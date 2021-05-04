@@ -112,14 +112,15 @@ public:
     SgHighlightPtr highlight;
     SgGroupPtr markerGroup;
     CrossMarkerPtr cmMarker;
-    CrossMarkerPtr ppcomMarker;
-    bool isCmVisible;
-    bool isPpcomVisible;
-    SgLineSetPtr virtualElasticStringLine;
+    CrossMarkerPtr cmProjectionMarker;
     SphereMarkerPtr zmpMarker;
-    bool isZmpVisible;
     Vector3 orgZmpPos;
+    double bodyMarkerRadius;
+    bool isCmVisible;
+    bool isCmProjectionVisible;
+    bool isZmpVisible;
 
+    SgLineSetPtr virtualElasticStringLine;
     weak_ref_ptr<SimulatorItem> activeSimulatorItem;
     Vector3 pointedLinkLocalPoint;
     enum { NO_FORCED_POSITION, MOVE_FORCED_POSITION, KEEP_FORCED_POSITION };
@@ -145,8 +146,13 @@ public:
     void onLinkOriginsCheckChanged(bool on);
 
     void enableHighlight(bool on);
+    void calcBodyMarkerRadius();
+    void ensureCmMarker();
+    void ensureCmProjectionMarker();
+    LeggedBodyHelper* checkLeggedBody();
+    bool ensureZmpMarker();
     void showCenterOfMass(bool on);
-    void showPpcom(bool on);
+    void showCmProjection(bool on);
     void showZmp(bool on);
     void makeLinkFree(EditableSceneLink* sceneLink);
     void setBaseLink(EditableSceneLink* sceneLink);
@@ -364,39 +370,15 @@ void EditableSceneBody::Impl::initialize()
     markerGroup->setName("Marker");
     self->addChild(markerGroup);
 
-    double radius = 0.0;
-    const int n = self->numSceneLinks();
-    for(int i=0; i < n; ++i){
-        SceneLink* sLink = self->sceneLink(i);
-        BoundingBox bb = sLink->boundingBox();
-        double radius0 = bb.size().norm() / 2.0;
-        if(radius0 > radius){
-            radius = radius0;
-        }
-    }
-    cmMarker = new CrossMarker(radius, Vector3f(0.0f, 1.0f, 0.0f), 2.0);
-    cmMarker->setName("centerOfMass");
+    bodyMarkerRadius = -1.0;
     isCmVisible = false;
-    ppcomMarker = new CrossMarker(radius, Vector3f(1.0f, 0.5f, 0.0f), 2.0);
-    ppcomMarker->setName("ProjectionPointCoM");
-    isPpcomVisible = false;
+    isCmProjectionVisible = false;
+    isZmpVisible = false;
 
     forcedPositionMode = NO_FORCED_POSITION;
     virtualElasticStringLine = new SgLineSet;
     virtualElasticStringLine->getOrCreateVertices()->resize(2);
     virtualElasticStringLine->addLine(0, 1);
-
-    LeggedBodyHelperPtr legged = getLeggedBodyHelper(self->body());
-    if(legged->isValid() && legged->numFeet() > 0){
-        Link* footLink = legged->footLink(0);
-        const double r = calcLinkMarkerRadius(self->sceneLink(footLink->index()));
-        zmpMarker = new SphereMarker(r, Vector3f(0.0f, 1.0f, 0.0f), 0.3);
-        zmpMarker->setName("ZMP");
-        zmpMarker->addChild(new CrossMarker(r * 2.5, Vector3f(0.0f, 1.0f, 0.0f), 2.0f));
-    } else {
-        zmpMarker = new SphereMarker(0.1, Vector3f(0.0f, 1.0f, 0.0f), 0.3);
-    }
-    isZmpVisible = false;
 
     self->sigGraphConnection().connect([&](bool on){ onSceneGraphConnection(on);});
 }
@@ -514,10 +496,10 @@ void EditableSceneBody::Impl::onKinematicStateChanged()
     if(isCmVisible){
         cmMarker->setTranslation(bodyItem->centerOfMass());
     }
-    if(isPpcomVisible){
+    if(isCmProjectionVisible){
     	Vector3 com = bodyItem->centerOfMass();
     	com(2) = 0.0;
-    	ppcomMarker->setTranslation(com);
+    	cmProjectionMarker->setTranslation(com);
     }
     if(isZmpVisible){
         zmpMarker->setTranslation(bodyItem->zmp());
@@ -653,40 +635,120 @@ void EditableSceneBody::Impl::enableHighlight(bool on)
 }
 
 
-void EditableSceneBody::Impl::showCenterOfMass(bool on)
+void EditableSceneBody::Impl::calcBodyMarkerRadius()
 {
-    isCmVisible = on;
-    if(on){
-        cmMarker->setTranslation(bodyItem->centerOfMass());
-        markerGroup->addChildOnce(cmMarker, update);
-    } else {
-        markerGroup->removeChild(cmMarker, update);
+    bodyMarkerRadius = 0.0;
+    const int n = self->numSceneLinks();
+    for(int i=0; i < n; ++i){
+        SceneLink* sLink = self->sceneLink(i);
+        BoundingBox bb = sLink->boundingBox();
+        double radius0 = bb.size().norm() / 2.0;
+        if(radius0 > bodyMarkerRadius){
+            bodyMarkerRadius = radius0;
+        }
     }
 }
 
 
-void EditableSceneBody::Impl::showPpcom(bool on)
+void EditableSceneBody::Impl::ensureCmMarker()
 {
-    isPpcomVisible = on;
+    if(!cmMarker){
+        if(bodyMarkerRadius < 0.0){
+            calcBodyMarkerRadius();
+        }
+        cmMarker = new CrossMarker(bodyMarkerRadius, Vector3f(0.0f, 1.0f, 0.0f), 2.0);
+        cmMarker->setName("centerOfMass");
+    }
+}
+
+
+void EditableSceneBody::Impl::ensureCmProjectionMarker()
+{
+    if(!cmProjectionMarker){
+        if(bodyMarkerRadius < 0.0){
+            calcBodyMarkerRadius();
+        }
+        cmProjectionMarker = new CrossMarker(bodyMarkerRadius, Vector3f(1.0f, 0.5f, 0.0f), 2.0);
+        cmProjectionMarker->setName("CmProjection");
+    }
+}
+
+
+LeggedBodyHelper* EditableSceneBody::Impl::checkLeggedBody()
+{
+    auto legged = getLeggedBodyHelper(self->body());
+    if(!legged->isValid() || legged->numFeet() == 0){
+        legged = nullptr;
+    }
+    return legged;
+}
+
+
+bool EditableSceneBody::Impl::ensureZmpMarker()
+{
+    if(!zmpMarker){
+        if(auto legged = checkLeggedBody()){
+            Link* footLink = legged->footLink(0);
+            double radius = calcLinkMarkerRadius(self->sceneLink(footLink->index()));
+            zmpMarker = new SphereMarker(radius, Vector3f(0.0f, 1.0f, 0.0f), 0.3);
+            zmpMarker->addChild(new CrossMarker(radius * 2.5, Vector3f(0.0f, 1.0f, 0.0f), 2.0f));
+            zmpMarker->setName("ZMP");
+        }
+    }
+    return (zmpMarker != nullptr);
+}
+
+
+void EditableSceneBody::Impl::showCenterOfMass(bool on)
+{
+    isCmVisible = on;
     if(on){
+        ensureCmMarker();
+        cmMarker->setTranslation(bodyItem->centerOfMass());
+        markerGroup->addChildOnce(cmMarker, update);
+    } else {
+        if(cmMarker){
+            markerGroup->removeChild(cmMarker, update);
+            cmMarker.reset();
+            bodyMarkerRadius = -1.0;
+        }
+    }
+}
+
+
+void EditableSceneBody::Impl::showCmProjection(bool on)
+{
+    isCmProjectionVisible = on;
+    if(on){
+        ensureCmProjectionMarker();
         Vector3 com = bodyItem->centerOfMass();
         com(2) = 0.0;
-        ppcomMarker->setTranslation(com);
-        markerGroup->addChildOnce(ppcomMarker, update);
+        cmProjectionMarker->setTranslation(com);
+        markerGroup->addChildOnce(cmProjectionMarker, update);
     } else {
-        markerGroup->removeChild(ppcomMarker, update);
+        if(cmProjectionMarker){
+            markerGroup->removeChild(cmProjectionMarker, update);
+            cmProjectionMarker.reset();
+            bodyMarkerRadius = -1.0;
+        }
     }
 }
 
 
 void EditableSceneBody::Impl::showZmp(bool on)
 {
-    isZmpVisible = on;
     if(on){
-        zmpMarker->setTranslation(bodyItem->zmp());
-        markerGroup->addChildOnce(zmpMarker, update);
+        if(ensureZmpMarker()){
+            zmpMarker->setTranslation(bodyItem->zmp());
+            markerGroup->addChildOnce(zmpMarker, update);
+            isZmpVisible = true;
+        }
     } else {
-        markerGroup->removeChild(zmpMarker, update);
+        if(zmpMarker){
+            markerGroup->removeChild(zmpMarker, update);
+            zmpMarker.reset();
+        }
+        isZmpVisible = false;
     }
 }
 
@@ -783,10 +845,11 @@ EditableSceneBody::Impl::PointedType EditableSceneBody::Impl::findPointedObject(
             pointedType = PT_SCENE_LINK;
             break;
         }
-        SphereMarker* marker = dynamic_cast<SphereMarker*>(path[i]);
-        if(marker == zmpMarker){
-            pointedType = PT_ZMP;
-            break;
+        if(auto marker = dynamic_cast<SphereMarker*>(path[i])){
+            if(marker == zmpMarker){
+                pointedType = PT_ZMP;
+                break;
+            }
         }
     }
     return pointedType;
@@ -1440,13 +1503,16 @@ bool EditableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event, Menu
     item->setChecked(isCmVisible);
     item->sigToggled().connect([&](bool on){ showCenterOfMass(on); });
             
-    item = mm->addCheckItem(_("Projection Point of CoM"));
-    item->setChecked(isPpcomVisible);
-    item->sigToggled().connect([&](bool on){ showPpcom(on); });
-            
-    item = mm->addCheckItem(_("ZMP"));
-    item->setChecked(isZmpVisible);
-    item->sigToggled().connect([&](bool on){ showZmp(on); });
+    item = mm->addCheckItem(_("Center of Mass Projection"));
+    item->setChecked(isCmProjectionVisible);
+    item->sigToggled().connect([&](bool on){ showCmProjection(on); });
+
+
+    if(checkLeggedBody()){
+        item = mm->addCheckItem(_("ZMP"));
+        item->setChecked(isZmpVisible);
+        item->sigToggled().connect([&](bool on){ showZmp(on); });
+    }
 
     mm->setPath("/");
     mm->addSeparator();
@@ -1766,9 +1832,9 @@ bool EditableSceneBody::Impl::storeProperties(Archive& archive)
                 EditableSceneBody::Impl* impl = sceneBody->impl;
                 MappingPtr state = new Mapping();
                 state->insert("bodyItem", id);
-                state->write("showCenterOfMass", impl->isCmVisible);
-                state->write("showPpcom", impl->isPpcomVisible);
-                state->write("showZmp", impl->isZmpVisible);
+                state->write("show_cm", impl->isCmVisible);
+                state->write("show_cm_projection", impl->isCmProjectionVisible);
+                state->write("show_zmp", impl->isZmpVisible);
                 states->append(state);
             }
         }
@@ -1798,9 +1864,9 @@ void EditableSceneBody::Impl::restoreSceneBodyProperties(const Archive& archive)
             BodyItem* bodyItem = archive.findItem<BodyItem>(state->find("bodyItem"));
             if(bodyItem){
                 EditableSceneBody::Impl* impl = bodyItem->sceneBody()->impl;
-                impl->showCenterOfMass(state->get("showCenterOfMass", impl->isCmVisible));
-                impl->showPpcom(state->get("showPpcom", impl->isPpcomVisible));
-                impl->showZmp(state->get("showZmp", impl->isZmpVisible));
+                impl->showCenterOfMass(state->get({ "show_cm", "showCenterOfMass" }, impl->isCmVisible));
+                impl->showCmProjection(state->get({ "show_cm_projection", "showCmProjection" }, impl->isCmProjectionVisible));
+                impl->showZmp(state->get({ "show_zmp", "showZmp" }, impl->isZmpVisible));
             }
         }
     }
