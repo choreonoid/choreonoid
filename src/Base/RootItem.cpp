@@ -118,8 +118,10 @@ void RootItem::initializeClass(ExtensionManager* ext)
         initialized = true;
 
         // debug
+        /*
         ext->menuManager().setPath("/Options").addItem("Polymorphic id test")->sigTriggered().connect(
             [](){ putItemTreeWithPolymorphicIds(); });
+        */
     }
 }
 
