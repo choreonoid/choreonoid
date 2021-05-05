@@ -317,7 +317,6 @@ public:
     Isometry3 viewTransform;
     Matrix4 projectionMatrix;
     Matrix4 PV;
-    SgUpdate boundingBoxUpdate;
 
     vector<SgPolygonDrawStyle*> solidWireframeStyleStack;
 
@@ -3037,7 +3036,8 @@ void GLSLSceneRenderer::Impl::renderBoundingBox(SgBoundingBox* bboxNode)
     renderGroup(bboxNode);
 
     if(isRenderingVisibleImage){
-        bboxNode->updateLineSet(boundingBoxUpdate);
+        // Do not emit the update signal to avoid redundant rendrings over multiple rendering screens
+        bboxNode->updateLineSet();
         renderLineSet(const_cast<SgLineSet*>(bboxNode->lineSet()));
     }
 }
