@@ -92,7 +92,7 @@ Referenced* SgFog::doClone(CloneMap*) const
 SgHighlight::SgHighlight(int classId)
     : SgGroup(classId)
 {
-
+    setAttribute(Marker);
 }
 
 
