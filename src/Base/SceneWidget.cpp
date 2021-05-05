@@ -68,6 +68,8 @@ enum { FLOOR_GRID = 0, XZ_GRID = 1, YZ_GRID = 2 };
 bool isLowMemoryConsumptionMode;
 Signal<void(bool on)> sigLowMemoryConsumptionModeChanged;
 
+QLabel* sharedIndicatorLabel = nullptr;
+
 class ConfigDialog : public Dialog
 {
 public:
@@ -295,7 +297,6 @@ public:
     bool isFPSTestCanceled;
 
     ConfigDialog* config;
-    QLabel* indicatorLabel;
 
     MenuManager menuManager;
     Signal<void(SceneWidgetEvent* event, MenuManager* menuManager)> sigContextMenuRequest;
@@ -580,12 +581,14 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
     activeCustomModeHandler = nullptr;
     activeCustomModeId = 0;
-    
-    indicatorLabel = new QLabel;
-    indicatorLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    QFont font = indicatorLabel->font();
-    font.setFixedPitch(true);
-    indicatorLabel->setFont(font);
+
+    if(!sharedIndicatorLabel){
+        sharedIndicatorLabel = new QLabel;
+        sharedIndicatorLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        QFont font = sharedIndicatorLabel->font();
+        font.setFixedPitch(true);
+        sharedIndicatorLabel->setFont(font);
+    }
 
     builtinCameraTransform = new InteractiveCameraTransform;
     builtinCameraTransform->setTransform(
@@ -658,7 +661,6 @@ SceneWidget::~SceneWidget()
 SceneWidget::Impl::~Impl()
 {
     delete renderer;
-    delete indicatorLabel;
     delete config;
 
     if(pickingImageWindow){
@@ -734,7 +736,7 @@ void SceneWidget::renderScene(bool doImmediately)
 
 QWidget* SceneWidget::indicator()
 {
-    return impl->indicatorLabel;
+    return sharedIndicatorLabel;
 }
 
 
@@ -1100,7 +1102,7 @@ void SceneWidget::Impl::setEditMode(bool on)
     if(on != isEditMode){
         isEditMode = on;
         resetCursor();
-        indicatorLabel->clear();
+        sharedIndicatorLabel->clear();
 
         if(!isEditMode){
             clearFocusToEditables(true);
@@ -1728,10 +1730,21 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
                     [&](SceneWidgetEditable* editable){ return editable->onPointerMoveEvent(&latestEvent); });
 
             if(mouseMovedEditable){
+                handled = true;
+
+                /**
+                   The following code changes the input focus to this scene widget if the mouse pointer
+                   is pointing an editable scene object and the event is processed by it.
+                   This is sometimes convenient for operating the object with key inputs because it can
+                   omit the operation to click the view or the object first. However, changing the focus
+                   without clicking a view does not conform to the usual GUI operation style and can be
+                   confusing. Thus the focus change should not be enabled.
+                */
+                /*
                 if(!QWidget::hasFocus()){
                     QWidget::setFocus(Qt::MouseFocusReason);
                 }
-                handled = true;
+                */
             }
             if(lastMouseMovedEditable != mouseMovedEditable){
                 if(!mouseMovedEditable){
@@ -1746,14 +1759,18 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
     }
 
     if(!handled){
-        static string f1(_("Global Position: ({0:.3f} {1:.3f} {2:.3f})"));
-        static string f2(_("Object: {0}, Global Position: ({1:.3f} {2:.3f} {3:.3f})"));
-        const Vector3& p = latestEvent.point();
-        string name = findObjectNameFromNodePath(latestEvent.nodePath());
-        if(name.empty()){
-            updateIndicator(fmt::format(f1, p.x(), p.y(), p.z()));
+        if(latestEvent.nodePath().empty()){
+            updateIndicator("");
         } else {
-            updateIndicator(fmt::format(f2, name, p.x(), p.y(), p.z()));
+            static string f1(_("Global Position: ({0:.3f} {1:.3f} {2:.3f})"));
+            static string f2(_("Object: {0}, Global Position: ({1:.3f} {2:.3f} {3:.3f})"));
+            const Vector3& p = latestEvent.point();
+            string name = findObjectNameFromNodePath(latestEvent.nodePath());
+            if(name.empty()){
+                updateIndicator(fmt::format(f1, p.x(), p.y(), p.z()));
+            } else {
+                updateIndicator(fmt::format(f2, name, p.x(), p.y(), p.z()));
+            }
         }
     }
 }
@@ -2797,13 +2814,13 @@ void SceneWidget::Impl::setScreenSize(int width, int height)
 
 void SceneWidget::updateIndicator(const std::string& text)
 {
-    impl->indicatorLabel->setText(text.c_str());
+    sharedIndicatorLabel->setText(text.c_str());
 }
 
 
 void SceneWidget::Impl::updateIndicator(const std::string& text)
 {
-    indicatorLabel->setText(text.c_str());
+    sharedIndicatorLabel->setText(text.c_str());
 }
 
 
