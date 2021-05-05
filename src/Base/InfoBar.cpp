@@ -86,8 +86,9 @@ void InfoBar::setIndicator(QWidget* indicator)
         if(indicator){
             indicatorLayout->addWidget(indicator);
             indicator->show();
-            connect(indicator, &QObject::destroyed,
-                    [this](QObject* obj){ onIndicatorDestroyed(obj); });
+            indicatorConnection =
+                connect(indicator, &QObject::destroyed,
+                        [this](QObject* obj){ onIndicatorDestroyed(obj); });
             currentIndicator = indicator;
         }
     }
@@ -100,8 +101,8 @@ void InfoBar::removeCurrentIndicator()
         indicatorLayout->removeWidget(currentIndicator);
         currentIndicator->hide();
         currentIndicator->setParent(nullptr);
-        currentIndicator->disconnect(SIGNAL(destroyed(QObject*)), this, SLOT(onIndicatorDestroyed(QObject*)));
         currentIndicator = nullptr;
+        disconnect(indicatorConnection);
     }
 }    
 

@@ -25,6 +25,7 @@ private:
     QWidget* indicatorBase;
     QHBoxLayout* indicatorLayout;
     QWidget* currentIndicator;
+    QMetaObject::Connection indicatorConnection;
     std::string plainTextMessage;
         
     InfoBar();
