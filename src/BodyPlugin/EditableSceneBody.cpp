@@ -625,11 +625,19 @@ void EditableSceneBody::Impl::enableHighlight(bool on)
             doUpdate = !highlight->hasParents();
         }
         if(doUpdate){
-            self->insertEffectGroup(highlight, update);
+            if(self->numSceneLinks() == 1){
+                self->sceneLink(0)->insertEffectGroup(highlight, update);
+            } else{
+                self->insertEffectGroup(highlight, update);
+            }
         }
     } else {
         if(highlight && highlight->hasParents()){
-            self->removeEffectGroup(highlight, update);
+            if(self->numSceneLinks() == 1){
+                self->sceneLink(0)->removeEffectGroup(highlight, update);
+            } else {
+                self->removeEffectGroup(highlight, update);
+            }
         }
     }
 }

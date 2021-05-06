@@ -357,7 +357,7 @@ public:
     void onNormalVisualizationChanged();
 
     void resetCursor();
-    void setEditMode(bool on);
+    void setEditMode(bool on, bool doAdvertise);
     void toggleEditMode();
     void advertiseSceneModeChange(bool doModeSyncRequest);
     void viewAll();
@@ -691,7 +691,8 @@ void SceneWidget::setModeSyncEnabled(bool on)
 void SceneWidget::Impl::onModeSyncRequest(SceneWidget* requester)
 {
     isHighlightingEnabled = requester->isHighlightingEnabled();
-    setEditMode(requester->isEditMode());
+    setEditMode(requester->isEditMode(), false);
+    advertiseSceneModeChange(false);
 }
 
 
@@ -1098,43 +1099,26 @@ SignalProxy<void()> SceneWidget::sigStateChanged() const
 
 void SceneWidget::setEditMode(bool on)
 {
-    impl->setEditMode(on);
+    impl->setEditMode(on, true);
 }
 
 
-void SceneWidget::Impl::setEditMode(bool on)
+void SceneWidget::Impl::setEditMode(bool on, bool doAdvertise)
 {
     if(on != isEditMode){
         isEditMode = on;
         resetCursor();
         sharedIndicatorLabel->clear();
-
-        if(!isEditMode){
-            clearFocusToEditables(true);
-
-        } else {
-            std::swap(focusedEditablePath, prevFocusedEditablePath);
-            // Check if the path elements are still belonging to the scene
-            if(!focusedEditablePath.empty()){
-                int existingPathSize = 0;
-                for(auto& element : focusedEditablePath){
-                    if(editables.find(element) == editables.end()){
-                        break;
-                    }
-                    ++existingPathSize;
-                }
-                focusedEditablePath.resize(existingPathSize);
-            }
+        if(doAdvertise){
+            advertiseSceneModeChange(true);
         }
-        
-        advertiseSceneModeChange(true);
     }
 }
 
 
 void SceneWidget::Impl::toggleEditMode()
 {
-    setEditMode(!isEditMode);
+    setEditMode(!isEditMode, true);
 }
 
 
@@ -2529,7 +2513,7 @@ void SceneWidget::setHighlightingEnabled(bool on)
 {
     if(on != impl->isHighlightingEnabled){
         impl->isHighlightingEnabled = on;
-        impl->advertiseSceneModeChange(false);
+        impl->advertiseSceneModeChange(true);
     }
 }
 
@@ -2971,7 +2955,7 @@ bool SceneWidget::Impl::restoreState(const Archive& archive)
 {
     bool doUpdate = false;
 
-    setEditMode(archive.get("editMode", isEditMode));
+    setEditMode(archive.get("editMode", isEditMode), false);
     
     string symbol;
     if(archive.read("viewpointOperationMode", symbol)){
@@ -3062,6 +3046,8 @@ bool SceneWidget::Impl::restoreState(const Archive& archive)
         updateGrids();
         update();
     }
+
+    advertiseSceneModeChange(true);
 
     return true;
 }
