@@ -22,6 +22,13 @@ public:
     BoundingBox(const BoundingBox& org);
     BoundingBox(const BoundingBoxf& org);
 
+    bool operator==(const BoundingBox& rhs) const {
+        return (min_ == rhs.min_) && (max_ == rhs.max_);
+    }
+    bool operator!=(const BoundingBox& rhs) const {
+        return !operator==(rhs);
+    }
+
     void set(const Vector3& min, const Vector3& max);
     void clear();
 
@@ -59,6 +66,13 @@ public:
     BoundingBoxf(const BoundingBoxf& org);
     BoundingBoxf(const BoundingBox& org);
         
+    bool operator==(const BoundingBoxf& rhs) const {
+        return (min_ == rhs.min_) && (max_ == rhs.max_);
+    }
+    bool operator!=(const BoundingBoxf& rhs) const {
+        return !operator==(rhs);
+    }
+
     void set(const Vector3f& min, const Vector3f& max);
     void clear();
 

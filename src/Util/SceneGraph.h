@@ -47,11 +47,13 @@ public:
         Node = 1 << 0,
         GroupNode = 1 << 1,
         TransformNode = 1 << 2,
-        Composite = 1 << 3, // the object has some SgObject members except for group children
-        NodeDecoration = 1 << 4,
-        Marker = 1 << 5,
-        Operable = 1 << 6,
-        NumAttributes = 7,
+        Composite = 1 << 3, // the object has some SgObject members other than group node children
+        Geometry = 1 << 4,
+        Appearance = 1 << 5,
+        NodeDecoration = 1 << 6,
+        Marker = 1 << 7,
+        Operable = 1 << 8,
+        MaxAttributeBit = 9,
 
         // deprecated
         GroupAttribute = GroupNode,
@@ -60,6 +62,7 @@ public:
     };
 
     void setAttribute(int attr){ attributes_ |= attr; }
+    void setAttributes(int attrs){ attributes_ |= attrs; }
     int attributes() const { return attributes_; }
     bool hasAttribute(int attr) const { return attributes_ & attr; }
     bool hasAttributes(int attrs) const { return (attributes_ & attrs) == attrs; }
@@ -76,13 +79,13 @@ public:
         
     void notifyUpdate(SgUpdate& update) {
         update.clearPath();
-        onUpdated(update);
+        notifyUpperNodesOfUpdate(update);
     }
 
     void notifyUpdate(int action = SgUpdate::Modified) {
         SgUpdate update(action);
         update.reservePathCapacity(16);
-        onUpdated(update);
+        notifyUpperNodesOfUpdate(update);
     }
 
     void addParent(SgObject* parent, SgUpdateRef update = nullptr);
@@ -128,10 +131,11 @@ protected:
     SgObject();
     SgObject(const SgObject& org);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
-    void onUpdated(SgUpdate& update);
+    void notifyUpperNodesOfUpdate(SgUpdate& update);
+    void notifyUpperNodesOfUpdate(SgUpdate& update, bool doInvalidateBoundingBox);
             
 private:
-    unsigned char attributes_;
+    unsigned short attributes_;
     mutable bool hasValidBoundingBoxCache_;
     ParentContainer parents;
     Signal<void(const SgUpdate& update)> sigUpdated_;

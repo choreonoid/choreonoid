@@ -138,6 +138,7 @@ protected:
 
 private:
     ref_ptr<SgLineSet> lineSet_;
+    BoundingBox lastBoundingBox;
 
     void initializeLineSet();
 };

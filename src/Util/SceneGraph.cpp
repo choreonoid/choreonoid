@@ -76,13 +76,21 @@ SgObject* SgObject::childObject(int /* index */)
 }
 
 
-void SgObject::onUpdated(SgUpdate& update)
+void SgObject::notifyUpperNodesOfUpdate(SgUpdate& update)
+{
+    notifyUpperNodesOfUpdate(update, update.hasAction(SgUpdate::GeometryModified));
+}
+
+
+void SgObject::notifyUpperNodesOfUpdate(SgUpdate& update, bool doInvalidateBoundingBox)
 {
     update.pushNode(this);
-    invalidateBoundingBox();
+    if(doInvalidateBoundingBox){
+        invalidateBoundingBox();
+    }
     sigUpdated_(update);
     for(const_parentIter p = parents.begin(); p != parents.end(); ++p){
-        (*p)->onUpdated(update);
+        (*p)->notifyUpperNodesOfUpdate(update, doInvalidateBoundingBox);
     }
     update.popNode();
 }
@@ -95,7 +103,8 @@ void SgObject::addParent(SgObject* parent, SgUpdateRef update)
     if(update){
         update->clearPath();
         update->pushNode(this);
-        parent->onUpdated(update->withAction(SgUpdate::Added));
+        parent->notifyUpperNodesOfUpdate(
+            update->withAction(SgUpdate::Added), hasAttribute(Geometry));
     }
 
     if(parents.size() == 1){
@@ -327,7 +336,6 @@ SgGroup::SgGroup(const SgGroup& org, CloneMap* cloneMap)
         }
     }
 
-    setAttribute(GroupNode);
     if(org.hasValidBoundingBoxCache()){
         bboxCache = org.bboxCache;
         setBoundingBoxCacheReady();
@@ -477,7 +485,8 @@ SgGroup::iterator SgGroup::removeChild(iterator childIter, SgUpdateRef update)
         next = children.erase(childIter);
         update->clearPath();
         update->pushNode(child);
-        onUpdated(update->withAction(SgUpdate::Removed));
+        notifyUpperNodesOfUpdate(
+            update->withAction(SgUpdate::Removed), child->hasAttribute(Geometry));
     }
     return next;
 }
@@ -571,7 +580,8 @@ void SgGroup::removeChainedGroup(SgGroup* group, SgUpdateRef update)
             if(update){
                 update->clearPath();
                 update->pushNode(group);
-                onUpdated(update->withAction(SgUpdate::Removed));
+                notifyUpperNodesOfUpdate(
+                    update->withAction(SgUpdate::Removed), group->hasAttribute(Geometry));
             }
             break;
         }
@@ -609,7 +619,7 @@ Referenced* SgInvariantGroup::doClone(CloneMap* cloneMap) const
 SgTransform::SgTransform(int classId)
     : SgGroup(classId)
 {
-    setAttribute(TransformNode);
+    setAttributes(TransformNode | Geometry);
 }
 
 

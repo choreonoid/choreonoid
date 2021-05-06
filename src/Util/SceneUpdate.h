@@ -14,14 +14,16 @@ public:
         None = 0,
         Added = 1 << 0,
         Removed = 1 << 1,
-        Modified = 1 << 2,
+        GeometryModified = 1 << 2,
+        AppearanceModified = 1 << 3,
+        Modified = GeometryModified | AppearanceModified,
 
         // deprecated
         NONE = None,
         ADDED = Added,
         REMOVED = Removed,
         MODIFIED = Modified,
-        BBOX_UPDATED = 1 << 3
+        BBOX_UPDATED = GeometryModified
     };
 
     typedef std::vector<SgObject*> Path;
@@ -34,6 +36,7 @@ public:
     void setInitialPathCapacity(unsigned char n) { initialPathCapacity_ = n; }
     void reservePathCapacity(int n) { path_.reserve(n); }
     int action() const { return action_; }
+    bool hasAction(int act) const { return action_ & act; }
     SgUpdate& withAction(int act) { action_ = act; return *this; }
     void setAction(int act) { action_ = act; }
     void addAction(int act) { action_ |= act; }

@@ -200,26 +200,33 @@ void SgBoundingBox::setLineWidth(float width)
 void SgBoundingBox::updateLineSet(SgUpdateRef update)
 {
     auto vertices = lineSet_->vertices();
-    
+
     if(vertices->empty() || !hasValidBoundingBoxCache()){
         auto bb = boundingBox();
-        if(bb.empty()){
-            vertices->clear();
-        } else {
-            vertices->resize(8);
-            auto& v0 = bb.min();
-            auto& v1 = bb.max();
-            vertices->at(0) << v0.x(), v0.y(), v1.z();
-            vertices->at(1) << v1.x(), v0.y(), v1.z();
-            vertices->at(2) << v1.x(), v1.y(), v1.z();
-            vertices->at(3) << v0.x(), v1.y(), v1.z();
-            vertices->at(4) << v0.x(), v0.y(), v0.z();
-            vertices->at(5) << v1.x(), v0.y(), v0.z();
-            vertices->at(6) << v1.x(), v1.y(), v0.z();
-            vertices->at(7) << v0.x(), v1.y(), v0.z();
-        }
-        if(update){
-            vertices->notifyUpdate(update->withAction(SgUpdate::Modified));
+        if(bb != lastBoundingBox){
+            if(bb.empty()){
+                vertices->clear();
+            } else {
+                vertices->resize(8);
+                auto& v0 = bb.min();
+                auto& v1 = bb.max();
+                vertices->at(0) << v0.x(), v0.y(), v1.z();
+                vertices->at(1) << v1.x(), v0.y(), v1.z();
+                vertices->at(2) << v1.x(), v1.y(), v1.z();
+                vertices->at(3) << v0.x(), v1.y(), v1.z();
+                vertices->at(4) << v0.x(), v0.y(), v0.z();
+                vertices->at(5) << v1.x(), v0.y(), v0.z();
+                vertices->at(6) << v1.x(), v1.y(), v0.z();
+                vertices->at(7) << v0.x(), v1.y(), v0.z();
+            }
+            if(update){
+                // Prevent the invalidation of the bounding box cache
+                ScopedConnection connection =
+                    sigUpdated().connect(
+                        [this](const SgUpdate&){ setBoundingBoxCacheReady(); });
+                vertices->notifyUpdate(update->withAction(SgUpdate::GeometryModified));
+            }
+            lastBoundingBox = bb;
         }
     }
 }

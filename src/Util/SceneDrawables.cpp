@@ -30,6 +30,8 @@ struct NodeClassRegistration {
 
 SgMaterial::SgMaterial()
 {
+    setAttribute(Appearance);
+    
     ambientIntensity_ = 1.0f;
     diffuseColor_ << 1.0f, 1.0f, 1.0f;
     emissiveColor_.setZero();
@@ -72,21 +74,21 @@ void SgMaterial::setShininess(float s)
 SgImage::SgImage()
     : image_(std::make_shared<Image>())
 {
-
+    setAttribute(Appearance);
 }
 
 
 SgImage::SgImage(const Image& image)
     : image_(std::make_shared<Image>(image))
 {
-
+    setAttribute(Appearance);
 }
 
 
 SgImage::SgImage(std::shared_ptr<Image> sharedImage)
     : image_(sharedImage)
 {
-
+    setAttribute(Appearance);
 }
 
 
@@ -136,6 +138,8 @@ void SgImage::setSize(int width, int height)
 
 SgTextureTransform::SgTextureTransform()
 {
+    setAttribute(Appearance);
+    
     center_ << 0.0, 0.0; 
     rotation_ = 0;
     scale_ << 1.0, 1.0;
@@ -161,7 +165,7 @@ Referenced* SgTextureTransform::doClone(CloneMap*) const
 
 SgTexture::SgTexture()
 {
-    setAttribute(Composite);
+    setAttributes(Composite | Appearance);
     repeatS_ = true; 
     repeatT_ = true; 
 }
@@ -260,7 +264,7 @@ SgTextureTransform* SgTexture::setTextureTransform(SgTextureTransform* textureTr
 
 SgMeshBase::SgMeshBase()
 {
-    setAttribute(Composite);
+    setAttribute(Composite | Geometry);
     creaseAngle_ = 0.0f;
     isSolid_ = false;
 }
@@ -357,6 +361,7 @@ SgVertexArray* SgMeshBase::setVertices(SgVertexArray* vertices)
     }
     vertices_ = vertices;
     if(vertices){
+        vertices->setAttribute(Geometry);
         vertices->addParent(this);
     }
     return vertices;
@@ -381,6 +386,7 @@ SgNormalArray* SgMeshBase::setNormals(SgNormalArray* normals)
     }
     normals_ = normals;
     if(normals){
+        normals->setAttribute(Appearance);
         normals->addParent(this);
     }
     return normals;
@@ -403,6 +409,7 @@ SgColorArray* SgMeshBase::setColors(SgColorArray* colors)
     }
     colors_ = colors;
     if(colors){
+        colors->setAttribute(Appearance);
         colors->addParent(this);
     }
     return colors;
@@ -427,6 +434,7 @@ SgTexCoordArray* SgMeshBase::setTexCoords(SgTexCoordArray* texCoords)
     }
     texCoords_ = texCoords;
     if(texCoords){
+        texCoords->setAttribute(Appearance);
         texCoords->addParent(this);
     }
     return texCoords;
@@ -605,7 +613,7 @@ void SgPolygonMesh::updateBoundingBox()
 SgShape::SgShape(int classId)
     : SgNode(classId)
 {
-    setAttribute(Composite);
+    setAttribute(Composite | Geometry | Appearance);
 }
 
 
@@ -762,7 +770,7 @@ SgTexture* SgShape::getOrCreateTexture()
 SgPlot::SgPlot(int classId)
     : SgNode(classId)
 {
-    setAttribute(Composite);
+    setAttribute(Composite | Geometry | Appearance);
 }
         
 
@@ -876,6 +884,7 @@ SgVertexArray* SgPlot::setVertices(SgVertexArray* vertices)
     }
     vertices_ = vertices;
     if(vertices){
+        vertices->setAttribute(Geometry);
         vertices->addParent(this);
     }
     return vertices;
@@ -900,6 +909,7 @@ SgNormalArray* SgPlot::setNormals(SgNormalArray* normals)
     }
     normals_ = normals;
     if(normals){
+        normals->setAttribute(Appearance);
         normals->addParent(this);
     }
     return normals;
@@ -944,6 +954,7 @@ SgColorArray* SgPlot::setColors(SgColorArray* colors)
     }
     colors_ = colors;
     if(colors){
+        colors->setAttribute(Appearance);
         colors->addParent(this);
     }
     return colors;
