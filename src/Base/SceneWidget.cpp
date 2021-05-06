@@ -215,7 +215,6 @@ public:
     bool needToUpdatePreprocessedNodeTree;
     bool needToClearGLOnFrameBufferChange;
     SgUpdate sgUpdate;
-    int recursiveEditableNodeSetChangeCounter;
 
     InteractiveCameraTransformPtr interactiveCameraTransform;
     InteractiveCameraTransformPtr builtinCameraTransform;
@@ -250,14 +249,13 @@ public:
                 dragMode == VIEW_ZOOM);
     }
 
-    set<EditableNodeInfo> editables;
-    vector<EditableNodeInfo> editableDifferences;
+    typedef list<vector<EditableNodeInfo>> EditableArrayList;
+    EditableArrayList tmpEditableArrays;
+    EditableArrayList::iterator pCurrentTmpEditableArray;
     vector<EditableNodeInfo> pointedEditablePath;
     EditableNodeInfo lastMouseMovedEditable;
     EditableNodeInfo focusedEditable;
     vector<EditableNodeInfo> focusedEditablePath;
-    // Used to restore the previous focus when the mode is changed from the view mdoe to the edit mode
-    vector<EditableNodeInfo> prevFocusedEditablePath;
 
     QCursor defaultCursor;
     QCursor editModeCursor;
@@ -321,10 +319,9 @@ public:
     SgLineSet* createGrid(int index);
 
     void onSceneGraphUpdated(const SgUpdate& update);
-    void checkNewEditableNodes(SgNode* node);
-    void checkNewEditableNodeIter(SgNode* node);
+    void extractEditablesInSubTree(SgNode* node, vector<EditableNodeInfo>& editables);
+    void checkAddedEditableNodes(SgNode* node);
     void checkRemovedEditableNodes(SgNode* node);
-    void checkRemovedEditableNodeIter(SgNode* node);
     void warnRecursiveEditableNodeSetChange();
     
     virtual void initializeGL() override;
@@ -360,6 +357,7 @@ public:
     void setEditMode(bool on, bool doAdvertise);
     void toggleEditMode();
     void advertiseSceneModeChange(bool doModeSyncRequest);
+    void advertiseSceneModeChangeInSubTree(SgNode* node);
     void viewAll();
 
     void showPickingImageWindow();
@@ -375,7 +373,6 @@ public:
         vector<EditableNodeInfo>& editablePath, std::function<bool(SceneWidgetEditable* editable)> function);
     bool setFocusToEditablePath(vector<EditableNodeInfo>& editablePath);
     bool setFocusToPointedEditablePath(const EditableNodeInfo& targetEditable);
-    void clearFocusToEditables(bool doStoreFocus);
 
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void keyReleaseEvent(QKeyEvent* event) override;
@@ -547,7 +544,10 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     renderer->sigCurrentCameraChanged().connect([&](){ onCurrentCameraChanged(); });
     renderer->setCurrentCameraAutoRestorationMode(true);
     self->sigObjectNameChanged().connect([this](string name){ renderer->setName(name); });
+
     sceneRoot->sigUpdated().connect([this](const SgUpdate& update){ onSceneGraphUpdated(update); });
+    tmpEditableArrays.emplace_back();
+    pCurrentTmpEditableArray = tmpEditableArrays.begin();
 
     scene = renderer->scene();
     prevDefaultFramebufferObject = 0;
@@ -557,7 +557,6 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     renderer->setFlagVariableToUpdatePreprocessedNodeTree(needToUpdatePreprocessedNodeTree);
 
     needToClearGLOnFrameBufferChange = false;
-    recursiveEditableNodeSetChangeCounter = 0;
 
     for(auto& color : gridColor){
     	color << 0.9f, 0.9f, 0.9f, 1.0f;
@@ -779,10 +778,10 @@ void SceneWidget::Impl::resizeGL(int width, int height)
 
 void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& sgUpdate)
 {
-    if(sgUpdate.action() & (SgUpdate::Added | SgUpdate::Removed)){
+    if(sgUpdate.hasAction(SgUpdate::Added | SgUpdate::Removed)){
         if(sgUpdate.action() & SgUpdate::Added){
             if(auto node = sgUpdate.path().front()->toNode()){
-                checkNewEditableNodes(node);
+                checkAddedEditableNodes(node);
             }
         } else if(sgUpdate.action() & SgUpdate::Removed){
             if(auto node = sgUpdate.path().front()->toNode()){
@@ -798,68 +797,80 @@ void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& sgUpdate)
 }
 
 
-void SceneWidget::Impl::checkNewEditableNodes(SgNode* node)
-{
-    checkNewEditableNodeIter(node);
-
-    if(!editableDifferences.empty()){
-
-        if(recursiveEditableNodeSetChangeCounter > 0){
-            warnRecursiveEditableNodeSetChange();
-        }
-        ++recursiveEditableNodeSetChangeCounter;
-        
-        for(auto& editableNode : editableDifferences){
-            editableNode.editable->onSceneModeChanged(&latestEvent);
-        }
-        editableDifferences.clear();
-        
-        --recursiveEditableNodeSetChangeCounter;
-    }
-}
-
-
-void SceneWidget::Impl::checkNewEditableNodeIter(SgNode* node)
+void SceneWidget::Impl::extractEditablesInSubTree(SgNode* node, vector<EditableNodeInfo>& editables)
 {
     if(node->hasAttribute(SgObject::Operable)){
         if(auto editable = dynamic_cast<SceneWidgetEditable*>(node)){
-            auto inserted = editables.emplace(node, editable);
-            if(inserted.second){
-                editableDifferences.emplace_back(node, editable);
-            }
+            editables.emplace_back(node, editable);
         }
     }
     if(auto group = node->toGroupNode()){
         for(auto& child : *group){
-            checkNewEditableNodeIter(child);
+            extractEditablesInSubTree(child, editables);
         }
+    }
+}
+
+
+void SceneWidget::Impl::checkAddedEditableNodes(SgNode* node)
+{
+    if(pCurrentTmpEditableArray != tmpEditableArrays.begin()){
+        warnRecursiveEditableNodeSetChange();
+    }
+    
+    auto& addedEditables = *pCurrentTmpEditableArray;
+    extractEditablesInSubTree(node, addedEditables);
+
+    if(!addedEditables.empty()){
+
+        ++pCurrentTmpEditableArray;
+        if(pCurrentTmpEditableArray == tmpEditableArrays.end()){
+            tmpEditableArrays.emplace_back();
+            pCurrentTmpEditableArray = tmpEditableArrays.end();
+            --pCurrentTmpEditableArray;
+        }
+
+        for(auto& editable : addedEditables){
+            editable.editable->onSceneModeChanged(&latestEvent);
+        }
+        addedEditables.clear();
+
+        --pCurrentTmpEditableArray;
     }
 }
 
 
 void SceneWidget::Impl::checkRemovedEditableNodes(SgNode* node)
 {
-    checkRemovedEditableNodeIter(node);
+    if(pCurrentTmpEditableArray != tmpEditableArrays.begin()){
+        warnRecursiveEditableNodeSetChange();
+    }
+    
+    auto& removedEditables = *pCurrentTmpEditableArray;
+    extractEditablesInSubTree(node, removedEditables);
 
-    if(!editableDifferences.empty()){
+    if(!removedEditables.empty()){
 
-        if(recursiveEditableNodeSetChangeCounter > 0){
-            warnRecursiveEditableNodeSetChange();
+        ++pCurrentTmpEditableArray;
+        if(pCurrentTmpEditableArray == tmpEditableArrays.end()){
+            tmpEditableArrays.emplace_back();
+            pCurrentTmpEditableArray = tmpEditableArrays.end();
+            --pCurrentTmpEditableArray;
         }
-        ++recursiveEditableNodeSetChangeCounter;
-        
-        for(auto& editableNode : editableDifferences){
-            if(editableNode == lastMouseMovedEditable){
+
+        list<EditableNodeInfo> editablesToClearFocus;
+        for(auto& editable : removedEditables){
+            if(editable == lastMouseMovedEditable){
                 lastMouseMovedEditable.editable->onPointerLeaveEvent(&latestEvent);
                 lastMouseMovedEditable.clear();
             }
             if(!focusedEditablePath.empty()){
                 auto iter = focusedEditablePath.begin();
                 while(iter != focusedEditablePath.end()){
-                    auto& nodeInfo = *iter;
-                    if(nodeInfo == editableNode){
+                    auto& focused = *iter;
+                    if(focused == editable){
                         iter = focusedEditablePath.erase(iter);
-                        nodeInfo.editable->onFocusChanged(&latestEvent, false);
+                        editablesToClearFocus.push_back(focused);
                     } else {
                         ++iter;
                     }
@@ -869,34 +880,28 @@ void SceneWidget::Impl::checkRemovedEditableNodes(SgNode* node)
                 break;
             }
         }
-        editableDifferences.clear();
 
-        --recursiveEditableNodeSetChangeCounter;
+        for(auto& editable : editablesToClearFocus){
+            editable.editable->onFocusChanged(&latestEvent, false);
+        }
+
+        removedEditables.clear();
+
+        --pCurrentTmpEditableArray;
     }
 }
     
 
-void SceneWidget::Impl::checkRemovedEditableNodeIter(SgNode* node)
-{
-    if(node->hasAttribute(SgObject::Operable)){
-        if(auto editable = dynamic_cast<SceneWidgetEditable*>(node)){
-            editableDifferences.emplace_back(node, editable);
-            editables.erase(editableDifferences.back());
-        }
-    }
-    if(auto group = node->toGroupNode()){
-        for(auto& child : *group){
-            checkRemovedEditableNodeIter(child);
-        }
-    }
-}
-
-
 void SceneWidget::Impl::warnRecursiveEditableNodeSetChange()
 {
-    MessageView::instance()->putln(
-        fmt::format(_("Recursive editable node set change on {0}."), self->objectName().toStdString()),
-        MessageView::Warning);
+    string message;
+    auto name = self->objectName().toStdString();
+    if(name.empty()){
+        message = _("Recursive editable node set change on a scene widget.");
+    } else {
+        message = fmt::format(_("Recursive editable node set change on scene widget {0}."), name);
+    }
+    MessageView::instance()->putln(message, MessageView::Warning);
 }
 
 
@@ -1130,24 +1135,47 @@ bool SceneWidget::isEditMode() const
 
 void SceneWidget::Impl::advertiseSceneModeChange(bool doModeSyncRequest)
 {
-   if(activeCustomModeHandler){
-       activeCustomModeHandler->onSceneModeChanged(&latestEvent);
-   }
-   for(auto& editable : editables){
-       editable.editable->onSceneModeChanged(&latestEvent);
-   }
-   if(isEditMode){
-       for(auto& element : focusedEditablePath){
-           element.editable->onFocusChanged(&latestEvent, true);
-       }
-   }
-   emitSigStateChangedLater();
+    if(!isEditMode){
+        // Clear focus
+        for(auto& editable : focusedEditablePath){
+            editable.editable->onFocusChanged(&latestEvent, false);
+        }
+    }
+    
+    if(activeCustomModeHandler){
+        activeCustomModeHandler->onSceneModeChanged(&latestEvent);
+    }
+    
+    advertiseSceneModeChangeInSubTree(sceneRoot);
+    
+    if(isEditMode){
+        for(auto& element : focusedEditablePath){
+            element.editable->onFocusChanged(&latestEvent, true);
+        }
+    }
+    
+    if(doModeSyncRequest && isModeSyncEnabled){
+        isEditModeInModeSync = isEditMode;
+        isHighlightingEnabledInModeSync = isHighlightingEnabled;
+        ::sigModeSyncRequest(self);
+    }
 
-   if(doModeSyncRequest && isModeSyncEnabled){
-       isEditModeInModeSync = isEditMode;
-       isHighlightingEnabledInModeSync = isHighlightingEnabled;
-       ::sigModeSyncRequest(self);
-   }
+    emitSigStateChangedLater();
+}
+
+
+void SceneWidget::Impl::advertiseSceneModeChangeInSubTree(SgNode* node)
+{
+    if(node->hasAttribute(SgObject::Operable)){
+        if(auto editable = dynamic_cast<SceneWidgetEditable*>(node)){
+            editable->onSceneModeChanged(&latestEvent);
+        }
+    }
+    if(auto group = node->toGroupNode()){
+        for(auto& child : *group){
+            advertiseSceneModeChangeInSubTree(child);
+        }
+    }
 }
 
 
@@ -1398,11 +1426,12 @@ bool SceneWidget::Impl::setFocusToEditablePath(vector<EditableNodeInfo>& editabl
             break;
         }
     }
+
     focusedEditable.clear();
-    prevFocusedEditablePath.clear();
-    std::swap(focusedEditablePath, prevFocusedEditablePath);
-    for(size_t i=indexOfFirstEditableToChangeFocus; i < prevFocusedEditablePath.size(); ++i){
-        prevFocusedEditablePath[i].editable->onFocusChanged(&latestEvent, false);
+    vector<EditableNodeInfo> tmpPath(focusedEditablePath);
+
+    for(size_t i=indexOfFirstEditableToChangeFocus; i < tmpPath.size(); ++i){
+        tmpPath[i].editable->onFocusChanged(&latestEvent, false);
     }
     for(size_t i=indexOfFirstEditableToChangeFocus; i < editablePath.size(); ++i){
         editablePath[i].editable->onFocusChanged(&latestEvent, true);
@@ -1425,26 +1454,7 @@ bool SceneWidget::Impl::setFocusToPointedEditablePath(const EditableNodeInfo& ta
             }
         }
     }
-
-    // No editable is pointed
-    // The following command is disabled because keeping the focus seems better.
-    // clearFocusToEditables(false);
-    
     return false;
-}
-
-
-void SceneWidget::Impl::clearFocusToEditables(bool doStoreFocus)
-{
-    prevFocusedEditablePath.clear();
-    std::swap(focusedEditablePath, prevFocusedEditablePath);
-    focusedEditable.clear();
-    for(auto& node : prevFocusedEditablePath){
-        node.editable->onFocusChanged(&latestEvent, false);
-    }
-    if(!doStoreFocus){
-        prevFocusedEditablePath.clear();
-    }
 }
 
 
