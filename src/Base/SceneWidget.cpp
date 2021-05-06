@@ -70,6 +70,11 @@ Signal<void(bool on)> sigLowMemoryConsumptionModeChanged;
 
 QLabel* sharedIndicatorLabel = nullptr;
 
+Signal<void(SceneWidget* instance)> sigSceneWidgetCreated;
+Signal<void(SceneWidget* requester)> sigModeSyncRequest;
+bool isEditModeInModeSync = false;
+bool isHighlightingEnabledInModeSync = false;
+
 class ConfigDialog : public Dialog
 {
 public:
@@ -185,9 +190,6 @@ struct EditableNodeInfo
 };
 
             
-Signal<void(SceneWidget* instance)> sigSceneWidgetCreated;
-Signal<void(SceneWidget* requester)> sigModeSyncRequest;
-
 }
 
 namespace cnoid {
@@ -677,6 +679,8 @@ void SceneWidget::setModeSyncEnabled(bool on)
             impl->modeSyncConnection =
                 sigModeSyncRequest.connect(
                     [this](SceneWidget* requester){ impl->onModeSyncRequest(requester); });
+            impl->isEditMode = isEditModeInModeSync;
+            impl->isHighlightingEnabled = isHighlightingEnabledInModeSync;
         } else {
             impl->modeSyncConnection.disconnect();
         }
@@ -686,6 +690,7 @@ void SceneWidget::setModeSyncEnabled(bool on)
 
 void SceneWidget::Impl::onModeSyncRequest(SceneWidget* requester)
 {
+    isHighlightingEnabled = requester->isHighlightingEnabled();
     setEditMode(requester->isEditMode());
 }
 
@@ -1155,6 +1160,8 @@ void SceneWidget::Impl::advertiseSceneModeChange(bool doModeSyncRequest)
    emitSigStateChangedLater();
 
    if(doModeSyncRequest && isModeSyncEnabled){
+       isEditModeInModeSync = isEditMode;
+       isHighlightingEnabledInModeSync = isHighlightingEnabled;
        ::sigModeSyncRequest(self);
    }
 }
