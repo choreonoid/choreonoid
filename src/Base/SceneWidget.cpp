@@ -276,6 +276,7 @@ public:
     Vector3 lastClickedPoint;
     int mousePressX;
     int mousePressY;
+    QMouseEvent* lastMouseMoveEvent;
 
     SceneWidgetEditable* activeCustomModeHandler;
     int activeCustomModeId;
@@ -579,6 +580,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
     latestEvent.sceneWidget_ = self;
     lastClickedPoint.setZero();
+    lastMouseMoveEvent = nullptr;
 
     activeCustomModeHandler = nullptr;
     activeCustomModeId = 0;
@@ -664,6 +666,9 @@ SceneWidget::Impl::~Impl()
     delete renderer;
     delete config;
 
+    if(lastMouseMoveEvent){
+        delete lastMouseMoveEvent;
+    }
     if(pickingImageWindow){
         delete pickingImageWindow;
     }
@@ -1151,6 +1156,9 @@ void SceneWidget::Impl::advertiseSceneModeChange(bool doModeSyncRequest)
     if(isEditMode){
         for(auto& element : focusedEditablePath){
             element.editable->onFocusChanged(&latestEvent, true);
+        }
+        if(lastMouseMoveEvent){
+            mouseMoveEvent(lastMouseMoveEvent);
         }
     }
     
@@ -1774,6 +1782,14 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
             }
         }
     }
+
+    if(lastMouseMoveEvent){
+        delete lastMouseMoveEvent;
+    }
+    lastMouseMoveEvent =
+        new QMouseEvent(
+            event->type(), event->localPos(), event->windowPos(), event->screenPos(),
+            event->button(), event->buttons(), event->modifiers());
 }
 
 
@@ -1823,6 +1839,10 @@ void SceneWidget::Impl::leaveEvent(QEvent* event)
     if(lastMouseMovedEditable){
         lastMouseMovedEditable.editable->onPointerLeaveEvent(&latestEvent);
         lastMouseMovedEditable.clear();
+    }
+    if(lastMouseMoveEvent){
+        delete lastMouseMoveEvent;
+        lastMouseMoveEvent = nullptr;
     }
 }
 
