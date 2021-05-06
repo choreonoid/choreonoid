@@ -1060,12 +1060,16 @@ void MovieRecorderImpl::stopRecording(bool isFinished)
         } else {
             mv->putln(format(_("Recording of {} has been stopped."), targetView->name()));
         }
+
+        targetView->updateGeometry();
     }
     
     timeBarConnections.disconnect();
 
     toolBar->setRecordingToggle(false);
     dialog->setRecordingToggle(false);
+
+    
 }
 
 
