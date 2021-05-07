@@ -288,6 +288,7 @@ public:
     unique_ptr<SolidColorExProgram> solidColorExProgram;
     unique_ptr<SolidPointProgram> solidPointProgram;
     unique_ptr<ThickLineProgram> thickLineProgram;
+    unique_ptr<OutlineProgram> outlineProgram;
     unique_ptr<MinimumLightingProgram> minimumLightingProgram;
     unique_ptr<FullLightingProgram> fullLightingProgram;
 
@@ -800,6 +801,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         solidColorExProgram->release();
         solidPointProgram->release();
         thickLineProgram->release();
+        outlineProgram->release();
         minimumLightingProgram->release();
         fullLightingProgram->release();
 
@@ -828,6 +830,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         solidColorExProgram.reset(new SolidColorExProgram);
         solidPointProgram.reset(new SolidPointProgram);
         thickLineProgram.reset(new ThickLineProgram);
+        outlineProgram.reset(new OutlineProgram);
         minimumLightingProgram.reset(new MinimumLightingProgram);
         fullLightingProgram.reset(new FullLightingProgram);
 
@@ -965,6 +968,7 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
         solidColorExProgram->initialize();
         solidPointProgram->initialize();
         thickLineProgram->initialize();
+        outlineProgram->initialize();
         minimumLightingProgram->initialize();
         fullLightingProgram->setColorTextureIndex(ImageTextureIndex);
         fullLightingProgram->setShadowMapTextureTopIndex(ShadowMapTextureIndex);
@@ -3070,34 +3074,20 @@ void GLSLSceneRenderer::Impl::renderOutlineEdge(SgOutline* outline, const Affine
     glStencilFunc(GL_ALWAYS, 1, -1);
     glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    
     renderChildNodes(outline);
+    
     popProgram();
 
-    pushProgram(solidColorProgram);
-
-    solidColorProgram->setColor(outline->color());
-    solidColorProgram->setColorChangable(false);
-
+    pushProgram(outlineProgram);
+    outlineProgram->resetColor(outline->color());
+    outlineProgram->setLineWidth(outline->lineWidth());
     glStencilFunc(GL_NOTEQUAL, 1, -1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-    float orgLineWidth = lineWidth;
-    setGlLineWidth(outline->lineWidth()*2+1);
-
-    GLint polygonMode[2]; // front and back
-    glGetIntegerv(GL_POLYGON_MODE, polygonMode);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
     
     renderChildNodes(outline);
     
-    setGlLineWidth(orgLineWidth);
-    glPolygonMode(GL_FRONT_AND_BACK, polygonMode[0]);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    
-    solidColorProgram->setColorChangable(true);
-
     popProgram();
 
     glDisable(GL_STENCIL_TEST);
@@ -3199,6 +3189,7 @@ void GLSLSceneRenderer::setColor(const Vector3f& color)
 {
     impl->solidColorProgram->setColor(color);
     impl->thickLineProgram->setColor(color);
+    impl->outlineProgram->setColor(color);
 }
 
 

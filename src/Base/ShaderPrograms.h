@@ -109,6 +109,7 @@ public:
     
     void setColorChangable(bool on);
     bool isColorChangable() const;
+    void resetColor(const Vector3f& color);
 
 protected:
     SolidColorProgram(std::initializer_list<ShaderSource> sources);
@@ -181,6 +182,24 @@ public:
 private:
     class Impl;
     Impl* impl;
+};
+
+
+/**
+   Experimental implementaion for rendering outlines
+*/
+class CNOID_EXPORT OutlineProgram : public SolidColorProgram
+{
+    OutlineProgram(const OutlineProgram&) = delete;
+    
+public:
+    OutlineProgram();
+    virtual void initialize() override;
+    virtual void setTransform(const Matrix4& PV, const Isometry3& V, const Affine3& M, const Matrix4* L) override;
+    void setLineWidth(float width);
+
+private:
+    GLint normalMatrixLocation;
 };
 
 

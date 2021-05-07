@@ -367,9 +367,9 @@ void NolightingProgram::setTransform(const Matrix4& PV, const Isometry3& V, cons
 {
     Matrix4f PVM;
     if(L){
-        PVM = (PV * M.matrix() * (*L)).cast<float>();
+        PVM.noalias() = (PV * M.matrix() * (*L)).cast<float>();
     } else {
-        PVM = (PV * M.matrix()).cast<float>();
+        PVM.noalias() = (PV * M.matrix()).cast<float>();
     }
     glUniformMatrix4fv(impl->MVPLocation, 1, GL_FALSE, PVM.data());
 }
@@ -441,6 +441,15 @@ void SolidColorProgram::setColor(const Vector3f& color)
             glUniform3fv(impl->colorLocation, 1, color.data());
             impl->color = color;
         }
+    }
+}
+
+
+void SolidColorProgram::resetColor(const Vector3f& color)
+{
+    if(color != impl->color){
+        glUniform3fv(impl->colorLocation, 1, color.data());
+        impl->color = color;
     }
 }
 
@@ -668,6 +677,39 @@ void SolidPointProgram::setViewportSize(int width, int height)
     impl->viewportWidth = width;
     impl->viewportHeight = height;
     impl->isViewportSizeInvalidated = true;
+}
+
+
+OutlineProgram::OutlineProgram()
+    : SolidColorProgram(
+        { { ":/Base/shader/Outline.vert", GL_VERTEX_SHADER },
+          { ":/Base/shader/SolidColor.frag", GL_FRAGMENT_SHADER } })
+{
+    setColorChangable(false);
+}
+
+
+void OutlineProgram::initialize()
+{
+    SolidColorProgram::initialize();
+
+    normalMatrixLocation = glslProgram().getUniformLocation("normalMatrix");
+}
+
+
+void OutlineProgram::setTransform
+(const Matrix4& PV, const Isometry3& V, const Affine3& M, const Matrix4* L)
+{
+    NolightingProgram::setTransform(PV, V, M, L);
+
+    const Matrix3f N = (V.linear() * M.linear()).cast<float>();
+    glUniformMatrix3fv(normalMatrixLocation, 1, GL_FALSE, N.data());
+}
+
+
+void OutlineProgram::setLineWidth(float /* width */)
+{
+
 }
 
 

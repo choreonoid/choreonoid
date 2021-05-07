@@ -52,6 +52,7 @@
     <file>shader/SolidPoint.geom</file>
     <file>shader/SolidPoint.frag</file>
     <file>shader/ThickLine.geom</file>
+    <file>shader/Outline.vert</file>
     <file>shader/MinLighting.vert</file>
     <file>shader/MinLighting.frag</file>
     <file>shader/FullLighting.vert</file>
