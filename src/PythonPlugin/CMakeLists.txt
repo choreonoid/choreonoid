@@ -1,13 +1,5 @@
-if(WIN32)
-  option(BUILD_PYTHON_PLUGIN "Building Python Plugin" OFF)
-else()
-  option(BUILD_PYTHON_PLUGIN "Building Python Plugin" ON)
-endif()
-
-if(NOT BUILD_PYTHON_PLUGIN)
+if(NOT ENABLE_PYTHON OR NOT ENABLE_GUI)
   return()
-elseif(NOT ENABLE_PYTHON)
-  message(FATAL_ERROR "PythonPlugin needs to ENABLE_PYTHON")
 endif()
 
 set(target CnoidPythonPlugin)

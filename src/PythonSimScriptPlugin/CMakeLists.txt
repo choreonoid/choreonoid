@@ -1,17 +1,5 @@
-# @author Shin'ichiro Nakaoka
-
-if(WIN32)
-  option(BUILD_PYTHON_SIM_SCRIPT_PLUGIN "Building the PythonSimScript plugin" OFF)
-else()
-  option(BUILD_PYTHON_SIM_SCRIPT_PLUGIN "Building the PythonSimScript plugin" ON)
-endif()
-
-if(NOT BUILD_PYTHON_SIM_SCRIPT_PLUGIN)
+if(NOT ENABLE_PYTHON OR NOT ENABLE_GUI)
   return()
-else()
-  if(NOT BUILD_PYTHON_PLUGIN)
-    message(FATAL_ERROR "The PythonSimScript plugin requires the Python plugin")
-  endif()
 endif()
 
 set(target CnoidPythonSimScriptPlugin)
