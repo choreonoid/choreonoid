@@ -6,6 +6,8 @@ if(NOT ENABLE_GUI)
 endif()
 
 option(BUILD_COLLISION_HANDLER_SAMPLE "Building a collision handler sample" OFF)
+mark_as_advanced(BUILD_COLLISION_HANDLER_SAMPLE)
+
 if(NOT BUILD_COLLISION_HANDLER_SAMPLE)
   return()
 endif()

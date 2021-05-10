@@ -1,4 +1,5 @@
 option(BUILD_SCENEEDIT_PLUGIN "Building Scene Edit Plugin" OFF)
+mark_as_advanced(BUILD_SCENEEDIT_PLUGIN)
 
 if(NOT BUILD_SCENEEDIT_PLUGIN)
   return()

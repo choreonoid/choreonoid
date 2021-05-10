@@ -1,7 +1,3 @@
-# @author Shin'ichiro Nakaoka
-
-#set(CMAKE_BUILD_TYPE Debug)
-
 if(NOT ENABLE_CORBA)
   return()
 endif()

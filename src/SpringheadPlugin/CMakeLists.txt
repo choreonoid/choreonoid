@@ -1,4 +1,5 @@
 option(BUILD_SPRINGHEAD_PLUGIN "Building SpringheadPlugin" OFF)
+mark_as_advanced(BUILD_SPRINGHEAD_PLUGIN)
 
 if(NOT BUILD_SPRINGHEAD_PLUGIN)
   return()

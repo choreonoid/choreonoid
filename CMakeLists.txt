@@ -582,6 +582,7 @@ endif()
 
 # CORBA, omniORB
 option(ENABLE_CORBA "Enable CORBA related modules / plugins" OFF)
+mark_as_advanced(ENABLE_CORBA)
 
 if(ENABLE_CORBA)
   # Note that the OMNIORB_XXX varialbes cannot be used because
@@ -663,12 +664,6 @@ if(ENABLE_CORBA)
   endif()
 
 endif(ENABLE_CORBA)
-
-# Simulation profiling
-option(ENABLE_SIMULATION_PROFILING "Enable simulation plofiling" OFF)
-if(ENABLE_SIMULATION_PROFILING)
-    add_definitions(-DENABLE_SIMULATION_PROFILING)
-endif()
 
 # Document installaiton
 install(FILES NEWS DESTINATION ${CHOREONOID_DOC_SUBDIR})
