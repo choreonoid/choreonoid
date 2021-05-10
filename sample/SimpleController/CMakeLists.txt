@@ -58,6 +58,9 @@ choreonoid_add_simple_controller(AizuWheelController AizuWheelController.cpp)
 list(APPEND project_files AizuWheel.cnoid)
 
 # Other samples
+choreonoid_add_simple_controller(SpringModelController SpringModelController.cpp)
+list(APPEND project_files ControlledSpringModel.cnoid)
+
 choreonoid_add_simple_controller(ConveyorController ConveyorController.cpp)
 list(APPEND project_files ConveyorSample.cnoid)
 

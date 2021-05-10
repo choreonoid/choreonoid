@@ -1,3 +1,5 @@
+choreonoid_add_body_customizer(SpringModelCustomizer SpringModelCustomizer.cpp)
+
 install(FILES
   FallingBoxes.cnoid
   FallingBoxesContactPoints.cnoid
@@ -6,4 +8,5 @@ install(FILES
   ExtraJointSample.cnoid
   ConcaveShapeTest.cnoid
   Ragdoll.cnoid
+  CustomizedSpringModel.cnoid
   DESTINATION ${CNOID_SHARE_SUBDIR}/project)
