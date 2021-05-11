@@ -15,7 +15,7 @@ class MprPosition;
 class MprPositionList;
 class MprStatement;
 class MprStructuredStatement;
-class ArchiveSession;
+class PositionTagGroup;
 
 
 class CNOID_EXPORT MprProgram : public ClonableReferenced
@@ -61,7 +61,7 @@ public:
     void removeUnreferencedPositions();
 
     SignalProxy<void(MprProgram::iterator iter)> sigStatementInserted();
-    SignalProxy<void(MprProgram* program, MprStatement* statement)> sigStatementRemoved();
+    SignalProxy<void(MprStatement* statement, MprProgram* program)> sigStatementRemoved();
     SignalProxy<void(MprStatement* statement)> sigStatementUpdated();
     
     void notifyStatementUpdate(MprStatement* statement) const;
@@ -71,7 +71,13 @@ public:
     bool isSubProgram() const;
     MprProgram* topLevelProgram() const;
 
-    bool traverseAllStatements(std::function<bool(MprStatement* statement)> callback);
+    void traverseStatements(std::function<void(MprStatement* statement)> callback);
+    
+    /**
+       Stop the traverse when false is returned from the callback function.
+       @return true if all the statements are traversed.
+    */
+    bool traverseStatements(std::function<bool(MprStatement* statement)> callback);
 
     void renumberPositionIds();
 
@@ -83,10 +89,6 @@ public:
 
     bool read(const Mapping& archive);
     bool write(Mapping& archive) const;
-
-    // Temporary
-    ArchiveSession* archiveSession();
-    void setArchiveSession(ArchiveSession* session);
 
 protected:
     MprProgram(const MprProgram& org, CloneMap* cloneMap = nullptr);

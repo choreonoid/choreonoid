@@ -21,7 +21,9 @@ using fmt::format;
 
 namespace {
 
-//PolymorphicFunctionSet<bool(MprStatement*, MprProgramItemBase*)> unreferenceFunctions;
+PolymorphicFunctionSet<MprStatement> referenceResolvers(MprStatementClassRegistry::instance());
+MprProgramItemBase* referenceResolver_programItem;
+bool referenceResolver_result;
 
 }
 
@@ -35,10 +37,11 @@ public:
     BodyItem* targetBodyItem;
     LinkKinematicsKitPtr kinematicsKit;
     bool isStartupProgram;
+    bool needToUpdateAllReferences;
 
     Impl(MprProgramItemBase* self);
     Impl(MprProgramItemBase* self, const Impl& org);
-    void setupSignalConnections();
+    void initialize();
     void setTargetBodyItem(BodyItem* bodyItem);
     MprPosition* findPositionOrShowWarning(MprPositionStatement* statement);
     bool moveTo(MprPosition* position, bool doUpdateAll);
@@ -65,9 +68,7 @@ MprProgramItemBase::Impl::Impl(MprProgramItemBase* self)
     : self(self)
 {
     topLevelProgram = new MprProgram;
-    setupSignalConnections();
-    targetBodyItem = nullptr;
-    isStartupProgram = false;
+    initialize();
 }
 
 
@@ -82,14 +83,16 @@ MprProgramItemBase::Impl::Impl(MprProgramItemBase* self, const Impl& org)
     : self(self)
 {
     topLevelProgram = org.topLevelProgram->clone();
-    setupSignalConnections();
-    targetBodyItem = nullptr;
-    isStartupProgram = false;
+    initialize();
 }
 
 
-void MprProgramItemBase::Impl::setupSignalConnections()
+void MprProgramItemBase::Impl::initialize()
 {
+    targetBodyItem = nullptr;
+    isStartupProgram = false;
+    needToUpdateAllReferences = false;
+
     topLevelProgram->sigStatementInserted().connect(
         [&](MprProgram::iterator iter){
             auto holder = (*iter)->holderProgram()->holderStatement();
@@ -101,7 +104,7 @@ void MprProgramItemBase::Impl::setupSignalConnections()
         });
 
     topLevelProgram->sigStatementRemoved().connect(
-        [&](MprProgram*, MprStatement*){
+        [&](MprStatement*, MprProgram*){
             self->suggestFileUpdate(); });
 
     topLevelProgram->sigStatementUpdated().connect(
@@ -146,6 +149,10 @@ void MprProgramItemBase::onPositionChanged()
     if(ownerBodyItem != impl->targetBodyItem){
         impl->setTargetBodyItem(ownerBodyItem);
     }
+    if(impl->needToUpdateAllReferences){
+        resolveAllReferences();
+        impl->needToUpdateAllReferences = false;
+    }
     if(impl->isStartupProgram){
         if(auto controller = findOwnerItem<ControllerItem>()){
             auto startupProgram =
@@ -157,6 +164,12 @@ void MprProgramItemBase::onPositionChanged()
             }
         }
     }
+}
+
+
+void MprProgramItemBase::onConnectedToRoot()
+{
+    impl->needToUpdateAllReferences = true;
 }
 
 
@@ -392,22 +405,36 @@ bool MprProgramItemBase::Impl::touchupPosition(MprPosition* position)
 }
 
 
-void MprProgramItemBase::registerUnreferenceFunction_
-(const std::type_info& type, std::function<bool(MprStatement*, MprProgramItemBase*)> unreference)
+void MprProgramItemBase::registerReferenceResolver_
+(const std::type_info& type, const std::function<bool(MprStatement*, MprProgramItemBase*)>& resolve)
 {
-    //unreferenceFunctions.setFunction(type, unreference);
+    referenceResolvers.setFunction(
+        type,
+        [resolve](MprStatement* statement){
+            referenceResolver_result = resolve(statement, referenceResolver_programItem);
+        });
 }
 
 
-bool MprProgramItemBase::resolveProgramDataReferences()
+bool MprProgramItemBase::resolveStatementReferences(MprStatement* statement)
 {
-    /*
-    return program->traverseAllStatements(
-        [this](MprStatement* statement){
-            return unreferenceFunctions.dispatch(statement, this);
+    referenceResolver_result = true;
+    referenceResolver_programItem = this;
+    referenceResolvers.dispatch(statement);
+    return referenceResolver_result;
+}
+
+
+bool MprProgramItemBase::resolveAllReferences()
+{
+    bool complete = true;
+    impl->topLevelProgram->traverseStatements(
+        [this, &complete](MprStatement* statement){
+            if(!resolveStatementReferences(statement)){
+                complete = false;
+            }
         });
-    */
-    return true;
+    return complete;
 }
 
 
@@ -436,9 +463,6 @@ bool MprProgramItemBase::store(Archive& archive)
 
 bool MprProgramItemBase::restore(const Archive& archive)
 {
-    // temporary
-    impl->topLevelProgram->setArchiveSession(archive.session());
-    
     if(archive.loadFileTo(this)){
         setAsStartupProgram(archive.get("is_startup_program", false));
         return true;

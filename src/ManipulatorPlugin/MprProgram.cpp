@@ -30,14 +30,14 @@ public:
     MprPositionListPtr positionList;
     Signal<void(MprStatement* statement)> sigStatementUpdated;
     Signal<void(iterator iter)> sigStatementInserted;
-    Signal<void(MprProgram* program, MprStatement* statement)> sigStatementRemoved;
+    Signal<void(MprStatement* statement, MprProgram* program)> sigStatementRemoved;
     std::string name;
-    ArchiveSession* archiveSession;
+    std::function<PositionTagGroup*(const std::string& name)> positionTagGroupFinder;
 
     Impl(MprProgram* self);
     Impl(MprProgram* self, const Impl& org, CloneMap* cloneMap);
     void notifyStatementInsertion(iterator iter);
-    void notifyStatementRemoval(MprProgram* program, MprStatement* statement);
+    void notifyStatementRemoval(MprStatement* statement, MprProgram* program);
     void notifyStatementUpdate(MprStatement* statement) const;
     bool read(const Mapping& archive);    
 };
@@ -56,7 +56,7 @@ MprProgram::MprProgram()
 MprProgram::Impl::Impl(MprProgram* self)
     : self(self)
 {
-    archiveSession = nullptr;
+
 }
     
 
@@ -90,7 +90,6 @@ MprProgram::Impl::Impl(MprProgram* self, const Impl& org, CloneMap* cloneMap)
             positionList = org.positionList->clone();
         }
     }
-    archiveSession = nullptr;
 }
 
 
@@ -161,7 +160,7 @@ MprProgram::iterator MprProgram::remove(iterator pos, bool doNotify)
         statement->holderProgram_.reset();
         auto iter = statements_.erase(pos);
         if(doNotify){
-            impl->notifyStatementRemoval(this, statement);
+            impl->notifyStatementRemoval(statement, this);
         }
         return iter;
     }
@@ -200,13 +199,13 @@ void MprProgram::clearStatements()
 }
 
 
-void MprProgram::Impl::notifyStatementRemoval(MprProgram* program, MprStatement* statement)
+void MprProgram::Impl::notifyStatementRemoval(MprStatement* statement, MprProgram* program)
 {
-    sigStatementRemoved(program, statement);
+    sigStatementRemoved(statement, program);
 
     if(auto hs = holderStatement.lock()){
         if(auto hp = hs->holderProgram()){
-            hp->impl->notifyStatementRemoval(program, statement);
+            hp->impl->notifyStatementRemoval(statement, program);
         }
     }
 }
@@ -230,7 +229,7 @@ SignalProxy<void(MprProgram::iterator iter)> MprProgram::sigStatementInserted()
 }
 
 
-SignalProxy<void(MprProgram* program, MprStatement* statement)>
+SignalProxy<void(MprStatement* statement, MprProgram* program)>
 MprProgram::sigStatementRemoved()
 {
     return impl->sigStatementRemoved;
@@ -281,7 +280,26 @@ void MprProgram::setHolderStatement(MprStructuredStatement* holder)
 }
 
 
-static bool traverseAllStatements
+static void traverseStatements
+(MprProgram* program, const std::function<void(MprStatement* statement)>& callback)
+{
+    for(auto& statement : *program){
+        callback(statement);
+        if(auto structured = dynamic_cast<MprStructuredStatement*>(statement.get())){
+            auto program = structured->lowerLevelProgram();
+            traverseStatements(program, callback);
+        }
+    }
+}
+
+
+void MprProgram::traverseStatements(std::function<void(MprStatement* statement)> callback)
+{
+    ::traverseStatements(this, callback);
+}
+
+
+static bool traverseStatements
 (MprProgram* program, const std::function<bool(MprStatement* statement)>& callback)
 {
     for(auto& statement : *program){
@@ -290,7 +308,7 @@ static bool traverseAllStatements
         }
         if(auto structured = dynamic_cast<MprStructuredStatement*>(statement.get())){
             auto program = structured->lowerLevelProgram();
-            if(!traverseAllStatements(program, callback)){
+            if(!traverseStatements(program, callback)){
                 return false;
             }
         }
@@ -299,9 +317,9 @@ static bool traverseAllStatements
 }
 
 
-bool MprProgram::traverseAllStatements(std::function<bool(MprStatement* statement)> callback)
+bool MprProgram::traverseStatements(std::function<bool(MprStatement* statement)> callback)
 {
-    return ::traverseAllStatements(this, callback);
+    return ::traverseStatements(this, callback);
 }
 
 
@@ -348,12 +366,11 @@ void MprProgram::removeUnreferencedPositions()
     
     std::unordered_set<GeneralId, GeneralId::Hash> referencedIds;
 
-    traverseAllStatements(
+    traverseStatements(
         [&](MprStatement* statement){
             if(auto ps = dynamic_cast<MprPositionStatement*>(statement)){
                 referencedIds.insert(ps->positionId());
             }
-            return true;
         });
 
     positionList_->removeUnreferencedPositions(
@@ -370,8 +387,8 @@ void MprProgram::renumberPositionIds()
 
     int idCounter = 0;
 
-    traverseAllStatements(
-        [&](MprStatement* statement){
+    traverseStatements(
+        [&](MprStatement* statement) {
             if(auto ps = dynamic_cast<MprPositionStatement*>(statement)){
                 auto id = ps->positionId();
                 if(id.isInt()){
@@ -388,7 +405,6 @@ void MprProgram::renumberPositionIds()
                     }
                 }
             }
-            return true;
         });
 
     vector<MprPositionPtr> unreferencedIntIdPositions;
@@ -565,16 +581,3 @@ bool MprProgram::write(Mapping& archive) const
 
     return true;
 }
-
-
-ArchiveSession* MprProgram::archiveSession()
-{
-    return impl->archiveSession;
-}
-
-
-void MprProgram::setArchiveSession(ArchiveSession* session)
-{
-    impl->archiveSession = session;
-}
-

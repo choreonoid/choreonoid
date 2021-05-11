@@ -175,6 +175,21 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
+    /**
+       \note It may be better to define the reference to the actual program instance specified by
+       the program name as
+
+       MprProgramPtr program_;
+
+       in addition to the following program name variable.
+       
+       In that case, the reference is resolved by a custom resolver function registered with
+       MprProgramItemBase::registerReferenceResolver. By this modification, you can easily access
+       to the program instance, and the modification will also simplify the detection of sub
+       programs referenced by the call statements, which is implemented in MprProgramItemBase.
+       Refer to the MprTagTraceStatement implementation for an example of the use of the resolver
+       registration.
+    */
     std::string programName_;
 };
 

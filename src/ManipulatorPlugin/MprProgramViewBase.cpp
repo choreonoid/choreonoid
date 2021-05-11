@@ -855,7 +855,7 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
     
     programConnections.add(
         program->sigStatementRemoved().connect(
-            [&](MprProgram* program, MprStatement* statement){
+            [&](MprStatement* statement, MprProgram* program){
                 onStatementRemoved(program, statement); }));
     
     programConnections.add(
@@ -884,7 +884,7 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
         
         programState.programConnections.add(
             program->sigStatementRemoved().connect(
-                [pExpansionStateMap, programItem](MprProgram*, MprStatement* statement){
+                [pExpansionStateMap, programItem](MprStatement* statement, MprProgram*){
                     if(auto structured = dynamic_cast<MprStructuredStatement*>(statement)){
                         pExpansionStateMap->erase(structured);
                     }
@@ -1706,7 +1706,9 @@ void MprProgramViewBase::Impl::pasteStatements()
     }
     
     for(auto& statement : statementsToPaste){
-        pos = program->insert(pos, statement->clone());
+        auto pasted = statement->clone();
+        pos = program->insert(pos, pasted);
+        currentProgramItem->resolveStatementReferences(pasted);
         ++pos;
     }
 }

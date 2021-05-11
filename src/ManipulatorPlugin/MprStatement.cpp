@@ -103,5 +103,3 @@ void MprStatement::notifyUpdate()
         holder->notifyStatementUpdate(this);
     }
 }
-
-

@@ -294,10 +294,9 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
     
     startupProgramItem.reset();
     for(auto& programItem : programItems){
-        if(!programItem->resolveProgramDataReferences()){
+        if(!programItem->resolveAllReferences()){
             mv->putln(format(_("Program \"{0}\" is incomplete due to unresolved references."),
-                             programItem->displayName(), MessageView::Error));
-            return false;
+                             programItem->displayName()), MessageView::Warning);
         }
         if(programItem->isStartupProgram()){
             startupProgramItem = programItem;

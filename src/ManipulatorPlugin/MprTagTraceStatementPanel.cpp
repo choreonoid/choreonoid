@@ -2,18 +2,18 @@
 #include "MprPositionStatementPanel.h"
 #include "MprTagTraceStatement.h"
 #include "MprProgramItemBase.h"
-#include <cnoid/RootItem>
+#include <cnoid/WorldItem>
 #include <cnoid/PositionTagGroupItem>
 #include <cnoid/ItemList>
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/CoordinateFrameList>
-#include <cnoid/MessageView>
 #include <cnoid/EigenUtil>
 #include <cnoid/Buttons>
 #include <cnoid/ComboBox>
 #include <QLabel>
 #include <QBoxLayout>
 #include <fmt/format.h>
+#include <set>
 #include "gettext.h"
 
 using namespace std;
@@ -40,7 +40,6 @@ public:
     QGridLayout* grid;
     ComboBox tagGroupCombo;
     QLabel tagGroupLabel;
-    vector<weak_ref_ptr<PositionTagGroupItem>> tagGroupCandidates;
     PushButton touchupButton;
     QLabel xyzLabel[3];
     QLabel rpyLabel[3];
@@ -51,9 +50,8 @@ public:
     void createBaseInterfaces(
         const std::function<void(QGridLayout* grid)>& createAdditionalInterfaces);
     void updateBaseInterfaces();
-    void updateTagGroupCandidates();
+    void updateTagGroupCombo();
     void onTagGroupComboActivated(int comboIndex);
-    PositionTagGroupItem* getTagGroupItemOf(PositionTagGroup* tagGroup);
     void touchupPositionAndFrames();
 };
 
@@ -96,8 +94,9 @@ void MprTagTraceStatementPanel::Impl::createBaseInterfaces
     tagGroupLabel.setVisible(false);
     grid->addWidget(&tagGroupLabel, 0, 2);
 
+    tagGroupCombo.setEditable(true);
     tagGroupCombo.sigAboutToShowPopup().connect(
-        [&](){ updateTagGroupCandidates(); });
+        [&](){ updateTagGroupCombo(); });
     tagGroupCombo.sigActivated().connect(
         [&](int index){ onTagGroupComboActivated(index); });
 
@@ -175,7 +174,7 @@ void MprTagTraceStatementPanel::onStatementUpdated()
 
 void MprTagTraceStatementPanel::Impl::updateBaseInterfaces()
 {
-    updateTagGroupCandidates();
+    updateTagGroupCombo();
 
     auto programItem = self->currentProgramItem();
     auto kinematicsKit = programItem->kinematicsKit();
@@ -198,29 +197,31 @@ void MprTagTraceStatementPanel::Impl::updateBaseInterfaces()
 }
 
 
-void MprTagTraceStatementPanel::Impl::updateTagGroupCandidates()
+void MprTagTraceStatementPanel::Impl::updateTagGroupCombo()
 {
     tagGroupCombo.blockSignals(true);
-    tagGroupCandidates.clear();
     tagGroupCombo.clear();
     int currentIndex = 0;
     bool hasCurrent = false;
-    auto currentTagGroup = self->currentStatement<MprTagTraceStatement>()->tagGroup();
-    
-    for(auto& tagGroupItem : RootItem::instance()->descendantItems<PositionTagGroupItem>()){
-        int index = tagGroupCandidates.size();
-        tagGroupCandidates.push_back(tagGroupItem);
-        tagGroupCombo.addItem(tagGroupItem->name().c_str(), index);
-        if(tagGroupItem->tagGroup() == currentTagGroup){
-            currentIndex = index;
-            hasCurrent = true;
+    auto statement = self->currentStatement<MprTagTraceStatement>();
+
+    if(auto worldItem = self->currentProgramItem()->findOwnerItem<WorldItem>()){
+        set<string> names;
+        for(auto& tagGroupItem : worldItem->descendantItems<PositionTagGroupItem>()){
+            auto& name = tagGroupItem->name();
+            if(names.insert(name).second){
+                int index = tagGroupCombo.count();
+                tagGroupCombo.addItem(name.c_str());
+                if(name == statement->tagGroupName()){
+                    currentIndex = index;
+                    tagGroupCombo.setCurrentIndex(currentIndex);
+                    hasCurrent = true;
+                }
+            }
         }
     }
-    if(hasCurrent){
-        tagGroupCombo.setCurrentIndex(currentIndex);
-
-    } else if(!tagGroupCandidates.empty()){
-        tagGroupCombo.insertItem(0, "", -1);
+    if(!hasCurrent){
+        tagGroupCombo.insertItem(0, statement->tagGroupName().c_str());
         tagGroupCombo.setCurrentIndex(0);
     }
 
@@ -234,66 +235,24 @@ void MprTagTraceStatementPanel::Impl::updateTagGroupCandidates()
 
 void MprTagTraceStatementPanel::Impl::onTagGroupComboActivated(int comboIndex)
 {
-    bool isValid = true;
-    bool updated = false;
-    
-    PositionTagGroupItem* tagGroupItem = nullptr;
-    if(comboIndex >= 0){
-        int candidateIndex = tagGroupCombo.itemData(comboIndex).toInt();
-        if(candidateIndex >= 0){
-            tagGroupItem = tagGroupCandidates[candidateIndex].lock();
-        }
-    }
     auto statement = self->currentStatement<MprTagTraceStatement>();
-    if(!tagGroupItem){
-        statement->setTagGroup(nullptr);
-        statement->setTagGroupPosition(Isometry3::Identity());
-        statement->updateTagTraceProgram();
-        updated = true;
-    } else {
-        if(statement->tagGroup() != tagGroupItem->tagGroup()){
-            statement->setTagGroup(tagGroupItem->tagGroup());
-            auto kinematicsKit = self->currentProgramItem()->kinematicsKit();
-            statement->updateTagGroupPositionWithGlobalCoordinate(
-                kinematicsKit, tagGroupItem->originPosition());
-            isValid = statement->updateTagTraceProgram();
-            updated = true;
-        }
+    auto name = tagGroupCombo.currentText().toStdString();
+    if(name != statement->tagGroupName()){
+        statement->setTagGroupName(name);
+        touchupPositionAndFrames();
     }
-    if(!isValid){
-        showWarningDialog(
-            format(_("The program to trace {0} cannot be generated."),
-                   tagGroupItem->displayName()));
-    }
-    if(updated){
-        statement->notifyUpdate();
-    }
-}
-
-
-PositionTagGroupItem* MprTagTraceStatementPanel::Impl::getTagGroupItemOf(PositionTagGroup* tagGroup)
-{
-    //updateTagGroupCandidates();
-    for(auto& candidate : tagGroupCandidates){
-        if(auto item = candidate.lock()){
-            if(item->tagGroup() == tagGroup){
-                return item;
-            }
-        }
-    }
-    return nullptr;
 }
 
 
 void MprTagTraceStatementPanel::Impl::touchupPositionAndFrames()
 {
     auto statement = self->currentStatement<MprTagTraceStatement>();
-    auto kinematicsKit = self->currentProgramItem()->kinematicsKit();
-    statement->updateFramesWithCurrentFrames(kinematicsKit);
-    if(auto tagGroupItem = getTagGroupItemOf(statement->tagGroup())){
-        statement->updateTagGroupPositionWithGlobalCoordinate(
-            kinematicsKit, tagGroupItem->originPosition());
+
+    // Clear the current tag group to force update
+    statement->setTagGroup(nullptr, false, false);
+    
+    if(!self->currentProgramItem()->resolveStatementReferences(statement)){
+        statement->updateTagTraceProgram();
+        statement->notifyUpdate();
     }
-    statement->updateTagTraceProgram();
-    statement->notifyUpdate();
 }

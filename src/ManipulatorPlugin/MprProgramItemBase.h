@@ -41,13 +41,15 @@ public:
     bool touchupPosition(MprPosition* position);
 
     template<class StatementType>
-    static void registerUnreferenceFunction(std::function<bool(StatementType*, MprProgramItemBase*)> unreference){
-        registerUnreferenceFunction_(
+    static void registerReferenceResolver(
+        std::function<bool(StatementType*, MprProgramItemBase*)> resolve){
+        registerReferenceResolver_(
             typeid(StatementType),
-            [unreference](MprStatement* statement, MprProgramItemBase* item){
-                return unreference(static_cast<StatementType*>(statement), item); });
+            [resolve](MprStatement* statement, MprProgramItemBase* item){
+                return resolve(static_cast<StatementType*>(statement), item); });
     }
-    bool resolveProgramDataReferences();
+    bool resolveStatementReferences(MprStatement* statement);
+    bool resolveAllReferences();
 
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
@@ -58,10 +60,12 @@ protected:
     MprProgramItemBase(const MprProgramItemBase& org);
     virtual Item* doDuplicate() const override;
     virtual void onPositionChanged() override;
+    virtual void onConnectedToRoot() override;
 
 private:
-    static void registerUnreferenceFunction_(
-        const std::type_info& type, std::function<bool(MprStatement*, MprProgramItemBase*)> unreference);
+    static void registerReferenceResolver_(
+        const std::type_info& type,
+        const std::function<bool(MprStatement*, MprProgramItemBase*)>& resolve);
     
     class Impl;
     Impl* impl;

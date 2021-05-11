@@ -21,10 +21,14 @@ public:
 
     virtual std::string label(int index) const override;
 
-    void setTagGroup(PositionTagGroup* tags);
-    PositionTagGroup* tagGroup() { return tagGroup_; }
+    void setTagGroupName(const std::string& name) { tagGroupName_ = name; }
 
-    const std::string& originalTagGroupName() const { return originalTagGroupName_; }
+    const std::string& tagGroupName() const { return tagGroupName_; }
+    [[deprecated]]
+    const std::string& originalTagGroupName() const { return tagGroupName(); }
+
+    void setTagGroup(PositionTagGroup* tags, bool doUpdateTagGroupName, bool doUpdateTagTraceProgram);
+    PositionTagGroup* tagGroup() { return tagGroup_; }
 
     //! The position of the tag group on the base coordinate frame
     const Isometry3& tagGroupPosition() const { return T_tags; }
@@ -55,17 +59,17 @@ protected:
     virtual void onTagGroupOriginOffsetChanged();
 
 private:
+    std::string tagGroupName_;
     PositionTagGroupPtr tagGroup_;
     Isometry3 T_tags;
     GeneralId baseFrameId_;
     GeneralId offsetFrameId_;
-    std::string originalTagGroupName_;
     ScopedConnectionSet tagGroupConnections;
 
     void connectTagGroupUpdateSignals();
 };
 
-typedef ref_ptr<MprTagTraceStatement> MprtTagTraceStatementPtr;
+typedef ref_ptr<MprTagTraceStatement> MprTagTraceStatementPtr;
 
 }
 
