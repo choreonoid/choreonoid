@@ -95,7 +95,7 @@ public:
     bool restoreObjectStates(
         Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix);
 
-    ItemList<> loadProject(
+    void loadProject(
         const std::string& filename, Item* parentItem,
         bool isInvokingApplication, bool isBuiltinProject, bool doClearExistingProject);
 
@@ -336,24 +336,22 @@ bool ProjectManager::Impl::restoreObjectStates
 }
 
 
-ItemList<> ProjectManager::loadProject(const std::string& filename, Item* parentItem)
+void ProjectManager::loadProject(const std::string& filename, Item* parentItem)
 {
-    return impl->loadProject(filename, parentItem, false, false, (parentItem == nullptr));
+    impl->loadProject(filename, parentItem, false, false, (parentItem == nullptr));
 }
 
 
-ItemList<> ProjectManager::loadBuiltinProject(const std::string& resourceFile, Item* parentItem)
+void ProjectManager::loadBuiltinProject(const std::string& resourceFile, Item* parentItem)
 {
-    return impl->loadProject(resourceFile, parentItem, true, true, false);
+    impl->loadProject(resourceFile, parentItem, true, true, false);
 }
 
 
-ItemList<> ProjectManager::Impl::loadProject
+void ProjectManager::Impl::loadProject
 (const std::string& filename, Item* parentItem,
  bool isInvokingApplication, bool isBuiltinProject, bool doClearExistingProject)
 {
-    ItemList<> loadedItems;
-    
     ::sigProjectAboutToBeLoaded(projectBeingLoadedCounter);
     
     ++projectBeingLoadedCounter;
@@ -516,7 +514,7 @@ ItemList<> ProjectManager::Impl::loadProject
             if(items->isValid()){
                 items->inheritSharedInfoFrom(*archive);
 
-                loadedItems = itemTreeArchiver.restore(items, parentItem, optionalPlugins);
+                itemTreeArchiver.restore(items, parentItem, optionalPlugins);
                 
                 numArchivedItems = itemTreeArchiver.numArchivedItems();
                 numRestoredItems = itemTreeArchiver.numRestoredItems();
@@ -582,8 +580,6 @@ ItemList<> ProjectManager::Impl::loadProject
         vp->clearBaseDirectory();
         vp->clearProjectDirectory();
     }
-    
-    return loadedItems;
 }
 
 

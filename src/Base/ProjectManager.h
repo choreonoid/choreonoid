@@ -36,9 +36,9 @@ public:
       If this argument is nullptr, the items of the existing project are cleared
       and the project is newly loaded.
     */
-    ItemList<> loadProject(const std::string& filename, Item* parentItem = nullptr);
+    void loadProject(const std::string& filename, Item* parentItem = nullptr);
     
-    ItemList<> loadBuiltinProject(const std::string& resourceFile, Item* parentItem = nullptr);
+    void loadBuiltinProject(const std::string& resourceFile, Item* parentItem = nullptr);
     bool isLoadingProject() const;
     void saveProject(const std::string& filename, Item* item = nullptr);
     void overwriteCurrentProject();

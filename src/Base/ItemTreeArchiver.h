@@ -21,7 +21,7 @@ public:
     ~ItemTreeArchiver();
     void reset();
     ArchivePtr store(Archive* parentArchive, Item* topItem);
-    ItemList<> restore(Archive* archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
+    void restore(Archive* archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
     int numArchivedItems() const;
     int numRestoredItems() const;
 

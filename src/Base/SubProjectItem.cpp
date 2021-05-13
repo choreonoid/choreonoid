@@ -154,7 +154,7 @@ void SubProjectItemImpl::doLoadSubProject(const std::string& filename)
     projectFilesBeingLoaded.insert(filename);
 
     auto pm = projectManager();
-    auto items = pm->loadProject(filename, self);
+    pm->loadProject(filename, self);
 
     projectFilesBeingLoaded.erase(filename);
 
