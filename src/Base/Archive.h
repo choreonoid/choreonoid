@@ -34,6 +34,7 @@ public:
 
     void addProcessOnSubTreeRestored(const std::function<void()>& func) const;
     void addPostProcess(const std::function<void()>& func, int priority = 0) const;
+    void addFinalProcess(const std::function<void()>& func) const;
 
     Archive* findSubArchive(const std::string& name);
     const Archive* findSubArchive(const std::string& name) const;
@@ -71,7 +72,11 @@ public:
     bool readRelocatablePath(const std::string& key, std::string& out_value) const;
     std::string readItemFilePath() const;
     bool loadFileTo(Item* item) const;
-    bool loadFileTo(const std::string& filepath, Item* item) const;
+    bool loadFileTo(Item* item, const std::string& filepath) const;
+    [[deprecated]]
+    bool loadFileTo(const std::string& filepath, Item* item) const {
+        return loadFileTo(item, filepath);
+    }
     [[deprecated]]
     bool loadItemFile(Item* item, const std::string& fileNameKey, const std::string& fileFormatKey = std::string()) const;
     

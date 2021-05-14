@@ -22,7 +22,12 @@ typedef map<int, Item*> IdToItemMap;
 typedef map<View*, int> ViewToIdMap;
 typedef map<int, View*> IdToViewMap;
 
-typedef list<std::function<void()>> PostProcessList;
+struct FunctionInfo {
+    function<void()> func;
+    int priority;
+    FunctionInfo(function<void()> func, int priority)
+        : func(func), priority(priority) { }
+};
 
 }
 
@@ -43,8 +48,8 @@ public:
         
     Item* currentParentItem;
 
-    std::vector<std::function<void()>>* pointerToProcessesOnSubTreeRestored;
-    PostProcessList postProcesses;
+    vector<function<void()>>* pointerToProcessesOnSubTreeRestored;
+    vector<FunctionInfo> postProcesses;
 
     ArchiveSharedData(){
         currentParentItem = nullptr;
@@ -131,23 +136,27 @@ void Archive::setPointerToProcessesOnSubTreeRestored(std::vector<std::function<v
 void Archive::addPostProcess(const std::function<void()>& func, int priority) const
 {
     if(shared){
-        if(priority <= 0){
-            shared->postProcesses.push_back(func);
-        } else {
-            shared->postProcesses.push_back(
-                [this, func, priority](){ addPostProcess(func, priority - 1); });
-        }
+        shared->postProcesses.emplace_back(func, priority);
     }
+}
+
+
+void Archive::addFinalProcess(const std::function<void()>& func) const
+{
+    addPostProcess(func, std::numeric_limits<int>::max());
 }
 
 
 void Archive::callPostProcesses()
 {
     if(shared){
-        PostProcessList::iterator p = shared->postProcesses.begin();
-        while(p != shared->postProcesses.end()){
-            (*p)(); // call a post-process function
-            ++p;
+        auto& processes = shared->postProcesses;
+        std::sort(processes.begin(), processes.end(),
+                  [](const FunctionInfo& info1, const FunctionInfo& info2){
+                      return info1.priority < info2.priority;
+                  });
+        for(auto& process : processes){
+            process.func();
         }
     }
 }
@@ -278,7 +287,7 @@ bool Archive::loadFileTo(Item* item) const
 }
 
 
-bool Archive::loadFileTo(const std::string& filepath, Item* item) const
+bool Archive::loadFileTo(Item* item, const std::string& filepath) const
 {
     string format;
     read("format", format);
