@@ -1047,6 +1047,12 @@ void SceneWidget::Impl::onFPSTestButtonClicked()
 
 void SceneWidget::Impl::doFPSTest()
 {
+    if(!isBuiltinCameraCurrent){
+        showWarningDialog(
+            _("FPS test cannot be executed because the current camera is not a built-in interactive camera."));
+        return;
+    }
+    
     isDoingFPSTest = true;
     isFPSTestCanceled = false;
     
@@ -1079,11 +1085,13 @@ void SceneWidget::Impl::doFPSTest()
     fps = numFrames / time;
     fpsCounter = 0;
 
-    builtinCameraTransform->setTransform(C);
     update();
 
     QMessageBox::information(config, _("FPS Test Result"),
                              QString(_("FPS: %1 frames / %2 [s] = %3")).arg(numFrames).arg(time).arg(fps));
+
+    builtinCameraTransform->setTransform(C);
+    update();
 
     isDoingFPSTest = false;
 }
