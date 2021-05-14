@@ -418,7 +418,7 @@ protected:
 
     /**
        This function is called when the item has been connected to the tree including the root item.
-       The onPositionChanged function and sigSubTreeChanged are processed before calling this function.
+       Note that the onPositionChanged function is called after this function.
     */
     virtual void onConnectedToRoot();
 

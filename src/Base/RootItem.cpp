@@ -67,6 +67,7 @@ public:
     Signal<void(Item* item, bool isMoving)> sigSubTreeRemoving;
     Signal<void(Item* item, bool isMoving)> sigSubTreeRemoved;
     Signal<void(Item* assigned, Item* srcItem)> sigItemAssigned;
+    Signal<void(Item* item, const std::string& oldName)> sigItemNameChanged;
 
     Impl(RootItem* self);
     Impl(RootItem* self, const Impl& org);
@@ -269,6 +270,12 @@ SignalProxy<void(Item* assigned, Item* srcItem)> RootItem::sigItemAssigned()
 }
 
 
+SignalProxy<void(Item* item, const std::string& oldName)> RootItem::sigItemNameChanged()
+{
+    return impl->sigItemNameChanged;
+}
+
+
 void RootItem::notifyEventOnSubTreeAdded(Item* item, std::vector<Item*>& orgSubTreeItems)
 {
     if(TRACE_FUNCTIONS){
@@ -312,6 +319,12 @@ void RootItem::notifyEventOnSubTreeRemoved(Item* item, bool isMoving)
 void RootItem::emitSigItemAssinged(Item* assigned, Item* srcItem)
 {
     impl->sigItemAssigned(assigned, srcItem);
+}
+
+
+void RootItem::emitSigItemNameChanged(Item* item, const std::string& oldName)
+{
+    impl->sigItemNameChanged(item, oldName);
 }
 
 

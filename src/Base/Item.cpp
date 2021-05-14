@@ -103,6 +103,7 @@ public:
     Impl(Item* self, const Impl& org);
     void initialize();
     ~Impl();
+    void notifyNameChange(const std::string& oldName);
     void setSelected(bool on, bool forceToNotify, bool doEmitSigSelectedItemsChangedLater);
     bool setSubTreeItemsSelectedIter(Item* item, bool on);
     int countDescendantItems(const Item* item) const;
@@ -317,7 +318,7 @@ bool Item::setName(const std::string& name)
     if(name != name_){
         string oldName(name_);
         name_ = name;
-        impl->sigNameChanged(oldName);
+        impl->notifyNameChange(oldName);
     }
     return true;
 }
@@ -335,7 +336,7 @@ std::string Item::displayName() const
 void Item::setDisplayNameModifier(std::function<std::string(const Item* item)> modifier)
 {
     impl->displayNameModifier = modifier;
-    impl->sigNameChanged(name_);
+    impl->notifyNameChange(name_);
 }
 
 
@@ -345,9 +346,18 @@ SignalProxy<void(const std::string& oldName)> Item::sigNameChanged()
 }
 
 
+void Item::Impl::notifyNameChange(const std::string& oldName)
+{
+    sigNameChanged(oldName);
+    if(auto root = self->findRootItem()){
+        root->emitSigItemNameChanged(self, oldName);
+    }
+}
+
+
 void Item::notifyNameChange()
 {
-    impl->sigNameChanged(name_);
+    impl->notifyNameChange(name_);
 }
 
 

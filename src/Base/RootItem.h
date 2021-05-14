@@ -34,6 +34,7 @@ public:
     SignalProxy<void(Item* item, bool isMoving)> sigSubTreeRemoving();
     SignalProxy<void(Item* item, bool isMoving)> sigSubTreeRemoved();
     SignalProxy<void(Item* assigned, Item* srcItem)> sigItemAssigned();
+    SignalProxy<void(Item* item, const std::string& oldName)> sigItemNameChanged();
 
     [[deprecated("Use Item::sigSubTreeChanged()")]]
     SignalProxy<void()> sigTreeChanged();
@@ -95,6 +96,7 @@ private:
     void notifyEventOnSubTreeRemoving(Item* item, bool isMoving);
     void notifyEventOnSubTreeRemoved(Item* item, bool isMoving);
     void emitSigItemAssinged(Item* assigned, Item* srcItem);
+    void emitSigItemNameChanged(Item* item, const std::string& oldName);
     void emitSigSelectionChanged(Item* item, bool on, bool isCurrent);
     void requestToEmitSigSelectedItemsChanged();
     void emitSigCheckToggled(Item* item, int checkId, bool on);
