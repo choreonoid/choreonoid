@@ -123,6 +123,7 @@ public:
     BodyItem* self;
     BodyPtr body;
 
+    bool isBeingRestored; // flag to check if this item and its sub tree is being restored
     bool isSharingShapes;
     bool isLocationEditable;
     bool isKinematicStateChangeNotifiedByParentBodyItem;
@@ -259,6 +260,7 @@ BodyItem::Impl::Impl(BodyItem* self)
 BodyItem::Impl::Impl(BodyItem* self, Body* body, bool isSharingShapes)
     : self(self),
       body(body),
+      isBeingRestored(false),
       isSharingShapes(isSharingShapes),
       sigKinematicStateChanged([this](){ emitSigKinematicStateChanged(); })
 {
@@ -417,7 +419,7 @@ void BodyItem::onPositionChanged()
       In that case, the attachment update is processed by the callback function
       given to the Archive::addProcessOnSubTreeRestored in the restore function.
     */
-    if(!ProjectManager::instance()->isLoadingProject()){
+    if(!impl->isBeingRestored){
         impl->updateAttachment(true, true);
     }
 }
@@ -1740,13 +1742,16 @@ bool BodyItem::restore(const Archive& archive)
 
 bool BodyItem::Impl::restore(const Archive& archive)
 {
+    isBeingRestored = true;
+    
     string filepath = archive.readItemFilePath();
     if(filepath.empty()){
         // for the backward compatibiliy
         archive.readRelocatablePath("modelFile", filepath);
     }
     if(!filepath.empty()){
-        if(!archive.loadFileTo(filepath, self)){
+        if(!archive.loadFileTo(self, filepath)){
+            isBeingRestored = false;
             return false;
         }
     }
@@ -1874,7 +1879,11 @@ bool BodyItem::Impl::restore(const Archive& archive)
     read(archive, "zmp", zmp);
 
     // The attachment is updated after the sub tree is restored
-    archive.addProcessOnSubTreeRestored([&](){ updateAttachment(true, true); });
+    archive.addProcessOnSubTreeRestored(
+        [&](){
+            isBeingRestored = false;
+            updateAttachment(true, true);
+        });
         
     return true;
 }
