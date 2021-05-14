@@ -211,7 +211,7 @@ bool PythonScriptItemImpl::onBackgroundModeChanged(bool on)
 
 bool PythonScriptItemImpl::store(Archive& archive)
 {
-    archive.write("backgroundExecution", executor.isBackgroundMode());
+    archive.write("background_execution", executor.isBackgroundMode());
     return true;
 }
 
@@ -219,7 +219,7 @@ bool PythonScriptItemImpl::store(Archive& archive)
 bool PythonScriptItemImpl::restore(const Archive& archive)
 {
     bool isBackgroundMode;
-    if(archive.read("backgroundExecution", isBackgroundMode)){
+    if(archive.read({ "background_execution", "backgroundExecution" }, isBackgroundMode)){
         executor.setBackgroundMode(isBackgroundMode);
     }
     return true;

@@ -178,8 +178,8 @@ bool PythonPlugin::Impl::initialize()
     PythonConsoleView::initializeClass(self);
     
     OptionManager& opm = self->optionManager();
-    opm.addOption("python,p", boost::program_options::value< vector<string> >(), _("execute a python script file"));
-    opm.addOption("python-item", boost::program_options::value< vector<string> >(), _("load a python script as an item"));
+    opm.addOption("python,p", boost::program_options::value< vector<string> >(), "execute a python script");
+    opm.addOption("python-item", boost::program_options::value< vector<string> >(), "load a python script as an item");
     opm.sigInputFileOptionsParsed(1).connect(
         [&](std::vector<std::string>& inputFiles){ onInputFileOptionsParsed(inputFiles); });
     opm.sigOptionsParsed(1).connect(

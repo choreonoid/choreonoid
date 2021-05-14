@@ -19,7 +19,7 @@ void PythonScriptItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerClass<PythonScriptItem, ScriptItem>(N_("PythonScriptItem"));
     ext->itemManager().addLoader<PythonScriptItem>(
-        _("Python Script"), "PYTHON-SCRIPT-FILE", "py",
+        _("Python Script"), "PYTHON-SCRIPT", "py",
         [](PythonScriptItem* item, const std::string& filename, std::ostream&, Item*){
             return item->setScriptFilename(filename); });
 }
@@ -28,7 +28,7 @@ void PythonScriptItem::initializeClass(ExtensionManager* ext)
 PythonScriptItem::PythonScriptItem()
 {
     impl = new PythonScriptItemImpl(this);
-    doExecutionOnLoading = false;
+    doExecuteOnProjectLoading = false;
 }
 
 
@@ -36,7 +36,7 @@ PythonScriptItem::PythonScriptItem(const PythonScriptItem& org)
     : ScriptItem(org)
 {
     impl = new PythonScriptItemImpl(this, *org.impl);
-    doExecutionOnLoading = org.doExecutionOnLoading;
+    doExecuteOnProjectLoading = org.doExecuteOnProjectLoading;
 }
 
 
@@ -54,11 +54,7 @@ void PythonScriptItem::onDisconnectedFromRoot()
 
 bool PythonScriptItem::setScriptFilename(const std::string& filename)
 {
-    bool result = impl->setScriptFilename(filename);
-    if(result && doExecutionOnLoading){
-        callLater(std::bind(&PythonScriptItem::execute, this), LazyCaller::PRIORITY_LOW);
-    }
-    return result;
+    return impl->setScriptFilename(filename);
 }
 
 
@@ -131,35 +127,28 @@ Item* PythonScriptItem::doDuplicate() const
 void PythonScriptItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Script"), fileName());
+    putProperty(_("Execution on project loading"),
+                doExecuteOnProjectLoading, changeProperty(doExecuteOnProjectLoading));
     impl->doPutProperties(putProperty);
-    putProperty(_("Execution on loading"), doExecutionOnLoading, changeProperty(doExecutionOnLoading));
 }
 
 
 bool PythonScriptItem::store(Archive& archive)
 {
-    if(!filePath().empty()){
-        archive.writeRelocatablePath("file", filePath());
-    }
-    archive.write("executionOnLoading", doExecutionOnLoading);
-    return impl->store(archive);
+    archive.writeFileInformation(this);
+    archive.write("exeute_on_project_loading", doExecuteOnProjectLoading);
+    return impl->store(archive);    
 }
 
 
 bool PythonScriptItem::restore(const Archive& archive)
 {
-    archive.read("executionOnLoading", doExecutionOnLoading);
-    impl->restore(archive);
-    string filename;
-    if(archive.readRelocatablePath("file", filename)){
-        bool doExecution = doExecutionOnLoading;
-        doExecutionOnLoading = false; // disable execution in the load function
-        bool loaded = load(filename);
-        doExecutionOnLoading = doExecution;
-        if(loaded && doExecution){
-            archive.addPostProcess(std::bind(&PythonScriptItem::execute, this));
+    if(impl->restore(archive) && archive.loadFileTo(this)){
+        archive.read({ "exeute_on_project_loading", "executionOnLoading" }, doExecuteOnProjectLoading);
+        if(doExecuteOnProjectLoading){
+            archive.addFinalProcess([this](){ execute(); });
         }
-        return loaded;
+        return true;
     }
-    return true;
+    return false;
 }

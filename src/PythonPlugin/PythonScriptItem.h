@@ -46,7 +46,7 @@ protected:
             
 private:
     PythonScriptItemImpl* impl;
-    bool doExecutionOnLoading;
+    bool doExecuteOnProjectLoading;
 };
 
 typedef ref_ptr<PythonScriptItem> PythonScriptItemPtr;
