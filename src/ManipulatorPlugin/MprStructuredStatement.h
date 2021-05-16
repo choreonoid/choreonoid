@@ -14,7 +14,7 @@ public:
     const MprProgram* lowerLevelProgram() const { return program_; }
 
     enum Attribute {
-        ArchiveLowerLevelProgram = 1
+        ArbitraryLowerLevelProgram = 1
     };
     void setStructuredStatementAttribute(int attr) { attributes_ |= attr; }
     bool hasStructuredStatementAttribute(int attr) const { return attributes_ & attr; }

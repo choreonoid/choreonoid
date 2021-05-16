@@ -127,7 +127,7 @@ bool MprCommentStatement::write(Mapping& archive) const
 
 MprGroupStatement::MprGroupStatement()
 {
-    setStructuredStatementAttribute(ArchiveLowerLevelProgram);
+    setStructuredStatementAttribute(ArbitraryLowerLevelProgram);
 }
 
 
@@ -179,7 +179,7 @@ bool MprGroupStatement::write(Mapping& archive) const
 
 MprConditionStatement::MprConditionStatement()
 {
-    setStructuredStatementAttribute(ArchiveLowerLevelProgram);
+    setStructuredStatementAttribute(ArbitraryLowerLevelProgram);
 }
 
 
@@ -255,7 +255,7 @@ bool MprIfStatement::write(Mapping& archive) const
 
 MprElseStatement::MprElseStatement()
 {
-    setStructuredStatementAttribute(ArchiveLowerLevelProgram);
+    setStructuredStatementAttribute(ArbitraryLowerLevelProgram);
 }
 
 

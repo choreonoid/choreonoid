@@ -22,9 +22,12 @@ MprStructuredStatement::MprStructuredStatement(const MprStructuredStatement& org
     if(cloneMap){
         program_ = cloneMap->getClone(org.program_);
     } else {
-        program_ = org.program_->clone();
+        if(hasStructuredStatementAttribute(ArbitraryLowerLevelProgram)){
+            program_ = org.program_->clone();
+        } else {
+            program_ = new MprProgram;
+        }
     }
-
     program_->setHolderStatement(this);
 }
 
@@ -49,7 +52,7 @@ bool MprStructuredStatement::isExpandedByDefault() const
 
 bool MprStructuredStatement::read(MprProgram* program, const Mapping& archive)
 {
-    if(hasStructuredStatementAttribute(ArchiveLowerLevelProgram)){
+    if(hasStructuredStatementAttribute(ArbitraryLowerLevelProgram)){
         return program_->read(archive);
     }
     return true;
@@ -58,7 +61,7 @@ bool MprStructuredStatement::read(MprProgram* program, const Mapping& archive)
 
 bool MprStructuredStatement::write(Mapping& archive) const
 {
-    if(hasStructuredStatementAttribute(ArchiveLowerLevelProgram)){
+    if(hasStructuredStatementAttribute(ArbitraryLowerLevelProgram)){
         return program_->write(archive);
     }
     return true;

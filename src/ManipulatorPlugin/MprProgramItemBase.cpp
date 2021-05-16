@@ -95,7 +95,7 @@ void MprProgramItemBase::Impl::setupSignalConnections()
             auto holder = (*iter)->holderProgram()->holderStatement();
             if(!holder ||
                holder->hasStructuredStatementAttribute(
-                   MprStructuredStatement::ArchiveLowerLevelProgram)){
+                   MprStructuredStatement::ArbitraryLowerLevelProgram)){
                 self->suggestFileUpdate();
             }
         });
