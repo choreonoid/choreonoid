@@ -2,18 +2,14 @@ find_package(Doxygen)
 
 set(target_dirs
   Util
-  Base
-  Body
   AISTCollisionDetector
+  Body
+  Base
   BodyPlugin
-  PoseSeqPlugin
-  Python
+  ManipulatorPlugin
+  MediaPlugin
   PythonPlugin
   PythonSimScriptPlugin
-  Corba
-  CorbaPlugin
-  OpenRTM
-  OpenRTMPlugin 
   )
   
 unset(input_files)
@@ -21,7 +17,7 @@ set(DOXYGEN_INPUT_DIRECTORIES "")
 foreach(directory ${target_dirs})
   set(abs_directory ${PROJECT_SOURCE_DIR}/src/${directory})
   set(DOXYGEN_INPUT_DIRECTORIES "${DOXYGEN_INPUT_DIRECTORIES} ${abs_directory}")
-  file(GLOB_RECURSE files ${abs_directory}/*.h ${abs_directory}/*.cpp ${abs_directory}/*.c)
+  file(GLOB files ${abs_directory}/*.h ${abs_directory}/*.cpp ${abs_directory}/*.c)
   list(APPEND input_files ${files})
 endforeach()
 

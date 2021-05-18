@@ -5,8 +5,8 @@ if(MSVC)
   # * The install command can specifiy a target defined in a sub directory since version 3.13
   cmake_minimum_required(VERSION 3.13.0)
 else()
-  # Cmake version installed in Ubuntu 16.04
-  # (Version 3.10.2 is installed in Ubuntu 18.04)
+  # CMake version 3.5.1 is installed in Ubuntu 16.04.
+  # (Version 3.10.2 is installed in Ubuntu 18.04.)
   cmake_minimum_required(VERSION 3.5.0)
 endif()
 
