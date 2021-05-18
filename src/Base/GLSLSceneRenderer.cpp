@@ -927,10 +927,6 @@ void GLSLSceneRenderer::Impl::checkGPU()
         }
         */
     }
-    // Check if the GPU is an old Radeon GPU
-    else if(regex_match(glRendererString, regex("AMD Radeon.*"))){
-        isShadowCastingEnabled = false;
-    }
     // CHeck if the VMWare's virtual driver is used
     else if(regex_match(glVendorString, regex("VMware, Inc\\..*"))){
         isShadowCastingEnabled = false;
