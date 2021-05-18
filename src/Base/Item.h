@@ -333,7 +333,7 @@ public:
         const Mapping* options = nullptr);
 
     /**
-       @param parentItem specify this when the item is newly created one and will be attached to a parent item
+       @param parent specify this when the item is newly created one and will be attached to a parent item
        if loading succeeds.
     */
     bool load(

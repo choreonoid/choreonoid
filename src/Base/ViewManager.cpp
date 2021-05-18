@@ -221,6 +221,8 @@ public:
 }
 
 
+namespace {
+
 ViewInfo::ViewInfo
 (ViewManager::Impl* managerImpl,
  const type_info& view_type_info, const string& className, const string& defaultInstanceName,
@@ -237,8 +239,6 @@ ViewInfo::ViewInfo
     translatedDefaultInstanceName = dgettext(textDomain.c_str(), defaultInstanceName.c_str());
 }
 
-
-namespace {
 
 InstanceInfo::~InstanceInfo()
 {
@@ -432,6 +432,7 @@ void onViewMenuAboutToShow(Menu* menu)
         }
     }
 }
+
 }
 
 

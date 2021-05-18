@@ -169,6 +169,8 @@ void BodyContactPointLoggerItem::Impl::clearScene()
 }
 
 
+namespace {
+
 BodyContactPointLogItem::BodyContactPointLogItem()
 {
 
@@ -247,4 +249,6 @@ bool BodyContactPointLogEngine::onTimeChanged(double time)
     }
     
     return isValid;
+}
+
 }

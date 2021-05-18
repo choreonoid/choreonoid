@@ -156,6 +156,8 @@ public:
 }
 
 
+namespace {
+
 TextSink::TextSink(MessageView::Impl* viewImpl, bool doFlush)
     : viewImpl(viewImpl),
       doFlush(doFlush)
@@ -208,6 +210,8 @@ bool TextEditEx::isLatestMessageVisible()
 {
     int scrollPos = getScrollPos();
     return (scrollPos > maxScrollPos() - 3 * scrollSingleStep());
+}
+
 }
     
 

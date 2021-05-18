@@ -374,6 +374,8 @@ bool SensorVisualizerItem::restore(const Archive& archive)
 }
 
 
+namespace {
+
 SensorVisualizerItemBase::SensorVisualizerItemBase(Item* item)
     : item(item),
       bodyItem(nullptr)
@@ -750,4 +752,6 @@ void RangeSensorVisualizerItem::updateRangeSensorState()
         }
     }
     pointSet_->notifyUpdate(update.withAction(SgUpdate::Modified));
+}
+
 }

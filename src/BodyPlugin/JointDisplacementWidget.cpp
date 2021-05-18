@@ -352,6 +352,8 @@ void JointDisplacementWidget::Impl::initializeIndicators(int num)
 }
 
 
+namespace {
+
 JointIndicator::JointIndicator(JointDisplacementWidget::Impl* baseImpl, int index)
     : baseImpl(baseImpl),
       baseWidget(baseImpl->self),
@@ -695,6 +697,8 @@ void JointIndicator::removeWidgesFrom(QGridLayout& grid)
     grid.removeWidget(&upperLimitLabel);
     grid.removeWidget(&dial);
     grid.removeWidget(&phaseSpin);
+}
+
 }
 
 

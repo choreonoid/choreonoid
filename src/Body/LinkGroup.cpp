@@ -28,10 +28,6 @@ LinkGroup::~LinkGroup()
 }
 
 
-/**
-   @param linkGroupSeq YAML node defining a ling group set.
-   If linkGroupSeq.isValid() is false, a whole body group that contains all the links is created.
-*/
 LinkGroupPtr LinkGroup::create(const Body& body)
 {
     const Listing& linkGroupList = *body.info()->findListing("linkGroup");

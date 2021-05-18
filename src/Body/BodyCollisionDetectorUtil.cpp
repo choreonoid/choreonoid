@@ -28,7 +28,7 @@ void setStaticFlags(Link* link, vector<bool>& staticFlags)
 
 /**
    @return top of the geometry indices assigned to the body.
-   The geometry id corresponding to a link is <the top index> + <link->index()>.
+   The geometry id corresponding to a link is [the top index] + [link->index()].
 */
 int cnoid::addBodyToCollisionDetector(Body& body, CollisionDetector& detector, bool enableSelfCollisions)
 {

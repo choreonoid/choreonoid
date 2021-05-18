@@ -441,6 +441,8 @@ void SceneRenderer::Impl::extractPreproNodeIter(PreproNode* node, const Affine3&
 }
 
 
+namespace {
+
 PreproTreeExtractor::PreproTreeExtractor()
 {
     functions.setFunction<SgGroup>(
@@ -531,6 +533,8 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
         delete self;
         node = nullptr;
     }
+}
+
 }
 
 

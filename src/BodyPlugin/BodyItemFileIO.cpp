@@ -216,6 +216,8 @@ bool BodyItemBodyFileIO::save(BodyItem* item, const std::string& filename)
 }
 
 
+namespace {
+
 SceneFileImporter::SceneFileImporter()
 {
     setCaption(_("Body"));
@@ -410,4 +412,6 @@ void ObjFileExporter::createOptionPanelForSaving()
     addShapeTypeCombo(hbox);
     hbox->addStretch();
     optionVBox->addLayout(hbox);
+}
+
 }

@@ -307,7 +307,9 @@ bool KinematicsBarImpl::restoreState(const Archive& archive)
     
     return true;
 }
-    
+
+
+namespace {
 
 KinematicsBarSetupDialog::KinematicsBarSetupDialog()
 {
@@ -376,4 +378,6 @@ void KinematicsBarSetupDialog::restoreState(const Archive& archive)
     snapDistanceSpin.setValue(archive.get("snapDistance", snapDistanceSpin.value()));
     penetrationBlockDepthSpin.setValue(archive.get("penetrationBlockDepth", penetrationBlockDepthSpin.value()));
     lazyCollisionDetectionModeCheck.setChecked(archive.get("lazyCollisionDetectionMode", lazyCollisionDetectionModeCheck.isChecked()));
+}
+
 }

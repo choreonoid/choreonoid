@@ -594,6 +594,8 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
 }
 
 
+namespace {
+
 SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* device, SimulationBody* simBody, int bodyIndex)
     : simImpl(simImpl),
       device(device),
@@ -1060,6 +1062,8 @@ void SensorScreenRenderer::doneGLContextCurrent()
     glContext->doneCurrent();
 }
 
+}
+
 
 void GLVisionSimulatorItemImpl::onPreDynamics()
 {
@@ -1150,6 +1154,8 @@ exitRenderingQueueLoop:
     }
 }
 
+
+namespace {
 
 void SensorRenderer::updateSensorScene(bool updateSensorForRenderingThread)
 {
@@ -1286,6 +1292,8 @@ void SensorScreenRenderer::storeResultToTmpDataBuffer()
     }
 }
 
+}
+
 
 void GLVisionSimulatorItemImpl::onPostDynamics()
 {
@@ -1332,6 +1340,8 @@ void GLVisionSimulatorItemImpl::getVisionDataInThreadsForSensors()
 }
 
 
+namespace {
+
 bool SensorRenderer::waitForRenderingToFinish()
 {
     for(auto& scene : scenes){
@@ -1355,6 +1365,8 @@ bool SensorRenderer::waitForRenderingToFinish()
     }
 
     return true;
+}
+
 }
         
 
@@ -1381,6 +1393,8 @@ void GLVisionSimulatorItemImpl::getVisionDataInQueueThread()
     }
 }
 
+
+namespace {
 
 bool SensorRenderer::waitForRenderingToFinish(std::unique_lock<std::mutex>& lock)
 {
@@ -1696,6 +1710,8 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
     return true;
 }
 
+}
+
 
 void GLVisionSimulatorItem::finalizeSimulation()
 {
@@ -1720,6 +1736,8 @@ void GLVisionSimulatorItemImpl::finalizeSimulation()
     sensorRenderers.clear();
 }
 
+
+namespace {
 
 SensorRenderer::~SensorRenderer()
 {
@@ -1755,6 +1773,8 @@ SensorScreenRenderer::~SensorScreenRenderer()
     if(renderer){
         delete renderer;
     }
+}
+
 }
     
 

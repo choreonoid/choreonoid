@@ -436,6 +436,8 @@ void LocationView::Impl::setEditorLocked(bool on)
 }
 
 
+namespace {
+
 bool LockCheckBox::isChangable()
 {
     auto& locations = impl->locations;
@@ -472,6 +474,8 @@ void LockCheckBox::nextCheckState()
         }
         impl->setupInterfaceForNewLocations();
     }
+}
+
 }
 
 

@@ -1070,6 +1070,8 @@ void GLSLSceneRenderer::requestToClearResources()
 }
 
 
+namespace {
+
 ScopedShaderProgramActivator::ScopedShaderProgramActivator
 (ShaderProgram* program, GLSLSceneRenderer::Impl* renderer)
     : renderer(renderer)
@@ -1123,6 +1125,8 @@ ScopedShaderProgramActivator::~ScopedShaderProgramActivator()
         renderer->currentLightingProgram = prevLightingProgram;
         renderer->currentMaterialLightingProgram = prevMaterialLightingProgram;
     }
+}
+
 }
 
 
@@ -3147,6 +3151,8 @@ void GLSLSceneRenderer::Impl::renderLightweightRenderingGroup(SgLightweightRende
 }
 
 
+namespace {
+
 ResourceRefreshGroupResource::ResourceRefreshGroupResource(GLSLSceneRenderer::Impl* impl, SgGroup* group)
     : impl(impl)
 {
@@ -3174,6 +3180,8 @@ void ResourceRefreshGroupResource::clearSubTreeResources(GLResourceMap* resource
             clearSubTreeResources(resourceMap, child);
         }
     }
+}
+
 }
 
 

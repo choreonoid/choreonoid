@@ -175,12 +175,10 @@ void MenuManager::addItem(QWidget* menu, QAction* item)
     
 
 /**
-   @if jp
-
    This function specifies a menu to be subjected to item operation.
    The function must be called before adding a menu item.
    
-   @param menuPath The path to the target menu
+   @param path The path to the target menu
    If the path begins with '/', it will be the path from the root.
    Otherwise, it will be a relative path from the currently specifed menu.
    A menu is newly created if the menu specified in the path does not exist.

@@ -167,6 +167,8 @@ public:
 }
 
 
+namespace {
+
 MeshLoader::MeshLoader(size_t numTriangles)
     : sharedMesh(new SgMesh),
       numTriangles(numTriangles)
@@ -436,6 +438,8 @@ SgMeshPtr MeshLoader::completeMesh(bool doShrink)
     return sharedMesh;
 }
 
+}
+
 
 STLSceneLoader::STLSceneLoader()
 {
@@ -570,6 +574,8 @@ SgMeshPtr STLSceneLoader::Impl::loadBinaryFormatConcurrently
 }
 
 
+namespace {
+
 void BinaryMeshLoader::initializeArrays(size_t triangleOffset, size_t numTriangles)
 {
     this->triangleOffset = triangleOffset;
@@ -642,6 +648,8 @@ void BinaryMeshLoader::loadConcurrently(const string& filename, size_t triangleO
             ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
             load(ifs, triangleOffset, numTriangles);
         });
+}
+
 }
 
 
@@ -719,6 +727,8 @@ SgMeshPtr STLSceneLoader::Impl::loadAsciiFormatConcurrently
     return mesh;
 }
 
+
+namespace {
 
 AsciiMeshLoader::AsciiMeshLoader(const string& filename, bool doOpen)
     : MeshLoader(0),
@@ -862,6 +872,8 @@ void AsciiMeshLoader::initializeIntegration(MeshLoader* prevLoader)
     if(prevLoader){
         triangleOffset = prevLoader->triangleOffset + prevLoader->numTriangles;
     }
+}
+
 }
 
 

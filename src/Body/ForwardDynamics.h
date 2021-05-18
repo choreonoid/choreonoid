@@ -43,12 +43,10 @@ protected:
 
     /**
        @brief update position/orientation using spatial velocity
-       @param out_p p(t+dt)
-       @param out_R R(t+dt)
-       @param p0 p(t)
-       @param R0 R(t)
+       @param out_T T(t+dt)
+       @param T0 T(t)
        @param w angular velocity
-       @param v0 spatial velocity
+       @param vo spatial velocity
        @param dt time step[s]
     */
     static void SE3exp(Isometry3& out_T, const Isometry3& T0, const Vector3& w, const Vector3& vo, double dt);

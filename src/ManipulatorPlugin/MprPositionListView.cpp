@@ -117,6 +117,8 @@ public:
 }
 
 
+namespace {
+
 PositionListModel::PositionListModel(MprPositionListView::Impl* view)
     : QAbstractTableModel(view),
       view(view),
@@ -507,6 +509,8 @@ QSize CheckItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QMod
     QSize size = checkBoxRect.size();
     size.setWidth(size.width() * 2);
     return size;
+}
+
 }
 
 

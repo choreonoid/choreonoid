@@ -56,8 +56,6 @@ public:
     void checkNewTagGroupItem(ProgramInfo* programInfo, Item* item);
 };
 
-}
-
 
 void StatementInfo::invalidateTagGroup()
 {
@@ -65,17 +63,6 @@ void StatementInfo::invalidateTagGroup()
     statement->setTagGroup(nullptr, false, true);
     statement->notifyUpdate();
     tagGroupConnections.disconnect();
-}
-
-
-void cnoid::registerTagTraceStatementTagGroupResolver()
-{
-    static Resolver resolver;
-
-    MprProgramItemBase::registerReferenceResolver<MprTagTraceStatement>(
-        [&](MprTagTraceStatement* statement, MprProgramItemBase* programItem){
-            return resolver.resolvePositionTagGroup(statement, programItem);
-        });
 }
 
 
@@ -220,4 +207,17 @@ void Resolver::checkNewTagGroupItem(ProgramInfo* programInfo, Item* item)
             programInfo->itemTreeConnections.disconnect();
         }
     }
+}
+
+}
+
+
+void cnoid::registerTagTraceStatementTagGroupResolver()
+{
+    static Resolver resolver;
+
+    MprProgramItemBase::registerReferenceResolver<MprTagTraceStatement>(
+        [&](MprTagTraceStatement* statement, MprProgramItemBase* programItem){
+            return resolver.resolvePositionTagGroup(statement, programItem);
+        });
 }

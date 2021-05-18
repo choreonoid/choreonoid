@@ -230,6 +230,8 @@ void cnoid::initializeSplineFilterDialog(ExtensionManager* ext)
     }
 }
 
+
+namespace {
             
 SplineFilterDialog::SplineFilterDialog()
     : os(MessageView::instance()->cout())
@@ -361,4 +363,6 @@ void SplineFilterDialog::onAccepted()
             applySplineFilter(*zmpSeq, ifps, ofps, ratio);
         }
     }
+}
+
 }

@@ -20,7 +20,15 @@ class PanelArea : public QWidget
 public:
     vector<function<QSize()>> minimumPanelSizeHintFunctions;
 
-    virtual QSize minimumSizeHint() const override;
+    virtual QSize minimumSizeHint() const override
+    {
+        auto size = QWidget::minimumSizeHint();
+        for(auto& sizeHintFunc : minimumPanelSizeHintFunctions){
+            auto panelSize = sizeHintFunc();
+            size = size.expandedTo(panelSize);
+        }
+        return size;
+    }
 };
 
 }
@@ -506,15 +514,3 @@ void ItemTreePanelDialog::hideEvent(QHideEvent* event)
     impl->lastDialogPosition = geometry();
     Dialog::hideEvent(event);
 }
-
-
-QSize PanelArea::minimumSizeHint() const
-{
-    auto size = QWidget::minimumSizeHint();
-    for(auto& sizeHintFunc : minimumPanelSizeHintFunctions){
-        auto panelSize = sizeHintFunc();
-        size = size.expandedTo(panelSize);
-    }
-    return size;
-}
-  

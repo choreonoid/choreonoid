@@ -654,6 +654,8 @@ bool MultiPointSetItem::restore(const Archive& archive)
 }
 
 
+namespace {
+
 SceneMultiPointSet::SceneMultiPointSet(MultiPointSetItem::Impl* multiPointSetItem)
     : weakMultiPointSetItem(multiPointSetItem->self)
 {
@@ -813,6 +815,8 @@ void SceneMultiPointSet::onRegionFixed(const PolyhedralRegion& region)
             item->activePointSetItem(i)->removePoints(region);
         }
     }
+}
+
 }
 
 

@@ -75,8 +75,8 @@ void EasyScanner::init()
 
 /*!
   Copy Constructor. New object inherits another's propety and symbols.
-  @param scanner original object
-  @param copy_text If true, new object has same text as original
+  @param org original object
+  @param copyText If true, new object has same text as original
 */
 EasyScanner::EasyScanner(const EasyScanner& org, bool copyText) :
     whiteSpaceChars(org.whiteSpaceChars)

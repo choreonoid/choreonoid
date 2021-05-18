@@ -410,6 +410,8 @@ LocationProxyPtr DeviceOverwriteItem::getLocationProxy()
 }
 
 
+namespace {
+
 DeviceLocation::DeviceLocation(DeviceOverwriteItem::Impl* impl)
     : LocationProxy(OffsetLocation),
       impl(impl)
@@ -466,6 +468,8 @@ SignalProxy<void()> DeviceLocation::sigLocationChanged()
     }
     static Signal<void()> dummySignal;
     return dummySignal;
+}
+
 }
 
 

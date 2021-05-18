@@ -124,6 +124,8 @@ bool ScenePointSelectionMode::PointInfo::hasSameVertexWith(const PointInfo& poin
 }
 
 
+namespace {
+
 FixedPixelSizeNormal::FixedPixelSizeNormal(SgLineSetPtr& sharedLine, SgMaterial* material)
     : sharedLine(sharedLine)
 {
@@ -253,6 +255,8 @@ void ScenePointPlot::addPoint(PointInfo* info, bool doNotify)
             }
         }
     }
+}
+
 }
 
 

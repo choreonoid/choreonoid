@@ -728,6 +728,8 @@ void CoordinateFrameListItem::Impl::updateParentFrameForFrameMarkers(const Isome
 }
 
 
+namespace {
+
 FrameMarker::FrameMarker(CoordinateFrameListItem::Impl* impl, CoordinateFrame* frame)
     : CoordinateFrameMarker(frame),
       impl(impl)
@@ -786,6 +788,8 @@ void FrameMarker::onFrameUpdated(int flags)
     }
 
     CoordinateFrameMarker::onFrameUpdated(flags);
+}
+
 }
 
 

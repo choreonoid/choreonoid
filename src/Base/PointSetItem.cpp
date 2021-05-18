@@ -635,6 +635,8 @@ bool PointSetItem::restore(const Archive& archive)
 }
 
 
+namespace {
+
 ScenePointSet::ScenePointSet(PointSetItemImpl* pointSetItemImpl)
     : weakPointSetItem(pointSetItemImpl->self),
       orgPointSet(pointSetItemImpl->pointSet),
@@ -957,4 +959,6 @@ void ScenePointSet::onRegionFixed(const PolyhedralRegion& region)
     if(item){
         item->removePoints(region);
     }
+}
+
 }

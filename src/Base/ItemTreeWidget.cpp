@@ -230,6 +230,8 @@ void ItemTreeWidget::Display::setNameEditable(bool on)
 }
 
 
+namespace {
+
 ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
     : item(item),
       widgetImpl(widgetImpl)
@@ -318,6 +320,8 @@ void ItwItem::setData(int column, int role, const QVariant& value)
             itemCheckConnection.unblock();
         }
     }
+}
+
 }
 
 

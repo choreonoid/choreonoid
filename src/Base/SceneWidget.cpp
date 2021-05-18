@@ -3290,6 +3290,8 @@ void SceneWidget::Impl::activateSystemNode(SgNode* node, bool on)
 }
 
 
+namespace {
+
 ConfigDialog::ConfigDialog(SceneWidget::Impl* impl)
     : sceneWidgetImpl(impl),
       lightingMode(3, CNOID_GETTEXT_DOMAIN_NAME),
@@ -3795,4 +3797,6 @@ void ConfigDialog::restoreState(const Archive& archive)
     fpsTestIterationSpin.setValue(archive.get("fpsTestIteration", fpsTestIterationSpin.value()));
     //fpsCheck.setChecked(archive.get("showFPS", fpsCheck.isChecked()));
     upsideDownCheck.setChecked(archive.get("upsideDown", upsideDownCheck.isChecked()));
+}
+
 }

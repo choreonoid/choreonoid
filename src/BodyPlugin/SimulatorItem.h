@@ -216,7 +216,6 @@ public:
     
     /**
        @param attachmentPoint link local position
-       @param goal global goal position
     */
     virtual void setVirtualElasticString(
         BodyItem* bodyItem, Link* link, const Vector3& attachmentPoint, const Vector3& endPoint);

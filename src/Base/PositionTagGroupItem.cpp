@@ -894,6 +894,8 @@ bool PositionTagGroupItem::restore(const Archive& archive)
 }
 
 
+namespace {
+
 SceneTagGroup::SceneTagGroup(PositionTagGroupItem::Impl* impl)
     : impl(impl)
 {
@@ -1741,4 +1743,6 @@ void ConversionDialog::setTargets(PositionTagGroupItem* tagGroupItem, LocationPr
             QString(_("The parent coordinate system of \"%1\" is changed to the global coordinate system."))
             .arg(tagGroupItem->displayName().c_str()));
     }
+}
+
 }

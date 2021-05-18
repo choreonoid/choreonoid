@@ -9,7 +9,9 @@
 #include <unordered_map>
 #include <iostream>
 #ifdef _WIN32
-# include <windows.h>
+#include <windows.h>
+#else
+#include <dlfcn.h>
 #endif
 #include "gettext.h"
 
@@ -29,7 +31,6 @@ DllHandle loadDll(const char* filename) { return LoadLibrary(filename); }
 void* resolveDllSymbol(DllHandle handle, const char* symbol) { return GetProcAddress(handle, symbol); }
 void unloadDll(DllHandle handle) { FreeLibrary(handle); }
 #else
-# include <dlfcn.h>
 typedef void* DllHandle;
 DllHandle loadDll(const char* filename) { return dlopen(filename, RTLD_LAZY); }
 void* resolveDllSymbol(DllHandle handle, const char* symbol) { return dlsym(handle, symbol); }

@@ -11,7 +11,7 @@ using namespace cnoid;
 
 namespace cnoid {
 
-class BasicSensorSimulationHelperImpl
+class BasicSensorSimulationHelper::Impl
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -37,24 +37,21 @@ public:
 
     KFStateArray kfStates;
 
-    BasicSensorSimulationHelperImpl(BasicSensorSimulationHelper* self);
+    Impl(BasicSensorSimulationHelper* self);
     void initialize(Body* body, double timeStep, const Vector3& gravityAcceleration);
 };
+
 }
 
-namespace {
-typedef BasicSensorSimulationHelperImpl Impl;
-}
-    
 
 BasicSensorSimulationHelper::BasicSensorSimulationHelper()
 {
     isActive_ = false;
-    impl = new BasicSensorSimulationHelperImpl(this);
+    impl = new Impl(this);
 }
 
 
-BasicSensorSimulationHelperImpl::BasicSensorSimulationHelperImpl(BasicSensorSimulationHelper* self)
+BasicSensorSimulationHelper::Impl::Impl(BasicSensorSimulationHelper* self)
     : self(self)
 {
     isOldAccelSensorCalcMode = false;
@@ -93,7 +90,7 @@ void BasicSensorSimulationHelper::initialize(Body* body, double timeStep, const 
 }
 
 
-void Impl::initialize(Body* body, double timeStep, const Vector3& gravityAcceleration)
+void BasicSensorSimulationHelper::Impl::initialize(Body* body, double timeStep, const Vector3& gravityAcceleration)
 {
     this->body = body;
     g = gravityAcceleration;

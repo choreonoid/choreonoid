@@ -785,6 +785,8 @@ void LinkPositionWidget::Impl::showConfigurationDialog()
 }
 
 
+namespace {
+
 JointSpaceConfigurationDialog::JointSpaceConfigurationDialog(LinkPositionWidget::Impl* baseImpl)
     : Dialog(baseImpl->self, Qt::Tool),
       baseImpl(baseImpl)
@@ -1020,6 +1022,8 @@ QSize ConfTreeWidget::sizeHint() const
     auto header_ = header();
     auto r = visualItemRect(topLevelItem(c - 1));
     return QSize(-1, r.bottom() + header_->height() + frameWidth * 2 + r.height() / 2);
+}
+
 }
 
 

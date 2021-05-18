@@ -209,6 +209,8 @@ public:
 }
 
 
+namespace {
+
 PropertyItem::PropertyItem(ItemPropertyWidget::Impl* view, ValueVariant value)
     : view(view),
       value(value)
@@ -609,6 +611,8 @@ void CustomizedItemDelegate::openFileDialog(FilePathProperty value, FilePathEdit
         editor->setValue(value);
         commitData(editor);
     }
+}
+
 }
 
 

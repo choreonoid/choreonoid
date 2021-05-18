@@ -170,6 +170,8 @@ public:
 }
 
 
+namespace {
+
 ClassInfo::ClassInfo()
 {
     creationPanelBase = nullptr;
@@ -179,6 +181,8 @@ ClassInfo::ClassInfo()
 ClassInfo::~ClassInfo()
 {
     delete creationPanelBase;
+}
+
 }
 
 
@@ -620,6 +624,8 @@ void ItemManager::Impl::onNewItemActivated(CreationPanelBase* base)
 }
 
 
+namespace {
+
 CreationPanelBase::CreationPanelBase
 (const QString& title, ClassInfo* classInfo, ItemPtr protoItem, bool isSingleton)
     : QDialog(MainWindow::instance()),
@@ -744,6 +750,8 @@ Item* CreationPanelBase::createItem(Item* parentItem, Item* protoItem)
     }
 
     return item.retn();
+}
+
 }
 
 

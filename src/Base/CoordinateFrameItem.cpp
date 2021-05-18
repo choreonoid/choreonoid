@@ -380,6 +380,8 @@ void CoordinateFrameItem::setLocationEditable(bool on)
 }
 
 
+namespace {
+
 FrameLocation::FrameLocation(CoordinateFrameItem::Impl* impl)
     : LocationProxy(InvalidLocation),
       impl(impl)
@@ -474,4 +476,6 @@ bool FrameLocation::setLocation(const Isometry3& T)
 SignalProxy<void()> FrameLocation::sigLocationChanged()
 {
     return impl->sigLocationChanged;
+}
+
 }

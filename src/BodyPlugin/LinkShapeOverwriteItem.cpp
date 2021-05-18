@@ -320,6 +320,8 @@ LocationProxyPtr LinkShapeOverwriteItem::getLocationProxy()
 }
 
 
+namespace {
+
 LinkShapeLocation::LinkShapeLocation(LinkShapeOverwriteItem::Impl* impl)
     : LocationProxy(OffsetLocation),
       impl(impl)
@@ -358,6 +360,8 @@ LocationProxyPtr LinkShapeLocation::getParentLocationProxy() const
 SignalProxy<void()> LinkShapeLocation::sigLocationChanged()
 {
     return impl->sigOffsetChanged;
+}
+
 }
 
 

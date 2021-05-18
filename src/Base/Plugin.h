@@ -64,7 +64,7 @@ protected:
 
     /**
        Call this function in the constructor if necessary.
-       @param prioirty
+       @param priority
        A smaller value means a higher priority.
        The default value is the maximum integer value.
        The value 0 is set for fundamental plugins which should be initialized before extra plugins.

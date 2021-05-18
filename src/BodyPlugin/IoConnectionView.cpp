@@ -135,6 +135,8 @@ public:
 }
 
 
+namespace {
+
 ConnectionMapModel::ConnectionMapModel(QObject* parent)
     : QAbstractTableModel(parent)
 {
@@ -491,6 +493,8 @@ SignalDeviceComboBox::SignalDeviceComboBox
         setCurrentIndex(index);
         deviceInfos.emplace_back(nullptr, currentBodyName, currentDeviceName);
     }
+}
+
 }
 
 

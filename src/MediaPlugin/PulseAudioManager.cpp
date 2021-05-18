@@ -401,6 +401,8 @@ void PulseAudioManagerImpl::restore(const Archive& archive)
 }
 
 
+namespace {
+
 Source::Source(PulseAudioManagerImpl* manager, AudioItemPtr audioItem)
     : manager(manager),
       audioItem(audioItem),
@@ -424,13 +426,12 @@ Source::~Source()
 }
 
 
-namespace {
-
 void pa_stream_state_callback(pa_stream* stream, void* userdata)
 {
     Source* source = (Source*)userdata;
     pa_threaded_mainloop_signal(source->manager->mainloop, 0);
 }
+
 
 void pa_stream_write_callback(pa_stream* stream,  size_t nbytes, void* userdata)
 {
@@ -438,11 +439,13 @@ void pa_stream_write_callback(pa_stream* stream,  size_t nbytes, void* userdata)
     source->write(nbytes, false);
 }
 
+
 void pa_stream_success_callback(pa_stream* stream, int success, void* userdata)
 {
     Source* source = (Source*)userdata;
     pa_threaded_mainloop_signal(source->manager->mainloop, 0);
 }
+
 
 void pa_stream_overflow_notify_callback(pa_stream* stream, void* userdata)
 {
@@ -450,13 +453,13 @@ void pa_stream_overflow_notify_callback(pa_stream* stream, void* userdata)
     callLater([source](){ source->onBufferOverflow(); });
 }
 
+
 void pa_stream_underflow_notify_callback(pa_stream* stream, void* userdata)
 {
     Source* source = (Source*)userdata;
     if(!source->hasAllFramesWritten){
         callLater([source](){ source->onBufferUnderflow(); });
     }
-}
 }
 
 
@@ -758,4 +761,6 @@ void Source::stop()
         pa_threaded_mainloop_unlock(manager->mainloop);
     }
     isActive_ = false;
+}
+
 }

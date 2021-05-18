@@ -95,6 +95,8 @@ public:
 }
 
 
+namespace {
+
 SliderUnit::SliderUnit
 (GeneralSliderView::Impl* viewImpl, const string& name, double lower, double upper, int precision)
     : viewImpl(viewImpl),
@@ -249,6 +251,8 @@ void SliderOwner::setCallback(std::function<void(double value)> callback)
     } else {
         connection.disconnect();
     }
+}
+
 }
 
 

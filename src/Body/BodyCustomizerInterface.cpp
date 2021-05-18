@@ -19,6 +19,8 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <dlfcn.h>
 #endif
 
 #include "gettext.h"
@@ -37,7 +39,6 @@ inline DllHandle loadDll(const char* filename) { return LoadLibrary(filename); }
 inline void* resolveDllSymbol(DllHandle handle, const char* symbol) { return GetProcAddress(handle, symbol); }
 inline void unloadDll(DllHandle handle) { FreeLibrary(handle); }
 #else
-# include <dlfcn.h>
 typedef void* DllHandle;
 inline DllHandle loadDll(const char* filename) { return dlopen(filename, RTLD_LAZY); }
 inline void* resolveDllSymbol(DllHandle handle, const char* symbol) { return dlsym(handle, symbol); }

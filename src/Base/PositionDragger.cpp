@@ -174,6 +174,8 @@ public:
 }
 
 
+namespace {
+
 SgHandleVariantSelector::SgHandleVariantSelector(PositionDragger::Impl* dragger)
     : SgGroup(findClassId<SgHandleVariantSelector>()),
       dragger(dragger)
@@ -234,6 +236,8 @@ void SgViewpointDependentSelector::render(SceneRenderer* renderer)
             renderer->renderNode(child(1));
         }
     }
+}
+
 }
 
 

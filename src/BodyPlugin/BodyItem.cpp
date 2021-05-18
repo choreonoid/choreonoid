@@ -1170,6 +1170,14 @@ void BodyItem::Impl::setLocationEditable(bool on, bool updateInitialPositionWhen
 }
 
 
+LocationProxyPtr BodyItem::createLinkLocationProxy(Link* link)
+{
+    return new LinkLocation(this, link);
+}
+
+
+namespace {
+
 BodyLocation::BodyLocation(BodyItem::Impl* impl)
     : LocationProxy(impl->attachmentToParent ? OffsetLocation : GlobalLocation),
       impl(impl)
@@ -1263,12 +1271,6 @@ SignalProxy<void()> BodyLocation::sigLocationChanged()
 }
 
 
-LocationProxyPtr BodyItem::createLinkLocationProxy(Link* link)
-{
-    return new LinkLocation(this, link);
-}
-
-
 LinkLocation::LinkLocation()
     : LocationProxy(GlobalLocation)
 {
@@ -1339,6 +1341,8 @@ SignalProxy<void()> LinkLocation::sigLocationChanged()
         static Signal<void()> dummySignal;
         return dummySignal;
     }
+}
+
 }
 
 
@@ -1568,6 +1572,8 @@ void BodyItem::Impl::onParentBodyKinematicStateChanged()
 }
 
 
+namespace {
+
 MyCompositeBodyIK::MyCompositeBodyIK(BodyItem::Impl* bodyItemImpl)
     : bodyItemImpl(bodyItemImpl),
       attachment(bodyItemImpl->attachmentToParent)
@@ -1596,6 +1602,8 @@ bool MyCompositeBodyIK::calcInverseKinematics(const Isometry3& T)
 std::shared_ptr<InverseKinematics> MyCompositeBodyIK::getParentBodyIK()
 {
     return holderIK;
+}
+
 }
 
 
@@ -1889,6 +1897,8 @@ bool BodyItem::Impl::restore(const Archive& archive)
 }
 
 
+namespace {
+
 KinematicStateRecord::KinematicStateRecord(BodyItem::Impl* bodyItemImpl)
     : bodyItem(bodyItemImpl->self),
       bodyItemImpl(bodyItemImpl)
@@ -1949,4 +1959,6 @@ bool KinematicStateRecord::redo()
     bodyItem->storeKinematicState(bodyItemImpl->lastEditState);
     bodyItemImpl->notifyKinematicStateChange(false, false, false, true);
     return true;
+}
+
 }

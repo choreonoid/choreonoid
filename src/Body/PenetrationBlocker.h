@@ -20,7 +20,7 @@ class CNOID_EXPORT PenetrationBlocker
 {
 public:
     /**
-       @param collidionDetector A CollisionDetector object which is only used for the PenetrationBlocker instance.
+       @param collisionDetector A CollisionDetector object which is only used for the PenetrationBlocker instance.
     */
     PenetrationBlocker(CollisionDetectorPtr collisionDetector, Link* targetLink);
         

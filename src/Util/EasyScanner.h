@@ -46,7 +46,7 @@ public:
 
     EasyScanner();
     EasyScanner(std::string filename);
-    EasyScanner(const EasyScanner& scanner, bool copy_text = false);
+    EasyScanner(const EasyScanner& org, bool copyText = false);
     virtual ~EasyScanner();
 
     void putSymbols();

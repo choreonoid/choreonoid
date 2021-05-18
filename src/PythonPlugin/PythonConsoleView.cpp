@@ -99,6 +99,8 @@ public:
 }
 
 
+namespace {
+
 void PythonConsoleOut::setConsole(PythonConsoleView::Impl* console)
 {
     this->console = console;
@@ -122,6 +124,8 @@ python::object PythonConsoleIn::readline()
 {
     //! \todo release the GIL inside this function
     return python::str(console->getInputFromConsoleIn());
+}
+
 }
 
 

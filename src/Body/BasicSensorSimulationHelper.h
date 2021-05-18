@@ -15,7 +15,6 @@
 namespace cnoid {
 
 class Body;
-class BasicSensorSimulationHelperImpl;
 
 class CNOID_EXPORT BasicSensorSimulationHelper
 {
@@ -37,13 +36,13 @@ public:
     void updateGyroAndAccelerationSensors();
 
 private:
-    BasicSensorSimulationHelperImpl* impl;
     bool isActive_;
     DeviceList<ForceSensor> forceSensors_;
     DeviceList<RateGyroSensor> rateGyroSensors_;
     DeviceList<AccelerationSensor> accelerationSensors_;
 
-    friend class BasicSensorSimulationHelperImpl;
+    class Impl;
+    Impl* impl;
 };
 
 }

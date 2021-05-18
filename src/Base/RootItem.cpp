@@ -80,6 +80,8 @@ public:
 }
 
 
+namespace {
+
 CheckEntry::CheckEntry(const string& description)
     : needToUpdateCheckedItemList(false),
       description(description)
@@ -96,7 +98,7 @@ CheckEntry::CheckEntry(const CheckEntry& org)
 }
 
 
-static void putItemTreeWithPolymorphicIds()
+void putItemTreeWithPolymorphicIds()
 {
     auto& registry = ItemClassRegistry::instance();
     cout << "Number of item classes: " << registry.numRegisteredClasses() << endl;
@@ -105,6 +107,8 @@ static void putItemTreeWithPolymorphicIds()
         cout << fmt::format("{}: id {} : {}",
                             item->name(), id, registry.superClassId(id)) << endl;
     }
+}
+
 }
     
 
@@ -226,7 +230,6 @@ SignalProxy<void(Item* item)> RootItem::sigItemMoved()
 
 
 /**
-   @if jp
    The signal that is emitted just before an item belonging to the path from
    the root item is being removed.
    
@@ -242,7 +245,6 @@ SignalProxy<void(Item* item, bool isMoving)> RootItem::sigSubTreeRemoving()
 
 
 /**
-   @if jp
    The signal that is emitted when an item belonging to the item tree from the
    root item is removed.
    

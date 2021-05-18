@@ -565,19 +565,6 @@ public:
     }
 
     void append(size_t value);
-
-    /**
-       @param maxColumns LF is automatically inserted when the column pos is over maxColumsn
-       @param numValues If numValues is not greater than maxColumns, the initial LF is skipped.
-       This feature is disabled if numValues = 0.
-    */
-    /*
-      void append(size_t value, int maxColumns, int numValues = 0){
-      insertLF(maxColumns, numValues);
-      append(value);
-      }
-    */
-        
     void append(double value);
 
     /**

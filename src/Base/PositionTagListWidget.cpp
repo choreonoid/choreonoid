@@ -83,6 +83,8 @@ public:
 }
 
 
+namespace {
+
 TagGroupModel::TagGroupModel(PositionTagListWidget* widget)
     : QAbstractTableModel(widget),
       widget(widget),
@@ -334,6 +336,8 @@ void TagGroupModel::onTagPositionChanged(int tagIndex)
 {
     auto modelIndex = index(tagIndex, PositionColumn, QModelIndex());
     Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+}
+
 }
 
 

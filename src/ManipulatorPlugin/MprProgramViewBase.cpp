@@ -239,6 +239,8 @@ public:
 }
 
 
+namespace {
+
 StatementItem::StatementItem(MprStatement* statement_, MprProgram* program, MprProgramViewBase::Impl* viewImpl)
     : statement_(statement_),
       viewImpl(viewImpl)
@@ -454,6 +456,8 @@ void TreeWidgetStyle::drawPrimitive
         return;
     }
     QProxyStyle::drawPrimitive(element, option, painter, widget);
+}
+
 }
 
 

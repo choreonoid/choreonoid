@@ -595,6 +595,8 @@ bool Joystick::getButtonState(int button) const
 }
 
 
+#ifdef __linux__
+
 bool Joystick::getButtonDown(int button) const
 {
     if(button >= (int)impl->buttons.size()){
@@ -635,6 +637,8 @@ bool Joystick::getButtonHoldOn(int button, int duration /*(msec)*/) const
     if(chrono::duration_cast<chrono::milliseconds>(dur).count() > duration) return true;
     return false;
 }
+
+#endif
 
 
 bool Joystick::isActive() const

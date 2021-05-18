@@ -152,6 +152,8 @@ public:
 }
 
 
+namespace {
+
 VariableListModel::VariableListModel(QObject* parent)
     : QAbstractTableModel(parent)
 {
@@ -580,6 +582,8 @@ void CustomizedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* m
     default:
         QStyledItemDelegate::setModelData(editor, model, index);
     }
+}
+
 }
 
 

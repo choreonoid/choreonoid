@@ -209,6 +209,8 @@ void ItemEditRecordManager::Impl::onItemNameChanged(Item* item, const string& ol
 }
 
 
+namespace {
+
 ItemTreeEditRecord::ItemTreeEditRecord(Item* item)
     : item(item)
 {
@@ -440,4 +442,6 @@ bool ItemNameEditRecord::redo()
 {
     auto block = manager->itemConnectionSetMap[item].scopedBlock();
     return item->setName(newName);
+}
+
 }

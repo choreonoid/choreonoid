@@ -310,8 +310,6 @@ QSplitterHandle* CustomSplitter::createHandle()
     return new CustomSplitterHandle(this);
 }
 
-}
-
 
 ViewPane::ViewPane(ViewArea::Impl* viewAreaImpl, QWidget* parent)
     : QWidget(parent),
@@ -440,6 +438,8 @@ bool ViewPane::eventFilter(QObject* object, QEvent* event)
         }
     }
     return false;
+}
+
 }
 
 

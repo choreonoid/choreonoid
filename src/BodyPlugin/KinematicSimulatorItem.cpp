@@ -348,6 +348,8 @@ bool KinematicSimulatorItem::restore(const Archive& archive)
 }
 
 
+namespace {
+
 KinematicSimBody::KinematicSimBody(Body* body)
     : SimulationBody(body)
 {
@@ -358,4 +360,6 @@ KinematicSimBody::KinematicSimBody(Body* body)
 bool KinematicSimBody::initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem)
 {
     return SimulationBody::initialize(simulatorItem, bodyItem);
+}
+
 }

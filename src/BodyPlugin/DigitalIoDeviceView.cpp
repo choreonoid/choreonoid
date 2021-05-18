@@ -77,6 +77,8 @@ public:
 }
 
 
+namespace {
+
 IoDeviceModel::IoDeviceModel(QObject* parent)
     : QAbstractTableModel(parent)
 {
@@ -284,6 +286,8 @@ void CustomizedItemDelegate::setModelData
     cefault:
         QStyledItemDelegate::setModelData(editor, model, index);
     }
+}
+
 }
 
 

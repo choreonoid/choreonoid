@@ -495,6 +495,8 @@ SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
 }
 
 
+namespace {
+
 ControllerInfo::ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl)
     : controller(controller),
       body_(simBodyImpl->body_),
@@ -627,6 +629,8 @@ bool ControllerInfo::setNoDelayMode(bool on)
 {
     controller->setNoDelayMode(on);
     return on;
+}
+
 }
 
 
@@ -1509,6 +1513,8 @@ void SimulatorItem::removePostDynamicsFunction(int id)
 }
 
 
+namespace {
+
 int FunctionSet::add(std::function<void()>& func)
 {
     std::lock_guard<std::mutex> lock(mutex);
@@ -1565,8 +1571,10 @@ void FunctionSet::updateFunctions()
         }
     }
     needToUpdate = false;
-}        
-    
+}
+
+}
+
     
 void SimulatorItem::Impl::clearSimulation()
 {
@@ -2198,6 +2206,8 @@ bool SimulatorItem::Impl::stepSimulationMain()
 }
 
 
+namespace {
+
 bool ControllerInfo::waitForControlInThreadToFinish()
 {
     std::unique_lock<std::mutex> lock(controlMutex);
@@ -2239,6 +2249,8 @@ void ControllerInfo::concurrentControlLoop()
     
 exitConcurrentControlLoop:
     return;
+}
+
 }
 
 
@@ -2856,6 +2868,8 @@ SimulationLogEngine* SimulatorItem::Impl::getOrCreateLogEngine()
 }
 
 
+namespace {
+
 SimulationLogEngine::SimulationLogEngine(SimulatorItem::Impl* itemImpl)
     : TimeSyncItemEngine(itemImpl->self),
       itemImpl(itemImpl)
@@ -2934,4 +2948,6 @@ void SimulationLogEngine::notifyKinematicStateUpdate()
             }
         }
     }
+}
+
 }

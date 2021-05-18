@@ -163,6 +163,8 @@ public:
 }
 
 
+namespace {
+
 MySimpleControllerConfig::MySimpleControllerConfig(SimpleControllerItem::Impl* impl)
     : SimpleControllerConfig(impl),
       impl(impl)
@@ -174,6 +176,8 @@ MySimpleControllerConfig::MySimpleControllerConfig(SimpleControllerItem::Impl* i
 Referenced* MySimpleControllerConfig::bodyItem()
 {
     return impl->targetBodyItem;
+}
+
 }
 
 
