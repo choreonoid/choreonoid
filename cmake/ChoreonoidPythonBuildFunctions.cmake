@@ -6,6 +6,11 @@ function(choreonoid_add_python_module)
   list(REMOVE_AT sources 0)
 
   add_library(${target} SHARED ${sources})
+  if(TARGET Choreonoid::CnoidPyUtil)
+    target_link_libraries(${target} Choreonoid::CnoidPyUtil)
+  else()
+    target_link_libraries(${target} CnoidPyUtil)
+  endif()
     
   if(MSVC)
     set_target_properties(${target} PROPERTIES SUFFIX .pyd)

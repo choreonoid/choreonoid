@@ -26,4 +26,4 @@ if(WIN32)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "CNOID_USE_GETTEXT_WRAPPER")
 endif()
 
-target_link_libraries(${target} CnoidBase CnoidPoseSeqPlugin)
+target_link_libraries(${target} CnoidPoseSeqPlugin)

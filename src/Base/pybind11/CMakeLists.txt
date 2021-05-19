@@ -1,7 +1,3 @@
-# @author Shin'ichiro Nakaoka
-
-#set(CMAKE_BUILD_TYPE Debug)
-
 set(headers
   PyBase.h
   PyItemList.h

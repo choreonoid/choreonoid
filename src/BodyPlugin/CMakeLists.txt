@@ -129,7 +129,7 @@ if(MSVC)
   set(boost_libraries ${boost_libraries} ${Boost_BZIP2_LIBRARY} ${Boost_ZLIB_LIBRARY})
 endif()
 
-target_link_libraries(${target} CnoidBase CnoidBody ${boost_libraries})
+target_link_libraries(${target} CnoidBody ${boost_libraries})
 
 if(ENABLE_PYTHON)
   add_subdirectory(pybind11)

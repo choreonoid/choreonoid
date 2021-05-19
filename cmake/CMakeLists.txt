@@ -12,7 +12,7 @@ set(modules
   ChoreonoidFindQt.cmake
   )
 
-set(util_libs CnoidUtil fmt)
+set(util_dependencies fmt)
 
 set(has_boost_libs_for_util_libs true)
 set(boost_version ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION})
@@ -25,7 +25,7 @@ if(CMAKE_CXX_STANDARD LESS 17)
   list(APPEND boost_libs_for_util_libs ${Boost_FILESYSTEM_LIBRARY})
 else() # C++17
   if(UNIX)
-    list(APPEND util_libs stdc++fs)
+    list(APPEND util_dependencies stdc++fs)
   endif()
 endif()
 
@@ -33,7 +33,7 @@ if(UNIX)
   set(CHOREONOID_USE_SUBSYSTEM_CONSOLE false)
 elseif(MSVC)
   if(ENABLE_GETTEXT)
-    list(APPEND util_libs ${GETTEXT_LIBRARIES})
+    list(APPEND util_dependencies ${GETTEXT_LIBRARIES})
   endif()
 endif()
 

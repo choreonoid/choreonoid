@@ -24,4 +24,4 @@ choreonoid_add_python_module(PyUtil
   PyTask.cpp
   )
 
-target_link_libraries(PyUtil CnoidUtil CnoidPyUtil)
+target_link_libraries(PyUtil CnoidUtil)

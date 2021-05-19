@@ -116,7 +116,11 @@ function(choreonoid_add_plugin target)
   set(add_library_args ${ARGN})
   list(REMOVE_ITEM add_library_args SHARED HEADERS)
   add_library(${target} SHARED ${add_library_args})
-
+  if(TARGET Choreonoid::CnoidBase)
+    target_link_libraries(${target} Choreonoid::CnoidBase)
+  else()
+    target_link_libraries(${target} CnoidBase)
+  endif()
   choreonoid_set_target_common_properties(${target})
 
   set_target_properties(${target} PROPERTIES

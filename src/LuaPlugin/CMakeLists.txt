@@ -18,4 +18,4 @@ set(headers
 
 make_gettext_mofiles(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
-target_link_libraries(${target} CnoidBase ${LUA_LIBRARIES})
+target_link_libraries(${target} ${LUA_LIBRARIES})

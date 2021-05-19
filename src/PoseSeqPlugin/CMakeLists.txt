@@ -40,7 +40,7 @@ qt5_add_resources(RC_SRCS PoseSeqPlugin.qrc)
 
 choreonoid_make_gettext_mo_files(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})
-target_link_libraries(${target} CnoidUtil CnoidBody CnoidBodyPlugin)
+target_link_libraries(${target} CnoidBodyPlugin)
 
 if(ENABLE_PYTHON)
   add_subdirectory(pybind11)
