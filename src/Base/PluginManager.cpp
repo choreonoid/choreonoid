@@ -55,7 +55,7 @@ static const char* DEBUG_SUFFIX = "";
 
 namespace {
 
-PluginManager* instance_ = 0;
+PluginManager* instance_ = nullptr;
 
 struct PluginInfo;
 typedef std::shared_ptr<PluginInfo> PluginInfoPtr;
@@ -75,14 +75,15 @@ struct PluginInfo
     bool doReloading;
     Action* aboutMenuItem;
     DescriptionDialog* aboutDialog;
+    string lastErrorMessage;
 
     PluginInfo(){
-        plugin = 0;
+        plugin = nullptr;
         status = PluginManager::NOT_LOADED;
         areAllRequisitiesResolved = false;
         doReloading = false;
-        aboutMenuItem = 0;
-        aboutDialog = 0;
+        aboutMenuItem = nullptr;
+        aboutDialog = nullptr;
     }
 };
 
@@ -175,7 +176,7 @@ void PluginManager::finalize()
 {
     if(instance_){
         delete instance_;
-        instance_ = 0;
+        instance_ = nullptr;
     }
 }
 
@@ -199,7 +200,7 @@ PluginManager::Impl::Impl(ExtensionManager* ext)
 #endif
 
     pluginNamePattern.setPattern(
-        QString(DLL_PREFIX) + "Cnoid.+Plugin" + DEBUG_SUFFIX + "\\." + DLL_EXTENSION);
+        QString(DLL_PREFIX) + "Cnoid(.+)Plugin" + DEBUG_SUFFIX + "\\." + DLL_EXTENSION);
 
     // for the base module
     PluginInfoPtr info = std::make_shared<PluginInfo>();
@@ -271,9 +272,20 @@ Plugin* PluginManager::findPlugin(const std::string& name)
     if(p != impl->nameToPluginInfoMap.end()){
         return p->second->plugin;
     }
-    return 0;
+    return nullptr;
 }
 
+const std::string& PluginManager::getErrorMessage(const std::string& name)
+{
+    auto p = impl->nameToPluginInfoMap.find(name);
+    if(p != impl->nameToPluginInfoMap.end()){
+        return p->second->lastErrorMessage;
+    } else {
+        static const string message;
+        return message;
+    }
+}
+    
 
 void PluginManager::doStartupLoading(const char* pluginPathList)
 {
@@ -370,6 +382,8 @@ void PluginManager::Impl::scanPluginFiles(const std::string& pathString, bool is
                 PluginMap::iterator p = pathToPluginInfoMap.find(pathStringUtf8);
                 if(p == pathToPluginInfoMap.end()){
                     PluginInfoPtr info = std::make_shared<PluginInfo>();
+                    // Set a tentative name extracted from the plugin file name
+                    info->name = pluginNamePattern.cap(1).toStdString();
                     info->pathString = pathStringUtf8;
                     allPluginInfos.push_back(info);
                     pathToPluginInfoMap[info->pathString] = info;
@@ -502,16 +516,19 @@ bool PluginManager::Impl::loadPlugin(int index)
         if(CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS && (strcmp(CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS, "1") == 0)){
             info->dll.setLoadHints(QLibrary::ExportExternalSymbolsHint);
         }
-        
+
         if(!(info->dll.load())){
-            mv->putln(QString("System error: ") + info->dll.errorString(), MessageView::Error);
+            info->lastErrorMessage = fmt::format(_("System error: {0}"), info->dll.errorString().toStdString());
+            mv->putln(info->lastErrorMessage, MessageView::Error);
+            info->status = PluginManager::INVALID;
 
         } else {
             QFunctionPointer symbol = info->dll.resolve("getChoreonoidPlugin");
             if(!symbol){
                 info->status = PluginManager::INVALID;
-                mv->putln(_("The plugin entry function \"getChoreonoidPlugin\" is not found."), MessageView::Error);
-                mv->putln(info->dll.errorString(), MessageView::Error);
+                info->lastErrorMessage = _("The plugin entry function \"getChoreonoidPlugin\" is not found.\n");
+                info->lastErrorMessage += info->dll.errorString().toStdString();
+                mv->putln(info->lastErrorMessage, MessageView::Error);
 
             } else {
                 Plugin::PluginEntry getCnoidPluginFunc = (Plugin::PluginEntry)(symbol);
@@ -553,25 +570,27 @@ bool PluginManager::Impl::loadPlugin(int index)
                         }
                         info->subsequences.insert(subsequence);
                     }
-
-                    PluginMap::iterator p = nameToPluginInfoMap.find(info->name);
-                    if(p == nameToPluginInfoMap.end()){
-                        nameToPluginInfoMap.insert(make_pair(info->name, info));
-                    } else {
-                        info->status = PluginManager::CONFLICT;
-                        PluginInfoPtr& another = p->second;
-                        another->status = PluginManager::CONFLICT;
-                        mv->putln(
-                            fmt::format(_("Plugin file \"{0}\" conflicts with \"{1}\"."),
-                                        info->pathString, another->pathString),
-                            MessageView::Error);
-                    }
                 }
             }
         }
+
+        PluginMap::iterator p = nameToPluginInfoMap.find(info->name);
+        if(p == nameToPluginInfoMap.end()){
+            nameToPluginInfoMap.insert(make_pair(info->name, info));
+        } else {
+            info->status = PluginManager::CONFLICT;
+            PluginInfoPtr& another = p->second;
+            another->status = PluginManager::CONFLICT;
+            info->lastErrorMessage =
+                fmt::format(_("Plugin file \"{0}\" conflicts with \"{1}\"."),
+                            info->pathString, another->pathString);
+            mv->putln(info->lastErrorMessage, MessageView::Error);
+        }
     }
 
-    if(info->status != PluginManager::LOADED){
+    if(info->status == PluginManager::LOADED){
+        info->lastErrorMessage.clear();
+    } else {
         mv->putln(_("Loading the plugin failed."), MessageView::Error);
         mv->flush();
     }
@@ -835,13 +854,13 @@ bool PluginManager::Impl::finalizePlugin(PluginInfoPtr info)
                     info->status = PluginManager::FINALIZED;
                     if(info->aboutMenuItem){
                         delete info->aboutMenuItem;
-                        info->aboutMenuItem = 0;
+                        info->aboutMenuItem = nullptr;
                     }
                     delete info->plugin;
                     info->plugin = 0;
                     if(info->aboutDialog){
                         delete info->aboutDialog;
-                        info->aboutDialog = 0;
+                        info->aboutDialog = nullptr;
                     }
                     ExtensionManager::notifySystemUpdate();
 

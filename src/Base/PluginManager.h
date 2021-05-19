@@ -40,6 +40,7 @@ public:
     int pluginStatus(int index) const;
 	
     Plugin* findPlugin(const std::string& name);
+    const std::string& getErrorMessage(const std::string& name);
 
     bool loadPlugin(int index);
     bool unloadPlugin(int index);
