@@ -259,7 +259,9 @@ function(install_runtime_dlls dll_dir)
   endif()
 endfunction()
 
-set(CHOREONOID_ENABLE_INSTALL_RPATH true)
+option(ENABLE_INSTALL_RPATH "Enable RPATH for installed shared libraries" ON)
+mark_as_advanced(ENABLE_INSTALL_RPATH)
+set(CHOREONOID_ENABLE_INSTALL_RPATH ${ENABLE_INSTALL_RPATH})
 
 if(UNIX)
   option(ENABLE_NEW_DTAGS "Make LD_LIBRARY_PATH take precedence over RPATH with --enable-new-dtags" OFF)
