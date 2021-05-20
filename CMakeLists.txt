@@ -3,11 +3,11 @@ if(MSVC)
   # * CMAKE_CXX_STANDARD 17 is supported for MSVC since version 3.10
   # * The target_link_options command is available since version 3.13
   # * The install command can specifiy a target defined in a sub directory since version 3.13
-  cmake_minimum_required(VERSION 3.13.0)
+  cmake_minimum_required(VERSION 3.13)
 else()
   # CMake version 3.5.1 is installed in Ubuntu 16.04.
   # (Version 3.10.2 is installed in Ubuntu 18.04.)
-  cmake_minimum_required(VERSION 3.5.0)
+  cmake_minimum_required(VERSION 3.5)
 endif()
 
 cmake_policy(SET CMP0003 NEW)

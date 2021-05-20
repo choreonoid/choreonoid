@@ -448,7 +448,7 @@ void ColdetModelInternalModel::extractNeghiborTriangles()
         ret &= extractNeighborTriangle(neighbors, edgeToExistingTriangleMap, i, triangle[2], triangle[0]);
     }
 
-#ifdef CNOID_DEBUG
+#ifndef NDEBUG
     if(!ret)
         cout << "Warning : Three or more triangles are defined for a edge." << endl;
 #endif
