@@ -40,7 +40,6 @@ string shareDir_;
 string executableBasename_;
 }
 
-
 namespace cnoid {
 
 namespace filesystem = stdx::filesystem;
@@ -54,7 +53,13 @@ void detectExecutableFile()
         throw std::runtime_error("The execution of the dladdr function to get the executable path failed.");
     }
     filesystem::path path(dlInfo.dli_fname);
-    
+    /*
+      If the shared library is referenced by a relative RPATH, the dli_fname contains the relative
+      path component and looks like "/usr/bin/../lib/libCnodUtil.so.1.8". The following normalization
+      function is applied so that such the redundant path becomes a normal path.
+    */
+    path = stdx::filesystem::lexically_normal(path);
+
     utsname info;
     if(uname(&info) == 0){
         if(strncmp(info.sysname, "Linux", 6) == 0){
