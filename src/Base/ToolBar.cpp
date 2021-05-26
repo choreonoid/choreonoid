@@ -106,7 +106,6 @@ ToolBar::ToolBar(const QString& name)
     isVisibleByDefault_ = false;
     isPlacedOnNewRowByDefault_ = false;
     isAutoRaiseByDefault_ = true;
-    defaultOrderIndex = 0;
     
     desiredX = 0;
     layoutPriority = 0;

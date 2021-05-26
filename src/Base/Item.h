@@ -89,7 +89,7 @@ public:
        simulation result may be an temporal item because a user may not want to
        save the result. If a user manually save the item, the item becomes a
        non-temporal item. Or if a child item is manually attached to a temporal
-       item, the item becomes non-temporal one, too.
+       item, the item becomes non-temporal one as well.
     */
     bool isTemporal() const;
     

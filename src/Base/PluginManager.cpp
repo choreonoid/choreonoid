@@ -24,7 +24,6 @@
 #include <map>
 #include <set>
 #include <list>
-#include <iostream>
 #include <fmt/format.h>
 
 #ifdef Q_OS_WIN32

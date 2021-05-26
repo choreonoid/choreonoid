@@ -52,8 +52,6 @@ SimulationBar* SimulationBar::instance()
 SimulationBar::SimulationBar()
     : ToolBar(N_("SimulationBar"))
 {
-    setVisibleByDefault(true);    
-    
     addButton(QIcon(":/Body/icon/store-world-initial.svg"),
               _("Store body positions to the initial world state"))->
         sigClicked().connect([&](){ onStoreInitialClicked(); });
@@ -75,7 +73,6 @@ SimulationBar::SimulationBar()
 
     addButton(QIcon(":/Body/icon/stop-simulation.svg"), _("Stop simulation"))->
         sigClicked().connect([&](){ onStopSimulationClicked(); });
-
 }
 
 

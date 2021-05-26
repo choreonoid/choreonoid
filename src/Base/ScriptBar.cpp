@@ -25,8 +25,6 @@ void ScriptBar::initialize(ExtensionManager* ext)
 ScriptBar::ScriptBar()
     : ToolBar(N_("ScriptBar"))
 {
-    setVisibleByDefault(true);
-    
     addButton(QIcon(":/Base/icon/script.svg"), _("Execute scripts"))
         ->sigClicked().connect([&](){ executeCheckedScriptItems(); });
 }

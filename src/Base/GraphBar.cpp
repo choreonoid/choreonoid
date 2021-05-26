@@ -114,8 +114,6 @@ GraphBarImpl::GraphBarImpl(GraphBar* self)
     : self(self),
       config(this)
 {
-    self->setVisibleByDefault(true);    
-    
     orgRenderingToggle = self->addToggleButton(QIcon(":/Base/icon/graph.svg"),
                                                _("Plot trajectories of the target data on the graph view"));
     orgRenderingToggle->setChecked(true);

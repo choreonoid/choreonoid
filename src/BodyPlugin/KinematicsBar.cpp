@@ -82,8 +82,6 @@ KinematicsBar::KinematicsBar()
 
 KinematicsBarImpl::KinematicsBarImpl(KinematicsBar* self)
 {
-    self->setVisibleByDefault(true);
-    
     setup = new KinematicsBarSetupDialog();
     
     fkToggle = self->addToggleButton(QIcon(":/Body/icon/fk.svg"), _("Enable forward kinematics"));

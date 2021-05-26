@@ -5,7 +5,6 @@
 #ifndef CNOID_BASE_TOOL_BAR_AREA_H
 #define CNOID_BASE_TOOL_BAR_AREA_H
 
-#include <cnoid/ValueTree>
 #include <QWidget>
 #include <vector>
 #include "exportdecl.h"
@@ -13,7 +12,6 @@
 namespace cnoid {
 
 class ToolBar;
-class ToolBarAreaImpl;
 class Menu;
 class Mapping;
 
@@ -26,14 +24,14 @@ public:
     std::vector<ToolBar*> toolBars() const;
     std::vector<ToolBar*> visibleToolBars() const;
     
-    void setInitialLayout(MappingPtr archive);
+    void setInitialLayout(Mapping* archive);
     void doInitialLayout();
-    void restoreLayout(MappingPtr archive);
-    void resetLayout(MappingPtr archive);
-    void removeLayout(MappingPtr archive);
-    void storeLayout(MappingPtr archive);
+    void restoreLayout(Mapping* archive);
+    void resetLayout(Mapping* archive);
+    void removeLayout(Mapping* archive);
+    void storeLayout(Mapping* archive);
 
-    bool addToolBar(ToolBar* toolBar);
+    void addToolBar(ToolBar* toolBar);
     void removeToolBar(ToolBar* toolBar);
 
     void setVisibilityMenuItems(Menu* menu);
@@ -47,12 +45,9 @@ protected:
     virtual void resizeEvent(QResizeEvent* event);
     virtual bool event(QEvent* event);
         
-    //virtual QSize sizeHint() const;
-    //virtual QSize minimumSizeHint () const;
-
 private:
-    ToolBarAreaImpl* impl;
-    friend class MainWindowImpl;
+    class Impl;
+    Impl* impl;
 };
 
 }

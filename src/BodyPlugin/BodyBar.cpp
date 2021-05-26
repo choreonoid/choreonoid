@@ -48,8 +48,6 @@ BodyBar::BodyBar()
 
 BodyBar::Impl::Impl(BodyBar* self)
 {
-    self->setVisibleByDefault(true);
-
     self->addButton(QIcon(":/Body/icon/storepose.svg"), _("Memory the current pose"))
         ->sigClicked().connect([&](){ onCopyButtonClicked(); });
 

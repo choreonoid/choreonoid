@@ -78,7 +78,6 @@ public Q_SLOTS:
     void changeIconSize(const QSize& iconSize);
 
 private:
-
     QHBoxLayout* hbox;
     int insertionPosition;
     QWidget* handle;
@@ -86,11 +85,9 @@ private:
     bool isNewRadioGroupRequested;
     MainWindow* mainWindow;
     ToolBarArea* toolBarArea_;
-
     bool isVisibleByDefault_;
     bool isPlacedOnNewRowByDefault_;
     bool isAutoRaiseByDefault_;
-    int defaultOrderIndex;
     
     // used for layouting tool bars on a ToolBarArea
     bool isStretchable_;
@@ -98,10 +95,9 @@ private:
     int layoutPriority;
 
     void setRadioButton(ToolButton* button);
-
-    friend class ToolBarAreaImpl;
-
     void changeIconSizeSub(QLayout* layout, const QSize& iconSize);
+
+    friend class ToolBarArea;
 };
 
 }
