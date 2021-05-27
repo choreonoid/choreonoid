@@ -61,6 +61,7 @@ set(sources
   ActionGroup.cpp
   Widget.cpp
   SpinBox.cpp
+  DoubleSpinBox.cpp
   FloatingNumberBox.cpp
   ScrollBar.cpp
   Slider.cpp
@@ -160,6 +161,7 @@ set(headers
   ActionGroup.h
   Widget.h
   SpinBox.h
+  DoubleSpinBox.h
   FloatingNumberBox.h
   ScrollBar.h
   Slider.h
