@@ -709,7 +709,9 @@ bool ViewArea::viewTabsVisible() const
 void ViewArea::setViewTabsVisible(bool on)
 {
     if(impl->viewTabsVisible != on){
-        impl->setViewTabsVisible(impl->topSplitter, on);
+        if(impl->topSplitter){
+            impl->setViewTabsVisible(impl->topSplitter, on);
+        }
         impl->viewTabsVisible = on;
     }
 }
