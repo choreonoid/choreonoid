@@ -36,9 +36,12 @@
   <exec_depend>libqt5-opengl</exec_depend>
   <exec_depend>opengl</exec_depend>
 
-  <depend>python</depend>
-  <depend>python-numpy</depend>
+  <!-- Choreonoid depends on Python and numpy if its Python integration is enabled, but the dependency on
+       python packages is omitted in this file because package.xml cannot describe the dependency on
+       different versions of Python for each distribution. In fact up to Melodic uses Python2 and from
+       Noetic uses Python3. -->
 
+  <!-- Packages that Media-plugin depends on -->
   <build_depend>libpulse-dev</build_depend>
   <build_depend>libsndfile1-dev</build_depend>
   <build_depend>libgstreamer1.0-dev</build_depend>
