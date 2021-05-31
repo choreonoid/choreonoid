@@ -73,7 +73,7 @@ LinkKinematicsKitManager::Impl::Impl(BodyItem* bodyItem)
     bodySelectionManager = BodySelectionManager::instance();
 
     bodyItemConnection =
-        bodyItem->sigPositionChanged().connect(
+        bodyItem->sigTreePositionChanged().connect(
             [&](){ onBodyItemPositionChanged(); });
 
     onBodyItemPositionChanged();

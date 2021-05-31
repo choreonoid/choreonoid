@@ -148,7 +148,7 @@ void Resolver::setNewTagGroup(StatementInfo* info, PositionTagGroupItem* tagGrou
             [this, info](const std::string&){ findNewTagGroupItem(info); }));
 
     info->tagGroupConnections.add(
-        tagGroupItem->sigPositionChanged().connect(
+        tagGroupItem->sigTreePositionChanged().connect(
             [this, info](){ findNewTagGroupItem(info); }));
 }
 

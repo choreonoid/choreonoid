@@ -84,8 +84,9 @@ public:
     Signal<void(const std::string& oldName)> sigNameChanged;
     Signal<void()> sigDisconnectedFromRoot;
     Signal<void()> sigUpdated;
-    Signal<void()> sigPositionChanged;
-    Signal<void(Item* topItem, Item* prevTopParentItem)> sigPositionChanged2;
+    Signal<void()> sigTreePathChanged;
+    Signal<void()> sigTreePositionChanged;
+    Signal<void(Item* topItem, Item* prevTopParentItem)> sigTreePositionChanged2;
     Signal<void()> sigSubTreeChanged;
     Signal<void(bool on)> sigSelectionChanged;
     Signal<void(int checkId, bool on)> sigAnyCheckToggled;
@@ -119,15 +120,16 @@ public:
     Item* duplicateSubTreeIter(Item* duplicated, Item* duplicatedParent) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
     void justInsertChildItem(Item* newNextItem, Item* item);
-    bool checkNewPositionAcceptance(
+    bool checkNewTreePositionAcceptance(
         Item* newParentItem, Item* newNextItem, bool isManualOperation, vector<function<void()>>& callbacksWhenAdded);
-    bool checkNewPositionAcceptanceIter(bool isManualOperation, vector<function<void()>>& callbacksWhenAdded);
+    bool checkNewTreePositionAcceptanceIter(bool isManualOperation, vector<function<void()>>& callbacksWhenAdded);
     void collectSubTreeItems(vector<Item*>& items, Item* item);
     void callFuncOnConnectedToRoot();
     void justRemoveSelfFromParent();
     void doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted);
-    void callSlotsOnPositionChanged(Item* prevParentItem, Item* prevNextSibling);
-    void callSlotsOnPositionChangedIter(Item* topItem, Item* prevTopParentItem);
+    void notifySubTreeItemsOfTreePositionChange(Item* prevParentItem, Item* prevNextSibling);
+    void notifySubTreeItemsOfTreePositionChangeIter(
+        Item* topItem, Item* prevTopParentItem, Item* topPathChangedItem, bool isPathChanged = false);
     void addToItemsToEmitSigSubTreeChanged();
     static void emitSigSubTreeChanged();
     void emitSigDisconnectedFromRootForSubTree();
@@ -647,7 +649,8 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
     }
 
     vector<function<void()>> callbacksWhenAdded;
-    if(!item->impl->checkNewPositionAcceptance(self, newNextItem, isManualOperation, callbacksWhenAdded)){
+    if(!item->impl->checkNewTreePositionAcceptance(
+           self, newNextItem, isManualOperation, callbacksWhenAdded)){
         return false;
     }
 
@@ -696,7 +699,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
         /*
            The order to process the following notifications was modified on February 4, 2020.
            (The revision just before this modification is 2401bde85eb50340ea5ea1e915d1355fa6b85582.)
-           The order in which callSlotsOnPositionChanged is called was changed before
+           The order of calling notifySubTreeItemsOfTreePositionChange was changed to before
            notifyEventOnSubTreeAdded or notifyEventOnSubTreeMoved because Item::onPositionChanged
            is frequently used for initializing an item by itself, and the initialization outside
            the item should be processed after it. (There is a case where the condition is required.)
@@ -708,7 +711,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
             item->impl->callFuncOnConnectedToRoot();
         }
 
-        item->impl->callSlotsOnPositionChanged(prevParentItem, prevNextSibling);
+        item->impl->notifySubTreeItemsOfTreePositionChange(prevParentItem, prevNextSibling);
 
         if(isMoving){
             rootItem->notifyEventOnSubTreeMoved(item, orgSubTreeItems);
@@ -778,7 +781,7 @@ void Item::Impl::justInsertChildItem(Item* newNextItem, Item* item)
 }    
 
 
-bool Item::Impl::checkNewPositionAcceptance
+bool Item::Impl::checkNewTreePositionAcceptance
 (Item* newParentItem, Item* newNextItem, bool isManualOperation, vector<function<void()>>& callbacksWhenAdded)
 {
     auto currentParentItem = self->parent_;
@@ -789,7 +792,7 @@ bool Item::Impl::checkNewPositionAcceptance
     }
     newParentItem->impl->justInsertChildItem(newNextItem, self);
 
-    bool accepted = checkNewPositionAcceptanceIter(isManualOperation, callbacksWhenAdded);
+    bool accepted = checkNewTreePositionAcceptanceIter(isManualOperation, callbacksWhenAdded);
 
     justRemoveSelfFromParent();
     if(currentParentItem){
@@ -800,18 +803,18 @@ bool Item::Impl::checkNewPositionAcceptance
 }
 
 
-bool Item::Impl::checkNewPositionAcceptanceIter
+bool Item::Impl::checkNewTreePositionAcceptanceIter
 (bool isManualOperation, vector<function<void()>>& callbacksWhenAdded)
 {
     function<void()> callback;
-    if(!self->onNewPositionCheck(isManualOperation, callback)){
+    if(!self->onNewTreePositionCheck(isManualOperation, callback)){
         return false;
     }
     if(callback){
         callbacksWhenAdded.push_back(callback);
     }
     for(auto child = self->childItem(); child; child = child->nextItem()){
-        if(!child->impl->checkNewPositionAcceptanceIter(isManualOperation, callbacksWhenAdded)){
+        if(!child->impl->checkNewTreePositionAcceptanceIter(isManualOperation, callbacksWhenAdded)){
             return false;
         }
     }
@@ -819,7 +822,7 @@ bool Item::Impl::checkNewPositionAcceptanceIter
 }
 
 
-bool Item::onNewPositionCheck(bool isManualOperation, std::function<void()>& out_callbackWhenAdded)
+bool Item::onNewTreePositionCheck(bool isManualOperation, std::function<void()>& out_callbackWhenAdded)
 {
     return true;
 }
@@ -917,7 +920,7 @@ void Item::Impl::doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted
     if(rootItem){
         rootItem->notifyEventOnSubTreeRemoved(self, isMoving);
         if(!isMoving){
-            callSlotsOnPositionChanged(prevParent, prevNextSibling); // sigPositionChanged is also emitted
+            notifySubTreeItemsOfTreePositionChange(prevParent, prevNextSibling);
             emitSigDisconnectedFromRootForSubTree();
         }
     }
@@ -950,7 +953,7 @@ void Item::clearChildren()
 }
 
 
-void Item::Impl::callSlotsOnPositionChanged(Item* prevParentItem, Item* prevNextSibling)
+void Item::Impl::notifySubTreeItemsOfTreePositionChange(Item* prevParentItem, Item* prevNextSibling)
 {
     Item* newParentItem = self->parentItem();
 
@@ -968,9 +971,9 @@ void Item::Impl::callSlotsOnPositionChanged(Item* prevParentItem, Item* prevNext
         for(Item* sibling = self->nextItem(); sibling; sibling = sibling->nextItem()){
             changedItems.insert(sibling);
         }
-        for(Item* sibling = prevParentItem->childItem(); sibling; sibling = sibling->nextItem()){
+        for(Item* sibling = newParentItem->childItem(); sibling; sibling = sibling->nextItem()){
             if(changedItems.find(sibling) != changedItems.end()){
-                callSlotsOnPositionChangedIter(sibling, prevParentItem);
+                sibling->impl->notifySubTreeItemsOfTreePositionChangeIter(sibling, newParentItem, nullptr);
             }
         }
     } else {
@@ -983,31 +986,54 @@ void Item::Impl::callSlotsOnPositionChanged(Item* prevParentItem, Item* prevNext
             }
         }
         if(!isUnderPreviousYoungerSibling){
-            callSlotsOnPositionChangedIter(self, prevParentItem);
+            notifySubTreeItemsOfTreePositionChangeIter(self, prevParentItem, self);
         }
         // Younger siblings at the previous position
         for(Item* sibling = prevNextSibling; sibling; sibling = sibling->nextItem()){
-            sibling->impl->callSlotsOnPositionChangedIter(sibling, prevParentItem);
+            sibling->impl->notifySubTreeItemsOfTreePositionChangeIter(sibling, prevParentItem, self);
         }
         // Younger sibling at the new position
-        if(newParentItem){
+        if(!isUnderPreviousYoungerSibling && newParentItem){
             for(Item* sibling = self->nextItem(); sibling; sibling = sibling->nextItem()){
-                sibling->impl->callSlotsOnPositionChangedIter(sibling, newParentItem);
+                sibling->impl->notifySubTreeItemsOfTreePositionChangeIter(sibling, newParentItem, nullptr);
             }
         }
     }
 }
 
 
-void Item::Impl::callSlotsOnPositionChangedIter(Item* topItem, Item* prevTopParentItem)
+void Item::Impl::notifySubTreeItemsOfTreePositionChangeIter
+(Item* topItem, Item* prevTopParentItem, Item* topPathChangedItem, bool isPathChanged)
 {
-    self->onPositionChanged();
-    sigPositionChanged();
-    sigPositionChanged2(topItem, prevTopParentItem);
-
-    for(Item* child = self->childItem(); child; child = child->nextItem()){
-        child->impl->callSlotsOnPositionChangedIter(topItem, prevTopParentItem);
+    if(self == topPathChangedItem){
+        isPathChanged = true;
     }
+    self->onTreePositionChanged();
+    self->onPositionChanged();
+    if(isPathChanged){
+        self->onTreePathChanged();
+    }
+    sigTreePositionChanged();
+    sigTreePositionChanged2(topItem, prevTopParentItem);
+    if(isPathChanged){
+        sigTreePathChanged();
+    }
+    for(Item* child = self->childItem(); child; child = child->nextItem()){
+        child->impl->notifySubTreeItemsOfTreePositionChangeIter(
+            topItem, prevTopParentItem, topPathChangedItem, isPathChanged);
+    }
+}
+
+
+void Item::onTreePathChanged()
+{
+
+}
+
+
+void Item::onTreePositionChanged()
+{
+
 }
 
 
@@ -1067,15 +1093,27 @@ void Item::onDisconnectedFromRoot()
 }
 
 
-SignalProxy<void()> Item::sigPositionChanged()
+SignalProxy<void()> Item::sigTreePathChanged()
 {
-    return impl->sigPositionChanged;
+    return impl->sigTreePathChanged;
 }
 
 
-SignalProxy<void(Item* topItem, Item* prevTopParentItem)> Item::sigPositionChanged2()
+SignalProxy<void()> Item::sigTreePositionChanged()
 {
-    return impl->sigPositionChanged2;
+    return impl->sigTreePositionChanged;
+}
+
+
+SignalProxy<void()> Item::sigPositionChanged()
+{
+    return impl->sigTreePositionChanged;
+}
+
+
+SignalProxy<void(Item* topItem, Item* prevTopParentItem)> Item::sigTreePositionChanged2()
+{
+    return impl->sigTreePositionChanged2;
 }
 
 

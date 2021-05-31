@@ -492,7 +492,7 @@ void ItemTreeWidget::Impl::setLocalRootItem(Item* item)
             // the local root item may also be changed.
             // Check it in the following callback function.
             localRootItemConnection =
-                item->sigPositionChanged2().connect(
+                item->sigTreePositionChanged2().connect(
                     [&,item](Item* topItem, Item* prevTopParentItem){
                         if(!isProcessingSlotOnlocalRootItemPositionChanged){
                             isProcessingSlotOnlocalRootItemPositionChanged = true;

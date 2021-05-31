@@ -68,7 +68,8 @@ protected:
     virtual Item* doDuplicate() const override;
     virtual void onConnectedToRoot() override;
     virtual void onDisconnectedFromRoot() override;
-    virtual bool onNewPositionCheck(bool isManualOperation, std::function<void()>& out_callbackWhenAdded) override;
+    virtual bool onNewTreePositionCheck(
+        bool isManualOperation, std::function<void()>& out_callbackWhenAdded) override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:

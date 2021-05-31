@@ -68,12 +68,12 @@ public:
     Item* duplicateAll() const { return duplicateSubTree(); }
 
     const std::string& name() const { return name_; }
-    // Return true if the name is successfully updated or the item originally has the same name
+    //! \return true if the name is successfully updated or the item originally has the same name
     virtual bool setName(const std::string& name);
     virtual std::string displayName() const;
     void setDisplayNameModifier(std::function<std::string(const Item* item)> modifier);
     SignalProxy<void(const std::string& oldName)> sigNameChanged();
-    // This is used to notify the system of a displayName change
+    //! This function notifies the system of a displayName change
     void notifyNameChange();
 
     void setAttribute(Attribute attribute);
@@ -275,27 +275,38 @@ public:
     }
 
     /**
-       This signal is emitted when the position of this item in the item tree is changed.
-       Being added to the tree and being removed from the tree are also the events
-       to emit this signal.
-       This signal is also emitted for descendent items when the position of an ancestor
-       item is changed.
-       This signal is emitted before RootItem::sigTreeChanged();
+       This signal is emitted when the path from the root to this item in an item tree is changed.
+       The path changes include the addition or removal of this item to or from the item tree.
+       The item tree can contain or not contain the RootItem instance as the tree root.
+       Note that the signal is emitted before RootItem::sigTreeChanged().
     */
+    SignalProxy<void()> sigTreePathChanged();
+
+    /**
+       This signal is emitted when the position of this item in the item tree is changed.
+       In contrast to sigTreePathChanged, this signal is emitted when the order of the item
+       in the parent item is changed even if the path to the item is not changed.
+       Except for that, this signal is same as sigTreePathChanged.
+    */
+    SignalProxy<void()> sigTreePositionChanged();
+
+    /**
+       The arguments of this signal should be included in sigTreePositionChanged.
+       However, the current implementation of the signal template class does now allow the omission of
+       arguments in connecting a slot function and these arguments are not frequently used.
+       Therefore the signal with the arguments are defined separately from the signal without arguments.
+       If the Signal template class is improved so that it can omit arguments in the slot connection,
+       it is better to integrate the signals.
+       In any case, do not use this signal if you don't have a special reason.
+    */
+    SignalProxy<void(Item* topItem, Item* prevTopParentItem)> sigTreePositionChanged2();
+
+    [[deprecated("Use sigTreePositionChanged")]]
     SignalProxy<void()> sigPositionChanged();
 
     /**
-       The following signal name is temporary.
-       This is a variant of sigPositionChanged, and should be a standard sigunature.
-       When the template implementation of the Signal class is improved to connect to functions
-       omitting some arguments defined in a signal, this sigunare should replace the old
-       sigunature with no arguments.
-       Do not use this signal if you don't have a special reason because this function name
-       will be removed.
+       This signal is emitted when the structure or elements of the sub tree changes.
     */
-    SignalProxy<void(Item* topItem, Item* prevTopParentItem)> sigPositionChanged2();
-
-    // This signal that is emitted when the structure of the sub tree changes.
     SignalProxy<void()> sigSubTreeChanged();
 
     SignalProxy<void()> sigDisconnectedFromRoot();
@@ -321,18 +332,16 @@ public:
     std::vector<ItemAddon*> addons();
 
     /**
-       This function loads the data of the item from a file by using a pre-registered loading function.
-   
-       To make this function available, a loading function has to be registered to an ItemManager
-       in advance by calling the addLoader() or addLoaderAndSaver() function.  Otherwise,
-       this function cannot be used.
-       Note that this function should not be overloaded or overridden in the derived classes.
+       This function loads the data of the item from a file by using a registered FileIO object.
+       To make this function available, a FileIO object must be registered to an ItemManager
+       in advance with its registerFileIO function.
     */
     bool load(
         const std::string& filename, const std::string& format = std::string(),
         const Mapping* options = nullptr);
 
     /**
+       An overload version of the load function.
        @param parent specify this when the item is newly created one and will be attached to a parent item
        if loading succeeds.
     */
@@ -341,25 +350,22 @@ public:
         const Mapping* options = nullptr);
     
     /**
-       This function saves the data of the item to a file by using a pre-registered saving function.
-   
-       To make this function available, a saving function has to be registered to an ItemManager
-       in advance by calling the addSaver() or addLoaderAndSaver() function.  Otherwise,
-       this function cannot be used.
-       Note that this function should not be overloaded or overridden in the derived classes.
+       This function saves the data of the item to a file by using a registered FileIO object.
+       To make this function available, a FileIO object must be registered to an ItemManager
+       in advance with its registerFileIO function.
     */
     bool save(const std::string& filename, const std::string& format = std::string(),
               const Mapping* options = nullptr);
 
     /**
        This function save the data of the item to the file from which the data of the item has been loaded.
-       If the data has not been loaded from a file, a file save dialog opens and user specifies a file.
+       If the data has not been loaded from a file, a file save dialog to specify a file opens.
     */
     bool overwrite(bool forceOverwrite = false, const std::string& format = std::string());
 
-    // full path file name
+    //! Full path file name
     const std::string& filePath() const;
-    // file name without the directory
+    //! File name without the directory
     std::string fileName() const;
     const std::string& fileFormat() const;
     const Mapping* fileOptions() const;
@@ -404,21 +410,32 @@ protected:
     */
     virtual Item* doDuplicate(Item* duplicatedParentItem) const;
 
-    virtual bool onNewPositionCheck(bool isManualOperation, std::function<void()>& out_callbackWhenAdded);
+    virtual bool onNewTreePositionCheck(bool isManualOperation, std::function<void()>& out_callbackWhenAdded);
     virtual void onAddedToParent();
 
     /**
-       This function is called when the item position in the whole item tree is changed.
-       Note that this function is not called when the item is not connected to the root
-       even if the item is newly attached to another item that is not connected to the root.
-       For such items, the function is called for each item when the sub tree is connected
-       to the root.
+       This function is called at the same time as sigTreePathChanged.
+       The order in which it is called precedes the signal.
+       By overriding this function in a derived item class, you can implement the necessary processing
+       when the path in the item tree is changed.
+    */
+    virtual void onTreePathChanged();
+
+    /**
+       This function is similar to the onTreePathChanged function. The condition to call this function
+       is same as sigTreePositionChanged, and the order in which it is called precedes the signal.
+    */
+    virtual void onTreePositionChanged();
+
+    /**
+       \deprecated This function was replaced with onTreePositionChanged and onTreePathChanged is now available.
+       Please use either of those functions to implement the necessary processing.
     */
     virtual void onPositionChanged();
 
     /**
-       This function is called when the item has been connected to the tree including the root item.
-       Note that the onPositionChanged function is called after this function.
+       This function is called when the item has been connected to the item tree with RootItem as the root.
+       Note that this function is called before onTreePathChanged and onTreePositionChanged are called.
     */
     virtual void onConnectedToRoot();
 
@@ -426,17 +443,18 @@ protected:
     virtual void onDisconnectedFromRoot();
 
     /**
-       This function is called when a child item is about to added to this item.
+       This function is called when a child item is about to be added to this item.
+       By overriding this function, you can check a child item and prevent the item from being added
+       if necessary.
        \return false if the item cannot be accepted as a child item
        \note The childItem is not actually connected to the item when this function is called.
     */
     virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation);
 
     /**
-       Override this function to put properties of the item.
-       @note Please call doPutProperties() of the parent class in this function.
-       For example, when your class directly inherits the Item class,
-       call Item::doPutProperties(putProperty).
+       This function is used to put a standard properties of the item.
+       You can implement the standard properties by overriding this function.
+       \note The overridden function should call the same function of the parent class.
     */
     virtual void doPutProperties(PutPropertyFunction& putProperty);
 

@@ -91,11 +91,13 @@ void exportPyItems(py::module m)
         .def("notifyUpdate", &Item::notifyUpdate)
         .def_property_readonly("sigNameChanged", &Item::sigNameChanged)
         .def_property_readonly("sigUpdated", &Item::sigUpdated)
-        .def_property_readonly("sigPositionChanged", &Item::sigPositionChanged)
+        .def_property_readonly("sigTreePathChanged", &Item::sigTreePositionChanged)
+        .def_property_readonly("sigTreePositionChanged", &Item::sigTreePositionChanged)
         .def_property_readonly("sigDisconnectedFromRoot", &Item::sigDisconnectedFromRoot)
         .def_property_readonly("sigSubTreeChanged", &Item::sigSubTreeChanged)
 
         // deprecated
+        .def_property_readonly("sigPositionChanged", &Item::sigTreePositionChanged)
         .def("detachFromParentItem", &Item::removeFromParentItem)
         .def("insertChildItem",
              [](Item& self, Item* item, Item* nextItem, bool isManualOperation = false){
@@ -116,7 +118,7 @@ void exportPyItems(py::module m)
         .def("getFileFormat", &Item::fileFormat)
         .def("getSigNameChanged", &Item::sigNameChanged)
         .def("getSigUpdated", &Item::sigUpdated)
-        .def("getSigPositionChanged", &Item::sigPositionChanged)
+        .def("getSigPositionChanged", &Item::sigTreePositionChanged)
         .def("getSigDisconnectedFromRoot", &Item::sigDisconnectedFromRoot)
         .def("getSigSubTreeChanged", &Item::sigSubTreeChanged)
         ;
