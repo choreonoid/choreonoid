@@ -1303,7 +1303,7 @@ SimulatorItem::Impl::~Impl()
 }
 
 
-void SimulatorItem::onPositionChanged()
+void SimulatorItem::onTreePathChanged()
 {
     impl->worldItem = findOwnerItem<WorldItem>();
 }

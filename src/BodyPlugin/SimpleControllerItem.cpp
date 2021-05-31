@@ -268,7 +268,7 @@ Item* SimpleControllerItem::doDuplicate() const
 }
 
 
-void SimpleControllerItem::onPositionChanged()
+void SimpleControllerItem::onTreePathChanged()
 {
     bool isTargetBodyItemChanged = false;
     bool connected = isConnectedToRoot();

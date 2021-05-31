@@ -24,7 +24,7 @@ public:
 
 protected:
     virtual Item* doDuplicate() const override;
-    virtual void onPositionChanged() override;
+    virtual void onTreePathChanged() override;
     virtual void onDisconnectedFromRoot() override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

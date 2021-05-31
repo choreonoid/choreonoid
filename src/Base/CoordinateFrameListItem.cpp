@@ -176,7 +176,7 @@ Item* CoordinateFrameListItem::doDuplicate() const
 }
 
 
-void CoordinateFrameListItem::onPositionChanged()
+void CoordinateFrameListItem::onTreePositionChanged()
 {
     impl->notifyRegisteredItemsOfListAssociation(true);
 }
@@ -200,7 +200,7 @@ void CoordinateFrameListItem::Impl::notifyRegisteredItemsOfListAssociation(bool 
         do {
             auto p = listAssociationSignalInfoMap.find(item);
             if(p != listAssociationSignalInfoMap.end()){
-                weak_ref_ptr<Item> witem =item;
+                weak_ref_ptr<Item> witem = item;
                 auto& itemInfo = associatedItemInfoMap[witem];
                 if(!itemInfo.signalInfo){
                     auto& signalInfo = p->second;

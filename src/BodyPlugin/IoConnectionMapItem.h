@@ -31,7 +31,7 @@ public:
 
 protected:
     virtual Item* doDuplicate() const override;
-    virtual void onPositionChanged() override;
+    virtual void onTreePathChanged() override;
 
 private:
     class Impl;

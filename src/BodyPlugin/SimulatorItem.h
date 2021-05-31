@@ -232,7 +232,7 @@ protected:
     SimulatorItem(const std::string& name);
     SimulatorItem(const SimulatorItem& org);
 
-    virtual void onPositionChanged() override;
+    virtual void onTreePathChanged() override;
     virtual void onDisconnectedFromRoot() override;
 
     virtual void clearSimulation();

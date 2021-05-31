@@ -59,7 +59,7 @@ protected:
     MprProgramItemBase();
     MprProgramItemBase(const MprProgramItemBase& org);
     virtual Item* doDuplicate() const override;
-    virtual void onPositionChanged() override;
+    virtual void onTreePathChanged() override;
     virtual void onConnectedToRoot() override;
 
 private:

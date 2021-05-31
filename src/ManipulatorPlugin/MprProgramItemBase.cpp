@@ -143,7 +143,7 @@ bool MprProgramItemBase::setName(const std::string& name_)
 }
 
 
-void MprProgramItemBase::onPositionChanged()
+void MprProgramItemBase::onTreePathChanged()
 {
     auto ownerBodyItem = findOwnerItem<BodyItem>();
     if(ownerBodyItem != impl->targetBodyItem){

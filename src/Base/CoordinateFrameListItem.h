@@ -89,7 +89,7 @@ public:
 
 protected:
     virtual Item* doDuplicate() const override;
-    virtual void onPositionChanged() override;
+    virtual void onTreePositionChanged() override;
     virtual void onDisconnectedFromRoot() override;
     virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation) override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;

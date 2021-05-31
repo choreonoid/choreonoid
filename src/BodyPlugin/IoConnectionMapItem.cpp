@@ -98,7 +98,7 @@ Item* IoConnectionMapItem::Impl::findOwnerItem()
 }
 
 
-void IoConnectionMapItem::onPositionChanged()
+void IoConnectionMapItem::onTreePathChanged()
 {
     auto item = impl->lastOwnerItem.lock();
     if(!item || item != impl->findOwnerItem()){

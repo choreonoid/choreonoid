@@ -152,7 +152,7 @@ bool PoseSeqItem::setName(const std::string& name)
 }
 
 
-void PoseSeqItem::onPositionChanged()
+void PoseSeqItem::onTreePathChanged()
 {
     if(!sigInterpolationParametersChangedConnection.connected()){
         sigInterpolationParametersChangedConnection =

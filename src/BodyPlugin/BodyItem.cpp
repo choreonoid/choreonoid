@@ -405,7 +405,7 @@ void BodyItem::Impl::doAssign(Item* srcItem)
 }
 
 
-void BodyItem::onPositionChanged()
+void BodyItem::onTreePathChanged()
 {
     auto worldItem = findOwnerItem<WorldItem>();
     if(!worldItem){

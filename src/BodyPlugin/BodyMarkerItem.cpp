@@ -145,7 +145,7 @@ Item* BodyMarkerItem::doDuplicate() const
 }
 
 
-void BodyMarkerItem::onPositionChanged()
+void BodyMarkerItem::onTreePathChanged()
 {
     impl->setBodyItem(findOwnerItem<BodyItem>());
 }

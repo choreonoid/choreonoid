@@ -167,7 +167,7 @@ public:
     SgUpdate update;
 
     SensorVisualizerItemImpl(SensorVisualizerItem* self);
-    void onPositionChanged();
+    void onTreePathChanged();
 };
 
 }
@@ -226,15 +226,15 @@ Item* SensorVisualizerItem::doDuplicate() const
 }
 
 
-void SensorVisualizerItem::onPositionChanged()
+void SensorVisualizerItem::onTreePathChanged()
 {
     if(parentItem()){
-        impl->onPositionChanged();
+        impl->onTreePathChanged();
     }
 }
 
 
-void SensorVisualizerItemImpl::onPositionChanged()
+void SensorVisualizerItemImpl::onTreePathChanged()
 {
     BodyItem* newBodyItem = self->findOwnerItem<BodyItem>();
     if(newBodyItem != bodyItem){

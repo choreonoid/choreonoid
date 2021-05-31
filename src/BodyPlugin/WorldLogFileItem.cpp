@@ -650,7 +650,7 @@ void WorldLogFileItem::Impl::updateBodyInfos()
 }
 
 
-void WorldLogFileItem::onPositionChanged()
+void WorldLogFileItem::onTreePathChanged()
 {
     WorldItem* worldItem = findOwnerItem<WorldItem>();
     if(!worldItem){

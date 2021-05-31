@@ -336,7 +336,7 @@ SgNode* BodyTrackingCameraItem::getScene()
 }
 
 
-void BodyTrackingCameraItem::onPositionChanged()
+void BodyTrackingCameraItem::onTreePathChanged()
 {
     impl->cameraTransform->setBodyItem(findOwnerItem<BodyItem>());
 }

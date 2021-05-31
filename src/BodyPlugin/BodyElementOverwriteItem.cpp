@@ -59,7 +59,7 @@ bool BodyElementOverwriteItem::onCheckNewOverwritePosition(bool isManualOperatio
 }
 
 
-void BodyElementOverwriteItem::onPositionChanged()
+void BodyElementOverwriteItem::onTreePathChanged()
 {
     if(bodyItem_){
         if(!parentItem()){
