@@ -238,7 +238,10 @@ void MprTagTraceStatementPanel::Impl::onTagGroupComboActivated(int comboIndex)
     auto statement = self->currentStatement<MprTagTraceStatement>();
     auto name = tagGroupCombo.currentText().toStdString();
     if(name != statement->tagGroupName()){
+        // Clear the current tag group to force update
+        statement->setTagGroup(nullptr, false, false);
         statement->setTagGroupName(name);
+        self->currentProgramItem()->resolveStatementReferences(statement);
         touchupPositionAndFrames();
     }
 }
@@ -247,12 +250,13 @@ void MprTagTraceStatementPanel::Impl::onTagGroupComboActivated(int comboIndex)
 void MprTagTraceStatementPanel::Impl::touchupPositionAndFrames()
 {
     auto statement = self->currentStatement<MprTagTraceStatement>();
-
-    // Clear the current tag group to force update
-    statement->setTagGroup(nullptr, false, false);
-    
-    if(!self->currentProgramItem()->resolveStatementReferences(statement)){
-        statement->updateTagTraceProgram();
-        statement->notifyUpdate();
+    if(auto kinematicsKit = self->currentProgramItem()->kinematicsKit()){
+        statement->updateFramesWithCurrentFrames(kinematicsKit);
+        if(auto tagGroupItem = PositionTagGroupItem::findItemOf(statement->tagGroup())){
+            statement->updateTagGroupPositionWithGlobalCoordinate(
+                kinematicsKit, tagGroupItem->originPosition());
+        }
     }
+    statement->updateTagTraceProgram();
+    statement->notifyUpdate();
 }

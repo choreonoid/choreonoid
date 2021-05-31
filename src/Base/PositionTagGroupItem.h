@@ -15,6 +15,7 @@ class CNOID_EXPORT PositionTagGroupItem : public Item, public RenderableItem, pu
 {
 public:
     static void initializeClass(ExtensionManager* ext);
+    static PositionTagGroupItem* findItemOf(PositionTagGroup* tagGroup);
 
     PositionTagGroupItem();
     PositionTagGroupItem(const PositionTagGroupItem& org);

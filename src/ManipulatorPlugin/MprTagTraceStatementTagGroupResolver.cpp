@@ -140,16 +140,7 @@ void Resolver::setNewTagGroup(StatementInfo* info, PositionTagGroupItem* tagGrou
 {
     auto statement = info->statement;
 
-    statement->setTagGroup(tagGroupItem->tagGroup(), false, false);
-
-    if(auto kinematicsKit = info->programInfo->programItem->kinematicsKit()){
-        statement->updateTagGroupPositionWithGlobalCoordinate(
-            kinematicsKit, tagGroupItem->originPosition());
-    } else {
-        statement->setTagGroupPosition(Isometry3::Identity());
-    }
-    
-    statement->updateTagTraceProgram();
+    statement->setTagGroup(tagGroupItem->tagGroup(), false, true);
     statement->notifyUpdate();
 
     info->tagGroupConnections.add(
