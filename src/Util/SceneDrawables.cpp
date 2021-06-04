@@ -262,6 +262,15 @@ SgTextureTransform* SgTexture::setTextureTransform(SgTextureTransform* textureTr
 }
 
 
+SgTextureTransform* SgTexture::getOrCreateTextureTransform()
+{
+    if(!textureTransform_){
+        setTextureTransform(new SgTextureTransform);
+    }
+    return textureTransform_;
+}
+
+
 SgMeshBase::SgMeshBase()
 {
     setAttribute(Composite | Geometry);
@@ -777,24 +786,30 @@ SgPlot::SgPlot(int classId)
 SgPlot::SgPlot(const SgPlot& org, CloneMap* cloneMap)
     : SgNode(org)
 {
+    bbox = org.bbox;
+
     if(cloneMap && checkNonNodeCloning(*cloneMap)){
         if(org.vertices()){
             setVertices(cloneMap->getClone<SgVertexArray>(org.vertices()));
         }
-        if(org.colors()){
-            setColors(cloneMap->getClone<SgColorArray>(org.colors()));
-        }
         if(org.material()){
             setMaterial(cloneMap->getClone<SgMaterial>(org.material()));
         }
+        if(org.colors()){
+            setColors(cloneMap->getClone<SgColorArray>(org.colors()));
+        }
+        if(org.normals()){
+            setNormals(cloneMap->getClone<SgNormalArray>(org.normals()));
+        }
     } else {
         setVertices(const_cast<SgVertexArray*>(org.vertices()));
-        setColors(const_cast<SgColorArray*>(org.colors()));
         setMaterial(const_cast<SgMaterial*>(org.material()));
+        setColors(const_cast<SgColorArray*>(org.colors()));
+        setNormals(const_cast<SgNormalArray*>(org.normals()));
     }
-    normalIndices_ = org.normalIndices_;
+    
     colorIndices_ = org.colorIndices_;
-    bbox = org.bbox;
+    normalIndices_ = org.normalIndices_;
 }
 
 
@@ -803,14 +818,14 @@ SgPlot::~SgPlot()
     if(vertices_){
         vertices_->removeParent(this);
     }
-    if(normals_){
-        normals_->removeParent(this);
+    if(material_){
+        material_->removeParent(this);
     }
     if(colors_){
         colors_->removeParent(this);
     }
-    if(material_){
-        material_->removeParent(this);
+    if(normals_){
+        normals_->removeParent(this);
     }
 }    
 
@@ -820,16 +835,18 @@ int SgPlot::numChildObjects() const
     int n = 0;
     if(vertices_) ++n;
     if(colors_) ++n;
+    if(normals_) ++n;
     return n;
 }
     
 
 SgObject* SgPlot::childObject(int index)
 {
-    SgObject* objects[2] = { 0, 0 };
+    SgObject* objects[3] = { nullptr, nullptr, nullptr };
     int i = 0;
     if(vertices_) objects[i++] = vertices_.get();
     if(colors_) objects[i++] = colors_.get();
+    if(normals_) objects[i++] = normals_.get();
     return objects[index];
 }
     
@@ -865,15 +882,16 @@ void SgPlot::clear()
     if(vertices_){
         vertices_->clear();
     }
-    if(normals_){
-        normals_->clear();
-    }
-    normalIndices_.clear();
     
     if(colors_){
         colors_->clear();
     }
     colorIndices_.clear();
+
+    if(normals_){
+        normals_->clear();
+    }
+    normalIndices_.clear();
 }
 
 
@@ -899,29 +917,6 @@ SgVertexArray* SgPlot::getOrCreateVertices(int size)
         vertices_->resize(size);
     }
     return vertices_;
-}
-
-
-SgNormalArray* SgPlot::setNormals(SgNormalArray* normals)
-{
-    if(normals_){
-        normals_->removeParent(this);
-    }
-    normals_ = normals;
-    if(normals){
-        normals->setAttribute(Appearance);
-        normals->addParent(this);
-    }
-    return normals;
-}
-
-
-SgNormalArray* SgPlot::getOrCreateNormals()
-{
-    if(!normals_){
-        setNormals(new SgNormalArray);
-    }
-    return normals_;
 }
 
 
@@ -972,6 +967,29 @@ SgColorArray* SgPlot::getOrCreateColors(int size)
 }
 
 
+SgNormalArray* SgPlot::setNormals(SgNormalArray* normals)
+{
+    if(normals_){
+        normals_->removeParent(this);
+    }
+    normals_ = normals;
+    if(normals){
+        normals->setAttribute(Appearance);
+        normals->addParent(this);
+    }
+    return normals;
+}
+
+
+SgNormalArray* SgPlot::getOrCreateNormals()
+{
+    if(!normals_){
+        setNormals(new SgNormalArray);
+    }
+    return normals_;
+}
+
+
 SgPointSet::SgPointSet(int classId)
     : SgPlot(classId)
 {
@@ -1015,7 +1033,7 @@ SgLineSet::SgLineSet()
 
 SgLineSet::SgLineSet(const SgLineSet& org, CloneMap* cloneMap)
     : SgPlot(org, cloneMap),
-      lineVertices_(org.lineVertices_)
+      lineVertexIndices_(org.lineVertexIndices_)
 {
     lineWidth_ = org.lineWidth_;
 }

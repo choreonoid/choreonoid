@@ -3270,10 +3270,10 @@ SgLineSet* SceneWidget::Impl::createGrid(int index)
     } while(x < half);
 
     const int n = vertices.size();
-    SgIndexArray& lineVertices = grid->lineVertices();
-    lineVertices.resize(n);
+    SgIndexArray& vertexIndices = grid->lineVertexIndices();
+    vertexIndices.resize(n);
     for(int i=0; i < n; ++i){
-        lineVertices[i] = i;
+        vertexIndices[i] = i;
     }
 
     return grid;

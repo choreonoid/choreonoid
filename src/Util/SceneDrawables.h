@@ -153,6 +153,7 @@ public:
     SgTextureTransform* textureTransform() { return textureTransform_; }
     const SgTextureTransform* textureTransform() const { return textureTransform_; }
     SgTextureTransform* setTextureTransform(SgTextureTransform* textureTransform);
+    SgTextureTransform* getOrCreateTextureTransform();
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
@@ -595,15 +596,6 @@ public:
     SgMaterial* setMaterial(SgMaterial* material);
     SgMaterial* getOrCreateMaterial();
         
-    bool hasNormals() const { return (normals_ && !normals_->empty()); }
-    SgNormalArray* normals() { return normals_; }
-    const SgNormalArray* normals() const { return normals_; }
-    SgNormalArray* setNormals(SgNormalArray* normals);
-    SgVertexArray* getOrCreateNormals();
-        
-    const SgIndexArray& normalIndices() const { return normalIndices_; }
-    SgIndexArray& normalIndices() { return normalIndices_; }
-
     bool hasColors() const { return (colors_ && !colors_->empty()); }
     SgColorArray* colors() { return colors_; }
     const SgColorArray* colors() const { return colors_; }
@@ -613,14 +605,29 @@ public:
     const SgIndexArray& colorIndices() const { return colorIndices_; }
     SgIndexArray& colorIndices() { return colorIndices_; }
 
+    /**
+       The following normal data is usually not used for rendering lines or points,
+       but it is sometimes useful if the normal data can be contained in this object.
+       For example, there may be a file format that has normal data and you may want to
+       keep them, or there may be a library to estimate surface normals from point
+       cloud data.
+    */
+    bool hasNormals() const { return (normals_ && !normals_->empty()); }
+    SgNormalArray* normals() { return normals_; }
+    const SgNormalArray* normals() const { return normals_; }
+    SgNormalArray* setNormals(SgNormalArray* normals);
+    SgVertexArray* getOrCreateNormals();
+    const SgIndexArray& normalIndices() const { return normalIndices_; }
+    SgIndexArray& normalIndices() { return normalIndices_; }
+
 private:
     BoundingBox bbox;
     SgVertexArrayPtr vertices_;
-    SgNormalArrayPtr normals_;
-    SgIndexArray normalIndices_;
+    SgMaterialPtr material_;
     SgColorArrayPtr colors_;
     SgIndexArray colorIndices_;
-    SgMaterialPtr material_;
+    SgNormalArrayPtr normals_;
+    SgIndexArray normalIndices_;
 };
 
 typedef ref_ptr<SgPlot> SgPlotPtr;
@@ -656,39 +663,47 @@ public:
     SgLineSet();
     SgLineSet(const SgLineSet& org, CloneMap* cloneMap = nullptr);
 
-    const SgIndexArray& lineVertices() const { return lineVertices_; }
-    SgIndexArray& lineVertices() { return lineVertices_; }
+    const SgIndexArray& lineVertexIndices() const { return lineVertexIndices_; }
+    SgIndexArray& lineVertexIndices() { return lineVertexIndices_; }
 
-    int numLines() const { return static_cast<int>(lineVertices_.size()) / 2; }
-    void setNumLines(int n) { lineVertices_.resize(n * 2); }
-    void reserveNumLines(int n) { lineVertices_.reserve(n * 2); }
-    void clearLines() { lineVertices_.clear(); }
+    //! \deprecated Use lineVertexIndices()
+    [[deprecated("Use lineVertexIndices()")]]
+    const SgIndexArray& lineVertices() const { return lineVertexIndices_; }
+
+    [[deprecated("Use lineVertexIndices()")]]
+    //! \deprecated Use lineVertexIndices()
+    SgIndexArray& lineVertices() { return lineVertexIndices_; }
+
+    int numLines() const { return static_cast<int>(lineVertexIndices_.size()) / 2; }
+    void setNumLines(int n) { lineVertexIndices_.resize(n * 2); }
+    void reserveNumLines(int n) { lineVertexIndices_.reserve(n * 2); }
+    void clearLines() { lineVertexIndices_.clear(); }
 
     typedef Eigen::Map<Array2i> LineRef;
     LineRef line(int index){
-        return LineRef(&lineVertices_[index * 2]);
+        return LineRef(&lineVertexIndices_[index * 2]);
     }
 
     typedef Eigen::Map<const Array2i> ConstLineRef;
     ConstLineRef line(int index) const {
-        return ConstLineRef(&lineVertices_[index * 2]);
+        return ConstLineRef(&lineVertexIndices_[index * 2]);
     }
 
     void setLine(int index, int v0, int v1){
         const int i = index * 2;
-        lineVertices_[i+0] = v0;
-        lineVertices_[i+1] = v1;
+        lineVertexIndices_[i+0] = v0;
+        lineVertexIndices_[i+1] = v1;
     }
 
     LineRef addLine(){
-        const size_t s = lineVertices_.size();
-        lineVertices_.resize(s + 2);
-        return LineRef(&lineVertices_[s]);
+        const size_t s = lineVertexIndices_.size();
+        lineVertexIndices_.resize(s + 2);
+        return LineRef(&lineVertexIndices_[s]);
     }
 
     void addLine(int v0, int v1){
-        lineVertices_.push_back(v0);
-        lineVertices_.push_back(v1);
+        lineVertexIndices_.push_back(v0);
+        lineVertexIndices_.push_back(v1);
     }
 
     void resizeColorIndicesForNumLines(int n) {
@@ -712,7 +727,7 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
-    SgIndexArray lineVertices_;
+    SgIndexArray lineVertexIndices_;
     float lineWidth_;
 };
 

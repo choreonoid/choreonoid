@@ -560,10 +560,10 @@ void SceneGraphViewImpl::updateSelectedMarker(SgLineSet* marker)
     }
 
     const int n = vertices.size();
-    SgIndexArray& lineVertices = marker->lineVertices();
-    lineVertices.resize(n);
+    SgIndexArray& vertexIndices = marker->lineVertexIndices();
+    vertexIndices.resize(n);
     for(int i=0; i < n; ++i){
-        lineVertices[i] = i;
+        vertexIndices[i] = i;
     }
 
     marker->notifyUpdate();

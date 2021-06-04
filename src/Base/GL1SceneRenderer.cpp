@@ -1683,8 +1683,8 @@ void GL1SceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
 
 void GL1SceneRenderer::Impl::setupLineSetResource(SgLineSet* lineSet, VertexResource* resource)
 {
-    const auto& lineVertices = lineSet->lineVertices();
-    const int totalNumVertices = lineVertices.size();
+    const auto& vertexIndices = lineSet->lineVertexIndices();
+    const int totalNumVertices = vertexIndices.size();
 
     const SgVertexArray& orgVertices = *lineSet->vertices();
     SgVertexArray& vertices = tmpbuf->vertices;
@@ -1706,7 +1706,7 @@ void GL1SceneRenderer::Impl::setupLineSetResource(SgLineSet* lineSet, VertexReso
     }
 
     for(size_t i=0; i < totalNumVertices; ++i){
-        const int orgVertexIndex = lineVertices[i];
+        const int orgVertexIndex = vertexIndices[i];
         vertices.push_back(orgVertices[orgVertexIndex]);
         if(pNormals){
             if(lineSet->normalIndices().empty()){

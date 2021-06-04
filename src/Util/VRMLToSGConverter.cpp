@@ -1328,8 +1328,8 @@ SgNode* VRMLToSGConverterImpl::convertLineSet(VRMLIndexedLineSet* vLineSet)
         const int numOrgColorIndices = orgColorIndices.size();
         bool doWarning = false;
         SgIndexArray& colorIndices = lineSet->colorIndices();
-        const SgIndexArray& lineVertices = lineSet->lineVertices();
-        for(size_t i=0; i < lineVertices.size(); ++i){
+        const SgIndexArray& vertexIndices = lineSet->lineVertexIndices();
+        for(size_t i=0; i < vertexIndices.size(); ++i){
             int orgPos = newColorPosToOrgColorPosMap[i];
             if(orgPos >= numOrgColorIndices){
                 orgPos = numOrgColorIndices - 1;

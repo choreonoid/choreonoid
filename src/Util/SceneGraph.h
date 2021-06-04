@@ -397,8 +397,8 @@ public:
         T_.linear() = R.template cast<Isometry3::Scalar>();
     }
     template<typename T>
-    void setRotation(const Eigen::AngleAxis<T>& a) {
-        T_.linear() = a.template cast<Isometry3::Scalar>().toRotationMatrix();
+    void setRotation(const Eigen::AngleAxis<T>& aa) {
+        T_.linear() = aa.template cast<Isometry3::Scalar>().toRotationMatrix();
     }
     template<typename T>
     void setRotation(const Eigen::Quaternion<T>& q) {
@@ -487,8 +487,8 @@ public:
         T_.linear() = M.template cast<Affine3::Scalar>();
     }
     template<typename T>
-        void setLinear(const Eigen::AngleAxis<T>& a) {
-        T_.linear() = a.template cast<Affine3::Scalar>().toRotationMatrix();
+        void setLinear(const Eigen::AngleAxis<T>& aa) {
+        T_.linear() = aa.template cast<Affine3::Scalar>().toRotationMatrix();
     }
     template<typename Derived>
         void setTranslation(const Eigen::MatrixBase<Derived>& p) {
