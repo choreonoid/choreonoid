@@ -539,9 +539,9 @@ void MessageView::Impl::put(const std::string& message, bool doLF, bool doNotify
     } else {
         MessageViewEvent* event;
         if(isMovable){
-            event = new MessageViewEvent(std::move(message), doLF, doNotify, doFlush);
+            event = new MessageViewEvent(std::move(message), doLF, doNotify, false);
         } else {
-            event = new MessageViewEvent(message, doLF, doNotify, doFlush);
+            event = new MessageViewEvent(message, doLF, doNotify, false);
         }
         QCoreApplication::postEvent(self, event, Qt::NormalEventPriority);
     }

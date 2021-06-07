@@ -72,7 +72,7 @@ public:
     
     void clear();
       
-    std::ostream& cout(bool doFlush = false);
+    std::ostream& cout(bool doFlush = true);
 
     void beginStdioRedirect();
     void endStdioRedirect();
@@ -90,7 +90,7 @@ private:
 
 #ifndef CNOID_BASE_MVOUT_DECLARED
 #define CNOID_BASE_MVOUT_DECLARED
-CNOID_EXPORT std::ostream& mvout(bool doFlush = false);
+CNOID_EXPORT std::ostream& mvout(bool doFlush = true);
 #endif
 
 CNOID_EXPORT void showMessageBox(const std::string& message);

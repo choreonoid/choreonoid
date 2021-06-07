@@ -46,14 +46,15 @@ inline long lround(double x) {
     return static_cast<long>((x > 0.0) ? floor(x + 0.5) : ceil(x -0.5));
 }
 #endif
+
 }
 
 namespace cnoid {
 
-class KinematicFaultCheckerImpl : public Dialog
+class KinematicFaultChecker::Impl : public Dialog
 {
 public:
-    MessageView& mes;
+    MessageView* mv;
     std::ostream& os;
         
     CheckBox positionCheck;
@@ -83,18 +84,19 @@ public:
     double translationMargin;
     double velocityLimitRatio;
 
-    KinematicFaultCheckerImpl();
+    Impl();
     bool store(Archive& archive);
     void restore(const Archive& archive);
     void apply();
     int checkFaults(
-        BodyItem* bodyItem, BodyMotionItem* motionItem, std::ostream& os,
+        BodyItem* bodyItem, BodyMotionItem* motionItem,
         bool checkPosition, bool checkVelocity, bool checkCollision,
         vector<bool> linkSelection, double beginningTime, double endingTime);
-    void putJointPositionFault(int frame, Link* joint, std::ostream& os);
-    void putJointVelocityFault(int frame, Link* joint, std::ostream& os);
-    void putSelfCollision(Body* body, int frame, const CollisionPair& collisionPair, std::ostream& os);
+    void putJointPositionFault(int frame, Link* joint);
+    void putJointVelocityFault(int frame, Link* joint);
+    void putSelfCollision(Body* body, int frame, const CollisionPair& collisionPair);
 };
+
 }
 
 
@@ -124,7 +126,7 @@ KinematicFaultChecker* KinematicFaultChecker::instance()
 
 KinematicFaultChecker::KinematicFaultChecker()
 {
-    impl = new KinematicFaultCheckerImpl();
+    impl = new Impl;
 }
 
 
@@ -134,9 +136,9 @@ KinematicFaultChecker::~KinematicFaultChecker()
 }
 
 
-KinematicFaultCheckerImpl::KinematicFaultCheckerImpl()
-    : mes(*MessageView::mainInstance()),
-      os(mes.cout())
+KinematicFaultChecker::Impl::Impl()
+    : mv(MessageView::mainInstance()),
+      os(mv->cout())
 {
     setWindowTitle(_("Kinematic Fault Checker"));
     
@@ -232,7 +234,7 @@ KinematicFaultCheckerImpl::KinematicFaultCheckerImpl()
 }
 
 
-bool KinematicFaultCheckerImpl::store(Archive& archive)
+bool KinematicFaultChecker::Impl::store(Archive& archive)
 {
     archive.write("checkJointPositions", positionCheck.isChecked());
     archive.write("angleMargin", angleMarginSpin.value());
@@ -248,7 +250,7 @@ bool KinematicFaultCheckerImpl::store(Archive& archive)
 }
 
 
-void KinematicFaultCheckerImpl::restore(const Archive& archive)
+void KinematicFaultChecker::Impl::restore(const Archive& archive)
 {
     positionCheck.setChecked(archive.get("checkJointPositions", positionCheck.isChecked()));
     angleMarginSpin.setValue(archive.get("angleMargin", angleMarginSpin.value()));
@@ -270,20 +272,20 @@ void KinematicFaultCheckerImpl::restore(const Archive& archive)
 }
 
 
-void KinematicFaultCheckerImpl::apply()
+void KinematicFaultChecker::Impl::apply()
 {
     auto items = RootItem::instance()->selectedItems<BodyMotionItem>();
     if(items.empty()){
-        mes.notify(_("No BodyMotionItems are selected."));
+        mv->notify(_("No BodyMotionItems are selected."));
     } else {
         for(size_t i=0; i < items.size(); ++i){
             BodyMotionItem* motionItem = items.get(i);
             BodyItem* bodyItem = motionItem->findOwnerItem<BodyItem>();
             if(!bodyItem){
-                mes.notify(format(_("{} is not owned by any BodyItem. Check skiped."), motionItem->displayName()));
+                mv->notify(format(_("{} is not owned by any BodyItem. Check skiped."), motionItem->displayName()));
             } else {
-                mes.putln();
-                mes.notify(format(_("Applying the Kinematic Fault Checker to {} ..."),
+                mv->putln();
+                mv->notify(format(_("Applying the Kinematic Fault Checker to {} ..."),
                                   motionItem->headItem()->displayName()));
                 
                 vector<bool> linkSelection;
@@ -305,7 +307,7 @@ void KinematicFaultCheckerImpl::apply()
                     endingTime = timeBar->maxTime();
                 }
                 
-                int n = checkFaults(bodyItem, motionItem, mes.cout(),
+                int n = checkFaults(bodyItem, motionItem,
                                     positionCheck.isChecked(),
                                     velocityCheck.isChecked(),
                                     collisionCheck.isChecked(),
@@ -314,12 +316,12 @@ void KinematicFaultCheckerImpl::apply()
                 
                 if(n > 0){
                     if(n == 1){
-                        mes.notify(_("A fault has been detected."));
+                        mv->notify(_("A fault has been detected."));
                     } else {
-                        mes.notify(format(_("{} faults have been detected."), n));
+                        mv->notify(format(_("{} faults have been detected."), n));
                     }
                 } else {
-                    mes.notify(_("No faults have been detected."));
+                    mv->notify(_("No faults have been detected."));
                 }
             }
         }
@@ -331,16 +333,16 @@ void KinematicFaultCheckerImpl::apply()
    @return Number of detected faults
 */
 int KinematicFaultChecker::checkFaults
-(BodyItem* bodyItem, BodyMotionItem* motionItem, std::ostream& os, double beginningTime, double endingTime)
+(BodyItem* bodyItem, BodyMotionItem* motionItem, double beginningTime, double endingTime)
 {
     vector<bool> linkSelection(bodyItem->body()->numLinks(), true);
     return impl->checkFaults(
-        bodyItem, motionItem, os, true, true, true, linkSelection, beginningTime, endingTime);
+        bodyItem, motionItem, true, true, true, linkSelection, beginningTime, endingTime);
 }
 
 
-int KinematicFaultCheckerImpl::checkFaults
-(BodyItem* bodyItem, BodyMotionItem* motionItem, std::ostream& os,
+int KinematicFaultChecker::Impl::checkFaults
+(BodyItem* bodyItem, BodyMotionItem* motionItem,
  bool checkPosition, bool checkVelocity, bool checkCollision, vector<bool> linkSelection,
  double beginningTime, double endingTime)
 {
@@ -416,14 +418,14 @@ int KinematicFaultCheckerImpl::checkFaults
                         fault = (q > (joint->q_upper() - translationMargin) || q < (joint->q_lower() + translationMargin));
                     }
                     if(fault){
-                        putJointPositionFault(frame, joint, os);
+                        putJointPositionFault(frame, joint);
                     }
                 }
                 if(checkVelocity){
                     double dq = (qseq->at(nextFrame, i) - qseq->at(prevFrame, i)) / stepRatio2;
                     joint->dq() = dq;
                     if(dq > (joint->dq_upper() * velocityLimitRatio) || dq < (joint->dq_lower() * velocityLimitRatio)){
-                        putJointVelocityFault(frame, joint, os);
+                        putJointVelocityFault(frame, joint);
                     }
                 }
             }
@@ -460,7 +462,7 @@ int KinematicFaultCheckerImpl::checkFaults
 
             bodyCollisionDetector.detectCollisions(
                 [&](const CollisionPair& collisionPair){
-                    putSelfCollision(body, frame, collisionPair, os);
+                    putSelfCollision(body, frame, collisionPair);
                 });
         }
     }
@@ -473,7 +475,7 @@ int KinematicFaultCheckerImpl::checkFaults
 }
 
 
-void KinematicFaultCheckerImpl::putJointPositionFault(int frame, Link* joint, std::ostream& os)
+void KinematicFaultChecker::Impl::putJointPositionFault(int frame, Link* joint)
 {
     if(frame > lastPosFaultFrames[joint->jointId()] + 1){
         double q, l, u, m;
@@ -503,7 +505,7 @@ void KinematicFaultCheckerImpl::putJointPositionFault(int frame, Link* joint, st
 }
 
 
-void KinematicFaultCheckerImpl::putJointVelocityFault(int frame, Link* joint, std::ostream& os)
+void KinematicFaultChecker::Impl::putJointVelocityFault(int frame, Link* joint)
 {
     if(frame > lastVelFaultFrames[joint->jointId()] + 1){
         double dq, l, u;
@@ -529,7 +531,7 @@ void KinematicFaultCheckerImpl::putJointVelocityFault(int frame, Link* joint, st
 }
 
 
-void KinematicFaultCheckerImpl::putSelfCollision(Body* body, int frame, const CollisionPair& collisionPair, std::ostream& os)
+void KinematicFaultChecker::Impl::putSelfCollision(Body* body, int frame, const CollisionPair& collisionPair)
 {
     bool putMessage = false;
     GeometryPair gPair(collisionPair.geometries());

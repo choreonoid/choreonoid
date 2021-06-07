@@ -483,7 +483,7 @@ private:
 
 #ifndef CNOID_BASE_MVOUT_DECLARED
 #define CNOID_BASE_MVOUT_DECLARED
-CNOID_EXPORT std::ostream& mvout(bool doFlush = false);
+CNOID_EXPORT std::ostream& mvout(bool doFlush = true);
 #endif
 
 }

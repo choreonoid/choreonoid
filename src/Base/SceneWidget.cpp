@@ -45,6 +45,7 @@
 #include <QPainter>
 #include <fmt/format.h>
 #include <set>
+#include <iostream>
 #include "gettext.h"
 
 #ifdef _WIN32
@@ -202,7 +203,6 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     SceneWidget* self;
-    ostream& os;
 
     SceneWidgetRootPtr sceneRoot;
     SgUnpickableGroupPtr systemGroup;
@@ -521,7 +521,6 @@ SceneWidget::SceneWidget(QWidget* parent)
 SceneWidget::Impl::Impl(SceneWidget* self)
     : QOpenGLWidget(self),
       self(self),
-      os(MessageView::mainInstance()->cout()),
       sceneRoot(new SceneWidgetRoot(self)),
       systemGroup(sceneRoot->systemGroup),
       emitSigStateChangedLater(std::ref(sigStateChanged)),
@@ -540,7 +539,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
         glslRenderer->setLowMemoryConsumptionMode(isLowMemoryConsumptionMode);
     }
         
-    renderer->setOutputStream(os);
+    renderer->setOutputStream(MessageView::instance()->cout(false));
     renderer->enableUnusedResourceCheck(true);
     renderer->sigCurrentCameraChanged().connect([&](){ onCurrentCameraChanged(); });
     renderer->setCurrentCameraAutoRestorationMode(true);
@@ -753,7 +752,7 @@ QWidget* SceneWidget::indicator()
 void SceneWidget::Impl::initializeGL()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidget::Impl::initializeGL()" << endl;
+        cout << "SceneWidget::Impl::initializeGL()" << endl;
     }
 
     renderer->setDefaultFramebufferObject(defaultFramebufferObject());
@@ -766,7 +765,8 @@ void SceneWidget::Impl::initializeGL()
             }
         }
     } else {
-        os << "OpenGL initialization failed." << endl;
+        MessageView::instance()->putln(
+            _("OpenGL initialization failed."), MessageView::Error);
         // This view shoulbe be disabled when the glew initialization is failed.
     }
 }
@@ -775,7 +775,7 @@ void SceneWidget::Impl::initializeGL()
 void SceneWidget::Impl::resizeGL(int width, int height)
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidget::Impl::resizeGL()" << endl;
+        cout << "SceneWidget::Impl::resizeGL()" << endl;
     }
     needToUpdateViewportInformation = true;
 }
@@ -914,7 +914,7 @@ void SceneWidget::Impl::paintGL()
 {
     if(TRACE_FUNCTIONS){
         static int counter = 0;
-        os << "SceneWidget::Impl::paintGL() " << counter++ << endl;
+        cout << "SceneWidget::Impl::paintGL() " << counter++ << endl;
     }
 
     auto newFramebuffer = defaultFramebufferObject();
@@ -934,8 +934,9 @@ void SceneWidget::Impl::paintGL()
         */
         if(needToClearGLOnFrameBufferChange && prevDefaultFramebufferObject > 0){
             renderer->clearGL();
-            os << fmt::format(_("The OpenGL resources of {0} has been cleared."),
-                              self->objectName().toStdString()) << endl;
+            MessageView::instance()->putln(
+                fmt::format(_("The OpenGL resources of {0} has been cleared."),
+                            self->objectName().toStdString()));
         }
 
         // The default FBO must be updated after the clearGL function
@@ -1489,7 +1490,7 @@ bool SceneWidget::setSceneFocus(const SgNodePath& path)
 void SceneWidget::Impl::keyPressEvent(QKeyEvent* event)
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidget::Impl::keyPressEvent()" << endl;
+        cout << "SceneWidget::Impl::keyPressEvent()" << endl;
     }
 
     /*
@@ -1552,7 +1553,7 @@ void SceneWidget::Impl::keyPressEvent(QKeyEvent* event)
 void SceneWidget::Impl::keyReleaseEvent(QKeyEvent* event)
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidget::Impl::keyReleaseEvent()" << endl;
+        cout << "SceneWidget::Impl::keyReleaseEvent()" << endl;
     }
 
     /*
@@ -1589,7 +1590,7 @@ void SceneWidget::Impl::keyReleaseEvent(QKeyEvent* event)
 void SceneWidget::Impl::mousePressEvent(QMouseEvent* event)
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidget::Impl::mousePressEvent()" << endl;
+        cout << "SceneWidget::Impl::mousePressEvent()" << endl;
     }
     
     updateLatestEvent(event);
@@ -1858,8 +1859,8 @@ void SceneWidget::Impl::leaveEvent(QEvent* event)
 void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidget::Impl::wheelEvent()" << endl;
-        os << "delta: " << event->delta() << endl;
+        cout << "SceneWidget::Impl::wheelEvent()" << endl;
+        cout << "delta: " << event->delta() << endl;
     }
 
     updateLatestEvent(event->x(), event->y(), event->modifiers());
@@ -1992,7 +1993,7 @@ void SceneWidget::Impl::startViewChange()
 void SceneWidget::Impl::startViewRotation()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidget::Impl::startViewRotation()" << endl;
+        cout << "SceneWidget::Impl::startViewRotation()" << endl;
     }
 
     if(!interactiveCameraTransform){
@@ -2019,7 +2020,7 @@ void SceneWidget::Impl::startViewRotation()
 void SceneWidget::Impl::dragViewRotation()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidget::Impl::dragViewRotation()" << endl;
+        cout << "SceneWidget::Impl::dragViewRotation()" << endl;
     }
 
     if(!interactiveCameraTransform){
@@ -2081,7 +2082,7 @@ void SceneWidget::Impl::dragViewRotation()
 void SceneWidget::Impl::startViewTranslation()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidget::Impl::startViewTranslation()" << endl;
+        cout << "SceneWidget::Impl::startViewTranslation()" << endl;
     }
 
     if(!interactiveCameraTransform){
@@ -2125,7 +2126,7 @@ void SceneWidget::Impl::startViewTranslation()
 void SceneWidget::Impl::dragViewTranslation()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidget::Impl::dragViewTranslation()" << endl;
+        cout << "SceneWidget::Impl::dragViewTranslation()" << endl;
     }
     
     if(!interactiveCameraTransform){
@@ -2149,7 +2150,7 @@ void SceneWidget::Impl::dragViewTranslation()
 void SceneWidget::Impl::startViewZoom()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidget::Impl::startViewZoom()" << endl;
+        cout << "SceneWidget::Impl::startViewZoom()" << endl;
     }
 
     if(!interactiveCameraTransform){
@@ -2171,7 +2172,7 @@ void SceneWidget::Impl::startViewZoom()
 void SceneWidget::Impl::dragViewZoom()
 {
     if(TRACE_FUNCTIONS){
-        os << "SceneWidget::Impl::dragViewZoom()" << endl;
+        cout << "SceneWidget::Impl::dragViewZoom()" << endl;
     }
 
     SgCamera* camera = renderer->currentCamera();

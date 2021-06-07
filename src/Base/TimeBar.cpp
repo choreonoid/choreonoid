@@ -5,8 +5,6 @@
 #include "TimeBar.h"
 #include "ExtensionManager.h"
 #include "Archive.h"
-#include "MessageView.h"
-#include "MainWindow.h"
 #include "OptionManager.h"
 #include "LazyCaller.h"
 #include "SpinBox.h"
@@ -192,7 +190,6 @@ public:
     bool restoreState(const Archive& archive);
 
     TimeBar* self;
-    ostream& os;
     ConfigDialog config;
 
     ToolButton* stopResumeButton;
@@ -265,7 +262,6 @@ TimeBar::TimeBar()
 
 TimeBar::Impl::Impl(TimeBar* self)
     : self(self),
-      os(MessageView::mainInstance()->cout()),
       resumeIcon(QIcon(":/Base/icon/resume.svg")),
       stopIcon(QIcon(":/Base/icon/stop.svg"))
 {

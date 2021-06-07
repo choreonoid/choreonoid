@@ -58,7 +58,6 @@
 #include <cnoid/UTF8>
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
-#include <cnoid/MessageView>
 #include <cnoid/CnoidBody>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -146,7 +145,7 @@ public:
 
         initializeHrpsysFileIO(this);
 
-        loadDefaultBodyCustomizers(mvout());
+        loadDefaultBodyCustomizers(mvout(false));
 
         return true;
     }

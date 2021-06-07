@@ -1475,8 +1475,8 @@ void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
     if(!bodyItem){
         if(attachmentToParent){
             auto holderLink = attachmentToParent->holder()->link();
-            mvout() << format(_("{0} has been detached from {1} of {2}."),
-                              self->displayName(), holderLink->name(), holderLink->body()->name()) << endl;
+            mvout(false) << format(_("{0} has been detached from {1} of {2}."),
+                                   self->displayName(), holderLink->name(), holderLink->body()->name()) << endl;
         }
     }
 
@@ -1534,8 +1534,8 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
                     body->rootLink()->setOffsetPosition(T_offset);
                     body->setParent(linkToAttach);
                     setLocationEditable(false, false);
-                    mvout() << format(_("{0} has been attached to {1} of {2}."),
-                                      self->displayName(), linkToAttach->name(), bodyItem->displayName()) << endl;
+                    mvout(false) << format(_("{0} has been attached to {1} of {2}."),
+                                           self->displayName(), linkToAttach->name(), bodyItem->displayName()) << endl;
                     goto found;
                 }
             }

@@ -265,7 +265,7 @@ bool exportHrpsysSeqFileSet(BodyMotionItem* item, const std::string& filename, s
     if(bodyItem){
         body = bodyItem->body();
         KinematicFaultChecker* checker = KinematicFaultChecker::instance();
-        int numFaults = checker->checkFaults(bodyItem, item, os);
+        int numFaults = checker->checkFaults(bodyItem, item);
         if(numFaults > 0){
             bool result;
             if(numFaults == 1){

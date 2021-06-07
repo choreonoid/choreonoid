@@ -524,8 +524,8 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
                 Device* device = body->device(j);
                 if(dynamic_cast<Camera*>(device) || dynamic_cast<RangeSensor*>(device)){
                     if(sensorNameSet.empty() || sensorNameSet.find(device->name()) != sensorNameSet.end()){
-                        os << format(_("{0} detected vision sensor \"{1}\" of {2} as a target."),
-                                     self->displayName(), device->name(), simBody->body()->name()) << endl;
+                        os << format(_("{0} detected vision sensor \"{1}\" of {2} as a target.\n"),
+                                     self->displayName(), device->name(), simBody->body()->name());
                         sensorRenderers.push_back(new SensorRenderer(this, device, simBody, i));
                     }
                 }
@@ -537,7 +537,7 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
         os << format(_("{} has no target sensors"), self->displayName()) << endl;
         return false;
     }
-        
+
 #ifdef Q_OS_LINUX
     /**
        The following code is neccessary to avoid a crash when a view which has a widget such as
@@ -564,11 +564,12 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
         if(renderer->initialize(simBodies)){
             ++p;
         } else {
-            os << format(_("{0}: Target sensor \"{1}\" cannot be initialized."),
-                    self->displayName(), renderer->device->name()) << endl;
+            os << format(_("{0}: Target sensor \"{1}\" cannot be initialized.\n"),
+                    self->displayName(), renderer->device->name());
             p = sensorRenderers.erase(p);
         }
     }
+    os.flush();
 
     if(!sensorRenderers.empty()){
         simulatorItem->addPreDynamicsFunction([&](){ onPreDynamics(); });

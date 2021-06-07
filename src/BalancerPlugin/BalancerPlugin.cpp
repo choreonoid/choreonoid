@@ -259,7 +259,7 @@ namespace {
 
             bar = BodyMotionGenerationBar::instance();
             balancer = new WaistBalancer();
-            balancer->setMessageOutputStream(mvout());
+            balancer->setMessageOutputStream(mvout(false));
             panel = new BalancerPanel();
 
             bar->setBalancer(panel);

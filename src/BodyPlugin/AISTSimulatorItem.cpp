@@ -432,8 +432,8 @@ bool AISTSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationB
     }
 
     if(world.hasHighGainDynamics()){
-        mvout() << format(_("{} uses the ForwardDynamicsCBM module to perform the high-gain control."),
-                          self->displayName()) << endl;
+        mv->putln(format(_("{} uses the ForwardDynamicsCBM module to perform the high-gain control."),
+                         self->displayName()));
     }
 
     cfs.setFrictionCoefficientRange(minFrictionCoefficient, maxFrictionCoefficient);

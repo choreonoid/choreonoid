@@ -160,7 +160,7 @@ PulseAudioManager::PulseAudioManager(ExtensionManager* ext)
 
 
 PulseAudioManagerImpl::PulseAudioManagerImpl(ExtensionManager* ext)
-    : os(mvout())
+    : os(mvout(false))
 {
     context = 0;
     

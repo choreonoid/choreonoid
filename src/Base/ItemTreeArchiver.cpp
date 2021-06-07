@@ -25,7 +25,6 @@ class ItemTreeArchiver::Impl
 {
 public:
     MessageView* mv;
-    ostream& os;
     int itemIdCounter;
     int numArchivedItems;
     int numRestoredItems;
@@ -54,8 +53,7 @@ ItemTreeArchiver::ItemTreeArchiver()
 
 
 ItemTreeArchiver::Impl::Impl()
-    : mv(MessageView::instance()),
-      os(mv->cout())
+    : mv(MessageView::instance())
 {
     
 }
