@@ -16,6 +16,7 @@ namespace cnoid {
 class CNOID_EXPORT MessageView : public View
 {
 public:
+    static void postMessageBeforeInitialization(const std::string& message, int type = Normal);
     static void initializeClass(ExtensionManager* ext);
 
     static MessageView* mainInstance();

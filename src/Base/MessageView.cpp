@@ -28,7 +28,16 @@ namespace iostreams = boost::iostreams;
 
 namespace {
 
-MessageView* messageView = 0;
+MessageView* messageView = nullptr;
+
+struct PendingMessage
+{
+    string message;
+    int type;
+    PendingMessage(const string& message, int type)
+        : message(message), type(type) { }
+};
+vector<PendingMessage> initialPendingMessages;
 
 int flushingRef = 0;
 
@@ -213,12 +222,26 @@ bool TextEditEx::isLatestMessageVisible()
 }
 
 }
-    
+
+
+void MessageView::postMessageBeforeInitialization(const std::string& message, int type)
+{
+    initialPendingMessages.emplace_back(message, type);
+}
+
 
 void MessageView::initializeClass(ExtensionManager* ext)
 {
     messageView = ext->viewManager().registerClass<MessageView>(
         "MessageView", N_("Message"), ViewManager::SINGLE_DEFAULT);
+
+    if(!initialPendingMessages.empty()){
+        for(auto& m : initialPendingMessages){
+            messageView->putln(m.message, m.type);
+        }
+        initialPendingMessages.clear();
+        initialPendingMessages.shrink_to_fit();
+    }
 }
 
 

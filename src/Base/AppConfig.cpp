@@ -72,18 +72,15 @@ static bool loadConfig(const std::string& filename)
 
     if(filesystem::exists(fromUTF8(filename))){
         YAMLReader reader;
-        try {
-            if(reader.load(filename)){
-                if(reader.numDocuments() == 1 && reader.document()->isMapping()){
-                    configArchive = reader.document()->toMapping();
-                    loaded = true;
-                } else {
-                    putLoadError(filename, _("Invalid file format."));
-                }
+        if(!reader.load(filename)){
+            putLoadError(filename, reader.errorMessage());
+        } else {
+            if(reader.numDocuments() == 1 && reader.document()->isMapping()){
+                configArchive = reader.document()->toMapping();
+                loaded = true;
+            } else {
+                putLoadError(filename, _("Invalid file format."));
             }
-        } catch (const ValueNode::Exception& ex){
-            ostream& os = MessageView::mainInstance()->cout();
-            putLoadError(filename, ex.message());
         }
     }
 
@@ -93,9 +90,8 @@ static bool loadConfig(const std::string& filename)
 
 static void putLoadError(const string& filename, const string& message)
 {
-    MessageView::instance()->putln(
-        format(_("Application config file \"{0}\" cannot be loaded.\n{1})."),
-               filename, message),
+    MessageView::postMessageBeforeInitialization(
+        format(_("Application config file \"{0}\" cannot be loaded.\n{1}"), filename, message),
         MessageView::Error);
 }
 
