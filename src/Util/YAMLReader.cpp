@@ -177,8 +177,7 @@ bool YAMLReaderImpl::load(const std::string& filename)
             result = parse();
         }
         catch(const ValueNode::Exception& ex){
-            errorMessage = format(_("{0} at line {1}, column {2}"),
-                    ex.message(), ex.line(), ex.column());
+            errorMessage = ex.message();
         }
         fclose(file);
     }
@@ -219,8 +218,7 @@ bool YAMLReaderImpl::parse(const char* input, size_t size)
         result = parse();
     }
     catch(const ValueNode::Exception& ex){
-        errorMessage = format(_("{0} at line {1}, column {2}"),
-                ex.message(), ex.line(), ex.column());
+        errorMessage = ex.message();
     }
 
     yaml_parser_delete(&parser);
@@ -297,7 +295,7 @@ error:
     }
     if(parser.error != YAML_NO_ERROR && parser.problem != NULL){
         ValueNode::Exception ex;
-        ex.setPosition(parser.problem_mark.line+1, parser.problem_mark.column+1);
+        ex.setPosition(parser.problem_mark.line + 1, parser.problem_mark.column + 1);
         ex.setMessage(parser.problem);
         throw ex;
     }
