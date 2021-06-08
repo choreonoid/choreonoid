@@ -34,4 +34,8 @@ add_custom_command(
 
 add_custom_target(doc ALL DEPENDS ${output_dir}/index.html)
 
+set_property(
+  TARGET doc
+  APPEND PROPERTY ADDITIONAL_CLEAN_FILES ${output_dir})
+
 install(DIRECTORY ${output_dir} DESTINATION ${CNOID_DOC_SUBDIR})
