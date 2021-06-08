@@ -277,7 +277,7 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
     }
     
 
-    displayMode = DisplayInFocus;
+    displayMode = DisplayInEditMode;
     isEditMode = false;
     isOverlayMode = false;
     isScreenFixedSizeMode = false;

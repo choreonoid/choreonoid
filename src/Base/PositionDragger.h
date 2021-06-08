@@ -27,9 +27,10 @@ public:
     };
 
     enum HandleType {
-        StandardHandle = 0,
-        PositiveOnlyHandle = 1,
+        PositiveOnlyHandle = 0,
+        SymmetricHandle = 1,
         WideHandle = 2,
+        StandardHandle = PositiveOnlyHandle,
     };
         
     PositionDragger(int axes = AllAxes, int handleType = StandardHandle);
@@ -64,13 +65,16 @@ public:
        the PPI of the display, and use it for the fixed size marker.
        \note The unit of the parameters is meter.
     */
-    void setScreenFixedSize(double length, double width);
+    //void setScreenFixedSize(double length, double width);
     
     bool isScreenFixedSizeMode() const;
 
-    [[deprecated("Use setFixedPixelSize")]]
+    //! \deprecated Use setPixelSize.
+    [[deprecated("Use setPixelSize")]]
     void setFixedPixelSizeMode(bool on, double pixelSizeRatio = 1.0);
-    [[deprecated("Use isFixedScreenSizeMode")]]
+
+    //! \deprecated Use isScreenFixedSizeMode.
+    [[deprecated("Use isScreenFixedSizeMode")]]
     bool isFixedPixelSizeMode() const;
 
     void setTransparency(float t);
@@ -89,10 +93,13 @@ public:
     DisplayMode displayMode() const;
     void setDisplayMode(DisplayMode mode, SgUpdateRef update = nullptr);
 
+    //! \deprecated
     [[deprecated("This function does nothing.")]]
     void setUndoEnabled(bool on);
+    //! \deprecated
     [[deprecated("This function always returns false.")]]
     bool isUndoEnabled() const;
+    //! \deprecated
     [[deprecated("This function does nothing.")]]
     void storeCurrentPositionToHistory();
 
@@ -100,6 +107,7 @@ public:
     void setDragEnabled(bool on);
     bool isDragging() const;
 
+    //! \deprecated
     [[deprecated("Use globalDraggingPosition to get the global coordinate, or "
                  "draggingPosition to get the local position in the parent node coordinate.")]]
     Isometry3 draggedPosition() const { return globalDraggingPosition(); }
@@ -118,13 +126,16 @@ public:
     virtual void onPointerLeaveEvent(SceneWidgetEvent* event) override;
     virtual void onFocusChanged(SceneWidgetEvent* event, bool on) override;
 
-    // Thw following functions are deprecated. Use displayMode and setDisplayMode instead.
+    //! \deprecated
     [[deprecated("Use setDisplayMode.")]]
     void setDraggerAlwaysShown(bool on, SgUpdateRef update);
+    //! \deprecated
     [[deprecated("Use displayMode.")]]
     bool isDraggerAlwaysShown() const;
+    //! \deprecated
     [[deprecated("Use setDisplayMode.")]]
     void setDraggerAlwaysHidden(bool on, SgUpdateRef update);
+    //! \deprecated
     [[deprecated("Use displayMode.")]]
     bool isDraggerAlwaysHidden() const;
 
