@@ -12,7 +12,9 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
+
 enum TranslationMode { TRANSLATION_1D, TRANSLATION_2D, TRANSLATION_VIEW_PLANE };
+
 }
 
 namespace cnoid {

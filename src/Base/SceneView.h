@@ -11,7 +11,7 @@
 namespace cnoid {
 
 class SceneWidget;
-class SceneWidgetEditable;
+class SceneWidgetEventHandler;
 class SceneBar;
 class SgGroup;
 class Item;
@@ -34,7 +34,7 @@ public:
        If you want to add a custom mode button to the scene bar, use the SceneBar::addCustomModeButton function.
        \return Mode id
     */
-    static int registerCustomMode(SceneWidgetEditable* modeHandler);
+    static int registerCustomMode(SceneWidgetEventHandler* modeHandler);
 
     /**
        If the corresponding custom mode button is added to the scene bar, remove it with

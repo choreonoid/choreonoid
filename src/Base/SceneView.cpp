@@ -4,6 +4,7 @@
 
 #include "SceneView.h"
 #include "SceneWidget.h"
+#include "SceneWidgetEventHandler.h"
 #include "ViewManager.h"
 #include "Separator.h"
 #include "RootItem.h"
@@ -39,7 +40,7 @@ struct SceneInfo {
     }
 };
 
-std::map<int, SceneWidgetEditable*> customModeIdToHandlerMap;
+std::map<int, SceneWidgetEventHandler*> customModeIdToHandlerMap;
 
 }
 
@@ -108,7 +109,7 @@ std::vector<SceneView*> SceneView::instances()
 }
 
 
-int SceneView::registerCustomMode(SceneWidgetEditable* modeHandler)
+int SceneView::registerCustomMode(SceneWidgetEventHandler* modeHandler)
 {
     int id = SceneWidget::issueUniqueCustomModeId();
     customModeIdToHandlerMap[id] = modeHandler;

@@ -1,7 +1,7 @@
 #include "PositionTagGroupItem.h"
 #include "ItemManager.h"
 #include "SceneWidget.h"
-#include "SceneWidgetEditable.h"
+#include "SceneWidgetEventHandler.h"
 #include "PositionDragger.h"
 #include "CoordinateFrameMarker.h"
 #include "Dialog.h"
@@ -46,7 +46,7 @@ public:
 };
 
 
-class SceneTagGroup : public SgPosTransform, public SceneWidgetEditable
+class SceneTagGroup : public SgPosTransform, public SceneWidgetEventHandler
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

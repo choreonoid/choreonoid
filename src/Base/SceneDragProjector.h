@@ -5,7 +5,7 @@
 #ifndef CNOID_BASE_SCENE_DRAG_PROJECTOR_H
 #define CNOID_BASE_SCENE_DRAG_PROJECTOR_H
 
-#include "SceneWidgetEditable.h"
+#include "SceneWidgetEvent.h"
 #include "exportdecl.h"
 
 namespace cnoid {

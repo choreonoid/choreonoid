@@ -2,18 +2,17 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_SCENE_WIDGET_EDITABLE_H
-#define CNOID_BASE_SCENE_WIDGET_EDITABLE_H
+#ifndef CNOID_BASE_SCENE_WIDGET_EVENT_HANDLER_H
+#define CNOID_BASE_SCENE_WIDGET_EVENT_HANDLER_H
 
 #include "SceneWidgetEvent.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class SceneWidgetEvent;
 class MenuManager;
     
-class CNOID_EXPORT SceneWidgetEditable
+class CNOID_EXPORT SceneWidgetEventHandler
 {
 public:
     virtual void onSceneModeChanged(SceneWidgetEvent* event);
@@ -44,6 +43,9 @@ public:
     virtual bool onUndoRequest();
     virtual bool onRedoRequest();
 };
+
+// For the backward compatibility
+typedef SceneWidgetEventHandler SceneWidgetEditable;
 
 }
 

@@ -1,7 +1,7 @@
 #ifndef CNOID_BASE_SCENE_POINT_SELECTION_MODE_H
 #define CNOID_BASE_SCENE_POINT_SELECTION_MODE_H
 
-#include "SceneWidgetEditable.h"
+#include "SceneWidgetEventHandler.h"
 #include <cnoid/EigenTypes>
 #include <cnoid/Signal>
 #include <vector>
@@ -10,7 +10,7 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT ScenePointSelectionMode : public SceneWidgetEditable
+class CNOID_EXPORT ScenePointSelectionMode : public SceneWidgetEventHandler
 {
     class Impl;
     
@@ -69,7 +69,7 @@ protected:
     //virtual void onSelectionModeActivated(SceneWidgetEvent* event);
     //virtual void onSelectionModeDeactivated(SceneWidgetEvent* event);
 
-    // SceneWidgetEditable functions
+    // SceneWidgetEventHandler functions
     virtual void onSceneModeChanged(SceneWidgetEvent* event) override;
     virtual bool onButtonPressEvent(SceneWidgetEvent* event) override;
     virtual bool onButtonReleaseEvent(SceneWidgetEvent* event) override;

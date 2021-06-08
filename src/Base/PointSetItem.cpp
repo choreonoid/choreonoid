@@ -11,7 +11,7 @@
 #include "GLSceneRenderer.h"
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneWidget>
-#include <cnoid/SceneWidgetEditable>
+#include <cnoid/SceneWidgetEventHandler>
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneMarkers>
@@ -27,7 +27,7 @@ namespace {
 
 class ScenePointSet;
 
-class ScenePointSet : public SgPosTransform, public SceneWidgetEditable
+class ScenePointSet : public SgPosTransform, public SceneWidgetEventHandler
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

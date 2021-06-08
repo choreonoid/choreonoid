@@ -2,10 +2,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_SCENE_PROJECT_H
-#define CNOID_BASE_SCENE_PROJECT_H
+#ifndef CNOID_BASE_SCENE_PROJECTOR_H
+#define CNOID_BASE_SCENE_PROJECTOR_H
 
-#include "SceneWidgetEditable.h"
+#include "SceneWidgetEventHandler.h"
 #include "exportdecl.h"
 
 namespace cnoid {

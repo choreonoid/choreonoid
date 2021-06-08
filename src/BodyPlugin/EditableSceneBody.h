@@ -5,7 +5,7 @@
 #ifndef CNOID_BODY_PLUGIN_EDITABLE_SCENE_BODY_H
 #define CNOID_BODY_PLUGIN_EDITABLE_SCENE_BODY_H
 
-#include <cnoid/SceneWidgetEditable>
+#include <cnoid/SceneWidgetEventHandler>
 #include <cnoid/SceneBody>
 #include <vector>
 #include "exportdecl.h"
@@ -42,7 +42,7 @@ private:
 typedef ref_ptr<EditableSceneLink> EditableSceneLinkPtr;
 
     
-class CNOID_EXPORT EditableSceneBody : public SceneBody, public SceneWidgetEditable
+class CNOID_EXPORT EditableSceneBody : public SceneBody, public SceneWidgetEventHandler
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;

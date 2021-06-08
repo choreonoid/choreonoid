@@ -5,12 +5,12 @@
 #ifndef CNOID_BASE_POSITION_DRAGGER_H
 #define CNOID_BASE_POSITION_DRAGGER_H
 
-#include "SceneWidgetEditable.h"
+#include "SceneWidgetEventHandler.h"
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT PositionDragger : public SgPosTransform, public SceneWidgetEditable
+class CNOID_EXPORT PositionDragger : public SgPosTransform, public SceneWidgetEventHandler
 {
 public:
     enum AxisBit {

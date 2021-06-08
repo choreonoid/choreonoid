@@ -7,7 +7,7 @@
 #include "ToolBarArea.h"
 #include "GL1SceneRenderer.h"
 #include "GLSLSceneRenderer.h"
-#include "SceneWidgetEditable.h"
+#include "SceneWidgetEventHandler.h"
 #include "InteractiveCameraTransform.h"
 #include "MainWindow.h"
 #include "Buttons.h"
@@ -179,15 +179,15 @@ public:
 struct EditableNodeInfo
 {
     SgNodePtr node;
-    SceneWidgetEditable* editable;
-    EditableNodeInfo() : editable(nullptr) { }
-    EditableNodeInfo(SgNode* node, SceneWidgetEditable* editable)
-        : node(node), editable(editable) { }
-    bool operator<(const EditableNodeInfo& rhs) const { return editable < rhs.editable; };
-    bool operator==(const EditableNodeInfo& rhs) const { return editable == rhs.editable; }
-    bool operator!=(const EditableNodeInfo& rhs) const { return editable != rhs.editable; }
-    explicit operator bool() const { return editable != nullptr; }
-    void clear(){ node.reset(); editable = nullptr; }
+    SceneWidgetEventHandler* handler;
+    EditableNodeInfo() : handler(nullptr) { }
+    EditableNodeInfo(SgNode* node, SceneWidgetEventHandler* handler)
+        : node(node), handler(handler) { }
+    bool operator<(const EditableNodeInfo& rhs) const { return handler < rhs.handler; };
+    bool operator==(const EditableNodeInfo& rhs) const { return handler == rhs.handler; }
+    bool operator!=(const EditableNodeInfo& rhs) const { return handler != rhs.handler; }
+    explicit operator bool() const { return handler != nullptr; }
+    void clear(){ node.reset(); handler = nullptr; }
 };
 
             
@@ -278,7 +278,7 @@ public:
     int mousePressY;
     QMouseEvent* lastMouseMoveEvent;
 
-    SceneWidgetEditable* activeCustomModeHandler;
+    SceneWidgetEventHandler* activeCustomModeHandler;
     int activeCustomModeId;
 
     bool collisionLineVisibility;
@@ -371,7 +371,7 @@ public:
     void updateLastClickedPoint();
         
     EditableNodeInfo applyEditableFunction(
-        vector<EditableNodeInfo>& editablePath, std::function<bool(SceneWidgetEditable* editable)> function);
+        vector<EditableNodeInfo>& editablePath, std::function<bool(SceneWidgetEventHandler* editable)> function);
     bool setFocusToEditablePath(vector<EditableNodeInfo>& editablePath);
     bool setFocusToPointedEditablePath(const EditableNodeInfo& targetEditable);
 
@@ -805,7 +805,7 @@ void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& sgUpdate)
 void SceneWidget::Impl::extractEditablesInSubTree(SgNode* node, vector<EditableNodeInfo>& editables)
 {
     if(node->hasAttribute(SgObject::Operable)){
-        if(auto editable = dynamic_cast<SceneWidgetEditable*>(node)){
+        if(auto editable = dynamic_cast<SceneWidgetEventHandler*>(node)){
             editables.emplace_back(node, editable);
         }
     }
@@ -836,7 +836,7 @@ void SceneWidget::Impl::checkAddedEditableNodes(SgNode* node)
         }
 
         for(auto& editable : addedEditables){
-            editable.editable->onSceneModeChanged(&latestEvent);
+            editable.handler->onSceneModeChanged(&latestEvent);
         }
         addedEditables.clear();
 
@@ -866,7 +866,7 @@ void SceneWidget::Impl::checkRemovedEditableNodes(SgNode* node)
         list<EditableNodeInfo> editablesToClearFocus;
         for(auto& editable : removedEditables){
             if(editable == lastMouseMovedEditable){
-                lastMouseMovedEditable.editable->onPointerLeaveEvent(&latestEvent);
+                lastMouseMovedEditable.handler->onPointerLeaveEvent(&latestEvent);
                 lastMouseMovedEditable.clear();
             }
             if(!focusedEditablePath.empty()){
@@ -887,7 +887,7 @@ void SceneWidget::Impl::checkRemovedEditableNodes(SgNode* node)
         }
 
         for(auto& editable : editablesToClearFocus){
-            editable.editable->onFocusChanged(&latestEvent, false);
+            editable.handler->onFocusChanged(&latestEvent, false);
         }
 
         removedEditables.clear();
@@ -1152,7 +1152,7 @@ void SceneWidget::Impl::advertiseSceneModeChange(bool doModeSyncRequest)
     if(!isEditMode){
         // Clear focus
         for(auto& editable : focusedEditablePath){
-            editable.editable->onFocusChanged(&latestEvent, false);
+            editable.handler->onFocusChanged(&latestEvent, false);
         }
     }
     
@@ -1164,7 +1164,7 @@ void SceneWidget::Impl::advertiseSceneModeChange(bool doModeSyncRequest)
     
     if(isEditMode){
         for(auto& element : focusedEditablePath){
-            element.editable->onFocusChanged(&latestEvent, true);
+            element.handler->onFocusChanged(&latestEvent, true);
         }
         if(lastMouseMoveEvent){
             mouseMoveEvent(lastMouseMoveEvent);
@@ -1184,7 +1184,7 @@ void SceneWidget::Impl::advertiseSceneModeChange(bool doModeSyncRequest)
 void SceneWidget::Impl::advertiseSceneModeChangeInSubTree(SgNode* node)
 {
     if(node->hasAttribute(SgObject::Operable)){
-        if(auto editable = dynamic_cast<SceneWidgetEditable*>(node)){
+        if(auto editable = dynamic_cast<SceneWidgetEventHandler*>(node)){
             editable->onSceneModeChanged(&latestEvent);
         }
     }
@@ -1203,7 +1203,7 @@ int SceneWidget::issueUniqueCustomModeId()
 }
 
 
-void SceneWidget::activateCustomMode(SceneWidgetEditable* modeHandler, int modeId)
+void SceneWidget::activateCustomMode(SceneWidgetEventHandler* modeHandler, int modeId)
 {
     auto prevHandler = impl->activeCustomModeHandler;
     impl->activeCustomModeHandler = modeHandler;
@@ -1222,7 +1222,7 @@ void SceneWidget::activateCustomMode(SceneWidgetEditable* modeHandler, int modeI
 }
 
 
-SceneWidgetEditable* SceneWidget::activeCustomModeHandler()
+SceneWidgetEventHandler* SceneWidget::activeCustomModeHandler()
 {
     return impl->activeCustomModeHandler;
 }
@@ -1234,7 +1234,7 @@ int SceneWidget::activeCustomMode() const
 }
 
 
-void SceneWidget::deactivateCustomMode(SceneWidgetEditable* modeHandler)
+void SceneWidget::deactivateCustomMode(SceneWidgetEventHandler* modeHandler)
 {
     if(!modeHandler || modeHandler == impl->activeCustomModeHandler){
         activateCustomMode(nullptr, 0);
@@ -1393,7 +1393,7 @@ void SceneWidget::Impl::updateLatestEventPath(bool forceFullPicking)
         latestEvent.nodePath_ = renderer->pickedNodePath();
 
         for(auto& node : latestEvent.nodePath_){
-            if(auto editable = dynamic_cast<SceneWidgetEditable*>(node)){
+            if(auto editable = dynamic_cast<SceneWidgetEventHandler*>(node)){
                 pointedEditablePath.emplace_back(node, editable);
             }
         }
@@ -1417,11 +1417,11 @@ void SceneWidget::Impl::updateLastClickedPoint()
    If there are no functions which returns true, null object is returned.
 */
 EditableNodeInfo SceneWidget::Impl::applyEditableFunction
-(vector<EditableNodeInfo>& editablePath, std::function<bool(SceneWidgetEditable* editable)> function)
+(vector<EditableNodeInfo>& editablePath, std::function<bool(SceneWidgetEventHandler* editable)> function)
 {
     for(auto p = editablePath.rbegin(); p != editablePath.rend(); ++p){
         auto& editableNode = *p;
-        if(function(editableNode.editable)){
+        if(function(editableNode.handler)){
             return editableNode;
         }
     }
@@ -1448,10 +1448,10 @@ bool SceneWidget::Impl::setFocusToEditablePath(vector<EditableNodeInfo>& editabl
     vector<EditableNodeInfo> tmpPath(focusedEditablePath);
 
     for(size_t i=indexOfFirstEditableToChangeFocus; i < tmpPath.size(); ++i){
-        tmpPath[i].editable->onFocusChanged(&latestEvent, false);
+        tmpPath[i].handler->onFocusChanged(&latestEvent, false);
     }
     for(size_t i=indexOfFirstEditableToChangeFocus; i < editablePath.size(); ++i){
-        editablePath[i].editable->onFocusChanged(&latestEvent, true);
+        editablePath[i].handler->onFocusChanged(&latestEvent, true);
     }
     focusedEditablePath = editablePath;
     focusedEditable = editablePath.back();
@@ -1479,7 +1479,7 @@ bool SceneWidget::setSceneFocus(const SgNodePath& path)
 {
     vector<EditableNodeInfo> editablePath;
     for(auto& node : path){
-        if(auto editable = dynamic_cast<SceneWidgetEditable*>(node)){
+        if(auto editable = dynamic_cast<SceneWidgetEventHandler*>(node)){
             editablePath.emplace_back(node, editable);
         }
     }
@@ -1508,7 +1508,7 @@ void SceneWidget::Impl::keyPressEvent(QKeyEvent* event)
     if(isEditMode){
         if(applyEditableFunction(
                focusedEditablePath,
-               [&](SceneWidgetEditable* editable){ return editable->onKeyPressEvent(&latestEvent); })){
+               [&](SceneWidgetEventHandler* editable){ return editable->onKeyPressEvent(&latestEvent); })){
             handled = true;
         }
     }
@@ -1577,7 +1577,7 @@ void SceneWidget::Impl::keyReleaseEvent(QKeyEvent* event)
         
     } else if(isEditMode){
         if(focusedEditable){
-            handled = focusedEditable.editable->onKeyReleaseEvent(&latestEvent);
+            handled = focusedEditable.handler->onKeyReleaseEvent(&latestEvent);
         }
     }
 
@@ -1610,7 +1610,7 @@ void SceneWidget::Impl::mousePressEvent(QMouseEvent* event)
             handled = setFocusToPointedEditablePath(
                 applyEditableFunction(
                     pointedEditablePath,
-                    [&](SceneWidgetEditable* editable){ return editable->onButtonPressEvent(&latestEvent); }));
+                    [&](SceneWidgetEventHandler* editable){ return editable->onButtonPressEvent(&latestEvent); }));
             if(handled){
                 dragMode = ABOUT_TO_EDIT;
             }
@@ -1648,7 +1648,7 @@ void SceneWidget::Impl::mouseDoubleClickEvent(QMouseEvent* event)
             handled = setFocusToPointedEditablePath(
                 applyEditableFunction(
                     pointedEditablePath,
-                    [&](SceneWidgetEditable* editable){ return editable->onDoubleClickEvent(&latestEvent); }));
+                    [&](SceneWidgetEventHandler* editable){ return editable->onDoubleClickEvent(&latestEvent); }));
         }
     }
     if(!handled){
@@ -1658,7 +1658,7 @@ void SceneWidget::Impl::mouseDoubleClickEvent(QMouseEvent* event)
             setFocusToPointedEditablePath(
                 applyEditableFunction(
                     pointedEditablePath,
-                    [&](SceneWidgetEditable* editable){
+                    [&](SceneWidgetEventHandler* editable){
                         if(editable->onButtonPressEvent(&latestEvent)){
                             return editable->onButtonReleaseEvent(&latestEvent);
                         }
@@ -1684,7 +1684,7 @@ void SceneWidget::Impl::mouseReleaseEvent(QMouseEvent* event)
         if(isEditMode && (dragMode == ABOUT_TO_EDIT || dragMode == EDITING)){
             if(focusedEditable){
                 updateLatestEventPath();
-                focusedEditable.editable->onButtonReleaseEvent(&latestEvent);
+                focusedEditable.handler->onButtonReleaseEvent(&latestEvent);
             }
         }
         dragMode = NO_DRAGGING;
@@ -1710,7 +1710,7 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
                 }
             }
             if(dragMode == EDITING){
-                focusedEditable.editable->onPointerMoveEvent(&latestEvent);
+                focusedEditable.handler->onPointerMoveEvent(&latestEvent);
             }
             handled = true;
         }
@@ -1745,7 +1745,7 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
             auto mouseMovedEditable =
                 applyEditableFunction(
                     pointedEditablePath,
-                    [&](SceneWidgetEditable* editable){ return editable->onPointerMoveEvent(&latestEvent); });
+                    [&](SceneWidgetEventHandler* editable){ return editable->onPointerMoveEvent(&latestEvent); });
 
             if(mouseMovedEditable){
                 handled = true;
@@ -1769,7 +1769,7 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
                     resetCursor();
                 }
                 if(lastMouseMovedEditable){
-                    lastMouseMovedEditable.editable->onPointerLeaveEvent(&latestEvent);
+                    lastMouseMovedEditable.handler->onPointerLeaveEvent(&latestEvent);
                 }
                 lastMouseMovedEditable = mouseMovedEditable;
             }
@@ -1846,7 +1846,7 @@ void SceneWidget::Impl::findObjectNameFromChildren(SgObject* object, string& nam
 void SceneWidget::Impl::leaveEvent(QEvent* event)
 {
     if(lastMouseMovedEditable){
-        lastMouseMovedEditable.editable->onPointerLeaveEvent(&latestEvent);
+        lastMouseMovedEditable.handler->onPointerLeaveEvent(&latestEvent);
         lastMouseMovedEditable.clear();
     }
     if(lastMouseMoveEvent){
@@ -1879,7 +1879,7 @@ void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
             handled = setFocusToPointedEditablePath(
                 applyEditableFunction(
                     pointedEditablePath,
-                    [&](SceneWidgetEditable* editable){ return editable->onScrollEvent(&latestEvent); }));
+                    [&](SceneWidgetEventHandler* editable){ return editable->onScrollEvent(&latestEvent); }));
         }
     }    
 
@@ -2317,7 +2317,7 @@ void SceneWidget::Impl::showEditModePopupMenu(const QPoint& globalPos)
         auto editableToFocus = pointedEditablePath.front();
         for(auto p = pointedEditablePath.rbegin(); p != pointedEditablePath.rend(); ++p){
             auto& editableNode = *p;
-            handled = editableNode.editable->onContextMenuRequest(&latestEvent, &menuManager);
+            handled = editableNode.handler->onContextMenuRequest(&latestEvent, &menuManager);
             if(handled){
                 int numItems = menuManager.numItems();
                 if(numItems > prevNumItems){

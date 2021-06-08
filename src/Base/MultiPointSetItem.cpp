@@ -8,7 +8,7 @@
 #include "MenuManager.h"
 #include "RootItem.h"
 #include "SceneWidget.h"
-#include "SceneWidgetEditable.h"
+#include "SceneWidgetEventHandler.h"
 #include "PutPropertyFunction.h"
 #include "Archive.h"
 #include <cnoid/PointSetUtil>
@@ -27,7 +27,7 @@ namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
-class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEditable
+class SceneMultiPointSet : public SgPosTransform, public SceneWidgetEventHandler
 {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

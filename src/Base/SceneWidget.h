@@ -17,7 +17,7 @@ class SceneRenderer;
 class Archive;
 class MenuManager;
 class SceneWidgetEvent;
-class SceneWidgetEditable;
+class SceneWidgetEventHandler;
 class SceneWidgetRoot;
 class Menu;
 class InteractiveCameraTransform;
@@ -56,11 +56,11 @@ public:
     // ID 1 is used as the default (common) customo mode ID that can be used for any customo mode.
     static int issueUniqueCustomModeId();
 
-    void activateCustomMode(SceneWidgetEditable* modeHandler, int modeId = 1);
-    SceneWidgetEditable* activeCustomModeHandler();
+    void activateCustomMode(SceneWidgetEventHandler* modeHandler, int modeId = 1);
+    SceneWidgetEventHandler* activeCustomModeHandler();
     int activeCustomMode() const;
     // If modeHandler is nullptr, any current custom mode is deactivated.
-    void deactivateCustomMode(SceneWidgetEditable* modeHandler = nullptr);
+    void deactivateCustomMode(SceneWidgetEventHandler* modeHandler = nullptr);
 
     SceneWidgetEvent* latestEvent();
     Vector3 lastClickedPoint() const;

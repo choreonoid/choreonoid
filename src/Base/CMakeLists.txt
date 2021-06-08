@@ -111,7 +111,7 @@ set(sources
   GLSLSceneRenderer.cpp
   SceneWidget.cpp
   SceneWidgetEvent.cpp
-  SceneWidgetEditable.cpp
+  SceneWidgetEventHandler.cpp
   ScenePointSelectionMode.cpp
   InteractiveCameraTransform.cpp
   SceneProjector.cpp
@@ -243,11 +243,11 @@ set(headers
   LazyCaller.h
   SceneWidget.h
   SceneWidgetEvent.h
+  SceneWidgetEventHandler.h
   SceneProjector.h
   SceneDragProjector.h
   PositionDragger.h
   SceneBar.h
-  SceneWidgetEditable.h
   ScenePointSelectionMode.h
   InteractiveCameraTransform.h
   RectRegionMarker.h

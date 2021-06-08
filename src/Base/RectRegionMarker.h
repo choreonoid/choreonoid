@@ -5,7 +5,7 @@
 #ifndef CNOID_BASE_RECT_REGION_MARKER_H
 #define CNOID_BASE_RECT_REGION_MARKER_H
 
-#include "SceneWidgetEditable.h"
+#include "SceneWidgetEventHandler.h"
 #include <cnoid/SceneDrawables>
 #include <QCursor>
 #include "exportdecl.h"
@@ -15,7 +15,7 @@ namespace cnoid {
 class PolyhedralRegion;
 class RectRegionMarkerImpl;
 
-class CNOID_EXPORT RectRegionMarker : public SgViewportOverlay, public SceneWidgetEditable
+class CNOID_EXPORT RectRegionMarker : public SgViewportOverlay, public SceneWidgetEventHandler
 {
 public:
     RectRegionMarker();

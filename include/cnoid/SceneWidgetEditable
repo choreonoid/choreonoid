@@ -1,1 +1,2 @@
-#include "src/Base/SceneWidgetEditable.h"
+// This header is kept for the backward compatibility
+#include "src/Base/SceneWidgetEventHandler.h"
