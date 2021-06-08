@@ -1860,14 +1860,14 @@ void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
 {
     if(TRACE_FUNCTIONS){
         cout << "SceneWidget::Impl::wheelEvent()" << endl;
-        cout << "delta: " << event->delta() << endl;
+        cout << "angleDelta().y(): " << event->angleDelta().y() << endl;
     }
 
     updateLatestEvent(event->x(), event->y(), event->modifiers());
     updateLatestEventPath();
     updateLastClickedPoint();
 
-    const double s = event->delta() / 8.0 / 15.0;
+    const double s = event->angleDelta().y() / 8.0 / 15.0;
     latestEvent.wheelSteps_ = s;
 
     bool handled = false;
