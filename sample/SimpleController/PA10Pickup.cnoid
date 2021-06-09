@@ -61,33 +61,6 @@ items:
                 isOldTargetVariableMode: false
         - 
           id: 4
-          name: "box3"
-          plugin: Body
-          class: BodyItem
-          isChecked: true
-          data: 
-            file: "${SHARE}/model/misc/box3.body"
-            format: CHOREONOID-BODY
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0.9, 0, 0.035 ]
-            rootAttitude: [ 
-              2.22044605e-16, -1, 0, 
-              1, 2.22044605e-16, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0.9, 0, 0.035 ]
-            initialRootAttitude: [ 
-              2.22044605e-16, -1, 0, 
-              1, 2.22044605e-16, 0, 
-              0, 0, 1 ]
-            staticModel: false
-            collisionDetection: true
-            selfCollisionDetection: false
-            location_editable: true
-            scene_sensitive: true
-            zmp: [ 0, 0, 0 ]
-        - 
-          id: 5
           name: "box2"
           plugin: Body
           class: BodyItem
@@ -111,6 +84,33 @@ items:
             collisionDetection: true
             selfCollisionDetection: false
             location_editable: false
+            scene_sensitive: true
+            zmp: [ 0, 0, 0 ]
+        - 
+          id: 5
+          name: "box3"
+          plugin: Body
+          class: BodyItem
+          isChecked: true
+          data: 
+            file: "${SHARE}/model/misc/box3.body"
+            format: CHOREONOID-BODY
+            currentBaseLink: "WAIST"
+            rootPosition: [ 0.9, 0, 0.035 ]
+            rootAttitude: [ 
+              2.22044605e-16, -1, 0, 
+              1, 2.22044605e-16, 0, 
+              0, 0, 1 ]
+            jointPositions: [  ]
+            initialRootPosition: [ 0.9, 0, 0.035 ]
+            initialRootAttitude: [ 
+              2.22044605e-16, -1, 0, 
+              1, 2.22044605e-16, 0, 
+              0, 0, 1 ]
+            staticModel: false
+            collisionDetection: true
+            selfCollisionDetection: false
+            location_editable: true
             scene_sensitive: true
             zmp: [ 0, 0, 0 ]
         - 
