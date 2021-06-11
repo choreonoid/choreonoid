@@ -20,11 +20,6 @@ double JointPath::numericalIkDefaultDeltaScale()
     return 0.9;
 }
 
-double JointPath::numericalIKdefaultTruncateRatio()
-{
-    return TruncatedSVD<MatrixXd>::defaultTruncateRatio();
-}
-
 int JointPath::numericalIkDefaultMaxIterations()
 {
     return 50;
@@ -40,6 +35,11 @@ double JointPath::numericalIkDefaultDampingConstant()
     return 1.0e-6;
 }
 
+//! \deprecated
+double JointPath::numericalIkDefaultTruncateRatio()
+{
+    return TruncatedSVD<MatrixXd>::defaultTruncateRatio();
+}
 
 namespace cnoid {
 
@@ -252,12 +252,6 @@ void JointPath::setNumericalIkDeltaScale(double s)
 }
 
 
-void JointPath::setNumericalIKtruncateRatio(double r)
-{
-    getOrCreateNumericalIK()->svd.setTruncateRatio(r);
-}
-
-    
 void JointPath::setNumericalIkMaxIterations(int n)
 {
     getOrCreateNumericalIK()->maxIterations = n;
@@ -270,6 +264,18 @@ void JointPath::setNumericalIkDampingConstant(double lambda)
 }
 
 
+/**
+   \deprecated
+   This parameter is used when SVD is used to solve a numerical IK, but the current
+   implementation uses the damped least square method instead of SVD by default.
+   Therefore this parameter is meaningless in the current implementation.
+*/
+void JointPath::setNumericalIkTruncateRatio(double r)
+{
+    getOrCreateNumericalIK()->svd.setTruncateRatio(r);
+}
+
+    
 void JointPath::customizeTarget
 (int numTargetElements,
  std::function<double(VectorXd& out_error)> errorFunc,

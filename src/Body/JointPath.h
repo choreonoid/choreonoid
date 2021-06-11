@@ -33,6 +33,7 @@ public:
     JointPath(Link* base, Link* end);
     JointPath(Link* end);
     JointPath(const JointPath& org) = delete;
+    JointPath& operator=(const JointPath& rhs) = delete;
 
     bool empty() const {
         return joints_.empty();
@@ -120,10 +121,6 @@ public:
     std::string name() const { return name_; }
     void setName(const std::string& name){ name_ = name; }
 
-    // deprecated
-    void setNumericalIKtruncateRatio(double r);
-    static double numericalIKdefaultTruncateRatio();
-
     [[deprecated("Use calcInverseKinematics(const Isometry3& T)")]]
     bool calcInverseKinematics(const Vector3& p, const Matrix3& R) {
         return InverseKinematics::calcInverseKinematics(p, R);
@@ -159,6 +156,10 @@ public:
     static double numericalIKdefaultMaxIKerror(){ return numericalIkDefaultMaxIkError(); }
     [[deprecated("Use numericalIkDefaultDampingConstant.")]]
     static double numericalIKdefaultDampingConstant(){ return numericalIkDefaultDampingConstant(); }
+    [[deprecated]]
+    void setNumericalIkTruncateRatio(double r);
+    [[deprecated]]
+    static double numericalIkDefaultTruncateRatio();
 
 private:
     void initialize();

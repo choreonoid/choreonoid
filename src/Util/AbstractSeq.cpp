@@ -250,12 +250,14 @@ bool AbstractMultiSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> addi
 }
 
 
-std::vector<std::string> AbstractMultiSeq::readSeqPartLabels(const Mapping& archive)
+std::vector<std::string> AbstractMultiSeq::readSeqPartLabels(const Mapping* archive)
 {
     vector<string> labelStrings;
-    const Listing& labels = *archive.findListing("partLabels");
+    const Listing& labels = *archive->findListing("partLabels");
     if(labels.isValid()){
-        for(int i=0; i < labels.size(); ++i){
+        int n = labels.size();
+        labelStrings.reserve(n);
+        for(int i=0; i < n; ++i){
             labelStrings.push_back(labels[i].toString());
         }
     }

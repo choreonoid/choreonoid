@@ -120,7 +120,7 @@ public:
 
 protected:
     virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback);
-    std::vector<std::string> readSeqPartLabels(const Mapping& archive);
+    std::vector<std::string> readSeqPartLabels(const Mapping* archive);
     bool writeSeqPartLabels(YAMLWriter& writer);
 };
 

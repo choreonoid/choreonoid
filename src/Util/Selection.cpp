@@ -41,6 +41,15 @@ Selection::Selection(const Selection& org)
 }
 
 
+Selection& Selection::operator=(const Selection& rhs)
+{
+    symbols_ = rhs.symbols_;
+    selectedIndex_ = rhs.selectedIndex_;
+    domainname_ = rhs.domainname_;
+    return *this;
+}
+
+
 void Selection::resize(int s)
 {
     symbols_.resize(s);

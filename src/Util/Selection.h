@@ -19,6 +19,8 @@ public:
     explicit Selection(size_t size, const char* domainname = nullptr);
     Selection(std::initializer_list<std::string> symbols, const char* domainname = nullptr);
     Selection(const Selection& org);
+
+    Selection& operator=(const Selection& rhs);
         
     int size() const {
         return  static_cast<int>(symbols_.size());
