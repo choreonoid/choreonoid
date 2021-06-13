@@ -67,8 +67,17 @@ else()
   set_target_properties(Choreonoid::CnoidUtil PROPERTIES
     IMPORTED_LOCATION ${CHOREONOID_LIB_DIR}/libCnoidUtil.so)
 endif()
-target_compile_definitions(Choreonoid::CnoidUtil INTERFACE ${CHOREONOID_COMPILE_DEFINITIONS})
-target_include_directories(Choreonoid::CnoidUtil INTERFACE ${CHOREONOID_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+
+# CMake 3.10 does not allow the target_compile_definitions and target_include_directories commands
+# to specify INTERFACE for an imported library, and it is supported in CMake 3.11 and later.
+# To be able to use CMake 3.10, the following alternative descriptions with the set_property command are used.
+#target_compile_definitions(Choreonoid::CnoidUtil INTERFACE ${CHOREONOID_COMPILE_DEFINITIONS})
+#target_include_directories(Choreonoid::CnoidUtil INTERFACE ${CHOREONOID_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+set_property(TARGET Choreonoid::CnoidUtil APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS
+  ${CHOREONOID_COMPILE_DEFINITIONS})
+set_property(TARGET Choreonoid::CnoidUtil APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+  ${CHOREONOID_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+
 target_link_libraries(Choreonoid::CnoidUtil INTERFACE @util_dependencies@;${Boost_LIBRARIES})
 set(CHOREONOID_UTIL_LIBRARIES Choreonoid::CnoidUtil)
 
@@ -101,7 +110,9 @@ if(NOT CHOREONOID_SKIP_QT_CONFIG)
   choreonoid_find_qt_package(Core Gui Widgets Network)
   set(CMAKE_AUTOMOC OFF)
   list(APPEND CHOREONOID_COMPILE_DEFINITIONS ${CHOREONOID_QT_COMPILE_DEFINITIONS})
-  target_compile_definitions(Choreonoid::CnoidBase INTERFACE ${CHOREONOID_QT_COMPILE_DEFINITIONS})
+  #target_compile_definitions(Choreonoid::CnoidBase INTERFACE ${CHOREONOID_QT_COMPILE_DEFINITIONS})
+  set_property(TARGET Choreonoid::CnoidBase APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS
+    ${CHOREONOID_QT_COMPILE_DEFINITIONS})
   target_link_libraries(Choreonoid::CnoidBase INTERFACE ${CHOREONOID_QT_LIBRARIES})
 endif()
 
