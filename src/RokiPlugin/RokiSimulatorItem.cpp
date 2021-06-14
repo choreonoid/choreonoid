@@ -1301,7 +1301,6 @@ bool RokiSimulatorItemImpl::restore(const Archive& archive)
     archive.read("elasticity", elasticity);
     archive.read("viscosity", viscosity);
     archive.read("useContactFile", useContactFile);
-    string value;
     archive.readRelocatablePath("contactFileName", contactFileName);
     return true;
 }

@@ -1085,10 +1085,12 @@ bool SimpleControllerItem::store(Archive& archive)
 bool SimpleControllerItem::Impl::store(Archive& archive)
 {
     archive.writeRelocatablePath("controller", controllerModuleName);
-    archive.write("baseDirectory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
+    archive.write("base_directory", baseDirectoryType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("reloading", doReloading);
-    archive.write("exportSymbols", isSymbolExportEnabled);
-    archive.write("isOldTargetVariableMode", isOldTargetVariableMode);
+    archive.write("export_symbols", isSymbolExportEnabled);
+    if(isOldTargetVariableMode){
+        archive.write("is_old_target_variable_mode", isOldTargetVariableMode);
+    }
     return true;
 }
 
@@ -1106,19 +1108,18 @@ bool SimpleControllerItem::Impl::restore(const Archive& archive)
 {
     string value;
     baseDirectoryType.select(CONTROLLER_DIRECTORY);
-    if(archive.read("baseDirectory", value) ||
-       archive.read("RelativePathBase", value) /* for the backward compatibility */){
+    if(archive.read({ "base_directory", "baseDirectory", "RelativePathBase" }, value)){
         baseDirectoryType.select(value);
     }
     archive.read("reloading", doReloading);
     bool on;
-    if(archive.read("exportSymbols", on)){
+    if(archive.read({ "export_symbols", "exportSymbols" }, on)){
         setSymbolExportEnabled(on);
     }
     if(archive.read("controller", value)){
-        controllerModuleName = archive.expandPathVariables(value);
+        controllerModuleName = archive.resolveRelocatablePath(value, false);
     }
-    archive.read("isOldTargetVariableMode", isOldTargetVariableMode);
+    archive.read({ "is_old_target_variable_mode", "isOldTargetVariableMode" }, isOldTargetVariableMode);
 
     return true;
 }

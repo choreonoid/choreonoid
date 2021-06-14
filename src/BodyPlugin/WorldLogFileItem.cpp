@@ -1224,8 +1224,7 @@ void WorldLogFileItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool WorldLogFileItem::store(Archive& archive)
 {
-    archive.writeRelocatablePath("filename", filePath());
-    archive.write("format", fileFormat());
+    archive.writeFileInformation(this);
     archive.write("timeStampSuffix", impl->isTimeStampSuffixEnabled);
     archive.write("recordingFrameRate", impl->recordingFrameRate);
     return true;
@@ -1236,12 +1235,11 @@ bool WorldLogFileItem::restore(const Archive& archive)
 {
     archive.read("timeStampSuffix", impl->isTimeStampSuffixEnabled);
     archive.read("recordingFrameRate", impl->recordingFrameRate);
-    
-    std::string filename, formatId;
-    if(archive.readRelocatablePath("filename", filename)){
-        impl->setLogFile(filename);
+
+    std::string filename;
+    if(archive.read({ "file", "filename" }, filename)){
+        impl->setLogFile(archive.resolveRelocatablePath(filename));
     }
-    
     return true;
 }
 

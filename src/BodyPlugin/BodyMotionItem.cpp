@@ -380,10 +380,8 @@ Item* BodyMotionItem::doDuplicate() const
 
 bool BodyMotionItem::store(Archive& archive)
 {
-    if(overwrite() || !filePath().empty()){
-        archive.writeRelocatablePath("filename", filePath());
-        archive.write("format", fileFormat());
-        return true;
+    if(overwrite()){
+        return archive.writeFileInformation(this);
     }
     return false;
 }
@@ -391,11 +389,5 @@ bool BodyMotionItem::store(Archive& archive)
 
 bool BodyMotionItem::restore(const Archive& archive)
 {
-    std::string filename, format;
-    if(archive.readRelocatablePath("filename", filename) && archive.read("format", format)){
-        if(load(filename, format)){
-            return true;
-        }
-    }
-    return false;
+    return archive.loadFileTo(this);
 }

@@ -76,8 +76,7 @@ void AbstractSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 bool AbstractSeqItem::store(Archive& archive)
 {
     if(overwrite()){
-        archive.writeRelocatablePath("filename", filePath());
-        archive.write("format", fileFormat());
+        archive.writeFileInformation(this);
     }
     archive.write("offsetTime", abstractSeq()->getOffsetTime());
     return true;
@@ -90,13 +89,7 @@ bool AbstractSeqItem::restore(const Archive& archive)
     if(archive.read("offsetTime", offsetTime)){
         abstractSeq()->setOffsetTime(offsetTime);
     }
-    std::string filename, formatId;
-    if(archive.readRelocatablePath("filename", filename) && archive.read("format", formatId)){
-        if(load(filename, formatId)){
-            return true;
-        }
-    }
-    return false;
+    return archive.loadFileTo(this);
 }
 
 

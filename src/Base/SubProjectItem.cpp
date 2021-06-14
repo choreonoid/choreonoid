@@ -243,9 +243,8 @@ bool SubProjectItem::store(Archive& archive)
 {
     if(!impl->isSavingSubProject){
         if(overwrite()){
-            archive.writeRelocatablePath("filename", filePath());
-            archive.write("format", fileFormat());
-            archive.write("saveMode", impl->saveMode.selectedSymbol(), DOUBLE_QUOTED);
+            archive.writeFileInformation(this);
+            archive.write("save_mode", impl->saveMode.selectedSymbol(), DOUBLE_QUOTED);
         }
     }
     return true;
@@ -255,12 +254,8 @@ bool SubProjectItem::store(Archive& archive)
 bool SubProjectItem::restore(const Archive& archive)
 {
     string symbol;
-    if(archive.read("saveMode", symbol)){
+    if(archive.read({ "save_mode", "saveMode" }, symbol)){
         impl->saveMode.select(symbol);
     }
-    string filename, format;
-    if(archive.readRelocatablePath("filename", filename) && archive.read("format", format)){
-        return load(filename, format);
-    }
-    return false;
+    return archive.loadFileTo(this);
 }

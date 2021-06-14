@@ -28,7 +28,7 @@ public:
 
     using BaseSeqType::operator=;
 
-    bool loadStandardYAMLformat(const std::string& filename);
+    bool loadStandardYAMLformat(const std::string& filename, std::ostream& os = nullout());
     bool saveAsStandardYAMLformat(const std::string& filename);
     void writeCollsionData(YAMLWriter& writer, std::shared_ptr<const CollisionLinkPairList> ptr);
     void readCollisionData(int nFrames, const Listing& values);

@@ -619,8 +619,8 @@ void WorldItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool WorldItem::store(Archive& archive)
 {
-    archive.write("collisionDetection", isCollisionDetectionEnabled());
-    archive.write("collisionDetector", impl->collisionDetectorType.selectedSymbol());
+    archive.write("collision_detection", isCollisionDetectionEnabled());
+    archive.write("collision_detector", impl->collisionDetectorType.selectedSymbol());
     archive.writeRelocatablePath("default_material_table_file", impl->defaultMaterialTableFile);
     return true;
 }
@@ -629,15 +629,17 @@ bool WorldItem::store(Archive& archive)
 bool WorldItem::restore(const Archive& archive)
 {
     string symbol;
-    if(archive.read("collisionDetector", symbol)){
+    if(archive.read({ "collision_detector", "collisionDetector" }, symbol)){
         selectCollisionDetector(symbol);
     }
-    if(archive.get("collisionDetection", false)){
+    if(archive.get({ "collision_detection", "collisionDetection" }, false)){
         archive.addPostProcess([&](){ impl->enableCollisionDetection(true); });
     }
-    if(archive.readRelocatablePath("default_material_table_file", symbol) ||
-       archive.readRelocatablePath("materialTableFile", symbol) /* old format */){
-        setDefaultMaterialTableFile(symbol);
+    if(archive.read({ "default_material_table_file", "materialTableFile" }, symbol)){
+        symbol = archive.resolveRelocatablePath(symbol);
+        if(!symbol.empty()){
+            setDefaultMaterialTableFile(symbol);
+        }
     }
     return true;
 }

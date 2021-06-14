@@ -252,25 +252,25 @@ void LuaScriptItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 
 bool LuaScriptItem::store(Archive& archive)
 {
-    if(!filePath().empty()){
-        archive.writeRelocatablePath("file", filePath());
+    if(archive.writeFileInformation(this)){
+        archive.write("use_main_interpreter", impl->isUsingMainInterpreter);
+        archive.write("execution_on_loading", impl->doExecutionOnLoading);
+        archive.write("background_execution", impl->isBackgroundMode);
+        return true;
     }
-    archive.write("useMainInterpreter", impl->isUsingMainInterpreter);
-    archive.write("executionOnLoading", impl->doExecutionOnLoading);
-    archive.write("backgroundExecution", impl->isBackgroundMode);
-    return true;
+    return false;
 }
 
 
 bool LuaScriptItem::restore(const Archive& archive)
 {
-    impl->useMainInterpreter(archive.get("useMainInterpreter", impl->isUsingMainInterpreter));
+    impl->useMainInterpreter(archive.get("use_main_interpreter", impl->isUsingMainInterpreter));
     
-    archive.read("executionOnLoading", impl->doExecutionOnLoading);
-    archive.read("backgroundExecution", impl->isBackgroundMode);
+    archive.read("execution_on_loading", impl->doExecutionOnLoading);
+    archive.read("background_execution", impl->isBackgroundMode);
 
-    string filename;
-    if(archive.readRelocatablePath("file", filename)){
+    string filename = archive.readItemFilePath();
+    if(!filename.empty()){
         bool doExecution = impl->doExecutionOnLoading;
         impl->doExecutionOnLoading = false; // disable execution in the load function
         bool loaded = load(filename);

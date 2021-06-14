@@ -197,13 +197,8 @@ void AudioItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool AudioItem::store(Archive& archive)
 {
-    if(!filePath().empty()){
-        archive.writeRelocatablePath("file", filePath());
-        if(!fileFormat().empty()){
-            archive.write("format", fileFormat());
-        }
-    }
-    archive.write("offsetTime", offsetTime_);
+    archive.writeFileInformation(this);
+    archive.write("offset_time", offsetTime_);
     return true;
 }
 
@@ -212,18 +207,17 @@ bool AudioItem::restore(const Archive& archive)
 {
     bool restored = false;
 
-    string filepath, format;
-    
-    if(!archive.readRelocatablePath("file", filepath)){
-        /* for backward compatibility */
-        archive.readRelocatablePath("audioFile", filepath);
-    }
-    if(!filepath.empty()){
-        archive.read("format", format);
-        restored = load(filepath, format);
+    string filepath;
+    if(archive.read({ "file", "audioFile" }, filepath)){
+        filepath = archive.resolveRelocatablePath(filepath);
+        if(!filepath.empty()){
+            string format;
+            archive.read("format", format);
+            restored = load(filepath, format);
+        }
     }
 
-    offsetTime_ = archive.get("offsetTime", 0.0);
+    offsetTime_ = archive.get({ "offset_time", "offsetTime" }, 0.0);
     
     return restored;
 }

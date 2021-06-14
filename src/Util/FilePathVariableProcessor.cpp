@@ -325,6 +325,7 @@ std::string FilePathVariableProcessor::Impl::expand
         variableRegex.emplace("^\\$\\{(\\w+)\\}");
     }
 
+    bool expansionFailed = false;
     string expanded = pathString;
     smatch match;
 
@@ -342,6 +343,7 @@ std::string FilePathVariableProcessor::Impl::expand
         } else if(varname == "PROJECT_DIR"){
             if(projectDirString.empty()){
                 errorMessage = format(_("${{PROJECT_DIR}} of \"{0}\" cannot be expanded."), pathString);
+                expansionFailed = true;
                 expanded.clear();
             } else {
                 expanded.replace(pos, len, projectDirString);
@@ -352,12 +354,13 @@ std::string FilePathVariableProcessor::Impl::expand
             
         } else {
             if(!replaceUserVariable(expanded, varname, pos, len)){
+                expansionFailed = true;
                 expanded.clear();
             }
         }
     }
 
-    if(!doMakeNativeAbsolutePath || expanded.empty()){
+    if(expansionFailed || !doMakeNativeAbsolutePath){
         return expanded;
     }
     

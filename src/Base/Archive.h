@@ -42,15 +42,15 @@ public:
     Archive* openSubArchive(const std::string& name);
     Archive* subArchive(Mapping* node);
 
-    ValueNodePtr getItemId(Item* item) const;
-    Item* findItem(ValueNodePtr id) const;
+    ValueNodePtr getItemId(const Item* item) const;
+    Item* findItem(const ValueNode* id) const;
     
-    int getViewId(View* view) const;
+    int getViewId(const View* view) const;
     View* findView(int id) const;
 
     void clearIds();
         
-    template<class ItemType> inline ItemType* findItem(ValueNodePtr id) const {
+    template<class ItemType> inline ItemType* findItem(ValueNode* id) const {
         return dynamic_cast<ItemType*>(findItem(id));
     }
 
@@ -61,29 +61,32 @@ public:
         return id->isValid() ? findItem<ItemType>(id) : 0;
     }
 
-    std::string expandPathVariables(const std::string& path) const;
-        
-    /**
-       This method expands path variables and adds the path to the project file
-       if the path is relative one
-    */
-    std::string resolveRelocatablePath(const std::string& relocatable) const;
-        
+    std::string resolveRelocatablePath(const std::string& relocatable, bool doAbsolutize = true) const;
     bool readRelocatablePath(const std::string& key, std::string& out_value) const;
     std::string readItemFilePath() const;
+    
+    //! \deprecated
+    [[deprecated("Use resolveRelocatablePath(path, false).")]]
+    std::string expandPathVariables(const std::string& path) const {
+        return resolveRelocatablePath(path, false);
+    }
+
     bool loadFileTo(Item* item) const;
     bool loadFileTo(Item* item, const std::string& filepath) const;
-    [[deprecated]]
-    bool loadFileTo(const std::string& filepath, Item* item) const {
-        return loadFileTo(item, filepath);
-    }
-    [[deprecated]]
-    bool loadItemFile(Item* item, const std::string& fileNameKey, const std::string& fileFormatKey = std::string()) const;
-    
+
     std::string getRelocatablePath(const std::string& path) const;
     bool writeRelocatablePath(const std::string& key, const std::string& path);
     bool writeFileInformation(Item* item);
 
+    //! \deprecated
+    [[deprecated("Use loadFileTo(Item* item, const std::string& filepath)")]]
+    bool loadFileTo(const std::string& filepath, Item* item) const {
+        return loadFileTo(item, filepath);
+    }
+    //! \deprecated
+    [[deprecated]]
+    bool loadItemFile(Item* item, const std::string& fileNameKey, const std::string& fileFormatKey = std::string()) const;
+    
     Item* currentParentItem() const;
 
     std::string projectDirectory() const;
@@ -96,8 +99,8 @@ private:
     Item* findItem(int id) const;
     void setCurrentParentItem(Item* parentItem);
     static Archive* invalidArchive();
-    void registerItemId(Item* item, int id);
-    void registerViewId(View* view, int id);
+    void registerItemId(const Item* item, int id);
+    void registerViewId(const View* view, int id);
 
     // called from ItemTreeArchiver
     void setPointerToProcessesOnSubTreeRestored(std::vector<std::function<void()>>* pfunc);

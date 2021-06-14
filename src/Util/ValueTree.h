@@ -238,6 +238,8 @@ private:
     friend class Listing;
 };
 
+typedef ref_ptr<ScalarNode> ScalarNodePtr;
+
 
 inline const std::string& ValueNode::toString() const
 {

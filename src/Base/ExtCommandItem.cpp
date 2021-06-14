@@ -168,7 +168,6 @@ void ExtCommandItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool ExtCommandItem::store(Archive& archive)
 {
-    //archive.writeRelocatablePath("command", command_);
     archive.write("command", command_);
     archive.write("executeOnLoading", doExecuteOnLoading);
     archive.write("waitingTimeAfterStarted", waitingTimeAfterStarted_);
@@ -178,7 +177,6 @@ bool ExtCommandItem::store(Archive& archive)
 
 bool ExtCommandItem::restore(const Archive& archive)
 {
-    //archive.readRelocatablePath("command", command_);
     archive.read("command", command_);
     archive.read("waitingTimeAfterStarted", waitingTimeAfterStarted_);
 

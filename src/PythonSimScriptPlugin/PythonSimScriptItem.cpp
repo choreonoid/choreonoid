@@ -10,7 +10,6 @@
 #include "gettext.h"
 
 using namespace std;
-namespace stdph = std::placeholders;
 using namespace cnoid;
 
 
@@ -19,7 +18,9 @@ void PythonSimScriptItem::initialize(ExtensionManager* ext)
     ext->itemManager().registerClass<PythonSimScriptItem, SimulationScriptItem>(N_("PythonSimScriptItem"));
     ext->itemManager().addLoader<PythonSimScriptItem>(
         _("Python Script for Simulation"), "PYTHON-SCRIPT-FILE", "py",
-        std::bind(&PythonSimScriptItem::setScriptFilename, stdph::_1, stdph::_2));
+        [](PythonSimScriptItem* item, const std::string& filename, std::ostream&, Item* /* parentItem */){
+            return item->setScriptFilename(filename);
+        });
 }
 
 
@@ -130,10 +131,7 @@ void PythonSimScriptItem::doPutProperties(PutPropertyFunction& putProperty)
 bool PythonSimScriptItem::store(Archive& archive)
 {
     if(SimulationScriptItem::store(archive) && impl->store(archive)){
-        if(!filePath().empty()){
-            archive.writeRelocatablePath("file", filePath());
-        }
-        return true;
+        return archive.writeFileInformation(this);
     }
     return false;
 }
@@ -142,13 +140,8 @@ bool PythonSimScriptItem::store(Archive& archive)
 bool PythonSimScriptItem::restore(const Archive& archive)
 {
     if(SimulationScriptItem::restore(archive)){
-        string filename;
-        if(archive.readRelocatablePath("file", filename)){
-            if(load(filename)){
-                if(impl->restore(archive)){
-                    return true;
-                }
-            }
+        if(archive.loadFileTo(this)){
+            return impl->restore(archive);
         }
     }
     return false;

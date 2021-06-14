@@ -227,20 +227,22 @@ void MessageLogItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool MessageLogItem::store(Archive& archive)
 {
-    archive.writeRelocatablePath("fileName", impl->filename);
-    archive.write("fileMode", impl->fileMode.selectedSymbol());
-    archive.write("skipEscapeSequence", impl->skipEscapeSequence);
+    archive.writeRelocatablePath("file", impl->filename);
+    archive.write("file_mode", impl->fileMode.selectedSymbol());
+    archive.write("skip_escape_sequence", impl->skipEscapeSequence);
     return true;
 }
 
 bool MessageLogItem::restore(const Archive& archive)
 {
     string symbol;
-    if(archive.read("fileMode", symbol)){
+    if(archive.read({ "file_mode", "fileMode" }, symbol)){
         impl->fileMode.select(symbol);
     }
-    archive.readRelocatablePath("fileName", impl->filename);
-    archive.read("skipEscapeSequence", impl->skipEscapeSequence);
+    if(archive.read({ "file", "fileName" }, impl->filename)){
+        impl->filename = archive.resolveRelocatablePath(impl->filename);
+    }
+    archive.read({ "skip_escape_sequence", "skipEscapeSequence" }, impl->skipEscapeSequence);
     return true;
 }
 

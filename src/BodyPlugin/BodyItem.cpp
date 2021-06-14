@@ -1751,19 +1751,20 @@ bool BodyItem::restore(const Archive& archive)
 bool BodyItem::Impl::restore(const Archive& archive)
 {
     isBeingRestored = true;
-    
-    string filepath = archive.readItemFilePath();
-    if(filepath.empty()){
-        // for the backward compatibiliy
-        archive.readRelocatablePath("modelFile", filepath);
-    }
-    if(!filepath.empty()){
-        if(!archive.loadFileTo(self, filepath)){
+
+    string filepath;
+    if(archive.read({ "file", "modelFile" }, filepath)){
+        bool loaded = false;
+        filepath = archive.resolveRelocatablePath(filepath);
+        if(!filepath.empty()){
+            loaded = archive.loadFileTo(self, filepath);
+        }
+        if(!loaded){
             isBeingRestored = false;
             return false;
         }
     }
-
+            
     Vector3 p = Vector3::Zero();
     Matrix3 R = Matrix3::Identity();
         

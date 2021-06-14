@@ -26,9 +26,8 @@ CollisionSeq::CollisionSeq(CollisionSeqItem* collisionSeqItem)
 }
 
 
-bool CollisionSeq::loadStandardYAMLformat(const std::string& filename)
+bool CollisionSeq::loadStandardYAMLformat(const std::string& filename, std::ostream& os)
 {
-    bool result = false;
     bool loaded = false;
     clearSeqMessage();
     YAMLReader reader;
@@ -36,21 +35,16 @@ bool CollisionSeq::loadStandardYAMLformat(const std::string& filename)
 
     try {
         auto archive = reader.loadDocument(filename)->toMapping();
-        if(archive->get<string>("type") != "CollisionSeq"){
-            result = false;
-        }else{
-            result = readSeq(archive);
-            if(result){
+        if(archive->get<string>("type") == "CollisionSeq"){
+            if(readSeq(archive, os)){
                 loaded = true;
-            } else {
-                addSeqMessage(seqMessage());
             }
         }
     } catch(const ValueNode::Exception& ex){
-        addSeqMessage(ex.message());
+        os << ex.message() << endl;
     }
 
-    return (result && loaded);
+    return loaded;
 }
 
 

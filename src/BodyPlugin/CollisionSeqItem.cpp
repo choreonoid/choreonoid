@@ -9,13 +9,7 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
-
-namespace {
-
-}
-
 
 namespace cnoid {
 
@@ -29,27 +23,23 @@ public:
     void initialize();
 
 };
-}
 
-
-static bool fileIoSub(CollisionSeqItem* item, std::ostream& os, bool loaded, bool isLoading)
-{
-    if(!loaded){
-        os << item->collisionSeq()->seqMessage();
-    }
-    return loaded;
 }
 
 
 static bool loadStandardYamlFormat(CollisionSeqItem* item, const std::string& filename, std::ostream& os)
 {
-    return fileIoSub(item, os, item->collisionSeq()->loadStandardYAMLformat(filename), true);
+    return item->collisionSeq()->loadStandardYAMLformat(filename, os);
 }
 
 
 static bool saveAsStandardYamlFormat(CollisionSeqItem* item, const std::string& filename, std::ostream& os)
 {
-    return fileIoSub(item, os, item->collisionSeq()->saveAsStandardYAMLformat(filename), false);
+    if(!item->collisionSeq()->saveAsStandardYAMLformat(filename)){
+        os << item->collisionSeq()->seqMessage() << endl;
+        return false;
+    }
+    return true;
 }
 
 
@@ -66,7 +56,12 @@ void CollisionSeqItem::initislizeClass(ExtensionManager* ext)
     im.registerClass<CollisionSeqItem, AbstractMultiSeqItem>(N_("CollisionSeqItem"));
     im.addLoaderAndSaver<CollisionSeqItem>(
         _("Collision Data"), "COLLISION-DATA-YAML", "yaml",
-        std::bind(loadStandardYamlFormat, _1, _2, _3),  std::bind(saveAsStandardYamlFormat, _1, _2, _3));
+        [](CollisionSeqItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
+            return loadStandardYamlFormat(item, filename, os);
+        },
+        [](CollisionSeqItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
+            return saveAsStandardYamlFormat(item, filename, os);
+        });
 
     initialized = true;
 }
@@ -126,10 +121,8 @@ Item* CollisionSeqItem::doDuplicate() const
 
 bool CollisionSeqItem::store(Archive& archive)
 {
-    if(overwrite() || !filePath().empty()){
-        archive.writeRelocatablePath("filename", filePath());
-        archive.write("format", fileFormat());
-        return true;
+    if(overwrite()){
+        return archive.writeFileInformation(this);
     }
     return false;
 }
@@ -137,13 +130,7 @@ bool CollisionSeqItem::store(Archive& archive)
 
 bool CollisionSeqItem::restore(const Archive& archive)
 {
-    std::string filename, format;
-    if(archive.readRelocatablePath("filename", filename) && archive.read("format", format)){
-        if(load(filename, format)){
-            return true;
-        }
-    }
-    return false;
+    return archive.loadFileTo(this);
 }
 
 

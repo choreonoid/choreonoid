@@ -579,22 +579,19 @@ bool PointSetItemImpl::onRotationPropertyChanged(const std::string& value)
 
 bool PointSetItem::store(Archive& archive)
 {
-    ScenePointSet* scene = impl->scene;
-    if(!filePath().empty()){
-        archive.writeRelocatablePath("file", filePath());
-        archive.write("format", fileFormat());
-    }
-    write(archive, "translation", Vector3(scene->translation()));
+    archive.writeFileInformation(this);
 
+    ScenePointSet* scene = impl->scene;
+    write(archive, "translation", Vector3(scene->translation()));
     writeDegreeAngleAxis(archive, "rotation", AngleAxis(scene->rotation()));
     // The following element is used to distinguish the value type from the old one using radian.
     // The old format is deprecated, and writing the following element should be omitted in the future.
     archive.write("angle_unit", "degree");
-
-    archive.write("renderingMode", scene->renderingMode.selectedSymbol());
-    archive.write("pointSize", pointSize());
-    archive.write("voxelSize", scene->voxelSize);
-    archive.write("isEditable", isEditable());
+    archive.write("rendering_mode", scene->renderingMode.selectedSymbol());
+    archive.write("point_size", pointSize());
+    archive.write("voxel_size", scene->voxelSize);
+    archive.write("is_editable", isEditable());
+    
     return true;
 }
 
@@ -620,17 +617,23 @@ bool PointSetItem::restore(const Archive& archive)
     }
     
     string symbol;
-    if(archive.read("renderingMode", symbol)){
+    if(archive.read({ "rendering_mode", "renderingMode" }, symbol)){
         impl->setRenderingMode(scene->renderingMode.index(symbol));
     }
-    scene->setPointSize(archive.get("pointSize", pointSize()));
-    scene->setVoxelSize(archive.get("voxelSize", voxelSize()));
-    setEditable(archive.get("isEditable", isEditable()));
-    
+    scene->setPointSize(archive.get({ "point_size", "pointSize" }, pointSize()));
+    scene->setVoxelSize(archive.get({ "voxel_size", "voxelSize" }, voxelSize()));
+    setEditable(archive.get({ "is_editable", "isEditable" }, isEditable()));
+
     std::string filename, formatId;
-    if(archive.readRelocatablePath("file", filename) && archive.read("format", formatId)){
+    if(archive.read("file", filename) && archive.read("format", formatId)){
+        filename = archive.resolveRelocatablePath(filename);
+        if(filename.empty()){
+            return false; // Invalid relocatable path
+        }
         return load(filename, archive.currentParentItem(), formatId);
     }
+    
+    // Restoration succeeds when there is no associated file information
     return true;
 }
 

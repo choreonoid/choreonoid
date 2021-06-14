@@ -140,27 +140,17 @@ bool MediaItem::store(Archive& archive)
     } else if(!mediaURI_.empty()){
         archive.write("uri", mediaURI_, DOUBLE_QUOTED);
     }
-    archive.write("offsetTime", offsetTime_);
-
+    archive.write("offset_time", offsetTime_);
     return true;
 }
 
 
 bool MediaItem::restore(const Archive& archive)
 {
-    bool restored = false;
-    
-    string location;
-    string format = "MEDIA-GENERIC";
-    
-    if(archive.readRelocatablePath("file", location)){
-        archive.read("format", format);
-        restored = load(location, format);
-    } else {
+    bool restored = archive.loadFileTo(this);
+    if(!restored){
         restored = setMediaURI(archive.get("uri", ""));
     }
-
-    setOffsetTime(archive.get("offsetTime", 0.0));
-
+    setOffsetTime(archive.get({ "offset_time", "offsetTime" }, 0.0));
     return restored;
 }

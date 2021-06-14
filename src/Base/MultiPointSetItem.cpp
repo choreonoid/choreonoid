@@ -89,7 +89,6 @@ public:
     Selection renderingMode;
     double pointSize;
     double voxelSize;
-    string directory;
     ScopedConnection itemSelectionChangedConnection;
     ScopedConnection subTreeChangedConnection;
     Signal<void(int index)> sigPointSetItemAdded;
@@ -540,7 +539,6 @@ void MultiPointSetItem::doPutProperties(PutPropertyFunction& putProperty)
                 [&](int mode){
                     setVisibilityMode(mode); impl->updateVisibilities(); return true; });
     putProperty(_("Auto save"), false);
-    putProperty(_("Directory"), string(""));
     putProperty(_("Num point sets"), numPointSetItems());
     putProperty(_("Rendering mode"), impl->renderingMode,
                 [&](int mode){ return impl->onRenderingModePropertyChanged(mode); });
@@ -595,9 +593,6 @@ bool MultiPointSetItem::store(Archive& archive)
 {
     archive.write("visibilityMode", impl->visibilityMode.selectedSymbol());
     archive.write("autoSave", false);
-    if(!impl->directory.empty()){
-        archive.writeRelocatablePath("directory", impl->directory);
-    }
 
     auto& scene = impl->scene;
     write(archive, "translation", Vector3(scene->translation()));
@@ -622,10 +617,6 @@ bool MultiPointSetItem::restore(const Archive& archive)
     }
     
     archive.get("autoSave", false);
-    string directory;
-    if(archive.readRelocatablePath("directory", directory)){
-
-    }
 
     auto& scene = impl->scene;
     Vector3 translation;
