@@ -871,7 +871,7 @@ void PositionTagGroupItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool PositionTagGroupItem::store(Archive& archive)
 {
-    impl->tagGroup->write(&archive, *archive.session());
+    impl->tagGroup->write(&archive);
 
     archive.setFloatingNumberFormat("%.9g");
     cnoid::write(archive, "offset_translation", impl->T_offset.translation());
@@ -906,7 +906,7 @@ bool PositionTagGroupItem::restore(const Archive& archive)
         setEdgeVisiblility(on);
     }
     
-    return impl->tagGroup->read(&archive, *archive.session());
+    return impl->tagGroup->read(&archive);
 }
 
 

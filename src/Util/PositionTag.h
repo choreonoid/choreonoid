@@ -8,7 +8,6 @@
 namespace cnoid {
 
 class Mapping;
-class ArchiveSession;
 
 class CNOID_EXPORT PositionTag : public Referenced
 {
@@ -53,8 +52,8 @@ public:
         hasAttitude_ = true;
     }
     
-    bool read(const Mapping* archive, ArchiveSession& session);
-    bool write(Mapping* archive, ArchiveSession& session) const;
+    bool read(const Mapping* archive);
+    bool write(Mapping* archive) const;
 
 private:
     Isometry3 position_;

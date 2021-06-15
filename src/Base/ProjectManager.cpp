@@ -20,7 +20,6 @@
 #include <cnoid/MainWindow>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
-#include <cnoid/ArchiveSession>
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/ExecutablePath>
 #include <cnoid/Sleep>
@@ -50,15 +49,6 @@ MessageView* mv = nullptr;
 
 Signal<void(int recursiveLevel)> sigProjectAboutToBeLoaded;
 Signal<void(int recursiveLevel)> sigProjectLoaded;
-
-class ProjectArchiveSession : public ArchiveSession
-{
-public:
-    virtual void putWarning(const std::string& message) override {
-        mv->put(message, MessageView::Warning);
-    }
-};
-
 
 #ifdef Q_OS_UNIX
 class WindowActivationChecker : public QObject
@@ -124,8 +114,6 @@ public:
     string currentProjectName;
     string currentProjectFile;
     string currentProjectDirectory;
-
-    ProjectArchiveSession archiveSession;
 
     struct ArchiverInfo {
         std::function<bool(Archive&)> storeFunction;
@@ -405,9 +393,8 @@ void ProjectManager::Impl::loadProject
                 parentItem = RootItem::instance();
             }
 
-            archiveSession.initialize();
             Archive* archive = static_cast<Archive*>(reader.document()->toMapping());
-            archive->initSharedInfo(filename, isSubProject, &archiveSession);
+            archive->initSharedInfo(filename, isSubProject);
 
             std::set<string> optionalPlugins;
             Listing& optionalPluginsNode = *archive->findListing("optionalPlugins");
@@ -548,11 +535,10 @@ void ProjectManager::Impl::loadProject
 
                 mv->flush();
 
-                bool finalizationCompleted = archiveSession.finalize();
                 archive->callPostProcesses();
 
                 if(!isBuiltinProject){
-                    if(numRestoredItems == numArchivedItems && finalizationCompleted){
+                    if(numRestoredItems == numArchivedItems){
                         mv->notify(format(_("Project \"{}\" has been completely loaded."), filename));
                     } else {
                         mv->notify(format(_("Project \"{}\" has been partially loaded."), filename));
@@ -589,13 +575,13 @@ template<class TObject> bool ProjectManager::Impl::storeObjects
     bool result = true;
     
     if(!objects.empty()){
-        MappingPtr archives = new Mapping();
+        MappingPtr archives = new Mapping;
         archives->setKeyQuoteStyle(DOUBLE_QUOTED);
         for(size_t i=0; i < objects.size(); ++i){
             TObject* object = objects[i];
             string name = object->objectName().toStdString();
             if(!name.empty()){
-                ArchivePtr archive = new Archive();
+                ArchivePtr archive = new Archive;
                 archive->inheritSharedInfoFrom(parentArchive);
                 if(object->storeState(*archive) && !archive->empty()){
                     archives->insert(name, archive);
@@ -646,9 +632,8 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
     
     itemTreeArchiver.reset();
 
-    archiveSession.initialize();
-    ArchivePtr archive = new Archive();
-    archive->initSharedInfo(filename, isSubProject, &archiveSession);
+    ArchivePtr archive = new Archive;
+    archive->initSharedInfo(filename, isSubProject);
 
     ArchivePtr itemArchive = itemTreeArchiver.store(archive, item);
 
@@ -662,7 +647,7 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
 
     ArchiverMapMap::iterator p;
     for(p = archivers.begin(); p != archivers.end(); ++p){
-        ArchivePtr moduleArchive = new Archive();
+        ArchivePtr moduleArchive = new Archive;
         moduleArchive->setKeyQuoteStyle(DOUBLE_QUOTED);
         ArchiverMap::iterator q;
         for(q = p->second.begin(); q != p->second.end(); ++q){
@@ -671,7 +656,7 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
             if(objectName.empty()){
                 objArchive = moduleArchive;
             } else {
-                objArchive = new Archive();
+                objArchive = new Archive;
             }
             objArchive->inheritSharedInfoFrom(*archive);
             ArchiverInfo& info = q->second;
@@ -692,8 +677,6 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
         mainWindow->storeLayout(archive);
         stored = true;
     }
-
-    archiveSession.finalize();
 
     if(stored){
         writer.setKeyOrderPreservationMode(true);

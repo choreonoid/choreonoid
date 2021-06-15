@@ -5,7 +5,6 @@
 #include "MprStatementRegistration.h"
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/ValueTree>
-#include <cnoid/ArchiveSession>
 #include <cnoid/EigenArchive>
 #include <cnoid/EigenUtil>
 #include <cnoid/CloneMap>

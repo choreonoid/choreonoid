@@ -10,6 +10,9 @@ namespace cnoid {
 
 class Uuid;
 
+/**
+   \deprecated
+*/
 class CNOID_EXPORT ArchiveSession
 {
 public:

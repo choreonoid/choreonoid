@@ -1,7 +1,5 @@
 #include "PositionTagGroup.h"
 #include "ValueTree.h"
-#include "ArchiveSession.h"
-#include "Uuid.h"
 #include "UTF8.h"
 #include "Tokenizer.h"
 #include "EigenUtil.h"
@@ -19,7 +17,6 @@ class PositionTagGroup::Impl
 {
 public:
     string name;
-    Uuid uuid;
     Signal<void(int index)> sigTagAdded;
     Signal<void(int index, PositionTag* tag)> sigTagRemoved;
     Signal<void(int index)> sigTagPositionChanged;
@@ -83,12 +80,6 @@ const std::string& PositionTagGroup::name() const
 void PositionTagGroup::setName(const std::string& name)
 {
     impl->name = name;
-}
-
-
-const Uuid& PositionTagGroup::uuid() const
-{
-    return impl->uuid;
 }
 
 
@@ -188,7 +179,7 @@ void PositionTagGroup::notifyTagPositionUpdate(int index, bool doNotifyPositionC
 }
 
 
-bool PositionTagGroup::read(const Mapping* archive, ArchiveSession& session)
+bool PositionTagGroup::read(const Mapping* archive)
 {
     auto& typeNode = archive->get("type");
     if(typeNode.toString() != "PositionTagGroup"){
@@ -204,18 +195,13 @@ bool PositionTagGroup::read(const Mapping* archive, ArchiveSession& session)
 
     archive->read("name", impl->name);
 
-    impl->uuid.read(archive);
-    if(!session.addReference(impl->uuid, this)){
-        impl->uuid = Uuid(); // assign a new UUID to resolve the duplication
-    }
-
     clearTags();
 
     auto listing = archive->findListing("tags");
     if(listing->isValid()){
         for(auto& node : *listing){
             PositionTagPtr tag = new PositionTag;
-            if(tag->read(node->toMapping(), session)){
+            if(tag->read(node->toMapping())){
                 append(tag);
             }
         }
@@ -225,18 +211,17 @@ bool PositionTagGroup::read(const Mapping* archive, ArchiveSession& session)
 }
 
 
-bool PositionTagGroup::write(Mapping* archive, ArchiveSession& session) const
+bool PositionTagGroup::write(Mapping* archive) const
 {
     archive->write("type", "PositionTagGroup");
     archive->write("format_version", 1.0);
-    archive->write("uuid", impl->uuid.toString());
     archive->write("name", impl->name);
 
     if(!tags_.empty()){
         auto listing = archive->createListing("tags");
         for(auto& tag : tags_){
             MappingPtr node = new Mapping;
-            if(!tag->write(node, session)){
+            if(!tag->write(node)){
                 return false;
             }
             listing->append(node);
@@ -248,11 +233,11 @@ bool PositionTagGroup::write(Mapping* archive, ArchiveSession& session) const
 
 
 bool PositionTagGroup::loadCsvFile
-(const std::string& filename, CsvFormat csvFormat, ArchiveSession& session)
+(const std::string& filename, CsvFormat csvFormat, std::ostream& os)
 {
     ifstream is(fromUTF8(filename).c_str());
     if(!is){
-        session.putError(format(_("\"{}\" cannot be opened.\n"), filename));
+        os << format(_("\"{}\" cannot be opened."), filename) << endl;
         return false;
     }
   
@@ -269,8 +254,7 @@ bool PositionTagGroup::loadCsvFile
             int i = 0;
             for(auto& token : tokens){
                 if(i > 5){
-                    session.putError(
-                        format(_("Too many elements at line {0} of \"{1}\".\n"), lineNumber, filename));
+                    os << format(_("Too many elements at line {0} of \"{1}\"."), lineNumber, filename) << endl;
                     return false;
                 }
                 xyzrpy[i++] = std::stod(token);
@@ -282,7 +266,7 @@ bool PositionTagGroup::loadCsvFile
         }
     }
     catch(std::logic_error& ex){
-        session.putError(format(_("{0} at line {1} of \"{2}\".\n"), ex.what(), lineNumber, filename));
+        os << format(_("{0} at line {1} of \"{2}\"."), ex.what(), lineNumber, filename) << endl;
         return false;
     }
 
@@ -300,7 +284,7 @@ bool PositionTagGroup::loadCsvFile
             append(tag);
         }
     } else {
-        session.putError(_("Unsupported CSV format is specified.\n"));
+        os << _("Unsupported CSV format is specified.") << endl;
         return false;
     }
         

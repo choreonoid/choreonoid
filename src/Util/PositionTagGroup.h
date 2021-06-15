@@ -12,8 +12,6 @@ namespace cnoid {
 
 class PositionTag;
 class Mapping;
-class ArchiveSession;
-class Uuid;
 
 class CNOID_EXPORT PositionTagGroup : public ClonableReferenced
 {
@@ -33,8 +31,6 @@ public:
 
     const std::string& name() const;
     void setName(const std::string& name);
-
-    const Uuid& uuid() const;
 
     void clearTags();
 
@@ -63,11 +59,11 @@ public:
     void notifyTagPositionChange(int index);
     void notifyTagPositionUpdate(int index, bool doNotifyPositionChange = true);
 
-    bool read(const Mapping* archive, ArchiveSession& session);
-    bool write(Mapping* archive, ArchiveSession& session) const;
+    bool read(const Mapping* archive);
+    bool write(Mapping* archive) const;
 
     enum CsvFormat { XYZMMRPYDEG = 0, XYZMM = 1 };
-    bool loadCsvFile(const std::string& filename, CsvFormat csvFormat, ArchiveSession& session);
+    bool loadCsvFile(const std::string& filename, CsvFormat csvFormat, std::ostream& os);
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
