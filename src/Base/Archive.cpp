@@ -9,6 +9,7 @@
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <map>
+#include <deque>
 #include "gettext.h"
 
 using namespace std;
@@ -29,6 +30,8 @@ struct FunctionInfo {
         : func(func), priority(priority) { }
 };
 
+deque<function<void()>> finalProcesses;
+
 }
 
 namespace cnoid {
@@ -48,10 +51,13 @@ public:
 
     vector<function<void()>>* pointerToProcessesOnSubTreeRestored;
     vector<FunctionInfo> postProcesses;
+    vector<FunctionInfo> nextPostProcesses;
+    bool isDoingPostProcesses;
 
     ArchiveSharedData(){
         currentParentItem = nullptr;
         pointerToProcessesOnSubTreeRestored = nullptr;
+        isDoingPostProcesses = false;
     }
 };
 
@@ -75,7 +81,7 @@ Archive::Archive()
 Archive::Archive(int line, int column)
     : Mapping(line, column)
 {
-    
+
 }
 
 
@@ -126,28 +132,49 @@ void Archive::setPointerToProcessesOnSubTreeRestored(std::vector<std::function<v
 void Archive::addPostProcess(const std::function<void()>& func, int priority) const
 {
     if(shared){
-        shared->postProcesses.emplace_back(func, priority);
+        if(!shared->isDoingPostProcesses){
+            shared->postProcesses.emplace_back(func, priority);
+        } else {
+            shared->nextPostProcesses.emplace_back(func, priority);
+        }
     }
-}
-
-
-void Archive::addFinalProcess(const std::function<void()>& func) const
-{
-    addPostProcess(func, std::numeric_limits<int>::max());
 }
 
 
 void Archive::callPostProcesses()
 {
     if(shared){
+        shared->isDoingPostProcesses = true;
         auto& processes = shared->postProcesses;
-        std::sort(processes.begin(), processes.end(),
-                  [](const FunctionInfo& info1, const FunctionInfo& info2){
-                      return info1.priority < info2.priority;
-                  });
-        for(auto& process : processes){
-            process.func();
+        while(!processes.empty()){
+            std::sort(processes.begin(), processes.end(),
+                      [](const FunctionInfo& info1, const FunctionInfo& info2){
+                          return info1.priority < info2.priority;
+                      });
+            for(auto& process : processes){
+                process.func();
+            }
+            processes.clear();
+            if(!shared->nextPostProcesses.empty()){
+                processes.swap(shared->nextPostProcesses);
+            }
         }
+        shared->isDoingPostProcesses = false;
+    }
+}
+
+
+void Archive::addFinalProcess(const std::function<void()>& func) const
+{
+    finalProcesses.push_back(func);
+}
+
+
+void Archive::callFinalProcesses()
+{
+    while(!finalProcesses.empty()){
+        finalProcesses.front()();
+        finalProcesses.pop_front();
     }
 }
 

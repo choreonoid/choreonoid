@@ -102,6 +102,7 @@ private:
     // called from ItemTreeArchiver
     void setPointerToProcessesOnSubTreeRestored(std::vector<std::function<void()>>* pfunc);
     void callPostProcesses();
+    static void callFinalProcesses();
 
     friend class ItemTreeArchiver;
     friend class ViewManager;

@@ -559,9 +559,11 @@ void ProjectManager::Impl::loadProject
 
     --projectBeingLoadedCounter;
 
-    ::sigProjectLoaded(projectBeingLoadedCounter);
-
-    if(!self->isLoadingProject()){
+    if(self->isLoadingProject()){
+        ::sigProjectLoaded(projectBeingLoadedCounter);
+    } else {
+        Archive::callFinalProcesses();
+        ::sigProjectLoaded(projectBeingLoadedCounter);
         auto vp = FilePathVariableProcessor::systemInstance();
         vp->clearBaseDirectory();
         vp->clearProjectDirectory();
