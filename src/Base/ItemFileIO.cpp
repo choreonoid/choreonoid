@@ -12,8 +12,6 @@
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
-using fmt::format;
-
 
 namespace cnoid {
 
@@ -22,8 +20,8 @@ class ItemFileIO::Impl
 public:
     ItemFileIO* self;
     int api;
-    std::string formatId;
-    std::vector<std::string> formatIdAliases;
+    std::string format;
+    std::vector<std::string> formatAliases;
     std::string caption;
     std::string fileTypeCaption;
     std::vector<std::string> extensions;
@@ -39,7 +37,7 @@ public:
     // This variable actualy points a instance of the ClassInfo class defined in ItemManager.cpp
     mutable weak_ref_ptr<Referenced> itemClassInfo;
 
-    Impl(ItemFileIO* self, const std::string& formatId, int api);
+    Impl(ItemFileIO* self, const std::string& format, int api);
     Impl(ItemFileIO* self, const Impl& org);
     bool preprocessLoadingOrSaving(Item* item, std::string& io_filename, const Mapping* options);
     bool loadItem(
@@ -51,16 +49,16 @@ public:
 }
 
 
-ItemFileIO::ItemFileIO(const std::string& formatId, int api)
+ItemFileIO::ItemFileIO(const std::string& format, int api)
 {
-    impl = new Impl(this, formatId, api);
+    impl = new Impl(this, format, api);
 }
 
 
-ItemFileIO::Impl::Impl(ItemFileIO* self, const std::string& formatId, int api)
+ItemFileIO::Impl::Impl(ItemFileIO* self, const std::string& format, int api)
     : self(self),
       api(api),
-      formatId(formatId)
+      format(format)
 {
     interfaceLevel = Standard;
     invocationType = Direct;
@@ -91,8 +89,8 @@ void ItemFileIO::copyFrom(const ItemFileIO& org)
 ItemFileIO::Impl::Impl(ItemFileIO* self, const Impl& org)
     : self(self),
       api(org.api),
-      formatId(org.formatId),
-      formatIdAliases(org.formatIdAliases),
+      format(org.format),
+      formatAliases(org.formatAliases),
       caption(org.caption),
       extensions(org.extensions),
       extensionFunction(org.extensionFunction),
@@ -112,14 +110,14 @@ ItemFileIO::~ItemFileIO()
 }
 
 
-bool ItemFileIO::isFormat(const std::string& id) const
+bool ItemFileIO::isFormat(const std::string& format) const
 {
-    if(!id.empty()){
-        if(impl->formatId == id){
+    if(!format.empty()){
+        if(impl->format == format){
             return true;
         }
-        for(auto& alias : impl->formatIdAliases){
-            if(alias == id){
+        for(auto& alias : impl->formatAliases){
+            if(alias == format){
                 return true;
             }
         }
@@ -173,9 +171,9 @@ const std::string& ItemFileIO::fileTypeCaption() const
 }
 
 
-void ItemFileIO::addFormatIdAlias(const std::string& formatId)
+void ItemFileIO::addFormatAlias(const std::string& format)
 {
-    impl->formatIdAliases.push_back(formatId);
+    impl->formatAliases.push_back(format);
 }
 
 
@@ -189,15 +187,6 @@ void ItemFileIO::setExtension(const std::string& extension)
 void ItemFileIO::setExtensions(const std::vector<std::string>& extensions)
 {
     impl->extensions = extensions;
-}
-
-
-void ItemFileIO::addExtensions(const std::vector<std::string>& extensions)
-{
-    impl->extensions.reserve(impl->extensions.size() + extensions.size());
-    for(auto& ext : extensions){
-        impl->extensions.push_back(ext);
-    }
 }
 
 
@@ -306,12 +295,14 @@ bool ItemFileIO::Impl::loadItem
     }
 
     if(!preprocessLoadingOrSaving(item, filename, options)){
-        self->putError(format(_("{0} cannot be loaded because {1}"), item->displayName(), errorMessage));
+        self->putError(
+            fmt::format(_("{0} cannot be loaded because {1}"),
+                        item->displayName(), errorMessage));
         return false;
     }
     this->parentItem = parentItem;
 
-    mv->notify(format(_("Loading {0} \"{1}\""), caption, filename));
+    mv->notify(fmt::format(_("Loading {0} \"{1}\""), caption, filename));
     mv->flush();
 
     actuallyLoadedItem = item;
@@ -332,7 +323,7 @@ bool ItemFileIO::Impl::loadItem
             optionArchive = new Mapping;
             self->storeOptions(optionArchive);
         }
-        actuallyLoadedItem->updateFileInformation(filename, formatId, optionArchive);
+        actuallyLoadedItem->updateFileInformation(filename, format, optionArchive);
 
         if(doAddition && parentItem){
             parentItem->insertChild(nextItem, item, true);
@@ -355,6 +346,12 @@ bool ItemFileIO::load(Item* item, const std::string& filename)
 }
 
 
+Item* ItemFileIO::createItem()
+{
+    return nullptr;
+}
+
+
 void ItemFileIO::setActuallyLoadedItem(Item* item)
 {
     impl->actuallyLoadedItem = item;
@@ -373,23 +370,27 @@ bool ItemFileIO::Impl::saveItem
 (Item* item, std::string filename, const Mapping* options)
 {
     if(filename.empty()){
-        self->putError(format(_("{0} cannot be saved with empty filename."), item->displayName()));
+        self->putError(
+            fmt::format(_("{0} cannot be saved with empty filename."), item->displayName()));
         return false;
     }
 
     if(!preprocessLoadingOrSaving(item, filename, options)){
-        self->putError(format(_("{0} cannot be saved because {1}"), item->displayName(), errorMessage));
+        self->putError(
+            fmt::format(_("{0} cannot be saved because {1}"), item->displayName(), errorMessage));
         return false;
     }
     parentItem = item->parentItem();
 
     bool isExport = (interfaceLevel == Conversion);
     if(!isExport){
-        mv->notify(format(_("Saving {0} \"{1}\" to \"{2}\""),
-                          caption, item->displayName(), filename));
+        mv->notify(
+            fmt::format(_("Saving {0} \"{1}\" to \"{2}\""),
+                        caption, item->displayName(), filename));
     } else {
-        mv->notify(format(_("Exporting {0} \"{1}\" into \"{2}\""),
-                          caption, item->displayName(), filename));
+        mv->notify(
+            fmt::format(_("Exporting {0} \"{1}\" into \"{2}\""),
+                        caption, item->displayName(), filename));
     }
     mv->flush();
 
@@ -406,7 +407,7 @@ bool ItemFileIO::Impl::saveItem
             self->storeOptions(optionArchive);
         }
         if(interfaceLevel != Conversion){
-            item->updateFileInformation(filename, formatId, optionArchive);
+            item->updateFileInformation(filename, format, optionArchive);
         }
         mv->put(_(" -> ok!\n"));
     }
@@ -509,81 +510,4 @@ void ItemFileIO::setItemClassInfo(Referenced* info)
 const Referenced* ItemFileIO::itemClassInfo() const
 {
     return impl->itemClassInfo.lock();
-}
-
-
-ItemFileIoExtenderBase::ItemFileIoExtenderBase(const std::type_info& type, const std::string& formatId)
-{
-    baseFileIO = ItemManager::findFileIO(type, formatId);
-    if(baseFileIO){
-        copyFrom(*baseFileIO);
-    }
-}
-
-
-bool ItemFileIoExtenderBase::isAvailable() const
-{
-    return baseFileIO != nullptr;
-}
-
-
-bool ItemFileIoExtenderBase::load(Item* item, const std::string& filename)
-{
-    return baseFileIO ? baseFileIO->load(item, filename) : false;
-}
-
-
-void ItemFileIoExtenderBase::resetOptions()
-{
-    if(baseFileIO){
-        baseFileIO->resetOptions();
-    }
-}
-
-
-void ItemFileIoExtenderBase::storeOptions(Mapping* options)
-{
-    if(baseFileIO){
-        baseFileIO->storeOptions(options);
-    }
-}
-
-
-bool ItemFileIoExtenderBase::restoreOptions(const Mapping* options)
-{
-    return baseFileIO ? baseFileIO->restoreOptions(options) : true;
-}
-
-
-QWidget* ItemFileIoExtenderBase::getOptionPanelForLoading()
-{
-    return baseFileIO ? baseFileIO->getOptionPanelForLoading() : nullptr;
-}
-
-
-void ItemFileIoExtenderBase::fetchOptionPanelForLoading()
-{
-    if(baseFileIO){
-        baseFileIO->fetchOptionPanelForLoading();
-    }
-}
-
-
-QWidget* ItemFileIoExtenderBase::getOptionPanelForSaving(Item* item)
-{
-    return baseFileIO ? baseFileIO->getOptionPanelForSaving(item) : nullptr;
-}
-
-
-void ItemFileIoExtenderBase::fetchOptionPanelForSaving()
-{
-    if(baseFileIO){
-        baseFileIO->fetchOptionPanelForSaving();
-    }
-}
-    
-
-bool ItemFileIoExtenderBase::save(Item* item, const std::string& filename)
-{
-    return baseFileIO ? baseFileIO->save(item, filename) : false;
 }

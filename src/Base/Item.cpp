@@ -1502,7 +1502,7 @@ bool Item::reload()
         ItemPtr reloadedItem = createNewInstance();
         if(reloadedItem){
             reloadedItem->setName(name());
-            if(reloadedItem->load(filePath(), parentItem(), fileFormat(), fileOptions())){
+            if(reloadedItem->load(filePath(), fileFormat(), fileOptions())){
                 reloaded = reloadedItem->replace(this);
             }
         }

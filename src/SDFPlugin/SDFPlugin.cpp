@@ -36,7 +36,7 @@ public:
         setCaption(_("ROS / Gazebo model"));
         setFileTypeCaption(_("URDF"));
         setExtensions({ "urdf", "xacro" });
-        addFormatIdAlias("GAZEBO-MODEL"); // for the backward compatibility
+        addFormatAlias("GAZEBO-MODEL"); // for the backward compatibility
         setInterfaceLevel(Conversion);
     }
 
@@ -61,7 +61,7 @@ public:
         setCaption(_("ROS / Gazebo model"));
         setFileTypeCaption(_("SDF"));
         setExtensions({ "sdf", "xacro" });
-        addFormatIdAlias("GAZEBO-MODEL"); // for the backward compatibility
+        addFormatAlias("GAZEBO-MODEL"); // for the backward compatibility
         setInterfaceLevel(Conversion);
     }
 
@@ -91,8 +91,8 @@ public:
         BodyLoader::registerLoader("urdf", sdfBodyLoaderFactory);
 
         auto& im = itemManager();
-        im.registerFileIO<BodyItem>(new UrdfFileIO);
-        im.registerFileIO<BodyItem>(new SdfFileIO);
+        im.addFileIO<BodyItem>(new UrdfFileIO);
+        im.addFileIO<BodyItem>(new SdfFileIO);
 
         addModelSearchPath("GAZEBO_MODEL_PATH");
         addModelSearchPath("ROS_PACKAGE_PATH");

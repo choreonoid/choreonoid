@@ -180,11 +180,13 @@ ItemList<Item> ItemFileDialog::Impl::loadItems(Item* parentItem, bool doAddition
             if(!isSingleton){
                 item = targetFileIO->createItem();
             }
-            targetFileIO->setInvocationType(ItemFileIO::Dialog);
-            bool loaded = targetFileIO->loadItem(
-                item, filenames[i].toStdString(), parentItem, doAddition, nextItem, nullptr);
-            if(loaded){
-                loadedItems.push_back(item);
+            if(item){
+                targetFileIO->setInvocationType(ItemFileIO::Dialog);
+                bool loaded = targetFileIO->loadItem(
+                    item, filenames[i].toStdString(), parentItem, doAddition, nextItem, nullptr);
+                if(loaded){
+                    loadedItems.push_back(item);
+                }
             }
         }
     }

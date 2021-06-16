@@ -70,13 +70,13 @@ public:
 void BodyItem::registerBodyItemFileIoSet(ItemManager* im)
 {
     ::bodyFileIO = new BodyItemBodyFileIO;
-    im->registerFileIO<BodyItem>(::bodyFileIO);
+    im->addFileIO<BodyItem>(::bodyFileIO);
 
     ::meshFileIO = new SceneFileImporter;
-    im->registerFileIO<BodyItem>(::meshFileIO);
+    im->addFileIO<BodyItem>(::meshFileIO);
 
-    im->registerFileIO<BodyItem>(new StdSceneFileExporter);
-    im->registerFileIO<BodyItem>(new ObjFileExporter);
+    im->addFileIO<BodyItem>(new StdSceneFileExporter);
+    im->addFileIO<BodyItem>(new ObjFileExporter);
 }
 
 
@@ -152,7 +152,7 @@ BodyItemBodyFileIO::BodyItemBodyFileIO()
 {
     setCaption(_("Body"));
     setExtensions({ "body", "yaml", "yml", "wrl" });
-    addFormatIdAlias("OpenHRP-VRML-MODEL");
+    addFormatAlias("OpenHRP-VRML-MODEL");
     
     bodyLoader_.setMessageSink(os());
 }
@@ -256,7 +256,7 @@ SceneFileExporterBase::SceneFileExporterBase(const char* caption, const char* fo
     : BodyItemFileIoBase(format, Save | Options | OptionPanelForSaving)
 {
     setCaption(caption);
-    setExtensions({ extension });
+    setExtension(extension);
     setInterfaceLevel(Conversion);
 }
 

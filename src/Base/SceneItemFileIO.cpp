@@ -19,10 +19,10 @@ public:
         setCaption(_("Scene"));
         setFileTypeCaption(_("Scene / Mesh"));
 
-        addFormatIdAlias("CHOREONOID-SCENE");
-        addFormatIdAlias("AVAILABLE-SCENE-FILE");
-        addFormatIdAlias("VRML-FILE");
-        addFormatIdAlias("STL-FILE");
+        addFormatAlias("CHOREONOID-SCENE");
+        addFormatAlias("AVAILABLE-SCENE-FILE");
+        addFormatAlias("VRML-FILE");
+        addFormatAlias("STL-FILE");
     }
     
     virtual Item* createItem() override
@@ -91,10 +91,10 @@ bool SceneItemStdSceneFileExporter::save(SceneItem* item, const std::string& fil
 
 void SceneItem::registerSceneItemFileIoSet(ItemManager* im)
 {
-    im->registerFileIO<SceneItem>(new GeneralSceneFileImporter);
+    im->addFileIO<SceneItem>(new GeneralSceneFileImporter);
 
     ::stdSceneFileExporter = new SceneItemStdSceneFileExporter;
-    im->registerFileIO<SceneItem>(::stdSceneFileExporter);
+    im->addFileIO<SceneItem>(::stdSceneFileExporter);
 }
 
 

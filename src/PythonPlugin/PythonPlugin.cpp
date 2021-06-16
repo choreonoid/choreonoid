@@ -216,8 +216,9 @@ void PythonPlugin::Impl::onSigOptionsParsed(boost::program_options::variables_ma
     } else if(v.count("python-item")){
         for(auto& script : v["python-item"].as<vector<string>>()){
             PythonScriptItemPtr item = new PythonScriptItem;
-            if(item->load(script, RootItem::instance())){
-                RootItem::instance()->addChildItem(item);
+            auto rootItem = RootItem::instance();
+            if(item->load(script, rootItem)){
+                rootItem->addChildItem(item);
             }
             item->setChecked(true);
         }

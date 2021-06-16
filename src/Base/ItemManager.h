@@ -17,7 +17,6 @@
 namespace cnoid {
 
 class MenuManager;
-
 class Item;
 class ItemFileIO;
 class ItemAddon;
@@ -27,28 +26,35 @@ class CNOID_EXPORT ItemCreationPanel : public QWidget
 {
 public:
     ItemCreationPanel();
-    virtual bool initializePanel(Item* protoItem, Item* parentItem);
-    virtual bool initializeItem(Item* protoItem, Item* parentItem);
-
-    //! \deprecated
-    virtual bool initializePanel(Item* protoItem);
-    //! \deprecated
-    virtual bool initializeItem(Item* protoItem);
-
-protected:
-    ItemCreationPanel* findPanelOnTheSameDialog(const std::string& name);
+    virtual bool initializeCreation(Item* protoItem, Item* parentItem) = 0;
+    virtual bool updateItem(Item* protoItem, Item* parentItem) = 0;
 };
 
+template<class ItemType>
+class ItemCreationPanelBase : public ItemCreationPanel
+{
+protected:
+    ItemCreationPanelBase() { }
+    virtual bool initializeCreation(ItemType* protoItem, Item* parentItem) = 0;
+    virtual bool updateItem(ItemType* protoItem, Item* parentItem) = 0;
+    
+private:
+    virtual bool initializeCreation(Item* protoItem, Item* parentItem) override final {
+        return initializeCreation(dynamic_cast<ItemType*>(protoItem), parentItem);
+    }
+    virtual bool updateItem(Item* protoItem, Item* parentItem) override final {
+        return updateItem(dynamic_cast<ItemType*>(protoItem), parentItem);
+    }
+};
 
 class CNOID_EXPORT DefaultItemCreationPanel : public ItemCreationPanel
 {
     QWidget* nameEntry;
 public:
     DefaultItemCreationPanel();
-    virtual bool initializePanel(Item* protoItem, Item* parentItem) override;
-    virtual bool initializeItem(Item* protoItem, Item* parentItem) override;
+    virtual bool initializeCreation(Item* protoItem, Item* parentItem) override;
+    virtual bool updateItem(Item* protoItem, Item* parentItem) override;
 };
-
 
 class CNOID_EXPORT ItemManager
 {
@@ -62,13 +68,6 @@ private:
     template <class ItemType> class Factory {
     public:
         virtual Item* operator()() { return new ItemType(); }
-    };
-
-    class CreationPanelFilterBase
-    {
-    public:
-        virtual ~CreationPanelFilterBase() { }
-        virtual bool operator()(Item* protoItem, Item* parentItem) = 0;
     };
 
     class OverwritingCheckFunctionBase
@@ -88,20 +87,18 @@ public:
 
     void bindTextDomain(const std::string& domain);
 
-    enum { PRIORITY_CONVERSION = -10, PRIORITY_COMPATIBILITY = 0, PRIORITY_OPTIONAL = 0, PRIORITY_DEFAULT = 10 };
+    enum IoUsageType {
+        Standard = 10,
+        Conversion = 0,
+        Internal = -10,
 
-    template <class ItemType> class CreationPanelFilter : public CreationPanelFilterBase
-    {
-    public:
-        typedef std::function<bool(ItemType* protoItem, Item* parentItem)> Function;
-        CreationPanelFilter(Function function) : function(function) { }
-        virtual bool operator()(Item* protoItem, Item* parentItem){
-            return function(static_cast<ItemType*>(protoItem), parentItem);
-        }
-    private:
-        Function function;
+        // deprecated
+        PRIORITY_DEFAULT = Standard,
+        PRIORITY_COMPATIBILITY = Internal,
+        PRIORITY_OPTIONAL = Internal,
+        PRIORITY_CONVERSION = Conversion
     };
-        
+
     template <class ItemType> class FileFunction : public FileFunctionBase
     {
     public:
@@ -134,7 +131,7 @@ public:
     }
 
     template <class ItemType>
-        ItemManager& addAlias(const std::string& className, const std::string& moduleName){
+    ItemManager& addAlias(const std::string& className, const std::string& moduleName){
         addAlias_(typeid(ItemType), className, moduleName);
         return *this;
     }
@@ -151,25 +148,16 @@ public:
     }
 
     template <class ItemType>
-    void addCreationPanelPreFilter(const typename CreationPanelFilter<ItemType>::Function& filter) {
-        addCreationPanelFilter_(
-            typeid(ItemType),
-            std::make_shared<CreationPanelFilter<ItemType>>(filter),
-            false);
-    }
-        
-    template <class ItemType>
-    void addCreationPanelPostFilter(const typename CreationPanelFilter<ItemType>::Function& filter){
-        addCreationPanelFilter_(
-            typeid(ItemType),
-            std::make_shared<CreationPanelFilter<ItemType>>(filter),
-            true);
-    }
-
-    template <class ItemType>
-    ItemManager& registerFileIO(ItemFileIO* fileIO) {
+    ItemManager& addFileIO(ItemFileIO* fileIO) {
         registerFileIO_(typeid(ItemType), fileIO);
         return *this;
+    }
+
+    //! \deprecated
+    template <class ItemType>
+    [[deprecated("Use addFileIO")]]
+    ItemManager& registerFileIO(ItemFileIO* fileIO) {
+        return addFileIO<ItemType>(fileIO);
     }
 
     template <class ItemType>
@@ -179,63 +167,69 @@ public:
 
     static std::vector<ItemFileIO*> getFileIOs(const std::type_info& type);
 
-    static ItemFileIO* findFileIO(const std::type_info& type, const std::string& formatId);
+    static ItemFileIO* findFileIO(const std::type_info& type, const std::string& format);
 
     template <class ItemType>
     ItemManager& addLoader(
-        const std::string& caption, const std::string& formatId, const std::string& extensions, 
-        const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT) {
-        addLoader_(typeid(ItemType), caption, formatId, [extensions](){ return extensions; },
-                   std::make_shared<FileFunction<ItemType>>(function), priority);
+        const std::string& caption, const std::string& format, const std::string& extensions, 
+        typename FileFunction<ItemType>::Function function, int usage = Standard)
+    {
+        addLoader_(typeid(ItemType), caption, format, [extensions](){ return extensions; },
+                   std::make_shared<FileFunction<ItemType>>(function), usage);
         return *this;
     }
 
     template <class ItemType>
     ItemManager& addLoader(
-        const std::string& caption, const std::string& formatId, std::function<std::string()> getExtensions,
-        const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT) {
-        addLoader_(typeid(ItemType), caption, formatId, getExtensions,
-                   std::make_shared<FileFunction<ItemType>>(function), priority);
+        const std::string& caption, const std::string& format, std::function<std::string()> getExtensions,
+        typename FileFunction<ItemType>::Function function, int usage = Standard)
+    {
+        addLoader_(typeid(ItemType), caption, format, getExtensions,
+                   std::make_shared<FileFunction<ItemType>>(function), usage);
         return *this;
     }
     
     template<class ItemType>
     ItemManager& addSaver(
-        const std::string& caption, const std::string& formatId, const std::string& extensions,
-        const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT){
-        addSaver_(typeid(ItemType), caption, formatId, [extensions](){ return extensions; },
-                  std::make_shared<FileFunction<ItemType>>(function), priority);
+        const std::string& caption, const std::string& format, const std::string& extensions,
+        typename FileFunction<ItemType>::Function function, int usage = Standard)
+    {
+        addSaver_(typeid(ItemType), caption, format, [extensions](){ return extensions; },
+                  std::make_shared<FileFunction<ItemType>>(function), usage);
         return *this;
     }
 
     template<class ItemType>
     ItemManager& addSaver(
-        const std::string& caption, const std::string& formatId, std::function<std::string()> getExtensions,
-        const typename FileFunction<ItemType>::Function& function, int priority = PRIORITY_DEFAULT){
-        addSaver_(typeid(ItemType), caption, formatId, getExtensions, 
-                  std::make_shared<FileFunction<ItemType>>(function), priority);
+        const std::string& caption, const std::string& format, std::function<std::string()> getExtensions,
+        typename FileFunction<ItemType>::Function function, int usage = Standard)
+    {
+        addSaver_(typeid(ItemType), caption, format, getExtensions, 
+                  std::make_shared<FileFunction<ItemType>>(function), usage);
         return *this;
     }
     
     template<class ItemType>
-    ItemManager& addLoaderAndSaver(const std::string& caption, const std::string& formatId,
-                                   const std::string& extensions,
-                                   const typename FileFunction<ItemType>::Function& loadingFunction,
-                                   const typename FileFunction<ItemType>::Function& savingFunction,
-                                   int priority = PRIORITY_DEFAULT){
-        addLoader<ItemType>(caption, formatId, extensions, loadingFunction, priority);
-        addSaver<ItemType>(caption, formatId, extensions, savingFunction, priority);
+    ItemManager& addLoaderAndSaver(
+        const std::string& caption, const std::string& format, const std::string& extensions,
+        typename FileFunction<ItemType>::Function loaderFunction,
+        typename FileFunction<ItemType>::Function saverFunction,
+        int usage = Standard)
+    {
+        addLoader<ItemType>(caption, format, extensions, loaderFunction, usage);
+        addSaver<ItemType>(caption, format, extensions, saverFunction, usage);
         return *this;
     }
 
     template<class ItemType>
-    ItemManager& addLoaderAndSaver(const std::string& caption, const std::string& formatId,
-                                   std::function<std::string()> getExtensions,
-                                   const typename FileFunction<ItemType>::Function& loadingFunction,
-                                   const typename FileFunction<ItemType>::Function& savingFunction,
-                                   int priority = PRIORITY_DEFAULT){
-        addLoader<ItemType>(caption, formatId, getExtensions, loadingFunction, priority);
-        addSaver<ItemType>(caption, formatId, getExtensions, savingFunction, priority);
+    ItemManager& addLoaderAndSaver(
+        const std::string& caption, const std::string& format, std::function<std::string()> getExtensions,
+        typename FileFunction<ItemType>::Function loaderFunction,
+        typename FileFunction<ItemType>::Function saverFunction,
+        int usage = Standard)
+    {
+        addLoader<ItemType>(caption, format, getExtensions, loaderFunction, usage);
+        addSaver<ItemType>(caption, format, getExtensions, saverFunction, usage);
         return *this;
     }
     
@@ -256,7 +250,8 @@ public:
     template <class ItemType>
     static ItemType* createItemWithDialog(
         Item* parentItem, bool doAddition = true, Item* nextItem = nullptr,
-        Item* protoItem = nullptr, const std::string& title = std::string()) {
+        Item* protoItem = nullptr, const std::string& title = std::string())
+    {
         return static_cast<ItemType*>(
             createItemWithDialog_(
                 typeid(ItemType), parentItem, doAddition, nextItem, protoItem, title));
@@ -264,7 +259,8 @@ public:
 
     template <class ItemType>
     static ItemList<ItemType> loadItemsWithDialog(
-        Item* parentItem, bool doAddtion = true, Item* nextItem = nullptr){
+        Item* parentItem, bool doAddtion = true, Item* nextItem = nullptr)
+    {
         return loadItemsWithDialog_(typeid(ItemType), parentItem, doAddtion, nextItem);
     }
 
@@ -295,15 +291,13 @@ private:
         std::function<Item*()> factory, Item* singletonInstance);
     void addAlias_(const std::type_info& type, const std::string& className, const std::string& moduleName);
     void addCreationPanel_(const std::type_info& type, ItemCreationPanel* panel);
-    void addCreationPanelFilter_(
-        const std::type_info& type, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels);
     void registerFileIO_(const std::type_info& type, ItemFileIO* fileIO);
     void addLoader_(
-        const std::type_info& type, const std::string& caption, const std::string& formatId,
-        std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority);
+        const std::type_info& type, const std::string& caption, const std::string& format,
+        std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int usage);
     void addSaver_(
-        const std::type_info& type, const std::string& caption, const std::string& formatId,
-        std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority);
+        const std::type_info& type, const std::string& caption, const std::string& format,
+        std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int usage);
 
     static Item* getSingletonInstance(const std::type_info& type);
 
@@ -316,11 +310,11 @@ private:
 
     // The following static functions are called from functions in the Item class
     static bool load(
-        Item* item, const std::string& filename, Item* parentItem, const std::string& formatId,
+        Item* item, const std::string& filename, Item* parentItem, const std::string& format,
         const Mapping* options = nullptr);
     static bool save(
-        Item* item, const std::string& filename, const std::string& formatId, const Mapping* options = nullptr);
-    static bool overwrite(Item* item, bool forceOverwrite, const std::string& formatId);
+        Item* item, const std::string& filename, const std::string& format, const Mapping* options = nullptr);
+    static bool overwrite(Item* item, bool forceOverwrite, const std::string& format);
 
     void registerAddon_(
         const std::type_info& type, const std::string& name, const std::function<ItemAddon*(void)>& factory);

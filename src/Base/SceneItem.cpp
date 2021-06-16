@@ -26,9 +26,9 @@ public:
         setCaption(_("Scene"));
         setFileTypeCaption(_("Scene / Mesh"));
 
-        addFormatIdAlias("AVAILABLE-SCENE-FILE");
-        addFormatIdAlias("VRML-FILE");
-        addFormatIdAlias("STL-FILE");
+        addFormatAlias("AVAILABLE-SCENE-FILE");
+        addFormatAlias("VRML-FILE");
+        addFormatAlias("STL-FILE");
     }
     
     virtual Item* createItem() override

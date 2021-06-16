@@ -831,7 +831,7 @@ bool MultiPointSetItem::Impl::load(const std::string& filename)
                 if(info.read("file", pcdFilename)){
                     filesystem::path path(fromUTF8(pcdFilename));
                     PointSetItemPtr childItem = new PointSetItem();
-                    if(childItem->load(toUTF8((directory / path).string()), "PCD-FILE")){
+                    if(childItem->load(toUTF8((directory / path).string()), self, "PCD-FILE")){
                         childItem->setName(toUTF8(path.stem().string()));
                         Isometry3 T;
                         if(read(info, "offsetTransform", T)){

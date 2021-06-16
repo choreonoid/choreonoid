@@ -40,6 +40,14 @@ typedef ref_ptr<ExtraSeqItemInfo> ExtraSeqItemInfoPtr;
     
 typedef std::map<std::string, ExtraSeqItemInfoPtr> ExtraSeqItemInfoMap;
 
+class BodyMotionItemCreationPanel : public MultiSeqItemCreationPanel
+{
+public:
+    BodyMotionItemCreationPanel();
+    virtual void doExtraInitialization(AbstractSeqItem* protoItem, Item* parentItem) override;
+    virtual void doExtraItemUpdate(AbstractSeqItem* protoItem, Item* parentItem) override;
+};
+
 }
 
 namespace cnoid {
@@ -67,43 +75,49 @@ public:
 }
 
 
-static bool bodyMotionItemPreFilter(BodyMotionItem* protoItem, Item* parentItem)
+BodyMotionItemCreationPanel::BodyMotionItemCreationPanel()
+    : MultiSeqItemCreationPanel(_("Number of joints"))
+{
+
+}
+
+
+void BodyMotionItemCreationPanel::doExtraInitialization(AbstractSeqItem* protoItem, Item* parentItem)
 {
     BodyItemPtr bodyItem = dynamic_cast<BodyItem*>(parentItem);
     if(!bodyItem){
         bodyItem = parentItem->findOwnerItem<BodyItem>();
     }
     if(bodyItem){
-        auto jointPosSeq = protoItem->motion()->jointPosSeq();
+        auto motionItem = static_cast<BodyMotionItem*>(protoItem);
+        auto jointPosSeq = motionItem->motion()->jointPosSeq();
         int numJoints = bodyItem->body()->numJoints();
         if(numJoints != jointPosSeq->numParts()){
             jointPosSeq->setNumParts(numJoints, true);
         }
     }
-    return true;
 }
 
 
-static bool bodyMotionItemPostFilter(BodyMotionItem* protoItem, Item* parentItem)
+void BodyMotionItemCreationPanel::doExtraItemUpdate(AbstractSeqItem* protoItem, Item* parentItem)
 {
     BodyItemPtr bodyItem = dynamic_cast<BodyItem*>(parentItem);
     if(!bodyItem){
         bodyItem = parentItem->findOwnerItem<BodyItem>();
     }
     if(bodyItem){
-        BodyPtr body = bodyItem->body();
-        auto qseq = protoItem->jointPosSeq();
+        auto motionItem = static_cast<BodyMotionItem*>(protoItem);
+        auto body = bodyItem->body();
+        auto qseq = motionItem->jointPosSeq();
         int n = std::min(body->numJoints(), qseq->numParts());
         for(int i=0; i < n; ++i){
-            Link* joint = body->joint(i);
+            auto joint = body->joint(i);
             if(joint->q_initial() != 0.0){
-                MultiValueSeq::Part part = qseq->part(i);
+                auto part = qseq->part(i);
                 std::fill(part.begin(), part.end(), joint->q_initial());
             }
         }
     }
-    
-    return true;
 }
 
 
@@ -119,9 +133,7 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
     
     im.registerClass<BodyMotionItem, AbstractSeqItem>(N_("BodyMotionItem"));
 
-    im.addCreationPanel<BodyMotionItem>(new MultiSeqItemCreationPanel(_("Number of joints")));
-    im.addCreationPanelPreFilter<BodyMotionItem>(bodyMotionItemPreFilter);
-    im.addCreationPanelPostFilter<BodyMotionItem>(bodyMotionItemPostFilter);
+    im.addCreationPanel<BodyMotionItem>(new BodyMotionItemCreationPanel);
 
     im.addLoaderAndSaver<BodyMotionItem>(
         _("Body Motion"), "BODY-MOTION-YAML", "seq;yaml",

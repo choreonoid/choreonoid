@@ -211,12 +211,9 @@ bool AudioItem::restore(const Archive& archive)
     if(archive.read({ "file", "audioFile" }, filepath)){
         filepath = archive.resolveRelocatablePath(filepath);
         if(!filepath.empty()){
-            string format;
-            archive.read("format", format);
-            restored = load(filepath, format);
+            restored = archive.loadFileTo(this, filepath);
         }
     }
-
     offsetTime_ = archive.get({ "offset_time", "offsetTime" }, 0.0);
     
     return restored;

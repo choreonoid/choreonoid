@@ -13,7 +13,6 @@ namespace cnoid {
 
 class Item;
 class ItemManager;
-class ItemFileIOExtenderBase;
 class ItemFileDialog;
 class Mapping;
 
@@ -31,19 +30,18 @@ public:
     enum InvocationType { Direct, Dialog, DragAndDrop };
     class Impl;
 
-public:
     ~ItemFileIO();
 
-    bool isFormat(const std::string& id) const;
+    bool isFormat(const std::string& format) const;
     int api() const;
-    void setApi(int apiSet);
     bool hasApi(int api) const;
-    void setCaption(const std::string& caption);
     const std::string& caption() const;
-    void setFileTypeCaption(const std::string& caption);
     const std::string& fileTypeCaption() const;
-    void addFormatIdAlias(const std::string& formatId);
-    void addExtensions(const std::vector<std::string>& extensions);
+    void addFormatAlias(const std::string& format);
+    [[deprecated("Use addFormatAlias")]]
+    void addFormatIdAlias(const std::string& format){
+        addFormatAlias(format);
+    }
 
     // deprecated. This is internally used for specifing SceneItem's extensions dynamically.
     // The dynamic extension specification should be achieved by a signal to update the
@@ -52,10 +50,7 @@ public:
 
     std::vector<std::string> extensions() const;
     
-    void setInterfaceLevel(InterfaceLevel level);
     int interfaceLevel() const;
-    
-    virtual Item* createItem() = 0;
 
     // Set the invocation type before calling the loadItem or saveItem function
     // if the invocation type is not "Direct".
@@ -105,16 +100,21 @@ public:
     static std::vector<std::string> separateExtensions(const std::string& multiExtString);
 
 protected:
-    ItemFileIO(const std::string& formatId, int api);
+    ItemFileIO(const std::string& format, int api);
     ItemFileIO(const ItemFileIO& org);
     ItemFileIO();
     void copyFrom(const ItemFileIO& org);
     
+    void setApi(int apiSet);
+    void setCaption(const std::string& caption);
+    void setFileTypeCaption(const std::string& caption);
     void setExtension(const std::string& extension);
     void setExtensions(const std::vector<std::string>& extensions);
+    void setInterfaceLevel(InterfaceLevel level);
 
     // Load API
     virtual bool load(Item* item, const std::string& filename);
+    virtual Item* createItem();
 
     // Save API
     virtual bool save(Item* item, const std::string& filename);
@@ -133,7 +133,6 @@ protected:
 private:
     Impl* impl;
     friend class ItemManager;
-    friend class ItemFileIoExtenderBase;
     friend class ItemFileDialog;
 };
 
@@ -143,10 +142,13 @@ template<class ItemType>
 class ItemFileIoBase : public ItemFileIO
 {
 public:
-    ItemFileIoBase(const std::string& formatId, int api)
-        : ItemFileIO(formatId, api) {
+    ItemFileIoBase(const std::string& format, int api)
+        : ItemFileIO(format, api) {
     }
     virtual Item* createItem() override {
+        if(isRegisteredForSingletonItem()){
+            return findSingletonItemInstance();
+        }
         return new ItemType;
     }
     virtual bool load(Item* item, const std::string& filename) override final {
@@ -172,59 +174,6 @@ public:
     }
     virtual QWidget* getOptionPanelForSaving(ItemType* item) {
         return nullptr;
-    }
-};
-
-
-class CNOID_EXPORT ItemFileIoExtenderBase : public ItemFileIO
-{
-    ItemFileIOPtr baseFileIO;
-
-protected:
-    ItemFileIoExtenderBase(const std::type_info& type, const std::string& formatId);
-    
-public:
-    bool isAvailable() const;
-    virtual bool load(Item* item, const std::string& filename) override final;
-    virtual void resetOptions() override;
-    virtual void storeOptions(Mapping* options) override;
-    virtual bool restoreOptions(const Mapping* options) override;
-    virtual QWidget* getOptionPanelForLoading() override;
-    virtual void fetchOptionPanelForLoading() override;
-    virtual bool save(Item* item, const std::string& filename) override final;
-    virtual QWidget* getOptionPanelForSaving(Item* item) override final;
-    virtual void fetchOptionPanelForSaving() override;
-};
-
-
-template<class ItemType, class BaseItemType = ItemType>
-class ItemFileIoExtender : public ItemFileIoExtenderBase
-{
-public:
-    ItemFileIoExtender(const std::string& formatId = "")
-        : ItemFileIoExtenderBase(typeid(BaseItemType), formatId)
-    { }
-
-    ItemType* loadItem(
-        const std::string& filename,
-        Item* parentItem = nullptr, bool doAddition = true, Item* nextItem = nullptr,
-        const Mapping* options = nullptr) {
-        return static_cast<ItemType*>(
-            ItemFileIO::loadItem(filename, parentItem, doAddition, nextItem, options));
-    }
-    
-protected:
-    virtual Item* createItem() override {
-        return new ItemType;
-    }
-    virtual bool load(ItemType* item, const std::string& filename) {
-        return ItemFileIoExtenderBase::load(item, filename);
-    }
-    virtual bool save(ItemType* item, const std::string& filename) {
-        return ItemFileIoExtenderBase::save(item, filename);
-    }
-    virtual QWidget* getOptionPanelForSaving(ItemType* item) {
-        return ItemFileIoExtenderBase::getOptionPanelForSaving(item);
     }
 };
 

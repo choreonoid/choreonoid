@@ -208,10 +208,11 @@ static void onSigOptionsParsed(boost::program_options::variables_map& variables)
     if(variables.count("body")){
     	vector<string> bodyFileNames = variables["body"].as<vector<string>>();
     	for(size_t i=0; i < bodyFileNames.size(); ++i){
-    		BodyItemPtr item(new BodyItem());
-    		if(item->load(bodyFileNames[i], "CHOREONOID-BODY")){
+    		BodyItemPtr item(new BodyItem);
+                auto rootItem = RootItem::instance();
+    		if(item->load(bodyFileNames[i], rootItem, "CHOREONOID-BODY")){
                     item->setChecked(true);
-                    RootItem::instance()->addChildItem(item);
+                    rootItem->addChildItem(item);
     		}
     	}
     }

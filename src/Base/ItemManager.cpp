@@ -37,11 +37,10 @@
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
-using fmt::format;
 
 namespace {
 
-class CreationPanelBase;
+class CreationDialog;
 
 struct ClassInfo : public Referenced
 {
@@ -49,7 +48,7 @@ struct ClassInfo : public Referenced
     string className;
     string name; // without the 'Item' suffix
     function<Item*()> factory;
-    CreationPanelBase* creationPanelBase;
+    vector<CreationDialog*> creationDialogs;
     vector<ItemFileIOPtr> fileIOs;
     ItemPtr singletonInstance;
     bool isSingleton;
@@ -111,13 +110,7 @@ public:
     ItemClassNameToInfoMap itemClassNameToInfoMap;
     set<int> registeredItemClassIds;
     set<std::type_index> registeredAddonTypes;
-
-    typedef list<shared_ptr<CreationPanelFilterBase>> CreationPanelFilterList;
-    typedef set<pair<int, shared_ptr<CreationPanelFilterBase>>> CreationPanelFilterSet;
-    
     set<ItemCreationPanel*> registeredCreationPanels;
-    CreationPanelFilterSet registeredCreationPanelFilters;
-    
     set<ItemFileIOPtr> registeredFileIOs;
     
     QSignalMapper* mapperForNewItemActivated;
@@ -131,17 +124,14 @@ public:
         function<Item*()>& factory, Item* singletonInstance, int classId, const string& className);
 
     void addCreationPanel(const std::type_info& type, ItemCreationPanel* panel);
-    void addCreationPanelFilter(
-        const std::type_info& type, shared_ptr<CreationPanelFilterBase> filter,
-        bool afterInitializionByPanels);
-    CreationPanelBase* getOrCreateCreationPanelBase(const std::type_info& type);
-    static void onNewItemActivated(CreationPanelBase* base);
+    CreationDialog* createCreationDialog(const std::type_info& type);
+    static void onNewItemActivated(CreationDialog* dialog);
 
     ClassInfoPtr registerFileIO(const type_info& typeId, ItemFileIO* fileIO);
     void addLoader(ItemFileIO* fileIO, CaptionToFileIoListMap& loaderMap);
     static vector<ItemFileIO*> getFileIOs(Item* item, function<bool(ItemFileIO* fileIO)> pred, bool includeSuperClassIos);
     static ItemFileIO* findMatchedFileIO(
-        const type_info& type, const string& filename, const string& formatId, int ioTypeFlag);
+        const type_info& type, const string& filename, const string& format, int ioTypeFlag);
     static void onLoadOrImportItemsActivated(const vector<ItemFileIO*>& fileIOs);
     static void onReloadSelectedItemsActivated();
     static void onSaveSelectedItemsAsActivated();
@@ -153,34 +143,29 @@ public:
 
 namespace {
 
-class CreationPanelBase : public QDialog
+class CreationDialog : public QDialog
 {
 public:
-    CreationPanelBase(const QString& title, ClassInfo* classInfo, ItemPtr protoItem, bool isSingleton);
+    CreationDialog(const QString& title, ClassInfo* classInfo, Item* singletonInstance);
     void addPanel(ItemCreationPanel* panel);
     Item* createItem(Item* parentItem, Item* protoItem = nullptr);
-    ItemManager::Impl::CreationPanelFilterList preFilters;
-    ItemManager::Impl::CreationPanelFilterList postFilters;
     ClassInfo* classInfo;
+    ItemCreationPanel* creationPanel;
     QVBoxLayout* panelLayout;
     ItemPtr defaultProtoItem;
     bool isSingleton;
 };
 
-}
-
-
-namespace {
-
 ClassInfo::ClassInfo()
 {
-    creationPanelBase = nullptr;
-}
 
+}
 
 ClassInfo::~ClassInfo()
 {
-    delete creationPanelBase;
+    for(auto& dialog : creationDialogs){
+        delete dialog;
+    }
 }
 
 }
@@ -249,11 +234,9 @@ ItemManager::~ItemManager()
 
 ItemManager::Impl::~Impl()
 {
-    for(auto it = registeredCreationPanels.begin(); it != registeredCreationPanels.end(); ++it){
-        ItemCreationPanel* panel = *it;
+    for(auto& panel : registeredCreationPanels){
         delete panel;
     }
-
     for(auto& fileIO : registeredFileIOs){
         if(fileIO->hasApi(ItemFileIO::Load) && (fileIO->interfaceLevel() == ItemFileIO::Standard)){
             auto& caption = fileIO->caption();
@@ -269,22 +252,11 @@ ItemManager::Impl::~Impl()
             }
         }
     }
-    
     for(auto& id : registeredItemClassIds){
         itemClassIdToInfoMap.erase(id);
     }
     for(auto& type : registeredAddonTypes){
         addonTypeToInfoMap.erase(type);
-    }
-
-    for(auto p = registeredCreationPanelFilters.begin(); p != registeredCreationPanelFilters.end(); ++p){
-        int itemClassId = p->first;
-        auto q = itemClassIdToInfoMap.find(itemClassId);
-        if(q != itemClassIdToInfoMap.end()){
-            ClassInfoPtr& classInfo = q->second;
-            classInfo->creationPanelBase->preFilters.remove(p->second);
-            classInfo->creationPanelBase->postFilters.remove(p->second);
-        }
     }
 
     moduleNameToItemManagerImplMap.erase(moduleName);
@@ -499,25 +471,28 @@ Item* ItemManager::createItemWithDialog_
     
     auto iter = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
     if(iter == itemClassIdToInfoMap.end()){
-        showWarningDialog(format(_("Class {} is not registered as an item class."), type.name()));
+        showWarningDialog(fmt::format(_("Class {} is not registered as an item class."), type.name()));
 
     } else {
         auto& info = iter->second;
-        auto panel = info->creationPanelBase;
-        if(!panel){
-            showWarningDialog(format(_("The panel to create {} is not registered."), info->className));
+        CreationDialog* dialog = nullptr;
+        if(!info->creationDialogs.empty()){
+            dialog = info->creationDialogs.front();
+        }
+        if(!dialog){
+            showWarningDialog(fmt::format(_("The panel to create {} is not registered."), info->className));
         } else {
             if(!parentItem){
                 parentItem = RootItem::instance();
             }
             QString orgTitle;
             if(!title.empty()){
-                orgTitle = panel->windowTitle();
-                panel->setWindowTitle(title.c_str());
+                orgTitle = dialog->windowTitle();
+                dialog->setWindowTitle(title.c_str());
             }
-            newItem = panel->createItem(parentItem, protoItem);
+            newItem = dialog->createItem(parentItem, protoItem);
             if(!orgTitle.isEmpty()){
-                panel->setWindowTitle(orgTitle);
+                dialog->setWindowTitle(orgTitle);
             }
         }
     }
@@ -538,76 +513,46 @@ void ItemManager::addCreationPanel_(const std::type_info& type, ItemCreationPane
 
 void ItemManager::Impl::addCreationPanel(const std::type_info& type, ItemCreationPanel* panel)
 {
-    CreationPanelBase* base = getOrCreateCreationPanelBase(type);
+    CreationDialog* dialog = createCreationDialog(type);
     if(panel){
-        base->addPanel(panel);
+        dialog->addPanel(panel);
     } else {
-        base->addPanel(new DefaultItemCreationPanel);
+        dialog->addPanel(new DefaultItemCreationPanel);
     }
     registeredCreationPanels.insert(panel);
 }
 
 
-void ItemManager::addCreationPanelFilter_
-(const std::type_info& type, std::shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels)
+CreationDialog* ItemManager::Impl::createCreationDialog(const std::type_info& type)
 {
-    impl->addCreationPanelFilter(type, filter, afterInitializionByPanels);
-}
-
-
-void ItemManager::Impl::addCreationPanelFilter
-(const std::type_info& type, shared_ptr<CreationPanelFilterBase> filter, bool afterInitializionByPanels)
-{
-    int classId = itemClassRegistry->classId(type);
-    if(classId >= 0){
-        CreationPanelBase* base = getOrCreateCreationPanelBase(type);
-        if(!afterInitializionByPanels){
-            base->preFilters.push_back(filter);
-        } else {
-            base->postFilters.push_back(filter);
-        }
-        registeredCreationPanelFilters.insert(make_pair(classId, filter));
-    }
-}
-
-
-CreationPanelBase* ItemManager::Impl::getOrCreateCreationPanelBase(const std::type_info& type)
-{
-    CreationPanelBase* base = nullptr;
+    CreationDialog* dialog = nullptr;
     
     auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
     if(p != itemClassIdToInfoMap.end()){
         auto& info = p->second;
-        base = info->creationPanelBase;
-        if(!base){
-            const char* className_c_str = info->className.c_str();
-            QString className(className_c_str);
-            const char* translatedClassName_c_str = dgettext(textDomain.c_str(), className_c_str);
-            QString translatedClassName(translatedClassName_c_str);
-            QString translatedName(translatedClassName);
-            if(translatedClassName_c_str == className_c_str){
-                translatedName.replace(QRegExp("Item$"), "");
-            } else {
-                translatedName.replace(QRegExp(_("Item$")), "");
-            }
-            QString title(QString(_("Create New %1")).arg(translatedName));
-            ItemPtr protoItem;
-            if(info->isSingleton){
-                protoItem = info->singletonInstance;
-            }
-            base = new CreationPanelBase(title, info, protoItem, info->isSingleton);
-            base->hide();
-            menuManager.setPath("/File/New ...").addItem(translatedName)
-                ->sigTriggered().connect([=](){ onNewItemActivated(base); });
-            info->creationPanelBase = base;
+        const char* className_c_str = info->className.c_str();
+        QString className(className_c_str);
+        const char* translatedClassName_c_str = dgettext(textDomain.c_str(), className_c_str);
+        QString translatedClassName(translatedClassName_c_str);
+        QString translatedName(translatedClassName);
+        if(translatedClassName_c_str == className_c_str){
+            translatedName.replace(QRegExp("Item$"), "");
+        } else {
+            translatedName.replace(QRegExp(_("Item$")), "");
         }
+        QString title(QString(_("Create New %1")).arg(translatedName));
+        dialog = new CreationDialog(title, info, info->singletonInstance);
+        dialog->hide();
+        menuManager.setPath("/File/New ...").addItem(translatedName)
+            ->sigTriggered().connect([=](){ onNewItemActivated(dialog); });
+        info->creationDialogs.push_back(dialog);
     }
 
-    return base;
+    return dialog;
 }
 
 
-void ItemManager::Impl::onNewItemActivated(CreationPanelBase* base)
+void ItemManager::Impl::onNewItemActivated(CreationDialog* dialog)
 {
     ItemList<Item> parentItems = RootItem::instance()->selectedItems();
 
@@ -616,7 +561,7 @@ void ItemManager::Impl::onNewItemActivated(CreationPanelBase* base)
     }
     for(size_t i=0; i < parentItems.size(); ++i){
         auto parentItem = parentItems[i];
-        auto newItem = base->createItem(parentItem);
+        auto newItem = dialog->createItem(parentItem);
         if(newItem){
             parentItem->addChildItem(newItem, true);
         }
@@ -626,12 +571,12 @@ void ItemManager::Impl::onNewItemActivated(CreationPanelBase* base)
 
 namespace {
 
-CreationPanelBase::CreationPanelBase
-(const QString& title, ClassInfo* classInfo, ItemPtr protoItem, bool isSingleton)
+CreationDialog::CreationDialog
+(const QString& title, ClassInfo* classInfo, Item* singletonInstance)
     : QDialog(MainWindow::instance()),
       classInfo(classInfo),
-      defaultProtoItem(protoItem),
-      isSingleton(isSingleton)
+      defaultProtoItem(singletonInstance),
+      isSingleton((bool)singletonInstance)
 {
     setWindowTitle(title);
     
@@ -646,110 +591,49 @@ CreationPanelBase::CreationPanelBase
     connect(buttonBox,SIGNAL(accepted()), this, SLOT(accept()));
     connect(buttonBox,SIGNAL(rejected()), this, SLOT(reject()));
 
-    QVBoxLayout* topLayout = new QVBoxLayout();
-    panelLayout = new QVBoxLayout();
+    QVBoxLayout* topLayout = new QVBoxLayout;
+    panelLayout = new QVBoxLayout;
     topLayout->addLayout(panelLayout);
     topLayout->addWidget(buttonBox);
     setLayout(topLayout);
 }
 
 
-void CreationPanelBase::addPanel(ItemCreationPanel* panel)
+void CreationDialog::addPanel(ItemCreationPanel* panel)
 {
+    creationPanel = panel;
     panelLayout->addWidget(panel);
 }
 
 
-Item* CreationPanelBase::createItem(Item* parentItem, Item* protoItem)
+Item* CreationDialog::createItem(Item* parentItem, Item* protoItem)
 {
     if(!protoItem){
         protoItem = defaultProtoItem;
     }
-
     if(isSingleton){
         if(protoItem->parentItem()){
             return nullptr;
         }
     }
-            
-    vector<ItemCreationPanel*> panels;
-
-    int n = panelLayout->count();
-    for(int i=0; i < n; ++i){
-        ItemCreationPanel* panel =
-            dynamic_cast<ItemCreationPanel*>(panelLayout->itemAt(i)->widget());
-        if(panel){
-            panels.push_back(panel);
-        }
-    }
-
-    bool result = true;
-
-    if(!protoItem && (!preFilters.empty() || !postFilters.empty())){
+    if(!protoItem){
         defaultProtoItem = classInfo->factory();
         defaultProtoItem->setName(classInfo->name);
         protoItem = defaultProtoItem;
     }
-    ItemPtr item = protoItem;
-    if(!item){
-        item = classInfo->factory();
-        item->setName(classInfo->name);
-    }
-
-    for(auto p = preFilters.begin(); p != preFilters.end(); ++p){
-        auto filter = *p;
-        if(!(*filter)(item, parentItem)){
-            result = false;
-            break;
-        }
-    }
-
-    if(result){
-        for(auto& panel : panels){
-            if(!panel->initializePanel(item, parentItem)){
-                result = false;
-                break;
-            }
-            if(!panel->initializePanel(item)){ // old
-                result = false;
-                break;
-            }
-        }
-    }
-
-    if(result){
+    ItemPtr newInstance;
+    if(creationPanel->initializeCreation(protoItem, parentItem)){
         if(exec() == QDialog::Accepted){
-            for(auto& panel : panels){
-                if(!panel->initializeItem(item, parentItem)){
-                    result = false;
-                    break;
-                }
-                if(!panel->initializeItem(item)){ // old
-                    result = false;
-                    break;
+            if(creationPanel->updateItem(protoItem, parentItem)){
+                if((protoItem == defaultProtoItem) && !isSingleton){
+                    newInstance = protoItem->duplicate();
+                } else {
+                    newInstance = protoItem;
                 }
             }
-            if(result){
-                for(auto p = postFilters.begin(); p != postFilters.end(); ++p){
-                    auto filter = *p;
-                    if(!(*filter)(item, parentItem)){
-                        result = false;
-                        break;
-                    }
-                }
-            }
-        } else {
-            result = false;
         }
     }
-    
-    if(!result){
-        item = nullptr;
-    } else if(item == protoItem && !isSingleton){
-        item = item->duplicate();
-    }
-
-    return item.retn();
+    return newInstance.retn();
 }
 
 }
@@ -758,49 +642,6 @@ Item* CreationPanelBase::createItem(Item* parentItem, Item* protoItem)
 ItemCreationPanel::ItemCreationPanel()
 {
 
-}
-
-
-bool ItemCreationPanel::initializePanel(Item* /* protoItem */, Item* /* parentItem */)
-{
-    return true;
-}
-
-
-bool ItemCreationPanel::initializeItem(Item* /* protoItem */, Item* /* parentItem */)
-{
-    return true;
-}
-
-
-bool ItemCreationPanel::initializePanel(Item* /* protoItem */)
-{
-    return true;
-}
-
-
-bool ItemCreationPanel::initializeItem(Item* /* protoItem */)
-{
-    return true;
-}
-
-
-ItemCreationPanel* ItemCreationPanel::findPanelOnTheSameDialog(const std::string& name)
-{
-    QBoxLayout* layout = dynamic_cast<QBoxLayout*>(parentWidget());
- 
-    if(layout){
-        int n = layout->count();
-        for(int i=0; i < n; ++i){
-            ItemCreationPanel* panel = dynamic_cast<ItemCreationPanel*>(layout->itemAt(i)->widget());
-            if(panel){
-                if(panel->objectName().toStdString() == name){
-                    return panel;
-                }
-            }
-        }
-    }
-    return nullptr;
 }
 
 
@@ -814,14 +655,14 @@ DefaultItemCreationPanel::DefaultItemCreationPanel()
 }
         
 
-bool DefaultItemCreationPanel::initializePanel(Item* protoItem, Item* /* parentItem */)
+bool DefaultItemCreationPanel::initializeCreation(Item* protoItem, Item* /* parentItem */)
 {
     static_cast<QLineEdit*>(nameEntry)->setText(protoItem->name().c_str());
     return true;
 }
             
 
-bool DefaultItemCreationPanel::initializeItem(Item* protoItem, Item* /* parentItem */)
+bool DefaultItemCreationPanel::updateItem(Item* protoItem, Item* /* parentItem */)
 {
     protoItem->setName(static_cast<QLineEdit*>(nameEntry)->text().toStdString());
     return true;
@@ -924,14 +765,14 @@ vector<ItemFileIO*> ItemManager::getFileIOs(const std::type_info& type)
 }
     
 
-ItemFileIO* ItemManager::findFileIO(const std::type_info& type, const std::string& formatId)
+ItemFileIO* ItemManager::findFileIO(const std::type_info& type, const std::string& format)
 {
     ItemFileIO* found = nullptr;
     auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
     if(p != itemClassIdToInfoMap.end()){
         auto& classInfo = p->second;
         for(auto& fileIO : classInfo->fileIOs){
-            if(formatId.empty() || fileIO->isFormat(formatId)){
+            if(format.empty() || fileIO->isFormat(format)){
                 found = fileIO;
                 break;
             }
@@ -942,15 +783,15 @@ ItemFileIO* ItemManager::findFileIO(const std::type_info& type, const std::strin
 
 
 ItemFileIO* ItemManager::Impl::findMatchedFileIO
-(const type_info& type, const string& filename, const string& formatId, int ioTypeFlag)
+(const type_info& type, const string& filename, const string& format, int ioTypeFlag)
 {
     ItemFileIO* targetFileIO = nullptr;
     
     auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
     if(p == itemClassIdToInfoMap.end()){
         messageView->putln(
-            format(_("\"{0}\" cannot be accessed because the specified item type \"{1}\" is not registered."),
-                   filename, type.name()),
+            fmt::format(_("\"{0}\" cannot be accessed because the specified item type \"{1}\" is not registered."),
+                        filename, type.name()),
             MessageView::Error);
         return targetFileIO;;
     }
@@ -958,10 +799,10 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
     ClassInfoPtr& classInfo = p->second;
     auto& fileIOs = classInfo->fileIOs;
 
-    if(!formatId.empty() || filename.empty()){
+    if(!format.empty() || filename.empty()){
         for(auto& fileIO : fileIOs){
             if(fileIO->hasApi(ioTypeFlag)){
-                if(formatId.empty() || fileIO->isFormat(formatId)){
+                if(format.empty() || fileIO->isFormat(format)){
                     targetFileIO = fileIO;
                     break;
                 }
@@ -989,14 +830,14 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
     }
 
     if(!targetFileIO){
-        if(formatId.empty()){
+        if(format.empty()){
             messageView->putln(
-                format(_("The file format for accessing \"{0}\" cannot be determined."), filename),
+                fmt::format(_("The file format for accessing \"{0}\" cannot be determined."), filename),
                 MessageView::Error);
         } else {
             messageView->putln(
-                format(_("Unknown file format \"{0}\" is specified in accessing \"{1}\"."),
-                       formatId, filename),
+                fmt::format(_("Unknown file format \"{0}\" is specified in accessing \"{1}\"."),
+                            format, filename),
                 MessageView::Error);
         }
     }
@@ -1007,7 +848,8 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
 
 namespace {
 
-// Defined to use existing loaders and savers based on FileFunctionBase for the backward compatiblity
+// The following adapter class is defined to use existing loaders and savers
+// based on FileFunctionBase for the backward compatiblity
 class FileFunctionAdapter : public ItemFileIO
 {
 public:
@@ -1015,20 +857,20 @@ public:
     function<Item*()> factory;
     
     FileFunctionAdapter(
-        int api, const std::string& caption, const std::string& formatId,
+        int api, const std::string& caption, const std::string& format,
         const std::function<std::string()>& getExtensions, std::shared_ptr<ItemManager::FileFunctionBase> function,
-        int priority)
-        : ItemFileIO(formatId, api),
+        int usage)
+        : ItemFileIO(format, api),
           fileFunction(function)
     {
         setCaption(caption);
         setExtensionFunction(getExtensions);
-        if(priority >= ItemManager::PRIORITY_DEFAULT){
+        if(usage >= ItemManager::Standard){
             setInterfaceLevel(Standard);
-        } else if(priority >= ItemManager::PRIORITY_COMPATIBILITY){
-            setInterfaceLevel(Internal);
-        } else {
+        } else if(usage >= ItemManager::Conversion){
             setInterfaceLevel(Conversion);
+        } else {
+            setInterfaceLevel(Internal);
         }
     }
 
@@ -1036,6 +878,8 @@ public:
     {
         if(factory){
             return factory();
+        } else if(isRegisteredForSingletonItem()){
+            return findSingletonItemInstance();
         }
         return nullptr;
     }
@@ -1055,30 +899,30 @@ public:
 
 
 void ItemManager::addLoader_
-(const std::type_info& type, const std::string& caption, const std::string& formatId,
- std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority)
+(const std::type_info& type, const std::string& caption, const std::string& format,
+ std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int usage)
 {
     auto adapter = new FileFunctionAdapter(
-        ItemFileIO::Load, caption, formatId, getExtensions, function, priority);
+        ItemFileIO::Load, caption, format, getExtensions, function, usage);
     auto classInfo = impl->registerFileIO(type, adapter);
     adapter->factory = classInfo->factory;
 }
 
 
 void ItemManager::addSaver_
-(const std::type_info& type, const std::string& caption, const std::string& formatId,
- std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int priority)
+(const std::type_info& type, const std::string& caption, const std::string& format,
+ std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int usage)
 {
     auto adapter = new FileFunctionAdapter(
-        ItemFileIO::Save, caption, formatId, getExtensions, function, priority);
+        ItemFileIO::Save, caption, format, getExtensions, function, usage);
     impl->registerFileIO(type, adapter);
 }
 
 
 bool ItemManager::load
-(Item* item, const std::string& filename, Item* parentItem, const std::string& formatId, const Mapping* options)
+(Item* item, const std::string& filename, Item* parentItem, const std::string& format, const Mapping* options)
 {
-    if(auto fileIO = Impl::findMatchedFileIO(typeid(*item), filename, formatId, ItemFileIO::Load)){
+    if(auto fileIO = Impl::findMatchedFileIO(typeid(*item), filename, format, ItemFileIO::Load)){
         return fileIO->loadItem(item, filename, parentItem, false, nullptr, options);
     }
     return false;
@@ -1132,9 +976,9 @@ void ItemManager::Impl::onReloadSelectedItemsActivated()
 
 
 bool ItemManager::save
-(Item* item, const std::string& filename, const std::string& formatId, const Mapping* options)
+(Item* item, const std::string& filename, const std::string& format, const Mapping* options)
 {
-    if(auto fileIO = Impl::findMatchedFileIO(typeid(*item), filename, formatId, ItemFileIO::Save)){
+    if(auto fileIO = Impl::findMatchedFileIO(typeid(*item), filename, format, ItemFileIO::Save)){
         return fileIO->saveItem(item, filename, options);
     }
     return false;
@@ -1187,14 +1031,14 @@ void ItemManager::Impl::onExportSelectedItemsActivated()
 }
 
 
-bool ItemManager::overwrite(Item* item, bool forceOverwrite, const std::string& formatId)
+bool ItemManager::overwrite(Item* item, bool forceOverwrite, const std::string& format)
 {
     bool needToOverwrite = forceOverwrite;
 
     string filename(item->filePath());
-    string lastFormatId(item->fileFormat());
+    string lastFormat(item->fileFormat());
 
-    if(!formatId.empty() && formatId != lastFormatId){
+    if(!format.empty() && format != lastFormat){
         needToOverwrite = true;
     } else {
         if(!filename.empty()){
@@ -1213,8 +1057,8 @@ bool ItemManager::overwrite(Item* item, bool forceOverwrite, const std::string& 
     bool synchronized = !needToOverwrite;
     
     if(!synchronized){
-        if(!filename.empty() && formatId.empty()){
-            synchronized = save(item, filename, lastFormatId, item->fileOptions());
+        if(!filename.empty() && format.empty()){
+            synchronized = save(item, filename, lastFormat, item->fileOptions());
         } 
         if(!synchronized){
             auto fileIOs =
@@ -1223,7 +1067,7 @@ bool ItemManager::overwrite(Item* item, bool forceOverwrite, const std::string& 
                     [&](ItemFileIO* fileIO){
                         return (fileIO->hasApi(ItemFileIO::Save) &&
                                 fileIO->interfaceLevel() == ItemFileIO::Standard &&
-                                (formatId.empty() || fileIO->isFormat(formatId)));
+                                (format.empty() || fileIO->isFormat(format)));
                     },
                     false);
             
