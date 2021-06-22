@@ -13,10 +13,10 @@
 #include "CheckBox.h"
 #include "Dialog.h"
 #include <QDialogButtonBox>
+#include <QElapsedTimer>
 #include <cmath>
 #include <limits>
 #include <iostream>
-#include <QElapsedTimer>
 #include "gettext.h"
 
 using namespace std;
@@ -145,7 +145,7 @@ public:
         QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
         buttonBox->addButton(okButton, QDialogButtonBox::AcceptRole);
         connect(buttonBox,SIGNAL(accepted()), this, SLOT(accept()));
-        vbox->addWidget(okButton);
+        vbox->addWidget(buttonBox);
     }
 };
 
