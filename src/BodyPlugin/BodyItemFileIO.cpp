@@ -166,7 +166,7 @@ bool BodyItemBodyFileIO::load(BodyItem* item, const std::string& filename)
     }
     item->setBody(newBody);
     
-    auto itype = invocationType();
+    auto itype = currentInvocationType();
     if(itype == Dialog || itype == DragAndDrop){
         item->setChecked(true);
     }
@@ -243,7 +243,7 @@ bool SceneFileImporter::load(Item* item, const std::string& filename)
     newBody->rootLink()->addShapeNode(shape);
     bodyItem->setBody(newBody);
     
-    auto itype = invocationType();
+    auto itype = currentInvocationType();
     if(itype == Dialog || itype == DragAndDrop){
         item->setChecked(true);
     }

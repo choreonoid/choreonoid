@@ -181,7 +181,7 @@ ItemList<Item> ItemFileDialog::Impl::loadItems(Item* parentItem, bool doAddition
                 item = targetFileIO->createItem();
             }
             if(item){
-                targetFileIO->setInvocationType(ItemFileIO::Dialog);
+                targetFileIO->setCurrentInvocationType(ItemFileIO::Dialog);
                 bool loaded = targetFileIO->loadItem(
                     item, filenames[i].toStdString(), parentItem, doAddition, nextItem, nullptr);
                 if(loaded){
@@ -269,7 +269,7 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
             if(optionPanel){
                 targetFileIO->fetchOptionPanelForSaving();
             }
-            targetFileIO->setInvocationType(ItemFileIO::Dialog);
+            targetFileIO->setCurrentInvocationType(ItemFileIO::Dialog);
             saved = targetFileIO->saveItem(item, filename, nullptr);
         }
     }

@@ -54,7 +54,7 @@ public:
 
     // Set the invocation type before calling the loadItem or saveItem function
     // if the invocation type is not "Direct".
-    void setInvocationType(int type);
+    void setCurrentInvocationType(int type);
 
     // Load API
     Item* loadItem(
@@ -89,7 +89,7 @@ public:
     virtual void fetchOptionPanelForSaving();
 
     Item* parentItem();
-    int invocationType() const;
+    int currentInvocationType() const;
 
     bool isRegisteredForSingletonItem() const;
     Item* findSingletonItemInstance() const;

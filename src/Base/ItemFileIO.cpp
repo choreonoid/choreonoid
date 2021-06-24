@@ -27,7 +27,7 @@ public:
     std::vector<std::string> extensions;
     std::function<std::string()> extensionFunction;
     ItemFileIO::InterfaceLevel interfaceLevel;
-    int invocationType;
+    int currentInvocationType;
     Item* parentItem;
     Item* actuallyLoadedItem;
     std::ostream* os;
@@ -61,7 +61,7 @@ ItemFileIO::Impl::Impl(ItemFileIO* self, const std::string& format, int api)
       format(format)
 {
     interfaceLevel = Standard;
-    invocationType = Direct;
+    currentInvocationType = Direct;
     parentItem = nullptr;
     mv = MessageView::instance();
     os = &mv->cout(true);
@@ -95,9 +95,9 @@ ItemFileIO::Impl::Impl(ItemFileIO* self, const Impl& org)
       extensions(org.extensions),
       extensionFunction(org.extensionFunction),
       interfaceLevel(org.interfaceLevel),
-      invocationType(org.invocationType)
+      currentInvocationType(org.currentInvocationType)
 {
-    invocationType = Direct;
+    currentInvocationType = Direct;
     parentItem = nullptr;
     mv = MessageView::instance();
     os = &mv->cout(true);
@@ -231,16 +231,16 @@ int ItemFileIO::interfaceLevel() const
 }
 
 
-void ItemFileIO::setInvocationType(int type)
+void ItemFileIO::setCurrentInvocationType(int type)
 {
-    impl->invocationType = type;
+    impl->currentInvocationType = type;
 }
 
 
 bool ItemFileIO::Impl::preprocessLoadingOrSaving
 (Item* item, std::string& io_filename, const Mapping* options)
 {
-    if(invocationType == Direct){
+    if(currentInvocationType == Direct){
         FilePathVariableProcessor* pathProcessor = FilePathVariableProcessor::systemInstance();
         io_filename = pathProcessor->expand(io_filename, true);
         if(io_filename.empty()){
@@ -249,10 +249,12 @@ bool ItemFileIO::Impl::preprocessLoadingOrSaving
         }
     }
 
-    if((invocationType == Direct) && (api & ItemFileIO::Options)){
+    if((currentInvocationType == Direct) && (api & ItemFileIO::Options)){
         self->resetOptions();
         if(options){
-            self->restoreOptions(options);
+            if(!self->restoreOptions(options)){
+                return false;
+            }
         }
     }
 
@@ -270,7 +272,7 @@ Item* ItemFileIO::loadItem
             item.reset();
         }
     }
-    impl->invocationType = Direct;
+    impl->currentInvocationType = Direct;
     return item.retn();
 }
 
@@ -280,7 +282,7 @@ bool ItemFileIO::loadItem
  Item* parentItem, bool doAddition, Item* nextItem, const Mapping* options)
 {
     bool loaded = impl->loadItem(item, filename, parentItem, doAddition, nextItem, options);
-    impl->invocationType = Direct;
+    impl->currentInvocationType = Direct;
     return loaded;
 }
 
@@ -295,9 +297,13 @@ bool ItemFileIO::Impl::loadItem
     }
 
     if(!preprocessLoadingOrSaving(item, filename, options)){
-        self->putError(
-            fmt::format(_("{0} cannot be loaded because {1}"),
-                        item->displayName(), errorMessage));
+        if(errorMessage.empty()){
+            self->putError(fmt::format(_("{0} cannot be loaded."), item->displayName()));
+        } else {
+            self->putError(
+                fmt::format(_("{0} cannot be loaded because {1}"), item->displayName(), errorMessage));
+            errorMessage.clear();
+        }
         return false;
     }
     this->parentItem = parentItem;
@@ -361,7 +367,7 @@ void ItemFileIO::setActuallyLoadedItem(Item* item)
 bool ItemFileIO::saveItem(Item* item, const std::string& filename, const Mapping* options)
 {
     bool saved = impl->saveItem(item, filename, options);
-    impl->invocationType = Direct;
+    impl->currentInvocationType = Direct;
     return saved;
 }
 
@@ -376,8 +382,13 @@ bool ItemFileIO::Impl::saveItem
     }
 
     if(!preprocessLoadingOrSaving(item, filename, options)){
-        self->putError(
-            fmt::format(_("{0} cannot be saved because {1}"), item->displayName(), errorMessage));
+        if(errorMessage.empty()){
+            self->putError(fmt::format(_("{0} cannot be saved."), item->displayName()));
+        } else {
+            self->putError(
+                fmt::format(_("{0} cannot be saved because {1}"), item->displayName(), errorMessage));
+            errorMessage.clear();
+        }
         return false;
     }
     parentItem = item->parentItem();
@@ -477,9 +488,9 @@ Item* ItemFileIO::parentItem()
 }
 
 
-int ItemFileIO::invocationType() const
+int ItemFileIO::currentInvocationType() const
 {
-    return impl->invocationType;
+    return impl->currentInvocationType;
 }
 
 
