@@ -4,7 +4,6 @@
 
 #include "SceneWidget.h"
 #include "SceneBar.h"
-#include "ToolBarArea.h"
 #include "GL1SceneRenderer.h"
 #include "GLSLSceneRenderer.h"
 #include "SceneWidgetEventHandler.h"
@@ -13,12 +12,12 @@
 #include "Buttons.h"
 #include "ButtonGroup.h"
 #include "CheckBox.h"
-#include "ToolBar.h"
 #include "Dialog.h"
 #include "SpinBox.h"
 #include "Separator.h"
 #include "Archive.h"
 #include "MessageView.h"
+#include "ExtensionManager.h"
 #include "MenuManager.h"
 #include "Timer.h"
 #include "LazyCaller.h"
@@ -31,8 +30,6 @@
 #include <cnoid/CoordinateAxesOverlay>
 #include <cnoid/ConnectionSet>
 #include <QOpenGLWidget>
-#include <QOpenGLContext>
-#include <QSurfaceFormat>
 #include <QLabel>
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -1088,8 +1085,9 @@ void SceneWidget::Impl::doFPSTest()
 
     update();
 
-    QMessageBox::information(config, _("FPS Test Result"),
-                             QString(_("FPS: %1 frames / %2 [s] = %3")).arg(numFrames).arg(time).arg(fps));
+    QMessageBox::information(
+        config, _("FPS Test Result"),
+        QString(_("FPS: %1 frames / %2 [s] = %3")).arg(numFrames).arg(time).arg(fps));
 
     builtinCameraTransform->setTransform(C);
     update();

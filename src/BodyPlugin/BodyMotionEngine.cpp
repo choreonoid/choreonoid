@@ -6,6 +6,7 @@
 #include "BodyMotionEngine.h"
 #include "BodyItem.h"
 #include "BodyMotionItem.h"
+#include <cnoid/ExtensionManager>
 #include <cnoid/MenuManager>
 #include <cnoid/ConnectionSet>
 #include <cnoid/Archive>

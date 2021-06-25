@@ -11,6 +11,7 @@
 #include <cnoid/AppConfig>
 #include <cnoid/MainWindow>
 #include <cnoid/MessageView>
+#include <cnoid/ExtensionManager>
 #include <cnoid/MenuManager>
 #include <cnoid/Tokenizer>
 #include <cnoid/FileDialog>
@@ -78,7 +79,7 @@ bool loadFaceControllerPoseSet(const string& filename)
             if(it != tokens.end()){
                 if(*it == "*"){
                     ++it;
-                    PartPtr part(new Part());
+                    PartPtr part(new Part);
                     while(it != tokens.end()){
                         part->jointIds.push_back(std::stoi(*it++));
                     }
@@ -149,12 +150,12 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
     ifstream ifs(filename_.c_str());
     if(!ifs.is_open()){
         os << filename + "is not found" << endl;
-        return 0;
+        return nullptr;
     }
 
     os << "Loading " << filename << "..." << endl;
 
-    PoseSeqItemPtr item = new PoseSeqItem();
+    PoseSeqItemPtr item = new PoseSeqItem;
     stdx::filesystem::path fpath(filename_);
     item->setName(toUTF8(fpath.stem().string()));
     PoseSeqPtr seq = item->poseSeq();
@@ -196,7 +197,7 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
                                 os << " at line " << nLines << "." << endl;
                             } else {
                                 const FcPose& fcPose = p->second;
-                                PosePtr pose(new Pose());
+                                PosePtr pose(new Pose);
                                 for(size_t j=0; j < part.jointIds.size(); ++j){
                                     pose->setJointPosition(part.jointIds[j], fcPose.q[j]);
                                 }
@@ -217,7 +218,7 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
     catch(const std::invalid_argument& ex){
         os << "FaceController : " << ex.what() << endl;
         os << " at line " << nLines << "." << endl;
-        item = 0;
+        item.reset();
     }
         
     return item;
@@ -281,8 +282,8 @@ void invokeFaceControllerPatternFileImportDialog()
 
 void cnoid::initializeFcpFileLoader(ExtensionManager& ext)
 {
-    MenuManager& mm = ext.menuManager();
-    mm.setPath("/File/Import ...");
-    mm.addItem(_("FaceController Plugin Pattern Files"))
+    ext.menuManager()
+        .setPath("/File/Import ...")
+        .addItem(_("FaceController Plugin Pattern Files"))
         ->sigTriggered().connect(invokeFaceControllerPatternFileImportDialog);
 }

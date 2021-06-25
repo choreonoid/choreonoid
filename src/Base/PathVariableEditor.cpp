@@ -5,6 +5,7 @@
 #include "PathVariableEditor.h"
 #include "AppConfig.h"
 #include "MainWindow.h"
+#include "ExtensionManager.h"
 #include "MenuManager.h"
 #include "Buttons.h"
 #include <cnoid/UTF8>

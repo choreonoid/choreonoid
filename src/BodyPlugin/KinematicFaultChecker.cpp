@@ -11,6 +11,7 @@
 #include <cnoid/BodyState>
 #include <cnoid/Archive>
 #include <cnoid/MainWindow>
+#include <cnoid/ExtensionManager>
 #include <cnoid/MenuManager>
 #include <cnoid/TimeBar>
 #include <cnoid/MessageView>
@@ -39,7 +40,7 @@ namespace {
 
 bool USE_DUPLICATED_BODY = false;
 
-KinematicFaultChecker* checkerInstance = 0;
+KinematicFaultChecker* checkerInstance = nullptr;
 
 #if defined(_MSC_VER) && _MSC_VER < 1800
 inline long lround(double x) {
@@ -103,7 +104,7 @@ public:
 void KinematicFaultChecker::initializeClass(ExtensionManager* ext)
 {
     if(!checkerInstance){
-        checkerInstance = ext->manage(new KinematicFaultChecker());
+        checkerInstance = ext->manage(new KinematicFaultChecker);
 
         MenuManager& mm = ext->menuManager();
         mm.setPath("/Tools");
@@ -142,10 +143,10 @@ KinematicFaultChecker::Impl::Impl()
 {
     setWindowTitle(_("Kinematic Fault Checker"));
     
-    QVBoxLayout* vbox = new QVBoxLayout();
+    auto vbox = new QVBoxLayout;
     setLayout(vbox);
     
-    QHBoxLayout* hbox = new QHBoxLayout();
+    auto hbox = new QHBoxLayout;
     
     positionCheck.setText(_("Joint position check"));
     positionCheck.setChecked(true);
@@ -169,7 +170,7 @@ KinematicFaultChecker::Impl::Impl()
 
     hbox->addStretch();
     vbox->addLayout(hbox);
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     
     velocityCheck.setText(_("Joint velocity check"));
     velocityCheck.setChecked(true);
@@ -185,7 +186,7 @@ KinematicFaultChecker::Impl::Impl()
 
     hbox->addStretch();
     vbox->addLayout(hbox);
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
 
     radioGroup.addButton(&allJointsRadio);
     radioGroup.addButton(&selectedJointsRadio);
@@ -204,7 +205,7 @@ KinematicFaultChecker::Impl::Impl()
     hbox->addStretch();
     vbox->addLayout(hbox);
     vbox->addWidget(new HSeparator);
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     
     collisionCheck.setText(_("Self-collision check"));
     collisionCheck.setChecked(true);
@@ -215,7 +216,7 @@ KinematicFaultChecker::Impl::Impl()
 
     vbox->addWidget(new HSeparator);
     
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     onlyTimeBarRangeCheck.setText(_("Time bar's range only"));
     onlyTimeBarRangeCheck.setChecked(false);
     hbox->addWidget(&onlyTimeBarRangeCheck);

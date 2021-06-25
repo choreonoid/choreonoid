@@ -1,5 +1,6 @@
 #include "UnifiedEditHistory.h"
 #include "EditRecord.h"
+#include "ExtensionManager.h"
 #include "MenuManager.h"
 #include "ProjectManager.h"
 #include "Action.h"

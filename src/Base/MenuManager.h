@@ -7,13 +7,9 @@
 
 #include "Action.h"
 #include "Menu.h"
-#include <cnoid/ExtensionManager>
 #include "exportdecl.h"
 
 namespace cnoid {
-
-class Menu;
-class MenuManagerImpl;
 
 class CNOID_EXPORT MenuManager
 {

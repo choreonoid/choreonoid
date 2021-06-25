@@ -6,6 +6,7 @@
 #include "PulseAudioManager.h"
 #include "AudioItem.h"
 #include "MediaUtil.h"
+#include <cnoid/ExtensionManager>
 #include <cnoid/MenuManager>
 #include <cnoid/RootItem>
 #include <cnoid/TimeBar>

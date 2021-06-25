@@ -3,9 +3,9 @@
 */
 
 #include "MenuManager.h"
-#include "Menu.h"
+#include "MessageView.h"
+#include <fmt/format.h>
 #include <tuple>
-#include <iostream>
 #include "gettext.h"
 
 using namespace std;
@@ -195,7 +195,9 @@ MenuManager& MenuManager::setPath(const QString& path)
     std::tie(item, menu) = findPath(path, true);
 
     if(!menu){
-        cerr << "cnoid::MenuManager warning: setting path to " << path.toLocal8Bit().data() << " failed." << endl;
+        MessageView::instance()->putln(
+            fmt::format(_("MenuManager failed to set the current menu path to {0}."), path.toStdString()),
+            MessageView::Error);
     }
 
     currentMenu_ = menu;

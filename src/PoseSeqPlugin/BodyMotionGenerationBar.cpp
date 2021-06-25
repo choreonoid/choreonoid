@@ -14,6 +14,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/TimeBar>
 #include <cnoid/Archive>
+#include <cnoid/ExtensionManager>
 #include <cnoid/MenuManager>
 #include <cnoid/MainWindow>
 #include <cnoid/SpinBox>

@@ -13,6 +13,7 @@
 #include <cnoid/RootItem>
 #include <cnoid/ItemList>
 #include <cnoid/Archive>
+#include <cnoid/ExtensionManager>
 #include <cnoid/MenuManager>
 #include <cnoid/MessageView>
 #include <cnoid/Dialog>

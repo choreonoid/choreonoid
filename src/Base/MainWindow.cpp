@@ -6,6 +6,7 @@
 #include "ViewArea.h"
 #include "InfoBar.h"
 #include "ToolBarArea.h"
+#include "ExtensionManager.h"
 #include "MenuManager.h"
 #include "AppConfig.h"
 #include "TimeBar.h"
