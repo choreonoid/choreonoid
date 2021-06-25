@@ -70,7 +70,7 @@ public:
 ImageView::Impl::Impl(ImageView* self)
     : self(self)
 {
-    self->setDefaultLayoutArea(View::CENTER);
+    self->setDefaultLayoutArea(CenterArea);
 
     QVBoxLayout* vbox = new QVBoxLayout;
     vbox->setSpacing(0);
@@ -113,7 +113,7 @@ void ImageView::Impl::updateImage()
 void ImageView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<ImageView>(
-        "ImageView", N_("Image"), ViewManager::MULTI_OPTIONAL);
+        "ImageView", N_("Image"), ViewManager::Multiple);
 }
 
 

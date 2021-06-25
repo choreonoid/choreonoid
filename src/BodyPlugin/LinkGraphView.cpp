@@ -18,14 +18,14 @@ using namespace cnoid;
 void LinkGraphView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<LinkGraphView>(
-        "LinkGraphView", N_("Link Trajectories"), ViewManager::SINGLE_OPTIONAL);
+        "LinkGraphView", N_("Link Trajectories"));
 }
 
 
 LinkGraphView::LinkGraphView()
     : graph(this)
 {
-    setDefaultLayoutArea(View::BOTTOM);
+    setDefaultLayoutArea(BottomCenterArea);
     setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     static const char* xyzLabels[] = { "X", "Y", "Z" };

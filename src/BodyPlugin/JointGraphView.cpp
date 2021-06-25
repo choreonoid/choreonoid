@@ -18,14 +18,14 @@ using namespace cnoid;
 void JointGraphView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<JointGraphView>(
-        "JointGraphView", N_("Joint Trajectories"), ViewManager::SINGLE_OPTIONAL);
+        "JointGraphView", N_("Joint Trajectories"));
 }
 
 
 JointGraphView::JointGraphView()
     : graph(this)
 {
-    setDefaultLayoutArea(View::BOTTOM);
+    setDefaultLayoutArea(BottomCenterArea);
     
     QVBoxLayout* vbox = new QVBoxLayout();
     vbox->addWidget(&graph);

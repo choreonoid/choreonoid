@@ -51,13 +51,24 @@ public:
     SignalProxy<void()> sigRemoved();
     
     enum LayoutArea {
-        LEFT = 0,
-        LEFT_TOP = 0,
-        LEFT_BOTTOM = 1,
-        CENTER = 2,
-        RIGHT = 3,
-        BOTTOM = 4,
-        NUM_AREAS };
+        TopLeftArea = 0,
+        MiddleLeftArea = 1,
+        BottomLeftArea = 2,
+        TopCenterArea = 3,
+        CenterArea = 4,
+        BottomCenterArea = 5,
+        TopRightArea = 6,
+        MiddleRightArea = 7,
+        BottomRightArea = 8,
+        NumLayoutAreas = 9,
+        // deprecated
+        LEFT = TopLeftArea,
+        LEFT_TOP = TopLeftArea,
+        LEFT_BOTTOM = BottomLeftArea,
+        CENTER = CenterArea,
+        RIGHT = TopRightArea,
+        BOTTOM = BottomCenterArea,
+    };
 
     void setDefaultLayoutArea(LayoutArea area);
     LayoutArea defaultLayoutArea() const;

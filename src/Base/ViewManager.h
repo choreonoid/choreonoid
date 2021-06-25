@@ -35,25 +35,25 @@ public:
         virtual View* create() { return new ViewType(); }
     };
 
-    enum InstantiationType {
-        SINGLE_DEFAULT,
-        SINGLE_OPTIONAL,
-        MULTI_DEFAULT,
-        MULTI_OPTIONAL
+    enum InstantiationFlags {
+        Single = 0,
+        Multiple = 1,
+        Default = 2,
+        SINGLE_OPTIONAL = Single,
+        SINGLE_DEFAULT = Single | Default,
+        MULTI_OPTIONAL = Multiple,
+        MULTI_DEFAULT = Multiple | Default
     };
 
-    /**
-       \return If itype is SINGLE_DEFAULT or MULTI_DEFAULT, the default instance created by
-       this function is returned. Otherwise null pointer is returned.
-    */
-    template <class ViewType> ViewType* registerClass(
-        const std::string& className, const std::string& defaultInstanceName,
-        ViewManager::InstantiationType itype = ViewManager::SINGLE_OPTIONAL) {
-        return static_cast<ViewType*>(
-            registerClassSub(typeid(ViewType), className, defaultInstanceName, itype, new Factory<ViewType>()));
+    template <class ViewType>
+    ViewManager& registerClass(
+        const std::string& className, const std::string& defaultInstanceName, int instantiationFlags = Single) {
+        registerClass_(
+            typeid(ViewType), className, defaultInstanceName, instantiationFlags, new Factory<ViewType>());
+        return *this;
     }
 
-    void registerClassAlias(const std::string& alias, const std::string& orgClassName);
+    ViewManager& registerClassAlias(const std::string& alias, const std::string& orgClassName);
     
     static ViewClass* viewClass(const std::type_info& view_type_info);
 
@@ -114,9 +114,10 @@ public:
 private:
     ViewManager(const ViewManager&) { }
     
-    View* registerClassSub(
-        const std::type_info& view_type_info, const std::string& className, const std::string& defaultInstanceName,
-        InstantiationType itype, FactoryBase* factory);
+    void registerClass_(
+        const std::type_info& view_type_info,
+        const std::string& className, const std::string& defaultInstanceName, int instantiationFlags,
+        FactoryBase* factory);
     static View* getOrCreateSpecificTypeView(
         const std::type_info& view_type_info, const std::string& instanceName, bool doMountCreatedView);
     static View* findSpecificTypeView(const std::type_info& view_type_info, const std::string& instanceName);

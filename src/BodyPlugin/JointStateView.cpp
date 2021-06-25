@@ -64,8 +64,7 @@ public:
 
 void JointStateView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<JointStateView>(
-        "JointStateView", N_("Joint State"), ViewManager::SINGLE_OPTIONAL);
+    ext->viewManager().registerClass<JointStateView>("JointStateView", N_("Joint State"));
 }
 
 
@@ -78,7 +77,7 @@ JointStateView::JointStateView()
 JointStateView::Impl::Impl(JointStateView* self)
     : self(self)
 {
-    self->setDefaultLayoutArea(View::CENTER);
+    self->setDefaultLayoutArea(BottomCenterArea);
     
     QVBoxLayout* vbox = new QVBoxLayout();
     vbox->setSpacing(0);

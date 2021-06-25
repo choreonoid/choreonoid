@@ -71,8 +71,7 @@ public:
 
 void TextEditView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<TextEditView>(
-        "TextEditView", N_("Text"), ViewManager::SINGLE_OPTIONAL);    
+    ext->viewManager().registerClass<TextEditView>("TextEditView", N_("Text"));
 }
 
 
@@ -92,8 +91,8 @@ TextEditView::Impl::Impl(TextEditView* self)
     : self(self),
       targetItemPicker(self)
 {
-    self->setDefaultLayoutArea(View::CENTER);
-
+    self->setDefaultLayoutArea(CenterArea);
+    
     actionUndo = new QAction(&textEdit);
     actionUndo->setShortcut(QKeySequence::Undo);
     QObject::connect(actionUndo, SIGNAL(triggered()), &textEdit, SLOT(undo()));

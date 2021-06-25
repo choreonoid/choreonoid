@@ -38,10 +38,9 @@ public:
 
 void LinkDeviceListView::initializeClass(ExtensionManager* ext)
 {
-    auto& vm = ext->viewManager();
-    vm.registerClass<LinkDeviceListView>(
-        "LinkDeviceListView", N_("Links / Devices"), ViewManager::SINGLE_OPTIONAL);
-    vm.registerClassAlias("LinkSelectionView", "Body::LinkDeviceListView");
+    ext->viewManager()
+        .registerClass<LinkDeviceListView>("LinkDeviceListView", N_("Links / Devices"))
+        .registerClassAlias("LinkSelectionView", "Body::LinkDeviceListView");
 }
 
 
@@ -53,7 +52,7 @@ LinkDeviceListView::LinkDeviceListView()
 
 LinkDeviceListView::Impl::Impl(LinkDeviceListView* self)
 {
-    self->setDefaultLayoutArea(View::LEFT_BOTTOM);
+    self->setDefaultLayoutArea(BottomLeftArea);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     auto vbox = new QVBoxLayout;

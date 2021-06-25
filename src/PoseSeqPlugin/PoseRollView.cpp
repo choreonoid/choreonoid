@@ -212,14 +212,13 @@ public:
 
 void PoseRollView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<PoseRollView>(
-        "PoseRollView", N_("Pose Roll"), ViewManager::SINGLE_OPTIONAL);
+    ext->viewManager().registerClass<PoseRollView>("PoseRollView", N_("Pose Roll"));
 }
 
 
 PoseRollView::PoseRollView()
 {
-    setDefaultLayoutArea(View::BOTTOM);
+    setDefaultLayoutArea(BottomCenterArea);
     setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     impl = new PoseRollViewImpl(this);

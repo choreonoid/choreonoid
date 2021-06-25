@@ -46,7 +46,7 @@ public:
 void LinkPropertyView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<LinkPropertyView>(
-        "LinkPropertyView", N_("Link Properties"), ViewManager::SINGLE_OPTIONAL);
+        "LinkPropertyView", N_("Link Properties"));
 }
 
 
@@ -58,7 +58,7 @@ LinkPropertyView::LinkPropertyView()
     vbox->addWidget(impl);
     setLayout(vbox);
 
-    setDefaultLayoutArea(View::LEFT_BOTTOM);
+    setDefaultLayoutArea(BottomLeftArea);
 }
 
 

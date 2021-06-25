@@ -259,7 +259,7 @@ void SliderOwner::setCallback(std::function<void(double value)> callback)
 void GeneralSliderView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<GeneralSliderView>(
-        "GeneralSliderView", N_("General Sliders"), ViewManager::SINGLE_OPTIONAL);
+        "GeneralSliderView", N_("General Sliders"));
 }
 
 
@@ -278,7 +278,7 @@ GeneralSliderView::GeneralSliderView()
 GeneralSliderView::Impl::Impl(GeneralSliderView* self)
     : self(self)
 {
-    self->setDefaultLayoutArea(View::CENTER);
+    self->setDefaultLayoutArea(BottomCenterArea);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     QVBoxLayout* vbox = new QVBoxLayout();

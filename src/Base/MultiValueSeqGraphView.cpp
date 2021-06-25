@@ -13,13 +13,13 @@ using namespace cnoid;
 void MultiValueSeqGraphView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<MultiValueSeqGraphView>(
-        "MultiValueSeqGraphView", N_("Multi Value Seq"), ViewManager::SINGLE_OPTIONAL);    
+        "MultiValueSeqGraphView", N_("Multi Value Seq"));
 }
 
 
 MultiValueSeqGraphView::MultiValueSeqGraphView()
 {
-    setDefaultLayoutArea(View::BOTTOM);
+    setDefaultLayoutArea(BottomCenterArea);
 }
 
 

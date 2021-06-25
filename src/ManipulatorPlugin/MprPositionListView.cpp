@@ -517,7 +517,7 @@ QSize CheckItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QMod
 void MprPositionListView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<MprPositionListView>(
-        "MprPositionListView", N_("Waypoints"), ViewManager::SINGLE_OPTIONAL);
+        "MprPositionListView", N_("Waypoints"));
 }
 
 
@@ -532,7 +532,7 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
       self(self),
       targetItemPicker(self)
 {
-    self->setDefaultLayoutArea(View::RIGHT);
+    self->setDefaultLayoutArea(BottomCenterArea);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     auto sty = self->style();
     int hs = sty->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);

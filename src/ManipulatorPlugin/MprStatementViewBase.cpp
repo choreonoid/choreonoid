@@ -56,7 +56,7 @@ MprStatementViewBase::MprStatementViewBase()
 MprStatementViewBase::Impl::Impl(MprStatementViewBase* self)
     : self(self)
 {
-    self->setDefaultLayoutArea(View::LEFT_BOTTOM);
+    self->setDefaultLayoutArea(BottomLeftArea);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     auto vbox = new QVBoxLayout;

@@ -28,8 +28,6 @@ namespace iostreams = boost::iostreams;
 
 namespace {
 
-MessageView* messageView = nullptr;
-
 struct PendingMessage
 {
     string message;
@@ -232,12 +230,12 @@ void MessageView::postMessageBeforeInitialization(const std::string& message, in
 
 void MessageView::initializeClass(ExtensionManager* ext)
 {
-    messageView = ext->viewManager().registerClass<MessageView>(
-        "MessageView", N_("Message"), ViewManager::SINGLE_DEFAULT);
+    ext->viewManager().registerClass<MessageView>(
+        "MessageView", N_("Message"), ViewManager::Default);
 
     if(!initialPendingMessages.empty()){
         for(auto& m : initialPendingMessages){
-            messageView->putln(m.message, m.type);
+            instance()->putln(m.message, m.type);
         }
         initialPendingMessages.clear();
         initialPendingMessages.shrink_to_fit();
@@ -250,16 +248,17 @@ void MessageView::initializeClass(ExtensionManager* ext)
 */
 MessageView* MessageView::instance()
 {
-    return messageView;
+    static MessageView* instance_ = ViewManager::findView<MessageView>();
+    return instance_;
 }
 
 
 /**
-   Obsolete. Please use MessageView::instance().
+   \deprecated Use MessageView::instance().
 */
 MessageView* MessageView::mainInstance()
 {
-    return messageView;
+    return instance();
 }
 
 
@@ -280,7 +279,7 @@ MessageView::Impl::Impl(MessageView* self) :
     sbuf_flush(textSink_flush),
     os_flush(&sbuf_flush)
 {
-    self->setDefaultLayoutArea(View::BOTTOM);
+    self->setDefaultLayoutArea(BottomCenterArea);
 
     layout = new QHBoxLayout;
     self->setLayout(layout);

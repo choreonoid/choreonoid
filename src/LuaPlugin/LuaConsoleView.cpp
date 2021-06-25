@@ -73,7 +73,7 @@ public:
 void LuaConsoleView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<LuaConsoleView>(
-        "LuaConsoleView", N_("Lua Console"), ViewManager::SINGLE_DEFAULT);
+        "LuaConsoleView", N_("Lua Console"), ViewManager::Default);
 }
 
 
@@ -90,7 +90,7 @@ LuaConsoleViewImpl::LuaConsoleViewImpl(LuaConsoleView* self)
       sbuf(textSink),
       os(&sbuf)
 {
-    self->setDefaultLayoutArea(View::BOTTOM);
+    self->setDefaultLayoutArea(View::BottomCenterArea);
 
     setFrameShape(QFrame::NoFrame);
     setReadOnly(false);

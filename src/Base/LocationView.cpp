@@ -131,7 +131,7 @@ public:
 void LocationView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<LocationView>(
-        "LocationView", N_("Location"), ViewManager::SINGLE_OPTIONAL);
+        "LocationView", N_("Location"), ViewManager::Default);
 }
 
 
@@ -145,7 +145,7 @@ LocationView::Impl::Impl(LocationView* self)
     : self(self),
       lockCheck(this)
 {
-    self->setDefaultLayoutArea(View::CENTER);
+    self->setDefaultLayoutArea(TopRightArea);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 
     auto vbox = new QVBoxLayout;

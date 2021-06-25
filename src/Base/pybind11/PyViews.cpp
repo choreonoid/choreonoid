@@ -50,13 +50,16 @@ void exportPyViews(py::module m)
         ;
 
     py::enum_<View::LayoutArea>(view, "LayoutArea")
-        .value("LEFT", View::LayoutArea::LEFT)
-        .value("LEFT_TOP", View::LayoutArea::LEFT_TOP)
-        .value("LEFT_BOTTOM", View::LayoutArea::LEFT_BOTTOM)
-        .value("CENTER", View::LayoutArea::CENTER)
-        .value("RIGHT", View::LayoutArea::RIGHT)
-        .value("BOTTOM", View::LayoutArea::BOTTOM)
-        .value("NUM_AREAS", View::LayoutArea::NUM_AREAS)
+        .value("TopLeftArea", View::TopLeftArea)
+        .value("MiddleLeftArea", View::MiddleLeftArea)
+        .value("BottomLeftArea", View::BottomLeftArea)
+        .value("TopCenterArea", View::TopCenterArea)
+        .value("CenterArea", View::CenterArea)
+        .value("BottomCenterArea", View::BottomCenterArea)
+        .value("TopRightArea", View::TopRightArea)
+        .value("MiddleRightArea", View::MiddleRightArea)
+        .value("BottomRightArea", View::BottomRightArea)
+        .value("NumLayoutAreas", View::NumLayoutAreas)
         .export_values();
 
     py::class_<MessageView, PyQObjectHolder<MessageView>, View>(m, "MessageView")

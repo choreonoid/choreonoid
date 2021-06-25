@@ -40,7 +40,7 @@ public:
 void LinkPositionView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<LinkPositionView>(
-        "LinkPositionView", N_("Link Position"), ViewManager::SINGLE_OPTIONAL);
+        "LinkPositionView", N_("Link Position"));
 }
 
 
@@ -60,7 +60,7 @@ LinkPositionView::LinkPositionView()
 LinkPositionView::Impl::Impl(LinkPositionView* self)
     : self(self)
 {
-    self->setDefaultLayoutArea(View::CENTER);
+    self->setDefaultLayoutArea(MiddleRightArea);
 
     auto topLayout = new QVBoxLayout;
     topLayout->setContentsMargins(0, 0, 0, 0);

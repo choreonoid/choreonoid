@@ -14,13 +14,13 @@ using namespace cnoid;
 void MultiSE3SeqGraphView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<MultiSE3SeqGraphView>(
-        "MultiSE3SeqGraphView", N_("Multi SE3 Seq"), ViewManager::SINGLE_OPTIONAL);
+        "MultiSE3SeqGraphView", N_("Multi SE3 Seq"));
 }
 
 
 MultiSE3SeqGraphView::MultiSE3SeqGraphView()
 {
-    setDefaultLayoutArea(View::BOTTOM);
+    setDefaultLayoutArea(BottomCenterArea);
     setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     static const char* xyzLabels[] = { "X", "Y", "Z" };

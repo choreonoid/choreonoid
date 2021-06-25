@@ -67,7 +67,8 @@ public:
     string translatedClassName;
     string defaultInstanceName;
     string translatedDefaultInstanceName; // temporary.
-    ViewManager::InstantiationType itype;
+    bool isSingleton;
+    bool hasDefaultInstance;
     ViewManager::FactoryBase* factory;
 
     InstanceInfoList instances;
@@ -75,24 +76,17 @@ public:
 
     virtual const std::string& className() const { return className_; }
 
-    ViewInfo(ViewManager::Impl* managerImpl,
-             const type_info& view_type_info, const string& className, const string& defaultInstanceName,
-             const string& textDomain, ViewManager::InstantiationType itype, ViewManager::FactoryBase* factory);
+    ViewInfo(
+        ViewManager::Impl* managerImpl,
+        const type_info& view_type_info, const string& className, const string& defaultInstanceName,
+        const string& textDomain, int instantiationFlags, ViewManager::FactoryBase* factory);
 
     ~ViewInfo(){
         delete factory;
     }
 
-    bool hasDefaultInstance() const {
-        return itype == ViewManager::SINGLE_DEFAULT || itype == ViewManager::MULTI_DEFAULT;
-    }
-
-    bool isSingleton() const {
-        return itype == ViewManager::SINGLE_DEFAULT || itype == ViewManager::SINGLE_OPTIONAL;
-    }
-
     bool checkIfDefaultInstance(View* view){
-        return hasDefaultInstance() && !instances.empty() && (instances.front()->view == view);
+        return hasDefaultInstance && !instances.empty() && (instances.front()->view == view);
     }
 
     bool checkIfPrimalInstance(View* view){
@@ -137,7 +131,7 @@ public:
             return nullptr;
         }
         View* view = createView();
-        if(isSingleton()){
+        if(isSingleton){
             view->setName(defaultInstanceName);
             view->setWindowTitle(translatedDefaultInstanceName.c_str());
         } else {
@@ -152,9 +146,9 @@ public:
 
     View* findView(const string& name){
         if(name.empty()){
-            return instances.empty() ? 0 : instances.front()->view;
+            return instances.empty() ? nullptr : instances.front()->view;
         } else {
-            for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
+            for(auto p = instances.begin(); p != instances.end(); ++p){
                 if((*p)->view->name() == name){
                     return (*p)->view;
                 }
@@ -226,15 +220,16 @@ namespace {
 ViewInfo::ViewInfo
 (ViewManager::Impl* managerImpl,
  const type_info& view_type_info, const string& className, const string& defaultInstanceName,
- const string& textDomain, ViewManager::InstantiationType itype, ViewManager::FactoryBase* factory)
+ const string& textDomain, int instantiationFlags, ViewManager::FactoryBase* factory)
     : view_type_info(view_type_info),
       className_(className),
       textDomain(textDomain),
       defaultInstanceName(defaultInstanceName),
-      itype(itype),
       factory(factory),
       instancesInViewManager(managerImpl->instances)
 {
+    isSingleton = (instantiationFlags & ViewManager::Multiple) ? false : true;
+    hasDefaultInstance = instantiationFlags & ViewManager::Default;
     translatedClassName = dgettext(textDomain.c_str(), className_.c_str());
     translatedDefaultInstanceName = dgettext(textDomain.c_str(), defaultInstanceName.c_str());
 }
@@ -271,21 +266,21 @@ public:
         
     ViewCreationDialog(ViewInfoPtr viewInfo) {
 
-        QVBoxLayout* vbox = new QVBoxLayout();
+        auto vbox = new QVBoxLayout;
             
-        QHBoxLayout* hbox = new QHBoxLayout();
+        auto hbox = new QHBoxLayout;
         hbox->addWidget(new QLabel(_("Name:")));
         hbox->addWidget(&nameEdit);
         vbox->addLayout(hbox);
         
-        QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
+        auto buttonBox = new QDialogButtonBox(this);
         
-        QPushButton* createButton = new QPushButton(_("&Create"));
+        auto createButton = new QPushButton(_("&Create"));
         createButton->setDefault(true);
         buttonBox->addButton(createButton, QDialogButtonBox::AcceptRole);
         connect(buttonBox,SIGNAL(accepted()), this, SLOT(accept()));
         
-        QPushButton* cancelButton = new QPushButton(_("&Cancel"));
+        auto cancelButton = new QPushButton(_("&Cancel"));
         buttonBox->addButton(cancelButton, QDialogButtonBox::RejectRole);
         connect(buttonBox,SIGNAL(rejected()), this, SLOT(reject()));
         
@@ -345,9 +340,9 @@ void onDeleteViewTriggered(InstanceInfoPtr instance)
 
 void deleteAllInvisibleViews()
 {
-    for(TypeToViewInfoMap::iterator p = typeToViewInfoMap.begin(); p != typeToViewInfoMap.end(); ++p){
+    for(auto p = typeToViewInfoMap.begin(); p != typeToViewInfoMap.end(); ++p){
         ViewInfo& info = *p->second;
-        InstanceInfoList::iterator q = info.instances.begin();
+        auto q = info.instances.begin();
         while(q != info.instances.end()){
             InstanceInfoPtr& instance = (*q++);
             if(!instance->view->viewArea()){
@@ -362,44 +357,41 @@ void onViewMenuAboutToShow(Menu* menu)
     menu->clear();
     bool needSeparator = false;
         
-    ModuleNameToClassNameToViewInfoMap::iterator p;
-
     if(menu == deleteViewMenu){
-        Action* action = new Action(menu);
+        auto action = new Action(menu);
         action->setText(_("Delete All Invisible Views"));
         action->sigTriggered().connect([](){ deleteAllInvisibleViews(); });
         menu->addAction(action);
         needSeparator = true;
     }
         
-    for(p = moduleNameToClassNameToViewInfoMap.begin(); p != moduleNameToClassNameToViewInfoMap.end(); ++p){
+    for(auto p = moduleNameToClassNameToViewInfoMap.begin(); p != moduleNameToClassNameToViewInfoMap.end(); ++p){
 
         if(needSeparator){
-            QAction* separator = new QAction(menu);
+            auto separator = new QAction(menu);
             separator->setSeparator(true);
             menu->addAction(separator);
             needSeparator = false;
         }
             
         ClassNameToViewInfoMap& viewInfoMap = *p->second;
-        ClassNameToViewInfoMap::iterator q;
-        for(q = viewInfoMap.begin(); q != viewInfoMap.end(); ++q){
+        for(auto q = viewInfoMap.begin(); q != viewInfoMap.end(); ++q){
             ViewInfoPtr& viewInfo = q->second;
             InstanceInfoList& instances = viewInfo->instances;
 
             if(menu == showViewMenu){
                 View* view = nullptr;
                 if(instances.empty()){
-                    Action* action = new Action(menu);
+                    auto action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
                     action->setCheckable(true);
                     action->sigToggled().connect([=](bool on){ onShowViewToggled(viewInfo, view, on); });
                     menu->addAction(action);
                 } else {
-                    for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
+                    for(auto p = instances.begin(); p != instances.end(); ++p){
                         InstanceInfoPtr& instance = (*p);
                         view = instance->view;
-                        Action* action = new Action(menu);
+                        auto action = new Action(menu);
                         action->setText(view->windowTitle());
                         action->setCheckable(true);
                         action->setChecked(view->viewArea());
@@ -408,21 +400,21 @@ void onViewMenuAboutToShow(Menu* menu)
                     }
                 }
             } else if(menu == createViewMenu){
-                if((viewInfo->itype == ViewManager::SINGLE_OPTIONAL && viewInfo->instances.empty()) ||
-                   (viewInfo->itype == ViewManager::MULTI_DEFAULT || viewInfo->itype == ViewManager::MULTI_OPTIONAL)){
-                    Action* action = new Action(menu);
+                if(!viewInfo->isSingleton || 
+                   (!viewInfo->hasDefaultInstance && viewInfo->instances.empty())){
+                    auto action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
                     action->sigTriggered().connect([=](){ onCreateViewTriggered(viewInfo); });
                     menu->addAction(action);
                 }
             } else if(menu == deleteViewMenu){
-                InstanceInfoList::iterator p = instances.begin();
-                if(viewInfo->hasDefaultInstance() && p != instances.end()){
+                auto p = instances.begin();
+                if(viewInfo->hasDefaultInstance && p != instances.end()){
                     ++p;
                 }
                 while(p != instances.end()){
                     InstanceInfoPtr& instance = (*p++);
-                    Action* action = new Action(menu);
+                    auto action = new Action(menu);
                     action->setText(instance->view->windowTitle());
                     action->sigTriggered().connect([=](){ onDeleteViewTriggered(instance); });
                     menu->addAction(action);
@@ -498,8 +490,7 @@ ViewManager::~ViewManager()
 
 ViewManager::Impl::~Impl()
 {
-    ClassNameToViewInfoMap::iterator p;
-    for(p = classNameToViewInfoMap->begin(); p != classNameToViewInfoMap->end(); ++p){
+    for(auto p = classNameToViewInfoMap->begin(); p != classNameToViewInfoMap->end(); ++p){
         ViewInfoPtr& info = p->second;
         typeToViewInfoMap.erase(&info->view_type_info);
     }
@@ -510,35 +501,34 @@ ViewManager::Impl::~Impl()
 }
 
 
-View* ViewManager::registerClassSub
-(const type_info& view_type_info, const std::string& className, const std::string& defaultInstanceName,
- ViewManager::InstantiationType itype, FactoryBase* factory)
+void ViewManager::registerClass_
+(const type_info& view_type_info,
+ const std::string& className, const std::string& defaultInstanceName, int instantiationFlags,
+ FactoryBase* factory)
 {
     ViewInfoPtr info = std::make_shared<ViewInfo>(
-        impl, view_type_info, className, defaultInstanceName, impl->textDomain, itype, factory);
+        impl, view_type_info, className, defaultInstanceName, impl->textDomain, instantiationFlags, factory);
     
     (*impl->classNameToViewInfoMap)[className] = info;
     typeToViewInfoMap[&view_type_info] = info;
 
-    if(itype == ViewManager::SINGLE_DEFAULT || itype == ViewManager::MULTI_DEFAULT){
-        View* view = info->getOrCreateView();
-        mainWindow->viewArea()->addView(view);
-        return view;
+    if(instantiationFlags & Default){
+        mainWindow->viewArea()->addView(info->getOrCreateView());
     }
-    return nullptr;
 }
 
 
-void ViewManager::registerClassAlias(const std::string& alias, const std::string& orgClassName)
+ViewManager& ViewManager::registerClassAlias(const std::string& alias, const std::string& orgClassName)
 {
     classNameAliasMap[alias] = orgClassName;
+    return *this;
 }
 
 
 ViewClass* ViewManager::viewClass(const std::type_info& view_type_info)
 {
     ViewClass* viewClass = nullptr;
-    TypeToViewInfoMap::iterator p = typeToViewInfoMap.find(&view_type_info);
+    auto p = typeToViewInfoMap.find(&view_type_info);
     if(p != typeToViewInfoMap.end()){
         viewClass = p->second.get();
     }
@@ -601,10 +591,10 @@ View* ViewManager::getOrCreateView(const std::string& moduleName, const std::str
 std::vector<View*> ViewManager::allViews()
 {
     std::vector<View*> views;
-    for(TypeToViewInfoMap::iterator p = typeToViewInfoMap.begin(); p != typeToViewInfoMap.end(); ++p){
+    for(auto p = typeToViewInfoMap.begin(); p != typeToViewInfoMap.end(); ++p){
         InstanceInfoList& instances = p->second->instances;
-        for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
-            views.push_back((*p)->view);
+        for(auto q = instances.begin(); q != instances.end(); ++q){
+            views.push_back((*q)->view);
         }
     }
     return views;
@@ -614,10 +604,10 @@ std::vector<View*> ViewManager::allViews()
 std::vector<View*> ViewManager::activeViews()
 {
     std::vector<View*> views;
-    for(TypeToViewInfoMap::iterator p = typeToViewInfoMap.begin(); p != typeToViewInfoMap.end(); ++p){
+    for(auto p = typeToViewInfoMap.begin(); p != typeToViewInfoMap.end(); ++p){
         InstanceInfoList& instances = p->second->instances;
-        for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){
-            View* view = (*p)->view;
+        for(auto q = instances.begin(); q != instances.end(); ++q){
+            View* view = (*q)->view;
             if(view->isActive()){
                 views.push_back(view);
             }
@@ -630,7 +620,7 @@ std::vector<View*> ViewManager::activeViews()
 View* ViewManager::getOrCreateSpecificTypeView
 (const std::type_info& view_type_info, const std::string& instanceName, bool doMountCreatedView)
 {
-    TypeToViewInfoMap::iterator p = typeToViewInfoMap.find(&view_type_info);
+    auto p = typeToViewInfoMap.find(&view_type_info);
     if(p != typeToViewInfoMap.end()){
         ViewInfo& info = *p->second;
         if(instanceName.empty()){
@@ -645,7 +635,7 @@ View* ViewManager::getOrCreateSpecificTypeView
 
 View* ViewManager::findSpecificTypeView(const std::type_info& view_type_info, const std::string& instanceName)
 {
-    TypeToViewInfoMap::iterator p = typeToViewInfoMap.find(&view_type_info);
+    auto p = typeToViewInfoMap.find(&view_type_info);
     if(p != typeToViewInfoMap.end()){
         ViewInfo& info = *p->second;
         return info.findView(instanceName);
@@ -667,7 +657,7 @@ void ViewManager::deleteView(View* view)
 
 bool ViewManager::isPrimalInstance(View* view)
 {
-    TypeToViewInfoMap::iterator p = typeToViewInfoMap.find(&typeid(*view));
+    auto p = typeToViewInfoMap.find(&typeid(*view));
     if(p != typeToViewInfoMap.end()){
         ViewInfo& info = *p->second;
         return info.checkIfPrimalInstance(view);
@@ -682,12 +672,12 @@ ArchivePtr storeView(Archive& parentArchive, const string& moduleName, ViewInfo&
 {
     ArchivePtr archive;
         
-    ArchivePtr state = new Archive();
+    ArchivePtr state = new Archive;
     state->inheritSharedInfoFrom(parentArchive);
 
     if(view->storeState(*state)){
             
-        archive = new Archive();
+        archive = new Archive;
         archive->inheritSharedInfoFrom(parentArchive);
 
         archive->write("id", state->getViewId(view));
@@ -716,27 +706,26 @@ bool ViewManager::storeViewStates(ArchivePtr archive, const std::string& key)
 {
     // assign view ids first
     int id = 0;
-    ModuleNameToClassNameToViewInfoMap::iterator p;
-    for(p = moduleNameToClassNameToViewInfoMap.begin(); p != moduleNameToClassNameToViewInfoMap.end(); ++p){
+    for(auto p = moduleNameToClassNameToViewInfoMap.begin(); p != moduleNameToClassNameToViewInfoMap.end(); ++p){
         ClassNameToViewInfoMap& viewInfoMap = *p->second;
-        for(ClassNameToViewInfoMap::iterator q = viewInfoMap.begin(); q != viewInfoMap.end(); ++q){
+        for(auto q = viewInfoMap.begin(); q != viewInfoMap.end(); ++q){
             ViewInfoPtr& viewInfo = q->second;
             InstanceInfoList& instances = viewInfo->instances;
-            for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){            
+            for(auto p = instances.begin(); p != instances.end(); ++p){            
                 archive->registerViewId((*p)->view, id++);
             }
         }
     }
     
-    ListingPtr viewList = new Listing();
+    ListingPtr viewList = new Listing;
 
-    for(p = moduleNameToClassNameToViewInfoMap.begin(); p != moduleNameToClassNameToViewInfoMap.end(); ++p){
+    for(auto p = moduleNameToClassNameToViewInfoMap.begin(); p != moduleNameToClassNameToViewInfoMap.end(); ++p){
         const std::string& moduleName = p->first;
         ClassNameToViewInfoMap& viewInfoMap = *p->second;
-        for(ClassNameToViewInfoMap::iterator q = viewInfoMap.begin(); q != viewInfoMap.end(); ++q){
+        for(auto q = viewInfoMap.begin(); q != viewInfoMap.end(); ++q){
             ViewInfoPtr& viewInfo = q->second;
             InstanceInfoList& instances = viewInfo->instances;
-            for(InstanceInfoList::iterator p = instances.begin(); p != instances.end(); ++p){            
+            for(auto p = instances.begin(); p != instances.end(); ++p){            
                 View* view = (*p)->view;
                 ArchivePtr viewArchive = storeView(*archive, moduleName, *viewInfo, view);
                 if(viewArchive){
@@ -804,15 +793,15 @@ static View* restoreView(Archive* archive, const string& moduleName, const strin
                 remainingViews = &remainingViewsMap[info];
                 InstanceInfoList& instances = info->instances;
                 remainingViews->reserve(instances.size());
-                InstanceInfoList::iterator q = instances.begin();
-                if(info->hasDefaultInstance() && q != instances.end()){
+                auto q = instances.begin();
+                if(info->hasDefaultInstance && q != instances.end()){
                     ++q;
                 }
                 while(q != instances.end()){
                     remainingViews->push_back((*q++)->view);
                 }
             }
-            for(vector<View*>::iterator q = remainingViews->begin(); q != remainingViews->end(); ++q){
+            for(auto q = remainingViews->begin(); q != remainingViews->end(); ++q){
                 if((*q)->name() == instanceName){
                     view = *q;
                     remainingViews->erase(q);
@@ -820,7 +809,7 @@ static View* restoreView(Archive* archive, const string& moduleName, const strin
                 }
             }
             if(!view){
-                if(!info->isSingleton() || info->instances.empty()){
+                if(!info->isSingleton || info->instances.empty()){
                     view = info->createView(instanceName, true);
                 }
             }
@@ -832,7 +821,7 @@ static View* restoreView(Archive* archive, const string& moduleName, const strin
             MessageView::Error);
     }
     if(!view){
-        if(info && info->isSingleton()){
+        if(info && info->isSingleton){
             MessageView::instance()->putln(
                 format(_("A singleton view \"{0}\" of the {1} type cannot be created "
                          "because its singleton instance has already been created."),

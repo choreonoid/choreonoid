@@ -14,7 +14,6 @@ class CNOID_EXPORT PythonConsoleView : public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
-    static PythonConsoleView* instance();
         
     PythonConsoleView();
     virtual ~PythonConsoleView();

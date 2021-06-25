@@ -254,13 +254,13 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
 void SceneGraphPropertyView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<SceneGraphPropertyView>(
-        "SceneGraphPropertyView", N_("Scene Graph Property"), ViewManager::SINGLE_OPTIONAL);
+        "SceneGraphPropertyView", N_("Scene Graph Property"));
 }
 
 
 SceneGraphPropertyView::SceneGraphPropertyView()
 {
-    setDefaultLayoutArea(View::LEFT_BOTTOM);
+    setDefaultLayoutArea(BottomLeftArea);
     
     impl = new SceneGraphPropertyViewImpl(this);
 }

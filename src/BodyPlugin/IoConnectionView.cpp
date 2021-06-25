@@ -501,7 +501,7 @@ SignalDeviceComboBox::SignalDeviceComboBox
 void IoConnectionView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<IoConnectionView>(
-        "IoConnectionView", N_("I/O Connection"), ViewManager::SINGLE_OPTIONAL);
+        "IoConnectionView", N_("I/O Connection"));
 }
 
 
@@ -515,7 +515,7 @@ IoConnectionView::Impl::Impl(IoConnectionView* self)
     : self(self),
       targetItemPicker(self)
 {
-    self->setDefaultLayoutArea(View::RIGHT);
+    self->setDefaultLayoutArea(BottomCenterArea);
 
     auto vbox = new QVBoxLayout;
     vbox->setSpacing(0);

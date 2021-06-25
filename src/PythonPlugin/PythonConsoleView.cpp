@@ -22,8 +22,6 @@ using namespace cnoid;
 
 namespace {
 
-PythonConsoleView* pythonConsoleView = nullptr;
-
 const unsigned int HISTORY_SIZE = 100;
 
 class PythonConsoleOut
@@ -131,15 +129,8 @@ python::object PythonConsoleIn::readline()
 
 void PythonConsoleView::initializeClass(ExtensionManager* ext)
 {
-    pythonConsoleView =
-        ext->viewManager().registerClass<PythonConsoleView>(
-            "PythonConsoleView", N_("Python Console"), ViewManager::SINGLE_DEFAULT);
-}
-
-
-PythonConsoleView* PythonConsoleView::instance()
-{
-    return pythonConsoleView;
+    ext->viewManager().registerClass<PythonConsoleView>(
+        "PythonConsoleView", N_("Python Console"), ViewManager::Default);
 }
 
 
@@ -161,7 +152,7 @@ PythonConsoleView::Impl::Impl(PythonConsoleView* self)
         " ", "{",  "}", "(",  ")", "[", "]", "<", ">", ":", ";", "^",
         "@", "\"", ",", "\\", "!", "#", "'", "=", "|", "*", "?", "\t" };
     
-    self->setDefaultLayoutArea(View::BOTTOM);
+    self->setDefaultLayoutArea(BottomCenterArea);
 
     setFrameShape(QFrame::NoFrame);
     setReadOnly(false);

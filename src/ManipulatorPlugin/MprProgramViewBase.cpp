@@ -607,7 +607,7 @@ MprProgramViewBase::Impl::~Impl()
 
 void MprProgramViewBase::Impl::setupWidgets()
 {
-    self->setDefaultLayoutArea(View::LEFT_TOP);
+    self->setDefaultLayoutArea(BottomLeftArea);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     auto vbox = new QVBoxLayout;

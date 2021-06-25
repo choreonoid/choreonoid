@@ -36,7 +36,7 @@ void JointDisplacementView::initializeClass(ExtensionManager* ext)
 {
     auto& vm = ext->viewManager();
     vm.registerClass<JointDisplacementView>(
-        "JointDisplacementView", N_("Joint Displacement"), ViewManager::SINGLE_DEFAULT);
+        "JointDisplacementView", N_("Joint Displacement"));
     vm.registerClassAlias("JointSliderView", "JointDisplacementView");
 }
 
@@ -50,7 +50,7 @@ JointDisplacementView::JointDisplacementView()
 JointDisplacementView::Impl::Impl(JointDisplacementView* self)
     : jointDisplacementWidget(self)
 {
-    self->setDefaultLayoutArea(View::CENTER);
+    self->setDefaultLayoutArea(BottomRightArea);
 
     auto style = self->style();
     int lmargin = style->pixelMetric(QStyle::PM_LayoutLeftMargin);

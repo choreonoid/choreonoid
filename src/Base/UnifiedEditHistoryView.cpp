@@ -34,13 +34,13 @@ public:
 void UnifiedEditHistoryView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<UnifiedEditHistoryView>(
-        "UnifiedEditHistoryView", N_("Edit History"), ViewManager::SINGLE_OPTIONAL);
+        "UnifiedEditHistoryView", N_("Edit History"));
 }
 
 
 UnifiedEditHistoryView::UnifiedEditHistoryView()
 {
-    setDefaultLayoutArea(View::LEFT_BOTTOM);
+    setDefaultLayoutArea(BottomLeftArea);
     setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     auto vbox = new QVBoxLayout;

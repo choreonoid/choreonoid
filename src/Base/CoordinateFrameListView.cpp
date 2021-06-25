@@ -521,7 +521,7 @@ QSize CheckItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QMod
 void CoordinateFrameListView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<CoordinateFrameListView>(
-        "CoordinateFrameListView", N_("Coordinate Frames"), ViewManager::SINGLE_OPTIONAL);
+        "CoordinateFrameListView", N_("Coordinate Frames"));
 }
 
 
@@ -535,7 +535,7 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     : self(self),
       targetItemPicker(self)
 {
-    self->setDefaultLayoutArea(View::RIGHT);
+    self->setDefaultLayoutArea(BottomCenterArea);
 
     auto vbox = new QVBoxLayout;
     vbox->setSpacing(0);

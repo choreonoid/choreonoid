@@ -75,8 +75,7 @@ public:
 
 void BodyStateView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<BodyStateView>(
-        "BodyStateView", N_("Body State"), ViewManager::SINGLE_OPTIONAL);
+    ext->viewManager().registerClass<BodyStateView>("BodyStateView", N_("Body State"));
 }
 
 
@@ -89,7 +88,7 @@ BodyStateView::BodyStateView()
 BodyStateView::Impl::Impl(BodyStateView* self)
     : self(self)
 {
-    self->setDefaultLayoutArea(View::BOTTOM);
+    self->setDefaultLayoutArea(BottomCenterArea);
     
     QVBoxLayout* vbox = new QVBoxLayout();
 

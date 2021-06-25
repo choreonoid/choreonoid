@@ -207,8 +207,7 @@ static void onAboutToQuit()
 
 void TaskView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<TaskView>(
-        "TaskView", N_("Task"), ViewManager::SINGLE_OPTIONAL);
+    ext->viewManager().registerClass<TaskView>("TaskView", N_("Task"));
 
     cnoid::sigAboutToQuit().connect([](){ onAboutToQuit(); });
 }
@@ -235,7 +234,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
       os(mv->cout())
 {
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-    self->setDefaultLayoutArea(View::CENTER);
+    self->setDefaultLayoutArea(View::BottomCenterArea);
 
     currentTaskIndex = -1;
     currentPhaseIndex_ = 0;

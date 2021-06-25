@@ -114,16 +114,16 @@ public:
     bool needToUpdateDefaultPaneAreas;
     std::unique_ptr<vector<View*>> defaultViewsToShow;
 
-    ViewPane* areaToPane[View::NUM_AREAS];
+    ViewPane* areaToPane[View::NumLayoutAreas];
 
     struct AreaDetectionInfo {
         AreaDetectionInfo() {
-            for(int i=0; i < View::NUM_AREAS; ++i){
+            for(int i=0; i < View::NumLayoutAreas; ++i){
                 scores[i] = 0;
             }
         }
         ViewPane* pane;
-        int scores[View::NUM_AREAS];
+        int scores[View::NumLayoutAreas];
     };
 
     typedef bitset<NUM_DROP_AREAS> EdgeContactState;
@@ -517,7 +517,7 @@ void ViewArea::Impl::setSingleView(View* view)
 
     ViewPane* pane = new ViewPane(this, topSplitter);
     topSplitter->addWidget(pane);
-    for(int i=0; i < View::NUM_AREAS; ++i){
+    for(int i=0; i < View::NumLayoutAreas; ++i){
         areaToPane[i] = pane;
     }
     needToUpdateDefaultPaneAreas = false;
@@ -542,29 +542,39 @@ void ViewArea::Impl::createDefaultPanes()
     vbox->addWidget(topSplitter);
     topSplitter->setOrientation(Qt::Horizontal);
     
-    QSplitter* vSplitter0 = new CustomSplitter(this, Qt::Vertical, topSplitter);
+    auto vSplitter0 = new CustomSplitter(this, Qt::Vertical, topSplitter);
     topSplitter->addWidget(vSplitter0);
     
-    areaToPane[View::LEFT_TOP] = new ViewPane(this, vSplitter0);
-    vSplitter0->addWidget(areaToPane[View::LEFT_TOP]);
+    auto topLeftPane = new ViewPane(this, vSplitter0);
+    vSplitter0->addWidget(topLeftPane);
+
+    auto bottomLeftPane = new ViewPane(this, vSplitter0);
+    vSplitter0->addWidget(bottomLeftPane);
     
-    areaToPane[View::LEFT_BOTTOM] = new ViewPane(this, vSplitter0);
-    vSplitter0->addWidget(areaToPane[View::LEFT_BOTTOM]);
-    
-    QSplitter* vSplitter1 = new CustomSplitter(this, Qt::Vertical, topSplitter);
+    auto vSplitter1 = new CustomSplitter(this, Qt::Vertical, topSplitter);
     topSplitter->addWidget(vSplitter1);
 
-    QSplitter* hSplitter1 = new CustomSplitter(this, Qt::Horizontal, vSplitter1);
+    auto hSplitter1 = new CustomSplitter(this, Qt::Horizontal, vSplitter1);
     vSplitter1->addWidget(hSplitter1);
-    
-    areaToPane[View::BOTTOM] = new ViewPane(this, vSplitter1);
-    vSplitter1->addWidget(areaToPane[View::BOTTOM]);
-    
-    areaToPane[View::CENTER] = new ViewPane(this, hSplitter1);
-    hSplitter1->addWidget(areaToPane[View::CENTER]);
-    
-    areaToPane[View::RIGHT]  = new ViewPane(this, hSplitter1);
-    hSplitter1->addWidget(areaToPane[View::RIGHT]);
+
+    auto bottomCenterPane = new ViewPane(this, vSplitter1);
+    vSplitter1->addWidget(bottomCenterPane);
+
+    auto centerPane = new ViewPane(this, hSplitter1);
+    hSplitter1->addWidget(centerPane);
+
+    auto rightPane = new ViewPane(this, hSplitter1);
+    hSplitter1->addWidget(rightPane);
+
+    areaToPane[View::TopLeftArea] = topLeftPane;
+    areaToPane[View::MiddleLeftArea] = topLeftPane;
+    areaToPane[View::BottomLeftArea] = bottomLeftPane;
+    areaToPane[View::TopCenterArea] = centerPane;
+    areaToPane[View::CenterArea] = centerPane;
+    areaToPane[View::BottomCenterArea] = bottomCenterPane;
+    areaToPane[View::TopRightArea] = rightPane;
+    areaToPane[View::MiddleRightArea] = rightPane;
+    areaToPane[View::BottomRightArea] = rightPane;
 
     QList<int> sizes;
     sizes << 100 << 600;
@@ -582,7 +592,7 @@ void ViewArea::Impl::createDefaultPanes()
 
 void ViewArea::Impl::detectExistingPaneAreas()
 {
-    for(int i=0; i < View::NUM_AREAS; ++i){
+    for(int i=0; i < View::NumLayoutAreas; ++i){
         areaToPane[i] = nullptr;
     }
 
@@ -596,11 +606,16 @@ void ViewArea::Impl::detectExistingPaneAreas()
         createDefaultPanes();
 
     } else {
-        setBestAreaMatchPane(infos, View::CENTER, firstPane);
-        setBestAreaMatchPane(infos, View::LEFT_TOP, firstPane);
-        setBestAreaMatchPane(infos, View::LEFT_BOTTOM, firstPane);
-        setBestAreaMatchPane(infos, View::RIGHT, firstPane);
-        setBestAreaMatchPane(infos, View::BOTTOM, firstPane);
+        setBestAreaMatchPane(infos, View::CenterArea, firstPane);
+        setBestAreaMatchPane(infos, View::TopLeftArea, firstPane);
+        setBestAreaMatchPane(infos, View::BottomLeftArea, firstPane);
+        setBestAreaMatchPane(infos, View::TopRightArea, firstPane);
+        setBestAreaMatchPane(infos, View::BottomCenterArea, firstPane);
+
+        areaToPane[View::MiddleLeftArea] = areaToPane[View::TopLeftArea];
+        areaToPane[View::TopCenterArea] = areaToPane[View::CenterArea];
+        areaToPane[View::MiddleRightArea] = areaToPane[View::TopRightArea];
+        areaToPane[View::BottomRightArea] = areaToPane[View::TopRightArea];
     }
 
     needToUpdateDefaultPaneAreas = false;
@@ -647,23 +662,22 @@ ViewPane* ViewArea::Impl::updateAreaDetectionInfos
                     int width = pane->width();
                     int height = pane->height();
 
-                    info.scores[View::CENTER] = (4 - currentEdge.count()) * offset + width * height;
+                    info.scores[View::CenterArea] = (4 - currentEdge.count()) * offset + width * height;
 
                     if(currentEdge.test(LEFT) && !currentEdge.test(RIGHT)){
-                        info.scores[View::LEFT] = offset + height;
-                        info.scores[View::LEFT_TOP] = offset + height;
-                        info.scores[View::LEFT_BOTTOM] = offset + height;
+                        info.scores[View::TopLeftArea] = offset + height;
+                        info.scores[View::BottomLeftArea] = offset + height;
                         if(currentEdge.test(TOP) && !currentEdge.test(BOTTOM)){
-                            info.scores[View::LEFT_TOP] += 100;
+                            info.scores[View::TopLeftArea] += 100;
                         } else if(currentEdge.test(BOTTOM) && !currentEdge.test(TOP)){
-                            info.scores[View::LEFT_BOTTOM] += 100;
+                            info.scores[View::BottomLeftArea] += 100;
                         }
                     }
                     if(currentEdge.test(RIGHT) && !currentEdge.test(LEFT)){
-                        info.scores[View::RIGHT] = offset + height;
+                        info.scores[View::TopRightArea] = offset + height;
                     }
                     if(currentEdge.test(BOTTOM) && !currentEdge.test(TOP)){
-                        info.scores[View::BOTTOM] = offset + width;
+                        info.scores[View::BottomCenterArea] = offset + width;
                     }
                     
                     infos.push_back(info);

@@ -294,7 +294,7 @@ void CustomizedItemDelegate::setModelData
 void DigitalIoDeviceView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<DigitalIoDeviceView>(
-        "DigitalIoDeviceView", N_("I/O device"), ViewManager::SINGLE_OPTIONAL);
+        "DigitalIoDeviceView", N_("I/O device"));
 }
 
 
@@ -307,7 +307,7 @@ DigitalIoDeviceView::DigitalIoDeviceView()
 DigitalIoDeviceView::Impl::Impl(DigitalIoDeviceView* self)
     : self(self)
 {
-    self->setDefaultLayoutArea(View::BOTTOM);
+    self->setDefaultLayoutArea(BottomCenterArea);
 
     int hs = self->style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
     int vs = self->style()->pixelMetric(QStyle::PM_LayoutVerticalSpacing);

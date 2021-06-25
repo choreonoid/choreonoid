@@ -419,7 +419,7 @@ bool PythonPlugin::finalize()
 
     // Views and items defined in this plugin must be deleted before finalizing the Python interpreter
     // because the views and items have their own python objects
-    viewManager().deleteView(PythonConsoleView::instance());
+    viewManager().deleteView(ViewManager::findView<PythonConsoleView>());
     itemManager().detachAllManagedTypeItemsFromRoot();
     
     return true;

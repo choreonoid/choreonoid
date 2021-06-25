@@ -105,7 +105,7 @@ View::Impl::Impl(View* self)
     hasFocus = false;
     titleFormat = "{}";
     viewArea = 0;
-    defaultLayoutArea = View::CENTER;
+    defaultLayoutArea = CenterArea;
     isFontSizeZoomKeysEnabled = false;
     fontZoom = 0;
 }

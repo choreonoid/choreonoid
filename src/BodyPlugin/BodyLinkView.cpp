@@ -37,16 +37,6 @@ namespace {
 
 static const double sliderResolution = 1000000.0;
 
-Action* useQuaternionCheck;
-
-void onUseQuaternionToggled(bool on)
-{
-    AppConfig::archive()->openMapping("Body")->openMapping("Link View")->write("useQuaternion", on);
-    BodyLinkView::instance()->switchRpyQuat(on);
-}
-
-BodyLinkView* bodyLinkView = nullptr;
-
 }
 
 namespace cnoid {
@@ -130,7 +120,7 @@ public:
     void setPosture(Matrix3 R);
     void doInverseKinematics(Vector3 p, Matrix3 R);
     void onZmpXyzChanged();
-    void switchRpyQuat(bool on);
+    void setQuaternionMode(bool on);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
@@ -148,22 +138,7 @@ const int M4 = 16;
 
 void BodyLinkView::initializeClass(ExtensionManager* ext)
 {
-    bodyLinkView = ext->viewManager().registerClass<BodyLinkView>(
-        "BodyLinkView", N_("Body / Link"), ViewManager::SINGLE_DEFAULT);
-    MenuManager& mm = ext->menuManager().setPath("/Options").setPath(N_("BodyLink View"));
-    MappingPtr config = AppConfig::archive()->openMapping("Body")->openMapping("Link View");
-    useQuaternionCheck = mm.addCheckItem(_("Use Quaternion"));
-    useQuaternionCheck->setChecked(config->get("useQuaternion", false));
-    useQuaternionCheck->sigToggled().connect(onUseQuaternionToggled);
-    if(config->get("useQuaternion", false)){
-        BodyLinkView::instance()->switchRpyQuat(config->get("useQuaternion", false));
-    }
-}
-
-
-BodyLinkView* BodyLinkView::instance()
-{
-    return bodyLinkView;
+    ext->viewManager().registerClass<BodyLinkView>("BodyLinkView", N_("Body / Link"));
 }
 
 
@@ -176,7 +151,7 @@ BodyLinkView::BodyLinkView()
 BodyLinkView::Impl::Impl(BodyLinkView* self)
     : self(self)
 {
-    self->setDefaultLayoutArea(View::CENTER);
+    self->setDefaultLayoutArea(CenterArea);
 
     currentWorldItem = nullptr;
     currentBodyItem = nullptr;
@@ -903,12 +878,13 @@ void BodyLinkView::Impl::onRpyChanged()
 void BodyLinkView::Impl::onQuatChanged()
 {
     if(currentBodyItem && currentLink){
-        Eigen::Quaterniond quat = Eigen::Quaterniond(quatSpin[3].value(), quatSpin[0].value(), quatSpin[1].value(), quatSpin[2].value());
-        if(quat.norm()<1.0e-20) return;
-        quat.normalize();
-        Matrix3 R = quat.toRotationMatrix();
-
-        setPosture(R);
+        Eigen::Quaterniond quat =
+            Eigen::Quaterniond(quatSpin[3].value(), quatSpin[0].value(), quatSpin[1].value(), quatSpin[2].value());
+        if(quat.norm() > std::numeric_limits<double>::epsilon()){
+            quat.normalize();
+            Matrix3 R = quat.toRotationMatrix();
+            setPosture(R);
+        }
     }
 }
 
@@ -996,13 +972,13 @@ void BodyLinkView::Impl::onZmpXyzChanged()
 }
 
 
-void BodyLinkView::switchRpyQuat(bool on)
+void BodyLinkView::setQuaternionMode(bool on)
 {
-    impl->switchRpyQuat(on);
+    impl->setQuaternionMode(on);
 }
 
 
-void BodyLinkView::Impl::switchRpyQuat(bool on)
+void BodyLinkView::Impl::setQuaternionMode(bool on)
 {
     if(on){
         Vector3 rpy;
@@ -1024,7 +1000,8 @@ void BodyLinkView::Impl::switchRpyQuat(bool on)
             quatSpin[i].show();
         }
     } else {
-        Eigen::Quaterniond quat = Eigen::Quaterniond(quatSpin[3].value(), quatSpin[0].value(), quatSpin[1].value(), quatSpin[2].value());
+        Eigen::Quaterniond quat =
+            Eigen::Quaterniond(quatSpin[3].value(), quatSpin[0].value(), quatSpin[1].value(), quatSpin[2].value());
         quat.normalize();
         Matrix3 R = quat.toRotationMatrix();
         Vector3 rpy = rpyFromRot(R);
@@ -1040,6 +1017,15 @@ void BodyLinkView::Impl::switchRpyQuat(bool on)
             rpySpin[i].show();
         }
     }
+}
+
+
+void BodyLinkView::onAttachedMenuRequest(MenuManager& menu)
+{
+    auto quaternionCheck = menu.setPath("/").addCheckItem(_("Use Quaternion"));
+    quaternionCheck->setChecked(impl->quatSpin[0].isVisible());
+    quaternionCheck->sigToggled().connect([this](bool on){ impl->setQuaternionMode(on); });
+    menu.addSeparator();
 }
 
 

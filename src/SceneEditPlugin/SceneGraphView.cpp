@@ -128,13 +128,13 @@ SgvMarkerItem::~SgvMarkerItem()
 void SceneGraphView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<SceneGraphView>(
-        "SceneGraphView", N_("Scene Graph"), ViewManager::SINGLE_OPTIONAL);
+        "SceneGraphView", N_("Scene Graph"));
 }
 
 
 SceneGraphView::SceneGraphView()
 {
-    setDefaultLayoutArea(View::LEFT);
+    setDefaultLayoutArea(MiddleLeftArea);
     
     impl = new SceneGraphViewImpl(this, SceneView::instance()->scene());
 

@@ -31,7 +31,7 @@ public:
 void ItemTreeView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<ItemTreeView>(
-        "ItemTreeView", N_("Items"), ViewManager::SINGLE_DEFAULT);
+        "ItemTreeView", N_("Items"), ViewManager::Default);
 }
 
 
@@ -51,7 +51,7 @@ ItemTreeView::ItemTreeView()
 ItemTreeView::Impl::Impl(ItemTreeView* self)
     : self(self)
 {
-    self->setDefaultLayoutArea(View::LEFT);
+    self->setDefaultLayoutArea(TopLeftArea);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     itemTreeWidget = new ItemTreeWidget(self);

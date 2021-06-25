@@ -16,7 +16,7 @@ MonitorView::MonitorView()
     QVBoxLayout* vbox = new QVBoxLayout();
     vbox->addWidget(_Monitor);
     setLayout(vbox);
-    setDefaultLayoutArea(View::BOTTOM);
+    setDefaultLayoutArea(BottomCenterArea);
 }
 
 void

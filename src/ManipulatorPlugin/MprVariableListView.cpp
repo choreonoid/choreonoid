@@ -590,7 +590,7 @@ void CustomizedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* m
 void MprVariableListView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<MprVariableListView>(
-        "MprVariableListView", N_("Variables"), ViewManager::SINGLE_OPTIONAL);
+        "MprVariableListView", N_("Variables"));
 }
 
 
@@ -604,7 +604,7 @@ MprVariableListView::Impl::Impl(MprVariableListView* self)
     : self(self),
       targetItemPicker(self)
 {
-    self->setDefaultLayoutArea(View::BOTTOM);
+    self->setDefaultLayoutArea(BottomCenterArea);
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     hSpacing = self->style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
 

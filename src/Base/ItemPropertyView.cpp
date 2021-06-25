@@ -24,7 +24,7 @@ public:
 void ItemPropertyView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<ItemPropertyView>(
-        "ItemPropertyView", N_("Property"), ViewManager::SINGLE_DEFAULT);
+        "ItemPropertyView", N_("Property"), ViewManager::Default);
 }
 
 
@@ -32,7 +32,7 @@ ItemPropertyView::ItemPropertyView()
 {
     impl = new Impl(this);
 
-    setDefaultLayoutArea(View::LEFT_BOTTOM);
+    setDefaultLayoutArea(BottomLeftArea);
 
     QVBoxLayout* vbox = new QVBoxLayout();
     vbox->addWidget(impl);

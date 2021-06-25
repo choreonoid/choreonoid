@@ -127,8 +127,7 @@ bool GSMediaView::initializeClass(ExtensionManager* ext)
             return false;
         }
 
-        ext->viewManager().registerClass<GSMediaView>(
-            "MediaView", N_("Media"), ViewManager::SINGLE_OPTIONAL);
+        ext->viewManager().registerClass<GSMediaView>("MediaView", N_("Media"));
         
         MenuManager& mm = ext->menuManager();
         
@@ -150,7 +149,7 @@ bool GSMediaView::initializeClass(ExtensionManager* ext)
 GSMediaView::GSMediaView()
 {
     setName(N_("Media"));
-    setDefaultLayoutArea(View::CENTER);
+    setDefaultLayoutArea(CenterArea);
 
     setAttribute(Qt::WA_NativeWindow);
     setAttribute(Qt::WA_PaintOnScreen);

@@ -79,7 +79,7 @@ void SceneView::initializeClass(ExtensionManager* ext)
         SceneWidget::initializeClass(ext);
         
         ext->viewManager().registerClass<SceneView>(
-            "SceneView", N_("Scene"), ViewManager::MULTI_DEFAULT);
+            "SceneView", N_("Scene"), ViewManager::Multiple | ViewManager::Default);
 
         sigItemAddedConnection =
             RootItem::instance()->sigItemAdded().connect(
@@ -149,7 +149,7 @@ SceneView::SceneView()
 SceneView::Impl::Impl(SceneView* self)
     : self(self)
 {
-    self->setDefaultLayoutArea(View::RIGHT);
+    self->setDefaultLayoutArea(CenterArea);
     
     sceneWidget = new SceneWidget(self);
     sceneWidget->setModeSyncEnabled(true);

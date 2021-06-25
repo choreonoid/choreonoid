@@ -104,7 +104,7 @@ public:
 void VirtualJoystickView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<VirtualJoystickView>(
-        "VirtualJoystickView", N_("Virtual Joystick"), ViewManager::SINGLE_OPTIONAL);
+        "VirtualJoystickView", N_("Virtual Joystick"));
 }
 
 
@@ -119,7 +119,7 @@ VirtualJoystickViewImpl::VirtualJoystickViewImpl(VirtualJoystickView* self)
       keyValues(NUM_JOYSTICK_ELEMENTS, 0.0)
 {
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-    self->setDefaultLayoutArea(View::BOTTOM);
+    self->setDefaultLayoutArea(View::BottomCenterArea);
     self->setFocusPolicy(Qt::WheelFocus);
     
     for(int i=0; i < NUM_JOYSTICK_ELEMENTS; ++i){
