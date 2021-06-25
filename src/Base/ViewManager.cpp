@@ -770,20 +770,24 @@ ViewManager::ViewStateInfo::~ViewStateInfo()
 
 static View* restoreView(Archive* archive, const string& moduleName, const string& className, ViewInfoToViewsMap& remainingViewsMap)
 {
-    ViewInfo* info = nullptr;
+    ViewInfo* info = findViewInfo(moduleName, className);
     View* view = nullptr;
     string instanceName;
-                    
-    if(!archive->read("name", instanceName)){
-        info = findViewInfo(moduleName, className);
-        if(info){
-            view = info->getOrCreateView();
-        }
+
+    if(!info){
+        MessageView::instance()->putln(
+            format(_("{0} is not registered in {1}."), className, moduleName),
+            MessageView::Error);
+
     } else {
-        // get one of the view instances having the instance name, or create a new instance.
-        // Different instances are assigned even if there are instances with the same name in the archive
-        info = findViewInfo(moduleName, className);
-        if(info){
+        archive->read("name", instanceName);
+
+        if(instanceName.empty() || info->isSingleton){
+            view = info->getOrCreateView();
+            
+        } else {
+            // get one of the view instances having the instance name, or create a new instance.
+            // Different instances are assigned even if there are instances with the same name in the archive
             vector<View*>* remainingViews;
 
             auto p = remainingViewsMap.find(info);
@@ -815,27 +819,14 @@ static View* restoreView(Archive* archive, const string& moduleName, const strin
             }
         }
     }
-    if(!info){
-        MessageView::instance()->putln(
-            format(_("{0} is not registered in {1}."), className, moduleName),
-            MessageView::Error);
-    }
     if(!view){
-        if(info && info->isSingleton){
+        if(instanceName.empty()){
             MessageView::instance()->putln(
-                format(_("A singleton view \"{0}\" of the {1} type cannot be created "
-                         "because its singleton instance has already been created."),
-                       instanceName, info->className()),
-                MessageView::Error);
+                format(_("{0} cannot be restored."), className), MessageView::Error);
         } else {
-            if(instanceName.empty()){
-                MessageView::instance()->putln(
-                    format(_("{0} cannot be restored."), className), MessageView::Error);
-            } else {
-                MessageView::instance()->putln(
-                    format(_("The \"{0}\" view of {1} cannot be restored."), instanceName, className),
-                    MessageView::Error);
-            }
+            MessageView::instance()->putln(
+                format(_("The \"{0}\" view of {1} cannot be restored."), instanceName, className),
+                MessageView::Error);
         }
     }
 
