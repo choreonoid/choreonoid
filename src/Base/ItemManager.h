@@ -276,8 +276,8 @@ public:
     static Item* findOriginalItemForReloadedItem(Item* item);
 
     template<class AddonType>
-    void registerAddon(const std::string& name, std::function<ItemAddon*(void)> factory = nullptr){
-        registerAddon_(typeid(AddonType), name, factory ? factory : [](){ return new AddonType; });
+    void registerAddon(const std::string& name){
+        registerAddon_(typeid(AddonType), name, [](){ return new AddonType; });
     }
     static ItemAddon* createAddon(const std::type_info& type);
     static ItemAddon* createAddon(const std::string& moduleName, const std::string& addonName);
