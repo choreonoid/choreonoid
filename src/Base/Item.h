@@ -53,6 +53,7 @@ public:
         if(classId_ < 0) validateClassId();
         return classId_;
     }
+    int superClassId() const;
 
     Item* createNewInstance() const;
 

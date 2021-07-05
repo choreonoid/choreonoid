@@ -233,6 +233,12 @@ void Item::validateClassId() const
 }
 
 
+int Item::superClassId() const
+{
+    return ItemClassRegistry::instance().superClassId(classId());
+}
+
+
 Item* Item::createNewInstance() const
 {
     return ItemManager::createItem(classId());
