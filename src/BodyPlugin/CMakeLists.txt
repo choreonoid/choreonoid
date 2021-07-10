@@ -32,7 +32,8 @@ set(sources
   WorldLogFileItem.cpp
   IoConnectionMapItem.cpp
   SensorVisualizerItem.cpp
-  BodyTrackingCameraItem.cpp
+  BodySyncCameraItem.cpp
+  BodySyncCameraConfigDialog.cpp
   BodyMarkerItem.cpp
   BodySuperimposerAddon.cpp
   BodyMotionEngine.cpp
@@ -91,7 +92,7 @@ set(headers
   WorldLogFileItem.h
   IoConnectionMapItem.h
   SensorVisualizerItem.h
-  BodyTrackingCameraItem.h
+  BodySyncCameraItem.h
   BodyMarkerItem.h
   BodySuperimposerAddon.h
   BodyOverwriteAddon.h

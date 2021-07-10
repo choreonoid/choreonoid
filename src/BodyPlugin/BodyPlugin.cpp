@@ -25,7 +25,7 @@
 #include "WorldLogFileItem.h"
 #include "IoConnectionMapItem.h"
 #include "SensorVisualizerItem.h"
-#include "BodyTrackingCameraItem.h"
+#include "BodySyncCameraItem.h"
 #include "BodyMarkerItem.h"
 #include "BodySuperimposerAddon.h"
 #include "BodyOverwriteAddon.h"
@@ -118,7 +118,7 @@ bool BodyPlugin::initialize()
     WorldLogFileItem::initializeClass(this);
     IoConnectionMapItem::initializeClass(this);
     SensorVisualizerItem::initializeClass(this);
-    BodyTrackingCameraItem::initializeClass(this);
+    BodySyncCameraItem::initializeClass(this);
     BodyMarkerItem::initializeClass(this);
     BodySuperimposerAddon::initializeClass(this);
     BodyOverwriteAddon::initializeClass(this);

@@ -1,0 +1,2 @@
+// This header is deprecated. Use the BodySyncCameraItem header
+#include "src/BodyPlugin/BodySyncCameraItem.h"

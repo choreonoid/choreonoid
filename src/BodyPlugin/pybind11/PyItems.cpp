@@ -5,7 +5,7 @@
 #include "../WorldItem.h"
 #include "../WorldLogFileItem.h"
 #include "../BodyMotionItem.h"
-#include "../BodyTrackingCameraItem.h"
+#include "../BodySyncCameraItem.h"
 #include <cnoid/PyBase>
 #include <cnoid/SceneCameras>
 #include <cnoid/MaterialTable>
@@ -73,23 +73,36 @@ void exportItems(py::module m)
 
     PyItemList<BodyMotionItem>(m, "BodyMotionItemList");
 
-    py::class_<BodyTrackingCameraItem, BodyTrackingCameraItemPtr, Item>(m, "BodyTrackingCameraItem", py::multiple_inheritance())
+    py::class_<BodySyncCameraItem, BodySyncCameraItemPtr, Item>
+        bodySyncCameraItem(m, "BodySyncCameraItem", py::multiple_inheritance());
+
+    bodySyncCameraItem
         .def(py::init<>())
-        .def("setTargetLink", &BodyTrackingCameraItem::setTargetLink)
-        .def_property("targetLinkName", &BodyTrackingCameraItem::targetLinkName, &BodyTrackingCameraItem::setTargetLink)
-        .def("setRotationSyncEnabled", &BodyTrackingCameraItem::setRotationSyncEnabled)
-        .def_property(
-            "isRotationSyncEnabled",
-            &BodyTrackingCameraItem::isRotationSyncEnabled, &BodyTrackingCameraItem::setRotationSyncEnabled)
-        .def("setCameraType", &BodyTrackingCameraItem::setCameraType)
+        .def("setTargetLink", &BodySyncCameraItem::setTargetLink)
+        .def_property("targetLinkName", &BodySyncCameraItem::targetLinkName, &BodySyncCameraItem::setTargetLink)
+        .def("setCameraType", &BodySyncCameraItem::setCameraType)
         .def_property(
             "CameraType",
-            &BodyTrackingCameraItem::cameraType, &BodyTrackingCameraItem::setCameraType)
-        .def_property_readonly("currentCamera", &BodyTrackingCameraItem::currentCamera)
-        .def_property_readonly("cameraTransform", &BodyTrackingCameraItem::cameraTransform)
+            &BodySyncCameraItem::cameraType, &BodySyncCameraItem::setCameraType)
+        .def_property_readonly("currentCamera", &BodySyncCameraItem::currentCamera)
+        .def_property_readonly("cameraTransform", &BodySyncCameraItem::cameraTransform)
+        .def("setParallelTrackingMode", &BodySyncCameraItem::setParallelTrackingMode)
+        .def("isParallelTrackingMode", &BodySyncCameraItem::isParallelTrackingMode)
+
+        // deprecated
+        .def("setRotationSyncEnabled",
+             [](BodySyncCameraItem* item, bool on){ item->setParallelTrackingMode(!on); })
+        .def_property_readonly(
+            "isRotationSyncEnabled",
+            [](BodySyncCameraItem* item){ return !item->isParallelTrackingMode(); })
         ;
 
-    PyItemList<BodyTrackingCameraItem>(m, "BodyTrackingCameraItemList");
+    // For the backward compatibility
+    m.attr("BodyTrackingCameraItem") = bodySyncCameraItem;
+
+    PyItemList<BodySyncCameraItem> bodySyncCameraItemList(m, "BodySyncCameraItemList");
+
+    m.attr("BodyTrackingCameraItemList") = bodySyncCameraItemList;
 }
 
 }
