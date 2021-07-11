@@ -292,7 +292,6 @@ set(qtheaders
   CheckBox.h
   ComboBox.h
   LineEdit.h
-  Dialog.h
   ImageWidget.h
   TreeView.h
   TreeWidget.h

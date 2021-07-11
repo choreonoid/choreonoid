@@ -13,12 +13,10 @@ namespace cnoid {
 
 class CNOID_EXPORT Dialog : public QDialog
 {
-    Q_OBJECT
-
 public:
     Dialog();
     Dialog(QWidget* parent, Qt::WindowFlags f = Qt::WindowFlags());
-        
+
     SignalProxy<void()> sigAccepted() {
         return sigAccepted_;
     }
@@ -29,19 +27,21 @@ public:
         return sigRejected_;
     }
 
+    void setWindowPositionKeepingMode(bool on);
+    bool isWindowPositionKeepingMode() const { return isWindowPositionKeepingMode_; }
+    void show();
+
 protected:
     virtual void onAccepted();
     virtual void onRejected();
-
-private Q_SLOTS:
-    void onSigAccepted();
-    void onSigFinished(int result);
-    void onSigRejected();
+    virtual void hideEvent(QHideEvent* event) override;
 
 private:
     Signal<void()> sigAccepted_;
     Signal<void(int)> sigFinished_;
     Signal<void()> sigRejected_;
+    QRect lastWindowPosition_;
+    bool isWindowPositionKeepingMode_;
 
     void initialize();
 };

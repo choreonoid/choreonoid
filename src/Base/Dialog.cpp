@@ -31,9 +31,14 @@ Dialog::Dialog(QWidget* parent, Qt::WindowFlags f)
 
 void Dialog::initialize()
 {
-    connect(this, SIGNAL(accepted()), this, SLOT(onSigAccepted()));
-    connect(this, SIGNAL(finished(int)), this, SLOT(onSigFinished(int)));
-    connect(this, SIGNAL(rejected()), this, SLOT(onSigRejected()));
+    connect(this, (void(QDialog::*)()) &QDialog::accepted,
+            [this](){ onAccepted(); sigAccepted_(); });
+    connect(this, (void(QDialog::*)(int)) &QDialog::finished,
+            [this](int result){ sigFinished_(result); });
+    connect(this, (void(QDialog::*)()) &QDialog::rejected,
+            [this](){ onRejected(); sigRejected_(); });
+
+    isWindowPositionKeepingMode_ = false;
 }
 
 
@@ -49,21 +54,24 @@ void Dialog::onRejected()
 }
 
 
-void Dialog::onSigAccepted()
+void Dialog::setWindowPositionKeepingMode(bool on)
 {
-    onAccepted();
-    sigAccepted_();
+    isWindowPositionKeepingMode_ = on;
 }
 
 
-void Dialog::onSigFinished(int result)
+void Dialog::show()
 {
-    sigFinished_(result);
+    QDialog::show();
+
+    if(isWindowPositionKeepingMode_ && !lastWindowPosition_.isNull()){
+        setGeometry(lastWindowPosition_);
+    }
 }
 
 
-void Dialog::onSigRejected()
+void Dialog::hideEvent(QHideEvent* event)
 {
-    onRejected();
-    sigRejected_();
+    lastWindowPosition_ = geometry();
+    QDialog::hideEvent(event);
 }

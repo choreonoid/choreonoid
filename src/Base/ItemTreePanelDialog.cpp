@@ -59,7 +59,6 @@ public:
     QVBoxLayout panelLayout;
     QLabel panelCaptionLabel;
     QLabel defaultPanelLabel;
-    QRect lastDialogPosition;
     
     Impl(ItemTreePanelDialog* self);
     void initialize();
@@ -326,10 +325,6 @@ void ItemTreePanelDialog::show()
     if(isPanelCaptionHidden){
         impl->panelCaptionLabel.hide();
     }
-    
-    if(!impl->lastDialogPosition.isNull()){
-        setGeometry(impl->lastDialogPosition);
-    }
 }
 
 
@@ -511,6 +506,5 @@ void ItemTreePanelDialog::keyPressEvent(QKeyEvent* event)
 void ItemTreePanelDialog::hideEvent(QHideEvent* event)
 {
     impl->clear();
-    impl->lastDialogPosition = geometry();
     Dialog::hideEvent(event);
 }
