@@ -93,35 +93,49 @@ public:
     bool* pFlagToUpdatePreprocessedNodeTree;
     std::unique_ptr<PreproNode> preproTree;
 
-    struct CameraInfo
+    class CameraInfo : public Referenced
     {
+    public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        CameraInfo() : camera(0), M(Isometry3::Identity()), node(0) { }
-        CameraInfo(SgCamera* camera, const Isometry3& M, PreproNode* node)
-            : camera(camera), M(M), node(node)
-        { }
-        
         SgCamera* camera;
 
-        // I want to use 'T' here, but that causes a compile error (c2327) for VC++2010.
-        // 'T' is also used as a template parameter in a template code of Eigen,
-        // and it seems that the name of a template parameter and this member conflicts.
-        // So I changed the name to 'M'.
-        // This behavior of VC++ seems stupid!!!
+        // Using 'T' here causes a compile error (c2327) with VC++2010.
+        // 'T' is also used as a template parameter name in the definition of the following
+        // Eigen type, and the template parameter name seems to conflicts with follwoing variable.
+        // To avoid this problem, 'M' is used instead of 'T'.
         Isometry3 M;
         PreproNode* node;
-    };
+        ScopedConnection cameraConnection;
+        // This flag includes the camera name change
+        bool cameraPathChanged;
 
-    typedef vector<CameraInfo, Eigen::aligned_allocator<CameraInfo>> CameraInfoArray;
-    CameraInfoArray cameras1;
-    CameraInfoArray cameras2;
-    CameraInfoArray* cameras;
-    CameraInfoArray* prevCameras;
+        CameraInfo(SgCamera* camera)
+            : camera(camera), cameraPathChanged(false)
+        {
+            cameraConnection = camera->sigUpdated().connect(
+                [this](const SgUpdate&){ cameraPathChanged = true; });
+        }
+
+        void setNode(PreproNode* node)
+        {
+            this->node = node;
+        }
+
+        void setCameraPosition(const Isometry3& M)
+        {
+            this->M = M;
+        }
+    };
+    typedef ref_ptr<CameraInfo> CameraInfoPtr;
+
+    vector<CameraInfoPtr> cameras;
+    vector<CameraInfoPtr> prevCameras;
 
     Isometry3 I;
 
-    bool camerasChanged;
+    bool cameraSetChanged;
+    bool cameraPathsChanged;
     bool currentCameraRemoved;
     bool isCurrentCameraAutoRestorationMode;
     bool isPreferredCameraCurrent;
@@ -207,8 +221,6 @@ SceneRenderer::Impl::Impl(SceneRenderer* self)
     builtinFlagToUpdatePreprocessedNodeTree = true;
     pFlagToUpdatePreprocessedNodeTree = &builtinFlagToUpdatePreprocessedNodeTree;
 
-    cameras = &cameras1;
-    prevCameras = &cameras2;
     isCurrentCameraAutoRestorationMode = false;
     isPreferredCameraCurrent = false;
     currentCameraIndex = -1;
@@ -332,9 +344,10 @@ void SceneRenderer::Impl::extractPreproNodes()
         builtinFlagToUpdatePreprocessedNodeTree = true;
     }
 
-    std::swap(cameras, prevCameras);
-    cameras->clear();
-    camerasChanged = false;
+    cameras.swap(prevCameras);
+    cameras.clear();
+    cameraSetChanged = false;
+    cameraPathsChanged = false;
     currentCameraRemoved = true;
     
     lights.clear();
@@ -344,18 +357,21 @@ void SceneRenderer::Impl::extractPreproNodes()
         extractPreproNodeIter(preproTree.get(), Affine3::Identity());
     }
 
-    if(!camerasChanged){
-        if(cameras->size() != prevCameras->size()){
-            camerasChanged = true;
+    if(!cameraSetChanged){
+        if(cameras.size() != prevCameras.size()){
+            cameraSetChanged = true;
         }
     }
-    if(camerasChanged){
+    if(cameraSetChanged){
         if(currentCameraRemoved){
             currentCameraIndex = 0;
             if(isPreferredCameraCurrent){
                 isPreferredCameraCurrent = false;
             }
         }
+        cameraPathsChanged = true;
+    }
+    if(cameraPathsChanged){
         cameraPaths.clear();
         sigCamerasChanged();
     }
@@ -421,17 +437,32 @@ void SceneRenderer::Impl::extractPreproNodeIter(PreproNode* node, const Affine3&
     case PreproNode::CAMERA:
     {
         SgCamera* camera = stdx::get<SgCamera*>(node->node);
-        size_t index = cameras->size();
-        if(!camerasChanged){
-            if(index >= prevCameras->size() || camera != (*prevCameras)[index].camera){
-                camerasChanged = true;
+
+        size_t index = cameras.size();
+        CameraInfo* cameraInfo = nullptr;
+        if(!cameraSetChanged && index < prevCameras.size()){
+            auto& prevCameraInfo = prevCameras[index];
+            if(camera == prevCameraInfo->camera){
+                cameraInfo = prevCameraInfo;
+                if(cameraInfo->cameraPathChanged){
+                    cameraPathsChanged = true;
+                    cameraInfo->cameraPathChanged = false;
+                }
             }
         }
+        if(!cameraInfo){
+            cameraSetChanged = true;
+            cameraInfo = new CameraInfo(camera);
+        }
+        cameraInfo->setNode(node);
+        cameraInfo->setCameraPosition(convertToIsometryWithOrthonormalization(T));
+
         if(camera == currentCamera){
             currentCameraRemoved = false;
-            currentCameraIndex = cameras->size();
+            currentCameraIndex = cameras.size();
         }
-        cameras->push_back(CameraInfo(camera, convertToIsometryWithOrthonormalization(T), node));
+
+        cameras.push_back(cameraInfo);
     }
     break;
 
@@ -540,7 +571,7 @@ void PreproTreeExtractor::visitGroup(SgGroup* group)
 
 int SceneRenderer::numCameras() const
 {
-    return impl->cameras->size();
+    return impl->cameras.size();
 }
 
 
@@ -562,13 +593,13 @@ const SgNodePath& SceneRenderer::cameraPath(int index) const
 void SceneRenderer::Impl::updateCameraPaths()
 {
     SgNodePath tmpPath;
-    const int n = cameras->size();
+    const int n = cameras.size();
     cameraPaths.resize(n);
     
     for(int i=0; i < n; ++i){
-        CameraInfo& info = (*cameras)[i];
+        CameraInfo* info = cameras[i];
         tmpPath.clear();
-        PreproNode* node = info.node;
+        PreproNode* node = info->node;
         while(node){
             tmpPath.push_back(node->base);
             node = node->parent;
@@ -585,8 +616,8 @@ void SceneRenderer::Impl::updateCameraPaths()
 
 const Isometry3& SceneRenderer::cameraPosition(int index) const
 {
-    if(index < static_cast<int>(impl->cameras->size())){
-        return (*(impl->cameras))[index].M;
+    if(index < static_cast<int>(impl->cameras.size())){
+        return impl->cameras[index]->M;
     } else {
         return impl->I;
     }
@@ -608,8 +639,8 @@ void SceneRenderer::setCurrentCamera(int index)
 void SceneRenderer::Impl::setCurrentCamera(int index)
 {
     SgCamera* newCamera = nullptr;
-    if(index >= 0 && index < static_cast<int>(cameras->size())){
-        newCamera = (*cameras)[index].camera;
+    if(index >= 0 && index < static_cast<int>(cameras.size())){
+        newCamera = cameras[index]->camera;
     }
     if(newCamera && newCamera != currentCamera){
         currentCameraIndex = index;
@@ -632,8 +663,8 @@ bool SceneRenderer::setCurrentCamera(SgCamera* camera)
 bool SceneRenderer::Impl::setCurrentCamera(SgCamera* camera)
 {
     if(camera != currentCamera){
-        for(size_t i=0; i < cameras->size(); ++i){
-            if((*cameras)[i].camera == camera){
+        for(size_t i=0; i < cameras.size(); ++i){
+            if(cameras[i]->camera == camera){
                 setCurrentCamera(i);
                 return true;
             }
@@ -658,7 +689,7 @@ int SceneRenderer::currentCameraIndex() const
 const Isometry3& SceneRenderer::currentCameraPosition() const
 {
     if(impl->currentCameraIndex >= 0){
-        return (*(impl->cameras))[impl->currentCameraIndex].M;
+        return impl->cameras[impl->currentCameraIndex]->M;
     } else {
         return impl->I;
     }
@@ -689,7 +720,7 @@ bool SceneRenderer::Impl::getSimplifiedCameraPathStrings(int cameraIndex, std::v
 {
     out_pathStrings.clear();
 
-    int n = cameras->size();
+    int n = cameras.size();
     if(cameraIndex < n){
         const SgNodePath& path = self->cameraPath(cameraIndex);
         const string& name = path.back()->name();

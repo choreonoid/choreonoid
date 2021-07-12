@@ -188,6 +188,9 @@ SceneView::Impl::Impl(SceneView* self)
         }
     }
 
+    if(instances_.empty()){
+        lastFocusView_ = self;
+    }
     instances_.push_back(self);
 }
 
@@ -230,8 +233,10 @@ SceneWidget* SceneView::sceneWidget()
 void SceneView::onFocusChanged(bool on)
 {
     if(on){
-        lastFocusView_ = this;
-        sigLastFocusViewChanged_(this);
+        if(this != lastFocusView_){
+            lastFocusView_ = this;
+            sigLastFocusViewChanged_(this);
+        }
     }
 }
     

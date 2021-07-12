@@ -408,7 +408,8 @@ public:
     void updateIndicator(const std::string& text);
     bool storeState(Archive& archive);
     void writeCameraPath(Mapping& archive, const std::string& key, int cameraIndex);
-    Mapping* storeCameraState(int cameraIndex, bool isInteractiveCamera, SgPosTransform* cameraTransform);
+    Mapping* storeCameraState(
+        int cameraIndex, SgCamera* camera, bool isBuiltinCamera, SgPosTransform* cameraTransform);
     bool restoreState(const Archive& archive);
     bool restoreCameraStates(const Listing& cameraListing, bool isSecondTrial);
     int readCameraPath(const Mapping& archive, const char* key);
@@ -2885,15 +2886,15 @@ bool SceneWidget::Impl::storeState(Archive& archive)
     int numCameras = renderer->numCameras();
     for(int i=0; i < numCameras; ++i){
         Mapping* cameraState = nullptr;
-        if(InteractiveCameraTransform* transform = self->findOwnerInteractiveCameraTransform(i)){
-            if(!storedTransforms.insert(transform).second){
+        auto camera = renderer->camera(i);
+        if(self->isBuiltinCamera(camera)){
+            auto transform = self->findOwnerInteractiveCameraTransform(i);
+            if(transform && !storedTransforms.insert(transform).second){
                 transform = nullptr; // already stored
             }
-            cameraState = storeCameraState(i, true, transform);
-        } else {
-            if(i == renderer->currentCameraIndex()){
-                cameraState = storeCameraState(i, false, 0);
-            }
+            cameraState = storeCameraState(i, camera, true, transform);
+        } else if(i == renderer->currentCameraIndex()){
+            cameraState = storeCameraState(i, camera, false, nullptr);
         }
         if(cameraState){
             cameraListing->append(cameraState);
@@ -2927,28 +2928,27 @@ void SceneWidget::Impl::writeCameraPath(Mapping& archive, const std::string& key
 }
 
 
-Mapping* SceneWidget::Impl::storeCameraState(int cameraIndex, bool isInteractiveCamera, SgPosTransform* cameraTransform)
+Mapping* SceneWidget::Impl::storeCameraState
+(int cameraIndex, SgCamera* camera, bool isBuiltinCamera, SgPosTransform* cameraTransform)
 {
-    Mapping* state = new Mapping;
+    auto state = new Mapping;
     writeCameraPath(*state, "camera", cameraIndex);
 
     if(cameraIndex == renderer->currentCameraIndex()){
         state->write("isCurrent", true);
     }
 
-    if(isInteractiveCamera){
-        SgCamera* camera = renderer->camera(cameraIndex);
-        if(self->isBuiltinCamera(camera)){
-            if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
-                state->write("fieldOfView", pers->fieldOfView());
-            } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
-                state->write("orthoHeight", ortho->height());
-            }
-            state->write("near", camera->nearClipDistance());
-            state->write("far", camera->farClipDistance());
+    if(isBuiltinCamera){
+        if(auto pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
+            state->write("fieldOfView", pers->fieldOfView());
+        } else if(auto ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
+            state->write("orthoHeight", ortho->height());
         }
+        state->write("near", camera->nearClipDistance());
+        state->write("far", camera->farClipDistance());
+
         if(cameraTransform){
-            const Isometry3& T = cameraTransform->T();
+            auto& T = cameraTransform->T();
             write(*state, "eye", T.translation());
             write(*state, "direction", SgCamera::direction(T));
             write(*state, "up", SgCamera::up(T));
