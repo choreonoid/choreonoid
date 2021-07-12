@@ -20,8 +20,14 @@ public:
 
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
+    void setInteractiveViewpointChangeLocked(bool on) { isInteractiveViewpointChangeLocked_ = on; }
+    bool isInteractiveViewpointChangeLocked() { return isInteractiveViewpointChangeLocked_; }
+
 protected:
     InteractiveCameraTransform(int polymorhicId);
+
+private:
+    bool isInteractiveViewpointChangeLocked_;
 };
 
 typedef ref_ptr<InteractiveCameraTransform> InteractiveCameraTransformPtr;

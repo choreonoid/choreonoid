@@ -11,21 +11,21 @@ using namespace cnoid;
 InteractiveCameraTransform::InteractiveCameraTransform(int classId)
     : SgPosTransform(classId)
 {
-    
+    isInteractiveViewpointChangeLocked_ = false;
 }
 
 
 InteractiveCameraTransform::InteractiveCameraTransform()
     : InteractiveCameraTransform(findClassId<InteractiveCameraTransform>())
 {
-    
+
 }
 
 
 InteractiveCameraTransform::InteractiveCameraTransform(const InteractiveCameraTransform& org, CloneMap* cloneMap)
     : SgPosTransform(org, cloneMap)
 {
-
+    isInteractiveViewpointChangeLocked_ = org.isInteractiveViewpointChangeLocked_;
 }
 
 

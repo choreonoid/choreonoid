@@ -214,6 +214,12 @@ public:
     SgUpdate sgUpdate;
 
     InteractiveCameraTransformPtr interactiveCameraTransform;
+
+    bool hasActiveInteractiveCamera() const {
+        return interactiveCameraTransform &&
+            !interactiveCameraTransform->isInteractiveViewpointChangeLocked();
+    }
+    
     InteractiveCameraTransformPtr builtinCameraTransform;
     SgPerspectiveCameraPtr builtinPersCamera;
     SgOrthographicCameraPtr builtinOrthoCamera;
@@ -1274,7 +1280,7 @@ void SceneWidget::viewAll()
 
 void SceneWidget::Impl::viewAll()
 {
-    if(!interactiveCameraTransform){
+    if(!hasActiveInteractiveCamera()){
         return;
     }
     
@@ -1882,7 +1888,7 @@ void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
         }
     }    
 
-    if(interactiveCameraTransform && !handled){
+    if(!handled && hasActiveInteractiveCamera()){
         if(event->orientation() == Qt::Vertical){
             zoomView(0.25 * s);
         }
@@ -1966,7 +1972,7 @@ Isometry3 SceneWidget::Impl::getNormalizedCameraTransform(const Isometry3& T)
 
 void SceneWidget::Impl::startViewChange()
 {
-    if(interactiveCameraTransform){
+    if(hasActiveInteractiveCamera()){
 
         switch(latestEvent.button()){
                 
@@ -1995,7 +2001,7 @@ void SceneWidget::Impl::startViewRotation()
         cout << "SceneWidget::Impl::startViewRotation()" << endl;
     }
 
-    if(!interactiveCameraTransform){
+    if(!hasActiveInteractiveCamera()){
         dragMode = NO_DRAGGING;
         return;
     }
@@ -2022,7 +2028,7 @@ void SceneWidget::Impl::dragViewRotation()
         cout << "SceneWidget::Impl::dragViewRotation()" << endl;
     }
 
-    if(!interactiveCameraTransform){
+    if(!hasActiveInteractiveCamera()){
         dragMode = NO_DRAGGING;
         return;
     }
@@ -2084,7 +2090,7 @@ void SceneWidget::Impl::startViewTranslation()
         cout << "SceneWidget::Impl::startViewTranslation()" << endl;
     }
 
-    if(!interactiveCameraTransform){
+    if(!hasActiveInteractiveCamera()){
         dragMode = NO_DRAGGING;
         return;
     }
@@ -2128,7 +2134,7 @@ void SceneWidget::Impl::dragViewTranslation()
         cout << "SceneWidget::Impl::dragViewTranslation()" << endl;
     }
     
-    if(!interactiveCameraTransform){
+    if(!hasActiveInteractiveCamera()){
         dragMode = NO_DRAGGING;
         return;
     }
@@ -2152,7 +2158,7 @@ void SceneWidget::Impl::startViewZoom()
         cout << "SceneWidget::Impl::startViewZoom()" << endl;
     }
 
-    if(!interactiveCameraTransform){
+    if(!hasActiveInteractiveCamera()){
         dragMode = NO_DRAGGING;
         return;
     }
@@ -2203,7 +2209,7 @@ void SceneWidget::Impl::dragViewZoom()
 
 void SceneWidget::Impl::zoomView(double ratio)
 {
-    if(!interactiveCameraTransform){
+    if(!hasActiveInteractiveCamera()){
         dragMode = NO_DRAGGING;
         return;
     }
