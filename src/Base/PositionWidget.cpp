@@ -1,5 +1,5 @@
 #include "PositionWidget.h"
-#include "DisplayedValueFormatManager.h"
+#include "DisplayValueFormat.h"
 #include "MenuManager.h"
 #include "Archive.h"
 #include "Buttons.h"
@@ -51,8 +51,8 @@ public:
     vector<bool> inputSpinErrorStates;
     ScopedConnectionSet userInputConnections;
 
-    DisplayedValueFormatManager* valueFormatManager;
-    ScopedConnection valueFormatManagerConnection;
+    DisplayValueFormat* valueFormat;
+    ScopedConnection valueFormatConnection;
     double lengthRatio;
     double angleRatio;
     
@@ -113,9 +113,9 @@ PositionWidget::~PositionWidget()
 PositionWidget::Impl::Impl(PositionWidget* self)
     : self(self)
 {
-    valueFormatManager = DisplayedValueFormatManager::instance();
-    valueFormatManagerConnection =
-        valueFormatManager->sigFormatChanged().connect(
+    valueFormat = DisplayValueFormat::instance();
+    valueFormatConnection =
+        valueFormat->sigFormatChanged().connect(
             [&](){ updateValueFormat(true); });
 
     mainvbox = new QVBoxLayout;
@@ -266,31 +266,31 @@ PositionWidget::Impl::Impl(PositionWidget* self)
 
 void PositionWidget::Impl::updateValueFormat(bool doRefresh)
 {
-    int lunit = valueFormatManager->lengthUnit();
+    int lunit = valueFormat->lengthUnit();
     double lmax;
-    if(lunit == DisplayedValueFormatManager::Millimeter){
+    if(lunit == DisplayValueFormat::Millimeter){
         lengthRatio = 1000.0;
         lmax = 100000.0;
     } else {
         lengthRatio = 1.0;
         lmax = 100.0;
     }
-    int ldecimals = valueFormatManager->lengthDecimals();
+    int ldecimals = valueFormat->lengthDecimals();
     lmax -= pow(10.0, -ldecimals);
-    double lstep = valueFormatManager->lengthStep();
+    double lstep = valueFormat->lengthStep();
 
-    int aunit = valueFormatManager->angleUnit();
+    int aunit = valueFormat->angleUnit();
     double amax;
-    if(aunit == DisplayedValueFormatManager::Degree){
+    if(aunit == DisplayValueFormat::Degree){
         angleRatio = 180.0 / PI;
         amax = 1000.0;
     } else {
         angleRatio = 1.0;
         amax = 10.0;
     }
-    int adecimals = valueFormatManager->angleDecimals();
+    int adecimals = valueFormat->angleDecimals();
     amax -= pow(10.0, -adecimals);
-    double astep = valueFormatManager->angleStep();
+    double astep = valueFormat->angleStep();
 
     for(int i=0; i < 3; ++i){
         auto& tspin = xyzSpin[i];

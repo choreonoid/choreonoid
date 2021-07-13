@@ -41,7 +41,7 @@ set(sources
   ItemEditRecordManager.cpp
   UnifiedEditHistoryView.cpp
   StringListComboBox.cpp
-  DisplayedValueFormatManager.cpp
+  DisplayValueFormat.cpp
   PositionWidget.cpp
   LocationView.cpp
   MultiSeqItemCreationPanel.cpp
@@ -62,6 +62,7 @@ set(sources
   Widget.cpp
   SpinBox.cpp
   DoubleSpinBox.cpp
+  LengthSpinBox.cpp
   FloatingNumberBox.cpp
   ScrollBar.cpp
   Slider.cpp
@@ -162,6 +163,7 @@ set(headers
   Widget.h
   SpinBox.h
   DoubleSpinBox.h
+  LengthSpinBox.h
   FloatingNumberBox.h
   ScrollBar.h
   Slider.h
@@ -208,7 +210,7 @@ set(headers
   UnifiedEditHistory.h
   EditRecord.h
   ItemEditRecordManager.h
-  DisplayedValueFormatManager.h
+  DisplayValueFormat.h
   PositionWidget.h
   PutPropertyFunction.h
   RootItem.h

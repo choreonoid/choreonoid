@@ -85,8 +85,8 @@ public:
     ScopedConnection linkSelectionChangeConnection;
     ScopedConnection kinematicStateChangeConnection;
 
-    DisplayedValueFormatManager* valueFormatManager;
-    ScopedConnection valueFormatManagerConnection;
+    DisplayValueFormat* dvFormat;
+    ScopedConnection dvFormatConnection;
     int lengthUnit;
     int lengthDecimals;
     double defaultMaxLength;
@@ -162,9 +162,9 @@ JointDisplacementWidget::Impl::Impl(JointDisplacementWidget* self)
     isDialEnabled = false;
     isPhaseEnabled = true;
 
-    valueFormatManager = DisplayedValueFormatManager::instance();
-    valueFormatManagerConnection =
-        valueFormatManager->sigFormatChanged().connect(
+    dvFormat = DisplayValueFormat::instance();
+    dvFormatConnection =
+        dvFormat->sigFormatChanged().connect(
             [&](){ updateIndicatorGrid(); });
     
     updateIndicatorGrid();
@@ -298,25 +298,25 @@ void JointDisplacementWidget::Impl::updateIndicatorGrid()
     int n = activeJointLinkIndices.size();
     initializeIndicators(n);
 
-    lengthUnit = valueFormatManager->lengthUnit();
-    if(lengthUnit == DisplayedValueFormatManager::Millimeter){
+    lengthUnit = dvFormat->lengthUnit();
+    if(lengthUnit == DisplayValueFormat::Millimeter){
         defaultMaxLength = 10000.0;
     } else {
         defaultMaxLength = 10.0;
     }
-    lengthDecimals = valueFormatManager->lengthDecimals();
+    lengthDecimals = dvFormat->lengthDecimals();
     defaultMaxLength -= pow(10.0, -lengthDecimals);
-    lengthStep = valueFormatManager->lengthStep();
+    lengthStep = dvFormat->lengthStep();
     
-    angleUnit = valueFormatManager->angleUnit();
-    if(angleUnit == DisplayedValueFormatManager::Degree){
+    angleUnit = dvFormat->angleUnit();
+    if(angleUnit == DisplayValueFormat::Degree){
         defaultMaxAngle = 1000.0;
     } else {
         defaultMaxAngle = 10.0;
     }
-    angleDecimals = valueFormatManager->angleDecimals();
+    angleDecimals = dvFormat->angleDecimals();
     defaultMaxAngle -= pow(10.0, -angleDecimals);
-    angleStep = valueFormatManager->angleStep();
+    angleStep = dvFormat->angleStep();
     
     int row = 0;
     for(int i=0; i < n; ++i){
@@ -486,7 +486,7 @@ void JointIndicator::initialize(Link* joint)
     
     if(joint->isRevoluteJoint()){
         bool isValidRange = true;
-        if(baseImpl->angleUnit == DisplayedValueFormatManager::Degree){
+        if(baseImpl->angleUnit == DisplayValueFormat::Degree){
             unitConversionRatio = 180.0 / PI;
             lower *= unitConversionRatio;
             upper *= unitConversionRatio;
@@ -527,7 +527,7 @@ void JointIndicator::initialize(Link* joint)
         dial.setEnabled(true);
         
     } else if(joint->isPrismaticJoint()){
-        if(baseImpl->lengthUnit == DisplayedValueFormatManager::Millimeter){
+        if(baseImpl->lengthUnit == DisplayValueFormat::Millimeter){
             unitConversionRatio = 1000.0;
             lower *= unitConversionRatio;
             upper *= unitConversionRatio;
