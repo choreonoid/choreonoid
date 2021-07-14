@@ -2,6 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
+#include "BodyPlugin.h"
 #include "BodySelectionManager.h"
 #include "WorldItem.h"
 #include "BodyItem.h"
@@ -56,7 +57,6 @@
 #include <cnoid/BodyCustomizerInterface>
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
-#include <cnoid/Plugin>
 #include <cnoid/ItemManager>
 #include <cnoid/CnoidBody>
 #include <fmt/format.h>
@@ -65,107 +65,125 @@
 using namespace cnoid;
 
 namespace {
-  
-class BodyPlugin : public Plugin
-{
-public:
-    BodyPlugin() : Plugin("Body")
-    {
-        addOldName("SimpleController");
-        setActivationPriority(0);
-    }
 
-    virtual bool initialize() override
-    {
-
-#ifdef CNOID_ENABLE_GETTEXT
-        setCnoidBodyTextDomainCodeset();
-#endif
-
-        auto customizerPath = pluginDirPath() / "customizer";
-        Body::addCustomizerDirectory(toUTF8(customizerPath.string()));
-
-        BodySelectionManager::initializeClass(this);
-
-        WorldItem::initializeClass(this);
-        BodyItem::initializeClass(this);
-        LinkOffsetFrameListItem::initializeClass(this);
-        MaterialTableItem::initializeClass(this);
-        SimulatorItem::initializeClass(this);
-        AISTSimulatorItem::initializeClass(this);
-        KinematicSimulatorItem::initializeClass(this);
-        ControllerItem::initializeClass(this);
-        SimpleControllerItem::initializeClass(this);
-        BodyMotionControllerItem::initializeClass(this);
-        ControllerLogItem::initializeClass(this);
-        BodyContactPointLoggerItem::initializeClass(this);
-        SubSimulatorItem::initializeClass(this);
-        GLVisionSimulatorItem::initializeClass(this);
-        SimulationScriptItem::initializeClass(this);
-        BodyMotionItem::initializeClass(this);
-        WorldLogFileItem::initializeClass(this);
-        IoConnectionMapItem::initializeClass(this);
-        SensorVisualizerItem::initializeClass(this);
-        BodyTrackingCameraItem::initializeClass(this);
-        BodyMarkerItem::initializeClass(this);
-        BodySuperimposerAddon::initializeClass(this);
-        BodyOverwriteAddon::initializeClass(this);
-        BodyElementOverwriteItem::initializeClass(this);
-        LinkShapeOverwriteItem::initializeClass(this);
-        DeviceOverwriteItem::initializeClass(this);
-        CollisionSeqItem::initislizeClass(this);
-
-        BodyMotionEngine::initializeClass(this);
-        CollisionSeqEngine::initializeClass();
-        KinematicFaultChecker::initializeClass(this);
-        initializeSplineFilterDialog(this);
-
-        // This should be after the initialization of BodyMotionEngine
-        ZMPSeqItem::initializeClass(this); 
-        MultiDeviceStateSeqItem::initializeClass(this);
-
-        EditableSceneBody::initializeClass(this);
-
-        SimulationBar::initialize(this);
-        addToolBar(BodyBar::instance());
-        addToolBar(LeggedBodyBar::instance());
-        addToolBar(KinematicsBar::instance());
-
-        LinkDeviceListView::initializeClass(this);
-        LinkPositionView::initializeClass(this);
-        LinkPropertyView::initializeClass(this);
-        JointDisplacementView::initializeClass(this);
-        JointStateView::initializeClass(this);
-        BodyStateView::initializeClass(this);
-        DigitalIoDeviceView::initializeClass(this);
-        IoConnectionView::initializeClass(this);
-        JointGraphView::initializeClass(this);
-        LinkGraphView::initializeClass(this);
-        BodyLinkView::initializeClass(this);
-
-        initializeHrpsysFileIO(this);
-
-        loadDefaultBodyCustomizers(mvout(false));
-
-        return true;
-    }
-
-    virtual const char* description() const override
-    {
-        static std::string text =
-            fmt::format("Body Plugin Version {}\n", CNOID_FULL_VERSION_STRING) +
-            "\n" +
-            "Copyrigh (c) 2018 Shin'ichiro Nakaoka and Choreonoid Development Team, AIST.\n"
-            "\n" +
-            MITLicenseText() +
-            "\n" +
-            _("The Collision deteciton module used in this plugin is implemented using "
-              "the OPCODE library (http://www.codercorner.com/Opcode.htm).\n");
-
-        return text.c_str();
-    }
-};
+BodyPlugin* instance_ = nullptr;
 
 }
+
+
+BodyPlugin* BodyPlugin::instance()
+{
+    return instance_;
+}
+
+
+BodyPlugin::BodyPlugin()
+    : Plugin("Body")
+{
+    addOldName("SimpleController");
+    setActivationPriority(0);
+
+    instance_ = this;
+}
+
+
+bool BodyPlugin::initialize()
+{
+
+#ifdef CNOID_ENABLE_GETTEXT
+    setCnoidBodyTextDomainCodeset();
+#endif
+    
+    auto customizerPath = pluginDirPath() / "customizer";
+    Body::addCustomizerDirectory(toUTF8(customizerPath.string()));
+    
+    BodySelectionManager::initializeClass(this);
+    
+    WorldItem::initializeClass(this);
+    BodyItem::initializeClass(this);
+    LinkOffsetFrameListItem::initializeClass(this);
+    MaterialTableItem::initializeClass(this);
+    SimulatorItem::initializeClass(this);
+    AISTSimulatorItem::initializeClass(this);
+    KinematicSimulatorItem::initializeClass(this);
+    ControllerItem::initializeClass(this);
+    SimpleControllerItem::initializeClass(this);
+    BodyMotionControllerItem::initializeClass(this);
+    ControllerLogItem::initializeClass(this);
+    BodyContactPointLoggerItem::initializeClass(this);
+    SubSimulatorItem::initializeClass(this);
+    GLVisionSimulatorItem::initializeClass(this);
+    SimulationScriptItem::initializeClass(this);
+    BodyMotionItem::initializeClass(this);
+    WorldLogFileItem::initializeClass(this);
+    IoConnectionMapItem::initializeClass(this);
+    SensorVisualizerItem::initializeClass(this);
+    BodyTrackingCameraItem::initializeClass(this);
+    BodyMarkerItem::initializeClass(this);
+    BodySuperimposerAddon::initializeClass(this);
+    BodyOverwriteAddon::initializeClass(this);
+    BodyElementOverwriteItem::initializeClass(this);
+    LinkShapeOverwriteItem::initializeClass(this);
+    DeviceOverwriteItem::initializeClass(this);
+    CollisionSeqItem::initislizeClass(this);
+    
+    BodyMotionEngine::initializeClass(this);
+    CollisionSeqEngine::initializeClass();
+    KinematicFaultChecker::initializeClass(this);
+    initializeSplineFilterDialog(this);
+    
+    // This should be after the initialization of BodyMotionEngine
+    ZMPSeqItem::initializeClass(this); 
+    MultiDeviceStateSeqItem::initializeClass(this);
+    
+    EditableSceneBody::initializeClass(this);
+    
+    SimulationBar::initialize(this);
+    addToolBar(BodyBar::instance());
+    addToolBar(LeggedBodyBar::instance());
+    addToolBar(KinematicsBar::instance());
+    
+    LinkDeviceListView::initializeClass(this);
+    LinkPositionView::initializeClass(this);
+    LinkPropertyView::initializeClass(this);
+    JointDisplacementView::initializeClass(this);
+    JointStateView::initializeClass(this);
+    BodyStateView::initializeClass(this);
+    DigitalIoDeviceView::initializeClass(this);
+    IoConnectionView::initializeClass(this);
+    JointGraphView::initializeClass(this);
+    LinkGraphView::initializeClass(this);
+    BodyLinkView::initializeClass(this);
+    
+    initializeHrpsysFileIO(this);
+    
+    loadDefaultBodyCustomizers(mvout(false));
+    
+    return true;
+}
+
+
+bool BodyPlugin::finalize()
+{
+    instance_ = nullptr;
+    return true;
+}
+
+
+const char* BodyPlugin::description() const
+{
+    static std::string text =
+        fmt::format("Body Plugin Version {}\n", CNOID_FULL_VERSION_STRING) +
+        "\n" +
+        "Copyrigh (c) 2018 Shin'ichiro Nakaoka and Choreonoid Development Team, AIST.\n"
+        "\n" +
+        MITLicenseText() +
+        "\n" +
+        _("The Collision deteciton module used in this plugin is implemented using "
+          "the OPCODE library (http://www.codercorner.com/Opcode.htm).\n");
+    
+    return text.c_str();
+}
+
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(BodyPlugin);
