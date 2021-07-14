@@ -24,6 +24,7 @@ public:
     void setController(const std::string& name);
     SimpleController* controller();
 
+    virtual bool checkIfSubController(ControllerItem* controllerItem) const override;
     virtual bool initialize(ControllerIO* io) override;
     virtual bool start() override;
     virtual double timeStep() const override;

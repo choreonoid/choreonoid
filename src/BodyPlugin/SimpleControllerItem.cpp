@@ -21,6 +21,7 @@
 #include <fmt/format.h>
 #include <set>
 #include <bitset>
+#include <algorithm>
 #include "gettext.h"
 
 using namespace std;
@@ -84,7 +85,7 @@ public:
     ConnectionSet outputDeviceStateConnections;
     vector<bool> outputDeviceStateChangeFlag;
 
-    vector<SimpleControllerItemPtr> childControllerItems;
+    vector<SimpleControllerItemPtr> subControllerItems;
 
     BodyItem* targetBodyItem;
     MySimpleControllerConfig config;
@@ -294,7 +295,7 @@ void SimpleControllerItem::onDisconnectedFromRoot()
     if(!isActive()){
         impl->unloadController();
     }
-    impl->childControllerItems.clear();
+    impl->subControllerItems.clear();
 }
 
 
@@ -510,7 +511,14 @@ void SimpleControllerItem::Impl::clearIoTargets()
     inputStateTypes.clear();
     outputLinkFlags.clear();
     linkOutputStateInfos.clear();
-    childControllerItems.clear();
+    subControllerItems.clear();
+}
+
+
+bool SimpleControllerItem::checkIfSubController(ControllerItem* controllerItem) const
+{
+    auto& items = impl->subControllerItems;
+    return std::find(items.begin(), items.end(), controllerItem) != items.end();
 }
 
 
@@ -568,7 +576,7 @@ SimpleController* SimpleControllerItem::Impl::initialize(ControllerIO* io, Share
         if(childControllerItem){
             SimpleController* childController = childControllerItem->impl->initialize(io, sharedInfo);
             if(childController){
-                childControllerItems.push_back(childControllerItem);
+                subControllerItems.push_back(childControllerItem);
             }
         }
     }
@@ -809,8 +817,8 @@ bool SimpleControllerItem::Impl::start()
         mv->putln(format(_("{} failed to start"), self->displayName()), MessageView::Warning);
         result = false;
     } else {
-        for(auto& childController : childControllerItems){
-            if(!childController->start()){
+        for(auto& subController : subControllerItems){
+            if(!subController->start()){
                 result = false;
                 break;
             }
@@ -827,8 +835,8 @@ void SimpleControllerItem::input()
 {
     impl->input();
     
-    for(size_t i=0; i < impl->childControllerItems.size(); ++i){
-        impl->childControllerItems[i]->impl->input();
+    for(size_t i=0; i < impl->subControllerItems.size(); ++i){
+        impl->subControllerItems[i]->impl->input();
     }
 }
 
@@ -900,8 +908,8 @@ bool SimpleControllerItem::control()
 {
     bool result = impl->controller->control();
 
-    for(size_t i=0; i < impl->childControllerItems.size(); ++i){
-        if(impl->childControllerItems[i]->impl->controller->control()){
+    for(size_t i=0; i < impl->subControllerItems.size(); ++i){
+        if(impl->subControllerItems[i]->impl->controller->control()){
             result = true;
         }
     }
@@ -920,8 +928,8 @@ void SimpleControllerItem::output()
 {
     impl->output();
     
-    for(size_t i=0; i < impl->childControllerItems.size(); ++i){
-        impl->childControllerItems[i]->impl->output();
+    for(size_t i=0; i < impl->subControllerItems.size(); ++i){
+        impl->subControllerItems[i]->impl->output();
     }
 }
 
@@ -1000,7 +1008,7 @@ void SimpleControllerItem::Impl::output()
 
 void SimpleControllerItem::stop()
 {
-    for(auto iter = impl->childControllerItems.rbegin(); iter != impl->childControllerItems.rend(); ++iter){
+    for(auto iter = impl->subControllerItems.rbegin(); iter != impl->subControllerItems.rend(); ++iter){
         (*iter)->stop();
     }
     impl->controller->stop();

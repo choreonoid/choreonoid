@@ -38,6 +38,8 @@ public:
 
     virtual double timeStep() const;
 
+    virtual bool checkIfSubController(ControllerItem* controllerItem) const;
+
     /**
        This function is called before the simulation world is initialized.
 

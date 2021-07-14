@@ -202,10 +202,10 @@ public:
     shared_ptr<MultiDeviceStateSeq> deviceStateRecord;
 
     Impl(SimulationBody* self, Body* body);
-    void findControlSrcItems(Item* item, vector<Item*>& io_items);
     bool initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem);
     bool initialize(SimulatorItem::Impl* simImpl, ControllerItem* controllerItem);
     void extractAssociatedItems(bool doReset);
+    void extractControllerItems(Item* item, ControllerItem* parentControllerItem);
     void copyStateToBodyItem();
     void cloneShapesOnce();
     void initializeRecording();
@@ -684,21 +684,6 @@ ControllerItem* SimulationBody::controller(int index) const
 }
 
 
-void SimulationBody::Impl::findControlSrcItems(Item* item, vector<Item*>& io_items)
-{
-    while(item){
-        if(!dynamic_cast<BodyItem*>(item)){
-            if(auto controllerItem = dynamic_cast<ControllerItem*>(item)){
-                io_items.push_back(controllerItem);
-            } else if(item->childItem()){
-                findControlSrcItems(item->childItem(), io_items);
-            }
-        }
-        item = item->nextItem();
-    }
-}
-
-
 bool SimulationBody::initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem)
 {
     return impl->initialize(simulatorItem, bodyItem);
@@ -751,39 +736,19 @@ bool SimulationBody::Impl::initialize(SimulatorItem::Impl* simImpl, ControllerIt
 
 void SimulationBody::Impl::extractAssociatedItems(bool doReset)
 {
-    vector<Item*> controlSrcItems;
-    findControlSrcItems(bodyItem->childItem(), controlSrcItems);
-    auto iter = controlSrcItems.begin();
-    while(iter != controlSrcItems.end()){
-        Item* srcItem = *iter;
-        auto controllerItem = dynamic_cast<ControllerItem*>(srcItem);
-        if(controllerItem){
-            simImpl->hasControllers = true;
-            ControllerInfoPtr info = new ControllerInfo(controllerItem, this);
-            if(controllerItem->initialize(info)){
-                controllerInfos.push_back(info);
-            } else {
-                controllerItem = nullptr;
-            }
-        }
-        if(controllerItem){
-            ++iter;
-        } else {
-            iter = controlSrcItems.erase(iter);
-        }
-    }
-
-    if(controlSrcItems.empty()){
+    extractControllerItems(bodyItem->childItem(), nullptr);
+    
+    if(controllerInfos.empty()){
         parentOfRecordItems = bodyItem;
 
-    } else if(controlSrcItems.size() == 1){
-        parentOfRecordItems = controlSrcItems.front();
+    } else if(controllerInfos.size() == 1){
+        parentOfRecordItems = controllerInfos.front()->controller;
 
     } else {
         // find the common owner of all the controllers
         int minDepth = std::numeric_limits<int>::max();
-        for(size_t i=0; i < controlSrcItems.size(); ++i){
-            Item* owner = controlSrcItems[i]->parentItem();
+        for(size_t i=0; i < controllerInfos.size(); ++i){
+            Item* owner = controllerInfos[i]->controller->parentItem();
             int depth = 0;
             Item* item = owner;
             while(item && item != bodyItem){
@@ -795,6 +760,35 @@ void SimulationBody::Impl::extractAssociatedItems(bool doReset)
                 minDepth = depth;
             }
         }
+    }
+}
+
+
+void SimulationBody::Impl::extractControllerItems(Item* item, ControllerItem* parentControllerItem)
+{
+    while(item){
+        bool isValidControllerItem = false;
+        auto controllerItem = dynamic_cast<ControllerItem*>(item);
+        if(controllerItem){
+            bool isSubController = false;
+            if(parentControllerItem && parentControllerItem->checkIfSubController(controllerItem)){
+                isSubController = true;
+            }
+            if(!isSubController){
+                simImpl->hasControllers = true;
+                ControllerInfoPtr info = new ControllerInfo(controllerItem, this);
+                if(controllerItem->initialize(info)){
+                    controllerInfos.push_back(info);
+                    isValidControllerItem = true;
+                }
+            }
+        }
+        if(auto childItem = item->childItem()){
+            if(isValidControllerItem || !bool(dynamic_cast<BodyItem*>(item))){
+                extractControllerItems(childItem, controllerItem);
+            }
+        }
+        item = item->nextItem();
     }
 }
 

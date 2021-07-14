@@ -64,6 +64,12 @@ double ControllerItem::timeStep() const
 }
 
 
+bool ControllerItem::checkIfSubController(ControllerItem* /* controllerItem */) const
+{
+    return false;
+}
+    
+
 bool ControllerItem::initialize(ControllerIO* io)
 {
     return true;
