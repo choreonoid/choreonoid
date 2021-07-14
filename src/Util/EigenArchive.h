@@ -195,7 +195,7 @@ CNOID_EXPORT bool readRadianAngleAxis(const Mapping& mapping, const std::string&
 
 CNOID_EXPORT Listing* writeDegreeAngleAxis(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& aa);
 CNOID_EXPORT Listing& writeDegreeAngleAxis(Mapping& mapping, const std::string& key, const Eigen::AngleAxisd& aa);
-CNOID_EXPORT Listing* writeRadianAngleAxis_(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& aa);
+CNOID_EXPORT Listing* writeRadianAngleAxis(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& aa);
 
 CNOID_EXPORT bool read(
     const Mapping& mapping, const std::string& key, std::function<void(const Eigen::Vector3d& value)> setterFunc);

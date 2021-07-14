@@ -136,7 +136,7 @@ Listing& cnoid::writeDegreeAngleAxis(Mapping& mapping, const std::string& key, c
 }
 
 
-Listing* cnoid::writeRadianAngleAxis_(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& aa)
+Listing* cnoid::writeRadianAngleAxis(Mapping* mapping, const std::string& key, const Eigen::AngleAxisd& aa)
 {
     return writeAngleAxis_<double, 0>(mapping, key, aa);
 }
