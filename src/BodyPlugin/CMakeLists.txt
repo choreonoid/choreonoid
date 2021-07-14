@@ -19,6 +19,7 @@ set(sources
   ControllerItem.cpp
   SimpleControllerItem.cpp
   BodyMotionControllerItem.cpp
+  RegionIntrusionDetectorItem.cpp
   ControllerLogItem.cpp
   BodyContactPointLoggerItem.cpp
   SimulationScriptItem.cpp
@@ -80,6 +81,7 @@ set(headers
   SubSimulatorItem.h
   ControllerItem.h
   SimpleControllerItem.h
+  RegionIntrusionDetectorItem.h
   ControllerLogItem.h
   BodyContactPointLoggerItem.h
   SimulationScriptItem.h
