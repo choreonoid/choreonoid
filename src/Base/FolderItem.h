@@ -17,12 +17,21 @@ public:
         
     FolderItem();
     FolderItem(const FolderItem& org);
-    virtual ~FolderItem();
+
+    /**
+       A string for identifying the folder category.
+       This value is mainly used in the system, and a user does not specify this manually.
+    */
+    const std::string& category() const { return category_; }
+    void setCategory(const std::string& category){ category_ = category; }
 
 protected:
     virtual Item* doDuplicate() const override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
+
+private:
+    std::string category_;
 };
 
 typedef ref_ptr<FolderItem> FolderItemPtr;
