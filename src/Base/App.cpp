@@ -62,6 +62,7 @@
 #include "MovieRecorder.h"
 #include "LazyCaller.h"
 #include "DescriptionDialog.h"
+#include "LayoutSwitcher.h"
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
 #include <cnoid/CnoidUtil>
@@ -123,6 +124,7 @@ public:
     ExtensionManager* ext;
     MainWindow* mainWindow;
     MessageView* messageView;
+    LayoutSwitcher* layoutSwitcher;
     string appName;
     string vendorName;
     DescriptionDialog* descriptionDialog;
@@ -335,6 +337,8 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
 
     mainWindow->installEventFilter(this);
 
+    layoutSwitcher = new LayoutSwitcher;
+
     OptionManager& om = ext->optionManager();
     om.addOption("quit", "quit the application just after it is invoked");
     om.addOption("list-qt-styles", "list all the available qt styles");
@@ -408,6 +412,9 @@ int App::Impl::exec()
         item->removeFromParentItem();
         item = next;
     }
+
+    delete layoutSwitcher;
+    layoutSwitcher = nullptr;
 
     PluginManager::finalize();
     delete ext;

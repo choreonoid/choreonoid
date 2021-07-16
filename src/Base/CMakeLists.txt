@@ -16,6 +16,7 @@ set(sources
   InfoBar.cpp
   ViewManager.cpp
   View.cpp
+  LayoutSwitcher.cpp
   MessageView.cpp
   ItemManager.cpp
   ItemClassRegistry.cpp
@@ -188,6 +189,7 @@ set(headers
   View.h
   ViewArea.h
   ViewManager.h
+  LayoutSwitcher.h
   GraphWidget.h
   GraphViewBase.h
   ExtensionManager.h
