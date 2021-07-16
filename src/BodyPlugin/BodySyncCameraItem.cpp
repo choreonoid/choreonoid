@@ -403,28 +403,68 @@ void BodySyncCameraItem::onTreePathChanged()
 }
 
 
-void BodySyncCameraItem::doPutProperties(PutPropertyFunction& putProperty)
+double BodySyncCameraItem::fieldOfView() const
 {
-    impl->doPutProperties(putProperty);
+    return impl->persCamera->fieldOfView();
 }
 
 
-void BodySyncCameraItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
+bool BodySyncCameraItem::setFieldOfView(double fov)
 {
-    putProperty(_("Target link"), cameraTransform->targetLinkName,
-                [&](const string& name){ cameraTransform->setTargetLink(name); return true; });
-    putProperty(_("Parallel tracking"), cameraTransform->isParallelTrackingMode(),
-                [&](bool on){ self->setParallelTrackingMode(on); return true; });
-    putProperty(_("Interactive viewpoint change"), self->isInteractiveViewpointChangeEnabled(),
-                [&](bool on){ self->setInteractiveViewpointChangeEnabled(on); return true; });
-    putProperty(_("Camera type"), cameraType,
-                [&](int index){ return setCameraType(index); });
-    putProperty(_("Near clip distance"), persCamera->nearClipDistance(),
-                [&](double nearDistance){ return setClipDistances( nearDistance, persCamera->farClipDistance()); } );
-    putProperty(_("Far clip distance"), persCamera->farClipDistance(),
-                [&](double farDistance){ return setClipDistances(persCamera->nearClipDistance(), farDistance); } );
-    putProperty(_("field Of View"), degree(persCamera->fieldOfView()),
-                [&](double fov){ return setFieldOfView(radian(fov)); } );
+    return impl->setFieldOfView(fov);
+}
+
+
+bool BodySyncCameraItem::Impl::setFieldOfView(double fov)
+{
+    if(fov > 0.0 && fov < PI){
+        persCamera->setFieldOfView(fov);
+        persCamera->notifyUpdate(update);
+        return true;
+    }
+    return false;
+}
+
+
+double BodySyncCameraItem::nearClipDistance() const
+{
+    return impl->persCamera->nearClipDistance();
+}
+
+
+bool BodySyncCameraItem::setNearClipDistance(double nearDistance)
+{
+    if(nearDistance > 0.0){
+        impl->setClipDistances(nearDistance, farClipDistance());
+        return true;
+    }
+    return false;
+}
+
+
+double BodySyncCameraItem::farClipDistance() const
+{
+    return impl->persCamera->farClipDistance();
+}
+
+
+bool BodySyncCameraItem::setFarClipDistance(double farDistance)
+{
+    if(farDistance > 0.0){
+        impl->setClipDistances(nearClipDistance(), farDistance);
+        return true;
+    }
+    return false;
+}
+
+
+bool BodySyncCameraItem::setClipDistances(double nearDistance, double farDistance)
+{
+    if(nearDistance > 0.0 && farDistance > 0.0){
+        impl->setClipDistances(nearDistance, farDistance);
+        return true;
+    }
+    return false;
 }
 
 
@@ -442,11 +482,28 @@ bool BodySyncCameraItem::Impl::setClipDistances(double nearDistance, double farD
 }
 
 
-bool BodySyncCameraItem::Impl::setFieldOfView(double fov)
+void BodySyncCameraItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    persCamera->setFieldOfView(fov);
-    persCamera->notifyUpdate(update);
-    return true;
+    impl->doPutProperties(putProperty);
+}
+
+
+void BodySyncCameraItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
+{
+    putProperty(_("Target link"), cameraTransform->targetLinkName,
+                [&](const string& name){ cameraTransform->setTargetLink(name); return true; });
+    putProperty(_("Camera type"), cameraType,
+                [&](int index){ return setCameraType(index); });
+    putProperty(_("Field Of View"), degree(self->fieldOfView()),
+                [&](double fov){ return setFieldOfView(radian(fov)); } );
+    putProperty(_("Near clip distance"), self->nearClipDistance(),
+                [&](double distance){ return self->setNearClipDistance(distance); });
+    putProperty(_("Far clip distance"), self->farClipDistance(),
+                [&](double distance){ return self->setFarClipDistance(distance); } );
+    putProperty(_("Parallel tracking"), cameraTransform->isParallelTrackingMode(),
+                [&](bool on){ self->setParallelTrackingMode(on); return true; });
+    putProperty(_("Interactive viewpoint change"), self->isInteractiveViewpointChangeEnabled(),
+                [&](bool on){ self->setInteractiveViewpointChangeEnabled(on); return true; });
 }
 
 
@@ -455,7 +512,7 @@ bool BodySyncCameraItem::store(Archive& archive)
     archive.write("target_link", impl->cameraTransform->targetLinkName, DOUBLE_QUOTED);
     archive.write("parallel_tracking", isParallelTrackingMode());
     archive.write("interactive_viewpoint_change", isInteractiveViewpointChangeEnabled());
-    archive.write("camera_type", impl->cameraType.selectedSymbol(), DOUBLE_QUOTED);
+    archive.write("camera_type", impl->cameraType.selectedSymbol());
     archive.write("near_clip_distance", impl->persCamera->nearClipDistance());    
     archive.write("far_clip_distance", impl->persCamera->farClipDistance());
     archive.write("field_of_view", impl->persCamera->fieldOfView());

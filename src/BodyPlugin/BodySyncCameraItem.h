@@ -58,6 +58,15 @@ public:
     SgPosTransform* cameraTransform();
     Isometry3 relativeCameraPosition() const;
 
+    double fieldOfView() const;
+    bool setFieldOfView(double fov);
+
+    double nearClipDistance() const;
+    bool setNearClipDistance(double distance);
+    double farClipDistance() const;
+    bool setFarClipDistance(double distance);
+    bool setClipDistances(double nearDistance, double farDistance);
+
     // RenderableItem
     virtual SgNode* getScene() override;
 

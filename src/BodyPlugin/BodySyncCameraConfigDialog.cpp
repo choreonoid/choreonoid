@@ -225,7 +225,6 @@ BodySyncCameraItem* BodySyncCameraConfigDialog::createCameraItem(BodyItem* bodyI
     BodySyncCameraItemPtr cameraItem = new BodySyncCameraItem;
     cameraItem->setName(format(_("{0} Camera"), bodyItem->name()));
     cameraItem->setChecked(true);
-    cameraItem->setAttribute(Item::Attached);
     cameraItem->setParallelTrackingMode(false);
     cameraItem->setInteractiveViewpointChangeEnabled(false);
 
