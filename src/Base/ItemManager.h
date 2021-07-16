@@ -138,8 +138,8 @@ public:
 
     static bool getClassIdentifier(Item* item, std::string& out_moduleName, std::string& out_className);
 
-    template <class ItemType> static ItemType* singletonInstance() {
-        return static_cast<ItemType*>(getSingletonInstance(typeid(ItemType)));
+    template <class ItemType> static ItemType* getPrototypeInstance() {
+        return static_cast<ItemType*>(getPrototypeInstance_(typeid(ItemType)));
     }
 
     template <class ItemType> ItemManager& addCreationPanel(ItemCreationPanel* panel = nullptr) {
@@ -291,6 +291,8 @@ private:
         std::function<Item*()> factory, Item* singletonInstance);
     void addAlias_(const std::type_info& type, const std::string& className, const std::string& moduleName);
     void addCreationPanel_(const std::type_info& type, ItemCreationPanel* panel);
+    static Item* getPrototypeInstance_(const std::type_info& type);
+
     void registerFileIO_(const std::type_info& type, ItemFileIO* fileIO);
     void addLoader_(
         const std::type_info& type, const std::string& caption, const std::string& format,
@@ -298,8 +300,6 @@ private:
     void addSaver_(
         const std::type_info& type, const std::string& caption, const std::string& format,
         std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int usage);
-
-    static Item* getSingletonInstance(const std::type_info& type);
 
     static Item* createItemWithDialog_(
         const std::type_info& type, Item* parentItem, bool doAddition, Item* nextItem,

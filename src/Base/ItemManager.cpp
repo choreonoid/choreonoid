@@ -149,6 +149,7 @@ public:
     CreationDialog(const QString& title, ClassInfo* classInfo, Item* singletonInstance);
     void addPanel(ItemCreationPanel* panel);
     Item* createItem(Item* parentItem, Item* protoItem = nullptr);
+    Item* getOrCreateDefaultProtoItem();
     ClassInfo* classInfo;
     ItemCreationPanel* creationPanel;
     QVBoxLayout* panelLayout;
@@ -363,19 +364,6 @@ bool ItemManager::getClassIdentifier(Item* item, std::string& out_moduleName, st
     }
 
     return result;
-}
-
-
-Item* ItemManager::getSingletonInstance(const std::type_info& type)
-{
-    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
-    if(p != itemClassIdToInfoMap.end()){
-        auto& info = p->second;
-        if(info->isSingleton){
-            return info->singletonInstance;
-        }
-    }
-    return nullptr;
 }
 
 
@@ -636,6 +624,21 @@ Item* CreationDialog::createItem(Item* parentItem, Item* protoItem)
     return newInstance.retn();
 }
 
+
+Item* CreationDialog::getOrCreateDefaultProtoItem()
+{
+    if(isSingleton){
+        if(!defaultProtoItem || !defaultProtoItem->parentItem()){
+            return defaultProtoItem;
+        }
+    }
+    if(!defaultProtoItem){
+        defaultProtoItem = classInfo->factory();
+        defaultProtoItem->setName(classInfo->name);
+    }
+    return defaultProtoItem;
+}
+
 }
 
 
@@ -666,6 +669,19 @@ bool DefaultItemCreationPanel::updateItem(Item* protoItem, Item* /* parentItem *
 {
     protoItem->setName(static_cast<QLineEdit*>(nameEntry)->text().toStdString());
     return true;
+}
+
+
+Item* ItemManager::getPrototypeInstance_(const std::type_info& type)
+{
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    if(p != itemClassIdToInfoMap.end()){
+        auto& info = p->second;
+        if(!info->creationDialogs.empty()){
+            return info->creationDialogs.front()->getOrCreateDefaultProtoItem();
+        }
+    }
+    return nullptr;
 }
 
 
