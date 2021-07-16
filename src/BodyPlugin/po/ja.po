@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-14 16:06+0900\n"
+"POT-Creation-Date: 2021-07-16 12:06+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -415,15 +415,15 @@ msgstr "I/Oデバイス"
 msgid "{0} (No I/O)"
 msgstr "{0} (I/O無し)"
 
-#: ControllerItem.cpp:123
+#: ControllerItem.cpp:129
 msgid "No delay mode"
 msgstr "無遅延モード"
 
-#: ControllerItem.cpp:125 SimulatorItem.cpp:2730
+#: ControllerItem.cpp:131 SimulatorItem.cpp:2724
 msgid "Controller options"
 msgstr "コントローラオプション"
 
-#: BodyPlugin.cpp:182
+#: BodyPlugin.cpp:184
 msgid ""
 "The Collision deteciton module used in this plugin is implemented using the "
 "OPCODE library (http://www.codercorner.com/Opcode.htm).\n"
@@ -614,33 +614,33 @@ msgstr "透視投影"
 msgid "Orthographic"
 msgstr "並行投影"
 
-#: BodySyncCameraItem.cpp:414
+#: BodySyncCameraItem.cpp:493
 msgid "Target link"
 msgstr "対象リンク"
 
-#: BodySyncCameraItem.cpp:416 BodySyncCameraConfigDialog.cpp:187
-msgid "Parallel tracking"
-msgstr "平行トラッキング"
-
-#: BodySyncCameraItem.cpp:418 BodySyncCameraConfigDialog.cpp:193
-msgid "Interactive viewpoint change"
-msgstr "インタラクティブな視点変更"
-
-#: BodySyncCameraItem.cpp:420
+#: BodySyncCameraItem.cpp:495
 msgid "Camera type"
 msgstr "カメラ タイプ"
 
-#: BodySyncCameraItem.cpp:422
-msgid "Near clip distance"
-msgstr "近クリッピング距離"
-
-#: BodySyncCameraItem.cpp:424
-msgid "Far clip distance"
-msgstr "遠クリッピング距離"
-
-#: BodySyncCameraItem.cpp:426
-msgid "field Of View"
+#: BodySyncCameraItem.cpp:497
+msgid "Field Of View"
 msgstr "視野角"
+
+#: BodySyncCameraItem.cpp:499
+msgid "Near clip distance"
+msgstr "近方クリップ距離"
+
+#: BodySyncCameraItem.cpp:501
+msgid "Far clip distance"
+msgstr "遠方クリップ距離"
+
+#: BodySyncCameraItem.cpp:503 BodySyncCameraConfigDialog.cpp:187
+msgid "Parallel tracking"
+msgstr "平行トラッキング"
+
+#: BodySyncCameraItem.cpp:505 BodySyncCameraConfigDialog.cpp:193
+msgid "Interactive viewpoint change"
+msgstr "インタラクティブな視点変更"
 
 #: AISTSimulatorItem.cpp:129
 msgid "AISTSimulatorItem"
@@ -961,7 +961,7 @@ msgstr ""
 
 #: BodySyncCameraConfigDialog.cpp:167
 msgid "Near Clip:"
-msgstr "手前クリップ："
+msgstr "近方クリップ："
 
 #: BodySyncCameraConfigDialog.cpp:176
 msgid "Far Clip:"
@@ -977,7 +977,7 @@ msgstr ""
 
 #: BodySyncCameraConfigDialog.cpp:223
 msgid "Camera Creation"
-msgstr "カメラの生成"
+msgstr "カメラの作成"
 
 #: BodySyncCameraConfigDialog.cpp:226
 msgid "{0} Camera"
@@ -987,9 +987,35 @@ msgstr ""
 msgid "Camera Configuration"
 msgstr "カメラの設定"
 
+#: RegionIntrusionDetectorItem.cpp:80
+msgid "RegionIntrusionDetector"
+msgstr "領域侵入検出器"
+
+#: RegionIntrusionDetectorItem.cpp:204
+msgid ""
+"\"{0}\" cannot work with \"{1}\" because it does not have a digital IO "
+"device."
+msgstr "\"{0}\" はデジタルIOを有していない \"{1}\" に対して機能しません．"
+
+#: RegionIntrusionDetectorItem.cpp:373
+msgid "Box region size"
+msgstr "ボックス領域サイズ"
+
+#: RegionIntrusionDetectorItem.cpp:382
+msgid "Region offset"
+msgstr "領域オフセット"
+
+#: RegionIntrusionDetectorItem.cpp:394
+msgid "Region yaw angle"
+msgstr "領域ヨー軸角度"
+
+#: RegionIntrusionDetectorItem.cpp:401
+msgid "I/O signal number"
+msgstr "I/O信号番号"
+
 #: DeviceOverwriteItem.cpp:204
 msgid "DeviceOverwriteItem"
-msgstr "デバイスオーバーライトアイテム"
+msgstr "デバイス上書きアイテム"
 
 #: DeviceOverwriteItem.cpp:584 LinkShapeOverwriteItem.cpp:439
 msgid "The target body item of \"{0}\" is not found."
@@ -1027,47 +1053,47 @@ msgstr "再開"
 msgid "Finish"
 msgstr "終了"
 
-#: SimulatorItem.cpp:1230
+#: SimulatorItem.cpp:1224
 msgid "Timestep"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:1231
+#: SimulatorItem.cpp:1225
 msgid "Framerate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:1232
+#: SimulatorItem.cpp:1226
 msgid "Time bar"
 msgstr "タイムバー"
 
-#: SimulatorItem.cpp:1242
+#: SimulatorItem.cpp:1236
 msgid "full"
 msgstr "全て"
 
-#: SimulatorItem.cpp:1243
+#: SimulatorItem.cpp:1237
 msgid "tail"
 msgstr "末尾"
 
-#: SimulatorItem.cpp:1244
+#: SimulatorItem.cpp:1238
 msgid "off"
 msgstr "オフ"
 
-#: SimulatorItem.cpp:1247
+#: SimulatorItem.cpp:1241
 msgid "Unlimited"
 msgstr "無制限"
 
-#: SimulatorItem.cpp:1248
+#: SimulatorItem.cpp:1242
 msgid "Specified time"
 msgstr "指定時間"
 
-#: SimulatorItem.cpp:1249
+#: SimulatorItem.cpp:1243
 msgid "Time bar range"
 msgstr "タイムバー範囲"
 
-#: SimulatorItem.cpp:1628
+#: SimulatorItem.cpp:1622
 msgid "{0} is doing its simulation."
 msgstr "{0}はシミュレーションを実行中です。"
 
-#: SimulatorItem.cpp:1631
+#: SimulatorItem.cpp:1625
 msgid ""
 "{0} cannot start the simulation because {1} in the same world is doing its "
 "simulation."
@@ -1075,40 +1101,40 @@ msgstr ""
 "{0}と同じワールドの{1}がシミュレーション中であるため、{0}のシミュレーションを"
 "開始できません．"
 
-#: SimulatorItem.cpp:1644
+#: SimulatorItem.cpp:1638
 msgid "{} must be in a WorldItem to do simulation."
 msgstr "{}はシミュレーション対象のワールド内に配置されている必要があります．"
 
-#: SimulatorItem.cpp:1686
+#: SimulatorItem.cpp:1680
 msgid "The clone of {0} for the simulation cannot be created."
 msgstr "シミュレーション用の{0}のクローンを生成できません．"
 
-#: SimulatorItem.cpp:1732
+#: SimulatorItem.cpp:1726
 msgid "SubSimulatorItem \"{}\" has been detected."
 msgstr "サブシミュレータアイテム \"{}\" が検出されました．"
 
-#: SimulatorItem.cpp:1736
+#: SimulatorItem.cpp:1730
 msgid "The initialization of \"{}\" failed."
 msgstr "\"{}\" の初期化に失敗しました．"
 
-#: SimulatorItem.cpp:1740
+#: SimulatorItem.cpp:1734
 msgid "SubSimulatorItem \"{}\" is disabled."
 msgstr "サブシミュレータアイテム \"{}\" は無効化されています．"
 
-#: SimulatorItem.cpp:1762
+#: SimulatorItem.cpp:1756
 msgid "{0} for {1} failed to start."
 msgstr "{1}用の{0}を稼働できませんでした．"
 
-#: SimulatorItem.cpp:1769
+#: SimulatorItem.cpp:1763
 msgid "{} failed to start."
 msgstr "{}を稼働できませんでした．"
 
-#: SimulatorItem.cpp:1787
+#: SimulatorItem.cpp:1781
 msgid ""
 "The simulation cannot be started because all the controllers are inactive."
 msgstr "稼働可能なコントローラが無いためシミュレーションを開始できません．"
 
-#: SimulatorItem.cpp:1873
+#: SimulatorItem.cpp:1867
 msgid ""
 "WorldLogFileItem \"{0}\" has been detected. A simulation result is recoreded "
 "to \"{1}\"."
@@ -1116,67 +1142,67 @@ msgstr ""
 "ワールドログファイルアイテム \"{0}\" が検出されました．シミュレーション結果は"
 "\"{1}\" に記録されます．"
 
-#: SimulatorItem.cpp:1902
+#: SimulatorItem.cpp:1896
 msgid "Simulation by {} has started."
 msgstr "{}によるシミュレーションを開始しました．"
 
-#: SimulatorItem.cpp:1908
+#: SimulatorItem.cpp:1902
 msgid "{0} failed to initialize the simulation."
 msgstr ""
 
-#: SimulatorItem.cpp:2419
+#: SimulatorItem.cpp:2413
 msgid "Simulation by {0} has finished at {1} [s]."
 msgstr "{0}によるシミュレーションが{1}秒時点で終了しました．"
 
-#: SimulatorItem.cpp:2422
+#: SimulatorItem.cpp:2416
 msgid "Computation time is {0} [s], computation time / simulation time = {1}."
 msgstr "計算時間: {0} [s], 計算時間 / シミュレーション時間 = {1}"
 
-#: SimulatorItem.cpp:2701
+#: SimulatorItem.cpp:2695
 msgid "Temporal resolution type"
 msgstr "時間分解能タイプ"
 
-#: SimulatorItem.cpp:2705
+#: SimulatorItem.cpp:2699
 msgid "Time step"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:2708
+#: SimulatorItem.cpp:2702
 msgid "Frame rate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:2712
+#: SimulatorItem.cpp:2706
 msgid "Sync with realtime"
 msgstr "実時間同期"
 
-#: SimulatorItem.cpp:2714
+#: SimulatorItem.cpp:2708
 msgid "Time range"
 msgstr "時間範囲"
 
-#: SimulatorItem.cpp:2716
+#: SimulatorItem.cpp:2710
 msgid "Time length"
 msgstr "時間長"
 
-#: SimulatorItem.cpp:2718
+#: SimulatorItem.cpp:2712
 msgid "Active control period only"
 msgstr "能動制御期間のみ"
 
-#: SimulatorItem.cpp:2720
+#: SimulatorItem.cpp:2714
 msgid "Recording"
 msgstr "記録モード"
 
-#: SimulatorItem.cpp:2722
+#: SimulatorItem.cpp:2716
 msgid "All link position recording"
 msgstr "全リンク位置の記録"
 
-#: SimulatorItem.cpp:2724
+#: SimulatorItem.cpp:2718
 msgid "Device state output"
 msgstr "デバイス状態の記録"
 
-#: SimulatorItem.cpp:2726
+#: SimulatorItem.cpp:2720
 msgid "Record collision data"
 msgstr "干渉データの記録"
 
-#: SimulatorItem.cpp:2728
+#: SimulatorItem.cpp:2722
 msgid "Controller Threads"
 msgstr "コントローラスレッド"
 
@@ -1260,27 +1286,27 @@ msgstr "接触マテリアル定義ファイル (*.yaml)"
 msgid "Default material table"
 msgstr "デフォルトマテリアルテーブル"
 
-#: SimpleControllerItem.cpp:187
+#: SimpleControllerItem.cpp:188
 msgid "SimpleControllerItem"
 msgstr "シンプルコントローラアイテム"
 
-#: SimpleControllerItem.cpp:212
+#: SimpleControllerItem.cpp:213
 msgid "None"
 msgstr "無"
 
-#: SimpleControllerItem.cpp:213
+#: SimpleControllerItem.cpp:214
 msgid "Controller directory"
 msgstr "コントローラディレクトリ"
 
-#: SimpleControllerItem.cpp:214
+#: SimpleControllerItem.cpp:215
 msgid "Project directory"
 msgstr "プロジェクトディレクトリ"
 
-#: SimpleControllerItem.cpp:349
+#: SimpleControllerItem.cpp:350
 msgid "The controller module of {0} is not specified."
 msgstr "{0}のコントローラモジュールが指定されていません．"
 
-#: SimpleControllerItem.cpp:365
+#: SimpleControllerItem.cpp:366
 msgid ""
 "Controller module \"{0}\" of {1} is specified as a relative path from the "
 "project directory, but the project directory has not been determined yet."
@@ -1288,23 +1314,23 @@ msgstr ""
 "{1}のコントローラモジュール \"{0}\" はプロジェクトディレクトリからの相対パス"
 "で指定されていますが，プロジェクトディレクトリはまだ決まっていません．"
 
-#: SimpleControllerItem.cpp:379
+#: SimpleControllerItem.cpp:380
 msgid "The controller module of {} has already been loaded."
 msgstr "{}のコントローラモジュールは既にロードされています．"
 
-#: SimpleControllerItem.cpp:386
+#: SimpleControllerItem.cpp:387
 msgid "Loading the controller module \"{1}\" of {0} ... "
 msgstr "{0}のコントローラモジュール\"{1}\"をロード中･･･"
 
-#: SimpleControllerItem.cpp:389
+#: SimpleControllerItem.cpp:390
 msgid "Failed.\n"
 msgstr "失敗．\n"
 
-#: SimpleControllerItem.cpp:393
+#: SimpleControllerItem.cpp:394
 msgid "OK!"
 msgstr ""
 
-#: SimpleControllerItem.cpp:399
+#: SimpleControllerItem.cpp:400
 msgid ""
 "The factory function \"createSimpleController()\" is not found in the "
 "controller module."
@@ -1312,56 +1338,56 @@ msgstr ""
 "ファクトリ関数 \"createSimpleController()\" がコントローラモジュール内に見つ"
 "かりません．"
 
-#: SimpleControllerItem.cpp:406
+#: SimpleControllerItem.cpp:407
 msgid "The controller factory of {} failed to create a controller instance."
 msgstr ""
 "{}のコントローラファクトリはコントローラインスタンスの生成に失敗しました．"
 
-#: SimpleControllerItem.cpp:413
+#: SimpleControllerItem.cpp:414
 msgid "A controller instance has successfully been created."
 msgstr "コントローラインスタンスを生成しました．"
 
-#: SimpleControllerItem.cpp:425
+#: SimpleControllerItem.cpp:426
 msgid "{} failed to configure the controller"
 msgstr "{}はコントローラインスタンスの生成に失敗しました"
 
-#: SimpleControllerItem.cpp:458
+#: SimpleControllerItem.cpp:459
 msgid "The controller module \"{1}\" of {0} has been unloaded."
 msgstr "{0}のコントローラモジュール \"{1}\" をアンロードしました．"
 
-#: SimpleControllerItem.cpp:544
+#: SimpleControllerItem.cpp:552
 msgid "{} is not configured."
 msgstr ""
 
-#: SimpleControllerItem.cpp:561
+#: SimpleControllerItem.cpp:569
 msgid "{}'s initialize method failed."
 msgstr "{}のinitializeメソッドが失敗しました．"
 
-#: SimpleControllerItem.cpp:809
+#: SimpleControllerItem.cpp:817
 msgid "{} failed to start"
 msgstr "{}を稼働できませんでした"
 
-#: SimpleControllerItem.cpp:1060
+#: SimpleControllerItem.cpp:1068
 msgid "Simple Controller Module (*.{})"
 msgstr "シンプルコントローラモジュール (*.{})"
 
-#: SimpleControllerItem.cpp:1063
+#: SimpleControllerItem.cpp:1071
 msgid "Controller module"
 msgstr "コントローラモジュール"
 
-#: SimpleControllerItem.cpp:1066
+#: SimpleControllerItem.cpp:1074
 msgid "Base directory"
 msgstr "ベースディレクトリ"
 
-#: SimpleControllerItem.cpp:1068
+#: SimpleControllerItem.cpp:1076
 msgid "Reloading"
 msgstr "再読込"
 
-#: SimpleControllerItem.cpp:1070
+#: SimpleControllerItem.cpp:1078
 msgid "Export symbols"
 msgstr "シンボルのエクスポート"
 
-#: SimpleControllerItem.cpp:1072
+#: SimpleControllerItem.cpp:1080
 msgid "Old target value variable mode"
 msgstr "旧指令値変数モード"
 
@@ -1833,7 +1859,7 @@ msgstr "シミュレーション用に限定"
 
 #: LinkShapeOverwriteItem.cpp:71
 msgid "LinkShapeOverwriteItem"
-msgstr "リンク形状オーバーライトアイテム"
+msgstr "リンク形状上書きアイテム"
 
 #: LinkShapeOverwriteItem.cpp:158
 msgid "Shape ({0})"
