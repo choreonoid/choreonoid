@@ -1313,22 +1313,21 @@ void ViewArea::Impl::storeLayout(Archive* archive)
 
 MappingPtr ViewArea::Impl::storeSplitterState(QSplitter* splitter, Archive* archive)
 {
-    MappingPtr state = new Mapping;
+    // The actual state object must be the Archive type if it is directly used to restore the state
+    MappingPtr state = new Archive;
 
     ListingPtr children = new Listing;
 
     for(int i=0; i < splitter->count(); ++i){
         QSplitter* childSplitter = dynamic_cast<QSplitter*>(splitter->widget(i));
         if(childSplitter){
-            MappingPtr childState = storeSplitterState(childSplitter, archive);
-            if(childState){
+            if(auto childState = storeSplitterState(childSplitter, archive)){
                 children->append(childState);
             }
         } else {
             ViewPane* pane = dynamic_cast<ViewPane*>(splitter->widget(i));
             if(pane && pane->count() > 0){
-                MappingPtr childState = storePaneState(pane, archive);
-                if(childState){
+                if(auto childState = storePaneState(pane, archive)){
                     children->append(childState);
                 }
             }
@@ -1357,7 +1356,8 @@ MappingPtr ViewArea::Impl::storeSplitterState(QSplitter* splitter, Archive* arch
 
 MappingPtr ViewArea::Impl::storePaneState(ViewPane* pane, Archive* archive)
 {
-    MappingPtr state = new Mapping;
+    // The actual state object must be the Archive type if it is directly used to restore the state
+    MappingPtr state = new Archive;
     
     state->write("type", "pane");
     

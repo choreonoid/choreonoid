@@ -52,17 +52,16 @@ public:
     InstanceInfoList::iterator iterInViewInfo;
     InstanceInfoList::iterator iterInViewManager;
 
-    InstanceInfo(ViewInfo* viewInfo, View* view) : view(view), viewInfo(viewInfo) {
-    }
+    InstanceInfo(ViewInfo* viewInfo, View* view);
     ~InstanceInfo();
     void remove();
 };
 
-class ViewInfo : public ViewClass
+class ViewInfo
 {
 public:
     const std::type_info& view_type_info;
-    string className_;
+    string className;
     string textDomain;
     string translatedClassName;
     string defaultInstanceName;
@@ -74,100 +73,26 @@ public:
     InstanceInfoList instances;
     InstanceInfoList& instancesInViewManager;
 
-    virtual const std::string& className() const { return className_; }
-
     ViewInfo(
         ViewManager::Impl* managerImpl,
         const type_info& view_type_info, const string& className, const string& defaultInstanceName,
         const string& textDomain, int instantiationFlags, ViewManager::FactoryBase* factory);
 
-    ~ViewInfo(){
-        delete factory;
-    }
+    ~ViewInfo();
 
     bool checkIfDefaultInstance(View* view){
         return hasDefaultInstance && !instances.empty() && (instances.front()->view == view);
     }
 
     bool checkIfPrimalInstance(View* view){
-        return !instances.empty() && (instances.front()->view == view);
+        return (hasDefaultInstance || isSingleton) && !instances.empty() && (instances.front()->view == view);
     }
 
-private:
-    View* createView() {
-        View* view = factory->create();
-        InstanceInfoPtr instance = std::make_shared<InstanceInfo>(this, view);
-            
-        instances.push_back(instance);
-        instance->iterInViewInfo = instances.end();
-        --instance->iterInViewInfo;
-            
-        instancesInViewManager.push_back(instance);
-        instance->iterInViewManager = instancesInViewManager.end();
-        --instance->iterInViewManager;
-
-        view->sigActivated().connect([view](){ sigViewActivated_(view); });
-        view->sigDeactivated().connect([view](){ sigViewDeactivated_(view); });
-
-        return view;
-    }
-
-public:
-    View* getOrCreateView(bool doMountCreatedView = false){
-        if(instances.empty()){
-            View* view = createView();
-            view->setName(defaultInstanceName);
-            view->setWindowTitle(translatedDefaultInstanceName.c_str());
-            sigViewCreated_(view);
-            if(doMountCreatedView){
-                mainWindow->viewArea()->addView(view);
-            }
-        }
-        return instances.front()->view;
-    }
-        
-    View* createView(const string& name, bool setTranslatedNameToWindowTitle = false){
-        if(name.empty()){
-            return nullptr;
-        }
-        View* view = createView();
-        if(isSingleton){
-            view->setName(defaultInstanceName);
-            view->setWindowTitle(translatedDefaultInstanceName.c_str());
-        } else {
-            view->setName(name);
-            if(setTranslatedNameToWindowTitle){
-                view->setWindowTitle(dgettext(textDomain.c_str(), name.c_str()));
-            }
-        }
-        sigViewCreated_(view);
-        return view;
-    }
-
-    View* findView(const string& name){
-        if(name.empty()){
-            return instances.empty() ? nullptr : instances.front()->view;
-        } else {
-            for(auto p = instances.begin(); p != instances.end(); ++p){
-                if((*p)->view->name() == name){
-                    return (*p)->view;
-                }
-            }
-            return nullptr;
-        }
-    }
-
-    View* getOrCreateView(const string& name, bool doMountCreatedView = false){
-        View* view = findView(name);
-        if(!view){
-            view = createView(name);
-            sigViewCreated_(view);
-            if(doMountCreatedView){
-                mainWindow->viewArea()->addView(view);
-            }
-        }
-        return view;
-    }
+    View* createView();
+    View* getOrCreateView(bool doMountCreatedView = false);
+    View* createView(const string& name, bool setTranslatedNameToWindowTitle = false);
+    View* findView(const string& name);
+    View* getOrCreateView(const string& name, bool doMountCreatedView = false);
 };
 
 struct compare_type_info {
@@ -202,6 +127,10 @@ public:
 
     Impl(ExtensionManager* ext);
     ~Impl();
+
+    static void setViewClassName(View* view, const string& name){
+        view->setClassName(name);
+    }
     static void notifySigRemoved(View* view){
         view->notifySigRemoved();
     }
@@ -217,21 +146,10 @@ public:
 
 namespace {
 
-ViewInfo::ViewInfo
-(ViewManager::Impl* managerImpl,
- const type_info& view_type_info, const string& className, const string& defaultInstanceName,
- const string& textDomain, int instantiationFlags, ViewManager::FactoryBase* factory)
-    : view_type_info(view_type_info),
-      className_(className),
-      textDomain(textDomain),
-      defaultInstanceName(defaultInstanceName),
-      factory(factory),
-      instancesInViewManager(managerImpl->instances)
+InstanceInfo::InstanceInfo(ViewInfo* viewInfo, View* view)
+    : view(view), viewInfo(viewInfo)
 {
-    isSingleton = (instantiationFlags & ViewManager::Multiple) ? false : true;
-    hasDefaultInstance = instantiationFlags & ViewManager::Default;
-    translatedClassName = dgettext(textDomain.c_str(), className_.c_str());
-    translatedDefaultInstanceName = dgettext(textDomain.c_str(), defaultInstanceName.c_str());
+
 }
 
 
@@ -256,6 +174,116 @@ void InstanceInfo::remove()
     iterInViewInfo = viewInfo->instances.end();
     viewInfo->instancesInViewManager.erase(iterInViewManager);
     //iterInViewManager = viewInfo->instancesInViewManager.end();
+}
+
+
+ViewInfo::ViewInfo
+(ViewManager::Impl* managerImpl,
+ const type_info& view_type_info, const string& className, const string& defaultInstanceName,
+ const string& textDomain, int instantiationFlags, ViewManager::FactoryBase* factory)
+    : view_type_info(view_type_info),
+      className(className),
+      textDomain(textDomain),
+      defaultInstanceName(defaultInstanceName),
+      factory(factory),
+      instancesInViewManager(managerImpl->instances)
+{
+    isSingleton = (instantiationFlags & ViewManager::Multiple) ? false : true;
+    hasDefaultInstance = instantiationFlags & ViewManager::Default;
+    translatedClassName = dgettext(textDomain.c_str(), className.c_str());
+    translatedDefaultInstanceName = dgettext(textDomain.c_str(), defaultInstanceName.c_str());
+}
+
+
+ViewInfo::~ViewInfo()
+{
+    delete factory;
+}
+
+
+View* ViewInfo::createView()
+{
+    View* view = factory->create();
+    ViewManager::Impl::setViewClassName(view, className);
+    
+    InstanceInfoPtr instance = std::make_shared<InstanceInfo>(this, view);
+
+    instances.push_back(instance);
+    instance->iterInViewInfo = instances.end();
+    --instance->iterInViewInfo;
+    
+    instancesInViewManager.push_back(instance);
+    instance->iterInViewManager = instancesInViewManager.end();
+    --instance->iterInViewManager;
+    
+    view->sigActivated().connect([view](){ sigViewActivated_(view); });
+    view->sigDeactivated().connect([view](){ sigViewDeactivated_(view); });
+    
+    return view;
+}
+
+
+View* ViewInfo::getOrCreateView(bool doMountCreatedView)
+{
+    if(instances.empty()){
+        View* view = createView();
+        view->setName(defaultInstanceName);
+        view->setWindowTitle(translatedDefaultInstanceName.c_str());
+        sigViewCreated_(view);
+        if(doMountCreatedView){
+            mainWindow->viewArea()->addView(view);
+        }
+        }
+    return instances.front()->view;
+}
+
+
+View* ViewInfo::createView(const string& name, bool setTranslatedNameToWindowTitle)
+{
+    if(name.empty()){
+        return nullptr;
+    }
+    View* view = createView();
+    if(isSingleton){
+        view->setName(defaultInstanceName);
+        view->setWindowTitle(translatedDefaultInstanceName.c_str());
+    } else {
+        view->setName(name);
+        if(setTranslatedNameToWindowTitle){
+            view->setWindowTitle(dgettext(textDomain.c_str(), name.c_str()));
+        }
+    }
+    sigViewCreated_(view);
+    return view;
+}
+
+
+View* ViewInfo::findView(const string& name)
+{
+    if(name.empty()){
+        return instances.empty() ? nullptr : instances.front()->view;
+    } else {
+        for(auto p = instances.begin(); p != instances.end(); ++p){
+            if((*p)->view->name() == name){
+                return (*p)->view;
+            }
+        }
+        return nullptr;
+    }
+}
+
+
+View* ViewInfo::getOrCreateView(const string& name, bool doMountCreatedView)
+{
+    View* view = findView(name);
+    if(!view){
+        view = createView(name);
+        sigViewCreated_(view);
+        if(doMountCreatedView){
+            mainWindow->viewArea()->addView(view);
+        }
+    }
+    return view;
 }
 
 
@@ -525,17 +553,6 @@ ViewManager& ViewManager::registerClassAlias(const std::string& alias, const std
 }
 
 
-ViewClass* ViewManager::viewClass(const std::type_info& view_type_info)
-{
-    ViewClass* viewClass = nullptr;
-    auto p = typeToViewInfoMap.find(&view_type_info);
-    if(p != typeToViewInfoMap.end()){
-        viewClass = p->second.get();
-    }
-    return viewClass;
-}
-
-
 namespace {
 
 ViewInfo* findViewInfo(const std::string& moduleName, const std::string& className, bool checkAlias = true)
@@ -666,43 +683,48 @@ bool ViewManager::isPrimalInstance(View* view)
 }
 
 
-namespace {
-
-ArchivePtr storeView(Archive& parentArchive, const string& moduleName, ViewInfo& viewInfo, View* view)
+static ArchivePtr storeView
+(Archive& parentArchive, const string& moduleName, ViewInfo& viewInfo, View* view, bool isLayoutMode)
 {
     ArchivePtr archive;
-        
-    ArchivePtr state = new Archive;
-    state->inheritSharedInfoFrom(parentArchive);
+    ArchivePtr state;
+    bool isValid = true;
+    bool isPrimalInstance = viewInfo.checkIfPrimalInstance(view);
 
-    if(view->storeState(*state)){
-            
+    if(!isLayoutMode || !isPrimalInstance){
+        state = new Archive;
+        state->inheritSharedInfoFrom(parentArchive);
+        if(!view->storeState(*state)){
+            isValid = false;
+        }
+    }
+        
+    if(isValid){
         archive = new Archive;
         archive->inheritSharedInfoFrom(parentArchive);
 
-        archive->write("id", state->getViewId(view));
+        archive->write("id", archive->getViewId(view));
             
-        if(!viewInfo.checkIfDefaultInstance(view)){
+        if(!isPrimalInstance){
             archive->write("name", view->name(), DOUBLE_QUOTED);
         }
         archive->write("plugin", moduleName);
-        archive->write("class", viewInfo.className_);
+        archive->write("class", viewInfo.className);
 
         if(view->viewArea()){
             archive->write("mounted", true);
         }
 
-        if(!state->empty()){
+        if(state && !state->empty()){
             archive->insert("state", state);
         }
     }
 
     return archive;
 }
-}
 
 
-bool ViewManager::storeViewStates(ArchivePtr archive, const std::string& key)
+bool ViewManager::storeViewStates(Archive* archive, const std::string& key, bool isLayoutMode)
 {
     // assign view ids first
     int id = 0;
@@ -727,7 +749,7 @@ bool ViewManager::storeViewStates(ArchivePtr archive, const std::string& key)
             InstanceInfoList& instances = viewInfo->instances;
             for(auto p = instances.begin(); p != instances.end(); ++p){            
                 View* view = (*p)->view;
-                ArchivePtr viewArchive = storeView(*archive, moduleName, *viewInfo, view);
+                ArchivePtr viewArchive = storeView(*archive, moduleName, *viewInfo, view, isLayoutMode);
                 if(viewArchive){
                     viewList->append(viewArchive);
                 }
@@ -768,7 +790,8 @@ ViewManager::ViewStateInfo::~ViewStateInfo()
 }
 
 
-static View* restoreView(Archive* archive, const string& moduleName, const string& className, ViewInfoToViewsMap& remainingViewsMap)
+static View* restoreView
+(Archive* archive, const string& moduleName, const string& className, ViewInfoToViewsMap& remainingViewsMap)
 {
     ViewInfo* info = findViewInfo(moduleName, className);
     View* view = nullptr;
@@ -835,8 +858,8 @@ static View* restoreView(Archive* archive, const string& moduleName, const strin
 
 
 bool ViewManager::restoreViews
-(ArchivePtr archive, const std::string& key, ViewManager::ViewStateInfo& out_viewStateInfo,
- const std::set<std::string>& optionalPlugins)
+(Archive* archive, const std::string& key, ViewManager::ViewStateInfo& out_viewStateInfo,
+ const std::set<std::string>* optionalPlugins, bool enableMissingPluginWarnings)
 {
     bool restored = false;
     
@@ -862,7 +885,8 @@ bool ViewManager::restoreViews
                 if(isHeaderValid){
                     const char* actualModuleName = PluginManager::instance()->guessActualPluginName(moduleName);
                     if(!actualModuleName){
-                        if(optionalPlugins.find(moduleName) == optionalPlugins.end()){
+                        if(enableMissingPluginWarnings &&
+                           optionalPlugins->find(moduleName) == optionalPlugins->end()){
                             MessageView::instance()->putln(
                                 format(_("The \"{0}\" plugin for \"{1}\" is not found. The view cannot be restored."),
                                        moduleName, className),
@@ -890,6 +914,21 @@ bool ViewManager::restoreViews
         }
     }
     return restored;
+}
+
+
+bool ViewManager::restoreViews
+(Archive* archive, const std::string& key, ViewStateInfo& out_viewStateInfo,  bool enableMissingPluginWarnings)
+{
+    return restoreViews(archive, key, out_viewStateInfo, nullptr, false);
+}
+
+
+bool ViewManager::restoreViews
+(Archive* archive, const std::string& key, ViewManager::ViewStateInfo& out_viewStateInfo,
+ const std::set<std::string>& optionalPlugins)
+{
+    return restoreViews(archive, key, out_viewStateInfo, &optionalPlugins, true);
 }
 
 

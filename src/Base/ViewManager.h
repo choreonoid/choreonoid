@@ -22,6 +22,7 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     ViewManager(ExtensionManager* ext);
+    ViewManager(const ViewManager&) = delete;
     ~ViewManager();
 
     class FactoryBase {
@@ -55,8 +56,6 @@ public:
 
     ViewManager& registerClassAlias(const std::string& alias, const std::string& orgClassName);
     
-    static ViewClass* viewClass(const std::type_info& view_type_info);
-
     // get or create the primal instance of the specified view type
     static View* getOrCreateView(const std::string& moduleName, const std::string& className);
 
@@ -87,7 +86,7 @@ public:
 
     static bool isPrimalInstance(View* view);
 
-    static bool storeViewStates(ArchivePtr archive, const std::string& key);
+    static bool storeViewStates(Archive* archive, const std::string& key, bool isLayoutMode);
 
     class ViewStateInfo {
     public:
@@ -100,7 +99,10 @@ public:
     };
 
     static bool restoreViews(
-        ArchivePtr archive, const std::string& key, ViewStateInfo& out_viewStateInfo,
+        Archive* archive, const std::string& key, ViewStateInfo& out_viewStateInfo,
+        bool enableMissingPluginWarnings = true);
+    static bool restoreViews(
+        Archive* archive, const std::string& key, ViewStateInfo& out_viewStateInfo,
         const std::set<std::string>& optionalPlugins);
     static bool restoreViewStates(ViewStateInfo& info);
 
@@ -112,8 +114,6 @@ public:
     class Impl;
 
 private:
-    ViewManager(const ViewManager&) { }
-    
     void registerClass_(
         const std::type_info& view_type_info,
         const std::string& className, const std::string& defaultInstanceName, int instantiationFlags,
@@ -121,6 +121,9 @@ private:
     static View* getOrCreateSpecificTypeView(
         const std::type_info& view_type_info, const std::string& instanceName, bool doMountCreatedView);
     static View* findSpecificTypeView(const std::type_info& view_type_info, const std::string& instanceName);
+    static bool restoreViews(
+        Archive* archive, const std::string& key, ViewManager::ViewStateInfo& out_viewStateInfo,
+        const std::set<std::string>* optionalPlugins, bool enableMissingPluginWarnings);
 
     Impl* impl;
 };

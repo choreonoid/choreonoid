@@ -14,6 +14,7 @@ namespace cnoid {
 
 class ExtensionManager;
 class Archive;
+class Mapping;
 
 class CNOID_EXPORT ProjectManager
 {
@@ -48,6 +49,9 @@ public:
 
     SignalProxy<void(int recursiveLevel)> sigProjectAboutToBeLoaded();
     SignalProxy<void(int recursiveLevel)> sigProjectLoaded();
+
+    ref_ptr<Mapping> storeCurrentLayout();
+    void restoreLayout(Mapping* layout);
 
 private:
     ProjectManager(ExtensionManager* ext);

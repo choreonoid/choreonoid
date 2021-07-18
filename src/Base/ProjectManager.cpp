@@ -571,6 +571,26 @@ void ProjectManager::Impl::loadProject
 }
 
 
+void ProjectManager::restoreLayout(Mapping* layout)
+{
+    ArchivePtr archive = new Archive;
+    archive->initSharedInfo("dummy", false);
+    archive->insert(layout);
+
+    ViewManager::ViewStateInfo viewStateInfo;
+    if(ViewManager::restoreViews(archive, "views", viewStateInfo, false)){
+        mainWindow->restoreLayout(archive);
+        if(ViewManager::restoreViewStates(viewStateInfo)){
+            Archive* barStates = archive->findSubArchive("toolbars");
+            if(barStates->isValid()){
+                impl->restoreObjectStates(archive, barStates, mainWindow->toolBars(), "bar");
+            }
+        }
+    }
+}
+
+
+
 template<class TObject> bool ProjectManager::Impl::storeObjects
 (Archive& parentArchive, const char* key, vector<TObject*> objects)
 {
@@ -643,7 +663,7 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
         archive->insert("items", itemArchive);
     }
 
-    bool stored = ViewManager::storeViewStates(archive, "views");
+    bool stored = ViewManager::storeViewStates(archive, "views", false);
 
     stored |= storeObjects(*archive, "toolbars", mainWindow->toolBars());
 
@@ -691,6 +711,16 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
         mv->notify(_("Saving the project file failed."), MessageView::Error);
         clearCurrentProjectFile();
     }
+}
+
+
+ref_ptr<Mapping> ProjectManager::storeCurrentLayout()
+{
+    ArchivePtr archive = new Archive;
+    archive->initSharedInfo("dummy", false);
+    ViewManager::storeViewStates(archive, "views", true);
+    mainWindow->storeLayout(archive);
+    return archive;
 }
 
 

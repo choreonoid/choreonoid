@@ -31,6 +31,7 @@ public:
     View* self;
     bool isActive;
     bool hasFocus;
+    string className;
     string name;
     string titleFormat;
     mutable ViewArea* viewArea;
@@ -133,9 +134,15 @@ View::~View()
 }
 
 
-ViewClass* View::viewClass() const
+const std::string& View::className() const
 {
-    return ViewManager::viewClass(typeid(*this));
+    return impl->className;
+}
+
+
+void View::setClassName(const std::string& name)
+{
+    impl->className = name;
 }
 
 
@@ -241,7 +248,7 @@ void View::onActivated()
 void View::onDeactivated()
 {
     if(impl->isFontSizeZoomKeysEnabled){
-        AppConfig::archive()->openMapping(viewClass()->className())->write("fontZoom", impl->fontZoom);
+        AppConfig::archive()->openMapping(impl->className)->write("fontZoom", impl->fontZoom);
     }
 }
 
@@ -379,7 +386,7 @@ void View::enableFontSizeZoomKeys(bool on)
 {
     impl->isFontSizeZoomKeysEnabled = on;
     if(on){
-        MappingPtr config = AppConfig::archive()->openMapping(viewClass()->className());
+        MappingPtr config = AppConfig::archive()->openMapping(impl->className);
         int storedZoom;
         if(config->read("fontZoom", storedZoom)){
             zoomFontSize(storedZoom);

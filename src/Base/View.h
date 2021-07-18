@@ -16,13 +16,6 @@ class Archive;
 class MenuManager;
 class ViewManager;
 class ViewArea;
-class ViewAreaImpl;
-
-class CNOID_EXPORT ViewClass
-{
-public:
-    virtual const std::string& className() const = 0;
-};
 
 class CNOID_EXPORT View : public Widget
 {
@@ -30,7 +23,7 @@ public:
     View();
     virtual ~View();
 
-    ViewClass* viewClass() const;
+    const std::string& className() const;
 
     const std::string& name() const;
     virtual void setName(const std::string& name);
@@ -112,6 +105,8 @@ private:
 
     // Called from the view manager initialization
     static void initializeClass();
+
+    void setClassName(const std::string& name);
 
     static void onApplicationFocusChanged(QWidget* widget);
 
