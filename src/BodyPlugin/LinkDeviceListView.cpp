@@ -4,6 +4,7 @@
 #include "BodySelectionManager.h"
 #include <cnoid/Link>
 #include <cnoid/ViewManager>
+#include <cnoid/Archive>
 #include <cnoid/ComboBox>
 #include <QBoxLayout>
 #include "gettext.h"

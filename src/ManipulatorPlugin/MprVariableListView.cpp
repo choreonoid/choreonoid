@@ -6,6 +6,7 @@
 #include <cnoid/MenuManager>
 #include <cnoid/MessageView>
 #include <cnoid/TargetItemPicker>
+#include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
 #include <cnoid/Buttons>
 #include <cnoid/ButtonGroup>

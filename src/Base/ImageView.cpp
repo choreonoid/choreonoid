@@ -3,6 +3,7 @@
 #include "ViewManager.h"
 #include "RootItem.h"
 #include "ImageableItem.h"
+#include "Archive.h"
 #include "ComboBox.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/Image>

@@ -7,7 +7,6 @@
 
 #include "View.h"
 #include "ExtensionManager.h"
-#include "Archive.h"
 #include <cnoid/Signal>
 #include <set>
 #include "exportdecl.h"
@@ -15,6 +14,7 @@
 namespace cnoid {
 
 class ExtensionManager;
+class Archive;
 
 class CNOID_EXPORT ViewManager
 {

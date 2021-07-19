@@ -7,6 +7,7 @@
 #include "CoordinateFrameItem.h"
 #include "RootItem.h"
 #include "UnifiedEditHistory.h"
+#include "Archive.h"
 #include "CheckBox.h"
 #include "ComboBox.h"
 #include <cnoid/CoordinateFrameList>

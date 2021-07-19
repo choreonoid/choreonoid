@@ -6,9 +6,10 @@
 #include "SceneWidget.h"
 #include "SceneWidgetEventHandler.h"
 #include "ViewManager.h"
-#include "Separator.h"
 #include "RootItem.h"
 #include "RenderableItem.h"
+#include "Archive.h"
+#include "Separator.h"
 #include "Buttons.h"
 #include "CheckBox.h"
 #include <cnoid/SceneGraph>

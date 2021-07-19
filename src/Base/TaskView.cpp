@@ -4,15 +4,16 @@
 */
 
 #include "TaskView.h"
-#include <cnoid/ViewManager>
-#include <cnoid/MenuManager>
-#include <cnoid/MessageView>
-#include <cnoid/Buttons>
-#include <cnoid/ComboBox>
-#include <cnoid/SpinBox>
-#include <cnoid/Timer>
-#include <cnoid/LazyCaller>
-#include <cnoid/AppUtil>
+#include "ViewManager.h"
+#include "MenuManager.h"
+#include "MessageView.h"
+#include "Buttons.h"
+#include "ComboBox.h"
+#include "SpinBox.h"
+#include "Timer.h"
+#include "LazyCaller.h"
+#include "AppUtil.h"
+#include "Archive.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/stdx/optional>
 #include <QBoxLayout>

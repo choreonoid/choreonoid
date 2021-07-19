@@ -5,6 +5,7 @@
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
 #include <cnoid/TargetItemPicker>
+#include <cnoid/Archive>
 #include <cnoid/Buttons>
 #include <cnoid/ConnectionSet>
 #include <cnoid/BodyItem>

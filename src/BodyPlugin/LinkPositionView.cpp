@@ -4,6 +4,7 @@
 #include "BodyItem.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
+#include <cnoid/Archive>
 #include <cnoid/ActionGroup>
 #include <cnoid/ConnectionSet>
 #include <QLabel>

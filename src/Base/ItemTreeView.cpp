@@ -4,6 +4,7 @@
 #include "MenuManager.h"
 #include "ItemTreeWidget.h"
 #include "RootItem.h"
+#include "Archive.h"
 #include <QBoxLayout>
 #include "gettext.h"
 
