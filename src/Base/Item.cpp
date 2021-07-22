@@ -11,6 +11,7 @@
 #include "ItemClassRegistry.h"
 #include "PutPropertyFunction.h"
 #include "LazyCaller.h"
+#include "MessageView.h"
 #include <cnoid/ValueTree>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
@@ -639,6 +640,13 @@ bool Item::insertSubItem(Item* item, Item* nextItem)
 
 bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation)
 {
+    if(item == self){
+        MessageView::instance()->putln(
+            fmt::format(_("Item \"{0}\" was about to be inserted into itself."), item->name()),
+            MessageView::Error);
+        return false;
+    }
+    
     RootItem* rootItem = self->findRootItem();
     Item* prevParentItem = item->parentItem();
     Item* prevNextSibling = nullptr;
@@ -1540,7 +1548,6 @@ bool Item::replace(Item* originalItem)
             while(child){
                 ItemPtr nextChild = child->nextItem();
                 if(!child->isSubItem()){
-                    child->removeFromParentItem();
                     addChildItem(child);
                 }
                 child = nextChild;
