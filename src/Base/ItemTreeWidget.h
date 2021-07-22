@@ -12,7 +12,6 @@ class QTreeWidgetItem;
 namespace cnoid {
 
 class Item;
-class RootItem;
 class MenuManager;
 class Archive;
 
@@ -25,26 +24,16 @@ public:
     ~ItemTreeWidget();
 
     RootItem* projectRootItem();
-
-    /*
-      The following root item is the top item of a sub tree the item tree widget covers.
-      The item is not necessarily the project root item of the RootItem type but it may
-      be any item in the project item tree.
-    */
     Item* findRootItem();
     template<class ItemType>
     ItemType* findRootItem(){ return dynamic_cast<ItemType*>(findRootItem()); }
     Item* findOrCreateRootItem();
     template<class ItemType>
     ItemType* findOrCreateRootItem(){ return dynamic_cast<ItemType*>(findRootItem()); }
-    
     void setRootItem(Item* item);
     void setRootItemUpdateFunction(std::function<Item*(bool doCreate)> func);
-
-    //! \note This functions does not update the tree widget items
     void setRootItemVisible(bool on);
     bool isRootItemVisible() const;
-
     void setDragDropEnabled(bool on);
     void setCheckColumnShown(bool on);
 
@@ -126,9 +115,7 @@ public:
         return getSelectedItems();
     }
 
-    //! \return true if the selected items are changed
     bool selectOnly(Item* item);
-    
     void selectAllItems();
     void clearSelection();
     void setSelectedItemsChecked(bool on);

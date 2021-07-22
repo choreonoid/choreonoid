@@ -301,6 +301,7 @@ bool ItemTreePanelDialog::setTopItem(Item* item, bool isTopVisible)
     impl->topItem = item;
     impl->itemTreeWidget.setRootItemVisible(isTopVisible);
     impl->itemTreeWidget.setRootItem(item);
+    impl->itemTreeWidget.updateTreeWidgetItems();
     impl->needToUpdatePanel = true;
     return true;
 }

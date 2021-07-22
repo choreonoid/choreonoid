@@ -2,7 +2,6 @@
 #include "TreeWidget.h"
 #include "RootItem.h"
 #include "ProjectManager.h"
-#include "ItemManager.h"
 #include "MenuManager.h"
 #include "MessageView.h"
 #include "Archive.h"
@@ -11,7 +10,6 @@
 #include <QHeaderView>
 #include <QModelIndex>
 #include <QBoxLayout>
-//#include <QMimeData>
 #include <fmt/format.h>
 #include <map>
 #include <unordered_map>
@@ -339,7 +337,6 @@ ItemTreeWidget::ItemTreeWidget(QWidget* parent)
 ItemTreeWidget::Impl::Impl(ItemTreeWidget* self)
     : self(self),
       projectRootItem(RootItem::instance()),
-      localRootItem(projectRootItem),
       projectManager(ProjectManager::instance())
 {
     initialize();
@@ -450,6 +447,12 @@ RootItem* ItemTreeWidget::projectRootItem()
 }
 
 
+
+/*
+  This function returns the top item of a sub tree that the item tree widget covers.
+  The item is not necessarily the project root item of the RootItem type but it may
+  be any item in the project item tree.
+*/
 Item* ItemTreeWidget::findRootItem()
 {
     return impl->findOrCreateLocalRootItem(false);
@@ -475,6 +478,13 @@ Item* ItemTreeWidget::Impl::findOrCreateLocalRootItem(bool doCreate)
 }
 
 
+/**
+   This function specifies the item that is displayed by this widget as its root tiem.
+   
+   \note This function only prepares the specified item to be used as the root item.
+   In order to update the item tree displayed by this widget, you have to call the
+   updateTreeWidgetItems function after calling this function.
+*/
 void ItemTreeWidget::setRootItem(Item* item)
 {
     impl->setLocalRootItem(item);
@@ -510,8 +520,6 @@ void ItemTreeWidget::Impl::setLocalRootItem(Item* item)
                         }
                     });
         }
-        
-        updateTreeWidgetItems();
     }
 }
 
@@ -523,6 +531,7 @@ void ItemTreeWidget::setRootItemUpdateFunction(std::function<Item*(bool doCreate
 }
 
 
+//! \note This functions does not update the tree widget items
 void ItemTreeWidget::setRootItemVisible(bool on)
 {
     impl->isRootItemVisible = on;
@@ -569,6 +578,13 @@ void ItemTreeWidget::setDragDropEnabled(bool on)
 }
 
 
+/**
+   This function specifies whether or not to display the check column of each item.
+   
+   \note This function only changes the internal state regarding the check column.
+   In order to update the actual display of the check columns, the updateTreeWidgetItems
+   function must be executed.
+*/
 void ItemTreeWidget::setCheckColumnShown(bool on)
 {
     impl->isCheckColumnShown = on;
@@ -576,7 +592,6 @@ void ItemTreeWidget::setCheckColumnShown(bool on)
         int column = kv.second;
         impl->setCheckColumnShown(column, on);
     }
-    impl->updateTreeWidgetItems();
 }
 
 
@@ -995,6 +1010,7 @@ ItemList<> ItemTreeWidget::Impl::getSelectedItems() const
 }
 
 
+//! \return true if the selected items are changed
 bool ItemTreeWidget::selectOnly(Item* item)
 {
     bool selectionChanged = false;
@@ -1689,26 +1705,32 @@ void ItemTreeWidget::Impl::dragMoveEvent(QDragMoveEvent* event)
 {
     TreeWidget::dragMoveEvent(event);
 
+    Item* parentItem = nullptr;
+
     Item* itemAtDropPosition = localRootItem;
     if(auto itwItem = dynamic_cast<ItwItem*>(itemAt(event->pos()))){
         itemAtDropPosition = itwItem->item;
     }
-
-    Item* parentItem = nullptr;
-    switch(dropIndicatorPosition()){
-    case QAbstractItemView::AboveItem:
-    case QAbstractItemView::BelowItem:
-        parentItem = itemAtDropPosition->parentItem();
-        break;
-    default:
-        parentItem = itemAtDropPosition;
-        break;
+    if(itemAtDropPosition){
+        switch(dropIndicatorPosition()){
+        case QAbstractItemView::AboveItem:
+        case QAbstractItemView::BelowItem:
+            parentItem = itemAtDropPosition->parentItem();
+            break;
+        default:
+            parentItem = itemAtDropPosition;
+            break;
+        }
     }
     
-    for(auto& item : dragItems){
-        if(!checkPositionAcceptance(item, parentItem)){
-            event->ignore();
-            break;
+    if(!parentItem){
+        event->ignore();
+    } else {
+        for(auto& item : dragItems){
+            if(!checkPositionAcceptance(item, parentItem)){
+                event->ignore();
+                break;
+            }
         }
     }
 }

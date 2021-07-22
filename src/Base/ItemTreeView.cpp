@@ -1,5 +1,4 @@
 #include "ItemTreeView.h"
-#include "ItemManager.h"
 #include "ViewManager.h"
 #include "MenuManager.h"
 #include "ItemTreeWidget.h"
@@ -56,6 +55,7 @@ ItemTreeView::Impl::Impl(ItemTreeView* self)
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     itemTreeWidget = new ItemTreeWidget(self);
+    itemTreeWidget->setRootItem(RootItem::instance());
 
     auto vbox = new QVBoxLayout;
     vbox->addWidget(itemTreeWidget);
