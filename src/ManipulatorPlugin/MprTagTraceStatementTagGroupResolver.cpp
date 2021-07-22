@@ -96,15 +96,19 @@ ProgramInfo* Resolver::getOrCreateProgramInfo(MprProgramItemBase* programItem)
                 [this, programItem](){ programInfoMap.erase(programItem); }));
 
         auto program = programItem->program();
+
+        // Raw pointer must be used to capture this object in the following lambda expression
+        // to avoid cyclic reference.
+        ProgramInfo* info = programInfo;
         
         programInfo->connections.add(
             program->sigStatementRemoved().connect(
-                [programInfo](MprStatement* statement, MprProgram*){
-                    auto& statementMap = programInfo->statementMap;
+                [info](MprStatement* statement, MprProgram*){
+                    auto& statementMap = info->statementMap;
                     auto p = statementMap.find(statement);
                     if(p != statementMap.end()){
                         auto& statementInfo = p->second;
-                        programInfo->unresolvedStatementInfos.erase(statementInfo);
+                        info->unresolvedStatementInfos.erase(statementInfo);
                         statementMap.erase(statement);
                     }
                 }));
