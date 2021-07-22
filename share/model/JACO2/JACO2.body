@@ -646,6 +646,13 @@ standardPose: [
   0         # FINGER3
 ]
 
+collision_detection_rules:
+  - disabled_link_chain_level: 1
+  - disabled_link_group: [ BASE, SHOULDER, ARM ]
+  - disabled_link_group: [ FOREARM, WRIST1, WRIST2, HAND ]
+  - disabled_link_group: [ FINGER1, FINGER2, FINGER3 ]
+
+# For AGXDynamicsSimulator
 collisionDetection:
   excludeTreeDepth: 1
   excludeLinkGroups:

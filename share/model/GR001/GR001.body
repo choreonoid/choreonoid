@@ -466,10 +466,8 @@ symmetricIkLinks:
 
 divisionNumberOfPrimitiveGeometries: 10
 
-collisionDetection:
-  excludeTreeDepth: 3
-  excludeLinks: [ ]
-
+collision_detection_rules:
+  - disabled_link_chain_level: 2
 
 poseConversionInfo:
   - targetBodies: [ HRP4C ]

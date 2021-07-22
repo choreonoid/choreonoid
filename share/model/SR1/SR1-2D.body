@@ -679,6 +679,5 @@ possibleIkInterpolationLinks: [ WAIST, RLEG_ANKLE_R, LLEG_ANKLE_R ]
 defaultIkInterpolationLinks: [ WAIST, RLEG_ANKLE_R, LLEG_ANKLE_R ]
 possileSupportLinks: [ RLEG_ANKLE_R, LLEG_ANKLE_R ]
 
-collisionDetection:
-  excludeTreeDepth: 3
-  excludeLinks: [ ]
+collision_detection_rules:
+  - disabled_link_chain_level: 3

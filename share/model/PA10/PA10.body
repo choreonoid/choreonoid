@@ -418,9 +418,8 @@ defaultIKsetup:
   J6: [ BASE ]
   J7: [ BASE ]
 
-selfCollisionDetection:
-  excludeTreeDepth: 2
-  excludeLinks: [ ]
+collision_detection_rules:
+  - disabled_link_chain_level: 1
 
 bodyMarkers:
   - [ BASE, [ 0.2, 0.2, 0.0 ], [ 0.2, -0.2, 0.0 ], [ -0.2, -0.2, 0.0 ], [ -0.2, 0.2, 0.0 ] ]

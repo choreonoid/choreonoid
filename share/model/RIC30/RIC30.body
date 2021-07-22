@@ -379,9 +379,7 @@ symmetricIkLinks:
   - [ WAIST ]
   - [ L_ANKLE_R, R_ANKLE_R ]
 
-
-selfCollisionDetection:
-  excludeTreeDepth: 3
-  excludeLinks: [ ]
+collision_detection_rules:
+  - disabled_link_chain_level: 3
 
 body_handlers: GRobotHandler
