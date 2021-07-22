@@ -263,6 +263,7 @@ BodyItem::Impl::Impl(BodyItem* self, Body* body, bool isSharingShapes)
       body(body),
       isBeingRestored(false),
       isSharingShapes(isSharingShapes),
+      isLocationEditable(true),
       sigKinematicStateChanged([this](){ emitSigKinematicStateChanged(); })
 {
 
@@ -284,7 +285,6 @@ BodyItem::Impl::Impl(BodyItem* self, const Impl& org)
     : Impl(self, org.body->clone(), true)
 {
     isAttachmentEnabled = org.isAttachmentEnabled;
-    isLocationEditable = true;
     transparency = org.transparency;
     zmp = org.zmp;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
