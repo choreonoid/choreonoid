@@ -1,15 +1,11 @@
 #include "ItemAddon.h"
+#include "ItemManager.h"
 
+using namespace std;
 using namespace cnoid;
 
 
 ItemAddon::ItemAddon()
-{
-    ownerItem_ = nullptr;
-}
-
-
-ItemAddon::ItemAddon(const ItemAddon& org)
 {
     ownerItem_ = nullptr;
 }
@@ -22,6 +18,12 @@ bool ItemAddon::setOwnerItem(Item* item)
 }
 
 
+bool ItemAddon::assign(const ItemAddon* /* srcAddon */)
+{
+    return false;
+}
+
+
 Item* ItemAddon::ownerItem()
 {
     return ownerItem_;
@@ -30,12 +32,21 @@ Item* ItemAddon::ownerItem()
 
 bool ItemAddon::store(Archive& archive)
 {
-    return true;
+    return false;
 }
 
 
 bool ItemAddon::restore(const Archive& archive)
 {
-    return true;
+    return false;
 }
 
+
+const std::string& ItemAddon::name() const
+{
+    if(name_.empty()){
+        string moduleName;
+        ItemManager::getAddonIdentifier(this, moduleName, name_);
+    }
+    return name_;
+}

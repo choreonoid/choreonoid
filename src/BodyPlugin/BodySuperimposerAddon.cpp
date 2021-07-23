@@ -109,6 +109,16 @@ void BodySuperimposerAddon::Impl::setBodyItem(BodyItem* bodyItem)
 }
 
 
+bool BodySuperimposerAddon::assign(const ItemAddon* srcAddon)
+{
+    if(auto srcSuperimposer = dynamic_cast<const BodySuperimposerAddon*>(srcAddon)){
+        impl->setTransparency(srcSuperimposer->impl->transparency);
+        return true;
+    }
+    return false;
+}
+
+
 void BodySuperimposerAddon::Impl::updateSuperimposedBodies()
 {
     if(!needToCheckSuperimposedBodies){

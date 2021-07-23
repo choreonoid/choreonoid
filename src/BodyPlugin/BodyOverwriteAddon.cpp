@@ -51,11 +51,8 @@ BodyOverwriteAddon::Impl::Impl(BodyOverwriteAddon* self)
 bool BodyOverwriteAddon::setOwnerItem(Item* item)
 {
     impl->bodyItem = dynamic_cast<BodyItem*>(item);
-    if(impl->bodyItem){
-        ItemAddon::setOwnerItem(item);
-        return true;
-    }
-    return false;
+    ItemAddon::setOwnerItem(impl->bodyItem);
+    return bool(impl->bodyItem);
 }
 
 
@@ -244,17 +241,3 @@ void BodyOverwriteAddon::clearOverwriteItems()
         item->removeFromParentItem();
     }
 }
-
-
-bool BodyOverwriteAddon::store(Archive& archive)
-{
-    return false;
-}
-
-
-bool BodyOverwriteAddon::restore(const Archive& archive)
-{
-    return true;
-}
-
-

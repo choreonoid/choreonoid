@@ -185,7 +185,7 @@ public:
     bool setCollisionDetectionEnabled(bool on);
     bool setSelfCollisionDetectionEnabled(bool on);
     void updateCollisionDetectorLater();
-    void doAssign(Item* srcItem);
+    bool doAssign(const Item* srcItem);
     void setLocationEditable(bool on, bool updateInitialPositionWhenLocked);
     void createSceneBody();
     void setTransparency(float t);
@@ -353,56 +353,59 @@ Item* BodyItem::doDuplicate() const
 }
 
 
-void BodyItem::doAssign(Item* srcItem)
+bool BodyItem::doAssign(const Item* srcItem)
 {
-    Item::doAssign(srcItem);
-    impl->doAssign(srcItem);
+    return impl->doAssign(srcItem);
 }
 
 
-void BodyItem::Impl::doAssign(Item* srcItem)
+bool BodyItem::Impl::doAssign(const Item* srcItem)
 {
-    BodyItem* srcBodyItem = dynamic_cast<BodyItem*>(srcItem);
+    const BodyItem* srcBodyItem = dynamic_cast<const BodyItem*>(srcItem);
 
-    if(srcBodyItem){
-        auto srcImpl = srcBodyItem->impl;
-        isAttachmentEnabled = srcImpl->isAttachmentEnabled;
-        isLocationEditable = srcImpl->isLocationEditable;
-        transparency = srcImpl->transparency;
-        zmp = srcImpl->zmp;
-        isCollisionDetectionEnabled = srcImpl->isCollisionDetectionEnabled;
-        isSelfCollisionDetectionEnabled = srcImpl->isSelfCollisionDetectionEnabled;
-        
-        // copy the base link property
-        Link* baseLink = nullptr;
-        Link* srcBaseLink = srcBodyItem->currentBaseLink();
-        if(srcBaseLink){
-            baseLink = body->link(srcBaseLink->name());
-            if(baseLink){
-                setCurrentBaseLink(baseLink);
-            }
-        }
-        // copy the current kinematic state
-        Body* srcBody = srcBodyItem->body();
-        for(int i=0; i < srcBody->numLinks(); ++i){
-            Link* srcLink = srcBody->link(i);
-            Link* link = body->link(srcLink->name());
-            if(link){
-                link->q() = srcLink->q();
-            }
-        }
-        if(baseLink){
-            baseLink->p() = srcBaseLink->p();
-            baseLink->R() = srcBaseLink->R();
-        } else {
-            body->rootLink()->p() = srcBody->rootLink()->p();
-            body->rootLink()->R() = srcBody->rootLink()->R();
-        }
-
-        initialState = srcImpl->initialState;
-        
-        self->notifyKinematicStateChange(true);
+    if(!srcBodyItem){
+        return false;
     }
+    
+    auto srcImpl = srcBodyItem->impl;
+    isAttachmentEnabled = srcImpl->isAttachmentEnabled;
+    isLocationEditable = srcImpl->isLocationEditable;
+    transparency = srcImpl->transparency;
+    zmp = srcImpl->zmp;
+    isCollisionDetectionEnabled = srcImpl->isCollisionDetectionEnabled;
+    isSelfCollisionDetectionEnabled = srcImpl->isSelfCollisionDetectionEnabled;
+    
+    // copy the base link property
+    Link* baseLink = nullptr;
+    Link* srcBaseLink = srcBodyItem->currentBaseLink();
+    if(srcBaseLink){
+        baseLink = body->link(srcBaseLink->name());
+        if(baseLink){
+            setCurrentBaseLink(baseLink);
+        }
+    }
+    // copy the current kinematic state
+    Body* srcBody = srcBodyItem->body();
+    for(int i=0; i < srcBody->numLinks(); ++i){
+        Link* srcLink = srcBody->link(i);
+        Link* link = body->link(srcLink->name());
+        if(link){
+            link->q() = srcLink->q();
+        }
+    }
+    if(baseLink){
+        baseLink->p() = srcBaseLink->p();
+        baseLink->R() = srcBaseLink->R();
+    } else {
+        body->rootLink()->p() = srcBody->rootLink()->p();
+        body->rootLink()->R() = srcBody->rootLink()->R();
+    }
+    
+    initialState = srcImpl->initialState;
+    
+    self->notifyKinematicStateChange(true);
+
+    return true;
 }
 
 

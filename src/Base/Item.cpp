@@ -15,6 +15,7 @@
 #include <cnoid/ValueTree>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
+#include <fmt/format.h>
 #include <typeinfo>
 #include <bitset>
 #include <vector>
@@ -105,6 +106,7 @@ public:
     Impl(Item* self, const Impl& org);
     void initialize();
     ~Impl();
+    void assignAddons(const Item* srcItem);
     void notifyNameChange(const std::string& oldName);
     void setSelected(bool on, bool forceToNotify, bool doEmitSigSelectedItemsChangedLater);
     bool setSubTreeItemsSelectedIter(Item* item, bool on);
@@ -135,6 +137,8 @@ public:
     static void emitSigSubTreeChanged();
     void emitSigDisconnectedFromRootForSubTree();
     bool traverse(Item* item, const std::function<bool(Item*)>& pred);
+    void removeAddon(ItemAddon* addon, bool isMoving);
+    ItemAddon* createAddon(const std::type_info& type);
 };
 
 }
@@ -246,20 +250,46 @@ Item* Item::createNewInstance() const
 }
 
 
-void Item::assign(Item* srcItem)
+bool Item::assign(const Item* srcItem)
 {
-    doAssign(srcItem);
-    
-    RootItem* rootItem = findRootItem();
-    if(rootItem){
-        rootItem->emitSigItemAssinged(this, srcItem);
+    bool assigned = doAssign(srcItem);
+
+    if(assigned){
+        impl->assignAddons(srcItem);
+ 
+        RootItem* rootItem = findRootItem();
+        if(rootItem){
+            rootItem->emitSigItemAssinged(this, srcItem);
+        }
+    }
+
+    return assigned;
+}
+
+
+void Item::Impl::assignAddons(const Item* srcItem)
+{
+    for(auto& kv : srcItem->impl->addonMap){
+        const ItemAddon* srcAddon = kv.second;
+        auto existingAddon = self->findAddon(typeid(*srcAddon));
+        ItemAddonPtr addon = existingAddon;
+        if(!addon){
+            addon = createAddon(typeid(*srcAddon));
+        }
+        if(addon){
+            if(!addon->assign(srcAddon)){
+                if(!existingAddon){
+                    removeAddon(addon, false);
+                }
+            }
+        }
     }
 }
 
 
-void Item::doAssign(Item* srcItem)
+bool Item::doAssign(const Item* /* srcItem */)
 {
-    
+    return false;
 }
 
 
@@ -272,6 +302,9 @@ Item* Item::duplicate(Item* duplicatedParentItem) const
     if(duplicated && (typeid(*duplicated) != typeid(*this))){
         delete duplicated;
         duplicated = nullptr;
+    }
+    if(duplicated){
+        duplicated->impl->assignAddons(this);
     }
     return duplicated;
 }
@@ -1334,16 +1367,16 @@ SignalProxy<void()> Item::sigUpdated()
 
 bool Item::setAddon(ItemAddon* addon)
 {
-    bool accepted = false;
+    ItemAddonPtr holder;
     if(auto owner = addon->ownerItem()){
         if(owner == this){
-            accepted = true;
+            return true;
         } else {
-            owner->removeAddon(addon);
+            holder = addon;
+            owner->impl->removeAddon(addon, true);
         }
-    } else {
-        accepted = addon->setOwnerItem(this);
     }
+    bool accepted = addon->setOwnerItem(this);
     if(accepted){
         impl->addonMap[typeid(*addon)] = addon;
     }
@@ -1353,16 +1386,25 @@ bool Item::setAddon(ItemAddon* addon)
 
 void Item::removeAddon(ItemAddon* addon)
 {
+    impl->removeAddon(addon, false);
+}
+
+
+void Item::Impl::removeAddon(ItemAddon* addon, bool isMoving)
+{
     if(auto owner = addon->ownerItem()){
-        if(owner == this){
-            impl->addonMap.erase(typeid(*addon));
-            addon->setOwnerItem(nullptr);
+        if(owner == self){
+            ItemAddonPtr holder = addon;
+            addonMap.erase(typeid(*addon));
+            if(!isMoving){
+                addon->setOwnerItem(nullptr);
+            }
         }
     }
 }
 
 
-ItemAddon* Item::findAddon_(const std::type_info& type)
+ItemAddon* Item::findAddon(const std::type_info& type)
 {
     auto p = impl->addonMap.find(type);
     if(p != impl->addonMap.end()){
@@ -1372,15 +1414,28 @@ ItemAddon* Item::findAddon_(const std::type_info& type)
 }
 
 
-ItemAddon* Item::getAddon_(const std::type_info& type)
+const ItemAddon* Item::findAddon(const std::type_info& type) const
 {
-    ItemAddonPtr addon = findAddon_(type);
+    return const_cast<Item*>(this)->findAddon(type);
+}
+
+
+ItemAddon* Item::getAddon(const std::type_info& type)
+{
+    auto addon = findAddon(type);
     if(!addon){
-        addon = ItemManager::createAddon(type);
-        if(addon){
-            if(!setAddon(addon)){
-                addon.reset();
-            }
+        addon = impl->createAddon(type);
+    }
+    return addon;
+}
+
+
+ItemAddon* Item::Impl::createAddon(const std::type_info& type)
+{
+    ItemAddonPtr addon = ItemManager::createAddon(type);
+    if(addon){
+        if(!self->setAddon(addon)){
+            addon.reset();
         }
     }
     return addon;
@@ -1390,6 +1445,17 @@ ItemAddon* Item::getAddon_(const std::type_info& type)
 std::vector<ItemAddon*> Item::addons()
 {
     std::vector<ItemAddon*> addons_;
+    addons_.reserve(impl->addonMap.size());
+    for(auto& kv : impl->addonMap){
+        addons_.push_back(kv.second);
+    }
+    return addons_;
+}
+
+
+std::vector<const ItemAddon*> Item::addons() const
+{
+    std::vector<const ItemAddon*> addons_;
     addons_.reserve(impl->addonMap.size());
     for(auto& kv : impl->addonMap){
         addons_.push_back(kv.second);
@@ -1608,6 +1674,16 @@ void Item::putProperties(PutPropertyFunction& putProperty)
 
     if(!impl->filePath.empty()){
         putProperty(_("File"), FilePathProperty(impl->filePath));
+    }
+
+    int addonIndex = 0;
+    for(auto& kv : impl->addonMap){
+        ItemAddon* addon = kv.second;
+        if(impl->addonMap.size() == 1){
+            putProperty(_("Addon"), addon->name());
+        } else {
+            putProperty(fmt::format(_("Addon {0}"), addonIndex++ + 1), addon->name());
+        }
     }
 
     putProperty(_("Num children"), numChildren_);

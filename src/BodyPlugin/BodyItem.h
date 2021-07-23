@@ -191,7 +191,7 @@ public:
 
 protected:
     virtual Item* doDuplicate() const override;
-    virtual void doAssign(Item* item) override;
+    virtual bool doAssign(const Item* item) override;
     virtual void onTreePathChanged() override;
     virtual void onConnectedToRoot() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;

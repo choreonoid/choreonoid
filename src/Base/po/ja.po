@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-19 23:58+0900\n"
+"POT-Creation-Date: 2021-07-23 20:34+0900\n"
 "PO-Revision-Date: 2011-11-12 11:42+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -205,7 +205,7 @@ msgstr "ポイントセットアイテム"
 msgid "Point Cloud (PCD)"
 msgstr "ポイントクラウド(PCD)"
 
-#: PointSetItem.cpp:527 SceneItem.cpp:161 MainWindow.cpp:232 Item.cpp:1603
+#: PointSetItem.cpp:527 SceneItem.cpp:161 MainWindow.cpp:232 Item.cpp:1647
 msgid "File"
 msgstr "ファイル"
 
@@ -338,27 +338,27 @@ msgstr ""
 " \"{}\" は既存のファイルです．\n"
 " 上書きしてもよいですか？"
 
-#: MessageLogItem.cpp:157
+#: MessageLogItem.cpp:156
 msgid "Couldn't open file \"{}\" for writing.\n"
 msgstr "\"{}\"は書き込み用ファイルとして開けません．\n"
 
-#: MessageLogItem.cpp:160
+#: MessageLogItem.cpp:159
 msgid "Opened file \"{}\" for writing.\n"
 msgstr "\"{}\"を書き込み用ファイルとして開きました．\n"
 
-#: MessageLogItem.cpp:217
+#: MessageLogItem.cpp:214
 msgid "Message view log file (*.log)"
 msgstr "メッセージビューログファイル (*.log)"
 
-#: MessageLogItem.cpp:219
+#: MessageLogItem.cpp:216
 msgid "file name"
 msgstr "ファイル名"
 
-#: MessageLogItem.cpp:221
+#: MessageLogItem.cpp:218
 msgid "File mode"
 msgstr "ファイルモード"
 
-#: MessageLogItem.cpp:223
+#: MessageLogItem.cpp:220
 msgid "skip escapeSequence"
 msgstr "エスケープシーケンスをスキップ"
 
@@ -944,19 +944,19 @@ msgstr "スクリプトの実行"
 msgid "Add : "
 msgstr "追加 : "
 
-#: ItemTreePanelDialog.cpp:391
+#: ItemTreePanelDialog.cpp:392
 msgid "Unkown"
 msgstr "不明"
 
-#: ItemTreePanelDialog.cpp:399
+#: ItemTreePanelDialog.cpp:400
 msgid "There are no items to be configured."
 msgstr "設定対象のアイテムがありません．"
 
-#: ItemTreePanelDialog.cpp:401
+#: ItemTreePanelDialog.cpp:402
 msgid "No item is selected."
 msgstr "アイテムが選択されていません．"
 
-#: ItemTreePanelDialog.cpp:425
+#: ItemTreePanelDialog.cpp:426
 msgid "\"{0}\" is not a target item."
 msgstr "\"{0}\" は対象アイテムではありません．"
 
@@ -964,7 +964,7 @@ msgstr "\"{0}\" は対象アイテムではありません．"
 msgid "&Ok"
 msgstr "了解(&O)"
 
-#: MultiSeqItemCreationPanel.cpp:25 Item.cpp:1583
+#: MultiSeqItemCreationPanel.cpp:25 Item.cpp:1627
 msgid "Name"
 msgstr "名前"
 
@@ -1011,7 +1011,7 @@ msgstr ""
 msgid "Empty scene"
 msgstr ""
 
-#: ItemTreeView.cpp:35
+#: ItemTreeView.cpp:34
 msgid "Items"
 msgstr "アイテム"
 
@@ -2014,27 +2014,35 @@ msgstr "エラー："
 msgid "Warning: "
 msgstr "警告："
 
-#: Item.cpp:1593
+#: Item.cpp:1637
 msgid "Display name"
 msgstr "表示名"
 
-#: Item.cpp:1598
+#: Item.cpp:1642
 msgid "Class"
 msgstr "クラス"
 
-#: Item.cpp:1606
+#: Item.cpp:1654
+msgid "Addon"
+msgstr "アドオン"
+
+#: Item.cpp:1656
+msgid "Addon {0}"
+msgstr "アドオン{0}"
+
+#: Item.cpp:1660
 msgid "Num children"
 msgstr "子アイテムの数"
 
-#: Item.cpp:1607
+#: Item.cpp:1661
 msgid "Sub item?"
 msgstr "サブアイテム？"
 
-#: Item.cpp:1608
+#: Item.cpp:1662
 msgid "Temporal"
 msgstr "一時的"
 
-#: Item.cpp:1609
+#: Item.cpp:1663
 msgid "Refs"
 msgstr "参照数"
 
@@ -2236,7 +2244,7 @@ msgstr ""
 "アプリケーション設定ファイル \"{0}\" を読み込むことができません．\n"
 "{1}"
 
-#: ItemTreeWidget.cpp:1260
+#: ItemTreeWidget.cpp:1276
 msgid "The copied items cannot be pasted to \"{0}\"."
 msgstr "コピーされたアイテムを\"{0}\"にペーストできませんでした．"
 

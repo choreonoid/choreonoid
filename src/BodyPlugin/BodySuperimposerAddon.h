@@ -14,10 +14,11 @@ public:
     static void initializeClass(ExtensionManager* ext);
         
     BodySuperimposerAddon();
-    BodySuperimposerAddon(const BodySuperimposerAddon& org) = delete;
+    BodySuperimposerAddon(const BodySuperimposerAddon&) = delete;
     virtual ~BodySuperimposerAddon();
 
     virtual bool setOwnerItem(Item* item) override;
+    virtual bool assign(const ItemAddon* srcAddon) override;
 
     int numSuperimposedBodies() const;
     Body* superimposedBody(int index);

@@ -1146,7 +1146,7 @@ ItemAddon* ItemManager::createAddon(const std::string& moduleName, const std::st
 }
 
 
-bool ItemManager::getAddonIdentifier(ItemAddon* addon, std::string& out_moduleName, std::string& out_addonName)
+bool ItemManager::getAddonIdentifier(const ItemAddon* addon, std::string& out_moduleName, std::string& out_addonName)
 {
     bool result;
     auto p = addonTypeToInfoMap.find(typeid(*addon));

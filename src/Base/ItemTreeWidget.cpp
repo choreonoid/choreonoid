@@ -123,7 +123,7 @@ public:
     bool isItemUnderTreeWidgetInternalOperation(Item* item);
     void onSubTreeAddedOrMoved(Item* item);
     void onSubTreeRemoved(Item* item);
-    void onItemAssigned(Item* assigned, Item* srcItem);
+    void onItemAssigned(Item* assigned, const Item* srcItem);
 
     void getItemsIter(ItwItem* itwItem, ItemList<>& itemList);
     ItemList<> getSelectedItems() const;
@@ -408,7 +408,7 @@ void ItemTreeWidget::Impl::initialize()
 
     projectRootItemConnections.add(
         projectRootItem->sigItemAssigned().connect(
-            [&](Item* assigned, Item* srcItem){ onItemAssigned(assigned, srcItem); }));
+            [&](Item* assigned, const Item* srcItem){ onItemAssigned(assigned, srcItem); }));
 
     sigRowsAboutToBeRemoved().connect(
         [&](const QModelIndex& parent, int start, int end){
@@ -953,7 +953,7 @@ void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item)
 }
 
 
-void ItemTreeWidget::Impl::onItemAssigned(Item* assigned, Item* srcItem)
+void ItemTreeWidget::Impl::onItemAssigned(Item* assigned, const Item* srcItem)
 {
     if(findItwItem(assigned)){
         assigned->setSelected(srcItem->isSelected());

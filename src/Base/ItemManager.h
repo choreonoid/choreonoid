@@ -281,7 +281,7 @@ public:
     }
     static ItemAddon* createAddon(const std::type_info& type);
     static ItemAddon* createAddon(const std::string& moduleName, const std::string& addonName);
-    static bool getAddonIdentifier(ItemAddon* addon, std::string& out_moduleName, std::string& out_addonName);
+    static bool getAddonIdentifier(const ItemAddon* addon, std::string& out_moduleName, std::string& out_addonName);
 
     class Impl;
 

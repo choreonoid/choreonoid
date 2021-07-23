@@ -58,7 +58,7 @@ public:
     Item* createNewInstance() const;
 
     //! Copy item properties as much as possible like the assignment operator
-    void assign(Item* srcItem);
+    bool assign(const Item* srcItem);
 
     Item* duplicate(Item* duplicatedParentItem = nullptr) const;
 
@@ -323,14 +323,21 @@ public:
     SignalProxy<void()> sigUpdated();
 
     bool setAddon(ItemAddon* addon);
-    void removeAddon(ItemAddon* addon);
+    ItemAddon* findAddon(const std::type_info& type);
+    const ItemAddon* findAddon(const std::type_info& type) const;
     template<class AddonType> AddonType* findAddon(){
-        return static_cast<AddonType*>(findAddon_(typeid(AddonType)));
+        return static_cast<AddonType*>(findAddon(typeid(AddonType)));
     }
+    template<class AddonType> const AddonType* findAddon() const {
+        return static_cast<AddonType*>(findAddon(typeid(AddonType)));
+    }
+    ItemAddon* getAddon(const std::type_info& type);
     template<class AddonType> AddonType* getAddon(){
-        return static_cast<AddonType*>(getAddon_(typeid(AddonType)));
+        return static_cast<AddonType*>(getAddon(typeid(AddonType)));
     }
+    void removeAddon(ItemAddon* addon);
     std::vector<ItemAddon*> addons();
+    std::vector<const ItemAddon*> addons() const;
 
     /**
        This function loads the data of the item from a file by using a registered FileIO object.
@@ -398,7 +405,7 @@ public:
 protected:
 
     //! Implement the code to copy properties like the assingment operator
-    virtual void doAssign(Item* srcItem);
+    virtual bool doAssign(const Item* srcItem);
 
     //! Override this function to allow duplication of an instance.
     virtual Item* doDuplicate() const;
@@ -478,8 +485,6 @@ private:
         const std::string& path, std::function<bool(Item* item)> pred, bool isRecursive) const;
     ItemList<Item> getDescendantItems(std::function<bool(Item* item)> pred, bool isRecursive) const;
     void validateClassId() const;
-    ItemAddon* findAddon_(const std::type_info& type);
-    ItemAddon* getAddon_(const std::type_info& type);
 };
 
 #ifndef CNOID_BASE_MVOUT_DECLARED

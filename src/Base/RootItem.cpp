@@ -66,7 +66,7 @@ public:
     Signal<void(Item* item)> sigItemMoved;
     Signal<void(Item* item, bool isMoving)> sigSubTreeRemoving;
     Signal<void(Item* item, bool isMoving)> sigSubTreeRemoved;
-    Signal<void(Item* assigned, Item* srcItem)> sigItemAssigned;
+    Signal<void(Item* assigned, const Item* srcItem)> sigItemAssigned;
     Signal<void(Item* item, const std::string& oldName)> sigItemNameChanged;
 
     Impl(RootItem* self);
@@ -266,7 +266,7 @@ SignalProxy<void()> RootItem::sigTreeChanged()
 /**
    This signal is emitted when Item::asign() is called.
 */
-SignalProxy<void(Item* assigned, Item* srcItem)> RootItem::sigItemAssigned()
+SignalProxy<void(Item* assigned, const Item* srcItem)> RootItem::sigItemAssigned()
 {
     return impl->sigItemAssigned;
 }
@@ -318,7 +318,7 @@ void RootItem::notifyEventOnSubTreeRemoved(Item* item, bool isMoving)
 }
 
 
-void RootItem::emitSigItemAssinged(Item* assigned, Item* srcItem)
+void RootItem::emitSigItemAssinged(Item* assigned, const Item* srcItem)
 {
     impl->sigItemAssigned(assigned, srcItem);
 }
