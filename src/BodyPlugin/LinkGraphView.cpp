@@ -313,7 +313,7 @@ bool LinkGraphView::restoreState(const Archive& archive)
     if(graph.restoreState(archive)){
         const Listing& visibleElements = *archive.findListing("visibleElements");
         if(visibleElements.isValid()){
-            toggleConnections.block();
+            auto block = toggleConnections.scopedBlock();
             for(int i=0; i < 3; ++i){
                 xyzToggles[i].setChecked(false);
                 rpyToggles[i].setChecked(false);
@@ -326,7 +326,6 @@ bool LinkGraphView::restoreState(const Archive& archive)
                     rpyToggles[index-3].setChecked(true);
                 }
             }
-            toggleConnections.unblock();
         }
         return true;
     }

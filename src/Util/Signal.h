@@ -299,6 +299,7 @@ public:
     ScopedConnection& changeOrder(Connection::Order order) { connection_.changeOrder(order); return *this; }
     Connection& connection(){ return connection_; }
     const Connection& connection() const { return connection_; }
+    Connection::ScopedBlock scopedBlock(){ return connection_.scopedBlock(); }
 };
 
 

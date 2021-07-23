@@ -1251,7 +1251,7 @@ bool LinkPositionWidget::restoreState(const Archive& archive)
 
 bool LinkPositionWidget::Impl::restoreState(const Archive& archive)
 {
-    userInputConnections.block();
+    auto block = userInputConnections.scopedBlock();
     
     string symbol;
 
@@ -1267,8 +1267,6 @@ bool LinkPositionWidget::Impl::restoreState(const Archive& archive)
     }
 
     positionWidget->restoreState(archive);
-    
-    userInputConnections.unblock();
 
     return true;
 }

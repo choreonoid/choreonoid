@@ -677,12 +677,9 @@ void PositionWidget::restoreState(const Archive& archive)
 
 void PositionWidget::Impl::restoreState(const Archive& archive)
 {
-    userInputConnections.block();
-    
+    auto block = userInputConnections.scopedBlock();
     setRpyEnabled(archive.get("show_rpy", isRpyEnabled));
     archive.read("unique_rpy", isUniqueRpyMode);
     setQuaternionEnabled(archive.get("show_quoternion", isQuaternionEnabled));
     setRotationMatrixEnabled(archive.get("show_rotation_matrix", isRotationMatrixEnabled));
-
-    userInputConnections.unblock();
 }

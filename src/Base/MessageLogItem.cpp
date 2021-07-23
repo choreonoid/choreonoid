@@ -31,7 +31,7 @@ public:
 
     string filename;
     ofstream ofs;
-    Connection mvConnection;
+    ScopedConnection mvConnection;
     Selection fileMode;
     bool skipEscapeSequence;
 
@@ -98,7 +98,6 @@ MessageLogItemImpl::MessageLogItemImpl(MessageLogItem* self, const MessageLogIte
 
 MessageLogItemImpl::~MessageLogItemImpl()
 {
-    mvConnection.disconnect();
     ofs.close();
 }
 
@@ -123,15 +122,16 @@ void MessageLogItem::onConnectedToRoot()
 void MessageLogItemImpl::startWriting()
 {
     openFile();
-
-    mvConnection = mv->sigMessage().connect([&](const std::string& text){ onMessageOut(text); });
-
+    
+    if(!mvConnection.connected()){
+        mvConnection = mv->sigMessage().connect([&](const std::string& text){ onMessageOut(text); });
+    }
 }
 
 
 void MessageLogItemImpl::openFile()
 {
-    mvConnection.block();
+    auto block = mvConnection.scopedBlock();
 
     if(ofs.is_open()){
         ofs.close();
@@ -146,7 +146,6 @@ void MessageLogItemImpl::openFile()
                 _("Confirm"),
                 format(_(" \"{}\" already exists.\n Do you want to replace it? " ), filename));
             if(!ok){
-                mvConnection.unblock();
                 return;
             }
         }
@@ -159,8 +158,6 @@ void MessageLogItemImpl::openFile()
     }else{
         mv->putln(format(_("Opened file \"{}\" for writing.\n"), filename));
     }
-
-    mvConnection.unblock();
 }
 
 
