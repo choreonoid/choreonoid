@@ -19,7 +19,11 @@ public:
     void insertOptionPanel(QWidget* panel);
 
     SignalProxy<void(int index)> sigFilterSelected();
-    SignalProxy<bool(int result), LogicalProduct> sigAboutToFinished();
+    SignalProxy<bool(int result), LogicalProduct> sigAboutToFinish();
+    [[deprecated("Use sigAboutToFinish")]]
+    SignalProxy<bool(int result), LogicalProduct> sigAboutToFinished(){
+        return sigAboutToFinish();
+    }
 
     virtual int exec() override;
     

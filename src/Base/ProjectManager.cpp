@@ -100,7 +100,7 @@ public:
     void openDialogToLoadProject();
     void openDialogToSaveProject();
     std::string getSaveFilename(FileDialog& dialog);
-    bool onSaveDialogAboutToFinished(FileDialog& dialog, int result);
+    bool onSaveDialogAboutToFinish(FileDialog& dialog, int result);
 
     void onPerspectiveCheckToggled(bool on);
         
@@ -840,8 +840,8 @@ void ProjectManager::Impl::openDialogToSaveProject()
         dialog.selectFile(currentProjectName);
     }
 
-    dialog.sigAboutToFinished().connect(
-        [&](int result){ return onSaveDialogAboutToFinished(dialog, result); });
+    dialog.sigAboutToFinish().connect(
+        [&](int result){ return onSaveDialogAboutToFinish(dialog, result); });
 
     if(dialog.exec() == QDialog::Accepted){
         saveProject(getSaveFilename(dialog));
@@ -866,7 +866,7 @@ std::string ProjectManager::Impl::getSaveFilename(FileDialog& dialog)
 }
 
 
-bool ProjectManager::Impl::onSaveDialogAboutToFinished(FileDialog& dialog, int result)
+bool ProjectManager::Impl::onSaveDialogAboutToFinish(FileDialog& dialog, int result)
 {
     bool finished = true;
     if(result == QFileDialog::Accepted){

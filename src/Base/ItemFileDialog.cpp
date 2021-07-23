@@ -43,7 +43,7 @@ public:
     std::string getSaveFilename();
     bool initializeFileIoFilters();
     void setTargetFileIO(int index, bool doSelectNameFilter);
-    bool onFileDialogFinished(int result);
+    bool onFileDialogAboutToFinish(int result);
 };
 
 }
@@ -83,8 +83,8 @@ ItemFileDialog::Impl::Impl(ItemFileDialog* self)
         self->sigFilterSelected().connect(
             [this](int index){ setTargetFileIO(index, false); });
 
-    self->sigAboutToFinished().connect(
-        [this](int result){ return onFileDialogFinished(result); });
+    self->sigAboutToFinish().connect(
+        [this](int result){ return onFileDialogAboutToFinish(result); });
 
     isExportMode = false;
 }
@@ -426,7 +426,7 @@ void ItemFileDialog::Impl::setTargetFileIO(int index, bool doSelectNameFilter)
 }
 
 
-bool ItemFileDialog::Impl::onFileDialogFinished(int result)
+bool ItemFileDialog::Impl::onFileDialogAboutToFinish(int result)
 {
     bool finished = true;
     

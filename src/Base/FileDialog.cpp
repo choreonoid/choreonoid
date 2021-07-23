@@ -40,7 +40,7 @@ public:
     FileDialog* self;
     QBoxLayout* optionPanelBox;
     stdx::optional<Signal<void(int index)>> sigFilterSelected;
-    Signal<bool(int result), LogicalProduct> sigAboutToFinished;
+    Signal<bool(int result), LogicalProduct> sigAboutToFinish;
     
     Impl(FileDialog* self);
     void updatePresetDirectories();    
@@ -217,9 +217,9 @@ void FileDialog::selectNameFilter(int index)
 }
 
 
-SignalProxy<bool(int result), LogicalProduct> FileDialog::sigAboutToFinished()
+SignalProxy<bool(int result), LogicalProduct> FileDialog::sigAboutToFinish()
 {
-    return impl->sigAboutToFinished;
+    return impl->sigAboutToFinish;
 }
 
 
@@ -232,7 +232,7 @@ int FileDialog::exec()
 
 void FileDialog::Impl::onFinished(int result)
 {
-    if(sigAboutToFinished(result)){
+    if(sigAboutToFinish(result)){
         if(result == QFileDialog::Accepted){
             storeRecentDirectories();
         }
