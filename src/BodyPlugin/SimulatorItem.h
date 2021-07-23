@@ -111,6 +111,7 @@ public:
     //! This can be called from non simulation threads
     double simulationTime() const;
     
+    SignalProxy<void()> sigSimulationAboutToBeStarted();
     SignalProxy<void()> sigSimulationStarted();
     SignalProxy<void()> sigSimulationPaused();
     SignalProxy<void()> sigSimulationResumed();

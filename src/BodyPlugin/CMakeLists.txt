@@ -7,6 +7,7 @@
 set(sources
   BodyPlugin.cpp
   WorldItem.cpp
+  BodyWorldAddon.cpp
   BodySelectionManager.cpp
   BodyItem.cpp
   BodyItemFileIO.cpp
@@ -70,6 +71,7 @@ set(sources
 
 set(headers
   WorldItem.h
+  BodyWorldAddon.h
   BodySelectionManager.h
   BodyItem.h
   BodyItemFileIO.h

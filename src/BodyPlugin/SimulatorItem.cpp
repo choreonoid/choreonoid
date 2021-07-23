@@ -294,6 +294,7 @@ public:
     bool doReset;
     bool isWaitingForSimulationToStop;
     bool isForcedToStopSimulation;
+    Signal<void()> sigSimulationAboutToBeStarted;
     Signal<void()> sigSimulationStarted;
     Signal<void()> sigSimulationPaused;
     Signal<void()> sigSimulationResumed;
@@ -1646,6 +1647,8 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
         return false;
     }
 
+    sigSimulationAboutToBeStarted();
+
     cloneMap.clear();
 
     currentFrame = 0;
@@ -2500,6 +2503,12 @@ std::string SimulatorItem::Impl::optionString() const
 std::ostream& SimulatorItem::Impl::os() const
 {
     return mv->cout();
+}
+
+
+SignalProxy<void()> SimulatorItem::sigSimulationAboutToBeStarted()
+{
+    return impl->sigSimulationAboutToBeStarted;
 }
 
 

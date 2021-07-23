@@ -5,6 +5,7 @@
 #include "BodyPlugin.h"
 #include "BodySelectionManager.h"
 #include "WorldItem.h"
+#include "BodyWorldAddon.h"
 #include "BodyItem.h"
 #include "LinkOffsetFrameListItem.h"
 #include "MaterialTableItem.h"
@@ -101,6 +102,7 @@ bool BodyPlugin::initialize()
     BodySelectionManager::initializeClass(this);
     
     WorldItem::initializeClass(this);
+    BodyWorldAddon::initializeClass(this);
     BodyItem::initializeClass(this);
     LinkOffsetFrameListItem::initializeClass(this);
     MaterialTableItem::initializeClass(this);
