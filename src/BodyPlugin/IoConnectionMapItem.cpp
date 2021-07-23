@@ -1,8 +1,9 @@
 #include "IoConnectionMapItem.h"
+#include "WorldItem.h"
+#include "BodyWorldAddon.h"
+#include "BodyItem.h"
 #include <cnoid/IoConnectionMap>
 #include <cnoid/DigitalIoDevice>
-#include <cnoid/WorldItem>
-#include <cnoid/BodyItem>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <unordered_map>
@@ -19,11 +20,12 @@ class IoConnectionMapItem::Impl
 public:
     IoConnectionMapItem* self;
     IoConnectionMapPtr connectionMap;
-    weak_ref_ptr<Item> lastOwnerItem;
 
     Impl(IoConnectionMapItem* self);
     Impl(IoConnectionMapItem* self, const Impl& org);
-    Item* findOwnerItem();
+    void updateIoDeviceInstances(bool enableWarningMessages);
+    void forEachIoDevice(
+        WorldItem* worldItem, std::function<void(BodyItem* bodyItem, DigitalIoDevice* device)> callback) const;
 };
 
 }
@@ -88,52 +90,49 @@ const IoConnectionMap* IoConnectionMapItem::connectionMap() const
 }
 
 
-Item* IoConnectionMapItem::Impl::findOwnerItem()
-{
-    Item* ownerItem = self->findOwnerItem<WorldItem>();
-    if(!ownerItem){
-        ownerItem = self->localRootItem();
-    }
-    return ownerItem;
-}
-
-
-void IoConnectionMapItem::onTreePathChanged()
-{
-    auto item = impl->lastOwnerItem.lock();
-    if(!item || item != impl->findOwnerItem()){
-        refreshIoDeviceInstances(true);
-    }
-}
-
-
 void IoConnectionMapItem::forEachIoDevice
 (std::function<void(BodyItem* bodyItem, DigitalIoDevice* device)> callback) const
 {
-    auto ownerItem = impl->findOwnerItem();
-    for(auto& bodyItem : ownerItem->descendantItems<BodyItem>()){
+    if(auto worldItem = findOwnerItem<WorldItem>()){
+        impl->forEachIoDevice(worldItem, callback);
+    }
+}
+
+
+void IoConnectionMapItem::Impl::forEachIoDevice
+(WorldItem* worldItem, std::function<void(BodyItem* bodyItem, DigitalIoDevice* device)> callback) const
+{
+    for(auto& bodyItem : worldItem->descendantItems<BodyItem>()){
         for(auto& device : bodyItem->body()->devices<DigitalIoDevice>()){
             callback(bodyItem, device);
         }
     }
-    impl->lastOwnerItem = ownerItem;
 }
 
 
-void IoConnectionMapItem::refreshIoDeviceInstances(bool enableWarningMessages)
+void IoConnectionMapItem::updateIoDeviceInstances(bool enableWarningMessages)
+{
+    impl->updateIoDeviceInstances(enableWarningMessages);
+}
+
+
+void IoConnectionMapItem::Impl::updateIoDeviceInstances(bool enableWarningMessages)
 {
     typedef unordered_map<string, DigitalIoDevice*> IoDeviceMap;
     typedef unordered_map<string, IoDeviceMap> IoDeviceMapMap;
     IoDeviceMapMap allIoDeviceMap;
     unordered_set<DigitalIoDevice*> availableDevices;
 
-    forEachIoDevice(
-        [&](BodyItem* bodyItem, DigitalIoDevice* device){
-            allIoDeviceMap[bodyItem->name()][device->name()] = device;
-            availableDevices.insert(device);
-        });
+    if(auto worldItem = self->findOwnerItem<WorldItem>()){
+        forEachIoDevice(
+            worldItem, 
+            [&](BodyItem* bodyItem, DigitalIoDevice* device){
+                allIoDeviceMap[bodyItem->name()][device->name()] = device;
+                availableDevices.insert(device);
+            });
+    }
 
-    for(auto& connection : *impl->connectionMap){
+    for(auto& connection : *connectionMap){
         for(int i=0; i < 2; ++i){
             auto device = connection->device(i);
             if(!device || availableDevices.find(device) == availableDevices.end()){
@@ -154,6 +153,7 @@ void IoConnectionMapItem::refreshIoDeviceInstances(bool enableWarningMessages)
             }
         }
     }
+
 }
 
 
@@ -165,9 +165,5 @@ bool IoConnectionMapItem::store(Archive& archive)
 
 bool IoConnectionMapItem::restore(const Archive& archive)
 {
-    if(impl->connectionMap->read(archive)){
-        archive.addPostProcess([&](){ refreshIoDeviceInstances(true);});
-        return true;
-    }
-    return false;
+    return impl->connectionMap->read(archive);
 }

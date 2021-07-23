@@ -24,14 +24,13 @@ public:
 
     void forEachIoDevice(std::function<void(BodyItem* bodyItem, DigitalIoDevice* device)> callback) const;
     
-    void refreshIoDeviceInstances(bool enableWarningMessages = true);
+    void updateIoDeviceInstances(bool enableWarningMessages = true);
 
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
 protected:
     virtual Item* doDuplicate() const override;
-    virtual void onTreePathChanged() override;
 
 private:
     class Impl;

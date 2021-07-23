@@ -144,11 +144,16 @@ bool KinematicSimulatorItem::Impl::initializeSimulation(const std::vector<Simula
 {
     /*
       This is a temporary implementation.
-      This should be implemented in IoConnectionMapItem as functions of SubSimulatorItem.
-      To achieve it, SubSimulatorItem must be an interface class that does not inherit the Item class,
-      or define another interface class that provides the functions similar to SubSimulatorItem.
+      This should be implemented in IoConnectionMapItem.
+      First of all, use BodyWorldAddon's sigSimulationAboutToBeStarted to detect a simulator item
+      that is about to start simulation. On the slot function, set a handler for doing the initialization
+      using a customization function like addPreDynamicsFunction.
+      The clone ioConnectionMap object for the simulation should be managed by SimulatorItem.
+      This can be achieved if SimulatorItem provides a function to accept a Referenced object to manage
+      during the simulation.
     */
     for(auto& item : self->worldItem()->descendantItems<IoConnectionMapItem>()){
+        item->updateIoDeviceInstances();
         auto connectionMap = self->cloneMap().getClone(item->connectionMap());
         connectionMap->establishConnections();
         ioConnectionMaps.push_back(connectionMap);
