@@ -35,14 +35,53 @@ protected:
     
 public:
     enum Attribute {
-        SubItem,
-        Attached,
-        Temporal,
-        LoadOnly,
-        NumAttributes,
+        /**
+           This attribute is set if the item is basically loaded from a file and the file does not
+           need to be modified by user operations on the item.
+           In that case, an item inherits the information on the original file when it is duplicated
+           from an existing item, and the information is stored as item data without confirmation
+           when the project is saved.
+        */
+        FileImmutable = 1 << 0,
+        
+        /**
+           This attribute is set if the role of the item is specified by the system and it works
+           with other items at a specific position in the item tree.
+           If the item has this attribute, changing the name or position of the item, or removing the item,
+           cannot be done interactively by a user on the item tree view.
+        */
+        Attached = 1 << 1,
+
+        SubItemAdditionalAttribute = 1 << 2,
+        
+        /**
+           This attribute is set if the item is a part of a composite item and is not the main (top) item of it.
+           The attribute first has the same attributes as Attached.
+           In addition to that, the state of the item is stored or restored as a part of the top item of the
+           corresponding composite item when the project save or load is performed.
+        */
+        SubItem = Attached | SubItemAdditionalAttribute,
+
+        /**
+           This attribute is set if the item is unique in a specific situation.
+           This attribute is first set to a singleton item instance, and may be set to non-singleton
+           item instance as well if the item is used in the above situation.
+           As a specific effect of this attribute, the operation of copying an instance is forbidden
+           to a user on the item tree view.
+        */
+        Unique = 1 << 3,
+
+        /**
+           This attribute is set if the item is temporarily generated item.
+           An item with this attribute is not stored or restored when a project is saved or loaded.
+        */
+        Temporal = 1 << 4,
+
+        // deprecated
         SUB_ITEM = SubItem,
         TEMPORAL = Temporal,
-        LOAD_ONLY = LoadOnly
+        LOAD_ONLY = FileImmutable,
+        LocaOnly = FileImmutable
     };
 
     virtual ~Item();
@@ -78,11 +117,16 @@ public:
     void notifyNameChange();
 
     void setAttribute(Attribute attribute);
+    void setAttributes(int attributes);
     void unsetAttribute(Attribute attribute);
     bool hasAttribute(Attribute attribute) const;
 
     bool isSubItem() const;
-    void setSubItemAttributes();
+
+    [[deprecated("Use setAttribute(Item::SubItem)")]]
+    void setSubItemAttributes(){
+        setAttribute(Item::SubItem);
+    }
 
     /**
        If this is true, the item is not automatically saved or overwritten

@@ -111,12 +111,21 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
     auto clearSelection = menu.addItem(_("Clear selection"));
 
     if(item){
-        cut->sigTriggered().connect(
-            [&](){ itemTreeWidget->cutSelectedItems(); });
-        copy1->sigTriggered().connect(
-            [&](){ itemTreeWidget->copySelectedItems(); });
-        copy2->sigTriggered().connect(
-            [&](){ itemTreeWidget->copySelectedItemsWithSubTrees(); });
+        if(itemTreeWidget->checkCuttable(item)){
+            cut->sigTriggered().connect(
+                [&](){ itemTreeWidget->cutSelectedItems(); });
+        } else {
+            cut->setEnabled(false);
+        }
+        if(itemTreeWidget->checkCopiable(item)){
+            copy1->sigTriggered().connect(
+                [&](){ itemTreeWidget->copySelectedItems(); });
+            copy2->sigTriggered().connect(
+                [&](){ itemTreeWidget->copySelectedItemsWithSubTrees(); });
+        } else {
+            copy1->setEnabled(false);
+            copy2->setEnabled(false);
+        }
         check->sigTriggered().connect(
             [&](){ itemTreeWidget->setSelectedItemsChecked(true); });
         uncheck->sigTriggered().connect(
@@ -144,8 +153,13 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
         clearSelection->setEnabled(false);
     }
 
-    paste->sigTriggered().connect(
-        [&](){ itemTreeWidget->pasteItems(); });
+    if(itemTreeWidget->checkPastable(item)){
+        paste->sigTriggered().connect(
+            [&](){ itemTreeWidget->pasteItems(); });
+    } else {
+        paste->setEnabled(false);
+    }
+
     selectAll->sigTriggered().connect(
         [=](){ itemTreeWidget->selectAllItems(); });
 }

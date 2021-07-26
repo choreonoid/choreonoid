@@ -327,7 +327,7 @@ CoordinateFrameItem* CoordinateFrameListItem::Impl::createFrameItem(CoordinateFr
 {
     CoordinateFrameItem* item = new CoordinateFrameItem(frame);
     if(itemizationMode == SubItemization || frameList->isDefaultFrameId(frame->id())){
-        item->setSubItemAttributes();
+        item->setAttribute(Item::SubItem);
     } else if(itemizationMode == IndependentItemization){
         item->setAttribute(Item::Attached);
     }

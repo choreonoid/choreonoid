@@ -17,7 +17,6 @@
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <typeinfo>
-#include <bitset>
 #include <vector>
 #include <map>
 #include <unordered_set>
@@ -77,7 +76,7 @@ class Item::Impl
 {
 public:
     Item* self;
-    bitset<NumAttributes> attributes;
+    unsigned int attributes;
     vector<bool> checkStates;
     std::function<std::string(const Item* item)> displayNameModifier;
     
@@ -96,11 +95,11 @@ public:
     map<int, Signal<void(bool on)>> checkIdToSignalMap;
 
     // for file overwriting management, mainly accessed by ItemManager::Impl
-    bool isConsistentWithFile;
     std::string filePath;
     std::string fileFormat;
     MappingPtr fileOptions;
     std::time_t fileModificationTime;
+    bool isConsistentWithFile;
 
     Impl(Item* self);
     Impl(Item* self, const Impl& org);
@@ -160,6 +159,7 @@ Item::Item(const std::string& name)
 Item::Impl::Impl(Item* self)
     : self(self)
 {
+    attributes = 0;
     initialize();
 }
 
@@ -172,16 +172,20 @@ Item::Item(const Item& org)
 
 
 Item::Impl::Impl(Item* self, const Impl& org)
-    : self(self),
-      attributes(org.attributes)
+    : self(self)
 {
-    initialize();
+    attributes = org.attributes & FileImmutable;
 
-    if(attributes[LoadOnly]){
+    initialize();
+    
+    if(attributes & FileImmutable){
         filePath = org.filePath;
         fileFormat = org.fileFormat;
-        fileOptions = org.fileOptions;
+        if(org.fileOptions){
+            fileOptions = org.fileOptions->clone()->toMapping();
+        }
         fileModificationTime = org.fileModificationTime;
+        isConsistentWithFile = org.isConsistentWithFile;
     }
 }
 
@@ -195,9 +199,6 @@ void Item::Impl::initialize()
     self->lastChild_ = nullptr;
     self->numChildren_ = 0;
     self->isSelected_ = false;
-
-    attributes.reset(SubItem);
-    attributes.reset(Temporal);
 
     isConsistentWithFile = false;
     fileModificationTime = 0;
@@ -405,44 +406,47 @@ void Item::notifyNameChange()
 
 bool Item::hasAttribute(Attribute attribute) const
 {
-    return impl->attributes[attribute];
+    return (impl->attributes & attribute) == attribute;
 }
 
 
 void Item::setAttribute(Attribute attribute)
 {
-    impl->attributes.set(attribute);
+    impl->attributes |= attribute;
+}
+
+
+void Item::setAttributes(int attributes)
+{
+    impl->attributes |= attributes;
 }
 
 
 void Item::unsetAttribute(Attribute attribute)
 {
-    impl->attributes.reset(attribute);
+    impl->attributes &= ~attribute;
 }
 
 
 bool Item::isSubItem() const
 {
-    return impl->attributes[SubItem];
-}
-
-
-void Item::setSubItemAttributes()
-{
-    impl->attributes.set(SubItem);
-    impl->attributes.set(Attached);
+    return hasAttribute(SubItem);
 }
 
 
 bool Item::isTemporal() const
 {
-    return impl->attributes[Temporal];
+    return hasAttribute(Temporal);
 }
 
 
 void Item::setTemporal(bool on)
 {
-    impl->attributes.set(Temporal, on);
+    if(on){
+        setAttribute(Temporal);
+    } else {
+        unsetAttribute(Temporal);
+    }
 }
 
 
@@ -659,14 +663,14 @@ bool Item::insertChildItem(Item* item, Item* nextItem, bool isManualOperation)
 
 bool Item::addSubItem(Item* item)
 {
-    item->setSubItemAttributes();
+    item->setAttribute(SubItem);
     return impl->doInsertChildItem(item, nullptr, false);
 }
 
 
 bool Item::insertSubItem(Item* item, Item* nextItem)
 {
-    item->setSubItemAttributes();
+    item->setAttribute(SubItem);
     return impl->doInsertChildItem(item, nextItem, false);
 }
 
@@ -719,7 +723,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
     }
     
     if(self->isTemporal()){
-        if(isManualOperation && !item->impl->attributes[SubItem]){
+        if(isManualOperation && !item->isSubItem()){
             self->setTemporal(false);
         }
     }
@@ -960,7 +964,7 @@ void Item::Impl::doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted
 
     justRemoveSelfFromParent();
 
-    attributes.reset(SubItem);
+    self->unsetAttribute(SubItem);
 
     self->onRemovedFromParent(prevParent, isParentBeingDeleted);
 

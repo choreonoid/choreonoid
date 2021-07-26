@@ -314,7 +314,7 @@ BodyItem::Impl::~Impl()
 
 void BodyItem::Impl::init(bool calledFromCopyConstructor)
 {
-    self->setAttribute(Item::LOAD_ONLY);
+    self->setAttribute(FileImmutable);
 
     kinematicsBar = KinematicsBar::instance();
     transparency = 0.0f;

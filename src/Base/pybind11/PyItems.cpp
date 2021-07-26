@@ -40,7 +40,6 @@ void exportPyItems(py::module m)
         .def("addChildItem", &Item::addChildItem, py::arg("item"), py::arg("isManualOperation") = false)
         .def("addSubItem", &Item::addSubItem)
         .def("isSubItem", &Item::isSubItem)
-        .def("setSubItemAttributes", &Item::setSubItemAttributes)
         .def("removeFromParentItem", &Item::removeFromParentItem)
         .def("insertChild",
              &Item::insertChild, py::arg("position"), py::arg("item"), py::arg("isManualOperation") = false)

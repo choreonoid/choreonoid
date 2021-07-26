@@ -139,7 +139,6 @@ public:
     void copySelectedItemsWithSubTrees();
     void cutSelectedItems();
     bool pasteItems(bool doCheckPositionAcceptance);
-    bool checkPastable(Item* pasteParentItem) const;
     void onTreeWidgetRowsAboutToBeRemoved(const QModelIndex& parent, int start, int end);
     void onTreeWidgetRowsInserted(const QModelIndex& parent, int start, int end);
     void revertItemPosition(Item* item);
@@ -240,7 +239,7 @@ ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
     if(widgetImpl->isCheckColumnShown){
         flags |= Qt::ItemIsUserCheckable;
     }
-    if(!item->isSubItem() && !item->hasAttribute(Item::Attached)){
+    if(!item->hasAttribute(Item::Attached)){
         flags |= Qt::ItemIsEditable | Qt::ItemIsDragEnabled;
     }
     setFlags(flags);
@@ -1271,7 +1270,7 @@ bool ItemTreeWidget::Impl::pasteItems(bool doCheckPositionAcceptance)
     if(parentItem && !copiedItems.empty()){
         bool isPastable = true;
         if(doCheckPositionAcceptance){
-            if(!checkPastable(parentItem)){
+            if(!self->checkPastable(parentItem)){
                 showWarningDialog(
                     format(_("The copied items cannot be pasted to \"{0}\"."),
                            parentItem->displayName()));
@@ -1297,15 +1296,24 @@ bool ItemTreeWidget::Impl::pasteItems(bool doCheckPositionAcceptance)
 }
 
 
-bool ItemTreeWidget::checkPastable(Item* pasteParentItem) const
+bool ItemTreeWidget::checkCuttable(Item* item) const
 {
-    return impl->checkPastable(pasteParentItem);
+    return !item->hasAttribute(Item::Attached);
 }
 
 
-bool ItemTreeWidget::Impl::checkPastable(Item* pasteParentItem) const
+bool ItemTreeWidget::checkCopiable(Item* item) const
 {
-    for(auto& item : copiedItems){
+    return !item->hasAttribute(Item::Unique);
+}
+
+
+bool ItemTreeWidget::checkPastable(Item* pasteParentItem) const
+{
+    if(impl->copiedItems.empty()){
+        return false;
+    }
+    for(auto& item : impl->copiedItems){
         if(!checkPositionAcceptance(item, pasteParentItem)){
             return false;
         }
