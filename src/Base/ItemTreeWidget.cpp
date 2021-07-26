@@ -805,8 +805,9 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
         return;
     }
 
-    bool isVisible = item->isOwnedBy(localRootItem) || (isRootItemVisible && item == localRootItem);
-    if(isVisible){
+    bool isVisible = false;
+
+    if(item->isOwnedBy(localRootItem) || (isRootItemVisible && (item == localRootItem))){
         visibilityFunction_isTopLevelItemCandidate = isTopLevelItemCandidate;
         visibilityFunction_result = true;
         visibilityFunctions.dispatch(item);
@@ -819,7 +820,7 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
         }
     } else {
         auto itwItem = findOrCreateItwItem(item);
-        bool isNewChildItem = parentTwItem->childCount() == 0;
+        bool isFirstNewChildItem = parentTwItem->childCount() == 0;
         auto nextItwItem = findNextItwItem(item, isTopLevelItemCandidate);
         if(nextItwItem){
             int index = parentTwItem->indexOfChild(nextItwItem);
@@ -829,7 +830,8 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
         }
         if(projectLoadingWithItemExpansionInfoStack.empty() ||
            !projectLoadingWithItemExpansionInfoStack.top()){
-            if(!parentTwItem->isExpanded() && isNewChildItem && !item->hasAttribute(Item::Attached)){
+            if(!parentTwItem->isExpanded() && isFirstNewChildItem &&
+               (!item->hasAttribute(Item::Attached) || item->hasAttribute(Item::Unique))){
                 parentTwItem->setExpanded(true);
             }
         }
@@ -875,6 +877,10 @@ ItwItem* ItemTreeWidget::Impl::findNextItwItemInSubTree(Item* item, bool doTrave
         }
         if(doTraverse){
             if(auto childItem = nextItem->childItem()){
+                found = findItwItem(childItem);
+                if(found){
+                    break;
+                }
                 found = findNextItwItemInSubTree(childItem, true);
                 if(found){
                     break;
