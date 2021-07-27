@@ -42,9 +42,10 @@ public:
 
     void setTransformIntegrationEnabled(bool on);
     bool isTransformIntegrationEnabled() const;
-
     void setAppearanceEnabled(bool on);
     bool isAppearanceEnabled() const;
+    void setMeshEnabled(bool on);
+    bool isMeshEnabled() const;
 
     //enum AngleUnit { Degree, Radian };
     //void setAngleUnit(AngleUnit unit);

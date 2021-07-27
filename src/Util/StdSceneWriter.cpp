@@ -33,6 +33,7 @@ public:
     bool isTransformIntegrationEnabled;
     bool isAppearanceEnabled;
     bool isReplacingExistingModelFile;
+    bool isMeshEnabled;
     int extModelFileMode;
     SgMaterialPtr defaultMaterial;
     FilePathVariableProcessorPtr pathVariableProcessor;
@@ -130,6 +131,7 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
     isTransformIntegrationEnabled = false;
     isAppearanceEnabled = true;
     isReplacingExistingModelFile = false;
+    isMeshEnabled = true;
     extModelFileMode = EmbedModels;
 
     os_ = &nullout();    
@@ -148,6 +150,7 @@ void StdSceneWriter::Impl::copyConfigurations(const Impl* org)
     isDegreeMode = org->isDegreeMode;
     isTransformIntegrationEnabled = org->isTransformIntegrationEnabled;
     isAppearanceEnabled = org->isAppearanceEnabled;
+    isMeshEnabled = org->isMeshEnabled;
     extModelFileMode = org->extModelFileMode;
     os_ = org->os_;
     if(org->yamlWriter){
@@ -277,6 +280,18 @@ void StdSceneWriter::setAppearanceEnabled(bool on)
 bool StdSceneWriter::isAppearanceEnabled() const
 {
     return impl->isAppearanceEnabled;
+}
+
+
+void StdSceneWriter::setMeshEnabled(bool on)
+{
+    impl->isMeshEnabled = on;
+}
+
+
+bool StdSceneWriter::isMeshEnabled() const
+{
+    return impl->isMeshEnabled;
 }
 
 
@@ -606,7 +621,7 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgShape* shape)
     } else {
         switch(mesh->primitiveType()){
         case SgMesh::MeshType:
-            if(!writeMesh(archive, mesh)){
+            if(!isMeshEnabled || !writeMesh(archive, mesh)){
                 archive.reset();
             }
             break;
