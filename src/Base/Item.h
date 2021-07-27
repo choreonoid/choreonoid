@@ -77,6 +77,11 @@ public:
         */
         Temporal = 1 << 4,
 
+        /**
+           This attribute is set to enable the reloading function for this item.
+        */
+        Reloadable = 1 << 5,
+
         // deprecated
         SUB_ITEM = SubItem,
         TEMPORAL = Temporal,

@@ -155,6 +155,7 @@ void PointSetItem::initializeClass(ExtensionManager* ext)
 
 PointSetItem::PointSetItem()
 {
+    setAttributes(FileImmutable | Reloadable);
     impl = new PointSetItemImpl(this);
     initialize();
 }

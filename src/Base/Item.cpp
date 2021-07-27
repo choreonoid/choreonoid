@@ -174,7 +174,7 @@ Item::Item(const Item& org)
 Item::Impl::Impl(Item* self, const Impl& org)
     : self(self)
 {
-    attributes = org.attributes & FileImmutable;
+    attributes = org.attributes & (FileImmutable | Reloadable);
 
     initialize();
     
@@ -1582,7 +1582,9 @@ bool Item::reload()
 {
     bool reloaded = false;
     
-    if(parentItem() && !isSubItem() && !filePath().empty() && !fileFormat().empty()){
+    if(hasAttribute(Reloadable) && !isSubItem() && isConnectedToRoot() &&
+       !filePath().empty() && !fileFormat().empty()) {
+
         ItemPtr reloadedItem = createNewInstance();
         if(reloadedItem){
             reloadedItem->setName(name());

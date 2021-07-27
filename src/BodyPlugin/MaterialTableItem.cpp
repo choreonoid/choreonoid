@@ -24,7 +24,7 @@ void MaterialTableItem::initializeClass(ExtensionManager* ext)
 
 MaterialTableItem::MaterialTableItem()
 {
-    setAttribute(FileImmutable);
+    setAttributes(FileImmutable | Reloadable);
     materialTable_ = new MaterialTable;
 }
 

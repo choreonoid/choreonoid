@@ -235,6 +235,7 @@ void BodyItem::initializeClass(ExtensionManager* ext)
 
 BodyItem::BodyItem()
 {
+    setAttributes(FileImmutable | Reloadable);
     impl = new Impl(this);
     impl->init(false);
     isAttachedToParentBody_ = false;
@@ -314,8 +315,6 @@ BodyItem::Impl::~Impl()
 
 void BodyItem::Impl::init(bool calledFromCopyConstructor)
 {
-    self->setAttribute(FileImmutable);
-
     kinematicsBar = KinematicsBar::instance();
     transparency = 0.0f;
     isFkRequested = isVelFkRequested = isAccFkRequested = false;

@@ -146,6 +146,7 @@ void MultiPointSetItem::initializeClass(ExtensionManager* ext)
 
 MultiPointSetItem::MultiPointSetItem()
 {
+    setAttributes(FileImmutable | Reloadable);
     impl = new Impl(this);
 }
 

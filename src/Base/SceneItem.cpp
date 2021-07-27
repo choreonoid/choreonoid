@@ -70,6 +70,7 @@ void SceneItem::initializeClass(ExtensionManager* ext)
 
 SceneItem::SceneItem()
 {
+    setAttributes(FileImmutable | Reloadable);
     topNode_ = new SgPosTransform;
     isLightweightRenderingEnabled_ = false;
 }

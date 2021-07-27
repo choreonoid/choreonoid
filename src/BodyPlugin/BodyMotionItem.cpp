@@ -164,6 +164,7 @@ void BodyMotionItem::addExtraSeqItemFactory
 BodyMotionItem::BodyMotionItem()
     : bodyMotion_(new BodyMotion())
 {
+    setAttribute(Reloadable);
     impl = new BodyMotionItemImpl(this);
     impl->initialize();
 }

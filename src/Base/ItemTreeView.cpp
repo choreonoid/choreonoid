@@ -94,17 +94,14 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
     auto copy1 = menu.addItem(_("Copy (single)"));
     auto copy2 = menu.addItem(_("Copy (sub tree)"));
     auto paste = menu.addItem(_("Paste"));
-
     menu.addSeparator();
     
     auto check = menu.addItem(_("Check"));
     auto uncheck = menu.addItem(_("Uncheck"));
     auto toggleCheck = menu.addItem(_("Toggle checks"));
-
     menu.addSeparator();
 
     auto reload = menu.addItem(_("Reload"));
-
     menu.addSeparator();
     
     auto selectAll = menu.addItem(_("Select all"));
@@ -133,12 +130,16 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
         toggleCheck->sigTriggered().connect(
             [&](){ itemTreeWidget->toggleSelectedItemChecks(); });
 
-        reload->sigTriggered().connect(
-            [&](){
-                for(auto& item : itemTreeWidget->getSelectedItems()){
-                    item->reload();
-                }
-            });
+        if(item->hasAttribute(Item::Reloadable)){
+            reload->sigTriggered().connect(
+                [&](){
+                    for(auto& item : itemTreeWidget->getSelectedItems()){
+                        item->reload();
+                    }
+                });
+        } else {
+            reload->setEnabled(false);
+        }
 
         clearSelection->sigTriggered().connect(
             [=](){ itemTreeWidget->clearSelection(); });
