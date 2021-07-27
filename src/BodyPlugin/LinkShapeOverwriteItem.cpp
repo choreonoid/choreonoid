@@ -405,6 +405,8 @@ bool LinkShapeOverwriteItem::store(Archive& archive)
         }
         StdSceneWriter sceneWriter;
         sceneWriter.setFilePathVariableProcessor(archive.filePathVariableProcessor());
+        // Temporary configuration. The mesh outout should be enabled if it is explicitly specified.
+        sceneWriter.setMeshEnabled(false);
 
         string uri, absoluteUri;
         auto mesh = impl->shapeNode->mesh();
