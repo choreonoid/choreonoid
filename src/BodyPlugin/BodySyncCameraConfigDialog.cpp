@@ -51,12 +51,14 @@ public:
     ScopedConnection cameraConnection;
 
     Impl(BodySyncCameraConfigDialog* self);
-    void configureCameraItem(BodySyncCameraItem* cameraItem);
+    void showToConfigureCameraItem(BodySyncCameraItem* cameraItem);
     void setCameraItem(BodySyncCameraItem* cameraItem);
     void updateWidgetsWithCurrentCameraStates();
     void setVectorElementSpins(const Vector3& v, LengthSpinBox spins[]);
     void setVectorElementSpins(const Vector3& v, DoubleSpinBox spins[]);
     void onNameEditingFinished(const std::string& name);
+    void alignWithBuiltinCamera();
+    void alignWithTargetOrigin();
     void onCameraPositionSpinValueChanged();
     void onFieldOfViewSpinValueChanged(double fov);
     void onClipDistanceSpinValueChanged();
@@ -99,6 +101,21 @@ BodySyncCameraConfigDialog::Impl::Impl(BodySyncCameraConfigDialog* self)
     hbox->addWidget(&nameEdit);
     vbox->addLayout(hbox);
 
+    hbox = new QHBoxLayout;
+    auto alignVBox = new QVBoxLayout;
+    auto alignButton1 = new PushButton(_("Align with the builtin camera"));
+    alignButton1->sigClicked().connect(
+        [&](){ alignWithBuiltinCamera(); });
+    alignVBox->addWidget(alignButton1);
+    auto alignButton2 = new PushButton(_("Align with the target origin"));
+    alignButton2->sigClicked().connect(
+        [&](){ alignWithTargetOrigin(); });
+    alignVBox->addWidget(alignButton2);
+    hbox->addStretch();
+    hbox->addLayout(alignVBox);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+    
     hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Coordinate System:")));
     globalRadio.setText(_("Global"));
@@ -218,7 +235,7 @@ BodySyncCameraConfigDialog::~BodySyncCameraConfigDialog()
 }
 
 
-BodySyncCameraItem* BodySyncCameraConfigDialog::createCameraItem(BodyItem* bodyItem, Link* link)
+BodySyncCameraItem* BodySyncCameraConfigDialog::showToCreateCameraItem(BodyItem* bodyItem, Link* link)
 {
     setWindowTitle(_("Camera Creation"));
     
@@ -239,20 +256,20 @@ BodySyncCameraItem* BodySyncCameraConfigDialog::createCameraItem(BodyItem* bodyI
 
     bodyItem->addChildItem(cameraItem);
 
-    impl->configureCameraItem(cameraItem);
+    impl->showToConfigureCameraItem(cameraItem);
 
     return cameraItem;
 }
 
 
-void BodySyncCameraConfigDialog::configureCameraItem(BodySyncCameraItem* cameraItem)
+void BodySyncCameraConfigDialog::showToConfigureCameraItem(BodySyncCameraItem* cameraItem)
 {
     setWindowTitle(_("Camera Configuration"));
-    impl->configureCameraItem(cameraItem);
+    impl->showToConfigureCameraItem(cameraItem);
 }
 
 
-void BodySyncCameraConfigDialog::Impl::configureCameraItem(BodySyncCameraItem* cameraItem)
+void BodySyncCameraConfigDialog::Impl::showToConfigureCameraItem(BodySyncCameraItem* cameraItem)
 {
     setCameraItem(cameraItem);
     self->show();
@@ -334,6 +351,33 @@ void BodySyncCameraConfigDialog::Impl::onNameEditingFinished(const std::string& 
 }
 
 
+void BodySyncCameraConfigDialog::Impl::alignWithBuiltinCamera()
+{
+    auto sceneWidget = SceneView::instance()->sceneWidget();
+
+    auto builtin = sceneWidget->builtinPerspectiveCamera();
+    auto camera = cameraItem->perspectiveCamera();
+    camera->setNearClipDistance(builtin->nearClipDistance());
+    camera->setFarClipDistance(builtin->farClipDistance());
+    camera->setFieldOfView(builtin->fieldOfView());
+    
+    auto transform = cameraItem->cameraTransform();
+    transform->setPosition(sceneWidget->builtinCameraTransform()->position());
+
+    camera->notifyUpdate();
+    globalRadio.setChecked(true);
+}
+
+
+void BodySyncCameraConfigDialog::Impl::alignWithTargetOrigin()
+{
+    auto transform = cameraItem->cameraTransform();
+    transform->setPosition(cameraItem->targetLinkPosition());
+    transform->notifyUpdate();
+    localRadio.setChecked(true);
+}
+
+
 void BodySyncCameraConfigDialog::Impl::onCameraPositionSpinValueChanged()
 {
     cameraConnection.block();
@@ -387,8 +431,14 @@ void BodySyncCameraConfigDialog::Impl::onInteractiveViewpointChangeToggled(bool 
 
 void BodySyncCameraConfigDialog::Impl::onSceneViewActivationChecked(bool on)
 {
-    auto camera = cameraItem->perspectiveCamera();
     auto renderer = SceneView::instance()->sceneWidget()->renderer();
+
+    if(on && !cameraItem->isChecked()){
+        cameraItem->setChecked(true);
+        renderer->extractPreprocessedNodes();
+    }
+    
+    auto camera = cameraItem->perspectiveCamera();
     auto currentCamera = renderer->currentCamera();
 
     if(on){

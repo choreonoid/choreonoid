@@ -17,8 +17,8 @@ public:
 
     static BodySyncCameraConfigDialog* instance();
 
-    BodySyncCameraItem* createCameraItem(BodyItem* bodyItem, Link* link);
-    void configureCameraItem(BodySyncCameraItem* cameraItem);
+    BodySyncCameraItem* showToCreateCameraItem(BodyItem* bodyItem, Link* link);
+    void showToConfigureCameraItem(BodySyncCameraItem* cameraItem);
 
 protected:
     virtual void hideEvent(QHideEvent* event) override;

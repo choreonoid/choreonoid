@@ -24,9 +24,8 @@ class CNOID_EXPORT BodySyncCameraItem : public Item, public RenderableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
-    static BodySyncCameraItem* createBodySyncCameraItemWithDialog(BodyItem* bodyItem, Link* link);
-    static void configureCameraItemWithDialog(BodySyncCameraItem* cameraItem);
-    
+    static BodySyncCameraItem* showDialogToCreateBodySyncCameraItem(BodyItem* bodyItem, Link* link);
+
     enum CameraType {
         Perspective,
         Orthographic,
@@ -66,6 +65,8 @@ public:
     double farClipDistance() const;
     bool setFarClipDistance(double distance);
     bool setClipDistances(double nearDistance, double farDistance);
+
+    void showDialogToConfigureCamera();
 
     // RenderableItem
     virtual SgNode* getScene() override;

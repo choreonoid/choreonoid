@@ -6,15 +6,17 @@
 #include "BodySyncCameraItem.h"
 #include "BodySyncCameraConfigDialog.h"
 #include <cnoid/ItemManager>
-#include <cnoid/PutPropertyFunction>
-#include <cnoid/Archive>
+#include <cnoid/MenuManager>
 #include <cnoid/InteractiveCameraTransform>
-#include <cnoid/SceneCameras>
+#include <cnoid/ItemTreeView>
 #include <cnoid/SceneView>
 #include <cnoid/SceneWidget>
 #include <cnoid/BodyItem>
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneBar>
+#include <cnoid/PutPropertyFunction>
+#include <cnoid/Archive>
+#include <cnoid/SceneCameras>
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
 #include "gettext.h"
@@ -80,7 +82,10 @@ class BodySyncCameraTransform : public InteractiveCameraTransform
     }
 
     void setParallelTrackingMode(bool on){
-        isParallelTrackingMode_ = on;
+        if(on != isParallelTrackingMode_){
+            isParallelTrackingMode_ = on;
+            updateRelativePosition();
+        }
     }
             
     void setBodyItem(BodyItem* bodyItem) {
@@ -102,6 +107,7 @@ class BodySyncCameraTransform : public InteractiveCameraTransform
     }
 
     void updateTargetLink(){
+        auto prevTargetLink = targetLink;
         targetLink = nullptr;
         if(bodyItem){
             if(!targetLinkName.empty()){
@@ -109,6 +115,9 @@ class BodySyncCameraTransform : public InteractiveCameraTransform
             }
             if(!targetLink){
                 targetLink = bodyItem->body()->rootLink();
+            }
+            if(targetLink != prevTargetLink){
+                updateRelativePosition();
             }
         }
     }
@@ -170,19 +179,26 @@ void BodySyncCameraItem::initializeClass(ExtensionManager* ext)
         .registerClass<BodySyncCameraItem>(N_("BodySyncCameraItem"))
         .addAlias<BodySyncCameraItem>("BodyTrackingCameraItem", "Body")
         .addCreationPanel<BodySyncCameraItem>();
+
+    ItemTreeView::instance()->customizeContextMenu<BodySyncCameraItem>(
+        [](BodySyncCameraItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
+            menuManager.addItem(_("Camera configuration"))->sigTriggered().connect(
+                [item](){ item->showDialogToConfigureCamera(); });
+            menuManager.addSeparator();
+            menuFunction.dispatchAs<Item>(item);
+        });
 }
 
 
-BodySyncCameraItem* BodySyncCameraItem::createBodySyncCameraItemWithDialog
-(BodyItem* bodyItem, Link* link)
+BodySyncCameraItem* BodySyncCameraItem::showDialogToCreateBodySyncCameraItem(BodyItem* bodyItem, Link* link)
 {
-    return BodySyncCameraConfigDialog::instance()->createCameraItem(bodyItem, link);
+    return BodySyncCameraConfigDialog::instance()->showToCreateCameraItem(bodyItem, link);
 }
 
 
-void BodySyncCameraItem::configureCameraItemWithDialog(BodySyncCameraItem* cameraItem)
+void BodySyncCameraItem::showDialogToConfigureCamera()
 {
-    BodySyncCameraConfigDialog::instance()->configureCameraItem(cameraItem);
+    BodySyncCameraConfigDialog::instance()->showToConfigureCameraItem(this);
 }
 
 
