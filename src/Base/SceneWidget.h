@@ -113,9 +113,11 @@ public:
 
     void setHeadLightEnabled(bool on);
     void setHeadLightLightingFromBack(bool on);
-    void setWorldLight(bool on);
+    void setWorldLightEnabled(bool on);
+    bool isWorldLightEnabled() const;
     void setAdditionalLights(bool on);
-    void setFloorGrid(bool on);
+    void setFloorGridEnabled(bool on);
+    bool isFloorGridEnabled() const;
     void setNormalVisualization(bool on);
     void setCoordinateAxes(bool on);
     void setShowFPS(bool on);

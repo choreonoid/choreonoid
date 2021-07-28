@@ -136,9 +136,9 @@ void exportPyViews(py::module m)
         .def("setNormalLength", &SceneWidget::setNormalLength)
         .def("setHeadLightEnabled", &SceneWidget::setHeadLightEnabled)
         .def("setHeadLightLightingFromBack", &SceneWidget::setHeadLightLightingFromBack)
-        .def("setWorldLight", &SceneWidget::setWorldLight)
+        .def("setWorldLightEnabled", &SceneWidget::setWorldLightEnabled)
         .def("setAdditionalLights", &SceneWidget::setAdditionalLights)
-        .def("setFloorGrid", &SceneWidget::setFloorGrid)
+        .def("setFloorGridEnabled", &SceneWidget::setFloorGridEnabled)
         .def("setNormalVisualization", &SceneWidget::setNormalVisualization)
         .def("setCoordinateAxes", &SceneWidget::setCoordinateAxes)
         .def("setShowFPS", &SceneWidget::setShowFPS)
@@ -164,6 +164,9 @@ void exportPyViews(py::module m)
         .def_property_readonly("indicator", &SceneWidget::indicator)
         .def_property_readonly("sigWidgetFocusChanged", &SceneWidget::sigWidgetFocusChanged)
         .def_property_readonly("sigAboutToBeDestroyed", &SceneWidget::sigAboutToBeDestroyed)
+
+        // deprecated
+        .def("setWorldLight", &SceneWidget::setWorldLightEnabled)
         ;
 
     py::class_<SceneView, PyQObjectHolder<SceneView>, View>(m, "SceneView")

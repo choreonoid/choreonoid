@@ -2726,9 +2726,15 @@ void SceneWidget::setHeadLightLightingFromBack(bool on)
 }
 
 
-void SceneWidget::setWorldLight(bool on)
+void SceneWidget::setWorldLightEnabled(bool on)
 {
     impl->config->worldLightCheck.setChecked(on);
+}
+
+
+bool SceneWidget::isWorldLightEnabled() const
+{
+    return impl->config->worldLightCheck.isChecked();
 }
 
 
@@ -2738,9 +2744,15 @@ void SceneWidget::setAdditionalLights(bool on)
 }
 
 
-void SceneWidget::setFloorGrid(bool on)
+void SceneWidget::setFloorGridEnabled(bool on)
 {
     impl->config->gridCheck[FLOOR_GRID].setChecked(on);
+}
+
+
+bool SceneWidget::isFloorGridEnabled() const
+{
+    return impl->config->gridCheck[FLOOR_GRID].isChecked();
 }
 
 

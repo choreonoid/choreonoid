@@ -191,7 +191,14 @@ SceneView::Impl::Impl(SceneView* self)
 
     if(instances_.empty()){
         lastFocusView_ = self;
+
+    } else if(lastFocusView_){
+        // Temporary code. All the properties should be copied from the last focus view.
+        auto srcWidget = lastFocusView_->impl->sceneWidget;
+        sceneWidget->setWorldLightEnabled(srcWidget->isWorldLightEnabled());
+        sceneWidget->setFloorGridEnabled(srcWidget->isFloorGridEnabled());
     }
+    
     instances_.push_back(self);
 }
 
