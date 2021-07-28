@@ -123,6 +123,27 @@ items:
             zmp: [ 0, 0, 0 ]
         - 
           id: 6
+          name: "Lighting"
+          plugin: Base
+          class: LightingItem
+          is_checked: true
+          data: 
+            light_type: "Spot light"
+            translation: [ 0, 0, 2.5 ]
+            direction: [ 0, 0, -1 ]
+            on: true
+            color: [ 1, 1, 1 ]
+            intensity: 0.8
+            ambient_intensity: 0
+            constant_attenuation: 1
+            linear_attenuation: 0
+            quadratic_attenuation: 0
+            beam_width: 60
+            cutoff_angle: 70
+            cutoff_exponent: 1
+            show_marker: false
+        - 
+          id: 7
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
@@ -145,7 +166,7 @@ items:
             oldAccelSensorMode: false
           children: 
             - 
-              id: 7
+              id: 8
               name: "GLVisionSimulator"
               plugin: Body
               class: GLVisionSimulatorItem
@@ -213,7 +234,7 @@ views:
       defaultHeadLight: true
       defaultHeadLightIntensity: 0.75
       headLightLightingFromBack: false
-      worldLight: true
+      worldLight: false
       worldLightIntensity: 0.1
       worldLightAmbient: 0
       additionalLights: true

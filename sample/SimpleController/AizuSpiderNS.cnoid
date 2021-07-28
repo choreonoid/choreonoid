@@ -9,16 +9,18 @@ items:
       name: "World"
       plugin: Body
       class: WorldItem
+      is_checked: true
       data: 
-        collisionDetection: false
-        collisionDetector: AISTCollisionDetector
-        materialTableFile: "${SHARE}/default/materials.yaml"
+        collision_detection: false
+        collision_detector: AISTCollisionDetector
+        default_material_table_file: "${SHARE}/default/materials.yaml"
       children: 
         - 
           id: 2
           name: "AizuSpider"
           plugin: Body
           class: BodyItem
+          is_checked: true
           data: 
             modelFile: "${SHARE}/model/AizuSpider/AizuSpiderNS.body"
             currentBaseLink: "CHASSIS"
@@ -55,6 +57,7 @@ items:
           name: "Labo1"
           plugin: Body
           class: BodyItem
+          is_checked: true
           data: 
             modelFile: "${SHARE}/model/Labo1/Labo1.body"
             currentBaseLink: "Root"
@@ -73,8 +76,30 @@ items:
             collisionDetection: true
             selfCollisionDetection: false
             isEditable: false
+
         - 
           id: 5
+          name: "Lighting"
+          plugin: Base
+          class: LightingItem
+          is_checked: true
+          data: 
+            light_type: "Spot light"
+            translation: [ 0, 0, 2.5 ]
+            direction: [ 0, 0, -1 ]
+            on: true
+            color: [ 1, 1, 1 ]
+            intensity: 0.8
+            ambient_intensity: 0
+            constant_attenuation: 1
+            linear_attenuation: 0
+            quadratic_attenuation: 0
+            beam_width: 60
+            cutoff_angle: 70
+            cutoff_exponent: 1
+            show_marker: false
+        - 
+          id: 6
           name: "AISTSimulator-Position"
           plugin: Body
           class: AISTSimulatorItem
@@ -96,7 +121,7 @@ items:
             2Dmode: false
             oldAccelSensorMode: false
         - 
-          id: 6
+          id: 7
           name: "AISTSimulator-Torque"
           plugin: Body
           class: AISTSimulatorItem
@@ -129,34 +154,48 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 5 ]
-      checked: [ 1, 2, 4 ]
       expanded: [ 1, 2, 3 ]
   - 
     id: 2
     plugin: Base
+    class: LocationView
+    mounted: true
+    state: 
+      show_rpy: true
+      unique_rpy: false
+      show_quoternion: false
+      show_rotation_matrix: false
+      coordinate: parent
+  - 
+    id: 3
+    plugin: Base
     class: MessageView
     mounted: true
   - 
-    id: 3
+    id: 4
     plugin: Base
     class: SceneView
     mounted: true
     state: 
       editMode: false
-      viewpointControlMode: thirdPerson
+      viewpointOperationMode: thirdPerson
+      visible_polygon_elements: [ face ]
+      highlighting: false
       collisionLines: false
-      polygonMode: fill
+      restrictCameraRoll: true
+      verticalAxis: Z
+      lightingMode: normal
+      cullingMode: enabled
       defaultHeadLight: true
       defaultHeadLightIntensity: 0.6
       headLightLightingFromBack: false
-      worldLight: true
+      worldLight: false
       worldLightIntensity: 0.4
       worldLightAmbient: 0
       additionalLights: true
       shadowLights: 
-        - 0
         - 1
+        - 2
       fog: true
       floorGrid: false
       floorGridSpan: 10
@@ -171,11 +210,9 @@ views:
       pointSize: 1
       normalVisualization: false
       normalLength: 0.01
+      lightweightViewChange: false
       coordinateAxes: true
       fpsTestIteration: 1
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
       upsideDown: false
       cameras: 
         - 
@@ -184,54 +221,74 @@ views:
           fieldOfView: 0.6978
           near: 0.01
           far: 10000
-          eye: [ -5.41653313, -2.53115986, 2.2575238 ]
-          direction: [ 0.856454124, 0.441191141, -0.268023711 ]
-          up: [ 0.238267675, 0.122740477, 0.963412316 ]
+          eye: [ -5.26641, -2.91897, 3.10882 ]
+          direction: [ 0.762211, 0.452431, -0.462968 ]
+          up: [ 0.398116, 0.236312, 0.886375 ]
         - 
           camera: [ System, Orthographic ]
           orthoHeight: 20
           near: 0.01
           far: 10000
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
+      backgroundColor: [ 0.1, 0.1, 0.3 ]
+      gridColor: [ 0.9, 0.9, 0.9, 1 ]
+      xzgridColor: [ 0.9, 0.9, 0.9, 1 ]
+      yzgridColor: [ 0.9, 0.9, 0.9, 1 ]
+      isDedicatedItemCheckEnabled: false
   - 
-    id: 4
-    name: "Joystick"
+    id: 5
     plugin: Base
     class: VirtualJoystickView
     mounted: true
   - 
-    id: 5
+    id: 6
     plugin: Body
     class: BodyLinkView
-    mounted: true
     state: 
       showRotationMatrix: false
   - 
-    id: 6
-    plugin: Body
-    class: JointSliderView
-    mounted: true
-    state: 
-      showAllJoints: true
-      jointId: true
-      name: true
-      numColumns: 1
-      spinBox: true
-      slider: true
-      labelOnLeft: true
-      currentBodyItem: 2
-  - 
     id: 7
     plugin: Body
-    class: LinkSelectionView
+    class: JointDisplacementView
     mounted: true
     state: 
-      listingMode: "Link Tree"
-      currentBodyItem: 2
+      show_selected_joints: false
+      show_joint_ids: true
+      show_joint_names: false
+      overlap_joint_names: false
+      show_sliders: true
+      show_dials: false
+      show_phases: true
+  - 
+    id: 8
+    plugin: Body
+    class: LinkDeviceListView
+    mounted: true
+    state: 
+      element_type: link
+      listingMode: list
+  - 
+    id: 9
+    plugin: Body
+    class: LinkPositionView
+    mounted: true
+    state: 
+      coordinate_mode: world
+      preferred_coordinate_mode: base
+      show_rpy: true
+      unique_rpy: false
+      show_quoternion: false
+      show_rotation_matrix: false
+      target_link_type: ik_link
+  - 
+    id: 10
+    plugin: Body
+    class: LinkPropertyView
+    mounted: true
+  - 
+    id: 12
+    plugin: Python
+    class: PythonConsoleView
+    mounted: true
 viewAreas: 
   - 
     type: embedded
@@ -239,57 +296,54 @@ viewAreas:
     contents: 
       type: splitter
       orientation: horizontal
-      sizes: [ 456, 1942 ]
+      sizes: [ 1403, 445 ]
       children: 
         - 
           type: splitter
-          orientation: vertical
-          sizes: [ 554, 975 ]
-          children: 
-            - 
-              type: pane
-              views: [ 1 ]
-              current: 1
-            - 
-              type: pane
-              views: [ 0, 7 ]
-              current: 0
-        - 
-          type: splitter
-          orientation: vertical
-          sizes: [ 1094, 435 ]
+          orientation: horizontal
+          sizes: [ 335, 1064 ]
           children: 
             - 
               type: splitter
-              orientation: horizontal
-              sizes: [ 907, 1029 ]
+              orientation: vertical
+              sizes: [ 629, 628 ]
               children: 
                 - 
                   type: pane
-                  views: [ 5, 6 ]
-                  current: 5
+                  views: [ 1 ]
                 - 
                   type: pane
-                  views: [ 3 ]
-                  current: 3
+                  views: [ 0, 10 ]
+                  current: 0
             - 
               type: splitter
-              orientation: horizontal
-              sizes: [ 1166, 770 ]
+              orientation: vertical
+              sizes: [ 943, 314 ]
               children: 
-                - 
-                  type: pane
-                  views: [ 2 ]
-                  current: 2
                 - 
                   type: pane
                   views: [ 4 ]
-                  current: 4
-layoutOfToolBars: 
-  rows: 
-    - 
-      - { name: "FileBar", x: 0, priority: 0 }
-      - { name: "ScriptBar", x: 48, priority: 0 }
-      - { name: "SimulationBar", x: 95, priority: 1 }
-      - { name: "TimeBar", x: 96, priority: 0 }
-      - { name: "SceneBar", x: 1336, priority: 2 }
+                - 
+                  type: pane
+                  views: [ 3, 12 ]
+                  current: 3
+        - 
+          type: splitter
+          orientation: vertical
+          sizes: [ 286, 971 ]
+          children: 
+            - 
+              type: pane
+              views: [ 2 ]
+            - 
+              type: splitter
+              orientation: vertical
+              sizes: [ 389, 578 ]
+              children: 
+                - 
+                  type: pane
+                  views: [ 9 ]
+                - 
+                  type: pane
+                  views: [ 8, 7, 5 ]
+                  current: 5
