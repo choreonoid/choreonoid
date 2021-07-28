@@ -1883,8 +1883,9 @@ void EditableSceneBody::Impl::restoreSceneBodyProperties(const Archive& archive)
 
 void EditableSceneBody::initializeClass(ExtensionManager* ext)
 {
-    MenuManager& mm = ext->menuManager().setPath("/Options/Scene View");
-    linkVisibilityCheck = mm.addCheckItem(_("Show selected links only"));
+    linkVisibilityCheck =
+        ext->menuManager().setPath("/Options").setPath(N_("Scene View"))
+        .addCheckItem(_("Show selected links only"));
 
     ext->setProjectArchiver(
         "EditableSceneBody",
