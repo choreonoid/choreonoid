@@ -19,3 +19,9 @@ links:
     rotation: [ 1, 0, 0, 90 ]
     jointType: fixed
     jointIdOffset: 6
+
+defaultIKsetup:
+  WRIST3: [ BASE ]
+  Coupler: [ BASE ]
+  Gripper_Base: [ BASE ]
+

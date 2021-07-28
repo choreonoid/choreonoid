@@ -41,7 +41,8 @@ items:
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
-            isEditable: true
+            location_editable: false
+            scene_sensitive: true
           children: 
             - 
               id: 3
@@ -77,7 +78,8 @@ items:
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
-            isEditable: true
+            location_editable: true
+            scene_sensitive: true
         - 
           id: 5
           name: "box2"
@@ -101,7 +103,8 @@ items:
             staticModel: true
             collisionDetection: true
             selfCollisionDetection: false
-            isEditable: true
+            location_editable: false
+            scene_sensitive: true
         - 
           id: 6
           name: "Floor"
@@ -124,7 +127,8 @@ items:
             zmp: [ 0, 0, 0 ]
             collisionDetection: true
             selfCollisionDetection: false
-            isEditable: true
+            location_editable: false
+            scene_sensitive: false
         - 
           id: 7
           name: "AISTSimulator"

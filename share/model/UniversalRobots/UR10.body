@@ -302,6 +302,10 @@ links:
             type: Transform
             translation: [ 0.0, 0.0007, 0.116 ]
             elements: *ARM_JOINT_SHAPE
+      -
+        type: ForceSensor
+        name: ForceSensor
+        id: 0
   -
     name: WRIST3
     parent: WRIST2
@@ -339,5 +343,5 @@ links:
             translation: [ 0, 0.08859, 0.001 ]
             geometry: { type: Cylinder, radius: 0.0315, height: 0.007 }
 
-    
-    
+defaultIKsetup:
+  WRIST3: [ BASE ]
