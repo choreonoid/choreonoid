@@ -25,7 +25,7 @@ enum LightType { DIRECTIONAL=0, POINT, SPOT, N_LIGHT_TYPES };
 
 namespace cnoid {
 
-class LightingItemImpl
+class LightingItem::Impl
 {
 public:
     LightingItem* self;
@@ -54,8 +54,8 @@ public:
     SgGroupPtr plightShape;
     SgGroupPtr slightShape;
 
-    LightingItemImpl(LightingItem* self);
-    LightingItemImpl(LightingItem* self, const LightingItemImpl& org);
+    Impl(LightingItem* self);
+    Impl(LightingItem* self, const Impl& org);
     bool updateLightType(LightType type);
     void directionToMatrix3(Vector3& direction, Matrix3& R);
     bool onTranslationPropertyChanged(const std::string& value);
@@ -68,11 +68,15 @@ public:
     bool onLinearAttenuationPropertyChanged(float value);
     bool onQuadraticAttenuationPropertyChanged(float value);
     bool onBeamWidthPropertyChanged(float value);
-    bool onCutOffAnglePropertyChanged(float value);
+    bool onCutOffAnglePropertyChanged(float angle);
     bool onCutOffExponentPropertyChanged(float value);
     bool onShowMarkerPropertyChanged(bool on);
     void genarateLightShape();
+    void doPutProperties(PutPropertyFunction& putProperty);
+    bool store(Archive& archive);
+    bool restore(const Archive& archive);
 };
+
 }
 
 
@@ -80,8 +84,9 @@ void LightingItem::initializeClass(ExtensionManager* ext)
 {
     static bool initialized = false;
     if(!initialized){
-        ext->itemManager().registerClass<LightingItem>(N_("LightingItem"));
-        ext->itemManager().addCreationPanel<LightingItem>();
+        ext->itemManager()
+            .registerClass<LightingItem>(N_("LightingItem"))
+            .addCreationPanel<LightingItem>();
         initialized = true;
     }
 }
@@ -89,14 +94,14 @@ void LightingItem::initializeClass(ExtensionManager* ext)
 
 LightingItem::LightingItem()
 {
-    impl = new LightingItemImpl(this);
+    impl = new Impl(this);
 }
 
 
 LightingItem::LightingItem(const LightingItem& org)
     : Item(org)
 {
-    impl = new LightingItemImpl(this, *org.impl);
+    impl = new Impl(this, *org.impl);
 }
 
 
@@ -116,13 +121,13 @@ SgNode* LightingItem::getScene()
 }
 
 
-LightingItemImpl::LightingItemImpl(LightingItem* self)
+LightingItem::Impl::Impl(LightingItem* self)
     : self(self),
       lightType(N_LIGHT_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    lightType.setSymbol(DIRECTIONAL, _("Directional light"));
-    lightType.setSymbol(POINT, _("Point light"));
-    lightType.setSymbol(SPOT, _("Spot light"));
+    lightType.setSymbol(DIRECTIONAL, N_("Directional light"));
+    lightType.setSymbol(POINT, N_("Point light"));
+    lightType.setSymbol(SPOT, N_("Spot light"));
 
     on = true;
 
@@ -144,11 +149,10 @@ LightingItemImpl::LightingItemImpl(LightingItem* self)
     scene->setTranslation(Vector3(0,0,3));
     genarateLightShape();
     updateLightType(SPOT);
-
 }
 
 
-void LightingItemImpl::genarateLightShape()
+void LightingItem::Impl::genarateLightShape()
 {
     SgMaterial* material = new SgMaterial;
     material->setDiffuseColor(Vector3f(1.0f, 1.0f, 0.0f));
@@ -162,6 +166,7 @@ void LightingItemImpl::genarateLightShape()
     SgShape* capsule = new SgShape;
     capsule->setMesh(meshGenerator.generateCapsule(0.005, 0.03));
     capsule->setMaterial(material);
+
     static const std::vector<Vector3> d_pos = {
             Vector3(0, 0, -0.07), Vector3(0, 0.04, -0.06),
             Vector3(0, -0.04, -0.06), Vector3(0.04, 0, -0.06),
@@ -177,6 +182,7 @@ void LightingItemImpl::genarateLightShape()
 
     plightShape = new SgGroup;
     plightShape->addChild(sphere);
+
     static const std::vector<Vector3> p_pos = {
             Vector3(0, 0, 0.07), Vector3(0, 0, -0.07),
             Vector3(0.07, 0, 0), Vector3(-0.07, 0, 0),
@@ -207,6 +213,7 @@ void LightingItemImpl::genarateLightShape()
     coneT->addChild(cone);
     slightShape->addChild(box);
     slightShape->addChild(coneT);
+
     static const std::vector<Vector3> s_pos = {
             Vector3(0, 0, -0.055), Vector3(0, 0.05, -0.055)
     };
@@ -231,7 +238,7 @@ void LightingItemImpl::genarateLightShape()
 }
 
 
-LightingItemImpl::LightingItemImpl(LightingItem* self, const LightingItemImpl& org)
+LightingItem::Impl::Impl(LightingItem* self, const Impl& org)
     : self(self),
       lightType(org.lightType),
       on(org.on)
@@ -256,7 +263,7 @@ LightingItemImpl::LightingItemImpl(LightingItem* self, const LightingItemImpl& o
 }
 
 
-bool LightingItemImpl::updateLightType(LightType type)
+bool LightingItem::Impl::updateLightType(LightType type)
 {
     lightType.select(type);
     scene->clearChildren();
@@ -300,7 +307,7 @@ bool LightingItemImpl::updateLightType(LightType type)
 }
 
 
-bool LightingItemImpl::onTranslationPropertyChanged(const string& value)
+bool LightingItem::Impl::onTranslationPropertyChanged(const string& value)
 {
     Vector3 p;
     if(toVector3(value, p)){
@@ -312,7 +319,7 @@ bool LightingItemImpl::onTranslationPropertyChanged(const string& value)
 }
 
 
-void LightingItemImpl::directionToMatrix3(Vector3& direction, Matrix3& R)
+void LightingItem::Impl::directionToMatrix3(Vector3& direction, Matrix3& R)
 {
     Vector3 nx = Vector3::UnitZ().cross(-direction);
     if(nx.norm()==0){
@@ -331,7 +338,7 @@ void LightingItemImpl::directionToMatrix3(Vector3& direction, Matrix3& R)
 }
 
 
-bool LightingItemImpl::onDirectionPropertyChanged(const std::string& value)
+bool LightingItem::Impl::onDirectionPropertyChanged(const std::string& value)
 {
     Vector3 direction_;
     if(toVector3(value, direction_)){
@@ -348,7 +355,7 @@ bool LightingItemImpl::onDirectionPropertyChanged(const std::string& value)
 }
 
 
-bool LightingItemImpl::onColorPropertyChanged(const std::string& value)
+bool LightingItem::Impl::onColorPropertyChanged(const std::string& value)
 {
     Vector3f color_;
     if(toVector3(value, color_)){
@@ -361,7 +368,7 @@ bool LightingItemImpl::onColorPropertyChanged(const std::string& value)
 }
 
 
-bool LightingItemImpl::onIntensityPropertyChanged(float value)
+bool LightingItem::Impl::onIntensityPropertyChanged(float value)
 {
     intensity = value;
     light->setIntensity(intensity);
@@ -370,7 +377,7 @@ bool LightingItemImpl::onIntensityPropertyChanged(float value)
 }
 
 
-bool LightingItemImpl::onAmbientIntensityPropertyChanged(float value)
+bool LightingItem::Impl::onAmbientIntensityPropertyChanged(float value)
 {
     ambientIntensity = value;
     light->setAmbientIntensity(ambientIntensity);
@@ -379,7 +386,7 @@ bool LightingItemImpl::onAmbientIntensityPropertyChanged(float value)
 }
 
 
-bool LightingItemImpl::onSwitchPropertyChanged(bool value)
+bool LightingItem::Impl::onSwitchPropertyChanged(bool value)
 {
     on = value;
     light->on(on);
@@ -388,7 +395,7 @@ bool LightingItemImpl::onSwitchPropertyChanged(bool value)
 }
 
 
-bool LightingItemImpl::onConstantAttenuationPropertyChanged(float value)
+bool LightingItem::Impl::onConstantAttenuationPropertyChanged(float value)
 {
     constantAttenuation = value;
     SgPointLight* pointLight = dynamic_cast<SgPointLight*>(light);
@@ -401,7 +408,7 @@ bool LightingItemImpl::onConstantAttenuationPropertyChanged(float value)
 }
 
 
-bool LightingItemImpl::onLinearAttenuationPropertyChanged(float value)
+bool LightingItem::Impl::onLinearAttenuationPropertyChanged(float value)
 {
     linearAttenuation = value;
     SgPointLight* pointLight = dynamic_cast<SgPointLight*>(light);
@@ -414,7 +421,7 @@ bool LightingItemImpl::onLinearAttenuationPropertyChanged(float value)
 }
 
 
-bool LightingItemImpl::onQuadraticAttenuationPropertyChanged(float value)
+bool LightingItem::Impl::onQuadraticAttenuationPropertyChanged(float value)
 {
     quadraticAttenuation = value;
     SgPointLight* pointLight = dynamic_cast<SgPointLight*>(light);
@@ -427,7 +434,7 @@ bool LightingItemImpl::onQuadraticAttenuationPropertyChanged(float value)
 }
 
 
-bool LightingItemImpl::onBeamWidthPropertyChanged(float value)
+bool LightingItem::Impl::onBeamWidthPropertyChanged(float value)
 {
     beamWidth = value;
     SgSpotLight* spotLight = dynamic_cast<SgSpotLight*>(light);
@@ -440,9 +447,9 @@ bool LightingItemImpl::onBeamWidthPropertyChanged(float value)
 }
 
 
-bool LightingItemImpl::onCutOffAnglePropertyChanged(float value)
+bool LightingItem::Impl::onCutOffAnglePropertyChanged(float angle)
 {
-    cutOffAngle = value;
+    cutOffAngle = angle;
     SgSpotLight* spotLight = dynamic_cast<SgSpotLight*>(light);
     if(spotLight){
         spotLight->setCutOffAngle(cutOffAngle);
@@ -453,7 +460,7 @@ bool LightingItemImpl::onCutOffAnglePropertyChanged(float value)
 }
 
 
-bool LightingItemImpl::onCutOffExponentPropertyChanged(float value)
+bool LightingItem::Impl::onCutOffExponentPropertyChanged(float value)
 {
     cutOffExponent = value;
     SgSpotLight* spotLight = dynamic_cast<SgSpotLight*>(light);
@@ -466,7 +473,7 @@ bool LightingItemImpl::onCutOffExponentPropertyChanged(float value)
 }
 
 
-bool LightingItemImpl::onShowMarkerPropertyChanged(bool on)
+bool LightingItem::Impl::onShowMarkerPropertyChanged(bool on)
 {
     showMarker = on;
     SgTmpUpdate update;
@@ -481,96 +488,119 @@ bool LightingItemImpl::onShowMarkerPropertyChanged(bool on)
 
 void LightingItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Light Type"), impl->lightType,
-            [&](int index){ return impl->updateLightType((LightType)index); });
-    putProperty(_("Translation"), str(Vector3(impl->scene->translation())),
-            [&](const string& value){ return impl->onTranslationPropertyChanged(value); });
+    return impl->doPutProperties(putProperty);
+}
 
-    LightType type = (LightType)impl->lightType.selectedIndex();
+
+void LightingItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
+{
+    putProperty(_("Light type"), lightType,
+                [&](int index){ return updateLightType((LightType)index); });
+    putProperty(_("Translation"), str(Vector3(scene->translation())),
+                [&](const string& value){ return onTranslationPropertyChanged(value); });
+    
+    LightType type = (LightType)lightType.selectedIndex();
     if(type == DIRECTIONAL || type == SPOT){
-        putProperty(_("Direction"), str(impl->direction),
-                [&](const string& value){ return impl->onDirectionPropertyChanged(value);});
+        putProperty(_("Direction"), str(direction),
+                    [&](const string& value){ return onDirectionPropertyChanged(value);});
     }
 
-    putProperty(_("ON"), impl->on,
-            [&](bool value){ return impl->onSwitchPropertyChanged(value); });
-    putProperty(_("Color"), str(impl->color),
-            [&](const string& value){ return impl->onColorPropertyChanged(value); });
-    putProperty(_("Intensity"), impl->intensity,
-            [&](float value){ return impl->onIntensityPropertyChanged(value); });
-    putProperty(_("AmbientIntensity"), impl->ambientIntensity,
-            [&](float value){ return impl->onAmbientIntensityPropertyChanged(value); });
+    putProperty(_("ON"), on,
+                [&](bool value){ return onSwitchPropertyChanged(value); });
+    putProperty(_("Color"), str(color),
+                [&](const string& value){ return onColorPropertyChanged(value); });
+    putProperty(_("Intensity"), intensity,
+                [&](float value){ return onIntensityPropertyChanged(value); });
+    putProperty(_("Ambient intensity"), ambientIntensity,
+                [&](float value){ return onAmbientIntensityPropertyChanged(value); });
 
     if(type == POINT || type == SPOT){
-        putProperty(_("ConstantAttenuation"), impl->constantAttenuation,
-                [&](float value){ return impl->onConstantAttenuationPropertyChanged(value); });
-        putProperty(_("LinearAttenuation"), impl->linearAttenuation,
-                [&](float value){ return impl->onLinearAttenuationPropertyChanged(value); });
-        putProperty(_("QuadraticAttenuation"), impl->quadraticAttenuation,
-                [&](float value){ return impl->onQuadraticAttenuationPropertyChanged(value); });
+        putProperty(_("Constant attenuation"), constantAttenuation,
+                    [&](float value){ return onConstantAttenuationPropertyChanged(value); });
+        putProperty(_("Linear attenuation"), linearAttenuation,
+                    [&](float value){ return onLinearAttenuationPropertyChanged(value); });
+        putProperty(_("Quadratic attenuation"), quadraticAttenuation,
+                    [&](float value){ return onQuadraticAttenuationPropertyChanged(value); });
     }
     if(type == SPOT){
-        putProperty(_("BeamWidth"), impl->beamWidth,
-                [&](float value){ return impl->onBeamWidthPropertyChanged(value); });
-        putProperty(_("CutOffAngle"), impl->cutOffAngle,
-                [&](float value){ return impl->onCutOffAnglePropertyChanged(value); });
-        putProperty(_("CutOffExponent"), impl->cutOffExponent,
-                [&](float value){ return impl->onCutOffExponentPropertyChanged(value); });
+        putProperty(_("Beam width"), degree(beamWidth),
+                    [&](float angle){ return onBeamWidthPropertyChanged(radian(angle)); });
+        putProperty(_("Cut-off angle"), degree(cutOffAngle),
+                    [&](float angle){ return onCutOffAnglePropertyChanged(radian(angle)); });
+        putProperty(_("Cut-off Exponent"), cutOffExponent,
+                    [&](float value){ return onCutOffExponentPropertyChanged(value); });
     }
 
-    putProperty(_("Show Marker"), impl->showMarker,
-            [&](bool on){ return impl->onShowMarkerPropertyChanged(on); });
+    putProperty(_("Show Marker"), showMarker,
+            [&](bool on){ return onShowMarkerPropertyChanged(on); });
 }
 
 
 bool LightingItem::store(Archive& archive)
 {
-    archive.write("lightType", impl->lightType.selectedSymbol(), DOUBLE_QUOTED);
-    write(archive, "translation", impl->scene->translation());
-    write(archive, "direction", impl->direction);
-    archive.write("on", impl->on);
-    write(archive, "color", impl->color);
-    archive.write("intensity", impl->intensity);
-    archive.write("ambientIntensity", impl->ambientIntensity);
-    archive.write("constantAttenuation", impl->constantAttenuation);
-    archive.write("linearAttenuation", impl->linearAttenuation);
-    archive.write("quadraticAttenuation", impl->quadraticAttenuation);
-    archive.write("beamWidth", impl->beamWidth);
-    archive.write("cutOffAngle", impl->cutOffAngle);
-    archive.write("cutOffExponent", impl->cutOffExponent);
-    archive.write("showMarker", impl->showMarker);
+    return impl->store(archive);
+}
 
+
+bool LightingItem::Impl::store(Archive& archive)
+{
+    archive.write("light_type", lightType.selectedSymbol(), DOUBLE_QUOTED);
+    write(archive, "translation", scene->translation());
+    write(archive, "direction", direction);
+    archive.write("on", on);
+    write(archive, "color", color);
+    archive.write("intensity", intensity);
+    archive.write("ambient_intensity", ambientIntensity);
+    archive.write("constant_attenuation", constantAttenuation);
+    archive.write("linear_attenuation", linearAttenuation);
+    archive.write("quadratic_attenuation", quadraticAttenuation);
+    archive.write("beam_width", degree(beamWidth));
+    archive.write("cutoff_angle", degree(cutOffAngle));
+    archive.write("cutoff_exponent", cutOffExponent);
+    archive.write("show_marker", showMarker);
     return true;
 }
 
 
 bool LightingItem::restore(const Archive& archive)
 {
+    return impl->restore(archive);
+}
+
+
+bool LightingItem::Impl::restore(const Archive& archive)
+{
     string symbol;
-    if(archive.read("lightType", symbol)){
-        impl->lightType.select(symbol);
+    if(archive.read("light_type", symbol)){
+        lightType.select(symbol);
     }
     Vector3 translation;
     if(read(archive, "translation", translation)){
-        impl->scene->setTranslation(translation);
+        scene->setTranslation(translation);
     }
-    if(read(archive, "direction", impl->direction)){
+    if(read(archive, "direction", direction)){
         Matrix3 R;
-        impl->directionToMatrix3(impl->direction, R);
-        impl->scene->setRotation(R);
+        directionToMatrix3(direction, R);
+        scene->setRotation(R);
     }
-    archive.read("on", impl->on);
-    read(archive, "color", impl->color);
-    archive.read("intensity", impl->intensity);
-    archive.read("ambientIntensity", impl->ambientIntensity);
-    archive.read("constantAttenuation", impl->constantAttenuation);
-    archive.read("linearAttenuation", impl->linearAttenuation);
-    archive.read("quadraticAttenuation", impl->quadraticAttenuation);
-    archive.read("beamWidth", impl->beamWidth);
-    archive.read("cutOffAngle", impl->cutOffAngle);
-    archive.read("cutOffExponent", impl->cutOffExponent);
-    archive.read("showMarker", impl->showMarker);
+    archive.read("on", on);
+    read(archive, "color", color);
+    archive.read("intensity", intensity);
+    archive.read("ambient_intensity", ambientIntensity);
+    archive.read("constant_attenuation", constantAttenuation);
+    archive.read("linear_attenuation", linearAttenuation);
+    archive.read("quadratic_attenuation", quadraticAttenuation);
+    double angle;
+    if(archive.read("beam_width", angle)){
+        beamWidth = radian(angle);
+    }
+    if(archive.read("cutoff_angle", angle)){
+        cutOffAngle = radian(angle);
+    }
+    archive.read("cutoff_exponent", cutOffExponent);
+    archive.read("show_marker", showMarker);
 
-    impl->updateLightType((LightType)impl->lightType.selectedIndex());
+    updateLightType((LightType)lightType.selectedIndex());
+                       
     return true;
 }

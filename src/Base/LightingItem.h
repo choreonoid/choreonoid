@@ -12,8 +12,6 @@
 
 namespace cnoid {
 
-class LightingItemImpl;
-
 class CNOID_EXPORT LightingItem : public Item, public RenderableItem
 {
 public:
@@ -33,7 +31,8 @@ protected:
     virtual SgNode* getScene() override;
 
 private:
-    LightingItemImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<LightingItem> LightingItemPtr;
