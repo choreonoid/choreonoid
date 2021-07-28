@@ -16,6 +16,7 @@ public:
 
     enum BodySyncMode { NoBodySync, DirectBodySync, TwoStageBodySync };
     void setBodySyncMode(BodySyncMode mode);
+    static void setDefaultBodySyncMode(BodySyncMode mode);
 
     class Impl;
     

@@ -28,6 +28,8 @@ using fmt::format;
 
 namespace {
 
+MprPositionListView::BodySyncMode defaultBodySyncMode = MprPositionListView::DirectBodySync;
+
 constexpr int NumColumns = 4;
 constexpr int IdColumn = 0;
 constexpr int NoteColumn = 1;
@@ -604,7 +606,7 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
     targetItemPicker.sigTargetItemChanged().connect(
         [&](MprProgramItemBase* item){ setProgramItem(item); });
 
-    bodySyncMode = DirectBodySync;
+    bodySyncMode = defaultBodySyncMode;
 }
 
 
@@ -768,6 +770,12 @@ void MprPositionListView::Impl::setBodySyncMode(BodySyncMode mode)
             programItem->clearSuperimposition();
         }
     }
+}
+
+
+void MprPositionListView::setDefaultBodySyncMode(BodySyncMode mode)
+{
+    defaultBodySyncMode = mode;
 }
 
 
