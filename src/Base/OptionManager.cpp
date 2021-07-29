@@ -82,8 +82,8 @@ void OptionManager::parseCommandLine2()
     // by calling the non-existent codes.
     delete info;
     info = nullptr;
-    sigOptionsParsed_[0].disconnect_all_slots();
-    sigOptionsParsed_[1].disconnect_all_slots();
+    sigOptionsParsed_[0].disconnectAllSlots();
+    sigOptionsParsed_[1].disconnectAllSlots();
 
     for(auto& file : inputFiles){
         MessageView::instance()->putln(

@@ -75,7 +75,6 @@ struct last_value
     }
 };
 
-
 template<>
 struct last_value<void> {
   public:
@@ -88,17 +87,146 @@ struct last_value<void> {
     }
 };
 
+class SignalBase;
 
 class SlotHolderBase : public Referenced
 {
 public:
-    SlotHolderBase() : blockCounter(0) { }
-    virtual void disconnect() = 0;
-    virtual bool connected() const = 0;
-    virtual void changeOrder(int orderId) = 0;
+    SlotHolderBase() : prev(nullptr), owner(nullptr), blockCounter(0) { }
+    void disconnect();
+    bool connected() const;
+    void changeOrder(int orderId);
 
+    ref_ptr<SlotHolderBase> next;
+    SlotHolderBase* prev;
+    SignalBase* owner;
     int blockCounter;
 };
+
+class SignalBase
+{
+protected:
+    typedef ref_ptr<SlotHolderBase> SlotHolderPtr;
+    SlotHolderPtr firstSlot;
+    SlotHolderBase* lastSlot;
+    std::vector<SlotHolderPtr>* pSlotsToConnectLater;
+    bool isCallingSlots;
+
+    friend class SlotHolderBase;
+    
+    SignalBase() : lastSlot(nullptr), pSlotsToConnectLater(nullptr), isCallingSlots(false) { }
+
+    ~SignalBase() {
+        disconnectAllSlots();
+        if(pSlotsToConnectLater){
+            delete pSlotsToConnectLater;
+        }
+    }
+
+    void connectSlotHolder(SlotHolderBase* slot) {
+
+        if(!isCallingSlots){
+            if(!firstSlot){
+                firstSlot = slot;
+                lastSlot = slot;
+            } else {
+                lastSlot->next = slot;
+                slot->prev = lastSlot;
+                lastSlot = slot;
+            }
+            slot->owner = this;
+        } else {
+            if(!pSlotsToConnectLater){
+                pSlotsToConnectLater = new std::vector<SlotHolderPtr>();
+            }
+            pSlotsToConnectLater->push_back(slot);
+        }
+    }
+
+    void connectSlotsWithPendingConnection(){
+        for(auto& slot : *pSlotsToConnectLater){
+            if(!firstSlot){
+                firstSlot = slot;
+                lastSlot = slot;
+            } else {
+                lastSlot->next = slot;
+                slot->prev = lastSlot;
+                lastSlot = slot;
+            }
+            slot->owner = this;
+        }
+        pSlotsToConnectLater->clear();
+    }
+
+    void remove(SlotHolderPtr slot){
+        if(slot->owner == this){
+            SlotHolderBase* next = slot->next;
+            SlotHolderBase* prev = slot->prev;
+            if(next){
+                next->prev = prev;
+            } else {
+                lastSlot = prev;
+            }
+            if(prev){
+                prev->next = next;
+            } else {
+                firstSlot = next;
+            }
+            slot->prev = nullptr;
+            slot->owner = nullptr;
+            ++(slot->blockCounter);
+
+            /**
+               keep slot->next so that the slot call iteration
+               can be continued even if the slot is disconnected
+               during the iteration.
+            */
+        }
+    }
+
+    void changeOrder(SlotHolderPtr slot, int orderId);
+
+public:
+    bool empty() const {
+        return (firstSlot == nullptr);
+    }
+
+    int numConnections() const {
+        int n = 0;
+        auto slot = firstSlot;
+        while(slot){
+            ++n;
+            slot = slot->next;
+        }
+        return n;
+    }
+
+    void disconnectAllSlots() {
+        while(firstSlot){
+            remove(firstSlot);
+        }
+    }
+};
+
+
+inline void SlotHolderBase::disconnect()
+{
+    if(owner){
+        owner->remove(this);
+    }
+}
+
+inline bool SlotHolderBase::connected() const
+{
+    return owner != nullptr;
+}
+
+inline void SlotHolderBase::changeOrder(int orderId)
+{
+    if(owner){
+        owner->changeOrder(this, orderId);
+    }
+}
 
 
 template<typename SlotHolderType, typename... Args>
@@ -128,8 +256,10 @@ public:
         }
     }
     
-    SlotCallIterator(SlotHolderType* firstSlot, std::tuple<Args...>& args)
-        : currentSlotHolder(firstSlot), args(args) { }
+    SlotCallIterator(SlotHolderBase* firstSlot, std::tuple<Args...>& args)
+        : currentSlotHolder(static_cast<SlotHolderType*>(firstSlot)),
+          args(args) {
+    }
 
     SlotCallIterator(const SlotCallIterator& org)
         : currentSlotHolder(org.currentSlotHolder), args(org.args) { }
@@ -143,7 +273,7 @@ public:
     }
 
     SlotCallIterator& operator++() {
-        currentSlotHolder = currentSlotHolder->next;
+        currentSlotHolder = static_pointer_cast<SlotHolderType>(currentSlotHolder->next);
         return *this;
     }
 
@@ -156,50 +286,16 @@ public:
     }
 };
 
-} // namespace signal_private
-
-
-template<
-    typename TSignature,
-    typename Combiner = signal_private::last_value<
-        typename signal_private::function_traits<TSignature>::result_type>
-    >
-class Signal;
-
-
-namespace signal_private {
 
 template<typename Signature, typename Combiner>
 class SlotHolder : public SlotHolderBase
 {
 public:
     typedef std::function<Signature> FuncType;
-    FuncType func;
-    
-    typedef ref_ptr<SlotHolder> SlotHolderPtr;
-    SlotHolderPtr next;
-    SlotHolder* prev;
-
-    typedef Signal<Signature, Combiner> SignalType;
-    SignalType* owner;
-
     typedef typename signal_private::function_traits<Signature>::result_type result_type;
-    
-    SlotHolder(const FuncType& func)
-        : func(func), prev(nullptr), owner(nullptr) {
-    }
+    FuncType func;
 
-    virtual void disconnect() override {
-        if(owner) owner->remove(this);
-    }
-
-    virtual bool connected() const override {
-        return owner != nullptr;
-    }
-
-    virtual void changeOrder(int orderId) override {
-        if(owner) owner->changeOrder(this, orderId);
-    }
+    SlotHolder(const FuncType& func) : func(func) { }
 };
     
 } // namespace signal_private
@@ -304,8 +400,48 @@ public:
 };
 
 
+namespace signal_private {
+
+inline void SignalBase::changeOrder(SlotHolderPtr slot, int orderId)
+{
+    if(slot->owner == this){
+        if(orderId == Connection::FIRST){
+            if(firstSlot != slot){
+                remove(slot);
+                slot->owner = this;
+                if(firstSlot){
+                    slot->next = firstSlot;
+                    slot->next->prev = slot;
+                }
+                firstSlot = slot;
+            }
+        } else if(orderId == Connection::LAST){
+            if(lastSlot != slot){
+                remove(slot);
+                slot->owner = this;
+                if(lastSlot){
+                    lastSlot->next = slot;
+                    slot->prev = lastSlot;
+                } else {
+                    firstSlot = slot;
+                }
+                lastSlot = slot;
+            }
+        }
+    }
+}
+
+}
+
+template<
+    typename TSignature,
+    typename Combiner = signal_private::last_value<
+        typename signal_private::function_traits<TSignature>::result_type>
+    >
+class Signal;
+
 template<typename Combiner, typename R, typename... Args>
-class Signal<R(Args...), Combiner>
+class Signal<R(Args...), Combiner> : public signal_private::SignalBase
 {
 public:
     typedef typename signal_private::function_traits<R(Args...)>::result_type result_type;
@@ -314,70 +450,19 @@ public:
 
 private:
     typedef signal_private::SlotHolder<R(Args...), Combiner> SlotHolderType;
-    typedef ref_ptr<SlotHolderType> SlotHolderPtr;
-
-    SlotHolderPtr firstSlot;
-    SlotHolderType* lastSlot;
-    std::vector<SlotHolderPtr>* pSlotsToConnectLater;
-    bool isCallingSlots;
 
 public:
-    Signal() : lastSlot(nullptr), pSlotsToConnectLater(nullptr), isCallingSlots(false) { }
+    Signal() { }
     Signal(Signal&&) = default;
     Signal(const Signal& org) = delete;
     Signal& operator=(const Signal& rhs) = delete;
 
-    ~Signal() {
-        disconnect_all_slots();
-        if(pSlotsToConnectLater){
-            delete pSlotsToConnectLater;
-        }
-    }
-
     Connection connect(const Function& func){
-
-        SlotHolderType* slot = new SlotHolderType(func);
-
-        if(!isCallingSlots){
-            if(!firstSlot){
-                firstSlot = slot;
-                lastSlot = slot;
-            } else {
-                lastSlot->next = slot;
-                slot->prev = lastSlot;
-                lastSlot = slot;
-            }
-            slot->owner = this;
-        } else {
-            if(!pSlotsToConnectLater){
-                pSlotsToConnectLater = new std::vector<SlotHolderPtr>();
-            }
-            pSlotsToConnectLater->push_back(slot);
-        }
-
+        auto slot = new SlotHolderType(func);
+        connectSlotHolder(slot);
         return Connection(slot);
     }
 
-    void disconnect_all_slots() {
-        while(firstSlot){
-            remove(firstSlot);
-        }
-    }
-
-    bool empty() const {
-        return (firstSlot == nullptr);
-    }
-
-    int numConnections() const {
-        int n = 0;
-        auto slot = firstSlot;
-        while(slot){
-            ++n;
-            slot = slot->next;
-        }
-        return n;
-    }
-    
     auto operator()(Args... args){
         return invoke(std::is_void<result_type>{}, std::forward<Args>(args)...);
     }
@@ -413,77 +498,6 @@ private:
         }
         return result;
     }
-
-    void connectSlotsWithPendingConnection(){
-        for(auto& slot : *pSlotsToConnectLater){
-            if(!firstSlot){
-                firstSlot = slot;
-                lastSlot = slot;
-            } else {
-                lastSlot->next = slot;
-                slot->prev = lastSlot;
-                lastSlot = slot;
-            }
-            slot->owner = this;
-        }
-        pSlotsToConnectLater->clear();
-    }
-
-    void remove(SlotHolderPtr slot){
-        if(slot->owner == this){
-            SlotHolderType* next = slot->next;
-            SlotHolderType* prev = slot->prev;
-            if(next){
-                next->prev = prev;
-            } else {
-                lastSlot = prev;
-            }
-            if(prev){
-                prev->next = next;
-            } else {
-                firstSlot = next;
-            }
-            slot->prev = nullptr;
-            slot->owner = nullptr;
-            ++(slot->blockCounter);
-
-            /**
-               keep slot->next so that the slot call iteration
-               can be continued even if the slot is disconnected
-               during the iteration.
-            */
-        }
-    }
-
-    void changeOrder(SlotHolderPtr slot, int orderId){
-        if(slot->owner == this){
-            if(orderId == Connection::FIRST){
-                if(firstSlot != slot){
-                    remove(slot);
-                    slot->owner = this;
-                    if(firstSlot){
-                        slot->next = firstSlot;
-                        slot->next->prev = slot;
-                    }
-                    firstSlot = slot;
-                }
-            } else if(orderId == Connection::LAST){
-                if(lastSlot != slot){
-                    remove(slot);
-                    slot->owner = this;
-                    if(lastSlot){
-                        lastSlot->next = slot;
-                        slot->prev = lastSlot;
-                    } else {
-                        firstSlot = slot;
-                    }
-                    lastSlot = slot;
-                }
-            }
-        }
-    }
-
-    friend SlotHolderType;
 };
 
 
