@@ -7,6 +7,7 @@
 
 #include "Referenced.h"
 #include <functional>
+#include <vector>
 #include <tuple>
 #include <type_traits>
 
@@ -336,7 +337,6 @@ public:
     Connection connect(const Function& func){
 
         SlotHolderType* slot = new SlotHolderType(func);
-        slot->owner = this;
 
         if(!isCallingSlots){
             if(!firstSlot){
@@ -347,6 +347,7 @@ public:
                 slot->prev = lastSlot;
                 lastSlot = slot;
             }
+            slot->owner = this;
         } else {
             if(!pSlotsToConnectLater){
                 pSlotsToConnectLater = new std::vector<SlotHolderPtr>();
@@ -355,6 +356,77 @@ public:
         }
 
         return Connection(slot);
+    }
+
+    void disconnect_all_slots() {
+        while(firstSlot){
+            remove(firstSlot);
+        }
+    }
+
+    bool empty() const {
+        return (firstSlot == nullptr);
+    }
+
+    int numConnections() const {
+        int n = 0;
+        auto slot = firstSlot;
+        while(slot){
+            ++n;
+            slot = slot->next;
+        }
+        return n;
+    }
+    
+    auto operator()(Args... args){
+        return invoke(std::is_void<result_type>{}, std::forward<Args>(args)...);
+    }
+
+private:
+    void invoke(std::true_type, Args&&... args){
+        if(firstSlot){
+            typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
+            Combiner combiner;
+            std::tuple<Args...> argset(args...);
+            isCallingSlots = true;
+            combiner(IteratorType(firstSlot, argset), IteratorType(nullptr, argset));
+            isCallingSlots = false;
+            if(pSlotsToConnectLater){
+                connectSlotsWithPendingConnection();
+            }
+        }
+    }
+
+    /**
+       The combiner operation must always be executed even if there is no slot connected
+       to the signal to return the correct default value that is determined by the combiner.
+    */
+    result_type invoke(std::false_type, Args&&... args){
+        typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
+        Combiner combiner;
+        std::tuple<Args...> argset(args...);
+        isCallingSlots = true;
+        auto result = combiner(IteratorType(firstSlot, argset), IteratorType(nullptr, argset));
+        isCallingSlots = false;
+        if(pSlotsToConnectLater){
+            connectSlotsWithPendingConnection();
+        }
+        return result;
+    }
+
+    void connectSlotsWithPendingConnection(){
+        for(auto& slot : *pSlotsToConnectLater){
+            if(!firstSlot){
+                firstSlot = slot;
+                lastSlot = slot;
+            } else {
+                lastSlot->next = slot;
+                slot->prev = lastSlot;
+                lastSlot = slot;
+            }
+            slot->owner = this;
+        }
+        pSlotsToConnectLater->clear();
     }
 
     void remove(SlotHolderPtr slot){
@@ -410,76 +482,8 @@ public:
             }
         }
     }
-                        
-    void disconnect_all_slots() {
-        while(firstSlot){
-            remove(firstSlot);
-        }
-    }
 
-    bool empty() const {
-        return (firstSlot == nullptr);
-    }
-
-    int numConnections() const {
-        int n = 0;
-        auto slot = firstSlot;
-        while(slot){
-            ++n;
-            slot = slot->next;
-        }
-        return n;
-    }
-    
-    auto operator()(Args... args){
-        return invoke(std::is_void<result_type>{}, std::forward<Args>(args)...);
-    }
-
-private:
-    void invoke(std::true_type, Args&&... args){
-        if(firstSlot){
-            typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
-            Combiner combiner;
-            std::tuple<Args...> argset(args...);
-            isCallingSlots = true;
-            combiner(IteratorType(firstSlot, argset), IteratorType(nullptr, argset));
-            isCallingSlots = false;
-            if(pSlotsToConnectLater){
-                connectSlotsWithPendingConnection();
-            }
-        }
-    }
-
-    result_type invoke(std::false_type, Args&&... args){
-        if(!firstSlot){
-            return result_type();
-        } else {
-            typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
-            Combiner combiner;
-            std::tuple<Args...> argset(args...);
-            isCallingSlots = true;
-            auto result = combiner(IteratorType(firstSlot, argset), IteratorType(nullptr, argset));
-            isCallingSlots = false;
-            if(pSlotsToConnectLater){
-                connectSlotsWithPendingConnection();
-            }
-            return result;
-        }
-    }
-
-    void connectSlotsWithPendingConnection(){
-        for(auto& slot : *pSlotsToConnectLater){
-            if(!firstSlot){
-                firstSlot = slot;
-                lastSlot = slot;
-            } else {
-                lastSlot->next = slot;
-                slot->prev = lastSlot;
-                lastSlot = slot;
-            }
-        }
-        pSlotsToConnectLater->clear();
-    }
+    friend SlotHolderType;
 };
 
 
