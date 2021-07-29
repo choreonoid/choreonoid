@@ -66,8 +66,10 @@ Changes since 1.7.0:
 * Added MaterialTableItem
 * Introduce snake case keys into data files
 * Improve Undo/Redo functions with the unified edit history
-
 * Improve WorldLogFileItem to provide a function to create a log playback project
+* Modify BodyTrackingCameraItem to BodySyncCameraItem and add the configuration dialog for it
+* Add RegionIntrusionDetectorItem
+* Add a function to register and switch multiple layouts of main window
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
