@@ -563,7 +563,7 @@ void MessageView::Impl::doPut(const string& message, bool doLF, bool doNotify, b
     if(doNotify){
         InfoBar::instance()->notify(message);
     }
-    if(!sigMessage.empty()){
+    if(sigMessage.hasConnections()){
         if(doLF){
             sigMessage(message + "\n");
         } else {

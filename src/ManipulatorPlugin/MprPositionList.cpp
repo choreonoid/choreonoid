@@ -193,7 +193,7 @@ bool MprPositionList::replace(int index, MprPosition* position)
     if(impl->removeAt(index, false)){
         if(impl->insert(index, position, false)){
             replaced = true;
-            if(!impl->sigPositionUpdated.empty()){
+            if(impl->sigPositionUpdated.hasConnections()){
                 impl->sigPositionUpdated(index, MprPosition::ObjectReplaced);
             }
         }
@@ -250,7 +250,7 @@ SignalProxy<void(int index, int flags)> MprPositionList::sigPositionUpdated()
 
 void MprPositionList::notifyPositionUpdate(MprPosition* position, int flags)
 {
-    if(!impl->sigPositionUpdated.empty()){
+    if(impl->sigPositionUpdated.hasConnections()){
         impl->sigPositionUpdated(indexOf(position), flags);
     }
 }

@@ -334,7 +334,7 @@ SignalProxy<void(int index, int flags)> MprVariableList::sigVariableUpdated()
 
 void MprVariableList::notifyVariableUpdate(MprVariable* variable, int flags)
 {
-    if(!impl->sigVariableUpdated.empty()){
+    if(impl->sigVariableUpdated.hasConnections()){
         impl->sigVariableUpdated(indexOf(variable), flags);
     }
 }

@@ -680,7 +680,7 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
         }
         
         if(!isTransient){
-            if(!sigFrameMarkerVisibilityChanged.empty()){
+            if(sigFrameMarkerVisibilityChanged.hasConnections()){
                 sigFrameMarkerVisibilityChanged(frameIndex, on);
             }
             if(itemizationMode != NoItemization){

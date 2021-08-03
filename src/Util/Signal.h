@@ -187,9 +187,9 @@ protected:
     void changeOrder(SlotHolderPtr slot, int orderId);
 
 public:
-    bool empty() const {
-        return (firstSlot == nullptr);
-    }
+    bool hasConnections() const {
+        return (firstSlot != nullptr);
+    }        
 
     int numConnections() const {
         int n = 0;
@@ -205,6 +205,11 @@ public:
         while(firstSlot){
             remove(firstSlot);
         }
+    }
+
+    [[deprecated("Use !hasConnections()")]]
+    bool empty() const {
+        return (firstSlot == nullptr);
     }
 };
 
@@ -560,6 +565,8 @@ public:
             return Connection();
         }
     };
+
+    bool hasConnections() const { return signal->hasConnections(); }
 
 private:
     SignalType* signal;

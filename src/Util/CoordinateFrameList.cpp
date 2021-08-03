@@ -243,7 +243,7 @@ SignalProxy<void(int index, int flags)> CoordinateFrameList::sigFrameUpdated()
 
 void CoordinateFrameList::notifyFrameUpdate(CoordinateFrame* frame, int flags)
 {
-    if(!impl->sigFrameUpdated.empty()){
+    if(impl->sigFrameUpdated.hasConnections()){
         impl->sigFrameUpdated(indexOf(frame), flags);
     }
 }

@@ -1449,7 +1449,7 @@ void ItemTreeWidget::Impl::onTreeWidgetSelectionChanged()
 {
     ItemList<> items;
     auto selectedTwItems = selectedItems();
-    bool doEmitSignal = !sigSelectionChanged.empty();
+    bool doEmitSignal = sigSelectionChanged.hasConnections();
     if(doEmitSignal){
         items.reserve(selectedTwItems.size());
     }
@@ -1536,7 +1536,7 @@ void ItemTreeWidget::Impl::setItwItemSelected(ItwItem* itwItem, bool on)
         itwItem->setSelected(on);
         treeWidgetSelectionChangeConnections.unblock();
 
-        if(!sigSelectionChanged.empty()){
+        if(sigSelectionChanged.hasConnections()){
             sigSelectionChanged(getSelectedItems());
         }
     }
