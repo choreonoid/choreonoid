@@ -11,8 +11,6 @@
 
 namespace cnoid {
 
-class SensorVisualizerItemImpl;
-
 class CNOID_EXPORT SensorVisualizerItem : public Item
 {
 public:
@@ -29,9 +27,9 @@ protected:
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
-
 private:
-    SensorVisualizerItemImpl* impl;
+    class Impl;
+    Impl* impl;
 };
         
 typedef ref_ptr<SensorVisualizerItem> SensorVisualizerItemPtr;

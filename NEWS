@@ -21,7 +21,7 @@ Changes since 1.7.0:
 * Supported Ubuntu 20.04
 * Supported Visual C++ 2019
 * Supported Clang
-* Add LocationView and LinkPositionView
+* Added LocationView and LinkPositionView
 * The location of an object in the scene can be locked if necessary
 * Coordinate system for editing model positions can be selected on the location view and the link position view
 * Modified the default material colors
@@ -47,7 +47,7 @@ Changes since 1.7.0:
 * The transparency of a body shown in the scene view can be modified as a property of the corresponding BodyItem
 * Improved file dialogs
 * Removed RobotAccessPlugin and Hrpsys31Plugin. The plugins are now availabe at https://github.com/choreonoid/robot-access-plugin
-* Fix the default layout of the main window
+* Fixed the default layout of the main window
 * Replaced LinkSelectionView with LinkDeviceListView, which can list the devices of a target body
 * Improved loading a new project when there is an existing project
 * Made the internal link attitudes same as the original model descriptions
@@ -64,12 +64,13 @@ Changes since 1.7.0:
 * Added BodyContactPointLoggerItem to visualize the information on the contacts against a target body during simulation
 * Added a function to write a body file
 * Added MaterialTableItem
-* Introduce snake case keys into data files
-* Improve Undo/Redo functions with the unified edit history
-* Improve WorldLogFileItem to provide a function to create a log playback project
-* Modify BodyTrackingCameraItem to BodySyncCameraItem and add the configuration dialog for it
-* Add RegionIntrusionDetectorItem
-* Add a function to register and switch multiple layouts of main window
+* Introduced snake case keys into data files
+* Improveed Undo/Redo functions with the unified edit history
+* Improveed WorldLogFileItem to provide a function to create a log playback project
+* Modified BodyTrackingCameraItem to BodySyncCameraItem and add the configuration dialog for it
+* Added RegionIntrusionDetectorItem
+* Added a function to register and switch multiple layouts of main window
+* Improved SensorVisualizerItem to support acceleration sensors and rate gyro sensors
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================

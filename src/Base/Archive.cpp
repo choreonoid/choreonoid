@@ -243,6 +243,12 @@ Archive* Archive::subArchive(Mapping* node)
 }
 
 
+const Archive* Archive::subArchive(Mapping* node) const
+{
+    return const_cast<Archive*>(this)->subArchive(node);
+}
+
+
 std::string Archive::resolveRelocatablePath(const std::string& relocatable, bool doAbsolutize) const
 {
     auto expanded = shared->pathVariableProcessor->expand(relocatable, doAbsolutize);

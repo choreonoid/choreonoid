@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-28 12:37+0900\n"
+"POT-Creation-Date: 2021-08-04 00:14+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -465,7 +465,7 @@ msgstr "ローカル"
 msgid "Body Origin"
 msgstr "ボディ原点"
 
-#: LinkPositionWidget.cpp:278
+#: LinkPositionWidget.cpp:278 SensorVisualizerItem.cpp:588
 msgid "Offset"
 msgstr "オフセット"
 
@@ -606,47 +606,47 @@ msgstr "ダイヤル"
 msgid "Phase"
 msgstr "位相"
 
-#: BodySyncCameraItem.cpp:172
+#: BodySyncCameraItem.cpp:179
 msgid "BodySyncCameraItem"
 msgstr "ボディ同期カメラ"
 
-#: BodySyncCameraItem.cpp:178
+#: BodySyncCameraItem.cpp:185
 msgid "Camera configuration"
 msgstr "カメラの設定"
 
-#: BodySyncCameraItem.cpp:217
+#: BodySyncCameraItem.cpp:223
 msgid "Perspective"
 msgstr "透視投影"
 
-#: BodySyncCameraItem.cpp:218
+#: BodySyncCameraItem.cpp:224
 msgid "Orthographic"
 msgstr "並行投影"
 
-#: BodySyncCameraItem.cpp:503
+#: BodySyncCameraItem.cpp:509
 msgid "Target link"
 msgstr "対象リンク"
 
-#: BodySyncCameraItem.cpp:505
+#: BodySyncCameraItem.cpp:511
 msgid "Camera type"
 msgstr "カメラ タイプ"
 
-#: BodySyncCameraItem.cpp:507
+#: BodySyncCameraItem.cpp:513
 msgid "Field Of View"
 msgstr "視野角"
 
-#: BodySyncCameraItem.cpp:509
+#: BodySyncCameraItem.cpp:515
 msgid "Near clip distance"
 msgstr "近方クリップ距離"
 
-#: BodySyncCameraItem.cpp:511
+#: BodySyncCameraItem.cpp:517
 msgid "Far clip distance"
 msgstr "遠方クリップ距離"
 
-#: BodySyncCameraItem.cpp:513 BodySyncCameraConfigDialog.cpp:204
+#: BodySyncCameraItem.cpp:519 BodySyncCameraConfigDialog.cpp:204
 msgid "Parallel tracking"
 msgstr "平行トラッキング"
 
-#: BodySyncCameraItem.cpp:515 BodySyncCameraConfigDialog.cpp:210
+#: BodySyncCameraItem.cpp:521 BodySyncCameraConfigDialog.cpp:210
 msgid "Interactive viewpoint change"
 msgstr "インタラクティブな視点変更"
 
@@ -1913,29 +1913,41 @@ msgstr "{}のデータを上書きしますか？"
 msgid "Do you add the data of \"{0}\" to \"{1}\" as a sequence data element?"
 msgstr "\"{0}\" のデータを \"{1}\" のシーケンスデータ要素として追加しますか？"
 
-#: SensorVisualizerItem.cpp:180
+#: SensorVisualizerItem.cpp:259
 msgid "SensorVisualizerItem"
 msgstr "センサ可視化アイテム"
 
-#: SensorVisualizerItem.cpp:181
+#: SensorVisualizerItem.cpp:260
 msgid "ForceSensorVisualizerItem"
 msgstr "力センサ可視化アイテム"
 
-#: SensorVisualizerItem.cpp:182
+#: SensorVisualizerItem.cpp:261
+msgid "AccelerationSensorVisualizerItem"
+msgstr "加速度センサ可視化アイテム"
+
+#: SensorVisualizerItem.cpp:262
+msgid "RateGyroSensorVisualizerItem"
+msgstr "レートジャイロセンサ可視化アイテム"
+
+#: SensorVisualizerItem.cpp:263
 msgid "PointCloudVisualizerItem"
 msgstr "ポイントクラウド可視化アイテム"
 
-#: SensorVisualizerItem.cpp:183
+#: SensorVisualizerItem.cpp:264
 msgid "RangeSensorVisualizerItem"
 msgstr "レンジセンサ可視化アイテム"
 
-#: SensorVisualizerItem.cpp:184
+#: SensorVisualizerItem.cpp:265
 msgid "CameraImageVisualizerItem"
 msgstr "カメラ画像可視化アイテム"
 
-#: SensorVisualizerItem.cpp:500
+#: SensorVisualizerItem.cpp:575
 msgid "Visual ratio"
 msgstr "表示比率"
+
+#: SensorVisualizerItem.cpp:585
+msgid "Visual threshold"
+msgstr "表示閾値"
 
 #: JointStateView.cpp:67
 msgid "Joint State"
@@ -2058,3 +2070,6 @@ msgstr "逆運動学優先リンク"
 #: ControllerLogItem.cpp:9
 msgid "ControllerLogItem"
 msgstr "コントローラログアイテム"
+
+#~ msgid "Threshold"
+#~ msgstr "表示閾値"

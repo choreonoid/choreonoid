@@ -38,6 +38,7 @@ public:
     bool forSubArchive(const std::string& name, std::function<bool(const Archive& archive)> func) const;
     Archive* openSubArchive(const std::string& name);
     Archive* subArchive(Mapping* node);
+    const Archive* subArchive(Mapping* node) const;
 
     ValueNodePtr getItemId(const Item* item) const;
     Item* findItem(const ValueNode* id) const;

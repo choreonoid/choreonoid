@@ -18,6 +18,8 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
+#include <cnoid/EigenArchive>
+#include <cnoid/EigenUtil>
 #include "gettext.h"
 
 using namespace std;
@@ -25,51 +27,86 @@ using namespace cnoid;
 
 namespace {
 
-class Arrow : public SgPosTransform
+class ArrowMarker : public SgPosTransform
 {
 public:
+    SgSwitchableGroupPtr sgroup;
     SgPosTransformPtr cylinderPosition;
     SgScaleTransformPtr cylinderScale;
-    SgShapePtr cylinder;
     SgPosTransformPtr conePosition;
-    SgShapePtr cone;
+    SgMaterialPtr material;
+    bool isVisible;
     
-    Arrow(SgShape* cylinder, SgShape* cone)
-        : cylinder(cylinder),
-          cone(cone)
+    static SgMeshPtr cylinderMesh;
+    static SgMeshPtr coneMesh;
+    
+    ArrowMarker(SgMaterial* material)
+        : material(material)
     {
-        cylinderScale = new SgScaleTransform();
+        sgroup = new SgSwitchableGroup;
+        
+        if(!cylinderMesh){
+            MeshGenerator meshGenerator;
+            cylinderMesh = meshGenerator.generateCylinder(0.01, 1.0);
+            coneMesh = meshGenerator.generateCone(0.03,  0.04);
+        }
+
+        auto cylinder = new SgShape;
+        cylinder->setMesh(cylinderMesh);
+        cylinder->setMaterial(material);
+        cylinderScale = new SgScaleTransform;
         cylinderScale->addChild(cylinder);
-        cylinderPosition = new SgPosTransform();
+        cylinderPosition = new SgPosTransform;
         cylinderPosition->addChild(cylinderScale);
-        addChild(cylinderPosition);
+        sgroup->addChild(cylinderPosition);
 
-        conePosition = new SgPosTransform();
+        auto cone = new SgShape;
+        cone->setMesh(coneMesh);
+        cone->setMaterial(material);
+        conePosition = new SgPosTransform;
         conePosition->addChild(cone);
-        addChild(conePosition);
+        sgroup->addChild(conePosition);
 
-        setVector(Vector3(0.0, 0.0, 0.0), nullptr);
+        addChild(sgroup);
+        isVisible = true;
+
+        setVector(Vector3::Zero(), 1.0, nullptr);
     }
 
-    void setVector(const Vector3& v, SgUpdateRef update) {
+    void setVector(const Vector3& v, double threshold, SgUpdateRef update)
+    {
         double len = v.norm();
-        cylinderScale->setScale(Vector3(1.0, len, 1.0));
-        cylinderPosition->setTranslation(Vector3(0.0, len / 2.0, 0.0));
-        conePosition->setTranslation(Vector3(0.0, len, 0.0));
 
-        if(len > 0.0){
+        if(len < threshold){
+            if(isVisible){
+                sgroup->setTurnedOn(false, update);
+                isVisible = false;
+            }
+        } else {
+            if(!isVisible){
+                sgroup->setTurnedOn(true);
+                isVisible = true;
+            }
+            cylinderScale->setScale(Vector3(1.0, len, 1.0));
+            cylinderPosition->setTranslation(Vector3(0.0, len / 2.0, 0.0));
+            conePosition->setTranslation(Vector3(0.0, len, 0.0));
+
             Vector3 axis = (Vector3::UnitY().cross(v)).normalized();
             double angle = acos(Vector3::UnitY().dot(v) / len);
             setRotation(AngleAxis(angle, axis));
-        }
 
-        if(update){
-            notifyUpdate(*update);
+            if(update){
+                notifyUpdate(*update);
+            }
         }
     }
 };
 
-typedef ref_ptr<Arrow> ArrowPtr;
+SgMeshPtr ArrowMarker::cylinderMesh;
+SgMeshPtr ArrowMarker::coneMesh;
+
+
+typedef ref_ptr<ArrowMarker> ArrowMarkerPtr;
 
 class SensorVisualizerItemBase
 {
@@ -85,29 +122,62 @@ public:
     virtual void enableVisualization(bool on) = 0;
     virtual void doUpdateVisualization() = 0;
 };
-    
 
-class ForceSensorVisualizerItem : public Item, public SensorVisualizerItemBase, public RenderableItem
+
+class Vector3SensorVisualizerItem : public Item, public SensorVisualizerItemBase, public RenderableItem
 {
 public:
-    ForceSensorVisualizerItem();
+    Vector3SensorVisualizerItem();
+
     virtual SgNode* getScene() override;
     virtual void enableVisualization(bool on) override;
     virtual void doUpdateVisualization() override;
-    void updateSensorPositions(bool doNotify);
-    void updateForceSensorState(int index);
+    virtual void updateSensors() = 0;
+    void updateSensorMarkerPositions(bool doNotify);
+    void updateSensorMarkerVector(int index);
+    virtual Vector3 getSensorMarkerVector(Device* sensor) = 0;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
     SgGroupPtr scene;
-    SgShapePtr cylinder;
-    SgShapePtr cone;
-    DeviceList<ForceSensor> forceSensors;
-    vector<ArrowPtr> forceSensorArrows;
+    SgMaterialPtr material;
+    Vector3f color;
+    DeviceList<> sensors;
+    vector<ArrowMarkerPtr> markers;
+    Vector3 offset;
+    double threshold;
     double visualRatio;
     ScopedConnectionSet connections;
 };
+    
+
+class ForceSensorVisualizerItem : public Vector3SensorVisualizerItem
+{
+public:
+    ForceSensorVisualizerItem();
+    virtual void updateSensors() override;
+    virtual Vector3 getSensorMarkerVector(Device* sensor) override;
+};
+
+
+class AccelerationSensorVisualizerItem : public Vector3SensorVisualizerItem
+{
+public:
+    AccelerationSensorVisualizerItem();
+    virtual void updateSensors() override;
+    virtual Vector3 getSensorMarkerVector(Device* sensor) override;
+};
+
+
+class RateGyroSensorVisualizerItem : public Vector3SensorVisualizerItem
+{
+public:
+    RateGyroSensorVisualizerItem();
+    virtual void updateSensors() override;
+    virtual Vector3 getSensorMarkerVector(Device* sensor) override;
+};
+
 
 class CameraImageVisualizerItem : public Item, public SensorVisualizerItemBase, public ImageableItem
 {
@@ -125,6 +195,7 @@ public:
     Signal<void()> sigImageUpdated_;
 };
 
+
 class PointCloudVisualizerItem : public PointSetItem, public SensorVisualizerItemBase
 {
 public:
@@ -138,6 +209,7 @@ public:
     RangeCameraPtr rangeCamera;
     ScopedConnectionSet connections;
 };
+
 
 class RangeSensorVisualizerItem : public PointSetItem, public SensorVisualizerItemBase
 {
@@ -157,7 +229,7 @@ public:
 
 namespace cnoid {
 
-class SensorVisualizerItemImpl
+class SensorVisualizerItem::Impl
 {
 public:
     SensorVisualizerItem* self;
@@ -166,7 +238,14 @@ public:
     vector<ItemPtr> restoredSubItems;
     SgUpdate update;
 
-    SensorVisualizerItemImpl(SensorVisualizerItem* self);
+    Impl(SensorVisualizerItem* self);
+
+    template<class ItemType, class SensorType>
+    void addSensorVisualizerItem(Body* body, int& itemIndex);
+
+    template<class ItemType, class SensorType, bool isCamera>
+    void addVisionSensorVisualizerItem(Body* body, int& itemIndex);
+    
     void onTreePathChanged();
 };
 
@@ -179,6 +258,8 @@ void SensorVisualizerItem::initializeClass(ExtensionManager* ext)
 
     im.registerClass<SensorVisualizerItem>(N_("SensorVisualizerItem"));
     im.registerClass<ForceSensorVisualizerItem>(N_("ForceSensorVisualizerItem"));
+    im.registerClass<AccelerationSensorVisualizerItem>(N_("AccelerationSensorVisualizerItem"));
+    im.registerClass<RateGyroSensorVisualizerItem>(N_("RateGyroSensorVisualizerItem"));
     im.registerClass<PointCloudVisualizerItem, PointSetItem>(N_("PointCloudVisualizerItem"));
     im.registerClass<RangeSensorVisualizerItem, PointSetItem>(N_("RangeSensorVisualizerItem"));
     im.registerClass<CameraImageVisualizerItem>(N_("CameraImageVisualizerItem"));
@@ -196,11 +277,11 @@ void SensorVisualizerItem::initializeClass(ExtensionManager* ext)
 
 SensorVisualizerItem::SensorVisualizerItem()
 {
-    impl = new SensorVisualizerItemImpl(this);
+    impl = new Impl(this);
 }
 
 
-SensorVisualizerItemImpl::SensorVisualizerItemImpl(SensorVisualizerItem* self)
+SensorVisualizerItem::Impl::Impl(SensorVisualizerItem* self)
     : self(self)
 {
 
@@ -210,7 +291,7 @@ SensorVisualizerItemImpl::SensorVisualizerItemImpl(SensorVisualizerItem* self)
 SensorVisualizerItem::SensorVisualizerItem(const SensorVisualizerItem& org)
     : Item(org)
 {
-    impl = new SensorVisualizerItemImpl(this);
+    impl = new Impl(this);
 }
 
 
@@ -234,71 +315,76 @@ void SensorVisualizerItem::onTreePathChanged()
 }
 
 
-void SensorVisualizerItemImpl::onTreePathChanged()
+template<class ItemType, class SensorType>
+void SensorVisualizerItem::Impl::addSensorVisualizerItem(Body* body, int& itemIndex)
+{
+    auto sensors = body->devices<SensorType>();
+    if(!sensors.empty()){
+        ItemType* item = nullptr;
+        if(itemIndex < static_cast<int>(restoredSubItems.size())){
+            item = dynamic_cast<ItemType*>(restoredSubItems[itemIndex].get());
+            if(item){
+                ++itemIndex;
+            }
+        }
+        if(!item){
+            item = new ItemType;;
+        }
+        item->setBodyItem(bodyItem);
+        self->addSubItem(item);
+        subItems.push_back(item);
+    }
+}
+
+
+template<class ItemType, class SensorType, bool isCamera>
+void SensorVisualizerItem::Impl::addVisionSensorVisualizerItem(Body* body, int& itemIndex)
+{
+    auto sensors = body->devices<SensorType>();
+    for(size_t i=0; i < sensors.size(); ++i){
+        if(isCamera){
+            if(reinterpret_cast<Camera*>(sensors[i].get())->imageType() == Camera::NO_IMAGE){
+                continue;
+            }
+        }
+        ItemType* item = nullptr;
+        if(itemIndex < static_cast<int>(restoredSubItems.size())){
+            item = dynamic_cast<ItemType*>(restoredSubItems[itemIndex].get());
+            if(item){
+                ++itemIndex;
+            }
+        }
+        if(!item){
+            item = new ItemType;;
+        }
+        item->setBodyItem(bodyItem, sensors[i]);
+        self->addSubItem(item);
+        subItems.push_back(item);
+    }
+}
+
+
+void SensorVisualizerItem::Impl::onTreePathChanged()
 {
     BodyItem* newBodyItem = self->findOwnerItem<BodyItem>();
+
     if(newBodyItem != bodyItem){
+        
         bodyItem = newBodyItem;
-        for(size_t i=0; i < subItems.size(); i++){
+        for(size_t i=0; i < subItems.size(); ++i){
             subItems[i]->removeFromParentItem();
         }
         subItems.clear();
 
-        int n = restoredSubItems.size();
-        int j = 0;
-
         if(bodyItem){
-            Body* body = bodyItem->body();
-
-            DeviceList<ForceSensor> forceSensors = body->devices<ForceSensor>();
-            if(!forceSensors.empty()){
-                ForceSensorVisualizerItem* forceSensorVisualizerItem= 0;
-                if(j<n){
-                    forceSensorVisualizerItem = dynamic_cast<ForceSensorVisualizerItem*>(restoredSubItems[j++].get());
-                } else {
-                    forceSensorVisualizerItem = new ForceSensorVisualizerItem();
-                }
-                if(forceSensorVisualizerItem){
-                    forceSensorVisualizerItem->setBodyItem(bodyItem);
-                    self->addSubItem(forceSensorVisualizerItem);
-                    subItems.push_back(forceSensorVisualizerItem);
-                }
-            }
-
-            DeviceList<RangeCamera> rangeCameras = body->devices<RangeCamera>();
-            for(size_t i=0; i < rangeCameras.size(); ++i){
-                PointCloudVisualizerItem* pointCloudVisualizerItem =
-                        j<n ? dynamic_cast<PointCloudVisualizerItem*>(restoredSubItems[j++].get()) : new PointCloudVisualizerItem();
-                if(pointCloudVisualizerItem){
-                    pointCloudVisualizerItem->setBodyItem(bodyItem, rangeCameras[i]);
-                    self->addSubItem(pointCloudVisualizerItem);
-                    subItems.push_back(pointCloudVisualizerItem);
-                }
-            }
-
-            DeviceList<RangeSensor> rangeSensors = body->devices<RangeSensor>();
-            for(size_t i=0; i < rangeSensors.size(); ++i){
-                RangeSensorVisualizerItem* rangeSensorVisualizerItem =
-                        j<n ? dynamic_cast<RangeSensorVisualizerItem*>(restoredSubItems[j++].get()) : new RangeSensorVisualizerItem();
-                if(rangeSensorVisualizerItem){
-                    rangeSensorVisualizerItem->setBodyItem(bodyItem, rangeSensors[i]);
-                    self->addSubItem(rangeSensorVisualizerItem);
-                    subItems.push_back(rangeSensorVisualizerItem);
-                }
-            }
-
-            DeviceList<Camera> cameras = body->devices<Camera>();
-            for(size_t i=0; i < cameras.size(); ++i){
-                if(cameras[i]->imageType()!=Camera::NO_IMAGE){
-                    CameraImageVisualizerItem* cameraImageVisualizerItem =
-                            j<n ? dynamic_cast<CameraImageVisualizerItem*>(restoredSubItems[j++].get()) : new CameraImageVisualizerItem();
-                    if(cameraImageVisualizerItem){
-                        cameraImageVisualizerItem->setBodyItem(bodyItem, cameras[i]);
-                        self->addSubItem(cameraImageVisualizerItem);
-                        subItems.push_back(cameraImageVisualizerItem);
-                    }
-                }
-            }
+            auto body = bodyItem->body();
+            int itemIndex = 0;
+            addSensorVisualizerItem<ForceSensorVisualizerItem, ForceSensor>(body, itemIndex);
+            addSensorVisualizerItem<AccelerationSensorVisualizerItem, AccelerationSensor>(body, itemIndex);
+            addSensorVisualizerItem<RateGyroSensorVisualizerItem, RateGyroSensor>(body, itemIndex);
+            addVisionSensorVisualizerItem<CameraImageVisualizerItem, Camera, true>(body, itemIndex);
+            addVisionSensorVisualizerItem<PointCloudVisualizerItem, RangeCamera, false>(body, itemIndex);
+            addVisionSensorVisualizerItem<RangeSensorVisualizerItem, RangeSensor, false>(body, itemIndex);
         }
 
         restoredSubItems.clear();
@@ -316,14 +402,14 @@ void SensorVisualizerItem::onDisconnectedFromRoot()
 
 bool SensorVisualizerItem::store(Archive& archive)
 {
-    ListingPtr subItems = new Listing();
+    ListingPtr subItems = new Listing;
 
     for(size_t i=0; i < impl->subItems.size(); i++){
         Item* item = impl->subItems[i];
         string pluginName, className;
         ItemManager::getClassIdentifier(item, pluginName, className);
 
-        ArchivePtr subArchive = new Archive();
+        ArchivePtr subArchive = new Archive;
         subArchive->write("class", className);
         subArchive->write("name", item->name());
         if(item->isSelected()){
@@ -347,13 +433,10 @@ bool SensorVisualizerItem::restore(const Archive& archive)
 {
     impl->restoredSubItems.clear();
 
-    ListingPtr subItems = archive.findListing("sub_items");
-    if(!subItems->isValid()){
-        subItems = archive.findListing("subItems"); // Old
-    }
+    ListingPtr subItems = archive.findListing({ "sub_items", "subItems" });
     if(subItems->isValid()){
-        for(int i=0; i < subItems->size(); i++){
-            Archive* subArchive = dynamic_cast<Archive*>(subItems->at(i)->toMapping());
+        for(int i=0; i < subItems->size(); ++i){
+            auto subArchive = archive.subArchive(subItems->at(i)->toMapping());
             string className, itemName;
             subArchive->read("class", className);
             subArchive->read("name", itemName);
@@ -373,8 +456,6 @@ bool SensorVisualizerItem::restore(const Archive& archive)
     return true;
 }
 
-
-namespace {
 
 SensorVisualizerItemBase::SensorVisualizerItemBase(Item* item)
     : item(item),
@@ -401,100 +482,94 @@ void SensorVisualizerItemBase::updateVisualization()
 }
     
 
-ForceSensorVisualizerItem::ForceSensorVisualizerItem()
+Vector3SensorVisualizerItem::Vector3SensorVisualizerItem()
     : SensorVisualizerItemBase(this)
 {
-    setName("ForceSensor");
-    
-    scene = new SgGroup;
 
-    SgMaterial* material = new SgMaterial;
-    Vector3f color(1.0f, 0.2f, 0.2f);
-    material->setDiffuseColor(Vector3f::Zero());
-    material->setEmissiveColor(color);
-    material->setAmbientIntensity(0.0f);
-    material->setTransparency(0.6f);
-
-    MeshGenerator meshGenerator;
-    cone = new SgShape;
-    cone->setMesh(meshGenerator.generateCone(0.03,  0.04));
-    cone->setMaterial(material);
-
-    cylinder = new SgShape;
-    cylinder->setMesh(meshGenerator.generateCylinder(0.01, 1.0));
-    cylinder->setMaterial(material);
-
-    visualRatio = 0.002;
 }
 
 
-SgNode* ForceSensorVisualizerItem::getScene()
+SgNode* Vector3SensorVisualizerItem::getScene()
 {
+    if(!scene){
+        scene = new SgGroup;
+    }
     return scene;
 }
 
 
-void ForceSensorVisualizerItem::enableVisualization(bool on)
+void Vector3SensorVisualizerItem::enableVisualization(bool on)
 {
+    getScene();
+    
     connections.disconnect();
     scene->clearChildren();
-    forceSensors.clear();
+    sensors.clear();
+    markers.clear();
 
     if(bodyItem && on){
-        connections.add(
-            bodyItem->sigKinematicStateChanged().connect(
-                [&](){ updateSensorPositions(true); }));
-
-        Body* body = bodyItem->body();
-        forceSensors = body->devices<ForceSensor>();
-        forceSensorArrows.clear();
-        for(size_t i=0; i < forceSensors.size(); ++i){
-            ArrowPtr arrow = new Arrow(cylinder, cone);
-            forceSensorArrows.push_back(arrow);
-            scene->addChild(arrow);
-            connections.add(
-                forceSensors[i]->sigStateChanged().connect(
-                    [this, i](){ updateForceSensorState(i); }));
+        if(!material){
+            material = new SgMaterial;
+            material->setDiffuseColor(Vector3f::Zero());
+            material->setEmissiveColor(color);
+            material->setAmbientIntensity(0.0f);
+            material->setTransparency(0.5f);
         }
 
+        updateSensors();
+
+        for(size_t i=0; i < sensors.size(); ++i){
+            auto marker = new ArrowMarker(material);
+            markers.push_back(marker);
+            scene->addChild(marker);
+            connections.add(
+                sensors[i]->sigStateChanged().connect(
+                    [this, i](){ updateSensorMarkerVector(i); }));
+        }
+        if(!sensors.empty()){
+            connections.add(
+                bodyItem->sigKinematicStateChanged().connect(
+                    [&](){ updateSensorMarkerPositions(true); }));
+        }
         doUpdateVisualization();
     }
 }
 
 
-void ForceSensorVisualizerItem::doUpdateVisualization()
+void Vector3SensorVisualizerItem::doUpdateVisualization()
 {
-    updateSensorPositions(false);
-    for(size_t i=0; i < forceSensors.size(); ++i){
-        updateForceSensorState(i);
+    updateSensorMarkerPositions(false);
+    for(size_t i=0; i < sensors.size(); ++i){
+        updateSensorMarkerVector(i);
     }
 }
 
     
-void ForceSensorVisualizerItem::updateSensorPositions(bool doNotify)
+void Vector3SensorVisualizerItem::updateSensorMarkerPositions(bool doNotify)
 {
-    for(size_t i=0; i < forceSensors.size(); ++i){
-        ForceSensor* sensor = forceSensors[i];
+    for(size_t i=0; i < sensors.size(); ++i){
+        auto sensor = sensors[i];
         Vector3 p = sensor->link()->T() * sensor->localTranslation();
-        forceSensorArrows[i]->setTranslation(p);
+        markers[i]->setTranslation(p);
         if(doNotify){
-            forceSensorArrows[i]->notifyUpdate(update.withAction(SgUpdate::Modified));
+            markers[i]->notifyUpdate(update.withAction(SgUpdate::Modified));
         }
     }
 }
 
 
-void ForceSensorVisualizerItem::updateForceSensorState(int index)
+void Vector3SensorVisualizerItem::updateSensorMarkerVector(int index)
 {
-    if(index < static_cast<int>(forceSensors.size())){
-        ForceSensor* sensor = forceSensors[index];
-        Vector3 v = sensor->link()->T() * sensor->T_local() * sensor->f();
-        forceSensorArrows[index]->setVector(v * visualRatio, update);
+    if(index < static_cast<int>(sensors.size())){
+        auto sensor = sensors[index];
+        Vector3 v_local = getSensorMarkerVector(sensor) + offset;
+        Vector3 v_global = sensor->link()->R() * sensor->R_local() * v_local;
+        markers[index]->setVector(visualRatio * v_global, threshold, update);
     }
 }
 
 
-void ForceSensorVisualizerItem::doPutProperties(PutPropertyFunction& putProperty)
+void Vector3SensorVisualizerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty.decimals(4)(
         _("Visual ratio"), visualRatio,
@@ -506,20 +581,95 @@ void ForceSensorVisualizerItem::doPutProperties(PutPropertyFunction& putProperty
             }
             return false;
         });
+    
+    putProperty.decimals(3)(_("Visual threshold"), threshold, changeProperty(threshold));
+    
+    putProperty.decimals(2)(
+        _("Offset"), str(offset), [&](const string& v){ return toVector3(v, offset); });
 }
 
 
-bool ForceSensorVisualizerItem::store(Archive& archive)
+bool Vector3SensorVisualizerItem::store(Archive& archive)
 {
-    archive.write("visualRatio", visualRatio);
+    archive.write("ratio", visualRatio);
+    archive.write("threshold", threshold);
+    write(archive, "offset", offset);
     return true;
 }
 
 
-bool ForceSensorVisualizerItem::restore(const Archive& archive)
+bool Vector3SensorVisualizerItem::restore(const Archive& archive)
 {
-    archive.read("visualRatio", visualRatio);
+    archive.read({ "ratio", "visualRatio" }, visualRatio);
+    archive.read("threshold", threshold);
+    read(archive, "offset", offset);
     return true;
+}
+
+
+ForceSensorVisualizerItem::ForceSensorVisualizerItem()
+{
+    setName("ForceSensor");
+    color << 1.0f, 0.8f, 0.0f;
+    offset.setZero();    
+    threshold = 0.1;
+    visualRatio = 0.01;
+}
+
+
+void ForceSensorVisualizerItem::updateSensors()
+{
+    sensors = bodyItem->body()->devices<ForceSensor>();
+}
+
+
+Vector3 ForceSensorVisualizerItem::getSensorMarkerVector(Device* sensor)
+{
+    return static_cast<ForceSensor*>(sensor)->f();
+}
+
+
+AccelerationSensorVisualizerItem::AccelerationSensorVisualizerItem()
+{
+    setName("AccelerationSensor");
+    color << 1.0f, 0.2f, 0.2f;
+    offset << 0.0, 0.0, -9.8;
+    threshold = 0.05;
+    visualRatio = 0.1;
+}
+
+
+void AccelerationSensorVisualizerItem::updateSensors()
+{
+    sensors = bodyItem->body()->devices<AccelerationSensor>();
+}
+
+
+Vector3 AccelerationSensorVisualizerItem::getSensorMarkerVector(Device* sensor)
+{
+    return static_cast<AccelerationSensor*>(sensor)->dv();
+}
+
+
+RateGyroSensorVisualizerItem::RateGyroSensorVisualizerItem()
+{
+    setName("RateGyro");
+    color << 0.2f, 0.2f, 1.0f;
+    offset.setZero();    
+    threshold = 0.01;
+    visualRatio = 0.4;
+}
+
+
+void RateGyroSensorVisualizerItem::updateSensors()
+{
+    sensors = bodyItem->body()->devices<RateGyroSensor>();
+}
+
+
+Vector3 RateGyroSensorVisualizerItem::getSensorMarkerVector(Device* sensor)
+{
+    return static_cast<RateGyroSensor*>(sensor)->w();
 }
 
 
@@ -546,8 +696,9 @@ void CameraImageVisualizerItem::setBodyItem(BodyItem* bodyItem, Camera* camera)
 {
     if(name().empty()){
         string name = camera->name();
-        if(dynamic_cast<RangeCamera*>(camera))
-            name += "_Image";
+        if(dynamic_cast<RangeCamera*>(camera)){
+            name += "-Image";
+        }
         setName(name);
     }
 
@@ -752,6 +903,4 @@ void RangeSensorVisualizerItem::updateRangeSensorState()
         }
     }
     pointSet_->notifyUpdate(update.withAction(SgUpdate::Modified));
-}
-
 }
