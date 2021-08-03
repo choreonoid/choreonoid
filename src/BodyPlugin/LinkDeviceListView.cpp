@@ -18,6 +18,7 @@ class LinkDeviceListView::Impl
 {
 public:
     LinkDeviceTreeWidget treeWidget;
+    bool needToInitializeTreeWidgetElementTypeAndListingMode;
     ScopedConnection treeWidgetConnection;
     enum ElementType { ALL, LINK, JOINT, DEVICE };
     ComboBox elementTypeCombo;
@@ -82,6 +83,8 @@ LinkDeviceListView::Impl::Impl(LinkDeviceListView* self)
     vbox->addWidget(&treeWidget);
     
     self->setLayout(vbox);
+
+    needToInitializeTreeWidgetElementTypeAndListingMode = true;
 
     elementTypeCombo.sigCurrentIndexChanged().connect(
         [&](int id){ onElementTypeChanged(id, true); });
@@ -164,6 +167,11 @@ void LinkDeviceListView::Impl::onListingModeChanged(int id, bool doUpdate)
 
 void LinkDeviceListView::Impl::onCurrentBodySelectionChanged(BodyItem* bodyItem, Link* link)
 {
+    if(needToInitializeTreeWidgetElementTypeAndListingMode){
+        onElementTypeChanged(elementTypeCombo.currentIndex(), false);
+        onListingModeChanged(listingModeCombo.currentIndex(), false);
+        needToInitializeTreeWidgetElementTypeAndListingMode = false;
+    }
     if(bodyItem && link){
         treeWidget.setLinkSelection(bodyItem, bodySelectionManager->linkSelection(bodyItem));
     }
