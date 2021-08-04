@@ -69,7 +69,7 @@ links:
     translation: [ -0.04, 0, 0.1125 ]
     jointType: revolute
     jointAxis: -Z
-    jointRange: unlimited
+    jointRange: [ -360, 360 ]
     maxJointVelocity: 90
     jointId: 0
     centerOfMass: [ 0, 0, 0.025 ]
