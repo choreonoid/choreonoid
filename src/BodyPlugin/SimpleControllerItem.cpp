@@ -419,6 +419,10 @@ bool SimpleControllerItem::Impl::loadController()
 bool SimpleControllerItem::Impl::configureController()
 {
     if(controller){
+        if(isConfigured){
+            controller->unconfigure();
+            isConfigured = false;
+        }            
         if(targetBodyItem){
             if(controller->configure(&config)){
                 isConfigured = true;
@@ -427,9 +431,6 @@ bool SimpleControllerItem::Impl::configureController()
                           MessageView::Error);
                 isConfigured = false;
             }
-        } else if(isConfigured){
-            controller->unconfigure();
-            isConfigured = false;
         }
     }
     return isConfigured;
