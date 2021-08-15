@@ -29,7 +29,8 @@ void exportPyItemTreeView(py::module m)
              py::arg("item"), py::arg("on") = true)
         
         .def_property_readonly(
-            "selectedItems", [](ItemTreeView&){ return RootItem::instance()->selectedItems();})
+            "selectedItems", [](ItemTreeView&){ return RootItem::instance()->selectedItems(); })
+        .def("getSelectedItems", [](ItemTreeView&){ return RootItem::instance()->selectedItems(); })
         .def("getSelectedItems", [](ItemTreeView&, py::object itemClass){
                 return getPyNarrowedItemList(RootItem::instance()->selectedItems(), itemClass); })
         .def("getSelectedItem", [](ItemTreeView&, py::object itemClass){

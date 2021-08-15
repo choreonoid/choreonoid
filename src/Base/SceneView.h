@@ -25,7 +25,7 @@ public:
     static SceneView* instance();
 
     /**
-       This function is used in the BodyTrackingCameraItem implementation, but
+       This function is used in the BodySyncCameraItem implementation, but
        the implementation should not use the function and the function should be removed.
     */
     static std::vector<SceneView*> instances();

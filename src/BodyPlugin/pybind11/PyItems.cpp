@@ -102,7 +102,7 @@ void exportItems(py::module m)
 
     PyItemList<BodySyncCameraItem> bodySyncCameraItemList(m, "BodySyncCameraItemList");
 
-    m.attr("BodyTrackingCameraItemList") = bodySyncCameraItemList;
+    m.attr("BodyTrackingCameraItemList") = m.attr("BodySyncCameraItemList");
 }
 
 }
