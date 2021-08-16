@@ -85,7 +85,7 @@ public:
     bool restoreObjectStates(
         Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix);
 
-    void loadProject(
+    ItemList<> loadProject(
         const std::string& filename, Item* parentItem,
         bool isInvokingApplication, bool isBuiltinProject, bool doClearExistingProject);
 
@@ -324,9 +324,9 @@ bool ProjectManager::Impl::restoreObjectStates
 }
 
 
-void ProjectManager::loadProject(const std::string& filename, Item* parentItem)
+ItemList<> ProjectManager::loadProject(const std::string& filename, Item* parentItem)
 {
-    impl->loadProject(filename, parentItem, false, false, (parentItem == nullptr));
+    return impl->loadProject(filename, parentItem, false, false, (parentItem == nullptr));
 }
 
 
@@ -336,10 +336,12 @@ void ProjectManager::loadBuiltinProject(const std::string& resourceFile, Item* p
 }
 
 
-void ProjectManager::Impl::loadProject
+ItemList<> ProjectManager::Impl::loadProject
 (const std::string& filename, Item* parentItem,
  bool isInvokingApplication, bool isBuiltinProject, bool doClearExistingProject)
 {
+    ItemList<> topLevelItems;
+    
     ::sigProjectAboutToBeLoaded(projectBeingLoadedCounter);
     
     ++projectBeingLoadedCounter;
@@ -501,7 +503,7 @@ void ProjectManager::Impl::loadProject
             if(items->isValid()){
                 items->inheritSharedInfoFrom(*archive);
 
-                itemTreeArchiver.restore(items, parentItem, optionalPlugins);
+                topLevelItems = itemTreeArchiver.restore(items, parentItem, optionalPlugins);
                 
                 numArchivedItems = itemTreeArchiver.numArchivedItems();
                 numRestoredItems = itemTreeArchiver.numRestoredItems();
@@ -568,6 +570,8 @@ void ProjectManager::Impl::loadProject
         vp->clearBaseDirectory();
         vp->clearProjectDirectory();
     }
+
+    return topLevelItems;
 }
 
 

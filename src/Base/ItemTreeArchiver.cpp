@@ -34,10 +34,11 @@ public:
     ArchivePtr store(Archive& parentArchive, Item* item);
     ArchivePtr storeIter(Archive& parentArchive, Item* item, bool& isComplete);
     void storeAddons(Archive& archive, Item* item);
-    void restore(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
-    void restoreItemIter(Archive& archive, Item* parentItem);
+    ItemList<> restore(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
+    void restoreItemIter(Archive& archive, Item* parentItem, ItemList<>& io_topLevelItems, int level);
     ItemPtr restoreItem(
-        Archive& archive, Item* parentItem, string& itemName, string& classame, bool& io_isOptional);
+        Archive& archive, Item* parentItem, string& itemName, string& classame,
+        bool& io_isRootItem, bool& io_isOptional);
     void restoreAddons(Archive& archive, Item* item);
     void restoreItemStates(Archive& archive, Item* item);
 };
@@ -230,40 +231,45 @@ void ItemTreeArchiver::Impl::storeAddons(Archive& archive, Item* item)
 }
 
 
-void ItemTreeArchiver::restore(Archive* archive, Item* parentItem, const std::set<std::string>& optionalPlugins)
+ItemList<> ItemTreeArchiver::restore(Archive* archive, Item* parentItem, const std::set<std::string>& optionalPlugins)
 {
-    impl->restore(*archive, parentItem, optionalPlugins);
+    return impl->restore(*archive, parentItem, optionalPlugins);
 }
 
 
-void ItemTreeArchiver::Impl::restore
+ItemList<> ItemTreeArchiver::Impl::restore
 (Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins)
 {
     numArchivedItems = 0;
     numRestoredItems = 0;
     pOptionalPlugins = &optionalPlugins;
+    ItemList<> topLevelItems;
 
     archive.setCurrentParentItem(nullptr);
     try {
-        restoreItemIter(archive, parentItem);
+        restoreItemIter(archive, parentItem, topLevelItems, 0);
     } catch (const ValueNode::Exception& ex){
         mv->putln(ex.message(), MessageView::Error);
     }
     archive.setCurrentParentItem(nullptr);
+
+    return topLevelItems;
 }
 
 
-void ItemTreeArchiver::Impl::restoreItemIter(Archive& archive, Item* parentItem)
+void ItemTreeArchiver::Impl::restoreItemIter
+(Archive& archive, Item* parentItem, ItemList<>& io_topLevelItems, int level)
 {
     ItemPtr item;
     string itemName;
     string className;
+    bool isRootItem = false;
     bool isOptional = false;
     std::vector<std::function<void()>> processesOnSubTreeRestored;
     archive.setPointerToProcessesOnSubTreeRestored(&processesOnSubTreeRestored);
 
     try {
-        item = restoreItem(archive, parentItem, itemName, className, isOptional);
+        item = restoreItem(archive, parentItem, itemName, className, isRootItem, isOptional);
     } catch (const ValueNode::Exception& ex){
         mv->putln(ex.message(), MessageView::Error);
     }
@@ -289,12 +295,18 @@ void ItemTreeArchiver::Impl::restoreItemIter(Archive& archive, Item* parentItem)
         if(archive.read("id", id) && (id >= 0)){
             archive.registerItemId(item, id);
         }
+        if(!isRootItem){
+            if(level == 0){
+                io_topLevelItems.push_back(item);
+            }
+            ++level;
+        }
         ListingPtr children = archive.findListing("children");
         if(children->isValid()){
             for(int i=0; i < children->size(); ++i){
                 Archive* childArchive = dynamic_cast<Archive*>(children->at(i)->toMapping());
                 childArchive->inheritSharedInfoFrom(archive);
-                restoreItemIter(*childArchive, item);
+                restoreItemIter(*childArchive, item, io_topLevelItems, level);
             }
         }
         for(auto& func : processesOnSubTreeRestored){
@@ -305,7 +317,7 @@ void ItemTreeArchiver::Impl::restoreItemIter(Archive& archive, Item* parentItem)
 
 
 ItemPtr ItemTreeArchiver::Impl::restoreItem
-(Archive& archive, Item* parentItem, string& itemName, string& className, bool& io_isOptional)
+(Archive& archive, Item* parentItem, string& itemName, string& className, bool& io_isRootItem, bool& io_isOptional)
 {
     archive.read("name", itemName);
 
@@ -346,8 +358,8 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
     ++numArchivedItems;
         
     item->setName(itemName);
-    bool isRootItem = dynamic_pointer_cast<RootItem>(item);
-    if(isRootItem){
+    io_isRootItem = bool(dynamic_pointer_cast<RootItem>(item));
+    if(io_isRootItem){
         item = parentItem;
         --numArchivedItems;
 

@@ -21,7 +21,12 @@ public:
     ~ItemTreeArchiver();
     void reset();
     ArchivePtr store(Archive* parentArchive, Item* topItem);
-    void restore(Archive* archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
+
+    /**
+       \return The list of the top level items in the loaded item tree, excluding the root item.
+    */
+    ItemList<> restore(Archive* archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
+
     int numArchivedItems() const;
     int numRestoredItems() const;
 
