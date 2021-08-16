@@ -245,8 +245,13 @@ static bool toVectorX_(const std::string& s, VectorType& out_v)
             nptr++;
         }
     }
-    return true;
-}    
+
+    while (isspace(*nptr)) {
+        nptr++;
+    }
+    // returns true if the number of elements matches the vector size
+    return endptr == nptr;
+}
 
 
 bool toVector3(const std::string& s, Vector3& out_v)
