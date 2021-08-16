@@ -35,12 +35,12 @@ void exportPyItemTreeView(py::module m)
                 return getPyNarrowedItemList(RootItem::instance()->selectedItems(), itemClass); })
         .def("getSelectedItem", [](ItemTreeView&, py::object itemClass){
                 return getPyNarrowedFirstItem(RootItem::instance()->selectedItems(), itemClass); })
-        .def("getSelectedSubItems", [](ItemTreeView&, ItemPtr topItem, py::object itemClass){
+        .def("getSelectedSubItems", [](ItemTreeView&, Item* topItem, py::object itemClass){
                 return getPyNarrowedItemList(topItem->selectedDescendantItems<Item>(), itemClass); })
-        .def("getSelectedSubItem", [](ItemTreeView&, ItemPtr topItem, py::object itemClass){
+        .def("getSelectedSubItem", [](ItemTreeView&, Item* topItem, py::object itemClass){
                 return getPyNarrowedFirstItem(topItem->selectedDescendantItems<Item>(), itemClass); })
-        .def("isItemSelected", [](ItemTreeView&, ItemPtr item){ return item->isSelected(); })
-        .def("selectItem", [](ItemTreeView&, ItemPtr item, bool on){ item->setSelected(on); return true; },
+        .def("isItemSelected", [](ItemTreeView&, Item* item){ return item->isSelected(); })
+        .def("selectItem", [](ItemTreeView&, Item* item, bool on){ item->setSelected(on); return true; },
              py::arg("item"), py::arg("on") = true)
         .def("selectAllItems", [](ItemTreeView&){ RootItem::instance()->setSubTreeItemsSelected(true); })
         .def("clearSelection", [](ItemTreeView&){ RootItem::instance()->setSubTreeItemsSelected(false); })
@@ -48,10 +48,10 @@ void exportPyItemTreeView(py::module m)
              [](ItemTreeView&, int checkId){ return RootItem::instance()->checkedItems<Item>(checkId); },
              py::arg("checkId") = Item::PrimaryCheck)
         .def("isItemChecked",
-             [](ItemTreeView&, ItemPtr item, int checkId){ return item->isChecked(checkId); },
+             [](ItemTreeView&, Item* item, int checkId){ return item->isChecked(checkId); },
              py::arg("item"), py::arg("checkId") = Item::PrimaryCheck)
         .def("checkItem",
-             [](ItemTreeView&, ItemPtr item, bool on, int checkId){
+             [](ItemTreeView&, Item* item, bool on, int checkId){
                  item->setChecked(checkId, on); return true; },
              py::arg("item"), py::arg("on") = true, py::arg("checkId") = Item::PrimaryCheck)
         .def_property_readonly(
@@ -63,7 +63,7 @@ void exportPyItemTreeView(py::module m)
              py::arg("checkId") = Item::PrimaryCheck)
         .def(
             "getSigCheckToggled",
-            [](ItemTreeView&, ItemPtr item, int checkId){ return item->sigCheckToggled(checkId); },
+            [](ItemTreeView&, Item* item, int checkId){ return item->sigCheckToggled(checkId); },
             py::arg("item"), py::arg("checkId") = Item::PrimaryCheck)
         ;
 }

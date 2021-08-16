@@ -118,15 +118,15 @@ void exportPySeqTypes(py::module& m)
         .def_property_readonly("empty", &ReferencedObjectSeq::empty)
         //.def("at", (&ReferencedObjectSeq::element_type (ReferencedObjectSeq:*)(int)) &ReferencedObjectSeq::at)
         .def("__getitem__", [](ReferencedObjectSeq& self, int i){ return self[i]; })
-        .def("__setitem__", [](ReferencedObjectSeq& self, int i, ReferencedPtr obj){ self[i] = obj; })
+        .def("__setitem__", [](ReferencedObjectSeq& self, int i, Referenced* obj){ self[i] = obj; })
         .def_property(
             "front",
             [](ReferencedObjectSeq& self){ return self.empty() ? nullptr : self.front(); },
-            [](ReferencedObjectSeq& self, ReferencedPtr obj){ if(!self.empty()) self.front() = obj; })
+            [](ReferencedObjectSeq& self, Referenced* obj){ if(!self.empty()) self.front() = obj; })
         .def_property(
             "back",
             [](ReferencedObjectSeq& self){ return self.empty() ? nullptr : self.back(); },
-            [](ReferencedObjectSeq& self, ReferencedPtr obj){ if(!self.empty()) self.back() = obj; })
+            [](ReferencedObjectSeq& self, Referenced* obj){ if(!self.empty()) self.back() = obj; })
         ;
 }
 
