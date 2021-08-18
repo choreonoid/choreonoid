@@ -5,7 +5,7 @@ items:
   class: RootItem
   children: 
     - 
-      id: 2
+      id: 1
       name: "AISTSimulator-Torque"
       plugin: Body
       class: AISTSimulatorItem
@@ -35,7 +35,7 @@ items:
         2Dmode: false
         oldAccelSensorMode: false
     - 
-      id: 1
+      id: 2
       name: "AISTSimulator-Position"
       plugin: Body
       class: AISTSimulatorItem
@@ -64,11 +64,3 @@ items:
         kinematicWalking: false
         2Dmode: false
         oldAccelSensorMode: false
-views: 
-  - 
-    id: 1
-    plugin: Base
-    class: ItemTreeView
-    mounted: true
-    state: 
-      selected: [ 2 ]

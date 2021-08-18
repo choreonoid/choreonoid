@@ -9,11 +9,6 @@ except:
     pass
 
 try:
-    from cnoid.OpenRTMPlugin import *
-except:
-    pass
-
-try:
     from cnoid.AGXDynamicsPlugin import *
 except:
     pass
@@ -28,7 +23,6 @@ def loadProject(
     enableMulticopterSimulation = False, enableVisionSimulation = False, targetVisionSensors = "", remoteType = ""):
 
     projectdir = os.path.join(shareDirectory, "WRS2018", "project")
-    #directory = os.path.dirname(os.path.realpath(__file__))
     
     itv = ItemTreeView.instance
     pm = ProjectManager.instance
@@ -54,10 +48,10 @@ def loadProject(
     for project in simulatorProjects:
         pm.loadProject(os.path.join(projectdir, project + ".cnoid"), world)
 
-    # select only the first simulator item
-    selectedSimulatorItems = SimulatorItemList(itv.getSelectedItems())
+    # Deselect the simulator items except the first one
+    selectedSimulatorItems = RootItem.instance.getSelectedItems(SimulatorItem)
     for i in range(1, len(selectedSimulatorItems)):
-        itv.selectItem(selectedSimulatorItems[i], False)
+        selectedSimulatorItems[i].setSelected(False)
 
     if not isinstance(robotProjects, list):
         robotProjects = [ robotProjects ]
@@ -66,7 +60,12 @@ def loadProject(
 
     for robotProject in robotProjects:
 
-        robot = pm.loadProject(os.path.join(projectdir, robotProject + ".cnoid"), world)[0]
+        loadedItems = pm.loadProject(os.path.join(projectdir, robotProject + ".cnoid"), world)
+        if not loadedItems:
+            continue
+        robot = loadedItems[0]
+        if not isinstance(robot, BodyItem):
+            continue
 
         rootLink = robot.body.rootLink;
         p = rootLink.translation
@@ -79,17 +78,10 @@ def loadProject(
         if remoteType:
             joystickInput = SimpleControllerItem()
             joystickInput.name = robot.name + "-JoystickInput"
-            mainController = robot.getDescendantItems(SimpleControllerItem)[0]
+            mainController = robot.findItem(SimpleControllerItem)
             mainController.addChildItem(joystickInput)
 
-            if remoteType == "RTM":
-                joystickInput.setController("RemoteJoystickInputController")
-                visionSensorOutput = BodyIoRTCItem()
-                visionSensorOutput.name = "VisionSensorOutput"
-                visionSensorOutput.rtcModuleName = "VisionSensorIoRTC"
-                robot.addChildItem(visionSensorOutput)
-        
-            elif remoteType == "ROS":
+            if remoteType == "ROS":
                 joystickInput.setController("JoyTopicSubscriberController")
                 bodyPublisher = BodyPublisherItem()
                 bodyPublisher.name = "BodyPublisher"
@@ -97,16 +89,14 @@ def loadProject(
 
         if enableMulticopterSimulation:
             multicopterSimulator = MulticopterSimulatorItem()
-            simulators = world.getDescendantItems(SimulatorItem)
-            for simulator in simulators:
+            for simulator in world.getDescendantItems(SimulatorItem):
                 simulator.addChildItem(multicopterSimulator.duplicate())
 
         if enableVisionSimulation:
             visionSimulator = GLVisionSimulatorItem()
             visionSimulator.setTargetSensors(targetVisionSensors)
             visionSimulator.setBestEffortMode(True)
-            simulators = world.getDescendantItems(SimulatorItem)
-            for simulator in simulators:
+            for simulator in world.getDescendantItems(SimulatorItem):
                 simulator.addChildItem(visionSimulator.duplicate())
 
     logItem = WorldLogFileItem()

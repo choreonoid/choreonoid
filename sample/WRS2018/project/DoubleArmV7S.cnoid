@@ -9,6 +9,7 @@ items:
       name: "DoubleArmV7"
       plugin: Body
       class: BodyItem
+      is_checked: true
       data: 
         modelFile: "${SHARE}/model/DoubleArmV7/DoubleArmV7S.body"
         currentBaseLink: "TFRAME"
@@ -41,6 +42,7 @@ items:
           name: "BodyTrackingCamera"
           plugin: Body
           class: BodyTrackingCameraItem
+          is_checked: true
           data: 
             keepRelativeAttitude: false
             cameraType: "Perspective"
@@ -54,7 +56,6 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 1, 3 ]
       expanded: [ 1 ]
   - 
     id: 3

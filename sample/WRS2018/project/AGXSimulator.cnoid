@@ -28,11 +28,3 @@ items:
         ContactWarmstarting: true
         AutoSleep: false
         SaveToAGXFileOnStart: false
-views: 
-  - 
-    id: 1
-    plugin: Base
-    class: ItemTreeView
-    state: 
-      selected: [ 1 ]
-      expanded: [ 1 ]

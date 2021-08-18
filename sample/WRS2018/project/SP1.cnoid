@@ -25,6 +25,7 @@ items:
               name: "RoadSurface60m"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/RoadSurface60m.body"
                 currentBaseLink: "1_Base"
@@ -48,6 +49,7 @@ items:
               name: "TunnelWall60m-L"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/TunnelWall60m-L.body"
                 currentBaseLink: "1_Base"
@@ -94,6 +96,7 @@ items:
               name: "ChocoTerrain"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/ChocoTerrain.body"
                 currentBaseLink: ""
@@ -117,6 +120,7 @@ items:
               name: "WaffleTerrain"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/WaffleTerrain.body"
                 currentBaseLink: ""
@@ -140,6 +144,7 @@ items:
               name: "TerrainA"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/TerrainA.body"
                 currentBaseLink: ""
@@ -163,6 +168,7 @@ items:
               name: "TerrainB"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/TerrainB.body"
                 currentBaseLink: ""
@@ -186,6 +192,7 @@ items:
               name: "JungleGym"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/JungleGym2.body"
                 currentBaseLink: "Base"
@@ -209,6 +216,7 @@ items:
               name: "JungleGym"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/JungleGym2.body"
                 currentBaseLink: "Base"
@@ -232,6 +240,7 @@ items:
               name: "JungleGym"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/JungleGym2.body"
                 currentBaseLink: "Base"
@@ -255,6 +264,7 @@ items:
               name: "JungleGym"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/JungleGym2.body"
                 currentBaseLink: "Base"
@@ -278,6 +288,7 @@ items:
               name: "Smoke1"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/Smoke1.body"
                 currentBaseLink: "Base"
@@ -301,6 +312,7 @@ items:
               name: "Smoke1"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/Smoke1.body"
                 currentBaseLink: "Base"
@@ -324,6 +336,7 @@ items:
               name: "Fire2"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/Fire2.body"
                 currentBaseLink: "Base"
@@ -347,6 +360,7 @@ items:
               name: "Car"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/CarT2.body"
                 currentBaseLink: "BODY"
@@ -371,6 +385,7 @@ items:
               name: "Debris-S"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/DebrisS.body"
                 currentBaseLink: "BASE"
@@ -394,6 +409,7 @@ items:
               name: "Debris-S"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/DebrisS.body"
                 currentBaseLink: "BASE"
@@ -417,6 +433,7 @@ items:
               name: "Debris-S"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/DebrisS.body"
                 currentBaseLink: "BASE"
@@ -440,6 +457,7 @@ items:
               name: "Debris-S"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/DebrisS.body"
                 currentBaseLink: "BASE"
@@ -463,6 +481,7 @@ items:
               name: "Debris-M"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/DebrisM.body"
                 currentBaseLink: "BASE"
@@ -486,6 +505,7 @@ items:
               name: "Debris-M"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/DebrisM.body"
                 currentBaseLink: "BASE"
@@ -509,6 +529,7 @@ items:
               name: "Debris-M"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/DebrisM.body"
                 currentBaseLink: "BASE"
@@ -532,6 +553,7 @@ items:
               name: "Debris-M"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/DebrisM.body"
                 currentBaseLink: "BASE"
@@ -555,6 +577,7 @@ items:
               name: "Debris-M"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/DebrisM.body"
                 currentBaseLink: "BASE"
@@ -578,6 +601,7 @@ items:
               name: "Debris-L"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/DebrisL.body"
                 currentBaseLink: "body"
@@ -601,6 +625,7 @@ items:
               name: "Debris-L"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/DebrisL.body"
                 currentBaseLink: "body"
@@ -624,6 +649,7 @@ items:
               name: "TerrainA"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/TerrainA.body"
                 currentBaseLink: ""
@@ -647,6 +673,7 @@ items:
               name: "TerrainB"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/TerrainB.body"
                 currentBaseLink: "Base"
@@ -670,6 +697,7 @@ items:
               name: "TunnelLight"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/TunnelLight.wrl"
                 currentBaseLink: "Root"
@@ -693,6 +721,7 @@ items:
               name: "Flag1L"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/Flag1L.body"
                 currentBaseLink: "BASE"
@@ -716,6 +745,7 @@ items:
               name: "Flag1R"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/Flag1R.body"
                 currentBaseLink: "BASE"
@@ -739,6 +769,7 @@ items:
               name: "Flag2L"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/Flag2L.body"
                 currentBaseLink: "BASE"
@@ -762,6 +793,7 @@ items:
               name: "Flag2R"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/Flag2R.body"
                 currentBaseLink: "BASE"
@@ -785,6 +817,7 @@ items:
               name: "Flag3L"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/Flag3L.body"
                 currentBaseLink: "BASE"
@@ -808,6 +841,7 @@ items:
               name: "Flag3R"
               plugin: Body
               class: BodyItem
+              is_checked: true
               data: 
                 modelFile: "${SHARE}/WRS2018/model/Flag3R.body"
                 currentBaseLink: "BASE"
@@ -838,7 +872,6 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      checked: [ 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37 ]
       expanded: [ 1, 9, 15, 21, 25, 27, 28 ]
   - 
     id: 2

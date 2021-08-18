@@ -2,7 +2,7 @@
 
 tasks = [ "T1M", "T1L", "T2", "T3", "T4", "T5", "T6" ]
 robots = [ "AizuSpiderSS", "AizuSpiderSA", "DoubleArmV7S", "DoubleArmV7A", "WAREC1", "Quadcopter" ]
-interfaces = [ "", "RTM", "ROS" ]
+interfaces = [ "", "ROS" ]
 
 def get_simulators(robot):
     if robot == "AizuSpiderSS" or robot == "DoubleArmV7S":
