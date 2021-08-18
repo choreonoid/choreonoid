@@ -62,8 +62,10 @@ void exportPyItems(py::module m)
         .def("findChildItem", [](Item& self, const string& path){ return self.findChildItem(path); })
         .def_property_readonly("headItem", &Item::headItem)
         .def("getDescendantItems", [](Item& self){ return self.descendantItems(); })
-        .def("getDescendantItems", [](Item& self, py::object itemClass) {
-                return getPyNarrowedItemList(self.descendantItems(), itemClass); })
+        .def("getDescendantItems",
+             [](Item& self, py::object itemClass) {
+                 return getPyNarrowedItemList(self.descendantItems(), itemClass);
+             })
         .def("duplicate", [](Item& self){ return self.duplicate(); })
         .def("duplicateSubTree", &Item::duplicateSubTree)
         .def("assign", &Item::assign)
@@ -135,7 +137,15 @@ void exportPyItems(py::module m)
         .def_property_readonly("sigSelectionChanged", &RootItem::sigSelectionChanged)
         .def_property_readonly("sigSelectedItemsChanged", &RootItem::sigSelectedItemsChanged)
         .def_property_readonly("selectedItems", [](RootItem& self){ return self.selectedItems(); })
+        .def("getSelectedItems",
+              [](RootItem& self, py::object itemClass){
+                  return getPyNarrowedItemList(self.selectedItems(), itemClass);
+              })
         .def_property_readonly("checkedItems", [](RootItem& self){ return self.checkedItems(); })
+        .def("getCheckedItems",
+              [](RootItem& self, py::object itemClass){
+                  return getPyNarrowedItemList(self.checkedItems(), itemClass);
+              })
         ;
 
     py::class_<RenderableItem>(m, "RenderableItem")
