@@ -1,6 +1,7 @@
 #!/bin/sh
 
-sudo apt-get -y install \
+sudo --preserve-env=DEBIAN_FRONTEND,TZ \
+apt-get -y install \
 build-essential \
 cmake-curses-gui \
 libboost-dev \
