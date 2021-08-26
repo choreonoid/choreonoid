@@ -1,0 +1,116 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: Labo1
+
+GROUND_OFFSET: &GROUND_OFFSET
+  translation: [ 0.86, -1.5, 0.05 ]
+  rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ]
+
+FLOOR_OFFSET: &FLOOR_OFFSET
+  translation: [ 0.86, -1.5, 0 ]
+  rotation: [ [ 0, 0, 1, 180 ], [ 1, 0, 0, 90 ] ]
+
+links:
+  -
+    name: Ground
+    jointType: fixed
+    translation: [ 0, 0, -0.1 ]
+    material: Ground
+    elements:
+      -
+        type: Shape
+        translation: [ 0, 0, -0.05 ]
+        geometry: { type: Box, size: [ 20, 20, 0.1 ] }
+        appearance:
+          material:
+            diffuseColor: [ 0.5, 0.5, 0.5 ]
+            specularColor: [ 0.2, 0.2, 0.2 ]
+  -
+    name: Floor
+    jointType: fixed
+    parent: Ground
+    translation: [ 0, 0, 0.1 ]
+    material: Ground
+    elements:
+      Shape:
+        translation: [ 0, 0, -0.05 ]
+        geometry: { type: Box, size: [ 5.4, 3.0, 0.1 ] }
+        appearance:
+          material:
+            diffuseColor: [ 1, 0.56, 0.34 ]
+            shininess: 0.05
+            specularColor: [ 0.8, 0.4, 0.25 ] 
+  -
+    name: Wall1
+    parent: Floor
+    jointType: fixed
+    elements: 
+      Resource: 
+        <<: *FLOOR_OFFSET
+        uri: "resource/wall1.wrl"
+  -
+    name: Wall2
+    parent: Floor
+    jointType: fixed
+    elements:
+      Resource: 
+        <<: *FLOOR_OFFSET
+        uri: "resource/wall2.wrl"
+  -
+    name: Tank
+    parent: Floor
+    jointType: fixed
+    elements: 
+      Resource: 
+        <<: *FLOOR_OFFSET
+        uri: "resource/tank.wrl"
+  -
+    name: Pipes
+    parent: Floor
+    jointType: fixed
+    elements: 
+      Resource: 
+        <<: *FLOOR_OFFSET
+        uri: "resource/pipes.wrl"
+  -
+    name: Valve1Handle
+    parent: Pipes
+    translation: [ -1.085, -0.32, 0.848 ]
+    rotation: [ 0, 0, 1, 47.5 ]
+    jointType: revolute
+    jointId: 0
+    jointAxis: X
+
+    # For the friction for AGX
+    jointMotor: true
+    jointMotorCompliance: 0.9
+
+    elements:
+      Resource:
+        uri: "resource/valves.yaml"
+        node: VALVE_HANDLE_213
+  -
+    name: Rack1
+    parent: Ground
+    jointType: fixed
+    elements:
+      Resource:
+        <<: *GROUND_OFFSET
+        uri: "resource/rack1.wrl"
+  -
+    name: Rack2
+    parent: Ground
+    jointType: fixed
+    elements:
+      Resource: 
+        <<: *GROUND_OFFSET
+        uri: "resource/rack2.wrl"
+  -
+    name: Rack3
+    parent: Ground
+    jointType: fixed
+    elements:
+      Resource:
+        <<: *GROUND_OFFSET
+        uri: "resource/rack3.wrl"

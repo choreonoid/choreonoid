@@ -1,9 +1,9 @@
 #VRML V2.0 utf8
 
 Transform {
-  translation 0.915566 0.759064 -0.02625
+  translation 0.915566 0.949064 -0.02625
   children [
-    DEF Wall2 Shape {
+    DEF Wall1 Shape {
       appearance Appearance {
 	material Material {
 	  diffuseColor 0.6 0.5 0.3
