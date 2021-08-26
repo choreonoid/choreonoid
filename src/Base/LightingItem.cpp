@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shizuko Hattori
-*/
-
 #include "LightingItem.h"
 #include "ItemManager.h"
 #include "PutPropertyFunction.h"
@@ -17,60 +12,38 @@
 using namespace std;
 using namespace cnoid;
 
-namespace {
-
-enum LightType { DIRECTIONAL=0, POINT, SPOT, N_LIGHT_TYPES };
-
-}
-
 namespace cnoid {
 
 class LightingItem::Impl
 {
 public:
     LightingItem* self;
-    SgPosTransformPtr scene;
+    SgPosTransformPtr lightPosTransform;
     Selection lightType;
-    SgLight* light;
-
+    SgLightPtr light;
     Vector3f color;
     float intensity;
     float ambientIntensity;
     bool on;
-    // SPOT & DIRECTIONAL
+    // For the spot light and the directional light
     Vector3 direction;
-    //POINT
+    // For the point light
     float constantAttenuation;
     float linearAttenuation;
     float quadraticAttenuation;
-    //SPOT
+    // For the spot light
     float beamWidth;
     float cutOffAngle;
     float cutOffExponent;
-
-    bool showMarker;
-    SgGroup* lightShape;
-    SgGroupPtr dlightShape;
-    SgGroupPtr plightShape;
-    SgGroupPtr slightShape;
+    bool isMarkerEnabled;
+    SgGroupPtr lightShape;
+    SgGroupPtr directionalLightShape;
+    SgGroupPtr pointLightShape;
+    SgGroupPtr spotLightShape;
 
     Impl(LightingItem* self);
     Impl(LightingItem* self, const Impl& org);
-    bool updateLightType(LightType type);
-    void directionToMatrix3(Vector3& direction, Matrix3& R);
-    bool onTranslationPropertyChanged(const std::string& value);
-    bool onDirectionPropertyChanged(const std::string& value);
-    bool onColorPropertyChanged(const std::string& value);
-    bool onIntensityPropertyChanged(float value);
-    bool onAmbientIntensityPropertyChanged(float value);
-    bool onSwitchPropertyChanged(bool value);
-    bool onConstantAttenuationPropertyChanged(float value);
-    bool onLinearAttenuationPropertyChanged(float value);
-    bool onQuadraticAttenuationPropertyChanged(float value);
-    bool onBeamWidthPropertyChanged(float value);
-    bool onCutOffAnglePropertyChanged(float angle);
-    bool onCutOffExponentPropertyChanged(float value);
-    bool onShowMarkerPropertyChanged(bool on);
+    void setLightType(LightType type);
     void genarateLightShape();
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
@@ -94,6 +67,7 @@ void LightingItem::initializeClass(ExtensionManager* ext)
 
 LightingItem::LightingItem()
 {
+    setName("Lighting");
     impl = new Impl(this);
 }
 
@@ -117,38 +91,38 @@ Item* LightingItem::doDuplicate() const
 
 SgNode* LightingItem::getScene()
 {
-    return impl->scene;
+    return impl->lightPosTransform;
 }
 
 
 LightingItem::Impl::Impl(LightingItem* self)
     : self(self),
-      lightType(N_LIGHT_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
+      lightType(NumLightTypes, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    lightType.setSymbol(DIRECTIONAL, N_("Directional light"));
-    lightType.setSymbol(POINT, N_("Point light"));
-    lightType.setSymbol(SPOT, N_("Spot light"));
+    lightType.setSymbol(DirectionalLight, N_("Directional light"));
+    lightType.setSymbol(PointLight, N_("Point light"));
+    lightType.setSymbol(SpotLight, N_("Spot light"));
 
     on = true;
 
-    // get default value
+    // Get the default values
     SgSpotLight light;
     color = light.color();
     intensity = light.intensity();
+    direction = light.direction();
     ambientIntensity = light.ambientIntensity();
     constantAttenuation = light.constantAttenuation();
     linearAttenuation = light.linearAttenuation();
     quadraticAttenuation = light.quadraticAttenuation();
-    direction = Vector3(0, 0, -1);
     beamWidth = light.beamWidth();
     cutOffAngle = light.cutOffAngle();
     cutOffExponent = light.cutOffExponent();
 
-    showMarker = true;
-    scene = new SgPosTransform;
-    scene->setTranslation(Vector3(0,0,3));
+    isMarkerEnabled = false;
+    lightPosTransform = new SgPosTransform;
+    lightPosTransform->setTranslation(Vector3(0.0, 0.0, 3.0));
     genarateLightShape();
-    updateLightType(SPOT);
+    setLightType(SpotLight);
 }
 
 
@@ -157,83 +131,83 @@ void LightingItem::Impl::genarateLightShape()
     SgMaterial* material = new SgMaterial;
     material->setDiffuseColor(Vector3f(1.0f, 1.0f, 0.0f));
     material->setAmbientIntensity(0.2f);
-    dlightShape = new SgGroup;
+    directionalLightShape = new SgGroup;
     MeshGenerator meshGenerator;
-    SgShape* sphere = new SgShape;
+    auto sphere = new SgShape;
     sphere->setMesh(meshGenerator.generateSphere(0.05, false));
     sphere->setMaterial(material);
-    dlightShape->addChild(sphere);
-    SgShape* capsule = new SgShape;
+    directionalLightShape->addChild(sphere);
+    auto capsule = new SgShape;
     capsule->setMesh(meshGenerator.generateCapsule(0.005, 0.03));
     capsule->setMaterial(material);
 
     static const std::vector<Vector3> d_pos = {
-            Vector3(0, 0, -0.07), Vector3(0, 0.04, -0.06),
-            Vector3(0, -0.04, -0.06), Vector3(0.04, 0, -0.06),
-            Vector3(-0.04, 0, -0.06)
+        Vector3(0.0, 0.0, -0.07), Vector3(0, 0.04, -0.06),
+        Vector3(0.0, -0.04, -0.06), Vector3(0.04, 0, -0.06),
+        Vector3(-0.04, 0, -0.06)
     };
     for(size_t i=0; i < d_pos.size(); i++){
-        SgPosTransform* cT = new SgPosTransform;
-        cT->setRotation(AngleAxis(radian(90), Vector3(1, 0, 0)));
+        auto cT = new SgPosTransform;
+        cT->setRotation(AngleAxis(radian(90), Vector3::UnitX()));
         cT->setTranslation(d_pos[i]);
         cT->addChild(capsule);
-        dlightShape->addChild(cT);
+        directionalLightShape->addChild(cT);
     }
 
-    plightShape = new SgGroup;
-    plightShape->addChild(sphere);
+    pointLightShape = new SgGroup;
+    pointLightShape->addChild(sphere);
 
     static const std::vector<Vector3> p_pos = {
-            Vector3(0, 0, 0.07), Vector3(0, 0, -0.07),
-            Vector3(0.07, 0, 0), Vector3(-0.07, 0, 0),
-            Vector3(0, 0.07, 0), Vector3(0, -0.07, 0)
+        Vector3(0.0, 0.0, 0.07), Vector3(0.0, 0.0, -0.07),
+        Vector3(0.07, 0.0, 0.0), Vector3(-0.07, 0.0, 0.0),
+        Vector3(0.0, 0.07, 0.0), Vector3(0.0, -0.07, 0.0)
     };
     static const std::vector<AngleAxis> p_att = {
-            AngleAxis(radian(90), Vector3(1, 0, 0)), AngleAxis(radian(90), Vector3(1, 0, 0)),
-            AngleAxis(radian(90), Vector3(0, 0, 1)), AngleAxis(radian(90), Vector3(0, 0, 1)),
-            AngleAxis(radian(0), Vector3(0, 0, 1)), AngleAxis(radian(0), Vector3(0, 0, 1))
+        AngleAxis(radian(90.0), Vector3::UnitX()), AngleAxis(radian(90.0), Vector3::UnitX()),
+        AngleAxis(radian(90.0), Vector3::UnitZ()), AngleAxis(radian(90.0), Vector3::UnitZ()),
+        AngleAxis(radian(0.0),  Vector3::UnitZ()), AngleAxis(radian(0.0),  Vector3::UnitZ())
     };
     for(size_t i=0; i < p_pos.size(); i++){
-        SgPosTransform* cT = new SgPosTransform;
+        auto cT = new SgPosTransform;
         cT->setRotation(p_att[i]);
         cT->setTranslation(p_pos[i]);
         cT->addChild(capsule);
-        plightShape->addChild(cT);
+        pointLightShape->addChild(cT);
     }
 
-    slightShape = new SgGroup;
-    SgShape* box = new SgShape;
+    spotLightShape = new SgGroup;
+    auto box = new SgShape;
     box->setMesh(meshGenerator.generateBox(Vector3(0.07, 0.07, 0.07)));
     box->setMaterial(material);
-    SgShape* cone = new SgShape;
+    auto cone = new SgShape;
     cone->setMesh(meshGenerator.generateCone(0.07, 0.07));
     cone->setMaterial(material);
-    SgPosTransform* coneT = new SgPosTransform;
-    coneT->setRotation(AngleAxis(radian(90), Vector3(1, 0, 0)));
+    auto coneT = new SgPosTransform;
+    coneT->setRotation(AngleAxis(radian(90), Vector3::UnitX()));
     coneT->addChild(cone);
-    slightShape->addChild(box);
-    slightShape->addChild(coneT);
+    spotLightShape->addChild(box);
+    spotLightShape->addChild(coneT);
 
     static const std::vector<Vector3> s_pos = {
-            Vector3(0, 0, -0.055), Vector3(0, 0.05, -0.055)
+        Vector3(0, 0, -0.055), Vector3(0.0, 0.05, -0.055)
     };
     static const std::vector<AngleAxis> s_att = {
-            AngleAxis(radian(90), Vector3(1, 0, 0)), AngleAxis(radian(125), Vector3(1, 0, 0))
+        AngleAxis(radian(90.0), Vector3::UnitX()), AngleAxis(radian(125), Vector3::UnitX())
     };
-    SgPosTransform* cT0 = new SgPosTransform;
+    auto cT0 = new SgPosTransform;
     cT0->setRotation(s_att[0]);
     cT0->setTranslation(s_pos[0]);
     cT0->addChild(capsule);
-    slightShape->addChild(cT0);
+    spotLightShape->addChild(cT0);
     for(int i=0; i<4; i++){
-        SgPosTransform* cT1 = new SgPosTransform;
+        auto cT1 = new SgPosTransform;
         cT1->setRotation(s_att[1]);
         cT1->setTranslation(s_pos[1]);
         cT1->addChild(capsule);
-        SgPosTransform* cT2 = new SgPosTransform;
-        cT2->setRotation(AngleAxis(radian(90*i), Vector3(0, 0, 1)));
+        auto cT2 = new SgPosTransform;
+        cT2->setRotation(AngleAxis(radian(90.0 * i), Vector3::UnitZ()));
         cT2->addChild(cT1);
-        slightShape->addChild(cT2);
+        spotLightShape->addChild(cT2);
     }
 }
 
@@ -254,42 +228,61 @@ LightingItem::Impl::Impl(LightingItem* self, const Impl& org)
     beamWidth = org.beamWidth;
     cutOffAngle = org.cutOffAngle;
     cutOffExponent = org.cutOffExponent;
-    dlightShape = org.dlightShape;
-    plightShape = org.plightShape;
-    slightShape = org.slightShape;
-    showMarker = org.showMarker;
+    directionalLightShape = org.directionalLightShape;
+    pointLightShape = org.pointLightShape;
+    spotLightShape = org.spotLightShape;
+    isMarkerEnabled = org.isMarkerEnabled;
     lightShape = org.lightShape;
-    scene = new SgPosTransform(*org.scene);
+    lightPosTransform = new SgPosTransform(*org.lightPosTransform);
 }
 
 
-bool LightingItem::Impl::updateLightType(LightType type)
+void LightingItem::setLightType(LightType type)
+{
+    impl->setLightType(type);
+}
+
+
+void LightingItem::Impl::setLightType(LightType type)
 {
     lightType.select(type);
-    scene->clearChildren();
+    lightPosTransform->clearChildren();
+    
     switch(lightType.which()){
-    case DIRECTIONAL :
-        light = new SgDirectionalLight;
-        ((SgDirectionalLight*)light)->setDirection(Vector3(0, 0, -1));
-        lightShape = dlightShape.get();
+
+    case DirectionalLight: {
+        auto directionalLight = new SgDirectionalLight;
+        directionalLight->setDirection(direction);
+        lightShape = directionalLightShape;
+        light = directionalLight;
         break;
-    case POINT :
-        light = new SgPointLight;
-        ((SgPointLight*)light)->setConstantAttenuation(constantAttenuation);
-        ((SgPointLight*)light)->setLinearAttenuation(linearAttenuation);
-        ((SgPointLight*)light)->setQuadraticAttenuation(quadraticAttenuation);
-        lightShape = plightShape.get();
+    }
+        
+    case PointLight: {
+        auto pointLight = new SgPointLight;
+        pointLight->setConstantAttenuation(constantAttenuation);
+        pointLight->setLinearAttenuation(linearAttenuation);
+        pointLight->setQuadraticAttenuation(quadraticAttenuation);
+        lightShape = pointLightShape;
+        light = pointLight;
         break;
-    case SPOT :
-        light = new SgSpotLight;
-        ((SgPointLight*)light)->setConstantAttenuation(constantAttenuation);
-        ((SgPointLight*)light)->setLinearAttenuation(linearAttenuation);
-        ((SgPointLight*)light)->setQuadraticAttenuation(quadraticAttenuation);
-        ((SgSpotLight*)light)->setDirection(Vector3(0, 0, -1));
-        ((SgSpotLight*)light)->setBeamWidth(beamWidth);
-        ((SgSpotLight*)light)->setCutOffAngle(cutOffAngle);
-        ((SgSpotLight*)light)->setCutOffExponent(cutOffExponent);
-        lightShape = slightShape.get();
+    }
+        
+    case SpotLight: {
+        auto spotLight = new SgSpotLight;
+        spotLight->setConstantAttenuation(constantAttenuation);
+        spotLight->setLinearAttenuation(linearAttenuation);
+        spotLight->setQuadraticAttenuation(quadraticAttenuation);
+        spotLight->setDirection(direction);
+        spotLight->setBeamWidth(beamWidth);
+        spotLight->setCutOffAngle(cutOffAngle);
+        spotLight->setCutOffExponent(cutOffExponent);
+        lightShape = spotLightShape;
+        light = spotLight;
+        break;
+    }
+
+    default:
         break;
     }
 
@@ -297,192 +290,134 @@ bool LightingItem::Impl::updateLightType(LightType type)
     light->setIntensity(intensity);
     light->setAmbientIntensity(ambientIntensity);
     light->on(on);
-    if(showMarker){
-        scene->addChild(lightShape);
+    if(isMarkerEnabled){
+        lightPosTransform->addChild(lightShape);
     }
     SgTmpUpdate update;
-    scene->addChild(light, update);
-
-    return true;
+    lightPosTransform->addChild(light, update);
 }
 
 
-bool LightingItem::Impl::onTranslationPropertyChanged(const string& value)
+void LightingItem::setTranslation(const Vector3& translation)
 {
-    Vector3 p;
-    if(toVector3(value, p)){
-        scene->setTranslation(p);
-        scene->notifyUpdate();
-        return true;
+    impl->lightPosTransform->setTranslation(translation);
+    impl->lightPosTransform->notifyUpdate();
+}
+    
+
+void LightingItem::setDirection(const Vector3& direction)
+{
+    impl->direction = direction;
+    if(auto directionalLight = dynamic_pointer_cast<SgDirectionalLight>(impl->light)){
+        directionalLight->setDirection(direction);
+        directionalLight->notifyUpdate();
+    } else if(auto spotLight = dynamic_pointer_cast<SgSpotLight>(impl->light)){
+        spotLight->setDirection(direction);
+        spotLight->notifyUpdate();
     }
-    return false;
 }
 
 
-void LightingItem::Impl::directionToMatrix3(Vector3& direction, Matrix3& R)
+void LightingItem::setLightEnabled(bool on)
 {
-    Vector3 nx = Vector3::UnitZ().cross(-direction);
-    if(nx.norm()==0){
-        R = Matrix3::Identity();
-        if(-direction!=Vector3::UnitZ()){
-            R.col(1) = -Vector3::UnitY();
-            R.col(2) = -Vector3::UnitZ();
-        }
+    impl->on = on;
+    impl->light->on(on);
+    impl->light->notifyUpdate();
+}
+
+
+void LightingItem::setIntensity(float intensity)
+{
+    impl->intensity = intensity;
+    impl->light->setIntensity(intensity);
+    impl->light->notifyUpdate();
+}
+
+
+void LightingItem::setAmbientIntensity(float intensity)
+{
+    impl->ambientIntensity = intensity;
+    impl->light->setAmbientIntensity(intensity);
+    impl->light->notifyUpdate();
+}
+
+
+void LightingItem::setColor(const Vector3f& color)
+{
+    impl->color = color;
+    impl->light->setColor(color);
+    impl->light->notifyUpdate();
+}
+
+    
+void LightingItem::setConstantAttenuation(float a0)
+{
+    impl->constantAttenuation = a0;
+    if(auto pointLight = dynamic_pointer_cast<SgPointLight>(impl->light)){
+        pointLight->setConstantAttenuation(a0);
+        pointLight->notifyUpdate();
+    }
+}
+    
+
+void LightingItem::setLinearAttenuation(float a1)
+{
+    impl->linearAttenuation = a1;
+    if(auto pointLight = dynamic_pointer_cast<SgPointLight>(impl->light)){
+        pointLight->setLinearAttenuation(a1);
+        pointLight->notifyUpdate();
+    }
+}
+    
+
+void LightingItem::setQuadraticAttenuation(float a2)
+{
+    impl->quadraticAttenuation = a2;
+    if(auto pointLight = dynamic_pointer_cast<SgPointLight>(impl->light)){
+        pointLight->setQuadraticAttenuation(a2);
+        pointLight->notifyUpdate();
+    }
+}
+    
+
+void LightingItem::setBeamWidth(float w)
+{
+    impl->beamWidth = w;
+    if(auto spotLight = dynamic_pointer_cast<SgSpotLight>(impl->light)){
+        spotLight->setBeamWidth(w);
+        spotLight->notifyUpdate();
+    }
+}
+    
+
+void LightingItem::setCutOffAngle(float a)
+{
+    impl->cutOffAngle = a;
+    if(auto spotLight = dynamic_pointer_cast<SgSpotLight>(impl->light)){
+        spotLight->setCutOffAngle(a);
+        spotLight->notifyUpdate();
+    }
+}
+
+
+void LightingItem::setCutOffExponent(float e)
+{
+    impl->cutOffExponent = e;
+    if(auto spotLight = dynamic_pointer_cast<SgSpotLight>(impl->light)){
+        spotLight->setCutOffExponent(e);
+        spotLight->notifyUpdate();
+    }
+}
+
+
+void LightingItem::setLightMarkerEnabled(bool on)
+{
+    impl->isMarkerEnabled = on;
+    if(on){
+        impl->lightPosTransform->addChildOnce(impl->lightShape, true);
     }else{
-        nx.normalize();
-        Vector3 ny = -direction.cross(nx).normalized();
-        R.col(0) = nx;
-        R.col(1) = ny;
-        R.col(2) = -direction;
+        impl->lightPosTransform->removeChild(impl->lightShape, true);
     }
-}
-
-
-bool LightingItem::Impl::onDirectionPropertyChanged(const std::string& value)
-{
-    Vector3 direction_;
-    if(toVector3(value, direction_)){
-        direction_.normalize();
-        direction = direction_;
-        Matrix3 R;
-        directionToMatrix3(direction, R);
-
-        scene->setRotation(R);
-        scene->notifyUpdate();
-        return true;
-    }
-    return false;
-}
-
-
-bool LightingItem::Impl::onColorPropertyChanged(const std::string& value)
-{
-    Vector3f color_;
-    if(toVector3(value, color_)){
-        color = color_;
-        light->setColor(color);
-        light->notifyUpdate();
-        return true;
-    }
-    return false;
-}
-
-
-bool LightingItem::Impl::onIntensityPropertyChanged(float value)
-{
-    intensity = value;
-    light->setIntensity(intensity);
-    light->notifyUpdate();
-    return true;
-}
-
-
-bool LightingItem::Impl::onAmbientIntensityPropertyChanged(float value)
-{
-    ambientIntensity = value;
-    light->setAmbientIntensity(ambientIntensity);
-    light->notifyUpdate();
-    return true;
-}
-
-
-bool LightingItem::Impl::onSwitchPropertyChanged(bool value)
-{
-    on = value;
-    light->on(on);
-    light->notifyUpdate();
-    return true;
-}
-
-
-bool LightingItem::Impl::onConstantAttenuationPropertyChanged(float value)
-{
-    constantAttenuation = value;
-    SgPointLight* pointLight = dynamic_cast<SgPointLight*>(light);
-    if(pointLight){
-        pointLight->setConstantAttenuation(constantAttenuation);
-        pointLight->notifyUpdate();
-        return true;
-    }
-    return false;
-}
-
-
-bool LightingItem::Impl::onLinearAttenuationPropertyChanged(float value)
-{
-    linearAttenuation = value;
-    SgPointLight* pointLight = dynamic_cast<SgPointLight*>(light);
-    if(pointLight){
-        pointLight->setLinearAttenuation(linearAttenuation);
-        pointLight->notifyUpdate();
-        return true;
-    }
-    return false;
-}
-
-
-bool LightingItem::Impl::onQuadraticAttenuationPropertyChanged(float value)
-{
-    quadraticAttenuation = value;
-    SgPointLight* pointLight = dynamic_cast<SgPointLight*>(light);
-    if(pointLight){
-        pointLight->setQuadraticAttenuation(quadraticAttenuation);
-        pointLight->notifyUpdate();
-        return true;
-    }
-    return false;
-}
-
-
-bool LightingItem::Impl::onBeamWidthPropertyChanged(float value)
-{
-    beamWidth = value;
-    SgSpotLight* spotLight = dynamic_cast<SgSpotLight*>(light);
-    if(spotLight){
-        spotLight->setBeamWidth(beamWidth);
-        spotLight->notifyUpdate();
-        return true;
-    }
-    return false;
-}
-
-
-bool LightingItem::Impl::onCutOffAnglePropertyChanged(float angle)
-{
-    cutOffAngle = angle;
-    SgSpotLight* spotLight = dynamic_cast<SgSpotLight*>(light);
-    if(spotLight){
-        spotLight->setCutOffAngle(cutOffAngle);
-        spotLight->notifyUpdate();
-        return true;
-    }
-    return false;
-}
-
-
-bool LightingItem::Impl::onCutOffExponentPropertyChanged(float value)
-{
-    cutOffExponent = value;
-    SgSpotLight* spotLight = dynamic_cast<SgSpotLight*>(light);
-    if(spotLight){
-        spotLight->setCutOffExponent(cutOffExponent);
-        spotLight->notifyUpdate();
-        return true;
-    }
-    return false;
-}
-
-
-bool LightingItem::Impl::onShowMarkerPropertyChanged(bool on)
-{
-    showMarker = on;
-    SgTmpUpdate update;
-    if(showMarker){
-        scene->addChildOnce(lightShape, update);
-    }else{
-        scene->removeChild(lightShape, update);
-    }
-    return true;
 }
 
 
@@ -495,44 +430,68 @@ void LightingItem::doPutProperties(PutPropertyFunction& putProperty)
 void LightingItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Light type"), lightType,
-                [&](int index){ return updateLightType((LightType)index); });
-    putProperty(_("Translation"), str(Vector3(scene->translation())),
-                [&](const string& value){ return onTranslationPropertyChanged(value); });
+                [&](int index){ setLightType((LightType)index); return true; });
+
+    putProperty(_("Translation"), str(Vector3(lightPosTransform->translation())),
+                [&](const string& value){
+                    Vector3 p;
+                    if(toVector3(value, p)){
+                        self->setTranslation(p);
+                        return true;
+                    }
+                    return false;
+                });
     
-    LightType type = (LightType)lightType.selectedIndex();
-    if(type == DIRECTIONAL || type == SPOT){
+    if(lightType.is(DirectionalLight) || lightType.is(SpotLight)){
         putProperty(_("Direction"), str(direction),
-                    [&](const string& value){ return onDirectionPropertyChanged(value);});
+                    [&](const string& value){
+                        Vector3 d;
+                        if(toVector3(value, d)){
+                            self->setDirection(d);
+                            return true;
+                        }
+                        return false;
+                    });
     }
-
+        
     putProperty(_("ON"), on,
-                [&](bool value){ return onSwitchPropertyChanged(value); });
-    putProperty(_("Color"), str(color),
-                [&](const string& value){ return onColorPropertyChanged(value); });
+                [&](bool value){ self->setLightEnabled(value); return true;});
+
     putProperty(_("Intensity"), intensity,
-                [&](float value){ return onIntensityPropertyChanged(value); });
+                [&](float value){ self->setIntensity(value); return true; });
     putProperty(_("Ambient intensity"), ambientIntensity,
-                [&](float value){ return onAmbientIntensityPropertyChanged(value); });
+                [&](float value){ self->setAmbientIntensity(value); return true; });
 
-    if(type == POINT || type == SPOT){
+    putProperty(_("Color"), str(color),
+                [&](const string& value){
+                    Vector3f c;
+                    if(toVector3(value, c)){
+                        self->setColor(c);
+                        return true;
+                    }
+                    return false;
+                });
+
+    if(lightType.is(PointLight) || lightType.is(SpotLight)){
         putProperty(_("Constant attenuation"), constantAttenuation,
-                    [&](float value){ return onConstantAttenuationPropertyChanged(value); });
+                    [&](float value){ self->setConstantAttenuation(value); return true;});
         putProperty(_("Linear attenuation"), linearAttenuation,
-                    [&](float value){ return onLinearAttenuationPropertyChanged(value); });
+                    [&](float value){ self->setLinearAttenuation(value); return true; });
         putProperty(_("Quadratic attenuation"), quadraticAttenuation,
-                    [&](float value){ return onQuadraticAttenuationPropertyChanged(value); });
+                    [&](float value){ self->setQuadraticAttenuation(value); return true; });
     }
-    if(type == SPOT){
+    
+    if(lightType.is(SpotLight)){
         putProperty(_("Beam width"), degree(beamWidth),
-                    [&](float angle){ return onBeamWidthPropertyChanged(radian(angle)); });
+                    [&](float angle){ self->setBeamWidth(radian(angle)); return true; });
         putProperty(_("Cut-off angle"), degree(cutOffAngle),
-                    [&](float angle){ return onCutOffAnglePropertyChanged(radian(angle)); });
-        putProperty(_("Cut-off Exponent"), cutOffExponent,
-                    [&](float value){ return onCutOffExponentPropertyChanged(value); });
+                    [&](float angle){ self->setCutOffAngle(radian(angle)); return true; });
+        putProperty(_("Cut-off exponent"), cutOffExponent,
+                    [&](float value){ self->setCutOffExponent(value); return true; });
     }
 
-    putProperty(_("Show Marker"), showMarker,
-            [&](bool on){ return onShowMarkerPropertyChanged(on); });
+    putProperty(_("Show marker"), isMarkerEnabled,
+                [&](bool on){ self->setLightMarkerEnabled(on); return true; });
 }
 
 
@@ -545,7 +504,7 @@ bool LightingItem::store(Archive& archive)
 bool LightingItem::Impl::store(Archive& archive)
 {
     archive.write("light_type", lightType.selectedSymbol(), DOUBLE_QUOTED);
-    write(archive, "translation", scene->translation());
+    write(archive, "translation", lightPosTransform->translation());
     write(archive, "direction", direction);
     archive.write("on", on);
     write(archive, "color", color);
@@ -557,7 +516,7 @@ bool LightingItem::Impl::store(Archive& archive)
     archive.write("beam_width", degree(beamWidth));
     archive.write("cutoff_angle", degree(cutOffAngle));
     archive.write("cutoff_exponent", cutOffExponent);
-    archive.write("show_marker", showMarker);
+    archive.write("show_marker", isMarkerEnabled);
     return true;
 }
 
@@ -576,13 +535,9 @@ bool LightingItem::Impl::restore(const Archive& archive)
     }
     Vector3 translation;
     if(read(archive, "translation", translation)){
-        scene->setTranslation(translation);
+        lightPosTransform->setTranslation(translation);
     }
-    if(read(archive, "direction", direction)){
-        Matrix3 R;
-        directionToMatrix3(direction, R);
-        scene->setRotation(R);
-    }
+    read(archive, "direction", direction);
     archive.read("on", on);
     read(archive, "color", color);
     archive.read("intensity", intensity);
@@ -598,9 +553,9 @@ bool LightingItem::Impl::restore(const Archive& archive)
         cutOffAngle = radian(angle);
     }
     archive.read("cutoff_exponent", cutOffExponent);
-    archive.read("show_marker", showMarker);
+    archive.read("show_marker", isMarkerEnabled);
 
-    updateLightType((LightType)lightType.selectedIndex());
+    setLightType((LightType)lightType.selectedIndex());
                        
     return true;
 }
