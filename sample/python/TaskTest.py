@@ -14,7 +14,7 @@ class TestTask(Task):
         Task.__init__(self)
 
         self.setName("TestTask")
-        self.mv = cnoid.Base.MessageView.getInstance()
+        self.mv = cnoid.Base.MessageView.instance
 
         self.setupSequence()
 
@@ -77,7 +77,7 @@ class TestTask2(Task):
         Task.__init__(self)
 
         self.setName("TestTask2")
-        self.mv = cnoid.Base.MessageView.getInstance()
+        self.mv = cnoid.Base.MessageView.instance
 
         self.setupSequence()
 
@@ -119,7 +119,7 @@ class TestTask2(Task):
             
         
         
-taskView = cnoid.Base.TaskView.getInstance()
+taskView = cnoid.Base.TaskView.instance
 taskView.updateTask(TestTask())
 taskView.updateTask(TestTask2())
 

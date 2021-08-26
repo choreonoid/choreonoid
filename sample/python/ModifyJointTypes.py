@@ -13,7 +13,7 @@ newRobotItem = robotItem.duplicate()
 robot = newRobotItem.body
 
 for link in robot.links:
-    if not link.isBodyRoot():
+    if not link.isRoot():
         if link.isRevoluteJoint():
             link.setJointType(Link.PrismaticJoint)
         elif link.isPrismaticJoint():

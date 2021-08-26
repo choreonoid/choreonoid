@@ -13,6 +13,7 @@
 #include "../ScriptItem.h"
 #include "../ExtCommandItem.h"
 #include "../SceneItem.h"
+#include "../LightingItem.h"
 #include "../PointSetItem.h"
 #include "../MultiPointSetItem.h"
 #include <cnoid/PyUtil>
@@ -127,6 +128,7 @@ void exportPyItems(py::module m)
     py::enum_<Item::CheckId>(itemClass, "CheckId")
         .value("LogicalSumOfAllChecks", Item::LogicalSumOfAllChecks)
         .value("PrimaryCheck", Item::PrimaryCheck)
+        .export_values();
         ;
 
     PyItemList<Item>(m, "ItemList");
@@ -221,6 +223,33 @@ void exportPyItems(py::module m)
         .def("getTopNode", (SgPosTransform*(SceneItem::*)()) &SceneItem::topNode)
         ;
 
+    py::class_<LightingItem, LightingItemPtr, Item> lightingItemClass(m, "LightingItem", py::multiple_inheritance());
+
+    lightingItemClass
+        .def(py::init<>())
+        .def("setLightType", &LightingItem::setLightType)
+        .def("setLightEnabled", &LightingItem::setLightEnabled)
+        .def("setTranslation", &LightingItem::setTranslation)
+        .def("setDirection", &LightingItem::setDirection)
+        .def("setIntensity", &LightingItem::setIntensity)
+        .def("setAmbientIntensity", &LightingItem::setAmbientIntensity)
+        .def("setColor", &LightingItem::setColor)
+        .def("setConstantAttenuation", &LightingItem::setConstantAttenuation)
+        .def("setLinearAttenuation", &LightingItem::setLinearAttenuation)
+        .def("setQuadraticAttenuation", &LightingItem::setQuadraticAttenuation)
+        .def("setBeamWidth", &LightingItem::setBeamWidth)
+        .def("setCutOffAngle", &LightingItem::setCutOffAngle)
+        .def("setCutOffExponent", &LightingItem::setCutOffExponent)
+        .def("setLightMarkerEnabled", &LightingItem::setLightMarkerEnabled)
+        ;
+
+    py::enum_<LightingItem::LightType>(lightingItemClass, "LightType")
+        .value("DirectionalLight", LightingItem::DirectionalLight)
+        .value("PointLight", LightingItem::PointLight)
+        .value("SpotLight", LightingItem::SpotLight)
+        .export_values();
+        ;
+    
     py::class_<PointSetItem, PointSetItemPtr, Item> (m, "PointSetItem", py::multiple_inheritance())
         .def(py::init<>())
         .def_property_readonly("numAttentionPoints", &PointSetItem::numAttentionPoints)

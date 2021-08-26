@@ -1,7 +1,9 @@
 from cnoid.Base import *
 from cnoid.BodyPlugin import *
 
-def doNextSimulation():
+def doNextSimulation(isForced = False):
+    if isForced:
+        return
     global simulationCount, gravity
     if simulationCount < 5:
         print("Simulation trial {}, gravity: {:.1f}".format(simulationCount + 1, gravity))

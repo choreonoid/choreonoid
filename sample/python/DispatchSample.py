@@ -1,3 +1,5 @@
+# This script must be executed in the background mode
+
 from cnoid.Base import *
 from time import sleep
 
@@ -7,5 +9,3 @@ def doSomething(i):
 for i in range(10):
     callLater(lambda : doSomething(i))
     sleep(1.0)
-
-

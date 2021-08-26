@@ -27,6 +27,7 @@ void exportPyViews(py::module m)
     PySignal<void(View*)>(m, "ViewSignal");
 
     py::class_<View, PyQObjectHolder<View>, QWidget> view(m, "View");
+
     view
         .def_property("name", &View::name, &View::setName)
         .def("setName", &View::setName)
@@ -62,11 +63,23 @@ void exportPyViews(py::module m)
         .value("NumLayoutAreas", View::NumLayoutAreas)
         .export_values();
 
-    py::class_<MessageView, PyQObjectHolder<MessageView>, View>(m, "MessageView")
+    py::class_<MessageView, PyQObjectHolder<MessageView>, View> messageView(m, "MessageView");
+
+    py::enum_<MessageView::MessageType>(messageView, "MessageType")
+        .value("Normal", MessageView::Normal)
+        .value("Error", MessageView::Error)
+        .value("Warning", MessageView::Warning)
+        .value("Highlight", MessageView::Highlight)
+        .export_values();
+
+    messageView
         .def_property_readonly_static("instance", [](py::object){ return MessageView::instance(); })
-        .def("put", (void (MessageView::*)(const std::string&, int)) &MessageView::put)
-        .def("putln", (void (MessageView::*)(const std::string&, int)) &MessageView::putln)
-        .def("notify", (void (MessageView::*)(const std::string&, int)) &MessageView::notify)
+        .def("put", (void (MessageView::*)(const std::string&, int)) &MessageView::put,
+             py::arg("message"), py::arg("type") = MessageView::Normal)
+        .def("putln", (void (MessageView::*)(const std::string&, int)) &MessageView::putln,
+             py::arg("message"), py::arg("type") = MessageView::Normal)
+        .def("notify", (void (MessageView::*)(const std::string&, int)) &MessageView::notify,
+             py::arg("message"), py::arg("type") = MessageView::Normal)
         .def("flush", &MessageView::flush)
         .def("clear", &MessageView::clear)
         .def("beginStdioRedirect", &MessageView::beginStdioRedirect)
@@ -184,6 +197,48 @@ void exportPyViews(py::module m)
     py::class_<TaskView, PyQObjectHolder<TaskView>, View>(m, "TaskView", py::multiple_inheritance())
         .def_property_readonly_static(
             "instance", [](py::object){ return releaseFromPythonSideManagement(TaskView::instance()); })
+
+        // Virtual functions defined in AbstractTaskSequencer
+        .def("activate", &TaskView::activate, py::arg("on") = true)
+        .def("isActive", &TaskView::isActive)
+        .def("addTask", &TaskView::addTask)
+        .def("updateTask", &TaskView::updateTask)
+        .def("removeTask", &TaskView::removeTask)
+        .def_property_readonly("sigTaskAdded", &TaskView::sigTaskAdded)
+        .def_property_readonly("sigTaskRemoved", &TaskView::sigTaskRemoved)
+        .def("clearTasks", &TaskView::clearTasks)
+        .def_property_readonly("numTasks", &TaskView::numTasks)
+        .def("getTask", &TaskView::task)
+        .def_property_readonly("currentTaskIndex", &TaskView::currentTaskIndex)
+        .def("setCurrentTask", &TaskView::setCurrentTask)
+        .def_property_readonly("sigCurrentTaskChanged", &TaskView::sigCurrentTaskChanged)
+        .def_property_readonly("currentPhaseIndex", &TaskView::currentPhaseIndex)
+        .def("setCurrentPhase", &TaskView::setCurrentPhase)
+        .def_property_readonly("sigCurrentPhaseChanged", &TaskView::sigCurrentPhaseChanged)
+        .def_property_readonly("currentCommandIndex", &TaskView::currentCommandIndex)
+        .def("executeCommand", &TaskView::executeCommand)
+        .def_property_readonly("sigCurrentCommandChanged", &TaskView::sigCurrentCommandChanged)
+        .def("isBusy", &TaskView::isBusy)
+        .def_property_readonly("sigBusyStateChanged", &TaskView::sigBusyStateChanged)
+        .def("cancelCurrentCommand", &TaskView::cancelCurrentCommand)
+        .def_property_readonly("sigCurrentCommandCanceled", &TaskView::sigCurrentCommandCanceled)
+        .def("isAutoMode", &TaskView::isAutoMode)
+        .def("setAutoMode", &TaskView::setAutoMode)
+        .def("sigAutoModeToggled", &TaskView::sigAutoModeToggled)
+        .def("serializeTasks", &TaskView::serializeTasks)
+
+        // Non-virtual functions defined in TaskView
+        .def("setNoExecutionMode", &TaskView::setNoExecutionMode)
+        .def("isNoExecutionMode", &TaskView::isNoExecutionMode)
+        .def("setCurrentCommand", &TaskView::setCurrentCommand)
+        .def("setBusyState", &TaskView::setBusyState)
+        .def("executeMenuItem", &TaskView::executeMenuItem)
+        .def("checkMenuItem", &TaskView::checkMenuItem)
+        .def_property_readonly("menuItemCheckStates", &TaskView::menuItemCheckStates)
+        .def_property_readonly("sigMenuRequest", &TaskView::sigMenuRequest)
+        .def("showMenu", &TaskView::showMenu)
+        .def_property_readonly("sigMenuItemTriggered", &TaskView::sigMenuItemTriggered)
+        .def_property_readonly("sigMenuItemToggled", &TaskView::sigMenuItemToggled)
         ;
 
     py::class_<ViewManager>(m, "ViewManager")

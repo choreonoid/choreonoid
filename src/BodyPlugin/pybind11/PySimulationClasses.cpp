@@ -75,7 +75,7 @@ void exportSimulationClasses(py::module m)
         .value("NoRecording", SimulatorItem::NoRecording)
         .value("NumRecordingModes", SimulatorItem::NumRecordingModes)
 
-// deprecated
+        // deprecated
         .value("REC_FULL", SimulatorItem::FullRecording)
         .value("REC_TAIL", SimulatorItem::TailRecording)
         .value("REC_NONE", SimulatorItem::NoRecording)
@@ -90,10 +90,10 @@ void exportSimulationClasses(py::module m)
 
         // deprecated
         .value("ActiveControlTime", SimulatorItem::ActiveControlTime)
-        .value("UNLIMITED", SimulatorItem::UnlimitedTime)
-        .value("ACTIVE_CONTROL", SimulatorItem::ActiveControlTime)
-        .value("SPECIFIED", SimulatorItem::SpecifiedTime)
-        .value("TIMEBAR", SimulatorItem::TimeBarTime)
+        .value("TR_UNLIMITED", SimulatorItem::UnlimitedTime)
+        .value("TR_ACTIVE_CONTROL", SimulatorItem::ActiveControlTime)
+        .value("TR_SPECIFIED", SimulatorItem::SpecifiedTime)
+        .value("TR_TIMEBAR", SimulatorItem::TimeBarTime)
         .value("N_TIME_RANGE_MODES", SimulatorItem::NumTimeRangeModes)
         .export_values();
 
