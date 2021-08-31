@@ -30,6 +30,5 @@ int execute(cnoid::App& app)
 {
     app.initialize("Choreonoid", "Choreonoid");
     cnoid::ProjectManager::instance()->loadBuiltinProject(":/Base/project/layout.cnoid");
-    app.exec();
-    return 0;
+    return app.exec();
 }

@@ -39,34 +39,33 @@ bool OptionManager::parseCommandLine1(int argc, char *argv[])
 
     info->options.add_options()("help,h", "show help message");
 
-    bool is_error = false;
+    bool doContinue = true;
+    
     try{
         program_options::store(
             program_options::command_line_parser(argc, argv).
             options(info->options).positional(info->positionalOptions).run(), info->variables);
-    
         program_options::notify(info->variables);
+
+        if(info->variables.count("input-file")){
+            inputFiles = info->variables["input-file"].as<vector<string>>();
+        }
+        
     } catch (std::exception& ex) {
         std::cerr << "Command line option error! : " << ex.what() << std::endl;
-        is_error = true;
+        doContinue = false;
     }
 
-    bool terminated;
-
-    if(info->variables.count("input-file")){
-        inputFiles = info->variables["input-file"].as<vector<string>>();
-    }
-    
-    if(info->variables.count("help") || is_error){
+    if(!doContinue || info->variables.count("help")){
         cout << info->options << endl;
-        terminated = true;
+        doContinue = false;
+        
     } else {
         sigInputFileOptionsParsed_[0](inputFiles);
         sigOptionsParsed_[0](info->variables);
-        terminated = false;
     }
 
-    return !terminated;
+    return doContinue;
 }
 
 

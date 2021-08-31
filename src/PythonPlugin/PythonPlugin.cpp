@@ -8,6 +8,7 @@
 #include "PythonExecutor.h"
 #include <cnoid/PyUtil>
 #include <cnoid/Plugin>
+#include <cnoid/App>
 #include <cnoid/AppConfig>
 #include <cnoid/MenuManager>
 #include <cnoid/ViewManager>
@@ -233,9 +234,10 @@ void PythonPlugin::Impl::executeScriptFileOnStartup(const string& scriptFile)
     if(!executor().hasException()){
         MessageView::instance()->putln(_("The script finished."));
     } else {
-        MessageView::instance()->putln(_("Failed to run the python script."), MessageView::Warning);
+        MessageView::instance()->putln(_("Failed to run the python script."), MessageView::Error);
         python::gil_scoped_acquire lock;
         MessageView::instance()->put(executor().exceptionText());
+        App::checkErrorAndExitIfExitOnErrorMode();
     }
 }
 

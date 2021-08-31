@@ -12,7 +12,6 @@
 #include <cnoid/RootItem>
 #include <cnoid/ConnectionSet>
 #include <cnoid/LazySignal>
-#include <cnoid/LazyCaller>
 #include <cnoid/MessageView>
 #include <cnoid/TimeBar>
 #include <cnoid/ItemManager>
@@ -229,7 +228,7 @@ void BodyItem::initializeClass(ExtensionManager* ext)
 
     OptionManager& om = ext->optionManager();
     om.addOption("body", boost::program_options::value< vector<string> >(), "load a body file");
-    om.sigOptionsParsed().connect(onSigOptionsParsed);
+    om.sigOptionsParsed(1).connect(onSigOptionsParsed);
 }
 
 

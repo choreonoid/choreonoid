@@ -1,7 +1,7 @@
 #include "TextEditView.h"
 #include "TextEdit.h"
 #include "TargetItemPicker.h"
-#include "AppUtil.h"
+#include "App.h"
 #include "MainWindow.h"
 #include "ViewManager.h"
 #include "RootItem.h"
@@ -140,7 +140,7 @@ TextEditView::Impl::Impl(TextEditView* self)
     
     connections.add(timer.sigTimeout().connect([&](){ checkFileUpdate(); }));
 
-    connections.add(sigAboutToQuit().connect([&](){ onTextItemDisconnectedFromRoot(); }));
+    connections.add(App::sigAboutToQuit().connect([&](){ onTextItemDisconnectedFromRoot(); }));
 }
 
 

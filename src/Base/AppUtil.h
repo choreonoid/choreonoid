@@ -10,8 +10,9 @@
 
 namespace cnoid {
 
+[[deprecated("Use App::sigAboutToQuit")]]
 CNOID_EXPORT SignalProxy<void()> sigAboutToQuit();
-
+[[deprecated("Use App::updateGui")]]
 CNOID_EXPORT void updateGui();
 
 }

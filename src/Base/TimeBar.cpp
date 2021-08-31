@@ -6,7 +6,6 @@
 #include "ExtensionManager.h"
 #include "Archive.h"
 #include "OptionManager.h"
-#include "LazyCaller.h"
 #include "SpinBox.h"
 #include "Slider.h"
 #include "Buttons.h"
@@ -226,7 +225,7 @@ public:
 static void onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("start-playback")){
-        callLater([](){ TimeBar::instance()->startPlayback(); });
+        TimeBar::instance()->startPlayback();
     }
 }
 
@@ -239,7 +238,7 @@ void TimeBar::initialize(ExtensionManager* ext)
 
         ext->optionManager()
             .addOption("start-playback", "start playback automatically")
-            .sigOptionsParsed().connect(onSigOptionsParsed);
+            .sigOptionsParsed(1).connect(onSigOptionsParsed);
             
         initialized = true;
     }

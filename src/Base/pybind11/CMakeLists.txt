@@ -30,7 +30,7 @@ target_link_libraries(PyQtWidgets ${CHOREONOID_QT_LIBRARIES} ${PYTHON_LIBRARIES}
 
 choreonoid_add_python_module(PyBase
   PyBaseModule.cpp
-  PyAppUtil.cpp
+  PyApp.cpp
   PyQtEx.cpp
   PyItems.cpp
   PySeqItems.cpp

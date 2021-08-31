@@ -79,6 +79,8 @@ public:
 
     SignalProxy<void(const std::string& text)> sigMessage();
 
+    bool hasErrorMessages() const;
+
     class Impl;
 
 protected:

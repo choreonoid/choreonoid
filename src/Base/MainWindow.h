@@ -25,6 +25,10 @@ public:
     ~MainWindow();
 
     void show();
+
+    bool isActivatedInWindowSystem() const;
+    bool waitForWindowSystemToActivate();
+    
     void setProjectTitle(const std::string& title);
     ToolBarArea* toolBarArea();
     ViewArea* viewArea();

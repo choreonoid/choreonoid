@@ -84,6 +84,8 @@ void exportPyViews(py::module m)
         .def("clear", &MessageView::clear)
         .def("beginStdioRedirect", &MessageView::beginStdioRedirect)
         .def("endStdioRedirect", &MessageView::endStdioRedirect)
+        .def("hasErrorMessages", &MessageView::hasErrorMessages)
+
         ;
 
     m.def("showMessageBox", (void(*)(const std::string&)) &showMessageBox);

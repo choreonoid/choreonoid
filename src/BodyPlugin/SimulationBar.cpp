@@ -10,7 +10,6 @@
 #include <cnoid/MessageView>
 #include <cnoid/UnifiedEditHistory>
 #include <cnoid/OptionManager>
-#include <cnoid/LazyCaller>
 #include <fmt/format.h>
 #include <functional>
 #include "gettext.h"
@@ -19,13 +18,13 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
-static SimulationBar* instance_ = 0;
+static SimulationBar* instance_ = nullptr;
     
 
 static void onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("start-simulation")){
-        callLater([](){ instance_->startSimulation(true); });
+        instance_->startSimulation(true);
     }
 }
 
@@ -38,7 +37,7 @@ void SimulationBar::initialize(ExtensionManager* ext)
         
         ext->optionManager()
             .addOption("start-simulation", "start simulation automatically")
-            .sigOptionsParsed().connect(onSigOptionsParsed);
+            .sigOptionsParsed(1).connect(onSigOptionsParsed);
     }
 }
 

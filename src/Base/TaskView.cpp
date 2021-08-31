@@ -12,7 +12,7 @@
 #include "SpinBox.h"
 #include "Timer.h"
 #include "LazyCaller.h"
-#include "AppUtil.h"
+#include "App.h"
 #include "Archive.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/stdx/optional>
@@ -210,7 +210,7 @@ void TaskView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<TaskView>("TaskView", N_("Task"));
 
-    cnoid::sigAboutToQuit().connect([](){ onAboutToQuit(); });
+    App::sigAboutToQuit().connect([](){ onAboutToQuit(); });
 }
 
 

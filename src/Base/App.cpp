@@ -92,7 +92,13 @@ using namespace cnoid;
 
 namespace {
 
+App* instance_ = nullptr;
+
+Signal<void()> sigExecutionStarted_;
 Signal<void()> sigAboutToQuit_;
+
+string messagesForExitOnErrorMode;
+bool isExitOnErrorMode = false;
 
 void onCtrl_C_Input(int)
 {
@@ -129,6 +135,7 @@ public:
     string vendorName;
     DescriptionDialog* descriptionDialog;
     bool doQuit;
+    int returnCode;
     
     Impl(App* self, int& argc, char** argv);
     ~Impl();
@@ -137,6 +144,7 @@ public:
     void onMainWindowCloseEvent();
     void onSigOptionsParsed(boost::program_options::variables_map& v);
     void showInformationDialog();
+    void enableExitOnErrorMode();
     virtual bool eventFilter(QObject* watched, QEvent* event);
 };
 
@@ -188,8 +196,12 @@ App::Impl::Impl(App* self, int& argc, char** argv)
       argc(argc),
       argv(argv)
 {
+    instance_ = self;
+    qapplication = nullptr;
+    mainWindow = nullptr;
     descriptionDialog = nullptr;
     doQuit = false;
+    returnCode = 0;
 }
 
 
@@ -340,7 +352,8 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     layoutSwitcher = new LayoutSwitcher;
 
     OptionManager& om = ext->optionManager();
-    om.addOption("quit", "quit the application just after it is invoked");
+    om.addOption("quit", "stop the application without showing the main window");
+    om.addOption("exit-on-error", "exit the application when an error occurs");
     om.addOption("list-qt-styles", "list all the available qt styles");
     om.sigOptionsParsed().connect(
         [&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
@@ -390,21 +403,34 @@ int App::exec()
 int App::Impl::exec()
 {
     if(!ext->optionManager().parseCommandLine1(argc, argv)){
-        //exit
+        doQuit = true;
     }
 
-    if(!mainWindow->isVisible()){
-        mainWindow->show();
+    if(!doQuit){
+        if(mainWindow->isVisible()){
+            App::updateGui();
+        } else {
+            mainWindow->show();
+            mainWindow->waitForWindowSystemToActivate();
+        }
     }
 
-    ext->optionManager().parseCommandLine2();
+    if(!doQuit){
+        callLater(
+            [this](){
+                ext->optionManager().parseCommandLine2();
+                sigExecutionStarted_();
+            });
+        
+        int result = qapplication->exec();
 
-    int result = 0;
-    
-    if(doQuit){
-        messageView->flush();
-    } else {
-        result = qapplication->exec();
+        if(result != 0){
+            returnCode = result;
+        }
+    }
+
+    if(returnCode == 0 && messageView->hasErrorMessages()){
+        returnCode = 1;
     }
 
     for(Item* item = RootItem::instance()->childItem(); item; ){
@@ -421,7 +447,7 @@ int App::Impl::exec()
     delete mainWindow;
     mainWindow = nullptr;
     
-    return result;
+    return returnCode;
 }
 
 
@@ -455,6 +481,8 @@ void App::Impl::onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("quit")){
         doQuit = true;
+    } else if(v.count("exit-on-error")){
+        enableExitOnErrorMode();
     } else if(v.count("list-qt-styles")){
         cout << QStyleFactory::keys().join(" ").toStdString() << endl;
         doQuit = true;
@@ -483,6 +511,64 @@ void App::Impl::showInformationDialog()
 }
 
 
+void App::exit(int returnCode)
+{
+    if(instance_){
+        auto impl = instance_->impl;
+        impl->returnCode = returnCode;
+        if(impl->mainWindow){
+            if(!impl->mainWindow->close()){
+                impl->qapplication->exit(returnCode);
+            }
+        }
+    }
+}
+
+
+void App::Impl::enableExitOnErrorMode()
+{
+    isExitOnErrorMode = true;
+    instance_->impl->messageView->sigMessage().connect(
+        [this](const std::string& text){
+            messagesForExitOnErrorMode += text;
+        });
+}
+
+
+void App::checkErrorAndExitIfExitOnErrorMode()
+{
+    if(isExitOnErrorMode){
+        auto impl = instance_->impl;
+        auto mv = impl->messageView;
+        if(mv->hasErrorMessages()){
+            App::updateGui();
+            cerr << messagesForExitOnErrorMode;
+            cerr.flush();
+            exit(1);
+        }
+    }
+}
+
+
+SignalProxy<void()> App::sigExecutionStarted()
+{
+    return sigExecutionStarted_;
+}
+
+
+SignalProxy<void()> App::sigAboutToQuit()
+{
+    return sigAboutToQuit_;
+}
+
+
+void App::updateGui()
+{
+    QCoreApplication::processEvents(
+        QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers, 1.0);
+}
+
+
 SignalProxy<void()> cnoid::sigAboutToQuit()
 {
     return sigAboutToQuit_;
@@ -491,6 +577,6 @@ SignalProxy<void()> cnoid::sigAboutToQuit()
 
 void cnoid::updateGui()
 {
-    QCoreApplication::processEvents(
-        QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers, 1.0);
+    return App::updateGui();
 }
+

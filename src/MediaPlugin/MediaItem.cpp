@@ -15,7 +15,6 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
@@ -34,7 +33,7 @@ bool loadMediaItem(MediaItemPtr item, const std::string& filepath, std::ostream&
 void onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("media")){
-        vector<string> mediaFilenames = v["media"].as< vector<string> >();
+        vector<string> mediaFilenames = v["media"].as<vector<string>>();
             
         for(size_t i=0; i < mediaFilenames.size(); ++i){
             MediaItemPtr item(new MediaItem());
@@ -53,8 +52,8 @@ void MediaItem::initialize(ExtensionManager* ext)
     ext->itemManager().registerClass<MediaItem>(N_("MediaItem"));
     ext->itemManager().addLoader<MediaItem>(_("Media file"), "MEDIA-GENERIC", "", loadMediaItem);
 
-    ext->optionManager().addOption("media", boost::program_options::value< vector<string> >(), _("load an media file"));
-    ext->optionManager().sigOptionsParsed().connect(onSigOptionsParsed);
+    ext->optionManager().addOption("media", boost::program_options::value<vector<string>>(), _("load an media file"));
+    ext->optionManager().sigOptionsParsed(1).connect(onSigOptionsParsed);
 }
 
 

@@ -5,6 +5,8 @@
 #ifndef CNOID_BASE_APP_H
 #define CNOID_BASE_APP_H
 
+#include <cnoid/Signal>
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -26,9 +28,14 @@ public:
     ~App();
         
     void initialize(const char* appName, const char* vendorName, const char* pluginPathList = nullptr);
-
     int exec();
 
+    static void updateGui();
+    static void exit(int returnCode = 0);
+    static void checkErrorAndExitIfExitOnErrorMode();
+    static SignalProxy<void()> sigExecutionStarted();
+    static SignalProxy<void()> sigAboutToQuit();
+        
 private:
     class Impl;
     Impl* impl;

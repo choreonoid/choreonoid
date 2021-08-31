@@ -8,9 +8,11 @@
 #include "ToolBarArea.h"
 #include "ExtensionManager.h"
 #include "MenuManager.h"
+#include "App.h"
 #include "AppConfig.h"
 #include "TimeBar.h"
 #include "UnifiedEditHistory.h"
+#include <cnoid/Sleep>
 #include <QResizeEvent>
 #include <QWindowStateChangeEvent>
 #include <QApplication>
@@ -35,7 +37,24 @@ QSize getScreenSize() {
     return QApplication::desktop()->screenGeometry().size();
 }
 #endif
-    
+
+#ifdef Q_OS_UNIX
+class WindowActivationChecker : public QObject
+{
+public:
+    bool isWindowActivated;
+
+    WindowActivationChecker() : isWindowActivated(false) { }
+
+    bool eventFilter(QObject* obj, QEvent* event) override {
+        if(event->type() == QEvent::ActivationChange){
+            isWindowActivated = true;
+        }
+        return false;
+    }
+};
+#endif
+
 }
 
 namespace cnoid {
@@ -73,6 +92,10 @@ public:
     int lastWindowState;
     QString currentLayoutFolder;
     Action* fullScreenCheck;
+
+#ifdef Q_OS_UNIX
+    WindowActivationChecker windowActivationChecker;
+#endif
 
     void setupMenus(ExtensionManager* ext);
     void showFirst();
@@ -376,7 +399,16 @@ void MainWindow::Impl::showFirst()
     if(TRACE_FUNCTIONS){
         cout << "MainWindow::Impl::showFirst()" << endl;
     }
-    if(isBeforeShowing){
+
+    if(!isBeforeShowing){
+        self->QMainWindow::show();
+
+    } else {
+
+#ifdef Q_OS_UNIX
+        self->installEventFilter(&windowActivationChecker);
+#endif
+        
         if(config->get("fullScreen", false)){
             isMaximizedJustBeforeFullScreen = config->get("maximized", true);
 #ifdef Q_OS_WIN32
@@ -409,9 +441,51 @@ void MainWindow::Impl::showFirst()
         self->statusBar()->setVisible(showStatusBar);
 
         isBeforeShowing = false;
-    } else {
-        self->QMainWindow::show();
     }
+}
+
+
+bool MainWindow::isActivatedInWindowSystem() const
+{
+#ifdef Q_OS_UNIX
+    return impl->windowActivationChecker.isWindowActivated;
+#else
+    return !impl->isBeforeShowing;
+#endif
+}
+
+
+bool MainWindow::waitForWindowSystemToActivate()
+{
+#ifndef Q_OS_UNIX
+    return isActivatedInWindowSystem();
+
+#else
+    /**
+       There is a delay between the initial execution of the show function of a window and the window
+       is actually displayed first. If the event loop is blocked by an operation that takes a long
+       time before the window is displayed, the window will remain hidden or its contents will be black
+       for a while. This behavior gives a user the bad impression that the application is slow to start.
+       To avoid this problem, it is better to wait for the window system to actually display the window
+       and then start the initialization process that may take some time. The following code wait for
+       the window system to activate the main window on Linux.
+    */
+    int timeoutCounter = 0;
+    while(true){
+        App::updateGui();
+        if(impl->windowActivationChecker.isWindowActivated){
+            break;
+        }
+        msleep(1);
+        ++timeoutCounter;
+        if(timeoutCounter > 100){
+            break;
+        }
+    }
+    removeEventFilter(&impl->windowActivationChecker);
+
+    return impl->windowActivationChecker.isWindowActivated;
+#endif
 }
 
 

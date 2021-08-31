@@ -139,6 +139,7 @@ public:
         
     std::stack<StdioInfo> stdios;
     bool exitEventLoopRequested;
+    bool hasErrorMessages;
 
     Signal<void(const std::string& text)> sigMessage;
 
@@ -285,6 +286,8 @@ MessageView::Impl::Impl(MessageView* self) :
     self->setLayout(layout);
 
     createTextEdit();
+
+    hasErrorMessages = false;
 }
 
 
@@ -523,6 +526,7 @@ void MessageView::Impl::put
         const char* prefix = "";
         if(type == Error){
             prefix = _("Error: ");
+            hasErrorMessages = true;
         } else if(type == Warning){
             prefix = _("Warning: ");
         }
@@ -677,6 +681,12 @@ bool MessageView::isFlushing()
 SignalProxy<void(const std::string& text)> MessageView::sigMessage()
 {
     return impl->sigMessage;
+}
+
+
+bool MessageView::hasErrorMessages() const
+{
+    return impl->hasErrorMessages;
 }
 
 

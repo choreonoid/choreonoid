@@ -20,7 +20,7 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/ControllerIO>
 #include <cnoid/BodyState>
-#include <cnoid/AppUtil>
+#include <cnoid/App>
 #include <cnoid/TimeBar>
 #include <cnoid/MessageView>
 #include <cnoid/LazyCaller>
@@ -1852,7 +1852,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
         }
 
         aboutToQuitConnection.disconnect();
-        aboutToQuitConnection = cnoid::sigAboutToQuit().connect(
+        aboutToQuitConnection = App::sigAboutToQuit().connect(
             [&](){ stopSimulation(true, true); });
 
         worldLogFileItem = nullptr;
