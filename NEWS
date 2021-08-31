@@ -71,6 +71,7 @@ Changes since 1.7.0:
 * Added RegionIntrusionDetectorItem
 * Added a function to register and switch multiple layouts of main window
 * Improved SensorVisualizerItem to support acceleration sensors and rate gyro sensors
+* Add the choreonoid-info command (experimental)
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
