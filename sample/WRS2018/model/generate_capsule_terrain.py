@@ -74,7 +74,7 @@ for i in range(num_capsules_y):
         pitch = random.random() * 0.6 - 0.3
         R = cnoid.Util.rotFromRpy([roll, pitch, 0.0])
         aa = cnoid.Util.AngleAxis(R)
-        axis = aa.axis()
+        axis = aa.axis
             
         print(capsule_description.format(
             x = capsule_diameter * j,
@@ -82,7 +82,7 @@ for i in range(num_capsules_y):
             rx = axis[0],
             ry = axis[1],
             rz = axis[2],
-            theta = degrees(aa.angle()),
+            theta = degrees(aa.angle),
             radius = capsule_radius,
             height = h * capsule_height_step
             ))
