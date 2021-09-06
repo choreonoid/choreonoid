@@ -19,6 +19,8 @@ install(DIRECTORY
   project
   script
   test
-  DESTINATION ${CNOID_SHARE_SUBDIR}/WRS2018)
+  DESTINATION ${CNOID_SHARE_SUBDIR}/WRS2018
+  REGEX "model/.+\.py|script/generate-sample-projects\.py"
+  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
 add_subdirectory(controller)
