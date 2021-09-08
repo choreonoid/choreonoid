@@ -246,9 +246,11 @@ BodySyncCameraItem::Impl::Impl(BodySyncCameraItem* self, const Impl& org)
     : Impl(self, false)
 {
     cameraType = org.cameraType;
+
     cameraTransform->setPosition(org.cameraTransform->position());
     cameraTransform->setInteractiveViewpointChangeLocked(
         org.cameraTransform->isInteractiveViewpointChangeLocked());
+    cameraTransform->setParallelTrackingMode(org.cameraTransform->isParallelTrackingMode());
     cameraTransform->targetLinkName = org.cameraTransform->targetLinkName;
 }
 
