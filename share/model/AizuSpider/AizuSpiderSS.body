@@ -29,35 +29,25 @@ standardPose: [
   ]
 
 # TODO: Share the following information with other AizuSpider models
-collisionDetection:
-  excludeTreeDepth: 1
-  excludeLinkGroups:
-    -
-      name: ChassisGroup
-      links: [
-        CHASSIS, R_TRACK, L_TRACK,
-        FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER,
-        BASE, SHOULDER ]
-    -
-      name: FrontSubTrackGroup
-      links: [
-        CHASSIS, R_TRACK, L_TRACK,
-        FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER,
-        FR_SUB_TRACK, FL_SUB_TRACK,
-        BASE, SHOULDER ]
-    -
-      name: BackSubTrackGroup
-      links: [
-        CHASSIS, R_TRACK, L_TRACK,
-        FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER,
-        BR_SUB_TRACK, BL_SUB_TRACK,
-        BASE, SHOULDER ]
-    -
-      name: ArmGroup
-      links: [ BASE, ARM ]
-    -
-      name: ForeArmGroup
-      links: [ FOREARM, WRIST1, WRIST2, HAND ]
-    -
-      name: FingerGroup
-      links: [ FINGER1, FINGER2, FINGER3 ]
+collision_detection_rules:
+  - disabled_link_chain_level: 1
+  - disabled_link_group: [ # Chassis
+      CHASSIS, R_TRACK, L_TRACK,
+      FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER,
+      BASE, SHOULDER ]
+  - disabled_link_group: [ # Front sub tracks
+      CHASSIS, R_TRACK, L_TRACK,
+      FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER,
+      FR_SUB_TRACK, FL_SUB_TRACK,
+      BASE, SHOULDER ]
+  - disabled_link_group: [ # Back sub tracks
+      CHASSIS, R_TRACK, L_TRACK,
+      FR_FLIPPER, FL_FLIPPER, BR_FLIPPER, BL_FLIPPER,
+      BR_SUB_TRACK, BL_SUB_TRACK,
+      BASE, SHOULDER ]
+  - disabled_link_group: [ # Arm
+      BASE, ARM ]
+  - disabled_link_group: [ # Fore arm
+      FOREARM, WRIST1, WRIST2, HAND ]
+  - disabled_link_group: [ # Fingers
+      FINGER1, FINGER2, FINGER3 ]
