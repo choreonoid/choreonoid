@@ -556,7 +556,10 @@ endif()
 
 # Assimp
 if(MSVC AND (NOT DEFINED ENABLE_ASSIMP))
-  file(GLOB assimp_dirs "c:/local/Assimp*/lib/cmake/assimp-*" "d:/local/Assimp*/lib/cmake/assimp-*")
+  file(GLOB assimp_dirs
+    "c:/Program Files/Assimp/lib/cmake/assimp-*"
+    "c:/local/Assimp*/lib/cmake/assimp-*"
+    "d:/local/Assimp*/lib/cmake/assimp-*")
   find_package(ASSIMP QUIET HINTS ${assimp_dirs})
 else()
   find_package(ASSIMP QUIET)
