@@ -22,7 +22,7 @@ links:
         nodeWidth:  0.25
         nodeThickerThickness: 0.04
         useThickerNodeEvery: 2
-        nodeDistanceTension: 1.0E-4
+        nodeDistanceTension: 1.2E-4
         hingeCompliance: 1.0E-8
         hingeSpookDamping: 0.01
         minStabilizingHingeNormalForce: 1000
@@ -40,8 +40,8 @@ links:
           appearance:
             material:
               diffuseColor: [ 0.15, 0.15, 0.15 ]
-              specularColor: [ 0.8, 0.8, 0.8 ]
-              shininess: 0.02
+              specularColor: [ 0.7, 0.7, 0.7 ]
+              shininess: 0.1
       -
         type: AGXVehicleContinuousTrackDevice
         name: TRACK_R
@@ -54,7 +54,7 @@ links:
         nodeWidth:  0.25
         nodeThickerThickness: 0.04
         useThickerNodeEvery: 2
-        nodeDistanceTension: 1.0E-4
+        nodeDistanceTension: 1.2E-4
         hingeCompliance: 1.0E-8
         hingeSpookDamping: 0.01
         minStabilizingHingeNormalForce: 1000

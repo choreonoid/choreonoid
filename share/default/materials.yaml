@@ -132,6 +132,7 @@ contact_materials:
     restitution: 0.0
   -
     materials: [ Ground, DoubleArmV7ATracks ]
+    youngs_modulus: 1e10
     friction: 1.0
     secondary_friction: 0.5
     restitution: 0.0
@@ -140,10 +141,12 @@ contact_materials:
     primary_direction: [ 1, 0, 0 ]
     friction_model: [ constant_normal_force_oriented_box, direct ]
     #friction_model: [ oriented_iterative, direct ]
+    constant_normal_force: 5000
     reference_body: DoubleArmV7
     reference_link: TFRAME
   -
     materials: [ DoubleArmV7AWheel, DoubleArmV7ATracks ]
+    youngs_modulus: 1e10
     friction: 1.0
     restitution: 0.0
   -
