@@ -1,29 +1,63 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: TerrainC
+name: TerrainE
 
 BLOCK: &BLOCK
-  type: Shape
-  appearance:
-    material:
-      diffuseColor: [ 0.0, 0.6, 0.0 ]
-  geometry:
-    type: IndexedFaceSet
-    coordinate: [ -0.25, -0.25, 0.0,
-                   0.25, -0.25, 0.0,
-                   0.25,  0.25, 0.0,
-                  -0.25,  0.25, 0.0,
-                  -0.25, -0.25, 0.14,
-                   0.25, -0.25, 0.25,
-                   0.25,  0.25, 0.25,
-                  -0.25,  0.25, 0.14 ]
-    coordIndex: [ 3, 2, 1, 0, -1,
-                  4, 5, 6, 7, -1,
-                  4, 0, 1, 5, -1,
-                  5, 1, 2, 6, -1,
-                  6, 2, 3, 7, -1,
-                  7, 3, 0, 4, -1 ]
+  type: Transform
+  elements:
+    -
+      type: Shape
+      translation: [ 0.24, 0, 0.125 ]
+      geometry: { type: Box, size: [ 0.02, 0.5, 0.25 ] }
+      appearance: &APP
+        material:
+          diffuseColor: [ 0.0, 0.6, 0.0 ]
+    -
+      type: Shape
+      translation: [ -0.24, 0, 0.07 ]
+      geometry: { type: Box, size: [ 0.02, 0.5, 0.14 ] }
+      appearance: *APP
+    -
+      type: Shape
+      translation: [ -0.006, 0, 0.1854 ]
+      rotation: [ 0, 1, 0, -12.9 ]
+      geometry: { type: Box, size: [ 0.494, 0.5, 0.02 ] }
+      appearance: *APP
+    -
+      type: Shape
+      translation: [ 0, -0.24, 0.07 ]
+      geometry: { type: Box, size: [ 0.5, 0.02, 0.14 ] }
+      appearance: *APP
+    -
+      type: Shape
+      translation: [ 0, 0.24, 0.07 ]
+      geometry: { type: Box, size: [ 0.5, 0.02, 0.14 ] }
+      appearance: *APP
+    -
+      type: Shape
+      translation: [ 0.19, -0.24, 0.181 ]
+      rotation: [ 0, 1, 0, -5 ]
+      geometry: { type: Box, size: [ 0.1, 0.02, 0.095 ] }
+      appearance: *APP
+    -
+      type: Shape
+      translation: [ 0.19, 0.24, 0.181 ]
+      rotation: [ 0, 1, 0, -5 ]
+      geometry: { type: Box, size: [ 0.1, 0.02, 0.095 ] }
+      appearance: *APP
+    -
+      type: Shape
+      translation: [ 0.0, -0.24, 0.145 ]
+      rotation: [ 0, 1, 0, -12.82 ]
+      geometry: { type: Box, size: [ 0.32, 0.02, 0.08 ] }
+      appearance: *APP
+    -
+      type: Shape
+      translation: [ 0.0, 0.24, 0.145 ]
+      rotation: [ 0, 1, 0, -12.82 ]
+      geometry: { type: Box, size: [ 0.32, 0.02, 0.08 ] }
+      appearance: *APP
                   
 BASE_BLOCK: &BASE_BLOCK
   type: Shape
@@ -33,136 +67,111 @@ BASE_BLOCK: &BASE_BLOCK
   geometry: { type: Box, size: [ 0.5, 0.5, 0.14 ] }
 
 LINE0: &LINE0
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 0 ]
     translation: [ 0.0, 0, 0.0 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 90 ]
     translation: [ 0.5, 0, 0.0 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 0 ]
     translation: [ 1.0, 0, 0.0 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 0 ]
     translation: [ 1.5, 0, 0.0 ]
 
 LINE1: &LINE1
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 90 ]
     translation: [ 0.0, 0, 0.0 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 90 ]
     translation: [ 0.5, 0, 0.14 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 180 ]
     translation: [ 1.0, 0, 0.14 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 180 ]
     translation: [ 1.5, 0, 0.0 ]
 
 LINE2: &LINE2
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 90 ]
     translation: [ 0.0, 0, 0.0 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 0 ]
     translation: [ 0.5, 0, 0.14 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 90 ]
     translation: [ 1.0, 0, 0.0 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 90 ]
     translation: [ 1.5, 0, 0.0 ]
 
 LINE3: &LINE3
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 0 ]
     translation: [ 0.0, 0, 0.0 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 90 ]
     translation: [ 0.5, 0, 0.14 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 90 ]
     translation: [ 1.0, 0, 0.28 ]
-
   -
     <<: *BASE_BLOCK
     translation: [ 1.0, 0, 0.21 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 270 ]
     translation: [ 1.5, 0, 0.0 ]
 
 LINE4: &LINE4
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 270 ]
     translation: [ 0.0, 0, 0.0 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 90 ]
     translation: [ 0.5, 0, 0.0 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 0 ]
     translation: [ 1.0, 0, 0.0 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 180 ]
     translation: [ 1.5, 0, 0.0 ]
 
 LINE5: &LINE5
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 0 ]
     translation: [ 0.0, 0, 0.0 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 0 ]
     translation: [ 0.5, 0, 0.0 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 270 ]
     translation: [ 1.0, 0, 0.0 ]
-
   -
     <<: *BLOCK
     rotation: [ 0, 0, 1, 0 ]
@@ -173,55 +182,43 @@ links:
     name: 0
     jointType: fixed
     material: Ground
-    convexRecompostiion: true
     elements:
       -
         type: Transform
         translation: [ 0.0, 0.0, 0 ]
         elements: *LINE0
-
   - 
     name: 1
     parent: 0
     jointType: fixed
     material: Ground
-    convexRecompostiion: true
     translation: [ 0.0, 0.5, 0 ]
     elements: *LINE1
-
   - 
     name: 2
     parent: 0
     jointType: fixed
     material: Ground
-    convexRecompostiion: true
     translation: [ 0.0, 1.0, 0 ]
     elements: *LINE2
-
   - 
     name: 3
     parent: 0
     jointType: fixed
     material: Ground
-    convexRecompostiion: true
     translation: [ 0.0, 1.5, 0 ]
     elements: *LINE3
-
   - 
     name: 4
     parent: 0
     jointType: fixed
     material: Ground
-    convexRecompostiion: true
     translation: [ 0.0, 2.0, 0 ]
     elements: *LINE4
-
   - 
     name: 5
     parent: 0
     jointType: fixed
     material: Ground
-    convexRecompostiion: true
     translation: [ 0.0, 2.5, 0 ]
     elements: *LINE5
-
