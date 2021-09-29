@@ -3,20 +3,17 @@ formatVersion: 1.0
 angleUnit: degree
 name: TerrainE
 
+APP: &APP
+  material:
+    diffuseColor: [ 0.0, 0.6, 0.0 ]
+
 BLOCK: &BLOCK
   type: Transform
   elements:
     -
       type: Shape
-      translation: [ 0.24, 0, 0.125 ]
-      geometry: { type: Box, size: [ 0.02, 0.5, 0.25 ] }
-      appearance: &APP
-        material:
-          diffuseColor: [ 0.0, 0.6, 0.0 ]
-    -
-      type: Shape
-      translation: [ -0.24, 0, 0.07 ]
-      geometry: { type: Box, size: [ 0.02, 0.5, 0.14 ] }
+      translation: [ 0.24, 0, 0.195 ]
+      geometry: { type: Box, size: [ 0.02, 0.5, 0.11 ] }
       appearance: *APP
     -
       type: Shape
@@ -26,44 +23,25 @@ BLOCK: &BLOCK
       appearance: *APP
     -
       type: Shape
-      translation: [ 0, -0.24, 0.07 ]
-      geometry: { type: Box, size: [ 0.5, 0.02, 0.14 ] }
+      translation: [ 0, 0, 0.07 ]
+      geometry: { type: Box, size: [ 0.5, 0.5, 0.14 ] }
       appearance: *APP
     -
       type: Shape
-      translation: [ 0, 0.24, 0.07 ]
-      geometry: { type: Box, size: [ 0.5, 0.02, 0.14 ] }
-      appearance: *APP
-    -
-      type: Shape
-      translation: [ 0.19, -0.24, 0.181 ]
+      translation: [ 0.19, 0.0, 0.181 ]
       rotation: [ 0, 1, 0, -5 ]
-      geometry: { type: Box, size: [ 0.1, 0.02, 0.095 ] }
+      geometry: { type: Box, size: [ 0.1, 0.5, 0.095 ] }
       appearance: *APP
     -
       type: Shape
-      translation: [ 0.19, 0.24, 0.181 ]
-      rotation: [ 0, 1, 0, -5 ]
-      geometry: { type: Box, size: [ 0.1, 0.02, 0.095 ] }
-      appearance: *APP
-    -
-      type: Shape
-      translation: [ 0.0, -0.24, 0.145 ]
+      translation: [ 0.0, 0.0, 0.145 ]
       rotation: [ 0, 1, 0, -12.82 ]
-      geometry: { type: Box, size: [ 0.32, 0.02, 0.08 ] }
-      appearance: *APP
-    -
-      type: Shape
-      translation: [ 0.0, 0.24, 0.145 ]
-      rotation: [ 0, 1, 0, -12.82 ]
-      geometry: { type: Box, size: [ 0.32, 0.02, 0.08 ] }
+      geometry: { type: Box, size: [ 0.32, 0.5, 0.08 ] }
       appearance: *APP
                   
 BASE_BLOCK: &BASE_BLOCK
   type: Shape
-  appearance:
-    material:
-      diffuseColor: [ 0.0, 0.6, 0.0 ]
+  appearance: *APP
   geometry: { type: Box, size: [ 0.5, 0.5, 0.14 ] }
 
 LINE0: &LINE0
