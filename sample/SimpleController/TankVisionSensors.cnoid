@@ -65,35 +65,47 @@ items:
               data: 
                 sub_items: 
                   - 
-                    class: PointCloudVisualizer
-                    name: Kinect
-                    is_checked: true
-                    translation: [ -2.01, -0.5, 0.43 ]
-                    rotation: [ 0.57735, -0.57735, -0.57735, 120 ]
-                    angle_unit: degree
-                    renderingMode: Point
-                    pointSize: 0
-                    voxelSize: 0.01
-                    isEditable: false
+                    class: AccelerationSensorVisualizerItem
+                    name: AccelerationSensor
+                    ratio: 0.1
+                    threshold: 0.05
+                    offset: [ 0, 0, -9.8 ]
                   - 
-                    class: RangeSensorVisualizer
-                    name: VLP-16
-                    is_checked: true
-                    translation: [ -2.01, -0.5, 0.53 ]
-                    rotation: [ 0.57735, -0.57735, -0.57735, 120 ]
-                    angle_unit: degree
-                    renderingMode: Point
-                    pointSize: 0
-                    voxelSize: 0.01
-                    isEditable: false
+                    class: RateGyroSensorVisualizerItem
+                    name: RateGyro
+                    ratio: 0.4
+                    threshold: 0.01
+                    offset: [ 0, 0, 0 ]
                   - 
-                    class: CameraImageVisualizer
-                    name: Kinect Camera
+                    class: CameraImageVisualizerItem
+                    name: Kinect-Image
                     is_checked: true
                   - 
-                    class: CameraImageVisualizer
+                    class: CameraImageVisualizerItem
                     name: Theta
                     is_checked: true
+                  - 
+                    class: PointCloudVisualizerItem
+                    name: Kinect
+                    is_checked: true
+                    translation: [ -1.41367, -0.5, 0.435448 ]
+                    rotation: [ 0.575454, -0.575454, -0.581125, 119.676 ]
+                    angle_unit: degree
+                    rendering_mode: Point
+                    point_size: 0
+                    voxel_size: 0.01
+                    is_editable: false
+                  - 
+                    class: RangeSensorVisualizerItem
+                    name: VLP-16
+                    is_checked: true
+                    translation: [ -1.41269, -0.5, 0.535443 ]
+                    rotation: [ 0.575454, -0.575454, -0.581125, 119.676 ]
+                    angle_unit: degree
+                    rendering_mode: Point
+                    point_size: 0
+                    voxel_size: 0.01
+                    is_editable: false
         - 
           id: 5
           name: "Labo1"
@@ -191,7 +203,7 @@ views:
     class: ImageView
     mounted: true
     state: 
-      ImageableItem: [ 4, "Kinect Camera" ]
+      ImageableItem: [ 4, "Kinect-Image" ]
   - 
     id: 1
     name: "Theta Image"

@@ -266,7 +266,10 @@ void SensorVisualizerItem::initializeClass(ExtensionManager* ext)
 
     im.addCreationPanel<SensorVisualizerItem>();
 
-    // For reading old project files
+    /**
+       Tha following item aliases are defined for reading old project files.
+       \todo Remove the aliases in newer versions.
+    */
     im.addAlias<SensorVisualizerItem>("SensorVisualizer", "Body");
     im.addAlias<ForceSensorVisualizerItem>("ForceSensorVisualizer", "Body");
     im.addAlias<PointCloudVisualizerItem>("PointCloudVisualizer", "Body");
