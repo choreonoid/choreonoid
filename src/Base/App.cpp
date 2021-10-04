@@ -97,8 +97,7 @@ App* instance_ = nullptr;
 Signal<void()> sigExecutionStarted_;
 Signal<void()> sigAboutToQuit_;
 
-string messagesForExitOnErrorMode;
-bool isExitOnErrorMode = false;
+bool isTestMode = false;
 
 void onCtrl_C_Input(int)
 {
@@ -144,7 +143,7 @@ public:
     void onMainWindowCloseEvent();
     void onSigOptionsParsed(boost::program_options::variables_map& v);
     void showInformationDialog();
-    void enableExitOnErrorMode();
+    void enableTestMode();
     virtual bool eventFilter(QObject* watched, QEvent* event);
 };
 
@@ -353,7 +352,7 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
 
     OptionManager& om = ext->optionManager();
     om.addOption("quit", "stop the application without showing the main window");
-    om.addOption("exit-on-error", "exit the application when an error occurs");
+    om.addOption("test-mode", "exit the application when an error occurs and put MessageView text to the standard output");
     om.addOption("list-qt-styles", "list all the available qt styles");
     om.sigOptionsParsed().connect(
         [&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
@@ -481,8 +480,8 @@ void App::Impl::onSigOptionsParsed(boost::program_options::variables_map& v)
 {
     if(v.count("quit")){
         doQuit = true;
-    } else if(v.count("exit-on-error")){
-        enableExitOnErrorMode();
+    } else if(v.count("test-mode")){
+        enableTestMode();
     } else if(v.count("list-qt-styles")){
         cout << QStyleFactory::keys().join(" ").toStdString() << endl;
         doQuit = true;
@@ -525,25 +524,26 @@ void App::exit(int returnCode)
 }
 
 
-void App::Impl::enableExitOnErrorMode()
+void App::Impl::enableTestMode()
 {
-    isExitOnErrorMode = true;
-    instance_->impl->messageView->sigMessage().connect(
+    isTestMode = true;
+    auto mv = instance_->impl->messageView;
+    cout << mv->messages();
+    cout.flush();
+    mv->sigMessage().connect(
         [this](const std::string& text){
-            messagesForExitOnErrorMode += text;
+            std::cout << text;
+            std::cout.flush();
         });
 }
 
 
-void App::checkErrorAndExitIfExitOnErrorMode()
+void App::checkErrorAndExitIfTestMode()
 {
-    if(isExitOnErrorMode){
+    if(isTestMode){
         auto impl = instance_->impl;
-        auto mv = impl->messageView;
-        if(mv->hasErrorMessages()){
+        if(impl->messageView->hasErrorMessages()){
             App::updateGui();
-            cerr << messagesForExitOnErrorMode;
-            cerr.flush();
             exit(1);
         }
     }

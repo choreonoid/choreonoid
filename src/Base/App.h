@@ -32,7 +32,7 @@ public:
 
     static void updateGui();
     static void exit(int returnCode = 0);
-    static void checkErrorAndExitIfExitOnErrorMode();
+    static void checkErrorAndExitIfTestMode();
     static SignalProxy<void()> sigExecutionStarted();
     static SignalProxy<void()> sigAboutToQuit();
         

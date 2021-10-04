@@ -237,7 +237,7 @@ void PythonPlugin::Impl::executeScriptFileOnStartup(const string& scriptFile)
         MessageView::instance()->putln(_("Failed to run the python script."), MessageView::Error);
         python::gil_scoped_acquire lock;
         MessageView::instance()->put(executor().exceptionText());
-        App::checkErrorAndExitIfExitOnErrorMode();
+        App::checkErrorAndExitIfTestMode();
     }
 }
 
