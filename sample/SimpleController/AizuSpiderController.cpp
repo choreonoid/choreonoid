@@ -71,17 +71,19 @@ bool AizuSpiderController::initialize(SimpleControllerIO* io)
     body = io->body();
     dt = io->timeStep();
 
+    mainActuationMode = Link::JointEffort;
+    for(auto opt : io->options()){
+        if(opt == "velocity"){
+            mainActuationMode = Link::JointVelocity;
+        } else if(opt == "position"){
+            mainActuationMode = Link::JointDisplacement;
+        }
+    }
     io->os() << "The actuation mode of " << io->controllerName() << " is ";
-    string option = io->optionString();
-    if(option == "velocity"){
-        mainActuationMode = Link::JointVelocity;
-        io->os() << "JOINT_VELOCITY";
-    } else if(option  == "position"){
-        mainActuationMode = Link::JointDisplacement;
-        io->os() << "JOINT_DISPLACEMENT";
-    } else {
-        mainActuationMode = Link::JointEffort;
-        io->os() << "JOINT_EFFORT";
+    switch(mainActuationMode){
+    case Link::JointEffort:       io->os() << "JointEffort";       break;
+    case Link::JointDisplacement: io->os() << "JointDisplacement"; break;
+    case Link::JointVelocity:     io->os() << "JointVelocity";     break;
     }
     io->os() << "." << endl;
 
