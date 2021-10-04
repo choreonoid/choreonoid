@@ -82,10 +82,7 @@ void exportPyViews(py::module m)
              py::arg("message"), py::arg("type") = MessageView::Normal)
         .def("flush", &MessageView::flush)
         .def("clear", &MessageView::clear)
-        .def("beginStdioRedirect", &MessageView::beginStdioRedirect)
-        .def("endStdioRedirect", &MessageView::endStdioRedirect)
         .def("hasErrorMessages", &MessageView::hasErrorMessages)
-
         ;
 
     m.def("showMessageBox", (void(*)(const std::string&)) &showMessageBox);

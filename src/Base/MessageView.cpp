@@ -51,11 +51,6 @@ public:
     bool doFlush;
 };
 
-struct StdioInfo {
-    streambuf* cout;
-    streambuf* cerr;
-};
-
 enum MvCommand { MV_PUT, MV_CLEAR };
 
 
@@ -137,7 +132,6 @@ public:
     iostreams::stream_buffer<TextSink> sbuf_flush;
     std::ostream os_flush;
         
-    std::stack<StdioInfo> stdios;
     bool exitEventLoopRequested;
     bool hasErrorMessages;
 
@@ -337,27 +331,13 @@ std::ostream& MessageView::cout(bool doFlush)
 
 void MessageView::beginStdioRedirect()
 {
-    /*
-    StdioInfo info;
-    info.cout = std::cout.rdbuf();
-    info.cerr = std::cerr.rdbuf();
-    impl->stdios.push(info);
-    std::cout.rdbuf(impl->os.rdbuf());
-    std::cerr.rdbuf(impl->os.rdbuf());
-    */
+
 }
 
 
 void MessageView::endStdioRedirect()
 {
-    /*
-    if(!impl->stdios.empty()){
-        StdioInfo& info = impl->stdios.top();
-        std::cout.rdbuf(info.cout);
-        std::cerr.rdbuf(info.cerr);
-        impl->stdios.pop();
-    }
-    */
+
 }
 
 
@@ -687,6 +667,12 @@ SignalProxy<void(const std::string& text)> MessageView::sigMessage()
 bool MessageView::hasErrorMessages() const
 {
     return impl->hasErrorMessages;
+}
+
+
+std::string MessageView::messages() const
+{
+    return impl->textEdit->toPlainText().toStdString();
 }
 
 

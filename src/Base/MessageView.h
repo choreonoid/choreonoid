@@ -74,12 +74,16 @@ public:
       
     std::ostream& cout(bool doFlush = true);
 
+    [[deprecated]]
     void beginStdioRedirect();
+    [[deprecated]]
     void endStdioRedirect();
 
     SignalProxy<void(const std::string& text)> sigMessage();
 
     bool hasErrorMessages() const;
+
+    std::string messages() const;
 
     class Impl;
 
