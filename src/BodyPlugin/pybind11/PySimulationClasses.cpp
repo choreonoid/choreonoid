@@ -50,6 +50,7 @@ void exportSimulationClasses(py::module m)
         .def("setDeviceStateOutputEnabled", &SimulatorItem::setDeviceStateOutputEnabled)
         .def("isAllLinkPositionOutputMode", &SimulatorItem::isAllLinkPositionOutputMode)
         .def("setAllLinkPositionOutputMode", &SimulatorItem::setAllLinkPositionOutputMode)
+        .def("setSceneViewEditModeBlockedDuringSimulation", &SimulatorItem::setSceneViewEditModeBlockedDuringSimulation)
         .def("setExternalForce", &SimulatorItem::setExternalForce,
              py::arg("bodyItem"), py::arg("link"), py::arg("point"), py::arg("f"), py::arg("time") = 0.0)
         .def("clearExternalForces", &SimulatorItem::clearExternalForces)

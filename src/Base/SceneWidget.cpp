@@ -239,6 +239,7 @@ public:
     bool isHighlightingEnabled;
     bool isModeSyncEnabled;
     ScopedConnection modeSyncConnection;
+    std::set<ReferencedPtr> editModeBlockRequesters;
 
     Selection viewpointOperationMode;
     bool isFirstPersonMode() const {
@@ -686,7 +687,7 @@ void SceneWidget::setModeSyncEnabled(bool on)
             impl->modeSyncConnection =
                 sigModeSyncRequest.connect(
                     [this](SceneWidget* requester){ impl->onModeSyncRequest(requester); });
-            impl->isEditMode = isEditModeInModeSync;
+            impl->setEditMode(isEditModeInModeSync, false);
             impl->isHighlightingEnabled = isHighlightingEnabledInModeSync;
         } else {
             impl->modeSyncConnection.disconnect();
@@ -1130,11 +1131,13 @@ void SceneWidget::setEditMode(bool on)
 void SceneWidget::Impl::setEditMode(bool on, bool doAdvertise)
 {
     if(on != isEditMode){
-        isEditMode = on;
-        resetCursor();
-        sharedIndicatorLabel->clear();
-        if(doAdvertise){
-            advertiseSceneModeChange(true);
+        if(!on || editModeBlockRequesters.empty()){
+            isEditMode = on;
+            resetCursor();
+            sharedIndicatorLabel->clear();
+            if(doAdvertise){
+                advertiseSceneModeChange(true);
+            }
         }
     }
 }
@@ -1149,6 +1152,19 @@ void SceneWidget::Impl::toggleEditMode()
 bool SceneWidget::isEditMode() const
 {
     return impl->isEditMode;
+}
+
+
+void SceneWidget::blockEditMode(Referenced* requester)
+{
+    impl->editModeBlockRequesters.insert(requester);
+    setEditMode(false);
+}
+
+
+void SceneWidget::unblockEditMode(Referenced* requester)
+{
+    impl->editModeBlockRequesters.erase(requester);
 }
 
 

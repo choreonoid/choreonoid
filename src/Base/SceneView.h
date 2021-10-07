@@ -44,6 +44,9 @@ public:
     
     static int customModeId(const std::string& modeName);
 
+    static void blockEditModeForAllViews(Referenced* requester);
+    static void unblockEditModeForAllViews(Referenced* requester);
+
     static SignalProxy<void(SceneView* view)> sigLastFocusViewChanged();
         
     SceneView();
@@ -54,7 +57,7 @@ public:
 
     bool setCustomMode(int mode);
     int customMode() const;
-        
+
 protected:
     virtual void onFocusChanged(bool on) override;
     virtual QWidget* indicatorOnInfoBar() override;

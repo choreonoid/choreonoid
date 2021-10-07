@@ -51,6 +51,9 @@ public:
     void setEditMode(bool on);
     bool isEditMode() const;
 
+    void blockEditMode(Referenced* requester);
+    void unblockEditMode(Referenced* requester);
+
     // Issue a unique ID from 2.
     // ID 0 is used as the non-custom mode ID.
     // ID 1 is used as the default (common) customo mode ID that can be used for any customo mode.

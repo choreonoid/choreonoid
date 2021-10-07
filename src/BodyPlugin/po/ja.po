@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-07 12:12+0900\n"
+"POT-Creation-Date: 2021-10-07 19:08+0900\n"
 "PO-Revision-Date: 2011-11-12 14:46+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Language =\n"
@@ -1219,37 +1219,37 @@ msgstr "シミュレーションの一時停止"
 msgid "Stop simulation"
 msgstr "シミュレーションの停止"
 
-#: SimulationBar.cpp:107
+#: SimulationBar.cpp:108
 msgid "Current state of {} has been set to the initial state."
 msgstr "{}の現在の状態を初期状態にセットしました．"
 
-#: SimulationBar.cpp:120
+#: SimulationBar.cpp:121
 msgid "Restore body initial positions"
 msgstr "ボディ初期位置の取り戻し"
 
-#: SimulationBar.cpp:140
+#: SimulationBar.cpp:141
 msgid "There is no simulator item."
 msgstr "シミュレータアイテムが存在しません．"
 
-#: SimulationBar.cpp:160
+#: SimulationBar.cpp:161
 msgid "{} cannot be processed because it is not related with a world."
 msgstr "{}はワールドと関連付けられていないため処理出来ません．"
 
-#: SimulationBar.cpp:167
+#: SimulationBar.cpp:168
 msgid ""
 "{} cannot be processed because another simulator in the same world is also "
 "selected."
 msgstr "{}は同じワールドに他のシミュレータも選択されているため処理出来ません．"
 
-#: SimulationBar.cpp:219
+#: SimulationBar.cpp:220
 msgid "Enable Confirmation Dialog"
 msgstr "確認ダイアログの有効化"
 
-#: SimulationBar.cpp:230
+#: SimulationBar.cpp:231
 msgid "Stop Simulation"
 msgstr "シミュレーションの停止"
 
-#: SimulationBar.cpp:231
+#: SimulationBar.cpp:232
 msgid "Do you really want to stop the simulation completely?"
 msgstr "本当にシミュレーションを完全に停止しますか？"
 
@@ -1705,7 +1705,7 @@ msgstr "マルチデバイス状態列アイテム"
 msgid "No delay mode"
 msgstr "無遅延モード"
 
-#: ControllerItem.cpp:131 SimulatorItem.cpp:2733
+#: ControllerItem.cpp:131 SimulatorItem.cpp:2748
 msgid "Controller options"
 msgstr "コントローラオプション"
 
@@ -1841,67 +1841,67 @@ msgstr "2Dモード"
 msgid "Old accel sensor mode"
 msgstr "旧加速センサモード"
 
-#: SimulatorItem.cpp:464
+#: SimulatorItem.cpp:466
 msgid "Simulation"
 msgstr "シミュレーション"
 
-#: SimulatorItem.cpp:465
+#: SimulatorItem.cpp:467
 msgid "Start"
 msgstr "開始"
 
-#: SimulatorItem.cpp:467
+#: SimulatorItem.cpp:469
 msgid "Pause"
 msgstr "停止"
 
-#: SimulatorItem.cpp:469
+#: SimulatorItem.cpp:471
 msgid "Resume"
 msgstr "再開"
 
-#: SimulatorItem.cpp:471
+#: SimulatorItem.cpp:473
 msgid "Finish"
 msgstr "終了"
 
-#: SimulatorItem.cpp:1225
+#: SimulatorItem.cpp:1227
 msgid "Timestep"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:1226
+#: SimulatorItem.cpp:1228
 msgid "Framerate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:1227
+#: SimulatorItem.cpp:1229
 msgid "Time bar"
 msgstr "タイムバー"
 
-#: SimulatorItem.cpp:1237
+#: SimulatorItem.cpp:1239
 msgid "full"
 msgstr "全て"
 
-#: SimulatorItem.cpp:1238
+#: SimulatorItem.cpp:1240
 msgid "tail"
 msgstr "末尾"
 
-#: SimulatorItem.cpp:1239
+#: SimulatorItem.cpp:1241
 msgid "off"
 msgstr "オフ"
 
-#: SimulatorItem.cpp:1242
+#: SimulatorItem.cpp:1244
 msgid "Unlimited"
 msgstr "無制限"
 
-#: SimulatorItem.cpp:1243
+#: SimulatorItem.cpp:1245
 msgid "Specified time"
 msgstr "指定時間"
 
-#: SimulatorItem.cpp:1244
+#: SimulatorItem.cpp:1246
 msgid "Time bar range"
 msgstr "タイムバー範囲"
 
-#: SimulatorItem.cpp:1623
+#: SimulatorItem.cpp:1626
 msgid "{0} is doing its simulation."
 msgstr "{0}はシミュレーションを実行中です。"
 
-#: SimulatorItem.cpp:1626
+#: SimulatorItem.cpp:1629
 msgid ""
 "{0} cannot start the simulation because {1} in the same world is doing its "
 "simulation."
@@ -1909,40 +1909,40 @@ msgstr ""
 "{0}と同じワールドの{1}がシミュレーション中であるため、{0}のシミュレーションを"
 "開始できません．"
 
-#: SimulatorItem.cpp:1639
+#: SimulatorItem.cpp:1642
 msgid "{} must be in a WorldItem to do simulation."
 msgstr "{}はシミュレーション対象のワールド内に配置されている必要があります．"
 
-#: SimulatorItem.cpp:1683
+#: SimulatorItem.cpp:1686
 msgid "The clone of {0} for the simulation cannot be created."
 msgstr "シミュレーション用の{0}のクローンを生成できません．"
 
-#: SimulatorItem.cpp:1729
+#: SimulatorItem.cpp:1732
 msgid "SubSimulatorItem \"{}\" has been detected."
 msgstr "サブシミュレータアイテム \"{}\" が検出されました．"
 
-#: SimulatorItem.cpp:1733
+#: SimulatorItem.cpp:1736
 msgid "The initialization of \"{}\" failed."
 msgstr "\"{}\" の初期化に失敗しました．"
 
-#: SimulatorItem.cpp:1737
+#: SimulatorItem.cpp:1740
 msgid "SubSimulatorItem \"{}\" is disabled."
 msgstr "サブシミュレータアイテム \"{}\" は無効化されています．"
 
-#: SimulatorItem.cpp:1759
+#: SimulatorItem.cpp:1762
 msgid "{0} for {1} failed to start."
 msgstr "{1}用の{0}を稼働できませんでした．"
 
-#: SimulatorItem.cpp:1766
+#: SimulatorItem.cpp:1769
 msgid "{} failed to start."
 msgstr "{}を稼働できませんでした．"
 
-#: SimulatorItem.cpp:1784
+#: SimulatorItem.cpp:1787
 msgid ""
 "The simulation cannot be started because all the controllers are inactive."
 msgstr "稼働可能なコントローラが無いためシミュレーションを開始できません．"
 
-#: SimulatorItem.cpp:1870
+#: SimulatorItem.cpp:1873
 msgid ""
 "WorldLogFileItem \"{0}\" has been detected. A simulation result is recoreded "
 "to \"{1}\"."
@@ -1950,69 +1950,73 @@ msgstr ""
 "ワールドログファイルアイテム \"{0}\" が検出されました．シミュレーション結果は"
 "\"{1}\" に記録されます．"
 
-#: SimulatorItem.cpp:1899
+#: SimulatorItem.cpp:1902
 msgid "Simulation by {} has started."
 msgstr "{}によるシミュレーションを開始しました．"
 
-#: SimulatorItem.cpp:1905
+#: SimulatorItem.cpp:1912
 msgid "{0} failed to initialize the simulation."
 msgstr ""
 
-#: SimulatorItem.cpp:2416
+#: SimulatorItem.cpp:2423
 msgid "Simulation by {0} has finished at {1} [s]."
 msgstr "{0}によるシミュレーションが{1}秒時点で終了しました．"
 
-#: SimulatorItem.cpp:2419
+#: SimulatorItem.cpp:2426
 msgid "Computation time is {0} [s], computation time / simulation time = {1}."
 msgstr "計算時間: {0} [s], 計算時間 / シミュレーション時間 = {1}"
 
-#: SimulatorItem.cpp:2704
+#: SimulatorItem.cpp:2719
 msgid "Temporal resolution type"
 msgstr "時間分解能タイプ"
 
-#: SimulatorItem.cpp:2708
+#: SimulatorItem.cpp:2723
 msgid "Time step"
 msgstr "タイムステップ"
 
-#: SimulatorItem.cpp:2711
+#: SimulatorItem.cpp:2726
 msgid "Frame rate"
 msgstr "フレームレート"
 
-#: SimulatorItem.cpp:2715
+#: SimulatorItem.cpp:2730
 msgid "Sync with realtime"
 msgstr "実時間同期"
 
-#: SimulatorItem.cpp:2717
+#: SimulatorItem.cpp:2732
 msgid "Time range"
 msgstr "時間範囲"
 
-#: SimulatorItem.cpp:2719
+#: SimulatorItem.cpp:2734
 msgid "Time length"
 msgstr "時間長"
 
-#: SimulatorItem.cpp:2721
+#: SimulatorItem.cpp:2736
 msgid "Active control period only"
 msgstr "能動制御期間のみ"
 
-#: SimulatorItem.cpp:2723
+#: SimulatorItem.cpp:2738
 msgid "Recording"
 msgstr "記録モード"
 
-#: SimulatorItem.cpp:2725
+#: SimulatorItem.cpp:2740
 msgid "All link position recording"
 msgstr "全リンク位置の記録"
 
-#: SimulatorItem.cpp:2727
+#: SimulatorItem.cpp:2742
 msgid "Device state output"
 msgstr "デバイス状態の記録"
 
-#: SimulatorItem.cpp:2729
+#: SimulatorItem.cpp:2744
 msgid "Record collision data"
 msgstr "干渉データの記録"
 
-#: SimulatorItem.cpp:2731
+#: SimulatorItem.cpp:2746
 msgid "Controller Threads"
 msgstr "コントローラスレッド"
+
+#: SimulatorItem.cpp:2750
+msgid "Block scene view edit mode"
+msgstr "シーンビュー編集モードをブロック"
 
 #: BodyPlugin.cpp:186
 msgid ""

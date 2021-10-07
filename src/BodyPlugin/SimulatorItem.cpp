@@ -33,6 +33,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/FloatingNumberString>
 #include <cnoid/SceneGraph>
+#include <cnoid/SceneView>
 #include <cnoid/CloneMap>
 #include <QThread>
 #include <QMutex>
@@ -282,6 +283,7 @@ public:
     bool needToUpdateSimBodyLists;
     bool hasActiveFreeBodies;
     bool recordCollisionData;
+    bool isSceneViewEditModeBlockedDuringSimulation;
 
     string controllerOptionString_;
 
@@ -1252,6 +1254,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self)
     isDoingSimulationLoop = false;
     isRealtimeSyncMode = true;
     recordCollisionData = false;
+    isSceneViewEditModeBlockedDuringSimulation = false;
 
     timeBar = TimeBar::instance();
 }
@@ -1901,7 +1904,11 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
         sigSimulationStarted();
     }
 
-    if(!result){
+    if(result){
+        if(isSceneViewEditModeBlockedDuringSimulation){
+            SceneView::blockEditModeForAllViews(self);
+        }
+    } else {
         mv->notify(format(_("{0} failed to initialize the simulation."), self->displayName()),
                    MessageView::Error);
         clearSimulation();
@@ -2422,6 +2429,8 @@ void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
 
     clearSimulation();
 
+    SceneView::unblockEditModeForAllViews(self);
+
     sigSimulationFinished(isForced);
 }
 
@@ -2693,6 +2702,12 @@ std::shared_ptr<CollisionLinkPairList> SimulatorItem::getCollisions()
 }
 
 
+void SimulatorItem::setSceneViewEditModeBlockedDuringSimulation(bool on)
+{
+    impl->isSceneViewEditModeBlockedDuringSimulation = on;
+}
+
+
 void SimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     impl->doPutProperties(putProperty);
@@ -2732,6 +2747,8 @@ void SimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                 changeProperty(useControllerThreadsProperty));
     putProperty(_("Controller options"), controllerOptionString_,
                 changeProperty(controllerOptionString_));
+    putProperty(_("Block scene view edit mode"), isSceneViewEditModeBlockedDuringSimulation,
+                [&](bool on){ self->setSceneViewEditModeBlockedDuringSimulation(on); return true; });
 }
 
 
@@ -2759,6 +2776,7 @@ bool SimulatorItem::Impl::store(Archive& archive)
     archive.write("controllerThreads", useControllerThreadsProperty);
     archive.write("recordCollisionData", recordCollisionData);
     archive.write("controllerOptions", controllerOptionString_, DOUBLE_QUOTED);
+    archive.write("scene_view_edit_mode_blocking", isSceneViewEditModeBlockedDuringSimulation);
     
     ListingPtr idseq = new Listing();
     idseq->setFlowStyle(true);
@@ -2828,6 +2846,7 @@ bool SimulatorItem::Impl::restore(const Archive& archive)
     archive.read("recordCollisionData", recordCollisionData);
     archive.read("controllerThreads", useControllerThreadsProperty);
     archive.read("controllerOptions", controllerOptionString_);
+    archive.read("scene_view_edit_mode_blocking", isSceneViewEditModeBlockedDuringSimulation);
 
     archive.addPostProcess([&](){ restoreTimeSyncItemEngines(archive); });
     
