@@ -74,6 +74,7 @@ SimulationBar::SimulationBar()
     stopButton = addButton(QIcon(":/Body/icon/stop-simulation.svg"), _("Stop simulation"));
     stopButton->sigClicked().connect([&](){ onStopSimulationClicked(); });
     stopButton->installEventFilter(this);
+    isStopConfirmationEnabled = true;
 }
 
 
