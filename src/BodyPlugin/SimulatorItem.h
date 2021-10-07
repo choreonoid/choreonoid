@@ -173,6 +173,8 @@ public:
     virtual void setAllLinkPositionOutputMode(bool on);
 
     const std::string& controllerOptionString() const;
+
+    void setSceneViewEditModeBlockedDuringSimulation(bool on);    
     
     /**
        For sub simulators

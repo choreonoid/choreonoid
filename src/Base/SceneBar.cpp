@@ -418,6 +418,13 @@ void SceneBar::Impl::onEditModeButtonToggled(bool on)
     sceneViewConnections.block();
     currentSceneWidget->setEditMode(on);
     sceneViewConnections.unblock();
+
+    // Return the button to the standard state when the edit mode is blocked.
+    if(on && !currentSceneWidget->isEditMode()){
+        editModeToggle->blockSignals(true);
+        editModeToggle->setChecked(false);
+        editModeToggle->blockSignals(false);
+    }
 }
 
 

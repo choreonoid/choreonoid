@@ -26,6 +26,7 @@ vector<SceneView*> instances_;
 Connection sigItemAddedConnection;
 Signal<void(SceneView* view)> sigLastFocusViewChanged_;
 SceneView* lastFocusView_ = nullptr;
+set<ReferencedPtr> editModeBlockRequesters;
 
 struct SceneInfo {
     Item* item;
@@ -129,6 +130,25 @@ void SceneView::unregisterCustomMode(int id)
 }
 
 
+void SceneView::blockEditModeForAllViews(Referenced* requester)
+{
+    editModeBlockRequesters.insert(requester);
+    for(auto& view : instances_){
+        view->sceneWidget()->blockEditMode(requester);
+    }
+}
+
+
+void SceneView::unblockEditModeForAllViews(Referenced* requester)
+{
+    if(editModeBlockRequesters.erase(requester) > 0){
+        for(auto& view : instances_){
+            view->sceneWidget()->unblockEditMode(requester);
+        }
+    }
+}
+
+
 SignalProxy<void(SceneView* view)> SceneView::sigLastFocusViewChanged()
 {
     return sigLastFocusViewChanged_;
@@ -137,6 +157,7 @@ SignalProxy<void(SceneView* view)> SceneView::sigLastFocusViewChanged()
 
 static void finalizeClass()
 {
+    editModeBlockRequesters.clear();
     sigItemAddedConnection.disconnect();
 }
 
@@ -161,6 +182,10 @@ SceneView::Impl::Impl(SceneView* self)
         [this](string title){ sceneWidget->setObjectName(title.c_str()); });
     unpickableScene = new SgUnpickableGroup;
     scene->addChild(unpickableScene);
+
+    for(auto& requester : editModeBlockRequesters){
+        sceneWidget->blockEditMode(requester);
+    }
 
     QVBoxLayout* vbox = new QVBoxLayout;
     vbox->addWidget(sceneWidget);
