@@ -1254,7 +1254,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self)
     isDoingSimulationLoop = false;
     isRealtimeSyncMode = true;
     recordCollisionData = false;
-    isSceneViewEditModeBlockedDuringSimulation = false;
+    isSceneViewEditModeBlockedDuringSimulation = true;
 
     timeBar = TimeBar::instance();
 }
