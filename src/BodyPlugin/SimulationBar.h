@@ -7,6 +7,8 @@
 
 #include <cnoid/ToolBar>
 #include <cnoid/Signal>
+#include <cnoid/MenuManager>
+#include <QMouseEvent>
 #include <functional>
 #include "exportdecl.h"
 
@@ -28,6 +30,11 @@ public:
 
     virtual ~SimulationBar();
 
+protected:
+    virtual bool eventFilter(QObject* obj, QEvent* event) override;
+    virtual bool storeState(Archive& archive) override;
+    virtual bool restoreState(const Archive& archive) override;
+
 private:
     SimulationBar();
 
@@ -35,12 +42,16 @@ private:
     void onRestoreInitialClicked();
     void forEachSimulator(std::function<void(SimulatorItem* simulator)> callback, bool doSelect = false);
     void startSimulation(SimulatorItem* simulator, bool doReset);
+    void onStopButtonRightClicked(QMouseEvent* event);
     void onStopSimulationClicked();
     void onPauseSimulationClicked();
     void pauseSimulation(SimulatorItem* simulator);
-    ToolButton* pauseToggle;
 
+    ToolButton* pauseToggle;
+    ToolButton* stopButton;
     Signal<void(SimulatorItem*)> sigSimulationAboutToStart_;
+    MenuManager menuManager;
+    bool isStopConfirmationEnabled;
 };
 
 }

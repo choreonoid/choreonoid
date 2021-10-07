@@ -10,6 +10,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/UnifiedEditHistory>
 #include <cnoid/OptionManager>
+#include <cnoid/Archive>
 #include <fmt/format.h>
 #include <functional>
 #include "gettext.h"
@@ -70,8 +71,9 @@ SimulationBar::SimulationBar()
     pauseToggle->sigClicked().connect([&](){ onPauseSimulationClicked(); });
     pauseToggle->setChecked(false);
 
-    addButton(QIcon(":/Body/icon/stop-simulation.svg"), _("Stop simulation"))->
-        sigClicked().connect([&](){ onStopSimulationClicked(); });
+    stopButton = addButton(QIcon(":/Body/icon/stop-simulation.svg"), _("Stop simulation"));
+    stopButton->sigClicked().connect([&](){ onStopSimulationClicked(); });
+    stopButton->installEventFilter(this);
 }
 
 
@@ -197,8 +199,40 @@ void SimulationBar::startSimulation(SimulatorItem* simulator, bool doReset)
 }
 
 
+bool SimulationBar::eventFilter(QObject* obj, QEvent* event)
+{
+    if(obj == stopButton && event->type() == QEvent::MouseButtonPress){
+        auto mouseEvent = static_cast<QMouseEvent*>(event);
+        if(mouseEvent->button() == Qt::RightButton){
+            onStopButtonRightClicked(mouseEvent);
+            return true;
+        }
+    }
+    // standard event processing
+    return QObject::eventFilter(obj, event);
+}
+
+
+void SimulationBar::onStopButtonRightClicked(QMouseEvent* event)
+{
+    menuManager.setNewPopupMenu(stopButton);
+    auto check = menuManager.addCheckItem(_("Enable Confirmation Dialog"));
+    check->setChecked(isStopConfirmationEnabled);
+    check->sigToggled().connect([this](bool on){ isStopConfirmationEnabled = on; });
+    menuManager.popupMenu()->popup(event->globalPos());
+}
+
+
 void SimulationBar::onStopSimulationClicked()
 {
+    if(isStopConfirmationEnabled){
+        if(!showConfirmDialog(
+               _("Stop Simulation"),
+               _("Do you really want to stop the simulation completely?"))){
+            return;
+        }
+    }
+    
     forEachSimulator(
         [&](SimulatorItem* simulator){ simulator->stopSimulation(true); });
 
@@ -234,4 +268,20 @@ void SimulationBar::pauseSimulation(SimulatorItem* simulator)
         }
         timeBar->startPlayback();
     }
+}
+
+
+bool SimulationBar::storeState(Archive& archive)
+{
+    if(isStopConfirmationEnabled){
+        archive.write("is_stop_confirmation_enabled", true);
+    }
+    return true;
+}
+
+
+bool SimulationBar::restoreState(const Archive& archive)
+{
+    archive.read("is_stop_confirmation_enabled", isStopConfirmationEnabled);
+    return true;
 }
