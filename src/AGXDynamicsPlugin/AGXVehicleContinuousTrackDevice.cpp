@@ -182,9 +182,11 @@ bool writeAGXVehicleContinuousTrackDevice
     info->write("max_angle_merge_condition", desc.maxAngleMergeCondition);
     info->write("material", desc.materialName);
 
-    if(auto shape = writer->sceneWriter()->writeScene(desc.nodeShape)){
-        shape->remove("type");
-        info->insert("nodeShape", shape);
+    if(desc.nodeShape){
+        if(auto shape = writer->sceneWriter()->writeScene(desc.nodeShape)){
+            shape->remove("type");
+            info->insert("nodeShape", shape);
+        }
     }
 
     info->writeAsListing("sprocket_names", desc.sprocketNames);
