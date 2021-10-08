@@ -28,6 +28,8 @@ public:
 
     void setParameterToSimulationManager();
 
+    bool setAirDefinitionFile(const std::string& filename);
+
 protected:
     virtual cnoid::Item* doDuplicate() const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
@@ -45,7 +47,6 @@ private:
     double  _viscosity;
     Vector3 _fluidVelocity;
     std::string _airDefinitionFileName;
-    std::string _airDefinitionFileNameP;
     bool _wallEffect;
     bool _groundEffect;
     bool _outputParam;

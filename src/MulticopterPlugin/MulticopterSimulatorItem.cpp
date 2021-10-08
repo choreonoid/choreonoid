@@ -156,33 +156,40 @@ MulticopterSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty.decimals(3).min(0.0);
     putProperty(MULTICOPTER_VELOCITY, str(_fluidVelocity), [&](const string& v){ return toVector3(v, _fluidVelocity); });
     putProperty(MULTICOPTER_AIRDEFINITION, moduleProperty,
-                [&](const string& name){ _airDefinitionFileName=name; return true; });
+                [&](const string& filename){ return setAirDefinitionFile(filename); });
 
     putProperty(MULTICOPTER_WALLEFFECT, _wallEffect, changeProperty(_wallEffect));
     putProperty(MULTICOPTER_GROUNDEFFECT, _groundEffect, changeProperty(_groundEffect));
     putProperty(MULTICOPTER_OUTPUT, _outputParam, changeProperty(_outputParam));
     putProperty(MULTICOPTER_TIMESTEP, _timeStep, changeProperty(_timeStep));
-
-    if( _airDefinitionFileName==_airDefinitionFileNameP)return;
-
-    SimulationManager* simMgr =SimulationManager::instance();
-    if(_airDefinitionFileName==""){
-        _airDefinitionFileNameP=_airDefinitionFileName="";
-        simMgr->setNewFluidEnvironment();
-        UtilityImpl::printMessage("Air Definition File reset.");
-        return;
-    }
-
-    FluidEnvironment* fluEnv = simMgr->fluidEnvironment();
-    bool ret = fluEnv->load(_airDefinitionFileName);
-    if( ret == false ){
-        _airDefinitionFileNameP=_airDefinitionFileName="";
-        simMgr->setNewFluidEnvironment();
-        return;
-    }
-    _airDefinitionFileNameP=_airDefinitionFileName;
-    UtilityImpl::printMessage("Air Definition File read successfully.");
 }
+
+bool
+MulticopterSimulatorItem::setAirDefinitionFile(const std::string& filename)
+{
+    bool result = false;
+    SimulationManager* simMgr = SimulationManager::instance();
+
+    if(filename.empty()){
+        simMgr->setNewFluidEnvironment();
+        UtilityImpl::printMessage("Air definition file was reset.");
+        result = true;
+    } else {
+        FluidEnvironment* fluEnv = simMgr->fluidEnvironment();
+        result = fluEnv->load(filename);
+        if(!result){
+            simMgr->setNewFluidEnvironment();
+            _airDefinitionFileName.clear();
+            UtilityImpl::printErrorMessage(
+                fmt::format("Air definition file \"{}\" is not valid", _airDefinitionFileName));
+        }
+    }
+    if(result){
+        _airDefinitionFileName = filename;
+        UtilityImpl::printMessage("Air definition file has been loaded successfully.");
+    }
+    return result;
+}    
 
 bool
 MulticopterSimulatorItem::store(Archive& archive)
@@ -215,18 +222,8 @@ MulticopterSimulatorItem::restore(const Archive& archive)
     archive.read(MULTICOPTER_OUTPUT, _outputParam);
     archive.read(MULTICOPTER_TIMESTEP, _timeStep);
 
-    if(_airDefinitionFileName=="")return true;
-
-    SimulationManager* simMgr =SimulationManager::instance();
-    FluidEnvironment* fluEnv = simMgr->fluidEnvironment();
-    bool ret = fluEnv->load(_airDefinitionFileName);
-    if( ret == false ){
-        UtilityImpl::printErrorMessage(
-            fmt::format(" Air Definition File( {} )is not valid", _airDefinitionFileName));
-        _airDefinitionFileNameP=_airDefinitionFileName="";
-        return true;
+    if(!_airDefinitionFileName.empty()){
+        setAirDefinitionFile(_airDefinitionFileName);
     }
-    _airDefinitionFileNameP=_airDefinitionFileName;
-    UtilityImpl::printMessage("Air Definition File read successfully.");
     return true;
 }
