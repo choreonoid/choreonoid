@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-02-20 18:15+0900\n"
+"POT-Creation-Date: 2021-10-15 17:48+0900\n"
 "PO-Revision-Date: 2011-11-15 21:47+0000\n"
 "Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
 "Language-Team: Japanese\n"
@@ -17,54 +17,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: AudioItem.cpp:32
-msgid "AudioItem"
-msgstr "音声アイテム"
-
-#: AudioItem.cpp:35
-msgid "Audio File"
-msgstr "音声ファイル"
-
-#: DSMediaView.cpp:110
-msgid "CoInitialize failed. MediaView is not available."
-msgstr ""
-"CoInitialize関数の実行に問題があるため，メディアビューを利用できません．"
-
-#: DSMediaView.cpp:115 DSMediaView.cpp:152 GSMediaView.cpp:131
-#: GSMediaView.cpp:152
-msgid "Media"
-msgstr "メディア"
-
-#: DSMediaView.cpp:119 GSMediaView.cpp:135
-msgid "Media View"
-msgstr "メディアビュー"
-
-#: DSMediaView.cpp:121 GSMediaView.cpp:137
-msgid "Keep Aspect Ratio"
-msgstr "アスペクト比を維持"
-
-#: DSMediaView.cpp:124 GSMediaView.cpp:140
-msgid "Keep Original Size"
-msgstr "元のサイズを維持"
-
-#: DSMediaView.cpp:454
-msgid "This media file is not able to seek!"
-msgstr "本メディアファイルはシーク出来ません！"
-
-#: DSMediaView.cpp:692
-msgid "Failed({}) to stop media clip!\n"
-msgstr "メディアクリップの停止が出来ません({})！\n"
-
 #: GSMediaView.cpp:120
 msgid "GStreamer cannot be initialized: "
 msgstr "GStreamerの初期化が出来ません: "
 
-#: GSMediaView.cpp:176
+#: GSMediaView.cpp:130 GSMediaView.cpp:151 DSMediaView.cpp:117
+#: DSMediaView.cpp:154
+msgid "Media"
+msgstr "メディア"
+
+#: GSMediaView.cpp:134 DSMediaView.cpp:121
+msgid "Media View"
+msgstr "メディアビュー"
+
+#: GSMediaView.cpp:136 DSMediaView.cpp:123
+msgid "Keep Aspect Ratio"
+msgstr "アスペクト比を維持"
+
+#: GSMediaView.cpp:139 DSMediaView.cpp:126
+msgid "Keep Original Size"
+msgstr "元のサイズを維持"
+
+#: GSMediaView.cpp:175
 msgid ""
 "Initialization of the GSMediaView failed. The playbin plugin is missing."
 msgstr "GSMediaViewの初期化に失敗しました．playbinプラグインがありません．"
 
-#: GSMediaView.cpp:201
+#: GSMediaView.cpp:200
 msgid ""
 "Initialization of the GSMediaView failed. The ximagesink could not be "
 "created."
@@ -90,48 +69,80 @@ msgstr "メディアファイル \"{}\" が存在しません．"
 msgid "offset"
 msgstr "オフセット"
 
-#: PulseAudioManager.cpp:170
+#: PulseAudioManager.cpp:171
 msgid "PulseAudio's main loop cannot be created."
 msgstr "PulseAudioのメインループを生成できません．"
 
-#: PulseAudioManager.cpp:179
+#: PulseAudioManager.cpp:181
 msgid "PulseAudio's context cannot be created."
 msgstr "PulseAudioのコンテキストを生成できません．"
 
-#: PulseAudioManager.cpp:193
+#: PulseAudioManager.cpp:197
 msgid "PulseAudio's context cannot be connected to the server."
 msgstr "PulseAudioのコンテキストをサーバに接続できません．"
 
-#: PulseAudioManager.cpp:208
+#: PulseAudioManager.cpp:217
 msgid "PulseAudio"
 msgstr ""
 
-#: PulseAudioManager.cpp:210
+#: PulseAudioManager.cpp:219
 msgid "Keep Stream Connections"
 msgstr "ストリーム接続を維持"
 
-#: PulseAudioManager.cpp:212
+#: PulseAudioManager.cpp:221
 msgid "Fully-Synchronized Audio Playback"
 msgstr "音声再生の完全同期"
 
-#: PulseAudioManager.cpp:511
+#: PulseAudioManager.cpp:338
+msgid "Audio item \"{0}\" cannot be initialized."
+msgstr "音声アイテム \"{0}\" を初期化できません．"
+
+#: PulseAudioManager.cpp:525
 msgid "PulseAudio's stream cannot be created."
 msgstr "PulseAudioのストリームを生成できません．"
 
-#: PulseAudioManager.cpp:629
-msgid "PulseAudio stream for {} cannot be written."
-msgstr "{}のPulseAudioストリームに書き込みできません．"
+#: PulseAudioManager.cpp:555
+msgid "PulseAudio stream cannot be connected: {0}"
+msgstr "PulseAudioのストリームを接続できません： {0}."
 
-#: PulseAudioManager.cpp:714
+#: PulseAudioManager.cpp:570
+msgid "PulseAudio stream cannot be ready."
+msgstr "PulseAudioのストリームを準備できません．"
+
+#: PulseAudioManager.cpp:644
+msgid "PulseAudio stream for {0} cannot be written."
+msgstr "{0}のPulseAudioストリームに書き込むことができません．"
+
+#: PulseAudioManager.cpp:730
 msgid "overflowed"
 msgstr "オーバフロー"
 
-#: PulseAudioManager.cpp:719
+#: PulseAudioManager.cpp:735
 msgid "underflowed"
 msgstr "アンダーフロー"
 
-#: PulseAudioManager.cpp:732
+#: PulseAudioManager.cpp:748
 msgid ""
 "PulseAudioManager: Buffer of {0} {1}. Its playback time is adjusted to {2}."
 msgstr "PulseAudioManager: {0}のバッファが{1}です．再生時刻を{2}に調整します．"
+
+#: AudioItem.cpp:33
+msgid "AudioItem"
+msgstr "音声アイテム"
+
+#: AudioItem.cpp:37
+msgid "Audio File"
+msgstr "音声ファイル"
+
+#: DSMediaView.cpp:112
+msgid "CoInitialize failed. MediaView is not available."
+msgstr "CoInitialize関数の実行に問題があるため，メディアビューを利用できません．"
+
+#: DSMediaView.cpp:451
+msgid "This media file is not able to seek!"
+msgstr "本メディアファイルはシーク出来ません！"
+
+#: DSMediaView.cpp:689
+msgid "Failed({}) to stop media clip!\n"
+msgstr "メディアクリップの停止が出来ません({})！\n"
 

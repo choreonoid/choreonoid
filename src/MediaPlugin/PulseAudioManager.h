@@ -12,7 +12,6 @@
 namespace cnoid {
 
 class ExtensionManager;
-class PulseAudioManagerImpl;
 
 class PulseAudioManager
 {
@@ -23,10 +22,12 @@ public:
 
     bool playAudioFile(const std::string& filename, double volumeRatio = -1.0);
 
+    class Impl;
+
 private:
     PulseAudioManager(ExtensionManager* ext);
-        
-    PulseAudioManagerImpl* impl;
+
+    Impl* impl;
 };
 
 }

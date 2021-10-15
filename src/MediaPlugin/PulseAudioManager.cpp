@@ -10,6 +10,7 @@
 #include <cnoid/MenuManager>
 #include <cnoid/RootItem>
 #include <cnoid/TimeBar>
+#include <cnoid/MessageView>
 #include <cnoid/LazyCaller>
 #include <cnoid/Archive>
 #include <pulse/pulseaudio.h>
@@ -32,7 +33,7 @@ PulseAudioManager* pulseAudioManager = nullptr;
 class Source
 {
 public:
-    PulseAudioManagerImpl* manager;
+    PulseAudioManager::Impl* manager;
     AudioItemPtr audioItem;
     pa_stream* stream;
     int currentFrame;
@@ -48,7 +49,7 @@ public:
     pa_operation* operation;
     LazyCaller stopLater;
         
-    Source(PulseAudioManagerImpl* manager, AudioItemPtr audioItem);
+    Source(PulseAudioManager::Impl* manager, AudioItemPtr audioItem);
     ~Source();
     bool waitForOperation();
     bool initialize();
@@ -81,10 +82,10 @@ namespace cnoid {
    \todo To support timeout, mainloop should be manually handled instead of using threaded-mainloop
    because thread-mainloop does not provide any API which accepts a tiemout parameter.
 */
-class PulseAudioManagerImpl
+class PulseAudioManager::Impl
 {
 public:
-    std::ostream& os;
+    MessageView* mv;
     TimeBar* timeBar;
         
     /**
@@ -105,8 +106,8 @@ public:
     SourceMap activeSources;
     Connection sigTimeChangedConnection;
         
-    PulseAudioManagerImpl(ExtensionManager* ext);
-    ~PulseAudioManagerImpl();
+    Impl(ExtensionManager* ext);
+    ~Impl();
     void finalize();
     void onItemCheckToggled(Item* item, bool isChecked);
     void onFullSyncPlaybackToggled();
@@ -133,7 +134,7 @@ namespace {
 
 void pa_context_state_callback(pa_context* context, void* userdata)
 {
-    PulseAudioManagerImpl* manager = (PulseAudioManagerImpl*)userdata;
+    PulseAudioManager::Impl* manager = (PulseAudioManager::Impl*)userdata;
     pa_threaded_mainloop_signal(manager->mainloop, 0);
 }
 }
@@ -156,27 +157,30 @@ PulseAudioManager* PulseAudioManager::instance()
 
 PulseAudioManager::PulseAudioManager(ExtensionManager* ext)
 {
-    impl = new PulseAudioManagerImpl(ext);
+    impl = new Impl(ext);
 }
 
 
-PulseAudioManagerImpl::PulseAudioManagerImpl(ExtensionManager* ext)
-    : os(mvout(false))
+PulseAudioManager::Impl::Impl(ExtensionManager* ext)
+    : mv(MessageView::instance())
 {
     context = nullptr;
     
     mainloop = pa_threaded_mainloop_new();
     if(!mainloop){
-        os << _("PulseAudio's main loop cannot be created.") << endl;
+        mv->putln(_("PulseAudio's main loop cannot be created."), MessageView::Error);
         return;
     }
     pa_threaded_mainloop_start(mainloop);
 
     pa_threaded_mainloop_lock(mainloop);
+    bool isMainLoopLocked = true;
 
     context = pa_context_new(pa_threaded_mainloop_get_api(mainloop), "Choreonoid");
     if(!context){
-        os << _("PulseAudio's context cannot be created.") << endl;
+        mv->putln(_("PulseAudio's context cannot be created."), MessageView::Error);
+        pa_threaded_mainloop_unlock(mainloop);
+        isMainLoopLocked = false;
         finalize();
         return;
     }
@@ -190,13 +194,18 @@ PulseAudioManagerImpl::PulseAudioManagerImpl(ExtensionManager* ext)
             break;
         }
         if(state == PA_CONTEXT_FAILED || state == PA_CONTEXT_TERMINATED){
-            os << _("PulseAudio's context cannot be connected to the server.") << endl;
+            mv->putln(_("PulseAudio's context cannot be connected to the server."), MessageView::Error);
+            pa_threaded_mainloop_unlock(mainloop);
+            isMainLoopLocked = false;
             finalize();
             break;
         }
         pa_threaded_mainloop_wait(mainloop);
     }
-    pa_threaded_mainloop_unlock(mainloop);
+    if(isMainLoopLocked){
+        pa_threaded_mainloop_unlock(mainloop);
+        isMainLoopLocked = false;
+    }
 
     if(!context){
         return;
@@ -250,14 +259,14 @@ PulseAudioManager::~PulseAudioManager()
 }
 
 
-PulseAudioManagerImpl::~PulseAudioManagerImpl()
+PulseAudioManager::Impl::~Impl()
 {
     activeSources.clear();
     finalize();
 }
 
 
-void PulseAudioManagerImpl::finalize()
+void PulseAudioManager::Impl::finalize()
 {
     if(context){
         pa_threaded_mainloop_lock(mainloop);
@@ -283,7 +292,7 @@ bool PulseAudioManager::playAudioFile(const std::string& filename, double volume
 }
 
 
-bool PulseAudioManagerImpl::playAudioFile(const std::string& filename, double volumeRatio)
+bool PulseAudioManager::Impl::playAudioFile(const std::string& filename, double volumeRatio)
 {
     AudioItemPtr audioItem = new AudioItem;
     if(audioItem->load(filename)){
@@ -307,13 +316,13 @@ bool PulseAudioManagerImpl::playAudioFile(const std::string& filename, double vo
 }
 
 
-void PulseAudioManagerImpl::onAudioFilePlaybackStopped(AudioItemPtr audioItem)
+void PulseAudioManager::Impl::onAudioFilePlaybackStopped(AudioItemPtr audioItem)
 {
     activeSources.erase(audioItem);
 }
 
 
-void PulseAudioManagerImpl::onItemCheckToggled(Item* item, bool isChecked)
+void PulseAudioManager::Impl::onItemCheckToggled(Item* item, bool isChecked)
 {
     if(AudioItem* audioItem = dynamic_cast<AudioItem*>(item)){
         if(isChecked){
@@ -325,7 +334,9 @@ void PulseAudioManagerImpl::onItemCheckToggled(Item* item, bool isChecked)
                     source->startPlayback();
                 }
             } else {
-                os << audioItem->displayName() << " cannot be initialized." << endl;
+                mv->putln(
+                    format(_("Audio item \"{0}\" cannot be initialized."), audioItem->displayName()),
+                    MessageView::Error);
             }
         } else {
             activeSources.erase(audioItem);
@@ -334,13 +345,13 @@ void PulseAudioManagerImpl::onItemCheckToggled(Item* item, bool isChecked)
 }
 
 
-void PulseAudioManagerImpl::onFullSyncPlaybackToggled()
+void PulseAudioManager::Impl::onFullSyncPlaybackToggled()
 {
 
 }
 
 
-bool PulseAudioManagerImpl::onPlaybackInitialized(double time)
+bool PulseAudioManager::Impl::onPlaybackInitialized(double time)
 {
     if(!sigTimeChangedConnection.connected()){
         for(SourceMap::iterator p = activeSources.begin(); p != activeSources.end(); ++p){
@@ -354,7 +365,7 @@ bool PulseAudioManagerImpl::onPlaybackInitialized(double time)
 }
 
 
-void PulseAudioManagerImpl::onPlaybackStarted(double time)
+void PulseAudioManager::Impl::onPlaybackStarted(double time)
 {
     for(SourceMap::iterator p = activeSources.begin(); p != activeSources.end(); ++p){
         SourcePtr& source = p->second;
@@ -363,7 +374,7 @@ void PulseAudioManagerImpl::onPlaybackStarted(double time)
 }
 
 
-void PulseAudioManagerImpl::onPlaybackStopped(double time)
+void PulseAudioManager::Impl::onPlaybackStopped(double time)
 {
     for(SourceMap::iterator p = activeSources.begin(); p != activeSources.end(); ++p){
         SourcePtr& source = p->second;
@@ -373,7 +384,7 @@ void PulseAudioManagerImpl::onPlaybackStopped(double time)
 }
 
 
-bool PulseAudioManagerImpl::onTimeChanged(double time)
+bool PulseAudioManager::Impl::onTimeChanged(double time)
 {
     bool isActive = false;
 
@@ -389,14 +400,14 @@ bool PulseAudioManagerImpl::onTimeChanged(double time)
 }
 
 
-bool PulseAudioManagerImpl::store(Archive& archive)
+bool PulseAudioManager::Impl::store(Archive& archive)
 {
     archive.write("keepStreamConnection", connectionKeepCheck->isChecked());
     return true;
 }
 
 
-void PulseAudioManagerImpl::restore(const Archive& archive)
+void PulseAudioManager::Impl::restore(const Archive& archive)
 {
     connectionKeepCheck->setChecked(archive.get("keepStreamConnection", connectionKeepCheck->isChecked()));
 }
@@ -404,7 +415,7 @@ void PulseAudioManagerImpl::restore(const Archive& archive)
 
 namespace {
 
-Source::Source(PulseAudioManagerImpl* manager, AudioItemPtr audioItem)
+Source::Source(PulseAudioManager::Impl* manager, AudioItemPtr audioItem)
     : manager(manager),
       audioItem(audioItem),
       stopLater([&](){ stop(); })
@@ -511,7 +522,7 @@ bool Source::connectStream()
     if(!stream){
         stream = pa_stream_new(manager->context, audioItem->name().c_str(), &sampleSpec, NULL);
         if(!stream){
-            manager->os << _("PulseAudio's stream cannot be created.") << endl;
+            manager->mv->putln(_("PulseAudio's stream cannot be created."), MessageView::Error);
             return false;
         }
         pa_stream_set_state_callback(stream, pa_stream_state_callback, (void*)this);
@@ -540,8 +551,9 @@ bool Source::connectStream()
     
     int result = pa_stream_connect_playback(stream, NULL, pattr, flags, NULL, NULL);
     if(result < 0){
-        manager->os << "PulseAudio stream cannot be connected: "
-                    << pa_strerror(result) << endl;
+        manager->mv->putln(
+            format(_("PulseAudio stream cannot be connected: {0}"), pa_strerror(result)),
+            MessageView::Error);
     } else {
 
         // wait for ready
@@ -555,7 +567,7 @@ bool Source::connectStream()
         }
 
         if(state != PA_STREAM_READY){
-            manager->os << "PulseAudio stream cannot be ready." << endl;
+            manager->mv->putln(_("PulseAudio stream cannot be ready."), MessageView::Error);
             result = -1;
         } else {
 
@@ -628,8 +640,9 @@ void Source::initializePlayback(double time)
         size_t writableSize = pa_stream_writable_size(stream);
         
         if(writableSize <= 0){
-            manager->os <<
-                format(_("PulseAudio stream for {} cannot be written."), audioItem->displayName()) << endl;
+            manager->mv->putln(
+                format(_("PulseAudio stream for {0} cannot be written."), audioItem->displayName()),
+                MessageView::Error);
             disconnectStream();
             
         } else {
@@ -731,9 +744,10 @@ void Source::adjustTime(const char* reason)
     doAdjustTime = true;
     pa_threaded_mainloop_unlock(manager->mainloop);
 
-    manager->os <<
+    manager->mv->putln(
         format(_("PulseAudioManager: Buffer of {0} {1}. Its playback time is adjusted to {2}."),
-               audioItem->displayName(), reason, time) << endl;
+               audioItem->displayName(), reason, time),
+        MessageView::Error);
 }
 
 
