@@ -67,6 +67,7 @@
 #include <cnoid/ValueTree>
 #include <cnoid/CnoidUtil>
 #include <cnoid/FilePathVariableProcessor>
+#include <cnoid/UTF8>
 #include <fmt/format.h>
 #include <Eigen/Core>
 #include <QApplication>
@@ -528,11 +529,11 @@ void App::Impl::enableTestMode()
 {
     isTestMode = true;
     auto mv = instance_->impl->messageView;
-    cout << mv->messages();
+    cout << fromUTF8(mv->messages());
     cout.flush();
     mv->sigMessage().connect(
         [this](const std::string& text){
-            std::cout << text;
+            std::cout << fromUTF8(text);
             std::cout.flush();
         });
 }
