@@ -17,7 +17,16 @@ macro(choreonoid_find_qt_package)
     endif()
     cmake_policy(POP)
   elseif(MSVC)
-    file(GLOB qt_hint_dirs "c:/Qt/5.??.?/msvc20??_??/lib/cmake" "d:/Qt/5.??.?/msvc20??_??/lib/cmake")
+    set(qt_msvc_hint "msvc20??_64")
+    if(MSVC_VERSION GREATER_EQUAL 1910 AND MSVC_VERSION LESS 1920) # VC++2017
+      # Qt provides the msvc 2015 binary for VC++2017
+      set(qt_msvc_hint "msvc2015_64") 
+    elseif(MSVC_VERSION LESS 1930) # VC++2019
+      set(qt_msvc_hint "msvc2019_64") 
+    #elseif(MSVC_VERSION LESS 1940) # VC++2022
+    #  set(qt_msvc_hint "msvc2022_64") 
+    endif()
+    file(GLOB qt_hint_dirs "c:/Qt/5.??.?/${qt_msvc_hint}/lib/cmake" "d:/Qt/5.??.?/${qt_msvc_hint}/lib/cmake")
     list(SORT qt_hint_dirs)
     list(REVERSE qt_hint_dirs)
   endif()
