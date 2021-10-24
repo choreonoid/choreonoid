@@ -2,7 +2,7 @@
 
 # set(CMAKE_BUILD_TYPE Debug)
 
-option(BUILD_POSE_SEQ_PLUGIN "Building PoseSeqPlugin" ON)
+option(BUILD_POSE_SEQ_PLUGIN "Building PoseSeqPlugin" OFF)
 
 if(NOT BUILD_POSE_SEQ_PLUGIN)
   return()

@@ -3,7 +3,7 @@
 
 #set(CMAKE_BUILD_TYPE Debug)
 
-option(BUILD_BALANCER_PLUGIN "Building BalancerPlugin" ON)
+option(BUILD_BALANCER_PLUGIN "Building BalancerPlugin" OFF)
 if(NOT BUILD_BALANCER_PLUGIN)
   return()
 elseif(NOT BUILD_POSE_SEQ_PLUGIN)
