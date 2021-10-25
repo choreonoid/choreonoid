@@ -1,439 +1,320 @@
-# Japanese translations for PACKAGE package.
-# Copyright (C) 2011 THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# nakaoka <s.nakaoka@aist.go.jp>, 2011.
+# Japanese translations for Choreonoid package.
+# This file is distributed under the same license as the Choreonoid package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-20 12:09+0900\n"
-"PO-Revision-Date: 2011-11-13 23:55+0000\n"
-"Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
-"Language-Team: Japanese\n"
+"POT-Creation-Date: 2021-10-25 12:41+0900\n"
+"PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: FcpFileLoader.cpp:232
-msgid "Choose poseset file"
-msgstr "ポーズ定義ファイルの選択"
-
-#: FcpFileLoader.cpp:235
-msgid "Open"
-msgstr "オープン"
-
-#: FcpFileLoader.cpp:236
-msgid "Cancel"
-msgstr "キャンセル"
-
-#: FcpFileLoader.cpp:240
-msgid "FaceController poseset files (*.poseset)"
-msgstr "FaceControllerのポーズ定義ファイル (*.poseset)"
-
-#: FcpFileLoader.cpp:241 FcpFileLoader.cpp:253
-msgid "Any files (*)"
-msgstr "全てのファイル (*)"
-
-#: FcpFileLoader.cpp:248
-msgid "Choose poseseq files"
-msgstr "ポーズ列ファイルの選択"
-
-#: FcpFileLoader.cpp:252
-msgid "FaceController poseseq files (*.poseseq)"
-msgstr "FaceControllerのポーズ列ファイル (*.poseseq)"
-
-#: FcpFileLoader.cpp:286
-msgid "FaceController Plugin Pattern Files"
-msgstr "FaceControllerプラグインパターンファイル"
-
-#: PoseRollView.cpp:216
-msgid "Pose Roll"
-msgstr "ポーズロール"
-
-#: PoseRollView.cpp:296
-msgid "Select specified key poses"
-msgstr "特定のキーポーズの選択"
-
-#: PoseRollView.cpp:298 PoseSeqViewBase.cpp:284
-msgid "Adjust step positions"
-msgstr "ステップ位置の調整"
-
-#: PoseRollView.cpp:300
-msgid "Adjust waist positions of selected key poses"
-msgstr "選択キーポーズの腰位置の調整"
-
-#: PoseRollView.cpp:302
-msgid "Rotate yaw orientations"
-msgstr "Yaw軸向きの変更"
-
-#: PoseRollView.cpp:304
-msgid "Update key poses with balanced trajectories"
-msgstr "バランス補正された軌道でキーポーズを更新"
-
-#: PoseRollView.cpp:306
-msgid "Flip poses against the x-z plane"
-msgstr "x-z平面に対して反転"
-
-#: PoseRollView.cpp:309
-msgid "Show lip-sync elements"
-msgstr "リップシンク要素を表示"
-
-#: PoseRollView.cpp:313
-msgid "Menu"
-msgstr "メニュー"
-
-#: PoseRollView.cpp:343
-msgid "Sync"
-msgstr "時刻同期"
-
-#: PoseRollView.cpp:345 PoseRollView.cpp:374
-msgid "T:"
-msgstr ""
-
-#: PoseRollView.cpp:346
-msgid "Current time"
-msgstr "現在時刻"
-
-#: PoseRollView.cpp:356
-msgid "Time length for editing"
-msgstr "編集時間長"
-
-#: PoseRollView.cpp:368 PoseRollView.cpp:385
-msgid "TT:"
-msgstr ""
-
-#: PoseRollView.cpp:375
-msgid "Time of the selected pose"
-msgstr "選択ポーズの時刻"
-
-#: PoseRollView.cpp:386
-msgid "Transition time of the selected pose"
-msgstr "選択ポーズへの遷移時間"
-
-#: PoseRollView.cpp:398
-msgid "Grid:"
-msgstr "グリッド:"
-
-#: BodyMotionGenerationBar.cpp:86
 msgid "Body Motion Generation Setup"
 msgstr "ボディモーション生成の設定"
 
-#: BodyMotionGenerationBar.cpp:91
 msgid "Time scale"
 msgstr "タイムスケール"
 
-#: BodyMotionGenerationBar.cpp:99
 msgid "Pre-initial"
 msgstr "開始前余白時間"
 
-#: BodyMotionGenerationBar.cpp:105 BodyMotionGenerationBar.cpp:114
-#: BodyMotionGenerationBar.cpp:187 BodyMotionGenerationBar.cpp:202
-#: BodyMotionGenerationBar.cpp:211 BodyMotionGenerationBar.cpp:221
-#: PoseSeqViewBase.cpp:200 PoseSeqViewBase.cpp:207
 msgid "[s]"
 msgstr ""
 
-#: BodyMotionGenerationBar.cpp:108
 msgid "Post-final"
 msgstr "終了後余白時間"
 
-#: BodyMotionGenerationBar.cpp:118
 msgid "Time bar's range only"
 msgstr "タイムバーの範囲に適用"
 
-#: BodyMotionGenerationBar.cpp:122
 msgid "Put all link positions"
 msgstr "全リンク位置姿勢を出力"
 
-#: BodyMotionGenerationBar.cpp:128
 msgid "Make a new body item"
 msgstr "新しいボディアイテムの生成"
 
-#: BodyMotionGenerationBar.cpp:134
 msgid "Stealthy Step Mode"
 msgstr "忍び足モード"
 
-#: BodyMotionGenerationBar.cpp:135
-msgid ""
-"This mode makes foot lifting / landing smoother to increase the stability"
+msgid "This mode makes foot lifting / landing smoother to increase the stability"
 msgstr "本モードでは足の離反・接地をスムーズにして安定性を向上させます"
 
-#: BodyMotionGenerationBar.cpp:139
 msgid "Height ratio thresh"
 msgstr "高さ割合の閾値"
 
-#: BodyMotionGenerationBar.cpp:149
 msgid "Flat Lifting Height"
 msgstr "垂直離反終了高度"
 
-#: BodyMotionGenerationBar.cpp:156 BodyMotionGenerationBar.cpp:166
-#: BodyMotionGenerationBar.cpp:177 BodyMotionGenerationBar.cpp:230
 msgid "[m]"
 msgstr ""
 
-#: BodyMotionGenerationBar.cpp:159
 msgid "Flat Landing Height"
 msgstr "垂直接地開始高度"
 
-#: BodyMotionGenerationBar.cpp:170
 msgid "Impact reduction height"
 msgstr "衝撃緩和軌道開始高度"
 
-#: BodyMotionGenerationBar.cpp:180
 msgid "Impact reduction time"
 msgstr "衝撃緩和軌道時間長"
 
-#: BodyMotionGenerationBar.cpp:191
 msgid "Auto ZMP Mode"
 msgstr "ZMPの自動調整"
 
-#: BodyMotionGenerationBar.cpp:192
 msgid "Automatically insert ZMP and foot key poses for stable motion"
 msgstr "安定化のためのZMP・足先キーポーズの追加を自動で行います"
 
-#: BodyMotionGenerationBar.cpp:196
 msgid "Min. transtion time"
 msgstr "最短遷移時間"
 
-#: BodyMotionGenerationBar.cpp:205
 msgid "Centering time thresh"
 msgstr "センタリング時間閾値"
 
-#: BodyMotionGenerationBar.cpp:215
 msgid "Time margin before lifting"
 msgstr "足先離反前時間マージン"
 
-#: BodyMotionGenerationBar.cpp:224
 msgid "Max distance from center"
 msgstr "中心からの最大距離"
 
-#: BodyMotionGenerationBar.cpp:236
 msgid "Mix lip-sync motion"
 msgstr "リップシンクの合成"
 
-#: BodyMotionGenerationBar.cpp:246
 msgid "&Ok"
 msgstr "了解(&O)"
 
-#: BodyMotionGenerationBar.cpp:314
 msgid "Pose Seq Processing"
 msgstr "ポーズ列処理"
 
-#: BodyMotionGenerationBar.cpp:316
 msgid "Automatic Interpolation Update"
 msgstr "補完自動更新"
 
-#: BodyMotionGenerationBar.cpp:319
 msgid "Automatic Generation for a New Body"
 msgstr "新しいボディへの自動生成"
 
-#: BodyMotionGenerationBar.cpp:337
 msgid "BodyMotionGenerationBar"
 msgstr "ボディ動作生成バー"
 
-#: BodyMotionGenerationBar.cpp:347
 msgid "Generate body motions"
 msgstr "ボディモーションの生成"
 
-#: BodyMotionGenerationBar.cpp:368
 msgid "Automatic Balance Adjustment Mode"
 msgstr "自動更新モード"
 
-#: BodyMotionGenerationBar.cpp:371
 msgid "Enable the balancer"
 msgstr "バランス補正の有効化"
 
-#: PoseSeqViewBase.cpp:78
-msgid "Link Position Adjustment"
-msgstr "リンク位置調整"
+msgid "Choose poseset file"
+msgstr "ポーズ定義ファイルの選択"
 
-#: PoseSeqViewBase.cpp:85
-msgid "Absolute"
-msgstr "直指定"
+msgid "Open"
+msgstr "オープン"
 
-#: PoseSeqViewBase.cpp:87
-msgid "Relative"
-msgstr "相対指定"
+msgid "Cancel"
+msgstr "キャンセル"
 
-#: PoseSeqViewBase.cpp:132
-msgid "Yaw Orientation Rotation"
-msgstr "Yaw軸回転"
+msgid "FaceController poseset files (*.poseset)"
+msgstr "FaceControllerのポーズ定義ファイル (*.poseset)"
 
-#: PoseSeqViewBase.cpp:138
-msgid "Center:"
-msgstr "中心:"
+msgid "Any files (*)"
+msgstr "全てのファイル (*)"
 
-#: PoseSeqViewBase.cpp:152
-msgid "Angle"
-msgstr "角度"
+msgid "Choose poseseq files"
+msgstr "ポーズ列ファイルの選択"
 
-#: PoseSeqViewBase.cpp:157
-msgid "[deg]"
-msgstr "[deg]"
+msgid "FaceController poseseq files (*.poseseq)"
+msgstr "FaceControllerのポーズ列ファイル (*.poseseq)"
 
-#: PoseSeqViewBase.cpp:188
-msgid "Select Specified Key Poses"
-msgstr "特定のキーポーズを選択"
+msgid "FaceController Plugin Pattern Files"
+msgstr "FaceControllerプラグインパターンファイル"
 
-#: PoseSeqViewBase.cpp:195
-msgid "Start"
-msgstr "最小時刻"
+msgid "Pose Roll"
+msgstr "ポーズロール"
 
-#: PoseSeqViewBase.cpp:202
-msgid "End"
-msgstr "最大時刻"
+msgid "Select specified key poses"
+msgstr "特定のキーポーズの選択"
 
-#: PoseSeqViewBase.cpp:212
-msgid "all parts"
-msgstr "全部位"
+msgid "Adjust step positions"
+msgstr "ステップ位置の調整"
 
-#: PoseSeqViewBase.cpp:214
-msgid "having selected parts"
-msgstr "選択部位を有する"
+msgid "Adjust waist positions of selected key poses"
+msgstr "選択キーポーズの腰位置の調整"
 
-#: PoseSeqViewBase.cpp:217
-msgid "just selected parts"
-msgstr "選択部位に一致"
+msgid "Rotate yaw orientations"
+msgstr "Yaw軸向きの変更"
 
-#: PoseSeqViewBase.cpp:280
-msgid "Select all poses after current position"
-msgstr "現在時刻後の全ポーズを選択"
+msgid "Update key poses with balanced trajectories"
+msgstr "バランス補正された軌道でキーポーズを更新"
 
-#: PoseSeqViewBase.cpp:282
-msgid "Select all poses before current position"
-msgstr "現在時刻前の全ポーズを選択"
+msgid "Flip poses against the x-z plane"
+msgstr "x-z平面に対して反転"
 
-#: PoseSeqViewBase.cpp:286
-msgid "Count selected key poses"
-msgstr "選択ポーズの数"
+msgid "Show lip-sync elements"
+msgstr "リップシンク要素を表示"
 
-#: PoseSeqViewBase.cpp:342
-msgid " Insert "
-msgstr "挿入"
+msgid "Menu"
+msgstr "メニュー"
 
-#: PoseSeqViewBase.cpp:344
-msgid "Insert a new pose at the current time position"
-msgstr "新しいポーズを現在時刻に挿入する"
-
-#: PoseSeqViewBase.cpp:348
-msgid "Transition time of a newly inserted pose"
-msgstr "新たに挿入されるポーズの遷移時間"
-
-#: PoseSeqViewBase.cpp:356
-msgid "Update"
-msgstr "更新"
-
-#: PoseSeqViewBase.cpp:358
-msgid "Update the selected pose with the current robot state"
-msgstr "選択ポーズをロボットの現在姿勢で更新"
-
-#: PoseSeqViewBase.cpp:362
-msgid "All"
-msgstr "全部位"
-
-#: PoseSeqViewBase.cpp:364
-msgid "The update button updates all the element of the selected pose."
-msgstr "選択ポーズの全ての部位を更新"
-
-#: PoseSeqViewBase.cpp:367
-msgid "Auto"
-msgstr "自動更新"
-
-#: PoseSeqViewBase.cpp:368
-msgid ""
-"The selected pose is automatically updated when the robot state changes."
-msgstr "ロボットの状態変化に応じて自動で選択姿勢を更新"
-
-#: PoseSeqViewBase.cpp:371
-msgid "Delete"
-msgstr "削除"
-
-#: PoseSeqViewBase.cpp:376
-msgid "Time sync"
+msgid "Sync"
 msgstr "時刻同期"
 
-#: PoseSeqViewBase.cpp:413
-msgid "Select key poses having the selected links"
-msgstr "選択リンクを含むポーズを選択"
-
-#: PoseSeqViewBase.cpp:415
-msgid "Select key poses just having the selected links"
-msgstr "選択リンクに一致するポーズを選択"
-
-#: PoseSeqViewBase.cpp:417
-msgid "Remove the selected parts from the selected poses"
-msgstr "選択ポーズから選択部位を削除"
-
-#: PoseSeqViewBase.cpp:1376
-msgid "Original key poses have been updated to be balanced ones."
-msgstr "元のポーズをバランス補正されたものに更新する．"
-
-#: PoseSeqViewBase.cpp:1379
-msgid "Operation failed ! Key poses cannot be updated."
-msgstr "処理失敗！ポーズが更新できません．"
-
-#: PoseSeqViewBase.cpp:1391
-msgid "flipping all the poses against x-z plane ..."
-msgstr "全姿勢をx-z平面に対して反転…"
-
-#: PoseSeqViewBase.cpp:1401
-msgid "The number of selected key poses is {}"
-msgstr "選択ポーズの数は{}です．"
-
-#: PoseSeqViewBase.cpp:1452
-msgid "Selected key poses have been updated."
-msgstr "選択ポーズは更新されました．"
-
-#: PoseSeqViewBase.cpp:1506
-msgid "Please check parts needed for making a desired pose."
-msgstr "望みの姿勢をつくるのに必要な部位を選択してください．"
-
-#: PoseSeqItem.cpp:42
-msgid ""
-"Warning: the original target body {0} of \"{1}\" isdifferent from the "
-"current target {2}."
+msgid "T:"
 msgstr ""
-"警告: 元々対象としていた \"{1}\" の{0}は現在対象としている{2}とは異なります．"
 
-#: PoseSeqItem.cpp:51
+msgid "Current time"
+msgstr "現在時刻"
+
+msgid "Time length for editing"
+msgstr "編集時間長"
+
+msgid "TT:"
+msgstr ""
+
+msgid "Time of the selected pose"
+msgstr "選択ポーズの時刻"
+
+msgid "Transition time of the selected pose"
+msgstr "選択ポーズへの遷移時間"
+
+msgid "Grid:"
+msgstr "グリッド:"
+
+msgid "Warning: the original target body {0} of \"{1}\" isdifferent from the current target {2}."
+msgstr "警告: 元々対象としていた \"{1}\" の{0}は現在対象としている{2}とは異なります．"
+
 msgid "PoseSeqItem must be loaded as a child of a BodyItem"
-msgstr ""
-"PoseSeqアイテムはBodyアイテムの小アイテムとして読み込まなければなりません．"
+msgstr "PoseSeqアイテムはBodyアイテムの小アイテムとして読み込まなければなりません．"
 
-#: PoseSeqItem.cpp:74
 msgid "PoseSeqItem"
 msgstr "ポーズ列アイテム"
 
-#: PoseSeqItem.cpp:79
 msgid "Pose Sequence"
 msgstr "ポーズ列"
 
-#: PoseSeqItem.cpp:82
 msgid "Talk Plugin File"
 msgstr "Talk Plugin ファイル"
 
-#: PoseSeqItem.cpp:88
 msgid "Seq File for the Face Controller"
 msgstr "Face Controller の Seq ファイル"
 
-#: PoseSeqItem.cpp:95
 msgid "Generate"
 msgstr "生成"
 
-#: PoseSeqItem.cpp:236
-msgid ""
-"Pose seq \"{0}\" has been converted. Its target has been changed from {1} to "
-"{2}"
-msgstr ""
-"{1}を対象としていたポーズ列 \"{0}\" は{2}を対象とするように変換されました"
+msgid "Pose seq \"{0}\" has been converted. Its target has been changed from {1} to {2}"
+msgstr "{1}を対象としていたポーズ列 \"{0}\" は{2}を対象とするように変換されました"
 
-#: PoseSeqItem.cpp:605
 msgid "Target body"
 msgstr "対象ボディ"
 
-#: PoseSeqItem.cpp:606
 msgid "Bar length"
 msgstr ""
+
+msgid "Link Position Adjustment"
+msgstr "リンク位置調整"
+
+msgid "Absolute"
+msgstr "直指定"
+
+msgid "Relative"
+msgstr "相対指定"
+
+msgid "Yaw Orientation Rotation"
+msgstr "Yaw軸回転"
+
+msgid "Center:"
+msgstr "中心:"
+
+msgid "Angle"
+msgstr "角度"
+
+msgid "[deg]"
+msgstr "[deg]"
+
+msgid "Select Specified Key Poses"
+msgstr "特定のキーポーズを選択"
+
+msgid "Start"
+msgstr "最小時刻"
+
+msgid "End"
+msgstr "最大時刻"
+
+msgid "all parts"
+msgstr "全部位"
+
+msgid "having selected parts"
+msgstr "選択部位を有する"
+
+msgid "just selected parts"
+msgstr "選択部位に一致"
+
+msgid "Select all poses after current position"
+msgstr "現在時刻後の全ポーズを選択"
+
+msgid "Select all poses before current position"
+msgstr "現在時刻前の全ポーズを選択"
+
+msgid "Count selected key poses"
+msgstr "選択ポーズの数"
+
+msgid " Insert "
+msgstr "挿入"
+
+msgid "Insert a new pose at the current time position"
+msgstr "新しいポーズを現在時刻に挿入する"
+
+msgid "Transition time of a newly inserted pose"
+msgstr "新たに挿入されるポーズの遷移時間"
+
+msgid "Update"
+msgstr "更新"
+
+msgid "Update the selected pose with the current robot state"
+msgstr "選択ポーズをロボットの現在姿勢で更新"
+
+msgid "All"
+msgstr "全部位"
+
+msgid "The update button updates all the element of the selected pose."
+msgstr "選択ポーズの全ての部位を更新"
+
+msgid "Auto"
+msgstr "自動更新"
+
+msgid "The selected pose is automatically updated when the robot state changes."
+msgstr "ロボットの状態変化に応じて自動で選択姿勢を更新"
+
+msgid "Delete"
+msgstr "削除"
+
+msgid "Time sync"
+msgstr "時刻同期"
+
+msgid "Select key poses having the selected links"
+msgstr "選択リンクを含むポーズを選択"
+
+msgid "Select key poses just having the selected links"
+msgstr "選択リンクに一致するポーズを選択"
+
+msgid "Remove the selected parts from the selected poses"
+msgstr "選択ポーズから選択部位を削除"
+
+msgid "Original key poses have been updated to be balanced ones."
+msgstr "元のポーズをバランス補正されたものに更新する．"
+
+msgid "Operation failed ! Key poses cannot be updated."
+msgstr "処理失敗！ポーズが更新できません．"
+
+msgid "flipping all the poses against x-z plane ..."
+msgstr "全姿勢をx-z平面に対して反転…"
+
+msgid "The number of selected key poses is {}"
+msgstr "選択ポーズの数は{}です．"
+
+msgid "Selected key poses have been updated."
+msgstr "選択ポーズは更新されました．"
+
+msgid "Please check parts needed for making a desired pose."
+msgstr "望みの姿勢をつくるのに必要な部位を選択してください．"

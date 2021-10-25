@@ -1,148 +1,107 @@
-# Japanese translations for PACKAGE package.
-# Copyright (C) 2011 THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# nakaoka <s.nakaoka@aist.go.jp>, 2011.
+# Japanese translations for Choreonoid package.
+# This file is distributed under the same license as the Choreonoid package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-15 17:48+0900\n"
-"PO-Revision-Date: 2011-11-15 21:47+0000\n"
-"Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
-"Language-Team: Japanese\n"
+"POT-Creation-Date: 2021-10-25 12:41+0900\n"
+"PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: GSMediaView.cpp:120
-msgid "GStreamer cannot be initialized: "
-msgstr "GStreamerの初期化が出来ません: "
-
-#: GSMediaView.cpp:130 GSMediaView.cpp:151 DSMediaView.cpp:117
-#: DSMediaView.cpp:154
-msgid "Media"
-msgstr "メディア"
-
-#: GSMediaView.cpp:134 DSMediaView.cpp:121
-msgid "Media View"
-msgstr "メディアビュー"
-
-#: GSMediaView.cpp:136 DSMediaView.cpp:123
-msgid "Keep Aspect Ratio"
-msgstr "アスペクト比を維持"
-
-#: GSMediaView.cpp:139 DSMediaView.cpp:126
-msgid "Keep Original Size"
-msgstr "元のサイズを維持"
-
-#: GSMediaView.cpp:175
-msgid ""
-"Initialization of the GSMediaView failed. The playbin plugin is missing."
-msgstr "GSMediaViewの初期化に失敗しました．playbinプラグインがありません．"
-
-#: GSMediaView.cpp:200
-msgid ""
-"Initialization of the GSMediaView failed. The ximagesink could not be "
-"created."
-msgstr "GSMediaViewの初期化に失敗しました．ximagesinkを生成できません．"
-
-#: MediaItem.cpp:52
-msgid "MediaItem"
-msgstr "メディアアイテム"
-
-#: MediaItem.cpp:53
-msgid "Media file"
-msgstr "メディアファイル"
-
-#: MediaItem.cpp:55
-msgid "load an media file"
-msgstr "メディアファイルの読み込み"
-
-#: MediaItem.cpp:107
-msgid "Media file \"{}\" does not exist."
-msgstr "メディアファイル \"{}\" が存在しません．"
-
-#: MediaItem.cpp:128
-msgid "offset"
-msgstr "オフセット"
-
-#: PulseAudioManager.cpp:171
-msgid "PulseAudio's main loop cannot be created."
-msgstr "PulseAudioのメインループを生成できません．"
-
-#: PulseAudioManager.cpp:181
-msgid "PulseAudio's context cannot be created."
-msgstr "PulseAudioのコンテキストを生成できません．"
-
-#: PulseAudioManager.cpp:197
-msgid "PulseAudio's context cannot be connected to the server."
-msgstr "PulseAudioのコンテキストをサーバに接続できません．"
-
-#: PulseAudioManager.cpp:217
-msgid "PulseAudio"
-msgstr ""
-
-#: PulseAudioManager.cpp:219
-msgid "Keep Stream Connections"
-msgstr "ストリーム接続を維持"
-
-#: PulseAudioManager.cpp:221
-msgid "Fully-Synchronized Audio Playback"
-msgstr "音声再生の完全同期"
-
-#: PulseAudioManager.cpp:338
-msgid "Audio item \"{0}\" cannot be initialized."
-msgstr "音声アイテム \"{0}\" を初期化できません．"
-
-#: PulseAudioManager.cpp:525
-msgid "PulseAudio's stream cannot be created."
-msgstr "PulseAudioのストリームを生成できません．"
-
-#: PulseAudioManager.cpp:555
-msgid "PulseAudio stream cannot be connected: {0}"
-msgstr "PulseAudioのストリームを接続できません： {0}."
-
-#: PulseAudioManager.cpp:570
-msgid "PulseAudio stream cannot be ready."
-msgstr "PulseAudioのストリームを準備できません．"
-
-#: PulseAudioManager.cpp:644
-msgid "PulseAudio stream for {0} cannot be written."
-msgstr "{0}のPulseAudioストリームに書き込むことができません．"
-
-#: PulseAudioManager.cpp:730
-msgid "overflowed"
-msgstr "オーバフロー"
-
-#: PulseAudioManager.cpp:735
-msgid "underflowed"
-msgstr "アンダーフロー"
-
-#: PulseAudioManager.cpp:748
-msgid ""
-"PulseAudioManager: Buffer of {0} {1}. Its playback time is adjusted to {2}."
-msgstr "PulseAudioManager: {0}のバッファが{1}です．再生時刻を{2}に調整します．"
-
-#: AudioItem.cpp:33
 msgid "AudioItem"
 msgstr "音声アイテム"
 
-#: AudioItem.cpp:37
 msgid "Audio File"
 msgstr "音声ファイル"
 
-#: DSMediaView.cpp:112
 msgid "CoInitialize failed. MediaView is not available."
 msgstr "CoInitialize関数の実行に問題があるため，メディアビューを利用できません．"
 
-#: DSMediaView.cpp:451
+msgid "Media"
+msgstr "メディア"
+
+msgid "Media View"
+msgstr "メディアビュー"
+
+msgid "Keep Aspect Ratio"
+msgstr "アスペクト比を維持"
+
+msgid "Keep Original Size"
+msgstr "元のサイズを維持"
+
 msgid "This media file is not able to seek!"
 msgstr "本メディアファイルはシーク出来ません！"
 
-#: DSMediaView.cpp:689
 msgid "Failed({}) to stop media clip!\n"
 msgstr "メディアクリップの停止が出来ません({})！\n"
 
+msgid "GStreamer cannot be initialized: "
+msgstr "GStreamerの初期化が出来ません: "
+
+msgid "Initialization of the GSMediaView failed. The playbin plugin is missing."
+msgstr "GSMediaViewの初期化に失敗しました．playbinプラグインがありません．"
+
+msgid "Initialization of the GSMediaView failed. The ximagesink could not be created."
+msgstr "GSMediaViewの初期化に失敗しました．ximagesinkを生成できません．"
+
+msgid "MediaItem"
+msgstr "メディアアイテム"
+
+msgid "Media file"
+msgstr "メディアファイル"
+
+msgid "load an media file"
+msgstr "メディアファイルの読み込み"
+
+msgid "Media file \"{}\" does not exist."
+msgstr "メディアファイル \"{}\" が存在しません．"
+
+msgid "offset"
+msgstr "オフセット"
+
+msgid "PulseAudio's main loop cannot be created."
+msgstr "PulseAudioのメインループを生成できません．"
+
+msgid "PulseAudio's context cannot be created."
+msgstr "PulseAudioのコンテキストを生成できません．"
+
+msgid "PulseAudio's context cannot be connected to the server."
+msgstr "PulseAudioのコンテキストをサーバに接続できません．"
+
+msgid "PulseAudio"
+msgstr ""
+
+msgid "Keep Stream Connections"
+msgstr "ストリーム接続を維持"
+
+msgid "Fully-Synchronized Audio Playback"
+msgstr "音声再生の完全同期"
+
+msgid "Audio item \"{0}\" cannot be initialized."
+msgstr "音声アイテム \"{0}\" を初期化できません．"
+
+msgid "PulseAudio's stream cannot be created."
+msgstr "PulseAudioのストリームを生成できません．"
+
+msgid "PulseAudio stream cannot be connected: {0}"
+msgstr "PulseAudioのストリームを接続できません： {0}."
+
+msgid "PulseAudio stream cannot be ready."
+msgstr "PulseAudioのストリームを準備できません．"
+
+msgid "PulseAudio stream for {0} cannot be written."
+msgstr "{0}のPulseAudioストリームに書き込むことができません．"
+
+msgid "overflowed"
+msgstr "オーバフロー"
+
+msgid "underflowed"
+msgstr "アンダーフロー"
+
+msgid "PulseAudioManager: Buffer of {0} {1}. Its playback time is adjusted to {2}."
+msgstr "PulseAudioManager: {0}のバッファが{1}です．再生時刻を{2}に調整します．"

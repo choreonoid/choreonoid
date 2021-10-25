@@ -1,372 +1,254 @@
-# Japanese translations for PACKAGE package.
-# Copyright (C) 2012 THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# nakaoka <s.nakaoka@aist.go.jp>, 2012.
+# Japanese translations for Choreonoid package.
+# This file is distributed under the same license as the Choreonoid package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-01 16:07+0900\n"
-"PO-Revision-Date: 2013-12-11 13:29+0900\n"
-"Last-Translator: nakaoka <s.nakaoka@gmail.com>\n"
-"Language-Team: Japanese\n"
+"POT-Creation-Date: 2021-10-25 12:41+0900\n"
+"PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: BodyMotionUtil.cpp:470
-msgid "applying the gaussian filter (sigma = {0}, range = {1}) to seq"
-msgstr "ガウシアンフィルター（Σ= {0}、範囲= {1}）を適用しています"
-
-#: StdBodyLoader.cpp:87
-msgid "\"{}\" is not found in the ROS package directories."
-msgstr "\"{}\" はROSパッケージディレクトリ内にありません．"
-
-#: StdBodyLoader.cpp:350
-msgid "Unknown symbol is used as a jointRange value"
-msgstr "jointRangeの値に不明なシンボルが使用されています"
-
-#: StdBodyLoader.cpp:353
-msgid "Invalid type value is used as a jointRange value"
-msgstr "jointRangeの値に無効な型の値が使用されています"
-
-#: StdBodyLoader.cpp:429
-msgid ""
-"The number of elements specified as an inertia value must be six or nine"
-msgstr "inertiaの要素は6つか9つでなければなりません"
-
-#: StdBodyLoader.cpp:756
-msgid "The file format cannot be loaded as a Choreonoid body model"
-msgstr ""
-"このファイル形式はChoreonoidのボディモデルとして読み込むことができません"
-
-#: StdBodyLoader.cpp:767
-msgid "Neither format nor modelFile are specified"
-msgstr "フォーマットもモデルファイルも指定されていません"
-
-#: StdBodyLoader.cpp:818
-msgid "The version of the Choreonoid body file format is not specified"
-msgstr "Choreonoidボディファイル形式のバージョンが指定されていません"
-
-#: StdBodyLoader.cpp:823
-msgid "Version {0} of the Choreonoid body format is not supported"
-msgstr "バージョン{0}のChoreonoidボディ形式はサポートされていません"
-
-#: StdBodyLoader.cpp:839
-msgid "There is no \"links\" values for defining the links in the body"
-msgstr "ボディに含まれるリンクを定義する \"links\" の値がありません"
-
-#: StdBodyLoader.cpp:844
-msgid "No link is contained in the \"links\" listing"
-msgstr "リンクが \"links\" 内に含まれていません"
-
-#: StdBodyLoader.cpp:859
-msgid "Invalid value specified in the \"links\" key"
-msgstr "無効な値が \"link\" キーに記述されています"
-
-#: StdBodyLoader.cpp:864
-msgid "There is no link defined"
-msgstr "リンクが定義されていません"
-
-#: StdBodyLoader.cpp:873
-msgid "Link \"{}\" specified in \"rootLink\" is not defined"
-msgstr "\"rootLink\" で指定されているリンク \"{}\" が定義されていません"
-
-#: StdBodyLoader.cpp:889
-msgid "The parent of {} is not specified"
-msgstr "{}の親が指定されていません"
-
-#: StdBodyLoader.cpp:895
-msgid "Parent link \"{0}\" of {1} is not defined"
-msgstr "{1}の親リンク \"{0}\" は定義されていません"
-
-#: StdBodyLoader.cpp:900
-msgid "Adding \"{0}\" to link \"{1}\" will result in a cyclic reference"
-msgstr "\"{0}\" をリンク \"{1}\" に追加すると循環参照になります"
-
-#: StdBodyLoader.cpp:915 VRMLBodyLoader.cpp:663
-msgid "Warning: Joint ID {} is not specified."
-msgstr "警告: Joint ID {} の指定がありません．"
-
-#: StdBodyLoader.cpp:940 StdBodyLoader.cpp:1383
-msgid ""
-"The node type \"{0}\" is different from the type \"{1}\" specified in the "
-"parent node"
-msgstr ""
-"ノード型 \"{0}\" は親ノードで指定されている型である \"{1}\" と異なります"
-
-#: StdBodyLoader.cpp:957
-msgid "A {} node cannot be specified in links"
-msgstr "{}ノードがlinksに定義されていません"
-
-#: StdBodyLoader.cpp:977
-msgid "Duplicated link name \"{}\""
-msgstr "リンク名 \"{}\" は重複しています"
-
-#: StdBodyLoader.cpp:987
-msgid "Duplicated joint name \"{}\""
-msgstr "関節名 \"{}\" は重複しています"
-
-#: StdBodyLoader.cpp:1110
-msgid "Warning: Joint ID {0} of {1} is duplicated."
-msgstr "警告： {1}の関節ID{0}は重複しています．"
-
-#: StdBodyLoader.cpp:1141
-msgid "Illegal jointType value \"{0}\""
-msgstr ""
-
-#: StdBodyLoader.cpp:1165
-msgid ""
-"Warning: Actuation mode \"jointSurfaceVelocity\" is specified in {0}. The "
-"mode is deprecated and the joint type should be the pseudo continuous track "
-"in this case."
-msgstr ""
-
-#: StdBodyLoader.cpp:1203
-msgid "jointRange must have two elements"
-msgstr "jointRangeは要素を2つ有する必要があります"
-
-#: StdBodyLoader.cpp:1208
-msgid "Invalid type value is specefied as a jointRange"
-msgstr "jointRangeに無効な型の値が記述されています"
-
-#: StdBodyLoader.cpp:1233
-msgid "jointVelocityRange must have two elements"
-msgstr "jointVelocityRangeは要素を2つ有する必要があります"
-
-#: StdBodyLoader.cpp:1393
-msgid "A value of the \"elements\" key must be a sequence or a mapping"
-msgstr "キー \"elements\" の値はシーケンスまたはマッピングでなければなりません"
-
-#: StdBodyLoader.cpp:1586
-msgid ""
-"The visual node is conflicting with the Collision node defined at the higher "
-"level"
-msgstr "Visualノードがその上位で定義されているCollisionノードと競合しています"
-
-#: StdBodyLoader.cpp:1592
-msgid ""
-"The collision node is conflicting with the Visual node defined at the higher "
-"level"
-msgstr "Collisionノードがその上位で定義されているVisualノードと競合しています"
-
-#: StdBodyLoader.cpp:1784
-msgid "SubBody specified by uri \"{}\" cannot be loaded."
-msgstr "uri \"{}\" で指定されているサブボディをロードできません．"
-
-#: StdBodyLoader.cpp:1870
-msgid "The link specified in \"link{}Name\" is not found"
-msgstr "\"link{}Name\" で指定されているリンクがありません"
-
-#: StdBodyLoader.cpp:1876
-msgid "The joint type must be specified with the \"joint_type\" key"
-msgstr "関節タイプを \"joint_type\" キーで指定しなければなりません"
-
-#: StdBodyLoader.cpp:1885
-msgid "The axis must be specified for the pistion type"
-msgstr "pistion型の軸を指定しなければなりません"
-
-#: StdBodyLoader.cpp:1890
-msgid "Joint type \"{}\" is not available"
-msgstr "関節タイプ \"{}\" は利用できません"
-
-#: BodyCustomizerInterface.cpp:85
 msgid "Body customizer \"{}\" is incomatible and cannot be loaded."
 msgstr "ボディカスタマイザ \"{}\" は互換性の無いものなのでロードできません．"
 
-#: BodyCustomizerInterface.cpp:101
 msgid "Body customizer \"{0}\" for {1} has been loaded."
 msgstr "{1}用のボディカスタマイザ \"{0}\" がロードされました．"
 
-#: DigitalIoDevice.cpp:317
-msgid "The element is not the pair of the input number and the target name"
+msgid "Body handler {0} built with Choreonoid {1}.{2} cannot be used on Choreonoid {3}.{4}"
+msgstr "Choreonoid {1}.{2}でビルドされたボディハンドラ{0}はChoreonoid {3}.{4}では使用できません"
+
+msgid "Body handler {1} built with Choreonoid {1}.{2}.{3} cannot be used on Choreonoid {4}.{5}.{6}"
 msgstr ""
+"Choreonoid {1}.{2}.{3}でビルドされたボディハンドラ{1}はChoreonoid {4}.{5}.{6}では使用できません"
 
-#: MarkerDevice.cpp:237
-msgid "Unknown marker type '{}'"
-msgstr "不明なマーカタイプ '{}'"
-
-#: BodyMotion.cpp:312
-msgid "Format version {} is not supported"
-msgstr "フォーマットバージョン{}はサポートされていません．"
-
-#: BodyMotion.cpp:367 BodyMotion.cpp:375
-msgid "Unknown content \"{0}\" of type \"{1}\"."
-msgstr "タイプ \"{1}\" の \"{0}\" は不明なコンテンツです．"
-
-#: BodyMotion.cpp:398
-msgid "Unknown type \"{}\"."
-msgstr "不明なタイプ \"{}\"．"
-
-#: IoConnectionMap.cpp:233
-msgid "{0} cannot be loaded as a signal I/O connection map"
-msgstr "{0}はI/O接続マップとして読み込むことができません"
-
-#: IoConnectionMap.cpp:239
-msgid "Format version {0} is not supported."
-msgstr "フォーマットバージョン{0}はサポートされていません．"
-
-#: VRMLBodyLoader.cpp:148
-msgid "Proto \"{0}\" must have the \"{1}\" field of {2} type"
-msgstr "Proto \"{0}\" には{2}型のフィールド \"{1}\" が必要です"
-
-#: VRMLBodyLoader.cpp:193
-msgid "Node \"{0}\" should have the field \"{1}\""
-msgstr "ノード \"{0}\" にはフィールド \"{1}\" が必要です"
-
-#: VRMLBodyLoader.cpp:443
-msgid "Humanoid nodes more than one are defined."
-msgstr "２つ以上のHumanoidノードが定義されています．"
-
-#: VRMLBodyLoader.cpp:475
-msgid "There are no VRML nodes which can be loaded as a Body."
-msgstr "ボディとして読み込み可能なVRMLノードがありません．"
-
-#: VRMLBodyLoader.cpp:511
-msgid "Prototype of Humanoid must have the \"jointAxis\" field"
-msgstr "Humanoidのプロトタイプには \"jointAxis\" フィールドが必要です"
-
-#: VRMLBodyLoader.cpp:514
-msgid ""
-"The type of \"jointAxis\" field in \"Humanoid\" prototype must be SFString "
-"or SFVec3f"
-msgstr ""
-"\"Humanoid\" プロトタイプの \"jointAxis\" フィールドの型はSFStringかSFVec3fで"
-"ある必要があります"
-
-#: VRMLBodyLoader.cpp:536
-msgid "The \"equivalentInertia\" field of the Joint node is obsolete."
-msgstr "Jointノードの \"equivalentInertia\" フィールドは廃止予定です．"
-
-#: VRMLBodyLoader.cpp:633
-msgid ""
-"The Humanoid node does not have a Joint node in its \"humanoidBody\" field."
-msgstr ""
-"Humanoidノードの \"humanoidBody\" フィールドにJointノードがありません．"
-
-#: VRMLBodyLoader.cpp:635
-msgid ""
-"The Humanoid node must have a unique Joint node in its \"humanoidBody\" "
-"field."
-msgstr ""
-"Humanoidノードの \"humanoidBody\" に含められるJointノードはひとつだけです．"
-
-#: VRMLBodyLoader.cpp:754
-msgid "Warning: Joint ID {} is duplicated."
-msgstr "警告： Joint ID {} は重複しています．"
-
-#: VRMLBodyLoader.cpp:782 VRMLBodyLoader.cpp:1227
-msgid "JointType \"{}\" is not supported."
-msgstr "関節タイプ \"{}\" はサポートされていません．"
-
-#: VRMLBodyLoader.cpp:874
-msgid "{} node is not in a correct place."
-msgstr "{}ノードの位置が不正です．"
-
-#: VRMLBodyLoader.cpp:883
-msgid "Joint node \"{}\" is not in a correct place."
-msgstr "Jointノード \"{}\" の位置が正しくありません．"
-
-#: VRMLBodyLoader.cpp:1022
-msgid "Sensor type {} is not supported.\n"
-msgstr "センサ型{}はサポートされていません．\n"
-
-#: VRMLBodyLoader.cpp:1216
-msgid ""
-"Field \"link{}Name\" of a ExtraJoint node does not specify a valid link name"
-msgstr ""
-"ExtraJointノードのフィールド \"link{}Name\" で有効なリンク名が指定されていま"
-"せん"
-
-#: BodyLoader.cpp:100
-msgid "The file format of \"{}\" is not supported by the body loader.\n"
-msgstr "{}のファイル形式はボディローダではサポートされていません．\n"
-
-#: BodyHandlerManager.cpp:112
 msgid "Body handler {0} has been loaded to {1}."
 msgstr "ボディハンドラ {0} が {1} にロードされました．"
 
-#: BodyHandlerManager.cpp:115
 msgid "Body handler {0} cannot be loaded to {1}."
 msgstr "ボディハンドラ {0} を {1} にロードできません．"
 
-#: BodyHandlerManager.cpp:141
 msgid "Body handler {0} was not found."
 msgstr "ボディハンドラ {0} がみつかりません."
 
-#: BodyHandlerManager.cpp:162
 msgid ""
-"Body handler {0} found at \"{1}\" does not have the factory function "
-"\"createCnoidBodyHandler\"."
+"Body handler {0} found at \"{1}\" does not have the factory function \"createCnoidBodyHandler\"."
 msgstr ""
-"ボディハンドラ {0} のファイル \"{1}\" にはファクトリ関数 "
-"\"createCnoidBodyHandler\" がありません."
+"ボディハンドラ {0} のファイル \"{1}\" にはファクトリ関数 \"createCnoidBodyHandler\" がありません."
 
-#: BodyHandlerManager.cpp:168
 msgid "Body handler {0} was found at \"{1}\"."
 msgstr "ボディハンドラ {0} が \"{1}\" でみつかりました."
 
-#: MaterialTable.cpp:303
+msgid "The file format of \"{}\" is not supported by the body loader.\n"
+msgstr "{}のファイル形式はボディローダではサポートされていません．\n"
+
+msgid "Format version {} is not supported"
+msgstr "フォーマットバージョン{}はサポートされていません．"
+
+msgid "Unknown content \"{0}\" of type \"{1}\"."
+msgstr "タイプ \"{1}\" の \"{0}\" は不明なコンテンツです．"
+
+msgid "Unknown type \"{}\"."
+msgstr "不明なタイプ \"{}\"．"
+
+msgid "applying the gaussian filter (sigma = {0}, range = {1}) to seq"
+msgstr "ガウシアンフィルター（Σ= {0}、範囲= {1}）を適用しています"
+
+msgid "The element is not the pair of the input number and the target name"
+msgstr "要素が入力番号と対象名の組み合わせではありません"
+
+msgid "{0} cannot be loaded as a signal I/O connection map"
+msgstr "{0}はI/O接続マップとして読み込むことができません"
+
+msgid "Format version {0} is not supported."
+msgstr "フォーマットバージョン{0}はサポートされていません．"
+
+msgid "Unknown marker type '{}'"
+msgstr "不明なマーカタイプ '{}'"
+
 msgid "Nameless material is defined at the {}th material item."
 msgstr "{}番目のマテリアルアイテムで無名のマテリアルが定義されています．"
 
-#: MaterialTable.cpp:307
-msgid ""
-"Material name \"{}\" is duplicated. The defenition is updated with the last "
-"item."
-msgstr ""
-"マテリアル名 \"{}\" が重複しています．定義は最後のアイテムで更新されます．"
+msgid "Material name \"{}\" is duplicated. The defenition is updated with the last item."
+msgstr "マテリアル名 \"{}\" が重複しています．定義は最後のアイテムで更新されます．"
 
-#: MaterialTable.cpp:332
 msgid "No material pair is specified"
 msgstr "マテリアルペアが指定されていません"
 
-#: MaterialTable.cpp:336
 msgid "The counterpart of the material pair is lacking"
 msgstr "マテリアルペアの片方が欠けています"
 
-#: BodyHandler.cpp:22
-msgid ""
-"Body handler {0} built with Choreonoid {1}.{2} cannot be used on Choreonoid "
-"{3}.{4}"
-msgstr ""
-"Choreonoid {1}.{2}でビルドされたボディハンドラ{0}はChoreonoid {3}.{4}では使用"
-"できません"
+msgid "\"{}\" is not found in the ROS package directories."
+msgstr "\"{}\" はROSパッケージディレクトリ内にありません．"
 
-#: BodyHandler.cpp:28
-msgid ""
-"Body handler {1} built with Choreonoid {1}.{2}.{3} cannot be used on "
-"Choreonoid {4}.{5}.{6}"
-msgstr ""
-"Choreonoid {1}.{2}.{3}でビルドされたボディハンドラ{1}はChoreonoid {4}.{5}.{6}"
-"では使用できません"
+msgid "Unknown symbol is used as a jointRange value"
+msgstr "jointRangeの値に不明なシンボルが使用されています"
 
-#: StdBodyWriter.cpp:211
+msgid "Invalid type value is used as a jointRange value"
+msgstr "jointRangeの値に無効な型の値が使用されています"
+
+msgid "The number of elements specified as an inertia value must be six or nine"
+msgstr "inertiaの要素は6つか9つでなければなりません"
+
+msgid "The file format cannot be loaded as a Choreonoid body model"
+msgstr "このファイル形式はChoreonoidのボディモデルとして読み込むことができません"
+
+msgid "Neither format nor modelFile are specified"
+msgstr "フォーマットもモデルファイルも指定されていません"
+
+msgid "The version of the Choreonoid body file format is not specified"
+msgstr "Choreonoidボディファイル形式のバージョンが指定されていません"
+
+msgid "Version {0} of the Choreonoid body format is not supported"
+msgstr "バージョン{0}のChoreonoidボディ形式はサポートされていません"
+
+msgid "There is no \"links\" values for defining the links in the body"
+msgstr "ボディに含まれるリンクを定義する \"links\" の値がありません"
+
+msgid "No link is contained in the \"links\" listing"
+msgstr "リンクが \"links\" 内に含まれていません"
+
+msgid "Invalid value specified in the \"links\" key"
+msgstr "無効な値が \"link\" キーに記述されています"
+
+msgid "There is no link defined"
+msgstr "リンクが定義されていません"
+
+msgid "Link \"{}\" specified in \"rootLink\" is not defined"
+msgstr "\"rootLink\" で指定されているリンク \"{}\" が定義されていません"
+
+msgid "The parent of {} is not specified"
+msgstr "{}の親が指定されていません"
+
+msgid "Parent link \"{0}\" of {1} is not defined"
+msgstr "{1}の親リンク \"{0}\" は定義されていません"
+
+msgid "Adding \"{0}\" to link \"{1}\" will result in a cyclic reference"
+msgstr "\"{0}\" をリンク \"{1}\" に追加すると循環参照になります"
+
+msgid "Warning: Joint ID {} is not specified."
+msgstr "警告: Joint ID {} の指定がありません．"
+
+msgid "The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"
+msgstr "ノード型 \"{0}\" は親ノードで指定されている型である \"{1}\" と異なります"
+
+msgid "A {} node cannot be specified in links"
+msgstr "{}ノードがlinksに定義されていません"
+
+msgid "Duplicated link name \"{}\""
+msgstr "リンク名 \"{}\" は重複しています"
+
+msgid "Duplicated joint name \"{}\""
+msgstr "関節名 \"{}\" は重複しています"
+
+msgid "Warning: Joint ID {0} of {1} is duplicated."
+msgstr "警告： {1}の関節ID{0}は重複しています．"
+
+msgid "Illegal jointType value \"{0}\""
+msgstr "不正なjointType値 \"{0}\""
+
+msgid ""
+"Warning: Actuation mode \"jointSurfaceVelocity\" is specified in {0}. The mode is deprecated and "
+"the joint type should be the pseudo continuous track in this case."
+msgstr "警告：{0}に \"jointSurfaceVelocity\" のアクチュエーションモードが指定されています．このモードは廃止の予定です．"
+"この場合の関節タイプは \"pseudo continuous track\" とするべきです．"
+
+msgid "jointRange must have two elements"
+msgstr "jointRangeは要素を2つ有する必要があります"
+
+msgid "Invalid type value is specefied as a jointRange"
+msgstr "jointRangeに無効な型の値が記述されています"
+
+msgid "jointVelocityRange must have two elements"
+msgstr "jointVelocityRangeは要素を2つ有する必要があります"
+
+msgid "A value of the \"elements\" key must be a sequence or a mapping"
+msgstr "キー \"elements\" の値はシーケンスまたはマッピングでなければなりません"
+
+msgid "The visual node is conflicting with the Collision node defined at the higher level"
+msgstr "Visualノードがその上位で定義されているCollisionノードと競合しています"
+
+msgid "The collision node is conflicting with the Visual node defined at the higher level"
+msgstr "Collisionノードがその上位で定義されているVisualノードと競合しています"
+
+msgid "SubBody specified by uri \"{}\" cannot be loaded."
+msgstr "uri \"{}\" で指定されているサブボディをロードできません．"
+
+msgid "The link specified in \"link{}Name\" is not found"
+msgstr "\"link{}Name\" で指定されているリンクがありません"
+
+msgid "The joint type must be specified with the \"joint_type\" key"
+msgstr "関節タイプを \"joint_type\" キーで指定しなければなりません"
+
+msgid "The axis must be specified for the pistion type"
+msgstr "pistion型の軸を指定しなければなりません"
+
+msgid "Joint type \"{}\" is not available"
+msgstr "関節タイプ \"{}\" は利用できません"
+
 msgid "The name of the link {0} is not specified."
 msgstr "リンク{}の名前が設定されていません．"
 
-#: StdBodyWriter.cpp:312
+msgid "Warning: {0} of {1} cannot be written because its writing function is not provided."
+msgstr "警告： {1}の{0}は書き出し関数が提供されていないため書き出すことができません．"
+
 msgid ""
-"Warning: {0} of {1} cannot be written because its writing function is not "
+"Warning: Device \"{0}\" of the {1} type cannot be written because its writing function is not "
 "provided."
-msgstr ""
-"警告： {1}の{0}は書き出し関数が提供されていないため書き出すことができません．"
+msgstr "警告： {1}型の \"{0}\" は書き出し関数が提供されていないため書き出すことができません．"
 
-#: StdBodyWriter.cpp:316
-msgid ""
-"Warning: Device \"{0}\" of the {1} type cannot be written because its "
-"writing function is not provided."
-msgstr ""
-"警告： {1}型の \"{0}\" は書き出し関数が提供されていないため書き出すことができ"
-"ません．"
-
-#: StdBodyWriter.cpp:327
 msgid "Warning: Writing {0} of {1} failed."
 msgstr "警告： {1}の{0}の書き出しができませんでした．"
 
-#: StdBodyWriter.cpp:330
 msgid "Warning: Writing device \"{0}\" of the {1} type failed."
 msgstr "警告： {1}型の \"{0}\" の書き出しができませんでした．"
+
+msgid "Proto \"{0}\" must have the \"{1}\" field of {2} type"
+msgstr "Proto \"{0}\" には{2}型のフィールド \"{1}\" が必要です"
+
+msgid "Node \"{0}\" should have the field \"{1}\""
+msgstr "ノード \"{0}\" にはフィールド \"{1}\" が必要です"
+
+msgid "Humanoid nodes more than one are defined."
+msgstr "２つ以上のHumanoidノードが定義されています．"
+
+msgid "There are no VRML nodes which can be loaded as a Body."
+msgstr "ボディとして読み込み可能なVRMLノードがありません．"
+
+msgid "Prototype of Humanoid must have the \"jointAxis\" field"
+msgstr "Humanoidのプロトタイプには \"jointAxis\" フィールドが必要です"
+
+msgid "The type of \"jointAxis\" field in \"Humanoid\" prototype must be SFString or SFVec3f"
+msgstr ""
+"\"Humanoid\" プロトタイプの \"jointAxis\" フィールドの型はSFStringかSFVec3fである必要があります"
+
+msgid "The \"equivalentInertia\" field of the Joint node is obsolete."
+msgstr "Jointノードの \"equivalentInertia\" フィールドは廃止予定です．"
+
+msgid "The Humanoid node does not have a Joint node in its \"humanoidBody\" field."
+msgstr "Humanoidノードの \"humanoidBody\" フィールドにJointノードがありません．"
+
+msgid "The Humanoid node must have a unique Joint node in its \"humanoidBody\" field."
+msgstr "Humanoidノードの \"humanoidBody\" に含められるJointノードはひとつだけです．"
+
+msgid "Warning: Joint ID {} is duplicated."
+msgstr "警告： Joint ID {} は重複しています．"
+
+msgid "JointType \"{}\" is not supported."
+msgstr "関節タイプ \"{}\" はサポートされていません．"
+
+msgid "{} node is not in a correct place."
+msgstr "{}ノードの位置が不正です．"
+
+msgid "Joint node \"{}\" is not in a correct place."
+msgstr "Jointノード \"{}\" の位置が正しくありません．"
+
+msgid "Sensor type {} is not supported.\n"
+msgstr "センサ型{}はサポートされていません．\n"
+
+msgid "Field \"link{}Name\" of a ExtraJoint node does not specify a valid link name"
+msgstr "ExtraJointノードのフィールド \"link{}Name\" で有効なリンク名が指定されていません"

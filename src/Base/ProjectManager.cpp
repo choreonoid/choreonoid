@@ -752,7 +752,7 @@ void ProjectManager::Impl::openDialogToLoadProject()
     }
     
     FileDialog dialog(mw);
-    dialog.setWindowTitle(_("Open a Choreonoid project file"));
+    dialog.setWindowTitle(_("Open a project"));
     dialog.setFileMode(QFileDialog::ExistingFile);
     dialog.setViewMode(QFileDialog::List);
     dialog.setLabelText(QFileDialog::Accept, _("Open"));
@@ -775,7 +775,7 @@ void ProjectManager::Impl::openDialogToLoadProject()
 void ProjectManager::Impl::openDialogToSaveProject()
 {
     FileDialog dialog(MainWindow::instance());
-    dialog.setWindowTitle(_("Save a choreonoid project file"));
+    dialog.setWindowTitle(_("Save a project"));
     dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setAcceptMode(QFileDialog::AcceptSave);
     dialog.setViewMode(QFileDialog::List);

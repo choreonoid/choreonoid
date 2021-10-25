@@ -328,7 +328,7 @@ void PositionWidget::Impl::setOptionMenuTo(MenuManager& menu)
     uniqueRpyCheck->sigToggled().connect(
         [&](bool on){ isUniqueRpyMode = on; refreshPosition(); });
     
-    auto quaternionCheck = menu.addCheckItem(_("Quoternion"));
+    auto quaternionCheck = menu.addCheckItem(_("Quaternion"));
     quaternionCheck->setChecked(isQuaternionEnabled);
     quaternionCheck->sigToggled().connect(
         [&](bool on){ setQuaternionEnabled(on); refreshPosition(); });

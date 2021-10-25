@@ -1,472 +1,333 @@
-# Japanese translations for PACKAGE package.
-# Copyright (C) 2012 THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# nakaoka <s.nakaoka@aist.go.jp>, 2012.
+# Japanese translations for Choreonoid package.
+# This file is distributed under the same license as the Choreonoid package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-01 15:50+0900\n"
-"PO-Revision-Date: 2012-07-16 14:30+0100\n"
-"Last-Translator: nakaoka <s.nakaoka@aist.go.jp>\n"
-"Language-Team: Japanese\n"
+"POT-Creation-Date: 2021-10-25 12:41+0900\n"
+"PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: StdSceneLoader.cpp:105
-msgid "Scene file \"{}\" does not have the \"scene\" node."
-msgstr "シーンファイル \"{}\" は \"scene\" ノードを有していません．"
-
-#: StdSceneLoader.cpp:109
-msgid "Scene file \"{}\" is an empty scene."
-msgstr "シーンファイル\"{}\"は空のシーンです．"
-
-#: AbstractSceneWriter.cpp:75
 msgid "Warning: Texture image file \"{0}\" cannot be copied: {1}"
 msgstr "警告： テクスチャ画像ファイル \"{0}\" をコピーできません： {1}"
 
-#: AbstractSceneWriter.cpp:84
 msgid "Warning: Texture image file \"{0}\" is not found."
 msgstr "警告: テクスチャ画像ファイル \"{0}\" がみつかりません．"
 
-#: StdSceneWriter.cpp:372
-msgid "Warning: There is an unsupported node."
-msgstr "警告：サポートされていないノードがあります．"
-
-#: StdSceneWriter.cpp:374
-msgid "Warning: {0} unsupported nodes were skipped to output."
-msgstr "警告：サポートされていない{0}のノードの出力をスキップしました．"
-
-#: StdSceneWriter.cpp:493
-msgid ""
-"Model file \"{0}\" cannot be replaced with the same format file in the same "
-"directory"
-msgstr ""
-"モデルファイル \"{0}\" について同一ディレクトリ内の同一形式のファイルには置き"
-"換えできません"
-
-#: StdSceneWriter.cpp:518
-msgid "Warning: Failed to replace model file \"{0}\" with \"{1}\". {2}"
-msgstr ""
-"警告：モデルファイル  \"{0}\" を \"{1}\" で置き換えることができませんでした. "
-"{2}"
-
-#: StdSceneWriter.cpp:521
-msgid "Warning: Failed to replace model file \"{0}\" with \"{1}\"."
-msgstr ""
-"警告：モデルファイル  \"{0}\" を \"{1}\" で置き換えることができませんでした."
-
-#: StdSceneReader.cpp:305
-msgid "The version of the Choreonoid scene file format is not specified"
-msgstr "Choreonoidシーンファイル形式のバージョンが指定されていません"
-
-#: StdSceneReader.cpp:310 StdSceneReader.cpp:320
-msgid "Version {0} of the Choreonoid scene file format is not supported"
-msgstr "Choreonoidシーンファイル形式のバージョン{0}はサポートされていません"
-
-#: StdSceneReader.cpp:327
-msgid ""
-"Radian mode is not supported in Choreonoid scene file format version 2.0"
-msgstr "ラジアンモードはChoreonoidシーンファイル形式バージョン2ではサポートされていません"
-
-#: StdSceneReader.cpp:333
-msgid "The \"angleUnit\" value must be either \"radian\" or \"degree\""
-msgstr "\"angleUnit\"の値は \"radian\" か \"degree\" のいずれかである必要があります"
-
-#: StdSceneReader.cpp:605
-msgid ""
-"Warning: the node type \"{}\" is not defined. Reading this node has been "
-"skipped."
-msgstr ""
-"警告：ノードタイプ\"{}\"は定義されていません．このノードの読み込みはスキップ"
-"されます． "
-
-#: StdSceneReader.cpp:608
-msgid "The node type \"{}\" is not defined."
-msgstr "ノードタイプ\"{}\"は定義されていません．"
-
-#: StdSceneReader.cpp:671
-msgid ""
-"The node type \"{0}\" is different from the type \"{1}\" specified in the "
-"parent node"
-msgstr "ノードタイプ\"{0}\"は親ノードで指定されているタイプ\"{1}\"と異なります"
-
-#: StdSceneReader.cpp:681
-msgid "A scalar value is not accepted"
-msgstr "スカラ値を使用することはできません"
-
-#: StdSceneReader.cpp:825
-msgid "Unknown geometry \"{}\""
-msgstr "不明なジオメトリ \"{}\""
-
-#: StdSceneReader.cpp:872
-msgid "A box cannot be generated with the given parameters."
-msgstr "与えられたパラメータでボックスを生成することはできません．"
-
-#: StdSceneReader.cpp:890
-msgid "A sphere cannot be generated with the given parameters."
-msgstr "与えられたパラメータで球を生成することはできません．"
-
-#: StdSceneReader.cpp:910
-msgid "A cylinder cannot be generated with the given parameters."
-msgstr "与えられたパラメータでシリンダを生成することはできません．"
-
-#: StdSceneReader.cpp:929
-msgid "A cone cannot be generated with the given parameters."
-msgstr "与えられたパラメータで円錐を生成することはできません．"
-
-#: StdSceneReader.cpp:947
-msgid "A capsule cannot be generated with the given parameters."
-msgstr "与えられたパラメータでカプセルを生成することはできません．"
-
-#: StdSceneReader.cpp:1195
-msgid "A resouce specified as a geometry must be a single mesh"
-msgstr "ジオメトリと指定するリソースは単一のメッシュでなければなりません"
-
-#: StdSceneReader.cpp:1199
-msgid "A resouce specified as a geometry does not have a mesh"
-msgstr "ジオメトリとして指定されているリソースがメッシュを有していません"
-
-#: StdSceneReader.cpp:1290
-msgid "Warning: texture uri \"{0}\" is not valid: {1}"
-msgstr "警告: テクスチャのURL \"{0}\" は有効ではありません: {1}"
-
-#: StdSceneReader.cpp:1314
-msgid "The number of the repeat elements must be two"
-msgstr "repeatの要素は2つでなければなりません"
-
-#: StdSceneReader.cpp:1507 StdSceneReader.cpp:1539
-msgid "Fragment \"{0}\" is not found in \"{1}\"."
-msgstr "フラグメント \"{0}\" は \"{1}\" の中にみつかりません．"
-
-#: StdSceneReader.cpp:1582
-msgid "The \"{0}\" scheme of \"{1}\" is not available"
-msgstr "\"{1}\" の \"{0}\" スキームは利用できません"
-
-#: StdSceneReader.cpp:1602
-msgid "The resource URI \"{0}\" is not valid: {1}"
-msgstr "リソースURI \"{0}\" は有効ではありません: {1}"
-
-#: StdSceneReader.cpp:1608
-msgid "The resource URI \"{}\" is not valid"
-msgstr "リソースURI \"{}\" は有効ではありません"
-
-#: StdSceneReader.cpp:1623
-msgid "YAML resource \"{0}\" cannot be loaded ({1})"
-msgstr "YAMLリソース \"{0}\" は読み込みできません ({1})"
-
-#: StdSceneReader.cpp:1632
-msgid "The resource is not found at URI \"{}\""
-msgstr "URI \"{}\" のリソースがみつかりません"
-
-#: AbstractSeq.cpp:138
 msgid "The function to read {} is not implemented."
 msgstr "{}を読む関数は実装されていません．"
 
-#: AbstractSeq.cpp:153
 msgid "The type of the sequence to write is unknown.\n"
 msgstr "書き込むシーケンスのタイプは不明です．\n"
 
-#: AbstractSeq.cpp:155
 msgid "The type of the {} sequence to write is unknown.\n"
 msgstr "書き込む{}シーケンスのタイプは不明です．\n"
 
-#: AbstractSeq.cpp:163
 msgid "Frame rate {0} of {1} is invalid.\n"
 msgstr "{1}のフレームレート{0}は無効です．\n"
 
-#: VRMLSceneLoader.cpp:102
-msgid "VRML file \"{}\" does not have any valid entity."
-msgstr "VRMLファイル \"{}\" には有効なエントリが有りません．"
+msgid "UUID \"{0}\" is a duplicate of the existing ID.\n"
+msgstr "UUID \"{0}\" は既存のIDと重複しています．\n"
 
-#: ObjSceneLoader.cpp:167 STLSceneLoader.cpp:476
-msgid "Unable to open file \"{}\"."
-msgstr "ファイル\"{}\"を開けません．"
+msgid "{0} cannot be loaded as a coordinate frame list"
+msgstr "{0} を座標フレームリストとして読み込むことができません"
 
-#: YAMLReader.cpp:180 YAMLReader.cpp:222
-msgid "{0} at line {1}, column {2}"
-msgstr "{1}行{2}列にて{0}"
+msgid "Format version {0} is not supported."
+msgstr "フォーマットバージョン{0}はサポートされていません．"
 
-#: YAMLReader.cpp:343
-msgid "An element to merge by the \"<<\" key must be a mapping"
-msgstr "キー\"<<\"によってマージする要素はマッピングでなければなりません"
+msgid "\"{}\" is not found."
+msgstr "\"{}\" が見つかりません．"
 
-#: YAMLReader.cpp:351
-msgid "A value to merge by the \"<<\" key must be mapping or listing"
-msgstr ""
-"キー\"<<\"によってマージする値はマッピングかリスティングでなければなりません"
+msgid "I/O error in accessing \"{}\"."
+msgstr "\"{}\" へのアクセスにおけるI/Oエラー．"
 
-#: YAMLReader.cpp:370
-msgid "Anchor \"{}\" is duplicated"
-msgstr "アンカー\"{}\"は重複しています"
+msgid "Angle-axis value must have four elements representing the axis and the angle"
+msgstr "Angle-axisの値は回転軸と回転角度を表す4成分を有する必要があります"
 
-#: YAMLReader.cpp:482
-msgid "Scalar value cannot be put on the top-level text position"
-msgstr "スカラ値はテキストのトップレベルに配置できません"
+msgid "Rotation axis is the zero vector"
+msgstr "回転軸がゼロベクトルです"
 
-#: YAMLReader.cpp:498
-msgid "empty key"
-msgstr "空のキー"
+msgid "${{PROJECT_DIR}} of \"{0}\" cannot be expanded."
+msgstr "\"{0}\" の ${{PROJECT_DIR}} は展開できません．"
 
-#: YAMLReader.cpp:560
-msgid "Anchor \"{}\" is not defined"
-msgstr "ノードタイプ\"{}\"は定義されていません"
+msgid "The \"{0}\" variable in \"{1}\" is not defined."
+msgstr "\"{1}\" における変数 \"{0}\" は定義されていません．"
 
-#: YAMLReader.cpp:606
-msgid "The yaml file does not contains any documents."
-msgstr "YAMLファイルにドキュメントが含まれていません．"
+msgid "Seq type \"{0}\" cannot be load into {1}."
+msgstr "Seqタイプ\"{0}\"は{1}にロードできません．"
 
-#: YAMLReader.cpp:609
-msgid "The yaml file does not contains {}-th document."
-msgstr "YAMLファイルに{}番目のドキュメントが含まれていません．"
+msgid "The \"hasFrameTime\" parameter is not availabe in format version {}."
+msgstr "\"hasFrameTime\"パラメータは、フォーマットバージョン{}では使用できません．"
 
-#: MultiSE3Seq.cpp:87
+msgid "The frame rate for importing a timed-frame seq is not specified."
+msgstr "timed-frame seqをインポートするフレームレートが指定されていません．"
+
+msgid "The \"frames\" key is not found."
+msgstr "\"フレーム\"キーが見つかりません．"
+
+msgid "The \"frames\" key does not contain any frame data."
+msgstr "\"フレーム\"キーにはフレームデータは含まれていません．"
+
+msgid "Invaid number of parts is specified"
+msgstr "無効な数が指定されています"
+
+msgid "Invalid frame size."
+msgstr "無効なフレームサイズ．"
+
+msgid "Image file \"{0}\" cannot be loaded. {1}"
+msgstr "画像ファイル \"{0}\" をロードできません．{1}"
+
+msgid "Image file \"{0}\" is not the PNG format."
+msgstr "画像ファイル \"{0}\" はPNG形式ではありません."
+
+msgid "Failed to create png_struct in loading \"{0}\""
+msgstr "\"{0}\" の読み込みにおいて png_struct の生成ができませんでした"
+
+msgid "Failed to create png_info in loading \"{0}\""
+msgstr "\"{0}\" の読み込みにおいて png_info の生成ができませんでした"
+
+msgid "Image file \"{0}\" cannot be loaded because its color type is not supported."
+msgstr "画像ファイル \"{0}\" のカラータイプはサポートされていないため読み込むことができません．"
+
+msgid "Internal error in saving \"{0}\"."
+msgstr "\"{0}\" の保存における内部エラー．"
+
+msgid "Image file \"{0}\" cannot be saved. {1}"
+msgstr "画像ファイル \"{0}\" をセーブすることができません．{1}"
+
+msgid "Image file \"{0}\" is not the uncompressed TGA format."
+msgstr "画像ファイル \"{0}\" は無圧縮TGA形式ではありません．"
+
+msgid "Image file \"{0}\" is empty."
+msgstr "画像ファイル \"{0}\" は空です．"
+
+msgid "Internal error in loading \"{0}\"."
+msgstr "\"{0}\" の読み込みにおける内部エラー．"
+
+msgid "The image file format of \"{0}\" is not supported."
+msgstr "\"{0}\" の画像ファイル形式はサポートされていません．"
+
 msgid "The number of elements specified as a SE3 value is invalid."
 msgstr "SE3値として指定された要素の数が無効です．"
 
-#: MultiSE3Seq.cpp:126
 msgid "SE3 format \"{}\" is not supported."
 msgstr "SE3形式の\"{}\"はサポートされていません．"
 
-#: MultiSE3Seq.cpp:197
 msgid ""
 "\"{}\" does not have elements in multiple of twelve (each 3 for position "
 "vectors, 9 for attitde matrices)"
 msgstr ""
-"\"{}\"には12の倍数の要素がありません．（３要素が位置ベクトル、９要素が姿勢行"
-"列）"
+"\"{}\"には12の倍数の要素がありません．（３要素が位置ベクトル、９要素が姿勢行列）"
 
-#: MultiSE3Seq.cpp:239
 msgid "\"{}\" does not have a multiple of 3 elements (R,P,Y)"
 msgstr "\"{}\"には3つの要素（R、P、Y）の倍数がありません"
 
-#: MultiSE3Seq.cpp:273 MultiValueSeq.cpp:113 Vector3Seq.cpp:124
-#: PlainSeqFileLoader.cpp:22
 msgid "\"{}\" cannot be opened."
 msgstr "\"{}\" は開けません．"
 
-#: MultiSE3Seq.cpp:315
 msgid "{0} cannot be opened."
 msgstr "{0} を開けません．"
 
-#: ImageIO.cpp:27 ImageIO.cpp:211 ImageIO.cpp:258
-msgid "Image file \"{0}\" cannot be loaded. {1}"
-msgstr "画像ファイル \"{0}\" をロードできません．{1}"
-
-#: ImageIO.cpp:38
-msgid "Image file \"{0}\" is not the PNG format."
-msgstr "画像ファイル \"{0}\" はPNG形式ではありません."
-
-#: ImageIO.cpp:45
-msgid "Failed to create png_struct in loading \"{0}\""
-msgstr "\"{0}\" の読み込みにおいて png_struct の生成ができませんでした"
-
-#: ImageIO.cpp:53
-msgid "Failed to create png_info in loading \"{0}\""
-msgstr "\"{0}\" の読み込みにおいて png_info の生成ができませんでした"
-
-#: ImageIO.cpp:109
-msgid ""
-"Image file \"{0}\" cannot be loaded because its color type is not supported."
-msgstr ""
-"画像ファイル \"{0}\" のカラータイプはサポートされていないため読み込むことがで"
-"きません．"
-
-#: ImageIO.cpp:141 ImageIO.cpp:148 ImageIO.cpp:162
-msgid "Internal error in saving \"{0}\"."
-msgstr "\"{0}\" の保存における内部エラー．"
-
-#: ImageIO.cpp:155
-msgid "Image file \"{0}\" cannot be saved. {1}"
-msgstr "画像ファイル \"{0}\" をセーブすることができません．{1}"
-
-#: ImageIO.cpp:270
-msgid "Image file \"{0}\" is not the uncompressed TGA format."
-msgstr "画像ファイル \"{0}\" は無圧縮TGA形式ではありません．"
-
-#: ImageIO.cpp:283
-msgid "Image file \"{0}\" is empty."
-msgstr "画像ファイル \"{0}\" は空です．"
-
-#: ImageIO.cpp:303
-msgid "Internal error in loading \"{0}\"."
-msgstr "\"{0}\" の読み込みにおける内部エラー．"
-
-#: ImageIO.cpp:344 ImageIO.cpp:362
-msgid "The image file format of \"{0}\" is not supported."
-msgstr "\"{0}\" の画像ファイル形式はサポートされていません．"
-
-#: CoordinateFrameList.cpp:301
-msgid "{0} cannot be loaded as a coordinate frame list"
-msgstr "{0} を座標フレームリストとして読み込むことができません"
-
-#: CoordinateFrameList.cpp:310 PositionTagGroup.cpp:202
-msgid "Format version {0} is not supported."
-msgstr "フォーマットバージョン{0}はサポートされていません．"
-
-#: FilePathVariableProcessor.cpp:344
-msgid "${{PROJECT_DIR}} of \"{0}\" cannot be expanded."
-msgstr "\"{0}\" の ${{PROJECT_DIR}} は展開できません．"
-
-#: FilePathVariableProcessor.cpp:385
-msgid "The \"{0}\" variable in \"{1}\" is not defined."
-msgstr "\"{1}\" における変数 \"{0}\" は定義されていません．"
-
-#: PositionTagGroup.cpp:196
-msgid "{0} cannot be loaded as a position tag group"
-msgstr "{0} をポジションタググループとして読み込むことができません"
-
-#: PositionTagGroup.cpp:255
-msgid "\"{}\" cannot be opened.\n"
-msgstr "\"{}\" を開くことができません．\n"
-
-#: PositionTagGroup.cpp:273
-msgid "Too many elements at line {0} of \"{1}\".\n"
-msgstr "\"{1}\" の{0}行の要素が多すぎます．\n"
-
-#: PositionTagGroup.cpp:285
-msgid "{0} at line {1} of \"{2}\".\n"
-msgstr "\"{2}\" の{1}行にて{0}．\n"
-
-#: PositionTagGroup.cpp:303
-msgid "Unsupported CSV format is specified.\n"
-msgstr "サポートされていないCSV形式が指定されています．\n"
-
-#: Vector3Seq.cpp:61 MultiVector3Seq.cpp:70
 msgid "The number of elements specified as a 3D vector is invalid."
 msgstr "3Dベクトルとして指定された要素の数が無効です．"
 
-#: Vector3Seq.cpp:100
-msgid "\"{}\" does not have 3 columns for 3d vector elements."
-msgstr "\"{}\" は三次元ベクトルの3要素に対応する列を有していません．"
+msgid "Unable to open file \"{}\"."
+msgstr "ファイル\"{}\"を開けません．"
 
-#: EasyScanner.cpp:217
-msgid "\"{}\" is not found."
-msgstr "\"{}\" が見つかりません．"
-
-#: EasyScanner.cpp:220
-msgid "I/O error in accessing \"{}\"."
-msgstr "\"{}\" へのアクセスにおけるI/Oエラー．"
-
-#: GeneralSeqReader.cpp:15
-msgid "Seq type \"{0}\" cannot be load into {1}."
-msgstr "Seqタイプ\"{0}\"は{1}にロードできません．"
-
-#: GeneralSeqReader.cpp:20
-msgid "The \"hasFrameTime\" parameter is not availabe in format version {}."
-msgstr ""
-"\"hasFrameTime\"パラメータは、フォーマットバージョン{}では使用できません．"
-
-#: GeneralSeqReader.cpp:25
-msgid "The frame rate for importing a timed-frame seq is not specified."
-msgstr "timed-frame seqをインポートするフレームレートが指定されていません．"
-
-#: GeneralSeqReader.cpp:30
-msgid "The \"frames\" key is not found."
-msgstr "\"フレーム\"キーが見つかりません．"
-
-#: GeneralSeqReader.cpp:35
-msgid "The \"frames\" key does not contain any frame data."
-msgstr "\"フレーム\"キーにはフレームデータは含まれていません．"
-
-#: GeneralSeqReader.cpp:40
-msgid "Invaid number of parts is specified"
-msgstr "無効な数が指定されています"
-
-#: GeneralSeqReader.cpp:45
-msgid "Invalid frame size."
-msgstr "無効なフレームサイズ．"
-
-#: PlainSeqFileLoader.cpp:46
-msgid "\"{}\" contains different size columns."
-msgstr "\"{}\"には異なるサイズの列が含まれています．"
-
-#: PlainSeqFileLoader.cpp:52
-msgid "\"{}\": Empty sequence."
-msgstr "\"{}\"：空のシーケンスです．"
-
-#: PlainSeqFileLoader.cpp:65
-msgid "\"{}\": Time values are not arranged."
-msgstr "\"{}\": 時刻値が整列されていません．"
-
-#: ArchiveSession.cpp:100
-msgid "UUID \"{0}\" is a duplicate of the existing ID.\n"
-msgstr "UUID \"{0}\" は既存のIDと重複しています．\n"
-
-#: ObjSceneWriter.cpp:138 ObjSceneWriter.cpp:235
 msgid "\"{0}\" cannot be open. {1}."
 msgstr "\"{0}\" を開くことができません．{1}."
 
-#: ObjSceneWriter.cpp:147
 msgid "Failed to write a scene into \"{0}\"."
 msgstr "シーンを \"{0}\" に書き出すことができませんでした．"
 
-#: EigenArchive.cpp:10
-msgid ""
-"Angle-axis value must have four elements representing the axis and the angle"
-msgstr ""
+msgid "\"{}\" contains different size columns."
+msgstr "\"{}\"には異なるサイズの列が含まれています．"
 
-#: EigenArchive.cpp:16
-msgid "Rotation axis is the zero vector"
-msgstr ""
+msgid "\"{}\": Empty sequence."
+msgstr "\"{}\"：空のシーケンスです．"
 
-#: ValueTree.cpp:87
-msgid "{0} at line {1}, column {2}."
-msgstr "{1}行{2}列にて{0}．"
+msgid "\"{}\": Time values are not arranged."
+msgstr "\"{}\": 時刻値が整列されていません．"
 
-#: ValueTree.cpp:93
-msgid "Error at line {0}, column {1}."
-msgstr "{0}行{1}列にてエラー．"
+msgid "{0} cannot be loaded as a position tag group"
+msgstr "{0} をポジションタググループとして読み込むことができません"
 
-#: ValueTree.cpp:181
-msgid "The value \"{}\" must be an integer value"
-msgstr "値\"{}\"は整数値でなければなりません"
+msgid "Too many elements at line {0} of \"{1}\"."
+msgstr "\"{1}\" の{0}行の要素が多すぎます．"
 
-#: ValueTree.cpp:232 ValueTree.cpp:255
-msgid "The value \"{}\" must be a floating point number"
-msgstr "値 \"{}\" は浮動小数点値でなければなりません"
+msgid "{0} at line {1} of \"{2}\"."
+msgstr "\"{2}\" の{1}行にて{0}．"
 
-#: ValueTree.cpp:301
-msgid "The value \"{}\" must be a boolean value"
-msgstr "値\"{}\"はboolean値でなければなりません"
+msgid "Unsupported CSV format is specified."
+msgstr "サポートされていないCSV形式が指定されています．"
 
-#: ValueTree.cpp:418
-msgid "A {} value must be a scalar value"
-msgstr "値{}はスカラ値でなければなりません"
+msgid "No triangles in \"{1}\"."
+msgstr "\"{1}\"にトライアングルが含まれていません．"
 
-#: ValueTree.cpp:427
-msgid "The value is not a mapping"
-msgstr "値がマッピング型でありません"
+msgid "Unable to load \"{1}\". Its file size is too large."
+msgstr "\"{1}\"を読み込むことができません．ファイルサイズが大きすぎます．"
 
-#: ValueTree.cpp:436
-msgid "The value is not a listing"
-msgstr "値がリスティング型でありません"
-
-#: ValueTree.cpp:684
-msgid "Key \"{}\" is not found in the mapping"
-msgstr "マッピング内でキー\"{}\"がみつかりません"
-
-#: ValueTree.cpp:707
-msgid "A node to insert into a Mapping is a null node"
-msgstr "マッピングに挿入しようとしているノードが空ノードです"
-
-#: SceneLoader.cpp:165
 msgid ""
 "The file format of \"{}\" is unknown because it lacks a file name extension."
 msgstr "\"{}\"は拡張子が無いためファイル形式が不明です．"
 
-#: SceneLoader.cpp:175
 msgid "The file format of \"{}\" is not supported by the scene loader."
 msgstr "\"{}\"のファイル形式はシーンローダでサポートされていません．"
 
-#: STLSceneLoader.cpp:520
-msgid "No triangles in \"{1}\"."
-msgstr "\"{1}\"にトライアングルが含まれていません．"
+msgid "Scene file \"{}\" does not have the \"scene\" node."
+msgstr "シーンファイル \"{}\" は \"scene\" ノードを有していません．"
 
-#: STLSceneLoader.cpp:524
-msgid "Unable to load \"{1}\". Its file size is too large."
-msgstr "\"{1}\"を読み込むことができません．ファイルサイズが大きすぎます．"
+msgid "Scene file \"{}\" is an empty scene."
+msgstr "シーンファイル\"{}\"は空のシーンです．"
+
+msgid "The version of the Choreonoid scene file format is not specified"
+msgstr "Choreonoidシーンファイル形式のバージョンが指定されていません"
+
+msgid "Version {0} of the Choreonoid scene file format is not supported"
+msgstr "Choreonoidシーンファイル形式のバージョン{0}はサポートされていません"
+
+msgid "Radian mode is not supported in Choreonoid scene file format version 2.0"
+msgstr "ラジアンモードはChoreonoidシーンファイル形式バージョン2ではサポートされていません"
+
+msgid "The \"angleUnit\" value must be either \"radian\" or \"degree\""
+msgstr "\"angleUnit\"の値は \"radian\" か \"degree\" のいずれかである必要があります"
+
+msgid "Warning: the node type \"{}\" is not defined. Reading this node has been skipped."
+msgstr "警告：ノードタイプ\"{}\"は定義されていません．このノードの読み込みはスキップされます． "
+
+msgid "The node type \"{}\" is not defined."
+msgstr "ノードタイプ\"{}\"は定義されていません．"
+
+msgid "The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"
+msgstr "ノードタイプ\"{0}\"は親ノードで指定されているタイプ\"{1}\"と異なります"
+
+msgid "A scalar value is not accepted"
+msgstr "スカラ値を使用することはできません"
+
+msgid "Unknown geometry \"{}\""
+msgstr "不明なジオメトリ \"{}\""
+
+msgid "A box cannot be generated with the given parameters."
+msgstr "与えられたパラメータでボックスを生成することはできません．"
+
+msgid "A sphere cannot be generated with the given parameters."
+msgstr "与えられたパラメータで球を生成することはできません．"
+
+msgid "A cylinder cannot be generated with the given parameters."
+msgstr "与えられたパラメータでシリンダを生成することはできません．"
+
+msgid "A cone cannot be generated with the given parameters."
+msgstr "与えられたパラメータで円錐を生成することはできません．"
+
+msgid "A capsule cannot be generated with the given parameters."
+msgstr "与えられたパラメータでカプセルを生成することはできません．"
+
+msgid "A resouce specified as a geometry must be a single mesh"
+msgstr "ジオメトリと指定するリソースは単一のメッシュでなければなりません"
+
+msgid "A resouce specified as a geometry does not have a mesh"
+msgstr "ジオメトリとして指定されているリソースがメッシュを有していません"
+
+msgid "Warning: texture uri \"{0}\" is not valid: {1}"
+msgstr "警告: テクスチャのURL \"{0}\" は有効ではありません: {1}"
+
+msgid "The number of the repeat elements must be two"
+msgstr "repeatの要素は2つでなければなりません"
+
+msgid "Fragment \"{0}\" is not found in \"{1}\"."
+msgstr "フラグメント \"{0}\" は \"{1}\" の中にみつかりません．"
+
+msgid "The \"{0}\" scheme of \"{1}\" is not available"
+msgstr "\"{1}\" の \"{0}\" スキームは利用できません"
+
+msgid "The resource URI \"{0}\" is not valid: {1}"
+msgstr "リソースURI \"{0}\" は有効ではありません: {1}"
+
+msgid "The resource URI \"{}\" is not valid"
+msgstr "リソースURI \"{}\" は有効ではありません"
+
+msgid "YAML resource \"{0}\" cannot be loaded ({1})"
+msgstr "YAMLリソース \"{0}\" は読み込みできません ({1})"
+
+msgid "The resource is not found at URI \"{}\""
+msgstr "URI \"{}\" のリソースがみつかりません"
+
+msgid "Warning: There is an unsupported node."
+msgstr "警告：サポートされていないノードがあります．"
+
+msgid "Warning: {0} unsupported nodes were skipped to output."
+msgstr "警告：サポートされていない{0}のノードの出力をスキップしました．"
+
+msgid "Model file \"{0}\" cannot be replaced with the same format file in the same directory"
+msgstr "モデルファイル \"{0}\" について同一ディレクトリ内の同一形式のファイルには置き換えできません"
+
+msgid "Warning: Failed to replace model file \"{0}\" with \"{1}\". {2}"
+msgstr "警告：モデルファイル  \"{0}\" を \"{1}\" で置き換えることができませんでした. {2}"
+
+msgid "Warning: Failed to replace model file \"{0}\" with \"{1}\"."
+msgstr "警告：モデルファイル  \"{0}\" を \"{1}\" で置き換えることができませんでした."
+
+msgid "VRML file \"{}\" does not have any valid entity."
+msgstr "VRMLファイル \"{}\" には有効なエントリが有りません．"
+
+msgid "{0} at line {1}, column {2}."
+msgstr "{1}行{2}列にて{0}．"
+
+msgid "Error at line {0}, column {1}."
+msgstr "{0}行{1}列にてエラー．"
+
+msgid "The value \"{}\" must be an integer value"
+msgstr "値\"{}\"は整数値でなければなりません"
+
+msgid "The value \"{}\" must be a floating point number"
+msgstr "値 \"{}\" は浮動小数点値でなければなりません"
+
+msgid "The value \"{}\" must be a boolean value"
+msgstr "値\"{}\"はboolean値でなければなりません"
+
+msgid "A {} value must be a scalar value"
+msgstr "値{}はスカラ値でなければなりません"
+
+msgid "The value is not a mapping"
+msgstr "値がマッピング型でありません"
+
+msgid "The value is not a listing"
+msgstr "値がリスティング型でありません"
+
+msgid "Key \"{}\" is not found in the mapping"
+msgstr "マッピング内でキー\"{}\"がみつかりません"
+
+msgid "A node to insert into a Mapping is a null node"
+msgstr "マッピングに挿入しようとしているノードが空ノードです"
+
+msgid "\"{}\" does not have 3 columns for 3d vector elements."
+msgstr "\"{}\" は三次元ベクトルの3要素に対応する列を有していません．"
+
+msgid "An element to merge by the \"<<\" key must be a mapping"
+msgstr "キー\"<<\"によってマージする要素はマッピングでなければなりません"
+
+msgid "A value to merge by the \"<<\" key must be mapping or listing"
+msgstr "キー\"<<\"によってマージする値はマッピングかリスティングでなければなりません"
+
+msgid "Anchor \"{}\" is duplicated"
+msgstr "アンカー\"{}\"は重複しています"
+
+msgid "Scalar value cannot be put on the top-level text position"
+msgstr "スカラ値はテキストのトップレベルに配置できません"
+
+msgid "empty key"
+msgstr "空のキー"
+
+msgid "Anchor \"{}\" is not defined"
+msgstr "ノードタイプ\"{}\"は定義されていません"
+
+msgid "The yaml file does not contains any documents."
+msgstr "YAMLファイルにドキュメントが含まれていません．"
+
+msgid "The yaml file does not contains {}-th document."
+msgstr "YAMLファイルに{}番目のドキュメントが含まれていません．"

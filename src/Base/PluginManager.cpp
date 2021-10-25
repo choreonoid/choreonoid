@@ -705,7 +705,7 @@ void PluginManager::Impl::onLoadPluginTriggered()
     dialog.setWindowTitle(_("Load plugins"));
     dialog.setFileMode(QFileDialog::ExistingFiles);
     dialog.setViewMode(QFileDialog::List);
-    dialog.setLabelText(QFileDialog::Accept, _("Open"));
+    dialog.setLabelText(QFileDialog::Accept, _("Load"));
     dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
 
     QStringList filters;
