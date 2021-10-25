@@ -8,6 +8,7 @@
 #define CNOID_UTIL_GETTEXT_UTIL_H
 
 #include <cnoid/Config>
+#include <string>
 #include "exportdecl.h"
 
 #ifdef CNOID_ENABLE_GETTEXT
@@ -43,13 +44,30 @@ inline const char* getText(const char* domainname, const char* msgid) {
 }
 #endif
 
-CNOID_EXPORT void bindGettextDomain(const char* domainname);
+/**
+   \param moduleName The target module (library or plugin) name.
+   The domain name is based on the module name and is named as "Cnoid" + module name + Choreonoid version suffix.
+   \param customSubDirectory If this string is empty, the default message catalog directory is used
+   to bind the domain. You can use a special directory to customize messages from an application executable
+   by specifying a locale sub directory in the application's share directory.
+   \param useUTF8 Set UTF-8 as the encoding of translated messages.
+   \return domain name
+*/
+CNOID_EXPORT std::string bindModuleTextDomain(
+    const std::string& moduleName, const std::string& customSubDirectory = "", bool useUTF8 = true);
 
-class GettextDomainBinder
+CNOID_EXPORT void setUTF8ToModuleTextDomain(const std::string& moduleName);
+
+/**
+   This function is called from the beginning part of the application main function if necessary.
+*/
+CNOID_EXPORT void useEnglishMessageCatalogForUnsupportedLocale(const std::string& customLabel = "");
+
+class ModuleTextDomainBinder
 {
 public:
-    GettextDomainBinder(const char* domainname){
-        bindGettextDomain(domainname);
+    ModuleTextDomainBinder(const std::string& moduleName){
+        bindModuleTextDomain(moduleName, "", false);
     }
 };
 
@@ -59,7 +77,7 @@ public:
    Implement this once in a shared library to bind a gettext domain.
    The "gettext.h" header must be included before using this macro.
 */
-#define CNOID_BIND_GETTEXT_DOMAN() \
-    namespace { cnoid::GettextDomainBinder cnoidGettextDomainBinder(CNOID_GETTEXT_DOMAIN_NAME); }
+#define CNOID_BIND_MODULE_TEXT_DOMAIN(moduleName) \
+    namespace { cnoid::ModuleTextDomainBinder cnoidModuleTextDomainBinder(#moduleName); }
 
 #endif

@@ -91,10 +91,7 @@ BodyPlugin::BodyPlugin()
 
 bool BodyPlugin::initialize()
 {
-
-#ifdef CNOID_ENABLE_GETTEXT
-    setCnoidBodyTextDomainCodeset();
-#endif
+    setUTF8ToModuleTextDomain("Body");
     
     auto customizerPath = pluginDirPath() / "customizer";
     Body::addCustomizerDirectory(toUTF8(customizerPath.string()));

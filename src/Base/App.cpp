@@ -267,9 +267,7 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
 
     ext = new ExtensionManager("Base", false);
 
-#ifdef CNOID_ENABLE_GETTEXT
-    setCnoidUtilTextDomainCodeset();
-#endif
+    setUTF8ToModuleTextDomain("Util");
 
     mainWindow = MainWindow::initialize(appName, ext);
 

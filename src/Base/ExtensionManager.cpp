@@ -43,9 +43,8 @@ public:
     static set<Impl*> instances;
     static LazyCaller emitSigSystemUpdatedLater;
 
-    Impl(ExtensionManager* self, const std::string& moduleName);
+    Impl(ExtensionManager* self, const std::string& moduleName, bool isPlugin);
     ~Impl();
-    void setVersion(const std::string& version, bool isPlugin);
     deque<PtrHolderBase*>::iterator deleteManagedObject(deque<PtrHolderBase*>::iterator iter);
     void deleteManagedObjects();
     static void emitSigSystemUpdated();
@@ -60,23 +59,17 @@ LazyCaller ExtensionManager::Impl::emitSigSystemUpdatedLater(
 
 ExtensionManager::ExtensionManager(const std::string& moduleName, bool isPlugin)
 {
-    impl = new Impl(this, moduleName);
-    impl->setVersion(CNOID_FULL_VERSION_STRING, isPlugin);
+    impl = new Impl(this, moduleName, isPlugin);
 }
 
 
-ExtensionManager::ExtensionManager(const std::string& moduleName, const std::string& version, bool isPlugin)
-{
-    impl = new Impl(this, moduleName);
-    impl->setVersion(version, isPlugin);
-}
-    
-    
-ExtensionManager::Impl::Impl(ExtensionManager* self, const std::string& moduleName)
+ExtensionManager::Impl::Impl(ExtensionManager* self, const std::string& moduleName, bool isPlugin)
     : self(self),
       moduleName(moduleName)
 {
     instances.insert(this);
+
+    textDomain = bindModuleTextDomain(isPlugin ? (moduleName + "Plugin") : moduleName);
 }
 
 
@@ -144,30 +137,6 @@ OptionManager& ExtensionManager::optionManager()
 {
     static OptionManager optionManager;
     return optionManager;
-}
-
-
-void ExtensionManager::Impl::setVersion(const std::string& version, bool isPlugin)
-{
-    vector<string> v;
-    boost::algorithm::split(v, version, boost::is_any_of("."));
-
-    textDomain = string("Cnoid") + moduleName;
-    if(isPlugin){
-        textDomain += "Plugin";
-    }
-    if(!v.empty()){
-        textDomain += "-";
-        textDomain += v[0];
-        if(v.size() >= 2){
-            textDomain += string(".") + v[1];
-        }
-    }
-    bindGettextDomain(textDomain.c_str());
-
-#ifdef CNOID_ENABLE_GETTEXT
-    bind_textdomain_codeset(textDomain.c_str(), "utf-8");
-#endif
 }
 
 

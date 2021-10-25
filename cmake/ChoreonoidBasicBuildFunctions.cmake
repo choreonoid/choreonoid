@@ -180,8 +180,8 @@ function(add_cnoid_executable)
   choreonoid_add_executable(${ARGV})
 endfunction()
 
-function(choreonoid_make_gettext_mo_files target out_mo_files)
-  set(${out_mo_files} "" PARENT_SCOPE)
+function(choreonoid_make_gettext_mo_files target out_mofiles)
+  set(${out_mofiles} "" PARENT_SCOPE)
   if(NOT CHOREONOID_ENABLE_GETTEXT)
     return()
   endif()
@@ -190,26 +190,52 @@ function(choreonoid_make_gettext_mo_files target out_mo_files)
     get_filename_component(lang ${pofile} NAME_WE)
     set(message_location share/locale/${lang}/LC_MESSAGES)
     file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${message_location})
-    set(version "${CHOREONOID_VERSION_MAJOR}.${CHOREONOID_VERSION_MINOR}")
-    set(mo_file ${PROJECT_BINARY_DIR}/${message_location}/${target}-${version}.mo)
+    set(mofile ${PROJECT_BINARY_DIR}/${message_location}/${target}-${CHOREONOID_VERSION}.mo)
     add_custom_command(
-      OUTPUT ${mo_file}
-      COMMAND ${CHOREONOID_GETTEXT_MSGFMT_EXECUTABLE} -o ${mo_file} ${pofile}
+      OUTPUT ${mofile}
+      COMMAND ${CHOREONOID_GETTEXT_MSGFMT_EXECUTABLE} -o ${mofile} ${pofile}
       DEPENDS ${pofile}
       )
-    list(APPEND mo_files ${mo_file})
-    install(FILES ${mo_file} DESTINATION "share/locale/${lang}/LC_MESSAGES")
+    list(APPEND mo_files ${mofile})
+    install(FILES ${mofile} DESTINATION ${message_location})
   endforeach()
-  set(${out_mo_files} ${mo_files} PARENT_SCOPE)
+  set(${out_mofiles} ${mo_files} PARENT_SCOPE)
 endfunction()
 
 # Deprecated
-function(cnoid_make_gettext_mofiles target out_mo_files)
-  choreonoid_make_gettext_mo_files(${target} ${out_mo_files})
-  set(${out_mo_files} ${${out_mo_files}} PARENT_SCOPE)
+function(cnoid_make_gettext_mofiles target out_mofiles)
+  choreonoid_make_gettext_mo_files(${target} ${out_mofiles})
+  set(${out_mofiles} ${${out_mofiles}} PARENT_SCOPE)
 endfunction()
 
-function(make_gettext_mofiles target out_mo_files)
-  choreonoid_make_gettext_mo_files(${target} ${out_mo_files})
-  set(${out_mo_files} ${${out_mo_files}} PARENT_SCOPE)
+function(make_gettext_mofiles target out_mofiles)
+  choreonoid_make_gettext_mo_files(${target} ${out_mofiles})
+  set(${out_mofiles} ${${out_mofiles}} PARENT_SCOPE)
+endfunction()
+
+function(make_custom_gettext_mofiles custom_label module lang custom_pofile io_mofiles)
+  get_target_property(module_src_dir ${module} SOURCE_DIR)
+  get_filename_component(custom_pofile_dir ${custom_pofile} PATH)
+  set(custom_pofile ${CMAKE_CURRENT_SOURCE_DIR}/${custom_pofile})
+  set(org_pofile ${module_src_dir}/po/${lang}.po)
+  if(EXISTS ${org_pofile})
+    set(pofile ${CMAKE_CURRENT_BINARY_DIR}/${custom_pofile_dir}/${module}-integrated.po)
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${custom_pofile_dir})
+    add_custom_command(
+      OUTPUT ${pofile}
+      COMMAND ${CHOREONOID_GETTEXT_MSGCAT_EXECUTABLE} --use-first -o ${pofile} ${custom_pofile} ${org_pofile}
+      DEPENDS ${org_pofile} ${custom_pofile})
+  else()
+    set(pofile ${custom_pofile})
+  endif()
+  set(message_location ${CHOREONOID_SHARE_SUBDIR}/locale/${custom_label}/${lang}/LC_MESSAGES)
+  set(mofile ${PROJECT_BINARY_DIR}/${message_location}/${module}-${CHOREONOID_VERSION}.mo)
+  file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${message_location})
+  add_custom_command(
+    OUTPUT ${mofile}
+    COMMAND ${CHOREONOID_GETTEXT_MSGFMT_EXECUTABLE} -o ${mofile} ${pofile}
+    DEPENDS ${pofile})
+  install(FILES ${mofile} DESTINATION ${message_location})
+  list(APPEND ${io_mofiles} ${mofile})
+  set(${io_mofiles} ${${io_mofiles}} PARENT_SCOPE)
 endfunction()
