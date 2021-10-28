@@ -60,7 +60,6 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/ItemManager>
-#include <cnoid/CnoidBody>
 #include <fmt/format.h>
 #include "gettext.h"
 

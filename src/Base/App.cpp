@@ -65,7 +65,6 @@
 #include "LayoutSwitcher.h"
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
-#include <cnoid/CnoidUtil>
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/UTF8>
 #include <fmt/format.h>

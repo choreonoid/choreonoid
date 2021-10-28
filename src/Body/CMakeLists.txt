@@ -146,7 +146,6 @@ set(headers
   ControllerIO.h
   SimpleController.h
   exportdecl.h
-  CnoidBody.h
   )
 
 choreonoid_make_gettext_mo_files(${target} mofiles)
