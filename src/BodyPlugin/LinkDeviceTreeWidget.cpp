@@ -66,6 +66,7 @@ public:
     int numberColumnMode;
     bool isLinkItemVisible;
     bool isJointItemVisible;
+    bool isJointListingMode;
     bool isDeviceItemVisible;
     bool isCacheEnabled;
     std::function<bool(Link* link)> visibleLinkPredicate;
@@ -201,7 +202,7 @@ LinkDeviceTreeItem::LinkDeviceTreeItem
 
 LinkDeviceTreeItem::LinkDeviceTreeItem(Link* link, LinkDeviceTreeWidget::Impl* treeImpl)
     : LinkDeviceTreeItem(
-        treeImpl->isJointItemVisible ? link->jointName() : link->name(), treeImpl)
+        treeImpl->isJointListingMode ? link->jointName() : link->name(), treeImpl)
 {
     link_ = link;
     treeImpl->linkIndexToItemMap[link->index()] = this;
@@ -324,6 +325,7 @@ void LinkDeviceTreeWidget::Impl::initialize()
     self->setNumberColumnMode(Index);
     isLinkItemVisible = true;
     isJointItemVisible = false;
+    isJointListingMode = false;
     isDeviceItemVisible = false;
     isCacheEnabled = false;
     
@@ -380,7 +382,7 @@ int LinkDeviceTreeWidget::numberColumnMode() const
 void LinkDeviceTreeWidget::setLinkItemVisible(bool on)
 {
     impl->isLinkItemVisible = on;
-    setNumberColumnMode(Index);
+    impl->isJointListingMode = !impl->isLinkItemVisible && impl->isJointItemVisible;
 }
 
 
@@ -399,7 +401,7 @@ void LinkDeviceTreeWidget::setVisibleLinkPredicate(std::function<bool(Link* link
 void LinkDeviceTreeWidget::setJointItemVisible(bool on)
 {
     impl->isJointItemVisible = on;
-    setNumberColumnMode(Identifier);
+    impl->isJointListingMode = !impl->isLinkItemVisible && impl->isJointItemVisible;
 }
 
 
@@ -796,22 +798,20 @@ void LinkDeviceTreeWidget::Impl::createLinkDeviceList(Body* body)
             devices[device->link()].push_back(device);
         }
     }
-    auto links = body->links();
-    if(numberColumnMode == Identifier || isJointItemVisible){
-        std::stable_sort(links.begin(), links.end(),
-                  [&](Link* l0, Link* l1){
-                      if(l0->jointId() < 0 || l1->jointId() < 0){
-                          return false;
-                      }
-                      return l0->jointId() < l1->jointId();
-                  });
+
+    vector<LinkPtr> links;
+
+    if(!isJointListingMode || numberColumnMode != Identifier){
+        links = body->links();
+    } else {
+        links = body->getIdentifiedJoints();
     }
         
     for(auto& link : links){
         if(visibleLinkPredicate && !visibleLinkPredicate(link)){
             continue;
         }
-        if(isJointItemVisible && link->jointId() < 0){
+        if(isJointListingMode && link->jointId() < 0){
             continue;
         }
         auto linkItem = new LinkDeviceTreeItem(link, this);
@@ -866,8 +866,8 @@ void LinkDeviceTreeWidget::Impl::createLinkDeviceTreeSub
     }
 
     LinkDeviceTreeItem* item = nullptr;
-    
-    if(!isJointItemVisible || link->jointId() >= 0){
+
+    if(!isJointListingMode || link->jointId() >= 0){
 
         item = new LinkDeviceTreeItem(link, this);
         addLinkDeviceTreeItem(item, parentItem);

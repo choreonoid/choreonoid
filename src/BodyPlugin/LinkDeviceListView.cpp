@@ -27,8 +27,8 @@ public:
     ScopedConnection bodySelectionManagerConnection;
 
     Impl(LinkDeviceListView* self);
-    void onElementTypeChanged(int id, bool doUpdate);
-    void onListingModeChanged(int id, bool doUpdate);
+    void onElementTypeChanged(int type, bool doUpdate);
+    void onListingModeChanged(int mode, bool doUpdate);
     void onCurrentBodySelectionChanged(BodyItem* bodyItem, Link* link);
     void onTreeWidgetLinkSelectionChanged();
     bool storeState(Archive& archive);
@@ -87,10 +87,10 @@ LinkDeviceListView::Impl::Impl(LinkDeviceListView* self)
     needToInitializeTreeWidgetElementTypeAndListingMode = true;
 
     elementTypeCombo.sigCurrentIndexChanged().connect(
-        [&](int id){ onElementTypeChanged(id, true); });
+        [&](int index){ onElementTypeChanged(index, true); });
 
     listingModeCombo.sigCurrentIndexChanged().connect(
-        [&](int id){ onListingModeChanged(id, true); });
+        [&](int index){ onListingModeChanged(index, true); });
 
     treeWidgetConnection =
         treeWidget.sigLinkSelectionChanged().connect(
@@ -125,18 +125,24 @@ void LinkDeviceListView::onDeactivated()
 }
 
 
-void LinkDeviceListView::Impl::onElementTypeChanged(int id, bool doUpdate)
+void LinkDeviceListView::Impl::onElementTypeChanged(int type, bool doUpdate)
 {
-    if(id == DEVICE && listingModeCombo.currentIndex() != LinkDeviceTreeWidget::List){
+    if(type == DEVICE && listingModeCombo.currentIndex() != LinkDeviceTreeWidget::List){
         listingModeCombo.blockSignals(true);
         listingModeCombo.setCurrentIndex(LinkDeviceTreeWidget::List);
         onListingModeChanged(LinkDeviceTreeWidget::List, false);
         listingModeCombo.blockSignals(false);
     }
     
-    treeWidget.setLinkItemVisible(id == ALL || id == LINK);
-    treeWidget.setJointItemVisible(id == JOINT);
-    treeWidget.setDeviceItemVisible(id == ALL || id == DEVICE);
+    treeWidget.setLinkItemVisible(type == ALL || type == LINK);
+    treeWidget.setJointItemVisible(type == JOINT);
+    treeWidget.setDeviceItemVisible(type == ALL || type == DEVICE);
+
+    if(type == LINK){
+        treeWidget.setNumberColumnMode(LinkDeviceTreeWidget::Index);
+    } else if(type != ALL){
+        treeWidget.setNumberColumnMode(LinkDeviceTreeWidget::Identifier);
+    }
 
     if(doUpdate){
         treeWidget.updateTreeItems();
@@ -144,11 +150,11 @@ void LinkDeviceListView::Impl::onElementTypeChanged(int id, bool doUpdate)
 }
 
 
-void LinkDeviceListView::Impl::onListingModeChanged(int id, bool doUpdate)
+void LinkDeviceListView::Impl::onListingModeChanged(int mode, bool doUpdate)
 {
-    treeWidget.setListingMode(id);
+    treeWidget.setListingMode(mode);
 
-    if(id != LinkDeviceTreeWidget::List){
+    if(mode != LinkDeviceTreeWidget::List){
         if(elementTypeCombo.currentIndex() == DEVICE){
             elementTypeCombo.blockSignals(true);
             elementTypeCombo.setCurrentIndex(ALL);

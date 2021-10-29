@@ -57,6 +57,7 @@ public:
     void onKinematicStateChanged();
     void onExtraJointStateChanged();
     void updateView();
+    void updateJointItem(int index, LinkDeviceTreeItem* item, const vector<int>& columnMap);
 };
 
 }
@@ -82,7 +83,8 @@ JointStateView::Impl::Impl(JointStateView* self)
     QVBoxLayout* vbox = new QVBoxLayout();
     vbox->setSpacing(0);
 
-    treeWidget.setVisibleLinkPredicate([](Link* link){ return link->jointId() >= 0; });
+    treeWidget.setLinkItemVisible(false);
+    treeWidget.setJointItemVisible(true);
     treeWidget.setNumberColumnMode(LinkDeviceTreeWidget::Identifier);
     treeWidget.setSelectionMode(QAbstractItemView::NoSelection);
     treeWidget.setAlternatingRowColors(true);
@@ -252,10 +254,11 @@ void JointStateView::Impl::updateJointList()
         for(int i = 0; i < currentBody->numJoints(); ++i){
             Link* joint = currentBody->joint(i);
             if(joint){
-                LinkDeviceTreeItem* item = treeWidget.itemOfLink(joint->index());
-                item->setTextAlignment(nameColumn, Qt::AlignHCenter);
-                item->setTextAlignment(qColumn, Qt::AlignRight);
-                item->setTextAlignment(uColumn, Qt::AlignRight);
+                if(auto item = treeWidget.itemOfLink(joint->index())){
+                    item->setTextAlignment(nameColumn, Qt::AlignHCenter);
+                    item->setTextAlignment(qColumn, Qt::AlignRight);
+                    item->setTextAlignment(uColumn, Qt::AlignRight);
+                }
             }
         }
 
@@ -283,8 +286,9 @@ void JointStateView::Impl::updateJointList()
                     for(int k=0; k < nj; ++k){
                         Link* joint = currentBody->joint(k);
                         if(joint){
-                            LinkDeviceTreeItem* item = treeWidget.itemOfLink(joint->index());
-                            item->setTextAlignment(column, alignment);
+                            if(auto item = treeWidget.itemOfLink(joint->index())){
+                                item->setTextAlignment(column, alignment);
+                            }
                         }
                     }
                 }
@@ -322,13 +326,14 @@ void JointStateView::Impl::updateView()
         for(int i = 0; i < currentBody->numJoints(); ++i){
             Link* joint = currentBody->joint(i);
             if(joint){
-                LinkDeviceTreeItem* item = treeWidget.itemOfLink(joint->index());
-                if(joint->jointType() == Link::ROTATIONAL_JOINT){
-                    item->setText(qColumn, QString::number(degree(joint->q()), 'f', 2));
-                } else {
-                    item->setText(qColumn, QString::number(joint->q(), 'f', 2));
+                if(auto item = treeWidget.itemOfLink(joint->index())){
+                    if(joint->jointType() == Link::ROTATIONAL_JOINT){
+                        item->setText(qColumn, QString::number(degree(joint->q()), 'f', 2));
+                    } else {
+                        item->setText(qColumn, QString::number(joint->q(), 'f', 2));
+                    }
+                    item->setText(uColumn, QString::number(joint->u(), 'f', 2));
                 }
-                item->setText(uColumn, QString::number(joint->u(), 'f', 2));
             }
         }
         isKinematicStateChanged = false;
@@ -341,55 +346,61 @@ void JointStateView::Impl::updateView()
             jointState.clear();
             accessor.getJointState(jointState);
             const int n = jointState.rowSize();
-            const int m = jointState.colSize();
             for(int j=0; j < n; ++j){
-                Link* joint = currentBody->joint(j);
-                Array2D<ExtraBodyStateAccessor::Value>::Row js = jointState.row(j);
-                if(joint){
-                    LinkDeviceTreeItem* item = treeWidget.itemOfLink(joint->index());
-                    for(int k=0; k < m; ++k){
-                        bool isValid = true;
-                        const int column = columnMap[k];
-                        const ExtraBodyStateAccessor::Value& v = js[k];
-                        switch(v.which()){
-                        case ExtraBodyStateAccessor::BOOL:
-                            item->setText(column, v.getBool() ? _("ON") : _("OFF"));
-                            break;
-                        case ExtraBodyStateAccessor::INT:
-                            item->setText(column, QString::number(v.getInt()));
-                            break;
-                        case ExtraBodyStateAccessor::DOUBLE:
-                            item->setText(column, QString::number(v.getDouble()));
-                            break;
-                        case ExtraBodyStateAccessor::ANGLE:
-                            item->setText(column, QString::number(degree(v.getAngle()), 'f', 1));
-                            break;
-                        case ExtraBodyStateAccessor::STRING:
-                            item->setText(column, v.getString().c_str());
-                            break;
-                            //case ExtraBodyStateAccessor::VECTOR2:
-                        case ExtraBodyStateAccessor::VECTOR3:
-                        case ExtraBodyStateAccessor::VECTORX:
-                            item->setText(column, "...");
-                            break;
-                        default:
-                            item->setText(column, "");
-                            isValid = false;
-                            break;
-                        }
-                        if(isValid){
-                            const int attr = v.attribute();
-                            if(attr == ExtraBodyStateAccessor::NORMAL){
-                                item->setData(column, Qt::ForegroundRole, QVariant());
-                            } else if(attr | ExtraBodyStateAccessor::WARNING){
-                                item->setData(column, Qt::ForegroundRole, QBrush(Qt::red));
-                            }
-                        }
+                if(auto joint = currentBody->joint(j)){
+                    if(auto item = treeWidget.itemOfLink(joint->index())){
+                        updateJointItem(j, item, columnMap);
                     }
                 }
             }
         }
         isExtraJointStateChanged = false;
+    }
+}
+
+
+void JointStateView::Impl::updateJointItem(int index, LinkDeviceTreeItem* item, const vector<int>& columnMap)
+{
+    auto js = jointState.row(index);
+    const int n = jointState.colSize();
+    for(int i=0; i < n; ++i){
+        bool isValid = true;
+        const int column = columnMap[i];
+        const ExtraBodyStateAccessor::Value& v = js[i];
+        switch(v.which()){
+        case ExtraBodyStateAccessor::BOOL:
+            item->setText(column, v.getBool() ? _("ON") : _("OFF"));
+            break;
+        case ExtraBodyStateAccessor::INT:
+            item->setText(column, QString::number(v.getInt()));
+            break;
+        case ExtraBodyStateAccessor::DOUBLE:
+            item->setText(column, QString::number(v.getDouble()));
+            break;
+        case ExtraBodyStateAccessor::ANGLE:
+            item->setText(column, QString::number(degree(v.getAngle()), 'f', 1));
+            break;
+        case ExtraBodyStateAccessor::STRING:
+            item->setText(column, v.getString().c_str());
+            break;
+            //case ExtraBodyStateAccessor::VECTOR2:
+        case ExtraBodyStateAccessor::VECTOR3:
+        case ExtraBodyStateAccessor::VECTORX:
+            item->setText(column, "...");
+            break;
+        default:
+            item->setText(column, "");
+            isValid = false;
+            break;
+        }
+        if(isValid){
+            const int attr = v.attribute();
+            if(attr == ExtraBodyStateAccessor::NORMAL){
+                item->setData(column, Qt::ForegroundRole, QVariant());
+            } else if(attr | ExtraBodyStateAccessor::WARNING){
+                item->setData(column, Qt::ForegroundRole, QBrush(Qt::red));
+            }
+        }
     }
 }
 
