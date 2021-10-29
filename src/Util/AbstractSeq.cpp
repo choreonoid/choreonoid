@@ -111,6 +111,12 @@ int AbstractSeq::getOffsetTimeFrame() const
 }
 
 
+void AbstractSeq::setOffsetTimeFrame(int frame)
+{
+    setOffsetTime(frame / getFrameRate());
+}
+
+
 double AbstractSeq::getTimeLength() const
 {
     double r = getFrameRate();

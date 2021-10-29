@@ -49,7 +49,8 @@ public:
 
     virtual double getOffsetTime() const = 0;
     virtual void setOffsetTime(double time) = 0;
-    int getOffsetTimeFrame() const;
+    virtual int getOffsetTimeFrame() const;
+    virtual void setOffsetTimeFrame(int offset);
     
     virtual int getNumFrames() const = 0;
     virtual void setNumFrames(int n, bool clearNewElements = false) = 0;
