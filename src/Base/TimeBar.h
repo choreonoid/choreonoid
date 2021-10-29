@@ -35,6 +35,7 @@ public:
     inline double time() const { return time_; }
         
     bool setTime(double time);
+    void refresh();
 
     double realPlaybackTime() const;
 

@@ -183,8 +183,6 @@ public:
 
     virtual void timerEvent(QTimerEvent* event);
         
-    void onRefreshButtonClicked();
-
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 
@@ -286,7 +284,7 @@ TimeBar::Impl::Impl(TimeBar* self)
     stopResumeButton->sigClicked().connect([&](){ onResumeActivated(); });
 
     self->addButton(QIcon(":/Base/icon/refresh.svg"), _("Refresh state at the current time"))
-        ->sigClicked().connect([&](){ onRefreshButtonClicked(); });
+        ->sigClicked().connect([this](){ this->self->refresh(); });
     
     timeSpin = new DoubleSpinBox();
     timeSpin->setAlignment(Qt::AlignCenter);
@@ -720,6 +718,14 @@ bool TimeBar::Impl::setTime(double time, bool calledFromPlaybackLoop, QWidget* c
 }
 
 
+void TimeBar::refresh()
+{
+    if(!impl->isDoingPlayback){
+        impl->setTime(time_, false);
+    }
+}    
+
+
 int TimeBar::startOngoingTimeUpdate(double time)
 {
     return impl->startOngoingTimeUpdate(time);
@@ -810,14 +816,6 @@ void TimeBar::Impl::onTimeRangeSpinsChanged()
 void TimeBar::Impl::onFrameRateSpinChanged(int value)
 {
     setFrameRate(config.frameRateSpin.value());
-}
-
-
-void TimeBar::Impl::onRefreshButtonClicked()
-{
-    if(!isDoingPlayback){
-        setTime(self->time_, false);
-    }
 }
 
 
