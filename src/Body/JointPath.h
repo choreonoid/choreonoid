@@ -67,7 +67,7 @@ public:
         return (index >= numUpwardJointConnections);
     }
 
-    const std::vector<Link*>& joints() const { return joints_; }
+    const std::vector<LinkPtr>& joints() const { return joints_; }
 
     typedef LinkTraverse::iterator iterator;
     typedef LinkTraverse::const_iterator const_iterator;
@@ -168,7 +168,7 @@ private:
     NumericalIK* getOrCreateNumericalIK();
 
     LinkPath linkPath_;
-    std::vector<Link*> joints_;
+    std::vector<LinkPtr> joints_;
     std::shared_ptr<LinkTraverse> remainingLinkTraverse;
     NumericalIK* numericalIK;
     int numUpwardJointConnections;

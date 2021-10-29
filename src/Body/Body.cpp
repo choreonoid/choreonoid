@@ -403,6 +403,15 @@ void Body::resetInfo(Mapping* info)
 }
 
 
+std::vector<LinkPtr> Body::getIdentifiedJoints() const
+{
+    std::vector<LinkPtr> identified;
+    identified.reserve(numActualJoints);
+    std::copy(jointIdToLinkArray.begin(), jointIdToLinkArray.end(), back_inserter(identified));
+    return identified;
+}
+
+
 void Body::addDevice(Device* device, Link* link)
 {
     device->setLink(link);

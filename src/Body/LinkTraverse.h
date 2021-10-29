@@ -7,6 +7,7 @@
 #ifndef CNOID_BODY_LINK_TRAVERSE_H
 #define CNOID_BODY_LINK_TRAVERSE_H
 
+#include "Link.h"
 #include <vector>
 #include "exportdecl.h"
 
@@ -17,7 +18,7 @@ class Link;
 class CNOID_EXPORT LinkTraverse
 {
 public:
-    typedef std::vector<Link*> container;
+    typedef std::vector<LinkPtr> container;
     
     LinkTraverse();
     LinkTraverse(int size);
@@ -61,7 +62,7 @@ public:
         return links_[index];
     }
 
-    const std::vector<Link*>& links() const { return links_; }
+    const std::vector<LinkPtr>& links() const { return links_; }
 
     typedef container::iterator iterator;
     typedef container::const_iterator const_iterator;
@@ -83,7 +84,7 @@ public:
     void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false) const;
 
 protected:
-    std::vector<Link*> links_;
+    std::vector<LinkPtr> links_;
     int numUpwardConnections;
 
 private:

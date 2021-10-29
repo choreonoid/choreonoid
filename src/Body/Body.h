@@ -94,7 +94,7 @@ public:
         return linkTraverse_;
     }
 
-    const std::vector<Link*>& links() const {
+    const std::vector<LinkPtr>& links() const {
         return linkTraverse_.links();
     }
     
@@ -169,6 +169,8 @@ public:
     }
     
     const std::vector<LinkPtr>& allJoints() const { return jointIdToLinkArray; }
+
+    std::vector<LinkPtr> getIdentifiedJoints() const;
 
     int numDevices() const {
         return static_cast<int>(devices_.size());

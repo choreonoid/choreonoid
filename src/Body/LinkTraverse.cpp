@@ -5,7 +5,6 @@
 */
   
 #include "LinkTraverse.h"
-#include "Link.h"
 
 using namespace std;
 using namespace cnoid;
