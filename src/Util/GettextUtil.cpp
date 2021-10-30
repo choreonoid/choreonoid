@@ -65,14 +65,15 @@ bool updateLanguageSymbolsOfCurrentLocale()
         }
     }
 #else
-    string locale(getenv("LANG"));
-    if(!locale.empty()){
+    if(auto locale = getenv("LANG")){
         langSymbol1 = locale;
-        smatch match;
-        if(regex_match(langSymbol1, match, regex("^(.+)_(.+)\\.(.+)$")) ||
-           regex_match(langSymbol1, match, regex("^(.+)_(.+)$"))){
-            langSymbol1 = match.str(1);
-            langSymbol2 = langSymbol1 + "_" + match.str(2);
+        if(!langSymbol1.empty()){
+            smatch match;
+            if(regex_match(langSymbol1, match, regex("^(.+)_(.+)\\.(.+)$")) ||
+               regex_match(langSymbol1, match, regex("^(.+)_(.+)$"))){
+                langSymbol1 = match.str(1);
+                langSymbol2 = langSymbol1 + "_" + match.str(2);
+            }
         }
     }
 #endif
