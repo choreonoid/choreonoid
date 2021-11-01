@@ -63,6 +63,8 @@ CNOID_EXPORT void setUTF8ToModuleTextDomain(const std::string& moduleName);
 */
 CNOID_EXPORT void useEnglishMessageCatalogForUnsupportedLocale(const std::string& customLabel = "");
 
+CNOID_EXPORT bool checkCurrentLocaleLanguageSupport();
+
 class ModuleTextDomainBinder
 {
 public:

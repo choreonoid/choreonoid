@@ -70,12 +70,14 @@
 #include <fmt/format.h>
 #include <Eigen/Core>
 #include <QApplication>
+#include <QTranslator>
 #include <QTextCodec>
 #include <QSurfaceFormat>
 #include <QTextStream>
 #include <QFile>
 #include <QStyleFactory>
 #include <QThread>
+#include <QLibraryInfo>
 #include <iostream>
 #include <csignal>
 #include <cstdlib>
@@ -132,6 +134,7 @@ public:
     LayoutSwitcher* layoutSwitcher;
     string appName;
     string vendorName;
+    QTranslator translator;
     DescriptionDialog* descriptionDialog;
     bool doQuit;
     int returnCode;
@@ -256,9 +259,16 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
 #endif
 
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+
+    if(checkCurrentLocaleLanguageSupport()){
+        translator.load(
+            "qt_" + QLocale::system().name(),
+            QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+        qapplication->installTranslator(&translator);
+    }
+
     qapplication->setApplicationName(appName);
     qapplication->setOrganizationName(vendorName);
-
     qapplication->setWindowIcon(QIcon(":/Base/icon/choreonoid.svg"));
 
     FilePathVariableProcessor::systemInstance()->setUserVariables(
@@ -372,7 +382,6 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     */
     // SetConsoleCtrlHandler(consoleCtrlHandler, TRUE);
 #endif
-
 }
 
 

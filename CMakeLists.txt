@@ -539,6 +539,19 @@ if(ENABLE_GUI)
     install(DIRECTORY ${_qt5Core_install_prefix}/plugins/imageformats DESTINATION bin FILES_MATCHING PATTERN "*.dll")
     install(DIRECTORY ${_qt5Core_install_prefix}/plugins/styles DESTINATION bin FILES_MATCHING PATTERN "*.dll")
   endif()
+
+  function(install_qt_message_files_for_languages)
+    if(MSVC)
+      foreach(lang ${ARGV})
+	install(
+	  DIRECTORY ${_qt5Core_install_prefix}/translations
+	  DESTINATION bin
+	  FILES_MATCHING PATTERN "*_${lang}.qm")
+      endforeach()
+    endif()
+  endfunction()
+  # Install Japanese messages by default
+  install_qt_message_files_for_languages(ja)
 endif()
 
 # Assimp

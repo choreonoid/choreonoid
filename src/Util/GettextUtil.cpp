@@ -32,6 +32,8 @@ filesystem::path mainMessageCatalogDir;
 filesystem::path customMessageCatalogBaseDir;
 string langSymbol1;
 string langSymbol2;
+bool isCurrentLocaleLanguageSupportChecked = false;
+bool isCurrentLocaleLanguageSupported = false;
 
 
 filesystem::path& getOrCreateMainMessageCatalogDir()
@@ -79,6 +81,40 @@ bool updateLanguageSymbolsOfCurrentLocale()
 #endif
 
     return !langSymbol1.empty();
+}
+
+
+bool checkCurrentLocaleLanguageSupport_(const std::string& customLabel)
+{
+#ifndef CNOID_ENABLE_GETTEXT
+    return false;
+#endif
+    
+    if(isCurrentLocaleLanguageSupportChecked){
+        return isCurrentLocaleLanguageSupported;
+    }
+        
+    updateLanguageSymbolsOfCurrentLocale();
+
+    if(!langSymbol1.empty()){
+        filesystem::path& mmcDir = getOrCreateMainMessageCatalogDir();
+        if(filesystem::is_directory(mmcDir / langSymbol1)){
+            isCurrentLocaleLanguageSupported = true;
+        } else if(!langSymbol2.empty() && filesystem::is_directory(mmcDir / langSymbol2)){
+            isCurrentLocaleLanguageSupported = true;
+        } else if(!customLabel.empty()){
+            filesystem::path cmcDir = getOrCreateCustomMessageCatalogBaseDir() / customLabel;
+            if(filesystem::is_directory(cmcDir / langSymbol1)){
+                isCurrentLocaleLanguageSupported = true;
+            } else if(!langSymbol2.empty() && filesystem::is_directory(cmcDir / langSymbol2)){
+                isCurrentLocaleLanguageSupported = true;
+            }
+        }
+    }
+
+    isCurrentLocaleLanguageSupportChecked = true;
+
+    return isCurrentLocaleLanguageSupported;
 }
 
 }
@@ -163,38 +199,32 @@ void setUTF8ToModuleTextDomain(const std::string& moduleName)
 }
 
 
+bool checkCurrentLocaleLanguageSupport()
+{
+    return checkCurrentLocaleLanguageSupport_("");
+}
+
+
 void useEnglishMessageCatalogForUnsupportedLocale(const std::string& customLabel)
 {
 #ifdef CNOID_ENABLE_GETTEXT
 
-    updateLanguageSymbolsOfCurrentLocale();
-
-    bool supported = false;
-
-    if(!langSymbol1.empty()){
-        filesystem::path& mmcDir = getOrCreateMainMessageCatalogDir();
-        if(filesystem::is_directory(mmcDir / langSymbol1)){
-            supported = true;
-        } else if(!langSymbol2.empty() && filesystem::is_directory(mmcDir / langSymbol2)){
-            supported = true;
-        } else if(!customLabel.empty()){
-            filesystem::path cmcDir = getOrCreateCustomMessageCatalogBaseDir() / customLabel;
-            if(filesystem::is_directory(cmcDir / langSymbol1)){
-                supported = true;
-            } else if(!langSymbol2.empty() && filesystem::is_directory(cmcDir / langSymbol2)){
-                supported = true;
-            }
-        }
-        if(!supported){
-            // Set the locale for gettext to English (United States) 
+    /**
+       Reset the previous checking because the custom label may be changed.
+       Basically, this function must be called first in the main function
+       before using the checkCurrentLocaleLanguageSupport function.
+    */
+    isCurrentLocaleLanguageSupportChecked = false;
+    
+    if(!checkCurrentLocaleLanguageSupport_(customLabel)){
+        // Set the locale for gettext to English (United States) 
 #ifdef _WIN32
-            SetThreadLocale(0x0409);
+        SetThreadLocale(0x0409);
 #else
-            setenv("LANG", "en_US.utf8", 1);
+        setenv("LANG", "en_US.utf8", 1);
 #endif
-            langSymbol1 = "en";
-            langSymbol2 = "en_US";
-        }
+        langSymbol1 = "en";
+        langSymbol2 = "en_US";
     }
 
 #endif
