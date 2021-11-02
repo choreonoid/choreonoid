@@ -18,8 +18,10 @@ if(BUILD_CHOREONOID_EXECUTABLE)
       set_target_properties(choreonoid PROPERTIES WIN32_EXECUTABLE true)
     endif()
   endif()
-  
-  install(FILES choreonoid.1 DESTINATION share/man/man1)
+
+  if(UNIX)
+    install(FILES choreonoid.1 DESTINATION share/man/man1)
+  endif()
 endif()
 
 
