@@ -26,7 +26,10 @@ public:
 #endif
 
     ~App();
-        
+
+    // Optional setting
+    void setIcon(const char* filename);
+
     void initialize(const char* appName, const char* vendorName, const char* pluginPathList = nullptr);
     int exec();
 

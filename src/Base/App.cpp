@@ -134,6 +134,7 @@ public:
     LayoutSwitcher* layoutSwitcher;
     string appName;
     string vendorName;
+    const char* iconFilename;
     QTranslator translator;
     DescriptionDialog* descriptionDialog;
     bool doQuit;
@@ -200,10 +201,20 @@ App::Impl::Impl(App* self, int& argc, char** argv)
 {
     instance_ = self;
     qapplication = nullptr;
+    iconFilename = nullptr;
     mainWindow = nullptr;
     descriptionDialog = nullptr;
     doQuit = false;
     returnCode = 0;
+}
+
+
+void App::setIcon(const char* filename)
+{
+    impl->iconFilename = filename;
+    if(impl->qapplication){
+        impl->qapplication->setWindowIcon(QIcon(filename));
+    }
 }
 
 
@@ -269,7 +280,8 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
 
     qapplication->setApplicationName(appName);
     qapplication->setOrganizationName(vendorName);
-    qapplication->setWindowIcon(QIcon(":/Base/icon/choreonoid.svg"));
+    qapplication->setWindowIcon(
+        QIcon(iconFilename ? iconFilename : ":/Base/icon/choreonoid.svg"));
 
     FilePathVariableProcessor::systemInstance()->setUserVariables(
         AppConfig::archive()->openMapping("pathVariables"));
