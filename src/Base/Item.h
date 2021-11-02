@@ -36,23 +36,14 @@ protected:
 public:
     enum Attribute {
         /**
-           This attribute is set if the item is basically loaded from a file and the file does not
-           need to be modified by user operations on the item.
-           In that case, an item inherits the information on the original file when it is duplicated
-           from an existing item, and the information is stored as item data without confirmation
-           when the project is saved.
-        */
-        FileImmutable = 1 << 0,
-        
-        /**
            This attribute is set if the role of the item is specified by the system and it works
            with other items at a specific position in the item tree.
            If the item has this attribute, changing the name or position of the item, or removing the item,
            cannot be done interactively by a user on the item tree view.
         */
-        Attached = 1 << 1,
+        Attached = 1 << 0,
 
-        SubItemAdditionalAttribute = 1 << 2,
+        SubItemAdditionalAttribute = 1 << 1,
         
         /**
            This attribute is set if the item is a part of a composite item and is not the main (top) item of it.
@@ -69,18 +60,34 @@ public:
            As a specific effect of this attribute, the operation of copying an instance is forbidden
            to a user on the item tree view.
         */
-        Unique = 1 << 3,
+        Unique = 1 << 2,
 
         /**
            This attribute is set if the item is temporarily generated item.
            An item with this attribute is not stored or restored when a project is saved or loaded.
         */
-        Temporal = 1 << 4,
+        Temporal = 1 << 3,
 
+        /**
+           This attribute is set if the item is a built-in type item, which is automatically created and
+           managed by a Choreonoid application, If there are no items other than built-in items, the
+           project is recognized as empty even though there are such built-in items.
+         */
+        Builtin = 1 << 4,
+
+        /**
+           This attribute is set if the item is basically loaded from a file and the file does not
+           need to be modified by user operations on the item.
+           In that case, an item inherits the information on the original file when it is duplicated
+           from an existing item, and the information is stored as item data without confirmation
+           when the project is saved.
+        */
+        FileImmutable = 1 << 5,
+        
         /**
            This attribute is set to enable the reloading function for this item.
         */
-        Reloadable = 1 << 5,
+        Reloadable = 1 << 6,
 
         // deprecated
         SUB_ITEM = SubItem,
@@ -450,6 +457,8 @@ public:
 
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
+    virtual void setConsistentWithArchive(bool isConsistent);
+    virtual bool checkConsistencyWithArchive();
 
 protected:
 

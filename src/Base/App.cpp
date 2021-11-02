@@ -100,10 +100,15 @@ Signal<void()> sigExecutionStarted_;
 Signal<void()> sigAboutToQuit_;
 
 bool isTestMode = false;
+bool ctrl_c_pressed = false;
 
 void onCtrl_C_Input(int)
 {
-    callLater([](){ MainWindow::instance()->close(); });
+    callLater(
+        [](){
+            ctrl_c_pressed = true;
+            MainWindow::instance()->close();
+        });
 }
 
 #ifdef Q_OS_WIN32
@@ -300,8 +305,8 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     
     MessageView::initializeClass(ext);
     messageView = MessageView::instance();
-    RootItem::initializeClass(ext);
     ProjectManager::initializeClass(ext);
+    RootItem::initializeClass(ext);
     UnifiedEditHistory::initializeClass(ext);
     UnifiedEditHistoryView::initializeClass(ext);
     ItemEditRecordManager::initializeClass(ext);
@@ -476,8 +481,12 @@ int App::Impl::exec()
 bool App::Impl::eventFilter(QObject* watched, QEvent* event)
 {
     if(watched == mainWindow && event->type() == QEvent::Close){
-        onMainWindowCloseEvent();
-        event->accept();
+        if(ctrl_c_pressed || ProjectManager::instance()->tryToCloseProject()){
+            onMainWindowCloseEvent();
+            event->accept();
+        } else {
+            event->ignore();
+        }
         return true;
     }
     return false;

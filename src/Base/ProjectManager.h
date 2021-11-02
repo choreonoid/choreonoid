@@ -42,10 +42,13 @@ public:
     
     void loadBuiltinProject(const std::string& resourceFile, Item* parentItem = nullptr);
     bool isLoadingProject() const;
-    void saveProject(const std::string& filename, Item* item = nullptr);
-    void overwriteCurrentProject();
-    std::string currentProjectFile() const;
-    std::string currentProjectDirectory() const;
+    bool saveProject(const std::string& filename, Item* item = nullptr);
+    bool overwriteCurrentProject();
+    bool tryToCloseProject();
+
+    const std::string& currentProjectName() const;
+    const std::string& currentProjectFile() const;
+    const std::string& currentProjectDirectory() const;
     void setCurrentProjectName(const std::string& filename);
 
     SignalProxy<void(int recursiveLevel)> sigProjectAboutToBeLoaded();

@@ -100,6 +100,7 @@ public:
     MappingPtr fileOptions;
     std::time_t fileModificationTime;
     bool isConsistentWithFile;
+    bool isConsistentWithArchive;
 
     Impl(Item* self);
     Impl(Item* self, const Impl& org);
@@ -202,6 +203,8 @@ void Item::Impl::initialize()
 
     isConsistentWithFile = false;
     fileModificationTime = 0;
+    
+    isConsistentWithArchive = false;
 }
 
 
@@ -256,6 +259,8 @@ bool Item::assign(const Item* srcItem)
     bool assigned = doAssign(srcItem);
 
     if(assigned){
+        impl->isConsistentWithArchive = false;
+        
         impl->assignAddons(srcItem);
  
         RootItem* rootItem = findRootItem();
@@ -361,6 +366,7 @@ bool Item::setName(const std::string& name)
     if(name != name_){
         string oldName(name_);
         name_ = name;
+        impl->isConsistentWithArchive = false;
         impl->notifyNameChange(oldName);
     }
     return true;
@@ -542,6 +548,8 @@ void Item::setChecked(int checkId, bool on)
     bool current = impl->checkStates[checkId];
     
     if(on != current){
+
+        impl->isConsistentWithArchive = false;
 
         if(!root){
             root = findRootItem();
@@ -1359,6 +1367,7 @@ bool Item::Impl::traverse(Item* item, const std::function<bool(Item*)>& pred)
 
 void Item::notifyUpdate()
 {
+    impl->isConsistentWithArchive = false;
     impl->sigUpdated();
 }
 
@@ -1714,4 +1723,19 @@ bool Item::store(Archive& archive)
 bool Item::restore(const Archive& archive)
 {
     return true;
+}
+
+
+void Item::setConsistentWithArchive(bool isConsistent)
+{
+    impl->isConsistentWithArchive = isConsistent;
+}
+
+
+bool Item::checkConsistencyWithArchive()
+{
+    if(hasAttribute(SubItem) || hasAttribute(Temporal)){
+        return true;
+    }
+    return impl->isConsistentWithArchive;
 }

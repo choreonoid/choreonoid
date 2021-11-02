@@ -149,10 +149,13 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
     }
 
     if(item->isSubItem()){
-        archive->write("isSubItem", true);
+        archive->write("is_sub_item", true);
     } else {
         archive->write("plugin", pluginName);
         archive->write("class", className);
+        if(item->hasAttribute(Item::Builtin)){
+            archive->write("is_builtin_item", true);
+        }
         if(item->hasAttribute(Item::Attached)){
             archive->write("is_attached_item", true);
         }
@@ -169,6 +172,8 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
         }
         storeAddons(*archive, item);
     }
+
+    item->setConsistentWithArchive(true);
 
     if(subProjectItem && !subProjectItem->isSavingSubProject()){
         return archive;
@@ -321,7 +326,7 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
 {
     archive.read("name", itemName);
 
-    const bool isSubItem = archive.get("isSubItem", false);
+    const bool isSubItem = archive.get({ "is_sub_item", "isSubItem" }, false);
     if(isSubItem){
         if(itemName.empty()){
             mv->putln(_("The archive has an empty-name sub item, which cannot be processed."), MessageView::Error);
@@ -357,13 +362,17 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
 
     ++numArchivedItems;
         
-    item->setName(itemName);
     io_isRootItem = bool(dynamic_pointer_cast<RootItem>(item));
     if(io_isRootItem){
         item = parentItem;
         --numArchivedItems;
 
     } else {
+        item->setName(itemName);
+
+        if(archive.get("is_builtin_item", false)){
+            item->setAttribute(Item::Builtin);
+        }
         if(archive.get("is_attached_item", false)){
             item->setAttribute(Item::Attached);
         }

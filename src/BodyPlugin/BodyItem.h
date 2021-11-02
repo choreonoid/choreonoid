@@ -186,6 +186,11 @@ public:
     EditableSceneBody* existingSceneBody();
     float transparency() const;
     void setTransparency(float t);
+
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
+    virtual void setConsistentWithArchive(bool isConsistent) override;
+    virtual bool checkConsistencyWithArchive() override;
     
     class Impl;
 
@@ -195,8 +200,6 @@ protected:
     virtual void onTreePathChanged() override;
     virtual void onConnectedToRoot() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
-    virtual bool store(Archive& archive) override;
-    virtual bool restore(const Archive& archive) override;
             
 private:
     Impl* impl;

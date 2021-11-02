@@ -49,7 +49,8 @@ Changes since 1.7.0:
 * Removed RobotAccessPlugin and Hrpsys31Plugin. The plugins are now availabe at https://github.com/choreonoid/robot-access-plugin
 * Fixed the default layout of the main window
 * Replaced LinkSelectionView with LinkDeviceListView, which can list the devices of a target body
-* Improved loading a new project when there is an existing project
+* Introduced a dialog to confirm whether the current project should be saved or not when loading a new project or
+  closing the application.
 * Made the internal link attitudes same as the original model descriptions
 * Fixed the GLSL renderer to render casting shadows correctly using Radeon GPUs
 * Updated the tool bar icons
@@ -66,12 +67,13 @@ Changes since 1.7.0:
 * Added MaterialTableItem
 * Introduced snake case keys into data files
 * Improveed Undo/Redo functions with the unified edit history
-* Improveed WorldLogFileItem to provide a function to create a log playback project
+* Improveed WorldLogFileItem to provide a function to create an all-in-one log playback project
 * Modified BodyTrackingCameraItem to BodySyncCameraItem and add the configuration dialog for it
 * Added RegionIntrusionDetectorItem
-* Added a function to register and switch multiple layouts of main window
+* Added a function to register and switch multiple layouts of the main window
 * Improved SensorVisualizerItem to support acceleration sensors and rate gyro sensors
 * Add the choreonoid-info command (experimental)
+* Enabled the translation of the Qt built-in messages
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================

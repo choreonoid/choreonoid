@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-28 12:10+0900\n"
+"POT-Creation-Date: 2021-11-05 19:54+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1242,17 +1242,6 @@ msgstr "プロジェクトファイルの保存が完了しました."
 msgid "Saving the project file failed."
 msgstr "プロジェクトファイルの保存に失敗しました．"
 
-msgid ""
-"A project item exists. Do you want to save it as a project file before loading a new project?"
-msgstr "プロジェクトアイテムが存在します．新しいプロジェクトを読み込む前に保存しますか？"
-
-msgid ""
-"Project items exist. Do you want to save them as a project file before loading a new project?"
-msgstr "プロジェクトアイテムが存在します．新しいプロジェクトを読み込む前に保存しますか？"
-
-msgid "Project \"%1\" exists. Do you want to save it before loading a new project?"
-msgstr "プロジェクト \"%1\" が開かれています．新しいプロジェクトを読み込む前に保存しますか？"
-
 msgid "Open a project"
 msgstr "プロジェクトを開く"
 
@@ -1264,6 +1253,14 @@ msgstr "プロジェクトファイル (*.cnoid)"
 
 msgid "Save a project"
 msgstr "プロジェクトの保存"
+
+msgid ""
+"Current project has not been saved yet. Do you want to save it as a project file before loading a "
+"new project?"
+msgstr "現在のプロジェクトは保存されていません．新しいプロジェクトを読み込む前に保存しますか？"
+
+msgid "Project \"%1\" has been updated. Do you want to save it before loading a new project?"
+msgstr "プロジェクト \"%1\" は更新されています．新しいプロジェクトを読み込む前に保存しますか？"
 
 msgid "ReferencedObjectSeqItem"
 msgstr "参照オブジェクト時系列アイテム"
@@ -1749,3 +1746,7 @@ msgstr "\"{1}\"のための\"{0}\"プラグインが見つかりません．ビ�
 
 msgid "Virtual Joystick"
 msgstr "仮想ジョイスティック"
+
+#~ msgid ""
+#~ "Project items exist. Do you want to save them as a project file before loading a new project?"
+#~ msgstr "プロジェクトアイテムが存在します．新しいプロジェクトを読み込む前に保存しますか？"

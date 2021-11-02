@@ -119,6 +119,8 @@ namespace cnoid {
 class BodyItem::Impl
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     BodyItem* self;
     BodyPtr body;
 
@@ -154,10 +156,11 @@ public:
     BodyState initialState;
     BodyState lastEditState;
             
-    KinematicsBar* kinematicsBar;
     EditableSceneBodyPtr sceneBody;
     float transparency;
     Signal<void()> sigModelUpdated;
+
+    Isometry3 T_archive;
 
     LeggedBodyHelperPtr legged;
     Vector3 zmp;
@@ -314,7 +317,6 @@ BodyItem::Impl::~Impl()
 
 void BodyItem::Impl::init(bool calledFromCopyConstructor)
 {
-    kinematicsBar = KinematicsBar::instance();
     transparency = 0.0f;
     isFkRequested = isVelFkRequested = isAccFkRequested = false;
 
@@ -448,7 +450,7 @@ bool BodyItem::setName(const std::string& name)
 
 Body* BodyItem::body() const
 {
-    return impl->body.get();
+    return impl->body;
 }
 
 
@@ -661,6 +663,7 @@ bool BodyItem::restoreKinematicState(const BodyState& state)
 
 void BodyItem::storeInitialState()
 {
+    Item::setConsistentWithArchive(false);
     storeKinematicState(impl->initialState);
 }
 
@@ -785,7 +788,7 @@ void BodyItem::Impl::createPenetrationBlocker(Link* link, bool excludeSelfCollis
                 blocker->addOpponentLink(bodyItem->body()->rootLink());
             }
         }
-        blocker->setDepth(kinematicsBar->penetrationBlockDepth());
+        blocker->setDepth(KinematicsBar::instance()->penetrationBlockDepth());
         blocker->start();
     }
 }
@@ -1897,6 +1900,34 @@ bool BodyItem::Impl::restore(const Archive& archive)
         });
         
     return true;
+}
+
+
+void BodyItem::setConsistentWithArchive(bool isConsistent)
+{
+    Item::setConsistentWithArchive(isConsistent);
+    
+    if(isConsistent){
+        impl->T_archive = impl->body->rootLink()->T();
+    }
+}
+
+
+bool BodyItem::checkConsistencyWithArchive()
+{
+    bool isConsistent = Item::checkConsistencyWithArchive();
+    if(isConsistent){
+        // Check if the root link position is changed for the model
+        // where the root link is fixed and is not attached to the parent body.
+        // Such a change should be recorded to the archive.
+        auto root = impl->body->rootLink();
+        if(root->isFixedJoint() && !isAttachedToParentBody()){
+            if(!impl->T_archive.isApprox(root->T())){
+                isConsistent = false;
+            }
+        }
+    }
+    return isConsistent;
 }
 
 

@@ -44,9 +44,6 @@ Action* perspectiveCheck = nullptr;
 MainWindow* mainWindow = nullptr;
 MessageView* mv = nullptr;
 
-Signal<void(int recursiveLevel)> sigProjectAboutToBeLoaded;
-Signal<void(int recursiveLevel)> sigProjectLoaded;
-
 }
 
 namespace cnoid {
@@ -68,19 +65,23 @@ public:
     ItemList<> loadProject(
         const std::string& filename, Item* parentItem,
         bool isInvokingApplication, bool isBuiltinProject, bool doClearExistingProject);
+    void setItemTreeConsistentWithArchive(Item* item);    
 
     template<class TObject>
     bool storeObjects(Archive& parentArchive, const char* key, vector<TObject*> objects);
         
-    void saveProject(const string& filename, Item* item = nullptr);
-    void overwriteCurrentProject();
+    bool saveProject(const string& filename, Item* item = nullptr);
+    bool overwriteCurrentProject();
         
     void onProjectOptionsParsed(boost::program_options::variables_map& v);
     void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
-    void openDialogToLoadProject();
-    void openDialogToSaveProject();
+    void showDialogToLoadProject();
+    bool showDialogToSaveProject();
     std::string getSaveFilename(FileDialog& dialog);
     bool onSaveDialogAboutToFinish(FileDialog& dialog, int result);
+    bool confirmToCloseProject();
+    bool checkValidItemExistence(Item* item);
+    bool checkItemTreeConsistencyWithArchive(Item* item);
 
     void onPerspectiveCheckToggled(bool on);
         
@@ -105,6 +106,9 @@ public:
 
     MappingPtr config;
     MappingPtr managerConfig;
+
+    Signal<void(int recursiveLevel)> sigProjectAboutToBeLoaded;
+    Signal<void(int recursiveLevel)> sigProjectLoaded;
 };
 
 }
@@ -161,11 +165,11 @@ ProjectManager::Impl::Impl(ProjectManager* self, ExtensionManager* ext)
     mm.setPath("/File");
 
     mm.addItem(_("Open Project"))
-        ->sigTriggered().connect([&](){ openDialogToLoadProject(); });
+        ->sigTriggered().connect([&](){ showDialogToLoadProject(); });
     mm.addItem(_("Save Project"))
         ->sigTriggered().connect([&](){ overwriteCurrentProject(); });
     mm.addItem(_("Save Project As"))
-        ->sigTriggered().connect([&](){ openDialogToSaveProject(); });
+        ->sigTriggered().connect([&](){ showDialogToSaveProject(); });
 
     mm.setPath(N_("Project File Options"));
 
@@ -197,13 +201,13 @@ ProjectManager::~ProjectManager()
 
 SignalProxy<void(int recursiveLevel)> ProjectManager::sigProjectAboutToBeLoaded()
 {
-    return ::sigProjectAboutToBeLoaded;
+    return impl->sigProjectAboutToBeLoaded;
 }
 
 
 SignalProxy<void(int recursiveLevel)> ProjectManager::sigProjectLoaded()
 {
-    return ::sigProjectLoaded;
+    return impl->sigProjectLoaded;
 }
 
 
@@ -246,13 +250,19 @@ void ProjectManager::Impl::clearCurrentProjectFile()
 }
 
 
-std::string ProjectManager::currentProjectFile() const
+const std::string& ProjectManager::currentProjectName() const
+{
+    return impl->currentProjectName;
+}
+
+
+const std::string& ProjectManager::currentProjectFile() const
 {
     return impl->currentProjectFile;
 }
 
 
-std::string ProjectManager::currentProjectDirectory() const
+const std::string& ProjectManager::currentProjectDirectory() const
 {
     return impl->currentProjectDirectory;
 }
@@ -266,7 +276,9 @@ void ProjectManager::clearProject()
 
 void ProjectManager::Impl::clearProject()
 {
-    RootItem::instance()->clearChildren();
+    auto rootItem = RootItem::instance();
+    rootItem->clearChildren();
+    rootItem->setConsistentWithArchive(true);
     currentProjectName.clear();
     currentProjectFile.clear();
     mainWindow->setProjectTitle("");
@@ -318,15 +330,15 @@ ItemList<> ProjectManager::Impl::loadProject
 {
     ItemList<> topLevelItems;
     
-    ::sigProjectAboutToBeLoaded(projectBeingLoadedCounter);
-    
-    ++projectBeingLoadedCounter;
-
     if(doClearExistingProject){
         clearProject();
         mv->flush();
     }
     
+    sigProjectAboutToBeLoaded(projectBeingLoadedCounter);
+    
+    ++projectBeingLoadedCounter;
+
     bool loaded = false;
     YAMLReader reader;
     reader.setMappingClass<Archive>();
@@ -511,17 +523,29 @@ ItemList<> ProjectManager::Impl::loadProject
 
     --projectBeingLoadedCounter;
 
-    if(self->isLoadingProject()){
-        ::sigProjectLoaded(projectBeingLoadedCounter);
-    } else {
+    if(!self->isLoadingProject()){
         Archive::callFinalProcesses();
-        ::sigProjectLoaded(projectBeingLoadedCounter);
         auto vp = FilePathVariableProcessor::systemInstance();
         vp->clearBaseDirectory();
         vp->clearProjectDirectory();
+
+        for(auto& item : topLevelItems){
+            setItemTreeConsistentWithArchive(item);
+        }
     }
 
+    sigProjectLoaded(projectBeingLoadedCounter);
+
     return topLevelItems;
+}
+
+
+void ProjectManager::Impl::setItemTreeConsistentWithArchive(Item* item)
+{
+    item->setConsistentWithArchive(true);
+    for(Item* child = item->childItem(); child; child = child->nextItem()){
+        setItemTreeConsistentWithArchive(child);
+    }
 }
 
 
@@ -574,28 +598,30 @@ template<class TObject> bool ProjectManager::Impl::storeObjects
 }
 
 
-void ProjectManager::saveProject(const string& filename, Item* item)
+bool ProjectManager::saveProject(const string& filename, Item* item)
 {
-    impl->saveProject(filename, item);
+    return impl->saveProject(filename, item);
 }
 
 
-void ProjectManager::Impl::saveProject(const string& filename, Item* item)
+bool ProjectManager::Impl::saveProject(const string& filename, Item* item)
 {
     YAMLWriter writer(filename);
     if(!writer.isFileOpen()){
         mv->put(
             format(_("Can't open file \"{}\" for writing.\n"), filename),
             MessageView::Error);
-        return;
+        return false;
     }
 
-    bool isSubProject;
+    bool isSubProject = false;
+    auto rootItem = RootItem::instance();
     if(item){
-        isSubProject = true;
+        if(item != rootItem){
+            isSubProject = true;
+        }
     } else {
-        item = RootItem::instance();
-        isSubProject = false;
+        item = rootItem;
     }
     
     mv->putln();
@@ -606,6 +632,8 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
     }
     mv->flush();
     
+    bool saved = false;
+    
     itemTreeArchiver.reset();
 
     ArchivePtr archive = new Archive;
@@ -615,11 +643,15 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
 
     if(itemArchive){
         archive->insert("items", itemArchive);
+        saved = true;
     }
 
-    bool stored = ViewManager::storeViewStates(archive, "views", false);
-
-    stored |= storeObjects(*archive, "toolbars", mainWindow->toolBars());
+    if(ViewManager::storeViewStates(archive, "views", false)){
+        saved = true;
+    }
+    if(storeObjects(*archive, "toolbars", mainWindow->toolBars())){
+        saved = true;
+    }
 
     ArchiverMapMap::iterator p;
     for(p = archivers.begin(); p != archivers.end(); ++p){
@@ -645,16 +677,16 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
         if(!moduleArchive->empty()){
             const string& moduleName = p->first;
             archive->insert(moduleName, moduleArchive);
-            stored = true;
+            saved = true;
         }
     }
 
     if(perspectiveCheck->isChecked() && !isSubProject){
         mainWindow->storeLayout(archive);
-        stored = true;
+        saved = true;
     }
 
-    if(stored){
+    if(saved){
         writer.setKeyOrderPreservationMode(true);
         writer.putNode(archive);
         mv->notify(_("Saving the project file has been finished."));
@@ -665,6 +697,8 @@ void ProjectManager::Impl::saveProject(const string& filename, Item* item)
         mv->notify(_("Saving the project file failed."), MessageView::Error);
         clearCurrentProjectFile();
     }
+
+    return saved;
 }
 
 
@@ -678,19 +712,21 @@ ref_ptr<Mapping> ProjectManager::storeCurrentLayout()
 }
 
 
-void ProjectManager::overwriteCurrentProject()
+bool ProjectManager::overwriteCurrentProject()
 {
-    impl->overwriteCurrentProject();
+    return impl->overwriteCurrentProject();
 }
 
 
-void ProjectManager::Impl::overwriteCurrentProject()
+bool ProjectManager::Impl::overwriteCurrentProject()
 {
+    bool saved;
     if(currentProjectFile.empty()){
-        openDialogToSaveProject();
+        saved = showDialogToSaveProject();
     } else {
-        saveProject(currentProjectFile);
-    } 
+        saved = saveProject(currentProjectFile);
+    }
+    return saved;
 }
 
     
@@ -719,39 +755,13 @@ void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& in
 }
 
 
-void ProjectManager::Impl::openDialogToLoadProject()
+void ProjectManager::Impl::showDialogToLoadProject()
 {
-    auto mw = MainWindow::instance();
-    int numItems = RootItem::instance()->countDescendantItems();
-    if(numItems > 0){
-        QString title = _("Warning");
-        QString message;
-        QMessageBox::StandardButton clicked;
-        if(currentProjectFile.empty()){
-            if(numItems == 1){
-                message = _("A project item exists. "
-                            "Do you want to save it as a project file before loading a new project?");
-            } else {
-                message = _("Project items exist. "
-                            "Do you want to save them as a project file before loading a new project?");
-            }
-            clicked = QMessageBox::warning(
-                mw, title, message, QMessageBox::Save | QMessageBox::Cancel | QMessageBox::Ignore);
-        } else {
-            message = _("Project \"%1\" exists. Do you want to save it before loading a new project?");
-            clicked = QMessageBox::warning(
-                mw, title, message.arg(currentProjectName.c_str()),
-                QMessageBox::Save | QMessageBox::Cancel | QMessageBox::Ignore);
-        }
-        if(clicked == QMessageBox::Cancel){
-            return;
-        }
-        if(clicked == QMessageBox::Save){
-            overwriteCurrentProject();
-        }
+    if(!confirmToCloseProject()){
+        return;
     }
     
-    FileDialog dialog(mw);
+    FileDialog dialog(MainWindow::instance());
     dialog.setWindowTitle(_("Open a project"));
     dialog.setFileMode(QFileDialog::ExistingFile);
     dialog.setViewMode(QFileDialog::List);
@@ -772,7 +782,7 @@ void ProjectManager::Impl::openDialogToLoadProject()
 }
 
 
-void ProjectManager::Impl::openDialogToSaveProject()
+bool ProjectManager::Impl::showDialogToSaveProject()
 {
     FileDialog dialog(MainWindow::instance());
     dialog.setWindowTitle(_("Save a project"));
@@ -797,10 +807,12 @@ void ProjectManager::Impl::openDialogToSaveProject()
     dialog.sigAboutToFinish().connect(
         [&](int result){ return onSaveDialogAboutToFinish(dialog, result); });
 
+    bool saved = false;
     if(dialog.exec() == QDialog::Accepted){
-        saveProject(getSaveFilename(dialog));
+        saved = saveProject(getSaveFilename(dialog));
     }
-    
+
+    return saved;
 }
 
 
@@ -838,6 +850,80 @@ bool ProjectManager::Impl::onSaveDialogAboutToFinish(FileDialog& dialog, int res
         }
     }
     return finished;
+}
+
+
+bool ProjectManager::tryToCloseProject()
+{
+    return impl->confirmToCloseProject();
+}
+
+
+bool ProjectManager::Impl::confirmToCloseProject()
+{
+    auto rootItem = RootItem::instance();
+    
+    if(!checkValidItemExistence(rootItem)){
+        // The current project is empty
+        return true;
+    }
+    if(checkItemTreeConsistencyWithArchive(rootItem)){
+        return true;
+    }
+
+    auto mw = MainWindow::instance();
+
+    QString title = _("Warning");
+    QString message;
+    QMessageBox::StandardButton clicked;
+    if(currentProjectFile.empty()){
+        message = _("Current project has not been saved yet. "
+                    "Do you want to save it as a project file before loading a new project?");
+        clicked = QMessageBox::warning(
+            mw, title, message, QMessageBox::Save | QMessageBox::Cancel | QMessageBox::Ignore);
+    } else {
+        message = _("Project \"%1\" has been updated. "
+                    "Do you want to save it before loading a new project?");
+        clicked = QMessageBox::warning(
+            mw, title, message.arg(currentProjectName.c_str()),
+            QMessageBox::Save | QMessageBox::Cancel | QMessageBox::Ignore);
+    }
+    bool accepted = false;
+    if(clicked == QMessageBox::Ignore){
+        accepted = true;
+    } else if(clicked == QMessageBox::Save){
+        accepted = overwriteCurrentProject();
+    }
+
+    return accepted;
+}
+
+
+bool ProjectManager::Impl::checkValidItemExistence(Item* item)
+{
+    if(!item->hasAttribute(Item::Builtin) && !item->isTemporal()){
+        return true;
+    }
+    for(auto child = item->childItem(); child; child = child->nextItem()){
+        if(checkValidItemExistence(child)){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool ProjectManager::Impl::checkItemTreeConsistencyWithArchive(Item* item)
+{
+    if(!item->checkConsistencyWithArchive()){
+        return false;
+    }
+    for(auto child = item->childItem(); child; child = child->nextItem()){
+        if(!checkItemTreeConsistencyWithArchive(child)){
+            return false;
+        }
+    }
+    return true;
 }
 
 

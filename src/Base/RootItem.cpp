@@ -6,6 +6,7 @@
 #include "ExtensionManager.h"
 #include "ItemManager.h"
 #include "ItemClassRegistry.h"
+#include "ProjectManager.h"
 #include "MenuManager.h"
 #include "Archive.h"
 #include <fmt/format.h>
@@ -47,6 +48,7 @@ public:
     ItemPtr currentItem;
     int itemSelectionChangeBlockLevel;
     bool needToUpdateSelectedItems;
+    bool isProjectBeingLoaded;
     Signal<void(Item* item, bool on)> sigSelectionChanged;
     Signal<void(const ItemList<>& selectedItems)> sigSelectedItemsChanged;
 
@@ -117,8 +119,7 @@ void RootItem::initializeClass(ExtensionManager* ext)
     static bool initialized = false;
     if(!initialized){
         ext->itemManager().registerClass<RootItem>(N_("RootItem"));
-        instance_ = new RootItem;
-        instance_->setName("Root");
+        instance_ = new RootItem();
         ext->manage(RootItemPtr(instance_));
         initialized = true;
 
@@ -138,9 +139,14 @@ RootItem* RootItem::instance()
 
 
 RootItem::RootItem()
+    : Item("RootItem")
 {
+    setAttribute(Builtin);
+    
     impl = new Impl(this);
+    
     addCheckEntry(_("Primary check"));
+    Item::setConsistentWithArchive(true);
 }
 
 
@@ -168,11 +174,27 @@ RootItem::Impl::Impl(RootItem* self, const Impl& org)
     doCommonInitialization();
 }
 
-#include <iostream>
+
 void RootItem::Impl::doCommonInitialization()
 {
     needToUpdateSelectedItems = false;
     itemSelectionChangeBlockLevel = 0;
+
+    isProjectBeingLoaded = false;
+    
+    auto pm = ProjectManager::instance();
+    pm->sigProjectAboutToBeLoaded().connect(
+        [this](int recursiveLevel){
+            if(recursiveLevel == 0){
+                isProjectBeingLoaded = true;
+            }
+        });
+    pm->sigProjectLoaded().connect(
+        [this](int recursiveLevel){
+            if(recursiveLevel == 0){
+                isProjectBeingLoaded = false;
+            }
+        });
 }
 
 
@@ -284,6 +306,12 @@ void RootItem::notifyEventOnSubTreeAdded(Item* item, std::vector<Item*>& orgSubT
         cout << "RootItem::notifyEventOnItemAdded()" << endl;
     }
 
+    if(!impl->isProjectBeingLoaded){
+        if(!item->isSubItem() && !item->isTemporal()){
+            Item::setConsistentWithArchive(false);
+        }
+    }
+
     impl->sigSubTreeAdded(item);
 
     for(auto& item : orgSubTreeItems){
@@ -314,6 +342,13 @@ void RootItem::notifyEventOnSubTreeRemoving(Item* item, bool isMoving)
 
 void RootItem::notifyEventOnSubTreeRemoved(Item* item, bool isMoving)
 {
+    if(!impl->isProjectBeingLoaded){
+        if(!item->isSubItem() && !item->isTemporal()){
+            Item::setConsistentWithArchive(false);
+        }
+    }
+    
+    
     impl->sigSubTreeRemoved(item, isMoving);
 }
 
@@ -609,4 +644,25 @@ bool RootItem::store(Archive& archive)
 bool RootItem::restore(const Archive& archive)
 {
     return true;
+}
+
+
+void RootItem::setConsistentWithArchive(bool isConsistent)
+{
+    if(isConsistent){
+        /*
+          \todo It is better to store the information on the current tree structure here
+          and use it when checking the consistency so that the project can be recognized
+          as consistent even if some items are moved in the tree and are moved back to their
+          original position. Such a prcess is not currently implemented and the project is
+          recognized as inconsistent in the above situation.
+        */
+    }
+    Item::setConsistentWithArchive(isConsistent);
+}
+
+    
+bool RootItem::checkConsistencyWithArchive()
+{
+    return Item::checkConsistencyWithArchive();
 }
