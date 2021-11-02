@@ -788,9 +788,11 @@ endif()
 
 add_subdirectory(src)
 add_subdirectory(include)
-add_subdirectory(share)
 
 option(ENABLE_SAMPLES "Enable samples in the sample directory" ON)
+
+add_subdirectory(share)
+
 if(ENABLE_SAMPLES)
   add_subdirectory(sample)
 endif()
