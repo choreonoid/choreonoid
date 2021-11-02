@@ -262,6 +262,10 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     */
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+    QCoreApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton);
+#endif
+
     qapplication = new QApplication(argc, argv);
 
 #ifdef Q_OS_UNIX

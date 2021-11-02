@@ -440,6 +440,9 @@ void MainWindow::Impl::showFirst()
         bool showStatusBar = config->get("showStatusBar", true);
         self->statusBar()->setVisible(showStatusBar);
 
+        bool showViewTabs = config->get("showViewTabs", true);
+        viewArea->setViewTabsVisible(showViewTabs);
+
         isBeforeShowing = false;
     }
 }
@@ -664,6 +667,12 @@ void MainWindow::Impl::keyPressEvent(QKeyEvent* event)
             } else {
                 UnifiedEditHistory::instance()->undo();
             }
+        }
+        break;
+
+    case Qt::Key_Y:
+        if (event->modifiers() & Qt::ControlModifier) {
+            UnifiedEditHistory::instance()->redo();
         }
         break;
         
