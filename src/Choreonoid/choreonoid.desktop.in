@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Choreonoid
+Version=@CHOREONOID_VERSION@
+Encoding=UTF-8
+Comment=Intagrated graphical robotics framework
+Exec=@CMAKE_INSTALL_PREFIX@/bin/choreonoid %f
+Icon=@CMAKE_INSTALL_PREFIX@/@CHOREONOID_SHARE_SUBDIR@/icon/choreonoid.svg
+Categories=Education;Science;Physics;Robotics;;Engineering
+MimeType=application/x-choreonoid

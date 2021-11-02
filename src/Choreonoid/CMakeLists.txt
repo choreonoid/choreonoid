@@ -20,6 +20,16 @@ if(BUILD_CHOREONOID_EXECUTABLE)
   endif()
 
   if(UNIX)
+    if(CMAKE_INSTALL_PREFIX MATCHES "^$ENV{HOME}/.+") # Inside home directory?
+      # Execute update-mime-database ~/.local/share/mime to recognize the mime type 
+      install(FILES application-x-choreonoid.xml DESTINATION $ENV{HOME}/.local/share/mime/packages)
+      # Execute update-desktop-database ~/.local/share/applications to recognize the application
+      configure_file(choreonoid.desktop.in choreonoid.desktop @ONLY)
+      install(FILES ${CMAKE_CURRENT_BINARY_DIR}/choreonoid.desktop DESTINATION $ENV{HOME}/.local/share/applications)
+      # Execute update-icon-caches ~/.local/share/icons/* to recognize the icon
+      install(FILES ${PROJECT_SOURCE_DIR}/src/Base/icon/choreonoid.svg DESTINATION $ENV{HOME}/.local/share/icons/hicolor/scalable/mimetypes RENAME application-x-choreonoid.svg)
+    endif()
+
     install(FILES choreonoid.1 DESTINATION share/man/man1)
   endif()
 endif()
