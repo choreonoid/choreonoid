@@ -353,11 +353,8 @@ option(ENABLE_GUI "Enable GUI components" ON)
 
 # OpenGL
 if(ENABLE_GUI)
-  if(CMAKE_VERSION VERSION_LESS 3.20.0)
-    if(POLICY CMP0072)
-      cmake_policy(SET CMP0072 OLD)
-    endif()
-  endif()
+  # Qt5 is using the legacy OpenGL library
+  set(OpenGL_GL_PREFERENCE LEGACY)
   find_package(OpenGL)
   include_directories(${OPENGL_INCLUDE_DIR})
 endif()

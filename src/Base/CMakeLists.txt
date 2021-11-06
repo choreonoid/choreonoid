@@ -324,7 +324,7 @@ if(MSVC)
 else()
   target_link_libraries(${target}
     CnoidUtil
-    ${CHOREONOID_QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${OPENGL_LIBRARY}
+    ${CHOREONOID_QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} OpenGL::GLU
     icuuc X11 Xfixes
     )
 endif()
