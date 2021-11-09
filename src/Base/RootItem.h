@@ -23,7 +23,6 @@ public:
     static RootItem* mainInstance() { return instance(); }
 
     RootItem();
-    RootItem(const RootItem& org);
     virtual ~RootItem();
 
     SignalProxy<void(RootItem* rootItem)> sigDestroyed();
@@ -94,6 +93,9 @@ public:
        the entire project item tree is consistent with that archived in the project file.
     */
     virtual bool checkConsistencyWithArchive() override;
+
+protected:
+    RootItem(const RootItem& org);
 
 private:
     friend class Item;

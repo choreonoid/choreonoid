@@ -76,7 +76,6 @@ class Item::Impl
 {
 public:
     Item* self;
-    unsigned int attributes;
     vector<bool> checkStates;
     std::function<std::string(const Item* item)> displayNameModifier;
     
@@ -160,7 +159,6 @@ Item::Item(const std::string& name)
 Item::Impl::Impl(Item* self)
     : self(self)
 {
-    attributes = 0;
     initialize();
 }
 
@@ -175,11 +173,11 @@ Item::Item(const Item& org)
 Item::Impl::Impl(Item* self, const Impl& org)
     : self(self)
 {
-    attributes = org.attributes & (FileImmutable | Reloadable);
-
     initialize();
     
-    if(attributes & FileImmutable){
+    self->attributes_ = org.self->attributes_ & (FileImmutable | Reloadable);
+
+    if(self->attributes_ & FileImmutable){
         filePath = org.filePath;
         fileFormat = org.fileFormat;
         if(org.fileOptions){
@@ -199,6 +197,7 @@ void Item::Impl::initialize()
     self->prevItem_ = nullptr;
     self->lastChild_ = nullptr;
     self->numChildren_ = 0;
+    self->attributes_ = 0;
     self->isSelected_ = false;
 
     isConsistentWithFile = false;
@@ -407,42 +406,6 @@ void Item::Impl::notifyNameChange(const std::string& oldName)
 void Item::notifyNameChange()
 {
     impl->notifyNameChange(name_);
-}
-
-
-bool Item::hasAttribute(Attribute attribute) const
-{
-    return (impl->attributes & attribute) == attribute;
-}
-
-
-void Item::setAttribute(Attribute attribute)
-{
-    impl->attributes |= attribute;
-}
-
-
-void Item::setAttributes(int attributes)
-{
-    impl->attributes |= attributes;
-}
-
-
-void Item::unsetAttribute(Attribute attribute)
-{
-    impl->attributes &= ~attribute;
-}
-
-
-bool Item::isSubItem() const
-{
-    return hasAttribute(SubItem);
-}
-
-
-bool Item::isTemporal() const
-{
-    return hasAttribute(Temporal);
 }
 
 

@@ -128,12 +128,21 @@ public:
     //! This function notifies the system of a displayName change
     void notifyNameChange();
 
-    void setAttribute(Attribute attribute);
-    void setAttributes(int attributes);
-    void unsetAttribute(Attribute attribute);
-    bool hasAttribute(Attribute attribute) const;
-
-    bool isSubItem() const;
+    void setAttribute(Attribute attribute) {
+        attributes_ |= attribute;
+    }
+    void setAttributes(int attributes) {
+        attributes_ |= attributes;
+    }
+    void unsetAttribute(Attribute attribute) {
+        attributes_ &= ~attribute;
+    }
+    bool hasAttribute(Attribute attribute) const {
+        return (attributes_ & attribute) == attribute;
+    }
+    bool isSubItem() const {
+        return hasAttribute(SubItem);
+    }
 
     [[deprecated("Use setAttribute(Item::SubItem)")]]
     void setSubItemAttributes(){
@@ -148,8 +157,10 @@ public:
        non-temporal item. Or if a child item is manually attached to a temporal
        item, the item becomes non-temporal one as well.
     */
-    bool isTemporal() const;
-    
+    bool isTemporal() const {
+        return hasAttribute(Temporal);
+    }
+
     void setTemporal(bool on = true);
 
     bool isSelected() const { return isSelected_; }
@@ -535,6 +546,7 @@ private:
     Item* prevItem_;
     Item* lastChild_;
     int numChildren_;
+    unsigned int attributes_;
     std::string name_;
     bool isSelected_;
 
