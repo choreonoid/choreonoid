@@ -8,18 +8,26 @@
 #include "View.h"
 #include "ExtensionManager.h"
 #include <cnoid/Signal>
+#include <string>
+#include <vector>
 #include <set>
+#include <typeinfo>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class ExtensionManager;
 class Archive;
 
 class CNOID_EXPORT ViewManager
 {
 public:
     static void initializeClass(ExtensionManager* ext);
+
+
+    //! \note This function can only be called before calling the App::initialize function.
+    static void setPluginWhitelist(const std::vector<const char*>& pluginNames);
+    //! \note This function can only be called before calling the App::initialize function.
+    static void setViewWhitelist(const std::vector<const char*>& viewNames);
 
     ViewManager(ExtensionManager* ext);
     ViewManager(const ViewManager&) = delete;

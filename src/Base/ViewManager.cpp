@@ -18,6 +18,7 @@
 #include <fmt/format.h>
 #include <list>
 #include <regex>
+#include <unordered_set>
 #include "gettext.h"
 
 using namespace std;
@@ -30,6 +31,9 @@ MainWindow* mainWindow = nullptr;
 Menu* showViewMenu = nullptr;
 Menu* createViewMenu = nullptr;
 Menu* deleteViewMenu = nullptr;
+
+unordered_set<string> pluginWhitelist;
+unordered_set<string> viewWhitelist;
 
 Signal<void(View* view)> sigViewCreated_;
 Signal<void(View* view)> sigViewActivated_;
@@ -68,6 +72,7 @@ public:
     string translatedDefaultInstanceName; // temporary.
     bool isSingleton;
     bool hasDefaultInstance;
+    bool isEnabled;
     ViewManager::FactoryBase* factory;
 
     InstanceInfoList instances;
@@ -76,7 +81,7 @@ public:
     ViewInfo(
         ViewManager::Impl* managerImpl,
         const type_info& view_type_info, const string& className, const string& defaultInstanceName,
-        const string& textDomain, int instantiationFlags, ViewManager::FactoryBase* factory);
+        const string& textDomain, int instantiationFlags, bool isEnabled, ViewManager::FactoryBase* factory);
 
     ~ViewInfo();
 
@@ -124,6 +129,7 @@ public:
     MenuManager& menuManager;
     ClassNameToViewInfoMapPtr classNameToViewInfoMap;
     InstanceInfoList instances;
+    bool doCheckViewWhitelist;
 
     Impl(ExtensionManager* ext);
     ~Impl();
@@ -180,11 +186,12 @@ void InstanceInfo::remove()
 ViewInfo::ViewInfo
 (ViewManager::Impl* managerImpl,
  const type_info& view_type_info, const string& className, const string& defaultInstanceName,
- const string& textDomain, int instantiationFlags, ViewManager::FactoryBase* factory)
+ const string& textDomain, int instantiationFlags, bool isEnabled, ViewManager::FactoryBase* factory)
     : view_type_info(view_type_info),
       className(className),
       textDomain(textDomain),
       defaultInstanceName(defaultInstanceName),
+      isEnabled(isEnabled),
       factory(factory),
       instancesInViewManager(managerImpl->instances)
 {
@@ -233,7 +240,7 @@ View* ViewInfo::getOrCreateView(bool doMountCreatedView)
         if(doMountCreatedView){
             mainWindow->viewArea()->addView(view);
         }
-        }
+    }
     return instances.front()->view;
 }
 
@@ -403,8 +410,13 @@ void onViewMenuAboutToShow(Menu* menu)
         }
             
         ClassNameToViewInfoMap& viewInfoMap = *p->second;
+
         for(auto q = viewInfoMap.begin(); q != viewInfoMap.end(); ++q){
+
             ViewInfoPtr& viewInfo = q->second;
+            if(!viewInfo->isEnabled){
+                continue;
+            }
             InstanceInfoList& instances = viewInfo->instances;
 
             if(menu == showViewMenu){
@@ -487,6 +499,22 @@ void ViewManager::initializeClass(ExtensionManager* ext)
 }
 
 
+void ViewManager::setPluginWhitelist(const std::vector<const char*>& pluginNames)
+{
+    for(auto& name : pluginNames){
+        pluginWhitelist.insert(name);
+    }
+}
+
+
+void ViewManager::setViewWhitelist(const std::vector<const char*>& viewNames)
+{
+    for(auto& name : viewNames){
+        viewWhitelist.insert(name);
+    }
+}
+
+
 ViewManager::ViewManager(ExtensionManager* ext)
 {
     impl = new Impl(ext);
@@ -500,6 +528,13 @@ ViewManager::Impl::Impl(ExtensionManager* ext)
 {
     classNameToViewInfoMap = std::make_shared<ClassNameToViewInfoMap>();
     moduleNameToClassNameToViewInfoMap[moduleName] = classNameToViewInfoMap;
+
+    doCheckViewWhitelist = false;
+    if(!pluginWhitelist.empty() || !viewWhitelist.empty()){
+        if(pluginWhitelist.find(moduleName) == pluginWhitelist.end()){
+            doCheckViewWhitelist = true;
+        }
+    }
 }
 
 
@@ -534,14 +569,28 @@ void ViewManager::registerClass_
  const std::string& className, const std::string& defaultInstanceName, int instantiationFlags,
  FactoryBase* factory)
 {
+    bool isEnabled = true;
+    if(impl->doCheckViewWhitelist){
+        if(viewWhitelist.find(className) == viewWhitelist.end()){
+            isEnabled = false;
+        }
+    }
+
+    if(!isEnabled){
+        if(!(instantiationFlags & Default)){
+            return;
+        }
+    }
+    
     ViewInfoPtr info = std::make_shared<ViewInfo>(
-        impl, view_type_info, className, defaultInstanceName, impl->textDomain, instantiationFlags, factory);
+        impl, view_type_info, className, defaultInstanceName, impl->textDomain, instantiationFlags, isEnabled, factory);
     
     (*impl->classNameToViewInfoMap)[className] = info;
     typeToViewInfoMap[&view_type_info] = info;
 
-    if(instantiationFlags & Default){
-        mainWindow->viewArea()->addView(info->getOrCreateView());
+    if((instantiationFlags & Default) && isEnabled){
+        auto view = info->getOrCreateView();
+        mainWindow->viewArea()->addView(view);
     }
 }
 
