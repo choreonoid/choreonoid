@@ -1,10 +1,11 @@
-optionalPlugins: [ ODE, Bullet, PhysX, AgX ]
+optionalPlugins: [ ODE, Bullet ]
 
 items: 
   id: 0
-  name: "Root"
+  name: "RootItem"
   plugin: Base
   class: RootItem
+  is_builtin_item: true
   children: 
     - 
       id: 1
@@ -12,43 +13,71 @@ items:
       plugin: Body
       class: WorldItem
       data: 
-        collisionDetection: false
+        collision_detection: false
+        collision_detector: AISTCollisionDetector
+        default_material_table_file: "${SHARE}/default/materials.yaml"
       children: 
         - 
           id: 2
           name: "ClosedLinkSample"
           plugin: Body
           class: BodyItem
+          is_checked: true
           data: 
-            modelFile: "${SHARE}/model/misc/ClosedLinkSample.body"
+            file: "${SHARE}/model/misc/ClosedLinkSample.body"
+            format: CHOREONOID-BODY
             currentBaseLink: "WAIST"
-            rootPosition: [  0.000000,  0.000000,  0.150000 ]
+            rootPosition: [ 0, 0, 0.15 ]
             rootAttitude: [ 
-               1.000000,  0.000000,  0.000000, 
-               0.000000, -0.000204,  1.000000, 
-               0.000000, -1.000000, -0.000204 ]
-            jointPositions: [ -0.785398,  0.785398, -0.785398 ]
-            initialRootPosition: [  0.000000,  0.000000,  0.150000 ]
+              1, 0, 0, 
+              0, -0, 1, 
+              0, -1, -0 ]
+            jointDisplacements: [ -45, 45, -45 ]
+            jointPositions: [ -0.785398, 0.785398, -0.785398 ]
+            initialRootPosition: [ 0, 0, 0.15 ]
             initialRootAttitude: [ 
-               1.000000,  0.000000,  0.000000, 
-               0.000000, -0.000204,  1.000000, 
-               0.000000, -1.000000, -0.000204 ]
-            initialJointPositions: [ -0.785398,  0.785398, -0.785398 ]
-            zmp: [  0.000000,  0.000000,  0.000000 ]
+              1, 0, 0, 
+              0, -0, 1, 
+              0, -1, -0 ]
+            initialJointPositions: [ -0.785398, 0.785398, -0.785398 ]
+            staticModel: false
+            collisionDetection: true
             selfCollisionDetection: false
+            location_editable: true
+            scene_sensitive: true
+            zmp: [ 0, 0, 0 ]
         - 
           id: 3
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
+          is_selected: true
           data: 
             realtimeSync: true
-            recordingMode: "Time bar range"
+            recording: "full"
+            timeRangeMode: "Unlimited"
             timeLength: 60
+            active_control_time_range_mode: false
             allLinkPositionOutputMode: false
-            dynamicsMode: Forward dynamics
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: ""
+            scene_view_edit_mode_blocking: false
+            dynamicsMode: "Forward dynamics"
+            integrationMode: "Runge Kutta"
             gravity: [ 0, 0, -9.80665 ]
+            min_friction_coefficient: 0
+            max_friction_coefficient: 100
+            cullingThresh: 0.005
+            contactCullingDepth: 0.05
+            errorCriterion: 0.001
+            maxNumIterations: 25
+            contactCorrectionDepth: 0.00025
+            contactCorrectionVelocityRatio: 5
+            kinematicWalking: false
             2Dmode: false
+            oldAccelSensorMode: false
         - 
           id: 4
           name: "ODESimulator"
@@ -70,7 +99,7 @@ items:
             limitCorrectingVel: true
             maxCorrectingVel: 1.0e-3
             2Dmode: false
-        - 
+        -
           id: 5
           name: "BulletSimulator"
           plugin: Bullet
@@ -87,200 +116,25 @@ items:
             Friction: 0.7
             ERP2: 0
             SplitImpulsePenetrationThreshold: -0.0001
-
 views: 
-  "Items": 
-    selected: [ 3 ]
-    checked: [ 2 ]
-    expanded: [ 1 ]
-  "Scene": 
-    mode: view
-    floorGird: true
-    collisions: true
-    shadow: false
-    floorGridSpan: 10
-    floorGridInterval: 0.5
-    hiPriorityRendering: false
-    camera: 
-      projection: perspetive
-      perspective: [ 40, 1.29272, 0.0030309, 6.18305 ]
-      ortho: [ -1, 1, -1, 1, -1, 1 ]
-      eye: [ 0.0555696, 0.899931, 0.179849 ]
-      center: [ 0.0883989, -0.0990386, 0.148513 ]
-      up: [ 0.00102939, -0.0313191, 0.999509 ]
-  "Multi Value Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-  "Multi SE3 Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-    visibleElements: [ 0, 1, 2 ]
-  "Links": 
-    listingMode: "link list"
-    currentBodyItem: 2
-  "Body / Link": 
-    showRotationMatrix: false
-  "Joint Sliders": 
-    showAllJoints: true
-    jointId: false
-    name: true
-    numColumns: 1
-    spinBox: true
-    slider: true
-    labelOnLeft: true
-    currentBodyItem: 2
-  "Joint Trajectories": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-  "Multi Affine3 Seq": 
-    mode: view
-    editMode: freeLine
-    original: true
-    velocity: false
-    acceleration: false
-    limits: true
-    grid: true
-    gridWidth: 0.2
-    gridHeight: 0.2
-    lineWidth: 1
-    rulers: false
-    sync: true
-    controlPointStep: 1
-    controlPointOffset: 0
-    controlPointHeighlight: false
-    scrollMode: continuous
-    lower: -10
-    upper: 10
-    visibleElements: [ 0, 1, 2 ]
-  "Pose Roll": 
-    defaultTransitionTime: 0
-    updateAll: true
-    autoUpdate: false
-    timeSync: true
-    listingMode: "part tree"
-    timeLength: 10
-    showLipSync: false
-    gridInterval: 1
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 30
-    frameRate: 500
-    playbackFrameRate: 100
-    currentTime: 0
-    speedScale: 1
-  "BodyBar": 
-    current: 2
-    stanceWidth: 0.15
-  "KinematicsBar": 
-    mode: AUTO
-    attitude: false
-    penetrationBlock: true
-    collisionLinkHighlight: false
-    snapDistance: 0.025
-    penetrationBlockDepth: 0.0005
-    lazyCollisionDetectionMode: true
-  "BodyMotionGenerationBar": 
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: 位置を保存
-    boundarySmootherType: 4次
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
-Base: 
-  "MovieGenerator": 
-    directory: 
-    basename: scene
-    begin: 0
-    fps: 30
-    width: 640
-    heiht: 480
-Body: 
-  "KinematicFaultChecker": 
-    checkJointPositions: true
-    angleMargin: 0
-    translationMargin: 0
-    checkJointVelocities: true
-    velocityLimitRatio: 100
-    targetJoints: all
-    checkSelfCollisions: true
-    onlyTimeBarRange: false
-  "SceneBodyManager": 
-    sceneBodies: 
-      - 
-        bodyItem: 2
-        editable: true
-        centerOfMass: false
-        zmp: false
+  - 
+    id: 4
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state: 
+      cameras: 
+        - 
+          camera: [ System, Perspective ]
+          isCurrent: true
+          fieldOfView: 0.610865
+          near: 0.04
+          far: 200
+          eye: [ 0.817133, 0.834253, 0.399377 ]
+          direction: [ -0.650101, -0.716069, -0.254193 ]
+          up: [ -0.170863, -0.188201, 0.967154 ]
+        - 
+          camera: [ System, Orthographic ]
+          orthoHeight: 20
+          near: 0.04
+          far: 200
