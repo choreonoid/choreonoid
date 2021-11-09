@@ -10,6 +10,12 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+ItemTreeView* instance_ = nullptr;
+
+}
+
 namespace cnoid {
 
 class ItemTreeView::Impl
@@ -37,7 +43,18 @@ void ItemTreeView::initializeClass(ExtensionManager* ext)
 
 ItemTreeView* ItemTreeView::instance()
 {
-    static ItemTreeView* instance_ = ViewManager::getOrCreateView<ItemTreeView>();
+    if(!instance_){
+        instance_ = ViewManager::getOrCreateView<ItemTreeView>();
+    }
+    return instance_;
+}
+
+
+ItemTreeView* ItemTreeView::findInstance()
+{
+    if(!instance_){
+        instance_ = ViewManager::findView<ItemTreeView>();
+    }
     return instance_;
 }
 

@@ -159,7 +159,9 @@ void SubProjectItemImpl::doLoadSubProject(const std::string& filename)
     projectFilesBeingLoaded.erase(filename);
 
     if(!pm->isLoadingProject()){
-        ItemTreeView::instance()->itemTreeWidget()->setExpanded(self);
+        if(auto itemTreeView = ItemTreeView::findInstance()){
+            itemTreeView->itemTreeWidget()->setExpanded(self);
+        }
     }
 
     if(saveMode.is(SubProjectItem::AUTOMATIC_SAVE)){

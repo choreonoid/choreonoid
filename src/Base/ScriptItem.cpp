@@ -19,7 +19,7 @@ void ScriptItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerAbstractClass<ScriptItem, AbstractTextItem>();
 
-    ItemTreeView::instance()->customizeContextMenu<ScriptItem>(
+    ItemTreeView::customizeContextMenu<ScriptItem>(
         [](ScriptItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
             menuManager.addItem(_("Execute"))->sigTriggered().connect([item](){ item->execute(); });
             menuManager.addItem(_("Terminate"))->sigTriggered().connect([item](){ item->terminate(); });

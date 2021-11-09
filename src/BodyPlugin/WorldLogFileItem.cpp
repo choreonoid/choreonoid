@@ -486,7 +486,7 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
             return item->impl->setLogFile(filename, true);
         });
 
-    ItemTreeView::instance()->customizeContextMenu<WorldLogFileItem>(
+    ItemTreeView::customizeContextMenu<WorldLogFileItem>(
         [](WorldLogFileItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
             menuManager.setPath("/");
             menuManager.addItem(_("Save project as log playback archive"))->sigTriggered().connect(

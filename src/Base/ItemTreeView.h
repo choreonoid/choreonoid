@@ -15,6 +15,12 @@ public:
 
     static ItemTreeView* instance();
 
+    /**
+       This function may return nullptr if ItemTreeView is disabled by not including it in the whitelist
+       and the instance of it is not being used from anywhere.
+    */
+    static ItemTreeView* findInstance();
+
      // deprecated
     static ItemTreeView* mainInstance() {
         return instance();
@@ -26,9 +32,11 @@ public:
     ItemTreeWidget* itemTreeWidget();
 
     template<class ItemType>
-    void customizeContextMenu(
+    static void customizeContextMenu(
         std::function<void(ItemType* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func){
-        itemTreeWidget()->customizeContextMenu(func);
+        if(auto view = findInstance()){
+            view->itemTreeWidget()->customizeContextMenu(func);
+        }
     }
 
     void setExpanded(Item* item, bool on = true);

@@ -180,7 +180,7 @@ void BodySyncCameraItem::initializeClass(ExtensionManager* ext)
         .addAlias<BodySyncCameraItem>("BodyTrackingCameraItem", "Body")
         .addCreationPanel<BodySyncCameraItem>();
 
-    ItemTreeView::instance()->customizeContextMenu<BodySyncCameraItem>(
+    ItemTreeView::customizeContextMenu<BodySyncCameraItem>(
         [](BodySyncCameraItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
             menuManager.addItem(_("Camera configuration"))->sigTriggered().connect(
                 [item](){ item->showDialogToConfigureCamera(); });

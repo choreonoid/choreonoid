@@ -461,7 +461,7 @@ void SimulatorItem::initializeClass(ExtensionManager* ext)
                 return item->impl->getOrCreateLogEngine();
             });
 
-    ItemTreeView::instance()->customizeContextMenu<SimulatorItem>(
+    ItemTreeView::customizeContextMenu<SimulatorItem>(
         [](SimulatorItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
             menuManager.setPath("/").setPath(_("Simulation"));
             menuManager.addItem(_("Start"))->sigTriggered().connect(
