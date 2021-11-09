@@ -29,11 +29,11 @@ protected:
 };
 
 
-template <class ElementType = double, class Allocator = std::allocator<ElementType> >
+template <class ElementType = double, class Allocator = std::allocator<ElementType>>
 class DataMap : public DataMapBase,
-                protected std::map<int, std::vector<ElementType, Allocator> >
+                protected std::map<int, std::vector<ElementType, Allocator>>
 {
-    typedef std::map<int, std::vector<ElementType, Allocator> > MapType;
+    typedef std::map<int, std::vector<ElementType, Allocator>> MapType;
 
     static const std::vector<ElementType, Allocator> emptyData;
         
@@ -48,6 +48,13 @@ public:
     DataMap& operator=(const DataMap& rhs) {
         MapType::operator=(rhs);
         return *this;
+    }
+
+    bool operator==(const DataMap& rhs) const {
+        return std::operator==(static_cast<MapType>(*this), static_cast<MapType>(rhs));
+    }
+    bool operator!=(const DataMap& rhs) const {
+        return std::operator!=(static_cast<MapType>(*this), static_cast<MapType>(rhs));
     }
 
 #ifndef _MSC_VER
