@@ -160,8 +160,6 @@ public:
     float transparency;
     Signal<void()> sigModelUpdated;
 
-    Isometry3 T_archive;
-
     LeggedBodyHelperPtr legged;
     Vector3 zmp;
 
@@ -1900,34 +1898,6 @@ bool BodyItem::Impl::restore(const Archive& archive)
         });
         
     return true;
-}
-
-
-void BodyItem::setConsistentWithArchive(bool isConsistent)
-{
-    Item::setConsistentWithArchive(isConsistent);
-    
-    if(isConsistent){
-        impl->T_archive = impl->body->rootLink()->T();
-    }
-}
-
-
-bool BodyItem::checkConsistencyWithArchive()
-{
-    bool isConsistent = Item::checkConsistencyWithArchive();
-    if(isConsistent){
-        // Check if the root link position is changed for the model
-        // where the root link is fixed and is not attached to the parent body.
-        // Such a change should be recorded to the archive.
-        auto root = impl->body->rootLink();
-        if(root->isFixedJoint() && !isAttachedToParentBody()){
-            if(!impl->T_archive.isApprox(root->T())){
-                isConsistent = false;
-            }
-        }
-    }
-    return isConsistent;
 }
 
 

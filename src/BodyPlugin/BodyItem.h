@@ -189,8 +189,6 @@ public:
 
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
-    virtual void setConsistentWithArchive(bool isConsistent) override;
-    virtual bool checkConsistencyWithArchive() override;
     
     class Impl;
 
