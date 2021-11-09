@@ -362,7 +362,7 @@ void ToolBarArea::Impl::restoreLayout(Mapping* archive)
     map<string, ToolBar*> nameToToolBarMap;
     for(auto& toolBar : registeredToolBars){
         toolBar->hide();
-        nameToToolBarMap[toolBar->objectName().toStdString()] = toolBar;
+        nameToToolBarMap[toolBar->name()] = toolBar;
     }
 
     newToolBarsToShow.clear();
@@ -465,7 +465,7 @@ void ToolBarArea::Impl::storeLayout(Mapping* archive)
             for(auto& toolBar : toolBars){
                 auto state = new Mapping;
                 state->setFlowStyle(true);
-                state->write("name", toolBar->objectName().toStdString(), DOUBLE_QUOTED);
+                state->write("name", toolBar->name(), DOUBLE_QUOTED);
                 state->write("x", toolBar->desiredX);
                 state->write("priority", toolBar->layoutPriority);
                 bars->append(state);
@@ -479,7 +479,7 @@ void ToolBarArea::Impl::storeLayout(Mapping* archive)
         ListingPtr hidden = new Listing;
         for(auto& toolBar : registeredToolBars){
             if(toolBar->isVisibleByDefault() && !toolBar->isVisible()){
-                hidden->append(toolBar->objectName().toStdString(), DOUBLE_QUOTED);
+                hidden->append(toolBar->name(), DOUBLE_QUOTED);
             }
         }
         if(!hidden->empty()){

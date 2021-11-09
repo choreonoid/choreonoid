@@ -16,7 +16,7 @@ namespace cnoid {
 void exportPyToolBars(py::module m)
 {
     py::class_<ToolBar, PyQObjectHolder<ToolBar>, QWidget>(m, "ToolBar")
-        .def(py::init<const QString&>())
+        .def(py::init<const std::string&>())
         .def("addButton",
              [](ToolBar& self, const char* text, const char* tooltip){ return self.addButton(text, tooltip); },
              py::arg("text"), py::arg("tooltip") = QString())

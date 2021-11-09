@@ -292,7 +292,7 @@ bool ProjectManager::Impl::restoreObjectStates
     bool restored = false;
     for(size_t i=0; i < objects.size(); ++i){
         TObject* object = objects[i];
-        const string name = object->objectName().toStdString();
+        const string& name = object->name();
         Archive* state = states->findSubArchive(name);
         if(state->isValid()){
             state->inheritSharedInfoFrom(*projectArchive);
@@ -579,7 +579,7 @@ template<class TObject> bool ProjectManager::Impl::storeObjects
         archives->setKeyQuoteStyle(DOUBLE_QUOTED);
         for(size_t i=0; i < objects.size(); ++i){
             TObject* object = objects[i];
-            string name = object->objectName().toStdString();
+            const string& name = object->name();
             if(!name.empty()){
                 ArchivePtr archive = new Archive;
                 archive->inheritSharedInfoFrom(parentArchive);

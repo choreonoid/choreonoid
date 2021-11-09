@@ -10,6 +10,7 @@
 #include <QLabel>
 #include <QWidget>
 #include <QBoxLayout>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -24,8 +25,10 @@ class CNOID_EXPORT ToolBar : public QWidget
     Q_OBJECT
 public:
 
-    ToolBar(const QString& name);
+    ToolBar(const std::string& name);
     virtual ~ToolBar();
+
+    const std::string& name() const { return name_; }
 
     ToolButton* addButton(const QString& text, const QString& tooltip = QString());
     ToolButton* addButton(const QIcon& icon, const QString& tooltip = QString());
@@ -78,21 +81,22 @@ public Q_SLOTS:
     void changeIconSize(const QSize& iconSize);
 
 private:
+    std::string name_;
     QHBoxLayout* hbox;
     int insertionPosition;
     QWidget* handle;
     QButtonGroup* radioGroup;
-    bool isNewRadioGroupRequested;
     MainWindow* mainWindow;
     ToolBarArea* toolBarArea_;
+    bool isNewRadioGroupRequested;
     bool isVisibleByDefault_;
     bool isPlacedOnNewRowByDefault_;
     bool isAutoRaiseByDefault_;
     
     // used for layouting tool bars on a ToolBarArea
-    bool isStretchable_;
     int desiredX;
     int layoutPriority;
+    bool isStretchable_;
 
     void setRadioButton(ToolButton* button);
     void changeIconSizeSub(QLayout* layout, const QSize& iconSize);

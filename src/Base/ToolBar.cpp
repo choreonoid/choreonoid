@@ -81,11 +81,9 @@ public:
 }
 
 
-ToolBar::ToolBar(const QString& name)
+ToolBar::ToolBar(const std::string& name)
+    : name_(name)
 {
-    setWindowTitle(name);
-    setObjectName(name);
-
     mainWindow = MainWindow::instance();
 
     hbox = new QHBoxLayout(this);
