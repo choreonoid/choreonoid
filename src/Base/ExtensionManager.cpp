@@ -20,10 +20,19 @@
 #include <boost/algorithm/string.hpp>
 #include <set>
 #include <deque>
+#include <unordered_set>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+
+namespace {
+
+unordered_set<string> pluginWhitelistForToolBars;
+unordered_set<string> toolBarWhitelist;
+
+}
+
 
 namespace cnoid {
 
@@ -39,6 +48,7 @@ public:
     std::unique_ptr<MenuManager> menuManager;
     std::unique_ptr<ItemManager> itemManager;
     std::unique_ptr<ViewManager> viewManager;
+    bool doCheckToolBarWhitelist;
 
     static set<Impl*> instances;
     static LazyCaller emitSigSystemUpdatedLater;
@@ -70,6 +80,13 @@ ExtensionManager::Impl::Impl(ExtensionManager* self, const std::string& moduleNa
     instances.insert(this);
 
     textDomain = bindModuleTextDomain(isPlugin ? (moduleName + "Plugin") : moduleName);
+
+    doCheckToolBarWhitelist = false;
+    if(!pluginWhitelistForToolBars.empty() || !toolBarWhitelist.empty()){
+        if(pluginWhitelistForToolBars.find(moduleName) == pluginWhitelistForToolBars.end()){
+            doCheckToolBarWhitelist = true;
+        }
+    }
 }
 
 
@@ -152,12 +169,36 @@ void ExtensionManager::manageSub(PtrHolderBase* holder)
 }
 
 
+void ExtensionManager::setPluginWhitelistForToolBars(const std::vector<const char*>& pluginNames)
+{
+    for(auto& name : pluginNames){
+        pluginWhitelistForToolBars.insert(name);
+    }
+}
+
+
+void ExtensionManager::setToolBarWhitelist(const std::vector<const char*>& toolBarNames)
+{
+    for(auto& name : toolBarNames){
+        toolBarWhitelist.insert(name);
+    }
+}
+
+
 void ExtensionManager::addToolBar(ToolBar* toolBar)
 {
-    toolBar->setWindowTitle(dgettext(impl->textDomain.c_str(), toolBar->name().c_str()));
-
     manage(toolBar);
-    MainWindow::instance()->addToolBar(toolBar);
+
+    bool isEnabled = true;
+    if(impl->doCheckToolBarWhitelist){
+        if(toolBarWhitelist.find(toolBar->name()) == toolBarWhitelist.end()){
+            isEnabled = false;
+        }
+    }
+    if(isEnabled){
+        toolBar->setWindowTitle(dgettext(impl->textDomain.c_str(), toolBar->name().c_str()));
+        MainWindow::instance()->addToolBar(toolBar);
+    }
 }
 
 
@@ -171,7 +212,7 @@ void ExtensionManager::mountToolBar(ToolBar* toolBar)
         auto toolBarHolder = dynamic_cast<PtrHolder<ToolBar*>*>(*p);
         if(toolBarHolder){
             auto existingToolBar = toolBarHolder->pointer;
-            if(existingToolBar->objectName() == toolBar->objectName()){
+            if(existingToolBar->name() == toolBar->name()){
                 MainWindow::instance()->removeToolBar(existingToolBar);
                 p = impl->deleteManagedObject(p);
                 continue;

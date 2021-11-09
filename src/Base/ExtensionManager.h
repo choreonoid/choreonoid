@@ -7,12 +7,11 @@
 
 #include <cnoid/Signal>
 #include <string>
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class Item;
-class View;
 class ToolBar;
 class Archive;
 class ItemManager;
@@ -36,30 +35,11 @@ public:
     MenuManager& menuManager();
     OptionManager& optionManager();
 
-private:
-
-    struct CNOID_EXPORT PtrHolderBase {
-        virtual ~PtrHolderBase();
-    };
-
-    // smart pointer version
-    template <class PointerType> struct PtrHolder : public PtrHolderBase {
-        PtrHolder(PointerType pointer) : pointer(pointer) { }
-        virtual ~PtrHolder() { }
-        PointerType pointer;
-    };
-
-    // raw pointer version
-    template <class Object> struct PtrHolder<Object*> : public PtrHolderBase {
-        PtrHolder(Object* pointer) : pointer(pointer) { }
-        virtual ~PtrHolder() { delete pointer; }
-        Object* pointer;
-    };
-
-    void manageSub(PtrHolderBase* holder);
-
-public:
-
+    //! \note This function can only be called before calling the App::initialize function.
+    static void setPluginWhitelistForToolBars(const std::vector<const char*>& pluginNames);
+    //! \note This function can only be called before calling the App::initialize function.
+    static void setToolBarWhitelist(const std::vector<const char*>& toolBarNames);
+    
     void addToolBar(ToolBar* toolBar);
 
     /**
@@ -108,7 +88,27 @@ public:
         
 private:
     ExtensionManager(const ExtensionManager& org);
-        
+
+    struct CNOID_EXPORT PtrHolderBase {
+        virtual ~PtrHolderBase();
+    };
+
+    // smart pointer version
+    template <class PointerType> struct PtrHolder : public PtrHolderBase {
+        PtrHolder(PointerType pointer) : pointer(pointer) { }
+        virtual ~PtrHolder() { }
+        PointerType pointer;
+    };
+
+    // raw pointer version
+    template <class Object> struct PtrHolder<Object*> : public PtrHolderBase {
+        PtrHolder(Object* pointer) : pointer(pointer) { }
+        virtual ~PtrHolder() { delete pointer; }
+        Object* pointer;
+    };
+
+    void manageSub(PtrHolderBase* holder);
+
     class Impl;
     Impl* impl;
 };
