@@ -59,6 +59,8 @@ public:
 class CNOID_EXPORT ItemManager
 {
 public:
+    static void initializeClass(ExtensionManager* ext);
+
     ItemManager(const std::string& moduleName, MenuManager& menuManager);
     ~ItemManager();
 

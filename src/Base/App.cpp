@@ -305,6 +305,7 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     
     MessageView::initializeClass(ext);
     messageView = MessageView::instance();
+    ItemManager::initializeClass(ext);
     ProjectManager::initializeClass(ext);
     RootItem::initializeClass(ext);
     UnifiedEditHistory::initializeClass(ext);

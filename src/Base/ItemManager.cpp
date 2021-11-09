@@ -63,7 +63,6 @@ typedef map<string, ClassInfoPtr> ItemClassNameToInfoMap;
 
 ItemClassRegistry* itemClassRegistry = nullptr;
 MessageView* messageView = nullptr;
-bool isStaticMembersInitialized = false;
 
 ItemClassIdToInfoMap itemClassIdToInfoMap;
 
@@ -172,6 +171,42 @@ ClassInfo::~ClassInfo()
 }
 
 
+void ItemManager::initializeClass(ExtensionManager* ext)
+{
+    itemClassRegistry = &ItemClassRegistry::instance();
+
+    auto& mm = ext->menuManager();
+
+    mm.setPath("/File").setPath(N_("New ..."));
+        
+    mm.setPath("/File");
+    mm.setPath(N_("Load ..."));
+    mm.setPath("/File");
+    mm.addItem(_("Reload Selected Items"))
+        ->sigTriggered().connect([](){ Impl::onReloadSelectedItemsActivated(); });
+        
+    mm.addSeparator();
+
+    mm.addItem(_("Save Selected Items"))
+        ->sigTriggered().connect([](){ Impl::onSaveSelectedItemsActivated(); });
+    mm.addItem(_("Save Selected Items As"))
+        ->sigTriggered().connect([](){ Impl::onSaveSelectedItemsAsActivated(); });
+
+    mm.addSeparator();
+        
+    mm.setPath(N_("Import ..."));
+    importMenu = mm.current();
+        
+    mm.setPath("/File");
+    mm.addItem(_("Export Selected Items"))
+        ->sigTriggered().connect([](){ Impl::onExportSelectedItemsActivated(); });
+        
+    mm.addSeparator();
+
+    messageView = MessageView::instance();
+}
+
+
 ItemManager::ItemManager(const std::string& moduleName, MenuManager& menuManager)
 {
     impl = new Impl(moduleName, menuManager);
@@ -182,41 +217,6 @@ ItemManager::Impl::Impl(const string& moduleName, MenuManager& menuManager)
     : moduleName(moduleName),
       menuManager(menuManager)
 {
-    if(!isStaticMembersInitialized){
-
-        itemClassRegistry = &ItemClassRegistry::instance();
-
-        menuManager.setPath("/File").setPath(N_("New ..."));
-        
-        menuManager.setPath("/File");
-        menuManager.setPath(N_("Load ..."));
-        menuManager.setPath("/File");
-        menuManager.addItem(_("Reload Selected Items"))
-            ->sigTriggered().connect([&](){ onReloadSelectedItemsActivated(); });
-        
-        menuManager.addSeparator();
-
-        menuManager.addItem(_("Save Selected Items"))
-            ->sigTriggered().connect([&](){ onSaveSelectedItemsActivated(); });
-        menuManager.addItem(_("Save Selected Items As"))
-            ->sigTriggered().connect([&](){ onSaveSelectedItemsAsActivated(); });
-
-        menuManager.addSeparator();
-        
-        menuManager.setPath(N_("Import ..."));
-        importMenu = menuManager.current();
-        
-        menuManager.setPath("/File");
-        menuManager.addItem(_("Export Selected Items"))
-            ->sigTriggered().connect([&](){ onExportSelectedItemsActivated(); });
-        
-        menuManager.addSeparator();
-
-        messageView = MessageView::mainInstance();
-
-        isStaticMembersInitialized = true;
-    }
-
     moduleNameToItemManagerImplMap[moduleName] = this;
 }
 
