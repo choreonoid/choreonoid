@@ -300,6 +300,9 @@ bool Item::doAssign(const Item* /* srcItem */)
 
 Item* Item::duplicate(Item* duplicatedParentItem) const
 {
+    if(isTemporal()){
+        return nullptr;
+    }
     Item* duplicated = doDuplicate(duplicatedParentItem);
     if(!duplicated){
         duplicated = doDuplicate();
@@ -307,8 +310,7 @@ Item* Item::duplicate(Item* duplicatedParentItem) const
     if(duplicated && (typeid(*duplicated) != typeid(*this))){
         delete duplicated;
         duplicated = nullptr;
-    }
-    if(duplicated){
+    } else if(duplicated){
         duplicated->impl->assignAddons(this);
     }
     return duplicated;
