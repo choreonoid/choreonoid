@@ -300,9 +300,6 @@ bool Item::doAssign(const Item* /* srcItem */)
 
 Item* Item::duplicate(Item* duplicatedParentItem) const
 {
-    if(isTemporal()){
-        return nullptr;
-    }
     Item* duplicated = doDuplicate(duplicatedParentItem);
     if(!duplicated){
         duplicated = doDuplicate();
@@ -338,9 +335,11 @@ Item* Item::duplicateSubTree() const
 Item* Item::Impl::duplicateSubTreeIter(Item* duplicated, Item* duplicatedParent) const
 {
     if(!duplicated){
-        duplicated = self->duplicate(duplicatedParent);
+        // Skip the duplication of a temporal item other than the top item
+        if(!duplicatedParent || !self->isTemporal()){
+            duplicated = self->duplicate(duplicatedParent);
+        }
     }
-    
     if(duplicated){
         for(Item* child = self->childItem(); child; child = child->nextItem()){
             Item* duplicatedChildItem;
@@ -357,7 +356,6 @@ Item* Item::Impl::duplicateSubTreeIter(Item* duplicated, Item* duplicatedParent)
             }
         }
     }
-
     return duplicated;
 }
 
