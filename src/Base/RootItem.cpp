@@ -72,8 +72,6 @@ public:
     Signal<void(Item* item, const std::string& oldName)> sigItemNameChanged;
 
     Impl(RootItem* self);
-    Impl(RootItem* self, const Impl& org);
-    void doCommonInitialization();
     void selectItemIter(Item* item, Item* itemToSelect);
     bool updateSelectedItemsIter(Item* item);
     void updateCheckedItemsIter(Item* item, int checkId, ItemList<>& checkedItems);
@@ -118,8 +116,9 @@ void RootItem::initializeClass(ExtensionManager* ext)
 {
     static bool initialized = false;
     if(!initialized){
-        ext->itemManager().registerClass<RootItem>(N_("RootItem"));
-        instance_ = new RootItem();
+        instance_ = new RootItem;
+        // Register RootItem as a singleton item class
+        ext->itemManager().registerClass<RootItem>(N_("RootItem"), instance_);
         ext->manage(RootItemPtr(instance_));
         initialized = true;
 
@@ -152,30 +151,6 @@ RootItem::RootItem()
 
 RootItem::Impl::Impl(RootItem* self)
     : self(self)
-{
-    doCommonInitialization();
-}
-
-
-RootItem::RootItem(const RootItem& org)
-    : Item(org)
-{
-    impl = new Impl(this, *org.impl);
-}
-
-
-RootItem::Impl::Impl(RootItem* self, const Impl& org)
-{
-    checkEntries.reserve(org.checkEntries.size());
-    for(auto& entry : org.checkEntries){
-        checkEntries.push_back(make_shared<CheckEntry>(*entry));
-    }
-
-    doCommonInitialization();
-}
-
-
-void RootItem::Impl::doCommonInitialization()
 {
     needToUpdateSelectedItems = false;
     itemSelectionChangeBlockLevel = 0;
@@ -212,12 +187,6 @@ RootItem::~RootItem()
     impl->sigDestroyed(this);
 
     delete impl;
-}
-
-
-Item* RootItem::doDuplicate() const
-{
-    return new RootItem(*this);
 }
 
 

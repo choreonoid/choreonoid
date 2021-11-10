@@ -25,6 +25,13 @@ public:
     RootItem();
     virtual ~RootItem();
 
+    /**
+       The copy constructor is disabled and the duplication function
+       is not implemented becasue RootItem is a singleton item class.
+    */
+    RootItem(const RootItem& org) = delete;
+    // virtual Item* doDuplicate() const override;
+    
     SignalProxy<void(RootItem* rootItem)> sigDestroyed();
     SignalProxy<void(Item* item)> sigSubTreeAdded();
     SignalProxy<void(Item* item)> sigItemAdded();
@@ -78,8 +85,7 @@ public:
     }
 
     SignalProxy<void(Item* item, bool on)> sigCheckToggled(int checkId = PrimaryCheck);
-    
-    virtual Item* doDuplicate() const override;
+
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
@@ -93,9 +99,6 @@ public:
        the entire project item tree is consistent with that archived in the project file.
     */
     virtual bool checkConsistencyWithArchive() override;
-
-protected:
-    RootItem(const RootItem& org);
 
 private:
     friend class Item;
