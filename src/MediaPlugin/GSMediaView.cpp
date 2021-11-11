@@ -7,6 +7,7 @@
 #include <cnoid/TimeBar>
 #include <cnoid/ConnectionSet>
 #include <cnoid/MenuManager>
+#include <cnoid/MainMenu>
 #include <cnoid/ViewManager>
 #include <cnoid/Archive>
 #include <cnoid/RootItem>
@@ -33,8 +34,8 @@ namespace {
 const bool TRACE_FUNCTIONS = false;
 const bool TRACE_FUNCTIONS2 = false;
 
-Action* aspectRatioCheck = 0;
-Action* orgSizeCheck = 0;
+Action* aspectRatioCheck = nullptr;
+Action* orgSizeCheck = nullptr;
 
 }
 
@@ -128,15 +129,17 @@ bool GSMediaView::initializeClass(ExtensionManager* ext)
         }
 
         ext->viewManager().registerClass<GSMediaView>("MediaView", N_("Media"));
-        
-        MenuManager& mm = ext->menuManager();
-        
-        mm.setPath("/Options").setPath(N_("Media View"));
-        
-        aspectRatioCheck = mm.addCheckItem(_("Keep Aspect Ratio"));
+
+        if(auto optionsMenu = MainMenu::instance()->get_Options_Menu()){
+            MenuManager& mm = ext->menuManager();
+            mm.setCurrent(optionsMenu).setPath(N_("Media View"));
+            aspectRatioCheck = mm.addCheckItem(_("Keep Aspect Ratio"));
+            orgSizeCheck = mm.addCheckItem(_("Keep Original Size"));
+        } else {
+            aspectRatioCheck = new Action;
+            orgSizeCheck = new Action;
+        }
         aspectRatioCheck->setChecked(true);
-        
-        orgSizeCheck = mm.addCheckItem(_("Keep Original Size"));
         orgSizeCheck->setChecked(true);
 
         initialized = true;
@@ -182,7 +185,7 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
         if(sret != GST_STATE_CHANGE_SUCCESS){
             gst_element_set_state(GST_ELEMENT(videoSink), GST_STATE_NULL);
             gst_object_unref(videoSink);
-            videoSink = 0;
+            videoSink = nullptr;
         }
     }
     if(!videoSink){
@@ -192,7 +195,7 @@ GSMediaViewImpl::GSMediaViewImpl(GSMediaView* self)
             if(sret != GST_STATE_CHANGE_SUCCESS){
                 gst_element_set_state(GST_ELEMENT(videoSink), GST_STATE_NULL);
                 gst_object_unref(videoSink);
-                videoSink = 0;
+                videoSink = nullptr;
             }
         }
     }

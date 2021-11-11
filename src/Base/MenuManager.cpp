@@ -3,9 +3,10 @@
 */
 
 #include "MenuManager.h"
+#include "MainWindow.h"
 #include "MessageView.h"
+#include <QMenuBar>
 #include <fmt/format.h>
-#include <tuple>
 #include "gettext.h"
 
 using namespace std;
@@ -13,26 +14,27 @@ using namespace cnoid;
 
 
 MenuManager::MenuManager()
-    : topMenu_(nullptr)
+    : MenuManager(static_cast<QWidget*>(nullptr))
 {
-    currentMenu_ = topMenu_;
-    popupMenu_ = nullptr;
-    isBackwardMode = false;
+
 }
 
 
 MenuManager::MenuManager(QWidget* topMenu)
-    : topMenu_(topMenu)
 {
-    currentMenu_ = topMenu;
+    topMenu_ = topMenu;
     popupMenu_ = nullptr;
+    currentMenu_ = topMenu;
+    lastUpperMenu_ = nullptr;
     isBackwardMode = false;
 }
 
 
-void MenuManager::bindTextDomain(const std::string& domain)
+MenuManager::~MenuManager()
 {
-    textDomain = domain;
+    if(popupMenu_){
+        delete popupMenu_;
+    }
 }
 
 
@@ -47,9 +49,9 @@ void MenuManager::setTopMenu(QWidget* topMenu)
 }
 
 
-QWidget* MenuManager::topMenu()
+void MenuManager::setMainMenuBarAsTopMenu()
 {
-    return topMenu_;
+    setTopMenu(MainWindow::instance()->menuBar());
 }
 
 
@@ -64,23 +66,29 @@ void MenuManager::setNewPopupMenu(QWidget* parent)
 }
 
 
-Menu* MenuManager::popupMenu()
+void MenuManager::bindTextDomain(const std::string& domain)
 {
-    return popupMenu_;
+    textDomain = domain;
 }
 
 
-QWidget* MenuManager::current() const
+MenuManager& MenuManager::goBackToUpperMenu()
 {
-    return currentMenu_;
-}
+    if(lastUpperMenu_){
+        currentMenu_ = lastUpperMenu_;
+        lastUpperMenu_ = nullptr;
 
-
-MenuManager::~MenuManager()
-{
-    if(popupMenu_){
-        delete popupMenu_;
+    } else if(currentMenu_){
+        if(auto upper = currentMenu_->parentWidget()){
+            if(auto upperMenu = dynamic_cast<QMenu*>(upper)){
+                currentMenu_ = upperMenu;
+            } else if(auto upperMenuBar = dynamic_cast<QMenuBar*>(upper)){
+                currentMenu_ = upperMenuBar;
+            }
+        }
     }
+
+    return *this;
 }
 
 
@@ -95,19 +103,26 @@ int MenuManager::numItems() const
 
 QAction* MenuManager::findItem(const QString& path)
 {
-    return findPath(path, false).first;
+    QAction* item;
+    QWidget* menu;
+    QWidget* upperMenu;
+    findPath(path, false, item, menu, upperMenu);
+    return item;
 }
 
-
-std::pair<QAction*, QWidget*> MenuManager::findPath(const QString& path, bool createPath)
+void MenuManager::findPath
+(const QString& path, bool createPath, QAction*& out_item, QWidget*& out_menu, QWidget*& out_upperMenu)
 {
+    out_item = nullptr;
+    out_upperMenu = nullptr;
+
     int pos = 0;
     int size = path.size();
     QAction* item = nullptr;
     QWidget* menu = currentMenu_;
-    
+        
     if(path[pos] == QChar('/')){
-        pos++;
+        ++pos;
         menu = topMenu_;
     }
 
@@ -117,34 +132,75 @@ std::pair<QAction*, QWidget*> MenuManager::findPath(const QString& path, bool cr
         int length = (next >= 0) ? (next - pos) : next;
         QString name = path.mid(pos, length);
 
-        QList<QAction*> items = menu->actions();
         item = nullptr;
-        for(int i=0; i < items.size(); ++i){
-            if(name == items[i]->objectName()){
-                item = items[i];
+        for(auto& action : menu->actions()){
+            if(action->objectName() == name){
+                item = action;
                 break;
             }
         }
         if(!item){
-            if(createPath){
-                if(textDomain.empty()){
-                    item = new QAction(name, menu);
-                } else {
-                    item = new QAction(dgettext(textDomain.c_str(), name.toUtf8()), menu);
-                }
-                item->setObjectName(name);
-                addItem(menu, item);
-                item->setMenu(new Menu());
-            } else {
+            if(!createPath){
                 break;
             }
+            if(textDomain.empty()){
+                item = new QAction(name, menu);
+            } else {
+                item = new QAction(dgettext(textDomain.c_str(), name.toUtf8()), menu);
+            }
+            item->setObjectName(name);
+            addItem(menu, item);
+            item->setMenu(new Menu);
         }
 
-        menu = item->menu();
+        auto itemMenu = item->menu();
+        if(itemMenu){
+            out_upperMenu = menu;
+        }
+        menu = itemMenu;
+        
         pos = (next >= 0) ? (next + 1) : size;
     }
 
-    return make_pair(item, menu);
+    out_item = item;
+    out_menu = menu;
+}
+
+
+/**
+   This function specifies a menu to be subjected to item operation.
+   The function must be called before adding a menu item.
+   
+   @param path The path to the target menu
+   If the path begins with '/', it will be the path from the root.
+   Otherwise, it will be a relative path from the currently specifed menu.
+   A menu is newly created if the menu specified in the path does not exist.
+*/
+MenuManager& MenuManager::setPath(const QString& path)
+{
+    if(!path.isEmpty() && path[0] == QChar('/')){
+        isBackwardMode = false;
+    }
+    
+    QAction* item;
+    findPath(path, true, item, currentMenu_, lastUpperMenu_);
+
+    if(!currentMenu_){
+        MessageView::instance()->putln(
+            fmt::format(_("MenuManager failed to set the current menu path to {0}."), path.toStdString()),
+            MessageView::Error);
+    }
+
+    isBackwardMode = false;
+
+    return *this;
+}
+
+
+MenuManager& MenuManager::setBackwardMode()
+{
+    isBackwardMode = true;
+    return *this;
 }
 
 
@@ -173,53 +229,6 @@ void MenuManager::addItem(QWidget* menu, QAction* item)
     }
 }
     
-
-/**
-   This function specifies a menu to be subjected to item operation.
-   The function must be called before adding a menu item.
-   
-   @param path The path to the target menu
-   If the path begins with '/', it will be the path from the root.
-   Otherwise, it will be a relative path from the currently specifed menu.
-   A menu is newly created if the menu specified in the path does not exist.
-*/
-MenuManager& MenuManager::setPath(const QString& path)
-{
-    if(!path.isEmpty() && path[0] == QChar('/')){
-        isBackwardMode = false;
-    }
-    
-    QAction* item;
-    QWidget* menu;
-
-    std::tie(item, menu) = findPath(path, true);
-
-    if(!menu){
-        MessageView::instance()->putln(
-            fmt::format(_("MenuManager failed to set the current menu path to {0}."), path.toStdString()),
-            MessageView::Error);
-    }
-
-    currentMenu_ = menu;
-    isBackwardMode = false;
-
-    return *this;
-}
-
-
-MenuManager& MenuManager::setCurrent(QWidget* menu)
-{
-    currentMenu_ = menu;
-    return *this;
-}
-
-
-MenuManager& MenuManager::setBackwardMode()
-{
-    isBackwardMode = true;
-    return *this;
-}
-
 
 Action* MenuManager::addItem(const QString& text)
 {

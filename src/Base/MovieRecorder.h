@@ -19,6 +19,8 @@ class CNOID_EXPORT MovieRecorder
     static MovieRecorder* instance();
     ~MovieRecorder();
 
+    void showDialog();
+  
   private:
     MovieRecorder(ExtensionManager* ext);
 

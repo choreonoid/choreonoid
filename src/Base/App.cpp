@@ -15,7 +15,6 @@
 #include "UnifiedEditHistory.h"
 #include "UnifiedEditHistoryView.h"
 #include "ItemEditRecordManager.h"
-#include "MenuManager.h"
 #include "TimeSyncItemEngine.h"
 #include "MainWindow.h"
 #include "FolderItem.h"
@@ -56,12 +55,11 @@
 #include "TextEditView.h"
 #include "GeneralSliderView.h"
 #include "VirtualJoystickView.h"
-#include "PathVariableEditor.h"
+#include "MainMenu.h"
 #include "GLSceneRenderer.h"
 #include "Licenses.h"
 #include "MovieRecorder.h"
 #include "LazyCaller.h"
-#include "DescriptionDialog.h"
 #include "LayoutSwitcher.h"
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
@@ -73,8 +71,6 @@
 #include <QTranslator>
 #include <QTextCodec>
 #include <QSurfaceFormat>
-#include <QTextStream>
-#include <QFile>
 #include <QStyleFactory>
 #include <QThread>
 #include <QLibraryInfo>
@@ -141,7 +137,6 @@ public:
     string vendorName;
     const char* iconFilename;
     QTranslator translator;
-    DescriptionDialog* descriptionDialog;
     bool doQuit;
     int returnCode;
     
@@ -151,7 +146,6 @@ public:
     int exec();
     void onMainWindowCloseEvent();
     void onSigOptionsParsed(boost::program_options::variables_map& v);
-    void showInformationDialog();
     void enableTestMode();
     virtual bool eventFilter(QObject* watched, QEvent* event);
 };
@@ -207,8 +201,8 @@ App::Impl::Impl(App* self, int& argc, char** argv)
     instance_ = self;
     qapplication = nullptr;
     iconFilename = nullptr;
+    ext = nullptr;
     mainWindow = nullptr;
-    descriptionDialog = nullptr;
     doQuit = false;
     returnCode = 0;
 }
@@ -251,9 +245,9 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
         glFormat.setVersion(1, 5);
         break;
     }
-    
-    auto glConfig = AppConfig::archive()->openMapping("open_gl");
-    glFormat.setSwapInterval(glConfig->get("vsync", 0));
+
+    glFormat.setSwapInterval(
+        AppConfig::archive()->openMapping("OpenGL")->get("vsync", false));
 
     QSurfaceFormat::setDefaultFormat(glFormat);
 
@@ -302,7 +296,6 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     mainWindow = MainWindow::initialize(appName, ext);
 
     ViewManager::initializeClass(ext);
-    
     MessageView::initializeClass(ext);
     messageView = MessageView::instance();
     ItemManager::initializeClass(ext);
@@ -360,17 +353,20 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
 
     CaptureBar::initialize(ext);
     
-    PathVariableEditor::initialize(ext);
-
-    ext->menuManager().setPath("/Help").addItem(_("About Choreonoid"))
-        ->sigTriggered().connect([&](){ showInformationDialog(); });
-
     messageView->putln(
         fmt::format(_("The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: {3})."),
                     EIGEN_WORLD_VERSION, EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
                     Eigen::SimdInstructionSetsInUse()));
 
     PluginManager::initialize(ext);
+
+    /**
+       Since the main menu may be customized by the main function of a custom application executable
+       and the custom main menu may depend on plugins, the main menu setup is processed after
+       initializing the plugin manager so that the custom main menu setup can use the functions of it.
+    */
+    MainMenu::instance()->setMenuItems();
+
     if(!pluginPathList){
         pluginPathList = getenv("CNOID_PLUGIN_PATH");
     }
@@ -479,6 +475,12 @@ int App::Impl::exec()
 }
 
 
+ExtensionManager* App::baseModule()
+{
+    return instance_->impl->ext;
+}
+
+
 bool App::Impl::eventFilter(QObject* watched, QEvent* event)
 {
     if(watched == mainWindow && event->type() == QEvent::Close){
@@ -521,27 +523,6 @@ void App::Impl::onSigOptionsParsed(boost::program_options::variables_map& v)
     }
 }
     
-
-void App::Impl::showInformationDialog()
-{
-    if(!descriptionDialog){
-
-        descriptionDialog = new DescriptionDialog();
-
-        descriptionDialog->setWindowTitle(_("About Choreonoid"));
-
-        QFile resource(":/Base/LICENSE");
-        if(resource.open(QIODevice::ReadOnly | QIODevice::Text)){
-            QTextStream license(&resource);
-            descriptionDialog->setDescription(
-                QString("Choreonoid Version %1\n\n").arg(CNOID_FULL_VERSION_STRING) +
-                license.readAll());
-        }
-    }
-
-    descriptionDialog->show();
-}
-
 
 void App::exit(int returnCode)
 {

@@ -11,6 +11,7 @@
 #include <cnoid/App>
 #include <cnoid/AppConfig>
 #include <cnoid/MenuManager>
+#include <cnoid/MainMenu>
 #include <cnoid/ViewManager>
 #include <cnoid/ItemManager>
 #include <cnoid/RootItem>
@@ -156,14 +157,19 @@ bool PythonPlugin::Impl::initialize()
 {
     pythonConfig = AppConfig::archive()->openMapping("Python");
 
-    MenuManager& mm = self->menuManager();
-    mm.setPath("/Options").setPath("Python");
-    redirectionCheck = mm.addCheckItem(_("Redirectiton to MessageView"));
-    redirectionCheck->setChecked(pythonConfig->get("redirectionToMessageView", true));
-
-    refreshModulesCheck = mm.addCheckItem(_("Refresh modules in the script directory"));
+    if(auto optionsMenu = MainMenu::instance()->get_Options_Menu()){
+        MenuManager& mm = self->menuManager();
+        mm.setCurrent(optionsMenu).setPath(N_("Python"));
+        redirectionCheck = mm.addCheckItem(_("Redirectiton to MessageView"));
+        refreshModulesCheck = mm.addCheckItem(_("Refresh modules in the script directory"));
+    } else {
+        redirectionCheck = new Action;
+        refreshModulesCheck = new Action;
+    }
+    redirectionCheck->setChecked(pythonConfig->get("redirection_to_message_view", true));
     refreshModulesCheck->sigToggled().connect(&PythonExecutor::setModuleRefreshEnabled);
-    if(pythonConfig->get("refreshModules", false)){
+    
+    if(pythonConfig->get("refresh_modules", false)){
         refreshModulesCheck->setChecked(true);
     }
 
@@ -416,8 +422,8 @@ bool PythonPlugin::finalize()
 {
     pythonPlugin = nullptr;
     
-    pythonConfig->write("redirectionToMessageView", redirectionCheck->isChecked());
-    pythonConfig->write("refreshModules", refreshModulesCheck->isChecked());
+    pythonConfig->write("redirection_to_message_view", redirectionCheck->isChecked());
+    pythonConfig->write("refresh_modules", refreshModulesCheck->isChecked());
 
     // Views and items defined in this plugin must be deleted before finalizing the Python interpreter
     // because the views and items have their own python objects

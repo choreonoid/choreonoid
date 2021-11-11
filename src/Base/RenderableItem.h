@@ -18,6 +18,8 @@ public:
     virtual void setSceneSensitive(bool on);
     virtual SignalProxy<void(bool on)> sigSceneSensitiveChanged();
 
+    static void putSceneStatistics();
+
 private:
     Signal<void(bool on)> sigSceneSensitiveChanged_;
     bool isSceneSensitive_;

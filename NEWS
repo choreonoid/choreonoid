@@ -74,6 +74,7 @@ Changes since 1.7.0:
 * Improved SensorVisualizerItem to support acceleration sensors and rate gyro sensors
 * Add the choreonoid-info command (experimental)
 * Enabled the translation of the Qt built-in messages
+* Arrange the main menu items
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================

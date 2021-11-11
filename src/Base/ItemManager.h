@@ -16,7 +16,6 @@
 
 namespace cnoid {
 
-class MenuManager;
 class Item;
 class ItemFileIO;
 class ItemAddon;
@@ -61,7 +60,7 @@ class CNOID_EXPORT ItemManager
 public:
     static void initializeClass(ExtensionManager* ext);
 
-    ItemManager(const std::string& moduleName, MenuManager& menuManager);
+    ItemManager(const std::string& moduleName);
     ~ItemManager();
 
     void detachAllManagedTypeItemsFromRoot();
@@ -166,9 +165,9 @@ public:
     static std::vector<ItemFileIO*> getFileIOs(){
         return getFileIOs(typeid(ItemType));
     }
-
     static std::vector<ItemFileIO*> getFileIOs(const std::type_info& type);
-
+    static std::vector<ItemFileIO*> getFileIOs(
+        Item* item, std::function<bool(ItemFileIO* fileIO)> pred, bool includeSuperClassIos);
     static ItemFileIO* findFileIO(const std::type_info& type, const std::string& format);
 
     template <class ItemType>
@@ -235,8 +234,6 @@ public:
         return *this;
     }
     
-    void addMenuItemToImport(const std::string& caption, std::function<void()> slot);
-
     static Item* createItem(const std::string& moduleName, const std::string& itemClassName);
     static Item* createItem(int itemClassId);
 

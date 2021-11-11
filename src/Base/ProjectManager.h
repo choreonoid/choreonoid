@@ -19,13 +19,16 @@ class Mapping;
 class CNOID_EXPORT ProjectManager
 {
 public:
-     // This function is called before initializaing the App class
+    //! This function can be called before the initializeClass function is called.
+    static void setDefaultLayoutInclusionMode(bool on);
+
+    [[deprecated("Use setDefaultLayoutInclusionMode")]]
     static void setDefaultOptionToStoreLayoutInProjectFile(bool on);
     
     static void initializeClass(ExtensionManager* ext);
     static ProjectManager* instance();
 
-    //The constructor used to create a sub instance for recursive loading / saving
+    //! The constructor used to create a sub instance for recursive loading / saving
     ProjectManager();
     
     ~ProjectManager();
@@ -46,10 +49,15 @@ public:
     bool overwriteCurrentProject();
     bool tryToCloseProject();
 
+    bool showDialogToLoadProject();
+    bool showDialogToSaveProject();
+
     const std::string& currentProjectName() const;
     const std::string& currentProjectFile() const;
     const std::string& currentProjectDirectory() const;
     void setCurrentProjectName(const std::string& filename);
+    bool isLayoutInclusionMode() const;
+    void setLayoutInclusionMode(bool on);
 
     SignalProxy<void(int recursiveLevel)> sigProjectAboutToBeLoaded();
     SignalProxy<void(int recursiveLevel)> sigProjectLoaded();

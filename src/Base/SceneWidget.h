@@ -27,6 +27,10 @@ class CNOID_EXPORT SceneWidget : public Widget
 public:
     static void initializeClass(ExtensionManager* ext);
     static SignalProxy<void(SceneWidget*)> sigSceneWidgetCreated();
+    static bool isVerticalSyncMode();
+    static void setVerticalSyncMode(bool on);
+    static bool isLowMemoryConsumptionMode();
+    static void setLowMemoryConsumptionMode(bool on);
 
     SceneWidget(QWidget* parent);
     ~SceneWidget();

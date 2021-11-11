@@ -63,7 +63,8 @@ const int NUM_SHADOWS = 2;
 
 enum { FLOOR_GRID = 0, XZ_GRID = 1, YZ_GRID = 2 };
 
-bool isLowMemoryConsumptionMode;
+bool isVerticalSyncMode = false;
+bool isLowMemoryConsumptionMode = false;
 Signal<void(bool on)> sigLowMemoryConsumptionModeChanged;
 
 QLabel* sharedIndicatorLabel = nullptr;
@@ -428,23 +429,18 @@ public:
 
 void SceneWidget::initializeClass(ExtensionManager* ext)
 {
-    Mapping* glConfig = AppConfig::archive()->openMapping("open_gl");
+    auto glConfig = AppConfig::archive()->openMapping("OpenGL");
     
-    bool isVSyncEnabled = (glConfig->get("vsync", 0) > 0);
-    auto& mm = ext->menuManager();
-    auto vsyncItem = mm.setPath("/Options/OpenGL").addCheckItem(_("Vertical sync"));
-    vsyncItem->setChecked(isVSyncEnabled);
-    vsyncItem->sigToggled().connect([&](bool on){ Impl::onOpenGLVSyncToggled(on, true); });
+    ::isVerticalSyncMode = glConfig->get("vsync", false);
 
-    isLowMemoryConsumptionMode = glConfig->get("lowMemoryConsumption", false);
-    auto memoryItem = mm.addCheckItem(_("Low GPU memory consumption mode"));
-    memoryItem->setChecked(isLowMemoryConsumptionMode);
-    memoryItem->sigToggled().connect([&](bool on){ Impl::onLowMemoryConsumptionModeChanged(on, true); });
-    Impl::onLowMemoryConsumptionModeChanged(isLowMemoryConsumptionMode, false);
+    ::isLowMemoryConsumptionMode = glConfig->get("low_memory_consumption", false);
+    if(::isLowMemoryConsumptionMode){
+        setLowMemoryConsumptionMode(true);
+    }
 }
 
 
-void SceneWidget::Impl::onOpenGLVSyncToggled(bool on, bool doConfigOutput)
+void SceneWidget::setVerticalSyncMode(bool on)
 {
     /*
       When the menu check item on the OpenGL vertical sync is toggled, the state is
@@ -452,21 +448,34 @@ void SceneWidget::Impl::onOpenGLVSyncToggled(bool on, bool doConfigOutput)
       update the vsync state because it is impossible to change the state of the existing
       QOpenGLWidgets.
     */
-    if(doConfigOutput){
-        Mapping* glConfig = AppConfig::archive()->openMapping("open_gl");
-        glConfig->write("vsync", (on ? 1 : 0));
+    ::isVerticalSyncMode = on;
+    AppConfig::archive()->openMapping("OpenGL")->write("vsync", on);
+}
+
+
+bool SceneWidget::isVerticalSyncMode()
+{
+    return ::isVerticalSyncMode;
+}
+
+
+void SceneWidget::setLowMemoryConsumptionMode(bool on)
+{
+    ::isLowMemoryConsumptionMode = on;
+    sigLowMemoryConsumptionModeChanged(on);
+
+    auto glConfig = AppConfig::archive()->openMapping("OpenGL");
+    if(on){
+        glConfig->write("low_memory_consumption", true);
+    } else {
+        glConfig->remove("low_memory_consumption");
     }
 }
 
 
-void SceneWidget::Impl::onLowMemoryConsumptionModeChanged(bool on, bool doConfigOutput)
+bool SceneWidget::isLowMemoryConsumptionMode()
 {
-    sigLowMemoryConsumptionModeChanged(on);
-
-    if(doConfigOutput){
-        Mapping* glConfig = AppConfig::archive()->openMapping("open_gl");
-        glConfig->write("low_memory_consumption", on);
-    }
+    return ::isLowMemoryConsumptionMode;
 }
 
 

@@ -1,7 +1,6 @@
 #include "UnifiedEditHistory.h"
 #include "EditRecord.h"
 #include "ExtensionManager.h"
-#include "MenuManager.h"
 #include "ProjectManager.h"
 #include "Action.h"
 #include "MessageView.h"
@@ -32,14 +31,11 @@ public:
     bool isProjectBeingLoaded;
     vector<EditRecordPtr> newRecordBuffer;
     LazyCaller flushNewRecordBufferLater;
-    Action* undoAction;
-    Action* redoAction;
     Signal<void()> sigHistoryUpdated;
     Signal<void(int position)> sigCurrentPositionChanged;
     MessageView* mv;
 
     Impl(ExtensionManager* ext);
-    void updateActionState();
     void clear();
     void removeRecordsAfter(int index);
     void addRecord(EditRecord* record);
@@ -78,15 +74,6 @@ UnifiedEditHistory::Impl::Impl(ExtensionManager* ext)
     currentPosition = 0;
     maxHistorySize = 100;
 
-    auto& mm = ext->menuManager();
-    mm.setPath("/Edit");
-    undoAction = mm.addItem(_("Undo"));
-    undoAction->sigTriggered().connect([&](){ undo(); });
-    undoAction->setEnabled(false);
-    redoAction = mm.addItem(_("Redo"));
-    redoAction->sigTriggered().connect([&](){ redo(); });
-    redoAction->setEnabled(false);
-
     mv = MessageView::instance();
 
     auto pm = ProjectManager::instance();
@@ -122,13 +109,6 @@ int UnifiedEditHistory::numRecords() const
 EditRecord* UnifiedEditHistory::record(int index)
 {
     return impl->records[index];
-}
-
-
-void UnifiedEditHistory::Impl::updateActionState()
-{
-    undoAction->setEnabled(currentPosition < records.size());
-    redoAction->setEnabled(currentPosition >= 1);
 }
 
 
@@ -233,7 +213,6 @@ void UnifiedEditHistory::Impl::flushNewRecordBuffer()
         records.pop_back();
     }
     newRecordBuffer.clear();
-    updateActionState();
     sigHistoryUpdated();
 }
 
@@ -254,6 +233,18 @@ void UnifiedEditHistory::Impl::expandHistoryFromLatestToCurrentUndoPosition()
 int UnifiedEditHistory::currentPosition() const
 {
     return impl->currentPosition;
+}
+
+
+bool UnifiedEditHistory::isUndoable() const
+{
+    return (impl->currentPosition < impl->records.size());
+}
+
+
+bool UnifiedEditHistory::isRedoable() const
+{
+    return (impl->currentPosition >= 1);
 }
 
 
@@ -279,7 +270,6 @@ bool UnifiedEditHistory::Impl::undo()
             clear();
             mv->notify(_("Undo failed and the edit history has been clered."), MessageView::Error);
         }
-        updateActionState();
     }
 
     return done;
@@ -308,7 +298,6 @@ bool UnifiedEditHistory::Impl::redo()
             clear();
             mv->notify(_("Redo failed and the edit history has been clered."), MessageView::Error);
         }
-        updateActionState();
     }
 
     return done;

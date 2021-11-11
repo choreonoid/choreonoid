@@ -7,6 +7,7 @@ set(sources
   App.cpp
   MenuManager.cpp
   Menu.cpp
+  MainMenu.cpp
   ProjectManager.cpp
   PathVariableEditor.cpp
   PluginManager.cpp

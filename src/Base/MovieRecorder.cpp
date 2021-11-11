@@ -5,7 +5,6 @@
 #include "MovieRecorder.h"
 #include "ExtensionManager.h"
 #include "ViewManager.h"
-#include "MenuManager.h"
 #include "ViewArea.h"
 #include "MessageView.h"
 #include "AppConfig.h"
@@ -265,11 +264,6 @@ void MovieRecorder::initialize(ExtensionManager* ext)
 {
     if(!movieRecorder){
         movieRecorder = ext->manage(new MovieRecorder(ext));
-
-        MenuManager& mm = ext->menuManager();
-        mm.setPath("/Tools");
-        mm.addItem(_("Movie Recorder"))
-            ->sigTriggered().connect([](){ movieRecorder->impl->dialog->show(); });
     }
 }
 
@@ -343,6 +337,12 @@ MovieRecorderImpl::~MovieRecorderImpl()
     if(viewMarker){
         delete viewMarker;
     }
+}
+
+
+void MovieRecorder::showDialog()
+{
+    impl->dialog->show();
 }
 
 

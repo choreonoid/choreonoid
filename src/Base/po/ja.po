@@ -442,7 +442,7 @@ msgid "Save Selected Items"
 msgstr "選択アイテムの保存"
 
 msgid "Save Selected Items As"
-msgstr "名前を付けて選択アイテムを保存"
+msgstr "選択アイテムに名前を付けて保存"
 
 msgid "Import ..."
 msgstr "インポート"
@@ -1188,7 +1188,7 @@ msgid "Save Project"
 msgstr "プロジェクトの保存"
 
 msgid "Save Project As"
-msgstr "名前を付けてプロジェクトを保存"
+msgstr "プロジェクトに名前を付けて保存"
 
 msgid "Perspective"
 msgstr "レイアウト"

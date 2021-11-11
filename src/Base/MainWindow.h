@@ -6,6 +6,7 @@
 #define CNOID_BASE_MAIN_WINDOW_H
 
 #include "Archive.h"
+#include <cnoid/Signal>
 #include <QMainWindow>
 #include "exportdecl.h"
 
@@ -40,7 +41,12 @@ public:
     void restoreLayout(ArchivePtr archive);
     void storeLayout(ArchivePtr archive);
     void setInitialLayout(ArchivePtr archive);
+    void resetLayout();
     void storeWindowStateConfig();
+
+    void setFullScreen(bool on);
+    void toggleFullScreen();
+    SignalProxy<void(bool on)> sigFullScreenToggled();
 
 protected:
     virtual void changeEvent(QEvent* event);

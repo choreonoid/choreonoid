@@ -13,6 +13,7 @@
 #include <cnoid/RootItem>
 #include <cnoid/ItemList>
 #include <cnoid/MenuManager>
+#include <cnoid/MainMenu>
 #include <cnoid/Sleep>
 #include <QPainter>
 #include <Dshow.h>
@@ -32,8 +33,8 @@ const bool TRACE_FUNCTIONS = false;
 
 bool initialized = false;
 
-Action* aspectRatioCheck = 0;
-Action* orgSizeCheck = 0;
+Action* aspectRatioCheck = nullptr;
+Action* orgSizeCheck = nullptr;
 
 const UINT WM_DSHOW_NOTIFY = WM_USER + 21;
 
@@ -116,14 +117,16 @@ bool DSMediaView::initialize(ExtensionManager* ext)
         ext->viewManager().registerClass<DSMediaView>(
             "MediaView", N_("Media"), ViewManager::SINGLE_OPTIONAL);
 
-        MenuManager& mm = ext->menuManager();
-        
-        mm.setPath("/Options").setPath(N_("Media View"));
-        
-        aspectRatioCheck = mm.addCheckItem(_("Keep Aspect Ratio"));
+        if(auto optionsMenu = MainMenu::instance()->get_Options_Menu()){
+            MenuManager& mm = ext->menuManager();
+            mm.setCurrent(optionsMenu).setPath(N_("Media View"));
+            aspectRatioCheck = mm.addCheckItem(_("Keep Aspect Ratio"));
+            orgSizeCheck = mm.addCheckItem(_("Keep Original Size"));
+        } else {
+            aspectRatioCheck = new Action;
+            orgSizeCheck = new Action;
+        }
         aspectRatioCheck->setChecked(true);
-        
-        orgSizeCheck = mm.addCheckItem(_("Keep Original Size"));
         orgSizeCheck->setChecked(true);
 
         initialized = true;
@@ -170,13 +173,13 @@ DSMediaViewImpl::DSMediaViewImpl(DSMediaView* self)
         cout << "DSMediaViewImpl::DSMediaViewImpl()" << endl;
     }
     
-    graphBuilder = 0;
-    mediaControl = 0;
-    mediaEvent = 0;
-    videoWindow = 0;
-    basicVideo = 0;
-    mediaSeeking = 0;
-    videoFrameStep = 0;
+    graphBuilder = nullptr;
+    mediaControl = nullptr;
+    mediaEvent = nullptr;
+    mediaSeeking = nullptr;
+    videoWindow = nullptr;
+    basicVideo = nullptr;
+    videoFrameStep = nullptr;
     hwnd = 0;
     
     bMapped = false;

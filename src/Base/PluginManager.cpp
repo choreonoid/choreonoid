@@ -5,12 +5,13 @@
 #include "PluginManager.h"
 #include "Plugin.h"
 #include "ExtensionManager.h"
-#include "MenuManager.h"
+#include "MainMenu.h"
 #include "MessageView.h"
 #include "DescriptionDialog.h"
 #include "LazyCaller.h"
 #include "AppConfig.h"
 #include "MainWindow.h"
+#include "Action.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/Tokenizer>
 #include <cnoid/Config>
@@ -98,10 +99,11 @@ public:
     Impl(ExtensionManager* ext);
     ~Impl();
 
-    Action* startupLoadingCheck;
-    Action* namingConventionCheck;
-        
+    bool isStartupLoadingDisabled;
+    bool isNamingConventionCheckDisabled;
+
     MessageView* mv;
+    MainMenu* mainMenu;
 
     string pluginDirectory;
     QRegExp pluginNamePattern;
@@ -133,7 +135,7 @@ public:
     bool finalizePlugins();
     bool loadPlugin(int index);
     bool activatePlugin(int index);
-    void onLoadPluginTriggered();
+    void showDialogToLoadPlugin();
     void onAboutDialogTriggered(PluginInfoPtr info);
     const char* guessActualPluginName(const std::string& name);
     bool unloadPlugin(const std::string& name, bool doReloading);
@@ -187,7 +189,8 @@ PluginManager::PluginManager(ExtensionManager* ext)
 
 
 PluginManager::Impl::Impl(ExtensionManager* ext)
-    : mv(MessageView::mainInstance()),
+    : mv(MessageView::instance()),
+      mainMenu(nullptr),
       unloadPluginsLater([&](){ unloadPluginsActually(); }, LazyCaller::PRIORITY_LOW),
       reloadPluginsLater([&](){ loadPlugins(); }, LazyCaller::PRIORITY_LOW)
 {
@@ -207,21 +210,10 @@ PluginManager::Impl::Impl(ExtensionManager* ext)
     nameToPluginInfoMap.insert(make_pair(string("Base"), info));
 
     auto config = AppConfig::archive()->openMapping("PluginManager");
-
-    MenuManager& mm = ext->menuManager();
-    mm.setPath("/File").setPath(N_("Plugin"));
-    mm.addItem(_("Load Plugin"))
-        ->sigTriggered().connect([&](){ onLoadPluginTriggered(); });
-
-    mm.addSeparator();
-
-    startupLoadingCheck = mm.addCheckItem(_("Startup Plugin Loading"));
-    startupLoadingCheck->setChecked(config->get("startupPluginLoading", true));
-
-    namingConventionCheck = mm.addCheckItem(_("Check the naming convention of plugin files"));
-    namingConventionCheck->setChecked(config->get("checkPluginfileNamingConvention", true));
     
-    mm.addSeparator();
+    // The following options are used for debug and can only be specified in the config file.
+    isStartupLoadingDisabled = config->get("disable_startup_loading", false);
+    isNamingConventionCheckDisabled = config->get("disable_naming_convention_check", false);
 }
 
 
@@ -234,61 +226,18 @@ PluginManager::~PluginManager()
 PluginManager::Impl::~Impl()
 {
     finalizePlugins();
-
-    auto config = AppConfig::archive()->openMapping("PluginManager");
-    config->write("startupPluginLoading", startupLoadingCheck->isChecked());
-    config->write("checkPluginfileNamingConvention", namingConventionCheck->isChecked());
 }
 
 
-int PluginManager::numPlugins() const
+bool PluginManager::isStartupLoadingDisabled() const
 {
-    return impl->allPluginInfos.size();
+    return impl->isStartupLoadingDisabled;
 }
 
-
-const std::string& PluginManager::pluginPath(int index) const
-{
-    return impl->allPluginInfos[index]->pathString;
-}
-
-
-const std::string& PluginManager::pluginName(int index) const
-{
-    return impl->allPluginInfos[index]->name;
-}
-
-
-int PluginManager::pluginStatus(int index) const
-{
-    return impl->allPluginInfos[index]->status;
-}
-
-
-Plugin* PluginManager::findPlugin(const std::string& name)
-{
-    auto p = impl->nameToPluginInfoMap.find(name);
-    if(p != impl->nameToPluginInfoMap.end()){
-        return p->second->plugin;
-    }
-    return nullptr;
-}
-
-const std::string& PluginManager::getErrorMessage(const std::string& name)
-{
-    auto p = impl->nameToPluginInfoMap.find(name);
-    if(p != impl->nameToPluginInfoMap.end()){
-        return p->second->lastErrorMessage;
-    } else {
-        static const string message;
-        return message;
-    }
-}
-    
 
 void PluginManager::doStartupLoading(const char* pluginPathList)
 {
-    if(impl->startupLoadingCheck->isChecked()){
+    if(!impl->isStartupLoadingDisabled){
         if(pluginPathList){
             scanPluginFilesInPathList(pluginPathList);
         }
@@ -377,7 +326,7 @@ void PluginManager::Impl::scanPluginFiles(const std::string& pathString, bool is
             }
             const string& pathStringUtf8 = *pPathStringUtf8;
             QString filename(filesystem::path(pathStringUtf8).filename().string().c_str());
-            if(!namingConventionCheck->isChecked() || pluginNamePattern.exactMatch(filename)){
+            if(isNamingConventionCheckDisabled || pluginNamePattern.exactMatch(filename)){
                 PluginMap::iterator p = pathToPluginInfoMap.find(pathStringUtf8);
                 if(p == pathToPluginInfoMap.end()){
                     PluginInfoPtr info = std::make_shared<PluginInfo>();
@@ -388,28 +337,6 @@ void PluginManager::Impl::scanPluginFiles(const std::string& pathString, bool is
                     pathToPluginInfoMap[info->pathString] = info;
                 }
             }
-        }
-    }
-}
-
-
-void PluginManager::clearUnusedPlugins()
-{
-    impl->clearUnusedPlugins();
-}
-
-
-void PluginManager::Impl::clearUnusedPlugins()
-{
-    vector<PluginInfoPtr> oldList = allPluginInfos;
-    allPluginInfos.clear();
-
-    for(size_t i=0; i < oldList.size(); ++i){
-        PluginInfoPtr& info = oldList[i];
-        if(info->status == PluginManager::ACTIVE){
-            allPluginInfos.push_back(info);
-        } else {
-            pathToPluginInfoMap.erase(info->pathString);
         }
     }
 }
@@ -668,10 +595,11 @@ bool PluginManager::Impl::activatePlugin(int index)
                 }
                 
                 // set an about dialog
-                info->aboutMenuItem =
-                    info->plugin->menuManager().setPath("/Help").setPath(_("About Plugins"))
-                    .addItem(fmt::format(_("About {} Plugin"), info->name).c_str());
-                info->aboutMenuItem->sigTriggered().connect(
+                if(!mainMenu){
+                    mainMenu = MainMenu::instance();
+                }
+                mainMenu->add_Help_AboutPlugins_Item(
+                    fmt::format(_("About {} Plugin"), info->name),
                     [this, info]{ onAboutDialogTriggered(info); });
                 
                 // register old names
@@ -698,7 +626,13 @@ bool PluginManager::Impl::activatePlugin(int index)
 }
 
 
-void PluginManager::Impl::onLoadPluginTriggered()
+void PluginManager::showDialogToLoadPlugin()
+{
+    impl->showDialogToLoadPlugin();
+}
+
+
+void PluginManager::Impl::showDialogToLoadPlugin()
 {
     QFileDialog dialog(MainWindow::instance());
     dialog.setOptions(QFileDialog::DontUseNativeDialog);
@@ -749,34 +683,6 @@ void PluginManager::Impl::onAboutDialogTriggered(PluginInfoPtr info)
     }
 
     info->aboutDialog->show();
-}
-
-
-const char* PluginManager::guessActualPluginName(const std::string& name)
-{
-    return impl->guessActualPluginName(name);
-}
-
-
-const char* PluginManager::Impl::guessActualPluginName(const std::string& name)
-{
-    PluginMap::iterator p = nameToPluginInfoMap.find(name);
-    if(p != nameToPluginInfoMap.end()){
-        return p->second->name.c_str();
-    }
-
-    MultiNameMap::iterator q, upper_bound;
-    std::pair<MultiNameMap::iterator, MultiNameMap::iterator> range =
-        oldNameToCurrentPluginNameMap.equal_range(name);
-    for(MultiNameMap::iterator q = range.first; q != range.second; ++q){
-        const string& candidate = q->second;
-        PluginMap::iterator r = nameToPluginInfoMap.find(candidate);
-        if(r != nameToPluginInfoMap.end()){
-            return r->second->name.c_str();
-        }
-    }
-
-    return nullptr;
 }
 
 
@@ -938,4 +844,99 @@ bool PluginManager::Impl::finalizePlugins()
         }
     }
     return !failed;
+}
+
+
+void PluginManager::clearUnusedPlugins()
+{
+    impl->clearUnusedPlugins();
+}
+
+
+void PluginManager::Impl::clearUnusedPlugins()
+{
+    vector<PluginInfoPtr> oldList = allPluginInfos;
+    allPluginInfos.clear();
+
+    for(size_t i=0; i < oldList.size(); ++i){
+        PluginInfoPtr& info = oldList[i];
+        if(info->status == PluginManager::ACTIVE){
+            allPluginInfos.push_back(info);
+        } else {
+            pathToPluginInfoMap.erase(info->pathString);
+        }
+    }
+}
+
+
+int PluginManager::numPlugins() const
+{
+    return impl->allPluginInfos.size();
+}
+
+
+const std::string& PluginManager::pluginPath(int index) const
+{
+    return impl->allPluginInfos[index]->pathString;
+}
+
+
+const std::string& PluginManager::pluginName(int index) const
+{
+    return impl->allPluginInfos[index]->name;
+}
+
+
+int PluginManager::pluginStatus(int index) const
+{
+    return impl->allPluginInfos[index]->status;
+}
+
+
+Plugin* PluginManager::findPlugin(const std::string& name)
+{
+    auto p = impl->nameToPluginInfoMap.find(name);
+    if(p != impl->nameToPluginInfoMap.end()){
+        return p->second->plugin;
+    }
+    return nullptr;
+}
+
+const std::string& PluginManager::getErrorMessage(const std::string& name)
+{
+    auto p = impl->nameToPluginInfoMap.find(name);
+    if(p != impl->nameToPluginInfoMap.end()){
+        return p->second->lastErrorMessage;
+    } else {
+        static const string message;
+        return message;
+    }
+}
+    
+
+const char* PluginManager::guessActualPluginName(const std::string& name)
+{
+    return impl->guessActualPluginName(name);
+}
+
+
+const char* PluginManager::Impl::guessActualPluginName(const std::string& name)
+{
+    PluginMap::iterator p = nameToPluginInfoMap.find(name);
+    if(p != nameToPluginInfoMap.end()){
+        return p->second->name.c_str();
+    }
+
+    MultiNameMap::iterator q, upper_bound;
+    std::pair<MultiNameMap::iterator, MultiNameMap::iterator> range =
+        oldNameToCurrentPluginNameMap.equal_range(name);
+    for(MultiNameMap::iterator q = range.first; q != range.second; ++q){
+        const string& candidate = q->second;
+        PluginMap::iterator r = nameToPluginInfoMap.find(candidate);
+        if(r != nameToPluginInfoMap.end()){
+            return r->second->name.c_str();
+        }
+    }
+
+    return nullptr;
 }

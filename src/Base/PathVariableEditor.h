@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_PATH_VARIABLE_EDITOR_H_INCLUDED
-#define CNOID_BASE_PATH_VARIABLE_EDITOR_H_INCLUDED
+#ifndef CNOID_BASE_PATH_VARIABLE_EDITOR_H
+#define CNOID_BASE_PATH_VARIABLE_EDITOR_H
 
 #include <QDialog>
 #include <QTableWidget>
@@ -11,24 +11,23 @@
 
 namespace cnoid {
     
-class ExtensionManager;
-
 class PathVariableEditor : public QDialog
 {
 public:
-    static void initialize(ExtensionManager* ext);
+    static PathVariableEditor* instance();
+    void show();
 
 private:
     QTableWidget* tableWidget;
     QLineEdit* newVariableEntry;
 
     PathVariableEditor();
-    void initAndShow();
     void readPathVariablesFromArchive();
     void appendPathVariable(const QString& name, const QString& paths);
     void writePathVariablesToArchive();
     void onAppendActivated();
 };
+
 }
 
 #endif

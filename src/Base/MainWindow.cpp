@@ -7,7 +7,6 @@
 #include "InfoBar.h"
 #include "ToolBarArea.h"
 #include "ExtensionManager.h"
-#include "MenuManager.h"
 #include "App.h"
 #include "AppConfig.h"
 #include "TimeBar.h"
@@ -27,7 +26,7 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
-MainWindow* mainWindow = 0;
+MainWindow* mainWindow = nullptr;
 
 QSize getAvailableScreenSize() {
     return QApplication::desktop()->availableGeometry().size();
@@ -69,18 +68,11 @@ public:
 
     QWidget* centralWidget;
     QVBoxLayout* centralVBox;
-
     ToolBarArea* toolBarArea;
-
     ViewArea* viewArea;
-    Action* showViewTabCheck;
-
     string appName;
-
     MappingPtr config;
     ArchivePtr initialLayoutArchive;
-    //Action* storeLastLayoutCheck;
-        
     bool isBeforeShowing;
     bool isBeforeDoingInitialLayout;
     bool isMaximized;
@@ -90,16 +82,14 @@ public:
     QSize normalSize;
     QSize oldNormalSize;
     int lastWindowState;
+    Signal<void(bool on)> sigFullScreenToggled;
     QString currentLayoutFolder;
-    Action* fullScreenCheck;
 
 #ifdef Q_OS_UNIX
     WindowActivationChecker windowActivationChecker;
 #endif
 
-    void setupMenus(ExtensionManager* ext);
     void showFirst();
-    void onFullScreenToggled(bool on);
     void resizeEvent(QResizeEvent* event);
     void restoreLayout(ArchivePtr& archive);
     void resetLayout();
@@ -140,13 +130,13 @@ MainWindow::Impl::Impl(MainWindow* self, const char* appName, ExtensionManager* 
     : self(self),
       appName(appName)
 {
-    isBeforeDoingInitialLayout = true;
-    isMaximized = false;
-    isFullScreen = false;
-    isGoingToMaximized = false;
-    
     config = AppConfig::archive()->openMapping("MainWindow");
 
+    isBeforeDoingInitialLayout = true;
+    isMaximized = false;
+    isFullScreen = config->get({ "full_screen", "fullScreen" }, false);
+    isGoingToMaximized = false;
+    
     centralWidget = new QWidget(self);
     
     centralVBox = new QVBoxLayout(centralWidget);
@@ -160,8 +150,6 @@ MainWindow::Impl::Impl(MainWindow* self, const char* appName, ExtensionManager* 
     centralVBox->addWidget(viewArea, 1);
 
     self->setCentralWidget(centralWidget);
-
-    setupMenus(ext);
 
     self->setStatusBar(InfoBar::instance());
 
@@ -245,56 +233,6 @@ MainWindow::~MainWindow()
 MainWindow::Impl::~Impl()
 {
 
-}
-
-
-void MainWindow::Impl::setupMenus(ExtensionManager* ext)
-{
-    MenuManager& mm = ext->menuManager();
-
-    mm.setPath("/" N_("File")).setBackwardMode().addItem(_("Exit"))
-        ->sigTriggered().connect([&](){ self->close(); });
-
-    mm.setPath("/" N_("Edit"));
-
-    Menu* viewMenu = static_cast<Menu*>(mm.setPath("/" N_("View")).current());
-
-    mm.setPath(N_("Show Toolbar"));
-    Menu* showToolBarMenu = static_cast<Menu*>(mm.current());
-    showToolBarMenu->sigAboutToShow().connect(
-        [=](){ toolBarArea->setVisibilityMenuItems(showToolBarMenu); });
-    
-    mm.setCurrent(viewMenu).setPath(N_("Show View"));
-    mm.setCurrent(viewMenu).setPath(N_("Create View"));
-    mm.setCurrent(viewMenu).setPath(N_("Delete View"));
-
-    showViewTabCheck = mm.setCurrent(viewMenu).addCheckItem(_("Show View Tabs"));
-    showViewTabCheck->sigToggled().connect([=](bool on){ viewArea->setViewTabsVisible(on); });
-    showViewTabCheck->setChecked(config->get("showViewTabs", true));
-
-    mm.setCurrent(viewMenu).addSeparator();
-
-    Action* showStatusBarCheck = mm.setCurrent(viewMenu).addCheckItem(_("Show Status Bar"));
-    bool showStatusBar = config->get("showStatusBar", true);
-    QWidget* statusBar = InfoBar::instance();
-    showStatusBarCheck->setChecked(showStatusBar);
-    showStatusBarCheck->sigToggled().connect([=](bool on){ statusBar->setVisible(on); });
-    
-    fullScreenCheck = mm.addCheckItem(_("Full Screen"));
-    fullScreenCheck->setChecked(config->get("fullScreen", false));
-    fullScreenCheck->sigToggled().connect([&](bool on){ onFullScreenToggled(on); });
-
-    mm.setCurrent(viewMenu).setPath(N_("Layout"));
-    
-    //storeLastLayoutCheck = mm.addCheckItem(_("Store Last Toolbar Layout"));
-    //storeLastLayoutCheck->setChecked(config->get("storeLastLayout", false));
-
-    mm.addItem(_("Reset Layout"))->sigTriggered().connect([&](){ resetLayout(); });
-    
-    mm.setPath("/" N_("Tools"));
-    mm.setPath("/" N_("Filters"));
-    mm.setPath("/" N_("Options"));
-    mm.setPath("/").setBackwardMode().setPath(N_("Help"));
 }
 
 
@@ -437,11 +375,9 @@ void MainWindow::Impl::showFirst()
             }
             self->showNormal();
         }
-        bool showStatusBar = config->get("showStatusBar", true);
-        self->statusBar()->setVisible(showStatusBar);
-
-        bool showViewTabs = config->get("showViewTabs", true);
-        viewArea->setViewTabsVisible(showViewTabs);
+        
+        viewArea->setViewTabsVisible(config->get({ "show_view_tabs" }, true));
+        self->statusBar()->setVisible(config->get("show_status_bar", true));
 
         isBeforeShowing = false;
     }
@@ -492,26 +428,47 @@ bool MainWindow::waitForWindowSystemToActivate()
 }
 
 
-void MainWindow::Impl::onFullScreenToggled(bool on)
+void MainWindow::toggleFullScreen()
 {
+    setFullScreen(!impl->isFullScreen);
+}
+
+
+void MainWindow::setFullScreen(bool on)
+{
+    bool changed = false;
+    
     if(on){
-        if(!self->isFullScreen()){
-            isMaximizedJustBeforeFullScreen = isMaximized;
-            isGoingToMaximized = true;
-            self->showFullScreen();
-            isGoingToMaximized = false;
+        if(!isFullScreen()){
+            impl->isMaximizedJustBeforeFullScreen = impl->isMaximized;
+            impl->isGoingToMaximized = true;
+            showFullScreen();
+            impl->isGoingToMaximized = false;
+            changed = true;
         }
     } else {
-        if(self->isFullScreen()){
-            if(isMaximizedJustBeforeFullScreen){
-                isGoingToMaximized = true;
-                self->showMaximized();
-                isGoingToMaximized = false;
+        if(isFullScreen()){
+            if(impl->isMaximizedJustBeforeFullScreen){
+                impl->isGoingToMaximized = true;
+                showMaximized();
+                impl->isGoingToMaximized = false;
             } else {
-                self->showNormal();
+                showNormal();
             }
+            changed = true;
         }
     }
+    impl->isFullScreen = on;
+
+    if(changed){
+        impl->sigFullScreenToggled(on);
+    }
+}
+
+
+SignalProxy<void(bool on)> MainWindow::sigFullScreenToggled()
+{
+    return impl->sigFullScreenToggled;
 }
 
 
@@ -600,10 +557,10 @@ void MainWindow::Impl::restoreLayout(ArchivePtr& archive)
 }
 
 
-void MainWindow::Impl::resetLayout()
+void MainWindow::resetLayout()
 {
-    toolBarArea->resetLayout(config);
-    viewArea->resetLayout();
+    impl->toolBarArea->resetLayout(impl->config);
+    impl->viewArea->resetLayout();
 }
 
 
@@ -627,13 +584,16 @@ void MainWindow::storeWindowStateConfig()
 
 void MainWindow::Impl::storeWindowStateConfig()
 {
-    config->write("showViewTabs", showViewTabCheck->isChecked());
-    config->write("showStatusBar", InfoBar::instance()->isVisible());
-    bool isFullScreen = self->isFullScreen();
-    config->write("fullScreen", isFullScreen);
+    if(!viewArea->viewTabsVisible()){
+        config->write("show_view_tabs", false);
+    }
+    if(!InfoBar::instance()->isVisible()){
+        config->write("show_status_bar", false);
+    }
     if(isFullScreen){
+        config->write("full_screen", isFullScreen);
         config->write("maximized", isMaximizedJustBeforeFullScreen);
-    } else {
+    } else if(isMaximized){
         config->write("maximized", isMaximized);
     }
     config->write("width", normalSize.width());
@@ -677,7 +637,7 @@ void MainWindow::Impl::keyPressEvent(QKeyEvent* event)
         break;
         
     case Qt::Key_F11:
-        fullScreenCheck->toggle();
+        self->toggleFullScreen();
         break;
 
     case Qt::Key_F12:

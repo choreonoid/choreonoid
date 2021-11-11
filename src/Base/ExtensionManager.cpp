@@ -124,7 +124,7 @@ const std::string& ExtensionManager::textDomain() const
 ItemManager& ExtensionManager::itemManager()
 {
     if(!impl->itemManager){
-        impl->itemManager.reset(new ItemManager(impl->moduleName, menuManager()));
+        impl->itemManager.reset(new ItemManager(impl->moduleName));
         impl->itemManager->bindTextDomain(impl->textDomain);
     }
     return *impl->itemManager;

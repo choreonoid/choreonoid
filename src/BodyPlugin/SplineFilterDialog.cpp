@@ -14,7 +14,7 @@
 #include <cnoid/ItemList>
 #include <cnoid/Archive>
 #include <cnoid/ExtensionManager>
-#include <cnoid/MenuManager>
+#include <cnoid/MainMenu>
 #include <cnoid/MessageView>
 #include <cnoid/Dialog>
 #include <cnoid/Button>
@@ -217,17 +217,18 @@ public:
 
 void cnoid::initializeSplineFilterDialog(ExtensionManager* ext)
 {
-    static SplineFilterDialog* dialog = 0;
+    static SplineFilterDialog* dialog = nullptr;
 
     if(!dialog){
-        dialog = ext->manage(new SplineFilterDialog());
 
-        ext->menuManager().setPath("/Filters").addItem(_("Spline filter"))->
-            sigTriggered().connect([](){ dialog->show(); });
+        dialog = ext->manage(new SplineFilterDialog());
 
         ext->setProjectArchiver("SplineFilterDialog",
                                 [](Archive& archive){ return dialog->store(archive); },
                                 [](const Archive& archive){ dialog->restore(archive); });
+
+        MainMenu::instance()->add_Filters_Item(
+            _("Spline filter"), [](){ dialog->show(); });
     }
 }
 

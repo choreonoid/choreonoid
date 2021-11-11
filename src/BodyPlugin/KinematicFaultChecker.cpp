@@ -12,7 +12,7 @@
 #include <cnoid/Archive>
 #include <cnoid/MainWindow>
 #include <cnoid/ExtensionManager>
-#include <cnoid/MenuManager>
+#include <cnoid/MainMenu>
 #include <cnoid/TimeBar>
 #include <cnoid/MessageView>
 #include <cnoid/SpinBox>
@@ -104,17 +104,16 @@ public:
 void KinematicFaultChecker::initializeClass(ExtensionManager* ext)
 {
     if(!checkerInstance){
+
         checkerInstance = ext->manage(new KinematicFaultChecker);
 
-        MenuManager& mm = ext->menuManager();
-        mm.setPath("/Tools");
-        mm.addItem(_("Kinematic Fault Checker"))
-            ->sigTriggered().connect([](){ checkerInstance->impl->show(); });
-        
         ext->setProjectArchiver(
             "KinematicFaultChecker",
             [](Archive& archive){ return checkerInstance->impl->store(archive); },
             [](const Archive& archive) { return checkerInstance->impl->restore(archive); });
+
+        MainMenu::instance()->add_Tools_Item(
+            _("Kinematic Fault Checker"), [](){ checkerInstance->impl->show(); });
     }
 }
 

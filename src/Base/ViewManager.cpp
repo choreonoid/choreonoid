@@ -4,12 +4,13 @@
 
 #include "ViewManager.h"
 #include "PluginManager.h"
-#include "MenuManager.h"
 #include "MainWindow.h"
+#include "MainMenu.h"
 #include "ViewArea.h"
 #include "MessageView.h"
 #include "Dialog.h"
 #include "Archive.h"
+#include "Action.h"
 #include <QBoxLayout>
 #include <QLineEdit>
 #include <QLabel>
@@ -28,9 +29,8 @@ using fmt::format;
 namespace {
 
 MainWindow* mainWindow = nullptr;
-Menu* showViewMenu = nullptr;
-Menu* createViewMenu = nullptr;
-Menu* deleteViewMenu = nullptr;
+
+enum ViewMenuId { ShowView, CreateView, DeleteView };
 
 unordered_set<string> pluginWhitelist;
 unordered_set<string> viewWhitelist;
@@ -126,7 +126,6 @@ class ViewManager::Impl
 public:
     const string& moduleName;
     const string& textDomain;
-    MenuManager& menuManager;
     ClassNameToViewInfoMapPtr classNameToViewInfoMap;
     InstanceInfoList instances;
     bool doCheckViewWhitelist;
@@ -387,12 +386,12 @@ void deleteAllInvisibleViews()
     }
 }
     
-void onViewMenuAboutToShow(Menu* menu)
+void onViewMenuAboutToShow(Menu* menu, ViewMenuId viewMenuId)
 {
     menu->clear();
     bool needSeparator = false;
         
-    if(menu == deleteViewMenu){
+    if(viewMenuId == DeleteView){
         auto action = new Action(menu);
         action->setText(_("Delete All Invisible Views"));
         action->sigTriggered().connect([](){ deleteAllInvisibleViews(); });
@@ -419,7 +418,7 @@ void onViewMenuAboutToShow(Menu* menu)
             }
             InstanceInfoList& instances = viewInfo->instances;
 
-            if(menu == showViewMenu){
+            if(viewMenuId == ShowView){
                 View* view = nullptr;
                 if(instances.empty()){
                     auto action = new Action(menu);
@@ -439,7 +438,7 @@ void onViewMenuAboutToShow(Menu* menu)
                         menu->addAction(action);
                     }
                 }
-            } else if(menu == createViewMenu){
+            } else if(viewMenuId == CreateView){
                 if(!viewInfo->isSingleton || 
                    (!viewInfo->hasDefaultInstance && viewInfo->instances.empty())){
                     auto action = new Action(menu);
@@ -447,7 +446,7 @@ void onViewMenuAboutToShow(Menu* menu)
                     action->sigTriggered().connect([=](){ onCreateViewTriggered(viewInfo); });
                     menu->addAction(action);
                 }
-            } else if(menu == deleteViewMenu){
+            } else if(viewMenuId == DeleteView){
                 auto p = instances.begin();
                 if(viewInfo->hasDefaultInstance && p != instances.end()){
                     ++p;
@@ -476,24 +475,15 @@ void ViewManager::initializeClass(ExtensionManager* ext)
         View::initializeClass();
         
         mainWindow = MainWindow::instance();
-        MenuManager& mm = ext->menuManager();
-        QWidget* viewMenu = mm.setPath("/View").current();
 
-        QAction* showViewAction = mm.findItem("Show View");
-        showViewMenu = new Menu(viewMenu);
-        showViewMenu->sigAboutToShow().connect([=](){ onViewMenuAboutToShow(showViewMenu); });
-        showViewAction->setMenu(showViewMenu);
-
-        QAction* createViewAction = mm.setCurrent(viewMenu).findItem("Create View");
-        createViewMenu = new Menu(viewMenu);
-        createViewMenu->sigAboutToShow().connect([=](){ onViewMenuAboutToShow(createViewMenu); });
-        createViewAction->setMenu(createViewMenu);
-
-        QAction* deleteViewAction = mm.setCurrent(viewMenu).findItem("Delete View");
-        deleteViewMenu = new Menu(viewMenu);
-        deleteViewMenu->sigAboutToShow().connect([=](){ onViewMenuAboutToShow(deleteViewMenu); });
-        deleteViewAction->setMenu(deleteViewMenu);
-
+        auto mainMenu = MainMenu::instance();
+        mainMenu->sig_View_Show_MenuAboutToShow().connect(
+            [=](Menu* menu){ onViewMenuAboutToShow(menu, ShowView); });
+        mainMenu->sig_View_Create_MenuAboutToShow().connect(
+            [=](Menu* menu){ onViewMenuAboutToShow(menu, CreateView); });
+        mainMenu->sig_View_Delete_MenuAboutToShow().connect(
+            [=](Menu* menu){ onViewMenuAboutToShow(menu, DeleteView); });
+        
         initialized = true;
     }
 }
@@ -523,8 +513,7 @@ ViewManager::ViewManager(ExtensionManager* ext)
 
 ViewManager::Impl::Impl(ExtensionManager* ext)
     : moduleName(ext->name()),
-      textDomain(ext->textDomain()),
-      menuManager(ext->menuManager())
+      textDomain(ext->textDomain())
 {
     classNameToViewInfoMap = std::make_shared<ClassNameToViewInfoMap>();
     moduleNameToClassNameToViewInfoMap[moduleName] = classNameToViewInfoMap;
@@ -559,8 +548,6 @@ ViewManager::Impl::~Impl()
     }
     
     moduleNameToClassNameToViewInfoMap.erase(moduleName);
-    showViewMenu->clear();
-    createViewMenu->clear();
 }
 
 

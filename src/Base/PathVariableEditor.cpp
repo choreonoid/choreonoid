@@ -6,7 +6,6 @@
 #include "AppConfig.h"
 #include "MainWindow.h"
 #include "ExtensionManager.h"
-#include "MenuManager.h"
 #include "Buttons.h"
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
@@ -48,20 +47,14 @@ public:
         }
     }
 };
+
 }
 
 
-void PathVariableEditor::initialize(ExtensionManager* ext)
+PathVariableEditor* PathVariableEditor::instance()
 {
-    static bool initialized = false;
-    if(!initialized){
-        PathVariableEditor* editor = new PathVariableEditor();
-        MenuManager& mm = ext->menuManager();
-        mm.setPath("/File").setPath(N_("Project File Options"));
-        mm.addItem(_("Edit Path Variables"))
-            ->sigTriggered().connect(std::bind(&PathVariableEditor::initAndShow, editor));
-        initialized = true;
-    }
+    static PathVariableEditor* instance_ = new PathVariableEditor;
+    return instance_;
 }
 
 
@@ -109,7 +102,7 @@ PathVariableEditor::PathVariableEditor()
 }
 
 
-void PathVariableEditor::initAndShow()
+void PathVariableEditor::show()
 {
     readPathVariablesFromArchive();
     if(exec() == QDialog::Accepted){

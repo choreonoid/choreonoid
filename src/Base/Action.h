@@ -16,7 +16,7 @@ class CNOID_EXPORT Action : public QAction
     Q_OBJECT
 
 public:
-    Action(QObject* parent);
+    Action(QObject* parent = nullptr);
     Action(const QString& text, QObject* parent);
     Action(const QIcon& icon, QObject* parent);
     Action(const QIcon& icon, const QString& text, QObject* parent);

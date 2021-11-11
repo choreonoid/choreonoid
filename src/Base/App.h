@@ -15,6 +15,8 @@
 
 namespace cnoid {
 
+class ExtensionManager;
+
 class CNOID_EXPORT App
 {
         
@@ -33,6 +35,7 @@ public:
     void initialize(const char* appName, const char* vendorName, const char* pluginPathList = nullptr);
     int exec();
 
+    static ExtensionManager* baseModule();
     static void updateGui();
     static void exit(int returnCode = 0);
     static void checkErrorAndExitIfTestMode();

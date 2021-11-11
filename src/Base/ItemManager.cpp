@@ -11,10 +11,11 @@
 #include "ItemFileIO.h"
 #include "ItemFileDialog.h"
 #include "FileDialog.h"
-#include "MenuManager.h"
 #include "AppConfig.h"
 #include "MainWindow.h"
 #include "MessageView.h"
+#include "MainMenu.h"
+#include "Action.h"
 #include "CheckBox.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
@@ -26,12 +27,12 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QSignalMapper>
-#include <QRegExp>
 #include <fmt/format.h>
 #include <chrono>
 #include <set>
 #include <sstream>
 #include <typeindex>
+#include <regex>
 #include "gettext.h"
 
 using namespace std;
@@ -75,8 +76,6 @@ typedef map<string, vector<ItemFileIO*>> CaptionToFileIoListMap;
 CaptionToFileIoListMap captionToStandardLoadersMap;
 CaptionToFileIoListMap captionToConversionLoadersMap;
     
-QWidget* importMenu;
-
 class AddonClassInfo : public Referenced
 {
 public:
@@ -99,12 +98,12 @@ namespace cnoid {
 class ItemManager::Impl
 {
 public:
-    Impl(const string& moduleName, MenuManager& menuManager);
+    Impl(const string& moduleName);
     ~Impl();
 
     string moduleName;
     string textDomain;
-    MenuManager& menuManager;
+    MainMenu* mainMenu;
 
     ItemClassNameToInfoMap itemClassNameToInfoMap;
     set<int> registeredItemClassIds;
@@ -127,15 +126,10 @@ public:
     static void onNewItemActivated(CreationDialog* dialog);
 
     ClassInfoPtr registerFileIO(const type_info& typeId, ItemFileIO* fileIO);
-    void addLoader(ItemFileIO* fileIO, CaptionToFileIoListMap& loaderMap);
-    static vector<ItemFileIO*> getFileIOs(Item* item, function<bool(ItemFileIO* fileIO)> pred, bool includeSuperClassIos);
+    void addLoader(ItemFileIO* fileIO, CaptionToFileIoListMap& loaderMap, bool isImporter);
     static ItemFileIO* findMatchedFileIO(
         const type_info& type, const string& filename, const string& format, int ioTypeFlag);
     static void onLoadOrImportItemsActivated(const vector<ItemFileIO*>& fileIOs);
-    static void onReloadSelectedItemsActivated();
-    static void onSaveSelectedItemsAsActivated();
-    static void onExportSelectedItemsActivated();
-    static void onSaveSelectedItemsActivated();
 };
 
 }
@@ -174,56 +168,21 @@ ClassInfo::~ClassInfo()
 void ItemManager::initializeClass(ExtensionManager* ext)
 {
     itemClassRegistry = &ItemClassRegistry::instance();
-
-    auto& mm = ext->menuManager();
-
-    mm.setPath("/File").setPath(N_("New ..."));
-        
-    mm.setPath("/File");
-    mm.setPath(N_("Load ..."));
-    mm.setPath("/File");
-    mm.addItem(_("Reload Selected Items"))
-        ->sigTriggered().connect([](){ Impl::onReloadSelectedItemsActivated(); });
-        
-    mm.addSeparator();
-
-    mm.addItem(_("Save Selected Items"))
-        ->sigTriggered().connect([](){ Impl::onSaveSelectedItemsActivated(); });
-    mm.addItem(_("Save Selected Items As"))
-        ->sigTriggered().connect([](){ Impl::onSaveSelectedItemsAsActivated(); });
-
-    mm.addSeparator();
-        
-    mm.setPath(N_("Import ..."));
-    importMenu = mm.current();
-        
-    mm.setPath("/File");
-    mm.addItem(_("Export Selected Items"))
-        ->sigTriggered().connect([](){ Impl::onExportSelectedItemsActivated(); });
-        
-    mm.addSeparator();
-
     messageView = MessageView::instance();
 }
 
 
-ItemManager::ItemManager(const std::string& moduleName, MenuManager& menuManager)
+ItemManager::ItemManager(const std::string& moduleName)
 {
-    impl = new Impl(moduleName, menuManager);
+    impl = new Impl(moduleName);
 }
 
 
-ItemManager::Impl::Impl(const string& moduleName, MenuManager& menuManager)
+ItemManager::Impl::Impl(const string& moduleName)
     : moduleName(moduleName),
-      menuManager(menuManager)
+      mainMenu(MainMenu::instance())
 {
     moduleNameToItemManagerImplMap[moduleName] = this;
-}
-
-
-void ItemManager::addMenuItemToImport(const std::string& caption, std::function<void()> slot)
-{
-    impl->menuManager.setCurrent(importMenu).addItem(caption.c_str())->sigTriggered().connect(slot);
 }
 
 
@@ -519,21 +478,21 @@ CreationDialog* ItemManager::Impl::createCreationDialog(const std::type_info& ty
     if(p != itemClassIdToInfoMap.end()){
         auto& info = p->second;
         const char* className_c_str = info->className.c_str();
-        QString className(className_c_str);
         const char* translatedClassName_c_str = dgettext(textDomain.c_str(), className_c_str);
-        QString translatedClassName(translatedClassName_c_str);
-        QString translatedName(translatedClassName);
+        string translatedName;
         if(translatedClassName_c_str == className_c_str){
-            translatedName.replace(QRegExp("Item$"), "");
+            static regex itemSuffix("Item$");
+            translatedName = regex_replace(translatedClassName_c_str, itemSuffix, "");
         } else {
-            translatedName.replace(QRegExp(_("Item$")), "");
+            static regex itemSuffix(_("Item$"));
+            translatedName = regex_replace(translatedClassName_c_str, itemSuffix, "");
         }
-        QString title(QString(_("Create New %1")).arg(translatedName));
+        QString title(QString(_("Create New %1")).arg(translatedName.c_str()));
         dialog = new CreationDialog(title, info, info->singletonInstance);
         dialog->hide();
-        menuManager.setPath("/File/New ...").addItem(translatedName)
-            ->sigTriggered().connect([=](){ onNewItemActivated(dialog); });
         info->creationDialogs.push_back(dialog);
+
+        mainMenu->add_File_New_Item(translatedName, [=](){ onNewItemActivated(dialog); });
     }
 
     return dialog;
@@ -714,11 +673,9 @@ ClassInfoPtr ItemManager::Impl::registerFileIO(const type_info& type, ItemFileIO
         
         if(fileIO->hasApi(ItemFileIO::Load)){
             if(interfaceLevel == ItemFileIO::Standard){
-                menuManager.setPath("/File/Load ...");
-                addLoader(fileIO, captionToStandardLoadersMap);
+                addLoader(fileIO, captionToStandardLoadersMap, false);
             } else if(interfaceLevel == ItemFileIO::Conversion){
-                menuManager.setPath("/File/Import ...");
-                addLoader(fileIO, captionToConversionLoadersMap);
+                addLoader(fileIO, captionToConversionLoadersMap, true);
             }
         }
     }
@@ -727,22 +684,26 @@ ClassInfoPtr ItemManager::Impl::registerFileIO(const type_info& type, ItemFileIO
 }
 
 
-void ItemManager::Impl::addLoader(ItemFileIO* fileIO, CaptionToFileIoListMap& loaderMap)
+void ItemManager::Impl::addLoader(ItemFileIO* fileIO, CaptionToFileIoListMap& loaderMap, bool isImporter)
 {
     auto& caption = fileIO->caption();
     auto& loaders = loaderMap[caption];
     if(loaders.empty()){
-        menuManager.addItem(caption)
-            ->sigTriggered().connect(
-                [this, caption, &loaderMap]() mutable {
-                    onLoadOrImportItemsActivated(loaderMap[caption]); });
+        auto handler =
+            [this, caption, &loaderMap]() mutable {
+                onLoadOrImportItemsActivated(loaderMap[caption]); };
+        if(!isImporter){
+            mainMenu->add_File_Load_Item(caption, handler);
+        } else {
+            mainMenu->add_File_Import_Item(caption, handler);
+        }
     }
     loaders.push_back(fileIO);
 }
 
 
-vector<ItemFileIO*> ItemManager::Impl::getFileIOs
-(Item* item, function<bool(ItemFileIO* fileIO)> pred, bool includeSuperClassIos)
+std::vector<ItemFileIO*> ItemManager::getFileIOs
+(Item* item,std:: function<bool(ItemFileIO* fileIO)> pred, bool includeSuperClassIos)
 {
     vector<ItemFileIO*> fileIOs;
 
@@ -983,14 +944,6 @@ Item* ItemManager::findOriginalItemForReloadedItem(Item* item)
 }
 
 
-void ItemManager::Impl::onReloadSelectedItemsActivated()
-{
-    for(auto& item : RootItem::instance()->selectedItems()){
-        item->reload();
-    }
-}
-
-
 bool ItemManager::save
 (Item* item, const std::string& filename, const std::string& format, const Mapping* options)
 {
@@ -1009,41 +962,6 @@ bool ItemManager::saveItemWithDialog_(const std::type_info& type, Item* item)
         return dialog.saveItem(item);
     }
     return false;
-}
-
-
-void ItemManager::Impl::onSaveSelectedItemsAsActivated()
-{
-    ItemFileDialog dialog;
-    for(auto& item : RootItem::instance()->selectedItems()){
-        dialog.setFileIOs(
-            getFileIOs(
-                item,
-                [](ItemFileIO* fileIO){
-                    return (fileIO->hasApi(ItemFileIO::Save) &&
-                            fileIO->interfaceLevel() == ItemFileIO::Standard);
-                },
-                false));
-        dialog.saveItem(item);
-    }
-}
-
-
-void ItemManager::Impl::onExportSelectedItemsActivated()
-{
-    ItemFileDialog dialog;
-    dialog.setExportMode();
-    for(auto& item : RootItem::instance()->selectedItems()){
-        dialog.setFileIOs(
-            getFileIOs(
-                item,
-                [](ItemFileIO* fileIO){
-                    return (fileIO->hasApi(ItemFileIO::Save) &&
-                            fileIO->interfaceLevel() == ItemFileIO::Conversion);
-                },
-                true));
-        dialog.saveItem(item);
-    }
 }
 
 
@@ -1078,7 +996,7 @@ bool ItemManager::overwrite(Item* item, bool forceOverwrite, const std::string& 
         } 
         if(!synchronized){
             auto fileIOs =
-                Impl::getFileIOs(
+                getFileIOs(
                     item,
                     [&](ItemFileIO* fileIO){
                         return (fileIO->hasApi(ItemFileIO::Save) &&
@@ -1094,14 +1012,6 @@ bool ItemManager::overwrite(Item* item, bool forceOverwrite, const std::string& 
     }
 
     return synchronized;
-}
-
-
-void ItemManager::Impl::onSaveSelectedItemsActivated()
-{
-    for(auto& item : RootItem::instance()->selectedItems()){
-        overwrite(item, true, "");
-    }
 }
 
 

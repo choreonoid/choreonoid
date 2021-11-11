@@ -23,16 +23,21 @@ public:
 	
     ~PluginManager();
 
+    bool isStartupLoadingDisabled() const;
     void doStartupLoading(const char* pluginPathList);
     void scanPluginFilesInPathList(const std::string& pathList);
     void scanPluginFilesInDirectoyOfExecFile();
     void scanPluginFiles(const std::string& pathString);
-    void clearUnusedPlugins();
     void loadPlugins();
+    bool loadPlugin(int index);
+    void showDialogToLoadPlugin();
+    bool unloadPlugin(int index);
+    bool unloadPlugin(const std::string& name);
+    bool reloadPlugin(const std::string& name);
     bool finalizePlugins();
+    void clearUnusedPlugins();
 
     int numPlugins() const;
-
     const std::string& pluginPath(int index) const;
     const std::string& pluginName(int index) const;
 
@@ -41,12 +46,6 @@ public:
 	
     Plugin* findPlugin(const std::string& name);
     const std::string& getErrorMessage(const std::string& name);
-
-    bool loadPlugin(int index);
-    bool unloadPlugin(int index);
-    bool unloadPlugin(const std::string& name);
-    bool reloadPlugin(const std::string& name);
-
     const char* guessActualPluginName(const std::string& name);
 	
 private:

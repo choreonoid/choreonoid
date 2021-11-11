@@ -12,7 +12,6 @@
 #include "ItemTreeArchiver.h"
 #include "ExtensionManager.h"
 #include "OptionManager.h"
-#include "MenuManager.h"
 #include "AppConfig.h"
 #include "AppUtil.h"
 #include "FileDialog.h"
@@ -38,9 +37,9 @@ using fmt::format;
 namespace {
 
 ProjectManager* instance_ = nullptr;
-bool defaultOptionToSotreLayoutInProjectFile = true;
+bool defaultLayoutInclusionMode = true;
+bool isLayoutInclusionMode = true;
 int projectBeingLoadedCounter = 0;
-Action* perspectiveCheck = nullptr;
 MainWindow* mainWindow = nullptr;
 MessageView* mv = nullptr;
 
@@ -53,6 +52,7 @@ class ProjectManager::Impl
 public:
     Impl(ProjectManager* self);
     Impl(ProjectManager* self, ExtensionManager* ext);
+    ~Impl();
 
     void setCurrentProjectFile(const string& filename);
     void clearCurrentProjectFile();
@@ -71,20 +71,15 @@ public:
     bool storeObjects(Archive& parentArchive, const char* key, vector<TObject*> objects);
         
     bool saveProject(const string& filename, Item* item = nullptr);
-    bool overwriteCurrentProject();
         
     void onProjectOptionsParsed(boost::program_options::variables_map& v);
     void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
-    void showDialogToLoadProject();
-    bool showDialogToSaveProject();
     std::string getSaveFilename(FileDialog& dialog);
     bool onSaveDialogAboutToFinish(FileDialog& dialog, int result);
     bool confirmToCloseProject();
     bool checkValidItemExistence(Item* item);
     bool checkItemTreeConsistencyWithArchive(Item* item);
 
-    void onPerspectiveCheckToggled(bool on);
-        
     void connectArchiver(
         const std::string& name,
         std::function<bool(Archive&)> storeFunction,
@@ -105,18 +100,25 @@ public:
     ArchiverMapMap archivers;
 
     MappingPtr config;
-    MappingPtr managerConfig;
 
     Signal<void(int recursiveLevel)> sigProjectAboutToBeLoaded;
     Signal<void(int recursiveLevel)> sigProjectLoaded;
+
+    bool isMainInstance;
 };
 
 }
 
 
+void ProjectManager::setDefaultLayoutInclusionMode(bool on)
+{
+    defaultLayoutInclusionMode = on;
+}
+
+
 void ProjectManager::setDefaultOptionToStoreLayoutInProjectFile(bool on)
 {
-    defaultOptionToSotreLayoutInProjectFile = on;
+    defaultLayoutInclusionMode = on;
 }
 
 
@@ -130,20 +132,9 @@ void ProjectManager::initializeClass(ExtensionManager* ext)
 {
     if(!instance_){
         instance_ = ext->manage(new ProjectManager(ext));
+        mainWindow = MainWindow::instance();
+        mv = MessageView::instance();
     }
-}
-
-
-ProjectManager::ProjectManager()
-{
-    impl = new Impl(this);
-}
-
-
-ProjectManager::Impl::Impl(ProjectManager* self)
-    : self(self)
-{
-    
 }
 
 
@@ -157,29 +148,9 @@ ProjectManager::ProjectManager(ExtensionManager* ext)
 ProjectManager::Impl::Impl(ProjectManager* self, ExtensionManager* ext)
     : Impl(self)
 {
-    config = AppConfig::archive();
-    managerConfig = config->openMapping("ProjectManager");
-    
-    MenuManager& mm = ext->menuManager();
-
-    mm.setPath("/File");
-
-    mm.addItem(_("Open Project"))
-        ->sigTriggered().connect([&](){ showDialogToLoadProject(); });
-    mm.addItem(_("Save Project"))
-        ->sigTriggered().connect([&](){ overwriteCurrentProject(); });
-    mm.addItem(_("Save Project As"))
-        ->sigTriggered().connect([&](){ showDialogToSaveProject(); });
-
-    mm.setPath(N_("Project File Options"));
-
-    perspectiveCheck = mm.addCheckItem(_("Perspective"));
-    bool isPerspectiveChecked = managerConfig->get("store_perspective", defaultOptionToSotreLayoutInProjectFile);
-    perspectiveCheck->setChecked(isPerspectiveChecked);
-    perspectiveCheck->sigToggled().connect([&](bool on){ onPerspectiveCheckToggled(on); });
-
-    mm.setPath("/File");
-    mm.addSeparator();
+    config = AppConfig::archive()->openMapping("ProjectManager");
+    ::isLayoutInclusionMode = config->get({ "include_layout", "store_perspective" }, defaultLayoutInclusionMode);
+    isMainInstance = true;
 
     OptionManager& om = ext->optionManager();
     om.addOption("project", boost::program_options::value<vector<string>>(), "load a project file");
@@ -187,9 +158,19 @@ ProjectManager::Impl::Impl(ProjectManager* self, ExtensionManager* ext)
         [&](std::vector<std::string>& inputFiles){ onInputFileOptionsParsed(inputFiles); });
     om.sigOptionsParsed().connect(
         [&](boost::program_options::variables_map& v){ onProjectOptionsParsed(v); });
+}
 
-    mainWindow = MainWindow::instance();
-    mv = MessageView::instance();
+
+ProjectManager::ProjectManager()
+{
+    impl = new Impl(this);
+}
+
+
+ProjectManager::Impl::Impl(ProjectManager* self)
+    : self(self)
+{
+    isMainInstance = false;
 }
 
 
@@ -199,15 +180,11 @@ ProjectManager::~ProjectManager()
 }
 
 
-SignalProxy<void(int recursiveLevel)> ProjectManager::sigProjectAboutToBeLoaded()
+ProjectManager::Impl::~Impl()
 {
-    return impl->sigProjectAboutToBeLoaded;
-}
-
-
-SignalProxy<void(int recursiveLevel)> ProjectManager::sigProjectLoaded()
-{
-    return impl->sigProjectLoaded;
+    if(isMainInstance){
+        config->write("include_layout", ::isLayoutInclusionMode);
+    }
 }
 
 
@@ -265,6 +242,30 @@ const std::string& ProjectManager::currentProjectFile() const
 const std::string& ProjectManager::currentProjectDirectory() const
 {
     return impl->currentProjectDirectory;
+}
+
+
+bool ProjectManager::isLayoutInclusionMode() const
+{
+    return ::isLayoutInclusionMode;
+}
+
+
+void ProjectManager::setLayoutInclusionMode(bool on)
+{
+    ::isLayoutInclusionMode = on;
+}
+
+
+SignalProxy<void(int recursiveLevel)> ProjectManager::sigProjectAboutToBeLoaded()
+{
+    return impl->sigProjectAboutToBeLoaded;
+}
+
+
+SignalProxy<void(int recursiveLevel)> ProjectManager::sigProjectLoaded()
+{
+    return impl->sigProjectLoaded;
 }
 
 
@@ -401,14 +402,14 @@ ItemList<> ProjectManager::Impl::loadProject
 
             MainWindow* mainWindow = MainWindow::instance();
             if(isInvokingApplication){
-                if(isBuiltinProject || perspectiveCheck->isChecked()){
+                if(isBuiltinProject || ::isLayoutInclusionMode){
                     mainWindow->setInitialLayout(archive);
                 }
                 if(!isBuiltinProject){
                     mainWindow->show();
                 }
             } else {
-                if(isBuiltinProject || perspectiveCheck->isChecked()){
+                if(isBuiltinProject || ::isLayoutInclusionMode){
                     mainWindow->restoreLayout(archive);
                 }
             }
@@ -681,7 +682,7 @@ bool ProjectManager::Impl::saveProject(const string& filename, Item* item)
         }
     }
 
-    if(perspectiveCheck->isChecked() && !isSubProject){
+    if(::isLayoutInclusionMode && !isSubProject){
         mainWindow->storeLayout(archive);
         saved = true;
     }
@@ -714,17 +715,11 @@ ref_ptr<Mapping> ProjectManager::storeCurrentLayout()
 
 bool ProjectManager::overwriteCurrentProject()
 {
-    return impl->overwriteCurrentProject();
-}
-
-
-bool ProjectManager::Impl::overwriteCurrentProject()
-{
     bool saved;
-    if(currentProjectFile.empty()){
+    if(impl->currentProjectFile.empty()){
         saved = showDialogToSaveProject();
     } else {
-        saved = saveProject(currentProjectFile);
+        saved = saveProject(impl->currentProjectFile);
     }
     return saved;
 }
@@ -755,10 +750,10 @@ void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& in
 }
 
 
-void ProjectManager::Impl::showDialogToLoadProject()
+bool ProjectManager::showDialogToLoadProject()
 {
-    if(!confirmToCloseProject()){
-        return;
+    if(!impl->confirmToCloseProject()){
+        return false;
     }
     
     FileDialog dialog(MainWindow::instance());
@@ -774,15 +769,20 @@ void ProjectManager::Impl::showDialogToLoadProject()
     dialog.setNameFilters(filters);
 
     dialog.updatePresetDirectories();
-    
+
+    bool loaded = false;
     if(dialog.exec()){
         string filename = dialog.selectedFiles().front().toStdString();
-        loadProject(filename, nullptr, false, false, true);
+        if(!impl->loadProject(filename, nullptr, false, false, true).empty()){
+            loaded = true;
+        }
     }
+
+    return loaded;
 }
 
 
-bool ProjectManager::Impl::showDialogToSaveProject()
+bool ProjectManager::showDialogToSaveProject()
 {
     FileDialog dialog(MainWindow::instance());
     dialog.setWindowTitle(_("Save a project"));
@@ -800,16 +800,16 @@ bool ProjectManager::Impl::showDialogToSaveProject()
 
     dialog.updatePresetDirectories();
 
-    if(!dialog.selectFilePath(currentProjectFile)){
-        dialog.selectFile(currentProjectName);
+    if(!dialog.selectFilePath(impl->currentProjectFile)){
+        dialog.selectFile(impl->currentProjectName);
     }
 
     dialog.sigAboutToFinish().connect(
-        [&](int result){ return onSaveDialogAboutToFinish(dialog, result); });
+        [&](int result){ return impl->onSaveDialogAboutToFinish(dialog, result); });
 
     bool saved = false;
     if(dialog.exec() == QDialog::Accepted){
-        saved = saveProject(getSaveFilename(dialog));
+        saved = saveProject(impl->getSaveFilename(dialog));
     }
 
     return saved;
@@ -892,7 +892,7 @@ bool ProjectManager::Impl::confirmToCloseProject()
     if(clicked == QMessageBox::Ignore){
         accepted = true;
     } else if(clicked == QMessageBox::Save){
-        accepted = overwriteCurrentProject();
+        accepted = self->overwriteCurrentProject();
     }
 
     return accepted;
@@ -924,12 +924,6 @@ bool ProjectManager::Impl::checkItemTreeConsistencyWithArchive(Item* item)
         }
     }
     return true;
-}
-
-
-void ProjectManager::Impl::onPerspectiveCheckToggled(bool on)
-{
-    managerConfig->write("store_perspective", perspectiveCheck->isChecked());
 }
 
 

@@ -16,6 +16,7 @@
 #include <cnoid/Archive>
 #include <cnoid/ExtensionManager>
 #include <cnoid/MenuManager>
+#include <cnoid/MainMenu>
 #include <cnoid/MainWindow>
 #include <cnoid/SpinBox>
 #include <cnoid/Separator>
@@ -310,18 +311,18 @@ void BodyMotionGenerationBar::initializeInstance(ExtensionManager* ext)
         BodyMotionGenerationBar* bar = instance();
         ext->addToolBar(bar);
 
-        MenuManager& mm = ext->menuManager();
-    
-        mm.setPath("/Options").setPath(N_("Pose Seq Processing"));
-
-        bar->autoInterpolationUpdateCheck = mm.addCheckItem(_("Automatic Interpolation Update"));
+        if(auto optionsMenu = MainMenu::instance()->get_Options_Menu()){
+            MenuManager& mm = ext->menuManager();
+            mm.setCurrent(optionsMenu).setPath(N_("Pose Seq Processing"));
+            bar->autoInterpolationUpdateCheck = mm.addCheckItem(_("Automatic Interpolation Update"));
+            bar->autoGenerationForNewBodyCheck = mm.addCheckItem(_("Automatic Generation for a New Body"));
+        } else {
+            bar->autoInterpolationUpdateCheck = new Action;
+            bar->autoGenerationForNewBodyCheck = new Action;
+        }
         bar->autoInterpolationUpdateCheck->setChecked(true);
-
-        bar->autoGenerationForNewBodyCheck = mm.addCheckItem(_("Automatic Generation for a New Body"));
         bar->autoGenerationForNewBodyCheck->setChecked(true);
 
-        mm.addSeparator();
-    
         initialized = true;
     }
 }
@@ -341,7 +342,7 @@ BodyMotionGenerationBar::BodyMotionGenerationBar()
     poseProviderToBodyMotionConverter = new PoseProviderToBodyMotionConverter();
     timeBar = TimeBar::instance();
     setup = new BodyMotionGenerationSetupDialog();
-    balancer = 0;
+    balancer = nullptr;
 
     addButton(QIcon(":/PoseSeq/icon/trajectory-generation.svg"), _("Generate body motions"))
         ->sigClicked().connect([&](){ onGenerationButtonClicked(); });
@@ -372,7 +373,7 @@ BodyMotionGenerationBar::BodyMotionGenerationBar()
     balancerToggle->setChecked(false);
 
     addButton(QIcon(":/Base/icon/setup.svg"))
-        ->sigClicked().connect(std::bind(&BodyMotionGenerationSetupDialog::show, setup));
+        ->sigClicked().connect([this](){ setup->show(); });
     
     interpolationParameterWidgetsConnection.add(
         setup->stealthyStepCheck.sigToggled().connect(
@@ -458,7 +459,7 @@ void BodyMotionGenerationBar::onGenerationButtonClicked()
         BodyMotionItem* motionItem = *p;
         BodyItem* bodyItem = motionItem->findOwnerItem<BodyItem>(true);
         if(bodyItem){
-            PoseProvider* provider = 0;
+            PoseProvider* provider = nullptr;
             PoseSeqItem* poseSeqItem = dynamic_cast<PoseSeqItem*>(motionItem->parentItem());
             if(poseSeqItem){
                 provider = poseSeqItem->interpolator().get();
@@ -482,7 +483,7 @@ void BodyMotionGenerationBar::onGenerationButtonClicked()
 void BodyMotionGenerationBar::setBalancer(Balancer* balancer)
 {
     this->balancer = balancer;
-    balancerToggle->setEnabled(balancer != 0);
+    balancerToggle->setEnabled(balancer != nullptr);
     if(balancer){
         setup->vbox->addWidget(balancer->panel());
     }
@@ -494,7 +495,7 @@ void BodyMotionGenerationBar::unsetBalancer()
     balancerToggle->setEnabled(false);
     if(balancer){
         setup->layout()->removeWidget(balancer->panel());
-        balancer = 0;
+        balancer = nullptr;
     }
 }
 

@@ -29,9 +29,10 @@ public:
     void endEditGroup();
 
     int currentPosition() const;
+    bool isUndoable() const;
+    bool isRedoable() const;
     bool undo();
     bool redo();
-
     void clear();
 
     SignalProxy<void()> sigHistoryUpdated();

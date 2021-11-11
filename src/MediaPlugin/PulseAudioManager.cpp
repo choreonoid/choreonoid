@@ -8,6 +8,7 @@
 #include "MediaUtil.h"
 #include <cnoid/ExtensionManager>
 #include <cnoid/MenuManager>
+#include <cnoid/MainMenu>
 #include <cnoid/RootItem>
 #include <cnoid/TimeBar>
 #include <cnoid/MessageView>
@@ -213,12 +214,15 @@ PulseAudioManager::Impl::Impl(ExtensionManager* ext)
 
     maxTimeOfActiveSources = -std::numeric_limits<double>::max();
 
-    MenuManager& mm = ext->menuManager();
-    mm.setPath("/Options").setPath(N_("PulseAudio"));
-
-    connectionKeepCheck = mm.addCheckItem(_("Keep Stream Connections"));
-
-    fullSyncPlaybackMenuItem = mm.addCheckItem(_("Fully-Synchronized Audio Playback"));
+    if(auto optionsMenu = MainMenu::instance()->get_Options_Menu()){
+        MenuManager& mm = ext->menuManager();
+        mm.setCurrent(optionsMenu).setPath(N_("PulseAudio"));
+        connectionKeepCheck = mm.addCheckItem(_("Keep Stream Connections"));
+        fullSyncPlaybackMenuItem = mm.addCheckItem(_("Fully-Synchronized Audio Playback"));
+    } else {
+        connectionKeepCheck = new Action;
+        fullSyncPlaybackMenuItem = new Action;
+    }
     fullSyncPlaybackMenuItem->sigToggled().connect(
         [&](bool){ onFullSyncPlaybackToggled(); });
 
