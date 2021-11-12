@@ -187,6 +187,9 @@ public:
     float transparency() const;
     void setTransparency(float t);
 
+    bool isLinkVisibilitySelectionMode() const { return isLinkVisibilitySelectionMode_; }
+    void setLinkVisibilitySelectionMode(bool on) { isLinkVisibilitySelectionMode_ = on; }
+
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
     
@@ -202,6 +205,7 @@ protected:
 private:
     Impl* impl;
     bool isAttachedToParentBody_;
+    bool isLinkVisibilitySelectionMode_;
     std::vector<CollisionLinkPairPtr> collisions_;
     std::vector<bool> collisionLinkBitSet_;
     std::vector<std::vector<CollisionLinkPairPtr>> collisionsOfLink_;

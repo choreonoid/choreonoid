@@ -239,6 +239,7 @@ BodyItem::BodyItem()
     impl = new Impl(this);
     impl->init(false);
     isAttachedToParentBody_ = false;
+    isLinkVisibilitySelectionMode_ = false;
 }
     
 
@@ -277,6 +278,7 @@ BodyItem::BodyItem(const BodyItem& org)
     impl = new Impl(this, *org.impl);
     impl->init(true);
     isAttachedToParentBody_ = false;
+    isLinkVisibilitySelectionMode_ = org.isLinkVisibilitySelectionMode_;
 
     setChecked(org.isChecked());
 }
@@ -1638,6 +1640,8 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty.min(0.0).max(0.9).decimals(1);
     putProperty(_("Transparency"), transparency,
                 [&](float value){ setTransparency(value); return true; });
+    putProperty(_("Link visibility selection"), self->isLinkVisibilitySelectionMode_,
+                changeProperty(self->isLinkVisibilitySelectionMode_));
 
     if(isAttachable()){
         putProperty(_("Enable attachment"), isAttachmentEnabled,
@@ -1723,6 +1727,9 @@ bool BodyItem::Impl::store(Archive& archive)
     archive.write("selfCollisionDetection", isSelfCollisionDetectionEnabled);
     archive.write("location_editable", self->isLocationEditable());
     archive.write("scene_sensitive", self->isSceneSensitive());
+    if(self->isLinkVisibilitySelectionMode_){
+        archive.write("link_visibility_selection_mode", true);
+    }
 
     if(linkKinematicsKitManager){
         MappingPtr kinematicsNode = new Mapping;
@@ -1875,6 +1882,7 @@ bool BodyItem::Impl::restore(const Archive& archive)
     if(archive.read("scene_sensitive", on)){
         self->setSceneSensitive(on);
     }
+    archive.read("link_visibility_selection_mode", self->isLinkVisibilitySelectionMode_);
        
     auto kinematicsNode = archive.findMapping("link_kinematics");
     if(kinematicsNode->isValid()){

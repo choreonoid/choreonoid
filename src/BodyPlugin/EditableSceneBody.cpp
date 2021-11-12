@@ -35,8 +35,6 @@ using namespace cnoid;
 
 namespace {
 
-Action* linkVisibilityCheck;
-
 enum LinkOperationType { None, FK, IK, SimInterference };
 
 }
@@ -91,6 +89,7 @@ public:
     bool isFocused;
     bool isSelected;
     bool isHighlightingEnabled;
+    bool isLinkVisibilitySelectionMode;
 
     KinematicsBar* kinematicsBar;
 
@@ -141,10 +140,8 @@ public:
     void onCollisionsUpdated();
     void onCollisionLinkHighlightModeChanged();
     void changeCollisionLinkHighlightMode(bool on);
-    void onLinkVisibilityCheckToggled();
-    void onLinkSelectionChanged(const std::vector<bool>& selection);
+    void updateLinkVisibilitySelectionMode();
     void onLinkOriginsCheckChanged(bool on);
-
     void enableHighlight(bool on);
     void calcBodyMarkerRadius();
     void ensureCmMarker();
@@ -359,6 +356,7 @@ void EditableSceneBody::Impl::initialize()
     isFocused = false;
     isSelected = false;
     isHighlightingEnabled = false;
+    isLinkVisibilitySelectionMode = false;
 
     self->setBody(bodyItem->body(), [this](Link* link){ return new EditableSceneLink(self, link); });
 
@@ -413,8 +411,13 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
         connections.add(
             bodyItem->sigUpdated().connect(
                 [&](){
-                    if(isFocused){ updateMarkersAndManipulators(true); }
+                    if(isFocused){
+                        updateMarkersAndManipulators(true);
+                    }
+                    updateLinkVisibilitySelectionMode();
                 }));
+
+        updateLinkVisibilitySelectionMode();
 
         connections.add(
             bodyItem->sigKinematicStateChanged().connect(
@@ -446,12 +449,6 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
             bodyItem->sigModelUpdated().connect(
                 [&](){ updateModel(); }));
         */
-
-        connections.add(
-            linkVisibilityCheck->sigToggled().connect(
-                [&](bool){ onLinkVisibilityCheckToggled(); }));
-        
-        onLinkVisibilityCheckToggled();
     }
 }
 
@@ -578,28 +575,27 @@ void EditableSceneBody::setLinkVisibilities(const std::vector<bool>& visibilitie
 }
 
 
-void EditableSceneBody::Impl::onLinkVisibilityCheckToggled()
+void EditableSceneBody::Impl::updateLinkVisibilitySelectionMode()
 {
-    auto bsm = BodySelectionManager::instance();
+    bool newMode = bodyItem->isLinkVisibilitySelectionMode();
 
-    if(linkVisibilityCheck->isChecked()){
-        connectionToSigLinkSelectionChanged.reset(
-            bsm->sigLinkSelectionChanged(bodyItem).connect(
-                [&](const std::vector<bool>& selection){
-                    onLinkSelectionChanged(selection);
-                }));
-        onLinkSelectionChanged(bsm->linkSelection(bodyItem));
-    } else {
-        connectionToSigLinkSelectionChanged.disconnect();
-        self->setLinkVisibilities(vector<bool>(self->numSceneLinks(), true));
-    }
-}
+    if(newMode != isLinkVisibilitySelectionMode){
+        
+        isLinkVisibilitySelectionMode = newMode;
 
+        if(isLinkVisibilitySelectionMode){
+            auto bsm = BodySelectionManager::instance();
+            connectionToSigLinkSelectionChanged.reset(
+                bsm->sigLinkSelectionChanged(bodyItem).connect(
+                    [&](const std::vector<bool>& selection){
+                        self->setLinkVisibilities(selection);
+                    }));
+            self->setLinkVisibilities(bsm->linkSelection(bodyItem));
 
-void EditableSceneBody::Impl::onLinkSelectionChanged(const std::vector<bool>& selection)
-{
-    if(linkVisibilityCheck->isChecked()){
-        self->setLinkVisibilities(selection);
+        } else {
+            connectionToSigLinkSelectionChanged.disconnect();
+            self->setLinkVisibilities(vector<bool>(self->numSceneLinks(), true));
+        }
     }
 }
 
@@ -1883,10 +1879,6 @@ void EditableSceneBody::Impl::restoreSceneBodyProperties(const Archive& archive)
 
 void EditableSceneBody::initializeClass(ExtensionManager* ext)
 {
-    linkVisibilityCheck =
-        ext->menuManager().setPath("/Options").setPath(N_("Scene View"))
-        .addCheckItem(_("Show selected links only"));
-
     ext->setProjectArchiver(
         "EditableSceneBody",
         EditableSceneBody::Impl::storeProperties,
