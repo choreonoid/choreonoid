@@ -1,6 +1,9 @@
 #include "AGXSimulatorItem.h"
 #include "AGXSimulatorItemImpl.h"
 #include <cnoid/ItemManager>
+#include <cnoid/ItemTreeView>
+#include <cnoid/MenuManager>
+#include <cnoid/MessageView>
 #include "gettext.h"
 
 namespace cnoid {
@@ -11,6 +14,19 @@ void AGXSimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerClass<AGXSimulatorItem, SimulatorItem>("AGXSimulatorItem");
     ext->itemManager().addCreationPanel<AGXSimulatorItem>();
+
+    ItemTreeView::customizeContextMenu<AGXSimulatorItem>(
+        [](AGXSimulatorItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
+            menuManager.setPath("/").addItem(_("Save AGX file"))
+                ->sigTriggered().connect(
+                    [item](){
+                        if(item->saveSimulationToAGXFile()){
+                            MessageView::instance()->putln("The simulation has been saved to agx file.");
+                        } else {
+                            MessageView::instance()->putln("Failed to save the simulation to agx file.");
+                        }
+                    });
+        });
 }
 
 AGXSimulatorItem::AGXSimulatorItem()
