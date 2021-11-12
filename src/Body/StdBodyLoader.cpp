@@ -396,6 +396,18 @@ bool extract(Mapping* mapping, const char* key, ValueType& out_value)
 }
 
 
+template<typename ValueType>
+bool extract(Mapping* mapping, std::initializer_list<const char*> keys, ValueType& out_value)
+{
+    ValueNodePtr node = mapping->extract(keys);
+    if(node){
+        out_value = node->to<ValueType>();
+        return true;
+    }
+    return false;
+}
+
+
 template<typename Derived>
 bool extractEigen(Mapping* mapping, std::initializer_list<const char*> keys, Eigen::MatrixBase<Derived>& x)
 {
@@ -1147,16 +1159,18 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
         link->setJointAxis(v);
     }
 
-    auto actuationModeNode = node->extract("actuationMode");
+    auto actuationModeNode = node->extract({ "actuation_mode", "actuationMode" });
     if(actuationModeNode){
         string mode = actuationModeNode->toString();
-        if(mode == "jointEffort" || mode == "jointTorque" || mode == "jointForce"){
+
+        //! \todo Use a map bewteen mode string and actuation mode id
+        if(mode == "joint_effort" || mode == "jointEffort" || mode == "jointTorque" || mode == "jointForce"){
             link->setActuationMode(Link::JointEffort);
 
-        } else if(mode == "jointDisplacement" || mode == "jointAngle"){
+        } else if(mode == "joint_displacement" || mode == "jointDisplacement" || mode == "jointAngle"){
             link->setActuationMode(Link::JointDisplacement);
 
-        } else if(mode == "jointVelocity"){
+        } else if(mode == "joint_velocity" || mode == "jointVelocity"){
             link->setActuationMode(Link::JointVelocity);
 
         } else if(mode == "jointSurfaceVelocity"){ // deprecated
@@ -1169,7 +1183,7 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
             link->setJointType(Link::PseudoContinuousTrackJoint);
             link->setActuationMode(Link::JointVelocity);
             
-        } else if(mode == "linkPosition"){
+        } else if(mode == "link_position" || mode == "linkPosition"){
             link->setActuationMode(Link::LinkPosition);
 
         } else {
@@ -1181,7 +1195,7 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
     if(jointAngleNode){
         link->setInitialJointDisplacement(toRadian(jointAngleNode->toDouble()));
     }
-    auto jointDisplacementNode = node->extract("jointDisplacement");
+    auto jointDisplacementNode = node->extract({ "joint_displacement", "jointDisplacement" });
     if(jointDisplacementNode){
         if(link->isRevoluteJoint()){
             link->setInitialJointDisplacement(toRadian(jointDisplacementNode->toDouble()));
@@ -1226,11 +1240,11 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
         }
     }
 
-    auto velocityRangeNode = node->extract("jointVelocityRange");
+    auto velocityRangeNode = node->extract({ "joint_velocity_range", "jointVelocityRange" });
     if(velocityRangeNode){
         Listing& velocityRange = *velocityRangeNode->toListing();
         if(velocityRange.size() != 2){
-            velocityRangeNode->throwException(_("jointVelocityRange must have two elements"));
+            velocityRangeNode->throwException(_("The joint velocity range node must have two elements"));
         }
         if(link->isRevoluteJoint()){
             link->setJointVelocityRange(toRadian(velocityRange[0].toDouble()), toRadian(velocityRange[1].toDouble()));
@@ -1239,9 +1253,18 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
         }
     }
 
-    double Ir = node->get("rotorInertia", 0.0);
-    double r = node->get("gearRatio", 1.0);
-    link->setEquivalentRotorInertia(r * r * Ir);
+    double Ir = 0.0;
+    auto jointAxisInertiaNode = node->extract("joint_axis_inertia");
+    if(jointAxisInertiaNode){
+        Ir = jointAxisInertiaNode->toDouble();
+    } else {
+        Ir = node->get("rotorInertia", 0.0);
+        double gearRatio;
+        if(node->read("gearRatio", gearRatio)){
+            Ir = gearRatio * gearRatio * Ir;
+        }
+    }
+    link->setEquivalentRotorInertia(Ir);
 }
 
 
@@ -1803,11 +1826,11 @@ void StdBodyLoader::Impl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
     string suffix;
     node->read("suffix", suffix);
     string devicePrefix;
-    if(!node->read("devicePrefix", devicePrefix)){
+    if(!node->read({ "device_prefix", "devicePrefix" }, devicePrefix)){
         devicePrefix = prefix;
     }
 
-    int jointIdOffset = node->get("jointIdOffset", 0);
+    int jointIdOffset = node->get({ "joint_id_offset", "jointIdOffset" }, 0);
 
     for(int i=0; i < subBody->numLinks(); ++i){
         Link* link = subBody->link(i);
@@ -1845,7 +1868,7 @@ void StdBodyLoader::Impl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
 
 void StdBodyLoader::Impl::readExtraJoints(Mapping* topNode)
 {
-    auto node = topNode->extract("extraJoints");
+    auto node = topNode->extract({ "extra_joints", "extraJoints" });
     if(node){
         if(node->isListing()){
             Listing& extraJoints = *node->toListing();
@@ -1861,8 +1884,8 @@ void StdBodyLoader::Impl::readExtraJoint(Mapping* info)
 {
     ExtraJoint joint;
 
-    joint.setLink(0, body->link(info->get("link1Name").toString()));
-    joint.setLink(1, body->link(info->get("link2Name").toString()));
+    joint.setLink(0, body->link(info->get({ "link1_name", "link1Name" }).toString()));
+    joint.setLink(1, body->link(info->get({ "link2_name", "link2Name" }).toString()));
 
     for(int i=0; i < 2; ++i){
         if(!joint.link(i)){

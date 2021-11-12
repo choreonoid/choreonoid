@@ -236,6 +236,13 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
         node->write("joint_id", link->jointId());
     }
     if(link->hasJoint()){
+        if(link->q_initial() != 0.0){
+            if(link->isRevoluteJoint()){
+                node->write("joint_displacement", degree(link->q_initial()));
+            } else {
+                node->write("joint_displacement", link->q_initial());
+            }
+        }
         auto rangeNode = node->createFlowStyleListing("joint_range");
         if(link->isRevoluteJoint()){
             rangeNode->append(degree(link->q_lower()));
@@ -243,6 +250,17 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
         } else {
             rangeNode->append(link->q_lower());
             rangeNode->append(link->q_upper());
+        }
+        rangeNode = node->createFlowStyleListing("joint_velocity_range");
+        if(link->isRevoluteJoint()){
+            rangeNode->append(degree(link->dq_lower()));
+            rangeNode->append(degree(link->dq_upper()));
+        } else {
+            rangeNode->append(link->dq_lower());
+            rangeNode->append(link->dq_upper());
+        }
+        if(link->Jm2() != 0.0){
+            node->write("joint_axis_inertia", link->Jm2());
         }
     }
     
