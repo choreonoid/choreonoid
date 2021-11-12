@@ -10,6 +10,7 @@
 #include <cnoid/Archive>
 #include <cnoid/ZMPSeq>
 #include <cnoid/MessageView>
+#include <cnoid/PutPropertyFunction>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -52,7 +53,7 @@ public:
 
 namespace cnoid {
 
-class BodyMotionItemImpl
+class BodyMotionItem::Impl
 {
 public:
     BodyMotionItem* self;
@@ -65,8 +66,8 @@ public:
     Signal<void()> sigExtraSeqItemsChanged;
     Connection extraSeqsChangedConnection;
 
-    BodyMotionItemImpl(BodyMotionItem* self);
-    ~BodyMotionItemImpl();
+    Impl(BodyMotionItem* self);
+    ~Impl();
     void initialize();
     void onSubItemUpdated();
     void updateExtraSeqItems();
@@ -162,39 +163,42 @@ void BodyMotionItem::addExtraSeqItemFactory
 
 
 BodyMotionItem::BodyMotionItem()
-    : bodyMotion_(new BodyMotion())
+    : bodyMotion_(new BodyMotion),
+      isBodyJointVelocityUpdateEnabled_(false)
 {
     setAttribute(Reloadable);
-    impl = new BodyMotionItemImpl(this);
+    impl = new Impl(this);
     impl->initialize();
 }
 
 
 BodyMotionItem::BodyMotionItem(std::shared_ptr<BodyMotion> bodyMotion)
-    : bodyMotion_(bodyMotion)
+    : bodyMotion_(bodyMotion),
+      isBodyJointVelocityUpdateEnabled_(false)
 {
-    impl = new BodyMotionItemImpl(this);
+    impl = new Impl(this);
     impl->initialize();
 }
 
 
 BodyMotionItem::BodyMotionItem(const BodyMotionItem& org)
     : AbstractSeqItem(org),
-      bodyMotion_(new BodyMotion(*org.bodyMotion_))
+      bodyMotion_(new BodyMotion(*org.bodyMotion_)),
+      isBodyJointVelocityUpdateEnabled_(org.isBodyJointVelocityUpdateEnabled_)
 {
-    impl = new BodyMotionItemImpl(this);
+    impl = new Impl(this);
     impl->initialize();
 }
 
 
-BodyMotionItemImpl::BodyMotionItemImpl(BodyMotionItem* self)
+BodyMotionItem::Impl::Impl(BodyMotionItem* self)
     : self(self)
 {
 
 }
 
 
-void BodyMotionItemImpl::initialize()
+void BodyMotionItem::Impl::initialize()
 {
     self->jointPosSeqItem_ = new MultiValueSeqItem(self->bodyMotion_->jointPosSeq());
     self->jointPosSeqItem_->setName("Joint");
@@ -226,7 +230,7 @@ BodyMotionItem::~BodyMotionItem()
 }
 
 
-BodyMotionItemImpl::~BodyMotionItemImpl()
+BodyMotionItem::Impl::~Impl()
 {
     extraSeqsChangedConnection.disconnect();
     jointPosSeqUpdateConnection.disconnect();
@@ -262,7 +266,7 @@ void BodyMotionItem::notifyUpdate()
 }
 
 
-void BodyMotionItemImpl::onSubItemUpdated()
+void BodyMotionItem::Impl::onSubItemUpdated()
 {
     self->suggestFileUpdate();
     self->Item::notifyUpdate();
@@ -305,7 +309,7 @@ void BodyMotionItem::updateExtraSeqItems()
 }
 
 
-void BodyMotionItemImpl::updateExtraSeqItems()
+void BodyMotionItem::Impl::updateExtraSeqItems()
 {
     extraSeqItemInfos.clear();
 
@@ -391,10 +395,23 @@ Item* BodyMotionItem::doDuplicate() const
 }
 
 
+void BodyMotionItem::doPutProperties(PutPropertyFunction& putProperty)
+{
+    putProperty(_("Body joint velocity update"), isBodyJointVelocityUpdateEnabled_,
+                changeProperty(isBodyJointVelocityUpdateEnabled_));
+}
+
+
 bool BodyMotionItem::store(Archive& archive)
 {
+    bool result = false;
     if(overwrite()){
-        return archive.writeFileInformation(this);
+        result = archive.writeFileInformation(this);
+        if(result){
+            if(isBodyJointVelocityUpdateEnabled_){
+                archive.write("is_body_joint_velocity_update_enabled", true);
+            }
+        }
     }
     return false;
 }
@@ -402,5 +419,6 @@ bool BodyMotionItem::store(Archive& archive)
 
 bool BodyMotionItem::restore(const Archive& archive)
 {
+    isBodyJointVelocityUpdateEnabled_ = archive.get("is_body_joint_velocity_update_enabled", false);
     return archive.loadFileTo(this);
 }

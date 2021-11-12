@@ -13,8 +13,6 @@
 
 namespace cnoid {
 
-class BodyMotionItemImpl;
-
 class CNOID_EXPORT BodyMotionItem : public AbstractSeqItem
 {
 public:
@@ -64,11 +62,19 @@ public:
     SignalProxy<void()> sigExtraSeqItemsChanged();
     void updateExtraSeqItems();
 
+    bool isBodyJointVelocityUpdateEnabled() const {
+        return isBodyJointVelocityUpdateEnabled_;
+    }
+    void setBodyJointVelocityUpdateEnabled(bool on) {
+        isBodyJointVelocityUpdateEnabled_ = on;
+    }
+
     virtual void notifyUpdate() override;
 
 protected:
     virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation) override;
     virtual Item* doDuplicate() const override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
@@ -77,8 +83,10 @@ private:
     MultiValueSeqItemPtr jointPosSeqItem_;
     MultiSE3SeqItemPtr linkPosSeqItem_;
 
-    BodyMotionItemImpl* impl;
-    friend class BodyMotionItemImpl;
+    class Impl;
+    Impl* impl;
+
+    bool isBodyJointVelocityUpdateEnabled_;
 };
 
 typedef ref_ptr<BodyMotionItem> BodyMotionItemPtr;

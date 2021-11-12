@@ -7,9 +7,7 @@
 #include "BodyItem.h"
 #include "BodyMotionItem.h"
 #include <cnoid/ExtensionManager>
-#include <cnoid/MenuManager>
 #include <cnoid/ConnectionSet>
-#include <cnoid/Archive>
 #include <map>
 #include "gettext.h"
 
@@ -24,19 +22,6 @@ typedef std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* s
 typedef map<string, ExtraSeqEngineFactory> ExtraSeqEngineFactoryMap;
 ExtraSeqEngineFactoryMap extraSeqEngineFactories;
 
-Action* updateVelocityCheck;
-
-}
-
-static bool storeProperties(Archive& archive)
-{
-    archive.write("updateJointVelocities", updateVelocityCheck->isChecked());
-    return true;
-}
-
-static void restoreProperties(const Archive& archive)
-{
-    updateVelocityCheck->setChecked(archive.get("updateJointVelocities", updateVelocityCheck->isChecked()));
 }
 
 namespace cnoid {
@@ -108,7 +93,7 @@ public:
                 for(int i=0; i < numAllJoints; ++i){
                     body->joint(i)->q() = q[i];
                 }
-                if(updateVelocityCheck->isChecked()){
+                if(motionItem->isBodyJointVelocityUpdateEnabled()){
                     const double dt = qSeq->timeStep();
                     const MultiValueSeq::Frame q_prev = qSeq->frame((clampedFrame == 0) ? 0 : (clampedFrame -1));
                     for(int i=0; i < numAllJoints; ++i){
@@ -215,12 +200,6 @@ void BodyMotionEngine::initializeClass(ExtensionManager* ext)
 {
     TimeSyncItemEngineManager::instance()
         ->registerFactory<BodyMotionItem, BodyMotionEngine>(createBodyMotionEngine);
-
-    MenuManager& mm = ext->menuManager();
-    mm.setPath("/Options").setPath(N_("Body Motion Engine"));
-    updateVelocityCheck = mm.addCheckItem(_("Update Joint Velocities"));
-
-    ext->setProjectArchiver("BodyMotionEngine", storeProperties, restoreProperties);
 }
 
 
