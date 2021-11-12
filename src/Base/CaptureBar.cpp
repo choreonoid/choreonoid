@@ -4,7 +4,6 @@
 
 #include "CaptureBar.h"
 #include "ExtensionManager.h"
-#include "MenuManager.h"
 #include "MessageView.h"
 #include "MainWindow.h"
 #include "AppConfig.h"
@@ -12,33 +11,139 @@
 #include "SceneWidget.h"
 #include "FileDialog.h"
 #include <QApplication>
-#include <QMouseEvent>
 #include <QPainter>
-#include <QTabWidget>
-#include <functional>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using namespace std::placeholders;
-
-namespace {
-
-Action* includeTabCheck;
-QString lastCaptureFile;
-QWidget* lastCaptureWidget;
 
 
-void onIncludeTabToggled(bool on)
+void CaptureBar::initialize(ExtensionManager* ext)
 {
-    AppConfig::archive()->openMapping("CaptureBar")->write("includeTab", on);
+    static bool initialized = false;
+    if(!initialized){
+        ext->addToolBar(instance());
+        initialized = true;
+    }
 }
 
 
-bool saveWidgetImage(QWidget* widget, const QString& filename)
+CaptureBar* CaptureBar::instance()
 {
-    SceneView* sceneView = dynamic_cast<SceneView*>(widget);
-    if(sceneView){
+    static CaptureBar* captureBar = new CaptureBar;
+    return captureBar;
+}
+
+
+CaptureBar::CaptureBar()
+    : ToolBar(N_("CaptureBar"))
+{
+    lastCaptureWidget = nullptr;
+    isTabInclusionMode = AppConfig::archive()->openMapping("CaptureBar")->get("include_tab", false);
+
+    
+    captureButton = addButton(QIcon(":/Base/icon/scenecapture.svg"), _("Capture the image of a view or toolbar"));
+    captureButton->sigClicked().connect( [this](){ grabMouse(); });
+    captureButton->installEventFilter(this);
+}
+
+
+CaptureBar::~CaptureBar()
+{
+
+}
+
+
+void CaptureBar::mouseMoveEvent(QMouseEvent*)
+{
+    
+}
+
+
+void CaptureBar::mousePressEvent(QMouseEvent* event)
+{
+    if(event->button() == Qt::LeftButton){
+        releaseMouse();
+        QWidget* widget = QApplication::widgetAt(event->globalPos());
+        while(widget){
+            if(ToolBar* bar = dynamic_cast<ToolBar*>(widget)){
+                captureToolbar(bar);
+                break;
+            } else if(View* view = dynamic_cast<View*>(widget)){
+                captureView(view);
+                break;
+            }
+            widget = widget->parentWidget();
+        }
+    }
+}
+
+
+bool CaptureBar::eventFilter(QObject* obj, QEvent* event)
+{
+    if(obj == captureButton && event->type() == QEvent::MouseButtonPress){
+        auto mouseEvent = static_cast<QMouseEvent*>(event);
+        if(mouseEvent->button() == Qt::RightButton){
+            onCaptureButtonRightClicked(mouseEvent);
+            return true;
+        }
+    }
+    // standard event processing
+    return QObject::eventFilter(obj, event);
+}
+
+
+void CaptureBar::onCaptureButtonRightClicked(QMouseEvent* event)
+{
+    menuManager.setNewPopupMenu(captureButton);
+    auto check = menuManager.addCheckItem(_("Include Tab"));
+    check->setChecked(isTabInclusionMode);
+    check->sigToggled().connect([this](bool on){ setTabInclusionMode(on); });
+    menuManager.popupMenu()->popup(event->globalPos());
+}
+
+
+void CaptureBar::setTabInclusionMode(bool on)
+{
+    isTabInclusionMode = on;
+    AppConfig::archive()->openMapping("CaptureBar")->write("include_tab", on);
+}
+
+
+void CaptureBar::captureToolbar(ToolBar* bar)
+{
+    save(bar, [this, bar](const QString& filename){ return saveWidgetImage(bar, filename); });
+}
+
+
+void CaptureBar::captureView(View* view)
+{
+    auto owner = view->parentWidget();
+        
+    if(isTabInclusionMode){
+        for(int i=0; i < 2; ++i){
+            auto tab = dynamic_cast<QTabWidget*>(owner);
+            if(tab){
+                save(view,
+                     [this, tab, view](const QString& filename){
+                         return saveTabViewImage(tab, view, filename);
+                     });
+                return;
+            }
+            owner = owner->parentWidget();
+            if(!owner){
+                break;
+            }
+        }
+    }
+
+    save(view, [this, view](const QString& filename){ return saveWidgetImage(view, filename); });
+}
+
+
+bool CaptureBar::saveWidgetImage(QWidget* widget, const QString& filename)
+{
+    if(auto sceneView = dynamic_cast<SceneView*>(widget)){
         return sceneView->sceneWidget()->saveImage(filename.toStdString());
     } else {
         QPixmap pixmap(widget->size());
@@ -48,7 +153,7 @@ bool saveWidgetImage(QWidget* widget, const QString& filename)
 }
 
 
-bool saveTabViewImage(QTabWidget* tab, View* view, const QString& filename)
+bool CaptureBar::saveTabViewImage(QTabWidget* tab, View* view, const QString& filename)
 {
     const int n = tab->count();
     vector<QWidget*> widgets(n);
@@ -63,7 +168,7 @@ bool saveTabViewImage(QTabWidget* tab, View* view, const QString& filename)
     QPixmap pixmap(tab->size());
     tab->render(&pixmap);
         
-    SceneView* sceneView = dynamic_cast<SceneView*>(view);
+    auto sceneView = dynamic_cast<SceneView*>(view);
     if(sceneView){
         QPainter painter(&pixmap);
         QImage image = sceneView->sceneWidget()->getImage();
@@ -83,7 +188,7 @@ bool saveTabViewImage(QTabWidget* tab, View* view, const QString& filename)
 }
 
 
-void save(QWidget* widget, std::function<bool(const QString& filename)> saveImage)
+void CaptureBar::save(QWidget* widget, std::function<bool(const QString& filename)> saveImage)
 {
     const QString name(widget->windowTitle());
     QString filename;
@@ -127,104 +232,6 @@ void save(QWidget* widget, std::function<bool(const QString& filename)> saveImag
                 MessageView::instance()->putln(
                     QString(_("The image of %1 cannot be saved into \"%2\".")).arg(name).arg(filename));
             }
-        }
-    }
-}
-
-
-void captureView(View* view)
-{
-    QWidget* owner = view->parentWidget();
-        
-    if(includeTabCheck->isChecked()){
-        for(int i=0; i < 2; ++i){
-            QTabWidget* tab = dynamic_cast<QTabWidget*>(owner);
-            if(tab){
-                save(view, std::bind(saveTabViewImage, tab, view, _1));
-                return;
-            }
-            owner = owner->parentWidget();
-            if(!owner){
-                break;
-            }
-        }
-    }
-
-    save(view, std::bind(saveWidgetImage, view, _1));
-}
-
-
-void captureToolbar(ToolBar* bar)
-{
-    save(bar, std::bind(saveWidgetImage, bar, _1));
-}
-}
-
-
-void CaptureBar::initialize(ExtensionManager* ext)
-{
-    static bool initialized = false;
-    if(!initialized){
-        ext->addToolBar(instance());
-
-        MenuManager& mm = ext->menuManager();
-        MappingPtr config = AppConfig::archive()->openMapping("CaptureBar");
-        mm.setPath("/Options").setPath(N_("Capture Bar"));
-        
-        includeTabCheck = mm.addCheckItem(_("Include Tab"));
-        includeTabCheck->setChecked(config->get("includeTab", false));
-        includeTabCheck->sigToggled().connect(onIncludeTabToggled);
-        
-        lastCaptureWidget = 0;
-        
-        initialized = true;
-    }
-}
-
-
-CaptureBar* CaptureBar::instance()
-{
-    static CaptureBar* captureBar = new CaptureBar();
-    return captureBar;
-}
-
-
-CaptureBar::CaptureBar()
-    : ToolBar(N_("CaptureBar"))
-{
-    addButton(QIcon(":/Base/icon/scenecapture.svg"), _("Capture the image of a view or toolbar"))
-        ->sigClicked().connect(
-            std::bind(static_cast<void(CaptureBar::*)()>(&CaptureBar::grabMouse), this));
-}
-
-
-CaptureBar::~CaptureBar()
-{
-
-}
-
-
-void CaptureBar::mouseMoveEvent(QMouseEvent*)
-{
-    
-
-}
-
-
-void CaptureBar::mousePressEvent(QMouseEvent* event)
-{
-    if(event->button() == Qt::LeftButton){
-        releaseMouse();
-        QWidget* widget = QApplication::widgetAt(event->globalPos());
-        while(widget){
-            if(View* view = dynamic_cast<View*>(widget)){
-                captureView(view);
-                break;
-            } else if(ToolBar* bar = dynamic_cast<ToolBar*>(widget)){
-                captureToolbar(bar);
-                break;
-            }
-            widget = widget->parentWidget();
         }
     }
 }
