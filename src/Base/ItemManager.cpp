@@ -11,7 +11,6 @@
 #include "ItemFileIO.h"
 #include "ItemFileDialog.h"
 #include "FileDialog.h"
-#include "AppConfig.h"
 #include "MainWindow.h"
 #include "MessageView.h"
 #include "MainMenu.h"

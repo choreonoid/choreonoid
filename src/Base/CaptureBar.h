@@ -7,6 +7,8 @@
 
 #include "ToolBar.h"
 #include "MenuManager.h"
+#include <cnoid/ValueTree>
+#include <cnoid/stdx/optional>
 #include <QMouseEvent>
 #include <QTabWidget>
 #include <functional>
@@ -29,6 +31,7 @@ protected:
     
 private:
     CaptureBar();
+    Mapping* getConfig();
     void onCaptureButtonRightClicked(QMouseEvent* event);    
     void setTabInclusionMode(bool on);
     void captureToolbar(ToolBar* bar);
@@ -41,7 +44,8 @@ private:
     MenuManager menuManager;
     QWidget* lastCaptureWidget;
     QString lastCaptureFile;
-    bool isTabInclusionMode;
+    MappingPtr config;
+    stdx::optional<bool> isTabInclusionMode;
 };
 
 }

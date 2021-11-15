@@ -1,6 +1,5 @@
 #include "MainMenu.h"
 #include "App.h"
-#include "AppConfig.h"
 #include "MenuManager.h"
 #include "ItemManager.h"
 #include "ItemFileDialog.h"

@@ -125,7 +125,9 @@ void FilePathVariableProcessor::Impl::setSystemVariablesEnabled(bool on)
 
 void FilePathVariableProcessor::setUserVariables(Mapping* variables)
 {
-    impl->userVariables = variables;
+    if(variables && variables->isValid()){
+        impl->userVariables = variables;
+    }
 }
 
 

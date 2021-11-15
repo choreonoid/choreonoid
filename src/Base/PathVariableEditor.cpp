@@ -113,8 +113,17 @@ void PathVariableEditor::show()
 
 void PathVariableEditor::readPathVariablesFromArchive()
 {
-    MappingPtr pathVars = AppConfig::archive()->openMapping("pathVariables");
+    auto archive = AppConfig::archive();
+    MappingPtr pathVars = archive->openMapping("path_variables");
     tableWidget->setRowCount(0);
+
+    if(pathVars->empty()){
+        auto oldPathVars = archive->findMapping("pathVariables");
+        if(oldPathVars->isValid()){
+            pathVars->insert(oldPathVars);
+            archive->remove("pathVariables");
+        }
+    }
 
     for(Mapping::const_iterator p = pathVars->begin(); p != pathVars->end(); ++p){
         if(p->second->isListing()){
@@ -148,7 +157,7 @@ void PathVariableEditor::appendPathVariable(const QString& name, const QString& 
 
 void PathVariableEditor::writePathVariablesToArchive()
 {
-    MappingPtr pathVars = AppConfig::archive()->openMapping("pathVariables");
+    MappingPtr pathVars = AppConfig::archive()->openMapping("path_variables");
     pathVars->clear();
 
     int n = tableWidget->rowCount();
@@ -162,6 +171,9 @@ void PathVariableEditor::writePathVariablesToArchive()
                 listing->append(toUTF8(path.generic_string()), DOUBLE_QUOTED);
             }
         }
+    }
+    if(pathVars->empty()){
+        AppConfig::archive()->remove("path_variables");
     }
 }
 

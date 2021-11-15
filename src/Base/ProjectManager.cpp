@@ -15,7 +15,7 @@
 #include "AppConfig.h"
 #include "AppUtil.h"
 #include "FileDialog.h"
-#include <cnoid/MainWindow>
+#include "MainWindow.h"
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <cnoid/FilePathVariableProcessor>

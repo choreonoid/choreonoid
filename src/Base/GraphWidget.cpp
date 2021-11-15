@@ -8,8 +8,7 @@
 #include "TimeBar.h"
 #include "ToolBarArea.h"
 #include "ScrollBar.h"
-#include <cnoid/View>
-#include <cnoid/MainWindow>
+#include "View.h"
 #include <cnoid/ConnectionSet>
 #include <QGridLayout>
 #include <QPainter>

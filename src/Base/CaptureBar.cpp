@@ -39,8 +39,6 @@ CaptureBar::CaptureBar()
     : ToolBar(N_("CaptureBar"))
 {
     lastCaptureWidget = nullptr;
-    isTabInclusionMode = AppConfig::archive()->openMapping("CaptureBar")->get("include_tab", false);
-
     
     captureButton = addButton(QIcon(":/Base/icon/scenecapture.svg"), _("Capture the image of a view or toolbar"));
     captureButton->sigClicked().connect( [this](){ grabMouse(); });
@@ -50,7 +48,13 @@ CaptureBar::CaptureBar()
 
 CaptureBar::~CaptureBar()
 {
-
+    if(config){
+        if(config->empty()){
+            AppConfig::archive()->remove("CaptureBar");
+        } else {
+            config->setFlowStyle(false);
+        }
+    }
 }
 
 
@@ -93,11 +97,23 @@ bool CaptureBar::eventFilter(QObject* obj, QEvent* event)
 }
 
 
+Mapping* CaptureBar::getConfig()
+{
+    if(!config){
+        config = AppConfig::archive()->openMapping("CaptureBar");
+    }
+    return config;
+}
+
+
 void CaptureBar::onCaptureButtonRightClicked(QMouseEvent* event)
 {
     menuManager.setNewPopupMenu(captureButton);
     auto check = menuManager.addCheckItem(_("Include Tab"));
-    check->setChecked(isTabInclusionMode);
+    if(!isTabInclusionMode){
+        isTabInclusionMode = getConfig()->get("include_tab", false);
+    }
+    check->setChecked(*isTabInclusionMode);
     check->sigToggled().connect([this](bool on){ setTabInclusionMode(on); });
     menuManager.popupMenu()->popup(event->globalPos());
 }
@@ -106,7 +122,7 @@ void CaptureBar::onCaptureButtonRightClicked(QMouseEvent* event)
 void CaptureBar::setTabInclusionMode(bool on)
 {
     isTabInclusionMode = on;
-    AppConfig::archive()->openMapping("CaptureBar")->write("include_tab", on);
+    getConfig()->write("include_tab", on);
 }
 
 
@@ -207,8 +223,7 @@ void CaptureBar::save(QWidget* widget, std::function<bool(const QString& filenam
 
     dialog.updatePresetDirectories();
 
-    MappingPtr config = AppConfig::archive()->openMapping("CaptureBar");
-    dialog.setDirectory(config->get("directory", QDir::currentPath().toStdString()));
+    dialog.setDirectory(getConfig()->get("directory", QDir::currentPath().toStdString()));
         
     if(widget != lastCaptureWidget){
         lastCaptureFile = QString("%1.png").arg(name);
@@ -217,7 +232,7 @@ void CaptureBar::save(QWidget* widget, std::function<bool(const QString& filenam
     dialog.selectFile(lastCaptureFile);
         
     if(dialog.exec()){
-        config->writePath("directory", dialog.directory().absolutePath().toStdString());
+        getConfig()->writePath("directory", dialog.directory().absolutePath().toStdString());
             
         filename = dialog.selectedFiles().front();
             

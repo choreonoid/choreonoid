@@ -6,7 +6,6 @@
 #include "SceneView.h"
 #include "SceneWidget.h"
 #include "ExtensionManager.h"
-#include "AppConfig.h"
 #include "ComboBox.h"
 #include "ButtonGroup.h"
 #include <cnoid/ConnectionSet>
@@ -53,8 +52,6 @@ public:
     };
     vector<CustomModeButtonInfo> customModeButtons;
     ButtonGroup customModeButtonGroup;
-
-    MappingPtr config;
 
     Impl(SceneBar* self);
     void initialize();
@@ -115,8 +112,6 @@ void SceneBar::Impl::initialize()
 
     currentSceneView = nullptr;
     currentSceneWidget = nullptr;
-    
-    config = AppConfig::archive()->openMapping("SceneBar");
     
     editModeToggle = self->addToggleButton(
         QIcon(":/Base/icon/sceneedit.svg"), _("Switch to the edit mode"));

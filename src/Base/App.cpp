@@ -287,7 +287,7 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
         QIcon(iconFilename ? iconFilename : ":/Base/icon/choreonoid.svg"));
 
     FilePathVariableProcessor::systemInstance()->setUserVariables(
-        AppConfig::archive()->openMapping("pathVariables"));
+        AppConfig::archive()->findMapping({ "path_variables", "pathVariables" }));
 
     ext = new ExtensionManager("Base", false);
 
