@@ -63,14 +63,14 @@ const int NUM_SHADOWS = 2;
 
 enum { FLOOR_GRID = 0, XZ_GRID = 1, YZ_GRID = 2 };
 
-bool isVerticalSyncMode = false;
-bool isLowMemoryConsumptionMode = false;
+bool isVerticalSyncMode_ = false;
+bool isLowMemoryConsumptionMode_ = false;
 Signal<void(bool on)> sigLowMemoryConsumptionModeChanged;
 
 QLabel* sharedIndicatorLabel = nullptr;
 
-Signal<void(SceneWidget* instance)> sigSceneWidgetCreated;
-Signal<void(SceneWidget* requester)> sigModeSyncRequest;
+Signal<void(SceneWidget* instance)> sigSceneWidgetCreated_;
+Signal<void(SceneWidget* requester)> sigModeSyncRequest_;
 bool isEditModeInModeSync = false;
 bool isHighlightingEnabledInModeSync = false;
 
@@ -431,10 +431,10 @@ void SceneWidget::initializeClass(ExtensionManager* ext)
 {
     auto glConfig = AppConfig::archive()->openMapping("OpenGL");
     
-    ::isVerticalSyncMode = glConfig->get("vsync", false);
+    isVerticalSyncMode_ = glConfig->get("vsync", false);
 
-    ::isLowMemoryConsumptionMode = glConfig->get("low_memory_consumption", false);
-    if(::isLowMemoryConsumptionMode){
+    isLowMemoryConsumptionMode_ = glConfig->get("low_memory_consumption", false);
+    if(isLowMemoryConsumptionMode_){
         setLowMemoryConsumptionMode(true);
     }
 }
@@ -448,20 +448,20 @@ void SceneWidget::setVerticalSyncMode(bool on)
       update the vsync state because it is impossible to change the state of the existing
       QOpenGLWidgets.
     */
-    ::isVerticalSyncMode = on;
+    isVerticalSyncMode_ = on;
     AppConfig::archive()->openMapping("OpenGL")->write("vsync", on);
 }
 
 
 bool SceneWidget::isVerticalSyncMode()
 {
-    return ::isVerticalSyncMode;
+    return isVerticalSyncMode_;
 }
 
 
 void SceneWidget::setLowMemoryConsumptionMode(bool on)
 {
-    ::isLowMemoryConsumptionMode = on;
+    isLowMemoryConsumptionMode_ = on;
     sigLowMemoryConsumptionModeChanged(on);
 
     auto glConfig = AppConfig::archive()->openMapping("OpenGL");
@@ -475,7 +475,7 @@ void SceneWidget::setLowMemoryConsumptionMode(bool on)
 
 bool SceneWidget::isLowMemoryConsumptionMode()
 {
-    return ::isLowMemoryConsumptionMode;
+    return isLowMemoryConsumptionMode_;
 }
 
 
@@ -528,7 +528,7 @@ SceneWidget::SceneWidget(QWidget* parent)
 {
     impl = new Impl(this);
 
-    ::sigSceneWidgetCreated(this);
+    sigSceneWidgetCreated_(this);
 }
 
 
@@ -550,7 +550,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     renderer = GLSceneRenderer::create(sceneRoot);
     glslRenderer = dynamic_cast<GLSLSceneRenderer*>(renderer);
     if(glslRenderer ){
-        glslRenderer->setLowMemoryConsumptionMode(isLowMemoryConsumptionMode);
+        glslRenderer->setLowMemoryConsumptionMode(isLowMemoryConsumptionMode_);
     }
         
     renderer->setOutputStream(MessageView::instance()->cout(false));
@@ -694,7 +694,7 @@ void SceneWidget::setModeSyncEnabled(bool on)
         impl->isModeSyncEnabled = on;
         if(on){
             impl->modeSyncConnection =
-                sigModeSyncRequest.connect(
+                sigModeSyncRequest_.connect(
                     [this](SceneWidget* requester){ impl->onModeSyncRequest(requester); });
             impl->setEditMode(isEditModeInModeSync, false);
             impl->isHighlightingEnabled = isHighlightingEnabledInModeSync;
@@ -1204,7 +1204,7 @@ void SceneWidget::Impl::advertiseSceneModeChange(bool doModeSyncRequest)
     if(doModeSyncRequest && isModeSyncEnabled){
         isEditModeInModeSync = isEditMode;
         isHighlightingEnabledInModeSync = isHighlightingEnabled;
-        ::sigModeSyncRequest(self);
+        sigModeSyncRequest_(self);
     }
 
     emitSigStateChangedLater();
@@ -1930,7 +1930,7 @@ bool SceneWidget::unproject(double x, double y, double z, Vector3& out_projected
 
 SignalProxy<void(SceneWidget*)> SceneWidget::sigSceneWidgetCreated()
 {
-    return ::sigSceneWidgetCreated;
+    return sigSceneWidgetCreated_;
 }
 
 
