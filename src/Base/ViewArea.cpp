@@ -1040,7 +1040,7 @@ void ViewArea::restoreAllViewAreaLayouts(ArchivePtr archive)
                                 layout.read("maximized", viewWindow->impl->isMaximizedBeforeFullScreen);
                                 viewWindow->showFullScreen();
                             } else {
-                                if(layout.get("maximized"), false){
+                                if(layout.get("maximized", false)){
                                     viewWindow->showMaximized();
                                 } else {
                                     viewWindow->show();

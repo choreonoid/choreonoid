@@ -347,8 +347,8 @@ void MainWindow::Impl::showFirst()
         self->installEventFilter(&windowActivationChecker);
 #endif
         
-        if(config->get("fullScreen", false)){
-            isMaximizedJustBeforeFullScreen = config->get("maximized", true);
+        if(isFullScreen){
+            isMaximizedJustBeforeFullScreen = config->get("maximized", false);
 #ifdef Q_OS_WIN32
             self->resize(getScreenSize());
 #endif
@@ -358,7 +358,7 @@ void MainWindow::Impl::showFirst()
             }
             self->showFullScreen();
             //isGoingToMaximized = false;
-        } else if(config->get("maximized", true)){
+        } else if(config->get("maximized", false)){
 #ifdef Q_OS_WIN32
             self->resize(getAvailableScreenSize());
 #endif
@@ -584,20 +584,20 @@ void MainWindow::storeWindowStateConfig()
 
 void MainWindow::Impl::storeWindowStateConfig()
 {
-    if(!viewArea->viewTabsVisible()){
-        config->write("show_view_tabs", false);
-    }
-    if(!InfoBar::instance()->isVisible()){
-        config->write("show_status_bar", false);
-    }
-    if(isFullScreen){
-        config->write("full_screen", isFullScreen);
-        config->write("maximized", isMaximizedJustBeforeFullScreen);
-    } else if(isMaximized){
-        config->write("maximized", isMaximized);
-    }
+    config->clear();
+    
     config->write("width", normalSize.width());
     config->write("height", normalSize.height());
+
+    if(isFullScreen){
+        config->write("maximized", isMaximizedJustBeforeFullScreen);
+    } else {
+        config->write("maximized", isMaximized);
+    }
+    config->write("full_screen", isFullScreen);
+
+    config->write("show_view_tabs", viewArea->viewTabsVisible());
+    config->write("show_status_bar", InfoBar::instance()->isVisible());
 
     /*
     config->write("storeLastLayout", storeLastLayoutCheck->isChecked());
