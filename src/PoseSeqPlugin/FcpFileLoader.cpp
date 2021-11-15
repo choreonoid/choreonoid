@@ -12,7 +12,7 @@
 #include <cnoid/MainWindow>
 #include <cnoid/MessageView>
 #include <cnoid/ExtensionManager>
-#include <cnoid/MenuManager>
+#include <cnoid/MainMenu>
 #include <cnoid/Tokenizer>
 #include <cnoid/FileDialog>
 #include <cnoid/UTF8>
@@ -282,8 +282,8 @@ void invokeFaceControllerPatternFileImportDialog()
 
 void cnoid::initializeFcpFileLoader(ExtensionManager& ext)
 {
-    ext.menuManager()
-        .setPath("/File/Import ...")
-        .addItem(_("FaceController Plugin Pattern Files"))
-        ->sigTriggered().connect(invokeFaceControllerPatternFileImportDialog);
+    MainMenu::instance()->add_File_Import_Item(
+        _("FaceController Plugin Pattern Files"),
+        invokeFaceControllerPatternFileImportDialog,
+        true);
 }

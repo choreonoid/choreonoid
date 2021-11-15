@@ -34,9 +34,12 @@ public:
     virtual void setMenuItems();
 
     Menu* get_File_Menu() { return menu_File; }
-    Action* add_File_New_Item(const std::string& caption, std::function<void()> handler = nullptr);
-    Action* add_File_Load_Item(const std::string& caption, std::function<void()> handler = nullptr);
-    Action* add_File_Import_Item(const std::string& caption, std::function<void()> handler = nullptr);
+    Action* add_File_New_Item(
+        const std::string& caption, std::function<void()> handler = nullptr, bool doInsertSeparator = false);
+    Action* add_File_Load_Item(
+        const std::string& caption, std::function<void()> handler = nullptr, bool doInsertSeparator = false);
+    Action* add_File_Import_Item(
+        const std::string& caption, std::function<void()> handler = nullptr, bool doInsertSeparator = false);
     Action* add_Tools_Item(const std::string& caption, std::function<void()> handler = nullptr);
     Action* add_Filters_Item(const std::string& caption, std::function<void()> handler = nullptr);
     Menu* get_Options_Menu() { return menu_Options; }
@@ -91,7 +94,8 @@ protected:
 
 private:
     static void setCustomClassFactory(std::function<MainMenu*()> factory);
-    Action* addMenuItem(Menu* menu, const std::string& caption, std::function<void()> handler);
+    Action* addMenuItem(
+        Menu* menu, const std::string& caption, std::function<void()> handler, bool doInsertSeparator);
     static void showDialogAboutChoreonoid();
 
     Menu* menu_File;

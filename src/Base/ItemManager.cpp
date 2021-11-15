@@ -110,7 +110,10 @@ public:
     set<std::type_index> registeredAddonTypes;
     set<ItemCreationPanel*> registeredCreationPanels;
     set<ItemFileIOPtr> registeredFileIOs;
-    
+
+    bool hasLoaders;
+    bool hasImporters;
+
     QSignalMapper* mapperForNewItemActivated;
     QSignalMapper* mapperForLoadSpecificTypeItemActivated;
 
@@ -183,6 +186,8 @@ ItemManager::Impl::Impl(const string& moduleName)
       mainMenu(MainMenu::instance())
 {
     moduleNameToItemManagerImplMap[moduleName] = this;
+    hasLoaders = false;
+    hasImporters = false;
 }
 
 
@@ -461,11 +466,14 @@ void ItemManager::addCreationPanel_(const std::type_info& type, ItemCreationPane
 void ItemManager::Impl::addCreationPanel(const std::type_info& type, ItemCreationPanel* panel)
 {
     CreationDialog* dialog = createCreationDialog(type);
-    if(panel){
-        dialog->addPanel(panel);
-    } else {
-        dialog->addPanel(new DefaultItemCreationPanel);
+    if(dialog){
+        if(panel){
+            dialog->addPanel(panel);
+        } else {
+            dialog->addPanel(new DefaultItemCreationPanel);
+        }
     }
+    
     registeredCreationPanels.insert(panel);
 }
 
@@ -492,7 +500,10 @@ CreationDialog* ItemManager::Impl::createCreationDialog(const std::type_info& ty
         dialog->hide();
         info->creationDialogs.push_back(dialog);
 
-        mainMenu->add_File_New_Item(translatedName, [=](){ onNewItemActivated(dialog); });
+        mainMenu->add_File_New_Item(
+            translatedName,
+            [=](){ onNewItemActivated(dialog); },
+            registeredCreationPanels.empty());
     }
 
     return dialog;
@@ -693,9 +704,11 @@ void ItemManager::Impl::addLoader(ItemFileIO* fileIO, CaptionToFileIoListMap& lo
             [this, caption, &loaderMap]() mutable {
                 onLoadOrImportItemsActivated(loaderMap[caption]); };
         if(!isImporter){
-            mainMenu->add_File_Load_Item(caption, handler);
+            mainMenu->add_File_Load_Item(caption, handler, !hasLoaders);
+            hasLoaders = true;
         } else {
-            mainMenu->add_File_Import_Item(caption, handler);
+            mainMenu->add_File_Import_Item(caption, handler, !hasImporters);
+            hasImporters = true;
         }
     }
     loaders.push_back(fileIO);

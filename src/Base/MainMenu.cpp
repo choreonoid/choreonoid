@@ -188,46 +188,55 @@ void MainMenu::setMenuItems()
 }
 
 
-Action* MainMenu::add_File_New_Item(const std::string& caption, std::function<void()> handler)
+Action* MainMenu::add_File_New_Item
+(const std::string& caption, std::function<void()> handler, bool doInsertSeparator)
 {
-    return addMenuItem(menu_File_New, caption, handler);    
+    return addMenuItem(menu_File_New, caption, handler, doInsertSeparator);
 }
 
 
-Action* MainMenu::add_File_Load_Item(const std::string& caption, std::function<void()> handler)
+Action* MainMenu::add_File_Load_Item
+(const std::string& caption, std::function<void()> handler, bool doInsertSeparator)
 {
-    return addMenuItem(menu_File_Load, caption, handler);    
+    return addMenuItem(menu_File_Load, caption, handler, doInsertSeparator);
 }
 
 
-Action* MainMenu::add_File_Import_Item(const std::string& caption, std::function<void()> handler)
+Action* MainMenu::add_File_Import_Item
+(const std::string& caption, std::function<void()> handler, bool doInsertSeparator)
 {
-    return addMenuItem(menu_File_Import, caption, handler);    
+    return addMenuItem(menu_File_Import, caption, handler, doInsertSeparator);
 }
 
 
 Action* MainMenu::add_Tools_Item(const std::string& caption, std::function<void()> handler)
 {
-    return addMenuItem(menu_Tools, caption, handler);
+    return addMenuItem(menu_Tools, caption, handler, false);
 }
 
 
 Action* MainMenu::add_Filters_Item(const std::string& caption, std::function<void()> handler)
 {
-    return addMenuItem(menu_Filters, caption, handler);
+    return addMenuItem(menu_Filters, caption, handler, false);
 }
 
 
 Action* MainMenu::add_Help_AboutPlugins_Item(const std::string& caption, std::function<void()> handler)
 {
-    return addMenuItem(menu_Help_AboutPlugins, caption, handler);
+    return addMenuItem(menu_Help_AboutPlugins, caption, handler, false);
 }
 
 
-Action* MainMenu::addMenuItem(Menu* menu, const std::string& caption, std::function<void()> handler)
+Action* MainMenu::addMenuItem
+(Menu* menu, const std::string& caption, std::function<void()> handler, bool doInsertSeparator)
 {
     Action* action = nullptr;
     if(menu){
+        if(doInsertSeparator && !menu->isEmpty()){
+            auto separator = new QAction(menu);
+            separator->setSeparator(true);
+            menu->addAction(separator);
+        }
         action = new Action(caption.c_str(), menu);
         menu->addAction(action);
         action->sigTriggered().connect(handler);
