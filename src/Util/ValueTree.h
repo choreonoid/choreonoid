@@ -297,7 +297,8 @@ public:
     bool extract(const std::string& key, std::string& out_value);
 
     ValueNode& get(const std::string& key) const;
-
+    ValueNode& get(std::initializer_list<const char*> keys) const;
+    
     ValueNode& operator[](const std::string& key) const {
         return get(key);
     }
@@ -363,12 +364,18 @@ public:
     
     template <class T> T get(const std::string& key) const {
         T value;
-        if(read(key, value)){
-            return value;
-        } else {
+        if(!read(key, value)){
             throwKeyNotFoundException(key);
-            return value;
+        }            
+        return value;
+    }
+
+    template <class T> T get(std::initializer_list<const char*> keys) const {
+        T value;
+        if(!read(keys, value)){
+            throwKeyNotFoundException(*keys.begin());
         }
+        return value;
     }
     
     template <class T>

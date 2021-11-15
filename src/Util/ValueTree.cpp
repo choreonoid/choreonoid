@@ -668,7 +668,7 @@ ValueNode& Mapping::get(const std::string& key) const
     if(!isValid()){
         throwNotMappingException();
     }
-    const_iterator p = values.find(key);
+    auto p = values.find(key);
     if(p == values.end()){
         throwKeyNotFoundException(key);
     }
@@ -676,6 +676,26 @@ ValueNode& Mapping::get(const std::string& key) const
 }
 
 
+ValueNode& Mapping::get(std::initializer_list<const char*> keys) const
+{
+    if(!isValid()){
+        throwNotMappingException();
+    }
+    ValueNode* node = nullptr;
+    for(auto& key : keys){
+        auto p = values.find(key);
+        if(p != values.end()){
+            node = &(*p->second);
+            break;
+        }
+    }
+    if(!node){
+        throwKeyNotFoundException(*keys.begin());
+    }
+    return *node;
+}
+    
+        
 void Mapping::throwKeyNotFoundException(const std::string& key) const
 {
     KeyNotFoundException ex;
