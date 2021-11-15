@@ -305,6 +305,15 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     UnifiedEditHistoryView::initializeClass(ext);
     ItemEditRecordManager::initializeClass(ext);
 
+    PluginManager::initialize(ext);
+
+    /**
+       Since the main menu may be customized by the main function of a custom application executable
+       and the custom main menu may depend on plugins, the main menu setup is processed after
+       initializing the plugin manager so that the custom main menu setup can use the functions of it.
+    */
+    MainMenu::instance()->setMenuItems();
+
     FileBar::initialize(ext);
     ScriptBar::initialize(ext);
     TimeBar::initialize(ext);
@@ -357,15 +366,6 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
         fmt::format(_("The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: {3})."),
                     EIGEN_WORLD_VERSION, EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
                     Eigen::SimdInstructionSetsInUse()));
-
-    PluginManager::initialize(ext);
-
-    /**
-       Since the main menu may be customized by the main function of a custom application executable
-       and the custom main menu may depend on plugins, the main menu setup is processed after
-       initializing the plugin manager so that the custom main menu setup can use the functions of it.
-    */
-    MainMenu::instance()->setMenuItems();
 
     if(!pluginPathList){
         pluginPathList = getenv("CNOID_PLUGIN_PATH");
