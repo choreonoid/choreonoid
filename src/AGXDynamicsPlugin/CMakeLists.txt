@@ -5,8 +5,12 @@ if(NOT BUILD_AGX_DYNAMICS_PLUGIN)
   return()
 endif()
 
-if(NOT DEFINED ENV{AGX_DIR})
-  MESSAGE(WARNING "\n*** AGXDynamicsPlugin: The environment initialization file setup_env.bat/bash has not been executed\n*** Errors might occur during runtime!")
+if(UNIX AND NOT DEFINED ENV{AGX_DIR})
+  message(WARNING "\n*** AGXDynamicsPlugin: The environment initialization file setup_env.bat/bash has not been executed\n*** Errors might occur during runtime!")
+endif()
+
+if(WIN32)
+  option(INSTALL_AGX_RUNTIME "Install the runtime libraries of AGX Dynamics" ON)
 endif()
 
 # Check for architecture
@@ -26,19 +30,25 @@ if(MSVC)
   endif()
 endif(MSVC)
 
-if(NOT EXISTS ${AGX_DIR})
+if(NOT AGX_DIR)
   if(DEFINED ENV{AGX_DIR})
     set(agx_dir $ENV{AGX_DIR})
   elseif(MSVC)
-    file(GLOB agx_dir "c:/Program Files/Algoryx/AGX-?.*.?.?" "d:/Program Files/Algoryx/AGX-?.*.?.?")
+    file(GLOB agx_dirs "c:/Users/$ENV{USERNAME}/AppData/Local/Algoryx/AGX-?.*.?.?" "c:/Program Files/Algoryx/AGX-?.*.?.?")
+    if(agx_dirs)
+      list(REVERSE agx_dirs) # Prefer a newer version
+      list(GET agx_dirs 0 agx_dir)
+    endif()
   endif()
   if(agx_dir)
     set(AGX_DIR ${agx_dir} CACHE PATH "set the top directory of the AGX Dynamics library" FORCE)
   endif()
 endif()
 
-if(NOT EXISTS ${AGX_DIR})
-  MESSAGE(FATAL_ERROR "AGX_DIR must be set to build AGXDynamicsPlugin.")
+if(NOT AGX_DIR)
+  message(FATAL_ERROR "AGX_DIR must be set to build AGXDynamicsPlugin.")
+elseif(NOT EXISTS ${AGX_DIR})
+  message(FATAL_ERROR "The directory \"${AGX_DIR}\" specified in AGX_DIR is not found.")
 endif()
 
 set(CMAKE_MODULE_PATH "${AGX_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
@@ -49,17 +59,16 @@ include(AGXCompilerFlags )
 # Now locate AgX
 find_package(AGX REQUIRED)
 
-if(NOT AGX_FOUND)
-  MESSAGE(FATAL_ERROR "Unable to locate AGX headers and libraries. Cannot proceed.")
+if(AGX_FOUND)
+  message(STATUS "AGX Dynamics found in \"${AGX_DIR}\".")
 endif()
 
-if(MSVC)
-  if(NOT CMAKE_CXX_STANDARD LESS 17)
-    message(WARNING "AGX with VC++ does not support C++17 or later. C++14 is used in this project.")
-    set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ version number. AGX with VC++ does not support C++17 or later." FORCE)
-  endif()
-endif()
-
+#if(MSVC)
+  #if(NOT CMAKE_CXX_STANDARD LESS 17)
+  #  message(WARNING "AGX with VC++ does not support C++17 or later. C++14 is used in this project.")
+  #  set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ version number. AGX with VC++ does not support C++17 or later." FORCE)
+  #endif()
+#endif()
 
 include_directories(${AGX_INCLUDE_DIR})
 link_directories(${AGX_LIBRARY_DIR})
@@ -118,4 +127,16 @@ add_subdirectory(AGXBodyExtensionPlugin)
 
 if(ENABLE_PYTHON AND USE_PYBIND11)
   add_subdirectory(pybind11)
+endif()
+
+if(WIN32 AND INSTALL_AGX_RUNTIME)
+  find_path(AGX_BIN_DIR NAMES agxCore.dll PATHS ${AGX_DIR}/bin PATH_SUFFIXES x64 NO_DEFAULT_PATH)
+  install_runtime_dlls(
+    ${AGX_BIN_DIR}
+    agxCore.dll agxPhysics.dll agxSabre.dll agxVehicle.dll
+    OPTIONAL
+    zlib.dll libpng.dll websockets.dll colamd.dll
+    # AGX 2.31 or later does not require the followings
+    agx-assimp-vc142-mt.dll glew.dll
+    )
 endif()

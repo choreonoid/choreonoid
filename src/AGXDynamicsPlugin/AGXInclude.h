@@ -1,6 +1,8 @@
 #ifndef CNOID_AGXDYNAMICS_PLUGIN_AGX_INCLUDE_H
 #define CNOID_AGXDYNAMICS_PLUGIN_AGX_INCLUDE_H
 
+#include <agx/version.h>
+
 // Runtime
 #include <agx/Runtime.h>
 
@@ -48,6 +50,15 @@
 #include <agxWire/WireController.h>
 
 // etc
-#include <agxCollide/ConvexBuilder.h>
+
+#if AGX_VERSION_GREATER_OR_EQUAL(2, 31, 0, 0)
+# include <agxCollide/ConvexFactory.h>
+#else
+# include <agxCollide/ConvexBuilder.h>
+namespace agxCollide {
+typedef ConvexBuilder ConvexFactory;
+typedef ConvexBuilderRef ConvexFactoryRef;
+}
+#endif
 
 #endif

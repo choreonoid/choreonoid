@@ -406,11 +406,11 @@ void AGXLink::createAGXShape()
         auto bConvexDecomposition = getOrgLink()->info()->find("convexDecomposition");
         if(bConvexDecomposition->isValid()){
             AGXConvexDecompositionPtr conDec = new AGXConvexDecomposition();
-            numConvex = conDec->getConvexBuilder()->build(td.vertices, td.indices, td.triangles);
+            numConvex = conDec->build(td.vertices, td.indices, td.triangles);
             if(numConvex > 0){
                 LOGGER_INFO() << orgLink->name() << " convex decomposition succeed." << LOGGER_ENDL();
                 LOGGER_INFO() << "Divided to " << numConvex << std::endl;
-                for(auto shape : conDec->getConvexBuilder()->getConvexShapes()){
+                for(auto shape : conDec->getConvexFactory()->getConvexShapes()){
                     getAGXGeometry()->add(shape, agx::AffineMatrix4x4());
                 }
             }else{

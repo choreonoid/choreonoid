@@ -9,11 +9,11 @@
 namespace cnoid{
 
 AGXConvexDecomposition::AGXConvexDecomposition(){
-    m_builder = AGXObjectFactory::createConvexBuilder();
+    m_factory = AGXObjectFactory::createConvexFactory();
 }
 
-agxCollide::ConvexBuilder* AGXConvexDecomposition::getConvexBuilder(){
-    return m_builder;
+agxCollide::ConvexFactory* AGXConvexDecomposition::getConvexFactory(){
+    return m_factory;
 }
 
 }

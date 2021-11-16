@@ -30,6 +30,7 @@ Changes since 1.7.0:
 * Added PositionView, which replaces BodyLinkView
 * The GLSL scene renderer is used by default
 * The appearance of the AGX track shoes can be specified
+* Supported the new convex decomposition API introduced in AGX Dynamics 2.31.0.0 or later
 * Multiple body items can be integrated into a composite body
 * Added ManipulatorPlugin
 * Introduced the environmental variable CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS

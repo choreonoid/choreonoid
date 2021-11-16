@@ -433,9 +433,9 @@ agxWire::LinkRef AGXObjectFactory::createWireLink(agx::RigidBody* rigid)
     return new agxWire::Link(rigid);
 }
 
-agxCollide::ConvexBuilderRef AGXObjectFactory::createConvexBuilder()
+agxCollide::ConvexFactoryRef AGXObjectFactory::createConvexFactory()
 {
-    return new agxCollide::ConvexBuilder();
+    return new agxCollide::ConvexFactory();
 }
 
 }
