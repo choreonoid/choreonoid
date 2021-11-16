@@ -361,9 +361,20 @@ void ObjSceneWriter::Impl::writeMesh(SgMesh* mesh, const Affine3& T)
     }
     if(hasValidNormals){
         Matrix3 R = T.linear();
-        for(auto& n : *normals){
-            Vector3f vn = (R * n.cast<double>()).cast<float>();
-            gfs << "vn " << vn.x() << " " << vn.y() << " " << vn.z() << "\n";
+        Matrix3 E = R * R.transpose();
+        bool doNormalization = !E.isApprox(Matrix3::Identity());
+        if(doNormalization){
+            os() << format(_("The normal vectors of mesh \"{0}\" are normalized because "
+                             "its corresponding scene graph has a scaling factor."), name) << endl;
+            for(auto& n : *normals){
+                Vector3f vn = Vector3(R * n.cast<double>()).normalized().cast<float>();
+                gfs << "vn " << vn.x() << " " << vn.y() << " " << vn.z() << "\n";
+            }
+        } else {
+            for(auto& n : *normals){
+                Vector3f vn = (R * n.cast<double>()).cast<float>();
+                gfs << "vn " << vn.x() << " " << vn.y() << " " << vn.z() << "\n";
+            }
         }
     }
 
