@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-05 19:54+0900\n"
+"POT-Creation-Date: 2021-11-16 12:16+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -31,9 +31,6 @@ msgstr "タイムステップ"
 msgid "Num parts"
 msgstr "パート数"
 
-msgid "About Choreonoid"
-msgstr "Choreonoid について"
-
 msgid "The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: {3})."
 msgstr ""
 "Eigenライブラリバージョン{0}.{1}.{2}が使用されています．( 使用されているSIMD命令セット: {3} )"
@@ -47,6 +44,15 @@ msgid ""
 msgstr ""
 "アプリケーション設定ファイル \"{0}\" を読み込むことができません．\n"
 "{1}"
+
+msgid "CaptureBar"
+msgstr "キャプチャバー"
+
+msgid "Capture the image of a view or toolbar"
+msgstr "ビューやツールバーの画像をキャプチャします"
+
+msgid "Include Tab"
+msgstr "タブを含める"
 
 msgid "Save the image of %1"
 msgstr "%1の画像を保存"
@@ -62,18 +68,6 @@ msgstr "全てのファイル (*)"
 
 msgid "The image of %1 cannot be saved into \"%2\"."
 msgstr "%1の画像を\"%2\"に保存できませんでした．"
-
-msgid "Capture Bar"
-msgstr "キャプチャバー"
-
-msgid "Include Tab"
-msgstr "タブを含める"
-
-msgid "CaptureBar"
-msgstr "キャプチャバー"
-
-msgid "Capture the image of a view or toolbar"
-msgstr "ビューやツールバーの画像をキャプチャします"
 
 msgid "CoordinateFrameItem"
 msgstr "座標フレームアイテム"
@@ -429,27 +423,6 @@ msgstr "{0} \"{1}\" を \"{2}\" に保存中"
 msgid "Exporting {0} \"{1}\" into \"{2}\""
 msgstr "{0} \"{1}\" を \"{2}\" にエクスポート中"
 
-msgid "New ..."
-msgstr "新規"
-
-msgid "Load ..."
-msgstr "読み込み"
-
-msgid "Reload Selected Items"
-msgstr "選択アイテムの再読み込み"
-
-msgid "Save Selected Items"
-msgstr "選択アイテムの保存"
-
-msgid "Save Selected Items As"
-msgstr "選択アイテムに名前を付けて保存"
-
-msgid "Import ..."
-msgstr "インポート"
-
-msgid "Export Selected Items"
-msgstr "選択アイテムのエクスポート"
-
 msgid "Class {} is not registered as an item class."
 msgstr "クラス{}はアイテムクラスとして登録されていません．"
 
@@ -738,11 +711,62 @@ msgstr "親"
 msgid "Change multiple object locations"
 msgstr "複数オブジェクトの配置を変更"
 
+msgid "New ..."
+msgstr "新規"
+
+msgid "Load ..."
+msgstr "読み込み"
+
+msgid "Reload Selected Items"
+msgstr "選択アイテムの再読み込み"
+
+msgid "Save Selected Items"
+msgstr "選択アイテムの保存"
+
+msgid "Save Selected Items As"
+msgstr "選択アイテムに名前を付けて保存"
+
+msgid "Import ..."
+msgstr "インポート"
+
+msgid "Export Selected Items"
+msgstr "選択アイテムのエクスポート"
+
+msgid "Open Project"
+msgstr "プロジェクトを開く"
+
+msgid "Save Project"
+msgstr "プロジェクトの保存"
+
+msgid "Save Project As"
+msgstr "プロジェクトに名前を付けて保存"
+
+msgid "Project File Options"
+msgstr "プロジェクトファイルオプション"
+
+msgid "Layout"
+msgstr "レイアウト"
+
+msgid "Edit Path Variables"
+msgstr "パス変数の設定"
+
+msgid "Load Plugin"
+msgstr "プラグインの読み込み"
+
+msgid "Plugin"
+msgstr "プラグイン"
+
 msgid "Exit"
 msgstr "終了"
 
 msgid "Edit"
 msgstr "編集"
+
+msgid "Undo"
+msgstr "元に戻す"
+
+msgid "Redo"
+msgstr "やり直し"
 
 msgid "View"
 msgstr "表示"
@@ -768,14 +792,17 @@ msgstr "ステータスバーの表示"
 msgid "Full Screen"
 msgstr "フルスクリーン"
 
-msgid "Layout"
-msgstr "レイアウト"
-
 msgid "Reset Layout"
 msgstr "レイアウトのリセット"
 
 msgid "Tools"
 msgstr "ツール"
+
+msgid "Put Scene Statistics"
+msgstr "シーン統計情報の表示"
+
+msgid "Movie Recorder"
+msgstr "動画レコーダ"
 
 msgid "Filters"
 msgstr "フィルタ"
@@ -783,8 +810,23 @@ msgstr "フィルタ"
 msgid "Options"
 msgstr "オプション"
 
+msgid "OpenGL"
+msgstr ""
+
+msgid "Vertical Sync"
+msgstr "垂直同期"
+
+msgid "Low GPU Memory Consumption Mode"
+msgstr "GPUメモリ消費低減モード"
+
 msgid "Help"
 msgstr "ヘルプ"
+
+msgid "About Choreonoid"
+msgstr "Choreonoid について"
+
+msgid "About Plugins"
+msgstr "プラグインについて"
 
 msgid "MenuManager failed to set the current menu path to {0}."
 msgstr "メニューマネージャがカレントメニューパスを{0}にセットできませんでした．"
@@ -837,9 +879,6 @@ msgstr "警告："
 
 msgid "Warning"
 msgstr "警告"
-
-msgid "Movie Recorder"
-msgstr "動画レコーダ"
 
 msgid "Offline"
 msgstr "オフライン"
@@ -1006,12 +1045,6 @@ msgstr "複数数値列のプレインフォーマット"
 msgid "Input file \"{}\" was not processed."
 msgstr "入力ファイル \"{}\" は処理されませんでした．"
 
-msgid "Project File Options"
-msgstr "プロジェクトファイルオプション"
-
-msgid "Edit Path Variables"
-msgstr "パス変数の設定"
-
 msgid "Path Variables"
 msgstr "パス変数"
 
@@ -1023,18 +1056,6 @@ msgstr "パス"
 
 msgid "&Apply"
 msgstr "適用(&A)"
-
-msgid "Plugin"
-msgstr "プラグイン"
-
-msgid "Load Plugin"
-msgstr "プラグインの読み込み"
-
-msgid "Startup Plugin Loading"
-msgstr "起動時のプラグイン読み込み"
-
-msgid "Check the naming convention of plugin files"
-msgstr "プラグインファイルの命名規則をチェックする"
 
 msgid "{0}-plugin cannot be initialized because required plugin(s) {1} are not found."
 msgstr "必要なプラグイン{1}が見つからないため、{0}プラグインの初期化ができません．"
@@ -1069,9 +1090,6 @@ msgstr "プラグインの読み込みができませんでした．"
 
 msgid "The plugin object cannot be intialized."
 msgstr "プラグインオブジェクトの初期化ができません．"
-
-msgid "About Plugins"
-msgstr "プラグインについて"
 
 msgid "About {} Plugin"
 msgstr "{}プラグインについて"
@@ -1181,18 +1199,6 @@ msgstr "クォータニオン"
 msgid "Rotation matrix"
 msgstr "回転行列"
 
-msgid "Open Project"
-msgstr "プロジェクトを開く"
-
-msgid "Save Project"
-msgstr "プロジェクトの保存"
-
-msgid "Save Project As"
-msgstr "プロジェクトに名前を付けて保存"
-
-msgid "Perspective"
-msgstr "レイアウト"
-
 msgid ""
 "The state of the \"{0}\" {1} was not completely restored.\n"
 "{2}"
@@ -1265,14 +1271,41 @@ msgstr "プロジェクト \"%1\" は更新されています．新しいプロ�
 msgid "ReferencedObjectSeqItem"
 msgstr "参照オブジェクト時系列アイテム"
 
+msgid "Scene statistics:"
+msgstr "シーン統計情報:"
+
+msgid " Scene \"{}\":"
+msgstr " シーン \"{}\":"
+
+msgid "  Vertices: {}\n"
+msgstr "  頂点: {}\n"
+
+msgid "  Normals: {}\n"
+msgstr "  法線: {}\n"
+
+msgid "  Triangles: {}"
+msgstr "  トライアングル: {}"
+
+msgid "No valid scene item is selected."
+msgstr "有効なシーンアイテムが選択されていません．"
+
+msgid "The total number of {} scene items:\n"
+msgstr "{}シーンアイテムの総数: \n"
+
+msgid " Vertices: {}\n"
+msgstr " 頂点: {}\n"
+
+msgid " Normals: {}\n"
+msgstr " 法線: {}\n"
+
+msgid " Triangles: {}"
+msgstr " トライアングル: {}"
+
 msgid "RootItem"
 msgstr "ルートアイテム"
 
 msgid "Primary check"
 msgstr "プライマリチェック"
-
-msgid "Put scene statistics"
-msgstr "シーン統計情報の表示"
 
 msgid "SceneBar"
 msgstr "シーンバー"
@@ -1316,36 +1349,6 @@ msgstr "干渉チェック用モデルを表示"
 msgid "Toggle the collision line visibility"
 msgstr "干渉線の表示"
 
-msgid "Scene statistics:"
-msgstr "シーン統計情報:"
-
-msgid " Scene \"{}\":"
-msgstr " シーン \"{}\":"
-
-msgid "  Vertices: {}\n"
-msgstr "  頂点: {}\n"
-
-msgid "  Normals: {}\n"
-msgstr "  法線: {}\n"
-
-msgid "  Triangles: {}"
-msgstr "  トライアングル: {}"
-
-msgid "No valid scene item is selected."
-msgstr "有効なシーンアイテムが選択されていません．"
-
-msgid "The total number of {} scene items:\n"
-msgstr "{}シーンアイテムの総数: \n"
-
-msgid " Vertices: {}\n"
-msgstr " 頂点: {}\n"
-
-msgid " Normals: {}\n"
-msgstr " 法線: {}\n"
-
-msgid " Triangles: {}"
-msgstr " トライアングル: {}"
-
 msgid "Scene"
 msgstr "シーン"
 
@@ -1369,12 +1372,6 @@ msgstr "対象アイテム選択用の専用のチェックをアイテムツリ
 
 msgid "OpengGL image buffer for picking"
 msgstr "ピッキング用OpenGL画像バッファ"
-
-msgid "Vertical sync"
-msgstr "垂直同期"
-
-msgid "Low GPU memory consumption mode"
-msgstr "GPUメモリ消費低減モード"
 
 msgid "OpenGL initialization failed."
 msgstr "OpenGLの初期化に失敗しました．"
@@ -1696,12 +1693,6 @@ msgstr "現在時刻で状態を更新"
 msgid "Stop animation"
 msgstr "アニメーションの停止"
 
-msgid "Undo"
-msgstr "元に戻す"
-
-msgid "Redo"
-msgstr "やり直し"
-
 msgid "Undo: {0}."
 msgstr "「{0}」を元に戻しました．"
 
@@ -1746,6 +1737,18 @@ msgstr "\"{1}\"のための\"{0}\"プラグインが見つかりません．ビ�
 
 msgid "Virtual Joystick"
 msgstr "仮想ジョイスティック"
+
+#~ msgid "Capture Bar"
+#~ msgstr "キャプチャバー"
+
+#~ msgid "Startup Plugin Loading"
+#~ msgstr "起動時のプラグイン読み込み"
+
+#~ msgid "Check the naming convention of plugin files"
+#~ msgstr "プラグインファイルの命名規則をチェックする"
+
+#~ msgid "Perspective"
+#~ msgstr "レイアウト"
 
 #~ msgid ""
 #~ "Project items exist. Do you want to save them as a project file before loading a new project?"
