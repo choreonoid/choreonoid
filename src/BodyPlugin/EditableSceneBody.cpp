@@ -89,7 +89,7 @@ public:
     bool isFocused;
     bool isSelected;
     bool isHighlightingEnabled;
-    bool isLinkVisibilitySelectionMode;
+    bool isVisibleLinkSelectionMode;
 
     KinematicsBar* kinematicsBar;
 
@@ -140,7 +140,7 @@ public:
     void onCollisionsUpdated();
     void onCollisionLinkHighlightModeChanged();
     void changeCollisionLinkHighlightMode(bool on);
-    void updateLinkVisibilitySelectionMode();
+    void updateVisibleLinkSelectionMode();
     void onLinkOriginsCheckChanged(bool on);
     void enableHighlight(bool on);
     void calcBodyMarkerRadius();
@@ -356,7 +356,7 @@ void EditableSceneBody::Impl::initialize()
     isFocused = false;
     isSelected = false;
     isHighlightingEnabled = false;
-    isLinkVisibilitySelectionMode = false;
+    isVisibleLinkSelectionMode = false;
 
     self->setBody(bodyItem->body(), [this](Link* link){ return new EditableSceneLink(self, link); });
 
@@ -414,10 +414,10 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
                     if(isFocused){
                         updateMarkersAndManipulators(true);
                     }
-                    updateLinkVisibilitySelectionMode();
+                    updateVisibleLinkSelectionMode();
                 }));
 
-        updateLinkVisibilitySelectionMode();
+        updateVisibleLinkSelectionMode();
 
         connections.add(
             bodyItem->sigKinematicStateChanged().connect(
@@ -575,15 +575,15 @@ void EditableSceneBody::setLinkVisibilities(const std::vector<bool>& visibilitie
 }
 
 
-void EditableSceneBody::Impl::updateLinkVisibilitySelectionMode()
+void EditableSceneBody::Impl::updateVisibleLinkSelectionMode()
 {
-    bool newMode = bodyItem->isLinkVisibilitySelectionMode();
+    bool newMode = bodyItem->isVisibleLinkSelectionMode();
 
-    if(newMode != isLinkVisibilitySelectionMode){
+    if(newMode != isVisibleLinkSelectionMode){
         
-        isLinkVisibilitySelectionMode = newMode;
+        isVisibleLinkSelectionMode = newMode;
 
-        if(isLinkVisibilitySelectionMode){
+        if(isVisibleLinkSelectionMode){
             auto bsm = BodySelectionManager::instance();
             connectionToSigLinkSelectionChanged.reset(
                 bsm->sigLinkSelectionChanged(bodyItem).connect(
