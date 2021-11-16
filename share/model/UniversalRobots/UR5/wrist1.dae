@@ -276,7 +276,7 @@
         <instance_light url="#Lamp-light"/>
       </node>
       <node id="Actor0" name="Actor0" type="NODE">
-        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 0.9999999 0 0 0 0 1</matrix>
+        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
         <instance_geometry url="#ActorShape0_0-Mesh_025-mesh" name="Actor0">
           <bind_material>
             <technique_common>
@@ -287,7 +287,7 @@
         </instance_geometry>
       </node>
       <node id="Actor1" name="Actor1" type="NODE">
-        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 0.9999999 0 0 0 0 1</matrix>
+        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
         <instance_geometry url="#ActorShape1_0-Mesh_019-mesh" name="Actor1">
           <bind_material>
             <technique_common>
