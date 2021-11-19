@@ -41,7 +41,11 @@ void AbstractSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     auto seq = abstractSeq();
 
-    putProperty(_("Frame rate"), seq->getFrameRate());
+    putProperty(_("Frame rate"), seq->getFrameRate(),
+                [&](double value){
+                    abstractSeq()->setFrameRate(value);
+                    return true;
+                });
 
     putProperty(_("Offset time"), seq->getOffsetTime(),
                 [&](double value){
