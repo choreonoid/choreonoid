@@ -11,6 +11,10 @@ template<class T, class... Args>
 T& emplace(optional<T>& opt, Args&&... args){
     return opt.emplace(args...);
 }
+template<class T>
+T& emplace(optional<T>& opt){
+    return opt.emplace();
+}
 
 }
 
@@ -30,6 +34,11 @@ const boost::none_t& nullopt = boost::detail::optional_detail::none_instance<boo
 template<class T, class... Args>
 T& emplace(optional<T>& opt, Args&&... args){
     opt = boost::in_place(args...);
+    return *opt;
+}
+template<class T>
+T& emplace(optional<T>& opt){
+    opt = boost::in_place();
     return *opt;
 }
 
