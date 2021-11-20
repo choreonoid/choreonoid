@@ -234,7 +234,22 @@ QVariant PropertyItem::data(int role) const
 {
     if(role == Qt::DisplayRole || role == Qt::EditRole){
         switch(stdx::get_variant_index(value)){
-        case TYPE_BOOL:      return stdx::get<bool>(value);
+
+        case TYPE_BOOL:
+            {
+                /**
+                   QTableWidget originally supports the boolean value, but the string and
+                   QStringList types are used to show the boolean value in this implementation
+                   so that the translation texts of "True" and "Fasle" can be fully controlled.
+                */
+                auto boolValue = get<bool>(value);
+                if(role == Qt::DisplayRole){
+                    return boolValue ? _("True") : _("False");
+                } else if(role == Qt::EditRole){
+                    return QStringList({ (boolValue ? "0" : "1"), _("True"),  _("False") });
+                }
+            }
+            
         case TYPE_INT:       return stdx::get<Int>(value).value;
         case TYPE_DOUBLE:    return stdx::get<Double>(value).value;
         case TYPE_STRING:    return stdx::get<string>(value).c_str();
@@ -314,7 +329,13 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
         {
             const QStringList& slist = qvalue.toStringList();
             if(!slist.empty()){
-                accepted = stdx::get<std::function<bool(int)>>(func)(slist[0].toInt());
+                int valueType = stdx::get_variant_index(func);
+                if(valueType == TYPE_BOOL){
+                    bool value = (slist[0].toInt() == 0) ? true : false;
+                    accepted = stdx::get<std::function<bool(bool)>>(func)(value);
+                } else if(valueType == TYPE_SELECTION){
+                    accepted = stdx::get<std::function<bool(int)>>(func)(slist[0].toInt());
+                }
             }
         }
         break;
