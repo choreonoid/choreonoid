@@ -664,7 +664,7 @@ void PositionWidget::Impl::storeState(Archive& archive)
 {
     archive.write("show_rpy", isRpyEnabled);
     archive.write("unique_rpy", isUniqueRpyMode);
-    archive.write("show_quoternion", isQuaternionEnabled);
+    archive.write("show_quaternion", isQuaternionEnabled);
     archive.write("show_rotation_matrix", isRotationMatrixEnabled);
 }
 
@@ -680,6 +680,6 @@ void PositionWidget::Impl::restoreState(const Archive& archive)
     auto block = userInputConnections.scopedBlock();
     setRpyEnabled(archive.get("show_rpy", isRpyEnabled));
     archive.read("unique_rpy", isUniqueRpyMode);
-    setQuaternionEnabled(archive.get("show_quoternion", isQuaternionEnabled));
+    setQuaternionEnabled(archive.get("show_quaternion", isQuaternionEnabled));
     setRotationMatrixEnabled(archive.get("show_rotation_matrix", isRotationMatrixEnabled));
 }

@@ -136,7 +136,7 @@ public:
         return static_cast<int>(offsetTime_ * frameRate_);
     }
 
-    void setOffsetTimeFrame(int offset) {
+    virtual void setOffsetTimeFrame(int offset) override {
         offsetTime_ = (frameRate_ > 0) ? (offset / frameRate_) : 0.0;
     }
     
