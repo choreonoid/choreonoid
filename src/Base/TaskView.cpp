@@ -208,7 +208,7 @@ static void onAboutToQuit()
 
 void TaskView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<TaskView>("TaskView", N_("Task"));
+    ext->viewManager().registerClass<TaskView>(N_("TaskView"), N_("Task"));
 
     App::sigAboutToQuit().connect([](){ onAboutToQuit(); });
 }

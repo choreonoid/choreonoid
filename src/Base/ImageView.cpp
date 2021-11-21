@@ -114,7 +114,7 @@ void ImageView::Impl::updateImage()
 void ImageView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<ImageView>(
-        "ImageView", N_("Image"), ViewManager::Multiple);
+        N_("ImageView"), N_("Image"), ViewManager::Multiple);
 }
 
 

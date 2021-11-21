@@ -14,7 +14,7 @@ using namespace cnoid;
 void MultiSE3SeqGraphView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<MultiSE3SeqGraphView>(
-        "MultiSE3SeqGraphView", N_("Multi SE3 Seq"));
+        N_("MultiSE3SeqGraphView"), N_("Multi SE3 Seq"));
 }
 
 

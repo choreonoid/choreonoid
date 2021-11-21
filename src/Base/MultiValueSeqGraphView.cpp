@@ -13,7 +13,7 @@ using namespace cnoid;
 void MultiValueSeqGraphView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<MultiValueSeqGraphView>(
-        "MultiValueSeqGraphView", N_("Multi Value Seq"));
+        N_("MultiValueSeqGraphView"), N_("Multi Value Seq"));
 }
 
 

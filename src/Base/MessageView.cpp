@@ -226,7 +226,7 @@ void MessageView::postMessageBeforeInitialization(const std::string& message, in
 void MessageView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<MessageView>(
-        "MessageView", N_("Message"), ViewManager::Default);
+        N_("MessageView"), N_("Message"), ViewManager::Default);
 
     if(!initialPendingMessages.empty()){
         for(auto& m : initialPendingMessages){

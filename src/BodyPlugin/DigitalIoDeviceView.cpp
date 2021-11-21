@@ -294,7 +294,7 @@ void CustomizedItemDelegate::setModelData
 void DigitalIoDeviceView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<DigitalIoDeviceView>(
-        "DigitalIoDeviceView", N_("I/O device"));
+        N_("DigitalIoDeviceView"), N_("I/O device"));
 }
 
 

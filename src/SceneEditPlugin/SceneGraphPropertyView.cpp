@@ -254,7 +254,7 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
 void SceneGraphPropertyView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<SceneGraphPropertyView>(
-        "SceneGraphPropertyView", N_("Scene Graph Property"));
+        N_("SceneGraphPropertyView"), N_("Scene Graph Property"));
 }
 
 

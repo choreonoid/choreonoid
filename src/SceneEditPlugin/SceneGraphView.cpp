@@ -128,7 +128,7 @@ SgvMarkerItem::~SgvMarkerItem()
 void SceneGraphView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<SceneGraphView>(
-        "SceneGraphView", N_("Scene Graph"));
+        N_("SceneGraphView"), N_("Scene Graph"));
 }
 
 

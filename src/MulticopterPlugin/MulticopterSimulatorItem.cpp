@@ -16,7 +16,7 @@ using namespace Multicopter;
 void MulticopterSimulatorItem::initializeClass(ExtensionManager* ext)
 {
     ItemManager& im = ext->itemManager();
-    im.registerClass<MulticopterSimulatorItem, SubSimulatorItem>("MulticopterSimulatorItem");
+    im.registerClass<MulticopterSimulatorItem, SubSimulatorItem>(N_("MulticopterSimulatorItem"));
     im.addCreationPanel<MulticopterSimulatorItem>();
 }
 

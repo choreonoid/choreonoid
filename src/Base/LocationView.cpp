@@ -132,7 +132,7 @@ public:
 void LocationView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<LocationView>(
-        "LocationView", N_("Location"), ViewManager::Default);
+        N_("LocationView"), N_("Location"), ViewManager::Default);
 }
 
 

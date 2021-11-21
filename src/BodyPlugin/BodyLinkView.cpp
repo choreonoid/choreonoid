@@ -138,7 +138,7 @@ const int M4 = 16;
 
 void BodyLinkView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<BodyLinkView>("BodyLinkView", N_("Body / Link"));
+    ext->viewManager().registerClass<BodyLinkView>(N_("BodyLinkView"), N_("Body / Link"));
 }
 
 

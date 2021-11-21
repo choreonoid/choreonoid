@@ -34,7 +34,7 @@ public:
 void UnifiedEditHistoryView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<UnifiedEditHistoryView>(
-        "UnifiedEditHistoryView", N_("Edit History"));
+        N_("UnifiedEditHistoryView"), N_("Edit History"));
 }
 
 

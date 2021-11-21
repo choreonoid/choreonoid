@@ -24,7 +24,7 @@ public:
 void ItemPropertyView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<ItemPropertyView>(
-        "ItemPropertyView", N_("Property"), ViewManager::Default);
+        N_("ItemPropertyView"), N_("Property"), ViewManager::Default);
 }
 
 

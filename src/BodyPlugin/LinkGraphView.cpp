@@ -18,7 +18,7 @@ using namespace cnoid;
 void LinkGraphView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<LinkGraphView>(
-        "LinkGraphView", N_("Link Trajectories"));
+        N_("LinkGraphView"), N_("Link Trajectories"));
 }
 
 

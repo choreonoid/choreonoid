@@ -212,7 +212,7 @@ public:
 
 void PoseRollView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<PoseRollView>("PoseRollView", N_("Pose Roll"));
+    ext->viewManager().registerClass<PoseRollView>(N_("PoseRollView"), N_("Pose Roll"));
 }
 
 

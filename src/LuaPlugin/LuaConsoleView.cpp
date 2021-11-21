@@ -73,7 +73,7 @@ public:
 void LuaConsoleView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<LuaConsoleView>(
-        "LuaConsoleView", N_("Lua Console"), ViewManager::Default);
+        N_("LuaConsoleView"), N_("Lua Console"), ViewManager::Default);
 }
 
 

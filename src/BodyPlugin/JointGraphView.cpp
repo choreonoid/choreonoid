@@ -18,7 +18,7 @@ using namespace cnoid;
 void JointGraphView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<JointGraphView>(
-        "JointGraphView", N_("Joint Trajectories"));
+        N_("JointGraphView"), N_("Joint Trajectories"));
 }
 
 

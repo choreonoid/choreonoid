@@ -259,7 +259,7 @@ void SliderOwner::setCallback(std::function<void(double value)> callback)
 void GeneralSliderView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<GeneralSliderView>(
-        "GeneralSliderView", N_("General Sliders"));
+        N_("GeneralSliderView"), N_("General Sliders"));
 }
 
 

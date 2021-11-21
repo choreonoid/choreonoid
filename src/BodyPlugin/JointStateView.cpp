@@ -65,7 +65,7 @@ public:
 
 void JointStateView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<JointStateView>("JointStateView", N_("Joint State"));
+    ext->viewManager().registerClass<JointStateView>(N_("JointStateView"), N_("Joint State"));
 }
 
 

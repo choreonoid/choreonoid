@@ -501,7 +501,7 @@ SignalDeviceComboBox::SignalDeviceComboBox
 void IoConnectionView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<IoConnectionView>(
-        "IoConnectionView", N_("I/O Connection"));
+        N_("IoConnectionView"), N_("I/O Connection"));
 }
 
 

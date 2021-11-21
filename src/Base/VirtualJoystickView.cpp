@@ -104,7 +104,7 @@ public:
 void VirtualJoystickView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<VirtualJoystickView>(
-        "VirtualJoystickView", N_("Virtual Joystick"));
+        N_("VirtualJoystickView"), N_("Virtual Joystick"));
 }
 
 

@@ -75,7 +75,7 @@ public:
 
 void BodyStateView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<BodyStateView>("BodyStateView", N_("Body State"));
+    ext->viewManager().registerClass<BodyStateView>(N_("BodyStateView"), N_("Body State"));
 }
 
 

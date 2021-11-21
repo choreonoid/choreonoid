@@ -521,7 +521,7 @@ QSize CheckItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QMod
 void CoordinateFrameListView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<CoordinateFrameListView>(
-        "CoordinateFrameListView", N_("Coordinate Frames"));
+        N_("CoordinateFrameListView"), N_("Coordinate Frames"));
 }
 
 

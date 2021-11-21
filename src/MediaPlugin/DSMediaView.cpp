@@ -115,7 +115,7 @@ bool DSMediaView::initialize(ExtensionManager* ext)
         }
 
         ext->viewManager().registerClass<DSMediaView>(
-            "MediaView", N_("Media"), ViewManager::SINGLE_OPTIONAL);
+            N_("MediaView"), N_("Media"), ViewManager::SINGLE_OPTIONAL);
 
         if(auto optionsMenu = MainMenu::instance()->get_Options_Menu()){
             MenuManager& mm = ext->menuManager();

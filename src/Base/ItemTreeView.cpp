@@ -37,7 +37,7 @@ public:
 void ItemTreeView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<ItemTreeView>(
-        "ItemTreeView", N_("Items"), ViewManager::Default);
+        N_("ItemTreeView"), N_("Items"), ViewManager::Default);
 }
 
 

@@ -37,7 +37,7 @@ public:
 void NameServerView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<NameServerView>(
-        "NameServerView", N_("Nameserver"), ViewManager::SINGLE_OPTIONAL);
+        N_("NameServerView"), N_("Nameserver"), ViewManager::SINGLE_OPTIONAL);
 }
 
 

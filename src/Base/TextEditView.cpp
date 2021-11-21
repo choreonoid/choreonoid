@@ -71,7 +71,7 @@ public:
 
 void TextEditView::initializeClass(ExtensionManager* ext)
 {
-    ext->viewManager().registerClass<TextEditView>("TextEditView", N_("Text"));
+    ext->viewManager().registerClass<TextEditView>(N_("TextEditView"), N_("Text"));
 }
 
 

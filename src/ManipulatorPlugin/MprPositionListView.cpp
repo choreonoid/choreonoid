@@ -520,7 +520,7 @@ QSize CheckItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QMod
 void MprPositionListView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<MprPositionListView>(
-        "MprPositionListView", N_("Waypoints"));
+        N_("MprPositionListView"), N_("Waypoints"));
 }
 
 

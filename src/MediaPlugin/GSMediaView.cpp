@@ -128,7 +128,7 @@ bool GSMediaView::initializeClass(ExtensionManager* ext)
             return false;
         }
 
-        ext->viewManager().registerClass<GSMediaView>("MediaView", N_("Media"));
+        ext->viewManager().registerClass<GSMediaView>(N_("MediaView"), N_("Media"));
 
         if(auto optionsMenu = MainMenu::instance()->get_Options_Menu()){
             MenuManager& mm = ext->menuManager();

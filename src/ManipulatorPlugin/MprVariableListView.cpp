@@ -591,7 +591,7 @@ void CustomizedItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* m
 void MprVariableListView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<MprVariableListView>(
-        "MprVariableListView", N_("Variables"));
+        N_("MprVariableListView"), N_("Variables"));
 }
 
 
