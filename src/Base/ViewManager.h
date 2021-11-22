@@ -23,11 +23,38 @@ class CNOID_EXPORT ViewManager
 public:
     static void initializeClass(ExtensionManager* ext);
 
-
     //! \note This function can only be called before calling the App::initialize function.
     static void setPluginWhitelist(const std::vector<const char*>& pluginNames);
+
+    enum InstantiationFlags {
+        Single = 0,
+        Multiple = 1,
+        Default = 2,
+        SingleDefault = Single | Default,
+        MultiDefault = Multiple | Default,
+        // deprecated
+        SINGLE_OPTIONAL = Single,
+        SINGLE_DEFAULT = Single | Default,
+        MULTI_OPTIONAL = Multiple,
+        MULTI_DEFAULT = Multiple | Default
+    };
+
+    struct WhiteListElement {
+        const char* viewClassName;
+        int instantiationFlags;
+        bool hasCustomInstantiationFlags;
+
+        WhiteListElement(const char* viewClassName)
+            : viewClassName(viewClassName),
+              hasCustomInstantiationFlags(false) { }
+        WhiteListElement(const char* viewClassName, int instantiationFlags)
+            : viewClassName(viewClassName),
+              instantiationFlags(instantiationFlags),
+              hasCustomInstantiationFlags(true) { }
+    };
+
     //! \note This function can only be called before calling the App::initialize function.
-    static void setViewWhitelist(const std::vector<const char*>& viewNames);
+    static void setViewWhitelist(const std::vector<WhiteListElement>& elements);
 
     ViewManager(ExtensionManager* ext);
     ViewManager(const ViewManager&) = delete;
@@ -42,16 +69,6 @@ public:
     template <class ViewType> class Factory : public FactoryBase {
     public:
         virtual View* create() { return new ViewType(); }
-    };
-
-    enum InstantiationFlags {
-        Single = 0,
-        Multiple = 1,
-        Default = 2,
-        SINGLE_OPTIONAL = Single,
-        SINGLE_DEFAULT = Single | Default,
-        MULTI_OPTIONAL = Multiple,
-        MULTI_DEFAULT = Multiple | Default
     };
 
     template <class ViewType>

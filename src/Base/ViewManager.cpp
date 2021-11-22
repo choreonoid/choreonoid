@@ -33,7 +33,9 @@ MainWindow* mainWindow = nullptr;
 enum ViewMenuId { ShowView, CreateView, DeleteView };
 
 unordered_set<string> pluginWhitelist;
-unordered_set<string> viewWhitelist;
+
+typedef unordered_map<string, ViewManager::WhiteListElement> ViewWhiteListMap;
+ViewWhiteListMap viewWhiteListMap;
 
 Signal<void(View* view)> sigViewCreated_;
 Signal<void(View* view)> sigViewActivated_;
@@ -391,20 +393,10 @@ void onViewMenuAboutToShow(Menu* menu, ViewMenuId viewMenuId)
     menu->clear();
     bool needSeparator = false;
         
-    if(viewMenuId == DeleteView){
-        auto action = new Action(menu);
-        action->setText(_("Delete All Invisible Views"));
-        action->sigTriggered().connect([](){ deleteAllInvisibleViews(); });
-        menu->addAction(action);
-        needSeparator = true;
-    }
-        
     for(auto p = moduleNameToClassNameToViewInfoMap.begin(); p != moduleNameToClassNameToViewInfoMap.end(); ++p){
 
         if(needSeparator){
-            auto separator = new QAction(menu);
-            separator->setSeparator(true);
-            menu->addAction(separator);
+            menu->addSeparator();
             needSeparator = false;
         }
             
@@ -462,6 +454,16 @@ void onViewMenuAboutToShow(Menu* menu, ViewMenuId viewMenuId)
             needSeparator = true;
         }
     }
+
+    if(viewMenuId == DeleteView){
+        if(needSeparator){
+            menu->addSeparator();
+        }
+        auto action = new Action(menu);
+        action->setText(_("Delete All Invisible Views"));
+        action->sigTriggered().connect([](){ deleteAllInvisibleViews(); });
+        menu->addAction(action);
+    }
 }
 
 }
@@ -497,11 +499,11 @@ void ViewManager::setPluginWhitelist(const std::vector<const char*>& pluginNames
 }
 
 
-void ViewManager::setViewWhitelist(const std::vector<const char*>& viewNames)
+void ViewManager::setViewWhitelist(const std::vector<WhiteListElement>& elements)
 {
-    for(auto& name : viewNames){
-        viewWhitelist.insert(name);
-    }
+    for(auto& element : elements){
+        viewWhiteListMap.insert(ViewWhiteListMap::value_type(element.viewClassName, element));
+    };
 }
 
 
@@ -519,7 +521,7 @@ ViewManager::Impl::Impl(ExtensionManager* ext)
     moduleNameToClassNameToViewInfoMap[moduleName] = classNameToViewInfoMap;
 
     doCheckViewWhitelist = false;
-    if(!pluginWhitelist.empty() || !viewWhitelist.empty()){
+    if(!pluginWhitelist.empty() || !viewWhiteListMap.empty()){
         if(pluginWhitelist.find(moduleName) == pluginWhitelist.end()){
             doCheckViewWhitelist = true;
         }
@@ -557,8 +559,13 @@ void ViewManager::registerClass_
  FactoryBase* factory)
 {
     bool isEnabled = true;
+    WhiteListElement* whiteListElement = nullptr;
+    
     if(impl->doCheckViewWhitelist){
-        if(viewWhitelist.find(className) == viewWhitelist.end()){
+        auto iter = viewWhiteListMap.find(className);
+        if(iter != viewWhiteListMap.end()){
+            whiteListElement = &iter->second;
+        } else {
             isEnabled = false;
         }
     }
@@ -567,6 +574,10 @@ void ViewManager::registerClass_
         if(!(instantiationFlags & Default)){
             return;
         }
+    }
+
+    if(whiteListElement && whiteListElement->hasCustomInstantiationFlags){
+        instantiationFlags = whiteListElement->instantiationFlags;
     }
     
     ViewInfoPtr info = std::make_shared<ViewInfo>(
