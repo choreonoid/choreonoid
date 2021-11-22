@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-25 12:41+0900\n"
+"POT-Creation-Date: 2021-11-22 23:02+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -112,6 +112,9 @@ msgstr ""
 
 msgid "Position"
 msgstr "ポジション"
+
+msgid "MprPositionListView"
+msgstr "Mprポジションビュー"
 
 msgid "Waypoints"
 msgstr "教示点"
@@ -252,6 +255,9 @@ msgstr "マイナスの値はIDとして使用できません．"
 
 msgid "ID {0} is already in use."
 msgstr "ID{0}は既に使用されています．"
+
+msgid "MprVariableListView"
+msgstr "Mpr変数リストビュー"
 
 msgid "Variables"
 msgstr "変数"

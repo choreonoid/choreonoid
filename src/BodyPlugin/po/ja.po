@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-16 12:32+0900\n"
+"POT-Creation-Date: 2021-11-22 22:59+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -247,6 +247,9 @@ msgstr "OBJファイル"
 msgid "Body / Link"
 msgstr "ボディ／リンク"
 
+msgid "BodyLinkView"
+msgstr "ボディ／リンクビュー"
+
 msgid "Index:"
 msgstr "インデックス"
 
@@ -387,6 +390,9 @@ msgstr ""
 msgid "Body State"
 msgstr "ボディ状態"
 
+msgid "BodyStateView"
+msgstr "ボディ状態ビュー"
+
 msgid "OFF"
 msgstr "オフ"
 
@@ -487,7 +493,7 @@ msgid "The function to read CollisionSeq is not implemented."
 msgstr "CollisionSeqを読み込む機能は実装されていません．"
 
 msgid "CollisionSeqItem"
-msgstr "干渉列アイテム"
+msgstr "干渉時系列アイテム"
 
 msgid "Collision Data"
 msgstr "干渉データ"
@@ -524,6 +530,9 @@ msgstr "オフ"
 
 msgid "On"
 msgstr "オン"
+
+msgid "DigitalIoDeviceView"
+msgstr "デジタルI/Oデバイスビュー"
 
 msgid "I/O device"
 msgstr "I/Oデバイス"
@@ -698,6 +707,9 @@ msgstr "注釈"
 msgid "I/O Connection"
 msgstr "I/O接続"
 
+msgid "IoConnectionView"
+msgstr "I/O接続アイテム"
+
 msgid "Add"
 msgstr "追加"
 
@@ -709,6 +721,9 @@ msgstr "削除"
 
 msgid "Joint Displacement"
 msgstr "関節変位"
+
+msgid "JointDisplacementView"
+msgstr "関節変位ビュー"
 
 msgid "Selected joints only"
 msgstr "選択関節のみ"
@@ -737,8 +752,14 @@ msgstr "位相"
 msgid "Joint Trajectories"
 msgstr "関節軌道"
 
+msgid "JointGraphView"
+msgstr "関節グラフビュー"
+
 msgid "Joint State"
 msgstr "関節状態"
+
+msgid "JointStateView"
+msgstr "関節状態ビュー"
 
 msgid "Displacement"
 msgstr "変位"
@@ -808,6 +829,7 @@ msgstr ""
 msgid "{0:7.3f} [s]: Position limit over of {1} ({2} is beyond the range ({3} , {4}).)"
 msgstr "{0:7.3f} [秒]: {1}の関節位置制約オーバー ({2} は範囲({3} , {4})を超えています．"
 
+#, fuzzy, c-format
 msgid "{0:7.3f} [s]: Velocity limit over of {1} ({2} is {3:.0f}% of the range ({4} , {5}).)"
 msgstr "{0:7.3f} [秒]: {1}の速度リミットオーバー ({2}は範囲({4} , {5})の{3:.0f}%を超えています．"
 
@@ -893,6 +915,9 @@ msgstr "両足中心間距離"
 msgid "The center of mass of {} cannt be moved to the target position\n"
 msgstr "{}の重心を指定の位置まで移動できません\n"
 
+msgid "LinkDeviceListView"
+msgstr "リンク／デバイスリストビュー"
+
 msgid "Links / Devices"
 msgstr "リンク／デバイス"
 
@@ -944,11 +969,17 @@ msgstr "デバイス"
 msgid "Link Trajectories"
 msgstr "リンク軌道"
 
+msgid "LinkGraphView"
+msgstr "リンクグラフビュー"
+
 msgid "LinkOffsetFrameListItem"
 msgstr "リンクオフセットフレームリストアイテム"
 
 msgid "Link Position"
 msgstr "リンクポジション"
+
+msgid "LinkPositionView"
+msgstr "リンクポジションビュー"
 
 msgid "Target link type"
 msgstr "対象リンクタイプ"
@@ -1025,6 +1056,9 @@ msgstr "解有り"
 msgid "Link Properties"
 msgstr "リンクプロパティ"
 
+msgid "LinkPropertyView"
+msgstr "リンクプロパティビュー"
+
 msgid "Name"
 msgstr "名前"
 
@@ -1089,7 +1123,7 @@ msgid "Num contact materials"
 msgstr "接触マテリアルの数"
 
 msgid "MultiDeviceStateSeqItem"
-msgstr "マルチデバイス状態列アイテム"
+msgstr "複数デバイス状態時系列アイテム"
 
 msgid "RegionIntrusionDetector"
 msgstr "領域侵入検出器"
@@ -1513,7 +1547,7 @@ msgid "Directory \"{0}\" cannot be created: {1}."
 msgstr "ディレクトリ \"{}\" を作成できません： {1}."
 
 msgid "ZMPSeqItem"
-msgstr "ZMP軌道アイテム"
+msgstr "ZMP時系列アイテム"
 
 msgid "{0} of {1} has been converted to {2}."
 msgstr "{1}の{0}は{2}に変換されました．"

@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-16 12:16+0900\n"
+"POT-Creation-Date: 2021-11-23 22:18+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -101,6 +101,9 @@ msgstr "ポジション"
 
 msgid "Coordinate Frames"
 msgstr "座標フレーム"
+
+msgid "CoordinateFrameListView"
+msgstr "座標フレームリストビュー"
 
 msgid "Add"
 msgstr "追加"
@@ -229,6 +232,9 @@ msgstr "上方軸"
 msgid "General Sliders"
 msgstr "汎用スライダ"
 
+msgid "GeneralSliderView"
+msgstr "汎用スライダビュー"
+
 msgid "GraphBar"
 msgstr "グラフバー"
 
@@ -297,6 +303,9 @@ msgstr "グラフ位置 = ({0:.5f}, {1:.5f})"
 
 msgid "Image"
 msgstr "画像"
+
+msgid "ImageView"
+msgstr "画像ビュー"
 
 msgid "ImageViewBar"
 msgstr "画像ビューバー"
@@ -456,8 +465,17 @@ msgstr "\"{1}\"に対して不明なファイル形式\"{0}\"が指定されて�
 msgid ";;Any files (*)"
 msgstr ";;全てのファイル (*)"
 
+msgid "ItemPropertyView"
+msgstr "アイテムプロパティビュー"
+
 msgid "Property"
 msgstr "プロパティ"
+
+msgid "False"
+msgstr ""
+
+msgid "True"
+msgstr ""
 
 msgid "Select File"
 msgstr "ファイルを選択"
@@ -548,6 +566,9 @@ msgstr "アイテムが選択されていません．"
 
 msgid "\"{0}\" is not a target item."
 msgstr "\"{0}\" は対象アイテムではありません．"
+
+msgid "ItemTreeView"
+msgstr "アイテムツリービュー"
 
 msgid "Items"
 msgstr "アイテム"
@@ -677,6 +698,9 @@ msgstr "マーカ表示"
 
 msgid "Location"
 msgstr "配置"
+
+msgid "LocationView"
+msgstr "配置ビュー"
 
 msgid "Lock"
 msgstr "ロック"
@@ -828,6 +852,9 @@ msgstr "Choreonoid について"
 msgid "About Plugins"
 msgstr "プラグインについて"
 
+msgid "Delete All Unmounted Views"
+msgstr "マウントされていない全てのビューを削除"
+
 msgid "MenuManager failed to set the current menu path to {0}."
 msgstr "メニューマネージャがカレントメニューパスを{0}にセットできませんでした．"
 
@@ -870,6 +897,9 @@ msgstr "エスケープシーケンスをスキップ"
 
 msgid "Message"
 msgstr "メッセージ"
+
+msgid "MessageView"
+msgstr "メッセージビュー"
 
 msgid "Error: "
 msgstr "エラー："
@@ -971,10 +1001,10 @@ msgid "Select Directory"
 msgstr "ディレクトリの選択"
 
 msgid "MultiPointSetItem"
-msgstr "マルチポイントセットアイテム"
+msgstr "複数ポイントセットアイテム"
 
 msgid "Multi Point Sets"
-msgstr "マルチポイントセット"
+msgstr "複数ポイントセット"
 
 msgid "All"
 msgstr "全て"
@@ -1019,28 +1049,34 @@ msgid "PointSet: Exit Eraser Mode"
 msgstr "PointSet: 消去モード終了"
 
 msgid "MultiSE3MatrixSeqItem"
-msgstr ""
+msgstr "複数SE3行列時系列アイテム"
 
 msgid "Number of SE3 values in a frame"
 msgstr "フレームあたりSE3要素数"
 
 msgid "Multi SE3 Seq"
-msgstr "SE3軌道"
+msgstr "複数SE3時系列"
+
+msgid "MultiSE3SeqGraphView"
+msgstr "複数SE3時系列グラフビュー"
 
 msgid "MultiSE3SeqItem"
-msgstr ""
+msgstr "複数SE3時系列アイテム"
 
 msgid "Multi Value Seq"
-msgstr ""
+msgstr "複数値時系列"
+
+msgid "MultiValueSeqGraphView"
+msgstr "複数値時系列グラフビュー"
 
 msgid "MultiValueSeqItem"
-msgstr ""
+msgstr "複数値時系列アイテム"
 
 msgid "Number of values in a frame"
 msgstr "フレームあたり要素数"
 
 msgid "Plain Format of a Multi Value Sequence"
-msgstr "複数数値列のプレインフォーマット"
+msgstr "複数値時系列のプレインフォーマット"
 
 msgid "Input file \"{}\" was not processed."
 msgstr "入力ファイル \"{}\" は処理されませんでした．"
@@ -1367,6 +1403,9 @@ msgstr "標準シーンファイル"
 msgid "Empty scene"
 msgstr "空のシーン"
 
+msgid "SceneView"
+msgstr "シーンビュー"
+
 msgid "Use dedicated item tree view checks to select the target items"
 msgstr "対象アイテム選択用の専用のチェックをアイテムツリービューに追加"
 
@@ -1577,6 +1616,9 @@ msgstr "更新"
 msgid "Task"
 msgstr "タスク"
 
+msgid "TaskView"
+msgstr "タスクビュー"
+
 msgid "Select a task type"
 msgstr "タスクの選択"
 
@@ -1636,6 +1678,9 @@ msgstr "縦配置"
 
 msgid "Text"
 msgstr "テキスト"
+
+msgid "TextEditView"
+msgstr "テキスト編集ビュー"
 
 msgid ""
 "The document has been modified.\n"
@@ -1708,20 +1753,20 @@ msgstr "やり直すことができませんでした．編集履歴をクリア
 msgid "Edit History"
 msgstr "編集履歴"
 
+msgid "UnifiedEditHistoryView"
+msgstr "統合編集履歴ビュー"
+
 msgid "Vector3SeqItem"
-msgstr "３次元ベクタ列アイテム"
+msgstr "３次元ベクタ時系列アイテム"
 
 msgid "Separate the view"
 msgstr "ビューの分離"
 
-msgid "Create %1"
-msgstr "%1の生成"
-
 msgid "Please specify the name of the new view."
 msgstr "作成するビューの名前を指定してください．"
 
-msgid "Delete All Invisible Views"
-msgstr "全ての非表示ビューを消去"
+msgid "Create %1"
+msgstr "%1の生成"
 
 msgid "{0} is not registered in {1}."
 msgstr "{0} は {1} に登録されていません．"
@@ -1738,18 +1783,5 @@ msgstr "\"{1}\"のための\"{0}\"プラグインが見つかりません．ビ�
 msgid "Virtual Joystick"
 msgstr "仮想ジョイスティック"
 
-#~ msgid "Capture Bar"
-#~ msgstr "キャプチャバー"
-
-#~ msgid "Startup Plugin Loading"
-#~ msgstr "起動時のプラグイン読み込み"
-
-#~ msgid "Check the naming convention of plugin files"
-#~ msgstr "プラグインファイルの命名規則をチェックする"
-
-#~ msgid "Perspective"
-#~ msgstr "レイアウト"
-
-#~ msgid ""
-#~ "Project items exist. Do you want to save them as a project file before loading a new project?"
-#~ msgstr "プロジェクトアイテムが存在します．新しいプロジェクトを読み込む前に保存しますか？"
+msgid "VirtualJoystickView"
+msgstr "仮想ジョイスティックビュー"
