@@ -177,6 +177,7 @@ public:
     void dragViewOutside(const QPoint& pos);
     void dropViewOutside(const QPoint& pos);
     void separateView(View* view);
+    void separateView(View* view, const QPoint& pos, const QSize& size);
     void clearAllPanes();
     void clearAllPanesSub(QSplitter* splitter);
     void getAllViews(vector<View*>& out_views);
@@ -1741,11 +1742,7 @@ void ViewArea::Impl::dragViewOutside(const QPoint& pos)
 
 void ViewArea::Impl::dropViewOutside(const QPoint& pos)
 {
-    ViewArea* viewWindow = new ViewArea;
-    viewWindow->setSingleView(draggedView);
-    viewWindow->move(pos);
-    viewWindow->resize(draggedViewWindowSize);
-    viewWindow->show();
+    separateView(draggedView, pos, draggedViewWindowSize);
 }
 
 
@@ -1753,12 +1750,25 @@ void ViewArea::Impl::separateView(View* view)
 {
     QPoint pos = view->mapToGlobal(QPoint(0, 0));
     removeView(view);
+    separateView(view, pos, view->size());
+}
+
+
+void ViewArea::Impl::separateView(View* view, const QPoint& pos, const QSize& size)
+{
     ViewArea* viewWindow = new ViewArea;
     viewWindow->setSingleView(view);
-    viewWindow->setGeometry(pos.x(), pos.y(), view->width(), view->height());
-    viewWindow->show();
-}    
+
+    // Make separated views always in front of the main window.
+    // This only works on Windows.
+#ifdef Q_OS_WIN32
+    viewWindow->setParent(MainWindow::instance());
+    viewWindow->setWindowFlags(Qt::Window);
+#endif
     
+    viewWindow->setGeometry(pos.x(), pos.y(), size.width(), size.height());
+    viewWindow->show();
+}
 
 
 void ViewArea::Impl::removePaneIfEmpty(ViewPane* pane)
