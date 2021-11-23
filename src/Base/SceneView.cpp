@@ -81,7 +81,7 @@ void SceneView::initializeClass(ExtensionManager* ext)
         SceneWidget::initializeClass(ext);
         
         ext->viewManager().registerClass<SceneView>(
-            N_("SceneView"), N_("Scene"), ViewManager::Multiple | ViewManager::Default);
+            N_("SceneView"), N_("Scene"), ViewManager::Multiple | ViewManager::Permanent);
 
         sigItemAddedConnection =
             RootItem::instance()->sigItemAdded().connect(

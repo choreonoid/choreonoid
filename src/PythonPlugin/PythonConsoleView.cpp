@@ -130,7 +130,7 @@ python::object PythonConsoleIn::readline()
 void PythonConsoleView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<PythonConsoleView>(
-        N_("PythonConsoleView"), N_("Python Console"), ViewManager::Default);
+        N_("PythonConsoleView"), N_("Python Console"), ViewManager::Permanent);
 }
 
 

@@ -73,7 +73,7 @@ public:
     string defaultInstanceName;
     string translatedDefaultInstanceName; // temporary.
     bool isSingleton;
-    bool hasDefaultInstance;
+    bool hasPermanentInstance;
     bool isEnabled;
     ViewManager::FactoryBase* factory;
 
@@ -88,11 +88,11 @@ public:
     ~ViewInfo();
 
     bool checkIfDefaultInstance(View* view){
-        return hasDefaultInstance && !instances.empty() && (instances.front()->view == view);
+        return hasPermanentInstance && !instances.empty() && (instances.front()->view == view);
     }
 
     bool checkIfPrimalInstance(View* view){
-        return (hasDefaultInstance || isSingleton) && !instances.empty() && (instances.front()->view == view);
+        return (hasPermanentInstance || isSingleton) && !instances.empty() && (instances.front()->view == view);
     }
 
     View* createView();
@@ -197,7 +197,7 @@ ViewInfo::ViewInfo
       instancesInViewManager(managerImpl->instances)
 {
     isSingleton = (instantiationFlags & ViewManager::Multiple) ? false : true;
-    hasDefaultInstance = instantiationFlags & ViewManager::Default;
+    hasPermanentInstance = instantiationFlags & ViewManager::Permanent;
     translatedClassName = dgettext(textDomain.c_str(), className.c_str());
     translatedDefaultInstanceName = dgettext(textDomain.c_str(), defaultInstanceName.c_str());
 }
@@ -432,7 +432,7 @@ void onViewMenuAboutToShow(Menu* menu, ViewMenuId viewMenuId)
                 }
             } else if(viewMenuId == CreateView){
                 if(!viewInfo->isSingleton || 
-                   (!viewInfo->hasDefaultInstance && viewInfo->instances.empty())){
+                   (!viewInfo->hasPermanentInstance && viewInfo->instances.empty())){
                     auto action = new Action(menu);
                     action->setText(viewInfo->translatedDefaultInstanceName.c_str());
                     action->sigTriggered().connect([=](){ onCreateViewTriggered(viewInfo); });
@@ -440,7 +440,7 @@ void onViewMenuAboutToShow(Menu* menu, ViewMenuId viewMenuId)
                 }
             } else if(viewMenuId == DeleteView){
                 auto p = instances.begin();
-                if(viewInfo->hasDefaultInstance && p != instances.end()){
+                if(viewInfo->hasPermanentInstance && p != instances.end()){
                     ++p;
                 }
                 while(p != instances.end()){
@@ -571,7 +571,7 @@ void ViewManager::registerClass_
     }
 
     if(!isEnabled){
-        if(!(instantiationFlags & Default)){
+        if(!(instantiationFlags & Permanent)){
             return;
         }
     }
@@ -586,7 +586,7 @@ void ViewManager::registerClass_
     (*impl->classNameToViewInfoMap)[className] = info;
     typeToViewInfoMap[&view_type_info] = info;
 
-    if((instantiationFlags & Default) && isEnabled){
+    if((instantiationFlags & Permanent) && isEnabled){
         auto view = info->getOrCreateView();
         mainWindow->viewArea()->addView(view);
     }
@@ -868,7 +868,7 @@ static View* restoreView
                 InstanceInfoList& instances = info->instances;
                 remainingViews->reserve(instances.size());
                 auto q = instances.begin();
-                if(info->hasDefaultInstance && q != instances.end()){
+                if(info->hasPermanentInstance && q != instances.end()){
                     ++q;
                 }
                 while(q != instances.end()){

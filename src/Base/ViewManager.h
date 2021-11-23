@@ -29,14 +29,12 @@ public:
     enum InstantiationFlags {
         Single = 0,
         Multiple = 1,
-        Default = 2,
-        SingleDefault = Single | Default,
-        MultiDefault = Multiple | Default,
+        Permanent= 2,
         // deprecated
         SINGLE_OPTIONAL = Single,
-        SINGLE_DEFAULT = Single | Default,
+        SINGLE_DEFAULT = Single | Permanent,
         MULTI_OPTIONAL = Multiple,
-        MULTI_DEFAULT = Multiple | Default
+        MULTI_DEFAULT = Multiple | Permanent
     };
 
     struct WhiteListElement {
