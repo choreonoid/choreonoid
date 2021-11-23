@@ -21,6 +21,10 @@ public:
     Action(const QIcon& icon, QObject* parent);
     Action(const QIcon& icon, const QString& text, QObject* parent);
     ~Action();
+
+    void setText(const QString& text){ QAction::setText(text); }
+    void setText(const std::string& text){ QAction::setText(text.c_str()); }
+    void setText(const char* text){ QAction::setText(text); }
                                
     SignalProxy<void()> sigTriggered();
     SignalProxy<void(bool)> sigToggled();
