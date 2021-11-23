@@ -78,17 +78,32 @@ public:
     }
 
     ViewManager& registerClassAlias(const std::string& alias, const std::string& orgClassName);
-    
+
+    class ViewClass : public Referenced
+    {
+    public:
+        virtual const std::string& moduleName() const = 0;
+        virtual const std::string& name() const = 0;
+        virtual const std::string& translatedName() const = 0;
+        virtual const std::string& defaultInstanceName() const = 0;
+        virtual const std::string& translatedDefaultInstanceName() const = 0;
+        virtual bool isSingleton() const = 0;
+        virtual bool hasPermanentInstance() const = 0;
+        virtual std::vector<View*> instances() const = 0;
+        virtual View* getOrCreateView() = 0;
+        virtual View* getOrCreateView(const std::string& name) = 0;
+        virtual View* createViewWithDialog() = 0;
+
+    protected:
+        ViewClass() = default;
+        ViewClass(const ViewClass& org) = delete;
+    };
+
+    static std::vector<ViewClass*> viewClasses();
+
     // get or create the primal instance of the specified view type
     static View* getOrCreateView(const std::string& moduleName, const std::string& className);
 
-    // get or create the instance of the specified view type and instance name
-    static View* getOrCreateView(
-        const std::string& moduleName, const std::string& className, const std::string& instanceName);
-
-    static std::vector<View*> allViews();
-    static std::vector<View*> activeViews();
-        
     template <class ViewType> static ViewType* getOrCreateView(bool doMountCreatedView = false) {
         return static_cast<ViewType*>(getOrCreateSpecificTypeView(typeid(ViewType), std::string(), doMountCreatedView));
     }
@@ -97,6 +112,10 @@ public:
         return static_cast<ViewType*>(getOrCreateSpecificTypeView(typeid(ViewType), instanceName, doMountCreatedView));
     }
 
+    // The following functions will be deprecated. Use the viewClasses function to get view instances.
+    static std::vector<View*> allViews();
+    static std::vector<View*> activeViews();
+    
     template <class ViewType> static ViewType* findView() {
         return static_cast<ViewType*>(findSpecificTypeView(typeid(ViewType), std::string()));
     }
@@ -105,7 +124,8 @@ public:
         return static_cast<ViewType*>(findSpecificTypeView(typeid(ViewType), instanceName));
     }
 
-    void deleteView(View* view);
+    static void deleteView(View* view);
+    static void deleteUnmountedViews();
 
     static bool isPrimalInstance(View* view);
 

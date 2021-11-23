@@ -45,11 +45,6 @@ public:
     Menu* get_Options_Menu() { return menu_Options; }
     Action* add_Help_AboutPlugins_Item(const std::string& caption, std::function<void()> handler);
 
-    // For ViewManager
-    SignalProxy<void(Menu* menu)> sig_View_Show_MenuAboutToShow() { return sig_View_Show_MenuAboutToShow_; }
-    SignalProxy<void(Menu* menu)> sig_View_Create_MenuAboutToShow() { return sig_View_Create_MenuAboutToShow_; }
-    SignalProxy<void(Menu* menu)> sig_View_Delete_MenuAboutToShow() { return sig_View_Delete_MenuAboutToShow_; }
-
 protected:
     MainMenu();
 
@@ -57,45 +52,40 @@ protected:
     void set_File_New_Menu(Menu* menu){ menu_File_New = menu; }
     void set_File_Load_Menu(Menu* menu){ menu_File_Load = menu; }
     void set_File_Import_Menu(Menu* menu){ menu_File_Import = menu; }
-    void set_View_Show_Menu(Menu* menu){
-        menu->sigAboutToShow().connect([=](){ sig_View_Show_MenuAboutToShow_(menu); });
-    }
-    void set_View_Create_Menu(Menu* menu){
-        menu->sigAboutToShow().connect([=](){ sig_View_Create_MenuAboutToShow_(menu); });
-    }
-    void set_View_Delete_Menu(Menu* menu){
-        menu->sigAboutToShow().connect([=](){ sig_View_Delete_MenuAboutToShow_(menu); });
-    }
     void set_Tools_Menu(Menu* menu){ menu_Tools = menu; }
     void set_Filters_Menu(Menu* menu){ menu_Filters = menu; }
     void set_Options_Menu(Menu* menu){ menu_Options = menu; }
     void set_Help_AboutPlugins_Menu(Menu* menu) { menu_Help_AboutPlugins = menu; }
 
-    static void setActionAsReloadSelectedItems(Action* action);
-    static void setActionAsSaveSelectedItems(Action* action);
-    static void setActionAsSaveSelectedItemsAs(Action* action);    
-    static void setActionAsExportSelectedItems(Action* action);
-    static void setActionAsOpenProject(Action* action);
-    static void setActionAsSaveProject(Action* action);
-    static void setActionAsSaveProjectAs(Action* action);
-    static void setActionAsProjectLayoutToggle(Action* action);
-    static void setActionAsShowPathVariableEditor(Action* action);
-    static void setActionAsExitApplication(Action* action);
-    static void setActionAsUndo(Action* action);
-    static void setActionAsRedo(Action* action);
-    static void setMenuAsToolBarVisibilityMenu(Menu* menu);
-    static void setActionAsViewTabToggle(Action* action);
-    static void setActionAsStatusBarToggle(Action* action);
-    static void setActionAsFullScreenToggle(Action* action);
-    static void setActionAsResetMainWindowLayout(Action* action);
-    static void setActionAsPutSceneStatistics(Action* action);
-    static void setActionAsShowMovieRecorderDialog(Action* action);
-    static void setActionAsShowDialogAboutChoreonoid(Action* action);
+    void setActionAsReloadSelectedItems(Action* action);
+    void setActionAsSaveSelectedItems(Action* action);
+    void setActionAsSaveSelectedItemsAs(Action* action);    
+    void setActionAsExportSelectedItems(Action* action);
+    void setActionAsOpenProject(Action* action);
+    void setActionAsSaveProject(Action* action);
+    void setActionAsSaveProjectAs(Action* action);
+    void setActionAsProjectLayoutToggle(Action* action);
+    void setActionAsShowPathVariableEditor(Action* action);
+    void setActionAsExitApplication(Action* action);
+    void setActionAsUndo(Action* action);
+    void setActionAsRedo(Action* action);
+    void setMenuAsToolBarVisibilityMenu(Menu* menu);
+    void setMenuAsViewVisibilityMenu(Menu* menu);
+    void setMenuAsViewCreationMenu(Menu* menu);
+    void setMenuAsViewDeletionMenu(Menu* menu, bool isItemToDeleteAllHiddenViewsEnabled);
+    void setActionAsViewTabToggle(Action* action);
+    void setActionAsStatusBarToggle(Action* action);
+    void setActionAsFullScreenToggle(Action* action);
+    void setActionAsResetMainWindowLayout(Action* action);
+    void setActionAsPutSceneStatistics(Action* action);
+    void setActionAsShowMovieRecorderDialog(Action* action);
+    void setActionAsShowDialogAboutChoreonoid(Action* action);
 
 private:
     static void setCustomClassFactory(std::function<MainMenu*()> factory);
     Action* addMenuItem(
         Menu* menu, const std::string& caption, std::function<void()> handler, bool doInsertSeparator);
+    void onViewOperationMenuAboutToShow(Menu* menu, int viewMenuType);
     static void showDialogAboutChoreonoid();
 
     Menu* menu_File;
@@ -106,10 +96,7 @@ private:
     Menu* menu_Filters;
     Menu* menu_Options;
     Menu* menu_Help_AboutPlugins;
-
-    Signal<void(Menu* menu)> sig_View_Show_MenuAboutToShow_;
-    Signal<void(Menu* menu)> sig_View_Create_MenuAboutToShow_;
-    Signal<void(Menu* menu)> sig_View_Delete_MenuAboutToShow_;
+    bool isItemToDeleteAllHiddenViewsEnabled;
 };
 
 }

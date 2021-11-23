@@ -5,6 +5,7 @@
 #include "ItemFileDialog.h"
 #include "ProjectManager.h"
 #include "PluginManager.h"
+#include "ViewManager.h"
 #include "RootItem.h"
 #include "RenderableItem.h"
 #include "ItemList.h"
@@ -30,6 +31,8 @@ using namespace cnoid;
 namespace {
 
 function<MainMenu*()> customClassFactory;
+
+enum ViewMenuType { ViewVisibilityMenu, ViewCreationMenu, ViewDeletionMenu };
 
 }
 
@@ -125,11 +128,11 @@ void MainMenu::setMenuItems()
     setMenuAsToolBarVisibilityMenu(mm.currentMenu());
 
     mm.goBackToUpperMenu().setPath(N_("Show View"));
-    set_View_Show_Menu(mm.currentMenu());
+    setMenuAsViewVisibilityMenu(mm.currentMenu());
     mm.goBackToUpperMenu().setPath(N_("Create View"));
-    set_View_Create_Menu(mm.currentMenu());
+    setMenuAsViewCreationMenu(mm.currentMenu());
     mm.goBackToUpperMenu().setPath(N_("Delete View"));
-    set_View_Delete_Menu(mm.currentMenu());
+    setMenuAsViewDeletionMenu(mm.currentMenu(), true);
 
     setActionAsViewTabToggle(mm.goBackToUpperMenu().addCheckItem(_("Show View Tabs")));
 
@@ -368,6 +371,119 @@ void MainMenu::setMenuAsToolBarVisibilityMenu(Menu* menu)
 {
     menu->sigAboutToShow().connect(
         [menu](){ MainWindow::instance()->toolBarArea()->setVisibilityMenuItems(menu); });
+}
+
+
+void MainMenu::setMenuAsViewVisibilityMenu(Menu* menu)
+{
+    menu->sigAboutToShow().connect([=](){ onViewOperationMenuAboutToShow(menu, ViewVisibilityMenu); });
+}
+
+
+void MainMenu::setMenuAsViewCreationMenu(Menu* menu)
+{
+    menu->sigAboutToShow().connect([=](){ onViewOperationMenuAboutToShow(menu, ViewCreationMenu); });
+}
+
+
+void MainMenu::setMenuAsViewDeletionMenu(Menu* menu, bool isItemToDeleteAllHiddenViewsEnabled)
+{
+    menu->sigAboutToShow().connect([=](){ onViewOperationMenuAboutToShow(menu, ViewDeletionMenu); });
+    this->isItemToDeleteAllHiddenViewsEnabled = isItemToDeleteAllHiddenViewsEnabled;
+}
+
+
+void MainMenu::onViewOperationMenuAboutToShow(Menu* menu, int viewMenuType)
+{
+    menu->clear();
+
+    auto viewClasses = ViewManager::viewClasses();
+    string prevModuleName;
+    bool needSeparator = false;
+
+    for(auto& viewClass : viewClasses){
+
+        if(needSeparator){
+            menu->addSeparator();
+            needSeparator = false;
+        }
+            
+        auto viewInstances = viewClass->instances();
+
+        if(viewMenuType == ViewVisibilityMenu){
+            if(viewInstances.empty()){
+                auto action = new Action(menu);
+                action->setText(viewClass->translatedDefaultInstanceName());
+                action->setCheckable(true);
+                action->sigToggled().connect(
+                    [viewClass](bool on){
+                        if(auto view = viewClass->getOrCreateView()){
+                            view->mountOnMainWindow(true);
+                        }
+                    });
+                menu->addAction(action);
+            } else {
+                for(auto& view : viewInstances){
+                    auto action = new Action(menu);
+                    action->setText(view->windowTitle());
+                    action->setCheckable(true);
+                    action->setChecked(view->isMounted());
+                    action->sigToggled().connect(
+                        [view](bool on){
+                            if(on){
+                                view->mountOnMainWindow(true);
+                            } else {
+                                view->unmount();
+                            }
+                        });
+                    menu->addAction(action);
+                }
+            }
+        } else if(viewMenuType == ViewCreationMenu){
+            if(!viewClass->isSingleton() || 
+               (!viewClass->hasPermanentInstance() && viewInstances.empty())){
+                auto action = new Action(menu);
+                action->setText(viewClass->translatedDefaultInstanceName());
+                action->sigTriggered().connect(
+                    [viewClass](){
+                        if(auto view = viewClass->createViewWithDialog()){
+                            view->mountOnMainWindow(true);
+                        }
+                    });
+                menu->addAction(action);
+            }
+        } else if(viewMenuType == ViewDeletionMenu){
+            auto it = viewInstances.begin();
+            if(viewClass->hasPermanentInstance() && it != viewInstances.end()){
+                ++it;
+            }
+            while(it != viewInstances.end()){
+                auto view = *it++;
+                auto action = new Action(menu);
+                action->setText(view->windowTitle());
+                action->sigTriggered().connect(
+                    [view](){ ViewManager::deleteView(view); });
+                menu->addAction(action);
+            }
+        }
+
+        auto moduleName = viewClass->moduleName();
+        if(moduleName != prevModuleName){
+            needSeparator = true;
+            prevModuleName = std::move(moduleName);
+        }
+    }
+
+    if(viewMenuType == ViewDeletionMenu && isItemToDeleteAllHiddenViewsEnabled){
+        if(needSeparator){
+            menu->addSeparator();
+        }
+        auto action = new Action(menu);
+        action->setText(_("Delete All Unmounted Views"));
+        action->sigTriggered().connect(
+            [](){ViewManager::deleteUnmountedViews();  });
+        menu->addAction(action);
+    }
 }
 
 

@@ -36,6 +36,9 @@ public:
     bool isActive() const;
     bool hasFocus() const;
 
+    bool isMounted() const;
+    void mountOnMainWindow(bool doBringToFront = false);
+    void unmount();
     void bringToFront();
 
     SignalProxy<void()> sigActivated();

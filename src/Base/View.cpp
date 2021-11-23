@@ -5,6 +5,7 @@
 #include "View.h"
 #include "ViewArea.h"
 #include "ViewManager.h"
+#include "MainWindow.h"
 #include "AppConfig.h"
 #include <QApplication>
 #include <QLayout>
@@ -19,6 +20,7 @@ using fmt::format;
 
 namespace {
 
+ViewArea* mainViewArea = nullptr;
 View* lastFocusView_ = nullptr;
 
 }
@@ -55,6 +57,8 @@ public:
 
 void View::initializeClass()
 {
+    mainViewArea = MainWindow::instance()->viewArea();
+    
     connect(qApp, &QApplication::focusChanged,
             [&](QWidget* old, QWidget* now){ onApplicationFocusChanged(now); });
 }
@@ -293,6 +297,34 @@ SignalProxy<void()> View::sigRemoved()
 void View::notifySigRemoved()
 {
     impl->sigRemoved();
+}
+
+
+bool View::isMounted() const
+{
+    return impl->viewArea != nullptr;
+}
+
+
+void View::mountOnMainWindow(bool doBringToFront)
+{
+    if(impl->viewArea != mainViewArea){
+        if(impl->viewArea){
+            impl->viewArea->removeView(this);
+        }
+        mainViewArea->addView(this);
+    }
+    if(doBringToFront){
+        bringToFront();
+    }
+}
+
+
+void View::unmount()
+{
+    if(impl->viewArea){
+        impl->viewArea->removeView(this);
+    }
 }
 
 
