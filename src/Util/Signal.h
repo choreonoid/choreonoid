@@ -468,7 +468,7 @@ public:
         return Connection(slot);
     }
 
-    auto operator()(Args... args){
+    result_type operator()(Args... args){
         return invoke(std::is_void<result_type>{}, std::forward<Args>(args)...);
     }
 
