@@ -399,13 +399,15 @@ void MainMenu::onViewOperationMenuAboutToShow(Menu* menu, int viewMenuType)
 
     auto viewClasses = ViewManager::viewClasses();
     string prevModuleName;
-    bool needSeparator = false;
 
     for(auto& viewClass : viewClasses){
 
-        if(needSeparator){
-            menu->addSeparator();
-            needSeparator = false;
+        auto moduleName = viewClass->moduleName();
+        if(moduleName != prevModuleName){
+            if(!prevModuleName.empty()){
+                menu->addSeparator();
+            }
+            prevModuleName = std::move(moduleName);
         }
             
         auto viewInstances = viewClass->instances();
@@ -440,8 +442,7 @@ void MainMenu::onViewOperationMenuAboutToShow(Menu* menu, int viewMenuType)
                 }
             }
         } else if(viewMenuType == ViewCreationMenu){
-            if(!viewClass->isSingleton() || 
-               (!viewClass->hasPermanentInstance() && viewInstances.empty())){
+            if(!viewClass->isSingleton()){
                 auto action = new Action(menu);
                 action->setText(viewClass->translatedDefaultInstanceName());
                 action->sigTriggered().connect(
@@ -466,16 +467,10 @@ void MainMenu::onViewOperationMenuAboutToShow(Menu* menu, int viewMenuType)
                 menu->addAction(action);
             }
         }
-
-        auto moduleName = viewClass->moduleName();
-        if(moduleName != prevModuleName){
-            needSeparator = true;
-            prevModuleName = std::move(moduleName);
-        }
     }
 
     if(viewMenuType == ViewDeletionMenu && isItemToDeleteAllHiddenViewsEnabled){
-        if(needSeparator){
+        if(!prevModuleName.empty()){
             menu->addSeparator();
         }
         auto action = new Action(menu);
