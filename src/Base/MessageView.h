@@ -107,6 +107,8 @@ CNOID_EXPORT void showWarningDialog(const std::string& message);
 CNOID_EXPORT void showWarningDialog(const char* message);
 CNOID_EXPORT void showWarningDialog(const QString& message);
 
+CNOID_EXPORT void showErrorDialog(const std::string& message);
+
 CNOID_EXPORT bool showConfirmDialog(const char* caption, const char* message);
 CNOID_EXPORT bool showConfirmDialog(const std::string& caption, const std::string& message);
 CNOID_EXPORT bool showConfirmDialog(const QString& caption, const QString& message);

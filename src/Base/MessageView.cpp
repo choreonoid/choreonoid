@@ -1142,6 +1142,12 @@ void cnoid::showWarningDialog(const std::string& message)
 }
 
 
+void cnoid::showErrorDialog(const std::string& message)
+{
+    QMessageBox::critical(MainWindow::instance(), _("Error"), message.c_str());
+}
+
+
 bool cnoid::showConfirmDialog(const QString& caption, const QString& message)
 {
     QMessageBox::StandardButton clicked =
