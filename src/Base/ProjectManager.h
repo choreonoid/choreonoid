@@ -59,6 +59,7 @@ public:
     bool isLayoutInclusionMode() const;
     void setLayoutInclusionMode(bool on);
 
+    SignalProxy<void()> sigProjectCleared();
     SignalProxy<void(int recursiveLevel)> sigProjectAboutToBeLoaded();
     SignalProxy<void(int recursiveLevel)> sigProjectLoaded();
 

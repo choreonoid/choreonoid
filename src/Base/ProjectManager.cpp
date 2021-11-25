@@ -101,6 +101,7 @@ public:
 
     MappingPtr config;
 
+    Signal<void()> sigProjectCleared;
     Signal<void(int recursiveLevel)> sigProjectAboutToBeLoaded;
     Signal<void(int recursiveLevel)> sigProjectLoaded;
 
@@ -257,6 +258,12 @@ void ProjectManager::setLayoutInclusionMode(bool on)
 }
 
 
+SignalProxy<void()> ProjectManager::sigProjectCleared()
+{
+    return impl->sigProjectCleared;
+}
+
+
 SignalProxy<void(int recursiveLevel)> ProjectManager::sigProjectAboutToBeLoaded()
 {
     return impl->sigProjectAboutToBeLoaded;
@@ -334,6 +341,7 @@ ItemList<> ProjectManager::Impl::loadProject
     if(doClearExistingProject){
         clearProject();
         mv->flush();
+        sigProjectCleared();
     }
     
     sigProjectAboutToBeLoaded(projectBeingLoadedCounter);

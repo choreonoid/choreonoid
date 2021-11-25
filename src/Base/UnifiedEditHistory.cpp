@@ -77,10 +77,12 @@ UnifiedEditHistory::Impl::Impl(ExtensionManager* ext)
     mv = MessageView::instance();
 
     auto pm = ProjectManager::instance();
+
+    pm->sigProjectCleared().connect([&](){ clear(); });
+    
     pm->sigProjectAboutToBeLoaded().connect(
         [&](int recursiveLevel){
             if(recursiveLevel == 0){
-                clear();
                 isProjectBeingLoaded = true;
             }
         });
@@ -90,6 +92,7 @@ UnifiedEditHistory::Impl::Impl(ExtensionManager* ext)
                 isProjectBeingLoaded = false;
             }
         });
+    
     isProjectBeingLoaded = false;
 }
 
