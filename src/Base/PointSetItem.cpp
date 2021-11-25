@@ -528,10 +528,15 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("File"), fileName());
     putProperty(_("Rendering mode"), scene->renderingMode,
                 [&](int mode){ return impl->onRenderingModePropertyChanged(mode); });
-    putProperty.decimals(1).min(0.0)(_("Point size"), pointSize(),
-                                     [=](double size){ scene->setPointSize(size); return true; });
-    putProperty.decimals(4)(_("Voxel size"), voxelSize(),
-                            [=](double size){ scene->setVoxelSize(size); return true; });
+
+    putProperty.min(0.0);
+    putProperty.decimals(1)
+        (_("Point size"), pointSize(),
+         [=](double size){ scene->setPointSize(size); return true; });
+    putProperty.decimals(4)
+        (_("Voxel size"), voxelSize(),
+         [=](double size){ scene->setVoxelSize(size); return true; });
+    
     putProperty(_("Editable"), isEditable(), [&](bool on){ return impl->onEditableChanged(on); });
     const SgVertexArray* points = impl->pointSet->vertices();
     putProperty(_("Num points"), static_cast<int>(points ? points->size() : 0));

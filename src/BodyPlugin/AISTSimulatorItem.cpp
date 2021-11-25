@@ -336,6 +336,18 @@ void AISTSimulatorItem::setConstraintForceOutputEnabled(bool /* on */)
 }
 
 
+void AISTSimulatorItem::addExtraJoint(ExtraJoint& extraJoint)
+{
+    impl->world.addExtraJoint(extraJoint);
+}
+
+
+void AISTSimulatorItem::clearExtraJoints()
+{
+    impl->world.clearExtraJoints();
+}
+
+
 Item* AISTSimulatorItem::doDuplicate() const
 {
     return new AISTSimulatorItem(*this);
@@ -685,18 +697,6 @@ void AISTSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 }
 
 
-void AISTSimulatorItem::clearExtraJoints()
-{
-    impl->world.clearExtraJoints();
-}
-
-
-void AISTSimulatorItem::addExtraJoint(ExtraJoint& extraJoint)
-{
-    impl->world.addExtraJoint(extraJoint);
-}
-
-
 void AISTSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Dynamics mode"), dynamicsMode,
@@ -704,16 +704,18 @@ void AISTSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Integration mode"), integrationMode,
                 [&](int index){ return integrationMode.selectIndex(index); });
     putProperty(_("Gravity"), str(gravity), [&](const string& v){ return toVector3(v, gravity); });
-    putProperty.decimals(1).min(0.0);
+
+    putProperty.reset().decimals(1).min(0.0);
     putProperty(_("Min friction coefficient"), minFrictionCoefficient, changeProperty(minFrictionCoefficient));
     putProperty(_("Max friction coefficient"), maxFrictionCoefficient, changeProperty(maxFrictionCoefficient));
+                                           
     putProperty(_("Contact culling distance"), contactCullingDistance,
                 [&](const string& v){ return contactCullingDistance.setNonNegativeValue(v); });
     putProperty(_("Contact culling depth"), contactCullingDepth,
                 [&](const string& v){ return contactCullingDepth.setNonNegativeValue(v); });
     putProperty(_("Error criterion"), errorCriterion,
                 [&](const string& v){ return errorCriterion.setPositiveValue(v); });
-    putProperty.min(1.0)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
+    putProperty.min(1)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
     putProperty(_("CC depth"), contactCorrectionDepth,
                 [&](const string& v){ return contactCorrectionDepth.setNonNegativeValue(v); });
     putProperty(_("CC v-ratio"), contactCorrectionVelocityRatio,

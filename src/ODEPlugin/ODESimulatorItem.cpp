@@ -1415,22 +1415,18 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 
     putProperty(_("Gravity"), str(gravity), [&](const string& v){ return toVector3(v, gravity); });
 
-    putProperty.decimals(2).min(0.0)
-        (_("Friction"), friction, changeProperty(friction));
+    putProperty.decimals(2).min(0.0)(_("Friction"), friction, changeProperty(friction));
 
     putProperty(_("Limit joint range"), isJointLimitMode, changeProperty(isJointLimitMode));
 
-    putProperty.decimals(1).min(0.0).max(1.0)
-        (_("Global ERP"), globalERP, changeProperty(globalERP));
-
+    putProperty.decimals(1).range(0.0, 1.0);
+    putProperty(_("Global ERP"), globalERP, changeProperty(globalERP));
     putProperty(_("Global CFM"), globalCFM,
                 [&](const string& value){ return globalCFM.setNonNegativeValue(value); });
 
-    putProperty.min(1)
-        (_("Iterations"), numIterations, changeProperty(numIterations));
+    putProperty.range(1, 999)(_("Iterations"), numIterations, changeProperty(numIterations));
 
-    putProperty.min(0.1).max(1.9)
-        (_("Over relaxation"), overRelaxation, changeProperty(overRelaxation));
+    putProperty.range(0.1, 1.9)(_("Over relaxation"), overRelaxation, changeProperty(overRelaxation));
 
     putProperty(_("Limit correcting vel."), enableMaxCorrectingVel, changeProperty(enableMaxCorrectingVel));
 
@@ -1440,7 +1436,6 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
 
     putProperty(_("Use WorldItem's Collision Detector"), useWorldCollisionDetector, changeProperty(useWorldCollisionDetector));
-
 }
 
 

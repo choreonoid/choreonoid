@@ -340,8 +340,7 @@ DynamicTCSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
         putProperty(_("EnableDynamicTrafficControl"),_dTCFlagC[_idxNew], changeProperty(_dTCFlagC[_idxNew]));
         putProperty(_("ReferencePoint"), str(_referencePointC[_idxNew]), [&](const string& v){ return toVector3(v, _referencePointC[_idxNew]); });
         putProperty(_("TargetBody"),_targetBody[_idxNew], changeProperty(_targetBody[_idxNew]));
-        putProperty.decimals(3).min(TSTEP_MIN);
-        putProperty.decimals(3).max(TSTEP_MAX);
+        putProperty.decimals(3).range(TSTEP_MIN, TSTEP_MAX);
         putProperty(_("TimeStep[s]"), _timeStep[_idxNew], changeProperty(_timeStep[_idxNew]));
 
         _portChanged = false;
@@ -378,8 +377,7 @@ DynamicTCSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
         putProperty(_("EnableDynamicTrafficControl"),_dTCFlagC[_idxCur], changeProperty(_dTCFlagC[_idxCur]));
         putProperty(_("ReferencePoint"), str(_referencePointC[_idxCur]), [&](const string& v){ return toVector3(v, _referencePointC[_idxCur]); });
         putProperty(_("TargetBody"),_targetBody[_idxCur], changeProperty(_targetBody[_idxCur]));
-        putProperty.decimals(3).min(TSTEP_MIN);
-        putProperty.decimals(3).max(TSTEP_MAX);
+        putProperty.decimals(3).range(TSTEP_MIN, TSTEP_MAX);
         putProperty(_("TimeStep[s]"), _timeStep[_idxCur], changeProperty(_timeStep[_idxCur]));
     }
 

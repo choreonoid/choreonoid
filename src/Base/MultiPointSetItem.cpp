@@ -543,10 +543,15 @@ void MultiPointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Num point sets"), numPointSetItems());
     putProperty(_("Rendering mode"), impl->renderingMode,
                 [&](int mode){ return impl->onRenderingModePropertyChanged(mode); });
-    putProperty.decimals(1).min(0.0)(_("Point size"), pointSize(),
-                                     [&](double size){ setPointSize(size); return true; });
-    putProperty.decimals(4)(_("Voxel size"), voxelSize(),
-                            [&](double size){ setVoxelSize(size); return true; });
+
+    putProperty.min(0.0);
+    putProperty.decimals(1)
+        (_("Point size"), pointSize(),
+         [&](double size){ setPointSize(size); return true; });
+    putProperty.decimals(4)
+        (_("Voxel size"), voxelSize(),
+         [&](double size){ setVoxelSize(size); return true; });
+    
     putProperty(_("Translation"), str(Vector3(offsetPosition().translation())),
                 [&](const string& value){ return impl->onTopTranslationPropertyChanged(value); });
     Vector3 rpy(TO_DEGREE * rpyFromRot(offsetPosition().linear()));

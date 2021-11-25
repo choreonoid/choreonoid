@@ -398,8 +398,9 @@ void RegionIntrusionDetectorItem::doPutProperties(PutPropertyFunction& putProper
                     return true;
                 });
 
-    putProperty.min(0)(_("I/O signal number"), impl->ioSignalNumber,
-                       [&](int no){ impl->ioSignalNumber = no; return true; });
+    putProperty.min(0)
+        (_("I/O signal number"), impl->ioSignalNumber,
+         [&](int no){ impl->ioSignalNumber = no; return true; });
 }
 
 

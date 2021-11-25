@@ -1798,11 +1798,12 @@ void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty
     putProperty(_("Thread mode"), threadMode, [&](int index){ return threadMode.select(index); });
     putProperty(_("Best effort"), isBestEffortModeProperty, changeProperty(isBestEffortModeProperty));
     putProperty(_("All scene objects"), shootAllSceneObjects, changeProperty(shootAllSceneObjects));
-    putProperty.min(1.0)(_("Precision ratio of range sensors"),
-                         rangeSensorPrecisionRatio, changeProperty(rangeSensorPrecisionRatio));
+    putProperty.min(1.0);
+    putProperty(_("Precision ratio of range sensors"),
+                rangeSensorPrecisionRatio, changeProperty(rangeSensorPrecisionRatio));
     putProperty.reset()(_("Depth error"), depthError, changeProperty(depthError));
-    putProperty.reset()(_("Head light"), isHeadLightEnabled, changeProperty(isHeadLightEnabled));
-    putProperty.reset()(_("Additional lights"), areAdditionalLightsEnabled, changeProperty(areAdditionalLightsEnabled));
+    putProperty(_("Head light"), isHeadLightEnabled, changeProperty(isHeadLightEnabled));
+    putProperty(_("Additional lights"), areAdditionalLightsEnabled, changeProperty(areAdditionalLightsEnabled));
     putProperty(_("Anti-aliasing"), isAntiAliasingEnabled, changeProperty(isAntiAliasingEnabled));
 }
 

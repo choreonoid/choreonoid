@@ -37,30 +37,17 @@ namespace {
 struct Int {
     int value;
     int min, max;
-    Int(int v){
-        value = v;
-    };
-    Int(int v, int min, int max) {
-        value = v;
-        this->min = min;
-        this->max = max;
-    };
+    Int(int v) : value(v) { }
+    Int(int v, int min, int max) : value(v), min(min), max(max) { }
 };
 
 struct Double {
     double value;
-    int decimals;
     double min, max;
-    Double(double v, int d) {
-        value = v;
-        decimals = d;
-    };
-    Double(double v, int d, double min, double max) {
-        value = v;
-        decimals = d;
-        this->min = min;
-        this->max = max;
-    };
+    int decimals;
+    Double(double v, int d) : value(v), decimals(d) { }
+    Double(double v, int d, double min, double max)
+        : value(v), decimals(d), min(min), max(max) { }
 };
 
 typedef stdx::variant<bool, Int, Double, string, Selection, FilePathProperty> ValueVariant;
@@ -148,11 +135,9 @@ public:
     ScopedConnectionSet itemConnections;
     PolymorphicItemFunctionSet  propertyFunctions;
 
+    double minValue;
+    double maxValue;
     int decimals_;
-    double dmin;
-    double dmax;
-    int imin;
-    int imax;
 
     CustomizedTableWidget* tableWidget;
     int fontPointSizeDiff;
@@ -173,8 +158,7 @@ public:
     virtual PutPropertyFunction& decimals(int d) override;
     virtual PutPropertyFunction& min(double min) override;
     virtual PutPropertyFunction& max(double max) override;
-    virtual PutPropertyFunction& min(int min) override;
-    virtual PutPropertyFunction& max(int max) override;
+    virtual PutPropertyFunction& range(double min, double max) override;
     virtual PutPropertyFunction& reset() override;
 
     virtual void operator()(
@@ -809,39 +793,31 @@ PutPropertyFunction& ItemPropertyWidget::Impl::decimals(int d)
 
 PutPropertyFunction& ItemPropertyWidget::Impl::min(double min)
 {
-    dmin = min;
+    minValue = min;
     return *this;
 }
 
 
 PutPropertyFunction& ItemPropertyWidget::Impl::max(double max)
 {
-    dmax = max;
+    maxValue = max;
     return *this;
 }
 
 
-PutPropertyFunction& ItemPropertyWidget::Impl::min(int min)
+PutPropertyFunction& ItemPropertyWidget::Impl::range(double min, double max)
 {
-    imin = min;
-    return *this;
-}
-
-
-PutPropertyFunction& ItemPropertyWidget::Impl::max(int max)
-{
-    imax = max;
+    minValue = min;
+    maxValue = max;
     return *this;
 }
 
 
 PutPropertyFunction& ItemPropertyWidget::Impl::reset()
 {
+    minValue = -999999999;
+    maxValue =  999999999;
     decimals_ = 2;
-    dmin = -std::numeric_limits<double>::max();
-    dmax = std::numeric_limits<double>::max();
-    imin =std::numeric_limits<int>::min();
-    imax= std::numeric_limits<int>::max();
     return *this;
 }
         
@@ -867,7 +843,7 @@ void ItemPropertyWidget::Impl::operator()(const std::string& name, int value)
 void ItemPropertyWidget::Impl::operator()
 (const std::string& name, int value, const std::function<bool(int)>& func)
 {
-    addProperty(name, new PropertyItem(this, Int(value, imin, imax), func));
+    addProperty(name, new PropertyItem(this, Int(value, minValue, maxValue), func));
 }
 
 
@@ -880,7 +856,7 @@ void ItemPropertyWidget::Impl::operator()(const std::string& name, double value)
 void ItemPropertyWidget::Impl::operator()
 (const std::string& name, double value, const std::function<bool(double)>& func)
 {
-    addProperty(name, new PropertyItem(this, Double(value, decimals_, dmin, dmax), func));
+    addProperty(name, new PropertyItem(this, Double(value, decimals_, minValue, maxValue), func));
 }
 
 

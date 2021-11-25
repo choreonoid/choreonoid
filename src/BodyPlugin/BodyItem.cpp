@@ -1638,7 +1638,7 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](bool on){ setLocationEditable(on, true); return true; });
     putProperty(_("Scene sensitive"), self->isSceneSensitive(),
                 [&](bool on){ self->setSceneSensitive(on); return true; });
-    putProperty.min(0.0).max(0.9).decimals(1);
+    putProperty.range(0.0, 0.9).decimals(1);
     putProperty(_("Transparency"), transparency,
                 [&](float value){ setTransparency(value); return true; });
     putProperty(_("Visible link selection"), self->isVisibleLinkSelectionMode_,

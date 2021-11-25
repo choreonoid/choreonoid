@@ -53,11 +53,10 @@ class CNOID_EXPORT PutPropertyFunction
 public:
     virtual ~PutPropertyFunction();
 
-    virtual PutPropertyFunction& decimals(int d) = 0;
     virtual PutPropertyFunction& min(double min) = 0;
     virtual PutPropertyFunction& max(double max) = 0;
-    virtual PutPropertyFunction& min(int min) = 0;
-    virtual PutPropertyFunction& max(int max) = 0;
+    virtual PutPropertyFunction& range(double min, double max) = 0;
+    virtual PutPropertyFunction& decimals(int d) = 0;
     virtual PutPropertyFunction& reset() = 0;
 
     // bool

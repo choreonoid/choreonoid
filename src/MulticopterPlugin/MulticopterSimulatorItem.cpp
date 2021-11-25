@@ -149,11 +149,11 @@ MulticopterSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 
     FilePathProperty moduleProperty(_airDefinitionFileName);
 
-    putProperty.decimals(3).min(0.0);
+    putProperty.min(0.0).decimals(3);
     putProperty(MULTICOPTER_DENSITY,_fluidDensity, changeProperty(_fluidDensity));
-    putProperty.decimals(6).min(0.0);
+    putProperty.decimals(6);
     putProperty(MULTICOPTER_VISCOSITY,_viscosity, changeProperty(_viscosity));
-    putProperty.decimals(3).min(0.0);
+    putProperty.decimals(3);
     putProperty(MULTICOPTER_VELOCITY, str(_fluidVelocity), [&](const string& v){ return toVector3(v, _fluidVelocity); });
     putProperty(MULTICOPTER_AIRDEFINITION, moduleProperty,
                 [&](const string& filename){ return setAirDefinitionFile(filename); });

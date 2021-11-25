@@ -2731,8 +2731,9 @@ void SimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](bool on){ onRealtimeSyncChanged(on); return true; });
     putProperty(_("Time range"), timeRangeMode,
                 [&](int index){ return timeRangeMode.select(index); });
+    putProperty.min(0.0);
     putProperty(_("Time length"), timeLength,
-                [&](double length){ self->setTimeLength(length); return true; });
+                 [&](double length){ self->setTimeLength(length); return true; });
     putProperty(_("Active control period only"), isActiveControlTimeRangeMode,
                 [&](bool on){ self->setActiveControlTimeRangeMode(on); return true; });
     putProperty(_("Recording"), recordingMode,

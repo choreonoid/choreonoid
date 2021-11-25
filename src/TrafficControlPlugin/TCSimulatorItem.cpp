@@ -379,24 +379,19 @@ TCSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
         putProperty.max(DELAY_MAX);
         putProperty(_("OutboundDelay[ms]"),_OutboundDelay[_idxNew], changeProperty(_OutboundDelay[_idxNew]));
 
-        putProperty.min(ZERO);
         putProperty.max(BAND_MAX);
         putProperty(_("OutboundBandWidth[kbit/s]"), _OutboundBandWidth[_idxNew], changeProperty(_OutboundBandWidth[_idxNew]));
 
-        putProperty.decimals(3).min(ZERO);
         putProperty.decimals(3).max(LOSS_MAX);
         putProperty(_("OutboundLoss[%]"), _OutboundLoss[_idxNew], changeProperty(_OutboundLoss[_idxNew]));
 
-        putProperty.min(ZERO);
         putProperty.max(DELAY_MAX);
         putProperty(_("InboundDelay[ms]"),_InboundDelay[_idxNew], changeProperty(_InboundDelay[_idxNew]));
 
-        putProperty.min(ZERO);
         putProperty.max(BAND_MAX);
         putProperty(_("InboundBandWidth[kbit/s]"), _InboundBandWidth[_idxNew], changeProperty(_InboundBandWidth[_idxNew]));
 
-        putProperty.decimals(3).min(ZERO);
-        putProperty.decimals(3).max(LOSS_MAX);
+        putProperty.max(LOSS_MAX);
         putProperty(_("InboundLoss[%]"), _InboundLoss[_idxNew], changeProperty(_InboundLoss[_idxNew]));
 
         putProperty(_("IP Address"), _ipAddressC[_idxNew], changeProperty(_ipAddressC[_idxNew]));
@@ -409,24 +404,19 @@ TCSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
         putProperty.max(DELAY_MAX);
         putProperty(_("OutboundDelay[ms]"),_OutboundDelay[_idxCur], changeProperty(_OutboundDelay[_idxCur]));
 
-        putProperty.min(ZERO);
         putProperty.max(BAND_MAX);
         putProperty(_("OutboundBandWidth[kbit/s]"), _OutboundBandWidth[_idxCur], changeProperty(_OutboundBandWidth[_idxCur]));
 
-        putProperty.decimals(3).min(0.0);
         putProperty.decimals(3).max(LOSS_MAX);
         putProperty(_("OutboundLoss[%]"), _OutboundLoss[_idxCur], changeProperty(_OutboundLoss[_idxCur]));
 
-        putProperty.min(ZERO);
         putProperty.max(DELAY_MAX);
         putProperty(_("InboundDelay[ms]"),_InboundDelay[_idxCur], changeProperty(_InboundDelay[_idxCur]));
 
-        putProperty.min(ZERO);
         putProperty.max(BAND_MAX);
         putProperty(_("InboundBandWidth[kbit/s]"), _InboundBandWidth[_idxCur], changeProperty(_InboundBandWidth[_idxCur]));
 
-        putProperty.decimals(3).min(0.0);
-        putProperty.decimals(3).max(LOSS_MAX);
+        putProperty.max(LOSS_MAX);
         putProperty(_("InboundLoss[%]"), _InboundLoss[_idxCur], changeProperty(_InboundLoss[_idxCur]));
 
         if(_ipAddressC[_idxCur].compare("")==0) {
