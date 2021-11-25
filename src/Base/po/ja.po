@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-23 22:18+0900\n"
+"POT-Creation-Date: 2021-11-25 01:46+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -910,6 +910,9 @@ msgstr "警告："
 msgid "Warning"
 msgstr "警告"
 
+msgid "Error"
+msgstr "エラー"
+
 msgid "Offline"
 msgstr "オフライン"
 
@@ -1352,8 +1355,8 @@ msgstr "編集モードへの切り替え"
 msgid "First-person viewpoint control mode"
 msgstr "一人称視点制御"
 
-msgid "Select a camera"
-msgstr "カメラの選択"
+msgid "Projection method / camera selection"
+msgstr "投影法／カメラの選択"
 
 msgid "Move the camera to look at the objects"
 msgstr "全ての物体が見えるように視点を移動"
@@ -1411,6 +1414,12 @@ msgstr "対象アイテム選択用の専用のチェックをアイテムツリ
 
 msgid "OpengGL image buffer for picking"
 msgstr "ピッキング用OpenGL画像バッファ"
+
+msgid "Perspective"
+msgstr "透視投影"
+
+msgid "Orthographic"
+msgstr "並行投影"
 
 msgid "OpenGL initialization failed."
 msgstr "OpenGLの初期化に失敗しました．"
@@ -1785,3 +1794,6 @@ msgstr "仮想ジョイスティック"
 
 msgid "VirtualJoystickView"
 msgstr "仮想ジョイスティックビュー"
+
+#~ msgid "Select a camera"
+#~ msgstr "カメラの選択"
