@@ -27,9 +27,7 @@ public:
     SignalProxy<bool(double time), LogicalProduct> sigPlaybackInitialized();
         
     SignalProxy<void(double time)> sigPlaybackStarted();
-
     SignalProxy<bool(double time), LogicalSum> sigTimeChanged();
-    
     SignalProxy<void(double time, bool isStoppedManually)> sigPlaybackStopped();
 
     inline double time() const { return time_; }
@@ -57,11 +55,11 @@ public:
     inline int beatNumerator() const { return beatNumerator_; }
     inline int beatDenominator() const { return beatDenominator_; }
 
-    double playbackSpeedScale() const;
-    void setPlaybackSpeedScale(double scale);
-        
     double playbackFrameRate() const;
     void setPlaybackFrameRate(double rate);
+
+    double playbackSpeedRatio() const;
+    void setPlaybackSpeedRatio(double ratio);
 
     void setRepeatMode(bool on);
 	
@@ -75,6 +73,11 @@ public:
     void stopOngoingTimeUpdate(int id);
     void setOngoingTimeSyncEnabled(bool on);
 
+    [[deprecated("Use playbackSpeedRatio")]]
+    double playbackSpeedScale() const { return playbackSpeedRatio(); }
+    [[deprecated("Use setPlaybackSpeedRatio")]]
+    void setPlaybackSpeedScale(double scale) { setPlaybackSpeedRatio(scale); }
+        
     [[deprecated]]
     void startPlaybackFromFillLevel() { startPlayback(); }
     [[deprecated]]

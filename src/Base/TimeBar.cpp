@@ -36,7 +36,7 @@ public:
     SpinBox frameRateSpin;
     SpinBox playbackFrameRateSpin;
     CheckBox idleLoopDrivenCheck;
-    DoubleSpinBox playbackSpeedScaleSpin;
+    DoubleSpinBox playbackSpeedRatioSpin;
     CheckBox ongoingTimeSyncCheck;
     CheckBox autoExpandCheck;
     QCheckBox beatModeCheck;
@@ -75,13 +75,13 @@ public:
         vbox->addLayout(hbox);
             
         hbox = new QHBoxLayout();
-        hbox->addWidget(new QLabel(_("Playback speed scale")));
-        playbackSpeedScaleSpin.setAlignment(Qt::AlignCenter);
-        playbackSpeedScaleSpin.setDecimals(1);
-        playbackSpeedScaleSpin.setRange(0.1, 99.9);
-        playbackSpeedScaleSpin.setSingleStep(0.1);
-        playbackSpeedScaleSpin.setValue(1.0);
-        hbox->addWidget(&playbackSpeedScaleSpin);
+        hbox->addWidget(new QLabel(_("Playback speed ratio")));
+        playbackSpeedRatioSpin.setAlignment(Qt::AlignCenter);
+        playbackSpeedRatioSpin.setDecimals(1);
+        playbackSpeedRatioSpin.setRange(0.1, 99.9);
+        playbackSpeedRatioSpin.setSingleStep(0.1);
+        playbackSpeedRatioSpin.setValue(1.0);
+        hbox->addWidget(&playbackSpeedRatioSpin);
         hbox->addStretch();
         vbox->addLayout(hbox);
 
@@ -166,7 +166,7 @@ public:
     void setTimeRange(double minTime, double maxTime);
     void setFrameRate(double rate);
     void updateTimeProperties(bool forceUpdate);
-    void onPlaybackSpeedScaleChanged(double value);
+    void onPlaybackSpeedRatioChanged(double value);
     void onPlaybackFrameRateChanged(int value);
     void onPlayActivated();
     void onResumeActivated();
@@ -201,7 +201,7 @@ public:
     int decimals;
     double minTime;
     double maxTime;
-    double playbackSpeedScale;
+    double playbackSpeedRatio;
     double playbackFrameRate;
     double animationTimeOffset;
     int timerId;
@@ -315,9 +315,9 @@ TimeBar::Impl::Impl(TimeBar* self)
 
     config.frameRateSpin.sigValueChanged().connect([&](int value){ onFrameRateSpinChanged(value); });
     config.playbackFrameRateSpin.sigValueChanged().connect([&](int value){ onPlaybackFrameRateChanged(value); });
-    config.playbackSpeedScaleSpin.sigValueChanged().connect([&](double value){ onPlaybackSpeedScaleChanged(value); });
+    config.playbackSpeedRatioSpin.sigValueChanged().connect([&](double value){ onPlaybackSpeedRatioChanged(value); });
 
-    playbackSpeedScale = config.playbackSpeedScaleSpin.value();
+    playbackSpeedRatio = config.playbackSpeedRatioSpin.value();
     playbackFrameRate = config.playbackFrameRateSpin.value();
 
     updateTimeProperties(true);
@@ -470,9 +470,9 @@ void TimeBar::Impl::updateTimeProperties(bool forceUpdate)
 }
 
     
-void TimeBar::Impl::onPlaybackSpeedScaleChanged(double value)
+void TimeBar::Impl::onPlaybackSpeedRatioChanged(double value)
 {
-    playbackSpeedScale = value;
+    playbackSpeedRatio = value;
     
     if(isDoingPlayback){
         startPlayback();
@@ -480,15 +480,15 @@ void TimeBar::Impl::onPlaybackSpeedScaleChanged(double value)
 }
 
 
-double TimeBar::playbackSpeedScale() const
+double TimeBar::playbackSpeedRatio() const
 {
-    return impl->config.playbackSpeedScaleSpin.value();
+    return impl->config.playbackSpeedRatioSpin.value();
 }
 
 
-void TimeBar::setPlaybackSpeedScale(double scale)
+void TimeBar::setPlaybackSpeedRatio(double ratio)
 {
-    impl->config.playbackSpeedScaleSpin.setValue(scale);
+    impl->config.playbackSpeedRatioSpin.setValue(ratio);
 }
 
 
@@ -626,7 +626,7 @@ bool TimeBar::isDoingPlayback()
 
 void TimeBar::Impl::timerEvent(QTimerEvent*)
 {
-    double time = animationTimeOffset + playbackSpeedScale * (elapsedTimer.elapsed() / 1000.0);
+    double time = animationTimeOffset + playbackSpeedRatio * (elapsedTimer.elapsed() / 1000.0);
 
     bool doStopAtLastOngoingTime = false;
     if(hasOngoingTime){
@@ -800,7 +800,7 @@ void TimeBar::setOngoingTimeSyncEnabled(bool on)
 double TimeBar::realPlaybackTime() const
 {
     if(impl->isDoingPlayback){
-        return impl->animationTimeOffset + impl->playbackSpeedScale * (impl->elapsedTimer.elapsed() / 1000.0);
+        return impl->animationTimeOffset + impl->playbackSpeedRatio * (impl->elapsedTimer.elapsed() / 1000.0);
     } else {
         return time_;
     }
@@ -833,15 +833,15 @@ bool TimeBar::storeState(Archive& archive)
 
 bool TimeBar::Impl::storeState(Archive& archive)
 {
-    archive.write("minTime", minTime);
-    archive.write("maxTime", maxTime);
-    archive.write("frameRate", self->frameRate_);
-    archive.write("playbackFrameRate", playbackFrameRate);
-    archive.write("idleLoopDrivenMode", config.idleLoopDrivenCheck.isChecked());
-    archive.write("currentTime", self->time_);
-    archive.write("speedScale", playbackSpeedScale);
-    archive.write("syncToOngoingUpdates", config.ongoingTimeSyncCheck.isChecked());
-    archive.write("autoExpansion", config.autoExpandCheck.isChecked());
+    archive.write("min_time", minTime);
+    archive.write("max_time", maxTime);
+    archive.write("frame_rate", self->frameRate_);
+    archive.write("playback_frame_rate", playbackFrameRate);
+    archive.write("idle_loop_driven_mode", config.idleLoopDrivenCheck.isChecked());
+    archive.write("current_time", self->time_);
+    archive.write("playback_speed_ratio", playbackSpeedRatio);
+    archive.write("sync_to_ongoing_updates", config.ongoingTimeSyncCheck.isChecked());
+    archive.write("auto_expansion", config.autoExpandCheck.isChecked());
     return true;
 }
 
@@ -854,18 +854,23 @@ bool TimeBar::restoreState(const Archive& archive)
 
 bool TimeBar::Impl::restoreState(const Archive& archive)
 {
-    archive.read("minTime", minTime);
-    archive.read("maxTime", maxTime);
-    archive.read("currentTime", self->time_);
+    archive.read({ "min_time", "minTime" }, minTime);
+    archive.read({ "max_time", "maxTime" }, maxTime);
+    archive.read({ "current_time", "currentTime" }, self->time_);
 
-    config.playbackFrameRateSpin.setValue(archive.get("playbackFrameRate", playbackFrameRate));
-    config.idleLoopDrivenCheck.setChecked(archive.get("idleLoopDrivenMode", config.idleLoopDrivenCheck.isChecked()));
-    config.playbackSpeedScaleSpin.setValue(archive.get("speedScale", playbackSpeedScale));
-    config.ongoingTimeSyncCheck.setChecked(archive.get("syncToOngoingUpdates", config.ongoingTimeSyncCheck.isChecked()));
-    config.autoExpandCheck.setChecked(archive.get("autoExpansion", config.autoExpandCheck.isChecked()));
+    config.playbackFrameRateSpin.setValue(
+        archive.get({ "playback_frame_rate", "playbackFrameRate" }, playbackFrameRate));
+    config.idleLoopDrivenCheck.setChecked(
+        archive.get("idle_loop_driven_mode", config.idleLoopDrivenCheck.isChecked()));
+    config.playbackSpeedRatioSpin.setValue(
+        archive.get("playback_speed_ratio", playbackSpeedRatio));
+    config.ongoingTimeSyncCheck.setChecked(
+        archive.get("sync_to_ongoing_updates", config.ongoingTimeSyncCheck.isChecked()));
+    config.autoExpandCheck.setChecked(
+        archive.get("auto_expansion", config.autoExpandCheck.isChecked()));
 
     double prevFrameRate = self->frameRate_;
-    archive.read("frameRate", self->frameRate_);
+    archive.read("frame_rate", self->frameRate_);
 
     updateTimeProperties(self->frameRate_ != prevFrameRate);
     
