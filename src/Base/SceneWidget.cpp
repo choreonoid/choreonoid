@@ -613,12 +613,12 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     interactiveCameraTransform = builtinCameraTransform;
 
     builtinPersCamera = new SgPerspectiveCamera;
-    builtinPersCamera->setName("Perspective");
+    builtinPersCamera->setName(N_("Perspective"));
     builtinPersCamera->setFieldOfView(radian(35.0));
     builtinCameraTransform->addChild(builtinPersCamera);
 
     builtinOrthoCamera = new SgOrthographicCamera;
-    builtinOrthoCamera->setName("Orthographic");
+    builtinOrthoCamera->setName(N_("Orthographic"));
     builtinOrthoCamera->setHeight(20.0f);
     builtinCameraTransform->addChild(builtinOrthoCamera);
 

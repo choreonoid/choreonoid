@@ -10,6 +10,7 @@
 #include "ButtonGroup.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/SceneRenderer>
+#include <cnoid/SceneCameras>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -127,10 +128,22 @@ void SceneBar::Impl::initialize()
     firstPersonModeToggle->sigToggled().connect(
         [&](bool on){ onFirstPersonModeButtonToggled(on); });
 
-    cameraCombo = new ComboBox();
-    cameraCombo->setToolTip(_("Select a camera"));
-    cameraCombo->setMinimumContentsLength(6);
-    cameraCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    cameraCombo = new ComboBox;
+
+    /**
+       It may be better to adjust the combo box size depending on the lengths of the available camera names
+       every time the avaiable camera set changes. However, it seems impossible to achive that using the
+       default implementation of ComboBox because its minimum size hint does not seem to change after the
+       size is determined at the first time the combo box is shown. Even if the size adjust policy is
+       changed or the adjustSize function is executed for the combo box and the tool bar, the combo box
+       size will return to its first determined size when the tool bar layout is processed by ToolBarArea,
+       which uses the minimum size hint to determine the width of each tool bar. Therefore the constant
+       minimum contents length is used in the current implementation.
+    */
+    cameraCombo->setMinimumContentsLength(8);
+    cameraCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLength);
+    
+    cameraCombo->setToolTip(_("Projection method / camera selection"));
     cameraCombo->sigCurrentIndexChanged().connect(
         [&](int index){ onCameraComboCurrentIndexChanged(index); });
     self->addWidget(cameraCombo);
@@ -357,23 +370,34 @@ void SceneBar::Impl::onSceneWidgetStateChanged()
 void SceneBar::Impl::onSceneRendererCamerasChanged()
 {
     cameraCombo->blockSignals(true);
-    
-    vector<string> pathStrings;
     cameraCombo->clear();
+
     auto renderer = currentSceneWidget->renderer();
+    SgCamera* builtinPersCamera = currentSceneWidget->builtinPerspectiveCamera();
+    SgCamera* builtinOrthoCamera = currentSceneWidget->builtinOrthographicCamera();
+    vector<string> pathStrings;
+
     const int n = renderer->numCameras();
+    
     for(int i=0; i < n; ++i){
-        renderer->getSimplifiedCameraPathStrings(i, pathStrings);
-        string label;
-        if(pathStrings.empty()){
-            label = format("Camera {}", i);
-        } else if(pathStrings.size() == 1){
-            label = pathStrings.front();
+        auto camera = renderer->camera(i);
+        if(camera == builtinPersCamera || camera == builtinOrthoCamera){
+            QString label(dgettext(CNOID_GETTEXT_DOMAIN_NAME, camera->name().c_str()));
+            cameraCombo->addItem(label);
         } else {
-            label = pathStrings.back() + " - " + pathStrings.front();
+            renderer->getSimplifiedCameraPathStrings(i, pathStrings);
+            string label;
+            if(pathStrings.empty()){
+                label = format("Camera {}", i);
+            } else if(pathStrings.size() == 1){
+                label = pathStrings.front();
+            } else {
+                label = pathStrings.back() + " - " + pathStrings.front();
+            }
+            cameraCombo->addItem(label.c_str());
         }
-        cameraCombo->addItem(label.c_str());
     }
+
     cameraCombo->setCurrentIndex(renderer->currentCameraIndex());
 
     cameraCombo->blockSignals(false);
