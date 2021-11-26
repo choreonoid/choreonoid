@@ -975,6 +975,22 @@ void Item::clearChildren()
 }
 
 
+void Item::clearNonSubItemChildren()
+{
+    Item* child = childItem();
+    Item* nextChild;
+    while(child){
+        nextChild = child->nextItem();
+        if(child->isSubItem()){
+            child->clearNonSubItemChildren();
+        } else {
+            child->removeFromParentItem();
+        }
+        child = nextChild;
+    }
+}
+
+
 void Item::Impl::notifySubTreeItemsOfTreePositionChange(Item* prevParentItem, Item* prevNextSibling)
 {
     Item* newParentItem = self->parentItem();

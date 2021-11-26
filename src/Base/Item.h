@@ -221,6 +221,7 @@ public:
     void detachFromParentItem() { removeFromParentItem(); }
     
     void clearChildren();
+    void clearNonSubItemChildren();
 
     typedef std::function<bool(Item* item)> ItemPredicate;
 

@@ -351,36 +351,44 @@ Item* ItemFileIO::findSingletonItemInstance() const
 static Item* createItem
 (const std::string& moduleName, const std::string& className, bool searchOtherModules)
 {
-    auto p = moduleNameToItemManagerImplMap.find(moduleName);
+    Item* item = nullptr;
 
+    auto p = moduleNameToItemManagerImplMap.find(moduleName);
     if(p == moduleNameToItemManagerImplMap.end()){
         if(auto alias = PluginManager::instance()->guessActualPluginName(moduleName)){
             p = moduleNameToItemManagerImplMap.find(alias);
         }
     }
-    
-    Item* item = nullptr;
-
     if(p != moduleNameToItemManagerImplMap.end()){
         auto& itemClassNameToInfoMap = p->second->itemClassNameToInfoMap;
         auto q = itemClassNameToInfoMap.find(className);
         if(q != itemClassNameToInfoMap.end()){
             auto& info = q->second;
-            if(info->isSingleton){
-                if(info->singletonInstance->parentItem()){
-                    //! \todo put a warning message to notify that the instance of this singleton class has been in the item tree
-                } else {
-                    item = info->singletonInstance;
-                }
-            } else {
+            if(!info->isSingleton){
                 if(info->factory){
                     item = info->factory();
+                }
+            } else {
+                auto instance = info->singletonInstance;
+                if(!instance->parentItem()){
+                    item = instance;
+                } else {
+                    if(!instance->isConnectedToRoot()){
+                        instance->removeFromParentItem();
+                        instance->clearNonSubItemChildren();
+                        item = instance;
+                    } else {
+                        messageView->putln(
+                            fmt::format(_("{0} is a singleton item type and its instance exists in the project item tree."),
+                                        info->className),
+                            MessageView::Warning);
+                        searchOtherModules = false;
+                    }
                 }
             }
         }
     }
-
-    if(searchOtherModules){
+    if(!item && searchOtherModules){
         auto r = aliasClassNameToAliasModuleNameToTrueNamePairMap.find(className);
         if(r != aliasClassNameToAliasModuleNameToTrueNamePairMap.end()){
             auto& aliasModuleNameToTrueNamePairMap = r->second;
@@ -570,7 +578,15 @@ Item* CreationDialog::createItem(Item* parentItem, Item* protoItem)
     }
     if(isSingleton){
         if(protoItem->parentItem()){
-            return nullptr;
+            if(!protoItem->isConnectedToRoot()){
+                protoItem->removeFromParentItem();
+                protoItem->clearNonSubItemChildren();
+            } else {
+                showWarningDialog(
+                    fmt::format(_("{0} is a singleton item type and its instance exists in the project item tree."),
+                                classInfo->className));
+                return nullptr;
+            }
         }
     }
     if(!protoItem){
