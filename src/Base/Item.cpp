@@ -1101,8 +1101,9 @@ void Item::Impl::emitSigSubTreeChanged()
 {
     tmpItemArray.resize(itemsToEmitSigSubTreeChanged.size());
     std::copy(itemsToEmitSigSubTreeChanged.begin(), itemsToEmitSigSubTreeChanged.end(), tmpItemArray.begin());
-    std::sort(tmpItemArray.begin(), tmpItemArray.end(), [](Item* lhs, Item* rhs){ return !rhs->isOwnedBy(lhs); });
-    
+    // Note that the comparison must be strict weak ordering
+    std::sort(tmpItemArray.begin(), tmpItemArray.end(), [](Item* lhs, Item* rhs){ return lhs->isOwnedBy(rhs); });
+
     for(auto item : tmpItemArray){
         item->impl->sigSubTreeChanged();
     }
