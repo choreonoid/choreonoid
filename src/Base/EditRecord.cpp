@@ -3,15 +3,17 @@
 using namespace cnoid;
 
 
-EditRecord::EditRecord()
-    : isReverse_(false)
+EditRecord::EditRecord(Referenced* targetObject)
+    : targetObject_(targetObject),
+      isReverse_(false)
 {
 
 }
 
 
 EditRecord::EditRecord(const EditRecord& org)
-    : isReverse_(org.isReverse_)
+    : targetObject_(org.targetObject_),
+      isReverse_(org.isReverse_)
 {
 
 }
@@ -26,7 +28,8 @@ EditRecord* EditRecord::getFlipped() const
 
 
 EditRecordGroup::EditRecordGroup(const std::string& label)
-    : label_(label)
+    : EditRecord(nullptr),
+      label_(label)
 {
 
 }

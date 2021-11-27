@@ -28,6 +28,21 @@ public:
     void beginEditGroup(const std::string& label);
     void endEditGroup();
 
+    class RecordBlocker : public Referenced
+    {
+    public:
+        virtual void setBlockedRecordGroupName(const std::string& name) = 0;
+        virtual void addBlockedRecordsToHistory() = 0;
+        /**
+           \note This function is called in the destructor, so the handle's reset function
+           can also be used to finish blocking if a single handle variable is being used.
+        */
+        virtual void finishBlocking() = 0;
+    };
+    typedef ref_ptr<RecordBlocker> RecordBlockerHandle;
+
+    RecordBlockerHandle blockRecording(std::function<bool(EditRecord* record)> predicate);
+
     int currentPosition() const;
     bool isUndoable() const;
     bool isRedoable() const;
@@ -38,11 +53,12 @@ public:
     SignalProxy<void()> sigHistoryUpdated();
     SignalProxy<void(int position)> sigCurrentPositionChanged();
 
+    class Impl;
+
 private:
     UnifiedEditHistory(ExtensionManager* ext);
     ~UnifiedEditHistory();
     
-    class Impl;
     Impl* impl;
 };
 

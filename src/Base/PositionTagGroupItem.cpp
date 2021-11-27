@@ -146,7 +146,6 @@ class OffsetEditRecord : public EditRecord
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    PositionTagGroupItemPtr tagGroupItem;
     Isometry3 T_new;
     Isometry3 T_old;
 
@@ -165,7 +164,6 @@ enum TagAction { AddAction = 1, UpdateAction, RemoveAction };
 class TagEditRecord : public EditRecord
 {
 public:
-    PositionTagGroupItemPtr tagGroupItem;
     PositionTagGroupItem::Impl* tagGroupItemImpl;
     TagAction action;
     int tagIndex;
@@ -1544,7 +1542,7 @@ LocationProxyPtr TagParentLocationProxy::getParentLocationProxy() const
 
 OffsetEditRecord::OffsetEditRecord
 (PositionTagGroupItem* tagGroupItem, const Isometry3& T_new, const Isometry3& T_old)
-    : tagGroupItem(tagGroupItem),
+    : EditRecord(tagGroupItem),
       T_new(T_new),
       T_old(T_old)
 {
@@ -1554,7 +1552,6 @@ OffsetEditRecord::OffsetEditRecord
 
 OffsetEditRecord::OffsetEditRecord(const OffsetEditRecord& org)
     : EditRecord(org),
-      tagGroupItem(org.tagGroupItem),
       T_new(org.T_new),
       T_old(org.T_old)
 {
@@ -1576,14 +1573,14 @@ std::string OffsetEditRecord::label() const
 
 bool OffsetEditRecord::undo()
 {
-    tagGroupItem->setOriginOffset(T_old, true);
+    static_cast<PositionTagGroupItem*>(targetObject())->setOriginOffset(T_old, true);
     return true;
 }
 
 
 bool OffsetEditRecord::redo()
 {
-    tagGroupItem->setOriginOffset(T_new, true);
+    static_cast<PositionTagGroupItem*>(targetObject())->setOriginOffset(T_new, true);
     return true;
 }
 
@@ -1591,7 +1588,7 @@ bool OffsetEditRecord::redo()
 TagEditRecord::TagEditRecord
 (PositionTagGroupItem::Impl* tagGroupItemImpl, TagAction action, int tagIndex,
  PositionTag* newTag, PositionTag* oldTag)
-    : tagGroupItem(tagGroupItemImpl->self),
+    : EditRecord(tagGroupItemImpl->self),
       tagGroupItemImpl(tagGroupItemImpl),
       action(action),
       tagIndex(tagIndex)
@@ -1602,7 +1599,6 @@ TagEditRecord::TagEditRecord
 
 TagEditRecord::TagEditRecord(const TagEditRecord& org)
     : EditRecord(org),
-      tagGroupItem(org.tagGroupItem),
       tagGroupItemImpl(org.tagGroupItemImpl),
       action(org.action),
       tagIndex(org.tagIndex)

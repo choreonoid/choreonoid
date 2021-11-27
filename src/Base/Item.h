@@ -25,6 +25,8 @@ class Archive;
 class Mapping;
 class ExtensionManager;
 class PutPropertyFunction;
+class UnifiedEditHistory;
+class EditRecord;
 
 class CNOID_EXPORT Item : public Referenced
 {
@@ -88,6 +90,8 @@ public:
            This attribute is set to enable the reloading function for this item.
         */
         Reloadable = 1 << 6,
+
+        ExcludedFromUnifiedEditHistory = 1 << 7,
 
         // deprecated
         SUB_ITEM = SubItem,
@@ -466,6 +470,9 @@ public:
 #endif
 
     void putProperties(PutPropertyFunction& putProperty);
+
+    static void setUnifiedEditHistory(UnifiedEditHistory* history);
+    void addEditRecordToUnifiedEditHistory(EditRecord* record);
 
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);

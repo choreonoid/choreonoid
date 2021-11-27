@@ -140,7 +140,7 @@ RootItem* RootItem::instance()
 RootItem::RootItem()
     : Item("RootItem")
 {
-    setAttribute(Builtin);
+    setAttributes(Builtin | ExcludedFromUnifiedEditHistory);
     
     impl = new Impl(this);
     

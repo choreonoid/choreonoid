@@ -1913,7 +1913,8 @@ bool BodyItem::Impl::restore(const Archive& archive)
 namespace {
 
 KinematicStateRecord::KinematicStateRecord(BodyItem::Impl* bodyItemImpl)
-    : bodyItem(bodyItemImpl->self),
+    : EditRecord(bodyItemImpl->self),
+      bodyItem(bodyItemImpl->self),
       bodyItemImpl(bodyItemImpl)
 {
     bodyItem->storeKinematicState(newState);
@@ -1922,7 +1923,8 @@ KinematicStateRecord::KinematicStateRecord(BodyItem::Impl* bodyItemImpl)
 
 
 KinematicStateRecord::KinematicStateRecord(BodyItem::Impl* bodyItemImpl, const BodyState& oldState)
-    : bodyItem(bodyItemImpl->self),
+    : EditRecord(bodyItemImpl->self),
+      bodyItem(bodyItemImpl->self),
       bodyItemImpl(bodyItemImpl),
       oldState(oldState)
 {

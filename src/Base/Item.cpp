@@ -12,6 +12,8 @@
 #include "PutPropertyFunction.h"
 #include "LazyCaller.h"
 #include "MessageView.h"
+#include "UnifiedEditHistory.h"
+#include "EditRecord.h"
 #include <cnoid/ValueTree>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
@@ -48,6 +50,9 @@ bool isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
 
 std::map<ItemPtr, ItemPtr> replacementToOriginalItemMap;
 std::map<ItemPtr, ItemPtr> originalToReplacementItemMap;
+
+UnifiedEditHistory* unifiedEditHistory = nullptr;
+
 
 LazyCaller clearItemReplacementMapsLater(
     [](){
@@ -175,7 +180,9 @@ Item::Impl::Impl(Item* self, const Impl& org)
 {
     initialize();
     
-    self->attributes_ = org.self->attributes_ & (FileImmutable | Reloadable);
+    self->attributes_ =
+        org.self->attributes_ &
+        (FileImmutable | Reloadable | ExcludedFromUnifiedEditHistory);
 
     if(self->attributes_ & FileImmutable){
         filePath = org.filePath;
@@ -200,9 +207,8 @@ void Item::Impl::initialize()
     self->attributes_ = 0;
     self->isSelected_ = false;
 
-    isConsistentWithFile = false;
     fileModificationTime = 0;
-    
+    isConsistentWithFile = false;
     isConsistentWithArchive = false;
 }
 
@@ -1691,6 +1697,20 @@ void Item::putProperties(PutPropertyFunction& putProperty)
 void Item::doPutProperties(PutPropertyFunction& putProperty)
 {
 
+}
+
+
+void Item::setUnifiedEditHistory(UnifiedEditHistory* history)
+{
+    unifiedEditHistory = history;
+}
+
+
+void Item::addEditRecordToUnifiedEditHistory(EditRecord* record)
+{
+    if(!hasAttribute(ExcludedFromUnifiedEditHistory)){
+        unifiedEditHistory->addRecord(record);
+    }
 }
 
 

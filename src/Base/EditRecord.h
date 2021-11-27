@@ -14,6 +14,11 @@ public:
     virtual EditRecord* clone() const = 0;
     virtual std::string label() const = 0;
 
+    Referenced* targetObject() const { return targetObject_; }
+
+    template<class T>
+    T* targetObject() const { return dynamic_cast<T*>(targetObject_.get()); }
+
     bool applyUndo() { return !isReverse_ ? undo() : redo(); }
     bool applyRedo() { return !isReverse_ ? redo() : undo(); }
 
@@ -22,13 +27,14 @@ public:
     EditRecord* getFlipped() const;
 
 protected:
-    EditRecord();
+    EditRecord(Referenced* targetObject);
     EditRecord(const EditRecord& org);
 
     virtual bool undo() = 0;
     virtual bool redo() = 0;
 
 private:
+    ReferencedPtr targetObject_;
     bool isReverse_;
 };
 

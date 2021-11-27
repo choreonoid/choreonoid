@@ -17,6 +17,26 @@ namespace {
 
 UnifiedEditHistory* instance_;
 
+class RecordBlockerImpl : public UnifiedEditHistory::RecordBlocker
+{
+public:
+    UnifiedEditHistory::Impl* history;
+    function<bool(EditRecord* record)> predicate;
+    vector<EditRecordPtr> records;
+    string groupName;
+
+    RecordBlockerImpl(UnifiedEditHistory::Impl* history, const std::function<bool(EditRecord* record)>& predicate)
+        : history(history),
+          predicate(predicate) { }
+
+    virtual ~RecordBlockerImpl();
+    virtual void setBlockedRecordGroupName(const std::string& name) override;
+    virtual void addBlockedRecordsToHistory() override;
+    virtual void finishBlocking() override;
+};
+
+typedef ref_ptr<RecordBlockerImpl> RecordBlockerImplPtr;
+
 }
 
 namespace cnoid {
@@ -35,7 +55,13 @@ public:
     Signal<void(int position)> sigCurrentPositionChanged;
     MessageView* mv;
 
+    // Smart pointers are not used to avoid cyclic references.
+    // Each blocker is externally referenced using a smart pointer and the corresponding element
+    // in the following vector is automatically removed by the destructor of the blocker.
+    vector<RecordBlockerImpl*> blockers;
+
     Impl(ExtensionManager* ext);
+    ~Impl();
     void clear();
     void removeRecordsAfter(int index);
     void addRecord(EditRecord* record);
@@ -65,6 +91,7 @@ UnifiedEditHistory* UnifiedEditHistory::instance()
 UnifiedEditHistory::UnifiedEditHistory(ExtensionManager* ext)
 {
     impl = new Impl(ext);
+    Item::setUnifiedEditHistory(this);
 }
 
 
@@ -100,6 +127,14 @@ UnifiedEditHistory::Impl::Impl(ExtensionManager* ext)
 UnifiedEditHistory::~UnifiedEditHistory()
 {
     delete impl;
+}
+
+
+UnifiedEditHistory::Impl::~Impl()
+{
+    for(auto& blocker : blockers){
+        blocker->history = nullptr;
+    }
 }
 
 
@@ -149,7 +184,17 @@ void UnifiedEditHistory::Impl::removeRecordsAfter(int index)
 void UnifiedEditHistory::addRecord(EditRecordPtr record)
 {
     if(!impl->isProjectBeingLoaded){
-        impl->addRecord(record);
+        bool isBlocked = false;
+        for(auto& blocker : impl->blockers){
+            if(blocker->predicate(record)){
+                blocker->records.push_back(record);
+                isBlocked = true;
+                break;
+            }
+        }
+        if(!isBlocked){
+            impl->addRecord(record);
+        }
     }
 }
 
@@ -161,26 +206,6 @@ void UnifiedEditHistory::Impl::addRecord(EditRecord* record)
     } else {
         newRecordBuffer.push_back(record);
         flushNewRecordBufferLater();
-    }
-}
-
-
-void UnifiedEditHistory::beginEditGroup(const std::string& label)
-{
-    if(!impl->isProjectBeingLoaded){
-        impl->currentGroup = new EditRecordGroup(label);
-    }
-}
-
-
-void UnifiedEditHistory::endEditGroup()
-{
-    if(!impl->isProjectBeingLoaded && impl->currentGroup){
-        EditRecordGroupPtr group = impl->currentGroup;
-        impl->currentGroup.reset();
-        if(!group->empty()){
-            addRecord(group);
-        }
     }
 }
 
@@ -230,6 +255,80 @@ void UnifiedEditHistory::Impl::expandHistoryFromLatestToCurrentUndoPosition()
         records.push_front(record);
     }
     currentPosition = 0;
+}
+
+
+void UnifiedEditHistory::beginEditGroup(const std::string& label)
+{
+    if(!impl->isProjectBeingLoaded){
+        impl->currentGroup = new EditRecordGroup(label);
+    }
+}
+
+
+void UnifiedEditHistory::endEditGroup()
+{
+    if(!impl->isProjectBeingLoaded && impl->currentGroup){
+        EditRecordGroupPtr group = impl->currentGroup;
+        impl->currentGroup.reset();
+        if(!group->empty()){
+            impl->addRecord(group);
+        }
+    }
+}
+
+
+UnifiedEditHistory::RecordBlockerHandle UnifiedEditHistory::blockRecording(std::function<bool(EditRecord* record)> predicate)
+{
+    RecordBlockerImplPtr blocker = new RecordBlockerImpl(impl, predicate);
+    impl->blockers.push_back(blocker);
+    return blocker;
+}
+
+
+RecordBlockerImpl::~RecordBlockerImpl()
+{
+    finishBlocking();
+}
+
+
+void RecordBlockerImpl::setBlockedRecordGroupName(const std::string& name)
+{
+    groupName = name;
+}
+
+
+void RecordBlockerImpl::addBlockedRecordsToHistory()
+{
+    if(!records.empty()){
+        if(records.size() == 1 && groupName.empty()){
+            history->addRecord(records.front());
+        } else {
+            EditRecordGroupPtr group = new EditRecordGroup(groupName);
+            for(auto& record : records){
+                group->addRecord(record);
+            }
+            history->addRecord(group);
+        }
+        records.clear();
+    }
+}
+
+
+void RecordBlockerImpl::finishBlocking()
+{
+    if(history){
+        auto& blockers = history->blockers;
+        auto it = blockers.begin();
+        while(it != blockers.end()){
+            if(*it == this){
+                blockers.erase(it);
+                break;
+            }
+        }
+    }
+    history = nullptr;
+    records.clear();
 }
 
 
@@ -317,4 +416,5 @@ SignalProxy<void(int position)> UnifiedEditHistory::sigCurrentPositionChanged()
 {
     return impl->sigCurrentPositionChanged;
 }
+
 

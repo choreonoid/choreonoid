@@ -73,7 +73,6 @@ namespace cnoid {
 class ItemEditRecordManager::Impl
 {
 public:
-    UnifiedEditHistory* history;
     ItemPtr movingItem;
     ItemPtr oldParentItem;
     ItemPtr oldNextItem;
@@ -114,8 +113,6 @@ ItemEditRecordManager::~ItemEditRecordManager()
 
 ItemEditRecordManager::Impl::Impl()
 {
-    history = UnifiedEditHistory::instance();
-
     auto rootItem = RootItem::instance();
 
     rootItemConnections.add(
@@ -137,7 +134,7 @@ void ItemEditRecordManager::Impl::onSubTreeAdded(Item* item)
 {
     auto record = new ItemTreeEditRecord(item);
     record->setItemAddition();
-    history->addRecord(record);
+    item->addEditRecordToUnifiedEditHistory(record);
     manageSubTree(item);
 }
 
@@ -151,7 +148,7 @@ void ItemEditRecordManager::Impl::onSubTreeRemoving(Item* item, Item* oldParentI
     } else {
         auto record = new ItemTreeEditRecord(item);
         record->setItemRemoval(oldParentItem, oldNextItem);
-        history->addRecord(record);
+        item->addEditRecordToUnifiedEditHistory(record);
         releaseSubTree(item);
     }
 }
@@ -162,9 +159,9 @@ void ItemEditRecordManager::Impl::onSubTreeMoved(Item* item)
     if(item == movingItem){
         auto record = new ItemTreeEditRecord(item);
         record->setItemMove(oldParentItem, oldNextItem);
-        history->addRecord(record);
+        item->addEditRecordToUnifiedEditHistory(record);
     } else {
-        history->clear();
+        UnifiedEditHistory::instance()->clear();
         MessageView::instance()->notify(
             format(_("The edit history has been cleared because inconsistent item move operation on \"{0}\" was carried out."),
                    item->displayName()),
@@ -205,14 +202,17 @@ void ItemEditRecordManager::Impl::releaseSubTree(Item* item)
 
 void ItemEditRecordManager::Impl::onItemNameChanged(Item* item, const string& oldName)
 {
-    history->addRecord(new ItemNameEditRecord(item, oldName));
+    if(item->name() != oldName){ // Is this check necessary?
+        item->addEditRecordToUnifiedEditHistory(new ItemNameEditRecord(item, oldName));
+    }
 }
 
 
 namespace {
 
 ItemTreeEditRecord::ItemTreeEditRecord(Item* item)
-    : item(item)
+    : EditRecord(item),
+      item(item)
 {
 
 }
@@ -397,7 +397,8 @@ bool ItemTreeEditRecord::redo()
 
 
 ItemNameEditRecord::ItemNameEditRecord(Item* item, const string& oldName)
-    : item(item),
+    : EditRecord(item),
+      item(item),
       oldName(oldName),
       newName(item->name())
 {
