@@ -413,7 +413,7 @@ bool BodyMotionItem::store(Archive& archive)
             }
         }
     }
-    return false;
+    return result;
 }
 
 
