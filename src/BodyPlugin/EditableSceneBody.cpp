@@ -155,7 +155,7 @@ public:
     void setBaseLink(EditableSceneLink* sceneLink);
     void toggleBaseLink(EditableSceneLink* sceneLink);
     void togglePin(EditableSceneLink* sceneLink, bool toggleTranslation, bool toggleRotation);
-    void makeLinkAttitudeLevel();
+    void makeLinkAttitudeLevel(EditableSceneLink* sceneLink);
         
     PointedType findPointedObject(const SgNodePath& path);
     int checkLinkOperationType(SceneLink* sceneLink, bool doUpdateIK);
@@ -813,27 +813,25 @@ void EditableSceneBody::Impl::togglePin(EditableSceneLink* sceneLink, bool toggl
 }
 
 
-void EditableSceneBody::Impl::makeLinkAttitudeLevel()
+void EditableSceneBody::Impl::makeLinkAttitudeLevel(EditableSceneLink* sceneLink)
 {
-    if(pointedSceneLink){
-        Link* link = highlightedLink->link();
-        auto ik = bodyItem->getCurrentIK(link);
-        if(ik){
-            const Isometry3& T = link->T();
-            const double theta = acos(T(2, 2));
-            const Vector3 z(T(0,2), T(1, 2), T(2, 2));
-            const Vector3 axis = z.cross(Vector3::UnitZ()).normalized();
-            const Matrix3 R2 = AngleAxisd(theta, axis) * T.linear();
-            Isometry3 T2;
-            T2.linear() = R2;
-            T2.translation() = link->p();
-
-            if(ik->calcInverseKinematics(T2)){
-                if(!ik->calcRemainingPartForwardKinematicsForInverseKinematics()){
-                    bodyItem->body()->calcForwardKinematics();
-                }
-                bodyItem->notifyKinematicStateUpdate();
+    Link* link = sceneLink->link();
+    auto ik = bodyItem->getCurrentIK(link);
+    if(ik){
+        const Isometry3& T = link->T();
+        const double theta = acos(T(2, 2));
+        const Vector3 z(T(0,2), T(1, 2), T(2, 2));
+        const Vector3 axis = z.cross(Vector3::UnitZ()).normalized();
+        const Matrix3 R2 = AngleAxisd(theta, axis) * T.linear();
+        Isometry3 T2;
+        T2.linear() = R2;
+        T2.translation() = link->p();
+        
+        if(ik->calcInverseKinematics(T2)){
+            if(!ik->calcRemainingPartForwardKinematicsForInverseKinematics()){
+                bodyItem->body()->calcForwardKinematics();
             }
+            bodyItem->notifyKinematicStateUpdate();
         }
     }
 }
@@ -1475,7 +1473,7 @@ bool EditableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event, Menu
         mm->addSeparator();
             
         mm->addItem(_("Level Attitude"))->sigTriggered().connect(
-            [&](){ makeLinkAttitudeLevel(); });
+            [&](){ makeLinkAttitudeLevel(pointedSceneLink); });
             
         mm->addSeparator();
     }
