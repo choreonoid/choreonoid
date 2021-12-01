@@ -113,7 +113,7 @@ void CaptureBar::onCaptureButtonRightClicked(QMouseEvent* event)
     if(!isTabInclusionMode){
         isTabInclusionMode = getConfig()->get("include_tab", false);
     }
-    check->setChecked(*isTabInclusionMode);
+    check->setChecked(isTabInclusionMode && *isTabInclusionMode);
     check->sigToggled().connect([this](bool on){ setTabInclusionMode(on); });
     menuManager.popupMenu()->popup(event->globalPos());
 }
@@ -135,8 +135,8 @@ void CaptureBar::captureToolbar(ToolBar* bar)
 void CaptureBar::captureView(View* view)
 {
     auto owner = view->parentWidget();
-        
-    if(isTabInclusionMode){
+
+    if(isTabInclusionMode && *isTabInclusionMode){
         for(int i=0; i < 2; ++i){
             auto tab = dynamic_cast<QTabWidget*>(owner);
             if(tab){
