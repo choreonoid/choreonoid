@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-25 01:46+0900\n"
+"POT-Creation-Date: 2021-12-02 14:41+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -431,6 +431,9 @@ msgstr "{0} \"{1}\" を \"{2}\" に保存中"
 
 msgid "Exporting {0} \"{1}\" into \"{2}\""
 msgstr "{0} \"{1}\" を \"{2}\" にエクスポート中"
+
+msgid "{0} is a singleton item type and its instance exists in the project item tree."
+msgstr "{0}はシングルトンアイテム型で、そのインスタンスはプロジェクトツリー内に存在します．"
 
 msgid "Class {} is not registered as an item class."
 msgstr "クラス{}はアイテムクラスとして登録されていません．"
@@ -1720,8 +1723,8 @@ msgstr "再生フレームレート"
 msgid "Idle loop driven mode"
 msgstr "アイドルループ駆動モード"
 
-msgid "Playback speed scale"
-msgstr "再生スピード倍率"
+msgid "Playback speed ratio"
+msgstr "再生速度倍率"
 
 msgid "Sync with ongoing updates"
 msgstr "進行中の更新に同期"
@@ -1794,6 +1797,3 @@ msgstr "仮想ジョイスティック"
 
 msgid "VirtualJoystickView"
 msgstr "仮想ジョイスティックビュー"
-
-#~ msgid "Select a camera"
-#~ msgstr "カメラの選択"
