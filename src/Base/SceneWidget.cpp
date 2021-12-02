@@ -3753,7 +3753,7 @@ void ConfigDialog::storeState(Archive& archive)
     archive.write("xzGrid", gridCheck[XZ_GRID].isChecked());
     archive.write("xzGridSpan", gridSpanSpin[XZ_GRID].value());
     archive.write("xzGridInterval", gridIntervalSpin[YZ_GRID].value());
-    archive.write("xzGrid", gridCheck[YZ_GRID].isChecked());
+    archive.write("yzGrid", gridCheck[YZ_GRID].isChecked());
     archive.write("yzGridSpan", gridSpanSpin[YZ_GRID].value());
     archive.write("yzGridInterval", gridIntervalSpin[YZ_GRID].value());
     archive.write("texture", textureCheck.isChecked());
