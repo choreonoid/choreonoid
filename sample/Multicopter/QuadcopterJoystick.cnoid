@@ -93,8 +93,8 @@ items:
             maxLatency: 1
             recordVisionData: false
             threadMode: Sensor
-            bestEffort: false
-            allSceneObjects: false
+            bestEffort: true
+            allSceneObjects: true
             rangeSensorPrecisionRatio: 2
             depthError: 0
             enableHeadLight: true

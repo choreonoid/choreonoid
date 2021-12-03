@@ -189,7 +189,7 @@ items:
                 recordVisionData: true
                 threadMode: Sensor
                 bestEffort: true
-                allSceneObjects: false
+                allSceneObjects: true
                 rangeSensorPrecisionRatio: 2
                 depthError: 0
                 enableHeadLight: true

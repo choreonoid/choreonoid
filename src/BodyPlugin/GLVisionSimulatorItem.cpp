@@ -322,10 +322,10 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
     depthError = 0.0;
 
     isVisionDataRecordingEnabled = false;
-    isBestEffortModeProperty = false;
+    isBestEffortModeProperty = true;
     isHeadLightEnabled = true;
     areAdditionalLightsEnabled = true;
-    shootAllSceneObjects = false;
+    shootAllSceneObjects = true;
 
     threadMode.setSymbol(GLVisionSimulatorItem::SINGLE_THREAD_MODE, N_("Single"));
     threadMode.setSymbol(GLVisionSimulatorItem::SENSOR_THREAD_MODE, N_("Sensor"));
