@@ -73,7 +73,6 @@ links:
     jointType: revolute
     jointId: 0
     jointAxis: [ 0, 0, -1 ]
-    jointRange: [ -10000, 10000 ]
     jointVelocityRange: [ -42.0, 42.0 ]
     centerOfMass: [ 0, -0.002, 0.0605 ]
     mass: 0.7477
@@ -233,7 +232,6 @@ links:
     jointType: revolute
     jointId: 3
     jointAxis: [ 0, 0, -1 ]
-    jointRange: [ -10000, 10000 ]
     jointVelocityRange: [ -90.0, 90.0 ]
     rotorInertia: 0.05
     # AGX parameters
@@ -295,7 +293,6 @@ links:
     jointType: revolute
     jointId: 4
     jointAxis: [ 0, 0, -1 ]
-    jointRange: [ -10000, 10000 ]
     jointVelocityRange: [ -90.0, 90.0 ]
     rotorInertia: 0.05
     # AGX parameters
@@ -314,7 +311,6 @@ links:
     jointType: revolute
     jointId: 5
     jointAxis: [ 0, 0, -1 ]
-    jointRange: [ -10000, 10000 ]
     jointVelocityRange: [ -90.0, 90.0 ]
     centerOfMass: [ 0, 0, 0.06 ]
     mass: 0.727
