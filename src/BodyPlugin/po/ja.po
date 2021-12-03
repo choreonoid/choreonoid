@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-22 22:59+0900\n"
+"POT-Creation-Date: 2021-12-03 22:46+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -748,6 +748,9 @@ msgstr "ダイヤル"
 
 msgid "Phase"
 msgstr "位相"
+
+msgid "Limit the slider range to within +/- 360 deg."
+msgstr "スライダの範囲を±360°以内に制限"
 
 msgid "Joint Trajectories"
 msgstr "関節軌道"

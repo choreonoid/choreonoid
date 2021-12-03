@@ -104,6 +104,7 @@ public:
     bool isSliderEnabled;
     bool isDialEnabled;
     bool isPhaseEnabled;
+    bool isRangeLimitMode;
 
     QGridLayout grid;
     Signal<void(QWidget* widget)> sigJointWidgetFocused;
@@ -161,6 +162,7 @@ JointDisplacementWidget::Impl::Impl(JointDisplacementWidget* self)
     isSliderEnabled = true;
     isDialEnabled = false;
     isPhaseEnabled = true;
+    isRangeLimitMode = false;
 
     dvFormat = DisplayValueFormat::instance();
     dvFormatConnection =
@@ -237,6 +239,11 @@ void JointDisplacementWidget::Impl::setOptionMenuTo(MenuManager& menu)
     phaseCheck->setChecked(isPhaseEnabled);
     phaseCheck->sigToggled().connect(
         [&](bool on){ isPhaseEnabled = on; updateIndicatorGrid(); });
+
+    auto rangeLimitCheck = menu.addCheckItem(_("Limit the slider range to within +/- 360 deg."));
+    rangeLimitCheck->setChecked(isRangeLimitMode);
+    rangeLimitCheck->sigToggled().connect(
+        [&](bool on){ isRangeLimitMode = on; updateIndicatorGrid(); });
 }
 
 
@@ -310,9 +317,9 @@ void JointDisplacementWidget::Impl::updateIndicatorGrid()
     
     angleUnit = dvFormat->angleUnit();
     if(angleUnit == DisplayValueFormat::Degree){
-        defaultMaxAngle = 1000.0;
+        defaultMaxAngle = 36000.0;
     } else {
-        defaultMaxAngle = 10.0;
+        defaultMaxAngle = 314.0;
     }
     angleDecimals = dvFormat->angleDecimals();
     defaultMaxAngle -= pow(10.0, -angleDecimals);
@@ -490,6 +497,15 @@ void JointIndicator::initialize(Link* joint)
             unitConversionRatio = 180.0 / PI;
             lower *= unitConversionRatio;
             upper *= unitConversionRatio;
+
+            if(baseImpl->isRangeLimitMode){
+                if(lower < -360.0){
+                    lower = -360.0;
+                }
+                if(upper > 360.0){
+                    upper = 360.0;
+                }
+            }
             if(!setRangeLabelValue(lowerLimitLabel, lower, isLowerInfinite, 0)){
                 lower = -360.0;
                 isValidRange = false;
@@ -499,6 +515,14 @@ void JointIndicator::initialize(Link* joint)
                 isValidRange = false;
             }
         } else {
+            if(baseImpl->isRangeLimitMode){
+                if(lower < -2.0 * M_PI){
+                    lower = -2.0 * M_PI;
+                }
+                if(upper > 2.0 * M_PI){
+                    upper = 2.0 * M_PI;
+                }
+            }
             if(!setRangeLabelValue(lowerLimitLabel, lower, isLowerInfinite, baseImpl->angleDecimals)){
                 lower = -2.0 * M_PI;
                 isValidRange = false;
@@ -568,7 +592,7 @@ void JointIndicator::initialize(Link* joint)
         minPhase = 0;
         maxPhase = 0;
         double q0 = joint->q_initial();
-        if((!isUpperInfinite && joint->q_upper() - q0) > M_PI){
+        if(!isUpperInfinite && (joint->q_upper() - q0) > M_PI){
             maxPhase = 1 + trunc((joint->q_upper() - q0 - M_PI) / (2.0 * M_PI));
             hasPhases = true;
         }
@@ -819,6 +843,7 @@ bool JointDisplacementWidget::Impl::storeState(Archive& archive)
     archive.write("show_sliders", isSliderEnabled);
     archive.write("show_dials", isDialEnabled);
     archive.write("show_phases", isPhaseEnabled);
+    archive.write("limit_ranges", isRangeLimitMode);
     return true;
 }
 
@@ -838,5 +863,6 @@ bool JointDisplacementWidget::Impl::restoreState(const Archive& archive)
     archive.read("show_sliders", isSliderEnabled);
     archive.read("show_dials", isDialEnabled);
     archive.read("show_phases", isPhaseEnabled);
+    archive.read("limit_ranges", isRangeLimitMode);
     return true;
 }
