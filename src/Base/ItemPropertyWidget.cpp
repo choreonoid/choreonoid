@@ -313,7 +313,7 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
         {
             const QStringList& slist = qvalue.toStringList();
             if(!slist.empty()){
-                int valueType = stdx::get_variant_index(func);
+                int valueType = stdx::get_variant_index(value);
                 if(valueType == TYPE_BOOL){
                     bool value = (slist[0].toInt() == 0) ? true : false;
                     accepted = stdx::get<std::function<bool(bool)>>(func)(value);
