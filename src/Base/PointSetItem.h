@@ -7,14 +7,14 @@
 
 #include "Item.h"
 #include "RenderableItem.h"
-#include <cnoid/RectRegionMarker>
+#include <cnoid/EigenTypes>
 #include <cnoid/stdx/optional>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class SgPointSet;
-class PointSetItemImpl;
+class PolyhedralRegion;
 
 class CNOID_EXPORT PointSetItem : public Item, public RenderableItem
 {
@@ -86,12 +86,14 @@ public:
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
+    class Impl;
+
 protected:
     virtual Item* doDuplicate() const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:
-    PointSetItemImpl* impl;
+    Impl* impl;
     void initialize();
 };
 

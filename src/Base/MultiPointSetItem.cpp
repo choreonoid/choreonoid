@@ -9,6 +9,7 @@
 #include "RootItem.h"
 #include "SceneWidget.h"
 #include "SceneWidgetEventHandler.h"
+#include "RectRegionMarker.h"
 #include "PutPropertyFunction.h"
 #include "Archive.h"
 #include <cnoid/PointSetUtil>

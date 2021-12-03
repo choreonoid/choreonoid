@@ -4,20 +4,19 @@
 */
 
 #include "PointSetItem.h"
+#include "RectRegionMarker.h"
 #include "ItemManager.h"
 #include "MenuManager.h"
 #include "PutPropertyFunction.h"
 #include "Archive.h"
-#include "GLSceneRenderer.h"
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneWidget>
 #include <cnoid/SceneWidgetEventHandler>
 #include <cnoid/SceneDrawables>
-#include <cnoid/SceneCameras>
 #include <cnoid/SceneMarkers>
 #include <cnoid/PointSetUtil>
-#include <cnoid/Exception>
 #include <cnoid/PolyhedralRegion>
+#include <cnoid/Exception>
 #include "gettext.h"
 
 using namespace std;
@@ -49,7 +48,7 @@ public:
     Signal<void()> sigAttentionPointsChanged;
     SgGroupPtr attentionPointMarkerGroup;
     
-    ScenePointSet(PointSetItemImpl* pointSetItem);
+    ScenePointSet(PointSetItem::Impl* pointSetItem);
 
     void setPointSize(double size);
     void setVoxelSize(double size);
@@ -79,7 +78,7 @@ typedef ref_ptr<ScenePointSet> ScenePointSetPtr;
 
 namespace cnoid {
 
-class PointSetItemImpl
+class PointSetItem::Impl
 {
 public:
     PointSetItem* self;
@@ -88,14 +87,14 @@ public:
     ScopedConnection pointSetUpdateConnection;
     Signal<void(const PolyhedralRegion& region)> sigPointsInRegionRemoved;
 
-    PointSetItemImpl(PointSetItem* self);
-    PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& org);
+    Impl(PointSetItem* self);
+    Impl(PointSetItem* self, const Impl& org);
+    void initialize();
     void setRenderingMode(int mode);
     bool onEditableChanged(bool on);
     void removePoints(const PolyhedralRegion& region);
     template<class ElementContainer>
     void removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove);
-    bool onRenderingModePropertyChanged(int mode);
     bool onTranslationPropertyChanged(const std::string& value);
     bool onRotationPropertyChanged(const std::string& value);
 };
@@ -156,40 +155,42 @@ void PointSetItem::initializeClass(ExtensionManager* ext)
 PointSetItem::PointSetItem()
 {
     setAttributes(FileImmutable | Reloadable);
-    impl = new PointSetItemImpl(this);
-    initialize();
+    impl = new Impl(this);
 }
 
 
-PointSetItemImpl::PointSetItemImpl(PointSetItem* self)
+PointSetItem::Impl::Impl(PointSetItem* self)
     : self(self)
 {
     pointSet = new SgPointSet;
     scene = new ScenePointSet(this);
+
+    initialize();
 }
 
 
 PointSetItem::PointSetItem(const PointSetItem& org)
     : Item(org)
 {
-    impl = new PointSetItemImpl(this, *org.impl);
-    initialize();
+    impl = new Impl(this, *org.impl);
 }
 
 
-PointSetItemImpl::PointSetItemImpl(PointSetItem* self, const PointSetItemImpl& org)
+PointSetItem::Impl::Impl(PointSetItem* self, const Impl& org)
     : self(self)
 {
     pointSet = new SgPointSet(*org.pointSet);
     scene = new ScenePointSet(this);
     scene->T() = org.scene->T();
+
+    initialize();
 }
 
 
-void PointSetItem::initialize()
+void PointSetItem::Impl::initialize()
 {
-    impl->pointSetUpdateConnection.reset(
-        impl->pointSet->sigUpdated().connect([&](const SgUpdate&){ notifyUpdate(); }));
+    pointSetUpdateConnection.reset(
+        pointSet->sigUpdated().connect([&](const SgUpdate&){ self->notifyUpdate(); }));
 }
 
 
@@ -290,7 +291,7 @@ void PointSetItem::setRenderingMode(int mode)
 }
 
 
-void PointSetItemImpl::setRenderingMode(int mode)
+void PointSetItem::Impl::setRenderingMode(int mode)
 {
     scene->renderingMode.select(mode);
 }
@@ -345,7 +346,7 @@ bool PointSetItem::isEditable() const
 }
 
 
-bool PointSetItemImpl::onEditableChanged(bool on)
+bool PointSetItem::Impl::onEditableChanged(bool on)
 {
     scene->setEditable(on);
     return true;
@@ -427,7 +428,7 @@ void PointSetItem::removePoints(const PolyhedralRegion& region)
 }
 
 
-void PointSetItemImpl::removePoints(const PolyhedralRegion& region)
+void PointSetItem::Impl::removePoints(const PolyhedralRegion& region)
 {
     vector<int> indicesToRemove;
     const Isometry3 T = scene->T();
@@ -470,7 +471,7 @@ void PointSetItemImpl::removePoints(const PolyhedralRegion& region)
 
 
 template<class ElementContainer>
-void PointSetItemImpl::removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove)
+void PointSetItem::Impl::removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove)
 {
     const ElementContainer orgElements(elements);
     const int numOrgElements = orgElements.size();
@@ -527,7 +528,7 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     ScenePointSet* scene = impl->scene;
     putProperty(_("File"), fileName());
     putProperty(_("Rendering mode"), scene->renderingMode,
-                [&](int mode){ return impl->onRenderingModePropertyChanged(mode); });
+                [&](int mode){ impl->setRenderingMode(mode); return true; });
 
     putProperty.min(0.0);
     putProperty.decimals(1)
@@ -547,19 +548,7 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
 }
 
 
-bool PointSetItemImpl::onRenderingModePropertyChanged(int mode)
-{
-    if(mode != scene->renderingMode.which()){
-        if(scene->renderingMode.select(mode)){
-            setRenderingMode(mode);
-            return true;
-        }
-    }
-    return false;
-}
-
-
-bool PointSetItemImpl::onTranslationPropertyChanged(const std::string& value)
+bool PointSetItem::Impl::onTranslationPropertyChanged(const std::string& value)
 {
     Vector3 p;
     if(toVector3(value, p)){
@@ -571,7 +560,7 @@ bool PointSetItemImpl::onTranslationPropertyChanged(const std::string& value)
 }
 
 
-bool PointSetItemImpl::onRotationPropertyChanged(const std::string& value)
+bool PointSetItem::Impl::onRotationPropertyChanged(const std::string& value)
 {
     Vector3 rpy;
     if(toVector3(value, rpy)){
@@ -646,7 +635,7 @@ bool PointSetItem::restore(const Archive& archive)
 
 namespace {
 
-ScenePointSet::ScenePointSet(PointSetItemImpl* pointSetItemImpl)
+ScenePointSet::ScenePointSet(PointSetItem::Impl* pointSetItemImpl)
     : weakPointSetItem(pointSetItemImpl->self),
       orgPointSet(pointSetItemImpl->pointSet),
       renderingMode(PointSetItem::N_RENDERING_MODES)

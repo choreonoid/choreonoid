@@ -5,7 +5,8 @@
 #ifndef CNOID_BASE_MULTI_POINT_SET_ITEM_H
 #define CNOID_BASE_MULTI_POINT_SET_ITEM_H
 
-#include <cnoid/PointSetItem>
+#include "PointSetItem.h"
+#include <cnoid/SceneDrawables>
 #include "exportdecl.h"
 
 namespace cnoid {
