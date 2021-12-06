@@ -258,10 +258,10 @@ void UnifiedEditHistory::Impl::expandHistoryFromLatestToCurrentUndoPosition()
 }
 
 
-void UnifiedEditHistory::beginEditGroup(const std::string& label)
+void UnifiedEditHistory::beginEditGroup(const std::string& label, bool isValidForSingleRecord)
 {
     if(!impl->isProjectBeingLoaded){
-        impl->currentGroup = new EditRecordGroup(label);
+        impl->currentGroup = new EditRecordGroup(label, isValidForSingleRecord);
     }
 }
 
@@ -272,7 +272,11 @@ void UnifiedEditHistory::endEditGroup()
         EditRecordGroupPtr group = impl->currentGroup;
         impl->currentGroup.reset();
         if(!group->empty()){
-            impl->addRecord(group);
+            if(group->numRecords() == 1 && !group->isValidForSingleRecord()){
+                impl->addRecord(group->record(0));
+            } else {
+                impl->addRecord(group);
+            }
         }
     }
 }

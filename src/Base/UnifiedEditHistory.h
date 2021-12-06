@@ -25,7 +25,7 @@ public:
     EditRecord* record(int index);
 
     void addRecord(EditRecordPtr record);
-    void beginEditGroup(const std::string& label);
+    void beginEditGroup(const std::string& label, bool isValidForSingleRecord = true);
     void endEditGroup();
 
     class RecordBlocker : public Referenced

@@ -27,9 +27,10 @@ EditRecord* EditRecord::getFlipped() const
 }
 
 
-EditRecordGroup::EditRecordGroup(const std::string& label)
+EditRecordGroup::EditRecordGroup(const std::string& label, bool isValidForSingleRecord)
     : EditRecord(nullptr),
-      label_(label)
+      label_(label),
+      isValidForSingleRecord_(isValidForSingleRecord)
 {
 
 }
@@ -37,7 +38,8 @@ EditRecordGroup::EditRecordGroup(const std::string& label)
 
 EditRecordGroup::EditRecordGroup(const EditRecordGroup& org)
     : EditRecord(org),
-      label_(org.label_)
+      label_(org.label_),
+      isValidForSingleRecord_(org.isValidForSingleRecord_)
 {
     group_.reserve(org.group_.size());
     for(auto& record : org.group_){

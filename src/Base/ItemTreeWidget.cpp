@@ -4,6 +4,7 @@
 #include "ProjectManager.h"
 #include "MenuManager.h"
 #include "MessageView.h"
+#include "UnifiedEditHistory.h"
 #include "Archive.h"
 #include <cnoid/ConnectionSet>
 #include <QMouseEvent>
@@ -101,6 +102,8 @@ public:
     std::function<void(MenuManager& menuManager)> rootContextMenuFunction;
     PolymorphicItemFunctionSet  contextMenuFunctions;
 
+    UnifiedEditHistory* unifiedEditHistory;
+
     Impl(ItemTreeWidget* self);
     ~Impl();
     void initialize();
@@ -160,6 +163,8 @@ public:
     void storeExpandedItemsIter(QTreeWidgetItem* parentTwItem, Archive& archive, Listing& expanded);
     void onProjectAboutToBeLoaded(int recursiveLevel);
     void onProjectLoaded(int recursiveLevel);
+    std::string getViewTitle();
+    View* findOwnerView();
     void restoreState(const Archive& archive, const ListingPtr expanded);
     void restoreExpandedItems(const Archive& archive, const ListingPtr expanded);
 };
@@ -437,6 +442,8 @@ void ItemTreeWidget::Impl::initialize()
             [&](int recursiveLevel){ onProjectLoaded(recursiveLevel); }));
 
     fontPointSizeDiff = 0;
+
+    unifiedEditHistory = UnifiedEditHistory::instance();
 }
 
 
@@ -1247,13 +1254,25 @@ void ItemTreeWidget::cutSelectedItems()
 void ItemTreeWidget::Impl::cutSelectedItems()
 {
     copiedItems.clear();
+
+    auto selectedItems = getSelectedItems();
+
+    bool editGroupCreated = false;
+    if(selectedItems.size() > 1){
+        unifiedEditHistory->beginEditGroup(format(_("Cut items in {0}"), getViewTitle()));
+        editGroupCreated = true;
+    }
     
     forEachTopItems(
-        getSelectedItems(),
+        selectedItems,
         [&](Item* item, unordered_set<Item*>&){
             copiedItems.push_back(item);
             item->removeFromParentItem();
         });
+
+    if(editGroupCreated){
+        unifiedEditHistory->endEditGroup();
+    }
 }
 
 
@@ -1284,6 +1303,11 @@ bool ItemTreeWidget::Impl::pasteItems(bool doCheckPositionAcceptance)
             }
         }
         if(isPastable){
+            bool editGroupCreated = false;
+            if(copiedItems.size() > 1){
+                unifiedEditHistory->beginEditGroup(format(_("Paste items in {0}"), getViewTitle()), false);
+                editGroupCreated = true;
+            }
             auto it = copiedItems.begin();
             while(it != copiedItems.end()){
                 auto& item = *it;
@@ -1295,6 +1319,9 @@ bool ItemTreeWidget::Impl::pasteItems(bool doCheckPositionAcceptance)
                     it = copiedItems.erase(it);
                 }
                 pasted = true;
+            }
+            if(editGroupCreated){
+                unifiedEditHistory->endEditGroup();
             }
         }
     }
@@ -1759,9 +1786,48 @@ void ItemTreeWidget::Impl::dragLeaveEvent(QDragLeaveEvent *event)
 void ItemTreeWidget::Impl::dropEvent(QDropEvent* event)
 {
     isDropping = true;
+
+    bool editGroupCreated = false;
+    if(dragItems.size() > 1){
+        unifiedEditHistory->beginEditGroup(format(_("Drop items in {0}"), getViewTitle()));
+        editGroupCreated = true;
+    }
+    
     TreeWidget::dropEvent(event);
     dragItems.clear();
+
+    if(editGroupCreated){
+        unifiedEditHistory->endEditGroup();
+    }
+    
     isDropping = false;
+}
+
+
+std::string ItemTreeWidget::Impl::getViewTitle()
+{
+    string viewTitle;
+    if(auto view = findOwnerView()){
+        viewTitle = format(_("the {0} view"), view->windowTitle().toStdString());
+    } else {
+        viewTitle = "a view";
+    }
+    return viewTitle;
+}
+
+
+View* ItemTreeWidget::Impl::findOwnerView()
+{
+    View* view = nullptr;
+    auto widget = self->parentWidget();
+    while(widget){
+        view = dynamic_cast<View*>(widget);
+        if(view){
+            break;
+        }
+        widget = widget->parentWidget();
+    }
+    return view;
 }
 
 

@@ -44,10 +44,12 @@ typedef ref_ptr<EditRecord> EditRecordPtr;
 class CNOID_EXPORT EditRecordGroup : public EditRecord
 {
 public:
-    EditRecordGroup(const std::string& label);
+    EditRecordGroup(const std::string& label, bool isValidForSingleRecord = true);
 
     virtual EditRecord* clone() const override;
     virtual std::string label() const override;
+
+    bool isValidForSingleRecord() const { return isValidForSingleRecord_; }
 
     void addRecord(EditRecord* record){
         group_.push_back(record);
@@ -65,6 +67,7 @@ protected:
 private:
     std::vector<EditRecordPtr> group_;
     std::string label_;
+    bool isValidForSingleRecord_;
 };
 
 typedef ref_ptr<EditRecordGroup> EditRecordGroupPtr;

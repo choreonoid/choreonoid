@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-02 14:41+0900\n"
+"POT-Creation-Date: 2021-12-06 22:12+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -606,8 +606,20 @@ msgstr "全て選択"
 msgid "Clear selection"
 msgstr "選択解除"
 
+msgid "Cut items in {0}"
+msgstr "複数のアイテムを{0}上で切り取り"
+
 msgid "The copied items cannot be pasted to \"{0}\"."
 msgstr "コピーされたアイテムを\"{0}\"にペーストできませんでした．"
+
+msgid "Paste items in {0}"
+msgstr "複数のアイテムを{0}上で貼り付け"
+
+msgid "Drop items in {0}"
+msgstr "複数のアイテムを{0}上でドロップ"
+
+msgid "the {0} view"
+msgstr "{0}ビュー"
 
 msgid "Register Layout"
 msgstr "レイアウトの登録"
@@ -1797,3 +1809,6 @@ msgstr "仮想ジョイスティック"
 
 msgid "VirtualJoystickView"
 msgstr "仮想ジョイスティックビュー"
+
+#~ msgid "Drop item \"{0}\" in {1}"
+#~ msgstr "アイテム \"{0}\" を{1}上でドロップ"
