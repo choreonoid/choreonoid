@@ -47,10 +47,12 @@ void calcSubMass(Link* link, vector<SubMass>& subMasses, bool calcIw)
     }
     
     if(calcIw){
-        sub.Iw = R * link->I() * R.transpose() + link->m() * D( link->wc() - sub.mwc/sub.m );
+        if(sub.m != 0.0) sub.Iw = R * link->I() * R.transpose() + link->m() * D( link->wc() - sub.mwc/sub.m );
+        else sub.Iw = R * link->I() * R.transpose();
         for(Link* child = link->child(); child; child = child->sibling()){
             SubMass& childSub = subMasses[child->index()];
-            sub.Iw += childSub.Iw + childSub.m * D( childSub.mwc/childSub.m - sub.mwc/sub.m );
+            if(sub.m != 0.0 && childSub.m != 0.0) sub.Iw += childSub.Iw + childSub.m * D( childSub.mwc/childSub.m - sub.mwc/sub.m );
+            else sub.Iw += childSub.Iw;
         }
     }
 }
@@ -204,7 +206,9 @@ void calcAngularMomentumJacobian(Body* body, Link* base, Eigen::MatrixXd& H)
             const Vector3 omega = sgn[joint->jointId()] * joint->R() * joint->a();
             const SubMass& sub = subMasses[joint->index()];
             const Vector3 Mcol = M.col(joint->jointId());
-            const Vector3 dp = (sub.mwc/sub.m).cross(Mcol) + sub.Iw * omega;
+            Vector3 dp;
+            if(sub.m != 0.0) dp = (sub.mwc/sub.m).cross(Mcol) + sub.Iw * omega;
+            else dp = sub.Iw * omega;
             H.col(joint->jointId()) = dp;
         } else {
             std::cerr << "calcAngularMomentumJacobian() : unsupported jointType("
