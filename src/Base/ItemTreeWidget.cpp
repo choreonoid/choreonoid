@@ -232,6 +232,12 @@ void ItemTreeWidget::Display::setNameEditable(bool on)
 }
 
 
+void ItemTreeWidget::Display::setDisabled(bool on)
+{
+    item->setDisabled(on);
+}
+
+
 namespace {
 
 ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)

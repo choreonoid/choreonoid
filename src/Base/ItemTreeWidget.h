@@ -59,6 +59,7 @@ public:
         void setToolTip(const std::string& toolTip);
         void setStatusTip(const std::string& statusTip);
         void setNameEditable(bool on);
+        void setDisabled(bool on);
     private:
         QTreeWidgetItem* item;
         friend class Impl;
