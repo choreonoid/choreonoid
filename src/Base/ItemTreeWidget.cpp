@@ -136,7 +136,7 @@ public:
     void setSelectedItemsChecked(bool on);
     void toggleSelectedItemChecks();
     void forEachTopItems(
-        const ItemList<>& items, std::function<void(Item*, unordered_set<Item*>& itemSet)> callback);
+        const ItemList<>& items, std::function<bool(Item*, unordered_set<Item*>& itemSet)> callback);
     void copySelectedItems();
     void copySelectedItemsInSubTree(Item* item, Item* duplicated, unordered_set<Item*>& itemSet);
     void copySelectedItemsWithSubTrees();
@@ -1162,7 +1162,7 @@ void ItemTreeWidget::Impl::toggleSelectedItemChecks()
 
 
 void ItemTreeWidget::Impl::forEachTopItems
-(const ItemList<>& items, std::function<void(Item*, unordered_set<Item*>& itemSet)> callback)
+(const ItemList<>& items, std::function<bool(Item*, unordered_set<Item*>& itemSet)> callback)
 {
     unordered_set<Item*> itemSet(items.size());
     for(auto& item : items){
@@ -1179,7 +1179,9 @@ void ItemTreeWidget::Impl::forEachTopItems
             parentItem = parentItem->parentItem();
         }
         if(!isChild){
-            callback(item, itemSet);
+            if(!callback(item, itemSet)){
+                return;
+            }
         }
     }
 }
@@ -1203,6 +1205,7 @@ void ItemTreeWidget::Impl::copySelectedItems()
                 copiedItems.push_back(duplicated);
                 copySelectedItemsInSubTree(item, duplicated, itemSet);
             }
+            return true;
         });
 }
 
@@ -1247,6 +1250,7 @@ void ItemTreeWidget::Impl::copySelectedItemsWithSubTrees()
             if(auto duplicated = item->duplicateSubTree()){
                 copiedItems.push_back(duplicated);
             }
+            return true;
         });
 }
 
@@ -1259,9 +1263,24 @@ void ItemTreeWidget::cutSelectedItems()
 
 void ItemTreeWidget::Impl::cutSelectedItems()
 {
-    copiedItems.clear();
-
     auto selectedItems = getSelectedItems();
+
+    bool cuttable = true;
+    forEachTopItems(
+        selectedItems,
+        [&](Item* item, unordered_set<Item*>&){
+            if(!self->checkCuttable(item)){
+                cuttable = false;
+                return false;
+            }
+            return true;
+        });
+
+    if(!cuttable){
+        return;
+    }
+
+    copiedItems.clear();
 
     bool editGroupCreated = false;
     if(selectedItems.size() > 1){
@@ -1274,6 +1293,7 @@ void ItemTreeWidget::Impl::cutSelectedItems()
         [&](Item* item, unordered_set<Item*>&){
             copiedItems.push_back(item);
             item->removeFromParentItem();
+            return true;
         });
 
     if(editGroupCreated){
@@ -1744,6 +1764,7 @@ void ItemTreeWidget::Impl::dragEnterEvent(QDragEnterEvent* event)
         getSelectedItems(),
         [&](Item* item, unordered_set<Item*>&){
             dragItems.push_back(item);
+            return true;
         });
 }
 
