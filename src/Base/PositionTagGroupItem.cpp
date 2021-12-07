@@ -32,7 +32,6 @@ namespace {
 
 map<PositionTagGroupPtr, PositionTagGroupItem*> tagGroupToItemMap;
 
-enum LocationMode { TagGroupLocation, TagLocation };
 enum TagDisplayType { Normal, Selected, Highlighted };
 
 constexpr float HighlightSizeRatio = 1.1f;
@@ -108,13 +107,12 @@ public:
 typedef ref_ptr<SceneTagGroup> SceneTagGroupPtr;
 
 
-class TargetLocationProxy : public LocationProxy
+class TagGroupLocationProxy : public LocationProxy
 {
 public:
     PositionTagGroupItem::Impl* impl;
 
-    TargetLocationProxy(PositionTagGroupItem::Impl* impl);
-    const PositionTag* getTargetTag() const;
+    TagGroupLocationProxy(PositionTagGroupItem::Impl* impl);
     virtual std::string getName() const override;
     virtual Item* getCorrespondingItem() override;
     virtual Isometry3 getLocation() const override;
@@ -124,7 +122,29 @@ public:
     virtual LocationProxyPtr getParentLocationProxy() const override;
 };
 
-typedef ref_ptr<TargetLocationProxy> TargetLocationProxyPtr;
+typedef ref_ptr<TagGroupLocationProxy> TagGroupLocationProxyPtr;
+
+
+class TagLocationProxy : public LocationProxy
+{
+public:
+    PositionTagGroupItem::Impl* impl;
+    int tagIndex;
+    ScopedConnection connection;
+    Signal<void()> sigLocationChanged_;
+
+    TagLocationProxy(PositionTagGroupItem::Impl* impl, int tagIndex);
+    PositionTag* getTag() const;
+    virtual std::string getName() const override;
+    virtual std::string getCategory() const override;
+    virtual Isometry3 getLocation() const override;
+    virtual bool setLocation(const Isometry3& T) override;
+    virtual void finishLocationEditing() override;
+    virtual SignalProxy<void()> sigLocationChanged() override;
+    virtual LocationProxyPtr getParentLocationProxy() const override;
+};
+
+typedef ref_ptr<TagLocationProxy> TagLocationProxyPtr;
 
 
 class TagParentLocationProxy : public LocationProxy
@@ -219,10 +239,12 @@ public:
     int numSelectedTags;
     std::vector<int> selectedTagIndices;
     Signal<void()> sigTagSelectionChanged;
-    LocationMode locationMode;
-    int locationTargetTagIndex;
-    TargetLocationProxyPtr targetLocation;
-    Signal<void()> sigTargetLocationChanged;
+
+    Signal<void()> sigOriginOffsetChanged;
+    Signal<void()> sigParentLocationChanged;
+
+    TagGroupLocationProxyPtr tagGroupLocationProxy;
+    map<PositionTagPtr, TagLocationProxyPtr> tagLocationProxyMap;
     LocationProxyPtr groupParentLocation;
     ScopedConnection groupParentLocationConnection;
     TagParentLocationProxyPtr tagParentLocation;
@@ -309,9 +331,6 @@ PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
     needToUpdateSelectedTagIndices = false;
     numSelectedTags = 0;
 
-    locationMode = TagGroupLocation;
-    locationTargetTagIndex = -1;
-    targetLocation = new TargetLocationProxy(this);
     tagParentLocation = new TagParentLocationProxy(this);
 
     fixedSizeTagMarker = new SgFixedPixelSizeGroup;
@@ -421,7 +440,7 @@ void PositionTagGroupItem::setOriginOffset(const Isometry3& T_offset, bool reque
 
     if(requestPreview){
         impl->sigOriginOffsetPreviewRequested();
-        impl->sigTargetLocationChanged();
+        impl->sigOriginOffsetChanged();
         if(impl->sceneTagGroup){
             impl->sceneTagGroup->setOriginOffset(T_offset);
         }
@@ -484,6 +503,8 @@ void PositionTagGroupItem::Impl::onTagRemoved(int index, PositionTag* tag)
         needToUpdateSelectedTagIndices = true;
     }
 
+    tagLocationProxyMap.erase(tag);
+
     lastEditTagGroup->removeAt(index);
 
     if(!isDoingUndoOrRedo){
@@ -505,10 +526,6 @@ void PositionTagGroupItem::Impl::onTagPositionUpdated(int index)
 
     *lastTag = *newTag;
 
-    if(locationMode == TagLocation && locationTargetTagIndex == index){
-        sigTargetLocationChanged();
-    }
-    
     notifyUpdateLater();
 }
 
@@ -621,24 +638,7 @@ void PositionTagGroupItem::Impl::onTagSelectionChanged(bool doUpdateTagDisplayTy
     if(sceneTagGroup && doUpdateTagDisplayTypes){
         sceneTagGroup->updateTagDisplayTypes();
     }
-    
     sigTagSelectionChanged();
-
-    if(numSelectedTags == 0){
-        locationMode = TagGroupLocation;
-        locationTargetTagIndex = -1;
-    } else {
-        locationMode = TagLocation;
-        locationTargetTagIndex = 0;
-        for(size_t i=0; i < tagSelection.size(); ++i){
-            if(tagSelection[i]){
-                locationTargetTagIndex = i;
-                break;
-            }
-        }
-    }        
-    targetLocation->notifyAttributeChange();
-    sigTargetLocationChanged();
 }
 
 
@@ -670,9 +670,36 @@ SgNode* PositionTagGroupItem::getScene()
 }
 
 
-LocationProxyPtr PositionTagGroupItem::getLocationProxy()
+std::vector<LocationProxyPtr> PositionTagGroupItem::getLocationProxies()
 {
-    return impl->targetLocation;
+    vector<LocationProxyPtr> proxies;
+
+    if(!impl->tagGroupLocationProxy){
+        impl->tagGroupLocationProxy = new TagGroupLocationProxy(impl);
+    }
+    proxies.push_back(impl->tagGroupLocationProxy);
+    
+    if(impl->numSelectedTags > 0){
+        for(size_t i=0; i < impl->tagSelection.size(); ++i){
+            if(impl->tagSelection[i]){
+                if(auto tag = impl->tagGroup->tagAt(i)){
+                    auto& proxy = impl->tagLocationProxyMap[tag];
+                    if(!proxy){
+                        proxy = new TagLocationProxy(impl, i);
+                    }
+                    proxies.push_back(proxy);
+                }
+            }
+        }
+    }
+    
+    return proxies;
+}
+
+
+SignalProxy<void()> PositionTagGroupItem::getSigLocationProxiesChanged()
+{
+    return impl->sigTagSelectionChanged;
 }
 
 
@@ -734,7 +761,12 @@ void PositionTagGroupItem::Impl::setParentItemLocationProxy
     onParentItemLocationChanged();
 
     // Notify the change of the parent location proxy
-    targetLocation->notifyAttributeChange();
+    if(tagGroupLocationProxy){
+        tagGroupLocationProxy->notifyAttributeChange();
+    }
+    for(auto& kv : tagLocationProxyMap){
+        kv.second->notifyAttributeChange();
+    }
 }
 
 
@@ -779,7 +811,7 @@ void PositionTagGroupItem::Impl::onParentItemLocationChanged()
     if(sceneTagGroup){
         sceneTagGroup->setParentPosition(T_parent);
     }
-    sigTargetLocationChanged();
+    sigParentLocationChanged();
 }
 
 
@@ -1405,7 +1437,7 @@ bool SceneTagGroup::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* m
 }
 
 
-TargetLocationProxy::TargetLocationProxy(PositionTagGroupItem::Impl* impl)
+TagGroupLocationProxy::TagGroupLocationProxy(PositionTagGroupItem::Impl* impl)
     : LocationProxy(ParentRelativeLocation),
       impl(impl)
 {
@@ -1413,95 +1445,120 @@ TargetLocationProxy::TargetLocationProxy(PositionTagGroupItem::Impl* impl)
 }
 
 
-const PositionTag* TargetLocationProxy::getTargetTag() const
+std::string TagGroupLocationProxy::getName() const
 {
-    return impl->tagGroup->tagAt(impl->locationTargetTagIndex);
+    return format(_("{0}: Origin"), impl->self->displayName());
 }
 
 
-std::string TargetLocationProxy::getName() const
+Item* TagGroupLocationProxy::getCorrespondingItem()
 {
-    if(impl->locationMode == TagGroupLocation){
-        return format(_("{0}: Origin"), impl->self->displayName());
-    } else {
-        auto tag = getTargetTag();
-        return format(_("{0}: Tag {1}"), impl->self->displayName(), impl->locationTargetTagIndex);
-    }
+    return impl->self;
 }
 
 
-Item* TargetLocationProxy::getCorrespondingItem()
+Isometry3 TagGroupLocationProxy::getLocation() const
 {
-    if(impl->locationMode == TagGroupLocation){
-        return impl->self;
-    } else {
-        return nullptr;
-    }
+    return impl->T_offset;
 }
 
 
-Isometry3 TargetLocationProxy::getLocation() const
+bool TagGroupLocationProxy::setLocation(const Isometry3& T)
 {
-    if(impl->locationMode == TagGroupLocation){
-        return impl->T_offset;
-    } else {
-        return getTargetTag()->position();
-    }
-}
-
-
-bool TargetLocationProxy::setLocation(const Isometry3& T)
-{
-    auto tagGroup = impl->tagGroup;
-    if(impl->locationMode == TagGroupLocation){
-        impl->self->setOriginOffset(T, true);
-    } else {
-        auto primaryTag = tagGroup->tagAt(impl->locationTargetTagIndex);
-        Isometry3 T_base = T * primaryTag->position().inverse(Eigen::Isometry);
-        primaryTag->setPosition(T);
-        for(size_t i=0; i < impl->tagSelection.size(); ++i){
-            if(impl->tagSelection[i]){
-                if(i != impl->locationTargetTagIndex){
-                    auto tag = tagGroup->tagAt(i);
-                    tag->setPosition(T_base * tag->position());
-                }
-                tagGroup->notifyTagPositionChange(i);
-            }
-        }
-    }
+    impl->self->setOriginOffset(T, true);
     return true;
 }
 
 
-void TargetLocationProxy::finishLocationEditing()
+void TagGroupLocationProxy::finishLocationEditing()
 {
-    auto tagGroup = impl->tagGroup;
-    if(impl->locationMode == TagGroupLocation){
-        impl->self->notifyOriginOffsetUpdate(false);
-    } else {
-        auto primaryTag = tagGroup->tagAt(impl->locationTargetTagIndex);
-        for(size_t i=0; i < impl->tagSelection.size(); ++i){
-            if(impl->tagSelection[i]){
-                tagGroup->notifyTagPositionUpdate(i, false);
-            }
-        }
-    }
+    impl->self->notifyOriginOffsetUpdate(false);
 }
 
 
-SignalProxy<void()> TargetLocationProxy::sigLocationChanged()
+SignalProxy<void()> TagGroupLocationProxy::sigLocationChanged()
 {
-    return impl->sigTargetLocationChanged;
+    return impl->sigOriginOffsetChanged;
 }
 
 
-LocationProxyPtr TargetLocationProxy::getParentLocationProxy() const
+LocationProxyPtr TagGroupLocationProxy::getParentLocationProxy() const
 {
-    if(impl->locationMode == TagGroupLocation){
-        return impl->groupParentLocation;
-    } else {
-        return impl->tagParentLocation;
+    return impl->groupParentLocation;
+}
+
+
+TagLocationProxy::TagLocationProxy(PositionTagGroupItem::Impl* impl, int tagIndex)
+    : LocationProxy(ParentRelativeLocation),
+      impl(impl),
+      tagIndex(tagIndex)
+{
+    connection.reset(
+        impl->tagGroup->sigTagPositionUpdated().connect(
+            [&](int index){
+                if(index == tagIndex){
+                    sigLocationChanged_();
+                }
+            }));
+}
+
+
+PositionTag* TagLocationProxy::getTag() const
+{
+    if(tagIndex < impl->tagGroup->numTags()){
+        return const_cast<PositionTagGroupItem::Impl*>(impl)->tagGroup->tagAt(tagIndex);
     }
+    return nullptr;
+}
+
+
+std::string TagLocationProxy::getName() const
+{
+    return format(_("{0}: Tag {1}"), impl->self->displayName(), tagIndex);
+}
+
+
+std::string TagLocationProxy::getCategory() const
+{
+    return "PositionTag";
+}
+
+
+Isometry3 TagLocationProxy::getLocation() const
+{
+    if(auto tag = getTag()){
+        return tag->position();
+    }
+    return Isometry3::Identity();
+}
+
+
+bool TagLocationProxy::setLocation(const Isometry3& T)
+{
+    if(auto tag = getTag()){
+        tag->setPosition(T);
+        impl->tagGroup->notifyTagPositionChange(tagIndex);
+        return true;
+    }
+    return false;
+}
+
+
+void TagLocationProxy::finishLocationEditing()
+{
+    impl->tagGroup->notifyTagPositionUpdate(tagIndex, false);
+}
+
+
+SignalProxy<void()> TagLocationProxy::sigLocationChanged()
+{
+    return sigLocationChanged_;
+}
+
+
+LocationProxyPtr TagLocationProxy::getParentLocationProxy() const
+{
+    return impl->tagParentLocation;
 }
 
 

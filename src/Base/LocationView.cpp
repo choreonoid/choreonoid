@@ -8,6 +8,7 @@
 #include "RootItem.h"
 #include "UnifiedEditHistory.h"
 #include "Archive.h"
+#include "LazyCaller.h"
 #include "CheckBox.h"
 #include "ComboBox.h"
 #include <cnoid/CoordinateFrameList>
@@ -16,7 +17,7 @@
 #include <QBoxLayout>
 #include <QLabel>
 #include <fmt/format.h>
-#include <unordered_set>
+#include <set>
 #include "gettext.h"
 
 using namespace std;
@@ -24,6 +25,31 @@ using namespace cnoid;
 using fmt::format;
 
 namespace {
+
+struct LocationInfo : public Referenced
+{
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
+    LocationProxyPtr location;
+    LocationProxyPtr parentLocation;
+    int type;
+    bool isRelativeLocation;
+    bool isLocationAbleToBeGlobal;
+    bool isDependingOnAnotherTargetLocation;
+    ItemPtr item;
+    ScopedConnection locationChangeConnection;
+    ScopedConnectionSet miscConnections;
+    Isometry3 T_primary_relative;
+};
+typedef ref_ptr<LocationInfo> LocationInfoPtr;
+
+struct LocationCategory : public Referenced
+{
+    string name;
+    vector<LocationInfoPtr> locationInfos;
+    bool changed;
+};
+typedef ref_ptr<LocationCategory> LocationCategoryPtr;
 
 enum CoordinateType { BaseCoord, ParentCoord, LocalCoord };
 
@@ -75,30 +101,18 @@ public:
     
     LocationView* self;
 
-    struct LocationInfo : public Referenced
-    {
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-        LocationProxyPtr proxy;
-        LocationProxyPtr parentProxy;
-        int type;
-        bool isRelativeLocation;
-        bool isLocationAbleToBeGlobal;
-        bool isDependingOnAnotherTargetLocation;
-        ItemPtr item;
-        ScopedConnection locationChangeConnection;
-        ScopedConnectionSet miscConnections;
-        Isometry3 T_primary_relative;
-    };
-    typedef ref_ptr<LocationInfo> LocationInfoPtr;
-    vector<LocationInfoPtr> locations;
-    unordered_set<LocationProxy*> locationProxySet;
+    vector<LocationCategoryPtr> locationCategories;
+    LocationCategoryPtr currentCategory;
+    set<LocationProxy*> managedLocations;
+    LazyCaller setupInterfaceForNewLocationsLater;
     Isometry3 T_primary; // The latest primary object global location
-
     Connection itemSelectionConnection;
     Connection editRequestConnection;
+    map<ItemPtr, ScopedConnection> itemConnectionMap;
     
-    QLabel captionLabel;
+    QLabel singleCategoryLabel;
+    ComboBox categoryCombo;
+    string preferredCategoryName;
     LockCheckBox lockCheck;
     PositionWidget* positionWidget;
     vector<CoordinateInfoPtr> coordinates;
@@ -110,15 +124,18 @@ public:
     Impl(LocationView* self);
     void onSelectedItemsChanged(const ItemList<>& items);
     bool onEditRequest(LocationProxyPtr location);
-    void addLocation(LocationProxyPtr locationProxy, Item* Item);
-    void onObjectLocationChanged(LocationInfo* location);
-    void updatePrimaryRelativePosition(LocationInfo* location);
-    void onLocationExpired(LocationInfoPtr location);
+    void clearLocationCategories();
+    void addLocation(LocationProxyPtr location, Item* Item);
+    void onObjectLocationChanged(LocationInfo* locationInfo);
+    void updatePrimaryRelativePosition(LocationInfo* locationInfo);
+    void onLocationExpired(LocationInfoPtr locationInfo);
     void setupInterfaceForNewLocations();
-    bool checkDependencyOnAnotherLocation(LocationProxyPtr parentProxy);
+    bool checkDependencyOnAnotherLocation(LocationCategory* category, LocationProxyPtr parentLocation);
+    void setCurrentLocationCategory(int categoryIndex);
     void setEditorLocked(bool on);
     void clearBaseCoordinateSystems();
     void updateBaseCoordinateSystems();
+    void setIndividualRotationMode(bool on);
     void updatePositionWidgetWithPrimaryLocation();
     bool updateTargetLocationWithInputPosition(const Isometry3& T_input);
     void finishLocationEditing();
@@ -153,7 +170,11 @@ LocationView::Impl::Impl(LocationView* self)
     self->setLayout(vbox, 1.0, 0.5, 1.0, 0.5);
 
     auto hbox = new QHBoxLayout;
-    hbox->addWidget(&captionLabel, 1);
+    hbox->addWidget(&singleCategoryLabel, 1);
+    categoryCombo.hide();
+    categoryCombo.sigCurrentIndexChanged().connect(
+        [&](int index){ setCurrentLocationCategory(index); });
+    hbox->addWidget(&categoryCombo, 1);
     lockCheck.setText(_("Lock"));
     hbox->addWidget(&lockCheck);
     vbox->addLayout(hbox);
@@ -178,13 +199,14 @@ LocationView::Impl::Impl(LocationView* self)
     hbox->addStretch();
     individualRotationCheck.setText(_("Individual Rotation"));
     individualRotationCheck.setEnabled(false);
+    individualRotationCheck.sigToggled().connect(
+        [&](bool on){ setIndividualRotationMode(on); });
     hbox->addWidget(&individualRotationCheck);
     vbox->addLayout(hbox);
 
     vbox->addStretch();
 
     setupInterfaceForNewLocations();
-    
     lastCoordIndex = ParentCoordIndex;
 }
 
@@ -205,7 +227,7 @@ void LocationView::onActivated()
 
     impl->editRequestConnection =
         LocationProxy::sigEditRequest().connect(
-            [this](LocationProxy* locationProxy){ return impl->onEditRequest(locationProxy); });
+            [this](LocationProxy* location){ return impl->onEditRequest(location); });
 
     impl->onSelectedItemsChanged(rootItem->selectedItems());
 }
@@ -215,6 +237,7 @@ void LocationView::onDeactivated()
 {
     impl->itemSelectionConnection.disconnect();
     impl->editRequestConnection.disconnect();
+    impl->itemConnectionMap.clear();
 }
 
 
@@ -226,207 +249,371 @@ void LocationView::onAttachedMenuRequest(MenuManager& menuManager)
 
 void LocationView::Impl::onSelectedItemsChanged(const ItemList<>& items)
 {
+    set<LocationProxy*> newLocations;
+
     for(auto& item : items){
         if(auto locatable = dynamic_cast<LocatableItem*>(item.get())){
-            if(auto proxy = locatable->getLocationProxy()){
-                if(locationProxySet.find(proxy) == locationProxySet.end()){
-                    addLocation(proxy, item);
+            auto locations = locatable->getLocationProxies();
+            if(!locations.empty()){
+                for(auto& location : locations){
+                    if(managedLocations.find(location) == managedLocations.end()){
+                        addLocation(location, item);
+                    }
+                    newLocations.insert(location);
                 }
+                auto& connection = itemConnectionMap[item];
+                if(!connection.connected()){
+                    connection.reset(
+                        locatable->getSigLocationProxiesChanged().connect(
+                            [&](){ onSelectedItemsChanged(RootItem::instance()->selectedItems()); }));
+                }
+            } else if(auto location = locatable->getLocationProxy()){
+                if(managedLocations.find(location) == managedLocations.end()){
+                    addLocation(location, item);
+                }
+                newLocations.insert(location);
             }
         }
     }
-    
-    // Arrange location objects
-    if(!locations.empty()){
-        auto oldFirstLocation = locations.front();
-        auto it = locations.begin();
-        while(it != locations.end()){
-            auto& location = *it;
-            if(!location->item || !location->item->isSelected()){
-                locationProxySet.erase(location->proxy);
-                it = locations.erase(it);
+
+    if(newLocations.empty()){
+        if(currentCategory){
+            // Keep the last primary location object if there is no selection
+            newLocations.insert(currentCategory->locationInfos.front()->location);
+        }
+    }
+        
+    // Remove inactive locations
+    if(!locationCategories.empty()){
+        LocationInfoPtr prevPrimayLocationInfo;
+        if(currentCategory){
+            prevPrimayLocationInfo = currentCategory->locationInfos.front();
+        }
+        bool firstCategoryBeingChangedFound = false;
+        auto p = locationCategories.begin();
+        while(p != locationCategories.end()){
+            auto& category = *p;
+            auto& locationInfos = category->locationInfos;
+            auto q = locationInfos.begin();
+            while(q != locationInfos.end()){
+                auto& location = (*q)->location;
+                if(newLocations.find(location) == newLocations.end()){
+                    q = locationInfos.erase(q);
+                    category->changed = true;
+                } else {
+                    ++q;
+                }
+            }
+            if(!firstCategoryBeingChangedFound && category->changed){
+                // To make the category that last changed in the target locations current for usability reasons.
+                preferredCategoryName = category->name;
+                firstCategoryBeingChangedFound = true;
+            }
+            category->changed = false;
+
+            if(locationInfos.empty()){
+                p = locationCategories.erase(p);
+            } else {
+                ++p;
+            }
+        }
+    }
+
+    if(!managedLocations.empty() || !newLocations.empty()){
+
+        // Remove the signal connections of the invalid items
+        auto it = itemConnectionMap.begin();
+        while(it != itemConnectionMap.end()){
+            auto& item = it->first;
+            if(!item->isSelected()){
+                it = itemConnectionMap.erase(it);
             } else {
                 ++it;
             }
         }
-        // Keep the last primary location object if there is no selection
-        if(locations.empty()){
-            locations.push_back(oldFirstLocation);
-            if(oldFirstLocation->item){
-                locationProxySet.insert(oldFirstLocation->proxy);
-            }
-        }
-    }
 
-    setupInterfaceForNewLocations();
+        managedLocations.swap(newLocations);
+
+        setupInterfaceForNewLocations();
+    }
 }
 
 
-bool LocationView::Impl::onEditRequest(LocationProxyPtr locationProxy)
+bool LocationView::Impl::onEditRequest(LocationProxyPtr location)
 {
-    locations.clear();
-    locationProxySet.clear();
-    addLocation(locationProxy, nullptr);
+    clearLocationCategories();
+    addLocation(location, nullptr);
+    managedLocations.insert(location);
     setupInterfaceForNewLocations();
     return true;
 }
 
 
-void LocationView::Impl::addLocation(LocationProxyPtr locationProxy, Item* ownerItem)
+void LocationView::Impl::clearLocationCategories()
 {
-    int type = locationProxy->locationType();
+    locationCategories.clear();
+    managedLocations.clear();
+    currentCategory.reset();
+}
+
+
+void LocationView::Impl::addLocation(LocationProxyPtr location, Item* ownerItem)
+{
+    int type = location->locationType();
     if(type == LocationProxy::InvalidLocation){
         return;
     }
 
-    // The variable must not be a smart pointer to avoid a circular reference
+    // Note that the variable must not be a smart pointer to avoid a circular reference
     // caused by a captured variable in the following lambda expressions
-    auto location = new LocationInfo;
-    location->proxy = locationProxy;
-    location->parentProxy = locationProxy->getParentLocationProxy();
-    location->type = type;
+    auto info = new LocationInfo;
+    info->location = location;
+    info->parentLocation = location->getParentLocationProxy();
+    info->type = type;
 
-    location->isRelativeLocation = false;
-    if(location->type == LocationProxy::ParentRelativeLocation && location->parentProxy){
-        location->isRelativeLocation = true;
-    } else if(location->type == LocationProxy::OffsetLocation){
-        location->isRelativeLocation = true;
+    info->isRelativeLocation = false;
+    if(info->type == LocationProxy::ParentRelativeLocation && info->parentLocation){
+        info->isRelativeLocation = true;
+    } else if(info->type == LocationProxy::OffsetLocation){
+        info->isRelativeLocation = true;
     }
-    location->isLocationAbleToBeGlobal = (!location->isRelativeLocation || location->parentProxy);
+    info->isLocationAbleToBeGlobal = (!info->isRelativeLocation || info->parentLocation);
 
-    location->isDependingOnAnotherTargetLocation = false;
+    info->isDependingOnAnotherTargetLocation = false;
         
-    location->locationChangeConnection.reset(
-        locationProxy->sigLocationChanged().connect(
-            [this, location](){ onObjectLocationChanged(location); }));
+    info->locationChangeConnection.reset(
+        location->sigLocationChanged().connect(
+            [this, info](){ onObjectLocationChanged(info); }));
     
-    location->miscConnections.add(
-        locationProxy->sigAttributeChanged().connect(
-            [this, location](){
-                if(location == locations.front() || location == locations[1]){
-                    setupInterfaceForNewLocations();
+    info->miscConnections.add(
+        location->sigAttributeChanged().connect(
+            [this, info](){
+                if(currentCategory){
+                    auto& infos = currentCategory->locationInfos;
+                    if(infos.front() == info || infos[1] == info){
+                        setupInterfaceForNewLocations();
+                    }
                 }
             }));
 
-    location->miscConnections.add(
-        locationProxy->sigExpired().connect(
-            [this, location](){ onLocationExpired(location); }));
+    info->miscConnections.add(
+        location->sigExpired().connect(
+            [this, info](){ onLocationExpired(info); }));
 
     if(ownerItem){
-        location->miscConnections.add(
+        info->miscConnections.add(
             ownerItem->sigDisconnectedFromRoot().connect(
-                [this, location](){ onLocationExpired(location); }));
-        location->item = ownerItem;
+                [this, info](){ onLocationExpired(info); }));
+        info->item = ownerItem;
     }
-        
-    locations.push_back(location);
-    locationProxySet.insert(locationProxy);
+
+    LocationCategoryPtr targetCategory;
+    string categoryName = location->getCategory();
+    for(auto& category : locationCategories){
+        if(category->name == categoryName){
+            targetCategory = category;
+            break;
+        }
+    }
+    if(!targetCategory){
+        targetCategory = new LocationCategory;
+        targetCategory->name = categoryName;
+        locationCategories.push_back(targetCategory);
+    }
+    targetCategory->changed = true;
+    targetCategory->locationInfos.push_back(info);
 }
 
 
-void LocationView::Impl::onObjectLocationChanged(LocationInfo* location)
+void LocationView::Impl::onObjectLocationChanged(LocationInfo* locationInfo)
 {
-    if(location == locations.front()){
-        updatePositionWidgetWithPrimaryLocation();
-    } else {
-        updatePrimaryRelativePosition(location);
+    if(currentCategory){
+        auto& locationInfos = currentCategory->locationInfos;
+        if(locationInfo == locationInfos.front()){
+            updatePositionWidgetWithPrimaryLocation();
+        } else {
+            for(auto& info : locationInfos){
+                if(info == locationInfo){ // Included in the current category?
+                    updatePrimaryRelativePosition(locationInfo);
+                    break;
+                }
+            }
+        }
     }
 }
 
 
-void LocationView::Impl::updatePrimaryRelativePosition(LocationInfo* location)
+void LocationView::Impl::updatePrimaryRelativePosition(LocationInfo* locationInfo)
 {
-    if(location->type != LocationProxy::OffsetLocation){
-        location->T_primary_relative =
-            T_primary.inverse(Eigen::Isometry) * location->proxy->getGlobalLocation();
+    if(locationInfo->type != LocationProxy::OffsetLocation){
+        locationInfo->T_primary_relative =
+            T_primary.inverse(Eigen::Isometry) * locationInfo->location->getGlobalLocation();
     }
 }
 
 
-void LocationView::Impl::onLocationExpired(LocationInfoPtr location)
+void LocationView::Impl::onLocationExpired(LocationInfoPtr locationInfo)
 {
-    auto it = std::find(locations.begin(), locations.end(), location);
-    if(it != locations.end()){
-        locations.erase(it);
+    bool doUpdate = false;
+    auto p = locationCategories.begin();
+    while(p != locationCategories.end()){
+        auto& category = *p;
+        auto& infos = category->locationInfos;
+        auto q = std::find(infos.begin(), infos.end(), locationInfo);
+        if(q != infos.end()){
+            infos.erase(q);
+            bool isCategoryExpired = false;
+            if(infos.empty()){
+                locationCategories.erase(p);
+                isCategoryExpired = true;
+            }
+            if(category == currentCategory){
+                doUpdate = true;
+                if(isCategoryExpired){
+                    currentCategory.reset();
+                }
+            }
+            break;
+        }
+        ++p;
     }
-    locationProxySet.erase(location->proxy);
-    setupInterfaceForNewLocations();
+    managedLocations.erase(locationInfo->location);
+
+    if(doUpdate){
+        // Avoid redundant executions of the setupInterfaceForNewLocations function by using LazyCaller
+        if(!setupInterfaceForNewLocationsLater.hasFunction()){
+            setupInterfaceForNewLocationsLater.setFunction(
+                [this](){ setupInterfaceForNewLocations(); });
+        }
+        setupInterfaceForNewLocationsLater();
+    }
 }
         
 
 void LocationView::Impl::setupInterfaceForNewLocations()
 {
-    if(locations.empty()){
-        captionLabel.setText("-----");
+    currentCategory.reset();
+    
+    if(locationCategories.empty()){
+        singleCategoryLabel.setText("-----");
+        singleCategoryLabel.show();
+        categoryCombo.hide();
+        individualRotationCheck.setEnabled(false);
         setEditorLocked(false);
         positionWidget->clearPosition();
         positionWidget->setEditable(false);
         clearBaseCoordinateSystems();
 
     } else {
-        auto& location = locations.front();
-        auto& proxy = location->proxy;
-
-        captionLabel.setText(proxy->getName().c_str());
-        int n = locations.size();
-        if(n == 1){
-            captionLabel.setText(
-                format(_("<b>{0}</b>"), proxy->getName()).c_str());
-        } else if(n == 2){
-            captionLabel.setText(
-                format(_("<b>{0}</b> + {1}"),
-                       proxy->getName(), locations[1]->proxy->getName()).c_str());
-        } else {
-            captionLabel.setText(
-                format(_("<b>{0}</b> + {1} objects"),
-                       proxy->getName(), n - 1).c_str());
-        }
-        individualRotationCheck.setEnabled(n >= 2);
-
-        // Update the dependency information
-        for(auto& location : locations){
-            location->isDependingOnAnotherTargetLocation =
-                checkDependencyOnAnotherLocation(location->parentProxy);
-        }
-
-        updateBaseCoordinateSystems();
-        updatePositionWidgetWithPrimaryLocation();
-
-        bool locked = !location->proxy->isEditable();
-
-        if(locations.size() >= 2){
-            if(location->type == LocationProxy::OffsetLocation){
-                locked = true;
+        categoryCombo.blockSignals(true);
+        categoryCombo.clear();
+        
+        int numCategories = locationCategories.size();
+        singleCategoryLabel.setVisible(numCategories == 1);
+        categoryCombo.setVisible(numCategories > 1);
+        
+        for(int i=0; i < numCategories; ++i){
+            auto& category = locationCategories[i];
+            auto& locationInfos = category->locationInfos;
+            auto& location = locationInfos.front()->location;
+            int n = locationInfos.size();
+            if(numCategories == 1){
+                if(n == 1){
+                    singleCategoryLabel.setText(format(_("<b>{0}</b>"), location->getName()).c_str());
+                } else if(n == 2){
+                    singleCategoryLabel.setText(
+                        format(_("<b>{0}</b> + {1}"), location->getName(), locationInfos[1]->location->getName()).c_str());
+                } else {
+                    singleCategoryLabel.setText(
+                        format(_("<b>{0}</b> + {1} objects"),  location->getName(), n - 1).c_str());
+                }
             } else {
-                for(size_t i=1; i < locations.size(); ++i){
-                    auto& subLocation = locations[i];
-                    if(subLocation->type == LocationProxy::OffsetLocation ||
-                       !subLocation->proxy->isEditable()){
-                        locked = true;
-                        break;
-                    }
-                    updatePrimaryRelativePosition(subLocation);
+                // Note that the default combo box implementation does not accept rich texts for its items and plain
+                // texts are now used as follows. Rich texts may be used by introducing a custom delegate.
+                if(n == 1){
+                    categoryCombo.addItem(format(location->getName()).c_str());
+                } else if(n == 2){
+                    categoryCombo.addItem(
+                        format(_("{0} + {1}"), location->getName(), locationInfos[1]->location->getName()).c_str());
+                } else {
+                    categoryCombo.addItem(
+                        format(_("{0} + {1} objects"),  location->getName(), n - 1).c_str());
                 }
             }
+
+            // Update the dependency information
+            for(auto& info : locationInfos){
+                info->isDependingOnAnotherTargetLocation =
+                    checkDependencyOnAnotherLocation(category, info->parentLocation);
+            }
         }
+
+        int categoryIndex = 0;
+        for(size_t i=0; i < locationCategories.size(); ++i){
+            if(locationCategories[i]->name == preferredCategoryName){
+                categoryIndex = i;
+                break;
+            }
+        }
+        categoryCombo.setCurrentIndex(categoryIndex);
         
-        setEditorLocked(locked);
+        categoryCombo.blockSignals(false);
+        
+        setCurrentLocationCategory(categoryIndex);
     }
 }
 
 
-bool LocationView::Impl::checkDependencyOnAnotherLocation(LocationProxyPtr parentProxy)
+bool LocationView::Impl::checkDependencyOnAnotherLocation(LocationCategory* category, LocationProxyPtr parentLocation)
 {
-    while(parentProxy){
-        if(locationProxySet.find(parentProxy) != locationProxySet.end()){
-            return true;
+    while(parentLocation){
+        for(auto& info : category->locationInfos){
+            if(info->location == parentLocation){
+                return true;
+            }
         }
-        parentProxy = parentProxy->getParentLocationProxy();
+        parentLocation = parentLocation->getParentLocationProxy();
     }
     return false;
 }
 
 
+void LocationView::Impl::setCurrentLocationCategory(int categoryIndex)
+{
+    currentCategory = locationCategories[categoryIndex];
+    preferredCategoryName = currentCategory->name;
+
+    auto& locationInfos = currentCategory->locationInfos;
+    int numLocations = locationInfos.size();
+    
+    individualRotationCheck.setEnabled(numLocations >= 2);
+
+    updateBaseCoordinateSystems();
+
+    updatePositionWidgetWithPrimaryLocation();
+
+    auto& primaryLocationInfo = locationInfos.front();
+    bool locked = !primaryLocationInfo->location->isEditable();
+    if(numLocations >= 2){
+        if(primaryLocationInfo->type == LocationProxy::OffsetLocation){
+            locked = true;
+        } else {
+            for(int i = 1; i < numLocations; ++i){
+                auto& subLocationInfo = locationInfos[i];
+                if(subLocationInfo->type == LocationProxy::OffsetLocation ||
+                   !subLocationInfo->location->isEditable()){
+                    locked = true;
+                    break;
+                }
+                updatePrimaryRelativePosition(subLocationInfo);
+            }
+        }
+    }
+    
+    setEditorLocked(locked);
+}
+
+    
 void LocationView::Impl::setEditorLocked(bool on)
 {
     lockCheck.blockSignals(true);
@@ -441,19 +628,22 @@ namespace {
 
 bool LockCheckBox::isChangable()
 {
-    auto& locations = impl->locations;
-    if(locations.empty()){
+    if(!impl->currentCategory){
         return false;
     }
-    int n = locations.size();
+    auto& infos = impl->currentCategory->locationInfos;
+    if(infos.empty()){
+        return false;
+    }
+    int n = infos.size();
     bool changable = true;
     if(n >= 2){
-        if(locations.front()->type == LocationProxy::OffsetLocation){
+        if(infos.front()->type == LocationProxy::OffsetLocation){
             changable = false;
         } else {
             for(int i=1; i < n; ++i){
-                auto& location = locations[i];
-                if(location->type == LocationProxy::OffsetLocation){
+                auto& info = infos[i];
+                if(info->type == LocationProxy::OffsetLocation){
                     changable = false;
                     break;
                 }
@@ -468,10 +658,10 @@ void LockCheckBox::nextCheckState()
 {
     if(isChangable()){
         bool isLocked = isChecked();
-        for(auto& location : impl->locations){
-            location->miscConnections.block();
-            location->proxy->setEditable(isLocked);
-            location->miscConnections.unblock();
+        for(auto& info : impl->currentCategory->locationInfos){
+            info->miscConnections.block();
+            info->location->setEditable(isLocked);
+            info->miscConnections.unblock();
         }
         impl->setupInterfaceForNewLocations();
     }
@@ -493,35 +683,36 @@ void LocationView::Impl::clearBaseCoordinateSystems()
 
 void LocationView::Impl::updateBaseCoordinateSystems()
 {
-    if(locations.empty()){
+    if(!currentCategory){
         return;
     }
-    LocationInfoPtr location = locations.front();
+    auto& locationInfo = currentCategory->locationInfos.front();
     
     clearBaseCoordinateSystems();
     int defaultComboIndex = 0;
 
-    if(location->isLocationAbleToBeGlobal && (location->type != LocationProxy::OffsetLocation)){
+    if(locationInfo->isLocationAbleToBeGlobal && (locationInfo->type != LocationProxy::OffsetLocation)){
         auto worldCoord = new CoordinateInfo(_("World"), BaseCoord, WorldCoordIndex);
         worldCoord->T.setIdentity();
         coordinates.push_back(worldCoord);
     }
 
-    if(!location->isDependingOnAnotherTargetLocation){
+    if(!locationInfo->isDependingOnAnotherTargetLocation){
         CoordinateInfo* parentCoord = nullptr;
-        if(location->parentProxy){
+        LocationProxyPtr parentLocation = locationInfo->parentLocation;
+        if(parentLocation){
             string label;
-            if(location->type == LocationProxy::OffsetLocation){
-                label = format(_("Offset ( {} )"), location->parentProxy->getName());
+            if(locationInfo->type == LocationProxy::OffsetLocation){
+                label = format(_("Offset ( {} )"), parentLocation->getName());
             } else {
-                label = format(_("Parent ( {} )"), location->parentProxy->getName());
+                label = format(_("Parent ( {} )"), parentLocation->getName());
             }
             parentCoord = new CoordinateInfo(label, ParentCoord, ParentCoordIndex);
             parentCoord->parentPositionFunc =
-                [location](){ return location->parentProxy->getGlobalLocation(); };
+                [parentLocation](){ return parentLocation->getGlobalLocation(); };
             
-        } else if(location->isRelativeLocation){
-            if(location->type == LocationProxy::OffsetLocation){
+        } else if(locationInfo->isRelativeLocation){
+            if(locationInfo->type == LocationProxy::OffsetLocation){
                 parentCoord = new CoordinateInfo(_("Offset"), ParentCoord, ParentCoordIndex);
             } else {
                 parentCoord = new CoordinateInfo(_("Parent"), ParentCoord, ParentCoordIndex);
@@ -533,13 +724,13 @@ void LocationView::Impl::updateBaseCoordinateSystems()
         }
     }
 
-    Isometry3 T = location->proxy->getLocation();
+    Isometry3 T = locationInfo->location->getLocation();
     auto localCoord = new CoordinateInfo(_("Local"), LocalCoord, LocalCoordIndex, T);
     localCoord->isLocal = true;
     localCoord->R0 = T.linear();
     coordinates.push_back(localCoord);
 
-    if(location->isLocationAbleToBeGlobal && (location->type != LocationProxy::OffsetLocation)){
+    if(locationInfo->isLocationAbleToBeGlobal && (locationInfo->type != LocationProxy::OffsetLocation)){
 
         //! \todo Use WorldItem as the root of the item search tree
         auto frameListItems =  RootItem::instance()->descendantItems<CoordinateFrameListItem>();
@@ -553,7 +744,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
             function<Isometry3()> parentPositionFunc;
             auto frameParentLocation = frameListItem->getFrameParentLocationProxy();
 
-            if(checkDependencyOnAnotherLocation(frameParentLocation)){
+            if(checkDependencyOnAnotherLocation(currentCategory, frameParentLocation)){
                 continue;
             }
             
@@ -565,9 +756,9 @@ void LocationView::Impl::updateBaseCoordinateSystems()
             auto frames = frameListItem->frameList();
             int n = frames->numFrames();
 
-            Item* targetItem = location->item;
+            Item* targetItem = locationInfo->item;
             if(!targetItem){
-                targetItem = location->proxy->getCorrespondingItem();
+                targetItem = locationInfo->location->getCorrespondingItem();
             }
             
             for(int i=0; i < n; ++i){
@@ -609,19 +800,39 @@ void LocationView::Impl::updateBaseCoordinateSystems()
 }
 
 
+void LocationView::Impl::setIndividualRotationMode(bool on)
+{
+    individualRotationCheck.blockSignals(true);
+    individualRotationCheck.setChecked(on);
+    individualRotationCheck.blockSignals(false);
+
+    if(currentCategory){
+        auto& locationInfos = currentCategory->locationInfos;
+        if(!locationInfos.empty()){
+            T_primary = locationInfos[0]->location->getGlobalLocation();
+            for(size_t i = 1; i < locationInfos.size(); ++i){
+                updatePrimaryRelativePosition(locationInfos[i]);
+            }
+        }
+    }
+}
+
+
 void LocationView::Impl::updatePositionWidgetWithPrimaryLocation()
 {
-    if(locations.empty()){
+    if(!currentCategory){
         return;
     }
-    auto& location = locations.front();
+
+    auto& locationInfo = currentCategory->locationInfos.front();
+    auto& location = locationInfo->location;
 
     auto& coord = coordinates[coordinateCombo.currentIndex()];
     lastCoordIndex = coord->index;
     Isometry3 T_display;
 
     if(coord->type == LocalCoord){
-        Isometry3 T_location = location->proxy->getLocation();
+        Isometry3 T_location = location->getLocation();
         Matrix3 R_prev = coord->T.linear();
         Matrix3 R_current = T_location.linear();
         // When the rotation is changed, the translation origin is reset
@@ -635,19 +846,19 @@ void LocationView::Impl::updatePositionWidgetWithPrimaryLocation()
         Isometry3 T_location_global;
         bool isGlobalBase = false;
 
-        if(location->isRelativeLocation){
+        if(locationInfo->isRelativeLocation){
             if(coord->type == ParentCoord){
-                T_display = location->proxy->getLocation();
+                T_display = location->getLocation();
 
-            } else if(location->parentProxy){
-                Isometry3 T_parent = location->parentProxy->getGlobalLocation();
-                T_location_global = T_parent * location->proxy->getLocation();
+            } else if(locationInfo->parentLocation){
+                Isometry3 T_parent = locationInfo->parentLocation->getGlobalLocation();
+                T_location_global = T_parent * location->getLocation();
                 isGlobalBase = true;
             } else {
                 return; // invalid case
             }
         } else {
-            T_location_global = location->proxy->getLocation();
+            T_location_global = location->getLocation();
             isGlobalBase = true;
         }
         if(isGlobalBase){
@@ -663,16 +874,19 @@ void LocationView::Impl::updatePositionWidgetWithPrimaryLocation()
     // positionWidget->setReferenceRpy(Vector3::Zero());
     positionWidget->setPosition(T_display);
 
-    T_primary = location->proxy->getGlobalLocation();
+    T_primary = location->getGlobalLocation();
 }
 
 
 bool LocationView::Impl::updateTargetLocationWithInputPosition(const Isometry3& T_input)
 {
-    if(locations.empty()){
+    if(!currentCategory){
         return false;
     }
-    auto& location = locations.front();
+
+    auto& locationInfos = currentCategory->locationInfos;
+    auto& locationInfo = locationInfos.front();
+    auto& location = locationInfo->location;
 
     auto& coord = coordinates[coordinateCombo.currentIndex()];
     Isometry3 T_location;
@@ -688,7 +902,7 @@ bool LocationView::Impl::updateTargetLocationWithInputPosition(const Isometry3& 
             positionWidget->setPosition(T_display);
         }
     } else {
-        if(location->isRelativeLocation && (coord->type == ParentCoord)){
+        if(locationInfo->isRelativeLocation && (coord->type == ParentCoord)){
             T_location = T_input;
         } else {
             Isometry3 T_base;
@@ -697,10 +911,10 @@ bool LocationView::Impl::updateTargetLocationWithInputPosition(const Isometry3& 
             } else {
                 T_base.setIdentity();
             }
-            if(location->isRelativeLocation){
-                if(location->parentProxy){
+            if(locationInfo->isRelativeLocation){
+                if(locationInfo->parentLocation){
                     Isometry3 T_global = T_base * T_input;
-                    Isometry3 T_parent = location->parentProxy->getGlobalLocation();
+                    Isometry3 T_parent = locationInfo->parentLocation->getGlobalLocation();
                     T_location = T_parent.inverse(Eigen::Isometry) * T_global;
                 } else {
                     return false; // invalid case
@@ -713,37 +927,38 @@ bool LocationView::Impl::updateTargetLocationWithInputPosition(const Isometry3& 
 
     normalizeRotation(T_location);
 
-    for(auto& loc : locations){
-        loc->locationChangeConnection.block();
+    for(auto& info : locationInfos){
+        info->locationChangeConnection.block();
     }
 
     bool updated = false;
 
     // Synchronize the positions of the remaining location objects
-    if(locations.size() == 1){
-        updated = location->proxy->setLocation(T_location);
+    if(locationInfos.size() == 1){
+        updated = location->setLocation(T_location);
 
-    } else if(locations.size() >= 2){
-        Isometry3 T_global = location->proxy->getGlobalLocationOf(T_location);
-        for(size_t i=1; i < locations.size(); ++i){
-            auto& subLocation = locations[i];
+    } else if(locationInfos.size() >= 2){
+        Isometry3 T_global = location->getGlobalLocationOf(T_location);
+        for(size_t i = 1; i < locationInfos.size(); ++i){
+            auto& subLocation = locationInfos[i];
             if(!subLocation->isDependingOnAnotherTargetLocation){
                 Isometry3 T;
                 if(!individualRotationCheck.isChecked()){
                     T = T_global * subLocation->T_primary_relative;
                 } else {
-                    T.linear() = T_global.linear() * subLocation->T_primary_relative.linear();
-                    T.translation() = T_global.translation() + subLocation->T_primary_relative.translation();
+                    const auto& T_relative = subLocation->T_primary_relative;
+                    T.linear() = T_global.linear() * T_relative.linear();
+                    T.translation() = T_primary.linear() * T_relative.translation() + T_global.translation();
                 }
                 normalizeRotation(T);
-                subLocation->proxy->setGlobalLocation(T);
+                subLocation->location->setGlobalLocation(T);
             }
         }
-        updated = location->proxy->setGlobalLocation(T_global);
+        updated = location->setGlobalLocation(T_global);
     }
 
-    for(auto& loc : locations){
-        loc->locationChangeConnection.unblock();
+    for(auto& info : locationInfos){
+        info->locationChangeConnection.unblock();
     }
     
     return updated;
@@ -752,14 +967,19 @@ bool LocationView::Impl::updateTargetLocationWithInputPosition(const Isometry3& 
 
 void LocationView::Impl::finishLocationEditing()
 {
-    if(locations.size() == 1){
-        locations.front()->proxy->finishLocationEditing();
+    if(!currentCategory){
+        return;
+    }
+    auto& locationInfos = currentCategory->locationInfos;
+    
+    if(locationInfos.size() == 1){
+        locationInfos.front()->location->finishLocationEditing();
 
-    } else if(locations.size() >= 2){
+    } else if(locationInfos.size() >= 2){
         auto history = UnifiedEditHistory::instance();
         history->beginEditGroup(_("Change multiple object locations"));
-        for(auto& location : locations){
-            location->proxy->finishLocationEditing();
+        for(auto& info : locationInfos){
+            info->location->finishLocationEditing();
         }
         history->endEditGroup();
     }

@@ -38,6 +38,12 @@ std::string LocationProxy::getName() const
 }
 
 
+std::string LocationProxy::getCategory() const
+{
+    return std::string();
+}
+
+
 bool LocationProxy::isEditable() const
 {
     return isEditable_;
@@ -157,4 +163,22 @@ bool LocationProxy::requestEdit()
 SignalProxy<bool(LocationProxyPtr item), LogicalSum> LocationProxy::sigEditRequest()
 {
     return ::sigEditRequest;
+}
+
+
+LocationProxyPtr LocatableItem::getLocationProxy()
+{
+    return nullptr;
+}
+
+
+std::vector<LocationProxyPtr> LocatableItem::getLocationProxies()
+{
+    return std::vector<LocationProxyPtr>();
+}
+
+
+SignalProxy<void()> LocatableItem::getSigLocationProxiesChanged()
+{
+    return SignalProxy<void()>();
 }

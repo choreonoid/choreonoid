@@ -29,6 +29,14 @@ public:
     LocationType locationType() const { return locationType_; }
     void setLocationType(LocationType type) { locationType_ = type; }
     virtual std::string getName() const;
+
+    /**
+       This function usually returns an empty string.
+       If the category is specified, only the proxies that have the same category
+       can be handled simultaneously in the location view.
+    */
+    virtual std::string getCategory() const;
+    
     virtual Isometry3 getLocation() const = 0;
     virtual bool isEditable() const;
     virtual void setEditable(bool on);
@@ -59,10 +67,23 @@ private:
     ScopedConnection itemNameConnection_;
 };
 
-class LocatableItem
+class CNOID_EXPORT LocatableItem
 {
 public:
-    virtual LocationProxyPtr getLocationProxy() = 0;
+    virtual LocationProxyPtr getLocationProxy();
+
+    /**
+       \note The proxies returned by this function are used in preference to
+       the one obtained by the getLocationProxy function.
+    */
+    virtual std::vector<LocationProxyPtr> getLocationProxies();
+
+    /**
+       This signal notifies the slots of the change of the location proxies.
+       Override this function to return a valid signal proxy if the location proxies
+       may be changed while the item is being selected.
+    */
+    virtual SignalProxy<void()> getSigLocationProxiesChanged();
 };
 
 }

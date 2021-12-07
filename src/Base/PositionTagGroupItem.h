@@ -44,9 +44,10 @@ public:
     // RenderableItem function
     virtual SgNode* getScene() override;
 
-    // LocatableItem function
-    virtual LocationProxyPtr getLocationProxy() override;
-
+    // LocatableItem functions
+    virtual std::vector<LocationProxyPtr> getLocationProxies() override;
+    virtual SignalProxy<void()> getSigLocationProxiesChanged() override;
+        
     double tagMarkerSize() const;
     void setTagMarkerSize(double s);
 
