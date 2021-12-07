@@ -1667,7 +1667,7 @@ void Item::putProperties(PutPropertyFunction& putProperty)
         putProperty(_("Display name"), dname);
     }
     
-    std::string moduleName, className;
+    static string moduleName, className;
     ItemManager::getClassIdentifier(this, moduleName, className);
     putProperty(_("Class"), className);
     
@@ -1687,9 +1687,41 @@ void Item::putProperties(PutPropertyFunction& putProperty)
         }
     }
 
+    static string attributes;
+    attributes.clear();
+
+    if(isSubItem()){
+        attributes += _("Sub Item");
+    } else {
+        if(hasAttribute(Attached)){
+            attributes += _("Attached");
+        }
+        if(hasAttribute(Unique)){
+            if(!attributes.empty()) attributes += ", ";
+            attributes += _("Unique");
+        }
+        if(isTemporal()){
+            if(!attributes.empty())  attributes += ", ";
+            attributes += _("Temporal");
+        }
+        if(hasAttribute(Builtin)){
+            if(!attributes.empty())  attributes += ", ";
+            attributes += _("Builtin");
+        }
+        if(hasAttribute(Reloadable)){
+            if(!attributes.empty())  attributes += ", ";
+            attributes += _("Reloadable");
+        }
+    }
+    if(!attributes.empty()){
+        if(attributes.size() == 1){
+            putProperty(_("Attribute"), attributes);
+        } else {
+            putProperty(_("Attributes"), attributes);
+        }
+    }
+
     putProperty(_("Num children"), numChildren_);
-    putProperty(_("Sub item?"), isSubItem());
-    putProperty(_("Temporal"), isTemporal());
     putProperty(_("Refs"), refCount());
 }
 

@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-06 22:12+0900\n"
+"POT-Creation-Date: 2021-12-07 20:06+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -340,14 +340,32 @@ msgstr "アドオン"
 msgid "Addon {0}"
 msgstr "アドオン{0}"
 
-msgid "Num children"
-msgstr "子アイテムの数"
+msgid "Sub Item"
+msgstr "サブアイテム"
 
-msgid "Sub item?"
-msgstr "サブアイテム？"
+msgid "Attached"
+msgstr "添付"
+
+msgid "Unique"
+msgstr "固有"
 
 msgid "Temporal"
 msgstr "一時的"
+
+msgid "Builtin"
+msgstr "組込"
+
+msgid "Reloadable"
+msgstr "再読込可"
+
+msgid "Attribute"
+msgstr "属性"
+
+msgid "Attributes"
+msgstr "属性"
+
+msgid "Num children"
+msgstr "子アイテムの数"
 
 msgid "Refs"
 msgstr "参照数"
@@ -1809,6 +1827,3 @@ msgstr "仮想ジョイスティック"
 
 msgid "VirtualJoystickView"
 msgstr "仮想ジョイスティックビュー"
-
-#~ msgid "Drop item \"{0}\" in {1}"
-#~ msgstr "アイテム \"{0}\" を{1}上でドロップ"
