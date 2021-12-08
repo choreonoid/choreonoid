@@ -218,6 +218,12 @@ void LazyCaller::setFunction(const std::function<void(void)>& function)
 }
 
 
+bool LazyCaller::hasFunction() const
+{
+    return impl->function != nullptr;
+}
+
+
 void LazyCaller::setPriority(int priority)
 {
     impl->priority = priority;

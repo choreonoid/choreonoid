@@ -44,6 +44,7 @@ public:
     virtual ~LazyCaller();
 
     void setFunction(const std::function<void(void)>& function);
+    bool hasFunction() const;
     void setPriority(int priority);
 
     /**
