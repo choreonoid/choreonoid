@@ -453,6 +453,17 @@ void ItemTreePanelDialog::Impl::deactivateCurrentPanel(bool doClearCurrentItem)
         currentPanel->hide();
         currentPanel = nullptr;
     }
+
+    /**
+       It has been reported that the following flag update caueses a bug in the cooperation
+       between item tree views and the panel dialog based on this ItemTreePanelDialog class.
+       The bug seems to be a symptom that when some item is selected in another item tree view,
+       an item in the panel dialog is unintentionally activated and then not deactivated.
+       The bug may have been resolved by fixes made to other classes after the report, but
+       if you encounter the bug, please check the following flag operation to resolve the problem.
+       Disabling the flag update may solve the problem, but since the update is originally
+       required for the dialog to work correctly, you may need another solution.
+    */
     needToUpdatePanel = true;
     
     if(currentItem && doClearCurrentItem){
