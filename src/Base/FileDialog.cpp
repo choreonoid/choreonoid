@@ -29,6 +29,7 @@ constexpr bool DisableToClearDefaultSettings = false;
 constexpr int MaxHistorySize = 8;
 
 bool isBeforeChoosingAnyFile = true;
+bool isShareDirectoryPresetEnabled = true;
 
 }
 
@@ -49,6 +50,12 @@ public:
     void storeRecentDirectories();
 };
 
+}
+
+
+void FileDialog::setShareDirectoryPresetEnabled(bool on)
+{
+    isShareDirectoryPresetEnabled = on;
 }
 
 
@@ -116,16 +123,26 @@ void FileDialog::Impl::updatePresetDirectories()
         urls = sidebarUrls();
     } else {
         urls << QUrl("file:");
+
+#ifdef Q_OS_WIN32
+        urls << QUrl::fromLocalFile(QDir::homePath() + "/Documents");
+#else
         urls << QUrl::fromLocalFile(QDir::homePath());
+#endif
+    }
+
+    if(isShareDirectoryPresetEnabled){
+        urls << QUrl::fromLocalFile(shareDir().c_str());
     }
     
-    urls << QUrl::fromLocalFile(shareDir().c_str());
     auto projectDir = ProjectManager::instance()->currentProjectDirectory();
-
     if(!projectDir.empty()){
         urls << QUrl::fromLocalFile(projectDir.c_str());
     }
+
+#ifndef Q_OS_WIN32
     urls << QUrl::fromLocalFile(QDir::currentPath());
+#endif
 
     setSidebarUrls(urls);
 
@@ -155,7 +172,11 @@ void FileDialog::Impl::updatePresetDirectories()
         if(!projectDir.empty()){
             setDirectory(projectDir.c_str());
         } else {
+#ifdef Q_OS_WIN32
+            setDirectory(QDir::homePath() + "/Documents");
+#else
             setDirectory(QDir::current());
+#endif
         }
     } 
 }

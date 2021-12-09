@@ -10,6 +10,9 @@ namespace cnoid {
 class CNOID_EXPORT FileDialog : public QDialog
 {
 public:
+    // For the customization from the executable
+    static void setShareDirectoryPresetEnabled(bool on);
+    
     FileDialog();
     FileDialog(QWidget* parent, Qt::WindowFlags f = 0);
     ~FileDialog();
