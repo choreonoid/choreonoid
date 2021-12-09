@@ -212,21 +212,25 @@ QVariant FrameListModel::headerData(int section, Qt::Orientation orientation, in
                 return _("Note");
             case PositionColumn:
                 return _("Position");
-            case GlobalCheckColumn:
-                return "G";
-            case VisibleCheckColumn:
-                return "V";
             default:
                 return QVariant();
             }
         } else {
             return QString::number(section);
         }
+    } else if(role == Qt::DecorationRole){
+        if(section == GlobalCheckColumn){
+            static QIcon global(":/Base/icon/global.svg");
+            return global;
+        } else if(section == VisibleCheckColumn){
+            static QIcon visibilityIcon(":/Base/icon/visualshape.svg");
+            return visibilityIcon;
+        }
     } else if(role == Qt::TextAlignmentRole){
         if(orientation == Qt::Horizontal){
             return Qt::AlignCenter;
         }
-    }
+    } 
     return QVariant();
 }
 
