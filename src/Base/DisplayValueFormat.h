@@ -92,9 +92,6 @@ private:
     Signal<void()> sigFormatChanged_;
 };
 
-[[deprecated]]
-typedef DisplayValueFormat DisplayedValueFormatManager;
-
 }
 
 #endif

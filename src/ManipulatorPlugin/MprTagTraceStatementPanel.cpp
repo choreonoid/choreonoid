@@ -3,10 +3,11 @@
 #include "MprTagTraceStatement.h"
 #include "MprProgramItemBase.h"
 #include <cnoid/WorldItem>
+#include <cnoid/LinkKinematicsKit>
 #include <cnoid/PositionTagGroupItem>
 #include <cnoid/ItemList>
-#include <cnoid/LinkKinematicsKit>
 #include <cnoid/CoordinateFrameList>
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/EigenUtil>
 #include <cnoid/Buttons>
 #include <cnoid/ComboBox>
@@ -182,9 +183,17 @@ void MprTagTraceStatementPanel::Impl::updateBaseInterfaces()
 
     auto& T = statement->tagGroupPosition();
     auto xyz = T.translation();
+    if(DisplayValueFormat::instance()->isMillimeter()){
+        for(int i=0; i < 3; ++i){
+            xyzLabel[i].setText(QString::number(xyz[i] * 1000.0, 'f', 3));
+        }
+    } else {
+        for(int i=0; i < 3; ++i){
+            xyzLabel[i].setText(QString::number(xyz[i], 'f', 4));
+        }
+    }
     auto rpy = rpyFromRot(T.linear());
     for(int i=0; i < 3; ++i){
-        xyzLabel[i].setText(QString::number(xyz[i], 'f', 4));
         rpyLabel[i].setText(QString::number(degree(rpy[i]), 'f', 1));
     }
 

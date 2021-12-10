@@ -1,6 +1,7 @@
 #include "PositionTagListWidget.h"
 #include "MenuManager.h"
 #include "PositionTagGroupItem.h"
+#include "DisplayValueFormat.h"
 #include <cnoid/PositionTagGroup>
 #include <cnoid/PositionTag>
 #include <cnoid/EigenUtil>
@@ -32,6 +33,7 @@ public:
     PositionTagGroupItemPtr tagGroupItem;
     ScopedConnectionSet tagGroupConnections;
     QFont monoFont;
+    DisplayValueFormat* valueFormat;
     bool isProcessingInternalMove;
     
     TagGroupModel(PositionTagListWidget* widget);
@@ -91,6 +93,7 @@ TagGroupModel::TagGroupModel(PositionTagListWidget* widget)
       monoFont("Monospace")
 {
     monoFont.setStyleHint(QFont::TypeWriter);
+    valueFormat = DisplayValueFormat::instance();
     isProcessingInternalMove = false;
 }
 
@@ -229,11 +232,22 @@ QVariant TagGroupModel::getPositionData(const PositionTag* tag) const
 {
     auto p = tag->translation();
     if(!tag->hasAttitude()){
-        return format("{0: 1.3f} {1: 1.3f} {2: 1.3f}", p.x(), p.y(), p.z()).c_str();
+        if(valueFormat->isMillimeter()){
+            return format("{0: 9.3f} {1: 9.3f} {2: 9.3f}",
+                          p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0).c_str();
+        } else {
+            return format("{0: 6.3f} {1: 6.3f} {2: 6.3f}", p.x(), p.y(), p.z()).c_str();
+        }
     } else {
         auto rpy = degree(rpyFromRot(tag->rotation()));
-        return format("{0: 1.3f} {1: 1.3f} {2: 1.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
-                      p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
+        if(valueFormat->isMillimeter()){
+            return format("{0: 9.3f} {1: 9.3f} {2: 9.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
+                          p.x() * 1000.0, p.y() * 1000, p.z() * 1000,
+                          rpy[0], rpy[1],rpy[2]).c_str();
+        } else {
+            return format("{0: 6.3f} {1: 6.3f} {2: 6.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
+                          p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
+        }
     }
 }
 

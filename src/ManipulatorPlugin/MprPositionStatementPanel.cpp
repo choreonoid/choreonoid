@@ -1,9 +1,10 @@
 #include "MprPositionStatementPanel.h"
 #include "MprPositionStatement.h"
 #include "MprProgramItemBase.h"
-#include <cnoid/LinkKinematicsKit>
 #include <cnoid/MprPosition>
 #include <cnoid/MprPositionList>
+#include <cnoid/LinkKinematicsKit>
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/EigenUtil>
 #include <cnoid/Buttons>
 #include <QLabel>
@@ -276,9 +277,17 @@ void MprPositionStatementPanel::Impl::updateIkPositionPanel
 (MprIkPosition* position, LinkKinematicsKit* kinematicsKit)
 {
     auto xyz = position->position().translation();
+    if(DisplayValueFormat::instance()->isMillimeter()){
+        for(int i=0; i < 3; ++i){
+            xyzLabel[i].setText(QString::number(xyz[i] * 1000.0, 'f', 3));
+        }
+    } else {
+        for(int i=0; i < 3; ++i){
+            xyzLabel[i].setText(QString::number(xyz[i], 'f', 4));
+        }
+    }
     auto rpy = position->rpy();
     for(int i=0; i < 3; ++i){
-        xyzLabel[i].setText(QString::number(xyz[i], 'f', 4));
         rpyLabel[i].setText(QString::number(degree(rpy[i]), 'f', 1));
     }
 

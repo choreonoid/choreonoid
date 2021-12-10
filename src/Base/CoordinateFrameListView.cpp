@@ -6,6 +6,7 @@
 #include "TargetItemPicker.h"
 #include "LocatableItem.h"
 #include "Archive.h"
+#include "DisplayValueFormat.h"
 #include "Buttons.h"
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/EigenUtil>
@@ -43,6 +44,7 @@ public:
     CoordinateFrameListPtr frameList;
     ScopedConnectionSet frameListConnections;
     QFont monoFont;
+    DisplayValueFormat* valueFormat;
     
     FrameListModel(CoordinateFrameListView::Impl* view);
     void setFrameListItem(CoordinateFrameListItem* frameListItem);
@@ -126,6 +128,8 @@ FrameListModel::FrameListModel(CoordinateFrameListView::Impl* view)
       monoFont("Monospace")
 {
     monoFont.setStyleHint(QFont::TypeWriter);
+    
+    valueFormat = DisplayValueFormat::instance();
 }
 
 
@@ -288,10 +292,21 @@ QVariant FrameListModel::data(const QModelIndex& index, int role) const
             if(frameListItem->getRelativeFramePosition(frame, T)){
                 auto p = T.translation();
                 auto rpy = degree(rpyFromRot(T.linear()));
-                return format("{0: 1.3f} {1: 1.3f} {2: 1.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
-                              p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
+
+                if(valueFormat->isMillimeter()){
+                    return format("{0: 9.3f} {1: 9.3f} {2: 9.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
+                                  p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0,
+                                  rpy[0], rpy[1], rpy[2]).c_str();
+                } else {
+                    return format("{0: 6.3f} {1: 6.3f} {2: 6.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
+                                  p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
+                }
             } else {
-                return " -.---  -.---  -.---    -.-    -.-    -.-";
+                if(valueFormat->isMillimeter()){
+                    return "  ---.---   ---.---   ---.---    -.-    -.-    -.-";
+                } else {
+                    return " -.---  -.---  -.---    -.-    -.-    -.-";
+                }
             }
         }
         case GlobalCheckColumn:

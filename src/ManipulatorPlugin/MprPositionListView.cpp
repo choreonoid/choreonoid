@@ -5,6 +5,7 @@
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
 #include <cnoid/TargetItemPicker>
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/Archive>
 #include <cnoid/Buttons>
 #include <cnoid/ConnectionSet>
@@ -44,6 +45,7 @@ public:
     MprPositionListPtr positionList;
     ScopedConnectionSet positionListConnections;
     QFont monoFont;
+    DisplayValueFormat* valueFormat;
     
     PositionListModel(MprPositionListView::Impl* view);
     void setProgramItem(MprProgramItemBase* programItem);
@@ -128,6 +130,7 @@ PositionListModel::PositionListModel(MprPositionListView::Impl* view)
       monoFont("Monospace")
 {
     monoFont.setStyleHint(QFont::TypeWriter);
+    valueFormat = DisplayValueFormat::instance();
 }
 
 
@@ -300,12 +303,34 @@ QVariant PositionListModel::getPositionData(MprPosition* position) const
         auto& baseId = ik->baseFrameId();
         auto& offsetId = ik->offsetFrameId();
         if(baseId.isInt() && offsetId.isInt()){
-            return format("{0: 1.3f} {1: 1.3f} {2: 1.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f} : {6:2X} {7:2d} {8:2d}",
-                          p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2], ik->configuration(),
-                          baseId.toInt(), offsetId.toInt()).c_str();
+            if(valueFormat->isMillimeter()){
+                return format("{0: 9.3f} {1: 9.3f} {2: 9.3f} "
+                              "{3: 6.1f} {4: 6.1f} {5: 6.1f} "
+                              ": {6:2X} {7:2d} {8:2d}",
+                              p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0,
+                              rpy[0], rpy[1], rpy[2],
+                              ik->configuration(), baseId.toInt(), offsetId.toInt()).c_str();
+            } else {
+                return format("{0: 6.3f} {1: 6.3f} {2: 6.3f} "
+                              "{3: 6.1f} {4: 6.1f} {5: 6.1f} "
+                              ": {6:2X} {7:2d} {8:2d}",
+                              p.x(), p.y(), p.z(),
+                              rpy[0], rpy[1], rpy[2],
+                              ik->configuration(), baseId.toInt(), offsetId.toInt()).c_str();
+            }
         } else {
-            return format("{0: 1.3f} {1: 1.3f} {2: 1.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f} : {6:2X}",
-                          p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2], ik->configuration()).c_str();
+            if(valueFormat->isMillimeter()){
+                return format("{0: 9.3f} {1: 9.3f} {2: 9.3f} "
+                              "{3: 6.1f} {4: 6.1f} {5: 6.1f} : {6:2X}",
+                              p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0,
+                              rpy[0], rpy[1], rpy[2],
+                              ik->configuration()).c_str();
+            } else {
+                return format("{0: 1.3f} {1: 1.3f} {2: 1.3f} "
+                              "{3: 6.1f} {4: 6.1f} {5: 6.1f} : {6:2X}",
+                              p.x(), p.y(), p.z(),
+                              rpy[0], rpy[1], rpy[2], ik->configuration()).c_str();
+            }
         }
     } else if(position->isFK()){
         auto fk = position->fkPosition();

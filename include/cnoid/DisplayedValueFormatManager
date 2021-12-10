@@ -1,2 +1,0 @@
-// deprecated. Use DisplayValueFormat
-#include "src/Base/DisplayValueFormat.h"

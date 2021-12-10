@@ -1,7 +1,7 @@
 #include "JointDisplacementWidget.h"
 #include "BodySelectionManager.h"
 #include "BodyItem.h"
-#include <cnoid/DisplayedValueFormatManager>
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/Body>
 #include <cnoid/Link>
 #include <cnoid/Archive>
