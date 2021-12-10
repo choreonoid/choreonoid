@@ -96,7 +96,7 @@ public:
     CoordinateFrameItem* findFrameItemAt(int index, Item*& out_insertionPosition);
     CoordinateFrameItem* findFrameItemAt(int index);
     void onFrameAdded(int index);
-    void onFrameRemoved(int index);
+    void onFrameRemoved(int index, CoordinateFrame* frame);
     bool onFrameItemAdded(CoordinateFrameItem* frameItem);
     void setFrameMarkerVisible(CoordinateFrame* frame, bool on, bool isTransient);
     void updateParentFrameForFrameMarkers(const Isometry3& T);
@@ -271,7 +271,7 @@ void CoordinateFrameListItem::Impl::setItemizationMode(int mode)
                     [&](int index){ onFrameAdded(index); }));
             frameListConnections.add(
                 frameList->sigFrameRemoved().connect(
-                    [&](int index, CoordinateFrame*){ onFrameRemoved(index); }));
+                    [&](int index, CoordinateFrame* frame){ onFrameRemoved(index, frame); }));
         }
         updateFrameItems();
     }
@@ -381,11 +381,12 @@ void CoordinateFrameListItem::Impl::onFrameAdded(int index)
 }
 
 
-void CoordinateFrameListItem::Impl::onFrameRemoved(int index)
+void CoordinateFrameListItem::Impl::onFrameRemoved(int index, CoordinateFrame* frame)
 {
     if(auto frameItem = findFrameItemAt(index)){
         isUpdatingFrameItems = true;
         frameItem->removeFromParentItem();
+        setFrameMarkerVisible(frame, false, false);
         isUpdatingFrameItems = false;
     }
 }
@@ -689,9 +690,7 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
                 }
             }
         }
-        if(frameItem){
-            marker->updateFrameItem(frameItem, on);
-        }
+        marker->updateFrameItem(frameItem, on);
     }
 }
 
@@ -742,15 +741,26 @@ FrameMarker::FrameMarker(CoordinateFrameListItem::Impl* impl, CoordinateFrame* f
 
 void FrameMarker::updateFrameItem(CoordinateFrameItem* frameItem, bool on)
 {
-    weakFrameItem.reset();
-    frameItemConnection.disconnect();
-    if(frameItem && on){
-        frameItemConnection =
-            frameItem->sigUpdated().connect(
-                [&](){ updateFrameLock(); });
-        weakFrameItem = frameItem;
+    bool updated = false;
+    if(weakFrameItem){
+        if(weakFrameItem.lock() != frameItem){
+            updated = true;
+        }
+    } else if(frameItem){
+        updated = true;
     }
-    updateFrameLock();
+
+    if(updated){
+        frameItemConnection.disconnect();
+        if(frameItem && on){
+            frameItemConnection =
+                frameItem->sigUpdated().connect(
+                    [&](){ updateFrameLock(); });
+        }
+        weakFrameItem = frameItem;
+
+        updateFrameLock();
+    }
 }
 
 
@@ -778,10 +788,14 @@ void FrameMarker::onFrameUpdated(int flags)
             SgTmpUpdate update;
             if(isCurrentGlobal){
                 impl->relativeFrameMarkerGroup->removeChild(this, update);
-                impl->frameMarkerGroup->addChild(this, update);
+                if(isOn){
+                    impl->frameMarkerGroup->addChild(this, update);
+                }
             } else {
                 impl->frameMarkerGroup->removeChild(this, update);
-                impl->relativeFrameMarkerGroup->addChild(this, update);
+                if(isOn){
+                    impl->relativeFrameMarkerGroup->addChild(this, update);
+                }
             }
             isGlobal = isCurrentGlobal;
         }

@@ -5,6 +5,7 @@
 #include "MenuManager.h"
 #include "TargetItemPicker.h"
 #include "LocatableItem.h"
+#include "Archive.h"
 #include "Buttons.h"
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/EigenUtil>
@@ -99,6 +100,7 @@ public:
     PushButton addButton;
     MenuManager contextMenuManager;
     bool isSelectionChangedAlreadyCalled;
+    bool isTransientFrameMarkerMode;
 
     Impl(CoordinateFrameListView* self);
     void setCoordinateFrameListItem(CoordinateFrameListItem* item);
@@ -614,6 +616,8 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
         [&](CoordinateFrameListItem* item){
             setCoordinateFrameListItem(item);
         });
+
+    isTransientFrameMarkerMode = true;
 }
 
 
@@ -783,7 +787,10 @@ void CoordinateFrameListView::Impl::selectionChanged
         auto modelIndex = indexes.front();
         startLocationEditing(modelIndex);
         auto frame = frameListModel->frameAt(modelIndex);
-        transientMarkerHolder = targetItem->transientFrameMarkerHolder(frame);
+
+        if(isTransientFrameMarkerMode){
+            transientMarkerHolder = targetItem->transientFrameMarkerHolder(frame);
+        }
     }
 }
 
@@ -818,5 +825,9 @@ bool CoordinateFrameListView::storeState(Archive& archive)
 bool CoordinateFrameListView::restoreState(const Archive& archive)
 {
     impl->targetItemPicker.restoreTargetItemLater(archive, "current_item");
+
+    // Restore-only option for customization written in the builtin project file
+    archive.read("enable_transient_frame_markers", impl->isTransientFrameMarkerMode);
+
     return true;
 }
