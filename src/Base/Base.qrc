@@ -30,6 +30,13 @@
     <file>icon/collisionshape.svg</file>
     <file>icon/collisionlines.svg</file>
 
+    <file>icon/frontview.svg</file>
+    <file>icon/backview.svg</file>
+    <file>icon/leftview.svg</file>
+    <file>icon/rightview.svg</file>
+    <file>icon/topview.svg</file>
+    <file>icon/bottomview.svg</file>
+
     <file>icon/global.svg</file>
     
     <file>icon/scenecapture.svg</file>

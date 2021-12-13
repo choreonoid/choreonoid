@@ -6,6 +6,8 @@
 #include "SceneView.h"
 #include "SceneWidget.h"
 #include "ExtensionManager.h"
+#include "InteractiveCameraTransform.h"
+#include "Archive.h"
 #include "ComboBox.h"
 #include "ButtonGroup.h"
 #include <cnoid/ConnectionSet>
@@ -36,7 +38,14 @@ enum ElementId {
     ModelTypeFlipButton = 10,
     CollisionModelToggle = 11,
     CollisionLineToggle = 12,
-    ConfigButton = 13
+    ConfigButton = 13,
+
+    FrontViewButton = 70,
+    BackViewButton = 71,
+    TopViewButton = 72,
+    BottomViewButton = 73,
+    RightViewButton = 74,
+    LeftViewButton = 75
 };
 
 }
@@ -64,6 +73,8 @@ public:
     ToolButton* collisionModelToggle;
     ToolButton* collisionLineToggle;
 
+    bool isViewButtonSetEnabled;
+
     struct CustomModeButtonInfo {
         ToolButton* button;
         int modeId;
@@ -87,6 +98,8 @@ public:
     void flipVisibleModels();
     void updateCollisionModelVisibility();
     void onCollisionLineButtonToggled(bool on);
+    void enableViewButtonSet();
+    void onViewButtonClicked(ElementId button);
 };
 
 }
@@ -223,6 +236,8 @@ void SceneBar::Impl::initialize()
             [&](SceneView* view){ setCurrentSceneView(view); });
 
     setCurrentSceneView(SceneView::instance());
+
+    isViewButtonSetEnabled = false;
 }
 
 
@@ -520,4 +535,81 @@ void SceneBar::Impl::onCollisionLineButtonToggled(bool on)
     sceneViewConnections.block();
     currentSceneWidget->setCollisionLineVisibility(on);
     sceneViewConnections.unblock();
+}
+
+
+void SceneBar::Impl::enableViewButtonSet()
+{
+    if(isViewButtonSetEnabled){
+        return;
+    }
+
+    ToolButton* button;
+
+    button = self->addButton(QIcon(":/Base/icon/frontview.svg"), FrontViewButton);
+    button->setToolTip(_("Front view"));
+    button->sigClicked().connect([&](){ onViewButtonClicked(FrontViewButton); });
+
+    button = self->addButton(QIcon(":/Base/icon/backview.svg"), BackViewButton);
+    button->setToolTip(_("Back view"));
+    button->sigClicked().connect([&](){ onViewButtonClicked(BackViewButton); });
+
+    button = self->addButton(QIcon(":/Base/icon/topview.svg"), TopViewButton);
+    button->setToolTip(_("Top view"));
+    button->sigClicked().connect([&](){ onViewButtonClicked(TopViewButton); });
+
+    button = self->addButton(QIcon(":/Base/icon/bottomview.svg"), BottomViewButton);
+    button->setToolTip(_("Bottom view"));
+    button->sigClicked().connect([&](){ onViewButtonClicked(BottomViewButton); });
+
+    button = self->addButton(QIcon(":/Base/icon/rightview.svg"), RightViewButton);
+    button->setToolTip(_("Right view"));
+    button->sigClicked().connect([&](){ onViewButtonClicked(RightViewButton); });
+
+    button = self->addButton(QIcon(":/Base/icon/leftview.svg"), LeftViewButton);
+    button->setToolTip(_("Left view"));
+    button->sigClicked().connect([&](){ onViewButtonClicked(LeftViewButton); });
+
+    isViewButtonSetEnabled = true;
+}
+
+
+void SceneBar::Impl::onViewButtonClicked(ElementId button)
+{
+    if(currentSceneWidget){
+        if(auto transform = currentSceneWidget->activeInteractiveCameraTransform()){
+            switch(button){
+            case FrontViewButton:
+                transform->setRotation(AngleAxis(M_PI_2, Vector3::UnitZ()) * AngleAxis(M_PI_2, Vector3::UnitX()));
+                break;
+            case BackViewButton:
+                transform->setRotation(AngleAxis(-M_PI_2, Vector3::UnitZ()) * AngleAxis(M_PI_2, Vector3::UnitX()));
+                break;
+            case TopViewButton:
+                transform->setRotation(AngleAxis(-M_PI_2, Vector3::UnitZ()));
+                break;
+            case BottomViewButton:
+                transform->setRotation(AngleAxis(M_PI_2, Vector3::UnitZ()) * AngleAxis(M_PI, Vector3::UnitX()));
+                break;
+            case RightViewButton:
+                transform->setRotation(AngleAxis(M_PI, Vector3::UnitZ()) * AngleAxis(M_PI_2, Vector3::UnitX()));
+                break;
+            case LeftViewButton:
+                transform->setRotation(AngleAxis(M_PI_2, Vector3::UnitX()));
+                break;
+            default:
+                break;
+            }
+            currentSceneWidget->viewAll();
+        }
+    }
+}
+
+
+bool SceneBar::restoreState(const Archive& archive)
+{
+    if(archive.get("enable_six_sided_view_buttons", false)){
+        impl->enableViewButtonSet();
+    }
+    return ToolBar::restoreState(archive);
 }

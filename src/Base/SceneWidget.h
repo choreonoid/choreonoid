@@ -85,6 +85,7 @@ public:
     bool isBuiltinCameraCurrent() const;
     bool isBuiltinCamera(SgCamera* camera) const;
     InteractiveCameraTransform* findOwnerInteractiveCameraTransform(int cameraIndex);
+    InteractiveCameraTransform* activeInteractiveCameraTransform();
 
     void startBuiltinCameraViewChange(const Vector3& center);
     void rotateBuiltinCameraView(double dPitch, double dYaw);

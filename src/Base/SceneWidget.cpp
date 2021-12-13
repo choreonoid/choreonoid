@@ -2483,6 +2483,15 @@ InteractiveCameraTransform* SceneWidget::findOwnerInteractiveCameraTransform(int
 }
 
 
+InteractiveCameraTransform* SceneWidget::activeInteractiveCameraTransform()
+{
+    if(impl->hasActiveInteractiveCamera()){
+        return impl->interactiveCameraTransform;
+    }
+    return nullptr;
+}
+
+
 void SceneWidget::Impl::onCurrentCameraChanged()
 {
     interactiveCameraTransform.reset();

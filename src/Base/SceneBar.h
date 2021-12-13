@@ -28,9 +28,10 @@ public:
     SceneWidget* targetSceneWidget();
 
 protected:
-    SceneBar();
+    virtual bool restoreState(const Archive& archive);
 
 private:
+    SceneBar();
     ~SceneBar();
 
     class Impl;
