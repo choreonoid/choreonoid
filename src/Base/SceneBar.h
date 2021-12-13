@@ -19,8 +19,8 @@ public:
     static void initialize(ExtensionManager* ext);
     static SceneBar* instance();
 
-    void addCustomModeButton(int id, const QIcon& icon, const QString& caption);
-    void removeCustomModeButton(int id);
+    void addCustomModeButton(int modeId, const QIcon& icon, const QString& caption);
+    void removeCustomModeButton(int modeId);
 
     SceneView* currentSceneView();
     

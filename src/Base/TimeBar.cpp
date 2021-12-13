@@ -29,7 +29,18 @@ const double DEFAULT_FRAME_RATE = 1000.0;
 
 // The following value shoud be same as the display refresh rate to make the animation smooth
 const double DEFAULT_PLAYBACK_FRAMERATE = 60.0;
-    
+
+enum ElementId {
+    PlayButton = 0,
+    ResumeButton = 1,
+    RefreshButton = 2,
+    TimeSpin = 3,
+    TimeSlider = 4,
+    TimeRangeMinSpin = 5,
+    TimeRangeMaxSpin = 6,
+    ConfigButton = 7
+};
+
 class ConfigDialog : public Dialog
 {
 public:
@@ -48,10 +59,10 @@ public:
     ConfigDialog() {
         setWindowTitle(_("Time Bar Config"));
 
-        QVBoxLayout* vbox = new QVBoxLayout();
+        QVBoxLayout* vbox = new QVBoxLayout;
         setLayout(vbox);
         
-        QHBoxLayout* hbox = new QHBoxLayout();
+        QHBoxLayout* hbox = new QHBoxLayout;
         hbox->addWidget(new QLabel(_("Internal frame rate")));
         frameRateSpin.setAlignment(Qt::AlignCenter);
         frameRateSpin.setRange(1, 10000);
@@ -59,7 +70,7 @@ public:
         hbox->addStretch();
         vbox->addLayout(hbox);
 
-        hbox = new QHBoxLayout();
+        hbox = new QHBoxLayout;
         hbox->addWidget(new QLabel(_("Playback frame rate")));
         playbackFrameRateSpin.setAlignment(Qt::AlignCenter);
         playbackFrameRateSpin.setRange(0, 1000);
@@ -68,13 +79,13 @@ public:
         hbox->addStretch();
         vbox->addLayout(hbox);
 
-        hbox = new QHBoxLayout();
+        hbox = new QHBoxLayout;
         idleLoopDrivenCheck.setText(_("Idle loop driven mode"));
         hbox->addWidget(&idleLoopDrivenCheck);
         hbox->addStretch();
         vbox->addLayout(hbox);
             
-        hbox = new QHBoxLayout();
+        hbox = new QHBoxLayout;
         hbox->addWidget(new QLabel(_("Playback speed ratio")));
         playbackSpeedRatioSpin.setAlignment(Qt::AlignCenter);
         playbackSpeedRatioSpin.setDecimals(1);
@@ -85,14 +96,14 @@ public:
         hbox->addStretch();
         vbox->addLayout(hbox);
 
-        hbox = new QHBoxLayout();
+        hbox = new QHBoxLayout;
         ongoingTimeSyncCheck.setText(_("Sync with ongoing updates"));
         ongoingTimeSyncCheck.setChecked(true);
         hbox->addWidget(&ongoingTimeSyncCheck);
         hbox->addStretch();
         vbox->addLayout(hbox);
 
-        hbox = new QHBoxLayout();
+        hbox = new QHBoxLayout;
         autoExpandCheck.setText(_("Automatically expand the time range"));
         autoExpandCheck.setChecked(true);
         hbox->addWidget(&autoExpandCheck);
@@ -100,19 +111,19 @@ public:
         vbox->addLayout(hbox);
             
         /*
-          hbox = new QHBoxLayout();
+          hbox = new QHBoxLayout;
           vbox->addLayout(hbox);
             
           beatModeCheck = new QCheckBox(_("Beat mode"));
           hbox->addWidget(beatModeCheck);
 
-          beatcSpin = new SpinBox();
+          beatcSpin = new SpinBox;
           beatcSpin->setRange(1, 99);
           hbox->addWidget(beatcSpin);
 
           hbox->addWidget(new QLabel("/"));
 
-          beatmSpin = new SpinBox();
+          beatmSpin = new SpinBox;
           beatmSpin->setRange(1, 99);
           hbox->addWidget(beatmSpin);
 
@@ -121,13 +132,13 @@ public:
           vbox->addLayout(hbox);
 
           hbox->addWidget(new QLabel(_("Tempo")));
-          tempoSpin = new DoubleSpinBox();
+          tempoSpin = new DoubleSpinBox;
           tempoSpin->setRange(1.0, 999.99);
           tempoSpin->setDecimals(2);
           hbox->addWidget(tempoSpin);
 
           hbox->addWidget(new QLabel(_("Offset")));
-          beatOffsetSpin = new DoubleSpinBox();
+          beatOffsetSpin = new DoubleSpinBox;
           beatOffsetSpin->setRange(-9.99, 9.99);
           beatOffsetSpin->setDecimals(2);
           beatOffsetSpin->setSingleStep(0.1);
@@ -189,7 +200,7 @@ public:
     TimeBar* self;
     ConfigDialog config;
 
-    ToolButton* stopResumeButton;
+    ToolButton* resumeButton;
     ToolButton* frameModeToggle;
     QIcon resumeIcon;
     QIcon stopIcon;
@@ -245,7 +256,7 @@ void TimeBar::initialize(ExtensionManager* ext)
 
 TimeBar* TimeBar::instance()
 {
-    static TimeBar* timeBar = new TimeBar();
+    static TimeBar* timeBar = new TimeBar;
     return timeBar;
 }
 
@@ -276,42 +287,45 @@ TimeBar::Impl::Impl(TimeBar* self)
     ongoingTime = 0.0;
     hasOngoingTime = false;
 
-    self->addButton(QIcon(":/Base/icon/play.svg"), _("Start animation"))
-        ->sigClicked().connect([&](){ onPlayActivated(); });
+    auto playButton = self->addButton(QIcon(":/Base/icon/play.svg"), PlayButton);
+    playButton->setToolTip(_("Start playback"));
+    playButton->sigClicked().connect([&](){ onPlayActivated(); });
 
-    stopResumeButton = self->addButton(resumeIcon, _("Resume animation"));
-    stopResumeButton->setIcon(resumeIcon);
-    stopResumeButton->sigClicked().connect([&](){ onResumeActivated(); });
+    resumeButton = self->addButton(resumeIcon, ResumeButton);
+    resumeButton->setToolTip(_("Resume playback"));
+    resumeButton->sigClicked().connect([&](){ onResumeActivated(); });
 
-    self->addButton(QIcon(":/Base/icon/refresh.svg"), _("Refresh state at the current time"))
-        ->sigClicked().connect([this](){ this->self->refresh(); });
+    auto refreshButton = self->addButton(QIcon(":/Base/icon/refresh.svg"), RefreshButton);
+    refreshButton->setToolTip(_("Refresh state at the current time"));
+    refreshButton->sigClicked().connect([this](){ this->self->refresh(); });
     
-    timeSpin = new DoubleSpinBox();
+    timeSpin = new DoubleSpinBox;
     timeSpin->setAlignment(Qt::AlignCenter);
     timeSpin->sigValueChanged().connect([&](double value){ onTimeSpinChanged(value); });
-    self->addWidget(timeSpin);
+    self->addWidget(timeSpin, TimeSpin);
 
     timeSlider = new Slider(Qt::Horizontal);
     timeSlider->sigValueChanged().connect([&](int value){ onTimeSliderValueChanged(value); });
     timeSlider->setMinimumWidth(timeSlider->sizeHint().width());
-    self->addWidget(timeSlider);
+    self->addWidget(timeSlider, TimeSlider);
 
-    minTimeSpin = new DoubleSpinBox();
+    minTimeSpin = new DoubleSpinBox;
     minTimeSpin->setAlignment(Qt::AlignCenter);
     minTimeSpin->setRange(-9999.0, 9999.0);
     minTimeSpin->sigValueChanged().connect([&](double){ onTimeRangeSpinsChanged(); });
-    self->addWidget(minTimeSpin);
+    self->addWidget(minTimeSpin, TimeRangeMinSpin);
 
     self->addLabel(" : ");
 
-    maxTimeSpin = new DoubleSpinBox();
+    maxTimeSpin = new DoubleSpinBox;
     maxTimeSpin->setAlignment(Qt::AlignCenter);
     maxTimeSpin->setRange(-9999.0, 9999.0);
     maxTimeSpin->sigValueChanged().connect([&](double){ onTimeRangeSpinsChanged(); });
-    self->addWidget(maxTimeSpin);
+    self->addWidget(maxTimeSpin, TimeRangeMaxSpin);
 
-    self->addButton(QIcon(":/Base/icon/setup.svg"), _("Show the config dialog"))
-        ->sigClicked().connect([&](){ config.show(); });
+    auto configButton = self->addButton(QIcon(":/Base/icon/setup.svg"));
+    configButton->setToolTip(_("Show the config dialog"));
+    configButton->sigClicked().connect([&](){ config.show(); });
 
     config.frameRateSpin.sigValueChanged().connect([&](int value){ onFrameRateSpinChanged(value); });
     config.playbackFrameRateSpin.sigValueChanged().connect([&](int value){ onPlaybackFrameRateChanged(value); });
@@ -579,8 +593,8 @@ void TimeBar::Impl::startPlayback(double time)
             isDoingPlayback = true;
 
             const static QString tip(_("Stop animation"));
-            stopResumeButton->setIcon(stopIcon);
-            stopResumeButton->setToolTip(tip);
+            resumeButton->setIcon(stopIcon);
+            resumeButton->setToolTip(tip);
             int interval;
             if(config.idleLoopDrivenCheck.isChecked()){
                 interval = 0;
@@ -608,8 +622,8 @@ void TimeBar::Impl::stopPlayback(bool isStoppedManually)
         sigPlaybackStopped(self->time_, isStoppedManually);
 
         const static QString tip(_("Resume animation"));
-        stopResumeButton->setIcon(resumeIcon);
-        stopResumeButton->setToolTip(tip);
+        resumeButton->setIcon(resumeIcon);
+        resumeButton->setToolTip(tip);
 
         if(ongoingTimeMap.empty()){
             hasOngoingTime = false;
@@ -827,6 +841,7 @@ int TimeBar::stretchableDefaultWidth() const
 
 bool TimeBar::storeState(Archive& archive)
 {
+    ToolBar::storeState(archive);
     return impl->storeState(archive);
 }
 
@@ -848,7 +863,10 @@ bool TimeBar::Impl::storeState(Archive& archive)
 
 bool TimeBar::restoreState(const Archive& archive)
 {
-    return impl->restoreState(archive);
+    if(ToolBar::restoreState(archive)){
+        return impl->restoreState(archive);
+    }
+    return false;
 }
 
 

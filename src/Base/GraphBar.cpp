@@ -114,21 +114,21 @@ GraphBarImpl::GraphBarImpl(GraphBar* self)
     : self(self),
       config(this)
 {
-    orgRenderingToggle = self->addToggleButton(QIcon(":/Base/icon/graph.svg"),
-                                               _("Plot trajectories of the target data on the graph view"));
+    orgRenderingToggle = self->addToggleButton(QIcon(":/Base/icon/graph.svg"));
+    orgRenderingToggle->setToolTip(_("Plot trajectories of the target data on the graph view"));
     orgRenderingToggle->setChecked(true);
     connections.add(
         orgRenderingToggle->sigToggled().connect(
             [&](bool){ onRenderingTypesToggled(); }));
 
-    velRenderingToggle = self->addToggleButton(QIcon(":/Base/icon/velocitygraph.svg"),
-                                               _("Plot velocity trajectories"));
+    velRenderingToggle = self->addToggleButton(QIcon(":/Base/icon/velocitygraph.svg"));
+    velRenderingToggle->setToolTip(_("Plot velocity trajectories"));
     connections.add(
         velRenderingToggle->sigToggled().connect(
             [&](bool){ onRenderingTypesToggled(); }));
 
-    accRenderingToggle = self->addToggleButton(QIcon(":/Base/icon/accgraph.svg"),
-                                               _("Plot acceleration trajectories"));
+    accRenderingToggle = self->addToggleButton(QIcon(":/Base/icon/accgraph.svg"));
+    accRenderingToggle->setToolTip(_("Plot acceleration trajectories"));
     // Hide this button because the acc trajectory is currently not supported by the graph wieget
     accRenderingToggle->hide();
     
@@ -136,8 +136,9 @@ GraphBarImpl::GraphBarImpl(GraphBar* self)
         accRenderingToggle->sigToggled().connect(
             [&](bool){ onRenderingTypesToggled(); }));
 
-    self->addButton(QIcon(":/Base/icon/setup.svg"), _("Show the config dialog"))
-        ->sigClicked().connect([&](){ config.show();});
+    auto configButton = self->addButton(QIcon(":/Base/icon/setup.svg"));
+    configButton->setToolTip(_("Show the config dialog"));
+    configButton->sigClicked().connect([&](){ config.show();});
 
     self->setEnabled(false);
     
@@ -210,10 +211,10 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
 {
     setWindowTitle(_("Graph Config"));
 
-    QVBoxLayout* vbox = new QVBoxLayout();
+    QVBoxLayout* vbox = new QVBoxLayout;
     setLayout(vbox);
 
-    QHBoxLayout* hbox = new QHBoxLayout();        
+    QHBoxLayout* hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Line width")));
     
     lineWidthSpin.setRange(1, 9);
@@ -225,7 +226,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("y-range, 10^")));
     
     verticalValueRangeSpin.setDecimals(1);
@@ -245,7 +246,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     hbox->addWidget(&showLimitCheck);
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     gridCheck.setText(_("Show grid"));
     connections.add(
         gridCheck.sigToggled().connect(
@@ -270,7 +271,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     editModeCheck.setText(_("Edit mode"));
     connections.add(
         editModeCheck.sigToggled().connect(
@@ -295,7 +296,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     highlightingControlPointCheck.setText(_("Control points"));
     connections.add(
         highlightingControlPointCheck.sigToggled().connect(
@@ -320,7 +321,7 @@ ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     timeBarSyncToggle.setText(_("Time bar sync"));
     timeBarSyncToggle.setChecked(true);
     connections.add(

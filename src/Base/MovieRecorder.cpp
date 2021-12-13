@@ -294,7 +294,7 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
     ext->addToolBar(toolBar);
     timeBar = TimeBar::instance();
 
-    targetView = 0;
+    targetView = nullptr;
     
     isRecording = false;
     isBeforeFirstFrameCapture = false;
@@ -304,7 +304,7 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
 
     startMessage = _("Recording of {0} has been started with the {1} mode.");
 
-    viewMarker = 0;
+    viewMarker = nullptr;
     isViewMarkerEnabled = false;
     flashTimer.setInterval(500);
     flashTimer.sigTimeout().connect([&](){ onFlashTimeout(); });
@@ -645,7 +645,7 @@ void MovieRecorderImpl::onDirectModeTimerTimeout()
 
 void MovieRecorderImpl::captureViewImage(bool waitForPrevOutput)
 {
-    CapturedImagePtr captured = new CapturedImage();
+    CapturedImagePtr captured = new CapturedImage;
     captured->frame = frame;
     
     if(SceneView* sceneView = dynamic_cast<SceneView*>(targetView)){
@@ -941,16 +941,19 @@ MovieRecorderBar::MovieRecorderBar(MovieRecorderImpl* recorder)
     : ToolBar(N_("MovieRecorderBar")),
       recorder(recorder)
 {
-    recordingToggle = addToggleButton(QIcon(":/Base/icon/record.svg"), _("Toggle Recording"));
+    recordingToggle = addToggleButton(QIcon(":/Base/icon/record.svg"));
+    recordingToggle->setToolTip(_("Toggle Recording"));
     recordingToggle->sigToggled().connect(
         [this](bool on){ this->recorder->activateRecording(on, false); });
 
-    viewMarkerToggle = addToggleButton(QIcon(":/Base/icon/recordtarget.svg"), _("Toggle Target View Marker"));
+    viewMarkerToggle = addToggleButton(QIcon(":/Base/icon/recordtarget.svg"));
+    viewMarkerToggle->setToolTip(_("Toggle Target View Marker"));
     viewMarkerToggle->sigToggled().connect(
         [this](bool on){ this->recorder->onViewMarkerToggled(on); });
     
-    addButton(QIcon(":/Base/icon/setup.svg"), _("Show the config dialog"))
-        ->sigClicked().connect([this](){ this->recorder->dialog->show(); });
+    auto configButton = addButton(QIcon(":/Base/icon/setup.svg"));
+    configButton->setToolTip(_("Show the config dialog"));
+    configButton->sigClicked().connect([this](){ this->recorder->dialog->show(); });
 }
 
 
@@ -960,10 +963,10 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
 {
     setWindowTitle(_("Movie Recorder"));
     
-    QVBoxLayout* vbox = new QVBoxLayout();
+    QVBoxLayout* vbox = new QVBoxLayout;
     setLayout(vbox);
 
-    QHBoxLayout* hbox = new QHBoxLayout();
+    QHBoxLayout* hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Target view:")));
 
     targetViewCombo.sigCurrentIndexChanged().connect(
@@ -978,9 +981,9 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Recording mode: ")));
-    ButtonGroup* modeGroup = new ButtonGroup();
+    ButtonGroup* modeGroup = new ButtonGroup;
     for(int i=0; i < N_RECORDING_MODES; ++i){
         RadioButton* radio = &modeRadioButtons[i];
         radio->setText(recorder->recordingMode.label(i));
@@ -993,7 +996,7 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Directory")));
     hbox->addWidget(&directoryEntry);
 
@@ -1008,14 +1011,14 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     hbox->addWidget(&directoryButton);
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Basename")));
     basenameEntry.setText("scene");
     hbox->addWidget(&basenameEntry);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Frame rate")));
     fpsSpin.setDecimals(1);
     fpsSpin.setRange(1.0, 9999.9);
@@ -1026,7 +1029,7 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     startTimeCheck.setText(_("Start time"));
     hbox->addWidget(&startTimeCheck);
     startTimeSpin.setDecimals(2);
@@ -1046,7 +1049,7 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     hbox->addStretch();
     vbox->addLayout(hbox);
     
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     imageSizeCheck.setText(_("Image size"));
     hbox->addWidget(&imageSizeCheck);
     
@@ -1062,14 +1065,14 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     vbox->addLayout(hbox);
 
     if(ENABLE_MOUSE_CURSOR_CAPTURE){
-        hbox = new QHBoxLayout();
+        hbox = new QHBoxLayout;
         mouseCursorCheck.setText(_("Capture the mouse cursor"));
         hbox->addWidget(&mouseCursorCheck);
         hbox->addStretch();
         vbox->addLayout(hbox);
     }
 
-    vbox->addWidget(new HSeparator());
+    vbox->addWidget(new HSeparator);
     QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
 
     recordingToggle.setText(_("&Record"));
@@ -1234,4 +1237,3 @@ void ViewMarker::paintEvent(QPaintEvent*)
 }
 
 }
-

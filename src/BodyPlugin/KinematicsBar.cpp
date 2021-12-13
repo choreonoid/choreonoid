@@ -37,7 +37,7 @@ public:
 
 namespace cnoid {
 
-class KinematicsBarImpl
+class KinematicsBar::Impl
 {
 public:
     ToolButton* fkToggle;
@@ -56,8 +56,7 @@ public:
 
     KinematicsBarSetupDialog* setup;
 
-    KinematicsBarImpl(KinematicsBar* self);
-    void onCollisionVisualizationChanged();
+    Impl(KinematicsBar* self);
     void onLazyCollisionDetectionModeToggled();
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
@@ -68,7 +67,7 @@ public:
 
 KinematicsBar* KinematicsBar::instance()
 {
-    static KinematicsBar* instance = new KinematicsBar();
+    static KinematicsBar* instance = new KinematicsBar;
     return instance;
 }
 
@@ -76,26 +75,32 @@ KinematicsBar* KinematicsBar::instance()
 KinematicsBar::KinematicsBar()
     : ToolBar(N_("KinematicsBar"))
 {
-    impl = new KinematicsBarImpl(this);
+    impl = new Impl(this);
 }
 
 
-KinematicsBarImpl::KinematicsBarImpl(KinematicsBar* self)
+KinematicsBar::Impl::Impl(KinematicsBar* self)
 {
-    setup = new KinematicsBarSetupDialog();
+    setup = new KinematicsBarSetupDialog;
     
-    fkToggle = self->addToggleButton(QIcon(":/Body/icon/fk.svg"), _("Enable forward kinematics"));
+    fkToggle = self->addToggleButton(QIcon(":/Body/icon/fk.svg"));
+    fkToggle->setToolTip(_("Enable forward kinematics"));
     fkToggle->setChecked(true);
     fkToggle->sigToggled().connect([&](bool on){ sigKinematicsModeChanged(); });
-    presetToggle = self->addToggleButton(QIcon(":/Body/icon/fkik.svg"), _("Use preset Kinematics"));
+    
+    presetToggle = self->addToggleButton(QIcon(":/Body/icon/fkik.svg"));
+    presetToggle->setToolTip(_("Use preset Kinematics"));
     presetToggle->setChecked(true);
     presetToggle->sigToggled().connect([&](bool on){ sigKinematicsModeChanged(); });
-    ikToggle = self->addToggleButton(QIcon(":/Body/icon/ik.svg"), _("Enable inverse kinematics"));
+    
+    ikToggle = self->addToggleButton(QIcon(":/Body/icon/ik.svg"));
+    ikToggle->setToolTip(_("Enable inverse kinematics"));
     ikToggle->setChecked(true);
     ikToggle->sigToggled().connect([&](bool on){ sigKinematicsModeChanged(); });
     self->addSpacing();
 
-    draggerToggle = self->addToggleButton(QIcon(":/Body/icon/rotation.svg"), _("Enable link orientation editing"));
+    draggerToggle = self->addToggleButton(QIcon(":/Body/icon/rotation.svg"));
+    draggerToggle->setToolTip(_("Enable link orientation editing"));
     draggerToggle->setChecked(true);
 
     /*
@@ -108,20 +113,21 @@ KinematicsBarImpl::KinematicsBarImpl(KinematicsBar* self)
       jointPositionLimitToggle->setChecked(true);
     */
     
-    penetrationBlockToggle = self->addToggleButton(QIcon(":/Body/icon/block.svg"), _("Penetration block mode"));
+    penetrationBlockToggle = self->addToggleButton(QIcon(":/Body/icon/block.svg"));
+    penetrationBlockToggle->setToolTip(_("Penetration block mode"));
     penetrationBlockToggle->setChecked(false);
 
-    collisionLinkHighlightToggle = self->addToggleButton(QIcon(":/Body/icon/collisionoutline.svg"), _("Highlight colliding links"));
+    collisionLinkHighlightToggle = self->addToggleButton(QIcon(":/Body/icon/collisionoutline.svg"));
+    collisionLinkHighlightToggle->setToolTip(_("Highlight colliding links"));
     collisionLinkHighlightToggle->setChecked(false);
     collisionLinkHighlightToggle->sigToggled().connect(
-        std::bind(&KinematicsBarImpl::onCollisionVisualizationChanged, this));
+        [this](bool){ sigCollisionVisualizationChanged(); });
 
     self->addButton(QIcon(":/Base/icon/setup.svg"))
-        ->sigClicked().connect(
-            std::bind(&KinematicsBarSetupDialog::show, setup));
+        ->sigClicked().connect([this](){ setup->show(); });
     
     setup->lazyCollisionDetectionModeCheck.sigToggled().connect(
-        std::bind(&KinematicsBarImpl::onLazyCollisionDetectionModeToggled, this));
+        [this](bool){ onLazyCollisionDetectionModeToggled(); });
     
     onLazyCollisionDetectionModeToggled();
 }
@@ -223,13 +229,7 @@ SignalProxy<void()> KinematicsBar::sigCollisionVisualizationChanged()
 }
 
 
-void KinematicsBarImpl::onCollisionVisualizationChanged()
-{
-    sigCollisionVisualizationChanged();
-}
-
-
-void KinematicsBarImpl::onLazyCollisionDetectionModeToggled()
+void KinematicsBar::Impl::onLazyCollisionDetectionModeToggled()
 {
     if(setup->lazyCollisionDetectionModeCheck.isChecked()){
         collisionDetectionPriority = LazyCaller::PRIORITY_NORMAL;
@@ -245,7 +245,7 @@ bool KinematicsBar::storeState(Archive& archive)
 }
 
 
-bool KinematicsBarImpl::storeState(Archive& archive)
+bool KinematicsBar::Impl::storeState(Archive& archive)
 {
     archive.write("forward_kinematics", fkToggle->isChecked());
     archive.write("inverse_kinematics", ikToggle->isChecked());
@@ -265,7 +265,7 @@ bool KinematicsBar::restoreState(const Archive& archive)
 }
 
 
-bool KinematicsBarImpl::restoreState(const Archive& archive)
+bool KinematicsBar::Impl::restoreState(const Archive& archive)
 {
     bool modeChanged = false;
     bool on;
@@ -300,7 +300,8 @@ bool KinematicsBarImpl::restoreState(const Archive& archive)
     draggerToggle->setChecked(archive.get("enablePositionDragger", draggerToggle->isChecked()));
     penetrationBlockToggle->setChecked(archive.get("penetrationBlock", penetrationBlockToggle->isChecked()));
     //footSnapToggle->setChecked(archive.get("footSnap", footSnapToggle->isChecked()));
-    collisionLinkHighlightToggle->setChecked(archive.get("collisionLinkHighlight", collisionLinkHighlightToggle->isChecked()));
+    collisionLinkHighlightToggle->setChecked(
+        archive.get("collisionLinkHighlight", collisionLinkHighlightToggle->isChecked()));
     setup->restoreState(archive);
     
     return true;
@@ -313,10 +314,10 @@ KinematicsBarSetupDialog::KinematicsBarSetupDialog()
 {
     setWindowTitle(_("Kinematics Operation Setup"));
         
-    QVBoxLayout* vbox = new QVBoxLayout();
+    QVBoxLayout* vbox = new QVBoxLayout;
     setLayout(vbox);
    
-    QHBoxLayout* hbox = new QHBoxLayout();
+    QHBoxLayout* hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Snap thresholds:")));
     hbox->addSpacing(10);
     
@@ -338,7 +339,7 @@ KinematicsBarSetupDialog::KinematicsBarSetupDialog()
     hbox->addWidget(new QLabel(_("[deg]")));
     vbox->addLayout(hbox);
     
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Penetration block depth")));
     penetrationBlockDepthSpin.setAlignment(Qt::AlignCenter);
     penetrationBlockDepthSpin.setDecimals(4);
@@ -349,13 +350,13 @@ KinematicsBarSetupDialog::KinematicsBarSetupDialog()
     hbox->addWidget(new QLabel(_("[m]")));
     vbox->addLayout(hbox);
     
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     lazyCollisionDetectionModeCheck.setText(_("Lazy collision detection mode"));
     lazyCollisionDetectionModeCheck.setChecked(true);
     hbox->addWidget(&lazyCollisionDetectionModeCheck);
     vbox->addLayout(hbox);
     
-    hbox = new QHBoxLayout();
+    hbox = new QHBoxLayout;
     okButton.setText(_("OK"));
     okButton.setDefault(true);
     hbox->addWidget(&okButton);
@@ -375,7 +376,8 @@ void KinematicsBarSetupDialog::restoreState(const Archive& archive)
 {
     snapDistanceSpin.setValue(archive.get("snapDistance", snapDistanceSpin.value()));
     penetrationBlockDepthSpin.setValue(archive.get("penetrationBlockDepth", penetrationBlockDepthSpin.value()));
-    lazyCollisionDetectionModeCheck.setChecked(archive.get("lazyCollisionDetectionMode", lazyCollisionDetectionModeCheck.isChecked()));
+    lazyCollisionDetectionModeCheck.setChecked(
+        archive.get("lazyCollisionDetectionMode", lazyCollisionDetectionModeCheck.isChecked()));
 }
 
 }

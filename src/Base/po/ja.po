@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-07 20:06+0900\n"
+"POT-Creation-Date: 2021-12-13 20:12+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -752,6 +752,12 @@ msgstr ""
 
 msgid "<b>{0}</b> + {1} objects"
 msgstr "<b>{0}</b> + {1} オブジェクト"
+
+msgid "{0} + {1}"
+msgstr ""
+
+msgid "{0} + {1} objects"
+msgstr "{0} + {1}オブジェクト"
 
 msgid "World"
 msgstr "ワールド"
@@ -1768,17 +1774,20 @@ msgstr "&OK"
 msgid "TimeBar"
 msgstr "タイムバー"
 
-msgid "Start animation"
-msgstr "アニメーションの開始"
+msgid "Start playback"
+msgstr "再生開始"
 
-msgid "Resume animation"
-msgstr "アニメーションの再生・停止"
+msgid "Resume playback"
+msgstr "再生再開"
 
 msgid "Refresh state at the current time"
 msgstr "現在時刻で状態を更新"
 
 msgid "Stop animation"
 msgstr "アニメーションの停止"
+
+msgid "Resume animation"
+msgstr "アニメーションの再生・停止"
 
 msgid "Undo: {0}."
 msgstr "「{0}」を元に戻しました．"
@@ -1827,3 +1836,6 @@ msgstr "仮想ジョイスティック"
 
 msgid "VirtualJoystickView"
 msgstr "仮想ジョイスティックビュー"
+
+#~ msgid "Start animation"
+#~ msgstr "アニメーションの開始"

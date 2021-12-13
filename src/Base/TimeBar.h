@@ -92,7 +92,6 @@ public:
     virtual int stretchableDefaultWidth() const;
 
 protected:
-
     virtual bool storeState(Archive& archive);
     virtual bool restoreState(const Archive& archive);
         

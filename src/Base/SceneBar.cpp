@@ -22,6 +22,23 @@ namespace {
 
 SceneBar* sceneBar;
 
+enum ElementId {
+    EditModeToggle = 0,
+    FirstPersonModeToggle = 1,
+    CameraCombo = 2,
+    FittingButton = 3,
+    VertexToggle = 4,
+    WireframeToggle = 5,
+    SolidWireframeToggle = 6,
+    SolidPolygonToggle = 7,
+    HighlightToggle = 8,
+    VisualModelToggle = 9,
+    ModelTypeFlipButton = 10,
+    CollisionModelToggle = 11,
+    CollisionLineToggle = 12,
+    ConfigButton = 13
+};
+
 }
 
 namespace cnoid {
@@ -49,7 +66,7 @@ public:
 
     struct CustomModeButtonInfo {
         ToolButton* button;
-        int id;
+        int modeId;
     };
     vector<CustomModeButtonInfo> customModeButtons;
     ButtonGroup customModeButtonGroup;
@@ -114,19 +131,17 @@ void SceneBar::Impl::initialize()
     currentSceneView = nullptr;
     currentSceneWidget = nullptr;
     
-    editModeToggle = self->addToggleButton(
-        QIcon(":/Base/icon/sceneedit.svg"), _("Switch to the edit mode"));
-    editModeToggle->sigToggled().connect(
-        [&](bool on){ onEditModeButtonToggled(on); });
+    editModeToggle = self->addToggleButton(QIcon(":/Base/icon/sceneedit.svg"), EditModeToggle);
+    editModeToggle->setToolTip(_("Switch to the edit mode"));
+    editModeToggle->sigToggled().connect([&](bool on){ onEditModeButtonToggled(on); });
 
     customModeButtonGroup.setExclusive(false);
     customModeButtonGroup.sigButtonToggled().connect(
         [&](int mode, bool on){ onCustomModeButtonToggled(mode, on); });
     
-    firstPersonModeToggle = self->addToggleButton(
-        QIcon(":/Base/icon/walkthrough.svg"), _("First-person viewpoint control mode"));
-    firstPersonModeToggle->sigToggled().connect(
-        [&](bool on){ onFirstPersonModeButtonToggled(on); });
+    firstPersonModeToggle = self->addToggleButton(QIcon(":/Base/icon/walkthrough.svg"), FirstPersonModeToggle);
+    firstPersonModeToggle->setToolTip(_("First-person viewpoint control mode"));
+    firstPersonModeToggle->sigToggled().connect([&](bool on){ onFirstPersonModeButtonToggled(on); });
 
     cameraCombo = new ComboBox;
 
@@ -146,32 +161,31 @@ void SceneBar::Impl::initialize()
     cameraCombo->setToolTip(_("Projection method / camera selection"));
     cameraCombo->sigCurrentIndexChanged().connect(
         [&](int index){ onCameraComboCurrentIndexChanged(index); });
-    self->addWidget(cameraCombo);
+    self->addWidget(cameraCombo, CameraCombo);
 
-    self->addButton(QIcon(":/Base/icon/viewfitting.svg"), _("Move the camera to look at the objects"))
-        ->sigClicked().connect([&](){
-                currentSceneWidget->viewAll();
-                currentSceneWidget->setViewpointOperationMode(SceneWidget::ThirdPersonMode);
-            });
+    auto fittingButton = self->addButton(QIcon(":/Base/icon/viewfitting.svg"), FittingButton);
+    fittingButton->setToolTip(_("Move the camera to look at the objects"));
+    fittingButton->sigClicked().connect(
+        [&](){
+            currentSceneWidget->viewAll();
+            currentSceneWidget->setViewpointOperationMode(SceneWidget::ThirdPersonMode);
+        });
 
-    self->addSpacing();
+    vertexToggle = self->addToggleButton(QIcon(":/Base/icon/vertex.svg"), VertexToggle);
+    vertexToggle->setToolTip(_("Vertex rendering"));
+    vertexToggle->sigToggled().connect([&](bool){ onPolygonModeButtonToggled(); });
 
-    vertexToggle = self->addToggleButton(
-        QIcon(":/Base/icon/vertex.svg"), _("Vertex rendering"));
-    vertexToggle->sigToggled().connect(
-        [&](bool){ onPolygonModeButtonToggled(); });
-
-    auto wireframeToggle = self->addToggleButton(
-        QIcon(":/Base/icon/wireframe.svg"), _("Wireframe rendering"));
+    auto wireframeToggle = self->addToggleButton(QIcon(":/Base/icon/wireframe.svg"), WireframeToggle);
+    wireframeToggle->setToolTip(_("Wireframe rendering"));
     polygonModeGroup.addButton(wireframeToggle, 0);
 
-    auto solidWireframeToggle = self->addToggleButton(
-        QIcon(":/Base/icon/solidwireframe.svg"), _("Solid wireframe rendering"));
-        
+    auto solidWireframeToggle =
+        self->addToggleButton(QIcon(":/Base/icon/solidwireframe.svg"), SolidWireframeToggle);
+    solidWireframeToggle->setToolTip(_("Solid wireframe rendering"));
     polygonModeGroup.addButton(solidWireframeToggle, 1);
 
-    auto solidPolygonToggle = self->addToggleButton(
-        QIcon(":/Base/icon/solidpolygon.svg"), _("Polygon rendering"));
+    auto solidPolygonToggle = self->addToggleButton(QIcon(":/Base/icon/solidpolygon.svg"), SolidPolygonToggle);
+    solidPolygonToggle->setToolTip(_("Polygon rendering"));
     polygonModeGroup.addButton(solidPolygonToggle, 2);
 
     polygonModeGroup.sigButtonToggled().connect(
@@ -179,34 +193,30 @@ void SceneBar::Impl::initialize()
             if(on){ onPolygonModeButtonToggled(); }
         });
 
-    highlightToggle = self->addToggleButton(
-        QIcon(":/Base/icon/highlight.svg"), _("Highlight selected objects"));
-    highlightToggle->sigToggled().connect(
-        [&](bool on){ onHighlightingToggled(on); });
+    highlightToggle = self->addToggleButton(QIcon(":/Base/icon/highlight.svg"), HighlightToggle);
+    highlightToggle->setToolTip(_("Highlight selected objects"));
+    highlightToggle->sigToggled().connect([&](bool on){ onHighlightingToggled(on); });
 
-    visualModelToggle = self->addToggleButton(
-        QIcon(":/Base/icon/visualshape.svg"), _("Show visual models"));
+    visualModelToggle = self->addToggleButton(QIcon(":/Base/icon/visualshape.svg"), VisualModelToggle);
+    visualModelToggle->setToolTip(_("Show visual models"));
     visualModelToggle->setChecked(true);
-    visualModelToggle->sigToggled().connect(
-        [&](bool){ updateCollisionModelVisibility(); });
+    visualModelToggle->sigToggled().connect([&](bool){ updateCollisionModelVisibility(); });
 
-    modelTypeFlipButton = self->addButton(
-        QIcon(":/Base/icon/shapeflip.svg"), _("Flip active model types"));
-    modelTypeFlipButton->sigClicked().connect(
-        [&](){ flipVisibleModels(); });
+    modelTypeFlipButton = self->addButton(QIcon(":/Base/icon/shapeflip.svg"), ModelTypeFlipButton);
+    modelTypeFlipButton->setToolTip(_("Flip active model types"));
+    modelTypeFlipButton->sigClicked().connect([&](){ flipVisibleModels(); });
 
-    collisionModelToggle = self->addToggleButton(
-        QIcon(":/Base/icon/collisionshape.svg"), _("Show the collision detection models"));
-    collisionModelToggle->sigToggled().connect(
-        [&](bool){ updateCollisionModelVisibility(); });
-    
-    collisionLineToggle = self->addToggleButton(
-        QIcon(":/Base/icon/collisionlines.svg"), _("Toggle the collision line visibility"));
-    collisionLineToggle->sigToggled().connect(
-        [&](bool on){ onCollisionLineButtonToggled(on); });
+    collisionModelToggle = self->addToggleButton(QIcon(":/Base/icon/collisionshape.svg"), CollisionModelToggle);
+    collisionModelToggle->setToolTip(_("Show the collision detection models"));
+    collisionModelToggle->sigToggled().connect([&](bool){ updateCollisionModelVisibility();});
 
-    self->addButton(QIcon(":/Base/icon/setup.svg"), _("Show the config dialog"))
-        ->sigClicked().connect([&](){ currentSceneWidget->showConfigDialog(); });
+    collisionLineToggle = self->addToggleButton(QIcon(":/Base/icon/collisionlines.svg"), CollisionLineToggle);
+    collisionLineToggle->setToolTip(_("Toggle the collision line visibility"));
+    collisionLineToggle->sigToggled().connect([&](bool on){ onCollisionLineButtonToggled(on); });
+
+    auto configButton = self->addButton(QIcon(":/Base/icon/setup.svg"), ConfigButton);
+    configButton->setToolTip(_("Show the config dialog"));
+    configButton->sigClicked().connect([&](){ currentSceneWidget->showConfigDialog(); });
 
     sceneViewFocusConnection =
         SceneView::sigLastFocusViewChanged().connect(
@@ -222,20 +232,21 @@ SceneBar::~SceneBar()
 }
 
 
-void SceneBar::addCustomModeButton(int id, const QIcon& icon, const QString& caption)
+void SceneBar::addCustomModeButton(int modeId, const QIcon& icon, const QString& caption)
 {
-    int position = 1 + impl->customModeButtons.size();
-    auto button = setInsertionPosition(position).addRadioButton(icon, caption);
-    impl->customModeButtonGroup.addButton(button, id);
-    impl->customModeButtons.push_back({ button, id });
+    int position = elementPosition(EditModeToggle) + 1 + impl->customModeButtons.size();
+    auto button = setInsertionPosition(position).addRadioButton(icon);
+    button->setToolTip(caption);
+    impl->customModeButtonGroup.addButton(button, modeId);
+    impl->customModeButtons.push_back({ button, modeId });
 }
 
 
-void SceneBar::removeCustomModeButton(int id)
+void SceneBar::removeCustomModeButton(int modeId)
 {
     auto p = impl->customModeButtons.begin();
     while(p != impl->customModeButtons.end()){
-        if(p->id == id){
+        if(p->modeId == modeId){
             delete p->button;
             impl->customModeButtons.erase(p);
             break;

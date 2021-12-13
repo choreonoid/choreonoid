@@ -48,29 +48,39 @@ BodyBar::BodyBar()
 
 BodyBar::Impl::Impl(BodyBar* self)
 {
-    self->addButton(QIcon(":/Body/icon/storepose.svg"), _("Memory the current pose"))
-        ->sigClicked().connect([&](){ onCopyButtonClicked(); });
-
-    self->addButton(QIcon(":/Body/icon/restorepose.svg"), _("Recall the memorized pose"))
-        ->sigClicked().connect([&](){ onPasteButtonClicked(); });
+    ToolButton* button;
     
-    self->addButton(QIcon(":/Body/icon/origin.svg"), _("Move the selected bodies to the origin"))
-        ->sigClicked().connect([&](){ onOriginButtonClicked(); });
+    button = self->addButton(QIcon(":/Body/icon/storepose.svg"));
+    button->setToolTip(_("Memory the current pose"));
+    button->sigClicked().connect([&](){ onCopyButtonClicked(); });
 
-    self->addButton(QIcon(":/Body/icon/initialpose.svg"), _("Set the preset initial pose to the selected bodies"))
-        ->sigClicked().connect([&](){ onPoseButtonClicked(BodyItem::INITIAL_POSE); });
+    button = self->addButton(QIcon(":/Body/icon/restorepose.svg"));
+    button->setToolTip(_("Recall the memorized pose"));
+    button->sigClicked().connect([&](){ onPasteButtonClicked(); });
+    
+    button = self->addButton(QIcon(":/Body/icon/origin.svg"));
+    button->setToolTip(_("Move the selected bodies to the origin"));
+    button->sigClicked().connect([&](){ onOriginButtonClicked(); });
 
-    self->addButton(QIcon(":/Body/icon/stdpose.svg"), _("Set the preset standard pose to the selected bodies"))
-        ->sigClicked().connect([&](){ onPoseButtonClicked(BodyItem::STANDARD_POSE); });
+    button = self->addButton(QIcon(":/Body/icon/initialpose.svg"));
+    button->setToolTip(_("Set the preset initial pose to the selected bodies"));
+    button->sigClicked().connect([&](){ onPoseButtonClicked(BodyItem::INITIAL_POSE); });
 
-    self->addButton(QIcon(":/Body/icon/right-to-left.svg"), _("Copy the right side pose to the left side"))
-        ->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(1, false); });
+    button = self->addButton(QIcon(":/Body/icon/stdpose.svg"));
+    button->setToolTip(_("Set the preset standard pose to the selected bodies"));
+    button->sigClicked().connect([&](){ onPoseButtonClicked(BodyItem::STANDARD_POSE); });
 
-    self->addButton(QIcon(":/Body/icon/flip.svg"), _("Mirror copy"))
-        ->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(0, true); });
+    button = self->addButton(QIcon(":/Body/icon/right-to-left.svg"));
+    button->setToolTip(_("Copy the right side pose to the left side"));
+    button->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(1, false); });
 
-    self->addButton(QIcon(":/Body/icon/left-to-right.svg"), _("Copy the left side pose to the right side"))
-        ->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(0, false); });
+    button = self->addButton(QIcon(":/Body/icon/flip.svg"));
+    button->setToolTip(_("Mirror copy"));
+    button->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(0, true); });
+
+    button = self->addButton(QIcon(":/Body/icon/left-to-right.svg"));
+    button->setToolTip(_("Copy the left side pose to the right side"));
+    button->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(0, false); });
 
     bodySelectionManager = BodySelectionManager::instance();
 }

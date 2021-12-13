@@ -65,7 +65,7 @@ public:
 
     void addSeparator(QVBoxLayout* vbox){
         vbox->addSpacing(4);
-        vbox->addWidget(new HSeparator());
+        vbox->addWidget(new HSeparator);
         vbox->addSpacing(2);
     }
 
@@ -76,7 +76,7 @@ public:
     }
 
     QHBoxLayout* newRow(QVBoxLayout* vbox) {
-        QHBoxLayout* hbox = new QHBoxLayout();
+        QHBoxLayout* hbox = new QHBoxLayout;
         hbox->setSpacing(2);
         hbox->setContentsMargins(2, 2, 2, 2);
         vbox->addLayout(hbox);
@@ -87,7 +87,7 @@ public:
         {
             setWindowTitle(_("Body Motion Generation Setup"));
 
-            vbox = new QVBoxLayout();
+            vbox = new QVBoxLayout;
 
             QHBoxLayout* hbox = newRow(vbox);
             hbox->addWidget(new QLabel(_("Time scale")));
@@ -240,7 +240,7 @@ public:
             hbox->addWidget(&lipSyncMixCheck);
             hbox->addStretch();
 
-            QVBoxLayout* topVBox = new QVBoxLayout();
+            QVBoxLayout* topVBox = new QVBoxLayout;
             topVBox->addLayout(vbox);
 
             addSeparator(topVBox);
@@ -330,7 +330,7 @@ void BodyMotionGenerationBar::initializeInstance(ExtensionManager* ext)
 
 BodyMotionGenerationBar* BodyMotionGenerationBar::instance()
 {
-    static BodyMotionGenerationBar* bar = new BodyMotionGenerationBar();
+    static BodyMotionGenerationBar* bar = new BodyMotionGenerationBar;
     return bar;
 }
 
@@ -338,14 +338,15 @@ BodyMotionGenerationBar* BodyMotionGenerationBar::instance()
 BodyMotionGenerationBar::BodyMotionGenerationBar()
     : ToolBar(N_("BodyMotionGenerationBar"))
 {
-    bodyMotionPoseProvider = new BodyMotionPoseProvider();
-    poseProviderToBodyMotionConverter = new PoseProviderToBodyMotionConverter();
+    bodyMotionPoseProvider = new BodyMotionPoseProvider;
+    poseProviderToBodyMotionConverter = new PoseProviderToBodyMotionConverter;
     timeBar = TimeBar::instance();
-    setup = new BodyMotionGenerationSetupDialog();
+    setup = new BodyMotionGenerationSetupDialog;
     balancer = nullptr;
 
-    addButton(QIcon(":/PoseSeq/icon/trajectory-generation.svg"), _("Generate body motions"))
-        ->sigClicked().connect([&](){ onGenerationButtonClicked(); });
+    auto generationButton = addButton(QIcon(":/PoseSeq/icon/trajectory-generation.svg"));
+    generationButton->setToolTip(_("Generate body motions"));
+    generationButton->sigClicked().connect([&](){ onGenerationButtonClicked(); });
 
     interpolationParameterWidgetsConnection.add(
         setup->timeScaleRatioSpin.sigValueChanged().connect(
@@ -364,11 +365,12 @@ BodyMotionGenerationBar::BodyMotionGenerationBar()
         setup->onlyTimeBarRangeCheck.sigToggled().connect(
             [&](bool){ notifyInterpolationParametersChanged(); }));
     
-    autoGenerationToggle =
-        addToggleButton(QIcon(":/PoseSeq/icon/auto-update.svg"), _("Automatic Balance Adjustment Mode"));
+    autoGenerationToggle = addToggleButton(QIcon(":/PoseSeq/icon/auto-update.svg"));
+    autoGenerationToggle->setToolTip(_("Automatic Balance Adjustment Mode"));
     autoGenerationToggle->setChecked(false);
     
-    balancerToggle = addToggleButton(QIcon(":/PoseSeq/icon/balancer.svg"), _("Enable the balancer"));
+    balancerToggle = addToggleButton(QIcon(":/PoseSeq/icon/balancer.svg"));
+    balancerToggle->setToolTip(_("Enable the balancer"));
     balancerToggle->setEnabled(false);
     balancerToggle->setChecked(false);
 
@@ -468,7 +470,7 @@ void BodyMotionGenerationBar::onGenerationButtonClicked()
                 provider = bodyMotionPoseProvider;
 
                 if(setup->newBodyItemCheck.isChecked()){
-                    BodyMotionItem* newMotionItem = new BodyMotionItem();
+                    BodyMotionItem* newMotionItem = new BodyMotionItem;
                     newMotionItem->setName(motionItem->name() + "'");
                     motionItem->parentItem()->insertChild(motionItem->nextItem(), newMotionItem);
                     motionItem = newMotionItem;

@@ -34,7 +34,7 @@ public:
 
 LeggedBodyBar* LeggedBodyBar::instance()
 {
-    static LeggedBodyBar* instance = new LeggedBodyBar();
+    static LeggedBodyBar* instance = new LeggedBodyBar;
     return instance;
 }
 
@@ -49,31 +49,40 @@ LeggedBodyBar::LeggedBodyBar()
 LeggedBodyBar::Impl::Impl(LeggedBodyBar* self)
 {
     bodySelectionManager = BodySelectionManager::instance();
-    
-    self->addButton(QIcon(":/Body/icon/center-cm.svg"), _("Move the center of mass to the position where its projection corresponds to the support feet cener"))->
-        sigClicked().connect([&](){ onCmButtonClicked(BodyItem::HOME_COP); });
-    
-    self->addButton(QIcon(":/Body/icon/zmp-to-cm.svg"), _("Move the center of mass to fit its projection to ZMP"))->
-        sigClicked().connect([&](){ onCmButtonClicked(BodyItem::ZERO_MOMENT_POINT); });
-    
-    self->addButton(QIcon(":/Body/icon/cm-to-zmp.svg"), _("Set ZMP to the projection of the center of mass"))
-        ->sigClicked().connect([&](){ onZmpButtonClicked(BodyItem::CM_PROJECTION); });
 
-    self->addButton(QIcon(":/Body/icon/right-zmp.svg"), _("Set ZMP under the right foot"))
-        ->sigClicked().connect([&](){ onZmpButtonClicked(BodyItem::RIGHT_HOME_COP); });
+    ToolButton* button;
+    
+    button = self->addButton(QIcon(":/Body/icon/center-cm.svg"));
+    button->setToolTip(_("Move the center of mass to the position where its projection corresponds to the support feet cener"));
+    button->sigClicked().connect([&](){ onCmButtonClicked(BodyItem::HOME_COP); });
+    
+    button = self->addButton(QIcon(":/Body/icon/zmp-to-cm.svg"));
+    button->setToolTip(_("Move the center of mass to fit its projection to ZMP"));
+    button->sigClicked().connect([&](){ onCmButtonClicked(BodyItem::ZERO_MOMENT_POINT); });
+    
+    button = self->addButton(QIcon(":/Body/icon/cm-to-zmp.svg"));
+    button->setToolTip(_("Set ZMP to the projection of the center of mass"));
+    button->sigClicked().connect([&](){ onZmpButtonClicked(BodyItem::CM_PROJECTION); });
 
-    self->addButton(QIcon(":/Body/icon/center-zmp.svg"), _("Set ZMP at the center of the feet"))
-        ->sigClicked().connect([&](){ onZmpButtonClicked(BodyItem::HOME_COP); });
+    button = self->addButton(QIcon(":/Body/icon/right-zmp.svg"));
+    button->setToolTip(_("Set ZMP under the right foot"));
+    button->sigClicked().connect([&](){ onZmpButtonClicked(BodyItem::RIGHT_HOME_COP); });
 
-    self->addButton(QIcon(":/Body/icon/left-zmp.svg"), _("Set ZMP under the left foot"))
-        ->sigClicked().connect([&](){ onZmpButtonClicked(BodyItem::LEFT_HOME_COP); });
+    button = self->addButton(QIcon(":/Body/icon/center-zmp.svg"));
+    button->setToolTip(_("Set ZMP at the center of the feet"));
+    button->sigClicked().connect([&](){ onZmpButtonClicked(BodyItem::HOME_COP); });
+
+    button = self->addButton(QIcon(":/Body/icon/left-zmp.svg"));
+    button->setToolTip(_("Set ZMP under the left foot"));
+    button->sigClicked().connect([&](){ onZmpButtonClicked(BodyItem::LEFT_HOME_COP); });
 
     self->addSeparator();
 
-    self->addButton(QIcon(":/Body/icon/stancelength.svg"), _("Adjust the width between the feet"))
-        ->sigClicked().connect([&](){ onStanceButtonClicked(); });
+    button = self->addButton(QIcon(":/Body/icon/stancelength.svg"));
+    button->setToolTip(_("Adjust the width between the feet"));
+    button->sigClicked().connect([&](){ onStanceButtonClicked(); });
 
-    stanceWidthSpin = new DoubleSpinBox();
+    stanceWidthSpin = new DoubleSpinBox;
     stanceWidthSpin->setAlignment(Qt::AlignCenter);
     stanceWidthSpin->setToolTip(_("Width between the feet [m]"));
     stanceWidthSpin->setDecimals(4);

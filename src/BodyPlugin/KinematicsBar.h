@@ -10,8 +10,6 @@
 
 namespace cnoid {
 
-class KinematicsBarImpl;
-
 class CNOID_EXPORT KinematicsBar : public ToolBar
 {
 public:
@@ -53,7 +51,8 @@ protected:
 private:
     KinematicsBar();
 
-    KinematicsBarImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 }

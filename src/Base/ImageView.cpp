@@ -286,7 +286,7 @@ ImageViewBar::Impl::Impl(ImageViewBar* self)
 {
     targetView = nullptr;
 
-    imageCombo = new ComboBox();
+    imageCombo = new ComboBox;
     imageCombo->setToolTip(_("Select an imageable item"));
     imageCombo->setMinimumContentsLength(6);
     imageCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
@@ -296,7 +296,8 @@ ImageViewBar::Impl::Impl(ImageViewBar* self)
     imageCombo->setCurrentIndex(0);
     self->addWidget(imageCombo);
 
-    adjustSizeToggle = self->addToggleButton(QIcon(":/Base/icon/adjustsize.svg"), _("Adjust image size according to view"));
+    adjustSizeToggle = self->addToggleButton(QIcon(":/Base/icon/adjustsize.svg"));
+    adjustSizeToggle->setToolTip(_("Adjust image size according to view"));
     adjustSizeToggle->sigToggled().connect( [&](bool on){ onAdjustSizeClicked( on ); } );
     adjustSizeToggle->setChecked(true);
 

@@ -33,7 +33,7 @@ static void onSigOptionsParsed(boost::program_options::variables_map& v)
 void SimulationBar::initialize(ExtensionManager* ext)
 {
     if(!instance_){
-        instance_ = new SimulationBar();
+        instance_ = new SimulationBar;
         ext->addToolBar(instance_);
         
         ext->optionManager()
@@ -52,26 +52,30 @@ SimulationBar* SimulationBar::instance()
 SimulationBar::SimulationBar()
     : ToolBar(N_("SimulationBar"))
 {
-    addButton(QIcon(":/Body/icon/store-world-initial.svg"),
-              _("Store body positions to the initial world state"))->
-        sigClicked().connect([&](){ onStoreInitialClicked(); });
     
-    addButton(QIcon(":/Body/icon/restore-world-initial.svg"),
-              _("Restore body positions from the initial world state"))->
-        sigClicked().connect([&](){ onRestoreInitialClicked(); });
-
-    addButton(QIcon(":/Body/icon/start-simulation.svg"), _("Start simulation from the beginning"))->
-        sigClicked().connect([&](){ startSimulation(true); });
-
-    addButton(QIcon(":/Body/icon/restart-simulation.svg"),
-              _("Start simulation from the current state"))->
-        sigClicked().connect([&](){ startSimulation(false); });
+    auto storeButton = addButton(QIcon(":/Body/icon/store-world-initial.svg"));
+    storeButton->setToolTip(_("Store body positions to the initial world state"));
+    storeButton->sigClicked().connect([&](){ onStoreInitialClicked(); });
     
-    pauseToggle = addToggleButton(QIcon(":/Body/icon/pause-simulation.svg"), _("Pause simulation"));
+    auto restoreButton = addButton(QIcon(":/Body/icon/restore-world-initial.svg"));
+    restoreButton->setToolTip(_("Restore body positions from the initial world state"));
+    restoreButton->sigClicked().connect([&](){ onRestoreInitialClicked(); });
+
+    auto startButton = addButton(QIcon(":/Body/icon/start-simulation.svg"));
+    startButton->setToolTip(_("Start simulation from the beginning"));
+    startButton->sigClicked().connect([&](){ startSimulation(true); });
+
+    auto restartButton = addButton(QIcon(":/Body/icon/restart-simulation.svg"));
+    restartButton->setToolTip(_("Start simulation from the current state"));
+    restartButton->sigClicked().connect([&](){ startSimulation(false); });
+    
+    pauseToggle = addToggleButton(QIcon(":/Body/icon/pause-simulation.svg"));
+    pauseToggle->setToolTip(_("Pause simulation"));
     pauseToggle->sigClicked().connect([&](){ onPauseSimulationClicked(); });
     pauseToggle->setChecked(false);
 
-    stopButton = addButton(QIcon(":/Body/icon/stop-simulation.svg"), _("Stop simulation"));
+    stopButton = addButton(QIcon(":/Body/icon/stop-simulation.svg"));
+    stopButton->setToolTip(_("Stop simulation"));
     stopButton->sigClicked().connect([&](){ onStopSimulationClicked(); });
     stopButton->installEventFilter(this);
     isStopConfirmationEnabled = false;

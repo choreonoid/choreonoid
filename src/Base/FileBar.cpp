@@ -23,7 +23,7 @@ void FileBar::initialize(ExtensionManager* ext)
 
 FileBar* FileBar::instance()
 {
-    static FileBar* fileBar = new FileBar();
+    static FileBar* fileBar = new FileBar;
     return fileBar;
 }
 
@@ -33,8 +33,9 @@ FileBar::FileBar()
 {
     setVisibleByDefault(true);
     
-    addButton(QIcon(":/Base/icon/projectsave.svg"), _("Save the project"))
-        ->sigClicked().connect([](){ ProjectManager::instance()->overwriteCurrentProject(); });
+    auto button = addButton(QIcon(":/Base/icon/projectsave.svg"));
+    button->setToolTip(_("Save the project"));
+    button->sigClicked().connect([](){ ProjectManager::instance()->overwriteCurrentProject(); });
 }
 
 

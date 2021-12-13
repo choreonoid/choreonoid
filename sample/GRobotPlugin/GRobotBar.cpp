@@ -10,7 +10,7 @@ using namespace cnoid;
 
 GRobotBar* GRobotBar::instance()
 {
-    static GRobotBar* instance = new GRobotBar();
+    static GRobotBar* instance = new GRobotBar;
     return instance;
 }
 
@@ -23,15 +23,16 @@ GRobotBar::GRobotBar() : ToolBar(N_("GRobotBar"))
     addSpacing();
     addSeparator();
 
-    addToggleButton(QIcon(":/GRobot/icons/servo-on.svg"), _("Turn on / off servo gains"))
-        ->sigToggled().connect([&](bool on){ onServoButtonToggled(on); });
+    auto servoButton = addToggleButton(QIcon(":/GRobot/icons/servo-on.svg"));
+    servoButton->setToolTip(_("Turn on / off servo gains"));
+    servoButton->sigToggled().connect([&](bool on){ onServoButtonToggled(on); });
 
-    addButton(QIcon(":/GRobot/icons/sendpose.svg"), _("Send the current pose of virtual robots to actual robots"))
-        ->sigClicked().connect([&](){ sigPoseSendRequest_(); });
+    auto sendButton = addButton(QIcon(":/GRobot/icons/sendpose.svg"));
+    sendButton->setToolTip(_("Send the current pose of virtual robots to actual robots"));
+    sendButton->sigClicked().connect([&](){ sigPoseSendRequest_(); });
     
-    syncCheck = addToggleButton(
-        QIcon(":/GRobot/icons/syncpose.svg"),
-        _("Synchronize the pose of actual robots pose with virtual robots"));
+    syncCheck = addToggleButton(QIcon(":/GRobot/icons/syncpose.svg"));
+    syncCheck->setToolTip(_("Synchronize the pose of actual robots pose with virtual robots"));
     
     syncCheck->sigToggled().connect([&](bool on){ sigSyncModeToggled_(on); });
 }

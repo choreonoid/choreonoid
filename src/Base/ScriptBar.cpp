@@ -16,7 +16,7 @@ void ScriptBar::initialize(ExtensionManager* ext)
 {
     static bool initialized = false;
     if(!initialized){
-        ext->addToolBar(new ScriptBar());
+        ext->addToolBar(new ScriptBar);
         initialized = true;
     }
 }
@@ -25,8 +25,9 @@ void ScriptBar::initialize(ExtensionManager* ext)
 ScriptBar::ScriptBar()
     : ToolBar(N_("ScriptBar"))
 {
-    addButton(QIcon(":/Base/icon/script.svg"), _("Execute scripts"))
-        ->sigClicked().connect([&](){ executeCheckedScriptItems(); });
+    auto button = addButton(QIcon(":/Base/icon/script.svg"));
+    button->setToolTip(_("Execute scripts"));
+    button->sigClicked().connect([&](){ executeCheckedScriptItems(); });
 }
 
 
