@@ -18,7 +18,6 @@
 using namespace std;
 using namespace cnoid;
 
-
 namespace {
 
 #ifdef Q_OS_MAC
@@ -84,30 +83,31 @@ public:
 ToolBar::ToolBar(const std::string& name)
     : name_(name)
 {
-    mainWindow = MainWindow::instance();
-
-    hbox = new QHBoxLayout(this);
-    hbox->setSpacing(0);
-    hbox->setContentsMargins(0, 0, 0, 0);
-    setLayout(hbox);
-    insertionPosition = -1;
+    auto topHBox = new QHBoxLayout(this);
+    topHBox->setSpacing(4);
+    topHBox->setContentsMargins(0, 0, 0, 0);
+    setLayout(topHBox);
 
     handle = new ToolBarHandle(this);
-    hbox->addWidget(handle);
-    hbox->addSpacing(4);
-    
-    radioGroup = 0;
-    isNewRadioGroupRequested = true;
+    topHBox->addWidget(handle);
 
-    toolBarArea_ = 0;
+    elementLayout = new QHBoxLayout;
+    elementLayout->setSpacing(0);
+    elementLayout->setContentsMargins(0, 0, 0, 0);
+    topHBox->addLayout(elementLayout);
 
-    isVisibleByDefault_ = false;
-    isPlacedOnNewRowByDefault_ = false;
-    isAutoRaiseByDefault_ = true;
-    
+    insertionPosition = -1;
+    lastId = -1;
+    radioGroup = nullptr;
+    mainWindow = MainWindow::instance();
+    toolBarArea_ = nullptr;
     desiredX = 0;
     layoutPriority = 0;
     isStretchable_ = false;
+    isNewRadioGroupRequested = true;
+    isVisibleByDefault_ = false;
+    isPlacedOnNewRowByDefault_ = false;
+    isAutoRaiseByDefault_ = true;
 
     connect(mainWindow, SIGNAL(iconSizeChanged(const QSize&)),
             this, SLOT(changeIconSize(const QSize&)));
@@ -126,82 +126,138 @@ int ToolBar::stretchableDefaultWidth() const
 }
 
 
-ToolButton* ToolBar::addButton(const QString& text, const QString& tooltip)
+ToolButton* ToolBar::addButton(int id)
 {
-    ToolButton* button = new ToolButton(this);
+    auto button = new ToolButton(this);
+    
 #ifdef Q_OS_MAC
     // Force auto-raize type
     if(dynamic_cast<QMacStyle*>(button->style())){
         button->setStyle(&cleanlooks);
     }
 #endif
-    button->setText(text);
+
     button->setAutoRaise(isAutoRaiseByDefault_);
     button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-    if(!tooltip.isEmpty()){
-        button->setToolTip(tooltip);
+    elementLayout->insertWidget(insertionPosition, button);
+
+    registerElement(button, id);
+
+    return button;
+}
+
+
+void ToolBar::registerElement(QWidget* element, int id)
+{
+    if(id < 0){
+        id = lastId + 1;
     }
-    hbox->insertWidget(insertionPosition, button);
+    elements.emplace_back(element, id);
+    if(id > lastId){
+        lastId = id;
+    }
     insertionPosition = -1;
+}    
+
+
+ToolButton* ToolBar::addButton(const QString& text, int id)
+{
+    auto button = addButton(id);
+    button->setText(text);
+    return button;
+}
+
+
+ToolButton* ToolBar::addButton(const QIcon& icon, int id)
+{
+    auto button = addButton(id);
+    button->setIconSize(mainWindow->iconSize());
+    button->setIcon(icon);
+    return button;
+}
+
+
+ToolButton* ToolBar::addButton(const char* const* xpm, int id)
+{
+    return addButton(QIcon(QPixmap(xpm)), id);
+}
+
+
+ToolButton* ToolBar::addButton(const QString& text, const QString& tooltip)
+{
+    auto button = addButton(text);
+    button->setToolTip(tooltip);
     return button;
 }
 
 
 ToolButton* ToolBar::addButton(const QIcon& icon, const QString& tooltip)
 {
-    ToolButton* button = new ToolButton(this);
-#ifdef Q_OS_MAC
-    // Force auto-raize type
-    if(dynamic_cast<QMacStyle*>(button->style())){
-        button->setStyle(&cleanlooks);
-    }
-#endif
-    button->setIconSize(mainWindow->iconSize());
-    button->setIcon(icon);
-    button->setAutoRaise(isAutoRaiseByDefault_);
-    button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-    if(!tooltip.isEmpty()){
-        button->setToolTip(tooltip);
-    }
-    hbox->insertWidget(insertionPosition, button);
-    insertionPosition = -1;
+    auto button = addButton(icon);
+    button->setToolTip(tooltip);
     return button;
 }
 
 
 ToolButton* ToolBar::addButton(const char* const* xpm, const QString& tooltip)
 {
-    return addButton(QIcon(QPixmap(xpm)), tooltip);
+    auto button = addButton(xpm);
+    button->setToolTip(tooltip);
+    return button;
+}
+
+
+ToolButton* ToolBar::addToggleButton(const QString& text, int id)
+{
+    auto button = addButton(text, id);
+    button->setCheckable(true);
+    return button;
+}
+
+
+ToolButton* ToolBar::addToggleButton(const QIcon& icon, int id)
+{
+    auto button = addButton(icon, id);
+    button->setCheckable(true);
+    return button;
+}
+
+
+ToolButton* ToolBar::addToggleButton(const char* const* xpm, int id)
+{
+    auto button = addButton(xpm, id);
+    button->setCheckable(true);
+    return button;
 }
 
 
 ToolButton* ToolBar::addToggleButton(const QString& text, const QString& tooltip)
 {
-    ToolButton* button = addButton(text, tooltip);
-    button->setCheckable(true);
+    auto button = addToggleButton(text);
+    button->setToolTip(tooltip);
     return button;
 }
 
 
 ToolButton* ToolBar::addToggleButton(const QIcon& icon, const QString& tooltip)
 {
-    ToolButton* button = addButton(icon, tooltip);
-    button->setCheckable(true);
+    auto button = addToggleButton(icon);
+    button->setToolTip(tooltip);
     return button;
 }
 
 
 ToolButton* ToolBar::addToggleButton(const char* const* xpm, const QString& tooltip)
 {
-    ToolButton* button = addButton(xpm, tooltip);
-    button->setCheckable(true);
+    auto button = addButton(xpm);
+    button->setToolTip(tooltip);
     return button;
 }
 
 
 void ToolBar::requestNewRadioGroup()
 {
-    radioGroup = 0;
+    radioGroup = nullptr;
     isNewRadioGroupRequested = true;
 }
 
@@ -223,82 +279,101 @@ void ToolBar::setRadioButton(ToolButton* button)
 }
 
 
+ToolButton* ToolBar::addRadioButton(const QString& text, int id)
+{
+    auto button = addButton(text, id);
+    setRadioButton(button);
+    return button;
+}
+
+
+ToolButton* ToolBar::addRadioButton(const QIcon& icon, int id)
+{
+    auto button = addButton(icon, id);
+    setRadioButton(button);
+    return button;
+}
+
+
+ToolButton* ToolBar::addRadioButton(const char* const* xpm, int id)
+{
+    auto button = addButton(xpm, id);
+    setRadioButton(button);
+    return button;
+}
+
+
 ToolButton* ToolBar::addRadioButton(const QString& text, const QString& tooltip)
 {
-    ToolButton* button = addButton(text, tooltip);
-    setRadioButton(button);
+    auto button = addRadioButton(text);
+    button->setToolTip(tooltip);
     return button;
 }
 
 
 ToolButton* ToolBar::addRadioButton(const QIcon& icon, const QString& tooltip)
 {
-    ToolButton* button = addButton(icon, tooltip);
-    setRadioButton(button);
+    auto button = addRadioButton(icon);
+    button->setToolTip(tooltip);
     return button;
 }
 
 
 ToolButton* ToolBar::addRadioButton(const char* const* xpm, const QString& tooltip)
 {
-    ToolButton* button = addButton(xpm, tooltip);
-    setRadioButton(button);
+    auto button = addRadioButton(xpm);
+    button->setToolTip(tooltip);
     return button;
 }
 
 
-void ToolBar::addAction(QAction* action)
+void ToolBar::addAction(QAction* action, int id)
 {
-    ToolButton* button = new ToolButton(this);
-    button->setAutoRaise(isAutoRaiseByDefault_);
-    button->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    auto button = addButton(id);
     button->setDefaultAction(action);
-    hbox->insertWidget(insertionPosition, button);
-    insertionPosition = -1;
 }
 
 
-void ToolBar::addWidget(QWidget* widget)
+void ToolBar::addWidget(QWidget* widget, int id)
 {
-    hbox->insertWidget(insertionPosition, widget);
-    insertionPosition = -1;
+    elementLayout->insertWidget(insertionPosition, widget);
+    registerElement(widget, id);
 }
 
 
-QLabel* ToolBar::addLabel(const QString& text)
+QLabel* ToolBar::addLabel(const QString& text, int id)
 {
-    QLabel* label = new QLabel(text, this);
-    hbox->insertWidget(insertionPosition, label);
-    insertionPosition = -1;
+    auto label = new QLabel(text, this);
+    elementLayout->insertWidget(insertionPosition, label);
+    registerElement(label, id);
     return label;
 }
 
 
-
-QLabel* ToolBar::addImage(const QString& filename)
+QLabel* ToolBar::addImage(const QString& filename, int id)
 {
-    QLabel* label = new QLabel(this);
+    auto label = new QLabel(this);
     label->setPixmap(QPixmap(filename));
-    hbox->insertWidget(insertionPosition, label);
-    insertionPosition = -1;
+    elementLayout->insertWidget(insertionPosition, label);
+    registerElement(label, id);
     return label;
 }
 
 
-QWidget* ToolBar::addSeparator()
+QWidget* ToolBar::addSeparator(int id)
 {
     if(separatorExtent < 0){
         separatorExtent = style()->pixelMetric(QStyle::PM_ToolBarSeparatorExtent);
     }
-    auto sep = new VSeparator(this);
-    sep->setMinimumWidth(separatorExtent);
-    hbox->insertWidget(insertionPosition, sep);
-    insertionPosition = -1;
-    return sep;
+    auto separator = new VSeparator(this);
+    separator->setMinimumWidth(separatorExtent);
+    elementLayout->insertWidget(insertionPosition, separator);
+    registerElement(separator, id);
+    return separator;
 }
 
 
-void ToolBar::addSpacing(int spacing)
+void ToolBar::addSpacing(int spacing, int id)
 {
     if(spacing < 0){
         if(separatorExtent < 0){
@@ -306,51 +381,46 @@ void ToolBar::addSpacing(int spacing)
         }
         spacing = separatorExtent;
     }
-    hbox->insertSpacing(insertionPosition, spacing);
-    insertionPosition = -1;
+    auto widget = new QWidget(this);
+    widget->setFixedSize(spacing, 1);
+    elementLayout->insertWidget(insertionPosition, widget);
+    registerElement(widget, id);
+}
+
+
+int ToolBar::elementPosition(int id) const
+{
+    for(size_t i=0; i < elements.size(); ++i){
+        if(elements[i].id == id){
+            return i;
+        }
+    }
+    return -1;
 }
 
 
 ToolBar& ToolBar::setInsertionPosition(int index)
 {
-    // The handle and a spacing exist before the first tool bar item
-    insertionPosition = index + 2;
+    insertionPosition = index;
     return *this;
 }
 
 
 void ToolBar::setEnabled(bool on)
 {
-    /*
-      if(on){
-      QWidget::setEnabled(on);
-      } else {
-      int n = hbox->count();
-      for(int i=0; i < n; ++i){
-      QLayoutItem* item = hbox->itemAt(i);
-      QWidget* widget = item->widget();
-      if(widget){
-      widget->setEnabled(false);
-      }
-      handle->setEnabled(true);
-      }
-      }
-    */
-    int n = hbox->count();
+    int n = elementLayout->count();
     for(int i=0; i < n; ++i){
-        QLayoutItem* item = hbox->itemAt(i);
-        QWidget* widget = item->widget();
-        if(widget){
+        QLayoutItem* item = elementLayout->itemAt(i);
+        if(auto widget = item->widget()){
             widget->setEnabled(on);
         }
-        handle->setEnabled(true);
     }
 }
 
 
 void ToolBar::changeIconSize(const QSize& iconSize)
 {
-    changeIconSizeSub(hbox, iconSize);
+    changeIconSizeSub(elementLayout, iconSize);
 }
 
 
@@ -375,13 +445,39 @@ void ToolBar::changeIconSizeSub(QLayout* layout, const QSize& iconSize)
 }
 
 
+void ToolBar::setActiveElements(const Listing& ids)
+{
+    QLayoutItem* layoutItem;
+    while((layoutItem = elementLayout->takeAt(0)) != 0){
+        if(auto widget = layoutItem->widget()){
+            widget->hide();
+        }
+    }
+    
+    for(int i=0; i < ids.size(); ++i){
+        int id = ids[i].toInt();
+        auto found = std::find_if(
+            elements.begin(), elements.end(),
+            [id](const Element& element){ return element.id == id; });
+        if(found != elements.end()){
+            elementLayout->addWidget(found->widget);
+            found->widget->show();
+        }
+    }
+}
+
+
 bool ToolBar::storeState(Archive& /* archive */)
 {
     return true;
 }
 
 
-bool ToolBar::restoreState(const Archive& /* archive */)
+bool ToolBar::restoreState(const Archive& archive)
 {
+    auto& ids = *archive.findListing("active_element_ids");
+    if(ids.isValid()){
+        setActiveElements(ids);
+    }
     return true;
 }

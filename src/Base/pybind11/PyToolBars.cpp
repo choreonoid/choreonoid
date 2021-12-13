@@ -17,30 +17,27 @@ void exportPyToolBars(py::module m)
 {
     py::class_<ToolBar, PyQObjectHolder<ToolBar>, QWidget>(m, "ToolBar")
         .def(py::init<const std::string&>())
-        .def("addButton",
-             [](ToolBar& self, const char* text, const char* tooltip){ return self.addButton(text, tooltip); },
-             py::arg("text"), py::arg("tooltip") = QString())
-        .def("addButton",
-             [](ToolBar& self, const QIcon& icon, const char* tooltip){ return self.addButton(icon, tooltip); },
-             py::arg("icon"), py::arg("tooltip") = QString())
-        .def("addToggleButton",
-             [](ToolBar& self, const char* text, const char* tooltip){ return self.addToggleButton(text, tooltip); },
-             py::arg("text"), py::arg("tooltip") = QString())
-        .def("addToggleButton",
-            [](ToolBar& self, const QIcon& icon, const char* tooltip){ return self.addToggleButton(icon, tooltip); },
-             py::arg("icon"), py::arg("tooltip") = QString())
+
+        .def("addButton", [](ToolBar& self, const char* text, int id){ return self.addButton(text, id); },
+             py::arg("text"), py::arg("id") = -1)
+        .def("addButton", [](ToolBar& self, const QIcon& icon, int id){ return self.addButton(icon, id); },
+             py::arg("icon"), py::arg("id") = -1)
+        .def("addToggleButton", [](ToolBar& self, const char* text, int id){ return self.addToggleButton(text, id); },
+             py::arg("text"), py::arg("id") = -1)
+        .def("addToggleButton", [](ToolBar& self, const QIcon& icon, int id){ return self.addButton(icon, id); },
+             py::arg("icon"), py::arg("id") = -1)
         .def("requestNewRadioGroup", &ToolBar::requestNewRadioGroup)
-        .def("addRadioButton",
-             [](ToolBar& self, const char* text, const char* tooltip){ return self.addRadioButton(text, tooltip); },
-             py::arg("text"), py::arg("tooltip") = QString())
-        .def("addRadioButton",
-             [](ToolBar& self, const QIcon& icon, const char* tooltip){ return self.addRadioButton(icon, tooltip); },
-             py::arg("icon"), py::arg("tooltip") = QString())
-        .def("addWidget", &ToolBar::addWidget)
-        .def("addLabel", &ToolBar::addLabel)
-        .def("addSeparator", &ToolBar::addSeparator)
-        .def("addSpacing", &ToolBar::addSpacing, py::arg("spacing") = -1)
+        .def("addRadioButton", [](ToolBar& self, const char* text, int id){ return self.addRadioButton(text, id); },
+             py::arg("text"), py::arg("id") = -1)
+        .def("addRadioButton", [](ToolBar& self, const QIcon& icon, int id){ return self.addRadioButton(icon, id); },
+             py::arg("icon"), py::arg("id") = -1)
+        .def("addWidget", &ToolBar::addWidget, py::arg("widget"), py::arg("id") = -1)
+        .def("addLabel", &ToolBar::addLabel, py::arg("text"), py::arg("id") = -1)
+        .def("addSeparator", &ToolBar::addSeparator, py::arg("id") = -1)
+        .def("addSpacing", &ToolBar::addSpacing, py::arg("spacing") = -1, py::arg("id") = -1)
         .def("setInsertionPosition", &ToolBar::setInsertionPosition)
+        .def("elementPosition", &ToolBar::elementPosition)
+        .def("numElements", &ToolBar::numElements)
         .def("setVisibleByDefault", &ToolBar::setVisibleByDefault, py::arg("on") = true)
         .def("isVisibleByDefault", &ToolBar::isVisibleByDefault)
         .def("placeOnNewRowByDefault", &ToolBar::placeOnNewRowByDefault, py::arg("on") = true)
@@ -49,6 +46,44 @@ void exportPyToolBars(py::module m)
         .def("isStretchable", &ToolBar::isStretchable)
         .def("setAutoRaiseByDefault", &ToolBar::setAutoRaiseByDefault, py::arg("on") = true)
         .def("isAutoRaiseByDefault", &ToolBar::isAutoRaiseByDefault)
+
+        // deprecated
+        .def("addButton",
+             [](ToolBar& self, const char* text, const char* tooltip){
+                 auto button = self.addButton(text);
+                 button->setToolTip(tooltip);
+                 return button;
+             })
+        .def("addButton",
+             [](ToolBar& self, const QIcon& icon, const char* tooltip){
+                 auto button = self.addButton(icon);
+                 button->setToolTip(tooltip);
+                 return button;
+             })
+        .def("addToggleButton",
+             [](ToolBar& self, const char* text, const char* tooltip){
+                 auto button = self.addToggleButton(text);
+                 button->setToolTip(tooltip);
+                 return button;
+             })
+        .def("addToggleButton",
+             [](ToolBar& self, const QIcon& icon, const char* tooltip){
+                 auto button = self.addToggleButton(icon);
+                 button->setToolTip(tooltip);
+                 return button;
+             })
+        .def("addRadioButton",
+             [](ToolBar& self, const char* text, const char* tooltip){
+                 auto button = self.addRadioButton(text);
+                 button->setToolTip(tooltip);
+                 return button;
+             })
+        .def("addRadioButton",
+             [](ToolBar& self, const QIcon& icon, const char* tooltip){
+                 auto button = self.addRadioButton(icon);
+                 button->setToolTip(tooltip);
+                 return button;
+             })
         ;
 
     py::class_<TimeBar, PyQObjectHolder<TimeBar>, ToolBar>(m, "TimeBar")
