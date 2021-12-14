@@ -80,6 +80,7 @@ public:
     ostream* os_;
     ostream& os() { return *os_; }
 
+    filesystem::path filePath;
     string fileBaseName;
     filesystem::path directoryPath;
 
@@ -107,6 +108,7 @@ public:
     void readTransparency();
     void readIlluminationModel();
     void readTexture(const std::string& mapType);
+    void normalizeNormals();
 };
 
 }
@@ -167,7 +169,7 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
         os() << format(_("Unable to open file \"{}\"."), filename) << endl;
         return nullptr;
     }
-    filesystem::path filePath(filename);
+    filePath = filename;
     fileBaseName = filePath.stem().string();
     directoryPath = filePath.parent_path();
 
@@ -280,6 +282,8 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
     }
 
     checkAndAddCurrentNode();
+
+    normalizeNormals();
 
     SgNodePtr scene;
 
@@ -678,6 +682,23 @@ void ObjSceneLoader::Impl::readTexture(const std::string& mapType)
                 image->setUriByFilePathAndBaseDirectory(
                     token, directoryPath.generic_string());
                 currentMaterialDefInfo->texture = texture;
+            }
+        }
+    }
+}
+
+
+void ObjSceneLoader::Impl::normalizeNormals()
+{
+    if(!normals->empty()){
+         // check if the first element is normalized
+        auto& n0 = normals->front();
+        if(fabs(n0.norm() - 1.0) > 1.0e-3){
+            os() << format(_("Warning: Mesh file \"{}\" contains unnormalized normals and "
+                             "the normalization process is appiled to all normals."),
+                           filePath.filename().string()) << endl;
+            for(auto& n : *normals){
+                n.normalize();
             }
         }
     }
