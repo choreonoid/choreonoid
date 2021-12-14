@@ -44,6 +44,15 @@ public:
         addFormatAlias(format);
     }
 
+    /**
+       This function is used to add supported file extensions from external code.
+       For example, if your implementation of ItemFileIO uses a file loader that
+       can dynamically extend its supported file formats, and some file formats
+       are added by the external code, this function can be used to support the
+       file formats in the functions based on ItemFileIO.
+    */
+    void addExtensions(const std::vector<std::string>& extensions);
+
     // deprecated. This is internally used for specifing SceneItem's extensions dynamically.
     // The dynamic extension specification should be achieved by a signal to update the
     // extensions and usual the registerExtensions function.
