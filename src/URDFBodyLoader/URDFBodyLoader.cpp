@@ -6,14 +6,13 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include <stdio.h>
-
-#include <boost/range/size.hpp>  // becomes STL from C++17
+#include <iterator>
+#include <cstdio>
 
 #include <cnoid/Body>
 #include <cnoid/BodyLoader>
 #include <cnoid/EigenUtil>
+#include <cnoid/ExecutablePath>
 #include <cnoid/MeshGenerator>
 #include <cnoid/NullOut>
 #include <cnoid/SceneLoader>
@@ -209,16 +208,21 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
     jointCounter_ = 0;
     colorMap.clear();
 
+    pugi::xml_parse_result result;
+
     const string suffix = ".xacro";
     if (filename.size() >= suffix.size()
         && std::equal(suffix.begin(),
                       suffix.end(),
                       filename.end() - suffix.size())) {
+#ifdef _WIN32
+        os() << "Error: Xacro files are not supported in Windows." << endl;
+        return false;
+#else
         // parses and reads a xacro-formatted URDF
         char buffer[128];
-        const string command = "xacro " + filename;
         std::string urdf_content;
-        FILE* pipe = popen(command.data(), "r");
+        FILE* pipe = popen(format("{0}/cnoid-xacro {1}", executableDir(), filename).c_str(), "r");
         if (!pipe) {
             os() << "Error: popen() for xacro parsing failed." << endl;
             return false;
@@ -234,22 +238,18 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
         }
         pclose(pipe);
 
-        const pugi::xml_parse_result result = doc.load_string(
-            urdf_content.data());
-        if (!result) {
-            os() << "Error: parsing XML failed: " << result.description()
-                 << endl;
-            return false;
-        }
+        result = doc.load_string(urdf_content.data());
+#endif
     } else {
         // loads a URDF
-        const pugi::xml_parse_result result = doc.load_file(filename.c_str());
-        if (!result) {
-            os() << "Error: parsing XML failed: " << result.description()
-                 << endl;
-        }
+        result = doc.load_file(filename.c_str());
     }
 
+    if (!result) {
+        os() << "Error: parsing XML failed: " << result.description() << endl;
+        return false;
+    }
+    
     // checks if only one 'robot' tag exists in the URDF
     if (doc.child(ROBOT).empty()) {
         os() << "Error: 'robot' tag is not found.";
@@ -272,7 +272,7 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
 
     // creates a link dictionary by loading all links for tree construction
     auto linkNodes = robotNode.children(LINK);
-    std::unordered_map<string, LinkPtr> linkMap(boost::size(linkNodes));
+    std::unordered_map<string, LinkPtr> linkMap(std::distance(linkNodes.begin(), linkNodes.end()));
 
     // loads all links
     for (xml_node linkNode : linkNodes) {
@@ -290,7 +290,7 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
 
     // creates a joint dictionary to check independence of joint names
     auto jointNodes = robotNode.children(JOINT);
-    std::unordered_map<string, int> jointMap(boost::size(jointNodes));
+    std::unordered_map<string, int> jointMap(std::distance(jointNodes.begin(), jointNodes.end()));
 
     // loads all joints with creating a link tree
     for (xml_node jointNode : jointNodes) {
@@ -324,7 +324,7 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
 void URDFBodyLoader::Impl::createColorMap(
     const pugi::xml_object_range<pugi::xml_named_node_iterator>& materialNodes)
 {
-    colorMap.reserve(boost::size(materialNodes));
+    colorMap.reserve(std::distance(materialNodes.begin(), materialNodes.end()));
 
     for (xml_node& materialNode : materialNodes) {
         const string materialName = materialNode.attribute(NAME).as_string();
@@ -654,9 +654,10 @@ bool URDFBodyLoader::Impl::readInertiaTag(const xml_node& inertiaNode,
 bool URDFBodyLoader::Impl::readGeometryTag(const xml_node& geometryNode,
                                            SgNodePtr& mesh)
 {
-    if (boost::size(geometryNode.children()) < 1) {
+    int n = std::distance(geometryNode.begin(), geometryNode.end());
+    if (n < 1) {
         os() << "Error: no geometry is found." << endl;
-    } else if (boost::size(geometryNode.children()) > 1) {
+    } else if (n > 1) {
         os() << "Error: one link can have only one geometry." << endl;
     }
 

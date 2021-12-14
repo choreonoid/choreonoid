@@ -1,10 +1,9 @@
-#include "gettext.h"
-
 #include <cnoid/BodyItem>
 #include <cnoid/BodyItemFileIO>
 #include <cnoid/ItemManager>
 #include <cnoid/Plugin>
 #include <cnoid/URDFBodyLoader>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -67,16 +66,18 @@ public:
         if (MAKE_URDF_LOADER_INDEPENDENT) {
             itemManager().addFileIO<BodyItem>(new BodyItemUrdfLoader);
         } else {
-            if (auto io = dynamic_cast<BodyItemBodyFileIO*>(
-                    BodyItem::bodyFileIO())) {
-                io->addFormatAlias({"urdf", "xacro"});
+            if (auto io = dynamic_cast<BodyItemBodyFileIO*>(BodyItem::bodyFileIO())) {
+                io->addExtensions({"urdf", "xacro"});
             }
         }
 
         return true;
     }
 
-    virtual bool finalize() { return true; }
+    virtual bool finalize()
+    {
+        return true;
+    }
 };
 
 }  // namespace
