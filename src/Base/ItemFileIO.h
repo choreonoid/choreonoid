@@ -5,6 +5,7 @@
 #include <cnoid/Referenced>
 #include <string>
 #include <vector>
+#include <ctime>
 #include "exportdecl.h"
 
 class QWidget;
@@ -96,6 +97,13 @@ public:
 
     void setItemClassInfo(Referenced* info);
     const Referenced* itemClassInfo() const;
+
+    // The following time values are used to determine the default selected file IO type on dialog.
+    std::time_t lastSelectedTimeInLoadDialog() const;
+    std::time_t lastSelectedTimeInSaveDialog() const;
+
+    void updateLastSelectedTimeInLoadDialog();
+    void updateLastSelectedTimeInSaveDialog();
 
     static std::vector<std::string> separateExtensions(const std::string& multiExtString);
 

@@ -33,6 +33,8 @@ public:
     std::ostream* os;
     MessageView* mv;
     std::string errorMessage;
+    std::time_t lastSelectedTimeInLoadDialog;
+    std::time_t lastSelectedTimeInSaveDialog;
 
     // This variable actualy points a instance of the ClassInfo class defined in ItemManager.cpp
     mutable weak_ref_ptr<Referenced> itemClassInfo;
@@ -65,6 +67,8 @@ ItemFileIO::Impl::Impl(ItemFileIO* self, const std::string& format, int api)
     parentItem = nullptr;
     mv = MessageView::instance();
     os = &mv->cout(true);
+    lastSelectedTimeInLoadDialog = 0;
+    lastSelectedTimeInSaveDialog = 0;
 }
 
 
@@ -522,3 +526,29 @@ const Referenced* ItemFileIO::itemClassInfo() const
 {
     return impl->itemClassInfo.lock();
 }
+
+
+std::time_t ItemFileIO::lastSelectedTimeInLoadDialog() const
+{
+    return impl->lastSelectedTimeInLoadDialog;
+}
+
+
+std::time_t ItemFileIO::lastSelectedTimeInSaveDialog() const
+{
+    return impl->lastSelectedTimeInSaveDialog;
+}
+
+
+void ItemFileIO::updateLastSelectedTimeInLoadDialog()
+{
+    impl->lastSelectedTimeInLoadDialog = time(nullptr);
+}
+
+
+void ItemFileIO::updateLastSelectedTimeInSaveDialog()
+{
+    impl->lastSelectedTimeInSaveDialog = time(nullptr);
+}
+   
+

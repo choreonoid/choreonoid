@@ -635,9 +635,9 @@ ItemCreationPanel::ItemCreationPanel()
 
 DefaultItemCreationPanel::DefaultItemCreationPanel()
 {
-    QHBoxLayout* layout = new QHBoxLayout();
+    QHBoxLayout* layout = new QHBoxLayout;
     layout->addWidget(new QLabel(_("Name:")));
-    nameEntry = new QLineEdit();
+    nameEntry = new QLineEdit;
     layout->addWidget(nameEntry);
     setLayout(layout);
 }
@@ -731,7 +731,7 @@ void ItemManager::Impl::addLoader(ItemFileIO* fileIO, CaptionToFileIoListMap& lo
 
 
 std::vector<ItemFileIO*> ItemManager::getFileIOs
-(Item* item,std:: function<bool(ItemFileIO* fileIO)> pred, bool includeSuperClassIos)
+(Item* item, std:: function<bool(ItemFileIO* fileIO)> pred, bool includeSuperClassIos)
 {
     vector<ItemFileIO*> fileIOs;
 

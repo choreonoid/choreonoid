@@ -192,6 +192,8 @@ ItemList<Item> ItemFileDialog::Impl::loadItems(Item* parentItem, bool doAddition
     }
 
 exit:
+    targetFileIO->updateLastSelectedTimeInLoadDialog();
+    
     if(optionPanel){
         optionPanel->setParent(nullptr);
         optionPanel = nullptr;
@@ -274,6 +276,8 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
         }
     }
 
+    targetFileIO->updateLastSelectedTimeInSaveDialog();
+
     if(optionPanel){
         optionPanel->setParent(nullptr);
         optionPanel = nullptr;
@@ -353,10 +357,23 @@ bool ItemFileDialog::Impl::initializeFileIoFilters()
 {
     validFileIOs.clear();
     QStringList filters;
+    time_t lastSelectedFileIoTime = 0;
+    int lastSelectedFileIoIndex = 0;
     for(auto& fileIO : givenFileIOs){
         if(fileIO->hasApi(mode)){
             validFileIOs.push_back(fileIO);
             filters << makeNameFilter(fileIO->fileTypeCaption(), fileIO->extensions(), false);
+
+            time_t time;
+            if(mode == Load){
+                time = fileIO->lastSelectedTimeInLoadDialog();
+            } else {
+                time = fileIO->lastSelectedTimeInSaveDialog();
+            }
+            if(time > lastSelectedFileIoTime){
+                lastSelectedFileIoTime = time;
+                lastSelectedFileIoIndex = validFileIOs.size() - 1;
+            }
         }
     }
     if(validFileIOs.empty()){
@@ -365,7 +382,7 @@ bool ItemFileDialog::Impl::initializeFileIoFilters()
 
     self->setNameFilters(filters);
 
-    setTargetFileIO(0, true);
+    setTargetFileIO(lastSelectedFileIoIndex, true);
 
     return true;
 }
