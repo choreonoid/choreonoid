@@ -21,6 +21,7 @@ public:
 
     int divisionNumber() const;
 
+    void setSourceVrmlFilename(const std::string& filename);
     void setMessageSink(std::ostream& os);
     void setTriangulationEnabled(bool on);
     void setDivisionNumber(int divisionNumber);

@@ -15,11 +15,14 @@
 #include "Exception.h"
 #include "NullOut.h"
 #include "EigenUtil.h"
+#include "UTF8.h"
+#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <tuple>
 
 using namespace std;
 using namespace cnoid;
+namespace filesystem = cnoid::stdx::filesystem;
 using fmt::format;
 
 namespace cnoid {
@@ -76,6 +79,8 @@ public:
     enum BoxFaceID { NO_FACE, LEFT_FACE, TOP_FACE, FRONT_FACE, BOTTOM_FACE, RIGHT_FACE, BACK_FACE };
 
     unique_ptr<SceneLoader> sceneLoader;
+
+    string baseDirectory;
         
     VRMLToSGConverterImpl(VRMLToSGConverter* self);
     void putMessage(const std::string& message);
@@ -131,6 +136,12 @@ VRMLToSGConverterImpl::VRMLToSGConverterImpl(VRMLToSGConverter* self)
 VRMLToSGConverter::~VRMLToSGConverter()
 {
     delete impl;
+}
+
+
+void VRMLToSGConverter::setSourceVrmlFilename(const std::string& filename)
+{
+    impl->baseDirectory = toUTF8(filesystem::absolute(fromUTF8(filename)).parent_path().string());
 }
 
 
@@ -259,6 +270,12 @@ SgNode* VRMLToSGConverterImpl::convertGroupNode(AbstractVRMLGroup* vgroup)
     } else {
         group = new SgGroup;
         top = group;
+        if(VRMLInline* vrmlInline = dynamic_cast<VRMLInline*>(vgroup)){
+            auto& urls = vrmlInline->urls;
+            if(!urls.empty()){
+                group->setUriByFilePathAndBaseDirectory(urls.front(), baseDirectory);
+            }
+        }
     }
     
     int num = vgroup->countChildren();

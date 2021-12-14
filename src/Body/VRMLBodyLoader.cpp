@@ -396,8 +396,9 @@ bool VRMLBodyLoaderImpl::load(Body* body, const std::string& filename)
     numValidJointIds = 0;
     
     try {
-        sgConverter.setDivisionNumber(divisionNumber);
         vrmlParser.load(filename);
+        sgConverter.setDivisionNumber(divisionNumber);
+        sgConverter.setSourceVrmlFilename(filename);
         readTopNodes();
         if(body->modelName().empty()){
             body->setModelName(toUTF8(filesystem::path(fromUTF8(filename)).stem().string()));
