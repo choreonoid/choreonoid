@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<package>
+  <name>xacro</name>
+  <version>1.14.10</version>
+  <description>Xacro (XML Macros)
+
+    Xacro is an XML macro language. With xacro, you can construct shorter and more readable XML files by using macros that expand to larger XML expressions.
+  </description>
+
+  <maintainer email="rhaschke@techfak.uni-bielefeld.de">Robert Haschke</maintainer>
+  <maintainer email="morgan@osrfoundation.org">Morgan Quigley</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/xacro</url>
+  <url type="repository">https://github.com/ros/xacro</url>
+  <url type="bugtracker">https://github.com/ros/xacro/issues</url>
+
+  <author>Stuart Glaser</author>
+  <author>William Woodall</author>
+  <author>Robert Haschke</author>
+
+  <buildtool_depend version_gte="0.5.68">catkin</buildtool_depend>
+
+  <build_depend>roslint</build_depend>
+
+  <run_depend>roslaunch</run_depend>
+
+  <test_depend>rostest</test_depend>
+
+  <export>
+    <architecture_independent/>
+  </export>
+</package>
