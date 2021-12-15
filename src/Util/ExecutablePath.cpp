@@ -101,10 +101,7 @@ void detectExecutableFile()
 
     executableFile_ = toUTF8(executableFile_);
 
-    auto executableDirPath = path.parent_path();
-    executableDir_ = toUTF8(executableDirPath.string());
-    
-    auto topPath = executableDirPath;
+    auto topPath = path.parent_path();;
     while(!topPath.empty()){
         auto iter = --topPath.end();
         auto dir = toUTF8(iter->string());
@@ -116,6 +113,9 @@ void detectExecutableFile()
         }
     }
     executableTopDir_ = toUTF8(topPath.string());
+    
+    auto executableDirPath = topPath / "bin";
+    executableDir_ = toUTF8(executableDirPath.string());
 
     filesystem::path pluginPath = topPath / CNOID_PLUGIN_SUBDIR;
     pluginDir_ = toUTF8(pluginPath.make_preferred().string());
