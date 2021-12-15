@@ -46,7 +46,8 @@ public:
     virtual void setDefaultPointSize(double size) override;
     virtual void setDefaultLineWidth(double width) override;
 
-    virtual void showNormalVectors(double length) override;
+    virtual void setNormalVisualizationEnabled(bool on) override;
+    virtual void setNormalVisualizationLength(double length) override;
 
     virtual void requestToClearResources() override;
 

@@ -14,6 +14,7 @@ namespace cnoid {
 
 class ExtensionManager;
 class SceneRenderer;
+class GLSceneRenderer;
 class Archive;
 class MenuManager;
 class SceneWidgetEvent;
@@ -44,6 +45,7 @@ public:
     SgGroup* systemNodeGroup();
 
     SceneRenderer* renderer();
+    template<class Renderer> Renderer* renderer();
 
     void renderScene(bool doImmediately = false);
 
@@ -110,36 +112,37 @@ public:
     void setCollisionLineVisibility(bool on);
     bool collisionLineVisibility() const;
 
-    void setHeadLightIntensity(double value);
-    void setWorldLightIntensity(double value);
-    void setWorldLightAmbient(double value);
-    void setFloorGridSpan(double value);
-    void setFloorGridInterval(double value);
-    void setLineWidth(double value);
-    void setPointSize(double value);
-    void setNormalLength(double value);
-
+    void setHeadLightIntensity(double intensity);
     void setHeadLightEnabled(bool on);
     void setHeadLightLightingFromBack(bool on);
-    void setWorldLightEnabled(bool on);
-    bool isWorldLightEnabled() const;
     void setAdditionalLights(bool on);
-    void setFloorGridEnabled(bool on);
-    bool isFloorGridEnabled() const;
-    void setNormalVisualization(bool on);
+
+    void setLineWidth(double width);
+    void setPointSize(double size);
+
+    enum GridPlane { XY_Grid = 0, XZ_Grid = 1, YZ_Grid = 2 };
+    void setGridEnabled(GridPlane plane, bool on);
+    bool isGridEnabled(GridPlane plane) const;
+    void setGridGeometry(GridPlane plane, double span, double interval);
+    void setGridColor(GridPlane plane, const Vector3f& color);
+    void updateGrids();
+
     void setCoordinateAxes(bool on);
     void setShowFPS(bool on);
-       
+
+    // Make the following three functions deprecated?
     void setBackgroundColor(const Vector3& color);
     Vector3 backgroundColor();
     void setColor(const Vector4& color);
 
     void setCameraPosition(const Vector3& eye, const Vector3& direction, const Vector3& up);
     void setFieldOfView(double value);
+    void setClipDistances(double nearDistance, double farDistance);
+    void setInteractiveCameraRollRestricted(bool on);
+    void setVerticalAxis(int axis);
+    void setLightweightViewChangeEnabled(bool on);
     void setHeight(double value);
-    void setNear(double value);
-    void setFar(double value);
- 
+
     bool setSceneFocus(const SgNodePath& path);
 
     /**
@@ -154,9 +157,6 @@ public:
     void showContextMenuAtPointerPosition();
     SignalProxy<void(SceneWidgetEvent* event, MenuManager* menuManager)> sigContextMenuRequest();
 
-    void showConfigDialog();
-    QVBoxLayout* configDialogVBox();
-
     bool saveImage(const std::string& filename);
     QImage getImage();
     void setScreenSize(int width, int height);
@@ -164,17 +164,43 @@ public:
     void updateIndicator(const std::string& text);
     QWidget* indicator();
 
+    void doFpsTest(int iteration);
+    void cancelFpsTest();
+
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 
     SignalProxy<void(bool isFocused)> sigWidgetFocusChanged();
     SignalProxy<void()> sigAboutToBeDestroyed();
 
+    [[deprecated("This function does nothing.")]]
+    void setWorldLightEnabled(bool on);
+    [[deprecated]]
+    bool isWorldLightEnabled() const;
+    [[deprecated("This function does nothing.")]]
+    void setWorldLightIntensity(double intensity);
+    [[deprecated("Use renderer()->headLight()->setAmbientIntensity()")]]
+    void setWorldLightAmbient(double intensity);
+    [[deprecated("Use GLSceneRenderer::setNormalVisualizationEnabled.")]]
+    void setNormalVisualization(bool on);
+    [[deprecated("Use GLSceneRenderer::setNormalVisualizationLength.")]]
+    void setNormalLength(double value);
+    [[deprecated("Use setGridEnabled")]]
+    void setFloorGridEnabled(bool on);
+    [[deprecated("Use isGridEnabled")]]
+    bool isFloorGridEnabled() const;
+    [[deprecated("Use setGridGeometry")]]
+    void setFloorGridSpan(double span);
+    [[deprecated("Use setGridGeometry")]]
+    void setFloorGridInterval(double intervale);
+ 
     class Impl;
 
 private:
     Impl* impl;
 };
+
+template<> CNOID_EXPORT GLSceneRenderer* SceneWidget::renderer<GLSceneRenderer>();
 
 
 class CNOID_EXPORT SceneWidgetRoot : public SgGroup

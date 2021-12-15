@@ -69,7 +69,7 @@ public:
     const Vector3f& backgroundColor() const;
     void setBackgroundColor(const Vector3f& color);
     const Vector3f& defaultColor() const;
-    void setDefaultColor(const Vector3f& color);
+    virtual void setDefaultColor(const Vector3f& color);
 
     enum LightingMode {
         NormalLighting,
@@ -81,15 +81,19 @@ public:
     virtual void setLightingMode(LightingMode mode) = 0;
     virtual LightingMode lightingMode() const = 0;
 
-    virtual void clearShadows();
-    virtual void enableShadowOfLight(int index, bool on = true);
-    virtual void enableShadowAntiAliasing(bool on);
+    virtual bool isShadowCastingAvailable() const;
+    virtual void setWorldLightShadowEnabled(bool on = true);
+    virtual void setAdditionalLightShadowEnabled(int index, bool on = true);
+    virtual void clearAdditionalLightShadows();
+    virtual void setShadowAntiAliasingEnabled(bool on);
+    
     virtual void setDefaultSmoothShading(bool on) = 0;
     virtual SgMaterial* defaultMaterial() = 0;
     virtual void enableTexture(bool on) = 0;
     virtual void setDefaultPointSize(double size) = 0;
     virtual void setDefaultLineWidth(double width) = 0;
-    virtual void showNormalVectors(double length) = 0;
+    virtual void setNormalVisualizationEnabled(bool on) = 0;
+    virtual void setNormalVisualizationLength(double length) = 0;
     virtual void requestToClearResources() = 0;
     virtual void enableUnusedResourceCheck(bool on) = 0;
     virtual const Vector3& pickedPoint() const = 0;
@@ -98,10 +102,16 @@ public:
     virtual void setUpsideDown(bool on);
 
     enum CullingMode {
-        ENABLE_BACK_FACE_CULLING,
-        DISABLE_BACK_FACE_CULLING,
-        FORCE_BACK_FACE_CULLING,
-        N_CULLING_MODES
+        EnableBackFaceCulling,
+        DisableBackFaceCulling,
+        ForceBackfaceCulling,
+        NumCullingModes,
+
+        // deprecated
+        ENABLE_BACK_FACE_CULLING = EnableBackFaceCulling,
+        DISABLE_BACK_FACE_CULLING = DisableBackFaceCulling,
+        FORCE_BACK_FACE_CULLING = ForceBackfaceCulling,
+        N_CULLING_MODES = NumCullingModes
     };
 
     virtual void setBackFaceCullingMode(int mode) = 0;
@@ -112,7 +122,8 @@ public:
     virtual void setPickingImageOutputEnabled(bool on);
     virtual bool getPickingImage(Image& out_image);
 
-    virtual bool isShadowCastingAvailable() const;
+    [[deprecated("Use setNormalVisualizationEnabled and setNormaliVisualizationLength.")]]
+    void showNormalVectors(double length);
 
 private:
     class Impl;

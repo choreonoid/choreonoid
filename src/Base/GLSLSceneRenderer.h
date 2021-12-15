@@ -66,18 +66,23 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     
     virtual void setLightingMode(LightingMode mode) override;
     virtual LightingMode lightingMode() const override;
+
+    virtual bool isShadowCastingAvailable() const override;
+    virtual void setWorldLightShadowEnabled(bool on = true) override;
+    virtual void setAdditionalLightShadowEnabled(int index, bool on = true) override;
+    virtual void clearAdditionalLightShadows() override;
+    virtual void setShadowAntiAliasingEnabled(bool on) override;
     
-    virtual void clearShadows() override;
-    virtual void enableShadowOfLight(int index, bool on) override;
-    virtual void enableShadowAntiAliasing(bool on) override;
     virtual void setDefaultSmoothShading(bool on) override;
     virtual SgMaterial* defaultMaterial() override;
     virtual void enableTexture(bool on) override;
     virtual void setDefaultPointSize(double size) override;
     virtual void setDefaultLineWidth(double width) override;
-    virtual void showNormalVectors(double length) override;
+    virtual void setNormalVisualizationEnabled(bool on) override;
+    virtual void setNormalVisualizationLength(double length) override;
     virtual void requestToClearResources() override;
     virtual void enableUnusedResourceCheck(bool on) override;
+    virtual void setDefaultColor(const Vector3f& color) override;
     virtual void setColor(const Vector3f& color) override;
     virtual void setUpsideDown(bool on) override;
     virtual void setBackFaceCullingMode(int mode) override;
@@ -88,8 +93,6 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     virtual void setPickingImageOutputEnabled(bool on) override;
     virtual bool getPickingImage(Image& out_image) override;
-
-    virtual bool isShadowCastingAvailable() const override;
 
     class Impl;
 

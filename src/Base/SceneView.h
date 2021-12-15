@@ -12,6 +12,7 @@ namespace cnoid {
 
 class SceneWidget;
 class SceneWidgetEventHandler;
+class SceneRenderer;
 class SceneBar;
 class SgGroup;
 class Item;
@@ -53,10 +54,15 @@ public:
     ~SceneView();
         
     SceneWidget* sceneWidget();
+    SceneRenderer* renderer();
     SgGroup* scene();
 
     bool setCustomMode(int mode);
     int customMode() const;
+
+    void setTargetSceneItemCheckId(int checkId);
+
+    virtual void showConfigDialog();
 
 protected:
     virtual void onFocusChanged(bool on) override;

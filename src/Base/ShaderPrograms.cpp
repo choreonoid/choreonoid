@@ -1471,7 +1471,7 @@ void FullLightingProgram::getShadowMapSize(int& width, int& height) const
 
 SgCamera* FullLightingProgram::getShadowMapCamera(SgLight* light, Isometry3& io_T)
 {
-    SgCamera* camera = 0;
+    SgCamera* camera = nullptr;
     bool hasDirection = false;
     Vector3 direction;
     if(SgDirectionalLight* directional = dynamic_cast<SgDirectionalLight*>(light)){

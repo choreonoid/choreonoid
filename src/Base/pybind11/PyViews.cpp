@@ -8,6 +8,7 @@
 #include "../SceneWidget.h"
 #include "../SceneWidgetEvent.h"
 #include "../SceneView.h"
+#include "../GLSceneRenderer.h"
 #include "../InteractiveCameraTransform.h"
 #include "../TaskView.h"
 #include "../ViewManager.h"
@@ -15,6 +16,7 @@
 #include <cnoid/PyUtil>
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneCameras>
+#include <cnoid/SceneLights>
 #include <QWidget>
 
 using namespace cnoid;
@@ -102,11 +104,17 @@ void exportPyViews(py::module m)
         .value("PolygonVertex", SceneWidget::PolygonVertex)
         .export_values();
 
+    py::enum_<SceneWidget::GridPlane>(sceneWidget, "GridPlane", py::arithmetic())
+        .value("XY_Grid", SceneWidget::XY_Grid)
+        .value("XZ_Grid", SceneWidget::XZ_Grid)
+        .value("YZ_Grid", SceneWidget::YZ_Grid)
+        .export_values();
+    
     sceneWidget
         .def_property_readonly("sceneRoot", &SceneWidget::sceneRoot)
         .def_property_readonly("scene", &SceneWidget::scene)
         .def_property_readonly("systemNodeGroup", &SceneWidget::systemNodeGroup)
-        .def_property_readonly("renderer", &SceneWidget::renderer)
+        .def_property_readonly("renderer", [](SceneWidget& self){ return self.renderer(); })
         .def("renderScene", &SceneWidget::renderScene, py::arg("doImmediately") = false)
         .def_property_readonly("sigStateChanged", &SceneWidget::sigStateChanged)
         .def("setEditMode", &SceneWidget::setEditMode)
@@ -139,19 +147,11 @@ void exportPyViews(py::module m)
         .def_property_readonly("collisionLineVisibility", &SceneWidget::collisionLineVisibility)
         .def("setCollisionLineVisibility", &SceneWidget::setCollisionLineVisibility)
         .def("setHeadLightIntensity", &SceneWidget::setHeadLightIntensity)
-        .def("setWorldLightIntensity", &SceneWidget::setWorldLightIntensity)
-        .def("setWorldLightAmbient", &SceneWidget::setWorldLightAmbient)
-        .def("setFloorGridSpan", &SceneWidget::setFloorGridSpan)
-        .def("setFloorGridInterval", &SceneWidget::setFloorGridInterval)
         .def("setLineWidth", &SceneWidget::setLineWidth)
         .def("setPointSize", &SceneWidget::setPointSize)
-        .def("setNormalLength", &SceneWidget::setNormalLength)
         .def("setHeadLightEnabled", &SceneWidget::setHeadLightEnabled)
         .def("setHeadLightLightingFromBack", &SceneWidget::setHeadLightLightingFromBack)
-        .def("setWorldLightEnabled", &SceneWidget::setWorldLightEnabled)
         .def("setAdditionalLights", &SceneWidget::setAdditionalLights)
-        .def("setFloorGridEnabled", &SceneWidget::setFloorGridEnabled)
-        .def("setNormalVisualization", &SceneWidget::setNormalVisualization)
         .def("setCoordinateAxes", &SceneWidget::setCoordinateAxes)
         .def("setShowFPS", &SceneWidget::setShowFPS)
         .def("setBackgroundColor", &SceneWidget::setBackgroundColor)
@@ -160,15 +160,13 @@ void exportPyViews(py::module m)
         .def("setCameraPosition", &SceneWidget::setCameraPosition)
         .def("setFieldOfView", &SceneWidget::setFieldOfView)
         .def("setHeight", &SceneWidget::setHeight)
-        .def("setNear", &SceneWidget::setNear)
-        .def("setFar", &SceneWidget::setFar)
+        .def("setClipDistances", &SceneWidget::setClipDistances)
+        .def("setGridEnabled", &SceneWidget::setGridEnabled)
         .def("setSceneFocus", &SceneWidget::setSceneFocus)
         .def("setCursor", &SceneWidget::setCursor)
         .def("contextMenu", &SceneWidget::contextMenu, py::return_value_policy::reference)
         .def("showContextMenuAtPointerPosition", &SceneWidget::showContextMenuAtPointerPosition)
         .def_property_readonly("sigContextMenuRequest", &SceneWidget::sigContextMenuRequest)
-        .def("showConfigDialog", &SceneWidget::showConfigDialog)
-        .def_property_readonly("configDialogVBox", &SceneWidget::configDialogVBox)
         .def("saveImage", &SceneWidget::saveImage)
         .def("getImage", &SceneWidget::getImage)
         .def("setScreenSize", &SceneWidget::setScreenSize)
@@ -178,13 +176,36 @@ void exportPyViews(py::module m)
         .def_property_readonly("sigAboutToBeDestroyed", &SceneWidget::sigAboutToBeDestroyed)
 
         // deprecated
-        .def("setWorldLight", &SceneWidget::setWorldLightEnabled)
+        .def("setWorldLight", [](SceneWidget&){ })
+        .def("setWorldLightEnabled", [](SceneWidget&){ })
+        .def("setWorldLightIntensity", [](SceneWidget&, double){ })
+        .def("setWorldLightAmbient",
+             [](SceneWidget& sceneWidget, double ambient){
+                 sceneWidget.renderer()->headLight()->setAmbientIntensity(ambient);
+             })
+        .def("setFloorGridEnabled",
+             [](SceneWidget& widget, bool on){
+                 widget.setGridEnabled(SceneWidget::XY_Grid, on);
+             })
+        .def("setNormalVisualization",
+             [](SceneWidget& self, bool on){
+                 if(auto renderer = self.renderer<GLSceneRenderer>()){
+                     renderer->setNormalVisualizationEnabled(on);
+                 }
+             })
+        .def("setNormalLength",
+             [](SceneWidget& self, double length){
+                 if(auto renderer = self.renderer<GLSceneRenderer>()){
+                     renderer->setNormalVisualizationLength(length);
+                 }
+             })
         ;
 
     py::class_<SceneView, PyQObjectHolder<SceneView>, View>(m, "SceneView")
         .def_property_readonly_static(
             "instance", [](py::object){ return releaseFromPythonSideManagement(SceneView::instance()); })
         .def_property_readonly("sceneWidget", &SceneView::sceneWidget)
+        .def("showConfigDialog", &SceneView::showConfigDialog)
         ;
     
     /*

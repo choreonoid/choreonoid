@@ -112,9 +112,11 @@ set(sources
   GLSLProgram.cpp
   ShaderPrograms.cpp
   GLSLSceneRenderer.cpp
+  SceneRendererConfig.cpp
   SceneWidget.cpp
   SceneWidgetEvent.cpp
   SceneWidgetEventHandler.cpp
+  SceneWidgetConfig.cpp
   ScenePointSelectionMode.cpp
   InteractiveCameraTransform.cpp
   SceneProjector.cpp
@@ -123,6 +125,7 @@ set(sources
   RectRegionMarker.cpp
   CoordinateFrameMarker.cpp
   SceneView.cpp
+  SceneViewConfig.cpp
   SceneBar.cpp
   SceneItem.cpp
   SceneItemFileIO.cpp
@@ -249,6 +252,7 @@ set(headers
   SceneWidget.h
   SceneWidgetEvent.h
   SceneWidgetEventHandler.h
+  SceneWidgetConfig.h
   SceneProjector.h
   SceneDragProjector.h
   PositionDragger.h
@@ -260,7 +264,9 @@ set(headers
   GLSceneRenderer.h
   GL1SceneRenderer.h
   GLSLSceneRenderer.h
+  SceneRendererConfig.h
   SceneView.h
+  SceneViewConfig.h
   SceneItem.h
   SceneItemFileIO.h
   GeneralSceneFileImporterBase.h

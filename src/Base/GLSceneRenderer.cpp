@@ -195,19 +195,31 @@ double GLSceneRenderer::aspectRatio() const
 }
 
 
-void GLSceneRenderer::clearShadows()
+bool GLSceneRenderer::isShadowCastingAvailable() const
+{
+    return false;
+}
+
+
+void GLSceneRenderer::setWorldLightShadowEnabled(bool /* on */)
 {
 
 }
 
 
-void GLSceneRenderer::enableShadowOfLight(int /* index */, bool /* on */)
+void GLSceneRenderer::setAdditionalLightShadowEnabled(int /* index */, bool /* on */)
 {
 
 }
 
 
-void GLSceneRenderer::enableShadowAntiAliasing(bool /* on */)
+void GLSceneRenderer::clearAdditionalLightShadows()
+{
+
+}
+
+
+void GLSceneRenderer::setShadowAntiAliasingEnabled(bool /* on */)
 {
 
 }
@@ -310,8 +322,8 @@ bool GLSceneRenderer::getPickingImage(Image&)
 }
 
 
-bool GLSceneRenderer::isShadowCastingAvailable() const
+void GLSceneRenderer::showNormalVectors(double length)
 {
-    return false;
+    setNormalVisualizationEnabled(length > 0.0);
+    setNormalVisualizationLength(length);
 }
-

@@ -3,15 +3,12 @@
 */
 
 #include "SceneView.h"
+#include "SceneViewConfig.h"
 #include "SceneWidget.h"
 #include "SceneWidgetEventHandler.h"
 #include "ViewManager.h"
 #include "RootItem.h"
 #include "RenderableItem.h"
-#include "Archive.h"
-#include "Separator.h"
-#include "Buttons.h"
-#include "CheckBox.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/ConnectionSet>
 #include <list>
@@ -58,18 +55,16 @@ public:
     list<SceneInfo> sceneInfos;
     SgUpdate sgUpdate;
     RootItem* rootItem;
-    CheckBox dedicatedCheckCheck;
-    int dedicatedCheckId;
+    int itemCheckId;
+    SceneViewConfig* config;
         
     Impl(SceneView* self);
     ~Impl();
     void onRenderableItemAdded(Item* item, RenderableItem* renderable);
     void onRenderableItemDisconnectedFromRoot(list<SceneInfo>::iterator infoIter);
-    void onDedicatedCheckToggled(bool on);
     void onSensitiveChanged(list<SceneInfo>::iterator infoIter, bool on);
     void showScene(list<SceneInfo>::iterator infoIter, bool show);
-    bool storeState(Archive& archive);
-    bool restoreState(const Archive& archive);
+    void setTargetSceneItemCheckId(int id);
 };
 
 }
@@ -165,6 +160,17 @@ static void finalizeClass()
 SceneView::SceneView()
 {
     impl = new Impl(this);
+
+
+    if(instances_.empty()){
+        impl->config = new SceneViewConfig(this);
+        lastFocusView_ = this;
+
+    } else if(lastFocusView_){
+        impl->config = new SceneViewConfig(*lastFocusView_->impl->config, this);
+    }
+
+    instances_.push_back(this);
 }
 
 
@@ -191,19 +197,8 @@ SceneView::Impl::Impl(SceneView* self)
     vbox->addWidget(sceneWidget);
     self->setLayout(vbox);
 
-    vbox = sceneWidget->configDialogVBox();
-    //vbox->addWidget(new HSeparator);
-    QHBoxLayout* hbox = new QHBoxLayout;
-    dedicatedCheckCheck.setText(_("Use dedicated item tree view checks to select the target items"));
-    dedicatedCheckCheck.sigToggled().connect(
-        [&](bool on){ onDedicatedCheckToggled(on); });
-    hbox->addWidget(&dedicatedCheckCheck);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
-
     rootItem = RootItem::instance();
-
-    dedicatedCheckId = -1;
+    itemCheckId = Item::PrimaryCheck;
 
     if(!instances_.empty()){
         auto mainImpl = instances_.front()->impl;
@@ -213,18 +208,6 @@ SceneView::Impl::Impl(SceneView* self)
             onRenderableItemAdded(info.item, info.renderable);
         }
     }
-
-    if(instances_.empty()){
-        lastFocusView_ = self;
-
-    } else if(lastFocusView_){
-        // Temporary code. All the properties should be copied from the last focus view.
-        auto srcWidget = lastFocusView_->impl->sceneWidget;
-        sceneWidget->setWorldLightEnabled(srcWidget->isWorldLightEnabled());
-        sceneWidget->setFloorGridEnabled(srcWidget->isFloorGridEnabled());
-    }
-    
-    instances_.push_back(self);
 }
 
 
@@ -236,9 +219,7 @@ SceneView::~SceneView()
 
 SceneView::Impl::~Impl()
 {
-    if(dedicatedCheckId >= 0){
-        rootItem->releaseCheckEntry(dedicatedCheckId);
-    }
+    delete config;
 
     instances_.erase(std::find(instances_.begin(), instances_.end(), self));
 
@@ -260,6 +241,12 @@ SceneView::Impl::~Impl()
 SceneWidget* SceneView::sceneWidget()
 {
     return impl->sceneWidget;
+}
+
+
+SceneRenderer* SceneView::renderer()
+{
+    return impl->sceneWidget->renderer();
 }
 
 
@@ -317,13 +304,11 @@ void SceneView::Impl::onRenderableItemAdded(Item* item, RenderableItem* renderab
         renderable->sigSceneSensitiveChanged().connect(
             [this, infoIter](bool on){ onSensitiveChanged(infoIter, on); }));
 
-    int checkId = dedicatedCheckCheck.isChecked() ? dedicatedCheckId : Item::PrimaryCheck;
-        
     info.itemCheckConnection =
-        item->sigCheckToggled(checkId).connect(
+        item->sigCheckToggled(itemCheckId).connect(
             [this, infoIter](bool on){ showScene(infoIter, on); });
         
-    if(item->isChecked(checkId)){
+    if(item->isChecked(itemCheckId)){
         showScene(infoIter, true);
     }
 }
@@ -333,34 +318,6 @@ void SceneView::Impl::onRenderableItemDisconnectedFromRoot(list<SceneInfo>::iter
 {
     showScene(infoIter, false);
     sceneInfos.erase(infoIter);
-}
-
-
-void SceneView::Impl::onDedicatedCheckToggled(bool on)
-{
-    int checkId = Item::PrimaryCheck;
-    
-    if(on){
-        if(dedicatedCheckId < 0){
-            dedicatedCheckId = rootItem->addCheckEntry(self->windowTitle().toStdString());
-        }
-        checkId = dedicatedCheckId;
-
-    } else {
-        if(dedicatedCheckId >= 0){
-            rootItem->releaseCheckEntry(dedicatedCheckId);
-            dedicatedCheckId = -1;
-        }
-    }
-
-    for(list<SceneInfo>::iterator p = sceneInfos.begin(); p != sceneInfos.end(); ++p){
-        p->itemCheckConnection.disconnect();
-        p->itemCheckConnection =
-            p->item->sigCheckToggled(checkId).connect(
-                [this, p](bool on) { showScene(p, on); });
-        
-        showScene(p, p->item->isChecked(checkId));
-    }
 }
 
 
@@ -414,47 +371,42 @@ QWidget* SceneView::indicatorOnInfoBar()
 }
 
 
-bool SceneView::storeState(Archive& archive)
+void SceneView::setTargetSceneItemCheckId(int id)
 {
-    return impl->storeState(archive);
+    impl->setTargetSceneItemCheckId(id);
 }
 
 
-bool SceneView::Impl::storeState(Archive& archive)
+void SceneView::Impl::setTargetSceneItemCheckId(int id)
 {
-    bool result = true;
-    result &= sceneWidget->storeState(archive);
-    archive.write("isDedicatedItemCheckEnabled", dedicatedCheckCheck.isChecked());
-    if(dedicatedCheckCheck.isChecked()){
-        rootItem->storeCheckStates(dedicatedCheckId, archive, "checked");
+    if(id != itemCheckId){
+        itemCheckId = id;
+        for(auto it = sceneInfos.begin(); it != sceneInfos.end(); ++it){
+            it->itemCheckConnection =
+                it->item->sigCheckToggled(id).connect(
+                    [this, it](bool on) { showScene(it, on); });
+            showScene(it, it->item->isChecked(id));
+        }
     }
-    return result;
+}
+
+
+void SceneView::showConfigDialog()
+{
+    impl->config->showConfigDialog();
+}
+
+
+bool SceneView::storeState(Archive& archive)
+{
+    bool result = impl->sceneWidget->storeState(archive);
+    return impl->config->store(&archive) && result;
 }
 
 
 bool SceneView::restoreState(const Archive& archive)
 {
-    return impl->restoreState(archive);
-}
-
-
-bool SceneView::Impl::restoreState(const Archive& archive)
-{
-    bool result = sceneWidget->restoreState(archive);
-
-    bool isDedicatedItemCheckEnabled = false;
-    if(archive.read("isDedicatedItemCheckEnabled", isDedicatedItemCheckEnabled) ||
-       archive.read("dedicatedItemTreeViewChecks", isDedicatedItemCheckEnabled) /* old format */){
-        dedicatedCheckCheck.setChecked(isDedicatedItemCheckEnabled);
-    }
-
-    if(dedicatedCheckId >= 0){
-        ref_ptr<const Archive> pArchive = &archive;
-        archive.addPostProcess(
-            [this, pArchive](){
-                rootItem->restoreCheckStates(dedicatedCheckId, *pArchive, "checked");
-            });
-    }
-    
+    bool result = impl->config->restore(&archive);
+    result &= impl->sceneWidget->restoreState(archive);
     return result;
 }

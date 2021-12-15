@@ -60,13 +60,17 @@ public:
     bool setCurrentCameraPath(const std::vector<std::string>& simplifiedPathStrings);
     void setCurrentCameraAutoRestorationMode(bool on);
 
-    int numLights() const;
-    void getLightInfo(int index, SgLight*& out_light, Isometry3& out_position) const;
-    void setAsDefaultLight(SgLight* light);
-    void unsetDefaultLight(SgLight* light);
     SgLight* headLight();
     void setHeadLight(SgLight* light);
+    SgLight* worldLight();
+    void setWorldLight(SgLight* light);
+    SgPosTransform* worldLightTransform();
+
     void enableAdditionalLights(bool on);
+    int numAdditionalLights() const;
+    [[deprecated("Use numAdditionalLights")]]
+    int numLights() const { return numAdditionalLights(); }
+    void getLightInfo(int index, SgLight*& out_light, Isometry3& out_position) const;
 
     void enableFog(bool on);
     bool isFogEnabled() const;

@@ -24,7 +24,7 @@ public:
 
     SceneView* currentSceneView();
     
-    // [[deprecated("Use SceneBar::currentSceneView().")]]
+    [[deprecated("Use SceneBar::currentSceneView().")]]
     SceneWidget* targetSceneWidget();
 
 protected:

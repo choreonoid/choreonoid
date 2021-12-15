@@ -305,7 +305,8 @@ public:
     bool isRenderingVisibleImage;
     bool isRenderingPickingImage;
     bool isPickingImageOutputEnabled;
-    bool isShadowCastingEnabled;
+    bool isShadowCastingAvailable;
+    bool isWorldLightShadowEnabled;
     bool isRenderingShadowMap;
     bool isLightweightRenderingBeingProcessed;
     bool isLowMemoryConsumptionMode;
@@ -347,11 +348,11 @@ public:
     LightingMode lightingMode;
     bool needToUpdateOverlayDepthBufferSize;
     
-    std::set<int> shadowLightIndices;
     SgMaterialPtr defaultMaterial;
     GLfloat defaultPointSize;
     GLfloat defaultLineWidth;
     float minTransparency;
+    vector<int> shadowLightIndices;
     
     GLResourceMap resourceMaps[2];
     GLResourceMap* currentResourceMap;
@@ -434,6 +435,7 @@ public:
     void setupFullLightingRendering();
     bool doPick(int x, int y);
     bool renderShadowMap(int lightIndex);
+    bool renderShadowMap(SgLight* light, const Isometry3& T);
     void beginRendering();
     void renderCamera(SgCamera* camera, const Isometry3& cameraPosition);
     void renderLights(LightingProgram* program);
@@ -643,7 +645,8 @@ void GLSLSceneRenderer::Impl::initialize()
     isRenderingVisibleImage = false;
     isRenderingPickingImage = false;
     isPickingImageOutputEnabled = false;
-    isShadowCastingEnabled = true;
+    isShadowCastingAvailable = true;
+    isWorldLightShadowEnabled = false;
     isRenderingShadowMap = false;
     isLowMemoryConsumptionMode = false;
     isBoundingBoxRenderingMode = false;
@@ -893,10 +896,10 @@ bool GLSLSceneRenderer::Impl::initializeGL()
     char* CNOID_ENABLE_GLSL_SHADOW = getenv("CNOID_ENABLE_GLSL_SHADOW");
     if(CNOID_ENABLE_GLSL_SHADOW){
         if(strcmp(CNOID_ENABLE_GLSL_SHADOW, "0") == 0){
-            isShadowCastingEnabled = false;
+            isShadowCastingAvailable = false;
             os() << _("Shadow casting is disabled according to the value of CNOID_ENABLE_GLSL_SHADOW.\n");
         } else {
-            isShadowCastingEnabled = true;
+            isShadowCastingAvailable = true;
             os() << _("Shadow casting is enabled according to the value of CNOID_ENABLE_GLSL_SHADOW.\n");
         }
     } else {
@@ -916,39 +919,39 @@ void GLSLSceneRenderer::Impl::checkGPU()
     // Check the Intel GPU
     if(regex_match(glRendererString, match, regex("Mesa DRI Intel\\(R\\) (\\S+).*$"))){
         if(match.str(1) == "Sandybridge"){
-            isShadowCastingEnabled = false;
+            isShadowCastingAvailable = false;
         }
         /* The problem on the following driver seems to have been resolved
         else if(regex_match(glVersionString, match, regex(".*Mesa (\\d+)\\.(\\d+)\\.(\\d+).*$"))){
             int mesaMajor = stoi(match.str(1));
             if(mesaMajor >= 19){
-                isShadowCastingEnabled = false;
+                isShadowCastingAvailable = false;
             }
         }
         */
     }
     // CHeck if the VMWare's virtual driver is used
     else if(regex_match(glVendorString, regex("VMware, Inc\\..*"))){
-        isShadowCastingEnabled = false;
+        isShadowCastingAvailable = false;
         if(regex_match(glVersionString, match, regex(".*Mesa (\\d+)\\.(\\d+)\\.(\\d+).*$"))){
             int mesaMajor = stoi(match.str(1));
             if(mesaMajor >= 20){
-                isShadowCastingEnabled = true;
+                isShadowCastingAvailable = true;
             }
         }
     }
     // Check if the GPU driver is Nouveau
     else if(regex_match(glVendorString, regex(".*nouveau.*"))){
-        isShadowCastingEnabled = false;
+        isShadowCastingAvailable = false;
         if(regex_match(glVersionString, match, regex(".*Mesa (\\d+)\\.(\\d+)\\.(\\d+).*$"))){
             int mesaMajor = stoi(match.str(1));
             if(mesaMajor >= 20){
-                isShadowCastingEnabled = true;
+                isShadowCastingAvailable = true;
             }
         }
     }
 
-    if(!isShadowCastingEnabled){
+    if(!isShadowCastingAvailable){
         os() << format(_("Shadow casting is disabled for this GPU due to some problems.\n"));
     }
 }
@@ -1255,7 +1258,7 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
 
     int shadowMapIndex = 0;
     
-    if(isShadowCastingEnabled && !shadowLightIndices.empty()){
+    if(isShadowCastingAvailable && (isWorldLightShadowEnabled || !shadowLightIndices.empty())){
 
         isRenderingVisibleImage = false;
         isRenderingShadowMap = true;
@@ -1267,16 +1270,22 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
         self->GLSceneRenderer::updateViewportInformation(0, 0, w, h);
 
         pushProgram(program->shadowMapProgram());
-        
-        set<int>::iterator iter = shadowLightIndices.begin();
-        const int maxNumShadows = program->maxNumShadows();
-        while(iter != shadowLightIndices.end() && shadowMapIndex < maxNumShadows){
+
+        if(isWorldLightShadowEnabled){
             program->activateShadowMapGenerationPass(shadowMapIndex);
-            int shadowLightIndex = *iter;
-            if(renderShadowMap(shadowLightIndex)){
+            if(renderShadowMap(self->worldLight(), self->worldLightTransform()->T())){
                 ++shadowMapIndex;
             }
-            ++iter;
+        }
+        const int maxNumShadows = program->maxNumShadows();
+        for(auto& lightIndex : shadowLightIndices){
+            if(shadowMapIndex == maxNumShadows){
+                break;
+            }
+            program->activateShadowMapGenerationPass(shadowMapIndex);
+            if(renderShadowMap(lightIndex)){
+                ++shadowMapIndex;
+            }
         }
         
         popProgram();
@@ -1451,11 +1460,20 @@ bool GLSLSceneRenderer::Impl::renderShadowMap(int lightIndex)
     Isometry3 T;
     self->getLightInfo(lightIndex, light, T);
 
-    if(light && light->on()){
-        SgCamera* shadowMapCamera = fullLightingProgram->getShadowMapCamera(light, T);
+    if(light){
+        return renderShadowMap(light, T);
+    }
+    return false;
+}
 
+
+bool GLSLSceneRenderer::Impl::renderShadowMap(SgLight* light, const Isometry3& T)
+{
+    if(light->on()){
+        Isometry3 Tc = T;
+        SgCamera* shadowMapCamera = fullLightingProgram->getShadowMapCamera(light, Tc);
         if(shadowMapCamera){
-            renderCamera(shadowMapCamera, T);
+            renderCamera(shadowMapCamera, Tc);
             fullLightingProgram->setShadowMapViewProjection(PV);
             fullLightingProgram->shadowMapProgram()->initializeShadowMapBuffer();
             renderingFunctions->dispatch(self->sceneRoot());
@@ -1469,7 +1487,7 @@ bool GLSLSceneRenderer::Impl::renderShadowMap(int lightIndex)
     }
     return false;
 }
-    
+
 
 void GLSLSceneRenderer::Impl::renderCamera(SgCamera* camera, const Isometry3& cameraPosition)
 {
@@ -1555,8 +1573,15 @@ void GLSLSceneRenderer::Impl::renderLights(LightingProgram* program)
             ++lightIndex;
         }
     }
-
-    const int n = self->numLights();
+    SgLight* worldLight = self->worldLight();
+    if(worldLight->on()){
+        auto& T = self->worldLightTransform()->T();
+        if(program->setLight(
+               lightIndex, worldLight, T, viewTransform, isWorldLightShadowEnabled)){
+            ++lightIndex;
+        }
+    }
+    const int n = self->numAdditionalLights();
     for(int i=0; i < n; ++i){
         if(lightIndex == program->maxNumLights()){
             break;
@@ -1565,8 +1590,15 @@ void GLSLSceneRenderer::Impl::renderLights(LightingProgram* program)
         Isometry3 T;
         self->getLightInfo(i, light, T);
         if(light->on()){
-            bool isCastingShadow =
-                isShadowCastingEnabled && (shadowLightIndices.find(i) != shadowLightIndices.end());
+            bool isCastingShadow = false;
+            if(isShadowCastingAvailable){
+                for(auto& lightIndex : shadowLightIndices){
+                    if(lightIndex == i){
+                        isCastingShadow = true;
+                        break;
+                    }
+                }
+            }
             if(program->setLight(lightIndex, light, T, viewTransform, isCastingShadow)){
                 ++lightIndex;
             }
@@ -3189,6 +3221,14 @@ void GLSLSceneRenderer::Impl::clearGLState()
 }
 
 
+void GLSLSceneRenderer::setDefaultColor(const Vector3f& color)
+{
+    GLSceneRenderer::setDefaultColor(color);
+    impl->defaultMaterial->setDiffuseColor(color);
+    requestToClearResources();
+}
+
+
 void GLSLSceneRenderer::setColor(const Vector3f& color)
 {
     impl->solidColorProgram->setColor(color);
@@ -3197,23 +3237,41 @@ void GLSLSceneRenderer::setColor(const Vector3f& color)
 }
 
 
-void GLSLSceneRenderer::clearShadows()
+bool GLSLSceneRenderer::isShadowCastingAvailable() const
+{
+    return impl->isShadowCastingAvailable;
+}
+
+
+void GLSLSceneRenderer::setWorldLightShadowEnabled(bool on)
+{
+    impl->isWorldLightShadowEnabled = on;
+}
+
+
+void GLSLSceneRenderer::setAdditionalLightShadowEnabled(int index, bool on)
+{
+    if(on){
+        for(auto& existingIndex : impl->shadowLightIndices){
+            if(index == existingIndex){
+                return;
+            }
+        }
+        impl->shadowLightIndices.push_back(index);
+    } else {
+        auto& indices = impl->shadowLightIndices;
+        indices.erase(std::remove(indices.begin(), indices.end(), index), indices.end());
+    }
+}
+
+
+void GLSLSceneRenderer::clearAdditionalLightShadows()
 {
     impl->shadowLightIndices.clear();
 }
 
 
-void GLSLSceneRenderer::enableShadowOfLight(int index, bool on)
-{
-    if(on){
-        impl->shadowLightIndices.insert(index);
-    } else {
-        impl->shadowLightIndices.erase(index);
-    }
-}
-
-
-void GLSLSceneRenderer::enableShadowAntiAliasing(bool on)
+void GLSLSceneRenderer::setShadowAntiAliasingEnabled(bool on)
 {
     impl->fullLightingProgram->setShadowAntiAliasingEnabled(on);
 }
@@ -3302,14 +3360,21 @@ void GLSLSceneRenderer::setDefaultLineWidth(double width)
 }
 
 
-void GLSLSceneRenderer::showNormalVectors(double length)
+void GLSLSceneRenderer::setNormalVisualizationEnabled(bool on)
 {
-    bool isEnabled = (length > 0.0);
-    if(isEnabled != impl->isNormalVisualizationEnabled || length != impl->normalVisualizationLength){
-        impl->isNormalVisualizationEnabled = isEnabled;
+    if(on != impl->isNormalVisualizationEnabled){
+        impl->isNormalVisualizationEnabled = on;
+        requestToClearResources();
+    }        
+}
+
+
+void GLSLSceneRenderer::setNormalVisualizationLength(double length)
+{
+    if(length != impl->normalVisualizationLength){
         impl->normalVisualizationLength = length;
         requestToClearResources();
-    }
+    }        
 }
 
 
@@ -3352,10 +3417,4 @@ void GLSLSceneRenderer::setLowMemoryConsumptionMode(bool on)
         impl->isLowMemoryConsumptionMode = on;
         requestToClearResources();
     }
-}
-
-
-bool GLSLSceneRenderer::isShadowCastingAvailable() const
-{
-    return impl->isShadowCastingEnabled;
 }

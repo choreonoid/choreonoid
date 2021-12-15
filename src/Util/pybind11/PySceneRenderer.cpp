@@ -32,18 +32,16 @@ void exportPySceneRenderer(py::module& m)
         .def("findCameraPath", &SceneRenderer::findCameraPath)
         .def("setCurrentCameraPath", &SceneRenderer::setCurrentCameraPath)
         .def("setCurrentCameraAutoRestorationMode", &SceneRenderer::setCurrentCameraAutoRestorationMode)
-        .def_property_readonly("numLights", &SceneRenderer::numLights)
+        .def_property_readonly("numAdditionalLights", &SceneRenderer::numAdditionalLights)
         .def("getLight",
              [](SceneRenderer& self, int index){
                  SgLight* light = nullptr;
-                 if(index < self.numLights()){
+                 if(index < self.numAdditionalLights()){
                      Isometry3 T;
                      self.getLightInfo(index, light, T);
                  }
                  return light;
              })
-        .def("setAsDefaultLight", &SceneRenderer::setAsDefaultLight)
-        .def("unsetDefaultLight", &SceneRenderer::unsetDefaultLight)
         .def_property("headLight", &SceneRenderer::headLight, &SceneRenderer::setHeadLight)
         .def("setHeadLight", &SceneRenderer::setHeadLight)
         .def("enableAdditionalLights", &SceneRenderer::enableAdditionalLights)
@@ -76,6 +74,9 @@ void exportPySceneRenderer(py::module& m)
              [](SceneRenderer& self, const std::string& key, double defaultValue){
                  return self.property(key, defaultValue);
              })
+
+        // deprecated
+        .def_property_readonly("numLights", &SceneRenderer::numAdditionalLights)
         ;
 }
 

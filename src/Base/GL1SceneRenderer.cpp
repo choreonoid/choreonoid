@@ -355,10 +355,10 @@ void GL1SceneRenderer::Impl::initialize()
     lastViewMatrix.setIdentity();
     lastProjectionMatrix.setIdentity();
 
-    numSystemLights = 2;
+    numSystemLights = 3;
     maxLights = numSystemLights;
     prevNumLights = 0;
-    isHeadLightLightingFromBackEnabled = false;
+    isHeadLightLightingFromBackEnabled = true;
 
     prevFog = nullptr;
 
@@ -646,10 +646,17 @@ void GL1SceneRenderer::Impl::renderLights(const Affine3& cameraPosition)
             glDisable(GL_LIGHT1);
         }
     }
+    SgLight* worldLight = self->worldLight();
+    if(!worldLight->on()){
+        glDisable(GL_LIGHT2);
+    } else {
+        renderLight(worldLight, GL_LIGHT2, self->worldLightTransform()->T());
+    }
     
-    const int numLights = std::min(self->numLights(), (int)(maxLights - numSystemLights));
+    const int numAdditionalLights =
+        std::min(self->numAdditionalLights(), (int)(maxLights - numSystemLights));
 
-    for(int i=0; i < numLights; ++i){
+    for(int i=0; i < numAdditionalLights; ++i){
         SgLight* light;
         Isometry3 T;
         self->getLightInfo(i, light, T);
@@ -657,12 +664,12 @@ void GL1SceneRenderer::Impl::renderLights(const Affine3& cameraPosition)
         renderLight(light, id, T);
     }
 
-    for(int i = numLights; i < prevNumLights; ++i){
+    for(int i = numAdditionalLights; i < prevNumLights; ++i){
         const GLint lightID = GL_LIGHT0 + numSystemLights + i;
         glDisable(lightID);
     }
 
-    prevNumLights = numLights;
+    prevNumLights = numAdditionalLights;
 }
 
 
@@ -2203,14 +2210,21 @@ void GL1SceneRenderer::setDefaultLineWidth(double width)
 }
 
 
-void GL1SceneRenderer::showNormalVectors(double length)
+void GL1SceneRenderer::setNormalVisualizationEnabled(bool on)
 {
-    bool doNormalVisualization = (length > 0.0);
-    if(doNormalVisualization != impl->doNormalVisualization || length != impl->normalLength){
-        impl->doNormalVisualization = doNormalVisualization;
+    if(on != impl->doNormalVisualization){
+        impl->doNormalVisualization = on;
+        requestToClearResources();
+    }        
+}
+
+
+void GL1SceneRenderer::setNormalVisualizationLength(double length)
+{
+    if(length != impl->normalLength){
         impl->normalLength = length;
         requestToClearResources();
-    }
+    }        
 }
 
 

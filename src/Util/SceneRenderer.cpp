@@ -158,7 +158,8 @@ public:
     vector<LightInfo, Eigen::aligned_allocator<LightInfo>> lights;
 
     SgLightPtr headLight;
-    std::set<SgLightPtr> defaultLights;
+    SgLightPtr worldLight;
+    SgPosTransformPtr worldLightTransform;
     bool additionalLightsEnabled;
 
     vector<SgFogPtr> fogs;
@@ -227,8 +228,18 @@ SceneRenderer::Impl::Impl(SceneRenderer* self)
     currentCamera = nullptr;
     I.setIdentity();
 
-    headLight = new SgDirectionalLight();
+    headLight = new SgDirectionalLight;
+    headLight->setName("Head light");
     headLight->setAmbientIntensity(0.0f);
+
+    auto light = new SgDirectionalLight;
+    light->setName("World light");
+    light->setDirection(Vector3(0.0, 0.0, -1.0));
+    worldLightTransform = new SgPosTransform;
+    worldLightTransform->setTranslation(Vector3(0.0, 0.0, 10.0));
+    worldLightTransform->addChild(light);
+    worldLight = light;
+    
     additionalLightsEnabled = true;
 
     isFogEnabled = true;
@@ -420,9 +431,11 @@ void SceneRenderer::Impl::extractPreproNodeIter(PreproNode* node, const Affine3&
 
     case PreproNode::LIGHT:
     {
-        SgLight* light = stdx::get<SgLight*>(node->node);
-        if(additionalLightsEnabled || defaultLights.find(light) != defaultLights.end()){
-            lights.push_back(LightInfo(light, convertToIsometryWithOrthonormalization(T)));
+        if(additionalLightsEnabled){
+            auto light = stdx::get<SgLight*>(node->node);
+            if(light != worldLight){
+                lights.push_back(LightInfo(light, convertToIsometryWithOrthonormalization(T)));
+            }
         }
         break;
     }
@@ -804,7 +817,45 @@ void SceneRenderer::setCurrentCameraAutoRestorationMode(bool on)
 }
 
 
-int SceneRenderer::numLights() const
+SgLight* SceneRenderer::headLight()
+{
+    return impl->headLight;
+}
+
+
+void SceneRenderer::setHeadLight(SgLight* light)
+{
+    impl->headLight = light;
+}
+
+
+SgLight* SceneRenderer::worldLight()
+{
+    return impl->worldLight;
+}
+
+
+void SceneRenderer::setWorldLight(SgLight* light)
+{
+    impl->worldLightTransform->removeChild(impl->worldLight);
+    impl->worldLightTransform->addChild(light);
+    impl->worldLight = light;
+}
+
+
+SgPosTransform* SceneRenderer::worldLightTransform()
+{
+    return impl->worldLightTransform;
+}
+
+
+void SceneRenderer::enableAdditionalLights(bool on)
+{
+    impl->additionalLightsEnabled = on;
+}
+
+
+int SceneRenderer::numAdditionalLights() const
 {
     return impl->lights.size();
 }
@@ -821,35 +872,6 @@ void SceneRenderer::getLightInfo(int index, SgLight*& out_light, Isometry3& out_
     }
 }
 
-
-SgLight* SceneRenderer::headLight()
-{
-    return impl->headLight;
-}
-
-
-void SceneRenderer::setHeadLight(SgLight* light)
-{
-    impl->headLight = light;
-}
-
-
-void SceneRenderer::setAsDefaultLight(SgLight* light)
-{
-    impl->defaultLights.insert(light);
-}
-
-
-void SceneRenderer::unsetDefaultLight(SgLight* light)
-{
-    impl->defaultLights.erase(light);
-}
-
-
-void SceneRenderer::enableAdditionalLights(bool on)
-{
-    impl->additionalLightsEnabled = on;
-}
 
 void SceneRenderer::enableFog(bool on)
 {
