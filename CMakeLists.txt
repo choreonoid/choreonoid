@@ -597,6 +597,9 @@ if(ENABLE_ASSIMP)
 endif()
 
 option(ENABLE_URDF "Enable URDF functions" ON)
+if(ENABLE_URDF AND ENABLE_PYTHON)
+  add_subdirectory(thirdparty/xacro-1.14.10)
+endif()
 
 # CORBA, omniORB
 option(ENABLE_CORBA "Enable CORBA related modules / plugins" OFF)
