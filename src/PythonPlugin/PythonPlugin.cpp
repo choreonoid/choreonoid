@@ -290,9 +290,19 @@ bool PythonPlugin::Impl::initializeInterpreter()
 
     sysModule.attr("dont_write_bytecode") = true;
     
-    // set the choreonoid default python script path
-    filesystem::path scriptPath = pluginDirPath() / "python";
-    sysModule.attr("path").attr("insert")(0, toUTF8(scriptPath.make_preferred().string()));
+    // set the choreonoid default python module path
+    filesystem::path modulePath = pluginDirPath() / "python";
+    auto moduleDir = toUTF8(modulePath.make_preferred().string());
+    sysModule.attr("path").attr("insert")(0, moduleDir);
+
+#ifndef _WIN32
+    auto pythonPath0 = getenv("PYTHONPATH");
+    if(pythonPath0){
+        setenv("PYTHONPATH", format("{0}:{1}", moduleDir, pythonPath0).c_str(), 1);
+    } else {
+        setenv("PYTHONPATH", moduleDir.c_str(), 1);
+    }
+#endif
 
     // Redirect the stdout and stderr to the message view
     python::object messageViewOutClass =
