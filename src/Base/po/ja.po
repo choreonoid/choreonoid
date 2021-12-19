@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-13 20:12+0900\n"
+"POT-Creation-Date: 2021-12-23 19:48+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -891,6 +891,10 @@ msgstr "Choreonoid について"
 msgid "About Plugins"
 msgstr "プラグインについて"
 
+msgid ""
+"\"{0}\" is an item that usually does not need to be saved. Do you really want to save this item?"
+msgstr ""
+
 msgid "Delete All Unmounted Views"
 msgstr "マウントされていない全てのビューを削除"
 
@@ -1427,6 +1431,24 @@ msgstr "干渉チェック用モデルを表示"
 msgid "Toggle the collision line visibility"
 msgstr "干渉線の表示"
 
+msgid "Front view"
+msgstr "前面ビュー"
+
+msgid "Back view"
+msgstr "後面ビュー"
+
+msgid "Top view"
+msgstr "上面ビュー"
+
+msgid "Bottom view"
+msgstr "下面ビュー"
+
+msgid "Right view"
+msgstr "右面ビュー"
+
+msgid "Left view"
+msgstr "左面ビュー"
+
 msgid "Scene"
 msgstr "シーン"
 
@@ -1445,11 +1467,110 @@ msgstr "標準シーンファイル"
 msgid "Empty scene"
 msgstr "空のシーン"
 
+msgid "Normal"
+msgstr " 標準"
+
+msgid "Minimum"
+msgstr "最小限"
+
+msgid "Solid color"
+msgstr "ソリッドカラー"
+
+msgid "Smooth shading"
+msgstr "スムーズシェーディング"
+
+msgid "Enabled"
+msgstr "有効"
+
+msgid "Disabled"
+msgstr "無効"
+
+msgid "Forced"
+msgstr "強制"
+
+msgid "Head light"
+msgstr "ヘッドライト"
+
+msgid "World light"
+msgstr "ワールドライト"
+
+msgid "Ambient light"
+msgstr "環境光"
+
+msgid "Additional lights"
+msgstr "追加のライト"
+
+msgid "Shadow"
+msgstr "影"
+
+msgid "Shadow for light"
+msgstr "影：ライト"
+
+msgid "Index of the light source causing the shadow"
+msgstr "影の要因となる光源の番号"
+
+msgid "Anti-aliasing of shadows"
+msgstr "影のアンチエイリアシング"
+
+msgid "Texture"
+msgstr "テクスチャ"
+
+msgid "Fog"
+msgstr "フォグ"
+
+msgid "Background color"
+msgstr "背景色"
+
+msgid "Background Color"
+msgstr "背景色"
+
+msgid "Default color"
+msgstr "デフォルト色"
+
+msgid "Default Color"
+msgstr "デフォルト色"
+
+msgid "Upside down"
+msgstr "上下反転"
+
+msgid "Lighting mode"
+msgstr "ライティングモード"
+
+msgid "Back face culling: "
+msgstr "裏面除去："
+
+msgid "Default line width"
+msgstr "デフォルトの線幅"
+
+msgid "Default point size"
+msgstr "デフォルト点サイズ"
+
 msgid "SceneView"
 msgstr "シーンビュー"
 
 msgid "Use dedicated item tree view checks to select the target items"
 msgstr "対象アイテム選択用の専用のチェックをアイテムツリービューに追加"
+
+msgid "Scene view"
+msgstr "シーンビュー"
+
+msgid "Configuration of {0}"
+msgstr "{0}の設定"
+
+msgid "Camera"
+msgstr "カメラ"
+
+msgid "Lighting"
+msgstr "ライティング"
+
+msgid "Background"
+msgstr "背景"
+
+msgid "Drawing"
+msgstr "描画"
+
+msgid "Debug"
+msgstr "デバッグ"
 
 msgid "OpengGL image buffer for picking"
 msgstr "ピッキング用OpenGL画像バッファ"
@@ -1493,113 +1614,14 @@ msgstr "編集モード"
 msgid "View Mode"
 msgstr "閲覧モード"
 
-msgid "Background Color"
-msgstr "背景色"
-
-msgid "Floor Grid Color"
-msgstr "床グリッド色"
-
-msgid "Default Color"
-msgstr "デフォルト色"
-
-msgid "Scene Config"
-msgstr "シーン設定"
-
-msgid "Camera"
-msgstr "カメラ"
-
-msgid "Field of view"
-msgstr "視野角"
-
-msgid "Clipping depth"
-msgstr "クリッピング深度"
-
-msgid "Near"
-msgstr "近隣"
-
-msgid "Far"
-msgstr "遠方"
-
 msgid "Restrict camera roll"
 msgstr "カメラロールを制限"
-
-msgid "Vertical axis"
-msgstr "垂直軸"
-
-msgid "Upside down"
-msgstr "上下反転"
-
-msgid "Lighting"
-msgstr "ライティング"
-
-msgid "Lighting mode"
-msgstr "ライティングモード"
-
-msgid "Normal"
-msgstr " 標準"
-
-msgid "Minimum"
-msgstr "最小限"
-
-msgid "Solid color"
-msgstr "ソリッドカラー"
-
-msgid "Smooth shading"
-msgstr "スムーズシェーディング"
-
-msgid "Back face culling: "
-msgstr "裏面除去："
-
-msgid "Enabled"
-msgstr "有効"
-
-msgid "Disabled"
-msgstr "無効"
-
-msgid "Forced"
-msgstr "強制"
-
-msgid "Head light"
-msgstr "ヘッドライト"
-
-msgid "Back lighting"
-msgstr "裏面照射"
-
-msgid "World light"
-msgstr "ワールドライト"
-
-msgid "Ambient"
-msgstr "環境光"
-
-msgid "Additional lights"
-msgstr "追加のライト"
-
-msgid "Texture"
-msgstr "テクスチャ"
-
-msgid "Fog"
-msgstr "フォグ"
-
-msgid "Shadow %1"
-msgstr "影 %1"
-
-msgid "Light"
-msgstr "ライト"
-
-msgid "Anti-aliasing of shadows"
-msgstr "影のアンチエイリアシング"
-
-msgid "Background"
-msgstr "背景"
-
-msgid "Background color"
-msgstr "背景色"
 
 msgid "Coordinate axes"
 msgstr "座標軸"
 
-msgid "XY Grid"
-msgstr "XYグリッド"
+msgid "XY (Floor) Grid"
+msgstr "XY (床) グリッド"
 
 msgid "XZ Grid"
 msgstr "XZグリッド"
@@ -1607,23 +1629,14 @@ msgstr "XZグリッド"
 msgid "YZ Grid"
 msgstr "YZグリッド"
 
-msgid "Span"
-msgstr "長さ"
-
-msgid "Interval"
-msgstr "間隔"
-
-msgid "Default color"
-msgstr "デフォルト色"
-
-msgid "Default line width"
-msgstr "デフォルトの線幅"
-
-msgid "Default point size"
-msgstr "デフォルト点サイズ"
+msgid "{0} Color"
+msgstr "{0}の色"
 
 msgid "Normal Visualization"
 msgstr "法線の表示"
+
+msgid "Normal length"
+msgstr "法線の長さ"
 
 msgid "Lightweight view change"
 msgstr "軽量視点変更"
@@ -1631,8 +1644,32 @@ msgstr "軽量視点変更"
 msgid "FPS Test"
 msgstr "FPSテスト"
 
-msgid "Show the image for picking (for debug)"
-msgstr "ピッキング用バッファの表示（デバッグ用）"
+msgid "Number of test iterations"
+msgstr "テスト回数"
+
+msgid "Picking image"
+msgstr "ピッキング用画像"
+
+msgid "Field of view"
+msgstr "視野角"
+
+msgid "Clip distances"
+msgstr "クリップ距離"
+
+msgid "Near"
+msgstr "近方"
+
+msgid "Far"
+msgstr "遠方"
+
+msgid "Vertical axis"
+msgstr "垂直軸"
+
+msgid "Span"
+msgstr "長さ"
+
+msgid "Interval"
+msgstr "間隔"
 
 msgid "ScriptBar"
 msgstr "スクリプトバー"
@@ -1837,5 +1874,11 @@ msgstr "仮想ジョイスティック"
 msgid "VirtualJoystickView"
 msgstr "仮想ジョイスティックビュー"
 
-#~ msgid "Start animation"
-#~ msgstr "アニメーションの開始"
+#~ msgid "Shadow %1"
+#~ msgstr "影 %1"
+
+#~ msgid "Light"
+#~ msgstr "ライト"
+
+#~ msgid "Back lighting"
+#~ msgstr "裏面照射"
