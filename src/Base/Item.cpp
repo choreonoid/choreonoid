@@ -1562,6 +1562,8 @@ void Item::updateFileInformation(const std::string& filename, const std::string&
     impl->filePath = filename;
     impl->fileFormat = format;
     impl->fileOptions = options;
+
+    notifyUpdate();
 }
 
 
