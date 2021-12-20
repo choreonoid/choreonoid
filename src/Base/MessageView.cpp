@@ -1107,38 +1107,30 @@ std::ostream& cnoid::mvout(bool doFlush)
 }
 
 
-void cnoid::showMessageBox(const QString& message)
-{
-    QMessageBox::information(MainWindow::instance(), _("Message"), message);
-}
-
-void cnoid::showMessageBox(const char* message)
-{
-    showMessageBox(QString(message));
-}
-
-    
 void cnoid::showMessageBox(const std::string& message)
 {
-    showMessageBox(QString(message.c_str()));
+    QMessageBox::information(MainWindow::instance(), _("Message"), message.c_str());
 }
 
 
-void cnoid::showWarningDialog(const QString& message)
+bool cnoid::showWarningDialog(const std::string& message, bool doConfirmation)
 {
-    QMessageBox::warning(MainWindow::instance(), _("Warning"), message);
-}
+    bool result = true;
+    
+    if(!doConfirmation){
+        QMessageBox::warning(MainWindow::instance(), _("Warning"), message.c_str());
+    } else {
+        QMessageBox mbox(MainWindow::instance());
+        mbox.setIcon(QMessageBox::Warning);
+        mbox.setWindowTitle(_("Warning"));
+        mbox.setText(message.c_str());
+        mbox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+        if(mbox.exec() != QMessageBox::Ok){
+            result = false;
+        }
+    }
 
-
-void cnoid::showWarningDialog(const char* message)
-{
-    showWarningDialog(QString(message));
-}
-
-
-void cnoid::showWarningDialog(const std::string& message)
-{
-    showWarningDialog(QString(message.c_str()));
+    return result;
 }
 
 
@@ -1148,22 +1140,10 @@ void cnoid::showErrorDialog(const std::string& message)
 }
 
 
-bool cnoid::showConfirmDialog(const QString& caption, const QString& message)
+bool cnoid::showConfirmDialog(const std::string& caption, const std::string& message)
 {
     QMessageBox::StandardButton clicked =
         QMessageBox::question(
-            MainWindow::instance(), caption, message, QMessageBox::Ok | QMessageBox::Cancel);
+            MainWindow::instance(), caption.c_str(), message.c_str(), QMessageBox::Ok | QMessageBox::Cancel);
     return (clicked == QMessageBox::Ok);
-}
-
-
-bool cnoid::showConfirmDialog(const std::string& caption, const std::string& message)
-{
-    return showConfirmDialog(QString(caption.c_str()), QString(message.c_str()));
-}
-
-
-bool cnoid::showConfirmDialog(const char* caption, const char* message)
-{
-    return showConfirmDialog(QString(caption), QString(message));
 }
