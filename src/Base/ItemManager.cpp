@@ -820,7 +820,7 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
             string extension = dotextension.substr(1); // remove dot
             for(auto& fileIO : fileIOs){
                 if(fileIO->hasApi(ioTypeFlag)){
-                    for(auto& ext : fileIO->extensions()){
+                    for(auto& ext : fileIO->extensions(ioTypeFlag)){
                         if(ext == extension){
                             targetFileIO = fileIO;
                             break;
@@ -863,13 +863,19 @@ public:
     
     FileFunctionAdapter(
         int api, const std::string& caption, const std::string& format,
-        const std::function<std::string()>& getExtensions, std::shared_ptr<ItemManager::FileFunctionBase> function,
+        const std::string& extensions, std::shared_ptr<ItemManager::FileFunctionBase> function,
         int usage)
         : ItemFileIO(format, api),
           fileFunction(function)
     {
         setCaption(caption);
-        setExtensionFunction(getExtensions);
+
+        if(api == ItemFileIO::Load){
+            setExtensionsForLoading(separateExtensions(extensions));
+        } else if(api == ItemFileIO::Save){
+            setExtensionsForSaving(separateExtensions(extensions));
+        }
+
         if(usage >= ItemManager::Standard){
             setInterfaceLevel(Standard);
         } else if(usage >= ItemManager::Conversion){
@@ -905,10 +911,10 @@ public:
 
 void ItemManager::addLoader_
 (const std::type_info& type, const std::string& caption, const std::string& format,
- std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int usage)
+ const std::string& extensions, std::shared_ptr<FileFunctionBase> function, int usage)
 {
     auto adapter = new FileFunctionAdapter(
-        ItemFileIO::Load, caption, format, getExtensions, function, usage);
+        ItemFileIO::Load, caption, format, extensions, function, usage);
     auto classInfo = impl->registerFileIO(type, adapter);
     adapter->factory = classInfo->factory;
 }
@@ -916,10 +922,10 @@ void ItemManager::addLoader_
 
 void ItemManager::addSaver_
 (const std::type_info& type, const std::string& caption, const std::string& format,
- std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int usage)
+ const std::string& extensions, std::shared_ptr<FileFunctionBase> function, int usage)
 {
     auto adapter = new FileFunctionAdapter(
-        ItemFileIO::Save, caption, format, getExtensions, function, usage);
+        ItemFileIO::Save, caption, format, extensions, function, usage);
     impl->registerFileIO(type, adapter);
 }
 

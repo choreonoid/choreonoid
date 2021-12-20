@@ -35,7 +35,7 @@ public:
     {
         setCaption(_("ROS / Gazebo model"));
         setFileTypeCaption(_("URDF"));
-        setExtensions({ "urdf", "xacro" });
+        setExtensionsForLoading({ "urdf", "xacro" });
         addFormatAlias("GAZEBO-MODEL"); // for the backward compatibility
         setInterfaceLevel(Conversion);
     }
@@ -60,7 +60,7 @@ public:
     {
         setCaption(_("ROS / Gazebo model"));
         setFileTypeCaption(_("SDF"));
-        setExtensions({ "sdf", "xacro" });
+        setExtensionsForLoading({ "sdf", "xacro" });
         addFormatAlias("GAZEBO-MODEL"); // for the backward compatibility
         setInterfaceLevel(Conversion);
     }

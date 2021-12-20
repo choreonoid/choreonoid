@@ -20,7 +20,7 @@ public:
     {
         setCaption(_("Body"));
         setFileTypeCaption("URDF");
-        setExtensions({"urdf", "xacro"});
+        setExtensionsForLoading({"urdf", "xacro"});
     }
 
     URDFBodyLoader* ensureUrdfLoader()
@@ -67,7 +67,7 @@ public:
             itemManager().addFileIO<BodyItem>(new BodyItemUrdfLoader);
         } else {
             if (auto io = dynamic_cast<BodyItemBodyFileIO*>(BodyItem::bodyFileIO())) {
-                io->addExtensions({"urdf", "xacro"});
+                io->addExtensionsForLoading({"urdf", "xacro"});
             }
         }
 

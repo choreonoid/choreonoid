@@ -54,7 +54,7 @@ SceneItemStdSceneFileExporter::SceneItemStdSceneFileExporter()
     : ItemFileIoBase<SceneItem>("CHOREONOID-SCENE", Save)
 {
     setCaption(_("Standard scene file"));
-    setExtension("scen");
+    setExtensionForSaving("scen");
 }
 
 

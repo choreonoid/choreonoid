@@ -6,21 +6,25 @@
 #define CNOID_UTIL_SCENE_LOADER_H
 
 #include "AbstractSceneLoader.h"
+#include "Signal.h"
 #include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class SceneLoaderImpl;
-
 class CNOID_EXPORT SceneLoader : public AbstractSceneLoader
 {
 public:
-    //! @param extensions semi-colon separated extension list
-    static void registerLoader(const char* extensions, std::function<std::shared_ptr<AbstractSceneLoader>()> factory);
+    //! \note The registration must be done in the main thread.
+    static void registerLoader(
+        const std::vector<std::string>& extensions,
+        std::function<std::shared_ptr<AbstractSceneLoader>()> factory);
+    
+    //! \note The registration must be done in the main thread.
+    static void registerLoader(const char* extension, std::function<std::shared_ptr<AbstractSceneLoader>()> factory);
 
-    //! This function returns a semi-colon separated list of availabe file extensions.
-    static std::string availableFileExtensions();
+    static std::vector<std::string> availableFileExtensions();
+    static SignalProxy<void(const std::vector<std::string>& extensions)> sigAvailableFileExtensionsAdded();
 
     SceneLoader();
     virtual ~SceneLoader();
@@ -32,7 +36,8 @@ public:
     SgNode* load(const std::string& filename, bool& out_isSupportedFormat);
 
 private:
-    SceneLoaderImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 }

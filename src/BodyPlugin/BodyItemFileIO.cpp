@@ -2,6 +2,8 @@
 #include "BodyItem.h"
 #include "BodyOverwriteAddon.h"
 #include <cnoid/GeneralSceneFileImporterBase>
+#include <cnoid/BodyLoader>
+#include <cnoid/StdBodyWriter>
 #include <cnoid/StdSceneWriter>
 #include <cnoid/ObjSceneWriter>
 #include <cnoid/ItemManager>
@@ -151,17 +153,42 @@ BodyItemBodyFileIO::BodyItemBodyFileIO()
     : BodyItemFileIoBase("CHOREONOID-BODY", Load | Save | Options | OptionPanelForSaving)
 {
     setCaption(_("Body"));
-    setExtensions({ "body", "yaml", "yml", "wrl" });
+
+    setExtensionsForLoading({ "body", "yaml", "yml", "wrl" });
+    setExtensionsForSaving({ "body" });
+
     addFormatAlias("OpenHRP-VRML-MODEL");
-    
-    bodyLoader_.setMessageSink(os());
+
+    bodyLoader_ = nullptr;
+    bodyWriter_ = nullptr;
+}
+
+
+BodyItemBodyFileIO::~BodyItemBodyFileIO()
+{
+    if(bodyLoader_){
+        delete bodyLoader_;
+    }
+    if(bodyWriter_){
+        delete bodyWriter_;
+    }
+}
+
+
+BodyLoader* BodyItemBodyFileIO::ensureBodyLoader()
+{
+    if(!bodyLoader_){
+        bodyLoader_ = new BodyLoader;
+        bodyLoader_->setMessageSink(os());
+    }
+    return bodyLoader_;
 }
 
 
 bool BodyItemBodyFileIO::load(BodyItem* item, const std::string& filename)
 {
     BodyPtr newBody = new Body;
-    if(!bodyLoader_.load(newBody, filename)){
+    if(!ensureBodyLoader()->load(newBody, filename)){
         return false;
     }
     item->setBody(newBody);
@@ -178,10 +205,10 @@ bool BodyItemBodyFileIO::load(BodyItem* item, const std::string& filename)
 StdBodyWriter* BodyItemBodyFileIO::ensureBodyWriter()
 {
     if(!bodyWriter_){
-        bodyWriter_.reset(new StdBodyWriter);
+        bodyWriter_ = new StdBodyWriter;
         bodyWriter_->setMessageSink(os());
     }
-    return bodyWriter_.get();
+    return bodyWriter_;
 }
 
 
@@ -256,7 +283,7 @@ SceneFileExporterBase::SceneFileExporterBase(const char* caption, const char* fo
     : BodyItemFileIoBase(format, Save | Options | OptionPanelForSaving)
 {
     setCaption(caption);
-    setExtension(extension);
+    setExtensionForSaving(extension);
     setInterfaceLevel(Conversion);
 }
 

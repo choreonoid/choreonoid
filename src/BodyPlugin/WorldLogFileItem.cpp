@@ -14,6 +14,7 @@
 #include <cnoid/ProjectManager>
 #include <cnoid/WorldItem>
 #include <cnoid/BodyItem>
+#include <cnoid/StdBodyWriter>
 #include <cnoid/SceneItem>
 #include <cnoid/SceneItemFileIO>
 #include <cnoid/FolderItem>

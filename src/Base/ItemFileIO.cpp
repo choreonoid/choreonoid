@@ -24,8 +24,8 @@ public:
     std::vector<std::string> formatAliases;
     std::string caption;
     std::string fileTypeCaption;
-    std::vector<std::string> extensions;
-    std::function<std::string()> extensionFunction;
+    std::vector<std::string> extensionsForLoading;
+    std::vector<std::string> extensionsForSaving;
     ItemFileIO::InterfaceLevel interfaceLevel;
     int currentInvocationType;
     Item* parentItem;
@@ -96,8 +96,8 @@ ItemFileIO::Impl::Impl(ItemFileIO* self, const Impl& org)
       format(org.format),
       formatAliases(org.formatAliases),
       caption(org.caption),
-      extensions(org.extensions),
-      extensionFunction(org.extensionFunction),
+      extensionsForLoading(org.extensionsForLoading),
+      extensionsForSaving(org.extensionsForSaving),
       interfaceLevel(org.interfaceLevel),
       currentInvocationType(org.currentInvocationType)
 {
@@ -183,38 +183,87 @@ void ItemFileIO::addFormatAlias(const std::string& format)
 
 void ItemFileIO::setExtension(const std::string& extension)
 {
-    impl->extensions.clear();
-    impl->extensions.push_back(extension);
+    setExtensionForLoading(extension);
+    setExtensionForSaving(extension);
 }
 
 
 void ItemFileIO::setExtensions(const std::vector<std::string>& extensions)
 {
-    impl->extensions = extensions;
+    impl->extensionsForLoading = extensions;
+    impl->extensionsForSaving = extensions;
 }
 
 
-void ItemFileIO::setExtensionFunction(std::function<std::string()> func)
+void ItemFileIO::setExtensionForLoading(const std::string& extension)
 {
-    impl->extensionFunction = func;
+    impl->extensionsForLoading.clear();
+    impl->extensionsForLoading.push_back(extension);
 }
+
+
+void ItemFileIO::setExtensionForSaving(const std::string& extension)
+{
+    impl->extensionsForSaving.clear();
+    impl->extensionsForSaving.push_back(extension);
+}
+
+
+void ItemFileIO::setExtensionsForLoading(const std::vector<std::string>& extensions)
+{
+    impl->extensionsForLoading = extensions;
+}
+
+    
+void ItemFileIO::setExtensionsForSaving(const std::vector<std::string>& extensions)
+{
+    impl->extensionsForSaving = extensions;
+}    
 
 
 void ItemFileIO::addExtensions(const std::vector<std::string>& extensions)
 {
-    impl->extensions.reserve(impl->extensions.size() + extensions.size());
+    addExtensionsForLoading(extensions);
+    addExtensionsForSaving(extensions);
+}
+
+
+void ItemFileIO::addExtensionsForLoading(const std::vector<std::string>& extensions)
+{
+    impl->extensionsForLoading.reserve(impl->extensionsForLoading.size() + extensions.size());
     for(auto& ext : extensions){
-        impl->extensions.push_back(ext);
+        impl->extensionsForLoading.push_back(ext);
     }
 }
 
 
-std::vector<std::string> ItemFileIO::extensions() const
+void ItemFileIO::addExtensionsForSaving(const std::vector<std::string>& extensions)
 {
-    if(impl->extensionFunction){
-        return separateExtensions(impl->extensionFunction());
-    }    
-    return impl->extensions;
+    impl->extensionsForSaving.reserve(impl->extensionsForSaving.size() + extensions.size());
+    for(auto& ext : extensions){
+        impl->extensionsForSaving.push_back(ext);
+    }
+}
+
+
+const std::vector<std::string>& ItemFileIO::extensions(int ioMode) const
+{
+    if(ioMode == Save){
+        return impl->extensionsForSaving;
+    }
+    return impl->extensionsForLoading;
+}
+
+
+const std::vector<std::string>& ItemFileIO::extensionsForLoading() const
+{
+    return impl->extensionsForLoading;
+}
+
+
+const std::vector<std::string>& ItemFileIO::extensionsForSaving() const
+{
+    return impl->extensionsForSaving;
 }
 
 

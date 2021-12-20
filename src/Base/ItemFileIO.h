@@ -52,13 +52,13 @@ public:
        file formats in the functions based on ItemFileIO.
     */
     void addExtensions(const std::vector<std::string>& extensions);
+    void addExtensionsForLoading(const std::vector<std::string>& extensions);
+    void addExtensionsForSaving(const std::vector<std::string>& extensions);
 
-    // deprecated. This is internally used for specifing SceneItem's extensions dynamically.
-    // The dynamic extension specification should be achieved by a signal to update the
-    // extensions and usual the registerExtensions function.
-    void setExtensionFunction(std::function<std::string()> func);
-
-    std::vector<std::string> extensions() const;
+    //! \param ioMode Load or Save
+    const std::vector<std::string>& extensions(int ioMode) const;
+    const std::vector<std::string>& extensionsForLoading() const;
+    const std::vector<std::string>& extensionsForSaving() const;
     
     int interfaceLevel() const;
 
@@ -127,6 +127,10 @@ protected:
     void setFileTypeCaption(const std::string& caption);
     void setExtension(const std::string& extension);
     void setExtensions(const std::vector<std::string>& extensions);
+    void setExtensionForLoading(const std::string& extension);
+    void setExtensionsForLoading(const std::vector<std::string>& extensions);
+    void setExtensionForSaving(const std::string& extension);
+    void setExtensionsForSaving(const std::vector<std::string>& extensions);
     void setInterfaceLevel(InterfaceLevel level);
 
     // Load API

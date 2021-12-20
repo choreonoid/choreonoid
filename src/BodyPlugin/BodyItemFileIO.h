@@ -3,8 +3,6 @@
 
 #include "BodyItem.h"
 #include <cnoid/ItemFileIO>
-#include <cnoid/BodyLoader>
-#include <cnoid/StdBodyWriter>
 #include <QBoxLayout>
 #include <QComboBox>
 #include <QCheckBox>
@@ -31,24 +29,29 @@ private:
     QWidget* optionPanel;
 };
 
+class BodyLoader;
+class StdBodyWriter;
 
 class CNOID_EXPORT BodyItemBodyFileIO : public BodyItemFileIoBase
 {
 public:
     BodyItemBodyFileIO();
+    ~BodyItemBodyFileIO();
 
     StdBodyWriter* bodyWriter(){ return ensureBodyWriter(); }
 
 protected:
-    virtual bool load(BodyItem* item, const std::string& filename) override;
+    BodyLoader* ensureBodyLoader();
     StdBodyWriter* ensureBodyWriter();
+
+    virtual bool load(BodyItem* item, const std::string& filename) override;
     virtual void createOptionPanelForSaving() override;
     virtual void fetchOptionPanelForSaving() override;
     virtual bool save(BodyItem* item, const std::string& filename) override;
 
 private:
-    BodyLoader bodyLoader_;
-    std::unique_ptr<StdBodyWriter> bodyWriter_;
+    BodyLoader* bodyLoader_;
+    StdBodyWriter* bodyWriter_;
 };
 
 }

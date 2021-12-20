@@ -39,7 +39,7 @@ public:
     Impl(ItemFileDialog* self);
     ItemList<Item>  loadItems(Item* parentItem, bool doAddition, Item* nextItem);
     bool saveItem(Item* item);
-    bool selectFilePath(filesystem::path& path);
+    bool selectFilePathForSaving(filesystem::path& path);
     std::string getSaveFilename();
     bool initializeFileIoFilters();
     void setTargetFileIO(int index, bool doSelectNameFilter);
@@ -256,7 +256,7 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
     if(filesystem::exists(directory)){
         self->setDirectory(toUTF8(directory.string()));
         if(filePath.stem().string() == item->name() && !isExportMode){
-            selected = selectFilePath(filePath);
+            selected = selectFilePathForSaving(filePath);
         }
     }
     if(!selected){
@@ -289,7 +289,7 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
 }
 
 
-bool ItemFileDialog::Impl::selectFilePath(filesystem::path& path)
+bool ItemFileDialog::Impl::selectFilePathForSaving(filesystem::path& path)
 {
     bool selected = false;
 
@@ -302,7 +302,7 @@ bool ItemFileDialog::Impl::selectFilePath(filesystem::path& path)
                 
         for(int i=0; i < validFileIOs.size(); ++i){
             auto fileIO = validFileIOs[i];
-            auto exts = fileIO->extensions();
+            auto exts = fileIO->extensionsForSaving();
             if(std::find(exts.begin(), exts.end(), ext) != exts.end()){
                 matchedFileIoIndex = i;
                 break;
@@ -331,7 +331,7 @@ std::string ItemFileDialog::Impl::getSaveFilename()
         filename = filenames.front().toStdString();
 
         // add a lacking extension automatically
-        auto exts = targetFileIO->extensions();
+        auto exts = targetFileIO->extensionsForSaving();
         if(!exts.empty()){
             bool hasExtension = false;
             string dotextension =
@@ -362,8 +362,7 @@ bool ItemFileDialog::Impl::initializeFileIoFilters()
     for(auto& fileIO : givenFileIOs){
         if(fileIO->hasApi(mode)){
             validFileIOs.push_back(fileIO);
-            filters << makeNameFilter(fileIO->fileTypeCaption(), fileIO->extensions(), false);
-
+            filters << makeNameFilter(fileIO->fileTypeCaption(), fileIO->extensions(mode), false);
             time_t time;
             if(mode == Load){
                 time = fileIO->lastSelectedTimeInLoadDialog();

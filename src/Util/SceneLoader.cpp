@@ -20,15 +20,16 @@ namespace {
 typedef shared_ptr<AbstractSceneLoader> AbstractSceneLoaderPtr;
 typedef function<AbstractSceneLoaderPtr()> LoaderFactory;
 typedef map<string, int> LoaderIdMap;
-LoaderIdMap loaderIdMap;
+LoaderIdMap extensionToLoaderIdMap;
 vector<LoaderFactory> loaderFactories;
 mutex loaderMutex;
+Signal<void(const std::vector<std::string>& extensions)> sigAvailableFileExtensionsAdded_;
 
 }
 
 namespace cnoid {
 
-class SceneLoaderImpl
+class SceneLoader::Impl
 {
 public:
     ostream* os_;
@@ -38,7 +39,7 @@ public:
     int defaultDivisionNumber;
     double defaultCreaseAngle;
 
-    SceneLoaderImpl();
+    Impl();
     AbstractSceneLoaderPtr findLoader(string ext);
     SgNode* load(const std::string& filename, bool* out_isSupportedFormat);
 };
@@ -46,48 +47,58 @@ public:
 }
 
 
-void SceneLoader::registerLoader(const char* extensions, std::function<AbstractSceneLoaderPtr()> factory)
+void SceneLoader::registerLoader
+(const std::vector<std::string>& extensions, std::function<std::shared_ptr<AbstractSceneLoader>()> factory)
 {
-    vector<string> extensionArray;
-    const char* str = extensions;;
-    do {
-        const char* begin = str;
-        while(*str != ';' && *str) ++str;
-        extensionArray.push_back(string(begin, str));
-    } while(0 != *str++);
-    
-    {
+    if(!extensions.empty()){
         lock_guard<mutex> lock(loaderMutex);
         const int id = loaderFactories.size();
         loaderFactories.push_back(factory);
-        for(size_t i=0; i < extensionArray.size(); ++i){
-            loaderIdMap[extensionArray[i]] = id;
+        for(auto& ext : extensions){
+            extensionToLoaderIdMap[ext] = id;
         }
+        sigAvailableFileExtensionsAdded_(extensions);
     }
 }
 
 
-std::string SceneLoader::availableFileExtensions()
+void SceneLoader::registerLoader(const char* extension, std::function<AbstractSceneLoaderPtr()> factory)
 {
-    string extensions;
-    for(auto iter = loaderIdMap.begin(); iter != loaderIdMap.end(); ++iter){
-        const string& extension = iter->first;
-        if(!extensions.empty()){
-            extensions += ";";
-        }
-        extensions += extension;
+    if(extension){
+        lock_guard<mutex> lock(loaderMutex);
+        const int id = loaderFactories.size();
+        loaderFactories.push_back(factory);
+        extensionToLoaderIdMap[extension] = id;
+        sigAvailableFileExtensionsAdded_({ extension });
+    }
+}
+
+
+std::vector<std::string> SceneLoader::availableFileExtensions()
+{
+    lock_guard<mutex> lock(loaderMutex);
+    vector<string> extensions;
+    extensions.reserve(extensionToLoaderIdMap.size());
+    for(auto& kv : extensionToLoaderIdMap){
+        extensions.push_back(kv.first);
     }
     return extensions;
 }
 
 
-SceneLoader::SceneLoader()
+SignalProxy<void(const std::vector<std::string>& extensions)> SceneLoader::sigAvailableFileExtensionsAdded()
 {
-    impl = new SceneLoaderImpl;
+    return sigAvailableFileExtensionsAdded_;
 }
 
 
-SceneLoaderImpl::SceneLoaderImpl()
+SceneLoader::SceneLoader()
+{
+    impl = new Impl;
+}
+
+
+SceneLoader::Impl::Impl()
 {
     os_ = &nullout();
     defaultDivisionNumber = -1;
@@ -119,7 +130,7 @@ void SceneLoader::setDefaultCreaseAngle(double theta)
 }
 
 
-AbstractSceneLoaderPtr SceneLoaderImpl::findLoader(string ext)
+AbstractSceneLoaderPtr SceneLoader::Impl::findLoader(string ext)
 {
     AbstractSceneLoaderPtr loader;
     
@@ -127,8 +138,8 @@ AbstractSceneLoaderPtr SceneLoaderImpl::findLoader(string ext)
 
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-    auto p = loaderIdMap.find(ext);
-    if(p != loaderIdMap.end()){
+    auto p = extensionToLoaderIdMap.find(ext);
+    if(p != extensionToLoaderIdMap.end()){
         const int loaderId = p->second;
         auto q = loaders.find(loaderId);
         if(q == loaders.end()){
@@ -156,7 +167,7 @@ SgNode* SceneLoader::load(const std::string& filename, bool& out_isSupportedForm
 }
 
 
-SgNode* SceneLoaderImpl::load(const std::string& filename, bool* out_isSupportedFormat)
+SgNode* SceneLoader::Impl::load(const std::string& filename, bool* out_isSupportedFormat)
 {
     stdx::filesystem::path filepath(fromUTF8(filename));
 

@@ -175,41 +175,21 @@ public:
         const std::string& caption, const std::string& format, const std::string& extensions, 
         typename FileFunction<ItemType>::Function function, int usage = Standard)
     {
-        addLoader_(typeid(ItemType), caption, format, [extensions](){ return extensions; },
+        addLoader_(typeid(ItemType), caption, format, extensions,
                    std::make_shared<FileFunction<ItemType>>(function), usage);
         return *this;
     }
 
-    template <class ItemType>
-    ItemManager& addLoader(
-        const std::string& caption, const std::string& format, std::function<std::string()> getExtensions,
-        typename FileFunction<ItemType>::Function function, int usage = Standard)
-    {
-        addLoader_(typeid(ItemType), caption, format, getExtensions,
-                   std::make_shared<FileFunction<ItemType>>(function), usage);
-        return *this;
-    }
-    
     template<class ItemType>
     ItemManager& addSaver(
         const std::string& caption, const std::string& format, const std::string& extensions,
         typename FileFunction<ItemType>::Function function, int usage = Standard)
     {
-        addSaver_(typeid(ItemType), caption, format, [extensions](){ return extensions; },
+        addSaver_(typeid(ItemType), caption, format, extensions,
                   std::make_shared<FileFunction<ItemType>>(function), usage);
         return *this;
     }
 
-    template<class ItemType>
-    ItemManager& addSaver(
-        const std::string& caption, const std::string& format, std::function<std::string()> getExtensions,
-        typename FileFunction<ItemType>::Function function, int usage = Standard)
-    {
-        addSaver_(typeid(ItemType), caption, format, getExtensions, 
-                  std::make_shared<FileFunction<ItemType>>(function), usage);
-        return *this;
-    }
-    
     template<class ItemType>
     ItemManager& addLoaderAndSaver(
         const std::string& caption, const std::string& format, const std::string& extensions,
@@ -222,18 +202,6 @@ public:
         return *this;
     }
 
-    template<class ItemType>
-    ItemManager& addLoaderAndSaver(
-        const std::string& caption, const std::string& format, std::function<std::string()> getExtensions,
-        typename FileFunction<ItemType>::Function loaderFunction,
-        typename FileFunction<ItemType>::Function saverFunction,
-        int usage = Standard)
-    {
-        addLoader<ItemType>(caption, format, getExtensions, loaderFunction, usage);
-        addSaver<ItemType>(caption, format, getExtensions, saverFunction, usage);
-        return *this;
-    }
-    
     static Item* createItem(const std::string& moduleName, const std::string& itemClassName);
     static Item* createItem(int itemClassId);
 
@@ -293,12 +261,13 @@ private:
     static Item* getPrototypeInstance_(const std::type_info& type);
 
     void registerFileIO_(const std::type_info& type, ItemFileIO* fileIO);
+
     void addLoader_(
         const std::type_info& type, const std::string& caption, const std::string& format,
-        std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int usage);
+        const std::string& extensions, std::shared_ptr<FileFunctionBase> function, int usage);
     void addSaver_(
         const std::type_info& type, const std::string& caption, const std::string& format,
-        std::function<std::string()> getExtensions, std::shared_ptr<FileFunctionBase> function, int usage);
+        const std::string& extensions, std::shared_ptr<FileFunctionBase> function, int usage);
 
     static Item* createItemWithDialog_(
         const std::type_info& type, Item* parentItem, bool doAddition, Item* nextItem,

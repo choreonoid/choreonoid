@@ -54,7 +54,12 @@ int GeneralSceneFileImporterBase::Impl::sharedImplCounter = 0;
 GeneralSceneFileImporterBase::GeneralSceneFileImporterBase(int api)
     : ItemFileIO("GENERAL-3D-MODEL", api)
 {
-    setExtensionFunction(SceneLoader::availableFileExtensions);
+    setExtensionsForLoading(SceneLoader::availableFileExtensions());
+
+    SceneLoader::sigAvailableFileExtensionsAdded().connect(
+        [this](const std::vector<std::string>& extensions){
+            addExtensionsForLoading(extensions);
+        });
 
     if(!Impl::sharedImpl){
         Impl::sharedImpl = new Impl;
