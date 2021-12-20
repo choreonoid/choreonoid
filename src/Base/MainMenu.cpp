@@ -13,6 +13,7 @@
 #include "ToolBarArea.h"
 #include "ViewArea.h"
 #include "InfoBar.h"
+#include "MessageView.h"
 #include "PathVariableEditor.h"
 #include "MovieRecorder.h"
 #include "SceneWidget.h"
@@ -23,10 +24,12 @@
 #include <QFile>
 #include <QTextStream>
 #include <QString>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 
@@ -263,7 +266,17 @@ void MainMenu::setActionAsSaveSelectedItems(Action* action)
     action->sigTriggered().connect(
         [](){
             for(auto& item : RootItem::instance()->selectedItems()){
-                item->overwrite(true, "");
+                bool doSave = true;
+                if(item->hasAttribute(Item::FileImmutable)){
+                    doSave = showWarningDialog(
+                        format(_("\"{0}\" is an item that usually does not need to be saved. "
+                                 "Do you really want to save this item?"),
+                               item->displayName()),
+                        true);
+                }
+                if(doSave){
+                    item->overwrite(true, "");
+                }
             }
         });
 }
