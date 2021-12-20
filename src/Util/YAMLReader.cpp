@@ -330,12 +330,12 @@ void YAMLReaderImpl::addNode(ValueNode* node, yaml_event_t& event)
 
         if(info.key == "<<"){
             if(node->isMapping()){
-                mapping->insert(static_cast<Mapping*>(node));
+                mapping->insert(static_cast<Mapping*>(node), true);
             } else if(node->isListing()){
                 Listing* listing = static_cast<Listing*>(node);
                 for(auto& element : *listing){
                     if(element->isMapping()){
-                        mapping->insert(static_cast<Mapping*>(element.get()));
+                        mapping->insert(static_cast<Mapping*>(element.get()), true);
                     } else {
                         ValueNode::SyntaxException ex;
                         ex.setMessage(_("An element to merge by the \"<<\" key must be a mapping"));

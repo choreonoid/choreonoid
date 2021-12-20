@@ -562,7 +562,7 @@ void ProjectManager::restoreLayout(Mapping* layout)
 {
     ArchivePtr archive = new Archive;
     archive->initSharedInfo("dummy", false);
-    archive->insert(layout);
+    archive->insert(layout, false);
 
     ViewManager::ViewStateInfo viewStateInfo;
     if(ViewManager::restoreViews(archive, "views", viewStateInfo, false)){

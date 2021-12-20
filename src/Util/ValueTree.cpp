@@ -731,11 +731,38 @@ void Mapping::insert(const std::string& key, ValueNode* node)
 }
 
 
-void Mapping::insert(const Mapping* other)
+void Mapping::insert(const Mapping* other, bool doArrangeElementIndices)
 {
     if(!isValid()){
         throwNotMappingException();
     }
+
+    if(doArrangeElementIndices){
+        int minIndexInOther = std::numeric_limits<int>::max();
+        int maxIndexInOther = 0;
+        for(auto& kv : *other){
+            int index = kv.second->indexInMapping_;
+            if(index < minIndexInOther){
+                minIndexInOther = index;
+            }
+            if(index > maxIndexInOther){
+                maxIndexInOther = index;
+            }
+        }
+        int offset = 0;
+        if(minIndexInOther < indexCounter){
+            offset = indexCounter - minIndexInOther;
+            for(auto& kv : *other){
+                kv.second->indexInMapping_ += offset;
+            }
+            maxIndexInOther += offset;
+            if(maxIndexInOther > other->indexCounter){
+                other->indexCounter = maxIndexInOther;
+            }
+        }
+        indexCounter = maxIndexInOther + 1;
+    }
+
     values.insert(other->values.begin(), other->values.end());
 }
 

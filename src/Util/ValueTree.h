@@ -305,7 +305,7 @@ public:
 
     void insert(const std::string& key, ValueNode* node);
 
-    void insert(const Mapping* other);
+    void insert(const Mapping* other, bool doArrangeElementIndices = true);
 
     Mapping* openMapping(const std::string& key) {
         return openMapping_(key, false);
@@ -473,7 +473,7 @@ private:
 
     Container values;
     AssignMode mode;
-    int indexCounter;
+    mutable int indexCounter;
     const char* floatingNumberFormat_;
     bool isFlowStyle_;
     StringStyle keyStringStyle_;
