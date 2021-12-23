@@ -3152,18 +3152,25 @@ void GLSLSceneRenderer::Impl::renderLightweightRenderingGroup(SgLightweightRende
     isLightweightRenderingBeingProcessed = true;
     isLowMemoryConsumptionRenderingBeingProcessed = true;
     isTextureBeingRendered = false;
-    if(isBoundingBoxRenderingForLightweightRenderingGroupEnabled){
-        isBoundingBoxRenderingMode = true;
-    }
 
-    ResourceRefreshGroupResource* resouce;
-    auto p = currentResourceMap->find(group);
-    if(p == currentResourceMap->end()){
-        resouce = new ResourceRefreshGroupResource(this, group);
-        p = currentResourceMap->insert(GLResourceMap::value_type(group, resouce)).first;
-    }
-    if(isCheckingUnusedResources){
-        nextResourceMap->insert(*p);
+    if(!isBoundingBoxRenderingForLightweightRenderingGroupEnabled){
+        // Remove the chache for rendering the bounding boxes of the sub tree nodes
+        // if the chache exist
+        currentResourceMap->erase(group);
+        
+    } else {
+        isBoundingBoxRenderingMode = true;
+
+        auto p = currentResourceMap->find(group);
+        if(p == currentResourceMap->end()){
+            // Remove the chache for normal rendering of the sub tree nodes
+            // if the chache exist
+            auto resouce = new ResourceRefreshGroupResource(this, group);
+            p = currentResourceMap->insert(GLResourceMap::value_type(group, resouce)).first;
+        }
+        if(isCheckingUnusedResources){
+            nextResourceMap->insert(*p);
+        }
     }
 
     renderChildNodes(group);
