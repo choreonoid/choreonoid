@@ -4,6 +4,7 @@ DEF FR Transform {
       appearance Appearance {
         material Material {
           diffuseColor 0.85 0.85 0.85
+	  ambientIntensity 1.0
         }
       }
       geometry IndexedFaceSet {

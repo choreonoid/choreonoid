@@ -1,16 +1,16 @@
 DEF J3 Transform {
-  children	[
+  children [
     Shape {
-      appearance	Appearance {
-	material	Material {
-	  diffuseColor	0.85 0.9 0.85
+      appearance Appearance {
+	material Material {
+	  diffuseColor 0.85 0.9 0.85
+	  ambientIntensity 1.0
 	}
-
       }
-
-      geometry	DEF _6 IndexedFaceSet {
-	coord	Coordinate {
-	  point	[ 0.065 0.035 0.005,
+      geometry DEF _6 IndexedFaceSet {
+	coord Coordinate {
+	  point	[
+	   0.065 0.035 0.005,
 	   0.065 0.045 0.005,
 	   -0.065 0.035 0.005,
 	   -0.065 0.045 0.005,
@@ -47,8 +47,8 @@ DEF J3 Transform {
 	   -0.045 0.07 -0.036961,
 	   -0.045 0.045 0.005 ]
 	}
-
-	coordIndex	[ 4, 5, 1, -1, 4, 1, 0, -1,
+	coordIndex [
+	 4, 5, 1, -1, 4, 1, 0, -1,
 	 9, 10, 0, -1, 10, 4, 0, -1,
 	 30, 32, 6, -1, 32, 2, 6, -1,
 	 1, 11, 8, -1, 1, 5, 11, -1,
@@ -84,22 +84,19 @@ DEF J3 Transform {
 	 33, 35, 32, -1, 33, 34, 35, -1 ]
 	creaseAngle	0.628319
 	normalPerVertex	FALSE
-	normalIndex	[  ]
-	texCoordIndex	[  ]
       }
-
     }
     Shape {
-      appearance	Appearance {
-	material	Material {
-	  diffuseColor	0.6 0.9 0.6
+      appearance Appearance {
+	material Material {
+	  diffuseColor 0.6 0.9 0.6
+	  ambientIntensity 1.0
 	}
-
       }
-
-      geometry	DEF _7 IndexedFaceSet {
-	coord	Coordinate {
-	  point	[ -0.1 0.194641 -0.02,
+      geometry DEF _7 IndexedFaceSet {
+	coord Coordinate {
+	  point	[
+	   -0.1 0.194641 -0.02,
 	   -0.1 0.18 -0.034641,
 	   -0.1 0.16 -0.04,
 	   -0.1 0.08 -0.04,
@@ -142,8 +139,8 @@ DEF J3 Transform {
 	   -0.05 0.211961 -0.03,
 	   -0.05 0.22 0 ]
 	}
-
-	coordIndex	[ 5, 6, 7, -1, 5, 7, 8, -1,
+	coordIndex [
+	 5, 6, 7, -1, 5, 7, 8, -1,
 	 5, 8, 4, -1, 4, 8, 9, -1,
 	 4, 9, 3, -1, 3, 9, 10, -1,
 	 3, 10, 2, -1, 2, 10, 11, -1,
@@ -185,22 +182,19 @@ DEF J3 Transform {
 	 39, 38, 40, -1, 39, 40, 41, -1 ]
 	creaseAngle	0.558505
 	normalPerVertex	FALSE
-	normalIndex	[  ]
-	texCoordIndex	[  ]
       }
-
     }
     Shape {
-      appearance	Appearance {
-	material	Material {
-	  diffuseColor	0.6 0.9 0.6
+      appearance Appearance {
+	material Material {
+	  diffuseColor 0.6 0.9 0.6
+	  ambientIntensity 1.0
 	}
-
       }
-
-      geometry	DEF _8 IndexedFaceSet {
-	coord	Coordinate {
-	  point	[ 0.1 0.045359 -0.02,
+      geometry DEF _8 IndexedFaceSet {
+	coord Coordinate {
+	  point	[
+	   0.1 0.045359 -0.02,
 	   0.1 0.06 -0.034641,
 	   0.1 0.08 -0.04,
 	   0.1 0.16 -0.04,
@@ -243,8 +237,8 @@ DEF J3 Transform {
 	   0.05 0.211962 0.03,
 	   0.05 0.22 -2.4422e-007 ]
 	}
-
-	coordIndex	[ 5, 6, 7, -1, 5, 7, 8, -1,
+	coordIndex [
+	 5, 6, 7, -1, 5, 7, 8, -1,
 	 5, 8, 4, -1, 4, 8, 9, -1,
 	 4, 9, 3, -1, 3, 9, 10, -1,
 	 3, 10, 2, -1, 2, 10, 11, -1,
@@ -286,12 +280,8 @@ DEF J3 Transform {
 	 39, 38, 40, -1, 39, 40, 41, -1 ]
 	creaseAngle	0.558505
 	normalPerVertex	FALSE
-	normalIndex	[  ]
-	texCoordIndex	[  ]
       }
-
     }
   ]
-  translation	0 0 0
-  rotation	1 0 0 1.570796326795
+  rotation 1 0 0 1.570796326795
 }

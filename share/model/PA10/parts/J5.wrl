@@ -1,16 +1,16 @@
 DEF J5 Transform {
-  children	[
+  children [
     Shape {
-      appearance	Appearance {
-	material	Material {
-	  diffuseColor	0.85 0.9 0.85
+      appearance Appearance {
+	material Material {
+	  diffuseColor 0.85 0.9 0.85
+	  ambientIntensity 1.0
 	}
-
       }
-
-      geometry	DEF _11 IndexedFaceSet {
-	coord	Coordinate {
-	  point	[ -0.03 0.07 0.051961,
+      geometry DEF _11 IndexedFaceSet {
+	coord Coordinate {
+	  point	[
+	   -0.03 0.07 0.051961,
 	   -0.03 0 0.051961,
 	   -0.03 0 -0.051962,
 	   -0.03 0.07 -0.051962,
@@ -47,8 +47,8 @@ DEF J5 Transform {
 	   -0.065 0.035 -0.005,
 	   -0.045 0.035 -0.005 ]
 	}
-
-	coordIndex	[ 12, 20, 14, -1, 20, 29, 14, -1,
+	coordIndex [
+	 12, 20, 14, -1, 20, 29, 14, -1,
 	 12, 22, 20, -1, 5, 31, 4, -1,
 	 31, 12, 4, -1, 31, 22, 12, -1,
 	 5, 29, 31, -1, 5, 14, 29, -1,
@@ -84,22 +84,19 @@ DEF J5 Transform {
 	 33, 32, 34, -1, 33, 34, 35, -1 ]
 	creaseAngle	0.610865
 	normalPerVertex	FALSE
-	normalIndex	[  ]
-	texCoordIndex	[  ]
       }
-
     }
     Shape {
-      appearance	Appearance {
-	material	Material {
-	  diffuseColor	0.6 0.9 0.6
+      appearance Appearance {
+	material Material {
+	  diffuseColor 0.6 0.9 0.6
+	  ambientIntensity 1.0
 	}
-
       }
-
-      geometry	DEF _12 IndexedFaceSet {
-	coord	Coordinate {
-	  point	[ -0.08 0.265981 -0.015,
+      geometry DEF _12 IndexedFaceSet {
+	coord Coordinate {
+	  point	[
+	   -0.08 0.265981 -0.015,
 	   -0.08 0.255 -0.025981,
 	   -0.08 0.24 -0.03,
 	   -0.08 0.04 -0.03,
@@ -142,8 +139,8 @@ DEF J5 Transform {
 	   -0.05 0.005359 0.02,
 	   -0.05 0 -1.62813e-007 ]
 	}
-
-	coordIndex	[ 13, 12, 0, -1, 13, 0, 1, -1,
+	coordIndex [
+	 13, 12, 0, -1, 13, 0, 1, -1,
 	 13, 1, 11, -1, 11, 1, 2, -1,
 	 11, 2, 10, -1, 10, 2, 3, -1,
 	 10, 3, 9, -1, 9, 3, 4, -1,
@@ -185,22 +182,19 @@ DEF J5 Transform {
 	 39, 38, 40, -1, 39, 40, 41, -1 ]
 	creaseAngle	0.558505
 	normalPerVertex	FALSE
-	normalIndex	[  ]
-	texCoordIndex	[  ]
       }
-
     }
     Shape {
-      appearance	Appearance {
-	material	Material {
-	  diffuseColor	0.6 0.9 0.6
+      appearance Appearance {
+	material Material {
+	  diffuseColor 0.6 0.9 0.6
+	  ambientIntensity 1.0
 	}
-
       }
-
-      geometry	DEF _13 IndexedFaceSet {
-	coord	Coordinate {
-	  point	[ 0.08 0.014019 -0.015,
+      geometry DEF _13 IndexedFaceSet {
+	coord Coordinate {
+	  point	[
+	   0.08 0.014019 -0.015,
 	   0.08 0.025 -0.025981,
 	   0.08 0.04 -0.03,
 	   0.08 0.24 -0.03,
@@ -243,8 +237,8 @@ DEF J5 Transform {
 	   0.05 0.274641 0.02,
 	   0.05 0.28 -1.62813e-007 ]
 	}
-
-	coordIndex	[ 13, 12, 0, -1, 13, 0, 1, -1,
+	coordIndex [
+	 13, 12, 0, -1, 13, 0, 1, -1,
 	 13, 1, 11, -1, 11, 1, 2, -1,
 	 11, 2, 10, -1, 10, 2, 3, -1,
 	 10, 3, 9, -1, 9, 3, 4, -1,
@@ -286,13 +280,8 @@ DEF J5 Transform {
 	 39, 38, 40, -1, 39, 40, 41, -1 ]
 	creaseAngle	0.558505
 	normalPerVertex	FALSE
-	normalIndex	[  ]
-	texCoordIndex	[  ]
       }
-
     }
-
   ]
-  translation	0 0 0
-  rotation	1 0 0 1.570796326795
+  rotation 1 0 0 1.570796326795
 }

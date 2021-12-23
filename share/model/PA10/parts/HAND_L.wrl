@@ -4,6 +4,7 @@ DEF FL Transform {
       appearance Appearance {
         material Material {
           diffuseColor 0.85 0.85 0.85
+	  ambientIntensity 1.0
         }
       }
       geometry IndexedFaceSet {
@@ -36,6 +37,5 @@ DEF FL Transform {
       } #IndexedFaceSet
     } #Shape
   ] # children
-  translation 0 0 0
   rotation 1 0 0 1.570796326795
 } # FL
