@@ -269,13 +269,13 @@ void FileDialog::Impl::storeRecentDirectories()
     if(!DisableToClearDefaultSettings){
         QDir latestDir = directory();
         ListingPtr recentDirs = new Listing;
-        recentDirs->append(latestDir.absolutePath().toStdString());
+        recentDirs->append(latestDir.absolutePath().toStdString(), DOUBLE_QUOTED);
         auto oldRecentDirs = AppConfig::archive()->openListing("file_dialog_recent_dirs");
         for(auto& node : *oldRecentDirs){
             if(node->isString()){
                 auto dir = node->toString();
                 if(QDir(dir.c_str()) != latestDir){
-                    recentDirs->append(dir);
+                    recentDirs->append(dir, DOUBLE_QUOTED);
                     if(recentDirs->size() >= MaxHistorySize){
                         break;
                     }
