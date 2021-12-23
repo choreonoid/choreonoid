@@ -50,6 +50,12 @@ Selection& Selection::operator=(const Selection& rhs)
 }
 
 
+void Selection::setDomain(const char* domainname)
+{
+    domainname_ = domainname;
+}
+
+
 void Selection::resize(int s)
 {
     symbols_.resize(s);

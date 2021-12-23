@@ -33,9 +33,9 @@ public:
     operator int() const {
         return selectedIndex_;
     }
-        
-    void resize(int s);
 
+    void setDomain(const char* domainname);
+    void resize(int s);
     void clear();
 
     void setSymbol(int index, const std::string& symbol);
