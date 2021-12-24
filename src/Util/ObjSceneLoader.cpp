@@ -65,8 +65,10 @@ public:
     {
         SgMaterialPtr material;
         SgTexturePtr texture;
+        Vector3f ambientColor;
         MaterialInfo(){
             material = new SgMaterial;
+            ambientColor << 1.0f, 1.0f, 1.0f;
         }
     };
     
@@ -109,6 +111,7 @@ public:
     void readIlluminationModel();
     void readTexture(const std::string& mapType);
     void normalizeNormals();
+    void updateAmbientIntensities();
 };
 
 }
@@ -284,6 +287,7 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
     checkAndAddCurrentNode();
 
     normalizeNormals();
+    updateAmbientIntensities();
 
     SgNodePtr scene;
 
@@ -606,10 +610,7 @@ void ObjSceneLoader::Impl::createNewMaterial(const string& name)
 
 void ObjSceneLoader::Impl::readAmbientColor()
 {
-    Vector3f a;
-    readVector3Ex(subScanner, a);
-    float intensity = std::max(a[0], std::max(a[1], a[2]));
-    currentMaterialDef->setAmbientIntensity(intensity);
+    readVector3Ex(subScanner, currentMaterialDefInfo->ambientColor);
 }
 
 
@@ -700,6 +701,24 @@ void ObjSceneLoader::Impl::normalizeNormals()
             for(auto& n : *normals){
                 n.normalize();
             }
+        }
+    }
+}
+
+
+void ObjSceneLoader::Impl::updateAmbientIntensities()
+{
+    for(auto& kv : materialMap){
+        auto& info = kv.second;
+        auto& material = info.material;
+        if(material){
+            float a = info.ambientColor.norm();
+            float d = material->diffuseColor().norm();
+            float intensity = a / d;
+            if(intensity >= (1.0f - 1.0e-3)){
+                intensity = 1.0f;
+            }
+            material->setAmbientIntensity(intensity);
         }
     }
 }
