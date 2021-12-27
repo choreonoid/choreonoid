@@ -421,10 +421,10 @@ msgid "Item with empty filename cannot be loaded."
 msgstr "空のファイル名のアイテムを読み込むことはできません．"
 
 msgid "{0} cannot be loaded."
-msgstr "{0}をロードすることができません．"
+msgstr "{0}を読み込むことができません．"
 
 msgid "{0} cannot be loaded because {1}"
-msgstr "{0}はロードできません: {1}"
+msgstr "{0}を読み込むことができません: {1}"
 
 msgid "Loading {0} \"{1}\""
 msgstr "{0} \"{1}\" を読み込み中"
@@ -442,7 +442,7 @@ msgid "{0} cannot be saved."
 msgstr "{0}を保存することができません．"
 
 msgid "{0} cannot be saved because {1}"
-msgstr "{0}は保存できません： {1}"
+msgstr "{0}を保存することができません： {1}"
 
 msgid "Saving {0} \"{1}\" to \"{2}\""
 msgstr "{0} \"{1}\" を \"{2}\" に保存中"
@@ -1432,10 +1432,10 @@ msgid "Toggle the collision line visibility"
 msgstr "干渉線の表示"
 
 msgid "Front view"
-msgstr "前面ビュー"
+msgstr "正面ビュー"
 
 msgid "Back view"
-msgstr "後面ビュー"
+msgstr "背面ビュー"
 
 msgid "Top view"
 msgstr "上面ビュー"
