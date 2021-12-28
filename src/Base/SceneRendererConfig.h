@@ -22,9 +22,10 @@ public:
     SceneRendererConfig(const SceneRendererConfig& org);
     ~SceneRendererConfig();
 
-    void setRenderer(SceneRenderer* renderer);
-    void addRenderer(SceneRenderer* renderer);
+    void addRenderer(SceneRenderer* renderer, bool doUpdateRenderer);
+    void removeRenderer(SceneRenderer* renderer);
     void clearRenderers();
+    void updateRenderers();
     
     virtual bool store(Mapping* archive);
     virtual bool restore(const Mapping* archive);

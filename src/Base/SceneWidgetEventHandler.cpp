@@ -67,9 +67,9 @@ void SceneWidgetEventHandler::onFocusChanged(SceneWidgetEvent* event, bool on)
 }
 
 
-bool SceneWidgetEventHandler::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menu)
+bool SceneWidgetEventHandler::onContextMenuRequest(SceneWidgetEvent* event)
 {
-    return onContextMenuRequest(*event, *menu);
+    return onContextMenuRequest(event, event->contextMenu());
 }
 
 
@@ -130,6 +130,12 @@ bool SceneWidgetEventHandler::onKeyReleaseEvent(const SceneWidgetEvent&)
 void SceneWidgetEventHandler::onFocusChanged(const SceneWidgetEvent&, bool)
 {
 
+}
+
+
+bool SceneWidgetEventHandler::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menu)
+{
+    return onContextMenuRequest(*event, *menu);
 }
 
 

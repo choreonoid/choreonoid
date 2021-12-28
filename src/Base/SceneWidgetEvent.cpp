@@ -12,6 +12,7 @@ using namespace cnoid;
 
 SceneWidgetEvent::SceneWidgetEvent()
 {
+    type_ = NoEvent;
     point_.setZero();
     x_ = 0.0;
     y_ = 0.0;
@@ -22,12 +23,14 @@ SceneWidgetEvent::SceneWidgetEvent()
     wheelSteps_ = 0.0;
     cameraIndex_ = -1;
     sceneWidget_ = nullptr;
+    contextMenu_ = nullptr;
 }
 
 
 SceneWidgetEvent::SceneWidgetEvent(const SceneWidgetEvent& org)
     : point_(org.point_)
 {
+    type_ = org.type_;
     x_ = org.x_;
     y_ = org.y_;
     pixelSizeRatio_ = org.pixelSizeRatio_;
@@ -37,6 +40,7 @@ SceneWidgetEvent::SceneWidgetEvent(const SceneWidgetEvent& org)
     wheelSteps_ = org.wheelSteps_;
     cameraIndex_ = org.cameraIndex_;
     sceneWidget_ = org.sceneWidget_;
+    contextMenu_ = org.contextMenu_;
 }
 
 

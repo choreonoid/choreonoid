@@ -10,12 +10,11 @@
 
 namespace cnoid {
 
+class SceneViewConfig;
 class SceneWidget;
 class SceneWidgetEventHandler;
 class SceneRenderer;
-class SceneBar;
 class SgGroup;
-class Item;
 
 class CNOID_EXPORT SceneView : public View
 {
@@ -48,11 +47,13 @@ public:
     static void blockEditModeForAllViews(Referenced* requester);
     static void unblockEditModeForAllViews(Referenced* requester);
 
-    static SignalProxy<void(SceneView* view)> sigLastFocusViewChanged();
+    static SignalProxy<void(SceneView* view)> sigLastFocusSceneViewChanged();
+    static SceneView* lastFocusSceneView();
         
     SceneView();
     ~SceneView();
         
+    SceneViewConfig* sceneViewConfig();
     SceneWidget* sceneWidget();
     SceneRenderer* renderer();
     SgGroup* scene();
@@ -62,13 +63,18 @@ public:
 
     void setTargetSceneItemCheckId(int checkId);
 
-    virtual void showConfigDialog();
-
 protected:
+    struct NoSceneViewConfig_t { };
+    static constexpr NoSceneViewConfig_t NoSceneViewConfig = { };
+    SceneView(NoSceneViewConfig_t);
+
+    void setSceneViewConfig(SceneViewConfig* config);
+    
     virtual void onFocusChanged(bool on) override;
     virtual QWidget* indicatorOnInfoBar() override;
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
+    virtual void onRestored(bool stateRestored) override;
         
 private:
     class Impl;

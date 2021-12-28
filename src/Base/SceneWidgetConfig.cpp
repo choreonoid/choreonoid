@@ -27,10 +27,10 @@ const char* axisSymbols[] = { "X", "Y", "Z" };
 
 enum ConfigCategory
 {
-    Camera = 1 << 1,
-    Drawing = 1 << 2,
-    Grid = 1 << 3,
-    AllCategories = Camera | Drawing | Grid
+    CameraCategory = 1 << 1,
+    DrawingCategory = 1 << 2,
+    GridCategory = 1 << 3,
+    AllCategories = CameraCategory | DrawingCategory | GridCategory
 };
 
 class ConfigWidgetSet
@@ -43,7 +43,7 @@ public:
 
     QWidget* cameraPanel;
     QWidget* backgroundPanel;
-    QWidget* renderingOptionPanel;
+    QWidget* drawingPanel;
     QWidget* debugPanel;
 
     DoubleSpinBox* fieldOfViewSpin;
@@ -211,24 +211,27 @@ SceneWidgetConfig::Impl::~Impl()
 }
 
 
-void SceneWidgetConfig::setSceneWidget(SceneWidget* widget)
+void SceneWidgetConfig::addSceneWidget(SceneWidget* widget, bool doUpdateSceneWidget)
 {
-    clearSceneWidgets();
-    addSceneWidget(widget);
-}
-
-
-void SceneWidgetConfig::addSceneWidget(SceneWidget* widget)
-{
-    /**
-       \todo Connect the sigUpdated signal of the builtin perspective camera to
-       the function to update the builtin camera paramaters managed by this class.
-    */
-    
     impl->sceneWidgets.push_back(widget);
-    addRenderer(widget->renderer());
-    impl->updateSceneWidget(widget, AllCategories);
+    addRenderer(widget->renderer(), doUpdateSceneWidget);
+
+    if(doUpdateSceneWidget){
+        impl->updateSceneWidget(widget, AllCategories);
+    }
 }
+
+
+void SceneWidgetConfig::removeSceneWidget(SceneWidget* widget)
+{
+    removeRenderer(widget->renderer());
+    
+    auto& widgets = impl->sceneWidgets;
+    auto it = std::find(widgets.begin(), widgets.end(), widget);
+    if(it != widgets.end()){
+        widgets.erase(it);
+    }
+}    
 
 
 void SceneWidgetConfig::clearSceneWidgets()
@@ -240,14 +243,14 @@ void SceneWidgetConfig::clearSceneWidgets()
 
 void SceneWidgetConfig::Impl::updateSceneWidget(SceneWidget* sceneWidget, unsigned int categories)
 {
-    if(categories & Camera){
+    if(categories & CameraCategory){
         sceneWidget->setFieldOfView(radian(fieldOfView));
         sceneWidget->setClipDistances(nearClipDistance, farClipDistance);
         sceneWidget->setInteractiveCameraRollRestricted(isCameraRollRistricted);
         sceneWidget->setVerticalAxis(verticalAxis);
     }
     
-    if(categories & Drawing){
+    if(categories & DrawingCategory){
         sceneWidget->setCoordinateAxes(isCoordinateAxesEnabled);
         auto renderer = sceneWidget->renderer<GLSceneRenderer>();
         renderer->setNormalVisualizationLength(normalLength);
@@ -255,7 +258,7 @@ void SceneWidgetConfig::Impl::updateSceneWidget(SceneWidget* sceneWidget, unsign
         sceneWidget->setLightweightViewChangeEnabled(isLightweightViewChangedEnabled);
     }
 
-    if(categories & Grid){
+    if(categories & GridCategory){
         for(int i=0; i < 3; ++i){
             auto& info = gridInfos[i];
             auto grid = static_cast<SceneWidget::GridPlane>(i);
@@ -276,6 +279,15 @@ void SceneWidgetConfig::Impl::updateSceneWidgets(unsigned int categories, bool i
             sceneWidget->renderScene();
         }
     }
+}
+
+
+// Public version of this function updates all the targets including those
+// implemented in the base classes
+void SceneWidgetConfig::updateSceneWidgets()
+{
+    updateRenderers();
+    impl->updateSceneWidgets(AllCategories, false);
 }
 
 
@@ -476,10 +488,10 @@ QWidget* SceneWidgetConfig::getOrCreateBackgroundPanel()
 QWidget* SceneWidgetConfig::getOrCreateDrawingPanel()
 {
     auto ws = impl->getOrCreateConfigWidgetSet();
-    if(!ws->renderingOptionPanel){
+    if(!ws->drawingPanel){
         ws->createDrawingPanel();
     }
-    return ws->renderingOptionPanel;
+    return ws->drawingPanel;
 }
 
 
@@ -490,6 +502,12 @@ QWidget* SceneWidgetConfig::getOrCreateDebugPanel()
         ws->createDebugPanel();
     }
     return ws->debugPanel;
+}
+
+
+PushButton* SceneWidgetConfig::fpsTestButton()
+{
+    return impl->getOrCreateConfigWidgetSet()->fpsTestButton;
 }
 
 
@@ -524,7 +542,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
 
     cameraPanel = nullptr;
     backgroundPanel = nullptr;
-    renderingOptionPanel = nullptr;
+    drawingPanel = nullptr;
     debugPanel = nullptr;
 
     //! \todo check the actual size
@@ -536,7 +554,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
     fieldOfViewSpin->sigValueChanged().connect(
         [this](int fov){
             config->fieldOfView = fov;
-            config->updateSceneWidgets(Camera, true);
+            config->updateSceneWidgets(CameraCategory, true);
         });
     signalObjects.push_back(fieldOfViewSpin);
 
@@ -547,7 +565,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
     nearClipSpin->sigValueChanged().connect(
         [this](double d){
             config->nearClipDistance = d;
-            config->updateSceneWidgets(Camera, true);
+            config->updateSceneWidgets(CameraCategory, true);
         });
     signalObjects.push_back(nearClipSpin);
 
@@ -558,7 +576,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
     farClipSpin->sigValueChanged().connect(
         [this](double d){
             config->farClipDistance = d;
-            config->updateSceneWidgets(Camera, true);
+            config->updateSceneWidgets(CameraCategory, true);
         });
     signalObjects.push_back(farClipSpin);
 
@@ -566,7 +584,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
     restrictCameraRollCheck->sigToggled().connect(
         [this](bool on){
             config->isCameraRollRistricted = on;
-            config->updateSceneWidgets(Camera, true);
+            config->updateSceneWidgets(CameraCategory, true);
         });
     signalObjects.push_back(restrictCameraRollCheck);
 
@@ -579,7 +597,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
         [this](int axis, bool on){
             if(on){
                 config->verticalAxis = axis;
-                config->updateSceneWidgets(Camera, true);
+                config->updateSceneWidgets(CameraCategory, true);
             }
         });
     signalObjects.push_back(verticalAxisGroup);
@@ -588,7 +606,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
     coordinateAxesCheck->sigToggled().connect(
         [this](bool on){
             config->isCoordinateAxesEnabled = on;
-            config->updateSceneWidgets(Drawing, true);
+            config->updateSceneWidgets(DrawingCategory, true);
         });
     signalObjects.push_back(coordinateAxesCheck);
 
@@ -600,7 +618,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
         gws.check->sigToggled().connect(
             [this, i](bool on){
                 config->gridInfos[i].isEnabled = on;
-                config->updateSceneWidgets(Grid, true);
+                config->updateSceneWidgets(GridCategory, true);
             });
         signalObjects.push_back(gws.check);
 
@@ -612,7 +630,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
         spanSpin->sigValueChanged().connect(
             [this, i](double span){
                 config->gridInfos[i].span = span;
-                config->updateSceneWidgets(Grid, true);
+                config->updateSceneWidgets(GridCategory, true);
             });
         signalObjects.push_back(spanSpin);
         gws.spanSpin = spanSpin;
@@ -625,7 +643,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
         intervalSpin->sigValueChanged().connect(
             [this, i](double interval){
                 config->gridInfos[i].interval = interval;
-                config->updateSceneWidgets(Grid, true);
+                config->updateSceneWidgets(GridCategory, true);
             });
         signalObjects.push_back(intervalSpin);
         gws.intervalSpin = intervalSpin;
@@ -636,7 +654,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
                 auto& color = config->gridInfos[i].color;
                 if(SceneRendererConfig::inputColorWithColorDialog(
                        format(_("{0} Color"), gridLabels[i]), color)){
-                    config->updateSceneWidgets(Grid, true);
+                    config->updateSceneWidgets(GridCategory, true);
                 }
             });
     }
@@ -645,7 +663,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
     normalVisualizationCheck->sigToggled().connect(
         [this](bool on){
             config->isNormalVisualizationEnabled = on;
-            config->updateSceneWidgets(Drawing, true);
+            config->updateSceneWidgets(DrawingCategory, true);
         });
     signalObjects.push_back(normalVisualizationCheck);
 
@@ -657,7 +675,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
     normalLengthSpin->sigValueChanged().connect(
         [this](double length){
             config->normalLength = length;
-            config->updateSceneWidgets(Drawing, true);
+            config->updateSceneWidgets(DrawingCategory, true);
         });
     signalObjects.push_back(normalLengthSpin);
 
@@ -665,7 +683,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
     lightweightViewChangeCheck->sigToggled().connect(
         [this](bool on){
             config->isLightweightViewChangedEnabled = on;
-            config->updateSceneWidgets(Drawing, true);
+            config->updateSceneWidgets(DrawingCategory, true);
         });
     signalObjects.push_back(lightweightViewChangeCheck);
 
@@ -678,6 +696,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
                 fpsTestButton->setText(_("Cancel"));
                 config->doFpsTest(fpsTestIterationSpin->value());
                 fpsTestButton->setText(label);
+                isDoingFpsTest = false;
             } else {
                 isDoingFpsTest = false;
                 config->cancelFpsTest();
@@ -779,14 +798,14 @@ QWidget* ConfigWidgetSet::createBackgroundPanel()
 
 QWidget* ConfigWidgetSet::createDrawingPanel()
 {
-    if(renderingOptionPanel){
-        return renderingOptionPanel;
+    if(drawingPanel){
+        return drawingPanel;
     }
 
-    renderingOptionPanel = new QWidget(ownerWidget);
+    drawingPanel = new QWidget(ownerWidget);
     auto vbox = new QVBoxLayout;
     vbox->setContentsMargins(0, 0, 0, 0);
-    renderingOptionPanel->setLayout(vbox);
+    drawingPanel->setLayout(vbox);
     QHBoxLayout* hbox;
 
     hbox = new QHBoxLayout;
@@ -807,7 +826,7 @@ QWidget* ConfigWidgetSet::createDrawingPanel()
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    return renderingOptionPanel;
+    return drawingPanel;
 }
 
 

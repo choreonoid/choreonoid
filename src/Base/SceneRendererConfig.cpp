@@ -133,7 +133,7 @@ public:
     Impl(SceneRendererConfig* self);
     Impl(const Impl& org, SceneRendererConfig* self);
     ~Impl();
-    void addRenderer(SceneRenderer* renderer);
+    void addRenderer(SceneRenderer* renderer, bool doUpdateRenderer);
     void updateRenderer(GLSceneRenderer* renderer, unsigned int categories);
     void updateRenderers(unsigned int categories, bool isInteractive);
     bool store(Mapping* archive);
@@ -263,25 +263,19 @@ SceneRendererConfig::Impl::~Impl()
 }
 
 
-void SceneRendererConfig::setRenderer(SceneRenderer* renderer)
+void SceneRendererConfig::addRenderer(SceneRenderer* renderer, bool doUpdateRenderer)
 {
-    clearRenderers();
-    impl->addRenderer(renderer);
+    impl->addRenderer(renderer, doUpdateRenderer);
 }
 
 
-void SceneRendererConfig::addRenderer(SceneRenderer* renderer)
-{
-    impl->addRenderer(renderer);
-}
-
-
-void SceneRendererConfig::Impl::addRenderer(SceneRenderer* renderer)
+void SceneRendererConfig::Impl::addRenderer(SceneRenderer* renderer, bool doUpdateRenderer)
 {
     if(auto glRenderer = dynamic_cast<GLSceneRenderer*>(renderer)){
         renderers.push_back(glRenderer);
-        updateRenderer(glRenderer, AllCategories);
-
+        if(doUpdateRenderer){
+            updateRenderer(glRenderer, AllCategories);
+        }
         if(!isShadowCastingAvailable){
             if(glRenderer->isShadowCastingAvailable()){
                 isShadowCastingAvailable = true;
@@ -290,6 +284,16 @@ void SceneRendererConfig::Impl::addRenderer(SceneRenderer* renderer)
                 }
             }
         }
+    }
+}
+
+
+void SceneRendererConfig::removeRenderer(SceneRenderer* renderer)
+{
+    auto& renderers = impl->renderers;
+    auto it = std::find(renderers.begin(), renderers.end(), renderer);
+    if(it != renderers.end()){
+        renderers.erase(it);
     }
 }
 
@@ -360,6 +364,12 @@ void SceneRendererConfig::Impl::updateRenderers(unsigned int categories, bool is
         updateRenderer(renderer, categories);
     }
     self->onRendererConfigUpdated(isInteractive);
+}
+
+
+void SceneRendererConfig::updateRenderers()
+{
+    impl->updateRenderers(AllCategories, false);
 }
 
 

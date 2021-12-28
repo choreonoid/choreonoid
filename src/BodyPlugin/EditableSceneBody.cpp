@@ -172,7 +172,7 @@ public:
     bool onPointerMoveEvent(SceneWidgetEvent* event);
     void onPointerLeaveEvent(SceneWidgetEvent* event);
     bool onScrollEvent(SceneWidgetEvent* event);
-    bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager);
+    bool onContextMenuRequest(SceneWidgetEvent* event);
     void onSceneModeChanged(SceneWidgetEvent* event);
     void onDraggerDragStarted();
     void onDraggerDragged();
@@ -1430,13 +1430,13 @@ void EditableSceneBody::onFocusChanged(SceneWidgetEvent* event, bool on)
 }
 
 
-bool EditableSceneBody::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager)
+bool EditableSceneBody::onContextMenuRequest(SceneWidgetEvent* event)
 {
-    return impl->onContextMenuRequest(event, menuManager);
+    return impl->onContextMenuRequest(event);
 }
 
 
-bool EditableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* mm)
+bool EditableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event)
 {
     PointedType pointedType = findPointedObject(event->nodePath());
 
@@ -1444,7 +1444,8 @@ bool EditableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event, Menu
         return false;
     }
 
-    auto locationLockCheck = mm->addCheckItem(_("Lock location"));
+    auto menu = event->contextMenu();
+    auto locationLockCheck = menu->addCheckItem(_("Lock location"));
     locationLockCheck->setChecked(!bodyItem->isLocationEditable());
     locationLockCheck->sigToggled().connect(
         [&](bool on){ bodyItem->setLocationEditable(!on); });
@@ -1452,39 +1453,39 @@ bool EditableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event, Menu
     activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
     if(activeSimulatorItem){
         if(pointedSceneLink->link()->isRoot() && bodyItem->isLocationEditable()){
-            Action* item1 = mm->addCheckItem(_("Move Forcibly"));
+            Action* item1 = menu->addCheckItem(_("Move Forcibly"));
             item1->setChecked(forcedPositionMode == MOVE_FORCED_POSITION);
             item1->sigToggled().connect(
                 [&](bool on){ setForcedPositionMode(MOVE_FORCED_POSITION, on); });
                     
-            Action* item2 = mm->addCheckItem(_("Hold Forcibly"));
+            Action* item2 = menu->addCheckItem(_("Hold Forcibly"));
             item2->setChecked(forcedPositionMode == KEEP_FORCED_POSITION);
             item2->sigToggled().connect(
                 [&](bool on){ setForcedPositionMode(KEEP_FORCED_POSITION, on); });
                     
-            mm->addSeparator();
+            menu->addSeparator();
         }
     } else {
-        mm->addItem(_("Set Free"))->sigTriggered().connect(
+        menu->addItem(_("Set Free"))->sigTriggered().connect(
             [&](){ makeLinkFree(pointedSceneLink); });
-        mm->addItem(_("Set Base"))->sigTriggered().connect(
+        menu->addItem(_("Set Base"))->sigTriggered().connect(
             [&](){ setBaseLink(pointedSceneLink); });
-        mm->addItem(_("Set Translation Pin"))->sigTriggered().connect(
+        menu->addItem(_("Set Translation Pin"))->sigTriggered().connect(
             [&](){ togglePin(pointedSceneLink, true, false); });
-        mm->addItem(_("Set Rotation Pin"))->sigTriggered().connect(
+        menu->addItem(_("Set Rotation Pin"))->sigTriggered().connect(
             [&](){ togglePin(pointedSceneLink, false, true); });
-        mm->addItem(_("Set Both Pins"))->sigTriggered().connect(
+        menu->addItem(_("Set Both Pins"))->sigTriggered().connect(
             [&](){ togglePin(pointedSceneLink, true, true); });
                 
-        mm->addSeparator();
+        menu->addSeparator();
             
-        mm->addItem(_("Level Attitude"))->sigTriggered().connect(
+        menu->addItem(_("Level Attitude"))->sigTriggered().connect(
             [&](){ makeLinkAttitudeLevel(pointedSceneLink); });
             
-        mm->addSeparator();
+        menu->addSeparator();
     }
 
-    mm->setPath(_("Markers"));
+    menu->setPath(_("Markers"));
 
     auto linkOriginAction = new CheckBoxAction(_("Link Origins"));
     int checkState = Qt::Unchecked;
@@ -1504,26 +1505,26 @@ bool EditableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event, Menu
     } else {
         check->setCheckState(Qt::PartiallyChecked);
     }
-    mm->addAction(linkOriginAction);
+    menu->addAction(linkOriginAction);
     check->sigToggled().connect([&](bool on){ onLinkOriginsCheckChanged(on); });
         
-    auto item = mm->addCheckItem(_("Center of Mass"));
+    auto item = menu->addCheckItem(_("Center of Mass"));
     item->setChecked(isCmVisible);
     item->sigToggled().connect([&](bool on){ showCenterOfMass(on); });
             
-    item = mm->addCheckItem(_("Center of Mass Projection"));
+    item = menu->addCheckItem(_("Center of Mass Projection"));
     item->setChecked(isCmProjectionVisible);
     item->sigToggled().connect([&](bool on){ showCmProjection(on); });
 
 
     if(checkLeggedBody()){
-        item = mm->addCheckItem(_("ZMP"));
+        item = menu->addCheckItem(_("ZMP"));
         item->setChecked(isZmpVisible);
         item->sigToggled().connect([&](bool on){ showZmp(on); });
     }
 
-    mm->setPath("/");
-    mm->addSeparator();
+    menu->setPath("/");
+    menu->addSeparator();
 
     return true;
 }

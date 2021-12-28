@@ -11,12 +11,20 @@
 namespace cnoid {
 
 class SceneWidget;
+class MenuManager;
     
 class CNOID_EXPORT SceneWidgetEvent
 {
 public:
     SceneWidgetEvent(const SceneWidgetEvent& org);
-        
+
+    enum EventType {
+        NoEvent, ModeChange, ButtonPress, ButtonRelease, DoubleClick,
+        PointerMove, PointerLeave,  Scroll, KeyPress, KeyRelease,
+        FocusChange, ContextMenuRequest };
+
+    EventType type() const { return type_; }
+
     const Vector3& point() const { return point_; }
 
     const SgNodePath& nodePath() const { return nodePath_; }
@@ -54,9 +62,12 @@ public:
 
     SceneWidget* sceneWidget() const { return sceneWidget_; }
 
+    MenuManager* contextMenu() { return contextMenu_; }
+
     void updateIndicator(const std::string& message) const;
         
 private:
+    EventType type_;
     int key_;
     int button_;
     int modifiers_;
@@ -69,6 +80,7 @@ private:
     int cameraIndex_;
     SgNodePath cameraPath_;
     mutable SceneWidget* sceneWidget_;
+    MenuManager* contextMenu_;
 
     SceneWidgetEvent();
     SceneWidgetEvent& operator=(const SceneWidgetEvent& org); // disabled

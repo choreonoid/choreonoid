@@ -68,7 +68,7 @@ public:
     virtual bool onKeyReleaseEvent(SceneWidgetEvent* event) override;
     virtual bool onScrollEvent(SceneWidgetEvent* event) override;
     virtual void onFocusChanged(SceneWidgetEvent* event, bool on) override;
-    virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager) override;
+    virtual bool onContextMenuRequest(SceneWidgetEvent* event) override;
 
 protected:
     virtual ~EditableSceneBody();

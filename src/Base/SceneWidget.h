@@ -7,7 +7,6 @@
 
 #include <cnoid/SceneGraph>
 #include <cnoid/Widget>
-#include <QBoxLayout>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -155,7 +154,16 @@ public:
 
     Menu* contextMenu();
     void showContextMenuAtPointerPosition();
-    SignalProxy<void(SceneWidgetEvent* event, MenuManager* menuManager)> sigContextMenuRequest();
+    SignalProxy<void(SceneWidgetEvent* event, MenuManager* menu)> sigContextMenuRequest();
+
+    typedef std::function<bool(SgNode* node, SceneWidgetEventHandler* orgHandler, SceneWidgetEvent* event)>
+        NodeEventHandler;
+    /**
+       This is used to override the event handler for a particular node type.
+       @return Return true if the overridden handler is processed. Otherwise, return false
+       and the original handler will be processed.
+    */
+    void overrideNodeEventHandler(NodeEventHandler handler);
 
     bool saveImage(const std::string& filename);
     QImage getImage();

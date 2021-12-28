@@ -78,7 +78,7 @@ protected:
     virtual void onPointerLeaveEvent(SceneWidgetEvent* event) override;
     virtual bool onKeyPressEvent(SceneWidgetEvent* event) override;
     virtual bool onKeyReleaseEvent(SceneWidgetEvent* event) override;
-    virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menu) override;
+    virtual bool onContextMenuRequest(SceneWidgetEvent* event) override;
 
 private:
     Impl* impl;

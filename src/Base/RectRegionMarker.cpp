@@ -30,7 +30,7 @@ public:
     PolyhedralRegion region;
     bool isDragging;
     Signal<void(const PolyhedralRegion& region)> sigRegionFixed;
-    Signal<void(SceneWidgetEvent* event, MenuManager* menuManager)> sigContextMenuRequest;
+    Signal<void(SceneWidgetEvent* event)> sigContextMenuRequest;
     
     RectRegionMarkerImpl(RectRegionMarker* self);
     ~RectRegionMarkerImpl();
@@ -281,14 +281,14 @@ bool RectRegionMarkerImpl::onPointerMoveEvent(SceneWidgetEvent* event)
 }
 
 
-bool RectRegionMarker::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager)
+bool RectRegionMarker::onContextMenuRequest(SceneWidgetEvent* event)
 {
-    impl->sigContextMenuRequest(event, menuManager);
+    impl->sigContextMenuRequest(event);
     return true;
 }
 
 
-SignalProxy<void(SceneWidgetEvent* event, MenuManager* menuManager)> RectRegionMarker::sigContextMenuRequest()
+SignalProxy<void(SceneWidgetEvent* event)> RectRegionMarker::sigContextMenuRequest()
 {
     return impl->sigContextMenuRequest;
 }

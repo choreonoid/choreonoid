@@ -7,10 +7,13 @@
 #include "SceneWidget.h"
 #include "SceneWidgetEventHandler.h"
 #include "ViewManager.h"
+#include "ProjectManager.h"
 #include "RootItem.h"
 #include "RenderableItem.h"
+#include "App.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/ConnectionSet>
+#include <QBoxLayout>
 #include <list>
 #include "gettext.h"
 
@@ -21,8 +24,8 @@ namespace {
 
 vector<SceneView*> instances_;
 Connection sigItemAddedConnection;
-Signal<void(SceneView* view)> sigLastFocusViewChanged_;
-SceneView* lastFocusView_ = nullptr;
+Signal<void(SceneView* view)> sigLastFocusSceneViewChanged_;
+SceneView* lastFocusSceneView_ = nullptr;
 set<ReferencedPtr> editModeBlockRequesters;
 
 struct SceneInfo {
@@ -56,7 +59,8 @@ public:
     SgUpdate sgUpdate;
     RootItem* rootItem;
     int itemCheckId;
-    SceneViewConfig* config;
+    SceneViewConfigPtr config;
+    bool isPendingInitialUpdate;
         
     Impl(SceneView* self);
     ~Impl();
@@ -144,9 +148,15 @@ void SceneView::unblockEditModeForAllViews(Referenced* requester)
 }
 
 
-SignalProxy<void(SceneView* view)> SceneView::sigLastFocusViewChanged()
+SignalProxy<void(SceneView* view)> SceneView::sigLastFocusSceneViewChanged()
 {
-    return sigLastFocusViewChanged_;
+    return sigLastFocusSceneViewChanged_;
+}
+
+
+SceneView* SceneView::lastFocusSceneView()
+{
+    return lastFocusSceneView_;
 }
 
 
@@ -161,16 +171,37 @@ SceneView::SceneView()
 {
     impl = new Impl(this);
 
-
-    if(instances_.empty()){
-        impl->config = new SceneViewConfig(this);
-        lastFocusView_ = this;
-
-    } else if(lastFocusView_){
-        impl->config = new SceneViewConfig(*lastFocusView_->impl->config, this);
+    // The following initialization must be processed after the impl has been created.
+    SceneViewConfig* config = nullptr;
+    if(lastFocusSceneView_){
+        if(auto orgConfig = lastFocusSceneView_->impl->config){
+            config = new SceneViewConfig(*orgConfig);
+        }
+    }
+    if(!config){
+        config = new SceneViewConfig;
     }
 
-    instances_.push_back(this);
+    setSceneViewConfig(config);
+
+    if(!lastFocusSceneView_){
+        onFocusChanged(true);
+    }
+}
+
+
+/**
+   The constructor used by an inherited view class.
+   Note that a SceneViewConfig instance must be set using the setSceneViewConfig function
+   in the constructor of the inherited clasls.
+*/
+SceneView::SceneView(NoSceneViewConfig_t)
+{
+    impl = new Impl(this);
+
+    if(!lastFocusSceneView_){
+        onFocusChanged(true);
+    }
 }
 
 
@@ -193,7 +224,7 @@ SceneView::Impl::Impl(SceneView* self)
         sceneWidget->blockEditMode(requester);
     }
 
-    QVBoxLayout* vbox = new QVBoxLayout;
+    auto vbox = new QVBoxLayout;
     vbox->addWidget(sceneWidget);
     self->setLayout(vbox);
 
@@ -202,12 +233,25 @@ SceneView::Impl::Impl(SceneView* self)
 
     if(!instances_.empty()){
         auto mainImpl = instances_.front()->impl;
-        list<SceneInfo>::iterator p;
-        for(p = mainImpl->sceneInfos.begin(); p != mainImpl->sceneInfos.end(); ++p){
-            SceneInfo& info = *p;
+        for(auto& info : mainImpl->sceneInfos){
             onRenderableItemAdded(info.item, info.renderable);
         }
     }
+
+    instances_.push_back(self);
+
+    isPendingInitialUpdate = false;
+}
+
+
+void SceneView::setSceneViewConfig(SceneViewConfig* config)
+{
+    impl->config = config;
+    
+    // Flag to avoid redundant initialization
+    bool doUpdate = !ProjectManager::instance()->isLoadingProject() && !App::isDoingInitialization();
+    impl->isPendingInitialUpdate = !doUpdate;
+    config->addSceneView(this, doUpdate);
 }
 
 
@@ -219,22 +263,30 @@ SceneView::~SceneView()
 
 SceneView::Impl::~Impl()
 {
-    delete config;
-
+    if(config){
+        config->removeSceneView(self);
+    }
+    
     instances_.erase(std::find(instances_.begin(), instances_.end(), self));
 
-    if(lastFocusView_ == self){
+    if(lastFocusSceneView_ == self){
         if(instances_.empty()){
-            lastFocusView_ = nullptr;
+            lastFocusSceneView_ = nullptr;
         } else {
-            lastFocusView_ = instances_.front();
+            lastFocusSceneView_ = instances_.front();
         }
-        sigLastFocusViewChanged_(lastFocusView_);
+        sigLastFocusSceneViewChanged_(lastFocusSceneView_);
     }
     
     if(instances_.empty()){
         finalizeClass();
     }
+}
+
+
+SceneViewConfig* SceneView::sceneViewConfig()
+{
+    return impl->config;
 }
 
 
@@ -253,13 +305,13 @@ SceneRenderer* SceneView::renderer()
 void SceneView::onFocusChanged(bool on)
 {
     if(on){
-        if(this != lastFocusView_){
-            lastFocusView_ = this;
-            sigLastFocusViewChanged_(this);
+        if(this != lastFocusSceneView_){
+            lastFocusSceneView_ = this;
+            sigLastFocusSceneViewChanged_(this);
         }
     }
 }
-    
+
 
 SgGroup* SceneView::scene()
 {
@@ -391,12 +443,6 @@ void SceneView::Impl::setTargetSceneItemCheckId(int id)
 }
 
 
-void SceneView::showConfigDialog()
-{
-    impl->config->showConfigDialog();
-}
-
-
 bool SceneView::storeState(Archive& archive)
 {
     bool result = impl->sceneWidget->storeState(archive);
@@ -409,4 +455,15 @@ bool SceneView::restoreState(const Archive& archive)
     bool result = impl->config->restore(&archive);
     result &= impl->sceneWidget->restoreState(archive);
     return result;
+}
+
+
+void SceneView::onRestored(bool stateRestored)
+{
+    if(impl->isPendingInitialUpdate){
+        if(!stateRestored){
+            impl->config->updateSceneViews();
+        }
+        impl->isPendingInitialUpdate = false;
+    }
 }

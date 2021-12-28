@@ -31,7 +31,7 @@ public:
     virtual SgGroup* scene() = 0;
     virtual void clearScene();
 
-    //! \deprecated. USe PolymorphicSceneNodeFunctionSet
+    //! \deprecated. Use PolymorphicSceneNodeFunctionSet
     typedef PolymorphicSceneNodeFunctionSet NodeFunctionSet;
 
     virtual PolymorphicSceneNodeFunctionSet* renderingFunctions() = 0;

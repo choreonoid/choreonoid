@@ -95,6 +95,7 @@ App* instance_ = nullptr;
 Signal<void()> sigExecutionStarted_;
 Signal<void()> sigAboutToQuit_;
 
+bool isDoingInitialization_ = true;
 bool isTestMode = false;
 bool ctrl_c_pressed = false;
 
@@ -199,6 +200,7 @@ App::Impl::Impl(App* self, int& argc, char** argv)
       argv(argv)
 {
     instance_ = self;
+    isDoingInitialization_ = true;
     qapplication = nullptr;
     iconFilename = nullptr;
     ext = nullptr;
@@ -426,6 +428,8 @@ int App::exec()
 
 int App::Impl::exec()
 {
+    isDoingInitialization_ = false;
+    
     if(!ext->optionManager().parseCommandLine1(argc, argv)){
         doQuit = true;
     }
@@ -472,6 +476,12 @@ int App::Impl::exec()
     mainWindow = nullptr;
     
     return returnCode;
+}
+
+
+bool App::isDoingInitialization()
+{
+    return isDoingInitialization_;
 }
 
 

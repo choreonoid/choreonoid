@@ -205,7 +205,6 @@ void exportPyViews(py::module m)
         .def_property_readonly_static(
             "instance", [](py::object){ return releaseFromPythonSideManagement(SceneView::instance()); })
         .def_property_readonly("sceneWidget", &SceneView::sceneWidget)
-        .def("showConfigDialog", &SceneView::showConfigDialog)
         ;
     
     /*

@@ -4,6 +4,7 @@
 
 #include "SceneBar.h"
 #include "SceneView.h"
+#include "SceneViewConfig.h"
 #include "SceneWidget.h"
 #include "ExtensionManager.h"
 #include "InteractiveCameraTransform.h"
@@ -228,10 +229,10 @@ void SceneBar::Impl::initialize()
 
     auto configButton = self->addButton(QIcon(":/Base/icon/setup.svg"), ConfigButton);
     configButton->setToolTip(_("Show the config dialog"));
-    configButton->sigClicked().connect([&](){ currentSceneView->showConfigDialog(); });
+    configButton->sigClicked().connect([&](){ currentSceneView->sceneViewConfig()->showConfigDialog(); });
 
     sceneViewFocusConnection =
-        SceneView::sigLastFocusViewChanged().connect(
+        SceneView::sigLastFocusSceneViewChanged().connect(
             [&](SceneView* view){ setCurrentSceneView(view); });
 
     setCurrentSceneView(SceneView::instance());

@@ -25,7 +25,7 @@ public:
     virtual bool onKeyPressEvent(SceneWidgetEvent* event);
     virtual bool onKeyReleaseEvent(SceneWidgetEvent* event);
     virtual void onFocusChanged(SceneWidgetEvent* event, bool on);
-    virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menu);
+    virtual bool onContextMenuRequest(SceneWidgetEvent* event);
 
     // The following functions are deprecated. Override the above functions.
     virtual void onSceneModeChanged(const SceneWidgetEvent& event);
@@ -38,6 +38,7 @@ public:
     virtual bool onKeyPressEvent(const SceneWidgetEvent& event);
     virtual bool onKeyReleaseEvent(const SceneWidgetEvent& event);
     virtual void onFocusChanged(const SceneWidgetEvent& event, bool on);
+    virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menu);
     virtual bool onContextMenuRequest(const SceneWidgetEvent& event, MenuManager& menu);
     // Undo and redo are not handled with SceneWidgetEditable.
     virtual bool onUndoRequest();

@@ -7,15 +7,17 @@
 namespace cnoid {
 
 class SceneWidget;
+class PushButton;
 
 class CNOID_EXPORT SceneWidgetConfig : public SceneRendererConfig
 {
 public:
     ~SceneWidgetConfig();
 
-    void setSceneWidget(SceneWidget* widget);
-    void addSceneWidget(SceneWidget* widget);
+    void addSceneWidget(SceneWidget* widget, bool doUpdateSceneWidget);
+    void removeSceneWidget(SceneWidget* widget);
     void clearSceneWidgets();
+    void updateSceneWidgets();
     
     virtual bool store(Mapping* archive) override;
     virtual bool restore(const Mapping* archive) override;
@@ -33,6 +35,8 @@ protected:
     QWidget* getOrCreateBackgroundPanel();
     QWidget* getOrCreateDrawingPanel();
     QWidget* getOrCreateDebugPanel();
+
+    PushButton* fpsTestButton();
 
 private:
     Impl* impl;

@@ -705,7 +705,7 @@ bool ScenePointSelectionMode::onKeyReleaseEvent(SceneWidgetEvent*)
 }
 
 
-bool ScenePointSelectionMode::onContextMenuRequest(SceneWidgetEvent* event, MenuManager*)
+bool ScenePointSelectionMode::onContextMenuRequest(SceneWidgetEvent* event)
 {
     return impl->checkIfPointingTargetNode(event);
 }

@@ -101,7 +101,7 @@ public:
     virtual void onPointerLeaveEvent(SceneWidgetEvent* event) override;
     virtual bool onButtonPressEvent(SceneWidgetEvent* event) override;
     virtual void onFocusChanged(SceneWidgetEvent* event, bool on) override;
-    virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menu) override;
+    virtual bool onContextMenuRequest(SceneWidgetEvent* event) override;
 };
 
 typedef ref_ptr<SceneTagGroup> SceneTagGroupPtr;
@@ -1416,16 +1416,17 @@ void SceneTagGroup::onFocusChanged(SceneWidgetEvent* event, bool on)
 }
 
 
-bool SceneTagGroup::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menu)
+bool SceneTagGroup::onContextMenuRequest(SceneWidgetEvent* event)
 {
     int tagIndex = findPointingTagIndex(event);
     
+    auto menu = event->contextMenu();
     auto moveAction = menu->addItem(_("Move"));
     if(tagIndex < 0){
         moveAction->setEnabled(false);
     }
     moveAction->sigTriggered().connect([this, tagIndex](){ attachPositionDragger(tagIndex); });
-                
+
     menu->addItem(_("Remove"))->sigTriggered().connect([&](){ impl->removeSelectedTags(); });
     menu->addSeparator();
     menu->addItem(_("Select all"))->sigTriggered().connect([&](){ impl->selectAllTags(); });

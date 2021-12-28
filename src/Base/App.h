@@ -35,6 +35,7 @@ public:
     void initialize(const char* appName, const char* vendorName, const char* pluginPathList = nullptr);
     int exec();
 
+    static bool isDoingInitialization();
     static ExtensionManager* baseModule();
     static void updateGui();
     static void exit(int returnCode = 0);

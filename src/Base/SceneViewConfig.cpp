@@ -32,7 +32,6 @@ public:
     Impl(const Impl& org, SceneViewConfig* self);
     ~Impl();
     void doCommonInitialization();
-    string getTargetSceneViewSetCaption();    
     void onDedicatedItemCheckToggled(bool on);    
     void updateSceneView(SceneView* view);
     void updateSceneViews();
@@ -44,13 +43,9 @@ public:
 }
 
 
-SceneViewConfig::SceneViewConfig(SceneView* view)
+SceneViewConfig::SceneViewConfig()
 {
     impl = new Impl(this);
-
-    if(view){
-        addSceneView(view);
-    }
 }
 
 
@@ -63,14 +58,10 @@ SceneViewConfig::Impl::Impl(SceneViewConfig* self)
 }
 
 
-SceneViewConfig::SceneViewConfig(const SceneViewConfig& org, SceneView* view)
+SceneViewConfig::SceneViewConfig(const SceneViewConfig& org)
     : SceneWidgetConfig(org)
 {
     impl = new Impl(*org.impl, this);
-
-    if(view){
-        addSceneView(view);
-    }
 }
 
 
@@ -117,18 +108,26 @@ SceneViewConfig::Impl::~Impl()
 }
 
 
-void SceneViewConfig::setSceneView(SceneView* view)
+void SceneViewConfig::addSceneView(SceneView* view, bool doUpdateSceneView)
 {
-    clearSceneViews();
-    addSceneView(view);
+    impl->sceneViews.push_back(view);
+    addSceneWidget(view->sceneWidget(), doUpdateSceneView);
+
+    if(doUpdateSceneView){
+        impl->updateSceneView(view);
+    }
 }
 
 
-void SceneViewConfig::addSceneView(SceneView* view)
+void SceneViewConfig::removeSceneView(SceneView* view)
 {
-    impl->sceneViews.push_back(view);
-    addSceneWidget(view->sceneWidget());
-    impl->updateSceneView(view);
+    removeSceneWidget(view->sceneWidget());
+    
+    auto& views = impl->sceneViews;
+    auto it = std::find(views.begin(), views.end(), view);
+    if(it != views.end()){
+        views.erase(it);
+    }
 }
 
 
@@ -139,13 +138,13 @@ void SceneViewConfig::clearSceneViews()
 }
 
 
-string SceneViewConfig::Impl::getTargetSceneViewSetCaption()
+string SceneViewConfig::getTargetSceneViewSetCaption()
 {
     string caption;
-    if(sceneViews.empty()){
+    if(impl->sceneViews.empty()){
         caption = _("Scene view");
     } else {
-        for(auto& view : sceneViews){
+        for(auto& view : impl->sceneViews){
             if(!caption.empty()){
                 caption += ", ";
             }
@@ -163,7 +162,7 @@ void SceneViewConfig::Impl::onDedicatedItemCheckToggled(bool on)
     if(on){
         if(itemCheckId == Item::PrimaryCheck){
             itemCheckId =
-                RootItem::instance()->addCheckEntry(getTargetSceneViewSetCaption());
+                RootItem::instance()->addCheckEntry(self->getTargetSceneViewSetCaption());
         }
         checkId = itemCheckId;
 
@@ -189,6 +188,15 @@ void SceneViewConfig::Impl::updateSceneViews()
     for(auto& view : sceneViews){
         updateSceneView(view);
     }
+}
+
+
+// Public version of this function updates all the targets including
+// those implemented in the base classes
+void SceneViewConfig::updateSceneViews()
+{
+    updateSceneWidgets();
+    impl->updateSceneViews();
 }
 
 
@@ -267,7 +275,7 @@ void SceneViewConfig::Impl::createConfigDialog()
 {
     dialog = new Dialog;
     dialog->setWindowTitle(
-        format(_("Configuration of {0}"), getTargetSceneViewSetCaption()).c_str());
+        format(_("Configuration of {0}"), self->getTargetSceneViewSetCaption()).c_str());
 
     auto vbox = new QVBoxLayout;
     

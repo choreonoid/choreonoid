@@ -67,8 +67,8 @@ public:
 
     virtual bool onButtonPressEvent(SceneWidgetEvent* event) override;
     virtual bool onPointerMoveEvent(SceneWidgetEvent* event) override;
-    virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager) override;
-    void onContextMenuRequestInEraserMode(SceneWidgetEvent* event, MenuManager* menuManager);
+    virtual bool onContextMenuRequest(SceneWidgetEvent* event) override;
+    void onContextMenuRequestInEraserMode(SceneWidgetEvent* event);
     void onRegionFixed(const PolyhedralRegion& region);
 };
 
@@ -655,8 +655,7 @@ ScenePointSet::ScenePointSet(PointSetItem::Impl* pointSetItemImpl)
     regionMarker->sigRegionFixed().connect(
         [&](const PolyhedralRegion& region){ onRegionFixed(region); });
     regionMarker->sigContextMenuRequest().connect(
-        [&](SceneWidgetEvent* event, MenuManager* manager){
-            onContextMenuRequestInEraserMode(event, manager); });
+        [&](SceneWidgetEvent* event){ onContextMenuRequestInEraserMode(event); });
 
     isEditable_ = false;
 }
@@ -925,16 +924,17 @@ bool ScenePointSet::onPointerMoveEvent(SceneWidgetEvent* event)
 }
 
 
-bool ScenePointSet::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager)
+bool ScenePointSet::onContextMenuRequest(SceneWidgetEvent* event)
 {
     if(isEditable_){
-        menuManager->addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
+        auto menu = event->contextMenu();
+        menu->addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
             [&](){ clearAttentionPoints(true); });
 
         if(!regionMarker->isEditing()){
             SceneWidget* sceneWidget = event->sceneWidget();
             eraserModeMenuItemConnection.reset(
-                menuManager->addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
+                menu->addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
                     [&, sceneWidget](){ regionMarker->startEditing(sceneWidget); }));
         }
         return true;
@@ -943,11 +943,11 @@ bool ScenePointSet::onContextMenuRequest(SceneWidgetEvent* event, MenuManager* m
 }
 
 
-void ScenePointSet::onContextMenuRequestInEraserMode(SceneWidgetEvent*, MenuManager* menuManager)
+void ScenePointSet::onContextMenuRequestInEraserMode(SceneWidgetEvent* event)
 {
-    eraserModeMenuItemConnection.reset(
-        menuManager->addItem(_("PointSet: Exit Eraser Mode"))->sigTriggered().connect(
-            [&](){ regionMarker->finishEditing(); }));
+    auto item = event->contextMenu()->addItem(_("PointSet: Exit Eraser Mode"))
+        ->sigTriggered().connect([&](){ regionMarker->finishEditing(); });
+    eraserModeMenuItemConnection.reset(item);
 }
 
 

@@ -12,26 +12,30 @@ class Archive;
 class CNOID_EXPORT SceneViewConfig : public SceneWidgetConfig
 {
 public:
-    SceneViewConfig(SceneView* view = nullptr);
-    SceneViewConfig(const SceneViewConfig& org, SceneView* view = nullptr);
+    SceneViewConfig();
+    SceneViewConfig(const SceneViewConfig& org);
     ~SceneViewConfig();
 
-    void setSceneView(SceneView* view);
-    void addSceneView(SceneView* view);
+    void addSceneView(SceneView* view, bool doUpdateSceneView);
+    void removeSceneView(SceneView* view);
     void clearSceneViews();
 
     virtual bool store(Archive* archive);
     virtual bool restore(const Archive* archive);
+    virtual void updateSceneViews();
     virtual void showConfigDialog() override;
 
     class Impl;
 
 protected:
+    std::string getTargetSceneViewSetCaption();
     QWidget* getOrCreateViewOptionaPanel();
 
 private:
     Impl* impl;
 };
+
+typedef ref_ptr<SceneViewConfig> SceneViewConfigPtr;
 
 }
 

@@ -37,9 +37,9 @@ public:
     virtual bool onButtonPressEvent(SceneWidgetEvent* event) override;
     virtual bool onButtonReleaseEvent(SceneWidgetEvent* event) override;
     virtual bool onPointerMoveEvent(SceneWidgetEvent* event) override;
-    virtual bool onContextMenuRequest(SceneWidgetEvent* event, MenuManager* menuManager) override;
+    virtual bool onContextMenuRequest(SceneWidgetEvent* event) override;
 
-    SignalProxy<void(SceneWidgetEvent* event, MenuManager* menuManager)> sigContextMenuRequest();
+    SignalProxy<void(SceneWidgetEvent* event)> sigContextMenuRequest();
 
 private:
     RectRegionMarkerImpl* impl;
