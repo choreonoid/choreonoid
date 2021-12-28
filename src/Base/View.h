@@ -92,6 +92,7 @@ protected:
         double leftMarginRatio, double topMarginRatio, double rightMarginRatio, double bottomMarginRatio);
     void zoomFontSize(int zoom);
 
+    virtual void onRestored(bool stateRestored);
     virtual void onActivated();
     virtual void onDeactivated();
     virtual void onFocusChanged(bool on);

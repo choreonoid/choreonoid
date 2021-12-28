@@ -54,6 +54,8 @@ public:
     //! \note This function can only be called before calling the App::initialize function.
     static void setViewWhitelist(const std::vector<WhiteListElement>& elements);
 
+    static void setClassAlias(const std::string& alias, const std::string& orgClassName);
+
     ViewManager(ExtensionManager* ext);
     ViewManager(const ViewManager&) = delete;
     ~ViewManager();
@@ -77,6 +79,7 @@ public:
         return *this;
     }
 
+    [[deprecated("Use setClassAlias")]]
     ViewManager& registerClassAlias(const std::string& alias, const std::string& orgClassName);
 
     class ViewClass : public Referenced

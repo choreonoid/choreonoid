@@ -130,7 +130,7 @@ typedef std::shared_ptr<ClassNameToViewClassImplMap> ClassNameToViewClassImplMap
 typedef map<string, ClassNameToViewClassImplMapPtr> ModuleNameToClassNameToViewClassImplMap;
 ModuleNameToClassNameToViewClassImplMap moduleNameToClassNameToViewClassImplMap;
 
-map<string, string> classNameAliasMap;
+unordered_map<string, string> classNameAliasMap;
 
 
 class ViewCreationDialog : public Dialog
@@ -223,7 +223,7 @@ ViewClassImpl::ViewClassImpl
       factory(factory)
 {
     isSingleton_ = (instantiationFlags & ViewManager::Multiple) ? false : true;
-    hasPermanentInstance_ = instantiationFlags & ViewManager::Permanent;
+    hasPermanentInstance_ = isEnabled && (instantiationFlags & ViewManager::Permanent);
     translatedClassName = dgettext(manager->textDomain.c_str(), className.c_str());
     translatedDefaultInstanceName_ = dgettext(manager->textDomain.c_str(), defaultInstanceName_.c_str());
 }
@@ -408,6 +408,12 @@ void ViewManager::setViewWhitelist(const std::vector<WhiteListElement>& elements
 }
 
 
+void ViewManager::setClassAlias(const std::string& alias, const std::string& orgClassName)
+{
+    classNameAliasMap[alias] = orgClassName;
+}
+
+
 ViewManager::ViewManager(ExtensionManager* ext)
 {
     impl = new Impl(ext);
@@ -471,12 +477,6 @@ void ViewManager::registerClass_
         }
     }
 
-    if(!isEnabled){
-        if(!(instantiationFlags & Permanent)){
-            return;
-        }
-    }
-
     if(whiteListElement && whiteListElement->hasCustomInstantiationFlags){
         instantiationFlags = whiteListElement->instantiationFlags;
     }
@@ -497,7 +497,7 @@ void ViewManager::registerClass_
 
 ViewManager& ViewManager::registerClassAlias(const std::string& alias, const std::string& orgClassName)
 {
-    classNameAliasMap[alias] = orgClassName;
+    setClassAlias(alias, orgClassName);
     return *this;
 }
 
@@ -524,27 +524,30 @@ namespace {
 ViewClassImpl* findViewClassImpl(const std::string& moduleName, const std::string& className, bool checkAlias = true)
 {
     ViewClassImpl* info = nullptr;
-    auto p = moduleNameToClassNameToViewClassImplMap.find(moduleName);
-    if(p != moduleNameToClassNameToViewClassImplMap.end()){
-        auto& infoMap = *p->second;
-        auto q = infoMap.find(className);
-        if(q == infoMap.end() && checkAlias){
-            auto r = classNameAliasMap.find(className);
-            if(r != classNameAliasMap.end()){
-                auto& actualClass = r->second;
-                static regex re("^(.+)::(.+)$");
-                std::smatch match;
-                if(!regex_match(actualClass, match, re)){
-                    q = infoMap.find(actualClass);
-                } else {
-                    return findViewClassImpl(match.str(1), match.str(2), false);
-                }
+
+    const string* pActualClassName = &className;
+
+    if(checkAlias){
+        auto it = classNameAliasMap.find(className);
+        if(it != classNameAliasMap.end()){
+            pActualClassName = &it->second;
+            static regex re("^(.+)::(.+)$");
+            std::smatch match;
+            if(regex_match(*pActualClassName, match, re)){
+                return findViewClassImpl(match.str(1), match.str(2), false);
             }
         }
-        if(q != infoMap.end()){
-            info = q->second.get();
+    }
+
+    auto it1 = moduleNameToClassNameToViewClassImplMap.find(moduleName);
+    if(it1 != moduleNameToClassNameToViewClassImplMap.end()){
+        auto& infoMap = *it1->second;
+        auto it2 = infoMap.find(*pActualClassName);
+        if(it2 != infoMap.end()){
+            info = it2->second;
         }
     }
+    
     return info;
 }
 
@@ -874,8 +877,10 @@ bool ViewManager::restoreViews
                             ArchivePtr state = viewArchive->findSubArchive("state");
                             if(state->isValid()){
                                 state->inheritSharedInfoFrom(*archive);
-                                viewsToRestoreState->push_back(ViewState(view, state));
+                            } else {
+                                state.reset();
                             }
+                            viewsToRestoreState->push_back(ViewState(view, state));
 
                             if(viewArchive->get("mounted", false)){
                                 view->mountOnMainWindow(false);
@@ -908,15 +913,17 @@ bool ViewManager::restoreViews
 
 bool ViewManager::restoreViewStates(ViewStateInfo& info)
 {
-    if(info.data){
-        vector<ViewState>* viewsToRestoreState = reinterpret_cast<vector<ViewState>*>(info.data);
-        for(size_t i=0; i < viewsToRestoreState->size(); ++i){
-            ViewState& vs = (*viewsToRestoreState)[i];
-            vs.view->restoreState(*vs.state);
-        }
-        return true;
+    if(!info.data){
+        return false;
     }
-    return false;
+    auto viewsToRestoreState = reinterpret_cast<vector<ViewState>*>(info.data);
+    for(auto& viewState : *viewsToRestoreState){
+        if(viewState.state){
+            viewState.view->restoreState(*viewState.state);
+        }
+        viewState.view->onRestored(static_cast<bool>(viewState.state));
+    }
+    return true;
 }
 
 

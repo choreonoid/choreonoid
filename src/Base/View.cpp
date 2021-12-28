@@ -235,13 +235,25 @@ void View::hideEvent(QHideEvent*)
 
 
 /**
+   This function is called when the view has been restored in a project.
+   Note that the function is called after the restoreState function is called
+   if the project contains the state of the view. In this case, the stateRestore
+   parameter is true.
+*/
+void View::onRestored(bool /* stateRestored */)
+{
+
+}
+
+
+/**
    Virtual function which is called when the view becomes visible on the main window.
 
-   @note In the current implementation, this function may be continuously called
+   \note In the current implementation, this function may be continuously called
    two or three times when the perspective changes, and the number of calles does not
    necessarily corresponds to the number of 'onDeactivated()' calles.
 
-   @todo improve the behavior written as note
+   \todo improve the behavior written as note
 */
 void View::onActivated()
 {

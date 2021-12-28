@@ -41,8 +41,8 @@ public:
 void LinkDeviceListView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager()
-        .registerClass<LinkDeviceListView>(N_("LinkDeviceListView"), N_("Links / Devices"))
-        .registerClassAlias("LinkSelectionView", "Body::LinkDeviceListView");
+        .registerClass<LinkDeviceListView>(N_("LinkDeviceListView"), N_("Links / Devices"));
+    ViewManager::setClassAlias("LinkSelectionView", "Body::LinkDeviceListView");
 }
 
 

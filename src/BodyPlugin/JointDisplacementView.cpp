@@ -34,10 +34,9 @@ public:
 
 void JointDisplacementView::initializeClass(ExtensionManager* ext)
 {
-    auto& vm = ext->viewManager();
-    vm.registerClass<JointDisplacementView>(
+    ext->viewManager().registerClass<JointDisplacementView>(
         N_("JointDisplacementView"), N_("Joint Displacement"));
-    vm.registerClassAlias("JointSliderView", "JointDisplacementView");
+    ViewManager::setClassAlias("JointSliderView", "JointDisplacementView");
 }
 
 
