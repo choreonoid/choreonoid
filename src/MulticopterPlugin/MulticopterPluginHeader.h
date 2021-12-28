@@ -19,7 +19,6 @@
 #include <cnoid/SimulatorItem>
 #include <cnoid/SubSimulatorItem>
 #include <cnoid/MeshGenerator>
-#include <cnoid/SceneView>
 #include <cnoid/AISTCollisionDetector>
 #include <cnoid/EigenArchive>
 #include <cnoid/Tokenizer>

@@ -7,8 +7,6 @@
 namespace Multicopter {
 class EventManager;
 
-#define VISIBLE_ROOT_NODE_SIZE (2)
-
 class LinkManager
 {
 friend class EventManager;
@@ -53,14 +51,6 @@ public:
             childItemArray(child, itemAry, containSelf);
         }
     }
-
-    cnoid::SgSwitchableGroupPtr visibleRootNode(int idx = 0);
-
-    cnoid::SgSwitchableGroupPtr nonVisibleRootNode();
-
-    void showVisibleNode(bool flg, int idx = 0);
-
-    void showNonVisibleNode(bool flg);
 
     QUuid addBodyCreateEvent(std::function<void(const QUuid&, const cnoid::Body*, const std::vector<cnoid::Link*>&, const std::vector<cnoid::Device*>&)>& ev);
 
@@ -123,13 +113,9 @@ private:
     std::map<cnoid::Body*, cnoid::Connection> _bodyKinemaStateChangedConMap;
     std::map<cnoid::Device*, cnoid::Connection> _devStateChangedConMap;
 
-
     cnoid::Body* _curBody;
     cnoid::Link* _curLink;
 
-    cnoid::SgSwitchableGroupPtr _visRootNodeAry[VISIBLE_ROOT_NODE_SIZE];
-    cnoid::SgSwitchableGroupPtr _nonVisRootNode;
-    
     bool _isInitialized = false;
     bool _isFinalized = false;
     bool _isSimInit = false;

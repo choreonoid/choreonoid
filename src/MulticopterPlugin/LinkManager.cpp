@@ -38,22 +38,6 @@ LinkManager::initialize()
     std::function<void(cnoid::SimulatorItem*)> simStartedEv = std::bind(&LinkManager::onSimulationStarted, this, std::placeholders::_1);
     _bodyItemDeleteEvId = EventManager::instance()->addSimulationStartedEvent(simStartedEv);
 
-
-    for(int i=0 ; i<VISIBLE_ROOT_NODE_SIZE ; ++i){
-        if( !_visRootNodeAry[i] ){
-            _visRootNodeAry[i] = new SgSwitchableGroup();
-            _visRootNodeAry[i]->setTurnedOn(true);
-            SceneView::instance()->scene()->addChild(_visRootNodeAry[i]);
-        }
-    }
-
-
-    if( !_nonVisRootNode ){
-        _nonVisRootNode = new SgSwitchableGroup();
-        _nonVisRootNode->setTurnedOn(true);
-        SceneView::instance()->scene()->addChild(_nonVisRootNode);
-    }
-
     _isInitialized = true;
     return true;
 }
@@ -172,36 +156,6 @@ LinkManager::mesh(const Link* link, vector<Triangle3d>& triAry)
         Eigen::Vector3d p1 = vtxAry[(*it)[1]];
         Eigen::Vector3d p2 = vtxAry[(*it)[2]];
         triAry.push_back(Triangle3d(p0,p1,p2));
-    }
-}
-
-SgSwitchableGroupPtr
-LinkManager::visibleRootNode(int idx)
-{
-    return _visRootNodeAry[idx];
-}
-
-SgSwitchableGroupPtr
-LinkManager::nonVisibleRootNode()
-{
-    return _nonVisRootNode;
-}
-
-void
-LinkManager::showVisibleNode(bool flg, int idx)
-{
-    if( _visRootNodeAry[idx] ){
-        _visRootNodeAry[idx]->setTurnedOn(flg);
-        _visRootNodeAry[idx]->notifyUpdate();
-    }
-}
-
-void
-LinkManager::showNonVisibleNode(bool flg)
-{
-    if( _nonVisRootNode ){
-        _nonVisRootNode->setTurnedOn(flg);
-        _nonVisRootNode->notifyUpdate();
     }
 }
 
