@@ -36,7 +36,6 @@ using fmt::format;
 
 namespace {
 
-ProjectManager* instance_ = nullptr;
 bool defaultLayoutInclusionMode = true;
 bool isLayoutInclusionMode = true;
 int projectBeingLoadedCounter = 0;
@@ -46,6 +45,8 @@ MessageView* mv = nullptr;
 }
 
 namespace cnoid {
+
+ProjectManager* ProjectManager::instance_ = nullptr;
 
 class ProjectManager::Impl
 {
@@ -120,12 +121,6 @@ void ProjectManager::setDefaultLayoutInclusionMode(bool on)
 void ProjectManager::setDefaultOptionToStoreLayoutInProjectFile(bool on)
 {
     defaultLayoutInclusionMode = on;
-}
-
-
-ProjectManager* ProjectManager::instance()
-{
-    return instance_;
 }
 
 
@@ -448,14 +443,6 @@ ItemList<> ProjectManager::Impl::loadProject
 
             if(ViewManager::restoreViewStates(viewStateInfo)){
                 loaded = true;
-            } else {
-                // load the old format (version 1.4 or earlier)
-                Archive* viewStates = archive->findSubArchive("views");
-                if(viewStates->isValid()){
-                    if(restoreObjectStates(archive, viewStates, ViewManager::allViews(), "view")){
-                        loaded = true;
-                    }
-                }
             }
 
             Archive* barStates = archive->findSubArchive("toolbars");

@@ -26,7 +26,7 @@ public:
     static void setDefaultOptionToStoreLayoutInProjectFile(bool on);
     
     static void initializeClass(ExtensionManager* ext);
-    static ProjectManager* instance();
+    static ProjectManager* instance() { return instance_; }
 
     //! The constructor used to create a sub instance for recursive loading / saving
     ProjectManager();
@@ -82,6 +82,8 @@ private:
         std::function<void(const Archive&)> restoreFunction);
 
     void resetArchivers(const std::string& moduleName);
+
+    static ProjectManager* instance_;
 };
 
 }
