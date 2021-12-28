@@ -132,7 +132,6 @@ public:
         return static_cast<EditableSceneLink*>(self->sceneLink(index));
     }
 
-    double calcLinkMarkerRadius(SceneLink* sceneLink) const;
     void onSceneGraphConnection(bool on);
     void updateModel();
     void onSelectionChanged(bool on);
@@ -144,6 +143,7 @@ public:
     void onLinkOriginsCheckChanged(bool on);
     void enableHighlight(bool on);
     void calcBodyMarkerRadius();
+    double calcLinkMarkerRadius(SceneLink* sceneLink) const;
     void ensureCmMarker();
     void ensureCmProjectionMarker();
     LeggedBodyHelper* checkLeggedBody();
@@ -382,16 +382,9 @@ void EditableSceneBody::Impl::initialize()
 }
 
 
-double EditableSceneBody::Impl::calcLinkMarkerRadius(SceneLink* sceneLink) const
+BodyItem* EditableSceneBody::bodyItem()
 {
-    SgNode* shape = sceneLink->visualShape();
-    if(shape){
-        const BoundingBox& bb = shape->boundingBox();
-        if (bb.empty()) return 1.0; // Is this OK?
-        double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
-        return pow(V, 1.0 / 3.0) * 0.6;
-    }
-    return 1.0;
+    return impl->bodyItem;
 }
 
 
@@ -651,6 +644,19 @@ void EditableSceneBody::Impl::calcBodyMarkerRadius()
             bodyMarkerRadius = radius0;
         }
     }
+}
+
+
+double EditableSceneBody::Impl::calcLinkMarkerRadius(SceneLink* sceneLink) const
+{
+    SgNode* shape = sceneLink->visualShape();
+    if(shape){
+        const BoundingBox& bb = shape->boundingBox();
+        if (bb.empty()) return 1.0; // Is this OK?
+        double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
+        return pow(V, 1.0 / 3.0) * 0.6;
+    }
+    return 1.0;
 }
 
 

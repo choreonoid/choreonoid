@@ -51,6 +51,8 @@ public:
 
     EditableSceneBody(BodyItem* bodyItem);
 
+    BodyItem* bodyItem();
+
     EditableSceneLink* editableSceneLink(int index);
     void setLinkVisibilities(const std::vector<bool>& visibilities);
 
