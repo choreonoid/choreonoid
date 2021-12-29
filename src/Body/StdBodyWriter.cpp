@@ -7,6 +7,7 @@
 #include <cnoid/YAMLWriter>
 #include <cnoid/EigenArchive>
 #include <cnoid/NullOut>
+#include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <mutex>
@@ -127,7 +128,7 @@ bool StdBodyWriter::Impl::writeBody(Body* body, const std::string& filename)
 {
     bool result = false;
     
-    auto directory = filesystem::path(filename).parent_path().generic_string();
+    auto directory = filesystem::path(fromUTF8(filename)).parent_path().generic_string();
     sceneWriter.setBaseDirectory(directory);
 
     updateDeviceWriteFunctions();
