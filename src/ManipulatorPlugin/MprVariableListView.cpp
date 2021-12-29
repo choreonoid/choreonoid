@@ -38,10 +38,11 @@ constexpr int NoteColumn = 3;
 class VariableListModel : public QAbstractTableModel
 {
 public:
+    MprVariableListView::Impl* view;
     MprVariableListPtr variableList;
     ScopedConnectionSet variableListConnections;
     
-    VariableListModel(QObject* parent);
+    VariableListModel(MprVariableListView::Impl* view);
     void setVariableList(MprVariableList* variables);
     void refresh();
     int numVariables() const;
@@ -155,8 +156,9 @@ public:
 
 namespace {
 
-VariableListModel::VariableListModel(QObject* parent)
-    : QAbstractTableModel(parent)
+VariableListModel::VariableListModel(MprVariableListView::Impl* view)
+    : QAbstractTableModel(view),
+      view(view)
 {
 
 }
@@ -425,6 +427,17 @@ void VariableListModel::onVariableAdded(int variableIndex)
     }
     beginInsertRows(QModelIndex(), variableIndex, variableIndex);
     endInsertRows();
+
+    /*
+      In Windows, the view's resizeColumnToContents function must be executed
+      to readjust the column size even though the ResizeToContents mode is
+      specified with the setSectionResizeMode function in advance.
+      \note It may be better to use LazyCaller to execute the functions.
+    */
+#ifdef Q_OS_WIN32
+    view->resizeColumnToContents(IdColumn);
+    view->resizeColumnToContents(ValueColumn);
+#endif
 }
 
 
@@ -437,6 +450,11 @@ void VariableListModel::onVariableRemoved(int variableIndex)
         beginResetModel();
         endResetModel();
     }
+
+#ifdef Q_OS_WIN32
+    view->resizeColumnToContents(IdColumn);
+    view->resizeColumnToContents(ValueColumn);
+#endif
 }
 
 
@@ -445,11 +463,17 @@ void VariableListModel::onVariableUpdated(int variableIndex, int flags)
     if(flags & MprVariable::IdUpdate){
         auto modelIndex = index(variableIndex, IdColumn, QModelIndex());
         Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+#ifdef Q_OS_WIN32
+        view->resizeColumnToContents(IdColumn);
+#endif
     }
     if(flags & MprVariable::ValueUpdate){
         auto modelIndex1 = index(variableIndex, ValueTypeColumn, QModelIndex());
         auto modelIndex2 = index(variableIndex, ValueColumn, QModelIndex());
         Q_EMIT dataChanged(modelIndex1, modelIndex2, { Qt::EditRole });
+#ifdef Q_OS_WIN32
+        view->resizeColumnToContents(ValueColumn);
+#endif
     }
     if(flags & MprVariable::NoteUpdate){
         auto modelIndex = index(variableIndex, NoteColumn, QModelIndex());
@@ -802,8 +826,6 @@ void MprVariableListView::Impl::addVariable(int row, bool doInsert)
         MprVariablePtr variable = new MprVariable(id, currentVariableList->defaultValue());
         int newVariableIndex = doInsert ? row : row + 1;
         currentVariableList->insert(newVariableIndex, variable);
-        resizeColumnToContents(IdColumn);
-        //resizeColumnToContents(ValueColumn);
     }
 }
 

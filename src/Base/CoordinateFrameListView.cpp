@@ -425,6 +425,17 @@ void FrameListModel::onFrameAdded(int frameIndex)
     }
     beginInsertRows(QModelIndex(), frameIndex, frameIndex);
     endInsertRows();
+
+    /*
+      In Windows, the view's resizeColumnToContents function must be executed
+      to readjust the column size even though the ResizeToContents mode is
+      specified with the setSectionResizeMode function in advance.
+      \note It may be better to use LazyCaller to execute the functions.
+    */
+#ifdef Q_OS_WIN32
+    view->resizeColumnToContents(IdColumn);
+    view->resizeColumnToContents(PositionColumn);
+#endif
 }
 
 
@@ -437,6 +448,11 @@ void FrameListModel::onFrameRemoved(int frameIndex)
         beginResetModel();
         endResetModel();
     }
+
+#ifdef Q_OS_WIN32
+    view->resizeColumnToContents(IdColumn);
+    view->resizeColumnToContents(PositionColumn);
+#endif
 }
 
 
@@ -445,6 +461,9 @@ void FrameListModel::onFrameUpdated(int frameIndex, int flags)
     if(flags & CoordinateFrame::IdUpdate){
         auto modelIndex = index(frameIndex, IdColumn, QModelIndex());
         Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+#ifdef Q_OS_WIN32
+        view->resizeColumnToContents(IdColumn);
+#endif
     }
     if(flags & CoordinateFrame::ModeUpdate){
         auto modelIndex = index(frameIndex, GlobalCheckColumn, QModelIndex());
@@ -458,6 +477,9 @@ void FrameListModel::onFrameUpdated(int frameIndex, int flags)
     if(flags & CoordinateFrame::PositionUpdate){
         auto modelIndex = index(frameIndex, PositionColumn, QModelIndex());
         Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+#ifdef Q_OS_WIN32
+        view->resizeColumnToContents(PositionColumn);
+#endif
     }
 }
 
@@ -707,8 +729,6 @@ void CoordinateFrameListView::Impl::addFrame(int row, bool doInsert)
         auto id = frameList->createNextId();
         CoordinateFramePtr frame = new CoordinateFrame(id);
         frameListModel->addFrame(row, frame, doInsert);
-        resizeColumnToContents(IdColumn);
-        resizeColumnToContents(PositionColumn);
     }
 }
 

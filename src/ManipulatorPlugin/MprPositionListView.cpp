@@ -444,6 +444,17 @@ void PositionListModel::onPositionAdded(int positionIndex)
     }
     beginInsertRows(QModelIndex(), positionIndex, positionIndex);
     endInsertRows();
+
+    /*
+      In Windows, the view's resizeColumnToContents function must be executed
+      to readjust the column size even though the ResizeToContents mode is
+      specified with the setSectionResizeMode function in advance.
+      \note It may be better to use LazyCaller to execute the functions.
+    */
+#ifdef Q_OS_WIN32
+    view->resizeColumnToContents(IdColumn);
+    view->resizeColumnToContents(PositionColumn);
+#endif
 }
 
 
@@ -456,6 +467,10 @@ void PositionListModel::onPositionRemoved(int positionIndex)
         beginResetModel();
         endResetModel();
     }
+#ifdef Q_OS_WIN32
+    view->resizeColumnToContents(IdColumn);
+    view->resizeColumnToContents(PositionColumn);
+#endif
 }
 
 
@@ -464,6 +479,9 @@ void PositionListModel::onPositionUpdated(int positionIndex, int flags)
     if(flags & MprPosition::IdUpdate){
         auto modelIndex = index(positionIndex, IdColumn, QModelIndex());
         Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+#ifdef Q_OS_WIN32
+        view->resizeColumnToContents(IdColumn);
+#endif
     }
     if(flags & MprPosition::NoteUpdate){
         auto modelIndex = index(positionIndex, NoteColumn, QModelIndex());
@@ -472,11 +490,18 @@ void PositionListModel::onPositionUpdated(int positionIndex, int flags)
     if(flags & MprPosition::PositionUpdate){
         auto modelIndex = index(positionIndex, PositionColumn, QModelIndex());
         Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+#ifdef Q_OS_WIN32
+        view->resizeColumnToContents(PositionColumn);
+#endif
     }
     if(flags & MprPosition::ObjectReplaced){
         auto modelIndex1 = index(positionIndex, IdColumn, QModelIndex());
         auto modelIndex2 = index(positionIndex, PositionColumn, QModelIndex());
         Q_EMIT dataChanged(modelIndex1, modelIndex2, { Qt::EditRole });
+#ifdef Q_OS_WIN32
+        view->resizeColumnToContents(IdColumn);
+        view->resizeColumnToContents(PositionColumn);
+#endif
     }
 }
 
@@ -689,8 +714,6 @@ void MprPositionListView::Impl::addPosition(int row, bool doInsert)
         MprPositionPtr position = new MprIkPosition(id);
         position->fetch(programItem->kinematicsKit());
         positionListModel->addPosition(row, position, doInsert);
-        resizeColumnToContents(IdColumn);
-        resizeColumnToContents(PositionColumn);
     }
 }
 

@@ -329,8 +329,15 @@ void TagGroupModel::onTagAdded(int tagIndex)
     beginInsertRows(QModelIndex(), tagIndex, tagIndex);
     endInsertRows();
 
-    //resizeColumnToContents(IdColumn);
-    //resizeColumnToContents(PositionColumn);
+    /*
+      In Windows, the view's resizeColumnToContents function must be executed
+      to readjust the column size even though the ResizeToContents mode is
+      specified with the setSectionResizeMode function in advance.
+      \note It may be better to use LazyCaller to execute the functions.
+    */
+#ifdef Q_OS_WIN32
+    widget->resizeColumnToContents(IndexColumn);
+#endif
 }
 
 
@@ -343,6 +350,10 @@ void TagGroupModel::onTagRemoved(int tagIndex)
         beginResetModel();
         endResetModel();
     }
+
+#ifdef Q_OS_WIN32
+    widget->resizeColumnToContents(IndexColumn);
+#endif
 }
 
 
