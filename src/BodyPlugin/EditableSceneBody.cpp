@@ -258,6 +258,7 @@ void EditableSceneLink::Impl::showOrigin(bool on)
                 self->removeChild(originMarker, update);
             }
         }
+        isOriginShown = on;
     }
 }
 
