@@ -360,7 +360,7 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     CoordinateFrameItem::initializeClass(ext);
     PositionTagGroupItem::initializeClass(ext);
 
-    MovieRecorder::initialize(ext);
+    MovieRecorder::initializeClass(ext);
 
     CaptureBar::initialize(ext);
     

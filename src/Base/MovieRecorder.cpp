@@ -28,7 +28,6 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/Selection>
 #include <cnoid/UTF8>
-#include <cnoid/stdx/variant>
 #include <cnoid/stdx/filesystem>
 #include <QPainter>
 #include <QDialogButtonBox>
@@ -55,57 +54,42 @@ const bool ENABLE_MOUSE_CURSOR_CAPTURE = false;
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
-using fmt::format;
 
 namespace {
 
-enum RecordinMode { OFFLINE_MODE, ONLINE_MODE, DIRECT_MODE, N_RECORDING_MODES };
+ExtensionManager* extensionManager = nullptr;
+MovieRecorder* instance_ = nullptr;
 
-MovieRecorder* movieRecorder = nullptr;
+vector<MovieRecorderEncoderPtr> newEncoders;
+
+enum RecordinMode { OFFLINE_MODE, ONLINE_MODE, DIRECT_MODE, N_RECORDING_MODES };
 
 class MovieRecorderBar : public ToolBar
 {
 public:
-    MovieRecorderImpl* recorder;
     ToolButton* recordingToggle;
     ToolButton* viewMarkerToggle;
     bool isFlashed;
     
-    MovieRecorderBar(MovieRecorderImpl* recorder);
-
-    void flashRecordingToggle(bool setNormal){
-        if(isFlashed || setNormal){
-            recordingToggle->setIcon(QIcon(":/Base/icon/record.svg"));
-            isFlashed = false;
-        } else {
-            recordingToggle->setIcon(QIcon(":/Base/icon/record2.svg"));
-            isFlashed = true;
-        }
-    }
-
-    void setRecordingToggle(bool on){
-        recordingToggle->blockSignals(true);
-        recordingToggle->setChecked(on);
-        recordingToggle->blockSignals(false);
-    }
-    
-    void changeViewMarkerToggleState(bool on){
-        viewMarkerToggle->blockSignals(true);
-        viewMarkerToggle->setChecked(on);
-        viewMarkerToggle->blockSignals(false);
-    }
+    MovieRecorderBar();
+    void flashRecordingToggle(bool setNormal);
+    void setRecordingToggle(bool on);
+    void changeViewMarkerToggleState(bool on);
 };
+
+MovieRecorderBar* movieRecorderBar = nullptr;
 
 class ConfigDialog : public Dialog
 {
 public:
-    MovieRecorderImpl* recorder;
+    MovieRecorder::Impl* recorderImpl;
     ScopedConnectionSet viewManagerConnections;
     LazyCaller updateViewComboLater;
     vector<View*> activeViews;
     ComboBox targetViewCombo;
     CheckBox viewMarkerCheck;
     RadioButton modeRadioButtons[N_RECORDING_MODES];
+    ComboBox encoderCombo;
     LineEdit directoryEntry;
     PushButton directoryButton;
     LineEdit basenameEntry;
@@ -120,64 +104,49 @@ public:
     CheckBox mouseCursorCheck;
     ToggleButton recordingToggle;
 
-    double startTime() const {
-        return startTimeCheck.isChecked() ? startTimeSpin.value() : 0.0;
-    }
-    double finishTime() const {
-        return finishTimeCheck.isChecked() ? finishTimeSpin.value() : std::numeric_limits<double>::max();
-    }
-    double frameRate() const {
-        return fpsSpin.value();
-    }
-    double timeStep() const {
-        return 1.0 / fpsSpin.value();
-    }
-    void setViewMarkerCheck(bool on){
-        viewMarkerCheck.blockSignals(true);
-        viewMarkerCheck.setChecked(on);
-        viewMarkerCheck.blockSignals(false);
-    }
-    void checkRecordingModeRadio(int mode){
-        RadioButton& radio = modeRadioButtons[mode];
-        radio.blockSignals(true);
-        radio.setChecked(true);
-        radio.blockSignals(false);
-    }
-    void setRecordingToggle(bool on){
-        recordingToggle.blockSignals(true);
-        recordingToggle.setChecked(on);
-        recordingToggle.blockSignals(false);
-    }
-
-    ConfigDialog(MovieRecorderImpl* recorder);
-    virtual void showEvent(QShowEvent* event);
-    virtual void hideEvent(QHideEvent* event);
+    ConfigDialog(MovieRecorder::Impl* recorderImpl);
+    virtual void showEvent(QShowEvent* event) override;
+    virtual void hideEvent(QHideEvent* event) override;
     void updateViewCombo();
     void onTargetViewIndexChanged(int index);
     void onRecordingModeRadioClicked(int mode);
     void showDirectorySelectionDialog();
-    bool store(Mapping& archive);
-    void restore(const Mapping& archive);
+    double startTime() const;
+    double finishTime() const;
+    double frameRate() const;
+    double timeStep() const;
+    void setViewMarkerCheck(bool on);
+    void checkRecordingModeRadio(int mode);
+    void setRecordingToggle(bool on);
+    bool store(Mapping* archive);
+    void restore(const Mapping* archive);
 };
-
 
 class ViewMarker : public QWidget
 {
 public:
-    MovieRecorderImpl* recorder;
+    MovieRecorder::Impl* recorderImpl;
     QPen pen;
-    ViewMarker(MovieRecorderImpl* recorder);
+    ViewMarker(MovieRecorder::Impl* recorderImpl);
     void setTargetView(View* view);
     virtual void paintEvent(QPaintEvent* event);
+};
+
+class SequentialNumberedImageFileEncoder : public MovieRecorderEncoder
+{
+public:
+    virtual std::string formatName() const override;
+    virtual bool doEncoding(std::string fileBasename) override;
 };
 
 }
 
 namespace cnoid {
 
-class MovieRecorderImpl
+class MovieRecorder::Impl
 {
 public:
+    MovieRecorder* self;    
     Selection recordingMode;
     bool isRecording;
     bool isBeforeFirstFrameCapture;
@@ -197,7 +166,6 @@ public:
 
     ConfigDialog* dialog;
     MovieRecorderBar* toolBar;
-
     TimeBar* timeBar;
     ConnectionSet timeBarConnections;
 
@@ -208,32 +176,36 @@ public:
     
     Timer flashTimer;
 
-    typedef stdx::variant<QPixmap, QImage> ImageVariant;
+    filesystem::path directoryPath;
+    string fileBasename;
 
-    class CapturedImage : public Referenced {
-    public:
-        ImageVariant image;
-        int frame;
-    };
-    typedef ref_ptr<CapturedImage> CapturedImagePtr;
+    typedef MovieRecorderEncoder::CapturedImage CapturedImage;
+    typedef MovieRecorderEncoder::CapturedImagePtr CapturedImagePtr;
 
     deque<CapturedImagePtr> capturedImages;
     vector<quint32> tmpImageBuf;
-    std::thread imageOutputThread;
+    std::thread encoderThread;
     std::mutex imageQueueMutex;
     std::condition_variable imageQueueCondition;
-    string filenameFormat;
-    
-    MovieRecorderImpl(ExtensionManager* ext);
-    ~MovieRecorderImpl();
+
+    vector<MovieRecorderEncoderPtr> encoders;
+    MovieRecorderEncoderPtr currentEncoder;
+    string encodeErrorMessage;
+
+    static MovieRecorder::Impl* instance();
+    Impl(MovieRecorder* self);
+    ~Impl();
+    void addEncoder(MovieRecorderEncoder* encoder);
     void setTargetView(View* view);
     void onTargetViewResized(View* view);
     void onTargetViewRemoved(View* view);
     void setTargetView(const std::string& name);
     void onViewCreated(View* view);
     void setRecordingMode(const std::string& symbol);
+    void setCurrentEncoder(int index, bool doUpdateCombo);
+    void setCurrentFormat(const std::string& formatName);
     void activateRecording(bool on, bool isActivatedByDialog);
-    bool setupViewAndFilenameFormat();
+    bool initializeRecording();
     bool doOfflineModeRecording();
     void setupOnlineModeRecording();
     void startOnlineModeRecording();
@@ -244,54 +216,74 @@ public:
     void captureViewImage(bool waitForPrevOutput);
     void drawMouseCursorImage(QPainter& painter);
     void captureSceneWidgets(QWidget* widget, QPixmap& pixmap);
-    void startImageOutput();
-    void outputImages();
-    void onImageOutputFailed(std::string message);
+    void startEncoding();
+    MovieRecorderEncoder::CapturedImagePtr getNextFrameImage();
+    void setEncodeErrorMessage(const std::string& message);
+    void onEncodingFailed();
     void stopRecording(bool isFinished);
     void onViewMarkerToggled(bool on);
     bool showViewMarker();
     void startFlash();
     void onFlashTimeout();
     void stopFlash();
-    bool store(Mapping& archive);
-    void restore(const Mapping& archive);
+    bool store(Mapping* archive);
+    void restore(const Mapping* archive);
 };
 
 }
 
 
-void MovieRecorder::initialize(ExtensionManager* ext)
+void MovieRecorder::initializeClass(ExtensionManager* ext)
 {
-    if(!movieRecorder){
-        movieRecorder = ext->manage(new MovieRecorder(ext));
-    }
+    extensionManager = ext;
+    movieRecorderBar = new MovieRecorderBar;
+    ext->addToolBar(movieRecorderBar);
 }
 
 
 MovieRecorder* MovieRecorder::instance()
 {
-    return movieRecorder;
+    if(!instance_){
+        instance_ = extensionManager->manage(new MovieRecorder);
+    }
+    return instance_;
 }
 
 
-MovieRecorder::MovieRecorder(ExtensionManager* ext)
+MovieRecorder::Impl* MovieRecorder::Impl::instance()
 {
-    impl = new MovieRecorderImpl(ext);
+    return MovieRecorder::instance()->impl;
 }
 
 
-MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
-    : recordingMode(N_RECORDING_MODES, CNOID_GETTEXT_DOMAIN_NAME),
-      mv(MessageView::instance())
+void MovieRecorder::addEncoder(MovieRecorderEncoder* encoder)
+{
+    if(!instance_){
+        newEncoders.push_back(encoder);
+    } else {
+        instance_->impl->addEncoder(encoder);
+    }
+}
 
+
+MovieRecorder::MovieRecorder()
+{
+    impl = new Impl(this);
+}
+
+
+MovieRecorder::Impl::Impl(MovieRecorder* self)
+    : self(self),
+      recordingMode(N_RECORDING_MODES, CNOID_GETTEXT_DOMAIN_NAME),
+      mv(MessageView::instance())
 {
     recordingMode.setSymbol(OFFLINE_MODE, N_("Offline"));
     recordingMode.setSymbol(ONLINE_MODE, N_("Online"));
     recordingMode.setSymbol(DIRECT_MODE, N_("Direct"));
-    
+    recordingMode.select(OFFLINE_MODE);
+
     dialog = new ConfigDialog(this);
-    toolBar = new MovieRecorderBar(this);
-    ext->addToolBar(toolBar);
+    toolBar = movieRecorderBar;
     timeBar = TimeBar::instance();
 
     targetView = nullptr;
@@ -309,10 +301,17 @@ MovieRecorderImpl::MovieRecorderImpl(ExtensionManager* ext)
     flashTimer.setInterval(500);
     flashTimer.sigTimeout().connect([&](){ onFlashTimeout(); });
 
-    Mapping& config = *AppConfig::archive()->findMapping("MovieRecorder");
-    if(config.isValid()){
+    auto config = AppConfig::archive()->findMapping("MovieRecorder");
+    if(config->isValid()){
         restore(config);
     }
+
+    for(auto& encoder : newEncoders){
+        addEncoder(encoder);
+    }
+    newEncoders.clear();
+
+    addEncoder(new SequentialNumberedImageFileEncoder);
 }
 
 
@@ -322,21 +321,32 @@ MovieRecorder::~MovieRecorder()
 }
 
 
-MovieRecorderImpl::~MovieRecorderImpl()
+MovieRecorder::Impl::~Impl()
 {
-    if(imageOutputThread.joinable()){
+    if(encoderThread.joinable()){
         requestStopRecording = true;
         imageQueueCondition.notify_all();
-        imageOutputThread.join();
+        encoderThread.join();
     }
     
     timeBarConnections.disconnect();
-    store(*AppConfig::archive()->openMapping("MovieRecorder"));
+    store(AppConfig::archive()->openMapping("MovieRecorder"));
     delete dialog;
 
     if(viewMarker){
         delete viewMarker;
     }
+}
+
+
+void MovieRecorder::Impl::addEncoder(MovieRecorderEncoder* encoder)
+{
+    encoder->recorderImpl = this;
+    encoders.push_back(encoder);
+    if(!currentEncoder){
+        currentEncoder = encoder;
+    }
+    dialog->encoderCombo.addItem(encoder->formatName().c_str());
 }
 
 
@@ -346,7 +356,7 @@ void MovieRecorder::showDialog()
 }
 
 
-void MovieRecorderImpl::setTargetView(View* view)
+void MovieRecorder::Impl::setTargetView(View* view)
 {
     if(view != targetView){
         if(isRecording){
@@ -374,7 +384,7 @@ void MovieRecorderImpl::setTargetView(View* view)
 }
 
 
-void MovieRecorderImpl::onTargetViewResized(View* view)
+void MovieRecorder::Impl::onTargetViewResized(View* view)
 {
     if(targetView == view){
         showViewMarker();
@@ -382,7 +392,7 @@ void MovieRecorderImpl::onTargetViewResized(View* view)
 }
 
 
-void MovieRecorderImpl::onTargetViewRemoved(View* view)
+void MovieRecorder::Impl::onTargetViewRemoved(View* view)
 {
     if(targetView == view){
         setTargetView(0);
@@ -390,7 +400,7 @@ void MovieRecorderImpl::onTargetViewRemoved(View* view)
 }
 
 
-void MovieRecorderImpl::setTargetView(const std::string& name)
+void MovieRecorder::Impl::setTargetView(const std::string& name)
 {
     if(name != targetViewName){
         targetViewName = name;
@@ -413,7 +423,7 @@ void MovieRecorderImpl::setTargetView(const std::string& name)
 }
 
 
-void MovieRecorderImpl::onViewCreated(View* view)
+void MovieRecorder::Impl::onViewCreated(View* view)
 {
     if(view->name() == targetViewName){
         setTargetView(view);
@@ -421,14 +431,40 @@ void MovieRecorderImpl::onViewCreated(View* view)
 }
 
 
-void MovieRecorderImpl::setRecordingMode(const std::string& symbol)
+void MovieRecorder::Impl::setRecordingMode(const std::string& symbol)
 {
     recordingMode.select(symbol);
     dialog->checkRecordingModeRadio(recordingMode.which());
 }
 
 
-void MovieRecorderImpl::activateRecording(bool on, bool isActivatedByDialog)
+void MovieRecorder::Impl::setCurrentEncoder(int index, bool doUpdateCombo)
+{
+    if(index < encoders.size()){
+        currentEncoder = encoders[index];
+
+        if(doUpdateCombo){
+            auto& combo = dialog->encoderCombo;
+            combo.blockSignals(true);
+            combo.setCurrentIndex(index);
+            combo.blockSignals(false);
+        }
+    }
+}
+
+
+void MovieRecorder::Impl::setCurrentFormat(const std::string& formatName)
+{
+    for(size_t i=0; i < encoders.size(); ++i){
+        if(encoders[i]->formatName() == formatName){
+            setCurrentEncoder(i, true);
+            break;
+        }
+    }
+}
+
+
+void MovieRecorder::Impl::activateRecording(bool on, bool isActivatedByDialog)
 {
     if(isActivatedByDialog){
         toolBar->setRecordingToggle(on);
@@ -438,19 +474,15 @@ void MovieRecorderImpl::activateRecording(bool on, bool isActivatedByDialog)
 
     if(!on){
         stopRecording(false);
+        
     } else {
-
         if(isRecording){
             return;
         }
+        if(!initializeRecording()){
+            stopRecording(false);
 
-        if(setupViewAndFilenameFormat()){
-            frame = 0;
-            requestStopRecording = false;
-            timeStep = dialog->timeStep();
-            startTime = dialog->startTime();
-            finishTime = dialog->finishTime();
-            
+        } else {
             switch(recordingMode.which()){
                 
             case OFFLINE_MODE:
@@ -478,50 +510,71 @@ void MovieRecorderImpl::activateRecording(bool on, bool isActivatedByDialog)
 }
 
 
-bool MovieRecorderImpl::setupViewAndFilenameFormat()
+bool MovieRecorder::Impl::initializeRecording()
 {
     if(!targetView){
         showWarningDialog(_("Target view is not specified."));
         return false;
     }
 
-    filesystem::path directory(fromUTF8(dialog->directoryEntry.string()));
-    filesystem::path basename(fromUTF8(dialog->basenameEntry.string() + "{:08d}.png"));
-
-    if(directory.empty()){
+    directoryPath = fromUTF8(dialog->directoryEntry.string());
+    if(directoryPath.empty()){
         showWarningDialog(_("Please set a directory to output image files."));
         return false;
 
     } else {
-        if(filesystem::exists(directory)){
-            if(!filesystem::is_directory(directory)){
-                showWarningDialog(format(_("{} is not a directory."), directory));
+        if(filesystem::exists(directoryPath)){
+            if(!filesystem::is_directory(directoryPath)){
+                showWarningDialog(fmt::format(_("{} is not a directory."), directoryPath));
                 return false;
             }
         } else {
-            filesystem::create_directories(directory);
+            filesystem::create_directories(directoryPath);
         }
     }
 
-    filenameFormat = toUTF8((directory / basename).string());
+    filesystem::path basePath(directoryPath / fromUTF8(dialog->basenameEntry.string()));
+    fileBasename = toUTF8(basePath.string());
 
+    int width, height;
+    QSize viewSize = targetView->size();
     if(dialog->imageSizeCheck.isChecked()){
-        int width = dialog->imageWidthSpin.value();
-        int height = dialog->imageHeightSpin.value();
-        QSize s = targetView->size();
-        int x = (s.width() - width) / 2;
-        int y = (s.height() - height) / 2;
-        targetView->setGeometry(x, y, width, height);
+        width = dialog->imageWidthSpin.value();
+        height = dialog->imageHeightSpin.value();
+    } else {
+        width = viewSize.width();
+        height = viewSize.height();
+    }
+    {
+        std::lock_guard<std::mutex> lock(imageQueueMutex);
+        capturedImages.clear();
     }
 
-    std::lock_guard<std::mutex> lock(imageQueueMutex);
-    capturedImages.clear();
+    frame = 0;
+    requestStopRecording = false;
+    timeStep = dialog->timeStep();
+    startTime = dialog->startTime();
+    finishTime = dialog->finishTime();
+
+    bool initialized = currentEncoder->initializeEncoding(width, height, dialog->frameRate());
+
+    if(initialized){
+        if(dialog->imageSizeCheck.isChecked()){
+            int x = (viewSize.width() - width) / 2;
+            int y = (viewSize.height() - height) / 2;
+            targetView->setGeometry(x, y, width, height);
+        }
+    } else {
+        if(!encodeErrorMessage.empty()){
+            showWarningDialog(encodeErrorMessage);
+        }
+    }
     
-    return true;
+    return initialized;
 }
 
 
-bool MovieRecorderImpl::doOfflineModeRecording()
+bool MovieRecorder::Impl::doOfflineModeRecording()
 {
     double time = startTime;
     bool doContinue = true;
@@ -529,9 +582,12 @@ bool MovieRecorderImpl::doOfflineModeRecording()
     isRecording = true;
 
     startFlash();
-    startImageOutput();
+    startEncoding();
 
-    mv->putln(format(startMessage, targetView->name(), recordingMode.selectedLabel()));
+    mv->putln(
+        fmt::format(startMessage,
+                    targetView->windowTitle().toStdString(),
+                    recordingMode.selectedLabel()));
     
     while(time <= finishTime && doContinue){
 
@@ -557,7 +613,7 @@ bool MovieRecorderImpl::doOfflineModeRecording()
 }
 
 
-void MovieRecorderImpl::setupOnlineModeRecording()
+void MovieRecorder::Impl::setupOnlineModeRecording()
 {
     timeBarConnections.disconnect();
         
@@ -571,12 +627,14 @@ void MovieRecorderImpl::setupOnlineModeRecording()
             timeBar->sigPlaybackStarted().connect(
                 [&](double /* time */){ startOnlineModeRecording(); }));
         
-        mv->putln(format(_("The online mode recording for {} is ready."), targetView->name()));
+        mv->putln(
+            fmt::format(_("The online mode recording for {} is ready."),
+                        targetView->windowTitle().toStdString()));
     }
 }
 
 
-void MovieRecorderImpl::startOnlineModeRecording()
+void MovieRecorder::Impl::startOnlineModeRecording()
 {
     timeBarConnections.disconnect();
     
@@ -589,13 +647,17 @@ void MovieRecorderImpl::startOnlineModeRecording()
             [&](double /* time */, bool isStoppedManually){ onPlaybackStopped(isStoppedManually); }));
 
     isRecording = true;
-    startImageOutput();
+    startEncoding();
 
-    mv->putln(format(startMessage, targetView->name(), recordingMode.selectedLabel()));
+    mv->putln(
+        fmt::format(
+            startMessage,
+            targetView->windowTitle().toStdString(),
+            recordingMode.selectedLabel()));
 }
 
 
-bool MovieRecorderImpl::onTimeChanged(double time)
+bool MovieRecorder::Impl::onTimeChanged(double time)
 {
     if(isRecording){
         if(isBeforeFirstFrameCapture){
@@ -618,32 +680,36 @@ bool MovieRecorderImpl::onTimeChanged(double time)
 }
 
 
-void MovieRecorderImpl::onPlaybackStopped(bool isStoppedManually)
+void MovieRecorder::Impl::onPlaybackStopped(bool isStoppedManually)
 {
     stopRecording(!isStoppedManually);
 }
 
 
-void MovieRecorderImpl::startDirectModeRecording()
+void MovieRecorder::Impl::startDirectModeRecording()
 {
     isRecording = true;
     startFlash();
-    startImageOutput();
+    startEncoding();
     directModeTimer.setInterval(1000 / dialog->frameRate());
     directModeTimer.start();
 
-    mv->putln(format(startMessage, targetView->name(), recordingMode.selectedLabel()));
+    mv->putln(
+        fmt::format(
+            startMessage,
+            targetView->windowTitle().toStdString(),
+            recordingMode.selectedLabel()));
 }
 
 
-void MovieRecorderImpl::onDirectModeTimerTimeout()
+void MovieRecorder::Impl::onDirectModeTimerTimeout()
 {
     captureViewImage(false);
     ++frame;
 }
 
 
-void MovieRecorderImpl::captureViewImage(bool waitForPrevOutput)
+void MovieRecorder::Impl::captureViewImage(bool waitForPrevOutput)
 {
     CapturedImagePtr captured = new CapturedImage;
     captured->frame = frame;
@@ -678,7 +744,7 @@ void MovieRecorderImpl::captureViewImage(bool waitForPrevOutput)
 }
 
 
-void MovieRecorderImpl::drawMouseCursorImage(QPainter& painter)
+void MovieRecorder::Impl::drawMouseCursorImage(QPainter& painter)
 {
 #ifdef Q_OS_LINUX
     XFixesCursorImage* cursor = XFixesGetCursorImage(QX11Info::display());
@@ -708,7 +774,7 @@ void MovieRecorderImpl::drawMouseCursorImage(QPainter& painter)
 }
 
 
-void MovieRecorderImpl::captureSceneWidgets(QWidget* widget, QPixmap& pixmap)
+void MovieRecorder::Impl::captureSceneWidgets(QWidget* widget, QPixmap& pixmap)
 {
     const QObjectList objs = widget->children();
     for(int i=0; i < objs.size(); ++i){
@@ -725,66 +791,66 @@ void MovieRecorderImpl::captureSceneWidgets(QWidget* widget, QPixmap& pixmap)
 }
 
 
-void MovieRecorderImpl::startImageOutput()
+void MovieRecorder::Impl::startEncoding()
 {
-    if(!imageOutputThread.joinable()){
-        imageOutputThread = std::thread(
-            [&](){ outputImages(); });
+    encodeErrorMessage.clear();
+    
+    if(!encoderThread.joinable()){
+        MovieRecorderEncoderPtr encoder = currentEncoder;
+        string basename = fileBasename;
+        encoderThread = std::thread(
+            [this, encoder, basename](){
+                if(!encoder->doEncoding(basename)){
+                    {
+                        std::lock_guard<std::mutex> lock(imageQueueMutex);
+                        capturedImages.clear();
+                    }
+                    imageQueueCondition.notify_all();
+
+                    callLater([this](){ onEncodingFailed(); });
+                }
+            });
     }
 }
 
 
-void MovieRecorderImpl::outputImages()
+MovieRecorderEncoder::CapturedImagePtr MovieRecorder::Impl::getNextFrameImage()
 {
-    while(true){
-        CapturedImagePtr captured;
-        {
-            std::unique_lock<std::mutex> lock(imageQueueMutex);
-            while(isRecording && capturedImages.empty()){
-                imageQueueCondition.wait(lock);
-            }
-            if(capturedImages.empty() && !isRecording){
-                break;
-            }
-            captured = capturedImages.front();
-            capturedImages.pop_front();
+    CapturedImagePtr captured;
+    {
+        std::unique_lock<std::mutex> lock(imageQueueMutex);
+        while(isRecording && capturedImages.empty()){
+            imageQueueCondition.wait(lock);
         }
-        imageQueueCondition.notify_all();
-        
-        bool saved = false;
-
-        string filename = format(filenameFormat, captured->frame);
-        
-        if(stdx::get_variant_index(captured->image) == 0){
-            QPixmap& pixmap = stdx::get<QPixmap>(captured->image);
-            saved = pixmap.save(filename.c_str());
-        } else {
-            QImage& image = stdx::get<QImage>(captured->image);
-            saved = image.save(filename.c_str());
+        if(capturedImages.empty() && !isRecording){
+            return nullptr;
         }
-
-        if(!saved){
-            string message = format(_("Saving an image to \"{}\" failed."), filename);
-            callLater([this, message](){ onImageOutputFailed(message); });
-            {
-                std::lock_guard<std::mutex> lock(imageQueueMutex);
-                capturedImages.clear();
-            }
-            imageQueueCondition.notify_all();
-            break;
-        }
+        captured = capturedImages.front();
+        capturedImages.pop_front();
     }
+    imageQueueCondition.notify_all();
+
+    return captured;
 }
 
 
-void MovieRecorderImpl::onImageOutputFailed(std::string message)
+void MovieRecorder::Impl::setEncodeErrorMessage(const std::string& message)
 {
-    showWarningDialog(message);
+    std::unique_lock<std::mutex> lock(imageQueueMutex);
+    this->encodeErrorMessage = message;
+}
+
+
+void MovieRecorder::Impl::onEncodingFailed()
+{
+    if(!encodeErrorMessage.empty()){
+        showWarningDialog(encodeErrorMessage);
+    }
     stopRecording(false);
 }
 
 
-void MovieRecorderImpl::stopRecording(bool isFinished)
+void MovieRecorder::Impl::stopRecording(bool isFinished)
 {
     directModeTimer.stop();
     
@@ -798,7 +864,9 @@ void MovieRecorderImpl::stopRecording(bool isFinished)
             numRemainingImages = capturedImages.size();
         }
         if(numRemainingImages > 1){
-            QProgressDialog progress(_("Outputting sequential image files..."), _("Abort Output"), 0, numRemainingImages, MainWindow::instance());
+            QProgressDialog progress(
+                _("Outputting sequential image files..."), _("Abort Output"),
+                0, numRemainingImages, MainWindow::instance());
             progress.setWindowTitle(_("Movie Recorder's Output Status"));
             progress.setWindowModality(Qt::WindowModal);
             while(true){
@@ -825,12 +893,13 @@ void MovieRecorderImpl::stopRecording(bool isFinished)
         isRecording = false;
         requestStopRecording = true;
         imageQueueCondition.notify_all();
-        imageOutputThread.join();
+        encoderThread.join();
 
+        auto viewName = targetView->windowTitle().toStdString();
         if(isFinished){
-            mv->putln(format(_("Recording of {} has been finished."), targetView->name()));
+            mv->putln(fmt::format(_("Recording of {} has been finished."), viewName));
         } else {
-            mv->putln(format(_("Recording of {} has been stopped."), targetView->name()));
+            mv->putln(fmt::format(_("Recording of {} has been stopped."), viewName));
         }
 
         targetView->updateGeometry();
@@ -845,7 +914,7 @@ void MovieRecorderImpl::stopRecording(bool isFinished)
 }
 
 
-void MovieRecorderImpl::onViewMarkerToggled(bool on)
+void MovieRecorder::Impl::onViewMarkerToggled(bool on)
 {
     toolBar->changeViewMarkerToggleState(on);
     dialog->setViewMarkerCheck(on);
@@ -867,7 +936,7 @@ void MovieRecorderImpl::onViewMarkerToggled(bool on)
 }
 
 
-bool MovieRecorderImpl::showViewMarker()
+bool MovieRecorder::Impl::showViewMarker()
 {
     if(isViewMarkerEnabled && targetView && targetView->isActive()){
         if(!viewMarker){
@@ -881,14 +950,14 @@ bool MovieRecorderImpl::showViewMarker()
 }
 
 
-void MovieRecorderImpl::startFlash()
+void MovieRecorder::Impl::startFlash()
 {
     showViewMarker();
     flashTimer.start();
 }
 
 
-void MovieRecorderImpl::onFlashTimeout()
+void MovieRecorder::Impl::onFlashTimeout()
 {
     toolBar->flashRecordingToggle(false);
     
@@ -902,7 +971,7 @@ void MovieRecorderImpl::onFlashTimeout()
 }
 
 
-void MovieRecorderImpl::stopFlash()
+void MovieRecorder::Impl::stopFlash()
 {
     flashTimer.stop();
     toolBar->flashRecordingToggle(true);
@@ -912,53 +981,80 @@ void MovieRecorderImpl::stopFlash()
 }
 
 
-bool MovieRecorderImpl::store(Mapping& archive)
+bool MovieRecorder::Impl::store(Mapping* archive)
 {
     if(targetView){
-        archive.write("target", targetView->name());
+        archive->write("target", targetView->name());
     }
-    archive.write("recordingMode", recordingMode.selectedSymbol());
+    archive->write("recordingMode", recordingMode.selectedSymbol());
     return dialog->store(archive);
 }
 
 
-void MovieRecorderImpl::restore(const Mapping& archive)
+void MovieRecorder::Impl::restore(const Mapping* archive)
 {
     string symbol;
-    if(archive.read("target", symbol)){
+    if(archive->read("target", symbol)){
         setTargetView(symbol);
     }
-    if(archive.read("recordingMode", symbol)){
+    if(archive->read("recordingMode", symbol)){
         setRecordingMode(symbol);
     }
     dialog->restore(archive);
 }
 
 
-namespace {
-
-MovieRecorderBar::MovieRecorderBar(MovieRecorderImpl* recorder)
-    : ToolBar(N_("MovieRecorderBar")),
-      recorder(recorder)
+MovieRecorderBar::MovieRecorderBar()
+    : ToolBar(N_("MovieRecorderBar"))
 {
     recordingToggle = addToggleButton(QIcon(":/Base/icon/record.svg"));
     recordingToggle->setToolTip(_("Toggle Recording"));
     recordingToggle->sigToggled().connect(
-        [this](bool on){ this->recorder->activateRecording(on, false); });
+        [this](bool on){ MovieRecorder::Impl::instance()->activateRecording(on, false); });
 
     viewMarkerToggle = addToggleButton(QIcon(":/Base/icon/recordtarget.svg"));
     viewMarkerToggle->setToolTip(_("Toggle Target View Marker"));
     viewMarkerToggle->sigToggled().connect(
-        [this](bool on){ this->recorder->onViewMarkerToggled(on); });
+        [this](bool on){ MovieRecorder::Impl::instance()->onViewMarkerToggled(on); });
     
     auto configButton = addButton(QIcon(":/Base/icon/setup.svg"));
     configButton->setToolTip(_("Show the config dialog"));
-    configButton->sigClicked().connect([this](){ this->recorder->dialog->show(); });
+    configButton->sigClicked().connect(
+        [this](){ MovieRecorder::Impl::instance()->dialog->show(); });
 }
 
 
-ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
-    : recorder(recorder),
+void MovieRecorderBar::flashRecordingToggle(bool setNormal)
+{
+    if(isFlashed || setNormal){
+        recordingToggle->setIcon(QIcon(":/Base/icon/record.svg"));
+        isFlashed = false;
+    } else {
+        recordingToggle->setIcon(QIcon(":/Base/icon/record2.svg"));
+        isFlashed = true;
+    }
+}
+
+
+void MovieRecorderBar::setRecordingToggle(bool on)
+{
+    recordingToggle->blockSignals(true);
+    recordingToggle->setChecked(on);
+    recordingToggle->blockSignals(false);
+}
+
+
+void MovieRecorderBar::changeViewMarkerToggleState(bool on)
+{
+    viewMarkerToggle->blockSignals(true);
+    viewMarkerToggle->setChecked(on);
+    viewMarkerToggle->blockSignals(false);
+}
+
+
+
+ConfigDialog::ConfigDialog(MovieRecorder::Impl* recorderImpl_)
+    : recorderImpl(recorderImpl_),
       updateViewComboLater([&](){ updateViewCombo(); })
 {
     setWindowTitle(_("Movie Recorder"));
@@ -967,32 +1063,43 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     setLayout(vbox);
 
     QHBoxLayout* hbox = new QHBoxLayout;
-    hbox->addWidget(new QLabel(_("Target view:")));
+    hbox->addWidget(new QLabel(_("Target view")));
 
     targetViewCombo.sigCurrentIndexChanged().connect(
-        [&](int index){ onTargetViewIndexChanged(index); });
+        [this](int index){ onTargetViewIndexChanged(index); });
     hbox->addWidget(&targetViewCombo);
 
     viewMarkerCheck.setText(_("Show the marker"));
     viewMarkerCheck.sigToggled().connect(
-        [this](bool on){ this->recorder->onViewMarkerToggled(on); });
+        [this](bool on){ recorderImpl->onViewMarkerToggled(on); });
     hbox->addWidget(&viewMarkerCheck);
     
     hbox->addStretch();
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout;
-    hbox->addWidget(new QLabel(_("Recording mode: ")));
+    hbox->addWidget(new QLabel(_("Recording mode")));
     ButtonGroup* modeGroup = new ButtonGroup;
     for(int i=0; i < N_RECORDING_MODES; ++i){
         RadioButton* radio = &modeRadioButtons[i];
-        radio->setText(recorder->recordingMode.label(i));
+        radio->setText(recorderImpl->recordingMode.label(i));
         modeGroup->addButton(radio, i);
         hbox->addWidget(radio);
     }
     modeRadioButtons[0].setChecked(true);
     modeGroup->sigButtonClicked().connect(
         [&](int mode){ onRecordingModeRadioClicked(mode); });
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout;
+    hbox->addWidget(new QLabel(_("Format")));
+    for(auto& encoder : recorderImpl->encoders){
+        encoderCombo.addItem(encoder->formatName().c_str());
+    }
+    encoderCombo.sigCurrentIndexChanged().connect(
+        [this](int index){ recorderImpl->setCurrentEncoder(index, false); });
+    hbox->addWidget(&encoderCombo);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
@@ -1007,7 +1114,7 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
         directoryButton.setIcon(folderIcon);
     }
     directoryButton.sigClicked().connect(
-        [&](){ showDirectorySelectionDialog(); });
+        [this](){ showDirectorySelectionDialog(); });
     hbox->addWidget(&directoryButton);
     vbox->addLayout(hbox);
 
@@ -1078,7 +1185,7 @@ ConfigDialog::ConfigDialog(MovieRecorderImpl* recorder)
     recordingToggle.setText(_("&Record"));
     recordingToggle.setDefault(true);
     recordingToggle.sigToggled().connect(
-        [this](bool on){ this->recorder->activateRecording(on, true); });
+        [this](bool on){ recorderImpl->activateRecording(on, true); });
     buttonBox->addButton(&recordingToggle, QDialogButtonBox::ActionRole);
 
     vbox->addWidget(buttonBox);
@@ -1121,8 +1228,8 @@ void ConfigDialog::updateViewCombo()
         View* view = activeViews[i];
         targetViewCombo.addItem(view->name().c_str());
         if(!selected){
-            if((recorder->targetView && (view == recorder->targetView)) ||
-               view->name() == recorder->targetViewName){
+            if((recorderImpl->targetView && (view == recorderImpl->targetView)) ||
+               view->name() == recorderImpl->targetViewName){
                 targetViewCombo.setCurrentIndex(i + 1);
                 selected = true;
             }
@@ -1136,11 +1243,11 @@ void ConfigDialog::updateViewCombo()
 void ConfigDialog::onTargetViewIndexChanged(int index)
 {
     if(index == 0){
-        recorder->setTargetView(0);
+        recorderImpl->setTargetView(0);
     } else {
         size_t viewIndex = index - 1;
         if(viewIndex < activeViews.size()){
-            recorder->setTargetView(activeViews[viewIndex]);
+            recorderImpl->setTargetView(activeViews[viewIndex]);
         }
     }
 }
@@ -1148,7 +1255,7 @@ void ConfigDialog::onTargetViewIndexChanged(int index)
 
 void ConfigDialog::onRecordingModeRadioClicked(int mode)
 {
-    recorder->recordingMode.select(mode);
+    recorderImpl->recordingMode.select(mode);
 }
 
 
@@ -1167,43 +1274,97 @@ void ConfigDialog::showDirectorySelectionDialog()
 }
 
 
-bool ConfigDialog::store(Mapping& archive)
+double ConfigDialog::startTime() const
 {
-    archive.write("showViewMarker", viewMarkerCheck.isChecked());
-    archive.write("directory", directoryEntry.string());
-    archive.write("basename", basenameEntry.string());
-    archive.write("checkStartTime", startTimeCheck.isChecked());
-    archive.write("startTime", startTimeSpin.value());
-    archive.write("checkFinishTime", finishTimeCheck.isChecked());
-    archive.write("finishTime", finishTimeSpin.value());
-    archive.write("fps", fpsSpin.value());
-    archive.write("setSize", imageSizeCheck.isChecked());
-    archive.write("width", imageWidthSpin.value());
-    archive.write("height", imageHeightSpin.value());
-    archive.write("mouseCursor", mouseCursorCheck.isChecked());
+    return startTimeCheck.isChecked() ? startTimeSpin.value() : 0.0;
+}
+
+
+double ConfigDialog::finishTime() const
+{
+    return finishTimeCheck.isChecked() ? finishTimeSpin.value() : std::numeric_limits<double>::max();
+}
+
+
+double ConfigDialog::frameRate() const
+{
+    return fpsSpin.value();
+}
+
+
+double ConfigDialog::timeStep() const
+{
+    return 1.0 / fpsSpin.value();
+}
+
+
+void ConfigDialog::setViewMarkerCheck(bool on)
+{
+    viewMarkerCheck.blockSignals(true);
+    viewMarkerCheck.setChecked(on);
+    viewMarkerCheck.blockSignals(false);
+}
+
+
+void ConfigDialog::checkRecordingModeRadio(int mode)
+{
+    RadioButton& radio = modeRadioButtons[mode];
+    radio.blockSignals(true);
+    radio.setChecked(true);
+    radio.blockSignals(false);
+}
+
+
+void ConfigDialog::setRecordingToggle(bool on)
+{
+    recordingToggle.blockSignals(true);
+    recordingToggle.setChecked(on);
+    recordingToggle.blockSignals(false);
+}
+
+
+bool ConfigDialog::store(Mapping* archive)
+{
+    archive->write("format", recorderImpl->currentEncoder->formatName(), DOUBLE_QUOTED);
+    archive->write("showViewMarker", viewMarkerCheck.isChecked());
+    archive->write("directory", directoryEntry.string());
+    archive->write("basename", basenameEntry.string());
+    archive->write("checkStartTime", startTimeCheck.isChecked());
+    archive->write("startTime", startTimeSpin.value());
+    archive->write("checkFinishTime", finishTimeCheck.isChecked());
+    archive->write("finishTime", finishTimeSpin.value());
+    archive->write("fps", fpsSpin.value());
+    archive->write("setSize", imageSizeCheck.isChecked());
+    archive->write("width", imageWidthSpin.value());
+    archive->write("height", imageHeightSpin.value());
+    archive->write("mouseCursor", mouseCursorCheck.isChecked());
     return true;
 }
 
 
-void ConfigDialog::restore(const Mapping& archive)
+void ConfigDialog::restore(const Mapping* archive)
 {
-    viewMarkerCheck.setChecked(archive.get("showViewMarker", viewMarkerCheck.isChecked()));
-    directoryEntry.setText(archive.get("directory", directoryEntry.string()));
-    basenameEntry.setText(archive.get("basename", basenameEntry.string()));
-    startTimeCheck.setChecked(archive.get("checkStartTime", startTimeCheck.isChecked()));
-    startTimeSpin.setValue(archive.get("startTime", startTimeSpin.value()));
-    finishTimeCheck.setChecked(archive.get("checkFinishTime", finishTimeCheck.isChecked()));
-    finishTimeSpin.setValue(archive.get("finishTime", finishTimeSpin.value()));
-    fpsSpin.setValue(archive.get("fps", fpsSpin.value()));
-    imageSizeCheck.setChecked(archive.get("setSize", imageSizeCheck.isChecked()));
-    imageWidthSpin.setValue(archive.get("width", imageWidthSpin.value()));
-    imageHeightSpin.setValue(archive.get("height", imageHeightSpin.value()));
-    mouseCursorCheck.setChecked(archive.get("mouseCursor", mouseCursorCheck.isChecked()));
+    string format;
+    if(archive->read("format", format)){
+        recorderImpl->setCurrentFormat(format);
+    }
+    viewMarkerCheck.setChecked(archive->get("showViewMarker", viewMarkerCheck.isChecked()));
+    directoryEntry.setText(archive->get("directory", directoryEntry.string()));
+    basenameEntry.setText(archive->get("basename", basenameEntry.string()));
+    startTimeCheck.setChecked(archive->get("checkStartTime", startTimeCheck.isChecked()));
+    startTimeSpin.setValue(archive->get("startTime", startTimeSpin.value()));
+    finishTimeCheck.setChecked(archive->get("checkFinishTime", finishTimeCheck.isChecked()));
+    finishTimeSpin.setValue(archive->get("finishTime", finishTimeSpin.value()));
+    fpsSpin.setValue(archive->get("fps", fpsSpin.value()));
+    imageSizeCheck.setChecked(archive->get("setSize", imageSizeCheck.isChecked()));
+    imageWidthSpin.setValue(archive->get("width", imageWidthSpin.value()));
+    imageHeightSpin.setValue(archive->get("height", imageHeightSpin.value()));
+    mouseCursorCheck.setChecked(archive->get("mouseCursor", mouseCursorCheck.isChecked()));
 }
 
 
-ViewMarker::ViewMarker(MovieRecorderImpl* recorder)
-    : recorder(recorder)
+ViewMarker::ViewMarker(MovieRecorder::Impl* recorderImpl)
+    : recorderImpl(recorderImpl)
 {
     setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_NoSystemBackground);
@@ -1236,4 +1397,64 @@ void ViewMarker::paintEvent(QPaintEvent*)
     painter.drawRect(0, 0, width(), height());
 }
 
+
+MovieRecorderEncoder::MovieRecorderEncoder()
+{
+    recorderImpl = nullptr;
+}
+
+
+bool MovieRecorderEncoder::initializeEncoding
+(int /* width */, int /* height */, int /* frameRate */)
+{
+    return true;
+}
+
+
+MovieRecorderEncoder::CapturedImagePtr MovieRecorderEncoder::getNextFrameImage()
+{
+    return recorderImpl->getNextFrameImage();
+}
+
+
+void MovieRecorderEncoder::setErrorMessage(const std::string& message)
+{
+    recorderImpl->setEncodeErrorMessage(message);
+}
+
+
+std::string SequentialNumberedImageFileEncoder::formatName() const
+{
+    return _("Sequential numbered PNG image files");
+}
+
+
+bool SequentialNumberedImageFileEncoder::doEncoding(std::string fileBasename)
+{
+    bool failed = false;
+    
+    string fFilename(fileBasename + "{:08d}.png");
+
+    while(true){
+        CapturedImagePtr captured = getNextFrameImage();
+        if(!captured){
+            break;
+        }
+        string filename = fmt::format(fFilename, captured->frame);
+        bool saved = false;
+        if(stdx::get_variant_index(captured->image) == 0){
+            QPixmap& pixmap = stdx::get<QPixmap>(captured->image);
+            saved = pixmap.save(filename.c_str());
+        } else {
+            QImage& image = stdx::get<QImage>(captured->image);
+            saved = image.save(filename.c_str());
+        }
+        if(!saved){
+            setErrorMessage(fmt::format(_("Saving an image to \"{}\" failed."), filename));
+            failed = false;
+            break;
+        }
+    }
+
+    return !failed;
 }

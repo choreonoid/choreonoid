@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-23 19:48+0900\n"
+"POT-Creation-Date: 2021-12-31 00:46+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -980,9 +980,6 @@ msgstr "{}はディレクトリではありません．"
 msgid "The online mode recording for {} is ready."
 msgstr "オンラインモードによる{}の録画を待機しています．"
 
-msgid "Saving an image to \"{}\" failed."
-msgstr "画像の\"{}\"への保存ができませんでした．"
-
 msgid "Abort Output"
 msgstr "出力中止"
 
@@ -1007,14 +1004,17 @@ msgstr "録画"
 msgid "Toggle Target View Marker"
 msgstr "対象ビューのマーカを表示"
 
-msgid "Target view:"
+msgid "Target view"
 msgstr "対象ビュー"
 
 msgid "Show the marker"
 msgstr "マーカ表示"
 
-msgid "Recording mode: "
+msgid "Recording mode"
 msgstr "録画モード"
+
+msgid "Format"
+msgstr "形式"
 
 msgid "Directory"
 msgstr "ディレクトリ"
@@ -1045,6 +1045,12 @@ msgstr "録画(&R)"
 
 msgid "Select Directory"
 msgstr "ディレクトリの選択"
+
+msgid "Sequential numbered PNG image files"
+msgstr "連番PNG画像ファイル"
+
+msgid "Saving an image to \"{}\" failed."
+msgstr "画像の\"{}\"への保存ができませんでした．"
 
 msgid "MultiPointSetItem"
 msgstr "複数ポイントセットアイテム"
