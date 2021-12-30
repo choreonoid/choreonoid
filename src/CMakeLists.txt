@@ -18,6 +18,7 @@ if(ENABLE_GUI)
   add_subdirectory(SceneEditPlugin)
 
   add_subdirectory(MediaPlugin)
+  add_subdirectory(FFmpegPlugin)
 
   add_subdirectory(PythonPlugin)
   add_subdirectory(PythonSimScriptPlugin)

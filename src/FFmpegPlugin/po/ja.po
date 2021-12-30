@@ -1,0 +1,59 @@
+# Japanese translations for Choreonoid package.
+# This file is distributed under the same license as the Choreonoid package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Choreonoid\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-12-30 22:50+0900\n"
+"PO-Revision-Date: 2021-12-30 16:43+0900\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Please set image height and width as a mutiple of 8."
+msgstr "画像の高さと幅は8の倍数に設定してください．"
+
+msgid "Executing avio_open failed."
+msgstr "avio_openの実行に失敗しました．"
+
+msgid "Executing avformat_alloc_output_context2 failed."
+msgstr "avformat_alloc_output_context2の実行に失敗しました．"
+
+msgid "Encoder \"{0}\" is not found."
+msgstr "エンコーダ \"{0}\" がみつかりません．"
+
+msgid "Executing avcodec_alloc_context3 failed."
+msgstr "avcodec_alloc_context3の実行に失敗しました．"
+
+msgid "Executing avcodec_open2 failed: {0}"
+msgstr "avcodec_open2の実行に失敗しました： {0}"
+
+msgid "Executing avformat_new_stream failed."
+msgstr "avformat_new_streamの実行に失敗しました．"
+
+msgid "Executing avcodec_parameters_from_context failed."
+msgstr "avcodec_parameters_from_contextの実行に失敗しました．"
+
+msgid "Executing avformat_write_header failed"
+msgstr "avformat_write_headerの実行に失敗しました．"
+
+msgid "A video frame data cannot be allocated."
+msgstr "ビデオフレームデータを確保できません．"
+
+msgid "A video frame buffer cannot be allocated."
+msgstr "ビデオフレームバッファを確保できません．"
+
+msgid "A video frame data is not writable."
+msgstr "ビデオフレームデータに書き込むことができません．"
+
+msgid "Executing avcodec_send_frame failed."
+msgstr "avcodec_send_frameの実行に失敗しました．"
+
+msgid "Executing av_interleaved_write_frame failed: {0}"
+msgstr "av_interleaved_write_frameの実行に失敗しました： {0}"
+
+msgid "Executing av_write_trailer failed."
+msgstr "av_write_trailerの実行に失敗しました．"
