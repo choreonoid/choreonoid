@@ -135,6 +135,8 @@ set(sources
   PositionTagGroupItem.cpp
   PositionTagListWidget.cpp
   MovieRecorder.cpp
+  MovieRecorderBar.cpp
+  MovieRecorderDialog.cpp
   TextEditView.cpp
   GeneralSliderView.cpp
   ImageView.cpp
@@ -274,6 +276,9 @@ set(headers
   MultiPointSetItem.h
   PositionTagGroupItem.h
   PositionTagListWidget.h
+  MovieRecorder.h
+  MovieRecorderBar.h
+  MovieRecorderDialog.h
   TextEditView.h
   GeneralSliderView.h
   ImageView.h

@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-31 00:46+0900\n"
+"POT-Creation-Date: 2022-01-04 01:05+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -956,6 +956,9 @@ msgstr "警告"
 msgid "Error"
 msgstr "エラー"
 
+msgid "Recording of {0} has been started with the {1} mode."
+msgstr "{1}モードによる{0}の録画を開始しました．"
+
 msgid "Offline"
 msgstr "オフライン"
 
@@ -964,9 +967,6 @@ msgstr "オンライン"
 
 msgid "Direct"
 msgstr "ダイレクト"
-
-msgid "Recording of {0} has been started with the {1} mode."
-msgstr "{1}モードによる{0}の録画を開始しました．"
 
 msgid "Target view is not specified."
 msgstr "対象のビューが指定されていません．"
@@ -995,6 +995,12 @@ msgstr "{}の録画が終了しました．"
 msgid "Recording of {} has been stopped."
 msgstr "{}の録画を停止しました．"
 
+msgid "Sequential numbered PNG image files"
+msgstr "連番PNG画像ファイル"
+
+msgid "Saving an image to \"{}\" failed."
+msgstr "画像の\"{}\"への保存ができませんでした．"
+
 msgid "MovieRecorderBar"
 msgstr "動画レコーダバー"
 
@@ -1019,8 +1025,8 @@ msgstr "形式"
 msgid "Directory"
 msgstr "ディレクトリ"
 
-msgid "Basename"
-msgstr "ベースファイル名"
+msgid "File base name"
+msgstr "ファイルベース名"
 
 msgid "[fps]"
 msgstr ""
@@ -1043,14 +1049,17 @@ msgstr "マウスカーソルもキャプチャする"
 msgid "&Record"
 msgstr "録画(&R)"
 
+msgid "Record animation of existing playback data in a frame-by-frame manner."
+msgstr "既存再生データのアニメーションをコマ送りしながら録画します．"
+
+msgid "Record animation of ongoing process in realtime."
+msgstr "進行中の処理のアニメーションをリアルタイムで録画します．"
+
+msgid "Record the display contents of a view directly in realtime."
+msgstr "ビューの表示内容を直接リアルタイムで録画します．"
+
 msgid "Select Directory"
 msgstr "ディレクトリの選択"
-
-msgid "Sequential numbered PNG image files"
-msgstr "連番PNG画像ファイル"
-
-msgid "Saving an image to \"{}\" failed."
-msgstr "画像の\"{}\"への保存ができませんでした．"
 
 msgid "MultiPointSetItem"
 msgstr "複数ポイントセットアイテム"

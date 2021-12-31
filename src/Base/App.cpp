@@ -58,7 +58,7 @@
 #include "MainMenu.h"
 #include "GLSceneRenderer.h"
 #include "Licenses.h"
-#include "MovieRecorder.h"
+#include "MovieRecorderBar.h"
 #include "LazyCaller.h"
 #include "LayoutSwitcher.h"
 #include <cnoid/Config>
@@ -360,8 +360,7 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     CoordinateFrameItem::initializeClass(ext);
     PositionTagGroupItem::initializeClass(ext);
 
-    MovieRecorder::initializeClass(ext);
-
+    MovieRecorderBar::initializeClass(ext);
     CaptureBar::initialize(ext);
     
     messageView->putln(

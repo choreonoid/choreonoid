@@ -15,7 +15,7 @@
 #include "InfoBar.h"
 #include "MessageView.h"
 #include "PathVariableEditor.h"
-#include "MovieRecorder.h"
+#include "MovieRecorderDialog.h"
 #include "SceneWidget.h"
 #include "DescriptionDialog.h"
 #include "UnifiedEditHistory.h"
@@ -541,7 +541,7 @@ void MainMenu::setActionAsPutSceneStatistics(Action* action)
 
 void MainMenu::setActionAsShowMovieRecorderDialog(Action* action)
 {
-    action->sigTriggered().connect([](){ MovieRecorder::instance()->showDialog(); });
+    action->sigTriggered().connect([](){ MovieRecorderDialog::instance()->show(); });
 }
 
 
