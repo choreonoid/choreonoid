@@ -8,6 +8,7 @@
 #include "InfoBar.h"
 #include "Item.h"
 #include "TextEdit.h"
+#include <cnoid/MessageManager>
 #include <cnoid/Tokenizer>
 #include <fmt/format.h>
 #include <QBoxLayout>
@@ -282,6 +283,11 @@ MessageView::Impl::Impl(MessageView* self) :
     createTextEdit();
 
     hasErrorMessages = false;
+
+    MessageManager::master()->addSink(
+        [this](const std::string& message, int type){
+            put(message, type, false, false, true);
+        });
 }
 
 

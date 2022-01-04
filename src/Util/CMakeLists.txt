@@ -16,6 +16,7 @@ set(sources
   GettextUtil.cpp
   UTF8.cpp
   NullOut.cpp
+  MessageManager.cpp
   StringUtil.cpp
   EasyScanner.cpp
   ValueTree.cpp
@@ -116,6 +117,7 @@ set(headers
   GettextUtil.h
   UTF8.h
   NullOut.h
+  MessageManager.h
   StringUtil.h
   Tokenizer.h
   EasyScanner.h
