@@ -162,6 +162,7 @@ endif()
 
 set(headers
   App.h
+  AppCustomizationUtil.h
   MainWindow.h
   Process.h
   Action.h
@@ -191,6 +192,7 @@ set(headers
   ItemSelectionModel.h
   MenuManager.h
   Menu.h
+  MainMenu.h
   ToolBar.h
   View.h
   ViewArea.h

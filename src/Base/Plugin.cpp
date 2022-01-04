@@ -84,6 +84,12 @@ unsigned int Plugin::internalVersion() const
 }
 
 
+bool Plugin::customizeApplication(AppCustomizationUtil& /* app */)
+{
+    return false;
+}
+
+
 bool Plugin::initialize()
 {
     return true;

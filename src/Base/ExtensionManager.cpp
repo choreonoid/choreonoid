@@ -13,11 +13,9 @@
 #include "View.h"
 #include "ToolBar.h"
 #include "MainWindow.h"
-#include "LazyCaller.h"
 #include <cnoid/GettextUtil>
 #include <cnoid/ExecutablePath>
 #include <QMenuBar>
-#include <boost/algorithm/string.hpp>
 #include <set>
 #include <deque>
 #include <unordered_set>
@@ -33,7 +31,6 @@ unordered_set<string> toolBarWhitelist;
 
 }
 
-
 namespace cnoid {
 
 class ExtensionManager::Impl
@@ -43,29 +40,24 @@ public:
     string moduleName;
     string textDomain;
     deque<PtrHolderBase*> pointerHolders;
-    Signal<void()> sigSystemUpdated;
-    Signal<void()> sigReleaseRequest;
     std::unique_ptr<MenuManager> menuManager;
     std::unique_ptr<ItemManager> itemManager;
     std::unique_ptr<ViewManager> viewManager;
+    bool isBeforeAddingToolBars;
     bool doCheckToolBarWhitelist;
 
     static set<Impl*> instances;
-    static LazyCaller emitSigSystemUpdatedLater;
 
     Impl(ExtensionManager* self, const std::string& moduleName, bool isPlugin);
     ~Impl();
     deque<PtrHolderBase*>::iterator deleteManagedObject(deque<PtrHolderBase*>::iterator iter);
     void deleteManagedObjects();
-    static void emitSigSystemUpdated();
 };
 
 set<ExtensionManager::Impl*> ExtensionManager::Impl::instances;
 
-LazyCaller ExtensionManager::Impl::emitSigSystemUpdatedLater(
-    [](){ ExtensionManager::Impl::emitSigSystemUpdated(); });
-
 }
+
 
 ExtensionManager::ExtensionManager(const std::string& moduleName, bool isPlugin)
 {
@@ -81,12 +73,8 @@ ExtensionManager::Impl::Impl(ExtensionManager* self, const std::string& moduleNa
 
     textDomain = bindModuleTextDomain(isPlugin ? (moduleName + "Plugin") : moduleName);
 
+    isBeforeAddingToolBars = true;
     doCheckToolBarWhitelist = false;
-    if(!pluginWhitelistForToolBars.empty() || !toolBarWhitelist.empty()){
-        if(pluginWhitelistForToolBars.find(moduleName) == pluginWhitelistForToolBars.end()){
-            doCheckToolBarWhitelist = true;
-        }
-    }
 }
 
 
@@ -104,7 +92,6 @@ ExtensionManager::Impl::~Impl()
     
     ProjectManager::instance()->resetArchivers(moduleName);
     deleteManagedObjects();
-    sigReleaseRequest();
     instances.erase(this);
 }
 
@@ -187,6 +174,15 @@ void ExtensionManager::setToolBarWhitelist(const std::vector<const char*>& toolB
 
 void ExtensionManager::addToolBar(ToolBar* toolBar)
 {
+    if(impl->isBeforeAddingToolBars){
+        if(!pluginWhitelistForToolBars.empty() || !toolBarWhitelist.empty()){
+            if(pluginWhitelistForToolBars.find(impl->moduleName) == pluginWhitelistForToolBars.end()){
+                impl->doCheckToolBarWhitelist = true;
+            }
+        }
+        impl->isBeforeAddingToolBars = false;
+    }
+    
     manage(toolBar);
 
     bool isEnabled = true;
@@ -241,32 +237,6 @@ void ExtensionManager::Impl::deleteManagedObjects()
     while(p != pointerHolders.end()){
         p = deleteManagedObject(p);
     }
-}
-
-
-SignalProxy<void()> ExtensionManager::sigSystemUpdated()
-{
-    return impl->sigSystemUpdated;
-}
-
-
-void ExtensionManager::notifySystemUpdate()
-{
-    Impl::emitSigSystemUpdatedLater();
-}
-
-
-void ExtensionManager::Impl::emitSigSystemUpdated()
-{
-    for(auto& instance : instances){
-        instance->sigSystemUpdated();
-    }
-}
-
-
-SignalProxy<void()> ExtensionManager::sigReleaseRequest()
-{
-    return impl->sigReleaseRequest;
 }
 
 

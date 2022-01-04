@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-04 01:05+0900\n"
+"POT-Creation-Date: 2022-01-05 01:32+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1154,14 +1154,14 @@ msgstr "パス"
 msgid "&Apply"
 msgstr "適用(&A)"
 
-msgid "{0}-plugin cannot be initialized because required plugin(s) {1} are not found."
-msgstr "必要なプラグイン{1}が見つからないため、{0}プラグインの初期化ができません．"
+msgid "{0}-plugin cannot be initialized because required plugin(s) {1} are not found.\n"
+msgstr "必要なプラグイン{1}が見つからないため、{0}プラグインの初期化ができません．\n"
 
-msgid "Plugin file \"{}\" has already been activated."
-msgstr "プラグインファイル\"{}\"は既に読み込まれています．"
+msgid "Plugin file \"{}\" has already been activated.\n"
+msgstr "プラグインファイル \"{}\" は既に読み込まれています．\n"
 
-msgid "Detecting plugin file \"{}\""
-msgstr "プラグインファイル \"{}\" を検出しました．"
+msgid "Detecting plugin file \"{}\".\n"
+msgstr "プラグインファイル \"{}\" を検出しました．\n"
 
 msgid "System error: {0}"
 msgstr "システムエラー: {0}"
@@ -1169,21 +1169,21 @@ msgstr "システムエラー: {0}"
 msgid "The plugin entry function \"getChoreonoidPlugin\" is not found.\n"
 msgstr "プラグインエントリ関数 \"getChoreonoidPlugin\" が見つかりません．\n"
 
-msgid "The plugin object cannot be created."
-msgstr "プラグインオブジェクトが生成できません．"
+msgid "The plugin object cannot be created.\n"
+msgstr "プラグインオブジェクトを生成できません．\n"
 
 msgid ""
 "The internal version of the {0} plugin is different from the system internal version.\n"
-"The plugin file \"{1}\" should be removed or updated to avoid a problem."
+"The plugin file \"{1}\" should be removed or updated to avoid a problem.\n"
 msgstr ""
 "{0}プラグインの内部バージョンがシステムの内部バージョンと一致しません．\n"
-"問題を避けるため，プラグインファイル \"{1}\" は削除か更新を行なってください．"
+"問題を避けるため，プラグインファイル \"{1}\" は削除か更新を行なってください．\n"
 
 msgid "Plugin file \"{0}\" conflicts with \"{1}\"."
 msgstr "{0}プラグインは\"{1}\"と競合しています．"
 
-msgid "Loading the plugin failed."
-msgstr "プラグインの読み込みができませんでした．"
+msgid "Loading the plugin failed.\n"
+msgstr "プラグインの読み込みができませんでした．\n"
 
 msgid "The plugin object cannot be intialized."
 msgstr "プラグインオブジェクトの初期化ができません．"
@@ -1191,20 +1191,27 @@ msgstr "プラグインオブジェクトの初期化ができません．"
 msgid "About {} Plugin"
 msgstr "{}プラグインについて"
 
-msgid "{}-plugin has been activated."
-msgstr "{}プラグインが読み込まれました．"
+msgid "{}-plugin has been activated.\n"
+msgstr "{}プラグインが読み込まれました．\n"
+
+msgid ""
+"Loading the plugin failed.\n"
+"{0}"
+msgstr ""
+"プラグインの読み込みができませんでした．\n"
+"{0}"
+
+msgid "{0}-plugin cannot be finalized.\n"
+msgstr "{}プラグインを終了できません．\n"
+
+msgid "Plugin DLL \"{}\" has been unloaded.\n"
+msgstr "プラグインDLL \"{}\" が解放されました．\n"
 
 msgid "Load plugins"
 msgstr "プラグインの読み込み"
 
 msgid "Plugin files (*.%1)"
 msgstr "プラグインファイル (*.%1)"
-
-msgid "Plugin {} cannot be finalized."
-msgstr "プラグイン{}を終了できません．"
-
-msgid "Plugin dll {} has been unloaded."
-msgstr "プラグイン{}のDLLが解放されました．"
 
 msgid "PointSetItem"
 msgstr "ポイントセットアイテム"

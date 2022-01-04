@@ -5,9 +5,11 @@
 #include "App.h"
 #include "AppUtil.h"
 #include "AppConfig.h"
+#include "AppCustomizationUtil.h"
 #include "ExtensionManager.h"
-#include "OptionManager.h"
 #include "PluginManager.h"
+#include "Plugin.h"
+#include "OptionManager.h"
 #include "ItemManager.h"
 #include "MessageView.h"
 #include "RootItem.h"
@@ -61,6 +63,7 @@
 #include "MovieRecorderBar.h"
 #include "LazyCaller.h"
 #include "LayoutSwitcher.h"
+#include <cnoid/MessageManager>
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
 #include <cnoid/FilePathVariableProcessor>
@@ -76,7 +79,6 @@
 #include <QLibraryInfo>
 #include <iostream>
 #include <csignal>
-#include <cstdlib>
 
 #ifdef Q_OS_WIN32
 #include <windows.h>
@@ -130,20 +132,27 @@ public:
     QApplication* qapplication;
     int& argc;
     char** argv;
+    string appName;
+    string organization;
+    string pluginPathList;
+    string iconFilename;
+    string builtinProjectFile;
+    MessageManager* messageManager;
+    PluginManager* pluginManager;
     ExtensionManager* ext;
     MainWindow* mainWindow;
     MessageView* messageView;
     LayoutSwitcher* layoutSwitcher;
-    string appName;
-    string vendorName;
-    const char* iconFilename;
     QTranslator translator;
-    bool doQuit;
+    ErrorCode error;
+    string errorMessage;
     int returnCode;
+    bool isAppInitialized;
+    bool doQuit;
     
-    Impl(App* self, int& argc, char** argv);
+    Impl(App* self, int& argc, char** argv, const std::string& appName, const std::string& organization);
     ~Impl();
-    void initialize(const char* appName, const char* vendorName, const char* pluginPathList);
+    void initialize();
     int exec();
     void onMainWindowCloseEvent();
     void onSigOptionsParsed(boost::program_options::variables_map& v);
@@ -154,14 +163,16 @@ public:
 }
 
 
-App::App(int& argc, char** argv)
+App::App(int& argc, char** argv, const std::string& appName, const std::string& organization)
 {
-    impl = new Impl(this, argc, argv);
+    impl = new Impl(this, argc, argv, appName, organization);
 }
 
 
 #ifdef _WIN32
-App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+App::App
+(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow,
+ const std::string& appName, const std::string& organization)
 {
 #ifndef UNICODE
     vector<string> args = boost::program_options::split_winmain(lpCmdLine);
@@ -189,48 +200,36 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
     }
 #endif
     argc_winmain = argv_winmain.size();
-    impl = new Impl(this, argc_winmain, &argv_winmain[0]);
+    impl = new Impl(this, argc_winmain, &argv_winmain[0], appName, organization);
 }
 #endif
 
 
-App::Impl::Impl(App* self, int& argc, char** argv)
+App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, const std::string& organization)
     : self(self),
+      qapplication(nullptr),
       argc(argc),
-      argv(argv)
+      argv(argv),
+      appName(appName),
+      organization(organization)
 {
     instance_ = self;
     isDoingInitialization_ = true;
-    qapplication = nullptr;
-    iconFilename = nullptr;
+
+    messageManager = MessageManager::master();
+    messageManager->setPendingMode(true);
+    
+    AppConfig::initialize(appName, organization);
+    pluginManager = PluginManager::instance();
+
     ext = nullptr;
     mainWindow = nullptr;
-    doQuit = false;
+    messageView = nullptr;
+    error = NoError;
     returnCode = 0;
-}
+    isAppInitialized = false;
+    doQuit = false;
 
-
-void App::setIcon(const char* filename)
-{
-    impl->iconFilename = filename;
-    if(impl->qapplication){
-        impl->qapplication->setWindowIcon(QIcon(filename));
-    }
-}
-
-
-void App::initialize(const char* appName, const char* vendorName, const char* pluginPathList)
-{
-    impl->initialize(appName, vendorName, pluginPathList);
-}
-
-
-void App::Impl::initialize( const char* appName, const char* vendorName, const char* pluginPathList)
-{
-    this->appName = appName;
-    this->vendorName = vendorName;
-
-    AppConfig::initialize(appName, vendorName);
 
     // OpenGL settings
     GLSceneRenderer::initializeClass();
@@ -268,6 +267,8 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
 #endif
 
     qapplication = new QApplication(argc, argv);
+    qapplication->setApplicationName(appName.c_str());
+    qapplication->setOrganizationName(organization.c_str());
 
 #ifdef Q_OS_UNIX
     // See https://doc.qt.io/qt-5/qcoreapplication.html#locale-settings
@@ -275,7 +276,61 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
 #endif
 
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+}
 
+
+bool App::requirePluginToCustomizeApplication(const std::string& pluginName)
+{
+    impl->pluginManager->loadPlugins(false);
+    
+    auto plugin = impl->pluginManager->findPlugin(pluginName);
+    if(!plugin){
+        impl->error = PluginNotFound;
+        impl->errorMessage = impl->pluginManager->getErrorMessage(pluginName);
+        return false;
+    }
+
+    AppCustomizationUtil util(this, impl->argc, impl->argv);
+    if(!plugin->customizeApplication(util)){
+        impl->error = CustomizationFailed;
+        return false;
+    }
+
+    return true;
+}
+
+
+void App::setIcon(const std::string& filename)
+{
+    impl->iconFilename = filename;
+    if(impl->qapplication){
+        impl->qapplication->setWindowIcon(QIcon(filename.c_str()));
+    }
+}
+
+
+void App::addPluginPath(const std::string& path)
+{
+    if(!path.empty()){
+        impl->pluginManager->addPluginPath(path);
+    }
+}
+
+
+void App::setBuiltinProject(const std::string& projectFile)
+{
+    impl->builtinProjectFile = projectFile;
+}
+
+
+void App::initialize()
+{
+    impl->initialize();
+}
+
+
+void App::Impl::initialize()
+{
     if(checkCurrentLocaleLanguageSupport()){
         translator.load(
             "qt_" + QLocale::system().name(),
@@ -283,10 +338,8 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
         qapplication->installTranslator(&translator);
     }
 
-    qapplication->setApplicationName(appName);
-    qapplication->setOrganizationName(vendorName);
     qapplication->setWindowIcon(
-        QIcon(iconFilename ? iconFilename : ":/Base/icon/choreonoid.svg"));
+        QIcon(!iconFilename.empty() ? iconFilename.c_str() : ":/Base/icon/choreonoid.svg"));
 
     FilePathVariableProcessor::systemInstance()->setUserVariables(
         AppConfig::archive()->findMapping({ "path_variables", "pathVariables" }));
@@ -298,16 +351,18 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     mainWindow = MainWindow::initialize(appName, ext);
 
     ViewManager::initializeClass(ext);
+
     MessageView::initializeClass(ext);
     messageView = MessageView::instance();
+    messageManager->flushPendingMessages();
+    messageManager->setPendingMode(false);
+    
     ItemManager::initializeClass(ext);
     ProjectManager::initializeClass(ext);
     RootItem::initializeClass(ext);
     UnifiedEditHistory::initializeClass(ext);
     UnifiedEditHistoryView::initializeClass(ext);
     ItemEditRecordManager::initializeClass(ext);
-
-    PluginManager::initialize(ext);
 
     /**
        Since the main menu may be customized by the main function of a custom application executable
@@ -368,10 +423,7 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
                     EIGEN_WORLD_VERSION, EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
                     Eigen::SimdInstructionSetsInUse()));
 
-    if(!pluginPathList){
-        pluginPathList = getenv("CNOID_PLUGIN_PATH");
-    }
-    PluginManager::instance()->doStartupLoading(pluginPathList);
+    pluginManager->doStartupLoading();
 
     mainWindow->installEventFilter(this);
 
@@ -401,6 +453,13 @@ void App::Impl::initialize( const char* appName, const char* vendorName, const c
     */
     // SetConsoleCtrlHandler(consoleCtrlHandler, TRUE);
 #endif
+
+    if(builtinProjectFile.empty()){
+        builtinProjectFile = ":/Base/project/layout.cnoid";
+    }
+    ProjectManager::instance()->loadBuiltinProject(builtinProjectFile);
+
+    isAppInitialized = true;
 }
 
 
@@ -416,6 +475,7 @@ App::Impl::~Impl()
 {
     AppConfig::flush();
     delete qapplication;
+    delete pluginManager;
 }
 
 
@@ -427,6 +487,10 @@ int App::exec()
 
 int App::Impl::exec()
 {
+    if(!isAppInitialized){
+        initialize();
+    }
+        
     isDoingInitialization_ = false;
     
     if(!ext->optionManager().parseCommandLine1(argc, argv)){
@@ -469,12 +533,24 @@ int App::Impl::exec()
     delete layoutSwitcher;
     layoutSwitcher = nullptr;
 
-    PluginManager::finalize();
+    pluginManager->finalizePlugins();
     delete ext;
     delete mainWindow;
     mainWindow = nullptr;
     
     return returnCode;
+}
+
+
+App::ErrorCode App::error() const
+{
+    return impl->error;
+}
+
+
+const std::string& App::errorMessage() const
+{
+    return impl->errorMessage;
 }
 
 
@@ -602,4 +678,3 @@ void cnoid::updateGui()
 {
     return App::updateGui();
 }
-

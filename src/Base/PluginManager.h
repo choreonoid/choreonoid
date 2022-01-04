@@ -11,31 +11,25 @@
 namespace cnoid {
 
 class Plugin;
-class ExtensionManager;
 
 class CNOID_EXPORT PluginManager
 {
 public:
-
-    static void initialize(ExtensionManager* ext);
     static PluginManager* instance();
-    static void finalize();
 	
     ~PluginManager();
 
+    void addPluginPath(const std::string& path);
     bool isStartupLoadingDisabled() const;
-    void doStartupLoading(const char* pluginPathList);
-    void scanPluginFilesInPathList(const std::string& pathList);
-    void scanPluginFilesInDirectoyOfExecFile();
-    void scanPluginFiles(const std::string& pathString);
-    void loadPlugins();
+    void doStartupLoading();
+    void loadPlugins(bool doActivation);
     bool loadPlugin(int index);
-    void showDialogToLoadPlugin();
+    bool reloadPlugin(const std::string& name);
     bool unloadPlugin(int index);
     bool unloadPlugin(const std::string& name);
-    bool reloadPlugin(const std::string& name);
     bool finalizePlugins();
     void clearUnusedPlugins();
+    void flushMessagesTo(std::ostream& os);
 
     int numPlugins() const;
     const std::string& pluginPath(int index) const;
@@ -47,9 +41,11 @@ public:
     Plugin* findPlugin(const std::string& name);
     const std::string& getErrorMessage(const std::string& name);
     const char* guessActualPluginName(const std::string& name);
+
+    void showDialogToLoadPlugin();
 	
 private:
-    PluginManager(ExtensionManager* ext);
+    PluginManager();
 
     class Impl;
     Impl* impl;

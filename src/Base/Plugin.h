@@ -16,6 +16,7 @@ class Item;
 class View;
 class ToolBar;
 class PluginManager;
+class AppCustomizationUtil;
 
 class CNOID_EXPORT Plugin : public ExtensionManager
 {
@@ -28,6 +29,7 @@ public:
     const std::string& name() const;
     const std::string& filePath() const;
 
+    virtual bool customizeApplication(AppCustomizationUtil& app);
     virtual bool initialize();
     virtual bool finalize();
 

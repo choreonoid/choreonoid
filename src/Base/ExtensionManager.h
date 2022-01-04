@@ -5,9 +5,9 @@
 #ifndef CNOID_BASE_EXTENSION_MANAGER_H
 #define CNOID_BASE_EXTENSION_MANAGER_H
 
-#include <cnoid/Signal>
 #include <string>
 #include <vector>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -57,25 +57,6 @@ public:
         manageSub(new PtrHolder<PointerType>(pointer));
         return pointer;
     }
-
-    /**
-       This signal is emitted when the states of the objects available in the system are updated,
-       such as when the initial generation of the object is completed at startup,
-       when a new plug-in is read or released.
-    */
-    SignalProxy<void()> sigSystemUpdated();
-        
-    /**
-       This function emits the SystemUpdated signal.
-
-       @note Emitting a signal is not done at the time of calling this function, but later
-       in the event loop. As a result, the processing of the callback function becomes
-       after the other events under processing are processed. Also, even if this function
-       is called more than once at the same time, emission of signals will be brought together.
-    */
-    static void notifySystemUpdate();
-
-    SignalProxy<void()> sigReleaseRequest();
 
     void setProjectArchiver(
         const std::string& name,

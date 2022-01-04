@@ -6,7 +6,10 @@
 */
 
 #include <cnoid/App>
-#include <cnoid/ProjectManager>
+#include <cnoid/UTF8>
+#include <cstdlib>
+
+using namespace cnoid;
 
 int execute(cnoid::App& app);
 
@@ -15,20 +18,22 @@ int execute(cnoid::App& app);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    cnoid::App app(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
+    cnoid::App app(hInstance, hPrevInstance, lpCmdLine, nCmdShow, "Choreonoid", "Choreonoid");
     return execute(app);
 }
 #endif
 
 int main(int argc, char *argv[])
 {
-    cnoid::App app(argc, argv);
+    cnoid::App app(argc, argv, "Choreonoid", "Choreonoid");
     return execute(app);
 }
 
 int execute(cnoid::App& app)
 {
-    app.initialize("Choreonoid", "Choreonoid");
-    cnoid::ProjectManager::instance()->loadBuiltinProject(":/Base/project/layout.cnoid");
+    if(auto pluginPath = getenv("CNOID_PLUGIN_PATH")){
+        app.addPluginPath(toUTF8(pluginPath));
+    }
+    app.setBuiltinProject(":/Base/project/layout.cnoid");
     return app.exec();
 }
