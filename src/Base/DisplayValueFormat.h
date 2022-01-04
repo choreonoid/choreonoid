@@ -14,7 +14,7 @@ public:
     DisplayValueFormat(const DisplayValueFormat& org) = delete;
 
     enum LengthUnit { Meter, Millimeter };
-    void setLengthUnit(int unitType) { lengthUnit_ = unitType; }
+    void setLengthUnit(LengthUnit unitType) { lengthUnit_ = unitType; }
     int lengthUnit() const { return lengthUnit_; }
     bool isMeter() const { return lengthUnit_ == Meter; }
     bool isMillimeter() const { return lengthUnit_ == Millimeter; }
@@ -40,7 +40,7 @@ public:
     bool isLengthStepForcedMode() const { return isLengthStepForcedMode_; }
 
     enum AngleUnit { Degree, Radian };
-    void setAngleUnit(int unitType) { angleUnit_ = unitType; }
+    void setAngleUnit(AngleUnit unitType) { angleUnit_ = unitType; }
     int angleUnit() const { return angleUnit_; }
     bool isDegree() const { return angleUnit_ == Degree; }
     void setDegreeDecimals(int decimals) { degreeDecimals_ = decimals; }
@@ -74,14 +74,14 @@ private:
 
     static DisplayValueFormat instance_;
 
-    int lengthUnit_;
+    LengthUnit lengthUnit_;
     int meterDecimals_;
     int millimeterDecimals_;
     double meterStep_;
     double millimeterStep_;
     bool isLengthDecimalsForcedMode_;
     bool isLengthStepForcedMode_;
-    int angleUnit_;
+    AngleUnit angleUnit_;
     int degreeDecimals_;
     int radianDecimals_;
     double degreeStep_;

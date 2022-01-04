@@ -63,7 +63,7 @@ class MainWindow::Impl
 public:
     MainWindow* self;
 
-    Impl(MainWindow* self, const char* appName, ExtensionManager* ext);
+    Impl(MainWindow* self, const std::string& appName, ExtensionManager* ext);
     ~Impl();
 
     QWidget* centralWidget;
@@ -100,7 +100,7 @@ public:
 }
 
 
-MainWindow* MainWindow::initialize(const char* appName, ExtensionManager* ext)
+MainWindow* MainWindow::initialize(const std::string& appName, ExtensionManager* ext)
 {
     if(!mainWindow){
         new MainWindow(appName, ext);
@@ -115,18 +115,18 @@ MainWindow* MainWindow::instance()
 }
 
 
-MainWindow::MainWindow(const char* appName, ExtensionManager* ext)
+MainWindow::MainWindow(const std::string& appName, ExtensionManager* ext)
 {
     mainWindow = this;
 
-    setWindowTitle(appName);
+    setWindowTitle(appName.c_str());
     setFocusPolicy(Qt::WheelFocus);
 
     impl = new Impl(this, appName, ext);
 }
 
 
-MainWindow::Impl::Impl(MainWindow* self, const char* appName, ExtensionManager* ext)
+MainWindow::Impl::Impl(MainWindow* self, const std::string& appName, ExtensionManager* ext)
     : self(self),
       appName(appName)
 {

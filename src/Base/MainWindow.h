@@ -8,6 +8,7 @@
 #include "Archive.h"
 #include <cnoid/Signal>
 #include <QMainWindow>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -20,7 +21,7 @@ class ExtensionManager;
 class CNOID_EXPORT MainWindow : public QMainWindow
 {
 public:
-    static MainWindow* initialize(const char* appName, ExtensionManager* ext);
+    static MainWindow* initialize(const std::string& appName, ExtensionManager* ext);
     static MainWindow* instance();
 
     ~MainWindow();
@@ -57,7 +58,7 @@ private:
     class Impl;
     Impl* impl;
 
-    MainWindow(const char* appName, ExtensionManager* ext);
+    MainWindow(const std::string& appName, ExtensionManager* ext);
 
     friend class ExtensionManager;
 };
