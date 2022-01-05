@@ -64,7 +64,8 @@ public:
     void putString(const std::string& value);
     void putString(const char* value);
     template<class StringType> void putSingleQuotedString(const StringType& value);
-    template<class StringType> void putDoubleQuotedString(const StringType& value);
+    void putDoubleQuotedString(const char* value);
+    void putDoubleQuotedString(const string& value);
     void putBlockStyleString(const std::string& value, bool isLiteral);
     void startMappingSub(bool isFlowStyle);
     template<class StringType> void putKey(const StringType& key, StringStyle style);
@@ -393,10 +394,38 @@ void YAMLWriter::putSingleQuotedString(const std::string& value)
 }
 
 
-template<class StringType> void YAMLWriterImpl::putDoubleQuotedString(const StringType& value)
+void YAMLWriterImpl::putDoubleQuotedString(const char* value)
 {
     if(startValuePut()){
-        os() << "\"" << value << "\"";
+        os() << "\"";
+        while(true){
+            switch(*value){
+            case '\0': goto end; break;
+            case '\\': os() << "\\\\"; break;
+            case '\"': os() << "\\\""; break;
+            default: os() << *value; break;
+            }
+            ++value;
+        }
+end:
+        os() << "\"";
+        endValuePut();
+    }
+}
+
+
+void YAMLWriterImpl::putDoubleQuotedString(const string& value)
+{
+    if(startValuePut()){
+        os() << "\"";
+        for(size_t i=0; i < value.size(); ++i){
+            switch(value[i]){
+            case '\\': os() << "\\\\"; break;
+            case '\"': os() << "\\\""; break;
+            default: os() << value[i]; break;
+            }
+        }
+        os() << "\"";
         endValuePut();
     }
 }
