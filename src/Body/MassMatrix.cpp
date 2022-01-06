@@ -15,15 +15,22 @@ void setColumnOfMassMatrix(Body* body, Eigen::MatrixBase<Derived>& out_M, int co
 {
     Link* rootLink = body->rootLink();
     Vector6 f = calcInverseDynamics(rootLink);
+    const int n = body->numJoints();
 
     if(!rootLink->isFixedJoint()){
+        // for the floating root link
         f.tail<3>() -= rootLink->p().cross(f.head<3>());
         out_M. Eigen::template MatrixBase<Derived>::template block<6, 1>(0, column) = f;
-    }
-    const int n = body->numJoints();
-    for(int i = 0; i < n; ++i){
-        Link* joint = body->joint(i);
-        out_M(i + 6, column) = joint->u();
+
+        // for other links
+        for(int i = 0; i < n; ++i){
+            out_M(i + 6, column) = body->joint(i)->u();
+        }
+    } else {
+        // we can ignore the fixed base link
+        for(int i = 0; i < n; ++i){
+            out_M(i, column) = body->joint(i)->u();
+        }
     }
 }
 
@@ -84,7 +91,7 @@ void calcMassMatrix(Body* body, const Vector3& g, Eigen::MatrixXd& out_M, Vector
     for(int i = 0; i < nj; ++i){
         Link* joint = body->joint(i);
         joint->ddq() = 1.0;
-        int j = i + 6;
+        const int j = rootLink->isFixedJoint() ? i : i + 6;
         setColumnOfMassMatrix(body, out_M, j);
         out_M(j, j) += joint->Jm2(); // motor inertia
         joint->ddq() = 0.0;
@@ -112,4 +119,3 @@ void calcMassMatrix(Body* body, MatrixXd& out_M)
 }
 
 }
-
