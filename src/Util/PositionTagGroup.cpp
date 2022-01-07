@@ -18,7 +18,7 @@ class PositionTagGroup::Impl
 public:
     string name;
     Signal<void(int index)> sigTagAdded;
-    Signal<void(int index, PositionTag* tag)> sigTagRemoved;
+    Signal<void(int index, PositionTag* tag, bool isChaningOrder)> sigTagRemoved;
     Signal<void(int index)> sigTagPositionChanged;
     Signal<void(int index)> sigTagPositionUpdated;
     
@@ -93,9 +93,9 @@ void PositionTagGroup::clearTags()
 
 void PositionTagGroup::insert(int index, PositionTag* tag)
 {
-    int size = tags_.size();
-    if(index > size){
-        index = size;
+    int n = tags_.size();
+    if(index > n){
+        index = n;
     }
     tags_.insert(tags_.begin() + index, tag);
 
@@ -105,9 +105,9 @@ void PositionTagGroup::insert(int index, PositionTag* tag)
 
 void PositionTagGroup::insert(int index, PositionTagGroup* group)
 {
-    int size = tags_.size();
-    if(index > size){
-        index = size;
+    int n = tags_.size();
+    if(index > n){
+        index = n;
     }
     auto it = tags_.begin() + index;
     for(auto& tag : *group){
@@ -126,12 +126,29 @@ void PositionTagGroup::append(PositionTag* tag)
 
 bool PositionTagGroup::removeAt(int index)
 {
-    if(index >= tags_.size()){
+    if(index >= static_cast<int>(tags_.size())){
         return false;
     }
     PositionTagPtr tag = tags_[index];
     tags_.erase(tags_.begin() + index);
-    impl->sigTagRemoved(index, tag);
+    impl->sigTagRemoved(index, tag, false);
+    return true;
+}
+
+
+bool PositionTagGroup::changeOrder(int orgIndex, int newIndex)
+{
+    int n = tags_.size();
+    if(orgIndex >= n || newIndex >= n){
+        return false;
+    }
+
+    PositionTagPtr tag = tags_[orgIndex];
+    tags_.erase(tags_.begin() + orgIndex);
+    impl->sigTagRemoved(orgIndex, tag, true);
+
+    insert(newIndex, tag);
+
     return true;
 }
 
@@ -142,7 +159,7 @@ SignalProxy<void(int index)> PositionTagGroup::sigTagAdded()
 }
 
 
-SignalProxy<void(int index, PositionTag* tag)> PositionTagGroup::sigTagRemoved()
+SignalProxy<void(int index, PositionTag* tag, bool isChaingingOrder)> PositionTagGroup::sigTagRemoved()
 {
     return impl->sigTagRemoved;
 }

@@ -52,8 +52,9 @@ public:
     void insert(int index, PositionTagGroup* group);
     void append(PositionTag* tag);
     bool removeAt(int index);
+    bool changeOrder(int orgIndex, int newIndex);
     SignalProxy<void(int index)> sigTagAdded();
-    SignalProxy<void(int index, PositionTag* tag)> sigTagRemoved();
+    SignalProxy<void(int index, PositionTag* tag, bool isChaingingOrder)> sigTagRemoved();
     SignalProxy<void(int index)> sigTagPositionChanged();
     SignalProxy<void(int index)> sigTagPositionUpdated();
     void notifyTagPositionChange(int index);

@@ -90,7 +90,8 @@ void MprTagTraceStatement::connectTagGroupUpdateSignals()
                 [&](int index){ onTagAdded(index); }));
         tagGroupConnections.add(
             tagGroup_->sigTagRemoved().connect(
-                [&](int index, PositionTag*){ onTagRemoved(index); }));
+                [&](int index, PositionTag*, bool isChangingOrder){
+                    onTagRemoved(index, isChangingOrder); }));
         tagGroupConnections.add(
             tagGroup_->sigTagPositionUpdated().connect(
                 [&](int index){ onTagPositionUpdated(index); }));
@@ -125,8 +126,9 @@ void MprTagTraceStatement::onTagAdded(int /* index */)
 }
 
 
-void MprTagTraceStatement::onTagRemoved(int /* index */)
+void MprTagTraceStatement::onTagRemoved(int /* index */, bool /* isChangingOrder */)
 {
+    //! \todo Skip to update the program when isChangingOrder is true
     updateTagTraceProgram();
 }
 

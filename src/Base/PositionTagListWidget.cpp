@@ -112,7 +112,7 @@ void TagGroupModel::setTagGroupItem(PositionTagGroupItem* tagGroupItem)
                 [&](int index){ onTagAdded(index); }));
         tagGroupConnections.add(
             tags->sigTagRemoved().connect(
-                [&](int index, PositionTag*){ onTagRemoved(index); }));
+                [&](int index, PositionTag*, bool){ onTagRemoved(index); }));
         tagGroupConnections.add(
             tags->sigTagPositionChanged().connect(
                 [&](int index){ onTagPositionChanged(index); }));
@@ -299,11 +299,8 @@ bool TagGroupModel::dropMimeData
             }
             if(srcIndex != destIndex){
                 beginMoveRows(parent, srcIndex, srcIndex, parent, destIndex);
-                auto tags = tagGroupItem->tagGroup();
-                PositionTagPtr tag = tags->tagAt(srcIndex);
-                tags->removeAt(srcIndex);
-                int insertionIndex = (srcIndex < destIndex) ? (destIndex - 1) : destIndex;
-                tags->insert(insertionIndex, tag);
+                int newIndex = (srcIndex >= destIndex) ? destIndex : (destIndex - 1);
+                tagGroupItem->tagGroup()->changeOrder(srcIndex, newIndex);
                 endMoveRows();
             }
             prevDestIndex = destIndex;

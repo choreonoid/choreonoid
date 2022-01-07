@@ -231,6 +231,7 @@ public:
     Signal<void()> sigOriginOffsetUpdated;
     LazyCaller notifyUpdateLater;
     UnifiedEditHistory* history;
+    EditRecordGroupPtr editRecordGroupForTagOrderChange;
     Isometry3 lastEdit_T_offset;
     PositionTagGroupPtr lastEditTagGroup;
     bool isDoingUndoOrRedo;
@@ -260,7 +261,7 @@ public:
     Impl(PositionTagGroupItem* self, const Impl* org);
     void setupHandlersForUnifiedEditHistory();
     void onTagAdded(int index);
-    void onTagRemoved(int index, PositionTag* tag);
+    void onTagRemoved(int index, PositionTag* tag, bool isChangingOrder);
     void onTagPositionUpdated(int index);
     bool clearTagSelection(bool doNotify);
     void selectAllTags();
@@ -389,7 +390,8 @@ void PositionTagGroupItem::Impl::setupHandlersForUnifiedEditHistory()
             [&](int index){ onTagAdded(index); }));
     tagGroupConnections.add(
         tagGroup->sigTagRemoved().connect(
-            [&](int index, PositionTag* tag){ onTagRemoved(index, tag); }));
+            [&](int index, PositionTag* tag, bool isChangingOrder){
+                onTagRemoved(index, tag, isChangingOrder); }));
     tagGroupConnections.add(
         tagGroup->sigTagPositionUpdated().connect(
             [&](int index){ onTagPositionUpdated(index); }));
@@ -489,14 +491,21 @@ void PositionTagGroupItem::Impl::onTagAdded(int index)
     lastEditTagGroup->insert(index, new PositionTag(*tag));
     
     if(!isDoingUndoOrRedo){
-        history->addRecord(new TagEditRecord(this, AddAction, index, tag, nullptr));
+        auto record = new TagEditRecord(this, AddAction, index, tag, nullptr);
+        if(editRecordGroupForTagOrderChange){
+            editRecordGroupForTagOrderChange->addRecord(record);
+            history->addRecord(editRecordGroupForTagOrderChange);
+            editRecordGroupForTagOrderChange.reset();
+        } else {
+            history->addRecord(record);
+        }
     }
 
     notifyUpdateLater();
 }
 
 
-void PositionTagGroupItem::Impl::onTagRemoved(int index, PositionTag* tag)
+void PositionTagGroupItem::Impl::onTagRemoved(int index, PositionTag* tag, bool isChangingOrder)
 {
     if(index < static_cast<int>(tagSelection.size())){
         tagSelection.erase(tagSelection.begin() + index);
@@ -508,7 +517,14 @@ void PositionTagGroupItem::Impl::onTagRemoved(int index, PositionTag* tag)
     lastEditTagGroup->removeAt(index);
 
     if(!isDoingUndoOrRedo){
-        history->addRecord(new TagEditRecord(this, RemoveAction, index, nullptr, tag));
+        auto record = new TagEditRecord(this, RemoveAction, index, nullptr, tag);
+        if(isChangingOrder){
+            editRecordGroupForTagOrderChange = new EditRecordGroup(_("Change the order of a position tag"));
+            editRecordGroupForTagOrderChange->addRecord(record);
+        } else {
+            editRecordGroupForTagOrderChange.reset();
+            history->addRecord(record);
+        }
     }
     
     notifyUpdateLater();
@@ -982,7 +998,7 @@ SceneTagGroup::SceneTagGroup(PositionTagGroupItem::Impl* impl)
             [&](int index){ addTagNode(index, true, true); }));
     tagGroupConnections.add(
         tagGroup->sigTagRemoved().connect(
-            [&](int index, PositionTag*){ removeTagNode(index); }));
+            [&](int index, PositionTag*, bool){ removeTagNode(index); }));
     tagGroupConnections.add(
         tagGroup->sigTagPositionChanged().connect(
             [&](int index){ updateTagNodePosition(index); }));

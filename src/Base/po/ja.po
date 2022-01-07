@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-05 01:32+0900\n"
+"POT-Creation-Date: 2022-01-07 21:03+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1019,6 +1019,15 @@ msgstr "マーカ表示"
 msgid "Recording mode"
 msgstr "録画モード"
 
+msgid "Record animation of existing playback data in a frame-by-frame manner."
+msgstr "既存再生データのアニメーションをコマ送りしながら録画します．"
+
+msgid "Record animation of ongoing process in realtime."
+msgstr "進行中の処理のアニメーションをリアルタイムで録画します．"
+
+msgid "Record the display contents of a view directly in realtime."
+msgstr "ビューの表示内容を直接リアルタイムで録画します．"
+
 msgid "Format"
 msgstr "形式"
 
@@ -1048,15 +1057,6 @@ msgstr "マウスカーソルもキャプチャする"
 
 msgid "&Record"
 msgstr "録画(&R)"
-
-msgid "Record animation of existing playback data in a frame-by-frame manner."
-msgstr "既存再生データのアニメーションをコマ送りしながら録画します．"
-
-msgid "Record animation of ongoing process in realtime."
-msgstr "進行中の処理のアニメーションをリアルタイムで録画します．"
-
-msgid "Record the display contents of a view directly in realtime."
-msgstr "ビューの表示内容を直接リアルタイムで録画します．"
 
 msgid "Select Directory"
 msgstr "ディレクトリの選択"
@@ -1227,6 +1227,9 @@ msgstr "ポイント数"
 
 msgid "PositionTagGroupItem"
 msgstr "ポジションタググループアイテム"
+
+msgid "Change the order of a position tag"
+msgstr "ポジションタグの順序を変更"
 
 msgid "Number of tags"
 msgstr "タグ数"

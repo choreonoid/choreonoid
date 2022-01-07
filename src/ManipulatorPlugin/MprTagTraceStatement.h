@@ -54,7 +54,7 @@ protected:
     MprTagTraceStatement(const MprTagTraceStatement& org, CloneMap* cloneMap);
 
     virtual void onTagAdded(int index);
-    virtual void onTagRemoved(int index);
+    virtual void onTagRemoved(int index, bool isChangingOrder);
     virtual void onTagPositionUpdated(int index);
     virtual void onTagGroupOriginOffsetChanged();
 
