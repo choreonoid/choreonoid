@@ -142,11 +142,13 @@ bool PositionTagGroup::changeOrder(int orgIndex, int newIndex)
     if(orgIndex >= n || newIndex >= n){
         return false;
     }
+    if(orgIndex == newIndex){
+        return true;
+    }
 
     PositionTagPtr tag = tags_[orgIndex];
     tags_.erase(tags_.begin() + orgIndex);
     impl->sigTagRemoved(orgIndex, tag, true);
-
     insert(newIndex, tag);
 
     return true;

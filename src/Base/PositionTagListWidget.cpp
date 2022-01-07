@@ -297,10 +297,13 @@ bool TagGroupModel::dropMimeData
                 --srcIndex;
                 --srcIndexOffset;
             }
-            if(srcIndex != destIndex){
-                beginMoveRows(parent, srcIndex, srcIndex, parent, destIndex);
+            if(srcIndex != destIndex && (srcIndex + 1) != destIndex){
                 int newIndex = (srcIndex >= destIndex) ? destIndex : (destIndex - 1);
-                tagGroupItem->tagGroup()->changeOrder(srcIndex, newIndex);
+                if(!tagGroupItem->tagGroup()->changeOrder(srcIndex, newIndex)){
+                    break;
+                }
+                // Destination must not be within the range of sourceFirst and sourceLast + 1
+                beginMoveRows(parent, srcIndex, srcIndex, parent, destIndex);
                 endMoveRows();
             }
             prevDestIndex = destIndex;
