@@ -222,6 +222,7 @@ set(headers
   ItemEditRecordManager.h
   DisplayValueFormat.h
   PositionWidget.h
+  LocationView.h
   PutPropertyFunction.h
   RootItem.h
   FolderItem.h

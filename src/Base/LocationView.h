@@ -2,10 +2,11 @@
 #define CNOID_BASE_LOCATION_VIEW_H
 
 #include "View.h"
+#include "exportdecl.h"
 
 namespace cnoid {
 
-class LocationView : public View
+class CNOID_EXPORT LocationView : public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
