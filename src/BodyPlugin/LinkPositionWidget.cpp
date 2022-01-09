@@ -1204,9 +1204,20 @@ bool LinkPositionWidget::Impl::findBodyIkSolution(const Isometry3& T_input, bool
         targetConnections.block();
         targetBodyItem->notifyKinematicStateChange();
         targetConnections.unblock();
-        
-        resultLabel.setText(_("Solved"));
-        resultLabel.setStyleSheet(normalStyle);
+
+        int nearSingularPointState = 0;
+        auto configuration = kinematicsKit->configurationHandler();
+        if(configuration){
+            nearSingularPointState = configuration->getCurrentNearSingularPointState();
+        }
+        if(nearSingularPointState == 0){
+            resultLabel.setText(_("Solved"));
+            resultLabel.setStyleSheet(normalStyle);
+        } else {
+            resultLabel.setText(
+                configuration->getNearSingularPointFactorString(nearSingularPointState).c_str());
+            resultLabel.setStyleSheet(errorStyle);
+        }
     } else {
         resultLabel.setText(_("Not Solved"));
         resultLabel.setStyleSheet(errorStyle);
