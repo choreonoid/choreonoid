@@ -1634,8 +1634,6 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
         }
     }
     
-    this->doReset = doReset;
-    
     stopSimulation(true, true);
 
     if(!worldItem){
@@ -1649,8 +1647,6 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
     if(targetItems.empty()){
         return false;
     }
-
-    sigSimulationAboutToBeStarted();
 
     cloneMap.clear();
 
@@ -1669,12 +1665,20 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
     clearSimulation();
     getOrCreateLogEngine()->clearSubEngines();
 
-    for(size_t i=0; i < targetItems.size(); ++i){
-
-        if(auto bodyItem = dynamic_cast<BodyItem*>(targetItems.get(i))){
-            if(doReset){
-                bodyItem->restoreInitialState(false);
+    this->doReset = doReset;
+    if(doReset){
+        for(auto& targetItem : targetItems){
+            if(auto bodyItem = dynamic_cast<BodyItem*>(targetItem.get())){
+                bodyItem->restoreInitialState(true);
             }
+        }
+    }
+
+    sigSimulationAboutToBeStarted();
+
+    for(auto& targetItem : targetItems){
+
+        if(auto bodyItem = dynamic_cast<BodyItem*>(targetItem.get())){
             auto orgBody = bodyItem->body();
             SimulationBodyPtr simBody = self->createSimulationBody(orgBody, cloneMap);
             if(!simBody){
@@ -1699,13 +1703,13 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
             }
             bodyItem->notifyKinematicStateChange();
             
-        } else if(auto controller = dynamic_cast<ControllerItem*>(targetItems.get(i))){
+        } else if(auto controller = dynamic_cast<ControllerItem*>(targetItem.get())){
             // ControllerItem which is not associated with a body
             SimulationBodyPtr simBody = new SimulationBody(nullptr);
             if(simBody->impl->initialize(this, controller)){
                 allSimBodies.push_back(simBody);
             }
-        } else if(auto script = dynamic_cast<SimulationScriptItem*>(targetItems.get(i))){
+        } else if(auto script = dynamic_cast<SimulationScriptItem*>(targetItem.get())){
             SimulationBodyPtr simBody = new SimulationBody(nullptr);
             ControllerItemPtr scriptControllerItem = new ScriptControllerItem(script);
             if(simBody->impl->initialize(this, scriptControllerItem)){
