@@ -278,10 +278,12 @@ bool PositionTagGroup::loadCsvFile
                 }
                 xyzrpy[i++] = std::stod(token);
             }
-            while(i < 6){
-                xyzrpy[i++] = 0.0;
+            if(i > 0){ // Check to skip an empty line
+                while(i < 6){
+                    xyzrpy[i++] = 0.0;
+                }
+                data.push_back(xyzrpy);
             }
-            data.push_back(xyzrpy);
         }
     }
     catch(std::logic_error& ex){
