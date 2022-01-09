@@ -221,7 +221,7 @@ make_gettext_mofiles(${target} mofiles)
 choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers})
 
 if(UNIX)
-  set(libraries 
+  set(libraries
     fmt::fmt
     ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${LIBUUID_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
@@ -243,7 +243,7 @@ if(UNIX)
   else()
     target_link_libraries(${target} ${libraries})
   endif()
-  
+
 elseif(MSVC)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "YAML_DECLARE_STATIC")
   set(libraries

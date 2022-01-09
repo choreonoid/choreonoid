@@ -75,7 +75,7 @@ set(CHOREONOID_SDK_LIBRARY_DIRS
   ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_LIB_SUBDIR} ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_PLUGIN_SUBDIR})
 
 # Deprecated
-set(CNOID_MAJOR_VERSION ${CHOREONOID_VERSION_MAJOR}) 
+set(CNOID_MAJOR_VERSION ${CHOREONOID_VERSION_MAJOR})
 set(CNOID_MINOR_VERSION ${CHOREONOID_VERSION_MINOR})
 set(CNOID_PATCH_VERSION ${CHOREONOID_VERSION_PATCH})
 set(CNOID_VERSION ${CHOREONOID_VERSION})
@@ -170,6 +170,13 @@ if(MSVC)
 
   if(${MSVC_VERSION} GREATER_EQUAL 1915)
     add_definitions(-D_ENABLE_EXTENDED_ALIGNED_STORAGE)
+  endif()
+  if(CMAKE_CXX_STANDARD GREATER_EQUAL 17)
+    option(DISABLE_CXX17_DEPRECATION_WARNINGS "Define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS" ON)
+    mark_as_advanced(DISABLE_CXX17_DEPRECATION_WARNINGS)
+    if(DISABLE_CXX17_DEPRECATION_WARNINGS)
+      add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
+    endif()
   endif()
 
   if(CMAKE_CL_64)
@@ -523,7 +530,7 @@ if(ENABLE_GUI)
   set(CMAKE_AUTOMOC OFF)
 
   if(MSVC)
-    list(APPEND QT_INST_LIBRARIES 
+    list(APPEND QT_INST_LIBRARIES
       optimized Qt5Core debug Qt5Cored
       optimized Qt5Gui debug Qt5Guid
       optimized Qt5Network debug Qt5Networkd
@@ -665,7 +672,7 @@ if(ENABLE_CORBA)
       endif()
     endif()
   endif()
-  
+
   include_directories(${CHOREONOID_OMNIORB_INCLUDE_DIRS})
   link_directories(${CHOREONOID_OMNIORB_LIBRARY_DIRS})
   list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${CHOREONOID_OMNIORB_INCLUDE_DIRS})
@@ -747,7 +754,7 @@ endif()
 if(PNG_FOUND AND NOT USE_BUNDLED_LIBPNG)
   list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${PNG_INCLUDE_DIRS})
 else()
-  set(PNG_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/thirdparty/lpng1232" "${PROJECT_SOURCE_DIR}/thirdparty/zlib123") 
+  set(PNG_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/thirdparty/lpng1232" "${PROJECT_SOURCE_DIR}/thirdparty/zlib123")
   set(PNG_LIBRARIES png zlib)
   add_subdirectory(thirdparty/zlib123)
   add_subdirectory(thirdparty/lpng1232)
@@ -877,7 +884,7 @@ if(INSTALL_RUNTIME_DEPENDENCIES)
     # As of MSVC 19 the CRT depends on the 'univeral' CRT (which is part of Windows development kit 10 and above).
     get_filename_component(WINDOWS_KIT_DIR
       "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots;KitsRoot10]" ABSOLUTE)
-    
+
     file(GLOB CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_DEBUG
       "${MSVS_DIR}/VC/redist/debug_nonredist/${_winsdk_arch8}/Microsoft.VC140.DebugCRT/*.dll"
       "${WINDOWS_KIT_DIR}/Redist/ucrt/DLLs/${_winsdk_arch8}/api-ms-win-*.dll"
