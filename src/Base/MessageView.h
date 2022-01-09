@@ -102,6 +102,8 @@ CNOID_EXPORT std::ostream& mvout(bool doFlush = true);
 CNOID_EXPORT void showMessageBox(const std::string& message);
 CNOID_EXPORT bool showWarningDialog(const std::string& message, bool doConfirmation = false);
 CNOID_EXPORT void showErrorDialog(const std::string& message);
+CNOID_EXPORT void showErrorDialog(
+    const std::string& title, const std::string& message, const std::string& informative = "", const std::string& detailed = "");
 CNOID_EXPORT bool showConfirmDialog(const std::string& caption, const std::string& message);
 
 }

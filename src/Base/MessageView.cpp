@@ -1146,6 +1146,24 @@ void cnoid::showErrorDialog(const std::string& message)
 }
 
 
+void cnoid::showErrorDialog
+(const std::string& title, const std::string& message, const std::string& informative, const std::string& detailed)
+{
+    QMessageBox mbox(MainWindow::instance());
+    mbox.setIcon(QMessageBox::Critical);
+    mbox.setWindowTitle(title.c_str());
+    mbox.setText(message.c_str());
+    if(!informative.empty()){
+        mbox.setInformativeText(detailed.c_str());
+    }
+    if(!detailed.empty()){
+        mbox.setDetailedText(detailed.c_str());
+    }
+    mbox.setStandardButtons(QMessageBox::Ok);
+    mbox.exec();
+}
+
+
 bool cnoid::showConfirmDialog(const std::string& caption, const std::string& message)
 {
     QMessageBox::StandardButton clicked =
