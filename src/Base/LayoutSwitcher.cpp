@@ -113,7 +113,7 @@ NewLayoutDialog::NewLayoutDialog(LayoutSwitcher::Impl* impl)
     setLayout(vbox);
     auto hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Name:")));
-    nameEdit.setText(_("My Layout"));
+    nameEdit.setText(_("Layout"));
     hbox->addWidget(&nameEdit);
     vbox->addLayout(hbox);
 
