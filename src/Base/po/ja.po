@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-09 23:16+0900\n"
+"POT-Creation-Date: 2022-01-11 23:22+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -890,7 +890,7 @@ msgstr "プラグインについて"
 
 msgid ""
 "\"{0}\" is an item that usually does not need to be saved. Do you really want to save this item?"
-msgstr ""
+msgstr "\"{0}\" は通常保存する必要のないアイテムです．本当にこのアイテムを保存しますか？"
 
 msgid "Delete All Unmounted Views"
 msgstr "マウントされていない全てのビューを削除"
@@ -1879,28 +1879,28 @@ msgid "Create %1"
 msgstr "%1の生成"
 
 msgid "{0} is not registered in {1}."
-msgstr "{0} は {1} に登録されていません．"
+msgstr "{0}は{1}に登録されていません．"
+
+msgid "{0} is disabled by the application."
+msgstr "{0}はアプリケーションによって無効化されています．"
 
 msgid "{0} cannot be restored."
 msgstr "{0}を復帰することができません．"
 
+msgid "{0} cannot be restored: {1}"
+msgstr "{0}を復帰することができません．{1}"
+
 msgid "The \"{0}\" view of {1} cannot be restored."
-msgstr "{1} の \"{0}\" ビューを復帰できません．"
+msgstr "{1}の \"{0}\" ビューを復帰できません．"
+
+msgid "The \"{0}\" view of {1} cannot be restored: {2}"
+msgstr "{1}の \"{0}\" ビューを復帰できません．{2}"
 
 msgid "The \"{0}\" plugin for \"{1}\" is not found. The view cannot be restored."
-msgstr "\"{1}\"のための\"{0}\"プラグインが見つかりません．ビューの復帰ができません．"
+msgstr "\"{1}\" のための \"{0}\" プラグインが見つかりません．ビューの復帰ができません．"
 
 msgid "Virtual Joystick"
 msgstr "仮想ジョイスティック"
 
 msgid "VirtualJoystickView"
 msgstr "仮想ジョイスティックビュー"
-
-#~ msgid "Shadow %1"
-#~ msgstr "影 %1"
-
-#~ msgid "Light"
-#~ msgstr "ライト"
-
-#~ msgid "Back lighting"
-#~ msgstr "裏面照射"

@@ -773,11 +773,13 @@ static View* restoreView
     ViewClassImpl* info = findViewClassImpl(moduleName, className);
     View* view = nullptr;
     string instanceName;
+    string errorMessage;
 
     if(!info){
-        MessageView::instance()->putln(
-            format(_("{0} is not registered in {1}."), className, moduleName),
-            MessageView::Error);
+        errorMessage = format(_("{0} is not registered in {1}."), className, moduleName);
+
+    } else if(!info->isEnabled){
+        errorMessage = format(_("{0} is disabled by the application."), className);
 
     } else {
         archive->read("name", instanceName);
@@ -820,14 +822,21 @@ static View* restoreView
         }
     }
     if(!view){
+        string message;
         if(instanceName.empty()){
-            MessageView::instance()->putln(
-                format(_("{0} cannot be restored."), className), MessageView::Error);
+            if(errorMessage.empty()){
+                message = format(_("{0} cannot be restored."), className);
+            } else {
+                message = format(_("{0} cannot be restored: {1}"), className, errorMessage);
+            }
         } else {
-            MessageView::instance()->putln(
-                format(_("The \"{0}\" view of {1} cannot be restored."), instanceName, className),
-                MessageView::Error);
+            if(errorMessage.empty()){
+                message = format(_("The \"{0}\" view of {1} cannot be restored."), instanceName, className);
+            } else {
+                message = format(_("The \"{0}\" view of {1} cannot be restored: {2}"), instanceName, className, errorMessage);
+            }
         }
+        MessageView::instance()->putln(message, MessageView::Error);
     }
 
     return view;
