@@ -30,9 +30,10 @@ public:
 #endif
 
     enum MessageType {
-        Normal, Error, Warning, Highlight,
+        //! \note The following values must be same as the MessageOutput::MessageType values
+        Normal, Highlight, Warning, Error,
         // deprecated
-        NORMAL = Normal, ERROR = Error, WARNING = Warning, HIGHLIGHT = Highlight
+        NORMAL = Normal, HIGHLIGHT = Highlight, WARNING = Warning, ERROR = Error
     };
 
     void put(const std::string& message, int type = Normal);

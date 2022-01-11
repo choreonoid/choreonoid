@@ -63,7 +63,7 @@
 #include "MovieRecorderBar.h"
 #include "LazyCaller.h"
 #include "LayoutSwitcher.h"
-#include <cnoid/MessageManager>
+#include <cnoid/MessageOut>
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
 #include <cnoid/FilePathVariableProcessor>
@@ -137,7 +137,7 @@ public:
     string pluginPathList;
     string iconFilename;
     string builtinProjectFile;
-    MessageManager* messageManager;
+    MessageOut* mout;
     PluginManager* pluginManager;
     ExtensionManager* ext;
     MainWindow* mainWindow;
@@ -216,8 +216,8 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     instance_ = self;
     isDoingInitialization_ = true;
 
-    messageManager = MessageManager::master();
-    messageManager->setPendingMode(true);
+    mout = MessageOut::master();
+    mout->setPendingMode(true);
     
     AppConfig::initialize(appName, organization);
     pluginManager = PluginManager::instance();
@@ -354,8 +354,8 @@ void App::Impl::initialize()
 
     MessageView::initializeClass(ext);
     messageView = MessageView::instance();
-    messageManager->flushPendingMessages();
-    messageManager->setPendingMode(false);
+    mout->flushPendingMessages();
+    mout->setPendingMode(false);
     
     ItemManager::initializeClass(ext);
     ProjectManager::initializeClass(ext);

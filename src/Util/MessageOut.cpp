@@ -1,7 +1,8 @@
-#include "MessageManager.h"
+#include "MessageOut.h"
 #include <sstream>
 #include <vector>
 #include <mutex>
+#include <memory>
 
 using namespace std;
 using namespace cnoid;
@@ -10,26 +11,26 @@ namespace {
 
 mutex sinkMutex;
 
-class MessageManagerStreamBuf : public std::stringbuf
+class MessageOutStreamBuf : public std::stringbuf
 {
 public:
-    MessageManager& messageManager;
-    MessageManagerStreamBuf(MessageManager& messageManager)
-        : messageManager(messageManager) { }
+    MessageOut& mout;
+    MessageOutStreamBuf(MessageOut& mout)
+        : mout(mout) { }
     virtual int sync() override {
-        messageManager.put(str());
+        mout.put(str());
         return 0;
     }
 };
 
-class MessageManagerErrorStreamBuf : public std::stringbuf
+class MessageOutErrorStreamBuf : public std::stringbuf
 {
 public:
-    MessageManager& messageManager;
-    MessageManagerErrorStreamBuf(MessageManager& messageManager)
-        : messageManager(messageManager) { }
+    MessageOut& mout;
+    MessageOutErrorStreamBuf(MessageOut& mout)
+        : mout(mout) { }
     virtual int sync() override {
-        messageManager.putError(str());
+        mout.putError(str());
         return 0;
     }
 };
@@ -48,10 +49,10 @@ typedef ref_ptr<Sink> SinkPtr;
 
 namespace cnoid {
 
-class MessageManager::Impl
+class MessageOut::Impl
 {
 public:
-    MessageManager* self;
+    MessageOut* self;
     vector<SinkPtr> sinks;
 
     struct Message {
@@ -65,56 +66,59 @@ public:
     bool isPendingMode;
     bool hasErrors;
 
-    MessageManagerStreamBuf streamBuf;
-    ostream cout;
-    MessageManagerErrorStreamBuf errorStreamBuf;
-    ostream cerr;
+    unique_ptr<MessageOutStreamBuf> streamBuf;
+    unique_ptr<ostream> cout;
+    unique_ptr<MessageOutErrorStreamBuf> errorStreamBuf;
+    unique_ptr<ostream> cerr;
 
-    Impl(MessageManager* self);
+    Impl(MessageOut* self);
 };
 
 }
 
 
-MessageManager* MessageManager::master()
+MessageOut* MessageOut::master()
 {
-    static MessageManagerPtr master_ = new MessageManager;
-    return master_;
+    static MessageOutPtr instance = new MessageOut;
+    return instance;
 }
 
 
-MessageManager::MessageManager()
+MessageOut* MessageOut::interactive()
+{
+    static MessageOutPtr instance = new MessageOut;
+    return instance;
+}
+
+
+MessageOut::MessageOut()
 {
     impl = new Impl(this);
 }
 
 
-MessageManager::Impl::Impl(MessageManager* self)
-    : self(self),
-      streamBuf(*self),
-      cout(&streamBuf),
-      errorStreamBuf(*self),
-      cerr(&errorStreamBuf)
+MessageOut::Impl::Impl(MessageOut* self)
+    : self(self)
 {
     isPendingMode = false;
     hasErrors = false;
 }
 
 
-MessageManager::~MessageManager()
+MessageOut::~MessageOut()
 {
     delete impl;
 }
 
 
-void MessageManager::clearSinks()
+void MessageOut::clearSinks()
 {
     lock_guard<mutex> lock(sinkMutex);
     impl->sinks.clear();
 }
     
 
-MessageManager::SinkHandle MessageManager::addSink(std::function<void(const std::string& message, int type)> func)
+MessageOut::SinkHandle MessageOut::addSink(std::function<void(const std::string& message, int type)> func)
 {
     lock_guard<mutex> lock(sinkMutex);
     impl->sinks.push_back(new Sink(func));
@@ -122,7 +126,7 @@ MessageManager::SinkHandle MessageManager::addSink(std::function<void(const std:
 }
 
 
-void MessageManager::removeSink(SinkHandle sink)
+void MessageOut::removeSink(SinkHandle sink)
 {
     lock_guard<mutex> lock(sinkMutex);
     for(auto it = impl->sinks.begin(); it != impl->sinks.end(); ++it){
@@ -134,7 +138,7 @@ void MessageManager::removeSink(SinkHandle sink)
 }
 
 
-void MessageManager::put(const std::string& message, int type)
+void MessageOut::put(const std::string& message, int type)
 {
     lock_guard<mutex> lock(sinkMutex);
     if(type == Error){
@@ -150,31 +154,45 @@ void MessageManager::put(const std::string& message, int type)
 }
 
 
-void MessageManager::putln(const std::string& message, int type)
+void MessageOut::putln(const std::string& message, int type)
 {
     put(message + "\n", type);
 }
 
 
-std::ostream& MessageManager::cout()
+std::ostream& MessageOut::cout()
 {
-    return impl->cout;
+    if(!impl->cout){
+        impl->streamBuf = make_unique<MessageOutStreamBuf>(*this);
+        impl->cout = make_unique<ostream>(impl->streamBuf.get());
+    }
+    return *impl->cout;
 }
 
 
-bool MessageManager::hasErrors() const
+std::ostream& MessageOut::cerr()
+{
+    if(!impl->cout){
+        impl->errorStreamBuf = make_unique<MessageOutErrorStreamBuf>(*this);
+        impl->cerr = make_unique<ostream>(impl->errorStreamBuf.get());
+    }
+    return *impl->cerr;
+}
+
+
+bool MessageOut::hasErrors() const
 {
     return impl->hasErrors;
 }
 
 
-void MessageManager::setPendingMode(bool on)
+void MessageOut::setPendingMode(bool on)
 {
     impl->isPendingMode = on;
 }
     
 
-void MessageManager::flushPendingMessages()
+void MessageOut::flushPendingMessages()
 {
     lock_guard<mutex> lock(sinkMutex);
     for(auto& message : impl->pendingMessages){

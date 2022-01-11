@@ -8,7 +8,7 @@
 #include "InfoBar.h"
 #include "Item.h"
 #include "TextEdit.h"
-#include <cnoid/MessageManager>
+#include <cnoid/MessageOut>
 #include <cnoid/Tokenizer>
 #include <fmt/format.h>
 #include <QBoxLayout>
@@ -284,9 +284,27 @@ MessageView::Impl::Impl(MessageView* self) :
 
     hasErrorMessages = false;
 
-    MessageManager::master()->addSink(
+    MessageOut::master()->addSink(
         [this](const std::string& message, int type){
             put(message, type, false, false, true);
+        });
+
+    MessageOut::interactive()->addSink(
+        [this](const std::string& message, int type){
+            switch(type){
+            case MessageOut::Normal:
+            case MessageOut::Highlighted:
+                put(message, type, false, false, true);
+                break;
+            case MessageOut::Warning:
+                showWarningDialog(message);
+                break;
+            case MessageOut::Error:
+                showErrorDialog(message);
+                break;
+            default:
+                break;
+            }
         });
 }
 

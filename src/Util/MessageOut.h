@@ -1,5 +1,5 @@
-#ifndef CNOID_UTIL_MESSAGE_MANAGER_H
-#define CNOID_UTIL_MESSAGE_MANAGER_H
+#ifndef CNOID_UTIL_MESSAGE_OUT_H
+#define CNOID_UTIL_MESSAGE_OUT_H
 
 #include "Referenced.h"
 #include <string>
@@ -7,15 +7,16 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT MessageManager : public Referenced
+class CNOID_EXPORT MessageOut : public Referenced
 {
 public:
-    static MessageManager* master();
+    static MessageOut* master();
+    static MessageOut* interactive();
 
-    MessageManager();
-    MessageManager(std::function<void(const std::string& message, int type)> sink);
-    MessageManager(MessageManager* parent);
-    ~MessageManager();
+    MessageOut();
+    MessageOut(std::function<void(const std::string& message, int type)> sink);
+    MessageOut(MessageOut* parent);
+    ~MessageOut();
 
     enum MessageType { Normal, Highlighted, Warning, Error };
 
@@ -69,7 +70,7 @@ private:
     Impl* impl;
 };
 
-typedef ref_ptr<MessageManager> MessageManagerPtr;
+typedef ref_ptr<MessageOut> MessageOutPtr;
 
 }
 
