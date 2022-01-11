@@ -33,5 +33,7 @@
   <file>icon/stop-simulation.svg</file>
   <file>icon/pause-simulation.svg</file>
 
+  <file>icon/digital-io-off.svg</file>
+  <file>icon/digital-io-on.svg</file>
 </qresource>
 </RCC>

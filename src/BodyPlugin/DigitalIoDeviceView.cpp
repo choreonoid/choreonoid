@@ -3,6 +3,7 @@
 #include <cnoid/ViewManager>
 #include <cnoid/BodyItem>
 #include <cnoid/DigitalIoDevice>
+#include <cnoid/Archive>
 #include <QTableView>
 #include <QHeaderView>
 #include <QAbstractTableModel>
@@ -10,6 +11,7 @@
 #include <QBoxLayout>
 #include <QLabel>
 #include <QComboBox>
+#include <QEvent>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -30,8 +32,10 @@ class IoDeviceModel : public QAbstractTableModel
 public:
     DigitalIoDevicePtr ioDevice;
     ScopedConnection ioDeviceConnection;
+    bool isOnOffIconMode;
 
     IoDeviceModel(QObject* parent);
+    void setOnOffIconMode(bool on);
     void setIoDevice(DigitalIoDevice* ioDevice);
     void onIoDeviceStateChanged();    
     virtual int rowCount(const QModelIndex& parent) const override;
@@ -46,12 +50,17 @@ public:
 class CustomizedItemDelegate : public QStyledItemDelegate
 {
 public:
-    IoDeviceModel* model;
+    IoDeviceModel* ioDeviceModel;
 
     CustomizedItemDelegate(DigitalIoDeviceView::Impl* view);
     virtual QWidget* createEditor(
         QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
-    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
+    virtual void setModelData(
+        QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
+    virtual void paint(
+        QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& modelIndex) const override;
+    virtual bool editorEvent(
+        QEvent* event, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index) override;
 };
 
 }
@@ -77,12 +86,16 @@ public:
 }
 
 
-namespace {
-
 IoDeviceModel::IoDeviceModel(QObject* parent)
     : QAbstractTableModel(parent)
 {
+    isOnOffIconMode = true;
+}
 
+
+void IoDeviceModel::setOnOffIconMode(bool on)
+{
+    isOnOffIconMode = on;
 }
 
 
@@ -170,10 +183,7 @@ QModelIndex IoDeviceModel::index(int row, int column, const QModelIndex& parent)
 
 Qt::ItemFlags IoDeviceModel::flags(const QModelIndex& index) const
 {
-    if(index.column() == InStateColumn || index.column() == OutStateColumn){
-        return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
-    }
-    return QAbstractTableModel::flags(index);
+    return Qt::ItemFlags(Qt::ItemIsEnabled | Qt::ItemIsEditable);
 }
 
 
@@ -189,15 +199,18 @@ QVariant IoDeviceModel::data(const QModelIndex& modelIndex, int role) const
             return ioDevice->outLabel(index).c_str();
         case InStateColumn:
         case OutStateColumn:
-        {
             bool on;
             if(column == InStateColumn){
                 on = ioDevice->in(index);
             } else {
                 on = ioDevice->out(index);
             }
-            return on ? _("On") : _("Off");
-        }
+            if(isOnOffIconMode){
+                return on;
+            } else {
+                return on ? _("On") : _("Off");
+            }
+            break;
         default:
             break;
         }
@@ -225,6 +238,12 @@ bool IoDeviceModel::setData(const QModelIndex& modelIndex, const QVariant& value
         } else if(column == OutStateColumn){
             ioDevice->setOut(index, value.toBool());
             Q_EMIT dataChanged(modelIndex, modelIndex, {role});
+        } else if(column == InLabelColumn){
+            ioDevice->setInLabel(index, value.toString().toStdString());
+            Q_EMIT dataChanged(modelIndex, modelIndex, { role });
+        } else if(column == OutLabelColumn){
+            ioDevice->setOutLabel(index, value.toString().toStdString());
+            Q_EMIT dataChanged(modelIndex, modelIndex, { role });
         }
     }
     return false;
@@ -233,7 +252,7 @@ bool IoDeviceModel::setData(const QModelIndex& modelIndex, const QVariant& value
 
 CustomizedItemDelegate::CustomizedItemDelegate(DigitalIoDeviceView::Impl* view)
     : QStyledItemDelegate(view),
-      model(view->ioDeviceModel)
+      ioDeviceModel(view->ioDeviceModel)
 {
 
 }
@@ -243,52 +262,101 @@ QWidget* CustomizedItemDelegate::createEditor
 (QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& modelIndex) const
 {
     QWidget* editor = nullptr;
-    int index = modelIndex.row();
-    int column = modelIndex.column();
-    switch(column){
-    case InStateColumn:
-    case OutStateColumn:
-    {
-        auto combo = new QComboBox(parent);
-        combo->addItem(_("On"));
-        combo->addItem(_("Off"));
-        bool on;
-        if(column == InStateColumn){
-            on = model->ioDevice->in(index) ? 0 : 1;
-        } else {
-            on = model->ioDevice->out(index) ? 0 : 1;
+
+    if(!ioDeviceModel->isOnOffIconMode){
+        int column = modelIndex.column();
+        if(column == InStateColumn || column == OutStateColumn){
+            int index = modelIndex.row();
+            auto combo = new QComboBox(parent);
+            combo->addItem(_("On"));
+            combo->addItem(_("Off"));
+            int comboIndex = 0;
+            if(column == InStateColumn){
+                comboIndex = ioDeviceModel->ioDevice->in(index) ? 0 : 1;
+            } else {
+                comboIndex = ioDeviceModel->ioDevice->out(index) ? 0 : 1;
+            }
+            combo->setCurrentIndex(comboIndex);
+            editor = combo;
         }
-        combo->setCurrentIndex(on);
-        editor = combo;
-        break;
     }
-    default:
-        break;
-    }
+
     if(!editor){
         editor = QStyledItemDelegate::createEditor(parent, option, modelIndex);
     }
+    
     return editor;
 }
 
 
 void CustomizedItemDelegate::setModelData
-(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
+(QWidget* editor, QAbstractItemModel* model, const QModelIndex& modelIndex) const
 {
-    switch(index.column()){
-    case InStateColumn:
-    case OutStateColumn:
-        if(auto combo = dynamic_cast<QComboBox*>(editor)){
-            bool on = (combo->currentIndex() == 0) ? true : false;
-            model->setData(index, on);
+    bool done = false;
+
+    if(!ioDeviceModel->isOnOffIconMode){
+        int column = modelIndex.column();
+        if(column == InStateColumn || column == OutStateColumn){
+            if(auto combo = dynamic_cast<QComboBox*>(editor)){
+                bool on = (combo->currentIndex() == 0) ? true : false;
+                model->setData(modelIndex, on);
+                done = true;
+            }
         }
-        break;
-    cefault:
-        QStyledItemDelegate::setModelData(editor, model, index);
+    }
+    
+    if(!done){
+        QStyledItemDelegate::setModelData(editor, model, modelIndex);
     }
 }
 
+
+void CustomizedItemDelegate::paint
+(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& modelIndex) const 
+{
+    bool done = false;
+    
+    if(ioDeviceModel->isOnOffIconMode){
+        int column = modelIndex.column();
+        if(column == InStateColumn || column == OutStateColumn){
+            bool on = modelIndex.data().toBool();
+            QRect iconRect = option.rect;
+            static QIcon onIcon(":Body/icon/digital-io-on.svg");
+            static QIcon offIcon(":Body/icon/digital-io-off.svg");
+            if(on){
+                onIcon.paint(painter, iconRect);
+            } else {
+                offIcon.paint(painter, iconRect);
+            }
+            done = true;
+        }
+    }
+
+    if(!done){
+        QStyledItemDelegate::paint(painter, option, modelIndex);
+    }
 }
+
+
+bool CustomizedItemDelegate::editorEvent
+(QEvent* event, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& modelIndex)
+{
+    bool done = false;
+    
+    if(ioDeviceModel->isOnOffIconMode){
+        int column = modelIndex.column();
+        if(column == InStateColumn || column == OutStateColumn){
+            if(event->type() == QEvent::MouseButtonPress){
+                bool on = modelIndex.data().toBool();
+                model->setData(modelIndex, !on, Qt::EditRole);
+                event->accept();
+            }
+            done = true;
+        }
+    }
+    return done;
+}
+
 
 
 void DigitalIoDeviceView::initializeClass(ExtensionManager* ext)
@@ -425,6 +493,11 @@ bool DigitalIoDeviceView::storeState(Archive& archive)
 
 bool DigitalIoDeviceView::restoreState(const Archive& archive)
 {
+    // Restore-only option for customization written in the builtin project file
+    bool on;
+    if(archive.read("use_on_off_icon", on)){
+        impl->ioDeviceModel->setOnOffIconMode(on);
+    }
     return true;
 }
 
