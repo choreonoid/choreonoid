@@ -11,7 +11,7 @@
 #include <cnoid/LinkKinematicsKit>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
-#include <cnoid/MessageView>
+#include <cnoid/MessageOut>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -43,10 +43,10 @@ public:
     Impl(MprProgramItemBase* self, const Impl& org);
     void initialize();
     void setTargetBodyItem(BodyItem* bodyItem);
-    MprPosition* findPositionOrShowWarning(MprPositionStatement* statement);
-    bool moveTo(MprPosition* position, bool doUpdateAll);
-    bool superimposePosition(MprPosition* position);
-    bool touchupPosition(MprPosition* position);
+    MprPosition* findPositionOrShowWarning(MprPositionStatement* statement, MessageOut* mout);
+    bool moveTo(MprPosition* position, bool doUpdateAll, MessageOut* mout);
+    bool superimposePosition(MprPosition* position, MessageOut* mout);
+    bool touchupPosition(MprPosition* position, MessageOut* mout);
 };
 
 }
@@ -248,11 +248,11 @@ bool MprProgramItemBase::setAsStartupProgram(bool on, bool doNotify)
 }
 
 
-MprPosition* MprProgramItemBase::Impl::findPositionOrShowWarning(MprPositionStatement* statement)
+MprPosition* MprProgramItemBase::Impl::findPositionOrShowWarning(MprPositionStatement* statement, MessageOut* mout)
 {
     MprPosition* position = statement->position();
-    if(!position){
-        showWarningDialog(
+    if(!position && mout){
+        mout->putError(
             format(_("Position {0} is not found in {1}."),
                    statement->positionLabel(), self->name()).c_str());
     }
@@ -260,22 +260,22 @@ MprPosition* MprProgramItemBase::Impl::findPositionOrShowWarning(MprPositionStat
 }
 
 
-bool MprProgramItemBase::moveTo(MprPositionStatement* statement)
+bool MprProgramItemBase::moveTo(MprPositionStatement* statement, MessageOut* mout)
 {
-    if(auto position = impl->findPositionOrShowWarning(statement)){
-        return impl->moveTo(position, true);
+    if(auto position = impl->findPositionOrShowWarning(statement, mout)){
+        return impl->moveTo(position, true, mout);
     }
     return false;
 }
 
 
-bool MprProgramItemBase::moveTo(MprPosition* position)
+bool MprProgramItemBase::moveTo(MprPosition* position, MessageOut* mout)
 {
-    return impl->moveTo(position, true);
+    return impl->moveTo(position, true, mout);
 }
 
 
-bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll)
+bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll, MessageOut* mout)
 {
     if(!kinematicsKit){
         return false;
@@ -316,36 +316,38 @@ bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll)
         if(tcpName.empty()){
             tcpName = "TCP";
         }
-        showWarningDialog(
-            format(_("{0} of {1} cannot be moved to position {2}"),
-                   tcpName, targetBodyItem->displayName(), position->id().label()));
+        if(mout){
+            mout->putError(
+                format(_("{0} of {1} cannot be moved to position {2}."),
+                       tcpName, targetBodyItem->displayName(), position->id().label()));
+        }
     }
 
     return updated;
 }
 
 
-bool MprProgramItemBase::superimposePosition(MprPositionStatement* statement)
+bool MprProgramItemBase::superimposePosition(MprPositionStatement* statement, MessageOut* mout)
 {
-    if(auto position = impl->findPositionOrShowWarning(statement)){
-        return impl->superimposePosition(position);
+    if(auto position = impl->findPositionOrShowWarning(statement, mout)){
+        return impl->superimposePosition(position, mout);
     }
     return false;
 }
 
 
-bool MprProgramItemBase::superimposePosition(MprPosition* position)
+bool MprProgramItemBase::superimposePosition(MprPosition* position, MessageOut* mout)
 {
-    return impl->superimposePosition(position);
+    return impl->superimposePosition(position, mout);
 }
 
 
-bool MprProgramItemBase::Impl::superimposePosition(MprPosition* position)
+bool MprProgramItemBase::Impl::superimposePosition(MprPosition* position, MessageOut* mout)
 {
     if(targetBodyItem){
         if(auto superimposer = targetBodyItem->getAddon<BodySuperimposerAddon>()){
             return superimposer->updateSuperimposition(
-                [&](){ return moveTo(position, false); });
+                [&](){ return moveTo(position, false, mout); });
         }
     }
     return false;
@@ -362,14 +364,14 @@ void MprProgramItemBase::clearSuperimposition()
 }
 
 
-bool MprProgramItemBase::touchupPosition(MprPositionStatement* statement)
+bool MprProgramItemBase::touchupPosition(MprPositionStatement* statement, MessageOut* mout)
 {
     auto positions = impl->topLevelProgram->positionList();
     MprPositionPtr position = statement->position();
     if(!position){
         position = new MprIkPosition(statement->positionId());
     }
-    bool result = impl->touchupPosition(position);
+    bool result = impl->touchupPosition(position, mout);
 
     if(result){
         positions->append(position);
@@ -383,20 +385,24 @@ bool MprProgramItemBase::touchupPosition(MprPositionStatement* statement)
 }
 
 
-bool MprProgramItemBase::touchupPosition(MprPosition* position)
+bool MprProgramItemBase::touchupPosition(MprPosition* position, MessageOut* mout)
 {
-    return impl->touchupPosition(position);
+    return impl->touchupPosition(position, mout);
 }
 
 
-bool MprProgramItemBase::Impl::touchupPosition(MprPosition* position)
+bool MprProgramItemBase::Impl::touchupPosition(MprPosition* position, MessageOut* mout)
 {
     if(!kinematicsKit){
-        showWarningDialog(_("Program item is not associated with any manipulator"));
+        if(mout){
+            mout->putError(
+                format(_("Program item \"{0}\" is not associated with any manipulator."),
+                       self->displayName()));
+        }
         return false;
     }
 
-    bool result = position->fetch(kinematicsKit);
+    bool result = position->fetch(kinematicsKit, mout);
     if(result){
         position->notifyUpdate(MprPosition::PositionUpdate);
     }

@@ -8,12 +8,38 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
 #include <cnoid/CloneMap>
+#include <cnoid/MessageOut>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 constexpr int MprPosition::MaxNumJoints;
+
+namespace {
+
+bool checkJointDisplacementRanges(JointPath& jointPath, MessageOut* mout)
+{
+    bool isOver = false;
+    for(auto& joint : jointPath){
+        if(joint->isRevoluteJoint() || joint->isPrismaticJoint()){
+            if(joint->q() < joint->q_lower() || joint->q() > joint->q_upper()){
+                if(mout){
+                    mout->putError(
+                        format(_("The joint displacement of {0} is out of its movable range."),
+                               joint->jointName()));
+                }
+                isOver = true;
+                break;
+            }
+        }
+    }
+    return !isOver;
+}
+
+}
 
 
 MprPosition::MprPosition(PositionType type)
@@ -84,7 +110,7 @@ void MprPosition::notifyUpdate(int flags)
 bool MprPosition::read(const Mapping& archive)
 {
     if(!id_.read(archive, "id")){
-        archive.throwException(_("The \"id\" key is not found in a manipulator position node"));
+        archive.throwException(_("The \"id\" key is not found in a manipulator position node."));
     }
     archive.read("note", note_);
     return true;
@@ -166,18 +192,38 @@ void MprIkPosition::resetReferenceRpy()
 }
 
 
-bool MprIkPosition::fetch(LinkKinematicsKit* kinematicsKit)
+bool MprIkPosition::fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout)
 {
-    if(kinematicsKit->hasJointPath()){
-        T = kinematicsKit->endPosition();
-        baseFrameId_ = kinematicsKit->currentBaseFrameId();
-        offsetFrameId_ = kinematicsKit->currentOffsetFrameId();
-        referenceRpy_ = rpyFromRot(T.linear(), kinematicsKit->referenceRpy());
-        configuration_ = kinematicsKit->currentConfigurationType();
-        //! \todo set phase here
-        return true;
+    bool fetched = false;
+    
+    if(auto jointPath = kinematicsKit->jointPath()){
+        bool failed = false;
+        if(auto configuration = kinematicsKit->configurationHandler()){
+            int state = configuration->getCurrentNearSingularPointState();
+            if(state > 0){
+                if(mout){
+                    mout->putError(
+                        format(_("The current manipulator position is not valid: {0}."),
+                               configuration->getNearSingularPointFactorString(state)));
+                }
+                failed = true;
+            }
+        }
+        if(!failed && !checkJointDisplacementRanges(*jointPath, mout)){
+            failed = true;
+        }
+        if(!failed){
+            T = kinematicsKit->endPosition();
+            baseFrameId_ = kinematicsKit->currentBaseFrameId();
+            offsetFrameId_ = kinematicsKit->currentOffsetFrameId();
+            referenceRpy_ = rpyFromRot(T.linear(), kinematicsKit->referenceRpy());
+            configuration_ = kinematicsKit->currentConfigurationType();
+            //! \todo set phase here
+            fetched = true;
+        }
     }
-    return false;
+
+    return fetched;
 }
 
 
@@ -303,21 +349,28 @@ Referenced* MprFkPosition::doClone(CloneMap*) const
 }
 
 
-bool MprFkPosition::fetch(LinkKinematicsKit* kinematicsKit)
+bool MprFkPosition::fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout)
 {
-    auto path = kinematicsKit->jointPath();
-    numJoints_ = std::min(path->numJoints(), MaxNumJoints);
-    int i;
-    for(i = 0; i < numJoints_; ++i){
-        auto joint = path->joint(i);
-        jointDisplacements_[i] = joint->q();
-        prismaticJointFlags_[i] = joint->isPrismaticJoint();
+    bool fetched = false;
+    
+    if(auto jointPath = kinematicsKit->jointPath()){
+        if(checkJointDisplacementRanges(*jointPath, mout)){
+            numJoints_ = std::min(jointPath->numJoints(), MaxNumJoints);
+            int i;
+            for(i = 0; i < numJoints_; ++i){
+                auto joint = jointPath->joint(i);
+                jointDisplacements_[i] = joint->q();
+                prismaticJointFlags_[i] = joint->isPrismaticJoint();
+            }
+            for( ; i < MaxNumJoints; ++i){
+                jointDisplacements_[i] = 0.0;
+                prismaticJointFlags_[i] = false;
+            }
+            fetched = true;
+        }
     }
-    for( ; i < MaxNumJoints; ++i){
-        jointDisplacements_[i] = 0.0;
-        prismaticJointFlags_[i] = false;
-    }
-    return true;
+
+    return fetched;
 }
 
 

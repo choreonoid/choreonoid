@@ -11,6 +11,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/BodyItem>
 #include <cnoid/EigenUtil>
+#include <cnoid/MessageOut>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QTableView>
@@ -406,8 +407,9 @@ void PositionListModel::changePositionType(int positionIndex, MprPosition* posit
     newPosition->setNote(position->note());
 
     if(view->applyPosition(positionIndex, true)){
-        newPosition->fetch(programItem->kinematicsKit());
-        positionList->replace(positionIndex, newPosition);
+        if(newPosition->fetch(programItem->kinematicsKit(), MessageOut::interactive())){
+            positionList->replace(positionIndex, newPosition);
+        }
     }
 }
 
@@ -710,10 +712,11 @@ void MprPositionListView::Impl::addPositionIntoCurrentIndex(bool doInsert)
 void MprPositionListView::Impl::addPosition(int row, bool doInsert)
 {
     if(positionList){
-        auto id = positionList->createNextId();
-        MprPositionPtr position = new MprIkPosition(id);
-        position->fetch(programItem->kinematicsKit());
-        positionListModel->addPosition(row, position, doInsert);
+        MprPositionPtr position = new MprIkPosition;
+        if(position->fetch(programItem->kinematicsKit(), MessageOut::interactive())){
+            position->setId(positionList->createNextId());
+            positionListModel->addPosition(row, position, doInsert);
+        }
     }
 }
 
@@ -832,9 +835,9 @@ bool MprPositionListView::Impl::applyPosition(int positionIndex, bool forceDirec
     bool result = false;
     auto position = positionList->positionAt(positionIndex);
     if(bodySyncMode == DirectBodySync || forceDirectSync){
-        result = programItem->moveTo(position);
+        result = programItem->moveTo(position, MessageOut::interactive());
     } else {
-        result = programItem->superimposePosition(position);
+        result = programItem->superimposePosition(position, MessageOut::interactive());
     }
     return result;
 }
@@ -844,7 +847,7 @@ void MprPositionListView::Impl::touchupCurrentPosition()
 {
     if(positionList){
         if(auto position = positionListModel->positionAt(selectionModel()->currentIndex())){
-            programItem->touchupPosition(position);
+            programItem->touchupPosition(position, MessageOut::interactive());
         }
     }
 }

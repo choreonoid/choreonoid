@@ -16,6 +16,7 @@
 #include <cnoid/Buttons>
 #include <cnoid/ConnectionSet>
 #include <cnoid/Archive>
+#include <cnoid/MessageOut>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QMouseEvent>
@@ -1123,9 +1124,9 @@ void MprProgramViewBase::onStatementActivated(MprStatement* statement)
     if(!impl->isOnTimeChanged){
         if(auto ps = dynamic_cast<MprPositionStatement*>(statement)){
             if(impl->bodySyncMode == DirectBodySync){
-                impl->currentProgramItem->moveTo(ps);
+                impl->currentProgramItem->moveTo(ps, MessageOut::master());
             } else if(impl->bodySyncMode == TwoStageBodySync){
-                impl->currentProgramItem->superimposePosition(ps);
+                impl->currentProgramItem->superimposePosition(ps, MessageOut::master());
             }
         }
     }
@@ -1145,7 +1146,7 @@ void MprProgramViewBase::onStatementDoubleClicked(MprStatement* statement)
 {
     if(impl->bodySyncMode == TwoStageBodySync){
         if(auto ps = dynamic_cast<MprPositionStatement*>(statement)){
-            impl->currentProgramItem->moveTo(ps);
+            impl->currentProgramItem->moveTo(ps, MessageOut::interactive());
         }
     }
 }

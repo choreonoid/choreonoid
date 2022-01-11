@@ -7,6 +7,7 @@
 #include <cnoid/DisplayValueFormat>
 #include <cnoid/EigenUtil>
 #include <cnoid/Buttons>
+#include <cnoid/MessageOut>
 #include <QLabel>
 #include <QBoxLayout>
 #include <QGridLayout>
@@ -90,7 +91,7 @@ MprPositionStatementPanel::Impl::Impl(MprPositionStatementPanel* self)
     moveToButton.sigClicked().connect(
         [self](){
             self->currentProgramItem()->moveTo(
-                self->currentStatement<MprPositionStatement>());
+                self->currentStatement<MprPositionStatement>(), MessageOut::interactive());
         });
     hbox->addWidget(&moveToButton);
 
@@ -98,7 +99,7 @@ MprPositionStatementPanel::Impl::Impl(MprPositionStatementPanel* self)
     touchupButton.sigClicked().connect(
         [self](){
             self->currentProgramItem()->touchupPosition(
-                self->currentStatement<MprPositionStatement>());
+                self->currentStatement<MprPositionStatement>(), MessageOut::interactive());
         });
     hbox->addWidget(&touchupButton);
     

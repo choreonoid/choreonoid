@@ -12,6 +12,7 @@ class Archive;
 class BodyItem;
 class LinkKinematicsKit;
 class MprPositionStatement;
+class MessageOut;
 
 class CNOID_EXPORT MprProgramItemBase : public Item
 {
@@ -32,13 +33,13 @@ public:
     bool isStartupProgram() const;
     bool setAsStartupProgram(bool on, bool doNotify = true);
 
-    bool moveTo(MprPositionStatement* statement);
-    bool moveTo(MprPosition* position);
-    bool superimposePosition(MprPositionStatement* statement);
-    bool superimposePosition(MprPosition* position);
+    bool moveTo(MprPositionStatement* statement, MessageOut* mout = nullptr);
+    bool moveTo(MprPosition* position, MessageOut* mout = nullptr);
+    bool superimposePosition(MprPositionStatement* statement, MessageOut* mout = nullptr);
+    bool superimposePosition(MprPosition* position, MessageOut* mout = nullptr);
     void clearSuperimposition();
-    bool touchupPosition(MprPositionStatement* statement);
-    bool touchupPosition(MprPosition* position);
+    bool touchupPosition(MprPositionStatement* statement, MessageOut* mout = nullptr);
+    bool touchupPosition(MprPosition* position, MessageOut* mout = nullptr);
 
     template<class StatementType>
     static void registerReferenceResolver(

@@ -19,6 +19,7 @@ class MprIkPosition;
 class MprFkPosition;
 class MprPositionList;
 class Mapping;
+class MessageOut;
 
 class CNOID_EXPORT MprPosition : public ClonableReferenced
 {
@@ -47,7 +48,7 @@ public:
 
     MprPositionList* ownerPositionList();
 
-    virtual bool fetch(LinkKinematicsKit* kinematicsKit) = 0;
+    virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) = 0;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const = 0;
 
     const std::string& note() const { return note_; }
@@ -124,7 +125,7 @@ public:
     int configuration() const { return configuration_; }
 
     //! \note This function always specifies BodyFrame as the base frame type.
-    virtual bool fetch(LinkKinematicsKit* kinematicsKit) override;
+    virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
@@ -154,7 +155,7 @@ public:
     MprFkPosition(const MprFkPosition& org);
     MprFkPosition& operator=(const MprFkPosition& rhs) = delete;
 
-    virtual bool fetch(LinkKinematicsKit* kinematicsKit) override;
+    virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
     virtual bool read(const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
