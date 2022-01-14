@@ -472,6 +472,28 @@ public:
         return invoke(std::is_void<result_type>{}, std::forward<Args>(args)...);
     }
 
+    void emitAndGetAllResults(Args... args, std::vector<result_type>& out_results)
+    {
+        out_results.clear();
+        if(firstSlot){
+            typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
+            std::tuple<Args...> argset(args...);
+            isCallingSlots = true;
+            IteratorType iter(firstSlot, argset);
+            IteratorType last(nullptr, argset);
+            while(iter != last){
+                if(iter.isReady()){
+                    out_results.push_back(*iter);
+                }
+                ++iter;
+            }
+            isCallingSlots = false;
+            if(pSlotsToConnectLater){
+                connectSlotsWithPendingConnection();
+            }
+        }
+    }
+
 private:
     void invoke(std::true_type, Args&&... args){
         if(firstSlot){
