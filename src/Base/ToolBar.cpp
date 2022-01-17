@@ -97,7 +97,6 @@ ToolBar::ToolBar(const std::string& name)
     topHBox->addLayout(elementLayout);
 
     insertionPosition = -1;
-    lastId = -1;
     radioGroup = nullptr;
     mainWindow = MainWindow::instance();
     toolBarArea_ = nullptr;
@@ -149,12 +148,8 @@ ToolButton* ToolBar::addButton(int id)
 
 void ToolBar::registerElement(QWidget* element, int id)
 {
-    if(id < 0){
-        id = lastId + 1;
-    }
-    elements.emplace_back(element, id);
-    if(id > lastId){
-        lastId = id;
+    if(id >= 0){
+        elements.emplace_back(element, id);
     }
     insertionPosition = -1;
 }    
@@ -464,6 +459,14 @@ void ToolBar::setActiveElements(const Listing& ids)
             found->widget->show();
         }
     }
+
+    onActiveElementUpdated();
+}
+
+
+void ToolBar::onActiveElementUpdated()
+{
+
 }
 
 

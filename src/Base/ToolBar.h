@@ -102,12 +102,14 @@ public Q_SLOTS:
     void setEnabled(bool on);
     void changeIconSize(const QSize& iconSize);
 
+protected:
+    virtual void onActiveElementUpdated();
+
 private:
     std::string name_;
     QHBoxLayout* elementLayout;
     QWidget* handle;
     int insertionPosition;
-    int lastId;
     QButtonGroup* radioGroup;
     MainWindow* mainWindow;
     ToolBarArea* toolBarArea_;
