@@ -41,124 +41,6 @@ enum ElementId {
     ConfigButton = 7
 };
 
-class ConfigDialog : public Dialog
-{
-public:
-    SpinBox frameRateSpin;
-    SpinBox playbackFrameRateSpin;
-    CheckBox idleLoopDrivenCheck;
-    DoubleSpinBox playbackSpeedRatioSpin;
-    CheckBox ongoingTimeSyncCheck;
-    CheckBox autoExpandCheck;
-    QCheckBox beatModeCheck;
-    DoubleSpinBox tempoSpin;
-    SpinBox beatcSpin;
-    SpinBox beatmSpin;
-    DoubleSpinBox beatOffsetSpin;
-
-    ConfigDialog() {
-        setWindowTitle(_("Time Bar Config"));
-
-        QVBoxLayout* vbox = new QVBoxLayout;
-        setLayout(vbox);
-        
-        QHBoxLayout* hbox = new QHBoxLayout;
-        hbox->addWidget(new QLabel(_("Internal frame rate")));
-        frameRateSpin.setAlignment(Qt::AlignCenter);
-        frameRateSpin.setRange(1, 10000);
-        hbox->addWidget(&frameRateSpin);
-        hbox->addStretch();
-        vbox->addLayout(hbox);
-
-        hbox = new QHBoxLayout;
-        hbox->addWidget(new QLabel(_("Playback frame rate")));
-        playbackFrameRateSpin.setAlignment(Qt::AlignCenter);
-        playbackFrameRateSpin.setRange(0, 1000);
-        playbackFrameRateSpin.setValue(DEFAULT_PLAYBACK_FRAMERATE);
-        hbox->addWidget(&playbackFrameRateSpin);
-        hbox->addStretch();
-        vbox->addLayout(hbox);
-
-        hbox = new QHBoxLayout;
-        idleLoopDrivenCheck.setText(_("Idle loop driven mode"));
-        hbox->addWidget(&idleLoopDrivenCheck);
-        hbox->addStretch();
-        vbox->addLayout(hbox);
-            
-        hbox = new QHBoxLayout;
-        hbox->addWidget(new QLabel(_("Playback speed ratio")));
-        playbackSpeedRatioSpin.setAlignment(Qt::AlignCenter);
-        playbackSpeedRatioSpin.setDecimals(1);
-        playbackSpeedRatioSpin.setRange(0.1, 99.9);
-        playbackSpeedRatioSpin.setSingleStep(0.1);
-        playbackSpeedRatioSpin.setValue(1.0);
-        hbox->addWidget(&playbackSpeedRatioSpin);
-        hbox->addStretch();
-        vbox->addLayout(hbox);
-
-        hbox = new QHBoxLayout;
-        ongoingTimeSyncCheck.setText(_("Sync with ongoing updates"));
-        ongoingTimeSyncCheck.setChecked(true);
-        hbox->addWidget(&ongoingTimeSyncCheck);
-        hbox->addStretch();
-        vbox->addLayout(hbox);
-
-        hbox = new QHBoxLayout;
-        autoExpandCheck.setText(_("Automatically expand the time range"));
-        autoExpandCheck.setChecked(true);
-        hbox->addWidget(&autoExpandCheck);
-        hbox->addStretch();
-        vbox->addLayout(hbox);
-            
-        /*
-          hbox = new QHBoxLayout;
-          vbox->addLayout(hbox);
-            
-          beatModeCheck = new QCheckBox(_("Beat mode"));
-          hbox->addWidget(beatModeCheck);
-
-          beatcSpin = new SpinBox;
-          beatcSpin->setRange(1, 99);
-          hbox->addWidget(beatcSpin);
-
-          hbox->addWidget(new QLabel("/"));
-
-          beatmSpin = new SpinBox;
-          beatmSpin->setRange(1, 99);
-          hbox->addWidget(beatmSpin);
-
-          hbox->addStretch();
-          hbox = new QHBoxLayout();
-          vbox->addLayout(hbox);
-
-          hbox->addWidget(new QLabel(_("Tempo")));
-          tempoSpin = new DoubleSpinBox;
-          tempoSpin->setRange(1.0, 999.99);
-          tempoSpin->setDecimals(2);
-          hbox->addWidget(tempoSpin);
-
-          hbox->addWidget(new QLabel(_("Offset")));
-          beatOffsetSpin = new DoubleSpinBox;
-          beatOffsetSpin->setRange(-9.99, 9.99);
-          beatOffsetSpin->setDecimals(2);
-          beatOffsetSpin->setSingleStep(0.1);
-          hbox->addWidget(beatOffsetSpin);
-          hbox->addWidget(new QLabel(_("[s]")));
-
-          hbox->addStretch();
-        */
-
-        vbox->addStretch();
-
-        PushButton* okButton = new PushButton(_("&OK"));
-        okButton->setDefault(true);
-        QDialogButtonBox* buttonBox = new QDialogButtonBox(this);
-        buttonBox->addButton(okButton, QDialogButtonBox::AcceptRole);
-        connect(buttonBox,SIGNAL(accepted()), this, SLOT(accept()));
-        vbox->addWidget(buttonBox);
-    }
-};
-
 }
 
 namespace cnoid {
@@ -174,55 +56,55 @@ public:
     void setTimeBarTime(double time, QWidget* callerWidget);
     void onTimeSpinChanged(double value);
     bool onTimeSliderValueChanged(int value);
-
-    void setTimeRange(double minTime, double maxTime);
-    void setFrameRate(double rate);
-    void updateTimeProperties(bool forceUpdate);
-    void onPlaybackSpeedRatioChanged(double value);
-    void onPlaybackFrameRateChanged(int value);
+    bool setTimeRange(double minTime, double maxTime, bool isSpinBoxSignal, bool doUpdateTimeSpinSlider);
+    void onTimeRangeSpinValueChanged();
+    bool setFrameRate(double rate, bool isSpinBoxSignal, bool doUpdateTimeSpinSlider);
+    void updateTimeSpinSlider();
+    void setPlaybackFrameRate(double rate, bool isSpinBoxSignal);
+    void setIdleEventDrivenMode(bool on, bool isCheckBoxSignal);
+    void setPlaybackSpeedRatio(double ratio, bool isSpinBoxSignal);
+    void setAutoExpansionMode(bool on, bool isCheckBoxSignal);
+    void setOngoingTimeSyncEnabled(bool on, bool isCheckBoxSignal);
     void onPlayActivated();
     void onResumeActivated();
     void startPlayback();
     void startPlayback(double time);
     double stopPlayback(bool isStoppedManually);
+    virtual void timerEvent(QTimerEvent* event) override;
     int startOngoingTimeUpdate(double time);
     void updateOngoingTime(int id, double time);
     void updateMinOngoingTime();
     void stopOngoingTimeUpdate(int id);
-
-    void onTimeRangeSpinsChanged();
-    void onFrameRateSpinChanged(int value);
-
-    virtual void timerEvent(QTimerEvent* event);
-        
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 
     TimeBar* self;
-    ConfigDialog config;
 
     ToolButton* resumeButton;
     ToolButton* frameModeToggle;
     QIcon resumeIcon;
     QIcon stopIcon;
-        
     DoubleSpinBox* timeSpin;
     Slider* timeSlider;
     DoubleSpinBox* minTimeSpin;
     DoubleSpinBox* maxTimeSpin;
+    QLabel* timeRangeDelimiterLabel;
     int decimals;
     double minTime;
     double maxTime;
-    double playbackSpeedRatio;
     double playbackFrameRate;
+    double playbackSpeedRatio;
     double animationTimeOffset;
+    double ongoingTime;
+    bool isIdleEventDrivenMode;
+    bool isRepeatMode;
+    bool isAutoExpansionMode;
+    bool isDoingPlayback;
+    bool hasOngoingTime;
+    bool isOngoingTimeSyncEnabled;
+    map<int, double> ongoingTimeMap;
     int timerId;
     QElapsedTimer elapsedTimer;
-    bool repeatMode;
-    bool isDoingPlayback;
-    map<int, double> ongoingTimeMap;
-    double ongoingTime;
-    bool hasOngoingTime;
 
     Signal<bool(double time)> sigPlaybackInitialized;
     Signal<void(double time)> sigPlaybackStarted;
@@ -231,6 +113,21 @@ public:
     Signal<void(double time, bool isStoppedManually)> sigPlaybackStopped;
     Signal<double(double time, bool isStoppedManually)> sigPlaybackStoppedEx;
     vector<double> lastValidTimesWhenStopped;
+
+    class ConfigDialog : public Dialog
+    {
+    public:
+        DoubleSpinBox frameRateSpin;
+        DoubleSpinBox playbackFrameRateSpin;
+        CheckBox idleEventDrivenModeCheck;
+        DoubleSpinBox playbackSpeedRatioSpin;
+        CheckBox ongoingTimeSyncCheck;
+        CheckBox autoExpansionCheck;
+        
+        ConfigDialog(TimeBar* timeBar);
+    };
+
+    ConfigDialog* configDialog;
 };
 
 }
@@ -270,6 +167,11 @@ TimeBar::TimeBar()
     : ToolBar(N_("TimeBar"))
 {
     impl = new Impl(this);
+
+    //! \todo Make the creation of the config dialog on-demand
+    impl->configDialog = new Impl::ConfigDialog(this);
+
+    impl->updateTimeSpinSlider();
 }
 
 
@@ -286,11 +188,16 @@ TimeBar::Impl::Impl(TimeBar* self)
     decimals = 2;
     minTime = 0.0;
     maxTime = 30.0;
-    repeatMode = false;
-    timerId = 0;
-    isDoingPlayback = false;
+    playbackFrameRate = DEFAULT_PLAYBACK_FRAMERATE;
+    playbackSpeedRatio = 1.0;
     ongoingTime = 0.0;
+    isIdleEventDrivenMode = false;
+    isRepeatMode = false;
+    isAutoExpansionMode = true;
+    isDoingPlayback = false;
     hasOngoingTime = false;
+    isOngoingTimeSyncEnabled = true;
+    timerId = 0;
 
     auto playButton = self->addButton(QIcon(":/Base/icon/play.svg"), PlayButton);
     playButton->setToolTip(_("Start playback"));
@@ -317,29 +224,104 @@ TimeBar::Impl::Impl(TimeBar* self)
     minTimeSpin = new DoubleSpinBox;
     minTimeSpin->setAlignment(Qt::AlignCenter);
     minTimeSpin->setRange(-9999.0, 9999.0);
-    minTimeSpin->sigValueChanged().connect([&](double){ onTimeRangeSpinsChanged(); });
+    minTimeSpin->sigValueChanged().connect([&](double){ onTimeRangeSpinValueChanged(); });
     self->addWidget(minTimeSpin, TimeRangeMinSpin);
 
-    self->addLabel(" : ");
+    timeRangeDelimiterLabel = self->addLabel(" : ");
 
     maxTimeSpin = new DoubleSpinBox;
     maxTimeSpin->setAlignment(Qt::AlignCenter);
     maxTimeSpin->setRange(-9999.0, 9999.0);
-    maxTimeSpin->sigValueChanged().connect([&](double){ onTimeRangeSpinsChanged(); });
+    maxTimeSpin->sigValueChanged().connect([&](double){ onTimeRangeSpinValueChanged(); });
     self->addWidget(maxTimeSpin, TimeRangeMaxSpin);
 
     auto configButton = self->addButton(QIcon(":/Base/icon/setup.svg"));
     configButton->setToolTip(_("Show the config dialog"));
-    configButton->sigClicked().connect([&](){ config.show(); });
+    configButton->sigClicked().connect([&](){ configDialog->show(); });
+}
 
-    config.frameRateSpin.sigValueChanged().connect([&](int value){ onFrameRateSpinChanged(value); });
-    config.playbackFrameRateSpin.sigValueChanged().connect([&](int value){ onPlaybackFrameRateChanged(value); });
-    config.playbackSpeedRatioSpin.sigValueChanged().connect([&](double value){ onPlaybackSpeedRatioChanged(value); });
 
-    playbackSpeedRatio = config.playbackSpeedRatioSpin.value();
-    playbackFrameRate = config.playbackFrameRateSpin.value();
+TimeBar::Impl::ConfigDialog::ConfigDialog(TimeBar* timeBar)
+    : Dialog(timeBar)
+{
+    auto impl = timeBar->impl;
+    
+    setWindowTitle(_("Time Bar Config"));
 
-    updateTimeProperties(true);
+    auto vbox = new QVBoxLayout;
+    setLayout(vbox);
+
+    auto hbox = new QHBoxLayout;
+    hbox->addWidget(new QLabel(_("Internal frame rate")));
+    frameRateSpin.setAlignment(Qt::AlignCenter);
+    frameRateSpin.setRange(1.0, 10000.0);
+    frameRateSpin.setDecimals(0);
+    frameRateSpin.setValue(timeBar->frameRate_);
+    frameRateSpin.sigValueChanged().connect(
+        [impl](double value){ impl->setFrameRate(value, true, true); });
+
+    hbox->addWidget(&frameRateSpin);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout;
+    hbox->addWidget(new QLabel(_("Playback frame rate")));
+    playbackFrameRateSpin.setAlignment(Qt::AlignCenter);
+    playbackFrameRateSpin.setRange(0.0, 1000.0);
+    playbackFrameRateSpin.setDecimals(0);
+    playbackFrameRateSpin.setValue(impl->playbackFrameRate);
+    playbackFrameRateSpin.sigValueChanged().connect(
+        [impl](double value){ impl->setPlaybackFrameRate(value, true); });
+    hbox->addWidget(&playbackFrameRateSpin);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout;
+    idleEventDrivenModeCheck.setText(_("Idle event driven mode"));
+    idleEventDrivenModeCheck.setChecked(impl->isIdleEventDrivenMode);
+    idleEventDrivenModeCheck.sigToggled().connect(
+        [impl](bool on){ impl->setIdleEventDrivenMode(on, true); });
+    hbox->addWidget(&idleEventDrivenModeCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout;
+    hbox->addWidget(new QLabel(_("Playback speed ratio")));
+    playbackSpeedRatioSpin.setAlignment(Qt::AlignCenter);
+    playbackSpeedRatioSpin.setDecimals(1);
+    playbackSpeedRatioSpin.setRange(0.1, 99.9);
+    playbackSpeedRatioSpin.setSingleStep(0.1);
+    playbackSpeedRatioSpin.setValue(impl->playbackSpeedRatio);
+    playbackSpeedRatioSpin.sigValueChanged().connect(
+        [impl](double value){ impl->setPlaybackSpeedRatio(value, true); });
+    hbox->addWidget(&playbackSpeedRatioSpin);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout;
+    ongoingTimeSyncCheck.setText(_("Sync with ongoing updates"));
+    ongoingTimeSyncCheck.setChecked(impl->isOngoingTimeSyncEnabled);
+    ongoingTimeSyncCheck.sigToggled().connect(
+        [impl](bool on){ impl->setOngoingTimeSyncEnabled(on, true); });
+    hbox->addWidget(&ongoingTimeSyncCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout;
+    autoExpansionCheck.setText(_("Automatically expand the time range"));
+    autoExpansionCheck.setChecked(impl->isAutoExpansionMode);
+    hbox->addWidget(&autoExpansionCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    vbox->addStretch();
+
+    auto okButton = new PushButton(_("&OK"));
+    okButton->setDefault(true);
+    auto buttonBox = new QDialogButtonBox(this);
+    buttonBox->addButton(okButton, QDialogButtonBox::AcceptRole);
+    connect(buttonBox,SIGNAL(accepted()), this, SLOT(accept()));
+    vbox->addWidget(buttonBox);
 }
 
 
@@ -352,6 +334,16 @@ TimeBar::~TimeBar()
 TimeBar::Impl::~Impl()
 {
 
+}
+
+
+void TimeBar::onActiveElementUpdated()
+{
+    if(!impl->minTimeSpin->isHidden() && !impl->maxTimeSpin->isHidden()){
+        setInsertionPosition(elementPosition(TimeRangeMinSpin));
+        addWidget(impl->timeRangeDelimiterLabel);
+        impl->timeRangeDelimiterLabel->show();
+    }
 }
 
 
@@ -410,23 +402,6 @@ bool TimeBar::Impl::onTimeSliderValueChanged(int value)
 }
 
 
-void TimeBar::setFrameRate(double rate)
-{
-    impl->setFrameRate(rate);
-}
-
-
-void TimeBar::Impl::setFrameRate(double rate)
-{
-    if(rate > 0.0){
-        if(self->frameRate_ != rate){
-            self->frameRate_ = rate;
-            updateTimeProperties(true);
-        }
-    }
-}
-
-
 double TimeBar::minTime() const
 {
     return impl->minTime;
@@ -439,102 +414,197 @@ double TimeBar::maxTime() const
 }
 
 
-void TimeBar::setTimeRange(double min, double max)
+void TimeBar::setTimeRange(double minTime, double maxTime)
 {
-    impl->setTimeRange(min, max);
+    impl->setTimeRange(minTime, maxTime, false, true);
 }
 
 
-void TimeBar::Impl::setTimeRange(double minTime, double maxTime)
+bool TimeBar::Impl::setTimeRange(double newMinTime, double newMaxTime, bool isSpinBoxSignal, bool doUpdateTimeSpinSlider)
 {
-    this->minTime = minTime;
-    this->maxTime = maxTime;
-    updateTimeProperties(false);
-}
-
-
-void TimeBar::Impl::updateTimeProperties(bool forceUpdate)
-{
-    timeSpin->blockSignals(true);
-    timeSlider->blockSignals(true);
-    minTimeSpin->blockSignals(true);
-    maxTimeSpin->blockSignals(true);
-    config.frameRateSpin.blockSignals(true);
+    bool updated = false;
     
+    if(newMinTime != minTime || newMaxTime != maxTime){
+        minTime = newMinTime;
+        maxTime = newMaxTime;
+        if(!isSpinBoxSignal){
+            minTimeSpin->blockSignals(true);
+            minTimeSpin->setValue(minTime);
+            minTimeSpin->blockSignals(false);
+            maxTimeSpin->blockSignals(true);
+            maxTimeSpin->setValue(maxTime);
+            maxTimeSpin->blockSignals(false);
+        }
+        updated = true;
+        if(doUpdateTimeSpinSlider){
+            updateTimeSpinSlider();
+        }
+    }
+    
+    return updated;
+}
+
+
+void TimeBar::Impl::onTimeRangeSpinValueChanged()
+{
+    setTimeRange(minTimeSpin->value(), maxTimeSpin->value(), true, true);
+}
+
+
+void TimeBar::setFrameRate(double rate)
+{
+    impl->setFrameRate(rate, false, true);
+}
+
+
+bool TimeBar::Impl::setFrameRate(double rate, bool isSpinBoxSignal, bool doUpdateTimeSpinSlider)
+{
+    bool updated = false;
+    
+    if(rate != self->frameRate_ && rate > 0.0){
+        self->frameRate_ = rate;
+        if(!isSpinBoxSignal){
+            auto& spin = configDialog->frameRateSpin;
+            spin.blockSignals(true);
+            spin.setValue(rate);
+            spin.blockSignals(false);
+        }
+        if(doUpdateTimeSpinSlider){
+            updateTimeSpinSlider();
+        }
+        updated = true;
+    }
+
+    return updated;
+}
+
+
+void TimeBar::Impl::updateTimeSpinSlider()
+{
     const double timeStep = 1.0 / self->frameRate_;
     decimals = static_cast<int>(ceil(log10(self->frameRate_)));
     const double r = pow(10.0, decimals);
 
-    if(forceUpdate ||
-       (minTime != timeSpin->minimum() || maxTime != timeSpin->maximum())){
-        timeSpin->setRange(minTime, maxTime);
-        timeSlider->setRange((int)nearbyint(minTime * r), (int)nearbyint(maxTime * r));
-    }
-
+    timeSpin->blockSignals(true);
+    timeSpin->setRange(minTime, maxTime);
     timeSpin->setDecimals(decimals);
     timeSpin->setSingleStep(timeStep);
-    timeSlider->setSingleStep(timeStep * r);
-    minTimeSpin->setValue(minTime);
-    maxTimeSpin->setValue(maxTime);
-    config.frameRateSpin.setValue(self->frameRate_);
-
-    config.frameRateSpin.blockSignals(false);
-    maxTimeSpin->blockSignals(false);
-    minTimeSpin->blockSignals(false);
-    timeSlider->blockSignals(false);
     timeSpin->blockSignals(false);
+
+    timeSlider->blockSignals(true);
+    timeSlider->setRange((int)nearbyint(minTime * r), (int)nearbyint(maxTime * r));
+    timeSlider->setSingleStep(timeStep * r);
+    timeSlider->blockSignals(false);
 
     setTime(self->time_, false);
 }
 
     
-void TimeBar::Impl::onPlaybackSpeedRatioChanged(double value)
-{
-    playbackSpeedRatio = value;
-    
-    if(isDoingPlayback){
-        startPlayback();
-    }
-}
-
-
-double TimeBar::playbackSpeedRatio() const
-{
-    return impl->config.playbackSpeedRatioSpin.value();
-}
-
-
-void TimeBar::setPlaybackSpeedRatio(double ratio)
-{
-    impl->config.playbackSpeedRatioSpin.setValue(ratio);
-}
-
-
-void TimeBar::Impl::onPlaybackFrameRateChanged(int value)
-{
-    playbackFrameRate = value;
-
-    if(isDoingPlayback){
-        startPlayback();
-    }
-}
-
-
 double TimeBar::playbackFrameRate() const
 {
-    return impl->config.playbackFrameRateSpin.value();
+    return impl->playbackFrameRate;
 }
 
 
 void TimeBar::setPlaybackFrameRate(double rate)
 {
-    impl->config.playbackFrameRateSpin.setValue(rate);
+    impl->setPlaybackFrameRate(rate, false);
+}
+
+
+void TimeBar::Impl::setPlaybackFrameRate(double rate, bool isSpinBoxSignal)
+{
+    if(rate != playbackFrameRate){
+        playbackFrameRate = rate;
+        if(!isSpinBoxSignal){
+            auto& spin = configDialog->playbackFrameRateSpin;
+            spin.blockSignals(true);
+            spin.setValue(rate);
+            spin.blockSignals(false);
+        }
+        if(isDoingPlayback){
+            startPlayback();
+        }
+    }
+}
+
+
+bool TimeBar::isIdleEventDrivenMode() const
+{
+    return impl->isIdleEventDrivenMode;
+}
+
+
+void TimeBar::setIdleEventDrivenMode(bool on)
+{
+    impl->setIdleEventDrivenMode(on, false);
+}
+
+
+void TimeBar::Impl::setIdleEventDrivenMode(bool on, bool isCheckBoxSignal)
+{
+    if(on != isIdleEventDrivenMode){
+        isIdleEventDrivenMode = on;
+        if(isCheckBoxSignal){
+            auto& check = configDialog->idleEventDrivenModeCheck;
+            check.blockSignals(true);
+            check.setChecked(on);
+            check.blockSignals(false);
+        }
+        configDialog->playbackFrameRateSpin.setEnabled(!on);
+        if(isDoingPlayback){
+            startPlayback();
+        }
+    }
+}
+    
+
+double TimeBar::playbackSpeedRatio() const
+{
+    return impl->playbackSpeedRatio;
+}
+
+
+void TimeBar::setPlaybackSpeedRatio(double ratio)
+{
+    impl->setPlaybackSpeedRatio(ratio, false);
+}
+
+
+void TimeBar::Impl::setPlaybackSpeedRatio(double ratio, bool isSpinBoxSignal)
+{
+    if(ratio != playbackSpeedRatio){
+       playbackSpeedRatio = ratio;
+       if(!isSpinBoxSignal){
+           auto& spin = configDialog->playbackSpeedRatioSpin;
+           spin.blockSignals(true);
+           spin.setValue(ratio);
+           spin.blockSignals(false);
+       }
+       if(isDoingPlayback){
+           startPlayback();
+       }
+    }
 }
 
 
 void TimeBar::setRepeatMode(bool on)
 {
-    impl->repeatMode = on;
+    impl->isRepeatMode = on;
+}
+
+
+void TimeBar::Impl::setAutoExpansionMode(bool on, bool isCheckBoxSignal)
+{
+    if(on != isAutoExpansionMode){
+        isAutoExpansionMode = on;
+        if(!isCheckBoxSignal){
+            auto& check = configDialog->autoExpansionCheck;
+            check.blockSignals(true);
+            check.setChecked(on);
+            check.blockSignals(false);
+        }
+    }
 }
 
 
@@ -578,7 +648,7 @@ void TimeBar::Impl::startPlayback(double time)
 {
     stopPlayback(false);
 
-    bool isOngoingTimeValid = hasOngoingTime && config.ongoingTimeSyncCheck.isChecked();
+    bool isOngoingTimeValid = hasOngoingTime && isOngoingTimeSyncEnabled;
     if(isOngoingTimeValid){
         time = ongoingTime;
     }
@@ -609,7 +679,7 @@ void TimeBar::Impl::startPlayback(double time)
             resumeButton->setIcon(stopIcon);
             resumeButton->setToolTip(tip);
             int interval;
-            if(config.idleLoopDrivenCheck.isChecked()){
+            if(isIdleEventDrivenMode){
                 interval = 0;
             } else {
                 interval = nearbyint(1000.0 / playbackFrameRate);
@@ -638,7 +708,7 @@ double TimeBar::Impl::stopPlayback(bool isStoppedManually)
         killTimer(timerId);
         isDoingPlayback = false;
 
-        if(hasOngoingTime && ongoingTime > self->time_ && config.ongoingTimeSyncCheck.isChecked()){
+        if(hasOngoingTime && ongoingTime > self->time_ && isOngoingTimeSyncEnabled){
             setTime(ongoingTime, false);
         }
 
@@ -677,7 +747,7 @@ void TimeBar::Impl::timerEvent(QTimerEvent*)
 
     bool doStopAtLastOngoingTime = false;
     if(hasOngoingTime){
-        if(config.ongoingTimeSyncCheck.isChecked() || (time > ongoingTime)){
+        if(isOngoingTimeSyncEnabled || (time > ongoingTime)){
             animationTimeOffset += (ongoingTime - time);
             time = ongoingTime;
             if(ongoingTimeMap.empty()){
@@ -689,7 +759,7 @@ void TimeBar::Impl::timerEvent(QTimerEvent*)
     if(!setTime(time, true) || doStopAtLastOngoingTime){
         double lastValidTime = stopPlayback(false);
         
-        if(!doStopAtLastOngoingTime && repeatMode){
+        if(!doStopAtLastOngoingTime && isRepeatMode){
             startPlayback(minTime);
         } else {
             if(lastValidTime < self->time_){
@@ -755,7 +825,7 @@ bool TimeBar::Impl::setTime(double time, bool calledFromPlaybackLoop, QWidget* c
 
 void TimeBar::Impl::setTimeBarTime(double time, QWidget* callerWidget)
 {
-   if(time > maxTime && config.autoExpandCheck.isChecked()){
+    if(time > maxTime && isAutoExpansionMode){
         maxTime = time;
         timeSpin->blockSignals(true);
         timeSlider->blockSignals(true);
@@ -789,7 +859,33 @@ void TimeBar::refresh()
     if(!impl->isDoingPlayback){
         impl->setTime(time_, false);
     }
-}    
+}
+
+
+bool TimeBar::isOngoingTimeSyncEnabled() const
+{
+    return impl->isOngoingTimeSyncEnabled;
+}
+
+
+void TimeBar::setOngoingTimeSyncEnabled(bool on)
+{
+    impl->setOngoingTimeSyncEnabled(on, false);
+}
+
+
+void TimeBar::Impl::setOngoingTimeSyncEnabled(bool on, bool isCheckBoxSignal)
+{
+    if(on != isOngoingTimeSyncEnabled){
+        isOngoingTimeSyncEnabled = on;
+        if(!isCheckBoxSignal){
+            auto& check = configDialog->ongoingTimeSyncCheck;
+            check.blockSignals(true);
+            check.setChecked(on);
+            check.blockSignals(false);
+        }
+    }
+}
 
 
 int TimeBar::startOngoingTimeUpdate(double time)
@@ -866,12 +962,6 @@ void TimeBar::Impl::stopOngoingTimeUpdate(int id)
 }
 
 
-void TimeBar::setOngoingTimeSyncEnabled(bool on)
-{
-    impl->config.ongoingTimeSyncCheck.setChecked(on);
-}
-
-
 double TimeBar::realPlaybackTime() const
 {
     if(impl->isDoingPlayback){
@@ -879,18 +969,6 @@ double TimeBar::realPlaybackTime() const
     } else {
         return time_;
     }
-}
-
-
-void TimeBar::Impl::onTimeRangeSpinsChanged()
-{
-    setTimeRange(minTimeSpin->value(), maxTimeSpin->value());
-}
-
-
-void TimeBar::Impl::onFrameRateSpinChanged(int value)
-{
-    setFrameRate(config.frameRateSpin.value());
 }
 
 
@@ -909,15 +987,15 @@ bool TimeBar::storeState(Archive& archive)
 
 bool TimeBar::Impl::storeState(Archive& archive)
 {
+    archive.write("current_time", self->time_);
     archive.write("min_time", minTime);
     archive.write("max_time", maxTime);
     archive.write("frame_rate", self->frameRate_);
     archive.write("playback_frame_rate", playbackFrameRate);
-    archive.write("idle_loop_driven_mode", config.idleLoopDrivenCheck.isChecked());
-    archive.write("current_time", self->time_);
+    archive.write("idle_loop_driven_mode", isIdleEventDrivenMode);
     archive.write("playback_speed_ratio", playbackSpeedRatio);
-    archive.write("sync_to_ongoing_updates", config.ongoingTimeSyncCheck.isChecked());
-    archive.write("auto_expansion", config.autoExpandCheck.isChecked());
+    archive.write("sync_to_ongoing_updates", isOngoingTimeSyncEnabled);
+    archive.write("auto_expansion", isAutoExpansionMode);
     return true;
 }
 
@@ -933,25 +1011,32 @@ bool TimeBar::restoreState(const Archive& archive)
 
 bool TimeBar::Impl::restoreState(const Archive& archive)
 {
+    bool doUpdateTimeSpinSlider = false;
+
+    double minTime, maxTime;
     archive.read({ "min_time", "minTime" }, minTime);
     archive.read({ "max_time", "maxTime" }, maxTime);
+    doUpdateTimeSpinSlider = setTimeRange(minTime, maxTime, false, false);
+
+    doUpdateTimeSpinSlider = setFrameRate(
+        archive.get("frame_rate", self->frameRate_), false, false);
+        
     archive.read({ "current_time", "currentTime" }, self->time_);
 
-    config.playbackFrameRateSpin.setValue(
-        archive.get({ "playback_frame_rate", "playbackFrameRate" }, playbackFrameRate));
-    config.idleLoopDrivenCheck.setChecked(
-        archive.get("idle_loop_driven_mode", config.idleLoopDrivenCheck.isChecked()));
-    config.playbackSpeedRatioSpin.setValue(
-        archive.get("playback_speed_ratio", playbackSpeedRatio));
-    config.ongoingTimeSyncCheck.setChecked(
-        archive.get("sync_to_ongoing_updates", config.ongoingTimeSyncCheck.isChecked()));
-    config.autoExpandCheck.setChecked(
-        archive.get("auto_expansion", config.autoExpandCheck.isChecked()));
+    setPlaybackFrameRate(
+        archive.get({ "playback_frame_rate", "playbackFrameRate" }, playbackFrameRate), false);
+    setIdleEventDrivenMode(
+        archive.get("idle_loop_driven_mode", isIdleEventDrivenMode), false);
+    setPlaybackSpeedRatio(
+        archive.get("playback_speed_ratio", playbackSpeedRatio), false);
+    setOngoingTimeSyncEnabled(
+        archive.get("sync_to_ongoing_updates", isOngoingTimeSyncEnabled), false);
+    setAutoExpansionMode(
+        archive.get("auto_expansion", isAutoExpansionMode), false);
 
-    double prevFrameRate = self->frameRate_;
-    archive.read("frame_rate", self->frameRate_);
-
-    updateTimeProperties(self->frameRate_ != prevFrameRate);
+    if(doUpdateTimeSpinSlider){
+        updateTimeSpinSlider();
+    }
     
     return true;
 }

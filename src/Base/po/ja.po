@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-11 23:22+0900\n"
+"POT-Creation-Date: 2022-01-17 23:52+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1806,6 +1806,18 @@ msgstr ""
 "外部のエディタによって内容が変更されました．\n"
 "ファイルを読み込み直しますか？"
 
+msgid "TimeBar"
+msgstr "タイムバー"
+
+msgid "Start playback"
+msgstr "再生開始"
+
+msgid "Resume playback"
+msgstr "再生再開"
+
+msgid "Refresh state at the current time"
+msgstr "現在時刻で状態を更新"
+
 msgid "Time Bar Config"
 msgstr "タイムバーの設定"
 
@@ -1815,8 +1827,8 @@ msgstr "内部フレームレート"
 msgid "Playback frame rate"
 msgstr "再生フレームレート"
 
-msgid "Idle loop driven mode"
-msgstr "アイドルループ駆動モード"
+msgid "Idle event driven mode"
+msgstr "アイドルイベント駆動モード"
 
 msgid "Playback speed ratio"
 msgstr "再生速度倍率"
@@ -1829,18 +1841,6 @@ msgstr "時間範囲の自動拡張"
 
 msgid "&OK"
 msgstr "&OK"
-
-msgid "TimeBar"
-msgstr "タイムバー"
-
-msgid "Start playback"
-msgstr "再生開始"
-
-msgid "Resume playback"
-msgstr "再生再開"
-
-msgid "Refresh state at the current time"
-msgstr "現在時刻で状態を更新"
 
 msgid "Stop animation"
 msgstr "アニメーションの停止"

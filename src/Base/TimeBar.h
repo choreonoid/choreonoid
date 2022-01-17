@@ -10,8 +10,6 @@
 
 namespace cnoid {
 
-class ExtensionManager;
-
 class CNOID_EXPORT TimeBar : public ToolBar
 {
 public:
@@ -45,24 +43,18 @@ public:
 
     double minTime() const;
     double maxTime() const;
-        
-    void setTimeRange(double min, double max);
+    void setTimeRange(double minTime, double maxTime);
         
     inline double frameRate() const { return frameRate_; }
     void setFrameRate(double rate);
 
     inline double timeStep() const { return 1.0 / frameRate_; }
 
-    inline bool isBeatMode() const { return isBeatMode_; }
-    inline double beatOffset() const { return beatOffset_; }
-    inline double tempo() const { return tempo_; }
-    double timeOfBeatLocation(double beatLocation) const;
-    double beatLocationOfTime(double time) const;
-    inline int beatNumerator() const { return beatNumerator_; }
-    inline int beatDenominator() const { return beatDenominator_; }
-
     double playbackFrameRate() const;
     void setPlaybackFrameRate(double rate);
+
+    bool isIdleEventDrivenMode() const;
+    void setIdleEventDrivenMode(bool on);
 
     double playbackSpeedRatio() const;
     void setPlaybackSpeedRatio(double ratio);
@@ -74,10 +66,11 @@ public:
     void stopPlayback(bool isStoppedManually = false);
     bool isDoingPlayback();
 
+    bool isOngoingTimeSyncEnabled() const;
+    void setOngoingTimeSyncEnabled(bool on);
     int startOngoingTimeUpdate(double time = 0.0);
     void updateOngoingTime(int id, double time);
     void stopOngoingTimeUpdate(int id);
-    void setOngoingTimeSyncEnabled(bool on);
 
     [[deprecated("Use playbackSpeedRatio")]]
     double playbackSpeedScale() const { return playbackSpeedRatio(); }
@@ -95,24 +88,21 @@ public:
     [[deprecated]]
     void setFillLevelSync(bool on) { setOngoingTimeSyncEnabled(on); }
 
-    virtual int stretchableDefaultWidth() const;
+    virtual int stretchableDefaultWidth() const override;
+
+    class Impl;
 
 protected:
-    virtual bool storeState(Archive& archive);
-    virtual bool restoreState(const Archive& archive);
+    virtual void onActiveElementUpdated() override;
+    virtual bool storeState(Archive& archive) override;
+    virtual bool restoreState(const Archive& archive) override;
         
 private:
     TimeBar();
 
-    class Impl;
     Impl* impl;
     double time_;
     double frameRate_;
-    bool isBeatMode_;
-    double beatOffset_;
-    double tempo_;
-    int beatNumerator_;
-    int beatDenominator_;
 };
 
 }
