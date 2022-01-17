@@ -34,7 +34,7 @@ public:
         
     virtual void onPlaybackStarted(double time) override;
     virtual bool onTimeChanged(double time) override;
-    virtual void onPlaybackStopped(double time, bool isStoppedManually) override;
+    virtual double onPlaybackStopped(double time, bool isStoppedManually) override;
     
 private:
     class Impl;

@@ -53,7 +53,7 @@ public:
     bool onPlaybackInitialized(double time);
     void onPlaybackStarted(double time);
     bool onTimeChanged(double time);
-    void onPlaybackStopped(double time, bool isStoppedManually);
+    double onPlaybackStopped(double time, bool isStoppedManually);
     void refresh(TimeSyncItemEngine* engine);
 };
 
@@ -112,9 +112,9 @@ TimeSyncItemEngineManager::Impl::Impl()
         timeBar->sigTimeChanged().connect(
             [&](double time){ return onTimeChanged(time); }));
     connections.add(
-        timeBar->sigPlaybackStopped().connect(
+        timeBar->sigPlaybackStoppedEx().connect(
             [&](double time, bool isStoppedManually){
-                onPlaybackStopped(time, isStoppedManually);
+                return onPlaybackStopped(time, isStoppedManually);
             }));
 }
 
@@ -308,13 +308,17 @@ bool TimeSyncItemEngineManager::Impl::onTimeChanged(double time)
 }
 
 
-void TimeSyncItemEngineManager::Impl::onPlaybackStopped(double time, bool isStoppedManually)
+double TimeSyncItemEngineManager::Impl::onPlaybackStopped(double time, bool isStoppedManually)
 {
+    double maxLastValidTime = 0.0;
     isDoingPlayback = false;
     auto iter = activeEngines.begin();
     while(iter != activeEngines.end()){
         auto& engine = *iter;
-        engine->onPlaybackStopped(time, isStoppedManually);
+        double lastValidTime = engine->onPlaybackStopped(time, isStoppedManually);
+        if(lastValidTime > maxLastValidTime){
+            maxLastValidTime = lastValidTime;
+        }
         if(engine->isTimeSyncForcedToBeMaintained()){
             engine->deactivate();
             iter = activeEngines.erase(iter);
@@ -322,6 +326,7 @@ void TimeSyncItemEngineManager::Impl::onPlaybackStopped(double time, bool isStop
         }
         ++iter;
     }
+    return maxLastValidTime;
 }
 
 
@@ -362,9 +367,9 @@ void TimeSyncItemEngine::onPlaybackStarted(double /* time */)
 }
 
 
-void TimeSyncItemEngine::onPlaybackStopped(double /* time */, bool /* isStoppedManually */)
+double TimeSyncItemEngine::onPlaybackStopped(double time, bool /* isStoppedManually */)
 {
-
+    return time;
 }
 
 

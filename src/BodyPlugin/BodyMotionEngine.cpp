@@ -38,107 +38,16 @@ public:
     std::vector<TimeSyncItemEnginePtr> extraSeqEngines;
     ScopedConnectionSet connections;
         
-    Impl(BodyMotionEngine* self, BodyItem* bodyItem, BodyMotionItem* motionItem)
-        : bodyItem(bodyItem),
-          motionItem(motionItem)
-    {
-        body = bodyItem->body();
-        
-        auto motion = motionItem->motion();
-        qSeq = motion->jointPosSeq();
-        positions = motion->linkPosSeq();
-        calcForwardKinematics = !(positions && positions->numParts() > 1);
-        
-        updateExtraSeqEngines();
-        
-        connections.add(
-            motionItem->sigUpdated().connect(
-                [self](){ self->refresh(); }));
-        
-        connections.add(
-            motionItem->sigExtraSeqItemsChanged().connect(
-                [this](){ updateExtraSeqEngines(); }));
-    }
-    
-    void updateExtraSeqEngines()
-    {
-        extraSeqEngines.clear();
-
-        const int n = motionItem->numExtraSeqItems();
-        for(int i=0; i < n; ++i){
-            const string& key = motionItem->extraSeqKey(i);
-            AbstractSeqItem* seqItem = motionItem->extraSeqItem(i);
-            ExtraSeqEngineFactoryMap::iterator q = extraSeqEngineFactories.find(key);
-            if(q != extraSeqEngineFactories.end()){
-                ExtraSeqEngineFactory& createEngine = q->second;
-                extraSeqEngines.push_back(createEngine(bodyItem, seqItem));
-            }
-        }
-    }
-
-    bool onTimeChanged(double time)
-    {
-        bool isActive = false;
-        bool fkDone = false;
-            
-        if(qSeq){
-            bool isValid = false;
-            const int numAllJoints = std::min(body->numAllJoints(), qSeq->numParts());
-            const int numFrames = qSeq->numFrames();
-            if(numAllJoints > 0 && numFrames > 0){
-                const int frame = qSeq->frameOfTime(time);
-                isValid = (frame < numFrames);
-                const int clampedFrame = qSeq->clampFrameIndex(frame);
-                const MultiValueSeq::Frame q = qSeq->frame(clampedFrame);
-                for(int i=0; i < numAllJoints; ++i){
-                    body->joint(i)->q() = q[i];
-                }
-                if(motionItem->isBodyJointVelocityUpdateEnabled()){
-                    const double dt = qSeq->timeStep();
-                    const MultiValueSeq::Frame q_prev = qSeq->frame((clampedFrame == 0) ? 0 : (clampedFrame -1));
-                    for(int i=0; i < numAllJoints; ++i){
-                        body->joint(i)->dq() = (q[i] - q_prev[i]) / dt;
-                    }
-                }
-            }
-            isActive = isValid;
-        }
-
-        if(positions){
-            bool isValid = false;
-            const int numLinks = positions->numParts();
-            const int numFrames = positions->numFrames();
-            if(numLinks > 0 && numFrames > 0){
-                const int frame = positions->frameOfTime(time);
-                isValid = (frame < numFrames);
-                const int clampedFrame = positions->clampFrameIndex(frame);
-                for(int i=0; i < numLinks; ++i){
-                    Link* link = body->link(i);
-                    const SE3& position = positions->at(clampedFrame, i);
-                    link->p() = position.translation();
-                    link->R() = position.rotation().toRotationMatrix();
-                }
-            }
-            isActive |= isValid;
-
-            if(positions->numParts() == 1){
-                body->calcForwardKinematics(); // FK from the root
-                fkDone = true;
-            }
-        }
-
-        for(size_t i=0; i < extraSeqEngines.size(); ++i){
-            isActive |= extraSeqEngines[i]->onTimeChanged(time);
-        }
-
-        bodyItem->notifyKinematicStateChange(!fkDone && calcForwardKinematics);
-
-        return isActive;
-    }
+    Impl(BodyMotionEngine* self, BodyItem* bodyItem, BodyMotionItem* motionItem);
+    void updateExtraSeqEngines();
+    bool onTimeChanged(double time);
+    double onPlaybackStopped(double time, bool isStoppedManually);    
 };
 
+}
 
-TimeSyncItemEngine* createBodyMotionEngine(BodyMotionItem* motionItem, BodyMotionEngine* engine0)
+
+static TimeSyncItemEngine* createBodyMotionEngine(BodyMotionItem* motionItem, BodyMotionEngine* engine0)
 {
     if(auto bodyItem = motionItem->findOwnerItem<BodyItem>()){
         if(engine0 && engine0->bodyItem() == bodyItem){
@@ -150,6 +59,19 @@ TimeSyncItemEngine* createBodyMotionEngine(BodyMotionItem* motionItem, BodyMotio
     return nullptr;
 }
 
+
+
+void BodyMotionEngine::initializeClass(ExtensionManager* ext)
+{
+    TimeSyncItemEngineManager::instance()
+        ->registerFactory<BodyMotionItem, BodyMotionEngine>(createBodyMotionEngine);
+}
+
+
+void BodyMotionEngine::addExtraSeqEngineFactory
+(const std::string& key, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory)
+{
+    extraSeqEngineFactories[key] = factory;
 }
 
 
@@ -157,6 +79,29 @@ BodyMotionEngine::BodyMotionEngine(BodyItem* bodyItem, BodyMotionItem* motionIte
     : TimeSyncItemEngine(motionItem)
 {
     impl = new Impl(this, bodyItem, motionItem);
+}
+
+
+BodyMotionEngine::Impl::Impl(BodyMotionEngine* self, BodyItem* bodyItem, BodyMotionItem* motionItem)
+    : bodyItem(bodyItem),
+      motionItem(motionItem)
+{
+    body = bodyItem->body();
+    
+    auto motion = motionItem->motion();
+    qSeq = motion->jointPosSeq();
+    positions = motion->linkPosSeq();
+    calcForwardKinematics = !(positions && positions->numParts() > 1);
+    
+    updateExtraSeqEngines();
+    
+    connections.add(
+        motionItem->sigUpdated().connect(
+            [self](){ self->refresh(); }));
+    
+    connections.add(
+        motionItem->sigExtraSeqItemsChanged().connect(
+            [this](){ updateExtraSeqEngines(); }));
 }
 
 
@@ -178,6 +123,23 @@ BodyMotionItem* BodyMotionEngine::motionItem()
 }
 
 
+void BodyMotionEngine::Impl::updateExtraSeqEngines()
+{
+    extraSeqEngines.clear();
+    
+    const int n = motionItem->numExtraSeqItems();
+    for(int i=0; i < n; ++i){
+        const string& key = motionItem->extraSeqKey(i);
+        AbstractSeqItem* seqItem = motionItem->extraSeqItem(i);
+        ExtraSeqEngineFactoryMap::iterator q = extraSeqEngineFactories.find(key);
+        if(q != extraSeqEngineFactories.end()){
+            ExtraSeqEngineFactory& createEngine = q->second;
+            extraSeqEngines.push_back(createEngine(bodyItem, seqItem));
+        }
+    }
+}
+
+
 void BodyMotionEngine::onPlaybackStarted(double time)
 {
     impl->bodyItem->notifyKinematicStateUpdate(false);
@@ -190,21 +152,97 @@ bool BodyMotionEngine::onTimeChanged(double time)
 }
 
 
-void BodyMotionEngine::onPlaybackStopped(double time, bool isStoppedManually)
+bool BodyMotionEngine::Impl::onTimeChanged(double time)
 {
-    impl->bodyItem->notifyKinematicStateUpdate(false);
+    bool isActive = false;
+    bool fkDone = false;
+    
+    if(qSeq){
+        const int numAllJoints = std::min(body->numAllJoints(), qSeq->numParts());
+        const int numFrames = qSeq->numFrames();
+        if(numAllJoints > 0 && numFrames > 0){
+            const int frame = qSeq->frameOfTime(time);
+            if(frame < numFrames){
+                isActive = true;
+            }
+            const int clampedFrame = qSeq->clampFrameIndex(frame);
+            const MultiValueSeq::Frame q = qSeq->frame(clampedFrame);
+            for(int i=0; i < numAllJoints; ++i){
+                body->joint(i)->q() = q[i];
+            }
+            if(motionItem->isBodyJointVelocityUpdateEnabled()){
+                const double dt = qSeq->timeStep();
+                const MultiValueSeq::Frame q_prev = qSeq->frame((clampedFrame == 0) ? 0 : (clampedFrame -1));
+                for(int i=0; i < numAllJoints; ++i){
+                    body->joint(i)->dq() = (q[i] - q_prev[i]) / dt;
+                }
+            }
+        }
+    }
+    
+    if(positions){
+        const int numLinks = positions->numParts();
+        const int numFrames = positions->numFrames();
+        if(numLinks > 0 && numFrames > 0){
+            const int frame = positions->frameOfTime(time);
+            if(frame < numFrames){
+                isActive = true;
+            }
+            const int clampedFrame = positions->clampFrameIndex(frame);
+            for(int i=0; i < numLinks; ++i){
+                Link* link = body->link(i);
+                const SE3& position = positions->at(clampedFrame, i);
+                link->p() = position.translation();
+                link->R() = position.rotation().toRotationMatrix();
+            }
+        }
+        
+        if(positions->numParts() == 1){
+            body->calcForwardKinematics(); // FK from the root
+            fkDone = true;
+        }
+    }
+    
+    for(size_t i=0; i < extraSeqEngines.size(); ++i){
+        isActive |= extraSeqEngines[i]->onTimeChanged(time);
+    }
+    
+    bodyItem->notifyKinematicStateChange(!fkDone && calcForwardKinematics);
+    
+    return isActive;
 }
 
 
-void BodyMotionEngine::initializeClass(ExtensionManager* ext)
+double BodyMotionEngine::onPlaybackStopped(double time, bool isStoppedManually)
 {
-    TimeSyncItemEngineManager::instance()
-        ->registerFactory<BodyMotionItem, BodyMotionEngine>(createBodyMotionEngine);
+    return impl->onPlaybackStopped(time, isStoppedManually);
 }
 
 
-void BodyMotionEngine::addExtraSeqEngineFactory
-(const std::string& key, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory)
+double BodyMotionEngine::Impl::onPlaybackStopped(double time, bool isStoppedManually)
 {
-    extraSeqEngineFactories[key] = factory;
+    bodyItem->notifyKinematicStateUpdate(false);
+
+    double lastValidTime = -1.0;
+    
+    if(qSeq){
+        double last = std::max(0.0, qSeq->timeOfFrame(qSeq->numFrames() - 1));
+        if(last < time && last > lastValidTime){
+            lastValidTime = last;
+        }
+    }
+    if(positions){
+        double last = std::max(0.0, positions->timeOfFrame(positions->numFrames() - 1));
+        if(last < time && last > lastValidTime){
+            lastValidTime = last;
+        }
+    }
+    for(auto& engine : extraSeqEngines){
+        double last = engine->onPlaybackStopped(time, isStoppedManually);
+        if(last < time && last > lastValidTime){
+            lastValidTime = last;
+        }
+    }
+
+    return lastValidTime;
 }

@@ -161,7 +161,7 @@ public:
     void addCollisionSeqEngine(CollisionSeqItem* collisionSeqItem);
     virtual void onPlaybackStarted(double /* time */) override;
     virtual bool onTimeChanged(double time) override;
-    virtual void onPlaybackStopped(double time, bool isStoppedManually) override;
+    virtual double onPlaybackStopped(double time, bool isStoppedManually) override;
     virtual bool isTimeSyncAlwaysMaintained() const override;
     void notifyKinematicStateUpdate();
 };
@@ -345,12 +345,14 @@ public:
     void onSimulationLoopStarted();
     void updateSimBodyLists();
     bool stepSimulationMain();
+    void startFlushTimer();
     void flushRecords();
     int flushMainRecords();
     void stopSimulation(bool isForced, bool doSync);
     void pauseSimulation();
     void restartSimulation();
     void onSimulationLoopStopped(bool isForced);
+    bool isActive() const;
     void setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f, double time);
     void doSetExternalForce();
     void setVirtualElasticString(
@@ -1183,7 +1185,7 @@ void SimulationBody::Impl::flushRecordsToWorldLogFile(int bufferFrame)
 
 
 /**
-   This function is called when the no recording mode
+   This function is called in the no recording mode
 */
 void SimulationBody::Impl::notifyRecords(double time)
 {
@@ -1329,7 +1331,7 @@ double SimulatorItem::worldTimeStep()
         return 1.0 / impl->frameRateProperty;
     case RESOLUTION_TIMEBAR:
     default:
-        return TimeBar::instance()->timeStep();
+        return impl->timeBar->timeStep();
     }
 }
 
@@ -1837,12 +1839,15 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
         ringBufferSize = std::numeric_limits<int>::max();
         
         if(timeRangeMode.is(SimulatorItem::TR_SPECIFIED)){
-            maxFrame = timeLength / worldTimeStep_;
+            maxFrame = std::max(0, static_cast<int>(lround(timeLength / worldTimeStep_) - 1));
+            
         } else if(timeRangeMode.is(SimulatorItem::TR_TIMEBAR)){
-            maxFrame = TimeBar::instance()->maxTime() / worldTimeStep_;
+            maxFrame = std::max(0, static_cast<int>(lround(timeBar->maxTime() / worldTimeStep_) - 1));
+                                
         } else if(isRingBufferMode){
             maxFrame = std::numeric_limits<int>::max();
             ringBufferSize = timeLength / worldTimeStep_;
+            
         } else {
             maxFrame = std::numeric_limits<int>::max();
         }
@@ -1895,13 +1900,10 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
             }
         }
 
-        if(isRecordingEnabled){
-            logEngine->startOngoingTimeUpdate(0.0);
-        }
-
+        logEngine->startOngoingTimeUpdate(0.0);
         flushRecords();
         start();
-        flushTimer.start(1000.0 / timeBar->playbackFrameRate());
+        startFlushTimer();
 
         mv->notify(format(_("Simulation by {} has started."), self->displayName()));
 
@@ -2262,6 +2264,16 @@ exitConcurrentControlLoop:
 }
 
 
+void SimulatorItem::Impl::startFlushTimer()
+{
+    if(timeBar->isIdleEventDrivenMode()){
+        flushTimer.start(0);
+    } else {
+        flushTimer.start(1000.0 / timeBar->playbackFrameRate());
+    }
+}
+
+
 void SimulatorItem::Impl::flushRecords()
 {
     int frame = flushMainRecords();
@@ -2270,18 +2282,14 @@ void SimulatorItem::Impl::flushRecords()
         info->flushLog();
     }
 
-    if(isRecordingEnabled){
-        logEngine->updateOngoingTime(frame / worldFrameRate);
-        
-    } else {
+    if(!isRecordingEnabled){
         const double time = frame / worldFrameRate;
-        for(size_t i=0; i < activeSimBodies.size(); ++i){
-            activeSimBodies[i]->impl->notifyRecords(time);
-        }
-        if(self->isSelected()){
-            timeBar->setTime(time);
+        for(auto& simBody : activeSimBodies){
+            simBody->impl->notifyRecords(time);
         }
     }
+
+    logEngine->updateOngoingTime(frame / worldFrameRate);
 }
 
 
@@ -2346,11 +2354,9 @@ void SimulatorItem::pauseSimulation()
 void SimulatorItem::Impl::pauseSimulation()
 {
     flushTimer.stop();
-    if(isRecordingEnabled){
-        logEngine->stopOngoingTimeUpdate();
-    }
     pauseRequested = true;
     flushRecords();
+    logEngine->stopOngoingTimeUpdate();
 }
 
 
@@ -2363,18 +2369,16 @@ void SimulatorItem::restartSimulation()
 void SimulatorItem::Impl::restartSimulation()
 {
     if(pauseRequested){
-        if(isRecordingEnabled){
-            logEngine->startOngoingTimeUpdate();
-        }
+        logEngine->startOngoingTimeUpdate();
         pauseRequested = false;
-        flushTimer.start(1000.0 / timeBar->playbackFrameRate());
+        startFlushTimer();
     }
 }
 
 
 void SimulatorItem::stopSimulation(bool isForced)
 {
-    impl->stopSimulation(isForced, false);
+    impl->stopSimulation(isForced, true);
 }
 
 
@@ -2421,7 +2425,6 @@ void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
     }
 
     flushRecords();
-
     logEngine->stopOngoingTimeUpdate();
 
     mv->notify(format(_("Simulation by {0} has finished at {1} [s]."), self->displayName(), finishTime));
@@ -2453,7 +2456,13 @@ bool SimulatorItem::isPausing() const
 
 bool SimulatorItem::isActive() const
 {
-    return impl->isDoingSimulationLoop && !impl->pauseRequested;
+    return impl->isActive();
+}
+
+
+bool SimulatorItem::Impl::isActive() const
+{
+    return isDoingSimulationLoop && !pauseRequested;
 }
 
 
@@ -2942,26 +2951,31 @@ bool SimulationLogEngine::isTimeSyncAlwaysMaintained() const
 
 bool SimulationLogEngine::onTimeChanged(double time)
 {
-    bool processed = false;
-    auto& si = itemImpl;
-    if(!subEngines.empty()){
-        for(auto& engine : subEngines){
-            processed |= engine->onTimeChanged(time);
+    bool isActive = itemImpl->isActive();
+
+    if(itemImpl->isRecordingEnabled){
+        if(!subEngines.empty()){
+            for(auto& engine : subEngines){
+                isActive |= engine->onTimeChanged(time);
+            }
+        } else if(itemImpl->worldLogFileItem){
+            isActive |= itemImpl->worldLogFileItem->recallStateAtTime(time);
         }
-    } else if(si->worldLogFileItem){
-        processed |= si->worldLogFileItem->recallStateAtTime(time);
+        if(collisionSeqEngine){
+            isActive |= collisionSeqEngine->onTimeChanged(time);
+        }
     }
-    if(collisionSeqEngine){
-        processed |= collisionSeqEngine->onTimeChanged(time);
-    }
-    return processed;
+    return isActive;
 }
 
 
-void SimulationLogEngine::onPlaybackStopped(double /* time */, bool /* isStoppedManually */)
+double SimulationLogEngine::onPlaybackStopped(double time, bool /* isStoppedManually */)
 {
     doKeepPlayback = false;
     notifyKinematicStateUpdate();
+
+    double simulationTime = itemImpl->currentTime();
+    return simulationTime < time ? simulationTime : time;
 }
 
 

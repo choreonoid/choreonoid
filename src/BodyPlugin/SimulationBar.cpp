@@ -193,7 +193,6 @@ void SimulationBar::startSimulation(SimulatorItem* simulator, bool doReset)
             simulator->restartSimulation();
             pauseToggle->setChecked(false);
     	}
-        //simulator->selectMotionItems();
         TimeBar::instance()->startPlayback();
         
     } else {

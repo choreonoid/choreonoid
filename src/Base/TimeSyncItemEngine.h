@@ -28,7 +28,7 @@ public:
     virtual bool onPlaybackInitialized(double time);
     virtual void onPlaybackStarted(double time);
     virtual bool onTimeChanged(double time) = 0;
-    virtual void onPlaybackStopped(double time, bool isStoppedManually);
+    virtual double onPlaybackStopped(double time, bool isStoppedManually);
     virtual bool isTimeSyncAlwaysMaintained() const;
 
     void startOngoingTimeUpdate();
