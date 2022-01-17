@@ -171,6 +171,7 @@ public:
 
     double quantizedTime(double time) const;
     bool setTime(double time, bool calledFromPlaybackLoop, QWidget* callerWidget = nullptr);
+    void setTimeBarTime(double time, QWidget* callerWidget);
     void onTimeSpinChanged(double value);
     bool onTimeSliderValueChanged(int value);
 
@@ -183,7 +184,7 @@ public:
     void onResumeActivated();
     void startPlayback();
     void startPlayback(double time);
-    void stopPlayback(bool isStoppedManually);
+    double stopPlayback(bool isStoppedManually);
     int startOngoingTimeUpdate(double time);
     void updateOngoingTime(int id, double time);
     void updateMinOngoingTime();
@@ -223,11 +224,15 @@ public:
     double ongoingTime;
     bool hasOngoingTime;
 
-    Signal<bool(double time), LogicalProduct> sigPlaybackInitialized;
+    Signal<bool(double time)> sigPlaybackInitialized;
     Signal<void(double time)> sigPlaybackStarted;
-    Signal<bool(double time), LogicalSum> sigTimeChanged;
+    Signal<bool(double time)> sigTimeChanged;
+    vector<bool> playbackContinueFlags;
     Signal<void(double time, bool isStoppedManually)> sigPlaybackStopped;
+    Signal<double(double time, bool isStoppedManually)> sigPlaybackStoppedEx;
+    vector<double> lastValidTimesWhenStopped;
 };
+
 }
 
 
@@ -350,7 +355,7 @@ TimeBar::Impl::~Impl()
 }
 
 
-SignalProxy<bool(double time), LogicalProduct> TimeBar::sigPlaybackInitialized()
+SignalProxy<bool(double time)> TimeBar::sigPlaybackInitialized()
 {
     return impl->sigPlaybackInitialized;
 }
@@ -362,14 +367,7 @@ SignalProxy<void(double time)> TimeBar::sigPlaybackStarted()
 }
 
 
-/**
-   Signal emitted when the TimeBar's time changes.
-   
-   In the function connected to this signal, please return true if the time is valid for it,
-   and return false if the time is not valid. The example of the latter case is that
-   the time is over the length of the data processed in the function.
-*/
-SignalProxy<bool(double time), LogicalSum> TimeBar::sigTimeChanged()
+SignalProxy<bool(double time)> TimeBar::sigTimeChanged()
 {
     return impl->sigTimeChanged;
 }
@@ -378,6 +376,12 @@ SignalProxy<bool(double time), LogicalSum> TimeBar::sigTimeChanged()
 SignalProxy<void(double time, bool isStoppedManually)> TimeBar::sigPlaybackStopped()
 {
     return impl->sigPlaybackStopped;
+}
+
+
+SignalProxy<double(double time, bool isStoppedManually)> TimeBar::sigPlaybackStoppedEx()
+{
+    return impl->sigPlaybackStoppedEx;
 }
 
 
@@ -582,12 +586,21 @@ void TimeBar::Impl::startPlayback(double time)
     self->time_ = quantizedTime(time);
     animationTimeOffset = self->time_;
 
-    if(sigPlaybackInitialized(self->time_)){
-
+    bool doStartPlayback = true;
+    sigPlaybackInitialized.emitAndGetAllResults(self->time_, playbackContinueFlags);
+    for(auto flag : playbackContinueFlags){
+        if(!flag){
+            doStartPlayback = false;
+            break;
+        }
+    }
+    
+    if(doStartPlayback){
         sigPlaybackStarted(self->time_);
         
         if(!setTime(self->time_, false) && !isOngoingTimeValid){
             sigPlaybackStopped(self->time_, false);
+            sigPlaybackStoppedEx(self->time_, false);
 
         } else {
             isDoingPlayback = true;
@@ -614,13 +627,31 @@ void TimeBar::stopPlayback(bool isStoppedManually)
 }
 
 
-void TimeBar::Impl::stopPlayback(bool isStoppedManually)
+double TimeBar::Impl::stopPlayback(bool isStoppedManually)
 {
-    if(isDoingPlayback){
+    double lastValidTime;
+    
+    if(!isDoingPlayback){
+        lastValidTime = self->time_;
+
+    } else {
         killTimer(timerId);
         isDoingPlayback = false;
+
+        if(hasOngoingTime && ongoingTime > self->time_ && config.ongoingTimeSyncCheck.isChecked()){
+            setTime(ongoingTime, false);
+        }
+
         sigPlaybackStopped(self->time_, isStoppedManually);
 
+        sigPlaybackStoppedEx.emitAndGetAllResults(self->time_, isStoppedManually, lastValidTimesWhenStopped);
+        lastValidTime = 0.0;
+        for(auto& time : lastValidTimesWhenStopped){
+            if(time > lastValidTime){
+                lastValidTime = time;
+            }
+        }
+        
         const static QString tip(_("Resume animation"));
         resumeButton->setIcon(resumeIcon);
         resumeButton->setToolTip(tip);
@@ -629,6 +660,8 @@ void TimeBar::Impl::stopPlayback(bool isStoppedManually)
             hasOngoingTime = false;
         }
     }
+
+    return lastValidTime;
 }
 
 
@@ -654,10 +687,14 @@ void TimeBar::Impl::timerEvent(QTimerEvent*)
     }
 
     if(!setTime(time, true) || doStopAtLastOngoingTime){
-        stopPlayback(false);
+        double lastValidTime = stopPlayback(false);
         
         if(!doStopAtLastOngoingTime && repeatMode){
             startPlayback(minTime);
+        } else {
+            if(lastValidTime < self->time_){
+                setTimeBarTime(lastValidTime, nullptr);
+            }
         }
     }
 }
@@ -701,8 +738,25 @@ bool TimeBar::Impl::setTime(double time, bool calledFromPlaybackLoop, QWidget* c
         }
     }
 
-    if(newTime > maxTime && config.autoExpandCheck.isChecked()){
-        maxTime = newTime;
+    setTimeBarTime(newTime, callerWidget);
+
+    sigTimeChanged.emitAndGetAllResults(self->time_, playbackContinueFlags);
+
+    bool isValid = false;
+    for(auto flag : playbackContinueFlags){
+        if(flag){
+            isValid = true;
+            break;
+        }
+    }
+    return isValid;
+}
+
+
+void TimeBar::Impl::setTimeBarTime(double time, QWidget* callerWidget)
+{
+   if(time > maxTime && config.autoExpandCheck.isChecked()){
+        maxTime = time;
         timeSpin->blockSignals(true);
         timeSlider->blockSignals(true);
         maxTimeSpin->blockSignals(true);
@@ -715,7 +769,7 @@ bool TimeBar::Impl::setTime(double time, bool calledFromPlaybackLoop, QWidget* c
         timeSpin->blockSignals(false);
     }
         
-    self->time_ = newTime;
+    self->time_ = time;
 
     if(callerWidget != timeSpin){
         timeSpin->blockSignals(true);
@@ -727,8 +781,6 @@ bool TimeBar::Impl::setTime(double time, bool calledFromPlaybackLoop, QWidget* c
         timeSlider->setValue((int)nearbyint(self->time_ * pow(10.0, decimals)));
         timeSlider->blockSignals(false);
     }
-
-    return sigTimeChanged(self->time_);
 }
 
 
@@ -749,14 +801,18 @@ int TimeBar::startOngoingTimeUpdate(double time)
 int TimeBar::Impl::startOngoingTimeUpdate(double time)
 {
     int id = 0;
+
     if(ongoingTimeMap.empty()){
         hasOngoingTime = true;
-    } else {
-        while(ongoingTimeMap.find(id) == ongoingTimeMap.end()){
-            ++id;
-        }
     }
-    updateOngoingTime(id, time);
+    while(true){
+        auto inserted = ongoingTimeMap.insert(make_pair(id, time)).second;
+        if(inserted){
+            updateMinOngoingTime();
+            break;
+        }
+        ++id; // try to find an unused id
+    }
 
     return id;
 }
@@ -770,18 +826,23 @@ void TimeBar::updateOngoingTime(int id, double time)
 
 void TimeBar::Impl::updateOngoingTime(int id, double time)
 {
-    ongoingTimeMap[id] = time;
-    updateMinOngoingTime();
+    auto it = ongoingTimeMap.find(id);
+    if(it != ongoingTimeMap.end()){
+        it->second = time;
+        updateMinOngoingTime();
+    }
 }
 
 
 void TimeBar::Impl::updateMinOngoingTime()
 {
-    double minOngoingTime = std::numeric_limits<double>::max();
-    for(auto& kv : ongoingTimeMap){
-        minOngoingTime = std::min(kv.second, minOngoingTime);
+    if(!ongoingTimeMap.empty()){
+        double minOngoingTime = std::numeric_limits<double>::max();
+        for(auto& kv : ongoingTimeMap){
+            minOngoingTime = std::min(kv.second, minOngoingTime);
+        }
+        ongoingTime = minOngoingTime;
     }
-    ongoingTime = minOngoingTime;
 }    
 
 

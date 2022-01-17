@@ -21,15 +21,21 @@ public:
     ~TimeBar();
 
     /**
-       \note If any connected slot returns false, the playback is canceled.
-       
+       The return value from each slot indicates whether the playback is successfully initialized or not.
+       If any slot returns false, starting the playback will be canceled.
     */
-    SignalProxy<bool(double time), LogicalProduct> sigPlaybackInitialized();
-        
+    SignalProxy<bool(double time)> sigPlaybackInitialized();
+
     SignalProxy<void(double time)> sigPlaybackStarted();
-    SignalProxy<bool(double time), LogicalSum> sigTimeChanged();
+
+    //! The return value from each slot indicates whether a valid data exists for the specified time or not.
+    SignalProxy<bool(double time)> sigTimeChanged();
+    
     SignalProxy<void(double time, bool isStoppedManually)> sigPlaybackStopped();
 
+    //! The return value from each slot is the time of the last valid frame when the playback is stopped.
+    SignalProxy<double(double time, bool isStoppedManually)> sigPlaybackStoppedEx();
+    
     inline double time() const { return time_; }
         
     bool setTime(double time);
