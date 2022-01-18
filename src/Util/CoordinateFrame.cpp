@@ -50,6 +50,17 @@ bool CoordinateFrame::resetId(const GeneralId& id)
 }
 
 
+void CoordinateFrame::setNote(const std::string& note, bool doNotify)
+{
+    if(note != note_){
+        note_ = note;
+        if(doNotify){
+            sigUpdated_(NoteUpdate);
+        }
+    }
+}
+
+
 CoordinateFrameList* CoordinateFrame::ownerFrameList() const
 {
     return ownerFrameList_.lock();

@@ -42,7 +42,7 @@ public:
     void setPosition(const Isometry3& T) { T_ = T; }
 
     const std::string& note() const { return note_; }
-    void setNote(const std::string& note) { note_ = note; }
+    void setNote(const std::string& note, bool doNotify = false);
 
     CoordinateFrameList* ownerFrameList() const;
 
