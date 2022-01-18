@@ -29,6 +29,9 @@ using fmt::format;
 
 namespace {
 
+int defaultMinIoNumber = 0;
+int defaultMaxIoNumber = 999;
+
 constexpr int NumColumns = 6;
 constexpr int OutDeviceColumn = 0;
 constexpr int OutSignalIndexColumn = 1;
@@ -410,9 +413,10 @@ QWidget* CustomizedItemDelegate::createSignalIndexSpingBox
     spin->setAlignment(Qt::AlignCenter);
     spin->setFrame(false);
     if(auto device = connection->device(which)){
-        spin->setRange(0, device->numSignalLines() - 1);
+        int maxIoNumber = std::min(defaultMaxIoNumber, device->numSignalLines() - 1);
+        spin->setRange(defaultMinIoNumber, maxIoNumber);
     } else {
-        spin->setRange(0, 999);
+        spin->setRange(defaultMinIoNumber, defaultMaxIoNumber);
     }
     return spin;
 }
@@ -495,6 +499,13 @@ SignalDeviceComboBox::SignalDeviceComboBox
     }
 }
 
+}
+
+
+void IoConnectionView::setDefaultEditableIoNumberRange(int minNumber, int maxNumber)
+{
+    defaultMinIoNumber = minNumber;
+    defaultMaxIoNumber = maxNumber;
 }
 
 
@@ -618,10 +629,11 @@ void IoConnectionView::Impl::addNewConnection(int index, bool doInsert)
             if(auto ioDevice1 = bodyItem1->body()->findDevice<DigitalIoDevice>()){
                 for(auto& bodyItem2 : bodyItems){
                     if(auto ioDevice2 = bodyItem2->body()->findDevice<DigitalIoDevice>()){
+                        int no = defaultMinIoNumber;
                         if(!intraConnection && bodyItem1 == bodyItem2){
-                            intraConnection = new DigitalIoConnection(ioDevice1, 0, ioDevice2, 0);
+                            intraConnection = new DigitalIoConnection(ioDevice1, no, ioDevice2, no);
                         } else if(!interConnection && bodyItem1 != bodyItem2){
-                            interConnection = new DigitalIoConnection(ioDevice1, 0, ioDevice2, 0);
+                            interConnection = new DigitalIoConnection(ioDevice1, no, ioDevice2, no);
                         }
                         if(intraConnection && interConnection){
                             break;

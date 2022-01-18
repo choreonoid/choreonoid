@@ -47,6 +47,7 @@ set(headers
   MprControllerItemBase.h
   MprMultiVariableListItem.h
   MprProgramViewBase.h
+  MprProgramViewDelegates.h
   MprStatementViewBase.h
   MprStatementPanel.h
   MprPositionStatementPanel.h

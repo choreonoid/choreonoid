@@ -112,6 +112,7 @@ set(headers
   LinkPositionView.h
   LinkPositionWidget.h
   JointDisplacementWidget.h
+  IoConnectionView.h
   CollisionSeq.h
   CollisionSeqItem.h
   CollisionSeqEngine.h

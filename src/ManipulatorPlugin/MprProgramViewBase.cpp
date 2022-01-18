@@ -568,8 +568,6 @@ MprProgramViewBase::MprProgramViewBase()
 {
     impl = new Impl(this);
 
-    registerBaseStatementDelegates();
-
     customizeContextMenu<MprStatement>(
         [this](MprStatement*, MenuManager& menuManager, MprStatementFunctionDispatcher){
             impl->setBaseContextMenu(menuManager); });
