@@ -148,7 +148,7 @@ public:
         const FrameLabelFunction& frameLabelFunction);
     string getFrameLabel(CoordinateFrame* frame, bool isDefaultFrame, const char* defaultFrameNote);
     void onFrameComboActivated(int frameComboIndex, int index);
-    void onFrameUpdate();
+    void onFrameSetChange();
     void setConfigurationInterfaceEnabled(bool on);
     void initializeConfigurationInterface();
     void showConfigurationDialog();
@@ -532,8 +532,8 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
         kinematicsKit = targetBodyItem->getCurrentLinkKinematicsKit(targetLink);
         if(kinematicsKit){
             kinematicsKitConnections.add(
-                kinematicsKit->sigFrameUpdate().connect(
-                    [&](){ onFrameUpdate(); }));
+                kinematicsKit->sigFrameSetChange().connect(
+                    [&](){ onFrameSetChange(); }));
             kinematicsKitConnections.add(
                 kinematicsKit->sigPositionError().connect(
                     [&](const Isometry3& T_frameCoordinate){
@@ -675,7 +675,9 @@ void LinkPositionWidget::Impl::onFrameComboActivated(int frameComboIndex, int in
         id = idValue.toString().toStdString();
     }
     if(id.isValid()){
-        if(kinematicsKit){
+        if(!kinematicsKit){
+            updateDisplay();
+        } else {
             if(frameComboIndex == BaseFrame){
                 kinematicsKit->setCurrentBaseFrame(id);
                 baseFrame = kinematicsKit->currentBaseFrame();
@@ -683,14 +685,14 @@ void LinkPositionWidget::Impl::onFrameComboActivated(int frameComboIndex, int in
                 kinematicsKit->setCurrentOffsetFrame(id);
                 offsetFrame = kinematicsKit->currentOffsetFrame();
             }
-            kinematicsKit->notifyFrameUpdate();
+            // onFrameSetChange is called and updateDisplay is then called
+            kinematicsKit->notifyFrameSetChange();
         }
-        updateDisplay();
     }
 }
 
 
-void LinkPositionWidget::Impl::onFrameUpdate()
+void LinkPositionWidget::Impl::onFrameSetChange()
 {
     bool coordinateModeUpdated = false;
 

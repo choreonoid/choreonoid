@@ -92,9 +92,13 @@ public:
         const GeneralId& offsetFrameId = GeneralId() /* Current */,
         int configuration = 0 /* Auto */);
     
-    // Any update on frames (frame lists, current frames, etc.)
-    SignalProxy<void()> sigFrameUpdate();
-    void notifyFrameUpdate();
+    /**
+       The signal emitted when there is a change in the current frames or frame list for the target frames.
+       Note that updates to the position, note, etc. of each frame are not notified by this signal.
+       The updates of each frame can be detected using the CoordinateeFrame::isgUpdated signal.
+    */
+    SignalProxy<void()> sigFrameSetChange();
+    void notifyFrameSetChange();
 
     SignalProxy<void(const Isometry3& T_frameCoordinate)> sigPositionError();
     void notifyPositionError(const Isometry3& T_frameCoordinate);

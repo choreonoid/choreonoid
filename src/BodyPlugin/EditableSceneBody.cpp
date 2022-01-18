@@ -1034,7 +1034,7 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
     kinematicsKitConnection.disconnect();
     if(kinematicsKit){
         kinematicsKitConnection =
-            kinematicsKit->sigFrameUpdate().connect(
+            kinematicsKit->sigFrameSetChange().connect(
                 [this, link](){ attachPositionDragger(link); });
     }
     

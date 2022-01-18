@@ -33,7 +33,7 @@ public:
     CoordinateFramePtr defaultBaseFrame;
     CoordinateFramePtr defaultOffsetFrame;
 
-    Signal<void()> sigFrameUpdate;
+    Signal<void()> sigFrameSetChange;
     Signal<void(const Isometry3& T_frameCoordinate)> sigPositionError;
     
     Impl(Link* link);
@@ -557,15 +557,15 @@ bool LinkKinematicsKit::setGlobalEndPosition
 }
 
 
-SignalProxy<void()> LinkKinematicsKit::sigFrameUpdate()
+SignalProxy<void()> LinkKinematicsKit::sigFrameSetChange()
 {
-    return impl->sigFrameUpdate;
+    return impl->sigFrameSetChange;
 }
 
 
-void LinkKinematicsKit::notifyFrameUpdate()
+void LinkKinematicsKit::notifyFrameSetChange()
 {
-    impl->sigFrameUpdate();
+    impl->sigFrameSetChange();
 }
 
 
@@ -615,7 +615,7 @@ bool LinkKinematicsKit::restoreState(const Mapping& archive)
         setCustomIkDisabled(on);
     }
     if(updated){
-        notifyFrameUpdate();
+        notifyFrameSetChange();
     }
     return true;
 }

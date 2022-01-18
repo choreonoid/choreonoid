@@ -288,7 +288,7 @@ bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll, M
         kinematicsKit->setReferenceRpy(ikPosition->referenceRpy());
         kinematicsKit->setCurrentBaseFrame(ikPosition->baseFrameId());
         kinematicsKit->setCurrentOffsetFrame(ikPosition->offsetFrameId());
-        kinematicsKit->notifyFrameUpdate();
+        kinematicsKit->notifyFrameSetChange();
     }
     updated = position->apply(kinematicsKit);
     if(updated){

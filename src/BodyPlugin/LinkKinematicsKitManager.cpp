@@ -358,7 +358,7 @@ void LinkKinematicsKitManager::Impl::onFrameListAssociation(CoordinateFrameListI
         for(auto& kv : linkPairToKinematicsKitMap){
             auto& kit = kv.second;
             if(updateCoordinateFramesOf(kit, false)){
-                kit->notifyFrameUpdate();
+                kit->notifyFrameSetChange();
             }
         }
     }
