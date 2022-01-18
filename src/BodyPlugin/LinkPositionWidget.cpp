@@ -96,7 +96,9 @@ public:
     ScopedConnectionSet kinematicsKitConnections;
     CoordinateFramePtr identityFrame;
     CoordinateFramePtr baseFrame;
+    ScopedConnection baseFrameConnection;
     CoordinateFramePtr offsetFrame;
+    ScopedConnection offsetFrameConnection;
     FrameLabelFunction frameLabelFunction[2];
 
     ScopedConnection kinematicsBarConnection;
@@ -131,8 +133,6 @@ public:
     vector<QWidget*> configurationWidgets;
     JointSpaceConfigurationDialog* configurationDialog;
     
-    ScopedConnectionSet userInputConnections;
-
     Impl(LinkPositionWidget* self);
     void createPanel();
     void onAttachedMenuRequest(MenuManager& menuManager);
@@ -146,9 +146,13 @@ public:
     void updateCoordinateFrameComboItems(
         QComboBox& combo, CoordinateFrameList* frames, const GeneralId& currentId,
         const FrameLabelFunction& frameLabelFunction);
-    string getFrameLabel(CoordinateFrame* frame, bool isDefaultFrame, const char* defaultFrameNote);
+    void updateCurrentCoordinateFrameLabel(int frameComboIndex);
+    string defaultFrameLabelFunction(CoordinateFrame* frame, bool isDefaultFrame, const char* defaultFrameNote);
     void onFrameComboActivated(int frameComboIndex, int index);
     void onFrameSetChange();
+    void setBaseFrame(CoordinateFrame* frame);
+    void setOffsetFrame(CoordinateFrame* frame);
+    void onFrameUpdated(int flags, int frameComboIndex);
     void setConfigurationInterfaceEnabled(bool on);
     void initializeConfigurationInterface();
     void showConfigurationDialog();
@@ -186,8 +190,8 @@ LinkPositionWidget::Impl::Impl(LinkPositionWidget* self)
     targetLinkType = IkLink;
     
     identityFrame = new CoordinateFrame;
-    baseFrame = identityFrame;
-    offsetFrame = identityFrame;
+    setBaseFrame(identityFrame);
+    setOffsetFrame(identityFrame);
 
     kinematicsBarConnection =
         KinematicsBar::instance()->sigKinematicsModeChanged().connect(
@@ -250,10 +254,11 @@ void LinkPositionWidget::Impl::createPanel()
     coordinateMode = WorldCoordinateMode;
     preferredCoordinateMode = BodyCoordinateMode;
 
-    coordinateModeGroup.sigButtonClicked().connect(
-        [&](int /* id */){
-            int mode = coordinateModeGroup.checkedId();
-            setCoordinateMode(mode, true, true);
+    coordinateModeGroup.sigButtonToggled().connect(
+        [&](int mode, bool on){
+            if(on){
+                setCoordinateMode(mode, true, true);
+            }
         });
     
     hbox->addStretch();
@@ -273,12 +278,12 @@ void LinkPositionWidget::Impl::createPanel()
     frameComboLabel[BaseFrame].setText(_("Base"));
     frameLabelFunction[BaseFrame] =
         [&](LinkKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame){
-            return getFrameLabel(frame, isDefaultFrame, _("Body Origin")); };
+            return defaultFrameLabelFunction(frame, isDefaultFrame, _("Body Origin")); };
 
     frameComboLabel[OffsetFrame].setText(_("Offset"));
     frameLabelFunction[OffsetFrame] =
         [&](LinkKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame){
-            return getFrameLabel(frame, isDefaultFrame, _("Link Origin")); };
+            return defaultFrameLabelFunction(frame, isDefaultFrame, _("Link Origin")); };
 
     for(int i=0; i < 2; ++i){
         grid->addWidget(&frameComboLabel[i], row + i, 0, Qt::AlignLeft /* Qt::AlignJustify */);
@@ -303,9 +308,7 @@ void LinkPositionWidget::Impl::createPanel()
     grid->addWidget(&configurationLabel, row, 1,  Qt::AlignLeft);
     configurationWidgets.push_back(&configurationLabel);
     configurationButton.setText(_("Set"));
-    userInputConnections.add(
-        configurationButton.sigClicked().connect(
-            [this](){ showConfigurationDialog(); }));
+    configurationButton.sigClicked().connect([this](){ showConfigurationDialog(); });
     grid->addWidget(&configurationButton, row, 2);
     configurationWidgets.push_back(&configurationButton);
     configurationDialog = nullptr;
@@ -522,8 +525,8 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
     targetLink = link;
     kinematicsKit.reset();
     kinematicsKitConnections.disconnect();
-    baseFrame = identityFrame;
-    offsetFrame = identityFrame;
+    setBaseFrame(identityFrame);
+    setOffsetFrame(identityFrame);
     bool isBodyCoordinateModeEnabled = false;
     
     if(targetLink){
@@ -542,8 +545,8 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
             if(kinematicsKit->baseLink() && link != kinematicsKit->baseLink()){
                 isBodyCoordinateModeEnabled = true;
             }
-            baseFrame = kinematicsKit->currentBaseFrame();
-            offsetFrame = kinematicsKit->currentOffsetFrame();
+            setBaseFrame(kinematicsKit->currentBaseFrame());
+            setOffsetFrame(kinematicsKit->currentOffsetFrame());
         }
     }
 
@@ -646,7 +649,38 @@ void LinkPositionWidget::Impl::updateCoordinateFrameComboItems
 }
 
 
-string LinkPositionWidget::Impl::getFrameLabel
+void LinkPositionWidget::Impl::updateCurrentCoordinateFrameLabel(int frameComboIndex)
+{
+    CoordinateFrameList* frames = nullptr;
+    if(kinematicsKit){
+        if(frameComboIndex == BaseFrame){
+            frames = kinematicsKit->baseFrames();
+        } else if(frameComboIndex == OffsetFrame){
+            frames = kinematicsKit->offsetFrames();
+        }
+    }
+    if(frames){
+        auto& combo = frameCombo[frameComboIndex];
+        int index = combo.currentIndex();
+        //! Do not update the label of the default frame with index 0
+        if(index < frames->numFrames()){
+            auto frame = frames->frameAt(index);
+            auto& labelFunction = frameLabelFunction[frameComboIndex];
+            bool isDefaultFrame = (index == 0 && frames->hasFirstElementAsDefaultFrame());
+            string label = labelFunction(kinematicsKit, frame, isDefaultFrame);
+            combo.setItemText(index, label.c_str());
+            auto& id = frame->id();
+            if(id.isInt()){
+                combo.setItemData(index, id.toInt());
+            } else {
+                combo.setItemData(index, id.toString().c_str());
+            }
+        }
+    }
+}
+
+
+string LinkPositionWidget::Impl::defaultFrameLabelFunction
 (CoordinateFrame* frame, bool isDefaultFrame, const char* defaultFrameNote)
 {
     string label;
@@ -680,10 +714,10 @@ void LinkPositionWidget::Impl::onFrameComboActivated(int frameComboIndex, int in
         } else {
             if(frameComboIndex == BaseFrame){
                 kinematicsKit->setCurrentBaseFrame(id);
-                baseFrame = kinematicsKit->currentBaseFrame();
+                setBaseFrame(kinematicsKit->currentBaseFrame());
             } else {
                 kinematicsKit->setCurrentOffsetFrame(id);
-                offsetFrame = kinematicsKit->currentOffsetFrame();
+                setOffsetFrame(kinematicsKit->currentOffsetFrame());
             }
             // onFrameSetChange is called and updateDisplay is then called
             kinematicsKit->notifyFrameSetChange();
@@ -725,10 +759,62 @@ void LinkPositionWidget::Impl::onFrameSetChange()
         }
     }
 
-    baseFrame = kinematicsKit->currentBaseFrame();
-    offsetFrame = kinematicsKit->currentOffsetFrame();
+    setBaseFrame(kinematicsKit->currentBaseFrame());
+    setOffsetFrame(kinematicsKit->currentOffsetFrame());
     
     updateDisplay();
+}
+
+
+void LinkPositionWidget::Impl::setBaseFrame(CoordinateFrame* frame)
+{
+    if(frame != baseFrame){
+        baseFrame = frame;
+        if(frame == identityFrame){
+            baseFrameConnection.disconnect();
+        } else {
+            baseFrameConnection =
+                baseFrame->sigUpdated().connect(
+                    [this](int flags){ onFrameUpdated(flags, BaseFrame); });
+        }
+    }
+}
+
+
+void LinkPositionWidget::Impl::setOffsetFrame(CoordinateFrame* frame)
+{
+    if(frame != offsetFrame){
+        offsetFrame = frame;
+        if(frame == identityFrame){
+            offsetFrameConnection.disconnect();
+        } else {
+            offsetFrameConnection =
+                offsetFrame->sigUpdated().connect(
+                    [this](int flags){ onFrameUpdated(flags, OffsetFrame); });
+        }
+    }
+}
+
+
+void LinkPositionWidget::Impl::onFrameUpdated(int flags, int frameComboIndex)
+{
+    bool doUpdateDisplay = false;
+
+    if(flags & CoordinateFrame::IdUpdate){
+        updateCoordinateFrameCandidates(frameComboIndex);
+        doUpdateDisplay = true;
+        
+    } else if(flags & CoordinateFrame::NoteUpdate){
+        updateCurrentCoordinateFrameLabel(frameComboIndex);
+    }
+
+    if(flags & (CoordinateFrame::ModeUpdate | CoordinateFrame::PositionUpdate)){
+        doUpdateDisplay = true;
+    }
+
+    if(doUpdateDisplay){
+        updateDisplay();
+    }
 }
 
 
@@ -992,6 +1078,7 @@ void JointSpaceConfigurationDialog::applyConfiguration(int id)
     configuration->setPreferredConfigurationType(id);
     baseImpl->findBodyIkSolution(baseImpl->kinematicsKit->link()->T(), true);
     configuration->resetPreferredConfigurationType();
+    baseImpl->updateConfigurationDisplay();
 }
 
 
@@ -1048,11 +1135,7 @@ void LinkPositionWidget::Impl::onKinematicsKitPositionError(const Isometry3& T_f
 
 void LinkPositionWidget::Impl::updateDisplay()
 {
-    userInputConnections.block();
-    
     updateDisplayWithCurrentLinkPosition();
-
-    userInputConnections.unblock();
 
     resultLabel.setText(_("Actual State"));
     resultLabel.setStyleSheet(normalStyle);
@@ -1075,15 +1158,15 @@ void LinkPositionWidget::Impl::updateDisplayWithGlobalLinkPosition(const Isometr
         T.linear() = R_local0.transpose() * T_end.linear();
 
     } else {
-        if(coordinateMode == WorldCoordinateMode){
-            T = Ta_global * offsetFrame->T();
-        
-        } else if(coordinateMode == BodyCoordinateMode){
-            T = baseFrame->T().inverse(Eigen::Isometry) * Ta_global * offsetFrame->T();
+        T = Ta_global * offsetFrame->T(); // World coordinate
+
+        if(coordinateMode == BodyCoordinateMode){
             if(kinematicsKit && kinematicsKit->baseLink()){
                 T = kinematicsKit->baseLink()->T().inverse(Eigen::Isometry) * T;
             }
+            T = baseFrame->T().inverse(Eigen::Isometry) * T;
         }
+        
         if(kinematicsKit){
             positionWidget->setReferenceRpy(kinematicsKit->referenceRpy());
         }
@@ -1264,8 +1347,6 @@ bool LinkPositionWidget::restoreState(const Archive& archive)
 
 bool LinkPositionWidget::Impl::restoreState(const Archive& archive)
 {
-    auto block = userInputConnections.scopedBlock();
-    
     string symbol;
 
     if(archive.read("preferred_coordinate_mode", symbol)){
