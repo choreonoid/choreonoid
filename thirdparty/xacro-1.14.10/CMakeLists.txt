@@ -2,4 +2,15 @@ file(COPY src/xacro DESTINATION ${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR
 configure_file(scripts/cnoid-xacro ${PROJECT_BINARY_DIR}/bin/cnoid-xacro)
 
 install(DIRECTORY src/xacro DESTINATION ${CHOREONOID_PYTHON_SUBDIR}/cnoid)
-install(FILES scripts/cnoid-xacro DESTINATION bin)
+install(
+  FILES scripts/cnoid-xacro
+  PERMISSIONS
+    OWNER_READ
+    OWNER_WRITE
+    OWNER_EXECUTE
+    GROUP_READ
+    GROUP_WRITE
+    GROUP_EXECUTE
+    WORLD_READ
+    WORLD_EXECUTE
+  DESTINATION bin)
