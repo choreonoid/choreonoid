@@ -7,6 +7,9 @@
 #include <cnoid/AttachmentDevice>
 #include <cnoid/IoConnectionMap>
 #include <cnoid/ItemManager>
+#include <cnoid/AISTCollisionDetector>
+#include <cnoid/BodyCollisionDetector>
+
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -39,6 +42,7 @@ class HolderInfo : public Referenced
 public:
     HolderDevicePtr holder;
     vector<AttachmentInfoPtr> extraAttachments;
+    vector<Link*> collidingLinks;
     bool isActive;
     
     HolderInfo(HolderDevice* holder) : holder(holder), isActive(false) { }
@@ -53,18 +57,21 @@ class KinematicSimulatorItem::Impl
 {
 public:
     KinematicSimulatorItem* self;
-    vector<HolderInfoPtr> holders;
-    vector<HolderInfoPtr> activeHolders;
+    vector<HolderInfoPtr> holderInfos;
+    vector<HolderInfoPtr> activeHolderInfos;
     vector<IoConnectionMapPtr> ioConnectionMaps;
+    unique_ptr<BodyCollisionDetector> bodyCollisionDetector;
 
     Impl(KinematicSimulatorItem* self);
     Impl(KinematicSimulatorItem* self, const Impl& org);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
+    bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
+    void onHolderCollisionDetected(HolderInfo* info, Link* link, const CollisionPair& collisionPair);
     void onHolderStateChanged(HolderInfo* info);
     void activateHolder(HolderInfo* info);
-    vector<Body*> findAttachableBodies(HolderDevice* holder, const Isometry3& T_holder);
+    vector<Body*> findAttachableBodies(HolderInfo* info, const Isometry3& T_holder);
+    void findAttachableBodiesByCollision(HolderInfo* info, vector<Body*>& out_bodies);
     void findAttachableBodiesByDistance(HolderDevice* holder, const Isometry3& T_holder, vector<Body*>& out_bodies);
-    void findAttachableBodiesByCollision(HolderDevice* holder, const Isometry3& T_holder, vector<Body*>& out_bodies);
     void findAttachableBodiesByName(HolderDevice* holder, const Isometry3& T_holder, vector<Body*>& out_bodies);
     void deactivateHolder(HolderInfo* info);
 };
@@ -122,9 +129,12 @@ Item* KinematicSimulatorItem::doDuplicate() const
 
 void KinematicSimulatorItem::clearSimulation()
 {
-    impl->holders.clear();    
-    impl->activeHolders.clear();    
+    impl->holderInfos.clear();    
+    impl->activeHolderInfos.clear();    
     impl->ioConnectionMaps.clear();
+    if(impl->bodyCollisionDetector){
+        impl->bodyCollisionDetector->clearBodies();
+    }
 }
 
 
@@ -158,24 +168,50 @@ bool KinematicSimulatorItem::Impl::initializeSimulation(const std::vector<Simula
         connectionMap->establishConnections();
         ioConnectionMaps.push_back(connectionMap);
     }
+
+    bool hasHolderDeviceWithCollisionCondition = false;
     
     for(auto& simBody : simBodies){
         for(auto& holder : simBody->body()->devices<HolderDevice>()){
             auto info = new HolderInfo(holder);
-            holders.push_back(info);
+            holderInfos.push_back(info);
             if(holder->numAttachments() > 0){
                 info->isActive = true;
-                activeHolders.push_back(info);
+                activeHolderInfos.push_back(info);
+            }
+            if(holder->holdCondition() == HolderDevice::Collision){
+                hasHolderDeviceWithCollisionCondition = true;
             }
             holder->sigStateChanged().connect(
                 [this, info](){ onHolderStateChanged(info); });
         }
     }
+
+    if(hasHolderDeviceWithCollisionCondition){
+        if(!bodyCollisionDetector){
+            bodyCollisionDetector = make_unique<BodyCollisionDetector>(new AISTCollisionDetector);
+            bodyCollisionDetector->setGeometryHandleMapEnabled(true);
+        }
+        bodyCollisionDetector->clearBodies();
+        for(auto& simBody : simBodies){
+            if(simBody->isActive()){
+                bodyCollisionDetector->addBody(simBody->body(), false);
+            }
+        }
+        bodyCollisionDetector->makeReady();
+    }
+    
     return true;
 }
 
 
 bool KinematicSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
+{
+    return impl->stepSimulation(activeSimBodies);
+}
+
+
+bool KinematicSimulatorItem::Impl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         SimulationBody* simBody = activeSimBodies[i];
@@ -188,7 +224,7 @@ bool KinematicSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& 
         body->calcForwardKinematics();
     }
 
-    for(auto& info : impl->activeHolders){
+    for(auto& info : activeHolderInfos){
         auto& holder = info->holder;
         Isometry3 T_base = holder->link()->T() * holder->T_local();
         int n = holder->numAttachments();
@@ -204,8 +240,37 @@ bool KinematicSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& 
             body->calcForwardKinematics();
         }
     }
+
+    if(bodyCollisionDetector && bodyCollisionDetector->hasBodies()){
+        bodyCollisionDetector->updatePositions();
+        for(auto& info : holderInfos){
+            info->collidingLinks.clear();
+            auto link = info->holder->link();
+            bodyCollisionDetector->detectCollisions(
+                link,
+                [&](const CollisionPair& collisionPair){
+                    onHolderCollisionDetected(info, link, collisionPair);
+                });
+        }
+    }
     
     return true;
+}
+
+
+void KinematicSimulatorItem::Impl::onHolderCollisionDetected
+(HolderInfo* info, Link* link, const CollisionPair& collisionPair)
+{
+    Link* anotherLink = nullptr;
+    for(int i=0; i < 2; ++i){
+        if(collisionPair.object(i) == link){
+            anotherLink = static_cast<Link*>(collisionPair.object(1 - i));
+            break;
+        }
+    }
+    if(anotherLink){
+        info->collidingLinks.push_back(anotherLink);
+    }
 }
 
 
@@ -225,7 +290,7 @@ void KinematicSimulatorItem::Impl::activateHolder(HolderInfo* info)
     auto holder = info->holder;
     info->extraAttachments.clear();
     Isometry3 T_holder = holder->link()->T() * holder->T_local();
-    for(auto& body : findAttachableBodies(holder, T_holder)){
+    for(auto& body : findAttachableBodies(info, T_holder)){
         auto rootLink = body->rootLink();
         AttachmentDevice* attachment = nullptr;
         for(auto& device : body->devices<AttachmentDevice>()){
@@ -243,20 +308,21 @@ void KinematicSimulatorItem::Impl::activateHolder(HolderInfo* info)
         }
     }
     if(!info->isActive){
-        activeHolders.push_back(info);
+        activeHolderInfos.push_back(info);
     }
 }
 
 
-vector<Body*> KinematicSimulatorItem::Impl::findAttachableBodies(HolderDevice* holder, const Isometry3& T_holder)
+vector<Body*> KinematicSimulatorItem::Impl::findAttachableBodies(HolderInfo* info, const Isometry3& T_holder)
 {
+    auto holder = info->holder;
     vector<Body*> bodies;
     switch(holder->holdCondition()){
+    case HolderDevice::Collision:
+        findAttachableBodiesByCollision(info, bodies);
+        break;
     case HolderDevice::Distance:
         findAttachableBodiesByDistance(holder, T_holder, bodies);
-        break;
-    case HolderDevice::Collision:
-        findAttachableBodiesByCollision(holder, T_holder, bodies);
         break;
     case HolderDevice::Name:
         findAttachableBodiesByName(holder, T_holder, bodies);
@@ -265,6 +331,19 @@ vector<Body*> KinematicSimulatorItem::Impl::findAttachableBodies(HolderDevice* h
         break;
     }
     return bodies;
+}
+
+
+void KinematicSimulatorItem::Impl::findAttachableBodiesByCollision
+(HolderInfo* info, vector<Body*>& out_bodies)
+{
+    for(auto& link : info->collidingLinks){
+        auto body = link->body();
+        auto rootLink = body->rootLink();
+        if(link == rootLink && rootLink->isFreeJoint()){
+            out_bodies.push_back(body);
+        }
+    }
 }
 
 
@@ -284,13 +363,6 @@ void KinematicSimulatorItem::Impl::findAttachableBodiesByDistance
             }
         }
     }
-}
-
-
-void KinematicSimulatorItem::Impl::findAttachableBodiesByCollision
-(HolderDevice* /* holder */, const Isometry3& /* T_holder */, vector<Body*>& /* out_bodies */)
-{
-
 }
 
 
@@ -321,9 +393,9 @@ void KinematicSimulatorItem::Impl::deactivateHolder(HolderInfo* info)
     info->extraAttachments.clear();
 
     if(info->isActive){
-        activeHolders.erase(
-            std::find(activeHolders.begin(), activeHolders.end(), info),
-            activeHolders.end());
+        activeHolderInfos.erase(
+            std::find(activeHolderInfos.begin(), activeHolderInfos.end(), info),
+            activeHolderInfos.end());
         info->isActive = false;
     }
 }
@@ -353,8 +425,6 @@ bool KinematicSimulatorItem::restore(const Archive& archive)
 }
 
 
-namespace {
-
 KinematicSimBody::KinematicSimBody(Body* body)
     : SimulationBody(body)
 {
@@ -365,6 +435,4 @@ KinematicSimBody::KinematicSimBody(Body* body)
 bool KinematicSimBody::initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem)
 {
     return SimulationBody::initialize(simulatorItem, bodyItem);
-}
-
 }
