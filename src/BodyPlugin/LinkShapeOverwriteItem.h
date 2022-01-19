@@ -4,6 +4,7 @@
 #include "BodyElementOverwriteItem.h"
 #include <cnoid/LocatableItem>
 #include <cnoid/RenderableItem>
+#include <cnoid/SceneGraph>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -21,19 +22,20 @@ public:
     LinkShapeOverwriteItem(const LinkShapeOverwriteItem& org);
     virtual ~LinkShapeOverwriteItem();
 
-    /**
-       \note Currently the following function works correctly when
-       the BodyOverwriteAddon::checkIfSingleShapeBody function returns true.
-    */
     bool overwriteLinkShape(BodyItem* bodyItem, Link* link);
     
     Link* link();
 
-    SgShape* shapeNode();
-    void setShapeNode(SgShape* shape);
+    std::vector<SgNodePath> shapePaths();
 
     Isometry3 shapeOffset() const;
     void setShapeOffset(const Isometry3& T);
+
+    /*
+      The following shape node functions are old and handle the first SgShape node in the shapePaths.
+    */
+    SgShape* shapeNode();
+    void setShapeNode(SgShape* shape);
 
     void cancelOverwriting();
 

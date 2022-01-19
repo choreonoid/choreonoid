@@ -3,7 +3,6 @@
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
-#include <cnoid/SceneGraph>
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneNodeExtractor>
 #include <cnoid/StdSceneReader>
@@ -45,10 +44,10 @@ class LinkShapeOverwriteItem::Impl
 {
 public:
     LinkShapeOverwriteItem* self;
-    Link* link;
+    LinkPtr link;
     SgPosTransformPtr offsetTransform;
     Signal<void()> sigOffsetChanged;
-    SgShapePtr shapeNode;
+    vector<SgNodePath> shapeNodePaths;
     SgGroupPtr orgLinkShape;
     ref_ptr<LinkShapeLocation> linkShapeLocation;
     PositionDraggerPtr originMarker;
@@ -57,9 +56,12 @@ public:
     Impl(LinkShapeOverwriteItem* self);
     Impl(LinkShapeOverwriteItem* self, const Impl& org);
     void clear();
-    bool overwriteLinkShape(BodyItem* bodyItem, Link* link, SgNode* newShape, SgGroup* orgLinkShapeForDuplicated);
-    void extractShapeNodes(SgNodePath& nodePath);
+    bool overwriteLinkShape(BodyItem* bodyItem, Link* link, SgNode* newShape, SgGroup* orgLinkShapeOfDuplicationOrgItem);
+    void extractShapeNodeSet(vector<SgNodePath>& nodePaths);
+    void extractOffsetTransform(SgNode* node);
+    void setShapeNode(SgShape* shapeNode);
     void updateLinkOriginMarker();
+    bool store(Archive& archive);
 };
 
 }
@@ -82,8 +84,7 @@ LinkShapeOverwriteItem::LinkShapeOverwriteItem()
 LinkShapeOverwriteItem::Impl::Impl(LinkShapeOverwriteItem* self)
     : self(self)
 {
-    offsetTransform = new SgPosTransform;
-    link = nullptr;
+
 }
 
 
@@ -139,12 +140,16 @@ bool LinkShapeOverwriteItem::overwriteLinkShape(BodyItem* bodyItem, Link* link)
 }
 
 
-//! \Note The return value of BodyOverwriteAddon::checkIfSingleShapeBody must be true
+/**
+   \note If the return value of BodyOverwriteAddon::checkIfSingleShapeBody is false,
+   only the offset position can be modified, and accessing and editing the shape nodes are not available.
+   \todo Extract multiple SgShape nodes and make the shapePaths function available.
+*/
 bool LinkShapeOverwriteItem::Impl::overwriteLinkShape
-(BodyItem* bodyItem, Link* link, SgNode* newShape, SgGroup* orgLinkShapeForDuplicated)
+(BodyItem* bodyItem, Link* link, SgNode* newShape, SgGroup* orgLinkShapeOfDuplicationOrgItem)
 {
     if(self->bodyItem()){
-        return false; // This item has been overwriting
+        return false; // This item has been overwriting a body item
     }
     auto bodyOverwrite = bodyItem->getAddon<BodyOverwriteAddon>();
     if(!bodyOverwrite->registerLinkShapeOverwriteItem(link, self)){
@@ -158,8 +163,8 @@ bool LinkShapeOverwriteItem::Impl::overwriteLinkShape
         self->setName(format(_("Shape ({0})"), link->name()));
     }
 
-    if(orgLinkShapeForDuplicated){
-        orgLinkShape = orgLinkShapeForDuplicated;
+    if(orgLinkShapeOfDuplicationOrgItem){
+        orgLinkShape = orgLinkShapeOfDuplicationOrgItem;
     } else {
         if(!orgLinkShape){
             orgLinkShape = new SgGroup;
@@ -169,46 +174,50 @@ bool LinkShapeOverwriteItem::Impl::overwriteLinkShape
         link->shape()->copyChildrenTo(orgLinkShape);
     }
     
+    offsetTransform.reset();
+    shapeNodePaths.clear();
+
     SceneNodeExtractor nodeExtractor;
-    SgNodePath newNodePath;
+
     if(newShape){
-        newNodePath = nodeExtractor.extractNode<SgShape>(newShape, true);
+        shapeNodePaths = nodeExtractor.extractNodes<SgShape>(newShape, true);
+        extractOffsetTransform(newShape);
     }
 
+    /*
+      The following code is temporary and cloning the shape nodes should not be performed.
+      Instead of it, the code to overwrite a node must create a new node instance and replace
+      the existing node with it.
+    */
     CloneMap cloneMap;
-    SgNodePath existingNodePath;
-    if(newNodePath.empty()){
-        // Clone the original scene nodes to avoid modifying them
-        existingNodePath = nodeExtractor.extractNode<SgShape>(cloneMap.getClone(link->shape()), false);
-    } else {
-        existingNodePath = nodeExtractor.extractNode<SgShape>(link->shape(), false);
-    }
+    SgNodePtr shapeClone = cloneMap.getClone(link->shape());
+    
+    vector<SgNodePath> existingShapeNodePaths = nodeExtractor.extractNodes<SgShape>(shapeClone, false);
 
-    if(existingNodePath.empty()){
-        if(newNodePath.empty()){
-            offsetTransform->setPosition(Isometry3::Identity());
-            shapeNode.reset();
-        } else {
-            extractShapeNodes(newNodePath);
+    if(existingShapeNodePaths.empty()){
+        if(!newShape){
+            offsetTransform = new SgPosTransform;
         }
     } else {
-        if(newNodePath.empty()){
-            extractShapeNodes(existingNodePath);
+        if(!newShape){
+            extractShapeNodeSet(existingShapeNodePaths);
         } else {
-            extractShapeNodes(newNodePath);
-            auto existingShapeNode = static_cast<SgShape*>(existingNodePath.back());
-            if(!shapeNode->mesh()){
-                shapeNode->setMesh(existingShapeNode->mesh());
-            }
-            if(!shapeNode->material()){
-                shapeNode->setMaterial(cloneMap.getClone(existingShapeNode->material()));
+            int n = std::min(shapeNodePaths.size(), existingShapeNodePaths.size());
+            for(int i=0; i < n; ++i){
+                auto shapeNode = static_cast<SgShape*>(shapeNodePaths[i].back());
+                auto existingShapeNode = static_cast<SgShape*>(existingShapeNodePaths[i].back());
+                if(!shapeNode->mesh()){
+                    shapeNode->setMesh(existingShapeNode->mesh());
+                }
+                if(!shapeNode->material()){
+                    shapeNode->setMaterial(existingShapeNode->material());
+                }
             }
         }
     }
 
     link->clearShapeNodes();
-    SgTmpUpdate update;
-    link->addShapeNode(offsetTransform, update);
+    link->addShapeNode(offsetTransform, true);
 
     bodyItemConnection =
         bodyItem->sigKinematicStateChanged().connect(
@@ -222,30 +231,37 @@ bool LinkShapeOverwriteItem::Impl::overwriteLinkShape
 }
 
 
-void LinkShapeOverwriteItem::Impl::extractShapeNodes(SgNodePath& nodePath)
+void LinkShapeOverwriteItem::Impl::extractShapeNodeSet(vector<SgNodePath>& nodePaths)
 {
-    shapeNode = static_cast<SgShape*>(nodePath.back());
-
-    int directPathTopIndex = nodePath.size() - 1;
-    offsetTransform.reset();
-    for(int i = nodePath.size() - 2; i >= 0; --i){
-        auto group = nodePath[i]->toGroupNode();
-        if(group->numChildren() >= 2){
-            break;
-        }
-        directPathTopIndex = i;
-        offsetTransform = dynamic_cast<SgPosTransform*>(group);
-    }
+    auto topNode = nodePaths.front().front();
+    
     if(!offsetTransform){
-        offsetTransform = new SgPosTransform;
-        SgNode* child = nodePath[directPathTopIndex];
-        if(directPathTopIndex > 0){
-            auto parent = nodePath[directPathTopIndex - 1]->toGroupNode();
-            parent->moveChildrenTo(offsetTransform);
-            parent->addChild(offsetTransform);
-        } else {
-            offsetTransform->addChild(child);
+        extractOffsetTransform(topNode);
+    }
+    
+    if(shapeNodePaths.empty()){
+        if(!nodePaths.empty()){
+            if(topNode != offsetTransform){
+                for(auto& path : nodePaths){
+                    if(path.size() >= 2){
+                        offsetTransform->addChild(path[1]);
+                        path[0] = offsetTransform;
+                    }
+                }
+            }
+            shapeNodePaths = nodePaths;
         }
+    }
+}
+
+
+void LinkShapeOverwriteItem::Impl::extractOffsetTransform(SgNode* node)
+{
+    if(auto transformNode = dynamic_cast<SgPosTransform*>(node)){
+        offsetTransform = transformNode;
+    } else {
+        offsetTransform = new SgPosTransform;
+        offsetTransform->addChild(node);
     }
 }
 
@@ -256,34 +272,63 @@ Link* LinkShapeOverwriteItem::link()
 }
 
 
+std::vector<SgNodePath> LinkShapeOverwriteItem::shapePaths()
+{
+    return impl->shapeNodePaths;
+}
+
+
 SgShape* LinkShapeOverwriteItem::shapeNode()
 {
-    return impl->shapeNode;
+    if(!impl->shapeNodePaths.empty()){
+        return static_cast<SgShape*>(impl->shapeNodePaths[0].back());
+    }
+    return nullptr;
 }
 
 
 void LinkShapeOverwriteItem::setShapeNode(SgShape* shapeNode)
 {
-    if(impl->shapeNode){
-        impl->offsetTransform->removeChild(impl->shapeNode);
+    impl->setShapeNode(shapeNode);
+}
+
+
+void LinkShapeOverwriteItem::Impl::setShapeNode(SgShape* shapeNode)
+{
+    if(shapeNodePaths.empty()){
+        offsetTransform->addChild(shapeNode);
+        SgNodePath path = { offsetTransform, shapeNode };
+        shapeNodePaths.emplace_back(std::move(path));
+    } else {
+        auto& shapeNodePath0 = shapeNodePaths.front();
+        auto shapeNode0 = static_cast<SgShape*>(shapeNodePath0.back());
+        auto parentGroup = dynamic_cast<SgGroup*>(shapeNodePath0.front());
+        if(parentGroup){
+            parentGroup->removeChild(shapeNode0);
+            parentGroup->addChild(shapeNode);
+            shapeNodePath0.back() = shapeNode;
+        }
     }
-    impl->shapeNode = shapeNode;
-    impl->offsetTransform->addChild(shapeNode);
 }
 
 
 Isometry3 LinkShapeOverwriteItem::shapeOffset() const
 {
-    return impl->offsetTransform->T();
+    if(impl->offsetTransform){
+        return impl->offsetTransform->T();
+    }
+    return Isometry3::Identity();
 }
 
 
 void LinkShapeOverwriteItem::setShapeOffset(const Isometry3& T)
 {
-    impl->offsetTransform->setPosition(T);
-    impl->offsetTransform->notifyUpdate();
-    impl->sigOffsetChanged();
-    notifyUpdate();
+    if(impl->offsetTransform){
+        impl->offsetTransform->setPosition(T);
+        impl->offsetTransform->notifyUpdate();
+        impl->sigOffsetChanged();
+        notifyUpdate();
+    }
 }
 
 
@@ -399,33 +444,24 @@ void LinkShapeOverwriteItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool LinkShapeOverwriteItem::store(Archive& archive)
 {
-    if(impl->link){
-        if(!impl->link->isRoot()){
-            archive.write("link", impl->link->name());
+    return impl->store(archive);
+}
+
+
+bool LinkShapeOverwriteItem::Impl::store(Archive& archive)
+{
+    if(link && offsetTransform){
+        if(!link->isRoot()){
+            archive.write("link", link->name());
         }
         StdSceneWriter sceneWriter;
         sceneWriter.setFilePathVariableProcessor(archive.filePathVariableProcessor());
+        sceneWriter.setExtModelFileMode(StdSceneWriter::EmbedModels);
         // Temporary configuration. The mesh outout should be enabled if it is explicitly specified.
         sceneWriter.setMeshEnabled(false);
 
-        string uri, absoluteUri;
-        auto mesh = impl->shapeNode->mesh();
-        if(mesh){
-            if(mesh->uri() == bodyItem()->filePath()){
-                uri = mesh->uri();
-                absoluteUri = mesh->absoluteUri();
-                // The uri of the mesh is temporarily cleared to omit the description of the mesh node
-                // so that the redundant mesh loading can be avoided in restoring the overwriting.
-                mesh->clearUri();
-            }
-        }
-        
-        if(auto sceneArchive = sceneWriter.writeScene(impl->offsetTransform)){
+        if(auto sceneArchive = sceneWriter.writeScene(offsetTransform)){
             archive.insert("overwrite_shape", sceneArchive);
-        }
-        
-        if(!uri.empty()){
-            mesh->setUri(uri, absoluteUri);
         }
     }
     
