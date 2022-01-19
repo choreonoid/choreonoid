@@ -9,14 +9,17 @@ namespace cnoid {
 class CNOID_EXPORT MprPositionListView : public View
 {
 public:
+    enum BodySyncMode { NoBodySync, DirectBodySync, TwoStageBodySync };
+    
+    // For the application customization
+    static void setDefaultBodySyncMode(BodySyncMode mode);
+    
     static void initializeClass(ExtensionManager* ext);
 
     MprPositionListView();
     virtual ~MprPositionListView();
 
-    enum BodySyncMode { NoBodySync, DirectBodySync, TwoStageBodySync };
     void setBodySyncMode(BodySyncMode mode);
-    static void setDefaultBodySyncMode(BodySyncMode mode);
 
     class Impl;
     

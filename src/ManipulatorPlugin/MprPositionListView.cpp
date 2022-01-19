@@ -158,7 +158,7 @@ void PositionListModel::setProgramItem(MprProgramItemBase* programItem)
             positionList->sigPositionUpdated().connect(
                 [&](int index, int flags){ onPositionUpdated(index, flags); }));
     }
-            
+
     endResetModel();
 }
 
@@ -189,14 +189,7 @@ MprPosition* PositionListModel::positionAt(const QModelIndex& index) const
     
 int PositionListModel::rowCount(const QModelIndex& parent) const
 {
-    int n = 0;
-    if(!parent.isValid()){
-        n = numPositions();
-    }
-    if(n == 0){ // to show an empty row
-        n = 1;
-    }
-    return n;
+    return parent.isValid() ? 0 : numPositions();
 }
 
 
@@ -439,11 +432,6 @@ void PositionListModel::removePositions(QModelIndexList selected)
 
 void PositionListModel::onPositionAdded(int positionIndex)
 {
-    if(numPositions() == 0){
-        // Remove the empty row first
-        beginRemoveRows(QModelIndex(), 0, 0);
-        endRemoveRows();
-    }
     beginInsertRows(QModelIndex(), positionIndex, positionIndex);
     endInsertRows();
 
@@ -464,11 +452,7 @@ void PositionListModel::onPositionRemoved(int positionIndex)
 {
     beginRemoveRows(QModelIndex(), positionIndex, positionIndex);
     endRemoveRows();
-    if(numPositions() == 0){
-        // This is necessary to show the empty row
-        beginResetModel();
-        endResetModel();
-    }
+
 #ifdef Q_OS_WIN32
     view->resizeColumnToContents(IdColumn);
     view->resizeColumnToContents(PositionColumn);
@@ -566,6 +550,12 @@ QSize CheckItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QMod
     return size;
 }
 
+}
+
+
+void MprPositionListView::setDefaultBodySyncMode(BodySyncMode mode)
+{
+    defaultBodySyncMode = mode;
 }
 
 
@@ -771,9 +761,8 @@ void MprPositionListView::Impl::mousePressEvent(QMouseEvent* event)
     QTableView::mousePressEvent(event);
 
     if(event->button() == Qt::RightButton){
-        int row = rowAt(event->pos().y());
-        if(row >= 0){
-            showContextMenu(row, event->globalPos());
+        if(positionList){
+            showContextMenu(rowAt(event->pos().y()), event->globalPos());
         }
     }
 }
@@ -784,10 +773,12 @@ void MprPositionListView::Impl::showContextMenu(int row, QPoint globalPos)
     contextMenuManager.setNewPopupMenu(this);
 
     contextMenuManager.addItem(_("Add"))
-        ->sigTriggered().connect([=](){ addPosition(row, false); });
+        ->sigTriggered().connect([=](){ addPosition(row >= 0 ? row : 0, false); });
 
-    contextMenuManager.addItem(_("Remove"))
-        ->sigTriggered().connect([=](){ removeSelectedPositions(); });
+    if(row >= 0){
+        contextMenuManager.addItem(_("Remove"))
+            ->sigTriggered().connect([=](){ removeSelectedPositions(); });
+    }
     
     contextMenuManager.popupMenu()->popup(globalPos);
 }
@@ -821,12 +812,6 @@ void MprPositionListView::Impl::setBodySyncMode(BodySyncMode mode)
             programItem->clearSuperimposition();
         }
     }
-}
-
-
-void MprPositionListView::setDefaultBodySyncMode(BodySyncMode mode)
-{
-    defaultBodySyncMode = mode;
 }
 
 
