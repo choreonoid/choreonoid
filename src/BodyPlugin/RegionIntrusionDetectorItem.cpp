@@ -39,7 +39,6 @@ class RegionIntrusionDetectorItem::Impl
 {
 public:
     RegionIntrusionDetectorItem* self;
-    unique_ptr<AISTCollisionDetector> collisionDetector;
     unique_ptr<BodyCollisionDetector> bodyCollisionDetector;
     DigitalIoDevicePtr ioDevice;
     int ioSignalNumber;
@@ -172,10 +171,7 @@ int RegionIntrusionDetectorItem::digitalIoSignalNumber() const
 
 void RegionIntrusionDetectorItem::Impl::initializeCollisionDetector()
 {
-    collisionDetector.reset(new AISTCollisionDetector);
-    bodyCollisionDetector.reset(new BodyCollisionDetector);
-    bodyCollisionDetector->setCollisionDetector(collisionDetector.get());
-
+    bodyCollisionDetector = make_unique<BodyCollisionDetector>(new AISTCollisionDetector);
     regionBody = new Body;
     regionLink = regionBody->rootLink();
     regionLink->setJointType(Link::FixedJoint);
@@ -194,7 +190,7 @@ bool RegionIntrusionDetectorItem::initialize(ControllerIO* io)
 
 bool RegionIntrusionDetectorItem::Impl::initialize(ControllerIO* io)
 {
-    if(!collisionDetector){
+    if(!bodyCollisionDetector){
         initializeCollisionDetector();
     }
     

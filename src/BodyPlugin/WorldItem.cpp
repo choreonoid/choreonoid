@@ -170,7 +170,7 @@ void WorldItem::Impl::init()
 {
     kinematicsBar = KinematicsBar::instance();
     bodyCollisionDetector.setCollisionDetector(CollisionDetector::create(collisionDetectorType.selectedIndex()));
-    bodyCollisionDetector.enableGeometryHandleMap(true);
+    bodyCollisionDetector.setGeometryHandleMapEnabled(true);
     collisions = std::make_shared<vector<CollisionLinkPairPtr>>();
     sceneCollision = new SceneCollision(collisions);
     sceneCollision->setName("Collisions");

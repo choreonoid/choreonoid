@@ -11,8 +11,6 @@
 
 namespace cnoid {
 
-class AISTCollisionDetectorImpl;
-
 class CNOID_EXPORT AISTCollisionDetector : public CollisionDetector, public CollisionDetectorDistanceAPI
 {
 public:
@@ -30,6 +28,8 @@ public:
     virtual void updatePosition(GeometryHandle geometry, const Isometry3& position) override;
     virtual void updatePositions(std::function<void(Referenced* object, Isometry3*& out_Position)> positionQuery) override;
     virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback) override;
+    virtual void detectCollisions(
+        GeometryHandle geometry, std::function<void(const CollisionPair& collisionPair)> callback) override;
 
     // CollisionDetectorDistanceAPI
     virtual double detectDistance(GeometryHandle geometry1, GeometryHandle geometry2, Vector3& out_point1, Vector3& out_point2) override;
@@ -38,7 +38,8 @@ public:
     void setNumThreads(int n);
 
 private:
-    AISTCollisionDetectorImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<AISTCollisionDetector> AISTCollisionDetectorPtr;

@@ -127,7 +127,7 @@ bool copyCollisionPairCollisions(ColdetModelPairEx* srcPair, CollisionPair& dest
 
 namespace cnoid {
 
-class AISTCollisionDetectorImpl
+class AISTCollisionDetector::Impl
 {
 public:
     vector<ColdetModelExPtr> models;
@@ -136,14 +136,16 @@ public:
     set<IdPair<GeometryHandle>> ignoredPairs;
     MeshExtractor* meshExtractor;
     bool isReady;
+    CollisionPair collisionPair;
         
-    AISTCollisionDetectorImpl();
-    ~AISTCollisionDetectorImpl();
+    Impl();
+    ~Impl();
     stdx::optional<GeometryHandle> addGeometry(SgNode* geometry);
     void addMesh(ColdetModelEx* model);
     void makeReady();
-    void detectCollisions(std::function<void(const CollisionPair&)> callback);
-    void detectCollisionsInParallel(std::function<void(const CollisionPair&)> callback);
+    void detectCollisions(GeometryHandle geometry, const std::function<void(const CollisionPair&)>& callback);
+    void detectCollisions(const std::function<void(const CollisionPair&)>& callback);
+    void detectCollisionsInParallel(const std::function<void(const CollisionPair&)>& callback);
 
     // for multithread version
     int numThreads;
@@ -162,11 +164,11 @@ public:
 
 AISTCollisionDetector::AISTCollisionDetector()
 {
-    impl = new AISTCollisionDetectorImpl();
+    impl = new Impl;
 }
 
 
-AISTCollisionDetectorImpl::AISTCollisionDetectorImpl()
+AISTCollisionDetector::Impl::Impl()
 {
     isReady = false;
     maxNumThreads = 0;
@@ -180,7 +182,7 @@ AISTCollisionDetectorImpl::AISTCollisionDetectorImpl()
 }
 
 
-AISTCollisionDetectorImpl::~AISTCollisionDetectorImpl()
+AISTCollisionDetector::Impl::~Impl()
 {
     delete meshExtractor;
 
@@ -232,7 +234,7 @@ stdx::optional<GeometryHandle> AISTCollisionDetector::addGeometry(SgNode* geomet
 }
 
 
-stdx::optional<GeometryHandle> AISTCollisionDetectorImpl::addGeometry(SgNode* geometry)
+stdx::optional<GeometryHandle> AISTCollisionDetector::Impl::addGeometry(SgNode* geometry)
 {
     if(geometry){
         ColdetModelExPtr model = new ColdetModelEx;
@@ -250,7 +252,7 @@ stdx::optional<GeometryHandle> AISTCollisionDetectorImpl::addGeometry(SgNode* ge
 }
 
 
-void AISTCollisionDetectorImpl::addMesh(ColdetModelEx* model)
+void AISTCollisionDetector::Impl::addMesh(ColdetModelEx* model)
 {
     SgMesh* mesh = meshExtractor->currentMesh();
     const Affine3& T = meshExtractor->currentTransform();
@@ -313,7 +315,7 @@ bool AISTCollisionDetector::makeReady()
 }
 
 
-void AISTCollisionDetectorImpl::makeReady()
+void AISTCollisionDetector::Impl::makeReady()
 {
     modelPairs.clear();
     const int n = models.size();
@@ -386,6 +388,38 @@ void AISTCollisionDetector::updatePositions
 }
 
 
+void AISTCollisionDetector::detectCollisions(GeometryHandle geometry, std::function<void(const CollisionPair&)> callback)
+{
+    if(!impl->isReady){
+        impl->makeReady();
+    }
+    impl->detectCollisions(geometry, callback);
+}
+
+
+void AISTCollisionDetector::Impl::detectCollisions
+(GeometryHandle geometry, const std::function<void(const CollisionPair&)>& callback)
+{
+    auto& collisions = collisionPair.collisions();
+    
+    for(ColdetModelPairEx* modelPair : modelPairs){ // Do not use auto&
+        collisions.clear();
+        do {
+            if(getHandle(modelPair->model(0)) == geometry || getHandle(modelPair->model(1)) == geometry){
+                if(!modelPair->detectCollisions().empty()){
+                    copyCollisionPairCollisions(modelPair, collisionPair);
+                }
+            }
+            modelPair = modelPair->sibling;  // Elements in models are overridden here if auto& is used
+        } while(modelPair);
+
+        if(!collisions.empty()){
+            callback(collisionPair);
+        }
+    }
+}
+
+
 void AISTCollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
 {
     if(!impl->isReady){
@@ -403,9 +437,8 @@ void AISTCollisionDetector::detectCollisions(std::function<void(const CollisionP
    \todo Remeber which geometry positions are updated after the last collision detection
    and do the actual collision detection only for the updated geometry pairs.
 */
-void AISTCollisionDetectorImpl::detectCollisions(std::function<void(const CollisionPair&)> callback)
+void AISTCollisionDetector::Impl::detectCollisions(const std::function<void(const CollisionPair&)>& callback)
 {
-    CollisionPair collisionPair;
     auto& collisions = collisionPair.collisions();
     
     for(ColdetModelPairEx* modelPair : modelPairs){ // Do not use auto&
@@ -424,7 +457,7 @@ void AISTCollisionDetectorImpl::detectCollisions(std::function<void(const Collis
 }
 
 
-void AISTCollisionDetectorImpl::detectCollisionsInParallel(std::function<void(const CollisionPair&)> callback)
+void AISTCollisionDetector::Impl::detectCollisionsInParallel(const std::function<void(const CollisionPair&)>& callback)
 {
     if(ENABLE_SHUFFLE){
         std::shuffle(shuffledPairIndices.begin(), shuffledPairIndices.end(), randomEngine);
@@ -454,7 +487,7 @@ void AISTCollisionDetectorImpl::detectCollisionsInParallel(std::function<void(co
 }
 
 
-void AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs
+void AISTCollisionDetector::Impl::extractCollisionsOfAssignedPairs
 (int pairIndexBegin, int pairIndexEnd, vector<CollisionPair>& collisionPairs)
 {
     collisionPairs.clear();
@@ -482,7 +515,7 @@ void AISTCollisionDetectorImpl::extractCollisionsOfAssignedPairs
     }
 }
 
-void AISTCollisionDetectorImpl::dispatchCollisionsInCollisionPairArrays
+void AISTCollisionDetector::Impl::dispatchCollisionsInCollisionPairArrays
 (std::function<void(const CollisionPair&)> callback)
 {
     for(int i=0; i < numThreads; ++i){

@@ -55,6 +55,8 @@ public:
         std::function<void(Referenced* object, Isometry3*& out_position)> positionQuery) = 0;
 
     virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback) = 0;
+    virtual void detectCollisions(
+        GeometryHandle geometry, std::function<void(const CollisionPair& collisionPair)> callback);
 };
 
 typedef ref_ptr<CollisionDetector> CollisionDetectorPtr;

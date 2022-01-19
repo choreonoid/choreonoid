@@ -66,6 +66,13 @@ BodyCollisionDetector::Impl::Impl()
 }
 
 
+BodyCollisionDetector::BodyCollisionDetector(CollisionDetector* collisionDetector)
+{
+    impl = new Impl;
+    impl->collisionDetector = collisionDetector;
+}
+
+
 BodyCollisionDetector::~BodyCollisionDetector()
 {
     delete impl;
@@ -85,12 +92,24 @@ CollisionDetector* BodyCollisionDetector::collisionDetector()
 }
 
 
-void BodyCollisionDetector::enableGeometryHandleMap(bool on)
+bool BodyCollisionDetector::isGeometryHandleMapEnabled() const
+{
+    return impl->isGeometryHandleMapEnabled;
+}
+
+
+void BodyCollisionDetector::setGeometryHandleMapEnabled(bool on)
 {
     if(!on){
         impl->linkToGeometryHandleMap.clear();
     }
     impl->isGeometryHandleMapEnabled = on;
+}
+
+
+void BodyCollisionDetector::enableGeometryHandleMap(bool on)
+{
+    setGeometryHandleMapEnabled(on);
 }
 
 
@@ -370,6 +389,12 @@ bool BodyCollisionDetector::Impl::addLinkRecursively(Link* link, bool isParentSt
 }
 
 
+bool BodyCollisionDetector::hasBodies() const
+{
+    return impl->collisionDetector->numGeometries() > 0;
+}
+
+
 bool BodyCollisionDetector::makeReady()
 {
     return impl->collisionDetector->makeReady();
@@ -406,4 +431,12 @@ void BodyCollisionDetector::updatePositions
 void BodyCollisionDetector::detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback)
 {
     impl->collisionDetector->detectCollisions(callback);
+}
+
+
+void BodyCollisionDetector::detectCollisions(Link* link, std::function<void(const CollisionPair& collisionPair)> callback)
+{
+    if(auto handle = findGeometryHandle(link)){
+        impl->collisionDetector->detectCollisions(*handle, callback);
+    }
 }

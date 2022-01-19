@@ -18,6 +18,7 @@ class CNOID_EXPORT BodyCollisionDetector
 {
 public:
     BodyCollisionDetector();
+    BodyCollisionDetector(CollisionDetector* collisionDetector);
     virtual ~BodyCollisionDetector();
 
     void setCollisionDetector(CollisionDetector* collisionDetector);
@@ -25,18 +26,26 @@ public:
 
     void clearBodies();
 
-    void enableGeometryHandleMap(bool on);
+    bool isGeometryHandleMapEnabled() const;
+    void setGeometryHandleMapEnabled(bool on);
     stdx::optional<CollisionDetector::GeometryHandle> findGeometryHandle(Link* link);
 
     void addBody(Body* body, bool isSelfCollisionDetectionEnabled);
     void addBody(Body* body, bool isSelfCollisionDetectionEnabled,
                  std::function<Referenced*(Link* link, CollisionDetector::GeometryHandle geometry)> getObjectAssociatedWithLink);
+    bool hasBodies() const;
     bool makeReady();
 
     void updatePositions();
     void updatePositions(std::function<void(Referenced* object, Isometry3*& out_position)> positionQuery);
 
     void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback);
+
+    //! \note Geometry handle map must be enabled to use this function
+    void detectCollisions(Link* link, std::function<void(const CollisionPair& collisionPair)> callback);
+
+    [[deprecated("Use setGeometryHandleMapEnabled.")]]
+    void enableGeometryHandleMap(bool on);
 
 private:
     class Impl;

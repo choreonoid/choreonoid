@@ -83,6 +83,9 @@ public:
         std::function<void(Referenced* object, Isometry3*& out_position)> positionQuery) override { }
 
     virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> /* callback */) override { }
+
+    virtual void detectCollisions(
+        GeometryHandle geometry, std::function<void(const CollisionPair& collisionPair)> callback) override { }
 };
 
 CollisionDetector* factory()
@@ -152,3 +155,12 @@ CollisionDetector::~CollisionDetector()
 {
 
 }
+
+
+// This function should be a pure virtual function
+void CollisionDetector::detectCollisions
+(GeometryHandle /* geometry */, std::function<void(const CollisionPair& collisionPair)> /* callback */)
+{
+
+}
+   
