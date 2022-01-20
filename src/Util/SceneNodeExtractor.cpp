@@ -4,46 +4,61 @@ using namespace std;
 using namespace cnoid;
 
 
-void SceneNodeExtractor::extractNode_(SgNode* root, std::function<bool(SgNode* node)> pred, bool includeRoot)
-{
-    nodePath_.clear();
-
-    if(includeRoot){
-        nodePath_.push_back(root);
-    }
-    extractNodesIter(root, pred, false);
-}
-
-
-void SceneNodeExtractor::extractNodes_(SgNode* root, std::function<bool(SgNode* node)> pred, bool includeRoot)
-{
-    nodePath_.clear();
-    nodePathList_.clear();
-
-    if(includeRoot){
-        nodePath_.push_back(root);
-    }
-    extractNodesIter(root, pred, true);
-}
-
-
-bool SceneNodeExtractor::extractNodesIter
-(SgNode* node, const std::function<bool(SgNode* node)>& pred, bool extractMultiplePaths)
+static bool extractNodeIter
+(SgNode* node, const std::function<bool(SgNode* node)>& pred, SgNodePath& nodePath)
 {
     if(pred(node)){
-        if(!extractMultiplePaths){
-            return true;
-        }
-        nodePathList_.push_back(nodePath_);
+        return true;
 
-    } else if(auto group = dynamic_cast<SgGroup*>(node)){
+    } else if(auto group = node->toGroupNode()){
         for(auto& child : *group){
-            nodePath_.push_back(child);
-            if(extractNodesIter(child, pred, extractMultiplePaths)){
+            nodePath.push_back(node);
+            if(extractNodeIter(child, pred, nodePath)){
                 return true;
             }
-            nodePath_.pop_back();
+            nodePath.pop_back();
         }
     }
+
     return false;
+}
+
+
+void SceneNodeExtractor::extractNode_
+(SgNode* root, std::function<bool(SgNode* node)> pred, bool includeRoot, SgNodePath& nodePath)
+{
+    if(includeRoot){
+        nodePath.push_back(root);
+    }
+    extractNodeIter(root, pred, nodePath);
+}
+
+
+static void extractNodesIter
+(SgNode* node, const std::function<bool(SgNode* node)>& pred, SgNodePath& nodePath, std::vector<SgNodePath>& nodePaths)
+{
+    if(pred(node)){
+        nodePaths.push_back(nodePath);
+
+    } else if(auto group = node->toGroupNode()){
+        for(auto& child : *group){
+            nodePath.push_back(child);
+            extractNodesIter(child, pred, nodePath, nodePaths);
+            nodePath.pop_back();
+        }
+    }
+}
+
+
+void SceneNodeExtractor::extractNodes_
+(SgNode* root, std::function<bool(SgNode* node)> pred, bool includeRoot, std::vector<SgNodePath>& nodePaths)
+{
+    SgNodePath nodePath;
+    nodePath.reserve(10);
+
+    if(includeRoot){
+        nodePath.push_back(root);
+    }
+
+    extractNodesIter(root, pred, nodePath, nodePaths);
 }

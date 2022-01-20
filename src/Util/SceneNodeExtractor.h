@@ -12,6 +12,8 @@ class CNOID_EXPORT SceneNodeExtractor
 public:
     template<class NodeType>
     SgNodePath extractNode(SgNode* root, bool includeRoot = true){
+        SgNodePath nodePath;
+        nodePath.reserve(20);
         extractNode_(
             root,
             [](SgNode* node){
@@ -20,12 +22,16 @@ public:
                 }
                 return false;
             },
-            includeRoot);
-        return std::move(nodePath_);
+            includeRoot,
+            nodePath
+            );
+        return nodePath;
     }
 
     template<class NodeType>
     std::vector<SgNodePath> extractNodes(SgNode* root, bool includeRoot = true){
+        std::vector<SgNodePath> nodePaths;
+        nodePaths.reserve(20);
         extractNodes_(
             root,
             [](SgNode* node){
@@ -34,17 +40,16 @@ public:
                 }
                 return false;
             },
-            includeRoot);
-        return std::move(nodePathList_);
+            includeRoot,
+            nodePaths);
+        return nodePaths;
     }
 
 private:
-    void extractNode_(SgNode* root, std::function<bool(SgNode* node)> pred, bool includeRoot);
-    void extractNodes_(SgNode* root, std::function<bool(SgNode* node)> pred, bool includeRoot);
-    bool extractNodesIter(SgNode* node, const std::function<bool(SgNode* node)>& pred, bool extractMultiplePaths);
-
-    SgNodePath nodePath_;
-    std::vector<SgNodePath> nodePathList_;
+    static void extractNode_(
+        SgNode* root, std::function<bool(SgNode* node)> pred, bool includeRoot, SgNodePath& nodePath);
+    static void extractNodes_(
+        SgNode* root, std::function<bool(SgNode* node)> pred, bool includeRoot, std::vector<SgNodePath>& nodePaths);
 };
 
 }
