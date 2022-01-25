@@ -236,18 +236,9 @@ views:
   - 
     id: 0
     plugin: Base
-    class: ItemTreeView
-    mounted: true
-    state: 
-      expanded: [ 1, 2, 3, 4, 5 ]
-  - 
-    id: 1
-    plugin: Base
     class: SceneView
     mounted: true
     state: 
-      shadowLights: 
-        - 0
       floorGrid: false
       cameras: 
         - 
@@ -256,3 +247,7 @@ views:
           eye: [ 2.88321, 1.53671, 1.09575 ]
           direction: [ -0.872341, -0.458202, -0.170504 ]
           up: [ -0.150948, -0.0792863, 0.985357 ]
+toolbars: 
+  "TimeBar": 
+    min_time: 0
+    max_time: 10

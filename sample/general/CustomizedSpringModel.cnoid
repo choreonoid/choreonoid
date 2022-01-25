@@ -19,6 +19,7 @@ items:
           name: "CustomizedSpringModel"
           plugin: Body
           class: BodyItem
+          is_checked: true
           data: 
             modelFile: "${SHARE}/model/misc/CustomizedSpringModel.body"
             currentBaseLink: "LOWER"
@@ -41,6 +42,7 @@ items:
           name: "Floor"
           plugin: Body
           class: BodyItem
+          is_checked: true
           data: 
             modelFile: "${SHARE}/model/misc/floor.body"
             currentBaseLink: "BASE"
@@ -116,50 +118,3 @@ items:
             Friction: 0.7
             ERP2: 0
             SplitImpulsePenetrationThreshold: -0.0001
-
-views: 
-  "Items": 
-    selected: [ 4 ]
-    checked: [ 2, 3 ]
-    expanded: [ 1, 2 ]
-  "Scene": 
-    mode: view
-    floorGird: true
-    collisions: true
-    shadow: false
-    floorGridSpan: 10
-    floorGridInterval: 0.5
-    hiPriorityRendering: false
-    camera: 
-      projection: perspetive
-      perspective: [ 40, 1.29272, 0.00362294, 7.3908 ]
-      ortho: [ -1, 1, -1, 1, -1, 1 ]
-      eye: [ -0.243298, 1.55507, 0.094242 ]
-      center: [ -0.0825026, 0.576457, 0.222547 ]
-      up: [ -0.0208027, 0.126607, 0.991735 ]
-  "Links": 
-    listingMode: "link list"
-    currentBodyItem: 2
-    bodyItems: 
-      - 
-        id: 2
-        selectedLinks: [ 0 ]
-  "Body / Link": 
-    showRotationMatrix: false
-  "Joint Sliders": 
-    showAllJoints: true
-    jointId: false
-    name: true
-    numColumns: 1
-    spinBox: true
-    slider: true
-    labelOnLeft: true
-    currentBodyItem: 2
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 10
-    frameRate: 500
-    playbackFrameRate: 100
-    currentTime: 0
-    speedScale: 1

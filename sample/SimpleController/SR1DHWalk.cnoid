@@ -20,6 +20,7 @@ items:
           name: "SR1DH"
           plugin: Body
           class: BodyItem
+          is_checked: true
           data: 
             modelFile: "${SHARE}/model/SR1/SR1DH.body"
             currentBaseLink: "WAIST"
@@ -289,22 +290,7 @@ items:
                 dynamicFriction: 0.8
                 Restitution: 0.1
                 jointLimitMode: false
-views: 
-  "Items": 
-    selected: [ 6 ]
-    checked: [ 1, 2 ]
-    expanded: [ 1, 2, 3, 5 ]
-  "Scene": 
-    camera: 
-      current: Perspective
-      eye: [ 2.38053012, 1.54674006, 1.10801005 ]
-      direction: [ -0.820639908, -0.553809941, -0.140870988 ]
-      up: [ -0.116768934, -0.0788013488, 0.990027964 ]
-      fieldOfView: 0.6978
-      near: 0.01
-      far: 10000
-      orthoHeight: 20
 toolbars: 
   "TimeBar": 
-    minTime: 0
-    maxTime: 15
+    min_time: 0
+    max_time: 15

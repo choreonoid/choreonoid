@@ -269,5 +269,5 @@ items:
                 jointLimitMode: false
 toolbars: 
   "TimeBar": 
-    minTime: 0
-    maxTime: 15
+    min_time: 0
+    max_time: 15

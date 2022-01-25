@@ -19,6 +19,7 @@ items:
           name: "RIC30"
           plugin: Body
           class: BodyItem
+          is_checked: true
           data: 
             modelFile: "${SHARE}/model/RIC30/RIC30.body"
             currentBaseLink: "L_ANKLE_R"
@@ -105,72 +106,40 @@ items:
             gravity: [ 0, 0, -9.80665 ]
             kinematicWalking: false
             2Dmode: false
-views: 
-  "Items": 
-    selected: [  ]
-    checked: [ 1, 2 ]
-    expanded: [ 1, 2, 3, 4 ]
-  "Scene": 
-    walkthrough: false
-    showCollisions: false
-    wireframe: false
-    defaultHeadLight: true
-    defaultHeadLightIntensity: 0.75
-    worldLight: true
-    worldLightIntensity: 0.5
-    worldLightAmbient: 0.3
-    additionalLights: true
-    floorGrid: true
-    floorGridSpan: 2
-    floorGridInterval: 0.05
-    normalVisualization: false
-    normalLength: 0.01
-    coordinateAxes: true
-    showFPS: false
-    camera: 
-      current: Perspective
-      eye: [ 0.492063, 0.150117, 0.159901 ]
-      direction: [ -0.951097, -0.298014, -0.0812513 ]
-      up: [ -0.0775343, -0.0242944, 0.996694 ]
+views:
+  -
+    id: 0
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state:
+      walkthrough: false
+      showCollisions: false
+      wireframe: false
+      defaultHeadLight: true
+      defaultHeadLightIntensity: 0.75
+      worldLight: true
+      worldLightIntensity: 0.5
+      worldLightAmbient: 0.3
+      additionalLights: true
+      floorGrid: true
+      floorGridSpan: 2
+      floorGridInterval: 0.05
+      normalVisualization: false
+      normalLength: 0.01
+      coordinateAxes: true
+      showFPS: false
+      camera:
+        current: Perspective
+        eye: [ 0.492063, 0.150117, 0.159901 ]
+        direction: [ -0.951097, -0.298014, -0.0812513 ]
+        up: [ -0.0775343, -0.0242944, 0.996694 ]
       fieldOfView: 0.6978
       near: 0.01
       far: 10000
       orthoHeight: 0.323817
-    backgroundColor: [ 0.1, 0.1, 0.3 ]
-    gridColor: [ 0.9, 0.9, 0.9, 1 ]
-  "Links": 
-    listingMode: "Link List"
-    currentBodyItem: 3
-    bodyItems: 
-      - 
-        id: 3
-        selectedLinks: [ 0 ]
-  "Body / Link": 
-    showRotationMatrix: false
-  "Joint Sliders": 
-    showAllJoints: true
-    jointId: true
-    name: true
-    numColumns: 1
-    spinBox: true
-    slider: true
-    labelOnLeft: true
-    currentBodyItem: 3
-  "Pose Roll": 
-    currentPoseSeqItem: 5
-    defaultTransitionTime: 0
-    updateAll: true
-    autoUpdate: false
-    timeSync: true
-    listingMode: "Part Tree"
-    bodyItems: 
-      - 
-        id: 3
-        expandedParts: [ "LEGS", "LOWER-BODY", "Whole Body" ]
-    timeLength: 10
-    showLipSync: false
-    gridInterval: 1
-
+      backgroundColor: [ 0.1, 0.1, 0.3 ]
+      gridColor: [ 0.9, 0.9, 0.9, 1 ]
 toolbars: 
   "TimeBar": 
     frameRate: 100

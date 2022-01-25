@@ -19,6 +19,7 @@ items:
           name: "SR1_2D"
           plugin: Body
           class: BodyItem
+          is_checked: true
           data: 
             modelFile: "${SHARE}/model/SR1/SR1-2D.body"
             currentBaseLink: "WAIST"
@@ -124,22 +125,7 @@ items:
             limitCorrectingVel: true
             maxCorrectingVel: 1.0e-3
             2Dmode: true
-views: 
-  "Items": 
-    selected: [ 5 ]
-    checked: [ 2 ]
-    expanded: [ 1, 2, 3 ]
-  "Scene": 
-    camera: 
-      current: Perspective
-      eye: [ 2.71159, 1.18265, 1.01329 ]
-      direction: [ -0.911844, -0.400276, -0.0912141 ]
-      up: [ -0.0835211, -0.0366637, 0.995831 ]
-      fieldOfView: 0.6978
-      near: 0.01
-      far: 10000
-      orthoHeight: 20
 toolbars: 
   "TimeBar": 
-    minTime: 0
-    maxTime: 15
+    min_time: 0
+    max_time: 15
