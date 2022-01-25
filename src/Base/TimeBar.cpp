@@ -187,7 +187,7 @@ TimeBar::Impl::Impl(TimeBar* self)
     self->frameRate_ = DEFAULT_FRAME_RATE;
     decimals = 2;
     minTime = 0.0;
-    maxTime = 30.0;
+    maxTime = 0.0;
     playbackFrameRate = DEFAULT_PLAYBACK_FRAMERATE;
     playbackSpeedRatio = 1.0;
     ongoingTime = 0.0;
@@ -238,6 +238,8 @@ TimeBar::Impl::Impl(TimeBar* self)
     auto configButton = self->addButton(QIcon(":/Base/icon/setup.svg"));
     configButton->setToolTip(_("Show the config dialog"));
     configButton->sigClicked().connect([&](){ configDialog->show(); });
+
+    setTimeRange(0.0, 30.0, false, true);
 }
 
 
@@ -424,7 +426,7 @@ bool TimeBar::Impl::setTimeRange(double newMinTime, double newMaxTime, bool isSp
 {
     bool updated = false;
     
-    if(newMinTime != minTime || newMaxTime != maxTime){
+    if((newMinTime != minTime || newMaxTime != maxTime) && newMinTime < newMaxTime){
         minTime = newMinTime;
         maxTime = newMaxTime;
         if(!isSpinBoxSignal){
@@ -461,7 +463,7 @@ bool TimeBar::Impl::setFrameRate(double rate, bool isSpinBoxSignal, bool doUpdat
 {
     bool updated = false;
     
-    if(rate != self->frameRate_ && rate > 0.0){
+    if((rate != self->frameRate_) && rate > 0.0){
         self->frameRate_ = rate;
         if(!isSpinBoxSignal){
             auto& spin = configDialog->frameRateSpin;
@@ -496,6 +498,11 @@ void TimeBar::Impl::updateTimeSpinSlider()
     timeSlider->setSingleStep(timeStep * r);
     timeSlider->blockSignals(false);
 
+    if(self->time_ < minTime){
+        self->time_ = minTime;
+    } else if(self->time_ > maxTime){
+        self->time_ = maxTime;
+    }
     setTime(self->time_, false);
 }
 
@@ -1013,13 +1020,17 @@ bool TimeBar::Impl::restoreState(const Archive& archive)
 {
     bool doUpdateTimeSpinSlider = false;
 
-    double minTime, maxTime;
-    archive.read({ "min_time", "minTime" }, minTime);
-    archive.read({ "max_time", "maxTime" }, maxTime);
-    doUpdateTimeSpinSlider = setTimeRange(minTime, maxTime, false, false);
-
-    doUpdateTimeSpinSlider = setFrameRate(
-        archive.get("frame_rate", self->frameRate_), false, false);
+    bool doUpdateTimeRange = false;
+    double newMinTime, newMaxTime;
+    doUpdateTimeRange = archive.read({ "min_time", "minTime" }, newMinTime);
+    doUpdateTimeRange |= archive.read({ "max_time", "maxTime" }, newMaxTime);
+    if(doUpdateTimeRange){
+        doUpdateTimeSpinSlider = setTimeRange(newMinTime, newMaxTime, false, false);
+    }
+    double newFrameRate;
+    if(archive.read("frame_rate", newFrameRate)){
+        doUpdateTimeSpinSlider = setFrameRate(newFrameRate, false, false);
+    }
         
     archive.read({ "current_time", "currentTime" }, self->time_);
 
