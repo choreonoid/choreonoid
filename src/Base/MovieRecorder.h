@@ -26,7 +26,8 @@ public:
     std::string targetViewName();
     void setTargetView(View* view, bool isExplicitlySpecified);
 
-    enum RecordingMode { OfflineMode, OnlineMode, DirectMode, NumRecordingModes };
+    enum RecordingMode { OfflineMode, OnlineMode, DirectMode };
+    static constexpr int NumRecordingModes = DirectMode + 1;
     static const char* recordingModeLabel(RecordingMode mode);
     static const char* translatedRecordingModeLabel(RecordingMode mode);
     RecordingMode recordingMode() const;
