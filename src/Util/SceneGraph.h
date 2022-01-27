@@ -166,6 +166,8 @@ public:
     template <class NodeType> static int findClassId() {
         return findClassId(typeid(NodeType));
     }
+
+    std::string className() const;
     
     SgNode* cloneNode() const {
         return static_cast<SgNode*>(this->clone());

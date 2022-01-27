@@ -116,9 +116,9 @@ namespace {
 struct NodeClassRegistration {
     NodeClassRegistration() {
         SceneNodeClassRegistry::instance()
-            .registerClass<SgCamera, SgPreprocessed>()
-            .registerClass<SgPerspectiveCamera, SgCamera>()
-            .registerClass<SgOrthographicCamera, SgCamera>();
+            .registerClass<SgCamera, SgPreprocessed>("SgCamera")
+            .registerClass<SgPerspectiveCamera, SgCamera>("SgPerspectiveCamera")
+            .registerClass<SgOrthographicCamera, SgCamera>("SgOrthographicCamera");
     }
 } registration;
 

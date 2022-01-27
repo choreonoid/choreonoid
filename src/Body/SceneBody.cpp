@@ -26,7 +26,6 @@ public:
     bool hasClone;
     
     LinkShapeGroup(Link* link)
-        : SgGroup(findClassId<LinkShapeGroup>())
     {
         visualShape = link->visualShape();
         if(visualShape){

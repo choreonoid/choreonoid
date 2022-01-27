@@ -245,6 +245,12 @@ Referenced* SgNode::doClone(CloneMap*) const
 }
 
 
+std::string SgNode::className() const
+{
+    return SceneNodeClassRegistry::instance().getClassName(classId_);
+}
+
+
 const BoundingBox& SgNode::boundingBox() const
 {
     return emptyBoundingBox;
@@ -1011,16 +1017,17 @@ namespace {
 struct NodeClassRegistration {
     NodeClassRegistration() {
         SceneNodeClassRegistry::instance()
-            .registerClass<SgGroup, SgNode>()
-            .registerClass<SgInvariantGroup, SgGroup>()
-            .registerClass<SgTransform, SgGroup>()
-            .registerClass<SgAffineTransform, SgTransform>()
-            .registerClass<SgPosTransform, SgTransform>()
-            .registerClass<SgScaleTransform, SgTransform>()
-            .registerClass<SgFixedPixelSizeGroup, SgGroup>()
-            .registerClass<SgSwitchableGroup, SgGroup>()
-            .registerClass<SgUnpickableGroup, SgGroup>()
-            .registerClass<SgPreprocessed, SgNode>();
+            .registerClass<SgNode>("SgNode")
+            .registerClass<SgGroup, SgNode>("SgGroup")
+            .registerClass<SgInvariantGroup, SgGroup>("SgInvariantGroup")
+            .registerClass<SgTransform, SgGroup>("SgTransform")
+            .registerClass<SgAffineTransform, SgTransform>("SgAffineTransform")
+            .registerClass<SgPosTransform, SgTransform>("SgPosTransform")
+            .registerClass<SgScaleTransform, SgTransform>("SgScaleTransform")
+            .registerClass<SgFixedPixelSizeGroup, SgGroup>("SgFixedPixelSizeGroup")
+            .registerClass<SgSwitchableGroup, SgGroup>("SgSwitchableGroup")
+            .registerClass<SgUnpickableGroup, SgGroup>("SgUnpickableGroup")
+            .registerClass<SgPreprocessed, SgNode>("SgPreprocessed");
     }
 } registration;
 

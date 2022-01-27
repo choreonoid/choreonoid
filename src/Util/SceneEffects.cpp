@@ -296,13 +296,13 @@ namespace {
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
         SceneNodeClassRegistry::instance()
-            .registerClass<SgPolygonDrawStyle, SgGroup>()
-            .registerClass<SgTransparentGroup, SgGroup>()
-            .registerClass<SgFog, SgPreprocessed>()
-            .registerClass<SgHighlight, SgGroup>()
-            .registerClass<SgOutline, SgHighlight>()
-            .registerClass<SgBoundingBox, SgHighlight>()
-            .registerClass<SgLightweightRenderingGroup, SgGroup>();
+            .registerClass<SgPolygonDrawStyle, SgGroup>("SgPolygonDrawStyle")
+            .registerClass<SgTransparentGroup, SgGroup>("SgTransparentGroup")
+            .registerClass<SgFog, SgPreprocessed>("SgFog")
+            .registerClass<SgHighlight, SgGroup>("SgHighlight")
+            .registerClass<SgOutline, SgHighlight>("SgOutline")
+            .registerClass<SgBoundingBox, SgHighlight>("SgBoundingBox")
+            .registerClass<SgLightweightRenderingGroup, SgGroup>("SgLightweightRenderingGroup");
     }
 } registration;
 

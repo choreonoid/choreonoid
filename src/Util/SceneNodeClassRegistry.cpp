@@ -2,15 +2,14 @@
 
 using namespace cnoid;
 
+namespace cnoid {
 
-SceneNodeClassRegistry& SceneNodeClassRegistry::instance()
-{
-    static SceneNodeClassRegistry registry;
-    return registry;
+SceneNodeClassRegistry SceneNodeClassRegistry::instance_;
+
 }
 
 
 SceneNodeClassRegistry::SceneNodeClassRegistry()
 {
-
+    reserve(50);
 }

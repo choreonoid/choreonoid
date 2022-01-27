@@ -132,10 +132,10 @@ namespace {
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
         SceneNodeClassRegistry::instance()
-            .registerClass<SgLight, SgPreprocessed>()
-            .registerClass<SgDirectionalLight, SgLight>()
-            .registerClass<SgPointLight, SgLight>()
-            .registerClass<SgSpotLight, SgPointLight>();
+            .registerClass<SgLight, SgPreprocessed>("SgLight")
+            .registerClass<SgDirectionalLight, SgLight>("SgDirectionalLight")
+            .registerClass<SgPointLight, SgLight>("SgPointLight")
+            .registerClass<SgSpotLight, SgPointLight>("SgSpotLight");
     }
 } registration;
 

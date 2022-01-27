@@ -17,12 +17,12 @@ const bool USE_FACES_FOR_BOUNDING_BOX_CALCULATION = true;
 struct NodeClassRegistration {
     NodeClassRegistration() {
         SceneNodeClassRegistry::instance()
-            .registerClass<SgShape, SgNode>()
-            .registerClass<SgPlot, SgNode>()
-            .registerClass<SgPointSet, SgPlot>()
-            .registerClass<SgLineSet, SgPlot>()
-            .registerClass<SgOverlay, SgGroup>()
-            .registerClass<SgViewportOverlay, SgOverlay>();
+            .registerClass<SgShape, SgNode>("SgShape")
+            .registerClass<SgPlot, SgNode>("SgPlot")
+            .registerClass<SgPointSet, SgPlot>("SgPointSet")
+            .registerClass<SgLineSet, SgPlot>("SgLineSet")
+            .registerClass<SgOverlay, SgGroup>("SgOverlay")
+            .registerClass<SgViewportOverlay, SgOverlay>("SgViewportOverlay");
     }
 } registration;
 
