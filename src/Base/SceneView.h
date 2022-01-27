@@ -57,6 +57,7 @@ public:
     SceneWidget* sceneWidget();
     SceneRenderer* renderer();
     SgGroup* scene();
+    SgGroup* systemNodeGroup();
 
     bool setCustomMode(int mode);
     int customMode() const;

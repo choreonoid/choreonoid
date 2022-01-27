@@ -11,6 +11,27 @@
 
 namespace cnoid {
 
+class CNOID_EXPORT SgVisibilityProcessor : public SgPreprocessed
+{
+public:
+    SgVisibilityProcessor();
+    SgVisibilityProcessor(const SgVisibilityProcessor& org, CloneMap* cloneMap = nullptr);
+
+    void setTargetRootNode(SgNode* node) { targetRootNode_ = node; }
+    SgNode* targetRootNode() { return targetRootNode_; }
+    void setVisiblePaths(const std::vector<SgNodePath>& paths) { visiblePaths_ = paths; }
+    std::vector<SgNodePath>& visiblePaths() { return visiblePaths_; }
+    const std::vector<SgNodePath>& visiblePaths() const { return visiblePaths_; }
+    
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    SgNodePtr targetRootNode_;
+    std::vector<SgNodePath> visiblePaths_;
+};
+
+
 class CNOID_EXPORT SgPolygonDrawStyle : public SgGroup
 {
 public:
@@ -44,8 +65,6 @@ private:
     float vertexSize_;
 };
 
-typedef ref_ptr<SgPolygonDrawStyle> SgPolygonDrawStylePtr;
-
 
 class CNOID_EXPORT SgTransparentGroup : public SgGroup
 {
@@ -62,8 +81,6 @@ protected:
 private:
     float transparency_;
 };
-
-typedef ref_ptr<SgTransparentGroup> SgTransparentGroupPtr;
 
 
 class CNOID_EXPORT SgFog : public SgPreprocessed
@@ -90,8 +107,6 @@ private:
     //int fogType;
 };
 
-typedef ref_ptr<SgFog> SgFogPtr;
-
 
 class CNOID_EXPORT SgHighlight : public SgGroup
 {
@@ -109,8 +124,6 @@ public:
     virtual float lineWidth() const = 0;
     virtual void setLineWidth(float width) = 0;
 };
-
-typedef ref_ptr<SgHighlight> SgHighlightPtr;;
 
 
 class CNOID_EXPORT SgBoundingBox : public SgHighlight
@@ -143,8 +156,6 @@ private:
     void initializeLineSet();
 };
 
-typedef ref_ptr<SgBoundingBox> SgBoundingBoxPtr;
-
 
 class CNOID_EXPORT SgOutline : public SgHighlight
 {
@@ -167,8 +178,6 @@ private:
     float lineWidth_;
 };
 
-typedef ref_ptr<SgOutline> SgOutlinePtr;
-
 
 class CNOID_EXPORT SgLightweightRenderingGroup : public SgGroup
 {
@@ -178,8 +187,6 @@ public:
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
-
-typedef ref_ptr<SgLightweightRenderingGroup> SgLightweightRenderingGroupPtr;
 
 }
 

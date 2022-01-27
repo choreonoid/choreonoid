@@ -60,8 +60,6 @@ private:
     float specularExponent_;
 };
 
-typedef ref_ptr<SgMaterial> SgMaterialPtr;
-
 
 class CNOID_EXPORT SgImage : public SgObject
 {
@@ -95,8 +93,6 @@ private:
     std::shared_ptr<Image> image_;
 };
 
-typedef ref_ptr<SgImage> SgImagePtr;
-
 
 class CNOID_EXPORT SgTextureTransform : public SgObject
 {
@@ -127,8 +123,6 @@ private:
     Vector2 translation_;
     double rotation_;
 };
-
-typedef ref_ptr<SgTextureTransform> SgTextureTransformPtr;
 
 
 class CNOID_EXPORT SgTexture : public SgObject
@@ -164,8 +158,6 @@ private:
     bool repeatS_;
     bool repeatT_;
 };
-
-typedef ref_ptr<SgTexture> SgTexturePtr;
 
 
 template<class T, class Alloc = std::allocator<T>> class SgVectorArray : public SgObject
@@ -497,8 +489,6 @@ private:
     short extraDivisionMode_;
 };
 
-typedef ref_ptr<SgMesh> SgMeshPtr;
-
 
 class CNOID_EXPORT SgPolygonMesh : public SgMeshBase
 {
@@ -523,8 +513,6 @@ public:
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
-
-typedef ref_ptr<SgPolygonMesh> SgPolygonMeshPtr;
 
 
 class CNOID_EXPORT SgShape : public SgNode
@@ -563,8 +551,6 @@ private:
     SgMaterialPtr material_;
     SgTexturePtr texture_;
 };
-
-typedef ref_ptr<SgShape> SgShapePtr;
 
 
 class CNOID_EXPORT SgPlot : public SgNode
@@ -630,8 +616,6 @@ private:
     SgIndexArray normalIndices_;
 };
 
-typedef ref_ptr<SgPlot> SgPlotPtr;
-
 
 class CNOID_EXPORT SgPointSet : public SgPlot
 {
@@ -653,8 +637,6 @@ protected:
 private:
     double pointSize_;
 };
-
-typedef ref_ptr<SgPointSet> SgPointSetPtr;
 
 
 class CNOID_EXPORT SgLineSet : public SgPlot
@@ -731,8 +713,6 @@ private:
     float lineWidth_;
 };
 
-typedef ref_ptr<SgLineSet> SgLineSetPtr;
-
 
 class CNOID_EXPORT SgOverlay : public SgGroup
 {
@@ -745,8 +725,6 @@ protected:
     SgOverlay(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
-
-typedef ref_ptr<SgOverlay> SgOverlayPtr;
 
 
 class CNOID_EXPORT SgViewportOverlay : public SgOverlay
@@ -771,8 +749,6 @@ protected:
     SgViewportOverlay(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
-
-typedef ref_ptr<SgViewportOverlay> SgViewportOverlayPtr;
 
 }
 

@@ -6,9 +6,42 @@
 #include "SceneEffects.h"
 #include "SceneDrawables.h"
 #include "SceneNodeClassRegistry.h"
+#include "CloneMap.h"
 
 using namespace std;
 using namespace cnoid;
+
+
+SgVisibilityProcessor::SgVisibilityProcessor()
+    : SgPreprocessed(findClassId<SgVisibilityProcessor>())
+{
+    
+}
+
+
+SgVisibilityProcessor::SgVisibilityProcessor(const SgVisibilityProcessor& org, CloneMap* cloneMap)
+    : SgPreprocessed(org)
+{
+    if(!cloneMap){
+        visiblePaths_ = org.visiblePaths_;
+    } else {
+        visiblePaths_.reserve(org.visiblePaths_.size());
+        for(auto& orgPath : org.visiblePaths_){
+            SgNodePath path;
+            path.reserve(orgPath.size());
+            for(auto& node : orgPath){
+                path.push_back(cloneMap->getClone<SgNode>(node));
+            }
+            visiblePaths_.push_back(std::move(path));
+        }
+    }
+}
+
+
+Referenced* SgVisibilityProcessor::doClone(CloneMap* cloneMap) const
+{
+    return new SgVisibilityProcessor(*this, cloneMap);
+}
 
 
 SgPolygonDrawStyle::SgPolygonDrawStyle()
@@ -296,6 +329,7 @@ namespace {
 struct NodeTypeRegistration {
     NodeTypeRegistration() {
         SceneNodeClassRegistry::instance()
+            .registerClass<SgVisibilityProcessor, SgPreprocessed>("SgVisibilityProcessor")
             .registerClass<SgPolygonDrawStyle, SgGroup>("SgPolygonDrawStyle")
             .registerClass<SgTransparentGroup, SgGroup>("SgTransparentGroup")
             .registerClass<SgFog, SgPreprocessed>("SgFog")

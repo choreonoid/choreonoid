@@ -77,6 +77,8 @@ public:
     int numFogs() const;
     SgFog* fog(int index) const;
 
+    const std::vector<SgVisibilityProcessorPtr>& visibilityProcessors();
+
     virtual const Affine3& currentModelTransform() const = 0;
     virtual const Matrix4& projectionMatrix() const = 0;
     virtual double projectedPixelSizeRatio(const Vector3& position) const = 0;

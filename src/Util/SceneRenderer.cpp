@@ -27,17 +27,30 @@ std::mutex propertyKeyMutex;
 int propertyKeyCount = 0;
 std::unordered_map<string, int> propertyKeyMap;
 
-struct PreproNode
+class PreproNodeInfo;
+typedef ref_ptr<PreproNodeInfo> PreproNodeInfoPtr;
+
+class PreproNodeInfo : public Referenced
 {
-    enum { GROUP, TRANSFORM, PREPROCESSED, LIGHT, FOG, CAMERA };
-    stdx::variant<SgGroup*, SgTransform*, SgPreprocessed*, SgLight*, SgFog*, SgCamera*> node;
-    SgNode* base;
-    PreproNode* parent;
-    PreproNode* child;
-    PreproNode* next;
+public:
+    enum { GROUP, TRANSFORM, PREPROCESSED, LIGHT, FOG, CAMERA, VISIBILITY };
+    
+    stdx::variant<
+        SgGroup*,
+        SgTransform*,
+        SgPreprocessed*,
+        SgLight*,
+        SgFog*,
+        SgCamera*,
+        SgVisibilityProcessor*> node;
+    
+    SgNodePtr base;
+    PreproNodeInfo* parent;
+    PreproNodeInfoPtr child;
+    PreproNodeInfoPtr next;
 
     template<class T>
-    PreproNode(T* n) : parent(0), child(0), next(0) {
+    PreproNodeInfo(T* n) : parent(nullptr) {
         setNode(n);
     }
     
@@ -45,23 +58,6 @@ struct PreproNode
         node = n;
         base = n;
     }
-
-    ~PreproNode() {
-        if(child) delete child;
-        if(next) delete next;
-    }
-};
-
-class PreproTreeExtractor
-{
-    PolymorphicSceneNodeFunctionSet functions;
-    PreproNode* node;
-    bool found;
-
-public:
-    PreproTreeExtractor();
-    PreproNode* apply(SgNode* node);
-    void visitGroup(SgGroup* group);
 };
 
 }
@@ -91,21 +87,24 @@ public:
     string name;
     bool builtinFlagToUpdatePreprocessedNodeTree;
     bool* pFlagToUpdatePreprocessedNodeTree;
-    std::unique_ptr<PreproNode> preproTree;
+    PreproNodeInfoPtr preproNodeTree;
+    PolymorphicSceneNodeFunctionSet preproNodeFunctions;
+    PreproNodeInfoPtr foundPreproNodeInfo;
+    bool isPreproNodeFound;
 
     class CameraInfo : public Referenced
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        SgCamera* camera;
+        SgCameraPtr camera;
 
         // Using 'T' here causes a compile error (c2327) with VC++2010.
         // 'T' is also used as a template parameter name in the definition of the following
         // Eigen type, and the template parameter name seems to conflicts with follwoing variable.
         // To avoid this problem, 'M' is used instead of 'T'.
         Isometry3 M;
-        PreproNode* node;
+        PreproNodeInfoPtr nodeInfo;
         ScopedConnection cameraConnection;
         // This flag includes the camera name change
         bool cameraPathChanged;
@@ -117,9 +116,9 @@ public:
                 [this](const SgUpdate&){ cameraPathChanged = true; });
         }
 
-        void setNode(PreproNode* node)
+        void setNodeInfo(PreproNodeInfo* info)
         {
-            this->node = node;
+            nodeInfo = info;
         }
 
         void setCameraPosition(const Isometry3& M)
@@ -165,6 +164,8 @@ public:
     vector<SgFogPtr> fogs;
     bool isFogEnabled;
 
+    vector<SgVisibilityProcessorPtr> visibilityProcessors;
+
     std::mutex newExtensionMutex;
     vector<std::function<void(SceneRenderer* renderer)>> newExtendFunctions;
 
@@ -173,8 +174,11 @@ public:
     
     Impl(SceneRenderer* self);
 
+    void initializePreproNodeFunctions();
+    PreproNodeInfo* extractPreproNodeTree(SgNode* snode);
+    void visitGroupInPreproTreeExtraction(SgGroup* group);
     void extractPreproNodes();
-    void extractPreproNodeIter(PreproNode* node, const Affine3& T);
+    void extractPreproNodeIter(PreproNodeInfo* nodeInfo, const Affine3& T);
     void updateCameraPaths();
     void setCurrentCamera(int index);
     bool setCurrentCamera(SgCamera* camera);
@@ -221,6 +225,7 @@ SceneRenderer::Impl::Impl(SceneRenderer* self)
 {
     builtinFlagToUpdatePreprocessedNodeTree = true;
     pFlagToUpdatePreprocessedNodeTree = &builtinFlagToUpdatePreprocessedNodeTree;
+    initializePreproNodeFunctions();
 
     isCurrentCameraAutoRestorationMode = false;
     isPreferredCameraCurrent = false;
@@ -340,6 +345,101 @@ void SceneRenderer::setFlagVariableToUpdatePreprocessedNodeTree(bool& flag)
 }
 
 
+void SceneRenderer::Impl::initializePreproNodeFunctions()
+{
+    auto& funcs = preproNodeFunctions;
+    
+    funcs.setFunction<SgGroup>(
+        [&](SgGroup* group){
+            visitGroupInPreproTreeExtraction(group);
+        });
+
+    funcs.setFunction<SgSwitchableGroup>(
+        [&](SgSwitchableGroup* group){
+            if(group->isTurnedOn()){
+                visitGroupInPreproTreeExtraction(group);
+            }
+        });
+
+    funcs.setFunction<SgTransform>(
+        [&](SgTransform* transform){
+            visitGroupInPreproTreeExtraction(transform);
+            if(foundPreproNodeInfo){
+                foundPreproNodeInfo->setNode(transform);
+            }
+        });
+
+    funcs.setFunction<SgLight>(
+        [&](SgLight* light){
+            foundPreproNodeInfo = new PreproNodeInfo(light);
+            isPreproNodeFound = true;
+        });
+
+    funcs.setFunction<SgFog>(
+        [&](SgFog* fog){
+            foundPreproNodeInfo = new PreproNodeInfo(fog);
+            isPreproNodeFound = true;
+        });
+
+    funcs.setFunction<SgCamera>(
+        [&](SgCamera* camera){
+            foundPreproNodeInfo = new PreproNodeInfo(camera);
+            isPreproNodeFound = true;
+        });
+
+    funcs.setFunction<SgVisibilityProcessor>(
+        [&](SgVisibilityProcessor* processor){
+            visibilityProcessors.push_back(processor);
+        });
+    
+    funcs.updateDispatchTable();
+}
+
+
+PreproNodeInfo* SceneRenderer::Impl::extractPreproNodeTree(SgNode* snode)
+{
+    foundPreproNodeInfo.reset();
+    isPreproNodeFound = false;
+    preproNodeFunctions.dispatch(snode);
+    return foundPreproNodeInfo;
+}
+
+
+void SceneRenderer::Impl::visitGroupInPreproTreeExtraction(SgGroup* group)
+{
+    bool foundInSubTree = false;
+
+    PreproNodeInfoPtr groupNodeInfo = new PreproNodeInfo(group);
+
+    for(SgGroup::const_reverse_iterator p = group->rbegin(); p != group->rend(); ++p){
+        
+        foundPreproNodeInfo.reset();
+        isPreproNodeFound = false;
+
+        preproNodeFunctions.dispatch(*p);
+        
+        if(foundPreproNodeInfo){
+            if(isPreproNodeFound){
+                foundPreproNodeInfo->parent = groupNodeInfo;
+                foundPreproNodeInfo->next = groupNodeInfo->child;
+                groupNodeInfo->child = foundPreproNodeInfo;
+                foundInSubTree = true;
+            } else {
+                foundPreproNodeInfo.reset();
+            }
+        }
+    }
+            
+    isPreproNodeFound = foundInSubTree;
+
+    if(isPreproNodeFound){
+        foundPreproNodeInfo = groupNodeInfo;
+    } else {
+        foundPreproNodeInfo.reset();
+    }
+}
+
+
 void SceneRenderer::extractPreprocessedNodes()
 {
     impl->extractPreproNodes();
@@ -349,8 +449,8 @@ void SceneRenderer::extractPreprocessedNodes()
 void SceneRenderer::Impl::extractPreproNodes()
 {
     if(*pFlagToUpdatePreprocessedNodeTree){
-        PreproTreeExtractor extractor;
-        preproTree.reset(extractor.apply(self->sceneRoot()));
+        visibilityProcessors.clear();
+        preproNodeTree.reset(extractPreproNodeTree(self->sceneRoot()));
         *pFlagToUpdatePreprocessedNodeTree = false;
         builtinFlagToUpdatePreprocessedNodeTree = true;
     }
@@ -364,8 +464,8 @@ void SceneRenderer::Impl::extractPreproNodes()
     lights.clear();
     fogs.clear();
 
-    if(preproTree){
-        extractPreproNodeIter(preproTree.get(), Affine3::Identity());
+    if(preproNodeTree){
+        extractPreproNodeIter(preproNodeTree.get(), Affine3::Identity());
     }
 
     if(!cameraSetChanged){
@@ -403,53 +503,47 @@ void SceneRenderer::Impl::extractPreproNodes()
 }
 
 
-void SceneRenderer::Impl::extractPreproNodeIter(PreproNode* node, const Affine3& T)
+void SceneRenderer::Impl::extractPreproNodeIter(PreproNodeInfo* nodeInfo, const Affine3& T)
 {
-    switch(stdx::get_variant_index(node->node)){
+    switch(stdx::get_variant_index(nodeInfo->node)){
 
-    case PreproNode::GROUP:
-        for(PreproNode* childNode = node->child; childNode; childNode = childNode->next){
-            extractPreproNodeIter(childNode, T);
+    case PreproNodeInfo::GROUP:
+        for(auto childInfo = nodeInfo->child; childInfo; childInfo = childInfo->next){
+            extractPreproNodeIter(childInfo, T);
         }
         break;
         
-    case PreproNode::TRANSFORM:
+    case PreproNodeInfo::TRANSFORM:
     {
-        SgTransform* transform = stdx::get<SgTransform*>(node->node);
+        auto transform = stdx::get<SgTransform*>(nodeInfo->node);
         Affine3 T1;
         transform->getTransform(T1);
         const Affine3 T2 = T * T1;
-        for(PreproNode* childNode = node->child; childNode; childNode = childNode->next){
-            extractPreproNodeIter(childNode, T2);
+        for(auto childInfo = nodeInfo->child; childInfo; childInfo = childInfo->next){
+            extractPreproNodeIter(childInfo, T2);
         }
-    }
-    break;
-        
-    case PreproNode::PREPROCESSED:
-        // call additional functions
         break;
-
-    case PreproNode::LIGHT:
-    {
+    }
+        
+    case PreproNodeInfo::LIGHT:
         if(additionalLightsEnabled){
-            auto light = stdx::get<SgLight*>(node->node);
+            auto light = stdx::get<SgLight*>(nodeInfo->node);
             if(light != worldLight){
                 lights.push_back(LightInfo(light, convertToIsometryWithOrthonormalization(T)));
             }
         }
         break;
-    }
 
-    case PreproNode::FOG:
+    case PreproNodeInfo::FOG:
     {
-        SgFog* fog = stdx::get<SgFog*>(node->node);
+        auto fog = stdx::get<SgFog*>(nodeInfo->node);
         fogs.push_back(fog);
         break;
     }
 
-    case PreproNode::CAMERA:
+    case PreproNodeInfo::CAMERA:
     {
-        SgCamera* camera = stdx::get<SgCamera*>(node->node);
+        auto camera = stdx::get<SgCamera*>(nodeInfo->node);
 
         size_t index = cameras.size();
         CameraInfo* cameraInfo = nullptr;
@@ -467,7 +561,7 @@ void SceneRenderer::Impl::extractPreproNodeIter(PreproNode* node, const Affine3&
             cameraSetChanged = true;
             cameraInfo = new CameraInfo(camera);
         }
-        cameraInfo->setNode(node);
+        cameraInfo->setNodeInfo(nodeInfo);
         cameraInfo->setCameraPosition(convertToIsometryWithOrthonormalization(T));
 
         if(camera == currentCamera){
@@ -476,109 +570,13 @@ void SceneRenderer::Impl::extractPreproNodeIter(PreproNode* node, const Affine3&
         }
 
         cameras.push_back(cameraInfo);
+
+        break;
     }
-    break;
 
     default:
         break;
     }
-}
-
-
-namespace {
-
-PreproTreeExtractor::PreproTreeExtractor()
-{
-    functions.setFunction<SgGroup>(
-        [&](SgNode* node){ visitGroup(static_cast<SgGroup*>(node)); });
-
-    functions.setFunction<SgSwitchableGroup>(
-        [&](SgSwitchableGroup* group){
-            if(group->isTurnedOn()){
-                visitGroup(group);
-            }
-        });
-
-    functions.setFunction<SgTransform>(
-        [&](SgTransform* transform){
-            visitGroup(transform);
-            if(node){
-                node->setNode(transform);
-            }
-        });
-
-    functions.setFunction<SgPreprocessed>(
-        [&](SgPreprocessed* preprocessed){
-            node = new PreproNode(preprocessed);
-            found = true;
-        });
-
-    functions.setFunction<SgLight>(
-        [&](SgLight* light){
-            node = new PreproNode(light);
-            found = true;
-        });
-
-    functions.setFunction<SgFog>(
-        [&](SgFog* fog){
-            node = new PreproNode(fog);
-            found = true;
-        });
-
-    functions.setFunction<SgCamera>(
-        [&](SgCamera* camera){
-            node = new PreproNode(camera);
-            found = true;
-        });
-    
-    functions.updateDispatchTable();
-}
-
-
-PreproNode* PreproTreeExtractor::apply(SgNode* snode)
-{
-    node = nullptr;
-    found = false;
-    functions.dispatch(snode);
-    return node;
-}
-
-
-void PreproTreeExtractor::visitGroup(SgGroup* group)
-{
-    bool foundInSubTree = false;
-
-    PreproNode* self = new PreproNode(group);
-
-    for(SgGroup::const_reverse_iterator p = group->rbegin(); p != group->rend(); ++p){
-        
-        node = nullptr;
-        found = false;
-
-        functions.dispatch(*p);
-        
-        if(node){
-            if(found){
-                node->parent = self;
-                node->next = self->child;
-                self->child = node;
-                foundInSubTree = true;
-            } else {
-                delete node;
-            }
-        }
-    }
-            
-    found = foundInSubTree;
-
-    if(found){
-        node = self;
-    } else {
-        delete self;
-        node = nullptr;
-    }
-}
-
 }
 
 
@@ -610,12 +608,12 @@ void SceneRenderer::Impl::updateCameraPaths()
     cameraPaths.resize(n);
     
     for(int i=0; i < n; ++i){
-        CameraInfo* info = cameras[i];
+        CameraInfo* cameraInfo = cameras[i];
         tmpPath.clear();
-        PreproNode* node = info->node;
-        while(node){
-            tmpPath.push_back(node->base);
-            node = node->parent;
+        PreproNodeInfo* nodeInfo = cameraInfo->nodeInfo;
+        while(nodeInfo){
+            tmpPath.push_back(nodeInfo->base);
+            nodeInfo = nodeInfo->parent;
         }
         if(!tmpPath.empty()){
             tmpPath.pop_back(); // remove the root node
@@ -894,6 +892,12 @@ int SceneRenderer::numFogs() const
 SgFog* SceneRenderer::fog(int index) const
 {
     return impl->fogs[index];
+}
+
+
+const std::vector<SgVisibilityProcessorPtr>& SceneRenderer::visibilityProcessors()
+{
+    return impl->visibilityProcessors;
 }
 
 

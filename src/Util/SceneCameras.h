@@ -50,7 +50,6 @@ private:
     double nearClipDistance_;
     double farClipDistance_;
 };
-typedef ref_ptr<SgCamera> SgCameraPtr;
 
 
 class CNOID_EXPORT SgPerspectiveCamera : public SgCamera
@@ -77,7 +76,6 @@ protected:
 private:
     double fieldOfView_;
 };
-typedef ref_ptr<SgPerspectiveCamera> SgPerspectiveCameraPtr;
 
 
 class CNOID_EXPORT SgOrthographicCamera : public SgCamera
@@ -98,7 +96,6 @@ protected:
 private:
     double height_;
 };
-typedef ref_ptr<SgOrthographicCamera> SgOrthographicCameraPtr;
 
 }
 

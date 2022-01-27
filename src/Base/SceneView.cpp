@@ -319,6 +319,12 @@ SgGroup* SceneView::scene()
 }
 
 
+SgGroup* SceneView::systemNodeGroup()
+{
+    return impl->sceneWidget->systemNodeGroup();
+}
+
+
 bool SceneView::setCustomMode(int mode)
 {
     bool isValid = true;

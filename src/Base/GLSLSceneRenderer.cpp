@@ -14,6 +14,7 @@
 #include <fmt/format.h>
 #include <GL/glu.h>
 #include <unordered_map>
+#include <unordered_set>
 #include <deque>
 #include <mutex>
 #include <regex>
@@ -353,7 +354,8 @@ public:
     GLfloat defaultLineWidth;
     float minTransparency;
     vector<int> shadowLightIndices;
-    
+
+    unordered_set<SgNodePtr> invisibleNodeSet;
     GLResourceMap resourceMaps[2];
     GLResourceMap* currentResourceMap;
     GLResourceMap* nextResourceMap;
@@ -436,15 +438,17 @@ public:
     bool doPick(int x, int y);
     bool renderShadowMap(int lightIndex);
     bool renderShadowMap(SgLight* light, const Isometry3& T);
-    void beginRendering();
     void renderCamera(SgCamera* camera, const Isometry3& cameraPosition);
+    void beginRendering();
+    void endRendering();
+    void setupNodeVisibilities();
+    void addSubSceneGraphNodesToInvisibleNodeSet(SgNode* node);
     void renderLights(LightingProgram* program);
     void renderFog(LightingProgram* program);
     void doPureWireframeRendering();
     void doVertexRendering();
     void renderTransparentObjects();
     void renderOverlayObjects();    
-    void endRendering();
     void pushProgram(ShaderProgram* program);
     template<class ShaderProgramType>
     void pushProgram(unique_ptr<ShaderProgramType>& program);
@@ -453,6 +457,7 @@ public:
     void pushPickNode(SgNode* node);
     int pushPickEndNode(SgNode* node, bool doSetPickColor);
     void popPickNode();
+    void dispatchRenderingFunction(SgNode* node);
     void renderChildNodes(SgGroup* group);
     void renderChildNodesWithNodeDecorationCheck(SgGroup* group);
     void renderGroup(SgGroup* group);
@@ -1476,7 +1481,7 @@ bool GLSLSceneRenderer::Impl::renderShadowMap(SgLight* light, const Isometry3& T
             renderCamera(shadowMapCamera, Tc);
             fullLightingProgram->setShadowMapViewProjection(PV);
             fullLightingProgram->shadowMapProgram()->initializeShadowMapBuffer();
-            renderingFunctions->dispatch(self->sceneRoot());
+            renderChildNodes(self->sceneRoot());
 
             if(USE_GL_FLUSH_FUNCTION_IN_SHADOW_MAP_RENDERING){
                 glFlush();
@@ -1544,6 +1549,8 @@ void GLSLSceneRenderer::Impl::beginRendering()
         nextResourceMap = &resourceMaps[1 - currentResourceMapIndex];
         hasValidNextResourceMap = false;
     }
+
+    setupNodeVisibilities();
 }
 
 
@@ -1552,6 +1559,36 @@ void GLSLSceneRenderer::Impl::endRendering()
     if(isCheckingUnusedResources){
         currentResourceMap->clear();
         hasValidNextResourceMap = true;
+    }
+}
+
+
+void GLSLSceneRenderer::Impl::setupNodeVisibilities()
+{
+    /**
+       This is a temporary, incomplete implementation, and this should be improved later.
+       The current implementation only checks an end node and decides whether to show it or not.
+       However, since a node may be shared by multiple scene graph paths, the entire path to
+       the node must be checked in order to correctly identify invisible nodes.
+    */
+    invisibleNodeSet.clear();
+    for(auto& visibility : self->visibilityProcessors()){
+        addSubSceneGraphNodesToInvisibleNodeSet(visibility->targetRootNode());
+        for(auto& path : visibility->visiblePaths()){
+            invisibleNodeSet.erase(path.back());
+        }
+    }
+}
+
+
+void GLSLSceneRenderer::Impl::addSubSceneGraphNodesToInvisibleNodeSet(SgNode* node)
+{
+    if(auto group = node->toGroupNode()){
+        for(auto& child : *group){
+            addSubSceneGraphNodesToInvisibleNodeSet(child);
+        }
+    } else {
+        invisibleNodeSet.insert(node);
     }
 }
 
@@ -1876,9 +1913,26 @@ void GLSLSceneRenderer::Impl::popPickNode()
 }
 
 
+void GLSLSceneRenderer::Impl::dispatchRenderingFunction(SgNode* node)
+{
+    if(!invisibleNodeSet.empty()){
+        /**
+           This is a temporary, incomplete implementation, and this should be improved later.
+           The current implementation only checks an end node and decides whether to show it or not.
+           However, since a node may be shared by multiple scene graph paths, the entire path to
+           the node must be checked in order to correctly identify invisible nodes.
+        */
+        if(invisibleNodeSet.find(node) != invisibleNodeSet.end()){
+            return;
+        }
+    }
+    renderingFunctions->dispatch(node);
+}
+
+
 void GLSLSceneRenderer::renderNode(SgNode* node)
 {
-    impl->renderingFunctions->dispatch(node);
+    impl->dispatchRenderingFunction(node);
 }
 
 
@@ -1886,7 +1940,7 @@ void GLSLSceneRenderer::Impl::renderChildNodes(SgGroup* group)
 {
     if(nodeDecorationInfoArrayMap.empty()){
         for(auto p = group->cbegin(); p != group->cend(); ++p){
-            renderingFunctions->dispatch(*p);
+            dispatchRenderingFunction(*p);
         }
     } else {
         renderChildNodesWithNodeDecorationCheck(group);
@@ -1900,11 +1954,11 @@ void GLSLSceneRenderer::Impl::renderChildNodesWithNodeDecorationCheck(SgGroup* g
         auto node = *p;
         if(!node->isDecoratedSomewhere() ||
            group->hasAttribute(SgNode::NodeDecorationGroup)){
-            renderingFunctions->dispatch(node);
+            dispatchRenderingFunction(node);
         } else {
             auto q = nodeDecorationInfoArrayMap.find(node);
             if(q == nodeDecorationInfoArrayMap.end()){
-                renderingFunctions->dispatch(node);
+                dispatchRenderingFunction(node);
             } else {
                 SgNodePtr node2 = node;
                 auto& nodeDecorationInfos = *q->second;
@@ -1912,7 +1966,7 @@ void GLSLSceneRenderer::Impl::renderChildNodesWithNodeDecorationCheck(SgGroup* g
                     node2 = info.func(node2);
                     node2->setAttribute(SgNode::NodeDecorationGroup);
                 }
-                renderingFunctions->dispatch(node2);
+                dispatchRenderingFunction(node2);
             }
         }
     }

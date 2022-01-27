@@ -588,7 +588,6 @@ public:
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
-
 };
 
 typedef ref_ptr<SgUnpickableGroup> SgUnpickableGroupPtr;
@@ -605,27 +604,85 @@ typedef ref_ptr<SgPreprocessed> SgPreprocessedPtr;
 
 
 class SgMaterial;
+typedef ref_ptr<SgMaterial> SgMaterialPtr;
+
 class SgImage;
+typedef ref_ptr<SgImage> SgImagePtr;
+
 class SgTextureTransform;
+typedef ref_ptr<SgTextureTransform> SgTextureTransformPtr;
+
 class SgTexture;
+typedef ref_ptr<SgTexture> SgTexturePtr;
+
 class SgMesh;
+typedef ref_ptr<SgMesh> SgMeshPtr;
+
 class SgPolygonMesh;
+typedef ref_ptr<SgPolygonMesh> SgPolygonMeshPtr;
+
 class SgShape;
+typedef ref_ptr<SgShape> SgShapePtr;
+
 class SgPlot;
+typedef ref_ptr<SgPlot> SgPlotPtr;
+
 class SgPointSet;
+typedef ref_ptr<SgPointSet> SgPointSetPtr;
+
 class SgLineSet;
+typedef ref_ptr<SgLineSet> SgLineSetPtr;
+
 class SgOverlay;
+typedef ref_ptr<SgOverlay> SgOverlayPtr;
+
 class SgViewportOverlay;
+typedef ref_ptr<SgViewportOverlay> SgViewportOverlayPtr;
+
 class SgLight;
+typedef ref_ptr<SgLight> SgLightPtr;
+
 class SgDirectionalLight;
+typedef ref_ptr<SgDirectionalLight> SgDirectionalLightPtr;
+
 class SgPointLight;
+typedef ref_ptr<SgPointLight> SgPointLightPtr;
+
 class SgSpotLight;
+typedef ref_ptr<SgSpotLight> SgSpotLightPtr;
+
 class SgCamera;
+typedef ref_ptr<SgCamera> SgCameraPtr;
+
 class SgPerspectiveCamera;
+typedef ref_ptr<SgPerspectiveCamera> SgPerspectiveCameraPtr;
+
 class SgOrthographicCamera;
+typedef ref_ptr<SgOrthographicCamera> SgOrthographicCameraPtr;
+
+class SgVisibilityProcessor;
+typedef ref_ptr<SgVisibilityProcessor> SgVisibilityProcessorPtr;
+
+class SgPolygonDrawStyle;
+typedef ref_ptr<SgPolygonDrawStyle> SgPolygonDrawStylePtr;
+
+class SgTransparentGroup;
+typedef ref_ptr<SgTransparentGroup> SgTransparentGroupPtr;
+
 class SgFog;
+typedef ref_ptr<SgFog> SgFogPtr;
+
+class SgHighlight;
+typedef ref_ptr<SgHighlight> SgHighlightPtr;;
+
+class SgBoundingBox;
+typedef ref_ptr<SgBoundingBox> SgBoundingBoxPtr;
+
 class SgOutline;
+typedef ref_ptr<SgOutline> SgOutlinePtr;
+
 class SgLightweightRenderingGroup;
+typedef ref_ptr<SgLightweightRenderingGroup> SgLightweightRenderingGroupPtr;
 
 }
 

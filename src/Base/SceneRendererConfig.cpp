@@ -93,6 +93,8 @@ namespace cnoid {
 class SceneRendererConfig::Impl
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     SceneRendererConfig* self;
     vector<GLSceneRenderer*> renderers;
     
@@ -422,7 +424,7 @@ bool SceneRendererConfig::Impl::store(Mapping* archive)
     }
     write(archive, "backgroundColor", backgroundColor);
 
-    if(!defaultColor.isApprox(Vector3f::Ones(1.0))){
+    if(!defaultColor.isApprox(Vector3f::Ones())){
         write(archive, "defaultColor", defaultColor);
     }
     archive->write("lineWidth", lineWidth);

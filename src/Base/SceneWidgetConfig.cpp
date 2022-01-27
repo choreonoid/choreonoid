@@ -96,6 +96,8 @@ namespace cnoid {
 class SceneWidgetConfig::Impl
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     SceneWidgetConfig* self;
     vector<SceneWidget*> sceneWidgets;
 
@@ -106,7 +108,7 @@ public:
     bool isCameraRollRistricted;
     bool isCoordinateAxesEnabled;
 
-    struct GridInfo {
+    struct GridInfo{
         double span;
         double interval;
         Vector3f color;

@@ -37,7 +37,6 @@ private:
     float ambientIntensity_;
     bool on_;
 };
-typedef ref_ptr<SgLight> SgLightPtr;
 
 
 class CNOID_EXPORT SgDirectionalLight : public SgLight
@@ -57,7 +56,6 @@ protected:
 private:
     Vector3 direction_;
 };
-typedef ref_ptr<SgDirectionalLight> SgDirectionalLightPtr;
 
 
 class CNOID_EXPORT SgPointLight : public SgLight
@@ -84,7 +82,6 @@ private:
     float linearAttenuation_;
     float quadraticAttenuation_;
 };
-typedef ref_ptr<SgPointLight> SgPointLightPtr;
 
 
 class CNOID_EXPORT SgSpotLight : public SgPointLight
@@ -114,7 +111,6 @@ private:
     float cutOffAngle_;
     float cutOffExponent_;
 };
-typedef ref_ptr<SgSpotLight> SgSpotLightPtr;
 
 }
 
