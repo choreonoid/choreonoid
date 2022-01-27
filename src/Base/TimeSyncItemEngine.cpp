@@ -129,7 +129,7 @@ void TimeSyncItemEngineManager::registerFactory_
 (const std::type_info& type,
  const std::function<TimeSyncItemEngine*(Item* item, TimeSyncItemEngine* prevEngine)>& factory)
 {
-    int id = impl->itemClassRegistry.classId(type);
+    int id = impl->itemClassRegistry.getClassId(type);
     if(id >= static_cast<int>(impl->classIdToFactoryListMap.size())){
         impl->classIdToFactoryListMap.resize(id + 1);
     }
@@ -231,7 +231,7 @@ void TimeSyncItemEngineManager::Impl::createManagedEngines
                 }
             }
         }
-        id = itemClassRegistry.superClassId(id);
+        id = itemClassRegistry.getSuperClassId(id);
     }
 }
 
@@ -256,7 +256,7 @@ int TimeSyncItemEngineManager::Impl::createEngines(Item* item, std::vector<TimeS
                 }
             }
         }
-        id = itemClassRegistry.superClassId(id);
+        id = itemClassRegistry.getSuperClassId(id);
     }
     return numCreatedEngines;
 }

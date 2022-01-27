@@ -199,7 +199,7 @@ void SgObject::setUriFragment(const std::string& fragment)
 
 int SgNode::findClassId(const std::type_info& nodeType)
 {
-    return SceneNodeClassRegistry::instance().classId(nodeType);
+    return SceneNodeClassRegistry::instance().getClassId(nodeType);
 }
 
 

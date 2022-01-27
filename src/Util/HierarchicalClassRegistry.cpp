@@ -16,8 +16,9 @@ public:
     typedef std::unordered_map<std::type_index, int> PolymorphicIdMap;
     PolymorphicIdMap polymorphicIdMap;
     std::vector<int> superClassPolymorphicIdMap;
+    std::vector<std::string> classNameMap;
 
-    int registerClassAsTypeInfo(const std::type_info& type, const std::type_info& superType);
+    int registerClassAsTypeInfo(const std::type_info& type, const std::type_info& superType, const char* name);
 };
 
 }
@@ -35,13 +36,23 @@ HierarchicalClassRegistryBase::~HierarchicalClassRegistryBase()
 }
 
 
-int HierarchicalClassRegistryBase::registerClassAsTypeInfo(const std::type_info& type, const std::type_info& superType)
+void HierarchicalClassRegistryBase::reserve(int n)
 {
-    return impl->registerClassAsTypeInfo(type, superType);
+    impl->polymorphicIdMap.reserve(n);
+    impl->superClassPolymorphicIdMap.reserve(n);
+    impl->classNameMap.reserve(n);
 }
 
 
-int HierarchicalClassRegistryBase::Impl::registerClassAsTypeInfo(const std::type_info& type, const std::type_info& superType)
+int HierarchicalClassRegistryBase::registerClassAsTypeInfo
+(const std::type_info& type, const std::type_info& superType, const char* name)
+{
+    return impl->registerClassAsTypeInfo(type, superType, name);
+}
+
+
+int HierarchicalClassRegistryBase::Impl::registerClassAsTypeInfo
+(const std::type_info& type, const std::type_info& superType, const char* name)
 {
     std::lock_guard<std::mutex> lock(polymorphicIdMutex);
 
@@ -69,6 +80,13 @@ int HierarchicalClassRegistryBase::Impl::registerClassAsTypeInfo(const std::type
         superClassPolymorphicIdMap[id] = superClassId;
     }
 
+    if(name){
+        if(id >= static_cast<int>(classNameMap.size())){
+            classNameMap.resize(id + 1);
+        }
+        classNameMap[id] = name;
+    }
+
     return id;
 }
 
@@ -85,7 +103,7 @@ int HierarchicalClassRegistryBase::getClassId(const std::type_info& type, int un
 }
 
 
-int HierarchicalClassRegistryBase::superClassId(int polymorphicId) const
+int HierarchicalClassRegistryBase::getSuperClassId(int polymorphicId) const
 {
     std::lock_guard<std::mutex> lock(impl->polymorphicIdMutex);
     return impl->superClassPolymorphicIdMap[polymorphicId];
@@ -96,4 +114,18 @@ int HierarchicalClassRegistryBase::numRegisteredClasses() const
 {
     std::lock_guard<std::mutex> lock(impl->polymorphicIdMutex);
     return impl->polymorphicIdMap.size();
+}
+
+
+std::string HierarchicalClassRegistryBase::getClassName(int classId) const
+{
+    std::lock_guard<std::mutex> lock(impl->polymorphicIdMutex);
+    while(classId > 0 && classId < static_cast<int>(impl->classNameMap.size())){
+        const auto& name = impl->classNameMap[classId];
+        if(!name.empty()){
+            return name;
+        }
+        classId = impl->superClassPolymorphicIdMap[classId];
+    }
+    return string();
 }

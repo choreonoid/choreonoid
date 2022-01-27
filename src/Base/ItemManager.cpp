@@ -301,7 +301,7 @@ void ItemManager::Impl::registerClass
 void ItemManager::addAlias_
 (const std::type_info& type, const std::string& aliasClassName, const std::string& aliasModuleName)
 {
-    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->getClassId(type));
     if(p != itemClassIdToInfoMap.end()){
         auto classInfo =  p->second;
         aliasClassNameToAliasModuleNameToTrueNamePairMap[aliasClassName][aliasModuleName] =
@@ -428,7 +428,7 @@ Item* ItemManager::createItemWithDialog_
 {
     Item* newItem = nullptr;
     
-    auto iter = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    auto iter = itemClassIdToInfoMap.find(itemClassRegistry->getClassId(type));
     if(iter == itemClassIdToInfoMap.end()){
         showWarningDialog(fmt::format(_("Class {} is not registered as an item class."), type.name()));
 
@@ -489,7 +489,7 @@ CreationDialog* ItemManager::Impl::createCreationDialog(const std::type_info& ty
 {
     CreationDialog* dialog = nullptr;
     
-    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->getClassId(type));
     if(p != itemClassIdToInfoMap.end()){
         auto& info = p->second;
         const char* className_c_str = info->className.c_str();
@@ -659,7 +659,7 @@ bool DefaultItemCreationPanel::updateItem(Item* protoItem, Item* /* parentItem *
 
 Item* ItemManager::getPrototypeInstance_(const std::type_info& type)
 {
-    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->getClassId(type));
     if(p != itemClassIdToInfoMap.end()){
         auto& info = p->second;
         if(!info->creationDialogs.empty()){
@@ -680,7 +680,7 @@ ClassInfoPtr ItemManager::Impl::registerFileIO(const type_info& type, ItemFileIO
 {
     ClassInfoPtr classInfo;
     
-    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->getClassId(type));
     if(p != itemClassIdToInfoMap.end()){
         classInfo = p->second;
         fileIO->setItemClassInfo(classInfo);
@@ -747,7 +747,7 @@ std::vector<ItemFileIO*> ItemManager::getFileIOs
             }
         }
         if(includeSuperClassIos){
-            classId = itemClassRegistry->superClassId(classId);
+            classId = itemClassRegistry->getSuperClassId(classId);
         } else {
             classId = 0;
         }
@@ -759,7 +759,7 @@ std::vector<ItemFileIO*> ItemManager::getFileIOs
 vector<ItemFileIO*> ItemManager::getFileIOs(const std::type_info& type)
 {
     vector<ItemFileIO*> fileIOs;
-    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->getClassId(type));
     if(p != itemClassIdToInfoMap.end()){
         auto& classInfo = p->second;
         for(auto& fileIO : classInfo->fileIOs){
@@ -773,7 +773,7 @@ vector<ItemFileIO*> ItemManager::getFileIOs(const std::type_info& type)
 ItemFileIO* ItemManager::findFileIO(const std::type_info& type, const std::string& format)
 {
     ItemFileIO* found = nullptr;
-    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->getClassId(type));
     if(p != itemClassIdToInfoMap.end()){
         auto& classInfo = p->second;
         for(auto& fileIO : classInfo->fileIOs){
@@ -792,7 +792,7 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
 {
     ItemFileIO* targetFileIO = nullptr;
     
-    auto p = itemClassIdToInfoMap.find(itemClassRegistry->classId(type));
+    auto p = itemClassIdToInfoMap.find(itemClassRegistry->getClassId(type));
     if(p == itemClassIdToInfoMap.end()){
         messageView->putln(
             fmt::format(_("\"{0}\" cannot be accessed because the specified item type \"{1}\" is not registered."),

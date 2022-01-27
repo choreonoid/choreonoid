@@ -104,8 +104,8 @@ void putItemTreeWithPolymorphicIds()
     cout << "Number of item classes: " << registry.numRegisteredClasses() << endl;
     for(auto& item : RootItem::instance()->descendantItems()){
         int id = item->classId();
-        cout << fmt::format("{}: id {} : {}",
-                            item->name(), id, registry.superClassId(id)) << endl;
+        cout << fmt::format(
+            "{}: id {} : {}", item->name(), id, registry.getSuperClassId(id)) << endl;
     }
 }
 

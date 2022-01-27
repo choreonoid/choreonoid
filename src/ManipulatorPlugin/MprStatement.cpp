@@ -46,7 +46,7 @@ MprStatement::~MprStatement()
 
 void MprStatement::validateClassId() const
 {
-    classId_ = MprStatementClassRegistry::instance().classId(this);
+    classId_ = MprStatementClassRegistry::instance().getClassId(this);
 }
 
 

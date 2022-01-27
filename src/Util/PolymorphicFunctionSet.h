@@ -36,7 +36,7 @@ public:
 
     void setFunction(const std::type_info& type, Function func)
     {
-        int id = registry.classId(type);
+        int id = registry.getClassId(type);
         if(id >= 0){
             if(validDispatchTableSize > id + 1){
                 validDispatchTableSize = id + 1;
@@ -110,7 +110,7 @@ public:
         if(dispatchTable[id]){
             return id;
         }
-        int superClassId = registry.superClassId(id);
+        int superClassId = registry.getSuperClassId(id);
         if(superClassId < 0){
             return -1;
         }
@@ -153,7 +153,7 @@ public:
     template <class Object>
     inline void dispatchAs(Object* obj) const
     {
-        dispatch(obj, registry.template classId<Object>(0));
+        dispatch(obj, registry.template getClassId<Object>(0));
     }
 
     class Dispatcher {

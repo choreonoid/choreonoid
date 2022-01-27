@@ -243,13 +243,13 @@ Item::Impl::~Impl()
 
 void Item::validateClassId() const
 {
-    classId_ = ItemClassRegistry::instance().classId(this);
+    classId_ = ItemClassRegistry::instance().getClassId(this);
 }
 
 
 int Item::superClassId() const
 {
-    return ItemClassRegistry::instance().superClassId(classId());
+    return ItemClassRegistry::instance().getSuperClassId(classId());
 }
 
 
