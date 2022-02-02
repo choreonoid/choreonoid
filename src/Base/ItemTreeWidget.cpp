@@ -11,6 +11,7 @@
 #include <QHeaderView>
 #include <QModelIndex>
 #include <QBoxLayout>
+#include <cnoid/stdx/optional>
 #include <fmt/format.h>
 #include <map>
 #include <unordered_map>
@@ -26,21 +27,7 @@ namespace {
 
 map<string, vector<ItemTreeWidget::Impl*>> selectionSyncGroupMap;
 
-class ItwItem : public QTreeWidgetItem
-{
-public:
-    Item* item;
-    ItemTreeWidget::Impl* widgetImpl;
-    ScopedConnection itemNameConnection;
-    ScopedConnection itemSelectionConnection;
-    ScopedConnection itemCheckConnection;
-    ScopedConnection displayUpdateConnection;
-    bool isExpandedBeforeRemoving;
-
-    ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl);
-    virtual ~ItwItem();
-    virtual void setData(int column, int role, const QVariant& value) override;
-};
+typedef ItemTreeWidget::ItwItem ItwItem;
 
 }
 
@@ -120,6 +107,7 @@ public:
     void updateCheckColumnIter(QTreeWidgetItem* twItem, int checkId, int column);
     void releaseCheckColumn(int checkId);
     void updateItemDisplay(ItwItem* itwItem);
+    void applyDefaultItemDisplay(Item* item, Display& display);
     void insertItem(QTreeWidgetItem* parentTwItem, Item* item, bool isTopLevelItemCandidate);
     ItwItem* findNextItwItem(Item* item, bool isTopLevelItem);
     ItwItem* findNextItwItemInSubTree(Item* item, bool doTraverse);
@@ -169,78 +157,33 @@ public:
     void restoreExpandedItems(const Archive& archive, const ListingPtr expanded);
 };
 
-}
-
-
-QBrush ItemTreeWidget::Display::foreground() const
+class ItemTreeWidget::ItwItem : public QTreeWidgetItem
 {
-    return item->foreground(0);
-}
+public:
+    Item* item;
+    ItemTreeWidget::Impl* widgetImpl;
+    ScopedConnection itemNameConnection;
+    ScopedConnection itemSelectionConnection;
+    ScopedConnection itemCheckConnection;
+    ScopedConnection displayUpdateConnection;
+    bool isExpandedBeforeRemoving;
+    bool isTemporalAttributeDisplay;
 
-void ItemTreeWidget::Display::setForeground(const QBrush& brush)
-{
-    item->setForeground(0, brush);
-}
+    struct DisplayState {
+        QColor foregroundColor;
+        bool fontItalicState;
+    };
+    stdx::optional<DisplayState> orgDisplayState;
 
-QBrush ItemTreeWidget::Display::background() const
-{
-    return item->background(0);
-}
-    
-void ItemTreeWidget::Display::setBackground(const QBrush& brush)
-{
-    item->setBackground(0, brush);
-}
+    ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl);
+    virtual ~ItwItem();
+    virtual void setData(int column, int role, const QVariant& value) override;
+};
 
-QFont ItemTreeWidget::Display::font() const
-{
-    return item->font(0);
-}
-
-void ItemTreeWidget::Display::setFont(const QFont& font)
-{
-    item->setFont(0, font);
-}
-
-QIcon ItemTreeWidget::Display::icon() const
-{
-    return item->icon(0);
-}
-
-void ItemTreeWidget::Display::setIcon(const QIcon& icon)
-{
-    item->setIcon(0, icon);
-}
-
-void ItemTreeWidget::Display::setToolTip(const std::string& toolTip)
-{
-    item->setText(0, toolTip.c_str());
-}
-
-void ItemTreeWidget::Display::setStatusTip(const std::string& statusTip)
-{
-    item->setStatusTip(0, statusTip.c_str());
-}
-
-void ItemTreeWidget::Display::setNameEditable(bool on)
-{
-    if(on){
-        item->setFlags(item->flags() | Qt::ItemIsEditable);
-    } else {
-        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-    }
 }
 
 
-void ItemTreeWidget::Display::setDisabled(bool on)
-{
-    item->setDisabled(on);
-}
-
-
-namespace {
-
-ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
+ItemTreeWidget::ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
     : item(item),
       widgetImpl(widgetImpl)
 {
@@ -285,17 +228,16 @@ ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
     }
 
     isExpandedBeforeRemoving = false;
+    isTemporalAttributeDisplay = false;
 
-    if(widgetImpl->displayFunctions.hasFunctionFor(item)){
-        widgetImpl->updateItemDisplay(this);
-        displayUpdateConnection =
-            item->sigUpdated().connect(
-                [this](){ this->widgetImpl->updateItemDisplay(this); });
-    }
+    widgetImpl->updateItemDisplay(this);
+    displayUpdateConnection =
+        item->sigUpdated().connect(
+            [this](){ this->widgetImpl->updateItemDisplay(this); });
 }
 
 
-ItwItem::~ItwItem()
+ItemTreeWidget::ItwItem::~ItwItem()
 {
     widgetImpl->itemToItwItemMap.erase(item);
 
@@ -305,7 +247,7 @@ ItwItem::~ItwItem()
 }
 
 
-void ItwItem::setData(int column, int role, const QVariant& value)
+void ItemTreeWidget::ItwItem::setData(int column, int role, const QVariant& value)
 {
     if(column == 0){
         QTreeWidgetItem::setData(column, role, value);
@@ -330,6 +272,80 @@ void ItwItem::setData(int column, int role, const QVariant& value)
     }
 }
 
+
+QBrush ItemTreeWidget::Display::foreground() const
+{
+    return itwItem->foreground(0);
+}
+
+
+void ItemTreeWidget::Display::setForeground(const QBrush& brush)
+{
+    itwItem->setForeground(0, brush);
+}
+
+
+QBrush ItemTreeWidget::Display::background() const
+{
+    return itwItem->background(0);
+}
+    
+
+void ItemTreeWidget::Display::setBackground(const QBrush& brush)
+{
+    itwItem->setBackground(0, brush);
+}
+
+
+QFont ItemTreeWidget::Display::font() const
+{
+    return itwItem->font(0);
+}
+
+
+void ItemTreeWidget::Display::setFont(const QFont& font)
+{
+    itwItem->setFont(0, font);
+}
+
+
+QIcon ItemTreeWidget::Display::icon() const
+{
+    return itwItem->icon(0);
+}
+
+
+void ItemTreeWidget::Display::setIcon(const QIcon& icon)
+{
+    itwItem->setIcon(0, icon);
+}
+
+
+void ItemTreeWidget::Display::setToolTip(const std::string& toolTip)
+{
+    itwItem->setText(0, toolTip.c_str());
+}
+
+
+void ItemTreeWidget::Display::setStatusTip(const std::string& statusTip)
+{
+    itwItem->setStatusTip(0, statusTip.c_str());
+}
+
+
+void ItemTreeWidget::Display::setNameEditable(bool on)
+{
+    if(on){
+        itwItem->setFlags(itwItem->flags() | Qt::ItemIsEditable);
+    } else {
+        itwItem->setFlags(itwItem->flags() & ~Qt::ItemIsEditable);
+    }
+}
+
+
+void ItemTreeWidget::Display::setDisabled(bool on)
+{
+    itwItem->setDisabled(on);
 }
 
 
@@ -337,6 +353,8 @@ ItemTreeWidget::ItemTreeWidget(QWidget* parent)
     : QWidget(parent)
 {
     impl = new Impl(this);
+    impl->initialize();
+    
     auto box = new QVBoxLayout;
     box->setContentsMargins(0, 0, 0, 0);
     box->addWidget(impl);
@@ -349,7 +367,7 @@ ItemTreeWidget::Impl::Impl(ItemTreeWidget* self)
       projectRootItem(RootItem::instance()),
       projectManager(ProjectManager::instance())
 {
-    initialize();
+
 }
 
 
@@ -450,6 +468,10 @@ void ItemTreeWidget::Impl::initialize()
     fontPointSizeDiff = 0;
 
     unifiedEditHistory = UnifiedEditHistory::instance();
+
+    self->customizeDisplay_(
+        typeid(Item),
+        [this](Item* item, Display& display){ applyDefaultItemDisplay(item, display); });
 }
 
 
@@ -807,8 +829,54 @@ void ItemTreeWidget::Impl::releaseCheckColumn(int checkId)
 
 void ItemTreeWidget::Impl::updateItemDisplay(ItwItem* itwItem)
 {
-    itemDisplay.item = itwItem;
+    itemDisplay.itwItem = itwItem;
     displayFunctions.dispatch(itwItem->item);
+}
+
+
+void ItemTreeWidget::Impl::applyDefaultItemDisplay(Item* item, Display& display)
+{
+    auto& itwItem = display.itwItem;
+
+    bool isTemporal = item->isTemporal();
+    while(item->isSubItem()){
+        item = item->parentItem();
+        isTemporal = item->isTemporal();
+    }
+    
+    if(isTemporal){
+        if(!itwItem->isTemporalAttributeDisplay){
+            ItwItem::DisplayState state;
+            auto fg = display.foreground();
+            qreal h, s, v;
+            state.foregroundColor = fg.color();
+            state.foregroundColor.getHsvF(&h, &s, &v);
+            if(v >= 0.8){
+                v = 0.6;
+            } else if(v <= 0.2){
+                v = 0.4;
+            }
+            fg.setColor(QColor::fromHsvF(h, s, v));
+            display.setForeground(fg);
+            auto font = display.font();
+            state.fontItalicState = font.italic();
+            font.setItalic(true);
+            display.setFont(font);
+            itwItem->isTemporalAttributeDisplay = true;
+            itwItem->orgDisplayState = state;
+        }
+    } else {
+        if(itwItem->isTemporalAttributeDisplay){
+            auto& state = *itwItem->orgDisplayState;
+            auto fg = display.foreground();
+            fg.setColor(state.foregroundColor);
+            display.setForeground(fg);
+            auto font = display.font();
+            font.setItalic(state.fontItalicState);
+            display.setFont(font);
+            itwItem->isTemporalAttributeDisplay = false;
+        }
+    }
 }
 
 

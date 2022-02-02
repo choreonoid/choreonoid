@@ -558,6 +558,10 @@ bool ControllerInfo::enableLog()
     logItem = controller->findChildItem<ControllerLogItem>(logName);
     if(logItem){
         logItem->resetSeq();
+        if(!logItem->isTemporal()){
+            logItem->setTemporal();
+            logItem->notifyUpdate();
+        }
     } else {
         logItem = controller->createLogItem();
         logItem->setTemporal();
@@ -898,10 +902,15 @@ void SimulationBody::Impl::initializeRecordItems()
 
     bool doAddMotionItem = false;
     auto motionItem = parentOfRecordItems->findChildItem<BodyMotionItem>(recordItemPrefix);
-    if(!motionItem){
-        motionItem = new BodyMotionItem();
-        motionItem->setTemporal();
+    if(motionItem){
+        if(!motionItem->isTemporal()){
+            motionItem->setTemporal();
+            motionItem->notifyUpdate();
+        }
+    } else {
+        motionItem = new BodyMotionItem;
         motionItem->setName(recordItemPrefix);
+        motionItem->setTemporal();
         doAddMotionItem = true;
     }
 
@@ -1814,8 +1823,13 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
             collisionPairsBuf.clear();
             string collisionSeqName = self->name() + "-collisions";
             auto collisionSeqItem = worldItem->findChildItem<CollisionSeqItem>(collisionSeqName);
-            if(!collisionSeqItem){
-                collisionSeqItem = new CollisionSeqItem();
+            if(collisionSeqItem){
+                if(!collisionSeqItem->isTemporal()){
+                    collisionSeqItem->setTemporal();
+                    collisionSeqItem->notifyUpdate();
+                }
+            } else {
+                collisionSeqItem = new CollisionSeqItem;
                 collisionSeqItem->setTemporal();
                 collisionSeqItem->setName(collisionSeqName);
                 worldItem->addChildItem(collisionSeqItem);
@@ -2792,7 +2806,7 @@ bool SimulatorItem::Impl::store(Archive& archive)
     archive.write("controllerOptions", controllerOptionString_, DOUBLE_QUOTED);
     archive.write("scene_view_edit_mode_blocking", isSceneViewEditModeBlockedDuringSimulation);
     
-    ListingPtr idseq = new Listing();
+    ListingPtr idseq = new Listing;
     idseq->setFlowStyle(true);
     for(auto& engine : getOrCreateLogEngine()->subEngines){
         if(ValueNodePtr id = archive.getItemId(engine->item())){

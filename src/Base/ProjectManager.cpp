@@ -16,6 +16,7 @@
 #include "AppUtil.h"
 #include "FileDialog.h"
 #include "MainWindow.h"
+#include "CheckBox.h"
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <cnoid/FilePathVariableProcessor>
@@ -41,6 +42,15 @@ bool isLayoutInclusionMode = true;
 int projectBeingLoadedCounter = 0;
 MainWindow* mainWindow = nullptr;
 MessageView* mv = nullptr;
+
+class SaveDialog : public FileDialog
+{
+public:
+    CheckBox temporaryItemSaveCheck;
+
+    SaveDialog(ProjectManager::Impl* manager);
+    std::string getSaveFilename();
+};
 
 }
 
@@ -71,12 +81,11 @@ public:
     template<class TObject>
     bool storeObjects(Archive& parentArchive, const char* key, vector<TObject*> objects);
         
-    bool saveProject(const string& filename, Item* item = nullptr);
+    bool saveProject(const string& filename, Item* item, bool doSaveTemporaryItems);
         
     void onProjectOptionsParsed(boost::program_options::variables_map& v);
     void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
-    std::string getSaveFilename(FileDialog& dialog);
-    bool onSaveDialogAboutToFinish(FileDialog& dialog, int result);
+    bool onSaveDialogAboutToFinish(int result);
     bool confirmToCloseProject();
     bool checkValidItemExistence(Item* item);
     bool checkItemTreeConsistencyWithArchive(Item* item);
@@ -101,6 +110,8 @@ public:
     ArchiverMapMap archivers;
 
     MappingPtr config;
+
+    SaveDialog* saveDialog;
 
     Signal<void()> sigProjectCleared;
     Signal<void(int recursiveLevel)> sigProjectAboutToBeLoaded;
@@ -146,6 +157,7 @@ ProjectManager::Impl::Impl(ProjectManager* self, ExtensionManager* ext)
 {
     config = AppConfig::archive()->openMapping("ProjectManager");
     ::isLayoutInclusionMode = config->get({ "include_layout", "store_perspective" }, defaultLayoutInclusionMode);
+    saveDialog = nullptr;
     isMainInstance = true;
 
     OptionManager& om = ext->optionManager();
@@ -180,6 +192,9 @@ ProjectManager::Impl::~Impl()
 {
     if(isMainInstance){
         config->write("include_layout", ::isLayoutInclusionMode);
+    }
+    if(saveDialog){
+        delete saveDialog;
     }
 }
 
@@ -596,11 +611,11 @@ template<class TObject> bool ProjectManager::Impl::storeObjects
 
 bool ProjectManager::saveProject(const string& filename, Item* item)
 {
-    return impl->saveProject(filename, item);
+    return impl->saveProject(filename, item, false);
 }
 
 
-bool ProjectManager::Impl::saveProject(const string& filename, Item* item)
+bool ProjectManager::Impl::saveProject(const string& filename, Item* item, bool doSaveTemporaryItems)
 {
     YAMLWriter writer(filename);
     if(!writer.isFileOpen()){
@@ -631,6 +646,7 @@ bool ProjectManager::Impl::saveProject(const string& filename, Item* item)
     bool saved = false;
     
     itemTreeArchiver.reset();
+    itemTreeArchiver.setTemporaryItemSaveEnabled(doSaveTemporaryItems);
 
     ArchivePtr archive = new Archive;
     archive->initSharedInfo(filename, isSubProject);
@@ -714,7 +730,7 @@ bool ProjectManager::overwriteCurrentProject()
     if(impl->currentProjectFile.empty()){
         saved = showDialogToSaveProject();
     } else {
-        saved = saveProject(impl->currentProjectFile);
+        saved = impl->saveProject(impl->currentProjectFile, nullptr, false);
     }
     return saved;
 }
@@ -779,66 +795,40 @@ bool ProjectManager::showDialogToLoadProject()
 
 bool ProjectManager::showDialogToSaveProject()
 {
-    FileDialog dialog(MainWindow::instance());
-    dialog.setWindowTitle(_("Save a project"));
-    dialog.setFileMode(QFileDialog::AnyFile);
-    dialog.setAcceptMode(QFileDialog::AcceptSave);
-    dialog.setViewMode(QFileDialog::List);
-    dialog.setLabelText(QFileDialog::Accept, _("Save"));
-    dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
-    dialog.setOption(QFileDialog::DontConfirmOverwrite);
+    auto& dialog = impl->saveDialog;
     
-    QStringList filters;
-    filters << _("Project files (*.cnoid)");
-    filters << _("Any files (*)");
-    dialog.setNameFilters(filters);
-
-    dialog.updatePresetDirectories();
-
-    if(!dialog.selectFilePath(impl->currentProjectFile)){
-        dialog.selectFile(impl->currentProjectName);
+    if(!dialog){
+        dialog = new SaveDialog(impl);
     }
 
-    dialog.sigAboutToFinish().connect(
-        [&](int result){ return impl->onSaveDialogAboutToFinish(dialog, result); });
+    dialog->updatePresetDirectories();
+
+    if(!dialog->selectFilePath(impl->currentProjectFile)){
+        dialog->selectFile(impl->currentProjectName);
+    }
 
     bool saved = false;
-    if(dialog.exec() == QDialog::Accepted){
-        saved = saveProject(impl->getSaveFilename(dialog));
+    if(dialog->exec() == QDialog::Accepted){
+        saved = impl->saveProject(
+            dialog->getSaveFilename(), nullptr, dialog->temporaryItemSaveCheck.isChecked());
     }
 
     return saved;
 }
 
 
-std::string ProjectManager::Impl::getSaveFilename(FileDialog& dialog)
-{
-    std::string filename;
-    auto filenames = dialog.selectedFiles();
-    if(!filenames.isEmpty()){
-        filename = filenames.front().toStdString();
-        filesystem::path path(fromUTF8(filename));
-        string ext = path.extension().string();
-        if(ext != ".cnoid"){
-            filename += ".cnoid";
-        }
-    }
-    return filename;
-}
-
-
-bool ProjectManager::Impl::onSaveDialogAboutToFinish(FileDialog& dialog, int result)
+bool ProjectManager::Impl::onSaveDialogAboutToFinish(int result)
 {
     bool finished = true;
     if(result == QFileDialog::Accepted){
-        auto filename = getSaveFilename(dialog);
+        auto filename = saveDialog->getSaveFilename();
         filesystem::path path(fromUTF8(filename));
         if(filesystem::exists(path)){
-            dialog.fileDialog()->show();
+            saveDialog->fileDialog()->show();
             QString file(toUTF8(path.filename().string()).c_str());
             QString message(QString(_("%1 already exists. Do you want to replace it? ")).arg(file));
-            auto button =
-                QMessageBox::warning(&dialog, dialog.windowTitle(), message, QMessageBox::Ok | QMessageBox::Cancel);
+            auto button = QMessageBox::warning(
+                saveDialog, saveDialog->windowTitle(), message, QMessageBox::Ok | QMessageBox::Cancel);
             if(button == QMessageBox::Cancel){
                 finished = false;
             }
@@ -937,4 +927,50 @@ void ProjectManager::setArchiver(
 void ProjectManager::resetArchivers(const std::string& moduleName)
 {
     impl->archivers.erase(moduleName);
+}
+
+
+SaveDialog::SaveDialog(ProjectManager::Impl* manager)
+{
+    setWindowTitle(_("Save a project"));
+    setFileMode(QFileDialog::AnyFile);
+    setAcceptMode(QFileDialog::AcceptSave);
+    setViewMode(QFileDialog::List);
+    setLabelText(QFileDialog::Accept, _("Save"));
+    setLabelText(QFileDialog::Reject, _("Cancel"));
+    setOption(QFileDialog::DontConfirmOverwrite);
+
+    auto optionPanel = new QWidget;
+    auto vbox = new QVBoxLayout;
+    vbox->setContentsMargins(0, 0, 0, 0);
+    temporaryItemSaveCheck.setText(_("Save temporary items"));
+    vbox->addWidget(&temporaryItemSaveCheck);
+    optionPanel->setLayout(vbox);
+    insertOptionPanel(optionPanel);
+    
+    QStringList filters;
+    filters << _("Project files (*.cnoid)");
+    filters << _("Any files (*)");
+    setNameFilters(filters);
+
+    sigAboutToFinish().connect(
+        [this, manager](int result){
+            return manager->onSaveDialogAboutToFinish(result);
+        });
+}
+
+
+std::string SaveDialog::getSaveFilename()
+{
+    std::string filename;
+    auto filenames = selectedFiles();
+    if(!filenames.isEmpty()){
+        filename = filenames.front().toStdString();
+        filesystem::path path(fromUTF8(filename));
+        string ext = path.extension().string();
+        if(ext != ".cnoid"){
+            filename += ".cnoid";
+        }
+    }
+    return filename;
 }

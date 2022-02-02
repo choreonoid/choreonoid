@@ -66,10 +66,11 @@ public:
     ref_ptr<Mapping> storeCurrentLayout();
     void restoreLayout(Mapping* layout);
 
+    class Impl;
+
 private:
     ProjectManager(ExtensionManager* ext);
 
-    class Impl;
     Impl* impl;
 
     friend class ExtensionManager;

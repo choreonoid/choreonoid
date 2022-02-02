@@ -4,6 +4,7 @@
 
 #include "Dialog.h"
 #include "MainWindow.h"
+#include <QStyle>
 
 using namespace cnoid;
 
@@ -74,4 +75,16 @@ void Dialog::hideEvent(QHideEvent* event)
 {
     lastWindowPosition_ = geometry();
     QDialog::hideEvent(event);
+}
+
+
+int Dialog::layoutHorizontalSpacing()
+{
+    return style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
+}
+
+
+int Dialog::layoutVerticalSpacing()
+{
+    return style()->pixelMetric(QStyle::PM_LayoutVerticalSpacing);
 }

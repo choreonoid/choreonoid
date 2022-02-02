@@ -31,6 +31,9 @@ public:
     bool isWindowPositionKeepingMode() const { return isWindowPositionKeepingMode_; }
     void show();
 
+    int layoutHorizontalSpacing();
+    int layoutVerticalSpacing();
+
 protected:
     virtual void onAccepted();
     virtual void onRejected();

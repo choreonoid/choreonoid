@@ -479,7 +479,8 @@ bool ItemFileIO::Impl::saveItem
             optionArchive = new Mapping;
             self->storeOptions(optionArchive);
         }
-        if(interfaceLevel != Conversion){
+        if(!isExport){
+            item->setTemporal(false);
             item->updateFileInformation(filename, format, optionArchive);
         }
         mv->put(_(" -> ok!\n"));
@@ -487,10 +488,6 @@ bool ItemFileIO::Impl::saveItem
     mv->flush();
 
     this->parentItem = nullptr;
-
-    if(saved && !isExport){
-        item->setTemporal(false);
-    }
 
     return saved;
 }

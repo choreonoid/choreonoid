@@ -29,10 +29,13 @@ public:
     int numArchivedItems;
     int numRestoredItems;
     const std::set<std::string>* pOptionalPlugins;
+    bool isTemporaryItemSaveEnabled;
 
     Impl();
     ArchivePtr store(Archive& parentArchive, Item* item);
     ArchivePtr storeIter(Archive& parentArchive, Item* item, bool& isComplete);
+    bool checkIfTemporal(Item* item);
+    bool checkSubTreeTemporality(Item* item);
     void storeAddons(Archive& archive, Item* item);
     ItemList<> restore(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
     void restoreItemIter(Archive& archive, Item* parentItem, ItemList<>& io_topLevelItems, int level);
@@ -56,7 +59,7 @@ ItemTreeArchiver::ItemTreeArchiver()
 ItemTreeArchiver::Impl::Impl()
     : mv(MessageView::instance())
 {
-    
+
 }
 
 
@@ -72,6 +75,19 @@ void ItemTreeArchiver::reset()
     impl->numArchivedItems = 0;
     impl->numRestoredItems = 0;
     impl->pOptionalPlugins = nullptr;
+    impl->isTemporaryItemSaveEnabled = false;
+}
+
+
+void ItemTreeArchiver::setTemporaryItemSaveEnabled(bool on)
+{
+    impl->isTemporaryItemSaveEnabled = on;
+}
+
+
+bool ItemTreeArchiver::isTemporaryItemSaveEnabled() const
+{
+    return impl->isTemporaryItemSaveEnabled;
 }
 
 
@@ -179,9 +195,12 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
         return archive;
     }
 
-    ListingPtr children = new Listing();
-    for(Item* childItem = item->childItem(); childItem; childItem = childItem->nextItem()){
-        if(childItem->isTemporal()){
+    ListingPtr children = new Listing;
+    for(auto childItem = item->childItem(); childItem; childItem = childItem->nextItem()){
+        if(checkIfTemporal(childItem)){
+            continue;
+        }
+        if(!isTemporaryItemSaveEnabled && childItem->isTemporal()){
             continue;
         }
         ArchivePtr childArchive = storeIter(*archive, childItem, isComplete);
@@ -197,6 +216,38 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
     }
 
     return archive;
+}
+
+
+bool ItemTreeArchiver::Impl::checkIfTemporal(Item* item)
+{
+    bool isTemporal = false;
+    if(item->isTemporal()){
+        if(isTemporaryItemSaveEnabled || !checkSubTreeTemporality(item)){
+            item->setTemporal(false);
+            item->notifyUpdate();
+        } else {
+            isTemporal = true;
+        }
+    }
+    return isTemporal;
+}
+
+
+bool ItemTreeArchiver::Impl::checkSubTreeTemporality(Item* item)
+{
+    for(auto childItem = item->childItem(); childItem; childItem = childItem->nextItem()){
+        if(childItem->isSubItem()){
+            continue;
+        }
+        if(!childItem->isTemporal()){
+            return false;
+        }
+        if(!checkSubTreeTemporality(childItem)){
+            return false;
+        }
+    }
+    return true;
 }
 
 

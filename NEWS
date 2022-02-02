@@ -73,9 +73,10 @@ Changes since 1.7.0:
 * Added RegionIntrusionDetectorItem
 * Added a function to register and switch multiple layouts of the main window
 * Improved SensorVisualizerItem to support acceleration sensors and rate gyro sensors
-* Add the choreonoid-info command (experimental)
+* Added the choreonoid-info command (experimental)
 * Enabled the translation of the Qt built-in messages
-* Arrange the main menu items
+* Arranged the main menu items
+* Fixed the display style of temporal items in ItemTreeWidget
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================

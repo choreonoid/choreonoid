@@ -20,6 +20,8 @@ public:
     ItemTreeArchiver();
     ~ItemTreeArchiver();
     void reset();
+    void setTemporaryItemSaveEnabled(bool on);
+    bool isTemporaryItemSaveEnabled() const;
     ArchivePtr store(Archive* parentArchive, Item* topItem);
 
     /**

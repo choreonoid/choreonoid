@@ -19,6 +19,7 @@ class CNOID_EXPORT ItemTreeWidget : public QWidget
 {
 public:
     class Impl;
+    class ItwItem;
 
     ItemTreeWidget(QWidget* parent = nullptr);
     ~ItemTreeWidget();
@@ -61,7 +62,7 @@ public:
         void setNameEditable(bool on);
         void setDisabled(bool on);
     private:
-        QTreeWidgetItem* item;
+        ItwItem* itwItem;
         friend class Impl;
     };
 
