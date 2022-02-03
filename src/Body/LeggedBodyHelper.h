@@ -50,8 +50,8 @@ private:
     BodyPtr body_;
     bool isValid_;
     struct FootInfo {
-        Link* link;
-        Link* kneePitchJoint;
+        LinkPtr link;
+        LinkPtr kneePitchJoint;
         Vector3 homeCop;
         Vector3 soleCenter;
     };

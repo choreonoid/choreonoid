@@ -32,6 +32,7 @@ class MultiDeviceStateSeqEngine : public TimeSyncItemEngine
     shared_ptr<MultiDeviceStateSeq> seq;
     BodyPtr body;
     vector<DeviceStatePtr> prevStates;
+    ScopedConnection connection;
 
 public:
         
@@ -40,7 +41,7 @@ public:
           seq(seqItem->seq()),
           body(bodyItem->body())
     {
-        seqItem->sigUpdated().connect([this](){ refresh(); });
+        connection = seqItem->sigUpdated().connect([this](){ refresh(); });
     }
 
     virtual bool onTimeChanged(double time){
@@ -70,10 +71,10 @@ public:
 
 TimeSyncItemEngine* createMultiDeviceStateSeqEngine(BodyItem* bodyItem, AbstractSeqItem* seqItem)
 {
-    if(MultiDeviceStateSeqItem* item = dynamic_cast<MultiDeviceStateSeqItem*>(seqItem)){
+    if(auto item = dynamic_cast<MultiDeviceStateSeqItem*>(seqItem)){
         return new MultiDeviceStateSeqEngine(item, bodyItem);
     }
-    return 0;
+    return nullptr;
 }
 
 }
@@ -81,18 +82,11 @@ TimeSyncItemEngine* createMultiDeviceStateSeqEngine(BodyItem* bodyItem, Abstract
 
 void MultiDeviceStateSeqItem::initializeClass(ExtensionManager* ext)
 {
-    static bool initialized = false;
+    ext->itemManager().registerClass<MultiDeviceStateSeqItem, AbstractMultiSeqItem>(
+        N_("MultiDeviceStateSeqItem"));
 
-    if(!initialized){
-        
-        ext->itemManager().registerClass<MultiDeviceStateSeqItem, AbstractMultiSeqItem>(
-            N_("MultiDeviceStateSeqItem"));
-        
-        BodyMotionItem::addExtraSeqItemFactory(MultiDeviceStateSeq::key(), createMultiDeviceStateSeqItem);
-        BodyMotionEngine::addExtraSeqEngineFactory(MultiDeviceStateSeq::key(), createMultiDeviceStateSeqEngine);
-        
-        initialized = true;
-    }
+    BodyMotionItem::addExtraSeqItemFactory(MultiDeviceStateSeq::key(), createMultiDeviceStateSeqItem);
+    BodyMotionEngine::addExtraSeqEngineFactory(MultiDeviceStateSeq::key(), createMultiDeviceStateSeqEngine);
 }
 
         

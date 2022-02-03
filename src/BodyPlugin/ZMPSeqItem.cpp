@@ -35,14 +35,15 @@ class ZMPSeqEngine : public TimeSyncItemEngine
 {
     shared_ptr<ZMPSeq> seq;
     BodyItemPtr bodyItem;
+    ScopedConnection connection;
+    
 public:
-        
     ZMPSeqEngine(ZMPSeqItem* seqItem, BodyItem* bodyItem)
         : TimeSyncItemEngine(seqItem),
           seq(seqItem->zmpseq()),
           bodyItem(bodyItem)
     {
-        seqItem->sigUpdated().connect([this](){ refresh(); });
+        connection = seqItem->sigUpdated().connect([this](){ refresh(); });
     }
 
     virtual bool onTimeChanged(double time) override
