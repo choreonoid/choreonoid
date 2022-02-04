@@ -405,7 +405,7 @@ void BodyMotionItem::doPutProperties(PutPropertyFunction& putProperty)
 bool BodyMotionItem::store(Archive& archive)
 {
     bool result = false;
-    if(overwrite()){
+    if(overwriteOrSaveWithDialog()){
         result = archive.writeFileInformation(this);
         if(result){
             if(isBodyJointVelocityUpdateEnabled_){

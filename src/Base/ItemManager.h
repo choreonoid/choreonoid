@@ -167,7 +167,7 @@ public:
     }
     static std::vector<ItemFileIO*> getFileIOs(const std::type_info& type);
     static std::vector<ItemFileIO*> getFileIOs(
-        Item* item, std::function<bool(ItemFileIO* fileIO)> pred, bool includeSuperClassIos);
+        const Item* item, std::function<bool(ItemFileIO* fileIO)> pred, bool includeSuperClassIos = false);
     static ItemFileIO* findFileIO(const std::type_info& type, const std::string& format);
 
     template <class ItemType>
@@ -231,11 +231,6 @@ public:
         return loadItemsWithDialog_(typeid(ItemType), parentItem, doAddtion, nextItem);
     }
 
-    template <class ItemType>
-    static bool saveItemWithDialog(ItemType* item){
-        return saveItemWithDialog_(typeid(ItemType), item);
-    }
-
     [[deprecated("Use Item::reload().")]]
     static void reloadItems(const ItemList<>& items);
 
@@ -274,16 +269,19 @@ private:
         Item* protoItem, const std::string& title);
     static ItemList<Item> loadItemsWithDialog_(
         const std::type_info& type, Item* parentItem, bool doAddtion, Item* nextItem);
-    static bool saveItemWithDialog_(const std::type_info& type, Item* item);
 
     // The following static functions are called from functions in the Item class
-    static bool load(
+    static bool loadItem(
         Item* item, const std::string& filename, Item* parentItem, const std::string& format,
         const Mapping* options = nullptr);
-    static bool save(
+    static bool saveItem(
         Item* item, const std::string& filename, const std::string& format, const Mapping* options = nullptr);
-    static bool overwrite(Item* item, bool forceOverwrite, const std::string& format);
-
+    static bool saveItemWithDialog(Item* item, const std::string& format = std::string(), bool doCheckFileImmutable = true);
+    
+    static bool overwriteItem(Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog = false);
+    static bool overwriteItemOrSaveItemWithDialog(Item* item, bool forceOverwrite, const std::string& format){
+        return overwriteItem(item, forceOverwrite, format, true);
+    }
     void registerAddon_(
         const std::type_info& type, const std::string& name, const std::function<ItemAddon*(void)>& factory);
 

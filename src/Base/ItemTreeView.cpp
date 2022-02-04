@@ -119,48 +119,13 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
     menu.addSeparator();
 
     auto reload = menu.addItem(_("Reload"));
+    auto saveAs = menu.addItem(_("Save as"));
     menu.addSeparator();
     
     auto selectAll = menu.addItem(_("Select all"));
     auto clearSelection = menu.addItem(_("Clear selection"));
 
-    if(item){
-        if(itemTreeWidget->checkCuttable(item)){
-            cut->sigTriggered().connect(
-                [&](){ itemTreeWidget->cutSelectedItems(); });
-        } else {
-            cut->setEnabled(false);
-        }
-        if(itemTreeWidget->checkCopiable(item)){
-            copy1->sigTriggered().connect(
-                [&](){ itemTreeWidget->copySelectedItems(); });
-            copy2->sigTriggered().connect(
-                [&](){ itemTreeWidget->copySelectedItemsWithSubTrees(); });
-        } else {
-            copy1->setEnabled(false);
-            copy2->setEnabled(false);
-        }
-        check->sigTriggered().connect(
-            [&](){ itemTreeWidget->setSelectedItemsChecked(true); });
-        uncheck->sigTriggered().connect(
-            [&](){ itemTreeWidget->setSelectedItemsChecked(false); });
-        toggleCheck->sigTriggered().connect(
-            [&](){ itemTreeWidget->toggleSelectedItemChecks(); });
-
-        if(item->hasAttribute(Item::Reloadable)){
-            reload->sigTriggered().connect(
-                [&](){
-                    for(auto& item : itemTreeWidget->getSelectedItems()){
-                        item->reload();
-                    }
-                });
-        } else {
-            reload->setEnabled(false);
-        }
-
-        clearSelection->sigTriggered().connect(
-            [=](){ itemTreeWidget->clearSelection(); });
-    } else {
+    if(!item){
         cut->setEnabled(false);
         copy1->setEnabled(false);
         copy2->setEnabled(false);
@@ -169,17 +134,60 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
         toggleCheck->setEnabled(false);
         reload->setEnabled(false);
         clearSelection->setEnabled(false);
+
+    } else {
+        if(itemTreeWidget->checkCuttable(item)){
+            cut->sigTriggered().connect(
+                [this](){ itemTreeWidget->cutSelectedItems(); });
+        } else {
+            cut->setEnabled(false);
+        }
+        if(itemTreeWidget->checkCopiable(item)){
+            copy1->sigTriggered().connect(
+                [this](){ itemTreeWidget->copySelectedItems(); });
+            copy2->sigTriggered().connect(
+                [this](){ itemTreeWidget->copySelectedItemsWithSubTrees(); });
+        } else {
+            copy1->setEnabled(false);
+            copy2->setEnabled(false);
+        }
+        check->sigTriggered().connect(
+            [this](){ itemTreeWidget->setSelectedItemsChecked(true); });
+        uncheck->sigTriggered().connect(
+            [this](){ itemTreeWidget->setSelectedItemsChecked(false); });
+        toggleCheck->sigTriggered().connect(
+            [this](){ itemTreeWidget->toggleSelectedItemChecks(); });
+
+        if(!item->hasAttribute(Item::Reloadable)){
+            reload->setEnabled(false);
+        } else {
+            reload->sigTriggered().connect(
+                [this](){
+                    for(auto& item : itemTreeWidget->getSelectedItems()){
+                        item->reload();
+                    }
+                });
+        }
+        if(!item->isFileSavable()){
+            saveAs->setEnabled(false);
+        } else {
+            saveAs->sigTriggered().connect(
+                [this, item](){ item->saveWithFileDialog(); });
+        }
+
+        clearSelection->sigTriggered().connect(
+            [=](){ itemTreeWidget->clearSelection(); });
     }
 
     if(itemTreeWidget->checkPastable(item)){
         paste->sigTriggered().connect(
-            [&](){ itemTreeWidget->pasteItems(); });
+            [this](){ itemTreeWidget->pasteItems(); });
     } else {
         paste->setEnabled(false);
     }
 
     selectAll->sigTriggered().connect(
-        [=](){ itemTreeWidget->selectAllItems(); });
+        [this](){ itemTreeWidget->selectAllItems(); });
 }
 
 

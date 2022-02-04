@@ -82,7 +82,8 @@ void exportPyItems(py::module m)
              [](Item& self, const string& filename, const string& format, const Mapping* options){
                  return self.save(filename, format, options); },
              py::arg("filename"), py::arg("format") = string(), py::arg("options") = nullptr)
-        .def("overwrite", &Item::overwrite, py::arg("forceOverwrite") = false, py::arg("format") = string())
+        .def("overwriteOrSaveWithDialog", &Item::overwriteOrSaveWithDialog,
+             py::arg("forceOverwrite") = false, py::arg("format") = string())
         .def_property_readonly("filePath", &Item::filePath)
         .def_property_readonly("fileFormat", &Item::fileFormat)
         .def("clearFileInformation", &Item::clearFileInformation)
@@ -123,6 +124,10 @@ void exportPyItems(py::module m)
         .def("getSigPositionChanged", &Item::sigTreePositionChanged)
         .def("getSigDisconnectedFromRoot", &Item::sigDisconnectedFromRoot)
         .def("getSigSubTreeChanged", &Item::sigSubTreeChanged)
+        .def("overwrite",
+             [](Item& self, bool forceOverwrite, const string& format){
+                 return self.overwriteOrSaveWithDialog(forceOverwrite, format); },
+             py::arg("forceOverwrite") = false, py::arg("format") = string())
         ;
 
     py::enum_<Item::CheckId>(itemClass, "CheckId")

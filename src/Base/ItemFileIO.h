@@ -61,6 +61,7 @@ public:
     const std::vector<std::string>& extensionsForSaving() const;
     
     int interfaceLevel() const;
+    bool isItemNameUpdateInSavingEnabled() const;
 
     // Set the invocation type before calling the loadItem or saveItem function
     // if the invocation type is not "Direct".
@@ -132,6 +133,7 @@ protected:
     void setExtensionForSaving(const std::string& extension);
     void setExtensionsForSaving(const std::vector<std::string>& extensions);
     void setInterfaceLevel(InterfaceLevel level);
+    void setItemNameUpdateInSavingEnabled(bool on);
 
     // Load API
     virtual bool load(Item* item, const std::string& filename);

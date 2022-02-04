@@ -27,6 +27,7 @@ public:
     std::vector<std::string> extensionsForLoading;
     std::vector<std::string> extensionsForSaving;
     ItemFileIO::InterfaceLevel interfaceLevel;
+    bool isItemNameUpdateInSavingEnabled;
     int currentInvocationType;
     Item* parentItem;
     Item* actuallyLoadedItem;
@@ -63,6 +64,7 @@ ItemFileIO::Impl::Impl(ItemFileIO* self, const std::string& format, int api)
       format(format)
 {
     interfaceLevel = Standard;
+    isItemNameUpdateInSavingEnabled = false;
     currentInvocationType = Direct;
     parentItem = nullptr;
     mv = MessageView::instance();
@@ -99,6 +101,7 @@ ItemFileIO::Impl::Impl(ItemFileIO* self, const Impl& org)
       extensionsForLoading(org.extensionsForLoading),
       extensionsForSaving(org.extensionsForSaving),
       interfaceLevel(org.interfaceLevel),
+      isItemNameUpdateInSavingEnabled(org.isItemNameUpdateInSavingEnabled),
       currentInvocationType(org.currentInvocationType)
 {
     currentInvocationType = Direct;
@@ -293,6 +296,18 @@ int ItemFileIO::interfaceLevel() const
 }
 
 
+bool ItemFileIO::isItemNameUpdateInSavingEnabled() const
+{
+    return impl->isItemNameUpdateInSavingEnabled;
+}
+
+
+void ItemFileIO::setItemNameUpdateInSavingEnabled(bool on)
+{
+    impl->isItemNameUpdateInSavingEnabled = on;
+}
+
+
 void ItemFileIO::setCurrentInvocationType(int type)
 {
     impl->currentInvocationType = type;
@@ -482,6 +497,12 @@ bool ItemFileIO::Impl::saveItem
         if(!isExport){
             item->setTemporal(false);
             item->updateFileInformation(filename, format, optionArchive);
+        }
+        if(isItemNameUpdateInSavingEnabled){
+            auto newName = toUTF8(filesystem::path(fromUTF8(filename)).stem().string());
+            if(newName != item->name()){
+                item->setName(newName);
+            }
         }
         mv->put(_(" -> ok!\n"));
     }

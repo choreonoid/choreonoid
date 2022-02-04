@@ -9,6 +9,7 @@
 #include "ItemPath.h"
 #include "ItemManager.h"
 #include "ItemClassRegistry.h"
+#include "ItemFileIO.h"
 #include "PutPropertyFunction.h"
 #include "LazyCaller.h"
 #include "MessageView.h"
@@ -1465,25 +1466,50 @@ std::vector<const ItemAddon*> Item::addons() const
 
 bool Item::load(const std::string& filename, const std::string& format, const Mapping* options)
 {
-    return ItemManager::load(this, filename, parentItem(), format, options);
+    return ItemManager::loadItem(this, filename, parentItem(), format, options);
 }
 
 
 bool Item::load(const std::string& filename, Item* parent, const std::string& format, const Mapping* options)
 {
-    return ItemManager::load(this, filename, parent, format, options);
+    return ItemManager::loadItem(this, filename, parent, format, options);
+}
+
+
+bool Item::isFileSavable() const
+{
+    auto fileIOs = ItemManager::getFileIOs(
+        this,
+        [&](ItemFileIO* fileIO){
+            return (fileIO->hasApi(ItemFileIO::Save) &&
+                    fileIO->interfaceLevel() == ItemFileIO::Standard);
+        });
+    return !fileIOs.empty();
 }
 
 
 bool Item::save(const std::string& filename, const std::string& format, const Mapping* options)
 {
-    return ItemManager::save(this, filename, format, options);
+    return ItemManager::saveItem(this, filename, format, options);
+}
+
+
+bool Item::saveWithFileDialog()
+{
+    return ItemManager::saveItemWithDialog(this);
+}
+
+
+bool Item::overwriteOrSaveWithDialog(bool forceOverwrite, const std::string& format)
+{
+    return ItemManager::overwriteItemOrSaveItemWithDialog(this, forceOverwrite, format);
 }
 
 
 bool Item::overwrite(bool forceOverwrite, const std::string& format)
 {
-    return ItemManager::overwrite(this, forceOverwrite, format);
+    // The fourth argument is currently true for the backward compatibility.
+    return ItemManager::overwriteItem(this, forceOverwrite, format, true);
 }
 
 

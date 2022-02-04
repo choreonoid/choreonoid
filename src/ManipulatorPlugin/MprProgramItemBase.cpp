@@ -456,7 +456,7 @@ void MprProgramItemBase::doPutProperties(PutPropertyFunction& putProperty)
 
 bool MprProgramItemBase::store(Archive& archive)
 {
-    if(overwrite()){
+    if(overwriteOrSaveWithDialog()){
         archive.writeFileInformation(this);
         if(impl->isStartupProgram){
             archive.write("is_startup_program", true);

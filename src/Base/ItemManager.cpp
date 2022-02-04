@@ -731,7 +731,7 @@ void ItemManager::Impl::addLoader(ItemFileIO* fileIO, CaptionToFileIoListMap& lo
 
 
 std::vector<ItemFileIO*> ItemManager::getFileIOs
-(Item* item, std:: function<bool(ItemFileIO* fileIO)> pred, bool includeSuperClassIos)
+(const Item* item, std:: function<bool(ItemFileIO* fileIO)> pred, bool includeSuperClassIos)
 {
     vector<ItemFileIO*> fileIOs;
 
@@ -794,10 +794,16 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
     
     auto p = itemClassIdToInfoMap.find(itemClassRegistry->getClassId(type));
     if(p == itemClassIdToInfoMap.end()){
-        messageView->putln(
-            fmt::format(_("\"{0}\" cannot be accessed because the specified item type \"{1}\" is not registered."),
-                        filename, type.name()),
-            MessageView::Error);
+        if(filename.empty()){
+            messageView->putln(
+                fmt::format(_("There is no file I/O processor registered for the \"{0}\" type."), type.name()),
+                MessageView::Error);
+        } else {
+            messageView->putln(
+                fmt::format(_("\"{0}\" cannot be accessed because there is no file I/O processor registered for the \"{1}\" type."),
+                            filename, type.name()),
+                MessageView::Error);
+        }
         return targetFileIO;;
     }
     
@@ -874,6 +880,7 @@ public:
             setExtensionsForLoading(separateExtensions(extensions));
         } else if(api == ItemFileIO::Save){
             setExtensionsForSaving(separateExtensions(extensions));
+            setItemNameUpdateInSavingEnabled(true);
         }
 
         if(usage >= ItemManager::Standard){
@@ -930,7 +937,7 @@ void ItemManager::addSaver_
 }
 
 
-bool ItemManager::load
+bool ItemManager::loadItem
 (Item* item, const std::string& filename, Item* parentItem, const std::string& format, const Mapping* options)
 {
     if(auto fileIO = Impl::findMatchedFileIO(typeid(*item), filename, format, ItemFileIO::Load)){
@@ -978,7 +985,7 @@ Item* ItemManager::findOriginalItemForReloadedItem(Item* item)
 }
 
 
-bool ItemManager::save
+bool ItemManager::saveItem
 (Item* item, const std::string& filename, const std::string& format, const Mapping* options)
 {
     if(auto fileIO = Impl::findMatchedFileIO(typeid(*item), filename, format, ItemFileIO::Save)){
@@ -988,19 +995,60 @@ bool ItemManager::save
 }
 
 
-bool ItemManager::saveItemWithDialog_(const std::type_info& type, Item* item)
+static bool checkFileImmutable(Item* item)
 {
-    if(auto fileIO = Impl::findMatchedFileIO(type, "", "", ItemFileIO::Save)){
-        ItemFileDialog dialog;
-        dialog.setFileIO(fileIO);
-        return dialog.saveItem(item);
+    bool doContinue = true;
+    if(item->hasAttribute(Item::FileImmutable)){
+        doContinue = showWarningDialog(
+            fmt::format(_("\"{0}\" is an item that usually does not need to be saved. "
+                     "Do you really want to save this item?"),
+                   item->displayName()),
+            true);
     }
-    return false;
+    return doContinue;
 }
 
 
-bool ItemManager::overwrite(Item* item, bool forceOverwrite, const std::string& format)
+bool ItemManager::saveItemWithDialog(Item* item, const std::string& format, bool doCheckFileImmutable)
 {
+    bool saved = false;
+    bool doSave = true;
+
+    if(doCheckFileImmutable){
+        if(!checkFileImmutable(item)){
+            return false;
+        }
+    }
+    
+    if(doSave){
+        auto fileIOs =
+            getFileIOs(
+                item,
+                [&](ItemFileIO* fileIO){
+                    return (fileIO->hasApi(ItemFileIO::Save) &&
+                            fileIO->interfaceLevel() == ItemFileIO::Standard &&
+                            (format.empty() || fileIO->isFormat(format)));
+                },
+                false);
+        
+        ItemFileDialog dialog;
+        dialog.setFileIOs(fileIOs);
+        saved = dialog.saveItem(item);
+    }
+
+    return saved;
+}
+
+
+bool ItemManager::overwriteItem
+(Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog)
+{
+    if(doSaveItemWithDialog){
+        if(!checkFileImmutable(item)){
+            return false;
+        }
+    }
+        
     bool needToOverwrite = forceOverwrite;
 
     string filename(item->filePath());
@@ -1023,25 +1071,12 @@ bool ItemManager::overwrite(Item* item, bool forceOverwrite, const std::string& 
     }
 
     bool synchronized = !needToOverwrite;
-    
     if(!synchronized){
         if(!filename.empty() && format.empty()){
-            synchronized = save(item, filename, lastFormat, item->fileOptions());
+            synchronized = saveItem(item, filename, lastFormat, item->fileOptions());
         } 
-        if(!synchronized){
-            auto fileIOs =
-                getFileIOs(
-                    item,
-                    [&](ItemFileIO* fileIO){
-                        return (fileIO->hasApi(ItemFileIO::Save) &&
-                                fileIO->interfaceLevel() == ItemFileIO::Standard &&
-                                (format.empty() || fileIO->isFormat(format)));
-                    },
-                    false);
-            
-            ItemFileDialog dialog;
-            dialog.setFileIOs(fileIOs);
-            synchronized = dialog.saveItem(item);
+        if(!synchronized && doSaveItemWithDialog){
+            synchronized = saveItemWithDialog(item, format, false);
         }
     }
 

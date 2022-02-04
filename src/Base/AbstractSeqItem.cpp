@@ -79,7 +79,7 @@ void AbstractSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool AbstractSeqItem::store(Archive& archive)
 {
-    if(overwrite()){
+    if(overwriteOrSaveWithDialog()){
         archive.writeFileInformation(this);
     }
     archive.write("offsetTime", abstractSeq()->getOffsetTime());

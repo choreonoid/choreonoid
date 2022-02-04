@@ -266,17 +266,7 @@ void MainMenu::setActionAsSaveSelectedItems(Action* action)
     action->sigTriggered().connect(
         [](){
             for(auto& item : RootItem::instance()->selectedItems()){
-                bool doSave = true;
-                if(item->hasAttribute(Item::FileImmutable)){
-                    doSave = showWarningDialog(
-                        format(_("\"{0}\" is an item that usually does not need to be saved. "
-                                 "Do you really want to save this item?"),
-                               item->displayName()),
-                        true);
-                }
-                if(doSave){
-                    item->overwrite(true, "");
-                }
+                item->overwriteOrSaveWithDialog(true, "");
             }
         });
 }
@@ -286,17 +276,8 @@ void MainMenu::setActionAsSaveSelectedItemsAs(Action* action)
 {
     action->sigTriggered().connect(
         [](){
-            ItemFileDialog dialog;
             for(auto& item : RootItem::instance()->selectedItems()){
-                dialog.setFileIOs(
-                    ItemManager::getFileIOs(
-                        item,
-                        [](ItemFileIO* fileIO){
-                            return (fileIO->hasApi(ItemFileIO::Save) &&
-                                    fileIO->interfaceLevel() == ItemFileIO::Standard);
-                        },
-                        false));
-                dialog.saveItem(item);
+                item->saveWithFileDialog();
             }
         });
 }

@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-03 14:41+0900\n"
+"POT-Creation-Date: 2022-02-05 16:11+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -474,14 +474,23 @@ msgstr "キャンセル(&C)"
 msgid "Name:"
 msgstr "名前"
 
-msgid "\"{0}\" cannot be accessed because the specified item type \"{1}\" is not registered."
-msgstr "\"{0}\"へのアクセスにおいて指定されたアイテム型\"{1}\"は未登録です．"
+msgid "There is no file I/O processor registered for the \"{0}\" type."
+msgstr "アイテム型 \"{0}\" に対してI/Oプロセッサが登録されていません．"
+
+msgid ""
+"\"{0}\" cannot be accessed because there is no file I/O processor registered for the \"{1}\" type."
+msgstr ""
+"アイテム型 \"{1}\" に対してI/Oプロセッサが登録されていないので \"{0}\"へのアクセスができません．"
 
 msgid "The file format for accessing \"{0}\" cannot be determined."
 msgstr "\"{0}\"のファイル形式を確定できません．"
 
 msgid "Unknown file format \"{0}\" is specified in accessing \"{1}\"."
 msgstr "\"{1}\"に対して不明なファイル形式\"{0}\"が指定されています．"
+
+msgid ""
+"\"{0}\" is an item that usually does not need to be saved. Do you really want to save this item?"
+msgstr "\"{0}\" は通常保存する必要のないアイテムです．本当にこのアイテムを保存しますか？"
 
 msgid ";;Any files (*)"
 msgstr ";;全てのファイル (*)"
@@ -617,6 +626,9 @@ msgstr "チェックの反転"
 
 msgid "Reload"
 msgstr "再読み込み"
+
+msgid "Save as"
+msgstr "名前を付けて保存"
 
 msgid "Select all"
 msgstr "全て選択"
@@ -887,10 +899,6 @@ msgstr "Choreonoid について"
 
 msgid "About Plugins"
 msgstr "プラグインについて"
-
-msgid ""
-"\"{0}\" is an item that usually does not need to be saved. Do you really want to save this item?"
-msgstr "\"{0}\" は通常保存する必要のないアイテムです．本当にこのアイテムを保存しますか？"
 
 msgid "Delete All Unmounted Views"
 msgstr "マウントされていない全てのビューを削除"

@@ -428,6 +428,8 @@ public:
     bool load(
         const std::string& filename, Item* parent, const std::string& format = std::string(),
         const Mapping* options = nullptr);
+
+    bool isFileSavable() const;    
     
     /**
        This function saves the data of the item to a file by using a registered FileIO object.
@@ -437,12 +439,22 @@ public:
     bool save(const std::string& filename, const std::string& format = std::string(),
               const Mapping* options = nullptr);
 
-    /**
-       This function save the data of the item to the file from which the data of the item has been loaded.
-       If the data has not been loaded from a file, a file save dialog to specify a file opens.
-    */
-    bool overwrite(bool forceOverwrite = false, const std::string& format = std::string());
+    bool saveWithFileDialog();
 
+    /**
+       This function tries to save the data of the item to the file from which the data of the item has
+       been loaded. If the data has not been loaded from a file, a file save dialog for the item is shown.
+    */
+    bool overwriteOrSaveWithDialog(bool forceOverwrite = false, const std::string& format = std::string());
+
+    /**
+       What this funtions does is currently same as the overwriteOrSaveWithDialog function for the backward
+       compatibility. This function will be removed in a future version, and will be redefined as an
+       overwrite-only function.
+    */
+    [[deprecated("Use the overwriteOrSaveWithDialog function")]]
+    bool overwrite(bool forceOverwrite = false, const std::string& format = std::string());
+    
     //! Full path file name
     const std::string& filePath() const;
     //! File name without the directory

@@ -609,7 +609,7 @@ void PoseSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool PoseSeqItem::store(Archive& archive)
 {
-    if(overwrite()){
+    if(overwriteOrSaveWithDialog()){
         archive.writeFileInformation(this);
         archive.write("barLength", barLength_);
         if(bodyMotionItem_->isSelected()){

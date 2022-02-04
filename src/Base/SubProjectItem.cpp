@@ -244,7 +244,7 @@ void SubProjectItem::doPutProperties(PutPropertyFunction& putProperty)
 bool SubProjectItem::store(Archive& archive)
 {
     if(!impl->isSavingSubProject){
-        if(overwrite()){
+        if(overwriteOrSaveWithDialog()){
             archive.writeFileInformation(this);
             archive.write("save_mode", impl->saveMode.selectedSymbol(), DOUBLE_QUOTED);
         }

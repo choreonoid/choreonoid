@@ -121,7 +121,7 @@ Item* CollisionSeqItem::doDuplicate() const
 
 bool CollisionSeqItem::store(Archive& archive)
 {
-    if(overwrite()){
+    if(overwriteOrSaveWithDialog()){
         return archive.writeFileInformation(this);
     }
     return false;
