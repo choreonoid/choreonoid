@@ -24,7 +24,7 @@ msgstr "センサーの範囲が大きすぎます [設定= {0} しきい値= {1
 
 msgid "unable to convert angle, use default value [ min={0} max={1} default={2} ] ({3})"
 msgstr ""
-"角度を変換できません。デフォルト値を使用してください [min = {0} max = {1} default = {2}] ({3})"
+"角度を変換できません．デフォルト値を使用してください [min = {0} max = {1} default = {2}] ({3})"
 
 msgid "unable to convert angle, use alternate value [ min={0} max={1} alternate={2} ] ({3})"
 msgstr "角度を変換できません．別の値を使用してください [min = {0} max = {1} alternate = {2}] ({3})"

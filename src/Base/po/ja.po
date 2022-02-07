@@ -133,7 +133,7 @@ msgid "External command \"{}\" cannot be executed."
 msgstr "外部コマンド\"{}\"を実行できません．"
 
 msgid " The command does not exist."
-msgstr "コマンドが存在しません。"
+msgstr "コマンドが存在しません．"
 
 msgid "Command"
 msgstr "コマンド"
@@ -373,7 +373,7 @@ msgstr "参照数"
 msgid ""
 "The edit history has been cleared because inconsistent item move operation on \"{0}\" was carried "
 "out."
-msgstr "\"{0}\" に関する一貫性の無い移動操作が実行されたため、編集履歴はクリアされました．"
+msgstr "\"{0}\" に関する一貫性の無い移動操作が実行されたため，編集履歴はクリアされました．"
 
 msgid "Add \"{0}\" to \"{1}\""
 msgstr "\"{0}\" を \"{1}\" に追加"
@@ -451,7 +451,7 @@ msgid "Exporting {0} \"{1}\" into \"{2}\""
 msgstr "{0} \"{1}\" を \"{2}\" にエクスポート中"
 
 msgid "{0} is a singleton item type and its instance exists in the project item tree."
-msgstr "{0}はシングルトンアイテム型で、そのインスタンスはプロジェクトツリー内に存在します．"
+msgstr "{0}はシングルトンアイテム型で，そのインスタンスはプロジェクトツリー内に存在します．"
 
 msgid "Class {} is not registered as an item class."
 msgstr "クラス{}はアイテムクラスとして登録されていません．"
@@ -547,7 +547,7 @@ msgid "An instance of {0} cannot be restored."
 msgstr "{0}のインスタンスを読み出すことができません．"
 
 msgid "An instance of unkown item type cannot be restored."
-msgstr "不明なアイテム型のインスタンスを読み出すことができません。"
+msgstr "不明なアイテム型のインスタンスを読み出すことができません．"
 
 msgid "The archive has an empty-name sub item, which cannot be processed."
 msgstr "アーカイブ内に名前の無いサブアイテムがありますがこれを処理することはできません．"
@@ -1160,7 +1160,7 @@ msgid "&Apply"
 msgstr "適用(&A)"
 
 msgid "{0}-plugin cannot be initialized because required plugin(s) {1} are not found.\n"
-msgstr "必要なプラグイン{1}が見つからないため、{0}プラグインの初期化ができません．\n"
+msgstr "必要なプラグイン{1}が見つからないため，{0}プラグインの初期化ができません．\n"
 
 msgid "Plugin file \"{}\" has already been activated.\n"
 msgstr "プラグインファイル \"{}\" は既に読み込まれています．\n"
@@ -1627,7 +1627,7 @@ msgid "The OpenGL resources of {0} has been cleared."
 msgstr "{0}のOpenGLリソースがクリアされました．"
 
 msgid "FPS test cannot be executed because the current camera is not a built-in interactive camera."
-msgstr "カレントカメラが組み込みのインタラクティブカメラでは無いため、FPSテストを実行できません．"
+msgstr "カレントカメラが組み込みのインタラクティブカメラでは無いため，FPSテストを実行できません．"
 
 msgid "FPS Test Result"
 msgstr "フレームレートテスト結果"
@@ -1783,7 +1783,7 @@ msgid "Task \"{}\" cannot be updated now because it is wating for a command to f
 msgstr "タスク \"{}\" は現在コマンドの終了待ちを行っているため更新できません．"
 
 msgid "Task \"{}\" has been updated with the new one."
-msgstr "タスク \"{}\" が更新されました。"
+msgstr "タスク \"{}\" が更新されました．"
 
 msgid "Next task \"{}\" is not found."
 msgstr "次のタスク \"{}\" がみつかりません．"

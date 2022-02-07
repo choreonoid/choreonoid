@@ -646,7 +646,7 @@ void IoConnectionView::Impl::addNewConnection(int index, bool doInsert)
     }
 
     if(!connection){
-        showWarningDialog(_("There are no I/O devices in the world"));
+        showWarningDialog(_("There are no I/O devices in the world."));
     } else {
         connectionMapModel->addNewConnection(index, connection, doInsert);
     }

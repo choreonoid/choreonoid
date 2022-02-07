@@ -59,7 +59,7 @@ msgid "Waist height relaxation"
 msgstr "腰高さの緩和"
 
 msgid "Vertical waist position is lowered when the leg length is not enough."
-msgstr "脚長が十分でないときに腰の垂直位置を下げます。"
+msgstr "脚長が十分でないときに腰の垂直位置を下げます．"
 
 msgid "Gravity"
 msgstr "重力加速度"
@@ -77,7 +77,7 @@ msgid "OK ! ({} [s] consumed.)"
 msgstr "完了 ! ({}秒消費）"
 
 msgid "failed."
-msgstr "失敗。"
+msgstr "失敗．"
 
 msgid "zero-velocity"
 msgstr "停止（速度０）"
@@ -95,10 +95,10 @@ msgid "off"
 msgstr "オフ"
 
 msgid "Warning: The body is floating at {0} (Vertical CM acceleration is {1})."
-msgstr "警告： {0}[s]にてボディが浮いています（重心垂直加速度は{1}[m/s^2]です）。"
+msgstr "警告： {0}[s]にてボディが浮いています（重心垂直加速度は{1}[m/s^2]です）．"
 
 msgid "Waist height relaxation cannot be applied because the robot is not a biped robot."
-msgstr "ロボットが二足歩行型でないため、腰高さの緩和は適用出来ません。"
+msgstr "ロボットが二足歩行型でないため，腰高さの緩和は適用出来ません．"
 
 msgid "Waist height relaxation cannot be applied because the knee joints are not specified."
-msgstr "膝関節が指定されていないため、腰高さの緩和は適用出来ません。"
+msgstr "膝関節が指定されていないため，腰高さの緩和は適用出来ません．"
