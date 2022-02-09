@@ -11,8 +11,6 @@
 
 namespace cnoid {
 
-class YAMLWriterImpl;
-
 class CNOID_EXPORT YAMLWriter
 {
 public:
@@ -98,7 +96,8 @@ public:
 #endif        
 
 private:
-    YAMLWriterImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 template<> CNOID_EXPORT double YAMLWriter::info(const std::string& key) const;
