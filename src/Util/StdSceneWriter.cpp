@@ -14,6 +14,7 @@
 #include "NullOut.h"
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
+#include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
@@ -44,6 +45,8 @@ public:
     filesystem::path baseDirPath;
     vector<filesystem::path> uriDirectoryStack;
     set<string> extModelFiles;
+    typedef unordered_map<SgObjectPtr, ValueNodePtr> SceneToYamlNodeMap;
+    SceneToYamlNodeMap sceneToYamlNodeMap;
 
     ostream* os_;
     ostream& os() { return *os_; }
@@ -58,6 +61,8 @@ public:
     void pushToUriDirectoryStack(const std::string& uri);
     void popFromUriDirectoryStack();
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
+    pair<MappingPtr, bool> findOrCreateMapping(SgObject* object);
+    pair<ListingPtr, bool> findOrCreateListing(SgObject* object);
     MappingPtr writeSceneNode(SgNode* node);
     void makeLinkToOriginalModelFile(Mapping* archive, SgObject* sceneObject);
     bool replaceOriginalModelFile(
@@ -393,14 +398,47 @@ bool StdSceneWriter::Impl::writeScene
     yamlWriter->closeFile();
 
     extModelFiles.clear();
+
+    sceneToYamlNodeMap.clear();    
     
     return true;
 }
 
 
+pair<MappingPtr, bool> StdSceneWriter::Impl::findOrCreateMapping(SgObject* object)
+{
+    bool found = false;
+    MappingPtr mapping = new Mapping;
+    auto inserted = sceneToYamlNodeMap.insert(SceneToYamlNodeMap::value_type(object, mapping));
+    if(!inserted.second){
+        mapping = dynamic_pointer_cast<Mapping>(inserted.first->second);
+        found = true;
+    }
+    return make_pair(mapping, found);
+}
+
+
+pair<ListingPtr, bool> StdSceneWriter::Impl::findOrCreateListing(SgObject* object)
+{
+    bool found = false;
+    ListingPtr listing = new Listing;
+    auto inserted = sceneToYamlNodeMap.insert(SceneToYamlNodeMap::value_type(object, listing));
+    if(!inserted.second){
+        listing = dynamic_pointer_cast<Listing>(inserted.first->second);
+        found = true;
+    }
+    return make_pair(listing, found);
+}
+
+
 MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
 {
-    MappingPtr archive = new Mapping;
+    MappingPtr archive;
+    bool found;
+    std::tie(archive, found) = findOrCreateMapping(node);
+    if(found){
+        return archive;
+    }
 
     if(node->hasUri()){
         if(extModelFileMode != EmbedModels){
@@ -538,8 +576,8 @@ void StdSceneWriter::Impl::processUnknownNode(Mapping* archive, SgNode* node)
 {
     ++numSkippedNode;
 }
-    
-    
+
+
 void StdSceneWriter::Impl::writeObjectHeader(Mapping* archive, const char* typeName, SgObject* object)
 {
     if(typeName){
@@ -603,8 +641,13 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgShape* shape)
         return nullptr;
     }
 
-    MappingPtr archive = new Mapping;
-
+    MappingPtr archive;
+    bool found;
+    std::tie(archive, found) = findOrCreateMapping(mesh);
+    if(found){
+        return archive;
+    }
+    
     if(mesh->hasUri() && (extModelFileMode != EmbedModels)){
         archive->write("type", "Resource");
         if(extModelFileMode == LinkToOriginalModelFiles){
@@ -672,15 +715,21 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
 
         writeMeshAttributes(archive, mesh);
 
-        auto vertices = archive->createFlowStyleListing("vertices");
         const auto srcVertices = mesh->vertices();
-        const int scalarElementSize = srcVertices->size() * 3;
-        vertices->reserve(scalarElementSize);
-        for(auto& v : *srcVertices){
-            vertices->append(v.x(), 12, scalarElementSize);
-            vertices->append(v.y(), 12, scalarElementSize);
-            vertices->append(v.z(), 12, scalarElementSize);
+        ListingPtr vertices;
+        bool found;
+        tie(vertices, found) = findOrCreateListing(srcVertices);
+        if(!found){
+            vertices->setFlowStyle();
+            const int scalarElementSize = srcVertices->size() * 3;
+            vertices->reserve(scalarElementSize);
+            for(auto& v : *srcVertices){
+                vertices->append(v.x(), 12, scalarElementSize);
+                vertices->append(v.y(), 12, scalarElementSize);
+                vertices->append(v.z(), 12, scalarElementSize);
+            }
         }
+        archive->insert("vertices", vertices);
         
         Listing& indexList = *archive->createFlowStyleListing("faces");
         const int numTriScalars = numTriangles * 3;
@@ -693,15 +742,21 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
         }
 
         if(mesh->hasNormals() && mesh->creaseAngle() == 0.0f){
-            auto normals = archive->createFlowStyleListing("normals");
             const auto srcNormals = mesh->normals();
-            const int scalarElementSize = srcNormals->size() * 3;
-            normals->reserve(scalarElementSize);
-            for(auto& n : *srcNormals){
-                normals->append(n.x(), 12, scalarElementSize);
-                normals->append(n.y(), 12, scalarElementSize);
-                normals->append(n.z(), 12, scalarElementSize);
+            ListingPtr normals;
+            tie(normals, found) = findOrCreateListing(srcNormals);
+            if(!found){
+                normals->setFlowStyle();
+                const int scalarElementSize = srcNormals->size() * 3;
+                normals->reserve(scalarElementSize);
+                for(auto& n : *srcNormals){
+                    normals->append(n.x(), 12, scalarElementSize);
+                    normals->append(n.y(), 12, scalarElementSize);
+                    normals->append(n.z(), 12, scalarElementSize);
+                }
             }
+            archive->insert("normals", normals);
+
             if(mesh->hasNormalIndices()){
                 const auto& srcNormalIndices = mesh->normalIndices();
                 const int n = srcNormalIndices.size();
@@ -714,14 +769,20 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
         }
 
         if(isAppearanceEnabled && mesh->hasTexCoords()){
-            auto texCoords = archive->createFlowStyleListing("tex_coords");
             const auto srcTexCoords = mesh->texCoords();
-            const int scalarElementSize = srcTexCoords->size() * 2;
-            texCoords->reserve(scalarElementSize);
-            for(auto& t : *srcTexCoords){
-                texCoords->append(t.x(), 12, scalarElementSize);
-                texCoords->append(t.y(), 12, scalarElementSize);
+            ListingPtr texCoords;
+            tie(texCoords, found) = findOrCreateListing(srcTexCoords);
+            if(!found){
+                texCoords->setFlowStyle();
+                const int scalarElementSize = srcTexCoords->size() * 2;
+                texCoords->reserve(scalarElementSize);
+                for(auto& t : *srcTexCoords){
+                    texCoords->append(t.x(), 12, scalarElementSize);
+                    texCoords->append(t.y(), 12, scalarElementSize);
+                }
             }
+            archive->insert("tex_coords", texCoords);
+            
             if(mesh->hasTexCoordIndices()){
                 const auto& srcTexCoordIndices = mesh->texCoordIndices();
                 const int n = srcTexCoordIndices.size();
@@ -825,7 +886,7 @@ void StdSceneWriter::Impl::writeCapsule(Mapping* archive, SgMesh* mesh)
 
 MappingPtr StdSceneWriter::Impl::writeAppearance(SgShape* shape)
 {
-    MappingPtr archive = new Mapping;
+    MappingPtr archive= new Mapping;
 
     if(auto materialInfo = writeMaterial(shape->material())){
         archive->insert("material", materialInfo);
@@ -854,7 +915,13 @@ MappingPtr StdSceneWriter::Impl::writeMaterial(SgMaterial* material)
     if(!defaultMaterial){
         defaultMaterial = new SgMaterial;
     }
-    MappingPtr archive = new Mapping;
+
+    MappingPtr archive;
+    bool found;
+    std::tie(archive, found) = findOrCreateMapping(material);
+    if(found){
+        return archive;
+    }
 
     if(material->ambientIntensity() != defaultMaterial->ambientIntensity()){
         archive->write("ambient", material->ambientIntensity());
@@ -889,7 +956,13 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
         return nullptr;
     }
 
-    MappingPtr archive = new Mapping;
+    MappingPtr archive;
+    bool found;
+    std::tie(archive, found) = findOrCreateMapping(texture);
+    if(found){
+        return archive;
+    }
+    
     bool isValid = false;
 
     if(auto image = texture->image()){
@@ -930,7 +1003,13 @@ MappingPtr StdSceneWriter::Impl::writeTextureTransform(SgTextureTransform * tran
         return nullptr;
     }
 
-    MappingPtr archive = new Mapping;
+    MappingPtr archive;
+    bool found;
+    std::tie(archive, found) = findOrCreateMapping(transform);
+    if(found){
+        return archive;
+    }
+
     if(!transform->center().isZero()){
         write(archive, "center", transform->center());
     }
@@ -943,6 +1022,7 @@ MappingPtr StdSceneWriter::Impl::writeTextureTransform(SgTextureTransform * tran
     if(transform->rotation() != 0.0){
         archive->write("rotation", transform->rotation());
     }
+    
     return archive;
 }
 
