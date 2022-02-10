@@ -443,6 +443,7 @@ public:
     void endRendering();
     void setupNodeVisibilities();
     void addSubSceneGraphNodesToInvisibleNodeSet(SgNode* node);
+    void addSubSceneGraphNodesToVisibleNodeSet(SgNode* node);
     void renderLights(LightingProgram* program);
     void renderFog(LightingProgram* program);
     void doPureWireframeRendering();
@@ -1575,7 +1576,7 @@ void GLSLSceneRenderer::Impl::setupNodeVisibilities()
     for(auto& visibility : self->visibilityProcessors()){
         addSubSceneGraphNodesToInvisibleNodeSet(visibility->targetRootNode());
         for(auto& path : visibility->visiblePaths()){
-            invisibleNodeSet.erase(path.back());
+            addSubSceneGraphNodesToVisibleNodeSet(path.back());
         }
     }
 }
@@ -1589,6 +1590,17 @@ void GLSLSceneRenderer::Impl::addSubSceneGraphNodesToInvisibleNodeSet(SgNode* no
         }
     } else {
         invisibleNodeSet.insert(node);
+    }
+}
+
+
+void GLSLSceneRenderer::Impl::addSubSceneGraphNodesToVisibleNodeSet(SgNode* node)
+{
+    invisibleNodeSet.erase(node);
+    if(auto group = node->toGroupNode()){
+        for(auto& child : *group){
+            addSubSceneGraphNodesToVisibleNodeSet(child);
+        }
     }
 }
 
