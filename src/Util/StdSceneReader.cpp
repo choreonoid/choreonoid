@@ -42,6 +42,7 @@ public:
     ostream& os() { return *os_; }
 
     YAMLReader* mainYamlReader;
+    unordered_map<ValueNodePtr, SgObjectPtr> sharedObjectMap;
 
     // temporary variables for reading values
     double value;
@@ -144,6 +145,20 @@ public:
     void adjustNodeCoordinate(SceneNodeInfo& info);
     void makeSceneNodeMap(ResourceInfo* info);
     void makeSceneNodeMapSub(const SceneNodeInfo& nodeInfo, SceneNodeMap& nodeMap);
+
+    template<class ObjectType>
+    ObjectType* findSharedObject(ValueNode* info, const char* objectTypeName)
+    {
+        ObjectType* object = nullptr;
+        auto it = sharedObjectMap.find(info);
+        if(it != sharedObjectMap.end()){
+            object = dynamic_cast<ObjectType*>(it->second.get());
+            if(!object){
+                info->throwException(format(_("Alias to non-{0} node is specified."), objectTypeName));
+            }
+        }
+        return object;
+    }
 };
 
 StdSceneReader::Impl::NodeFunctionMap StdSceneReader::Impl::nodeFunctionMap;
@@ -292,6 +307,7 @@ void StdSceneReader::setYAMLReader(YAMLReader* reader)
 void StdSceneReader::clear()
 {
     isDegreeMode_ = true;
+    impl->sharedObjectMap.clear();
     impl->defaultMaterial.reset();
     impl->resourceInfoMap.clear();
     impl->imagePathToSgImageMap.clear();
@@ -563,12 +579,12 @@ SgNode* StdSceneReader::readNode(Mapping& info, const std::string& type)
 }
 
 
-static SgNodePtr removeRedundantGroup(SgGroupPtr& group)
+static SgNodePtr removeRedundantGroup(SgGroup* group)
 {
     SgNodePtr node;
     if(!group->empty()){
         if(group->numChildren() == 1){
-            auto& g = *group.get();
+            auto& g = *group;
             if(typeid(g) == typeid(SgGroup)){
                 node = group->child(0);
             }
@@ -577,7 +593,6 @@ static SgNodePtr removeRedundantGroup(SgGroupPtr& group)
             node = group;
         }
     }
-    group.reset();
     return node;
 }
 
@@ -599,8 +614,12 @@ SgNode* StdSceneReader::Impl::readNode(Mapping* info)
 
 SgNode* StdSceneReader::Impl::readNode(Mapping* info, const string& type)
 {
-    NodeFunctionMap::iterator q = nodeFunctionMap.find(type);
-    if(q == nodeFunctionMap.end()){
+    if(auto node = findSharedObject<SgNode>(info, type.c_str())){
+        return node;
+    }
+    
+    auto it = nodeFunctionMap.find(type);
+    if(it == nodeFunctionMap.end()){
         if(info->get({ "is_optional", "isOptional" }, false)){
             os() << format(_("Warning: the node type \"{}\" is not defined. Reading this node has been skipped."), type) << endl;
             return nullptr;
@@ -608,26 +627,27 @@ SgNode* StdSceneReader::Impl::readNode(Mapping* info, const string& type)
         info->throwException(format(_("The node type \"{}\" is not defined."), type));
     }
 
-    NodeFunction funcToReadNode = q->second;
-    SgNodePtr scene = (this->*funcToReadNode)(info);
-    if(scene){
+    NodeFunction funcToReadNode = it->second;
+    SgNode* node = (this->*funcToReadNode)(info);
+    if(node){
+        sharedObjectMap[info] = node;
         if(info->read("name", symbol)){
-            scene->setName(symbol);
+            node->setName(symbol);
         } else {
             // remove a nameless, redundant group node
-            if(SgGroupPtr group = dynamic_pointer_cast<SgGroup>(scene)){
-                scene = removeRedundantGroup(group);
+            if(auto group = dynamic_cast<SgGroup*>(node)){
+                node = removeRedundantGroup(group);
             }
         }
     }
-    return scene.retn();
+    
+    return node;
 }
 
 
 SgNode* StdSceneReader::Impl::readNodeNode(Mapping* info)
 {
-    SgNodePtr node = new SgNode;
-    return node.retn();
+    return new SgNode;
 }
 
 
@@ -797,6 +817,10 @@ SgNode* StdSceneReader::Impl::readShape(Mapping* info)
 
 SgMesh* StdSceneReader::Impl::readGeometry(Mapping* info, int meshOptions)
 {
+    if(auto mesh = findSharedObject<SgMesh>(info, "geometry")){
+        return mesh;
+    }
+    
     SgMesh* mesh = nullptr;
     ValueNode& typeNode = (*info)["type"];
     auto& type = typeNode.toString();
@@ -824,6 +848,11 @@ SgMesh* StdSceneReader::Impl::readGeometry(Mapping* info, int meshOptions)
         typeNode.throwException(
             format(_("Unknown geometry \"{}\""), type));
     }
+
+    if(mesh){
+        sharedObjectMap[info] = mesh;
+    }
+    
     return mesh;
 }
 
@@ -1079,17 +1108,22 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping* info, bool isTriangleMesh, int m
         meshBase = polygonMesh;
     }
         
-    Listing& srcVertices = *info->findListing({ "vertices", "coordinate" });
-    if(srcVertices.isValid()){
-        const int numVertices = srcVertices.size() / 3;
-        SgVertexArray& vertices = *meshBase->getOrCreateVertices();
-        vertices.resize(numVertices);
-        for(int i=0; i < numVertices; ++i){
-            Vector3f& v = vertices[i];
-            for(int j=0; j < 3; ++j){
-                v[j] = srcVertices[i*3 + j].toFloat();
+    Listing* srcVertices = info->findListing({ "vertices", "coordinate" });
+    if(srcVertices->isValid()){
+        auto vertices = findSharedObject<SgVertexArray>(srcVertices, "vertices");
+        if(!vertices){
+            const int numVertices = srcVertices->size() / 3;
+            vertices = new SgVertexArray;
+            vertices->resize(numVertices);
+            for(int i=0; i < numVertices; ++i){
+                Vector3f& v = (*vertices)[i];
+                for(int j=0; j < 3; ++j){
+                    v[j] = (*srcVertices)[i*3 + j].toFloat();
+                }
             }
+            sharedObjectMap[srcVertices] = vertices;
         }
+        meshBase->setVertices(vertices);
     }
 
     Listing& srcFaces = *info->findListing({ "faces", "coordIndex" });
@@ -1102,17 +1136,22 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping* info, bool isTriangleMesh, int m
         }
     }
 
-    Listing& srcNormals = *info->findListing("normals");
-    if(srcNormals.isValid()){
-        const int numNormals = srcNormals.size() / 3;
-        SgNormalArray& normals = *meshBase->getOrCreateNormals();
-        normals.resize(numNormals);
-        for(int i=0; i < numNormals; ++i){
-            Vector3f& n = normals[i];
-            for(int j=0; j < 3; ++j){
-                n[j] = srcNormals[i*3 + j].toFloat();
+    Listing* srcNormals = info->findListing("normals");
+    if(srcNormals->isValid()){
+        auto normals = findSharedObject<SgNormalArray>(srcNormals, "normals");
+        if(!normals){
+            const int numNormals = srcNormals->size() / 3;
+            normals = new SgNormalArray;
+            normals->resize(numNormals);
+            for(int i=0; i < numNormals; ++i){
+                Vector3f& n = (*normals)[i];
+                for(int j=0; j < 3; ++j){
+                    n[j] = (*srcNormals)[i*3 + j].toFloat();
+                }
             }
+            sharedObjectMap[srcNormals] = normals;
         }
+        meshBase->setNormals(normals);
     }
 
     Listing& srcNormalIndices = *info->findListing("normal_indices");
@@ -1125,17 +1164,22 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping* info, bool isTriangleMesh, int m
         }
     }
 
-    Listing& srcTexCoords = *info->findListing({ "tex_coords", "texCoord" });
-    if(srcTexCoords.isValid()){
-        const int numCoords = srcTexCoords.size() / 2;
-        SgTexCoordArray& texCoord = *meshBase->getOrCreateTexCoords();
-        texCoord.resize(numCoords);
-        for(int i=0; i < numCoords; ++i){
-            Vector2f& p = texCoord[i];
-            for(int j=0; j < 2; ++j){
-                p[j] = srcTexCoords[i*2 + j].toFloat();
+    Listing* srcTexCoords = info->findListing({ "tex_coords", "texCoord" });
+    if(srcTexCoords->isValid()){
+        auto texCoords = findSharedObject<SgTexCoordArray>(srcTexCoords, "texture-coordinate");
+        if(!texCoords){
+            const int numCoords = srcTexCoords->size() / 2;
+            texCoords = new SgTexCoordArray;
+            texCoords->resize(numCoords);
+            for(int i=0; i < numCoords; ++i){
+                Vector2f& p = (*texCoords)[i];
+                for(int j=0; j < 2; ++j){
+                    p[j] = (*srcTexCoords)[i*2 + j].toFloat();
+                }
             }
+            sharedObjectMap[srcTexCoords] = texCoords;
         }
+        meshBase->setTexCoords(texCoords);
     }
 
     Listing& srcTexCoordIndices = *info->findListing({ "tex_coord_indices", "texCoordIndex" });
@@ -1245,30 +1289,33 @@ void StdSceneReader::Impl::readAppearance(SgShape* shape, Mapping* info)
 
 void StdSceneReader::Impl::readMaterial(SgShape* shape, Mapping* info)
 {
-    SgMaterialPtr material = new SgMaterial;
+    SgMaterialPtr material = findSharedObject<SgMaterial>(info, "material");
 
-    double value;
-    if(info->read({ "ambient", "ambientIntensity" }, value)){
-        material->setAmbientIntensity(value);
-    }
-    if(read(info, { "diffuse", "diffuseColor" }, color)){
-        material->setDiffuseColor(color);
-    }
-    if(read(info, { "emissive", "emissiveColor" }, color)){
-        material->setEmissiveColor(color);
-    }
-    if(read(info, { "specular", "specularColor" }, color)){
-        material->setSpecularColor(color);
-    }
-    if(info->read("specular_exponent", value)){
-        material->setSpecularExponent(value);
-    } else if(info->read("shininess", value)){ // deprecated
-        material->setSpecularExponent(
-            127.0f * std::max(0.0f, std::min((float)value, 1.0f)) + 1.0f);
-    }
-    
-    if(info->read("transparency", value)){
-        material->setTransparency(value);
+    if(!material){
+        material = new SgMaterial;
+        double value;
+        if(info->read({ "ambient", "ambientIntensity" }, value)){
+            material->setAmbientIntensity(value);
+        }
+        if(read(info, { "diffuse", "diffuseColor" }, color)){
+            material->setDiffuseColor(color);
+        }
+        if(read(info, { "emissive", "emissiveColor" }, color)){
+            material->setEmissiveColor(color);
+        }
+        if(read(info, { "specular", "specularColor" }, color)){
+            material->setSpecularColor(color);
+        }
+        if(info->read("specular_exponent", value)){
+            material->setSpecularExponent(value);
+        } else if(info->read("shininess", value)){ // deprecated
+            material->setSpecularExponent(
+                127.0f * std::max(0.0f, std::min((float)value, 1.0f)) + 1.0f);
+        }
+        if(info->read("transparency", value)){
+            material->setTransparency(value);
+        }
+        sharedObjectMap[info] = material;
     }
 
     shape->setMaterial(material);
@@ -1277,66 +1324,76 @@ void StdSceneReader::Impl::readMaterial(SgShape* shape, Mapping* info)
 
 void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping* info)
 {
-    string& uri = symbol;
-    if(info->read({ "uri", "url" }, uri) && !uri.empty()){
-        SgImagePtr image;
-        ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(uri);
-        if(p != imagePathToSgImageMap.end()){
-            image = p->second;
-        }else{
-            auto fpvp = getOrCreatePathVariableProcessor();
-            auto filename = fpvp->expand(uri, true);
-            if(filename.empty()){
-                os() << format(_("Warning: texture uri \"{0}\" is not valid: {1}"),
-                               uri, fpvp->errorMessage()) << endl;
-            } else {
-                image = new SgImage;
-                if(imageIO.load(image->image(), filename, os())){
-                    image->setUriByFilePathAndBaseDirectory(
-                        uri, getOrCreatePathVariableProcessor()->baseDirectory());
-                    imagePathToSgImageMap[uri] = image;
+    SgTexturePtr texture = findSharedObject<SgTexture>(info, "texture");
+
+    if(!texture){
+        string& uri = symbol;
+        if(info->read({ "uri", "url" }, uri) && !uri.empty()){
+            SgImagePtr image;
+            auto it = imagePathToSgImageMap.find(uri);
+            if(it != imagePathToSgImageMap.end()){
+                image = it->second;
+            }else{
+                auto fpvp = getOrCreatePathVariableProcessor();
+                auto filename = fpvp->expand(uri, true);
+                if(filename.empty()){
+                    os() << format(_("Warning: texture uri \"{0}\" is not valid: {1}"),
+                                   uri, fpvp->errorMessage()) << endl;
                 } else {
-                    image.reset();
-                }
-            }
-        }
-        if(image){
-            SgTexturePtr texture = new SgTexture;
-            texture->setImage(image);
-            bool repeatS = true;
-            bool repeatT = true;
-            
-            auto repeatNode = info->find("repeat");
-            if(repeatNode->isValid()){
-                if(repeatNode->isListing()){
-                    auto repeatList = repeatNode->toListing();
-                    if(repeatList->size() != 2){
-                        repeatList->throwException(_("The number of the repeat elements must be two"));
+                    image = new SgImage;
+                    if(imageIO.load(image->image(), filename, os())){
+                        image->setUriByFilePathAndBaseDirectory(
+                            uri, getOrCreatePathVariableProcessor()->baseDirectory());
+                        imagePathToSgImageMap[uri] = image;
+                    } else {
+                        image.reset();
                     }
-                    repeatS = repeatList->at(0)->toBool();
-                    repeatT = repeatList->at(1)->toBool();
-                } else {
-                    repeatS = repeatT = repeatNode->toBool();
                 }
-            } else {
-                info->read({ "repeat_s", "repeatS" }, repeatS);
-                info->read({ "repeat_t", "repeatT" }, repeatT);
             }
-            texture->setRepeat(repeatS, repeatT);
-            shape->setTexture(texture);
+            if(image){
+                texture = new SgTexture;
+                texture->setImage(image);
+                bool repeatS = true;
+                bool repeatT = true;
+                
+                auto repeatNode = info->find("repeat");
+                if(repeatNode->isValid()){
+                    if(repeatNode->isListing()){
+                        auto repeatList = repeatNode->toListing();
+                        if(repeatList->size() != 2){
+                            repeatList->throwException(_("The number of the repeat elements must be two"));
+                        }
+                        repeatS = repeatList->at(0)->toBool();
+                        repeatT = repeatList->at(1)->toBool();
+                    } else {
+                        repeatS = repeatT = repeatNode->toBool();
+                    }
+                } else {
+                    info->read({ "repeat_s", "repeatS" }, repeatS);
+                    info->read({ "repeat_t", "repeatT" }, repeatT);
+                }
+                texture->setRepeat(repeatS, repeatT);
+                sharedObjectMap[info] = texture;
+            }
         }
+    }
+    if(texture){
+        shape->setTexture(texture);
     }
 }
 
 
 SgTextureTransform* StdSceneReader::Impl::readTextureTransform(Mapping* info)
 {
-    SgTextureTransformPtr transform = new SgTextureTransform;
-    if(read(info, "center", v2)) transform->setCenter(v2);
-    if(read(info, "scale", v2)) transform->setScale(v2);
-    if(read(info, "translation", v2)) transform->setTranslation(v2);
-    if(self->readAngle(info, "rotation", value)) transform->setRotation(value);
-    return transform.retn();
+    SgTextureTransformPtr transform = findSharedObject<SgTextureTransform>(info, "texture-transform");
+    if(!transform){
+        transform = new SgTextureTransform;
+        if(read(info, "center", v2)) transform->setCenter(v2);
+        if(read(info, "scale", v2)) transform->setScale(v2);
+        if(read(info, "translation", v2)) transform->setTranslation(v2);
+        if(self->readAngle(info, "rotation", value)) transform->setRotation(value);
+    }
+    return transform;
 }
 
 
@@ -1682,7 +1739,6 @@ void StdSceneReader::Impl::makeSceneNodeMap(ResourceInfo* info)
 {
     info->sceneNodeMap.reset(new SceneNodeMap);
     SceneNodeInfo nodeInfo;
-    nodeInfo.parent = 0;
     nodeInfo.node = info->scene;
     nodeInfo.R = Matrix3::Identity();
     nodeInfo.isScaled = false;
