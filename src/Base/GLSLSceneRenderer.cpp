@@ -1576,7 +1576,8 @@ void GLSLSceneRenderer::Impl::setupNodeVisibilities()
     for(auto& visibility : self->visibilityProcessors()){
         addSubSceneGraphNodesToInvisibleNodeSet(visibility->targetRootNode());
         for(auto& path : visibility->visiblePaths()){
-            addSubSceneGraphNodesToVisibleNodeSet(path.back());
+            invisibleNodeSet.erase(path.back());
+            //addSubSceneGraphNodesToVisibleNodeSet(path.back());
         }
     }
 }
