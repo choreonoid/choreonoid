@@ -56,25 +56,28 @@ filesystem::path& getOrCreateCustomMessageCatalogBaseDir()
 
 bool updateLanguageSymbolsOfCurrentLocale()
 {
-#ifdef _WIN32
-    char locale[LOCALE_NAME_MAX_LENGTH];
-    if(GetLocaleInfo(GetThreadLocale(), LOCALE_SNAME, locale, LOCALE_NAME_MAX_LENGTH) > 0){
-        langSymbol1 = locale;
-        smatch match;
-        if(regex_match(langSymbol1, match, regex("^(.+)-(.+)$"))){
+    auto lang = getenv("LANG");
+    if(lang){
+        cmatch match;
+        if(regex_match(lang, match, regex("^(.+)_(.+)\\.(.+)$")) ||
+           regex_match(lang, match, regex("^(.+)_(.+)$"))){
             langSymbol1 = match.str(1);
             langSymbol2 = langSymbol1 + "_" + match.str(2);
+        } else {
+            langSymbol1 = lang;
         }
     }
-#else
-    if(auto locale = getenv("LANG")){
-        langSymbol1 = locale;
-        if(!langSymbol1.empty()){
-            smatch match;
-            if(regex_match(langSymbol1, match, regex("^(.+)_(.+)\\.(.+)$")) ||
-               regex_match(langSymbol1, match, regex("^(.+)_(.+)$"))){
+    
+#ifdef _WIN32
+    else {
+        char locale[LOCALE_NAME_MAX_LENGTH];
+        if(GetLocaleInfo(GetThreadLocale(), LOCALE_SNAME, locale, LOCALE_NAME_MAX_LENGTH) > 0){
+            cmatch match;
+            if(regex_match(locale, match, regex("^(.+)-(.+)$"))){
                 langSymbol1 = match.str(1);
                 langSymbol2 = langSymbol1 + "_" + match.str(2);
+            } else {
+                langSymbol1 = locale;
             }
         }
     }
@@ -147,7 +150,7 @@ std::string bindModuleTextDomain(const std::string& moduleName, const std::strin
             return domainName;
         }
     }
-    
+
     // Check if the module (domain) has already been bound with custom messages
     if(!customLabel.empty() || (customizedDomains.find(domainName) == customizedDomains.end())){
         
