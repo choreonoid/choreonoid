@@ -811,7 +811,7 @@ void LinkDeviceTreeWidget::Impl::createLinkDeviceList(Body* body)
         if(visibleLinkPredicate && !visibleLinkPredicate(link)){
             continue;
         }
-        if(isJointListingMode && link->jointId() < 0){
+        if(link->index() < 0 || (isJointListingMode && link->jointId() < 0)){
             continue;
         }
         auto linkItem = new LinkDeviceTreeItem(link, this);
@@ -1277,6 +1277,13 @@ bool LinkDeviceTreeWidget::Impl::restoreState(const Archive& archive)
                             }
                         }
                         info->isSelectedLinkIndicesValid = false;
+
+                        if(info == currentBodyItemInfo){
+                            if(isCacheEnabled){
+                                currentBodyItemInfo->sigSelectionChanged();
+                            }
+                            sigLinkSelectionChanged();
+                        }
                     }
                     if(auto& unexpanded = *node.findListing("unexpanded_links")){
                         for(auto& node : unexpanded){
