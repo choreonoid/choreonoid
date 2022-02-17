@@ -26,6 +26,7 @@ public:
     bool hasClone;
     
     LinkShapeGroup(Link* link)
+        : SgGroup(findClassId<LinkShapeGroup>())
     {
         visualShape = link->visualShape();
         if(visualShape){
@@ -111,7 +112,7 @@ typedef ref_ptr<LinkShapeGroup> LinkShapeGroupPtr;
 
 struct NodeClassRegistration {
     NodeClassRegistration(){
-        SceneNodeClassRegistry::instance().registerClass<LinkShapeGroup, SgGroup>();
+        SceneNodeClassRegistry::instance().registerClass<LinkShapeGroup, SgGroup>("LinkShapeGroup");
         SceneRenderer::addExtension(
             [](SceneRenderer* renderer){
                 renderer->renderingFunctions()->setFunction<LinkShapeGroup>(
