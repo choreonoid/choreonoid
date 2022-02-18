@@ -15,6 +15,7 @@
 #include "LazyCaller.h"
 #include "Timer.h"
 #include "AppConfig.h"
+#include "DisplayValueFormat.h"
 #include <cnoid/Selection>
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneCameras>
@@ -1798,14 +1799,21 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
         if(latestEvent.nodePath().empty()){
             updateIndicator("");
         } else {
-            static string f1(_("Global Position: ({0:.3f} {1:.3f} {2:.3f})"));
-            static string f2(_("Object: {0}, Global Position: ({1:.3f} {2:.3f} {3:.3f})"));
-            const Vector3& p = latestEvent.point();
             string name = findObjectNameFromNodePath(latestEvent.nodePath());
+            auto valueFormat = DisplayValueFormat::instance();
+            string text;
             if(name.empty()){
-                updateIndicator(fmt::format(f1, p.x(), p.y(), p.z()));
+                text = fmt::format("{0}: ({{0:.{1}f}} {{1:.{1}f}} {{2:.{1}f}})",
+                                   _("Global Position"), valueFormat->lengthDecimals());
             } else {
-                updateIndicator(fmt::format(f2, name, p.x(), p.y(), p.z()));
+                text = fmt::format("{0}: {1}, {2}: ({{0:.{3}f}} {{1:.{3}f}} {{2:.{3}f}})",
+                                   _("Object"), name, _("Global Position"), valueFormat->lengthDecimals());
+            }
+            const Vector3& p = latestEvent.point();
+            if(valueFormat->isMeter()){
+                updateIndicator(fmt::format(text, p.x(), p.y(), p.z()));
+            } else if(valueFormat->isMillimeter()){
+                updateIndicator(fmt::format(text, p.x() * 1000.0, p.y() * 1000.0, p.z() * 100.0));
             }
         }
     }

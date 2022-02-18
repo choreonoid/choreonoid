@@ -639,9 +639,9 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
 
         auto intervalSpin = new DoubleSpinBox(ownerWidget);
         intervalSpin->setAlignment(Qt::AlignCenter);
-    	intervalSpin->setDecimals(2);
-    	intervalSpin->setRange(0.01, 9.99);
-        intervalSpin->setSingleStep(0.01);
+    	intervalSpin->setDecimals(3);
+    	intervalSpin->setRange(0.001, 9.999);
+        intervalSpin->setSingleStep(0.001);
         intervalSpin->sigValueChanged().connect(
             [this, i](double interval){
                 config->gridInfos[i].interval = interval;
