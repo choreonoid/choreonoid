@@ -1369,7 +1369,7 @@ int SceneTagGroup::findPointingTagIndex(SceneWidgetEvent* event)
     }
     int tagIndex = -1;
     if(tagNodeIndex > 0 && tagNodeIndex < path.size()){
-        auto tagNode = dynamic_cast<SceneTag*>(path[tagNodeIndex]);
+        auto tagNode = dynamic_cast<SceneTag*>(path[tagNodeIndex].get());
         if(tagNode){
             tagIndex = tagMarkerGroup->findChildIndex(tagNode);
         }

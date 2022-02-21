@@ -849,12 +849,12 @@ EditableSceneBody::Impl::PointedType EditableSceneBody::Impl::findPointedObject(
     PointedType pointedType = PT_NONE;
     pointedSceneLink = nullptr;
     for(size_t i = path.size() - 1; i >= 1; --i){
-        pointedSceneLink = dynamic_cast<EditableSceneLink*>(path[i]);
+        pointedSceneLink = dynamic_cast<EditableSceneLink*>(path[i].get());
         if(pointedSceneLink){
             pointedType = PT_SCENE_LINK;
             break;
         }
-        if(auto marker = dynamic_cast<SphereMarker*>(path[i])){
+        if(auto marker = dynamic_cast<SphereMarker*>(path[i].get())){
             if(marker == zmpMarker){
                 pointedType = PT_ZMP;
                 break;

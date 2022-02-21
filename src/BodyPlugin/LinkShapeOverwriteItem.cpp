@@ -204,8 +204,8 @@ bool LinkShapeOverwriteItem::Impl::overwriteLinkShape
         } else {
             int n = std::min(shapeNodePaths.size(), existingShapeNodePaths.size());
             for(int i=0; i < n; ++i){
-                auto shapeNode = static_cast<SgShape*>(shapeNodePaths[i].back());
-                auto existingShapeNode = static_cast<SgShape*>(existingShapeNodePaths[i].back());
+                auto shapeNode = static_cast<SgShape*>(shapeNodePaths[i].back().get());
+                auto existingShapeNode = static_cast<SgShape*>(existingShapeNodePaths[i].back().get());
                 if(!shapeNode->mesh()){
                     shapeNode->setMesh(existingShapeNode->mesh());
                 }
@@ -281,7 +281,7 @@ std::vector<SgNodePath> LinkShapeOverwriteItem::shapePaths()
 SgShape* LinkShapeOverwriteItem::shapeNode()
 {
     if(!impl->shapeNodePaths.empty()){
-        return static_cast<SgShape*>(impl->shapeNodePaths[0].back());
+        return static_cast<SgShape*>(impl->shapeNodePaths[0].back().get());
     }
     return nullptr;
 }
@@ -301,8 +301,8 @@ void LinkShapeOverwriteItem::Impl::setShapeNode(SgShape* shapeNode)
         shapeNodePaths.emplace_back(std::move(path));
     } else {
         auto& shapeNodePath0 = shapeNodePaths.front();
-        auto shapeNode0 = static_cast<SgShape*>(shapeNodePath0.back());
-        auto parentGroup = dynamic_cast<SgGroup*>(shapeNodePath0.front());
+        auto shapeNode0 = static_cast<SgShape*>(shapeNodePath0.back().get());
+        auto parentGroup = dynamic_cast<SgGroup*>(shapeNodePath0.front().get());
         if(parentGroup){
             parentGroup->removeChild(shapeNode0);
             parentGroup->addChild(shapeNode);

@@ -235,9 +235,8 @@ public:
 
     GLdouble pickX;
     GLdouble pickY;
-    typedef std::shared_ptr<SgNodePath> SgNodePathPtr;
     SgNodePath currentNodePath;
-    vector<SgNodePathPtr> pickingNodePathList;
+    vector<shared_ptr<SgNodePath>> pickingNodePathList;
     SgNodePath pickedNodePath;
     Vector3 pickedPoint;
 

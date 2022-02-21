@@ -13,11 +13,13 @@ using namespace cnoid;
 
 namespace {
 
+template<class NodePathType>
 void calcTotalTransform
-(SgNodePath::const_iterator begin, SgNodePath::const_iterator end, const SgNode* targetNode, Affine3& out_T)
+(typename NodePathType::const_iterator begin, typename NodePathType::const_iterator end,
+ const SgNode* targetNode, Affine3& out_T)
 {
     out_T = Affine3::Identity();
-    for(SgNodePath::const_iterator p = begin; p != end; ++p){
+    for(typename NodePathType::const_iterator p = begin; p != end; ++p){
         SgNode* node = *p;
         SgTransform* transform = dynamic_cast<SgTransform*>(node);
         if(transform){
@@ -37,7 +39,7 @@ void calcTotalTransform
 Affine3 cnoid::calcTotalTransform(const SgNodePath& path)
 {
     Affine3 T;
-    ::calcTotalTransform(path.begin(), path.end(), nullptr, T);
+    ::calcTotalTransform<SgNodePath>(path.begin(), path.end(), nullptr, T);
     return T;
 }
 
@@ -45,7 +47,7 @@ Affine3 cnoid::calcTotalTransform(const SgNodePath& path)
 Affine3 cnoid::calcTotalTransform(const SgNodePath& path, const SgNode* targetNode)
 {
     Affine3 T;
-    ::calcTotalTransform(path.begin(), path.end(), targetNode, T);
+    ::calcTotalTransform<SgNodePath>(path.begin(), path.end(), targetNode, T);
     return T;
 }
 
@@ -53,7 +55,7 @@ Affine3 cnoid::calcTotalTransform(const SgNodePath& path, const SgNode* targetNo
 Affine3 cnoid::calcTotalTransform(SgNodePath::const_iterator begin, SgNodePath::const_iterator end)
 {
     Affine3 T;
-    ::calcTotalTransform(begin, end, nullptr, T);
+    ::calcTotalTransform<SgNodePath>(begin, end, nullptr, T);
     return T;
 }
 
@@ -61,16 +63,15 @@ Affine3 cnoid::calcTotalTransform(SgNodePath::const_iterator begin, SgNodePath::
 Isometry3 cnoid::calcRelativePosition(const SgNodePath& path, const SgNode* targetNode)
 {
     Affine3 T;
-    ::calcTotalTransform(path.begin(), path.end(), targetNode, T);
+    ::calcTotalTransform<SgNodePath>(path.begin(), path.end(), targetNode, T);
     return convertToIsometryWithOrthonormalization(T);
 }
-    
 
 
 Isometry3 cnoid::calcRelativePosition(SgNodePath::const_iterator begin, SgNodePath::const_iterator end)
 {
     Affine3 T;
-    ::calcTotalTransform(begin, end, nullptr, T);
+    ::calcTotalTransform<SgNodePath>(begin, end, nullptr, T);
     return convertToIsometryWithOrthonormalization(T);
 }
 

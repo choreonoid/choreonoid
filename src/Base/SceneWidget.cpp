@@ -435,8 +435,8 @@ void SceneWidget::forEachInstance(SgNode* node, std::function<void(SceneWidget* 
     vector<SgNodePath> paths;
     extractPathsFromSceneWidgetRoot(node, path, paths);
     for(size_t i=0; i < paths.size(); ++i){
-        const SgNodePath& path = paths[i];
-        SceneWidgetRoot* root = static_cast<SceneWidgetRoot*>(path.front());
+        auto& path = paths[i];
+        SceneWidgetRoot* root = static_cast<SceneWidgetRoot*>(path.front().get());
         function(root->sceneWidget(), path);
     }
 }
@@ -1377,7 +1377,7 @@ void SceneWidget::Impl::updateLatestEventPath(bool forceFullPicking)
         latestEvent.nodePath_ = renderer->pickedNodePath();
 
         for(auto& node : latestEvent.nodePath_){
-            if(auto editable = dynamic_cast<SceneWidgetEventHandler*>(node)){
+            if(auto editable = dynamic_cast<SceneWidgetEventHandler*>(node.get())){
                 pointedEditablePath.emplace_back(node, editable);
             }
         }
@@ -1387,7 +1387,7 @@ void SceneWidget::Impl::updateLatestEventPath(bool forceFullPicking)
 
 void SceneWidget::Impl::updateLastClickedPoint()
 {
-    const SgNodePath& path = latestEvent.nodePath();
+    auto& path = latestEvent.nodePath();
     if(!path.empty()){
         if(!gridGroup || path.back() != gridGroup){
             lastClickedPoint = latestEvent.point();
@@ -1478,7 +1478,7 @@ bool SceneWidget::setSceneFocus(const SgNodePath& path)
 {
     vector<EditableNodeInfo> editablePath;
     for(auto& node : path){
-        if(auto editable = dynamic_cast<SceneWidgetEventHandler*>(node)){
+        if(auto editable = dynamic_cast<SceneWidgetEventHandler*>(node.get())){
             editablePath.emplace_back(node, editable);
         }
     }
@@ -2432,9 +2432,9 @@ bool SceneWidget::isBuiltinCamera(SgCamera* camera) const
 
 InteractiveCameraTransform* SceneWidget::findOwnerInteractiveCameraTransform(int cameraIndex)
 {
-    const SgNodePath& path = impl->renderer->cameraPath(cameraIndex);
+    auto& path = impl->renderer->cameraPath(cameraIndex);
     for(size_t i=0; i < path.size() - 1; ++i){
-        if(InteractiveCameraTransform* transform = dynamic_cast<InteractiveCameraTransform*>(path[i])){
+        if(auto transform = dynamic_cast<InteractiveCameraTransform*>(path[i].get())){
             return transform;
         }
     }
@@ -2463,9 +2463,9 @@ void SceneWidget::Impl::onCurrentCameraChanged()
         latestEvent.cameraPath_.clear();
     } else {
         int index = renderer->currentCameraIndex();
-        const SgNodePath& path = renderer->cameraPath(index);
+        auto& path = renderer->cameraPath(index);
         for(int i = path.size() - 2; i >= 0; --i){
-            interactiveCameraTransform = dynamic_cast<InteractiveCameraTransform*>(path[i]);
+            interactiveCameraTransform = dynamic_cast<InteractiveCameraTransform*>(path[i].get());
             if(interactiveCameraTransform){
                 isBuiltinCameraCurrent = (current == builtinPersCamera || current == builtinOrthoCamera);
                 break;
@@ -2997,9 +2997,9 @@ bool SceneWidget::Impl::restoreCameraStates(const Listing& cameraListing, bool i
             if(read(state, "eye", eye) &&
                read(state, "direction", direction) &&
                read(state, "up", up)){
-                const SgNodePath& cameraPath = renderer->cameraPath(cameraIndex);
+                auto& cameraPath = renderer->cameraPath(cameraIndex);
                 for(size_t j=0; j < cameraPath.size() - 1; ++j){
-                    SgPosTransform* transform = dynamic_cast<SgPosTransform*>(cameraPath[j]);
+                    auto transform = dynamic_cast<SgPosTransform*>(cameraPath[j].get());
                     if(transform){
                         transform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
                         transform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));

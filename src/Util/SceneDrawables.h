@@ -403,6 +403,8 @@ public:
         CAPSULE = CapsuleType
     };
 
+    static constexpr int NumPrimitiveTypes = CapsuleType + 1;
+
     class Mesh { }; // defined for no primitive information
 
     class Box {

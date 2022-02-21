@@ -396,14 +396,9 @@ public:
     GLdouble pickX;
     GLdouble pickY;
 
-    /*
-      It might be better to use the ref_ptr type as an element of SgNodePath
-      so that the instance can be kept even if it is removed from the scene graph
-    */
-    typedef std::shared_ptr<SgNodePath> SgNodePathPtr;
     SgNodePath currentNodePath;
     SgNodePath emptyNodePath;
-    vector<SgNodePathPtr> pickingNodePathList;
+    vector<shared_ptr<SgNodePath>> pickingNodePathList;
     SgNodePath pickedNodePath;
     Vector3 pickedPoint;
     int overlayPickIndex0;

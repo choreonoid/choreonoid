@@ -430,7 +430,7 @@ bool ScenePointSelectionMode::onPointerMoveEvent(SceneWidgetEvent* event)
     bool pointed = false;
     if(isTargetNode){
         auto& path = event->nodePath();
-        if(auto shape = dynamic_cast<SgShape*>(path.back())){
+        if(auto shape = dynamic_cast<SgShape*>(path.back().get())){
             auto mesh = shape->mesh();
             Affine3 T = calcTotalTransform(path);
             int  pointedIndex;

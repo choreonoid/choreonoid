@@ -197,6 +197,12 @@ void SgObject::setUriFragment(const std::string& fragment)
 }
 
 
+int SgNode::findSuperClassId(int classId)
+{
+    return SceneNodeClassRegistry::instance().getSuperClassId(classId);
+}
+
+
 int SgNode::findClassId(const std::type_info& nodeType)
 {
     return SceneNodeClassRegistry::instance().getClassId(nodeType);

@@ -20,9 +20,11 @@ namespace cnoid {
 
 class CloneMap;
 class SgNode;
+typedef ref_ptr<SgNode> SgNodePtr;
 class SgGroup;
 class SgTransform;
-typedef std::vector<SgNode*> SgNodePath;
+
+typedef std::vector<SgNodePtr> SgNodePath;
 
 
 class CNOID_EXPORT SgObject : public ClonableReferenced
@@ -162,6 +164,8 @@ public:
     ~SgNode();
 
     int classId() const { return classId_; }
+    
+    static int findSuperClassId(int classId);
     static int findClassId(const std::type_info& nodeType);
     template <class NodeType> static int findClassId() {
         return findClassId(typeid(NodeType));
@@ -209,8 +213,6 @@ private:
     //! \deprecated
     static int registerNodeType(const std::type_info& nodeType, const std::type_info& superType);    
 };
-
-typedef ref_ptr<SgNode> SgNodePtr;
 
 
 inline SgNode* SgObject::toNode()

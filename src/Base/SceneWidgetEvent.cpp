@@ -49,7 +49,7 @@ const SgCamera* SceneWidgetEvent::camera() const
     if(cameraPath_.empty()){
         return nullptr;
     }
-    return dynamic_cast<SgCamera*>(cameraPath_.back());
+    return dynamic_cast<SgCamera*>(cameraPath_.back().get());
 }
 
 

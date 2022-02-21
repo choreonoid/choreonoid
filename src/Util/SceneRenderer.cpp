@@ -588,7 +588,7 @@ int SceneRenderer::numCameras() const
 
 SgCamera* SceneRenderer::camera(int index)
 {
-    return dynamic_cast<SgCamera*>(cameraPath(index).back());
+    return dynamic_cast<SgCamera*>(cameraPath(index).back().get());
 }
 
 
