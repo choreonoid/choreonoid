@@ -4,6 +4,7 @@
 #include "Archive.h"
 #include "Buttons.h"
 #include "SpinBox.h"
+#include "CheckBox.h"
 #include "Separator.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
@@ -44,6 +45,7 @@ public:
     PositionWidget* self;
 
     Isometry3 T_last;
+    stdx::optional<Vector3> rpy_last;
     std::function<bool(const Isometry3& T)> callbackOnPositionInput;
     std::function<void()> callbackOnPositionInputFinished;
     //vector<QWidget*> inputPanelWidgets;
@@ -72,6 +74,9 @@ public:
     vector<QWidget*> quatWidgets;
     QWidget rotationMatrixPanel;
     QLabel rotationMatrixElementLabel[3][3];
+    CheckBox additionalPrecisionCheck;
+    SpinBox additionalPrecisionSpin;
+    Signal<void(int precision)> sigAdditionalPrecisionChanged;
 
     Impl(PositionWidget* self);
     void updateValueFormat(bool doRefresh);
@@ -110,8 +115,8 @@ PositionWidget::~PositionWidget()
 }
 
 
-PositionWidget::Impl::Impl(PositionWidget* self)
-    : self(self)
+PositionWidget::Impl::Impl(PositionWidget* self_)
+    : self(self_)
 {
     valueFormat = DisplayValueFormat::instance();
     valueFormatConnection =
@@ -163,7 +168,7 @@ PositionWidget::Impl::Impl(PositionWidget* self)
         spin->setUndoRedoKeyInputEnabled(true);
 
         InputElementSet s;
-        s.set(RX + 1);
+        s.set(RX + i);
         userInputConnections.add(
             spin->sigValueChanged().connect(
                 [this, s](double){ onPositionInputRpy(s); }));
@@ -226,7 +231,7 @@ PositionWidget::Impl::Impl(PositionWidget* self)
     auto separator = new VSeparator;
     hbox->addWidget(separator);
 
-    grid = new QGridLayout();
+    grid = new QGridLayout;
     grid->setHorizontalSpacing(10);
     grid->setVerticalSpacing(4);
     for(int i=0; i < 3; ++i){
@@ -256,6 +261,30 @@ PositionWidget::Impl::Impl(PositionWidget* self)
     mainvbox->addWidget(&rotationMatrixPanel);
     //inputPanelWidgets.push_back(&rotationMatrixPanel);
 
+    hbox = new QHBoxLayout;
+    additionalPrecisionCheck.hide();
+    additionalPrecisionCheck.sigToggled().connect(
+        [this](bool on){
+            additionalPrecisionSpin.setEnabled(on);
+            updateValueFormat(true);
+            sigAdditionalPrecisionChanged(self->additionalPrecision());
+        });
+    hbox->addWidget(&additionalPrecisionCheck);
+    additionalPrecisionSpin.setRange(0, 9);
+    additionalPrecisionSpin.setValue(0);
+    additionalPrecisionSpin.hide();
+    additionalPrecisionSpin.setEnabled(false);
+    additionalPrecisionSpin.sigValueChanged().connect(
+        [this](int){
+            if(additionalPrecisionCheck.isChecked()){
+                updateValueFormat(true);
+                sigAdditionalPrecisionChanged(self->additionalPrecision());
+            }
+        });
+    hbox->addWidget(&additionalPrecisionSpin);
+    hbox->addStretch();
+    mainvbox->addLayout(hbox);
+
     T_last.setIdentity();
     lastInputAttitudeMode = RollPitchYawMode;
 
@@ -276,8 +305,13 @@ void PositionWidget::Impl::updateValueFormat(bool doRefresh)
         lmax = 100.0;
     }
     int ldecimals = valueFormat->lengthDecimals();
-    lmax -= pow(10.0, -ldecimals);
     double lstep = valueFormat->lengthStep();
+    if(additionalPrecisionCheck.isChecked()){
+        auto ap = additionalPrecisionSpin.value();
+        ldecimals += ap;
+        lstep /= pow(10.0, ap);
+    }
+    lmax -= pow(10.0, -ldecimals);
 
     int aunit = valueFormat->angleUnit();
     double amax;
@@ -289,8 +323,13 @@ void PositionWidget::Impl::updateValueFormat(bool doRefresh)
         amax = 10.0;
     }
     int adecimals = valueFormat->angleDecimals();
-    amax -= pow(10.0, -adecimals);
     double astep = valueFormat->angleStep();
+    if(additionalPrecisionCheck.isChecked()){
+        auto ap = additionalPrecisionSpin.value();
+        adecimals += ap;
+        astep /= pow(10.0, ap);
+    }
+    amax -= pow(10.0, -adecimals);
 
     for(int i=0; i < 3; ++i){
         auto& tspin = xyzSpin[i];
@@ -357,7 +396,32 @@ void PositionWidget::setUserInputValuePriorityMode(bool on)
 {
     impl->isUserInputValuePriorityMode = on;
 }
-    
+
+
+void PositionWidget::setAdditionalPrecisionInterfaceEnabled(bool on)
+{
+    if(on){
+        impl->additionalPrecisionCheck.setText(_("Additional precision"));
+    }
+    impl->additionalPrecisionCheck.setVisible(on);
+    impl->additionalPrecisionSpin.setVisible(on);
+}
+
+
+int PositionWidget::additionalPrecision() const
+{
+    if(impl->additionalPrecisionCheck.isChecked()){
+        return impl->additionalPrecisionSpin.value();
+    }
+    return 0;
+}
+
+
+SignalProxy<void(int precision)> PositionWidget::sigAdditionalPrecisionChanged()
+{
+    return impl->sigAdditionalPrecisionChanged;
+}
+
 
 void PositionWidget::setCallbacks
 (std::function<bool(const Isometry3& T)> callbackOnPositionInput,
@@ -471,6 +535,7 @@ void PositionWidget::Impl::setPosition(const Isometry3& T)
         }
     }
 
+    rpy_last = stdx::nullopt;
     Matrix3 R = T.linear();
     if(isRpyEnabled){
         Vector3 rpy;
@@ -487,6 +552,7 @@ void PositionWidget::Impl::setPosition(const Isometry3& T)
         for(int i=0; i < 3; ++i){
             rpySpin[i].setValue(angleRatio * rpy[i]);
         }
+        rpy_last = rpy;
     }
     
     if(isQuaternionEnabled){
@@ -569,16 +635,22 @@ void PositionWidget::Impl::onPositionInput(InputElementSet inputElements)
 
 void PositionWidget::Impl::onPositionInputRpy(InputElementSet inputElements)
 {
-    Isometry3 T;
     Vector3 rpy;
 
     for(int i=0; i < 3; ++i){
-        T.translation()[i] = xyzSpin[i].value() / lengthRatio;
-        rpy[i] = rpySpin[i].value() / angleRatio;
+        if(inputElements[TX + i]){
+            T_last.translation()[i] = xyzSpin[i].value() / lengthRatio;
+        }
+        if(rpy_last && !inputElements[RX + i]){
+            rpy[i] = (*rpy_last)[i];
+        } else {
+            rpy[i] = rpySpin[i].value() / angleRatio;
+        }
     }
-    T.linear() = rotFromRpy(rpy);
+    T_last.linear() = rotFromRpy(rpy);
+    rpy_last = rpy;
     
-    notifyPositionInput(T, inputElements);
+    notifyPositionInput(T_last, inputElements);
 
     lastInputAttitudeMode = RollPitchYawMode;
 }
@@ -586,11 +658,12 @@ void PositionWidget::Impl::onPositionInputRpy(InputElementSet inputElements)
 
 void PositionWidget::Impl::onPositionInputQuaternion(InputElementSet inputElements)
 {
-    Isometry3 T;
-
     for(int i=0; i < 3; ++i){
-        T.translation()[i] = xyzSpin[i].value() / lengthRatio;
+        if(inputElements[TX + i]){
+            T_last.translation()[i] = xyzSpin[i].value() / lengthRatio;
+        }
     }
+    rpy_last = stdx::nullopt;
     
     Eigen::Quaterniond quat =
         Eigen::Quaterniond(
@@ -598,8 +671,8 @@ void PositionWidget::Impl::onPositionInputQuaternion(InputElementSet inputElemen
 
     if(quat.norm() > 1.0e-6){
         quat.normalize();
-        T.linear() = quat.toRotationMatrix();
-        notifyPositionInput(T, inputElements);
+        T_last.linear() = quat.toRotationMatrix();
+        notifyPositionInput(T_last, inputElements);
     }
 
     lastInputAttitudeMode = QuaternionMode;

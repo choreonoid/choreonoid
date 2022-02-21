@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-18 20:29+0900\n"
+"POT-Creation-Date: 2022-02-26 18:57+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1310,6 +1310,9 @@ msgstr "クォータニオン"
 
 msgid "Rotation matrix"
 msgstr "回転行列"
+
+msgid "Additional precision"
+msgstr "追加精度"
 
 msgid ""
 "The state of the \"{0}\" {1} was not completely restored.\n"
