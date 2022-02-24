@@ -344,6 +344,7 @@ public:
     int numTriangles() const { return static_cast<int>(faceVertexIndices_.size()) / 3; }
     void setNumTriangles(int n) { faceVertexIndices_.resize(n * 3); }
     void reserveNumTriangles(int n) { faceVertexIndices_.reserve(n * 3); }
+    void clearTriangles() { faceVertexIndices_.clear(); }
 
     typedef Eigen::Map<Array3i> TriangleRef;
     TriangleRef triangle(int index){

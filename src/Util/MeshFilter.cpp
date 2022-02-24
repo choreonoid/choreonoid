@@ -136,7 +136,7 @@ MeshFilter::MeshFilter()
 
 MeshFilterImpl::MeshFilterImpl()
 {
-    isNormalOverwritingEnabled = false;
+    isNormalOverwritingEnabled = true;
     minCreaseAngle = 0.0f;
     maxCreaseAngle = PI;
 }

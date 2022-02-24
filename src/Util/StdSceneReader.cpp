@@ -1253,11 +1253,9 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping* info, int meshOpti
     double creaseAngle;
     if(readAngle(info, { "crease_angle", "creaseAngle" }, creaseAngle)){
         mesh->setCreaseAngle(creaseAngle);
-        meshFilter.setNormalOverwritingEnabled(true);
         bool removeRedundantVertices =
             info->get({ "remove_redundant_vertices", "removeRedundantVertices" }, false);
         meshFilter.generateNormals(mesh, creaseAngle, removeRedundantVertices);
-        meshFilter.setNormalOverwritingEnabled(false);
     }
     if(meshOptions & MeshGenerator::TextureCoordinate){
         if(mesh && !mesh->hasTexCoords()){

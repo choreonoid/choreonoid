@@ -165,7 +165,8 @@ bool MeshGenerator::generateBox(SgMesh* mesh, int options)
             { -x,-y,-z },
             {  x,-y,-z }
         });
-        
+
+    mesh->clearTriangles();
     mesh->addTriangles({
             {0,1,2},{2,3,0},
             {0,5,1},{0,4,5},
@@ -261,6 +262,7 @@ bool MeshGenerator::generateBoxWithExtraTriangles(SgMesh* mesh)
              (divisions[1] + 1) * (divisions[2] + 1) +
              (divisions[2] + 1) * (divisions[0] + 1)));
     
+    mesh->clearTriangles();
     mesh->reserveNumTriangles(
         4 * (divisions[0] * divisions[1] +
              divisions[1] * divisions[2] +
@@ -371,7 +373,7 @@ bool MeshGenerator::generateSphere(SgMesh* mesh, int options)
     const int vdn = dv / 2;  // latitudinal division number
     const int hdn = dv;      // longitudinal division number
 
-    auto& vertices = *mesh->setVertices(new SgVertexArray());
+    auto& vertices = *mesh->setVertices(new SgVertexArray);
     vertices.reserve((vdn - 1) * hdn + 2);
 
     for(int i=1; i < vdn; i++){ // latitudinal direction
@@ -387,6 +389,7 @@ bool MeshGenerator::generateSphere(SgMesh* mesh, int options)
     const int bottomIndex = vertices.size();
     vertices.push_back(Vector3f(0.0f, -radius, 0.0f));
 
+    mesh->clearTriangles();
     mesh->reserveNumTriangles(vdn * hdn * 2);
 
     // top faces
@@ -446,7 +449,7 @@ void MeshGenerator::generateTextureCoordinateForSphere(SgMesh* mesh)
     const auto& sphere = mesh->primitive<SgMesh::Sphere>();
     const auto& vertices = *mesh->vertices();
 
-    mesh->setTexCoords(new SgTexCoordArray());
+    mesh->setTexCoords(new SgTexCoordArray);
     SgTexCoordArray& texCoords = *mesh->texCoords();
     SgIndexArray& texCoordIndices = mesh->texCoordIndices();
     texCoordIndices.clear();
@@ -564,6 +567,7 @@ bool MeshGenerator::generateCylinder(SgMesh* mesh, int options)
     if(cylinder.side){
         nt += 2 * n * m;
     }
+    mesh->clearTriangles();
     mesh->reserveNumTriangles(nt);
     
     for(int i=0; i < n; ++i){
@@ -604,7 +608,7 @@ bool MeshGenerator::generateCylinder(SgMesh* mesh, int options)
 void MeshGenerator::generateTextureCoordinateForCylinder(SgMesh* mesh)
 {
     const auto& vertices = *mesh->vertices();
-    mesh->setTexCoords(new SgTexCoordArray());
+    mesh->setTexCoords(new SgTexCoordArray);
     SgTexCoordArray& texCoords = *mesh->texCoords();
     SgIndexArray& texCoordIndices = mesh->texCoordIndices();
     texCoordIndices.clear();
@@ -713,7 +717,7 @@ bool MeshGenerator::generateCone(SgMesh* mesh, int options)
         dv = 4;
     }
 
-    auto& vertices = *mesh->setVertices(new SgVertexArray());
+    auto& vertices = *mesh->setVertices(new SgVertexArray);
     vertices.reserve(dv + 2);
 
     for(int i=0;  i < dv; ++i){
@@ -726,6 +730,7 @@ bool MeshGenerator::generateCone(SgMesh* mesh, int options)
     const int bottomCenterIndex = vertices.size();
     vertices.push_back(Vector3f(0.0f, -cone.height / 2.0, 0.0f));
 
+    mesh->clearTriangles();
     mesh->reserveNumTriangles(dv * 2);
 
     for(int i=0; i < dv; ++i){
@@ -755,7 +760,7 @@ bool MeshGenerator::generateCone(SgMesh* mesh, int options)
 
 void MeshGenerator::generateTextureCoordinateForCone(SgMesh* mesh)
 {
-    mesh->setTexCoords(new SgTexCoordArray());
+    mesh->setTexCoords(new SgTexCoordArray);
     SgTexCoordArray& texCoords = *mesh->texCoords();
     SgIndexArray& texCoordIndices = mesh->texCoordIndices();
     texCoordIndices.clear();
@@ -874,7 +879,7 @@ bool MeshGenerator::generateCapsule(SgMesh* mesh)
     const int hdn = dv; // longitudinal division number
     int size = n * hdn + 2;
                 
-    auto& vertices = *mesh->setVertices(new SgVertexArray());
+    auto& vertices = *mesh->setVertices(new SgVertexArray);
     vertices.reserve(size);
 
     // top half-sphere
@@ -917,6 +922,7 @@ bool MeshGenerator::generateCapsule(SgMesh* mesh)
     const int bottomIndex = vertices.size();
     vertices.emplace_back(0.0f, -radius - height / 2.0, 0.0f);
 
+    mesh->clearTriangles();
     mesh->reserveNumTriangles(n * hdn * 2);
 
     // top faces
@@ -1098,11 +1104,11 @@ SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, int meshOpt
         crossSectionSize --;
 
     if(spineSize < 2 || crossSectionSize < 2){
-        return 0;
+        return nullptr;
     }
 
     auto mesh = new SgMesh;
-    auto& vertices = *mesh->setVertices(new SgVertexArray());
+    auto& vertices = *mesh->setVertices(new SgVertexArray);
     vertices.reserve(spineSize * crossSectionSize);
 
     Vector3 preZaxis(Vector3::Zero());
@@ -1285,7 +1291,7 @@ void MeshGenerator::generateTextureCoordinateForExtrusion
     const int spineSize = spine.size();
     const int crossSectionSize = crossSection.size();
 
-    mesh->setTexCoords(new SgTexCoordArray());
+    mesh->setTexCoords(new SgTexCoordArray);
     SgTexCoordArray& texCoords = *mesh->texCoords();
 
     vector<double> s;
@@ -1428,7 +1434,7 @@ SgMesh* MeshGenerator::generateElevationGrid(const ElevationGrid& grid, int mesh
     }
 
     auto mesh = new SgMesh;
-    mesh->setVertices(new SgVertexArray());
+    mesh->setVertices(new SgVertexArray);
     auto& vertices = *mesh->vertices();
     vertices.reserve(grid.zDimension * grid.xDimension);
 
@@ -1473,7 +1479,7 @@ void MeshGenerator::generateTextureCoordinateForElevationGrid(SgMesh* mesh, cons
     float xmax = grid.xSpacing * (grid.xDimension - 1);
     float zmax = grid.zSpacing * (grid.zDimension - 1);
 
-    mesh->setTexCoords(new SgTexCoordArray());
+    mesh->setTexCoords(new SgTexCoordArray);
     SgTexCoordArray& texCoords = *mesh->texCoords();
     const SgVertexArray& vertices = *mesh->vertices();
 
@@ -1527,7 +1533,7 @@ void MeshGenerator::generateTextureCoordinateForIndexedFaceSet(SgMeshBase* mesh)
     }
     const float ratio = size[t] / size[s];
 
-    mesh->setTexCoords(new SgTexCoordArray());
+    mesh->setTexCoords(new SgTexCoordArray);
     SgTexCoordArray& texCoords = *mesh->texCoords();
     texCoords.resize(n);
     for(int i=0; i < n; ++i){
