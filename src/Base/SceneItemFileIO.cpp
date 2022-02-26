@@ -1,6 +1,7 @@
 #include "SceneItemFileIO.h"
 #include "GeneralSceneFileImporterBase.h"
 #include "ItemManager.h"
+#include <cnoid/StdSceneLoader>
 #include <cnoid/StdSceneWriter>
 #include "gettext.h"
 
@@ -43,6 +44,11 @@ public:
         if(sceneItem->isLightweightRenderingEnabled()){
             sceneItem->setLightweightRenderingEnabled(true);
         }
+
+        if(auto loader = dynamic_pointer_cast<StdSceneLoader>(sceneLoaderOnLastLoading())){
+            setFormatOnLastIO("CHOREONOID-SCENE");
+        }
+        
         return true;
     }
 };

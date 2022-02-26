@@ -2,11 +2,13 @@
 #define CNOID_BASE_ITEM_GENERAL_SCENE_FILE_IMPORTER_BASE_H
 
 #include "ItemFileIO.h"
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class SgNode;
+class AbstractSceneLoader;
 
 class CNOID_EXPORT GeneralSceneFileImporterBase : public ItemFileIO
 {
@@ -17,6 +19,7 @@ public:
 
 protected:
     SgNode* loadScene(const std::string& filename);
+    std::shared_ptr<AbstractSceneLoader> sceneLoaderOnLastLoading();
 
     //! This function has not been implemented yet
     bool saveScene(SgNode* scene, const std::string& filename);

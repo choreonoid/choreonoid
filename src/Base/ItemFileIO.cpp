@@ -22,6 +22,7 @@ public:
     int api;
     std::string format;
     std::vector<std::string> formatAliases;
+    std::string formatOnLastIO;
     std::string caption;
     std::string fileTypeCaption;
     std::vector<std::string> extensionsForLoading;
@@ -406,7 +407,11 @@ bool ItemFileIO::Impl::loadItem
             optionArchive = new Mapping;
             self->storeOptions(optionArchive);
         }
-        actuallyLoadedItem->updateFileInformation(filename, format, optionArchive);
+            
+        actuallyLoadedItem->updateFileInformation(
+            filename,
+            formatOnLastIO.empty() ? format : formatOnLastIO,
+            optionArchive);
 
         if(doAddition && parentItem){
             parentItem->insertChild(nextItem, item, true);
@@ -418,6 +423,8 @@ bool ItemFileIO::Impl::loadItem
 
     this->parentItem = nullptr;
     actuallyLoadedItem = nullptr;
+
+    formatOnLastIO.clear();
 
     return loaded;
 }
@@ -496,7 +503,10 @@ bool ItemFileIO::Impl::saveItem
         }
         if(!isExport){
             item->setTemporal(false);
-            item->updateFileInformation(filename, format, optionArchive);
+            item->updateFileInformation(
+                filename,
+                formatOnLastIO.empty() ? format : formatOnLastIO,
+                optionArchive);
         }
         if(isItemNameUpdateInSavingEnabled){
             auto newName = toUTF8(filesystem::path(fromUTF8(filename)).stem().string());
@@ -510,7 +520,15 @@ bool ItemFileIO::Impl::saveItem
 
     this->parentItem = nullptr;
 
+    formatOnLastIO.clear();
+
     return saved;
+}
+
+
+void ItemFileIO::setFormatOnLastIO(const std::string& format)
+{
+    impl->formatOnLastIO = format;
 }
 
 

@@ -36,6 +36,7 @@ public:
     ostream& os() { return *os_; }
     typedef map<int, AbstractSceneLoaderPtr> LoaderMap;
     LoaderMap loaders;
+    std::shared_ptr<AbstractSceneLoader> actualSceneLoaderOnLastLoading;
     int defaultDivisionNumber;
     double defaultCreaseAngle;
 
@@ -198,8 +199,17 @@ SgNode* SceneLoader::Impl::load(const std::string& filename, bool* out_isSupport
             loader->setDefaultCreaseAngle(defaultCreaseAngle);
         }
         node = loader->load(filename);
+        actualSceneLoaderOnLastLoading = loader;
         os().flush();
     }
 
     return node;
 }
+
+
+std::shared_ptr<AbstractSceneLoader> SceneLoader::actualSceneLoaderOnLastLoading()
+{
+    return impl->actualSceneLoaderOnLastLoading;
+}
+
+

@@ -147,6 +147,14 @@ protected:
     void putError(const std::string& message);
 
     /**
+       This function can be used to specify a format different from the one originally
+       associated with the ItemFileIO object for the last loaded / saved item.
+       For example, the file format can dynamically be determined depending on actually
+       loaded file type by using this function.
+    */
+    void setFormatOnLastIO(const std::string& format);
+
+    /**
        When the file is loaded as a composite item tree and the item
        that actually loads the file is different from the top item,
        the following function must be called with the corresponding item.

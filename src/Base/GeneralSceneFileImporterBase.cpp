@@ -165,6 +165,12 @@ SgNode* GeneralSceneFileImporterBase::Impl::loadScene(GeneralSceneFileImporterBa
 }
 
 
+std::shared_ptr<AbstractSceneLoader> GeneralSceneFileImporterBase::sceneLoaderOnLastLoading()
+{
+    return impl->sceneLoader->actualSceneLoaderOnLastLoading();
+}
+
+
 bool GeneralSceneFileImporterBase::saveScene(SgNode* scene, const std::string& filename)
 {
     return false;

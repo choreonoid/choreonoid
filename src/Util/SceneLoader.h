@@ -35,6 +35,8 @@ public:
 
     SgNode* load(const std::string& filename, bool& out_isSupportedFormat);
 
+    std::shared_ptr<AbstractSceneLoader> actualSceneLoaderOnLastLoading();
+
 private:
     class Impl;
     Impl* impl;
