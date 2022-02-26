@@ -64,7 +64,7 @@ ItemFileIO::Impl::Impl(ItemFileIO* self, const std::string& format, int api)
       format(format)
 {
     interfaceLevel = Standard;
-    isItemNameUpdateInSavingEnabled = false;
+    isItemNameUpdateInSavingEnabled = true;
     currentInvocationType = Direct;
     parentItem = nullptr;
     mv = MessageView::instance();

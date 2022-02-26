@@ -153,11 +153,10 @@ BodyItemBodyFileIO::BodyItemBodyFileIO()
     : BodyItemFileIoBase("CHOREONOID-BODY", Load | Save | Options | OptionPanelForSaving)
 {
     setCaption(_("Body"));
-
     setExtensionsForLoading({ "body", "yaml", "yml", "wrl" });
     setExtensionsForSaving({ "body" });
-
     addFormatAlias("OpenHRP-VRML-MODEL");
+    setItemNameUpdateInSavingEnabled(false);
 
     bodyLoader_ = nullptr;
     bodyWriter_ = nullptr;
