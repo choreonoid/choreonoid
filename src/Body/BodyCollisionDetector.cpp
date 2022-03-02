@@ -234,10 +234,15 @@ void BodyCollisionDetector::Impl::checkCollisionDetectionTargets
                 auto& enabledLinks = *value->toListing();
                 if(isSelfCollisionDetectionEnabled){
                     for(int i=0; i < enabledLinks.size(); ++i){
-                        for(int j = i + 1; j < enabledLinks.size(); ++j){
-                            auto link1 = body->link(enabledLinks[i].toString());
-                            auto link2 = body->link(enabledLinks[j].toString());
-                            ignoredLinkPairs.erase(IdPair<int>(link1->index(), link2->index()));
+                        if(auto link1 = body->link(enabledLinks[i].toString())){
+                            int index1 = link1->index();
+                            linkExclusionFlags[index1] = false;
+                            for(int j = i + 1; j < enabledLinks.size(); ++j){
+                                if(auto link2 = body->link(enabledLinks[j].toString())){
+                                    int index2 = link2->index();
+                                    ignoredLinkPairs.erase(IdPair<int>(index1, index2));
+                                }
+                            }
                         }
                     }
                 }
