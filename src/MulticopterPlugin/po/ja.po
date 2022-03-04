@@ -32,7 +32,7 @@ msgid "[{0}] tag is false in body[{1}]."
 msgstr "Body[{1}]のタグ[{0}]は間違っています．"
 
 msgid "[{0}] tag is missing, or wrong parameter in link[{1}]."
-msgstr "リンク[{1}]のタグ[{0}]が見つからないか、パラメータが間違っています．"
+msgstr "リンク[{1}]のタグ[{0}]が見つからないか，パラメータが間違っています．"
 
 msgid "[{}] tag is missing, or wrong parameter in RotorDevice."
-msgstr "ロータデバイスのタグ[{}]が見つからないか、パラメータが間違っています．"
+msgstr "ロータデバイスのタグ[{}]が見つからないか，パラメータが間違っています．"

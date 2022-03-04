@@ -127,10 +127,10 @@ msgid "Terminate"
 msgstr "停止"
 
 msgid "External command \"{0}\" has been executed by item \"{1}\"."
-msgstr "外部コマンド\"{0}\"がアイテム\"{1}\"によって実行されました．"
+msgstr "外部コマンド \"{0}\" がアイテム \"{1}\" によって実行されました．"
 
 msgid "External command \"{}\" cannot be executed."
-msgstr "外部コマンド\"{}\"を実行できません．"
+msgstr "外部コマンド \"{}\" を実行できません．"
 
 msgid " The command does not exist."
 msgstr "コマンドが存在しません．"
@@ -160,17 +160,17 @@ msgid "Driver profile: {0} {1}."
 msgstr "ドライバプロファイル: {0} {1}."
 
 msgid "Shader \"{}\" is not found."
-msgstr "シェーダ\"{}\"がみつかりません．"
+msgstr "シェーダ \"{}\" がみつかりません．"
 
 msgid ""
 "Shader compilation of \"{0}\" failed.\n"
 "{1}"
 msgstr ""
-"\"{0}\"のシェーダコンパイルに失敗しました．\n"
+"\"{0}\" のシェーダコンパイルに失敗しました．\n"
 "{1}"
 
 msgid "Shader compilation of \"{}\" failed."
-msgstr "\"{}\"のシェーダコンパイルに失敗しました．"
+msgstr "\"{}\" のシェーダコンパイルに失敗しました．"
 
 msgid "Unable to create shader program."
 msgstr "シェーダプログラムを生成できません．"
@@ -209,7 +209,7 @@ msgid "Framebuffer is not complete.\n"
 msgstr "フレームバッファが不完全です．\n"
 
 msgid "The file format of \"{}\" is not supported.\n"
-msgstr "ファイルフォーマット\"{}\"はサポートされていません．\n"
+msgstr "ファイルフォーマット \"{}\" はサポートされていません．\n"
 
 msgid "[ Mesh import hints ]"
 msgstr "[ メッシュインポートヒント ]"
@@ -409,10 +409,10 @@ msgid "Exporting {0} to a file is not supported"
 msgstr "{0}のファイルエクスポートはサポートされていません"
 
 msgid "Save {}"
-msgstr "{} の保存"
+msgstr "{}の保存"
 
 msgid "Export {}"
-msgstr "{} のエクスポート"
+msgstr "{}のエクスポート"
 
 msgid "%1 already exists. Do you want to replace it? "
 msgstr "既存のファイル %1 を上書きしてもよいですか？"
@@ -553,7 +553,7 @@ msgid "The archive has an empty-name sub item, which cannot be processed."
 msgstr "アーカイブ内に名前の無いサブアイテムがありますがこれを処理することはできません．"
 
 msgid "Sub item \"{}\" is not found. Its children cannot be restored."
-msgstr "サブアイテム\"{}\"が見つからないため読み出しができません．"
+msgstr "サブアイテム \"{}\" が見つからないため読み出しができません．"
 
 msgid "Archive is broken."
 msgstr "アーカイブが壊れています．"
@@ -640,7 +640,7 @@ msgid "Cut items in {0}"
 msgstr "複数のアイテムを{0}上で切り取り"
 
 msgid "The copied items cannot be pasted to \"{0}\"."
-msgstr "コピーされたアイテムを\"{0}\"にペーストできませんでした．"
+msgstr "コピーされたアイテムを \"{0}\" にペーストできませんでした．"
 
 msgid "Paste items in {0}"
 msgstr "複数のアイテムを{0}上で貼り付け"
@@ -926,10 +926,10 @@ msgstr ""
 " 上書きしてもよいですか？"
 
 msgid "Couldn't open file \"{}\" for writing.\n"
-msgstr "\"{}\"は書き込み用ファイルとして開けません．\n"
+msgstr "\"{}\" は書き込み用ファイルとして開けません．\n"
 
 msgid "Opened file \"{}\" for writing.\n"
-msgstr "\"{}\"を書き込み用ファイルとして開きました．\n"
+msgstr "\"{}\" を書き込み用ファイルとして開きました．\n"
 
 msgid "Message view log file (*.log)"
 msgstr "メッセージビューログファイル (*.log)"
@@ -1004,7 +1004,7 @@ msgid "Sequential numbered PNG image files"
 msgstr "連番PNG画像ファイル"
 
 msgid "Saving an image to \"{}\" failed."
-msgstr "画像の\"{}\"への保存ができませんでした．"
+msgstr "画像の \"{}\" への保存ができませんでした．"
 
 msgid "MovieRecorderBar"
 msgstr "動画レコーダバー"
@@ -1145,7 +1145,7 @@ msgid "Plain Format of a Multi Value Sequence"
 msgstr "複数値時系列のプレインフォーマット"
 
 msgid "Input file \"{}\" was not processed."
-msgstr "入力ファイル \"{}\" は処理されませんでした．"
+msgstr "入力ファイル  \"{}\" は処理されませんでした．"
 
 msgid "Path Variables"
 msgstr "パス変数"
@@ -1185,7 +1185,7 @@ msgstr ""
 "問題を避けるため，プラグインファイル \"{1}\" は削除か更新を行なってください．\n"
 
 msgid "Plugin file \"{0}\" conflicts with \"{1}\"."
-msgstr "{0}プラグインは\"{1}\"と競合しています．"
+msgstr "{0}プラグインは \"{1}\" と競合しています．"
 
 msgid "Loading the plugin failed.\n"
 msgstr "プラグインの読み込みができませんでした．\n"
@@ -1322,7 +1322,7 @@ msgstr ""
 "{2}"
 
 msgid "Loading project file \"{}\" ..."
-msgstr "プロジェクトファイル\"{}\"を読み込み中…"
+msgstr "プロジェクトファイル \"{}\" を読み込み中…"
 
 msgid "Resource \"{0}\" is not found."
 msgstr "リソース \"{}\" がみつかりません．"
@@ -1346,10 +1346,10 @@ msgid "Project \"{}\" has been partially loaded."
 msgstr "プロジェクト \"{}\" を部分的に読み込みました．"
 
 msgid "Loading project \"{}\" failed. Any valid objects were not loaded."
-msgstr "プロジェクト\"{}\"の読み込みに失敗しました．いかなるオブジェクトもロードされていません．"
+msgstr "プロジェクト \"{}\" の読み込みに失敗しました．いかなるオブジェクトもロードされていません．"
 
 msgid "Can't open file \"{}\" for writing.\n"
-msgstr "\"{}\"は書き込み用ファイルとして開けません．\n"
+msgstr "\"{}\" は書き込み用ファイルとして開けません．\n"
 
 msgid "Saving sub project {0} as \"{1}\" ..."
 msgstr "サブプロジェクト \"{0}\" を \"{1}\" に保存中…"
@@ -1624,7 +1624,7 @@ msgid "Recursive editable node set change on a scene widget."
 msgstr "シーンウィジェットにおける編集可ノード集合の再帰的変化．"
 
 msgid "Recursive editable node set change on scene widget {0}."
-msgstr "シーンウィジェット {0} における編集可ノード集合の再帰的変化 ．"
+msgstr "シーンウィジェット{0}における編集可ノード集合の再帰的変化 ．"
 
 msgid "The OpenGL resources of {0} has been cleared."
 msgstr "{0}のOpenGLリソースがクリアされました．"

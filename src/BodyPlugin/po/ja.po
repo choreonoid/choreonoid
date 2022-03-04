@@ -62,7 +62,7 @@ msgstr ""
 
 msgid "{0}: Actuation mode \"{1}\" specified for the {2} link of {3} is not supported."
 msgstr ""
-"{0}: {3}の{2}リンクに指定されているアクチュエーションモード \"{1}\"はサポートされていません．"
+"{0}: {3}の{2}リンクに指定されているアクチュエーションモード \"{1}\" はサポートされていません．"
 
 msgid "Dynamics mode"
 msgstr "動力学モード"
@@ -320,10 +320,10 @@ msgid "Axes"
 msgstr "座標軸"
 
 msgid "Target link \"{0}\" of \"{1}\" is not found."
-msgstr "\"{1}\"の対象リンク\"{0}\"がみつかりません．"
+msgstr "\"{1}\" の対象リンク \"{0}\" がみつかりません．"
 
 msgid "Target node \"{0}\" of \"{1}\" is not found."
-msgstr "\"{1}\"の対象ノード\"{0}\"がみつかりません．"
+msgstr "\"{1}\" の対象ノード \"{0}\" がみつかりません．"
 
 msgid "Marker type"
 msgstr "マーカタイプ"
@@ -643,10 +643,10 @@ msgid "Anti-aliasing"
 msgstr "アンチエイリアシング"
 
 msgid "\"{}\" cannot be opened."
-msgstr "\"{}\"が開けません．"
+msgstr "\"{}\" が開けません．"
 
 msgid "\"{}\" contains different size columns."
-msgstr "\"{}\"に異なるサイズの列が含まれています．"
+msgstr "\"{}\" に異なるサイズの列が含まれています．"
 
 msgid "Warning"
 msgstr "警告"
@@ -810,7 +810,7 @@ msgid "No BodyMotionItems are selected."
 msgstr "BodyMotionアイテムが選択されていません．"
 
 msgid "{} is not owned by any BodyItem. Check skiped."
-msgstr "{} はボディアイテムの所有ではありませんので，チェックをしません．"
+msgstr "{}はボディアイテムの所有ではありませんので，チェックをしません．"
 
 msgid "Applying the Kinematic Fault Checker to {} ..."
 msgstr "{}に対して運動学的障害チェッカを適用中…"
@@ -1199,7 +1199,7 @@ msgid "The controller module of {} has already been loaded."
 msgstr "{}のコントローラモジュールは既にロードされています．"
 
 msgid "Loading the controller module \"{1}\" of {0} ... "
-msgstr "{0}のコントローラモジュール\"{1}\"をロード中･･･"
+msgstr "{0}のコントローラモジュール \"{1}\" をロード中･･･"
 
 msgid "Failed.\n"
 msgstr "失敗．\n"
@@ -1393,14 +1393,14 @@ msgstr "稼働可能なコントローラが無いためシミュレーション
 
 msgid "WorldLogFileItem \"{0}\" has been detected. A simulation result is recoreded to \"{1}\"."
 msgstr ""
-"ワールドログファイルアイテム \"{0}\" が検出されました．シミュレーション結果は\"{1}\" に記録されま"
+"ワールドログファイルアイテム \"{0}\" が検出されました．シミュレーション結果は \"{1}\" に記録されま"
 "す．"
 
 msgid "Simulation by {} has started."
 msgstr "{}によるシミュレーションを開始しました．"
 
 msgid "{0} failed to initialize the simulation."
-msgstr "{0} のシミュレーションの初期化ができませんでした．"
+msgstr "{0}のシミュレーションの初期化ができませんでした．"
 
 msgid "Simulation by {0} has finished at {1} [s]."
 msgstr "{0}によるシミュレーションが{1}秒時点で終了しました．"

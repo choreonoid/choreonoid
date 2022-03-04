@@ -57,10 +57,10 @@ msgid "Type / operator mismatch in the conditional expression of a While stateme
 msgstr "Whileステートメントの条件式における型とオペレータがマッチしていません．"
 
 msgid "Integer value {0} is out of range."
-msgstr "整数値 {0} は範囲外です．"
+msgstr "整数値{0}は範囲外です．"
 
 msgid "Expression assigned to variable {0} is empty."
-msgstr "変数 {0} に式が設定されていません．"
+msgstr "変数{0}に式が設定されていません．"
 
 msgid "Term \"{0}\" is invalid."
 msgstr "項 \"{0}\" は無効です．"
@@ -96,7 +96,7 @@ msgid "The joint displacement of {0} is out of its movable range."
 msgstr "{0}の関節変位が可動範囲外です．"
 
 msgid "The \"id\" key is not found in a manipulator position node."
-msgstr "マニピュレータ位置ノードの\"id\"キーが見つかりません."
+msgstr "マニピュレータ位置ノードの \"id\" キーが見つかりません."
 
 msgid "The current manipulator position is not valid: {0}."
 msgstr "現在のマニピュレータの姿勢は有効ではありません：{0}."
@@ -159,7 +159,7 @@ msgid "{0} cannot be loaded as a Manipulator program file"
 msgstr "{0}はマニピュレータプログラムファイルとして読み込むことができません"
 
 msgid "Statement type \"{0}\" is not supported"
-msgstr "ステートメント型\"{0}\"はサポートされていません"
+msgstr "ステートメント型 \"{0}\" はサポートされていません"
 
 msgid "Position {0} is not found in {1}."
 msgstr "ポジション{0}は{1}にありません．"
