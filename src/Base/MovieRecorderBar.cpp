@@ -41,7 +41,7 @@ MovieRecorderBar::MovieRecorderBar()
     auto configButton = addButton(QIcon(":/Base/icon/setup.svg"));
     configButton->setToolTip(_("Show the config dialog"));
     configButton->sigClicked().connect(
-        [this](){ MovieRecorderDialog::instance()->show(); });
+        [this](){ showMovieRecorderDialog(); });
 }
 
 
@@ -102,4 +102,10 @@ void MovieRecorderBar::onViewMarkerButtonToggled(bool on)
 {
     auto scopedBlock = recorderConnections.scopedBlock();
     MovieRecorder::instance()->setViewMarkerVisible(on);
+}
+
+
+void MovieRecorderBar::showMovieRecorderDialog()
+{
+    MovieRecorderDialog::instance()->show();
 }

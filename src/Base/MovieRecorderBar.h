@@ -4,13 +4,14 @@
 #include "ToolBar.h"
 #include <cnoid/ConnectionSet>
 #include <QIcon>
+#include "exportdecl.h"
 
 namespace cnoid {
 
 class ExtensionManager;
 class MovieRecorder;
 
-class MovieRecorderBar : public ToolBar
+class CNOID_EXPORT MovieRecorderBar : public ToolBar
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -26,6 +27,7 @@ private:
     void onRecordingConfigurationChanged();
     void onRecordingButtonToggled(bool on);
     void onViewMarkerButtonToggled(bool on);
+    virtual void showMovieRecorderDialog();
     
     static MovieRecorderBar* instance_;
     MovieRecorder* recorder;
