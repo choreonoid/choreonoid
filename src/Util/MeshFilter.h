@@ -12,7 +12,6 @@ namespace cnoid {
 
 class SgNode;
 class SgMesh;
-class MeshFilterImpl;
 
 class CNOID_EXPORT MeshFilter
 {
@@ -46,15 +45,13 @@ public:
     void setMinCreaseAngle(float angle);
     void setMaxCreaseAngle(float angle);
     
-    // Deprecated. Use enableNormalOverwriting()
+    [[deprecated("Use setNormalOverwritingEnabled")]]
     void setOverwritingEnabled(bool on);
 
 private:
-    MeshFilterImpl* impl;
+    class Impl;
+    Impl* impl;
 };
-
-// for the backward compatibility
-typedef MeshFilter MeshNormalGenerator;
 
 }
 

@@ -75,6 +75,7 @@ MeshFilter* MeshGenerator::getOrCreateMeshFilter()
 {
     if(!meshFilter){
         meshFilter = new MeshFilter;
+        meshFilter->setNormalOverwritingEnabled(true);
     }
     return meshFilter;
 }
