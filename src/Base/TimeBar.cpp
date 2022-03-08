@@ -56,8 +56,9 @@ public:
     void setTimeBarTime(double time, QWidget* callerWidget);
     void onTimeSpinChanged(double value);
     bool onTimeSliderValueChanged(int value);
-    bool setTimeRange(double minTime, double maxTime, bool isSpinBoxSignal, bool doUpdateTimeSpinSlider);
-    void onTimeRangeSpinValueChanged();
+    bool setTimeRange(double minTime, double maxTime, bool doUpdateTimeSpinSlider);
+    void onMinTimeSpinValueChanged(double minTime);
+    void onMaxTimeSpinValueChanged(double maxTime);
     bool setFrameRate(double rate, bool isSpinBoxSignal, bool doUpdateTimeSpinSlider);
     void updateTimeSpinSlider();
     void setPlaybackFrameRate(double rate, bool isSpinBoxSignal);
@@ -224,7 +225,7 @@ TimeBar::Impl::Impl(TimeBar* self)
     minTimeSpin = new DoubleSpinBox;
     minTimeSpin->setAlignment(Qt::AlignCenter);
     minTimeSpin->setRange(-9999.0, 9999.0);
-    minTimeSpin->sigValueChanged().connect([&](double){ onTimeRangeSpinValueChanged(); });
+    minTimeSpin->sigValueChanged().connect([&](double time){ onMinTimeSpinValueChanged(time); });
     self->addWidget(minTimeSpin, TimeRangeMinSpin);
 
     timeRangeDelimiterLabel = self->addLabel(" : ");
@@ -232,14 +233,14 @@ TimeBar::Impl::Impl(TimeBar* self)
     maxTimeSpin = new DoubleSpinBox;
     maxTimeSpin->setAlignment(Qt::AlignCenter);
     maxTimeSpin->setRange(-9999.0, 9999.0);
-    maxTimeSpin->sigValueChanged().connect([&](double){ onTimeRangeSpinValueChanged(); });
+    maxTimeSpin->sigValueChanged().connect([&](double time){ onMaxTimeSpinValueChanged(time); });
     self->addWidget(maxTimeSpin, TimeRangeMaxSpin);
 
     auto configButton = self->addButton(QIcon(":/Base/icon/setup.svg"));
     configButton->setToolTip(_("Show the config dialog"));
     configButton->sigClicked().connect([&](){ configDialog->show(); });
 
-    setTimeRange(0.0, 30.0, false, true);
+    setTimeRange(0.0, 30.0, true);
 }
 
 
@@ -418,25 +419,26 @@ double TimeBar::maxTime() const
 
 void TimeBar::setTimeRange(double minTime, double maxTime)
 {
-    impl->setTimeRange(minTime, maxTime, false, true);
+    impl->setTimeRange(minTime, maxTime, true);
 }
 
 
-bool TimeBar::Impl::setTimeRange(double newMinTime, double newMaxTime, bool isSpinBoxSignal, bool doUpdateTimeSpinSlider)
+bool TimeBar::Impl::setTimeRange(double newMinTime, double newMaxTime, bool doUpdateTimeSpinSlider)
 {
     bool updated = false;
     
-    if((newMinTime != minTime || newMaxTime != maxTime) && newMinTime < newMaxTime){
+    if((newMinTime != minTime || newMaxTime != maxTime) && newMinTime <= newMaxTime){
         minTime = newMinTime;
         maxTime = newMaxTime;
-        if(!isSpinBoxSignal){
-            minTimeSpin->blockSignals(true);
-            minTimeSpin->setValue(minTime);
-            minTimeSpin->blockSignals(false);
-            maxTimeSpin->blockSignals(true);
-            maxTimeSpin->setValue(maxTime);
-            maxTimeSpin->blockSignals(false);
-        }
+
+        minTimeSpin->blockSignals(true);
+        minTimeSpin->setValue(minTime);
+        minTimeSpin->blockSignals(false);
+
+        maxTimeSpin->blockSignals(true);
+        maxTimeSpin->setValue(maxTime);
+        maxTimeSpin->blockSignals(false);
+
         updated = true;
         if(doUpdateTimeSpinSlider){
             updateTimeSpinSlider();
@@ -447,9 +449,23 @@ bool TimeBar::Impl::setTimeRange(double newMinTime, double newMaxTime, bool isSp
 }
 
 
-void TimeBar::Impl::onTimeRangeSpinValueChanged()
+void TimeBar::Impl::onMinTimeSpinValueChanged(double minTime)
 {
-    setTimeRange(minTimeSpin->value(), maxTimeSpin->value(), true, true);
+    double maxTime = maxTimeSpin->value();
+    if(minTime > maxTime){
+        maxTime = minTime;
+    }
+    setTimeRange(minTime, maxTime, true);
+}
+
+
+void TimeBar::Impl::onMaxTimeSpinValueChanged(double maxTime)
+{
+    double minTime = minTimeSpin->value();
+    if(maxTime < minTime){
+        minTime = maxTime;
+    }
+    setTimeRange(minTime, maxTime, true);
 }
 
 
@@ -832,18 +848,31 @@ bool TimeBar::Impl::setTime(double time, bool calledFromPlaybackLoop, QWidget* c
 
 void TimeBar::Impl::setTimeBarTime(double time, QWidget* callerWidget)
 {
-    if(time > maxTime && isAutoExpansionMode){
-        maxTime = time;
-        timeSpin->blockSignals(true);
-        timeSlider->blockSignals(true);
-        maxTimeSpin->blockSignals(true);
-        timeSpin->setRange(minTime, maxTime);
-        const double r = pow(10.0, decimals);
-        timeSlider->setRange((int)nearbyint(minTime * r), (int)nearbyint(maxTime * r));
-        maxTimeSpin->setValue(maxTime);
-        maxTimeSpin->blockSignals(false);
-        timeSlider->blockSignals(false);
-        timeSpin->blockSignals(false);
+    if(isAutoExpansionMode){
+        bool doExpand = false;
+        if(time < minTime){
+            minTime = time;
+            minTimeSpin->blockSignals(true);
+            minTimeSpin->setValue(maxTime);
+            minTimeSpin->blockSignals(false);
+            doExpand = true;
+        }
+        if(time > maxTime){
+            maxTime = time;
+            maxTimeSpin->blockSignals(true);
+            maxTimeSpin->setValue(maxTime);
+            maxTimeSpin->blockSignals(false);
+            doExpand = true;
+        }
+        if(doExpand){
+            timeSpin->blockSignals(true);
+            timeSlider->blockSignals(true);
+            timeSpin->setRange(minTime, maxTime);
+            const double r = pow(10.0, decimals);
+            timeSlider->setRange((int)nearbyint(minTime * r), (int)nearbyint(maxTime * r));
+            timeSlider->blockSignals(false);
+            timeSpin->blockSignals(false);
+        }
     }
         
     self->time_ = time;
@@ -1025,7 +1054,7 @@ bool TimeBar::Impl::restoreState(const Archive& archive)
     doUpdateTimeRange = archive.read({ "min_time", "minTime" }, newMinTime);
     doUpdateTimeRange |= archive.read({ "max_time", "maxTime" }, newMaxTime);
     if(doUpdateTimeRange){
-        doUpdateTimeSpinSlider = setTimeRange(newMinTime, newMaxTime, false, false);
+        doUpdateTimeSpinSlider = setTimeRange(newMinTime, newMaxTime, false);
     }
     double newFrameRate;
     if(archive.read("frame_rate", newFrameRate)){
