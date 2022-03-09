@@ -1235,7 +1235,8 @@ bool BodyLocation::setLocation(const Isometry3& T)
         impl->parentBodyItem->notifyKinematicStateChange(true);
     } else {
         rootLink->setPosition(T);
-        impl->self->notifyKinematicStateChange(true);
+        impl->body->calcForwardKinematics();
+        impl->self->notifyKinematicStateChange();
     }
     return true;
 }
