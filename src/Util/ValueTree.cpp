@@ -58,12 +58,29 @@ ValueNode::Initializer::Initializer()
     invalidListing = new Listing;
     invalidListing->typeBits = INVALID_NODE;
     
-    booleanSymbols["true"] = true;
+    booleanSymbols["y"] = true;
+    booleanSymbols["Y"] = true;
     booleanSymbols["yes"] = true;
+    booleanSymbols["Yes"] = true;
+    booleanSymbols["YES"] = true;
+    booleanSymbols["true"] = true;
+    booleanSymbols["True"] = true;
+    booleanSymbols["TRUE"] = true;
     booleanSymbols["on"] = true;
-    booleanSymbols["false"] = false;
+    booleanSymbols["On"] = true;
+    booleanSymbols["ON"] = true;
+    
+    booleanSymbols["n"] = false;
+    booleanSymbols["N"] = false;
     booleanSymbols["no"] = false;
+    booleanSymbols["No"] = false;
+    booleanSymbols["NO"] = false;
+    booleanSymbols["false"] = false;
+    booleanSymbols["False"] = false;
+    booleanSymbols["FALSE"] = false;
     booleanSymbols["off"] = false;
+    booleanSymbols["Off"] = false;
+    booleanSymbols["OFF"] = false;
 }
 
 
