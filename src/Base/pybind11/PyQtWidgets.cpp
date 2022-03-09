@@ -11,6 +11,7 @@
 #include <QCheckBox>
 #include <QLabel>
 #include <QSpinBox>
+#include <QDoubleSpinBox>
 #include <QDialog>
 #include <QFrame>
 #include <QAbstractScrollArea>
@@ -124,12 +125,13 @@ PYBIND11_MODULE(QtWidgets, m)
 
     qSpinBox
         .def(py::init<>())
+        .def("maximum", &QSpinBox::maximum)
+        .def("minimum", &QSpinBox::minimum)
         .def("setMaximum", &QSpinBox::setMaximum)
         .def("setMinimum", &QSpinBox::setMinimum)
         .def("setRange", &QSpinBox::setRange)
-        .def("maximum", &QSpinBox::maximum)
-        .def("minimum", &QSpinBox::minimum)
         .def("setSingleStep", &QSpinBox::setSingleStep)
+        .def("singleStep", &QSpinBox::singleStep)
         .def("value", &QSpinBox::value)
         .def("setValue", &QSpinBox::setValue)
         .def_property_readonly(
@@ -137,6 +139,29 @@ PYBIND11_MODULE(QtWidgets, m)
             [](QSpinBox* self){ return SpinBoxIntSignal(self, &QSpinBox::valueChanged); })
         ;
 
+    py::class_<QDoubleSpinBox, PyQObjectHolder<QDoubleSpinBox>, QAbstractSpinBox> qDoubleSpinBox(m, "QDoubleSpinBox");
+
+    typedef cnoid::QtSignal<void(QDoubleSpinBox::*)(double), void(double)> DoubleSpinBoxIntSignal;
+    cnoid::PyQtSignal<DoubleSpinBoxIntSignal>(qDoubleSpinBox, "IntSignal");
+
+    qDoubleSpinBox
+        .def(py::init<>())
+        .def("decimals", &QDoubleSpinBox::decimals)
+        .def("maximum", &QDoubleSpinBox::maximum)
+        .def("minimum", &QDoubleSpinBox::minimum)
+        .def("setDecimals", &QDoubleSpinBox::setDecimals)
+        .def("setMaximum", &QDoubleSpinBox::setMaximum)
+        .def("setMinimum", &QDoubleSpinBox::setMinimum)
+        .def("setRange", &QDoubleSpinBox::setRange)
+        .def("setSingleStep", &QDoubleSpinBox::setSingleStep)
+        .def("singleStep", &QDoubleSpinBox::singleStep)
+        .def("value", &QDoubleSpinBox::value)
+        .def("setValue", &QDoubleSpinBox::setValue)
+        .def_property_readonly(
+            "valueChanged",
+            [](QDoubleSpinBox* self){ return DoubleSpinBoxIntSignal(self, &QDoubleSpinBox::valueChanged); })
+        ;
+    
     py::class_<QDialog, PyQObjectHolder<QDialog>, QWidget> qDialog(m, "QDialog");
 
     typedef cnoid::QtSignal<void(QDialog::*)(), void()> DialogSignal;

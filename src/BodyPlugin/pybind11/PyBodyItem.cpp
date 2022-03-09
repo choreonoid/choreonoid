@@ -40,7 +40,7 @@ void exportBodyItem(py::module m)
         .def("storeKinematicState", &BodyItem::storeKinematicState)
         .def("restoreKinematicState", &BodyItem::restoreKinematicState)
         .def("storeInitialState", &BodyItem::storeInitialState)
-        .def("restoreInitialState", &BodyItem::restoreInitialState)
+        .def("restoreInitialState", &BodyItem::restoreInitialState, py::arg("doNotify") = true)
         .def("getInitialState", &BodyItem::getInitialState)
         .def_property_readonly("sigKinematicStateChanged", &BodyItem::sigKinematicStateChanged)
         .def("notifyKinematicStateChange",
