@@ -52,6 +52,7 @@ set(sources
   ScriptBar.cpp
   FileBar.cpp
   CaptureBar.cpp
+  DisplayValueFormatBar.cpp
   GraphWidget.cpp
   GraphBar.cpp
   GraphViewBase.cpp

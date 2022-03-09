@@ -85,7 +85,7 @@ void DisplayValueFormat::setAngleStep(double step)
         
 void DisplayValueFormat::notifyFormatChange()
 {
-    sigFormatChanged();
+    sigFormatChanged_();
 }
 
 

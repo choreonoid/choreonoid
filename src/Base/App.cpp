@@ -46,6 +46,7 @@
 #include "FileBar.h"
 #include "ScriptBar.h"
 #include "TimeBar.h"
+#include "DisplayValueFormatBar.h"
 #include "SceneBar.h"
 #include "CaptureBar.h"
 #include "ImageView.h"
@@ -374,6 +375,7 @@ void App::Impl::initialize()
     FileBar::initialize(ext);
     ScriptBar::initialize(ext);
     TimeBar::initialize(ext);
+    DisplayValueFormatBar::initialize(ext);
     ItemTreeView::initializeClass(ext);
     ItemPropertyView::initializeClass(ext);
     SceneView::initializeClass(ext);

@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-26 18:57+0900\n"
+"POT-Creation-Date: 2022-03-09 19:13+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -117,6 +117,27 @@ msgstr "削除"
 msgid "&Ok"
 msgstr "了解(&O)"
 
+msgid "DisplayValueFormatBar"
+msgstr "数値表示形式バー"
+
+msgid "Meter"
+msgstr "メートル"
+
+msgid "Millimeter"
+msgstr "ミリメートル"
+
+msgid "Length value precision (number of decimals)"
+msgstr "長さ精度（小数点以下桁数）"
+
+msgid "Degree"
+msgstr "度"
+
+msgid "Radian"
+msgstr "ラジアン"
+
+msgid "Angle value precision (number of decimals)"
+msgstr "角度値精度（小数点以下桁数）"
+
 msgid "ExtCommandItem"
 msgstr "外部コマンドアイテム"
 
@@ -216,12 +237,6 @@ msgstr "[ メッシュインポートヒント ]"
 
 msgid "Unit:"
 msgstr "単位："
-
-msgid "Meter"
-msgstr "メートル"
-
-msgid "Millimeter"
-msgstr "ミリメートル"
 
 msgid "Inch"
 msgstr "インチ"
