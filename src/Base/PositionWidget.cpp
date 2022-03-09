@@ -333,14 +333,18 @@ void PositionWidget::Impl::updateValueFormat(bool doRefresh)
 
     for(int i=0; i < 3; ++i){
         auto& tspin = xyzSpin[i];
+        tspin.blockSignals(true);
         tspin.setDecimals(ldecimals);
         tspin.setRange(-lmax, lmax);
         tspin.setSingleStep(lstep);
+        tspin.blockSignals(false);
 
         auto& aspin = rpySpin[i];
+        aspin.blockSignals(true);
         aspin.setDecimals(adecimals);
         aspin.setRange(-amax, amax);
         aspin.setSingleStep(astep);
+        aspin.blockSignals(false);
     }
 
     if(doRefresh){
