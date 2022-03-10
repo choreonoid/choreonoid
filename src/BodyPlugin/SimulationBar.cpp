@@ -237,14 +237,12 @@ void SimulationBar::onStopSimulationClicked()
         }
     }
     
+    pauseToggle->blockSignals(true);
+    pauseToggle->setChecked(false);
+    pauseToggle->blockSignals(false);
+
     forEachSimulator(
         [&](SimulatorItem* simulator){ simulator->stopSimulation(true); });
-
-    TimeBar* timeBar = TimeBar::instance();
-    if(timeBar->isDoingPlayback()){
-        timeBar->stopPlayback();
-    }
-    pauseToggle->setChecked(false);
 }
 
 
