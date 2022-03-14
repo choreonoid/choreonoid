@@ -7,6 +7,7 @@
 #include "SceneNodeClassRegistry.h"
 #include "CloneMap.h"
 #include "Exception.h"
+#include "UTF8.h"
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <unordered_map>
@@ -152,25 +153,25 @@ const std::string& SgObject::uriFragment() const
 void SgObject::setUriByFilePathAndBaseDirectory
 (const std::string& filePath, const std::string& baseDirectory)
 {
-    filesystem::path path(filePath);
+    filesystem::path path(fromUTF8(filePath));
     if(path.is_relative()){
-        filesystem::path baseDirPath(baseDirectory);
+        filesystem::path baseDirPath(fromUTF8(baseDirectory));
         if(baseDirPath.is_relative()){
             baseDirPath = filesystem::current_path() / baseDirPath;
         }
         path = baseDirPath / path;
     }
-    setUri(filePath, format("file://{0}", path.generic_string()));
+    setUri(filePath, format("file://{0}", toUTF8(path.generic_string())));
 }
 
 
 void SgObject::setUriByFilePathAndCurrentDirectory(const std::string& filePath)
 {
-    filesystem::path path(filePath);
+    filesystem::path path(fromUTF8(filePath));
     if(path.is_relative()){
         path = filesystem::current_path() / path;
     }
-    setUri(filePath, format("file://{0}", path.generic_string()));
+    setUri(filePath, format("file://{0}", toUTF8(path.generic_string())));
 }
 
 
