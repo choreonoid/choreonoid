@@ -330,7 +330,7 @@ bool ImageIO::load(Image& image, const std::string& filename, std::ostream& os)
 {
     bool loaded = false;
     
-    filesystem::path fpath(filename);
+    filesystem::path fpath(fromUTF8(filename));
     string ext = fpath.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
     
@@ -341,7 +341,7 @@ bool ImageIO::load(Image& image, const std::string& filename, std::ostream& os)
     } else if(ext == ".tga"){
         loaded = loadTGA(image, filename, isUpsideDown_, os);
     } else {
-        os << format(_("The image file format of \"{0}\" is not supported."), filename) << endl;
+        os << format(_("The image file format of \"{0}\" is not supported."), fpath.string()) << endl;
     }
 
     return loaded;
@@ -352,14 +352,14 @@ bool ImageIO::save(const Image& image, const std::string& filename, std::ostream
 {
     bool saved = false;
     
-    filesystem::path fpath(filename);
+    filesystem::path fpath(fromUTF8(filename));
     string ext = fpath.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
     
     if(ext == ".png"){
         saved = savePNG(image, filename, isUpsideDown_, os);
     } else {
-        os << format(_("The image file format of \"{0}\" is not supported."), filename) << endl;
+        os << format(_("The image file format of \"{0}\" is not supported."), fpath.string()) << endl;
     }
 
     return saved;
