@@ -687,8 +687,8 @@ bool MovieRecorder::Impl::initializeRecording()
 
     if(initialized){
         if(isImageSizeSpecified){
-            int x = (imageWidth - width) / 2;
-            int y = (imageHeight - height) / 2;
+            int x = (viewSize.width() - width) / 2;
+            int y = (viewSize.height() - height) / 2;
             targetView->setGeometry(x, y, width, height);
         }
     } else {

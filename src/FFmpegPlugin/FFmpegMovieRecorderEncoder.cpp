@@ -148,52 +148,21 @@ bool FFmpegMovieRecorderEncoder::doEncoding(std::string fileBasename)
     while(true){
         fflush(stdout);
 
+        AVFrame* frameToSend = nullptr;
         CapturedImagePtr captured = getNextFrameImage();
-        if(!captured){
-            break;
-        }
-
-        /* make sure the frame data is writable */
-        ret = av_frame_make_writable(avFrame);
-        if(ret < 0){
-            setErrorMessage(_("A video frame data is not writable."));
-            failed = true;
-            break;
-        }
-
-        // copy into frame
-        QImage image;
-        if(stdx::get_variant_index(captured->image) == 0){
-            image = stdx::get<QPixmap>(captured->image).toImage();
-        } else {
-            image = stdx::get<QImage>(captured->image);
-        }
-        
-        for(int y = 0; y < codec_context->height; ++y){
-            for (int x = 0; x < codec_context->width; ++x){
-                QRgb rgb = image.pixel(x, y);
-                double Y, Cb, Cr;
-                YCbCrfromRGB(Y, Cb, Cr, qRed(rgb), qGreen(rgb), qBlue(rgb));
-                avFrame->data[0][y * avFrame->linesize[0] + x] = Y;
+        if(captured){
+            if(!copyCapturedImageToAVFrame(captured, avFrame)){
+                failed = true;
+                break;
             }
+            frameToSend = avFrame;
         }
-        for(int y = 0; y < codec_context->height / 2; ++y){
-            for(int x = 0; x < codec_context->width / 2; ++x){
-                QRgb rgb = image.pixel(2 * x, 2 * y);
-                double Y, Cb, Cr;
-                YCbCrfromRGB(Y, Cb, Cr, qRed(rgb), qGreen(rgb), qBlue(rgb));
-                avFrame->data[1][y * avFrame->linesize[1] + x] = Cb;
-                avFrame->data[2][y * avFrame->linesize[2] + x] = Cr;
-            }
-        }
-        
-        avFrame->pts = captured->frame;
-
-        if(avcodec_send_frame(codec_context, avFrame) != 0){
+        if(avcodec_send_frame(codec_context, frameToSend) != 0){
             setErrorMessage(_("Executing avcodec_send_frame failed."));
             failed = true;
             break;
         }
+        // An AVPacket variable must be initialized in the following form to avoid craching with FFmpeg functions.
         AVPacket packet = AVPacket();
         while(avcodec_receive_packet(codec_context, &packet) == 0){
             packet.stream_index = 0;
@@ -205,43 +174,65 @@ bool FFmpegMovieRecorderEncoder::doEncoding(std::string fileBasename)
                 break;
             }
         }
-        if(failed){
+        if(!captured || failed){
             break;
         }
     }
 
-    AVPacket packet;
-
-    if(failed){
-        goto finalization;
-    }
-
-    // flush encoder
-    if(avcodec_send_frame(codec_context, nullptr) != 0){
-        setErrorMessage(_("Executing avcodec_send_frame failed."));
-        failed = true;
-        goto finalization;
-    }
-    while(avcodec_receive_packet(codec_context, &packet) == 0){
-        packet.stream_index = 0;
-        av_packet_rescale_ts(&packet, codec_context->time_base, stream->time_base);
-        ret = av_interleaved_write_frame(format_context, &packet);
-        if(ret != 0){
-            setErrorMessage(format(_("Executing av_interleaved_write_frame failed: {0}"), ret));
+    if(!failed){
+        if(av_write_trailer(format_context) != 0){
+            setErrorMessage(_("Executing av_write_trailer failed."));
             failed = true;
-            goto finalization;
         }
     }
-    if(av_write_trailer(format_context) != 0){
-        setErrorMessage(_("Executing av_write_trailer failed."));
-        failed = true;
-    }
 
-finalization:
     av_frame_free(&avFrame);
     avcodec_free_context(&codec_context);
     avformat_free_context(format_context);
     avio_closep(&io_context);
 
     return !failed;
+}
+
+
+bool FFmpegMovieRecorderEncoder::copyCapturedImageToAVFrame(CapturedImagePtr captured, AVFrame* avFrame)
+{
+    /* make sure the frame data is writable */
+    int ret = av_frame_make_writable(avFrame);
+    if(ret < 0){
+        setErrorMessage(_("A video frame data is not writable."));
+        return false;
+    }
+
+    // copy into frame
+    QImage image;
+    if(stdx::get_variant_index(captured->image) == 0){
+        image = stdx::get<QPixmap>(captured->image).toImage();
+    } else {
+        image = stdx::get<QImage>(captured->image);
+    }
+    int width = image.width();
+    int height = image.height();
+
+    for(int y = 0; y < height; ++y){
+        for (int x = 0; x < width; ++x){
+            QRgb rgb = image.pixel(x, y);
+            double Y, Cb, Cr;
+            YCbCrfromRGB(Y, Cb, Cr, qRed(rgb), qGreen(rgb), qBlue(rgb));
+            avFrame->data[0][y * avFrame->linesize[0] + x] = Y;
+        }
+    }
+    for(int y = 0; y < height / 2; ++y){
+        for(int x = 0; x < width / 2; ++x){
+            QRgb rgb = image.pixel(2 * x, 2 * y);
+            double Y, Cb, Cr;
+            YCbCrfromRGB(Y, Cb, Cr, qRed(rgb), qGreen(rgb), qBlue(rgb));
+            avFrame->data[1][y * avFrame->linesize[1] + x] = Cb;
+            avFrame->data[2][y * avFrame->linesize[2] + x] = Cr;
+        }
+    }
+    
+    avFrame->pts = captured->frame;
+
+    return true;
 }
