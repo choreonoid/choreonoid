@@ -52,8 +52,8 @@ public:
     ~Impl();
 
     double quantizedTime(double time) const;
-    bool setTime(double time, bool calledFromPlaybackLoop, QWidget* callerWidget = nullptr);
-    void setTimeBarTime(double time, QWidget* callerWidget);
+    bool setTime(double time, bool doAutoExpansion = false, bool calledFromPlaybackLoop = false, QWidget* callerWidget = nullptr);
+    bool setTimeBarTime(double time, bool doAutoExpansion = false, bool calledFromPlaybackLoop = false, QWidget* callerWidget = nullptr);
     void onTimeSpinChanged(double value);
     bool onTimeSliderValueChanged(int value);
     bool setTimeRange(double minTime, double maxTime, bool doUpdateTimeSpinSlider);
@@ -313,6 +313,8 @@ TimeBar::Impl::ConfigDialog::ConfigDialog(TimeBar* timeBar)
     hbox = new QHBoxLayout;
     autoExpansionCheck.setText(_("Automatically expand the time range"));
     autoExpansionCheck.setChecked(impl->isAutoExpansionMode);
+    autoExpansionCheck.sigToggled().connect(
+        [impl](bool on){ impl->setAutoExpansionMode(on, true); });
     hbox->addWidget(&autoExpansionCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -388,7 +390,7 @@ void TimeBar::Impl::onTimeSpinChanged(double value)
     if(isDoingPlayback){
         stopPlayback(true);
     }
-    setTime(value, false, timeSpin);
+    setTime(value, false, false, timeSpin);
 }
 
 
@@ -400,7 +402,7 @@ bool TimeBar::Impl::onTimeSliderValueChanged(int value)
     if(isDoingPlayback){
         stopPlayback(true);
     }
-    setTime(value / pow(10.0, decimals), false, timeSlider);
+    setTime(value / pow(10.0, decimals), false, false, timeSlider);
     return true;
 }
 
@@ -519,7 +521,7 @@ void TimeBar::Impl::updateTimeSpinSlider()
     } else if(self->time_ > maxTime){
         self->time_ = maxTime;
     }
-    setTime(self->time_, false);
+    setTime(self->time_);
 }
 
     
@@ -691,7 +693,7 @@ void TimeBar::Impl::startPlayback(double time)
     if(doStartPlayback){
         sigPlaybackStarted(self->time_);
         
-        if(!setTime(self->time_, false) && !isOngoingTimeValid){
+        if(!setTime(self->time_) && !isOngoingTimeValid){
             sigPlaybackStopped(self->time_, false);
             sigPlaybackStoppedEx(self->time_, false);
 
@@ -732,7 +734,7 @@ double TimeBar::Impl::stopPlayback(bool isStoppedManually)
         isDoingPlayback = false;
 
         if(hasOngoingTime && ongoingTime > self->time_ && isOngoingTimeSyncEnabled){
-            setTime(ongoingTime, false);
+            setTime(ongoingTime);
         }
 
         sigPlaybackStopped(self->time_, isStoppedManually);
@@ -768,6 +770,7 @@ void TimeBar::Impl::timerEvent(QTimerEvent*)
 {
     double time = animationTimeOffset + playbackSpeedRatio * (elapsedTimer.elapsed() / 1000.0);
 
+    bool doAutoExpansion = isAutoExpansionMode;
     bool doStopAtLastOngoingTime = false;
     if(hasOngoingTime){
         if(isOngoingTimeSyncEnabled || (time > ongoingTime)){
@@ -776,17 +779,20 @@ void TimeBar::Impl::timerEvent(QTimerEvent*)
             if(ongoingTimeMap.empty()){
                 doStopAtLastOngoingTime = true;
             }
+            if(isOngoingTimeSyncEnabled){
+                doAutoExpansion = true;
+            }
         }
     }
 
-    if(!setTime(time, true) || doStopAtLastOngoingTime){
+    if(!setTime(time, doAutoExpansion, true) || doStopAtLastOngoingTime){
         double lastValidTime = stopPlayback(false);
         
         if(!doStopAtLastOngoingTime && isRepeatMode){
             startPlayback(minTime);
         } else {
             if(lastValidTime < self->time_){
-                setTimeBarTime(lastValidTime, nullptr);
+                setTimeBarTime(lastValidTime);
             }
         }
     }
@@ -801,7 +807,7 @@ double TimeBar::Impl::quantizedTime(double time) const
 
 bool TimeBar::setTime(double time)
 {
-    return impl->setTime(time, false);
+    return impl->setTime(time);
 }
 
 
@@ -809,7 +815,8 @@ bool TimeBar::setTime(double time)
    @todo check whether block() and unblock() of sigc::connection
    decrease the performance or not.
 */
-bool TimeBar::Impl::setTime(double time, bool calledFromPlaybackLoop, QWidget* callerWidget)
+bool TimeBar::Impl::setTime
+(double time, bool doAutoExpansion, bool calledFromPlaybackLoop, QWidget* callerWidget)
 {
     if(TRACE_FUNCTIONS){
         cout << "TimeBar::Impl::setTime(" << time << ", " << calledFromPlaybackLoop << ")" << endl;
@@ -823,7 +830,7 @@ bool TimeBar::Impl::setTime(double time, bool calledFromPlaybackLoop, QWidget* c
 
     // Avoid redundant update
     if(calledFromPlaybackLoop || callerWidget){
-        // When the optimization is enabled,
+        // When the compiler optimization is enabled,
         // the result of (newTime == self->time_) sometimes becomes false,
         // so here the following judgement is used.
         if(fabs(newTime - self->time_) < 1.0e-14){
@@ -831,69 +838,90 @@ bool TimeBar::Impl::setTime(double time, bool calledFromPlaybackLoop, QWidget* c
         }
     }
 
-    setTimeBarTime(newTime, callerWidget);
-
-    sigTimeChanged.emitAndGetAllResults(self->time_, playbackContinueFlags);
-
     bool isValid = false;
-    for(auto flag : playbackContinueFlags){
-        if(flag){
-            isValid = true;
-            break;
+    
+    bool isWithinTimeRange = setTimeBarTime(newTime, doAutoExpansion, calledFromPlaybackLoop, callerWidget);
+    if(isWithinTimeRange || calledFromPlaybackLoop){
+        sigTimeChanged.emitAndGetAllResults(self->time_, playbackContinueFlags);
+        for(auto flag : playbackContinueFlags){
+            if(flag){
+                isValid = true;
+                break;
+            }
         }
     }
+    
     return isValid;
 }
 
 
-void TimeBar::Impl::setTimeBarTime(double time, QWidget* callerWidget)
+bool TimeBar::Impl::setTimeBarTime
+(double time, bool doAutoExpansion, bool calledFromPlaybackLoop, QWidget* callerWidget)
 {
-    if(isAutoExpansionMode){
-        bool doExpand = false;
-        if(time < minTime){
+    bool isWithinTimeRange = true;
+    bool doExpand = false;
+    
+    if(time < minTime){
+        if(doAutoExpansion){
             minTime = time;
             minTimeSpin->blockSignals(true);
             minTimeSpin->setValue(maxTime);
             minTimeSpin->blockSignals(false);
             doExpand = true;
+        } else {
+            isWithinTimeRange = false;
+            if(calledFromPlaybackLoop){
+                time = minTime;
+            }
         }
-        if(time > maxTime){
+    }
+    if(time > maxTime){
+        if(doAutoExpansion){
             maxTime = time;
             maxTimeSpin->blockSignals(true);
             maxTimeSpin->setValue(maxTime);
             maxTimeSpin->blockSignals(false);
             doExpand = true;
-        }
-        if(doExpand){
-            timeSpin->blockSignals(true);
-            timeSlider->blockSignals(true);
-            timeSpin->setRange(minTime, maxTime);
-            const double r = pow(10.0, decimals);
-            timeSlider->setRange((int)nearbyint(minTime * r), (int)nearbyint(maxTime * r));
-            timeSlider->blockSignals(false);
-            timeSpin->blockSignals(false);
+        } else {
+            isWithinTimeRange = false;
+            if(calledFromPlaybackLoop){
+                time = maxTime;
+            }
         }
     }
-        
-    self->time_ = time;
-
-    if(callerWidget != timeSpin){
+    if(doExpand){
         timeSpin->blockSignals(true);
-        timeSpin->setValue(self->time_);
+        timeSlider->blockSignals(true);
+        timeSpin->setRange(minTime, maxTime);
+        const double r = pow(10.0, decimals);
+        timeSlider->setRange((int)nearbyint(minTime * r), (int)nearbyint(maxTime * r));
+        timeSlider->blockSignals(false);
         timeSpin->blockSignals(false);
     }
-    if(callerWidget != timeSlider){
-        timeSlider->blockSignals(true);
-        timeSlider->setValue((int)nearbyint(self->time_ * pow(10.0, decimals)));
-        timeSlider->blockSignals(false);
+
+    if(isWithinTimeRange || calledFromPlaybackLoop){
+        self->time_ = time;
+
+        if(callerWidget != timeSpin){
+            timeSpin->blockSignals(true);
+            timeSpin->setValue(self->time_);
+            timeSpin->blockSignals(false);
+        }
+        if(callerWidget != timeSlider){
+            timeSlider->blockSignals(true);
+            timeSlider->setValue((int)nearbyint(self->time_ * pow(10.0, decimals)));
+            timeSlider->blockSignals(false);
+        }
     }
+
+    return isWithinTimeRange;
 }
 
 
 void TimeBar::refresh()
 {
     if(!impl->isDoingPlayback){
-        impl->setTime(time_, false);
+        impl->setTime(time_);
     }
 }
 
