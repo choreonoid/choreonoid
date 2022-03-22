@@ -58,7 +58,8 @@ public:
     void clear();
     bool overwriteLinkShape(BodyItem* bodyItem, Link* link, SgNode* newShape, SgGroup* orgLinkShapeOfDuplicationOrgItem);
     void extractShapeNodeSet(vector<SgNodePath>& nodePaths);
-    void extractOffsetTransform(SgNode* node);
+    void extractOrInsertOffsetTransform(SgNode* node);
+    void extractOrInsertOffsetTransform(vector<SgNodePath>& nodePaths);
     void setShapeNode(SgShape* shapeNode);
     void updateLinkOriginMarker();
     bool store(Archive& archive);
@@ -181,7 +182,7 @@ bool LinkShapeOverwriteItem::Impl::overwriteLinkShape
 
     if(newShape){
         shapeNodePaths = nodeExtractor.extractNodes<SgShape>(newShape, true);
-        extractOffsetTransform(newShape);
+        extractOrInsertOffsetTransform(newShape);
     }
 
     /*
@@ -200,7 +201,8 @@ bool LinkShapeOverwriteItem::Impl::overwriteLinkShape
         }
     } else {
         if(!newShape){
-            extractShapeNodeSet(existingShapeNodePaths);
+            extractOrInsertOffsetTransform(existingShapeNodePaths);
+            shapeNodePaths = std::move(existingShapeNodePaths);
         } else {
             int n = std::min(shapeNodePaths.size(), existingShapeNodePaths.size());
             for(int i=0; i < n; ++i){
@@ -231,37 +233,36 @@ bool LinkShapeOverwriteItem::Impl::overwriteLinkShape
 }
 
 
-void LinkShapeOverwriteItem::Impl::extractShapeNodeSet(vector<SgNodePath>& nodePaths)
-{
-    auto topNode = nodePaths.front().front();
-    
-    if(!offsetTransform){
-        extractOffsetTransform(topNode);
-    }
-    
-    if(shapeNodePaths.empty()){
-        if(!nodePaths.empty()){
-            if(topNode != offsetTransform){
-                for(auto& path : nodePaths){
-                    if(path.size() >= 2){
-                        offsetTransform->addChild(path[1]);
-                        path[0] = offsetTransform;
-                    }
-                }
-            }
-            shapeNodePaths = nodePaths;
-        }
-    }
-}
-
-
-void LinkShapeOverwriteItem::Impl::extractOffsetTransform(SgNode* node)
+void LinkShapeOverwriteItem::Impl::extractOrInsertOffsetTransform(SgNode* node)
 {
     if(auto transformNode = dynamic_cast<SgPosTransform*>(node)){
         offsetTransform = transformNode;
     } else {
         offsetTransform = new SgPosTransform;
         offsetTransform->addChild(node);
+    }
+}
+
+
+void LinkShapeOverwriteItem::Impl::extractOrInsertOffsetTransform(vector<SgNodePath>& nodePaths)
+{
+    SgNode* firstTopNode = nodePaths.front().front();
+    offsetTransform = dynamic_cast<SgPosTransform*>(firstTopNode);
+    if(offsetTransform){
+        for(size_t i=1; i < nodePaths.size(); ++i){
+            auto& nodePath = nodePaths[i];
+            if(nodePath.front() != firstTopNode){
+                offsetTransform.reset();
+                break;
+            }
+        }
+    }
+    if(!offsetTransform){
+        offsetTransform = new SgPosTransform;
+        for(auto& nodePath : nodePaths){
+            offsetTransform->addChildOnce(nodePath.front());
+            nodePath.insert(nodePath.begin(), offsetTransform);
+        }
     }
 }
 
