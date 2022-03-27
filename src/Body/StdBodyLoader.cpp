@@ -1042,7 +1042,7 @@ LinkPtr StdBodyLoader::Impl::readLinkContents(Mapping* node, LinkPtr link)
         sceneGroupSetStack.push_back(SceneGroupSet());
         currentSceneGroupSet().newGroup<SgGroup>();
         
-        if(readElementContents(elementsNode) && !isSubBodyNode){
+        if(readElementContents(elementsNode)){
             SceneGroupSet& sgs = currentSceneGroupSet();
             sgs.setName(link->name());
             if(hasVisualOrCollisionNodes){
