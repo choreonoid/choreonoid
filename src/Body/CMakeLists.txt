@@ -35,6 +35,7 @@ set(sources
   RateGyroSensor.cpp
   AccelerationSensor.cpp
   BasicSensorSimulationHelper.cpp
+  VisionSensor.cpp
   Camera.cpp
   RangeCamera.cpp
   RangeSensor.cpp
@@ -111,6 +112,7 @@ set(headers
   RateGyroSensor.h
   AccelerationSensor.h
   BasicSensorSimulationHelper.h
+  VisionSensor.h
   Camera.h
   RangeCamera.h
   RangeSensor.h

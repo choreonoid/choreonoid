@@ -1,35 +1,27 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_CAMERA_H
 #define CNOID_BODY_CAMERA_H
 
-#include "Device.h"
+#include "VisionSensor.h"
 #include <cnoid/Image>
-#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class Mapping;
-
-class CNOID_EXPORT Camera : public Device
+class CNOID_EXPORT Camera : public VisionSensor
 {
 public:
     Camera();
     Camera(const Camera& org, bool copyStateOnly = false);
 
     virtual const char* typeName() const override;
-    void copyStateFrom(const Camera& other);
+    void copyCameraStateFrom(const Camera& other, bool doCopyVisionSensorState);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual void clearState() override;
 
-    void setImageStateClonable(bool on) { isImageStateClonable_ = on; }
-    bool isImageStateClonable() const { return isImageStateClonable_; }
+    void setImageStateClonable(bool on);
+    bool isImageStateClonable() const { return spec ? spec->isImageStateClonable : true; }
 
     enum ImageType { NO_IMAGE, COLOR_IMAGE, GRAYSCALE_IMAGE };
     enum LensType { NORMAL_LENS, FISHEYE_LENS, DUAL_FISHEYE_LENS };
@@ -39,9 +31,6 @@ public:
 
     LensType lensType() const { return lensType_; }
     void setLensType(LensType type) { lensType_ = type; }
-
-    virtual bool on() const override;
-    virtual void on(bool on) override;
 
     double nearClipDistance() const { return nearClipDistance_; }
     void setNearClipDistance(double d) { nearClipDistance_ = d; }
@@ -67,9 +56,6 @@ public:
     int resolutionX() const { return resolutionX_; }
     int resolutionY() const { return resolutionY_; }
 
-    void setFrameRate(double r) { frameRate_ = r; }
-    double frameRate() const { return frameRate_; }
-
     const Image& image() const;
     const Image& constImage() const { return *image_; }
     Image& image();
@@ -86,12 +72,6 @@ public:
 
     void clearImage();
 
-    /**
-       Time [s] consumed in shooting the current image
-    */
-    double delay() const { return delay_; }
-    void setDelay(double time) { delay_ = time; }
-
     virtual int stateSize() const override;
     virtual const double* readState(const double* buf) override;
     virtual double* writeState(double* out_buf) const override;
@@ -103,8 +83,6 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
-    bool on_;
-    bool isImageStateClonable_; // Non state variable
     ImageType imageType_;
     LensType lensType_;
     int resolutionX_;
@@ -113,8 +91,12 @@ private:
     double farClipDistance_;
     double fieldOfView_;
     double frameRate_;
-    double delay_;
     std::shared_ptr<Image> image_;
+
+    struct Spec {
+        bool isImageStateClonable;
+    };
+    std::unique_ptr<Spec> spec;
 
     void copyCameraStateFrom(const Camera& other);
 };

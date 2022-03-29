@@ -239,7 +239,7 @@ bool SceneLinkImpl::removeEffectGroup(SgGroup* parent, SgGroupPtr effect, SgUpda
         return false;
     }
     if(parent->removeChild(effect)){
-        SgGroup* childGroup = 0;
+        SgGroup* childGroup = nullptr;
         for(auto child : *effect){
             childGroup = dynamic_cast<SgGroup*>(child.get());
             if(childGroup){
@@ -350,7 +350,7 @@ SceneDevice* SceneLink::getSceneDevice(Device* device)
             return sdev;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 
@@ -458,7 +458,7 @@ SceneDevice* SceneBody::getSceneDevice(Device* device)
     if(linkIndex >= 0 && linkIndex < static_cast<int>(sceneLinks_.size())){
         return sceneLinks_[linkIndex]->getSceneDevice(device);
     }
-    return 0;
+    return nullptr;
 }
 
 

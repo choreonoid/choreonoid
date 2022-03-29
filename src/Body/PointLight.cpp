@@ -29,9 +29,11 @@ const char* PointLight::typeName() const
 }
 
 
-void PointLight::copyStateFrom(const PointLight& other)
+void PointLight::copyStateFrom(const PointLight& other, bool doCopyLightState)
 {
-    Light::copyStateFrom(other);
+    if(doCopyLightState){
+        Light::copyStateFrom(other);
+    }
 
     constantAttenuation_ = other.constantAttenuation_;
     linearAttenuation_ = other.linearAttenuation_;
@@ -44,14 +46,14 @@ void PointLight::copyStateFrom(const DeviceState& other)
     if(typeid(other) != typeid(PointLight)){
         throw std::invalid_argument("Type mismatch in the Device::copyStateFrom function");
     }
-    copyStateFrom(static_cast<const PointLight&>(other));
+    copyStateFrom(static_cast<const PointLight&>(other), true);
 }
 
 
 PointLight::PointLight(const PointLight& org, bool copyStateOnly)
     : Light(org, copyStateOnly)
 {
-    copyStateFrom(org);
+    copyStateFrom(org, false);
 }
 
 

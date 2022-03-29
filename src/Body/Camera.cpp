@@ -1,14 +1,10 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "Camera.h"
 #include "RangeCamera.h"
 #include "StdBodyLoader.h"
 #include "StdBodyWriter.h"
 #include <cnoid/ValueTree>
 #include <cnoid/EigenUtil>
+#include <cnoid/EigenArchive>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -16,6 +12,11 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
+namespace {
+
+const int VisionSensorStateSize = VisionSensor::visionSensorStateSize();
+
+}
 
 const char* Camera::typeName() const
 {
@@ -24,9 +25,8 @@ const char* Camera::typeName() const
 
 
 Camera::Camera()
+    : spec(new Spec)
 {
-    on_ = true;
-    isImageStateClonable_ = false;
     imageType_ = COLOR_IMAGE;
     lensType_ = NORMAL_LENS;
     resolutionX_ = 640;
@@ -35,22 +35,26 @@ Camera::Camera()
     nearClipDistance_ = 0.04;
     farClipDistance_ = 200.0;
     frameRate_ = 30.0;
-    delay_ = 0.0;
     image_ = std::make_shared<Image>();
+
+    spec->isImageStateClonable = false;
 }
 
 
 Camera::Camera(const Camera& org, bool copyStateOnly)
-    : Device(org, copyStateOnly),
+    : VisionSensor(org, copyStateOnly),
       image_(org.image_)
 {
-    if(copyStateOnly){
-        isImageStateClonable_ = true;
-    } else {
-        isImageStateClonable_ = org.isImageStateClonable_;
+    if(!copyStateOnly){
+        spec = make_unique<Spec>();
+        if(org.spec){
+            spec->isImageStateClonable = org.spec->isImageStateClonable;
+        } else {
+            spec->isImageStateClonable = false;
+        }
     }
 
-    copyCameraStateFrom(org);
+    copyCameraStateFrom(org, false);
 }
 
 
@@ -59,20 +63,16 @@ void Camera::copyStateFrom(const DeviceState& other)
     if(typeid(other) != typeid(Camera)){
         throw std::invalid_argument("Type mismatch in the Device::copyStateFrom function");
     }
-    copyStateFrom(static_cast<const Camera&>(other));
+    copyCameraStateFrom(static_cast<const Camera&>(other), true);
 }
 
 
-void Camera::copyStateFrom(const Camera& other)
+void Camera::copyCameraStateFrom(const Camera& other, bool doCopyVisionSensorState)
 {
-    copyCameraStateFrom(other);
-    image_ = other.image_;
-}
+    if(doCopyVisionSensorState){
+        VisionSensor::copyVisionSensorStateFrom(other);
+    }
 
-
-void Camera::copyCameraStateFrom(const Camera& other)
-{
-    on_ = other.on_;
     imageType_ = other.imageType_;
     lensType_ = other.lensType_;
     resolutionX_ = other.resolutionX_;
@@ -80,13 +80,15 @@ void Camera::copyCameraStateFrom(const Camera& other)
     fieldOfView_ = other.fieldOfView_;
     nearClipDistance_ = other.nearClipDistance_;
     farClipDistance_ = other.farClipDistance_;
-    frameRate_ = other.frameRate_;
-    delay_ = other.delay_;
 
-    if(other.isImageStateClonable_){
+    if(!other.spec){
         image_ = other.image_;
     } else {
-        image_ = std::make_shared<Image>();
+        if(other.spec->isImageStateClonable){
+            image_ = other.image_;
+        } else {
+            image_ = std::make_shared<Image>();
+        }
     }
 }
 
@@ -106,7 +108,7 @@ DeviceState* Camera::cloneState() const
 void Camera::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(Camera))){
-        Device::forEachActualType(func);
+        VisionSensor::forEachActualType(func);
     }
 }
 
@@ -114,6 +116,14 @@ void Camera::forEachActualType(std::function<bool(const std::type_info& type)> f
 void Camera::clearState()
 {
     clearImage();
+}
+
+
+void Camera::setImageStateClonable(bool on)
+{
+    if(spec){
+        spec->isImageStateClonable = on;
+    }
 }
 
 
@@ -125,18 +135,6 @@ void Camera::clearImage()
         image_ = std::make_shared<Image>();
     }
 }    
-
-
-bool Camera::on() const
-{
-    return on_;
-}
-
-
-void Camera::on(bool on)
-{
-    on_ = on;
-}
 
 
 Image& Camera::image()
@@ -168,40 +166,40 @@ void Camera::setImage(std::shared_ptr<Image>& image)
 
 int Camera::stateSize() const
 {
-    return 8;
+    return VisionSensorStateSize + 5;
 }
 
 
 const double* Camera::readState(const double* buf)
 {
-    on_ = buf[0];
-    resolutionX_ = buf[1];
-    resolutionY_ = buf[2];
-    nearClipDistance_ = buf[3];
-    farClipDistance_ = buf[4];
-    fieldOfView_ = buf[5];
-    frameRate_ = buf[6];
-    delay_ = buf[7];
-    return buf + 8;
+    buf = VisionSensor::readState(buf);
+    resolutionX_ = buf[0];
+    resolutionY_ = buf[1];
+    nearClipDistance_ = buf[2];
+    farClipDistance_ = buf[3];
+    fieldOfView_ = buf[4];
+    return buf + 5;
 }
 
 
 double* Camera::writeState(double* out_buf) const
 {
-    out_buf[0] = on_ ? 1.0 : 0.0;
-    out_buf[1] = resolutionX_;
-    out_buf[2] = resolutionY_;
-    out_buf[3] = nearClipDistance_;
-    out_buf[4] = farClipDistance_;
-    out_buf[5] = fieldOfView_;
-    out_buf[6] = frameRate_;
-    out_buf[7] = delay_;
-    return out_buf + 8;
+    out_buf = VisionSensor::writeState(out_buf);
+    out_buf[0] = resolutionX_;
+    out_buf[1] = resolutionY_;
+    out_buf[2] = nearClipDistance_;
+    out_buf[3] = farClipDistance_;
+    out_buf[4] = fieldOfView_;
+    return out_buf + 5;
 }
 
 
 bool Camera::readSpecifications(const Mapping* info)
 {
+    if(!VisionSensor::readSpecifications(info)){
+        return false;
+    }
+    
     string symbol;
     
     setImageType(NO_IMAGE);
@@ -224,7 +222,6 @@ bool Camera::readSpecifications(const Mapping* info)
     info->readAngle({ "field_of_view", "fieldOfView" }, fieldOfView_);
     info->read({ "near_clip_distance", "nearClipDistance" }, nearClipDistance_);
     info->read({ "far_clip_distance", "farClipDistance" }, farClipDistance_);
-    info->read({ "frame_rate", "frameRate" }, frameRate_);
 
     return true;
 }
@@ -232,6 +229,10 @@ bool Camera::readSpecifications(const Mapping* info)
 
 bool Camera::writeSpecifications(Mapping* info) const
 {
+    if(!VisionSensor::writeSpecifications(info)){
+        return false;
+    }
+
     if(imageType_ == COLOR_IMAGE){
         info->write("format", "COLOR");
     }
@@ -245,7 +246,6 @@ bool Camera::writeSpecifications(Mapping* info) const
     info->write("field_of_view", degree(fieldOfView_));
     info->write("near_clip_distance", nearClipDistance_);
     info->write("far_clip_distance", farClipDistance_);
-    info->write("frame_rate", frameRate_);
 
     return true;
 }

@@ -26,52 +26,72 @@ typedef std::unordered_map<std::type_index, SceneDevice::SceneDeviceFactory> Sce
 SceneDeviceFactoryMap sceneDeviceFactories;
 
 
-void updatePerspectiveCamera(Camera* camera, SgPerspectiveCamera* scamera)
+void updatePerspectiveCamera(Camera* camera, SgPerspectiveCamera* sceneCamera)
 {
-    scamera->setNearClipDistance(camera->nearClipDistance());
-    scamera->setFarClipDistance(camera->farClipDistance());
-    scamera->setFieldOfView(camera->fieldOfView());
-    scamera->notifyUpdate();
+    sceneCamera->setNearClipDistance(camera->nearClipDistance());
+    sceneCamera->setFarClipDistance(camera->farClipDistance());
+    sceneCamera->setFieldOfView(camera->fieldOfView());
+    sceneCamera->notifyUpdate();
 }
 
-void updateLight(Light* light, SgLight* slight)
-{
-    slight->on(light->on());
-    slight->setColor(light->color());
-    slight->setIntensity(light->intensity());
-    slight->notifyUpdate();
-}
-
-void updatePointLight(PointLight* light, SgPointLight* slight)
-{
-    slight->setConstantAttenuation(light->constantAttenuation());
-    slight->setLinearAttenuation(light->linearAttenuation());
-    slight->setQuadraticAttenuation(light->quadraticAttenuation());
-    updateLight(light, slight);
-}
-
-void updateSpotLight(SpotLight* light, SgSpotLight* slight)
-{
-    slight->setDirection(light->direction());
-    slight->setBeamWidth(light->beamWidth());
-    slight->setCutOffAngle(light->cutOffAngle());
-    slight->setCutOffExponent(light->cutOffExponent());
-    updatePointLight(light, slight);
-}
 
 SceneDevice* createScenePerspectiveCamera(Device* device)
 {
-    Camera* camera = static_cast<Camera*>(device);
-    SgPerspectiveCamera* scene = new SgPerspectiveCamera();
-    return new SceneDevice(camera, scene, [=](){ updatePerspectiveCamera(camera, scene); });
+    auto camera = static_cast<Camera*>(device);
+    SgNode* scene;
+    auto sceneCamera = new SgPerspectiveCamera;
+
+    if(camera->opticalFrameRotation().isIdentity()){
+        scene = sceneCamera;
+    } else {
+        sceneCamera->setName(device->name());
+        auto transform = new SgPosTransform;
+        transform->setRotation(camera->opticalFrameRotation());
+        transform->addChild(sceneCamera);
+        scene = transform;
+    }
+    
+    return new SceneDevice(
+        camera, scene,
+        [camera, sceneCamera](){ updatePerspectiveCamera(camera, sceneCamera); });
 }
         
+
+void updateLight(Light* light, SgLight* sceneLight)
+{
+    sceneLight->on(light->on());
+    sceneLight->setColor(light->color());
+    sceneLight->setIntensity(light->intensity());
+    sceneLight->notifyUpdate();
+}
+
+
+void updatePointLight(PointLight* light, SgPointLight* sceneLight)
+{
+    sceneLight->setConstantAttenuation(light->constantAttenuation());
+    sceneLight->setLinearAttenuation(light->linearAttenuation());
+    sceneLight->setQuadraticAttenuation(light->quadraticAttenuation());
+    updateLight(light, sceneLight);
+}
+
+
 SceneDevice* createScenePointLight(Device* device)
 {
     PointLight* pointLight = static_cast<PointLight*>(device);
     SgPointLight* scene = new SgPointLight;
     return new SceneDevice(pointLight, scene, [=](){ updatePointLight(pointLight, scene); });
 }
+
+
+void updateSpotLight(SpotLight* light, SgSpotLight* sceneLight)
+{
+    sceneLight->setDirection(light->direction());
+    sceneLight->setBeamWidth(light->beamWidth());
+    sceneLight->setCutOffAngle(light->cutOffAngle());
+    sceneLight->setCutOffExponent(light->cutOffExponent());
+    updatePointLight(light, sceneLight);
+}
+
 
 SceneDevice* createSceneSpotLight(Device* device)
 {
@@ -80,9 +100,10 @@ SceneDevice* createSceneSpotLight(Device* device)
     return new SceneDevice(spotLight, scene, [=](){ updateSpotLight(spotLight, scene); });
 }
 
+
 SceneDevice* createNullSceneDevice(Device*)
 {
-    return 0;
+    return nullptr;
 }
 
 }
@@ -158,7 +179,7 @@ void SceneDevice::setFunctionOnTimeChanged(std::function<void(double time)> func
 SceneDevice::SceneDevice(const SceneDevice& org)
     : SgPosTransform(org)
 {
-    device_ = 0;
+    device_ = nullptr;
 }
 
 

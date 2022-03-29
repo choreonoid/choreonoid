@@ -1,15 +1,17 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "RangeSensor.h"
 #include "StdBodyFileUtil.h"
 #include <cnoid/ValueTree>
 #include <cnoid/EigenUtil>
+#include <cnoid/EigenArchive>
 
 using namespace std;
 using namespace cnoid;
+
+namespace {
+
+const int VisionSensorStateSize = VisionSensor::visionSensorStateSize();
+
+}
 
 
 const char* RangeSensor::typeName() const
@@ -19,32 +21,35 @@ const char* RangeSensor::typeName() const
 
 
 RangeSensor::RangeSensor()
+    : spec(new Spec)
 {
-    on_ = true;
-    isRangeDataStateClonable_ = false;
+    setScanRate(10.0);
+    
     yawRange_ = radian(120.0);
     yawStep_ = 1.0;
     pitchRange_ = 0.0;
     pitchStep_ = 0.0;
     minDistance_ = 0.1;
     maxDistance_ = 10.0;
-    scanRate_ = 10.0;
-    delay_ = 0.0;
     rangeData_ = std::make_shared<RangeData>();
+
+    spec->isRangeDataStateClonable = false;
 }
 
 
 RangeSensor::RangeSensor(const RangeSensor& org, bool copyStateOnly)
-    : Device(org, copyStateOnly),
-      rangeData_(org.rangeData_)
+    : VisionSensor(org, copyStateOnly)
 {
-    if(copyStateOnly){
-        isRangeDataStateClonable_ = true;
-    } else {
-        isRangeDataStateClonable_ = org.isRangeDataStateClonable_;
+    if(!copyStateOnly){
+        spec = make_unique<Spec>();
+        if(org.spec){
+            spec->isRangeDataStateClonable = org.spec->isRangeDataStateClonable;
+        } else {
+            spec->isRangeDataStateClonable = false;
+        }
     }
 
-    copyRangeSensorStateFrom(org);
+    copyRangeSensorStateFrom(org, false);
 }
 
 
@@ -53,33 +58,31 @@ void RangeSensor::copyStateFrom(const DeviceState& other)
     if(typeid(other) != typeid(RangeSensor)){
         throw std::invalid_argument("Type mismatch in the Device::copyStateFrom function");
     }
-    copyStateFrom(static_cast<const RangeSensor&>(other));
+    copyRangeSensorStateFrom(static_cast<const RangeSensor&>(other), true);
 }
 
 
-void RangeSensor::copyStateFrom(const RangeSensor& other)
+void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other, bool doCopyVisionSensorState)
 {
-    copyRangeSensorStateFrom(other);
-    rangeData_ = other.rangeData_;
-}
+    if(doCopyVisionSensorState){
+        VisionSensor::copyVisionSensorStateFrom(other);
+    }
 
-
-void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other)
-{
-    on_ = other.on_;
     yawRange_ = other.yawRange_;
     yawStep_ = other.yawStep_;
     pitchRange_ = other.pitchRange_;
     pitchStep_ = other.pitchStep_;
     minDistance_ = other.minDistance_;
     maxDistance_ = other.maxDistance_;
-    scanRate_ = other.scanRate_;
-    delay_ = other.delay_;
-
-    if(other.isRangeDataStateClonable_){
+    
+    if(!other.spec){
         rangeData_ = other.rangeData_;
     } else {
-        rangeData_ = std::make_shared<RangeData>();
+        if(other.spec->isRangeDataStateClonable){
+            rangeData_ = other.rangeData_;
+        } else {
+            rangeData_ = std::make_shared<RangeData>();
+        }
     }
 }
 
@@ -99,7 +102,7 @@ DeviceState* RangeSensor::cloneState() const
 void RangeSensor::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
     if(!func(typeid(RangeSensor))){
-        Device::forEachActualType(func);
+        VisionSensor::forEachActualType(func);
     }
 }
 
@@ -157,6 +160,14 @@ void RangeSensor::clearState()
 }
 
 
+void RangeSensor::setRangeDataStateClonable(bool on)
+{
+    if(spec){
+        spec->isRangeDataStateClonable = on;
+    }
+}
+
+
 void RangeSensor::clearRangeData()
 {
     if(rangeData_.use_count() == 1){
@@ -167,55 +178,44 @@ void RangeSensor::clearRangeData()
 }
 
 
-bool RangeSensor::on() const
-{
-    return on_;
-}
-
-
-void RangeSensor::on(bool on)
-{
-    on_ = on;
-}
-
 int RangeSensor::stateSize() const
 {
-    return 9;
+    return VisionSensorStateSize + 6;
 }
 
 
 const double* RangeSensor::readState(const double* buf)
 {
-    on_ = buf[0];
-    yawRange_ = buf[1];
-    yawStep_ = buf[2];
-    pitchRange_ = buf[3];
-    pitchStep_ = buf[4];
-    minDistance_ = buf[5];
-    maxDistance_ = buf[6];
-    scanRate_ = buf[7];
-    delay_ = buf[8];
-    return buf + 9;
+    buf = VisionSensor::readState(buf);
+    yawRange_ = buf[0];
+    yawStep_ = buf[1];
+    pitchRange_ = buf[2];
+    pitchStep_ = buf[3];
+    minDistance_ = buf[4];
+    maxDistance_ = buf[5];
+    return buf + 6;
 }
 
 
 double* RangeSensor::writeState(double* out_buf) const
 {
-    out_buf[0] = on_ ? 1.0 : 0.0;
-    out_buf[1] = yawRange_;
-    out_buf[2] = yawStep_;
-    out_buf[3] = pitchRange_;
-    out_buf[4] = pitchStep_;
-    out_buf[5] = minDistance_;
-    out_buf[6] = maxDistance_;
-    out_buf[7] = scanRate_;
-    out_buf[8] = delay_;
-    return out_buf + 9;
+    out_buf = VisionSensor::writeState(out_buf);
+    out_buf[0] = yawRange_;
+    out_buf[1] = yawStep_;
+    out_buf[2] = pitchRange_;
+    out_buf[3] = pitchStep_;
+    out_buf[4] = minDistance_;
+    out_buf[5] = maxDistance_;
+    return out_buf + 6;
 }
 
 
 bool RangeSensor::readSpecifications(const Mapping* info)
 {
+    if(!VisionSensor::readSpecifications(info)){
+        return false;
+    }
+
     info->readAngle({ "yaw_range", "yawRange", "scanAngle" }, yawRange_);
     info->readAngle({ "yaw_step", "yawStep", "scanStep" }, yawStep_);
     info->readAngle({ "pitch_range", "pitchRange" }, pitchRange_);
@@ -223,20 +223,27 @@ bool RangeSensor::readSpecifications(const Mapping* info)
     info->read({ "min_distance", "minDistance" }, minDistance_);
     info->read({ "max_distance", "maxDistance" }, maxDistance_);
     info->read({ "scan_rate", "scanRate" }, scanRate_);
-    info->read("delay", delay_);
+
     return true;
 }
 
 
 bool RangeSensor::writeSpecifications(Mapping* info) const
 {
+    if(!VisionSensor::writeSpecifications(info)){
+        return false;
+    }
+    
     info->write("yaw_range", degree(yawRange_));
     info->write("yaw_step", degree(yawStep_));
     info->write("pitch_range", degree(pitchRange_));
     info->write("pitch_step", degree(pitchStep_));
     info->write("min_distance", minDistance_);
     info->write("max_distance", maxDistance_);
+
+    info->remove("frame_rate");
     info->write("scan_rate", scanRate_);
+
     return true;
 }
 

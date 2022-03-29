@@ -18,7 +18,7 @@ public:
     RangeCamera(const RangeCamera& org, bool copyStateOnly = false);
 
     virtual const char* typeName() const override;
-    void copyStateFrom(const RangeCamera& other); 
+    void copyRangeCameraStateFrom(const RangeCamera& other, bool doCopyCameraState);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
@@ -77,8 +77,6 @@ private:
     double maxDistance_;
     bool isOrganized_;
     bool isDense_;
-
-    void copyRangeCameraStateFrom(const RangeCamera& other);    
 };
 
 typedef ref_ptr<RangeCamera> RangeCameraPtr;

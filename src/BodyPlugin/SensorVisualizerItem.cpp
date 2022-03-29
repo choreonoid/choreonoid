@@ -887,7 +887,11 @@ void RangeSensorVisualizerItem::updateRangeSensorState()
         const double pitchStep = rangeSensor->pitchStep();
         const int numYawSamples = rangeSensor->numYawSamples();
         const double yawStep = rangeSensor->yawStep();
-        
+        Matrix3f Ro;
+        bool hasRo= !rangeSensor->opticalFrameRotation().isIdentity();
+        if(hasRo){
+            Ro = rangeSensor->opticalFrameRotation().cast<float>();
+        }
         for(int pitch=0; pitch < numPitchSamples; ++pitch){
             const double pitchAngle = pitch * pitchStep - rangeSensor->pitchRange() / 2.0;
             const double cosPitchAngle = cos(pitchAngle);
@@ -900,7 +904,11 @@ void RangeSensorVisualizerItem::updateRangeSensorState()
                     float x = distance *  cosPitchAngle * sin(-yawAngle);
                     float y  = distance * sin(pitchAngle);
                     float z  = -distance * cosPitchAngle * cos(yawAngle);
-                    points.push_back(Vector3f(x, y, z));
+                    if(hasRo){
+                        points.emplace_back(Ro * Vector3f(x, y, z));
+                    } else {
+                        points.emplace_back(x, y, z);
+                    }
                 }
             }
         }

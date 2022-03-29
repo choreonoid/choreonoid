@@ -20,7 +20,7 @@ public:
     PointLight(const PointLight& org, bool copyStateOnly = false);
 
     virtual const char* typeName() const override;
-    void copyStateFrom(const PointLight& other);
+    void copyStateFrom(const PointLight& other, bool doCopyLightState = true);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;

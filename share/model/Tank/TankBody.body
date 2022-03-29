@@ -1,14 +1,14 @@
 format: ChoreonoidBody
-formatVersion: 1.0
-angleUnit: degree
+format_version: 1.0
+angle_unit: degree
 name: TankBody
 
 links:
   -
     name: CHASSIS
     translation: [ 0, 0, 0.11 ]
-    jointType: free
-    centerOfMass: [ 0, 0, 0 ]
+    joint_type: free
+    center_of_mass: [ 0, 0, 0 ]
     mass: 8.0
     inertia: [
       0.1, 0,   0,
@@ -67,12 +67,12 @@ links:
     name: TURRET_Y
     parent: CHASSIS
     translation: [ -0.04, 0, 0.1125 ]
-    jointType: revolute
-    jointAxis: -Z
-    jointRange: [ -360, 360 ]
-    maxJointVelocity: 90
-    jointId: 0
-    centerOfMass: [ 0, 0, 0.025 ]
+    joint_type: revolute
+    joint_axis: -Z
+    joint_range: [ -360, 360 ]
+    max_joint_velocity: 90
+    joint_id: 0
+    center_of_mass: [ 0, 0, 0.025 ]
     mass: 4.0
     inertia: [
       0.1, 0,   0,
@@ -213,11 +213,11 @@ links:
     name: TURRET_P
     parent: TURRET_Y
     translation: [ 0, 0, 0.0475 ]
-    jointType: revolute
-    jointAxis: -Y
-    jointRange: [ -10, 45 ]
-    maxJointVelocity: 90
-    jointId: 1
+    joint_type: revolute
+    joint_axis: -Y
+    joint_range: [ -10, 45 ]
+    max_joint_velocity: 90
+    joint_id: 1
     elements:
       -
         type: Visual
@@ -231,7 +231,7 @@ links:
             # Turret
             type: RigidBody
             translation: [ 0.0, 0.0, 0.0 ]
-            centerOfMass: [ 0, 0, 0 ]
+            center_of_mass: [ 0, 0, 0 ]
             mass: 3.0
             inertia: [
               0.1, 0,   0,
@@ -248,7 +248,7 @@ links:
             elements:
               -
                 type: RigidBody
-                centerOfMass: [ 0, 0, 0 ]
+                center_of_mass: [ 0, 0, 0 ]
                 mass: 1.0
                 inertia: [
                   0.1, 0,   0,
@@ -287,7 +287,7 @@ links:
                   Shape:
                     geometry:
                       type: Extrusion
-                      crossSection: [
+                      cross_section: [
                         -0.01325, -0.0225,
                         -0.01325, 0.0225,
                         -0.0025, 0.0375,
@@ -309,7 +309,7 @@ links:
                   Shape:
                     geometry:
                       type: Extrusion
-                      crossSection: [
+                      cross_section: [
                         0.0275, -0.04675,
                         0.0275, -0.01325,
                         0.0375, -0.0025,
@@ -331,7 +331,7 @@ links:
                   Shape:
                     geometry:
                       type: Extrusion
-                      crossSection: [
+                      cross_section: [
                         -0.0025, -0.0375,
                         -0.0025, 0.0375,
                         -0.017, 0.0165,
@@ -353,7 +353,7 @@ links:
                   Shape:
                     geometry:
                       type: Extrusion
-                      crossSection: [
+                      cross_section: [
                         0.0375, -0.0575,
                         0.0375, -0.0025,
                         0.0165, -0.0175,
@@ -430,36 +430,36 @@ links:
               -
                 type: Camera
                 name: Kinect
-                rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
+                optical_frame_rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
                 format: COLOR_DEPTH
-                fieldOfView: 62
+                field_of_view: 62
                 width: 320
                 height: 240
-                frameRate: 30
+                frame_rate: 30
                 on: true
               -
                 type: Camera
                 name: Theta
-                rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
                 translation: [ 0, 0, 0.1 ]
+                optical_frame_rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
                 format: COLOR
-                lensType: DUAL_FISHEYE
-                fieldOfView: 180
+                lens_type: DUAL_FISHEYE
+                field_of_view: 180
                 width: 720
                 height: 480
-                frameRate: 30
+                frame_rate: 30
                 on: false
               -
                 type: RangeSensor
                 name: VLP-16
                 translation: [ 0, 0, 0.1 ]
-                rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
-                yawRange: 360.0
-                yawStep:  0.4
-                pitchRange: 30.0
-                pitchStep: 2.0
-                scanRate:  5
-                maxDistance: 100.0
+                optical_frame_rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
+                yaw_range: 360.0
+                yaw_step:  0.4
+                pitch_range: 30.0
+                pitch_step: 2.0
+                scan_rate:  5
+                max_distance: 100.0
                 on: false
               -
                 type: Transform
@@ -480,8 +480,8 @@ links:
                     type: SpotLight
                     name: Light
                     direction: [ 1, 0, 0 ]
-                    beamWidth: 36
-                    cutOffAngle: 40
-                    cutOffExponent: 6
+                    beam_width: 36
+                    cut_off_angle: 40
+                    cut_off_exponent: 6
                     attenuation: [ 1, 0, 0.01 ]
                     on: true

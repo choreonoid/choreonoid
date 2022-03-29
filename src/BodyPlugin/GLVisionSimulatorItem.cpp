@@ -174,7 +174,6 @@ public:
     void moveRenderingBufferToMainThread();
     void makeGLContextCurrent();
     void doneGLContextCurrent();
-    void updateSensorScene();
     void render(SensorScreenRenderer*& currentGLContextScreen);
     void finalizeRendering();
     void storeResultToTmpDataBuffer();
@@ -605,7 +604,7 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
 {
     deviceForRendering = device->clone();
     camera = dynamic_cast<Camera*>(device);
-    rangeCamera = dynamic_pointer_cast<RangeCamera>(camera);
+    rangeCamera = dynamic_cast<RangeCamera*>(camera.get());
     rangeSensor = dynamic_cast<RangeSensor*>(device);
     
     if(camera){
@@ -635,8 +634,8 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
             resolution /= 2;   //screen resolution
 
             Matrix3 R[6];
-            R[FRONT_SCREEN] = camera->R_local();
-            if(numScreens > 1){
+            R[FRONT_SCREEN] = camera->R_local() * camera->opticalFrameRotation();
+            if(numScreens >= 2){
                 R[RIGHT_SCREEN]  = R[FRONT_SCREEN] * AngleAxis(radian(-90.0), Vector3::UnitY());
                 R[LEFT_SCREEN]   = R[FRONT_SCREEN] * AngleAxis(radian(90.0),  Vector3::UnitY());
                 R[TOP_SCREEN]    = R[FRONT_SCREEN] * AngleAxis(radian(90.0),  Vector3::UnitX());
@@ -677,7 +676,6 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
         const double pitchRange = std::min(rangeSensor->pitchRange(), radian(170.0));
         
         for(int i=0; i < numScreens; ++i){
-
             auto rangeSensorForRendering = new RangeSensor(*rangeSensor);
             auto screen = new SensorScreenRenderer(simImpl, device, rangeSensorForRendering);
 
@@ -700,7 +698,8 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
             }
 
             double centerAngle = yawOffset + adjustedYawRange / 2.0;
-            Matrix3 R = rangeSensor->R_local() * AngleAxis(centerAngle, Vector3::UnitY());
+            const Matrix3& R_optical = rangeSensor->opticalFrameRotation();
+            Matrix3 R = rangeSensor->R_local() * R_optical * AngleAxis(centerAngle, Vector3::UnitY());
             rangeSensorForRendering->setLocalRotation(R);
             yawOffset += adjustedYawRange;
 
@@ -856,7 +855,7 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
                 persCamera->setNearClipDistance(cameraForRendering->nearClipDistance());
                 persCamera->setFarClipDistance(cameraForRendering->farClipDistance());
                 persCamera->setFieldOfView(radian(90.0));
-                auto cameraPos = new SgPosTransform();
+                auto cameraPos = new SgPosTransform;
                 cameraPos->setTransform(cameraForRendering->T_local());
                 cameraPos->addChild(persCamera);
                 sceneLink->addChild(cameraPos);
@@ -871,7 +870,7 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
             sceneCamera = persCamera;
             persCamera->setNearClipDistance(rangeSensorForRendering->minDistance());
             persCamera->setFarClipDistance(rangeSensorForRendering->maxDistance());
-            auto cameraPos = new SgPosTransform();
+            auto cameraPos = new SgPosTransform;
             cameraPos->setTransform(rangeSensorForRendering->T_local());
             cameraPos->addChild(persCamera);
             sceneLink->addChild(cameraPos);
@@ -1548,6 +1547,11 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
     const float fh = pixelHeight;
     const int cx = pixelWidth / 2;
     const int cy = pixelHeight / 2;
+    Matrix3f Ro;
+    bool hasRo = !rangeCameraForRendering->opticalFrameRotation().isIdentity();
+    if(hasRo){
+        Ro = rangeCameraForRendering->opticalFrameRotation().cast<float>();
+    }
     const bool isOrganized = rangeCameraForRendering->isOrganized();
     Vector4f n;
     n[3] = 1.0f;
@@ -1570,7 +1574,12 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
                 n.z() = 2.0f * z - 1.0f;
                 const Vector4f o = Pinv * n;
                 const float& w = o[3];
-                points.push_back(Vector3f(o[0] / w, o[1] / w, o[2] / w));
+                Vector3f p(o[0] / w, o[1] / w, o[2] / w);
+                if(hasRo){
+                    points.push_back(Ro * p);
+                } else {
+                    points.push_back(p);
+                }
                 if(pixels){
                     pixels[0] = colorSrc[0];
                     pixels[1] = colorSrc[1];
@@ -1578,8 +1587,7 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
                     pixels += 3;
                 }
             } else if(isOrganized){
-                points.push_back(Vector3f());
-                Vector3f& p = points.back();
+                Vector3f p;
                 if(z <= 0.0f){
                     p.z() = numeric_limits<float>::infinity();
                 } else {
@@ -1602,7 +1610,13 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
                     pixels += 3;
                 }
                 isDense = false;
+                if(hasRo){
+                    points.push_back(Ro * p);
+                } else {
+                    points.push_back(p);
+                }
             }
+            
             colorSrc += 3;
         }
     }
