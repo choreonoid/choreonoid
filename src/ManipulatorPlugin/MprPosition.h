@@ -15,8 +15,10 @@ namespace cnoid {
 
 class Body;
 class LinkKinematicsKit;
+class LinkKinematicsKitSet;
 class MprIkPosition;
 class MprFkPosition;
+class MprCompositePosition;
 class MprPositionList;
 class Mapping;
 class MessageOut;
@@ -26,7 +28,7 @@ class CNOID_EXPORT MprPosition : public ClonableReferenced
 public:
     static constexpr int MaxNumJoints = 8;
     
-    enum PositionType { IK, FK };
+    enum PositionType { IK, FK, Composite };
 
     MprPosition& operator=(const MprPosition& rhs) = delete;
 
@@ -42,14 +44,19 @@ public:
     int positionType() const { return positionType_; }
     bool isIK() const { return (positionType_ == IK); };
     bool isFK() const { return (positionType_ == FK); };
+    bool isComposite() const { return (positionType_ == Composite); };
 
     MprIkPosition* ikPosition();
     MprFkPosition* fkPosition();
+    MprCompositePosition* compositePosition();
 
     MprPositionList* ownerPositionList();
 
     virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) = 0;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const = 0;
+
+    virtual bool fetch(LinkKinematicsKitSet* kinematicsKitSet, MessageOut* mout = nullptr);
+    virtual bool apply(LinkKinematicsKitSet* kinematicsKitSet) const;
 
     const std::string& note() const { return note_; }
     void setNote(const std::string& note) { note_ = note; }
@@ -124,6 +131,13 @@ public:
     
     int configuration() const { return configuration_; }
 
+    /**
+       \note The configuration is usually determined by the manipulator pose when the fetch
+       function is executed, so this function should not used except in special cases.
+       It may be better to remove this function if the function is not necessary.
+    */
+    void setConfiguration(int conf) { configuration_ = conf; }
+
     //! \note This function always specifies BodyFrame as the base frame type.
     virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
@@ -188,6 +202,47 @@ private:
 };
 
 typedef ref_ptr<MprFkPosition> MprFkPositionPtr;
+
+
+class CNOID_EXPORT MprCompositePosition : public MprPosition
+{
+public:
+    MprCompositePosition();
+    MprCompositePosition(const GeneralId& id);
+    MprCompositePosition(const MprCompositePosition& org, CloneMap* cloneMap);
+    MprCompositePosition& operator=(const MprCompositePosition& rhs) = delete;
+
+    void clearPositions();
+    void setNumPositions(int n);
+    void setPosition(int index, MprPosition* position);
+    int numPositions() const { return positions_.size(); }
+    MprPosition* position(int index) { return positions_[index]; }
+    const MprPosition* position(int index) const { return positions_[index]; }
+    int mainPositionIndex() const { return mainPositionIndex_; }
+    void setMainPositionIndex(int index) { mainPositionIndex_ = index; }
+    MprPosition* mainPosition() {
+        return mainPositionIndex_ >= 0 ? positions_[mainPositionIndex_] : nullptr;
+    }
+    const MprPosition* mainPosition() const {
+        return const_cast<MprCompositePosition*>(this)->mainPosition();
+    }
+    
+    virtual bool fetch(LinkKinematicsKitSet* kinematicsKitSet, MessageOut* mout = nullptr) override;
+    virtual bool apply(LinkKinematicsKitSet* kinematicsKitSet) const override;
+
+    virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
+    virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
+    
+    virtual bool read(const Mapping& archive) override;
+    virtual bool write(Mapping& archive) const override;
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    std::vector<MprPositionPtr> positions_;
+    int mainPositionIndex_;
+};
 
 }
 

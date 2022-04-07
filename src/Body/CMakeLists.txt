@@ -11,6 +11,7 @@ set(sources
   LinkTraverse.cpp
   LinkPath.cpp
   JointPath.cpp
+  LinkGroup.cpp
   Jacobian.cpp
   BodyHandler.cpp
   BodyHandlerManager.cpp
@@ -50,7 +51,7 @@ set(sources
   CompositeIK.cpp
   PinDragIK.cpp
   LinkKinematicsKit.cpp
-  LinkGroup.cpp
+  LinkKinematicsKitSet.cpp
   LeggedBodyHelper.cpp
   BodyCollisionDetector.cpp
   BodyCollisionDetectorUtil.cpp
@@ -128,6 +129,7 @@ set(headers
   CompositeBodyIK.h
   PinDragIK.h
   LinkKinematicsKit.h
+  LinkKinematicsKitSet.h
   LeggedBodyHelper.h
   PenetrationBlocker.h
   ForwardDynamics.h

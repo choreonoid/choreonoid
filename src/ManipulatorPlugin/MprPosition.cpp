@@ -2,6 +2,7 @@
 #include "MprPositionList.h"
 #include <cnoid/Body>
 #include <cnoid/LinkKinematicsKit>
+#include <cnoid/LinkKinematicsKitSet>
 #include <cnoid/JointPath>
 #include <cnoid/JointSpaceConfigurationHandler>
 #include <cnoid/CoordinateFrame>
@@ -10,6 +11,7 @@
 #include <cnoid/CloneMap>
 #include <cnoid/MessageOut>
 #include <fmt/format.h>
+#include <stdexcept>
 #include "gettext.h"
 
 using namespace std;
@@ -92,9 +94,36 @@ MprFkPosition* MprPosition::fkPosition()
 }
 
 
+MprCompositePosition* MprPosition::compositePosition()
+{
+    if(positionType_ == Composite){
+        return static_cast<MprCompositePosition*>(this);
+    }
+    return nullptr;
+}
+
+
 MprPositionList* MprPosition::ownerPositionList()
 {
     return ownerPositionList_.lock();
+}
+
+
+bool MprPosition::fetch(LinkKinematicsKitSet* kinematicsKitSet, MessageOut* mout)
+{
+    if(auto kinematicsKit = kinematicsKitSet->mainKinematicsKit()){
+        return fetch(kinematicsKit);
+    }
+    return false;
+}
+    
+
+bool MprPosition::apply(LinkKinematicsKitSet* kinematicsKitSet) const
+{
+    if(auto kinematicsKit = kinematicsKitSet->mainKinematicsKit()){
+        return apply(kinematicsKit);
+    }
+    return false;
 }
 
 
@@ -109,9 +138,7 @@ void MprPosition::notifyUpdate(int flags)
 
 bool MprPosition::read(const Mapping& archive)
 {
-    if(!id_.read(archive, "id")){
-        archive.throwException(_("The \"id\" key is not found in a manipulator position node."));
-    }
+    id_.read(archive, "id");
     archive.read("note", note_);
     return true;
 }
@@ -119,13 +146,11 @@ bool MprPosition::read(const Mapping& archive)
 
 bool MprPosition::write(Mapping& archive) const
 {
-    if(id_.write(archive, "id")){
-        if(!note_.empty()){
-            archive.write("note", note_, DOUBLE_QUOTED);
-        }
-        return true;
+    id_.write(archive, "id");
+    if(!note_.empty()){
+        archive.write("note", note_, DOUBLE_QUOTED);
     }
-    return false;
+    return true;
 }
 
 
@@ -296,7 +321,9 @@ bool MprIkPosition::write(Mapping& archive) const
 {
     archive.write("type", "IkPosition");
     
-    MprPosition::write(archive);
+    if(!MprPosition::write(archive)){
+        return false;
+    }
     
     archive.setFloatingNumberFormat("%.10g");
     cnoid::write(archive, "translation", Vector3(T.translation()));
@@ -460,5 +487,231 @@ bool MprFkPosition::write(Mapping& archive) const
         archive.insert("prismatic_joints", plist);
     }
     
+    return true;
+}
+
+
+MprCompositePosition::MprCompositePosition()
+    : MprCompositePosition(GeneralId())
+{
+    
+}
+
+
+MprCompositePosition::MprCompositePosition(const GeneralId& id)
+    : MprPosition(Composite, id)
+{
+    mainPositionIndex_ = -1;
+}
+
+
+MprCompositePosition::MprCompositePosition(const MprCompositePosition& org, CloneMap* cloneMap)
+    : MprPosition(org)
+{
+    for(auto position : org.positions_){
+        if(cloneMap){
+            position = cloneMap->getClone(position);
+        }
+        positions_.push_back(position);
+    }
+    
+    mainPositionIndex_ = org.mainPositionIndex_;
+}
+
+
+Referenced* MprCompositePosition::doClone(CloneMap* cloneMap) const
+{
+    return new MprCompositePosition(*this, cloneMap);
+}
+
+
+void MprCompositePosition::clearPositions()
+{
+    positions_.clear();
+    mainPositionIndex_ = -1;
+}
+
+
+void MprCompositePosition::setNumPositions(int n)
+{
+    if(n >= 0){
+        positions_.resize(n);
+        if(mainPositionIndex_ >= n){
+            mainPositionIndex_ = -1;
+        }
+    }
+}
+
+
+void MprCompositePosition::setPosition(int index, MprPosition* position)
+{
+    if(position->isComposite()){
+        throw std::invalid_argument("MprCompositePosition cannot contain a composite position.");
+    }
+    if(index >= static_cast<int>(positions_.size())){
+        positions_.resize(index + 1);
+    }
+    positions_[index] = position;
+}
+
+
+namespace {
+
+enum CompositeProcessResult { Unmatched, Tried, Processed, Completed };
+
+CompositeProcessResult processPositionsAndKinematicsKits
+(MprCompositePosition* compositePosition, LinkKinematicsKitSet* kinematicsKitSet,
+ const std::function<bool(MprPosition* position, LinkKinematicsKit* kit)>& callback)
+{
+    bool tried = false;
+    bool processed = false;
+    bool completed = false;
+
+    int mainPositionIndex = compositePosition->mainPositionIndex();
+    int mainKinematicsKitIndex = kinematicsKitSet->mainKinematicsKitIndex();
+    if(mainPositionIndex >= 0 && mainKinematicsKitIndex >= 0){
+        int n = compositePosition->numPositions();
+        int numKinematicsKits = kinematicsKitSet->numKinematicsKits();
+        if(mainPositionIndex == mainKinematicsKitIndex){
+            if(n == numKinematicsKits){
+                completed = true;
+            } else {
+                n = std::min(n, numKinematicsKits);
+            }
+            tried = true;
+            for(int i=0; i < n; ++i){
+                auto position = compositePosition->position(i);
+                auto kit = kinematicsKitSet->kinematicsKit(i);
+                if(position && kit && callback(position, kit)){
+                    processed = true;
+                } else {
+                    completed = false;
+                }
+            }
+            if(!processed){
+                completed = false;
+            }
+        } else if(n == 1 || numKinematicsKits == 1){
+            tried = true;
+            processed = callback(compositePosition->mainPosition(), kinematicsKitSet->mainKinematicsKit());
+        }
+    }
+
+    CompositeProcessResult result;
+    if(!tried){
+        result = Unmatched;
+    } else if(!processed){
+        result = Tried;
+    } else if(!completed){
+        result = Processed;
+    } else {
+        result = Completed;
+    }
+    return result;
+}
+
+}
+
+
+bool MprCompositePosition::fetch(LinkKinematicsKitSet* kinematicsKitSet, MessageOut* mout)
+{
+    auto result = processPositionsAndKinematicsKits(
+        this, kinematicsKitSet,
+        [this](MprPosition* position, LinkKinematicsKit* kit){ return position->fetch(kit); });
+
+    if(result == Unmatched){
+        mout->putError(
+            format(_("Position {0} cannot be fetched due to the position set mismatch."),
+                   id().label()));
+    } else if(result == Tried){
+        mout->putError(format(_("Fetching position {0} failed."), id().label()));
+    } else if(result == Processed){
+        mout->putWarning(format(_("Could not fetch all elements of position {0}."), id().label()));
+    }
+
+    return (result == Processed || result == Completed);
+}
+
+
+bool MprCompositePosition::apply(LinkKinematicsKitSet* kinematicsKitSet) const
+{
+    auto result = processPositionsAndKinematicsKits(
+        const_cast<MprCompositePosition*>(this), kinematicsKitSet,
+        [this](MprPosition* position, LinkKinematicsKit* kit){ return position->apply(kit); });
+
+    return (result == Processed || result == Completed);
+}
+
+
+bool MprCompositePosition::fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout)
+{
+    if(auto position = mainPosition()){
+        return position->fetch(kinematicsKit, mout);
+    }
+    return false;
+}
+
+
+bool MprCompositePosition::apply(LinkKinematicsKit* kinematicsKit) const
+{
+    if(auto position = mainPosition()){
+        return position->apply(kinematicsKit);
+    }
+    return false;
+}
+
+
+bool MprCompositePosition::read(const Mapping& archive)
+{
+    if(!MprPosition::read(archive)){
+        return false;
+    }
+    auto positionList = archive.findListing("positions");
+    if(!positionList->isValid()){
+        return false;
+    }
+    clearPositions();
+    int n = positionList->size();
+    setNumPositions(n);
+    for(int i=0; i < n; ++i){
+        auto& node = *positionList->at(i)->toMapping();
+        auto& typeNode = node["type"];
+        auto type = typeNode.toString();
+        MprPositionPtr position;
+        if(type == "IkPosition"){
+            position = new MprIkPosition;
+        } else if(type == "FkPosition"){
+            position = new MprFkPosition;
+        } else if(type == "CompositePosition"){
+            typeNode.throwException(_("Recursive CompositePosition structure is not supported"));
+        } else {
+            typeNode.throwException(format(_("{0} is not supported"), type));
+        }
+        if(position){
+            if(position->read(node)){
+                setPosition(i, position);
+            }
+        }
+    }
+    return true;
+}
+
+
+bool MprCompositePosition::write(Mapping& archive) const
+{
+    archive.write("type", "CompositePosition");
+
+    if(!MprPosition::write(archive)){
+        return false;
+    }
+
+    auto positionList = archive.createListing("positions");
+    for(auto& position : positions_){
+        auto positionArchive = positionList->newMapping();
+        if(position){
+            position->write(*positionArchive);
+        }
+    }
+
     return true;
 }

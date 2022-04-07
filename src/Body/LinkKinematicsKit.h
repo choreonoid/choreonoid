@@ -93,7 +93,7 @@ public:
         int configuration = 0 /* Auto */);
     
     /**
-       The signal emitted when there is a change in the current frames or frame list for the target frames.
+       The signal is emitted when there is a change in the current frames or frame list for the target frames.
        Note that updates to the position, note, etc. of each frame are not notified by this signal.
        The updates of each frame can be detected using the CoordinateeFrame::isgUpdated signal.
     */

@@ -352,12 +352,18 @@ bool MprPositionList::read(const Mapping& archive)
                 position = new MprIkPosition;
             } else if(type == "FkPosition"){
                 position = new MprFkPosition;
+            } else if(type == "CompositePosition"){
+                position = new MprCompositePosition;
             } else {
                 typeNode.throwException(format(_("{0} is not supported"), type));
             }
             if(position){
                 if(position->read(node)){
-                    append(position);
+                    if(position->id().isValid()){
+                        append(position);
+                    } else {
+                        node.throwException(_("Invalid position ID"));
+                    }
                 }
             }
         }
