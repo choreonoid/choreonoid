@@ -34,6 +34,7 @@ bool GeneralId::read(const Mapping& archive, const char* key)
         }
         return true;
     }
+    (*this)  = GeneralId(); // Set invalid ID
     return false;
 }
 
