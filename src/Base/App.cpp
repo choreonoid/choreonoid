@@ -663,6 +663,18 @@ SignalProxy<void()> App::sigAboutToQuit()
 }
 
 
+SignalProxy<void()> AppUtil::sigAboutToQuit()
+{
+    return sigAboutToQuit_;
+}
+
+
+SignalProxy<void()> cnoid::sigAboutToQuit()
+{
+    return sigAboutToQuit_;
+}
+
+
 void App::updateGui()
 {
     QCoreApplication::processEvents(
@@ -670,9 +682,9 @@ void App::updateGui()
 }
 
 
-SignalProxy<void()> cnoid::sigAboutToQuit()
+void AppUtil::updateGui()
 {
-    return sigAboutToQuit_;
+    return App::updateGui();
 }
 
 
