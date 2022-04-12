@@ -90,6 +90,7 @@ public:
     // Used for the default variable mappings
     vector<MprVariableListPtr> variableLists;
 
+    bool isEnabled;
     bool isControlActive;
     typedef MprProgram::iterator Iterator;
     Iterator iterator;
@@ -177,12 +178,15 @@ MprControllerItemBase::MprControllerItemBase(const MprControllerItemBase& org)
     : ControllerItem(org)
 {
     impl = new Impl(this);
+
+    impl->speedRatio = org.impl->speedRatio;
 }
 
 
 MprControllerItemBase::Impl::Impl(MprControllerItemBase* self)
     : self(self)
 {
+    isEnabled = true;
     isControlActive = false;
     speedRatio = 1.0;
     currentLog = new MprControllerLog;
@@ -244,7 +248,7 @@ void MprControllerItemBase::registerBaseStatementInterpreters()
 
     impl->termPattern.assign("^\\s*(.+)\\s*");
     impl->operatorPattern.assign("^\\s*([+-])\\s*");
-    impl->cmpOperatorPattern.assign("^\\s*(=|==|!=|<|>|<=|>=)\\s*");
+    impl->cmpOperatorPattern.assign("^\\s*(=|!=|<=|>=|<|>)\\s*");
     impl->intPattern.assign("^[+-]?\\d+");
     impl->floatPattern.assign("^[+-]?(\\d+\\.\\d*|\\.\\d+)");
     impl->boolPattern.assign("^([Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee])");
@@ -259,6 +263,18 @@ void MprControllerItemBase::setResidentInputFunction(std::function<void()> input
 }
 
 
+bool MprControllerItemBase::isEnabled() const
+{
+    return impl->isEnabled;
+}
+
+
+void MprControllerItemBase::setEnabled(bool on)
+{
+    impl->isEnabled = on;
+}
+
+
 double MprControllerItemBase::timeStep() const
 {
     return impl->io ? impl->io->timeStep() : 0.0;
@@ -267,6 +283,10 @@ double MprControllerItemBase::timeStep() const
 
 bool MprControllerItemBase::initialize(ControllerIO* io)
 {
+    if(!isEnabled()){
+        return false;
+    }
+    
     impl->isControlActive = false;
     if(impl->initialize(io)){
         if(onInitialize(io)){
@@ -350,7 +370,8 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
 bool MprControllerItemBase::Impl::createKinematicsKitForControl()
 {
     kinematicsKit = cloneMap.getClone(startupProgramItem->kinematicsKit());
-    if(!kinematicsKit->jointPath()){
+
+    if(!kinematicsKit || !kinematicsKit->jointPath()){
         return false;
     }
 
@@ -831,10 +852,15 @@ bool MprControllerItemBase::Impl::interpretIfStatement(MprIfStatement* statement
     ++next;
                            
     MprElseStatement* nextElseStatement = nullptr;
-    if(next != currentProgram->end()){
-        nextElseStatement = dynamic_cast<MprElseStatement*>(next->get());
-        if(nextElseStatement){
+    while(next != currentProgram->end()){
+        if(dynamic_cast<MprEmptyStatement*>(next->get())){
             ++next;
+        } else {
+            nextElseStatement = dynamic_cast<MprElseStatement*>(next->get());
+            if(nextElseStatement){
+                ++next;
+            }
+            break;
         }
     }
 
@@ -899,8 +925,6 @@ template<class LhsType, class RhsType>
 static stdx::optional<bool> checkNumericalComparison(const string& op, LhsType lhs, RhsType rhs)
 {
     if(op == "="){
-        return lhs == rhs;
-    } else if(op == "=="){
         return lhs == rhs;
     } else if(op == "!="){
         return lhs != rhs;
@@ -1272,6 +1296,7 @@ void MprControllerItemBase::doPutProperties(PutPropertyFunction& putProperty)
 
 bool MprControllerItemBase::store(Archive& archive)
 {
+    archive.write("enabled", impl->isEnabled);
     archive.write("speed_ratio", impl->speedRatio);
     return true;
 }
@@ -1279,9 +1304,12 @@ bool MprControllerItemBase::store(Archive& archive)
 
 bool MprControllerItemBase::restore(const Archive& archive)
 {
+    archive.read("enabled", impl->isEnabled);
+
     if(!archive.read("speed_ratio", impl->speedRatio)){
         archive.read("speedRatio", impl->speedRatio); // old
     }
+    
     return true;
 }
 

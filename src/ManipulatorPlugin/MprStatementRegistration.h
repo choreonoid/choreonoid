@@ -34,8 +34,9 @@ public:
     static const std::string& fullTypeName(const MprStatement* statement);
 
 private:
-void registerFactory_(
-    const char* typeName, const std::type_info& type, const std::type_info& superType, FactoryFunction factory);
+    void registerFactory_(
+        const char* typeName, const std::type_info& type, const std::type_info& superType, FactoryFunction factory);
+
     class Impl;
     Impl* impl;
 };

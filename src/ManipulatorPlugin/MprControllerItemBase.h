@@ -25,6 +25,13 @@ public:
     MprControllerItemBase(const MprControllerItemBase& org);
     virtual ~MprControllerItemBase();
 
+    /**
+       This function should be defined in ControllerItem and the enabled state
+       should be syncrhonized with the item check state.
+    */
+    bool isEnabled() const;
+    void setEnabled(bool on);
+    
     virtual double timeStep() const override;
     double speedRatio() const;
     void setSpeedRatio(double r);
@@ -35,7 +42,7 @@ public:
     virtual bool control() override final;
     virtual void output() override final;
     virtual void stop() override final;
-    
+
 protected:
     template<class StatementType>
     void registerStatementInterpreter(std::function<bool(StatementType* statement)> interpret){
