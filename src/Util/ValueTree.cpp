@@ -183,7 +183,7 @@ bool ValueNode::read(int &out_value) const
 int ValueNode::toInt() const
 {
     if(!isScalar()){
-        throwNotScalrException();
+        throwNotScalarException();
     }
 
     const ScalarNode* const scalar = static_cast<const ScalarNode* const>(this);
@@ -234,7 +234,7 @@ bool ValueNode::read(float& out_value) const
 double ValueNode::toDouble() const
 {
     if(!isScalar()){
-        throwNotScalrException();
+        throwNotScalarException();
     }
 
     const ScalarNode* const scalar = static_cast<const ScalarNode* const>(this);
@@ -257,7 +257,7 @@ double ValueNode::toDouble() const
 float ValueNode::toFloat() const
 {
     if(!isScalar()){
-        throwNotScalrException();
+        throwNotScalarException();
     }
 
     const ScalarNode* const scalar = static_cast<const ScalarNode* const>(this);
@@ -304,7 +304,7 @@ bool ValueNode::read(bool& out_value) const
 bool ValueNode::toBool() const
 {
     if(!isScalar()){
-        throwNotScalrException();
+        throwNotScalarException();
     }
 
     const ScalarNode* const scalar = static_cast<const ScalarNode* const>(this);
@@ -327,6 +327,96 @@ bool ValueNode::read(std::string& out_value) const
         return !out_value.empty();
     }
     return false;
+}
+
+
+const ScalarNode* ValueNode::toScalar() const
+{
+    if(!isScalar()){
+        throwNotScalarException();
+    }
+    return static_cast<const ScalarNode*>(this);
+}
+
+
+ScalarNode* ValueNode::toScalar()
+{
+    if(!isScalar()){
+        throwNotScalarException();
+    }
+    return static_cast<ScalarNode*>(this);
+}
+
+
+const Mapping* ValueNode::toMapping() const
+{
+    if(!isMapping()){
+        throwNotMappingException();
+    }
+    return static_cast<const Mapping*>(this);
+}
+
+
+Mapping* ValueNode::toMapping()
+{
+    if(!isMapping()){
+        throwNotMappingException();
+    }
+    return static_cast<Mapping*>(this);
+}
+
+
+const Listing* ValueNode::toListing() const
+{
+    if(!isListing()){
+        throwNotListingException();
+    }
+    return static_cast<const Listing*>(this);
+}
+
+
+Listing* ValueNode::toListing()
+{
+    if(!isListing()){
+        throwNotListingException();
+    }
+    return static_cast<Listing*>(this);
+}
+
+
+void ValueNode::throwException(const std::string& message) const
+{
+    Exception ex;
+    ex.setPosition(line(), column());
+    ex.setMessage(message);
+    throw ex;
+}
+
+
+void ValueNode::throwNotScalarException() const
+{
+    NotScalarException ex;
+    ex.setPosition(line(), column());
+    ex.setMessage(fmt::format(_("A {} value must be a scalar value"), getTypeName(typeBits)));
+    throw ex;
+}
+
+
+void ValueNode::throwNotMappingException() const
+{
+    NotMappingException ex;
+    ex.setPosition(line(), column());
+    ex.setMessage(_("The value is not a mapping"));
+    throw ex;
+}
+
+
+void ValueNode::throwNotListingException() const
+{
+    NotListingException ex;
+    ex.setPosition(line(), column());
+    ex.setMessage(_("The value is not a listing"));
+    throw ex;
 }
 
 
@@ -380,78 +470,6 @@ ScalarNode::ScalarNode(const ScalarNode& org)
 ValueNode* ScalarNode::clone() const
 {
     return new ScalarNode(*this);
-}
-
-
-const Mapping* ValueNode::toMapping() const
-{
-    if(!isMapping()){
-        throwNotMappingException();
-    }
-    return static_cast<const Mapping*>(this);
-}
-
-
-Mapping* ValueNode::toMapping()
-{
-    if(!isMapping()){
-        throwNotMappingException();
-    }
-    return static_cast<Mapping*>(this);
-}
-
-
-const Listing* ValueNode::toListing() const
-{
-    if(!isListing()){
-        throwNotListingException();
-    }
-    return static_cast<const Listing*>(this);
-}
-
-
-Listing* ValueNode::toListing()
-{
-    if(!isListing()){
-        throwNotListingException();
-    }
-    return static_cast<Listing*>(this);
-}
-
-
-void ValueNode::throwException(const std::string& message) const
-{
-    Exception ex;
-    ex.setPosition(line(), column());
-    ex.setMessage(message);
-    throw ex;
-}
-
-
-void ValueNode::throwNotScalrException() const
-{
-    NotScalarException ex;
-    ex.setPosition(line(), column());
-    ex.setMessage(fmt::format(_("A {} value must be a scalar value"), getTypeName(typeBits)));
-    throw ex;
-}
-
-
-void ValueNode::throwNotMappingException() const
-{
-    NotMappingException ex;
-    ex.setPosition(line(), column());
-    ex.setMessage(_("The value is not a mapping"));
-    throw ex;
-}
-
-
-void ValueNode::throwNotListingException() const
-{
-    NotListingException ex;
-    ex.setPosition(line(), column());
-    ex.setMessage(_("The value is not a listing"));
-    throw ex;
 }
 
 
@@ -990,7 +1008,7 @@ void Mapping::write(const std::string &key, const std::string& value, StringStyl
             scalar->stringStyle_ = stringStyle;
             scalar->indexInMapping_ = indexCounter++;
         } else {
-            throwNotScalrException();
+            throwNotScalarException();
         }
     }
 }
@@ -1009,7 +1027,7 @@ void Mapping::writeSub(const std::string &key, const char* text, size_t length, 
             scalar->stringStyle_ = stringStyle;
             scalar->indexInMapping_ = indexCounter++;
         } else {
-            throwNotScalrException();
+            throwNotScalarException();
         }
     }
 }

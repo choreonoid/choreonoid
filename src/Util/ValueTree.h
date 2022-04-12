@@ -88,6 +88,9 @@ public:
 
     template<typename T> T to() const;
 
+    const ScalarNode* toScalar() const;
+    ScalarNode* toScalar();
+    
     bool isMapping() const { return typeBits & MAPPING; }
     const Mapping* toMapping() const;
     Mapping* toMapping();
@@ -183,7 +186,7 @@ protected:
 
     virtual ~ValueNode() { }
 
-    void throwNotScalrException() const;
+    void throwNotScalarException() const;
     void throwNotMappingException() const;
     void throwNotListingException() const;
 
@@ -244,7 +247,7 @@ typedef ref_ptr<ScalarNode> ScalarNodePtr;
 inline const std::string& ValueNode::toString() const
 {
     if(!isScalar()){
-        throwNotScalrException();
+        throwNotScalarException();
     }
     return static_cast<const ScalarNode* const>(this)->stringValue_;
 }

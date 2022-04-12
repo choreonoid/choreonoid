@@ -64,6 +64,7 @@ public:
     }
 
     bool isValid() const { return intId >= 0; }
+    void reset() { (*this) = GeneralId(); }
     bool isInt() const { return valueType == Int; }
     bool isString() const { return valueType == String; }
     int toInt() const { return intId; }
@@ -71,6 +72,7 @@ public:
     std::string label() const;
 
     bool read(const Mapping& archive, const char* key);
+    void readEx(const Mapping& archive, const char* key);
     bool write(Mapping& archive, const char* key) const;
 
     struct Hash {
@@ -88,6 +90,23 @@ private:
     enum IdValueType { Int, String } valueType;
     int intId;
     std::string stringId;
+};
+
+}
+
+namespace std {
+
+template<> struct hash<cnoid::GeneralId>
+{
+    std::size_t operator()(const cnoid::GeneralId& id) const
+    {
+        if(id.isInt()){
+            return std::hash<int>()(id.toInt());
+        } else if(id.isString()){
+            return std::hash<string>()(id.toString());
+        }
+        return 0;
+    }
 };
 
 }

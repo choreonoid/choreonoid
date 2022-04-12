@@ -15,28 +15,40 @@ std::string GeneralId::label() const
 }
 
 
+static void readGeneralId(GeneralId& id, ScalarNode* node)
+{
+    if(node->stringStyle() != PLAIN_STRING){
+        id = node->toString();
+    } else {
+        auto str = node->toString();
+        char* endptr;
+        int number = strtol(str.c_str(), &endptr, 10);
+        if(endptr == str.c_str()){
+            id = str;
+        } else {
+            id = number;
+        }
+    }
+}
+
+
 bool GeneralId::read(const Mapping& archive, const char* key)
 {
     auto idNode = archive.find(key);
     if(idNode->isValid() && idNode->isScalar()){
-        auto scalar = static_cast<ScalarNode*>(idNode);
-        if(scalar->stringStyle() != PLAIN_STRING){
-            (*this) = idNode->toString();
-        } else {
-            auto s = idNode->toString();
-            char* endptr;
-            int id = strtol(s.c_str(), &endptr, 10);
-            if(endptr == s.c_str()){
-                (*this) = s;
-            } else {
-                (*this) = id;
-            }
-        }
+        readGeneralId(*this, idNode->toScalar());
         return true;
     }
     (*this)  = GeneralId(); // Set invalid ID
     return false;
 }
+
+
+void GeneralId::readEx(const Mapping& archive, const char* key)
+{
+    auto idNode = archive[key].toScalar();
+    readGeneralId(*this, idNode);
+}    
 
 
 bool GeneralId::write(Mapping& archive, const char* key) const
