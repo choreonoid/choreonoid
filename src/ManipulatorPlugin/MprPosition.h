@@ -9,6 +9,7 @@
 #include <string>
 #include <array>
 #include <bitset>
+#include <unordered_map>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -213,19 +214,14 @@ public:
     MprCompositePosition& operator=(const MprCompositePosition& rhs) = delete;
 
     void clearPositions();
-    void setNumPositions(int n);
-    void setPosition(int index, MprPosition* position);
-    int numPositions() const { return positions_.size(); }
-    MprPosition* position(int index) { return positions_[index]; }
-    const MprPosition* position(int index) const { return positions_[index]; }
-    int mainPositionIndex() const { return mainPositionIndex_; }
-    void setMainPositionIndex(int index) { mainPositionIndex_ = index; }
-    MprPosition* mainPosition() {
-        return mainPositionIndex_ >= 0 ? positions_[mainPositionIndex_] : nullptr;
-    }
-    const MprPosition* mainPosition() const {
-        return const_cast<MprCompositePosition*>(this)->mainPosition();
-    }
+    void setPosition(const GeneralId& partId, MprPosition* position);
+    int numPositions() const { return positionMap_.size(); }
+    MprPosition* position(const GeneralId& partId);
+    const MprPosition* position(const GeneralId& partId) const;
+    const GeneralId& mainPartId() const { return mainPartId_; }
+    void setMainPpart(const GeneralId& partId) { mainPartId_ = partId; }
+    MprPosition* mainPosition();
+    const MprPosition* mainPosition() const;
     
     virtual bool fetch(LinkKinematicsKitSet* kinematicsKitSet, MessageOut* mout = nullptr) override;
     virtual bool apply(LinkKinematicsKitSet* kinematicsKitSet) const override;
@@ -240,8 +236,8 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
-    std::vector<MprPositionPtr> positions_;
-    int mainPositionIndex_;
+    std::unordered_map<GeneralId, MprPositionPtr> positionMap_;
+    GeneralId mainPartId_;
 };
 
 }

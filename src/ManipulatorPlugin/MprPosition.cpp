@@ -501,21 +501,22 @@ MprCompositePosition::MprCompositePosition()
 MprCompositePosition::MprCompositePosition(const GeneralId& id)
     : MprPosition(Composite, id)
 {
-    mainPositionIndex_ = -1;
+
 }
 
 
 MprCompositePosition::MprCompositePosition(const MprCompositePosition& org, CloneMap* cloneMap)
-    : MprPosition(org)
+    : MprPosition(org),
+      mainPartId_(org.mainPartId_)
 {
-    for(auto position : org.positions_){
-        if(cloneMap){
-            position = cloneMap->getClone(position);
+    if(!cloneMap){
+        positionMap_ = org.positionMap_;
+    } else {
+        for(auto& kv : org.positionMap_){
+            MprPosition* position = kv.second;
+            positionMap_.emplace(kv.first, cloneMap->getClone(position));
         }
-        positions_.push_back(position);
     }
-    
-    mainPositionIndex_ = org.mainPositionIndex_;
 }
 
 
@@ -527,119 +528,107 @@ Referenced* MprCompositePosition::doClone(CloneMap* cloneMap) const
 
 void MprCompositePosition::clearPositions()
 {
-    positions_.clear();
-    mainPositionIndex_ = -1;
+    positionMap_.clear();
+    mainPartId_.reset();
 }
 
 
-void MprCompositePosition::setNumPositions(int n)
+void MprCompositePosition::setPosition(const GeneralId& partId, MprPosition* position)
 {
-    if(n >= 0){
-        positions_.resize(n);
-        if(mainPositionIndex_ >= n){
-            mainPositionIndex_ = -1;
+    if(!partId.isValid()){
+        throw std::invalid_argument("Invalid ID is given to MprCompositePosition::setPosition.");
+    }
+    if(!position){
+        positionMap_.erase(partId);
+        if(mainPartId_ == partId){
+            mainPartId_.reset();
         }
-    }
-}
-
-
-void MprCompositePosition::setPosition(int index, MprPosition* position)
-{
-    if(position->isComposite()){
-        throw std::invalid_argument("MprCompositePosition cannot contain a composite position.");
-    }
-    if(index >= static_cast<int>(positions_.size())){
-        positions_.resize(index + 1);
-    }
-    positions_[index] = position;
-}
-
-
-namespace {
-
-enum CompositeProcessResult { Unmatched, Tried, Processed, Completed };
-
-CompositeProcessResult processPositionsAndKinematicsKits
-(MprCompositePosition* compositePosition, LinkKinematicsKitSet* kinematicsKitSet,
- const std::function<bool(MprPosition* position, LinkKinematicsKit* kit)>& callback)
-{
-    bool tried = false;
-    bool processed = false;
-    bool completed = false;
-
-    int mainPositionIndex = compositePosition->mainPositionIndex();
-    int mainKinematicsKitIndex = kinematicsKitSet->mainKinematicsKitIndex();
-    if(mainPositionIndex >= 0 && mainKinematicsKitIndex >= 0){
-        int n = compositePosition->numPositions();
-        int numKinematicsKits = kinematicsKitSet->numKinematicsKits();
-        if(mainPositionIndex == mainKinematicsKitIndex){
-            if(n == numKinematicsKits){
-                completed = true;
-            } else {
-                n = std::min(n, numKinematicsKits);
-            }
-            tried = true;
-            for(int i=0; i < n; ++i){
-                auto position = compositePosition->position(i);
-                auto kit = kinematicsKitSet->kinematicsKit(i);
-                if(position && kit && callback(position, kit)){
-                    processed = true;
-                } else {
-                    completed = false;
-                }
-            }
-            if(!processed){
-                completed = false;
-            }
-        } else if(n == 1 || numKinematicsKits == 1){
-            tried = true;
-            processed = callback(compositePosition->mainPosition(), kinematicsKitSet->mainKinematicsKit());
-        }
-    }
-
-    CompositeProcessResult result;
-    if(!tried){
-        result = Unmatched;
-    } else if(!processed){
-        result = Tried;
-    } else if(!completed){
-        result = Processed;
     } else {
-        result = Completed;
+        if(position->isComposite()){
+            throw std::invalid_argument("MprCompositePosition cannot contain a composite position.");
+        }
+        positionMap_[partId] = position;
     }
-    return result;
 }
 
+
+MprPosition* MprCompositePosition::position(const GeneralId& partId)
+{
+    auto it = positionMap_.find(partId);
+    if(it != positionMap_.end()){
+        return it->second;
+    }
+    return nullptr;
+}
+
+
+const MprPosition* MprCompositePosition::position(const GeneralId& partId) const
+{
+    return const_cast<MprCompositePosition*>(this)->position(partId);
+}
+
+
+MprPosition* MprCompositePosition::mainPosition()
+{
+    if(mainPartId_.isValid()){
+        return position(mainPartId_);
+    }
+    return nullptr;
+
+}
+
+
+const MprPosition* MprCompositePosition::mainPosition() const
+{
+    return const_cast<MprCompositePosition*>(this)->mainPosition();
 }
 
 
 bool MprCompositePosition::fetch(LinkKinematicsKitSet* kinematicsKitSet, MessageOut* mout)
 {
-    auto result = processPositionsAndKinematicsKits(
-        this, kinematicsKitSet,
-        [this](MprPosition* position, LinkKinematicsKit* kit){ return position->fetch(kit); });
-
-    if(result == Unmatched){
-        mout->putError(
-            format(_("Position {0} cannot be fetched due to the position set mismatch."),
-                   id().label()));
-    } else if(result == Tried){
-        mout->putError(format(_("Fetching position {0} failed."), id().label()));
-    } else if(result == Processed){
-        mout->putWarning(format(_("Could not fetch all elements of position {0}."), id().label()));
+    int numFetched = 0;
+    for(auto& kv : positionMap_){
+        auto& partId = kv.first;
+        if(auto kinematicsKit = kinematicsKitSet->kinematicsKit(partId)){
+            auto& position = kv.second;
+            if(position->fetch(kinematicsKit)){
+                ++numFetched;
+            }
+        }
     }
 
-    return (result == Processed || result == Completed);
+    bool fetched;
+    
+    if(numFetched == 0){
+        fetched = false;
+        mout->putError(
+            format(_("Position {0} cannot be fetched due to the position part set mismatch."),
+                   id().label()));
+    } else {
+        fetched = true;
+        if(numFetched < static_cast<int>(positionMap_.size())){
+            mout->putWarning(format(_("Could not fetch all elements of position {0}."), id().label()));
+        }
+    }
+
+    return fetched;
 }
 
 
 bool MprCompositePosition::apply(LinkKinematicsKitSet* kinematicsKitSet) const
 {
-    auto result = processPositionsAndKinematicsKits(
-        const_cast<MprCompositePosition*>(this), kinematicsKitSet,
-        [this](MprPosition* position, LinkKinematicsKit* kit){ return position->apply(kit); });
+    int numApplied = 0;
+    for(auto& kv : positionMap_){
+        auto& partId = kv.first;
+        if(auto kinematicsKit = kinematicsKitSet->kinematicsKit(partId)){
+            auto& position = kv.second;
+            if(position->apply(kinematicsKit)){
+                ++numApplied;
+            }
+        }
+    }
 
-    return (result == Processed || result == Completed);
+    return numApplied > 0;
 }
 
 
@@ -666,15 +655,20 @@ bool MprCompositePosition::read(const Mapping& archive)
     if(!MprPosition::read(archive)){
         return false;
     }
+
+    mainPartId_.read(archive, "main_part");
+    
     auto positionList = archive.findListing("positions");
     if(!positionList->isValid()){
         return false;
     }
     clearPositions();
+
     int n = positionList->size();
-    setNumPositions(n);
     for(int i=0; i < n; ++i){
         auto& node = *positionList->at(i)->toMapping();
+        GeneralId partId;
+        partId.readEx(node, "part");
         auto& typeNode = node["type"];
         auto type = typeNode.toString();
         MprPositionPtr position;
@@ -687,12 +681,11 @@ bool MprCompositePosition::read(const Mapping& archive)
         } else {
             typeNode.throwException(format(_("{0} is not supported"), type));
         }
-        if(position){
-            if(position->read(node)){
-                setPosition(i, position);
-            }
+        if(position->read(node)){
+            setPosition(partId, position);
         }
     }
+    
     return true;
 }
 
@@ -706,11 +699,12 @@ bool MprCompositePosition::write(Mapping& archive) const
     }
 
     auto positionList = archive.createListing("positions");
-    for(auto& position : positions_){
+    for(auto& kv : positionMap_){
         auto positionArchive = positionList->newMapping();
-        if(position){
-            position->write(*positionArchive);
-        }
+        auto& partId = kv.first;
+        positionArchive->write("part", partId.label());
+        auto& position = kv.second;
+        position->write(*positionArchive);
     }
 
     return true;

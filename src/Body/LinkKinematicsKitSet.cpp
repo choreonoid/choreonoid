@@ -7,21 +7,23 @@ using namespace cnoid;
 
 LinkKinematicsKitSet::LinkKinematicsKitSet()
 {
-    mainKinematicsKitIndex_ = -1;
+
 }
 
 
 LinkKinematicsKitSet::LinkKinematicsKitSet(const LinkKinematicsKitSet& org, CloneMap* cloneMap)
 {
-    for(auto element : org.elements){
-        auto kit = element.kinematicsKit;
+    for(auto& kv : org.kitMap){
+        auto& id = kv.first;
+        auto& info = kv.second;
+        auto kit = info.kinematicsKit;
         if(cloneMap){
             kit = cloneMap->getClone(kit);
         }
-        addKinematicsKit(kit);
+        setKinematicsKit(id, kit);
     }
 
-    mainKinematicsKitIndex_ = org.mainKinematicsKitIndex_;
+    mainPartId_ = org.mainPartId_;
 }
 
 
@@ -39,24 +41,53 @@ LinkKinematicsKitSet::~LinkKinematicsKitSet()
 
 void LinkKinematicsKitSet::clearKinematicsKits()
 {
-    for(auto& element : elements){
-        element.connections.disconnect();
-    }
-    elements.clear();
+    kitMap.clear();
 }
 
 
-void LinkKinematicsKitSet::addKinematicsKit(LinkKinematicsKit* kit)
+bool LinkKinematicsKitSet::setKinematicsKit(const GeneralId& id, LinkKinematicsKit* kit)
 {
-    elements.emplace_back();
-    auto& element = elements.back();
+    if(!id.isValid()){
+        return false;
+    }
 
-    element.kinematicsKit = kit;
+    if(!kit){
+        kitMap.erase(id);
+        if(mainPartId_ == id){
+            mainPartId_.reset();
+        }
+    } else {
+        auto& info = kitMap[id];
+        if(info.kinematicsKit){
+            info.connections.disconnect();
+        }
+        info.kinematicsKit = kit;
+        info.connections.add(
+            kit->sigFrameSetChange().connect(
+                [this](){ sigFrameSetChange_(); }));
+        info.connections.add(
+            kit->sigPositionError().connect(
+                [this](const Isometry3& T_frameCoordinate){ sigPositionError_(T_frameCoordinate); }));
+    }
+    
+    return true;
+}
 
-    element.connections.add(
-        kit->sigFrameSetChange().connect(
-            [this](){ sigFrameSetChange_(); }));
-    element.connections.add(
-        kit->sigPositionError().connect(
-            [this](const Isometry3& T_frameCoordinate){ sigPositionError_(T_frameCoordinate); }));
+
+LinkKinematicsKit* LinkKinematicsKitSet::kinematicsKit(const GeneralId& partId)
+{
+    LinkKinematicsKit* kit;
+    auto it = kitMap.find(partId);
+    if(it == kitMap.end()){
+        kit = nullptr;
+    } else {
+        kit = it->second.kinematicsKit;
+    }
+    return kit;
+}
+
+
+LinkKinematicsKit* LinkKinematicsKitSet::mainKinematicsKit()
+{
+    return mainPartId_.isValid() ? kinematicsKit(mainPartId_) : nullptr;
 }
