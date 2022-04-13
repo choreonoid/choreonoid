@@ -32,6 +32,7 @@ public:
     void setVariableType(VariableType type);
     void setGeneralVariableValueTypeUnchangeable(bool on);
     void setNumberIdEnabled(bool on);
+    void setStartingIdNumber(int id);
     void setStringIdEnabled(bool on);
 
     VariableType variableType() const { return variableType_; }

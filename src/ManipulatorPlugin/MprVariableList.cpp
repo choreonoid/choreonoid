@@ -19,6 +19,7 @@ public:
     MprVariableList* self;
     std::vector<MprVariablePtr> variables;
     unordered_map<GeneralId, MprVariablePtr, GeneralId::Hash> idToVariableMap;
+    int startingIdNumber;
     int idCounter;
     Signal<void(int index)> sigVariableAdded;
     Signal<void(int index, MprVariable* variable)> sigVariableRemoved;
@@ -38,7 +39,7 @@ public:
 MprVariableList::MprVariableList()
     : MprVariableList(GeneralVariable)
 {
-    impl = new Impl(this);
+
 }
 
 
@@ -55,7 +56,8 @@ MprVariableList::MprVariableList(VariableType variableType)
 MprVariableList::Impl::Impl(MprVariableList* self)
     : self(self)
 {
-    idCounter = 0;
+    startingIdNumber = 0;
+    idCounter = startingIdNumber;
 }
 
 
@@ -94,7 +96,8 @@ MprVariableList::MprVariableList(const MprVariableList& org, CloneMap* cloneMap)
 MprVariableList::Impl::Impl(MprVariableList* self, const Impl& org)
     : self(self)
 {
-    idCounter = 0;
+    startingIdNumber = org.startingIdNumber;
+    idCounter = startingIdNumber;
 }
 
 
@@ -144,7 +147,19 @@ void MprVariableList::setNumberIdEnabled(bool on)
     }
     isNumberIdEnabled_ = on;
 }
-    
+
+
+void MprVariableList::setStartingIdNumber(int id)
+{
+    if(id != impl->startingIdNumber){
+        bool doUpdateCounter = (impl->startingIdNumber == impl->idCounter);
+        impl->startingIdNumber = id;
+        if(doUpdateCounter || id > impl->idCounter){
+            impl->idCounter = id;
+        }
+    }
+}
+
 
 void MprVariableList::setStringIdEnabled(bool on)
 {
@@ -359,7 +374,7 @@ bool MprVariableList::resetId(MprVariable* variable, const GeneralId& newId)
 
 void MprVariableList::resetIdCounter()
 {
-    impl->idCounter = 0;
+    impl->idCounter = impl->startingIdNumber;
 }
 
 

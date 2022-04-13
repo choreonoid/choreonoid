@@ -18,6 +18,7 @@ public:
     MprMultiVariableListItem(const MprMultiVariableListItem& org);
     virtual ~MprMultiVariableListItem();
 
+    void setStartingVariableIdNumber(int id);
     void clearVariableLists();
     void setNumVariableList(int n);
     void setVariableList(int index, MprVariableList* list);

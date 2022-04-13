@@ -859,7 +859,8 @@ bool MprControllerItemBase::Impl::interpretIfStatement(MprIfStatement* statement
                            
     MprElseStatement* nextElseStatement = nullptr;
     while(next != currentProgram->end()){
-        if(dynamic_cast<MprEmptyStatement*>(next->get())){
+        if(dynamic_cast<MprEmptyStatement*>(next->get()) ||
+           dynamic_cast<MprCommentStatement*>(next->get())){
             ++next;
         } else {
             nextElseStatement = dynamic_cast<MprElseStatement*>(next->get());

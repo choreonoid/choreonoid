@@ -14,6 +14,7 @@ class MprMultiVariableListItem::Impl
 {
 public:
     vector<MprVariableListPtr> variableLists;
+    int startingVariableIdNumber;
 
     Impl();
     Impl(const Impl& org);
@@ -36,7 +37,7 @@ MprMultiVariableListItem::MprMultiVariableListItem()
 
 MprMultiVariableListItem::Impl::Impl()
 {
-
+    startingVariableIdNumber = 0;
 }
 
 
@@ -49,6 +50,8 @@ MprMultiVariableListItem::MprMultiVariableListItem(const MprMultiVariableListIte
 
 MprMultiVariableListItem::Impl::Impl(const Impl& org)
 {
+    startingVariableIdNumber = org.startingVariableIdNumber;
+    
     for(auto& list : org.variableLists){
         variableLists.push_back(list->clone());
     }
@@ -64,6 +67,15 @@ MprMultiVariableListItem::~MprMultiVariableListItem()
 Item* MprMultiVariableListItem::doDuplicate() const
 {
     return new MprMultiVariableListItem(*this);
+}
+
+
+void MprMultiVariableListItem::setStartingVariableIdNumber(int id)
+{
+    impl->startingVariableIdNumber = id;
+    for(auto& list : impl->variableLists){
+        list->setStartingIdNumber(id);
+    }
 }
 
 
@@ -85,6 +97,7 @@ void MprMultiVariableListItem::setVariableList(int index, MprVariableList* list)
         impl->variableLists.resize(index + 1);
     }
     impl->variableLists[index] = list;
+    list->setStartingIdNumber(impl->startingVariableIdNumber);
 }
 
 
@@ -208,6 +221,7 @@ bool MprMultiVariableListItem::restore(const Archive& archive)
     if(listListNode){
         for(auto& listNode : listListNode){
             MprVariableListPtr list = new MprVariableList;
+            list->setStartingIdNumber(impl->startingVariableIdNumber);
             if(list->read(*listNode->toMapping())){
                 impl->variableLists.push_back(list);
             } else {

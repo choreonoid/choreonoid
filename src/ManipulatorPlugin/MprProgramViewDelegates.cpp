@@ -217,7 +217,7 @@ QVariant MprWaitStatementDelegate::dataOfEditRole(MprStatement* statement, int c
     } else if(column == 2){
         return wait->signalIndex();
     } else if(column == 3){
-        return wait->signalStateCondition();
+        return QStringList{ (wait->signalStateCondition() ? "0" : "1"), "on", "off" };
     }
     return QVariant();
 }
@@ -237,7 +237,8 @@ void MprWaitStatementDelegate::setDataOfEditRole(MprStatement* statement, int co
         wait->setSignalIndex(value.toInt());
         updated = true;
     } else if(column == 3){
-        wait->setSignalStateCondition(value.toBool());
+        int selected = value.toStringList().first().toInt();
+        wait->setSignalStateCondition(selected == 0);
         updated = true;
     }
     if(updated){
