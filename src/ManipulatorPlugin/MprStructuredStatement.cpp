@@ -52,6 +52,7 @@ bool MprStructuredStatement::isExpandedByDefault() const
 
 bool MprStructuredStatement::read(MprProgram* program, const Mapping& archive)
 {
+    MprStatement::read(program, archive);
     if(hasStructuredStatementAttribute(ArbitraryLowerLevelProgram)){
         return program_->read(archive);
     }
@@ -61,6 +62,7 @@ bool MprStructuredStatement::read(MprProgram* program, const Mapping& archive)
 
 bool MprStructuredStatement::write(Mapping& archive) const
 {
+    MprStatement::write(archive);
     if(hasStructuredStatementAttribute(ArbitraryLowerLevelProgram)){
         return program_->write(archive);
     }

@@ -15,8 +15,6 @@ class CNOID_EXPORT MprEmptyStatement : public MprStatement
 public:
     MprEmptyStatement();
     virtual std::string label(int index) const override;
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
 
 protected:
     MprEmptyStatement(const MprEmptyStatement& org);
@@ -31,7 +29,6 @@ class CNOID_EXPORT MprDummyStatement : public MprEmptyStatement
 public:
     MprDummyStatement();
     virtual std::string label(int index) const override;
-    virtual bool write(Mapping& archive) const override;
 
 protected:
     MprDummyStatement(const MprDummyStatement& org);

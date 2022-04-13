@@ -36,18 +36,6 @@ std::string MprEmptyStatement::label(int index) const
 }
 
 
-bool MprEmptyStatement::read(MprProgram* program, const Mapping& archive)
-{
-    return true;
-}
-
-
-bool MprEmptyStatement::write(Mapping& archive) const
-{
-    return true;
-}
-
-
 MprDummyStatement::MprDummyStatement()
 {
 
@@ -73,12 +61,6 @@ std::string MprDummyStatement::label(int index) const
         return "---";
     }
     return string();
-}
-
-
-bool MprDummyStatement::write(Mapping& archive) const
-{
-    return true;
 }
 
 
@@ -113,6 +95,7 @@ std::string MprCommentStatement::label(int index) const
 
 bool MprCommentStatement::read(MprProgram* program, const Mapping& archive)
 {
+    MprStatement::read(program, archive);
     archive.read("comment", comment_);
     return true;
 }
@@ -120,6 +103,7 @@ bool MprCommentStatement::read(MprProgram* program, const Mapping& archive)
 
 bool MprCommentStatement::write(Mapping& archive) const
 {
+    MprStatement::write(archive);
     archive.write("comment", comment_);
     return true;
 }
@@ -162,18 +146,21 @@ std::string MprGroupStatement::label(int index) const
 
 bool MprGroupStatement::read(MprProgram* program, const Mapping& archive)
 {
-    if(MprStructuredStatement::read(program, archive)){
-        archive.read("group_name", groupName_);
-        return true;
+    if(!MprStructuredStatement::read(program, archive)){
+        return false;
     }
-    return false;
+    archive.read("group_name", groupName_);
+    return true;
 }
 
 
 bool MprGroupStatement::write(Mapping& archive) const
 {
+    if(!MprStructuredStatement::write(archive)){
+        return false;
+    }
     archive.write("group_name", groupName_, DOUBLE_QUOTED);
-    return MprStructuredStatement::write(archive);    
+    return true;
 }
 
 
@@ -193,18 +180,21 @@ MprConditionStatement::MprConditionStatement(const MprConditionStatement& org, C
 
 bool MprConditionStatement::read(MprProgram* program, const Mapping& archive)
 {
-    if(MprStructuredStatement::read(program, archive)){
-        archive.read("condition", condition_);
-        return true;
+    if(!MprStructuredStatement::read(program, archive)){
+        return false;
     }
-    return false;
+    archive.read("condition", condition_);
+    return true;
 }
 
 
 bool MprConditionStatement::write(Mapping& archive) const
 {
+    if(!MprStructuredStatement::write(archive)){
+        return false;
+    }
     archive.write("condition", condition_, DOUBLE_QUOTED);
-    return MprStructuredStatement::write(archive);
+    return true;
 }
 
 
@@ -374,6 +364,7 @@ std::string MprCallStatement::label(int index) const
 
 bool MprCallStatement::read(MprProgram* program, const Mapping& archive)
 {
+    MprStatement::read(program, archive);
     archive.read("program", programName_);
     return true;
 }
@@ -381,6 +372,7 @@ bool MprCallStatement::read(MprProgram* program, const Mapping& archive)
 
 bool MprCallStatement::write(Mapping& archive) const
 {
+    MprStatement::write(archive);
     archive.write("program", programName_, DOUBLE_QUOTED);
     return true;
 }
@@ -431,6 +423,8 @@ std::string MprAssignStatement::label(int index) const
 
 bool MprAssignStatement::read(MprProgram* program, const Mapping& archive)
 {
+    MprStatement::read(program, archive);
+    
     if(archive.read("variable", variableExpression_)){
         std::smatch match;
         if(regex_match(variableExpression_, match, regex("^[+-]?\\d+$"))){
@@ -440,12 +434,14 @@ bool MprAssignStatement::read(MprProgram* program, const Mapping& archive)
     if(!archive.read("value", valueExpression_)){
         archive.read("expression", valueExpression_); // for backward compatibility
     }
+
     return true;
 }
 
 
 bool MprAssignStatement::write(Mapping& archive) const
 {
+    MprStatement::write(archive);
     archive.write("variable", variableExpression_);
     archive.write("value", valueExpression_, SINGLE_QUOTED);
     return true;
@@ -488,16 +484,20 @@ std::string MprSignalStatement::label(int index) const
 
 bool MprSignalStatement::read(MprProgram* program, const Mapping& archive)
 {
+    MprStatement::read(program, archive);
+    
     if(!archive.read("signal_index", signalIndex_)){
         archive.read("signalIndex", signalIndex_); // Old
     }
     archive.read("on", on_);
+
     return true;
 }
 
 
 bool MprSignalStatement::write(Mapping& archive) const
 {
+    MprStatement::write(archive);
     archive.write("signal_index", signalIndex_);
     archive.write("on", on_);
     return true;
@@ -543,7 +543,7 @@ std::string MprWaitStatement::label(int index) const
         }
     } else if(index == 3){
         if(conditionType_ == SignalInput){
-            return signalStateCondition_ ? "On" : "Off";
+            return signalStateCondition_ ? "on" : "off";
         }
     }
     return string();
@@ -552,6 +552,8 @@ std::string MprWaitStatement::label(int index) const
 
 bool MprWaitStatement::read(MprProgram* program, const Mapping& archive)
 {
+    MprStatement::read(program, archive);
+    
     auto& typeNode = archive["condition_type"];
     string type = typeNode.toString();
     if(type == "signal_input"){
@@ -560,18 +562,22 @@ bool MprWaitStatement::read(MprProgram* program, const Mapping& archive)
     } else {
         typeNode.throwException(_("Invalid condition type"));
     }
+
     return true;
 }
     
     
 bool MprWaitStatement::write(Mapping& archive) const
 {
+    MprStatement::write(archive);
+    
     if(conditionType_ == SignalInput){
         archive.write("condition_type", "signal_input");
         archive.write("signal_index", signalIndex_);
         archive.write("condition", signalStateCondition_);
         return true;
     }
+    
     return false;
 }
     
@@ -608,6 +614,7 @@ std::string MprDelayStatement::label(int index) const
 
 bool MprDelayStatement::read(MprProgram* program, const Mapping& archive)
 {
+    MprStatement::read(program, archive);
     archive.read("time", time_);
     return true;
 }
@@ -615,6 +622,7 @@ bool MprDelayStatement::read(MprProgram* program, const Mapping& archive)
 
 bool MprDelayStatement::write(Mapping& archive) const
 {
+    MprStatement::write(archive);
     archive.write("time", time_);
     return true;
 }

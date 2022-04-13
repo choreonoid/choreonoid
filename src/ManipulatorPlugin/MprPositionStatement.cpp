@@ -75,7 +75,7 @@ const MprPosition* MprPositionStatement::position() const
 
 bool MprPositionStatement::read(MprProgram* program, const Mapping& archive)
 {
-    string symbol;
+    MprStatement::read(program, archive);
     positionId_.read(archive, "position");
     return true;
 }
@@ -83,6 +83,7 @@ bool MprPositionStatement::read(MprProgram* program, const Mapping& archive)
 
 bool MprPositionStatement::write(Mapping& archive) const
 {
+    MprStatement::write(archive);
     archive.write("position", positionId_.label());
     return true;
 }

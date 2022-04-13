@@ -706,24 +706,30 @@ bool MprControllerItemBase::Impl::control()
         
         auto statement = iterator->get();
 
-        auto p = interpreterMap.find(typeid(*statement));
-        if(p == interpreterMap.end()){
-            io->os() << format(_("{0} cannot be executed because the interpreter for it is not found."),
-                               statement->label(0)) << endl;
+        if(!statement->isEnabled()){
             ++iterator;
+
         } else {
-            auto& interpret = p->second;
-            if(!interpret(statement)){
-                isControlActive = false;
-                if(isLogEnabled){
-                    currentLog->isErrorState_ = true;
-                }
-                io->os() << format(_("Failed to execute {0} statement. The control was terminated."),
+            auto p = interpreterMap.find(typeid(*statement));
+            if(p == interpreterMap.end()){
+                io->os() << format(_("{0} cannot be executed because the interpreter for it is not found."),
                                    statement->label(0)) << endl;
-                break;
+                ++iterator;
+            } else {
+                auto& interpret = p->second;
+                if(!interpret(statement)){
+                    isControlActive = false;
+                    if(isLogEnabled){
+                        currentLog->isErrorState_ = true;
+                    }
+                    io->os() << format(_("Failed to execute {0} statement. The control was terminated."),
+                                       statement->label(0)) << endl;
+                    break;
+                }
+                isControlActive = true;
             }
-            isControlActive = true;
         }
+        
         ++loopCounter;
     }
 

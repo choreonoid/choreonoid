@@ -39,8 +39,11 @@ public:
 
     void notifyUpdate();
 
-    virtual bool read(MprProgram* program, const Mapping& archive) = 0;
-    virtual bool write(Mapping& archive) const = 0;
+    void setEnabled(bool on) { isEnabled_ = on; }
+    bool isEnabled() const { return isEnabled_; }
+
+    virtual bool read(MprProgram* program, const Mapping& archive);
+    virtual bool write(Mapping& archive) const;
 
 protected:
     MprStatement();
@@ -50,6 +53,7 @@ protected:
 private:
     mutable int classId_;
     weak_ref_ptr<MprProgram> holderProgram_;
+    bool isEnabled_;
 
     void validateClassId() const;
 

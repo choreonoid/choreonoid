@@ -1,9 +1,11 @@
 #include "MprStatement.h"
 #include "MprProgram.h"
 #include "MprBasicStatements.h"
+#include <cnoid/ValueTree>
 
 using namespace std;
 using namespace cnoid;
+
 
 MprStatementClassRegistry& MprStatementClassRegistry::instance()
 {
@@ -28,13 +30,14 @@ PolymorphicMprStatementFunctionSet::PolymorphicMprStatementFunctionSet()
 MprStatement::MprStatement()
 {
     classId_ = -1;
+    isEnabled_ = true;
 }
 
 
 MprStatement::MprStatement(const MprStatement& org)
     : MprStatement()
 {
-
+    isEnabled_ = org.isEnabled_;
 }
 
 
@@ -103,3 +106,27 @@ void MprStatement::notifyUpdate()
         holder->notifyStatementUpdate(this);
     }
 }
+
+
+bool MprStatement::read(MprProgram* /* program */, const Mapping& archive)
+{
+    isEnabled_ = true;
+    if(!archive.read("enabled", isEnabled_)){
+        // For backward compatibility
+        bool isCommentedOut;
+        if(archive.read("isCommentedOut", isCommentedOut)){
+            isEnabled_ = !isCommentedOut;
+        }
+    }
+    return true;
+}
+
+
+bool MprStatement::write(Mapping& archive) const
+{
+    if(!isEnabled_){
+        archive.write("enabled", false);
+    }
+    return true;
+}
+
