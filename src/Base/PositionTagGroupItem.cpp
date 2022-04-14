@@ -926,6 +926,7 @@ bool PositionTagGroupItem::store(Archive& archive)
     archive.write("origin_marker", impl->originMarkerVisibility);
     archive.write("tag_marker_size", tagMarkerSize());
     archive.write("show_edges", impl->edgeVisibility);
+    archive.write("transparency", transparency());
     
     return true;
 }
@@ -951,7 +952,10 @@ bool PositionTagGroupItem::restore(const Archive& archive)
     if(archive.read("show_edges", on)){
         setEdgeVisiblility(on);
     }
-    
+    float t;
+    if(archive.read("transparency", t)){
+        setTransparency(t);
+    }
     return impl->tagGroup->read(&archive);
 }
 
