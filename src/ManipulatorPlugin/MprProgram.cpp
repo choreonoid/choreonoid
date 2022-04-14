@@ -390,18 +390,20 @@ void MprProgram::renumberPositionIds()
     traverseStatements(
         [&](MprStatement* statement) {
             if(auto ps = dynamic_cast<MprPositionStatement*>(statement)){
-                auto id = ps->positionId();
-                if(id.isInt()){
-                    auto it = idMap.find(id.toInt());
-                    if(it != idMap.end()){
-                        int newId = it->second;
-                        ps->setPositionId(newId);
-                    } else {
-                        int newId = idCounter++;
-                        auto position = impl->positionList->findPosition(id);
-                        idMap[id.toInt()] = newId;
-                        referencedIntIdPositions.push_back(position);
-                        ps->setPositionId(newId);
+                if(ps->holderProgram()->isEditingEnabled()){
+                    auto id = ps->positionId();
+                    if(id.isInt()){
+                        auto it = idMap.find(id.toInt());
+                        if(it != idMap.end()){
+                            int newId = it->second;
+                            ps->setPositionId(newId);
+                        } else {
+                            int newId = idCounter++;
+                            auto position = impl->positionList->findPosition(id);
+                            idMap[id.toInt()] = newId;
+                            referencedIntIdPositions.push_back(position);
+                            ps->setPositionId(newId);
+                        }
                     }
                 }
             }
