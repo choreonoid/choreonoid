@@ -83,7 +83,12 @@ public:
     class Impl;
 
 protected:
+    virtual void updateMenuItems();
+    virtual void updateButtons();
+    
     void addEditButton(ToolButton* button, int row);
+    void addStatementToMenuBar(QString path, QString name, std::function<void()> func);
+    void setStatementInMenuBarEnabled(QString path, bool on);
 
     enum InsertionType { BeforeTargetPosition, AfterTargetPosition };
     bool insertStatement(

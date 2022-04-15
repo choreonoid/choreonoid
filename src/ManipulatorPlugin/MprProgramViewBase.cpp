@@ -4,6 +4,7 @@
 #include "MprBasicStatements.h"
 #include "MprPositionStatement.h"
 #include "MprControllerItemBase.h"
+#include "MprTagTraceStatement.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
 #include <cnoid/TargetItemPicker>
@@ -26,6 +27,7 @@
 #include <QPainter>
 #include <QItemEditorFactory>
 #include <QStandardItemEditorCreator>
+#include <QMenuBar>
 #include <fmt/format.h>
 #include <unordered_map>
 #include <array>
@@ -157,12 +159,6 @@ public:
 
     bool isJustAfterDoubleClicked;
 
-    /*
-    struct ExpansionState {
-        ScopedConnection statementConnection;
-        bool expanded;
-    };
-    */
     typedef map<MprStructuredStatementPtr, bool> ExpansionStateMap;
     struct ProgramState {
         ScopedConnectionSet programConnections;
@@ -177,6 +173,7 @@ public:
     ref_ptr<StatementDelegate> defaultStatementDelegate;
     unordered_map<type_index, ref_ptr<StatementDelegate>> statementDelegateMap;
 
+    MenuManager statementMenuManager;
     MenuManager contextMenuManager;
     PolymorphicMprStatementFunctionSet contextMenuFunctions;
 
@@ -195,6 +192,7 @@ public:
         ExpansionStateMap* expansionStateMap);
     void setCurrentStatement(MprStatement* statement);
     void setErrorStatement(MprStatement* statement);
+    void setStatementEnabled(MprStatement* statement, bool on);
     void onItemSelectionChanged();
     void onCurrentTreeWidgetItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
     void onTreeWidgetItemClicked(QTreeWidgetItem* item, int /* column */);
@@ -235,6 +233,9 @@ public:
         }
         return nullptr;
     }
+
+protected:
+    virtual void dropEvent(QDropEvent *event) override;
 };
 
 }
@@ -256,10 +257,17 @@ StatementItem::StatementItem(MprStatement* statement_, MprProgram* program, MprP
 
     if(program && program->isEditingEnabled()){
         flags |= Qt::ItemIsEditable | Qt::ItemIsDragEnabled;
+
+        // Qt::ItemNeverHasChildren is used to avoid software crash as unwanted drop event happen.
+        flags |= Qt::ItemNeverHasChildren;
     }
-    if(statement<MprStructuredStatement>()){
+    // ItemIsDropEnabled and ItemNeverHasChildren do not work properly because of Qt bug.
+    // If item has child or not is contolled at DropEvent instead.
+    if(true /* statement<MprStructuredStatement>() */){
         flags |= Qt::ItemIsDropEnabled;
+        flags ^= Qt::ItemNeverHasChildren;
     }
+
     setFlags(flags);
 }
 
@@ -612,6 +620,10 @@ void MprProgramViewBase::Impl::setupWidgets()
     auto vbox = new QVBoxLayout;
     vbox->setSpacing(0);
 
+    QMenuBar* menubar = new QMenuBar(self);
+    statementMenuManager.setTopMenu(menubar);
+    vbox->addWidget(menubar);
+
     QHBoxLayout* hbox;
     hbox = new QHBoxLayout;
     hbox->addLayout(&buttonBox[0]);
@@ -772,6 +784,22 @@ void MprProgramViewBase::addEditButton(ToolButton* button, int row)
 }
 
 
+void MprProgramViewBase::addStatementToMenuBar(QString path, QString name, std::function<void()> func)
+{
+    auto action = impl->statementMenuManager.setPath(path).addItem(name);
+    action->setObjectName(name);
+    action->sigTriggered().connect(func);
+}
+
+
+void MprProgramViewBase::setStatementInMenuBarEnabled(QString path, bool on)
+{
+    if(auto action = impl->statementMenuManager.findItem(path)){
+        action->setEnabled(on);
+    }
+}
+
+
 void MprProgramViewBase::onAttachedMenuRequest(MenuManager& menuManager)
 {
     menuManager.addItem(_("Refresh"))->sigTriggered().connect(
@@ -884,7 +912,7 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
         programState.programConnections.add(
             programItem->sigDisconnectedFromRoot().connect(
                 [this, programItem](){ programStateMap.erase(programItem); }));
-        
+
         programState.programConnections.add(
             program->sigStatementRemoved().connect(
                 [pExpansionStateMap, programItem](MprStatement* statement, MprProgram*){
@@ -893,6 +921,9 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
                     }
                 }));
     }
+
+    self->updateMenuItems();
+    self->updateButtons();
 
     addStatementsToTree(program, invisibleRootItem(), nullptr, pExpansionStateMap);
 }
@@ -917,6 +948,18 @@ void MprProgramViewBase::Impl::storeExpansionStatesIter
             }
         }
     }
+}
+
+
+void MprProgramViewBase::updateMenuItems()
+{
+
+}
+
+
+void MprProgramViewBase::updateButtons()
+{
+
 }
 
 
@@ -972,6 +1015,11 @@ void MprProgramViewBase::Impl::addStatementsToTree
                     addStatementsToTree(
                         lowerLevelProgram, statementItem, structured, expansionStateMap);
                 }
+            }
+            if(!statement->isEnabled()
+               // Enabling states should not be applied recursively
+               /* || (parentStatement && !parentStatement->isEnabled()) */ ){
+                setStatementEnabled(statement, false);
             }
         }
     }
@@ -1061,6 +1109,7 @@ void MprProgramViewBase::Impl::setErrorStatement(MprStatement* statement)
         weak_errorStatement = statement;
         if(errorStatement){
             if(auto item = findStatementItem(errorStatement)){
+                // Display the item as if it were disabled, while it is still selectable
                 QBrush brush;
                 for(int i=0; i < NumColumns; ++i){
                     item->setForeground(i, brush);
@@ -1077,6 +1126,38 @@ void MprProgramViewBase::Impl::setErrorStatement(MprStatement* statement)
                     item->setForeground(i, brush);
                 }
             }
+        }
+    }
+}
+
+
+void MprProgramViewBase::Impl::setStatementEnabled(MprStatement* statement, bool on)
+{
+    if(statement){
+        if(auto holder = statement->holderStatement()){
+            if(!holder->isEnabled() && on){
+                return;
+            }
+        }
+        if(statement->isEnabled() != on){
+            statement->setEnabled(on);
+            statement->notifyUpdate();
+        }
+        if(auto item = findStatementItem(statement)){
+            // Display the item as if it were disabled, while it is still selectable
+            QBrush brush = on ? Qt::black : Qt::gray;
+            for(int i=0; i < NumColumns; ++i){
+                item->setForeground(i, brush);
+            }
+            
+            // Enabling states should not be applied recursively
+            /*
+            if(auto prog = statement->getLowerLevelProgram()){
+                for(auto st = prog->begin(); st != prog->end(); st++){
+                    setStatementEnabled(*st, on);
+                }
+            }
+            */
         }
     }
 }
@@ -1310,10 +1391,13 @@ bool MprProgramViewBase::Impl::insertStatement(MprStatement* statement, int inse
             pos = program->end();
         }
     } else {
-        auto lastSelectedItem = static_cast<StatementItem*>(selected.back());
+        auto lastSelectedItem = static_cast<StatementItem*>(currentItem());
         parentStatement = lastSelectedItem->getParentStatement();
         if(parentStatement){
             program = parentStatement->lowerLevelProgram();
+            if (!program->isEditingEnabled()) {
+                return false;
+            }
         }
         if(lastSelectedItem->statement() == dummyStatement){
             pos = program->begin();
@@ -1331,6 +1415,15 @@ bool MprProgramViewBase::Impl::insertStatement(MprStatement* statement, int inse
         clearSelection();
         setCurrentItem(findStatementItem(statement));
     }
+
+    // Enabling states should not be applied recursively
+    /*
+    if(auto holder = statement->holderStatement()){
+        if(!holder->isEnabled()){
+            setStatementEnabled(statement, false);
+        }
+    }
+    */
 
     return true;
 }
@@ -1380,6 +1473,19 @@ void MprProgramViewBase::Impl::onStatementInserted(MprProgram::iterator iter)
             }
         }
         invalidLogSeq = findLogSeq();
+    }
+
+    bool isEnabled = statement->isEnabled();
+
+    // Enabling states should not be applied recursively
+    /*
+    if(holderStatement){
+        isEnabled &= holderStatement->isEnabled();
+    }
+    */
+    
+    if(!isEnabled){
+        setStatementEnabled(statement, false);
     }
 }
 
@@ -1468,6 +1574,19 @@ void MprProgramViewBase::Impl::onRowsAboutToBeRemoved(const QModelIndex& parent,
         parent, start, end,
         [&](MprStructuredStatement*, MprProgram* program, int, MprStatement* statement){
             programConnections.block();
+
+            /**
+               Remove child items of MprTagTraceStatement to avoid a crash
+               when a tag trace statement is moved by dragging.
+            */
+            if(auto tagTraceStatement = dynamic_cast<MprTagTraceStatement*>(statement)){
+                auto lowerLevelProgram = tagTraceStatement->lowerLevelProgram();
+                for (auto iter = lowerLevelProgram->begin(); iter != lowerLevelProgram->end(); iter++) {
+                    onStatementRemoved(lowerLevelProgram, *iter);
+                }
+                lowerLevelProgram->clearStatements();
+            };
+
             program->remove(statement);
             programConnections.unblock();
         });
@@ -1526,6 +1645,31 @@ void MprProgramViewBase::Impl::onRowsInserted(const QModelIndex& parent, int sta
         [&](MprStructuredStatement*, MprProgram* program, int index, MprStatement* statement){
             programConnections.block();
             program->insert(program->begin() + index, statement);
+
+            /**
+               Revive TagTraceStatement to avoid a crash
+               when a tag trace statement is moved by dragging.
+            */
+            if(auto tagTraceStatement = dynamic_cast<MprTagTraceStatement*>(statement)){
+                if(!currentProgramItem->resolveStatementReferences(tagTraceStatement)){
+                    tagTraceStatement->updateTagTraceProgram();
+                    tagTraceStatement->notifyUpdate();
+                }
+                // insert child items of TagTraceStatement
+                auto lowerLevelProgram = tagTraceStatement->lowerLevelProgram();
+                for(auto iter = lowerLevelProgram->begin(); iter != lowerLevelProgram->end(); iter++){
+                    auto counter = scopedCounterOfStatementItemOperationCall();
+                    auto statement = *iter;
+                    auto parentItem = findStatementItem(tagTraceStatement);
+                    auto statementItem = new StatementItem(statement, lowerLevelProgram, this);
+                    parentItem->addChild(statementItem);
+                    // revive the enabled state
+                    if(!statement->isEnabled() || !tagTraceStatement->isEnabled()){
+                        setStatementEnabled(statement, false);
+                    }
+                }
+            };
+
             programConnections.unblock();
         });
 }
@@ -1593,10 +1737,37 @@ void MprProgramViewBase::Impl::showContextMenu(MprStatement* statement, QPoint g
 {
     contextMenuManager.setNewPopupMenu(this);
     
-    if(statement){
-        contextMenuFunctions.dispatch(statement);
-    } else {
+    if(!statement){
         setBaseContextMenu(contextMenuManager);
+    } else {
+        if (!dynamic_cast<MprCommentStatement*>(statement) &&
+            !dynamic_cast<MprDummyStatement*>(statement) &&
+            !dynamic_cast<MprEmptyStatement*>(statement)) {
+            auto switchEnabledStateFunc =
+                [this](bool on){
+                    for (auto selectedItem : selectedItems()) {
+                        if(auto item = static_cast<StatementItem*>(selectedItem)){
+                            auto statement = item->statement();
+                            setStatementEnabled(statement, on);
+                        }
+                    }
+                };
+            if(!statement->isEnabled()){
+                auto action = contextMenuManager.addItem(_("Enable"));
+                action->sigTriggered().connect([=]() { switchEnabledStateFunc(true); });
+                if(auto holder = statement->holderStatement()){
+                    if(!holder->isEnabled()){
+                        action->setEnabled(false);
+                    }
+                }
+            } else {
+                contextMenuManager.addItem(_("Disable"))
+                    ->sigTriggered().connect([=]() { switchEnabledStateFunc(false); });
+            }
+
+            contextMenuManager.addSeparator();
+        }
+        contextMenuFunctions.dispatch(statement);
     }
 
     contextMenuManager.popupMenu()->popup(globalPos);
@@ -1605,11 +1776,11 @@ void MprProgramViewBase::Impl::showContextMenu(MprStatement* statement, QPoint g
 
 void MprProgramViewBase::Impl::setBaseContextMenu(MenuManager& menuManager)
 {
-    menuManager.addItem(_("Cut"))
-        ->sigTriggered().connect([=](){ copySelectedStatements(true); });
+    auto cutAction = menuManager.addItem(_("Cut"));
+    cutAction->sigTriggered().connect([=](){ copySelectedStatements(true); });
 
-    menuManager.addItem(_("Copy"))
-        ->sigTriggered().connect([=](){ copySelectedStatements(false); });
+    auto copyAction = menuManager.addItem(_("Copy"));
+    copyAction->sigTriggered().connect([=](){ copySelectedStatements(false); });
 
     auto pasteAction = menuManager.addItem(_("Paste"));
     if(statementsToPaste.empty()){
@@ -1618,10 +1789,27 @@ void MprProgramViewBase::Impl::setBaseContextMenu(MenuManager& menuManager)
         pasteAction->sigTriggered().connect([=](){ pasteStatements(); });
     }
 
+    if(auto currentStatementItem = dynamic_cast<StatementItem*>(currentItem())){
+        if(selectedItems().empty() || dynamic_cast<MprDummyStatement*>(currentStatementItem->statement().get())){
+            cutAction->setEnabled(false);
+            copyAction->setEnabled(false);
+        }
+        if(auto program = currentStatementItem->getProgram()){
+            if(!program->isEditingEnabled()){
+                pasteAction->setEnabled(false);
+            }
+        }
+    }
+
     menuManager.addSeparator();
 
     menuManager.addItem(_("Insert empty line"))
-        ->sigTriggered().connect([=](){ insertStatement(new MprEmptyStatement, BeforeTargetPosition); });
+        ->sigTriggered().connect(
+            [=](){
+                insertStatement(
+                    new MprEmptyStatement,
+                    selectedItems().empty() ? AfterTargetPosition : BeforeTargetPosition);
+            });
 }
 
 
@@ -1646,6 +1834,11 @@ void MprProgramViewBase::Impl::copySelectedStatements(bool doCut)
         auto statementItem = static_cast<StatementItem*>(item);
         if(statementItem->statement() == dummyStatement){
             continue;
+        }
+        if(auto program = statementItem->getProgram()){
+            if(!program->isEditingEnabled()){
+                continue;
+            }
         }
         bool isTop = true;
         auto parent = item->parent();
@@ -1689,15 +1882,15 @@ void MprProgramViewBase::Impl::pasteStatements()
     MprStructuredStatement* parentStatement = nullptr;
     MprProgram::iterator pos;
     
-    auto selected = selectedItems();
-    if(!selected.empty()){
-        pastePositionItem = static_cast<StatementItem*>(selected.back());
-    }
-    if(!pastePositionItem){
+    pastePositionItem = dynamic_cast<StatementItem*>(currentItem());
+    if(selectedItems().empty()){
         pos = program->end();
     } else {
         parentStatement = pastePositionItem->getParentStatement();
         if(parentStatement){
+            if (!parentStatement->lowerLevelProgram()->isEditingEnabled()) {
+                return;
+            }
             program = parentStatement->lowerLevelProgram();
         }
         auto index = indexFromItem(pastePositionItem);
@@ -1713,6 +1906,132 @@ void MprProgramViewBase::Impl::pasteStatements()
         pos = program->insert(pos, pasted);
         currentProgramItem->resolveStatementReferences(pasted);
         ++pos;
+    }
+}
+
+
+/**
+   \note The following code resolves a problem where item vanishes if it is accidentally
+   inserted to parent which has option of Qt::ItemNeverHasChildren.
+   Qt::ItemNeverHasChildren is used to avoid software crash as unwanted drop event happen.
+*/
+void MprProgramViewBase::Impl::dropEvent(QDropEvent *event)
+{
+    bool insertAbove = false;
+    bool insertBelow = false;
+    auto destinationItem = dynamic_cast<StatementItem*>(itemAt(event->pos()));
+    if(!destinationItem){
+        destinationItem = dynamic_cast<StatementItem*>(topLevelItem(topLevelItemCount() - 1));
+        insertBelow = true;
+    }
+
+    if(event->pos().y() < 4){
+        insertAbove = true;
+
+    } else if(itemAt(event->pos()) == nullptr){
+        insertBelow = true;
+
+    } else {
+        auto checkPos = QPoint(event->pos().x(), event->pos().y() - 4);
+        if(itemAt(event->pos()) != itemAt(checkPos)){
+            insertAbove = true;
+        }
+        checkPos = QPoint(event->pos().x(), event->pos().y() + 4);
+        if(itemAt(event->pos()) != itemAt(checkPos)){
+            insertBelow = true;
+        }
+    }
+
+    auto destinationStructure = destinationItem->statement<MprStructuredStatement>();
+    if(destinationStructure){
+        if(!destinationStructure->lowerLevelProgram()->isEditingEnabled() && !(insertAbove || insertBelow)){
+            return;
+        }
+    }
+    if(auto parentStatement = destinationItem->getParentStatement()){
+        if(!parentStatement->lowerLevelProgram()->isEditingEnabled()){
+            return;
+        }
+    }
+
+    if(destinationStructure && !(insertAbove || insertBelow)){
+        destinationItem = dynamic_cast<StatementItem*>(destinationItem->child(destinationItem->childCount() - 1));
+    }
+    auto destinationParent = destinationItem->parent();
+    bool isParentEnabled = true;
+    if(auto parentStruct = destinationItem->getParentStatement()){
+        isParentEnabled = parentStruct->isEnabled();
+    }
+    auto selected = selectedItems();
+    for(auto target : selected){
+        auto targetItem = dynamic_cast<StatementItem*>(target);
+        if(auto parentStatement = targetItem->getParentStatement()){
+            if(!parentStatement->lowerLevelProgram()->isEditingEnabled()){
+                continue;
+            }
+        }
+        if(targetItem->statement<MprDummyStatement>()){
+            continue;
+        }
+        auto ancestor = targetItem->parent();
+        bool found = false;
+        while(ancestor){
+            if(selected.contains(ancestor)){
+                found = true;
+                break;
+            }
+            ancestor = ancestor->parent();
+        }
+        if(found){
+            continue;
+        }
+
+        // take target item from parent
+        std::function<void()> rollbackFunction;
+        auto parent = targetItem->parent();
+        if(parent){
+            int index = parent->indexOfChild(targetItem);
+            parent->takeChild(index);
+            rollbackFunction = [&]() { parent->insertChild(index, targetItem); };
+        } else {
+            int index = indexOfTopLevelItem(targetItem);
+            takeTopLevelItem(index);
+            rollbackFunction = [&]() { insertTopLevelItem(index, targetItem); };
+        }
+
+        // insert target to the new position
+        if(destinationParent){
+            int index = -1;
+            if(insertAbove){
+                index = destinationParent->indexOfChild(destinationItem);
+            } else {
+                index = destinationParent->indexOfChild(destinationItem) + 1;
+            }
+            if(index < 0){ // this is because Qt bug
+                rollbackFunction();
+            } else {
+                destinationParent->insertChild(index, targetItem);
+                destinationItem = targetItem;
+                insertAbove = false;
+                if(!isParentEnabled){
+                    setStatementEnabled(targetItem->statement(), false);
+                }
+            }
+        } else {
+            int index = -1;
+            if(insertAbove){
+                index = indexOfTopLevelItem(destinationItem);
+            } else {
+                index = indexOfTopLevelItem(destinationItem) + 1;
+            }
+            if(index < 0){ // this is because Qt bug
+                rollbackFunction();
+            } else {
+                insertTopLevelItem(index, targetItem);
+                destinationItem = targetItem;
+                insertAbove = false;
+            }
+        }
     }
 }
 
