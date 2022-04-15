@@ -45,7 +45,7 @@ public:
 
     virtual bool updateTagTraceProgram() = 0;
     bool decomposeIntoTagTraceStatements();
-    
+
     virtual bool isExpandedByDefault() const override;
     virtual bool read(MprProgram* program, const Mapping& archive) override;
     virtual bool write(Mapping& archive) const override;
@@ -56,7 +56,6 @@ protected:
     virtual void onTagAdded(int index);
     virtual void onTagRemoved(int index, bool isChangingOrder);
     virtual void onTagPositionUpdated(int index);
-    virtual void onTagGroupOriginOffsetChanged();
 
 private:
     std::string tagGroupName_;

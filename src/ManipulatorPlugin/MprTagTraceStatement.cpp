@@ -139,12 +139,6 @@ void MprTagTraceStatement::onTagPositionUpdated(int /* index */)
 }
 
 
-void MprTagTraceStatement::onTagGroupOriginOffsetChanged()
-{
-    updateTagTraceProgram();
-}
-
-
 bool MprTagTraceStatement::decomposeIntoTagTraceStatements()
 {
     if(!tagGroup_){
@@ -189,7 +183,6 @@ bool MprTagTraceStatement::decomposeIntoTagTraceStatements()
 
     return true;
 }
-
 
 
 bool MprTagTraceStatement::read(MprProgram* program, const Mapping& archive)
