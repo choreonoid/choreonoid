@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-11 17:57+0900\n"
+"POT-Creation-Date: 2022-04-16 03:58+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -95,11 +95,20 @@ msgstr "文字列変数総数"
 msgid "The joint displacement of {0} is out of its movable range."
 msgstr "{0}の関節変位が可動範囲外です．"
 
-msgid "The \"id\" key is not found in a manipulator position node."
-msgstr "マニピュレータ位置ノードの \"id\" キーが見つかりません."
-
 msgid "The current manipulator position is not valid: {0}."
 msgstr "現在のマニピュレータの姿勢は有効ではありません：{0}."
+
+msgid "Position {0} cannot be fetched due to the position part set mismatch."
+msgstr ""
+
+msgid "Could not fetch all elements of position {0}."
+msgstr ""
+
+msgid "Recursive CompositePosition structure is not supported"
+msgstr ""
+
+msgid "{0} is not supported"
+msgstr "{0}はサポートされていません"
 
 msgid "{0} cannot be loaded as a manipulator position set"
 msgstr "{0}はマニピュレータ位置集として読み込むことができません"
@@ -107,8 +116,8 @@ msgstr "{0}はマニピュレータ位置集として読み込むことができ
 msgid "Format version {0} is not supported."
 msgstr "フォーマットバージョン{0}はサポートされていません．"
 
-msgid "{0} is not supported"
-msgstr "{0}はサポートされていません"
+msgid "Invalid position ID"
+msgstr "無効なポジションID"
 
 msgid "Note"
 msgstr "注釈"
@@ -190,6 +199,12 @@ msgstr "リナンバリング"
 
 msgid "Program item is not specified."
 msgstr "プログラムアイテムが指定されていません．"
+
+msgid "Enable"
+msgstr "有効化"
+
+msgid "Disable"
+msgstr "無効化"
 
 msgid "Cut"
 msgstr "切り取り"
