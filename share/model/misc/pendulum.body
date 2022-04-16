@@ -1,0 +1,64 @@
+format: ChoreonoidBody
+format_version: 1.0
+angle_unit: degree
+name: Pendulum
+root_link: BASE
+
+links:
+  -
+    name: BASE
+    joint_type: fixed
+    center_of_mass: [ 0, 0, 0.1 ]
+    mass: 10.0
+    inertia: [
+      0.06667, 0,       0,
+      0,       0.06667, 0,
+      0,       0,       0.06667
+    ]
+    elements:
+      -
+        type: Visual
+        elements:
+          -
+            type: Shape
+            translation: [ 0, 0, 0.1 ]
+            geometry: { type: Box, size: [ 0.2, 0.2, 0.2 ] }
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0, 0, 0.1 ]
+            geometry: { type: Box, size: [ 0.2, 0.2, 0.2] }
+  -
+    name: ARM
+    parent: BASE
+    translation: [ 0.125, 0, 0.1 ]
+    joint_type: revolute
+    joint_id: 0
+    joint_axis: [ 1, 0, 0 ]
+    max_joint_velocity: 42.0
+    max_joint_effort: 3.0
+    center_of_mass: [ 0, 0, 0.5 ]
+    mass: 1.0
+    inertia: [
+      0.0835417, 0,         0,
+      0,         0.0835417, 0,
+      0,         0,         0.000416667
+    ]
+    rotor_inertia: 0.2
+    elements:
+      -
+        type: Visual
+        elements:
+          -
+            type: Shape
+            translation: [ 0, 0, 0.5 ]
+            geometry: { type: Box, size: [ 0.05, 0.05, 1.0 ] }
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0, 0, 0.5 ]
+            geometry: { type: Box, size: [ 0.05, 0.05, 1.0 ] }
