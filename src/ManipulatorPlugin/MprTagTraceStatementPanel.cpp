@@ -37,7 +37,7 @@ class MprTagTraceStatementPanel::Impl
 {
 public:
     MprTagTraceStatementPanel* self;
-    bool isEditingEnabled;
+    bool isEditable;
     QGridLayout* grid;
     ComboBox tagGroupCombo;
     QLabel tagGroupLabel;
@@ -68,7 +68,7 @@ MprTagTraceStatementPanel::MprTagTraceStatementPanel()
 MprTagTraceStatementPanel::Impl::Impl(MprTagTraceStatementPanel* self)
     : self(self)
 {
-    isEditingEnabled = true;
+    isEditable = true;
 }
 
 
@@ -152,9 +152,9 @@ MprTagTraceStatementPanel::~MprTagTraceStatementPanel()
 }
 
 
-void MprTagTraceStatementPanel::setEditingEnabled(bool on)
+void MprTagTraceStatementPanel::setEditable(bool on)
 {
-    impl->isEditingEnabled = on;
+    impl->isEditable = on;
     impl->tagGroupCombo.setVisible(on);
     impl->tagGroupLabel.setVisible(!on);
     impl->touchupButton.setEnabled(on);
@@ -236,7 +236,7 @@ void MprTagTraceStatementPanel::Impl::updateTagGroupCombo()
 
     tagGroupCombo.blockSignals(false);
 
-    if(!isEditingEnabled){
+    if(!isEditable){
         tagGroupLabel.setText(tagGroupCombo.currentText());
     }
 }

@@ -396,17 +396,17 @@ GeneralId MprVariableList::createNextId(int prevId)
 }
 
 
-bool MprVariableList::read(const Mapping& archive)
+bool MprVariableList::read(const Mapping* archive)
 {
-    auto& typeNode = archive.get("type");
+    auto& typeNode = archive->get("type");
     if(typeNode.toString() != "ManipulatorVariableList"){
         typeNode.throwException(
             format(_("{0} cannot be loaded as a manipulator variable list"), typeNode.toString()));
     }
         
-    auto versionNode = archive.find("format_version");
-    if(!*versionNode){
-        versionNode = archive.find("formatVersion"); // old
+    auto versionNode = archive->find("format_version");
+    if(!versionNode->isValid()){
+        versionNode = archive->find("formatVersion"); // old
     }
     auto version = versionNode->toDouble();
     if(version != 1.0){
@@ -414,13 +414,12 @@ bool MprVariableList::read(const Mapping& archive)
     }
 
     clear();
-
     
-    auto& vartypeNode = *archive.find("variable_type");
-    if(!vartypeNode){
+    auto vartypeNode = archive->find("variable_type");
+    if(!vartypeNode->isValid()){
         variableType_ = GeneralVariable;
     } else {
-        auto vartype = vartypeNode.toString();
+        auto vartype = vartypeNode->toString();
         if(vartype == "general"){
             variableType_ = GeneralVariable;
         } else if(vartype == "integer"){
@@ -432,22 +431,22 @@ bool MprVariableList::read(const Mapping& archive)
         } else if(vartype == "string"){
             variableType_ = StringVariable;
         } else {
-            vartypeNode.throwException(_("Unknown variable type"));
+            vartypeNode->throwException(_("Unknown variable type"));
         }
     }
 
-    archive.read("is_value_type_unchangeable", isGeneralVariableValueTypeUnchangeable_);
-    archive.read("is_number_id_enabled", isNumberIdEnabled_);
-    archive.read("is_string_id_enabled", isStringIdEnabled_);
+    archive->read("is_value_type_unchangeable", isGeneralVariableValueTypeUnchangeable_);
+    archive->read("is_number_id_enabled", isNumberIdEnabled_);
+    archive->read("is_string_id_enabled", isStringIdEnabled_);
 
-    auto& variableNodes = *archive.findListing("variables");
-    if(variableNodes.isValid()){
-        for(int i=0; i < variableNodes.size(); ++i){
-            auto& node = *variableNodes[i].toMapping();
+    auto variableNodes = archive->findListing("variables");
+    if(variableNodes->isValid()){
+        for(int i=0; i < variableNodes->size(); ++i){
+            auto node = variableNodes->at(i)->toMapping();
             MprVariablePtr variable = new MprVariable;
             if(variable->read(node)){
                 if(!isStringIdEnabled_ && variable->id().isString()){
-                    node.throwException(
+                    node->throwException(
                         format(_("String \"{0}\" is specified as ID, but "
                                  "the string id type is not supported in this system"),
                                variable->id().toString()));
@@ -461,10 +460,10 @@ bool MprVariableList::read(const Mapping& archive)
 }
 
 
-bool MprVariableList::write(Mapping& archive) const
+bool MprVariableList::write(Mapping* archive) const
 {
-    archive.write("type", "ManipulatorVariableList");
-    archive.write("format_version", 1.0);
+    archive->write("type", "ManipulatorVariableList");
+    archive->write("format_version", 1.0);
 
     const char* typeSymbol;
     switch(variableType_){
@@ -476,24 +475,24 @@ bool MprVariableList::write(Mapping& archive) const
     default:
         return false;
     }
-    archive.write("variable_type", typeSymbol);
+    archive->write("variable_type", typeSymbol);
 
     if(variableType_ == GeneralVariable && isGeneralVariableValueTypeUnchangeable_){
-        archive.write("is_value_type_unchangeable", true);
+        archive->write("is_value_type_unchangeable", true);
     }
     if(isNumberIdEnabled_){
-        archive.write("is_number_id_enabled", true);
+        archive->write("is_number_id_enabled", true);
     }
     if(isStringIdEnabled_){
-        archive.write("is_string_id_enabled", true);
+        archive->write("is_string_id_enabled", true);
     }
 
     if(!impl->variables.empty()){
-        Listing& variableNodes = *archive.createListing("variables");
+        auto variableNodes = archive->createListing("variables");
         for(auto& variable : impl->variables){
             MappingPtr node = new Mapping;
-            if(variable->write(*node)){
-                variableNodes.append(node);
+            if(variable->write(node)){
+                variableNodes->append(node);
             }
         }
     }

@@ -136,19 +136,19 @@ void MprPosition::notifyUpdate(int flags)
 }
 
 
-bool MprPosition::read(const Mapping& archive)
+bool MprPosition::read(const Mapping* archive)
 {
     id_.read(archive, "id");
-    archive.read("note", note_);
+    archive->read("note", note_);
     return true;
 }
 
 
-bool MprPosition::write(Mapping& archive) const
+bool MprPosition::write(Mapping* archive) const
 {
     id_.write(archive, "id");
     if(!note_.empty()){
-        archive.write("note", note_, DOUBLE_QUOTED);
+        archive->write("note", note_, DOUBLE_QUOTED);
     }
     return true;
 }
@@ -262,7 +262,7 @@ bool MprIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
 }
     
 
-bool MprIkPosition::read(const Mapping& archive)
+bool MprIkPosition::read(const Mapping* archive)
 {
     if(!MprPosition::read(archive)){
         return false;
@@ -291,20 +291,20 @@ bool MprIkPosition::read(const Mapping& archive)
     }
 
     configuration_ = 0;
-    if(!archive.read("config_id", configuration_)){
+    if(!archive->read("config_id", configuration_)){
         // old
-        if(!archive.read("config_index", configuration_)){
-            archive.read("configIndex", configuration_); // old
+        if(!archive->read("config_index", configuration_)){
+            archive->read("configIndex", configuration_); // old
         }
     }
 
     /*
-    auto& phaseNodes = *archive.findListing("phases");
-    if(phaseNodes.isValid()){
+    auto phaseNodes = archive->findListing("phases");
+    if(phaseNodes->isValid()){
         int i = 0;
-        int n = std::min(phaseNodes.size(), MaxNumJoints);
+        int n = std::min(phaseNodes->size(), MaxNumJoints);
         while(i < n){
-            phase_[i] = phaseNodes[i].toInt();
+            phase_[i] = phaseNodes->at(i)->toInt();
             ++i;
         }
         while(i < MaxNumJoints){
@@ -317,27 +317,27 @@ bool MprIkPosition::read(const Mapping& archive)
 }
 
 
-bool MprIkPosition::write(Mapping& archive) const
+bool MprIkPosition::write(Mapping* archive) const
 {
-    archive.write("type", "IkPosition");
+    archive->write("type", "IkPosition");
     
     if(!MprPosition::write(archive)){
         return false;
     }
     
-    archive.setFloatingNumberFormat("%.10g");
+    archive->setFloatingNumberFormat("%.10g");
     cnoid::write(archive, "translation", Vector3(T.translation()));
     cnoid::write(archive, "rotation", degree(rpy()));
 
     baseFrameId_.write(archive, "base_frame");
     offsetFrameId_.write(archive, "offset_frame");
 
-    archive.write("config_id", configuration_);
+    archive->write("config_id", configuration_);
 
     /*
-    auto& phaseNodes = *archive.createFlowStyleListing("phases");
+    auto phaseNodes = archive->createFlowStyleListing("phases");
     for(auto& phase : phase_){
-        phaseNodes.append(phase);
+        phaseNodes->append(phase);
     }
     */
     
@@ -414,18 +414,18 @@ bool MprFkPosition::apply(LinkKinematicsKit* kinematicsKit) const
 }
 
 
-bool MprFkPosition::read(const Mapping& archive)
+bool MprFkPosition::read(const Mapping* archive)
 {
     if(!MprPosition::read(archive)){
         return false;
     }
 
     prismaticJointFlags_.reset();
-    auto plist = archive.findListing("prismatic_joints");
-    if(!plist){
-        plist = archive.findListing("prismaticJoints"); // old
+    auto plist = archive->findListing("prismatic_joints");
+    if(!plist->isValid()){
+        plist = archive->findListing("prismaticJoints"); // old
     }
-    if(plist){
+    if(plist->isValid()){
         for(int i=0; i < plist->size(); ++i){
             int index = plist->at(i)->toInt();
             if(index < MaxNumJoints){
@@ -435,11 +435,11 @@ bool MprFkPosition::read(const Mapping& archive)
     }
 
     
-    auto nodes = archive.findListing("joint_displacements");
-    if(!*nodes){
-        nodes = archive.findListing("jointDisplacements"); // old
+    auto nodes = archive->findListing("joint_displacements");
+    if(!nodes->isValid()){
+        nodes = archive->findListing("jointDisplacements"); // old
     }
-    if(!*nodes){
+    if(!nodes->isValid()){
         numJoints_ = 0;
     } else {
         numJoints_ = std::min(nodes->size(), MaxNumJoints);
@@ -461,15 +461,15 @@ bool MprFkPosition::read(const Mapping& archive)
 }
 
 
-bool MprFkPosition::write(Mapping& archive) const
+bool MprFkPosition::write(Mapping* archive) const
 {
-    archive.write("type", "FkPosition");
+    archive->write("type", "FkPosition");
     
     MprPosition::write(archive);
 
-    archive.setFloatingNumberFormat("%.9g");
+    archive->setFloatingNumberFormat("%.9g");
 
-    auto& qlist = *archive.createFlowStyleListing("joint_displacements");
+    auto qlist = archive->createFlowStyleListing("joint_displacements");
     ListingPtr plist = new Listing;
 
     for(int i=0; i < numJoints_; ++i){
@@ -479,12 +479,12 @@ bool MprFkPosition::write(Mapping& archive) const
         } else {
             q = degree(q);
         }
-        qlist.append(q);
+        qlist->append(q);
     }
 
     if(!plist->empty()){
         plist->setFlowStyle(true);
-        archive.insert("prismatic_joints", plist);
+        archive->insert("prismatic_joints", plist);
     }
     
     return true;
@@ -650,7 +650,7 @@ bool MprCompositePosition::apply(LinkKinematicsKit* kinematicsKit) const
 }
 
 
-bool MprCompositePosition::read(const Mapping& archive)
+bool MprCompositePosition::read(const Mapping* archive)
 {
     if(!MprPosition::read(archive)){
         return false;
@@ -658,7 +658,7 @@ bool MprCompositePosition::read(const Mapping& archive)
 
     mainPartId_.read(archive, "main_part");
     
-    auto positionList = archive.findListing("positions");
+    auto positionList = archive->findListing("positions");
     if(!positionList->isValid()){
         return false;
     }
@@ -666,10 +666,10 @@ bool MprCompositePosition::read(const Mapping& archive)
 
     int n = positionList->size();
     for(int i=0; i < n; ++i){
-        auto& node = *positionList->at(i)->toMapping();
+        auto node = positionList->at(i)->toMapping();
         GeneralId partId;
         partId.readEx(node, "part");
-        auto& typeNode = node["type"];
+        auto& typeNode = node->get("type");
         auto type = typeNode.toString();
         MprPositionPtr position;
         if(type == "IkPosition"){
@@ -690,21 +690,21 @@ bool MprCompositePosition::read(const Mapping& archive)
 }
 
 
-bool MprCompositePosition::write(Mapping& archive) const
+bool MprCompositePosition::write(Mapping* archive) const
 {
-    archive.write("type", "CompositePosition");
+    archive->write("type", "CompositePosition");
 
     if(!MprPosition::write(archive)){
         return false;
     }
 
-    auto positionList = archive.createListing("positions");
+    auto positionList = archive->createListing("positions");
     for(auto& kv : positionMap_){
         auto positionArchive = positionList->newMapping();
         auto& partId = kv.first;
         positionArchive->write("part", partId.label());
         auto& position = kv.second;
-        position->write(*positionArchive);
+        position->write(positionArchive);
     }
 
     return true;

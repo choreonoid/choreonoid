@@ -20,7 +20,7 @@ public:
         std::function<void(const std::string& caption)> setCaption);
     void deactivate();
 
-    virtual void setEditingEnabled(bool on);
+    virtual void setEditable(bool on);
     virtual void onActivated() = 0;
     virtual void onStatementUpdated();
     virtual void onAdditionalStatementsUpdated(const std::vector<MprStatementPtr>& additionalStatements);

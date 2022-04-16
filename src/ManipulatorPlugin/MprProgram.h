@@ -81,14 +81,14 @@ public:
 
     void renumberPositionIds();
 
-    bool isEditingEnabled() const { return isEditingEnabled_; }
-    void setEditingEnabled(bool on) { isEditingEnabled_ = on; }
+    bool isEditable() const { return isEditable_; }
+    void setEditable(bool on) { isEditable_ = on; }
 
     bool load(const std::string& filename, std::ostream& os);
     bool save(const std::string& filename);
 
-    bool read(const Mapping& archive);
-    bool write(Mapping& archive) const;
+    bool read(const Mapping* archive);
+    bool write(Mapping* archive) const;
 
 protected:
     MprProgram(const MprProgram& org, CloneMap* cloneMap = nullptr);
@@ -97,7 +97,7 @@ protected:
 private:
     StatementContainer statements_;
     bool hasLocalPositionList_;
-    bool isEditingEnabled_;
+    bool isEditable_;
 
     class Impl;
     Impl* impl;

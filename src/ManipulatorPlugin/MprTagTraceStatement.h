@@ -47,8 +47,8 @@ public:
     bool decomposeIntoTagTraceStatements();
 
     virtual bool isExpandedByDefault() const override;
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(MprProgram* program, const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
 protected:
     MprTagTraceStatement(const MprTagTraceStatement& org, CloneMap* cloneMap);

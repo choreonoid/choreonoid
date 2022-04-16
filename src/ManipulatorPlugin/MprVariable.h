@@ -62,8 +62,8 @@ public:
 
     MprVariableList* ownerVariableList() const;
 
-    bool read(const Mapping& archive);
-    bool write(Mapping& archive) const;
+    bool read(const Mapping* archive);
+    bool write(Mapping* archive) const;
 
     enum UpdateFlag {
         IdUpdate = 1 << 0,

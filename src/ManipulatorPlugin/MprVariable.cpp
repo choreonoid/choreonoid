@@ -287,16 +287,16 @@ void MprVariable::notifyUpdate(int flags)
 }
 
 
-bool MprVariable::read(const Mapping& archive)
+bool MprVariable::read(const Mapping* archive)
 {
     if(id_.read(archive, "id")){
 
         string type;
-        if(!archive.read("value_type", type)){
-            archive.read("valueType", type); // old
+        if(!archive->read("value_type", type)){
+            archive->read("valueType", type); // old
         }
         if(!type.empty()){
-            auto& node = archive["value"];
+            auto& node = archive->get("value");
             if(type == "int"){
                 value_ = node.toInt();
             } else if(type == "double"){
@@ -306,10 +306,10 @@ bool MprVariable::read(const Mapping& archive)
             } else if(type == "string"){
                 value_ = node.toString();
             } else {
-                archive.throwException(_("Invalid value type"));
+                archive->throwException(_("Invalid value type"));
             }
 
-            archive.read("note", note_);
+            archive->read("note", note_);
             
             return true;
         }
@@ -318,32 +318,32 @@ bool MprVariable::read(const Mapping& archive)
 }
 
 
-bool MprVariable::write(Mapping& archive) const
+bool MprVariable::write(Mapping* archive) const
 {
     if(id_.write(archive, "id")){
         int valueType = stdx::get_variant_index(value_);
         switch(valueType){
         case Int:
-            archive.write("value_type", "int");
-            archive.write("value", stdx::get<int>(value_));
+            archive->write("value_type", "int");
+            archive->write("value", stdx::get<int>(value_));
             break;
         case Double:
-            archive.write("value_type", "double");
-            archive.write("value", stdx::get<double>(value_));
+            archive->write("value_type", "double");
+            archive->write("value", stdx::get<double>(value_));
             break;
         case Bool:
-            archive.write("value_type", "bool");
-            archive.write("value", stdx::get<bool>(value_));
+            archive->write("value_type", "bool");
+            archive->write("value", stdx::get<bool>(value_));
             break;
         case String:
-            archive.write("value_type", "string");
-            archive.write("value", stdx::get<string>(value_), DOUBLE_QUOTED);
+            archive->write("value_type", "string");
+            archive->write("value", stdx::get<string>(value_), DOUBLE_QUOTED);
             break;
         default:
             break;
         }
         if(!note_.empty()){
-            archive.write("note", note_, DOUBLE_QUOTED);
+            archive->write("note", note_, DOUBLE_QUOTED);
         }
         return true;
     }

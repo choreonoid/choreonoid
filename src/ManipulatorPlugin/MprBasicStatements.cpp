@@ -93,18 +93,18 @@ std::string MprCommentStatement::label(int index) const
 }
 
 
-bool MprCommentStatement::read(MprProgram* program, const Mapping& archive)
+bool MprCommentStatement::read(MprProgram* program, const Mapping* archive)
 {
     MprStatement::read(program, archive);
-    archive.read("comment", comment_);
+    archive->read("comment", comment_);
     return true;
 }
     
 
-bool MprCommentStatement::write(Mapping& archive) const
+bool MprCommentStatement::write(Mapping* archive) const
 {
     MprStatement::write(archive);
-    archive.write("comment", comment_);
+    archive->write("comment", comment_);
     return true;
 }
 
@@ -144,22 +144,22 @@ std::string MprGroupStatement::label(int index) const
 }
 
 
-bool MprGroupStatement::read(MprProgram* program, const Mapping& archive)
+bool MprGroupStatement::read(MprProgram* program, const Mapping* archive)
 {
     if(!MprStructuredStatement::read(program, archive)){
         return false;
     }
-    archive.read("group_name", groupName_);
+    archive->read("group_name", groupName_);
     return true;
 }
 
 
-bool MprGroupStatement::write(Mapping& archive) const
+bool MprGroupStatement::write(Mapping* archive) const
 {
     if(!MprStructuredStatement::write(archive)){
         return false;
     }
-    archive.write("group_name", groupName_, DOUBLE_QUOTED);
+    archive->write("group_name", groupName_, DOUBLE_QUOTED);
     return true;
 }
 
@@ -178,22 +178,22 @@ MprConditionStatement::MprConditionStatement(const MprConditionStatement& org, C
 }
 
 
-bool MprConditionStatement::read(MprProgram* program, const Mapping& archive)
+bool MprConditionStatement::read(MprProgram* program, const Mapping* archive)
 {
     if(!MprStructuredStatement::read(program, archive)){
         return false;
     }
-    archive.read("condition", condition_);
+    archive->read("condition", condition_);
     return true;
 }
 
 
-bool MprConditionStatement::write(Mapping& archive) const
+bool MprConditionStatement::write(Mapping* archive) const
 {
     if(!MprStructuredStatement::write(archive)){
         return false;
     }
-    archive.write("condition", condition_, DOUBLE_QUOTED);
+    archive->write("condition", condition_, DOUBLE_QUOTED);
     return true;
 }
 
@@ -231,13 +231,13 @@ std::string MprIfStatement::label(int index) const
 }
 
 
-bool MprIfStatement::read(MprProgram* program, const Mapping& archive)
+bool MprIfStatement::read(MprProgram* program, const Mapping* archive)
 {
     return MprConditionStatement::read(program, archive);
 }
 
 
-bool MprIfStatement::write(Mapping& archive) const
+bool MprIfStatement::write(Mapping* archive) const
 {
     return MprConditionStatement::write(archive);
 }
@@ -271,13 +271,13 @@ std::string MprElseStatement::label(int index) const
 }
 
 
-bool MprElseStatement::read(MprProgram* program, const Mapping& archive)
+bool MprElseStatement::read(MprProgram* program, const Mapping* archive)
 {
     return MprStructuredStatement::read(program, archive);
 }
 
 
-bool MprElseStatement::write(Mapping& archive) const
+bool MprElseStatement::write(Mapping* archive) const
 {
     return MprStructuredStatement::write(archive);
 }
@@ -316,13 +316,13 @@ std::string MprWhileStatement::label(int index) const
 }
 
 
-bool MprWhileStatement::read(MprProgram* program, const Mapping& archive)
+bool MprWhileStatement::read(MprProgram* program, const Mapping* archive)
 {
     return MprConditionStatement::read(program, archive);
 }
 
 
-bool MprWhileStatement::write(Mapping& archive) const
+bool MprWhileStatement::write(Mapping* archive) const
 {
     return MprConditionStatement::write(archive);
 }
@@ -362,18 +362,18 @@ std::string MprCallStatement::label(int index) const
 }
 
 
-bool MprCallStatement::read(MprProgram* program, const Mapping& archive)
+bool MprCallStatement::read(MprProgram* program, const Mapping* archive)
 {
     MprStatement::read(program, archive);
-    archive.read("program", programName_);
+    archive->read("program", programName_);
     return true;
 }
 
 
-bool MprCallStatement::write(Mapping& archive) const
+bool MprCallStatement::write(Mapping* archive) const
 {
     MprStatement::write(archive);
-    archive.write("program", programName_, DOUBLE_QUOTED);
+    archive->write("program", programName_, DOUBLE_QUOTED);
     return true;
 }
 
@@ -421,29 +421,29 @@ std::string MprAssignStatement::label(int index) const
 }
 
 
-bool MprAssignStatement::read(MprProgram* program, const Mapping& archive)
+bool MprAssignStatement::read(MprProgram* program, const Mapping* archive)
 {
     MprStatement::read(program, archive);
     
-    if(archive.read("variable", variableExpression_)){
+    if(archive->read("variable", variableExpression_)){
         std::smatch match;
         if(regex_match(variableExpression_, match, regex("^[+-]?\\d+$"))){
             variableExpression_ = format("var[{}]", variableExpression_);
         }
     }
-    if(!archive.read("value", valueExpression_)){
-        archive.read("expression", valueExpression_); // for backward compatibility
+    if(!archive->read("value", valueExpression_)){
+        archive->read("expression", valueExpression_); // for backward compatibility
     }
 
     return true;
 }
 
 
-bool MprAssignStatement::write(Mapping& archive) const
+bool MprAssignStatement::write(Mapping* archive) const
 {
     MprStatement::write(archive);
-    archive.write("variable", variableExpression_);
-    archive.write("value", valueExpression_, SINGLE_QUOTED);
+    archive->write("variable", variableExpression_);
+    archive->write("value", valueExpression_, SINGLE_QUOTED);
     return true;
 }
 
@@ -482,24 +482,24 @@ std::string MprSignalStatement::label(int index) const
 }
         
 
-bool MprSignalStatement::read(MprProgram* program, const Mapping& archive)
+bool MprSignalStatement::read(MprProgram* program, const Mapping* archive)
 {
     MprStatement::read(program, archive);
     
-    if(!archive.read("signal_index", signalIndex_)){
-        archive.read("signalIndex", signalIndex_); // Old
+    if(!archive->read("signal_index", signalIndex_)){
+        archive->read("signalIndex", signalIndex_); // Old
     }
-    archive.read("on", on_);
+    archive->read("on", on_);
 
     return true;
 }
 
 
-bool MprSignalStatement::write(Mapping& archive) const
+bool MprSignalStatement::write(Mapping* archive) const
 {
     MprStatement::write(archive);
-    archive.write("signal_index", signalIndex_);
-    archive.write("on", on_);
+    archive->write("signal_index", signalIndex_);
+    archive->write("on", on_);
     return true;
 }
 
@@ -550,15 +550,15 @@ std::string MprWaitStatement::label(int index) const
 }
     
 
-bool MprWaitStatement::read(MprProgram* program, const Mapping& archive)
+bool MprWaitStatement::read(MprProgram* program, const Mapping* archive)
 {
     MprStatement::read(program, archive);
     
-    auto& typeNode = archive["condition_type"];
+    auto& typeNode = archive->get("condition_type");
     string type = typeNode.toString();
     if(type == "signal_input"){
-        signalIndex_ = archive["signal_index"].toInt();
-        signalStateCondition_ = archive["condition"].toBool();
+        signalIndex_ = archive->get("signal_index").toInt();
+        signalStateCondition_ = archive->get("condition").toBool();
     } else {
         typeNode.throwException(_("Invalid condition type"));
     }
@@ -567,14 +567,14 @@ bool MprWaitStatement::read(MprProgram* program, const Mapping& archive)
 }
     
     
-bool MprWaitStatement::write(Mapping& archive) const
+bool MprWaitStatement::write(Mapping* archive) const
 {
     MprStatement::write(archive);
     
     if(conditionType_ == SignalInput){
-        archive.write("condition_type", "signal_input");
-        archive.write("signal_index", signalIndex_);
-        archive.write("condition", signalStateCondition_);
+        archive->write("condition_type", "signal_input");
+        archive->write("signal_index", signalIndex_);
+        archive->write("condition", signalStateCondition_);
         return true;
     }
     
@@ -612,18 +612,18 @@ std::string MprDelayStatement::label(int index) const
 }
 
 
-bool MprDelayStatement::read(MprProgram* program, const Mapping& archive)
+bool MprDelayStatement::read(MprProgram* program, const Mapping* archive)
 {
     MprStatement::read(program, archive);
-    archive.read("time", time_);
+    archive->read("time", time_);
     return true;
 }
 
 
-bool MprDelayStatement::write(Mapping& archive) const
+bool MprDelayStatement::write(Mapping* archive) const
 {
     MprStatement::write(archive);
-    archive.write("time", time_);
+    archive->write("time", time_);
     return true;
 }
 

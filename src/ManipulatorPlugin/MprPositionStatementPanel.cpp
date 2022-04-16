@@ -200,7 +200,7 @@ void MprPositionStatementPanel::Impl::initializeFkPositionPanel()
 }
 
 
-void MprPositionStatementPanel::setEditingEnabled(bool on)
+void MprPositionStatementPanel::setEditable(bool on)
 {
     impl->touchupButton.setEnabled(on);
 }

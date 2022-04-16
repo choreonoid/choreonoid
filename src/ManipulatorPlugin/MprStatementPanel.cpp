@@ -41,7 +41,7 @@ MprStatementPanel::Impl::Impl(MprStatementPanel* self)
 }
 
 
-void MprStatementPanel::setEditingEnabled(bool on)
+void MprStatementPanel::setEditable(bool on)
 {
     setEnabled(on);
 }
@@ -63,7 +63,7 @@ void MprStatementPanel::activate
                 }
             });
 
-    setEditingEnabled(statement->holderProgram()->isEditingEnabled());
+    setEditable(statement->holderProgram()->isEditable());
 
     onActivated();
 }

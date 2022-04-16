@@ -17,7 +17,7 @@ public:
     MprPositionStatementPanel();
     ~MprPositionStatementPanel();
 
-    virtual void setEditingEnabled(bool on) override;
+    virtual void setEditable(bool on) override;
     virtual void onStatementUpdated() override;
 
     static void updateCoordinateFrameLabel(

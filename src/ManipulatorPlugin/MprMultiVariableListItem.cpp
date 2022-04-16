@@ -197,7 +197,7 @@ bool MprMultiVariableListItem::store(Archive& archive)
     ListingPtr listListNode = new Listing;
     for(auto& list : impl->variableLists){
         MappingPtr listNode = new Mapping;
-        if(list->write(*listNode)){
+        if(list->write(listNode)){
             listListNode->append(listNode);
         } else {
             stored = false;
@@ -217,12 +217,12 @@ bool MprMultiVariableListItem::restore(const Archive& archive)
 {
     bool restored = true;
     impl->variableLists.clear();
-    auto& listListNode = *archive.findListing("variable_lists");
-    if(listListNode){
-        for(auto& listNode : listListNode){
+    auto listListNode = archive.findListing("variable_lists");
+    if(listListNode->isValid()){
+        for(auto& listNode : *listListNode){
             MprVariableListPtr list = new MprVariableList;
             list->setStartingIdNumber(impl->startingVariableIdNumber);
-            if(list->read(*listNode->toMapping())){
+            if(list->read(listNode->toMapping())){
                 impl->variableLists.push_back(list);
             } else {
                 restored = false;

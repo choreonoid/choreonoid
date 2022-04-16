@@ -42,8 +42,8 @@ public:
     void setEnabled(bool on) { isEnabled_ = on; }
     bool isEnabled() const { return isEnabled_; }
 
-    virtual bool read(MprProgram* program, const Mapping& archive);
-    virtual bool write(Mapping& archive) const;
+    virtual bool read(MprProgram* program, const Mapping* archive);
+    virtual bool write(Mapping* archive) const;
 
 protected:
     MprStatement();

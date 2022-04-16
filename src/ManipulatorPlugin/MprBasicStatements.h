@@ -47,8 +47,8 @@ public:
     void setComment(const std::string& comment){ comment_ = comment; }
     const std::string& comment() const { return comment_; }
     
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(MprProgram* program, const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
 protected:
     MprCommentStatement(const MprCommentStatement& org);
@@ -70,8 +70,8 @@ public:
     const std::string& groupName() const { return groupName_; }
     void setGroupName(const std::string& name) { groupName_ = name; }
     
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(MprProgram* program, const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
 protected:
     MprGroupStatement(const MprGroupStatement& org, CloneMap* cloneMap);
@@ -90,8 +90,8 @@ public:
     const std::string condition() const { return condition_; }
     void setCondition(const std::string& condition) { condition_ = condition; }
 
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(MprProgram* program, const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
 protected:
     MprConditionStatement();
@@ -110,8 +110,8 @@ public:
     MprIfStatement();
     virtual std::string label(int index) const override;
 
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(MprProgram* program, const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
 protected:
     MprIfStatement(const MprIfStatement& org, CloneMap* cloneMap);
@@ -127,8 +127,8 @@ public:
     MprElseStatement();
     virtual std::string label(int index) const override;
 
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(MprProgram* program, const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
 protected:
     MprElseStatement(const MprElseStatement& org, CloneMap* cloneMap);
@@ -144,8 +144,8 @@ public:
     MprWhileStatement();
     virtual std::string label(int index) const override;
 
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(MprProgram* program, const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
 protected:
     MprWhileStatement(const MprWhileStatement& org, CloneMap* cloneMap);
@@ -164,8 +164,8 @@ public:
     const std::string& programName() const { return programName_; }
     void setProgramName(const std::string& name) { programName_ = name; }
     
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(MprProgram* program, const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
 protected:
     MprCallStatement(const MprCallStatement& org);
@@ -209,8 +209,8 @@ public:
     const std::string valueExpression() const { return valueExpression_; }
     void setValueExpression(const std::string& expression) { valueExpression_ = expression; }
 
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(MprProgram* program, const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
     
 protected:
     MprAssignStatement(const MprAssignStatement& org);
@@ -236,8 +236,8 @@ public:
     bool on() const { return on_; }
     void on(bool on){ on_ = on; }
     
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(MprProgram* program, const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
 protected:
     MprSignalStatement(const MprSignalStatement& org);
@@ -268,8 +268,8 @@ public:
     bool signalStateCondition() const { return signalStateCondition_; }
     void setSignalStateCondition(bool state) { signalStateCondition_ = state; }
 
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(MprProgram* program, const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
     
 protected:
    MprWaitStatement(const MprWaitStatement& org);
@@ -294,8 +294,8 @@ public:
     double time() const { return time_; }
     void setTime(double t){ time_ = t; }
 
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(MprProgram* program, const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
 protected:
     MprDelayStatement(const MprDelayStatement& org);

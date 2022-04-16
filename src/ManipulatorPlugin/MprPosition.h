@@ -62,8 +62,8 @@ public:
     const std::string& note() const { return note_; }
     void setNote(const std::string& note) { note_ = note; }
 
-    virtual bool read(const Mapping& archive);
-    virtual bool write(Mapping& archive) const;
+    virtual bool read(const Mapping* archive);
+    virtual bool write(Mapping* archive) const;
 
     enum UpdateFlag {
         IdUpdate = 1 << 0,
@@ -142,8 +142,8 @@ public:
     //! \note This function always specifies BodyFrame as the base frame type.
     virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
-    virtual bool read(const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
@@ -172,8 +172,8 @@ public:
 
     virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
-    virtual bool read(const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
     int numJoints() const { return numJoints_; }
 
@@ -229,8 +229,8 @@ public:
     virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
     
-    virtual bool read(const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;

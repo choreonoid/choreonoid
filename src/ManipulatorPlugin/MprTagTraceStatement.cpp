@@ -23,7 +23,7 @@ MprTagTraceStatement::MprTagTraceStatement()
 {
     auto program = lowerLevelProgram();
     program->setLocalPositionListEnabled(true);
-    program->setEditingEnabled(false);
+    program->setEditable(false);
 }
 
 
@@ -36,7 +36,7 @@ MprTagTraceStatement::MprTagTraceStatement(const MprTagTraceStatement& org, Clon
 {
     auto program = lowerLevelProgram();
     program->setLocalPositionListEnabled(true);
-    program->setEditingEnabled(false);
+    program->setEditable(false);
     
     if(org.tagGroup_ && cloneMap){
         tagGroup_ = cloneMap->getClone(org.tagGroup_);
@@ -185,12 +185,12 @@ bool MprTagTraceStatement::decomposeIntoTagTraceStatements()
 }
 
 
-bool MprTagTraceStatement::read(MprProgram* program, const Mapping& archive)
+bool MprTagTraceStatement::read(MprProgram* program, const Mapping* archive)
 {
     if(MprStructuredStatement::read(program, archive)){
 
         tagGroupName_.clear();
-        archive.read("tag_group_name", tagGroupName_);
+        archive->read("tag_group_name", tagGroupName_);
 
         Vector3 v;
         if(cnoid::read(archive, "translation", v)){
@@ -218,15 +218,15 @@ bool MprTagTraceStatement::read(MprProgram* program, const Mapping& archive)
 }
 
 
-bool MprTagTraceStatement::write(Mapping& archive) const
+bool MprTagTraceStatement::write(Mapping* archive) const
 {
     if(MprStructuredStatement::write(archive)){
         if(tagGroup_){
             if(!tagGroupName_.empty()){
-                archive.write("tag_group_name", tagGroupName_);
+                archive->write("tag_group_name", tagGroupName_);
             }
         }
-        archive.setFloatingNumberFormat("%.10g");
+        archive->setFloatingNumberFormat("%.10g");
         cnoid::write(archive, "translation", Vector3(T_tags.translation()));
         cnoid::write(archive, "rpy", degree(rpyFromRot(T_tags.linear())));
         baseFrameId_.write(archive, "base_frame");

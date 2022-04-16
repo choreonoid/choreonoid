@@ -255,7 +255,7 @@ StatementItem::StatementItem(MprStatement* statement_, MprProgram* program, MprP
     
     Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 
-    if(program && program->isEditingEnabled()){
+    if(program && program->isEditable()){
         flags |= Qt::ItemIsEditable | Qt::ItemIsDragEnabled;
 
         // Qt::ItemNeverHasChildren is used to avoid software crash as unwanted drop event happen.
@@ -1395,7 +1395,7 @@ bool MprProgramViewBase::Impl::insertStatement(MprStatement* statement, int inse
         parentStatement = lastSelectedItem->getParentStatement();
         if(parentStatement){
             program = parentStatement->lowerLevelProgram();
-            if (!program->isEditingEnabled()) {
+            if(!program->isEditable()){
                 return false;
             }
         }
@@ -1795,7 +1795,7 @@ void MprProgramViewBase::Impl::setBaseContextMenu(MenuManager& menuManager)
             copyAction->setEnabled(false);
         }
         if(auto program = currentStatementItem->getProgram()){
-            if(!program->isEditingEnabled()){
+            if(!program->isEditable()){
                 pasteAction->setEnabled(false);
             }
         }
@@ -1836,7 +1836,7 @@ void MprProgramViewBase::Impl::copySelectedStatements(bool doCut)
             continue;
         }
         if(auto program = statementItem->getProgram()){
-            if(!program->isEditingEnabled()){
+            if(!program->isEditable()){
                 continue;
             }
         }
@@ -1888,7 +1888,7 @@ void MprProgramViewBase::Impl::pasteStatements()
     } else {
         parentStatement = pastePositionItem->getParentStatement();
         if(parentStatement){
-            if (!parentStatement->lowerLevelProgram()->isEditingEnabled()) {
+            if(!parentStatement->lowerLevelProgram()->isEditable()){
                 return;
             }
             program = parentStatement->lowerLevelProgram();
@@ -1944,12 +1944,12 @@ void MprProgramViewBase::Impl::dropEvent(QDropEvent *event)
 
     auto destinationStructure = destinationItem->statement<MprStructuredStatement>();
     if(destinationStructure){
-        if(!destinationStructure->lowerLevelProgram()->isEditingEnabled() && !(insertAbove || insertBelow)){
+        if(!destinationStructure->lowerLevelProgram()->isEditable() && !(insertAbove || insertBelow)){
             return;
         }
     }
     if(auto parentStatement = destinationItem->getParentStatement()){
-        if(!parentStatement->lowerLevelProgram()->isEditingEnabled()){
+        if(!parentStatement->lowerLevelProgram()->isEditable()){
             return;
         }
     }
@@ -1966,7 +1966,7 @@ void MprProgramViewBase::Impl::dropEvent(QDropEvent *event)
     for(auto target : selected){
         auto targetItem = dynamic_cast<StatementItem*>(target);
         if(auto parentStatement = targetItem->getParentStatement()){
-            if(!parentStatement->lowerLevelProgram()->isEditingEnabled()){
+            if(!parentStatement->lowerLevelProgram()->isEditable()){
                 continue;
             }
         }

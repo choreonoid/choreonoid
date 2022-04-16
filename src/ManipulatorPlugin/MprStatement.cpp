@@ -108,13 +108,13 @@ void MprStatement::notifyUpdate()
 }
 
 
-bool MprStatement::read(MprProgram* /* program */, const Mapping& archive)
+bool MprStatement::read(MprProgram* /* program */, const Mapping* archive)
 {
     isEnabled_ = true;
-    if(!archive.read("enabled", isEnabled_)){
+    if(!archive->read("enabled", isEnabled_)){
         // For backward compatibility
         bool isCommentedOut;
-        if(archive.read("isCommentedOut", isCommentedOut)){
+        if(archive->read("isCommentedOut", isCommentedOut)){
             isEnabled_ = !isCommentedOut;
         }
     }
@@ -122,10 +122,10 @@ bool MprStatement::read(MprProgram* /* program */, const Mapping& archive)
 }
 
 
-bool MprStatement::write(Mapping& archive) const
+bool MprStatement::write(Mapping* archive) const
 {
     if(!isEnabled_){
-        archive.write("enabled", false);
+        archive->write("enabled", false);
     }
     return true;
 }

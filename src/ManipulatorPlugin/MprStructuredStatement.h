@@ -21,8 +21,8 @@ public:
 
     virtual MprProgram* getLowerLevelProgram() override;
     virtual bool isExpandedByDefault() const;
-    virtual bool read(MprProgram* program, const Mapping& archive) override;
-    virtual bool write(Mapping& archive) const override;
+    virtual bool read(MprProgram* program, const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
 
 protected:
     MprStructuredStatement();

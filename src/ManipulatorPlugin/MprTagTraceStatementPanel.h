@@ -14,7 +14,7 @@ public:
     MprTagTraceStatementPanel();
     ~MprTagTraceStatementPanel();
 
-    virtual void setEditingEnabled(bool on) override;
+    virtual void setEditable(bool on) override;
     virtual void onActivated() override;
     virtual void onStatementUpdated() override;
 

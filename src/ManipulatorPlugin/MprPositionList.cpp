@@ -322,17 +322,17 @@ GeneralId MprPositionList::createNextId(int prevId)
 }
 
 
-bool MprPositionList::read(const Mapping& archive)
+bool MprPositionList::read(const Mapping* archive)
 {
-    auto& typeNode = archive.get("type");
+    auto& typeNode = archive->get("type");
     if(typeNode.toString() != "ManipulatorPositionList"){
         typeNode.throwException(
             format(_("{0} cannot be loaded as a manipulator position set"), typeNode.toString()));
     }
         
-    auto versionNode = archive.find("format_version");
-    if(!*versionNode){
-        versionNode = archive.find("formatVersion"); // Old key
+    auto versionNode = archive->find("format_version");
+    if(!versionNode->isValid()){
+        versionNode = archive->find("formatVersion"); // Old key
     }
     auto version = versionNode->toDouble();
     if(version != 1.0){
@@ -341,11 +341,11 @@ bool MprPositionList::read(const Mapping& archive)
 
     clear();
 
-    auto& positionNodes = *archive.findListing("positions");
-    if(positionNodes.isValid()){
-        for(int i=0; i < positionNodes.size(); ++i){
-            auto& node = *positionNodes[i].toMapping();
-            auto& typeNode = node["type"];
+    auto positionNodes = archive->findListing("positions");
+    if(positionNodes->isValid()){
+        for(int i=0; i < positionNodes->size(); ++i){
+            auto node = positionNodes->at(i)->toMapping();
+            auto& typeNode = node->get("type");
             auto type = typeNode.toString();
             MprPositionPtr position;
             if(type == "IkPosition"){
@@ -362,7 +362,7 @@ bool MprPositionList::read(const Mapping& archive)
                     if(position->id().isValid()){
                         append(position);
                     } else {
-                        node.throwException(_("Invalid position ID"));
+                        node->throwException(_("Invalid position ID"));
                     }
                 }
             }
@@ -373,17 +373,17 @@ bool MprPositionList::read(const Mapping& archive)
 }
 
 
-bool MprPositionList::write(Mapping& archive) const
+bool MprPositionList::write(Mapping* archive) const
 {
-    archive.write("type", "ManipulatorPositionList");
-    archive.write("format_version", 1.0);
+    archive->write("type", "ManipulatorPositionList");
+    archive->write("format_version", 1.0);
 
     if(!impl->positions.empty()){
-        Listing& positionNodes = *archive.createListing("positions");
+        auto positionNodes = archive->createListing("positions");
         for(auto& position : impl->positions){
             MappingPtr node = new Mapping;
-            if(position->write(*node)){
-                positionNodes.append(node);
+            if(position->write(node)){
+                positionNodes->append(node);
             }
         }
     }

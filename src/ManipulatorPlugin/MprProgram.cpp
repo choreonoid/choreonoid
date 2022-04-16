@@ -39,7 +39,7 @@ public:
     void notifyStatementInsertion(iterator iter);
     void notifyStatementRemoval(MprStatement* statement, MprProgram* program);
     void notifyStatementUpdate(MprStatement* statement) const;
-    bool read(const Mapping& archive);    
+    bool read(const Mapping* archive);    
 };
 
 }
@@ -49,7 +49,7 @@ MprProgram::MprProgram()
 {
     impl = new Impl(this);
     hasLocalPositionList_ = false;
-    isEditingEnabled_ = true;
+    isEditable_ = true;
 }
 
 
@@ -75,7 +75,7 @@ MprProgram::MprProgram(const MprProgram& org, CloneMap* cloneMap)
     }
 
     hasLocalPositionList_ = org.hasLocalPositionList_;
-    isEditingEnabled_ = org.isEditingEnabled_;
+    isEditable_ = org.isEditable_;
 }
 
 
@@ -390,7 +390,7 @@ void MprProgram::renumberPositionIds()
     traverseStatements(
         [&](MprStatement* statement) {
             if(auto ps = dynamic_cast<MprPositionStatement*>(statement)){
-                if(ps->holderProgram()->isEditingEnabled()){
+                if(ps->holderProgram()->isEditable()){
                     auto id = ps->positionId();
                     if(id.isInt()){
                         auto it = idMap.find(id.toInt());
@@ -449,7 +449,7 @@ bool MprProgram::load(const std::string& filename, std::ostream& os)
     bool result = false;
 
     try {
-        auto& archive = *reader.loadDocument(filename)->toMapping();
+        auto archive = reader.loadDocument(filename)->toMapping();
         result = impl->read(archive);
 
     } catch(const ValueNode::Exception& ex){
@@ -460,36 +460,36 @@ bool MprProgram::load(const std::string& filename, std::ostream& os)
 }
 
 
-bool MprProgram::read(const Mapping& archive)
+bool MprProgram::read(const Mapping* archive)
 {
     return impl->read(archive);
 }
 
 
-bool MprProgram::Impl::read(const Mapping& archive)
+bool MprProgram::Impl::read(const Mapping* archive)
 {
     if(self->isTopLevelProgram()){
         
-        auto& typeNode = archive.get("type");
+        auto& typeNode = archive->get("type");
         if(typeNode.toString() != "ManipulatorProgram"){
             typeNode.throwException(
                 format(_("{0} cannot be loaded as a Manipulator program file"), typeNode.toString()));
         }
         
-        auto versionNode = archive.find("format_version");
-        if(!*versionNode){
-            versionNode = archive.find("formatVersion"); // old
+        auto versionNode = archive->find("format_version");
+        if(!versionNode->isValid()){
+            versionNode = archive->find("formatVersion"); // old
         }
         auto version = versionNode->toDouble();
         if(version != 1.0){
             versionNode->throwException(format(_("Format version {0} is not supported."), version));
         }
 
-        archive.read("name", name);
+        archive->read("name", name);
     }
 
-    auto& positionSetNode = *archive.findMapping("positions");
-    if(positionSetNode.isValid()){
+    auto positionSetNode = archive->findMapping("positions");
+    if(positionSetNode->isValid()){
         if(self->isSubProgram()){
             self->setLocalPositionListEnabled(true);
         }
@@ -500,16 +500,16 @@ bool MprProgram::Impl::read(const Mapping& archive)
         }
     }
     
-    auto& statementNodes = *archive.findListing("statements");
-    if(statementNodes.isValid()){
+    auto statementNodes = archive->findListing("statements");
+    if(statementNodes->isValid()){
 
         regex pattern("(.*):(.+)");
         std::smatch match;
         
-        for(int i=0; i < statementNodes.size(); ++i){
+        for(int i=0; i < statementNodes->size(); ++i){
             MprStatementPtr statement;
-            auto& node = *statementNodes[i].toMapping();
-            auto& typeNode = node["type"];
+            auto node = statementNodes->at(i)->toMapping();
+            auto& typeNode = node->get("type");
             auto type = typeNode.toString();
             if(regex_match(type, match, pattern)){
                 statement = MprStatementRegistration::create(match.str(2), match.str(1));
@@ -537,8 +537,8 @@ bool MprProgram::save(const std::string& filename)
     if(writer.openFile(filename)){
         removeUnreferencedPositions();
         writer.setKeyOrderPreservationMode(true);
-        MappingPtr archive = new Mapping();
-        if(write(*archive)){
+        MappingPtr archive = new Mapping;
+        if(write(archive)){
             writer.putNode(archive);
             result = true;
         }
@@ -548,12 +548,12 @@ bool MprProgram::save(const std::string& filename)
 }
 
 
-bool MprProgram::write(Mapping& archive) const
+bool MprProgram::write(Mapping* archive) const
 {
     if(isTopLevelProgram()){
-        archive.write("type", "ManipulatorProgram");
-        archive.write("format_version", 1.0);
-        archive.write("name", name(), DOUBLE_QUOTED);
+        archive->write("type", "ManipulatorProgram");
+        archive->write("format_version", 1.0);
+        archive->write("name", name(), DOUBLE_QUOTED);
     }
 
     if(!statements_.empty()){
@@ -562,21 +562,21 @@ bool MprProgram::write(Mapping& archive) const
         for(auto& statement : statements_){
             MappingPtr node = new Mapping;
             node->write("type", MprStatementRegistration::fullTypeName(statement));
-            if(statement->write(*node)){
+            if(statement->write(node)){
                 statementNodes->append(node);
                 appended = true;
             }
         }
         if(appended){
-            archive.insert("statements", statementNodes);
+            archive->insert("statements", statementNodes);
         }
     }
 
     if(isTopLevelProgram() || hasLocalPositionList()){
         if(impl->positionList){
             MappingPtr node = new Mapping;
-            if(impl->positionList->write(*node)){
-                archive.insert("positions", node);
+            if(impl->positionList->write(node)){
+                archive->insert("positions", node);
             }
         }
     }
