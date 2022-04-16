@@ -32,9 +32,9 @@ static void readGeneralId(GeneralId& id, ScalarNode* node)
 }
 
 
-bool GeneralId::read(const Mapping& archive, const char* key)
+bool GeneralId::read(const Mapping* archive, const char* key)
 {
-    auto idNode = archive.find(key);
+    auto idNode = archive->find(key);
     if(idNode->isValid() && idNode->isScalar()){
         readGeneralId(*this, idNode->toScalar());
         return true;
@@ -44,22 +44,40 @@ bool GeneralId::read(const Mapping& archive, const char* key)
 }
 
 
-void GeneralId::readEx(const Mapping& archive, const char* key)
+bool GeneralId::read(const Mapping& archive, const char* key)
 {
-    auto idNode = archive[key].toScalar();
+    return read(&archive, key);
+}
+
+
+void GeneralId::readEx(const Mapping* archive, const char* key)
+{
+    auto idNode = archive->get(key).toScalar();
     readGeneralId(*this, idNode);
 }    
 
 
-bool GeneralId::write(Mapping& archive, const char* key) const
+void GeneralId::readEx(const Mapping& archive, const char* key)
+{
+    readEx(&archive, key);
+}    
+
+
+bool GeneralId::write(Mapping* archive, const char* key) const
 {
     if(isValid()){
         if(isInt()){
-            archive.write(key, toInt());
+            archive->write(key, toInt());
         } else {
-            archive.write(key, toString(), DOUBLE_QUOTED);
+            archive->write(key, toString(), DOUBLE_QUOTED);
         }
         return true;
     }
     return false;
+}
+
+
+bool GeneralId::write(Mapping& archive, const char* key) const
+{
+    return write(&archive, key);
 }

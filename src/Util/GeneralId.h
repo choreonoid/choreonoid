@@ -71,8 +71,11 @@ public:
     const std::string& toString() const { return stringId; }
     std::string label() const;
 
+    bool read(const Mapping* archive, const char* key);
     bool read(const Mapping& archive, const char* key);
+    void readEx(const Mapping* archive, const char* key);
     void readEx(const Mapping& archive, const char* key);
+    bool write(Mapping* archive, const char* key) const;
     bool write(Mapping& archive, const char* key) const;
 
     struct Hash {
