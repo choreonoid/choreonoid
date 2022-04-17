@@ -1071,7 +1071,7 @@ SgMesh* StdSceneReader::Impl::readElevationGrid(Mapping* info, int meshOptions)
     Listing& texCoordNode = *info->findListing({ "tex_coord", "texCoord" });
     if(texCoordNode.isValid()){
         const int size = texCoordNode.size() / 2;
-        texCoord = new SgTexCoordArray();
+        texCoord = new SgTexCoordArray;
         texCoord->resize(size);
         for(int i=0; i < size; ++i){
             Vector2f& s = texCoord->at(i);
@@ -1386,12 +1386,20 @@ SgTextureTransform* StdSceneReader::Impl::readTextureTransform(Mapping* info)
     SgTextureTransformPtr transform = findSharedObject<SgTextureTransform>(info, "texture-transform");
     if(!transform){
         transform = new SgTextureTransform;
-        if(read(info, "center", v2)) transform->setCenter(v2);
-        if(read(info, "scale", v2)) transform->setScale(v2);
-        if(read(info, "translation", v2)) transform->setTranslation(v2);
-        if(self->readAngle(info, "rotation", value)) transform->setRotation(value);
+        if(read(info, "center", v2)){
+            transform->setCenter(v2);
+        }
+        if(read(info, "scale", v2)){
+            transform->setScale(v2);
+        }
+        if(read(info, "translation", v2)){
+            transform->setTranslation(v2);
+        }
+        if(self->readAngle(info, "rotation", value)){
+            transform->setRotation(value);
+        }
     }
-    return transform;
+    return transform.retn();
 }
 
 
@@ -1416,7 +1424,9 @@ SgNode* StdSceneReader::Impl::readDirectionalLight(Mapping* info)
 {
     SgDirectionalLightPtr light = new SgDirectionalLight;
     readLightCommon(info, light);
-    if(read(info, "direction", v)) light->setDirection(v);
+    if(read(info, "direction", v)){
+        light->setDirection(v);
+    }
     return light.retn();
 }
 

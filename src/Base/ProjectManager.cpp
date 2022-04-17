@@ -178,6 +178,7 @@ ProjectManager::ProjectManager()
 ProjectManager::Impl::Impl(ProjectManager* self)
     : self(self)
 {
+    saveDialog = nullptr;
     isMainInstance = false;
 }
 
