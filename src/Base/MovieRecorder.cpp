@@ -24,12 +24,13 @@
 #include <deque>
 #include <cstdlib>
 
+// For the mouse cursor capture
 #ifdef Q_OS_LINUX
 #include <QX11Info>
 #include <X11/extensions/Xfixes.h>
-const bool ENABLE_MOUSE_CURSOR_CAPTURE = true;
+static constexpr bool hasMouseCursorCaptureFeature = true;
 #else
-const bool ENABLE_MOUSE_CURSOR_CAPTURE = false;
+static constexpr bool hasMouseCursorCaptureFeature = false;
 #endif
 
 #include "gettext.h"
@@ -78,7 +79,7 @@ public:
     double specifiedFinishingTime;
     bool isStartingTimeSpecified;
     bool isFinishingTimeSpecified;
-    bool isCapturingMouseCursorEnabled;
+    bool isMouseCursorCaptureEnabled;
     bool isImageSizeSpecified;
     int imageWidth;
     int imageHeight;
@@ -208,7 +209,7 @@ MovieRecorder::Impl::Impl(MovieRecorder* self)
     specifiedFinishingTime = 0.0;
     isStartingTimeSpecified = false;
     isFinishingTimeSpecified = false;
-    isCapturingMouseCursorEnabled = false;
+    isMouseCursorCaptureEnabled = false;
     isImageSizeSpecified = false;
     imageWidth = 640;
     imageHeight = 480;
@@ -588,15 +589,35 @@ void MovieRecorder::setImageSize(int width, int height)
 }
 
 
+bool MovieRecorder::isMouseCursorCaptureAvailable()
+{
+    return hasMouseCursorCaptureFeature;
+}
+
+
+bool MovieRecorder::isMouseCursorCaptureEnabled() const
+{
+    return impl->isMouseCursorCaptureEnabled;
+}
+
+
 bool MovieRecorder::isCapturingMouseCursorEnabled() const
 {
-    return impl->isCapturingMouseCursorEnabled;
+    return isMouseCursorCaptureEnabled();
+}
+
+
+void MovieRecorder::setMouseCursorCaptureEnabled(bool on)
+{
+    if(hasMouseCursorCaptureFeature){
+        impl->isMouseCursorCaptureEnabled = on;
+    }
 }
 
 
 void MovieRecorder::setCapturingMouseCursorEnabled(bool on)
 {
-    impl->isCapturingMouseCursorEnabled = on;
+    setMouseCursorCaptureEnabled(on);
 }
 
 
@@ -847,7 +868,7 @@ void MovieRecorder::Impl::captureViewImage(bool waitForPrevOutput)
     
     if(SceneView* sceneView = dynamic_cast<SceneView*>(targetView)){
         captured->image = sceneView->sceneWidget()->getImage();
-        if(isCapturingMouseCursorEnabled){
+        if(isMouseCursorCaptureEnabled){
             QPainter painter(&stdx::get<QImage>(captured->image));
             drawMouseCursorImage(painter);
         }
@@ -856,7 +877,7 @@ void MovieRecorder::Impl::captureViewImage(bool waitForPrevOutput)
         QPixmap& pixmap = stdx::get<QPixmap>(captured->image);
         captureSceneWidgets(targetView, pixmap);
 
-        if(isCapturingMouseCursorEnabled){
+        if(isMouseCursorCaptureEnabled){
             QPainter painter(&pixmap);
             drawMouseCursorImage(painter);
         }
@@ -1157,7 +1178,9 @@ void MovieRecorder::Impl::store(Mapping* archive)
     archive->write("setSize", isImageSizeSpecified);
     archive->write("width", imageWidth);
     archive->write("height", imageHeight);
-    archive->write("mouseCursor", isCapturingMouseCursorEnabled);
+    if(hasMouseCursorCaptureFeature){
+        archive->write("mouseCursor", isMouseCursorCaptureEnabled);
+    }
 }
 
 
@@ -1190,7 +1213,9 @@ void MovieRecorder::Impl::restore(const Mapping* archive)
     archive->read("setSize", isImageSizeSpecified);
     archive->read("width", imageWidth);
     archive->read("height", imageHeight);
-    archive->read("mouseCursor", isCapturingMouseCursorEnabled);
+    if(hasMouseCursorCaptureFeature){
+        archive->read("mouseCursor", isMouseCursorCaptureEnabled);
+    }
 
     updateViewMarker();
     sigRecordingConfigurationChanged();

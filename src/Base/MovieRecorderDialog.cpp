@@ -244,17 +244,19 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox->addStretch();
     vbox->addLayout(hbox);
 
-    hbox = new QHBoxLayout;
-    mouseCursorCheck = new CheckBox(_("Capture the mouse cursor"), this);
-    widgetConnections.add(
-        mouseCursorCheck->sigToggled().connect(
-            [this](bool on){
-                auto block = recorderConfConnection.scopedBlock();
-                recorder_->setCapturingMouseCursorEnabled(on);
-            }));
-    hbox->addWidget(mouseCursorCheck);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
+    if(MovieRecorder::isMouseCursorCaptureAvailable()){
+        hbox = new QHBoxLayout;
+        mouseCursorCheck = new CheckBox(_("Capture the mouse cursor"), this);
+        widgetConnections.add(
+            mouseCursorCheck->sigToggled().connect(
+                [this](bool on){
+                    auto block = recorderConfConnection.scopedBlock();
+                    recorder_->setMouseCursorCaptureEnabled(on);
+                }));
+        hbox->addWidget(mouseCursorCheck);
+        hbox->addStretch();
+        vbox->addLayout(hbox);
+    }
 
     vbox->addWidget(new HSeparator);
 
@@ -429,7 +431,9 @@ void MovieRecorderDialog::updateWidgetsWithRecorderConfigurations()
     imageHeightSpin->setEnabled(isImageSizeSpecified);
     imageHeightSpin->setValue(recorder_->imageHeight());
 
-    mouseCursorCheck->setChecked(recorder_->isCapturingMouseCursorEnabled());
+    if(MovieRecorder::isMouseCursorCaptureAvailable()){
+        mouseCursorCheck->setChecked(recorder_->isMouseCursorCaptureEnabled());
+    }
 }
 
 

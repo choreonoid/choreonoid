@@ -56,7 +56,13 @@ public:
     int imageWidth() const;
     int imageHeight() const;
     void setImageSize(int width, int height);
+
+    static bool isMouseCursorCaptureAvailable();
+    bool isMouseCursorCaptureEnabled() const;
+    void setMouseCursorCaptureEnabled(bool on);
+    [[deprecated("Use isMouseCursorCaptureEnabled.")]]
     bool isCapturingMouseCursorEnabled() const;
+    [[deprecated("Use setMouseCursorCaptureEnabled.")]]
     void setCapturingMouseCursorEnabled(bool on);
     
     bool isRecording() const;
