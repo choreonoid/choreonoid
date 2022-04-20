@@ -4,7 +4,6 @@
 #include "MprBasicStatements.h"
 #include "MprPositionStatement.h"
 #include "MprControllerItemBase.h"
-#include "MprTagTraceStatement.h"
 #include <cnoid/ViewManager>
 #include <cnoid/MenuManager>
 #include <cnoid/TargetItemPicker>
@@ -1574,19 +1573,6 @@ void MprProgramViewBase::Impl::onRowsAboutToBeRemoved(const QModelIndex& parent,
         parent, start, end,
         [&](MprStructuredStatement*, MprProgram* program, int, MprStatement* statement){
             programConnections.block();
-
-            /**
-               Remove child items of MprTagTraceStatement to avoid a crash
-               when a tag trace statement is moved by dragging.
-            */
-            if(auto tagTraceStatement = dynamic_cast<MprTagTraceStatement*>(statement)){
-                auto lowerLevelProgram = tagTraceStatement->lowerLevelProgram();
-                for (auto iter = lowerLevelProgram->begin(); iter != lowerLevelProgram->end(); iter++) {
-                    onStatementRemoved(lowerLevelProgram, *iter);
-                }
-                lowerLevelProgram->clearStatements();
-            };
-
             program->remove(statement);
             programConnections.unblock();
         });
@@ -1645,31 +1631,6 @@ void MprProgramViewBase::Impl::onRowsInserted(const QModelIndex& parent, int sta
         [&](MprStructuredStatement*, MprProgram* program, int index, MprStatement* statement){
             programConnections.block();
             program->insert(program->begin() + index, statement);
-
-            /**
-               Revive TagTraceStatement to avoid a crash
-               when a tag trace statement is moved by dragging.
-            */
-            if(auto tagTraceStatement = dynamic_cast<MprTagTraceStatement*>(statement)){
-                if(!currentProgramItem->resolveStatementReferences(tagTraceStatement)){
-                    tagTraceStatement->updateTagTraceProgram();
-                    tagTraceStatement->notifyUpdate();
-                }
-                // insert child items of TagTraceStatement
-                auto lowerLevelProgram = tagTraceStatement->lowerLevelProgram();
-                for(auto iter = lowerLevelProgram->begin(); iter != lowerLevelProgram->end(); iter++){
-                    auto counter = scopedCounterOfStatementItemOperationCall();
-                    auto statement = *iter;
-                    auto parentItem = findStatementItem(tagTraceStatement);
-                    auto statementItem = new StatementItem(statement, lowerLevelProgram, this);
-                    parentItem->addChild(statementItem);
-                    // revive the enabled state
-                    if(!statement->isEnabled() || !tagTraceStatement->isEnabled()){
-                        setStatementEnabled(statement, false);
-                    }
-                }
-            };
-
             programConnections.unblock();
         });
 }

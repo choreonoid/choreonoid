@@ -18,13 +18,9 @@ class StatementInfo : public Referenced
 {
 public:
     MprTagTraceStatement* statement;
-    ConnectionSet tagGroupConnections;
+    ScopedConnectionSet tagGroupConnections;
     ProgramInfo* programInfo;
     
-    ~StatementInfo(){
-        invalidateTagGroup();
-    }
-
     void invalidateTagGroup();
 };
 typedef ref_ptr<StatementInfo> StatementInfoPtr;
@@ -59,10 +55,9 @@ public:
 
 void StatementInfo::invalidateTagGroup()
 {
-    auto scopedBlock = programInfo->connections.scopedBlock();
+    tagGroupConnections.disconnect();
     statement->setTagGroup(nullptr, false, true);
     statement->notifyUpdate();
-    tagGroupConnections.disconnect();
 }
 
 
