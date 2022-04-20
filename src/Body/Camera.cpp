@@ -6,6 +6,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
 #include <fmt/format.h>
+#include <cmath>
 #include "gettext.h"
 
 using namespace std;
@@ -117,14 +118,26 @@ void Camera::setImageStateClonable(bool on)
 }
 
 
-void Camera::clearImage()
-{
-    if(image_.use_count() == 1){
-        image_->clear();
+double Camera::horizontalFieldOfView() const {
+    if (resolutionX() <= resolutionY()) {
+        return fieldOfView();
     } else {
-        image_ = std::make_shared<Image>();
+        const double vfov = fieldOfView();
+        return std::atan2(resolutionX() / resolutionY() * std::tan(vfov), 1.0);
     }
-}    
+}
+
+
+// this function is only available after resolution settings
+void Camera::setHorizontalFieldOfView(double hfov) {
+    if (resolutionX() <= resolutionY()) {
+        setFieldOfView(hfov);
+    } else {
+        const double scale = static_cast<double>(resolutionY()) / static_cast<double>(resolutionX());
+        const double vfov = std::atan2(scale * std::tan(hfov), 1.0);
+        setFieldOfView(vfov);
+    }
+}
 
 
 Image& Camera::image()
@@ -151,6 +164,16 @@ void Camera::setImage(std::shared_ptr<Image>& image)
         image_ = std::make_shared<Image>(*image);
     }
     image.reset();
+}
+
+
+void Camera::clearImage()
+{
+    if(image_.use_count() == 1){
+        image_->clear();
+    } else {
+        image_ = std::make_shared<Image>();
+    }
 }
 
 

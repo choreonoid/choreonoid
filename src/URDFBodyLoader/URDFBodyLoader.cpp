@@ -10,6 +10,7 @@
 
 #include <cnoid/Body>
 #include <cnoid/BodyLoader>
+#include <cnoid/Camera>
 #include <cnoid/EigenUtil>
 #include <cnoid/ExecutablePath>
 #include <cnoid/MeshGenerator>
@@ -165,6 +166,9 @@ private:
     void setMaterialToAllShapeNodes(SgNodePtr& node, SgMaterialPtr& material);
     bool loadJoint(std::unordered_map<string, LinkPtr>& linkMap,
                    const xml_node& jointNode);
+    bool loadSensor(Body* body,
+                    std::unordered_map<string, LinkPtr>& linkMap,
+                    const xml_node& sensorNode);
 };
 }  // namespace cnoid
 
@@ -246,7 +250,7 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
         os() << "Error: parsing XML failed: " << result.description() << endl;
         return false;
     }
-    
+
     // checks if only one 'robot' tag exists in the URDF
     if (doc.child(ROBOT).empty()) {
         os() << "Error: 'robot' tag is not found.";
@@ -320,6 +324,15 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
     }
     body->setRootLink(rootLinks.at(0));
     body->rootLink()->setJointType(Link::FreeJoint);
+
+    // loads sensors
+    auto sensorNodes = robotNode.children(SENSOR);
+    for (xml_node sensorNode : sensorNodes) {
+        if (!loadSensor(body, linkMap, sensorNode)) {
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -916,5 +929,135 @@ bool URDFBodyLoader::Impl::loadJoint(
     if (!jointNode.child(MIMIC).empty()) {
         os() << "Warning: mimic joint is currently not supported." << endl;
     }
+    return true;
+}
+
+
+bool URDFBodyLoader::Impl::loadSensor(
+    Body* body,
+    std::unordered_map<string, LinkPtr>& linkMap,
+    const xml_node& sensorNode)
+{
+    // 'name' attribute (required)
+    const string sensorName = sensorNode.attribute(NAME).as_string();
+    if (sensorName.empty()) {
+        os() << "Error: an unnamed sensor is found." << endl;
+        return false;
+    }
+
+    // 'update_rate' attribute (optional)
+    // default: 1.0
+    const double update_rate = sensorNode.attribute(UPDATE_RATE).as_double(1.0);
+
+    // 'parent' tag (required)
+    LinkPtr parentLink = nullptr;
+    if (sensorNode.child(PARENT).empty()) {
+        os() << "Error: the sensor \"" << sensorName << "\" has no parent tag."
+             << endl;
+        return false;
+    } else {
+        // 'link' attribute (required)
+        const string parentName
+            = sensorNode.child(PARENT).attribute(LINK).as_string();
+        if (parentName.empty()) {
+            os() << "Error: the sensor \"" << sensorName
+                 << "\" has no parent link name." << endl;
+            return false;
+        }
+
+        auto parentSearchResult = linkMap.find(parentName);
+        if (parentSearchResult == linkMap.end()) {
+            os() << "Error: the parent name \"" << parentName
+                 << "\" of the sensor \"" << sensorName << "\" is invalid."
+                 << endl;
+            return false;
+        }
+        parentLink = parentSearchResult->second;
+    }
+    // 'origin' tag (optional)
+    const xml_node& originNode = sensorNode.child(ORIGIN);
+    Vector3 translation = Vector3::Zero();
+    Matrix3 rotation = Matrix3::Identity();
+    if (!readOriginTag(originNode, translation, rotation)) {
+        os() << " in the sensor \"" << sensorName << "\" definition." << endl;
+        return false;
+    }
+
+    // creates a sensor
+    if (!sensorNode.child(CAMERA).empty()) {
+        CameraPtr camera = new Camera;
+        camera->setName(sensorName);
+        camera->setFrameRate(update_rate);
+        camera->setLocalRotation(rotation);
+        camera->setLocalTranslation(translation);
+
+        // 'image' tag (required)
+        const xml_node& imageNode = sensorNode.child(CAMERA).child(IMAGE);
+        if (imageNode.empty()) {
+            os() << "Error: the camera \"" << sensorName
+                 << "\" has no image tag." << endl;
+            return false;
+        }
+
+        // 'width' attribute (required)
+        const int width = imageNode.attribute(WIDTH).as_int();
+        if (width <= 0) {
+            os() << "Error: image width of camera \"" << sensorName
+                 << "\" is invalid." << endl;
+            return false;
+        }
+        camera->setResolutionX(width);
+
+        // 'height' attribute (required)
+        const int height = imageNode.attribute(HEIGHT).as_int();
+        if (height <= 0) {
+            os() << "Error: image height of camera \"" << sensorName
+                 << "\" is invalid." << endl;
+            return false;
+        }
+        camera->setResolutionY(height);
+
+        // 'format' attribute (required) is currently ignored
+        // c.f. http://docs.ros.org/en/noetic/api/sensor_msgs/html/image__encodings_8h_source.html
+
+        // 'hfov' attribute (required)
+        const double hfov = imageNode.attribute(HFOV).as_double();
+        if (hfov <= 0.0) {
+            os() << "Error: the hfov of camera \"" << sensorName
+                 << "\" is invalid." << endl;
+            return false;
+        }
+        camera->setHorizontalFieldOfView(hfov);
+
+        // 'near' attribute (required)
+        const double near = imageNode.attribute(NEAR).as_double();
+        if (near <= 0.0) {
+            os() << "Error: near clip distance of camera \"" << sensorName
+                 << "\" is invalid." << endl;
+            return false;
+        }
+        camera->setNearClipDistance(near);
+
+        // 'far' attribute (required)
+        const double far = imageNode.attribute(FAR).as_double();
+        if (far <= 0.0) {
+            os() << "Error: far clip distance of camera \"" << sensorName
+                 << "\" is invalid." << endl;
+            return false;
+        } else if (far < near) {
+            os() << "Error: far clip distance must be larger than near one."
+                 << endl;
+        }
+        camera->setFarClipDistance(far);
+
+        // transforms the frame for the ROS-standard specification
+        const Vector3 a(1.0, -1.0, -1.0);
+        const Matrix3 R = a.asDiagonal();
+        camera->setOpticalFrameRotation(R);
+
+        // registers the camera
+        return body->addDevice(camera, parentLink);
+    }
+
     return true;
 }

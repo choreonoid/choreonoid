@@ -45,6 +45,8 @@ public:
         
     double fieldOfView() const { return fieldOfView_; }
     void setFieldOfView(double f) { fieldOfView_ = f; }
+    double horizontalFieldOfView() const;
+    void setHorizontalFieldOfView(double hfov);
 
     void setResolution(int x, int y) {
         resolutionX_ = x; resolutionY_ = y;
