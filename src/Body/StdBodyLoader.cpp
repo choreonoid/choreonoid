@@ -1253,6 +1253,12 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
         }
     }
 
+    auto maxEffortNode = node->extract({"max_joint_effort"});
+    if(maxEffortNode){
+        const double maxEffort = maxEffortNode->toDouble();
+        link->setJointEffortRange(-maxEffort, maxEffort);
+    }
+
     double Ir = 0.0;
     auto jointAxisInertiaNode = node->extract("joint_axis_inertia");
     if(jointAxisInertiaNode){

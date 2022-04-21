@@ -46,6 +46,8 @@ Link::Link()
     q_lower_ = -std::numeric_limits<double>::max();
     dq_upper_ = std::numeric_limits<double>::max();
     dq_lower_ = -std::numeric_limits<double>::max();
+    u_upper_ = std::numeric_limits<double>::max();
+    u_lower_ = -std::numeric_limits<double>::max();
     materialId_ = 0;
     visualShape_ = new SgGroup;
     collisionShape_ = new SgGroup;
@@ -64,12 +66,12 @@ Link::Link(const Link& org)
 
     T_ = org.T_;
     Tb_ = org.Tb_;
-    
+
     jointType_ = org.jointType_;
     jointId_ = org.jointId_;
     actuationMode_ = org.actuationMode_;
     sensingMode_ = org.sensingMode_;
-    
+
     a_ = org.a_;
     q_ = org.q_;
     dq_ = org.dq_;
@@ -84,7 +86,7 @@ Link::Link(const Link& org)
     dv_ = org.dv_;
     dw_ = org.dw_;
     F_ext_ = org.F_ext_;
-    
+
     c_ = org.c_;
     wc_ = org.wc_;
     m_ = org.m_;
@@ -96,6 +98,8 @@ Link::Link(const Link& org)
     q_lower_ = org.q_lower_;
     dq_upper_ = org.dq_upper_;
     dq_lower_ = org.dq_lower_;
+    u_upper_ = org.u_upper_;
+    u_lower_ = org.u_lower_;
 
     materialId_ = org.materialId_;
 
@@ -106,7 +110,7 @@ Link::Link(const Link& org)
     collisionShape_ = new SgGroup;
     org.collisionShape_->copyChildrenTo(collisionShape_);
     collisionShape_->invalidateBoundingBox();
-    
+
     info_ = org.info_;
 }
 

@@ -6,8 +6,9 @@
 #include "ForwardDynamicsABM.h"
 #include "DyBody.h"
 #include <cnoid/EigenUtil>
+#include <algorithm>
 
-using namespace std;
+using std::clamp;
 using namespace cnoid;
 
 static const bool debugMode = false;
@@ -378,7 +379,7 @@ void ForwardDynamicsABM::calcABMPhase2()
                 // dd = Ia * s * s^T
                 link->dd() = link->sv().dot(link->hhv()) + link->sw().dot(link->hhw()) + link->Jm2();
                 // uu = u - hh^T*c + s^T*pp
-                link->uu() = link->u() -
+                link->uu() = clamp(link->u(), link->u_lower(), link->u_upper()) -
                     (link->hhv().dot(link->cv()) + link->hhw().dot(link->cw()) +
                      link->sv().dot(link->pf()) + link->sw().dot(link->ptau()));
             }
@@ -450,7 +451,9 @@ void ForwardDynamicsABM::calcABMPhase2Part2()
 
         if(i > 0){
             if(!link->isFixedJoint()){
-                link->uu() += link->u() - (link->sv().dot(link->pf()) + link->sw().dot(link->ptau()));
+                link->uu() += clamp(link->u(), link->u_lower(), link->u_upper())
+                              - (link->sv().dot(link->pf())
+                              + link->sw().dot(link->ptau()));
             }
         }
     }

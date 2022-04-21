@@ -895,19 +895,19 @@ bool URDFBodyLoader::Impl::loadJoint(
             }
             child->setJointVelocityRange(-velocityLimit, velocityLimit);
 
-            // if (limitNode.attribute(EFFORT).empty()) {
-            //     os() << "Error: effort limit of joint \"" << jointName
-            //          << "\" is not defined." << endl;
-            //     return false;
-            // }
-            // const double effortLimit = limitNode.attribute(EFFORT)
-            //                                  .as_double();
-            // if (effortLimit < 0.0) {
-            //     os() << "Error: effort limit of joint \"" << jointName
-            //          << "\" has to be positive." << endl;
-            //     return false;
-            // }
-            // child->setJointEffortRange(-effortLimit, effortLimit);
+            const xml_attribute& effortAttribute = limitNode.attribute(EFFORT);
+            if (effortAttribute.empty()) {
+                os() << "Error: effort limit of joint \"" << jointName
+                     << "\" is not defined." << endl;
+                return false;
+            }
+            const double effortLimit = effortAttribute.as_double();
+            if (effortLimit < 0.0) {
+                os() << "Error: effort limit of joint \"" << jointName
+                     << "\" has to be positive." << endl;
+                return false;
+            }
+            child->setJointEffortRange(-effortLimit, effortLimit);
         }
     }
 

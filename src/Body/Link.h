@@ -262,6 +262,8 @@ public:
     double q_lower() const { return q_lower_; }  ///< the lower limit of joint values
     double dq_upper() const { return dq_upper_; } ///< the upper limit of joint velocities
     double dq_lower() const { return dq_lower_; } ///< the upper limit of joint velocities
+    double u_upper() const { return u_upper_; } ///< the upper limit of joints efforts
+    double u_lower() const { return u_lower_; } ///< the lower limit of joint efforts
 
     const Vector3& v() const { return v_; }
     Vector3& v() { return v_; }
@@ -397,7 +399,7 @@ public:
     [[deprecated("No need to use this function.")]]
     void setAccumulatedSegmentRotation(const Eigen::MatrixBase<Derived>& /* Rs */) {
     }
-        
+
     void setJointType(JointType type) { jointType_ = type; }
     void setJointId(int id) { jointId_ = id; }
     void setJointName(const std::string& name);
@@ -408,6 +410,7 @@ public:
     void setInitialJointAngle(double q) { q_initial_ = q; }
     void setJointRange(double lower, double upper) { q_lower_ = lower; q_upper_ = upper; }
     void setJointVelocityRange(double lower, double upper) { dq_lower_ = lower; dq_upper_ = upper; }
+    void setJointEffortRange(double lower, double upper) { u_lower_ = lower; u_upper_ = upper; }
 
     void setCenterOfMass(const Vector3& c) { c_ = c; }
     void setMass(double m) { m_ = m; }
@@ -500,7 +503,9 @@ private:
     double q_lower_;
     double dq_upper_;
     double dq_lower_;
-    
+    double u_upper_;
+    double u_lower_;
+
     int materialId_;
 
     std::vector<ContactPoint> contactPoints_;
