@@ -2,7 +2,7 @@
 #include "MprPositionList.h"
 #include <cnoid/Body>
 #include <cnoid/LinkKinematicsKit>
-#include <cnoid/LinkKinematicsKitSet>
+#include <cnoid/KinematicBodySet>
 #include <cnoid/JointPath>
 #include <cnoid/JointSpaceConfigurationHandler>
 #include <cnoid/CoordinateFrame>
@@ -109,18 +109,18 @@ MprPositionList* MprPosition::ownerPositionList()
 }
 
 
-bool MprPosition::fetch(LinkKinematicsKitSet* kinematicsKitSet, MessageOut* mout)
+bool MprPosition::fetch(KinematicBodySet* bodySet, MessageOut* mout)
 {
-    if(auto kinematicsKit = kinematicsKitSet->mainKinematicsKit()){
+    if(auto kinematicsKit = bodySet->mainKinematicsKit()){
         return fetch(kinematicsKit);
     }
     return false;
 }
     
 
-bool MprPosition::apply(LinkKinematicsKitSet* kinematicsKitSet) const
+bool MprPosition::apply(KinematicBodySet* bodySet) const
 {
-    if(auto kinematicsKit = kinematicsKitSet->mainKinematicsKit()){
+    if(auto kinematicsKit = bodySet->mainKinematicsKit()){
         return apply(kinematicsKit);
     }
     return false;
@@ -584,12 +584,12 @@ const MprPosition* MprCompositePosition::mainPosition() const
 }
 
 
-bool MprCompositePosition::fetch(LinkKinematicsKitSet* kinematicsKitSet, MessageOut* mout)
+bool MprCompositePosition::fetch(KinematicBodySet* bodySet, MessageOut* mout)
 {
     int numFetched = 0;
     for(auto& kv : positionMap_){
         auto& partId = kv.first;
-        if(auto kinematicsKit = kinematicsKitSet->kinematicsKit(partId)){
+        if(auto kinematicsKit = bodySet->kinematicsKit(partId)){
             auto& position = kv.second;
             if(position->fetch(kinematicsKit)){
                 ++numFetched;
@@ -615,12 +615,12 @@ bool MprCompositePosition::fetch(LinkKinematicsKitSet* kinematicsKitSet, Message
 }
 
 
-bool MprCompositePosition::apply(LinkKinematicsKitSet* kinematicsKitSet) const
+bool MprCompositePosition::apply(KinematicBodySet* bodySet) const
 {
     int numApplied = 0;
     for(auto& kv : positionMap_){
         auto& partId = kv.first;
-        if(auto kinematicsKit = kinematicsKitSet->kinematicsKit(partId)){
+        if(auto kinematicsKit = bodySet->kinematicsKit(partId)){
             auto& position = kv.second;
             if(position->apply(kinematicsKit)){
                 ++numApplied;

@@ -14,6 +14,7 @@ set(sources
   EditableSceneBody.cpp
   LinkKinematicsKitManager.cpp
   LinkOffsetFrameListItem.cpp
+  KinematicBodyItemSet.cpp
   MaterialTableItem.cpp
   SimulatorItem.cpp
   SubSimulatorItem.cpp
@@ -78,6 +79,7 @@ set(headers
   EditableSceneBody.h
   LinkKinematicsKitManager.h
   LinkOffsetFrameListItem.h
+  KinematicBodyItemSet.h
   MaterialTableItem.h
   SimulatorItem.h
   SubSimulatorItem.h

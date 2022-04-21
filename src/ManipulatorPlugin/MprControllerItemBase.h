@@ -13,6 +13,7 @@ namespace cnoid {
 class MprProgramItemBase;
 class MprProgram;
 class MprStatement;
+class KinematicBodyItemSet;
 class LinkKinematicsKit;
 class MprVariableSet;
 
@@ -76,6 +77,9 @@ protected:
 
     MprProgram* findProgram(const std::string& name);
 
+    virtual KinematicBodyItemSet* kinematicBodyItemSet() = 0;
+    
+    [[deprecated]]
     LinkKinematicsKit* linkKinematicsKitForControl();
 
     void pushControlFunctions(

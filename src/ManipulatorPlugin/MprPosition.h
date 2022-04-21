@@ -16,7 +16,7 @@ namespace cnoid {
 
 class Body;
 class LinkKinematicsKit;
-class LinkKinematicsKitSet;
+class KinematicBodySet;
 class MprIkPosition;
 class MprFkPosition;
 class MprCompositePosition;
@@ -56,8 +56,8 @@ public:
     virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) = 0;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const = 0;
 
-    virtual bool fetch(LinkKinematicsKitSet* kinematicsKitSet, MessageOut* mout = nullptr);
-    virtual bool apply(LinkKinematicsKitSet* kinematicsKitSet) const;
+    virtual bool fetch(KinematicBodySet* bodySet, MessageOut* mout = nullptr);
+    virtual bool apply(KinematicBodySet* bodySet) const;
 
     const std::string& note() const { return note_; }
     void setNote(const std::string& note) { note_ = note; }
@@ -223,12 +223,12 @@ public:
     MprPosition* mainPosition();
     const MprPosition* mainPosition() const;
     
-    virtual bool fetch(LinkKinematicsKitSet* kinematicsKitSet, MessageOut* mout = nullptr) override;
-    virtual bool apply(LinkKinematicsKitSet* kinematicsKitSet) const override;
-
     virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
     
+    virtual bool fetch(KinematicBodySet* bodySet, MessageOut* mout = nullptr) override;
+    virtual bool apply(KinematicBodySet* bodySet) const override;
+
     virtual bool read(const Mapping* archive) override;
     virtual bool write(Mapping* archive) const override;
 
