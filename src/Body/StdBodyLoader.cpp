@@ -1145,7 +1145,7 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
             link->setJointType(Link::FreeJoint);
         } else if(jointType == "fixed"){
             link->setJointType(Link::FixedJoint);
-        } else if(jointType == "pseudoContinuousTrack" || jointType == "pseudo_continuous_track"){
+        } else if(jointType == "pseudo_continuous_track" || jointType == "pseudoContinuousTrack"){
             link->setJointType(Link::PseudoContinuousTrackJoint);
             link->setActuationMode(Link::JointVelocity);
         } else {
@@ -1191,7 +1191,7 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
         }
     }
 
-    auto jointAngleNode = node->extract("jointAngle");
+    auto jointAngleNode = node->extract({"joint_angle", "jointAngle"});
     if(jointAngleNode){
         link->setInitialJointDisplacement(toRadian(jointAngleNode->toDouble()));
     }
@@ -1230,7 +1230,7 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
         link->setJointRange(lower, upper);
     }
     
-    auto maxVelocityNode = node->extract("maxJointVelocity");
+    auto maxVelocityNode = node->extract({"max_joint_velocity", "maxJointVelocity"});
     if(maxVelocityNode){
         double maxVelocity = maxVelocityNode->toDouble();
         if(link->isRevoluteJoint()){
@@ -1258,9 +1258,9 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
     if(jointAxisInertiaNode){
         Ir = jointAxisInertiaNode->toDouble();
     } else {
-        Ir = node->get("rotorInertia", 0.0);
+        Ir = node->get({"rotor_inertia", "rotorInertia"}, 0.0);
         double gearRatio;
-        if(node->read("gearRatio", gearRatio)){
+        if(node->read({"gear_ratio", "gearRatio"}, gearRatio)){
             Ir = gearRatio * gearRatio * Ir;
         }
     }
