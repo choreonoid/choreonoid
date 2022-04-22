@@ -25,11 +25,12 @@ public:
     int size() const {
         return  static_cast<int>(symbols_.size());
     }
-
+    bool empty() const {
+        return symbols_.empty();
+    }
     explicit operator bool() const {
         return selectedIndex_ >= 0;
     }
-
     operator int() const {
         return selectedIndex_;
     }
