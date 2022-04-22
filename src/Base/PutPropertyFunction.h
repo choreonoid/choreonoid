@@ -75,6 +75,11 @@ public:
     virtual void operator()(const std::string& name, const std::string& value) = 0;
     virtual void operator()(const std::string& name, const std::string& value,
                             const std::function<bool(const std::string&)>& changeFunc) = 0;
+
+    void operator()(const std::string& name, const char* value){
+        operator()(name, std::string(value));
+    }
+
     // Selection
     virtual void operator()(const std::string& name, const Selection& selection) = 0;
     virtual void operator()(const std::string& name, const Selection& selection,
