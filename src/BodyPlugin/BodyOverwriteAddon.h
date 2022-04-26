@@ -32,7 +32,7 @@ public:
 
     // Functions on device overwriting
 
-    // Note that the getter ids of newly extracted items are not specified by this function and
+    // Note that the device mediator ids of newly extracted items are not specified by this function and
     // the ids should be specified by a caller after calling this function.
     ItemList<DeviceOverwriteItem> extractDevicesAsOverwriteItems(std::function<bool(Device* device)> predicate);
 

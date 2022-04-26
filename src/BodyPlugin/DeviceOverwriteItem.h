@@ -4,6 +4,7 @@
 #include "BodyElementOverwriteItem.h"
 #include <cnoid/LocatableItem>
 #include <cnoid/RenderableItem>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -18,6 +19,24 @@ class CNOID_EXPORT DeviceOverwriteMediator : public Referenced
 {
 public:
     static void registerMediator(const std::string& deviceTypeName, DeviceOverwriteMediator* mediator);
+
+    template <class DeviceType>
+    static void registerStdMediator(
+        const std::string& deviceTypeName,
+        std::function<bool(DeviceType* device, const Mapping* info)> readDescription,
+        std::function<bool(DeviceType* device, Mapping* info)> writeDescription)
+    {
+        registerStdMediator_(
+            deviceTypeName,
+            []() -> Device* { return new DeviceType; },
+            [readDescription](Device* device, const Mapping* info){
+                return readDescription(static_cast<DeviceType*>(device), info);
+            },
+            [writeDescription](Device* device, Mapping* info){
+                return writeDescription(static_cast<DeviceType*>(device), info);
+            });
+    }
+    
     static DeviceOverwriteMediator* findMediator(const std::string& id, const std::string& deviceTypeName);
     
     const std::string& id() { return id_; }
@@ -51,6 +70,12 @@ protected:
     static bool restoreDeviceLink(Device* device, const Mapping* info, Body* body);
     
 private:
+    static void registerStdMediator_(
+        const std::string& deviceTypeName,
+        const std::function<Device*()>& factory,
+        const std::function<bool(Device* device, const Mapping* info)>& readDescription,
+        const std::function<bool(Device* device, Mapping* info)>& writeDescription);
+    
     std::string id_;
 };
 

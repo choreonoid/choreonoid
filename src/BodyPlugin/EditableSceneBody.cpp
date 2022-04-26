@@ -438,11 +438,10 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
         
         onCollisionLinkHighlightModeChanged();
 
-        /*
+        //! This is a temporary code to support DeviceOverwriteItem.
         connections.add(
             bodyItem->sigModelUpdated().connect(
                 [&](){ updateModel(); }));
-        */
     }
 }
 

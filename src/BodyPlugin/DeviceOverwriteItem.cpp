@@ -4,6 +4,9 @@
 #include <cnoid/BodyItem>
 #include <cnoid/Body>
 #include <cnoid/Device>
+#include <cnoid/Camera>
+#include <cnoid/RangeCamera>
+#include <cnoid/RangeSensor>
 #include <cnoid/Archive>
 #include <cnoid/EigenArchive>
 #include <cnoid/MessageView>
@@ -32,6 +35,21 @@ public:
     virtual Item* getCorrespondingItem() override;
     virtual LocationProxyPtr getParentLocationProxy() const override;
     virtual SignalProxy<void()> sigLocationChanged() override;
+};
+
+class StdDeviceOverwriteMediator : public DeviceOverwriteMediator
+{
+public:
+    StdDeviceOverwriteMediator(
+        const std::function<Device*()>& factory,
+        const std::function<bool(Device* device, const Mapping* info)>& readDescription,
+        const std::function<bool(Device* device, Mapping* info)>& writeDescription);
+    virtual Device* restoreDevice(Body* body, Device* device = nullptr, const Mapping* info = nullptr) override;
+    virtual bool storeInformation(DeviceOverwriteItem* item, Mapping* info) override;
+private:
+    std::function<Device*()> factory;
+    std::function<bool(Device* device, const Mapping* info)> readDescription;
+    std::function<bool(Device* device, Mapping* info)> writeDescription;
 };
 
 }
@@ -69,140 +87,26 @@ public:
 }
 
 
-void DeviceOverwriteMediator::registerMediator
-(const std::string& deviceTypeName, DeviceOverwriteMediator* mediator)
-{
-    idToMediatorMap[mediator->id()][deviceTypeName] = mediator;
-}
-
-
-DeviceOverwriteMediator* DeviceOverwriteMediator::findMediator
-(const std::string& id, const std::string& deviceTypeName)
-{
-    auto p = idToMediatorMap.find(id);
-    if(p != idToMediatorMap.end()){
-        auto& mediatorMap = p->second;
-        auto q = mediatorMap.find(deviceTypeName);
-        if(q != mediatorMap.end()){
-            return q->second;
-        }
-    }
-    return nullptr;
-}
-
-
-DeviceOverwriteMediator::DeviceOverwriteMediator(const std::string& id)
-    : id_(id)
-{
-
-}
-
-
-Device* DeviceOverwriteMediator::findDevice(Body* body, const Mapping* info)
-{
-    if(!info){
-        return nullptr;
-    }
-    string type;
-    if(!info->read("device_type", type)){
-        return nullptr;
-    }
-    string name;
-    if(!info->read("original_device_name", name)){
-        info->read("device_name", name);
-    }
-    string linkName;
-    info->read("link_name", linkName);
-
-    int maxScore = 0;
-    Device* found = nullptr;
-    auto devices = body->devices();
-    for(auto& device : devices){
-        if(device->typeName() == type){
-            int score = 1;
-            if(device->name() == name){
-                score++;
-            }
-            if(device->link()->name() == linkName){
-                score++;
-            }
-            if(score > maxScore){
-                found = device;
-                maxScore = score;
-            }
-        }
-    }
-    return found;
-}
-
-
-DeviceOverwriteMediator::DeviceInfo DeviceOverwriteMediator::findOrCreateDevice
-(BodyItem* bodyItem, bool doCreateOverwriteItem)
-{
-    DeviceOverwriteItemPtr overwriteItem;
-    auto body = bodyItem->body();
-    DevicePtr device = findDevice(body, nullptr);
-    bool deviceFound;
-    if(device){
-        deviceFound = true;
-        overwriteItem = bodyItem->getAddon<BodyOverwriteAddon>()->findDeviceOverwriteItem(device);
-    } else {
-        deviceFound = false;
-        device = restoreDevice(body);
-        if(!doCreateOverwriteItem){
-            bodyItem->body()->addDevice(device, device->link());
-        }
-    }
-    if(overwriteItem || !doCreateOverwriteItem){
-        return DeviceInfo(device, overwriteItem, !deviceFound, false);
-    }
-    bool added = false;
-    overwriteItem = new DeviceOverwriteItem;
-    if(!device->name().empty()){
-        overwriteItem->setName(device->name());
-    } else {
-        overwriteItem->setName(device->typeName());
-    }
-    overwriteItem->setMediatorId(id_);
-    if(overwriteItem->setDevice(bodyItem, device, !deviceFound)){
-        added = bodyItem->addChildItem(overwriteItem);
-    }
-    if(!added){
-        overwriteItem.reset();
-    }
-    return DeviceInfo(device, overwriteItem, !deviceFound, true);
-}
-
-
-bool DeviceOverwriteMediator::restoreDeviceName(Device* device, const Mapping* info)
-{
-    string name;
-    if(info->read("device_name", name)){
-        device->setName(name);
-        return true;
-    }
-    return false;
-}
-
-
-bool DeviceOverwriteMediator::restoreDeviceLink(Device* device, const Mapping* info, Body* body)
-{
-    string name;
-    if(info->read("link_name", name)){
-        if(auto link = body->link(name)){
-            device->setLink(link);
-            return true;
-        }
-    }
-    return false;
-}
-
-
 void DeviceOverwriteItem::initializeClass(ExtensionManager* ext)
 {
     ItemManager& im = ext->itemManager();
     im.registerClass<DeviceOverwriteItem, BodyElementOverwriteItem>(N_("DeviceOverwriteItem"));
     im.addAlias<DeviceOverwriteItem>("DeviceOverwriteItem", "BodyEdit");
+
+    DeviceOverwriteMediator::registerStdMediator<Camera>(
+        "Camera",
+        [](Camera* device, const Mapping* info){ return device->readSpecifications(info); },
+        [](Camera* device, Mapping* info){ return device->writeSpecifications(info); });
+    
+    DeviceOverwriteMediator::registerStdMediator<RangeCamera>(
+        "RangeCamera",
+        [](RangeCamera* device, const Mapping* info){ return device->readSpecifications(info); },
+        [](RangeCamera* device, Mapping* info){ return device->writeSpecifications(info); });
+    
+    DeviceOverwriteMediator::registerStdMediator<RangeSensor>(
+        "RangeSensor",
+        [](RangeSensor* device, const Mapping* info){ return device->readSpecifications(info); },
+        [](RangeSensor* device, Mapping* info){ return device->writeSpecifications(info); });
 }
 
 
@@ -613,6 +517,8 @@ bool DeviceOverwriteItem::Impl::restore(const Archive& archive)
                         if(cnoid::readDegreeAngleAxis(archive, "rotation", aa)){
                             device->setLocalRotation(aa.matrix());
                         }
+                        // Temporary code to notify the EditableSceneBody object of the device update
+                        bodyItem->notifyModelUpdate();
                     }
                 }
             }
@@ -620,4 +526,187 @@ bool DeviceOverwriteItem::Impl::restore(const Archive& archive)
     }
 
     return restored;
+}
+
+
+void DeviceOverwriteMediator::registerMediator
+(const std::string& deviceTypeName, DeviceOverwriteMediator* mediator)
+{
+    idToMediatorMap[mediator->id()][deviceTypeName] = mediator;
+}
+
+
+void DeviceOverwriteMediator::registerStdMediator_
+(const std::string& deviceTypeName,
+ const std::function<Device*()>& factory,
+ const std::function<bool(Device* device, const Mapping* info)>& readDescription,
+ const std::function<bool(Device* device, Mapping* info)>& writeDescription)
+{
+    registerMediator(
+        deviceTypeName,
+        new StdDeviceOverwriteMediator(factory, readDescription, writeDescription));
+}
+
+
+DeviceOverwriteMediator* DeviceOverwriteMediator::findMediator
+(const std::string& id, const std::string& deviceTypeName)
+{
+    auto p = idToMediatorMap.find(id);
+    if(p != idToMediatorMap.end()){
+        auto& mediatorMap = p->second;
+        auto q = mediatorMap.find(deviceTypeName);
+        if(q != mediatorMap.end()){
+            return q->second;
+        }
+    }
+    return nullptr;
+}
+
+
+DeviceOverwriteMediator::DeviceOverwriteMediator(const std::string& id)
+    : id_(id)
+{
+
+}
+
+
+Device* DeviceOverwriteMediator::findDevice(Body* body, const Mapping* info)
+{
+    if(!info){
+        return nullptr;
+    }
+    string type;
+    if(!info->read("device_type", type)){
+        return nullptr;
+    }
+    string name;
+    if(!info->read("original_device_name", name)){
+        info->read("device_name", name);
+    }
+    string linkName;
+    info->read("link_name", linkName);
+
+    int maxScore = 0;
+    Device* found = nullptr;
+    auto devices = body->devices();
+    for(auto& device : devices){
+        if(device->typeName() == type){
+            int score = 1;
+            if(device->name() == name){
+                score++;
+            }
+            if(device->link()->name() == linkName){
+                score++;
+            }
+            if(score > maxScore){
+                found = device;
+                maxScore = score;
+            }
+        }
+    }
+    return found;
+}
+
+
+DeviceOverwriteMediator::DeviceInfo DeviceOverwriteMediator::findOrCreateDevice
+(BodyItem* bodyItem, bool doCreateOverwriteItem)
+{
+    DeviceOverwriteItemPtr overwriteItem;
+    auto body = bodyItem->body();
+    DevicePtr device = findDevice(body, nullptr);
+    bool deviceFound;
+    if(device){
+        deviceFound = true;
+        overwriteItem = bodyItem->getAddon<BodyOverwriteAddon>()->findDeviceOverwriteItem(device);
+    } else {
+        deviceFound = false;
+        device = restoreDevice(body);
+        if(!doCreateOverwriteItem){
+            bodyItem->body()->addDevice(device, device->link());
+        }
+    }
+    if(overwriteItem || !doCreateOverwriteItem){
+        return DeviceInfo(device, overwriteItem, !deviceFound, false);
+    }
+    bool added = false;
+    overwriteItem = new DeviceOverwriteItem;
+    if(!device->name().empty()){
+        overwriteItem->setName(device->name());
+    } else {
+        overwriteItem->setName(device->typeName());
+    }
+    overwriteItem->setMediatorId(id_);
+    if(overwriteItem->setDevice(bodyItem, device, !deviceFound)){
+        added = bodyItem->addChildItem(overwriteItem);
+    }
+    if(!added){
+        overwriteItem.reset();
+    }
+    return DeviceInfo(device, overwriteItem, !deviceFound, true);
+}
+
+
+bool DeviceOverwriteMediator::restoreDeviceName(Device* device, const Mapping* info)
+{
+    string name;
+    if(info->read("device_name", name)){
+        device->setName(name);
+        return true;
+    }
+    return false;
+}
+
+
+bool DeviceOverwriteMediator::restoreDeviceLink(Device* device, const Mapping* info, Body* body)
+{
+    string name;
+    if(info->read("link_name", name)){
+        if(auto link = body->link(name)){
+            device->setLink(link);
+            return true;
+        }
+    }
+    return false;
+}
+
+
+StdDeviceOverwriteMediator::StdDeviceOverwriteMediator
+(const std::function<Device*()>& factory,
+ const std::function<bool(Device* device, const Mapping* info)>& readDescription,
+ const std::function<bool(Device* device, Mapping* info)>& writeDescription)
+    : DeviceOverwriteMediator("std"),
+      factory(factory),
+      readDescription(readDescription),
+      writeDescription(writeDescription)
+{
+
+}
+
+
+Device* StdDeviceOverwriteMediator::restoreDevice(Body* body, Device* device, const Mapping* info)
+{
+    if(!info){
+        device = nullptr;
+    } else {
+        if(!device){
+            device = factory();
+        }
+        restoreDeviceName(device, info);
+        if(!restoreDeviceLink(device, info, body)){
+            device = nullptr;
+        }
+        if(device){
+            if(!readDescription(device, info)){
+                device = nullptr;
+            }
+        }
+    }
+
+    return device;
+}
+
+
+bool StdDeviceOverwriteMediator::storeInformation(DeviceOverwriteItem* item, Mapping* info)
+{
+    return writeDescription(item->device(), info);
 }
