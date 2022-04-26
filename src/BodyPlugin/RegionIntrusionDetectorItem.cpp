@@ -330,6 +330,7 @@ void RegionIntrusionDetectorItem::Impl::createRegionMarker()
     material->setDiffuseColor(Vector3f(1.0f, 0.0f, 0.0f));
 
     markerTransform = new SgPosTransform(regionOffset);
+    markerTransform->setAttribute(SgObject::MetaScene);
     markerTransform->addChild(markerLineSet);
 }
 

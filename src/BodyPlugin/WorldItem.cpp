@@ -173,6 +173,7 @@ void WorldItem::Impl::init()
     bodyCollisionDetector.setGeometryHandleMapEnabled(true);
     collisions = std::make_shared<vector<CollisionLinkPairPtr>>();
     sceneCollision = new SceneCollision(collisions);
+    sceneCollision->setAttribute(SgObject::MetaScene);
     sceneCollision->setName("Collisions");
     defaultMaterialTableTimestamp = 0;
     needToUpdateCollisionsLater = false;

@@ -42,8 +42,11 @@ public:
         return static_cast<SgObject*>(doClone(&cloneMap));
     }
 
-    static bool checkNonNodeCloning(const CloneMap& cloneMap);
     static void setNonNodeCloning(CloneMap& cloneMap, bool on);
+    static bool checkNonNodeCloning(const CloneMap& cloneMap);
+
+    static bool checkMetaSceneCloning(const CloneMap& cloneMap);
+    static void setMetaSceneCloning(CloneMap& cloneMap, bool on);
 
     enum Attribute {
         Node = 1 << 0,
@@ -55,7 +58,8 @@ public:
         NodeDecoration = 1 << 6,
         Marker = 1 << 7,
         Operable = 1 << 8,
-        MaxAttributeBit = 9,
+        MetaScene = 1 << 9,
+        MaxAttributeBit = 10,
 
         // deprecated
         GroupAttribute = GroupNode,

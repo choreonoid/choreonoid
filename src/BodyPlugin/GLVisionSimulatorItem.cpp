@@ -505,6 +505,8 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
     */
     SgObject::setNonNodeCloning(cloneMap, true);
 
+    SgObject::setMetaSceneCloning(cloneMap, false);
+    
     std::set<string> bodyNameSet;
     for(size_t i=0; i < bodyNames.size(); ++i){
         bodyNameSet.insert(bodyNames[i]);
@@ -785,8 +787,12 @@ SensorScenePtr SensorRenderer::createSensorScene(const vector<SimulationBody*>& 
             for(auto& item : worldItem->descendantItems()){
                 auto renderable = dynamic_cast<RenderableItem*>(item.get());
                 if(renderable && !dynamic_cast<BodyItem*>(item.get())){
-                    if(auto node = renderable->getScene()->cloneNode(simImpl->cloneMap)){
-                        scene->root->addChild(node);
+                    if(auto node = renderable->getScene()){
+                        if(!node->hasAttribute(SgObject::MetaScene)){
+                            if(auto clone = node->cloneNode(simImpl->cloneMap)){
+                                scene->root->addChild(clone);
+                            }
+                        }
                     }
                 }
             }

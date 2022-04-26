@@ -201,6 +201,7 @@ class PointCloudVisualizerItem : public PointSetItem, public SensorVisualizerIte
 public:
     PointCloudVisualizerItem();
     void setBodyItem(BodyItem* bodyItem, RangeCamera* rangeCamera);
+    virtual SgNode* getScene() override;
     virtual void enableVisualization(bool on) override;
     virtual void doUpdateVisualization() override;
     void updateSensorPosition(bool doNitfy);
@@ -216,6 +217,7 @@ class RangeSensorVisualizerItem : public PointSetItem, public SensorVisualizerIt
 public:
     RangeSensorVisualizerItem();
     void setBodyItem(BodyItem* bodyItem, RangeSensor* rangeSensor);
+    virtual SgNode* getScene() override;
     virtual void enableVisualization(bool on) override;
     virtual void doUpdateVisualization() override;
     void updateSensorPosition(bool doNitfy);
@@ -496,6 +498,7 @@ SgNode* Vector3SensorVisualizerItem::getScene()
 {
     if(!scene){
         scene = new SgGroup;
+        scene->setAttribute(SgObject::MetaScene);
     }
     return scene;
 }
@@ -754,6 +757,14 @@ void PointCloudVisualizerItem::setBodyItem(BodyItem* bodyItem, RangeCamera* rang
 }
 
 
+SgNode* PointCloudVisualizerItem::getScene()
+{
+    auto node = PointSetItem::getScene();
+    node->setAttribute(SgObject::MetaScene);
+    return node;
+}
+
+
 void PointCloudVisualizerItem::enableVisualization(bool on)
 {
     connections.disconnect();
@@ -835,6 +846,14 @@ void RangeSensorVisualizerItem::setBodyItem(BodyItem* bodyItem, RangeSensor* ran
     this->rangeSensor = rangeSensor;
 
     SensorVisualizerItemBase::setBodyItem(bodyItem);
+}
+
+
+SgNode* RangeSensorVisualizerItem::getScene()
+{
+    auto node = PointSetItem::getScene();
+    node->setAttribute(SgObject::MetaScene);
+    return node;
 }
 
 

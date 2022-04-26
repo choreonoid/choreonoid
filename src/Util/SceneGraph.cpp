@@ -23,6 +23,7 @@ namespace {
 
 // Id to access the correspondingCloneMap flag
 CloneMap::FlagId DisableNonNodeCloning("SgObjectDisableNonNodeCloning");
+CloneMap::FlagId DisableMetaSceneCloning("SgObjectDisableMetaSceneCloning");
 
 const BoundingBox emptyBoundingBox;
 
@@ -53,15 +54,27 @@ Referenced* SgObject::doClone(CloneMap*) const
 }
 
 
+void SgObject::setNonNodeCloning(CloneMap& cloneMap, bool on)
+{
+    cloneMap.setFlag(DisableNonNodeCloning, !on);
+}
+
+
 bool SgObject::checkNonNodeCloning(const CloneMap& cloneMap)
 {
     return !cloneMap.flag(DisableNonNodeCloning);
 }
 
 
-void SgObject::setNonNodeCloning(CloneMap& cloneMap, bool on)
+void SgObject::setMetaSceneCloning(CloneMap& cloneMap, bool on)
 {
-    cloneMap.setFlag(DisableNonNodeCloning, !on);
+    cloneMap.setFlag(DisableMetaSceneCloning, !on);
+}
+
+
+bool SgObject::checkMetaSceneCloning(const CloneMap& cloneMap)
+{
+    return !cloneMap.flag(DisableMetaSceneCloning);
 }
 
 
@@ -335,8 +348,16 @@ SgGroup::SgGroup(const SgGroup& org, CloneMap* cloneMap)
 
     if(cloneMap){
         // deep copy
-        for(auto& child : org){
-            addChild(cloneMap->getClone<SgNode>(child));
+        if(checkMetaSceneCloning(*cloneMap)){
+            for(auto& child : org){
+                addChild(cloneMap->getClone<SgNode>(child));
+            }
+        } else {
+            for(auto& child : org){
+                if(!child->hasAttribute(MetaScene)){
+                    addChild(cloneMap->getClone<SgNode>(child));
+                }
+            }
         }
     } else {
         // shallow copy
