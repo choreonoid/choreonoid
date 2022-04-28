@@ -29,6 +29,7 @@ public:
         std::function<void()> callbackOnPositionInputFinished = nullptr);
     [[deprecated("Use setCallbacks")]]
     void setPositionCallback(std::function<bool(const Isometry3& T)> callback);
+    const Isometry3& currentPosition() const;
     void clearPosition();
     void refreshPosition();
     void applyPositionInput();

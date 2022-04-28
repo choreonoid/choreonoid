@@ -442,6 +442,12 @@ void PositionWidget::setPositionCallback(std::function<bool(const Isometry3& T)>
 }
 
 
+const Isometry3& PositionWidget::currentPosition() const
+{
+    return impl->T_last;
+}
+
+
 void PositionWidget::Impl::setRpyEnabled(bool on)
 {
     if(on != isRpyEnabled){
