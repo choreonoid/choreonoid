@@ -92,6 +92,7 @@ LinkShapeOverwriteItem::Impl::Impl(LinkShapeOverwriteItem* self)
 LinkShapeOverwriteItem::LinkShapeOverwriteItem(const LinkShapeOverwriteItem& org)
     : BodyElementOverwriteItem(org)
 {
+    setAttribute(Item::Attached);
     impl = new Impl(this, *org.impl);
 }
 

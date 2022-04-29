@@ -20,7 +20,6 @@ void BodyElementOverwriteItem::initializeClass(ExtensionManager* ext)
 
 BodyElementOverwriteItem::BodyElementOverwriteItem()
 {
-    setAttribute(Item::Attached);
     bodyItem_ = nullptr;
     newBodyItem_ = nullptr;
     isNewBodyItemValid = false;

@@ -141,6 +141,7 @@ public:
     void insertEffectGroup(SgGroup* effect, SgUpdateRef update);
     bool removeEffectGroup(SgGroup* parent, SgGroupPtr effect, SgUpdateRef update);
     void cloneShape(CloneMap& cloneMap);
+    void clearSceneDevices();
     void setTransparency(float transparency, SgUpdateRef update = SgUpdateRef());
 };
 
@@ -154,6 +155,7 @@ public:
 
     SceneBodyImpl(SceneBody* self);
     void cloneShape(CloneMap& cloneMap);
+    void clearSceneDevices();    
 };
 
 }
@@ -284,6 +286,39 @@ void SceneLink::setVisible(bool on)
 }
 
 
+void SceneLink::addSceneDevice(SceneDevice* sdev)
+{
+    if(!impl->deviceGroup){
+        impl->deviceGroup = new SgGroup;
+        addChild(impl->deviceGroup);
+    }
+    impl->sceneDevices.push_back(sdev);
+    impl->deviceGroup->addChild(sdev);
+}
+
+
+SceneDevice* SceneLink::getSceneDevice(Device* device)
+{
+    auto& devices = impl->sceneDevices;
+    for(size_t i=0; i < devices.size(); ++i){
+        SceneDevice* sdev = devices[i];
+        if(sdev->device() == device){
+            return sdev;
+        }
+    }
+    return nullptr;
+}
+
+
+void SceneLinkImpl::clearSceneDevices()
+{
+    sceneDevices.clear();
+    if(deviceGroup){
+        deviceGroup->clearChildren();
+    }
+}    
+
+
 float SceneLink::transparency() const
 {
     if(!impl->transparentGroup && impl->transparentGroup->hasParents()){
@@ -327,30 +362,6 @@ void SceneLink::makeTransparent(float transparency)
 {
     SgUpdate update;
     setTransparency(transparency, update);
-}
-
-
-void SceneLink::addSceneDevice(SceneDevice* sdev)
-{
-    if(!impl->deviceGroup){
-        impl->deviceGroup = new SgGroup;
-        addChild(impl->deviceGroup);
-    }
-    impl->sceneDevices.push_back(sdev);
-    impl->deviceGroup->addChild(sdev);
-}
-
-
-SceneDevice* SceneLink::getSceneDevice(Device* device)
-{
-    auto& devices = impl->sceneDevices;
-    for(size_t i=0; i < devices.size(); ++i){
-        SceneDevice* sdev = devices[i];
-        if(sdev->device() == device){
-            return sdev;
-        }
-    }
-    return nullptr;
 }
 
 
@@ -415,7 +426,7 @@ void SceneBody::updateSceneModel()
 
 void SceneBody::updateSceneDeviceModels(bool doNotify)
 {
-    impl->sceneDevices.clear();
+    impl->clearSceneDevices();
     for(auto& device : body_->devices()){
         if(auto sceneDevice = SceneDevice::create(device)){
             sceneLinks_[device->link()->index()]->addSceneDevice(sceneDevice);
@@ -455,6 +466,15 @@ void SceneBody::updateLinkPositions(SgUpdate& update)
         SceneLinkPtr& sLink = sceneLinks_[i];
         sLink->setPosition(sLink->link()->position());
         sLink->notifyUpdate(update);
+    }
+}
+
+
+void SceneBodyImpl::clearSceneDevices()
+{
+    sceneDevices.clear();
+    for(auto& sceneLink : self->sceneLinks_){
+        sceneLink->impl->clearSceneDevices();
     }
 }
 

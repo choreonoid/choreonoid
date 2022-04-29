@@ -113,7 +113,6 @@ void DeviceOverwriteItem::initializeClass(ExtensionManager* ext)
 DeviceOverwriteItem::DeviceOverwriteItem()
 {
     impl = new Impl(this);
-    setAttribute(Item::Attached);
 }
 
 
@@ -300,6 +299,7 @@ void DeviceOverwriteItem::onDisconnectedFromBodyItem()
         bodyItem()->body()->removeDevice(impl->device);
     }
     bodyOverwrite()->removeDeviceOverwriteItem(this);
+    bodyItem()->notifyModelUpdate(BodyItem::DeviceSetUpdate);
     impl->clear();
 }
 
@@ -630,6 +630,7 @@ DeviceOverwriteMediator::DeviceInfo DeviceOverwriteMediator::findOrCreateDevice
     }
     bool added = false;
     overwriteItem = new DeviceOverwriteItem;
+    overwriteItem->setAttribute(Item::Attached);
     if(!device->name().empty()){
         overwriteItem->setName(device->name());
     } else {

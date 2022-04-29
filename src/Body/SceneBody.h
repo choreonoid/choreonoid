@@ -39,19 +39,21 @@ public:
     void removeEffectGroup(SgGroup* effect, SgUpdateRef update = SgUpdateRef());
     
     void setVisible(bool on);
+
+    void addSceneDevice(SceneDevice* sdev);
+    SceneDevice* getSceneDevice(Device* device);
+
     float transparency() const;
     void setTransparency(float transparency, SgUpdateRef update = SgUpdateRef());
     //! \deprecated. Use setTransparency.
     void makeTransparent(float transparency);
     
-    void addSceneDevice(SceneDevice* sdev);
-    SceneDevice* getSceneDevice(Device* device);
-
 private:
     Link* link_;
     SceneLinkImpl* impl;
     SceneBody* sceneBody_;
     friend class SceneBody;
+    friend class SceneBodyImpl;
 };
 
 typedef ref_ptr<SceneLink> SceneLinkPtr;
@@ -105,6 +107,7 @@ private:
     std::vector<SceneLinkPtr> sceneLinks_;
     SceneBodyImpl* impl;
 
+    friend class SceneBodyImpl;
     friend class SceneLink;
 };
             
