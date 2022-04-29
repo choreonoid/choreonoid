@@ -385,11 +385,11 @@ void SceneBody::setBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFa
     body_ = body;
     impl->sceneLinkFactory = sceneLinkFactory;
     addChild(impl->sceneLinkGroup);
-    updateModel();
+    updateSceneModel();
 }
 
 
-void SceneBody::updateModel()
+void SceneBody::updateSceneModel()
 {
     setName(body_->name());
 
@@ -397,7 +397,6 @@ void SceneBody::updateModel()
         impl->sceneLinkGroup->clearChildren();
         sceneLinks_.clear();
     }
-    impl->sceneDevices.clear();
         
     const int n = body_->numLinks();
     for(int i=0; i < n; ++i){
@@ -406,20 +405,28 @@ void SceneBody::updateModel()
         impl->sceneLinkGroup->addChild(sLink);
         sceneLinks_.push_back(sLink);
     }
+    updateLinkPositions();
 
-    const DeviceList<Device>& devices = body_->devices();
-    for(size_t i=0; i < devices.size(); ++i){
-        Device* device = devices[i];
-        SceneDevice* sceneDevice = SceneDevice::create(device);
-        if(sceneDevice){
+    updateSceneDeviceModels(false);
+    
+    notifyUpdate(SgUpdate::REMOVED | SgUpdate::ADDED | SgUpdate::MODIFIED);
+}
+
+
+void SceneBody::updateSceneDeviceModels(bool doNotify)
+{
+    impl->sceneDevices.clear();
+    for(auto& device : body_->devices()){
+        if(auto sceneDevice = SceneDevice::create(device)){
             sceneLinks_[device->link()->index()]->addSceneDevice(sceneDevice);
             impl->sceneDevices.push_back(sceneDevice);
         }
     }
-
-    updateLinkPositions();
     updateSceneDevices(0.0);
-    notifyUpdate(SgUpdate::REMOVED | SgUpdate::ADDED | SgUpdate::MODIFIED);
+
+    if(doNotify){
+        notifyUpdate(SgUpdate::REMOVED | SgUpdate::ADDED | SgUpdate::MODIFIED);
+    }
 }
 
 

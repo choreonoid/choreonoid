@@ -158,7 +158,7 @@ public:
             
     EditableSceneBodyPtr sceneBody;
     float transparency;
-    Signal<void()> sigModelUpdated;
+    Signal<void(int flags)> sigModelUpdated;
 
     LeggedBodyHelperPtr legged;
     Vector3 zmp;
@@ -584,15 +584,15 @@ SignalProxy<void()> BodyItem::sigKinematicStateUpdated()
 }
 
 
-SignalProxy<void()> BodyItem::sigModelUpdated()
+SignalProxy<void(int flags)> BodyItem::sigModelUpdated()
 {
     return impl->sigModelUpdated;
 }
 
 
-void BodyItem::notifyModelUpdate()
+void BodyItem::notifyModelUpdate(int flags)
 {
-    impl->sigModelUpdated();
+    impl->sigModelUpdated(flags);
 }
 
 

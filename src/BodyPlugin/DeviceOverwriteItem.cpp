@@ -517,8 +517,8 @@ bool DeviceOverwriteItem::Impl::restore(const Archive& archive)
                         if(cnoid::readDegreeAngleAxis(archive, "rotation", aa)){
                             device->setLocalRotation(aa.matrix());
                         }
-                        // Temporary code to notify the EditableSceneBody object of the device update
-                        bodyItem->notifyModelUpdate();
+
+                        bodyItem->notifyModelUpdate(BodyItem::DeviceSetUpdate | BodyItem::DeviceSpecUpdate);
                     }
                 }
             }

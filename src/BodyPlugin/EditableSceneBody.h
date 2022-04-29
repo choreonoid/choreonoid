@@ -56,7 +56,7 @@ public:
     EditableSceneLink* editableSceneLink(int index);
     void setLinkVisibilities(const std::vector<bool>& visibilities);
 
-    virtual void updateModel() override;
+    virtual void updateSceneModel() override;
 
     virtual void onSceneModeChanged(SceneWidgetEvent* event) override;
     virtual bool onButtonPressEvent(SceneWidgetEvent* event) override;

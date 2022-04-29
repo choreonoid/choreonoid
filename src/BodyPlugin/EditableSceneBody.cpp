@@ -133,7 +133,7 @@ public:
     }
 
     void onSceneGraphConnection(bool on);
-    void updateModel();
+    void updateSceneModel();
     void onSelectionChanged(bool on);
     void onKinematicStateChanged();
     void onCollisionsUpdated();
@@ -441,18 +441,22 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
         //! This is a temporary code to support DeviceOverwriteItem.
         connections.add(
             bodyItem->sigModelUpdated().connect(
-                [&](){ updateModel(); }));
+                [this](int flags){
+                    if(flags & (BodyItem::DeviceSetUpdate | BodyItem::DeviceSpecUpdate)){
+                        self->updateSceneDeviceModels(true);
+                    }
+                }));
     }
 }
 
 
-void EditableSceneBody::updateModel()
+void EditableSceneBody::updateSceneModel()
 {
-    impl->updateModel();
+    impl->updateSceneModel();
 }
 
 
-void EditableSceneBody::Impl::updateModel()
+void EditableSceneBody::Impl::updateSceneModel()
 {
     pointedSceneLink = nullptr;
     targetLink = nullptr;
@@ -464,7 +468,7 @@ void EditableSceneBody::Impl::updateModel()
     isDragging = false;
     dragged = false;
     
-    self->SceneBody::updateModel();
+    self->SceneBody::updateSceneModel();
 }
 
 

@@ -104,10 +104,14 @@ public:
     std::shared_ptr<PinDragIK> checkPinDragIK();
     std::shared_ptr<PenetrationBlocker> createPenetrationBlocker(Link* link, bool excludeSelfCollisions = false);
 
-    [[deprecated("Create a new BodyItem and use Item::replace to update the model.")]]
-    SignalProxy<void()> sigModelUpdated();
-    [[deprecated("Create a new BodyItem and use Item::replace to update the model.")]]
-    void notifyModelUpdate();
+    enum ModelUpdateFlag {
+        LinkSetUpdate = 1 << 0,
+        DeviceSetUpdate = 1 << 1,
+        DeviceSpecUpdate = 1 << 2,
+        ShapeUpdate = 1 << 3
+    };
+    SignalProxy<void(int flags)> sigModelUpdated();
+    void notifyModelUpdate(int flags);
         
     /**
        This signal is emitted when there is a change in "kinematic" state such as joint angle of robot,

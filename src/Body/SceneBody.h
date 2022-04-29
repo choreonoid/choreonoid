@@ -86,15 +86,16 @@ public:
 
     void setTransparency(float transparency);
 
-    //! \deprecated. Use setTransparency.
-    void makeTransparent(float transparency);
-    //! \deprecated. Use setTransparency.
-    void makeTransparent(float transparency, CloneMap& cloneMap);
-
     void insertEffectGroup(SgGroup* effect, SgUpdateRef update = SgUpdateRef());
     void removeEffectGroup(SgGroup* effect, SgUpdateRef update = SgUpdateRef());
 
-    virtual void updateModel();
+    virtual void updateSceneModel();
+    void updateSceneDeviceModels(bool doNotify);
+
+    [[deprecated("Use setTransparency.")]]
+    void makeTransparent(float transparency);
+    [[deprecated("Use setTransparency.")]]
+    void makeTransparent(float transparency, CloneMap& cloneMap);
 
 protected:
     void setBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFactory);
