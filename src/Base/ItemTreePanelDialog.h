@@ -52,7 +52,6 @@ public:
 
 protected:
     virtual void onCurrentItemChanged(Item* item);
-    virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void hideEvent(QHideEvent* event) override;
 
 private:

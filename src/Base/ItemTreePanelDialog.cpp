@@ -144,7 +144,7 @@ ItemTreePanelDialog::ItemTreePanelDialog(QWidget* parent, Qt::WindowFlags f)
 ItemTreePanelDialog::Impl::Impl(ItemTreePanelDialog* self)
     : self(self)
 {
-
+    self->setEnterKeyClosePreventionMode(true);
 }
 
 
@@ -500,18 +500,6 @@ void ItemTreePanelDialog::Impl::clear()
     itemTreeWidget.setRootItem(nullptr);
     deactivateCurrentPanel(true);
     topItem.reset();
-}
-
-
-void ItemTreePanelDialog::keyPressEvent(QKeyEvent* event)
-{
-    int key = event->key();
-    // Prevent the dialog from closing when the enter key is pressed on a child widget
-    if(key == Qt::Key_Return || key == Qt::Key_Enter){
-        event->ignore();
-    } else {
-        QDialog::keyPressEvent(event);
-    }
 }
 
 

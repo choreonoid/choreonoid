@@ -5,6 +5,7 @@
 #include "Dialog.h"
 #include "MainWindow.h"
 #include <QStyle>
+#include <QKeyEvent>
 
 using namespace cnoid;
 
@@ -32,14 +33,21 @@ Dialog::Dialog(QWidget* parent, Qt::WindowFlags f)
 
 void Dialog::initialize()
 {
+    connect(this, (void(QDialog::*)(int)) &QDialog::finished,
+            [this](int result){ onFinished(result); sigFinished_(result); });
     connect(this, (void(QDialog::*)()) &QDialog::accepted,
             [this](){ onAccepted(); sigAccepted_(); });
-    connect(this, (void(QDialog::*)(int)) &QDialog::finished,
-            [this](int result){ sigFinished_(result); });
     connect(this, (void(QDialog::*)()) &QDialog::rejected,
             [this](){ onRejected(); sigRejected_(); });
 
     isWindowPositionKeepingMode_ = false;
+    isEnterKeyClosePreventionMode_ = false;
+}
+
+
+void Dialog::onFinished(int /* result */)
+{
+
 }
 
 
@@ -52,12 +60,6 @@ void Dialog::onAccepted()
 void Dialog::onRejected()
 {
 
-}
-
-
-void Dialog::setWindowPositionKeepingMode(bool on)
-{
-    isWindowPositionKeepingMode_ = on;
 }
 
 
@@ -75,6 +77,20 @@ void Dialog::hideEvent(QHideEvent* event)
 {
     lastWindowPosition_ = geometry();
     QDialog::hideEvent(event);
+}
+
+
+void Dialog::keyPressEvent(QKeyEvent* event)
+{
+    if(isEnterKeyClosePreventionMode_){
+        // Prevent the dialog from closing when the enter key is pressed on a child widget
+        int key = event->key();
+        if(key == Qt::Key_Return || key == Qt::Key_Enter){
+            return;
+        }
+    }
+            
+    QDialog::keyPressEvent(event);
 }
 
 
