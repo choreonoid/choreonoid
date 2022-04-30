@@ -13,7 +13,6 @@
 namespace cnoid {
 
 class SceneBody;
-class SceneLinkImpl;
 
 class CNOID_EXPORT SceneLink : public SgPosTransform
 {
@@ -50,16 +49,17 @@ public:
     
 private:
     Link* link_;
-    SceneLinkImpl* impl;
     SceneBody* sceneBody_;
+
+    class Impl;
+    Impl* impl;
+    
     friend class SceneBody;
-    friend class SceneBodyImpl;
 };
 
 typedef ref_ptr<SceneLink> SceneLinkPtr;
 
-class SceneBodyImpl;
-    
+
 class CNOID_EXPORT SceneBody : public SgPosTransform
 {
 public:
@@ -105,9 +105,10 @@ protected:
 private:
     BodyPtr body_;
     std::vector<SceneLinkPtr> sceneLinks_;
-    SceneBodyImpl* impl;
 
-    friend class SceneBodyImpl;
+    class Impl;
+    Impl* impl;
+
     friend class SceneLink;
 };
             

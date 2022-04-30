@@ -125,11 +125,11 @@ struct NodeClassRegistration {
 
 namespace cnoid {
 
-class SceneLinkImpl
+class SceneLink::Impl
 {
 public:
     SceneLink* self;
-    SceneBodyImpl* sceneBodyImpl;
+    SceneBody::Impl* sceneBodyImpl;
     LinkShapeGroupPtr mainShapeGroup;
     SgGroupPtr topShapeGroup;
     bool isVisible;
@@ -137,7 +137,7 @@ public:
     SgGroupPtr deviceGroup;
     SgTransparentGroupPtr transparentGroup;
 
-    SceneLinkImpl(SceneLink* self, Link* link);
+    Impl(SceneLink* self, Link* link);
     void insertEffectGroup(SgGroup* effect, SgUpdateRef update);
     bool removeEffectGroup(SgGroup* parent, SgGroupPtr effect, SgUpdateRef update);
     void cloneShape(CloneMap& cloneMap);
@@ -145,7 +145,7 @@ public:
     void setTransparency(float transparency, SgUpdateRef update = SgUpdateRef());
 };
 
-class SceneBodyImpl
+class SceneBody::Impl
 {
 public:
     SceneBody* self;
@@ -153,7 +153,7 @@ public:
     std::vector<SceneDevicePtr> sceneDevices;
     std::function<SceneLink*(Link*)> sceneLinkFactory;
 
-    SceneBodyImpl(SceneBody* self);
+    Impl(SceneBody* self);
     void cloneShape(CloneMap& cloneMap);
     void clearSceneDevices();    
 };
@@ -166,12 +166,12 @@ SceneLink::SceneLink(SceneBody* sceneBody, Link* link)
     link_ = link;
     sceneBody_ = sceneBody;
     setName(link->name());
-    impl = new SceneLinkImpl(this, link);
+    impl = new Impl(this, link);
     impl->sceneBodyImpl = sceneBody_->impl;
 }
 
 
-SceneLinkImpl::SceneLinkImpl(SceneLink* self, Link* link)
+SceneLink::Impl::Impl(SceneLink* self, Link* link)
     : self(self)
 {
     mainShapeGroup = new LinkShapeGroup(link);
@@ -217,7 +217,7 @@ void SceneLink::insertEffectGroup(SgGroup* effect, SgUpdateRef update)
 }
 
 
-void SceneLinkImpl::insertEffectGroup(SgGroup* effect, SgUpdateRef update)
+void SceneLink::Impl::insertEffectGroup(SgGroup* effect, SgUpdateRef update)
 {
     self->removeChild(topShapeGroup);
     effect->addChild(topShapeGroup);
@@ -235,7 +235,7 @@ void SceneLink::removeEffectGroup(SgGroup* effect, SgUpdateRef update)
 }
 
 
-bool SceneLinkImpl::removeEffectGroup(SgGroup* parent, SgGroupPtr effect, SgUpdateRef update)
+bool SceneLink::Impl::removeEffectGroup(SgGroup* parent, SgGroupPtr effect, SgUpdateRef update)
 {
     if(parent == mainShapeGroup){
         return false;
@@ -274,7 +274,7 @@ bool SceneLinkImpl::removeEffectGroup(SgGroup* parent, SgGroupPtr effect, SgUpda
 }
 
 
-void SceneLinkImpl::cloneShape(CloneMap& cloneMap)
+void SceneLink::Impl::cloneShape(CloneMap& cloneMap)
 {
     mainShapeGroup->cloneShapes(cloneMap);
 }
@@ -310,7 +310,7 @@ SceneDevice* SceneLink::getSceneDevice(Device* device)
 }
 
 
-void SceneLinkImpl::clearSceneDevices()
+void SceneLink::Impl::clearSceneDevices()
 {
     sceneDevices.clear();
     if(deviceGroup){
@@ -334,7 +334,7 @@ void SceneLink::setTransparency(float transparency, SgUpdateRef update)
 }
 
 
-void SceneLinkImpl::setTransparency(float transparency, SgUpdateRef update)
+void SceneLink::Impl::setTransparency(float transparency, SgUpdateRef update)
 {
     if(!transparentGroup){
         transparentGroup = new SgTransparentGroup;
@@ -367,18 +367,18 @@ void SceneLink::makeTransparent(float transparency)
 
 SceneBody::SceneBody()
 {
-    impl = new SceneBodyImpl(this);
+    impl = new Impl(this);
 }
 
 
 SceneBody::SceneBody(Body* body)
 {
-    impl = new SceneBodyImpl(this);
+    impl = new Impl(this);
     setBody(body, [this](Link* link){ return new SceneLink(this, link); });
 }
 
 
-SceneBodyImpl::SceneBodyImpl(SceneBody* self)
+SceneBody::Impl::Impl(SceneBody* self)
     : self(self)
 {
     sceneLinkGroup = new SgGroup;
@@ -470,7 +470,7 @@ void SceneBody::updateLinkPositions(SgUpdate& update)
 }
 
 
-void SceneBodyImpl::clearSceneDevices()
+void SceneBody::Impl::clearSceneDevices()
 {
     sceneDevices.clear();
     for(auto& sceneLink : self->sceneLinks_){
