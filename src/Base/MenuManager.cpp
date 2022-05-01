@@ -110,6 +110,19 @@ QAction* MenuManager::findItem(const QString& path)
     return item;
 }
 
+
+QAction* MenuManager::findItem(const std::string& path)
+{
+    return findItem(QString(path.c_str()));
+}
+
+
+QAction* MenuManager::findItem(const char* path)
+{
+    return findItem(QString(path));
+}
+
+
 void MenuManager::findPath
 (const QString& path, bool createPath, QAction*& out_item, QWidget*& out_menu, QWidget*& out_upperMenu)
 {
@@ -194,6 +207,18 @@ MenuManager& MenuManager::setPath(const QString& path)
     isBackwardMode = false;
 
     return *this;
+}
+
+
+MenuManager& MenuManager::setPath(const std::string& path)
+{
+    return setPath(QString(path.c_str()));
+}
+
+
+MenuManager& MenuManager::setPath(const char* path)
+{
+    return setPath(QString(path));
 }
 
 

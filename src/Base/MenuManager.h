@@ -7,6 +7,7 @@
 
 #include "Action.h"
 #include "Menu.h"
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -38,7 +39,11 @@ public:
     int numItems() const;
 
     QAction* findItem(const QString& path);
+    QAction* findItem(const std::string& path);
+    QAction* findItem(const char* path);
     MenuManager& setPath(const QString& path);
+    MenuManager& setPath(const std::string& path);
+    MenuManager& setPath(const char* path);
     MenuManager& setBackwardMode();
 
     Action* addItem(const QString& text);
