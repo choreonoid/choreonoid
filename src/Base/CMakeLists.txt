@@ -311,7 +311,6 @@ set(qtheaders
   ButtonGroup.h
   CheckBox.h
   ComboBox.h
-  LineEdit.h
   ImageWidget.h
   TreeView.h
   TreeWidget.h

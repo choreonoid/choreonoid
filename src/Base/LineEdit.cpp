@@ -10,70 +10,78 @@ using namespace cnoid;
 LineEdit::LineEdit(QWidget* parent)
     : QLineEdit(parent)
 {
-    initialize();
+
 }
 
 
 LineEdit::LineEdit(const QString& contents, QWidget* parent)
     : QLineEdit(contents, parent)
 {
-    initialize();
+
 }
 
 
-void LineEdit::initialize()
+SignalProxy<void(int oldpos, int newpos)> LineEdit::sigCursorPositoinChanged()
 {
-    connect(this, SIGNAL(cursorPositionChanged(int, int)),
-            this, SLOT(onCursorPositionChanged(int, int)));
-    
-    connect(this, SIGNAL(editingFinished()),
-            this, SLOT(onEditingFinished()));
-
-    connect(this, SIGNAL(returnPressed()),
-            this, SLOT(onReturnPressed()));
-
-    connect(this, SIGNAL(selectionChanged()),
-            this, SLOT(onSelectionChanged()));
-
-    connect(this, SIGNAL(textChanged(const QString&)),
-            this, SLOT(onTextChanged(const QString&)));
-
-    connect(this, SIGNAL(textEdited(const QString&)),
-            this, SLOT(onTextEdited(const QString&)));
+    if(!sigCursorPositionChanged_){
+        stdx::emplace(sigCursorPositionChanged_);
+        connect(this, (void(QLineEdit::*)(int, int)) &QLineEdit::cursorPositionChanged,
+                [this](int oldpos, int newpos){ (*sigCursorPositionChanged_)(oldpos, newpos); });
+    }
+    return *sigCursorPositionChanged_;
 }
 
 
-void LineEdit::onCursorPositionChanged(int oldpos, int newpos)
+SignalProxy<void()> LineEdit::sigEditingFinished()
 {
-    sigCursorPositionChanged_(oldpos, newpos);
+    if(!sigEditingFinished_){
+        stdx::emplace(sigEditingFinished_);
+        connect(this, (void(QLineEdit::*)()) &QLineEdit::editingFinished,
+                [this](){ (*sigEditingFinished_)(); });
+    }
+    return *sigEditingFinished_;
 }
 
 
-void LineEdit::onEditingFinished()
+SignalProxy<void()> LineEdit::sigReturnPressed()
 {
-    sigEditingFinished_();
+    if(!sigReturnPressed_){
+        stdx::emplace(sigReturnPressed_);
+        connect(this, (void(QLineEdit::*)()) &QLineEdit::returnPressed,
+                [this](){ (*sigReturnPressed_)(); });
+    }
+    return *sigReturnPressed_;
 }
 
 
-void LineEdit::onReturnPressed()
+SignalProxy<void()> LineEdit::sigSelectionChanged()
 {
-    sigReturnPressed_();
+    if(!sigSelectionChanged_){
+        stdx::emplace(sigSelectionChanged_);
+        connect(this, (void(QLineEdit::*)()) &QLineEdit::selectionChanged,
+                [this](){ (*sigSelectionChanged_)(); });
+    }
+    return *sigSelectionChanged_;
 }
 
 
-void LineEdit::onSelectionChanged()
+SignalProxy<void(const QString& text)> LineEdit::sigTextChanged()
 {
-    sigSelectionChanged_();
+    if(!sigTextChanged_){
+        stdx::emplace(sigTextChanged_);
+        connect(this, (void(QLineEdit::*)(const QString& text)) &QLineEdit::textChanged,
+                [this](const QString& text){ (*sigTextChanged_)(text); });
+    }
+    return *sigTextChanged_;
 }
 
 
-void LineEdit::onTextChanged(const QString& text)
+SignalProxy<void(const QString& text)> LineEdit::sigTextEdited()
 {
-    sigTextChanged_(text);
-}
-
-
-void LineEdit::onTextEdited(const QString& text)
-{
-    sigTextEdited_(text);
+    if(!sigTextEdited_){
+        stdx::emplace(sigTextEdited_);
+        connect(this, (void(QLineEdit::*)(const QString& text)) &QLineEdit::textEdited,
+                [this](const QString& text){ (*sigTextEdited_)(text); });
+    }
+    return *sigTextEdited_;
 }
