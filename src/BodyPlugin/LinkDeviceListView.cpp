@@ -25,11 +25,12 @@ public:
     ComboBox listingModeCombo;
     BodySelectionManager* bodySelectionManager;
     ScopedConnection bodySelectionManagerConnection;
+    ScopedConnection bodyItemConnection;
 
     Impl(LinkDeviceListView* self);
-    void onElementTypeChanged(int type, bool doUpdate);
-    void onListingModeChanged(int mode, bool doUpdate);
-    void onCurrentBodySelectionChanged(BodyItem* bodyItem, Link* link);
+    void setElementType(int type, bool doUpdate);
+    void setListingMode(int mode, bool doUpdate);
+    void setCurrentBodyItem(BodyItem* bodyItem, Link* link);
     void onTreeWidgetLinkSelectionChanged();
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
@@ -87,10 +88,10 @@ LinkDeviceListView::Impl::Impl(LinkDeviceListView* self)
     needToInitializeTreeWidgetElementTypeAndListingMode = true;
 
     elementTypeCombo.sigCurrentIndexChanged().connect(
-        [&](int index){ onElementTypeChanged(index, true); });
+        [&](int index){ setElementType(index, true); });
 
     listingModeCombo.sigCurrentIndexChanged().connect(
-        [&](int index){ onListingModeChanged(index, true); });
+        [&](int index){ setListingMode(index, true); });
 
     treeWidgetConnection =
         treeWidget.sigLinkSelectionChanged().connect(
@@ -113,9 +114,9 @@ void LinkDeviceListView::onActivated()
     impl->bodySelectionManagerConnection =
         bsm->sigCurrentChanged().connect(
             [&](BodyItem* bodyItem, Link* link){
-                impl->onCurrentBodySelectionChanged(bodyItem, link); });
+                impl->setCurrentBodyItem(bodyItem, link); });
     
-    impl->onCurrentBodySelectionChanged(bsm->currentBodyItem(), bsm->currentLink());
+    impl->setCurrentBodyItem(bsm->currentBodyItem(), bsm->currentLink());
 }
 
 
@@ -125,12 +126,12 @@ void LinkDeviceListView::onDeactivated()
 }
 
 
-void LinkDeviceListView::Impl::onElementTypeChanged(int type, bool doUpdate)
+void LinkDeviceListView::Impl::setElementType(int type, bool doUpdate)
 {
     if(type == DEVICE && listingModeCombo.currentIndex() != LinkDeviceTreeWidget::List){
         listingModeCombo.blockSignals(true);
         listingModeCombo.setCurrentIndex(LinkDeviceTreeWidget::List);
-        onListingModeChanged(LinkDeviceTreeWidget::List, false);
+        setListingMode(LinkDeviceTreeWidget::List, false);
         listingModeCombo.blockSignals(false);
     }
     
@@ -150,7 +151,7 @@ void LinkDeviceListView::Impl::onElementTypeChanged(int type, bool doUpdate)
 }
 
 
-void LinkDeviceListView::Impl::onListingModeChanged(int mode, bool doUpdate)
+void LinkDeviceListView::Impl::setListingMode(int mode, bool doUpdate)
 {
     treeWidget.setListingMode(mode);
 
@@ -160,7 +161,7 @@ void LinkDeviceListView::Impl::onListingModeChanged(int mode, bool doUpdate)
             elementTypeCombo.setCurrentIndex(ALL);
             treeWidget.setLinkItemVisible(true);
             treeWidget.setDeviceItemVisible(true);
-            onElementTypeChanged(ALL, false);
+            setElementType(ALL, false);
             elementTypeCombo.blockSignals(false);
         }
     }
@@ -171,17 +172,31 @@ void LinkDeviceListView::Impl::onListingModeChanged(int mode, bool doUpdate)
 }    
 
 
-void LinkDeviceListView::Impl::onCurrentBodySelectionChanged(BodyItem* bodyItem, Link* link)
+void LinkDeviceListView::Impl::setCurrentBodyItem(BodyItem* bodyItem, Link* link)
 {
     if(needToInitializeTreeWidgetElementTypeAndListingMode){
-        onElementTypeChanged(elementTypeCombo.currentIndex(), false);
-        onListingModeChanged(listingModeCombo.currentIndex(), false);
+        setElementType(elementTypeCombo.currentIndex(), false);
+        setListingMode(listingModeCombo.currentIndex(), false);
         needToInitializeTreeWidgetElementTypeAndListingMode = false;
     }
     if(bodyItem && link){
         treeWidget.setLinkSelection(bodyItem, bodySelectionManager->linkSelection(bodyItem));
     }
     treeWidget.setBodyItem(bodyItem);
+
+    bodyItemConnection.disconnect();
+
+    if(bodyItem){
+        bodyItemConnection =
+            bodyItem->sigModelUpdated().connect(
+                [this](int flags){
+                    if(((flags & BodyItem::LinkSetUpdate) &&
+                        (treeWidget.isLinkItemVisible() || treeWidget.isJointItemVisible())) ||
+                       ((flags & BodyItem::DeviceSetUpdate) && treeWidget.isDeviceItemVisible())){
+                        treeWidget.updateTreeItems();
+                    }
+                });
+    }
 }
 
 
@@ -222,7 +237,7 @@ bool LinkDeviceListView::Impl::storeState(Archive& archive)
     default: break;
     }
     if(listingModeSymbol){
-        archive.write("listingMode", listingModeSymbol);
+        archive.write("listing_mode", listingModeSymbol);
     }
 
     if(auto bodyItem = treeWidget.bodyItem()){
@@ -258,29 +273,26 @@ bool LinkDeviceListView::Impl::restoreState(const Archive& archive)
     elementTypeCombo.blockSignals(false);
 
     int listingMode = LinkDeviceTreeWidget::List;
-    if(archive.read("mode", symbol)){
+    if(archive.read("listing_mode", symbol)){
         if(symbol == "list"){
             listingMode = LinkDeviceTreeWidget::List;
-        }
-        if(symbol == "tree"){
+        } else if(symbol == "tree"){
             listingMode = LinkDeviceTreeWidget::Tree;
-        }
-        if(symbol == "grouped_tree"){
+        } else if(symbol == "grouped_tree"){
             listingMode = LinkDeviceTreeWidget::GroupedTree;
         }
     }
     listingModeCombo.blockSignals(true);
     listingModeCombo.setCurrentIndex(listingMode);
     listingModeCombo.blockSignals(false);
+
+    needToInitializeTreeWidgetElementTypeAndListingMode = true;
     
     archive.addPostProcess(
         [this, &archive](){
             if(treeWidget.restoreState(archive)){
-                if(auto item = archive.findItem<BodyItem>("current_body_item")){
-                    treeWidget.setBodyItem(item, true);
-                } else {
-                    treeWidget.updateTreeItems();
-                }
+                auto bodyItem = archive.findItem<BodyItem>("current_body_item");
+                setCurrentBodyItem(bodyItem, nullptr);
             }
         });
 
