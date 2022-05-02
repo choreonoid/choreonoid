@@ -22,6 +22,10 @@ public:
     const Matrix3& opticalFrameRotation() const { return spec->R_optical; }
     template<typename Derived>
     void setOpticalFrameRotation(const Eigen::MatrixBase<Derived>& R) { spec->R_optical = R; }
+
+    enum OpticalFrameType { GL, CV, Robotics };
+    static const Matrix3& opticalFrameRotationOfType(int opticalFrameType);
+    void setOpticalFrame(int opticalFrameType);
     
     double frameRate() const { return frameRate_; }
     void setFrameRate(double r) { frameRate_ = r; }

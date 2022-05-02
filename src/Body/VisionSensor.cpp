@@ -1,10 +1,34 @@
 #include "VisionSensor.h"
 #include <cnoid/ValueTree>
 #include <cnoid/EigenArchive>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+Matrix3 R_gl;
+Matrix3 R_cv;
+Matrix3 R_robotics;
+
+struct MatrixInitializer {
+    MatrixInitializer(){
+        R_gl.setIdentity();
+
+        R_cv <<
+            1.0,  0.0,  0.0,
+            0.0, -1.0,  0.0,
+            0.0,  0.0, -1.0;
+
+        R_robotics <<
+             0.0, 0.0, -1.0,
+            -1.0, 0.0,  0.0,
+             0.0, 1.0,  0.0;
+    }
+} matrixInitizlier;
+        
+}
 
 VisionSensor::VisionSensor()
     : spec(new Spec)
@@ -61,6 +85,31 @@ void VisionSensor::on(bool on)
 }
 
 
+const Matrix3& VisionSensor::opticalFrameRotationOfType(int opticalFrameType)
+{
+    if(opticalFrameType == GL){
+        return R_gl;
+    } else if(opticalFrameType == CV){
+        return R_cv;
+    } else if(opticalFrameType == Robotics){
+        return R_robotics;
+    }
+    return R_gl;
+}
+
+
+void VisionSensor::setOpticalFrame(int opticalFrameType)
+{
+    if(opticalFrameType == GL){
+        spec->R_optical.setIdentity();
+    } else if(opticalFrameType == CV){
+        spec->R_optical = R_cv;
+    } else if(opticalFrameType == Robotics){
+        spec->R_optical = R_robotics;
+    }
+}
+
+
 int VisionSensor::visionSensorStateSize()
 {
     return 3;
@@ -89,36 +138,27 @@ bool VisionSensor::readSpecifications(const Mapping* info)
 {
     info->read({ "frame_rate", "frameRate" }, frameRate_);
 
-    Matrix3 R_optical;
+    Matrix3 R_optical = R_gl; // default frame or "gl" frame
+
     string opticalFrameType;
-    bool hasOpticalFrame = false;
-    
     if(info->read("optical_frame", opticalFrameType)){
         if(opticalFrameType == "gl"){
-            R_optical.setIdentity();
-            hasOpticalFrame = true;
+            // R_gl;
         } else if(opticalFrameType == "cv"){
-            R_optical <<
-                1.0,  0.0,  0.0,
-                0.0, -1.0,  0.0,
-                0.0,  0.0, -1.0;
-            hasOpticalFrame = true;
+            R_optical = R_cv;
+        } else if(opticalFrameType == "robotics"){
+            R_optical = R_robotics;
+        } else {
+            info->throwException(_("Unknown optical frame type"));
         }
     };
 
     AngleAxis aa;
     if(readAngleAxis(info, "optical_frame_rotation", aa)){
-        if(hasOpticalFrame){
-            R_optical = R_optical * aa;
-        } else {
-            R_optical = aa.toRotationMatrix();
-            hasOpticalFrame = true;
-        }
+        R_optical = R_optical * aa;
     }
 
-    if(hasOpticalFrame){
-        spec->R_optical = R_optical;
-    }
+    spec->R_optical = R_optical;
 
     return true;
 }
@@ -128,7 +168,13 @@ bool VisionSensor::writeSpecifications(Mapping* info) const
 {
     info->write("frame_rate", frameRate_);
 
-    if(!spec->R_optical.isIdentity()){
+    if(spec->R_optical.isIdentity()){
+        info->write("optical_frame", "gl");
+    } else if(spec->R_optical.isApprox(R_cv)){
+        info->write("optical_frame", "cv");
+    } else if(spec->R_optical.isApprox(R_robotics)){
+        info->write("optical_frame", "robotics");
+    } else {
         writeDegreeAngleAxis(info, "optical_frame_rotation", AngleAxis(spec->R_optical));
     }
     
