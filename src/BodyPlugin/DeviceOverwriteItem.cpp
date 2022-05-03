@@ -11,6 +11,8 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/MessageView>
 #include <cnoid/PositionDragger>
+#include <cnoid/StdSceneReader>
+#include <cnoid/StdSceneWriter>
 #include <fmt/format.h>
 #include <unordered_map>
 #include "gettext.h"
@@ -21,6 +23,9 @@ using fmt::format;
 
 namespace {
 
+unique_ptr<StdSceneWriter> sceneWriter;
+unique_ptr<StdSceneReader> sceneReader;
+    
 typedef std::unordered_map<string, DeviceOverwriteMediatorPtr> MediatorMap;
 std::unordered_map<string, MediatorMap> idToMediatorMap;
 
@@ -61,6 +66,8 @@ class DeviceOverwriteItem::Impl
 public:
     DeviceOverwriteItem* self;
     DevicePtr device;
+    SgPosTransformPtr deviceShapePosTransform;
+    SgNodePtr deviceShape;
     bool isAdditionalDevice;
     int additionalDeviceLinkIndex;
     DevicePtr originalDevice;
@@ -70,15 +77,18 @@ public:
     LocationProxyPtr linkLocation;
     SgPosTransformPtr linkPosTransform;
     PositionDraggerPtr deviceOffsetMarker;
+    SgUpdate update;
     ScopedConnection bodyItemConnection;
     ScopedConnection deviceConnection;
-    
+
     Impl(DeviceOverwriteItem* self);
     Impl(DeviceOverwriteItem* self, const Impl& org);
     void clear();
     void clearLocationProxies();
     bool setDevice(BodyItem* bodyItem, Device* device, Device* originalDevice, bool isDuplicated);
     bool restoreOriginalDevice();
+    void setDeviceShape(SgNode* newShape);
+    void clearDeviceShape();
     void updateDeviceOffsetMarker();
     bool store(Archive& archive);
     bool restore(const Archive& archive);
@@ -210,6 +220,8 @@ bool DeviceOverwriteItem::Impl::setDevice
         return false;
     }
 
+    clearDeviceShape();
+
     self->setBodyItem(bodyItem);
     this->device = device;
     isAdditionalDevice = !originalDevice;
@@ -229,6 +241,10 @@ bool DeviceOverwriteItem::Impl::setDevice
     
     if(!originalDevice && !isDuplicated){
         body->addDevice(device, link);
+    }
+
+    if(deviceShape){
+        setDeviceShape(deviceShape);
     }
 
     bodyItemConnection =
@@ -284,6 +300,61 @@ bool DeviceOverwriteItem::Impl::restoreOriginalDevice()
         return device->copyFrom(originalDevice);
     }
     return false;
+}
+
+
+void DeviceOverwriteItem::setDeviceShape(SgNode* shape)
+{
+    impl->setDeviceShape(shape);
+}
+
+
+void DeviceOverwriteItem::Impl::setDeviceShape(SgNode* newShape)
+{
+    if(newShape != deviceShape){
+        clearDeviceShape();
+        deviceShape = newShape;
+        if(deviceShape && device && device->link()){
+            if(!deviceShapePosTransform){
+                deviceShapePosTransform = new SgPosTransform;
+            }
+            deviceShapePosTransform->setPosition(device->localPosition());
+            deviceShapePosTransform->addChildOnce(deviceShape);
+            device->link()->shape()->addChildOnce(deviceShapePosTransform, update);
+        }
+    }
+}
+
+
+void DeviceOverwriteItem::Impl::clearDeviceShape()
+{
+    if(deviceShape && device && device->link()){
+        if(deviceShapePosTransform){
+            device->link()->shape()->removeChild(deviceShapePosTransform, update);
+            deviceShapePosTransform->removeChild(deviceShape);
+        }
+        deviceShape.reset();
+    }
+}
+
+
+SgNode* DeviceOverwriteItem::deviceShape()
+{
+    return impl->deviceShape;
+}
+
+
+void DeviceOverwriteItem::notifyDeviceUpdate(bool doNotifyDeviceSetUpdate)
+{
+    if(impl->deviceShape && impl->deviceShapePosTransform && impl->device){
+        impl->deviceShapePosTransform->setPosition(impl->device->localPosition());
+        impl->deviceShapePosTransform->notifyUpdate(impl->update.withAction(SgUpdate::Modified));
+    }
+    int flags = BodyItem::DeviceSpecUpdate;
+    if(doNotifyDeviceSetUpdate){
+        flags |=  BodyItem::DeviceSetUpdate;
+    }
+    bodyItem()->notifyModelUpdate(flags);
 }
 
 
@@ -448,6 +519,9 @@ bool DeviceOverwriteItem::Impl::store(Archive& archive)
                 if(!device->name().empty()){
                     archive.write("device_name", device->name(), DOUBLE_QUOTED);
                 }
+                if(device->id() >= 0){
+                    archive.write("device_id", device->id());
+                }
                 archive.write("link_name", device->link()->name(), DOUBLE_QUOTED);
                 if(isAdditionalDevice){
                     archive.write("is_additional", isAdditionalDevice);
@@ -465,7 +539,16 @@ bool DeviceOverwriteItem::Impl::store(Archive& archive)
                 if(!T.translation().isZero()){
                     write(archive, "translation", T.translation());
                 }
-                
+                if(deviceShape){
+                    if(!sceneWriter){
+                        sceneWriter = make_unique<StdSceneWriter>();
+                        sceneWriter->setExtModelFileMode(StdSceneWriter::EmbedModels);
+                    }
+                    sceneWriter->setFilePathVariableProcessor(archive.filePathVariableProcessor());
+                    if(auto sceneArchive = sceneWriter->writeScene(deviceShape)){
+                        archive.insert("device_shape", sceneArchive);
+                    }
+                }
                 result = true;
             }
         }
@@ -516,6 +599,17 @@ bool DeviceOverwriteItem::Impl::restore(const Archive& archive)
                         AngleAxis aa;
                         if(cnoid::readDegreeAngleAxis(archive, "rotation", aa)){
                             device->setLocalRotation(aa.matrix());
+                        }
+
+                        auto shapeNode = archive.find("device_shape");
+                        if(shapeNode->isValid()){
+                            if(!sceneReader){
+                                sceneReader = make_unique<StdSceneReader>();
+                            }
+                            sceneReader->setFilePathVariableProcessor(archive.filePathVariableProcessor());
+                            if(auto scene = sceneReader->readNode(shapeNode->toMapping())){
+                                setDeviceShape(scene);
+                            }
                         }
 
                         bodyItem->notifyModelUpdate(BodyItem::DeviceSetUpdate | BodyItem::DeviceSpecUpdate);
@@ -658,6 +752,17 @@ bool DeviceOverwriteMediator::restoreDeviceName(Device* device, const Mapping* i
 }
 
 
+bool DeviceOverwriteMediator::restoreDeviceId(Device* device, const Mapping* info)
+{
+    int id;
+    if(info->read("device_id", id)){
+        device->setId(id);
+        return true;
+    }
+    return false;
+}
+
+
 bool DeviceOverwriteMediator::restoreDeviceLink(Device* device, const Mapping* info, Body* body)
 {
     string name;
@@ -693,6 +798,8 @@ Device* StdDeviceOverwriteMediator::restoreDevice(Body* body, Device* device, co
             device = factory();
         }
         restoreDeviceName(device, info);
+        restoreDeviceId(device, info);
+        
         if(!restoreDeviceLink(device, info, body)){
             device = nullptr;
         }

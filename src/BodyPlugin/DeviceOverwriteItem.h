@@ -67,6 +67,7 @@ public:
 protected:
     DeviceOverwriteMediator(const std::string& id);
     static bool restoreDeviceName(Device* device, const Mapping* info);
+    static bool restoreDeviceId(Device* device, const Mapping* info);
     static bool restoreDeviceLink(Device* device, const Mapping* info, Body* body);
     
 private:
@@ -107,6 +108,11 @@ public:
     Device* originalDevice();
 
     bool restoreOriginalDevice();
+
+    void setDeviceShape(SgNode* shape);
+    SgNode* deviceShape();
+
+    void notifyDeviceUpdate(bool doNotifyDeviceSetUpdate);
     
     void setMediatorId(const std::string& id);
 
