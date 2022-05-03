@@ -40,6 +40,11 @@ public:
     double scanRate() const { return frameRate(); }
     void setScanRate(double r) { setFrameRate(r); }
 
+    double detectionRate() const { return spec ? spec->detectionRate : 1.0; }
+    void setDetectionRate(double r);
+    double errorDeviation() const { return spec ? spec->errorDeviation : 0.0; }
+    void setErrorDeviation(double d);
+
     typedef std::vector<double> RangeData;
 
     void setRangeDataStateClonable(bool on);
@@ -82,9 +87,10 @@ private:
     double pitchStep_;
     double minDistance_;
     double maxDistance_;
-    double scanRate_;
 
     struct Spec {
+        double detectionRate;
+        double errorDeviation;
         bool isRangeDataStateClonable;
     };
     std::unique_ptr<Spec> spec;

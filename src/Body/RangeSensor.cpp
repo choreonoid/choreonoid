@@ -33,6 +33,8 @@ RangeSensor::RangeSensor()
     maxDistance_ = 10.0;
     rangeData_ = std::make_shared<RangeData>();
 
+    spec->detectionRate = 1.0;
+    spec->errorDeviation = 0.0;
     spec->isRangeDataStateClonable = false;
 }
 
@@ -43,8 +45,12 @@ RangeSensor::RangeSensor(const RangeSensor& org, bool copyStateOnly)
     if(!copyStateOnly){
         spec = make_unique<Spec>();
         if(org.spec){
+            spec->detectionRate = org.spec->detectionRate;
+            spec->errorDeviation = org.spec->errorDeviation;
             spec->isRangeDataStateClonable = org.spec->isRangeDataStateClonable;
         } else {
+            spec->detectionRate = 1.0;
+            spec->errorDeviation = 0.0;
             spec->isRangeDataStateClonable = false;
         }
     }
@@ -127,6 +133,30 @@ int RangeSensor::numPitchSamples() const
 }
 
 
+void RangeSensor::setDetectionRate(double r)
+{
+    if(spec){
+        spec->detectionRate = r;
+    }
+}
+
+
+void RangeSensor::setErrorDeviation(double d)
+{
+    if(spec){
+        spec->errorDeviation = d;
+    }
+}
+
+
+void RangeSensor::setRangeDataStateClonable(bool on)
+{
+    if(spec){
+        spec->isRangeDataStateClonable = on;
+    }
+}
+
+
 RangeSensor::RangeData& RangeSensor::rangeData()
 {
     if(rangeData_.use_count() > 1){
@@ -157,14 +187,6 @@ void RangeSensor::setRangeData(std::shared_ptr<RangeData>& data)
 void RangeSensor::clearState()
 {
     clearRangeData();
-}
-
-
-void RangeSensor::setRangeDataStateClonable(bool on)
-{
-    if(spec){
-        spec->isRangeDataStateClonable = on;
-    }
 }
 
 
@@ -222,7 +244,14 @@ bool RangeSensor::readSpecifications(const Mapping* info)
     info->readAngle({ "pitch_step", "pitchStep" }, pitchStep_);
     info->read({ "min_distance", "minDistance" }, minDistance_);
     info->read({ "max_distance", "maxDistance" }, maxDistance_);
-    info->read({ "scan_rate", "scanRate" }, scanRate_);
+
+    double scanRate;
+    if(info->read({ "scan_rate", "scanRate" }, scanRate)){
+        setFrameRate(scanRate);
+    }
+
+    info->read("detection_rate", spec->detectionRate);
+    info->read("error_deviation", spec->errorDeviation);
 
     return true;
 }
@@ -240,9 +269,9 @@ bool RangeSensor::writeSpecifications(Mapping* info) const
     info->write("pitch_step", degree(pitchStep_));
     info->write("min_distance", minDistance_);
     info->write("max_distance", maxDistance_);
-
-    info->remove("frame_rate");
-    info->write("scan_rate", scanRate_);
+    info->write("scan_rate", scanRate());
+    info->write("detection_rate", spec->detectionRate);
+    info->write("error_deviation", spec->errorDeviation);
 
     return true;
 }

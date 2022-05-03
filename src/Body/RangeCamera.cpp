@@ -12,19 +12,34 @@ using namespace cnoid;
 
 
 RangeCamera::RangeCamera()
+    : spec(new Spec)
 {
     setImageType(NO_IMAGE);
     points_ = std::make_shared<PointData>();
     maxDistance_ = 10.0;
     minDistance_ = 0.1;
-    isOrganized_ = false;
+    isOrganized_ = true;
     isDense_ = false;
+
+    spec->detectionRate = 1.0;
+    spec->errorDeviation = 0.0;
 }
 
 
 RangeCamera::RangeCamera(const RangeCamera& org, bool copyStateOnly)
     : Camera(org, copyStateOnly)
 {
+    if(!copyStateOnly){
+        spec = make_unique<Spec>();
+        if(org.spec){
+            spec->detectionRate = org.spec->detectionRate;
+            spec->errorDeviation = org.spec->errorDeviation;
+        } else {
+            spec->detectionRate = 1.0;
+            spec->errorDeviation = 0.0;
+        }
+    }
+
     copyRangeCameraStateFrom(org, false);
 }
 
@@ -137,6 +152,22 @@ void RangeCamera::setOrganized(bool on)
 }
 
 
+void RangeCamera::setDetectionRate(double r)
+{
+    if(spec){
+        spec->detectionRate = r;
+    }
+}
+
+
+void RangeCamera::setErrorDeviation(double d)
+{
+    if(spec){
+        spec->errorDeviation = d;
+    }
+}
+
+
 bool RangeCamera::readSpecifications(const Mapping* info)
 {
     if(!Camera::readSpecifications(info)){
@@ -165,6 +196,8 @@ bool RangeCamera::readSpecifications(const Mapping* info)
 
     info->read("min_distance", minDistance_);
     info->read("max_distance", maxDistance_);
+    info->read("detection_rate", spec->detectionRate);
+    info->read("error_deviation", spec->errorDeviation);
 
     return true;
 }
@@ -191,6 +224,8 @@ bool RangeCamera::writeSpecifications(Mapping* info) const
     }
     info->write("min_distance", minDistance_);
     info->write("max_distance", maxDistance_);
+    info->write("detection_rate", spec->detectionRate);
+    info->write("error_deviation", spec->errorDeviation);
 
     return true;
 }

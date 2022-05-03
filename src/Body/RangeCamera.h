@@ -54,6 +54,11 @@ public:
     bool isDense() const { return isDense_; }
     void setDense(bool on) { isDense_ = on; }
 
+    double detectionRate() const { return spec ? spec->detectionRate : 1.0; }
+    void setDetectionRate(double r);
+    double errorDeviation() const { return spec ? spec->errorDeviation : 0.0; }
+    void setErrorDeviation(double d);
+
     std::shared_ptr<const PointData> sharedPoints() const { return points_; }
 
     /**
@@ -77,6 +82,13 @@ private:
     double maxDistance_;
     bool isOrganized_;
     bool isDense_;
+
+    struct Spec {
+        double detectionRate;
+        double errorDeviation;
+    };
+    std::unique_ptr<Spec> spec;
+    
 };
 
 typedef ref_ptr<RangeCamera> RangeCameraPtr;
