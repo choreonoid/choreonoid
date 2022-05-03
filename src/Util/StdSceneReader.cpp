@@ -123,11 +123,13 @@ public:
     SgMesh* readExtrusion(Mapping* info, int meshOptions);
     SgMesh* readElevationGrid(Mapping* info, int meshOptions);
     SgMesh* readMesh(Mapping* info, bool isTriangleMesh, int meshOptions);
+    SgVertexArray* readVertices(Listing* srcVertices);
     SgMesh* readResourceAsGeometry(Mapping* info, int meshOptions);
     void readAppearance(SgShape* shape, Mapping* info);
-    void readMaterial(SgShape* shape, Mapping* info);
+    SgMaterial* readMaterial(Mapping* info);
     void readTexture(SgShape* shape, Mapping* info);
     SgTextureTransform* readTextureTransform(Mapping* info);
+    SgNode* readLineSet(Mapping* info);
     void readLightCommon(Mapping* info, SgLight* light);
     SgNode* readDirectionalLight(Mapping* info);
     SgNode* readPointLight(Mapping* info);
@@ -210,6 +212,7 @@ StdSceneReader::Impl::Impl(StdSceneReader* self)
                 { "Group",              &Impl::readGroup },
                 { "Transform",          &Impl::readTransform },
                 { "Shape",              &Impl::readShape },
+                { "LineSet",            &Impl::readLineSet },
                 { "DirectionalLight",   &Impl::readDirectionalLight },
                 { "PointLight",         &Impl::readPointLight },
                 { "SpotLight",          &Impl::readSpotLight },
@@ -631,9 +634,14 @@ SgNode* StdSceneReader::Impl::readNode(Mapping* info, const string& type)
     SgNode* node = (this->*funcToReadNode)(info);
     if(node){
         sharedObjectMap[info] = node;
+
+        bool isMetaSceneObject = info->get("is_meta_scene", false);
+        if(isMetaSceneObject){
+            node->setAttribute(SgObject::MetaScene);
+        }
         if(info->read("name", symbol)){
             node->setName(symbol);
-        } else {
+        } else if(!isMetaSceneObject){
             // remove a nameless, redundant group node
             if(auto group = dynamic_cast<SgGroup*>(node)){
                 node = removeRedundantGroup(group);
@@ -1110,20 +1118,7 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping* info, bool isTriangleMesh, int m
         
     Listing* srcVertices = info->findListing({ "vertices", "coordinate" });
     if(srcVertices->isValid()){
-        auto vertices = findSharedObject<SgVertexArray>(srcVertices, "vertices");
-        if(!vertices){
-            const int numVertices = srcVertices->size() / 3;
-            vertices = new SgVertexArray;
-            vertices->resize(numVertices);
-            for(int i=0; i < numVertices; ++i){
-                Vector3f& v = (*vertices)[i];
-                for(int j=0; j < 3; ++j){
-                    v[j] = (*srcVertices)[i*3 + j].toFloat();
-                }
-            }
-            sharedObjectMap[srcVertices] = vertices;
-        }
-        meshBase->setVertices(vertices);
+        meshBase->setVertices(readVertices(srcVertices));
     }
 
     Listing& srcFaces = *info->findListing({ "faces", "coordIndex" });
@@ -1221,6 +1216,26 @@ SgMesh* StdSceneReader::Impl::readMesh(Mapping* info, bool isTriangleMesh, int m
 }
 
 
+SgVertexArray* StdSceneReader::Impl::readVertices(Listing* srcVertices)
+{
+    SgVertexArrayPtr vertices;
+    vertices = findSharedObject<SgVertexArray>(srcVertices, "vertices");
+    if(!vertices){
+        const int numVertices = srcVertices->size() / 3;
+        vertices = new SgVertexArray;
+        vertices->resize(numVertices);
+        for(int i=0; i < numVertices; ++i){
+            Vector3f& v = (*vertices)[i];
+            for(int j=0; j < 3; ++j){
+                v[j] = (*srcVertices)[i*3 + j].toFloat();
+            }
+        }
+        sharedObjectMap[srcVertices] = vertices;
+    }
+    return vertices.retn();
+}
+
+
 SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping* info, int meshOptions)
 {
     auto resource = readResourceNode(info, false);
@@ -1270,7 +1285,7 @@ void StdSceneReader::Impl::readAppearance(SgShape* shape, Mapping* info)
 {
     auto material = info->findMapping("material");
     if(material->isValid()){
-        readMaterial(shape, material);
+        shape->setMaterial(readMaterial(material));
     }
 
     auto texture = info->findMapping("texture");
@@ -1285,7 +1300,7 @@ void StdSceneReader::Impl::readAppearance(SgShape* shape, Mapping* info)
 }
 
 
-void StdSceneReader::Impl::readMaterial(SgShape* shape, Mapping* info)
+SgMaterial* StdSceneReader::Impl::readMaterial(Mapping* info)
 {
     SgMaterialPtr material = findSharedObject<SgMaterial>(info, "material");
 
@@ -1316,7 +1331,7 @@ void StdSceneReader::Impl::readMaterial(SgShape* shape, Mapping* info)
         sharedObjectMap[info] = material;
     }
 
-    shape->setMaterial(material);
+    return material.retn();
 }
 
 
@@ -1400,6 +1415,36 @@ SgTextureTransform* StdSceneReader::Impl::readTextureTransform(Mapping* info)
         }
     }
     return transform.retn();
+}
+
+
+SgNode* StdSceneReader::Impl::readLineSet(Mapping* info)
+{
+    SgLineSetPtr lineSet = new SgLineSet;
+
+    auto material = info->findMapping("material");
+    if(material->isValid()){
+        lineSet->setMaterial(readMaterial(material));
+    }
+
+    Listing* srcVertices = info->findListing("vertices");
+    if(srcVertices->isValid()){
+        lineSet->setVertices(readVertices(srcVertices));
+    }
+
+    Listing& srcLines = *info->findListing("lines");
+    if(srcLines.isValid()){
+        const int numIndices = srcLines.size();
+        SgIndexArray& lines = lineSet->lineVertexIndices();
+        lines.resize(numIndices);
+        for(int i=0; i < numIndices; ++i){
+            lines[i] = srcLines[i].toInt();
+        }
+    }
+
+    lineSet->setLineWidth(info->get("line_width", 1.0));
+
+    return lineSet.retn();
 }
 
 

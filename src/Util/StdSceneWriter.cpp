@@ -76,6 +76,7 @@ public:
     MappingPtr writeGeometry(SgShape* shape);
     void writeMeshAttributes(Mapping* archive, SgMesh* mesh);
     bool writeMesh(Mapping* archive, SgMesh* mesh);
+    void writeVertices(Mapping* archive, SgVertexArray* srcVertices);
     void writePrimitiveAttributes(Mapping* archive, SgMesh* mesh);
     void writeBox(Mapping* archive, SgMesh* mesh);
     void writeSphere(Mapping* archive, SgMesh* mesh);
@@ -86,6 +87,7 @@ public:
     MappingPtr writeMaterial(SgMaterial* material);
     MappingPtr writeTexture(SgTexture* texture);
     MappingPtr writeTextureTransform(SgTextureTransform * transform);
+    void writeLineSet(Mapping* archive, SgLineSet* lineSet);
     void writeLight(Mapping* archive, SgLight* light);
     void writeDirectionalLight(Mapping* archive, SgDirectionalLight* light);
     void writePointLight(Mapping* archive, SgPointLight* light);
@@ -117,6 +119,8 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
         [&](SgScaleTransform* transform){ writeScaleTransform(currentArchive, transform); });
     writeFunctions.setFunction<SgShape>(
         [&](SgShape* shape){ writeShape(currentArchive, shape); });
+    writeFunctions.setFunction<SgLineSet>(
+        [&](SgLineSet* lineSet){ writeLineSet(currentArchive, lineSet); });
     writeFunctions.setFunction<SgDirectionalLight>(
         [&](SgDirectionalLight* light){ writeDirectionalLight(currentArchive, light); });
     writeFunctions.setFunction<SgPointLight>(
@@ -588,6 +592,9 @@ void StdSceneWriter::Impl::writeObjectHeader(Mapping* archive, const char* typeN
     if(!object->name().empty()){
         archive->write("name", object->name());
     }
+    if(object->hasAttribute(SgObject::MetaScene)){
+        archive->write("is_meta_scene", true);
+    }
 }
 
 
@@ -714,22 +721,7 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
         archive->write("type", "TriangleMesh");
 
         writeMeshAttributes(archive, mesh);
-
-        const auto srcVertices = mesh->vertices();
-        ListingPtr vertices;
-        bool found;
-        tie(vertices, found) = findOrCreateListing(srcVertices);
-        if(!found){
-            vertices->setFlowStyle();
-            const int scalarElementSize = srcVertices->size() * 3;
-            vertices->reserve(scalarElementSize);
-            for(auto& v : *srcVertices){
-                vertices->append(v.x(), 12, scalarElementSize);
-                vertices->append(v.y(), 12, scalarElementSize);
-                vertices->append(v.z(), 12, scalarElementSize);
-            }
-        }
-        archive->insert("vertices", vertices);
+        writeVertices(archive, mesh->vertices());
         
         Listing& indexList = *archive->createFlowStyleListing("faces");
         const int numTriScalars = numTriangles * 3;
@@ -744,6 +736,7 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
         if(mesh->hasNormals() && mesh->creaseAngle() == 0.0f){
             const auto srcNormals = mesh->normals();
             ListingPtr normals;
+            bool found;
             tie(normals, found) = findOrCreateListing(srcNormals);
             if(!found){
                 normals->setFlowStyle();
@@ -771,6 +764,7 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
         if(isAppearanceEnabled && mesh->hasTexCoords()){
             const auto srcTexCoords = mesh->texCoords();
             ListingPtr texCoords;
+            bool found;
             tie(texCoords, found) = findOrCreateListing(srcTexCoords);
             if(!found){
                 texCoords->setFlowStyle();
@@ -798,6 +792,28 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
     }
     
     return isValid;
+}
+
+
+void StdSceneWriter::Impl::writeVertices(Mapping* archive, SgVertexArray* srcVertices)
+{
+    if(srcVertices->empty()){
+        return;
+    }
+    ListingPtr vertices;
+    bool found;
+    tie(vertices, found) = findOrCreateListing(srcVertices);
+    if(!found){
+        vertices->setFlowStyle();
+        const int scalarElementSize = srcVertices->size() * 3;
+        vertices->reserve(scalarElementSize);
+        for(auto& v : *srcVertices){
+            vertices->append(v.x(), 12, scalarElementSize);
+            vertices->append(v.y(), 12, scalarElementSize);
+            vertices->append(v.z(), 12, scalarElementSize);
+        }
+    }
+    archive->insert("vertices", vertices);
 }
 
 
@@ -886,7 +902,7 @@ void StdSceneWriter::Impl::writeCapsule(Mapping* archive, SgMesh* mesh)
 
 MappingPtr StdSceneWriter::Impl::writeAppearance(SgShape* shape)
 {
-    MappingPtr archive= new Mapping;
+    MappingPtr archive = new Mapping;
 
     if(auto materialInfo = writeMaterial(shape->material())){
         archive->insert("material", materialInfo);
@@ -1024,6 +1040,34 @@ MappingPtr StdSceneWriter::Impl::writeTextureTransform(SgTextureTransform * tran
     }
     
     return archive;
+}
+
+
+void StdSceneWriter::Impl::writeLineSet(Mapping* archive, SgLineSet* lineSet)
+{
+    writeObjectHeader(archive, "LineSet", lineSet);
+
+    if(isAppearanceEnabled){
+        if(auto materialInfo = writeMaterial(lineSet->material())){
+            archive->insert("material", materialInfo);
+        }
+    }
+
+    if(lineSet->lineWidth() > 0.0f){
+        archive->write("line_width", lineSet->lineWidth());
+    }
+
+    writeVertices(archive, lineSet->vertices());
+
+    const int numLines = lineSet->numLines();
+    Listing& lines = *archive->createFlowStyleListing("lines");
+    const int numLineIndices = numLines * 2;
+    lines.reserve(numLineIndices);
+    for(int i=0; i < numLines; ++i){
+        auto line = lineSet->line(i);
+        lines.append(line[0], 16, numLineIndices);
+        lines.append(line[1], 16, numLineIndices);
+    }
 }
 
 
