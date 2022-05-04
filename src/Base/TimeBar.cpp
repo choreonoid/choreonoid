@@ -1079,14 +1079,14 @@ bool TimeBar::Impl::restoreState(const Archive& archive)
 
     bool doUpdateTimeRange = false;
     double newMinTime, newMaxTime;
-    doUpdateTimeRange = archive.read({ "min_time", "minTime" }, newMinTime);
+    doUpdateTimeRange |= archive.read({ "min_time", "minTime" }, newMinTime);
     doUpdateTimeRange |= archive.read({ "max_time", "maxTime" }, newMaxTime);
     if(doUpdateTimeRange){
-        doUpdateTimeSpinSlider = setTimeRange(newMinTime, newMaxTime, false);
+        doUpdateTimeSpinSlider |= setTimeRange(newMinTime, newMaxTime, false);
     }
     double newFrameRate;
-    if(archive.read("frame_rate", newFrameRate)){
-        doUpdateTimeSpinSlider = setFrameRate(newFrameRate, false, false);
+    if(archive.read({ "frame_rate", "frameRate" }, newFrameRate)){
+        doUpdateTimeSpinSlider |= setFrameRate(newFrameRate, false, false);
     }
         
     archive.read({ "current_time", "currentTime" }, self->time_);
