@@ -157,6 +157,9 @@ bool DeviceOverwriteItem::setName(const std::string& name)
 {
     if(impl->device){
         impl->device->setName(name);
+        if(impl->deviceShapePosTransform){
+            impl->deviceShapePosTransform->setName(name);
+        }
     }
     Item::setName(name);
     return true;
@@ -318,6 +321,7 @@ void DeviceOverwriteItem::Impl::setDeviceShape(SgNode* newShape)
             if(!deviceShapePosTransform){
                 deviceShapePosTransform = new SgPosTransform;
             }
+            deviceShapePosTransform->setName(device->name());
             deviceShapePosTransform->setPosition(device->localPosition());
             deviceShapePosTransform->addChildOnce(deviceShape);
             device->link()->shape()->addChildOnce(deviceShapePosTransform, update);
