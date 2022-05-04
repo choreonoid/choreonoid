@@ -1,13 +1,7 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ImageWidget.h"
-#include <cnoid/Image>
 #include <QImage>
 #include <QPaintEvent>
 #include <QPainter>
-#include <iostream>
 #include <math.h>
 
 using namespace std;
@@ -34,10 +28,9 @@ void ImageWidget::setScalingEnabled(bool on)
 {
     if(on != isScalingEnabled_){
         isScalingEnabled_ = on;
-
-        if(pixmap_.isNull())
-            return;
-        reset();
+        if(!pixmap_.isNull()){
+            reset();
+        }
     }
 }
 
@@ -68,8 +61,11 @@ void ImageWidget::setImage(const QImage& image)
 
 void ImageWidget::setImage(const Image& image)
 {
-    if(image.width() * image.height()==0)
+    int w = image.width();
+    int h = image.height();
+    if(w * h == 0 || (h == 1 && w > 100)){
         return;
+    }
 
     std::lock_guard<std::mutex> lock(mtx);
     static QImage::Format componentSizeToFormat[] = {
@@ -95,8 +91,9 @@ void ImageWidget::setImage(const Image& image)
 void ImageWidget::zoom(double scale)
 {
     std::lock_guard<std::mutex> lock(mtx);
-    if(pixmap_.isNull())
+    if(pixmap_.isNull()){
         return;
+    }
 
     QSize r = rect().size();
 	QTransform invT = transform_.inverted();
@@ -131,16 +128,16 @@ void ImageWidget::translate(QPoint pos)
 void ImageWidget::rotate(double angle)
 {
     std::lock_guard<std::mutex> lock(mtx);
-	QSize r = rect().size();
-	QTransform invT = transform_.inverted();
-	double x,y;
-	invT.map(r.width()/2,r.height()/2,&x,&y);
+    QSize r = rect().size();
+    QTransform invT = transform_.inverted();
+    double x,y;
+    invT.map(r.width()/2,r.height()/2,&x,&y);
 
-	transform_.translate(x,y);
-	transform_.rotate(angle);
-	transform_.translate(-x,-y);
+    transform_.translate(x,y);
+    transform_.rotate(angle);
+    transform_.translate(-x,-y);
 
-	update();
+    update();
 }
 
 
@@ -167,8 +164,9 @@ void ImageWidget::paintEvent(QPaintEvent* event)
 
 void ImageWidget::fitCenter()
 {
-    if(fitted)
+    if(fitted){
         return;
+    }
 
     if(settedT){
         oldSize = pixmap_.size();
@@ -193,7 +191,6 @@ void ImageWidget::fitCenter()
     oldScale = scale;
     oldSize = r;
     fitted = true;
-
 }
 
 
@@ -210,10 +207,9 @@ QSize ImageWidget::sizeHint() const
 void ImageWidget::resizeEvent(QResizeEvent *event)
 {
     std::lock_guard<std::mutex> lock(mtx);
-    if(pixmap_.isNull())
-            return;
-
-    resize(event->size());
+    if(!pixmap_.isNull()){
+        resize(event->size());
+    }
 }
 
 
@@ -262,8 +258,9 @@ void ImageWidget::setTransform(const QTransform& transform)
 
 bool ImageWidget::getTransform(QTransform& transform)
 {
-    if(pixmap_.isNull())
+    if(pixmap_.isNull()){
         return false;
+    }
 
     notScaledTransform_ = transform_;
     if(isScalingEnabled_ && !pixmap_.isNull()){
@@ -279,7 +276,12 @@ bool ImageWidget::getTransform(QTransform& transform)
         notScaledTransform_.scale(scale, scale);
         notScaledTransform_.translate(-x,-y);
 
-        QTransform T(notScaledTransform_.m11(), notScaledTransform_.m12(),notScaledTransform_.m21(), notScaledTransform_.m22(), 0,0);
+        QTransform T(
+            notScaledTransform_.m11(),
+            notScaledTransform_.m12(),
+            notScaledTransform_.m21(),
+            notScaledTransform_.m22(),
+            0,0);
         invT = T.inverted();
         double dx = ((double)size.width()-(double)oldSize.width())/2.0;
         double dy = ((double)size.height()-(double)oldSize.height())/2.0;
@@ -290,18 +292,20 @@ bool ImageWidget::getTransform(QTransform& transform)
     return true;
 }
 
-double ImageWidget::getAngle(){
+
+double ImageWidget::getAngle()
+{
     double scale;
-    if(pixmap_.isNull())
+    if(pixmap_.isNull()){
         scale = 1.0;
-    else
+    } else {
         scale = oldScale;
+    }
 
     notScaledTransform_ = transform_;
     notScaledTransform_ *= scale;
 
     return atan2(notScaledTransform_.m12(), notScaledTransform_.m11());
-
 }
 
 
@@ -355,10 +359,10 @@ Image& ImageWidget::getImage()
     return transformedImage;
 }
 
+
 void ImageWidget::clear()
 {
     std::lock_guard<std::mutex> lock(mtx);
     pixmap_.fill(Qt::black);
     update();
 }
-
