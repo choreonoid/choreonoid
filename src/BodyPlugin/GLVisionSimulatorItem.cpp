@@ -36,6 +36,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <queue>
+#include <random>
 #include <iostream>
 #include "gettext.h"
 
@@ -163,6 +164,10 @@ public:
     int screenId;
     bool isDense;
     bool flagToUpdatePreprocessedNodeTree;
+
+    std::mt19937 randomNumber;
+    std::uniform_real_distribution<> detectionProbability;
+    std::normal_distribution<> distanceErrorDistribution;
 
     SensorScreenRenderer(GLVisionSimulatorItem::Impl* simImpl, Device* device, Device* deviceForRendering);
     ~SensorScreenRenderer();
@@ -869,6 +874,12 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
                 pixelHeight = cameraForRendering->resolutionY();
             }
         }
+        if(rangeCamera){
+            if(rangeCamera->errorDeviation() > 0.0){
+                distanceErrorDistribution.param(
+                    std::normal_distribution<>::param_type(0.0, rangeCamera->errorDeviation()));
+            }
+        }
     } else if(rangeSensor){
         auto sceneLink = sceneBody->sceneLink(rangeSensor->link()->index());
         if(sceneLink){
@@ -918,6 +929,11 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
                 }
             }
 
+            if(rangeSensor->errorDeviation() > 0.0){
+                distanceErrorDistribution.param(
+                    std::normal_distribution<>::param_type(0.0, rangeSensor->errorDeviation()));
+            }
+
             depthError = simImpl->depthError;
 
             if(PUT_DEBUG_MESSAGES){
@@ -926,6 +942,10 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
             }
         }
     }
+
+    randomNumber.seed(0);
+    detectionProbability.reset();
+    distanceErrorDistribution.reset();
 
     return sceneCamera;
 }
@@ -1553,6 +1573,9 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
     points.reserve(pixelWidth * pixelHeight);
     unsigned char* colorSrc = nullptr;
 
+    const double detectionRate = rangeCameraForRendering->detectionRate();
+    const double errorDeviation = rangeCameraForRendering->errorDeviation();
+
     isDense = true;
     
     for(int y = pixelHeight - 1; y >= 0; --y){
@@ -1561,7 +1584,18 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
             colorSrc = &colorBuf[0] + y * pixelWidth * 3;
         }
         for(int x=0; x < pixelWidth; ++x){
-            const float z = depthBuf[srcpos + x];
+            float z = depthBuf[srcpos + x];
+
+            if(detectionRate < 1.0){
+                if(detectionProbability(randomNumber) > detectionRate){
+                    if(!isOrganized){
+                        continue;
+                    } else {
+                        z = 1.0f;
+                    }
+                }
+            }
+
             if(z > 0.0f && z < 1.0f){
                 n.x() = 2.0f * x / fw - 1.0f;
                 n.y() = 2.0f * y / fh - 1.0f;
@@ -1569,6 +1603,13 @@ bool SensorScreenRenderer::getRangeCameraData(Image& image, vector<Vector3f>& po
                 const Vector4f o = Pinv * n;
                 const float& w = o[3];
                 Vector3f p(o[0] / w, o[1] / w, o[2] / w);
+
+                if(errorDeviation > 0.0){
+                    double d = p.norm();
+                    double r = (d + distanceErrorDistribution(randomNumber)) / d;
+                    p *= r;
+                }
+
                 if(hasRo){
                     points.push_back(Ro * p);
                 } else {
@@ -1640,6 +1681,9 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
     const double fw = pixelWidth;
     const double fh = pixelHeight;
 
+    const double detectionRate = rangeSensorForRendering->detectionRate();
+    const double errorDeviation = rangeSensorForRendering->errorDeviation();
+
     depthBuf.resize(pixelWidth * pixelHeight * sizeof(float));
     glReadPixels(0, 0, pixelWidth, pixelHeight, GL_DEPTH_COMPONENT, GL_FLOAT, &depthBuf[0]);
 
@@ -1650,6 +1694,14 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
         const double cosPitchAngle = cos(pitchAngle);
 
         for(int yaw=0; yaw < numUniqueYawSamples; ++yaw){
+
+            if(detectionRate < 1.0){
+                if(detectionProbability(randomNumber) > detectionRate){
+                    rangeData.push_back(std::numeric_limits<double>::infinity());
+                    continue;
+                }
+            }
+            
             const double yawAngle = yaw * yawStep - yawRange / 2.0;
 
             int py;
@@ -1676,7 +1728,12 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
                 const double z0 = 2.0 * depth - 1.0;
                 const double w = Pinv_32 * z0 + Pinv_33;
                 const double z = -1.0 / w + depthError;
-                const double distance = fabs((z / cosPitchAngle) / cos(yawAngle));
+                double distance = fabs((z / cosPitchAngle) / cos(yawAngle));
+
+                if(errorDeviation > 0.0){
+                    distance += distanceErrorDistribution(randomNumber);
+                }
+                
                 rangeData.push_back(distance);
 
                 if(PUT_DEBUG_MESSAGES){
