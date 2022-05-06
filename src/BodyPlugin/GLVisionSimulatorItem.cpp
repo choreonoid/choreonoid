@@ -45,7 +45,7 @@ using fmt::format;
 
 namespace {
 
-constexpr bool DEBUG_MESSAGE = false;
+constexpr bool PUT_DEBUG_MESSAGES = false;
 
 // This does not seem to be necessary
 constexpr bool USE_FLUSH_GL_FUNCTION = false;
@@ -131,7 +131,7 @@ typedef ref_ptr<SensorScene> SensorScenePtr;
 class SensorScreenRenderer : public Referenced
 {
 public:
-    GLVisionSimulatorItemImpl* simImpl;
+    GLVisionSimulatorItem::Impl* simImpl;
 
     SensorScenePtr scene;
 
@@ -164,7 +164,7 @@ public:
     bool isDense;
     bool flagToUpdatePreprocessedNodeTree;
 
-    SensorScreenRenderer(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* deviceForRendering);
+    SensorScreenRenderer(GLVisionSimulatorItem::Impl* simImpl, Device* device, Device* deviceForRendering);
     ~SensorScreenRenderer();
     bool initialize(SensorScenePtr scene, int bodyIndex);
     SgCamera* initializeCamera(int bodyIndex);
@@ -180,13 +180,15 @@ public:
     bool getCameraImage(Image& image);
     bool getRangeCameraData(Image& image, vector<Vector3f>& points);
     bool getRangeSensorData(vector<double>& rangeData);
+    void putRangeSensorDataAsDebugMessages(
+        int px, int py, double pitchAngle, double yawAngle, float depth, double z, double distance);
 };
 typedef ref_ptr<SensorScreenRenderer> SensorScreenRendererPtr;
 
 class SensorRenderer : public Referenced
 {
 public:
-    GLVisionSimulatorItemImpl* simImpl;
+    GLVisionSimulatorItem::Impl* simImpl;
     SimulationBody* simBody;
     int bodyIndex;
     DevicePtr device;
@@ -207,7 +209,7 @@ public:
     std::shared_ptr<RangeSensor::RangeData> rangeData;
     FisheyeLensConverter fisheyeLensConverter;
 
-    SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* sensor, SimulationBody* simBody, int bodyIndex);
+    SensorRenderer(GLVisionSimulatorItem::Impl* simImpl, Device* sensor, SimulationBody* simBody, int bodyIndex);
     ~SensorRenderer();
     bool initialize(const vector<SimulationBody*>& simBodies);
     SensorScenePtr createSensorScene(const vector<SimulationBody*>& simBodies);
@@ -228,7 +230,7 @@ typedef ref_ptr<SensorRenderer> SensorRendererPtr;
 
 namespace cnoid {
 
-class GLVisionSimulatorItemImpl
+class GLVisionSimulatorItem::Impl
 {
 public:
     GLVisionSimulatorItem* self;
@@ -270,9 +272,9 @@ public:
     CloneMap cloneMap;
     bool isAntiAliasingEnabled;
         
-    GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self);
-    GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self, const GLVisionSimulatorItemImpl& org);
-    ~GLVisionSimulatorItemImpl();
+    Impl(GLVisionSimulatorItem* self);
+    Impl(GLVisionSimulatorItem* self, const Impl& org);
+    ~Impl();
     bool initializeSimulation(SimulatorItem* simulatorItem);
     void onPreDynamics();
     void queueRenderingLoop();
@@ -304,12 +306,12 @@ void GLVisionSimulatorItem::initializeClass(ExtensionManager* ext)
 
 GLVisionSimulatorItem::GLVisionSimulatorItem()
 {
-    impl = new GLVisionSimulatorItemImpl(this);
+    impl = new Impl(this);
     setName("GLVisionSimulator");
 }
 
 
-GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self)
+GLVisionSimulatorItem::Impl::Impl(GLVisionSimulatorItem* self)
     : self(self),
       os(MessageView::instance()->cout()),
       threadMode(GLVisionSimulatorItem::N_THREAD_MODES, CNOID_GETTEXT_DOMAIN_NAME)
@@ -338,11 +340,11 @@ GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self
 GLVisionSimulatorItem::GLVisionSimulatorItem(const GLVisionSimulatorItem& org)
     : SubSimulatorItem(org)
 {
-    impl = new GLVisionSimulatorItemImpl(this, *org.impl);
+    impl = new Impl(this, *org.impl);
 }
 
 
-GLVisionSimulatorItemImpl::GLVisionSimulatorItemImpl(GLVisionSimulatorItem* self, const GLVisionSimulatorItemImpl& org)
+GLVisionSimulatorItem::Impl::Impl(GLVisionSimulatorItem* self, const Impl& org)
     : self(self),
       os(MessageView::instance()->cout()),
       bodyNames(org.bodyNames),
@@ -378,7 +380,7 @@ GLVisionSimulatorItem::~GLVisionSimulatorItem()
 }
 
 
-GLVisionSimulatorItemImpl::~GLVisionSimulatorItemImpl()
+GLVisionSimulatorItem::Impl::~Impl()
 {
 
 }
@@ -467,7 +469,7 @@ bool GLVisionSimulatorItem::initializeSimulation(SimulatorItem* simulatorItem)
 }
 
 
-bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorItem)
+bool GLVisionSimulatorItem::Impl::initializeSimulation(SimulatorItem* simulatorItem)
 {
     this->simulatorItem = simulatorItem;
     worldTimeStep = simulatorItem->worldTimeStep();
@@ -596,9 +598,7 @@ bool GLVisionSimulatorItemImpl::initializeSimulation(SimulatorItem* simulatorIte
 }
 
 
-namespace {
-
-SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* device, SimulationBody* simBody, int bodyIndex)
+SensorRenderer::SensorRenderer(GLVisionSimulatorItem::Impl* simImpl, Device* device, SimulationBody* simBody, int bodyIndex)
     : simImpl(simImpl),
       device(device),
       simBody(simBody),
@@ -707,7 +707,7 @@ SensorRenderer::SensorRenderer(GLVisionSimulatorItemImpl* simImpl, Device* devic
 
             screens.push_back(screen);
         }
-        if(DEBUG_MESSAGE){
+        if(PUT_DEBUG_MESSAGES){
             cout << "Number of screens = " << numScreens << endl;
         }
     }
@@ -803,7 +803,7 @@ SensorScenePtr SensorRenderer::createSensorScene(const vector<SimulationBody*>& 
 }
 
 
-SensorScreenRenderer::SensorScreenRenderer(GLVisionSimulatorItemImpl* simImpl, Device* device, Device* screenDevice)
+SensorScreenRenderer::SensorScreenRenderer(GLVisionSimulatorItem::Impl* simImpl, Device* device, Device* screenDevice)
     : simImpl(simImpl)
 {
     camera = dynamic_cast<Camera*>(device);
@@ -920,7 +920,7 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
 
             depthError = simImpl->depthError;
 
-            if(DEBUG_MESSAGE){
+            if(PUT_DEBUG_MESSAGES){
                 cout << "FieldOfView= " << degree(persCamera->fieldOfView()) << endl;
                 cout << "Height= "  << pixelHeight << "  Width= "  << pixelWidth << endl;
             }
@@ -1068,10 +1068,8 @@ void SensorScreenRenderer::doneGLContextCurrent()
     glContext->doneCurrent();
 }
 
-}
 
-
-void GLVisionSimulatorItemImpl::onPreDynamics()
+void GLVisionSimulatorItem::Impl::onPreDynamics()
 {
     currentTime = simulatorItem->currentTime();
 
@@ -1124,7 +1122,7 @@ void GLVisionSimulatorItemImpl::onPreDynamics()
 }
 
 
-void GLVisionSimulatorItemImpl::queueRenderingLoop()
+void GLVisionSimulatorItem::Impl::queueRenderingLoop()
 {
     SensorRenderer* renderer = nullptr;
     SensorScreenRenderer* currentGLContextScreen = nullptr;
@@ -1160,8 +1158,6 @@ exitRenderingQueueLoop:
     }
 }
 
-
-namespace {
 
 void SensorRenderer::updateSensorScene(bool updateSensorForRenderingThread)
 {
@@ -1298,10 +1294,8 @@ void SensorScreenRenderer::storeResultToTmpDataBuffer()
     }
 }
 
-}
 
-
-void GLVisionSimulatorItemImpl::onPostDynamics()
+void GLVisionSimulatorItem::Impl::onPostDynamics()
 {
     if(useThreadsForSensors){
         getVisionDataInThreadsForSensors();
@@ -1324,7 +1318,7 @@ void GLVisionSimulatorItemImpl::onPostDynamics()
 }
 
 
-void GLVisionSimulatorItemImpl::getVisionDataInThreadsForSensors()
+void GLVisionSimulatorItem::Impl::getVisionDataInThreadsForSensors()
 {
     auto iter = renderersInRendering.begin();
     while(iter != renderersInRendering.end()){
@@ -1345,8 +1339,6 @@ void GLVisionSimulatorItemImpl::getVisionDataInThreadsForSensors()
     }
 }
 
-
-namespace {
 
 bool SensorRenderer::waitForRenderingToFinish()
 {
@@ -1373,10 +1365,8 @@ bool SensorRenderer::waitForRenderingToFinish()
     return true;
 }
 
-}
-        
 
-void GLVisionSimulatorItemImpl::getVisionDataInQueueThread()
+void GLVisionSimulatorItem::Impl::getVisionDataInQueueThread()
 {
     std::unique_lock<std::mutex> lock(queueMutex);
     
@@ -1399,8 +1389,6 @@ void GLVisionSimulatorItemImpl::getVisionDataInQueueThread()
     }
 }
 
-
-namespace {
 
 bool SensorRenderer::waitForRenderingToFinish(std::unique_lock<std::mutex>& lock)
 {
@@ -1682,48 +1670,18 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
             }
             //! \todo add the option to do the interpolation between the adjacent two pixel depths
             const float depth = depthBuf[srcpos + px];
-            if(depth > 0.0f && depth < 1.0f){
+            if(depth <= 0.0f || depth >= 1.0f){
+                rangeData.push_back(std::numeric_limits<double>::infinity());
+            } else {                
                 const double z0 = 2.0 * depth - 1.0;
                 const double w = Pinv_32 * z0 + Pinv_33;
                 const double z = -1.0 / w + depthError;
-                rangeData.push_back(fabs((z / cosPitchAngle) / cos(yawAngle)));
+                const double distance = fabs((z / cosPitchAngle) / cos(yawAngle));
+                rangeData.push_back(distance);
 
-                if(DEBUG_MESSAGE){
-                    const Matrix4 Pinv = renderer->projectionMatrix().inverse();
-                    const float fw = pixelWidth;
-                    const float fh = pixelHeight;
-                    const int cx = pixelWidth / 2;
-                    const int cy = pixelHeight / 2;
-                    Vector4 n;
-                    n[3] = 1.0f;
-                    n.x() = 2.0 * px / fw - 1.0;
-                    n.y() = 2.0 * py / fh - 1.0;
-                    n.z() = 2.0 * depth - 1.0f;
-                    const Vector4 o = Pinv * n;
-                    const double& ww = o[3];
-                    double x_ = o[0] / ww;
-                    double y_ = o[1] / ww;
-                    double z_ = o[2] / ww;
-                    double distance_ = sqrt(x_*x_ + y_*y_ + z_*z_);
-                    double pitchAngle_ = asin( y_ / distance_);
-                    double yawAngle_ = -asin( x_ / sqrt(x_*x_ + z_*z_) );
-
-                    cout << "pixelX= " << px << "  pixelY= " << py << endl;
-                    cout << "pitch= " << degree(pitchAngle_)  << " yaw= " << degree(yawAngle_) << endl;
-                    cout << "pitch= " << degree(pitchAngle)  << " yaw= " << degree(yawAngle) << endl;
-                    cout << "x= " << x_ << " "
-                         << "y= " << y_ << " "
-                         << "z= " << z_ << endl;
-                    double distance = fabs((z / cosPitchAngle) / cos(yawAngle));
-                    double x = distance *  cosPitchAngle * sin(-yawAngle);
-                    double y  = distance * sin(pitchAngle);
-                    cout << "x= " << x << " "
-                         << "y= " << y << " "
-                         << "z= " << z  << endl;
-                    cout << endl;
+                if(PUT_DEBUG_MESSAGES){
+                    putRangeSensorDataAsDebugMessages(px, py, pitchAngle, yawAngle, depth, z, distance);
                 }
-            } else {
-                rangeData.push_back(std::numeric_limits<double>::infinity());
             }
         }
     }
@@ -1731,6 +1689,41 @@ bool SensorScreenRenderer::getRangeSensorData(vector<double>& rangeData)
     return true;
 }
 
+
+void SensorScreenRenderer::putRangeSensorDataAsDebugMessages
+(int px, int py, double pitchAngle, double yawAngle, float depth, double z, double distance)
+{
+    const Matrix4 Pinv = renderer->projectionMatrix().inverse();
+    const float fw = pixelWidth;
+    const float fh = pixelHeight;
+    const int cx = pixelWidth / 2;
+    const int cy = pixelHeight / 2;
+    Vector4 n;
+    n[3] = 1.0f;
+    n.x() = 2.0 * px / fw - 1.0;
+    n.y() = 2.0 * py / fh - 1.0;
+    n.z() = 2.0 * depth - 1.0f;
+    const Vector4 o = Pinv * n;
+    const double& ww = o[3];
+    double x_ = o[0] / ww;
+    double y_ = o[1] / ww;
+    double z_ = o[2] / ww;
+    double distance_ = sqrt(x_*x_ + y_*y_ + z_*z_);
+    double pitchAngle_ = asin( y_ / distance_);
+    double yawAngle_ = -asin( x_ / sqrt(x_*x_ + z_*z_) );
+
+    cout << "pixelX= " << px << "  pixelY= " << py << endl;
+    cout << "pitch= " << degree(pitchAngle_)  << " yaw= " << degree(yawAngle_) << endl;
+    cout << "pitch= " << degree(pitchAngle)  << " yaw= " << degree(yawAngle) << endl;
+    cout << "x= " << x_ << " "
+         << "y= " << y_ << " "
+         << "z= " << z_ << endl;
+    double x = distance *  cos(pitchAngle) * sin(-yawAngle);
+    double y  = distance * sin(pitchAngle);
+    cout << "x= " << x << " "
+         << "y= " << y << " "
+         << "z= " << z  << endl;
+    cout << endl;
 }
 
 
@@ -1740,7 +1733,7 @@ void GLVisionSimulatorItem::finalizeSimulation()
 }
 
 
-void GLVisionSimulatorItemImpl::finalizeSimulation()
+void GLVisionSimulatorItem::Impl::finalizeSimulation()
 {
     if(useQueueThreadForAllSensors){
         {
@@ -1757,8 +1750,6 @@ void GLVisionSimulatorItemImpl::finalizeSimulation()
     sensorRenderers.clear();
 }
 
-
-namespace {
 
 SensorRenderer::~SensorRenderer()
 {
@@ -1796,8 +1787,6 @@ SensorScreenRenderer::~SensorScreenRenderer()
     }
 }
 
-}
-    
 
 void GLVisionSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
@@ -1806,7 +1795,7 @@ void GLVisionSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 }
 
 
-void GLVisionSimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
+void GLVisionSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Target bodies"), bodyNameListString,
                 [&](const string& names){ return updateNames(names, bodyNameListString, bodyNames); });
@@ -1835,21 +1824,21 @@ bool GLVisionSimulatorItem::store(Archive& archive)
 }
 
 
-bool GLVisionSimulatorItemImpl::store(Archive& archive)
+bool GLVisionSimulatorItem::Impl::store(Archive& archive)
 {
-    writeElements(archive, "targetBodies", bodyNames, true);
-    writeElements(archive, "targetSensors", sensorNames, true);
-    archive.write("maxFrameRate", maxFrameRate);
-    archive.write("maxLatency", maxLatency);
-    archive.write("recordVisionData", isVisionDataRecordingEnabled);
-    archive.write("threadMode", threadMode.selectedSymbol());
-    archive.write("bestEffort", isBestEffortModeProperty);
-    archive.write("allSceneObjects", shootAllSceneObjects);
-    archive.write("rangeSensorPrecisionRatio", rangeSensorPrecisionRatio);
-    archive.write("depthError", depthError);
-    archive.write("enableHeadLight", isHeadLightEnabled);    
-    archive.write("enableAdditionalLights", areAdditionalLightsEnabled);
-    archive.write("antiAliasing", isAntiAliasingEnabled);
+    writeElements(archive, "target_bodies", bodyNames, true);
+    writeElements(archive, "target_sensors", sensorNames, true);
+    archive.write("max_frame_rate", maxFrameRate);
+    archive.write("max_latency", maxLatency);
+    archive.write("record_vision_data", isVisionDataRecordingEnabled);
+    archive.write("thread_mode", threadMode.selectedSymbol());
+    archive.write("best_effort", isBestEffortModeProperty);
+    archive.write("all_scene_objects", shootAllSceneObjects);
+    archive.write("range_sensor_precision_ratio", rangeSensorPrecisionRatio);
+    archive.write("depth_error", depthError);
+    archive.write("enable_head_light", isHeadLightEnabled);    
+    archive.write("enable_additional_lights", areAdditionalLightsEnabled);
+    archive.write("antialiasing", isAntiAliasingEnabled);
     return true;
 }
 
@@ -1861,26 +1850,26 @@ bool GLVisionSimulatorItem::restore(const Archive& archive)
 }
 
 
-bool GLVisionSimulatorItemImpl::restore(const Archive& archive)
+bool GLVisionSimulatorItem::Impl::restore(const Archive& archive)
 {
-    readElements(archive, "targetBodies", bodyNames);
+    readElements(archive, { "target_bodies", "targetBodies" }, bodyNames);
     bodyNameListString = getNameListString(bodyNames);
-    readElements(archive, "targetSensors", sensorNames);
+    readElements(archive, { "target_sensors", "targetSensors" }, sensorNames);
     sensorNameListString = getNameListString(sensorNames);
 
-    archive.read("maxFrameRate", maxFrameRate);
-    archive.read("maxLatency", maxLatency);
-    archive.read("recordVisionData", isVisionDataRecordingEnabled);
-    archive.read("bestEffort", isBestEffortModeProperty);
-    archive.read("allSceneObjects", shootAllSceneObjects);
-    archive.read("rangeSensorPrecisionRatio", rangeSensorPrecisionRatio);
-    archive.read("depthError", depthError);
-    archive.read("enableHeadLight", isHeadLightEnabled);
-    archive.read("enableAdditionalLights", areAdditionalLightsEnabled);
-    archive.read("antiAliasing", isAntiAliasingEnabled);
+    archive.read({ "max_frame_rate", "maxFrameRate" }, maxFrameRate);
+    archive.read({ "max_latency", "maxLatency" }, maxLatency);
+    archive.read({ "record_vision_data", "recordVisionData" }, isVisionDataRecordingEnabled);
+    archive.read({ "best_effort", "bestEffort" }, isBestEffortModeProperty);
+    archive.read({ "all_scene_objects", "allSceneObjects" }, shootAllSceneObjects);
+    archive.read({ "range_sensor_precision_ratio", "rangeSensorPrecisionRatio" }, rangeSensorPrecisionRatio);
+    archive.read({ "depth_error", "depthError" }, depthError);
+    archive.read({ "enable_head_light", "enableHeadLight" }, isHeadLightEnabled);
+    archive.read({ "enable_additional_lights", "enableAdditionalLights" }, areAdditionalLightsEnabled);
+    archive.read({ "antialiasing", "antiAliasing" }, isAntiAliasingEnabled);
 
     string symbol;
-    if(archive.read("threadMode", symbol)){
+    if(archive.read({ "thread_mode", "threadMode" }, symbol)){
         threadMode.select(symbol);
     } else {
         // For the backward compatibility

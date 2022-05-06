@@ -11,8 +11,6 @@
 
 namespace cnoid {
 
-class GLVisionSimulatorItemImpl;
-
 class CNOID_EXPORT GLVisionSimulatorItem : public SubSimulatorItem
 {
 public:
@@ -39,8 +37,10 @@ public:
     virtual bool initializeSimulation(SimulatorItem* simulatorItem);
     virtual void finalizeSimulation();
 
-    // deprecated
-    void setDedicatedSensorThreadsEnabled(bool on); // setThreadMode(SENSOR_THREAD_MODE);
+    [[deprecated("Use setThreadMode(SENSOR_THREAD_MODE)")]]
+    void setDedicatedSensorThreadsEnabled(bool on);
+
+    class Impl;
 
 protected:
     virtual Item* doDuplicate() const;
@@ -49,7 +49,7 @@ protected:
     virtual bool restore(const Archive& archive);
 
 private:
-    GLVisionSimulatorItemImpl* impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<GLVisionSimulatorItem> GLVisionSimulatorItemPtr;
