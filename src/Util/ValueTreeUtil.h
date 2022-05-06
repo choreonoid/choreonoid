@@ -38,6 +38,17 @@ bool readElements(const Mapping& mapping, const std::string& key, Container& ele
     return !elements.empty();
 }
 
+template<class Container>
+bool readElements(const Mapping& mapping, std::initializer_list<const char*> keys, Container& elements)
+{
+    for(auto& key : keys){
+        if(readElements(mapping, key, elements)){
+            return true;
+        }
+    }
+    return false;
+}
+
 }
 
 #endif
