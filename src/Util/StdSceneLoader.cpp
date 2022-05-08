@@ -34,10 +34,11 @@ namespace cnoid {
 class StdSceneLoader::Impl
 {
 public:
+    StdSceneLoader* self;
     StdSceneReader sceneReader;
     ostream* os_;
 
-    Impl();
+    Impl(StdSceneLoader* self);
     ostream& os() { return *os_; }
     SgNode* load(const std::string& filename);
 };
@@ -47,11 +48,12 @@ public:
 
 StdSceneLoader::StdSceneLoader()
 {
-    impl = new Impl;
+    impl = new Impl(this);
 }
 
 
-StdSceneLoader::Impl::Impl()
+StdSceneLoader::Impl::Impl(StdSceneLoader* self)
+    : self(self)
 {
     os_ = &nullout();
 }
@@ -99,7 +101,17 @@ SgNode* StdSceneLoader::Impl::load(const std::string& filename)
         if(topNode){
             stdx::filesystem::path filepath(fromUTF8(filename));
             sceneReader.setBaseDirectory(toUTF8(filepath.parent_path().string()));
+
+            double scaling;
+            switch(self->lengthUnitHint()){
+            case Millimeter: scaling = 0.001;  break;
+            case Inch:       scaling = 0.0254; break;
+            default:         scaling = 1.0;    break;
+            }
+            sceneReader.setScaling(scaling);
+
             sceneReader.readHeader(topNode);
+            
             auto sceneSrc = topNode->find("scene");
             if(!sceneSrc->isValid()){
                 os() << format(_("Scene file \"{}\" does not have the \"scene\" node."), filename) << endl;
@@ -118,6 +130,6 @@ SgNode* StdSceneLoader::Impl::load(const std::string& filename)
     os().flush();
 
     sceneReader.clear();
-    
-    return scene.retn();
+
+    return self->insertTransformNodeToAdjustUpperAxis(scene.retn());
 }

@@ -44,6 +44,8 @@ public:
     YAMLReader* mainYamlReader;
     unordered_map<ValueNodePtr, SgObjectPtr> sharedObjectMap;
 
+    double scaling;
+    
     // temporary variables for reading values
     double value;
     string symbol;
@@ -307,8 +309,15 @@ void StdSceneReader::setYAMLReader(YAMLReader* reader)
 }
 
 
+void StdSceneReader::setScaling(double s)
+{
+    impl->scaling = s;
+}
+
+
 void StdSceneReader::clear()
 {
+    impl->scaling = 1.0;
     isDegreeMode_ = true;
     impl->sharedObjectMap.clear();
     impl->defaultMaterial.reset();
@@ -712,7 +721,7 @@ SgNode* StdSceneReader::Impl::readTransform(Mapping* info)
 
     SgPosTransformPtr posTransform = new SgPosTransform;
     if(self->readTranslation(info, v)){
-        posTransform->setTranslation(v);
+        posTransform->setTranslation(scaling * v);
         group = posTransform;
     }        
     Matrix3 R;
@@ -761,7 +770,7 @@ SgNode* StdSceneReader::Impl::readTransformParameters(Mapping* info, SgNode* sce
             transform->setRotation(R);
         }
         if(isTranslated){
-            transform->setTranslation(v);
+            transform->setTranslation(scaling * v);
         }
         group = transform;
     }
@@ -880,6 +889,7 @@ SgMesh* StdSceneReader::Impl::readBox(Mapping* info, int meshOptions)
 
     SgMesh::Box box;
     read(info, "size", box.size);
+    box.size *= scaling;
     mesh->setPrimitive(box);
 
     int edv = info->get("extra_division_number", 1);
@@ -916,6 +926,7 @@ SgMesh* StdSceneReader::Impl::readSphere(Mapping* info, int meshOptions)
 
     SgMesh::Sphere sphere;
     info->read("radius", sphere.radius);
+    sphere.radius *= scaling;
     mesh->setPrimitive(sphere);
 
     if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions)){
@@ -933,7 +944,9 @@ SgMesh* StdSceneReader::Impl::readCylinder(Mapping* info, int meshOptions)
 
     SgMesh::Cylinder cylinder;
     info->read("radius", cylinder.radius);
+    cylinder.radius *= scaling;
     info->read("height", cylinder.height);
+    cylinder.height *= scaling;
     info->read("top", cylinder.top);
     info->read("bottom", cylinder.bottom);
     mesh->setPrimitive(cylinder);
@@ -953,7 +966,9 @@ SgMesh* StdSceneReader::Impl::readCone(Mapping* info, int meshOptions)
 
     SgMesh::Cone cone;
     info->read("radius", cone.radius);
+    cone.radius *= scaling;
     info->read("height", cone.height);
+    cone.height *= scaling;
     info->read("bottom", cone.bottom);
     mesh->setPrimitive(cone);
 
@@ -972,7 +987,9 @@ SgMesh* StdSceneReader::Impl::readCapsule(Mapping* info, int meshOptions)
 
     SgMesh::Capsule capsule;
     info->read("radius", capsule.radius);
+    capsule.radius *= scaling;
     info->read("height", capsule.height);
+    capsule.height *= scaling;
     mesh->setPrimitive(capsule);
     
     if(!meshGenerator.updateMeshWithPrimitiveInformation(mesh, meshOptions)){
@@ -994,7 +1011,7 @@ SgMesh* StdSceneReader::Impl::readExtrusion(Mapping* info, int meshOptions)
         for(int i=0; i < n; ++i){
             Vector2& s = crossSection[i];
             for(int j=0; j < 2; ++j){
-                s[j] = crossSectionNode[i*2+j].toDouble();
+                s[j] = crossSectionNode[i*2+j].toDouble() * scaling;
             }
         }
     }
@@ -1007,7 +1024,7 @@ SgMesh* StdSceneReader::Impl::readExtrusion(Mapping* info, int meshOptions)
         for(int i=0; i < n; ++i){
             Vector3& s = spine[i];
             for(int j=0; j < 3; ++j){
-                s[j] = spineNode[i*3+j].toDouble();
+                s[j] = spineNode[i*3+j].toDouble() * scaling;
             }
         }
     }
@@ -1059,14 +1076,17 @@ SgMesh* StdSceneReader::Impl::readElevationGrid(Mapping* info, int meshOptions)
     info->read({ "x_dimension", "xDimension" }, grid.xDimension);
     info->read({ "z_dimension", "zDimension" }, grid.zDimension);
     info->read({ "x_spacing", "xSpacing" }, grid.xSpacing);
+    grid.xSpacing *= scaling;
     info->read({ "z_spacing", "zSpacing" }, grid.zSpacing);
+    grid.zSpacing *= scaling;
+
     info->read("ccw", grid.ccw);
     readAngle(info, { "crease_angle", "creaseAngle" }, grid.creaseAngle);
 
     Listing& heightNode = *info->findListing("height");
     if(heightNode.isValid()){
         for(int i=0; i < heightNode.size(); i++){
-            grid.height.push_back(heightNode[i].toDouble());
+            grid.height.push_back(heightNode[i].toDouble() * scaling);
         }
     }
 
@@ -1219,12 +1239,23 @@ SgVertexArray* StdSceneReader::Impl::readVertices(Listing* srcVertices)
         const int numVertices = srcVertices->size() / 3;
         vertices = new SgVertexArray;
         vertices->resize(numVertices);
-        for(int i=0; i < numVertices; ++i){
-            Vector3f& v = (*vertices)[i];
-            for(int j=0; j < 3; ++j){
-                v[j] = (*srcVertices)[i*3 + j].toFloat();
+        if(scaling == 1.0){
+            for(int i=0; i < numVertices; ++i){
+                Vector3f& v = (*vertices)[i];
+                for(int j=0; j < 3; ++j){
+                    v[j] = (*srcVertices)[i*3 + j].toFloat();
+                }
+            }
+        } else {
+            float s = scaling;
+            for(int i=0; i < numVertices; ++i){
+                Vector3f& v = (*vertices)[i];
+                for(int j=0; j < 3; ++j){
+                    v[j] = (*srcVertices)[i*3 + j].toFloat() * s;
+                }
             }
         }
+            
         sharedObjectMap[srcVertices] = vertices;
     }
     return vertices.retn();

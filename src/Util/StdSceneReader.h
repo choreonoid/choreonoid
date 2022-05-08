@@ -34,6 +34,7 @@ public:
     std::string baseDirectory() const;
     stdx::filesystem::path baseDirPath() const;
     void setYAMLReader(YAMLReader* reader);
+    void setScaling(double s);
     void clear();
     void readHeader(Mapping* info);
     void readHeader(Mapping* info, double formatVersion);

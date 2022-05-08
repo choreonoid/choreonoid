@@ -32,6 +32,7 @@ namespace cnoid {
 class SceneLoader::Impl
 {
 public:
+    SceneLoader* self;
     ostream* os_;
     ostream& os() { return *os_; }
     typedef map<int, AbstractSceneLoaderPtr> LoaderMap;
@@ -40,7 +41,7 @@ public:
     int defaultDivisionNumber;
     double defaultCreaseAngle;
 
-    Impl();
+    Impl(SceneLoader* impl);
     AbstractSceneLoaderPtr findLoader(string ext);
     SgNode* load(const std::string& filename, bool* out_isSupportedFormat);
 };
@@ -95,11 +96,12 @@ SignalProxy<void(const std::vector<std::string>& extensions)> SceneLoader::sigAv
 
 SceneLoader::SceneLoader()
 {
-    impl = new Impl;
+    impl = new Impl(this);
 }
 
 
-SceneLoader::Impl::Impl()
+SceneLoader::Impl::Impl(SceneLoader* self)
+    : self(self)
 {
     os_ = &nullout();
     defaultDivisionNumber = -1;
@@ -198,7 +200,11 @@ SgNode* SceneLoader::Impl::load(const std::string& filename, bool* out_isSupport
         if(defaultCreaseAngle >= 0.0){
             loader->setDefaultCreaseAngle(defaultCreaseAngle);
         }
+        loader->setLengthUnitHint(self->lengthUnitHint());
+        loader->setUpperAxisHint(self->upperAxisHint());
+        
         node = loader->load(filename);
+        
         actualSceneLoaderOnLastLoading = loader;
         os().flush();
     }

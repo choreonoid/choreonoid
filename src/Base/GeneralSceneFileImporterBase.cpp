@@ -14,13 +14,6 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
-namespace {
-
-enum LengthUnit { Meter, Millimeter, Inch, NumLengthUnitIds };
-enum UpperAxis { Z_Upper, Y_Upper, NumUpperAxisIds };
-
-}
-
 namespace cnoid {
 
 //! \todo Share the instance of the following impl class
@@ -77,15 +70,15 @@ GeneralSceneFileImporterBase::GeneralSceneFileImporterBase()
 
 
 GeneralSceneFileImporterBase::Impl::Impl()
-    : lengthUnitHint(NumLengthUnitIds),
-      upperAxisHint(NumUpperAxisIds, CNOID_GETTEXT_DOMAIN_NAME)
+    : lengthUnitHint(SceneLoader::NumLengthUnitTypes),
+      upperAxisHint(SceneLoader::NumUpperAxisTypes, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    lengthUnitHint.setSymbol(Meter, "meter");
-    lengthUnitHint.setSymbol(Millimeter, "millimeter");
-    lengthUnitHint.setSymbol(Inch, "inch");
+    lengthUnitHint.setSymbol(SceneLoader::Meter, "meter");
+    lengthUnitHint.setSymbol(SceneLoader::Millimeter, "millimeter");
+    lengthUnitHint.setSymbol(SceneLoader::Inch, "inch");
 
-    upperAxisHint.setSymbol(Z_Upper, "Z");
-    upperAxisHint.setSymbol(Y_Upper, "Y");
+    upperAxisHint.setSymbol(SceneLoader::Z_Upper, "Z");
+    upperAxisHint.setSymbol(SceneLoader::Y_Upper, "Y");
 
     optionPanel = nullptr;
     unitCombo = nullptr;
@@ -123,6 +116,9 @@ SgNode* GeneralSceneFileImporterBase::Impl::loadScene(GeneralSceneFileImporterBa
         sceneLoader->setMessageSink(self->os());
     }
 
+    sceneLoader->setLengthUnitHint(static_cast<SceneLoader::LengthUnitType>(lengthUnitHint.which()));
+    sceneLoader->setUpperAxisHint(static_cast<SceneLoader::UpperAxisType>(upperAxisHint.which()));
+    
     bool isSupported;
     SgNode* scene = sceneLoader->load(filename, isSupported);
 
@@ -134,34 +130,7 @@ SgNode* GeneralSceneFileImporterBase::Impl::loadScene(GeneralSceneFileImporterBa
         return nullptr;
     }
 
-    SgNodePtr topNode = scene;
-    /**
-       \note Modifying the vertex positions might be better than
-       inserting the transform nodes.
-       \note This should be implemented in SceneLoader.
-    */
-    if(!lengthUnitHint.is(Meter)){
-        auto scale = new SgScaleTransform;
-        if(lengthUnitHint.is(Millimeter)){
-            scale->setScale(1.0 / 1000.0);
-        } else if(lengthUnitHint.is(Inch)){
-            scale->setScale(0.0254);
-        }
-        scale->addChild(topNode);
-        topNode = scale;
-    }
-    if(upperAxisHint.is(Y_Upper)){
-        auto transform = new SgPosTransform;
-        Matrix3 R;
-        R << 0, 0, 1,
-             1, 0, 0,
-             0, 1, 0;
-        transform->setRotation(R);
-        transform->addChild(topNode);
-        topNode = transform;
-    }
-    
-    return topNode.retn();
+    return scene;
 }
 
 
@@ -179,17 +148,17 @@ bool GeneralSceneFileImporterBase::saveScene(SgNode* scene, const std::string& f
 
 void GeneralSceneFileImporterBase::resetOptions()
 {
-    impl->lengthUnitHint.select(Meter);
-    impl->upperAxisHint.select(Z_Upper);
+    impl->lengthUnitHint.select(SceneLoader::Meter);
+    impl->upperAxisHint.select(SceneLoader::Z_Upper);
 }
 
 
 void GeneralSceneFileImporterBase::storeOptions(Mapping* archive)
 {
-    if(!impl->lengthUnitHint.is(Meter)){
+    if(!impl->lengthUnitHint.is(SceneLoader::Meter)){
         archive->write("meshLengthUnitHint", impl->lengthUnitHint.selectedSymbol());
     }
-    if(!impl->upperAxisHint.is(Z_Upper)){
+    if(!impl->upperAxisHint.is(SceneLoader::Z_Upper)){
         archive->write("meshUpperAxisHint", impl->upperAxisHint.selectedSymbol());
     }
 }
@@ -232,7 +201,7 @@ void GeneralSceneFileImporterBase::Impl::createOptionPanel()
     hbox->addWidget(unitCombo);
     hbox->addWidget(new QLabel(_("Upper axis:")));
     axisCombo = new ComboBox;
-    for(int i=0; i < NumUpperAxisIds; ++i){
+    for(int i=0; i < SceneLoader::NumUpperAxisTypes; ++i){
         axisCombo->addItem(upperAxisHint.label(i));
     }
     hbox->addWidget(axisCombo);

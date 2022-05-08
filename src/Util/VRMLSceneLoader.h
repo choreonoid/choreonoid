@@ -10,8 +10,6 @@
 
 namespace cnoid {
 
-class VRMLSceneLoaderImpl;
-
 class CNOID_EXPORT VRMLSceneLoader : public AbstractSceneLoader
 {
 public:
@@ -21,7 +19,8 @@ public:
     virtual SgNode* load(const std::string& filename) override;
 
 private:
-    VRMLSceneLoaderImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 };

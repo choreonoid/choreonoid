@@ -29,14 +29,14 @@ struct Registration {
 
 namespace cnoid {
 
-class VRMLSceneLoaderImpl
+class VRMLSceneLoader::Impl
 {
 public:
     VRMLParser parser;
     VRMLToSGConverter converter;
     ostream* os_;
 
-    VRMLSceneLoaderImpl();
+    Impl();
     ostream& os() { return *os_; }
     SgNode* load(const std::string& filename);
 };
@@ -46,11 +46,11 @@ public:
 
 VRMLSceneLoader::VRMLSceneLoader()
 {
-    impl = new VRMLSceneLoaderImpl;
+    impl = new Impl;
 }
 
 
-VRMLSceneLoaderImpl::VRMLSceneLoaderImpl()
+VRMLSceneLoader::Impl::Impl()
 {
     os_ = &nullout();
 }
@@ -72,15 +72,15 @@ void VRMLSceneLoader::setMessageSink(std::ostream& os)
 
 SgNode* VRMLSceneLoader::load(const std::string& filename)
 {
-    return impl->load(filename);
+    return insertTransformNodesToAdjustLengthUnitAndUpperAxis(impl->load(filename));
 }
 
 
-SgNode* VRMLSceneLoaderImpl::load(const std::string& filename)
+SgNode* VRMLSceneLoader::Impl::load(const std::string& filename)
 {
     converter.clearConvertedNodeMap();
 
-    SgGroupPtr top = new SgGroup;
+    SgGroupPtr group = new SgGroup;
 
     try {
         parser.load(filename);
@@ -88,7 +88,7 @@ SgNode* VRMLSceneLoaderImpl::load(const std::string& filename)
         while(VRMLNodePtr vrml = parser.readNode()){
             SgNodePtr node = converter.convert(vrml);
             if(node){
-                top->addChild(node);
+                group->addChild(node);
             }
         }
         parser.checkEOF();
@@ -98,14 +98,17 @@ SgNode* VRMLSceneLoaderImpl::load(const std::string& filename)
         return 0;
     }
 
-    if(top->empty()){
+    if(group->empty()){
         os() << format(_("VRML file \"{}\" does not have any valid entity."), filename) << endl;
-        return 0;
+        return nullptr;
     }
 
-    if(top->numChildren() == 1){
-        return top->child(0);
+    SgNodePtr node = group;
+    if(group->numChildren() == 1){
+        node = group->child(0);
+        group->removeChildAt(0);
     }
+    group.reset();
 
-    return top.retn();
+    return node.retn();
 }

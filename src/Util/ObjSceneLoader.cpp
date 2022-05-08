@@ -162,7 +162,7 @@ void ObjSceneLoader::Impl::clearBufObjects()
 
 SgNode* ObjSceneLoader::load(const std::string& filename)
 {
-    return impl->load(filename);
+    return insertTransformNodesToAdjustLengthUnitAndUpperAxis(impl->load(filename));
 }
 
 

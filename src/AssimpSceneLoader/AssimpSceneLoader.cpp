@@ -1,7 +1,3 @@
-/*!
-  @author Shizuko Hattori, Shin'ichiro Nakaoka
-*/
-
 #include "AssimpSceneLoader.h"
 #include <cnoid/SceneLoader>
 #include <cnoid/SceneDrawables>
@@ -43,7 +39,7 @@ const bool ENABLE_WARNING_FOR_FLIPPED_COORDINATE = false;
 
 namespace cnoid {
 
-class AssimpSceneLoaderImpl
+class AssimpSceneLoader::Impl
 {
 public:
     ostream* os_;
@@ -66,7 +62,7 @@ public:
 
     MeshFilter meshFilter;
 
-    AssimpSceneLoaderImpl();
+    Impl();
     void clear();
     SgNode* load(const std::string& filename);
     SgGroup* convertAiNode(aiNode* node);
@@ -93,16 +89,16 @@ AssimpSceneLoader::AssimpSceneLoader()
 }
 
 
-AssimpSceneLoaderImpl* AssimpSceneLoader::getOrCreateImpl()
+AssimpSceneLoader::Impl* AssimpSceneLoader::getOrCreateImpl()
 {
     if(!impl){
-        impl = new AssimpSceneLoaderImpl;
+        impl = new Impl;
     }
     return impl;
 }
 
 
-AssimpSceneLoaderImpl::AssimpSceneLoaderImpl()
+AssimpSceneLoader::Impl::Impl()
 {
 #ifdef AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION
     importer.SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION, true);
@@ -127,7 +123,7 @@ void AssimpSceneLoader::setMessageSink(std::ostream& os)
 }
 
 
-void AssimpSceneLoaderImpl::clear()
+void AssimpSceneLoader::Impl::clear()
 {
     aiIndexToSgShapeMap.clear();
     aiIndexToSgMaterialMap.clear();
@@ -138,11 +134,12 @@ void AssimpSceneLoaderImpl::clear()
 
 SgNode* AssimpSceneLoader::load(const std::string& filename)
 {
-    return getOrCreateImpl()->load(filename);
+    return insertTransformNodesToAdjustLengthUnitAndUpperAxis(
+        getOrCreateImpl()->load(filename));
 }
 
 
-SgNode* AssimpSceneLoaderImpl::load(const std::string& filename)
+SgNode* AssimpSceneLoader::Impl::load(const std::string& filename)
 {
     clear();
 
@@ -171,7 +168,7 @@ SgNode* AssimpSceneLoaderImpl::load(const std::string& filename)
 }
 
 
-SgGroup* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
+SgGroup* AssimpSceneLoader::Impl::convertAiNode(aiNode* node)
 {
     static const bool USE_AFFINE_TRANSFORM = false;
     
@@ -266,7 +263,7 @@ SgGroup* AssimpSceneLoaderImpl::convertAiNode(aiNode* node)
 }
 
 
-SgNode* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
+SgNode* AssimpSceneLoader::Impl::convertAiMesh(unsigned int index)
 {
     if(!ENABLE_FLIPPED_COORDINATE_EXPANSION || !T_local){
         AiIndexToSgShapeMap::iterator p = aiIndexToSgShapeMap.find(index);
@@ -288,7 +285,7 @@ SgNode* AssimpSceneLoaderImpl::convertAiMesh(unsigned int index)
 }
 
 
-SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
+SgNode* AssimpSceneLoader::Impl::convertAiMeshFaces(aiMesh* srcMesh)
 {
     const unsigned int types = srcMesh->mPrimitiveTypes;
     SgGroupPtr group = new SgGroup;
@@ -437,7 +434,7 @@ SgNode* AssimpSceneLoaderImpl::convertAiMeshFaces(aiMesh* srcMesh)
 }
 
 
-SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
+SgMaterial* AssimpSceneLoader::Impl::convertAiMaterial(unsigned int index)
 {
     AiIndexToSgMaterialMap::iterator p = aiIndexToSgMaterialMap.find(index);
     if (p != aiIndexToSgMaterialMap.end()){
@@ -492,7 +489,7 @@ SgMaterial* AssimpSceneLoaderImpl::convertAiMaterial(unsigned int index)
 }
 
 
-SgTexture* AssimpSceneLoaderImpl::convertAiTexture(unsigned int index)
+SgTexture* AssimpSceneLoader::Impl::convertAiTexture(unsigned int index)
 {
     AiIndexToSgTextureMap::iterator p = aiIndexToSgTextureMap.find(index);
     if(p != aiIndexToSgTextureMap.end()){

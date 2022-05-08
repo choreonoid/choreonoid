@@ -469,7 +469,7 @@ void STLSceneLoader::setMessageSink(std::ostream& os)
 
 SgNode* STLSceneLoader::load(const std::string& filename)
 {
-    return impl->load(filename);
+    return insertTransformNodesToAdjustLengthUnitAndUpperAxis(impl->load(filename));
 }
 
 
