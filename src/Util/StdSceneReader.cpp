@@ -582,29 +582,20 @@ SgNode* StdSceneReader::readNode(Mapping& info, const std::string& type)
 }
 
 
-static SgNodePtr removeRedundantGroup(SgGroup* group)
-{
-    SgNodePtr node;
-    if(!group->empty()){
-        if(group->numChildren() == 1){
-            auto& g = *group;
-            if(typeid(g) == typeid(SgGroup)){
-                node = group->child(0);
-            }
-        }
-        if(!node){
-            node = group;
-        }
-    }
-    return node;
-}
-
-
 SgNode* StdSceneReader::readScene(ValueNode* scene)
 {
     SgGroupPtr group = new SgGroup;
     impl->readNodeList(scene, group);
-    return removeRedundantGroup(group).retn();
+
+    if(group->empty()){
+        return nullptr;
+    } else if(group->numChildren() == 1){
+        SgNodePtr node = group->child(0);
+        group->removeChildAt(0);
+        return node.retn();
+    } else {
+        return group.retn();
+    }
 }    
 
 
@@ -643,8 +634,12 @@ SgNode* StdSceneReader::Impl::readNode(Mapping* info, const string& type)
             node->setName(symbol);
         } else if(!isMetaSceneObject){
             // remove a nameless, redundant group node
-            if(auto group = dynamic_cast<SgGroup*>(node)){
-                node = removeRedundantGroup(group);
+            if(auto group = node->toGroupNode()){
+                auto& g = *group;
+                if(typeid(g) == typeid(SgGroup) && group->numChildren() == 1){
+                    node = group->child(0);
+                    sharedObjectMap[info] = node;
+                }
             }
         }
     }
