@@ -8,6 +8,10 @@ materials:
     roughness: 1.0
     viscosity: 1.0
   -
+    name: Slider
+    roughness: 0.0
+    viscosity: 1.0
+  -
     name: Tire
     roughness: 1.0
     viscosity: 1.0
@@ -77,6 +81,10 @@ contact_materials:
     materials: [ Ground, Default ]
     friction: 0.5
     restitution: 0.4
+  -
+    materials: [ Ground, Slider ]
+    friction: 0.0
+    restitution: 0.0
   -
     materials: [ Ground, Sole ]
     friction: 1.0
