@@ -200,8 +200,8 @@ void exportPyLink(py::module& m)
 
         // deprecated
         .def_property_readonly("jointTypeString", [](const Link& self){ return self.jointTypeLabel(); })
-        .def("isRotationalJoint", &Link::isRotationalJoint)
-        .def("isSlideJoint", &Link::isSlideJoint)
+        .def("isRotationalJoint", &Link::isRevoluteJoint)
+        .def("isSlideJoint", &Link::isPrismaticJoint)
         .def_property(
             "attitude",
             [](Link& self){ return self.rotation(); },

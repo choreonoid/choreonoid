@@ -939,9 +939,9 @@ void BulletLink::getKinematicStateFromBullet()
             link->p() << p[0], p[1], p[2];
         }
         double q = 0;
-        if(link->isRotationalJoint()){
+        if(link->isRevoluteJoint()){
             q = ((btHingeConstraint*)joint)->getHingeAngle() - q_offset;
-        } else if(link->isSlideJoint()){
+        } else if(link->isPrismaticJoint()){
             q = ((btGeneric6DofConstraint*)joint)->getRelativePivotPosition(2) - q_offset;
         }
         double dq = q - qold;
@@ -970,14 +970,14 @@ void BulletLink::setTorqueToBullet()
     if(bulletBody->multiBody){
         bulletBody->multiBody->addJointTorque(link->index()-1, link->u());
     }else{
-        if(link->isRotationalJoint()){
+        if(link->isRevoluteJoint()){
             const Vector3 u = link->u() * link->a();
             const Vector3 uu = link->R() * u;
             btVector3 torque(uu(0), uu(1), uu(2));
             body->applyTorque(torque);
             parent->body->applyTorque(-torque);
 
-        } else if(link->isSlideJoint()){
+        } else if(link->isPrismaticJoint()){
             const Vector3 u = link->u() * link->d();
             const Vector3 uu = link->R() * u;
             btVector3 torque(uu(0), uu(1), uu(2));
@@ -996,11 +996,11 @@ void BulletLink::setVelocityToBullet()
         if(motor)
             motor->setVelocityTarget(link->dq_target());
     }else{
-        if(link->isRotationalJoint()){
+        if(link->isRevoluteJoint()){
             double v = link->dq_target();
             ((btHingeConstraint*)joint)->enableAngularMotor(true, v, numeric_limits<double>::max());
 
-        } else if(link->isSlideJoint()){
+        } else if(link->isPrismaticJoint()){
             double v = link->dq_target();
             ((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_enableMotor[2] = true;
             ((btGeneric6DofConstraint*)joint)->getTranslationalLimitMotor()->m_targetVelocity[2] = v;
@@ -1267,7 +1267,7 @@ void BulletBody::updateForceSensors()
         }else{
             btTypedConstraint* joint = bulletLinks[link->index()]->joint;
             btJointFeedback* fb = joint->getJointFeedback();
-            if(link->isRotationalJoint()){
+            if(link->isRevoluteJoint()){
                 f   << fb->m_appliedForceBodyB.x(), fb->m_appliedForceBodyB.y(), fb->m_appliedForceBodyB.z();
                 tau << fb->m_appliedTorqueBodyB.x(),  fb->m_appliedTorqueBodyB.y(),  fb->m_appliedTorqueBodyB.z();
             }else{

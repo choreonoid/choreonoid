@@ -136,7 +136,7 @@ void JointPath::extractJoints()
         while(i < m){
             Link* link = linkPath_[i];
             if(link->jointId() >= 0){
-                if(link->isRotationalJoint() || link->isSlideJoint()){
+                if(link->hasActualJoint()){
                     joints_.push_back(link);
                     if(!linkPath_.isDownward(i)){
                         numUpwardJointConnections++;
@@ -148,7 +148,7 @@ void JointPath::extractJoints()
         if(linkPath_.isDownward(m-1)){
             Link* link = linkPath_[m];
             if(link->jointId() >= 0){
-                if(link->isRotationalJoint() || link->isSlideJoint()){
+                if(link->hasActualJoint()){
                     joints_.push_back(link);
                 }
             }

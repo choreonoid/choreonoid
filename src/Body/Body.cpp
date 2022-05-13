@@ -344,9 +344,15 @@ void Body::resetParent()
 void Body::syncPositionWithParentBody(bool doForwardKinematics)
 {
     if(auto parentLink = parentBodyLink()){
-        rootLink_->setPosition(parentLink->T() * rootLink_->Tb());
+        Isometry3 Ts = parentLink->T() * rootLink_->Tb();
         if(doForwardKinematics){
+            rootLink_->setPosition(Ts);
             calcForwardKinematics();
+        } else {
+            Isometry3 Tr = Ts * rootLink_->T().inverse();
+            for(auto& link : links()){
+                link->T() = Tr * link->T();
+            }
         }
     }
 }

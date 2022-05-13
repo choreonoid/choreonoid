@@ -569,9 +569,9 @@ void BodyLinkView::Impl::updateLink()
     Vector3 a(currentLink->a());
     jointAxisLabel.setText(QString("(%1 %2 %3)").arg(a[0], 0, 'f', 4).arg(a[1], 0, 'f', 4).arg(a[2], 0, 'f', 4));
 
-    if(currentLink->isRotationalJoint()){
+    if(currentLink->isRevoluteJoint()){
         updateRotationalJointState();
-    } else if(currentLink->isSlideJoint()){
+    } else if(currentLink->isPrismaticJoint()){
         updateSlideJointState();
     } else {
         qBox.hide();
@@ -677,13 +677,13 @@ void BodyLinkView::Impl::updateKinematicState(bool blockSignals)
             
         if(currentLink){
 
-            if(currentLink->isRotationalJoint()){
+            if(currentLink->isRevoluteJoint()){
                 double q = degree(currentLink->q());
                 qSpin.setValue(q);
                 qSlider.setValue(q * sliderResolution);
                 dqLabel.setText(QString::number(degree(currentLink->dq()), 'f', 1));
                 
-            } else if(currentLink->isSlideJoint()){
+            } else if(currentLink->isPrismaticJoint()){
                 qSpin.setValue(currentLink->q());
                 qSlider.setValue(currentLink->q() * sliderResolution);
                 dqLabel.setText(QString::number(currentLink->dq(), 'f', 1));
@@ -806,7 +806,7 @@ void BodyLinkView::Impl::on_qSliderChanged(int value)
 void BodyLinkView::Impl::on_qChanged(double q)
 {
     if(currentLink){
-        if(currentLink->isRotationalJoint()){
+        if(currentLink->isRevoluteJoint()){
             q = radian(q);
         }
         currentLink->q() = q;
@@ -824,7 +824,7 @@ void BodyLinkView::Impl::on_dqLimitChanged(bool isMin)
         double oppositeVal = isMin ? currentLink->dq_upper() : currentLink->dq_lower();
     
         double limit = targetSpin.value();
-        if(currentLink->isRotationalJoint()){
+        if(currentLink->isRevoluteJoint()){
             limit = radian(limit);
         }
         

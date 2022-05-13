@@ -1658,13 +1658,13 @@ void EditableSceneBody::Impl::startFK(SceneWidgetEvent* event)
     
     orgJointPosition = targetLink->q();
     
-    if(targetLink->isRotationalJoint()){
+    if(targetLink->isRevoluteJoint()){
         dragProjector.setRotationAxis(targetLink->R() * targetLink->a());
         if(dragProjector.startRotation(event)){
             dragMode = LINK_FK_ROTATION;
         }
         
-    } else if(targetLink->isSlideJoint()){
+    } else if(targetLink->isPrismaticJoint()){
         dragProjector.setTranslationAxis(targetLink->R() * targetLink->d());
         if(dragProjector.startTranslation(event)){
             dragMode = LINK_FK_TRANSLATION;

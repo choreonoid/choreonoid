@@ -10,6 +10,7 @@ set(sources
   Link.cpp
   LinkTraverse.cpp
   LinkPath.cpp
+  JointTraverse.cpp
   JointPath.cpp
   LinkGroup.cpp
   Jacobian.cpp
@@ -95,6 +96,7 @@ set(headers
   Link.h
   LinkTraverse.h
   LinkPath.h
+  JointTraverse.h
   JointPath.h
   LinkGroup.h
   Material.h

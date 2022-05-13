@@ -26,6 +26,10 @@ public:
     LinkKinematicsKit(Link* link);
     ~LinkKinematicsKit();
 
+    LinkKinematicsKit* clone(CloneMap* cloneMap = nullptr) const {
+        return static_cast<LinkKinematicsKit*>(doClone(cloneMap));
+    }
+
     void setBaseLink(Link* baseLink);
     void setInverseKinematics(std::shared_ptr<InverseKinematics> ik);
     void setBaseFrames(CoordinateFrameList* frames);

@@ -236,7 +236,7 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
     if(link->jointId() >= 0){
         node->write("joint_id", link->jointId());
     }
-    if(link->hasJoint()){
+    if(link->hasActualJoint()){
         if(link->q_initial() != 0.0){
             if(link->isRevoluteJoint()){
                 node->write("joint_displacement", degree(link->q_initial()));

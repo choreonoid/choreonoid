@@ -124,7 +124,7 @@ void calcCMJacobian(Body* body, Link* base, Eigen::MatrixXd& J)
     // compute Jacobian
     for(int i=0; i < nj; i++){
         Link* joint = body->joint(i);
-        if(joint->isRotationalJoint()){
+        if(joint->isRevoluteJoint()){
             const Vector3 omega = sgn[joint->jointId()] * joint->R() * joint->a();
             const SubMass& sub = subMasses[joint->index()];
             const Vector3 arm = (sub.mwc - sub.m * joint->p()) / body->mass();
@@ -208,7 +208,7 @@ void calcAngularMomentumJacobian(Body* body, Link* base, Eigen::MatrixXd& H)
     // compute Jacobian
     for(int i=0; i < nj; ++i){
         Link* joint = body->joint(i);
-        if(joint->isRotationalJoint()){
+        if(joint->isRevoluteJoint()){
             const Vector3 omega = sgn[joint->jointId()] * joint->R() * joint->a();
             const SubMass& sub = subMasses[joint->index()];
             const Vector3 Mcol = M.col(joint->jointId());

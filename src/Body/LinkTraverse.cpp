@@ -30,10 +30,20 @@ LinkTraverse::LinkTraverse(Link* root, bool doUpward, bool doDownward)
 
 
 LinkTraverse::LinkTraverse(const LinkTraverse& org)
-    : links_(org.links_),
-      numUpwardConnections(org.numUpwardConnections)
 {
-
+    links_.reserve(org.links_.size());
+    
+    if(cloneMap){
+        for(auto& link : org.links_){
+            links_.push_back(link->clone(cloneMap));
+        }
+    } else {
+        for(auto& link : org.links_){
+            links_.push_back(link);
+        }
+    }
+        
+    numUpwardConnections = org.numUpwardConnections;
 }
 
 

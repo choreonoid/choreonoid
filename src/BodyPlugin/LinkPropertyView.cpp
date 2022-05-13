@@ -122,7 +122,7 @@ void LinkPropertyView::Impl::updateLinkProperties(Link* link)
     addProperty(_("Inertia tensor"), link->I());
     addProperty(_("Material"), link->materialName());
     addProperty(_("Joint type"), link->jointTypeLabel());
-    if(link->isRotationalJoint() || link->isSlideJoint()){
+    if(link->hasActualJoint()){
         addProperty(_("Joint axis"), link->jointAxis());
         addProperty(_("Upper joint limit"), link->q_upper());
         addProperty(_("Lower joint limit"), link->q_lower());

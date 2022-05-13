@@ -412,9 +412,9 @@ int KinematicFaultChecker::Impl::checkFaults
             if(joint->index() >= 0 && linkSelection[joint->index()]){
                 if(checkPosition){
                     bool fault = false;
-                    if(joint->isRotationalJoint()){
+                    if(joint->isRevoluteJoint()){
                         fault = (q > (joint->q_upper() - angleMargin) || q < (joint->q_lower() + angleMargin));
-                    } else if(joint->isSlideJoint()){
+                    } else if(joint->isPrismaticJoint()){
                         fault = (q > (joint->q_upper() - translationMargin) || q < (joint->q_lower() + translationMargin));
                     }
                     if(fault){
@@ -479,7 +479,7 @@ void KinematicFaultChecker::Impl::putJointPositionFault(int frame, Link* joint)
 {
     if(frame > lastPosFaultFrames[joint->jointId()] + 1){
         double q, l, u, m;
-        if(joint->isRotationalJoint()){
+        if(joint->isRevoluteJoint()){
             q = degree(joint->q());
             l = degree(joint->q_lower());
             u = degree(joint->q_upper());
@@ -509,7 +509,7 @@ void KinematicFaultChecker::Impl::putJointVelocityFault(int frame, Link* joint)
 {
     if(frame > lastVelFaultFrames[joint->jointId()] + 1){
         double dq, l, u;
-        if(joint->isRotationalJoint()){
+        if(joint->isRevoluteJoint()){
             dq = degree(joint->dq());
             l = degree(joint->dq_lower());
             u = degree(joint->dq_upper());

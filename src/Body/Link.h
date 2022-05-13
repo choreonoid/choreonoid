@@ -164,12 +164,15 @@ public:
     bool isFreeJoint() const { return jointType_ == FreeJoint; }
     bool isRevoluteJoint() const { return jointType_ == RevoluteJoint; }
     bool isPrismaticJoint() const { return jointType_ == PrismaticJoint; }
-    bool hasJoint() const { return jointType_ <= 1; }
+    bool hasActualJoint() const { return jointType_ <= 1; }
+    
 
-    /// deprecated
+    [[deprecated("Use isRevoluteJoint")]]
     bool isRotationalJoint() const { return jointType_ == RevoluteJoint; }
-    /// deprecated
+    [[deprecated("Use isPrismaticJoint")]]
     bool isSlideJoint() const { return jointType_ == PrismaticJoint; }
+    [[deprecated("Use hasActualJoint")]]
+    bool hasJoint() const { return jointType_ <= 1; }
         
     const Vector3& a() const { return a_; }    
     const Vector3& jointAxis() const { return a_; }

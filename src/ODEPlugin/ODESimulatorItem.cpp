@@ -584,10 +584,10 @@ void ODELink::setKinematicStateToODEflip()
 void ODELink::getKinematicStateFromODE()
 {
     if(jointID){
-        if(link->isRotationalJoint()){
+        if(link->isRevoluteJoint()){
             link->q() = dJointGetHingeAngle(jointID);
             link->dq() = dJointGetHingeAngleRate(jointID);
-        } else if(link->isSlideJoint()){
+        } else if(link->isPrismaticJoint()){
             link->q() = dJointGetSliderPosition(jointID);
             link->dq() = dJointGetSliderPositionRate(jointID);
         }
@@ -613,10 +613,10 @@ void ODELink::getKinematicStateFromODE()
 void ODELink::getKinematicStateFromODEflip()
 {
     if(jointID){
-        if(link->isRotationalJoint()){
+        if(link->isRevoluteJoint()){
             link->q() = dJointGetHingeAngle(jointID);
             link->dq() = dJointGetHingeAngleRate(jointID);
-        } else if(link->isSlideJoint()){
+        } else if(link->isPrismaticJoint()){
             link->q() = dJointGetSliderPosition(jointID);
             link->dq() = dJointGetSliderPositionRate(jointID);
         }
@@ -646,9 +646,9 @@ void ODELink::getKinematicStateFromODEflip()
 */
 void ODELink::setTorqueToODE()
 {
-    if(link->isRotationalJoint()){
+    if(link->isRevoluteJoint()){
         dJointAddHingeTorque(jointID, link->u());
-    } else if(link->isSlideJoint()){
+    } else if(link->isPrismaticJoint()){
         dJointAddSliderForce(jointID, link->u());
     }
 }
@@ -656,14 +656,14 @@ void ODELink::setTorqueToODE()
 
 void ODELink::setVelocityToODE()
 {
-    if(link->isRotationalJoint()){
+    if(link->isRevoluteJoint()){
     	dReal v = link->dq_target();
     	if(!USE_AMOTOR){
     		dJointSetHingeParam(jointID, dParamVel, v);
         } else {
     		dJointSetAMotorParam(motorID, dParamVel, v);
         }
-    } else if(link->isSlideJoint()){
+    } else if(link->isPrismaticJoint()){
     	dReal v = link->dq_target();
     	dJointSetSliderParam(jointID, dParamVel, v);
     }

@@ -535,7 +535,7 @@ bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activ
         bool doRefresh = false;
         for(auto& dyLink : impl->internalStateUpdateLinks){
             if(dyLink->actuationMode() == Link::AllStateHighGainActuationMode){
-                if(dyLink->hasJoint()){
+                if(dyLink->hasActualJoint()){
                     dyLink->q() = dyLink->q_target();
                     dyLink->dq() = dyLink->dq_target();
                 }
