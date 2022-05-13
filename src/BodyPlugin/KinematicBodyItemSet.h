@@ -1,6 +1,7 @@
 #ifndef CNOID_BODY_PLUGIN_KINEMATIC_BODY_ITEM_SET_H
 #define CNOID_BODY_PLUGIN_KINEMATIC_BODY_ITEM_SET_H
 
+#include "BodyItem.h"
 #include <cnoid/KinematicBodySet>
 #include "exportdecl.h"
 
@@ -12,8 +13,44 @@ class CNOID_EXPORT KinematicBodyItemSet : public KinematicBodySet
 {
 public:
     KinematicBodyItemSet();
-    void setBodyItem(const GeneralId& partId, BodyItem* bodyItem);
-    BodyItem* bodyItem(const GeneralId& partId);
+    void setBodyItemPart(int index, BodyItem* bodyItem, LinkKinematicsKit* linkKinematicsKit);
+    void setBodyItemPart(int index, BodyItem* bodyItem, std::shared_ptr<JointTraverse> jointTraverse);
+    void clearBodyItemPart(int index) { clearBodyPart(index); }
+
+    class BodyItemPart : public KinematicBodySet::BodyPart
+    {
+    public:
+        BodyItem* bodyItem() { return bodyItem_.lock(); }
+        const BodyItem* bodyItem() const { return bodyItem_.lock(); }
+
+    private:
+        weak_ref_ptr<BodyItem> bodyItem_;
+        ScopedConnectionSet bodyItemConnections;
+        
+        friend class KinematicBodyItemSet;
+    };
+
+    BodyItemPart* bodyItemPart(int index){
+        return static_cast<BodyItemPart*>(bodyPart(index));
+    }
+    const BodyItemPart* bodyItemPart(int index) const {
+        return static_cast<const BodyItemPart*>(bodyPart(index));
+    }
+    BodyItem* bodyItem(int index) {
+        if(auto part = bodyItemPart(index)){
+            return part->bodyItem();
+        }
+        return nullptr;
+    }
+    const BodyItem* bodyItem(int index) const {
+        return const_cast<KinematicBodyItemSet*>(this)->bodyItem(index);
+    }
+    BodyItemPart* mainBodyItemPart() {
+        return static_cast<BodyItemPart*>(mainBodyPart());
+    }
+    const BodyItemPart* mainBodyItemPart() const {
+        return static_cast<const BodyItemPart*>(mainBodyPart());
+    }
 
 protected:
     KinematicBodyItemSet(const KinematicBodyItemSet& org, CloneMap* cloneMap);
@@ -21,7 +58,6 @@ protected:
 
 private:
     void copyBodyPart(BodyPart* newBodyPart, BodyPart* orgBodyPart, CloneMap* cloneMap);    
-    void initializeBodyPart(BodyPart* bodyPart, BodyItem* bodyItem);
 };
 
 typedef ref_ptr<KinematicBodyItemSet> KinematicBodyItemSetPtr;

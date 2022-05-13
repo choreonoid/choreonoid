@@ -4,69 +4,43 @@
 using namespace std;
 using namespace cnoid;
 
-namespace cnoid {
-
-class KinematicBodySet::Impl
-{
-public:
-    std::unordered_map<GeneralId, ref_ptr<BodyPart>> bodyPartMap;
-    GeneralId mainBodyPartId;
-
-    // Function objects are used instead of virtual functions so that the functions can be used in the constructor.
-    CreateBodyPartFunc createBodyPart;
-    CopyBodyPartFunc copyBodyPart;
-    
-    Signal<void()> sigFrameSetChange;
-    Signal<void(const Isometry3& T_frameCoordinate)> sigPositionError;
-
-    Impl(const CreateBodyPartFunc& createBodyPart, const CopyBodyPartFunc& copyBodyPart);
-    void clearBodyPart(const GeneralId& partId);
-};
-
-}
-
 
 KinematicBodySet::KinematicBodySet()
 {
-    impl = new Impl(
-        [](){
-            return new BodyPart;
-        },
+    mainBodyPartIndex_ = -1;
+    
+    createBodyPartFunc =
+        [](){ return new BodyPart; };
+    copyBodyPartFunc =
         [this](BodyPart* newBodyPart, BodyPart* orgBodyPart, CloneMap* cloneMap){
             copyBodyPart(newBodyPart, orgBodyPart, cloneMap);
-        });
+        };
 }
 
 
 KinematicBodySet::KinematicBodySet(CreateBodyPartFunc createBodyPart, CopyBodyPartFunc copyBodyPart)
-{
-    impl = new Impl(createBodyPart, copyBodyPart);
-}
-
-
-KinematicBodySet::Impl::Impl(const CreateBodyPartFunc& createBodyPart, const CopyBodyPartFunc& copyBodyPart)
-    : createBodyPart(createBodyPart),
-      copyBodyPart(copyBodyPart)
+    : createBodyPartFunc(createBodyPart),
+      copyBodyPartFunc(copyBodyPart)
 {
 
 }
 
 
 KinematicBodySet::KinematicBodySet(const KinematicBodySet& org, CloneMap* cloneMap)
+    : KinematicBodySet(org.createBodyPartFunc, org.copyBodyPartFunc)
 {
-    impl = new Impl(org.impl->createBodyPart, org.impl->copyBodyPart);
-    
-    for(auto& kv : org.impl->bodyPartMap){
-        auto& id = kv.first;
-        auto part = kv.second;
-        auto kinematicsKit = part->kinematicsKit;
-        if(cloneMap){
-            kinematicsKit = cloneMap->getClone(kinematicsKit);
+    bodyParts_.reserve(org.bodyParts_.size());
+    for(auto part : org.bodyParts_){
+        if(!part){
+            bodyParts_.push_back(nullptr);
+        } else {
+            auto newPart = createBodyPartFunc();
+            copyBodyPartFunc(newPart, part, cloneMap);
+            bodyParts_.push_back(newPart);
         }
-        setBodyPart(id, kinematicsKit);
     }
-
-    impl->mainBodyPartId = org.impl->mainBodyPartId;
+        
+    mainBodyPartIndex_ = org.mainBodyPartIndex_;
 }
 
 
@@ -76,132 +50,115 @@ Referenced* KinematicBodySet::doClone(CloneMap* cloneMap) const
 }
 
 
-KinematicBodySet::~KinematicBodySet()
-{
-    delete impl;
-}
-
-
 void KinematicBodySet::copyBodyPart(BodyPart* newBodyPart, BodyPart* orgBodyPart, CloneMap* cloneMap)
 {
-    auto kinematicsKit = orgBodyPart->kinematicsKit;
-    if(cloneMap){
-        kinematicsKit = cloneMap->getClone(kinematicsKit);
+    if(orgBodyPart->isLinkKinematicsKit()){
+        initializeBodyPart(newBodyPart, orgBodyPart->linkKinematicsKit()->clone(cloneMap));
+    } else if(orgBodyPart->isJointTraverse()){
+        initializeBodyPart(newBodyPart, orgBodyPart->jointTraverse());
     }
-    initializeBodyPart(newBodyPart, kinematicsKit);
 }
 
 
 void KinematicBodySet::initializeBodyPart(BodyPart* bodyPart, LinkKinematicsKit* kinematicsKit)
 {
-    if(kinematicsKit != bodyPart->kinematicsKit){
-        bodyPart->kinematicsKit = kinematicsKit;
+    if(kinematicsKit != bodyPart->linkKinematicsKit_){
+        bodyPart->linkKinematicsKit_ = kinematicsKit;
         bodyPart->connections.disconnect();
         bodyPart->connections.add(
             kinematicsKit->sigFrameSetChange().connect(
-                [this](){ impl->sigFrameSetChange(); }));
+                [this](){ sigFrameSetChange_(); }));
         bodyPart->connections.add(
             kinematicsKit->sigPositionError().connect(
-                [this](const Isometry3& T_frameCoordinate){ impl->sigPositionError(T_frameCoordinate); }));
+                [this](const Isometry3& T_frameCoordinate){ sigPositionError_(T_frameCoordinate); }));
+    }
+
+    bodyPart->jointTraverse_.reset();
+}
+
+
+void KinematicBodySet::initializeBodyPart(BodyPart* bodyPart, std::shared_ptr<JointTraverse> jointTraverse)
+{
+    bodyPart->jointTraverse_ = jointTraverse;
+
+    if(bodyPart->linkKinematicsKit_){
+        bodyPart->linkKinematicsKit_.reset();
+        bodyPart->connections.disconnect();
     }
 }
 
 
-KinematicBodySet::BodyPart* KinematicBodySet::findBodyPart(const GeneralId& partId)
+KinematicBodySet::BodyPart* KinematicBodySet::findOrCreateBodyPart(int index)
 {
-    auto it = impl->bodyPartMap.find(partId);
-    if(it != impl->bodyPartMap.end()){
-        return it->second;
+    if(index >= static_cast<int>(bodyParts_.size())){
+        bodyParts_.resize(index + 1);
     }
-    return nullptr;
-}
-
-
-KinematicBodySet::BodyPart* KinematicBodySet::findOrCreateBodyPart(const GeneralId& partId)
-{
-    auto& part = impl->bodyPartMap[partId];
+    auto& part = bodyParts_[index];
     if(!part){
-        part = impl->createBodyPart();
+        part = createBodyPartFunc();
     }
     return part;
 }
 
 
-void KinematicBodySet::setBodyPart(const GeneralId& partId, LinkKinematicsKit* kinematicsKit)
+void KinematicBodySet::setBodyPart(int index, LinkKinematicsKit* kinematicsKit)
 {
-    if(partId.isValid()){
-        if(kinematicsKit){
-            auto bodyPart = findOrCreateBodyPart(partId);
-            initializeBodyPart(bodyPart, kinematicsKit);
-        } else {
-            clearBodyPart(partId);
+    if(kinematicsKit){
+        auto bodyPart = findOrCreateBodyPart(index);
+        initializeBodyPart(bodyPart, kinematicsKit);
+    } else {
+        clearBodyPart(index);
+    }
+}
+
+
+void KinematicBodySet::setBodyPart(int index, std::shared_ptr<JointTraverse> jointTraverse)
+{
+    if(jointTraverse){
+        auto bodyPart = findOrCreateBodyPart(index);
+        initializeBodyPart(bodyPart, jointTraverse);
+    } else {
+        clearBodyPart(index);
+    }
+}
+
+
+void KinematicBodySet::clearBodyPart(int index)
+{
+    if(index < static_cast<int>(bodyParts_.size())){
+        bodyParts_[index] = nullptr;
+        bool doShrink = true;
+        for(size_t i = index + 1; i < bodyParts_.size(); ++i){
+            if(bodyParts_[i]){
+                doShrink = false;
+                break;
+            }
         }
+        if(doShrink){
+            bodyParts_.resize(index);
+        }
+    }
+    if(index == mainBodyPartIndex_){
+        mainBodyPartIndex_ = -1;
     }
 }
 
 
 void KinematicBodySet::clear()
 {
-    impl->bodyPartMap.clear();
-    impl->mainBodyPartId.reset();
+    bodyParts_.clear();
+    mainBodyPartIndex_ = -1;
 }
 
 
-void KinematicBodySet::clearBodyPart(const GeneralId& partId)
+std::vector<int> KinematicBodySet::validBodyPartIndices() const
 {
-    impl->clearBodyPart(partId);
-}
-
-
-void KinematicBodySet::Impl::clearBodyPart(const GeneralId& partId)
-{
-    bodyPartMap.erase(partId);
-    if(mainBodyPartId == partId){
-        mainBodyPartId.reset();
+    std::vector<int> indices;
+    for(size_t i=0; i < bodyParts_.size(); ++i){
+        if(bodyParts_[i]){
+            indices.push_back(i);
+        }
     }
+    return indices;
 }
 
-
-int KinematicBodySet::numKinematicBodyParts() const
-{
-    return impl->bodyPartMap.size();
-}
-
-
-LinkKinematicsKit* KinematicBodySet::kinematicsKit(const GeneralId& partId)
-{
-    if(auto bodyPart = findBodyPart(partId)){
-        return bodyPart->kinematicsKit;
-    }
-    return nullptr;
-}
-
-
-void KinematicBodySet::setMainBodyPartId(const GeneralId& partId)
-{
-    impl->mainBodyPartId = partId;
-}
-
-
-const GeneralId& KinematicBodySet::mainBodyPartId() const
-{
-    return impl->mainBodyPartId;
-}
-
-
-LinkKinematicsKit* KinematicBodySet::mainKinematicsKit()
-{
-    return impl->mainBodyPartId.isValid() ? kinematicsKit(impl->mainBodyPartId) : nullptr;
-}
-
-
-SignalProxy<void()> KinematicBodySet::sigFrameSetChange()
-{
-    return impl->sigFrameSetChange;
-}
-
-
-SignalProxy<void(const Isometry3& T_frameCoordinate)> KinematicBodySet::sigPositionError()
-{
-    return impl->sigPositionError;
-}

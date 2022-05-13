@@ -22,11 +22,12 @@ constexpr int MprPosition::MaxNumJoints;
 
 namespace {
 
-bool checkJointDisplacementRanges(JointPath& jointPath, MessageOut* mout)
+template<class JointTraverse>
+bool checkJointDisplacementRanges(JointTraverse& traverse, MessageOut* mout)
 {
     bool isOver = false;
-    for(auto& joint : jointPath){
-        if(joint->isRevoluteJoint() || joint->isPrismaticJoint()){
+    for(auto& joint : traverse){
+        if(joint->hasActualJoint()){
             if(joint->q() < joint->q_lower() || joint->q() > joint->q_upper()){
                 if(mout){
                     mout->putError(
@@ -111,19 +112,29 @@ MprPositionList* MprPosition::ownerPositionList()
 
 bool MprPosition::fetch(KinematicBodySet* bodySet, MessageOut* mout)
 {
-    if(auto kinematicsKit = bodySet->mainKinematicsKit()){
-        return fetch(kinematicsKit);
+    bool fetched = false;
+    if(auto bodyPart = bodySet->mainBodyPart()){
+        if(bodyPart->isLinkKinematicsKit()){
+            fetched = fetch(bodyPart->linkKinematicsKit(), mout);
+        } else if(bodyPart->isJointTraverse()){
+            fetched = fetch(*bodyPart->jointTraverse(), mout);
+        }
     }
-    return false;
+    return fetched;
 }
     
 
 bool MprPosition::apply(KinematicBodySet* bodySet) const
 {
-    if(auto kinematicsKit = bodySet->mainKinematicsKit()){
-        return apply(kinematicsKit);
+    bool applied = false;
+    if(auto bodyPart = bodySet->mainBodyPart()){
+        if(bodyPart->isLinkKinematicsKit()){
+            applied = apply(bodyPart->linkKinematicsKit());
+        } else if(bodyPart->isJointTraverse()){
+            applied = apply(*bodyPart->jointTraverse());
+        }
     }
-    return false;
+    return applied;
 }
 
 
@@ -150,6 +161,179 @@ bool MprPosition::write(Mapping* archive) const
     if(!note_.empty()){
         archive->write("note", note_, DOUBLE_QUOTED);
     }
+    return true;
+}
+
+
+MprFkPosition::MprFkPosition()
+    : MprFkPosition(GeneralId())
+{
+
+}
+
+
+MprFkPosition::MprFkPosition(const GeneralId& id)
+    : MprPosition(FK, id),
+      prismaticJointFlags_(0)
+{
+    jointDisplacements_.fill(0.0);
+    numJoints_ = 0;
+}
+
+
+MprFkPosition::MprFkPosition(const MprFkPosition& org)
+    : MprPosition(org),
+      jointDisplacements_(org.jointDisplacements_),
+      prismaticJointFlags_(org.prismaticJointFlags_)
+{
+    numJoints_ = org.numJoints_;
+}
+
+
+Referenced* MprFkPosition::doClone(CloneMap*) const
+{
+    return new MprFkPosition(*this);
+}
+
+
+template<class JointContainer>
+bool MprFkPosition::fetchJointDisplacements(const JointContainer& joints, MessageOut* mout)
+{
+    bool fetched = false;
+    
+    if(checkJointDisplacementRanges(joints, mout)){
+        numJoints_ = std::min(joints.numJoints(), MaxNumJoints);
+        int i;
+        for(i = 0; i < numJoints_; ++i){
+            auto joint = joints.joint(i);
+            jointDisplacements_[i] = joint->q();
+            prismaticJointFlags_[i] = joint->isPrismaticJoint();
+        }
+        for( ; i < MaxNumJoints; ++i){
+            jointDisplacements_[i] = 0.0;
+            prismaticJointFlags_[i] = false;
+        }
+        fetched = true;
+    }
+
+    return fetched;
+}
+
+
+bool MprFkPosition::fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout)
+{
+    bool fetched = false;
+    if(auto jointPath = kinematicsKit->jointPath()){
+        fetched = fetchJointDisplacements(*jointPath, mout);
+    }
+    return fetched;
+}
+
+
+bool MprFkPosition::fetch(const JointTraverse& jointTraverse, MessageOut* mout)
+{
+    return fetchJointDisplacements(jointTraverse, mout);
+}
+
+
+template<class JointContainer>
+bool MprFkPosition::applyJointDisplacements(JointContainer& joints) const
+{
+    int nj = std::min(joints.numJoints(), numJoints_);
+    for(int i = 0; i < nj; ++i){
+        joints.joint(i)->q() = jointDisplacements_[i];
+    }
+    joints.calcForwardKinematics();
+
+    return true;
+}
+
+
+bool MprFkPosition::apply(LinkKinematicsKit* kinematicsKit) const
+{
+    return applyJointDisplacements(*kinematicsKit->jointPath());
+}
+
+
+bool MprFkPosition::apply(JointTraverse& jointTraverse) const
+{
+    return applyJointDisplacements(jointTraverse);
+}
+
+
+bool MprFkPosition::read(const Mapping* archive)
+{
+    if(!MprPosition::read(archive)){
+        return false;
+    }
+
+    prismaticJointFlags_.reset();
+    auto plist = archive->findListing("prismatic_joints");
+    if(!plist->isValid()){
+        plist = archive->findListing("prismaticJoints"); // old
+    }
+    if(plist->isValid()){
+        for(int i=0; i < plist->size(); ++i){
+            int index = plist->at(i)->toInt();
+            if(index < MaxNumJoints){
+                prismaticJointFlags_[index] = true;
+            }
+        }
+    }
+
+    
+    auto nodes = archive->findListing("joint_displacements");
+    if(!nodes->isValid()){
+        nodes = archive->findListing("jointDisplacements"); // old
+    }
+    if(!nodes->isValid()){
+        numJoints_ = 0;
+    } else {
+        numJoints_ = std::min(nodes->size(), MaxNumJoints);
+        int i = 0;
+        while(i < numJoints_){
+            double q = nodes->at(i)->toDouble();
+            if(!prismaticJointFlags_[i]){
+                q = radian(q);
+            }
+            jointDisplacements_[i] = q;
+            ++i;
+        }
+        while(i < MaxNumJoints){
+            jointDisplacements_[i++] = 0.0;
+        }
+    }
+    
+    return true;
+}
+
+
+bool MprFkPosition::write(Mapping* archive) const
+{
+    archive->write("type", "FkPosition");
+    
+    MprPosition::write(archive);
+
+    archive->setFloatingNumberFormat("%.9g");
+
+    auto qlist = archive->createFlowStyleListing("joint_displacements");
+    ListingPtr plist = new Listing;
+
+    for(int i=0; i < numJoints_; ++i){
+        double q = jointDisplacements_[i];
+        if(prismaticJointFlags_[i]){
+            plist->append(i);
+        } else {
+            q = degree(q);
+        }
+        qlist->append(q);
+    }
+
+    if(!plist->empty()){
+        plist->setFlowStyle(true);
+        archive->insert("prismatic_joints", plist);
+    }
+    
     return true;
 }
 
@@ -252,6 +436,12 @@ bool MprIkPosition::fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout)
 }
 
 
+bool MprIkPosition::fetch(const JointTraverse& /* jointTraverse */, MessageOut* /* mout */)
+{
+    return false;
+}
+
+
 bool MprIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
 {
     if(kinematicsKit->setEndPosition(T, baseFrameId_, offsetFrameId_, configuration_)){
@@ -261,6 +451,12 @@ bool MprIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
     return false;
 }
     
+
+bool MprIkPosition::apply(JointTraverse& /* jointTraverse */) const
+{
+    return false;
+}
+
 
 bool MprIkPosition::read(const Mapping* archive)
 {
@@ -345,176 +541,32 @@ bool MprIkPosition::write(Mapping* archive) const
 }
 
 
-MprFkPosition::MprFkPosition()
-    : MprFkPosition(GeneralId())
-{
-
-}
-
-
-MprFkPosition::MprFkPosition(const GeneralId& id)
-    : MprPosition(FK, id),
-      prismaticJointFlags_(0)
-{
-    jointDisplacements_.fill(0.0);
-    numJoints_ = 0;
-}
-
-
-MprFkPosition::MprFkPosition(const MprFkPosition& org)
-    : MprPosition(org),
-      jointDisplacements_(org.jointDisplacements_),
-      prismaticJointFlags_(org.prismaticJointFlags_)
-{
-    numJoints_ = org.numJoints_;
-}
-
-
-Referenced* MprFkPosition::doClone(CloneMap*) const
-{
-    return new MprFkPosition(*this);
-}
-
-
-bool MprFkPosition::fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout)
-{
-    bool fetched = false;
-    
-    if(auto jointPath = kinematicsKit->jointPath()){
-        if(checkJointDisplacementRanges(*jointPath, mout)){
-            numJoints_ = std::min(jointPath->numJoints(), MaxNumJoints);
-            int i;
-            for(i = 0; i < numJoints_; ++i){
-                auto joint = jointPath->joint(i);
-                jointDisplacements_[i] = joint->q();
-                prismaticJointFlags_[i] = joint->isPrismaticJoint();
-            }
-            for( ; i < MaxNumJoints; ++i){
-                jointDisplacements_[i] = 0.0;
-                prismaticJointFlags_[i] = false;
-            }
-            fetched = true;
-        }
-    }
-
-    return fetched;
-}
-
-
-bool MprFkPosition::apply(LinkKinematicsKit* kinematicsKit) const
-{
-    auto path = kinematicsKit->jointPath();
-    int nj = std::min(path->numJoints(), numJoints_);
-    for(int i = 0; i < nj; ++i){
-        path->joint(i)->q() = jointDisplacements_[i];
-    }
-    path->calcForwardKinematics();
-
-    return true;
-}
-
-
-bool MprFkPosition::read(const Mapping* archive)
-{
-    if(!MprPosition::read(archive)){
-        return false;
-    }
-
-    prismaticJointFlags_.reset();
-    auto plist = archive->findListing("prismatic_joints");
-    if(!plist->isValid()){
-        plist = archive->findListing("prismaticJoints"); // old
-    }
-    if(plist->isValid()){
-        for(int i=0; i < plist->size(); ++i){
-            int index = plist->at(i)->toInt();
-            if(index < MaxNumJoints){
-                prismaticJointFlags_[index] = true;
-            }
-        }
-    }
-
-    
-    auto nodes = archive->findListing("joint_displacements");
-    if(!nodes->isValid()){
-        nodes = archive->findListing("jointDisplacements"); // old
-    }
-    if(!nodes->isValid()){
-        numJoints_ = 0;
-    } else {
-        numJoints_ = std::min(nodes->size(), MaxNumJoints);
-        int i = 0;
-        while(i < numJoints_){
-            double q = nodes->at(i)->toDouble();
-            if(!prismaticJointFlags_[i]){
-                q = radian(q);
-            }
-            jointDisplacements_[i] = q;
-            ++i;
-        }
-        while(i < MaxNumJoints){
-            jointDisplacements_[i++] = 0.0;
-        }
-    }
-    
-    return true;
-}
-
-
-bool MprFkPosition::write(Mapping* archive) const
-{
-    archive->write("type", "FkPosition");
-    
-    MprPosition::write(archive);
-
-    archive->setFloatingNumberFormat("%.9g");
-
-    auto qlist = archive->createFlowStyleListing("joint_displacements");
-    ListingPtr plist = new Listing;
-
-    for(int i=0; i < numJoints_; ++i){
-        double q = jointDisplacements_[i];
-        if(prismaticJointFlags_[i]){
-            plist->append(i);
-        } else {
-            q = degree(q);
-        }
-        qlist->append(q);
-    }
-
-    if(!plist->empty()){
-        plist->setFlowStyle(true);
-        archive->insert("prismatic_joints", plist);
-    }
-    
-    return true;
-}
-
-
 MprCompositePosition::MprCompositePosition()
     : MprCompositePosition(GeneralId())
 {
-    
+
 }
 
 
 MprCompositePosition::MprCompositePosition(const GeneralId& id)
     : MprPosition(Composite, id)
 {
-
+    numValidPositions_ = 0;
+    mainPositionIndex_ = -1;
 }
 
 
 MprCompositePosition::MprCompositePosition(const MprCompositePosition& org, CloneMap* cloneMap)
     : MprPosition(org),
-      mainPartId_(org.mainPartId_)
+      numValidPositions_(org.numValidPositions_),
+      mainPositionIndex_(org.mainPositionIndex_)
 {
     if(!cloneMap){
-        positionMap_ = org.positionMap_;
+        positions_ = org.positions_;
     } else {
-        for(auto& kv : org.positionMap_){
-            MprPosition* position = kv.second;
-            positionMap_.emplace(kv.first, cloneMap->getClone(position));
+        positions_.reserve(org.positions_.size());
+        for(auto position : org.positions_){
+            positions_.push_back(cloneMap->getClone(position));
         }
     }
 }
@@ -528,107 +580,49 @@ Referenced* MprCompositePosition::doClone(CloneMap* cloneMap) const
 
 void MprCompositePosition::clearPositions()
 {
-    positionMap_.clear();
-    mainPartId_.reset();
+    positions_.clear();
+    numValidPositions_ = 0;
+    mainPositionIndex_ = -1;
 }
 
 
-void MprCompositePosition::setPosition(const GeneralId& partId, MprPosition* position)
+void MprCompositePosition::setPosition(int index, MprPosition* position)
 {
-    if(!partId.isValid()){
-        throw std::invalid_argument("Invalid ID is given to MprCompositePosition::setPosition.");
-    }
-    if(!position){
-        positionMap_.erase(partId);
-        if(mainPartId_ == partId){
-            mainPartId_.reset();
-        }
-    } else {
+    if(position){
         if(position->isComposite()){
             throw std::invalid_argument("MprCompositePosition cannot contain a composite position.");
-        }
-        positionMap_[partId] = position;
-    }
-}
-
-
-MprPosition* MprCompositePosition::position(const GeneralId& partId)
-{
-    auto it = positionMap_.find(partId);
-    if(it != positionMap_.end()){
-        return it->second;
-    }
-    return nullptr;
-}
-
-
-const MprPosition* MprCompositePosition::position(const GeneralId& partId) const
-{
-    return const_cast<MprCompositePosition*>(this)->position(partId);
-}
-
-
-MprPosition* MprCompositePosition::mainPosition()
-{
-    if(mainPartId_.isValid()){
-        return position(mainPartId_);
-    }
-    return nullptr;
-
-}
-
-
-const MprPosition* MprCompositePosition::mainPosition() const
-{
-    return const_cast<MprCompositePosition*>(this)->mainPosition();
-}
-
-
-bool MprCompositePosition::fetch(KinematicBodySet* bodySet, MessageOut* mout)
-{
-    int numFetched = 0;
-    for(auto& kv : positionMap_){
-        auto& partId = kv.first;
-        if(auto kinematicsKit = bodySet->kinematicsKit(partId)){
-            auto& position = kv.second;
-            if(position->fetch(kinematicsKit)){
-                ++numFetched;
+        } else {
+            if(index >= static_cast<int>(positions_.size())){
+                positions_.resize(index + 1);
             }
+            auto& p = positions_[index];
+            if(!p){
+                ++numValidPositions_;
+            }
+            p = position;
         }
-    }
-
-    bool fetched;
-    
-    if(numFetched == 0){
-        fetched = false;
-        mout->putError(
-            format(_("Position {0} cannot be fetched due to the position part set mismatch."),
-                   id().label()));
     } else {
-        fetched = true;
-        if(numFetched < static_cast<int>(positionMap_.size())){
-            mout->putWarning(format(_("Could not fetch all elements of position {0}."), id().label()));
-        }
-    }
-
-    return fetched;
-}
-
-
-bool MprCompositePosition::apply(KinematicBodySet* bodySet) const
-{
-    int numApplied = 0;
-    for(auto& kv : positionMap_){
-        auto& partId = kv.first;
-        if(auto kinematicsKit = bodySet->kinematicsKit(partId)){
-            auto& position = kv.second;
-            if(position->apply(kinematicsKit)){
-                ++numApplied;
+        if(index < static_cast<int>(positions_.size())){
+            auto& p = positions_[index];
+            if(p){
+                --numValidPositions_;
+            }
+            p = nullptr;
+            bool doShrink = true;
+            for(size_t i = index + 1; i < positions_.size(); ++i){
+                if(positions_[i]){
+                    doShrink = false;
+                    break;
+                }
+            }
+            if(doShrink){
+                positions_.resize(index);
             }
         }
+        if(index == mainPositionIndex_){
+            mainPositionIndex_ = -1;
+        }
     }
-
-    return numApplied > 0;
 }
 
 
@@ -641,6 +635,53 @@ bool MprCompositePosition::fetch(LinkKinematicsKit* kinematicsKit, MessageOut* m
 }
 
 
+bool MprCompositePosition::fetch(const JointTraverse& jointTraverse, MessageOut* mout)
+{
+    if(auto position = mainPosition()){
+        return position->fetch(jointTraverse, mout);
+    }
+    return false;
+}
+
+
+bool MprCompositePosition::fetch(KinematicBodySet* bodySet, MessageOut* mout)
+{
+    int numFetched = 0;
+
+    for(int i=0; i <= bodySet->maxIndex(); ++i){
+        auto bodyPart = bodySet->bodyPart(i);
+        auto position = positions_[i];
+        bool fetched = false;
+        if(bodyPart && position){
+            if(bodyPart->isJointTraverse()){
+                fetched = position->fetch(*bodyPart->jointTraverse());
+            } else if(bodyPart->isLinkKinematicsKit()){
+                fetched = position->fetch(bodyPart->linkKinematicsKit());
+            }
+        }
+        if(fetched){
+            ++numFetched;
+        }
+    }
+
+    bool fetched;
+    
+    if(numFetched == 0){
+        fetched = false;
+        mout->putError(
+            format(_("Position {0} cannot be fetched due to the position part set mismatch."),
+                   id().label()));
+    } else {
+        fetched = true;
+        if(numFetched < numValidPositions_){
+            mout->putWarning(format(_("Could not fetch all elements of position {0}."), id().label()));
+        }
+    }
+
+    return fetched;
+}
+
+
 bool MprCompositePosition::apply(LinkKinematicsKit* kinematicsKit) const
 {
     if(auto position = mainPosition()){
@@ -650,13 +691,42 @@ bool MprCompositePosition::apply(LinkKinematicsKit* kinematicsKit) const
 }
 
 
+bool MprCompositePosition::apply(JointTraverse& jointTraverse) const
+{
+    if(auto position = mainPosition()){
+        return position->apply(jointTraverse);
+    }
+    return false;
+}
+
+
+bool MprCompositePosition::apply(KinematicBodySet* bodySet) const
+{
+    bool applied = false;
+
+    for(int i=0; i <= bodySet->maxIndex(); ++i){
+        auto bodyPart = bodySet->bodyPart(i);
+        auto position = positions_[i];
+        if(bodyPart && position){
+            if(bodyPart->isJointTraverse()){
+                applied |= position->apply(*bodyPart->jointTraverse());
+            } else if(bodyPart->isLinkKinematicsKit()){
+                applied |= position->apply(bodyPart->linkKinematicsKit());
+            }
+        }
+    }
+
+    return applied;
+}
+
+
 bool MprCompositePosition::read(const Mapping* archive)
 {
     if(!MprPosition::read(archive)){
         return false;
     }
 
-    mainPartId_.read(archive, "main_part");
+    mainPositionIndex_ = archive->get("main_index", -1);
     
     auto positionList = archive->findListing("positions");
     if(!positionList->isValid()){
@@ -667,25 +737,28 @@ bool MprCompositePosition::read(const Mapping* archive)
     int n = positionList->size();
     for(int i=0; i < n; ++i){
         auto node = positionList->at(i)->toMapping();
-        GeneralId partId;
-        partId.readEx(node, "part");
-        auto& typeNode = node->get("type");
-        auto type = typeNode.toString();
-        MprPositionPtr position;
-        if(type == "IkPosition"){
-            position = new MprIkPosition;
-        } else if(type == "FkPosition"){
-            position = new MprFkPosition;
-        } else if(type == "CompositePosition"){
-            typeNode.throwException(_("Recursive CompositePosition structure is not supported"));
+        int index = node->get("index", -1);
+        if(index < 0){
+            node->throwException(_("Invalid index"));
         } else {
-            typeNode.throwException(format(_("{0} is not supported"), type));
-        }
-        if(position->read(node)){
-            setPosition(partId, position);
+            auto& typeNode = node->get("type");
+            auto type = typeNode.toString();
+            MprPositionPtr position;
+            if(type == "IkPosition"){
+                position = new MprIkPosition;
+            } else if(type == "FkPosition"){
+                position = new MprFkPosition;
+            } else if(type == "CompositePosition"){
+                typeNode.throwException(_("Recursive CompositePosition structure is not supported"));
+            } else {
+                typeNode.throwException(format(_("{0} is not supported"), type));
+            }
+            if(position->read(node)){
+                setPosition(index, position);
+            }
         }
     }
-    
+
     return true;
 }
 
@@ -698,13 +771,17 @@ bool MprCompositePosition::write(Mapping* archive) const
         return false;
     }
 
+    archive->write("main_index", mainPositionIndex_);
+
     auto positionList = archive->createListing("positions");
-    for(auto& kv : positionMap_){
-        auto positionArchive = positionList->newMapping();
-        auto& partId = kv.first;
-        positionArchive->write("part", partId.label());
-        auto& position = kv.second;
-        position->write(positionArchive);
+
+    for(int i=0; i < static_cast<int>(positions_.size()); ++i){
+        auto position = positions_[i];
+        if(position){
+            auto positionArchive = positionList->newMapping();
+            positionArchive->write("index", i);
+            position->write(positionArchive);
+        }
     }
 
     return true;

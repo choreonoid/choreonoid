@@ -1,26 +1,13 @@
 #include "KinematicBodyItemSet.h"
-#include "BodyItem.h"
 
 using namespace std;
 using namespace cnoid;
-
-namespace {
-
-class BodyPartEx : public KinematicBodySet::BodyPart
-{
-public:
-    BodyItem* bodyItem;
-    ScopedConnectionSet connections;
-    BodyPartEx() : bodyItem(nullptr) { }
-};
-
-}
 
 
 KinematicBodyItemSet::KinematicBodyItemSet()
     : KinematicBodySet(
         [](){
-            return new BodyPartEx;
+            return new BodyItemPart;
         },
         [this](BodyPart* newBodyPart, BodyPart* orgBodyPart, CloneMap* cloneMap){
             copyBodyPart(newBodyPart, orgBodyPart, cloneMap);
@@ -41,7 +28,10 @@ void KinematicBodyItemSet::copyBodyPart(BodyPart* newBodyPart, BodyPart* orgBody
 {
     KinematicBodySet::copyBodyPart(newBodyPart, orgBodyPart, cloneMap);
 
-    initializeBodyPart(newBodyPart, static_cast<BodyPartEx*>(orgBodyPart)->bodyItem);
+    auto newBodyItemPart = static_cast<BodyItemPart*>(newBodyPart);
+    auto orgBodyItemPart = static_cast<BodyItemPart*>(orgBodyPart);
+    newBodyItemPart->bodyItemConnections.disconnect();
+    newBodyItemPart->bodyItem_ = orgBodyItemPart->bodyItem_;
 }
 
 
@@ -51,33 +41,29 @@ Referenced* KinematicBodyItemSet::doClone(CloneMap* cloneMap) const
 }
 
 
-void KinematicBodyItemSet::setBodyItem(const GeneralId& partId, BodyItem* bodyItem)
+void KinematicBodyItemSet::setBodyItemPart
+(int index, BodyItem* bodyItem, LinkKinematicsKit* linkKinematicsKit)
 {
     if(bodyItem){
-        if(auto bodyPart = findOrCreateBodyPart(partId)){
-            initializeBodyPart(bodyPart, bodyItem);
+        if(auto bodyPart = static_cast<BodyItemPart*>(findOrCreateBodyPart(index))){
+            initializeBodyPart(bodyPart, linkKinematicsKit);
+            bodyPart->bodyItem_ = bodyItem;
         }
     } else {
-        clearBodyPart(partId);
+        clearBodyPart(index);
     }
 }
 
 
-void KinematicBodyItemSet::initializeBodyPart(BodyPart* bodyPart, BodyItem* bodyItem)
+void KinematicBodyItemSet::setBodyItemPart
+(int index, BodyItem* bodyItem, std::shared_ptr<JointTraverse> jointTraverse)
 {
-    auto bodyPartEx = static_cast<BodyPartEx*>(bodyPart);
-    if(bodyItem && bodyItem != bodyPartEx->bodyItem){
-        bodyPartEx->bodyItem = bodyItem;
-        auto kinematicsKit = bodyItem->findPresetLinkKinematicsKit();
-        KinematicBodySet::initializeBodyPart(bodyPart, kinematicsKit);
+    if(bodyItem){
+        if(auto bodyPart = static_cast<BodyItemPart*>(findOrCreateBodyPart(index))){
+            initializeBodyPart(bodyPart, jointTraverse);
+            bodyPart->bodyItem_ = bodyItem;
+        }
+    } else {
+        clearBodyPart(index);
     }
-}
-
-
-BodyItem* KinematicBodyItemSet::bodyItem(const GeneralId& partId)
-{
-    if(auto bodyPart = dynamic_cast<BodyPartEx*>(findBodyPart(partId))){
-        return bodyPart->bodyItem;
-    }
-    return nullptr;
 }

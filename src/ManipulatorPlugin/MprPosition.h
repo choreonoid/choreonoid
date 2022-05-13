@@ -15,6 +15,7 @@
 namespace cnoid {
 
 class Body;
+class JointTraverse;
 class LinkKinematicsKit;
 class KinematicBodySet;
 class MprIkPosition;
@@ -54,9 +55,11 @@ public:
     MprPositionList* ownerPositionList();
 
     virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) = 0;
-    virtual bool apply(LinkKinematicsKit* kinematicsKit) const = 0;
-
+    virtual bool fetch(const JointTraverse& jointTraverse, MessageOut* mout = nullptr) = 0;
     virtual bool fetch(KinematicBodySet* bodySet, MessageOut* mout = nullptr);
+
+    virtual bool apply(LinkKinematicsKit* kinematicsKit) const = 0;
+    virtual bool apply(JointTraverse& jointTraverse) const = 0;
     virtual bool apply(KinematicBodySet* bodySet) const;
 
     const std::string& note() const { return note_; }
@@ -90,6 +93,58 @@ private:
 };
 
 typedef ref_ptr<MprPosition> MprPositionPtr;
+
+
+class CNOID_EXPORT MprFkPosition : public MprPosition
+{
+    typedef std::array<double, MaxNumJoints> JointDisplacementArray;
+    
+public:
+    MprFkPosition();
+    MprFkPosition(const GeneralId& id);
+    MprFkPosition(const MprFkPosition& org);
+    MprFkPosition& operator=(const MprFkPosition& rhs) = delete;
+
+    virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
+    virtual bool fetch(const JointTraverse& jointTraverse, MessageOut* mout = nullptr) override;
+    virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
+    virtual bool apply(JointTraverse& jointTraverse) const override;
+    virtual bool read(const Mapping* archive) override;
+    virtual bool write(Mapping* archive) const override;
+
+    int numJoints() const { return numJoints_; }
+
+    typedef JointDisplacementArray::iterator iterator;
+    typedef JointDisplacementArray::const_iterator const_iterator;
+
+    iterator begin() { return jointDisplacements_.begin(); }
+    const_iterator begin() const { return jointDisplacements_.cbegin(); }
+    iterator end() { return jointDisplacements_.begin() + numJoints_; }
+    const_iterator end() const { return jointDisplacements_.cbegin() + numJoints_; }
+
+    double& jointDisplacement(int index) { return jointDisplacements_[index]; }
+    double jointDisplacement(int index) const { return jointDisplacements_[index]; }
+    double& q(int index) { return jointDisplacements_[index]; }
+    double q(int index) const { return jointDisplacements_[index]; }
+
+    bool checkIfPrismaticJoint(int index) const { return prismaticJointFlags_[index]; }
+    bool checkIfRevoluteJoint(int index) const { return !prismaticJointFlags_[index]; }
+        
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+    
+private:
+    template<class JointContainer>
+    bool fetchJointDisplacements(const JointContainer& joints, MessageOut* out);
+    template<class JointContainer>
+    bool applyJointDisplacements(JointContainer& joints) const;
+    
+    JointDisplacementArray jointDisplacements_;
+    std::bitset<MaxNumJoints> prismaticJointFlags_;
+    int numJoints_;
+};
+
+typedef ref_ptr<MprFkPosition> MprFkPositionPtr;
 
 
 class CNOID_EXPORT MprIkPosition : public MprPosition
@@ -141,7 +196,9 @@ public:
 
     //! \note This function always specifies BodyFrame as the base frame type.
     virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
+    virtual bool fetch(const JointTraverse& jointTraverse, MessageOut* mout = nullptr) override;
     virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
+    virtual bool apply(JointTraverse& jointTraverse) const override;
     virtual bool read(const Mapping* archive) override;
     virtual bool write(Mapping* archive) const override;
 
@@ -160,51 +217,6 @@ private:
 typedef ref_ptr<MprIkPosition> MprIkPositionPtr;
 
 
-class CNOID_EXPORT MprFkPosition : public MprPosition
-{
-    typedef std::array<double, MaxNumJoints> JointDisplacementArray;
-    
-public:
-    MprFkPosition();
-    MprFkPosition(const GeneralId& id);
-    MprFkPosition(const MprFkPosition& org);
-    MprFkPosition& operator=(const MprFkPosition& rhs) = delete;
-
-    virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
-    virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
-    virtual bool read(const Mapping* archive) override;
-    virtual bool write(Mapping* archive) const override;
-
-    int numJoints() const { return numJoints_; }
-
-    typedef JointDisplacementArray::iterator iterator;
-    typedef JointDisplacementArray::const_iterator const_iterator;
-
-    iterator begin() { return jointDisplacements_.begin(); }
-    const_iterator begin() const { return jointDisplacements_.cbegin(); }
-    iterator end() { return jointDisplacements_.begin() + numJoints_; }
-    const_iterator end() const { return jointDisplacements_.cbegin() + numJoints_; }
-
-    double& jointDisplacement(int index) { return jointDisplacements_[index]; }
-    double jointDisplacement(int index) const { return jointDisplacements_[index]; }
-    double& q(int index) { return jointDisplacements_[index]; }
-    double q(int index) const { return jointDisplacements_[index]; }
-
-    bool checkIfPrismaticJoint(int index) const { return prismaticJointFlags_[index]; }
-    bool checkIfRevoluteJoint(int index) const { return !prismaticJointFlags_[index]; }
-        
-protected:
-    virtual Referenced* doClone(CloneMap* cloneMap) const override;
-    
-private:
-    JointDisplacementArray jointDisplacements_;
-    std::bitset<MaxNumJoints> prismaticJointFlags_;
-    int numJoints_;
-};
-
-typedef ref_ptr<MprFkPosition> MprFkPositionPtr;
-
-
 class CNOID_EXPORT MprCompositePosition : public MprPosition
 {
 public:
@@ -213,20 +225,27 @@ public:
     MprCompositePosition(const MprCompositePosition& org, CloneMap* cloneMap);
     MprCompositePosition& operator=(const MprCompositePosition& rhs) = delete;
 
+    void setPosition(int index, MprPosition* position);
+    void clearPosition(int index);
     void clearPositions();
-    void setPosition(const GeneralId& partId, MprPosition* position);
-    int numPositions() const { return positionMap_.size(); }
-    MprPosition* position(const GeneralId& partId);
-    const MprPosition* position(const GeneralId& partId) const;
-    const GeneralId& mainPartId() const { return mainPartId_; }
-    void setMainPpart(const GeneralId& partId) { mainPartId_ = partId; }
-    MprPosition* mainPosition();
-    const MprPosition* mainPosition() const;
+    bool empty() const { return numValidPositions_ == 0; }
+    int maxPositionIndex() const { return positions_.size() - 1; }
+    MprPosition* position(int index) { return positions_[index]; }
+    const MprPosition* position(int index) const { return positions_[index]; }
+    int mainPositionIndex() const { return mainPositionIndex_; }
+    void setMainPositionIndex(int index) { mainPositionIndex_ = index; }
+    MprPosition* mainPosition() {
+        return mainPositionIndex_ >= 0 ? positions_[mainPositionIndex_] : nullptr;
+    }
+    const MprPosition* mainPosition() const {
+        return const_cast<MprCompositePosition*>(this)->mainPosition();
+    }
     
     virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
-    virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
-    
+    virtual bool fetch(const JointTraverse& jointTraverse, MessageOut* mout = nullptr) override;
     virtual bool fetch(KinematicBodySet* bodySet, MessageOut* mout = nullptr) override;
+    virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
+    virtual bool apply(JointTraverse& jointTraverse) const override;
     virtual bool apply(KinematicBodySet* bodySet) const override;
 
     virtual bool read(const Mapping* archive) override;
@@ -236,8 +255,9 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
-    std::unordered_map<GeneralId, MprPositionPtr> positionMap_;
-    GeneralId mainPartId_;
+    std::vector<MprPositionPtr> positions_;
+    int numValidPositions_;
+    int mainPositionIndex_;
 };
 
 }

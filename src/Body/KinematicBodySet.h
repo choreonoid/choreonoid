@@ -1,6 +1,7 @@
 #ifndef CNOID_BODY_KINEMATIC_BODY_SET_H
 #define CNOID_BODY_KINEMATIC_BODY_SET_H
 
+#include "JointTraverse.h"
 #include "LinkKinematicsKit.h"
 #include <cnoid/GeneralId>
 #include <cnoid/ConnectionSet>
@@ -14,30 +15,52 @@ class CNOID_EXPORT KinematicBodySet : public ClonableReferenced
 public:
     KinematicBodySet();
     KinematicBodySet(const KinematicBodySet& org, CloneMap* cloneMap);
-    ~KinematicBodySet();
 
-    void setBodyPart(const GeneralId& partId, LinkKinematicsKit* kit);
+    void setBodyPart(int index, LinkKinematicsKit* linkKinematicsKit);
+    void setBodyPart(int index, std::shared_ptr<JointTraverse> jointTraverse);
+    void clearBodyPart(int index);
     void clear();
-    void clearBodyPart(const GeneralId& partId);
-    
-    int numKinematicBodyParts() const;
-    LinkKinematicsKit* kinematicsKit(const GeneralId& partId);
-    void setMainBodyPartId(const GeneralId& partId);
-    const GeneralId& mainBodyPartId() const;
-    LinkKinematicsKit* mainKinematicsKit();
-
-    //! The signal is emitted when any sub kinematics kit emits the same signal.
-    SignalProxy<void()> sigFrameSetChange();
-
-    //! The signal is emitted when any sub kinematics kit emits the same signal.
-    SignalProxy<void(const Isometry3& T_frameCoordinate)> sigPositionError();
+    bool empty() const { return bodyParts_.empty(); }
+    int maxIndex() const { return bodyParts_.size() - 1; }
+    std::vector<int> validBodyPartIndices() const;
+    void setMainBodyPartIndex(int index) { mainBodyPartIndex_ = index; }
+    int mainBodyPartIndex() const { return mainBodyPartIndex_; }
 
     class BodyPart : public Referenced
     {
-        LinkKinematicsKitPtr kinematicsKit;
+    public:
+        bool isLinkKinematicsKit() const { return static_cast<bool>(linkKinematicsKit_); }
+        LinkKinematicsKitPtr linkKinematicsKit() { return linkKinematicsKit_; }
+        bool isJointTraverse() const { return static_cast<bool>(jointTraverse_); }
+        std::shared_ptr<JointTraverse> jointTraverse() { return jointTraverse_; }
+
+    private:
+        // Either one of the following is valid
+        LinkKinematicsKitPtr linkKinematicsKit_;
+        std::shared_ptr<JointTraverse> jointTraverse_;
+        
         ScopedConnectionSet connections;
+
         friend class KinematicBodySet;
     };
+
+    BodyPart* bodyPart(int index) { return bodyParts_[index]; }
+    const BodyPart* bodyPart(int index) const { return bodyParts_[index]; }
+    BodyPart* mainBodyPart() {
+        return (mainBodyPartIndex_ >= 0) ? bodyParts_[mainBodyPartIndex_] : nullptr;
+    }
+    const BodyPart* mainBodyPart() const {
+        return const_cast<KinematicBodySet*>(this)->mainBodyPart();
+    }
+
+    SignalProxy<void()> sigUpdated() { return sigUpdated_; }
+    void notifyUpdate() { sigUpdated_(); }
+    
+    //! The signal is emitted when any sub kinematics kit emits the corresponding signal.
+    SignalProxy<void()> sigFrameSetChange() { return sigFrameSetChange_; }
+
+    //! The signal is emitted when any sub kinematics kit emits the corresponding signal.
+    SignalProxy<void(const Isometry3& T_frameCoordinate)> sigPositionError();
 
 protected:
     typedef std::function<BodyPart*()> CreateBodyPartFunc;
@@ -49,12 +72,20 @@ protected:
 
     void copyBodyPart(BodyPart* newBodyPart, BodyPart* orgBodyPart, CloneMap* cloneMap);
     void initializeBodyPart(BodyPart* bodyPart, LinkKinematicsKit* kinematicsKit);
-    BodyPart* findBodyPart(const GeneralId& partId);
-    BodyPart* findOrCreateBodyPart(const GeneralId& partId);
+    void initializeBodyPart(BodyPart* bodyPart, std::shared_ptr<JointTraverse> jointTraverse);
+    BodyPart* findOrCreateBodyPart(int index);
 
 private:
-    class Impl;
-    Impl* impl;
+    std::vector<ref_ptr<BodyPart>> bodyParts_;
+    int mainBodyPartIndex_;
+
+    // Function objects are used instead of virtual functions so that the functions can be used in the constructor.
+    CreateBodyPartFunc createBodyPartFunc;
+    CopyBodyPartFunc copyBodyPartFunc;
+
+    Signal<void()> sigUpdated_;
+    Signal<void()> sigFrameSetChange_;
+    Signal<void(const Isometry3& T_frameCoordinate)> sigPositionError_;
 };
 
 typedef ref_ptr<KinematicBodySet> KinematicBodySetPtr;
