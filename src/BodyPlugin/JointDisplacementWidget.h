@@ -8,6 +8,7 @@
 namespace cnoid {
 
 class BodyItem;
+class KinematicBodyItemSet;
 class MenuManager;
 class Archive;
 
@@ -19,10 +20,10 @@ public:
 
     void setBodyItem(BodyItem* bodyItem);
     BodyItem* bodyItem();
-    
+
     void setOptionMenuTo(MenuManager& menu);
-    bool storeState(Archive& archive);
-    bool restoreState(const Archive& archive);
+    bool storeState(Archive* archive);
+    bool restoreState(const Archive* archive);
 
     SignalProxy<void(QWidget* widget)> sigJointWidgetFocused();
 

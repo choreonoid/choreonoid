@@ -43,8 +43,8 @@ public:
 
     void setOptionMenuTo(MenuManager& menuManager);
 
-    bool storeState(Archive& archive);
-    bool restoreState(const Archive& archive);
+    bool storeState(Archive* archive);
+    bool restoreState(const Archive* archive);
 
     class Impl;
 

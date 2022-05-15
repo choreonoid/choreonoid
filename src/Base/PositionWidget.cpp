@@ -95,8 +95,8 @@ public:
     void onPositionInputQuaternion(InputElementSet inputElements);
     void notifyPositionInput(const Isometry3& T, InputElementSet inputElements);
     void onPositionInputFinished();
-    void storeState(Archive& archive);
-    void restoreState(const Archive& archive);
+    void storeState(Archive* archive);
+    void restoreState(const Archive* archive);
 };
 
 }
@@ -737,32 +737,32 @@ void PositionWidget::setErrorHighlight(bool on)
 }
 
 
-void PositionWidget::storeState(Archive& archive)
+void PositionWidget::storeState(Archive* archive)
 {
     impl->storeState(archive);
 }
 
 
-void PositionWidget::Impl::storeState(Archive& archive)
+void PositionWidget::Impl::storeState(Archive* archive)
 {
-    archive.write("show_rpy", isRpyEnabled);
-    archive.write("unique_rpy", isUniqueRpyMode);
-    archive.write("show_quaternion", isQuaternionEnabled);
-    archive.write("show_rotation_matrix", isRotationMatrixEnabled);
+    archive->write("show_rpy", isRpyEnabled);
+    archive->write("unique_rpy", isUniqueRpyMode);
+    archive->write("show_quaternion", isQuaternionEnabled);
+    archive->write("show_rotation_matrix", isRotationMatrixEnabled);
 }
 
 
-void PositionWidget::restoreState(const Archive& archive)
+void PositionWidget::restoreState(const Archive* archive)
 {
     return impl->restoreState(archive);
 }
 
 
-void PositionWidget::Impl::restoreState(const Archive& archive)
+void PositionWidget::Impl::restoreState(const Archive* archive)
 {
     auto block = userInputConnections.scopedBlock();
-    setRpyEnabled(archive.get("show_rpy", isRpyEnabled));
-    archive.read("unique_rpy", isUniqueRpyMode);
-    setQuaternionEnabled(archive.get("show_quaternion", isQuaternionEnabled));
-    setRotationMatrixEnabled(archive.get("show_rotation_matrix", isRotationMatrixEnabled));
+    setRpyEnabled(archive->get("show_rpy", isRpyEnabled));
+    archive->read("unique_rpy", isUniqueRpyMode);
+    setQuaternionEnabled(archive->get("show_quaternion", isQuaternionEnabled));
+    setRotationMatrixEnabled(archive->get("show_rotation_matrix", isRotationMatrixEnabled));
 }

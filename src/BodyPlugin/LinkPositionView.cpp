@@ -152,7 +152,7 @@ void LinkPositionView::onAttachedMenuRequest(MenuManager& menu)
 
 bool LinkPositionView::storeState(Archive& archive)
 {
-    impl->positionWidget->storeState(archive);
+    impl->positionWidget->storeState(&archive);
     
     switch(impl->positionWidget->targetLinkType()){
     case LinkPositionWidget::AnyLink:
@@ -171,7 +171,7 @@ bool LinkPositionView::storeState(Archive& archive)
 
 bool LinkPositionView::restoreState(const Archive& archive)
 {
-    impl->positionWidget->restoreState(archive);
+    impl->positionWidget->restoreState(&archive);
     
     string type;
     if(archive.read("target_link_type", type)){

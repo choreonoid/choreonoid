@@ -994,7 +994,7 @@ bool LocationView::storeState(Archive& archive)
 
 bool LocationView::Impl::storeState(Archive& archive)
 {
-    positionWidget->storeState(archive);
+    positionWidget->storeState(&archive);
     if(lastCoordIndex < 0){
         if(lastCoordIndex == WorldCoordIndex){
             archive.write("coordinate", "world");
@@ -1018,7 +1018,7 @@ bool LocationView::restoreState(const Archive& archive)
 
 bool LocationView::Impl::restoreState(const Archive& archive)
 {
-    positionWidget->restoreState(archive);
+    positionWidget->restoreState(&archive);
 
     auto coordNode = archive.find("coordinate");
     if(coordNode->isValid()){

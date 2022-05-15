@@ -166,8 +166,8 @@ public:
     bool applyPositionInput(const Isometry3& T);
     bool findBodyIkSolution(const Isometry3& T_input, bool isRawT);
     void finishPositionEditing();
-    bool storeState(Archive& archive);
-    bool restoreState(const Archive& archive);
+    bool storeState(Archive* archive);
+    bool restoreState(const Archive* archive);
 };
 
 }
@@ -1320,18 +1320,18 @@ void LinkPositionWidget::Impl::finishPositionEditing()
 }
 
 
-bool LinkPositionWidget::storeState(Archive& archive)
+bool LinkPositionWidget::storeState(Archive* archive)
 {
     return impl->storeState(archive);
 }
 
 
-bool LinkPositionWidget::Impl::storeState(Archive& archive)
+bool LinkPositionWidget::Impl::storeState(Archive* archive)
 {
     coordinateModeSelection.select(coordinateMode);
-    archive.write("coordinate_mode", coordinateModeSelection.selectedSymbol());
+    archive->write("coordinate_mode", coordinateModeSelection.selectedSymbol());
     coordinateModeSelection.select(preferredCoordinateMode);
-    archive.write("preferred_coordinate_mode", coordinateModeSelection.selectedSymbol());
+    archive->write("preferred_coordinate_mode", coordinateModeSelection.selectedSymbol());
 
     positionWidget->storeState(archive);
 
@@ -1339,22 +1339,22 @@ bool LinkPositionWidget::Impl::storeState(Archive& archive)
 }
 
 
-bool LinkPositionWidget::restoreState(const Archive& archive)
+bool LinkPositionWidget::restoreState(const Archive* archive)
 {
     return impl->restoreState(archive);
 }
 
 
-bool LinkPositionWidget::Impl::restoreState(const Archive& archive)
+bool LinkPositionWidget::Impl::restoreState(const Archive* archive)
 {
     string symbol;
 
-    if(archive.read("preferred_coordinate_mode", symbol)){
+    if(archive->read("preferred_coordinate_mode", symbol)){
         if(coordinateModeSelection.select(symbol)){
             preferredCoordinateMode = coordinateModeSelection.which();
         }
     }
-    if(archive.read("coordinate_mode", symbol)){
+    if(archive->read("coordinate_mode", symbol)){
         if(coordinateModeSelection.select(symbol)){
             setCoordinateMode(coordinateModeSelection.which(), false, true);
         }

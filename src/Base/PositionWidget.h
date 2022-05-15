@@ -37,8 +37,8 @@ public:
     void setReferenceRpy(const Vector3& rpy);
     void setPosition(const Isometry3& T);
     void setErrorHighlight(bool on);
-    void storeState(Archive& archive);
-    void restoreState(const Archive& archive);
+    void storeState(Archive* archive);
+    void restoreState(const Archive* archive);
 
 private:
     class Impl;

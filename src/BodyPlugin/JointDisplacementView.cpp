@@ -141,11 +141,11 @@ void JointDisplacementView::Impl::onCurrentBodyItemChanged(BodyItem* bodyItem)
 
 bool JointDisplacementView::storeState(Archive& archive)
 {
-    return impl->jointDisplacementWidget.storeState(archive);
+    return impl->jointDisplacementWidget.storeState(&archive);
 }
 
 
 bool JointDisplacementView::restoreState(const Archive& archive)
 {
-    return impl->jointDisplacementWidget.restoreState(archive);
+    return impl->jointDisplacementWidget.restoreState(&archive);
 }

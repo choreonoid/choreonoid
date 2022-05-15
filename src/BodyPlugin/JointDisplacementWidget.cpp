@@ -122,8 +122,8 @@ public:
     void onOperationFinished();
     void notifyJointDisplacementInput();
     void updateJointDisplacements();
-    bool storeState(Archive& archive);
-    bool restoreState(const Archive& archive);
+    bool storeState(Archive* archive);
+    bool restoreState(const Archive* archive);
 };
 
 }
@@ -828,41 +828,41 @@ void JointDisplacementWidget::Impl::updateJointDisplacements()
 }
 
 
-bool JointDisplacementWidget::storeState(Archive& archive)
+bool JointDisplacementWidget::storeState(Archive* archive)
 {
     return impl->storeState(archive);
 }
 
 
-bool JointDisplacementWidget::Impl::storeState(Archive& archive)
+bool JointDisplacementWidget::Impl::storeState(Archive* archive)
 {
-    archive.write("show_selected_joints", isSelectedJointsOnlyMode);
-    archive.write("show_joint_ids", isJointIdVisible);
-    archive.write("show_joint_names", isJointNameVisible);
-    archive.write("overlap_joint_names", isOverlapJointNameMode);
-    archive.write("show_sliders", isSliderEnabled);
-    archive.write("show_dials", isDialEnabled);
-    archive.write("show_phases", isPhaseEnabled);
-    archive.write("limit_ranges", isRangeLimitMode);
+    archive->write("show_selected_joints", isSelectedJointsOnlyMode);
+    archive->write("show_joint_ids", isJointIdVisible);
+    archive->write("show_joint_names", isJointNameVisible);
+    archive->write("overlap_joint_names", isOverlapJointNameMode);
+    archive->write("show_sliders", isSliderEnabled);
+    archive->write("show_dials", isDialEnabled);
+    archive->write("show_phases", isPhaseEnabled);
+    archive->write("limit_ranges", isRangeLimitMode);
     return true;
 }
 
 
-bool JointDisplacementWidget::restoreState(const Archive& archive)
+bool JointDisplacementWidget::restoreState(const Archive* archive)
 {
     return impl->restoreState(archive);
 }
 
 
-bool JointDisplacementWidget::Impl::restoreState(const Archive& archive)
+bool JointDisplacementWidget::Impl::restoreState(const Archive* archive)
 {
-    archive.read("show_selected_joints", isSelectedJointsOnlyMode);
-    archive.read("show_joint_ids", isJointIdVisible);
-    archive.read("show_joint_names", isJointNameVisible);
-    archive.read("overlap_joint_names", isOverlapJointNameMode);
-    archive.read("show_sliders", isSliderEnabled);
-    archive.read("show_dials", isDialEnabled);
-    archive.read("show_phases", isPhaseEnabled);
-    archive.read("limit_ranges", isRangeLimitMode);
+    archive->read("show_selected_joints", isSelectedJointsOnlyMode);
+    archive->read("show_joint_ids", isJointIdVisible);
+    archive->read("show_joint_names", isJointNameVisible);
+    archive->read("overlap_joint_names", isOverlapJointNameMode);
+    archive->read("show_sliders", isSliderEnabled);
+    archive->read("show_dials", isDialEnabled);
+    archive->read("show_phases", isPhaseEnabled);
+    archive->read("limit_ranges", isRangeLimitMode);
     return true;
 }
