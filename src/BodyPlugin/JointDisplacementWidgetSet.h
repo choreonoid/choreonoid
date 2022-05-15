@@ -2,26 +2,30 @@
 #define CNOID_BODY_PLUGIN_JOINT_DISPLACEMENT_WIDGET_H
 
 #include <QWidget>
+#include <QGridLayout>
 #include <cnoid/Signal>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class BodyItem;
-class KinematicBodyItemSet;
 class MenuManager;
 class Archive;
 
-class CNOID_EXPORT JointDisplacementWidget : public QWidget
+class CNOID_EXPORT JointDisplacementWidgetSet
 {
 public:
-    JointDisplacementWidget(QWidget* parent);
-    ~JointDisplacementWidget();
+    JointDisplacementWidgetSet(
+        QWidget* baseWidget, QGridLayout* sharedGrid = nullptr, int* sharedRowCounter = nullptr);
+    ~JointDisplacementWidgetSet();
 
     void setBodyItem(BodyItem* bodyItem);
     BodyItem* bodyItem();
 
+    void setTargetBodyLabelEnabled(bool on);
+    void setVisible(bool on);
     void setOptionMenuTo(MenuManager& menu);
+
     bool storeState(Archive* archive);
     bool restoreState(const Archive* archive);
 
@@ -29,9 +33,6 @@ public:
 
     class Impl;
 
-protected:
-    virtual bool eventFilter(QObject* object, QEvent* event) override;
-    
 private:
     Impl* impl;
 };

@@ -55,8 +55,9 @@ set(sources
   LinkPositionView.cpp
   LinkPositionWidget.cpp
   LinkPropertyView.cpp
+  JointDisplacementWidgetSet.cpp
+  MultiBodyJointDisplacementWidget.cpp
   JointDisplacementView.cpp
-  JointDisplacementWidget.cpp
   JointStateView.cpp
   BodyStateView.cpp
   DigitalIoDeviceView.cpp
@@ -113,7 +114,8 @@ set(headers
   LinkDeviceListView.h
   LinkPositionView.h
   LinkPositionWidget.h
-  JointDisplacementWidget.h
+  JointDisplacementWidgetSet.h
+  MultiBodyJointDisplacementWidget.h
   IoConnectionView.h
   CollisionSeq.h
   CollisionSeqItem.h

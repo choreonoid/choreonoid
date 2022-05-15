@@ -1,5 +1,5 @@
 #include "JointDisplacementView.h"
-#include "JointDisplacementWidget.h"
+#include "JointDisplacementWidgetSet.h"
 #include "BodySelectionManager.h"
 #include "BodyItem.h"
 #include <cnoid/Archive>
@@ -20,7 +20,7 @@ class JointDisplacementView::Impl
 {
 public:
     QLabel targetLabel;
-    JointDisplacementWidget jointDisplacementWidget;
+    JointDisplacementWidgetSet* displacementWidgetSet;
     ToolButton menuButton;
     ScopedConnection bodySelectionManagerConnection;
 
@@ -47,7 +47,6 @@ JointDisplacementView::JointDisplacementView()
 
 
 JointDisplacementView::Impl::Impl(JointDisplacementView* self)
-    : jointDisplacementWidget(self)
 {
     self->setDefaultLayoutArea(BottomRightArea);
 
@@ -69,17 +68,20 @@ JointDisplacementView::Impl::Impl(JointDisplacementView* self)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
+    auto baseWidget = new QWidget;
+    displacementWidgetSet = new JointDisplacementWidgetSet(baseWidget);
+
     auto scrollArea = new QScrollArea;
     scrollArea->setStyleSheet("QScrollArea {background: transparent;}");
     scrollArea->setFrameShape(QFrame::NoFrame);
     scrollArea->setWidgetResizable(true);
     scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    scrollArea->setWidget(&jointDisplacementWidget);
-    jointDisplacementWidget.setAutoFillBackground(false);
+    scrollArea->setWidget(baseWidget);
+    baseWidget->setAutoFillBackground(false);
     vbox->addWidget(scrollArea);
 
-    jointDisplacementWidget.sigJointWidgetFocused().connect(
+    displacementWidgetSet->sigJointWidgetFocused().connect(
         [scrollArea](QWidget* widget){ scrollArea->ensureWidgetVisible(widget); });
 }
 
@@ -111,13 +113,13 @@ void JointDisplacementView::Impl::onActivated()
 void JointDisplacementView::onDeactivated()
 {
     impl->bodySelectionManagerConnection.disconnect();
-    impl->jointDisplacementWidget.setBodyItem(nullptr);
+    impl->displacementWidgetSet->setBodyItem(nullptr);
 }
 
 
 void JointDisplacementView::onAttachedMenuRequest(MenuManager& menuManager)
 {
-    impl->jointDisplacementWidget.setOptionMenuTo(menuManager);
+    impl->displacementWidgetSet->setOptionMenuTo(menuManager);
 }
 
 
@@ -125,12 +127,12 @@ void JointDisplacementView::Impl::onCurrentBodyItemChanged(BodyItem* bodyItem)
 {
     if(!bodyItem){
         targetLabel.setText("------");
-        jointDisplacementWidget.setBodyItem(nullptr);
+        displacementWidgetSet->setBodyItem(nullptr);
     } else {
         while(bodyItem){
             if(bodyItem->body()->numJoints() > 0){
                 targetLabel.setText(bodyItem->displayName().c_str());
-                jointDisplacementWidget.setBodyItem(bodyItem);
+                displacementWidgetSet->setBodyItem(bodyItem);
                 break;
             }
             bodyItem = bodyItem->parentBodyItem();
@@ -141,11 +143,11 @@ void JointDisplacementView::Impl::onCurrentBodyItemChanged(BodyItem* bodyItem)
 
 bool JointDisplacementView::storeState(Archive& archive)
 {
-    return impl->jointDisplacementWidget.storeState(&archive);
+    return impl->displacementWidgetSet->storeState(&archive);
 }
 
 
 bool JointDisplacementView::restoreState(const Archive& archive)
 {
-    return impl->jointDisplacementWidget.restoreState(&archive);
+    return impl->displacementWidgetSet->restoreState(&archive);
 }
