@@ -6,13 +6,15 @@
 
 namespace cnoid {
 
+class CloneMap;
+
 class CNOID_EXPORT JointTraverse
 {
 public:
     JointTraverse();
     //! This constructor sets the default joint traverse of the body
     JointTraverse(Body* body);
-    JointTraverse(const JointTraverse& org);
+    JointTraverse(const JointTraverse& org, CloneMap* cloneMap = nullptr);
 
     void clear();
     bool empty() const { return linkTraverse_.empty() && joints_.empty(); }
@@ -39,6 +41,7 @@ public:
     Link* joint(int index) const {
         return joints_[index];
     }
+    const std::vector<LinkPtr>& joints() const { return joints_; }
 
     //! This function removes the link from both the link traverse and the joint array
     bool remove(Link* link);

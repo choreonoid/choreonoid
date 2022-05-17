@@ -1,5 +1,6 @@
 #include "JointTraverse.h"
 #include "Body.h"
+#include <cnoid/CloneMap>
 
 using namespace cnoid;
 
@@ -19,11 +20,17 @@ JointTraverse::JointTraverse(Body* body)
 }
 
 
-JointTraverse::JointTraverse(const JointTraverse& org)
-    : linkTraverse_(org.linkTraverse_),
-      joints_(org.joints_)
+JointTraverse::JointTraverse(const JointTraverse& org, CloneMap* cloneMap)
+    : linkTraverse_(org.linkTraverse_, cloneMap)
 {
-
+    if(!cloneMap){
+        joints_ = org.joints_;
+    } else {
+        joints_.reserve(org.joints_.size());
+        for(auto& joint : org.joints_){
+            joints_.push_back(joint->clone(cloneMap));
+        }
+    }
 }
 
 

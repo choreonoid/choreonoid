@@ -36,8 +36,8 @@ public:
     */
     Link(const Link& link);
 
-    Link* clone() const {
-        return static_cast<Link*>(doClone(nullptr));
+    Link* clone(CloneMap* cloneMap = nullptr) const {
+        return static_cast<Link*>(doClone(cloneMap));
     }
         
     virtual ~Link();

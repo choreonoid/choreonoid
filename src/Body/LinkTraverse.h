@@ -14,6 +14,7 @@
 namespace cnoid {
 
 class Link;
+class CloneMap;
 
 class CNOID_EXPORT LinkTraverse
 {
@@ -23,7 +24,7 @@ public:
     LinkTraverse();
     LinkTraverse(int size);
     LinkTraverse(Link* root, bool doUpward = false, bool doDownward = true);
-    LinkTraverse(const LinkTraverse& org);
+    LinkTraverse(const LinkTraverse& org, CloneMap* cloneMap = nullptr);
 
     virtual ~LinkTraverse();
 
