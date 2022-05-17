@@ -46,7 +46,7 @@ public:
     bool hasJointPath() const;
     std::shared_ptr<JointPath> jointPath();
     std::shared_ptr<InverseKinematics> inverseKinematics();
-    
+
     std::shared_ptr<JointSpaceConfigurationHandler> configurationHandler();
     int currentConfigurationType() const;
     std::string configurationLabel(int id) const;

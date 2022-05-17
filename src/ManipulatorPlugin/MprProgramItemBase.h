@@ -25,6 +25,7 @@ public:
 
     BodyItem* targetBodyItem();
 
+    [[deprecated]]
     LinkKinematicsKit* kinematicsKit();
 
     MprProgram* program();

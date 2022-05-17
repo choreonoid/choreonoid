@@ -11,7 +11,6 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/Buttons>
 #include <cnoid/MessageOut>
-#include <cnoid/stdx/variant>
 #include <QLabel>
 #include <QBoxLayout>
 #include <QGridLayout>
@@ -26,8 +25,6 @@ namespace {
 
 const QString normalStyle("font-weight: normal");
 const QString errorStyle("font-weight: bold; color: red");
-
-typedef stdx::variant<LinkKinematicsKit*, shared_ptr<JointTraverse>> BodyPart;
 
 class PositionPartPanel : public QWidget
 {
@@ -46,9 +43,9 @@ public:
     void createIkPanel();
     void createFkPanel();
     void showPositionWidgetsOfType(MprPosition::PositionType positionType);
-    bool update(BodyPart bodyPart, MprPosition* position);
-    bool updateIkPanel(BodyPart bodyPart, MprIkPosition* position);
-    bool updateFkPanel(BodyPart bodyPart, MprFkPosition* position);
+    bool update(KinematicBodyPart* bodyPart, MprPosition* position);
+    bool updateIkPanel(KinematicBodyPart* bodyPart, MprIkPosition* position);
+    bool updateFkPanel(KinematicBodyPart* bodyPart, MprFkPosition* position);
 };
 
 }
@@ -69,14 +66,14 @@ public:
     int numActivePositionPartPanels;
     vector<int> redundantPositionIndices;
 
-    KinematicBodyItemSetPtr currentBodyItemSet;
-    LinkKinematicsKitPtr currentKinematicsKit;
+    KinematicBodyItemSetPtr bodyItemSet;
+    KinematicBodyPartPtr mainBodyPart;
 
     Impl(MprPositionStatementPanel* self);
     ~Impl();
     PositionPartPanel* getOrCreatePositionPartPanel(int index);
     void updatePositionPanel();
-    void updatePositionPartPanel(MprPosition* position, BodyPart bodyPart, int& io_panelIndex);
+    void updatePositionPartPanel(MprPosition* position, KinematicBodyPart* bodyPart, int& io_panelIndex);
     void updateMultiPositionPartPanels(MprPosition* position, int& io_panelIndex);
     void updateIkPositionPanel(MprIkPosition* position, LinkKinematicsKit* kinematicsKit);
     void updateFkPositionPanel(MprFkPosition* position);
@@ -176,14 +173,14 @@ void MprPositionStatementPanel::setEditable(bool on)
 
 void MprPositionStatementPanel::onActivated()
 {
-    impl->currentBodyItemSet.reset();
-    impl->currentKinematicsKit.reset();
+    impl->bodyItemSet.reset();
 
     auto programItem = currentProgramItem();
     if(auto controllerItem = programItem->findOwnerItem<MprControllerItemBase>()){
-        impl->currentBodyItemSet = controllerItem->kinematicBodyItemSet();
+        impl->bodyItemSet = controllerItem->kinematicBodyItemSet();
+        impl->mainBodyPart = impl->bodyItemSet->mainBodyPart();
     } else {
-        impl->currentKinematicsKit = programItem->kinematicsKit();
+        impl->mainBodyPart = new KinematicBodyPart(programItem->kinematicsKit());
     }
 }
 
@@ -196,8 +193,8 @@ void MprPositionStatementPanel::onStatementUpdated()
 
 void MprPositionStatementPanel::onDeactivated()
 {
-    impl->currentBodyItemSet.reset();
-    impl->currentKinematicsKit.reset();
+    impl->bodyItemSet.reset();
+    impl->mainBodyPart.reset();
 }
 
 
@@ -239,8 +236,8 @@ void MprPositionStatementPanel::Impl::updatePositionPanel()
     int panelIndex = 0;
     numActivePositionPartPanels = 0;
     
-    if(!currentBodyItemSet){
-        updatePositionPartPanel(position, currentKinematicsKit, panelIndex);
+    if(!bodyItemSet){
+        updatePositionPartPanel(position, mainBodyPart, panelIndex);
     } else {
         updateMultiPositionPartPanels(position, panelIndex);
     }
@@ -260,7 +257,8 @@ void MprPositionStatementPanel::Impl::updatePositionPanel()
 }
 
 
-void MprPositionStatementPanel::Impl::updatePositionPartPanel(MprPosition* position, BodyPart bodyPart, int& io_panelIndex)
+void MprPositionStatementPanel::Impl::updatePositionPartPanel
+(MprPosition* position, KinematicBodyPart* bodyPart, int& io_panelIndex)
 {
     if(position->isComposite()){
         auto composite = position->compositePosition();
@@ -276,33 +274,21 @@ void MprPositionStatementPanel::Impl::updatePositionPartPanel(MprPosition* posit
 }
 
 
-static BodyPart convertBodyPart(KinematicBodyItemSet::BodyItemPart* bodyItemPart)
-{
-    BodyPart bodyPart;
-    if(bodyItemPart->isLinkKinematicsKit()){
-        bodyPart = bodyItemPart->linkKinematicsKit();
-    } else if(bodyItemPart->isJointTraverse()){
-        bodyPart = bodyItemPart->jointTraverse();
-    }
-    return bodyPart;
-}
-
-
 void MprPositionStatementPanel::Impl::updateMultiPositionPartPanels(MprPosition* position, int& io_panelIndex)
 {
     if(!position->isComposite()){
-        if(auto bodyItemPart = currentBodyItemSet->mainBodyItemPart()){
-            updatePositionPartPanel(position, convertBodyPart(bodyItemPart), io_panelIndex);
+        if(auto bodyItemPart = bodyItemSet->mainBodyItemPart()){
+            updatePositionPartPanel(position, bodyItemPart, io_panelIndex);
         }
     } else {
         auto composite = position->compositePosition();
-        for(auto& partIndex : composite->findMatchedPositionIndices(currentBodyItemSet)){
+        for(auto& partIndex : composite->findMatchedPositionIndices(bodyItemSet)){
             updatePositionPartPanel(
                 composite->position(partIndex),
-                convertBodyPart(currentBodyItemSet->bodyItemPart(partIndex)),
+                bodyItemSet->bodyItemPart(partIndex),
                 io_panelIndex);
         }
-        redundantPositionIndices = composite->findUnMatchedPositionIndices(currentBodyItemSet);
+        redundantPositionIndices = composite->findUnMatchedPositionIndices(bodyItemSet);
     }
 }
 
@@ -416,24 +402,11 @@ void PositionPartPanel::showPositionWidgetsOfType(MprPosition::PositionType posi
 }
 
 
-static string getBodyPartName(const BodyPart& bodyPart)
-{
-    if(stdx::holds_alternative<LinkKinematicsKit*>(bodyPart)){
-        return stdx::get<LinkKinematicsKit*>(bodyPart)->body()->name();
-    } else if(stdx::holds_alternative<shared_ptr<JointTraverse>>(bodyPart)){
-        if(auto body = stdx::get<shared_ptr<JointTraverse>>(bodyPart)->body()){
-            return body->name();
-        }
-    }
-    return std::string();
-}
-
-
-bool PositionPartPanel::update(BodyPart bodyPart, MprPosition* position)
+bool PositionPartPanel::update(KinematicBodyPart* bodyPart, MprPosition* position)
 {
     bool updated = false;
 
-    bodyPartLabel.setText(getBodyPartName(bodyPart).c_str());
+    bodyPartLabel.setText(bodyPart->body()->name().c_str());
 
     if(position->isIK()){
         showPositionWidgetsOfType(MprPosition::IK);
@@ -456,13 +429,12 @@ bool PositionPartPanel::update(BodyPart bodyPart, MprPosition* position)
 }
 
 
-bool PositionPartPanel::updateIkPanel(BodyPart bodyPart, MprIkPosition* position)
+bool PositionPartPanel::updateIkPanel(KinematicBodyPart* bodyPart, MprIkPosition* position)
 {
-    if(!stdx::holds_alternative<LinkKinematicsKit*>(bodyPart)){
+    auto kinematicsKit = bodyPart->linkKinematicsKit();
+    if(!kinematicsKit){
         return false;
     }
-
-    auto kinematicsKit = stdx::get<LinkKinematicsKit*>(bodyPart);
         
     auto xyz = position->position().translation();
     if(DisplayValueFormat::instance()->isMillimeter()){
@@ -501,29 +473,13 @@ bool PositionPartPanel::updateIkPanel(BodyPart bodyPart, MprIkPosition* position
 }
 
 
-bool PositionPartPanel::updateFkPanel(BodyPart bodyPart, MprFkPosition* position)
+bool PositionPartPanel::updateFkPanel(KinematicBodyPart* bodyPart, MprFkPosition* position)
 {
-    vector<string> jointNames;
-    if(stdx::holds_alternative<LinkKinematicsKit*>(bodyPart)){
-        if(auto jointPath = stdx::get<LinkKinematicsKit*>(bodyPart)->jointPath()){
-            jointNames.reserve(jointPath->size());
-            for(auto& joint : *jointPath){
-                jointNames.push_back(joint->jointName());
-            }
-        }
-    } else if(stdx::holds_alternative<shared_ptr<JointTraverse>>(bodyPart)){
-        auto joints = stdx::get<shared_ptr<JointTraverse>>(bodyPart);
-        jointNames.reserve(joints->numJoints());
-        for(auto& joint : *joints){
-            jointNames.push_back(joint->jointName());
-        }
-    }
-
-    if(jointNames.empty()){
+    const int n = std::min(position->numJoints(), bodyPart->numJoints());
+    if(n == 0){
         return false;
     }
     
-    const int n = position->numJoints();
     int i = 0;
     while(i < n){
         auto& label = jointDisplacementLabels[i];

@@ -13,20 +13,23 @@ class CNOID_EXPORT KinematicBodyItemSet : public KinematicBodySet
 {
 public:
     KinematicBodyItemSet();
-    void setBodyItemPart(int index, BodyItem* bodyItem, LinkKinematicsKit* linkKinematicsKit);
-    void setBodyItemPart(int index, BodyItem* bodyItem, std::shared_ptr<JointTraverse> jointTraverse);
+    void setBodyItemPart(int index, BodyItem* bodyItem, std::shared_ptr<JointTraverse> traverse);
+    void setBodyItemPart(int index, BodyItem* bodyItem, LinkKinematicsKit* kit);
     void clearBodyItemPart(int index) { clearBodyPart(index); }
 
-    class BodyItemPart : public KinematicBodySet::BodyPart
+    class BodyItemPart : public KinematicBodyPart
     {
     public:
         BodyItem* bodyItem() { return bodyItem_.lock(); }
         const BodyItem* bodyItem() const { return bodyItem_.lock(); }
 
+    protected:
+        BodyItemPart();
+        BodyItemPart(const BodyItemPart& org, CloneMap* cloneMap);
+        virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
     private:
         weak_ref_ptr<BodyItem> bodyItem_;
-        ScopedConnectionSet bodyItemConnections;
-        
         friend class KinematicBodyItemSet;
     };
 
@@ -55,9 +58,6 @@ public:
 protected:
     KinematicBodyItemSet(const KinematicBodyItemSet& org, CloneMap* cloneMap);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
-
-private:
-    void copyBodyPart(BodyPart* newBodyPart, BodyPart* orgBodyPart, CloneMap* cloneMap);    
 };
 
 typedef ref_ptr<KinematicBodyItemSet> KinematicBodyItemSetPtr;

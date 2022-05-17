@@ -8,38 +8,28 @@ using namespace cnoid;
 KinematicBodySet::KinematicBodySet()
 {
     mainBodyPartIndex_ = -1;
-    
-    createBodyPartFunc =
-        [](){ return new BodyPart; };
-    copyBodyPartFunc =
-        [this](BodyPart* newBodyPart, BodyPart* orgBodyPart, CloneMap* cloneMap){
-            copyBodyPart(newBodyPart, orgBodyPart, cloneMap);
-        };
+    createBodyPartFunc = [](){ return new KinematicBodyPart; };
 }
 
 
-KinematicBodySet::KinematicBodySet(CreateBodyPartFunc createBodyPart, CopyBodyPartFunc copyBodyPart)
-    : createBodyPartFunc(createBodyPart),
-      copyBodyPartFunc(copyBodyPart)
+KinematicBodySet::KinematicBodySet(CreateBodyPartFunc createBodyPart)
+    : createBodyPartFunc(createBodyPart)
 {
 
 }
 
 
 KinematicBodySet::KinematicBodySet(const KinematicBodySet& org, CloneMap* cloneMap)
-    : KinematicBodySet(org.createBodyPartFunc, org.copyBodyPartFunc)
+    : KinematicBodySet(org.createBodyPartFunc)
 {
     bodyParts_.reserve(org.bodyParts_.size());
     for(auto part : org.bodyParts_){
         if(!part){
             bodyParts_.push_back(nullptr);
         } else {
-            auto newPart = createBodyPartFunc();
-            copyBodyPartFunc(newPart, part, cloneMap);
-            bodyParts_.push_back(newPart);
+            bodyParts_.push_back(part->clone(cloneMap));
         }
     }
-        
     mainBodyPartIndex_ = org.mainBodyPartIndex_;
 }
 
@@ -50,45 +40,7 @@ Referenced* KinematicBodySet::doClone(CloneMap* cloneMap) const
 }
 
 
-void KinematicBodySet::copyBodyPart(BodyPart* newBodyPart, BodyPart* orgBodyPart, CloneMap* cloneMap)
-{
-    if(orgBodyPart->isLinkKinematicsKit()){
-        initializeBodyPart(newBodyPart, orgBodyPart->linkKinematicsKit()->clone(cloneMap));
-    } else if(orgBodyPart->isJointTraverse()){
-        initializeBodyPart(newBodyPart, orgBodyPart->jointTraverse());
-    }
-}
-
-
-void KinematicBodySet::initializeBodyPart(BodyPart* bodyPart, LinkKinematicsKit* kinematicsKit)
-{
-    if(kinematicsKit != bodyPart->linkKinematicsKit_){
-        bodyPart->linkKinematicsKit_ = kinematicsKit;
-        bodyPart->connections.disconnect();
-        bodyPart->connections.add(
-            kinematicsKit->sigFrameSetChange().connect(
-                [this](){ sigFrameSetChange_(); }));
-        bodyPart->connections.add(
-            kinematicsKit->sigPositionError().connect(
-                [this](const Isometry3& T_frameCoordinate){ sigPositionError_(T_frameCoordinate); }));
-    }
-
-    bodyPart->jointTraverse_.reset();
-}
-
-
-void KinematicBodySet::initializeBodyPart(BodyPart* bodyPart, std::shared_ptr<JointTraverse> jointTraverse)
-{
-    bodyPart->jointTraverse_ = jointTraverse;
-
-    if(bodyPart->linkKinematicsKit_){
-        bodyPart->linkKinematicsKit_.reset();
-        bodyPart->connections.disconnect();
-    }
-}
-
-
-KinematicBodySet::BodyPart* KinematicBodySet::findOrCreateBodyPart(int index)
+KinematicBodyPart* KinematicBodySet::findOrCreateBodyPart(int index)
 {
     if(index >= static_cast<int>(bodyParts_.size())){
         bodyParts_.resize(index + 1);
@@ -101,28 +53,18 @@ KinematicBodySet::BodyPart* KinematicBodySet::findOrCreateBodyPart(int index)
 }
 
 
-void KinematicBodySet::setBodyPart(int index, LinkKinematicsKit* kinematicsKit)
-{
-    if(kinematicsKit){
-        auto bodyPart = findOrCreateBodyPart(index);
-        initializeBodyPart(bodyPart, kinematicsKit);
-    } else {
-        clearBodyPart(index);
-    }
-}
-
-
 void KinematicBodySet::setBodyPart(int index, std::shared_ptr<JointTraverse> jointTraverse)
 {
-    if(jointTraverse){
-        auto bodyPart = findOrCreateBodyPart(index);
-        initializeBodyPart(bodyPart, jointTraverse);
-    } else {
-        clearBodyPart(index);
-    }
+    findOrCreateBodyPart(index)->setJointTraverse(jointTraverse);
 }
 
 
+void KinematicBodySet::setBodyPart(int index, LinkKinematicsKit* kit)
+{
+    findOrCreateBodyPart(index)->setLinkKinematicsKit(kit);
+}
+
+    
 void KinematicBodySet::clearBodyPart(int index)
 {
     if(index < static_cast<int>(bodyParts_.size())){
@@ -161,4 +103,3 @@ std::vector<int> KinematicBodySet::validBodyPartIndices() const
     }
     return indices;
 }
-
