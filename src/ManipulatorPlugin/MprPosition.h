@@ -18,12 +18,22 @@ class Body;
 class JointTraverse;
 class LinkKinematicsKit;
 class KinematicBodySet;
-class MprIkPosition;
-class MprFkPosition;
-class MprCompositePosition;
 class MprPositionList;
 class Mapping;
 class MessageOut;
+
+class MprPosition;
+typedef ref_ptr<MprPosition> MprPositionPtr;
+
+class MprFkPosition;
+typedef ref_ptr<MprFkPosition> MprFkPositionPtr;
+
+class MprIkPosition;
+typedef ref_ptr<MprIkPosition> MprIkPositionPtr;
+
+class MprCompositePosition;
+typedef ref_ptr<MprCompositePosition> MprCompositePositionPtr;
+
 
 class CNOID_EXPORT MprPosition : public ClonableReferenced
 {
@@ -51,6 +61,7 @@ public:
     MprIkPosition* ikPosition();
     MprFkPosition* fkPosition();
     MprCompositePosition* compositePosition();
+    MprCompositePositionPtr castOrConvertToCompositePosition(KinematicBodySet* bodySet);
 
     MprPositionList* ownerPositionList();
 
@@ -91,8 +102,6 @@ private:
 
     friend class MprPositionList;
 };
-
-typedef ref_ptr<MprPosition> MprPositionPtr;
 
 
 class CNOID_EXPORT MprFkPosition : public MprPosition
@@ -143,8 +152,6 @@ private:
     std::bitset<MaxNumJoints> prismaticJointFlags_;
     int numJoints_;
 };
-
-typedef ref_ptr<MprFkPosition> MprFkPositionPtr;
 
 
 class CNOID_EXPORT MprIkPosition : public MprPosition
@@ -214,8 +221,6 @@ private:
     std::array<int, MaxNumJoints> phase_;
 };
 
-typedef ref_ptr<MprIkPosition> MprIkPositionPtr;
-
 
 class CNOID_EXPORT MprCompositePosition : public MprPosition
 {
@@ -230,8 +235,12 @@ public:
     void clearPositions();
     bool empty() const { return numValidPositions_ == 0; }
     int maxPositionIndex() const { return positions_.size() - 1; }
-    MprPosition* position(int index) { return positions_[index]; }
-    const MprPosition* position(int index) const { return positions_[index]; }
+    MprPosition* position(int index) {
+        return index < static_cast<int>(positions_.size()) ? positions_[index] : nullptr;
+    }
+    const MprPosition* position(int index) const {
+        return const_cast<MprCompositePosition*>(this)->position(index);
+    }
     int mainPositionIndex() const { return mainPositionIndex_; }
     void setMainPositionIndex(int index) { mainPositionIndex_ = index; }
     MprPosition* mainPosition() {
@@ -240,6 +249,10 @@ public:
     const MprPosition* mainPosition() const {
         return const_cast<MprCompositePosition*>(this)->mainPosition();
     }
+
+    std::vector<int> findMatchedPositionIndices(KinematicBodySet* bodySet) const;
+    std::vector<int> findUnMatchedPositionIndices(KinematicBodySet* bodySet) const;
+    std::vector<int> nonMainPositionIndices() const;
     
     virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
     virtual bool fetch(const JointTraverse& jointTraverse, MessageOut* mout = nullptr) override;

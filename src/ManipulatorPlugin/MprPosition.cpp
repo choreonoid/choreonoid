@@ -79,7 +79,7 @@ void MprPosition::setId(const GeneralId& id)
 
 MprIkPosition* MprPosition::ikPosition()
 {
-    if(positionType_ == IK){
+    if(isIK()){
         return static_cast<MprIkPosition*>(this);
     }
     return nullptr;
@@ -88,7 +88,7 @@ MprIkPosition* MprPosition::ikPosition()
 
 MprFkPosition* MprPosition::fkPosition()
 {
-    if(positionType_ == FK){
+    if(isFK()){
         return static_cast<MprFkPosition*>(this);
     }
     return nullptr;
@@ -97,10 +97,26 @@ MprFkPosition* MprPosition::fkPosition()
 
 MprCompositePosition* MprPosition::compositePosition()
 {
-    if(positionType_ == Composite){
+    if(isComposite()){
         return static_cast<MprCompositePosition*>(this);
     }
     return nullptr;
+}
+
+
+MprCompositePositionPtr MprPosition::castOrConvertToCompositePosition(KinematicBodySet* bodySet)
+{
+    if(isComposite()){
+        return compositePosition();
+    }
+
+    auto composite = new MprCompositePosition;
+    int index = bodySet->mainBodyPartIndex();
+    if(index >= 0){
+        composite->setPosition(index, this);
+        composite->setMainPositionIndex(index);
+    }
+    return composite;
 }
 
 
@@ -626,6 +642,42 @@ void MprCompositePosition::setPosition(int index, MprPosition* position)
 }
 
 
+std::vector<int> MprCompositePosition::findMatchedPositionIndices(KinematicBodySet* bodySet) const
+{
+    std::vector<int> indices;
+    for(int i=0; i <= bodySet->maxIndex(); ++i){
+        if(bodySet->bodyPart(i) && position(i)){
+            indices.push_back(i);
+        }
+    }
+    return indices;
+}
+
+
+std::vector<int> MprCompositePosition::findUnMatchedPositionIndices(KinematicBodySet* bodySet) const
+{
+    std::vector<int> indices;
+    for(int i=0; i <= maxPositionIndex(); ++i){
+        if(position(i) && !bodySet->bodyPart(i)){
+            indices.push_back(i);
+        }
+    }
+    return indices;
+}
+
+
+std::vector<int> MprCompositePosition::nonMainPositionIndices() const
+{
+    std::vector<int> indices;
+    for(int i=0; i <= maxPositionIndex(); ++i){
+        if(position(i) && i != mainPositionIndex_){
+            indices.push_back(i);
+        }
+    }
+    return indices;
+}
+
+
 bool MprCompositePosition::fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout)
 {
     if(auto position = mainPosition()){
@@ -700,6 +752,9 @@ bool MprCompositePosition::apply(JointTraverse& jointTraverse) const
 }
 
 
+/**
+   \todo Execute Body::syncPositionWithParentBody for each child body part.
+*/
 bool MprCompositePosition::apply(KinematicBodySet* bodySet) const
 {
     bool applied = false;

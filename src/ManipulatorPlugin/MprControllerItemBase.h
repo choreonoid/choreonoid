@@ -32,6 +32,8 @@ public:
     */
     bool isEnabled() const;
     void setEnabled(bool on);
+
+    virtual KinematicBodyItemSet* kinematicBodyItemSet() = 0;
     
     virtual double timeStep() const override;
     double speedRatio() const;
@@ -77,8 +79,6 @@ protected:
 
     MprProgram* findProgram(const std::string& name);
 
-    virtual KinematicBodyItemSet* kinematicBodyItemSet() = 0;
-    
     [[deprecated]]
     LinkKinematicsKit* linkKinematicsKitForControl();
 

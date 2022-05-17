@@ -18,7 +18,9 @@ public:
     ~MprPositionStatementPanel();
 
     virtual void setEditable(bool on) override;
+    virtual void onActivated() override;
     virtual void onStatementUpdated() override;
+    virtual void onDeactivated() override;
 
     static void updateCoordinateFrameLabel(
         QLabel& label, const GeneralId& id, CoordinateFrame* frame, CoordinateFrameList* frames);
