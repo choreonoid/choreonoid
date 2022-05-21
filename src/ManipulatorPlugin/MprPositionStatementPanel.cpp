@@ -5,7 +5,7 @@
 #include <cnoid/MprPosition>
 #include <cnoid/MprPositionList>
 #include <cnoid/KinematicBodyItemSet>
-#include <cnoid/LinkKinematicsKit>
+#include <cnoid/BodyItemKinematicsKit>
 #include <cnoid/JointPath>
 #include <cnoid/DisplayValueFormat>
 #include <cnoid/EigenUtil>
@@ -43,9 +43,9 @@ public:
     void createIkPanel();
     void createFkPanel();
     void showPositionWidgetsOfType(MprPosition::PositionType positionType);
-    bool update(KinematicBodyPart* bodyPart, MprPosition* position);
-    bool updateIkPanel(KinematicBodyPart* bodyPart, MprIkPosition* position);
-    bool updateFkPanel(KinematicBodyPart* bodyPart, MprFkPosition* position);
+    bool update(BodyItemKinematicsKit* kinematicsKit, MprPosition* position);
+    bool updateIkPanel(BodyItemKinematicsKit* kinematicsKit, MprIkPosition* position);
+    bool updateFkPanel(BodyItemKinematicsKit* kinematicsKit, MprFkPosition* position);
 };
 
 }
@@ -67,15 +67,14 @@ public:
     vector<int> redundantPositionIndices;
 
     KinematicBodyItemSetPtr bodyItemSet;
-    KinematicBodyPartPtr mainBodyPart;
+    BodyItemKinematicsKitPtr mainBodyPart;
 
     Impl(MprPositionStatementPanel* self);
     ~Impl();
     PositionPartPanel* getOrCreatePositionPartPanel(int index);
     void updatePositionPanel();
-    void updatePositionPartPanel(MprPosition* position, KinematicBodyPart* bodyPart, int& io_panelIndex);
-    void updateMultiPositionPartPanels(MprPosition* position, int& io_panelIndex);
-    void updateIkPositionPanel(MprIkPosition* position, LinkKinematicsKit* kinematicsKit);
+    void updatePositionPartPanel(MprPosition* position, BodyItemKinematicsKit* kinematicsKit, int& io_panelIndex);
+    void updateIkPositionPanel(MprIkPosition* position, BodyItemKinematicsKit* kinematicsKit);
     void updateFkPositionPanel(MprFkPosition* position);
 };
 
@@ -174,13 +173,12 @@ void MprPositionStatementPanel::setEditable(bool on)
 void MprPositionStatementPanel::onActivated()
 {
     impl->bodyItemSet.reset();
+    impl->mainBodyPart.reset();
 
     auto programItem = currentProgramItem();
     if(auto controllerItem = programItem->findOwnerItem<MprControllerItemBase>()){
         impl->bodyItemSet = controllerItem->kinematicBodyItemSet();
-        impl->mainBodyPart = impl->bodyItemSet->mainBodyPart();
-    } else {
-        impl->mainBodyPart = new KinematicBodyPart(programItem->kinematicsKit());
+        impl->mainBodyPart = impl->bodyItemSet->mainBodyItemPart();
     }
 }
 
@@ -236,10 +234,19 @@ void MprPositionStatementPanel::Impl::updatePositionPanel()
     int panelIndex = 0;
     numActivePositionPartPanels = 0;
     
-    if(!bodyItemSet){
-        updatePositionPartPanel(position, mainBodyPart, panelIndex);
+    if(!position->isComposite()){
+        if(auto bodyItemPart = bodyItemSet->mainBodyItemPart()){
+            updatePositionPartPanel(position, bodyItemPart, panelIndex);
+        }
     } else {
-        updateMultiPositionPartPanels(position, panelIndex);
+        auto composite = position->compositePosition();
+        for(auto& partIndex : composite->findMatchedPositionIndices(bodyItemSet)){
+            updatePositionPartPanel(
+                composite->position(partIndex),
+                bodyItemSet->bodyItemPart(partIndex),
+                panelIndex);
+        }
+        redundantPositionIndices = composite->findUnMatchedPositionIndices(bodyItemSet);
     }
 
     panelIndex = 0;
@@ -258,38 +265,11 @@ void MprPositionStatementPanel::Impl::updatePositionPanel()
 
 
 void MprPositionStatementPanel::Impl::updatePositionPartPanel
-(MprPosition* position, KinematicBodyPart* bodyPart, int& io_panelIndex)
+(MprPosition* position, BodyItemKinematicsKit* kinematicsKit, int& io_panelIndex)
 {
-    if(position->isComposite()){
-        auto composite = position->compositePosition();
-        position = composite->mainPosition();
-        redundantPositionIndices = composite->nonMainPositionIndices();
-    }
-
-    if(position){
-        auto partPanel = getOrCreatePositionPartPanel(io_panelIndex++);
-        partPanel->update(bodyPart, position);
-        ++numActivePositionPartPanels;
-    }
-}
-
-
-void MprPositionStatementPanel::Impl::updateMultiPositionPartPanels(MprPosition* position, int& io_panelIndex)
-{
-    if(!position->isComposite()){
-        if(auto bodyItemPart = bodyItemSet->mainBodyItemPart()){
-            updatePositionPartPanel(position, bodyItemPart, io_panelIndex);
-        }
-    } else {
-        auto composite = position->compositePosition();
-        for(auto& partIndex : composite->findMatchedPositionIndices(bodyItemSet)){
-            updatePositionPartPanel(
-                composite->position(partIndex),
-                bodyItemSet->bodyItemPart(partIndex),
-                io_panelIndex);
-        }
-        redundantPositionIndices = composite->findUnMatchedPositionIndices(bodyItemSet);
-    }
+    auto partPanel = getOrCreatePositionPartPanel(io_panelIndex++);
+    partPanel->update(kinematicsKit, position);
+    ++numActivePositionPartPanels;
 }
 
 
@@ -402,19 +382,19 @@ void PositionPartPanel::showPositionWidgetsOfType(MprPosition::PositionType posi
 }
 
 
-bool PositionPartPanel::update(KinematicBodyPart* bodyPart, MprPosition* position)
+bool PositionPartPanel::update(BodyItemKinematicsKit* kinematicsKit, MprPosition* position)
 {
     bool updated = false;
 
-    bodyPartLabel.setText(bodyPart->body()->name().c_str());
+    bodyPartLabel.setText(kinematicsKit->body()->name().c_str());
 
     if(position->isIK()){
         showPositionWidgetsOfType(MprPosition::IK);
-        updated = updateIkPanel(bodyPart, position->ikPosition());
+        updated = updateIkPanel(kinematicsKit, position->ikPosition());
 
     } else if(position->isFK()){
         showPositionWidgetsOfType(MprPosition::FK);
-        updated = updateFkPanel(bodyPart, position->fkPosition());
+        updated = updateFkPanel(kinematicsKit, position->fkPosition());
     }
 
     if(updated){
@@ -429,13 +409,8 @@ bool PositionPartPanel::update(KinematicBodyPart* bodyPart, MprPosition* positio
 }
 
 
-bool PositionPartPanel::updateIkPanel(KinematicBodyPart* bodyPart, MprIkPosition* position)
+bool PositionPartPanel::updateIkPanel(BodyItemKinematicsKit* kinematicsKit, MprIkPosition* position)
 {
-    auto kinematicsKit = bodyPart->linkKinematicsKit();
-    if(!kinematicsKit){
-        return false;
-    }
-        
     auto xyz = position->position().translation();
     if(DisplayValueFormat::instance()->isMillimeter()){
         for(int i=0; i < 3; ++i){
@@ -462,7 +437,7 @@ bool PositionPartPanel::updateIkPanel(KinematicBodyPart* bodyPart, MprIkPosition
         kinematicsKit->offsetFrames());
 
     int configIndex = position->configuration();
-    if(kinematicsKit){
+    if(kinematicsKit->configurationHandler()){
         string configName = kinematicsKit->configurationLabel(configIndex);
         configLabel.setText(format("{0:X} ( {1} )", configIndex, configName).c_str());
     } else {
@@ -473,9 +448,9 @@ bool PositionPartPanel::updateIkPanel(KinematicBodyPart* bodyPart, MprIkPosition
 }
 
 
-bool PositionPartPanel::updateFkPanel(KinematicBodyPart* bodyPart, MprFkPosition* position)
+bool PositionPartPanel::updateFkPanel(BodyItemKinematicsKit* kinematicsKit, MprFkPosition* position)
 {
-    const int n = std::min(position->numJoints(), bodyPart->numJoints());
+    const int n = std::min(position->numJoints(), kinematicsKit->numJoints());
     if(n == 0){
         return false;
     }

@@ -10,7 +10,8 @@ namespace cnoid {
 
 class Archive;
 class BodyItem;
-class LinkKinematicsKit;
+class KinematicBodyItemSet;
+class BodyItemKinematicsKit;
 class MprPositionStatement;
 class MessageOut;
 
@@ -24,9 +25,8 @@ public:
     virtual bool setName(const std::string& name) override;
 
     BodyItem* targetBodyItem();
-
-    [[deprecated]]
-    LinkKinematicsKit* kinematicsKit();
+    KinematicBodyItemSet* targetBodyItemSet();
+    BodyItemKinematicsKit* targetMainKinematicsKit();
 
     MprProgram* program();
     const MprProgram* program() const;

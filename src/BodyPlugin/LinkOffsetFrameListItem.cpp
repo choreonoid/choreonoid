@@ -1,8 +1,8 @@
 #include "LinkOffsetFrameListItem.h"
 #include "BodyItem.h"
+#include "BodyItemKinematicsKit.h"
 #include <cnoid/ItemManager>
 #include <cnoid/Link>
-#include <cnoid/LinkKinematicsKit>
 #include "gettext.h"
 
 using namespace std;
@@ -66,8 +66,10 @@ LocationProxyPtr LinkOffsetFrameListItem::getFrameParentLocationProxy()
     if(!impl->linkLocation){
         if(auto bodyItem = findOwnerItem<BodyItem>()){
             // Currently a body that has a unique end link is supported.
-            if(auto kinematicsKit = bodyItem->findPresetLinkKinematicsKit()){
-                impl->linkLocation = bodyItem->createLinkLocationProxy(kinematicsKit->link());
+            if(auto kinematicsKit = bodyItem->findPresetKinematicsKit()){
+                if(auto endLink = kinematicsKit->endLink()){
+                    impl->linkLocation = bodyItem->createLinkLocationProxy(endLink);
+                }
             }
         }
     }

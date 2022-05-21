@@ -4,11 +4,11 @@
 
 #include "EditableSceneBody.h"
 #include "BodyItem.h"
+#include "BodyItemKinematicsKit.h"
 #include "BodySelectionManager.h"
 #include "KinematicsBar.h"
 #include "SimulatorItem.h"
 #include <cnoid/JointPath>
-#include <cnoid/LinkKinematicsKit>
 #include <cnoid/CoordinateFrame>
 #include <cnoid/PenetrationBlocker>
 #include <cnoid/MenuManager>
@@ -1008,12 +1008,12 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
         createPositionDragger();
     }
     
-    LinkKinematicsKit* kinematicsKit = nullptr;
+    BodyItemKinematicsKit* kinematicsKit = nullptr;
     if(link->isRoot() && bodyItem->isAttachedToParentBody()){
         auto parentBodyLink = bodyItem->body()->parentBodyLink();
         if(!parentBodyLink->isRoot()){
             auto parentBodyItem = bodyItem->parentBodyItem();
-            kinematicsKit = parentBodyItem->getCurrentLinkKinematicsKit(parentBodyLink);
+            kinematicsKit = parentBodyItem->getCurrentKinematicsKit(parentBodyLink);
             if(kinematicsKit){
                 positionDragger->setPosition(
                     link->Tb().inverse(Eigen::Isometry) * kinematicsKit->currentOffsetFrame()->T());
@@ -1021,7 +1021,7 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
         }
     }
     if(!kinematicsKit){
-        kinematicsKit = bodyItem->getCurrentLinkKinematicsKit(link);
+        kinematicsKit = bodyItem->getCurrentKinematicsKit(link);
         if(kinematicsKit){
             positionDragger->setPosition(kinematicsKit->currentOffsetFrame()->T());
         } else {
@@ -1037,7 +1037,7 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
     kinematicsKitConnection.disconnect();
     if(kinematicsKit){
         kinematicsKitConnection =
-            kinematicsKit->sigFrameSetChange().connect(
+            kinematicsKit->sigFrameSetChanged().connect(
                 [this, link](){ attachPositionDragger(link); });
     }
     

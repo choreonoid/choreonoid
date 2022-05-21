@@ -39,6 +39,8 @@ public:
     //! @return prepended link
     Link* prependRootAdjacentLinkToward(Link* link);
 
+    Body* body() { return links_.empty() ? nullptr : links_.front()->body(); }
+
     int numLinks() const {
         return static_cast<int>(links_.size());
     }

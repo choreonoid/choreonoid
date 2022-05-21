@@ -1,5 +1,6 @@
 #include "MprStatementPanel.h"
 #include "MprProgramItemBase.h"
+#include <cnoid/KinematicBodyItemSet>
 
 using namespace std;
 using namespace cnoid;
@@ -105,6 +106,21 @@ MprProgramItemBase* MprStatementPanel::currentProgramItem()
 }
 
 
+KinematicBodyItemSet* MprStatementPanel::currentBodyItemSet()
+{
+    return impl->programItem->targetBodyItemSet();
+}
+
+
+BodyItemKinematicsKit* MprStatementPanel::currentMainKinematicsKit()
+{
+    if(auto bodyItemSet = currentBodyItemSet()){
+        return bodyItemSet->mainBodyItemPart();
+    }
+    return nullptr;
+}
+
+
 MprStatement* MprStatementPanel::getCurrentStatement()
 {
     return impl->statement;
@@ -117,4 +133,3 @@ void MprStatementPanel::setCaption(const std::string& caption)
         impl->setCaption(caption);
     }
 }
-

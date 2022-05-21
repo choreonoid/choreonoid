@@ -1,8 +1,7 @@
 #ifndef CNOID_BODY_KINEMATIC_BODY_SET_H
 #define CNOID_BODY_KINEMATIC_BODY_SET_H
 
-#include "KinematicBodyPart.h"
-#include <functional>
+#include "BodyKinematicsKit.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -13,8 +12,7 @@ public:
     KinematicBodySet();
     KinematicBodySet(const KinematicBodySet& org, CloneMap* cloneMap);
 
-    void setBodyPart(int index, std::shared_ptr<JointTraverse> jointTraverse);
-    void setBodyPart(int index, LinkKinematicsKit* kit);
+    virtual void setBodyPart(int index, BodyKinematicsKit* kinematicsKit);
     void clearBodyPart(int index);
     void clear();
     void setMainBodyPartIndex(int index) { mainBodyPartIndex_ = index; }
@@ -22,34 +20,31 @@ public:
 
     bool empty() const { return bodyParts_.empty(); }
     int maxIndex() const { return bodyParts_.size() - 1; }
+    bool hasMainBodyPartOnly() const {
+        return numValidBodyParts_ == 1 && mainBodyPartIndex_ >= 0;
+    }
     std::vector<int> validBodyPartIndices() const;
     
-    KinematicBodyPart* bodyPart(int index) { return bodyParts_[index]; }
-    const KinematicBodyPart* bodyPart(int index) const { return bodyParts_[index]; }
-    KinematicBodyPart* mainBodyPart() {
+    BodyKinematicsKit* bodyPart(int index) { return bodyParts_[index]; }
+    const BodyKinematicsKit* bodyPart(int index) const { return bodyParts_[index]; }
+    BodyKinematicsKit* mainBodyPart() {
         return (mainBodyPartIndex_ >= 0) ? bodyParts_[mainBodyPartIndex_] : nullptr;
     }
-    const KinematicBodyPart* mainBodyPart() const {
+    const BodyKinematicsKit* mainBodyPart() const {
         return const_cast<KinematicBodySet*>(this)->mainBodyPart();
     }
 
-    SignalProxy<void()> sigUpdated() { return sigUpdated_; }
-    void notifyUpdate() { sigUpdated_(); }
-    
+    SignalProxy<void()> sigBodySetChanged() { return sigBodySetChanged_; }
+    void notifyBodySetChange() { sigBodySetChanged_(); }
+
 protected:
-    typedef std::function<KinematicBodyPart*()> CreateBodyPartFunc;
-    KinematicBodySet(CreateBodyPartFunc createBodyPart);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
-    KinematicBodyPart* findOrCreateBodyPart(int index);
 
 private:
-    std::vector<KinematicBodyPartPtr> bodyParts_;
+    std::vector<BodyKinematicsKitPtr> bodyParts_;
+    int numValidBodyParts_;
     int mainBodyPartIndex_;
-
-    // Function objects are used instead of virtual functions so that the functions can be used in the constructor.
-    CreateBodyPartFunc createBodyPartFunc;
-
-    Signal<void()> sigUpdated_;
+    Signal<void()> sigBodySetChanged_;
 };
 
 typedef ref_ptr<KinematicBodySet> KinematicBodySetPtr;

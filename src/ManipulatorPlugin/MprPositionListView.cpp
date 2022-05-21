@@ -6,6 +6,7 @@
 #include <cnoid/MenuManager>
 #include <cnoid/TargetItemPicker>
 #include <cnoid/DisplayValueFormat>
+#include <cnoid/BodyItemKinematicsKit>
 #include <cnoid/Archive>
 #include <cnoid/Buttons>
 #include <cnoid/ConnectionSet>
@@ -399,9 +400,11 @@ void PositionListModel::changePositionType(int positionIndex, MprPosition* posit
     newPosition->setId(position->id());
     newPosition->setNote(position->note());
 
-    if(view->applyPosition(positionIndex, true)){
-        if(newPosition->fetch(programItem->kinematicsKit(), MessageOut::interactive())){
-            positionList->replace(positionIndex, newPosition);
+    if(auto kinematicsKit = programItem->targetMainKinematicsKit()){
+        if(view->applyPosition(positionIndex, true)){
+            if(newPosition->fetch(kinematicsKit, MessageOut::interactive())){
+                positionList->replace(positionIndex, newPosition);
+            }
         }
     }
 }
@@ -702,10 +705,12 @@ void MprPositionListView::Impl::addPositionIntoCurrentIndex(bool doInsert)
 void MprPositionListView::Impl::addPosition(int row, bool doInsert)
 {
     if(positionList){
-        MprPositionPtr position = new MprIkPosition;
-        if(position->fetch(programItem->kinematicsKit(), MessageOut::interactive())){
-            position->setId(positionList->createNextId());
-            positionListModel->addPosition(row, position, doInsert);
+        if(auto kinematicsKit = programItem->targetMainKinematicsKit()){
+            MprPositionPtr position = new MprIkPosition;
+            if(position->fetch(kinematicsKit, MessageOut::interactive())){
+                position->setId(positionList->createNextId());
+                positionListModel->addPosition(row, position, doInsert);
+            }
         }
     }
 }

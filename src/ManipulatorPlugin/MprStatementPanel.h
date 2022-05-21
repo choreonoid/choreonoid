@@ -8,6 +8,8 @@
 namespace cnoid {
 
 class MprProgramItemBase;
+class KinematicBodyItemSet;
+class BodyItemKinematicsKit;
 
 class CNOID_EXPORT MprStatementPanel : public QWidget
 {
@@ -28,6 +30,8 @@ public:
     
 protected:
     MprProgramItemBase* currentProgramItem();
+    KinematicBodyItemSet* currentBodyItemSet();
+    BodyItemKinematicsKit* currentMainKinematicsKit();
 
     template<class StatementType> StatementType* currentStatement(){
         return dynamic_cast<StatementType*>(getCurrentStatement());

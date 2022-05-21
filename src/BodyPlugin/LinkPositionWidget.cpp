@@ -7,7 +7,7 @@
 #include <cnoid/JointPath>
 #include <cnoid/JointSpaceConfigurationHandler>
 #include <cnoid/CompositeBodyIK>
-#include <cnoid/LinkKinematicsKit>
+#include <cnoid/BodyItemKinematicsKit>
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/BodyState>
 #include <cnoid/MenuManager>
@@ -92,7 +92,7 @@ public:
     BodyItemPtr targetBodyItem;
     LinkPtr targetLink;
     int targetLinkType;
-    LinkKinematicsKitPtr kinematicsKit;
+    BodyItemKinematicsKitPtr kinematicsKit;
     ScopedConnectionSet kinematicsKitConnections;
     CoordinateFramePtr identityFrame;
     CoordinateFramePtr baseFrame;
@@ -149,7 +149,7 @@ public:
     void updateCurrentCoordinateFrameLabel(int frameComboIndex);
     string defaultFrameLabelFunction(CoordinateFrame* frame, bool isDefaultFrame, const char* defaultFrameNote);
     void onFrameComboActivated(int frameComboIndex, int index);
-    void onFrameSetChange();
+    void onFrameSetChanged();
     void setBaseFrame(CoordinateFrame* frame);
     void setOffsetFrame(CoordinateFrame* frame);
     void onFrameUpdated(int flags, int frameComboIndex);
@@ -277,12 +277,12 @@ void LinkPositionWidget::Impl::createPanel()
 
     frameComboLabel[BaseFrame].setText(_("Base"));
     frameLabelFunction[BaseFrame] =
-        [&](LinkKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame){
+        [&](BodyItemKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame){
             return defaultFrameLabelFunction(frame, isDefaultFrame, _("Body Origin")); };
 
     frameComboLabel[OffsetFrame].setText(_("Offset"));
     frameLabelFunction[OffsetFrame] =
-        [&](LinkKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame){
+        [&](BodyItemKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame){
             return defaultFrameLabelFunction(frame, isDefaultFrame, _("Link Origin")); };
 
     for(int i=0; i < 2; ++i){
@@ -532,11 +532,11 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
     if(targetLink){
         auto body = targetBodyItem->body();
 
-        kinematicsKit = targetBodyItem->getCurrentLinkKinematicsKit(targetLink);
+        kinematicsKit = targetBodyItem->getCurrentKinematicsKit(targetLink);
         if(kinematicsKit){
             kinematicsKitConnections.add(
-                kinematicsKit->sigFrameSetChange().connect(
-                    [&](){ onFrameSetChange(); }));
+                kinematicsKit->sigFrameSetChanged().connect(
+                    [&](){ onFrameSetChanged(); }));
             kinematicsKitConnections.add(
                 kinematicsKit->sigPositionError().connect(
                     [&](const Isometry3& T_frameCoordinate){
@@ -719,14 +719,14 @@ void LinkPositionWidget::Impl::onFrameComboActivated(int frameComboIndex, int in
                 kinematicsKit->setCurrentOffsetFrame(id);
                 setOffsetFrame(kinematicsKit->currentOffsetFrame());
             }
-            // onFrameSetChange is called and updateDisplay is then called
+            // onFrameSetChanged is called and updateDisplay is then called
             kinematicsKit->notifyFrameSetChange();
         }
     }
 }
 
 
-void LinkPositionWidget::Impl::onFrameSetChange()
+void LinkPositionWidget::Impl::onFrameSetChanged()
 {
     bool coordinateModeUpdated = false;
 
@@ -1076,7 +1076,7 @@ void JointSpaceConfigurationDialog::onSectionClicked(int index)
 void JointSpaceConfigurationDialog::applyConfiguration(int id)
 {
     configuration->setPreferredConfigurationType(id);
-    baseImpl->findBodyIkSolution(baseImpl->kinematicsKit->link()->T(), true);
+    baseImpl->findBodyIkSolution(baseImpl->kinematicsKit->endLink()->T(), true);
     configuration->resetPreferredConfigurationType();
     baseImpl->updateConfigurationDisplay();
 }

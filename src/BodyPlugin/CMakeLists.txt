@@ -12,7 +12,8 @@ set(sources
   BodyItem.cpp
   BodyItemFileIO.cpp
   EditableSceneBody.cpp
-  LinkKinematicsKitManager.cpp
+  BodyItemKinematicsKit.cpp
+  BodyItemKinematicsKitManager.cpp
   LinkOffsetFrameListItem.cpp
   KinematicBodyItemSet.cpp
   MaterialTableItem.cpp
@@ -78,7 +79,8 @@ set(headers
   BodyItem.h
   BodyItemFileIO.h
   EditableSceneBody.h
-  LinkKinematicsKitManager.h
+  BodyItemKinematicsKit.h
+  BodyItemKinematicsKitManager.h
   LinkOffsetFrameListItem.h
   KinematicBodyItemSet.h
   MaterialTableItem.h

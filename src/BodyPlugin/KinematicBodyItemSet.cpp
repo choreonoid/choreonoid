@@ -1,31 +1,11 @@
 #include "KinematicBodyItemSet.h"
+#include <stdexcept>
 
 using namespace std;
 using namespace cnoid;
 
 
-KinematicBodyItemSet::BodyItemPart::BodyItemPart()
-{
-
-}
-
-
-KinematicBodyItemSet::BodyItemPart::BodyItemPart(const BodyItemPart& org, CloneMap* cloneMap)
-    : KinematicBodyPart(org, cloneMap),
-      bodyItem_(org.bodyItem_)
-{
-
-}
-
-
-Referenced* KinematicBodyItemSet::BodyItemPart::doClone(CloneMap* cloneMap) const
-{
-    return new BodyItemPart(*this, cloneMap);
-}
-
-
 KinematicBodyItemSet::KinematicBodyItemSet()
-    : KinematicBodySet([](){ return new BodyItemPart; })
 {
 
 }
@@ -44,17 +24,11 @@ Referenced* KinematicBodyItemSet::doClone(CloneMap* cloneMap) const
 }
 
 
-void KinematicBodyItemSet::setBodyItemPart(int index, BodyItem* bodyItem, std::shared_ptr<JointTraverse> traverse)
+void KinematicBodyItemSet::setBodyPart(int index, BodyKinematicsKit* kinematicsKit)
 {
-    auto bodyPart = static_cast<BodyItemPart*>(findOrCreateBodyPart(index));
-    bodyPart->setJointTraverse(traverse);
-    bodyPart->bodyItem_ = bodyItem;
-}
-
-
-void KinematicBodyItemSet::setBodyItemPart(int index, BodyItem* bodyItem, LinkKinematicsKit* kit)
-{
-    auto bodyPart = static_cast<BodyItemPart*>(findOrCreateBodyPart(index));
-    bodyPart->setLinkKinematicsKit(kit);
-    bodyPart->bodyItem_ = bodyItem;
+    if(auto kit = dynamic_cast<BodyItemKinematicsKit*>(kinematicsKit)){
+        KinematicBodySet::setBodyPart(index, kit);
+    } else {
+        throw std::invalid_argument("Type mismatch in the KinematicBodyItemSet::setBodyPart function");
+    }
 }

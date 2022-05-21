@@ -1,7 +1,7 @@
 #ifndef CNOID_BODY_PLUGIN_KINEMATIC_BODY_ITEM_SET_H
 #define CNOID_BODY_PLUGIN_KINEMATIC_BODY_ITEM_SET_H
 
-#include "BodyItem.h"
+#include "BodyItemKinematicsKit.h"
 #include <cnoid/KinematicBodySet>
 #include "exportdecl.h"
 
@@ -13,31 +13,17 @@ class CNOID_EXPORT KinematicBodyItemSet : public KinematicBodySet
 {
 public:
     KinematicBodyItemSet();
-    void setBodyItemPart(int index, BodyItem* bodyItem, std::shared_ptr<JointTraverse> traverse);
-    void setBodyItemPart(int index, BodyItem* bodyItem, LinkKinematicsKit* kit);
-    void clearBodyItemPart(int index) { clearBodyPart(index); }
 
-    class BodyItemPart : public KinematicBodyPart
-    {
-    public:
-        BodyItem* bodyItem() { return bodyItem_.lock(); }
-        const BodyItem* bodyItem() const { return bodyItem_.lock(); }
-
-    protected:
-        BodyItemPart();
-        BodyItemPart(const BodyItemPart& org, CloneMap* cloneMap);
-        virtual Referenced* doClone(CloneMap* cloneMap) const override;
-
-    private:
-        weak_ref_ptr<BodyItem> bodyItem_;
-        friend class KinematicBodyItemSet;
-    };
-
-    BodyItemPart* bodyItemPart(int index){
-        return static_cast<BodyItemPart*>(bodyPart(index));
+    void setBodyItemPart(int index, BodyItemKinematicsKit* kinematicsKit) {
+        KinematicBodySet::setBodyPart(index, kinematicsKit);
     }
-    const BodyItemPart* bodyItemPart(int index) const {
-        return static_cast<const BodyItemPart*>(bodyPart(index));
+    virtual void setBodyPart(int index, BodyKinematicsKit* kinematicsKit) override;
+
+    BodyItemKinematicsKit* bodyItemPart(int index){
+        return static_cast<BodyItemKinematicsKit*>(bodyPart(index));
+    }
+    const BodyItemKinematicsKit* bodyItemPart(int index) const {
+        return static_cast<const BodyItemKinematicsKit*>(bodyPart(index));
     }
     BodyItem* bodyItem(int index) {
         if(auto part = bodyItemPart(index)){
@@ -48,11 +34,17 @@ public:
     const BodyItem* bodyItem(int index) const {
         return const_cast<KinematicBodyItemSet*>(this)->bodyItem(index);
     }
-    BodyItemPart* mainBodyItemPart() {
-        return static_cast<BodyItemPart*>(mainBodyPart());
+    BodyItemKinematicsKit* mainBodyItemPart() {
+        return static_cast<BodyItemKinematicsKit*>(mainBodyPart());
     }
-    const BodyItemPart* mainBodyItemPart() const {
-        return static_cast<const BodyItemPart*>(mainBodyPart());
+    const BodyItemKinematicsKit* mainBodyItemPart() const {
+        return static_cast<const BodyItemKinematicsKit*>(mainBodyPart());
+    }
+    BodyItem* mainBodyItem() {
+        return bodyItem(mainBodyPartIndex());
+    }
+    const BodyItem* mainBodyItem() const {
+        return bodyItem(mainBodyPartIndex());
     }
 
 protected:

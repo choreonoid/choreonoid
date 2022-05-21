@@ -20,6 +20,18 @@ JointTraverse::JointTraverse(Body* body)
 }
 
 
+JointTraverse::JointTraverse(Link* baseLink, bool doUpward, bool doDownward)
+    : linkTraverse_(baseLink, doUpward, doDownward)
+{
+    joints_.reserve(linkTraverse_.numLinks() - 1);
+    for(auto& link : linkTraverse_){
+        if(link->hasActualJoint()){
+            joints_.push_back(link);
+        }
+    }
+}
+
+
 JointTraverse::JointTraverse(const JointTraverse& org, CloneMap* cloneMap)
     : linkTraverse_(org.linkTraverse_, cloneMap)
 {

@@ -94,7 +94,7 @@ void MultiBodyJointDisplacementWidget::Impl::setKinematicBodyItemSet(KinematicBo
     if(bodyItemSet){
         updateDisplacementWidgets();
         bodyItemSetConnection =
-            bodyItemSet->sigUpdated().connect(
+            bodyItemSet->sigBodySetChanged().connect(
                 [this](){ updateDisplacementWidgets(); });
     }
 

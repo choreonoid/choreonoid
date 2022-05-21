@@ -1,10 +1,11 @@
 #include "MprPosition.h"
 #include "MprPositionList.h"
 #include <cnoid/Body>
-#include <cnoid/LinkKinematicsKit>
+#include <cnoid/BodyKinematicsKit>
 #include <cnoid/KinematicBodySet>
 #include <cnoid/JointPath>
 #include <cnoid/JointSpaceConfigurationHandler>
+#include <cnoid/JointTraverse>
 #include <cnoid/CoordinateFrame>
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
@@ -130,11 +131,7 @@ bool MprPosition::fetch(KinematicBodySet* bodySet, MessageOut* mout)
 {
     bool fetched = false;
     if(auto bodyPart = bodySet->mainBodyPart()){
-        if(bodyPart->isLinkKinematicsKit()){
-            fetched = fetch(bodyPart->linkKinematicsKit(), mout);
-        } else if(bodyPart->isJointTraverse()){
-            fetched = fetch(*bodyPart->jointTraverse(), mout);
-        }
+        fetched = fetch(bodyPart, mout);
     }
     return fetched;
 }
@@ -144,11 +141,7 @@ bool MprPosition::apply(KinematicBodySet* bodySet) const
 {
     bool applied = false;
     if(auto bodyPart = bodySet->mainBodyPart()){
-        if(bodyPart->isLinkKinematicsKit()){
-            applied = apply(bodyPart->linkKinematicsKit());
-        } else if(bodyPart->isJointTraverse()){
-            applied = apply(*bodyPart->jointTraverse());
-        }
+        applied = apply(bodyPart);
     }
     return applied;
 }
@@ -236,19 +229,15 @@ bool MprFkPosition::fetchJointDisplacements(const JointContainer& joints, Messag
 }
 
 
-bool MprFkPosition::fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout)
+bool MprFkPosition::fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout)
 {
     bool fetched = false;
-    if(auto jointPath = kinematicsKit->jointPath()){
-        fetched = fetchJointDisplacements(*jointPath, mout);
+    if(auto path = kinematicsKit->jointPath()){
+        fetched = fetchJointDisplacements(*path, mout);
+    } else if(auto traverse = kinematicsKit->jointTraverse()){
+        fetched = fetchJointDisplacements(*traverse, mout);
     }
     return fetched;
-}
-
-
-bool MprFkPosition::fetch(const JointTraverse& jointTraverse, MessageOut* mout)
-{
-    return fetchJointDisplacements(jointTraverse, mout);
 }
 
 
@@ -265,15 +254,15 @@ bool MprFkPosition::applyJointDisplacements(JointContainer& joints) const
 }
 
 
-bool MprFkPosition::apply(LinkKinematicsKit* kinematicsKit) const
+bool MprFkPosition::apply(BodyKinematicsKit* kinematicsKit) const
 {
-    return applyJointDisplacements(*kinematicsKit->jointPath());
-}
-
-
-bool MprFkPosition::apply(JointTraverse& jointTraverse) const
-{
-    return applyJointDisplacements(jointTraverse);
+    bool applied = false;
+    if(auto path = kinematicsKit->jointPath()){
+        applied = applyJointDisplacements(*path);
+    } else if(auto traverse = kinematicsKit->jointTraverse()){
+        applied = applyJointDisplacements(*traverse);
+    }
+    return applied;
 }
 
 
@@ -417,11 +406,12 @@ void MprIkPosition::resetReferenceRpy()
 }
 
 
-bool MprIkPosition::fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout)
+bool MprIkPosition::fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout)
 {
     bool fetched = false;
-    
-    if(auto jointPath = kinematicsKit->jointPath()){
+
+    auto jointPath = kinematicsKit->jointPath();
+    if(jointPath){
         bool failed = false;
         if(auto configuration = kinematicsKit->configurationHandler()){
             int state = configuration->getCurrentNearSingularPointState();
@@ -452,13 +442,7 @@ bool MprIkPosition::fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout)
 }
 
 
-bool MprIkPosition::fetch(const JointTraverse& /* jointTraverse */, MessageOut* /* mout */)
-{
-    return false;
-}
-
-
-bool MprIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
+bool MprIkPosition::apply(BodyKinematicsKit* kinematicsKit) const
 {
     if(kinematicsKit->setEndPosition(T, baseFrameId_, offsetFrameId_, configuration_)){
         kinematicsKit->setReferenceRpy(rpyFromRot(T.linear(), referenceRpy_));
@@ -467,12 +451,6 @@ bool MprIkPosition::apply(LinkKinematicsKit* kinematicsKit) const
     return false;
 }
     
-
-bool MprIkPosition::apply(JointTraverse& /* jointTraverse */) const
-{
-    return false;
-}
-
 
 bool MprIkPosition::read(const Mapping* archive)
 {
@@ -678,19 +656,10 @@ std::vector<int> MprCompositePosition::nonMainPositionIndices() const
 }
 
 
-bool MprCompositePosition::fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout)
+bool MprCompositePosition::fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout)
 {
     if(auto position = mainPosition()){
         return position->fetch(kinematicsKit, mout);
-    }
-    return false;
-}
-
-
-bool MprCompositePosition::fetch(const JointTraverse& jointTraverse, MessageOut* mout)
-{
-    if(auto position = mainPosition()){
-        return position->fetch(jointTraverse, mout);
     }
     return false;
 }
@@ -703,16 +672,10 @@ bool MprCompositePosition::fetch(KinematicBodySet* bodySet, MessageOut* mout)
     for(int i=0; i <= bodySet->maxIndex(); ++i){
         auto bodyPart = bodySet->bodyPart(i);
         auto position = positions_[i];
-        bool fetched = false;
         if(bodyPart && position){
-            if(bodyPart->isJointTraverse()){
-                fetched = position->fetch(*bodyPart->jointTraverse());
-            } else if(bodyPart->isLinkKinematicsKit()){
-                fetched = position->fetch(bodyPart->linkKinematicsKit());
+            if(position->fetch(bodyPart)){
+                ++numFetched;
             }
-        }
-        if(fetched){
-            ++numFetched;
         }
     }
 
@@ -734,19 +697,10 @@ bool MprCompositePosition::fetch(KinematicBodySet* bodySet, MessageOut* mout)
 }
 
 
-bool MprCompositePosition::apply(LinkKinematicsKit* kinematicsKit) const
+bool MprCompositePosition::apply(BodyKinematicsKit* kinematicsKit) const
 {
     if(auto position = mainPosition()){
         return position->apply(kinematicsKit);
-    }
-    return false;
-}
-
-
-bool MprCompositePosition::apply(JointTraverse& jointTraverse) const
-{
-    if(auto position = mainPosition()){
-        return position->apply(jointTraverse);
     }
     return false;
 }
@@ -759,18 +713,16 @@ bool MprCompositePosition::apply(KinematicBodySet* bodySet) const
 {
     bool applied = false;
 
-    for(int i=0; i <= bodySet->maxIndex(); ++i){
+    int maxIndex = std::min(bodySet->maxIndex(), maxPositionIndex());
+    
+    for(int i=0; i <= maxIndex; ++i){
         auto bodyPart = bodySet->bodyPart(i);
         auto position = positions_[i];
         if(bodyPart && position){
-            if(bodyPart->isJointTraverse()){
-                applied |= position->apply(*bodyPart->jointTraverse());
-            } else if(bodyPart->isLinkKinematicsKit()){
-                applied |= position->apply(bodyPart->linkKinematicsKit());
-            }
+            applied |= position->apply(bodyPart);
         }
     }
-
+    
     return applied;
 }
 

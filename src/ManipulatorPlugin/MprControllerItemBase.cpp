@@ -4,7 +4,8 @@
 #include "MprVariableList.h"
 #include "MprMultiVariableListItem.h"
 #include <cnoid/ItemManager>
-#include <cnoid/LinkKinematicsKit>
+#include <cnoid/KinematicBodyItemSet>
+#include <cnoid/BodyItemKinematicsKit>
 #include <cnoid/DigitalIoDevice>
 #include <cnoid/ItemList>
 #include <cnoid/BodyItem>
@@ -85,7 +86,7 @@ public:
     MprProgramPtr currentProgram;
     unordered_map<string, MprProgramPtr> otherProgramMap;
     CloneMap cloneMap;
-    LinkKinematicsKitPtr kinematicsKit;
+    BodyItemKinematicsKitPtr kinematicsKit;
 
     // Used for the default variable mappings
     vector<MprVariableListPtr> variableLists;
@@ -369,7 +370,8 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
 
 bool MprControllerItemBase::Impl::createKinematicsKitForControl()
 {
-    kinematicsKit = cloneMap.getClone(startupProgramItem->kinematicsKit());
+    auto bodyItemSet = self->kinematicBodyItemSet();
+    kinematicsKit = cloneMap.getClone(bodyItemSet->mainBodyItemPart());
 
     if(!kinematicsKit || !kinematicsKit->jointPath()){
         return false;
@@ -620,7 +622,7 @@ MprProgram* MprControllerItemBase::findProgram(const std::string& name)
 }
 
 
-LinkKinematicsKit* MprControllerItemBase::linkKinematicsKitForControl()
+BodyItemKinematicsKit* MprControllerItemBase::kinematicsKitForControl()
 {
     return impl->kinematicsKit;
 }

@@ -16,7 +16,7 @@ namespace cnoid {
 
 class Body;
 class JointTraverse;
-class LinkKinematicsKit;
+class BodyKinematicsKit;
 class KinematicBodySet;
 class MprPositionList;
 class Mapping;
@@ -65,12 +65,9 @@ public:
 
     MprPositionList* ownerPositionList();
 
-    virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) = 0;
-    virtual bool fetch(const JointTraverse& jointTraverse, MessageOut* mout = nullptr) = 0;
+    virtual bool fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) = 0;
     virtual bool fetch(KinematicBodySet* bodySet, MessageOut* mout = nullptr);
-
-    virtual bool apply(LinkKinematicsKit* kinematicsKit) const = 0;
-    virtual bool apply(JointTraverse& jointTraverse) const = 0;
+    virtual bool apply(BodyKinematicsKit* kinematicsKit) const = 0;
     virtual bool apply(KinematicBodySet* bodySet) const;
 
     const std::string& note() const { return note_; }
@@ -114,10 +111,8 @@ public:
     MprFkPosition(const MprFkPosition& org);
     MprFkPosition& operator=(const MprFkPosition& rhs) = delete;
 
-    virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
-    virtual bool fetch(const JointTraverse& jointTraverse, MessageOut* mout = nullptr) override;
-    virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
-    virtual bool apply(JointTraverse& jointTraverse) const override;
+    virtual bool fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
+    virtual bool apply(BodyKinematicsKit* kinematicsKit) const override;
     virtual bool read(const Mapping* archive) override;
     virtual bool write(Mapping* archive) const override;
 
@@ -202,10 +197,8 @@ public:
     void setConfiguration(int conf) { configuration_ = conf; }
 
     //! \note This function always specifies BodyFrame as the base frame type.
-    virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
-    virtual bool fetch(const JointTraverse& jointTraverse, MessageOut* mout = nullptr) override;
-    virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
-    virtual bool apply(JointTraverse& jointTraverse) const override;
+    virtual bool fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
+    virtual bool apply(BodyKinematicsKit* kinematicsKit) const override;
     virtual bool read(const Mapping* archive) override;
     virtual bool write(Mapping* archive) const override;
 
@@ -254,11 +247,9 @@ public:
     std::vector<int> findUnMatchedPositionIndices(KinematicBodySet* bodySet) const;
     std::vector<int> nonMainPositionIndices() const;
     
-    virtual bool fetch(LinkKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
-    virtual bool fetch(const JointTraverse& jointTraverse, MessageOut* mout = nullptr) override;
+    virtual bool fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
     virtual bool fetch(KinematicBodySet* bodySet, MessageOut* mout = nullptr) override;
-    virtual bool apply(LinkKinematicsKit* kinematicsKit) const override;
-    virtual bool apply(JointTraverse& jointTraverse) const override;
+    virtual bool apply(BodyKinematicsKit* kinematicsKit) const override;
     virtual bool apply(KinematicBodySet* bodySet) const override;
 
     virtual bool read(const Mapping* archive) override;

@@ -4,11 +4,13 @@
 #include "MprPositionList.h"
 #include "MprPositionStatement.h"
 #include "MprStructuredStatement.h"
+#include "MprControllerItemBase.h"
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
 #include <cnoid/BodySuperimposerAddon>
 #include <cnoid/ControllerItem>
-#include <cnoid/LinkKinematicsKit>
+#include <cnoid/BodyItemKinematicsKit>
+#include <cnoid/KinematicBodyItemSet>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/MessageOut>
@@ -35,15 +37,15 @@ public:
     MprProgramItemBase* self;
     MprProgramPtr topLevelProgram;
     BodyItem* targetBodyItem;
-    LinkKinematicsKitPtr kinematicsKit;
+    KinematicBodyItemSetPtr targetBodyItemSet;
     bool isStartupProgram;
     bool needToUpdateAllReferences;
 
     Impl(MprProgramItemBase* self);
     Impl(MprProgramItemBase* self, const Impl& org);
     void initialize();
-    void setTargetBodyItem(BodyItem* bodyItem);
     MprPosition* findPositionOrShowWarning(MprPositionStatement* statement, MessageOut* mout);
+    BodyItemKinematicsKit* findKinematicsKit();
     bool moveTo(MprPosition* position, bool doUpdateAll, MessageOut* mout);
     bool superimposePosition(MprPosition* position, MessageOut* mout);
     bool touchupPosition(MprPosition* position, MessageOut* mout);
@@ -147,19 +149,25 @@ void MprProgramItemBase::onTreePathChanged()
 {
     auto ownerBodyItem = findOwnerItem<BodyItem>();
     if(ownerBodyItem != impl->targetBodyItem){
-        impl->setTargetBodyItem(ownerBodyItem);
+        impl->targetBodyItem = ownerBodyItem;
     }
     if(impl->needToUpdateAllReferences){
         resolveAllReferences();
         impl->needToUpdateAllReferences = false;
     }
-    if(impl->isStartupProgram){
-        if(auto controller = findOwnerItem<ControllerItem>()){
-            auto startupProgram =
-                controller->findItem<MprProgramItemBase>(
+
+    impl->targetBodyItemSet.reset();
+    auto controllerItem = findOwnerItem<ControllerItem>();
+    if(controllerItem){
+        if(auto mprControllerItem = dynamic_cast<MprControllerItemBase*>(controllerItem)){
+            impl->targetBodyItemSet = mprControllerItem->kinematicBodyItemSet();
+        }
+        if(impl->isStartupProgram){
+            auto existingStartupProgram =
+                controllerItem->findItem<MprProgramItemBase>(
                     [this](MprProgramItemBase* item){
                         return item != this && item->isStartupProgram(); });
-            if(startupProgram){
+            if(existingStartupProgram){
                 setAsStartupProgram(false);
             }
         }
@@ -173,30 +181,21 @@ void MprProgramItemBase::onConnectedToRoot()
 }
 
 
-void MprProgramItemBase::Impl::setTargetBodyItem(BodyItem* bodyItem)
-{
-    if(!bodyItem){
-        kinematicsKit.reset();
-    } else {
-        kinematicsKit = bodyItem->findPresetLinkKinematicsKit();
-    }
-    if(kinematicsKit){
-        targetBodyItem = bodyItem;
-    } else {
-        targetBodyItem = nullptr;
-    }
-}
-
-
 BodyItem* MprProgramItemBase::targetBodyItem()
 {
     return impl->targetBodyItem;
 }
 
 
-LinkKinematicsKit* MprProgramItemBase::kinematicsKit()
+KinematicBodyItemSet* MprProgramItemBase::targetBodyItemSet()
 {
-    return impl->kinematicsKit;
+    return impl->targetBodyItemSet;
+}
+
+
+BodyItemKinematicsKit* MprProgramItemBase::targetMainKinematicsKit()
+{
+    return impl->targetBodyItemSet ? impl->targetBodyItemSet->mainBodyItemPart() : nullptr;
 }
 
 
@@ -260,6 +259,22 @@ MprPosition* MprProgramItemBase::Impl::findPositionOrShowWarning(MprPositionStat
 }
 
 
+// Temporary implementation
+BodyItemKinematicsKit* MprProgramItemBase::Impl::findKinematicsKit()
+{
+    BodyItemKinematicsKit* kinematicsKit;
+    if(auto bodyItemSet = self->targetBodyItemSet()){
+        kinematicsKit = bodyItemSet->mainBodyItemPart();
+    }
+    if(!kinematicsKit){
+        if(auto bodyItem = self->findOwnerItem<BodyItem>()){
+            kinematicsKit = bodyItem->findPresetKinematicsKit();
+        }
+    }
+    return kinematicsKit;
+}
+
+
 bool MprProgramItemBase::moveTo(MprPositionStatement* statement, MessageOut* mout)
 {
     if(auto position = impl->findPositionOrShowWarning(statement, mout)){
@@ -277,6 +292,7 @@ bool MprProgramItemBase::moveTo(MprPosition* position, MessageOut* mout)
 
 bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll, MessageOut* mout)
 {
+    auto kinematicsKit = findKinematicsKit();
     if(!kinematicsKit){
         return false;
     }
@@ -393,6 +409,7 @@ bool MprProgramItemBase::touchupPosition(MprPosition* position, MessageOut* mout
 
 bool MprProgramItemBase::Impl::touchupPosition(MprPosition* position, MessageOut* mout)
 {
+    auto kinematicsKit = findKinematicsKit();
     if(!kinematicsKit){
         if(mout){
             mout->putError(

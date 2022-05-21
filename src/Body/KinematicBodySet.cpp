@@ -7,20 +7,12 @@ using namespace cnoid;
 
 KinematicBodySet::KinematicBodySet()
 {
+    numValidBodyParts_ = 0;
     mainBodyPartIndex_ = -1;
-    createBodyPartFunc = [](){ return new KinematicBodyPart; };
-}
-
-
-KinematicBodySet::KinematicBodySet(CreateBodyPartFunc createBodyPart)
-    : createBodyPartFunc(createBodyPart)
-{
-
 }
 
 
 KinematicBodySet::KinematicBodySet(const KinematicBodySet& org, CloneMap* cloneMap)
-    : KinematicBodySet(org.createBodyPartFunc)
 {
     bodyParts_.reserve(org.bodyParts_.size());
     for(auto part : org.bodyParts_){
@@ -28,6 +20,7 @@ KinematicBodySet::KinematicBodySet(const KinematicBodySet& org, CloneMap* cloneM
             bodyParts_.push_back(nullptr);
         } else {
             bodyParts_.push_back(part->clone(cloneMap));
+            ++numValidBodyParts_;
         }
     }
     mainBodyPartIndex_ = org.mainBodyPartIndex_;
@@ -40,35 +33,27 @@ Referenced* KinematicBodySet::doClone(CloneMap* cloneMap) const
 }
 
 
-KinematicBodyPart* KinematicBodySet::findOrCreateBodyPart(int index)
+void KinematicBodySet::setBodyPart(int index, BodyKinematicsKit* kinematicsKit)
 {
     if(index >= static_cast<int>(bodyParts_.size())){
         bodyParts_.resize(index + 1);
     }
     auto& part = bodyParts_[index];
     if(!part){
-        part = createBodyPartFunc();
+        ++numValidBodyParts_;
     }
-    return part;
-}
-
-
-void KinematicBodySet::setBodyPart(int index, std::shared_ptr<JointTraverse> jointTraverse)
-{
-    findOrCreateBodyPart(index)->setJointTraverse(jointTraverse);
-}
-
-
-void KinematicBodySet::setBodyPart(int index, LinkKinematicsKit* kit)
-{
-    findOrCreateBodyPart(index)->setLinkKinematicsKit(kit);
+    part = kinematicsKit;
 }
 
     
 void KinematicBodySet::clearBodyPart(int index)
 {
     if(index < static_cast<int>(bodyParts_.size())){
-        bodyParts_[index] = nullptr;
+        auto& part = bodyParts_[index];
+        if(part){
+            --numValidBodyParts_;
+            part = nullptr;
+        }
         bool doShrink = true;
         for(size_t i = index + 1; i < bodyParts_.size(); ++i){
             if(bodyParts_[i]){
@@ -89,6 +74,7 @@ void KinematicBodySet::clearBodyPart(int index)
 void KinematicBodySet::clear()
 {
     bodyParts_.clear();
+    numValidBodyParts_ = 0;
     mainBodyPartIndex_ = -1;
 }
 

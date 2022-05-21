@@ -11,7 +11,7 @@ namespace cnoid {
 
 class BodyItem;
 class Link;
-class LinkKinematicsKit;
+class BodyItemKinematicsKit;
 class CoordinateFrame;
 class MenuManager;
 class Archive;
@@ -25,7 +25,7 @@ public:
     void customizeCoordinateModeLabels(
         const char* worldModeLabel, const char* modelModeLabel, const char* localModeLabel);
 
-    typedef std::function<std::string(LinkKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame)>
+    typedef std::function<std::string(BodyItemKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame)>
         FrameLabelFunction;
     void customizeBaseFrameLabels(const char* caption, FrameLabelFunction labelFunction);
     void customizeOffsetFrameLabels(const char* caption, FrameLabelFunction labelFunction);

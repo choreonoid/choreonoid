@@ -3,7 +3,7 @@
 #include "MprPosition.h"
 #include "MprPositionList.h"
 #include "MprStatementRegistration.h"
-#include <cnoid/LinkKinematicsKit>
+#include <cnoid/BodyKinematicsKit>
 #include <cnoid/ValueTree>
 #include <cnoid/EigenArchive>
 #include <cnoid/EigenUtil>
@@ -99,7 +99,7 @@ void MprTagTraceStatement::connectTagGroupUpdateSignals()
 }
 
 
-void MprTagTraceStatement::updateFramesWithCurrentFrames(LinkKinematicsKit* kinematicsKit)
+void MprTagTraceStatement::updateFramesWithCurrentFrames(BodyKinematicsKit* kinematicsKit)
 {
     setBaseFrameId(kinematicsKit->currentBaseFrameId());
     setOffsetFrameId(kinematicsKit->currentOffsetFrameId());
@@ -107,7 +107,7 @@ void MprTagTraceStatement::updateFramesWithCurrentFrames(LinkKinematicsKit* kine
 
 
 void MprTagTraceStatement::updateTagGroupPositionWithGlobalCoordinate
-(LinkKinematicsKit* kinematicsKit, const Isometry3& T_global)
+(BodyKinematicsKit* kinematicsKit, const Isometry3& T_global)
 {
     auto T_base = kinematicsKit->globalBasePosition(baseFrameId_);
     T_tags = T_base.inverse(Eigen::Isometry) * T_global;

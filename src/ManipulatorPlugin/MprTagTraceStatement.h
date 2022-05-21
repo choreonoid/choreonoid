@@ -10,7 +10,7 @@
 
 namespace cnoid {
 
-class LinkKinematicsKit;
+class BodyKinematicsKit;
 
 class CNOID_EXPORT MprTagTraceStatement : public MprStructuredStatement
 {
@@ -39,9 +39,9 @@ public:
     void setBaseFrameId(const GeneralId& id){ baseFrameId_ = id; }
     void setOffsetFrameId(const GeneralId& id){ offsetFrameId_ = id; }
 
-    void updateFramesWithCurrentFrames(LinkKinematicsKit* kinematicsKit);
+    void updateFramesWithCurrentFrames(BodyKinematicsKit* kinematicsKit);
     void updateTagGroupPositionWithGlobalCoordinate(
-        LinkKinematicsKit* kinematicsKit, const Isometry3& T_global);
+        BodyKinematicsKit* kinematicsKit, const Isometry3& T_global);
 
     virtual bool updateTagTraceProgram() = 0;
     bool decomposeIntoTagTraceStatements();

@@ -3,7 +3,7 @@
 #include "MprTagTraceStatement.h"
 #include "MprProgramItemBase.h"
 #include <cnoid/WorldItem>
-#include <cnoid/LinkKinematicsKit>
+#include <cnoid/BodyItemKinematicsKit>
 #include <cnoid/PositionTagGroupItem>
 #include <cnoid/ItemList>
 #include <cnoid/CoordinateFrameList>
@@ -177,8 +177,6 @@ void MprTagTraceStatementPanel::Impl::updateBaseInterfaces()
 {
     updateTagGroupCombo();
 
-    auto programItem = self->currentProgramItem();
-    auto kinematicsKit = programItem->kinematicsKit();
     auto statement = self->currentStatement<MprTagTraceStatement>();
 
     auto& T = statement->tagGroupPosition();
@@ -197,12 +195,17 @@ void MprTagTraceStatementPanel::Impl::updateBaseInterfaces()
         rpyLabel[i].setText(QString::number(degree(rpy[i]), 'f', 1));
     }
 
-    auto baseId = statement->baseFrameId();
-    MprPositionStatementPanel::updateCoordinateFrameLabel(
-        baseFrameLabel, baseId, kinematicsKit->baseFrames()->findFrame(baseId), kinematicsKit->baseFrames());
-    auto offsetId = statement->offsetFrameId();
-    MprPositionStatementPanel::updateCoordinateFrameLabel(
-        offsetFrameLabel, offsetId, kinematicsKit->offsetFrames()->findFrame(offsetId), kinematicsKit->offsetFrames());
+    if(auto kinematicsKit = self->currentMainKinematicsKit()){
+        auto baseId = statement->baseFrameId();
+        MprPositionStatementPanel::updateCoordinateFrameLabel(
+            baseFrameLabel, baseId, kinematicsKit->baseFrames()->findFrame(baseId), kinematicsKit->baseFrames());
+        auto offsetId = statement->offsetFrameId();
+        MprPositionStatementPanel::updateCoordinateFrameLabel(
+            offsetFrameLabel, offsetId, kinematicsKit->offsetFrames()->findFrame(offsetId), kinematicsKit->offsetFrames());
+    } else {
+        baseFrameLabel.setText("---");
+        offsetFrameLabel.setText("---");
+    }
 }
 
 
@@ -259,7 +262,7 @@ void MprTagTraceStatementPanel::Impl::onTagGroupComboActivated(int comboIndex)
 void MprTagTraceStatementPanel::Impl::touchupPositionAndFrames()
 {
     auto statement = self->currentStatement<MprTagTraceStatement>();
-    if(auto kinematicsKit = self->currentProgramItem()->kinematicsKit()){
+    if(auto kinematicsKit = self->currentMainKinematicsKit()){
         statement->updateFramesWithCurrentFrames(kinematicsKit);
         if(auto tagGroupItem = PositionTagGroupItem::findItemOf(statement->tagGroup())){
             statement->updateTagGroupPositionWithGlobalCoordinate(

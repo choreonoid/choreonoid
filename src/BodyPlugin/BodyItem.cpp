@@ -6,7 +6,8 @@
 #include "BodyItem.h"
 #include "WorldItem.h"
 #include "EditableSceneBody.h"
-#include "LinkKinematicsKitManager.h"
+#include "BodyItemKinematicsKitManager.h"
+#include "BodyItemKinematicsKit.h"
 #include "KinematicsBar.h"
 #include <cnoid/Archive>
 #include <cnoid/RootItem>
@@ -23,7 +24,6 @@
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/JointPath>
 #include <cnoid/BodyState>
-#include <cnoid/LinkKinematicsKit>
 #include <cnoid/InverseKinematics>
 #include <cnoid/CompositeBodyIK>
 #include <cnoid/PenetrationBlocker>
@@ -150,7 +150,7 @@ public:
 
     LinkPtr currentBaseLink;
     LinkTraverse fkTraverse;
-    unique_ptr<LinkKinematicsKitManager> linkKinematicsKitManager;
+    unique_ptr<BodyItemKinematicsKitManager> kinematicsKitManager;
     shared_ptr<PinDragIK> pinDragIK;
 
     BodyState initialState;
@@ -174,7 +174,7 @@ public:
     bool makeBodyStatic(bool makeAllJointsFixed = false);
     bool makeBodyDynamic();
     void setCurrentBaseLink(Link* link, bool forceUpdate = false);
-    LinkKinematicsKitManager* getOrCreateLinkKinematicsKitManager();
+    BodyItemKinematicsKitManager* getOrCreateKinematicsKitManager();
     void createPenetrationBlocker(Link* link, bool excludeSelfCollisions, shared_ptr<PenetrationBlocker>& blocker);
     void setPresetPose(BodyItem::PresetPoseID id);
     bool doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor);
@@ -710,18 +710,18 @@ void BodyItem::acceptKinematicStateEdit()
 }
 
 
-LinkKinematicsKitManager* BodyItem::Impl::getOrCreateLinkKinematicsKitManager()
+BodyItemKinematicsKitManager* BodyItem::Impl::getOrCreateKinematicsKitManager()
 {
-    if(!linkKinematicsKitManager){
-        linkKinematicsKitManager.reset(new LinkKinematicsKitManager(self));
+    if(!kinematicsKitManager){
+        kinematicsKitManager.reset(new BodyItemKinematicsKitManager(self));
     }
-    return linkKinematicsKitManager.get();
+    return kinematicsKitManager.get();
 }
 
 
-LinkKinematicsKit* BodyItem::findPresetLinkKinematicsKit(Link* targetLink)
+BodyItemKinematicsKit* BodyItem::findPresetKinematicsKit(Link* targetLink)
 {
-    return impl->getOrCreateLinkKinematicsKitManager()->findPresetKinematicsKit(targetLink);
+    return impl->getOrCreateKinematicsKitManager()->findPresetKinematicsKit(targetLink);
 }
     
 
@@ -729,16 +729,16 @@ std::shared_ptr<InverseKinematics> BodyItem::findPresetIK(Link* targetLink)
 {
     if(isAttachedToParentBody_ && targetLink->isRoot()){
         return make_shared<MyCompositeBodyIK>(impl);
-    } else if(auto kinematicsKit = findPresetLinkKinematicsKit(targetLink)){
+    } else if(auto kinematicsKit = findPresetKinematicsKit(targetLink)){
         return kinematicsKit->inverseKinematics();
     }
     return nullptr;
 }
 
 
-LinkKinematicsKit* BodyItem::getCurrentLinkKinematicsKit(Link* targetLink)
+BodyItemKinematicsKit* BodyItem::getCurrentKinematicsKit(Link* targetLink)
 {
-    return impl->getOrCreateLinkKinematicsKitManager()->getCurrentKinematicsKit(targetLink);
+    return impl->getOrCreateKinematicsKitManager()->getCurrentKinematicsKit(targetLink);
 }
 
 
@@ -747,7 +747,7 @@ std::shared_ptr<InverseKinematics> BodyItem::getCurrentIK(Link* targetLink)
     std::shared_ptr<InverseKinematics> ik;
     if(isAttachedToParentBody_ && targetLink->isRoot()){
         ik = make_shared<MyCompositeBodyIK>(impl);
-    } else if(auto kinematicsKit = getCurrentLinkKinematicsKit(targetLink)){
+    } else if(auto kinematicsKit = getCurrentKinematicsKit(targetLink)){
         ik = kinematicsKit->inverseKinematics();
     }
     return ik;
@@ -1733,9 +1733,9 @@ bool BodyItem::Impl::store(Archive& archive)
         archive.write("visible_link_selection_mode", true);
     }
 
-    if(linkKinematicsKitManager){
+    if(kinematicsKitManager){
         MappingPtr kinematicsNode = new Mapping;
-        if(linkKinematicsKitManager->storeState(*kinematicsNode) && !kinematicsNode->empty()){
+        if(kinematicsKitManager->storeState(*kinematicsNode) && !kinematicsNode->empty()){
             archive.insert("link_kinematics", kinematicsNode);
         }
     }
@@ -1888,7 +1888,7 @@ bool BodyItem::Impl::restore(const Archive& archive)
        
     auto kinematicsNode = archive.findMapping("link_kinematics");
     if(kinematicsNode->isValid()){
-        getOrCreateLinkKinematicsKitManager()->restoreState(*kinematicsNode);
+        getOrCreateKinematicsKitManager()->restoreState(*kinematicsNode);
     }
 
     archive.read("enable_attachment", isAttachmentEnabled);

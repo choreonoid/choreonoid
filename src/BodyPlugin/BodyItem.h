@@ -18,7 +18,7 @@ namespace cnoid {
 
 class ItemManager;
 class BodyState;
-class LinkKinematicsKit;
+class BodyItemKinematicsKit;
 class InverseKinematics;
 class PinDragIK;
 class PenetrationBlocker;
@@ -96,9 +96,14 @@ public:
     [[deprecated("Use notifyKinematicStateEdited")]]
     void acceptKinematicStateEdit();
 
-    LinkKinematicsKit* findPresetLinkKinematicsKit(Link* targetLink = nullptr);
+    BodyItemKinematicsKit* findPresetKinematicsKit(Link* targetLink = nullptr);
+    
+    [[deprecated("Use findPresetKinematicsKit")]]
+    BodyItemKinematicsKit* findPresetLinkKinematicsKit(Link* targetLink = nullptr){
+        return findPresetKinematicsKit(targetLink);
+    }
     std::shared_ptr<InverseKinematics> findPresetIK(Link* targetLink);
-    LinkKinematicsKit* getCurrentLinkKinematicsKit(Link* targetLink);
+    BodyItemKinematicsKit* getCurrentKinematicsKit(Link* targetLink);
     std::shared_ptr<InverseKinematics> getCurrentIK(Link* targetLink);
     std::shared_ptr<PinDragIK> getOrCreatePinDragIK();
     std::shared_ptr<PinDragIK> checkPinDragIK();

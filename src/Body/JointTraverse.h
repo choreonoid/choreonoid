@@ -14,12 +14,14 @@ public:
     JointTraverse();
     //! This constructor sets the default joint traverse of the body
     JointTraverse(Body* body);
+    //! This constructor sets the joint traverse from the base link
+    JointTraverse(Link* baseLink, bool doUpward = false, bool doDownward = true);
     JointTraverse(const JointTraverse& org, CloneMap* cloneMap = nullptr);
 
     void clear();
     bool empty() const { return linkTraverse_.empty() && joints_.empty(); }
 
-    Body* body() { return joints_.empty() ? joints_.front()->body() : nullptr; }
+    Body* body() { return linkTraverse_.body(); }
 
     LinkTraverse& linkTraverse() { return linkTraverse_; }
     const LinkTraverse& linkTraverse() const { return linkTraverse_; }
