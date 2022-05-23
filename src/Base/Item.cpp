@@ -1430,6 +1430,12 @@ ItemAddon* Item::getAddon(const std::type_info& type)
 }
 
 
+const ItemAddon* Item::getAddon(const std::type_info& type) const
+{
+    return const_cast<Item*>(this)->getAddon(type);
+}
+
+
 ItemAddon* Item::Impl::createAddon(const std::type_info& type)
 {
     ItemAddonPtr addon = ItemManager::createAddon(type);

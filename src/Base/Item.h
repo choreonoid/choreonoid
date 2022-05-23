@@ -407,6 +407,10 @@ public:
     template<class AddonType> AddonType* getAddon(){
         return static_cast<AddonType*>(getAddon(typeid(AddonType)));
     }
+    const ItemAddon* getAddon(const std::type_info& type) const;
+    template<class AddonType> const AddonType* getAddon() const {
+        return static_cast<const AddonType*>(getAddon(typeid(AddonType)));
+    }
     void removeAddon(ItemAddon* addon);
     std::vector<ItemAddon*> addons();
     std::vector<const ItemAddon*> addons() const;
