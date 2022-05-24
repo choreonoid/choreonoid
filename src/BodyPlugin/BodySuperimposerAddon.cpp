@@ -35,7 +35,7 @@ public:
     ScopedConnectionSet bodyItemConnections;
     vector<BodyInfoPtr> bodyInfos;
     typedef vector<Isometry3, Eigen::aligned_allocator<Isometry3>> PositionArray;
-    PositionArray tmpLinkPositions;
+    vector<PositionArray> tmpLinkPositions;
     bool needToCheckSuperimposedBodies;
     SgGroupPtr topGroup;
     float transparency;
@@ -263,10 +263,16 @@ void BodySuperimposerAddon::Impl::updateSuperimposition()
     if(!bodyInfos.empty()){
         bool isDifferent = false;
         for(auto& info : bodyInfos){
-            auto bodyItem = info->bodyItem.lock();
-            if(bodyItem && !checkPositionIdentity(bodyItem->body(), info->superimposedBody)){
+            if(auto bodyItem = info->bodyItem.lock()){
+                if(!checkPositionIdentity(bodyItem->body(), info->superimposedBody)){
+                    isDifferent = true;
+                    break;
+                }
+            }
+        }
+        if(isDifferent){
+            for(auto& info : bodyInfos){
                 info->sceneBody->updateLinkPositions(sgUpdate.withAction(SgUpdate::MODIFIED));
-                isDifferent = true;
             }
         }
         auto sceneBody = bodyItem->sceneBody();
@@ -310,35 +316,40 @@ bool BodySuperimposerAddon::Impl::updateSuperimposition
 (std::function<bool()>& setReferenceConfigurationToOrgBodiesTransiently)
 {
     bool updated = false;
+
+    updateSuperimposedBodies();
     
-    auto orgBody = bodyItem->body();
-    const int n = orgBody->numLinks();
+    tmpLinkPositions.resize(bodyInfos.size());
 
     // store the original body position
-    tmpLinkPositions.resize(n);
-    for(int i=0; i < n; ++i){
-        tmpLinkPositions[i] = orgBody->link(i)->T();
+    for(size_t i=0; i < bodyInfos.size(); ++i){
+        auto& info = bodyInfos[i];
+        auto body = info->bodyItem.lock()->body();
+        auto& linkPositions = tmpLinkPositions[i];
+        const int numLinks = body->numLinks();
+        linkPositions.resize(numLinks);
+        for(int j=0; j < numLinks; ++j){
+            linkPositions[j] = body->link(j)->T();
+        }
     }
     
     if(setReferenceConfigurationToOrgBodiesTransiently()){
-
-        auto superBody = self->superimposedBody(0);
-
         // Copy the body position to the supoerimpose body
-        for(int i=0; i < n; ++i){
-            superBody->link(i)->setPosition(orgBody->link(i)->position());
+        for(size_t i=0; i < bodyInfos.size(); ++i){
+            auto& info = bodyInfos[i];
+            auto orgBody = info->bodyItem.lock()->body();
+            auto superBody = info->superimposedBody;
+            auto& linkPositions = tmpLinkPositions[i];
+            const int numLinks = orgBody->numLinks();
+            for(int j=0; j < numLinks; ++j){
+                superBody->link(j)->setPosition(orgBody->link(j)->position());
+                // Restore the original body position
+                orgBody->link(j)->setPosition(linkPositions[j]);
+            }
+            if(i > 0){
+                superBody->syncPositionWithParentBody();
+            }
         }
-        // Restore the original body position
-        for(int i=0; i < n; ++i){
-            orgBody->link(i)->setPosition(tmpLinkPositions[i]);
-        }
-        // Update the kinematics states of superimpose child bodies
-        const int n = self->numSuperimposedBodies();
-        for(int i=1; i < n; ++i){
-            auto childBody = self->superimposedBody(i);
-            childBody->syncPositionWithParentBody();
-        }
-            
         updateSuperimposition();
         updated = true;
     }
