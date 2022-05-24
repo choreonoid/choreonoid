@@ -827,7 +827,7 @@ bool MprPositionListView::Impl::applyPosition(int positionIndex, bool forceDirec
     if(bodySyncMode == DirectBodySync || forceDirectSync){
         result = programItem->moveTo(position, MessageOut::interactive());
     } else {
-        result = programItem->superimposePosition(position, MessageOut::interactive());
+        programItem->superimposePosition(position, MessageOut::interactive());
     }
     return result;
 }

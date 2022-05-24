@@ -15,6 +15,7 @@
 #include <cnoid/Archive>
 #include <cnoid/MessageOut>
 #include <fmt/format.h>
+#include <map>
 #include "gettext.h"
 
 using namespace std;
@@ -292,51 +293,64 @@ bool MprProgramItemBase::moveTo(MprPosition* position, MessageOut* mout)
 
 bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll, MessageOut* mout)
 {
-    auto kinematicsKit = findKinematicsKit();
-    if(!kinematicsKit){
+    if(!targetBodyItemSet){
         return false;
     }
     bool updated = false;
 
-    auto ikPosition = position->ikPosition();
+    string errorMessage;
 
-    if(doUpdateAll && ikPosition){
-        kinematicsKit->setReferenceRpy(ikPosition->referenceRpy());
-        kinematicsKit->setCurrentBaseFrame(ikPosition->baseFrameId());
-        kinematicsKit->setCurrentOffsetFrame(ikPosition->offsetFrameId());
-        kinematicsKit->notifyFrameSetChange();
-    }
-    updated = position->apply(kinematicsKit);
-    if(updated){
-        if(doUpdateAll){
-            targetBodyItem->notifyKinematicStateUpdate();
-        }
-    } else {
-        if(doUpdateAll && ikPosition){
-            kinematicsKit->notifyPositionError(ikPosition->position());
-        }
-        string tcpName;
-        if(ikPosition){
-            if(auto tcpFrame = kinematicsKit->offsetFrame(ikPosition->offsetFrameId())){
-                tcpName = tcpFrame->note();
-                if(tcpName.empty()){
-                    auto& id = tcpFrame->id();
-                    if(id.isInt()){
-                        tcpName = format(_("TCP {0}"), id.toInt());
-                    } else {
-                        tcpName = id.toString();
+    auto composite = position->castOrConvertToCompositePosition(targetBodyItemSet);
+
+    for(auto index : composite->findMatchedPositionIndices(targetBodyItemSet)){
+        auto subPosition = composite->position(index);
+        auto bodyPart = targetBodyItemSet->bodyItemPart(index);
+        auto bodyItem = bodyPart->bodyItem();
+        if(subPosition->apply(bodyPart)){
+            updated = true;
+            if(doUpdateAll){
+                bodyItem->notifyKinematicStateUpdate();
+                if(auto ikPosition = subPosition->ikPosition()){
+                    bodyPart->setReferenceRpy(ikPosition->referenceRpy());
+                    bodyPart->setCurrentBaseFrame(ikPosition->baseFrameId());
+                    bodyPart->setCurrentOffsetFrame(ikPosition->offsetFrameId());
+                    bodyPart->notifyFrameSetChange();
+                }
+            }
+        } else {
+            if(auto ikPosition = subPosition->ikPosition()){
+                if(doUpdateAll){
+                    bodyPart->notifyPositionError(subPosition->ikPosition()->position());
+                }
+                if(mout){
+                    string tcpName;
+                    if(auto tcpFrame = bodyPart->offsetFrame(ikPosition->offsetFrameId())){
+                        tcpName = tcpFrame->note();
+                        if(tcpName.empty()){
+                            auto& id = tcpFrame->id();
+                            if(id.isInt()){
+                                tcpName = format(_("TCP {0}"), id.toInt());
+                            } else {
+                                tcpName = id.toString();
+                            }
+                        }
                     }
+                    if(tcpName.empty()){
+                        tcpName = "TCP";
+                    }
+                    if(!errorMessage.empty()){
+                        errorMessage += "\n";
+                    }
+                    errorMessage +=
+                        format(_("{0} of {1} cannot be moved to position {2}."),
+                               tcpName, bodyItem->displayName(), position->id().label());
                 }
             }
         }
-        if(tcpName.empty()){
-            tcpName = "TCP";
-        }
-        if(mout){
-            mout->putError(
-                format(_("{0} of {1} cannot be moved to position {2}."),
-                       tcpName, targetBodyItem->displayName(), position->id().label()));
-        }
+    }
+
+    if(!errorMessage.empty() && mout){
+        mout->putError(errorMessage);
     }
 
     return updated;
@@ -358,15 +372,82 @@ bool MprProgramItemBase::superimposePosition(MprPosition* position, MessageOut* 
 }
 
 
+/**
+   \todo Simplify the following implementation by using an independent BodySuperimposerAddons
+   for each body item and updating the positions of all the boides simultaneously.
+*/
 bool MprProgramItemBase::Impl::superimposePosition(MprPosition* position, MessageOut* mout)
 {
-    if(targetBodyItem){
-        if(auto superimposer = targetBodyItem->getAddon<BodySuperimposerAddon>()){
-            return superimposer->updateSuperimposition(
-                [&](){ return moveTo(position, false, mout); });
+    if(!targetBodyItemSet){
+        return false;
+    }
+
+    // Extract the top-level parent bodies 
+    std::map<Body*, BodyItem*> bodyMap;
+    for(auto index : targetBodyItemSet->validBodyPartIndices()){
+        auto bodyItem = targetBodyItemSet->bodyItem(index);
+        auto body = bodyItem->body();
+        bodyMap.insert(std::pair<Body*, BodyItem*>(body, bodyItem));
+    }
+    auto it = bodyMap.begin();
+    while(it != bodyMap.end()){
+        bool erased = false;
+        auto body = it->first;
+        while((body = body->parentBody())){
+            if(bodyMap.find(body) != bodyMap.end()){
+                it = bodyMap.erase(it);
+                erased = true;
+                break;
+            }
+        }
+        if(!erased){
+            ++it;
         }
     }
-    return false;
+
+    bool result = false;
+    
+    for(auto& kv : bodyMap){
+        auto bodyItem = kv.second;
+        if(auto superimposer = bodyItem->getAddon<BodySuperimposerAddon>()){
+            auto targetBody = bodyItem->body();
+            bool updated = superimposer->updateSuperimposition(
+                [&](){
+                    // Update the positions of a top-level parent body and its child bodies
+                    bool result = false;
+                    for(auto index : targetBodyItemSet->validBodyPartIndices()){
+                        auto kinematicsKit = targetBodyItemSet->bodyPart(index);
+                        auto body = kinematicsKit->body();
+                        bool doApply = false;
+                        auto tmpBody = body;
+                        while(tmpBody){
+                            if(tmpBody == targetBody){
+                                doApply = true;
+                                break;
+                            }
+                            tmpBody = tmpBody->parentBody();
+                        }
+                        if(doApply){
+                            if(auto composite = position->compositePosition()){
+                                if(composite->position(index)->apply(kinematicsKit)){
+                                    result = true;
+                                }
+                            } else {
+                                if(position->apply(kinematicsKit)){
+                                    result = true;
+                                }
+                            }
+                        }
+                    }
+                    return result;
+                });
+            
+            if(updated){
+                result = true;
+            }
+        }
+    }
+    return result;
 }
 
 
@@ -382,20 +463,19 @@ void MprProgramItemBase::clearSuperimposition()
 
 bool MprProgramItemBase::touchupPosition(MprPositionStatement* statement, MessageOut* mout)
 {
-    auto positions = impl->topLevelProgram->positionList();
+    bool result = false;
     MprPositionPtr position = statement->position();
-    if(!position){
-        position = new MprIkPosition(statement->positionId());
-    }
-    bool result = impl->touchupPosition(position, mout);
-
-    if(result){
-        positions->append(position);
-        /*
-          \todo Remove the following code and check the signal of the position
-          to update the display on the position
-        */
-        impl->topLevelProgram->notifyStatementUpdate(statement);
+    if(position){
+        if(impl->touchupPosition(position, mout)){
+            auto positions = impl->topLevelProgram->positionList();
+            positions->append(position);
+            /*
+              \todo Remove the following code and check the signal of the position
+              to update the display on the position
+            */
+            impl->topLevelProgram->notifyStatementUpdate(statement);
+            result = true;
+        }
     }
     return result;
 }
@@ -409,8 +489,7 @@ bool MprProgramItemBase::touchupPosition(MprPosition* position, MessageOut* mout
 
 bool MprProgramItemBase::Impl::touchupPosition(MprPosition* position, MessageOut* mout)
 {
-    auto kinematicsKit = findKinematicsKit();
-    if(!kinematicsKit){
+    if(!targetBodyItemSet){
         if(mout){
             mout->putError(
                 format(_("Program item \"{0}\" is not associated with any manipulator."),
@@ -419,7 +498,7 @@ bool MprProgramItemBase::Impl::touchupPosition(MprPosition* position, MessageOut
         return false;
     }
 
-    bool result = position->fetch(kinematicsKit, mout);
+    bool result = position->fetch(targetBodyItemSet, mout);
     if(result){
         position->notifyUpdate(MprPosition::PositionUpdate);
     }
