@@ -733,7 +733,7 @@ bool MprCompositePosition::read(const Mapping* archive)
         return false;
     }
 
-    mainPositionIndex_ = archive->get("main_index", -1);
+    mainPositionIndex_ = archive->get("main_position", -1);
     
     auto positionList = archive->findListing("positions");
     if(!positionList->isValid()){
@@ -778,7 +778,9 @@ bool MprCompositePosition::write(Mapping* archive) const
         return false;
     }
 
-    archive->write("main_index", mainPositionIndex_);
+    if(mainPositionIndex_ >= 0){
+        archive->write("main_position", mainPositionIndex_);
+    }
 
     auto positionList = archive->createListing("positions");
 

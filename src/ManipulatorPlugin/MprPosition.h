@@ -40,7 +40,7 @@ class CNOID_EXPORT MprPosition : public ClonableReferenced
 public:
     static constexpr int MaxNumJoints = 8;
     
-    enum PositionType { IK, FK, Composite };
+    enum PositionType { InvalidPositionType, IK, FK, Composite };
 
     MprPosition& operator=(const MprPosition& rhs) = delete;
 
