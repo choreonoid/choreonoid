@@ -436,6 +436,8 @@ links:
                 width: 320
                 height: 240
                 frame_rate: 30
+                detection_rate: 0.9
+                error_deviation: 0.005
                 on: true
               -
                 type: Camera
@@ -460,6 +462,8 @@ links:
                 pitch_step: 2.0
                 scan_rate:  5
                 max_distance: 100.0
+                detection_rate: 0.9
+                error_deviation: 0.01
                 on: false
               -
                 type: Transform
