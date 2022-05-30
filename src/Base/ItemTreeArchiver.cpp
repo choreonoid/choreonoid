@@ -33,6 +33,7 @@ public:
 
     Impl();
     ArchivePtr store(Archive& parentArchive, Item* item);
+    void registerItemIdIter(Archive& topArchive, Item* item);
     ArchivePtr storeIter(Archive& parentArchive, Item* item, bool& isComplete);
     bool checkIfTemporal(Item* item);
     bool checkSubTreeTemporality(Item* item);
@@ -111,14 +112,28 @@ ArchivePtr ItemTreeArchiver::store(Archive* parentArchive, Item* item)
 
 ArchivePtr ItemTreeArchiver::Impl::store(Archive& parentArchive, Item* item)
 {
+    registerItemIdIter(parentArchive, item);
+
     bool isComplete = true;
     ArchivePtr archive = storeIter(parentArchive, item, isComplete);
     if(!isComplete){
         mv->putln(_("Not all items were stored correctly."), MessageView::Warning);
     }
+    
     return archive;
 }
 
+
+void ItemTreeArchiver::Impl::registerItemIdIter(Archive& topArchive, Item* item)
+{
+    if(!item->isSubItem()){
+        topArchive.registerItemId(item, itemIdCounter++);
+    }
+    for(auto childItem = item->childItem(); childItem; childItem = childItem->nextItem()){
+        registerItemIdIter(topArchive, childItem);
+    }
+}
+    
 
 ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item, bool& isComplete)
 {
@@ -151,9 +166,7 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
             return nullptr;
         }
 
-        archive->registerItemId(item, itemIdCounter);
-        archive->write("id", itemIdCounter);
-        itemIdCounter++;
+        archive->insert("id", archive->getItemId(item));
     }
 
     archive->write("name", item->name(), DOUBLE_QUOTED);

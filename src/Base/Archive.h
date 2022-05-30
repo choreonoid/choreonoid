@@ -56,7 +56,7 @@ public:
 
     template<class ItemType> inline ItemType* findItem(const std::string& key) const {
         ValueNode* id = find(key);
-        return id->isValid() ? findItem<ItemType>(id) : 0;
+        return id->isValid() ? findItem<ItemType>(id) : nullptr;
     }
 
     std::string resolveRelocatablePath(const std::string& relocatable, bool doAbsolutize = true) const;

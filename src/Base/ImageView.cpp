@@ -245,9 +245,9 @@ bool ImageView::restoreState(const Archive& archive)
 
 void ImageView::Impl::restoreState(const Archive& archive)
 {
-    auto item = dynamic_cast<ImageableItem*>(archive.findItem<Item>("imageable_item"));
+    auto item = archive.findItem<ImageableItem>("imageable_item");
     if(!item){
-        item = dynamic_cast<ImageableItem*>(archive.findItem<Item>("ImageableItem"));
+        item = archive.findItem<ImageableItem>("ImageableItem");
     }
     if(item){
         setImageableItem(item);
