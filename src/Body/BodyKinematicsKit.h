@@ -127,6 +127,7 @@ public:
     int numJoints() const;
     Link* joint(int index);
     const Link* joint(int index) const;
+    std::vector<Link*> joints() const;
     
     /**
        The inverse kinematics is available in the joint path mode and the inverse kinematics without joint path mode.

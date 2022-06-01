@@ -32,3 +32,19 @@ void KinematicBodyItemSet::setBodyPart(int index, BodyKinematicsKit* kinematicsK
         throw std::invalid_argument("Type mismatch in the KinematicBodyItemSet::setBodyPart function");
     }
 }
+
+
+int KinematicBodyItemSet::indexOf(const BodyItem* item) const
+{
+    int index = -1;
+    if(item){
+        int n = maxIndex() + 1;
+        for(int i=0; i < n; ++i){
+            if(bodyItem(i) == item){
+                index = i;
+                break;
+            }
+        }
+    }
+    return index;
+}

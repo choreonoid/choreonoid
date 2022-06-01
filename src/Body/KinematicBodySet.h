@@ -12,6 +12,10 @@ public:
     KinematicBodySet();
     KinematicBodySet(const KinematicBodySet& org, CloneMap* cloneMap);
 
+    KinematicBodySet* clone(CloneMap* cloneMap){
+        return static_cast<KinematicBodySet*>(doClone(cloneMap));
+    }
+
     virtual void setBodyPart(int index, BodyKinematicsKit* kinematicsKit);
     void clearBodyPart(int index);
     void clear();
@@ -25,14 +29,20 @@ public:
     }
     std::vector<int> validBodyPartIndices() const;
     
-    BodyKinematicsKit* bodyPart(int index) { return bodyParts_[index]; }
-    const BodyKinematicsKit* bodyPart(int index) const { return bodyParts_[index]; }
+    BodyKinematicsKit* bodyPart(int index) {
+        return index < static_cast<int>(bodyParts_.size()) ? bodyParts_[index] : nullptr;
+    }
+    const BodyKinematicsKit* bodyPart(int index) const {
+        return const_cast<KinematicBodySet*>(this)->bodyPart(index);
+    }
     BodyKinematicsKit* mainBodyPart() {
         return (mainBodyPartIndex_ >= 0) ? bodyParts_[mainBodyPartIndex_] : nullptr;
     }
     const BodyKinematicsKit* mainBodyPart() const {
         return const_cast<KinematicBodySet*>(this)->mainBodyPart();
     }
+
+    int indexOf(const BodyKinematicsKit* kit) const;
 
     SignalProxy<void()> sigBodySetChanged() { return sigBodySetChanged_; }
     void notifyBodySetChange() { sigBodySetChanged_(); }

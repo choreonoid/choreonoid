@@ -43,7 +43,7 @@ public:
     Link* joint(int index) const {
         return joints_[index];
     }
-    const std::vector<LinkPtr>& joints() const { return joints_; }
+    const std::vector<LinkPtr>& joints() { return joints_; }
 
     //! This function removes the link from both the link traverse and the joint array
     bool remove(Link* link);

@@ -318,6 +318,26 @@ const Link* BodyKinematicsKit::joint(int index) const
 }
 
 
+std::vector<Link*> BodyKinematicsKit::joints() const
+{
+    std::vector<Link*> joints_;
+    
+    if(impl->jointPath){
+        joints_.reserve(impl->jointPath->numJoints());
+        for(auto& joint : impl->jointPath->joints()){
+            joints_.push_back(joint);
+        }
+    } else if(impl->jointTraverse){
+        joints_.reserve(impl->jointTraverse->numJoints());
+        for(auto& joint : impl->jointTraverse->joints()){
+            joints_.push_back(joint);
+        }
+    }
+    
+    return joints_;
+}
+
+
 std::shared_ptr<InverseKinematics> BodyKinematicsKit::inverseKinematics()
 {
     return impl->inverseKinematics;

@@ -34,6 +34,9 @@ public:
     const BodyItem* bodyItem(int index) const {
         return const_cast<KinematicBodyItemSet*>(this)->bodyItem(index);
     }
+
+    int indexOf(const BodyItem* bodyItem) const;
+    
     BodyItemKinematicsKit* mainBodyItemPart() {
         return static_cast<BodyItemKinematicsKit*>(mainBodyPart());
     }

@@ -89,3 +89,19 @@ std::vector<int> KinematicBodySet::validBodyPartIndices() const
     }
     return indices;
 }
+
+
+int KinematicBodySet::indexOf(const BodyKinematicsKit* kit) const
+{
+    int index = -1;
+    if(kit){
+        int n = maxIndex() + 1;
+        for(int i=0; i < n; ++i){
+            if(bodyPart(i) == kit){
+                index = i;
+                break;
+            }
+        }
+    }
+    return index;
+}
