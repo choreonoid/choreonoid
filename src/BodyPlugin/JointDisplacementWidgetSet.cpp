@@ -65,7 +65,7 @@ public:
     int getCurrentPhase();
     void onDisplacementInput(double value);
     void onPhaseInput(int phase);
-    void removeWidgesFrom(QGridLayout* grid);
+    void removeWidgetsFrom(QGridLayout* grid);
 };
 
 }
@@ -82,8 +82,7 @@ public:
     QGridLayout* sharedGrid;
     int* sharedRowCounter;
     int currentRowSize;
-    
-    QLabel targetBodyLabel;
+    QLabel* targetBodyLabel;
 
     BodySelectionManager* bodySelectionManager;
     BodyItemPtr currentBodyItem;
@@ -105,7 +104,6 @@ public:
     double defaultMaxAngle;
     double angleStep;
 
-    bool isTargetBodyLabelEnabled;
     bool isSelectedJointsOnlyMode;
     bool isPrivateJointEnabled;
     bool isJointIdVisible;
@@ -118,7 +116,7 @@ public:
 
     Signal<void(QWidget* widget)> sigJointWidgetFocused;
 
-    Impl(QWidget* baseWidget, QGridLayout* sharedGrid, int* sharedRowCounter);
+    Impl(JointDisplacementWidgetSet* self, QWidget* baseWidget, QGridLayout* sharedGrid, int* sharedRowCounter);
     ~Impl();
     void updateTargetBodyLabel();
     void setOptionMenuTo(MenuManager& menu);
@@ -143,12 +141,14 @@ public:
 JointDisplacementWidgetSet::JointDisplacementWidgetSet
 (QWidget* baseWidget, QGridLayout* sharedGrid, int* sharedRowCounter)
 {
-    impl = new Impl(baseWidget, sharedGrid, sharedRowCounter);
+    impl = new Impl(this, baseWidget, sharedGrid, sharedRowCounter);
 }
 
 
-JointDisplacementWidgetSet::Impl::Impl(QWidget* baseWidget, QGridLayout* sharedGrid, int* sharedRowCounter)
-    : baseWidget(baseWidget),
+JointDisplacementWidgetSet::Impl::Impl
+(JointDisplacementWidgetSet* self, QWidget* baseWidget, QGridLayout* sharedGrid, int* sharedRowCounter)
+    : self(self),
+      baseWidget(baseWidget),
       sharedGrid(sharedGrid),
       sharedRowCounter(sharedRowCounter)
 {
@@ -171,9 +171,10 @@ JointDisplacementWidgetSet::Impl::Impl(QWidget* baseWidget, QGridLayout* sharedG
         vbox->addStretch();
     }
 
+    targetBodyLabel = nullptr;
+    
     currentRowSize = 0;
 
-    isTargetBodyLabelEnabled = false;
     isSelectedJointsOnlyMode = false;
     isPrivateJointEnabled = false;
     isJointIdVisible = false;
@@ -189,8 +190,6 @@ JointDisplacementWidgetSet::Impl::Impl(QWidget* baseWidget, QGridLayout* sharedG
         dvFormat->sigFormatChanged().connect(
             [&](){ updateIndicatorGrid(); });
     
-    targetBodyLabel.setStyleSheet("font-weight: bold");
-
     updateIndicatorGrid();
 
     updateJointDisplacementsLater.setFunction([&](){ updateJointDisplacements(); });
@@ -208,6 +207,9 @@ JointDisplacementWidgetSet::~JointDisplacementWidgetSet()
 
 JointDisplacementWidgetSet::Impl::~Impl()
 {
+    if(targetBodyLabel){
+        delete targetBodyLabel;
+    }
     for(size_t i=0; i < jointIndicators.size(); ++i){
         delete jointIndicators[i];
     }
@@ -219,11 +221,15 @@ JointDisplacementWidgetSet::Impl::~Impl()
 
 void JointDisplacementWidgetSet::setTargetBodyLabelEnabled(bool on)
 {
-    if(on != impl->isTargetBodyLabelEnabled){
-        impl->isTargetBodyLabelEnabled = on;
-        impl->targetBodyLabel.setVisible(on);
+    bool current = (bool)impl->targetBodyLabel;
+    if(on != current){
         if(on){
+            impl->targetBodyLabel = new QLabel;
+            impl->targetBodyLabel->setStyleSheet("font-weight: bold");
             impl->updateTargetBodyLabel();
+        } else {
+            delete impl->targetBodyLabel;
+            impl->targetBodyLabel = nullptr;
         }
     }
 }
@@ -232,17 +238,18 @@ void JointDisplacementWidgetSet::setTargetBodyLabelEnabled(bool on)
 void JointDisplacementWidgetSet::Impl::updateTargetBodyLabel()
 {
     if(currentBodyItem){
-        targetBodyLabel.setText(currentBodyItem->displayName().c_str());
+        targetBodyLabel->setText(currentBodyItem->displayName().c_str());
     } else {
-        targetBodyLabel.setText("------");
+        targetBodyLabel->setText("------");
     }
 }
 
 
 void JointDisplacementWidgetSet::setVisible(bool on)
 {
-    impl->targetBodyLabel.setVisible(on && impl->isTargetBodyLabelEnabled);
-
+    if(impl->targetBodyLabel){
+        impl->targetBodyLabel->setVisible(on);
+    }
     for(auto& indicator : impl->jointIndicators){
         indicator->setVisible(on);
     }
@@ -320,7 +327,7 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
         linkSelectionChangeConnection.disconnect();
         kinematicStateChangeConnection.disconnect();
         currentBodyItem = bodyItem;
-        if(isTargetBodyLabelEnabled){
+        if(targetBodyLabel){
             updateTargetBodyLabel();
         }
         updateIndicatorGrid();
@@ -396,8 +403,10 @@ void JointDisplacementWidgetSet::Impl::updateIndicatorGrid()
         row = 0;
     }
 
-    grid->addWidget(&targetBodyLabel, row++, 0, 1, 6);
-    targetBodyLabel.setVisible(isTargetBodyLabelEnabled);
+    if(targetBodyLabel){
+        grid->addWidget(targetBodyLabel, row++, 0, 1, 6);
+        targetBodyLabel->show();
+    }
     
     for(int i=0; i < n; ++i){
         auto indicator = jointIndicators[i];
@@ -498,8 +507,9 @@ JointIndicator::JointIndicator(JointDisplacementWidgetSet::Impl* baseImpl, int i
 
 void JointIndicator::setVisible(bool on)
 {
-    baseImpl->targetBodyLabel.setVisible(on && baseImpl->isTargetBodyLabelEnabled);
-
+    if(auto label = baseImpl->targetBodyLabel){
+        label->setVisible(on);
+    }
     spin.setVisible(on);
     slider.setVisible(on && baseImpl->isSliderEnabled);
     dial.setVisible(on && baseImpl->isDialEnabled);
@@ -798,7 +808,7 @@ void JointIndicator::onPhaseInput(int phase)
 }
 
 
-void JointIndicator::removeWidgesFrom(QGridLayout* grid)
+void JointIndicator::removeWidgetsFrom(QGridLayout* grid)
 {
     grid->removeWidget(&idLabel);
     grid->removeWidget(&nameLabel);

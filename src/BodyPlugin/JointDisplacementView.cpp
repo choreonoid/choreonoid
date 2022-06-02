@@ -25,6 +25,7 @@ public:
     ScopedConnection bodySelectionManagerConnection;
 
     Impl(JointDisplacementView* self);
+    ~Impl();
     void onActivated();
     void onCurrentBodyItemChanged(BodyItem* bodyItem);
 };
@@ -89,6 +90,12 @@ JointDisplacementView::Impl::Impl(JointDisplacementView* self)
 JointDisplacementView::~JointDisplacementView()
 {
     delete impl;
+}
+
+
+JointDisplacementView::Impl::~Impl()
+{
+    delete displacementWidgetSet;
 }
 
 
