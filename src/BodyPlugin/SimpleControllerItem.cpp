@@ -871,6 +871,10 @@ void SimpleControllerItem::Impl::input()
                 ioLink->v() = simLink->v();
                 ioLink->w() = simLink->w();
                 break;
+            case Link::LinkAcceleration:
+                ioLink->dv() = simLink->dv();
+                ioLink->dw() = simLink->dw();
+                break;
             case Link::LinkExtWrench:
                 ioLink->F_ext() = simLink->F_ext();
                 break;
@@ -982,6 +986,11 @@ void SimpleControllerItem::Impl::output()
                 simLink->w() = ioLink->w();
                 break;
 
+            case Link::LinkAcceleration:
+                simLink->dv() = ioLink->dv();
+                simLink->dw() = ioLink->dw();
+                break;
+                
             case Link::LinkExtWrench:
                 simLink->F_ext() += ioLink->F_ext();
                 break;

@@ -137,18 +137,19 @@ public:
     virtual void unconfigure();
 
     enum StateType {
-        StateNone            = Link::StateNone,
-        JointDisplacement    = Link::JointDisplacement,
-        JointAngle           = Link::JointAngle,
-        JointVelocity        = Link::JointVelocity,
-        JointAcceleration    = Link::JointAcceleration,
-        JointEffort          = Link::JointEffort,
-        JointForce           = Link::JointForce,
-        JointTorque          = Link::JointTorque,
-        LinkPosition         = Link::LinkPosition,
-        LinkTwist            = Link::LinkTwist,
-        LinkExtWrench        = Link::LinkExtWrench,
-        LinkContactState     = Link::LinkContactState,
+        StateNone         = Link::StateNone,
+        JointDisplacement = Link::JointDisplacement,
+        JointAngle        = Link::JointAngle,
+        JointVelocity     = Link::JointVelocity,
+        JointAcceleration = Link::JointAcceleration,
+        JointEffort       = Link::JointEffort,
+        JointForce        = Link::JointForce,
+        JointTorque       = Link::JointTorque,
+        LinkPosition      = Link::LinkPosition,
+        LinkTwist         = Link::LinkTwist,
+        LinkAcceleration  = Link::LinkAcceleration,
+        LinkExtWrench     = Link::LinkExtWrench,
+        LinkContactState  = Link::LinkContactState,
 
         // deprecated
         JOINT_DISPLACEMENT     = JointDisplacement,

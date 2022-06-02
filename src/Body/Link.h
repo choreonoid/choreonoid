@@ -194,17 +194,18 @@ public:
         JointTorque = JointEffort,
         LinkPosition = 1 << 4,
         LinkTwist = 1 << 5,
-        LinkExtWrench = 1 << 6,
-        LinkContactState = 1 << 7,
+        LinkAcceleration = 1 << 6,
+        LinkExtWrench = 1 << 7,
+        LinkContactState = 1 << 8,
 
         // Options
-        HighGainActuation = 1 << 8,
+        HighGainActuation = 1 << 9,
 
         // Don't use this
-        DeprecatedJointSurfaceVelocity = 1 << 9,
+        DeprecatedJointSurfaceVelocity = 1 << 10,
 
-        MaxStateTypeBit = 9,
-        NumStateTypes = 10,
+        MaxStateTypeBit = 10,
+        NumStateTypes = 11,
 
         // Deprecated
         NO_ACTUATION = StateNone,
