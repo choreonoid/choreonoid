@@ -5,7 +5,6 @@
 #include "MprMultiVariableListItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/KinematicBodyItemSet>
-#include <cnoid/BodyItemKinematicsKit>
 #include <cnoid/DigitalIoDevice>
 #include <cnoid/ItemList>
 #include <cnoid/BodyItem>
@@ -86,7 +85,7 @@ public:
     MprProgramPtr currentProgram;
     unordered_map<string, MprProgramPtr> otherProgramMap;
     CloneMap cloneMap;
-    BodyItemKinematicsKitPtr kinematicsKit;
+    KinematicBodySetPtr kinematicBodySetForInternalUse;
 
     // Used for the default variable mappings
     vector<MprVariableListPtr> variableLists;
@@ -128,7 +127,7 @@ public:
 
     Impl(MprControllerItemBase* self);
     bool initialize(ControllerIO* io);
-    bool createKinematicsKitForControl();
+    bool createKinematicBodySetForInternalUse();
 
     // Default variable mappings
     bool initializeDefaultVariableMappings();
@@ -331,7 +330,7 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
     startupProgram = cloneMap.getClone(startupProgramItem->program());
     currentProgram = startupProgram;
 
-    if(!createKinematicsKitForControl()){
+    if(!createKinematicBodySetForInternalUse()){
         return false;
     }
 
@@ -368,21 +367,12 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
 }
 
 
-bool MprControllerItemBase::Impl::createKinematicsKitForControl()
+bool MprControllerItemBase::Impl::createKinematicBodySetForInternalUse()
 {
-    auto bodyItemSet = self->kinematicBodyItemSet();
-    kinematicsKit = cloneMap.getClone(bodyItemSet->mainBodyItemPart());
-
-    if(!kinematicsKit || !kinematicsKit->jointPath()){
+    kinematicBodySetForInternalUse = cloneMap.getClone(self->kinematicBodyItemSet());
+    if(!kinematicBodySetForInternalUse || !kinematicBodySetForInternalUse->mainBodyPart()){
         return false;
     }
-
-    if(kinematicsKit->isCustomIkDisabled()){
-        io->os() << format(_("Warning: The custom inverse kinematics is disabled in controller \"{0}\" for robot \"{1}\"."),
-                           self->displayName(), io->body()->name())
-                 << endl;
-    }
-
     return true;
 }
 
@@ -622,9 +612,9 @@ MprProgram* MprControllerItemBase::findProgram(const std::string& name)
 }
 
 
-BodyItemKinematicsKit* MprControllerItemBase::kinematicsKitForControl()
+KinematicBodySet* MprControllerItemBase::kinematicBodySetForInternalUse()
 {
-    return impl->kinematicsKit;
+    return impl->kinematicBodySetForInternalUse;
 }
 
 
@@ -811,7 +801,7 @@ void MprControllerItemBase::Impl::clear()
     currentProgram.reset();
     otherProgramMap.clear();
     cloneMap.clear();
-    kinematicsKit.reset();
+    kinematicBodySetForInternalUse.reset();
     variableLists.clear();
     programStack.clear();
     processorStack.clear();

@@ -14,7 +14,7 @@ class MprProgramItemBase;
 class MprProgram;
 class MprStatement;
 class KinematicBodyItemSet;
-class BodyItemKinematicsKit;
+class KinematicBodySet;
 class MprVariableSet;
 
 class CNOID_EXPORT MprControllerItemBase : public ControllerItem
@@ -79,8 +79,7 @@ protected:
 
     MprProgram* findProgram(const std::string& name);
 
-    [[deprecated]]
-    BodyItemKinematicsKit* kinematicsKitForControl();
+    KinematicBodySet* kinematicBodySetForInternalUse();
 
     void pushControlFunctions(
         std::function<bool()> control, std::function<void()> input = nullptr, std::function<void()> output = nullptr);
