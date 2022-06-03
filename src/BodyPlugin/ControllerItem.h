@@ -87,6 +87,14 @@ public:
     //! \deprecated Use setsNoDelayMode.
     void setImmediateMode(bool on) { setNoDelayMode(on); }
 
+    /**
+       \note Controll items usually does not need access to the simulator item.
+       This function is used only in special cases, such as when the controller controls multiple bodies.
+       The use of the simulator item from a controller item requires knowlidge of the internal implementation
+       and should not be used if you do not have such knowlidge.
+    */
+    SimulatorItem* simulatorItem() { return simulatorItem_.lock(); }
+
 protected:
     virtual void onOptionsChanged();
     
@@ -95,7 +103,7 @@ protected:
     virtual bool restore(const Archive& archive) override;
 
 private:
-    SimulatorItemPtr simulatorItem_;
+    weak_ref_ptr<SimulatorItem> simulatorItem_;
     bool isNoDelayMode_;
     std::string optionString_;
 

@@ -40,9 +40,18 @@ ControllerItem::~ControllerItem()
 }
 
 
+void ControllerItem::setSimulatorItem(SimulatorItem* item)
+{
+    simulatorItem_ = item;
+}
+
+
 bool ControllerItem::isActive() const
 {
-    return simulatorItem_ ? simulatorItem_->isRunning() : false;
+    if(auto item = simulatorItem_.lock()){
+        return item->isRunning();
+    }
+    return false;
 }
 
 
@@ -52,15 +61,12 @@ void ControllerItem::setNoDelayMode(bool on)
 }
 
 
-void ControllerItem::setSimulatorItem(SimulatorItem* item)
-{
-    simulatorItem_ = item;
-}
-
-
 double ControllerItem::timeStep() const
 {
-    return simulatorItem_ ? simulatorItem_->worldTimeStep() : 0.0;
+    if(auto item = simulatorItem_.lock()){
+        return item->worldTimeStep();
+    }
+    return 0.0;
 }
 
 

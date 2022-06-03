@@ -124,6 +124,7 @@ public:
     bool isLogEnabled_;
 
     ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl);
+    ~ControllerInfo();
 
     virtual std::string controllerName() const override;
     virtual Body* body() override;
@@ -340,6 +341,8 @@ public:
     ~Impl();
     void findTargetItems(Item* item, bool isUnderBodyItem, ItemList<Item>& out_targetItems);
     void clearSimulation();
+    void setSimulatorItemToControllerItem(ControllerItem* controllerItem);
+    void resetSimulatorItemForControllerItem(ControllerItem* controllerItem);
     bool startSimulation(bool doReset);
     virtual void run() override;
     void onSimulationLoopStarted();
@@ -500,15 +503,27 @@ SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
 }
 
 
-namespace {
-
 ControllerInfo::ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl)
     : controller(controller),
       body_(simBodyImpl->body_),
       simImpl(simBodyImpl->simImpl),
       isLogEnabled_(false)
 {
+    if(controller){
+        // ControllerInfo cannot directly set a simulator item to the controller item
+        // because ControllerItem::setSimulatorItem is a private function.
+        simImpl->setSimulatorItemToControllerItem(controller);
+    }
+}
 
+
+ControllerInfo::~ControllerInfo()
+{
+    if(controller){
+        // ControllerInfo cannot directly reset a simulator item for the controller item
+        // because ControllerItem::setSimulatorItem is a private function.
+        simImpl->resetSimulatorItemForControllerItem(controller);
+    }
 }
 
 
@@ -640,8 +655,6 @@ bool ControllerInfo::setNoDelayMode(bool on)
     return on;
 }
 
-}
-
 
 SimulationBody::SimulationBody(Body* body)
 {
@@ -727,19 +740,19 @@ bool SimulationBody::Impl::initialize(SimulatorItem* simulatorItem, BodyItem* bo
 // For a controller which is not associated with a body
 bool SimulationBody::Impl::initialize(SimulatorItem::Impl* simImpl, ControllerItem* controllerItem)
 {
+    bool initialized = false;
     this->simImpl = simImpl;
     simImpl->hasControllers = true;
 
     ControllerInfoPtr info = new ControllerInfo(controllerItem, this);
 
-    if(!controllerItem->initialize(info)){
-        return false;
+    if(controllerItem->initialize(info)){
+        controllerInfos.push_back(info);
+        linkPosBuf.resizeColumn(0);
+        initialized = true;
     }
-    controllerInfos.push_back(info);
 
-    linkPosBuf.resizeColumn(0);
-
-    return true;
+    return initialized;
 }
 
 
@@ -1590,6 +1603,8 @@ void SimulatorItem::Impl::clearSimulation()
     allSimBodies.clear();
     simBodiesWithBody.clear();;
     activeSimBodies.clear();
+    loggedControllerInfos.clear();
+    simBodyMap.clear();
     needToUpdateSimBodyLists = true;
 
     preDynamicsFunctions.clear();
@@ -1597,6 +1612,8 @@ void SimulatorItem::Impl::clearSimulation()
     postDynamicsFunctions.clear();
 
     subSimulatorItems.clear();
+    activeControllerInfos.clear();
+    loggingControllers.clear();
 
     hasControllers = false;
 
@@ -1619,6 +1636,18 @@ SimulationBody* SimulatorItem::createSimulationBody(Body* orgBody, CloneMap& clo
 SimulationBody* SimulatorItem::createSimulationBody(Body* orgBody)
 {
     return nullptr;
+}
+
+
+void SimulatorItem::Impl::setSimulatorItemToControllerItem(ControllerItem* controllerItem)
+{
+    controllerItem->setSimulatorItem(self);
+}
+
+
+void SimulatorItem::Impl::resetSimulatorItemForControllerItem(ControllerItem* controllerItem)
+{
+    controllerItem->setSimulatorItem(nullptr);
 }
 
 
@@ -1702,13 +1731,17 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
                           MessageView::Warning);
             } else {
                 if(simBody->body()){
-                    if(simBody->initialize(self, bodyItem)){
+                    simBodyMap[bodyItem] = simBody;
+                    
+                    if(!simBody->initialize(self, bodyItem)){
+                        simBodyMap.erase(bodyItem);
+
+                    } else {
                         // copy the body state overwritten by the controller
                         simBody->impl->copyStateToBodyItem();
-                        
+
                         allSimBodies.push_back(simBody);
                         simBodiesWithBody.push_back(simBody);
-                        simBodyMap[bodyItem] = simBody;
                     }
                 }
             }
@@ -1770,7 +1803,6 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
                 auto& info = *iter;
                 ControllerItem* controller = info->controller;
                 bool ready = false;
-                controller->setSimulatorItem(self);
                 if(body){
                     ready = controller->start();
                     if(!ready){
@@ -1788,7 +1820,6 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
                 if(ready){
                     ++iter;
                 } else {
-                    controller->setSimulatorItem(nullptr);
                     iter = controllerInfos.erase(iter);
                 }
             }
@@ -2429,7 +2460,6 @@ void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
         for(auto& info : simBody->impl->controllerInfos){
             auto& controller = info->controller;
             controller->stop();
-            controller->setSimulatorItem(nullptr);
         }
     }
     self->finalizeSimulation();
