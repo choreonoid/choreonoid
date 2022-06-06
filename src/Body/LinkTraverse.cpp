@@ -5,6 +5,7 @@
 */
   
 #include "LinkTraverse.h"
+#include <cnoid/CloneMap>
 
 using namespace std;
 using namespace cnoid;
@@ -36,7 +37,7 @@ LinkTraverse::LinkTraverse(const LinkTraverse& org, CloneMap* cloneMap)
     } else {
         links_.reserve(org.links_.size());
         for(auto& link : org.links_){
-            links_.push_back(link->clone(cloneMap));
+            links_.push_back(cloneMap->getClone<Link>(link));
         }
     }
         

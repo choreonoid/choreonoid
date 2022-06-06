@@ -40,7 +40,7 @@ JointTraverse::JointTraverse(const JointTraverse& org, CloneMap* cloneMap)
     } else {
         joints_.reserve(org.joints_.size());
         for(auto& joint : org.joints_){
-            joints_.push_back(joint->clone(cloneMap));
+            joints_.push_back(cloneMap->getClone<Link>(joint));
         }
     }
 }

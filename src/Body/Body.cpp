@@ -127,7 +127,7 @@ void Body::copyFrom(const Body* org, CloneMap* cloneMap)
     if(cloneMap){
         // reference to the parent body
         if(auto orgParentBodyLink = org->parentBodyLink()){
-            parentBodyLink_ = cloneMap->findClone<Link>(orgParentBodyLink);
+            parentBodyLink_ = cloneMap->getClone<Link>(orgParentBodyLink);
         }
     }
 

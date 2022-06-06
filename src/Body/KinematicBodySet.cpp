@@ -14,6 +14,7 @@ KinematicBodySet::KinematicBodySet()
 
 KinematicBodySet::KinematicBodySet(const KinematicBodySet& org, CloneMap* cloneMap)
 {
+    numValidBodyParts_ = 0;
     bodyParts_.reserve(org.bodyParts_.size());
     for(auto part : org.bodyParts_){
         if(!part){

@@ -42,6 +42,7 @@ public:
     Impl(const Impl& org, CloneMap* cloneMap);
     void setJointPath(Link* baseLink, Link* endLink);
     void setInverseKinematics(Link* endLink, std::shared_ptr<InverseKinematics> ik);
+    void setJointTraverse(std::shared_ptr<JointTraverse> jointTraverse);
     Link* baseLink();
 };
 
@@ -74,12 +75,23 @@ BodyKinematicsKit::BodyKinematicsKit(const BodyKinematicsKit& org, CloneMap* clo
 BodyKinematicsKit::Impl::Impl(const Impl& org, CloneMap* cloneMap)
 {
     isCustomIkDisabled = org.isCustomIkDisabled;
-    referenceRpy.setZero();
 
     currentBaseFrameId = org.currentBaseFrameId;
     currentOffsetFrameId = org.currentOffsetFrameId;
     
-    if(cloneMap){
+    if(!cloneMap){
+        body = org.body;
+        endLink = org.endLink;
+        jointPath = org.jointPath;
+        inverseKinematics = org.inverseKinematics;
+        jointTraverse = org.jointTraverse;
+        isRpySpecified = org.isRpySpecified;
+        referenceRpy = org.referenceRpy;
+        baseFrames = org.baseFrames;
+        offsetFrames = org.offsetFrames;
+
+    } else {
+        referenceRpy.setZero();
         auto bodyClone = cloneMap->getClone(org.body);
         if(bodyClone){
             if(org.endLink){
@@ -91,7 +103,7 @@ BodyKinematicsKit::Impl::Impl(const Impl& org, CloneMap* cloneMap)
                     // The inverse kinematics object should be cloned here.
                 }
             } else if(org.jointTraverse){
-                jointTraverse = make_shared<JointTraverse>(*org.jointTraverse, cloneMap);
+                setJointTraverse(make_shared<JointTraverse>(*org.jointTraverse, cloneMap));
             }
         }
         baseFrames = cloneMap->getClone(org.baseFrames);
@@ -188,24 +200,30 @@ void BodyKinematicsKit::Impl::setInverseKinematics(Link* endLink, std::shared_pt
 
 void BodyKinematicsKit::setJointTraverse(Body* body)
 {
-    setJointTraverse(make_shared<JointTraverse>(body));
+    impl->setJointTraverse(make_shared<JointTraverse>(body));
 }
 
 
 void BodyKinematicsKit::setJointTraverse(Link* baseLink)
 {
-    setJointTraverse(make_shared<JointTraverse>(baseLink));
+    impl->setJointTraverse(make_shared<JointTraverse>(baseLink));
 }
 
 
 void BodyKinematicsKit::setJointTraverse(std::shared_ptr<JointTraverse> jointTraverse)
 {
-    impl->body = jointTraverse->body();
-    impl->endLink.reset();
-    impl->jointPath.reset();
-    impl->inverseKinematics.reset();
-    impl->configurationHandler.reset();
-    impl->jointTraverse = jointTraverse;
+    impl->setJointTraverse(jointTraverse);
+}
+
+
+void BodyKinematicsKit::Impl::setJointTraverse(std::shared_ptr<JointTraverse> jointTraverse)
+{
+    body = jointTraverse->body();
+    endLink.reset();
+    jointPath.reset();
+    inverseKinematics.reset();
+    configurationHandler.reset();
+    this->jointTraverse = jointTraverse;
 }
 
 
