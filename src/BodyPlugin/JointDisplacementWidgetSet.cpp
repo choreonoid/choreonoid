@@ -83,6 +83,7 @@ public:
     int* sharedRowCounter;
     int currentRowSize;
     QLabel* targetBodyLabel;
+    int targetBodyLabelRow;
 
     BodySelectionManager* bodySelectionManager;
     BodyItemPtr currentBodyItem;
@@ -123,6 +124,7 @@ public:
     void setBodyItem(BodyItem* bodyItem);
     void updateIndicatorGrid();
     void initializeIndicators(int num);
+    void attachTargetBodyLabel();
     virtual bool eventFilter(QObject* object, QEvent* event) override;
     bool onSliderKeyPressEvent(Slider* slider, QKeyEvent* event);
     void focusSlider(int index);
@@ -172,6 +174,7 @@ JointDisplacementWidgetSet::Impl::Impl
     }
 
     targetBodyLabel = nullptr;
+    targetBodyLabelRow = -1;
     
     currentRowSize = 0;
 
@@ -224,9 +227,10 @@ void JointDisplacementWidgetSet::setTargetBodyLabelEnabled(bool on)
     bool current = (bool)impl->targetBodyLabel;
     if(on != current){
         if(on){
-            impl->targetBodyLabel = new QLabel;
+            impl->targetBodyLabel = new QLabel(impl->baseWidget);
             impl->targetBodyLabel->setStyleSheet("font-weight: bold");
             impl->updateTargetBodyLabel();
+            impl->attachTargetBodyLabel();
         } else {
             delete impl->targetBodyLabel;
             impl->targetBodyLabel = nullptr;
@@ -403,9 +407,9 @@ void JointDisplacementWidgetSet::Impl::updateIndicatorGrid()
         row = 0;
     }
 
+    targetBodyLabelRow = row++;
     if(targetBodyLabel){
-        grid->addWidget(targetBodyLabel, row++, 0, 1, 6);
-        targetBodyLabel->show();
+        attachTargetBodyLabel();
     }
     
     for(int i=0; i < n; ++i){
@@ -449,7 +453,14 @@ void JointDisplacementWidgetSet::Impl::initializeIndicators(int num)
 }
 
 
-namespace {
+void JointDisplacementWidgetSet::Impl::attachTargetBodyLabel()
+{
+    if(targetBodyLabelRow >= 0){
+        grid->addWidget(targetBodyLabel, targetBodyLabelRow, 0, 1, 6);
+        targetBodyLabel->show();
+    }
+}
+
 
 JointIndicator::JointIndicator(JointDisplacementWidgetSet::Impl* baseImpl, int index)
     : baseImpl(baseImpl),
@@ -818,8 +829,6 @@ void JointIndicator::removeWidgetsFrom(QGridLayout* grid)
     grid->removeWidget(&upperLimitLabel);
     grid->removeWidget(&dial);
     grid->removeWidget(&phaseSpin);
-}
-
 }
 
 
