@@ -72,8 +72,7 @@ using Eigen::Isometry3f;
 using Eigen::Isometry3d;
 typedef Eigen::Isometry3d Isometry3;
 
-//[[deprecated("Use Isometry3.")]]
-// Backward compatibility
+[[deprecated("Use Isometry3.")]]
 typedef Isometry3 Position;
     
 class SE3 {
