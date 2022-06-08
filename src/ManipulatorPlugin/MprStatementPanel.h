@@ -23,7 +23,7 @@ public:
     void deactivate();
 
     virtual void setEditable(bool on);
-    virtual void onActivated() = 0;
+    virtual void onActivated();
     virtual void onStatementUpdated();
     virtual void onAdditionalStatementsUpdated(const std::vector<MprStatementPtr>& additionalStatements);
     virtual void onDeactivated();

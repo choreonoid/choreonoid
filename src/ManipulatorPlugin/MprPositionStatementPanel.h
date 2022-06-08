@@ -17,21 +17,26 @@ public:
     MprPositionStatementPanel();
     ~MprPositionStatementPanel();
 
+    void setJointDisplacementColumnSize(int n);
+    void setJointNameLabelEnabled(bool on);
+
     virtual void setEditable(bool on) override;
-    virtual void onActivated() override;
     virtual void onStatementUpdated() override;
-    virtual void onDeactivated() override;
 
     static void updateCoordinateFrameLabel(
         QLabel& label, const GeneralId& id, CoordinateFrame* frame, CoordinateFrameList* frames);
+
+    class Impl;
 
 protected:
     QWidget* topPanel();
     QWidget* positionPanel();
     void updatePositionPanel();
+
+    //! \note The returned value is valid after the updatePositionPanel function is executed.
+    int numActivePositionParts() const;
     
 private:
-    class Impl;
     Impl* impl;
 };
 

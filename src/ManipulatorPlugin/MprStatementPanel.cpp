@@ -94,6 +94,12 @@ void MprStatementPanel::onAdditionalStatementsUpdated
 }
 
 
+void MprStatementPanel::onActivated()
+{
+
+}
+
+
 void MprStatementPanel::onDeactivated()
 {
 

@@ -25,28 +25,40 @@ namespace {
 
 const QString normalStyle("font-weight: normal");
 const QString errorStyle("font-weight: bold; color: red");
+constexpr int PositionPartColumnSize = 10;
 
-class PositionPartPanel : public QWidget
+class PositionPartWidgetSet : public Referenced
 {
 public:
+    MprPositionStatementPanel::Impl* statementPanelImpl;
+    QGridLayout* sharedGrid;
+    int currentRow;
+    MprPosition::PositionType currentPositionType;
     QLabel bodyPartLabel;
+
     QWidget ikPanel;
     QLabel xyzLabels[3];
     QLabel rpyLabels[3];
     QLabel coordinateFrameLabels[2];
     QLabel configLabel;
-    QWidget fkPanel;
-    QLabel jointDisplacementLabels[MprFkPosition::MaxNumJoints];
-    QLabel errorLabel;
-
-    PositionPartPanel();
+    
+    QLabel jointNameLabels[MprPosition::MaxNumJoints];
+    QLabel jointDisplacementLabels[MprPosition::MaxNumJoints];
+    int numValidJoints;
+    
+    PositionPartWidgetSet(MprPositionStatementPanel::Impl* statementPanelImpl);
     void createIkPanel();
-    void createFkPanel();
-    void showPositionWidgetsOfType(MprPosition::PositionType positionType);
-    bool update(BodyItemKinematicsKit* kinematicsKit, MprPosition* position);
-    bool updateIkPanel(BodyItemKinematicsKit* kinematicsKit, MprIkPosition* position);
-    bool updateFkPanel(BodyItemKinematicsKit* kinematicsKit, MprFkPosition* position);
+    void update(BodyItemKinematicsKit* kinematicsKit, MprPosition* position, int& io_row);
+    void detach();
+    int attachIkPanel(int row);
+    void detachIkPanel();
+    void updateIkPanel(BodyItemKinematicsKit* kinematicsKit, MprIkPosition* position);
+    int attachJointLabels(int row, int numJoints);
+    void detachJointLabels();
+    void updateJointLabels(BodyItemKinematicsKit* kinematicsKit, MprFkPosition* position);
 };
+
+typedef ref_ptr<PositionPartWidgetSet> PositionPartWidgetSetPtr;
 
 }
 
@@ -61,21 +73,22 @@ public:
     QLabel positionNameLabel;
     PushButton moveToButton;
     PushButton touchupButton;
-    QVBoxLayout* positionPartPanelVBox;
-    vector<PositionPartPanel*> positionPartPanels;
-    int numActivePositionPartPanels;
+    QGridLayout* positionPartGrid;
+    int jointDisplacementColumnSize;
+    int totalPositionPartGridColumnSize;
+    bool isJointNameLabelEnabled;
+    bool needToUpdatePositionPartGrid;
+    vector<PositionPartWidgetSetPtr> positionPartWidgetSets;
+    int numActivePositionPartWidgetSets;
     vector<int> redundantPositionIndices;
-
-    KinematicBodyItemSetPtr bodyItemSet;
-    BodyItemKinematicsKitPtr mainBodyPart;
 
     Impl(MprPositionStatementPanel* self);
     ~Impl();
-    PositionPartPanel* getOrCreatePositionPartPanel(int index);
+    void updateTotalPositionPartGridColumnSize();
     void updatePositionPanel();
-    void updatePositionPartPanel(MprPosition* position, BodyItemKinematicsKit* kinematicsKit, int& io_panelIndex);
-    void updateIkPositionPanel(MprIkPosition* position, BodyItemKinematicsKit* kinematicsKit);
-    void updateFkPositionPanel(MprFkPosition* position);
+    void updatePositionPartWidgetSet(
+        MprPosition* position, BodyItemKinematicsKit* kinematicsKit, int& io_widgetSetIndex, int& io_row);
+    PositionPartWidgetSet* getOrCreatePositionPartWidgetSet(int index);
 };
 
 }
@@ -101,6 +114,7 @@ MprPositionStatementPanel::Impl::Impl(MprPositionStatementPanel* self)
     topVBox->addWidget(&topPanel);
 
     auto positionPanelVBox = new QVBoxLayout;
+    positionPanelVBox->setContentsMargins(0, 0, 0, 0);
     positionPanel.setLayout(positionPanelVBox);
 
     auto hbox = new QHBoxLayout;
@@ -128,13 +142,20 @@ MprPositionStatementPanel::Impl::Impl(MprPositionStatementPanel* self)
     hbox->addStretch();
     positionPanelVBox->addLayout(hbox);
 
-    positionPartPanelVBox = new QVBoxLayout;
-    positionPanelVBox->addLayout(positionPartPanelVBox);
+    jointDisplacementColumnSize = 6;
+    isJointNameLabelEnabled = false;
+    updateTotalPositionPartGridColumnSize();
+
+    positionPartGrid = new QGridLayout;
+    positionPartGrid->setColumnStretch(totalPositionPartGridColumnSize, 10);
+    needToUpdatePositionPartGrid = false;
+
+    numActivePositionPartWidgetSets = 0;
+    
+    positionPanelVBox->addLayout(positionPartGrid);
 
     topVBox->addWidget(&positionPanel);
     topVBox->addStretch();
-
-    numActivePositionPartPanels = 0;
 }
 
 
@@ -146,9 +167,7 @@ MprPositionStatementPanel::~MprPositionStatementPanel()
 
 MprPositionStatementPanel::Impl::~Impl()
 {
-    for(auto& panel : positionPartPanels){
-        delete panel;
-    }
+
 }
 
 
@@ -164,22 +183,29 @@ QWidget* MprPositionStatementPanel::positionPanel()
 }
 
 
-void MprPositionStatementPanel::setEditable(bool on)
+void MprPositionStatementPanel::setJointDisplacementColumnSize(int n)
 {
-    impl->touchupButton.setEnabled(on);
+    impl->jointDisplacementColumnSize = n;
+    impl->needToUpdatePositionPartGrid = true;
 }
 
 
-void MprPositionStatementPanel::onActivated()
+void MprPositionStatementPanel::setJointNameLabelEnabled(bool on)
 {
-    impl->bodyItemSet.reset();
-    impl->mainBodyPart.reset();
+    impl->isJointNameLabelEnabled = on;
+    impl->needToUpdatePositionPartGrid = true;
+}
 
-    auto programItem = currentProgramItem();
-    if(auto controllerItem = programItem->findOwnerItem<MprControllerItemBase>()){
-        impl->bodyItemSet = controllerItem->kinematicBodyItemSet();
-        impl->mainBodyPart = impl->bodyItemSet->mainBodyItemPart();
-    }
+
+void MprPositionStatementPanel::Impl::updateTotalPositionPartGridColumnSize()
+{
+    totalPositionPartGridColumnSize = 1 + jointDisplacementColumnSize * (isJointNameLabelEnabled ? 3 : 1);
+}
+
+
+void MprPositionStatementPanel::setEditable(bool on)
+{
+    impl->touchupButton.setEnabled(on);
 }
 
 
@@ -189,30 +215,9 @@ void MprPositionStatementPanel::onStatementUpdated()
 }
 
 
-void MprPositionStatementPanel::onDeactivated()
-{
-    impl->bodyItemSet.reset();
-    impl->mainBodyPart.reset();
-}
-
-
-PositionPartPanel* MprPositionStatementPanel::Impl::getOrCreatePositionPartPanel(int index)
-{
-    if(index >= static_cast<int>(positionPartPanels.size())){
-        positionPartPanels.resize(index + 1);
-    }
-    auto& panel = positionPartPanels[index];
-    if(!panel){
-        panel = new PositionPartPanel;
-        positionPartPanelVBox->addWidget(panel);
-    }
-    return panel;
-}
-
-
 void MprPositionStatementPanel::updatePositionPanel()
 {
-    impl->updatePositionPanel();
+    return impl->updatePositionPanel();
 }
 
 
@@ -231,45 +236,71 @@ void MprPositionStatementPanel::Impl::updatePositionPanel()
         positionNameLabel.setStyleSheet(normalStyle);
     }
 
-    int panelIndex = 0;
-    numActivePositionPartPanels = 0;
+    if(needToUpdatePositionPartGrid){
+        updateTotalPositionPartGridColumnSize();
+        int i = 0;
+        int n = totalPositionPartGridColumnSize - 1;
+        while(i < n){
+            positionPartGrid->setColumnStretch(i++, 0);
+        }
+        positionPartGrid->setColumnStretch(i, 10); // last column
+        needToUpdatePositionPartGrid = false;
+    }
+
+    int row = 0;
+    int widgetSetIndex = 0;
+    numActivePositionPartWidgetSets = 0;
     
     if(!position->isComposite()){
-        if(auto bodyItemPart = bodyItemSet->mainBodyItemPart()){
-            updatePositionPartPanel(position, bodyItemPart, panelIndex);
+        if(auto mainKinematicsKit = self->currentMainKinematicsKit()){
+            updatePositionPartWidgetSet(position, mainKinematicsKit, widgetSetIndex, row);
         }
     } else {
         auto composite = position->compositePosition();
+        auto bodyItemSet = self->currentBodyItemSet();
         for(auto& partIndex : composite->findMatchedPositionIndices(bodyItemSet)){
-            updatePositionPartPanel(
+            updatePositionPartWidgetSet(
                 composite->position(partIndex),
                 bodyItemSet->bodyItemPart(partIndex),
-                panelIndex);
+                widgetSetIndex,
+                row);
         }
         redundantPositionIndices = composite->findUnMatchedPositionIndices(bodyItemSet);
     }
 
-    panelIndex = 0;
-    bool showBodyPartLabels = numActivePositionPartPanels >= 2;
-    while(panelIndex < numActivePositionPartPanels){
-        auto panel = positionPartPanels[panelIndex];
+    widgetSetIndex = 0;
+    bool showBodyPartLabels = numActivePositionPartWidgetSets >= 2;
+    while(widgetSetIndex < numActivePositionPartWidgetSets){
+        auto panel = positionPartWidgetSets[widgetSetIndex];
         panel->bodyPartLabel.setVisible(showBodyPartLabels);
-        panel->show();
-        ++panelIndex;
+        ++widgetSetIndex;
     }
-    while(panelIndex < static_cast<int>(positionPartPanels.size())){
-        positionPartPanels[panelIndex]->hide();
-        ++panelIndex;
+    while(widgetSetIndex < static_cast<int>(positionPartWidgetSets.size())){
+        positionPartWidgetSets[widgetSetIndex]->detach();
+        ++widgetSetIndex;
     }
 }
 
 
-void MprPositionStatementPanel::Impl::updatePositionPartPanel
-(MprPosition* position, BodyItemKinematicsKit* kinematicsKit, int& io_panelIndex)
+void MprPositionStatementPanel::Impl::updatePositionPartWidgetSet
+(MprPosition* position, BodyItemKinematicsKit* kinematicsKit, int& io_widgetSetIndex, int& io_row)
 {
-    auto partPanel = getOrCreatePositionPartPanel(io_panelIndex++);
-    partPanel->update(kinematicsKit, position);
-    ++numActivePositionPartPanels;
+    auto partPanel = getOrCreatePositionPartWidgetSet(io_widgetSetIndex++);
+    partPanel->update(kinematicsKit, position, io_row);
+    ++numActivePositionPartWidgetSets;
+}
+
+
+PositionPartWidgetSet* MprPositionStatementPanel::Impl::getOrCreatePositionPartWidgetSet(int index)
+{
+    if(index >= static_cast<int>(positionPartWidgetSets.size())){
+        positionPartWidgetSets.resize(index + 1);
+    }
+    auto& widgetSet = positionPartWidgetSets[index];
+    if(!widgetSet){
+        widgetSet = new PositionPartWidgetSet(this);
+    }
+    return widgetSet;
 }
 
 
@@ -299,117 +330,136 @@ void MprPositionStatementPanel::updateCoordinateFrameLabel
 }
 
 
-PositionPartPanel::PositionPartPanel()
+int MprPositionStatementPanel::numActivePositionParts() const
 {
-    auto vbox = new QVBoxLayout(this);
-    vbox->setContentsMargins(0, 0, 0, 0);
-    vbox->addWidget(&bodyPartLabel);
-    createIkPanel();
-    vbox->addWidget(&ikPanel);
-    createFkPanel();
-    vbox->addWidget(&fkPanel);
-    vbox->addWidget(&errorLabel);
-    vbox->addStretch();
+    return impl->numActivePositionPartWidgetSets;
 }
 
 
-void PositionPartPanel::createIkPanel()
+PositionPartWidgetSet::PositionPartWidgetSet(MprPositionStatementPanel::Impl* statementPanelImpl)
+    : statementPanelImpl(statementPanelImpl),
+      sharedGrid(statementPanelImpl->positionPartGrid)
+{
+    currentRow = -1;
+    currentPositionType = MprPosition::InvalidPositionType;
+    numValidJoints = 0;
+    //bodyPartLabel.setStyleSheet("font-weight: bold");
+    createIkPanel();
+}
+
+
+void PositionPartWidgetSet::createIkPanel()
 {
     auto vbox = new QVBoxLayout(&ikPanel);
     vbox->setContentsMargins(0, 0, 0, 0);
     
-    auto grid = new QGridLayout;
-    grid->setContentsMargins(0, 0, 0, 0);
+    auto localGrid1 = new QGridLayout;
+    localGrid1->setContentsMargins(0, 0, 0, 0);
 
     static const char* xyzCaptions[] = { "X:", "Y:", "Z:" };
     static const char* rpyCaptions[] = { "R:", "P:", "Y:" };
 
     for(int i=0; i < 3; ++i){
-        grid->addWidget(new QLabel(xyzCaptions[i]), 0, i * 2, Qt::AlignCenter);
+        localGrid1->addWidget(new QLabel(xyzCaptions[i]), 0, i * 2, Qt::AlignCenter);
         auto xyzLabel = &xyzLabels[i];
-        grid->addWidget(xyzLabel, 0, i * 2 + 1, Qt::AlignCenter);
-        grid->addWidget(new QLabel(rpyCaptions[i]), 1, i * 2, Qt::AlignCenter);
+        localGrid1->addWidget(xyzLabel, 0, i * 2 + 1, Qt::AlignCenter);
+        localGrid1->addWidget(new QLabel(rpyCaptions[i]), 1, i * 2, Qt::AlignCenter);
         auto rpyLabel = &rpyLabels[i];
-        grid->addWidget(rpyLabel, 1, i * 2 + 1, Qt::AlignCenter);
-        grid->setColumnStretch(i * 2, 0);
-        grid->setColumnStretch(i * 2 + 1, 1);
+        localGrid1->addWidget(rpyLabel, 1, i * 2 + 1, Qt::AlignCenter);
+        localGrid1->setColumnStretch(i * 2, 0);
+        localGrid1->setColumnStretch(i * 2 + 1, 1);
     }
-    vbox->addLayout(grid);
+    vbox->addLayout(localGrid1);
 
-    grid = new QGridLayout;
-    grid->setContentsMargins(0, 0, 0, 0);
+    auto localGrid2 = new QGridLayout;
+    localGrid2->setContentsMargins(0, 0, 0, 0);
     int row = 0;
     
-    grid->addWidget(new QLabel(_("Base")), row, 0);
-    grid->addWidget(new QLabel(":"), row, 1);
-    grid->addWidget(&coordinateFrameLabels[0], row, 2);
+    localGrid2->addWidget(new QLabel(_("Base")), row, 0);
+    localGrid2->addWidget(new QLabel(":"), row, 1);
+    localGrid2->addWidget(&coordinateFrameLabels[0], row, 2);
     ++row;
     
-    grid->addWidget(new QLabel(_("Tool")), row, 0);
-    grid->addWidget(new QLabel(":"), row, 1);
-    grid->addWidget(&coordinateFrameLabels[1], row, 2);
+    localGrid2->addWidget(new QLabel(_("Tool")), row, 0);
+    localGrid2->addWidget(new QLabel(":"), row, 1);
+    localGrid2->addWidget(&coordinateFrameLabels[1], row, 2);
     ++row;
 
-    grid->addWidget(new QLabel(_("Config")), row, 0);
-    grid->addWidget(new QLabel(":"), row, 1);
-    grid->addWidget(&configLabel, row, 2);
+    localGrid2->addWidget(new QLabel(_("Config")), row, 0);
+    localGrid2->addWidget(new QLabel(":"), row, 1);
+    localGrid2->addWidget(&configLabel, row, 2);
     ++row;
 
-    grid->setColumnStretch(0, 0);
-    grid->setColumnStretch(1, 0);
-    grid->setColumnStretch(2, 1);
+    localGrid2->setColumnStretch(0, 0);
+    localGrid2->setColumnStretch(1, 0);
+    localGrid2->setColumnStretch(2, 1);
     
-    vbox->addLayout(grid);
+    vbox->addLayout(localGrid2);
 }
 
 
-void PositionPartPanel::createFkPanel()
+void PositionPartWidgetSet::update(BodyItemKinematicsKit* kinematicsKit, MprPosition* position, int& io_row)
 {
-    auto grid = new QGridLayout(&fkPanel);
-    grid->setContentsMargins(0, 0, 0, 0);
-    for(int i=0; i < MprPosition::MaxNumJoints; ++i){
-        int row = i / 6;
-        int column = i % 6;
-        grid->addWidget(&jointDisplacementLabels[i], row, column, Qt::AlignCenter);
-    }
-}
-
-
-void PositionPartPanel::showPositionWidgetsOfType(MprPosition::PositionType positionType)
-{
-    ikPanel.setVisible(positionType == MprPosition::IK);
-    fkPanel.setVisible(positionType == MprPosition::FK);
-}
-
-
-bool PositionPartPanel::update(BodyItemKinematicsKit* kinematicsKit, MprPosition* position)
-{
-    bool updated = false;
-
-    bodyPartLabel.setText(kinematicsKit->body()->name().c_str());
+    bodyPartLabel.setText(QString("[ %1 ]").arg(kinematicsKit->body()->name().c_str()));
+    sharedGrid->addWidget(&bodyPartLabel, io_row++, 0, 1, statementPanelImpl->totalPositionPartGridColumnSize);
 
     if(position->isIK()){
-        showPositionWidgetsOfType(MprPosition::IK);
-        updated = updateIkPanel(kinematicsKit, position->ikPosition());
+        io_row = attachIkPanel(io_row);
+        updateIkPanel(kinematicsKit, position->ikPosition());
 
     } else if(position->isFK()){
-        showPositionWidgetsOfType(MprPosition::FK);
-        updated = updateFkPanel(kinematicsKit, position->fkPosition());
+        auto fkPosition = position->fkPosition();
+        int numJoints = std::min(fkPosition->numJoints(), kinematicsKit->numJoints());
+        io_row = attachJointLabels(io_row, numJoints);
+        updateJointLabels(kinematicsKit, fkPosition);
     }
-
-    if(updated){
-        errorLabel.hide();
-    } else {
-        errorLabel.setText(_("Invalid"));
-        errorLabel.setStyleSheet("font-weight: bold; color: red");
-        errorLabel.show();
-    }
-
-    return updated;
 }
 
 
-bool PositionPartPanel::updateIkPanel(BodyItemKinematicsKit* kinematicsKit, MprIkPosition* position)
+void PositionPartWidgetSet::detach()
+{
+    sharedGrid->removeWidget(&bodyPartLabel);
+    bodyPartLabel.hide();
+    
+    if(currentPositionType == MprPosition::IK){
+        detachIkPanel();
+    } else if(currentPositionType == MprPosition::FK){
+        detachJointLabels();
+    }
+    currentPositionType = MprPosition::InvalidPositionType;
+}
+
+
+int PositionPartWidgetSet::attachIkPanel(int row)
+{
+    if(currentRow == row && currentPositionType == MprPosition::IK){
+        return row + 1;
+    }
+    if(currentPositionType == MprPosition::FK){
+        detachJointLabels();
+    }
+    sharedGrid->addWidget(&ikPanel, row, 1, 1, statementPanelImpl->totalPositionPartGridColumnSize);
+    ikPanel.show();
+
+    currentRow = row;
+    currentPositionType = MprPosition::IK;
+
+    return row + 1;
+}
+
+
+void PositionPartWidgetSet::detachIkPanel()
+{
+    if(currentPositionType == MprPosition::IK){
+        sharedGrid->removeWidget(&ikPanel);
+        ikPanel.hide();
+        currentRow = -1;
+        currentPositionType = MprPosition::InvalidPositionType;
+    }
+}
+
+
+void PositionPartWidgetSet::updateIkPanel(BodyItemKinematicsKit* kinematicsKit, MprIkPosition* position)
 {
     auto xyz = position->position().translation();
     if(DisplayValueFormat::instance()->isMillimeter()){
@@ -443,33 +493,96 @@ bool PositionPartPanel::updateIkPanel(BodyItemKinematicsKit* kinematicsKit, MprI
     } else {
         configLabel.setText(QString::number(configIndex));
     }
-
-    return true;
 }
 
 
-bool PositionPartPanel::updateFkPanel(BodyItemKinematicsKit* kinematicsKit, MprFkPosition* position)
+int PositionPartWidgetSet::attachJointLabels(int row, int numJoints)
 {
-    const int n = std::min(position->numJoints(), kinematicsKit->numJoints());
-    if(n == 0){
-        return false;
+    if(currentRow == row &&
+       currentPositionType == MprPosition::FK &&
+       numValidJoints == numJoints){
+        return row + (numValidJoints / statementPanelImpl->jointDisplacementColumnSize) + 1;
     }
-    
+
+    if(currentPositionType == MprPosition::IK){
+        detachIkPanel();
+    }
+
+    currentRow = row;
+    currentPositionType = MprPosition::FK;
+    numValidJoints = numJoints;
+
     int i = 0;
-    while(i < n){
-        auto& label = jointDisplacementLabels[i];
-        label.setVisible(true);
-        double q = position->jointDisplacement(i);
-        if(position->checkIfRevoluteJoint(i)){
-            label.setText(QString::number(degree(q), 'f', 1));
-        } else {
-            label.setText(QString::number(q, 'f', 3));
+    int column = 1;
+    while(i < numJoints){
+        if(column >= statementPanelImpl->totalPositionPartGridColumnSize){
+            ++row;
+            column = 1;
         }
+        if(statementPanelImpl->isJointNameLabelEnabled){
+            auto& nameLabel = jointNameLabels[i];
+            sharedGrid->addWidget(&nameLabel, row, column++, Qt::AlignLeft);
+            nameLabel.show();
+        }
+        auto& displacementLabel = jointDisplacementLabels[i];
+        sharedGrid->addWidget(&displacementLabel, row, column++, Qt::AlignCenter);
+        displacementLabel.show();
+
+        if(statementPanelImpl->isJointNameLabelEnabled){
+            ++column; // space between joints
+        }
+        
         ++i;
     }
     while(i < MprPosition::MaxNumJoints){
-        jointDisplacementLabels[i++].setVisible(false);
+        auto& nameLabel = jointNameLabels[i];
+        sharedGrid->removeWidget(&nameLabel);
+        nameLabel.hide();
+        auto& displacementLabel = jointDisplacementLabels[i];
+        sharedGrid->removeWidget(&displacementLabel);
+        displacementLabel.hide();
+        ++i;
     }
 
-    return true;
+    return row + 1;
+}
+
+
+void PositionPartWidgetSet::detachJointLabels()
+{
+    if(currentPositionType == MprPosition::FK){
+        for(int i=0; i < MprPosition::MaxNumJoints; ++i){
+            auto& nameLabel = jointNameLabels[i];
+            sharedGrid->removeWidget(&nameLabel);
+            nameLabel.hide();
+            auto& displacementLabel = jointDisplacementLabels[i];
+            sharedGrid->removeWidget(&displacementLabel);
+            displacementLabel.hide();
+        }
+        currentRow = -1;
+        currentPositionType = MprPosition::InvalidPositionType;
+        numValidJoints = 0;
+    }
+}
+
+
+void PositionPartWidgetSet::updateJointLabels(BodyItemKinematicsKit* kinematicsKit, MprFkPosition* position)
+{
+    for(int i=0; i < numValidJoints; ++i){
+        auto& nameLabel = jointNameLabels[i];
+        if(statementPanelImpl->isJointNameLabelEnabled){
+            nameLabel.setText(QString("%1:").arg(kinematicsKit->joint(i)->jointName().c_str()));
+            nameLabel.show();
+        } else {
+            nameLabel.hide();
+        }
+        auto& displacementLabel = jointDisplacementLabels[i];
+        double q = position->jointDisplacement(i);
+        if(position->checkIfRevoluteJoint(i)){
+            displacementLabel.setText(QString::number(degree(q), 'f', 1));
+        } else {
+            displacementLabel.setText(QString::number(q, 'f', 3));
+        }
+        displacementLabel.setVisible(true);
+    }
 }
