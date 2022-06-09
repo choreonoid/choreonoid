@@ -22,7 +22,9 @@ public:
     void setBodyItem(BodyItem* bodyItem);
     BodyItem* bodyItem();
 
-    void setTargetBodyLabelEnabled(bool on);
+    enum LabelOption { PlainLabel = 0, BoldLabel = 1, BracketedLabel = 2 };
+    void setTargetBodyLabelEnabled(bool on, int labelOptions);
+    void setSelectedJointsOnlyModeEnabled(bool on);
     void setVisible(bool on);
     void setOptionMenuTo(MenuManager& menu);
 

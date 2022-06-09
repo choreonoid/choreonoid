@@ -23,6 +23,7 @@ public:
     QGridLayout* grid;
     int rowCounter;
     vector<JointDisplacementWidgetSet*> displacementWidgetSets;
+    int labelOptions;
     
     Impl(MultiBodyJointDisplacementWidget* self);
     ~Impl();
@@ -60,6 +61,8 @@ MultiBodyJointDisplacementWidget::Impl::Impl(MultiBodyJointDisplacementWidget* s
     grid->setVerticalSpacing(vspacing / 2);
     vbox->addLayout(grid);
     vbox->addStretch();
+
+    labelOptions = JointDisplacementWidgetSet::BoldLabel;
 }
 
 
@@ -74,6 +77,12 @@ MultiBodyJointDisplacementWidget::Impl::~Impl()
     for(auto& widgetSet : displacementWidgetSets){
         delete widgetSet;
     }
+}
+
+
+void MultiBodyJointDisplacementWidget::setTargetBodyLabelOptions(int options)
+{
+    impl->labelOptions = options;
 }
 
 
@@ -119,7 +128,7 @@ void MultiBodyJointDisplacementWidget::Impl::updateDisplacementWidgets()
         if(!widgetSet){
             widgetSet = new JointDisplacementWidgetSet(self, grid, &rowCounter);
         }
-        widgetSet->setTargetBodyLabelEnabled(numBodyParts >= 2);
+        widgetSet->setTargetBodyLabelEnabled(numBodyParts >= 2, labelOptions);
         widgetSet->setBodyItem(part->bodyItem());
         widgetSet->setVisible(true);
         ++widgetSetIndex;

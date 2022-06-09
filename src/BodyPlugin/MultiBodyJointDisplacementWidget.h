@@ -14,6 +14,9 @@ public:
     MultiBodyJointDisplacementWidget(QWidget* parent);
     ~MultiBodyJointDisplacementWidget();
 
+    enum LabelOption { PlainLabel = 0, BoldLabel = 1, BracketedLabel = 2 };
+    void setTargetBodyLabelOptions(int options);
+
     void setKinematicBodyItemSet(KinematicBodyItemSet* bodyItemSet);
     KinematicBodyItemSet* kinematicBodyItemSet();
 

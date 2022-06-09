@@ -83,6 +83,7 @@ public:
     int* sharedRowCounter;
     int currentRowSize;
     QLabel* targetBodyLabel;
+    QString targetBodyLabelFormat;
     int targetBodyLabelRow;
 
     BodySelectionManager* bodySelectionManager;
@@ -105,6 +106,7 @@ public:
     double defaultMaxAngle;
     double angleStep;
 
+    bool isSelectedJointsOnlyModeEnabled;
     bool isSelectedJointsOnlyMode;
     bool isPrivateJointEnabled;
     bool isJointIdVisible;
@@ -122,6 +124,7 @@ public:
     void updateTargetBodyLabel();
     void setOptionMenuTo(MenuManager& menu);
     void setBodyItem(BodyItem* bodyItem);
+    void updateConnectionForSelectedJointsOnlyMode();
     void updateIndicatorGrid();
     void initializeIndicators(int num);
     void attachTargetBodyLabel();
@@ -178,6 +181,7 @@ JointDisplacementWidgetSet::Impl::Impl
     
     currentRowSize = 0;
 
+    isSelectedJointsOnlyModeEnabled = false;
     isSelectedJointsOnlyMode = false;
     isPrivateJointEnabled = false;
     isJointIdVisible = false;
@@ -222,13 +226,20 @@ JointDisplacementWidgetSet::Impl::~Impl()
 }
 
 
-void JointDisplacementWidgetSet::setTargetBodyLabelEnabled(bool on)
+void JointDisplacementWidgetSet::setTargetBodyLabelEnabled(bool on, int labelOptions)
 {
     bool current = (bool)impl->targetBodyLabel;
     if(on != current){
         if(on){
             impl->targetBodyLabel = new QLabel(impl->baseWidget);
-            impl->targetBodyLabel->setStyleSheet("font-weight: bold");
+            if(labelOptions & BoldLabel){
+                impl->targetBodyLabel->setStyleSheet("font-weight: bold");
+            }
+            if(labelOptions & BracketedLabel){
+                impl->targetBodyLabelFormat = "[ %1 ]";
+            } else {
+                impl->targetBodyLabelFormat = "%1";
+            }
             impl->updateTargetBodyLabel();
             impl->attachTargetBodyLabel();
         } else {
@@ -242,9 +253,18 @@ void JointDisplacementWidgetSet::setTargetBodyLabelEnabled(bool on)
 void JointDisplacementWidgetSet::Impl::updateTargetBodyLabel()
 {
     if(currentBodyItem){
-        targetBodyLabel->setText(currentBodyItem->displayName().c_str());
+        targetBodyLabel->setText(targetBodyLabelFormat.arg(currentBodyItem->displayName().c_str()));
     } else {
         targetBodyLabel->setText("------");
+    }
+}
+
+
+void JointDisplacementWidgetSet::setSelectedJointsOnlyModeEnabled(bool on)
+{
+    if(on != impl->isSelectedJointsOnlyModeEnabled){
+        impl->isSelectedJointsOnlyModeEnabled = on;
+        impl->updateConnectionForSelectedJointsOnlyMode();
     }
 }
 
@@ -268,10 +288,12 @@ void JointDisplacementWidgetSet::setOptionMenuTo(MenuManager& menu)
 
 void JointDisplacementWidgetSet::Impl::setOptionMenuTo(MenuManager& menu)
 {
-    auto selectedJointsOnlyCheck = menu.addCheckItem(_("Selected joints only"));
-    selectedJointsOnlyCheck->setChecked(isSelectedJointsOnlyMode);
-    selectedJointsOnlyCheck->sigToggled().connect(
-        [&](bool on){ isSelectedJointsOnlyMode = on; updateIndicatorGrid(); });
+    if(isSelectedJointsOnlyModeEnabled){
+        auto selectedJointsOnlyCheck = menu.addCheckItem(_("Selected joints only"));
+        selectedJointsOnlyCheck->setChecked(isSelectedJointsOnlyMode);
+        selectedJointsOnlyCheck->sigToggled().connect(
+            [&](bool on){ isSelectedJointsOnlyMode = on; updateIndicatorGrid(); });
+    }
 
     auto privateJointCheck = menu.addCheckItem(_("Show private joints"));
     privateJointCheck->setChecked(isPrivateJointEnabled);
@@ -328,19 +350,17 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
             *sharedRowCounter += currentRowSize;
         }
     } else {
-        linkSelectionChangeConnection.disconnect();
-        kinematicStateChangeConnection.disconnect();
         currentBodyItem = bodyItem;
         if(targetBodyLabel){
             updateTargetBodyLabel();
         }
+
+        updateConnectionForSelectedJointsOnlyMode();
+        
         updateIndicatorGrid();
 
+        kinematicStateChangeConnection.disconnect();
         if(bodyItem){
-            linkSelectionChangeConnection =
-                bodySelectionManager->sigLinkSelectionChanged(bodyItem).connect(
-                    [&](const std::vector<bool>&){ updateIndicatorGrid(); });
-            
             kinematicStateChangeConnection =
                 bodyItem->sigKinematicStateChanged().connect(updateJointDisplacementsLater);
             updateJointDisplacements();
@@ -352,6 +372,22 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
 BodyItem* JointDisplacementWidgetSet::bodyItem()
 {
     return impl->currentBodyItem;
+}
+
+
+void JointDisplacementWidgetSet::Impl::updateConnectionForSelectedJointsOnlyMode()
+{
+    linkSelectionChangeConnection.disconnect();
+    
+    if(isSelectedJointsOnlyModeEnabled && currentBodyItem){
+        linkSelectionChangeConnection =
+            bodySelectionManager->sigLinkSelectionChanged(currentBodyItem).connect(
+                [&](const std::vector<bool>&){
+                    if(isSelectedJointsOnlyMode){
+                        updateIndicatorGrid();
+                    }
+                });
+    }
 }
 
 
@@ -367,11 +403,13 @@ void JointDisplacementWidgetSet::Impl::updateIndicatorGrid()
     activeJointLinkIndices.clear();
     auto& allJoints = body->allJoints();
     int numJoints = isPrivateJointEnabled ? allJoints.size() : body->numJoints();
+    bool showSelectedJointsOnly = isSelectedJointsOnlyModeEnabled && isSelectedJointsOnlyMode;
+
     for(size_t i=0; i < numJoints; ++i){
         auto joint = allJoints[i];
         if(joint->isValid()){
             int linkIndex = joint->index();
-            if(!isSelectedJointsOnlyMode || linkSelection[linkIndex]){
+            if(!showSelectedJointsOnly || linkSelection[linkIndex]){
                 activeJointLinkIndices.push_back(linkIndex);
             }
         }
@@ -942,7 +980,9 @@ bool JointDisplacementWidgetSet::storeState(Archive* archive)
 
 bool JointDisplacementWidgetSet::Impl::storeState(Archive* archive)
 {
-    archive->write("show_selected_joints", isSelectedJointsOnlyMode);
+    if(isSelectedJointsOnlyModeEnabled){
+        archive->write("show_selected_joints", isSelectedJointsOnlyMode);
+    }
     archive->write("show_joint_ids", isJointIdVisible);
     archive->write("show_joint_names", isJointNameVisible);
     archive->write("overlap_joint_names", isOverlapJointNameMode);
@@ -962,7 +1002,9 @@ bool JointDisplacementWidgetSet::restoreState(const Archive* archive)
 
 bool JointDisplacementWidgetSet::Impl::restoreState(const Archive* archive)
 {
-    archive->read("show_selected_joints", isSelectedJointsOnlyMode);
+    if(isSelectedJointsOnlyModeEnabled){
+        archive->read("show_selected_joints", isSelectedJointsOnlyMode);
+    }
     archive->read("show_joint_ids", isJointIdVisible);
     archive->read("show_joint_names", isJointNameVisible);
     archive->read("overlap_joint_names", isOverlapJointNameMode);

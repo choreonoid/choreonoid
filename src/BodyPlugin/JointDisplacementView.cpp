@@ -71,6 +71,7 @@ JointDisplacementView::Impl::Impl(JointDisplacementView* self)
 
     auto baseWidget = new QWidget;
     displacementWidgetSet = new JointDisplacementWidgetSet(baseWidget);
+    displacementWidgetSet->setSelectedJointsOnlyModeEnabled(true);
 
     auto scrollArea = new QScrollArea;
     scrollArea->setStyleSheet("QScrollArea {background: transparent;}");
