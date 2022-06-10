@@ -667,29 +667,46 @@ bool MprCompositePosition::fetch(BodyKinematicsKit* kinematicsKit, MessageOut* m
 
 bool MprCompositePosition::fetch(KinematicBodySet* bodySet, MessageOut* mout)
 {
-    int numFetched = 0;
+    bool fetched = false;
+    bool fetchFailed = false;
+    int maxIndex = std::max(maxPositionIndex(), bodySet->maxIndex());
+    vector<MprPositionPtr> fetchedPositions(maxIndex + 1);
+    int numPositionElements = 0;
+    int numFetchedElements = 0;
 
-    for(int i=0; i <= bodySet->maxIndex(); ++i){
-        auto bodyPart = bodySet->bodyPart(i);
+    for(int i=0; i <= maxIndex; ++i){
         auto position = positions_[i];
-        if(bodyPart && position){
-            if(position->fetch(bodyPart)){
-                ++numFetched;
+        if(position){
+            ++numPositionElements;
+        }
+        auto bodyPart = bodySet->bodyPart(i);
+        if(position && bodyPart){
+            MprPositionPtr positionToFetch = position->clone();
+            if(positionToFetch->fetch(bodyPart, mout)){
+                fetchedPositions[i] = positionToFetch;
+                ++numFetchedElements;
+            } else {
+                fetchFailed = true;
+                break;
             }
         }
     }
 
-    bool fetched;
-    
-    if(numFetched == 0){
-        fetched = false;
-        mout->putError(
-            format(_("Position {0} cannot be fetched due to the position part set mismatch."),
-                   id().label()));
-    } else {
+    if(!fetchFailed){
+        // replace the position elements with fetched ones
+        for(int i=0; i <= maxIndex; ++i){
+            if(auto fetchedPosition = fetchedPositions[i]){
+                setPosition(i, fetchedPosition);
+            }
+        }
         fetched = true;
-        if(numFetched < numValidPositions_){
-            mout->putWarning(format(_("Could not fetch all elements of position {0}."), id().label()));
+
+        if(numFetchedElements != numPositionElements){
+            if(id().isValid()){
+                mout->putWarning(format(_("Could not fetch all the elements of position {0}."), id().label()));
+            } else {
+                mout->putWarning(_("Could not fetch all the elements of the position."));
+            }
         }
     }
 
