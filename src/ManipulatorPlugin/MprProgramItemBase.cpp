@@ -381,21 +381,22 @@ bool MprProgramItemBase::Impl::superimposePosition(MprPosition* position, Messag
     if(!targetBodyItemSet){
         return false;
     }
-
+    MprCompositePositionPtr composite = position->castOrConvertToCompositePosition(targetBodyItemSet);
+    
     // Extract the top-level parent bodies 
-    std::map<Body*, BodyItem*> bodyMap;
+    std::map<Body*, BodyItem*> topBodyMap;
     for(auto index : targetBodyItemSet->validBodyPartIndices()){
         auto bodyItem = targetBodyItemSet->bodyItem(index);
         auto body = bodyItem->body();
-        bodyMap.insert(std::pair<Body*, BodyItem*>(body, bodyItem));
+        topBodyMap.insert(std::pair<Body*, BodyItem*>(body, bodyItem));
     }
-    auto it = bodyMap.begin();
-    while(it != bodyMap.end()){
+    auto it = topBodyMap.begin();
+    while(it != topBodyMap.end()){
         bool erased = false;
         auto body = it->first;
         while((body = body->parentBody())){
-            if(bodyMap.find(body) != bodyMap.end()){
-                it = bodyMap.erase(it);
+            if(topBodyMap.find(body) != topBodyMap.end()){
+                it = topBodyMap.erase(it);
                 erased = true;
                 break;
             }
@@ -407,35 +408,29 @@ bool MprProgramItemBase::Impl::superimposePosition(MprPosition* position, Messag
 
     bool result = false;
     
-    for(auto& kv : bodyMap){
+    for(auto& kv : topBodyMap){
         auto bodyItem = kv.second;
         if(auto superimposer = bodyItem->getAddon<BodySuperimposerAddon>()){
             auto targetBody = bodyItem->body();
             bool updated = superimposer->updateSuperimposition(
-                [&](){
+                [this, composite, targetBody](){
                     // Update the positions of a top-level parent body and its child bodies
                     bool result = false;
                     for(auto index : targetBodyItemSet->validBodyPartIndices()){
-                        auto kinematicsKit = targetBodyItemSet->bodyPart(index);
-                        auto body = kinematicsKit->body();
-                        bool doApply = false;
-                        auto tmpBody = body;
-                        while(tmpBody){
-                            if(tmpBody == targetBody){
-                                doApply = true;
-                                break;
+                        if(auto pi = composite->position(index)){
+                            auto kinematicsKit = targetBodyItemSet->bodyPart(index);
+                            auto body = kinematicsKit->body();
+                            bool doApply = false;
+                            auto tmpBody = body;
+                            while(tmpBody){
+                                if(tmpBody == targetBody){
+                                    doApply = true;
+                                    break;
+                                }
+                                tmpBody = tmpBody->parentBody();
                             }
-                            tmpBody = tmpBody->parentBody();
-                        }
-                        if(doApply){
-                            if(auto composite = position->compositePosition()){
-                                if(composite->position(index)->apply(kinematicsKit)){
-                                    result = true;
-                                }
-                            } else {
-                                if(position->apply(kinematicsKit)){
-                                    result = true;
-                                }
+                            if(doApply && pi->apply(kinematicsKit)){
+                                result = true;
                             }
                         }
                     }
