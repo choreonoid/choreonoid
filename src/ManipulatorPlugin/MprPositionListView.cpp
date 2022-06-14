@@ -6,6 +6,7 @@
 #include <cnoid/MenuManager>
 #include <cnoid/TargetItemPicker>
 #include <cnoid/DisplayValueFormat>
+#include <cnoid/KinematicBodyItemSet>
 #include <cnoid/BodyItemKinematicsKit>
 #include <cnoid/Archive>
 #include <cnoid/Buttons>
@@ -33,17 +34,21 @@ namespace {
 
 MprPositionListView::BodySyncMode defaultBodySyncMode = MprPositionListView::DirectBodySync;
 
-constexpr int NumColumns = 4;
 constexpr int IdColumn = 0;
 constexpr int NoteColumn = 1;
 constexpr int JointSpaceCheckColumn = 2;
-constexpr int PositionColumn = 3;
+constexpr int MainPositionColumn = 3;
+constexpr int NumMinimumColumns = 4;
 
 class PositionListModel : public QAbstractTableModel
 {
 public:
     MprPositionListView::Impl* view;
     MprProgramItemBasePtr programItem;
+    int columnCount_;
+    vector<int> bodyPartIndices;
+    int mainBodyPartIndex;
+    QStringList positionHeaderStrings;
     MprPositionListPtr positionList;
     ScopedConnectionSet positionListConnections;
     QFont monoFont;
@@ -60,9 +65,13 @@ public:
     virtual QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
     virtual Qt::ItemFlags flags(const QModelIndex& index) const override;
     virtual QVariant data(const QModelIndex& index, int role) const override;
-    QVariant getPositionData(MprPosition* position) const;
+    bool checkIfJointSpacePosition(MprPosition* position) const;
+    QVariant getPositionData(MprPosition* position, int posColumnIndex) const;
+    QVariant getSinglePositionData(MprPosition* position) const;
     virtual bool setData(const QModelIndex& index, const QVariant& value, int role) override;
     void changePositionType(int positionIndex, MprPosition* position, bool isJointSpace);
+    MprPositionPtr getPositionWithChangedPositionType(
+        MprPosition* position, BodyKinematicsKit* kinematicsKit, bool isJointSpace);
     void addPosition(int row, MprPosition* position, bool doInsert);
     void removePositions(QModelIndexList selected);
     void onPositionAdded(int positionIndex);
@@ -131,6 +140,7 @@ PositionListModel::PositionListModel(MprPositionListView::Impl* view)
       view(view),
       monoFont("Monospace")
 {
+    columnCount_ = NumMinimumColumns;
     monoFont.setStyleHint(QFont::TypeWriter);
     valueFormat = DisplayValueFormat::instance();
 }
@@ -141,10 +151,30 @@ void PositionListModel::setProgramItem(MprProgramItemBase* programItem)
     beginResetModel();
 
     this->programItem = programItem;
-    if(programItem){
-        this->positionList = programItem->program()->positionList();
-    } else {
+    columnCount_ = NumMinimumColumns;
+    bodyPartIndices.clear();
+    mainBodyPartIndex = -1;
+    positionHeaderStrings.clear();
+
+    if(!programItem){
         this->positionList = nullptr;
+
+    } else {
+        if(auto bodyItemSet = programItem->targetBodyItemSet()){
+            bodyPartIndices = bodyItemSet->validBodyPartIndices();
+            mainBodyPartIndex = bodyItemSet->mainBodyPartIndex();
+            if(bodyPartIndices.size() >= 2){
+                for(auto index : bodyPartIndices){
+                    positionHeaderStrings.append(bodyItemSet->bodyPart(index)->body()->name().c_str());
+                }
+                columnCount_ += positionHeaderStrings.size() - 1;
+            }
+        }
+        this->positionList = programItem->program()->positionList();
+    }
+
+    if(positionHeaderStrings.empty()){
+        positionHeaderStrings.append(_("Position"));
     }
 
     positionListConnections.disconnect();
@@ -196,7 +226,7 @@ int PositionListModel::rowCount(const QModelIndex& parent) const
 
 int PositionListModel::columnCount(const QModelIndex& parent) const
 {
-    return NumColumns;
+    return columnCount_;
 }
         
 
@@ -211,10 +241,14 @@ QVariant PositionListModel::headerData(int section, Qt::Orientation orientation,
                 return _("Note");
             case JointSpaceCheckColumn:
                 return _("J");
-            case PositionColumn:
-                return _("Position");
             default:
-                return QVariant();
+                {
+                    int posColumnIndex = section - MainPositionColumn;
+                    if(posColumnIndex < static_cast<int>(positionHeaderStrings.size())){
+                        return positionHeaderStrings[posColumnIndex];
+                    }
+                    return QVariant();
+                }
             }
         } else {
             return QString::number(section);
@@ -243,7 +277,7 @@ QModelIndex PositionListModel::index(int row, int column, const QModelIndex& par
 Qt::ItemFlags PositionListModel::flags(const QModelIndex& index) const
 {
     auto flags = QAbstractTableModel::flags(index);
-    if(index.isValid() && index.column() != PositionColumn){
+    if(index.isValid() && (index.column() < MainPositionColumn)){
         flags |= Qt::ItemIsEditable;
     }
     return flags;
@@ -266,22 +300,19 @@ QVariant PositionListModel::data(const QModelIndex& index, int role) const
             return position->note().c_str();
 
         case JointSpaceCheckColumn:
-            return position->isFK();
-
-        case PositionColumn:
-            return getPositionData(position);
+            return checkIfJointSpacePosition(position);
 
         default:
-            break;
+            return getPositionData(position, column - MainPositionColumn);
         }
     } else if(role == Qt::TextAlignmentRole){
-        if(column == NoteColumn || column == PositionColumn){
+        if(column == NoteColumn || column >= MainPositionColumn){
             return (Qt::AlignLeft + Qt::AlignVCenter);
         } else {
             return Qt::AlignCenter;
         }
     } else if(role == Qt::FontRole){
-        if(column == PositionColumn){
+        if(column >= MainPositionColumn){
             return monoFont;
         }
     }
@@ -289,7 +320,38 @@ QVariant PositionListModel::data(const QModelIndex& index, int role) const
 }
 
 
-QVariant PositionListModel::getPositionData(MprPosition* position) const
+bool PositionListModel::checkIfJointSpacePosition(MprPosition* position) const
+{
+    if(position->isFK()){
+        return true;
+    }
+    if(auto composite = position->compositePosition()){
+        if(auto mainPosition = composite->position(mainBodyPartIndex)){
+            return mainPosition->isFK();
+        }
+    }
+    return false;
+}
+
+
+QVariant PositionListModel::getPositionData(MprPosition* position, int posColumnIndex) const
+{
+    if(position->isComposite()){
+        if(posColumnIndex < static_cast<int>(bodyPartIndices.size())){
+            int positionIndex = bodyPartIndices[posColumnIndex];
+            auto pi = position->compositePosition()->position(positionIndex);
+            if(pi){
+                return getSinglePositionData(pi);
+            }
+        }
+    } else {
+        return getSinglePositionData(position);
+    }
+    return QVariant();
+}
+
+
+QVariant PositionListModel::getSinglePositionData(MprPosition* position) const
 {
     if(position->isIK()){
         auto ik = position->ikPosition();
@@ -321,7 +383,7 @@ QVariant PositionListModel::getPositionData(MprPosition* position) const
                               rpy[0], rpy[1], rpy[2],
                               ik->configuration()).c_str();
             } else {
-                return format("{0: 1.3f} {1: 1.3f} {2: 1.3f} "
+                return format("{0: 6.3f} {1: 6.3f} {2: 6.3f} "
                               "{3: 6.1f} {4: 6.1f} {5: 6.1f} : {6:2X}",
                               p.x(), p.y(), p.z(),
                               rpy[0], rpy[1], rpy[2], ik->configuration()).c_str();
@@ -333,7 +395,16 @@ QVariant PositionListModel::getPositionData(MprPosition* position) const
         int n = fk->numJoints();
         int m = n - 1;
         for(int i=0; i < n; ++i){
-            data += format("{0: 6.1f}", degree(fk->q(i)));
+            auto q = fk->q(i);
+            if(fk->checkIfRevoluteJoint(i)){
+                data += format("{0: 6.1f}", degree(q));
+            } else {
+                if(valueFormat->isMillimeter()){
+                    data += format("{0: 9.3f}", q * 1000.0);
+                } else {
+                    data += format("{0: 6.3f}", q);
+                }
+            }
             if(i < m){
                 data += " ";
             }
@@ -391,22 +462,61 @@ bool PositionListModel::setData(const QModelIndex& index, const QVariant& value,
 
 void PositionListModel::changePositionType(int positionIndex, MprPosition* position, bool isJointSpace)
 {
-    MprPosition* newPosition = nullptr;
-    if(position->isIK() && isJointSpace){
-        newPosition = new MprFkPosition;
-    } else if(position->isFK() && !isJointSpace){
-        newPosition = new MprIkPosition;
+    auto bodyItemSet = programItem->targetBodyItemSet();
+    if(!bodyItemSet){
+        return;
     }
-    newPosition->setId(position->id());
-    newPosition->setNote(position->note());
+    
+    if(!view->applyPosition(positionIndex, true)){
+        return;
+    }
+    
+    if(auto composite = position->compositePosition()){
+        bool updated = false;
+        for(auto& index : bodyPartIndices){
+            auto subPosition = composite->position(index);
+            auto kinematicsKit = bodyItemSet->bodyPart(index);
+            auto newPosition = getPositionWithChangedPositionType(subPosition, kinematicsKit, isJointSpace);
+            if(newPosition){
+                composite->setPosition(index, newPosition);
+                updated = true;
+            }
+        }
+        if(updated){
+            composite->notifyUpdate(MprPosition::PositionUpdate);
+        }
+    } else {
+        auto kinematicsKit = bodyItemSet->mainBodyPart();
+        auto newPosition = getPositionWithChangedPositionType(position, kinematicsKit, isJointSpace);
+        if(newPosition){
+            newPosition->setId(position->id());
+            newPosition->setNote(position->note());
+            positionList->replace(positionIndex, newPosition);
+        }
+    } 
+}
 
-    if(auto kinematicsKit = programItem->targetMainKinematicsKit()){
-        if(view->applyPosition(positionIndex, true)){
-            if(newPosition->fetch(kinematicsKit, MessageOut::interactive())){
-                positionList->replace(positionIndex, newPosition);
+
+MprPositionPtr PositionListModel::getPositionWithChangedPositionType
+(MprPosition* position, BodyKinematicsKit* kinematicsKit, bool isJointSpace)
+{
+    MprPositionPtr newPosition;
+
+    if(kinematicsKit->hasJointPath()){ // The body part must be able to have a FK position
+
+        if(position->isIK() && isJointSpace){
+            newPosition = new MprFkPosition;
+        } else if(position->isFK() && !isJointSpace){
+            newPosition = new MprIkPosition;
+        }
+        if(newPosition){
+            if(!newPosition->fetch(kinematicsKit, MessageOut::interactive())){
+                newPosition.reset();
             }
         }
     }
+    
+    return newPosition;
 }
 
 
@@ -439,14 +549,16 @@ void PositionListModel::onPositionAdded(int positionIndex)
     endInsertRows();
 
     /*
-      In Windows, the view's resizeColumnToContents function must be executed
+      In Windows, the view's resizeColumnsToContents function must be executed
       to readjust the column size even though the ResizeToContents mode is
       specified with the setSectionResizeMode function in advance.
       \note It may be better to use LazyCaller to execute the functions.
     */
 #ifdef Q_OS_WIN32
     view->resizeColumnToContents(IdColumn);
-    view->resizeColumnToContents(PositionColumn);
+    for(size_t i=0; i < bodyPartIndices.size(); ++i){
+        view->resizeColumnToContents(MainPositionColumn + i);
+    }
 #endif
 }
 
@@ -458,7 +570,9 @@ void PositionListModel::onPositionRemoved(int positionIndex)
 
 #ifdef Q_OS_WIN32
     view->resizeColumnToContents(IdColumn);
-    view->resizeColumnToContents(PositionColumn);
+    for(size_t i=0; i < bodyPartIndices.size(); ++i){
+        view->resizeColumnToContents(MainPositionColumn + i);
+    }
 #endif
 }
 
@@ -468,6 +582,7 @@ void PositionListModel::onPositionUpdated(int positionIndex, int flags)
     if(flags & MprPosition::IdUpdate){
         auto modelIndex = index(positionIndex, IdColumn, QModelIndex());
         Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+
 #ifdef Q_OS_WIN32
         view->resizeColumnToContents(IdColumn);
 #endif
@@ -477,19 +592,26 @@ void PositionListModel::onPositionUpdated(int positionIndex, int flags)
         Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
     }
     if(flags & MprPosition::PositionUpdate){
-        auto modelIndex = index(positionIndex, PositionColumn, QModelIndex());
-        Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
+        auto modelIndex1 = index(positionIndex, MainPositionColumn, QModelIndex());
+        auto modelIndex2 = index(positionIndex, columnCount_ - 1, QModelIndex());
+        Q_EMIT dataChanged(modelIndex1, modelIndex2, { Qt::EditRole });
+
 #ifdef Q_OS_WIN32
-        view->resizeColumnToContents(PositionColumn);
+        for(size_t i=0; i < bodyPartIndices.size(); ++i){
+            view->resizeColumnToContents(MainPositionColumn + i);
+        }
 #endif
     }
     if(flags & MprPosition::ObjectReplaced){
         auto modelIndex1 = index(positionIndex, IdColumn, QModelIndex());
-        auto modelIndex2 = index(positionIndex, PositionColumn, QModelIndex());
+        auto modelIndex2 = index(positionIndex, columnCount_ - 1, QModelIndex());
         Q_EMIT dataChanged(modelIndex1, modelIndex2, { Qt::EditRole });
+
 #ifdef Q_OS_WIN32
         view->resizeColumnToContents(IdColumn);
-        view->resizeColumnToContents(PositionColumn);
+        for(size_t i=0; i < bodyPartIndices.size(); ++i){
+            view->resizeColumnToContents(MainPositionColumn + i);
+        }
 #endif
     }
 }
@@ -623,10 +745,8 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
 
     auto hheader = horizontalHeader();
     hheader->setMinimumSectionSize(24);
-    hheader->setSectionResizeMode(IdColumn, QHeaderView::ResizeToContents);
+    hheader->setSectionResizeMode(QHeaderView::ResizeToContents);
     hheader->setSectionResizeMode(NoteColumn, QHeaderView::Stretch);
-    hheader->setSectionResizeMode(PositionColumn, QHeaderView::ResizeToContents);
-    hheader->setSectionResizeMode(JointSpaceCheckColumn, QHeaderView::ResizeToContents);
     verticalHeader()->hide();
 
     connect(this, &QTableView::pressed,
