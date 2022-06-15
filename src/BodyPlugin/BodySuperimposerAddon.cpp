@@ -20,6 +20,10 @@ struct BodyInfo : public Referenced
     weak_ref_ptr<BodyItem> bodyItem;
     BodyPtr superimposedBody;
     SceneBodyPtr sceneBody;
+    typedef vector<Isometry3, Eigen::aligned_allocator<Isometry3>> PositionArray;
+    PositionArray tmpLinkPositions;
+    vector<double> tmpJointDisplacements;
+    
 };
 typedef ref_ptr<BodyInfo> BodyInfoPtr;
 
@@ -35,7 +39,6 @@ public:
     ScopedConnectionSet bodyItemConnections;
     vector<BodyInfoPtr> bodyInfos;
     typedef vector<Isometry3, Eigen::aligned_allocator<Isometry3>> PositionArray;
-    vector<PositionArray> tmpLinkPositions;
     bool needToCheckSuperimposedBodies;
     SgGroupPtr topGroup;
     float transparency;
@@ -319,17 +322,21 @@ bool BodySuperimposerAddon::Impl::updateSuperimposition
 
     updateSuperimposedBodies();
     
-    tmpLinkPositions.resize(bodyInfos.size());
-
     // store the original body position
     for(size_t i=0; i < bodyInfos.size(); ++i){
         auto& info = bodyInfos[i];
         auto body = info->bodyItem.lock()->body();
-        auto& linkPositions = tmpLinkPositions[i];
         const int numLinks = body->numLinks();
+        auto& linkPositions = info->tmpLinkPositions;
         linkPositions.resize(numLinks);
         for(int j=0; j < numLinks; ++j){
             linkPositions[j] = body->link(j)->T();
+        }
+        const int numJoints = body->numJoints();
+        auto& jointDisplacements = info->tmpJointDisplacements;
+        jointDisplacements.resize(numJoints);
+        for(int j=0; j < numJoints; ++j){
+            jointDisplacements[j] = body->joint(j)->q();
         }
     }
     
@@ -339,12 +346,18 @@ bool BodySuperimposerAddon::Impl::updateSuperimposition
             auto& info = bodyInfos[i];
             auto orgBody = info->bodyItem.lock()->body();
             auto superBody = info->superimposedBody;
-            auto& linkPositions = tmpLinkPositions[i];
+            auto& linkPositions = info->tmpLinkPositions;
             const int numLinks = orgBody->numLinks();
             for(int j=0; j < numLinks; ++j){
                 superBody->link(j)->setPosition(orgBody->link(j)->position());
-                // Restore the original body position
+                // Restore the original link positions
                 orgBody->link(j)->setPosition(linkPositions[j]);
+            }
+            // Restore the original joint displacements
+            const int numJoints = orgBody->numJoints();
+            auto& jointDisplacements = info->tmpJointDisplacements;
+            for(int j=0; j < numJoints; ++j){
+                orgBody->joint(j)->q() = jointDisplacements[j];
             }
             if(i > 0){
                 superBody->syncPositionWithParentBody();
