@@ -161,27 +161,6 @@ bool BodyState::getZMP(Vector3& out_zmp) const
 }
         
 
-std::map<std::string, int>& BodyState::nameToIdMap()
-{
-    static std::map<std::string, int> nameToIdMap_;
-    return nameToIdMap_;
-}
-
-
-std::map<int, std::string>& BodyState::idToNameMap()
-{
-    static std::map<int, std::string> idToNameMap_;
-    return idToNameMap_;
-}
-
-
-int BodyState::nextDynamicId()
-{
-    static int dynamicIdCounter = MIN_DYNAMIC_ID;
-    return dynamicIdCounter++;
-}
-
-
 namespace cnoid {
 
 BodyState& operator<<(BodyState& state, const Body& body)

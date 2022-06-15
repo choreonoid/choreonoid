@@ -19,7 +19,6 @@ class Body;
 */
 class CNOID_EXPORT BodyState : public DataMap<double>
 {
-    typedef DataMap<double> BaseType;
 public:
     enum DataType {
         JOINT_POSITIONS,
@@ -46,11 +45,6 @@ public:
 
     void setZMP(const Vector3& zmp);
     bool getZMP(Vector3& out_zmp) const;
-
-protected:
-    virtual std::map<std::string, int>& nameToIdMap();
-    virtual std::map<int, std::string>& idToNameMap();
-    virtual int nextDynamicId();
 };
 
 
