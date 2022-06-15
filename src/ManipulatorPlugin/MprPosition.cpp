@@ -12,7 +12,6 @@
 #include <cnoid/CloneMap>
 #include <cnoid/MessageOut>
 #include <fmt/format.h>
-#include <stdexcept>
 #include "gettext.h"
 
 using namespace std;
@@ -115,7 +114,6 @@ MprCompositePositionPtr MprPosition::castOrConvertToCompositePosition(KinematicB
     int index = bodySet->mainBodyPartIndex();
     if(index >= 0){
         composite->setPosition(index, this);
-        composite->setMainPositionIndex(index);
     }
     return composite;
 }
@@ -546,14 +544,12 @@ MprCompositePosition::MprCompositePosition(const GeneralId& id)
     : MprPosition(Composite, id)
 {
     numValidPositions_ = 0;
-    mainPositionIndex_ = -1;
 }
 
 
 MprCompositePosition::MprCompositePosition(const MprCompositePosition& org, CloneMap* cloneMap)
     : MprPosition(org),
-      numValidPositions_(org.numValidPositions_),
-      mainPositionIndex_(org.mainPositionIndex_)
+      numValidPositions_(org.numValidPositions_)
 {
     if(!cloneMap){
         positions_ = org.positions_;
@@ -576,7 +572,6 @@ void MprCompositePosition::clearPositions()
 {
     positions_.clear();
     numValidPositions_ = 0;
-    mainPositionIndex_ = -1;
 }
 
 
@@ -613,9 +608,6 @@ void MprCompositePosition::setPosition(int index, MprPosition* position)
                 positions_.resize(index);
             }
         }
-        if(index == mainPositionIndex_){
-            mainPositionIndex_ = -1;
-        }
     }
 }
 
@@ -644,23 +636,8 @@ std::vector<int> MprCompositePosition::findUnMatchedPositionIndices(KinematicBod
 }
 
 
-std::vector<int> MprCompositePosition::nonMainPositionIndices() const
-{
-    std::vector<int> indices;
-    for(int i=0; i <= maxPositionIndex(); ++i){
-        if(position(i) && i != mainPositionIndex_){
-            indices.push_back(i);
-        }
-    }
-    return indices;
-}
-
-
 bool MprCompositePosition::fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout)
 {
-    if(auto position = mainPosition()){
-        return position->fetch(kinematicsKit, mout);
-    }
     return false;
 }
 
@@ -716,9 +693,6 @@ bool MprCompositePosition::fetch(KinematicBodySet* bodySet, MessageOut* mout)
 
 bool MprCompositePosition::apply(BodyKinematicsKit* kinematicsKit) const
 {
-    if(auto position = mainPosition()){
-        return position->apply(kinematicsKit);
-    }
     return false;
 }
 
@@ -750,8 +724,6 @@ bool MprCompositePosition::read(const Mapping* archive)
         return false;
     }
 
-    mainPositionIndex_ = archive->get("main_position", -1);
-    
     auto positionList = archive->findListing("positions");
     if(!positionList->isValid()){
         return false;
@@ -793,10 +765,6 @@ bool MprCompositePosition::write(Mapping* archive) const
 
     if(!MprPosition::write(archive)){
         return false;
-    }
-
-    if(mainPositionIndex_ >= 0){
-        archive->write("main_position", mainPositionIndex_);
     }
 
     auto positionList = archive->createListing("positions");

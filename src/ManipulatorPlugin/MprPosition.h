@@ -9,7 +9,6 @@
 #include <string>
 #include <array>
 #include <bitset>
-#include <unordered_map>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -234,18 +233,9 @@ public:
     const MprPosition* position(int index) const {
         return const_cast<MprCompositePosition*>(this)->position(index);
     }
-    int mainPositionIndex() const { return mainPositionIndex_; }
-    void setMainPositionIndex(int index) { mainPositionIndex_ = index; }
-    MprPosition* mainPosition() {
-        return mainPositionIndex_ >= 0 ? positions_[mainPositionIndex_] : nullptr;
-    }
-    const MprPosition* mainPosition() const {
-        return const_cast<MprCompositePosition*>(this)->mainPosition();
-    }
 
     std::vector<int> findMatchedPositionIndices(KinematicBodySet* bodySet) const;
     std::vector<int> findUnMatchedPositionIndices(KinematicBodySet* bodySet) const;
-    std::vector<int> nonMainPositionIndices() const;
     
     virtual bool fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
     virtual bool fetch(KinematicBodySet* bodySet, MessageOut* mout = nullptr) override;
@@ -261,7 +251,6 @@ protected:
 private:
     std::vector<MprPositionPtr> positions_;
     int numValidPositions_;
-    int mainPositionIndex_;
 };
 
 }
