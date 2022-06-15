@@ -1104,8 +1104,8 @@ msgstr "関節速度下限"
 msgid "Joint inertia"
 msgstr "関節慣性"
 
-msgid "LinkShapeOverwriteItem"
-msgstr "リンク形状上書きアイテム"
+msgid "LinkOverwriteItem"
+msgstr "リンク上書きアイテム"
 
 msgid "Shape ({0})"
 msgstr "形状 ({0})"

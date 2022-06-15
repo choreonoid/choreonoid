@@ -8,7 +8,7 @@
 
 namespace cnoid {
 
-class LinkShapeOverwriteItem;
+class LinkOverwriteItem;
 class DeviceOverwriteItem;
 class Link;
 class Device;
@@ -24,11 +24,17 @@ public:
     virtual bool setOwnerItem(Item* item) override;
 
     // Functions on link shape overwriting
+    [[deprecated]]
     bool checkIfSingleShapeBody();
-    LinkShapeOverwriteItem* findLinkShapeOverwriteItem(Link* link);
-    LinkShapeOverwriteItem* getOrCreateLinkShapeOverwriteItem(Link* link);
-    bool registerLinkShapeOverwriteItem(Link* link, LinkShapeOverwriteItem* item);
-    void unregisterLinkShapeOverwriteItem(LinkShapeOverwriteItem* item);
+
+    //! \todo Move this function to LinkOverwriteItem
+    LinkOverwriteItem* findLinkOverwriteItem(Link* link);
+
+    //! \todo Move this function to LinkOverwriteItem
+    //LinkOverwriteItem* findOrCreateLinkOverwriteItem(Link* link);
+    
+    bool registerLinkOverwriteItem(Link* link, LinkOverwriteItem* item);
+    void unregisterLinkOverwriteItem(LinkOverwriteItem* item);
 
     // Functions on device overwriting
 

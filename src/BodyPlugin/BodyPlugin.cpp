@@ -32,7 +32,7 @@
 #include "BodySuperimposerAddon.h"
 #include "BodyOverwriteAddon.h"
 #include "BodyElementOverwriteItem.h"
-#include "LinkShapeOverwriteItem.h"
+#include "LinkOverwriteItem.h"
 #include "DeviceOverwriteItem.h"
 #include "KinematicFaultChecker.h"
 #include "SplineFilterDialog.h"
@@ -123,7 +123,7 @@ bool BodyPlugin::initialize()
     BodySuperimposerAddon::initializeClass(this);
     BodyOverwriteAddon::initializeClass(this);
     BodyElementOverwriteItem::initializeClass(this);
-    LinkShapeOverwriteItem::initializeClass(this);
+    LinkOverwriteItem::initializeClass(this);
     DeviceOverwriteItem::initializeClass(this);
     CollisionSeqItem::initislizeClass(this);
     

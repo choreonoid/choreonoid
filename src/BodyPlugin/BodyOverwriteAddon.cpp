@@ -1,5 +1,5 @@
 #include "BodyOverwriteAddon.h"
-#include "LinkShapeOverwriteItem.h"
+#include "LinkOverwriteItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
 #include <cnoid/SceneDrawables>
@@ -18,7 +18,7 @@ public:
     BodyOverwriteAddon* self;
     BodyItem* bodyItem;
 
-    std::map<Link*, LinkShapeOverwriteItemPtr> linkShapeOverwriteItemMap;
+    std::map<Link*, LinkOverwriteItemPtr> linkOverwriteItemMap;
     std::map<Device*, DeviceOverwriteItemPtr> deviceOverwriteItemMap;
 
     Impl(BodyOverwriteAddon* self);
@@ -97,38 +97,36 @@ bool BodyOverwriteAddon::Impl::checkIfSingleShapeBody()
 }
 
 
-LinkShapeOverwriteItem* BodyOverwriteAddon::findLinkShapeOverwriteItem(Link* link)
+LinkOverwriteItem* BodyOverwriteAddon::findLinkOverwriteItem(Link* link)
 {
-    auto p = impl->linkShapeOverwriteItemMap.find(link);
-    if(p != impl->linkShapeOverwriteItemMap.end()){
+    auto p = impl->linkOverwriteItemMap.find(link);
+    if(p != impl->linkOverwriteItemMap.end()){
         return p->second;
     }
     return nullptr;
 }
 
 
-LinkShapeOverwriteItem* BodyOverwriteAddon::getOrCreateLinkShapeOverwriteItem(Link* link)
+/*
+LinkOverwriteItem* BodyOverwriteAddon::findOrCreateLinkOverwriteItem(Link* link)
 {
-    LinkShapeOverwriteItemPtr item = findLinkShapeOverwriteItem(link);
+    auto item = findLinkOverwriteItem(link);
     if(!item){
-        bool result = false;
-        item = new LinkShapeOverwriteItem;
-        if(item->overwriteLinkShape(impl->bodyItem, link)){
-            result = impl->bodyItem->addChildItem(item);
-        }
-        if(!result){
-            item.reset();
-        }
+        item = new LinkOverwriteItem;
+        item->setName(link->name());
+        impl->bodyItem->addChildItem(item);
     }
     return item;
 }
+*/
 
 
-bool BodyOverwriteAddon::registerLinkShapeOverwriteItem(Link* link, LinkShapeOverwriteItem* item)
+bool BodyOverwriteAddon::registerLinkOverwriteItem(Link* link, LinkOverwriteItem* item)
 {
     if(impl->bodyItem->body() == link->body()){
-        if(!findLinkShapeOverwriteItem(link)){
-            impl->linkShapeOverwriteItemMap[link] = item;
+        auto& mappedItem = impl->linkOverwriteItemMap[link];
+        if(!mappedItem){
+            mappedItem = item;
             return true;
         }
     }
@@ -136,13 +134,13 @@ bool BodyOverwriteAddon::registerLinkShapeOverwriteItem(Link* link, LinkShapeOve
 }
 
 
-void BodyOverwriteAddon::unregisterLinkShapeOverwriteItem(LinkShapeOverwriteItem* item)
+void BodyOverwriteAddon::unregisterLinkOverwriteItem(LinkOverwriteItem* item)
 {
     if(item->bodyItem() == impl->bodyItem){
-        auto p = impl->linkShapeOverwriteItemMap.begin();
-        while(p != impl->linkShapeOverwriteItemMap.end()){
+        auto p = impl->linkOverwriteItemMap.begin();
+        while(p != impl->linkOverwriteItemMap.end()){
             if(p->second == item){
-                impl->linkShapeOverwriteItemMap.erase(p);
+                impl->linkOverwriteItemMap.erase(p);
                 break;
             }
             ++p;
@@ -223,17 +221,17 @@ void BodyOverwriteAddon::removeDeviceOverwriteItem(DeviceOverwriteItem* item)
 
 
 /**
-   \note Currently this function only clears LinkShapeOverwriteItems.
+   \note Currently this function only clears LinkOverwriteItems.
    It does not clear DeviceOverwriteItems because outputting overwritten devices
    into a body file is not yet supported.
 */
 void BodyOverwriteAddon::clearOverwriteItems()
 {
     vector<BodyElementOverwriteItem*> overwriteItems;
-    overwriteItems.reserve(impl->linkShapeOverwriteItemMap.size());
-    for(auto& kv : impl->linkShapeOverwriteItemMap){
+    overwriteItems.reserve(impl->linkOverwriteItemMap.size());
+    for(auto& kv : impl->linkOverwriteItemMap){
         // note: The function to remove each item must not executed here because
-        // it also removes the item from linkShapeOverwriteItemMap and this loop crashes.
+        // it also removes the item from linkOverwriteItemMap and this loop crashes.
         overwriteItems.push_back(kv.second);
     }
 

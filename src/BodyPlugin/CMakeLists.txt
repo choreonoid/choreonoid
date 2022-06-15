@@ -43,7 +43,7 @@ set(sources
   BodyMotionEngine.cpp
   BodyOverwriteAddon.cpp
   BodyElementOverwriteItem.cpp
-  LinkShapeOverwriteItem.cpp
+  LinkOverwriteItem.cpp
   DeviceOverwriteItem.cpp
   KinematicFaultChecker.cpp
   SplineFilterDialog.cpp
@@ -106,7 +106,7 @@ set(headers
   BodySuperimposerAddon.h
   BodyOverwriteAddon.h
   BodyElementOverwriteItem.h
-  LinkShapeOverwriteItem.h
+  LinkOverwriteItem.h
   DeviceOverwriteItem.h
   KinematicFaultChecker.h
   BodyBar.h

@@ -63,12 +63,14 @@ void BodyElementOverwriteItem::onTreePathChanged()
     if(bodyItem_){
         if(!parentItem()){
             onDisconnectedFromBodyItem();
+            bodyItem_ = nullptr;
         } else {
             if(!isNewBodyItemValid){
                 newBodyItem_ = findOwnerItem<BodyItem>();
             }
             if(!newBodyItem_ || newBodyItem_ != bodyItem_){
                 onDisconnectedFromBodyItem();
+                bodyItem_ = nullptr;
             }
         }
     }
