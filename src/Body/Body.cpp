@@ -452,6 +452,23 @@ void Body::removeDevice(Device* device)
 }
 
 
+void Body::removeDevicesOfLink(Link* link)
+{
+    int index = 0;
+    auto iter = devices_.begin();
+    while(iter != devices_.end()){
+        auto& device = *iter;
+        if(device->link() == link){
+            impl->deviceNameMap.erase(device->name());
+            iter = devices_.erase(iter);
+        } else {
+            device->setIndex(index++);
+            ++iter;
+        }
+    }
+}
+
+
 void Body::clearDevices()
 {
     devices_.clear();

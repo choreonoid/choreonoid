@@ -211,6 +211,7 @@ public:
     [[deprecated("Use addDevice(Device* device, Link* link)")]]
     void addDevice(Device* device);
     void removeDevice(Device* device);
+    void removeDevicesOfLink(Link* link);
     void clearDevices();
     void sortDevicesByLinkOrder();
     void initializeDeviceStates();

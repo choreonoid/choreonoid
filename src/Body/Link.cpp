@@ -249,8 +249,12 @@ bool Link::removeChild(Link* childToRemove)
 {
     Link* link = child_;
     Link* prevSibling = nullptr;
+
     while(link){
         if(link == childToRemove){
+            if(body_){
+                body_->removeDevicesOfLink(childToRemove);
+            }
             childToRemove->parent_ = nullptr;
             if(prevSibling){
                 prevSibling->sibling_ = link->sibling_;
