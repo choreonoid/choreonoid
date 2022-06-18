@@ -85,7 +85,9 @@ void exportPySeqTypes(py::module& m)
         .def("getSize", &Deque2DDouble::Row::size)
         ;
 
-    py::class_<MultiValueSeq, shared_ptr<MultiValueSeq>, AbstractMultiSeq>(m, "MultiValueSeq")
+    py::class_<MultiValueSeq, shared_ptr<MultiValueSeq>, AbstractMultiSeq>
+        (m, "MultiValueSeq", py::multiple_inheritance())
+        .def(py::init<>())
         .def_property_readonly("empty", &MultiValueSeq::empty)
         .def("resize", &MultiValueSeq::resize)
         .def("clear", &MultiValueSeq::clear)
@@ -113,7 +115,9 @@ void exportPySeqTypes(py::module& m)
         .def("getPart", (MultiValueSeq::Part (MultiValueSeq::*)(int)) &MultiValueSeq::part)
         ;
 
-    py::class_<ReferencedObjectSeq, shared_ptr<ReferencedObjectSeq>, AbstractSeq>(m, "ReferencedObjectSeq")
+    py::class_<ReferencedObjectSeq, shared_ptr<ReferencedObjectSeq>, AbstractSeq>
+        (m, "ReferencedObjectSeq", py::multiple_inheritance())
+        .def(py::init<>())
         .def_property_readonly("clear", &ReferencedObjectSeq::clear)
         .def_property_readonly("empty", &ReferencedObjectSeq::empty)
         //.def("at", (&ReferencedObjectSeq::element_type (ReferencedObjectSeq:*)(int)) &ReferencedObjectSeq::at)
