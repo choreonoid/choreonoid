@@ -419,6 +419,7 @@ public:
     void write(const std::string& key, int value);
     void write(const std::string& key, double value);
     void writePath(const std::string &key, const std::string& value);
+    void write(const std::string& key, ValueNode* node) { insert(key, node); }
 
     template<class ArrayType> void writeAsListing(const std::string& key, const ArrayType& container);
 

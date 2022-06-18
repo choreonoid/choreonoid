@@ -140,6 +140,7 @@ void exportPyValueTree(py::module& m)
         .def("write", [](Mapping& self, const string &key, const string& value){ self.write(key, value); })
         .def("write", [](Mapping& self, const string &key, const string& value, StringStyle style){ self.write(key, value, style); })
         .def("write", Mapping_write)
+        .def("write", (void(Mapping::*)(const string&, ValueNode*)) &Mapping::write)
 
         // deprecated
         .def("isEmpty", &Mapping::empty)
