@@ -12,7 +12,7 @@ static bool extractNodeIter
 
     } else if(auto group = node->toGroupNode()){
         for(auto& child : *group){
-            nodePath.push_back(node);
+            nodePath.push_back(child);
             if(extractNodeIter(child, pred, nodePath)){
                 return true;
             }
