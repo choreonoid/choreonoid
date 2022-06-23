@@ -9,8 +9,7 @@
 namespace cnoid {
 
 class FilePathVariableProcessor;
-class Mapping;
-typedef ref_ptr<Mapping> MappingPtr;
+class ValueNode;
 
 class CNOID_EXPORT StdSceneWriter : public AbstractSceneWriter
 {
@@ -40,6 +39,8 @@ public:
     void setExtModelFileMode(int mode);
     int extModelFileMode() const;
 
+    void setTopGroupNodeSkippingEnabled(bool on);
+    bool isTopGroupNodeSkippingEnabled() const;
     void setTransformIntegrationEnabled(bool on);
     bool isTransformIntegrationEnabled() const;
     void setAppearanceEnabled(bool on);
@@ -50,7 +51,7 @@ public:
     //enum AngleUnit { Degree, Radian };
     //void setAngleUnit(AngleUnit unit);
 
-    MappingPtr writeScene(SgNode* node);
+    ref_ptr<ValueNode> writeScene(SgNode* node);
     virtual bool writeScene(const std::string& filename, SgNode* node) override;
     bool writeScene(const std::string& filename, const std::vector<SgNode*>& nodes);
 

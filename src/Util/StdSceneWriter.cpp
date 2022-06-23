@@ -31,6 +31,7 @@ public:
     PolymorphicSceneNodeFunctionSet writeFunctions;
     MappingPtr currentArchive;
     bool isDegreeMode;
+    bool isTopGroupNodeSkippingEnabled;
     bool isTransformIntegrationEnabled;
     bool isAppearanceEnabled;
     bool isReplacingExistingModelFile;
@@ -63,7 +64,7 @@ public:
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
     pair<MappingPtr, bool> findOrCreateMapping(SgObject* object);
     pair<ListingPtr, bool> findOrCreateListing(SgObject* object);
-    MappingPtr writeSceneNode(SgNode* node);
+    ValueNodePtr writeSceneNode(SgNode* node);
     void makeLinkToOriginalModelFile(Mapping* archive, SgObject* sceneObject);
     bool replaceOriginalModelFile(
         Mapping* archive, SgNode* node, bool isAppearanceEnabled, SgObject* objectOfUri);
@@ -137,6 +138,7 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
     writeFunctions.updateDispatchTable();
 
     isDegreeMode = true;
+    isTopGroupNodeSkippingEnabled = false;
     isTransformIntegrationEnabled = false;
     isAppearanceEnabled = true;
     isReplacingExistingModelFile = false;
@@ -157,6 +159,7 @@ StdSceneWriter::StdSceneWriter(const StdSceneWriter& org)
 void StdSceneWriter::Impl::copyConfigurations(const Impl* org)
 {
     isDegreeMode = org->isDegreeMode;
+    isTopGroupNodeSkippingEnabled = org->isTopGroupNodeSkippingEnabled;
     isTransformIntegrationEnabled = org->isTransformIntegrationEnabled;
     isAppearanceEnabled = org->isAppearanceEnabled;
     isMeshEnabled = org->isMeshEnabled;
@@ -268,6 +271,18 @@ int StdSceneWriter::extModelFileMode() const
 }
 
 
+void StdSceneWriter::setTopGroupNodeSkippingEnabled(bool on)
+{
+    impl->isTopGroupNodeSkippingEnabled = on;
+}
+
+
+bool StdSceneWriter::isTopGroupNodeSkippingEnabled() const
+{
+    return impl->isTopGroupNodeSkippingEnabled;
+}
+
+
 void StdSceneWriter::setTransformIntegrationEnabled(bool on)
 {
     impl->isTransformIntegrationEnabled = on;
@@ -328,9 +343,29 @@ void StdSceneWriter::Impl::popFromUriDirectoryStack()
 }
 
 
-MappingPtr StdSceneWriter::writeScene(SgNode* node)
+ref_ptr<ValueNode> StdSceneWriter::writeScene(SgNode* node)
 {
-    return impl->writeSceneNode(node);
+    ValueNodePtr archive;
+
+    if(!impl->isTopGroupNodeSkippingEnabled || (typeid(*node) != typeid(SgGroup))){
+        archive = impl->writeSceneNode(node);
+
+    } else {
+        auto group = node->toGroupNode();
+        ListingPtr nodes = new Listing;
+        for(auto& child : *group){
+            if(auto childArchive = impl->writeSceneNode(child)){
+                nodes->append(childArchive);
+            }
+        }
+        if(nodes->size() >= 2){
+            archive = nodes;
+        } else if(nodes->size() == 1){
+            archive = nodes->at(0);
+        }
+    }
+
+    return archive;
 }
 
 
@@ -435,7 +470,7 @@ pair<ListingPtr, bool> StdSceneWriter::Impl::findOrCreateListing(SgObject* objec
 }
 
 
-MappingPtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
+ValueNodePtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
 {
     MappingPtr archive;
     bool found;

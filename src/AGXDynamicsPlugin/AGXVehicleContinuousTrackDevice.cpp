@@ -183,9 +183,11 @@ bool writeAGXVehicleContinuousTrackDevice
     info->write("material", desc.materialName);
 
     if(desc.nodeShape){
-        if(auto shape = writer->sceneWriter()->writeScene(desc.nodeShape)){
-            shape->remove("type");
-            info->insert("nodeShape", shape);
+        if(auto node = writer->sceneWriter()->writeScene(desc.nodeShape)){
+            if(node->isMapping()){
+                node->toMapping()->remove("type");
+                info->insert("nodeShape", node);
+            }
         }
     }
 
