@@ -609,6 +609,7 @@ bool DeviceOverwriteItem::Impl::restore(const Archive& archive)
                         if(shapeNode->isValid()){
                             if(!sceneReader){
                                 sceneReader = make_unique<StdSceneReader>();
+                                sceneReader->setGroupOptimizationEnabled(true);
                             }
                             sceneReader->setFilePathVariableProcessor(archive.filePathVariableProcessor());
                             if(auto scene = sceneReader->readNode(shapeNode->toMapping())){

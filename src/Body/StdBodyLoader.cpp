@@ -495,6 +495,7 @@ StdBodyLoader::StdBodyLoader()
 StdBodyLoader::Impl::Impl(StdBodyLoader* self)
     : self(self)
 {
+    sceneReader.setGroupOptimizationEnabled(true);
     sceneReader.setYAMLReader(&reader);
     
     nodeFunctions["Skip"].set([&](Mapping* node){ return readSkipNode(node); });

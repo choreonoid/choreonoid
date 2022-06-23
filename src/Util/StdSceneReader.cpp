@@ -38,14 +38,18 @@ class StdSceneReader::Impl
 public:
     StdSceneReader* self;
 
+    YAMLReader* mainYamlReader;
+    unordered_map<ValueNodePtr, SgObjectPtr> sharedObjectMap;
+    MeshGenerator meshGenerator;
+    PolygonMeshTriangulator polygonMeshTriangulator;
+    MeshFilter meshFilter;
+    SgMaterialPtr defaultMaterial;
+    ImageIO imageIO;
+    double scaling;
+    bool isGroupOptimizationEnabled;
     ostream* os_;
     ostream& os() { return *os_; }
 
-    YAMLReader* mainYamlReader;
-    unordered_map<ValueNodePtr, SgObjectPtr> sharedObjectMap;
-
-    double scaling;
-    
     // temporary variables for reading values
     double value;
     string symbol;
@@ -54,12 +58,6 @@ public:
     Vector2 v2;
     bool on;
     
-    MeshGenerator meshGenerator;
-    PolygonMeshTriangulator polygonMeshTriangulator;
-    MeshFilter meshFilter;
-    SgMaterialPtr defaultMaterial;
-    ImageIO imageIO;
-
     struct SceneNodeInfo
     {
         SgGroupPtr parent;
@@ -111,7 +109,7 @@ public:
     SgNode* readNodeNode(Mapping* info);
     SgNode* readGroup(Mapping* info);
     void readElements(Mapping* info, SgGroup* group);
-    void readNodeList(ValueNode* elements, SgGroup* group);
+    void readNodeList(ValueNode* elements, SgGroup* group, bool isTopLevel);
     SgNode* readTransform(Mapping* info);
     SgNode* readTransformParameters(Mapping* info, SgNode* scene);
     SgNode* readShape(Mapping* info);
@@ -303,6 +301,18 @@ FilePathVariableProcessor* StdSceneReader::Impl::getOrCreatePathVariableProcesso
 }
 
 
+void StdSceneReader::setGroupOptimizationEnabled(bool on)
+{
+    impl->isGroupOptimizationEnabled = on;
+}
+
+
+bool StdSceneReader::isGroupOptimizationEnabled() const
+{
+    return impl->isGroupOptimizationEnabled;
+}
+
+
 void StdSceneReader::setYAMLReader(YAMLReader* reader)
 {
     impl->mainYamlReader = reader;
@@ -317,12 +327,13 @@ void StdSceneReader::setScaling(double s)
 
 void StdSceneReader::clear()
 {
-    impl->scaling = 1.0;
     isDegreeMode_ = true;
     impl->sharedObjectMap.clear();
     impl->defaultMaterial.reset();
     impl->resourceInfoMap.clear();
     impl->imagePathToSgImageMap.clear();
+    impl->scaling = 1.0;
+    impl->isGroupOptimizationEnabled = false;
 }
 
 
@@ -594,7 +605,7 @@ SgNode* StdSceneReader::readNode(Mapping& info, const std::string& type)
 SgNode* StdSceneReader::readScene(ValueNode* scene)
 {
     SgGroupPtr group = new SgGroup;
-    impl->readNodeList(scene, group);
+    impl->readNodeList(scene, group, true);
 
     if(group->empty()){
         return nullptr;
@@ -633,24 +644,22 @@ SgNode* StdSceneReader::Impl::readNode(Mapping* info, const string& type)
     NodeFunction funcToReadNode = it->second;
     SgNode* node = (this->*funcToReadNode)(info);
     if(node){
-        sharedObjectMap[info] = node;
-
         bool isMetaSceneObject = info->get("is_meta_scene", false);
         if(isMetaSceneObject){
             node->setAttribute(SgObject::MetaScene);
         }
         if(info->read("name", symbol)){
             node->setName(symbol);
-        } else if(!isMetaSceneObject){
+        } else if(isGroupOptimizationEnabled && !isMetaSceneObject){
             // remove a nameless, redundant group node
             if(auto group = node->toGroupNode()){
                 auto& g = *group;
                 if(typeid(g) == typeid(SgGroup) && group->numChildren() == 1){
                     node = group->child(0);
-                    sharedObjectMap[info] = node;
                 }
             }
         }
+        sharedObjectMap[info] = node;
     }
     
     return node;
@@ -675,12 +684,12 @@ void StdSceneReader::Impl::readElements(Mapping* info, SgGroup* group)
 {
     auto elements = info->find("elements");
     if(elements->isValid()){
-        readNodeList(elements, group);
+        readNodeList(elements, group, false);
     }
 }
 
 
-void StdSceneReader::Impl::readNodeList(ValueNode* elements, SgGroup* group)
+void StdSceneReader::Impl::readNodeList(ValueNode* elements, SgGroup* group, bool isTopLevel)
 {
     if(elements->isListing()){
         Listing& listing = *elements->toListing();
@@ -692,20 +701,33 @@ void StdSceneReader::Impl::readNodeList(ValueNode* elements, SgGroup* group)
             }
         }
     } else if(elements->isMapping()){
-        for(auto& kv : *elements->toMapping()){
-            auto& type = kv.first;
-            auto element = kv.second->toMapping();
-            auto typeNode = element->find("type");
+        auto mapping = elements->toMapping();
+        bool done = false;
+        if(isTopLevel){
+            auto typeNode = mapping->find("type");
             if(typeNode->isValid()){
-                auto& type2 = typeNode->toString();
-                if(type2 != type){
-                    element->throwException(
-                        format(_("The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"),
-                                type2, type));
+                if(SgNodePtr scene = readNode(mapping, typeNode->toString())){
+                    group->addChild(scene);
+                    done = true;
                 }
             }
-            if(SgNodePtr scene = readNode(element, type)){
-                group->addChild(scene);
+        }
+        if(!done){
+            for(auto& kv : *elements->toMapping()){
+                auto& type = kv.first;
+                auto element = kv.second->toMapping();
+                auto typeNode = element->find("type");
+                if(typeNode->isValid()){
+                    auto& type2 = typeNode->toString();
+                    if(type2 != type){
+                        element->throwException(
+                            format(_("The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"),
+                                   type2, type));
+                    }
+                }
+                if(SgNodePtr scene = readNode(element, type)){
+                    group->addChild(scene);
+                }
             }
         }
     } else {
@@ -734,7 +756,11 @@ SgNode* StdSceneReader::Impl::readTransform(Mapping* info)
 
     if(!read(info, "scale", v)){
         if(!group){
-            group = new SgGroup;
+            if(isGroupOptimizationEnabled){
+                group = new SgGroup;
+            } else {
+                group = posTransform;
+            }
         }
         readElements(info, group);
 

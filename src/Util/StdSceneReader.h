@@ -30,6 +30,8 @@ public:
     // One of the settings is valid for the following two functions
     void setBaseDirectory(const std::string& directory);
     void setFilePathVariableProcessor(FilePathVariableProcessor* processor);
+    void setGroupOptimizationEnabled(bool on);
+    bool isGroupOptimizationEnabled() const;
 
     std::string baseDirectory() const;
     stdx::filesystem::path baseDirPath() const;

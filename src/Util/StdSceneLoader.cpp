@@ -55,6 +55,7 @@ StdSceneLoader::StdSceneLoader()
 StdSceneLoader::Impl::Impl(StdSceneLoader* self)
     : self(self)
 {
+    sceneReader.setGroupOptimizationEnabled(true);
     os_ = &nullout();
 }
 
