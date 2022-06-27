@@ -39,8 +39,7 @@ RangeCamera::RangeCamera(const RangeCamera& org, bool copyStateOnly)
             spec->errorDeviation = 0.0;
         }
     }
-
-    copyRangeCameraStateFrom(org, false);
+    copyRangeCameraStateFrom(org, false, org.isImageStateClonable());
 }
 
 
@@ -55,14 +54,14 @@ void RangeCamera::copyStateFrom(const DeviceState& other)
     if(typeid(other) != typeid(RangeCamera)){
         throw std::invalid_argument("Type mismatch in the Device::copyStateFrom function");
     }
-    copyRangeCameraStateFrom(static_cast<const RangeCamera&>(other), true);
+    copyRangeCameraStateFrom(static_cast<const RangeCamera&>(other), true, true);
 }
 
 
-void RangeCamera::copyRangeCameraStateFrom(const RangeCamera& other, bool doCopyCameraState)
+void RangeCamera::copyRangeCameraStateFrom(const RangeCamera& other, bool doCopyCameraState, bool doCopyImage)
 {
     if(doCopyCameraState){
-        Camera::copyCameraStateFrom(other, true);
+        Camera::copyCameraStateFrom(other, true, doCopyImage);
     }
 
     maxDistance_ = other.maxDistance_;
@@ -70,7 +69,7 @@ void RangeCamera::copyRangeCameraStateFrom(const RangeCamera& other, bool doCopy
     isOrganized_ = other.isOrganized_;
     isDense_ = other.isDense_;
 
-    if(other.isImageStateClonable()){
+    if(doCopyImage && !other.points_->empty()){
         points_ = other.points_;
     } else {
         points_ = std::make_shared<PointData>();

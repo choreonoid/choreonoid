@@ -14,7 +14,6 @@ public:
     RangeSensor(const RangeSensor& org, bool copyStateOnly = false);
 
     virtual const char* typeName() const override;
-    void copyRangeSensorStateFrom(const RangeSensor& other, bool doCopyVisionSensorState); 
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
@@ -77,6 +76,7 @@ public:
     bool writeSpecifications(Mapping* info) const;
 
 protected:
+    void copyRangeSensorStateFrom(const RangeSensor& other, bool doCopyVisionSensorState, bool doCopyRangeData); 
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:

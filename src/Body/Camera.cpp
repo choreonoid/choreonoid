@@ -42,19 +42,13 @@ Camera::Camera()
 
 
 Camera::Camera(const Camera& org, bool copyStateOnly)
-    : VisionSensor(org, copyStateOnly),
-      image_(org.image_)
+    : VisionSensor(org, copyStateOnly)
 {
     if(!copyStateOnly){
         spec = make_unique<Spec>();
-        if(org.spec){
-            spec->isImageStateClonable = org.spec->isImageStateClonable;
-        } else {
-            spec->isImageStateClonable = false;
-        }
+        spec->isImageStateClonable = spec ? spec->isImageStateClonable : false;
     }
-
-    copyCameraStateFrom(org, false);
+    copyCameraStateFrom(org, false, org.isImageStateClonable());
 }
 
 
@@ -63,11 +57,11 @@ void Camera::copyStateFrom(const DeviceState& other)
     if(typeid(other) != typeid(Camera)){
         throw std::invalid_argument("Type mismatch in the Device::copyStateFrom function");
     }
-    copyCameraStateFrom(static_cast<const Camera&>(other), true);
+    copyCameraStateFrom(static_cast<const Camera&>(other), true, true);
 }
 
 
-void Camera::copyCameraStateFrom(const Camera& other, bool doCopyVisionSensorState)
+void Camera::copyCameraStateFrom(const Camera& other, bool doCopyVisionSensorState, bool doCopyImage)
 {
     if(doCopyVisionSensorState){
         VisionSensor::copyVisionSensorStateFrom(other);
@@ -81,14 +75,10 @@ void Camera::copyCameraStateFrom(const Camera& other, bool doCopyVisionSensorSta
     nearClipDistance_ = other.nearClipDistance_;
     farClipDistance_ = other.farClipDistance_;
 
-    if(!other.spec){
+    if(doCopyImage && !other.image_->empty()){
         image_ = other.image_;
     } else {
-        if(other.spec->isImageStateClonable){
-            image_ = other.image_;
-        } else {
-            image_ = std::make_shared<Image>();
-        }
+        image_ = std::make_shared<Image>();
     }
 }
 

@@ -55,7 +55,7 @@ RangeSensor::RangeSensor(const RangeSensor& org, bool copyStateOnly)
         }
     }
 
-    copyRangeSensorStateFrom(org, false);
+    copyRangeSensorStateFrom(org, false, org.isRangeDataStateClonable());
 }
 
 
@@ -64,11 +64,11 @@ void RangeSensor::copyStateFrom(const DeviceState& other)
     if(typeid(other) != typeid(RangeSensor)){
         throw std::invalid_argument("Type mismatch in the Device::copyStateFrom function");
     }
-    copyRangeSensorStateFrom(static_cast<const RangeSensor&>(other), true);
+    copyRangeSensorStateFrom(static_cast<const RangeSensor&>(other), true, true);
 }
 
 
-void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other, bool doCopyVisionSensorState)
+void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other, bool doCopyVisionSensorState, bool doCopyRangeData)
 {
     if(doCopyVisionSensorState){
         VisionSensor::copyVisionSensorStateFrom(other);
@@ -80,15 +80,11 @@ void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other, bool doCopy
     pitchStep_ = other.pitchStep_;
     minDistance_ = other.minDistance_;
     maxDistance_ = other.maxDistance_;
-    
-    if(!other.spec){
+
+    if(doCopyRangeData && !other.rangeData_->empty()){
         rangeData_ = other.rangeData_;
     } else {
-        if(other.spec->isRangeDataStateClonable){
-            rangeData_ = other.rangeData_;
-        } else {
-            rangeData_ = std::make_shared<RangeData>();
-        }
+        rangeData_ = std::make_shared<RangeData>();
     }
 }
 

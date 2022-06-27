@@ -18,7 +18,6 @@ public:
     RangeCamera(const RangeCamera& org, bool copyStateOnly = false);
 
     virtual const char* typeName() const override;
-    void copyRangeCameraStateFrom(const RangeCamera& other, bool doCopyCameraState);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
@@ -74,6 +73,7 @@ public:
     bool writeSpecifications(Mapping* info) const;
 
 protected:
+    void copyRangeCameraStateFrom(const RangeCamera& other, bool doCopyCameraState, bool doCopyImage);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:

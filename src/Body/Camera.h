@@ -14,7 +14,6 @@ public:
     Camera(const Camera& org, bool copyStateOnly = false);
 
     virtual const char* typeName() const override;
-    void copyCameraStateFrom(const Camera& other, bool doCopyVisionSensorState);
     virtual void copyStateFrom(const DeviceState& other) override;
     virtual DeviceState* cloneState() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
@@ -56,7 +55,7 @@ public:
     int resolutionX() const { return resolutionX_; }
     int resolutionY() const { return resolutionY_; }
 
-    const Image& image() const;
+    const Image& image() const { return *image_; }
     const Image& constImage() const { return *image_; }
     Image& image();
     Image& newImage();
@@ -80,6 +79,7 @@ public:
     bool writeSpecifications(Mapping* info) const;
 
 protected:
+    void copyCameraStateFrom(const Camera& other, bool doCopyVisionSensorState, bool doCopyImage);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
