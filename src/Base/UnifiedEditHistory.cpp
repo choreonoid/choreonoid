@@ -329,6 +329,7 @@ void RecordBlockerImpl::finishBlocking()
                 blockers.erase(it);
                 break;
             }
+            ++it;
         }
     }
     history = nullptr;
