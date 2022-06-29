@@ -21,7 +21,7 @@ void exportPyBody(py::module& m)
     body
         .def(py::init<>())
         .def(py::init<const std::string&>())
-        .def("__repr__", [](const Link &self) { return "<cnoid.Body.Body named '" + self.name() + "'>"; })
+        .def("__repr__", [](const Body &self) { return "<cnoid.Body.Body named '" + self.name() + "'>"; })
         .def("clone", (Body*(Body::*)()const) &Body::clone)
         .def("createLink", &Body::createLink, py::arg("org") = nullptr)
         .def_property("name", &Body::name, &Body::setName)
