@@ -3,7 +3,6 @@
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
 #include <cnoid/SceneDrawables>
-#include <cnoid/SceneNodeExtractor>
 #include <cnoid/Archive>
 
 using namespace std;
@@ -22,7 +21,6 @@ public:
     std::map<Device*, DeviceOverwriteItemPtr> deviceOverwriteItemMap;
 
     Impl(BodyOverwriteAddon* self);
-    bool checkIfSingleShapeBody();
 };
 
 }
@@ -56,47 +54,6 @@ bool BodyOverwriteAddon::setOwnerItem(Item* item)
 }
 
 
-bool BodyOverwriteAddon::checkIfSingleShapeBody()
-{
-    return impl->checkIfSingleShapeBody();
-}
-
-
-bool BodyOverwriteAddon::Impl::checkIfSingleShapeBody()
-{
-    auto body = bodyItem->body();
-    if(body->numLinks() >= 2){ // multi links
-        return false;
-    }
-    auto rootLink = body->rootLink();
-    if(rootLink->hasDedicatedCollisionShape()){ // collision shape variation
-        return false;
-    }
-    SceneNodeExtractor nodeExtractor;
-    auto nodePaths = nodeExtractor.extractNodes<SgShape>(rootLink->shape(), false);
-    if(nodePaths.size() >= 2){ // multi shapes
-        return false;
-    }
-
-    if(!nodePaths.empty()){
-        auto nodePath = nodePaths.front();
-        bool isDirectPath = true;
-        for(int i=0; i < nodePath.size() - 1; ++i){
-            auto group = nodePath[i]->toGroupNode();
-            if(group->numChildren() != 1){
-                isDirectPath = false;
-                break;
-            }
-        }
-        if(!isDirectPath){
-            return false;
-        }
-    }
-
-    return true;
-}
-
-
 LinkOverwriteItem* BodyOverwriteAddon::findLinkOverwriteItem(Link* link)
 {
     auto p = impl->linkOverwriteItemMap.find(link);
@@ -107,23 +64,10 @@ LinkOverwriteItem* BodyOverwriteAddon::findLinkOverwriteItem(Link* link)
 }
 
 
-/*
-LinkOverwriteItem* BodyOverwriteAddon::findOrCreateLinkOverwriteItem(Link* link)
-{
-    auto item = findLinkOverwriteItem(link);
-    if(!item){
-        item = new LinkOverwriteItem;
-        item->setName(link->name());
-        impl->bodyItem->addChildItem(item);
-    }
-    return item;
-}
-*/
-
-
 bool BodyOverwriteAddon::registerLinkOverwriteItem(Link* link, LinkOverwriteItem* item)
 {
-    if(impl->bodyItem->body() == link->body()){
+    auto body = link->body();
+    if(!body || (body == impl->bodyItem->body())){
         auto& mappedItem = impl->linkOverwriteItemMap[link];
         if(!mappedItem){
             mappedItem = item;

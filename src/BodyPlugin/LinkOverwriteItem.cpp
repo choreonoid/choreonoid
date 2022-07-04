@@ -3,6 +3,8 @@
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
+#include <cnoid/StdBodyLoader>
+#include <cnoid/StdBodyWriter>
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneNodeExtractor>
 #include <cnoid/StdSceneReader>
@@ -13,6 +15,7 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/Archive>
 #include <cnoid/CloneMap>
+#include <cnoid/EigenArchive>
 #include <cnoid/MessageView>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -179,6 +182,31 @@ void LinkOverwriteItem::onDisconnectedFromBodyItem()
 }
 
 
+bool LinkOverwriteItem::setName(const std::string& name)
+{
+    auto bodyItem_ = bodyItem();
+    auto sLink = sourceLink();
+    auto tLink = targetLink();
+    if(bodyItem_ && sLink){
+        auto body = bodyItem_->body();
+        auto existingLink = body->link(name);
+        if(existingLink){
+            if(existingLink == tLink){
+                return true; // Same as the current name
+            }
+            return false; // Same as the another link name
+        }
+        sLink->setName(name);
+        if(tLink){
+            tLink->setName(name);
+            body->updateLinkTree();
+            bodyItem_->notifyModelUpdate(BodyItem::LinkSetUpdate);
+        }
+    }
+    return Item::setName(name);
+}
+
+
 void LinkOverwriteItem::setTargetElementSet(int elementSet)
 {
     impl->targetElementSet = elementSet;
@@ -247,6 +275,12 @@ Link* LinkOverwriteItem::sourceLink()
 }
 
 
+Link* LinkOverwriteItem::targetLink()
+{
+    return impl->targetLink;
+}
+
+
 bool LinkOverwriteItem::isOverwriting() const
 {
     return impl->targetLink != nullptr;
@@ -259,7 +293,7 @@ bool LinkOverwriteItem::isOverwritingExistingLink() const
 }
 
 
-bool LinkOverwriteItem::isAddiingLink() const
+bool LinkOverwriteItem::isAddingLink() const
 {
     return impl->targetLink && !impl->originalLinkClone;
 }
@@ -273,6 +307,8 @@ bool LinkOverwriteItem::updateOverwriting()
 
 bool LinkOverwriteItem::Impl::updateOverwriting(BodyItem* bodyItem)
 {
+    bodyItemConnection.disconnect();
+    
     if(!bodyItem){
         return false;
     }
@@ -320,6 +356,10 @@ bool LinkOverwriteItem::Impl::updateOverwriting(BodyItem* bodyItem)
 
         bodyItem->notifyModelUpdate(
             BodyItem::LinkSetUpdate | BodyItem::DeviceSetUpdate | BodyItem::ShapeUpdate);
+
+        if(targetElementSet & (OffsetPosition | JointType | JointAxis)){
+            bodyItem->notifyKinematicStateChange(true);
+        }
 
         // todo: Execute the following code only when the target body item is changed
         bodyItemConnection =
@@ -436,6 +476,8 @@ void LinkOverwriteItem::clearOverwriting()
 
 void LinkOverwriteItem::Impl::clearOverwriting()
 {
+    bodyItemConnection.disconnect();
+    
     if(targetLink){
         if(auto body = targetLink->body()){
             bool updated = false;
@@ -525,25 +567,69 @@ bool LinkOverwriteItem::store(Archive& archive)
 
 bool LinkOverwriteItem::Impl::store(Archive& archive)
 {
-    if(targetLink){
-        archive.write("link_name", targetLink->name(), DOUBLE_QUOTED);
-        
-        if(targetElementSet & Shape){
-            if(!sceneWriter){
-                sceneWriter = sharedSceneWriter.lock();
-                if(!sceneWriter){
-                    sceneWriter = make_shared<StdSceneWriter>();
-                    sceneWriter->setTopGroupNodeSkippingEnabled(true);
-                    sceneWriter->setExtModelFileMode(StdSceneWriter::LinkToOriginalModelFiles);
-                    sharedSceneWriter = sceneWriter;
-                }
-            }
-            sceneWriter->setFilePathVariableProcessor(archive.filePathVariableProcessor());
-            if(auto sceneArchive = sceneWriter->writeScene(targetLink->shape())){
-                archive.insert("shape", sceneArchive);
-            }
+    auto link = self->sourceLink();
+    if(!link){
+        return false;
+    }
+
+    if(self->isAddingLink()){
+        archive.write("is_additional", true);
+        if(auto parentLink = link->parent()){
+            archive.write("parent", parentLink->name(), DOUBLE_QUOTED);
+        } else if(!additionalLinkParentName.empty()){
+            archive.write("parent", additionalLinkParentName, DOUBLE_QUOTED);
         }
     }
+    
+    archive.setFloatingNumberFormat("%.9g");
+    
+    if(targetElementSet & OffsetPosition){
+        // The "translation" value is always written so that the restore function can
+        // know that the OffsetPosition is an element to overwrite.
+        write(archive, "translation", link->offsetTranslation());
+        AngleAxis aa(link->offsetRotation());
+        if(aa.angle() != 0.0){
+            writeDegreeAngleAxis(archive, "rotation", aa);
+        }
+    }
+    if(targetElementSet & JointType){
+        archive.write("joint_type", link->jointTypeSymbol());
+    }
+    if(targetElementSet & JointAxis){
+        write(archive, "joint_axis", link->jointAxis());
+    }
+    if(targetElementSet & JointId){
+        archive.write("joint_id", link->jointId());
+    }
+    if(targetElementSet & JointName){
+        archive.write("joint_name", link->jointName(), DOUBLE_QUOTED);
+    }
+    if(targetElementSet & JointRange){
+        StdBodyWriter::writeJointDisplacementRange(&archive, link, true);
+    }
+    if(targetElementSet & JointVelocityRange){
+        StdBodyWriter::writeJointVelocityRange(&archive, link, true);
+    }
+    if(targetElementSet & JointEffortRange){
+        StdBodyWriter::writeJointEffortRange(&archive, link, true);
+    }
+
+    if(targetElementSet & Shape){
+        if(!sceneWriter){
+            sceneWriter = sharedSceneWriter.lock();
+            if(!sceneWriter){
+                sceneWriter = make_shared<StdSceneWriter>();
+                sceneWriter->setTopGroupNodeSkippingEnabled(true);
+                sceneWriter->setExtModelFileMode(StdSceneWriter::LinkToOriginalModelFiles);
+                sharedSceneWriter = sceneWriter;
+            }
+        }
+        sceneWriter->setFilePathVariableProcessor(archive.filePathVariableProcessor());
+        if(auto sceneArchive = sceneWriter->writeScene(link->shape())){
+            archive.insert("shape", sceneArchive);
+        }
+    }
+    
     return true;
 }
 
@@ -578,14 +664,65 @@ bool LinkOverwriteItem::Impl::restore(const Archive& archive)
         return restoreShapeWrittenInOldFormat(archive, node);
     }
 
-    LinkPtr link = new Link;
-    string name;
-    if(!archive.read("link_name", name)){
+    if(self->name().empty()){
         return false;
     }
-    link->setName(name);
+
+    LinkPtr link = new Link;
+    link->setName(self->name());
 
     int elementSet = NoElement;
+
+    if(!archive.get("is_additional", false)){
+        self->setReferenceLink(link);
+    } else {
+        string parentName;
+        archive.read("parent", parentName);
+        self->setAdditionalLink(link, parentName);
+    }
+    Vector3 p;
+    if(read(archive, "translation", p)){
+        link->setOffsetTranslation(p);
+        AngleAxis aa;
+        if(readDegreeAngleAxis(archive, "rotation", aa)){
+            link->setOffsetRotation(aa);
+        }
+        elementSet |= OffsetPosition;
+    }
+    string symbol;
+    if(archive.read("joint_type", symbol)){
+        if(symbol == "revolute"){
+            link->setJointType(Link::RevoluteJoint);
+        } else if(symbol == "prismatic"){
+            link->setJointType(Link::PrismaticJoint);
+        } else if(symbol == "free"){
+            link->setJointType(Link::FreeJoint);
+        } else if(symbol == "fixed"){
+            link->setJointType(Link::FixedJoint);
+        } else {
+            archive.throwException(format(_("Illegal jointType value \"{0}\""), symbol));
+        }
+        elementSet |= JointType;
+    }
+    Vector3 a;
+    if(read(archive, "joint_axis", a)){
+        link->setJointAxis(a);
+        elementSet |= JointAxis;
+    }
+    int id;
+    if(archive.read("joint_id", id)){
+        link->setJointId(id);
+        elementSet |= JointId;
+    }
+    if(StdBodyLoader::readJointDisplacementRange(&archive, link)){
+        elementSet |= JointRange;
+    }
+    if(StdBodyLoader::readJointVelocityRange(&archive, link)){
+        elementSet |= JointVelocityRange;
+    }
+    if(StdBodyLoader::readJointEffortRange(&archive, link)){
+        elementSet |= JointEffortRange;
+    }
 
     auto shapeArchive = archive.find("shape");
     if(shapeArchive->isValid()){
@@ -597,13 +734,6 @@ bool LinkOverwriteItem::Impl::restore(const Archive& archive)
 
     if(elementSet){
         self->setTargetElementSet(elementSet);
-        if(archive.get("is_additional_link", false)){
-            name.clear();
-            archive.read("parent_link_name", name);
-            self->setAdditionalLink(link, name);
-        } else {
-            self->setReferenceLink(link);
-        }
     }
 
     return elementSet != NoElement;

@@ -23,16 +23,7 @@ public:
     
     virtual bool setOwnerItem(Item* item) override;
 
-    // Functions on link shape overwriting
-    [[deprecated]]
-    bool checkIfSingleShapeBody();
-
-    //! \todo Move this function to LinkOverwriteItem
     LinkOverwriteItem* findLinkOverwriteItem(Link* link);
-
-    //! \todo Move this function to LinkOverwriteItem
-    //LinkOverwriteItem* findOrCreateLinkOverwriteItem(Link* link);
-    
     bool registerLinkOverwriteItem(Link* link, LinkOverwriteItem* item);
     void unregisterLinkOverwriteItem(LinkOverwriteItem* item);
 

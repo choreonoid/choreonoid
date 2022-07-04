@@ -24,6 +24,8 @@ public:
     LinkOverwriteItem(const LinkOverwriteItem& org);
     virtual ~LinkOverwriteItem();
 
+    virtual bool setName(const std::string& name) override;
+
     enum OverwriteElement {
         NoElement          = 0,
         OffsetPosition     = 1 << 0,
@@ -38,7 +40,11 @@ public:
         Inertia            = 1 << 9,
         CenterOfMass       = 1 << 10,
         Material           = 1 << 11,
-        Shape              = 1 << 12
+        Shape              = 1 << 12,
+        AllElements =
+          OffsetPosition | JointType | JointAxis | JointId | JointName | JointRange |
+          JointVelocityRange | JointEffortRange | Mass | Inertia | CenterOfMass |
+          Material | Shape,
     };
 
     void setTargetElementSet(int elementSet);
@@ -53,10 +59,11 @@ public:
     Link* additionalLink();
 
     Link* sourceLink();
+    Link* targetLink();
 
     bool isOverwriting() const;
     bool isOverwritingExistingLink() const;
-    bool isAddiingLink() const;
+    bool isAddingLink() const;
 
     bool updateOverwriting();
     void clearOverwriting();
