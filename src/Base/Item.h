@@ -183,7 +183,12 @@ public:
     int numCheckStates() const;
 
     int numChildren() const { return numChildren_; }
+
     int countDescendantItems() const;
+    template<class ItemType>
+    int countDescendantItems(){
+        return countDescendantItems_(getItemPredicate<ItemType>());
+    }
 
     Item* childItem() const { return firstChild_; }
     Item* prevItem() const { return prevItem_; }
@@ -577,6 +582,7 @@ private:
     static Item* find(const std::string& path, const std::function<bool(Item* item)>& pred);
     Item* findItem(
         const std::string& path, std::function<bool(Item* item)> pred, bool isRecursive) const;
+    int countDescendantItems_(std::function<bool(Item* item)> pred);
     ItemList<Item> getDescendantItems(std::function<bool(Item* item)> pred, bool isRecursive) const;
     void validateClassId() const;
 };

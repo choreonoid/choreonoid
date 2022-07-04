@@ -116,6 +116,7 @@ public:
     void setSelected(bool on, bool forceToNotify, bool doEmitSigSelectedItemsChangedLater);
     bool setSubTreeItemsSelectedIter(Item* item, bool on);
     int countDescendantItems(const Item* item) const;
+    int countDescendantItems(const Item* item, const std::function<bool(Item* item)>& pred) const;
     Item* findItem(const std::function<bool(Item* item)>& pred, bool isRecursive) const;
     Item* findItem(
         ItemPath::iterator iter, ItemPath::iterator end,  const std::function<bool(Item* item)>& pred,
@@ -575,7 +576,26 @@ int Item::Impl::countDescendantItems(const Item* item) const
     }
     return n;
 }
-        
+
+
+int Item::countDescendantItems_(std::function<bool(Item* item)> pred)
+{
+    return impl->countDescendantItems(this, pred);
+}
+
+
+int Item::Impl::countDescendantItems(const Item* item, const std::function<bool(Item* item)>& pred) const
+{
+    int n = 0;
+    for(Item* child = item->childItem(); child; child = child->nextItem()){
+        if(pred(child)){
+            ++n;
+        }
+        n += countDescendantItems(child, pred);
+    }
+    return n;
+}
+
 
 Item* Item::headItem() const
 {
