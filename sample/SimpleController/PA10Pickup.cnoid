@@ -232,6 +232,25 @@ items:
             dynamicFriction: 0.5
             Restitution: 0.1
             jointLimitMode: false
+        -
+          id: 11
+          name: "KinematicSimulator"
+          plugin: Body
+          class: KinematicSimulatorItem
+          data:
+            timeStep: 0.001
+            realtimeSync: true
+            recording: "full"
+            timeRangeMode: "Unlimited"
+            timeLength: 180
+            active_control_time_range_mode: true
+            allLinkPositionOutputMode: true
+            deviceStateOutput: true
+            controllerThreads: true
+            recordCollisionData: false
+            controllerOptions: "kinematics"
+            scene_view_edit_mode_blocking: false
+
 views: 
   - 
     id: 0

@@ -358,6 +358,9 @@ links:
             type: Cylinder
             height: 0.09
             radius: 0.04
+      Holder:
+        name: Gripper
+        translation: [ 0, 0, 0.13 ]
   -
     name: HAND_L
     parent: J7
