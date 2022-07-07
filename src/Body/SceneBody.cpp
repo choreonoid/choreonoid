@@ -150,6 +150,7 @@ class SceneBody::Impl
 public:
     SceneBody* self;
     SgGroupPtr sceneLinkGroup;
+    SgGroupPtr lastEffectGroup;
     std::vector<SceneDevicePtr> sceneDevices;
     std::function<SceneLink*(Link*)> sceneLinkFactory;
 
@@ -382,6 +383,8 @@ SceneBody::Impl::Impl(SceneBody* self)
     : self(self)
 {
     sceneLinkGroup = new SgGroup;
+    lastEffectGroup = sceneLinkGroup;
+    self->addChild(sceneLinkGroup);
 }
 
 
@@ -395,7 +398,6 @@ void SceneBody::setBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFa
 {
     body_ = body;
     impl->sceneLinkFactory = sceneLinkFactory;
-    addChild(impl->sceneLinkGroup);
     updateSceneModel();
 }
 
@@ -404,8 +406,8 @@ void SceneBody::updateSceneModel()
 {
     setName(body_->name());
 
-    if(sceneLinks_.empty()){
-        impl->sceneLinkGroup->clearChildren();
+    if(!sceneLinks_.empty()){
+        impl->lastEffectGroup->clearChildren();
         sceneLinks_.clear();
     }
         
@@ -413,7 +415,7 @@ void SceneBody::updateSceneModel()
     for(int i=0; i < n; ++i){
         Link* link = body_->link(i);
         SceneLink* sLink = impl->sceneLinkFactory(link);
-        impl->sceneLinkGroup->addChild(sLink);
+        impl->lastEffectGroup->addChild(sLink);
         sceneLinks_.push_back(sLink);
     }
     updateLinkPositions();
@@ -531,10 +533,30 @@ void SceneBody::makeTransparent(float transparency)
 void SceneBody::insertEffectGroup(SgGroup* effect, SgUpdateRef update)
 {
     impl->sceneLinkGroup->insertChainedGroup(effect, update);
+    if(impl->lastEffectGroup == impl->sceneLinkGroup){
+        impl->lastEffectGroup = effect;
+    }
 }
 
 
 void SceneBody::removeEffectGroup(SgGroup* effect, SgUpdateRef update)
 {
+    if(effect == impl->lastEffectGroup){
+        auto group = impl->sceneLinkGroup;
+        while(group){
+            if(group->empty()){
+                break;
+            }
+            auto childGroup = dynamic_cast<SgGroup*>(group->child(0));
+            if(!childGroup){
+                break;
+            }
+            if(childGroup == effect){
+                impl->lastEffectGroup = group;
+                break;
+            }
+            group = childGroup;
+        }
+    }
     impl->sceneLinkGroup->removeChainedGroup(effect, update);
 }

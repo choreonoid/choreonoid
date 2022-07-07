@@ -437,15 +437,6 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
                 [&](){ onCollisionLinkHighlightModeChanged(); }));
         
         onCollisionLinkHighlightModeChanged();
-
-        //! This is a temporary code to support DeviceOverwriteItem.
-        connections.add(
-            bodyItem->sigModelUpdated().connect(
-                [this](int flags){
-                    if(flags & (BodyItem::DeviceSetUpdate | BodyItem::DeviceSpecUpdate)){
-                        self->updateSceneDeviceModels(true);
-                    }
-                }));
     }
 }
 
@@ -618,19 +609,29 @@ void EditableSceneBody::Impl::enableHighlight(bool on)
             doUpdate = !highlight->hasParents();
         }
         if(doUpdate){
+            // The following code cannot support the case where
+            // the number of links is changed by model update.
+            /*
             if(self->numSceneLinks() == 1){
                 self->sceneLink(0)->insertEffectGroup(highlight, update);
             } else{
                 self->insertEffectGroup(highlight, update);
             }
+            */
+            self->insertEffectGroup(highlight, update);
         }
     } else {
         if(highlight && highlight->hasParents()){
+            // The following code cannot support the case where
+            // the number of links is changed by model update.
+            /*
             if(self->numSceneLinks() == 1){
                 self->sceneLink(0)->removeEffectGroup(highlight, update);
             } else {
                 self->removeEffectGroup(highlight, update);
             }
+            */
+            self->removeEffectGroup(highlight, update);
         }
     }
 }

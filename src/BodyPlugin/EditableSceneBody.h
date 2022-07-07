@@ -27,8 +27,6 @@ public:
     void showOrigin(bool on);
     bool isOriginShown() const;
     void enableHighlight(bool on);
-    [[deprecated("Use enableHighlight")]]
-    void showOutline(bool on);
     void showMarker(const Vector3f& color, float transparency);
     void hideMarker();
     void setColliding(bool on);

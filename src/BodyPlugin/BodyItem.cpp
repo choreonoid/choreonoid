@@ -173,7 +173,7 @@ public:
     void setBody(Body* body);
     bool makeBodyStatic(bool makeAllJointsFixed = false);
     bool makeBodyDynamic();
-    void setCurrentBaseLink(Link* link, bool forceUpdate = false);
+    void setCurrentBaseLink(Link* link, bool forceUpdate, bool doNotify);
     BodyItemKinematicsKitManager* getOrCreateKinematicsKitManager();
     void createPenetrationBlocker(Link* link, bool excludeSelfCollisions, shared_ptr<PenetrationBlocker>& blocker);
     void setPresetPose(BodyItem::PresetPoseID id);
@@ -294,9 +294,9 @@ BodyItem::Impl::Impl(BodyItem* self, const Impl& org)
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
 
     if(org.currentBaseLink){
-        setCurrentBaseLink(body->link(org.currentBaseLink->index()), true);
+        setCurrentBaseLink(body->link(org.currentBaseLink->index()), true, false);
     } else {
-        setCurrentBaseLink(nullptr, true);
+        setCurrentBaseLink(nullptr, true, false);
     }
 
     initialState = org.initialState;
@@ -340,7 +340,7 @@ void BodyItem::Impl::initBody(bool calledFromCopyConstructor)
     self->collisionLinkBitSet_.resize(n);
     
     if(!calledFromCopyConstructor){
-        setCurrentBaseLink(nullptr, true);
+        setCurrentBaseLink(nullptr, true, false);
         zmp.setZero();
         self->storeInitialState();
     }
@@ -382,7 +382,7 @@ bool BodyItem::Impl::doAssign(const Item* srcItem)
     if(srcBaseLink){
         baseLink = body->link(srcBaseLink->name());
         if(baseLink){
-            setCurrentBaseLink(baseLink);
+            setCurrentBaseLink(baseLink, false, false);
         }
     }
     // copy the current kinematic state
@@ -490,6 +490,10 @@ void BodyItem::Impl::setBody(Body* body_)
             body->setModelName(itemName);
         }
     }
+
+    // Is this necessary?
+    //self->notifyModelUpdate();
+    //self->notifyUpdate();
 }
 
 
@@ -592,7 +596,25 @@ SignalProxy<void(int flags)> BodyItem::sigModelUpdated()
 
 void BodyItem::notifyModelUpdate(int flags)
 {
+    if(flags & LinkSetUpdate){
+        impl->setCurrentBaseLink(impl->currentBaseLink, true, false);
+        if(impl->kinematicsKitManager){
+            impl->kinematicsKitManager->clearKinematicsKits();
+        }
+    }
+
+    if(impl->sceneBody){
+        if(flags & (LinkSetUpdate | ShapeUpdate)){
+            impl->sceneBody->updateSceneModel();
+        } else if(flags & (DeviceSetUpdate | DeviceSpecUpdate)){
+            //! This is a temporary code to support DeviceOverwriteItem.
+            impl->sceneBody->updateSceneDeviceModels(true);
+        }
+    }
+
     impl->sigModelUpdated(flags);
+
+    notifyUpdate();
 }
 
 
@@ -604,11 +626,11 @@ Link* BodyItem::currentBaseLink() const
 
 void BodyItem::setCurrentBaseLink(Link* link)
 {
-    impl->setCurrentBaseLink(link, false);
+    impl->setCurrentBaseLink(link, false, true);
 }
 
 
-void BodyItem::Impl::setCurrentBaseLink(Link* link, bool forceUpdate)
+void BodyItem::Impl::setCurrentBaseLink(Link* link, bool forceUpdate, bool doNotify)
 {
     if(link != currentBaseLink || forceUpdate){
         if(link){
@@ -617,7 +639,9 @@ void BodyItem::Impl::setCurrentBaseLink(Link* link, bool forceUpdate)
             fkTraverse.find(body->rootLink());
         }
         currentBaseLink = link;
-        self->notifyUpdate();
+        if(doNotify){
+            self->notifyUpdate();
+        }
     }
 }
 
@@ -1857,7 +1881,7 @@ bool BodyItem::Impl::restore(const Archive& archive)
     body->calcForwardKinematics();
     string baseLinkName;
     if(archive.read("currentBaseLink", baseLinkName)){
-        setCurrentBaseLink(body->link(baseLinkName));
+        setCurrentBaseLink(body->link(baseLinkName), false, false);
     }
 
     bool on;

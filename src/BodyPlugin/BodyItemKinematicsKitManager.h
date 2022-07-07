@@ -19,6 +19,8 @@ public:
 
     BodyItemKinematicsKit* getCurrentKinematicsKit(Link* targetLink);
     BodyItemKinematicsKit* findPresetKinematicsKit(Link* targetLink = nullptr);
+
+    void clearKinematicsKits();
     
     bool storeState(Mapping& archive) const;
     bool restoreState(const Mapping& archive);

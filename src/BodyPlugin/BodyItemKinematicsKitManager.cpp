@@ -367,6 +367,12 @@ void BodyItemKinematicsKitManager::Impl::onFrameListAssociation(CoordinateFrameL
 }
 
 
+void BodyItemKinematicsKitManager::clearKinematicsKits()
+{
+    impl->linkPairToKinematicsKitMap.clear();
+}
+
+
 bool BodyItemKinematicsKitManager::storeState(Mapping& archive) const
 {
     archive.setKeyQuoteStyle(DOUBLE_QUOTED);
