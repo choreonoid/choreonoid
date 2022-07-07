@@ -596,6 +596,15 @@ void PositionWidget::Impl::setPosition(const Isometry3& T)
 }
 
 
+void PositionWidget::setRpy(const Vector3& rpy)
+{
+    setReferenceRpy(rpy);
+    Isometry3 T = currentPosition();
+    T.linear() = rotFromRpy(rpy);
+    setPosition(T);
+}
+
+
 void PositionWidget::Impl::updateRotationMatrix(const Matrix3& R)
 {
     for(int i=0; i < 3; ++i){
