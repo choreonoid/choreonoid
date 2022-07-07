@@ -24,6 +24,7 @@ namespace {
 
 vector<SceneView*> instances_;
 Connection sigItemAddedConnection;
+Signal<void()> sigInstancesChanged_;
 Signal<void(SceneView* view)> sigLastFocusSceneViewChanged_;
 SceneView* lastFocusSceneView_ = nullptr;
 set<ReferencedPtr> editModeBlockRequesters;
@@ -107,6 +108,12 @@ SceneView* SceneView::instance()
 std::vector<SceneView*> SceneView::instances()
 {
     return instances_;
+}
+
+
+SignalProxy<void()> SceneView::sigInstancesChanged()
+{
+    return sigInstancesChanged_;
 }
 
 
@@ -199,6 +206,8 @@ SceneView::SceneView(NoSceneViewConfig_t)
 {
     impl = new Impl(this);
 
+    sigInstancesChanged_();
+
     if(!lastFocusSceneView_){
         onFocusChanged(true);
     }
@@ -277,6 +286,8 @@ SceneView::Impl::~Impl()
         }
         sigLastFocusSceneViewChanged_(lastFocusSceneView_);
     }
+
+    sigInstancesChanged_();
     
     if(instances_.empty()){
         finalizeClass();

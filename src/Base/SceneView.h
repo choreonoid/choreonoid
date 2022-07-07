@@ -21,7 +21,15 @@ class CNOID_EXPORT SceneView : public View
 public:
     static void initializeClass(ExtensionManager* ext);
 
-    //! This function returns the default instance
+    /**
+       This function returns the default instance.
+
+       \note This function does not necessarily return a valid instance even after
+       the base module initialization. SceneView may be extended by a plugin and the
+       default instance may be created in the plugin initialization. In such a case,
+       this function may return a null pointer during application initialization.
+       Use the sigInstanceChanged signal to obtain the instance reliably.
+    */
     static SceneView* instance();
 
     /**
@@ -29,6 +37,11 @@ public:
        the implementation should not use the function and the function should be removed.
     */
     static std::vector<SceneView*> instances();
+
+    /**
+       This signal is emitted when the instance set is changed.
+    */
+    static SignalProxy<void()> sigInstancesChanged();
 
     /**
        If you want to add a custom mode button to the scene bar, use the SceneBar::addCustomModeButton function.
