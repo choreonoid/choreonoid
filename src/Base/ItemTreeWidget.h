@@ -37,6 +37,7 @@ public:
     bool isRootItemVisible() const;
     void setDragDropEnabled(bool on);
     void setCheckColumnShown(bool on);
+    bool checkItemVisibility(Item* item) const;
 
     template<class ItemType>
     void customizeVisibility(std::function<bool(ItemType* item, bool isTopLevelItemCandidate)> func){
@@ -101,6 +102,7 @@ public:
 
     void updateTreeWidgetItems();
     void setExpanded(Item* item, bool on = true);
+    void expandAll(Item* item);
     void editItemName(Item* item);
 
     ItemList<> getItems() const;

@@ -101,6 +101,7 @@ public:
     bool checkPositionAcceptance(Item* item, Item* parentItem) const;
     void clearTreeWidgetItems();
     void updateTreeWidgetItems();
+    void expandAll(QTreeWidgetItem* twItem);
     ItwItem* findItwItem(Item* item);
     ItwItem* findOrCreateItwItem(Item* item);
     void addCheckColumn(int checkId);
@@ -638,6 +639,12 @@ void ItemTreeWidget::Impl::setCheckColumnShown(int column, bool on)
         header()->hideSection(column);
     }
 }
+
+
+bool ItemTreeWidget::checkItemVisibility(Item* item) const
+{
+    return impl->itemToItwItemMap.find(item) != impl->itemToItwItemMap.end();
+}
             
 
 void ItemTreeWidget::customizeVisibility_
@@ -742,10 +749,38 @@ void ItemTreeWidget::setExpanded(Item* item, bool on)
 }
 
 
+void ItemTreeWidget::expandAll(Item* item)
+{
+    if(auto itwItem = impl->findItwItem(item)){
+        impl->expandAll(itwItem);
+    }
+}
+
+
+void ItemTreeWidget::Impl::expandAll(QTreeWidgetItem* twItem)
+{
+    twItem->setExpanded(true);
+    
+    int n = twItem->childCount();
+    for(int i=0; i < n; ++i){
+        if(auto childItem = twItem->child(i)){
+            expandAll(childItem);
+        }
+    }
+}
+
+
 void ItemTreeWidget::editItemName(Item* item)
 {
     if(auto itwItem = impl->findItwItem(item)){
+        bool isEditable = (itwItem->flags() & Qt::ItemIsEditable);
+        if(!isEditable){
+            itwItem->setFlags(itwItem->flags() | Qt::ItemIsEditable);
+        }
         impl->editItem(itwItem);
+        if(!isEditable){
+            itwItem->setFlags(itwItem->flags() & ~Qt::ItemIsEditable);
+        }
     }
 }
 
