@@ -163,6 +163,7 @@ public:
     bool isActiveControlTimeRangeMode() const;
 
     void setRealtimeSyncMode(bool on);
+    void setFasterThanRealtimeEnabled(bool on);
     
     void setDeviceStateOutputEnabled(bool on);
 
