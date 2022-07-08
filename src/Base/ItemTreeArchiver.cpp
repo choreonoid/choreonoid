@@ -461,9 +461,16 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
             }
         }
         if(item){
-            parentItem->addChildItem(item);
-            restoreItemStates(archive, item);
-            ++numRestoredItems;
+            if(!parentItem->addChildItem(item)){
+                mv->putln(
+                    format(_("{0} \"{1}\" cannot be added to \"{2}\" as a child item."),
+                           className, itemName, parentItem->displayName()),
+                    MessageView::Error);
+                item.reset();
+            } else {
+                restoreItemStates(archive, item);
+                ++numRestoredItems;
+            }
         }
     }
 
