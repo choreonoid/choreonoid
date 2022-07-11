@@ -458,6 +458,20 @@ ScalarNode::ScalarNode(int value)
 }
 
 
+ScalarNode::ScalarNode(double value, const char* floatingNumberFormat_)
+    : stringValue_(std::to_string(value))
+{
+    char buf[32];
+    int n = snprintf(buf, 32, floatingNumberFormat_ ? floatingNumberFormat_ : defaultFloatingNumberFormat, value);
+    stringValue_.assign(buf, n);
+
+    typeBits = SCALAR;
+    line_ = -1;
+    column_ = -1;
+    stringStyle_ = PLAIN_STRING;
+}
+
+
 ScalarNode::ScalarNode(const ScalarNode& org)
     : ValueNode(org),
       stringValue_(org.stringValue_),

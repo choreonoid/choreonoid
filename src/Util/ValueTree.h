@@ -121,7 +121,7 @@ public:
        \todo integrate the exception classes with the common ones defined in Exception.h
     */
     class CNOID_EXPORT Exception {
-public:
+    public:
         Exception();
         virtual ~Exception();
         int line() const { return line_; }
@@ -134,7 +134,7 @@ public:
         void setMessage(const std::string& m){
             message_ = m;
         }
-private:
+    private:
         int line_;
         int column_;
         std::string message_;
@@ -221,6 +221,7 @@ class CNOID_EXPORT ScalarNode : public ValueNode
 public:
     ScalarNode(const std::string& value, StringStyle stringStyle = PLAIN_STRING);
     ScalarNode(int value);
+    ScalarNode(double value, const char* floatingNumberFormat_ = nullptr);
     
     virtual ValueNode* clone() const;
 
