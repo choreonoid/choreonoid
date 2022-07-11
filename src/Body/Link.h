@@ -269,6 +269,10 @@ public:
     double u_upper() const { return u_upper_; } ///< the upper limit of joints efforts
     double u_lower() const { return u_lower_; } ///< the lower limit of joint efforts
 
+    bool hasJointDisplacementLimits() const;
+    bool hasJointVelocityLimits() const;
+    bool hasJointEffortLimits() const;
+
     const Vector3& v() const { return v_; }
     Vector3& v() { return v_; }
     const Vector3& w() const { return w_; }

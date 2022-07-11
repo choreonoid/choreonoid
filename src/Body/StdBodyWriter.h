@@ -9,6 +9,7 @@
 namespace cnoid {
 
 class Body;
+class Link;
 class Device;
 class Mapping;
 class StdSceneWriter;
@@ -62,6 +63,10 @@ public:
     {
         return writeDeviceAs_(typeid(DeviceType), info, device);
     }
+
+    static void writeJointDisplacementRange(Mapping* node, Link* link, bool forceOutput = false);
+    static void writeJointVelocityRange(Mapping* node, Link* link, bool forceOutput = false);
+    static void writeJointEffortRange(Mapping* node, Link* link, bool forceOutput = false);
 
 private:
     class Impl;

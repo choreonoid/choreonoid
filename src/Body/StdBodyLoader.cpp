@@ -297,6 +297,9 @@ public:
     void setJointId(Link* link, int id);
     void readJointContents(Link* link, Mapping* node);
     void readAxis(ValueNode* node, Vector3& out_axis);
+    static bool readJointDisplacementRange(Mapping* node, Link* link, bool isDegree, bool doExtract);
+    static bool readJointVelocityRange(Mapping* node, Link* link, bool isDegree, bool doExtract);
+    static bool readJointEffortRange(Mapping* node, Link* link, bool doExtract);
     void setJointParameters(Link* link, string jointType, ValueNode* node);
     void setMassParameters(Link* link);
 
@@ -333,7 +336,7 @@ public:
         return sceneReader.toRadian(angle);
     }
 
-    double readLimitValue(ValueNode& node, bool isUpper){
+    static double readLimitValue(ValueNode& node, bool isUpper){
         double value;
         if(node.read(value)){
             return value;
@@ -1205,60 +1208,9 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
         }
     }
 
-    double lower = -std::numeric_limits<double>::max();
-    double upper =  std::numeric_limits<double>::max();
-    
-    if(auto jointRangeNode = node->extract({ "joint_range", "jointRange" })){
-        if(jointRangeNode->isScalar()){
-            upper = readLimitValue(*jointRangeNode, true);
-            lower = -upper;
-        } else if(jointRangeNode->isListing()){
-            Listing& jointRange = *jointRangeNode->toListing();
-            if(jointRange.size() != 2){
-                jointRangeNode->throwException(_("jointRange must have two elements"));
-            }
-            lower = readLimitValue(jointRange[0], false);
-            upper = readLimitValue(jointRange[1], true);
-        } else {
-            jointRangeNode->throwException(_("Invalid type value is specefied as a jointRange"));
-        }
-    }
-    if(link->isRevoluteJoint() && isDegreeMode()){
-        link->setJointRange(
-            lower == -std::numeric_limits<double>::max() ? lower : radian(lower),
-            upper ==  std::numeric_limits<double>::max() ? upper : radian(upper));
-    } else {
-        link->setJointRange(lower, upper);
-    }
-    
-    auto maxVelocityNode = node->extract({"max_joint_velocity", "maxJointVelocity"});
-    if(maxVelocityNode){
-        double maxVelocity = maxVelocityNode->toDouble();
-        if(link->isRevoluteJoint()){
-            link->setJointVelocityRange(toRadian(-maxVelocity), toRadian(maxVelocity));
-        } else {
-            link->setJointVelocityRange(-maxVelocity, maxVelocity);
-        }
-    }
-
-    auto velocityRangeNode = node->extract({ "joint_velocity_range", "jointVelocityRange" });
-    if(velocityRangeNode){
-        Listing& velocityRange = *velocityRangeNode->toListing();
-        if(velocityRange.size() != 2){
-            velocityRangeNode->throwException(_("The joint velocity range node must have two elements"));
-        }
-        if(link->isRevoluteJoint()){
-            link->setJointVelocityRange(toRadian(velocityRange[0].toDouble()), toRadian(velocityRange[1].toDouble()));
-        } else {
-            link->setJointVelocityRange(velocityRange[0].toDouble(), velocityRange[1].toDouble());
-        }
-    }
-
-    auto maxEffortNode = node->extract({"max_joint_effort"});
-    if(maxEffortNode){
-        const double maxEffort = maxEffortNode->toDouble();
-        link->setJointEffortRange(-maxEffort, maxEffort);
-    }
+    readJointDisplacementRange(node, link, isDegreeMode(), true);
+    readJointVelocityRange(node, link, isDegreeMode(), true);
+    readJointEffortRange(node, link, true);
 
     double Ir = 0.0;
     auto jointAxisInertiaNode = node->extract("joint_axis_inertia");
@@ -1299,6 +1251,143 @@ void StdBodyLoader::Impl::readAxis(ValueNode* node, Vector3& out_axis)
             node->throwException("Illegal axis value");
         }
     }
+}
+
+
+bool StdBodyLoader::readJointDisplacementRange(const Mapping* node, Link* link)
+{
+    return Impl::readJointDisplacementRange(const_cast<Mapping*>(node), link, true, false);
+}
+
+
+bool StdBodyLoader::Impl::readJointDisplacementRange(Mapping* node, Link* link, bool isDegree, bool doExtract)
+{
+    bool found = false;
+    
+    double lower = -std::numeric_limits<double>::max();
+    double upper =  std::numeric_limits<double>::max();
+
+    ValueNodePtr rangeNode;
+    if(doExtract){
+        rangeNode = node->extract({ "joint_range", "jointRange" });
+    } else {
+        rangeNode = node->find({ "joint_range", "jointRange" });
+        if(!rangeNode->isValid()){
+            rangeNode.reset();
+        }
+    }
+    if(rangeNode){
+        if(rangeNode->isScalar()){
+            upper = readLimitValue(*rangeNode, true);
+            lower = -upper;
+        } else if(rangeNode->isListing()){
+            Listing& rangeList = *rangeNode->toListing();
+            if(rangeList.size() != 2){
+                rangeList.throwException(_("jointRange must have two elements"));
+            }
+            lower = readLimitValue(rangeList[0], false);
+            upper = readLimitValue(rangeList[1], true);
+        } else {
+            rangeNode->throwException(_("Invalid joint range value"));
+        }
+        found = true;
+    }
+    if(link->isRevoluteJoint() && isDegree){
+        link->setJointRange(
+            lower == -std::numeric_limits<double>::max() ? lower : radian(lower),
+            upper ==  std::numeric_limits<double>::max() ? upper : radian(upper));
+    } else {
+        link->setJointRange(lower, upper);
+    }
+
+    return found;
+}
+
+
+bool StdBodyLoader::readJointVelocityRange(const Mapping* node, Link* link)
+{
+    return Impl::readJointVelocityRange(const_cast<Mapping*>(node), link, true, false);
+}
+
+
+bool StdBodyLoader::Impl::readJointVelocityRange(Mapping* node, Link* link, bool isDegree, bool doExtract)
+{
+    bool found = false;
+
+    double lower = -std::numeric_limits<double>::max();
+    double upper =  std::numeric_limits<double>::max();
+    ValueNodePtr rangeNode;
+    
+    if(doExtract){
+        rangeNode = node->extract({"max_joint_velocity", "maxJointVelocity"});
+    } else {
+        rangeNode = node->find({"max_joint_velocity", "maxJointVelocity"});
+        if(!rangeNode->isValid()){
+            rangeNode.reset();
+        }
+    }
+    if(rangeNode){
+        upper = readLimitValue(*rangeNode, true);
+        lower = -upper;
+        found = true;
+    }
+
+    if(!found){
+        if(doExtract){
+            rangeNode = node->extract({ "joint_velocity_range", "jointVelocityRange" });
+        } else {
+            rangeNode = node->find({ "joint_velocity_range", "jointVelocityRange" });
+            if(!rangeNode->isValid()){
+                rangeNode.reset();
+            }
+        }
+        if(rangeNode){
+            Listing& rangeList = *rangeNode->toListing();
+            if(rangeList.size() != 2){
+                rangeList.throwException(_("The joint velocity range node must have two elements"));
+            }
+            lower = readLimitValue(rangeList[0], false);
+            upper = readLimitValue(rangeList[1], true);
+            found = true;
+        }
+    }
+
+    if(link->isRevoluteJoint() && isDegree){
+        link->setJointVelocityRange(
+            lower == -std::numeric_limits<double>::max() ? lower : radian(lower),
+            upper ==  std::numeric_limits<double>::max() ? upper : radian(upper));
+    } else {
+        link->setJointRange(lower, upper);
+    }
+
+    return found;
+}
+
+
+bool StdBodyLoader::readJointEffortRange(const Mapping* node, Link* link)
+{
+    return Impl::readJointEffortRange(const_cast<Mapping*>(node), link, false);
+}
+
+
+bool StdBodyLoader::Impl::readJointEffortRange(Mapping* node, Link* link, bool doExtract)
+{
+    bool found = false;
+    ValueNodePtr maxNode;
+    if(doExtract){
+        maxNode = node->extract("max_joint_effort");
+    } else {
+        maxNode = node->find("max_joint_effort");
+        if(!maxNode->isValid()){
+            maxNode.reset();
+        }
+    }
+    if(maxNode){
+        double effort = readLimitValue(*maxNode, true);
+        link->setJointEffortRange(-effort, effort);
+        found = true;
+    }
+    return found;
 }
 
 

@@ -346,6 +346,27 @@ const char* Link::jointTypeString(bool useUnderscore) const
 }
 
 
+bool Link::hasJointDisplacementLimits() const
+{
+    return q_upper_ < std::numeric_limits<double>::max() &&
+           q_lower_ > -std::numeric_limits<double>::max();
+}
+
+
+bool Link::hasJointVelocityLimits() const
+{
+    return dq_upper_ < std::numeric_limits<double>::max() &&
+           dq_lower_ > -std::numeric_limits<double>::max();
+}
+
+
+bool Link::hasJointEffortLimits() const
+{
+    return u_upper_ < std::numeric_limits<double>::max() &&
+           u_lower_ > -std::numeric_limits<double>::max();
+}
+
+
 std::string Link::getStateModeString(short mode)
 {
     if(mode == StateNone){

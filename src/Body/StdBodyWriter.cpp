@@ -227,6 +227,10 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
         writeDegreeAngleAxis(node, "rotation", aa);
     }
 
+    if(!link->jointName().empty()){
+        node->write("joint_name", link->jointName());
+    }
+
     node->write("joint_type", link->jointTypeSymbol());
 
     if(!link->isFreeJoint() && !link->isFixedJoint()){
@@ -244,22 +248,10 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
                 node->write("joint_displacement", link->q_initial());
             }
         }
-        auto rangeNode = node->createFlowStyleListing("joint_range");
-        if(link->isRevoluteJoint()){
-            rangeNode->append(degree(link->q_lower()));
-            rangeNode->append(degree(link->q_upper()));
-        } else {
-            rangeNode->append(link->q_lower());
-            rangeNode->append(link->q_upper());
-        }
-        rangeNode = node->createFlowStyleListing("joint_velocity_range");
-        if(link->isRevoluteJoint()){
-            rangeNode->append(degree(link->dq_lower()));
-            rangeNode->append(degree(link->dq_upper()));
-        } else {
-            rangeNode->append(link->dq_lower());
-            rangeNode->append(link->dq_upper());
-        }
+        writeJointDisplacementRange(node, link, false);
+        writeJointVelocityRange(node, link, false);
+        writeJointEffortRange(node, link, false);
+        
         if(link->Jm2() != 0.0){
             node->write("joint_axis_inertia", link->Jm2());
         }
@@ -287,6 +279,51 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
     }
 
     return node;
+}
+
+
+static ValueNode* createLimitValueNode(double value, bool isAngle, const char* format)
+{
+    if(value <= -std::numeric_limits<double>::max() || value >= std::numeric_limits<double>::max()){
+        return new ScalarNode("unlimited");
+    } else if(isAngle){
+        return new ScalarNode(degree(value), format);
+    } else {
+        return new ScalarNode(value, format);
+    }
+}
+
+
+void StdBodyWriter::writeJointDisplacementRange(Mapping* node, Link* link, bool forceOutput)
+{
+    if(link->hasJointDisplacementLimits() || forceOutput){
+        auto range = node->createFlowStyleListing("joint_range");
+        range->append(createLimitValueNode(link->q_lower(), link->isRevoluteJoint(), node->floatingNumberFormat()));
+        range->append(createLimitValueNode(link->q_upper(), link->isRevoluteJoint(), node->floatingNumberFormat()));
+    }
+}
+
+
+void StdBodyWriter::writeJointVelocityRange(Mapping* node, Link* link, bool forceOutput)
+{
+    if(link->hasJointVelocityLimits() || forceOutput){
+        if(link->dq_lower() == -link->dq_upper()){
+            node->write("max_joint_velocity",
+                        createLimitValueNode(link->dq_upper(), link->isRevoluteJoint(), node->floatingNumberFormat()));
+        } else {
+            auto range = node->createFlowStyleListing("joint_velocity_range");
+            range->append(createLimitValueNode(link->dq_lower(), link->isRevoluteJoint(), node->floatingNumberFormat()));
+            range->append(createLimitValueNode(link->dq_upper(), link->isRevoluteJoint(), node->floatingNumberFormat()));
+        }
+    }
+}
+
+
+void StdBodyWriter::writeJointEffortRange(Mapping* node, Link* link, bool forceOutput)
+{
+    if(link->hasJointEffortLimits() || forceOutput){
+        node->write("max_joint_effort", createLimitValueNode(link->u_upper(), false, node->floatingNumberFormat()));
+    }
 }
 
 

@@ -14,6 +14,7 @@
 namespace cnoid {
 
 class Mapping;
+class Link;
 class Device;
 class StdSceneReader;
   
@@ -76,6 +77,10 @@ public:
         NodeTypeRegistration(
             const char* typeName, std::function<bool(StdBodyLoader& loader, const Mapping& info)> readFunction);
     };
+
+    static bool readJointDisplacementRange(const Mapping* node, Link* link);
+    static bool readJointVelocityRange(const Mapping* node, Link* link);
+    static bool readJointEffortRange(const Mapping* node, Link* link);
 
 private:
     class Impl;
