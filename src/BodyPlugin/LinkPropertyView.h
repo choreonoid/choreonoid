@@ -18,7 +18,9 @@ public:
     ~LinkPropertyView();
 
 protected:
-    void keyPressEvent(QKeyEvent* event);
+    virtual void onActivated() override;
+    virtual void onDeactivated() override;
+    virtual void keyPressEvent(QKeyEvent* event) override;
 
 private:
     class Impl;

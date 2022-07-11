@@ -3,12 +3,13 @@
 */
 
 #include "LinkPropertyView.h"
-#include "BodyItem.h"
 #include "BodySelectionManager.h"
+#include <cnoid/BodyItem>
 #include <cnoid/Link>
 #include <cnoid/ViewManager>
 #include <cnoid/AppConfig>
 #include <cnoid/ConnectionSet>
+#include <cnoid/MathUtil>
 #include <QTableWidget>
 #include <QHeaderView>
 #include <QBoxLayout>
@@ -24,7 +25,10 @@ class LinkPropertyView::Impl : public QTableWidget
 {
 public:
     LinkPropertyView* self;
-    ScopedConnection connection;
+    ScopedConnection bodySelectionManagerConnection;
+    ScopedConnection modelUpdateConnection;
+    BodyItemPtr currentBodyItem;
+    LinkPtr currentLink;
     int fontPointSizeDiff;
 
     Impl(LinkPropertyView* self);
@@ -84,14 +88,6 @@ LinkPropertyView::Impl::Impl(LinkPropertyView* self)
     if(config->read("fontZoom", storedFontPointSizeDiff)){
         zoomFontSize(storedFontPointSizeDiff);
     }
-
-    auto bsm = BodySelectionManager::instance();
-    connection.reset(
-        bsm->sigCurrentChanged().connect(
-            [this, bsm](BodyItem* bodyItem, Link* link){
-                if(!link) link = bsm->currentLink();
-                onCurrentLinkChanged(bodyItem, link);
-            }));
 }
 
 
@@ -101,18 +97,62 @@ LinkPropertyView::~LinkPropertyView()
 }
 
 
+void LinkPropertyView::onActivated()
+{
+    auto bsm = BodySelectionManager::instance();
+
+    impl->bodySelectionManagerConnection =
+        bsm->sigCurrentChanged().connect(
+            [this, bsm](BodyItem* bodyItem, Link* link){
+                if(!link){
+                    link = bsm->currentLink();
+                }
+                impl->onCurrentLinkChanged(bodyItem, link);
+            });
+    
+    impl->onCurrentLinkChanged(bsm->currentBodyItem(), bsm->currentLink());
+}
+
+
+void LinkPropertyView::onDeactivated()
+{
+    impl->bodySelectionManagerConnection.disconnect();
+    impl->onCurrentLinkChanged(nullptr, nullptr);
+}
+
+
 void LinkPropertyView::Impl::onCurrentLinkChanged(BodyItem* bodyItem, Link* link)
 {
-    setRowCount(0); // clear
-
-    if(bodyItem && link){
+    if(bodyItem != currentBodyItem){
+        if(!bodyItem){
+            modelUpdateConnection.disconnect();
+        } else {
+            modelUpdateConnection =
+                bodyItem->sigModelUpdated().connect(
+                    [this](int flags){
+                        if(flags & BodyItem::LinkSetUpdate){
+                            updateLinkProperties(currentLink);
+                        }
+                    });
+        }
+        currentBodyItem = bodyItem;
+    }
+    
+    if(link != currentLink){
         updateLinkProperties(link);
+        currentLink = link;
     }
 }
 
 
 void LinkPropertyView::Impl::updateLinkProperties(Link* link)
 {
+    setRowCount(0); // clear
+
+    if(!link){
+        return;
+    }
+    
     addProperty(_("Name"), link->name());
     addProperty(_("Index"), link->index());
     addProperty(_("Offset translation"), Vector3(link->offsetTranslation()));
@@ -122,12 +162,25 @@ void LinkPropertyView::Impl::updateLinkProperties(Link* link)
     addProperty(_("Inertia tensor"), link->I());
     addProperty(_("Material"), link->materialName());
     addProperty(_("Joint type"), link->jointTypeLabel());
+
     if(link->hasActualJoint()){
         addProperty(_("Joint axis"), link->jointAxis());
-        addProperty(_("Upper joint limit"), link->q_upper());
-        addProperty(_("Lower joint limit"), link->q_lower());
-        addProperty(_("Upper joint velocity"), link->dq_upper());
-        addProperty(_("Lower joint velocity"), link->dq_lower());
+
+        double q_lower = link->q_lower();
+        double q_upper = link->q_upper();
+        double dq_lower = link->dq_lower();
+        double dq_upper = link->dq_upper();
+        if(link->isRevoluteJoint()){
+            q_lower = degree(q_lower);
+            q_upper = degree(q_upper);
+            dq_lower = degree(dq_lower);
+            dq_upper = degree(dq_upper);
+        }
+        addProperty(_("Lower joint limit"), q_lower);
+        addProperty(_("Upper joint limit"), q_upper);
+        addProperty(_("Lower joint velocity"), dq_lower);
+        addProperty(_("Upper joint velocity"), dq_upper);
+
         addProperty(_("Joint inertia"), link->Jm2());
     }
 

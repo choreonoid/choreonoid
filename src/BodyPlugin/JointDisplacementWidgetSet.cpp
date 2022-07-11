@@ -94,6 +94,7 @@ public:
             
     ScopedConnection linkSelectionChangeConnection;
     ScopedConnection kinematicStateChangeConnection;
+    ScopedConnection modelUpdateConnection;
 
     DisplayValueFormat* dvFormat;
     ScopedConnection dvFormatConnection;
@@ -360,9 +361,20 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
         updateIndicatorGrid();
 
         kinematicStateChangeConnection.disconnect();
+        modelUpdateConnection.disconnect();
+
         if(bodyItem){
             kinematicStateChangeConnection =
                 bodyItem->sigKinematicStateChanged().connect(updateJointDisplacementsLater);
+
+            modelUpdateConnection =
+                bodyItem->sigModelUpdated().connect(
+                    [this](int flags){
+                        if(flags & BodyItem::LinkSetUpdate){
+                            updateIndicatorGrid();
+                        }
+                    });
+                    
             updateJointDisplacements();
         }
     }

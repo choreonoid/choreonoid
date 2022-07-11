@@ -23,6 +23,7 @@ public:
     JointDisplacementWidgetSet* displacementWidgetSet;
     ToolButton menuButton;
     ScopedConnection bodySelectionManagerConnection;
+    ScopedConnection modelUpdateConnection;
 
     Impl(JointDisplacementView* self);
     ~Impl();
@@ -122,6 +123,7 @@ void JointDisplacementView::onDeactivated()
 {
     impl->bodySelectionManagerConnection.disconnect();
     impl->displacementWidgetSet->setBodyItem(nullptr);
+    impl->modelUpdateConnection.disconnect();
 }
 
 
@@ -133,17 +135,31 @@ void JointDisplacementView::onAttachedMenuRequest(MenuManager& menuManager)
 
 void JointDisplacementView::Impl::onCurrentBodyItemChanged(BodyItem* bodyItem)
 {
+    modelUpdateConnection.disconnect();
+    
     if(!bodyItem){
         targetLabel.setText("------");
         displacementWidgetSet->setBodyItem(nullptr);
     } else {
-        while(bodyItem){
-            if(bodyItem->body()->numJoints() > 0){
-                targetLabel.setText(bodyItem->displayName().c_str());
-                displacementWidgetSet->setBodyItem(bodyItem);
+        bool updated = false;
+        auto candidate = bodyItem;
+        while(candidate){
+            if(candidate->body()->numJoints() > 0){
+                targetLabel.setText(candidate->displayName().c_str());
+                displacementWidgetSet->setBodyItem(candidate);
+                updated = true;
                 break;
             }
-            bodyItem = bodyItem->parentBodyItem();
+            candidate = candidate->parentBodyItem();
+        }
+        if(!updated){
+            modelUpdateConnection =
+                bodyItem->sigModelUpdated().connect(
+                    [this, bodyItem](int flags){
+                        if(flags & BodyItem::LinkSetUpdate){
+                            onCurrentBodyItemChanged(bodyItem);
+                        }
+                    });
         }
     }
 }
