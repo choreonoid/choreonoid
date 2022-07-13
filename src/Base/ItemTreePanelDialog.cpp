@@ -50,13 +50,14 @@ public:
     PolymorphicItemFunctionSet  panelFunctions;
     ItemTreePanelBase* panelToActivate;
     ItemTreePanelBase* currentPanel;
-    QLabel topAreaLabel;
     QHBoxLayout topWidgetLayout;
+    QHBoxLayout topAreaStretch;
     ItemTreeWidget itemTreeWidget;
     ScopedConnection itemTreeWidgetConnection;
     QFrame panelFrame;
     PanelArea panelArea;
     QVBoxLayout panelLayout;
+    QWidget panelCaptionBase;
     QLabel panelCaptionLabel;
     QLabel defaultPanelLabel;
     
@@ -64,12 +65,11 @@ public:
     void initialize();
     ~Impl();
     void setPanelOnlyDisplayMode(bool on);
-    void updateTopAreaLayout();
     void showPanel();
     void onSelectionChanged(const ItemList<>& items);
     void activateItem(Item* item, bool isNewItem, bool doKeepLastPanel);
-    void deactivateCurrentPanel(bool doClearCurrentItem);
-    void deactivatePanel(ItemTreePanelBase* panel, bool isPanelAccepted);
+    void deactivateCurrentPanel(int deactivationType, bool doClearCurrentItem);
+    void deactivatePanel(ItemTreePanelBase* panel, int deactivationType, bool doClearCurrentItem);
     void clear();
 };
 
@@ -91,27 +91,47 @@ bool ItemTreePanelBase::activate
 }
 
 
+void ItemTreePanelBase::setCaption(const std::string& caption)
+{
+    if(caption != caption_){
+        caption_ = caption;
+        if(currentDialog){
+            currentDialog->onCurrentPanelCaptionChanged();
+        }
+    }
+}
+
+
 void ItemTreePanelBase::accept()
 {
-    if(currentDialog){
-        currentDialog->impl->deactivatePanel(this, true);
-    } else {
-        onDeactivated();
-    }
+    finish(Accepted);
 }
 
 
 void ItemTreePanelBase::reject()
 {
-    if(currentDialog){
-        currentDialog->impl->deactivatePanel(this, false);
+    finish(Rejected);
+}
+
+
+void ItemTreePanelBase::finish(int deactivationType)
+{
+    if(!currentDialog){
+        onDeactivated(deactivationType);
     } else {
-        onDeactivated();
+        auto impl = currentDialog->impl;
+        int numItems = impl->itemTreeWidget.getItems().size();
+        impl->deactivatePanel(this, deactivationType, true);
+        if(numItems <= 1){
+            currentDialog->close();
+        } else {
+            impl->showPanel();
+        }
     }
 }
 
 
-void ItemTreePanelBase::onDeactivated()
+void ItemTreePanelBase::onDeactivated(int /* deactivationType */)
 {
 
 }
@@ -158,25 +178,24 @@ void ItemTreePanelDialog::Impl::initialize()
     panelToActivate = nullptr;
     currentPanel = nullptr;
 
-    auto vbox = new QVBoxLayout;
-    self->setLayout(vbox);
+    auto topVBox = new QVBoxLayout;
+    self->setLayout(topVBox);
 
     auto hbox = new QHBoxLayout;
-    topAreaLabel.setText(_("Add : "));
-    topAreaLabel.setStyleSheet("font-weight: bold");
-    hbox->addWidget(&topAreaLabel);
     hbox->addLayout(&topWidgetLayout);
-    hbox->addStretch();
-    vbox->addLayout(hbox);
+    topAreaStretch.addStretch();
+    hbox->addLayout(&topAreaStretch);
+    topVBox->addLayout(hbox);
 
     hbox = new QHBoxLayout;
     itemTreeWidget.setDragDropEnabled(false);
     itemTreeWidget.setCheckColumnShown(false);
+    /*
     QFontMetrics metrics(itemTreeWidget.font());
     int width = metrics.averageCharWidth() * 24;
     itemTreeWidget.setMinimumWidth(width);
-    itemTreeWidget.setMaximumWidth(width);
-    hbox->addWidget(&itemTreeWidget, 0);
+    */
+    hbox->addWidget(&itemTreeWidget, 1);
 
     int mh = self->style()->pixelMetric(QStyle::PM_LayoutLeftMargin);
     int mv = self->style()->pixelMetric(QStyle::PM_LayoutTopMargin);
@@ -184,11 +203,17 @@ void ItemTreePanelDialog::Impl::initialize()
     panelFrame.setFrameStyle(QFrame::StyledPanel);
     panelFrame.setLineWidth(2);
     auto frameLayout = new QVBoxLayout;
-    frameLayout->setContentsMargins(0, mh / 2, 0, 0);
+    frameLayout->setContentsMargins(0, 0, 0, 0);
     frameLayout->setSpacing(0);
+
+    auto vbox = new QVBoxLayout;
+    panelCaptionBase.setLayout(vbox);
+    vbox->setContentsMargins(0, mv / 2, 0, 0);
     panelCaptionLabel.setStyleSheet("font-weight: bold");
     panelCaptionLabel.setAlignment(Qt::AlignHCenter);
-    frameLayout->addWidget(&panelCaptionLabel);
+    vbox->addWidget(&panelCaptionLabel);
+    frameLayout->addWidget(&panelCaptionBase);
+    
     frameLayout->addWidget(&panelArea);
     panelFrame.setLayout(frameLayout);
 
@@ -199,7 +224,7 @@ void ItemTreePanelDialog::Impl::initialize()
     panelLayout.addWidget(&defaultPanelLabel, Qt::AlignCenter);
 
     hbox->addWidget(&panelFrame, 1);
-    vbox->addLayout(hbox);
+    topVBox->addLayout(hbox);
 
     itemTreeWidget.customizeVisibility<Item>(
         [](Item*, bool){ return false; });
@@ -240,10 +265,9 @@ int ItemTreePanelDialog::mode() const
 void ItemTreePanelDialog::Impl::setPanelOnlyDisplayMode(bool on)
 {
     if(on != isPanelOnlyDisplayMode){
-        topAreaLabel.setVisible(!on);
         itemTreeWidget.setVisible(!on);
         panelFrame.setFrameStyle(on ? QFrame::NoFrame : QFrame::StyledPanel);
-        panelCaptionLabel.setVisible(!on);
+        panelCaptionBase.setVisible(!on);
         isPanelOnlyDisplayMode = on;
     }
 }
@@ -273,26 +297,21 @@ void ItemTreePanelDialog::addTopAreaWidget(QWidget* widget)
 }
 
 
-void ItemTreePanelDialog::updateTopAreaLayout()
+void ItemTreePanelDialog::addTopAreaSpacing(int spacing)
 {
-    impl->updateTopAreaLayout();
+    impl->topWidgetLayout.addSpacing(spacing);
 }
 
 
-void ItemTreePanelDialog::Impl::updateTopAreaLayout()
+void ItemTreePanelDialog::setTopAreaLayoutStretchEnabled(bool on)
 {
-    bool hasVisibleWidget = false;
-    int n = topWidgetLayout.count();
-    for(int i=0; i < n; ++i){
-        auto item = topWidgetLayout.itemAt(i);
-        if(auto widget = item->widget()){
-            if(!widget->isHidden()){
-                hasVisibleWidget = true;
-                break;
-            }
+    if(on){
+        if(impl->topAreaStretch.count() == 0){
+            impl->topAreaStretch.addStretch();
         }
+    } else {
+        impl->topAreaStretch.takeAt(0);
     }
-    topAreaLabel.setVisible(hasVisibleWidget);
 }
 
 
@@ -301,7 +320,6 @@ bool ItemTreePanelDialog::setTopItem(Item* item, bool isTopVisible)
     impl->topItem = item;
     impl->itemTreeWidget.setRootItemVisible(isTopVisible);
     impl->itemTreeWidget.setRootItem(item);
-    impl->itemTreeWidget.updateTreeWidgetItems();
     impl->needToUpdatePanel = true;
     return true;
 }
@@ -316,15 +334,15 @@ void ItemTreePanelDialog::show()
     if(!impl->isPanelOnlyDisplayMode){
         // The label must be displayed when the dialog is shown
         // to ensure the necessary dialog size
-        isPanelCaptionHidden = impl->panelCaptionLabel.isHidden();
-        impl->panelCaptionLabel.show();
+        isPanelCaptionHidden = impl->panelCaptionBase.isHidden();
+        impl->panelCaptionBase.show();
     }
-    
+
     Dialog::show();
 
     // Restore the label visibility
     if(isPanelCaptionHidden){
-        impl->panelCaptionLabel.hide();
+        impl->panelCaptionBase.hide();
     }
 }
 
@@ -353,6 +371,11 @@ bool ItemTreePanelDialog::setCurrentItem(Item* item, bool isNewItem)
 }
 
 
+Item* ItemTreePanelDialog::currentItem()
+{
+    return impl->currentItem;
+}
+
 
 void ItemTreePanelDialog::Impl::onSelectionChanged(const ItemList<>& items)
 {
@@ -380,12 +403,12 @@ void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem, bool do
     }
 
     if(!doKeepLastPanel || panelToActivate){
-        deactivateCurrentPanel(false);
+        deactivateCurrentPanel(ItemTreePanelBase::Undetermined, false);
         currentItem = item;
         if(currentItem){
             currentItemConnection =
                 currentItem->sigDisconnectedFromRoot().connect(
-                    [this](){ deactivateCurrentPanel(true); });
+                    [this](){ deactivateCurrentPanel(ItemTreePanelBase::Rejected, true); });
         } else {
             currentItemConnection.disconnect();
         }
@@ -395,7 +418,7 @@ void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem, bool do
 
     if(!item){
         if(!doKeepLastPanel){
-            panelCaptionLabel.hide();
+            panelCaptionBase.hide();
             if(itemTreeWidget.getItems().empty()){
                 defaultPanelLabel.setText(_("There are no items to be configured."));
             } else {
@@ -410,7 +433,7 @@ void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem, bool do
                 defaultPanelLabel.hide();
                 if(!isPanelOnlyDisplayMode){
                     panelCaptionLabel.setText(currentPanel->caption().c_str());
-                    panelCaptionLabel.show();
+                    panelCaptionBase.show();
                 }
                 panelLayout.addWidget(currentPanel);
                 currentPanel->show();
@@ -419,7 +442,7 @@ void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem, bool do
 
         } else if(!doKeepLastPanel){
             if(!isPanelOnlyDisplayMode){
-                panelCaptionLabel.show();
+                panelCaptionBase.show();
             }
             defaultPanelLabel.show();
             defaultPanelLabel.setText(
@@ -427,7 +450,11 @@ void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem, bool do
         }
         if(!item->isSelected()){
             itemTreeWidgetConnection.block();
-            item->setSelected(true);
+            
+            // Use the ItemTreeWidget::selectOnly function instead of Item::setSelected
+            // to unselect other items in the sub tree
+            itemTreeWidget.selectOnly(item);
+            
             itemTreeWidgetConnection.unblock();
         }
     }
@@ -439,58 +466,62 @@ void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem, bool do
 }
 
 
+void ItemTreePanelDialog::onCurrentPanelCaptionChanged()
+{
+    if(impl->currentPanel){
+        impl->panelCaptionLabel.setText(impl->currentPanel->caption().c_str());
+    }
+}
+
+
 void ItemTreePanelDialog::onCurrentItemChanged(Item*)
 {
 
 }
 
 
-void ItemTreePanelDialog::Impl::deactivateCurrentPanel(bool doClearCurrentItem)
+void ItemTreePanelDialog::Impl::deactivateCurrentPanel(int deactivationType, bool doClearCurrentItem)
 {
-    if(currentPanel){
-        currentPanel->onDeactivated();
-        panelLayout.removeWidget(currentPanel);
-        currentPanel->hide();
-        currentPanel = nullptr;
-    }
-
-    /**
-       It has been reported that the following flag update caueses a bug in the cooperation
-       between item tree views and the panel dialog based on this ItemTreePanelDialog class.
-       The bug seems to be a symptom that when some item is selected in another item tree view,
-       an item in the panel dialog is unintentionally activated and then not deactivated.
-       The bug may have been resolved by fixes made to other classes after the report, but
-       if you encounter the bug, please check the following flag operation to resolve the problem.
-       Disabling the flag update may solve the problem, but since the update is originally
-       required for the dialog to work correctly, you may need another solution.
-    */
-    needToUpdatePanel = true;
-    
-    if(currentItem && doClearCurrentItem){
-        itemTreeWidgetConnection.block();
-        currentItem->setSelected(false);
-        currentItem.reset();
-        currentItemConnection.disconnect();
-        itemTreeWidgetConnection.unblock();
-        activateItem(nullptr, false, false);
-    }
+    deactivatePanel(currentPanel, deactivationType, doClearCurrentItem);
 }
 
 
-void ItemTreePanelDialog::Impl::deactivatePanel(ItemTreePanelBase* panel, bool isPanelAccepted)
+void ItemTreePanelDialog::Impl::deactivatePanel(ItemTreePanelBase* panel, int deactivationType, bool doClearCurrentItem)
 {
-    int numItems = itemTreeWidget.getItems().size();
+    auto prevPanel = currentPanel;
     
     if(panel == currentPanel){
-        deactivateCurrentPanel(!isPanelAccepted);
+        if(panel){
+            currentItemConnection.block();
+            panel->onDeactivated(deactivationType);
+            currentItemConnection.unblock();
+            
+            panelLayout.removeWidget(panel);
+            panel->hide();
+            currentPanel = nullptr;
+        }
+
+        /**
+           It has been reported that the following flag update caueses a bug in the cooperation
+           between item tree views and the panel dialog based on this ItemTreePanelDialog class.
+           The bug seems to be a symptom that when some item is selected in another item tree view,
+           an item in the panel dialog is unintentionally activated and then not deactivated.
+           The bug may have been resolved by fixes made to other classes after the report, but
+           if you encounter the bug, please check the following flag operation to resolve the problem.
+           Disabling the flag update may solve the problem, but since the update is originally
+           required for the dialog to work correctly, you may need another solution.
+        */
+        needToUpdatePanel = true;
     }
 
-    if(isSinglePanelSyncMode){
-        self->hide();
-    } else if(numItems <= 1){
-        self->hide();
-    } else if(isPanelAccepted){
-        showPanel();
+    if(currentItem && doClearCurrentItem){
+        currentItemConnection.disconnect();
+        currentItem.reset();
+        activateItem(nullptr, false, false);
+    }
+
+    if(isSinglePanelSyncMode && prevPanel){
+        self->close();
     }
 }
 
@@ -498,13 +529,23 @@ void ItemTreePanelDialog::Impl::deactivatePanel(ItemTreePanelBase* panel, bool i
 void ItemTreePanelDialog::Impl::clear()
 {
     itemTreeWidget.setRootItem(nullptr);
-    deactivateCurrentPanel(true);
+    deactivateCurrentPanel(ItemTreePanelBase::Undetermined, true);
     topItem.reset();
 }
 
 
-void ItemTreePanelDialog::hideEvent(QHideEvent* event)
+void ItemTreePanelDialog::closeEvent(QCloseEvent* event)
 {
-    impl->clear();
-    Dialog::hideEvent(event);
+    if(onDialogClosed()){
+        event->accept();
+        impl->clear();
+    } else {
+        event->ignore();
+    }
+}
+
+
+bool ItemTreePanelDialog::onDialogClosed()
+{
+    return true;
 }

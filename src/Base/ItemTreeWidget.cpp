@@ -95,7 +95,7 @@ public:
     ~Impl();
     void initialize();
     Item* findOrCreateLocalRootItem(bool doCreate);
-    void setLocalRootItem(Item* item);
+    void setLocalRootItem(Item* item, bool doUpdateTreeWidgetItems);
     void releaseFromSelectionSyncGroup();
     void setCheckColumnShown(int column, bool on);
     bool checkPositionAcceptance(Item* item, Item* parentItem) const;
@@ -483,7 +483,7 @@ RootItem* ItemTreeWidget::projectRootItem()
 
 
 
-/*
+/**
   This function returns the top item of a sub tree that the item tree widget covers.
   The item is not necessarily the project root item of the RootItem type but it may
   be any item in the project item tree.
@@ -505,7 +505,7 @@ Item* ItemTreeWidget::Impl::findOrCreateLocalRootItem(bool doCreate)
     if(!localRootItem){
         if(localRootItemUpdateFunction){
             if(auto item = localRootItemUpdateFunction(doCreate)){
-                setLocalRootItem(item);
+                setLocalRootItem(item, false);
             }
         }
     }
@@ -515,18 +515,14 @@ Item* ItemTreeWidget::Impl::findOrCreateLocalRootItem(bool doCreate)
 
 /**
    This function specifies the item that is displayed by this widget as its root tiem.
-   
-   \note This function only prepares the specified item to be used as the root item.
-   In order to update the item tree displayed by this widget, you have to call the
-   updateTreeWidgetItems function after calling this function.
 */
-void ItemTreeWidget::setRootItem(Item* item)
+void ItemTreeWidget::setRootItem(Item* item, bool doUpdateTreeWidgetItems)
 {
-    impl->setLocalRootItem(item);
+    impl->setLocalRootItem(item, doUpdateTreeWidgetItems);
 }
 
 
-void ItemTreeWidget::Impl::setLocalRootItem(Item* item)
+void ItemTreeWidget::Impl::setLocalRootItem(Item* item, bool doUpdateTreeWidgetItems)
 {
     if(item != localRootItem){
         localRootItem = item;
@@ -542,7 +538,7 @@ void ItemTreeWidget::Impl::setLocalRootItem(Item* item)
                         if(!isProcessingSlotOnlocalRootItemPositionChanged){
                             isProcessingSlotOnlocalRootItemPositionChanged = true;
                             if(prevTopParentItem){ // Exclude a newly added item
-                                setLocalRootItem(nullptr);
+                                setLocalRootItem(nullptr, false);
 
                                 // The following code is dangerous because it may add a
                                 // connection to sigPositionChanged2 during processing the
@@ -554,6 +550,10 @@ void ItemTreeWidget::Impl::setLocalRootItem(Item* item)
                             isProcessingSlotOnlocalRootItemPositionChanged = false;
                         }
                     });
+        }
+
+        if(doUpdateTreeWidgetItems){
+            updateTreeWidgetItems();
         }
     }
 }

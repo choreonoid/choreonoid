@@ -31,7 +31,7 @@ public:
     Item* findOrCreateRootItem();
     template<class ItemType>
     ItemType* findOrCreateRootItem(){ return dynamic_cast<ItemType*>(findRootItem()); }
-    void setRootItem(Item* item);
+    void setRootItem(Item* item, bool doUpdateTreeWidgetItems = true);
     void setRootItemUpdateFunction(std::function<Item*(bool doCreate)> func);
     void setRootItemVisible(bool on);
     bool isRootItemVisible() const;

@@ -72,7 +72,7 @@ ItemTreeView::Impl::Impl(ItemTreeView* self)
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     itemTreeWidget = new ItemTreeWidget(self);
-    itemTreeWidget->setRootItem(RootItem::instance());
+    itemTreeWidget->setRootItem(RootItem::instance(), false);
 
     auto vbox = new QVBoxLayout;
     vbox->addWidget(itemTreeWidget);

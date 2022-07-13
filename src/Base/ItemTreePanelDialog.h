@@ -14,7 +14,7 @@ class CNOID_EXPORT ItemTreePanelDialog : public Dialog
 {
 public:
     ItemTreePanelDialog();
-    ItemTreePanelDialog(QWidget* parent, Qt::WindowFlags f= Qt::WindowFlags());
+    ItemTreePanelDialog(QWidget* parent, Qt::WindowFlags f = Qt::WindowFlags());
     ~ItemTreePanelDialog();
 
     enum ModeFlags {
@@ -44,16 +44,21 @@ public:
     }
 
     void addTopAreaWidget(QWidget* widget);
-    void updateTopAreaLayout();
+    void addTopAreaSpacing(int spacing);
+    void setTopAreaLayoutStretchEnabled(bool on);
     
     bool setTopItem(Item* topItem, bool isTopVisible = false);
     void show();
     bool setCurrentItem(Item* item, bool isNewItem = false);
+    Item* currentItem();
 
 protected:
+    virtual void onCurrentPanelCaptionChanged();
     virtual void onCurrentItemChanged(Item* item);
-    virtual void hideEvent(QHideEvent* event) override;
+    virtual bool onDialogClosed();
 
+    virtual void closeEvent(QCloseEvent *event) override;
+    
 private:
     class Impl;
     Impl* impl;
@@ -64,7 +69,6 @@ private:
         const std::function<QSize()>& minimumSizeHintFunction);
 
     friend class ItemTreePanelBase;
-        
 };
 
 class CNOID_EXPORT ItemTreePanelBase : public QWidget
@@ -72,9 +76,14 @@ class CNOID_EXPORT ItemTreePanelBase : public QWidget
 public:
     ItemTreePanelBase(QWidget* parent = Q_NULLPTR, Qt::WindowFlags f = Qt::WindowFlags());
     bool activate(Item* topItem, Item* targetItem, bool isNewItem, ItemTreePanelDialog* currentDialog);
-    virtual std::string caption() const = 0;
+    void setCaption(const std::string& caption);
+    const std::string& caption() const { return caption_; }
+
     virtual bool onActivated(Item* topItem, Item* targetItem, bool isNewItem) = 0;
-    virtual void onDeactivated();
+
+    enum DeactivationType { Undetermined, Accepted, Rejected };
+    virtual void onDeactivated(int deactivationType);
+    
     ItemTreePanelDialog* dialog(){ return currentDialog; }
     ItemTreeWidget* itemTreeWidget();
 
@@ -83,7 +92,10 @@ protected:
     void reject();
     
 private:
+    void finish(int deactivationType);
+    
     ItemTreePanelDialog* currentDialog;
+    std::string caption_;
 };
 
 template<class TopItemType, class TargetItemType>
