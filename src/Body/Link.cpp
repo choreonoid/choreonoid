@@ -42,12 +42,9 @@ Link::Link()
     I_.setIdentity();
     Jm2_ = 0.0;
     q_initial_ = 0.0;
-    q_upper_ = std::numeric_limits<double>::max();
-    q_lower_ = -std::numeric_limits<double>::max();
-    dq_upper_ = std::numeric_limits<double>::max();
-    dq_lower_ = -std::numeric_limits<double>::max();
-    u_upper_ = std::numeric_limits<double>::max();
-    u_lower_ = -std::numeric_limits<double>::max();
+    setUnlimitedJointDisplacementRange();
+    setUnlimitedJointVelocityRange();
+    setUnlimitedEffortRange();
     materialId_ = 0;
     visualShape_ = new SgGroup;
     collisionShape_ = new SgGroup;
@@ -365,6 +362,27 @@ bool Link::hasJointEffortLimits() const
     return u_upper_ < std::numeric_limits<double>::max() &&
            u_lower_ > -std::numeric_limits<double>::max();
 }
+
+
+void Link::setUnlimitedJointDisplacementRange()
+{
+    q_upper_ = std::numeric_limits<double>::max();
+    q_lower_ = -std::numeric_limits<double>::max();
+}
+
+
+void Link::setUnlimitedJointVelocityRange()
+{
+    dq_upper_ = std::numeric_limits<double>::max();
+    dq_lower_ = -std::numeric_limits<double>::max();
+}
+
+
+void Link::setUnlimitedEffortRange()
+{
+    u_upper_ = std::numeric_limits<double>::max();
+    u_lower_ = -std::numeric_limits<double>::max();
+}    
 
 
 std::string Link::getStateModeString(short mode)

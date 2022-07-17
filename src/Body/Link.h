@@ -273,6 +273,10 @@ public:
     bool hasJointVelocityLimits() const;
     bool hasJointEffortLimits() const;
 
+    void setUnlimitedJointDisplacementRange();
+    void setUnlimitedJointVelocityRange();
+    void setUnlimitedEffortRange();
+
     const Vector3& v() const { return v_; }
     Vector3& v() { return v_; }
     const Vector3& w() const { return w_; }
