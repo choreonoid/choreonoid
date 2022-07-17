@@ -13,6 +13,7 @@
 #include <cnoid/PositionDragger>
 #include <cnoid/StdSceneReader>
 #include <cnoid/StdSceneWriter>
+#include <cnoid/ConnectionSet>
 #include <fmt/format.h>
 #include <unordered_map>
 #include "gettext.h"
@@ -33,6 +34,7 @@ class DeviceLocation : public LocationProxy
 {
 public:
     DeviceOverwriteItem::Impl* impl;
+    Signal<void()> sigLocationChanged_;
 
     DeviceLocation(DeviceOverwriteItem::Impl* impl);
     virtual Isometry3 getLocation() const override;
@@ -78,8 +80,7 @@ public:
     SgPosTransformPtr linkPosTransform;
     PositionDraggerPtr deviceOffsetMarker;
     SgUpdate update;
-    ScopedConnection bodyItemConnection;
-    ScopedConnection deviceConnection;
+    ScopedConnectionSet bodyItemConnections;
 
     Impl(DeviceOverwriteItem* self);
     Impl(DeviceOverwriteItem* self, const Impl& org);
@@ -183,12 +184,14 @@ Item* DeviceOverwriteItem::doDuplicate(Item* duplicatedParentItem) const
 
 void DeviceOverwriteItem::Impl::clear()
 {
-    self->setBodyItem(nullptr);
+    clearLocationProxies();
+    clearDeviceShape();
     device.reset();
     isAdditionalDevice = false;
     originalDevice.reset();
     originalDeviceName.clear();
-    clearLocationProxies();
+    bodyItemConnections.disconnect();
+    self->setBodyItem(nullptr);
 }
 
 
@@ -214,6 +217,8 @@ bool DeviceOverwriteItem::setDevice(BodyItem* bodyItem, Device* device, bool isA
 bool DeviceOverwriteItem::Impl::setDevice
 (BodyItem* bodyItem, Device* device, Device* originalDevice, bool isDuplicated)
 {
+    clear();
+    
     auto link = device->link();
     if(!link){
         return false;
@@ -222,8 +227,6 @@ bool DeviceOverwriteItem::Impl::setDevice
     if(link->body() != body){
         return false;
     }
-
-    clearDeviceShape();
 
     self->setBodyItem(bodyItem);
     this->device = device;
@@ -235,10 +238,8 @@ bool DeviceOverwriteItem::Impl::setDevice
         this->originalDevice.reset();
         originalDeviceName.clear();
     }
-    clearLocationProxies();
         
     if(!self->bodyOverwrite()->addDeviceOverwriteItem(self)){
-        clear();
         return false;
     }
     
@@ -250,14 +251,21 @@ bool DeviceOverwriteItem::Impl::setDevice
         setDeviceShape(deviceShape);
     }
 
-    bodyItemConnection =
+    bodyItemConnections.add(
         bodyItem->sigKinematicStateChanged().connect(
-            [&](){ updateDeviceOffsetMarker(); });
+            [this](){ updateDeviceOffsetMarker(); }));
 
-    //! \todo Define the signal on the change of the device specification and use it here
-    deviceConnection =
-        device->sigStateChanged().connect(
-            [&](){ updateDeviceOffsetMarker(); });
+    bodyItemConnections.add(
+        bodyItem->sigModelUpdated().connect(
+            [this](int flags){
+                if(flags & BodyItem::DeviceSpecUpdate){
+                    updateDeviceOffsetMarker();
+                    if(deviceLocation){
+                        deviceLocation->sigLocationChanged_();
+                    }
+                }
+            }));
+    
 
     if(deviceOffsetMarker){
         updateDeviceOffsetMarker();
@@ -389,8 +397,6 @@ LocationProxyPtr DeviceOverwriteItem::getLocationProxy()
 }
 
 
-namespace {
-
 DeviceLocation::DeviceLocation(DeviceOverwriteItem::Impl* impl)
     : LocationProxy(OffsetLocation),
       impl(impl)
@@ -413,9 +419,8 @@ bool DeviceLocation::setLocation(const Isometry3& T)
 {
     if(impl->device){
         impl->device->setLocalPosition(T);
+        impl->self->bodyItem()->notifyModelUpdate(BodyItem::DeviceSpecUpdate);
     }
-    //! \todo Define the signal on the change of the device specification and use it here
-    impl->device->notifyStateChange();
     return true;
 }
 
@@ -441,14 +446,7 @@ LocationProxyPtr DeviceLocation::getParentLocationProxy() const
 
 SignalProxy<void()> DeviceLocation::sigLocationChanged()
 {
-    if(impl->device){
-        //! \todo Define the signal on the change of the device specification and use it here
-        return impl->device->sigStateChanged();
-    }
-    static Signal<void()> dummySignal;
-    return dummySignal;
-}
-
+    return sigLocationChanged_;
 }
 
 
@@ -476,8 +474,7 @@ void DeviceOverwriteItem::Impl::updateDeviceOffsetMarker()
             [&](){
                 if(device){
                     device->setLocalPosition(deviceOffsetMarker->draggingPosition());
-                    //! \todo Define the signal on the change of the device specification and use it here
-                    device->notifyStateChange();
+                    self->bodyItem()->notifyModelUpdate(BodyItem::DeviceSpecUpdate);
                 }
             });
         
