@@ -51,8 +51,10 @@ public:
     void addTargetElement(int element);
     int targetElementSet() const;
 
-    bool setReferenceLink(Link* referenceLink);
+    bool setReferenceLink(Link* referenceLink, bool isRootLink = false);
     Link* referenceLink();
+    bool isRootLink() const;
+    
     Link* originalLinkClone();
     
     bool setAdditionalLink(Link* additionalLink, const std::string& parentLinkName = std::string());
@@ -73,11 +75,12 @@ public:
     // LocatableItem function
     virtual LocationProxyPtr getLocationProxy() override;
 
+    enum LocationTargetType { LinkOffsetLocation, ShapeOffsetLocation };
+    void setLocationTargetType(int type);
+    int locationTargetType() const;
+
     // RenderableItem function. This returns the link origin marker.
     virtual SgNode* getScene() override;
-
-    //Isometry3 LinkOverwriteItem::shapeOffset() const
-    //void LinkOverwriteItem::setShapeOffset(const Isometry3& T)
 
     class Impl;
 

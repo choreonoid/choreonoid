@@ -29,22 +29,18 @@ namespace {
 weak_ptr<StdSceneReader> sharedSceneReader;
 weak_ptr<StdSceneWriter> sharedSceneWriter;
 
-class LinkOffsetLocation : public LocationProxy
-{
-public:
-    Signal<void()> sigLocationChanged_;
-
-};
-
-typedef ref_ptr<LinkOffsetLocation> LinkOffsetLocationPtr;
-
-class LinkShapeLocation : public LocationProxy
+class OffsetLocation : public LocationProxy
 {
 public:
     LinkOverwriteItem::Impl* impl;
+    mutable LocationProxyPtr parentLinkLocation;
+    mutable LocationProxyPtr linkLocation;
     Signal<void()> sigLocationChanged_;
 
-    LinkShapeLocation(LinkOverwriteItem::Impl* impl);
+    OffsetLocation(LinkOverwriteItem::Impl* impl);
+    bool isLinkOffsetLocation() const;
+    bool isShapeOffsetLocation() const;
+    virtual std::string getName() const override;
     virtual Isometry3 getLocation() const override;
     virtual bool setLocation(const Isometry3& T) override;
     virtual Item* getCorrespondingItem() override;
@@ -52,7 +48,7 @@ public:
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
 
-typedef ref_ptr<LinkShapeLocation> LinkShapeLocationPtr;
+typedef ref_ptr<OffsetLocation> OffsetLocationPtr;    
 
 }
 
@@ -68,11 +64,11 @@ public:
     LinkPtr additionalLink;
     string additionalLinkParentName;
     LinkPtr originalLinkClone;
-    int modifiedLinkElementSet;
+    bool isRootLink;
 
     PositionDraggerPtr originMarker;
-    LinkOffsetLocationPtr linkOffsetLocation;
-    LinkShapeLocationPtr linkShapeLocation;
+    OffsetLocationPtr offsetLocation;
+    int locationTargetType;
     ScopedConnection bodyItemConnection;
 
     shared_ptr<StdSceneReader> sceneReader;
@@ -124,6 +120,8 @@ LinkOverwriteItem::Impl::Impl(LinkOverwriteItem* self)
     : self(self)
 {
     targetElementSet = NoElement;
+    isRootLink = false;
+    locationTargetType = LinkOffsetLocation;
 }
 
 
@@ -200,7 +198,7 @@ bool LinkOverwriteItem::setName(const std::string& name)
         if(tLink){
             tLink->setName(name);
             body->updateLinkTree();
-            bodyItem_->notifyModelUpdate(BodyItem::LinkSetUpdate);
+            bodyItem_->notifyModelUpdate(BodyItem::LinkSetUpdate | BodyItem::LinkSpecUpdate);
         }
     }
     return Item::setName(name);
@@ -225,7 +223,7 @@ int LinkOverwriteItem::targetElementSet() const
 }
 
 
-bool LinkOverwriteItem::setReferenceLink(Link* referenceLink)
+bool LinkOverwriteItem::setReferenceLink(Link* referenceLink, bool isRootLink)
 {
     if(isOverwriting()){
         return false;
@@ -234,6 +232,7 @@ bool LinkOverwriteItem::setReferenceLink(Link* referenceLink)
     impl->referenceLink = referenceLink;
     impl->additionalLink.reset();
     impl->additionalLinkParentName.clear();
+    impl->isRootLink = isRootLink;
     return true;
 }
 
@@ -241,6 +240,12 @@ bool LinkOverwriteItem::setReferenceLink(Link* referenceLink)
 Link* LinkOverwriteItem::referenceLink()
 {
     return impl->referenceLink;
+}
+
+
+bool LinkOverwriteItem::isRootLink() const
+{
+    return impl->isRootLink;
 }
 
 
@@ -259,6 +264,7 @@ bool LinkOverwriteItem::setAdditionalLink(Link* additionalLink, const std::strin
     impl->additionalLink = additionalLink;
     impl->additionalLinkParentName = parentLinkName;
     impl->referenceLink.reset();
+    impl->isRootLink = false;
     return true;
 }
 
@@ -319,7 +325,14 @@ bool LinkOverwriteItem::Impl::updateOverwriting(BodyItem* bodyItem)
 
     if(!targetLink){
         if(referenceLink){
-            newTargetLink = body->link(referenceLink->name());
+            if(isRootLink){
+                newTargetLink = body->rootLink();
+            } else {
+                newTargetLink = body->link(referenceLink->name());
+                if(newTargetLink->isRoot()){
+                    isRootLink = true;
+                }
+            }
         } else if(additionalLink){
             newTargetLink = additionalLink;
         }
@@ -355,7 +368,8 @@ bool LinkOverwriteItem::Impl::updateOverwriting(BodyItem* bodyItem)
         }
 
         bodyItem->notifyModelUpdate(
-            BodyItem::LinkSetUpdate | BodyItem::DeviceSetUpdate | BodyItem::ShapeUpdate);
+            BodyItem::LinkSetUpdate | BodyItem::LinkSpecUpdate |
+            BodyItem::DeviceSetUpdate | BodyItem::ShapeUpdate);
 
         if(targetElementSet & (OffsetPosition | JointType | JointAxis)){
             bodyItem->notifyKinematicStateChange(true);
@@ -370,9 +384,10 @@ bool LinkOverwriteItem::Impl::updateOverwriting(BodyItem* bodyItem)
             updateLinkOriginMarker();
         }
 
-        if(targetElementSet & Shape){
-            if(linkShapeLocation){
-                linkShapeLocation->sigLocationChanged_();
+        if(offsetLocation){
+            if(((targetElementSet & OffsetPosition) && (locationTargetType == LinkOffsetLocation)) ||
+               ((targetElementSet & Shape) && (locationTargetType == ShapeOffsetLocation))){
+                offsetLocation->sigLocationChanged_();
             }
         }
 
@@ -394,6 +409,9 @@ void LinkOverwriteItem::Impl::overwriteExistingLink(Link* existingLink)
 
 void LinkOverwriteItem::Impl::copyTargetElements(Link* srcLink, Link* destLink, int elementSet)
 {
+    if(isRootLink){
+        destLink->setName(srcLink->name());
+    }
     if(elementSet & OffsetPosition){
         destLink->setOffsetPosition(srcLink->offsetPosition());
     }
@@ -482,7 +500,7 @@ void LinkOverwriteItem::Impl::clearOverwriting()
         if(auto body = targetLink->body()){
             bool updated = false;
             if(originalLinkClone){
-                copyTargetElements(originalLinkClone, targetLink, modifiedLinkElementSet);
+                copyTargetElements(originalLinkClone, targetLink, targetElementSet);
                 updated = true;
             } else if(auto parent = targetLink->parent()){
                 parent->removeChild(targetLink);
@@ -497,9 +515,11 @@ void LinkOverwriteItem::Impl::clearOverwriting()
     }
 
     originalLinkClone.reset();
+    offsetLocation.reset();
 
-    if(linkShapeLocation){
-        linkShapeLocation->expire();
+    if(auto bodyItem = self->bodyItem()){
+        bodyItem->notifyModelUpdate(
+            BodyItem::LinkSetUpdate | BodyItem::DeviceSetUpdate | BodyItem::ShapeUpdate);
     }
 }
 
@@ -520,10 +540,28 @@ SgPosTransform* LinkOverwriteItem::Impl::getShapeOffsetTransform(Link* link)
 
 LocationProxyPtr LinkOverwriteItem::getLocationProxy()
 {
-    if(!impl->linkShapeLocation){
-        impl->linkShapeLocation = new LinkShapeLocation(impl);
+    if(!impl->offsetLocation){
+        impl->offsetLocation = new OffsetLocation(impl);
     }
-    return impl->linkShapeLocation;
+    return impl->offsetLocation;
+}
+
+
+void LinkOverwriteItem::setLocationTargetType(int type)
+{
+    if(type != impl->locationTargetType){
+        impl->locationTargetType = type;
+        if(impl->offsetLocation){
+            impl->offsetLocation->notifyAttributeChange();
+            impl->offsetLocation->sigLocationChanged_();
+        }
+    }
+}
+
+
+int LinkOverwriteItem::locationTargetType() const
+{
+    return impl->locationTargetType;
 }
 
 
@@ -570,6 +608,10 @@ bool LinkOverwriteItem::Impl::store(Archive& archive)
     auto link = self->sourceLink();
     if(!link){
         return false;
+    }
+
+    if(isRootLink){
+        archive.write("is_root", true);
     }
 
     if(self->isAddingLink()){
@@ -674,7 +716,7 @@ bool LinkOverwriteItem::Impl::restore(const Archive& archive)
     int elementSet = NoElement;
 
     if(!archive.get("is_additional", false)){
-        self->setReferenceLink(link);
+        self->setReferenceLink(link, archive.get("is_root", false));
     } else {
         string parentName;
         archive.read("parent", parentName);
@@ -713,6 +755,14 @@ bool LinkOverwriteItem::Impl::restore(const Archive& archive)
     if(archive.read("joint_id", id)){
         link->setJointId(id);
         elementSet |= JointId;
+    }
+    if(archive.read("joint_name", symbol)){
+        if(symbol.empty()){
+            link->resetJointSpecificName();
+        } else {
+            link->setJointName(symbol);
+        }
+        elementSet |= JointName;
     }
     if(StdBodyLoader::readJointDisplacementRange(&archive, link)){
         elementSet |= JointRange;
@@ -835,47 +885,102 @@ SgPosTransform* LinkOverwriteItem::Impl::extractOrInsertOffsetTransform(vector<S
 }
 
 
-LinkShapeLocation::LinkShapeLocation(LinkOverwriteItem::Impl* impl)
-    : LocationProxy(OffsetLocation),
+OffsetLocation::OffsetLocation(LinkOverwriteItem::Impl* impl)
+    : LocationProxy(LocationProxy::OffsetLocation),
       impl(impl)
 {
     setEditable(false);
 }
-    
 
-Isometry3 LinkShapeLocation::getLocation() const
+
+bool OffsetLocation::isLinkOffsetLocation() const
 {
-    if(auto transform = impl->getShapeOffsetTransform(impl->targetLink)){
-        return transform->T();
+    return impl->locationTargetType == LinkOverwriteItem::LinkOffsetLocation;
+}
+
+
+bool OffsetLocation::isShapeOffsetLocation() const
+{
+    return impl->locationTargetType == LinkOverwriteItem::ShapeOffsetLocation;
+}
+
+
+std::string OffsetLocation::getName() const
+{
+    auto name = LocationProxy::getName();
+    if(isShapeOffsetLocation()){
+        return format(_("{0} Shape"), name);
+    }
+    return name;
+}
+
+
+Isometry3 OffsetLocation::getLocation() const
+{
+    if(impl->targetLink){
+        if(isLinkOffsetLocation()){
+            return impl->targetLink->offsetPosition();
+        } else if(isShapeOffsetLocation()){
+            if(auto transform = impl->getShapeOffsetTransform(impl->targetLink)){
+                return transform->T();
+            }
+        }
     }
     return Isometry3::Identity();
 }
 
 
-bool LinkShapeLocation::setLocation(const Isometry3& T)
+bool OffsetLocation::setLocation(const Isometry3& T)
 {
-    if(auto transform = impl->getShapeOffsetTransform(impl->self->sourceLink())){
-        transform->setPosition(T);
-        transform->notifyUpdate();
-        return impl->self->updateOverwriting();
+    bool updated = false;
+    if(auto sourceLink = impl->self->sourceLink()){
+        if(isLinkOffsetLocation()){
+            sourceLink->setOffsetPosition(T);
+            updated = true;
+        } else if(isShapeOffsetLocation()){
+            if(auto transform = impl->getShapeOffsetTransform(sourceLink)){
+                transform->setPosition(T);
+                transform->notifyUpdate();
+                updated = true;
+            }
+        }
     }
-    return false;
+    if(updated){
+        updated = impl->self->updateOverwriting();
+    }
+    return updated;
 }
 
 
-Item* LinkShapeLocation::getCorrespondingItem()
+Item* OffsetLocation::getCorrespondingItem()
 {
     return impl->self;
 }
 
 
-LocationProxyPtr LinkShapeLocation::getParentLocationProxy() const
+LocationProxyPtr OffsetLocation::getParentLocationProxy() const
 {
-    return impl->self->bodyItem()->getLocationProxy();
+    if(impl->targetLink){
+        if(isLinkOffsetLocation()){
+            if(!parentLinkLocation){
+                if(auto parentLink = impl->targetLink->parent()){
+                    parentLinkLocation = impl->self->bodyItem()->createLinkLocationProxy(parentLink);
+                }
+            }
+            return parentLinkLocation;
+            
+        } else if(isShapeOffsetLocation()){
+            if(!linkLocation){
+                linkLocation = impl->self->bodyItem()->createLinkLocationProxy(impl->targetLink);
+            }
+            return linkLocation;
+        }
+    }
+    return nullptr;
 }
 
 
-SignalProxy<void()> LinkShapeLocation::sigLocationChanged()
+SignalProxy<void()> OffsetLocation::sigLocationChanged()
 {
     return sigLocationChanged_;
 }
