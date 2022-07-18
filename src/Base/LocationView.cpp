@@ -31,7 +31,6 @@ struct LocationInfo : public Referenced
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     
     LocationProxyPtr location;
-    LocationProxyPtr parentLocation;
     int type;
     bool isRelativeLocation;
     bool isLocationAbleToBeGlobal;
@@ -368,16 +367,16 @@ void LocationView::Impl::addLocation(LocationProxyPtr location, Item* ownerItem)
     // caused by a captured variable in the following lambda expressions
     auto info = new LocationInfo;
     info->location = location;
-    info->parentLocation = location->getParentLocationProxy();
     info->type = type;
+    auto parentLocation = location->getParentLocationProxy();
 
     info->isRelativeLocation = false;
-    if(info->type == LocationProxy::ParentRelativeLocation && info->parentLocation){
+    if(info->type == LocationProxy::ParentRelativeLocation && parentLocation){
         info->isRelativeLocation = true;
     } else if(info->type == LocationProxy::OffsetLocation){
         info->isRelativeLocation = true;
     }
-    info->isLocationAbleToBeGlobal = (!info->isRelativeLocation || info->parentLocation);
+    info->isLocationAbleToBeGlobal = (!info->isRelativeLocation || parentLocation);
 
     info->isDependingOnAnotherTargetLocation = false;
         
@@ -544,7 +543,7 @@ void LocationView::Impl::setupInterfaceForNewLocations()
             // Update the dependency information
             for(auto& info : locationInfos){
                 info->isDependingOnAnotherTargetLocation =
-                    checkDependencyOnAnotherLocation(category, info->parentLocation);
+                    checkDependencyOnAnotherLocation(category, info->location->getParentLocationProxy());
             }
         }
 
@@ -687,6 +686,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
         return;
     }
     auto& locationInfo = currentCategory->locationInfos.front();
+    auto location = locationInfo->location;
     
     clearBaseCoordinateSystems();
     int defaultComboIndex = 0;
@@ -699,7 +699,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
 
     if(!locationInfo->isDependingOnAnotherTargetLocation){
         CoordinateInfo* parentCoord = nullptr;
-        LocationProxyPtr parentLocation = locationInfo->parentLocation;
+        LocationProxyPtr parentLocation = location->getParentLocationProxy();
         if(parentLocation){
             string label;
             if(locationInfo->type == LocationProxy::OffsetLocation){
@@ -724,7 +724,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
         }
     }
 
-    Isometry3 T = locationInfo->location->getLocation();
+    Isometry3 T = location->getLocation();
     auto localCoord = new CoordinateInfo(_("Local"), LocalCoord, LocalCoordIndex, T);
     localCoord->isLocal = true;
     localCoord->R0 = T.linear();
@@ -758,7 +758,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
 
             Item* targetItem = locationInfo->item;
             if(!targetItem){
-                targetItem = locationInfo->location->getCorrespondingItem();
+                targetItem = location->getCorrespondingItem();
             }
             
             for(int i=0; i < n; ++i){
@@ -850,8 +850,8 @@ void LocationView::Impl::updatePositionWidgetWithPrimaryLocation()
             if(coord->type == ParentCoord){
                 T_display = location->getLocation();
 
-            } else if(locationInfo->parentLocation){
-                Isometry3 T_parent = locationInfo->parentLocation->getGlobalLocation();
+            } else if(auto parentLocation = location->getParentLocationProxy()){
+                Isometry3 T_parent = parentLocation->getGlobalLocation();
                 T_location_global = T_parent * location->getLocation();
                 isGlobalBase = true;
             } else {
@@ -912,9 +912,9 @@ bool LocationView::Impl::updateTargetLocationWithInputPosition(const Isometry3& 
                 T_base.setIdentity();
             }
             if(locationInfo->isRelativeLocation){
-                if(locationInfo->parentLocation){
+                if(auto parentLocation = location->getParentLocationProxy()){
                     Isometry3 T_global = T_base * T_input;
-                    Isometry3 T_parent = locationInfo->parentLocation->getGlobalLocation();
+                    Isometry3 T_parent = parentLocation->getGlobalLocation();
                     T_location = T_parent.inverse(Eigen::Isometry) * T_global;
                 } else {
                     return false; // invalid case
