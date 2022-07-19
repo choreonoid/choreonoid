@@ -156,7 +156,7 @@ void JointDisplacementView::Impl::onCurrentBodyItemChanged(BodyItem* bodyItem)
             modelUpdateConnection =
                 bodyItem->sigModelUpdated().connect(
                     [this, bodyItem](int flags){
-                        if(flags & BodyItem::LinkSetUpdate){
+                        if(flags & (BodyItem::LinkSetUpdate | BodyItem::LinkSpecUpdate)){
                             onCurrentBodyItemChanged(bodyItem);
                         }
                     });

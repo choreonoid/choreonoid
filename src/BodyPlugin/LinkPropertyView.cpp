@@ -130,7 +130,7 @@ void LinkPropertyView::Impl::onCurrentLinkChanged(BodyItem* bodyItem, Link* link
             modelUpdateConnection =
                 bodyItem->sigModelUpdated().connect(
                     [this](int flags){
-                        if(flags & BodyItem::LinkSetUpdate){
+                        if(flags & BodyItem::LinkSpecUpdate){
                             updateLinkProperties(currentLink);
                         }
                     });

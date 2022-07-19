@@ -370,7 +370,7 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
             modelUpdateConnection =
                 bodyItem->sigModelUpdated().connect(
                     [this](int flags){
-                        if(flags & BodyItem::LinkSetUpdate){
+                        if(flags & (BodyItem::LinkSetUpdate | BodyItem::LinkSpecUpdate)){
                             updateIndicatorGrid();
                         }
                     });
