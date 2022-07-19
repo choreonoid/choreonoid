@@ -609,6 +609,8 @@ void EditableSceneBody::Impl::enableHighlight(bool on)
             doUpdate = !highlight->hasParents();
         }
         if(doUpdate){
+            self->insertEffectGroup(highlight, update);
+
             // The following code cannot support the case where
             // the number of links is changed by model update.
             /*
@@ -618,10 +620,11 @@ void EditableSceneBody::Impl::enableHighlight(bool on)
                 self->insertEffectGroup(highlight, update);
             }
             */
-            self->insertEffectGroup(highlight, update);
         }
     } else {
         if(highlight && highlight->hasParents()){
+            self->removeEffectGroup(highlight, update);
+
             // The following code cannot support the case where
             // the number of links is changed by model update.
             /*
@@ -631,7 +634,6 @@ void EditableSceneBody::Impl::enableHighlight(bool on)
                 self->removeEffectGroup(highlight, update);
             }
             */
-            self->removeEffectGroup(highlight, update);
         }
     }
 }
