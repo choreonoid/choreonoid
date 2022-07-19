@@ -111,9 +111,10 @@ public:
 
     enum ModelUpdateFlag {
         LinkSetUpdate = 1 << 0,
-        DeviceSetUpdate = 1 << 1,
-        DeviceSpecUpdate = 1 << 2,
-        ShapeUpdate = 1 << 3
+        LinkSpecUpdate = 1 << 1,
+        DeviceSetUpdate = 1 << 2,
+        DeviceSpecUpdate = 1 << 3,
+        ShapeUpdate = 1 << 4
     };
     SignalProxy<void(int flags)> sigModelUpdated();
     void notifyModelUpdate(int flags);

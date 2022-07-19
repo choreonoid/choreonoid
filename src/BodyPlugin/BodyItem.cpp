@@ -604,7 +604,7 @@ void BodyItem::notifyModelUpdate(int flags)
     }
 
     if(impl->sceneBody){
-        if(flags & (LinkSetUpdate | ShapeUpdate)){
+        if(flags & (LinkSetUpdate | LinkSpecUpdate | ShapeUpdate)){
             impl->sceneBody->updateSceneModel();
         } else if(flags & (DeviceSetUpdate | DeviceSpecUpdate)){
             //! This is a temporary code to support DeviceOverwriteItem.
