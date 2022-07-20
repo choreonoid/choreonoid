@@ -418,37 +418,45 @@ std::vector<LinkPtr> Body::getIdentifiedJoints() const
 }
 
 
-void Body::addDevice(Device* device, Link* link)
+bool Body::addDevice(Device* device, Link* link)
 {
+    if(device->link()){
+        if(auto body = device->link()->body()){
+            auto it = std::find(body->devices_.begin(), body->devices_.end(), device);
+            if(it != body->devices_.end()){
+                return false;
+            }
+        }
+    }
+
     device->setLink(link);
     device->setIndex(devices_.size());
     devices_.push_back(device);
     if(!device->name().empty()){
         impl->deviceNameMap[device->name()] = device;
     }
+    return true;
 }
 
 
-void Body::addDevice(Device* device)
+bool Body::removeDevice(Device* device)
 {
-    addDevice(device, device->link());
-}
-
-
-void Body::removeDevice(Device* device)
-{
+    bool removed = false;
     int index = 0;
     auto iter = devices_.begin();
     while(iter != devices_.end()){
         auto& dev = *iter;
         if(dev == device){
             impl->deviceNameMap.erase(dev->name());
-            iter = devices_.erase(iter);
+            devices_.erase(iter);
+            removed = true;
+            break;
         } else {
             dev->setIndex(index++);
             ++iter;
         }
     }
+    return removed;
 }
 
 
@@ -491,7 +499,7 @@ void Body::sortDevicesByLinkOrder()
 }
 
 
-Device* Body::findDeviceSub(const std::string& name) const
+Device* Body::findDevice_(const std::string& name) const
 {
     DeviceNameMap::const_iterator p = impl->deviceNameMap.find(name);
     if(p != impl->deviceNameMap.end()){

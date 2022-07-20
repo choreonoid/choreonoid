@@ -152,7 +152,8 @@ public:
     */
     Link* joint(const std::string& name) const;
 
-    template<class Container> class ContainerWrapper {
+    template<class Container>
+    class ContainerWrapper {
     public:
         typedef typename Container::iterator iterator;
         ContainerWrapper(iterator begin, iterator end) : begin_(begin), end_(end) { }
@@ -188,29 +189,47 @@ public:
         return devices_;
     }
 
-    template<class DeviceType> DeviceList<DeviceType> devices() const {
+    template<class DeviceType>
+    DeviceList<DeviceType> devices() const {
         return devices_;
     }
 
-    template<class DeviceType> DeviceType* findDevice(const std::string& name) const {
-        return dynamic_cast<DeviceType*>(findDeviceSub(name));
-    }
-
-    template<class DeviceType> DeviceType* findDevice() const {
-        for(auto& device : devices_)
-            if(auto found = dynamic_cast<DeviceType*>(device.get()))
-                return found;
-        return nullptr;
+    template<class DeviceType>
+    DeviceType* findDevice(const std::string& name) const {
+        return dynamic_cast<DeviceType*>(findDevice_(name));
     }
 
     Device* findDevice(const std::string& name) const {
-        return findDeviceSub(name);
+        return findDevice_(name);
     }
-    
-    void addDevice(Device* device, Link* link);
-    [[deprecated("Use addDevice(Device* device, Link* link)")]]
-    void addDevice(Device* device);
-    void removeDevice(Device* device);
+
+    template<class DeviceType>
+    DeviceType* findDevice(std::function<bool(DeviceType* device)> pred = nullptr) const {
+        for(auto& device : devices_){
+            if(auto casted = dynamic_cast<DeviceType*>(device.get())){
+                if(!pred || pred(casted)){
+                    return casted;
+                }
+            }
+        }
+        return nullptr;
+    }
+
+    template<class DeviceType>
+    DeviceList<DeviceType> findDevices(std::function<bool(DeviceType* device)> pred = nullptr) const {
+        DeviceList<DeviceType> devices;
+        for(auto& device : devices_){
+            if(auto casted = dynamic_cast<DeviceType*>(device.get())){
+                if(!pred || pred(casted)){
+                    devices.push_back(casted);
+                }
+            }
+        }
+        return devices;
+    }
+
+    bool addDevice(Device* device, Link* link);
+    bool removeDevice(Device* device);
     void removeDevicesOfLink(Link* link);
     void clearDevices();
     void sortDevicesByLinkOrder();
@@ -259,15 +278,18 @@ public:
 
     void cloneShapes(CloneMap& cloneMap);
         
-    template<class T> T* findCache(const std::string& name){
+    template<class T>
+    T* findCache(const std::string& name){
         return dynamic_cast<T*>(findCacheSub(name));
     }
 
-    template<class T> const T* findCache(const std::string& name) const {
+    template<class T>
+    const T* findCache(const std::string& name) const {
         return dynamic_cast<const T*>(findCacheSub(name));
     }
 
-    template<class T> T* getOrCreateCache(const std::string& name){
+    template<class T>
+    T* getOrCreateCache(const std::string& name){
         T* cache = findCache<T>(name);
         if(!cache){
             cache = new T();
@@ -289,7 +311,8 @@ public:
 
     bool addHandler(BodyHandler* handler, bool isTopPriority = false);
 
-    template<class BodyHandlerType> BodyHandlerType* findHandler(){
+    template<class BodyHandlerType>
+    BodyHandlerType* findHandler(){
         return dynamic_cast<BodyHandlerType*>(
             findHandler([](BodyHandler* handler)->bool{ return dynamic_cast<BodyHandlerType*>(handler); }));
     }
@@ -331,7 +354,7 @@ private:
 
     Link* cloneLinkTree(const Link* orgLink, CloneMap* cloneMap);
     Link* createEmptyJoint(int jointId);
-    Device* findDeviceSub(const std::string& name) const;
+    Device* findDevice_(const std::string& name) const;
     Referenced* findCacheSub(const std::string& name);
     const Referenced* findCacheSub(const std::string& name) const;
     void insertCache(const std::string& name, Referenced* cache);
