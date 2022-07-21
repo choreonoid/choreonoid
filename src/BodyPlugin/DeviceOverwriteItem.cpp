@@ -182,16 +182,58 @@ Item* DeviceOverwriteItem::doDuplicate(Item* duplicatedParentItem) const
 }
 
 
-void DeviceOverwriteItem::Impl::clear()
+bool DeviceOverwriteItem::onCheckNewOverwritePosition(bool isManualOperation)
 {
-    clearLocationProxies();
-    clearDeviceShape();
-    device.reset();
-    isAdditionalDevice = false;
-    originalDevice.reset();
-    originalDeviceName.clear();
-    bodyItemConnections.disconnect();
-    self->setBodyItem(nullptr);
+    return true;
+}
+
+
+void DeviceOverwriteItem::onDisconnectedFromBodyItem()
+{
+    impl->clearOverwriting();
+}
+
+
+void DeviceOverwriteItem::Impl::clearOverwriting()
+{
+    if(device){
+        if(isAdditionalDevice){
+            if(auto bodyItem_ = self->bodyItem()){
+                if(bodyItem_->body()->removeDevice(device)){
+                    bodyItem_->notifyModelUpdate(BodyItem::DeviceSetUpdate);
+                }
+            }
+        }
+        clearDeviceShape();
+
+        releaseOverwriteTarget();
+    }
+}
+
+
+void DeviceOverwriteItem::releaseOverwriteTarget()
+{
+    impl->releaseOverwriteTarget();
+}
+
+
+void DeviceOverwriteItem::Impl::releaseOverwriteTarget()
+{
+    if(device){
+        clearLocationProxies();
+
+        if(self->bodyItem()){
+            self->bodyOverwrite()->unregisterDeviceOverwriteItem(self);
+            bodyItemConnections.disconnect();
+            self->setBodyItem(nullptr);
+        }
+        device.reset();
+        deviceShapePosTransform.reset();
+        deviceShape.reset();
+        isAdditionalDevice = false;
+        originalDevice.reset();
+        originalDeviceName.clear();
+    }
 }
 
 
@@ -242,13 +284,21 @@ bool DeviceOverwriteItem::Impl::setDevice
     if(!self->bodyOverwrite()->addDeviceOverwriteItem(self)){
         return false;
     }
-    
+
+    bool deviceAdded = false;
     if(!originalDevice && !isDuplicated){
-        body->addDevice(device, link);
+        if(!body->addDevice(device, link)){
+            return false;
+        }
+        deviceAdded = true;
     }
 
     if(deviceShape){
         setDeviceShape(deviceShape);
+    }
+
+    if(deviceAdded){
+        bodyItem->notifyModelUpdate(BodyItem::DeviceSetUpdate);
     }
 
     bodyItemConnections.add(
@@ -265,7 +315,6 @@ bool DeviceOverwriteItem::Impl::setDevice
                     }
                 }
             }));
-    
 
     if(deviceOffsetMarker){
         updateDeviceOffsetMarker();
