@@ -68,7 +68,7 @@ public:
     bool isAddingLink() const;
 
     bool updateOverwriting();
-    void clearOverwriting();
+    virtual void releaseOverwriteTarget() override;
 
     SgPosTransform* shapeOffsetTransform();
 
@@ -82,6 +82,9 @@ public:
     // RenderableItem function. This returns the link origin marker.
     virtual SgNode* getScene() override;
 
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
+
     class Impl;
 
 protected:
@@ -89,8 +92,6 @@ protected:
     virtual bool onCheckNewOverwritePosition(bool isManualOperation) override;
     virtual void onDisconnectedFromBodyItem() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
-    virtual bool store(Archive& archive) override;
-    virtual bool restore(const Archive& archive) override;
 
 private:
     Impl* impl;

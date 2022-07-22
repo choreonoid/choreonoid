@@ -42,10 +42,10 @@ public:
     }
     
     DeviceOverwriteItem* findDeviceOverwriteItem(Device* device);
-    bool addDeviceOverwriteItem(DeviceOverwriteItem* item);
-    void removeDeviceOverwriteItem(DeviceOverwriteItem* item);
+    bool registerDeviceOverwriteItem(DeviceOverwriteItem* item);
+    void unregisterDeviceOverwriteItem(DeviceOverwriteItem* item);
     
-    void clearOverwriteItems();
+    void removeOverwriteItems(bool doClearOverwrites = false);
 
 private:
     class Impl;

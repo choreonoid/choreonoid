@@ -37,7 +37,7 @@ BodyElementOverwriteItem::BodyElementOverwriteItem(const BodyElementOverwriteIte
 
 BodyOverwriteAddon* BodyElementOverwriteItem::bodyOverwrite()
 {
-    return bodyItem_->getAddon<BodyOverwriteAddon>();
+    return bodyItem_ ? bodyItem_->getAddon<BodyOverwriteAddon>() : nullptr;
 }
 
 
@@ -49,12 +49,6 @@ bool BodyElementOverwriteItem::onNewTreePositionCheck(bool isManualOperation, st
         return onCheckNewOverwritePosition(isManualOperation);
     }
     return false;
-}
-
-
-bool BodyElementOverwriteItem::onCheckNewOverwritePosition(bool isManualOperation)
-{
-    return true;
 }
 
 
@@ -76,10 +70,4 @@ void BodyElementOverwriteItem::onTreePathChanged()
     }
     newBodyItem_ = nullptr;
     isNewBodyItemValid = false;
-}
-
-
-void BodyElementOverwriteItem::onDisconnectedFromBodyItem()
-{
-
 }

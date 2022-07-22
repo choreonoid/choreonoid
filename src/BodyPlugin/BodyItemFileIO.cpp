@@ -234,7 +234,7 @@ bool BodyItemBodyFileIO::save(BodyItem* item, const std::string& filename)
 {
     if(ensureBodyWriter()->writeBody(item->body(), filename)){
         if(auto overwriteAddon = item->findAddon<BodyOverwriteAddon>()){
-            overwriteAddon->clearOverwriteItems();
+            overwriteAddon->removeOverwriteItems(false);
         }
         return true;
     }

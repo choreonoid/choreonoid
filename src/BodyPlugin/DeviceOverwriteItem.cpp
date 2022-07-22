@@ -84,7 +84,8 @@ public:
 
     Impl(DeviceOverwriteItem* self);
     Impl(DeviceOverwriteItem* self, const Impl& org);
-    void clear();
+    void clearOverwriting();
+    void releaseOverwriteTarget();
     void clearLocationProxies();
     bool setDevice(BodyItem* bodyItem, Device* device, Device* originalDevice, bool isDuplicated);
     bool restoreOriginalDevice();
@@ -259,7 +260,7 @@ bool DeviceOverwriteItem::setDevice(BodyItem* bodyItem, Device* device, bool isA
 bool DeviceOverwriteItem::Impl::setDevice
 (BodyItem* bodyItem, Device* device, Device* originalDevice, bool isDuplicated)
 {
-    clear();
+    clearOverwriting();
     
     auto link = device->link();
     if(!link){
@@ -281,7 +282,7 @@ bool DeviceOverwriteItem::Impl::setDevice
         originalDeviceName.clear();
     }
         
-    if(!self->bodyOverwrite()->addDeviceOverwriteItem(self)){
+    if(!self->bodyOverwrite()->registerDeviceOverwriteItem(self)){
         return false;
     }
 
@@ -422,17 +423,6 @@ void DeviceOverwriteItem::notifyDeviceUpdate(bool doNotifyDeviceSetUpdate)
 void DeviceOverwriteItem::setMediatorId(const std::string& id)
 {
     impl->mediatorId = id;
-}
-
-
-void DeviceOverwriteItem::onDisconnectedFromBodyItem()
-{
-    if(impl->isAdditionalDevice){
-        bodyItem()->body()->removeDevice(impl->device);
-    }
-    bodyOverwrite()->removeDeviceOverwriteItem(this);
-    bodyItem()->notifyModelUpdate(BodyItem::DeviceSetUpdate);
-    impl->clear();
 }
 
 

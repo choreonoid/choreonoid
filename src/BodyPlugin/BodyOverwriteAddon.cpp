@@ -143,7 +143,7 @@ DeviceOverwriteItem* BodyOverwriteAddon::findDeviceOverwriteItem(Device* device)
 }
 
 
-bool BodyOverwriteAddon::addDeviceOverwriteItem(DeviceOverwriteItem* item)
+bool BodyOverwriteAddon::registerDeviceOverwriteItem(DeviceOverwriteItem* item)
 {
     if(auto device = item->device()){
         impl->deviceOverwriteItemMap[device] = item;
@@ -153,7 +153,7 @@ bool BodyOverwriteAddon::addDeviceOverwriteItem(DeviceOverwriteItem* item)
 }
 
 
-void BodyOverwriteAddon::removeDeviceOverwriteItem(DeviceOverwriteItem* item)
+void BodyOverwriteAddon::unregisterDeviceOverwriteItem(DeviceOverwriteItem* item)
 {
     auto p = impl->deviceOverwriteItemMap.find(item->device());
     if(p != impl->deviceOverwriteItemMap.end()){
@@ -164,22 +164,33 @@ void BodyOverwriteAddon::removeDeviceOverwriteItem(DeviceOverwriteItem* item)
 }
 
 
-/**
-   \note Currently this function only clears LinkOverwriteItems.
-   It does not clear DeviceOverwriteItems because outputting overwritten devices
-   into a body file is not yet supported.
-*/
-void BodyOverwriteAddon::clearOverwriteItems()
+void BodyOverwriteAddon::removeOverwriteItems(bool doClearOverwrites)
 {
-    vector<BodyElementOverwriteItem*> overwriteItems;
-    overwriteItems.reserve(impl->linkOverwriteItemMap.size());
-    for(auto& kv : impl->linkOverwriteItemMap){
-        // note: The function to remove each item must not executed here because
-        // it also removes the item from linkOverwriteItemMap and this loop crashes.
-        overwriteItems.push_back(kv.second);
-    }
+    vector<BodyElementOverwriteItemPtr> overwriteItems;
+    overwriteItems.reserve(
+        impl->linkOverwriteItemMap.size() + impl->deviceOverwriteItemMap.size());
 
-    for(auto& item : overwriteItems){
+    impl->bodyItem->traverse(
+        [&overwriteItems](Item* item){
+            bool doContinue = true;
+            if(auto overwriteItem = dynamic_cast<BodyElementOverwriteItem*>(item)){
+                overwriteItems.push_back(overwriteItem);
+            } else if(auto bodyItem = dynamic_cast<BodyItem*>(item)){
+                doContinue = false;
+            }
+            return doContinue;
+        },
+        false);
+
+    // note 1: The overwrite items must be removed using the overwriteItems array
+    // instead of removing them directly in the above for loop to avoid crashes.
+    // note 2: The item must be processed in the reverse order to leave all the
+    // links and devices as they are
+    for(auto it = overwriteItems.rbegin(); it != overwriteItems.rend(); ++it){
+        auto& item = *it;
+        if(!doClearOverwrites){
+            item->releaseOverwriteTarget(); // leave the device as it is
+        }
         item->removeFromParentItem();
     }
 }

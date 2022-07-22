@@ -20,6 +20,8 @@ public:
     BodyItem* bodyItem() { return bodyItem_; }
     BodyOverwriteAddon* bodyOverwrite();
 
+    virtual void releaseOverwriteTarget() = 0;
+    
 protected:
     BodyElementOverwriteItem();
     BodyElementOverwriteItem(const BodyElementOverwriteItem& org);
@@ -29,13 +31,14 @@ protected:
     //! The next candidate of the target BodyItem when the item position is updated
     BodyItem* newBodyItem() { return newBodyItem_; }
 
+    virtual bool onCheckNewOverwritePosition(bool isManualOperation) = 0;
+    virtual void onDisconnectedFromBodyItem() = 0;
+
+private:
     virtual bool onNewTreePositionCheck(
         bool isManualOperation, std::function<void()>& out_callbackWhenAdded) override final;
     virtual void onTreePathChanged() override final;
-    virtual bool onCheckNewOverwritePosition(bool isManualOperation);
-    virtual void onDisconnectedFromBodyItem();
-
-private:
+    
     BodyItem* bodyItem_;
     BodyItem* newBodyItem_;
     bool isNewBodyItemValid;

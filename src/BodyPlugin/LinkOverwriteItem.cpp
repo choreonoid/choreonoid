@@ -80,7 +80,8 @@ public:
     void overwriteExistingLink(Link* existingLink);
     void copyTargetElements(Link* srcLink, Link* destLink, int elementSet);
     bool addNewLink(Body* body);
-    void clearOverwriting();
+    void releaseOverwriteTarget();
+    void cancelOverwriting();
     SgPosTransform* getShapeOffsetTransform(Link* link);
     bool restoreShapeWrittenInOldFormat(const Archive& archive, ValueNode* shapeArchive);
     void setReferenceLinkToRestoreShapeWritteinInOldFormat(Link* orgLink, SgNode* newShape);
@@ -176,7 +177,7 @@ bool LinkOverwriteItem::onCheckNewOverwritePosition(bool isManualOperation)
 
 void LinkOverwriteItem::onDisconnectedFromBodyItem()
 {
-    impl->clearOverwriting();
+    impl->cancelOverwriting();
 }
 
 
@@ -486,19 +487,38 @@ bool LinkOverwriteItem::Impl::addNewLink(Body* body)
 }
 
 
-void LinkOverwriteItem::clearOverwriting()
+void LinkOverwriteItem::releaseOverwriteTarget()
 {
-    impl->clearOverwriting();
+    impl->releaseOverwriteTarget();
 }
 
 
-void LinkOverwriteItem::Impl::clearOverwriting()
+void LinkOverwriteItem::Impl::releaseOverwriteTarget()
 {
+    if(offsetLocation){
+        offsetLocation->expire();
+    }
+    offsetLocation.reset();
+
     bodyItemConnection.disconnect();
+
+    if(targetLink){
+        self->bodyOverwrite()->unregisterLinkOverwriteItem(self);
+        targetLink.reset();
+    }
+    referenceLink.reset();
+    additionalLink.reset();
+    originalLinkClone.reset();
+    isRootLink = false;
+}
+
+
+void LinkOverwriteItem::Impl::cancelOverwriting()
+{
+    bool updated = false;
     
     if(targetLink){
         if(auto body = targetLink->body()){
-            bool updated = false;
             if(originalLinkClone){
                 copyTargetElements(originalLinkClone, targetLink, targetElementSet);
                 updated = true;
@@ -510,16 +530,15 @@ void LinkOverwriteItem::Impl::clearOverwriting()
                 body->updateLinkTree();
             }
         }
-        targetLink.reset();
-        self->bodyOverwrite()->unregisterLinkOverwriteItem(self);
     }
 
-    originalLinkClone.reset();
-    offsetLocation.reset();
+    releaseOverwriteTarget();
 
-    if(auto bodyItem = self->bodyItem()){
-        bodyItem->notifyModelUpdate(
-            BodyItem::LinkSetUpdate | BodyItem::DeviceSetUpdate | BodyItem::ShapeUpdate);
+    if(updated){
+        if(auto bodyItem = self->bodyItem()){
+            bodyItem->notifyModelUpdate(
+                BodyItem::LinkSetUpdate | BodyItem::DeviceSetUpdate | BodyItem::ShapeUpdate);
+        }
     }
 }
 

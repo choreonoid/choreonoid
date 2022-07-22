@@ -116,20 +116,24 @@ public:
     
     void setMediatorId(const std::string& id);
 
+    virtual void releaseOverwriteTarget() override;
+
     // LocatableItem function
     virtual LocationProxyPtr getLocationProxy() override;
 
     // RenderableItem function. This returns the coordinate marker.
     virtual SgNode* getScene() override;
 
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
+
     class Impl;
 
 protected:
     virtual Item* doDuplicate(Item* duplicatedParentItem) const override;
+    virtual bool onCheckNewOverwritePosition(bool isManualOperation) override;
     virtual void onDisconnectedFromBodyItem() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
-    virtual bool store(Archive& archive) override;
-    virtual bool restore(const Archive& archive) override;
 
 private:
     Impl* impl;
