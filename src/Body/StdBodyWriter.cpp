@@ -399,7 +399,7 @@ MappingPtr StdBodyWriter::Impl::writeDevice(const std::string& typeName, Device*
     info->write("type", typeName);
     
     if(!device->name().empty()){
-        info->write("name", device->name());
+        info->write("name", device->name(), DOUBLE_QUOTED);
     }
     if(device->id() >= 0){
         info->write("id", device->id());

@@ -1357,7 +1357,7 @@ bool StdBodyLoader::Impl::readJointVelocityRange(Mapping* node, Link* link, bool
             lower == -std::numeric_limits<double>::max() ? lower : radian(lower),
             upper ==  std::numeric_limits<double>::max() ? upper : radian(upper));
     } else {
-        link->setJointRange(lower, upper);
+        link->setJointVelocityRange(lower, upper);
     }
 
     return found;
