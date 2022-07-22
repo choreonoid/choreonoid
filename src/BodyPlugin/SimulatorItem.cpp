@@ -489,14 +489,8 @@ SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
     SimulatorItem* activeSimulatorItem = nullptr;
     if(item){
         if(auto worldItem = item->findOwnerItem<WorldItem>()){
-            worldItem->traverse<SimulatorItem>(
-                [&](SimulatorItem* item){
-                    if(item->isActive()){
-                        activeSimulatorItem = item;
-                        return true;
-                    }
-                    return false;
-                });
+            activeSimulatorItem = worldItem->findItem<SimulatorItem>(
+                [](SimulatorItem* item){ return item->isActive(); });
         }
     }
     return activeSimulatorItem;

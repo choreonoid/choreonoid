@@ -345,12 +345,11 @@ public:
         return selectedDescendantItems(getItemPredicate<ItemType>(pred));
     }
 
-    bool traverse(std::function<bool(Item*)> pred);
-
-    template<class ItemType>
-    bool traverse(std::function<bool(ItemType* item)> pred = nullptr){
-        return Item::traverse(getItemPredicate<ItemType>(pred));
-    }
+    /**
+       \param callback Return true by this functor to continue the traverse,
+       or return false to stop the traverse more deeply.
+    */
+    void traverse(std::function<bool(Item*)> callback, bool includeSelf = true);
 
     /**
        This signal is emitted when the path from the root to this item in an item tree is changed.

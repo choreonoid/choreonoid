@@ -142,7 +142,7 @@ public:
     void addToItemsToEmitSigSubTreeChanged();
     static void emitSigSubTreeChanged();
     void emitSigDisconnectedFromRootForSubTree();
-    bool traverse(Item* item, const std::function<bool(Item*)>& pred);
+    void traverse(Item* item, const std::function<bool(Item*)>& callback);
     void removeAddon(ItemAddon* addon, bool isMoving);
     ItemAddon* createAddon(const std::type_info& type);
 };
@@ -1352,23 +1352,25 @@ void Item::Impl::getSelectedDescendantItemsIter
 }
 
 
-bool Item::traverse(std::function<bool(Item*)> pred)
+void Item::traverse(std::function<bool(Item*)> callback, bool includeSelf)
 {
-    return impl->traverse(this, pred);
+    if(includeSelf){
+        impl->traverse(this, callback);
+    } else {
+        for(Item* child = childItem(); child; child = child->nextItem()){
+            impl->traverse(child, callback);
+        }
+    }
 }
 
 
-bool Item::Impl::traverse(Item* item, const std::function<bool(Item*)>& pred)
+void Item::Impl::traverse(Item* item, const std::function<bool(Item*)>& callback)
 {
-    if(pred(item)){
-        return true;
-    }
-    for(Item* child = item->childItem(); child; child = child->nextItem()){
-        if(traverse(child, pred)){
-            return true;
+    if(callback(item)){
+        for(Item* child = item->childItem(); child; child = child->nextItem()){
+            traverse(child, callback);
         }
     }
-    return false;
 }
 
 
