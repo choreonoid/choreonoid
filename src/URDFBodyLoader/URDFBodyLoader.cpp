@@ -316,7 +316,7 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
         return false;
     }
     body->setRootLink(rootLinks.at(0));
-
+    body->rootLink()->setJointType(Link::FreeJoint);
     return true;
 }
 
