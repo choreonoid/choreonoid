@@ -745,7 +745,7 @@ bool MprCompositePosition::read(const Mapping* archive)
             } else if(type == "FkPosition"){
                 position = new MprFkPosition;
             } else if(type == "CompositePosition"){
-                typeNode.throwException(_("Recursive CompositePosition structure is not supported"));
+                typeNode.throwException(_("The recursive structure of CompositePosition is not supported"));
             } else {
                 typeNode.throwException(format(_("{0} is not supported"), type));
             }
