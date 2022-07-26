@@ -40,7 +40,7 @@ public:
     Archive* subArchive(Mapping* node);
     const Archive* subArchive(Mapping* node) const;
 
-    ValueNodePtr getItemId(const Item* item) const;
+    ValueNodePtr getItemIdNode(const Item* item) const;
     Item* findItem(const ValueNode* id) const;
     
     int getViewId(const View* view) const;

@@ -517,8 +517,8 @@ bool RootItem::storeCheckStates(int checkId, Archive& archive, const std::string
     auto& items = getCheckedItems(checkId);
     Listing& idseq = *archive.createFlowStyleListing(key);
     for(auto& item : items){
-        if(auto itemId = archive.getItemId(item)){
-            idseq.append(itemId);
+        if(auto id = archive.getItemIdNode(item)){
+            idseq.append(id);
         }
     }
     return true;

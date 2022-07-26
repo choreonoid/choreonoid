@@ -166,7 +166,7 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
             return nullptr;
         }
 
-        archive->insert("id", archive->getItemId(item));
+        archive->insert("id", archive->getItemIdNode(item));
     }
 
     archive->write("name", item->name(), DOUBLE_QUOTED);

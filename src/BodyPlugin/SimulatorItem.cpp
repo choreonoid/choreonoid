@@ -2833,7 +2833,7 @@ bool SimulatorItem::Impl::store(Archive& archive)
     ListingPtr idseq = new Listing;
     idseq->setFlowStyle(true);
     for(auto& engine : getOrCreateLogEngine()->subEngines){
-        if(ValueNodePtr id = archive.getItemId(engine->item())){
+        if(auto id = archive.getItemIdNode(engine->item())){
             idseq->append(id);
         }
     }
@@ -2842,7 +2842,7 @@ bool SimulatorItem::Impl::store(Archive& archive)
     }
 
     if(auto engine = logEngine->collisionSeqEngine){
-        if(ValueNodePtr id = archive.getItemId(engine->collisionSeqItem())){
+        if(auto id = archive.getItemIdNode(engine->collisionSeqItem())){
             archive.insert("collisionSeqItem", id);
         }
     }

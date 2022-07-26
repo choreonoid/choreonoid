@@ -1981,7 +1981,7 @@ void ItemTreeWidget::Impl::storeExpandedItemsIter(QTreeWidgetItem* parentTwItem,
     for(int i=0; i < n; ++i){
         if(auto itwItem = dynamic_cast<ItwItem*>(parentTwItem->child(i))){
             if(itwItem->isExpanded()){
-                if(auto id = archive.getItemId(itwItem->item)){
+                if(auto id = archive.getItemIdNode(itwItem->item)){
                     expanded.append(id);
                 }
             }

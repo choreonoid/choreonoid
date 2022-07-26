@@ -371,7 +371,7 @@ void Archive::registerItemId(const Item* item, int id)
 }
 
 
-ValueNodePtr Archive::getItemId(const Item* item) const
+ValueNodePtr Archive::getItemIdNode(const Item* item) const
 {
     if(shared){
         int i = 0;
@@ -404,8 +404,7 @@ ValueNodePtr Archive::getItemId(const Item* item) const
 void Archive::writeItemId(const std::string& key, Item* item)
 {
     if(item){
-        ValueNodePtr id = getItemId(item);
-        if(id){
+        if(auto id = getItemIdNode(item)){
             insert(key, id);
         }
     }

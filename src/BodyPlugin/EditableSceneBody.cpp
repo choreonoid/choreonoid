@@ -1843,8 +1843,7 @@ bool EditableSceneBody::Impl::storeProperties(Archive& archive)
     for(auto& bodyItem : RootItem::instance()->descendantItems<BodyItem>()){
         EditableSceneBody* sceneBody = bodyItem->existingSceneBody();
         if(sceneBody){
-            ValueNodePtr id = archive.getItemId(bodyItem);
-            if(id){
+            if(auto id = archive.getItemIdNode(bodyItem)){
                 EditableSceneBody::Impl* impl = sceneBody->impl;
                 MappingPtr state = new Mapping();
                 state->insert("bodyItem", id);

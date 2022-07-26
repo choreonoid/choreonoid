@@ -1193,7 +1193,7 @@ bool LinkDeviceTreeWidget::Impl::storeState(Archive& archive)
     for(auto& kv : bodyItemInfoMap){
 
         BodyItem* bodyItem = kv.first;
-        ValueNodePtr id = archive.getItemId(bodyItem);
+        ValueNodePtr id = archive.getItemIdNode(bodyItem);
         if(!id){ // The item is not in the item tree
             continue;
         }
