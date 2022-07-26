@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-16 03:58+0900\n"
+"POT-Creation-Date: 2022-07-26 19:33+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -27,10 +27,6 @@ msgstr "{}の開始プログラムが指定されていません．"
 
 msgid "Variables for {} cannot be initialized."
 msgstr "{0}の変数を初期化できません．"
-
-msgid "Warning: The custom inverse kinematics is disabled in controller \"{0}\" for robot \"{1}\"."
-msgstr ""
-"警告： ロボット \"{1}\" 用のコントローラ \"{0}\" においてカスタム逆運動学は無効化されています．"
 
 msgid "Variable {0} is not defined."
 msgstr "変数 {0} は定義されていません．"
@@ -98,14 +94,17 @@ msgstr "{0}の関節変位が可動範囲外です．"
 msgid "The current manipulator position is not valid: {0}."
 msgstr "現在のマニピュレータの姿勢は有効ではありません：{0}."
 
-msgid "Position {0} cannot be fetched due to the position part set mismatch."
-msgstr ""
+msgid "Could not fetch all the elements of position {0}."
+msgstr "ポジション{0}の要素の全てを取り込むことができません．"
 
-msgid "Could not fetch all elements of position {0}."
-msgstr ""
+msgid "Could not fetch all the elements of the position."
+msgstr "ポジションの要素の全てを取り込むことができません．"
 
-msgid "Recursive CompositePosition structure is not supported"
-msgstr ""
+msgid "Invalid index"
+msgstr "無効なインデックス"
+
+msgid "The recursive structure of CompositePosition is not supported"
+msgstr "複合ポジションの再帰構造はサポートされていません"
 
 msgid "{0} is not supported"
 msgstr "{0}はサポートされていません"
@@ -119,14 +118,14 @@ msgstr "フォーマットバージョン{0}はサポートされていません
 msgid "Invalid position ID"
 msgstr "無効なポジションID"
 
+msgid "Position"
+msgstr "ポジション"
+
 msgid "Note"
 msgstr "注釈"
 
 msgid "J"
 msgstr ""
-
-msgid "Position"
-msgstr "ポジション"
 
 msgid "MprPositionListView"
 msgstr "Mprポジションビュー"
@@ -152,6 +151,9 @@ msgstr "ポジション："
 msgid "Move to"
 msgstr "移動"
 
+msgid "%1 ( Not found )"
+msgstr "%1 ( 不定 )"
+
 msgid "Base"
 msgstr "基準座標"
 
@@ -160,9 +162,6 @@ msgstr "ツール"
 
 msgid "Config"
 msgstr "形態"
-
-msgid "%1 ( Not found )"
-msgstr "%1 ( 不定 )"
 
 msgid "{0} cannot be loaded as a Manipulator program file"
 msgstr "{0}はマニピュレータプログラムファイルとして読み込むことができません"

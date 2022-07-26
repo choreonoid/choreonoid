@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-07-08 13:59+0900\n"
+"POT-Creation-Date: 2022-07-26 19:12+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -599,9 +599,6 @@ msgstr "アドオン \"{0}\" はアイテム \"{1}\" に追加できません．
 
 msgid "Addon \"{0}\" of plugin \"{1}\" cannot be restored."
 msgstr "プラグイン \"{1}\" のアドオン \"{0}\" を読み出すことができません．"
-
-msgid "Add : "
-msgstr "追加 : "
 
 msgid "Unkown"
 msgstr "不明"

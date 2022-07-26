@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-03 22:46+0900\n"
+"POT-Creation-Date: 2022-07-26 19:27+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -978,6 +978,15 @@ msgstr "リンクグラフビュー"
 msgid "LinkOffsetFrameListItem"
 msgstr "リンクオフセットフレームリストアイテム"
 
+msgid "LinkOverwriteItem"
+msgstr "リンク上書きアイテム"
+
+msgid "Illegal jointType value \"{0}\""
+msgstr "不正な関節タイプ \"{0}\""
+
+msgid "{0} Shape"
+msgstr "{0} 形状"
+
 msgid "Link Position"
 msgstr "リンクポジション"
 
@@ -1089,29 +1098,20 @@ msgstr "関節タイプ"
 msgid "Joint axis"
 msgstr "関節軸"
 
-msgid "Upper joint limit"
-msgstr "関節変位上限"
-
 msgid "Lower joint limit"
 msgstr "関節変位下限"
 
-msgid "Upper joint velocity"
-msgstr "関節速度上限"
+msgid "Upper joint limit"
+msgstr "関節変位上限"
 
 msgid "Lower joint velocity"
 msgstr "関節速度下限"
 
+msgid "Upper joint velocity"
+msgstr "関節速度上限"
+
 msgid "Joint inertia"
 msgstr "関節慣性"
-
-msgid "LinkOverwriteItem"
-msgstr "リンク上書きアイテム"
-
-msgid "Shape ({0})"
-msgstr "形状 ({0})"
-
-msgid "The target link \"{0}\" of \"{1}\" is not found."
-msgstr "\"{1}\" の対象リンク \"{0}\" がみつかりません．"
 
 msgid "MaterialTableItem"
 msgstr "マテリアルテーブルアイテム"
