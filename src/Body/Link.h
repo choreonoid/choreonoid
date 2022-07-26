@@ -379,6 +379,7 @@ public:
     SgGroup* shape() const { return visualShape_; }
     SgGroup* visualShape() const { return visualShape_; }
     SgGroup* collisionShape() const { return collisionShape_; }
+    bool hasShape() const;
     bool hasDedicatedCollisionShape() const;
 
     // functions for constructing a link
@@ -435,6 +436,7 @@ public:
     void addShapeNode(SgNode* shape, SgUpdateRef update = nullptr);
     void addVisualShapeNode(SgNode* shape, SgUpdateRef update = nullptr);
     void addCollisionShapeNode(SgNode* shape, SgUpdateRef update = nullptr);
+    bool copyShapeNodesTo(Link* anotherLink, SgUpdateRef update = nullptr);
     void removeShapeNode(SgNode* shape, SgUpdateRef update = nullptr);
     void clearShapeNodes(SgUpdateRef update = nullptr);
 

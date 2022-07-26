@@ -447,6 +447,12 @@ void Link::setMaterial(const std::string& name)
 }
 
 
+bool Link::hasShape() const
+{
+    return !visualShape_->empty() || !collisionShape_->empty();\
+}
+
+
 bool Link::hasDedicatedCollisionShape() const
 {
     if(visualShape_->numChildren() != collisionShape_->numChildren() ||
@@ -473,6 +479,28 @@ void Link::addVisualShapeNode(SgNode* shape, SgUpdateRef update)
 void Link::addCollisionShapeNode(SgNode* shape, SgUpdateRef update)
 {
     collisionShape_->addChild(shape, update);
+}
+
+
+bool Link::copyShapeNodesTo(Link* anotherLink, SgUpdateRef update)
+{
+    bool hasShapeNodes = false;
+
+    if(!visualShape_->empty()){
+        for(auto& node : *visualShape_){
+            anotherLink->addVisualShapeNode(node, update);
+        }
+        hasShapeNodes = true;
+    }
+
+    if(!collisionShape_->empty()){
+        for(auto& node : *collisionShape_){
+            anotherLink->addCollisionShapeNode(node, update);
+        }
+        hasShapeNodes = true;
+    }
+
+    return hasShapeNodes;
 }
 
 
