@@ -52,6 +52,9 @@ public:
     bool makeBodyStatic();
     bool makeBodyDynamic();
 
+    bool makeRootFixed();
+    bool makeRootFree();
+
     // API for a composite body
     // The following body and link pair is basically determined by
     // the parent-child relationship in the item tree

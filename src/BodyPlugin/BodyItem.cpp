@@ -174,6 +174,8 @@ public:
     bool makeBodyStatic(bool makeAllJointsFixed = false);
     bool makeBodyDynamic();
     void setCurrentBaseLink(Link* link, bool forceUpdate, bool doNotify);
+    bool makeRootFixed();
+    bool makeRootFree();
     BodyItemKinematicsKitManager* getOrCreateKinematicsKitManager();
     void createPenetrationBlocker(Link* link, bool excludeSelfCollisions, shared_ptr<PenetrationBlocker>& blocker);
     void setPresetPose(BodyItem::PresetPoseID id);
@@ -573,6 +575,40 @@ bool BodyItem::Impl::makeBodyDynamic()
         }
     }
     return isDynamic;
+}
+
+
+bool BodyItem::makeRootFixed()
+{
+    return impl->makeRootFixed();
+}
+
+
+bool BodyItem::Impl::makeRootFixed()
+{
+    const bool isFixed = body->isFixedRootModel();
+    if(!isFixed){
+        body->rootLink()->setJointType(Link::FIXED_JOINT);
+        body->updateLinkTree();
+    }
+    return true;
+}
+
+
+bool BodyItem::makeRootFree()
+{
+    return impl->makeRootFree();
+}
+
+
+bool BodyItem::Impl::makeRootFree()
+{
+    const bool isFree = !body->isFixedRootModel();
+    if(!isFree){
+        body->rootLink()->setJointType(Link::FREE_JOINT);
+        body->updateLinkTree();
+    }
+    return true;
 }
 
 
@@ -1663,6 +1699,8 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty.decimals(3)(_("Mass"), body->mass());
     putProperty(_("Static"), body->isStaticModel(),
                 [&](bool on){ return on ? makeBodyStatic() : makeBodyDynamic(); });
+    putProperty(_("Fixed"), body->isFixedRootModel(),
+                [&](bool on){ return on ? makeRootFixed() : makeRootFree(); });
     putProperty(_("Collision detection"), isCollisionDetectionEnabled,
                 [&](bool on){ return setCollisionDetectionEnabled(on); });
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
@@ -1757,6 +1795,7 @@ bool BodyItem::Impl::store(Archive& archive)
     }
 
     archive.write("staticModel", body->isStaticModel());
+    archive.write("fixedModel", body->rootLink()->jointType() == Link::FIXED_JOINT);
     archive.write("collisionDetection", isCollisionDetectionEnabled);
     archive.write("selfCollisionDetection", isSelfCollisionDetectionEnabled);
     archive.write("location_editable", self->isLocationEditable());
@@ -1898,6 +1937,14 @@ bool BodyItem::Impl::restore(const Archive& archive)
             makeBodyStatic(true);
         } else {
             makeBodyDynamic();
+        }
+    }
+
+    if(archive.read("fixedModel", on)){
+        if(on){
+            makeRootFixed();
+        } else {
+            makeRootFree();
         }
     }
 

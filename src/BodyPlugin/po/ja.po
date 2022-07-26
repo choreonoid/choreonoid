@@ -172,6 +172,9 @@ msgstr "質量"
 msgid "Static"
 msgstr "スタティック"
 
+msgid "Fixed"
+msgstr "環境固定"
+
 msgid "Collision detection"
 msgstr "干渉検出"
 
