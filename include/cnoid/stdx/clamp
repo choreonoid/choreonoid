@@ -1,0 +1,21 @@
+#pragma once
+
+#if __cplusplus > 201703L
+#include <algorithm>
+#else
+namespace std {
+/** Clamp a value in a given interval.
+ *
+ * \param value Value to clamp.
+ * \param lower Lower bound.
+ * \param upper Upper bound.
+ *
+ * \returns clamped value
+ */
+template<typename T>
+constexpr const T clamp(const T& value, const T& lower, const T& upper)
+{
+    return std::max(lower, std::min(value, upper));
+}
+}  // namespace std
+#endif
