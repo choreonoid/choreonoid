@@ -33,6 +33,21 @@
 using namespace std;
 using namespace cnoid;
 
+#include <algorithm>
+
+#if __cplusplus >= 201703L
+
+using std::clamp;
+
+#else
+
+static double clamp(double v, double low, double high)
+{
+    return v < low ? low : (v < high ? v : high);
+}
+
+#endif
+
 namespace {
 
 enum LinkOperationType { None, FK, IK, SimInterference };
@@ -1679,7 +1694,8 @@ void EditableSceneBody::Impl::startFK(SceneWidgetEvent* event)
 void EditableSceneBody::Impl::dragFKRotation(SceneWidgetEvent* event)
 {
     if(dragProjector.dragRotation(event)){
-        targetLink->q() = orgJointPosition + dragProjector.rotationAngle();
+        double q = orgJointPosition + dragProjector.rotationAngle();
+        targetLink->q() = clamp(q, targetLink->q_lower(), targetLink->q_upper());
         bodyItem->notifyKinematicStateChange(true);
         dragged = true;
     }
@@ -1689,7 +1705,8 @@ void EditableSceneBody::Impl::dragFKRotation(SceneWidgetEvent* event)
 void EditableSceneBody::Impl::dragFKTranslation(SceneWidgetEvent* event)
 {
     if(dragProjector.dragTranslation(event)){
-        targetLink->q() = orgJointPosition + dragProjector.translationAxis().dot(dragProjector.translation());
+        double q = orgJointPosition + dragProjector.translationAxis().dot(dragProjector.translation());
+        targetLink->q() = clamp(q, targetLink->q_lower(), targetLink->q_upper());
         bodyItem->notifyKinematicStateChange(true);
         dragged = true;
     }
