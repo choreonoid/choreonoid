@@ -8,8 +8,20 @@
 #include <cnoid/EigenUtil>
 #include <algorithm>
 
-using std::clamp;
 using namespace cnoid;
+
+#if __cplusplus >= 201703L
+
+using std::clamp;
+
+#else
+
+static double clamp(double v, double low, double high)
+{
+    return v < low ? low : (v < high ? v : high);
+}
+
+#endif
 
 static const bool debugMode = false;
 static const bool rootAttitudeNormalizationEnabled = false;

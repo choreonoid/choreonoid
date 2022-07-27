@@ -14,9 +14,9 @@ namespace {
 
 static const bool DEBUG_MESSAGE2 = false;
 
-int clamp(int i, int min, int max)
+int clamp(int i, int low, int high)
 {
-    return i < min ? min : i < max ? i : max - 1;
+    return i < low ? low : i < high ? i : high - 1;
 }
 
 }
