@@ -36,6 +36,7 @@ public:
     AngleAxis rotationAngleAxis;
     Matrix3 rotationMatrix;
     double rotationAngle;
+    double rotationAngleOffset;
         
     TranslationMode translationMode;
     Vector3 translationAxis;
@@ -168,6 +169,8 @@ bool SceneDragProjectorImpl::startRotation(SceneWidgetEvent* event)
 
     if(initialized){
         dragMode = SceneDragProjector::DRAG_ROTATION;
+        rotationAngle = 0.0;
+        rotationAngleOffset = 0.0;
     }
 
     return initialized;
@@ -185,7 +188,20 @@ bool SceneDragProjectorImpl::dragRotation(SceneWidgetEvent* event)
     if(dragMode == SceneDragProjector::DRAG_ROTATION){
         if(projector->project(event, projectedPoint)){
             const Vector3 r = projectedPoint - initialPosition.translation();
-            rotationAngle = atan2(r.dot(rotationBaseY), r.dot(rotationBaseX));
+            double a = atan2(r.dot(rotationBaseY), r.dot(rotationBaseX)) + rotationAngleOffset;
+            double d = a - rotationAngle;
+            if(d > PI){
+                if(abs(d - 2.0 * PI) < d){
+                    a -= 2.0 * PI;
+                    rotationAngleOffset -= 2.0 * PI;
+                }
+            } else if( d < -PI){
+                if(abs(d + 2.0 * PI) < -d){
+                    a += 2.0 * PI;
+                    rotationAngleOffset += 2.0 * PI;
+                }
+            }
+            rotationAngle = a;
             rotationAngleAxis = AngleAxis(rotationAngle, rotationAxis);
             rotationMatrix = rotationAngleAxis;
             position.linear() = rotationMatrix * initialPosition.linear();
