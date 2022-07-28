@@ -751,7 +751,7 @@ BodyItemKinematicsKit* BodyItem::findPresetKinematicsKit(Link* targetLink)
 
 std::shared_ptr<InverseKinematics> BodyItem::findPresetIK(Link* targetLink)
 {
-    if(isAttachedToParentBody_ && targetLink->isRoot()){
+    if(isAttachedToParentBody_ && targetLink->isFixedToRoot()){
         return make_shared<MyCompositeBodyIK>(impl);
     } else if(auto kinematicsKit = findPresetKinematicsKit(targetLink)){
         return kinematicsKit->inverseKinematics();
@@ -769,7 +769,7 @@ BodyItemKinematicsKit* BodyItem::getCurrentKinematicsKit(Link* targetLink)
 std::shared_ptr<InverseKinematics> BodyItem::getCurrentIK(Link* targetLink)
 {
     std::shared_ptr<InverseKinematics> ik;
-    if(isAttachedToParentBody_ && targetLink->isRoot()){
+    if(isAttachedToParentBody_ && targetLink->isFixedToRoot()){
         ik = make_shared<MyCompositeBodyIK>(impl);
     } else if(auto kinematicsKit = getCurrentKinematicsKit(targetLink)){
         ik = kinematicsKit->inverseKinematics();

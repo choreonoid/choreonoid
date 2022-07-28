@@ -930,7 +930,7 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link, bool doUpdateIK
             }
             break;
         }
-        if(!linkChain->isRoot()){
+        if(!linkChain->isFixedToRoot()){
             break;
         }
         bodyItemChain = bodyItemChain->parentBodyItem();
