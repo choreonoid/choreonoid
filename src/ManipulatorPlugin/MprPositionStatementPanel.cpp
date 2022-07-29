@@ -305,24 +305,25 @@ PositionPartWidgetSet* MprPositionStatementPanel::Impl::getOrCreatePositionPartW
 
 
 void MprPositionStatementPanel::updateCoordinateFrameLabel
-(QLabel& label, const GeneralId& id, CoordinateFrame* frame, CoordinateFrameList* frames)
+(QLabel& label, const GeneralId& id, CoordinateFrame* frame)
 {
     bool updated = false;
-    if(frames){
-        if(frame){
-            auto& note = frame->note();
-            if(id.isInt() && !note.empty()){
-                label.setText(QString("%1 ( %2 )").arg(id.toInt()).arg(note.c_str()));
-            } else {
-                label.setText(id.label().c_str());
-            }
-            label.setStyleSheet(normalStyle);
-        } else { // Not found
-            label.setText(QString("%1 ( Not found )").arg(id.label().c_str()));
-            label.setStyleSheet(errorStyle);
+    
+    if(frame){
+        auto& note = frame->note();
+        if(id.isInt() && !note.empty()){
+            label.setText(QString("%1 ( %2 )").arg(id.toInt()).arg(note.c_str()));
+        } else {
+            label.setText(id.label().c_str());
         }
-        updated = true;
+        label.setStyleSheet(normalStyle);
+    } else { // Not found
+        label.setText(QString("%1 ( Not found )").arg(id.label().c_str()));
+        label.setStyleSheet(errorStyle);
     }
+    
+    updated = true;
+    
     if(!updated){
         label.setText("---");
         label.setStyleSheet(normalStyle);
@@ -478,13 +479,11 @@ void PositionPartWidgetSet::updateIkPanel(BodyItemKinematicsKit* kinematicsKit, 
 
     MprPositionStatementPanel::updateCoordinateFrameLabel(
         coordinateFrameLabels[0], position->baseFrameId(),
-        position->findBaseFrame(kinematicsKit->baseFrames()),
-        kinematicsKit->baseFrames());
+        position->findBaseFrame(kinematicsKit->baseFrames()));
 
     MprPositionStatementPanel::updateCoordinateFrameLabel(
         coordinateFrameLabels[1], position->offsetFrameId(),
-        position->findOffsetFrame(kinematicsKit->offsetFrames()),
-        kinematicsKit->offsetFrames());
+        position->findOffsetFrame(kinematicsKit->offsetFrames()));
 
     int configIndex = position->configuration();
     if(kinematicsKit->configurationHandler()){

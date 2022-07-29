@@ -23,9 +23,7 @@ public:
     virtual void setEditable(bool on) override;
     virtual void onStatementUpdated() override;
 
-    static void updateCoordinateFrameLabel(
-        QLabel& label, const GeneralId& id, CoordinateFrame* frame, CoordinateFrameList* frames);
-
+    static void updateCoordinateFrameLabel(QLabel& label, const GeneralId& id, CoordinateFrame* frame);
     class Impl;
 
 protected:

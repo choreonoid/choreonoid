@@ -177,10 +177,10 @@ public:
     }
 
     CoordinateFrame* findBaseFrame(CoordinateFrameList* baseFrames){
-        return baseFrames->findFrame(baseFrameId_);
+        return baseFrames ? baseFrames->findFrame(baseFrameId_) : nullptr;
     }
     CoordinateFrame* findOffsetFrame(CoordinateFrameList* offsetFrames){
-        return offsetFrames->findFrame(offsetFrameId_);
+        return offsetFrames ? offsetFrames->findFrame(offsetFrameId_) : nullptr;
     }
     CoordinateFrame* findFrame(CoordinateFrameList* frames, int frameType){
         return (frameType == BaseFrame) ? findBaseFrame(frames) : findOffsetFrame(frames);

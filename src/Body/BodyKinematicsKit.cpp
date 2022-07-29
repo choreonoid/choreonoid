@@ -267,6 +267,8 @@ Link* BodyKinematicsKit::Impl::baseLink()
 {
     if(jointPath){
         return jointPath->baseLink();
+    } else if(jointTraverse){
+        return jointTraverse->linkTraverse().rootLink();
     }
     return nullptr;
 }
@@ -562,7 +564,7 @@ Isometry3 BodyKinematicsKit::endPosition
     if(baseFrame_->isGlobal()){
         T_base = baseFrame_->T();
     } else {
-        T_base = impl->jointPath->baseLink()->T() * baseFrame_->T();
+        T_base = impl->baseLink()->T() * baseFrame_->T();
     }
     
     const CoordinateFrame* offsetFrame_;
@@ -600,7 +602,7 @@ Isometry3 BodyKinematicsKit::globalBasePosition(const GeneralId& baseFrameId) co
     if(baseFrame_->isGlobal()){
         return baseFrame_->T();
     } else {
-        return impl->jointPath->baseLink()->T() * baseFrame_->T();
+        return impl->baseLink()->T() * baseFrame_->T();
     }
 }
 
@@ -622,7 +624,7 @@ bool BodyKinematicsKit::setEndPosition
     if(baseFrame_->isGlobal()){
         T_base = baseFrame_->T();
     } else {
-        T_base = baseLink()->T() * baseFrame_->T();
+        T_base = impl->baseLink()->T() * baseFrame_->T();
     }
 
     CoordinateFrame* offsetFrame_;

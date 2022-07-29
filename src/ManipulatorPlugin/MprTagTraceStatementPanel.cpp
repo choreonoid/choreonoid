@@ -197,11 +197,13 @@ void MprTagTraceStatementPanel::Impl::updateBaseInterfaces()
 
     if(auto kinematicsKit = self->currentMainKinematicsKit()){
         auto baseId = statement->baseFrameId();
+        auto baseFrames = kinematicsKit->baseFrames();
         MprPositionStatementPanel::updateCoordinateFrameLabel(
-            baseFrameLabel, baseId, kinematicsKit->baseFrames()->findFrame(baseId), kinematicsKit->baseFrames());
+            baseFrameLabel, baseId, baseFrames ? baseFrames->findFrame(baseId) : nullptr);
         auto offsetId = statement->offsetFrameId();
+        auto offsetFrames = kinematicsKit->offsetFrames();
         MprPositionStatementPanel::updateCoordinateFrameLabel(
-            offsetFrameLabel, offsetId, kinematicsKit->offsetFrames()->findFrame(offsetId), kinematicsKit->offsetFrames());
+            offsetFrameLabel, offsetId, offsetFrames ? offsetFrames->findFrame(offsetId) : nullptr);
     } else {
         baseFrameLabel.setText("---");
         offsetFrameLabel.setText("---");
