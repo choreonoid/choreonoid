@@ -6,6 +6,7 @@
 
 namespace cnoid {
 
+class BodyItem;
 class KinematicBodyItemSet;
 
 class CNOID_EXPORT MultiBodyJointDisplacementWidget : public QWidget
@@ -17,6 +18,7 @@ public:
     enum LabelOption { PlainLabel = 0, BoldLabel = 1, BracketedLabel = 2 };
     void setTargetBodyLabelOptions(int options);
 
+    void setPersistentBodyItem(BodyItem* bodyItem);
     void setKinematicBodyItemSet(KinematicBodyItemSet* bodyItemSet);
     KinematicBodyItemSet* kinematicBodyItemSet();
 

@@ -18,6 +18,7 @@ class MultiBodyJointDisplacementWidget::Impl
 {
 public:
     MultiBodyJointDisplacementWidget* self;
+    BodyItemPtr persistentBodyItem;
     KinematicBodyItemSetPtr currentBodyItemSet;
     ScopedConnection bodyItemSetConnection;
     QGridLayout* grid;
@@ -86,6 +87,12 @@ void MultiBodyJointDisplacementWidget::setTargetBodyLabelOptions(int options)
 }
 
 
+void MultiBodyJointDisplacementWidget::setPersistentBodyItem(BodyItem* bodyItem)
+{
+    impl->persistentBodyItem = bodyItem;
+}
+
+
 void MultiBodyJointDisplacementWidget::setKinematicBodyItemSet(KinematicBodyItemSet* bodyItemSet)
 {
     impl->setKinematicBodyItemSet(bodyItemSet);
@@ -100,8 +107,9 @@ void MultiBodyJointDisplacementWidget::Impl::setKinematicBodyItemSet(KinematicBo
     bodyItemSetConnection.disconnect();
     currentBodyItemSet = bodyItemSet;
 
+    updateDisplacementWidgets();
+
     if(bodyItemSet){
-        updateDisplacementWidgets();
         bodyItemSetConnection =
             bodyItemSet->sigBodySetChanged().connect(
                 [this](){ updateDisplacementWidgets(); });
@@ -112,24 +120,40 @@ void MultiBodyJointDisplacementWidget::Impl::setKinematicBodyItemSet(KinematicBo
 
 void MultiBodyJointDisplacementWidget::Impl::updateDisplacementWidgets()
 {
-    auto bodyPartIndices = currentBodyItemSet->validBodyPartIndices();
-    int numBodyParts = bodyPartIndices.size();
+    vector<BodyItem*> bodyItems;
+    bool isPersistentBodyItemFound = false;
+    
+    if(currentBodyItemSet){
+        for(auto& index : currentBodyItemSet->validBodyPartIndices()){
+            auto bodyItem = currentBodyItemSet->bodyItem(index);
+            if(bodyItem->body()->numJoints() > 0){
+                bodyItems.push_back(bodyItem);
+            }
+            if(bodyItem == persistentBodyItem){
+                isPersistentBodyItemFound = true;
+            }
+        }
+    }
+    if(persistentBodyItem && !isPersistentBodyItemFound){
+        if(persistentBodyItem->body()->numJoints() > 0){
+            bodyItems.insert(bodyItems.begin(), persistentBodyItem);
+        }
+    }
+    int numBodyItems = bodyItems.size();
 
-    if(numBodyParts > static_cast<int>(displacementWidgetSets.size())){
-        displacementWidgetSets.resize(bodyPartIndices.size());
+    if(numBodyItems > static_cast<int>(displacementWidgetSets.size())){
+        displacementWidgetSets.resize(numBodyItems);
     }
 
     rowCounter = 0;
     int widgetSetIndex = 0;
-    while(widgetSetIndex < numBodyParts){
-        int bodyPartIndex = bodyPartIndices[widgetSetIndex];
-        auto part = currentBodyItemSet->bodyItemPart(bodyPartIndex);
+    while(widgetSetIndex < numBodyItems){
         auto& widgetSet = displacementWidgetSets[widgetSetIndex];
         if(!widgetSet){
             widgetSet = new JointDisplacementWidgetSet(self, grid, &rowCounter);
         }
-        widgetSet->setTargetBodyLabelEnabled(numBodyParts >= 2, labelOptions);
-        widgetSet->setBodyItem(part->bodyItem());
+        widgetSet->setTargetBodyLabelEnabled(numBodyItems >= 2, labelOptions);
+        widgetSet->setBodyItem(bodyItems[widgetSetIndex]);
         widgetSet->setVisible(true);
         ++widgetSetIndex;
     }
