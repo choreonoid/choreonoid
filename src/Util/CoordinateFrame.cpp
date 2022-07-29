@@ -91,7 +91,7 @@ bool CoordinateFrame::read(const Mapping& archive)
         if(archive.read("mode", symbol)){
             if(symbol == "global"){
                 mode_ = Global;
-            } else if(symbol == "local"){
+            } else {
                 mode_ = Local;
             }
         }

@@ -380,8 +380,6 @@ void CoordinateFrameItem::setLocationEditable(bool on)
 }
 
 
-namespace {
-
 FrameLocation::FrameLocation(CoordinateFrameItem::Impl* impl)
     : LocationProxy(InvalidLocation),
       impl(impl)
@@ -393,14 +391,24 @@ FrameLocation::FrameLocation(CoordinateFrameItem::Impl* impl)
 
 void FrameLocation::updateLocationType()
 {
+    int prevType = locationType();
+    
     if(impl->frameList){
         if(impl->frameList->isForBaseFrames()){
-            setLocationType(ParentRelativeLocation);
+            if(impl->frame->isGlobal()){
+                setLocationType(GlobalLocation);
+            } else {
+                setLocationType(ParentRelativeLocation);
+            }
         } else if(impl->frameList->isForOffsetFrames()){
             setLocationType(OffsetLocation);
         }
     } else {
         setLocationType(InvalidLocation);
+    }
+
+    if(locationType() != prevType){
+        notifyAttributeChange();
     }
 }
 
@@ -413,8 +421,10 @@ Item* FrameLocation::getCorrespondingItem()
 
 LocationProxyPtr FrameLocation::getParentLocationProxy() const
 {
-    if(impl->frameListItem){
-        return impl->frameListItem->getFrameParentLocationProxy();
+    if(impl->frame->isLocal()){
+        if(impl->frameListItem){
+            return impl->frameListItem->getFrameParentLocationProxy();
+        }
     }
     return nullptr;
 }
@@ -476,6 +486,4 @@ bool FrameLocation::setLocation(const Isometry3& T)
 SignalProxy<void()> FrameLocation::sigLocationChanged()
 {
     return impl->sigLocationChanged;
-}
-
 }

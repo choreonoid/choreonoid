@@ -105,13 +105,13 @@ public:
     
     QLabel resultLabel;
 
-    enum CoordinateMode { WorldCoordinateMode, BodyCoordinateMode, LocalCoordinateMode, NumCoordinateModes };
+    enum CoordinateMode { WorldCoordinateMode, BaseFrameCoordinateMode, LocalCoordinateMode, NumCoordinateModes };
     Selection coordinateModeSelection;
     int coordinateMode;
     int preferredCoordinateMode;
     ButtonGroup coordinateModeGroup;
     RadioButton worldCoordRadio;
-    RadioButton bodyCoordRadio;
+    RadioButton baseCoordRadio;
     RadioButton localCoordRadio;
     vector<QWidget*> coordinateModeWidgets;
 
@@ -239,11 +239,11 @@ void LinkPositionWidget::Impl::createPanel()
     coordinateModeGroup.addButton(&worldCoordRadio, WorldCoordinateMode);
     coordinateModeWidgets.push_back(&worldCoordRadio);
 
-    coordinateModeSelection.setSymbol(BodyCoordinateMode, "base");
-    bodyCoordRadio.setText(_("Base"));
-    hbox->addWidget(&bodyCoordRadio);
-    coordinateModeGroup.addButton(&bodyCoordRadio, BodyCoordinateMode);
-    coordinateModeWidgets.push_back(&bodyCoordRadio);
+    coordinateModeSelection.setSymbol(BaseFrameCoordinateMode, "base");
+    baseCoordRadio.setText(_("Base"));
+    hbox->addWidget(&baseCoordRadio);
+    coordinateModeGroup.addButton(&baseCoordRadio, BaseFrameCoordinateMode);
+    coordinateModeWidgets.push_back(&baseCoordRadio);
 
     coordinateModeSelection.setSymbol(LocalCoordinateMode, "local");
     localCoordRadio.setText(_("Local"));
@@ -252,7 +252,7 @@ void LinkPositionWidget::Impl::createPanel()
     coordinateModeWidgets.push_back(&localCoordRadio);
 
     coordinateMode = WorldCoordinateMode;
-    preferredCoordinateMode = BodyCoordinateMode;
+    preferredCoordinateMode = BaseFrameCoordinateMode;
 
     coordinateModeGroup.sigButtonToggled().connect(
         [&](int mode, bool on){
@@ -322,7 +322,7 @@ void LinkPositionWidget::customizeCoordinateModeLabels
 (const char* worldModeLabel, const char* baseModeLabel, const char* localModeLabel)
 {
     impl->worldCoordRadio.setText(worldModeLabel);
-    impl->bodyCoordRadio.setText(baseModeLabel);
+    impl->baseCoordRadio.setText(baseModeLabel);
     impl->localCoordRadio.setText(localModeLabel);
 }
 
@@ -369,9 +369,9 @@ void LinkPositionWidget::Impl::setCoordinateMode(int mode, bool doUpdatePreferre
         positionWidget->setReferenceRpy(Vector3::Zero());
         isValid = true;
 
-    } else if(mode == BodyCoordinateMode){
-        if(bodyCoordRadio.isEnabled()){
-            bodyCoordRadio.setChecked(true);
+    } else if(mode == BaseFrameCoordinateMode){
+        if(baseCoordRadio.isEnabled()){
+            baseCoordRadio.setChecked(true);
             isValid = true;
         }
     }
@@ -527,7 +527,7 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
     kinematicsKitConnections.disconnect();
     setBaseFrame(identityFrame);
     setOffsetFrame(identityFrame);
-    bool isBodyCoordinateModeEnabled = false;
+    bool isBaseCoordinateModeEnabled = false;
     
     if(targetLink){
         auto body = targetBodyItem->body();
@@ -543,7 +543,7 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
                         onKinematicsKitPositionError(T_frameCoordinate); }));
 
             if(kinematicsKit->baseLink() && link != kinematicsKit->baseLink()){
-                isBodyCoordinateModeEnabled = true;
+                isBaseCoordinateModeEnabled = true;
             }
             setBaseFrame(kinematicsKit->currentBaseFrame());
             setOffsetFrame(kinematicsKit->currentOffsetFrame());
@@ -551,10 +551,10 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
     }
 
     self->setEnabled(kinematicsKit != nullptr);
-    isFrameComboEnabled[BaseFrame] = isBodyCoordinateModeEnabled;
+    isFrameComboEnabled[BaseFrame] = isBaseCoordinateModeEnabled;
     isFrameComboEnabled[OffsetFrame] = true;
     updateCoordinateFrameCandidates();
-    bodyCoordRadio.setEnabled(isBodyCoordinateModeEnabled);
+    baseCoordRadio.setEnabled(isBaseCoordinateModeEnabled);
     setCoordinateMode(preferredCoordinateMode, false, false);
 
     resultLabel.setText("");
@@ -1160,8 +1160,9 @@ void LinkPositionWidget::Impl::updateDisplayWithGlobalLinkPosition(const Isometr
     } else {
         T = Ta_global * offsetFrame->T(); // World coordinate
 
-        if(coordinateMode == BodyCoordinateMode){
-            if(kinematicsKit && kinematicsKit->baseLink()){
+        if(coordinateMode == BaseFrameCoordinateMode){
+            bool isBodyCoordinate = baseFrame->isLocal();
+            if(isBodyCoordinate && kinematicsKit && kinematicsKit->baseLink()){
                 T = kinematicsKit->baseLink()->T().inverse(Eigen::Isometry) * T;
             }
             T = baseFrame->T().inverse(Eigen::Isometry) * T;
@@ -1261,9 +1262,10 @@ bool LinkPositionWidget::Impl::findBodyIkSolution(const Isometry3& T_input, bool
         if(coordinateMode == WorldCoordinateMode){
             T = T_end_origin;
 
-        } else if(coordinateMode == BodyCoordinateMode){
+        } else if(coordinateMode == BaseFrameCoordinateMode){
             T = baseFrame->T() * T_end_origin;
-            if(kinematicsKit->baseLink()){
+            bool isBodyCoordinate = baseFrame->isLocal();
+            if(isBodyCoordinate && kinematicsKit->baseLink()){
                 T = kinematicsKit->baseLink()->T() * T;
             }
 

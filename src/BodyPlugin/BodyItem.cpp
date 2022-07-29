@@ -1229,13 +1229,16 @@ void BodyLocation::updateLocationType()
 Isometry3 BodyLocation::getLocation() const
 {
     auto rootLink = impl->body->rootLink();
-    if(impl->attachmentToParent){
+    switch(locationType()){
+    case OffsetLocation:
         // relative position from the parent link
         return rootLink->offsetPosition();
-    } else {
-        // global position
+    case GlobalLocation:
         return rootLink->T();
+    defaut:
+        break;
     }
+    return Isometry3::Identity();
 }
 
 
@@ -1254,15 +1257,20 @@ void BodyLocation::setEditable(bool on)
 bool BodyLocation::setLocation(const Isometry3& T)
 {
     auto rootLink = impl->body->rootLink();
-    if(impl->attachmentToParent){
+    switch(locationType()){
+    case OffsetLocation:
         rootLink->setOffsetPosition(T);
         impl->parentBodyItem->notifyKinematicStateChange(true);
-    } else {
+        return true;
+    case GlobalLocation:
         rootLink->setPosition(T);
         impl->body->calcForwardKinematics();
         impl->self->notifyKinematicStateChange();
+        return true;
+    default:
+        break;
     }
-    return true;
+    return false;
 }
 
 

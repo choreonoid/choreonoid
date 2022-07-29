@@ -72,7 +72,7 @@ public:
     virtual LocationProxyPtr getFrameParentLocationProxy();
     bool getRelativeFramePosition(const CoordinateFrame* frame, Isometry3& out_T) const;
     bool getGlobalFramePosition(const CoordinateFrame* frame, Isometry3& out_T) const;
-    bool switchFrameMode(CoordinateFrame* frame, int mode);
+    bool switchFrameMode(CoordinateFrame* frame, int mode, bool doNotify = false);
 
     // RenderableItem function
     virtual SgNode* getScene() override;

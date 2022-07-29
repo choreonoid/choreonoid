@@ -288,25 +288,17 @@ QVariant FrameListModel::data(const QModelIndex& index, int role) const
             return frame->note().c_str();
 
         case PositionColumn: {
-            Isometry3 T;
-            if(frameListItem->getRelativeFramePosition(frame, T)){
-                auto p = T.translation();
-                auto rpy = degree(rpyFromRot(T.linear()));
+            Isometry3 T = frame->T();
+            auto p = T.translation();
+            auto rpy = degree(rpyFromRot(T.linear()));
 
-                if(valueFormat->isMillimeter()){
-                    return format("{0: 9.3f} {1: 9.3f} {2: 9.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
-                                  p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0,
-                                  rpy[0], rpy[1], rpy[2]).c_str();
-                } else {
-                    return format("{0: 6.3f} {1: 6.3f} {2: 6.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
-                                  p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
-                }
+            if(valueFormat->isMillimeter()){
+                return format("{0: 9.3f} {1: 9.3f} {2: 9.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
+                              p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0,
+                              rpy[0], rpy[1], rpy[2]).c_str();
             } else {
-                if(valueFormat->isMillimeter()){
-                    return "  ---.---   ---.---   ---.---    -.-    -.-    -.-";
-                } else {
-                    return " -.---  -.---  -.---    -.-    -.-    -.-";
-                }
+                return format("{0: 6.3f} {1: 6.3f} {2: 6.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
+                              p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
             }
         }
         case GlobalCheckColumn:
@@ -369,9 +361,7 @@ bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, in
         case GlobalCheckColumn: {
             bool isGlobal = value.toBool();
             int mode = isGlobal ? CoordinateFrame::Global : CoordinateFrame::Local;
-            if(frameListItem->switchFrameMode(frame, mode)){
-                updateFlags = CoordinateFrame::ModeUpdate | CoordinateFrame::PositionUpdate;
-            }
+            frameListItem->switchFrameMode(frame, mode, true);
             break;
         }
         case VisibleCheckColumn:

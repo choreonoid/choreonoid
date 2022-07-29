@@ -99,6 +99,7 @@ public:
     void onFrameRemoved(int index, CoordinateFrame* frame);
     bool onFrameItemAdded(CoordinateFrameItem* frameItem);
     void setFrameMarkerVisible(CoordinateFrame* frame, bool on, bool isTransient);
+    void updateParentLocationConnectionForFramerMarkers();
     void updateParentFrameForFrameMarkers(const Isometry3& T);
     void storeLockedFrameIndices(Archive& archive);
     void completeFrameItemRestoration(const Archive& archive);
@@ -553,7 +554,7 @@ bool CoordinateFrameListItem::getGlobalFramePosition(const CoordinateFrame* fram
 {
     if(!frame->isGlobal()){
         if(auto parentLocation = const_cast<CoordinateFrameListItem*>(this)->getFrameParentLocationProxy()){
-            auto T_base = parentLocation->getLocation();
+            auto T_base = parentLocation->getGlobalLocation();
             out_T = T_base * frame->T();
             return true;
         }
@@ -564,7 +565,7 @@ bool CoordinateFrameListItem::getGlobalFramePosition(const CoordinateFrame* fram
 }
         
 
-bool CoordinateFrameListItem::switchFrameMode(CoordinateFrame* frame, int mode)
+bool CoordinateFrameListItem::switchFrameMode(CoordinateFrame* frame, int mode, bool doNotify)
 {
     if(frame->mode() == mode){
         return true;
@@ -573,13 +574,18 @@ bool CoordinateFrameListItem::switchFrameMode(CoordinateFrame* frame, int mode)
     if(!parentLocation){
         return false;
     }
-    auto T_base = parentLocation->getLocation();
+    auto T_base = parentLocation->getGlobalLocation();
     if(mode == CoordinateFrame::Global){
         frame->setPosition(T_base * frame->T());
     } else { // Local
         frame->setPosition(T_base.inverse(Eigen::Isometry) * frame->T());
     }
     frame->setMode(mode);
+
+    if(doNotify){
+        frame->notifyUpdate(CoordinateFrame::ModeUpdate | CoordinateFrame::PositionUpdate);
+    }
+    
     return true;
 }
 
@@ -646,30 +652,14 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
     }
 
     if(changed){
-        int numRelativeMarkers = relativeFrameMarkerGroup->numChildren();
         if(relativeMarkerChanged){
-            if(parentLocationConnection.connected()){
-                if(relativeFrameMarkerGroup->empty()){
-                    parentLocationConnection.disconnect();
-                }
-            } else {
-                if(!relativeFrameMarkerGroup->empty()){
-                    if(auto location = self->getFrameParentLocationProxy()){
-                        parentLocationConnection =
-                            location->sigLocationChanged().connect(
-                                [this, location](){
-                                    updateParentFrameForFrameMarkers(location->getLocation());
-                                });
-                        updateParentFrameForFrameMarkers(location->getLocation());
-                    }
-                }
-            }
+            updateParentLocationConnectionForFramerMarkers();
         }
 
         if(on){
             self->setChecked(true);
         } else {
-            if(numRelativeMarkers == 0 && frameMarkerGroup->numChildren() <= 1){
+            if(relativeFrameMarkerGroup->empty() == 0 && frameMarkerGroup->numChildren() <= 1){
                 self->setChecked(false);
             }
         }
@@ -691,6 +681,28 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
             }
         }
         marker->updateFrameItem(frameItem, on);
+    }
+}
+
+
+void CoordinateFrameListItem::Impl::updateParentLocationConnectionForFramerMarkers()
+{
+    int numRelativeMarkers = relativeFrameMarkerGroup->numChildren();
+    if(parentLocationConnection.connected()){
+        if(relativeFrameMarkerGroup->empty()){
+            parentLocationConnection.disconnect();
+        }
+    } else {
+        if(!relativeFrameMarkerGroup->empty()){
+            if(auto location = self->getFrameParentLocationProxy()){
+                parentLocationConnection =
+                    location->sigLocationChanged().connect(
+                        [this, location](){
+                            updateParentFrameForFrameMarkers(location->getGlobalLocation());
+                        });
+                updateParentFrameForFrameMarkers(location->getGlobalLocation());
+            }
+        }
     }
 }
 
@@ -726,8 +738,6 @@ void CoordinateFrameListItem::Impl::updateParentFrameForFrameMarkers(const Isome
     relativeFrameMarkerGroup->notifyUpdate();
 }
 
-
-namespace {
 
 FrameMarker::FrameMarker(CoordinateFrameListItem::Impl* impl, CoordinateFrame* frame)
     : CoordinateFrameMarker(frame),
@@ -798,12 +808,11 @@ void FrameMarker::onFrameUpdated(int flags)
                 }
             }
             isGlobal = isCurrentGlobal;
+            impl->updateParentLocationConnectionForFramerMarkers();
         }
     }
 
     CoordinateFrameMarker::onFrameUpdated(flags);
-}
-
 }
 
 
