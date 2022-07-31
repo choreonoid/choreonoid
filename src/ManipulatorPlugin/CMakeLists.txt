@@ -26,6 +26,7 @@ set(sources
   MprStatementViewBase.cpp
   MprStatementPanel.cpp
   MprPositionStatementPanel.cpp
+  MprPositionLabelSet.cpp
   MprTagTraceStatementPanel.cpp
   MprTagTraceStatementTagGroupResolver.cpp
   MprPositionListView.cpp

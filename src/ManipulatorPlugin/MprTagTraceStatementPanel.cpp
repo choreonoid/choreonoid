@@ -1,8 +1,9 @@
 #include "MprTagTraceStatementPanel.h"
-#include "MprPositionStatementPanel.h"
+#include "MprPositionLabelSet.h"
 #include "MprTagTraceStatement.h"
 #include "MprProgramItemBase.h"
 #include <cnoid/WorldItem>
+#include <cnoid/KinematicBodyItemSet>
 #include <cnoid/BodyItemKinematicsKit>
 #include <cnoid/PositionTagGroupItem>
 #include <cnoid/ItemList>
@@ -37,6 +38,7 @@ class MprTagTraceStatementPanel::Impl
 {
 public:
     MprTagTraceStatementPanel* self;
+    bool isSubBodyPositionEnabled;
     bool isEditable;
     QGridLayout* grid;
     ComboBox tagGroupCombo;
@@ -47,10 +49,16 @@ public:
     QLabel baseFrameLabel;
     QLabel offsetFrameLabel;
 
+    QGridLayout* positionLabelGrid;
+    int jointDisplacementColumnSize;
+    int positionLabelGridColumnSize;
+    vector<MprPositionLabelSetPtr> positionLabelSets;
+
     Impl(MprTagTraceStatementPanel* self);
     void createBaseInterfaces(
         const std::function<void(QGridLayout* grid)>& createAdditionalInterfaces);
     void updateBaseInterfaces();
+    MprPositionLabelSet* getOrCreatePositionLabelSet(int index);
     void updateTagGroupCombo();
     void onTagGroupComboActivated(int comboIndex);
     void touchupPositionAndFrames();
@@ -69,6 +77,13 @@ MprTagTraceStatementPanel::Impl::Impl(MprTagTraceStatementPanel* self)
     : self(self)
 {
     isEditable = true;
+    isSubBodyPositionEnabled = false;
+}
+
+
+void MprTagTraceStatementPanel::setSubBodyPositionEnabled(bool on)
+{
+    impl->isSubBodyPositionEnabled = on;
 }
 
 
@@ -109,8 +124,7 @@ void MprTagTraceStatementPanel::Impl::createBaseInterfaces
     grid->addWidget(new QLabel(" : "), row, 1);
 
     touchupButton.setText(_("Touch-up"));
-    touchupButton.sigClicked().connect(
-        [this](){ touchupPositionAndFrames(); });
+    touchupButton.sigClicked().connect([this](){ self->onTouchup(); });
     grid->addWidget(&touchupButton, row, 2, Qt::AlignRight);
 
     ++row;
@@ -140,6 +154,14 @@ void MprTagTraceStatementPanel::Impl::createBaseInterfaces
     ++row;
     
     vbox->addLayout(grid);
+
+    jointDisplacementColumnSize = 6;
+    positionLabelGridColumnSize = 1 + jointDisplacementColumnSize * 3;
+
+    positionLabelGrid = new QGridLayout;
+    positionLabelGrid->setColumnStretch(positionLabelGridColumnSize, 10);
+    vbox->addLayout(positionLabelGrid);
+    
     vbox->addStretch();
     
     self->setLayout(vbox);
@@ -198,16 +220,52 @@ void MprTagTraceStatementPanel::Impl::updateBaseInterfaces()
     if(auto kinematicsKit = self->currentMainKinematicsKit()){
         auto baseId = statement->baseFrameId();
         auto baseFrames = kinematicsKit->baseFrames();
-        MprPositionStatementPanel::updateCoordinateFrameLabel(
+        MprPositionLabelSet::updateCoordinateFrameLabel(
             baseFrameLabel, baseId, baseFrames ? baseFrames->findFrame(baseId) : nullptr);
         auto offsetId = statement->offsetFrameId();
         auto offsetFrames = kinematicsKit->offsetFrames();
-        MprPositionStatementPanel::updateCoordinateFrameLabel(
+        MprPositionLabelSet::updateCoordinateFrameLabel(
             offsetFrameLabel, offsetId, offsetFrames ? offsetFrames->findFrame(offsetId) : nullptr);
     } else {
         baseFrameLabel.setText("---");
         offsetFrameLabel.setText("---");
     }
+
+    int row = 0;
+    int labelSetIndex = 0;
+    
+    if(auto subBodyPositions = statement->subBodyPositions()){
+        auto bodyItemSet = self->currentBodyItemSet();
+        int mainIndex = bodyItemSet->mainBodyPartIndex();
+        for(auto& index : subBodyPositions->findMatchedPositionIndices(bodyItemSet)){
+            if(index != mainIndex){
+                auto labelSet = getOrCreatePositionLabelSet(labelSetIndex++);
+                labelSet->update(
+                    bodyItemSet->bodyItemPart(index),
+                    subBodyPositions->position(index),
+                    row,
+                    positionLabelGridColumnSize,
+                    jointDisplacementColumnSize,
+                    true);
+            }
+        }
+    }
+    while(labelSetIndex < static_cast<int>(positionLabelSets.size())){
+        positionLabelSets[labelSetIndex++]->detach();
+    }
+}
+
+
+MprPositionLabelSet* MprTagTraceStatementPanel::Impl::getOrCreatePositionLabelSet(int index)
+{
+    if(index >= static_cast<int>(positionLabelSets.size())){
+        positionLabelSets.resize(index + 1);
+    }
+    auto& labelSet = positionLabelSets[index];
+    if(!labelSet){
+        labelSet = new MprPositionLabelSet(positionLabelGrid);
+    }
+    return labelSet;
 }
 
 
@@ -256,8 +314,14 @@ void MprTagTraceStatementPanel::Impl::onTagGroupComboActivated(int comboIndex)
         statement->setTagGroup(nullptr, false, false);
         statement->setTagGroupName(name);
         self->currentProgramItem()->resolveStatementReferences(statement);
-        touchupPositionAndFrames();
+        self->onTouchup();
     }
+}
+
+
+void MprTagTraceStatementPanel::onTouchup()
+{
+    impl->touchupPositionAndFrames();
 }
 
 
@@ -269,6 +333,9 @@ void MprTagTraceStatementPanel::Impl::touchupPositionAndFrames()
         if(auto tagGroupItem = PositionTagGroupItem::findItemOf(statement->tagGroup())){
             statement->updateTagGroupPositionWithGlobalCoordinate(
                 kinematicsKit, tagGroupItem->originPosition());
+        }
+        if(isSubBodyPositionEnabled){
+            statement->fetchSubBodyPositions(self->currentBodyItemSet());
         }
     }
     statement->updateTagTraceProgram();

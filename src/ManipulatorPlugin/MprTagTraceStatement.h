@@ -3,6 +3,7 @@
 
 #include "MprBasicStatements.h"
 #include "MprProgram.h"
+#include "MprPosition.h"
 #include <cnoid/GeneralId>
 #include <cnoid/PositionTagGroup>
 #include <cnoid/ConnectionSet>
@@ -31,17 +32,28 @@ public:
     PositionTagGroup* tagGroup() { return tagGroup_; }
 
     //! The position of the tag group on the base coordinate frame
-    const Isometry3& tagGroupPosition() const { return T_tags; }
     void setTagGroupPosition(const Isometry3& T) { T_tags = T; }
+    const Isometry3& tagGroupPosition() const { return T_tags; }
 
-    const GeneralId& baseFrameId() const { return baseFrameId_; }
-    const GeneralId& offsetFrameId() const { return offsetFrameId_; }
-    void setBaseFrameId(const GeneralId& id){ baseFrameId_ = id; }
-    void setOffsetFrameId(const GeneralId& id){ offsetFrameId_ = id; }
-
-    void updateFramesWithCurrentFrames(BodyKinematicsKit* kinematicsKit);
     void updateTagGroupPositionWithGlobalCoordinate(
         BodyKinematicsKit* kinematicsKit, const Isometry3& T_global);
+    
+    void setBaseFrameId(const GeneralId& id){ baseFrameId_ = id; }
+    void setOffsetFrameId(const GeneralId& id){ offsetFrameId_ = id; }
+    const GeneralId& baseFrameId() const { return baseFrameId_; }
+    const GeneralId& offsetFrameId() const { return offsetFrameId_; }
+    void updateFramesWithCurrentFrames(BodyKinematicsKit* kinematicsKit);
+
+    /*
+      If the statement specifies the positions of sub bodies such as sliders and end-effectors,
+      you can get and update the positions using the following functions.
+      This feature is optional. The statement can handle the motions of the main manipulator body
+      without using the following functions.
+    */
+    MprCompositePosition* subBodyPositions() { return subBodyPositions_;  }
+    const MprCompositePosition* subBodyPositions() const { return subBodyPositions_; }
+    const int targetBodyIndex() const { return targetBodyIndex_; }
+    bool fetchSubBodyPositions(KinematicBodySet* bodySet);
 
     virtual bool updateTagTraceProgram() = 0;
     bool decomposeIntoTagTraceStatements();
@@ -60,11 +72,19 @@ protected:
 private:
     std::string tagGroupName_;
     PositionTagGroupPtr tagGroup_;
+    ScopedConnectionSet tagGroupConnections;
     Isometry3 T_tags;
     GeneralId baseFrameId_;
     GeneralId offsetFrameId_;
-    ScopedConnectionSet tagGroupConnections;
 
+    /*
+       The variables for supporting sub-body positions.
+       The sub-body position feature is disabled by setting -1 to targetBodyIndex_ and
+       nullptr to subMechanismPositions_.
+    */
+    int targetBodyIndex_;
+    MprCompositePositionPtr subBodyPositions_;
+    
     void connectTagGroupUpdateSignals();
 };
 

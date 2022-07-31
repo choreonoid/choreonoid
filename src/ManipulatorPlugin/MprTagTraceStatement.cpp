@@ -1,13 +1,14 @@
 #include "MprTagTraceStatement.h"
 #include "MprPositionStatement.h"
-#include "MprPosition.h"
 #include "MprPositionList.h"
 #include "MprStatementRegistration.h"
 #include <cnoid/BodyKinematicsKit>
+#include <cnoid/KinematicBodySet>
 #include <cnoid/ValueTree>
 #include <cnoid/EigenArchive>
 #include <cnoid/EigenUtil>
 #include <cnoid/CloneMap>
+#include <cnoid/MessageOut>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -19,7 +20,8 @@ using fmt::format;
 MprTagTraceStatement::MprTagTraceStatement()
     : T_tags(Isometry3::Identity()),
       baseFrameId_(0),
-      offsetFrameId_(0)
+      offsetFrameId_(0),
+      targetBodyIndex_(-1)
 {
     auto program = lowerLevelProgram();
     program->setLocalPositionListEnabled(true);
@@ -32,8 +34,13 @@ MprTagTraceStatement::MprTagTraceStatement(const MprTagTraceStatement& org, Clon
       tagGroupName_(org.tagGroupName_),
       T_tags(org.T_tags),
       baseFrameId_(org.baseFrameId_),
-      offsetFrameId_(org.offsetFrameId_)
+      offsetFrameId_(org.offsetFrameId_),
+      targetBodyIndex_(org.targetBodyIndex_)
 {
+    if(org.subBodyPositions_){
+        subBodyPositions_ = org.subBodyPositions_->clone();
+    }
+    
     auto program = lowerLevelProgram();
     program->setLocalPositionListEnabled(true);
     program->setEditable(false);
@@ -139,6 +146,30 @@ void MprTagTraceStatement::onTagPositionUpdated(int /* index */)
 }
 
 
+bool MprTagTraceStatement::fetchSubBodyPositions(KinematicBodySet* bodySet)
+{
+    if(!subBodyPositions_){
+        subBodyPositions_ = new MprCompositePosition;
+    }
+    subBodyPositions_->clearPositions();
+
+    targetBodyIndex_ = bodySet->mainBodyPartIndex();
+    for(auto index : bodySet->validBodyPartIndices()){
+        if(index != targetBodyIndex_){
+            subBodyPositions_->setPosition(index, new MprFkPosition);
+        }
+    }
+
+    if(subBodyPositions_->empty()){
+        subBodyPositions_.reset();
+        targetBodyIndex_ = -1;
+        return true;
+    }
+
+    return subBodyPositions_->fetch(bodySet, MessageOut::interactive());
+}
+
+
 bool MprTagTraceStatement::decomposeIntoTagTraceStatements()
 {
     if(!tagGroup_){
@@ -187,53 +218,76 @@ bool MprTagTraceStatement::decomposeIntoTagTraceStatements()
 
 bool MprTagTraceStatement::read(MprProgram* program, const Mapping* archive)
 {
-    if(MprStructuredStatement::read(program, archive)){
-
-        tagGroupName_.clear();
-        archive->read("tag_group_name", tagGroupName_);
-
-        Vector3 v;
-        if(cnoid::read(archive, "translation", v)){
-            T_tags.translation() = v;
-        } else {
-            T_tags.translation().setZero();
-        }
-        if(cnoid::read(archive, "rpy", v)){
-            T_tags.linear() = rotFromRpy(radian(v));
-        } else {
-            T_tags.linear().setIdentity();
-        }
-        baseFrameId_.read(archive, "base_frame");
-        offsetFrameId_.read(archive, "offset_frame");
-
-        if(tagGroup_ && (tagGroup_->name() != tagGroupName_)){
-            setTagGroup(nullptr, false, true);
-        }
-
-        notifyUpdate();
-
-        return true;
+    if(!MprStructuredStatement::read(program, archive)){
+        return false;
     }
-    return false;
+
+    tagGroupName_.clear();
+    archive->read("tag_group_name", tagGroupName_);
+
+    Vector3 v;
+    if(cnoid::read(archive, "translation", v)){
+        T_tags.translation() = v;
+    } else {
+        T_tags.translation().setZero();
+    }
+    if(cnoid::read(archive, "rpy", v)){
+        T_tags.linear() = rotFromRpy(radian(v));
+    } else {
+        T_tags.linear().setIdentity();
+    }
+    baseFrameId_.read(archive, "base_frame");
+    offsetFrameId_.read(archive, "offset_frame");
+
+    if(tagGroup_ && (tagGroup_->name() != tagGroupName_)){
+        setTagGroup(nullptr, false, true);
+    }
+
+    targetBodyIndex_ = -1;
+    auto node = archive->findMapping("sub_body_positions");
+    if(!node->isValid()){
+        subBodyPositions_.reset();
+    } else {
+        subBodyPositions_ = new MprCompositePosition;
+        if(!subBodyPositions_->read(node)){
+            return false;
+        }
+        archive->read("target_body_index", targetBodyIndex_);
+    }
+        
+    notifyUpdate();
+
+    return true;
 }
 
 
 bool MprTagTraceStatement::write(Mapping* archive) const
 {
-    if(MprStructuredStatement::write(archive)){
-        if(tagGroup_){
-            if(!tagGroupName_.empty()){
-                archive->write("tag_group_name", tagGroupName_);
-            }
-        }
-        archive->setFloatingNumberFormat("%.10g");
-        cnoid::write(archive, "translation", Vector3(T_tags.translation()));
-        cnoid::write(archive, "rpy", degree(rpyFromRot(T_tags.linear())));
-        baseFrameId_.write(archive, "base_frame");
-        offsetFrameId_.write(archive, "offset_frame");
-        return true;
+    if(!MprStructuredStatement::write(archive)){
+        return false;
     }
-    return false;
+    
+    if(tagGroup_){
+        if(!tagGroupName_.empty()){
+            archive->write("tag_group_name", tagGroupName_);
+        }
+    }
+    archive->setFloatingNumberFormat("%.10g");
+    cnoid::write(archive, "translation", Vector3(T_tags.translation()));
+    cnoid::write(archive, "rpy", degree(rpyFromRot(T_tags.linear())));
+    baseFrameId_.write(archive, "base_frame");
+    offsetFrameId_.write(archive, "offset_frame");
+
+    if(subBodyPositions_){
+        if(targetBodyIndex_ < 0){
+            return false;
+        }
+        archive->write("target_body_index", targetBodyIndex_);
+        if(!subBodyPositions_->write(archive->createMapping("sub_body_positions"))){
+            return false;
+        }
+    }
+    return true;
 }
 
 

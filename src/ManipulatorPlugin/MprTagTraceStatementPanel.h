@@ -14,9 +14,12 @@ public:
     MprTagTraceStatementPanel();
     ~MprTagTraceStatementPanel();
 
+    void setSubBodyPositionEnabled(bool on);
+
     virtual void setEditable(bool on) override;
     virtual void onActivated() override;
     virtual void onStatementUpdated() override;
+    virtual void onTouchup();
 
 protected:
     void createBaseInterfaces(std::function<void(QGridLayout* grid)> createOptionInterfaces);

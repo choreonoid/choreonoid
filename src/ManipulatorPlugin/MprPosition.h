@@ -110,6 +110,10 @@ public:
     MprFkPosition(const MprFkPosition& org);
     MprFkPosition& operator=(const MprFkPosition& rhs) = delete;
 
+    MprFkPosition* clone() const {
+        return static_cast<MprFkPosition*>(doClone(nullptr));
+    }
+
     virtual bool fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
     virtual bool apply(BodyKinematicsKit* kinematicsKit) const override;
     virtual bool read(const Mapping* archive) override;
@@ -157,6 +161,10 @@ public:
     MprIkPosition(const GeneralId& id);
     MprIkPosition(const MprIkPosition& org);
     MprIkPosition& operator=(const MprIkPosition& rhs) = delete;
+
+    MprIkPosition* clone() const {
+        return static_cast<MprIkPosition*>(doClone(nullptr));
+    }
 
     const Isometry3& position() const { return T; }
     void setPosition(const Isometry3& T) { this->T = T; }
@@ -221,6 +229,10 @@ public:
     MprCompositePosition(const GeneralId& id);
     MprCompositePosition(const MprCompositePosition& org, CloneMap* cloneMap);
     MprCompositePosition& operator=(const MprCompositePosition& rhs) = delete;
+
+    MprCompositePosition* clone() const {
+        return static_cast<MprCompositePosition*>(doClone(nullptr));
+    }
 
     void setPosition(int index, MprPosition* position);
     void clearPosition(int index);
