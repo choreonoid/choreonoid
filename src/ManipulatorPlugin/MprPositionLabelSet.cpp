@@ -275,6 +275,8 @@ void MprPositionLabelSet::detachJointLabels()
 void MprPositionLabelSet::updateJointLabels
 (BodyItemKinematicsKit* kinematicsKit, MprFkPosition* position, bool isJointNameLabelEnabled)
 {
+    const double lengthRatio = DisplayValueFormat::instance()->isMillimeter() ? 1000.0 : 1.0;
+    
     for(int i=0; i < numValidJoints; ++i){
         auto& nameLabel = jointNameLabels[i];
         if(isJointNameLabelEnabled){
@@ -288,7 +290,7 @@ void MprPositionLabelSet::updateJointLabels
         if(position->checkIfRevoluteJoint(i)){
             displacementLabel.setText(QString::number(degree(q), 'f', 1));
         } else {
-            displacementLabel.setText(QString::number(q, 'f', 3));
+            displacementLabel.setText(QString::number(lengthRatio * q, 'f', 3));
         }
         displacementLabel.setVisible(true);
     }

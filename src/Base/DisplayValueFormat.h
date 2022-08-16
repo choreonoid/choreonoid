@@ -6,6 +6,9 @@
 
 namespace cnoid {
 
+/**
+   \todo Move this class to the Util module and make it thread-safe.
+*/
 class CNOID_EXPORT DisplayValueFormat
 {
 public:
