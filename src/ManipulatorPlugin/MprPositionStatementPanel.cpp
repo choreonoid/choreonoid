@@ -206,20 +206,22 @@ void MprPositionStatementPanel::Impl::updatePositionPanel()
     int row = 0;
     int labelSetIndex = 0;
     numActivePositionLabelSets = 0;
-    
-    if(!position->isComposite()){
-        if(auto mainKinematicsKit = self->currentMainKinematicsKit()){
-            updatePositionLabelSet(position, mainKinematicsKit, labelSetIndex, row);
-        }
-    } else {
-        auto composite = position->compositePosition();
-        auto bodyItemSet = self->currentBodyItemSet();
-        for(auto& partIndex : composite->findMatchedPositionIndices(bodyItemSet)){
-            updatePositionLabelSet(
-                composite->position(partIndex),
-                bodyItemSet->bodyItemPart(partIndex),
-                labelSetIndex,
-                row);
+
+    if(position){
+        if(!position->isComposite()){
+            if(auto mainKinematicsKit = self->currentMainKinematicsKit()){
+                updatePositionLabelSet(position, mainKinematicsKit, labelSetIndex, row);
+            }
+        } else {
+            auto composite = position->compositePosition();
+            auto bodyItemSet = self->currentBodyItemSet();
+            for(auto& partIndex : composite->findMatchedPositionIndices(bodyItemSet)){
+                updatePositionLabelSet(
+                    composite->position(partIndex),
+                    bodyItemSet->bodyItemPart(partIndex),
+                    labelSetIndex,
+                    row);
+            }
         }
     }
 
