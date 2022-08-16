@@ -60,7 +60,20 @@ public:
     void setLayoutInclusionMode(bool on);
 
     SignalProxy<void()> sigProjectCleared();
+
+    /**
+       This signal is emitted when a project is about to be loaded.
+       \note The recursiveLevel argument is 0 for a top level project, and the level
+       is recursively incrimented for a sub project contained in the top level project.
+       Note that the level starts at 1 even for a top level project when the project
+       is loaded below an existing item, 
+    */
     SignalProxy<void(int recursiveLevel)> sigProjectAboutToBeLoaded();
+
+    /**
+       This signal is emitted when a project has been loaded. The recursiveLevel argument
+       is same as that of sigProjectAboutToBeLoaded.
+    */
     SignalProxy<void(int recursiveLevel)> sigProjectLoaded();
 
     ref_ptr<Mapping> storeCurrentLayout();

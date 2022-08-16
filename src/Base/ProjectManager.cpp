@@ -354,6 +354,11 @@ ItemList<> ProjectManager::Impl::loadProject
         mv->flush();
         sigProjectCleared();
     }
+
+    bool isTopProject = (projectBeingLoadedCounter == 0);
+    if(isTopProject && parentItem){
+        projectBeingLoadedCounter = 1;
+    }
     
     sigProjectAboutToBeLoaded(projectBeingLoadedCounter);
     
@@ -547,6 +552,10 @@ ItemList<> ProjectManager::Impl::loadProject
     }
 
     sigProjectLoaded(projectBeingLoadedCounter);
+
+    if(isTopProject){
+        projectBeingLoadedCounter = 0;
+    }
 
     return topLevelItems;
 }
