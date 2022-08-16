@@ -442,7 +442,7 @@ void MovieRecorderDialog::updateViewCombo()
     targetViewCombo->blockSignals(true);
 
     targetViewCombo->clear();
-    targetViewCombo->addItem("None");
+    targetViewCombo->addItem(_("None"));
 
     viewCandidates.clear();
     auto targetView = recorder_->targetView();
@@ -494,10 +494,6 @@ void MovieRecorderDialog::onRecordingStateChanged(bool on)
     recordingToggle->blockSignals(true);
     recordingToggle->setChecked(on);
     recordingToggle->blockSignals(false);
-
-    if(on){
-        hide();
-    }
 }
 
 
