@@ -389,14 +389,16 @@ bool SceneRendererConfig::store(Mapping* archive)
 
 bool SceneRendererConfig::Impl::store(Mapping* archive)
 {
-    archive->write("lightingMode", lightingMode.selectedSymbol());
-    archive->write("cullingMode", cullingMode.selectedSymbol());
+    archive->write("lighting_mode", lightingMode.selectedSymbol());
+    archive->write("culling_mode", cullingMode.selectedSymbol());
+    archive->write("shading_mode", isSmoothShadingEnabled ? "smooth" : "flat");
 
-    archive->write("worldLight", isWorldLightEnabled);
-    archive->write("worldLightIntensity", worldLightIntensity);
-    archive->write("worldLightAmbient", ambientIntensity);
-    archive->write("defaultHeadLight", isHeadLightEnabled);
-    archive->write("defaultHeadLightIntensity", headLightIntensity);
+    archive->write("world_light", isWorldLightEnabled);
+    archive->write("world_light_intensity", worldLightIntensity);
+    archive->write("ambient_light", isAmbientLightEnabled);
+    archive->write("ambient_light_intensity", ambientIntensity);
+    archive->write("head_light", isHeadLightEnabled);
+    archive->write("head_light_intensity", headLightIntensity);
 
     if(!isAdditionalLightSetEnabled){
         archive->write("enable_additional_lights", false);
@@ -406,13 +408,15 @@ bool SceneRendererConfig::Impl::store(Mapping* archive)
 
     ListingPtr shadowLights = new Listing;
     for(int i=0; i < MaxNumShadows; ++i){
-        if(shadowInfos[i].isEnabled){
-            shadowLights->append(shadowInfos[i].lightIndex);
-        }
+        auto& info = shadowInfos[i];
+        MappingPtr node = new Mapping;
+        node->setFlowStyle(true);
+        node->write("index", info.lightIndex);
+        node->write("enabled", info.isEnabled);
+        shadowLights->append(node);
     }
-    if(!shadowLights->empty()){
-        archive->insert("shadow_lights", shadowLights);
-    }
+    archive->insert("shadow_lights", shadowLights);
+
     if(!isShadowAntiAliasingEnabled){
         archive->write("shadow_antialiasing", false);
     }
@@ -422,16 +426,16 @@ bool SceneRendererConfig::Impl::store(Mapping* archive)
     if(!isFogEnabled){
         archive->write("fog", false);
     }
-    write(archive, "backgroundColor", backgroundColor);
+    write(archive, "background_color", backgroundColor);
 
     if(!defaultColor.isApprox(Vector3f::Ones())){
-        write(archive, "defaultColor", defaultColor);
+        write(archive, "default_color", defaultColor);
     }
-    archive->write("lineWidth", lineWidth);
-    archive->write("pointSize", pointSize);
+    archive->write("line_width", lineWidth);
+    archive->write("point_size", pointSize);
 
     if(isUpsideDownEnabled){
-        archive->write("upsideDown", true);
+        archive->write("upside_down", true);
     }
 
     return true;
@@ -448,34 +452,48 @@ bool SceneRendererConfig::Impl::restore(const Mapping* archive)
 {
     string symbol;
     
-    if(archive->read("lightingMode", symbol)){
+    if(archive->read({ "lighting_mode", "lightingMode" }, symbol)){
         lightingMode.select(symbol);
     }
-    if(archive->read("cullingMode", symbol)){
+    if(archive->read({ "culling_mode", "cullingMode" }, symbol)){
         cullingMode.select(symbol);
     }
+    if(archive->read("shading_mode", symbol)){
+        isSmoothShadingEnabled = (symbol != "flat");
+    }
 
-    archive->read("worldLight", isWorldLightEnabled);
-    archive->read("worldLightIntensity", worldLightIntensity);
-    archive->read("worldLightAmbient", ambientIntensity);
-    archive->read("defaultHeadLight", isHeadLightEnabled);
-    archive->read("defaultHeadLightIntensity", headLightIntensity);
+    archive->read({ "world_light", "worldLight"}, isWorldLightEnabled);
+    archive->read({ "world_light_intensity", "worldLightIntensity" }, worldLightIntensity);
 
-    if(!archive->read("enable_additional_lights", isAdditionalLightSetEnabled)){
-        if(!archive->read("additionalLights", isAdditionalLightSetEnabled)){
-            isAdditionalLightSetEnabled = true;
+    bool hasAmbientLightParameters = false;
+    if(archive->read("ambient_light", isAmbientLightEnabled)){
+        hasAmbientLightParameters = true;
+    }
+    if(archive->read("ambient_light_intensity", ambientIntensity)){
+        hasAmbientLightParameters = true;
+    }
+    if(!hasAmbientLightParameters){
+        if(archive->read("worldLightAmbient", ambientIntensity)){
+            isAmbientLightEnabled = true;
         }
+    }
+    
+    archive->read({ "head_light", "defaultHeadLight" }, isHeadLightEnabled);
+    archive->read({ "head_light_intensity", "defaultHeadLightIntensity" }, headLightIntensity);
+
+    if(!archive->read({ "enable_additional_lights", "additionalLights" }, isAdditionalLightSetEnabled)){
+        isAdditionalLightSetEnabled = true;
     }
 
     for(int i=0; i < MaxNumShadows; ++i){
         shadowInfos[i].isEnabled = false;
     }
-    bool isOldShadowFormat = false;
+    bool isOldShadowIndexFormat = false;
     ListingPtr shadowLights = archive->findListing("shadow_lights");
     if(!shadowLights->isValid()){
         shadowLights = archive->findListing("shadowLights"); // Old format
         if(shadowLights->isValid()){
-            isOldShadowFormat = true;
+            isOldShadowIndexFormat = true;
             isWorldLightShadowEnabled = false;
         }
     }
@@ -483,33 +501,45 @@ bool SceneRendererConfig::Impl::restore(const Mapping* archive)
         int configIndex = 0;
         int n = std::min(shadowLights->size(), MaxNumShadows);
         for(int i=0; i < n; ++i){
-            int index = shadowLights->at(i)->toInt();
-            if(isOldShadowFormat){
-                if(index == 0){
+            auto node = shadowLights->at(i);
+            int lightIndex = 0;
+            bool enabled = true;
+            if(node->isScalar()){ // Old format
+                lightIndex = node->toInt();
+            } else if(node->isMapping()){
+                auto info = node->toMapping();
+                lightIndex = info->get("index", 0);
+                enabled = info->get("enabled", false);
+            }
+            if(isOldShadowIndexFormat){
+                if(lightIndex == 0){
                     isWorldLightShadowEnabled = true;
                     continue;
                 }
-                --index;
+                --lightIndex;
             }
             auto& shadow = shadowInfos[configIndex++];
-            shadow.lightIndex = index;
-            shadow.isEnabled = true;
+            shadow.lightIndex = lightIndex;
+            shadow.isEnabled = enabled;
+        }
+        for(int i = configIndex; i < MaxNumShadows; ++i){
+            shadowInfos[configIndex].isEnabled = false;
         }
     }
-    if(!isOldShadowFormat){
+    if(!isOldShadowIndexFormat){
         archive->read("world_light_shadow", isWorldLightShadowEnabled);
     }
     isShadowAntiAliasingEnabled = archive->get("shadow_antialiasing", true);
 
     isTextureEnabled = archive->get("texture", true);
     isFogEnabled = archive->get("fog", true);
-    read(archive, "backgroundColor", backgroundColor);
-    if(!read(archive, "defaultColor", defaultColor)){
+    read(archive, { "background_color", "backgroundColor" }, backgroundColor);
+    if(!read(archive, { "default_color", "defaultColor" }, defaultColor)){
         defaultColor << 1.0f, 1.0f, 1.0f;
     }
-    archive->read("lineWidth", lineWidth);
-    archive->read("pointSize", pointSize);
-    isUpsideDownEnabled = archive->get("upsideDown", false);
+    archive->read({ "line_width", "lineWidth" }, lineWidth);
+    archive->read({ "point_size", "pointSize" }, pointSize);
+    isUpsideDownEnabled = archive->get({ "upside_down", "upsideDown" }, false);
 
     if(widgetSet){
         widgetSet->updateWidgets();
