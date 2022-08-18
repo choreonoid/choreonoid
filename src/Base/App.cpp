@@ -63,7 +63,6 @@
 #include "Licenses.h"
 #include "MovieRecorderBar.h"
 #include "LazyCaller.h"
-#include "LayoutSwitcher.h"
 #include <cnoid/MessageOut>
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
@@ -143,7 +142,6 @@ public:
     ExtensionManager* ext;
     MainWindow* mainWindow;
     MessageView* messageView;
-    LayoutSwitcher* layoutSwitcher;
     QTranslator translator;
     ErrorCode error;
     string errorMessage;
@@ -429,8 +427,6 @@ void App::Impl::initialize()
 
     mainWindow->installEventFilter(this);
 
-    layoutSwitcher = new LayoutSwitcher;
-
     OptionManager& om = ext->optionManager();
     om.addOption("quit", "stop the application without showing the main window");
     om.addOption("test-mode", "exit the application when an error occurs and put MessageView text to the standard output");
@@ -531,9 +527,6 @@ int App::Impl::exec()
         item->removeFromParentItem();
         item = next;
     }
-
-    delete layoutSwitcher;
-    layoutSwitcher = nullptr;
 
     pluginManager->finalizePlugins();
     delete ext;

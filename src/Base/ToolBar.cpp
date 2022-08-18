@@ -6,6 +6,7 @@
 #include "ToolBarArea.h"
 #include "MainWindow.h"
 #include "Separator.h"
+#include "Archive.h"
 #include <QStylePainter>
 #include <QStyleOptionToolBar>
 #include <QMouseEvent>

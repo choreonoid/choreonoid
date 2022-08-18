@@ -11,11 +11,13 @@
 #include "AppConfig.h"
 #include "TimeBar.h"
 #include "UnifiedEditHistory.h"
+#include "LayoutSwitcher.h"
 #include <cnoid/Sleep>
 #include <QResizeEvent>
 #include <QWindowStateChangeEvent>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QMenuBar>
 #include <iostream>
 #include "gettext.h"
 
@@ -27,6 +29,7 @@ namespace {
 const bool TRACE_FUNCTIONS = false;
 
 MainWindow* mainWindow = nullptr;
+bool isLayoutSwitcherAvailable = true;
 
 QSize getAvailableScreenSize() {
     return QApplication::desktop()->availableGeometry().size();
@@ -70,6 +73,7 @@ public:
     QVBoxLayout* centralVBox;
     ToolBarArea* toolBarArea;
     ViewArea* viewArea;
+    LayoutSwitcher* layoutSwitcher;
     string appName;
     MappingPtr config;
     ArchivePtr initialLayoutArchive;
@@ -91,12 +95,18 @@ public:
 
     void showFirst();
     void resizeEvent(QResizeEvent* event);
-    void restoreLayout(ArchivePtr& archive);
+    void restoreLayout(Archive* archive);
     void resetLayout();
     void storeWindowStateConfig();
     void keyPressEvent(QKeyEvent* event);
 };
 
+}
+
+
+void MainWindow::setLayoutSwitcherAvailable(bool on)
+{
+    isLayoutSwitcherAvailable = on;
 }
 
 
@@ -154,6 +164,13 @@ MainWindow::Impl::Impl(MainWindow* self, const std::string& appName, ExtensionMa
     self->setStatusBar(InfoBar::instance());
 
     toolBarArea->setInitialLayout(config);
+
+    if(!isLayoutSwitcherAvailable){
+        layoutSwitcher = nullptr;
+    } else {
+        layoutSwitcher = new LayoutSwitcher;
+        self->menuBar()->setCornerWidget(layoutSwitcher, Qt::TopRightCorner);
+    }
 
     isBeforeShowing = true;
 
@@ -272,7 +289,7 @@ std::vector<ToolBar*> MainWindow::visibleToolBars() const
 }
 
 
-void MainWindow::setInitialLayout(ArchivePtr archive)
+void MainWindow::setInitialLayout(Archive* archive)
 {
     if(TRACE_FUNCTIONS){
         cout << "MainWindow::setInitialLayout()" << endl;
@@ -539,13 +556,13 @@ void MainWindow::Impl::resizeEvent(QResizeEvent* event)
 }
 
 
-void MainWindow::restoreLayout(ArchivePtr archive)
+void MainWindow::restoreLayout(Archive* archive)
 {
     impl->restoreLayout(archive);
 }
 
 
-void MainWindow::Impl::restoreLayout(ArchivePtr& archive)
+void MainWindow::Impl::restoreLayout(Archive* archive)
 {
     if(!isBeforeDoingInitialLayout){
         toolBarArea->restoreLayout(archive);
@@ -564,7 +581,7 @@ void MainWindow::resetLayout()
 }
 
 
-void MainWindow::storeLayout(ArchivePtr archive)
+void MainWindow::storeLayout(Archive* archive)
 {
     try {
         ViewArea::storeAllViewAreaLayouts(archive);

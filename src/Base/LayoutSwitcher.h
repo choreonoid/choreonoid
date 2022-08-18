@@ -1,15 +1,13 @@
 #ifndef CNOID_BASE_LAYOUT_SWITCHER_H
 #define CNOID_BASE_LAYOUT_SWITCHER_H
 
-#include <string>
+#include <QWidget>
 
 namespace cnoid {
 
-class LayoutSwitcher
+class LayoutSwitcher : public QWidget
 {
 public:
-    static LayoutSwitcher* instance();
-    
     LayoutSwitcher();
     ~LayoutSwitcher();
 

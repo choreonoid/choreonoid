@@ -6,6 +6,7 @@
 #include "ExtensionManager.h"
 #include "ViewManager.h"
 #include "ProjectManager.h"
+#include "MainWindow.h"
 #include "FileDialog.h"
 #include "DisplayValueFormat.h"
 #include <cnoid/GettextUtil>
@@ -97,6 +98,11 @@ public:
     static void setTemporaryItemSaveCheckAvailable(bool on)
     {
         ProjectManager::setTemporaryItemSaveCheckAvailable(on);
+    }
+
+    static void setLayoutSwitcherAvailable(bool on)
+    {
+        MainWindow::setLayoutSwitcherAvailable(on);
     }
 
     static void setShareDirectoryPresetEnabled(bool on)

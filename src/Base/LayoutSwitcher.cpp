@@ -1,16 +1,15 @@
 #include "LayoutSwitcher.h"
-#include "MainWindow.h"
 #include "ProjectManager.h"
 #include "MenuManager.h"
 #include "Buttons.h"
 #include "Dialog.h"
 #include "LineEdit.h"
 #include <cnoid/ValueTree>
-#include <QMenuBar>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
 #include <QMouseEvent>
+#include <QMenuBar>
 #include <algorithm>
 #include "gettext.h"
 
@@ -59,14 +58,15 @@ namespace cnoid {
 class LayoutSwitcher::Impl
 {
 public:
+    LayoutSwitcher* self;
     vector<LayoutInfoPtr> layoutInfos;
-    QWidget* baseWidget;
     MenuManager menuManager;
     QHBoxLayout* buttonBox;
     NewLayoutDialog* dialog;
 
-    Impl();
+    Impl(LayoutSwitcher* self);
     void onAddButtonClicked();
+    void adjustSize();
     void storeCurrentLayoutAs(const std::string& name);
     void restoreLayout(LayoutInfo* info);
     void onLayoutContextMenuRequest(LayoutInfo* info, QMouseEvent* event);
@@ -99,12 +99,6 @@ LayoutInfo::~LayoutInfo()
 }
 
 
-LayoutSwitcher* LayoutSwitcher::instance()
-{
-    return instance_;
-}
-
-
 NewLayoutDialog::NewLayoutDialog(LayoutSwitcher::Impl* impl)
     : impl(impl)
 {
@@ -130,17 +124,14 @@ NewLayoutDialog::NewLayoutDialog(LayoutSwitcher::Impl* impl)
 
 LayoutSwitcher::LayoutSwitcher()
 {
-    impl = new Impl;
+    impl = new Impl(this);
     instance_ = this;
 }
 
 
-LayoutSwitcher::Impl::Impl()
+LayoutSwitcher::Impl::Impl(LayoutSwitcher* self)
+    : self(self)
 {
-    auto mainWindow = MainWindow::instance();
-    auto menuBar = mainWindow->menuBar();
-
-    baseWidget = new QWidget;
     auto hbox = new QHBoxLayout;
     hbox->setContentsMargins(0, 0, 0, 0);
     hbox->setSpacing(0);
@@ -150,9 +141,7 @@ LayoutSwitcher::Impl::Impl()
     addButton->setAutoRaise(true);
     addButton->sigClicked().connect([&](){ onAddButtonClicked(); });
     hbox->addWidget(addButton);
-    baseWidget->setLayout(hbox);
-
-    menuBar->setCornerWidget(baseWidget, Qt::TopRightCorner);
+    self->setLayout(hbox);
 
     dialog = nullptr;
 }
@@ -182,6 +171,19 @@ void NewLayoutDialog::onAccepted()
 }
 
 
+void LayoutSwitcher::Impl::adjustSize()
+{
+    auto parent = self->parentWidget();
+    while(parent){
+        if(auto menuBar = dynamic_cast<QMenuBar*>(parent)){
+            menuBar->adjustSize();
+            break;
+        }
+        parent = parent->parentWidget();
+    }
+}
+
+
 void LayoutSwitcher::Impl::storeCurrentLayoutAs(const std::string& name)
 {
     auto layoutData = ProjectManager::instance()->storeCurrentLayout();
@@ -196,7 +198,9 @@ void LayoutSwitcher::Impl::storeCurrentLayoutAs(const std::string& name)
             [this, info](QMouseEvent* event){ onLayoutContextMenuRequest(info, event); };
         buttonBox->addWidget(button);
         info->button = button;
-        MainWindow::instance()->menuBar()->adjustSize();
+
+        adjustSize();
+
         layoutInfos.push_back(info);
     }
 }
@@ -210,7 +214,7 @@ void LayoutSwitcher::Impl::restoreLayout(LayoutInfo* info)
 
 void LayoutSwitcher::Impl::onLayoutContextMenuRequest(LayoutInfo* info, QMouseEvent* event)
 {
-    menuManager.setNewPopupMenu(baseWidget);
+    menuManager.setNewPopupMenu(self);
     menuManager.addItem("Update")->sigTriggered().connect(
         [this, info](){ updateLayout(info); });
     menuManager.addItem("Remove")->sigTriggered().connect(
@@ -232,5 +236,5 @@ void LayoutSwitcher::Impl::removeLayout(LayoutInfo* info)
 {
     auto& infos = layoutInfos;
     infos.erase(std::remove(infos.begin(), infos.end(), info), infos.end());
-    MainWindow::instance()->menuBar()->adjustSize();
+    adjustSize();
 }

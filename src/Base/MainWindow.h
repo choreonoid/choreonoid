@@ -5,7 +5,6 @@
 #ifndef CNOID_BASE_MAIN_WINDOW_H
 #define CNOID_BASE_MAIN_WINDOW_H
 
-#include "Archive.h"
 #include <cnoid/Signal>
 #include <QMainWindow>
 #include <string>
@@ -17,10 +16,14 @@ class ToolBarArea;
 class ViewArea;
 class ToolBar;
 class ExtensionManager;
+class Archive;
 
 class CNOID_EXPORT MainWindow : public QMainWindow
 {
 public:
+    //! \note This function can be called before the initialize function is called.
+    static void setLayoutSwitcherAvailable(bool on);
+    
     static MainWindow* initialize(const std::string& appName, ExtensionManager* ext);
     static MainWindow* instance();
 
@@ -39,9 +42,9 @@ public:
     std::vector<ToolBar*> toolBars() const;
     std::vector<ToolBar*> visibleToolBars() const;
     
-    void restoreLayout(ArchivePtr archive);
-    void storeLayout(ArchivePtr archive);
-    void setInitialLayout(ArchivePtr archive);
+    void restoreLayout(Archive* archive);
+    void storeLayout(Archive* archive);
+    void setInitialLayout(Archive* archive);
     void resetLayout();
     void storeWindowStateConfig();
 
@@ -50,9 +53,9 @@ public:
     SignalProxy<void(bool on)> sigFullScreenToggled();
 
 protected:
-    virtual void changeEvent(QEvent* event);
-    virtual void resizeEvent(QResizeEvent* event);
-    virtual void keyPressEvent(QKeyEvent* event);
+    virtual void changeEvent(QEvent* event) override;
+    virtual void resizeEvent(QResizeEvent* event) override;
+    virtual void keyPressEvent(QKeyEvent* event) override;
  
 private:
     class Impl;
