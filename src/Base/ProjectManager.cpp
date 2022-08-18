@@ -39,6 +39,7 @@ namespace {
 
 bool defaultLayoutInclusionMode = true;
 bool isLayoutInclusionMode = true;
+bool isTemporaryItemSaveCheckAvailable = true;
 int projectBeingLoadedCounter = 0;
 MainWindow* mainWindow = nullptr;
 MessageView* mv = nullptr;
@@ -132,6 +133,21 @@ void ProjectManager::setDefaultLayoutInclusionMode(bool on)
 void ProjectManager::setDefaultOptionToStoreLayoutInProjectFile(bool on)
 {
     defaultLayoutInclusionMode = on;
+}
+
+
+void ProjectManager::setTemporaryItemSaveCheckAvailable(bool on)
+{
+    isTemporaryItemSaveCheckAvailable = on;
+
+    if(instance_){
+        if(auto dialog = instance_->impl->saveDialog){
+            dialog->temporaryItemSaveCheck.setVisible(on);
+            if(!on){
+                dialog->temporaryItemSaveCheck.setChecked(false);
+            }
+        }
+    }
 }
 
 
@@ -954,6 +970,7 @@ SaveDialog::SaveDialog(ProjectManager::Impl* manager)
     auto vbox = new QVBoxLayout;
     vbox->setContentsMargins(0, 0, 0, 0);
     temporaryItemSaveCheck.setText(_("Save temporary items"));
+    temporaryItemSaveCheck.setVisible(isTemporaryItemSaveCheckAvailable);
     vbox->addWidget(&temporaryItemSaveCheck);
     optionPanel->setLayout(vbox);
     insertOptionPanel(optionPanel);

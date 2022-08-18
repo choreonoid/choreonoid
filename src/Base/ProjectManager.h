@@ -19,11 +19,11 @@ class Mapping;
 class CNOID_EXPORT ProjectManager
 {
 public:
-    //! This function can be called before the initializeClass function is called.
+    // The following functions can be called before the initializeClass function is called.
     static void setDefaultLayoutInclusionMode(bool on);
-
     [[deprecated("Use setDefaultLayoutInclusionMode")]]
     static void setDefaultOptionToStoreLayoutInProjectFile(bool on);
+    static void setTemporaryItemSaveCheckAvailable(bool on);
     
     static void initializeClass(ExtensionManager* ext);
     static ProjectManager* instance() { return instance_; }

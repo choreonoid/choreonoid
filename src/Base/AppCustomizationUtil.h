@@ -94,6 +94,11 @@ public:
         ProjectManager::setDefaultLayoutInclusionMode(on);
     }
 
+    static void setTemporaryItemSaveCheckAvailable(bool on)
+    {
+        ProjectManager::setTemporaryItemSaveCheckAvailable(on);
+    }
+
     static void setShareDirectoryPresetEnabled(bool on)
     {
         FileDialog::setShareDirectoryPresetEnabled(on);
