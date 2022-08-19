@@ -235,15 +235,17 @@ public:
     void sortDevicesByLinkOrder();
     void initializeDeviceStates();
 
-    /**
-       This function returns true when the whole body is a static, fixed object like a floor.
-    */
-    bool isStaticModel() const {
-        return isStaticModel_;
-    }
     bool isFixedRootModel() const {
         return rootLink_->isFixedJoint();
     }
+    void setRootLinkFixed(bool on);
+
+    //! This function returns true when the whole body is a static object without movable links and joints
+    bool isStaticModel() const {
+        return isStaticModel_;
+    }
+
+    bool hasMovableJoints() const;
 
     void resetDefaultPosition(const Isometry3& T);
     const Isometry3& defaultPosition() const { return rootLink_->Tb(); }

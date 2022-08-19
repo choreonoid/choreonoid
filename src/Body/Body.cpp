@@ -271,10 +271,12 @@ void Body::updateLinkTree()
                 ++numActualJoints;
             }
         }
-        if(link->jointType() != Link::FIXED_JOINT){
-            isStaticModel_ = false;
+        if(link->jointType() != Link::FixedJoint){
             if(i > 0 && id < 0){
                 virtualJoints[numVirtualJoints++] = link;
+            }
+            if(!link->isFixedJoint()){
+                isStaticModel_ = false;
             }
         }
         m += link->mass();
@@ -296,6 +298,41 @@ void Body::updateLinkTree()
     }
 
     impl->mass = m;
+}
+
+
+void Body::setRootLinkFixed(bool on)
+{
+    if(on){
+        if(!rootLink_->isFixedJoint()){
+            rootLink_->setJointType(Link::FixedJoint);
+            isStaticModel_ = true;
+            int n = numLinks();
+            for(int i=1; i < n; ++i){
+                if(!link(i)->isFixedJoint()){
+                    isStaticModel_ = false;
+                    break;
+                }
+            }
+        }
+    } else {
+        if(rootLink_->isFixedJoint()){
+            rootLink_->setJointType(Link::FreeJoint);
+            isStaticModel_ = false;
+        }
+    }
+}
+
+
+bool Body::hasMovableJoints() const
+{
+    int n = numLinks();
+    for(int i=1; i < n; ++i){
+        if(!link(i)->isFixedJoint()){
+            return true;
+        }
+    }
+    return false;
 }
 
 

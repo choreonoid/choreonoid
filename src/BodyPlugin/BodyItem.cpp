@@ -171,8 +171,6 @@ public:
     void initBody(bool calledFromCopyConstructor);
     bool loadModelFile(const std::string& filename);
     void setBody(Body* body);
-    bool makeBodyStatic(bool makeAllJointsFixed = false);
-    bool makeBodyDynamic();
     void setCurrentBaseLink(Link* link, bool forceUpdate, bool doNotify);
     bool makeRootFixed();
     bool makeRootFree();
@@ -508,107 +506,6 @@ bool BodyItem::isSharingShapes() const
 void BodyItem::cloneShapes(CloneMap& cloneMap)
 {
     impl->body->cloneShapes(cloneMap);
-}
-
-
-bool BodyItem::makeBodyStatic()
-{
-    return impl->makeBodyStatic(false);
-}
-
-
-bool BodyItem::Impl::makeBodyStatic(bool makeAllJointsFixed)
-{
-    bool isStatic = body->isStaticModel();
-    if(!isStatic){
-        bool hasMovableJoint = false;
-        if(body->numLinks() > 1){
-            if(makeAllJointsFixed){
-                for(auto& link : body->links()){
-                    link->setJointType(Link::FixedJoint);
-                }
-            } else {
-                for(auto& link : body->links()){
-                    if(!link->isFixedJoint()){
-                        hasMovableJoint = true;
-                        break;
-                    }
-                }
-            }
-        }
-        if(!hasMovableJoint){
-            body->rootLink()->setJointType(Link::FIXED_JOINT);
-            body->updateLinkTree();
-            isStatic = true;
-        }
-    }
-    return isStatic;
-}
-     
-    
-bool BodyItem::makeBodyDynamic()
-{
-    return impl->makeBodyDynamic();
-}
-
-
-bool BodyItem::Impl::makeBodyDynamic()
-{
-    bool isDynamic = !body->isStaticModel();
-    if(!isDynamic){
-        bool hasFixedJoint = false;
-        if(body->numLinks() > 1){
-            for(auto& link : body->links()){
-                if(link->isFixedJoint()){
-                    hasFixedJoint = true;
-                    break;
-                }
-            }
-        }
-        // If the body has a fixed joint, the conversion to the dynamic
-        // model is impossible because which joint type shoulde be used
-        // for each fixed joint is unkown.
-        if(!hasFixedJoint){
-            body->rootLink()->setJointType(Link::FREE_JOINT);
-            body->updateLinkTree();
-            isDynamic = true;
-        }
-    }
-    return isDynamic;
-}
-
-
-bool BodyItem::makeRootFixed()
-{
-    return impl->makeRootFixed();
-}
-
-
-bool BodyItem::Impl::makeRootFixed()
-{
-    const bool isFixed = body->isFixedRootModel();
-    if(!isFixed){
-        body->rootLink()->setJointType(Link::FIXED_JOINT);
-        body->updateLinkTree();
-    }
-    return true;
-}
-
-
-bool BodyItem::makeRootFree()
-{
-    return impl->makeRootFree();
-}
-
-
-bool BodyItem::Impl::makeRootFree()
-{
-    const bool isFree = !body->isFixedRootModel();
-    if(!isFree){
-        body->rootLink()->setJointType(Link::FREE_JOINT);
-        body->updateLinkTree();
-    }
-    return true;
 }
 
 
@@ -1697,10 +1594,15 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Root link"), body->rootLink()->name());
     putProperty(_("Base link"), currentBaseLink ? currentBaseLink->name() : "none");
     putProperty.decimals(3)(_("Mass"), body->mass());
-    putProperty(_("Static"), body->isStaticModel(),
-                [&](bool on){ return on ? makeBodyStatic() : makeBodyDynamic(); });
-    putProperty(_("Fixed"), body->isFixedRootModel(),
-                [&](bool on){ return on ? makeRootFixed() : makeRootFree(); });
+    putProperty(_("Model type"), body->isStaticModel() ? _("Static") : _("Dynamic"));
+
+    putProperty(_("Root fixed"), body->isFixedRootModel(),
+                [&](bool on){
+                    body->setRootLinkFixed(on);
+                    self->notifyModelUpdate(LinkSpecUpdate);
+                    return true;
+                });
+    
     putProperty(_("Collision detection"), isCollisionDetectionEnabled,
                 [&](bool on){ return setCollisionDetectionEnabled(on); });
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
@@ -1794,8 +1696,7 @@ bool BodyItem::Impl::store(Archive& archive)
         }
     }
 
-    archive.write("staticModel", body->isStaticModel());
-    archive.write("fixedModel", body->rootLink()->jointType() == Link::FIXED_JOINT);
+    archive.write("fix_root", body->isFixedRootModel());
     archive.write("collisionDetection", isCollisionDetectionEnabled);
     archive.write("selfCollisionDetection", isSelfCollisionDetectionEnabled);
     archive.write("location_editable", self->isLocationEditable());
@@ -1932,19 +1833,14 @@ bool BodyItem::Impl::restore(const Archive& archive)
     }
 
     bool on;
-    if(archive.read("staticModel", on)){
+    if(archive.read("fix_root", on)){
+        body->setRootLinkFixed(on);
+    } else if(archive.read("staticModel", on)){ // Old format
+        // Incomplete restoration for the old format
         if(on){
-            makeBodyStatic(true);
-        } else {
-            makeBodyDynamic();
-        }
-    }
-
-    if(archive.read("fixedModel", on)){
-        if(on){
-            makeRootFixed();
-        } else {
-            makeRootFree();
+            body->setRootLinkFixed(true);
+        } else if(body->isStaticModel()){
+            body->setRootLinkFixed(false);
         }
     }
 
