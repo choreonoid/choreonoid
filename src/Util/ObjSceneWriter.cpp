@@ -34,9 +34,22 @@ public:
     map<string, int> objectNameCounterMap;
     int objectIdCounter;
     
-    int vertexIndexOffset;
-    int normalIndexOffset;
-    int texCoordIndexOffset;
+    struct SharedMeshArrayInfo : public Referenced
+    {
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Affine3 T;
+        int offset;
+    };
+    typedef ref_ptr<SharedMeshArrayInfo> SharedMeshArrayInfoPtr;
+
+    int totalVertexIndexOffset;
+    std::map<SgVertexArrayPtr, SharedMeshArrayInfoPtr> sharedVertexArrayInfoMap;
+    int totalNormalIndexOffset;
+    std::map<SgVertexArrayPtr, SharedMeshArrayInfoPtr> sharedNormalArrayInfoMap;
+    int totalTexCoordIndexOffset;
+    
+    typedef std::map<SgTexCoordArrayPtr, int> TexCoordOffsetMap;
+    TexCoordOffsetMap sharedTexCoordOffsetMap;
 
     bool isAppearanceEnabled;
     typedef IdPair<SgObject*> MaterialPair;
@@ -108,9 +121,12 @@ void ObjSceneWriter::Impl::clear()
     namedObjectStack.clear();
     objectNameCounterMap.clear();
     objectIdCounter = 0;
-    vertexIndexOffset = 1;
-    normalIndexOffset = 1;
-    texCoordIndexOffset = 1;
+    totalVertexIndexOffset = 1;
+    sharedVertexArrayInfoMap.clear();
+    totalNormalIndexOffset = 1;
+    sharedNormalArrayInfoMap.clear();
+    totalTexCoordIndexOffset = 1;
+    sharedTexCoordOffsetMap.clear();
 
     materialLabelMap.clear();
     materialLabelSet.clear();
@@ -337,16 +353,31 @@ void ObjSceneWriter::Impl::writeMesh(SgMesh* mesh, const Affine3& T)
         gfs << "g " << objectIdCounter++ << "\n";
     }
 
-    const auto vertices = mesh->vertices();
-    for(auto& v : *vertices){
-        Vector3f vt = (T * v.cast<double>()).cast<float>();
-        gfs << "v " << vt.x() << " " << vt.y() << " " << vt.z() << "\n";
+    auto vertices = mesh->vertices();
+    auto& vertexIndices = mesh->faceVertexIndices();
+
+    int vertexIndexOffset = totalVertexIndexOffset;
+    auto& sharedVertexArrayInfo = sharedVertexArrayInfoMap[vertices];
+    if(sharedVertexArrayInfo){
+        if(sharedVertexArrayInfo->T.isApprox(T)){
+            vertexIndexOffset = sharedVertexArrayInfo->offset;
+        } else {
+            sharedVertexArrayInfo = nullptr;
+        }
+    }
+    if(!sharedVertexArrayInfo){
+        sharedVertexArrayInfo = new SharedMeshArrayInfo;
+        for(auto& v : *vertices){
+            Vector3f vt = (T * v.cast<double>()).cast<float>();
+            gfs << "v " << vt.x() << " " << vt.y() << " " << vt.z() << "\n";
+        }
+        sharedVertexArrayInfo->T = T;
+        sharedVertexArrayInfo->offset = vertexIndexOffset;
+        totalVertexIndexOffset += vertices->size();
     }
 
-    const auto& vertexIndices = mesh->faceVertexIndices();
-
     bool hasValidNormals = false;
-    const auto normals = mesh->normals();
+    auto normals = mesh->normals();
     const auto& normalIndices = mesh->normalIndices();
     if(mesh->hasNormals()){
         if(!mesh->hasNormalIndices()){
@@ -359,27 +390,43 @@ void ObjSceneWriter::Impl::writeMesh(SgMesh* mesh, const Affine3& T)
             }
         }
     }
+    int normalIndexOffset = totalNormalIndexOffset;
     if(hasValidNormals){
+        auto& sharedNormalArrayInfo = sharedNormalArrayInfoMap[normals];
         Matrix3 R = T.linear();
-        Matrix3 E = R * R.transpose();
-        bool doNormalization = !E.isApprox(Matrix3::Identity());
-        if(doNormalization){
-            os() << format(_("The normal vectors of mesh \"{0}\" are normalized because "
-                             "its corresponding scene graph has a scaling factor."), name) << endl;
-            for(auto& n : *normals){
-                Vector3f vn = Vector3(R * n.cast<double>()).normalized().cast<float>();
-                gfs << "vn " << vn.x() << " " << vn.y() << " " << vn.z() << "\n";
+        if(sharedNormalArrayInfo){
+            if(sharedNormalArrayInfo->T.isApprox(T)){
+                normalIndexOffset = sharedNormalArrayInfo->offset;
+            } else {
+                sharedNormalArrayInfo = nullptr;
             }
-        } else {
-            for(auto& n : *normals){
-                Vector3f vn = (R * n.cast<double>()).cast<float>();
-                gfs << "vn " << vn.x() << " " << vn.y() << " " << vn.z() << "\n";
+        }
+        if(!sharedNormalArrayInfo){
+            sharedNormalArrayInfo = new SharedMeshArrayInfo;
+            Matrix3 R = T.linear();
+            Matrix3 E = R * R.transpose();
+            bool doNormalization = !E.isApprox(Matrix3::Identity());
+            if(doNormalization){
+                os() << format(_("The normal vectors of mesh \"{0}\" are normalized because "
+                                 "its corresponding scene graph has a scaling factor."), name) << endl;
+                for(auto& n : *normals){
+                    Vector3f vn = Vector3(R * n.cast<double>()).normalized().cast<float>();
+                    gfs << "vn " << vn.x() << " " << vn.y() << " " << vn.z() << "\n";
+                }
+            } else {
+                for(auto& n : *normals){
+                    Vector3f vn = (R * n.cast<double>()).cast<float>();
+                    gfs << "vn " << vn.x() << " " << vn.y() << " " << vn.z() << "\n";
+                }
             }
+            sharedNormalArrayInfo->T = T;
+            sharedNormalArrayInfo->offset = normalIndexOffset;
+            totalNormalIndexOffset += normals->size();
         }
     }
 
     bool hasValidTexCoords = false;
-    const auto texCoords = mesh->texCoords();
+    auto texCoords = mesh->texCoords();
     const auto& texCoordIndices = mesh->texCoordIndices();
     if(mesh->hasTexCoords()){
         if(!mesh->hasTexCoordIndices()){
@@ -392,9 +439,17 @@ void ObjSceneWriter::Impl::writeMesh(SgMesh* mesh, const Affine3& T)
             }
         }
     }
+    int texCoordIndexOffset = totalTexCoordIndexOffset;
     if(hasValidTexCoords){
-        for(auto& vt : *texCoords){
-            gfs << "vt " << vt.x() << " " << vt.y() << " 0\n";
+        auto inserted = sharedTexCoordOffsetMap.insert(
+            TexCoordOffsetMap::value_type(texCoords, texCoordIndexOffset));
+        if(!inserted.second){
+            texCoordIndexOffset = inserted.first->second;
+        } else {
+            for(auto& vt : *texCoords){
+                gfs << "vt " << vt.x() << " " << vt.y() << " 0\n";
+            }
+            totalTexCoordIndexOffset += texCoords->size();
         }
     }
 
@@ -426,13 +481,5 @@ void ObjSceneWriter::Impl::writeMesh(SgMesh* mesh, const Affine3& T)
                 gfs << " ";
             }
         }
-    }
-                    
-    vertexIndexOffset += vertices->size();
-    if(hasValidNormals){
-        normalIndexOffset += normals->size();
-    }
-    if(hasValidTexCoords){
-        texCoordIndexOffset += texCoords->size();
     }
 }
