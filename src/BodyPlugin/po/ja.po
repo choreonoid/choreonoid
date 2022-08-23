@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-20 01:16+0900\n"
+"POT-Creation-Date: 2022-08-23 22:02+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -247,6 +247,15 @@ msgstr "表示用"
 msgid "Collision"
 msgstr "干渉検出用"
 
+msgid "Coordinate:"
+msgstr "座標："
+
+msgid "Global"
+msgstr "グローバル"
+
+msgid "Local"
+msgstr "ローカル"
+
 msgid "Standard scene file"
 msgstr "標準シーンファイル"
 
@@ -422,12 +431,6 @@ msgstr "ターゲット原点に設定"
 
 msgid "Coordinate System:"
 msgstr "座標系："
-
-msgid "Global"
-msgstr "グローバル"
-
-msgid "Local"
-msgstr "ローカル"
 
 msgid "Position:"
 msgstr "位置："

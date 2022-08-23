@@ -35,12 +35,14 @@ class SceneFileExporterBase : public BodyItemFileIoBase
 {
 public:
     QComboBox* shapeTypeCombo;
+    QComboBox* coordinateCombo;
 
     SceneFileExporterBase(const char* caption, const char* format, const char* extension);
     virtual bool save(BodyItem* item, const std::string& filename) override;
     SgNode* strip(SgGroup* group, bool& out_stripped);
     virtual bool saveScene(const std::string& filename, SgGroup* scene) = 0;
     void addShapeTypeCombo(QBoxLayout* box);
+    void addCoordinateCombo(QBoxLayout* box);
 };
 
 class StdSceneFileExporter : public SceneFileExporterBase
@@ -297,6 +299,8 @@ bool SceneFileExporterBase::save(BodyItem* item, const std::string& filename)
     nodesToClearName.reserve(numLinks);
     const Isometry3 T0 = body->rootLink()->T();
     SgGroupPtr scene = new SgGroup;
+    bool useGlobalCoordinate = (coordinateCombo->currentIndex() == 0);
+    
     for(auto& link : body->links()){
         bool stripped;
         SgGroup* linkShapeGroup;
@@ -306,8 +310,14 @@ bool SceneFileExporterBase::save(BodyItem* item, const std::string& filename)
             linkShapeGroup = link->collisionShape();
         }
         if(SgNode* shape = strip(linkShapeGroup, stripped)){
-            if(!link->T().isApprox(T0)){
-                auto transform = new SgPosTransform(T0.inverse() * link->T());
+            if(useGlobalCoordinate || !link->T().isApprox(T0)){
+                Isometry3 T;
+                if(useGlobalCoordinate){
+                    T = link->T();
+                } else {
+                    T = T0.inverse() * link->T();
+                }
+                auto transform = new SgPosTransform(T);
                 if(stripped){
                     transform->addChild(shape);
                 } else {
@@ -358,6 +368,17 @@ void SceneFileExporterBase::addShapeTypeCombo(QBoxLayout* box)
 }
 
 
+void SceneFileExporterBase::addCoordinateCombo(QBoxLayout* box)
+{
+    box->addWidget(new QLabel(_("Coordinate:")));
+    coordinateCombo = new QComboBox;
+    coordinateCombo->addItem(_("Global"));
+    coordinateCombo->addItem(_("Local"));
+    coordinateCombo->setCurrentIndex(1);
+    box->addWidget(coordinateCombo);
+}
+
+
 StdSceneFileExporter::StdSceneFileExporter()
     : SceneFileExporterBase(_("Standard scene file"), "CHOREONOID-SCENE", "scen")
 {
@@ -392,12 +413,18 @@ bool StdSceneFileExporter::saveScene(const std::string& filename, SgGroup* scene
 
 void StdSceneFileExporter::createOptionPanelForSaving()
 {
+    auto vbox = new QVBoxLayout;
     auto hbox = new QHBoxLayout;
     addShapeTypeCombo(hbox);
-    addExtModelFileModeCombo(hbox);
+    addCoordinateCombo(hbox);
     addTransformIntegrationCheck(hbox);
     hbox->addStretch();
-    optionVBox->addLayout(hbox);
+    vbox->addLayout(hbox);
+    hbox = new QHBoxLayout;
+    addExtModelFileModeCombo(hbox);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+    optionVBox->addLayout(vbox);
 }
 
 
@@ -436,6 +463,7 @@ void ObjFileExporter::createOptionPanelForSaving()
 {
     auto hbox = new QHBoxLayout;
     addShapeTypeCombo(hbox);
+    addCoordinateCombo(hbox);
     hbox->addStretch();
     optionVBox->addLayout(hbox);
 }
