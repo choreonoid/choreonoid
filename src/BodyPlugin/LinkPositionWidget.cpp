@@ -104,6 +104,8 @@ public:
     ScopedConnection kinematicsBarConnection;
     
     QLabel resultLabel;
+    PushButton fetchButton;
+    PushButton applyButton;
 
     enum CoordinateMode { WorldCoordinateMode, BaseFrameCoordinateMode, LocalCoordinateMode, NumCoordinateModes };
     Selection coordinateModeSelection;
@@ -185,7 +187,6 @@ LinkPositionWidget::Impl::Impl(LinkPositionWidget* self)
       coordinateModeSelection(NumCoordinateModes, CNOID_GETTEXT_DOMAIN_NAME)
 {
     createPanel();
-    self->setEnabled(false);
     
     targetLinkType = IkLink;
     
@@ -219,12 +220,12 @@ void LinkPositionWidget::Impl::createPanel()
     resultLabel.setFrameStyle(QFrame::Box | QFrame::Sunken);
     resultLabel.setAlignment(Qt::AlignCenter);
     hbox->addWidget(&resultLabel, 1);
-    auto actualButton = new PushButton(_("Fetch"));
-    actualButton->sigClicked().connect([&](){ updateDisplay(); });
-    hbox->addWidget(actualButton);
-    auto applyButton = new PushButton(_("Apply"));
-    applyButton->sigClicked().connect([&](){ positionWidget->applyPositionInput(); });
-    hbox->addWidget(applyButton);
+    fetchButton.setText(_("Fetch"));
+    fetchButton.sigClicked().connect([&](){ updateDisplay(); });
+    hbox->addWidget(&fetchButton);
+    applyButton.setText(_("Apply"));
+    applyButton.sigClicked().connect([&](){ positionWidget->applyPositionInput(); });
+    hbox->addWidget(&applyButton);
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout;
@@ -313,6 +314,8 @@ void LinkPositionWidget::Impl::createPanel()
     configurationWidgets.push_back(&configurationButton);
     configurationDialog = nullptr;
     vbox->addLayout(grid);
+
+    setConfigurationInterfaceEnabled(false);
 
     vbox->addStretch();
 }
@@ -550,11 +553,19 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
         }
     }
 
-    self->setEnabled(kinematicsKit != nullptr);
+    bool isEditable = kinematicsKit != nullptr;
+    fetchButton.setEnabled(isEditable);
+    applyButton.setEnabled(isEditable);
+    baseCoordRadio.setEnabled(isBaseCoordinateModeEnabled);
+    positionWidget->setEditable(isEditable);
+
+    frameCombo[BaseFrame].setEnabled(isEditable);
+    frameCombo[OffsetFrame].setEnabled(isEditable);
+    
     isFrameComboEnabled[BaseFrame] = isBaseCoordinateModeEnabled;
     isFrameComboEnabled[OffsetFrame] = true;
+    
     updateCoordinateFrameCandidates();
-    baseCoordRadio.setEnabled(isBaseCoordinateModeEnabled);
     setCoordinateMode(preferredCoordinateMode, false, false);
 
     resultLabel.setText("");
