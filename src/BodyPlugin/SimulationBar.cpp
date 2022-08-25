@@ -139,7 +139,9 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
     auto simulators =  rootItem->selectedItems<SimulatorItem>();
     if(simulators.empty()){
         if(auto simulator = rootItem->findItem<SimulatorItem>()){
-            simulator->setSelected(doSelect);
+            if(doSelect){
+                simulator->setSelected(true);
+            }
             simulators.push_back(simulator);
         } else {
             mv->notify(_("There is no simulator item."));
@@ -191,14 +193,18 @@ void SimulationBar::startSimulation(SimulatorItem* simulator, bool doReset)
     if(simulator->isRunning()){
     	if(pauseToggle->isChecked() && !doReset){
             simulator->restartSimulation();
+            pauseToggle->blockSignals(true);
             pauseToggle->setChecked(false);
+            pauseToggle->blockSignals(false);
     	}
         TimeBar::instance()->startPlayback();
         
     } else {
         sigSimulationAboutToStart_(simulator);
         simulator->startSimulation(doReset);
+        pauseToggle->blockSignals(true);
         pauseToggle->setChecked(false);
+        pauseToggle->blockSignals(false);
     }
 }
 
