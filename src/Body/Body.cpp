@@ -63,6 +63,7 @@ public:
 
     Impl(Body* self);
     void initialize(Body* self, Link* rootLink);
+    void removeDeviceFromDeviceNameMap(Device* device);
     bool installCustomizer(BodyCustomizerInterface* customizerInterface);
 };
 
@@ -206,6 +207,7 @@ void Body::cloneShapes(CloneMap& cloneMap)
 
 Body::~Body()
 {
+    clearDevices();
     setRootLink(nullptr);
     
     if(impl->customizerHandle){
@@ -457,11 +459,16 @@ std::vector<LinkPtr> Body::getIdentifiedJoints() const
 
 bool Body::addDevice(Device* device, Link* link)
 {
-    if(device->link()){
-        if(auto body = device->link()->body()){
-            auto it = std::find(body->devices_.begin(), body->devices_.end(), device);
-            if(it != body->devices_.end()){
-                return false;
+    if(auto linkBody = link->body()){
+        if(linkBody != this){
+            return false;
+        }
+    }
+    if(auto currentLink = device->link()){
+        if(currentLink->body() == this){
+            auto it = std::find(devices_.begin(), devices_.end(), device);
+            if(it != devices_.end()){
+                return true;
             }
         }
     }
@@ -476,21 +483,33 @@ bool Body::addDevice(Device* device, Link* link)
 }
 
 
+void Body::Impl::removeDeviceFromDeviceNameMap(Device* device)
+{
+    auto it = deviceNameMap.find(device->name());
+    if(it != deviceNameMap.end()){
+        if(it->second == device){
+            deviceNameMap.erase(it);
+        }
+    }
+}
+
+
 bool Body::removeDevice(Device* device)
 {
     bool removed = false;
     int index = 0;
-    auto iter = devices_.begin();
-    while(iter != devices_.end()){
-        auto& dev = *iter;
+    auto it = devices_.begin();
+    while(it != devices_.end()){
+        auto& dev = *it;
         if(dev == device){
-            impl->deviceNameMap.erase(dev->name());
-            devices_.erase(iter);
+            impl->removeDeviceFromDeviceNameMap(device);
+            device->setLink(nullptr);
+            devices_.erase(it);
             removed = true;
             break;
         } else {
             dev->setIndex(index++);
-            ++iter;
+            ++it;
         }
     }
     return removed;
@@ -500,15 +519,16 @@ bool Body::removeDevice(Device* device)
 void Body::removeDevicesOfLink(Link* link)
 {
     int index = 0;
-    auto iter = devices_.begin();
-    while(iter != devices_.end()){
-        auto& device = *iter;
+    auto it = devices_.begin();
+    while(it != devices_.end()){
+        auto& device = *it;
         if(device->link() == link){
-            impl->deviceNameMap.erase(device->name());
-            iter = devices_.erase(iter);
+            impl->removeDeviceFromDeviceNameMap(device);
+            device->setLink(nullptr);
+            it = devices_.erase(it);
         } else {
             device->setIndex(index++);
-            ++iter;
+            ++it;
         }
     }
 }
@@ -516,6 +536,9 @@ void Body::removeDevicesOfLink(Link* link)
 
 void Body::clearDevices()
 {
+    for(auto& device : devices_){
+        device->setLink(nullptr);
+    }
     devices_.clear();
     impl->deviceNameMap.clear();
 }

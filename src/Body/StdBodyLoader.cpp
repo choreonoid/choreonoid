@@ -323,7 +323,7 @@ public:
     void readContinuousTrackNode(Mapping* linkNode);
     void addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle);
     void readSubBodyNode(Mapping* linkNode);
-    void addSubBodyLinks(BodyPtr subBody, Mapping* node);
+    void addSubBodyLinks(const Body* subBody, Mapping* node);
     void readExtraJoints(Mapping* topNode);
     void readExtraJoint(Mapping* node);
     void readBodyHandlers(ValueNode* node);
@@ -1909,13 +1909,13 @@ void StdBodyLoader::Impl::readSubBodyNode(Mapping* node)
     }
 
     if(subBody){
-        addSubBodyLinks(subBody->clone(), node);
+        addSubBodyLinks(subBody, node);
         subBodies.push_back(subBody);
     }
 }
 
 
-void StdBodyLoader::Impl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
+void StdBodyLoader::Impl::addSubBodyLinks(const Body* subBody, Mapping* node)
 {
     string prefix;
     node->read("prefix", prefix);
@@ -1928,8 +1928,10 @@ void StdBodyLoader::Impl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
 
     int jointIdOffset = node->get({ "joint_id_offset", "jointIdOffset" }, 0);
 
-    for(int i=0; i < subBody->numLinks(); ++i){
-        Link* link = subBody->link(i);
+    BodyPtr subBodyClone = subBody->clone();
+
+    for(int i=0; i < subBodyClone->numLinks(); ++i){
+        Link* link = subBodyClone->link(i);
         setLinkName(link, prefix + link->name() + suffix, node);
         if(link->jointId() >= 0){
             setJointId(link, link->jointId() + jointIdOffset);
@@ -1939,18 +1941,28 @@ void StdBodyLoader::Impl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
         }
     }
 
-    const int numExtraJoints = subBody->numExtraJoints();
+    const int numExtraJoints = subBodyClone->numExtraJoints();
     for(int i=0; i < numExtraJoints; ++i){
-        body->addExtraJoint(subBody->extraJoint(i));
-    }
-    
-    for(int i=0; i < subBody->numDevices(); ++i){
-        Device* device = subBody->device(i);
-        device->setName(devicePrefix + device->name());
-        body->addDevice(device, device->link());
+        body->addExtraJoint(subBodyClone->extraJoint(i));
     }
 
-    LinkPtr rootLink = subBody->rootLink();
+    struct DeviceInfo {
+        DevicePtr device;
+        LinkPtr link;
+        DeviceInfo(Device* device, Link* link)
+            : device(device), link(link) { }
+    };
+    vector<DeviceInfo> subBodyDevices;
+
+    const int numDevices = subBodyClone->numDevices();
+    subBodyDevices.reserve(numDevices);
+    for(int i=0; i < numDevices; ++i){
+        auto device = subBodyClone->device(i);
+        device->setName(devicePrefix + device->name());
+        subBodyDevices.emplace_back(device, device->link());
+    }
+
+    LinkPtr rootLink = subBodyClone->rootLink();
 
     readLinkContents(node, rootLink);
     
@@ -1959,6 +1971,14 @@ void StdBodyLoader::Impl::addSubBodyLinks(BodyPtr subBody, Mapping* node)
     linkInfo->node = node;
     node->read("parent", linkInfo->parent);
     linkInfos.push_back(linkInfo);
+
+    // Delete the sub body clone to relase its devices
+    // so that the devices can be added to the main body.
+    subBodyClone.reset();
+
+    for(auto& info : subBodyDevices){
+        body->addDevice(info.device, info.link);
+    }
 }
 
 
