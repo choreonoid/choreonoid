@@ -186,47 +186,55 @@ void TimeSyncItemEngineManager::Impl::createManagedEngines
     while(id > 0){
         if(id < static_cast<int>(classIdToFactoryListMap.size())){
 
-            FactoryToEngineMap* pFactoryToEngineMap0 = nullptr;
-            auto p = itemToFactoryToEngineMap0.find(item);
-            if(p != itemToFactoryToEngineMap0.end()){
-                pFactoryToEngineMap0 = &p->second;
-            }
-            for(auto& factory : classIdToFactoryListMap[id]){
-                TimeSyncItemEnginePtr existingEngine;
-                if(pFactoryToEngineMap0){
-                    auto q = pFactoryToEngineMap0->find(factory);
-                    if(q != pFactoryToEngineMap0->end()){
-                        existingEngine = q->second;
-                        pFactoryToEngineMap0->erase(q);
-                    }
+            auto& factories = classIdToFactoryListMap[id];
+            if(!factories.empty()){
+                
+                FactoryToEngineMap* pFactoryToEngineMap0 = nullptr;
+                auto it = itemToFactoryToEngineMap0.find(item);
+                if(it != itemToFactoryToEngineMap0.end()){
+                    pFactoryToEngineMap0 = &it->second;
                 }
-                TimeSyncItemEnginePtr engine;
-                if(existingEngine && !itemTreeMayBeChanged){
-                    engine = existingEngine;
-                } else {
-                    engine = (*factory)(item, existingEngine);
-                }
-                if(engine){
-                    engine->isTimeSyncForcedToBeMaintained_ = false;
-                    bool isPreExistingActiveEngine = false;
-                    itemToFactoryToEngineMap[item][factory] = engine;
-                    if(engine != existingEngine){
-                        if(existingEngine){
-                            existingEngine->deactivate();
+                
+                for(auto& factory : classIdToFactoryListMap[id]){
+                    TimeSyncItemEnginePtr existingEngine;
+                    if(pFactoryToEngineMap0){
+                        auto q = pFactoryToEngineMap0->find(factory);
+                        if(q != pFactoryToEngineMap0->end()){
+                            existingEngine = q->second;
+                            pFactoryToEngineMap0->erase(q);
                         }
-                        engine->activate();
+                    }
+                    TimeSyncItemEnginePtr engine;
+                    if(existingEngine && !itemTreeMayBeChanged){
+                        engine = existingEngine;
                     } else {
-                        if(engine->isTimeSyncAlwaysMaintained()){
-                            for(int i=0; i < numPreExistingActiveEngines; ++i){
-                                if(io_engines[i] == engine){
-                                    isPreExistingActiveEngine = true;
-                                    break;
+                        engine = (*factory)(item, existingEngine);
+                    }
+                    if(engine){
+                        engine->isTimeSyncForcedToBeMaintained_ = false;
+                        bool isPreExistingActiveEngine = false;
+                        itemToFactoryToEngineMap[item][factory] = engine;
+                        if(engine != existingEngine){
+                            if(existingEngine){
+                                existingEngine->deactivate();
+                            }
+                            engine->activate();
+                        } else {
+                            if(!engine->isActive_){
+                                engine->activate();
+                            }
+                            if(engine->isTimeSyncAlwaysMaintained()){
+                                for(int i=0; i < numPreExistingActiveEngines; ++i){
+                                    if(io_engines[i] == engine){
+                                        isPreExistingActiveEngine = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
-                    }
-                    if(!isPreExistingActiveEngine){
-                        io_engines.push_back(engine);
+                        if(!isPreExistingActiveEngine){
+                            io_engines.push_back(engine);
+                        }
                     }
                 }
             }

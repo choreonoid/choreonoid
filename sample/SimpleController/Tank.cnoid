@@ -127,7 +127,7 @@ items:
           data: 
             timeStep: 0.001
             realtimeSync: true
-            recording: "off"
+            recording: "full"
             timeRangeMode: "Unlimited"
             timeLength: 60
             active_control_time_range_mode: false
@@ -158,7 +158,7 @@ items:
           data: 
             timeStep: 0.001
             realtimeSync: true
-            recording: "off"
+            recording: "full"
             timeRangeMode: "Unlimited"
             timeLength: 60
             active_control_time_range_mode: false
@@ -189,7 +189,7 @@ items:
           data: 
             timeStep: 0.001
             realtimeSync: true
-            recording: "off"
+            recording: "full"
             timeRangeMode: "Unlimited"
             timeLength: 60
             active_control_time_range_mode: false
