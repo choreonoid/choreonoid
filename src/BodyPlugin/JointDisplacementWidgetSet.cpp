@@ -64,6 +64,7 @@ public:
     void updateDisplacement(bool forceUpdate);
     int getCurrentPhase();
     void onDisplacementInput(double value);
+    void onDialInput(double value);
     void onPhaseInput(int phase);
     void removeWidgetsFrom(QGridLayout* grid);
 };
@@ -126,7 +127,7 @@ public:
     void setOptionMenuTo(MenuManager& menu);
     void setBodyItem(BodyItem* bodyItem);
     void updateConnectionForSelectedJointsOnlyMode();
-    void updateIndicatorGrid();
+    void updateIndicatorGrid(bool doUpdateJointDisplacements);
     void initializeIndicators(int num);
     void attachTargetBodyLabel();
     virtual bool eventFilter(QObject* object, QEvent* event) override;
@@ -196,9 +197,9 @@ JointDisplacementWidgetSet::Impl::Impl
     dvFormat = DisplayValueFormat::instance();
     dvFormatConnection =
         dvFormat->sigFormatChanged().connect(
-            [&](){ updateIndicatorGrid(); });
+            [&](){ updateIndicatorGrid(true); });
     
-    updateIndicatorGrid();
+    updateIndicatorGrid(false);
 
     updateJointDisplacementsLater.setFunction([&](){ updateJointDisplacements(); });
     updateJointDisplacementsLater.setPriority(LazyCaller::PRIORITY_LOW);
@@ -293,48 +294,48 @@ void JointDisplacementWidgetSet::Impl::setOptionMenuTo(MenuManager& menu)
         auto selectedJointsOnlyCheck = menu.addCheckItem(_("Selected joints only"));
         selectedJointsOnlyCheck->setChecked(isSelectedJointsOnlyMode);
         selectedJointsOnlyCheck->sigToggled().connect(
-            [&](bool on){ isSelectedJointsOnlyMode = on; updateIndicatorGrid(); });
+            [&](bool on){ isSelectedJointsOnlyMode = on; updateIndicatorGrid(true); });
     }
 
     auto privateJointCheck = menu.addCheckItem(_("Show private joints"));
     privateJointCheck->setChecked(isPrivateJointEnabled);
     privateJointCheck->sigToggled().connect(
-        [&](bool on){ isPrivateJointEnabled = on; updateIndicatorGrid(); });
+        [&](bool on){ isPrivateJointEnabled = on; updateIndicatorGrid(true); });
 
     auto jointIdCheck = menu.addCheckItem(_("Joint ID"));
     jointIdCheck->setChecked(isJointIdVisible);
     jointIdCheck->sigToggled().connect(
-        [&](bool on){ isJointIdVisible = on; updateIndicatorGrid(); });
+        [&](bool on){ isJointIdVisible = on; updateIndicatorGrid(false); });
 
     auto jointNameCheck = menu.addCheckItem(_("Joint name"));
     jointNameCheck->setChecked(isJointNameVisible);
     jointNameCheck->sigToggled().connect(
-        [&](bool on){ isJointNameVisible = on; updateIndicatorGrid(); });
+        [&](bool on){ isJointNameVisible = on; updateIndicatorGrid(false); });
 
     auto overlapJointNameCheck = menu.addCheckItem(_("Overlap joint name"));
     overlapJointNameCheck->setChecked(isOverlapJointNameMode);
     overlapJointNameCheck->sigToggled().connect(
-        [&](bool on){ isOverlapJointNameMode = on; updateIndicatorGrid(); });
+        [&](bool on){ isOverlapJointNameMode = on; updateIndicatorGrid(false); });
 
     auto sliderCheck = menu.addCheckItem(_("Slider"));
     sliderCheck->setChecked(isSliderEnabled);
     sliderCheck->sigToggled().connect(
-        [&](bool on){ isSliderEnabled = on; updateIndicatorGrid(); });
+        [&](bool on){ isSliderEnabled = on; updateIndicatorGrid(true); });
 
     auto dialCheck = menu.addCheckItem(_("Dial"));
     dialCheck->setChecked(isDialEnabled);
     dialCheck->sigToggled().connect(
-        [&](bool on){ isDialEnabled = on; updateIndicatorGrid(); });
+        [&](bool on){ isDialEnabled = on; updateIndicatorGrid(true); });
 
     auto phaseCheck = menu.addCheckItem(_("Phase"));
     phaseCheck->setChecked(isPhaseEnabled);
     phaseCheck->sigToggled().connect(
-        [&](bool on){ isPhaseEnabled = on; updateIndicatorGrid(); });
+        [&](bool on){ isPhaseEnabled = on; updateIndicatorGrid(true); });
 
     auto rangeLimitCheck = menu.addCheckItem(_("Limit the slider range to within +/- 360 deg."));
     rangeLimitCheck->setChecked(isRangeLimitMode);
     rangeLimitCheck->sigToggled().connect(
-        [&](bool on){ isRangeLimitMode = on; updateIndicatorGrid(); });
+        [&](bool on){ isRangeLimitMode = on; updateIndicatorGrid(true); });
 }
 
 
@@ -358,7 +359,7 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
 
         updateConnectionForSelectedJointsOnlyMode();
         
-        updateIndicatorGrid();
+        updateIndicatorGrid(false);
 
         kinematicStateChangeConnection.disconnect();
         modelUpdateConnection.disconnect();
@@ -371,7 +372,7 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
                 bodyItem->sigModelUpdated().connect(
                     [this](int flags){
                         if(flags & (BodyItem::LinkSetUpdate | BodyItem::LinkSpecUpdate)){
-                            updateIndicatorGrid();
+                            updateIndicatorGrid(true);
                         }
                     });
                     
@@ -396,14 +397,14 @@ void JointDisplacementWidgetSet::Impl::updateConnectionForSelectedJointsOnlyMode
             bodySelectionManager->sigLinkSelectionChanged(currentBodyItem).connect(
                 [&](const std::vector<bool>&){
                     if(isSelectedJointsOnlyMode){
-                        updateIndicatorGrid();
+                        updateIndicatorGrid(true);
                     }
                 });
     }
 }
 
 
-void JointDisplacementWidgetSet::Impl::updateIndicatorGrid()
+void JointDisplacementWidgetSet::Impl::updateIndicatorGrid(bool doUpdateJointDisplacements)
 {
     if(!currentBodyItem){
         initializeIndicators(0);
@@ -477,6 +478,10 @@ void JointDisplacementWidgetSet::Impl::updateIndicatorGrid()
         *sharedRowCounter = row;
     } else {
         currentRowSize = row;
+    }
+
+    if(doUpdateJointDisplacements){
+        updateJointDisplacements();
     }
 }
 
@@ -552,7 +557,7 @@ JointIndicator::JointIndicator(JointDisplacementWidgetSet::Impl* baseImpl, int i
     dial.setProperty("JointDialIndex", index);
     dial.installEventFilter(baseImpl);
     dial.sigValueChanged().connect(
-        [=](int v){ onDisplacementInput(v / resolution); });
+        [=](int v){ onDialInput(v / resolution); });
     
     phaseSpin.sigValueChanged().connect(
         [=](int v){ onPhaseInput(v); });
@@ -673,6 +678,7 @@ void JointIndicator::initialize(Link* joint)
                 upper = 360.0;
                 isValidRange = false;
             }
+            dial.setRange(-180.0 * resolution, 180.0 * resolution);
         } else {
             if(baseImpl->isRangeLimitMode){
                 if(lower < -2.0 * M_PI){
@@ -690,6 +696,7 @@ void JointIndicator::initialize(Link* joint)
                 upper = 2.0 * M_PI;
                 isValidRange = false;
             }
+            dial.setRange(-M_PI * resolution, M_PI * resolution);
         }
         slider.setRange(lower * resolution, upper * resolution);
         slider.setEnabled(true);
@@ -699,14 +706,8 @@ void JointIndicator::initialize(Link* joint)
         spin.setSingleStep(baseImpl->angleStep);
         spin.setEnabled(true);
         
-        if(!isValidRange){
-            dial.setWrapping(true);
-            dial.setNotchesVisible(false);
-        } else {
-            dial.setWrapping(false);
-            dial.setNotchesVisible(true);
-        }
-        dial.setRange(lower * resolution, upper * resolution);
+        dial.setWrapping(true);
+        dial.setNotchesVisible(false);
         dial.setEnabled(true);
         
     } else if(joint->isPrismaticJoint()){
@@ -735,6 +736,10 @@ void JointIndicator::initialize(Link* joint)
         spin.setRange(-baseImpl->defaultMaxLength, baseImpl->defaultMaxLength);
         spin.setSingleStep(baseImpl->lengthStep);
         spin.setEnabled(true);
+
+        dial.setRange(lower * resolution, upper * resolution);
+        dial.setNotchesVisible(true);
+        dial.setEnabled(true);
         
     } else {
         slider.setRange(0, 0);
@@ -857,6 +862,42 @@ void JointIndicator::onDisplacementInput(double value)
     joint->q() = value / unitConversionRatio;
     updateDisplacement(true);
     baseImpl->notifyJointDisplacementInput();
+}
+
+
+void JointIndicator::onDialInput(double value)
+{
+    double q = value / unitConversionRatio;
+    bool valid = false;
+    if(q > joint->q_upper()){
+        double q_shifted = q - 2.0 * M_PI;
+        while(q_shifted >= joint->q_lower()){
+            if(q_shifted <= joint->q_upper()){
+                joint->q() = q_shifted;
+                valid = true;
+                break;
+            }
+            q_shifted -= 2.0 * M_PI;
+        }
+    } else if (q < joint->q_lower()){
+        double q_shifted = q + 2.0 * M_PI;
+        while(q_shifted <= joint->q_upper()){
+            if(q_shifted >= joint->q_lower()){
+                joint->q() = q_shifted;
+                valid = true;
+                break;
+            }
+            q_shifted += 2.0 * M_PI;
+        }
+    } else {
+        joint->q() = q;
+        valid = true;
+    }
+
+    if(valid){
+        updateDisplacement(true);
+        baseImpl->notifyJointDisplacementInput();
+    }
 }
 
 
