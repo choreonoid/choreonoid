@@ -8,6 +8,7 @@
 #include "Material.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/ValueTree>
+#include <cnoid/CloneMap>
 
 using namespace std;
 using namespace cnoid;
@@ -52,7 +53,7 @@ Link::Link()
 }
 
 
-Link::Link(const Link& org)
+Link::Link(const Link& org, CloneMap* cloneMap)
     : name_(org.name_),
       jointSpecificName_(org.jointSpecificName_)
 {
@@ -73,10 +74,9 @@ Link::Link(const Link& org)
     q_ = org.q_;
     dq_ = org.dq_;
     ddq_ = org.ddq_;
-    u_ = org.u_;
-
     q_target_ = org.q_target_;
     dq_target_ = org.dq_target_;
+    u_ = org.u_;
 
     v_ = org.v_;
     w_ = org.w_;
@@ -100,21 +100,27 @@ Link::Link(const Link& org)
 
     materialId_ = org.materialId_;
 
-    //! \todo add the mode for doing deep copy of the following objects
-    visualShape_ = new SgGroup;
-    org.visualShape_->copyChildrenTo(visualShape_);
-    visualShape_->invalidateBoundingBox();
-    collisionShape_ = new SgGroup;
-    org.collisionShape_->copyChildrenTo(collisionShape_);
-    collisionShape_->invalidateBoundingBox();
+    if(cloneMap){
+        // deep copy
+        visualShape_ = cloneMap->getClone(org.visualShape_);
+        collisionShape_ = cloneMap->getClone(org.collisionShape_);
+    } else {
+        // shallow copy
+        visualShape_ = new SgGroup;
+        org.visualShape_->copyChildrenTo(visualShape_);
+        visualShape_->invalidateBoundingBox();
+        collisionShape_ = new SgGroup;
+        org.collisionShape_->copyChildrenTo(collisionShape_);
+        collisionShape_->invalidateBoundingBox();
+    }
 
     info_ = org.info_;
 }
 
 
-Referenced* Link::doClone(CloneMap*) const
+Referenced* Link::doClone(CloneMap* cloneMap) const
 {
-    return new Link(*this);
+    return new Link(*this, cloneMap);
 }
 
 

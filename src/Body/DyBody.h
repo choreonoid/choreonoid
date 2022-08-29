@@ -82,8 +82,8 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     DyLink();
-    DyLink(const DyLink& org);
-    DyLink(const Link& link);
+    DyLink(const DyLink& org, CloneMap* cloneMap = nullptr);
+    DyLink(const Link& link, CloneMap* cloneMap = nullptr);
 
     virtual void initializeState() override;
 
@@ -220,8 +220,6 @@ public:
     */
     DyBody(const Body& org) = delete;
 
-    virtual Link* createLink(const Link* org = nullptr) const override;
-
     DyLink* joint(int id) const {
         return static_cast<DyLink*>(Body::joint(id));
     }
@@ -246,6 +244,7 @@ public:
 
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
+    virtual Link* doCreateLink(const Link* org, CloneMap* cloneMap) const override;
 
 private:
     std::vector<DySubBodyPtr> subBodies_;

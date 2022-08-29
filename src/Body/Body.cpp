@@ -133,13 +133,7 @@ void Body::copyFrom(const Body* org, CloneMap* cloneMap)
     }
 
     for(auto& device : org->devices()){
-        Device* clone;
-        if(cloneMap){
-            clone = cloneMap->getClone<Device>(device);
-        } else {
-            clone = device->clone();
-        }
-        addDevice(clone, link(device->link()->index()));
+        addDevice(CloneMap::getClone(device, cloneMap), link(device->link()->index()));
     }
 
     for(auto& orgExtraJoint : org->extraJoints_){
@@ -165,10 +159,7 @@ void Body::copyFrom(const Body* org, CloneMap* cloneMap)
 
 Link* Body::cloneLinkTree(const Link* orgLink, CloneMap* cloneMap)
 {
-    Link* link = createLink(orgLink);
-    if(cloneMap){
-        cloneMap->setClone(orgLink, link);
-    }
+    Link* link = createLink(orgLink, cloneMap);
     for(Link* child = orgLink->child(); child; child = child->sibling()){
         link->appendChild(cloneLinkTree(child, cloneMap));
     }
@@ -184,9 +175,19 @@ Referenced* Body::doClone(CloneMap* cloneMap) const
 }
 
 
-Link* Body::createLink(const Link* org) const
+Link* Body::createLink(const Link* orgLink, CloneMap* cloneMap) const
 {
-    return org ? new Link(*org) : new Link();
+    auto link = doCreateLink(orgLink, cloneMap);
+    if(orgLink && cloneMap){
+        cloneMap->setClone(orgLink, link);
+    }
+    return link;
+}
+
+
+Link* Body::doCreateLink(const Link* org, CloneMap* cloneMap) const
+{
+    return org ? new Link(*org, cloneMap) : new Link();
 }
 
 

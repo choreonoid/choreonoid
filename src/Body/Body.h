@@ -9,6 +9,7 @@
 #include "LinkTraverse.h"
 #include "ExtraJoint.h"
 #include "DeviceList.h"
+#include <cnoid/ClonableReferenced>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -17,7 +18,6 @@ class Body;
 class BodyHandler;
 class Link;
 class Mapping;
-class CloneMap;
 
 struct BodyInterface;
 struct BodyCustomizerInterface;
@@ -38,8 +38,8 @@ public:
     Body* clone() const { return static_cast<Body*>(doClone(nullptr)); }
     Body* clone(CloneMap& cloneMap) const { return static_cast<Body*>(doClone(&cloneMap)); }
 
-    virtual Link* createLink(const Link* org = nullptr) const;
-
+    Link* createLink(const Link* org = nullptr, CloneMap* cloneMap = nullptr) const;
+    
     const std::string& name() const;
     void setName(const std::string& name);
     const std::string& modelName() const;
@@ -339,6 +339,7 @@ public:
 protected:
     Body(Link* rootLink);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
+    virtual Link* doCreateLink(const Link* org, CloneMap* cloneMap) const;
 
 private:
     LinkTraverse linkTraverse_;

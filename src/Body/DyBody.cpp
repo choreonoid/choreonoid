@@ -141,15 +141,15 @@ DyLink::DyLink()
 }
 
 
-DyLink::DyLink(const Link& link)
-    : Link(link)
+DyLink::DyLink(const Link& link, CloneMap* cloneMap)
+    : Link(link, cloneMap)
 {
     subBody_ = nullptr;
 }
 
 
-DyLink::DyLink(const DyLink& org)
-    : Link(org)
+DyLink::DyLink(const DyLink& org, CloneMap* cloneMap)
+    : Link(org, cloneMap)
 {
     subBody_ = nullptr;
 }
@@ -161,9 +161,9 @@ Referenced* DyLink::doClone(CloneMap*) const
 }
 
 
-Link* DyBody::createLink(const Link* org) const
+Link* DyBody::doCreateLink(const Link* org, CloneMap* cloneMap) const
 {
-    return org ? new DyLink(*org) : new DyLink;
+    return org ? new DyLink(*org, cloneMap) : new DyLink;
 }
 
 

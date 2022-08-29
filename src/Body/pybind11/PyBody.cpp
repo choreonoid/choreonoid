@@ -6,6 +6,7 @@
 #include "../BodyMotion.h"
 #include "PyDeviceList.h"
 #include <cnoid/ValueTree>
+#include <cnoid/CloneMap>
 #include <cnoid/PyUtil>
 #include <pybind11/operators.h>
 
@@ -23,7 +24,7 @@ void exportPyBody(py::module& m)
         .def(py::init<const std::string&>())
         .def("__repr__", [](const Link &self) { return "<cnoid.Body.Body named '" + self.name() + "'>"; })
         .def("clone", (Body*(Body::*)()const) &Body::clone)
-        .def("createLink", &Body::createLink, py::arg("org") = nullptr)
+        .def("createLink", &Body::createLink, py::arg("org") = nullptr, py::arg("cloneMap") = nullptr)
         .def_property("name", &Body::name, &Body::setName)
         .def("setName", &Body::setName)
         .def_property("modelName", &Body::modelName, &Body::setModelName)

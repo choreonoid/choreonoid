@@ -31,11 +31,16 @@ public:
     Link();
 
     /**
-       This does shallow copy.
-       You have to use the copy constructor of the Body class to copy the link tree
+       This constructor does not copy the link tree, but only the link object itself.
+       Use the copy constructor of the Body class to copy the link tree.
+       \note If the cloneMap is specified, the scene graph nodes of the link shape
+       is stored in the cloneMap.
     */
-    Link(const Link& link);
+    Link(const Link& link, CloneMap* cloneMap = nullptr);
 
+    /**
+       The behavior of this clone function is basically same as the copy constructor.
+    */
     Link* clone(CloneMap* cloneMap = nullptr) const {
         return static_cast<Link*>(doClone(cloneMap));
     }
