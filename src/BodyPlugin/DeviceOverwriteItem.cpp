@@ -198,6 +198,8 @@ void DeviceOverwriteItem::onDisconnectedFromBodyItem()
 void DeviceOverwriteItem::Impl::clearOverwriting()
 {
     if(device){
+        clearDeviceShape();
+
         if(isAdditionalDevice){
             if(auto bodyItem_ = self->bodyItem()){
                 if(bodyItem_->body()->removeDevice(device)){
@@ -205,7 +207,6 @@ void DeviceOverwriteItem::Impl::clearOverwriting()
                 }
             }
         }
-        clearDeviceShape();
 
         releaseOverwriteTarget();
     }

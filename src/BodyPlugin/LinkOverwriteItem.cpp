@@ -147,6 +147,8 @@ LinkOverwriteItem::Impl::Impl(LinkOverwriteItem* self, const Impl& org)
     if(org.originalLinkClone){
         originalLinkClone = org.originalLinkClone->clone();
     }
+    isRootLink = org.isRootLink;
+    locationTargetType = org.locationTargetType;
 }
 
 
