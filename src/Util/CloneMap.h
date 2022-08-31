@@ -10,6 +10,9 @@ namespace cnoid {
 
 class ClonableReferenced;
 
+/**
+   \todo Support std::shared_ptr as a pointer to clone objects
+*/
 class CNOID_EXPORT CloneMap
 {
 public:
@@ -30,6 +33,11 @@ public:
     }
 
     template<class ObjectType>
+    static ObjectType* findClone(const ObjectType* org, CloneMap* cloneMap){
+        return cloneMap ? cloneMap->findClone(org) : nullptr;
+    }
+
+    template<class ObjectType>
     ObjectType* findClone(ref_ptr<ObjectType> org){
         return findClone<ObjectType>(org.get());
     }
@@ -40,8 +48,22 @@ public:
     }
 
     template<class ObjectType>
+    static ObjectType* getClone(const ObjectType* org, CloneMap* cloneMap){
+        return cloneMap ? cloneMap->getClone(org) : getClone_(org);
+    }
+
+    template<class ObjectType>
     ObjectType* getClone(ref_ptr<ObjectType> org){
         return getClone<ObjectType>(org.get());
+    }
+
+    template<class ObjectType>
+    static ObjectType* getClone(ref_ptr<ObjectType> org, CloneMap* cloneMap){
+        if(cloneMap){
+            return cloneMap->getClone(org);
+        } else {
+            return static_cast<ObjectType*>(getClone_(org));
+        }
     }
 
     /*
@@ -108,6 +130,8 @@ private:
     Referenced* findOrCreateClone_(const Referenced* org, const CloneFunction& cloneFunction);
     Referenced* findCloneOrReplaceLater_(
         const Referenced* org, std::function<void(Referenced* clone)> replaceFunction);
+
+    static Referenced* getClone_(const ClonableReferenced* org);
 
     static int getFlagId(const char* name);
 };
