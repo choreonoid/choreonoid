@@ -17,29 +17,25 @@ class CNOID_EXPORT ItemAddon : public Referenced
 public:
     ItemAddon();
 
-    virtual Item* ownerItem();
-
     ItemAddon* clone(Item* newItem = nullptr, CloneMap* cloneMap = nullptr) const;
+    const std::string& name() const;
 
-    /**
-       This function assigns the state of the source addon object to this assign object.
-       This function is used when the owner item is duplicated or assigned from another item.
-
-       \note This function does not necessarily need to be overriden. In that case, the false
-       is returned by the default implementation and the addon object is created and initialized
-       on demand even if the item is duplicated or assigned from another item with the
-       corresponding addon object.
-    */
-    virtual bool assign(const ItemAddon* srcAddon);
-    
+    virtual Item* ownerItem();
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
 
-    const std::string& name() const;
     
 protected:
     ItemAddon(const ItemAddon& org);
+
+    /**
+       \note This function does not necessarily need to be overriden. In that case, nullptr
+       is returned by the default implementation, and the addon object is created and
+       initialized on demand even if the item is cloned or assigned from another item with
+       the corresponding addon object.
+    */
     virtual ItemAddon* doClone(Item* newItem, CloneMap* cloneMap) const;
+    
     virtual bool setOwnerItem(Item* item);
 
 private:

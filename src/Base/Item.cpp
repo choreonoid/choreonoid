@@ -285,17 +285,9 @@ void Item::Impl::assignAddons(const Item* srcItem)
 {
     for(auto& kv : srcItem->impl->addonMap){
         const ItemAddon* srcAddon = kv.second;
-        auto existingAddon = self->findAddon(typeid(*srcAddon));
-        ItemAddonPtr addon = existingAddon;
-        if(!addon){
-            addon = createAddon(typeid(*srcAddon));
-        }
+        ItemAddonPtr  addon = srcAddon->clone(self);
         if(addon){
-            if(!addon->assign(srcAddon)){
-                if(!existingAddon){
-                    removeAddon(addon, false);
-                }
-            }
+            self->setAddon(addon);
         }
     }
 }

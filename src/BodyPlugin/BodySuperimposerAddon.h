@@ -17,7 +17,6 @@ public:
     virtual ~BodySuperimposerAddon();
 
     virtual bool setOwnerItem(Item* item) override;
-    virtual bool assign(const ItemAddon* srcAddon) override;
 
     int numSuperimposedBodies() const;
     Body* superimposedBody(int index);

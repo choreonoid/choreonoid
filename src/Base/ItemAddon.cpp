@@ -38,12 +38,6 @@ bool ItemAddon::setOwnerItem(Item* item)
 }
 
 
-bool ItemAddon::assign(const ItemAddon* /* srcAddon */)
-{
-    return false;
-}
-
-
 Item* ItemAddon::ownerItem()
 {
     return ownerItem_;
