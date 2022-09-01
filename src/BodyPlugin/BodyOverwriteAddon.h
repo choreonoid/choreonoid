@@ -19,7 +19,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     BodyOverwriteAddon();
-    BodyOverwriteAddon(const BodyOverwriteAddon*) = delete;
     
     virtual bool setOwnerItem(Item* item) override;
 
@@ -46,6 +45,10 @@ public:
     void unregisterDeviceOverwriteItem(DeviceOverwriteItem* item);
     
     void removeOverwriteItems(bool doClearOverwrites = false);
+
+protected:
+    BodyOverwriteAddon(const BodyOverwriteAddon& org, CloneMap* cloneMap);
+    virtual ItemAddon* doClone(Item* newItem, CloneMap* cloneMap) const override;
 
 private:
     class Impl;

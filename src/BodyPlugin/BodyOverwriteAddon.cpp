@@ -4,6 +4,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/SceneDrawables>
 #include <cnoid/Archive>
+#include <cnoid/CloneMap>
 
 using namespace std;
 using namespace cnoid;
@@ -17,10 +18,11 @@ public:
     BodyOverwriteAddon* self;
     BodyItem* bodyItem;
 
-    std::map<Link*, LinkOverwriteItemPtr> linkOverwriteItemMap;
-    std::map<Device*, DeviceOverwriteItemPtr> deviceOverwriteItemMap;
+    std::map<LinkPtr, LinkOverwriteItemPtr> linkOverwriteItemMap;
+    std::map<DevicePtr, DeviceOverwriteItemPtr> deviceOverwriteItemMap;
 
     Impl(BodyOverwriteAddon* self);
+    Impl(BodyOverwriteAddon* self, const BodyOverwriteAddon& org, CloneMap* cloneMap);
 };
 
 }
@@ -43,6 +45,51 @@ BodyOverwriteAddon::Impl::Impl(BodyOverwriteAddon* self)
     : self(self)
 {
     bodyItem = nullptr;
+}
+
+
+BodyOverwriteAddon::BodyOverwriteAddon(const BodyOverwriteAddon& org, CloneMap* cloneMap)
+    : ItemAddon(org)
+{
+    impl = new Impl(this, org, cloneMap);
+}
+
+
+BodyOverwriteAddon::Impl::Impl(BodyOverwriteAddon* self, const BodyOverwriteAddon& org, CloneMap* cloneMap)
+    : self(self)
+{
+    bodyItem = nullptr;
+
+    if(cloneMap){
+        for(auto& kv : org.impl->linkOverwriteItemMap){
+            auto& link = kv.first;
+            auto& item = kv.second;
+            if(auto linkClone = cloneMap->findClone(link)){
+                cloneMap->findCloneOrReplaceLater<LinkOverwriteItem>(
+                    item,
+                    [this, linkClone](LinkOverwriteItem* itemClone){
+                        linkOverwriteItemMap[linkClone] = itemClone;
+                    });
+            }
+        }
+        for(auto& kv : org.impl->deviceOverwriteItemMap){
+            auto& device = kv.first;
+            auto& item = kv.second;
+            if(auto deviceClone = cloneMap->findClone(device)){
+                cloneMap->findCloneOrReplaceLater<DeviceOverwriteItem>(
+                    item,
+                    [this, deviceClone](DeviceOverwriteItem* itemClone){
+                        deviceOverwriteItemMap[deviceClone] = itemClone;
+                    });
+            }
+        }
+    }
+}
+
+
+ItemAddon* BodyOverwriteAddon::doClone(Item* /* newItem */, CloneMap* cloneMap) const
+{
+    return new BodyOverwriteAddon(*this, cloneMap);
 }
 
 

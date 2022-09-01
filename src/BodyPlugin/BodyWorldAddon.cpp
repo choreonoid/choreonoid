@@ -50,6 +50,12 @@ BodyWorldAddon::~BodyWorldAddon()
 }
 
 
+ItemAddon* BodyWorldAddon::doClone(Item* /* newItem */, CloneMap* /* cloneMap */) const
+{
+    return nullptr;
+}
+
+
 bool BodyWorldAddon::setOwnerItem(Item* item)
 {
     impl->worldItemConnection.disconnect();

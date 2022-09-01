@@ -14,7 +14,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
         
     BodySuperimposerAddon();
-    BodySuperimposerAddon(const BodySuperimposerAddon&) = delete;
     virtual ~BodySuperimposerAddon();
 
     virtual bool setOwnerItem(Item* item) override;
@@ -28,8 +27,9 @@ public:
         std::function<bool()> setReferenceConfigurationToOrgBodiesTransiently);
     void clearSuperimposition();
     
-
 protected:
+    BodySuperimposerAddon(const BodySuperimposerAddon& org);
+    virtual ItemAddon* doClone(Item* newItem, CloneMap* cloneMap) const override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
             

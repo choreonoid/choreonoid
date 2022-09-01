@@ -23,6 +23,9 @@ public:
 
     SignalProxy<void(SimulatorItem* simulatorItem)> sigSimulationAboutToBeStarted();
 
+protected:
+    virtual ItemAddon* doClone(Item* newItem, CloneMap* cloneMap) const override;
+
 private:
     class Impl;
     Impl* impl;

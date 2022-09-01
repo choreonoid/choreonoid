@@ -84,9 +84,22 @@ BodySuperimposerAddon::Impl::Impl(BodySuperimposerAddon* self)
 }
 
 
+BodySuperimposerAddon::BodySuperimposerAddon(const BodySuperimposerAddon& org)
+    : BodySuperimposerAddon()
+{
+    impl->transparency = org.impl->transparency;
+}
+
+
 BodySuperimposerAddon::~BodySuperimposerAddon()
 {
     delete impl;
+}
+
+
+ItemAddon* BodySuperimposerAddon::doClone(Item* /* newItem */, CloneMap* /* cloneMap */) const
+{
+    return new BodySuperimposerAddon(*this);
 }
 
 
