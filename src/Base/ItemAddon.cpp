@@ -11,6 +11,26 @@ ItemAddon::ItemAddon()
 }
 
 
+ItemAddon::ItemAddon(const ItemAddon& org)
+    : ownerItem_(nullptr),
+      name_(org.name_)
+{
+
+}
+
+
+ItemAddon* ItemAddon::clone(Item* newItem, CloneMap* cloneMap) const
+{
+    return doClone(newItem, cloneMap);
+}
+
+
+ItemAddon* ItemAddon::doClone(Item* /* newItem */, CloneMap* /* cloneMap */) const
+{
+    return nullptr;
+}
+
+
 bool ItemAddon::setOwnerItem(Item* item)
 {
     ownerItem_ = item;

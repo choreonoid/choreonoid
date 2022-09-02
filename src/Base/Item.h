@@ -5,7 +5,7 @@
 #ifndef CNOID_BASE_ITEM_H
 #define CNOID_BASE_ITEM_H
 
-#include <cnoid/Referenced>
+#include <cnoid/ClonableReferenced>
 #include <cnoid/Signal>
 #include <string>
 #include <vector>
@@ -16,9 +16,7 @@ namespace cnoid {
 
 class Item;
 typedef ref_ptr<Item> ItemPtr;
-
 template<class ItemType = Item> class ItemList;
-    
 class ItemAddon;
 class RootItem;
 class Archive;
@@ -28,7 +26,7 @@ class PutPropertyFunction;
 class UnifiedEditHistory;
 class EditRecord;
 
-class CNOID_EXPORT Item : public Referenced
+class CNOID_EXPORT Item : public ClonableReferenced
 {
 protected:
     Item();
@@ -115,13 +113,22 @@ public:
     //! Copy item properties as much as possible like the assignment operator
     bool assign(const Item* srcItem);
 
+    Item* clone() const { return static_cast<Item*>(doClone(nullptr)); }
+    Item* clone(CloneMap& cloneMap) const { return static_cast<Item*>(doClone(&cloneMap)); }
+    Item* cloneSubTree(CloneMap& cloneMap) const;
+
+    [[deprecated("Use the clone function.")]]
     Item* duplicate(Item* duplicatedParentItem = nullptr) const;
 
     //! This function creates a copy of the item including its descendant items
+    
+
+    
+    [[deprecated("Use the cloneSubTree function.")]]
     Item* duplicateSubTree() const;
 
-    [[deprecated("Use Item::duplicateSubTree.")]]
-    Item* duplicateAll() const { return duplicateSubTree(); }
+    [[deprecated("Use the cloneSubTree function.")]]
+    Item* duplicateAll() const;
 
     const std::string& name() const { return name_; }
     //! \return true if the name is successfully updated or the item originally has the same name
@@ -503,6 +510,10 @@ protected:
 
     //! Implement the code to copy properties like the assingment operator
     virtual bool doAssign(const Item* srcItem);
+
+    virtual Referenced* doClone(CloneMap* cloneMap) const override final;
+
+    virtual Item* doCloneItem(CloneMap* cloneMap) const;
 
     //! Override this function to allow duplication of an instance.
     virtual Item* doDuplicate() const;

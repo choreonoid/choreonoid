@@ -7,6 +7,7 @@
 #include "UnifiedEditHistory.h"
 #include "Archive.h"
 #include <cnoid/ConnectionSet>
+#include <cnoid/CloneMap>
 #include <QMouseEvent>
 #include <QHeaderView>
 #include <QModelIndex>
@@ -127,7 +128,7 @@ public:
     void forEachTopItems(
         const ItemList<>& items, std::function<bool(Item*, unordered_set<Item*>& itemSet)> callback);
     void copySelectedItems();
-    void copySelectedItemsInSubTree(Item* item, Item* duplicated, unordered_set<Item*>& itemSet);
+    void copySelectedItemsInSubTree(Item* item, Item* duplicated, unordered_set<Item*>& itemSet, CloneMap& cloneMap);
     void copySelectedItemsWithSubTrees();
     void cutSelectedItems();
     bool pasteItems(bool doCheckPositionAcceptance);
@@ -1301,37 +1302,46 @@ void ItemTreeWidget::Impl::copySelectedItems()
 {
     copiedItems.clear();
 
+    CloneMap cloneMap;
+
     forEachTopItems(
         getSelectedItems(),
         [&](Item* item, unordered_set<Item*>& itemSet){
-            if(auto duplicated = item->duplicate()){
-                copiedItems.push_back(duplicated);
-                copySelectedItemsInSubTree(item, duplicated, itemSet);
+            if(auto clone = cloneMap.getClone(item)){
+                copiedItems.push_back(clone);
+                copySelectedItemsInSubTree(item, clone, itemSet, cloneMap);
             }
             return true;
         });
+
+    cloneMap.replacePendingObjects();
 }
 
 
 void ItemTreeWidget::Impl::copySelectedItemsInSubTree
-(Item* item, Item* duplicated, unordered_set<Item*>& itemSet)
+(Item* item, Item* clone, unordered_set<Item*>& itemSet, CloneMap& cloneMap)
 {
     for(Item* child = item->childItem(); child; child = child->nextItem()){
-        ItemPtr duplicatedChild;
+        ItemPtr childClone;
         if(itemSet.find(child) != itemSet.end() || child->hasAttribute(Item::Attached)){
             if(child->isSubItem()){
-                duplicatedChild = duplicated->findChildItem(child->name());
+                childClone = cloneMap.findClone<Item>(child);
+                /*
+                if(!childClone){
+                    childCLone = clone->findChildItem(child->name());
+                }
+                */
             } else {
-                duplicatedChild = child->duplicate(item);
-                if(duplicatedChild){
-                    duplicated->addChildItem(duplicatedChild);
+                childClone = cloneMap.getClone(child);
+                if(childClone){
+                    clone->addChildItem(childClone);
                 }
             }
         }
-        if(duplicatedChild){
-            copySelectedItemsInSubTree(child, duplicatedChild, itemSet);
+        if(childClone){
+            copySelectedItemsInSubTree(child, childClone, itemSet, cloneMap);
         } else {
-            copySelectedItemsInSubTree(child, duplicated, itemSet);
+            copySelectedItemsInSubTree(child, childClone, itemSet, cloneMap);
         }
     }
 }
@@ -1347,14 +1357,18 @@ void ItemTreeWidget::Impl::copySelectedItemsWithSubTrees()
 {
     copiedItems.clear();
 
+    CloneMap cloneMap;
+
     forEachTopItems(
         getSelectedItems(),
         [&](Item* item, unordered_set<Item*>&){
-            if(auto duplicated = item->duplicateSubTree()){
-                copiedItems.push_back(duplicated);
+            if(auto clone = item->cloneSubTree(cloneMap)){
+                copiedItems.push_back(clone);
             }
             return true;
         });
+
+    cloneMap.replacePendingObjects();
 }
 
 
@@ -1437,11 +1451,14 @@ bool ItemTreeWidget::Impl::pasteItems(bool doCheckPositionAcceptance)
                 unifiedEditHistory->beginEditGroup(format(_("Paste items in {0}"), getViewTitle()), false);
                 editGroupCreated = true;
             }
+            CloneMap cloneMap;
             auto it = copiedItems.begin();
             while(it != copiedItems.end()){
                 auto& item = *it;
-                if(auto duplicated = item->duplicateSubTree()){
-                    parentItem->addChildItem(duplicated, true);
+                auto clone = item->cloneSubTree(cloneMap);
+                cloneMap.replacePendingObjects();
+                if(clone){
+                    parentItem->addChildItem(clone, true);
                     ++it;
                 } else {
                     parentItem->addChildItem(item, true);

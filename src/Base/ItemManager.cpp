@@ -599,7 +599,7 @@ Item* CreationDialog::createItem(Item* parentItem, Item* protoItem)
         if(exec() == QDialog::Accepted){
             if(creationPanel->updateItem(protoItem, parentItem)){
                 if((protoItem == defaultProtoItem) && !isSingleton){
-                    newInstance = protoItem->duplicate();
+                    newInstance = protoItem->clone();
                 } else {
                     newInstance = protoItem;
                 }

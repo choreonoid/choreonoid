@@ -10,13 +10,16 @@ namespace cnoid {
 class ExtensionManager;
 class Item;
 class Archive;
+class CloneMap;
 
 class CNOID_EXPORT ItemAddon : public Referenced
 {
 public:
     ItemAddon();
-    ItemAddon(const ItemAddon&) = delete;
+
     virtual Item* ownerItem();
+
+    ItemAddon* clone(Item* newItem = nullptr, CloneMap* cloneMap = nullptr) const;
 
     /**
        This function assigns the state of the source addon object to this assign object.
@@ -35,6 +38,8 @@ public:
     const std::string& name() const;
     
 protected:
+    ItemAddon(const ItemAddon& org);
+    virtual ItemAddon* doClone(Item* newItem, CloneMap* cloneMap) const;
     virtual bool setOwnerItem(Item* item);
 
 private:

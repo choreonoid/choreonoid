@@ -15,6 +15,7 @@
 #include "MessageView.h"
 #include "UnifiedEditHistory.h"
 #include "EditRecord.h"
+#include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
@@ -126,7 +127,7 @@ public:
         bool isRecursive) const;
     void getSelectedDescendantItemsIter(
         const Item* parentItem, ItemList<>& io_items, std::function<bool(Item* item)> pred) const;
-    Item* duplicateSubTreeIter(Item* duplicated, Item* duplicatedParent) const;
+    Item* cloneSubTreeIter(Item* duplicated, Item* duplicatedParent, CloneMap& cloneMap) const;
     bool doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManualOperation);
     void justInsertChildItem(Item* newNextItem, Item* item);
     bool checkNewTreePositionAcceptance(
@@ -306,19 +307,54 @@ bool Item::doAssign(const Item* /* srcItem */)
 }
 
 
+Referenced* Item::doClone(CloneMap* cloneMap) const
+{
+    Item* clone = doCloneItem(cloneMap);
+
+    if(!clone){
+        // Implementation for backward compatibility.
+        Item* parentClone = nullptr;
+        if(cloneMap){
+            parentClone = cloneMap->findClone(parentItem());
+        }
+        clone = doDuplicate(parentClone);
+        if(!clone){
+            clone = doDuplicate();
+        }
+    }
+
+    if(clone && (typeid(*clone) != typeid(*this))){
+        delete clone;
+        clone = nullptr;
+    }
+
+    if(clone){
+        for(auto& kv : impl->addonMap){
+            const ItemAddon* addon = kv.second;
+            if(auto addonClone = addon->clone(clone, cloneMap)){
+                clone->setAddon(addonClone);
+            }
+        }
+    }
+
+    return clone;
+}
+
+
+Item* Item::doCloneItem(CloneMap* /* cloneMap */) const
+{
+    return nullptr;
+}
+
+
 Item* Item::duplicate(Item* duplicatedParentItem) const
 {
-    Item* duplicated = doDuplicate(duplicatedParentItem);
-    if(!duplicated){
-        duplicated = doDuplicate();
+    if(!duplicatedParentItem || !parent_){
+        return clone();
     }
-    if(duplicated && (typeid(*duplicated) != typeid(*this))){
-        delete duplicated;
-        duplicated = nullptr;
-    } else if(duplicated){
-        duplicated->impl->assignAddons(this);
-    }
-    return duplicated;
+    CloneMap cloneMap;
+    cloneMap.setClone(parent_, duplicatedParentItem);
+    return clone(cloneMap);
 }
 
 
@@ -334,37 +370,55 @@ Item* Item::doDuplicate(Item* /* duplicatedParentItem */) const
 }
 
 
-Item* Item::duplicateSubTree() const
+Item* Item::cloneSubTree(CloneMap& cloneMap) const
 {
-    return impl->duplicateSubTreeIter(nullptr, nullptr);
+    return impl->cloneSubTreeIter(nullptr, nullptr, cloneMap);
 }
 
 
-Item* Item::Impl::duplicateSubTreeIter(Item* duplicated, Item* duplicatedParent) const
+Item* Item::Impl::cloneSubTreeIter(Item* clone, Item* parentClone, CloneMap& cloneMap) const
 {
-    if(!duplicated){
-        // Skip the duplication of a temporal item other than the top item
-        if(!duplicatedParent || !self->isTemporal()){
-            duplicated = self->duplicate(duplicatedParent);
+    if(!clone){
+        // Skip cloning a temporal item other than the top item
+        if(!parentClone || !self->isTemporal()){
+            clone = cloneMap.getClone(self);
         }
     }
-    if(duplicated){
+    if(clone){
+        if(!clone->isSubItem() && parentClone){
+            parentClone->addChildItem(clone);
+        }
         for(Item* child = self->childItem(); child; child = child->nextItem()){
-            Item* duplicatedChildItem;
             if(child->isSubItem()){
-                duplicatedChildItem = duplicated->findChildItem(child->name());
-                if(duplicatedChildItem){
-                    child->impl->duplicateSubTreeIter(duplicatedChildItem, duplicated);
+                Item* childClone = cloneMap.findClone(child);
+                /*
+                if(!childClone){
+                    chileClone = clone->findChildItem(child->name());
+                }
+                */
+                if(childClone){
+                    child->impl->cloneSubTreeIter(childClone, clone, cloneMap);
                 }
             } else {
-                duplicatedChildItem = child->impl->duplicateSubTreeIter(nullptr, duplicated);
-                if(duplicatedChildItem){
-                    duplicated->addChildItem(duplicatedChildItem);
-                }
+                child->impl->cloneSubTreeIter(nullptr, clone, cloneMap);
             }
         }
     }
-    return duplicated;
+    return clone;
+}
+
+
+Item* Item::duplicateSubTree() const
+{
+    CloneMap cloneMap;
+    return cloneSubTree(cloneMap);
+}
+
+
+Item* Item::duplicateAll() const
+{
+    CloneMap cloneMap;
+    return cloneSubTree(cloneMap);
 }
 
 
