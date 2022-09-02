@@ -115,15 +115,13 @@ public:
 
     Item* clone() const { return static_cast<Item*>(doClone(nullptr)); }
     Item* clone(CloneMap& cloneMap) const { return static_cast<Item*>(doClone(&cloneMap)); }
+
+    //! This function creates a copy of the item including its descendant items
     Item* cloneSubTree(CloneMap& cloneMap) const;
 
     [[deprecated("Use the clone function.")]]
-    Item* duplicate(Item* duplicatedParentItem = nullptr) const;
+    Item* duplicate() const { return clone(); }
 
-    //! This function creates a copy of the item including its descendant items
-    
-
-    
     [[deprecated("Use the cloneSubTree function.")]]
     Item* duplicateSubTree() const;
 
@@ -515,16 +513,8 @@ protected:
 
     virtual Item* doCloneItem(CloneMap* cloneMap) const;
 
-    //! Override this function to allow duplication of an instance.
+    //! Deprecated. Override doCloneItem instead of this function.
     virtual Item* doDuplicate() const;
-
-    /**
-       Use this overload if the duplication process needs to know the duplicated parent item.
-       @note If this function is implemented and returns a valid dupulicated object, the
-       overload doDuplicate function without an argument is not called.
-       @note The parentItem argument may be nullptr.
-    */
-    virtual Item* doDuplicate(Item* duplicatedParentItem) const;
 
     virtual bool onNewTreePositionCheck(bool isManualOperation, std::function<void()>& out_callbackWhenAdded);
     virtual void onAddedToParent();

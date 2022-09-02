@@ -304,15 +304,8 @@ Referenced* Item::doClone(CloneMap* cloneMap) const
     Item* clone = doCloneItem(cloneMap);
 
     if(!clone){
-        // Implementation for backward compatibility.
-        Item* parentClone = nullptr;
-        if(cloneMap){
-            parentClone = cloneMap->findClone(parentItem());
-        }
-        clone = doDuplicate(parentClone);
-        if(!clone){
-            clone = doDuplicate();
-        }
+        // for backward compatibility.
+        clone = doDuplicate();
     }
 
     if(clone && (typeid(*clone) != typeid(*this))){
@@ -339,24 +332,7 @@ Item* Item::doCloneItem(CloneMap* /* cloneMap */) const
 }
 
 
-Item* Item::duplicate(Item* duplicatedParentItem) const
-{
-    if(!duplicatedParentItem || !parent_){
-        return clone();
-    }
-    CloneMap cloneMap;
-    cloneMap.setClone(parent_, duplicatedParentItem);
-    return clone(cloneMap);
-}
-
-
 Item* Item::doDuplicate() const
-{
-    return nullptr;
-}
-
-
-Item* Item::doDuplicate(Item* /* duplicatedParentItem */) const
 {
     return nullptr;
 }
@@ -383,11 +359,6 @@ Item* Item::Impl::cloneSubTreeIter(Item* clone, Item* parentClone, CloneMap& clo
         for(Item* child = self->childItem(); child; child = child->nextItem()){
             if(child->isSubItem()){
                 Item* childClone = cloneMap.findClone(child);
-                /*
-                if(!childClone){
-                    chileClone = clone->findChildItem(child->name());
-                }
-                */
                 if(childClone){
                     child->impl->cloneSubTreeIter(childClone, clone, cloneMap);
                 }
