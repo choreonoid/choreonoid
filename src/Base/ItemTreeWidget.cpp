@@ -1032,7 +1032,7 @@ void ItemTreeWidget::Impl::onSubTreeAddedOrMoved(Item* item)
         bool isUpperLevelItemInserted = false;
         parentItem = parentItem->parentItem();
         while(parentItem){
-            if(findItwItem(parentItem)){
+            if(parentItem == localRootItem || findItwItem(parentItem)){
                 isUpperLevelItemInserted = true;
                 break;
             }
