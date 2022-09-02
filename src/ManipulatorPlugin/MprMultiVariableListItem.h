@@ -31,7 +31,7 @@ public:
     virtual bool restore(const Archive& archive) override;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:

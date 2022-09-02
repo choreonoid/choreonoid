@@ -60,7 +60,7 @@ public:
 protected:
     MprProgramItemBase();
     MprProgramItemBase(const MprProgramItemBase& org);
-    virtual Item* doDuplicate() const override;
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void onTreePathChanged() override;
     virtual void onConnectedToRoot() override;
 

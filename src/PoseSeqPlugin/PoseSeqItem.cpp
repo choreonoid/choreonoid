@@ -323,7 +323,7 @@ bool PoseSeqItem::convertSub(BodyPtr orgBody, const Mapping& convInfo)
 }
 
 
-Item* PoseSeqItem::doDuplicate() const
+Item* PoseSeqItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new PoseSeqItem(*this);
 }

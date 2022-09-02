@@ -1080,7 +1080,7 @@ void ODESimulatorItemImpl::clear()
 }    
 
 
-Item* ODESimulatorItem::doDuplicate() const
+Item* ODESimulatorItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new ODESimulatorItem(*this);
 }

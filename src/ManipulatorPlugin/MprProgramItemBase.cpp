@@ -122,7 +122,7 @@ MprProgramItemBase::~MprProgramItemBase()
 }
 
 
-Item* MprProgramItemBase::doDuplicate() const
+Item* MprProgramItemBase::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new MprProgramItemBase(*this);
 }

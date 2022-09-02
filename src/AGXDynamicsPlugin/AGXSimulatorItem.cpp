@@ -85,7 +85,7 @@ void AGXSimulatorItem::setEnableAMOR(bool bOn)
     impl->setEnableAMOR(bOn);
 }
 
-Item* AGXSimulatorItem::doDuplicate() const
+Item* AGXSimulatorItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new AGXSimulatorItem(*this);
 }

@@ -64,7 +64,7 @@ MprMultiVariableListItem::~MprMultiVariableListItem()
 }
 
 
-Item* MprMultiVariableListItem::doDuplicate() const
+Item* MprMultiVariableListItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new MprMultiVariableListItem(*this);
 }

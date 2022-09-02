@@ -115,7 +115,7 @@ bool PythonSimScriptItem::terminate()
 }
 
 
-Item* PythonSimScriptItem::doDuplicate() const
+Item* PythonSimScriptItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new PythonSimScriptItem(*this);
 }

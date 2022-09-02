@@ -1375,7 +1375,7 @@ void BulletSimulatorItem::setAllLinkPositionOutputMode(bool on)
 }
 */
 
-Item* BulletSimulatorItem::doDuplicate() const
+Item* BulletSimulatorItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new BulletSimulatorItem(*this);
 }
