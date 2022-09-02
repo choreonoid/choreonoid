@@ -33,7 +33,6 @@ public:
     ContactMaterialMap contactMaterialMap;
     
     Impl();
-    Impl(const Impl& org);
     Impl(const Impl& org, CloneMap* cloneMap, MaterialTable::ContactMaterialCopyFactory factory);
     void setDefaultMaterial();
     int addMaterial(Material* material);
@@ -57,22 +56,9 @@ MaterialTable::Impl::Impl()
 }
 
 
-MaterialTable::MaterialTable(const MaterialTable& org)
+MaterialTable::MaterialTable(const MaterialTable& org, CloneMap* cloneMap, ContactMaterialCopyFactory factory)
 {
-    impl = new Impl(*org.impl);
-}
-
-
-MaterialTable::Impl::Impl(const Impl& org)
-    : Impl(org, nullptr, nullptr)
-{
-
-}
-
-    
-MaterialTable::MaterialTable(const MaterialTable& org, CloneMap& cloneMap, ContactMaterialCopyFactory factory)
-{
-    impl = new Impl(*org.impl, &cloneMap, factory);
+    impl = new Impl(*org.impl, cloneMap, factory);
 }
 
 
@@ -106,6 +92,12 @@ MaterialTable::Impl::Impl(const Impl& org, CloneMap* cloneMap, MaterialTable::Co
             contactMaterialMap.insert(ContactMaterialMap::value_type(idPair, copy));
         }
     }
+}
+
+
+Referenced* MaterialTable::doClone(CloneMap* cloneMap) const
+{
+    return new MaterialTable(*this, cloneMap, nullptr);
 }
 
 

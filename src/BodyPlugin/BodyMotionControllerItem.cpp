@@ -178,8 +178,8 @@ void BodyMotionControllerItem::output()
 void BodyMotionControllerItem::stop()
 {
     impl->qseqRef.reset();
-    impl->motionItem = 0;
-    impl->body = 0;
+    impl->motionItem .reset();
+    impl->body.reset();
 }
 
 
@@ -189,7 +189,7 @@ void BodyMotionControllerItem::onDisconnectedFromRoot()
 }
     
 
-Item* BodyMotionControllerItem::doDuplicate() const
+Item* BodyMotionControllerItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new BodyMotionControllerItem(*this);
 }

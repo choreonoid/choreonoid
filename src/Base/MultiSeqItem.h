@@ -28,13 +28,13 @@ public:
 
     typename std::shared_ptr<MultiSeqType> seq() { return seq_; }
 
+    virtual ~MultiSeqItem() { }
+ 
+protected:
     MultiSeqItem(const MultiSeqItem<MultiSeqType>& org)
         : AbstractMultiSeqItem(org),
           seq_(std::make_shared<MultiSeqType>(*org.seq_)) { }
 
-    virtual ~MultiSeqItem() { }
- 
-protected:
     /**
        For the copy constructor of inherited classes
     */
@@ -44,7 +44,7 @@ protected:
 
     void resetSeq(std::shared_ptr<MultiSeqType> seq) { seq_ = seq; }
         
-    virtual Item* doDuplicate() const override {
+    virtual Item* doCloneItem(CloneMap* /* cloneMap */) const override {
         return new MultiSeqItem<MultiSeqType>(*this);
     }
 

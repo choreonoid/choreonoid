@@ -263,7 +263,7 @@ void SimpleControllerItem::Impl::doCommonInitializationInConstructor()
 }    
 
 
-Item* SimpleControllerItem::doDuplicate() const
+Item* SimpleControllerItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new SimpleControllerItem(*this);
 }

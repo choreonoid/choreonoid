@@ -19,7 +19,6 @@ public:
     static void initialize(ExtensionManager* ext);
         
     PythonSimScriptItem();
-    PythonSimScriptItem(const PythonSimScriptItem& org);
     virtual ~PythonSimScriptItem();
 
     bool setScriptFilename(const std::string& filename);
@@ -38,6 +37,7 @@ public:
     virtual bool terminate() override;
         
 protected:
+    PythonSimScriptItem(const PythonSimScriptItem& org);
     virtual void onDisconnectedFromRoot() override;
     virtual Item* doDuplicate() const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;

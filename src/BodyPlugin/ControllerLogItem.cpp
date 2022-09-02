@@ -23,10 +23,7 @@ ControllerLogItem::ControllerLogItem(const ControllerLogItem& org)
 }
 
 
-Item* ControllerLogItem::doDuplicate() const
+Item* ControllerLogItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new ControllerLogItem(*this);
 }
-
-    
-

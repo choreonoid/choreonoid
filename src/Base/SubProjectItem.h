@@ -10,15 +10,12 @@
 
 namespace cnoid {
 
-class SubProjectItemImpl;
-
 class CNOID_EXPORT SubProjectItem : public Item
 {
 public:
     static void initializeClass(ExtensionManager* ext);
         
     SubProjectItem();
-    SubProjectItem(const SubProjectItem& org);
     virtual ~SubProjectItem();
 
     bool isSavingSubProject() const;
@@ -28,14 +25,16 @@ public:
     int saveMode() const;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    SubProjectItem(const SubProjectItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void onConnectedToRoot() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
 private:
-    SubProjectItemImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<SubProjectItem> SubProjectItemPtr;

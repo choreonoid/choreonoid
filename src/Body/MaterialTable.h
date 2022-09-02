@@ -8,24 +8,27 @@
 
 #include "ContactMaterial.h"
 #include <cnoid/NullOut>
+#include <cnoid/ClonableReferenced>
 #include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CloneMap;
-
-class CNOID_EXPORT MaterialTable : public Referenced
+class CNOID_EXPORT MaterialTable : public ClonableReferenced
 {
 public:
     typedef std::function<ContactMaterial*(const ContactMaterial* org)> ContactMaterialCopyFactory;
 
     MaterialTable();
     virtual ~MaterialTable();
-    //! The constructor to do shallow copy
-    MaterialTable(const MaterialTable& org);
-    //! The constructor to do deep copy with a custom ContactMaterial type
-    MaterialTable(const MaterialTable& org, CloneMap& cloneMap, ContactMaterialCopyFactory factory = nullptr);
+
+    /**
+       \param cloneMap If this is specified, deep copy is performed. Shallow copy is performed for nullptr.
+       \param factory A factory function for a custom ContactMaterial type.
+    */
+    MaterialTable* clone() const { return new MaterialTable(*this); }
+    MaterialTable* clone(CloneMap& cloneMap, ContactMaterialCopyFactory factory = nullptr) const {
+        return new MaterialTable(*this, &cloneMap, factory); }
 
     void clear();
 
@@ -45,6 +48,10 @@ public:
     void merge(MaterialTable* table);
     
     bool load(const std::string& filename, std::ostream& os = nullout());
+
+protected:
+    MaterialTable(const MaterialTable& org, CloneMap* cloneMap, ContactMaterialCopyFactory factory);
+    Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     class Impl;

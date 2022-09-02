@@ -171,7 +171,7 @@ CoordinateFrameListItem::~CoordinateFrameListItem()
 }
 
 
-Item* CoordinateFrameListItem::doDuplicate() const
+Item* CoordinateFrameListItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new CoordinateFrameListItem(*this);
 }

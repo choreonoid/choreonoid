@@ -3,6 +3,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
 #include <cnoid/MessageView>
+#include <cnoid/CloneMap>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -26,10 +27,10 @@ BodyElementOverwriteItem::BodyElementOverwriteItem()
 }
 
 
-BodyElementOverwriteItem::BodyElementOverwriteItem(const BodyElementOverwriteItem& org)
+BodyElementOverwriteItem::BodyElementOverwriteItem(const BodyElementOverwriteItem& org, CloneMap* cloneMap)
     : Item(org)
 {
-    bodyItem_ = nullptr;
+    bodyItem_ = CloneMap::findClone(org.bodyItem_, cloneMap);
     newBodyItem_ = nullptr;
     isNewBodyItemValid = false;
 }

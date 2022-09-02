@@ -13,6 +13,7 @@
 #include "MenuManager.h"
 #include "UnifiedEditHistory.h"
 #include "EditRecord.h"
+#include <cnoid/CloneMap>
 #include <cnoid/PositionTagGroup>
 #include <cnoid/SceneDrawables>
 #include <cnoid/ConnectionSet>
@@ -258,7 +259,7 @@ public:
     bool originMarkerVisibility;
     bool edgeVisibility;
     
-    Impl(PositionTagGroupItem* self, const Impl* org);
+    Impl(PositionTagGroupItem* self, const Impl* org, CloneMap* cloneMap);
     void setupHandlersForUnifiedEditHistory();
     void onTagAdded(int index);
     void onTagRemoved(int index, PositionTag* tag, bool isChangingOrder);
@@ -303,25 +304,25 @@ PositionTagGroupItem* PositionTagGroupItem::findItemOf(PositionTagGroup* tagGrou
 
 PositionTagGroupItem::PositionTagGroupItem()
 {
-    impl = new Impl(this, nullptr);
+    impl = new Impl(this, nullptr, nullptr);
 }
 
 
-PositionTagGroupItem::PositionTagGroupItem(const PositionTagGroupItem& org)
+PositionTagGroupItem::PositionTagGroupItem(const PositionTagGroupItem& org, CloneMap* cloneMap)
     : Item(org)
 {
-    impl = new Impl(this, org.impl);
+    impl = new Impl(this, org.impl, cloneMap);
 }
 
 
-PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org)
+PositionTagGroupItem::Impl::Impl(PositionTagGroupItem* self, const Impl* org, CloneMap* cloneMap)
     : self(self),
       notifyUpdateLater([this](){ this->self->notifyUpdate(); })
 {
     if(!org){
         tagGroup = new PositionTagGroup;
     } else {
-        tagGroup = new PositionTagGroup(*org->tagGroup);
+        tagGroup = CloneMap::getClone(org->tagGroup, cloneMap);
     }
 
     tagGroupToItemMap[tagGroup] = self;
@@ -368,9 +369,9 @@ PositionTagGroupItem::~PositionTagGroupItem()
 }
 
 
-Item* PositionTagGroupItem::doDuplicate() const
+Item* PositionTagGroupItem::doCloneItem(CloneMap* cloneMap) const
 {
-    return new PositionTagGroupItem(*this);
+    return new PositionTagGroupItem(*this, cloneMap);
 }
 
 

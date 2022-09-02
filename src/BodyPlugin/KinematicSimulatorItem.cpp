@@ -121,7 +121,7 @@ KinematicSimulatorItem::~KinematicSimulatorItem()
 }
 
 
-Item* KinematicSimulatorItem::doDuplicate() const
+Item* KinematicSimulatorItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new KinematicSimulatorItem(*this);
 }

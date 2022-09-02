@@ -18,7 +18,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
     
     SimpleControllerItem();
-    SimpleControllerItem(const SimpleControllerItem& org);
     virtual ~SimpleControllerItem();
         
     void setController(const std::string& name);
@@ -36,7 +35,8 @@ public:
     class Impl;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    SimpleControllerItem(const SimpleControllerItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void onTreePathChanged() override;
     virtual void onDisconnectedFromRoot() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;

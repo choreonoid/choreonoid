@@ -13,15 +13,12 @@
 
 namespace cnoid {
 
-class BodyMarkerItemImpl;
-
 class CNOID_EXPORT BodyMarkerItem : public Item, public RenderableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
         
     BodyMarkerItem();
-    BodyMarkerItem(const BodyMarkerItem& org);
     virtual ~BodyMarkerItem();
 
     virtual bool setName(const std::string& name) override;
@@ -48,14 +45,16 @@ public:
     void setMarkerColor(const Vector3f& color);
 
 protected:
-    virtual Item* doDuplicate() const override;
+    BodyMarkerItem(const BodyMarkerItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void onTreePathChanged() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
             
 private:
-    BodyMarkerItemImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 }

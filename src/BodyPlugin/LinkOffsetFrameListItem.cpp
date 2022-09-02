@@ -55,7 +55,7 @@ LinkOffsetFrameListItem::~LinkOffsetFrameListItem()
 }
 
 
-Item* LinkOffsetFrameListItem::doDuplicate() const
+Item* LinkOffsetFrameListItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new LinkOffsetFrameListItem(*this);
 }

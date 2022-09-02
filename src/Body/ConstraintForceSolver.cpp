@@ -594,8 +594,7 @@ void ConstraintForceSolver::Impl::initializeContactMaterials()
     } else {
         string collisionHandlerName;
         materialTable =
-            new MaterialTable(
-                *orgMaterialTable,
+            orgMaterialTable->clone(
                 cloneMap,
                 [&](const ContactMaterial* org){
                     auto cm = new ContactMaterialEx(*org);

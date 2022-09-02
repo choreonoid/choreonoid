@@ -25,7 +25,6 @@ public:
 
     CoordinateFrameListItem();
     CoordinateFrameListItem(CoordinateFrameList* frameList);
-    CoordinateFrameListItem(const CoordinateFrameListItem& org);
     virtual ~CoordinateFrameListItem();
 
     /**
@@ -88,7 +87,8 @@ public:
     class Impl;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    CoordinateFrameListItem(const CoordinateFrameListItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void onTreePositionChanged() override;
     virtual void onDisconnectedFromRoot() override;
     virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation) override;

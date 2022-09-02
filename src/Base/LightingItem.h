@@ -14,7 +14,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     LightingItem();
-    LightingItem(const LightingItem& org);
     virtual ~LightingItem();
 
     enum LightType { DirectionalLight, PointLight, SpotLight, NumLightTypes };
@@ -35,7 +34,8 @@ public:
     void setLightMarkerEnabled(bool on);
 
 protected:
-    virtual Item* doDuplicate() const override;
+    LightingItem(const LightingItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

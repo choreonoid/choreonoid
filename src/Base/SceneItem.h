@@ -25,7 +25,6 @@ public:
     static ItemFileIO* stdSceneFileExporter();
 
     SceneItem();
-    SceneItem(const SceneItem& org);
     virtual ~SceneItem();
 
     virtual bool setName(const std::string& name) override;
@@ -48,7 +47,8 @@ public:
     bool isLightweightRenderingEnabled() const { return isLightweightRenderingEnabled_; }
 
 protected:
-    virtual Item* doDuplicate() const override;
+    SceneItem(const SceneItem& org, CloneMap* cloneMap);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;

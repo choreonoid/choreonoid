@@ -2,6 +2,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
+#include <cnoid/CloneMap>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include "gettext.h"
@@ -29,16 +30,16 @@ MaterialTableItem::MaterialTableItem()
 }
 
 
-MaterialTableItem::MaterialTableItem(const MaterialTableItem& org)
+MaterialTableItem::MaterialTableItem(const MaterialTableItem& org, CloneMap* cloneMap)
     : Item(org)
 {
-    materialTable_ = new MaterialTable(*org.materialTable_);
+    materialTable_ = CloneMap::getClone(org.materialTable_, cloneMap);
 }
 
 
-Item* MaterialTableItem::doDuplicate() const
+Item* MaterialTableItem::doCloneItem(CloneMap* cloneMap) const
 {
-    return new MaterialTableItem(*this);
+    return new MaterialTableItem(*this, cloneMap);
 }
 
 

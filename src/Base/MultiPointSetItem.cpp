@@ -529,7 +529,7 @@ void MultiPointSetItem::notifyAttentionPointChange()
 }
 
 
-Item* MultiPointSetItem::doDuplicate() const
+Item* MultiPointSetItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new MultiPointSetItem(*this);
 }

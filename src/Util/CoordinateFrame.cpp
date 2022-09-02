@@ -39,6 +39,12 @@ CoordinateFrame::CoordinateFrame(const GeneralId& id, CoordinateFrameList* owner
 }
 
 
+Referenced* CoordinateFrame::doClone(CloneMap* /* cloneMap */) const
+{
+    return new CoordinateFrame(*this);
+}
+
+
 bool CoordinateFrame::resetId(const GeneralId& id)
 {
     if(!ownerFrameList_ || !ownerFrameList_.lock()){

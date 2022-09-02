@@ -238,6 +238,12 @@ BodyMotionItem::Impl::~Impl()
 }
 
 
+Item* BodyMotionItem::doCloneItem(CloneMap* /* cloneMap */) const
+{
+    return new BodyMotionItem(*this);
+}
+
+
 std::shared_ptr<AbstractSeq> BodyMotionItem::abstractSeq()
 {
     return bodyMotion_;
@@ -386,12 +392,6 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
         }
     }
     return true;
-}
-
-
-Item* BodyMotionItem::doDuplicate() const
-{
-    return new BodyMotionItem(*this);
 }
 
 

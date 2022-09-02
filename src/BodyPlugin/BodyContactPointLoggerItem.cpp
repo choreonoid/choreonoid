@@ -15,7 +15,7 @@ class BodyContactPointLogItem : public ControllerLogItem
 public:
     BodyContactPointLogItem();
     BodyContactPointLogItem(const BodyContactPointLogItem& org);
-    virtual Item* doDuplicate() const override;
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
 };
 
 typedef ref_ptr<BodyContactPointLogItem> BodyContactPointLogItemPtr;
@@ -90,7 +90,7 @@ BodyContactPointLoggerItem::BodyContactPointLoggerItem(const BodyContactPointLog
 }
 
 
-Item* BodyContactPointLoggerItem::doDuplicate() const
+Item* BodyContactPointLoggerItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new BodyContactPointLoggerItem(*this);
 }
@@ -184,7 +184,7 @@ BodyContactPointLogItem::BodyContactPointLogItem(const BodyContactPointLogItem& 
 }
 
 
-Item* BodyContactPointLogItem::doDuplicate() const
+Item* BodyContactPointLogItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new BodyContactPointLogItem(*this);
 }

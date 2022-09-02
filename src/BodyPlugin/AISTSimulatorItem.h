@@ -21,7 +21,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
         
     AISTSimulatorItem();
-    AISTSimulatorItem(const AISTSimulatorItem& org);
     virtual ~AISTSimulatorItem();
 
     enum DynamicsMode { FORWARD_DYNAMICS = 0, KINEMATICS, N_DYNAMICS_MODES };
@@ -66,6 +65,7 @@ public:
     void setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction);
 
 protected:
+    AISTSimulatorItem(const AISTSimulatorItem& org);
     virtual SimulationBody* createSimulationBody(Body* orgBody, CloneMap& cloneMap) override;
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies) override;
     virtual bool completeInitializationOfSimulation() override;
@@ -73,7 +73,7 @@ protected:
     virtual void finalizeSimulation() override;
     virtual std::shared_ptr<CollisionLinkPairList> getCollisions() override;
         
-    virtual Item* doDuplicate() const override;
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

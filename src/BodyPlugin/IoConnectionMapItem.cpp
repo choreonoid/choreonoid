@@ -6,6 +6,7 @@
 #include <cnoid/DigitalIoDevice>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
+#include <cnoid/CloneMap>
 #include <unordered_map>
 #include <unordered_set>
 #include "gettext.h"
@@ -22,7 +23,7 @@ public:
     IoConnectionMapPtr connectionMap;
 
     Impl(IoConnectionMapItem* self);
-    Impl(IoConnectionMapItem* self, const Impl& org);
+    Impl(IoConnectionMapItem* self, const Impl& org, CloneMap* cloneMap);
     void updateIoDeviceInstances(bool enableWarningMessages);
     void forEachIoDevice(
         WorldItem* worldItem, std::function<void(BodyItem* bodyItem, DigitalIoDevice* device)> callback) const;
@@ -52,17 +53,17 @@ IoConnectionMapItem::Impl::Impl(IoConnectionMapItem* self)
 }
 
 
-IoConnectionMapItem::IoConnectionMapItem(const IoConnectionMapItem& org)
+IoConnectionMapItem::IoConnectionMapItem(const IoConnectionMapItem& org, CloneMap* cloneMap)
     : Item(org)
 {
-    impl = new Impl(this, *org.impl);
+    impl = new Impl(this, *org.impl, cloneMap);
 }
 
 
-IoConnectionMapItem::Impl::Impl(IoConnectionMapItem* self, const Impl& org)
+IoConnectionMapItem::Impl::Impl(IoConnectionMapItem* self, const Impl& org, CloneMap* cloneMap)
     : self(self)
 {
-    connectionMap = new IoConnectionMap(*org.connectionMap);
+    connectionMap = CloneMap::getClone(org.connectionMap, cloneMap);
 }
 
 
@@ -72,9 +73,9 @@ IoConnectionMapItem::~IoConnectionMapItem()
 }
 
 
-Item* IoConnectionMapItem::doDuplicate() const
+Item* IoConnectionMapItem::doCloneItem(CloneMap* cloneMap) const
 {
-    return new IoConnectionMapItem(*this);
+    return new IoConnectionMapItem(*this, cloneMap);
 }
 
 

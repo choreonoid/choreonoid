@@ -30,7 +30,7 @@ public :
     }
 
 protected:
-    virtual Item* doDuplicate() const;
+    virtual Item* doCloneItem(CloneMap* cloneMap) const;
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
 

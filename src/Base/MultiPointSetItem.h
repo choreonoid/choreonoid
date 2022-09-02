@@ -17,7 +17,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     MultiPointSetItem();
-    MultiPointSetItem(const MultiPointSetItem& org);
     virtual ~MultiPointSetItem();
 
     enum VisibilityMode {
@@ -97,7 +96,8 @@ public:
     class Impl;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    MultiPointSetItem(const MultiPointSetItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:

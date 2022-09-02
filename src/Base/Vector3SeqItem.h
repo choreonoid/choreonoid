@@ -18,7 +18,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
             
     Vector3SeqItem();
-    Vector3SeqItem(const Vector3SeqItem& org);
     Vector3SeqItem(std::shared_ptr<Vector3Seq> seq);
 
     virtual std::shared_ptr<AbstractSeq> abstractSeq() override;
@@ -29,6 +28,8 @@ public:
     bool saveAsPlainFormat(const std::string& filename);
 
 protected:
+    Vector3SeqItem(const Vector3SeqItem& org);
+
     /**
        This is for the copy constructor of an inherited class
     */
@@ -36,7 +37,7 @@ protected:
         
     virtual ~Vector3SeqItem();
 
-    virtual Item* doDuplicate() const override;
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
             
     std::shared_ptr<Vector3Seq> seq_;
 };

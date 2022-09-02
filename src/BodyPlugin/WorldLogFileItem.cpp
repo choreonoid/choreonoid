@@ -555,7 +555,7 @@ WorldLogFileItem::Impl::~Impl()
 }
 
 
-Item* WorldLogFileItem::doDuplicate() const
+Item* WorldLogFileItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new WorldLogFileItem(*this);
 }
@@ -1435,7 +1435,7 @@ ItemPtr WorldLogFileItem::Impl::createArchiveModelItem(Item* modelItem, ArchiveI
                    toUTF8(modelDirPath.filename().string()), ec.message()),
             MessageView::Error);
     } else {
-        archiveModelItem = modelItem->duplicate();
+        archiveModelItem = modelItem->clone();
         auto filePath = modelDirPath / nativeBaseName;
         bool saved = false;
         if(isBodyItem){

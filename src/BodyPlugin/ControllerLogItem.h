@@ -12,13 +12,13 @@ public:
     static void initializeClass(ExtensionManager* ext);
             
     ControllerLogItem();
-    ControllerLogItem(const ControllerLogItem& org);
 
     std::shared_ptr<ReferencedObjectSeq> log() { return seq(); }
     void resetLog() { resetSeq(); }
 
 protected:
-    virtual Item* doDuplicate() const override;
+    ControllerLogItem(const ControllerLogItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
 };
 
 typedef ref_ptr<ControllerLogItem> ControllerLogItemPtr;
@@ -26,4 +26,3 @@ typedef ref_ptr<ControllerLogItem> ControllerLogItemPtr;
 }
 
 #endif
-

@@ -24,7 +24,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     WorldItem();
-    WorldItem(const WorldItem& org);
     virtual ~WorldItem();
 
     void storeCurrentBodyPositionsAsInitialPositions();
@@ -55,7 +54,8 @@ public:
     ItemList<BodyItem> collisionBodyItems() const { return coldetBodyItems(); }
 
 protected:
-    virtual Item* doDuplicate() const override;
+    WorldItem(const WorldItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

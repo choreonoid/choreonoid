@@ -8,6 +8,7 @@
 #include "GeneralSceneFileImporterBase.h"
 #include "Archive.h"
 #include "PutPropertyFunction.h"
+#include <cnoid/CloneMap>
 #include <cnoid/SceneLoader>
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneEffects>
@@ -76,11 +77,15 @@ SceneItem::SceneItem()
 }
 
 
-SceneItem::SceneItem(const SceneItem& org)
+SceneItem::SceneItem(const SceneItem& org, CloneMap* cloneMap)
     : Item(org)
 {
     // shallow copy
-    topNode_ = new SgPosTransform(*org.topNode());
+    auto orgTopNode = org.topNode();
+    topNode_ = new SgPosTransform(*orgTopNode);
+    if(cloneMap){
+        cloneMap->setClone(orgTopNode, topNode_);
+    }
     isLightweightRenderingEnabled_ = org.isLightweightRenderingEnabled_;
 }
 
@@ -91,9 +96,9 @@ SceneItem::~SceneItem()
 }
 
 
-Item* SceneItem::doDuplicate() const
+Item* SceneItem::doCloneItem(CloneMap* cloneMap) const
 {
-    return new SceneItem(*this);
+    return new SceneItem(*this, cloneMap);
 }
 
 

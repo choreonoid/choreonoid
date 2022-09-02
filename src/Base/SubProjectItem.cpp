@@ -19,12 +19,14 @@ using namespace cnoid;
 using fmt::format;
 
 namespace {
+
 std::set<string> projectFilesBeingLoaded;
+
 }
 
 namespace cnoid {
 
-class SubProjectItemImpl
+class SubProjectItem::Impl
 {
 public:
     SubProjectItem* self;
@@ -34,8 +36,8 @@ public:
     ScopedConnectionSet updateConnections;
     unique_ptr<ProjectManager> projectManager_;
 
-    SubProjectItemImpl(SubProjectItem* self);
-    SubProjectItemImpl(SubProjectItem* self, const SubProjectItemImpl& org);
+    Impl(SubProjectItem* self);
+    Impl(SubProjectItem* self, const Impl& org);
     bool loadSubProject(const std::string& filename);
     ProjectManager* projectManager();
     void doLoadSubProject(const std::string& filename);
@@ -67,11 +69,11 @@ void SubProjectItem::initializeClass(ExtensionManager* ext)
 
 SubProjectItem::SubProjectItem()
 {
-    impl = new SubProjectItemImpl(this);
+    impl = new Impl(this);
 }
 
 
-SubProjectItemImpl::SubProjectItemImpl(SubProjectItem* self)
+SubProjectItem::Impl::Impl(SubProjectItem* self)
     : self(self),
       saveMode(SubProjectItem::N_SAVE_MODE, CNOID_GETTEXT_DOMAIN_NAME)
 {
@@ -86,12 +88,12 @@ SubProjectItemImpl::SubProjectItemImpl(SubProjectItem* self)
 SubProjectItem::SubProjectItem(const SubProjectItem& org)
     : Item(org)
 {
-    impl = new SubProjectItemImpl(this, *org.impl);
+    impl = new Impl(this, *org.impl);
 }
 
 
-SubProjectItemImpl::SubProjectItemImpl(SubProjectItem* self, const SubProjectItemImpl& org)
-    : SubProjectItemImpl(self)
+SubProjectItem::Impl::Impl(SubProjectItem* self, const Impl& org)
+    : Impl(self)
 {
     projectFileToLoad = org.projectFileToLoad;
     saveMode = org.saveMode;
@@ -104,7 +106,7 @@ SubProjectItem::~SubProjectItem()
 }
 
 
-Item* SubProjectItem::doDuplicate() const
+Item* SubProjectItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new SubProjectItem(*this);
 }
@@ -119,7 +121,7 @@ void SubProjectItem::onConnectedToRoot()
 }
 
 
-bool SubProjectItemImpl::loadSubProject(const std::string& filename)
+bool SubProjectItem::Impl::loadSubProject(const std::string& filename)
 {
     if(projectFilesBeingLoaded.find(filename) != projectFilesBeingLoaded.end()){
         MessageView::instance()->putln(
@@ -140,7 +142,7 @@ bool SubProjectItemImpl::loadSubProject(const std::string& filename)
 }
 
 
-ProjectManager* SubProjectItemImpl::projectManager()
+ProjectManager* SubProjectItem::Impl::projectManager()
 {
     if(!projectManager_){
         projectManager_.reset(new ProjectManager());
@@ -149,7 +151,7 @@ ProjectManager* SubProjectItemImpl::projectManager()
 }
 
 
-void SubProjectItemImpl::doLoadSubProject(const std::string& filename)
+void SubProjectItem::Impl::doLoadSubProject(const std::string& filename)
 {
     projectFilesBeingLoaded.insert(filename);
 
@@ -170,7 +172,7 @@ void SubProjectItemImpl::doLoadSubProject(const std::string& filename)
 }
 
 
-void SubProjectItemImpl::enableSubProjectUpdateDetection()
+void SubProjectItem::Impl::enableSubProjectUpdateDetection()
 {
     updateConnections.disconnect();
 
@@ -189,14 +191,14 @@ void SubProjectItemImpl::enableSubProjectUpdateDetection()
 }
 
 
-void SubProjectItemImpl::onSubProjectUpdated()
+void SubProjectItem::Impl::onSubProjectUpdated()
 {
     self->suggestFileUpdate();
     self->notifyUpdate();
 }
     
 
-bool SubProjectItemImpl::saveSubProject(const std::string& filename)
+bool SubProjectItem::Impl::saveSubProject(const std::string& filename)
 {
     isSavingSubProject = true;
     projectManager()->saveProject(filename, self);

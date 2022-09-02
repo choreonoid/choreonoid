@@ -13,13 +13,13 @@ public:
 
     LinkOffsetFrameListItem();
     LinkOffsetFrameListItem(CoordinateFrameList* frameList);
-    LinkOffsetFrameListItem(const LinkOffsetFrameListItem& org);
     ~LinkOffsetFrameListItem();
 
     virtual LocationProxyPtr getFrameParentLocationProxy() override;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    LinkOffsetFrameListItem(const LinkOffsetFrameListItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
 
 private:
     class Impl;

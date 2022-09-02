@@ -129,6 +129,7 @@ class Vector3SensorVisualizerItem : public Item, public SubSensorVisualizerItem,
 public:
     Vector3SensorVisualizerItem();
 
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual SgNode* getScene() override;
     virtual void enableVisualization(bool on) override;
     virtual void doUpdateVisualization() override;
@@ -156,6 +157,7 @@ class ForceSensorVisualizerItem : public Vector3SensorVisualizerItem
 {
 public:
     ForceSensorVisualizerItem();
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void updateSensors() override;
     virtual Vector3 getSensorMarkerVector(Device* sensor) override;
 };
@@ -165,6 +167,7 @@ class AccelerationSensorVisualizerItem : public Vector3SensorVisualizerItem
 {
 public:
     AccelerationSensorVisualizerItem();
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void updateSensors() override;
     virtual Vector3 getSensorMarkerVector(Device* sensor) override;
 };
@@ -174,6 +177,7 @@ class RateGyroSensorVisualizerItem : public Vector3SensorVisualizerItem
 {
 public:
     RateGyroSensorVisualizerItem();
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void updateSensors() override;
     virtual Vector3 getSensorMarkerVector(Device* sensor) override;
 };
@@ -183,6 +187,7 @@ class CameraImageVisualizerItem : public Item, public SubSensorVisualizerItem, p
 {
 public:
     CameraImageVisualizerItem();
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual const Image* getImage() override;
     virtual SignalProxy<void()> sigImageUpdated() override;
     void setBodyItem(BodyItem* bodyItem, Camera* camera);
@@ -200,6 +205,7 @@ class PointCloudVisualizerItem : public PointSetItem, public SubSensorVisualizer
 {
 public:
     PointCloudVisualizerItem();
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     void setBodyItem(BodyItem* bodyItem, RangeCamera* rangeCamera);
     virtual SgNode* getScene() override;
     virtual void enableVisualization(bool on) override;
@@ -216,6 +222,7 @@ class RangeSensorVisualizerItem : public PointSetItem, public SubSensorVisualize
 {
 public:
     RangeSensorVisualizerItem();
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     void setBodyItem(BodyItem* bodyItem, RangeSensor* rangeSensor);
     virtual SgNode* getScene() override;
     virtual void enableVisualization(bool on) override;
@@ -308,7 +315,7 @@ SensorVisualizerItem::~SensorVisualizerItem()
 }
 
 
-Item* SensorVisualizerItem::doDuplicate() const
+Item* SensorVisualizerItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new SensorVisualizerItem(*this);
 }
@@ -528,6 +535,12 @@ Vector3SensorVisualizerItem::Vector3SensorVisualizerItem()
 }
 
 
+Item* Vector3SensorVisualizerItem::doCloneItem(CloneMap* /* cloneMap */) const
+{
+    return nullptr;
+}
+
+
 SgNode* Vector3SensorVisualizerItem::getScene()
 {
     if(!scene){
@@ -657,6 +670,12 @@ ForceSensorVisualizerItem::ForceSensorVisualizerItem()
 }
 
 
+Item* ForceSensorVisualizerItem::doCloneItem(CloneMap* /* cloneMap */) const
+{
+    return nullptr;
+}
+
+
 void ForceSensorVisualizerItem::updateSensors()
 {
     sensors = bodyItem->body()->devices<ForceSensor>();
@@ -676,6 +695,12 @@ AccelerationSensorVisualizerItem::AccelerationSensorVisualizerItem()
     offset << 0.0, 0.0, -9.8;
     threshold = 0.05;
     visualRatio = 0.1;
+}
+
+
+Item* AccelerationSensorVisualizerItem::doCloneItem(CloneMap* /* cloneMap */) const
+{
+    return nullptr;
 }
 
 
@@ -701,6 +726,12 @@ RateGyroSensorVisualizerItem::RateGyroSensorVisualizerItem()
 }
 
 
+Item* RateGyroSensorVisualizerItem::doCloneItem(CloneMap* /* cloneMap */) const
+{
+    return nullptr;
+}
+
+
 void RateGyroSensorVisualizerItem::updateSensors()
 {
     sensors = bodyItem->body()->devices<RateGyroSensor>();
@@ -717,6 +748,12 @@ CameraImageVisualizerItem::CameraImageVisualizerItem()
     : SubSensorVisualizerItem(this)
 {
 
+}
+
+
+Item* CameraImageVisualizerItem::doCloneItem(CloneMap* /* cloneMap */) const
+{
+    return nullptr;
 }
 
 
@@ -777,6 +814,12 @@ PointCloudVisualizerItem::PointCloudVisualizerItem()
     : SubSensorVisualizerItem(this)
 {
 
+}
+
+
+Item* PointCloudVisualizerItem::doCloneItem(CloneMap* /* cloneMap */) const
+{
+    return nullptr;
 }
 
 
@@ -880,6 +923,12 @@ void RangeSensorVisualizerItem::setBodyItem(BodyItem* bodyItem, RangeSensor* ran
     this->rangeSensor = rangeSensor;
 
     SubSensorVisualizerItem::setBodyItem(bodyItem);
+}
+
+
+Item* RangeSensorVisualizerItem::doCloneItem(CloneMap* /* cloneMap */) const
+{
+    return nullptr;
 }
 
 

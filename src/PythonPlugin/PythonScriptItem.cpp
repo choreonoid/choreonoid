@@ -118,7 +118,7 @@ bool PythonScriptItem::terminate()
 }
 
 
-Item* PythonScriptItem::doDuplicate() const
+Item* PythonScriptItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new PythonScriptItem(*this);
 }

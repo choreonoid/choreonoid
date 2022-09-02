@@ -107,7 +107,7 @@ const std::string& MessageLogItem::textFilename() const
 }
 
 
-Item* MessageLogItem::doDuplicate() const
+Item* MessageLogItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new MessageLogItem(*this);
 }

@@ -29,7 +29,7 @@ public:
         
 protected:
     virtual void onDisconnectedFromRoot();
-    virtual Item* doDuplicate() const;
+    virtual Item* doCloneItem(CloneMap* cloneMap) const;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);

@@ -190,6 +190,13 @@ RootItem::~RootItem()
 }
 
 
+Item* RootItem::doCloneItem(CloneMap* cloneMap) const
+{
+    // The root item is a singleton.
+    return nullptr;
+}
+
+
 SignalProxy<void(RootItem* rootItem)> RootItem::sigDestroyed()
 {
     return impl->sigDestroyed;

@@ -22,7 +22,6 @@ public:
     
     CoordinateFrameItem();
     CoordinateFrameItem(CoordinateFrame* frame);
-    CoordinateFrameItem(const CoordinateFrameItem& org);
     virtual ~CoordinateFrameItem();
 
     virtual std::string displayName() const override;
@@ -57,7 +56,8 @@ public:
     class Impl;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    CoordinateFrameItem(const CoordinateFrameItem& org, CloneMap* cloneMap);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void onAddedToParent() override;
     virtual void onRemovedFromParent(Item* parentItem, bool isParentBeingDeleted) override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;

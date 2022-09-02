@@ -38,7 +38,6 @@ public:
         
     BodyItem();
     BodyItem(const std::string& name);
-    BodyItem(const BodyItem& org);
     virtual ~BodyItem();
 
     virtual bool setName(const std::string& name) override;
@@ -203,7 +202,8 @@ public:
     class Impl;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    BodyItem(const BodyItem& org, CloneMap* cloneMap);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual bool doAssign(const Item* item) override;
     virtual void onTreePathChanged() override;
     virtual void onConnectedToRoot() override;

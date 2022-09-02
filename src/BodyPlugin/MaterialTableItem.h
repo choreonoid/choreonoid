@@ -13,12 +13,12 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     MaterialTableItem();
-    MaterialTableItem(const MaterialTableItem& org);
 
     MaterialTable* materialTable() { return materialTable_; }
 
 protected:
-    virtual Item* doDuplicate() const override;
+    MaterialTableItem(const MaterialTableItem& org, CloneMap* cloneMap);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

@@ -20,7 +20,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     WorldLogFileItem();
-    WorldLogFileItem(const WorldLogFileItem& org);
     ~WorldLogFileItem();
 
     bool setLogFile(const std::string& filename);
@@ -55,7 +54,8 @@ public:
     virtual void notifyUpdate() override;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    WorldLogFileItem(const WorldLogFileItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void onTreePathChanged() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;

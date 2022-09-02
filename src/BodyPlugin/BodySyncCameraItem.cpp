@@ -274,7 +274,7 @@ bool BodySyncCameraItem::setName(const std::string& name_)
 }
 
 
-Item* BodySyncCameraItem::doDuplicate() const
+Item* BodySyncCameraItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new BodySyncCameraItem(*this);
 }

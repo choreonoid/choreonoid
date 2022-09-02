@@ -118,7 +118,7 @@ RegionIntrusionDetectorItem::~RegionIntrusionDetectorItem()
 }
 
 
-Item* RegionIntrusionDetectorItem::doDuplicate() const
+Item* RegionIntrusionDetectorItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new RegionIntrusionDetectorItem(*this);
 }

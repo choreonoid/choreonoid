@@ -113,7 +113,7 @@ std::shared_ptr<AbstractMultiSeq> CollisionSeqItem::abstractMultiSeq()
 }
 
 
-Item* CollisionSeqItem::doDuplicate() const
+Item* CollisionSeqItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new CollisionSeqItem(*this);
 }

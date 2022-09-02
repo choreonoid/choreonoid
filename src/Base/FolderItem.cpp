@@ -33,7 +33,7 @@ FolderItem::FolderItem(const FolderItem& org)
 }
 
 
-Item* FolderItem::doDuplicate() const
+Item* FolderItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new FolderItem(*this);
 }

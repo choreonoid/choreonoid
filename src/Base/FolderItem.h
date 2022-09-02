@@ -16,7 +16,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
         
     FolderItem();
-    FolderItem(const FolderItem& org);
 
     /**
        A string for identifying the folder category.
@@ -26,7 +25,8 @@ public:
     void setCategory(const std::string& category){ category_ = category; }
 
 protected:
-    virtual Item* doDuplicate() const override;
+    FolderItem(const FolderItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 

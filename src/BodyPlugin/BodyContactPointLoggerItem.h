@@ -12,7 +12,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
     
     BodyContactPointLoggerItem();
-    BodyContactPointLoggerItem(const BodyContactPointLoggerItem& org);
 
     virtual bool initialize(ControllerIO* io) override;
     virtual ControllerLogItem* createLogItem() override;
@@ -23,7 +22,8 @@ public:
     class Impl;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    BodyContactPointLoggerItem(const BodyContactPointLoggerItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
 
 private:
     Impl* impl;

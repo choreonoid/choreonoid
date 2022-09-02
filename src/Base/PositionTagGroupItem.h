@@ -18,7 +18,6 @@ public:
     static PositionTagGroupItem* findItemOf(PositionTagGroup* tagGroup);
 
     PositionTagGroupItem();
-    PositionTagGroupItem(const PositionTagGroupItem& org);
     virtual ~PositionTagGroupItem();
 
     virtual bool setName(const std::string& name) override;
@@ -66,7 +65,8 @@ public:
     class Impl;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    PositionTagGroupItem(const PositionTagGroupItem& org, CloneMap* cloneMap);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void onConnectedToRoot() override;
     virtual void onDisconnectedFromRoot() override;
     virtual bool onNewTreePositionCheck(

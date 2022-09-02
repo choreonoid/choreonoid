@@ -72,7 +72,7 @@ bool Vector3SeqItem::saveAsPlainFormat(const std::string& filename)
 }
 
 
-Item* Vector3SeqItem::doDuplicate() const
+Item* Vector3SeqItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new Vector3SeqItem(*this);
 }

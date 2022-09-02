@@ -183,7 +183,7 @@ void WorldItem::Impl::init()
 }
 
     
-Item* WorldItem::doDuplicate() const
+Item* WorldItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new WorldItem(*this);
 }

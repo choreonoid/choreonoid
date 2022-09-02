@@ -348,7 +348,7 @@ void AISTSimulatorItem::clearExtraJoints()
 }
 
 
-Item* AISTSimulatorItem::doDuplicate() const
+Item* AISTSimulatorItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new AISTSimulatorItem(*this);
 }

@@ -19,15 +19,15 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     MessageLogItem();
-    MessageLogItem(const MessageLogItem& org);
     virtual ~MessageLogItem();
     virtual const std::string& textFilename() const override;
     enum FileMode { APPEND = 0, OVERWRITE, N_FILE_MODES };
 
 protected:
+    MessageLogItem(const MessageLogItem& org);
     virtual void onConnectedToRoot() override;
     virtual void onDisconnectedFromRoot() override;
-    virtual Item* doDuplicate() const override;
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

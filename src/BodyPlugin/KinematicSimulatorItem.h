@@ -12,11 +12,11 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     KinematicSimulatorItem();
-    KinematicSimulatorItem(const KinematicSimulatorItem& org);
     virtual ~KinematicSimulatorItem();
-    virtual Item* doDuplicate() const override;
 
 protected:
+    KinematicSimulatorItem(const KinematicSimulatorItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void clearSimulation() override;
     virtual SimulationBody* createSimulationBody(Body* orgBody, CloneMap& cloneMap) override;
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies) override;

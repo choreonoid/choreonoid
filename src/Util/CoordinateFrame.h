@@ -2,7 +2,7 @@
 #define CNOID_UTIL_COORDINATE_FRAME_H
 
 #include "GeneralId.h"
-#include "Referenced.h"
+#include "ClonableReferenced.h"
 #include <cnoid/EigenTypes>
 #include <cnoid/Signal>
 #include <string>
@@ -13,20 +13,22 @@ namespace cnoid {
 class CoordinateFrameList;
 class Mapping;
 
-class CNOID_EXPORT CoordinateFrame : public Referenced
+class CNOID_EXPORT CoordinateFrame : public ClonableReferenced
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     CoordinateFrame();
     CoordinateFrame(const GeneralId& id);
-    CoordinateFrame(const CoordinateFrame& org);
 
     /**
        This constructor is used in a special case where the frame is not actually
        contained in the owner, but the frame needs to set the owner formally.
     */
     CoordinateFrame(const GeneralId& id, CoordinateFrameList* owner);
+
+    CoordinateFrame* clone() const { return static_cast<CoordinateFrame*>(doClone(nullptr)); }
+    CoordinateFrame* clone(CloneMap& cloneMap) const { return static_cast<CoordinateFrame*>(doClone(&cloneMap)); }
 
     const GeneralId& id() const { return id_; }
     bool resetId(const GeneralId& id);
@@ -57,6 +59,10 @@ public:
     };
     SignalProxy<void(int flags)> sigUpdated() { return sigUpdated_; }
     void notifyUpdate(int flags);
+
+protected:
+    CoordinateFrame(const CoordinateFrame& org);
+    Referenced* doClone(CloneMap* cloneMap) const override;
         
 private:
     Isometry3 T_;

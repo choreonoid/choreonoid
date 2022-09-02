@@ -76,7 +76,7 @@ void ExtCommandItem::onDisconnectedFromRoot()
 }
 
 
-Item* ExtCommandItem::doDuplicate() const
+Item* ExtCommandItem::doCloneItem(CloneMap* cloneMap) const
 {
     return new ExtCommandItem(*this);
 }

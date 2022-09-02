@@ -37,7 +37,6 @@ public:
     };
 
     BodySyncCameraItem();
-    BodySyncCameraItem(const BodySyncCameraItem& org);
     ~BodySyncCameraItem();
 
     virtual bool setName(const std::string& name) override;
@@ -81,7 +80,8 @@ public:
     }
 
 protected:
-    virtual Item* doDuplicate() const override;
+    BodySyncCameraItem(const BodySyncCameraItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void onTreePathChanged() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;

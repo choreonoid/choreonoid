@@ -22,7 +22,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     PointSetItem();
-    PointSetItem(const PointSetItem& org);
     virtual ~PointSetItem();
 
     virtual bool setName(const std::string& name) override;
@@ -89,7 +88,8 @@ public:
     class Impl;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    PointSetItem(const PointSetItem& org, CloneMap* cloneMap);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:

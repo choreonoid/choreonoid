@@ -17,11 +17,11 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     SensorVisualizerItem();
-    SensorVisualizerItem(const SensorVisualizerItem& org);
     virtual ~SensorVisualizerItem();
 
 protected:
-    virtual Item* doDuplicate() const override;
+    SensorVisualizerItem(const SensorVisualizerItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void onTreePathChanged() override;
     virtual void onDisconnectedFromRoot() override;
     virtual bool store(Archive& archive) override;

@@ -124,7 +124,7 @@ std::shared_ptr<AbstractMultiSeq> MultiDeviceStateSeqItem::abstractMultiSeq()
 }
 
 
-Item* MultiDeviceStateSeqItem::doDuplicate() const
+Item* MultiDeviceStateSeqItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new MultiDeviceStateSeqItem(*this);
 }

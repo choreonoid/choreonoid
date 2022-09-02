@@ -373,7 +373,7 @@ GLVisionSimulatorItem::Impl::Impl(GLVisionSimulatorItem* self, const Impl& org)
 }
 
 
-Item* GLVisionSimulatorItem::doDuplicate() const
+Item* GLVisionSimulatorItem::doCloneItem(CloneMap* cloneMap) const
 {
     return new GLVisionSimulatorItem(*this);
 }

@@ -100,6 +100,9 @@ public:
     */
     virtual bool checkConsistencyWithArchive() override;
 
+protected:
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override final;
+
 private:
     friend class Item;
     class Impl;

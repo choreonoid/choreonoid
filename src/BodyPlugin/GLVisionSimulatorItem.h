@@ -43,7 +43,7 @@ public:
     class Impl;
 
 protected:
-    virtual Item* doDuplicate() const;
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);

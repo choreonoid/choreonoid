@@ -24,7 +24,7 @@ public:
     
 protected:
     BodyElementOverwriteItem();
-    BodyElementOverwriteItem(const BodyElementOverwriteItem& org);
+    BodyElementOverwriteItem(const BodyElementOverwriteItem& org, CloneMap* cloneMap);
 
     void setBodyItem(BodyItem* item) { bodyItem_ = item; }
 

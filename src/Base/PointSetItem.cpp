@@ -16,6 +16,7 @@
 #include <cnoid/SceneMarkers>
 #include <cnoid/PointSetUtil>
 #include <cnoid/PolyhedralRegion>
+#include <cnoid/CloneMap>
 #include <cnoid/Exception>
 #include "gettext.h"
 
@@ -88,7 +89,7 @@ public:
     Signal<void(const PolyhedralRegion& region)> sigPointsInRegionRemoved;
 
     Impl(PointSetItem* self);
-    Impl(PointSetItem* self, const Impl& org);
+    Impl(PointSetItem* self, const Impl& org, CloneMap* cloneMap);
     void initialize();
     void setRenderingMode(int mode);
     bool onEditableChanged(bool on);
@@ -169,17 +170,17 @@ PointSetItem::Impl::Impl(PointSetItem* self)
 }
 
 
-PointSetItem::PointSetItem(const PointSetItem& org)
+PointSetItem::PointSetItem(const PointSetItem& org, CloneMap* cloneMap)
     : Item(org)
 {
-    impl = new Impl(this, *org.impl);
+    impl = new Impl(this, *org.impl, cloneMap);
 }
 
 
-PointSetItem::Impl::Impl(PointSetItem* self, const Impl& org)
+PointSetItem::Impl::Impl(PointSetItem* self, const Impl& org, CloneMap* cloneMap)
     : self(self)
 {
-    pointSet = new SgPointSet(*org.pointSet);
+    pointSet = CloneMap::getClone(org.pointSet, cloneMap);
     scene = new ScenePointSet(this);
     scene->T() = org.scene->T();
 
@@ -200,9 +201,9 @@ PointSetItem::~PointSetItem()
 }
 
 
-Item* PointSetItem::doDuplicate() const
+Item* PointSetItem::doCloneItem(CloneMap* cloneMap) const
 {
-    return new PointSetItem(*this);
+    return new PointSetItem(*this, cloneMap);
 }
 
 

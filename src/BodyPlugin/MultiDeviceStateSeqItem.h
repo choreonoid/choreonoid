@@ -19,13 +19,13 @@ public:
         
     MultiDeviceStateSeqItem();
     MultiDeviceStateSeqItem(std::shared_ptr<MultiDeviceStateSeq> seq);
-    MultiDeviceStateSeqItem(const MultiDeviceStateSeqItem& org);
     virtual ~MultiDeviceStateSeqItem();
     virtual std::shared_ptr<AbstractMultiSeq> abstractMultiSeq() override;
     std::shared_ptr<MultiDeviceStateSeq> seq() { return seq_; }
 
 protected:
-    virtual Item* doDuplicate() const override;
+    MultiDeviceStateSeqItem(const MultiDeviceStateSeqItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 

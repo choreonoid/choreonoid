@@ -75,7 +75,7 @@ public:
     shared_ptr<StdSceneWriter> sceneWriter;
 
     Impl(LinkOverwriteItem* self);
-    Impl(LinkOverwriteItem* self, const Impl& org);
+    Impl(LinkOverwriteItem* self, const Impl& org, CloneMap* cloneMap);
     bool updateOverwriting(BodyItem* bodyItem);
     void overwriteExistingLink(Link* existingLink);
     void copyTargetElements(Link* srcLink, Link* destLink, int elementSet);
@@ -126,26 +126,29 @@ LinkOverwriteItem::Impl::Impl(LinkOverwriteItem* self)
 }
 
 
-LinkOverwriteItem::LinkOverwriteItem(const LinkOverwriteItem& org)
-    : BodyElementOverwriteItem(org)
+LinkOverwriteItem::LinkOverwriteItem(const LinkOverwriteItem& org, CloneMap* cloneMap)
+    : BodyElementOverwriteItem(org, cloneMap)
 {
-    impl = new Impl(this, *org.impl);
+    impl = new Impl(this, *org.impl, cloneMap);
 }
 
 
-LinkOverwriteItem::Impl::Impl(LinkOverwriteItem* self, const Impl& org)
+LinkOverwriteItem::Impl::Impl(LinkOverwriteItem* self, const Impl& org, CloneMap* cloneMap)
     : self(self),
       targetElementSet(org.targetElementSet),
       additionalLinkParentName(org.additionalLinkParentName)
 {
+    if(org.targetLink && cloneMap && self->bodyItem()){
+        targetLink = cloneMap->findClone(org.targetLink);
+    }
     if(org.referenceLink){
-        referenceLink = org.referenceLink->clone();
+        referenceLink = CloneMap::getClone(org.referenceLink, cloneMap);
     }
     if(org.additionalLink){
-        additionalLink = org.additionalLink->clone();
+        additionalLink = CloneMap::getClone(org.additionalLink, cloneMap);
     }
     if(org.originalLinkClone){
-        originalLinkClone = org.originalLinkClone->clone();
+        originalLinkClone = CloneMap::getClone(org.originalLinkClone, cloneMap);
     }
     isRootLink = org.isRootLink;
     locationTargetType = org.locationTargetType;
@@ -158,9 +161,9 @@ LinkOverwriteItem::~LinkOverwriteItem()
 }
 
 
-Item* LinkOverwriteItem::doDuplicate(Item* duplicatedParentItem) const
+Item* LinkOverwriteItem::doCloneItem(CloneMap* cloneMap) const
 {
-    return new LinkOverwriteItem(*this);
+    return new LinkOverwriteItem(*this, cloneMap);
 }
 
 

@@ -40,7 +40,7 @@ int getSceneMarkerType(int type)
 
 namespace cnoid {
 
-class BodyMarkerItemImpl
+class BodyMarkerItem::Impl
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -58,8 +58,8 @@ public:
     string targetLinkName;
     string targetNodeName;
 
-    BodyMarkerItemImpl(BodyMarkerItem* self);
-    BodyMarkerItemImpl(BodyMarkerItem* self, const BodyMarkerItemImpl& org);
+    Impl(BodyMarkerItem* self);
+    Impl(BodyMarkerItem* self, const Impl& org);
     void setBodyItem(BodyItem* bodyItem);
     bool updateTarget();
     bool findNode();
@@ -83,19 +83,19 @@ void BodyMarkerItem::initializeClass(ExtensionManager* ext)
 
 BodyMarkerItem::BodyMarkerItem()
 {
-    impl = new BodyMarkerItemImpl(this);
+    impl = new Impl(this);
 }
 
 
 BodyMarkerItem::BodyMarkerItem(const BodyMarkerItem& org)
     : Item(org)
 {
-    impl = new BodyMarkerItemImpl(this, *org.impl);
+    impl = new Impl(this, *org.impl);
     setName(org.name());
 }
 
 
-BodyMarkerItemImpl::BodyMarkerItemImpl(BodyMarkerItem* self)
+BodyMarkerItem::Impl::Impl(BodyMarkerItem* self)
     : self(self),
       markerType(BodyMarkerItem::N_MARKER_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
@@ -115,8 +115,8 @@ BodyMarkerItemImpl::BodyMarkerItemImpl(BodyMarkerItem* self)
 }
 
 
-BodyMarkerItemImpl::BodyMarkerItemImpl(BodyMarkerItem* self, const BodyMarkerItemImpl& org)
-    : BodyMarkerItemImpl(self)
+BodyMarkerItem::Impl::Impl(BodyMarkerItem* self, const Impl& org)
+    : Impl(self)
 {
     targetLinkName = org.targetLinkName;
     targetNodeName = org.targetNodeName;
@@ -139,7 +139,7 @@ bool BodyMarkerItem::setName(const std::string& name)
 }
 
 
-Item* BodyMarkerItem::doDuplicate() const
+Item* BodyMarkerItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new BodyMarkerItem(*this);
 }
@@ -151,7 +151,7 @@ void BodyMarkerItem::onTreePathChanged()
 }
 
 
-void BodyMarkerItemImpl::setBodyItem(BodyItem* bodyItem)
+void BodyMarkerItem::Impl::setBodyItem(BodyItem* bodyItem)
 {
     if(bodyItem != this->bodyItem){
         this->bodyItem = bodyItem;
@@ -236,7 +236,7 @@ bool BodyMarkerItem::setTargetNode(const std::string& name)
 }
 
 
-bool BodyMarkerItemImpl::updateTarget()
+bool BodyMarkerItem::Impl::updateTarget()
 {
     targetLink = nullptr;
     T_node.setIdentity();
@@ -283,7 +283,7 @@ bool BodyMarkerItemImpl::updateTarget()
 }
 
 
-bool BodyMarkerItemImpl::findNode()
+bool BodyMarkerItem::Impl::findNode()
 {
     bool found = false;
     if(targetLink){
@@ -304,7 +304,7 @@ bool BodyMarkerItemImpl::findNode()
 /**
    \todo Use SgNode::findNode instead of this implementation
 */
-bool BodyMarkerItemImpl::findNode(SgNode* node, Affine3 T)
+bool BodyMarkerItem::Impl::findNode(SgNode* node, Affine3 T)
 {
     if(node->name() == targetNodeName){
         T_node = convertToIsometryWithOrthonormalization(T);
@@ -333,7 +333,7 @@ void BodyMarkerItem::setOffsetPosition(const Isometry3& T)
 }
     
 
-void BodyMarkerItemImpl::updateMarkerPosition()
+void BodyMarkerItem::Impl::updateMarkerPosition()
 {
     if(targetLink && marker){
         marker->setPosition(targetLink->T() * T_node * localPosition);
@@ -348,7 +348,7 @@ void BodyMarkerItem::doPutProperties(PutPropertyFunction& putProperty)
 }
 
 
-void BodyMarkerItemImpl::doPutProperties(PutPropertyFunction& putProperty)
+void BodyMarkerItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Marker type"), markerType,
                 [&](int type){ self->setMarkerType(type); return true; });
@@ -402,7 +402,7 @@ bool BodyMarkerItem::store(Archive& archive)
 }
 
 
-bool BodyMarkerItemImpl::store(Archive& archive)
+bool BodyMarkerItem::Impl::store(Archive& archive)
 {
     archive.write("markerType", markerType.selectedSymbol(), DOUBLE_QUOTED);
     archive.write("link", targetLinkName, DOUBLE_QUOTED);
@@ -421,7 +421,7 @@ bool BodyMarkerItem::restore(const Archive& archive)
 }
 
 
-bool BodyMarkerItemImpl::restore(const Archive& archive)
+bool BodyMarkerItem::Impl::restore(const Archive& archive)
 {
     string symbol;
     if(archive.read("markerType", symbol)){

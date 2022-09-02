@@ -90,7 +90,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     DeviceOverwriteItem();
-    DeviceOverwriteItem(const DeviceOverwriteItem& org);
     virtual ~DeviceOverwriteItem();
 
     virtual bool setName(const std::string& name) override;
@@ -130,7 +129,8 @@ public:
     class Impl;
 
 protected:
-    virtual Item* doDuplicate(Item* duplicatedParentItem) const override;
+    DeviceOverwriteItem(const DeviceOverwriteItem& org, CloneMap* cloneMap);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual bool onCheckNewOverwritePosition(bool isManualOperation) override;
     virtual void onDisconnectedFromBodyItem() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;

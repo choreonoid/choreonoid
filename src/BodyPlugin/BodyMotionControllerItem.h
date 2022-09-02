@@ -18,7 +18,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     BodyMotionControllerItem();
-    BodyMotionControllerItem(const BodyMotionControllerItem& org);
     virtual ~BodyMotionControllerItem();
         
     virtual bool initialize(ControllerIO* io) override;
@@ -30,8 +29,9 @@ public:
     virtual void stop() override;
 
 protected:
+    BodyMotionControllerItem(const BodyMotionControllerItem& org);
     virtual void onDisconnectedFromRoot() override;
-    virtual Item* doDuplicate() const override;
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

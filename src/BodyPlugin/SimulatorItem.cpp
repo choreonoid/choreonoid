@@ -402,6 +402,9 @@ public:
         doExecAfterInit = false;
     }
 
+protected:
+    virtual Item* doCloneItem(CloneMap* cloneMap) const { return nullptr; }
+
     virtual bool initialize(ControllerIO* io) override {
         this->io = io;
         return true;

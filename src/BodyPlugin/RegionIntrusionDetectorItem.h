@@ -14,7 +14,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
     
     RegionIntrusionDetectorItem();
-    RegionIntrusionDetectorItem(const RegionIntrusionDetectorItem& org);
     ~RegionIntrusionDetectorItem();
 
     bool setBoxRegionSize(const Vector3& size);
@@ -40,7 +39,8 @@ public:
     class Impl;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    RegionIntrusionDetectorItem(const RegionIntrusionDetectorItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

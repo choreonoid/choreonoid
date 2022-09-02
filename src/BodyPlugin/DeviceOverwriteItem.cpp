@@ -14,6 +14,7 @@
 #include <cnoid/StdSceneReader>
 #include <cnoid/StdSceneWriter>
 #include <cnoid/ConnectionSet>
+#include <cnoid/CloneMap>
 #include <fmt/format.h>
 #include <unordered_map>
 #include "gettext.h"
@@ -68,8 +69,8 @@ class DeviceOverwriteItem::Impl
 public:
     DeviceOverwriteItem* self;
     DevicePtr device;
-    SgPosTransformPtr deviceShapePosTransform;
     SgNodePtr deviceShape;
+    SgPosTransformPtr deviceShapePosTransform;
     bool isAdditionalDevice;
     int additionalDeviceLinkIndex;
     DevicePtr originalDevice;
@@ -83,7 +84,7 @@ public:
     ScopedConnectionSet bodyItemConnections;
 
     Impl(DeviceOverwriteItem* self);
-    Impl(DeviceOverwriteItem* self, const Impl& org);
+    Impl(DeviceOverwriteItem* self, const Impl& org, CloneMap* cloneMap);
     void clearOverwriting();
     void releaseOverwriteTarget();
     void clearLocationProxies();
@@ -135,16 +136,38 @@ DeviceOverwriteItem::Impl::Impl(DeviceOverwriteItem* self)
 }
 
 
-DeviceOverwriteItem::DeviceOverwriteItem(const DeviceOverwriteItem& org)
-    : BodyElementOverwriteItem(org)
+DeviceOverwriteItem::DeviceOverwriteItem(const DeviceOverwriteItem& org, CloneMap* cloneMap)
+    : BodyElementOverwriteItem(org, cloneMap)
 {
-    impl = new Impl(this, *org.impl);
+    impl = new Impl(this, *org.impl, cloneMap);
 }
 
 
-DeviceOverwriteItem::Impl::Impl(DeviceOverwriteItem* self, const Impl& org)
+DeviceOverwriteItem::Impl::Impl(DeviceOverwriteItem* self, const Impl& org, CloneMap* cloneMap)
     : Impl(self)
 {
+    if(cloneMap && self->bodyItem()){
+        if(org.device){
+            device = cloneMap->findClone(org.device);
+        }
+        if(org.deviceShape){
+            deviceShape = cloneMap->findClone(org.deviceShape);
+            if(org.deviceShapePosTransform){
+                deviceShapePosTransform = cloneMap->findClone(org.deviceShapePosTransform);
+            }
+        }
+    } else {
+        if(org.device){
+            device = CloneMap::getClone(org.device, cloneMap);
+        }
+        if(org.deviceShape){
+            deviceShape = CloneMap::getClone(org.deviceShape, cloneMap);
+        }
+    }
+    isAdditionalDevice = org.isAdditionalDevice;
+    additionalDeviceLinkIndex = org.additionalDeviceLinkIndex;
+    originalDevice = CloneMap::getClone(org.originalDevice, cloneMap);
+    originalDeviceName = org.originalDeviceName;
     mediatorId = org.mediatorId;
 }
 
@@ -168,18 +191,9 @@ bool DeviceOverwriteItem::setName(const std::string& name)
 }
 
 
-Item* DeviceOverwriteItem::doDuplicate(Item* duplicatedParentItem) const
+Item* DeviceOverwriteItem::doCloneItem(CloneMap* cloneMap) const
 {
-    DeviceOverwriteItemPtr duplicated = new DeviceOverwriteItem(*this);
-
-    if(auto bodyItem = dynamic_cast<BodyItem*>(duplicatedParentItem)){
-        auto device = bodyItem->body()->device(impl->device->index());
-        if(!duplicated->impl->setDevice(bodyItem, device, impl->originalDevice, true)){
-            duplicated.reset();
-        }
-    }
-    
-    return duplicated.retn();
+    return new DeviceOverwriteItem(*this, cloneMap);
 }
 
 

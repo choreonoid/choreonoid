@@ -60,7 +60,7 @@ std::shared_ptr<AbstractSeq> ReferencedObjectSeqItem::abstractSeq()
 }
 
 
-Item* ReferencedObjectSeqItem::doDuplicate() const
+Item* ReferencedObjectSeqItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new ReferencedObjectSeqItem(*this);
 }

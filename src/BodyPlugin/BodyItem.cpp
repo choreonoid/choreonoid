@@ -32,6 +32,7 @@
 #include <cnoid/AttachmentDevice>
 #include <cnoid/HolderDevice>
 #include <cnoid/EigenArchive>
+#include <cnoid/CloneMap>
 #include <fmt/format.h>
 #include <bitset>
 #include <algorithm>
@@ -164,7 +165,7 @@ public:
     Vector3 zmp;
 
     Impl(BodyItem* self);
-    Impl(BodyItem* self, const Impl& org);
+    Impl(BodyItem* self, const Impl& org, CloneMap* cloneMap);
     Impl(BodyItem* self, Body* body, bool isSharingShapes);
     ~Impl();
     void init(bool calledFromCopyConstructor);
@@ -272,10 +273,10 @@ BodyItem::Impl::Impl(BodyItem* self, Body* body, bool isSharingShapes)
 }
 
 
-BodyItem::BodyItem(const BodyItem& org)
+BodyItem::BodyItem(const BodyItem& org, CloneMap* cloneMap)
     : Item(org)
 {
-    impl = new Impl(this, *org.impl);
+    impl = new Impl(this, *org.impl, cloneMap);
     impl->init(true);
     isAttachedToParentBody_ = false;
     isVisibleLinkSelectionMode_ = org.isVisibleLinkSelectionMode_;
@@ -284,8 +285,8 @@ BodyItem::BodyItem(const BodyItem& org)
 }
 
 
-BodyItem::Impl::Impl(BodyItem* self, const Impl& org)
-    : Impl(self, org.body->clone(), true)
+BodyItem::Impl::Impl(BodyItem* self, const Impl& org, CloneMap* cloneMap)
+    : Impl(self, CloneMap::getClone(org.body, cloneMap), true)
 {
     isAttachmentEnabled = org.isAttachmentEnabled;
     transparency = org.transparency;
@@ -347,9 +348,9 @@ void BodyItem::Impl::initBody(bool calledFromCopyConstructor)
 }
 
 
-Item* BodyItem::doDuplicate() const
+Item* BodyItem::doCloneItem(CloneMap* cloneMap) const
 {
-    return new BodyItem(*this);
+    return new BodyItem(*this, cloneMap);
 }
 
 

@@ -5,6 +5,7 @@
 #include "Archive.h"
 #include <cnoid/CoordinateFrame>
 #include <cnoid/CoordinateFrameList>
+#include <cnoid/CloneMap>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -79,10 +80,10 @@ CoordinateFrameItem::CoordinateFrameItem(CoordinateFrame* frame)
 }
 
 
-CoordinateFrameItem::CoordinateFrameItem(const CoordinateFrameItem& org)
+CoordinateFrameItem::CoordinateFrameItem(const CoordinateFrameItem& org, CloneMap* cloneMap)
     : Item(org)
 {
-    impl = new Impl(this, new CoordinateFrame(*org.impl->frame));
+    impl = new Impl(this, CloneMap::getClone(org.impl->frame, cloneMap));
     impl->isLocationEditable = org.impl->isLocationEditable;
 }
 
@@ -113,9 +114,9 @@ CoordinateFrameItem::~CoordinateFrameItem()
 }
 
 
-Item* CoordinateFrameItem::doDuplicate() const
+Item* CoordinateFrameItem::doCloneItem(CloneMap* cloneMap) const
 {
-    return new CoordinateFrameItem(*this);
+    return new CoordinateFrameItem(*this, cloneMap);
 }
 
 

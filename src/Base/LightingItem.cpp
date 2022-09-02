@@ -84,7 +84,7 @@ LightingItem::~LightingItem()
     delete impl;
 }
 
-Item* LightingItem::doDuplicate() const
+Item* LightingItem::doCloneItem(CloneMap* /* cloneMap */) const
 {
     return new LightingItem(*this);
 }

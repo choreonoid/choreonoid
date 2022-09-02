@@ -18,6 +18,7 @@
 #include "../MultiPointSetItem.h"
 #include <cnoid/PyUtil>
 #include <cnoid/ValueTree>
+#include <cnoid/CloneMap>
 
 using namespace std;
 using namespace cnoid;
@@ -67,8 +68,8 @@ void exportPyItems(py::module m)
              [](Item& self, py::object itemClass) {
                  return getPyNarrowedItemList(self.descendantItems(), itemClass);
              })
-        .def("duplicate", [](Item& self){ return self.duplicate(); })
-        .def("duplicateSubTree", &Item::duplicateSubTree)
+        .def("duplicate", [](Item& self){ return self.clone(); })
+        .def("duplicateSubTree", &Item::cloneSubTree)
         .def("assign", &Item::assign)
         .def("load",
              [](Item& self, const string& filename, const string& format, const Mapping* options){

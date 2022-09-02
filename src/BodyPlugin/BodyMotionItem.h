@@ -23,7 +23,6 @@ public:
 
     BodyMotionItem();
     BodyMotionItem(std::shared_ptr<BodyMotion> bodyMotion);
-    BodyMotionItem(const BodyMotionItem& org);
     ~BodyMotionItem();
 
     virtual std::shared_ptr<AbstractSeq> abstractSeq() override;
@@ -72,8 +71,9 @@ public:
     virtual void notifyUpdate() override;
 
 protected:
+    BodyMotionItem(const BodyMotionItem& org);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation) override;
-    virtual Item* doDuplicate() const override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

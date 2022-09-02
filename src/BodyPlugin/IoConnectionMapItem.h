@@ -16,7 +16,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     IoConnectionMapItem();
-    IoConnectionMapItem(const IoConnectionMapItem& org);
     virtual ~IoConnectionMapItem();
 
     IoConnectionMap* connectionMap();
@@ -30,7 +29,8 @@ public:
     virtual bool restore(const Archive& archive) override;
 
 protected:
-    virtual Item* doDuplicate() const override;
+    IoConnectionMapItem(const IoConnectionMapItem& org, CloneMap* cloneMap);
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
 
 private:
     class Impl;

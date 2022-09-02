@@ -18,7 +18,6 @@ public:
     static void initializeClass(ExtensionManager* ext);
             
     ReferencedObjectSeqItem();
-    ReferencedObjectSeqItem(const ReferencedObjectSeqItem& org);
     ReferencedObjectSeqItem(std::shared_ptr<ReferencedObjectSeq> seq);
 
     virtual std::shared_ptr<AbstractSeq> abstractSeq() override;
@@ -28,6 +27,8 @@ public:
     void resetSeq();
 
 protected:
+    ReferencedObjectSeqItem(const ReferencedObjectSeqItem& org);
+
     /**
        This is for the copy constructor of an inherited class
     */
@@ -35,7 +36,7 @@ protected:
         
     virtual ~ReferencedObjectSeqItem();
 
-    virtual Item* doDuplicate() const override;
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
             
     std::shared_ptr<ReferencedObjectSeq> seq_;
 };
