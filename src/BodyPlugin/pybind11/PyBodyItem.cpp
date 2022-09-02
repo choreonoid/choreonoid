@@ -69,6 +69,8 @@ void exportBodyItem(py::module m)
         .def("getSigKinematicStateChanged", &BodyItem::sigKinematicStateChanged)
         .def("getCenterOfMass", &BodyItem::centerOfMass)
         .def("getZmp", &BodyItem::zmp)
+        // This function has been removed. The following is an incomplete wrapper.
+        .def("makeBodyStatic", [](BodyItem& self){ self.body()->setRootLinkFixed(true); })
         ;
 
     py::enum_<BodyItem::PresetPoseID>(bodyItem, "PresetPoseID")
