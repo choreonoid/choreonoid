@@ -1,5 +1,9 @@
 if(ENABLE_ASSIMP)
-  choreonoid_add_library(CnoidAssimpSceneLoader SHARED AssimpSceneLoader.cpp)
+  set(headers
+    AssimpSceneLoader.h
+    exportdecl.h
+    )
+  choreonoid_add_library(CnoidAssimpSceneLoader SHARED AssimpSceneLoader.cpp HEADERS ${headers})
   if(ASSIMP_USE_IMPORTED_LIBRARY)
     target_link_libraries(CnoidAssimpSceneLoader CnoidUtil assimp::assimp)
   else()
