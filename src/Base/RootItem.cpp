@@ -276,7 +276,8 @@ SignalProxy<void(Item* item, const std::string& oldName)> RootItem::sigItemNameC
 }
 
 
-void RootItem::notifyEventOnSubTreeAdded(Item* item, std::vector<Item*>& orgSubTreeItems)
+void RootItem::notifyEventOnSubTreeAdded
+(Item* item, std::vector<Item*>& orgSubTreeItems, bool doEmitSigSubTreeAdded)
 {
     if(TRACE_FUNCTIONS){
         cout << "RootItem::notifyEventOnItemAdded()" << endl;
@@ -288,7 +289,9 @@ void RootItem::notifyEventOnSubTreeAdded(Item* item, std::vector<Item*>& orgSubT
         }
     }
 
-    impl->sigSubTreeAdded(item);
+    if(doEmitSigSubTreeAdded){
+        impl->sigSubTreeAdded(item);
+    }
 
     for(auto& item : orgSubTreeItems){
         impl->sigItemAdded(item);
