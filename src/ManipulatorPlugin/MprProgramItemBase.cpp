@@ -122,12 +122,6 @@ MprProgramItemBase::~MprProgramItemBase()
 }
 
 
-Item* MprProgramItemBase::doCloneItem(CloneMap* /* cloneMap */) const
-{
-    return new MprProgramItemBase(*this);
-}
-
-
 bool MprProgramItemBase::setName(const std::string& name_)
 {
     bool updated = false;
