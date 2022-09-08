@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-23 22:02+0900\n"
+"POT-Creation-Date: 2022-09-08 15:35+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1372,6 +1372,12 @@ msgstr "指定時間"
 msgid "Time bar range"
 msgstr "タイムバー範囲"
 
+msgid "On (Compensatory)"
+msgstr "オン (補償型）"
+
+msgid "On (Conservative)"
+msgstr "オン (保守的）"
+
 msgid "{0} is doing its simulation."
 msgstr "{0}はシミュレーションを実行中です．"
 
@@ -1429,7 +1435,7 @@ msgstr "タイムステップ"
 msgid "Frame rate"
 msgstr "フレームレート"
 
-msgid "Sync with realtime"
+msgid "Realtime sync"
 msgstr "実時間同期"
 
 msgid "Time range"

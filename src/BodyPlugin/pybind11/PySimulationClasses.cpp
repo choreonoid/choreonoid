@@ -45,7 +45,7 @@ void exportSimulationClasses(py::module m)
         .def("isActiveControlTimeRangeMode", &SimulatorItem::isActiveControlTimeRangeMode)
         .def("isRecordingEnabled", &SimulatorItem::isRecordingEnabled)
         .def("isDeviceStateOutputEnabled", &SimulatorItem::isDeviceStateOutputEnabled)
-        .def("setRealtimeSyncMode", &SimulatorItem::setRealtimeSyncMode)
+        .def("setRealtimeSyncMode", [](SimulatorItem& self, int mode){ self.setRealtimeSyncMode(mode); })
         .def("setDeviceStateOutputEnabled", &SimulatorItem::setDeviceStateOutputEnabled)
         .def("isAllLinkPositionOutputMode", &SimulatorItem::isAllLinkPositionOutputMode)
         .def("setAllLinkPositionOutputMode", &SimulatorItem::setAllLinkPositionOutputMode)
@@ -57,6 +57,11 @@ void exportSimulationClasses(py::module m)
         .def("clearForcedPositions", &SimulatorItem::clearForcedPositions)
 
         // deprecated
+        .def("setRealtimeSyncMode",
+             [](SimulatorItem& self, bool on){
+                 self.setRealtimeSyncMode(
+                     on ? SimulatorItem::CompensatoryRealtimeSync : SimulatorItem::NonRealtimeSync);
+             })
         .def("setSpecifiedRecordingTimeLength", &SimulatorItem::setTimeLength)
         .def("getWorldTimeStep", &SimulatorItem::worldTimeStep)
         .def("getCurrentFrame", &SimulatorItem::currentFrame)

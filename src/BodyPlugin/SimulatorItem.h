@@ -130,7 +130,7 @@ public:
         N_RECORDING_MODES = NumRecordingModes
     };
     
-    void setRecordingMode(int selection);
+    void setRecordingMode(int mode);
     int recordingMode() const;
 
     enum TimeRangeMode {
@@ -150,7 +150,7 @@ public:
         N_TIME_RANGE_MODES = NumTimeRangeModes
     };
     
-    void setTimeRangeMode(int selection);
+    void setTimeRangeMode(int mode);
 
     void setTimeLength(double length);
 
@@ -162,7 +162,19 @@ public:
     void setActiveControlTimeRangeMode(bool on);
     bool isActiveControlTimeRangeMode() const;
 
+    enum RealtimeSyncMode {
+        NonRealtimeSync,
+        CompensatoryRealtimeSync,
+        ConservativeRealtimeSync,
+        NumRealtimeSyncModes
+    };
+
+    void setRealtimeSyncMode(int mode);
+    int realtimeSyncMode() const;
+
+    [[deprecated("Use setRealtimeSyncMode(int mode)")]]
     void setRealtimeSyncMode(bool on);
+    
     void setSlowerThanRealtimeEnabled(bool on);
     
     void setDeviceStateOutputEnabled(bool on);
