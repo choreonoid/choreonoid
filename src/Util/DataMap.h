@@ -29,6 +29,9 @@ protected:
 };
 
 
+/**
+   \note This class is deprecated and should not be used anew.
+*/
 template <class ElementType = double, class Allocator = std::allocator<ElementType>>
 class DataMap : public DataMapBase,
                 protected std::map<int, std::vector<ElementType, Allocator>>

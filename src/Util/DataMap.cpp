@@ -38,10 +38,10 @@ int DataMapBase::nextDynamicId()
 
 int DataMapBase::getDynamicID(const std::string& name)
 {
-    std::map<string, int> nameToIdMap_ = nameToIdMap();
-    std::map<string, int>::iterator p = nameToIdMap_.find(name);
-    if(p != nameToIdMap_.end()){
-        return p->second;
+    auto& nameToIdMap_ = nameToIdMap();
+    auto it = nameToIdMap_.find(name);
+    if(it != nameToIdMap_.end()){
+        return it->second;
     }
     int id = nextDynamicId();
     nameToIdMap_[name] = id;
@@ -53,10 +53,10 @@ const std::string& DataMapBase::getDynamicIDname(int id)
 {
     static std::string emptyString;
     
-    std::map<int, string> idToNameMap_ = idToNameMap();
-    std::map<int, string>::iterator p = idToNameMap_.find(id);
-    if(p != idToNameMap_.end()){
-        return p->second;
+    const auto& idToNameMap_ = idToNameMap();
+    auto it = idToNameMap_.find(id);
+    if(it != idToNameMap_.end()){
+        return it->second;
     }
     return emptyString;
 }

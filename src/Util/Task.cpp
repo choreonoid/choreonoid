@@ -7,6 +7,7 @@
 #include "AbstractTaskSequencer.h"
 #include "ValueTree.h"
 #include <algorithm>
+#include <limits>
 
 using namespace std;
 using namespace cnoid;
