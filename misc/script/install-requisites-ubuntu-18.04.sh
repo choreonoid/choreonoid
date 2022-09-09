@@ -31,7 +31,3 @@ libpulse-dev \
 libsndfile1-dev \
 libgstreamer1.0-dev \
 libgstreamer-plugins-base1.0-dev
-
-# lua5.3 liblua5.3-dev lua-posix
-# libomniorb4-dev libcos4-dev omniidl omniorb-nameserver python-omniorb omniidl-python \
-# libsdformat6-dev libogre-1.9-dev

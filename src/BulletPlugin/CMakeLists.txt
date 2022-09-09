@@ -9,8 +9,10 @@ endif()
 
 set(BULLET_DIR ${BULLET_DIR} CACHE PATH "set the top directory of the Bullet Physics library")
 if(UNIX)
+  # The required packages can be installed by the following command in Ubuntu.
+  # sudo apt install libbullet-dev libbullet-extras-dev
   if(NOT BULLET_DIR)
-    PKG_CHECK_MODULES(bullet REQUIRED bullet)
+    pkg_check_modules(bullet REQUIRED bullet)
     # HACD is not included in bullet.pc, we thus have to add it ourselves.
     LIST(APPEND ${bullet_LIBRARIES} HACD)
   else()

@@ -11,6 +11,8 @@ endif()
 
 set(SDFORMAT_DIR ${SDFORMAT_DIR} CACHE PATH "set the top directory of the SDFORMAT")
 if(UNIX)
+  # The required packages can be installed by the following command in Ubuntu.
+  # sudo apt install libsdformat6-dev libogre-1.9-dev
   if(NOT SDFORMAT_DIR)
     pkg_check_modules(SDFORMAT REQUIRED sdformat)
   endif()

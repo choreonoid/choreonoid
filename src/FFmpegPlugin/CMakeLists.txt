@@ -15,7 +15,7 @@ if(MSVC)
   set(FFMPEG_LIBRARIES avutil avcodec avformat)
   install_runtime_dlls(${FFMPEG_DIR}/bin avcodec-58 avformat-58 avutil-56 swresample-3 libopenh264)
 else()
-  # The required package can be installed by the following command in Ubuntu.
+  # The required packages can be installed by the following command in Ubuntu.
   # sudo apt install libavcodec-dev libavformat-dev libavutil-dev
   pkg_check_modules(LIBAVCODEC libavcodec)
   pkg_check_modules(LIBAVFORMAT libavformat)

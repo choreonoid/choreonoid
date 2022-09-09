@@ -454,6 +454,9 @@ if(ENABLE_LUA)
     message(FATAL_ERROR "Lua wrapper requires C++14 or later C++ versions")
   endif()
   set(LUA_SOL2_DIR ${PROJECT_SOURCE_DIR}/thirdparty/sol2 CACHE PATH "set the directory of the Sol2 library")
+
+  # The required packages can be installed by the following command in Ubuntu.
+  # sudo apt install lua5.3 iblua5.3-dev lua-posix
   pkg_check_modules(LUA lua5.3)
   if(NOT LUA_FOUND)
     pkg_check_modules(LUA lua5.2)
@@ -618,6 +621,8 @@ if(ENABLE_CORBA)
   # the variables collide with those of OpenRTM-aist configuration.
   if(UNIX)
     if(NOT CHOREONOID_OMNIORB_DIR)
+      # The required package can be installed by the following command in Ubuntu.
+      # sudo apt install libomniorb4-dev libcos4-dev omniidl omniorb-nameserver
       pkg_check_modules(CHOREONOID_OMNIORB omniDynamic4)
       if(CHOREONOID_OMNIORB_FOUND)
 	set(CHOREONOID_OMNIORB_DIR ${CHOREONOID_OMNIORB_PREFIX})
