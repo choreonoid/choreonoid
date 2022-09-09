@@ -7,6 +7,7 @@
 #include "DyBody.h"
 #include <cnoid/EigenUtil>
 #include <algorithm>
+#include <cnoid/stdx/clamp>
 
 using namespace cnoid;
 
