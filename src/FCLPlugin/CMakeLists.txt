@@ -6,7 +6,7 @@ endif()
 
 set(FCL_DIR ${FCL_DIR} CACHE PATH "set the top directory of the FCL ")
 if(NOT FCL_DIR)
-  pkg_check_modules(FCL fcl>=0.5.0)
+  pkg_check_modules(FCL fcl>=0.5.0 fcl<=0.6.1)
   if(FCL_FOUND)
     set(FCL_DIR ${FCL_PREFIX})
   else()
