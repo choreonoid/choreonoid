@@ -6,23 +6,9 @@
 #include "ForwardDynamicsABM.h"
 #include "DyBody.h"
 #include <cnoid/EigenUtil>
-#include <algorithm>
 #include <cnoid/stdx/clamp>
 
 using namespace cnoid;
-
-#if __cplusplus >= 201703L
-
-using std::clamp;
-
-#else
-
-static double clamp(double v, double low, double high)
-{
-    return v < low ? low : (v < high ? v : high);
-}
-
-#endif
 
 static const bool debugMode = false;
 static const bool rootAttitudeNormalizationEnabled = false;
@@ -392,7 +378,8 @@ void ForwardDynamicsABM::calcABMPhase2()
                 // dd = Ia * s * s^T
                 link->dd() = link->sv().dot(link->hhv()) + link->sw().dot(link->hhw()) + link->Jm2();
                 // uu = u - hh^T*c + s^T*pp
-                link->uu() = clamp(link->u(), link->u_lower(), link->u_upper()) -
+                link->uu() =
+                    stdx::clamp(link->u(), link->u_lower(), link->u_upper()) -
                     (link->hhv().dot(link->cv()) + link->hhw().dot(link->cw()) +
                      link->sv().dot(link->pf()) + link->sw().dot(link->ptau()));
             }
@@ -464,9 +451,9 @@ void ForwardDynamicsABM::calcABMPhase2Part2()
 
         if(i > 0){
             if(!link->isFixedJoint()){
-                link->uu() += clamp(link->u(), link->u_lower(), link->u_upper())
-                              - (link->sv().dot(link->pf())
-                              + link->sw().dot(link->ptau()));
+                link->uu() +=
+                    stdx::clamp(link->u(), link->u_lower(), link->u_upper())
+                    - (link->sv().dot(link->pf()) + link->sw().dot(link->ptau()));
             }
         }
     }

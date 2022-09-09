@@ -1,9 +1,17 @@
-#pragma once
+#ifndef CNOID_STDX_CLAMP_HEADER
+#define CNOID_STDX_CLAMP_HEADER
+
+#include <algorithm>
 
 #if __cplusplus >= 201703L
-#include <algorithm>
+
+namespace cnoid::stdx {
+using std::clamp;
+}
+
 #else
-namespace std {
+
+namespace cnoid { namespace stdx {
 /** Clamp a value in a given interval.
  *
  * \param value Value to clamp.
@@ -13,9 +21,12 @@ namespace std {
  * \returns clamped value
  */
 template<typename T>
-constexpr const T clamp(const T& value, const T& lower, const T& upper)
+constexpr const T clamp(const T& v, const T& low, const T& high)
 {
-    return std::max(lower, std::min(value, upper));
+    return v < low ? low : (v < high ? v : high);
 }
-}  // namespace std
+} } // namespace cnoid::stdx
+
+#endif
+
 #endif

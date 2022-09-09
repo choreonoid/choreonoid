@@ -27,26 +27,12 @@
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
 #include <cnoid/CheckBoxAction>
+#include <cnoid/stdx/clamp>
 #include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-
-#include <algorithm>
-
-#if __cplusplus >= 201703L
-
-using std::clamp;
-
-#else
-
-static double clamp(double v, double low, double high)
-{
-    return v < low ? low : (v < high ? v : high);
-}
-
-#endif
 
 namespace {
 
@@ -1695,7 +1681,7 @@ void EditableSceneBody::Impl::dragFKRotation(SceneWidgetEvent* event)
 {
     if(dragProjector.dragRotation(event)){
         double q = orgJointPosition + dragProjector.rotationAngle();
-        targetLink->q() = clamp(q, targetLink->q_lower(), targetLink->q_upper());
+        targetLink->q() = stdx::clamp(q, targetLink->q_lower(), targetLink->q_upper());
         bodyItem->notifyKinematicStateChange(true);
         dragged = true;
     }
@@ -1706,7 +1692,7 @@ void EditableSceneBody::Impl::dragFKTranslation(SceneWidgetEvent* event)
 {
     if(dragProjector.dragTranslation(event)){
         double q = orgJointPosition + dragProjector.translationAxis().dot(dragProjector.translation());
-        targetLink->q() = clamp(q, targetLink->q_lower(), targetLink->q_upper());
+        targetLink->q() = stdx::clamp(q, targetLink->q_lower(), targetLink->q_upper());
         bodyItem->notifyKinematicStateChange(true);
         dragged = true;
     }
