@@ -76,7 +76,7 @@ void checkOrInvokeCorbaNameServer()
 #ifdef _WIN32
                 nameServerProcess.start(QString("\"") + command.c_str() + "\"");
 #else
-                nameServerProcess.start(command.c_str());
+                nameServerProcess.start(command.c_str(), QStringList());
 #endif
                 if(nameServerProcess.waitForStarted() && nameServerProcess.waitForReadyRead()){
                     mv->putln(format(_("Name server process {} has been invoked."), nameServerCommand));

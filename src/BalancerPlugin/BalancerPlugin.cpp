@@ -16,7 +16,7 @@
 #include <fmt/format.h>
 #include <QSpinBox>
 #include <QComboBox>
-#include <QTime>
+#include <QElapsedTimer>
 #include "gettext.h"
 
 
@@ -226,15 +226,15 @@ namespace {
                 mv->flush();
             }
         
-            QTime time;
-            time.start();
+            QElapsedTimer timer;
+            timer.start();
             
             motionItem->motion()->setFrameRate(timeBar->frameRate());
             bool result = balancer->apply(provider, *motionItem->motion(), bar->isSe3Enabled());
             
             if(result){
                 if(putMessages){
-                    mv->notify(format(_("OK ! ({} [s] consumed.)"), (time.elapsed() / 1000.0)));
+                    mv->notify(format(_("OK ! ({} [s] consumed.)"), (timer.elapsed() / 1000.0)));
                 }
                 motionItem->notifyUpdate();
             } else {

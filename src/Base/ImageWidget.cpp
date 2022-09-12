@@ -12,7 +12,7 @@ ImageWidget::ImageWidget(QWidget* parent, Qt::WindowFlags f)
     : QWidget(parent, f)
 {
     QPalette p(palette());
-    p.setColor(QPalette::Background, Qt::black);
+    p.setColor(QPalette::Window, Qt::black);
     setPalette(p);
     setAutoFillBackground(true);
 

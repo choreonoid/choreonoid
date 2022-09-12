@@ -167,8 +167,8 @@ void SceneBar::Impl::initialize()
        which uses the minimum size hint to determine the width of each tool bar. Therefore the constant
        minimum contents length is used in the current implementation.
     */
-    cameraCombo->setMinimumContentsLength(8);
-    cameraCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLength);
+    cameraCombo->setMinimumContentsLength(10);
+    cameraCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     
     cameraCombo->setToolTip(_("Projection method / camera selection"));
     cameraCombo->sigCurrentIndexChanged().connect(

@@ -14,7 +14,7 @@ public:
     static void setShareDirectoryPresetEnabled(bool on);
     
     FileDialog();
-    FileDialog(QWidget* parent, Qt::WindowFlags f = 0);
+    FileDialog(QWidget* parent, Qt::WindowFlags f = Qt::WindowFlags());
     ~FileDialog();
 
     void updatePresetDirectories();

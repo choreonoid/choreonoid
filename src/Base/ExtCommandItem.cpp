@@ -107,14 +107,15 @@ bool ExtCommandItem::execute()
     if(!command_.empty()){
         terminate();
         string actualCommand(command_);
+        QStringList arguments;
 #ifdef _WIN32
         if(filesystem::path(fromUTF8(actualCommand)).extension() != ".exe"){
             actualCommand += ".exe";
         }
         // quote the command string to support a path including spaces
-        process.start(QString("\"") + actualCommand.c_str() + "\"");
+        process.start(QString("\"") + actualCommand.c_str() + "\"", arguments);
 #else
-        process.start(actualCommand.c_str());
+        process.start(actualCommand.c_str(), arguments);
 #endif
 
         if(process.waitForStarted()){

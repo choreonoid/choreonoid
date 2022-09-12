@@ -29,16 +29,6 @@ void Process::start(const QString& program, const QStringList& arguments, OpenMo
     QProcess::start(program, arguments, mode);
     
 #ifdef Q_OS_UNIX
-    setpgid(pid(), 0);
+    setpgid(processId(), 0);
 #endif
 }
-
-
-void Process::start(const QString& program, OpenMode mode)
-{
-    QProcess::start(program, mode);
-    
-#ifdef Q_OS_UNIX
-    setpgid(pid(), 0);
-#endif
-}    

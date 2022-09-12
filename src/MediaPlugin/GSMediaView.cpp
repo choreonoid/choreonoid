@@ -327,15 +327,15 @@ void GSMediaViewImpl::updateRenderRectangle()
     gst_video_overlay_set_render_rectangle(GST_VIDEO_OVERLAY(playbin), x, y, width, height);
 
     background = background.subtracted(QRegion(x, y, width, height));
-    QVector<QRect> qrects = background.rects();
-    rects.resize(qrects.size());
-    for(int i=0; i < qrects.size(); ++i){
-        XRectangle& r = rects[i];
-        QRect& qr = qrects[i];
-        r.x = qr.x();
-        r.y = qr.y();
-        r.width = qr.width();
-        r.height = qr.height();
+    rects.clear();
+    rects.reserve(background.rectCount());
+    for(auto& qrect : background){
+        XRectangle rect;
+        rect.x = qrect.x();
+        rect.y = qrect.y();
+        rect.width = qrect.width();
+        rect.height = qrect.height();
+        rects.push_back(rect);
     }
 }
 

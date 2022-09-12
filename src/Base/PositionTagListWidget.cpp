@@ -283,7 +283,7 @@ bool TagGroupModel::dropMimeData
         if(selectedRows.isEmpty()){
             return false;
         }
-        qSort(selectedRows);
+        std::sort(selectedRows.begin(), selectedRows.end());
 
         int destIndex = row;
         int prevDestIndex = -1;

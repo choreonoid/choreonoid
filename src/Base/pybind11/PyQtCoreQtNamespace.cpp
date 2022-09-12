@@ -80,14 +80,17 @@ void exportPyQtCoreQtNamespace(py::module m)
         .value("FontRole", Qt::FontRole)
         .value("TextAlignmentRole", Qt::TextAlignmentRole)
         .value("BackgroundRole", Qt::BackgroundRole)
-        .value("BackgroundColorRole", Qt::BackgroundColorRole)
         .value("ForegroundRole", Qt::ForegroundRole)
-        .value("TextColorRole", Qt::TextColorRole)
         .value("CheckStateRole", Qt::CheckStateRole)
         .value("InitialSortOrderRole", Qt::InitialSortOrderRole)
         .value("AccessibleTextRole", Qt::AccessibleTextRole)
         .value("AccessibleDescriptionRole", Qt::AccessibleDescriptionRole)
         .value("UserRole", Qt::UserRole)
+
+        // deprecated
+        //.value("BackgroundColorRole", Qt::BackgroundColorRole)
+        //.value("TextColorRole", Qt::TextColorRole)
+        
         .export_values();
     
     py::implicitly_convertible<Qt::ItemFlag, QFlags<Qt::ItemFlag>>();

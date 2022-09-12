@@ -1543,7 +1543,7 @@ void SceneWidget::Impl::keyPressEvent(QKeyEvent* event)
         case Qt::Key_Space:
         {
             updateLastClickedPoint();
-            latestEvent.button_ = Qt::MidButton;
+            latestEvent.button_ = Qt::MiddleButton;
             startViewChange();
             handled = true;
             break;
@@ -1891,12 +1891,19 @@ void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
         cout << "angleDelta().y(): " << event->angleDelta().y() << endl;
     }
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+    const auto& pos = event->position();
+    updateLatestEvent(pos.x(), pos.y(), event->modifiers());
+#else
     updateLatestEvent(event->x(), event->y(), event->modifiers());
+#endif
+
     latestEvent.type_ = SceneWidgetEvent::Scroll;
     updateLatestEventPath();
     updateLastClickedPoint();
 
-    const double s = event->angleDelta().y() / 8.0 / 15.0;
+    const int dy = event->angleDelta().y();
+    const double s = dy / 8.0 / 15.0;
     latestEvent.wheelSteps_ = s;
 
     bool handled = false;
@@ -1913,7 +1920,7 @@ void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
     }    
 
     if(!handled && hasActiveInteractiveCamera()){
-        if(event->orientation() == Qt::Vertical){
+        if(dy != 0){
             zoomView(0.25 * s);
         }
     }
@@ -1998,7 +2005,7 @@ void SceneWidget::Impl::startViewChange()
             startViewRotation();
             break;
             
-        case Qt::MidButton:
+        case Qt::MiddleButton:
             if(latestEvent.modifiers() & Qt::ControlModifier){
                 startViewZoom();
             } else {

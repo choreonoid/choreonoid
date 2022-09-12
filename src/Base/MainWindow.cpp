@@ -16,7 +16,7 @@
 #include <QResizeEvent>
 #include <QWindowStateChangeEvent>
 #include <QApplication>
-#include <QDesktopWidget>
+#include <QScreen>
 #include <QMenuBar>
 #include <iostream>
 #include "gettext.h"
@@ -31,12 +31,15 @@ const bool TRACE_FUNCTIONS = false;
 MainWindow* mainWindow = nullptr;
 bool isLayoutSwitcherAvailable = true;
 
-QSize getAvailableScreenSize() {
-    return QApplication::desktop()->availableGeometry().size();
+QSize getAvailableScreenSize()
+{
+    return QGuiApplication::primaryScreen()->availableSize();
 }
+
 #ifdef Q_OS_WIN32
-QSize getScreenSize() {
-    return QApplication::desktop()->screenGeometry().size();
+QSize getScreenSize()
+{
+    return QGuiApplication::primaryScreen()->size();
 }
 #endif
 

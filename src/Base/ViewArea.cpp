@@ -16,8 +16,13 @@
 #include <QTabBar>
 #include <QRubberBand>
 #include <QMouseEvent>
-#include <QDesktopWidget>
+#include <QScreen>
 #include <QLabel>
+
+#if (QT_VERSION < QT_VERSION_CHECK(5, 10, 0))
+#include <QDesktopWidget>
+#endif
+
 #include <memory>
 #include <bitset>
 #include "gettext.h"
@@ -1002,9 +1007,8 @@ void ViewArea::restoreAllViewAreaLayouts(ArchivePtr archive)
     if(archive){
         Listing& layouts = *archive->findListing("viewAreas");
         if(layouts.isValid()){
-            QDesktopWidget* desktop = QApplication::desktop();
-            const int numScreens = desktop->screenCount();
-            
+            auto screens = QGuiApplication::screens();
+            auto primaryScreen = QGuiApplication::primaryScreen();
             for(int i=0; i < layouts.size(); ++i){
                 Mapping& layout = *layouts[i].toMapping();
                 Archive* contents = dynamic_cast<Archive*>(layout.get("contents").toMapping());
@@ -1026,14 +1030,14 @@ void ViewArea::restoreAllViewAreaLayouts(ArchivePtr archive)
                         } else {
                             const Listing& geo = *layout.findListing("geometry");
                             if(geo.isValid() && geo.size() == 4){
-                                // -1 means the primary screen
-                                int screen = -1;
-                                if(layout.read("screen", screen)){
-                                    if(screen >= numScreens){
-                                        screen = -1;
+                                QScreen* screen = primaryScreen;
+                                int screenNumber;
+                                if(layout.read("screen", screenNumber)){
+                                    if(screenNumber >= 0 && screenNumber < screens.size()){
+                                        screen = screens[screenNumber];
                                     }
                                 }
-                                const QRect s = desktop->screenGeometry(screen);
+                                const QRect s = screen->geometry();
                                 const QRect r(geo[0].toInt(), geo[1].toInt(), geo[2].toInt(), geo[3].toInt());
                                 viewWindow->setGeometry(r.translated(s.x(), s.y()));
                             }
@@ -1273,9 +1277,6 @@ void ViewArea::storeLayout(ArchivePtr archive)
 
 void ViewArea::Impl::storeLayout(Archive* archive)
 {
-    QDesktopWidget* desktop = QApplication::desktop();
-    const int primaryScreen = desktop->primaryScreen();
-    
     try {
         MappingPtr state = storeSplitterState(topSplitter, archive);
         if(state){
@@ -1283,17 +1284,45 @@ void ViewArea::Impl::storeLayout(Archive* archive)
                 archive->write("type", "embedded");
             } else {
                 archive->write("type", "independent");
-                const int screen = desktop->screenNumber(self->pos());
-                if(screen != primaryScreen){
-                    archive->write("screen", screen);
+
+                QScreen* screen = nullptr;
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+                screen = QGuiApplication::screenAt(self->pos());
+                if(screen && screen != QGuiApplication::primaryScreen()){
+                    // Currently the index of the screen array is used as the identifier of the screen,
+                    // but it may be better to use Screen::name() or Screen::serialNumber() as the identifier.
+                    auto screens = QGuiApplication::screens();
+                    for(int i=0; i < screens.size(); ++i){
+                        if(screen == screens[i]){
+                            archive->write("screen", i);
+                            break;
+                        }
+                    }
                 }
-                const QRect s = desktop->screenGeometry(screen);
-                const QRect r = self->geometry().translated(-s.x(), -s.y());
-                Listing* geometry = archive->createFlowStyleListing("geometry");
-                geometry->append(r.x());
-                geometry->append(r.y());
-                geometry->append(r.width());
-                geometry->append(r.height());
+#else
+                auto screenNumber = QApplication::desktop()->screenNumber(self->pos());
+                if(screenNumber >= 0){
+                    auto screens = QGuiApplication::screens();
+                    if(screenNumber < screens.size()){
+                        screen = screens[screenNumber];
+                        if(screen != QGuiApplication::primaryScreen()){
+                            archive->write("screen", screenNumber);
+                        }
+                    }
+                }
+#endif
+
+                if(screen){
+                    const QRect s = screen->geometry();
+                    const QRect r = self->geometry().translated(-s.x(), -s.y());
+                    Listing* geometry = archive->createFlowStyleListing("geometry");
+                    geometry->append(r.x());
+                    geometry->append(r.y());
+                    geometry->append(r.width());
+                    geometry->append(r.height());
+                }
+                
                 if(self->isFullScreen()){
                     archive->write("fullScreen", true);
                     archive->write("maximized", isMaximizedBeforeFullScreen);

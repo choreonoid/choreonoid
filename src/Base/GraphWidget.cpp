@@ -1089,7 +1089,7 @@ bool GraphWidgetImpl::onScreenMouseButtonPressEvent(QMouseEvent* event)
             setCursorPositionWithScreenX(pressedScreenX, true, false);
         }
             
-    } else if(event->button() == Qt::MidButton){
+    } else if(event->button() == Qt::MiddleButton){
         dragState = DRAG_ZOOM;
         dragOrgScaleX = scaleX;
         dragOrgScaleY = scaleY;
@@ -1198,7 +1198,7 @@ bool GraphWidgetImpl::onScreenKeyPressEvent(QKeyEvent* event)
         {
             QMouseEvent mouseEvent(QEvent::MouseButtonPress,
                                    QPoint(currentScreenX, currentScreenY),
-                                   Qt::MidButton, Qt::MidButton,
+                                   Qt::MiddleButton, Qt::MiddleButton,
                                    event->modifiers());
             unprocessed = !onScreenMouseButtonPressEvent(&mouseEvent);
         }
@@ -1230,7 +1230,7 @@ bool GraphWidgetImpl::onScreenKeyReleaseEvent(QKeyEvent* event)
     {
         QMouseEvent mouseEvent(QEvent::MouseButtonPress,
                                QPoint(currentScreenX, currentScreenY),
-                               Qt::MidButton, Qt::MidButton,
+                               Qt::MiddleButton, Qt::MiddleButton,
                                event->modifiers());
         unprocessed = !onScreenMouseButtonReleaseEvent(&mouseEvent);
     }

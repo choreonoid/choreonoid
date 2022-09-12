@@ -251,7 +251,10 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
 
     QSurfaceFormat::setDefaultFormat(glFormat);
 
+#if (QT_VERSION < QT_VERSION_CHECK(5, 6, 0))
     QCoreApplication::setAttribute(Qt::AA_X11InitThreads);
+#endif
+    
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
     /*

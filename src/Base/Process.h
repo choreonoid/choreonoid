@@ -33,7 +33,6 @@ public:
     }
 
     void start(const QString& program, const QStringList& arguments, OpenMode mode = ReadWrite);
-    void start(const QString& program, OpenMode mode = ReadWrite);
 
 private Q_SLOTS:
     void onReadyReadStandardOutput();

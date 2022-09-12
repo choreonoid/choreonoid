@@ -7,6 +7,7 @@
 #include "PyQtSignal.h"
 #include <QObject>
 #include <QTimer>
+#include <QElapsedTimer>
 #include <QTime>
 #include <QVariant>
 #include <QMargins>
@@ -73,15 +74,33 @@ PYBIND11_MODULE(QtCore, m)
         .def_property_readonly("timeout", [](QTimer* self){ return TimerSignal(self, &QTimer::timeout); })
         ;
 
+    py::class_<QElapsedTimer>(m, "QElapsedTimer")
+        .def(py::init<>())
+        .def("elapsed", &QElapsedTimer::elapsed)
+        .def("hasExpired", &QElapsedTimer::hasExpired)
+        .def("invalidate", &QElapsedTimer::invalidate)
+        .def("isValid", &QElapsedTimer::isValid)
+        .def("msecsSinceReference", &QElapsedTimer::msecsSinceReference)
+        .def("msecsTo", &QElapsedTimer::msecsTo)
+        .def("nsecsElapsed", &QElapsedTimer::nsecsElapsed)
+        .def("restart", &QElapsedTimer::start)
+        .def("secsTo", &QElapsedTimer::secsTo)
+        .def("start", &QElapsedTimer::start)
+        .def_static("clockType", &QElapsedTimer::clockType)
+        .def_static("isMonotonic", &QElapsedTimer::isMonotonic)
+        ;
+
     py::class_<QTime>(m, "QTime")
         .def(py::init<>())
-        .def("elapsed", &QTime::elapsed)
         .def("hour", &QTime::hour)
         .def("minute", &QTime::minute)
         .def("second", &QTime::second)
-        .def("start", &QTime::start)
-        ;
 
+        // deprecated
+        //.def("elapsed", &QTime::elapsed)
+        //.def("start", &QTime::start)
+        ;
+    
     py::class_<QVariant>(m, "QVariant")
         .def(py::init<>())
         .def(py::init<int>())

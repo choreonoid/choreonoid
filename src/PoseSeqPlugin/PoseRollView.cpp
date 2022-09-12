@@ -1188,7 +1188,7 @@ bool PoseRollViewImpl::onScreenMouseButtonPressEvent(QMouseEvent* event)
             } else {
                 pickPoseOnButtonPress(event->modifiers() & Qt::ControlModifier);
             }
-        } else if(event->button() == Qt::MidButton){
+        } else if(event->button() == Qt::MiddleButton){
             dragMode = DRAG_SCALING;
             dragOrgScale = timeToScreenX;
         } else if(event->button() == Qt::RightButton){
@@ -1350,7 +1350,7 @@ bool PoseRollViewImpl::onScreenKeyPressEvent(QKeyEvent* event)
     if(event->key() == Qt::Key_Space){
         QMouseEvent mouseEvent(QEvent::MouseButtonPress,
                                QPoint(pointerX, pointerY),
-                               Qt::MidButton, Qt::MidButton,
+                               Qt::MiddleButton, Qt::MiddleButton,
                                event->modifiers());
         return onScreenMouseButtonPressEvent(&mouseEvent);
     }
@@ -1418,7 +1418,7 @@ bool PoseRollViewImpl::onScreenKeyReleaseEvent(QKeyEvent* event)
     if(event->key() == Qt::Key_Space){
         QMouseEvent mouseEvent(QEvent::MouseButtonPress,
                                QPoint(pointerX, pointerY),
-                               Qt::MidButton, Qt::MidButton,
+                               Qt::MiddleButton, Qt::MiddleButton,
                                event->modifiers());
         return onScreenMouseButtonReleaseEvent(&mouseEvent);
     }
