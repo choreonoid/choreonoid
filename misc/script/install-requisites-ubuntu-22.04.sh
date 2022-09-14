@@ -8,7 +8,6 @@ libboost-dev \
 libboost-system-dev \
 libboost-program-options-dev \
 libboost-iostreams-dev \
-libboost-filesystem-dev \
 libeigen3-dev \
 uuid-dev \
 libxfixes-dev \
