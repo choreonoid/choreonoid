@@ -6,6 +6,7 @@
 #define CNOID_BASE_ROOT_ITEM_H
 
 #include "Item.h"
+#include "ItemList.h"
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -47,7 +48,8 @@ public:
 
     Item* currentItem();
     
-    template <class ItemType> ItemList<ItemType> selectedItems() {
+    template <class ItemType>
+    ItemList<ItemType> selectedItems() {
         return getSelectedItems();
     }
 
@@ -81,7 +83,7 @@ public:
     }
 
     const ItemList<>& checkedItems() {
-        return getSelectedItems();
+        return getCheckedItems(PrimaryCheck);
     }
 
     SignalProxy<void(Item* item, bool on)> sigCheckToggled(int checkId = PrimaryCheck);
