@@ -108,7 +108,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox->addWidget(new QLabel(_("Directory")));
     directoryEntry = new LineEdit(this);
     widgetConnections.add(
-        directoryEntry->sigTextEdited().connect(
+        directoryEntry->sigTextChanged().connect(
             [this](const QString& directory){
                 auto block = recorderConfConnection.scopedBlock();
                 recorder_->setOutputDirectory(directory.toStdString());
@@ -131,7 +131,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox->addWidget(new QLabel(_("File base name")));
     baseNameEntry = new LineEdit(this);
     widgetConnections.add(
-        baseNameEntry->sigTextEdited().connect(
+        baseNameEntry->sigTextChanged().connect(
             [this](const QString& baseName){
                 auto block = recorderConfConnection.scopedBlock();
                 recorder_->setFileBaseName(baseName.toStdString());
@@ -409,8 +409,13 @@ void MovieRecorderDialog::updateWidgetsWithRecorderConfigurations()
         recorder_->setCurrentEncoder(validEncoderIndex);
     }
 
+    directoryEntry->blockSignals(true);
     directoryEntry->setText(recorder_->outputDirectory().c_str());
+    directoryEntry->blockSignals(false);
+
+    baseNameEntry->blockSignals(true);
     baseNameEntry->setText(recorder_->fileBaseName().c_str());
+    baseNameEntry->blockSignals(false);
 
     fpsSpin->setValue(recorder_->frameRate());
 
