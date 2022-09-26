@@ -23,13 +23,10 @@
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using fmt::format;
 
 namespace {
-
-const bool TRACE_FUNCTIONS = false;
 
 inline double degree(double rad) { return (180.0 * rad / 3.14159265358979); }
 inline double radian(double deg) { return (3.14159265358979 * deg / 180.0); }
@@ -77,8 +74,8 @@ public:
 
         setWindowTitle(_("Link Position Adjustment"));
 
-        QVBoxLayout* vbox = new QVBoxLayout();
-        QHBoxLayout* hbox = new QHBoxLayout();
+        auto vbox = new QVBoxLayout;
+        auto hbox = new QHBoxLayout;
 
         vbox->addLayout(hbox);
 
@@ -88,7 +85,7 @@ public:
         relativeRadio.setChecked(true);
         hbox->addWidget(&relativeRadio);
 
-        hbox = new QHBoxLayout();
+        hbox = new QHBoxLayout;
         vbox->addLayout(hbox);
 
         const char* axisLabel[] = { "X", "Y", "Z" };
@@ -103,7 +100,7 @@ public:
             hbox->addWidget(&positionSpin[i]);
         }
 
-        QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok);
+        auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok);
         connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
         vbox->addWidget(buttonBox);
 
@@ -131,8 +128,8 @@ public:
 
         setWindowTitle(_("Yaw Orientation Rotation"));
 
-        QVBoxLayout* vbox = new QVBoxLayout();
-        QHBoxLayout* hbox = new QHBoxLayout();
+        auto vbox = new QVBoxLayout;
+        auto hbox = new QHBoxLayout;
         vbox->addLayout(hbox);
 
         hbox->addWidget(new QLabel(_("Center:")));
@@ -146,7 +143,7 @@ public:
             hbox->addWidget(&centerPosSpins[i]);
         }
 
-        hbox = new QHBoxLayout();
+        hbox = new QHBoxLayout;
         vbox->addLayout(hbox);
 
         hbox->addWidget(new QLabel(_("Angle")));
@@ -156,7 +153,7 @@ public:
         hbox->addWidget(&angleSpin);
         hbox->addWidget(new QLabel(_("[deg]")));
 
-        QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok);
+        auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok);
         connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
         vbox->addWidget(buttonBox);
             
@@ -187,9 +184,9 @@ public:
 
         setWindowTitle(_("Select Specified Key Poses"));
 
-        QVBoxLayout* vbox = new QVBoxLayout();
+        auto vbox = new QVBoxLayout;
 
-        QHBoxLayout* hbox = new QHBoxLayout();
+        auto hbox = new QHBoxLayout;
         vbox->addLayout(hbox);
 
         hbox->addWidget(new QLabel(_("Start")));
@@ -206,7 +203,7 @@ public:
         hbox->addWidget(&endTimeSpin);
         hbox->addWidget(new QLabel(_("[s]")));
             
-        hbox = new QHBoxLayout();
+        hbox = new QHBoxLayout;
         vbox->addLayout(hbox);
 
         allPartRadio.setText(_("all parts"));
@@ -217,7 +214,7 @@ public:
         justSelectedPartRadio.setText(_("just selected parts"));
         hbox->addWidget(&justSelectedPartRadio);
 
-        QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok);
+        auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok);
         connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
         vbox->addWidget(buttonBox);
             
@@ -241,50 +238,50 @@ PoseSeqViewBase::PoseSeqViewBase(View* view)
       textForEmptyName("----------"),
       menuManager(&popupMenu)
 {
-    view->sigActivated().connect(std::bind(&PoseSeqViewBase::onViewActivated, this));
-    view->sigDeactivated().connect(std::bind(&PoseSeqViewBase::onViewDeactivated, this));
+    view->sigActivated().connect([this](){ onViewActivated(); });
+    view->sigDeactivated().connect([this](){ onViewDeactivated(); });
 
     currentTime = 0.0;
 
     timeBar = TimeBar::instance();
 
-    BodyMotionGenerationBar* generationBar = BodyMotionGenerationBar::instance();
+    auto generationBar = BodyMotionGenerationBar::instance();
     timeScale = generationBar->timeScaleRatio();
     staticConnections.add(
         generationBar->sigInterpolationParametersChanged().connect(
-            std::bind(&PoseSeqViewBase::onInterpolationParametersChanged, this)));
+            [this](){ onInterpolationParametersChanged(); }));
 
     setupOperationParts();
     setupLinkTreeWidget();
 
     staticConnections.add(
         RootItem::instance()->sigSelectedItemsChanged().connect(
-            std::bind(&PoseSeqViewBase::onSelectedItemsChanged, this, _1)));
+            [this](const ItemList<>& selectedItems){ onSelectedItemsChanged(selectedItems); }));
 
     isSelectedPoseMoving = false;
 
-    copiedPoses = new PoseSeq();
+    copiedPoses = new PoseSeq;
     
     poseSelectionDialog = new PoseSelectionDialog(view);
     poseSelectionDialog->sigAccepted().connect(
-        std::bind(&PoseSeqViewBase::onPoseSelectionDialogAccepted, this));
+        [this](){ onPoseSelectionDialogAccepted(); });
 
     linkPositionAdjustmentDialog = new LinkPositionAdjustmentDialog(view);
     linkPositionAdjustmentDialog->sigAccepted().connect(
-        std::bind(&PoseSeqViewBase::onLinkPositionAdjustmentDialogAccepted, this));
+        [this](){ onLinkPositionAdjustmentDialogAccepted(); });
 
     yawOrientationRotationDialog = new YawOrientationRotationDialog(view);
     yawOrientationRotationDialog->sigAccepted().connect(
-        std::bind(&PoseSeqViewBase::onYawOrientationRotationDialogAccepted, this));
+        [this](){ onYawOrientationRotationDialogAccepted(); });
 
-    menuManager.addItem(_("Select all poses after current position"))->sigTriggered().connect
-        (std::bind(&PoseSeqViewBase::selectAllPosesAfterCurrentPosition, this));
-    menuManager.addItem(_("Select all poses before current position"))->sigTriggered().connect
-        (std::bind(&PoseSeqViewBase::selectAllPosesBeforeCurrentPosition, this));
-    menuManager.addItem(_("Adjust step positions"))->sigTriggered().connect
-        (std::bind(&PoseSeqViewBase::onAdjustStepPositionsActivated, this));
+    menuManager.addItem(_("Select all poses after current position"))->sigTriggered().connect(
+        [this](){ selectAllPosesAfterCurrentPosition(); });
+    menuManager.addItem(_("Select all poses before current position"))->sigTriggered().connect(
+        [this](){ selectAllPosesBeforeCurrentPosition(); });
+    menuManager.addItem(_("Adjust step positions"))->sigTriggered().connect(
+        [this](){ onAdjustStepPositionsActivated(); });
     menuManager.addItem(_("Count selected key poses"))->sigTriggered().connect(
-        std::bind(&PoseSeqViewBase::countSelectedKeyPoses, this));
+        [this](){ countSelectedKeyPoses(); });
 }
         
 
@@ -299,13 +296,10 @@ PoseSeqViewBase::~PoseSeqViewBase()
 
 void PoseSeqViewBase::onViewActivated()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "PoseSeqViewBase::onViewActivated()" << endl;
-    }
     if(timeSyncCheck.isChecked()){
         if(!connectionOfTimeChanged.connected()){
             connectionOfTimeChanged = timeBar->sigTimeChanged().connect(
-                std::bind(&PoseSeqViewBase::onTimeChanged, this, _1));
+                [this](double time){ return onTimeChanged(time); });
         }
         onTimeChanged(timeBar->time());
     }
@@ -314,9 +308,6 @@ void PoseSeqViewBase::onViewActivated()
 
 void PoseSeqViewBase::onViewDeactivated()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "PoseSeqViewBase::onViewDeactivated()" << endl;
-    }
     connectionOfTimeChanged.disconnect();
 }
 
@@ -326,7 +317,7 @@ void PoseSeqViewBase::onTimeSyncCheckToggled()
     if(timeSyncCheck.isChecked()){
         if(!connectionOfTimeChanged.connected()){
             connectionOfTimeChanged = timeBar->sigTimeChanged().connect(
-                std::bind(&PoseSeqViewBase::onTimeChanged, this, _1));
+                [this](double time){ return onTimeChanged(time); });
         }
     } else {
         connectionOfTimeChanged.disconnect();
@@ -343,7 +334,7 @@ void PoseSeqViewBase::setupOperationParts()
     insertPoseButton.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     insertPoseButton.setToolTip(_("Insert a new pose at the current time position"));
     insertPoseButton.sigClicked().connect(
-        std::bind(&PoseSeqViewBase::onInsertPoseButtonClicked, this));
+        [this](){ onInsertPoseButtonClicked(); });
 
     transitionTimeSpin.setToolTip(_("Transition time of a newly inserted pose"));
     transitionTimeSpin.setAlignment(Qt::AlignCenter);
@@ -351,13 +342,13 @@ void PoseSeqViewBase::setupOperationParts()
     transitionTimeSpin.setRange(0.0, 9.999);
     transitionTimeSpin.setSingleStep(0.005);
     transitionTimeSpin.sigEditingFinished().connect(
-        std::bind(&PoseSeqViewBase::onInsertPoseButtonClicked, this));
+        [this](){ onInsertPoseButtonClicked(); });
 
     updateButton.setText(_("Update"));
     updateButton.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     updateButton.setToolTip(_("Update the selected pose with the current robot state"));
     updateButton.sigClicked().connect(
-        std::bind(&PoseSeqViewBase::onUpdateButtonClicked, this));
+        [this](){ onUpdateButtonClicked(); });
 
     updateAllToggle.setText(_("All"));
     updateAllToggle.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
@@ -371,12 +362,12 @@ void PoseSeqViewBase::setupOperationParts()
     deleteButton.setText(_("Delete"));
     deleteButton.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     deleteButton.sigClicked().connect(
-        std::bind(&PoseSeqViewBase::onDeleteButtonClicked, this));
+        [this](){ onDeleteButtonClicked(); });
     
     timeSyncCheck.setText(_("Time sync"));
     timeSyncCheck.setChecked(true);
     timeSyncCheck.sigToggled().connect(
-        std::bind(&PoseSeqViewBase::onTimeSyncCheckToggled, this));
+        [this](bool){ onTimeSyncCheckToggled(); });
 }
 
         
@@ -386,10 +377,10 @@ void PoseSeqViewBase::setupLinkTreeWidget()
 
     //linkTreeWidget->setStyleSheet("QTreeView::item { border-right: 1px solid black }");
     
-    QHeaderView* header = linkTreeWidget->header();
+    auto header = linkTreeWidget->header();
     header->hideSection(linkTreeWidget->numberColumn());
 
-    poseForDefaultStateSetting = new Pose();
+    poseForDefaultStateSetting = new Pose;
     
     baseLinkColumn = linkTreeWidget->addColumn("BL");
     linkTreeWidget->moveVisualColumnIndex(baseLinkColumn, 0);
@@ -403,7 +394,7 @@ void PoseSeqViewBase::setupLinkTreeWidget()
     linkTreeWidget->addCustomRow(zmpRow);
 
     linkTreeWidget->sigUpdateRequest().connect(
-        std::bind(&PoseSeqViewBase::onLinkTreeUpdateRequest, this, _1));
+        [this](bool isInitialCreation){ onLinkTreeUpdateRequest(isInitialCreation); });
 
     linkTreeWidget->setFrameShape(QFrame::NoFrame);
     linkTreeWidget->setCacheEnabled(true);
@@ -411,24 +402,24 @@ void PoseSeqViewBase::setupLinkTreeWidget()
 
     MenuManager& mm = linkTreeWidget->popupMenuManager();
     mm.addItem(_("Select key poses having the selected links"))->sigTriggered().connect(
-        std::bind(&PoseSeqViewBase::selectPosesHavingSelectedLinks, this));
+        [this](){ selectPosesHavingSelectedLinks(); });
     mm.addItem(_("Select key poses just having the selected links"))->sigTriggered().connect(
-        std::bind(&PoseSeqViewBase::selectPosesJustHavingSelectedLinks, this));
+        [this](){ selectPosesJustHavingSelectedLinks(); });
     mm.addItem(_("Remove the selected parts from the selected poses"))->sigTriggered().connect(
-        std::bind(&PoseSeqViewBase::removeSelectedPartsFromKeyPoses, this));
+        [this](){ removeSelectedPartsFromKeyPoses(); });
 }
 
 
 bool PoseSeqViewBase::isChecked(LinkDeviceTreeItem* item, int column)
 {
-    QAbstractButton* check = dynamic_cast<QAbstractButton*>(linkTreeWidget->alignedItemWidget(item, column));
+    auto check = dynamic_cast<QAbstractButton*>(linkTreeWidget->alignedItemWidget(item, column));
     return check ? check->isChecked() : Qt::Unchecked;
 }
 
 
 void PoseSeqViewBase::setChecked(LinkDeviceTreeItem* item, int column, bool checked)
 {
-    QAbstractButton* check = dynamic_cast<QAbstractButton*>(linkTreeWidget->alignedItemWidget(item, column));
+    auto check = dynamic_cast<QAbstractButton*>(linkTreeWidget->alignedItemWidget(item, column));
     if(check){
         check->setChecked(checked);
     }
@@ -437,7 +428,7 @@ void PoseSeqViewBase::setChecked(LinkDeviceTreeItem* item, int column, bool chec
 
 void PoseSeqViewBase::setCheckState(LinkDeviceTreeItem* item, int column, Qt::CheckState state)
 {
-    QCheckBox* check = dynamic_cast<QCheckBox*>(linkTreeWidget->alignedItemWidget(item, column));
+    auto check = dynamic_cast<QCheckBox*>(linkTreeWidget->alignedItemWidget(item, column));
     if(check){
         check->setCheckState(state);
     }
@@ -447,7 +438,7 @@ void PoseSeqViewBase::setCheckState(LinkDeviceTreeItem* item, int column, Qt::Ch
 void PoseSeqViewBase::onLinkTreeUpdateRequest(bool isInitialCreation)
 {
     if(!linkTreeWidget->bodyItem()){
-        setCurrentPoseSeqItem(0);
+        setCurrentPoseSeqItem(nullptr);
     } else {
         if(isInitialCreation){
             initializeLinkTree();
@@ -466,15 +457,14 @@ void PoseSeqViewBase::initializeLinkTree()
     }
     baseLinkRadioGroup = new ButtonGroup(linkTreeWidget);
     baseLinkRadioGroup->sigButtonClicked().connect(
-        std::bind(&PoseSeqViewBase::onBaseLinkRadioClicked, this));
+        [this](int){ onBaseLinkRadioClicked(); });
 
     initializeLinkTreeIkLinkColumn();
 
-    Link* rootLink = body->rootLink();
+    auto rootLink = body->rootLink();
     poseForDefaultStateSetting->setBaseLink(rootLink->index(), rootLink->p(), rootLink->R());
 
     initializeLinkTreeTraverse(linkTreeWidget->invisibleRootItem());
-
 }
 
 
@@ -489,13 +479,11 @@ void PoseSeqViewBase::initializeLinkTreeIkLinkColumn()
         const Listing& possibleIkLinks = *info.findListing("possibleIkInterpolationLinks");
         if(possibleIkLinks.isValid()){
             for(int i=0; i < possibleIkLinks.size(); ++i){
-                Link* link = body->link(possibleIkLinks[i]);
-                if(link){
+                if(auto link = body->link(possibleIkLinks[i])){
                     possibleIkLinkFlag[link->index()] = true;
-                    LinkDeviceTreeItem* item = linkTreeWidget->itemOfLink(link->index());
-                    if(item){
-                        ColumnCheckBox* checkBox = new ColumnCheckBox(
-                            std::bind(&PoseSeqViewBase::onIkPartCheckClicked, this, item, _1));
+                    if(auto item = linkTreeWidget->itemOfLink(link->index())){
+                        auto checkBox = new ColumnCheckBox(
+                            [this, item](Qt::CheckState state){ onIkPartCheckClicked(item, state); });
                         linkTreeWidget->setAlignedItemWidget(item, ikPartColumn, checkBox);
                     }
                 }
@@ -509,8 +497,7 @@ void PoseSeqViewBase::initializeLinkTreeIkLinkColumn()
     const Listing& defaultIkLinks = *info.findListing("defaultIkInterpolationLinks");
     if(defaultIkLinks.isValid()){
         for(int i=0; i < defaultIkLinks.size(); ++i){
-            Link* link = body->link(defaultIkLinks[i]);
-            if(link){
+            if(auto link = body->link(defaultIkLinks[i])){
                 poseForDefaultStateSetting->addIkLink(link->index());
             }
         }
@@ -522,7 +509,7 @@ void PoseSeqViewBase::initializeLinkTreeTraverse(QTreeWidgetItem* parentItem)
 {
     int n = parentItem->childCount();
     for(int i=0; i < n; ++i){
-        LinkDeviceTreeItem* item = dynamic_cast<LinkDeviceTreeItem*>(parentItem->child(i));
+        auto item = dynamic_cast<LinkDeviceTreeItem*>(parentItem->child(i));
         if(!item){
             continue;
         }
@@ -530,8 +517,8 @@ void PoseSeqViewBase::initializeLinkTreeTraverse(QTreeWidgetItem* parentItem)
 
         if(!link || link->parent()){
 
-            ColumnCheckBox* checkBox = new ColumnCheckBox(
-                std::bind(&PoseSeqViewBase::onValidPartCheckClicked, this, item, _1));
+            auto checkBox = new ColumnCheckBox(
+                [this, item](Qt::CheckState state){ onValidPartCheckClicked(item, state); });
             
             if(link && link->jointId() >= 0){
                 poseForDefaultStateSetting->setJointPosition(link->jointId(), 0.0);
@@ -541,13 +528,13 @@ void PoseSeqViewBase::initializeLinkTreeTraverse(QTreeWidgetItem* parentItem)
             linkTreeWidget->setAlignedItemWidget(item, validPartColumn, checkBox);
         }
         if(link){
-            RadioButton* radioButton = new RadioButton();
+            auto radioButton = new RadioButton;
             baseLinkRadioGroup->addButton(radioButton, link->index());
             linkTreeWidget->setAlignedItemWidget(item, baseLinkColumn, radioButton);
         }
 
-        ColumnCheckBox* spCheck = new ColumnCheckBox(
-            std::bind(&PoseSeqViewBase::onStationaryPointCheckClicked, this, item, _1));
+        auto spCheck = new ColumnCheckBox(
+            [this, item](Qt::CheckState state){ onStationaryPointCheckClicked(item, state); });
         linkTreeWidget->setAlignedItemWidget(item, stationaryPointColumn, spCheck);
         
         initializeLinkTreeTraverse(item);
@@ -555,7 +542,7 @@ void PoseSeqViewBase::initializeLinkTreeTraverse(QTreeWidgetItem* parentItem)
 }
 
 
-void PoseSeqViewBase::togglePoseAttribute(std::function<bool(PosePtr& pose)> toggleFunction)
+void PoseSeqViewBase::togglePoseAttribute(std::function<bool(Pose* pose)> toggleFunction)
 {
     if(selectedPoseIters.empty()){
         if(toggleFunction(poseForDefaultStateSetting)){
@@ -565,7 +552,7 @@ void PoseSeqViewBase::togglePoseAttribute(std::function<bool(PosePtr& pose)> tog
     } else {
         currentPoseSeqItem->beginEditing();
         bool modified = false;
-        for(PoseIterSet::iterator p = selectedPoseIters.begin(); p != selectedPoseIters.end(); ++p){
+        for(auto p = selectedPoseIters.begin(); p != selectedPoseIters.end(); ++p){
             PosePtr pose = (*p)->get<Pose>();
             if(pose){
                 seq->beginPoseModification(*p);
@@ -587,22 +574,14 @@ void PoseSeqViewBase::togglePoseAttribute(std::function<bool(PosePtr& pose)> tog
 
 void PoseSeqViewBase::onBaseLinkRadioClicked()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "PoseSeqViewBase::onBaseLinkRadioClicked()" << endl;
-    }
-
     int linkIndex = baseLinkRadioGroup->checkedId();
-    Link* link = (linkIndex >= 0) ? body->link(linkIndex) : 0;
-    togglePoseAttribute(std::bind(&PoseSeqViewBase::setBaseLink, this, _1, link));
+    Link* link = (linkIndex >= 0) ? body->link(linkIndex) : nullptr;
+    togglePoseAttribute([this, link](Pose* pose){ return setBaseLink(pose, link); });
 }
 
 
-bool PoseSeqViewBase::setBaseLink(PosePtr& pose, Link* link)
+bool PoseSeqViewBase::setBaseLink(Pose* pose, Link* link)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "PoseSeqViewBase::toggleBaseLink()" << endl;
-    }
-    
     bool modified = false;
     if(link){
         if(pose->baseLinkIndex() != link->index()){
@@ -624,19 +603,24 @@ void PoseSeqViewBase::onValidPartCheckClicked(LinkDeviceTreeItem* item, Qt::Chec
     bool on = ((checkState == Qt::Unchecked) || (checkState == Qt::PartiallyChecked));
     
     if(item == zmpRow){
-        togglePoseAttribute(std::bind(&PoseSeqViewBase::toggleZmp, this, _1, on));
+        togglePoseAttribute([this, on](Pose* pose){ return toggleZmp(pose, on); });
     } else {
         if(auto link = item->link()){
             bool isIkPartChecked = isChecked(item, ikPartColumn);
-            togglePoseAttribute(std::bind(&PoseSeqViewBase::toggleLink, this, _1, item, link, on, isIkPartChecked));
+            togglePoseAttribute(
+                [this, item, link, on, isIkPartChecked](Pose* pose){
+                    return toggleLink(pose, item, link, on, isIkPartChecked); });
         } else {
-            togglePoseAttribute(std::bind(&PoseSeqViewBase::togglePart, this, _1, item, on));
+            togglePoseAttribute(
+                [this, item, on](Pose* pose){
+                    return togglePart(pose, item, on);
+                });
         }
     }
 }
 
 
-bool PoseSeqViewBase::toggleZmp(PosePtr& pose, bool on)
+bool PoseSeqViewBase::toggleZmp(Pose* pose, bool on)
 {
     bool modified = false;
     if(on){
@@ -656,7 +640,7 @@ bool PoseSeqViewBase::toggleZmp(PosePtr& pose, bool on)
 
 
 
-bool PoseSeqViewBase::toggleLink(PosePtr& pose, LinkDeviceTreeItem* item, Link* link, bool partOn, bool ikOn)
+bool PoseSeqViewBase::toggleLink(Pose* pose, LinkDeviceTreeItem* item, Link* link, bool partOn, bool ikOn)
 {
     bool modified = false;
     int jId = link->jointId();
@@ -698,7 +682,7 @@ bool PoseSeqViewBase::toggleLink(PosePtr& pose, LinkDeviceTreeItem* item, Link* 
 }
 
 
-bool PoseSeqViewBase::togglePart(PosePtr& pose, LinkDeviceTreeItem* item, bool on)
+bool PoseSeqViewBase::togglePart(Pose* pose, LinkDeviceTreeItem* item, bool on)
 {
     bool modified = false;
     
@@ -716,8 +700,7 @@ bool PoseSeqViewBase::togglePart(PosePtr& pose, LinkDeviceTreeItem* item, bool o
 
     int n = item->childCount();
     for(int i=0; i < n; ++i){
-        LinkDeviceTreeItem* childItem = dynamic_cast<LinkDeviceTreeItem*>(item->child(i));
-        if(childItem){
+        if(auto childItem = dynamic_cast<LinkDeviceTreeItem*>(item->child(i))){
             modified |= togglePart(pose, childItem, on);
         }
     }
@@ -730,21 +713,30 @@ void PoseSeqViewBase::onStationaryPointCheckClicked(LinkDeviceTreeItem* item, Qt
 {
     bool on = (checkState == Qt::Unchecked);
     if(item == zmpRow){
-        togglePoseAttribute(std::bind(&PoseSeqViewBase::toggleZmpStationaryPoint, this, _1, on));
+        togglePoseAttribute(
+            [this, on](Pose* pose){
+                return toggleZmpStationaryPoint(pose, on);
+            });
     } else {
         if(auto link = item->link()){
-            togglePoseAttribute(std::bind(&PoseSeqViewBase::toggleStationaryPoint, this, _1, link, on));
+            togglePoseAttribute(
+                [this, link, on](Pose* pose){
+                    return toggleStationaryPoint(pose, link, on);
+                });
         } else {
             if(checkState == Qt::PartiallyChecked){
                 on = true;
             }
-            togglePoseAttribute(std::bind(&PoseSeqViewBase::togglePartStationaryPoints, this, _1, item, on));
+            togglePoseAttribute(
+                [this, item, on](Pose* pose){
+                    return togglePartStationaryPoints(pose, item, on);
+                });
         }
     }
 }
 
 
-bool PoseSeqViewBase::toggleZmpStationaryPoint(PosePtr& pose, bool on)
+bool PoseSeqViewBase::toggleZmpStationaryPoint(Pose* pose, bool on)
 {
     bool modified = false;
     if(on){
@@ -762,7 +754,7 @@ bool PoseSeqViewBase::toggleZmpStationaryPoint(PosePtr& pose, bool on)
 }
 
 
-bool PoseSeqViewBase::toggleStationaryPoint(PosePtr& pose, Link* link, bool on)
+bool PoseSeqViewBase::toggleStationaryPoint(Pose* pose, Link* link, bool on)
 {
     bool modified = false;
 
@@ -780,7 +772,7 @@ bool PoseSeqViewBase::toggleStationaryPoint(PosePtr& pose, Link* link, bool on)
 }
 
 
-bool PoseSeqViewBase::togglePartStationaryPoints(PosePtr& pose, LinkDeviceTreeItem* item, bool on)
+bool PoseSeqViewBase::togglePartStationaryPoints(Pose* pose, LinkDeviceTreeItem* item, bool on)
 {
     bool modified = false;
     
@@ -789,8 +781,7 @@ bool PoseSeqViewBase::togglePartStationaryPoints(PosePtr& pose, LinkDeviceTreeIt
     }
     int n = item->childCount();
     for(int i=0; i < n; ++i){
-        LinkDeviceTreeItem* childItem = dynamic_cast<LinkDeviceTreeItem*>(item->child(i));
-        if(childItem){
+        if(auto childItem = dynamic_cast<LinkDeviceTreeItem*>(item->child(i))){
             modified |= togglePartStationaryPoints(pose, childItem, on);
         }
     }
@@ -803,7 +794,10 @@ void PoseSeqViewBase::onIkPartCheckClicked(LinkDeviceTreeItem* item, Qt::CheckSt
     if(auto link = item->link()){
         bool ikOn = (checkState == Qt::Unchecked);
         bool partOn = ikOn | isChecked(item, validPartColumn);
-        togglePoseAttribute(std::bind(&PoseSeqViewBase::toggleLink, this, _1, item, link, partOn, ikOn));
+        togglePoseAttribute(
+            [this, item, link, partOn, ikOn](Pose* pose){
+                return toggleLink(pose, item, link, partOn, ikOn);
+            });
     }
 }
 
@@ -832,7 +826,7 @@ void PoseSeqViewBase::onSelectedItemsChanged(ItemList<PoseSeqItem> selectedItems
 }
 
 
-void PoseSeqViewBase::setCurrentPoseSeqItem(PoseSeqItemPtr poseSeqItem)
+void PoseSeqViewBase::setCurrentPoseSeqItem(PoseSeqItem* poseSeqItem)
 {
     if(poseSeqItem == currentPoseSeqItem){
         return;
@@ -859,7 +853,9 @@ void PoseSeqViewBase::setCurrentPoseSeqItem(PoseSeqItemPtr poseSeqItem)
     } else {
         poseSeqConnections.add(
             poseSeqItem->sigNameChanged().connect(
-                std::bind(&PoseSeqViewBase::setCurrentItemName, this, poseSeqItem)));
+                [this, poseSeqItem](const std::string& /* oldName */){
+                    setCurrentItemName(poseSeqItem);
+                }));
 
         seq = currentPoseSeqItem->poseSeq();
         currentPoseIter = seq->end();
@@ -872,26 +868,26 @@ void PoseSeqViewBase::setCurrentPoseSeqItem(PoseSeqItemPtr poseSeqItem)
         if(currentBodyItem){
             connectionOfBodyKinematicStateUpdated =
                 currentBodyItem->sigKinematicStateUpdated().connect(
-                    std::bind(&PoseSeqViewBase::onBodyKinematicStateUpdated, this));
+                    [this](){ onBodyKinematicStateUpdated(); });
         }
             
         poseSeqConnections.add(
             seq->connectSignalSet(
-                std::bind(&PoseSeqViewBase::onPoseInserted, this, _1, _2),
-                std::bind(&PoseSeqViewBase::onPoseRemoving, this, _1, _2),
-                std::bind(&PoseSeqViewBase::onPoseModified, this, _1)));
+                [this](PoseSeq::iterator it, bool isMoving){ onPoseInserted(it, isMoving); },
+                [this](PoseSeq::iterator it, bool isMoving){ onPoseRemoving(it, isMoving); },
+                [this](PoseSeq::iterator it){ onPoseModified(it); }));
 
         poseSeqConnections.add(
             poseSeqItem->sigDisconnectedFromRoot().connect(
-                std::bind(&PoseSeqViewBase::setCurrentPoseSeqItem, this, PoseSeqItemPtr())));
+                [this](){ setCurrentPoseSeqItem(nullptr);}));
     }
 }
 
 
 PoseSeqViewBase::PoseIterSet::iterator PoseSeqViewBase::findPoseIterInSelected(PoseSeq::iterator poseIter)
 {
-    pair<PoseIterSet::iterator, PoseIterSet::iterator> range = selectedPoseIters.equal_range(poseIter);
-    for(PoseIterSet::iterator p = range.first; p != range.second; ++p){
+    auto range = selectedPoseIters.equal_range(poseIter);
+    for(auto p = range.first; p != range.second; ++p){
         if((*p) == poseIter){
             return p;
         }
@@ -911,7 +907,7 @@ bool PoseSeqViewBase::toggleSelection(PoseSeq::iterator poseIter, bool adding, b
             selectedPoseIters.clear();
 
         } else {
-            PoseIterSet::iterator p = findPoseIterInSelected(poseIter);
+            auto p = findPoseIterInSelected(poseIter);
             if(p == selectedPoseIters.end()){
                 if(!adding){
                     selectedPoseIters.clear();
@@ -944,8 +940,8 @@ bool PoseSeqViewBase::toggleSelection(PoseSeq::iterator poseIter, bool adding, b
 void PoseSeqViewBase::selectAllPoses()
 {
     selectedPoseIters.clear();
-    for(PoseSeq::iterator p = seq->begin(); p != seq->end(); ++p){
-        selectedPoseIters.insert(p);
+    for(auto it = seq->begin(); it != seq->end(); ++it){
+        selectedPoseIters.insert(it);
     }
     updateLinkTreeModel();
     onSelectedPosesModified();
@@ -955,9 +951,9 @@ void PoseSeqViewBase::selectAllPoses()
 void PoseSeqViewBase::selectAllPosesAfterCurrentPosition()
 {
     selectedPoseIters.clear();
-    PoseSeq::iterator p = seq->seek(seq->begin(), currentTime);
-    while(p != seq->end()){
-        selectedPoseIters.insert(p++);
+    auto it = seq->seek(seq->begin(), currentTime);
+    while(it != seq->end()){
+        selectedPoseIters.insert(it++);
     }
     updateLinkTreeModel();
     onSelectedPosesModified();
@@ -968,13 +964,13 @@ void PoseSeqViewBase::selectAllPosesBeforeCurrentPosition()
 {
     selectedPoseIters.clear();
     if(!seq->empty()){
-        PoseSeq::iterator p = seq->seek(seq->begin(), currentTime);
-        if(p != seq->end() && (p->time() == currentTime)){
-            ++p;
+        auto it = seq->seek(seq->begin(), currentTime);
+        if(it != seq->end() && (it->time() == currentTime)){
+            ++it;
         }
         do {
-            selectedPoseIters.insert(--p);
-        } while(p != seq->begin());
+            selectedPoseIters.insert(--it);
+        } while(it != seq->begin());
     }
     updateLinkTreeModel();
     onSelectedPosesModified();
@@ -990,9 +986,8 @@ void PoseSeqViewBase::selectPosesHavingSelectedLinks()
     const vector<int> selectedLinkIndices = linkTreeWidget->selectedLinkIndices();
 
     selectedPoseIters.clear();
-    for(PoseSeq::iterator p = seq->begin(); p != seq->end(); ++p){
-        PosePtr pose = p->get<Pose>();
-        if(pose){
+    for(auto it = seq->begin(); it != seq->end(); ++it){
+        if(auto pose = it->get<Pose>()){
             bool match = true;
             for(size_t i=0; i < selectedLinkIndices.size(); ++i){
                 int linkIndex = selectedLinkIndices[i];
@@ -1004,7 +999,7 @@ void PoseSeqViewBase::selectPosesHavingSelectedLinks()
                 }
             }
             if(match){
-                selectedPoseIters.insert(p);
+                selectedPoseIters.insert(it);
             }
         }
     }
@@ -1022,9 +1017,8 @@ void PoseSeqViewBase::selectPosesJustHavingSelectedLinks()
     const auto& linkSelection = linkTreeWidget->linkSelection();
 
     selectedPoseIters.clear();
-    for(PoseSeq::iterator p = seq->begin(); p != seq->end(); ++p){
-        PosePtr pose = p->get<Pose>();
-        if(pose){
+    for(auto it = seq->begin(); it != seq->end(); ++it){
+        if(auto pose = it->get<Pose>()){
             bool match = true;
             for(size_t linkIndex=0; linkIndex < linkSelection.size(); ++linkIndex){
                 bool hasLink = pose->isJointValid(body->link(linkIndex)->jointId()) || pose->ikLinkInfo(linkIndex);
@@ -1034,7 +1028,7 @@ void PoseSeqViewBase::selectPosesJustHavingSelectedLinks()
                 }
             }
             if(match){
-                selectedPoseIters.insert(p);
+                selectedPoseIters.insert(it);
             }
         }
     }
@@ -1049,7 +1043,7 @@ void PoseSeqViewBase::removeSelectedPartsFromKeyPoses()
         return;
     }
     
-    const std::vector<int>& selected = linkTreeWidget->selectedLinkIndices();
+    auto& selected = linkTreeWidget->selectedLinkIndices();
     bool doRemoveZmp = zmpRow->isSelected();
 
     if(selected.empty() && !doRemoveZmp){
@@ -1060,10 +1054,9 @@ void PoseSeqViewBase::removeSelectedPartsFromKeyPoses()
     currentPoseSeqItem->beginEditing();
     bool removed = false;
 
-    for(PoseIterSet::iterator p = orgSelected.begin(); p != orgSelected.end(); ++p){
-        PosePtr pose = (*p)->get<Pose>();
-        if(pose){
-            seq->beginPoseModification(*p);
+    for(auto it = orgSelected.begin(); it != orgSelected.end(); ++it){
+        if(auto pose = (*it)->get<Pose>()){
+            seq->beginPoseModification(*it);
             bool modified = false;
             for(size_t i=0; i < selected.size(); ++i){
                 int linkIndex = selected[i];
@@ -1077,9 +1070,9 @@ void PoseSeqViewBase::removeSelectedPartsFromKeyPoses()
                 modified |= pose->invalidateZmp();
             }
             if(pose->empty()){
-                seq->erase(*p);
+                seq->erase(*it);
             } else if(modified){
-                seq->endPoseModification(*p);
+                seq->endPoseModification(*it);
             }
             removed |= modified;
         }
@@ -1096,8 +1089,8 @@ bool PoseSeqViewBase::deleteSelectedPoses()
     if(!selectedPoseIters.empty()){
         PoseIterSet orgSelected(selectedPoseIters);
         currentPoseSeqItem->beginEditing();
-        for(PoseIterSet::iterator p = orgSelected.begin(); p != orgSelected.end(); ++p){
-            seq->erase(*p);
+        for(auto it = orgSelected.begin(); it != orgSelected.end(); ++it){
+            seq->erase(*it);
         }
         currentPoseSeqItem->endEditing();
         doAutomaticInterpolationUpdate();
@@ -1119,11 +1112,11 @@ bool PoseSeqViewBase::cutSelectedPoses()
 bool PoseSeqViewBase::copySelectedPoses()
 {
     if(!selectedPoseIters.empty()){
-        copiedPoses = new PoseSeq();
-        PoseSeq::iterator destIter = copiedPoses->begin();
+        copiedPoses = new PoseSeq;
+        auto destIter = copiedPoses->begin();
         double offset = - (*selectedPoseIters.begin())->time();
-        for(PoseIterSet::iterator p = selectedPoseIters.begin(); p != selectedPoseIters.end(); ++p){
-            PoseSeq::iterator srcIter = *p;
+        for(auto it = selectedPoseIters.begin(); it != selectedPoseIters.end(); ++it){
+            PoseSeq::iterator srcIter = *it;
             destIter = copiedPoses->copyElement(destIter, srcIter, offset);
         }    
         return true;
@@ -1136,11 +1129,11 @@ bool PoseSeqViewBase::pasteCopiedPoses(double timeToPaste)
 {
     if(!copiedPoses->empty()){
         currentPoseSeqItem->beginEditing();
-        PoseSeq::iterator dest = seq->seek(currentPoseIter, timeToPaste, true);
-        for(PoseSeq::iterator p = copiedPoses->begin(); p != copiedPoses->end(); ++p){
-            dest = seq->copyElement(dest, p, timeToPaste);
+        auto destIter = seq->seek(currentPoseIter, timeToPaste, true);
+        for(auto it = copiedPoses->begin(); it != copiedPoses->end(); ++it){
+            destIter = seq->copyElement(destIter, it, timeToPaste);
         }
-        currentPoseIter = dest;
+        currentPoseIter = destIter;
         currentPoseSeqItem->endEditing();
         doAutomaticInterpolationUpdate();        
         return true;
@@ -1163,11 +1156,11 @@ bool PoseSeqViewBase::moveSelectedPoses(double time0)
             // Copy is needed because selectedPoseIters may change during the following loops
             PoseIterSet tmpSelectedPoseIters(selectedPoseIters);
             if(diff > 0.0){
-                for(PoseIterSet::reverse_iterator p = tmpSelectedPoseIters.rbegin(); p != tmpSelectedPoseIters.rend(); ++p){
+                for(auto p = tmpSelectedPoseIters.rbegin(); p != tmpSelectedPoseIters.rend(); ++p){
                     seq->changeTime(*p, (*p)->time() + diff);
                 }
             } else {
-                for(PoseIterSet::iterator p = tmpSelectedPoseIters.begin(); p != tmpSelectedPoseIters.end(); ++p){
+                for(auto p = tmpSelectedPoseIters.begin(); p != tmpSelectedPoseIters.end(); ++p){
                     seq->changeTime(*p, (*p)->time() + diff);
                 }
             }
@@ -1184,10 +1177,10 @@ bool PoseSeqViewBase::modifyTransitionTimeOfSelectedPoses(double ttime)
     bool modified = false;
 
     if(!selectedPoseIters.empty()){
-        for(PoseIterSet::iterator p = selectedPoseIters.begin(); p != selectedPoseIters.end(); ++p){
-            seq->beginPoseModification(*p);
-            (*p)->setMaxTransitionTime(ttime);
-            seq->endPoseModification(*p);
+        for(auto it = selectedPoseIters.begin(); it != selectedPoseIters.end(); ++it){
+            seq->beginPoseModification(*it);
+            (*it)->setMaxTransitionTime(ttime);
+            seq->endPoseModification(*it);
         }
         modified = true;
     }
@@ -1219,7 +1212,7 @@ void PoseSeqViewBase::onPoseSelectionDialogAccepted()
     const double t0 = poseSelectionDialog->startTimeSpin.value();
     const double t1 = poseSelectionDialog->endTimeSpin.value();
 
-    PoseSeq::iterator p = seq->seek(seq->begin(), t0);
+    auto p = seq->seek(seq->begin(), t0);
 
     while(p != seq->end()){
 
@@ -1228,8 +1221,7 @@ void PoseSeqViewBase::onPoseSelectionDialogAccepted()
         }
 
         if(poseSelectionDialog->selectedPartRadio.isChecked()){
-            PosePtr pose = p->get<Pose>();
-            if(pose){
+            if(auto pose = p->get<Pose>()){
                 bool match = false;
                 for(size_t i=0; i < selectedLinkIndices.size(); ++i){
                     int linkIndex = selectedLinkIndices[i];
@@ -1338,10 +1330,9 @@ void PoseSeqViewBase::onLinkPositionAdjustmentDialogAccepted()
         
             currentPoseSeqItem->beginEditing();
         
-            for(PoseIterSet::iterator p = selectedPoseIters.begin(); p != selectedPoseIters.end(); ++p){
-                PosePtr pose = (*p)->get<Pose>();
-                if(pose){
-                    seq->beginPoseModification(*p);
+            for(auto it = selectedPoseIters.begin(); it != selectedPoseIters.end(); ++it){
+                if(auto pose = (*it)->get<Pose>()){
+                    seq->beginPoseModification(*it);
                     
                     /// \todo arbitrar selected link should be processed here
                     Pose::LinkInfo* waistInfo = pose->ikLinkInfo(waistLinkIndex);
@@ -1357,7 +1348,7 @@ void PoseSeqViewBase::onLinkPositionAdjustmentDialogAccepted()
                             }
                         }
                     }
-                    seq->endPoseModification(*p);
+                    seq->endPoseModification(*it);
                 }
             }
             
@@ -1415,7 +1406,7 @@ void PoseSeqViewBase::onSelectedPosesModified()
 }
 
 
-void PoseSeqViewBase::setCurrentItemName(ItemPtr item)
+void PoseSeqViewBase::setCurrentItemName(Item* item)
 {
     string name;
     if(item){
@@ -1434,15 +1425,11 @@ void PoseSeqViewBase::setCurrentItemName(ItemPtr item)
 */
 void PoseSeqViewBase::onBodyKinematicStateUpdated()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "PoseSeqViewBase::onBodyKinematicStateUpdated()" << endl;
-    }
-    
     if(autoUpdateModeCheck.isChecked()){
         if(!selectedPoseIters.empty()){
             bool timeMatches = true;
-            for(PoseIterSet::iterator p = selectedPoseIters.begin(); p != selectedPoseIters.end(); ++p){
-                double qtime = quantizedTime((*p)->time());
+            for(auto it = selectedPoseIters.begin(); it != selectedPoseIters.end(); ++it){
+                double qtime = quantizedTime((*it)->time());
                 if(qtime != timeBar->time()){
                     timeMatches = false;
                     break;
@@ -1466,9 +1453,8 @@ PoseSeq::iterator PoseSeqViewBase::insertPose()
     bool hasValidPart = false;
 
     for(int i=0; i < body->numLinks(); ++i){
-        Link* link = body->link(i);
-        LinkDeviceTreeItem* item = linkTreeWidget->itemOfLink(link->index());
-        if(item){
+        auto link = body->link(i);
+        if(auto item = linkTreeWidget->itemOfLink(link->index())){
             if(link->jointId() >= 0 && isChecked(item, validPartColumn)){
                 pose->setJointPosition(link->jointId(), link->q());
                 hasValidPart = true;
@@ -1513,21 +1499,21 @@ PoseSeq::iterator PoseSeqViewBase::insertPose()
 
 PoseSeq::iterator PoseSeqViewBase::insertPronunSymbol()
 {
-    PronunSymbolPtr pronun(new PronunSymbol());
+    PronunSymbolPtr pronun(new PronunSymbol);
     return insertPoseUnit(pronun);
 }
 
 
-PoseSeq::iterator PoseSeqViewBase::insertPoseUnit(PoseUnitPtr poseUnit)
+PoseSeq::iterator PoseSeqViewBase::insertPoseUnit(PoseUnit* poseUnit)
 {
-    PoseSeq::iterator poseIter = seq->insert(currentPoseIter, currentTime / timeScale, poseUnit);
-    poseIter->setMaxTransitionTime(transitionTimeSpin.value() / timeScale);
+    auto it = seq->insert(currentPoseIter, currentTime / timeScale, poseUnit);
+    it->setMaxTransitionTime(transitionTimeSpin.value() / timeScale);
     doAutomaticInterpolationUpdate();
-    toggleSelection(poseIter, false, false);
+    toggleSelection(it, false, false);
 
-    currentPoseIter = poseIter;
+    currentPoseIter = it;
 
-    return poseIter;
+    return it;
 }
 
 
@@ -1547,29 +1533,25 @@ void PoseSeqViewBase::onUpdateButtonClicked()
 
 void PoseSeqViewBase::setCurrentBodyStateToSelectedPoses(bool onlySelected)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "PoseSeqViewBase::setCurrentBodyStateToSelectedPoses()" << endl;
-    }
     if(body){
         if(!selectedPoseIters.empty()){
 
             // quantize selected pose times
             PoseIterSet prevSelected(selectedPoseIters);
             selectedPoseIters.clear();
-            for(PoseIterSet::iterator p = prevSelected.begin(); p != prevSelected.end(); ++p){
-                double qtime = quantizedTime((*p)->time());
-                selectedPoseIters.insert(seq->changeTime(*p, qtime));
+            for(auto it = prevSelected.begin(); it != prevSelected.end(); ++it){
+                double qtime = quantizedTime((*it)->time());
+                selectedPoseIters.insert(seq->changeTime(*it, qtime));
             }
             
             bool updated = false;
             currentPoseSeqItem->beginEditing();
-            for(PoseIterSet::iterator p = selectedPoseIters.begin(); p != selectedPoseIters.end(); ++p){
-                PosePtr pose = (*p)->get<Pose>();
-                if(pose){
-                    seq->beginPoseModification(*p);
+            for(auto it = selectedPoseIters.begin(); it != selectedPoseIters.end(); ++it){
+                if(auto pose = (*it)->get<Pose>()){
+                    seq->beginPoseModification(*it);
                     if(setCurrentBodyStateToPose(pose, onlySelected)){
                         updated = true;
-                        seq->endPoseModification(*p);
+                        seq->endPoseModification(*it);
                     }
                 }
             }
@@ -1584,7 +1566,7 @@ void PoseSeqViewBase::setCurrentBodyStateToSelectedPoses(bool onlySelected)
 }
 
 
-bool PoseSeqViewBase::setCurrentBodyStateToPose(PosePtr& pose, bool onlySelected)
+bool PoseSeqViewBase::setCurrentBodyStateToPose(Pose* pose, bool onlySelected)
 {
     auto& linkSelection = BodySelectionManager::instance()->linkSelection(currentBodyItem);
             
@@ -1593,7 +1575,7 @@ bool PoseSeqViewBase::setCurrentBodyStateToPose(PosePtr& pose, bool onlySelected
     int n = pose->numJoints();
     for(int i=0; i < n; ++i){
         if(pose->isJointValid(i)){
-            Link* joint = body->joint(i);
+            auto joint = body->joint(i);
             if(!onlySelected || linkSelection[joint->index()]){
                 const double q = body->joint(i)->q();
                 if(q != pose->jointPosition(i)){
@@ -1604,9 +1586,9 @@ bool PoseSeqViewBase::setCurrentBodyStateToPose(PosePtr& pose, bool onlySelected
         }
     }
 
-    for(Pose::LinkInfoMap::iterator it = pose->ikLinkBegin(); it != pose->ikLinkEnd(); ++it){
+    for(auto it = pose->ikLinkBegin(); it != pose->ikLinkEnd(); ++it){
         const int linkIndex = it->first;
-        Link* link = body->link(linkIndex);
+        auto link = body->link(linkIndex);
         if(link && (!onlySelected || linkSelection[link->index()])){
             updated |= setCurrentLinkStateToIkLink(link, &it->second);
         }
@@ -1645,8 +1627,8 @@ bool PoseSeqViewBase::setCurrentLinkStateToIkLink(Link* link, Pose::LinkInfo* li
     for(size_t i=0; i < collisions.size(); ++i){
         if(!collisions[i]->isSelfCollision()){
             CollisionLinkPair& collisionPair = *collisions[i];
-            for(std::vector<Collision>::iterator iter = collisionPair.collisions.begin(); iter != collisionPair.collisions.end(); ++iter){
-                contactPoints.push_back(link->R().transpose()*(iter->point - link->p()));
+            for(auto it = collisionPair.collisions.begin(); it != collisionPair.collisions.end(); ++it){
+                contactPoints.push_back(link->R().transpose()*(it->point - link->p()));
             }
         }
     }
@@ -1690,10 +1672,6 @@ void PoseSeqViewBase::onPoseInserted(PoseSeq::iterator it, bool isMoving)
     
 void PoseSeqViewBase::onPoseRemoving(PoseSeq::iterator it, bool isMoving)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "PoseSeqViewBase::onPoseRemoving(): isMoving = " << isMoving << endl;
-    }
-
     if(it == currentPoseIter){
         if(currentPoseIter != seq->begin()){
             --currentPoseIter;
@@ -1702,9 +1680,9 @@ void PoseSeqViewBase::onPoseRemoving(PoseSeq::iterator it, bool isMoving)
         }
     }
 
-    PoseIterSet::iterator p = findPoseIterInSelected(it);
-    if(p != selectedPoseIters.end()){
-        selectedPoseIters.erase(p);
+    auto poseIter = findPoseIterInSelected(it);
+    if(poseIter != selectedPoseIters.end()){
+        selectedPoseIters.erase(poseIter);
         if(isMoving){
             isSelectedPoseMoving = true;
         } else {
@@ -1719,10 +1697,6 @@ void PoseSeqViewBase::onPoseRemoving(PoseSeq::iterator it, bool isMoving)
 */
 void PoseSeqViewBase::onPoseModified(PoseSeq::iterator it)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "PoseSeqViewBase::onPoseModified()" << endl;
-    }
-
     if(!selectedPoseIters.empty() && it == *selectedPoseIters.begin()){
         updateLinkTreeModel();
         onSelectedPosesModified();
@@ -1732,14 +1706,10 @@ void PoseSeqViewBase::onPoseModified(PoseSeq::iterator it)
 
 void PoseSeqViewBase::updateLinkTreeModel()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "PoseSeqViewBase::updateLinkTreeModel()" << endl;
-    }
-    
     PosePtr pose;
 
-    for(PoseIterSet::iterator p = selectedPoseIters.begin(); p != selectedPoseIters.end(); ++p){
-        pose = (*p)->get<Pose>();
+    for(auto it = selectedPoseIters.begin(); it != selectedPoseIters.end(); ++it){
+        pose = (*it)->get<Pose>();
         if(pose){
             break;
         }
@@ -1752,9 +1722,8 @@ void PoseSeqViewBase::updateLinkTreeModel()
 
     int n = linkTreeWidget->topLevelItemCount();
     for(int i=0; i < n; ++i){
-        LinkDeviceTreeItem* item = dynamic_cast<LinkDeviceTreeItem*>(linkTreeWidget->topLevelItem(i));
-        if(item){
-            updateLinkTreeModelSub(item, linkTreeWidget->bodyItem()->body(), *pose);
+        if(auto item = dynamic_cast<LinkDeviceTreeItem*>(linkTreeWidget->topLevelItem(i))){
+            updateLinkTreeModelSub(item, linkTreeWidget->bodyItem()->body(), pose);
         }
     }
 
@@ -1763,14 +1732,13 @@ void PoseSeqViewBase::updateLinkTreeModel()
 
 
 PoseSeqViewBase::ChildrenState PoseSeqViewBase::updateLinkTreeModelSub
-(LinkDeviceTreeItem* item, const BodyPtr& body, const Pose& pose)
+(LinkDeviceTreeItem* item, Body* body, Pose* pose)
 {
     ChildrenState state;
 
     int n = item->childCount();
     for(int i=0; i < n; ++i){
-        LinkDeviceTreeItem* childItem = dynamic_cast<LinkDeviceTreeItem*>(item->child(i));
-        if(childItem){
+        if(auto childItem = dynamic_cast<LinkDeviceTreeItem*>(item->child(i))){
             ChildrenState childrenState = updateLinkTreeModelSub(childItem, body, pose);
             state.validChildExists |= childrenState.validChildExists;
             state.allChildrenAreValid &= childrenState.allChildrenAreValid;
@@ -1780,9 +1748,9 @@ PoseSeqViewBase::ChildrenState PoseSeqViewBase::updateLinkTreeModelSub
     }
 
     if(item == zmpRow){
-        if(pose.isZmpValid()){
+        if(pose->isZmpValid()){
             setChecked(item, validPartColumn, true);
-            setChecked(item, stationaryPointColumn, pose.isZmpStationaryPoint());
+            setChecked(item, stationaryPointColumn, pose->isZmpStationaryPoint());
         } else {
             setChecked(item, validPartColumn, false);
             setChecked(item, stationaryPointColumn, false);
@@ -1794,12 +1762,12 @@ PoseSeqViewBase::ChildrenState PoseSeqViewBase::updateLinkTreeModelSub
             bool isStationaryPoint = false;
             bool isIkPart = false;
             
-            const Pose::LinkInfo* linkInfo = pose.ikLinkInfo(link->index());
+            const Pose::LinkInfo* linkInfo = pose->ikLinkInfo(link->index());
             if(linkInfo){
                 isValidPart = true;
                 if(!possibleIkLinkFlag[link->index()]){
                     /// \todo put warning here or do the following call ?
-                    //pose.removeIkLink(link->index);
+                    //pose->removeIkLink(link->index);
                 } else if(!linkInfo->isSlave()){
                     isIkPart = true;
                     isBaseLink = linkInfo->isBaseLink();
@@ -1811,9 +1779,9 @@ PoseSeqViewBase::ChildrenState PoseSeqViewBase::updateLinkTreeModelSub
             
             int jointId = link->jointId();
             if(jointId >= 0){
-                if(pose.isJointValid(jointId)){
+                if(pose->isJointValid(jointId)){
                     isValidPart = true;
-                    if(pose.isJointStationaryPoint(jointId)){
+                    if(pose->isJointStationaryPoint(jointId)){
                         isStationaryPoint = true;
                     }
                 }
@@ -1893,7 +1861,7 @@ bool PoseSeqViewBase::restoreState(const Archive& archive)
     linkPositionAdjustmentDialog->restoreState(archive);
     
     archive.addPostProcess(
-        std::bind(&PoseSeqViewBase::restoreCurrentPoseSeqItem, this, std::ref(archive)));
+        [this, &archive](){ restoreCurrentPoseSeqItem(archive); });
 
     return true;
 }
@@ -1903,9 +1871,7 @@ void PoseSeqViewBase::restoreCurrentPoseSeqItem(const Archive& archive)
 {
     linkTreeWidget->restoreState(archive);
         
-    PoseSeqItem* item = archive.findItem<PoseSeqItem>("currentPoseSeqItem");
-    if(item){
+    if(auto item = archive.findItem<PoseSeqItem>("currentPoseSeqItem")){
         setCurrentPoseSeqItem(item);
     }
 }
-  
