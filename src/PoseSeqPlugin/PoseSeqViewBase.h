@@ -1,11 +1,8 @@
-/*! @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_VIEW_BASE_H
 #define CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_VIEW_BASE_H
 
 #include "PoseSeqItem.h"
+#include "BodyKeyPose.h"
 #include <cnoid/ItemList>
 #include <cnoid/View>
 #include <cnoid/LinkDeviceTreeWidget>
@@ -50,15 +47,6 @@ public:
     double timeScale;
 
     PoseSeq::iterator currentPoseIter;
-
-    struct PoseIterTimeComp {
-        bool operator()(const PoseSeq::iterator it1, const PoseSeq::iterator it2) const {
-            return it1->time() < it2->time();
-        }
-    };
-    typedef std::multiset<PoseSeq::iterator, PoseIterTimeComp> PoseIterSet;
-    PoseIterSet selectedPoseIters;
-
     PoseSeqPtr copiedPoses;
     
     ConnectionSet staticConnections;
@@ -79,7 +67,7 @@ public:
     std::vector<bool> possibleIkLinkFlag;
     LinkDeviceTreeItem* zmpRow;
         
-    PosePtr poseForDefaultStateSetting;
+    BodyKeyPosePtr poseForDefaultStateSetting;
 
     QLabel currentItemLabel;
     CheckBox timeSyncCheck;
@@ -109,20 +97,19 @@ public:
     LinkPositionAdjustmentDialog* linkPositionAdjustmentDialog;
     YawOrientationRotationDialog* yawOrientationRotationDialog;
 
-    PoseSeq::iterator insertPose();
+    PoseSeq::iterator insertBodyKeyPose();
     PoseSeq::iterator insertPronunSymbol();
-    PoseSeq::iterator insertPoseUnit(PoseUnit* poseUnit); 
-    PoseIterSet::iterator findPoseIterInSelected(PoseSeq::iterator poseIter);
+    PoseSeq::iterator insertPose(AbstractPose* pose); 
     bool toggleSelection(PoseSeq::iterator poseIter, bool adding, bool changeTime);
     void selectAllPoses();
     void selectAllPosesAfterCurrentPosition();
     void selectAllPosesBeforeCurrentPosition();
     void selectPosesHavingSelectedLinks();
     void selectPosesJustHavingSelectedLinks();
-    void removeSelectedPartsFromKeyPoses();
+    void removeSelectedPartsFromPoses();
     void doAutomaticInterpolationUpdate();
     void updateLinkTreeModel();
-    bool deleteSelectedPoses();
+    bool removeSelectedPoses();
     bool cutSelectedPoses();
     bool copySelectedPoses();
     bool pasteCopiedPoses(double timeToPaste);
@@ -130,25 +117,25 @@ public:
     bool modifyTransitionTimeOfSelectedPoses(double ttime);
     void popupContextMenu(QMouseEvent* event);
 
-    void onSelectSpecifiedKeyPosesActivated();
+    void onSelectSpecifiedPosesActivated();
     void onPoseSelectionDialogAccepted();
     void onAdjustStepPositionsActivated();
     void onRotateYawOrientationsActivated();
     void onYawOrientationRotationDialogAccepted();
     void onAdjustWaistPositionActivated();
     void onLinkPositionAdjustmentDialogAccepted();
-    void onUpdateKeyposesWithBalancedTrajectoriesActivated();
+    void onUpdatePosesWithBalancedTrajectoriesActivated();
     void onFlipPosesActivated();
-    void countSelectedKeyPoses();
+    void countSelectedPoses();
     double quantizedTime(double time);
         
     virtual void onLinkTreeUpdateRequest(bool isInitialCreation);
     virtual void setCurrentPoseSeqItem(PoseSeqItem* poseSeqItem);
     virtual void onTimeScaleChanged();
-    virtual void onSelectedPosesModified();
+    virtual void onPoseSelectionChanged(const std::vector<PoseSeq::iterator>& selected);
     virtual void onDeleteButtonClicked();
     virtual void onPoseInserted(PoseSeq::iterator it, bool isMoving);
-    virtual void onPoseRemoving(PoseSeq::iterator it, bool isMoving);
+    virtual void onPoseAboutToBeRemoved(PoseSeq::iterator it, bool isMoving);
     virtual void onPoseModified(PoseSeq::iterator it);
     virtual bool onTimeChanged(double time) = 0;
     virtual void onInsertPoseButtonClicked() = 0;
@@ -167,17 +154,17 @@ public:
     void initializeLinkTreeIkLinkColumn();
     void initializeLinkTreeTraverse(QTreeWidgetItem* parentItem);
 
-    void togglePoseAttribute(std::function<bool(Pose* pose)> toggleFunction);
+    void togglePoseAttribute(std::function<bool(BodyKeyPose* pose)> toggleFunction);
     void onBaseLinkRadioClicked();
-    bool setBaseLink(Pose* pose, Link* link);
+    bool setBaseLink(BodyKeyPose* pose, Link* link);
     void onValidPartCheckClicked(LinkDeviceTreeItem* item, Qt::CheckState checkState);
-    bool toggleZmp(Pose* pose, bool on);
-    bool toggleLink(Pose* pose, LinkDeviceTreeItem* item, Link* link, bool partOn, bool ikOn);
-    bool togglePart(Pose* pose, LinkDeviceTreeItem* item, bool on);
+    bool toggleZmp(BodyKeyPose* pose, bool on);
+    bool toggleLink(BodyKeyPose* pose, LinkDeviceTreeItem* item, Link* link, bool partOn, bool ikOn);
+    bool togglePart(BodyKeyPose* pose, LinkDeviceTreeItem* item, bool on);
     void onStationaryPointCheckClicked(LinkDeviceTreeItem* linkTreeItem, Qt::CheckState checkState);
-    bool toggleZmpStationaryPoint(Pose* pose, bool on);
-    bool toggleStationaryPoint(Pose* pose, Link* link, bool on);
-    bool togglePartStationaryPoints(Pose* pose, LinkDeviceTreeItem* item, bool on);
+    bool toggleZmpStationaryPoint(BodyKeyPose* pose, bool on);
+    bool toggleStationaryPoint(BodyKeyPose* pose, Link* link, bool on);
+    bool togglePartStationaryPoints(BodyKeyPose* pose, LinkDeviceTreeItem* item, bool on);
     void onIkPartCheckClicked(LinkDeviceTreeItem* item, Qt::CheckState checkState);
 
     void onInterpolationParametersChanged();
@@ -187,9 +174,9 @@ public:
     void onBodyKinematicStateUpdated();
     void onUpdateButtonClicked();
     void setCurrentBodyStateToSelectedPoses(bool onlySelected);
-    bool setCurrentBodyStateToPose(Pose* pose, bool onlySelected);
-    bool setCurrentLinkStateToIkLink(Link* link, Pose::LinkInfo* linkInfo);
-    ChildrenState updateLinkTreeModelSub(LinkDeviceTreeItem* item,  Body* body, Pose* pose);
+    bool setCurrentBodyStateToPose(BodyKeyPose* pose, bool onlySelected);
+    bool setCurrentLinkStateToIkLink(Link* link, BodyKeyPose::LinkInfo* linkInfo);
+    ChildrenState updateLinkTreeModelSub(LinkDeviceTreeItem* item,  Body* body, BodyKeyPose* pose);
 
 private:
     void restoreCurrentPoseSeqItem(const Archive& archive);

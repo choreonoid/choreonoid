@@ -1,29 +1,27 @@
-/**
-   @file
-   @author Shin'ichiro NAKAOKA
-*/
-
-#ifndef CNOID_CHOREOGRAPHY_POSE_FILTERS_H_INCLUDED
-#define CNOID_CHOREOGRAPHY_POSE_FILTERS_H_INCLUDED
+#ifndef CNOID_POSE_SEQ_PLUGIN_POSE_FILTERS_H
+#define CNOID_POSE_SEQ_PLUGIN_POSE_FILTERS_H
 
 #include "PoseSeq.h"
+#include <cnoid/EigenTypes>
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-CNOID_EXPORT void adjustStepPositions(
-    PoseSeqPtr seq, const std::vector<int>& footLinkIndices, PoseSeq::iterator origin);
+class PoseSeq;
+class KeyPose;
+class Body;
 
-CNOID_EXPORT void flipPoses(PoseSeqPtr seq, BodyPtr body);
+CNOID_EXPORT void adjustStepPositions(
+    PoseSeq* seq, const std::vector<int>& footLinkIndices, PoseSeq::iterator origin);
+
+CNOID_EXPORT void flipPoses(PoseSeq* seq, Body* body);
         
 CNOID_EXPORT void adjustWaistHeight(
-    PosePtr pose, int waistLinkIndex, const std::vector<int>& footLinkIndices, double offset);
+    KeyPose* pose, int waistLinkIndex, const std::vector<int>& footLinkIndices, double offset);
 
 CNOID_EXPORT void rotateYawOrientations(
-    PoseSeqPtr seq, PoseSeq::iterator begin, const Vector3& center, double angle);
+    PoseSeq* seq, PoseSeq::iterator begin, const Vector3& center, double angle);
 }
 
-
 #endif
-
-

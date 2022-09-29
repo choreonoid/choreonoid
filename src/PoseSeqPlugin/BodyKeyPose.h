@@ -1,121 +1,29 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
+#ifndef CNOID_POSE_SEQ_PLUGIN_BODY_KEY_POSE_H
+#define CNOID_POSE_SEQ_PLUGIN_BODY_KEY_POSE_H
 
-#ifndef CNOID_POSE_SEQ_PLUGIN_POSE_H
-#define CNOID_POSE_SEQ_PLUGIN_POSE_H
-
-#include <cnoid/Body>
+#include "AbstractPose.h"
+#include <cnoid/EigenTypes>
 #include <map>
 #include "exportdecl.h"
 
 namespace cnoid {
 
+class Body;
 class Mapping;
     
-class PoseUnit;
-class PoseSeq;
-class PoseRef;
-
-typedef ref_ptr<PoseUnit> PoseUnitPtr;
-
-class CNOID_EXPORT PoseUnit : public Referenced
+class CNOID_EXPORT BodyKeyPose : public AbstractPose
 {
 public:
-    PoseUnit();
-    PoseUnit(const PoseUnit& org);
-    virtual ~PoseUnit();
-
-    virtual PoseUnit* duplicate() = 0;
-
-    virtual bool restore(const Mapping& archive, const BodyPtr body) = 0;
-    virtual void store(Mapping& archive, const BodyPtr body) const = 0;
-    virtual bool hasSameParts(PoseUnitPtr unit) { return false; }
-
-    /**
-       @note A name can be only set by PoseSeq::rename().
-    */
-    const std::string& name() const {
-        return name_;
-    }
+    BodyKeyPose();
+    BodyKeyPose(int numJoints);
+    BodyKeyPose(const BodyKeyPose& org);
             
-private:
-    std::string name_;
-    PoseSeq* owner;
-    int seqLocalReferenceCounter;
+    virtual ~BodyKeyPose();
 
-    friend class PoseSeq;
-    friend class PoseRef;
-};
-
-        
-class CNOID_EXPORT Pose : public PoseUnit
-{
-    struct JointInfo {
-        JointInfo() : isValid(false), isStationaryPoint(false) { }
-        double q;
-        bool isValid;
-        bool isStationaryPoint;
-    };
-            
-public:
-
-    class LinkInfo {
-
-    public:
-
-        Vector3 p;
-        Matrix3 R;
-
-        LinkInfo() :
-            isBaseLink_(false),
-            isStationaryPoint_(false),
-            isTouching_(false),
-            isSlave_(false) { }
-        bool isBaseLink() const { return isBaseLink_; }
-        void setStationaryPoint(bool on){ isStationaryPoint_ = on; }
-        bool isStationaryPoint() const { return isStationaryPoint_; }
-        bool isTouching() const { return isTouching_; }
-        const Vector3& partingDirection() const { return partingDirection_; }
-        const std::vector<Vector3>& contactPoints() const { return contactPoints_; }
-        void setTouching(const Vector3& partingDirection, const std::vector<Vector3>& contactPoints) {
-            isTouching_ = true;
-            partingDirection_ = partingDirection;
-            contactPoints_ = contactPoints;
-        }
-        void clearTouching() { isTouching_ = false; }
-        bool isSlave() const { return isSlave_; }
-        void setSlave(bool on) { isSlave_ = on; }
-                
-    private:
-        bool isBaseLink_;
-        bool isStationaryPoint_;
-        bool isTouching_;
-        bool isSlave_;
-        Vector3 partingDirection_;
-        std::vector<Vector3> contactPoints_;
-        friend class Pose;
-    };
-
-    typedef std::map<int, LinkInfo> LinkInfoMap;
-
-    Pose();
-    Pose(int numJoints);
-    Pose(const Pose& org);
-            
-    virtual ~Pose();
-
-    bool empty();
-
+    bool empty() const;
     void clear();
 
-    virtual PoseUnit* duplicate();
-
-    virtual bool hasSameParts(PoseUnitPtr unit);
-
-    virtual bool restore(const Mapping& archive, const BodyPtr body);
-    virtual void store(Mapping& archive, const BodyPtr body) const;
+    BodyKeyPose* clone() const { return static_cast<BodyKeyPose*>(doClone(nullptr)); }
 
     void setNumJoints(int n){
         jointInfos.resize(n);
@@ -170,6 +78,44 @@ public:
         }
         return false;
     }
+
+    class LinkInfo
+    {
+    public:
+        Vector3 p;
+        Matrix3 R;
+
+        LinkInfo() :
+            isBaseLink_(false),
+            isStationaryPoint_(false),
+            isTouching_(false),
+            isSlave_(false) { }
+        bool isBaseLink() const { return isBaseLink_; }
+        void setStationaryPoint(bool on){ isStationaryPoint_ = on; }
+        bool isStationaryPoint() const { return isStationaryPoint_; }
+        bool isTouching() const { return isTouching_; }
+        const Vector3& partingDirection() const { return partingDirection_; }
+        const std::vector<Vector3>& contactPoints() const { return contactPoints_; }
+        void setTouching(const Vector3& partingDirection, const std::vector<Vector3>& contactPoints) {
+            isTouching_ = true;
+            partingDirection_ = partingDirection;
+            contactPoints_ = contactPoints;
+        }
+        void clearTouching() { isTouching_ = false; }
+        bool isSlave() const { return isSlave_; }
+        void setSlave(bool on) { isSlave_ = on; }
+                
+    private:
+        bool isBaseLink_;
+        bool isStationaryPoint_;
+        bool isTouching_;
+        bool isSlave_;
+        Vector3 partingDirection_;
+        std::vector<Vector3> contactPoints_;
+        friend class BodyKeyPose;
+    };
+
+    typedef std::map<int, LinkInfo> LinkInfoMap;
 
     void clearIkLinks();
 
@@ -249,18 +195,34 @@ public:
         return isZmpStationaryPoint_;
     }
 
-private:
+    bool hasSameParts(AbstractPose* pose) const override;
+    bool restore(const Mapping& archive, const Body* body) override;
+    void store(Mapping& archive, const Body* body) const override;
 
+protected:
+    virtual Referenced* doClone(CloneMap*) const override;    
+
+private:
+    struct JointInfo
+    {
+        JointInfo() : isValid(false), isStationaryPoint(false) { }
+        double q;
+        bool isValid;
+        bool isStationaryPoint;
+    };
+            
     std::vector<JointInfo> jointInfos;
     LinkInfoMap ikLinks;
     LinkInfoMap::iterator baseLinkIter;
     Vector3 zmp_;
     bool isZmpValid_;
     bool isZmpStationaryPoint_;
+    
     void initializeMembers();
 };
 
-typedef ref_ptr<Pose> PosePtr;
+typedef ref_ptr<BodyKeyPose> BodyKeyPosePtr;
+
 }
 
 #endif

@@ -1,11 +1,8 @@
-/**
-   @file
-   @author Shin'ichiro NAKAOKA
-*/
-
 #include "PoseFilters.h"
-#include <cnoid/ValueTree>
+#include "BodyKeyPose.h"
+#include <cnoid/Body>
 #include <cnoid/Link>
+#include <cnoid/ValueTree>
 
 using namespace std;
 using namespace cnoid;
@@ -17,118 +14,125 @@ class StepAdjuster
 public:
     PoseSeqPtr seq;
     const vector<int>& footLinkIndices;
-    map<int,Pose::LinkInfo*> supportingLinks;
+    map<int, BodyKeyPose::LinkInfo*> supportingLinks;
     Vector3 stepAdjustmentTranslation;
     double stepAdjustmentYawDiff;
     Matrix3 stepAdjustmentRotation;
 
-    StepAdjuster(PoseSeqPtr seq, const vector<int>& footLinkIndices, PoseSeq::iterator origin)
-        : seq(seq),
-          footLinkIndices(footLinkIndices) {
-            
-        supportingLinks.clear();
-        stepAdjustmentTranslation.setZero();
-        stepAdjustmentYawDiff = 0.0;
-        stepAdjustmentRotation.setIdentity();
-
-        PoseSeq::iterator poseIter;
-        for(poseIter = origin; poseIter != seq->end(); ++poseIter){
-            adjustStepPosition(poseIter);
-        }
-
-        supportingLinks.clear();
-        stepAdjustmentTranslation.setZero();
-        stepAdjustmentYawDiff = 0.0;
-        stepAdjustmentRotation.setIdentity();
-
-        poseIter = origin;
-        while(true){
-            adjustStepPosition(poseIter);
-            if(poseIter == seq->begin()){
-                break;
-            }
-            poseIter--;
-        }
-    }
-        
-    void adjustStepPosition(PoseSeq::iterator poseIter) {
-
-        PosePtr pose = poseIter->get<Pose>();
-        if(pose){
-                
-            seq->beginPoseModification(poseIter);
-        
-            bool modified = false;
-            Vector3 dp = Vector3::Zero();
-            double da = 0.0;
-            for(size_t i=0; i < footLinkIndices.size(); ++i){
-                int linkIndex = footLinkIndices[i];
-                Pose::LinkInfo* info = pose->ikLinkInfo(linkIndex);
-                if(info){
-                    map<int,Pose::LinkInfo*>::iterator p = supportingLinks.find(linkIndex);
-                    if(p != supportingLinks.end()){
-                        if(!info->isTouching()){
-                            supportingLinks.erase(p);
-                        } else {
-                            Pose::LinkInfo* prev = p->second;
-                            if(prev->p != info->p){
-                                dp += prev->p - info->p;
-                                info->p = prev->p;
-                                modified = true;
-                            }
-                            if(prev->R != info->R){
-                                const Matrix3 R = info->R.transpose() * prev->R;
-                                da += atan2(R(1,0),R(0,0));
-                                info->R = prev->R;
-                                modified = true;
-                            }
-                            p->second = info;
-                        }
-                    }
-                }
-            }
-                
-            double ns = supportingLinks.size();
-            if(modified && ns > 0){
-                stepAdjustmentTranslation[0] = dp[0] / ns;
-                stepAdjustmentTranslation[1] = dp[1] / ns;
-                stepAdjustmentYawDiff = da / ns;
-                stepAdjustmentRotation = AngleAxisd(stepAdjustmentYawDiff, Vector3::UnitZ());
-            }
-                
-            bool isDifferent = (stepAdjustmentTranslation != Vector3::Zero() || stepAdjustmentYawDiff != 0.0);
-                
-            if(isDifferent){
-                modified = true;
-            }
-                
-            for(Pose::LinkInfoMap::iterator it = pose->ikLinkBegin(); it != pose->ikLinkEnd(); ++it){
-                int linkIndex = it->first;
-                if(supportingLinks.find(linkIndex) == supportingLinks.end()){
-                    Pose::LinkInfo& info = it->second;
-                    if(isDifferent){
-                        info.p += stepAdjustmentTranslation;
-                        info.R = stepAdjustmentRotation * info.R;
-                    }
-                    if(info.isTouching()){
-                        supportingLinks.insert(make_pair(linkIndex, &info));
-                    }
-                }
-            }
-            if(pose->isZmpValid() && isDifferent){
-                pose->setZmp(pose->zmp() + stepAdjustmentTranslation);
-            }
-
-            if(modified){
-                seq->endPoseModification(poseIter);
-            }
-        }
-    }
+    StepAdjuster(PoseSeq* seq, const vector<int>& footLinkIndices, PoseSeq::iterator origin);
+    void adjustStepPosition(PoseSeq::iterator poseIter);
 };
+
+
+StepAdjuster::StepAdjuster(PoseSeq* seq, const vector<int>& footLinkIndices, PoseSeq::iterator origin)
+    : seq(seq),
+      footLinkIndices(footLinkIndices)
+{
+    supportingLinks.clear();
+    stepAdjustmentTranslation.setZero();
+    stepAdjustmentYawDiff = 0.0;
+    stepAdjustmentRotation.setIdentity();
+
+    PoseSeq::iterator poseIter;
+    for(poseIter = origin; poseIter != seq->end(); ++poseIter){
+        adjustStepPosition(poseIter);
+    }
+
+    supportingLinks.clear();
+    stepAdjustmentTranslation.setZero();
+    stepAdjustmentYawDiff = 0.0;
+    stepAdjustmentRotation.setIdentity();
+
+    poseIter = origin;
+    while(true){
+        adjustStepPosition(poseIter);
+        if(poseIter == seq->begin()){
+            break;
+        }
+        poseIter--;
+    }
 }
 
 
-void cnoid::adjustStepPositions(PoseSeqPtr seq, const vector<int>& footLinkIndices, PoseSeq::iterator origin)
+void StepAdjuster::adjustStepPosition(PoseSeq::iterator poseIter)
+{
+    auto pose = poseIter->get<BodyKeyPose>();
+    if(!pose){
+        return;
+    }
+
+    seq->beginPoseModification(poseIter);
+
+    bool modified = false;
+    Vector3 dp = Vector3::Zero();
+    double da = 0.0;
+    for(size_t i=0; i < footLinkIndices.size(); ++i){
+        int linkIndex = footLinkIndices[i];
+        BodyKeyPose::LinkInfo* info = pose->ikLinkInfo(linkIndex);
+        if(info){
+            auto it = supportingLinks.find(linkIndex);
+            if(it != supportingLinks.end()){
+                if(!info->isTouching()){
+                    supportingLinks.erase(it);
+                } else {
+                    BodyKeyPose::LinkInfo* prev = it->second;
+                    if(prev->p != info->p){
+                        dp += prev->p - info->p;
+                        info->p = prev->p;
+                        modified = true;
+                    }
+                    if(prev->R != info->R){
+                        const Matrix3 R = info->R.transpose() * prev->R;
+                        da += atan2(R(1,0),R(0,0));
+                        info->R = prev->R;
+                        modified = true;
+                    }
+                    it->second = info;
+                }
+            }
+        }
+    }
+    
+    double ns = supportingLinks.size();
+    if(modified && ns > 0){
+        stepAdjustmentTranslation[0] = dp[0] / ns;
+        stepAdjustmentTranslation[1] = dp[1] / ns;
+        stepAdjustmentYawDiff = da / ns;
+        stepAdjustmentRotation = AngleAxisd(stepAdjustmentYawDiff, Vector3::UnitZ());
+    }
+    
+    bool isDifferent = (stepAdjustmentTranslation != Vector3::Zero() || stepAdjustmentYawDiff != 0.0);
+    
+    if(isDifferent){
+        modified = true;
+    }
+    
+    for(auto it = pose->ikLinkBegin(); it != pose->ikLinkEnd(); ++it){
+        int linkIndex = it->first;
+        if(supportingLinks.find(linkIndex) == supportingLinks.end()){
+            BodyKeyPose::LinkInfo& info = it->second;
+            if(isDifferent){
+                info.p += stepAdjustmentTranslation;
+                info.R = stepAdjustmentRotation * info.R;
+            }
+            if(info.isTouching()){
+                supportingLinks.insert(make_pair(linkIndex, &info));
+            }
+        }
+    }
+    if(pose->isZmpValid() && isDifferent){
+        pose->setZmp(pose->zmp() + stepAdjustmentTranslation);
+    }
+    
+    if(modified){
+        seq->endPoseModification(poseIter);
+    }
+}
+
+}
+
+
+void cnoid::adjustStepPositions(PoseSeq* seq, const vector<int>& footLinkIndices, PoseSeq::iterator origin)
 {
     StepAdjuster adjuster(seq, footLinkIndices, origin);
 }
@@ -152,16 +156,16 @@ class FlipFilter
     typedef map<int, int> LinkFlipMap;
     LinkFlipMap linkFlipMap;
 
-    bool flipPose(PosePtr pose);
+    bool flipPose(BodyKeyPose* pose);
 
 public:
-    FlipFilter(BodyPtr body);
-    void flip(PoseSeqPtr seq);
+    FlipFilter(Body* body);
+    void flip(PoseSeq* seq);
 };
 }
 
 
-FlipFilter::FlipFilter(BodyPtr body)
+FlipFilter::FlipFilter(Body* body)
     : body(body)
 {
     const Listing& sjoints = *body->info()->findListing("symmetricJoints");    
@@ -219,36 +223,34 @@ FlipFilter::FlipFilter(BodyPtr body)
 }
 
 
-void FlipFilter::flip(PoseSeqPtr seq)
+void FlipFilter::flip(PoseSeq* seq)
 {
-    PoseSeq::iterator poseIter;
-    for(poseIter = seq->begin(); poseIter != seq->end(); ++poseIter){
-        PosePtr pose = poseIter->get<Pose>();
-        if(pose){
-            seq->beginPoseModification(poseIter);
+    for(auto it = seq->begin(); it != seq->end(); ++it){
+        if(auto pose = it->get<BodyKeyPose>()){
+            seq->beginPoseModification(it);
             if(flipPose(pose)){
-                seq->endPoseModification(poseIter);
+                seq->endPoseModification(it);
             }
         }
     }
 }
 
 
-bool FlipFilter::flipPose(PosePtr pose)
+bool FlipFilter::flipPose(BodyKeyPose* pose)
 {
     bool modified = false;
     
-    PosePtr orgPose = static_cast<Pose*>(pose->duplicate());
+    BodyKeyPosePtr orgPose = pose->clone();
 
     pose->setNumJoints(0);
     for(int i=0; i < orgPose->numJoints(); ++i){
         if(orgPose->isJointValid(i)){
             double q = orgPose->jointPosition(i);
-            JointFlipInfoMap::iterator p = jointFlipInfoMap.find(i);
-            if(p == jointFlipInfoMap.end()){
+            auto it = jointFlipInfoMap.find(i);
+            if(it == jointFlipInfoMap.end()){
                 pose->setJointPosition(i, q);
             } else {
-                JointFlipInfo& flip = p->second;
+                JointFlipInfo& flip = it->second;
                 pose->setJointPosition(flip.counterPartJointId, q * flip.jointPositionSign);
                 modified = true;
             }
@@ -256,14 +258,14 @@ bool FlipFilter::flipPose(PosePtr pose)
     }
 
     pose->clearIkLinks();
-    for(Pose::LinkInfoMap::iterator p = orgPose->ikLinkBegin(); p != orgPose->ikLinkEnd(); ++p){
-        int index = p->first;
-        Pose::LinkInfo& orgInfo = p->second;
+    for(auto ikLinkIter = orgPose->ikLinkBegin(); ikLinkIter != orgPose->ikLinkEnd(); ++ikLinkIter){
+        int index = ikLinkIter->first;
+        BodyKeyPose::LinkInfo& orgInfo = ikLinkIter->second;
 
-        Pose::LinkInfo* info;
-        LinkFlipMap::iterator q = linkFlipMap.find(index);
-        if(q != linkFlipMap.end()){
-            index = q->second;
+        BodyKeyPose::LinkInfo* info;
+        auto it = linkFlipMap.find(index);
+        if(it != linkFlipMap.end()){
+            index = it->second;
             info = pose->addIkLink(index);
             info->p = orgInfo.p;
             info->p.y() = -info->p.y();
@@ -305,7 +307,7 @@ bool FlipFilter::flipPose(PosePtr pose)
 }
 
 
-void cnoid::flipPoses(PoseSeqPtr seq, BodyPtr body)
+void cnoid::flipPoses(PoseSeq* seq, Body* body)
 {
     FlipFilter filiter(body);
     filiter.flip(seq);
@@ -313,22 +315,21 @@ void cnoid::flipPoses(PoseSeqPtr seq, BodyPtr body)
     
 
 void cnoid::rotateYawOrientations
-(PoseSeqPtr seq, PoseSeq::iterator begin, const Vector3& center, double angle)
+(PoseSeq* seq, PoseSeq::iterator begin, const Vector3& center, double angle)
 {
     const Matrix3 Rz(AngleAxisd(angle, Vector3::UnitZ()));
     
     PoseSeq::iterator poseIter;
     for(poseIter = begin; poseIter != seq->end(); ++poseIter){
 
-        PosePtr pose = poseIter->get<Pose>();
-        if(pose){
+        if(auto pose = poseIter->get<BodyKeyPose>()){
 
             if(pose->numIkLinks() > 0 || pose->isZmpValid()){
 
                 seq->beginPoseModification(poseIter);
             
-                for(Pose::LinkInfoMap::iterator p = pose->ikLinkBegin(); p != pose->ikLinkEnd(); ++p){
-                    Pose::LinkInfo& linkInfo = p->second;
+                for(auto it = pose->ikLinkBegin(); it != pose->ikLinkEnd(); ++it){
+                    BodyKeyPose::LinkInfo& linkInfo = it->second;
                     linkInfo.p = Rz * (linkInfo.p - center) + center;
                     linkInfo.R = Rz * linkInfo.R;
                 }

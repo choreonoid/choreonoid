@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_INTERPOLATOR_H
 #define CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_INTERPOLATOR_H
 
@@ -15,7 +10,6 @@
 namespace cnoid {
 
 class Mapping;
-class PSIImpl;
         
 class CNOID_EXPORT PoseSeqInterpolator : public PoseProvider
 {
@@ -32,7 +26,7 @@ public:
     void setLipSyncShapes(const Mapping& info);
     const std::vector<int>& lipSyncLinkIndices();
             
-    void setPoseSeq(PoseSeqPtr seq);
+    void setPoseSeq(PoseSeq* seq);
 
     void setTimeScaleRatio(double ratio);
 
@@ -79,8 +73,8 @@ public:
     virtual void getJointPositions(std::vector<stdx::optional<double>>& out_q) const;
 
 private:
-
-    PSIImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 typedef std::shared_ptr<PoseSeqInterpolator> PoseSeqInterpolatorPtr;

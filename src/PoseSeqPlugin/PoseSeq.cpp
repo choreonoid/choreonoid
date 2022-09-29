@@ -1,11 +1,9 @@
-/**
-   @file
-   @author Shin'ichiro NAKAOKA
-*/
-
 #include "PoseSeq.h"
+#include "BodyKeyPose.h"
 #include "PronunSymbol.h"
 #include "LipSyncTranslator.h"
+#include <cnoid/CloneMap>
+#include <cnoid/Body>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <fstream>
@@ -13,13 +11,6 @@
 using namespace std;
 using namespace cnoid;
 
-PoseRef::PoseRef(PoseSeq* owner, PoseUnitPtr poseUnit, double time)
-    : poseUnit_(poseUnit)
-{
-    this->owner = owner;
-    time_ = time;
-    maxTransitionTime_ = 0.0;
-}
 
 PoseSeq::PoseSeq()
 {
@@ -27,12 +18,11 @@ PoseSeq::PoseSeq()
 }
 
 
-PoseSeq::PoseSeq(const PoseSeq& org)
-    : PoseUnit(org)
+PoseSeq::PoseSeq(const PoseSeq& org, CloneMap* cloneMap)
 {
     iterator current = begin();
-    for(const_iterator it = org.begin(); it != org.end(); ++it){
-        current = copyElement(current, it);
+    for(auto it = org.begin(); it != org.end(); ++it){
+        current = copyElement(current, it, 0.0, cloneMap);
     }
 }
 
@@ -43,13 +33,7 @@ PoseSeq::~PoseSeq()
 }
 
 
-void PoseSeq::setName(const std::string& name)
-{
-    name_ = name;
-}
-
-
-PoseSeq::iterator PoseSeq::copyElement(iterator seekpos, const_iterator org, double offset)
+PoseSeq::iterator PoseSeq::copyElement(iterator seekpos, const_iterator org, double offset, CloneMap* cloneMap)
 {
     bool inserted = false;
 
@@ -57,8 +41,8 @@ PoseSeq::iterator PoseSeq::copyElement(iterator seekpos, const_iterator org, dou
 
     const string& name = org->name();
     if(!name.empty()){
-        PoseUnitMap::iterator p = poseUnitMap.find(name);
-        if(p != poseUnitMap.end()){
+        auto it = poseMap.find(name);
+        if(it != poseMap.end()){
             pos = insert(seekpos, org->time() + offset, org->name());
             pos->setMaxTransitionTime(org->maxTransitionTime());
             inserted = true;
@@ -66,10 +50,10 @@ PoseSeq::iterator PoseSeq::copyElement(iterator seekpos, const_iterator org, dou
     }
 
     if(!inserted){
-        PoseUnitPtr orgPoseUnit = org->poseUnit();
-        if(orgPoseUnit){
-            PoseUnitPtr copiedUnit(orgPoseUnit->duplicate());
-            pos = insert(seekpos, org->time() + offset, copiedUnit);
+        AbstractPosePtr orgPose = org->pose();
+        if(orgPose){
+            AbstractPosePtr copiedPose = CloneMap::getClone(orgPose, cloneMap);
+            pos = insert(seekpos, org->time() + offset, copiedPose);
             pos->setMaxTransitionTime(org->maxTransitionTime());
         }
     }
@@ -78,19 +62,25 @@ PoseSeq::iterator PoseSeq::copyElement(iterator seekpos, const_iterator org, dou
 }
 
 
-PoseUnit* PoseSeq::duplicate()
+Referenced* PoseSeq::doClone(CloneMap* cloneMap) const
 {
-    return new PoseSeq(*this);
+    return new PoseSeq(*this, cloneMap);
 }
 
 
-bool PoseSeq::load(const std::string& filename, const BodyPtr body)                   
+void PoseSeq::setName(const std::string& name)
+{
+    name_ = name;
+}
+
+
+bool PoseSeq::load(const std::string& filename, const Body* body)
 {
     errorMessage_.clear();
 
     /// \todo emit signals
-    refs.clear();
-    poseUnitMap.clear();
+    poses.clear();
+    poseMap.clear();
     
     YAMLReader parser;
     if(parser.load(filename)){
@@ -104,7 +94,7 @@ bool PoseSeq::load(const std::string& filename, const BodyPtr body)
 }
 
 
-bool PoseSeq::restore(const Mapping& archive, const BodyPtr body)
+bool PoseSeq::restore(const Mapping& archive, const Body* body)
 {
     setTargetBodyName(archive.get("targetBody", body->name()));
                                    
@@ -134,20 +124,15 @@ bool PoseSeq::restore(const Mapping& archive, const BodyPtr body)
         } else if(referred.isMapping()){
             const Mapping& mReferred = *referred.toMapping();
             const string& type = mReferred["type"];
-            PoseUnitPtr poseUnit;
+            AbstractPosePtr pose;
             if(type == "Pose"){
-                poseUnit = new Pose();
+                pose = new BodyKeyPose;
             } else if(type == "PronunSymbol"){
-                poseUnit = new PronunSymbol();
+                pose = new PronunSymbol;
             }
-            /*
-              else if(type == "PoseSeq"){
-              poseUnit = createLocalPoseSeq();
-              }
-            */
-            if(poseUnit && poseUnit->restore(mReferred, body)){
-                poseUnit->name_ = mReferred["name"];
-                current = insert(current, time, poseUnit);
+            if(pose && pose->restore(mReferred, body)){
+                pose->name_ = mReferred["name"];
+                current = insert(current, time, pose);
                 isInserted = true;
             }
         }
@@ -161,12 +146,12 @@ bool PoseSeq::restore(const Mapping& archive, const BodyPtr body)
 }
 
 
-bool PoseSeq::save(const std::string& filename, const BodyPtr body)
+bool PoseSeq::save(const std::string& filename, const Body* body)
 {
     YAMLWriter writer(filename);
     writer.setKeyOrderPreservationMode(true);
     storedNames.clear();
-    MappingPtr archive = new Mapping();
+    MappingPtr archive = new Mapping;
     archive->setFloatingNumberFormat("%.9g");
     store(*archive, body);
     writer.putComment("Body pose sequence format version 1.0 defined by cnoid-Robotics\n");
@@ -175,7 +160,7 @@ bool PoseSeq::save(const std::string& filename, const BodyPtr body)
 }
 
 
-void PoseSeq::store(Mapping& archive, const BodyPtr body) const
+void PoseSeq::store(Mapping& archive, const Body* body) const
 {
     archive.write("type", "PoseSeq");
     archive.write("name", name(), DOUBLE_QUOTED);
@@ -183,19 +168,18 @@ void PoseSeq::store(Mapping& archive, const BodyPtr body) const
 
     Listing& refsNode = *archive.createListing("refs");
     
-    for(PoseRefList::const_iterator p = refs.begin(); p != refs.end(); ++p){
-        const PoseRef& ref = *p;
+    for(auto& pose : poses){
         MappingPtr refNode = refsNode.newMapping();
-        refNode->write("time", ref.time());
-        if(ref.maxTransitionTime() > 0.0){
-            refNode->write("maxTransitionTime", ref.maxTransitionTime());
+        refNode->write("time", pose.time());
+        if(pose.maxTransitionTime() > 0.0){
+            refNode->write("maxTransitionTime", pose.maxTransitionTime());
         }
-        const string& name = ref.name();
-        if((storedNames.find(name) == storedNames.end() /* && !ref.isExternalReference()*/) ||
+        const string& name = pose.name();
+        if((storedNames.find(name) == storedNames.end() /* && !pose.isExternalReference()*/) ||
            name.empty()){
             const_cast<PoseSeq*>(this)->storedNames.insert(name);
             MappingPtr childNode = refNode->createMapping("refer");
-            ref.poseUnit()->store(*childNode, body);
+            pose.pose()->store(*childNode, body);
         } else {
             refNode->write("refer", name, DOUBLE_QUOTED);
         }
@@ -215,13 +199,12 @@ bool PoseSeq::exportTalkPluginFile(const std::string& filename)
     
     if(ENABLE_QUICK_MODE){
         
-        if(!refs.empty()){
+        if(!poses.empty()){
             bool isInitial = true;
-            for(PoseRefList::iterator p = refs.begin(); p != refs.end(); ++p){
-                PoseRef& ref = *p;
-                PronunSymbolPtr symbol = ref.get<PronunSymbol>();
+            for(auto& pose : poses){
+                PronunSymbolPtr symbol = pose.get<PronunSymbol>();
                 if(symbol && !symbol->name().empty()){
-                    const double time = ref.time();
+                    const double time = pose.time();
                     if(isInitial){
                         isInitial = false;
                     } else {
@@ -241,11 +224,10 @@ bool PoseSeq::exportTalkPluginFile(const std::string& filename)
             ofs << prevSymbol << " " << standardTransitionTiem << "\n";
         }
     } else {
-        for(PoseRefList::iterator p = refs.begin(); p != refs.end(); ++p){
-            PoseRef& ref = *p;
-            PronunSymbolPtr symbol = ref.get<PronunSymbol>();
+        for(auto& pose : poses){
+            PronunSymbolPtr symbol = pose.get<PronunSymbol>();
             if(symbol && !symbol->name().empty()){
-                const double time = ref.time();
+                const double time = pose.time();
                 double transitionTime = time - prevTime;
                 ofs << symbol->name() << " " << transitionTime << "\n";
                 prevTime = time;
@@ -281,11 +263,11 @@ PoseSeq::iterator PoseSeq::changeTime(iterator it, double newTime)
         endPoseModification(it);
         newpos = it;
     } else {
-        sigPoseRemoving_(it, true);
-        PoseRef newRef(this, it->poseUnit(), newTime);
-        newRef.setMaxTransitionTime(it->maxTransitionTime());
-        refs.erase(it);
-        newpos = refs.insert(insertpos, newRef);
+        sigPoseAboutToBeRemoved_(it, true);
+        SequentialPose newPose(this, it->pose(), newTime);
+        newPose.setMaxTransitionTime(it->maxTransitionTime());
+        poses.erase(it);
+        newpos = poses.insert(insertpos, newPose);
         sigPoseInserted_(newpos, true);
     }
 
@@ -293,21 +275,20 @@ PoseSeq::iterator PoseSeq::changeTime(iterator it, double newTime)
 }
 
 
-PoseUnitPtr PoseSeq::find(const std::string& name)
+AbstractPose* PoseSeq::find(const std::string& name)
 {
-    PoseUnitMap::iterator p = poseUnitMap.find(name);
-    if(p != poseUnitMap.end()){
-        return p->second;
+    auto it = poseMap.find(name);
+    if(it != poseMap.end()){
+        return it->second;
     }
-
-    return PoseUnitPtr(); // null pointer
+    return nullptr;
 }
 
 
 PoseSeq::iterator PoseSeq::seek(PoseSeq::iterator current, double time, bool seekPosToInsert)
 {
-    if(current == refs.end()){
-        if(current == refs.begin()){
+    if(current == poses.end()){
+        if(current == poses.begin()){
             return current;
         }
         current--;
@@ -320,7 +301,7 @@ PoseSeq::iterator PoseSeq::seek(PoseSeq::iterator current, double time, bool see
             current++;
         }
     } else if(ct > time){
-        while(current != refs.begin()){
+        while(current != poses.begin()){
             current--;
             ct = current->time();
             if(ct == time){
@@ -334,7 +315,7 @@ PoseSeq::iterator PoseSeq::seek(PoseSeq::iterator current, double time, bool see
             }
         }
     } else {
-        while(current != refs.end() && (current->time() < time)){
+        while(current != poses.end() && (current->time() < time)){
             current++;
         }
     }
@@ -343,55 +324,49 @@ PoseSeq::iterator PoseSeq::seek(PoseSeq::iterator current, double time, bool see
 }
             
 
-PoseSeq::iterator PoseSeq::insert(PoseSeq::iterator current, double time, PoseUnitPtr poseUnit)
+PoseSeq::iterator PoseSeq::insert(PoseSeq::iterator current, double time, AbstractPose* pose)
 {
-    const string& name = poseUnit->name();
-
-
+    const string& name = pose->name();
     if(!name.empty()){
-        PoseUnitMap::iterator p = poseUnitMap.find(name);
-        if(p != poseUnitMap.end()){
-            return insertSub(current, time, p->second);
+        auto it = poseMap.find(name);
+        if(it != poseMap.end()){
+            return insertSub(current, time, it->second);
         } else {
-            poseUnitMap.insert(make_pair(name, poseUnit));
+            poseMap.insert(make_pair(name, pose));
         }
     }
     
-    return insertSub(current, time, poseUnit);
+    return insertSub(current, time, pose);
 }
 
 
-PoseSeq::iterator PoseSeq::insertSub(PoseSeq::iterator current, double time, PoseUnitPtr poseUnit)
+PoseSeq::iterator PoseSeq::insertSub(PoseSeq::iterator current, double time, AbstractPose* pose)
 {
-    PoseRef ref(this, poseUnit, time);
-
-    poseUnit->owner = this;
-    poseUnit->seqLocalReferenceCounter++;
-
-    return insert(current, time, ref);
+    SequentialPose sequentialPose(this, pose, time);
+    pose->seqLocalReferenceCounter++;
+    return insert(current, time, sequentialPose);
 }
 
 
 PoseSeq::iterator PoseSeq::insert(iterator current, double time, const std::string& name)
 {
     if(name.empty()){
-        return refs.end();
+        return poses.end();
     }
     
-    PoseUnitPtr punit = find(name);
-    if(punit){
+    if(auto punit = find(name)){
         return insertSub(current, time, punit);
     } else {
-        PoseRef ref(this, PoseUnitPtr(), time);
-        return insert(current, time, ref);
+        SequentialPose pose(this, nullptr, time);
+        return insert(current, time, pose);
     }
 }
 
 
-PoseSeq::iterator PoseSeq::insert(iterator current, double time, PoseRef& ref)
+PoseSeq::iterator PoseSeq::insert(iterator current, double time, SequentialPose& pose)
 {
     iterator it = seek(current, time);
-    it = refs.insert(it, ref);
+    it = poses.insert(it, pose);
     sigPoseInserted_(it, false);
     return it;
 }
@@ -399,50 +374,49 @@ PoseSeq::iterator PoseSeq::insert(iterator current, double time, PoseRef& ref)
 
 PoseSeq::iterator PoseSeq::erase(iterator it)
 {
-    sigPoseRemoving_(it, false);
+    sigPoseAboutToBeRemoved_(it, false);
 
-    PoseUnitPtr unit = it->poseUnit();
+    AbstractPosePtr unit = it->pose();
     if(unit){
         unit->seqLocalReferenceCounter--;
         if(unit->seqLocalReferenceCounter == 0){
             const string& name = unit->name();
             if(!name.empty()){
-                poseUnitMap.erase(name);
+                poseMap.erase(name);
             }
-            unit->owner = 0;
         }
     }
     
-    return refs.erase(it);
+    return poses.erase(it);
 }
 
 
 void PoseSeq::rename(iterator it, const std::string newName)
 {
     // unref current shared pose unit
-    PoseUnitPtr currentPoseUnit = it->poseUnit();
-    if(currentPoseUnit){
-        const string& currentName = currentPoseUnit->name();
+    AbstractPosePtr currentPose = it->pose();
+    if(currentPose){
+        const string& currentName = currentPose->name();
         if(!currentName.empty()){
-            if(--currentPoseUnit->seqLocalReferenceCounter == 0){
-                poseUnitMap.erase(currentName);
+            if(--currentPose->seqLocalReferenceCounter == 0){
+                poseMap.erase(currentName);
             }
         }
     }
         
-    PoseUnitPtr sharedPoseUnit = find(newName);
-    if(sharedPoseUnit){
-        it->poseUnit_ = sharedPoseUnit;
-        sharedPoseUnit->seqLocalReferenceCounter++;
+    AbstractPosePtr sharedPose = find(newName);
+    if(sharedPose){
+        it->pose_ = sharedPose;
+        sharedPose->seqLocalReferenceCounter++;
     } else {
-        if(currentPoseUnit){
-            PoseUnitPtr newUnit(currentPoseUnit->duplicate());
+        if(currentPose){
+            AbstractPosePtr newUnit = currentPose->clone();
             newUnit->name_ = newName;
-            newUnit->owner = this;
+            //newUnit->owner = this;
             newUnit->seqLocalReferenceCounter++;
-            it->poseUnit_ = newUnit;
+            it->pose_ = newUnit;
             if(!newName.empty()){
-                poseUnitMap.insert(make_pair(newName, newUnit));
+                poseMap.insert(make_pair(newName, newUnit));
             }
         }
     }
@@ -451,43 +425,11 @@ void PoseSeq::rename(iterator it, const std::string newName)
 
 void PoseSeq::getDomain(double& out_lower, double& out_upper)
 {
-    if(refs.empty()){
+    if(poses.empty()){
         out_lower = 0.0;
         out_upper = 0.0;
     } else {
-        out_lower = refs.front().time();
-        out_upper = refs.back().time();
+        out_lower = poses.front().time();
+        out_upper = poses.back().time();
     }
-}
-
-
-ConnectionSet PoseSeq::connectSignalSet
-(const Signal<void(iterator, bool isMoving)>::Function& slotInserted,
- const Signal<void(iterator, bool isMoving)>::Function& slotRemoving,
- const Signal<void(iterator)>::Function& slotModified)
-{
-    ConnectionSet connections;
-
-    connections.add(sigPoseInserted_.connect(slotInserted));
-    connections.add(sigPoseRemoving_.connect(slotRemoving));
-    connections.add(sigPoseModified_.connect(slotModified));
-
-    return connections;
-}
-
-
-ConnectionSet PoseSeq::connectSignalSet
-(const Signal<void(iterator, bool isMoving)>::Function& slotInserted,
- const Signal<void(iterator, bool isMoving)>::Function& slotRemoving,
- const Signal<void(iterator)>::Function& slotModifying,
- const Signal<void(iterator)>::Function& slotModified)
-{
-    ConnectionSet connections;
-
-    connections.add(sigPoseInserted_.connect(slotInserted));
-    connections.add(sigPoseRemoving_.connect(slotRemoving));
-    connections.add(sigPoseModifying_.connect(slotModifying));
-    connections.add(sigPoseModified_.connect(slotModified));
-
-    return connections;
 }

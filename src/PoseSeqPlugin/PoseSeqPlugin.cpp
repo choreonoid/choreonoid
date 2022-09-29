@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include <cnoid/Config>
 #include <cnoid/Plugin>
 #include <cnoid/App>
@@ -32,7 +27,7 @@ public:
         initializePoseSeqEngine();
         BodyMotionGenerationBar::initializeInstance(this);
         PoseRollView::initializeClass(this);
-        initializeFcpFileLoader(*this);
+        initializeFcpFileLoader(this);
             
         return true;
     }

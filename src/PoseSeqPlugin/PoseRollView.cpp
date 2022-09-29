@@ -155,7 +155,7 @@ public:
     void onPoseTTimeSpinChanged(double value);
     virtual void onInsertPoseButtonClicked() override;
     virtual void onPoseInserted(PoseSeq::iterator it, bool isMoving) override;
-    virtual void onPoseRemoving(PoseSeq::iterator it, bool isMoving) override;
+    virtual void onPoseAboutToBeRemoved(PoseSeq::iterator it, bool isMoving) override;
     virtual void onPoseModified(PoseSeq::iterator it) override;
     void onCurrentTimeSpinChanged(double value);
     void setCurrentTime(double time, bool blockScroll = false);
@@ -169,19 +169,19 @@ public:
     void updateRowRects();
     void updateRowRectsSub(QTreeWidgetItem* treeWidgetItem);
     LinkDeviceTreeItem* getFirstVisibleAncestor(const LinkDeviceTreeItem* item);
-    bool checkIfPoseHasRow(Pose* pose, const LinkDeviceTreeItem* item);
+    bool checkIfPoseHasRow(BodyKeyPose* pose, const LinkDeviceTreeItem* item);
     double searchLastPoseTime(const LinkDeviceTreeItem* item);
-    void processKeyPoseMarkersSub(LinkDeviceTreeItem* item, std::function<void()> func);
-    void processKeyPoseMarkers(std::function<void()> func);
+    void processPoseMarkersSub(LinkDeviceTreeItem* item, std::function<void()> func);
+    void processPoseMarkers(std::function<void()> func);
             
     bool onScreenPaintEvent(QPaintEvent* event);        
     void drawBackground();
     void drawTimeCursor();
-    void drawKeyPoseMarker();
+    void drawPoseMarker();
 
+    void updateTimeSpinConfigurations();
     virtual void onTimeScaleChanged() override;
-            
-    virtual void onSelectedPosesModified() override;
+    virtual void onPoseSelectionChanged(const std::vector<PoseSeq::iterator>& selected) override;
     void pickPose();
     void pickPoseSub();
             
@@ -290,7 +290,7 @@ void PoseRollView::Impl::initialize()
     self->setLayout(vbox);
 
     commandMenuManager.addItem(_("Select specified key poses"))->sigTriggered().connect(
-        [this](){ onSelectSpecifiedKeyPosesActivated(); });
+        [this](){ onSelectSpecifiedPosesActivated(); });
     commandMenuManager.addItem(_("Adjust step positions"))->sigTriggered().connect(
         [this](){ onAdjustStepPositionsActivated(); });
     commandMenuManager.addItem(_("Adjust waist positions of selected key poses"))->sigTriggered().connect(
@@ -298,7 +298,7 @@ void PoseRollView::Impl::initialize()
     commandMenuManager.addItem(_("Rotate yaw orientations"))->sigTriggered().connect(
         [this](){ onRotateYawOrientationsActivated(); });
     commandMenuManager.addItem(_("Update key poses with balanced trajectories"))->sigTriggered().connect(
-        [this](){ onUpdateKeyposesWithBalancedTrajectoriesActivated(); });
+        [this](){ onUpdatePosesWithBalancedTrajectoriesActivated(); });
     commandMenuManager.addItem(_("Flip poses against the x-z plane"))->sigTriggered().connect(
         [this](){ onFlipPosesActivated(); });
 
@@ -533,11 +533,12 @@ void PoseRollView::Impl::onTimeLengthChanged(double value)
 
 void PoseRollView::Impl::onPoseTimeSpinChanged(double value)
 {
-    if(!selectedPoseIters.empty()){
+    auto& selected = currentPoseSeqItem->selectedPoses();
+    if(!selected.empty()){
         double scaledTime = value;
         double time = scaledTime / timeScale;
         
-        if(time != (*selectedPoseIters.begin())->time()){
+        if(time != selected.front()->time()){
             currentPoseSeqItem->beginEditing();
             if(currentPoseSeqItem->endEditing(moveSelectedPoses(time))){
                 doAutomaticInterpolationUpdate();
@@ -550,7 +551,8 @@ void PoseRollView::Impl::onPoseTimeSpinChanged(double value)
 
 void PoseRollView::Impl::onPoseTTimeSpinChanged(double value)
 {
-    if(!selectedPoseIters.empty()){
+    auto& selected = currentPoseSeqItem->selectedPoses();
+    if(!selected.empty()){
         double scaledTTime = value;
         double ttime = scaledTTime / timeScale;
         currentPoseSeqItem->beginEditing();
@@ -565,7 +567,7 @@ void PoseRollView::Impl::onInsertPoseButtonClicked()
 {
     if(currentPoseSeqItem){
         currentPoseSeqItem->beginEditing();
-        auto it = insertPose();
+        auto it = insertBodyKeyPose();
         currentPoseSeqItem->endEditing(it != seq->end());
     }
 }
@@ -579,9 +581,9 @@ void PoseRollView::Impl::onPoseInserted(PoseSeq::iterator it, bool isMoving)
 }
 
 
-void PoseRollView::Impl::onPoseRemoving(PoseSeq::iterator it, bool isMoving)
+void PoseRollView::Impl::onPoseAboutToBeRemoved(PoseSeq::iterator it, bool isMoving)
 {
-    PoseSeqViewBase::onPoseRemoving(it, isMoving);
+    PoseSeqViewBase::onPoseAboutToBeRemoved(it, isMoving);
 
     if(!isMoving){
         screen->update();
@@ -776,7 +778,7 @@ LinkDeviceTreeItem* PoseRollView::Impl::getFirstVisibleAncestor(const LinkDevice
 }
 
 
-bool PoseRollView::Impl::checkIfPoseHasRow(Pose* pose, const LinkDeviceTreeItem* item)
+bool PoseRollView::Impl::checkIfPoseHasRow(BodyKeyPose* pose, const LinkDeviceTreeItem* item)
 {
     if(item == zmpRow && pose->isZmpValid()){
         return true;
@@ -803,7 +805,7 @@ double PoseRollView::Impl::searchLastPoseTime(const LinkDeviceTreeItem* item)
 
     while(last != seq->begin()){
         last--;
-        if(auto pose = last->get<Pose>()){
+        if(auto pose = last->get<BodyKeyPose>()){
             if(checkIfPoseHasRow(pose, item)){
                 break;
             }
@@ -813,7 +815,7 @@ double PoseRollView::Impl::searchLastPoseTime(const LinkDeviceTreeItem* item)
 }
 
 
-void PoseRollView::Impl::processKeyPoseMarkersSub(LinkDeviceTreeItem* item, std::function<void()> func)
+void PoseRollView::Impl::processPoseMarkersSub(LinkDeviceTreeItem* item, std::function<void()> func)
 {
     while(item){
         const RowInfo& rowInfo = itemIndexToRowInfoMap[item->rowIndex()];
@@ -843,7 +845,7 @@ void PoseRollView::Impl::processKeyPoseMarkersSub(LinkDeviceTreeItem* item, std:
 }
 
 
-void PoseRollView::Impl::processKeyPoseMarkers(std::function<void()> func)
+void PoseRollView::Impl::processPoseMarkers(std::function<void()> func)
 {
     for(size_t i=0; i < rowRenderInfos.size(); ++i){
         RowRenderInfo& info = rowRenderInfos[i];
@@ -878,31 +880,31 @@ void PoseRollView::Impl::processKeyPoseMarkers(std::function<void()> func)
             RowRenderInfo& renderInfo = rowRenderInfos[i];
             renderInfo.rendered = false;
         }
-        isMarkerSelected = (findPoseIterInSelected(markerPoseIter) != selectedPoseIters.end());
+        isMarkerSelected = currentPoseSeqItem->checkSelected(markerPoseIter);
 
         markerX1 = floor(timeToScreenX * (time - left));
 
-        if(auto pose = markerPoseIter->get<Pose>()){
+        if(auto pose = markerPoseIter->get<BodyKeyPose>()){
             isMarkerPronunSymbol = false;
             int n = std::min(body->numJoints(), pose->numJoints());
             for(int i=0; i < n; ++i){
                 Link* joint = body->joint(i);
                 if(pose->isJointValid(i) && joint->isValid()){
-                    processKeyPoseMarkersSub(linkIndexToVisibleRowAncestorMap[joint->index()], func);
+                    processPoseMarkersSub(linkIndexToVisibleRowAncestorMap[joint->index()], func);
                 }
             }
             for(auto it = pose->ikLinkBegin(); it != pose->ikLinkEnd(); ++it){
-                processKeyPoseMarkersSub(linkIndexToVisibleRowAncestorMap[it->first], func);
+                processPoseMarkersSub(linkIndexToVisibleRowAncestorMap[it->first], func);
             }
             
             if(pose->isZmpValid()){
-                processKeyPoseMarkersSub(visibleRowAncestorOfZmp, func);
+                processPoseMarkersSub(visibleRowAncestorOfZmp, func);
             }
         } else if(lipSyncCheck->isChecked()) {
             if(auto pronun = markerPoseIter->get<PronunSymbol>()){
                 isMarkerPronunSymbol = true;
                 for(size_t i=0; i < lipSyncLinkIndices.size(); ++i){
-                    processKeyPoseMarkersSub(linkIndexToVisibleRowAncestorMap[lipSyncLinkIndices[i]], func);
+                    processPoseMarkersSub(linkIndexToVisibleRowAncestorMap[lipSyncLinkIndices[i]], func);
                 }
             }
         }   
@@ -924,7 +926,7 @@ bool PoseRollView::Impl::onScreenPaintEvent(QPaintEvent* event)
     painter.setClipping(true);
 
     if(seq){
-        processKeyPoseMarkers([this](){ drawKeyPoseMarker(); });
+        processPoseMarkers([this](){ drawPoseMarker(); });
     }
 
     painter.setClipping(false);
@@ -997,7 +999,7 @@ void PoseRollView::Impl::drawBackground()
 }
 
 
-void PoseRollView::Impl::drawKeyPoseMarker()
+void PoseRollView::Impl::drawPoseMarker()
 {
     QPen* pen;
     if(isMarkerSelected){
@@ -1046,49 +1048,56 @@ void PoseRollView::Impl::drawTimeCursor()
 }
 
 
-void PoseRollView::Impl::onTimeScaleChanged()
+void PoseRollView::Impl::updateTimeSpinConfigurations()
 {
-    PoseSeqViewBase::onTimeScaleChanged();
-    screen->update();
-}
-    
-
-void PoseRollView::Impl::onSelectedPosesModified()
-{
-    PoseSeqViewBase::onSelectedPosesModified();
-
     poseTimeSpinConnection.block();
     poseTTimeSpinConnection.block();
+
+    auto& selected = currentPoseSeqItem->selectedPoses();
     
-    if(selectedPoseIters.empty()){
+    if(selected.empty()){
         poseNameLabel.setText("");
         poseTimeSpin.setEnabled(false);
         poseTimeSpin.setValue(0.0);
         poseTTimeSpin.setEnabled(false);
         poseTTimeSpin.setValue(0.0);
     } else {
-        PoseSeq::iterator poseIter = *selectedPoseIters.begin();
-        poseNameLabel.setText(poseIter->name().c_str());
+        auto pose = selected.front();
+        poseNameLabel.setText(pose->name().c_str());
         poseTimeSpin.setEnabled(true);
-        poseTimeSpin.setValue(timeScale * poseIter->time());
+        poseTimeSpin.setValue(timeScale * pose->time());
         poseTTimeSpin.setEnabled(true);
-        poseTTimeSpin.setValue(timeScale * poseIter->maxTransitionTime());
+        poseTTimeSpin.setValue(timeScale * pose->maxTransitionTime());
     }
 
     poseTTimeSpinConnection.unblock();
     poseTimeSpinConnection.unblock();
+}    
     
+
+void PoseRollView::Impl::onTimeScaleChanged()
+{
+    PoseSeqViewBase::onTimeScaleChanged();
+    updateTimeSpinConfigurations();
     screen->update();
 }
-    
-    
+
+
+void PoseRollView::Impl::onPoseSelectionChanged(const std::vector<PoseSeq::iterator>& selected)
+{
+    PoseSeqViewBase::onPoseSelectionChanged(selected);
+    updateTimeSpinConfigurations();
+    screen->update();
+}
+
+
 void PoseRollView::Impl::pickPose()
 {
     if(seq){
         pickedPoseIter = seq->end();
         pickDistance = std::numeric_limits<double>::max();
         pickedPart = PICK_NONE;
-        processKeyPoseMarkers([this](){ pickPoseSub(); });
+        processPoseMarkers([this](){ pickPoseSub(); });
     }
 }
 
@@ -1186,7 +1195,8 @@ void PoseRollView::Impl::pickPoseOnButtonPress(bool isAdding)
     if(pickedPoseIter != seq->end()){
         if(pickedPart == PICK_RIGHT){
             dragMode = DRAG_POSES;
-            draggingPosesOrgTime = timeScale * (*selectedPoseIters.begin())->time();
+            auto pose = currentPoseSeqItem->selectedPoses().front();
+            draggingPosesOrgTime = timeScale * pose->time();
             screen->setCursor(Qt::ClosedHandCursor);
         } else if(pickedPart == PICK_LEFT){
             dragMode = DRAG_TRANSITION_TIME;
@@ -1398,13 +1408,14 @@ bool PoseRollView::Impl::onScreenKeyReleaseEvent(QKeyEvent* event)
 
 void PoseRollView::Impl::selectPrevPose(bool isAdding)
 {
-    if(!selectedPoseIters.empty()){
-        PoseSeq::iterator it = *selectedPoseIters.begin();
+    auto& selected = currentPoseSeqItem->selectedPoses();
+    if(!selected.empty()){
+        auto it = selected.front();
         if(it != seq->begin()){
             it--;
         }
         while(true){
-            if(!lipSyncCheck->isChecked() && !it->get<Pose>()){
+            if(!lipSyncCheck->isChecked() && !it->get<BodyKeyPose>()){
                 if(it != seq->begin()){
                     it--;
                     continue;
@@ -1423,17 +1434,17 @@ void PoseRollView::Impl::selectPrevPose(bool isAdding)
         
 void PoseRollView::Impl::selectNextPose(bool isAdding)
 {
-    if(!selectedPoseIters.empty()){
-        PoseSeq::iterator it = *(--selectedPoseIters.end());
+    auto& selected = currentPoseSeqItem->selectedPoses();
+    if(!selected.empty()){
+        PoseSeq::iterator it = *(--selected.end());
         ++it;
         if(!lipSyncCheck->isChecked()){
-            while(it != seq->end() && !it->get<Pose>()){
+            while(it != seq->end() && !it->get<BodyKeyPose>()){
                 ++it;
             }
         }
         if(it != seq->end()){
             toggleSelection(it, isAdding, true);
-            
         }
     }
 }

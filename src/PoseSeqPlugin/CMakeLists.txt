@@ -12,7 +12,9 @@ set(target CnoidPoseSeqPlugin)
 
 set(sources
   PoseSeqPlugin.cpp
-  Pose.cpp
+  AbstractPose.cpp
+  BodyKeyPose.cpp
+  SequentialPose.cpp
   PoseSeq.cpp
   PoseSeqInterpolator.cpp
   PronunSymbol.cpp
@@ -27,7 +29,9 @@ set(sources
 )
 
 set(headers
-  Pose.h
+  AbstractPose.h
+  BodyKeyPose.h
+  SequentialPose.h
   PoseSeq.h
   PoseSeqInterpolator.h
   PoseFilters.h

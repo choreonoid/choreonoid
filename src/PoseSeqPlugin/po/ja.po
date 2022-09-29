@@ -313,8 +313,8 @@ msgstr "処理失敗！ポーズが更新できません．"
 msgid "flipping all the poses against x-z plane ..."
 msgstr "全姿勢をx-z平面に対して反転…"
 
-msgid "The number of selected key poses is {}"
-msgstr "選択ポーズの数は{}です．"
+msgid "The number of selected key poses is {0}."
+msgstr "選択ポーズの数は{0}です．"
 
 msgid "Selected key poses have been updated."
 msgstr "選択ポーズは更新されました．"

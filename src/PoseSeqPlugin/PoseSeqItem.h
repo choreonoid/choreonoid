@@ -1,18 +1,13 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_ITEM_H
 #define CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_ITEM_H
 
+#include "PoseSeq.h"
 #include "PoseSeqInterpolator.h"
 #include <cnoid/Item>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class PoseSeq;
 class BodyMotionItem;
 
 class CNOID_EXPORT PoseSeqItem : public Item
@@ -31,6 +26,23 @@ public:
     BodyMotionItem* bodyMotionItem();
     double barLength() const;
 
+    typedef std::vector<PoseSeq::iterator> PoseSeqIteratorList;
+    const PoseSeqIteratorList& selectedPoses() const;
+    //! \return true if any selected item is actually cleared.
+    bool clearPoseSelection(bool doNotify = false);
+    void selectPose(PoseSeq::iterator pose, bool doNotify = false, bool doSort = true);
+    void selectAllPoses(bool doNotify = false);
+    //! \return true if the elemnt is actually unselected from the selected state.
+    bool unselectPose(PoseSeq::iterator pose, bool doNotify = false);
+    bool checkSelected(PoseSeq::iterator pose) const;
+    void notifyPoseSelectionChange();
+
+    /**
+       \note When a selected pose is removed from the sequence with the PoseSeq::erase function,
+       the pose is also removed from the selection and sigPoseSelectionChanged is emitted.
+    */
+    SignalProxy<void(const std::vector<PoseSeq::iterator>& selected)> sigPoseSelectionChanged();
+
     virtual bool updateInterpolation();
     virtual bool updateTrajectory(bool putMessages = false);
 
@@ -44,7 +56,7 @@ public:
     /**
        temporary treatment.
     */
-    bool updateKeyPosesWithBalancedTrajectories(std::ostream& os);
+    bool updatePosesWithBalancedTrajectories(std::ostream& os);
 
 protected:
     virtual Item* doCloneItem(CloneMap* cloneMap) const override;

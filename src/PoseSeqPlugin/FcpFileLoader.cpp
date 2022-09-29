@@ -1,11 +1,11 @@
 /**
    @file
    FaceController Plugin File (*.poseset and *.poseseq) Loader
-   @author Shin'ichiro Nakaoka
 */
 
 #include "FcpFileLoader.h"
 #include "PoseSeqItem.h"
+#include "BodyKeyPose.h"
 #include <cnoid/RootItem>
 #include <cnoid/ItemList>
 #include <cnoid/AppConfig>
@@ -178,7 +178,7 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
             auto it = tokens.begin();
             if(it != tokens.end()){
                 if(*it != "#"){
-                    PoseSeq::iterator poseIter = seq->begin();
+                    auto poseIter = seq->begin();
                     double time = std::stod(*it++);
                     int numParts = parts.size();
                     bool poseAdded = false;
@@ -191,13 +191,13 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
                         string label(*it);
                         
                         if(!label.empty()){
-                            map<string,FcPose>::iterator p = part.poses.find(label);
-                            if(p == part.poses.end()){
+                            auto fcpPoseIter = part.poses.find(label);
+                            if(fcpPoseIter == part.poses.end()){
                                 os << "label \"" << label << "\" is not defined";
                                 os << " at line " << nLines << "." << endl;
                             } else {
-                                const FcPose& fcPose = p->second;
-                                PosePtr pose(new Pose);
+                                const FcPose& fcPose = fcpPoseIter->second;
+                                BodyKeyPosePtr pose = new BodyKeyPose;
                                 for(size_t j=0; j < part.jointIds.size(); ++j){
                                     pose->setJointPosition(part.jointIds[j], fcPose.q[j]);
                                 }
@@ -280,7 +280,7 @@ void invokeFaceControllerPatternFileImportDialog()
 }
 
 
-void cnoid::initializeFcpFileLoader(ExtensionManager& ext)
+void cnoid::initializeFcpFileLoader(ExtensionManager* /* ext */)
 {
     MainMenu::instance()->add_File_Import_Item(
         _("FaceController Plugin Pattern Files"),

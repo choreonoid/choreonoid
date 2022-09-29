@@ -1,52 +1,27 @@
-/**
-   @file
-   @author Shin'ichiro NAKAOKA
-*/
-
-#include "Pose.h"
-#include <cnoid/EigenArchive>
+#include "BodyKeyPose.h"
+#include <cnoid/Body>
 #include <cnoid/Link>
+#include <cnoid/EigenArchive>
 
 using namespace std;
 using namespace cnoid;
 
 
-PoseUnit::PoseUnit()
-{
-    owner = 0;
-    seqLocalReferenceCounter = 0;
-}
-
-
-PoseUnit::PoseUnit(const PoseUnit& org)
-    : name_(org.name_)
-{
-    owner = 0;
-    seqLocalReferenceCounter = 0;
-}
-
-
-PoseUnit::~PoseUnit()
-{
-
-}
-
-
-Pose::Pose()
+BodyKeyPose::BodyKeyPose()
 {
     initializeMembers();
 }
     
 
-Pose::Pose(int numJoints)
+BodyKeyPose::BodyKeyPose(int numJoints)
     : jointInfos(numJoints)
 {
     initializeMembers();
 }
 
 
-Pose::Pose(const Pose& org)
-    : PoseUnit(org),
+BodyKeyPose::BodyKeyPose(const BodyKeyPose& org)
+    : AbstractPose(org),
       jointInfos(org.jointInfos),
       ikLinks(org.ikLinks)
 {
@@ -62,7 +37,7 @@ Pose::Pose(const Pose& org)
 }
 
 
-void Pose::initializeMembers()
+void BodyKeyPose::initializeMembers()
 {
     baseLinkIter = ikLinks.end();
     isZmpValid_ = false;
@@ -70,15 +45,21 @@ void Pose::initializeMembers()
 }
 
 
-Pose::~Pose()
+BodyKeyPose::~BodyKeyPose()
 {
 
 }
 
 
-bool Pose::hasSameParts(PoseUnitPtr unit)
+Referenced* BodyKeyPose::doClone(CloneMap*) const
 {
-    PosePtr pose = dynamic_pointer_cast<Pose>(unit);
+    return new BodyKeyPose(*this);
+}
+
+
+bool BodyKeyPose::hasSameParts(AbstractPose* unit) const
+{
+    auto pose = dynamic_cast<BodyKeyPose*>(unit);
     if(!pose){
         return false;
     }
@@ -95,7 +76,7 @@ bool Pose::hasSameParts(PoseUnitPtr unit)
 }
 
 
-bool Pose::empty()
+bool BodyKeyPose::empty() const
 {
     if(!ikLinks.empty()){
         return false;
@@ -112,7 +93,7 @@ bool Pose::empty()
 }
             
 
-void Pose::clear()
+void BodyKeyPose::clear()
 {
     jointInfos.clear();
     ikLinks.clear();
@@ -120,14 +101,14 @@ void Pose::clear()
 }
 
 
-void Pose::clearIkLinks()
+void BodyKeyPose::clearIkLinks()
 {
     ikLinks.clear();
     baseLinkIter = ikLinks.end();
 }
 
 
-bool Pose::removeIkLink(int linkIndex)
+bool BodyKeyPose::removeIkLink(int linkIndex)
 {
     LinkInfoMap::iterator p = ikLinks.find(linkIndex);
     if(p != ikLinks.end()){
@@ -141,7 +122,7 @@ bool Pose::removeIkLink(int linkIndex)
 }
 
 
-Pose::LinkInfo& Pose::setBaseLink(int linkIndex)
+BodyKeyPose::LinkInfo& BodyKeyPose::setBaseLink(int linkIndex)
 {
     if(baseLinkIter != ikLinks.end()){
         const int oldIndex = baseLinkIter->first;
@@ -158,13 +139,7 @@ Pose::LinkInfo& Pose::setBaseLink(int linkIndex)
 }
 
 
-PoseUnit* Pose::duplicate()
-{
-    return new Pose(*this);
-}
-
-
-bool Pose::restore(const Mapping& archive, const BodyPtr body)
+bool BodyKeyPose::restore(const Mapping& archive, const Body* body)
 {
     clear();
     
@@ -241,7 +216,7 @@ bool Pose::restore(const Mapping& archive, const BodyPtr body)
 }
 
 
-void Pose::store(Mapping& archive, const BodyPtr body) const
+void BodyKeyPose::store(Mapping& archive, const Body* body) const
 {
     archive.write("type", "Pose");
     archive.write("name", name(), DOUBLE_QUOTED);
