@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-22 23:04+0900\n"
+"POT-Creation-Date: 2022-10-06 17:38+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -129,6 +129,81 @@ msgstr "FaceControllerのポーズ列ファイル (*.poseseq)"
 
 msgid "FaceController Plugin Pattern Files"
 msgstr "FaceControllerプラグインパターンファイル"
+
+msgid "Humanoid Pose Fetch"
+msgstr "ヒューマノイド姿勢取得"
+
+msgid "HumanoidPoseFetchView"
+msgstr "ヒューマノイド姿勢取得ビュー"
+
+msgid "Source:"
+msgstr "取得元："
+
+msgid "Time:"
+msgstr "時刻："
+
+msgid "Pose Seq:"
+msgstr "ポーズ列："
+
+msgid "Pose:"
+msgstr "ポーズ："
+
+msgid "Foce new pose"
+msgstr "新規ポーズ強制"
+
+msgid "Whole Body"
+msgstr "全身"
+
+msgid "Upper Body"
+msgstr "上半身"
+
+msgid "Waist"
+msgstr "腰"
+
+msgid "Head"
+msgstr "頭"
+
+msgid "%1-Arm"
+msgstr "%1腕"
+
+msgid "L"
+msgstr "左"
+
+msgid "R"
+msgstr "右"
+
+msgid "Arms"
+msgstr "両腕"
+
+msgid "Chest"
+msgstr "胸"
+
+msgid "^"
+msgstr "↑"
+
+msgid "Offset"
+msgstr "オフセット"
+
+msgid "v"
+msgstr "↓"
+
+msgid "%1-Leg"
+msgstr "%1脚"
+
+msgid "Fit"
+msgstr "フィット"
+
+msgid "Legs"
+msgstr "両脚"
+
+msgid "Lower Body"
+msgstr "下半身"
+
+msgid "New pose"
+msgstr "新規ポーズ"
+
+msgid "{0:0X} ..."
+msgstr ""
 
 msgid "Pose Roll"
 msgstr "ポーズロール"

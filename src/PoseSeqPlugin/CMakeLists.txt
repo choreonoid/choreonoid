@@ -40,6 +40,13 @@ set(headers
   exportdecl.h
   )
 
+option(ENABLE_HUMANOID_POSE_FETCH_VIEW OFF)
+mark_as_advanced(ENABLE_HUMANOID_POSE_FETCH_VIEW)
+if(ENABLE_HUMANOID_POSE_FETCH_VIEW)
+  add_definitions(-DCNOID_ENABLE_HUMANOID_POSE_FETCH_VIEW)
+set(sources ${sources} HumanoidPoseFetchView.cpp)
+endif()
+
 qt5_add_resources(RC_SRCS PoseSeqPlugin.qrc)
 
 choreonoid_make_gettext_mo_files(${target} mofiles)
