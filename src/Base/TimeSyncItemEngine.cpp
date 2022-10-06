@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "TimeSyncItemEngine.h"
 #include "ItemClassRegistry.h"
 #include "RootItem.h"
@@ -11,6 +7,8 @@
 #include <cnoid/ConnectionSet>
 #include <vector>
 #include <unordered_map>
+#include <map>
+#include <set>
 
 using namespace std;
 using namespace cnoid;
@@ -30,6 +28,7 @@ namespace cnoid {
 class TimeSyncItemEngineManager::Impl
 {
 public:
+    RootItem* rootItem;
     TimeBar* timeBar;
     double currentTime;
     bool isDoingPlayback;
@@ -37,19 +36,26 @@ public:
     vector<vector<FactoryPtr>> classIdToFactoryListMap;
 
     typedef unordered_map<FactoryPtr, TimeSyncItemEnginePtr> FactoryToEngineMap;
-    typedef unordered_map<ItemPtr, FactoryToEngineMap> ItemToFactoryToEngineMap;
-    ItemToFactoryToEngineMap itemToFactoryToEngineMap;
-    ItemToFactoryToEngineMap itemToFactoryToEngineMap0;
 
-    vector<TimeSyncItemEnginePtr> activeEngines;
-    int numPreExistingActiveEngines;
+    struct ItemInfo
+    {
+        FactoryToEngineMap factoryToEngineMap;
+        vector<TimeSyncItemEnginePtr> activeEngines;
+        ScopedConnectionSet connections;
+        bool isActiveItem;
+    };
+    map<ItemPtr, ItemInfo> itemInfoMap;
+    set<ItemInfo*> activeItemInfos;
 
     ScopedConnectionSet connections;
 
     Impl();
-    void createManagedEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines, bool itemTreeMayBeChanged);
+    void onItemAdded(Item* item);
+    void onItemDisconnectedFromRoot(Item* item, ItemInfo* info);
+    void updateItemEngines(Item* item, ItemInfo* info, bool forceUpdate);
+    void activateItemEngines(Item* item, ItemInfo* info, bool forceUpdate);
+    void deactivateItemEngines(Item* item, ItemInfo* info, bool forceUpdate);
     int createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines);
-    void updateEnginesForSelectedItems(const ItemList<>& selectedItems, bool itemTreeMayBeChanged);
     bool onPlaybackInitialized(double time);
     void onPlaybackStarted(double time);
     bool onTimeChanged(double time);
@@ -88,18 +94,11 @@ TimeSyncItemEngineManager::Impl::Impl()
     currentTime = 0.0;
     isDoingPlayback = false;
 
-    auto rootItem = RootItem::instance();
+    rootItem = RootItem::instance();
 
     connections.add(
-        rootItem->sigSubTreeChanged().connect(
-            [this, rootItem](){
-                updateEnginesForSelectedItems(rootItem->selectedItems(), true); }));
-
-    connections.add(
-        rootItem->sigSelectedItemsChanged().connect(
-            [this](const ItemList<>& selectedItems){
-                updateEnginesForSelectedItems(selectedItems, false);
-            }));
+        rootItem->sigItemAdded().connect(
+            [this](Item* item){ onItemAdded(item); }));
 
     timeBar = TimeBar::instance();
     connections.add(
@@ -137,111 +136,145 @@ void TimeSyncItemEngineManager::registerFactory_
 }
 
 
-void TimeSyncItemEngineManager::Impl::updateEnginesForSelectedItems
-(const ItemList<>& selectedItems, bool itemTreeMayBeChanged)
+void TimeSyncItemEngineManager::Impl::onItemAdded(Item* item)
 {
-    itemToFactoryToEngineMap.swap(itemToFactoryToEngineMap0);
-
-    // Clear the active engine list except for the engines with the 'isTimeSyncAlwaysMaintained' flag.
-    auto iter = activeEngines.begin();
-    while(iter != activeEngines.end()){
-        auto& engine = *iter;
-        if(engine->isTimeSyncAlwaysMaintained()){
-            auto item = engine->item();
-            if(!item->isSelected() && item->isConnectedToRoot()){
-                // Force to keep the engine
-                engine->isTimeSyncForcedToBeMaintained_ = true;
-                auto p = itemToFactoryToEngineMap0.find(item);
-                if(p != itemToFactoryToEngineMap0.end()){
-                    itemToFactoryToEngineMap[item] = std::move(p->second);
-                    itemToFactoryToEngineMap0.erase(p);
-                }
-                ++iter;
-                continue;
-            }
-        }
-        iter = activeEngines.erase(iter);
-    }
-    
-    numPreExistingActiveEngines = activeEngines.size();
-        
-    for(auto& item : selectedItems){
-        createManagedEngines(item, activeEngines, itemTreeMayBeChanged);
-    }
-
-    for(auto& kv1 : itemToFactoryToEngineMap0){
-        for(auto& kv2 : kv1.second){
-            kv2.second->deactivate();
-        }
-    }
-    itemToFactoryToEngineMap0.clear();
-}
-
-
-void TimeSyncItemEngineManager::Impl::createManagedEngines
-(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines, bool itemTreeMayBeChanged)
-{
+    ItemInfo* info = nullptr;
     int id = item->classId();
 
     while(id > 0){
         if(id < static_cast<int>(classIdToFactoryListMap.size())){
-
             auto& factories = classIdToFactoryListMap[id];
             if(!factories.empty()){
-                
-                FactoryToEngineMap* pFactoryToEngineMap0 = nullptr;
-                auto it = itemToFactoryToEngineMap0.find(item);
-                if(it != itemToFactoryToEngineMap0.end()){
-                    pFactoryToEngineMap0 = &it->second;
+                if(!info){
+                    info = &itemInfoMap[item];
+                    info->isActiveItem = false;
                 }
-                
-                for(auto& factory : classIdToFactoryListMap[id]){
-                    TimeSyncItemEnginePtr existingEngine;
-                    if(pFactoryToEngineMap0){
-                        auto q = pFactoryToEngineMap0->find(factory);
-                        if(q != pFactoryToEngineMap0->end()){
-                            existingEngine = q->second;
-                            pFactoryToEngineMap0->erase(q);
-                        }
-                    }
-                    TimeSyncItemEnginePtr engine;
-                    if(existingEngine && !itemTreeMayBeChanged){
-                        engine = existingEngine;
-                    } else {
-                        engine = (*factory)(item, existingEngine);
-                    }
-                    if(engine){
-                        engine->isTimeSyncForcedToBeMaintained_ = false;
-                        bool isPreExistingActiveEngine = false;
-                        itemToFactoryToEngineMap[item][factory] = engine;
-                        if(engine != existingEngine){
-                            if(existingEngine){
-                                existingEngine->deactivate();
-                            }
-                            engine->activate();
-                        } else {
-                            if(!engine->isActive_){
-                                engine->activate();
-                            }
-                            if(engine->isTimeSyncAlwaysMaintained()){
-                                for(int i=0; i < numPreExistingActiveEngines; ++i){
-                                    if(io_engines[i] == engine){
-                                        isPreExistingActiveEngine = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        if(!isPreExistingActiveEngine){
-                            io_engines.push_back(engine);
-                        }
-                    }
+                for(auto& factory : factories){
+                    info->factoryToEngineMap[factory].reset();
+                    info->connections.add(
+                        item->sigSelectionChanged().connect(
+                            [this, item, info](bool){
+                                updateItemEngines(item, info, false);
+                            }));
+                    info->connections.add(
+                        item->sigCheckToggled().connect(
+                            [this, item, info](bool){
+                                updateItemEngines(item, info, false);
+                            }));
+                    info->connections.add(
+                        item->sigTreePositionChanged().connect(
+                            [this, item, info](){
+                                updateItemEngines(item, info, true);
+                            }));
+                    info->connections.add(
+                        item->sigDisconnectedFromRoot().connect(
+                            [this, item, info](){
+                                onItemDisconnectedFromRoot(item, info);
+                            }));
                 }
             }
         }
         id = itemClassRegistry.getSuperClassId(id);
     }
+
+    if(info){
+        updateItemEngines(item, info, true);
+    }
 }
+
+
+void TimeSyncItemEngineManager::Impl::onItemDisconnectedFromRoot(Item* item, ItemInfo* info)
+{
+    activeItemInfos.erase(info);
+    itemInfoMap.erase(item);
+}
+
+
+void TimeSyncItemEngineManager::Impl::updateItemEngines(Item* item, ItemInfo* info, bool forceUpdate)
+{
+    bool isActiveItem = item->isSelected() || item->isChecked();
+    if(forceUpdate || (isActiveItem != info->isActiveItem)){
+        info->isActiveItem = isActiveItem;
+        if(isActiveItem){
+            activateItemEngines(item, info, forceUpdate);
+        } else {
+            deactivateItemEngines(item, info, forceUpdate);
+        }
+    }
+}
+
+
+void TimeSyncItemEngineManager::Impl::activateItemEngines(Item* item, ItemInfo* info, bool forceUpdate)
+{
+    bool prevActiveEngineExistence = !info->activeEngines.empty();
+    info->activeEngines.clear();
+
+    for(auto& kv : info->factoryToEngineMap){
+        auto existingEngine = kv.second;
+        TimeSyncItemEnginePtr newEngine;
+        if(existingEngine && !forceUpdate){
+            newEngine = existingEngine;
+        } else {
+            auto& factory = kv.first;
+            newEngine = (*factory)(item, existingEngine);
+        }
+        if(newEngine){
+            newEngine->isTimeSyncForcedToBeMaintained_ = false;
+            bool isPreExistingActiveEngine = false;
+            kv.second = newEngine;
+            if(newEngine != existingEngine){
+                if(existingEngine){
+                    existingEngine->deactivate();
+                }
+            }
+            if(!newEngine->isActive_){
+                newEngine->activate();
+            }
+            info->activeEngines.push_back(newEngine);
+        }
+    }
+    
+    if(info->activeEngines.empty()){
+        if(prevActiveEngineExistence){
+            activeItemInfos.erase(info);
+        }
+    } else {
+        if(!prevActiveEngineExistence){
+            activeItemInfos.insert(info);
+        }
+    } 
+}
+
+
+void TimeSyncItemEngineManager::Impl::deactivateItemEngines(Item* item, ItemInfo* info, bool forceUpdate)
+{
+    bool prevActiveEngineExistence = !info->activeEngines.empty();
+
+    auto it = info->activeEngines.begin();
+    while(it != info->activeEngines.end()){
+        auto engine = *it;
+        if(forceUpdate || !engine->isTimeSyncAlwaysMaintained()){
+            engine->deactivate();
+            it = info->activeEngines.erase(it);
+        } else {            
+            engine->isTimeSyncForcedToBeMaintained_ = true;
+            ++it;
+        }
+    }
+
+    for(auto& kv : info->factoryToEngineMap){
+        auto& engine = kv.second;
+        if(engine){
+            if(forceUpdate || !engine->isTimeSyncForcedToBeMaintained_){
+                engine.reset();
+            }
+        }
+    }
+
+    if(prevActiveEngineExistence && info->activeEngines.empty()){
+        activeItemInfos.erase(info);
+    } 
+}    
 
 
 int TimeSyncItemEngineManager::createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines)
@@ -273,10 +306,12 @@ int TimeSyncItemEngineManager::Impl::createEngines(Item* item, std::vector<TimeS
 bool TimeSyncItemEngineManager::Impl::onPlaybackInitialized(double time)
 {
     bool initialized = true;
-    for(auto& engine : activeEngines){
-        if(!engine->onPlaybackInitialized(time)){
-            initialized = false;
-            break;
+    for(auto& info : activeItemInfos){
+        for(auto& engine : info->activeEngines){
+            if(!engine->onPlaybackInitialized(time)){
+                initialized = false;
+                break;
+            }
         }
     }
     return initialized;
@@ -286,8 +321,10 @@ bool TimeSyncItemEngineManager::Impl::onPlaybackInitialized(double time)
 void TimeSyncItemEngineManager::Impl::onPlaybackStarted(double time)
 {
     isDoingPlayback = true;
-    for(auto& engine : activeEngines){
-        engine->onPlaybackStarted(time);
+    for(auto& info : activeItemInfos){
+        for(auto& engine : info->activeEngines){
+            engine->onPlaybackStarted(time);
+        }
     }
 }
 
@@ -296,22 +333,38 @@ bool TimeSyncItemEngineManager::Impl::onTimeChanged(double time)
 {
     bool isActive = false;
     currentTime = time;
-    auto iter = activeEngines.begin();
-    while(iter != activeEngines.end()){
-        auto& engine = *iter;
-        if(engine->isTimeSyncForcedToBeMaintained()){
-            if(!engine->isTimeSyncAlwaysMaintained()){
-                if(isDoingPlayback){
-                    engine->onPlaybackStopped(time, false);
+
+    auto it1 = activeItemInfos.begin();
+    while(it1 != activeItemInfos.end()){
+        bool doErase = false;
+        auto info = *it1;
+        auto it2 = info->activeEngines.begin();
+        while(it2 != info->activeEngines.end()){
+            auto& engine = *it2;
+            if(engine->isTimeSyncForcedToBeMaintained()){
+                if(!engine->isTimeSyncAlwaysMaintained()){
+                    if(isDoingPlayback){
+                        engine->onPlaybackStopped(time, false);
+                    }
+                    engine->deactivate();
+                    it2 = info->activeEngines.erase(it2);
+                    if(info->activeEngines.empty()){
+                        doErase = true;
+                        break;
+                    }
+                    continue;
                 }
-                engine->deactivate();
-                iter = activeEngines.erase(iter);
-                continue;
             }
+            isActive |= engine->onTimeChanged(time);
+            ++it2;
         }
-        isActive |= engine->onTimeChanged(time);
-        ++iter;
+        if(doErase){
+            it1 = activeItemInfos.erase(it1);
+        } else {
+            ++it1;
+        }
     }
+
     return isActive;
 }
 
@@ -320,20 +373,36 @@ double TimeSyncItemEngineManager::Impl::onPlaybackStopped(double time, bool isSt
 {
     double maxLastValidTime = 0.0;
     isDoingPlayback = false;
-    auto iter = activeEngines.begin();
-    while(iter != activeEngines.end()){
-        auto& engine = *iter;
-        double lastValidTime = engine->onPlaybackStopped(time, isStoppedManually);
-        if(lastValidTime > maxLastValidTime){
-            maxLastValidTime = lastValidTime;
+
+    auto it1 = activeItemInfos.begin();
+    while(it1 != activeItemInfos.end()){
+        bool doErase = false;
+        auto info = *it1;
+        auto it2 = info->activeEngines.begin();
+        while(it2 != info->activeEngines.end()){
+            auto& engine = *it2;
+            double lastValidTime = engine->onPlaybackStopped(time, isStoppedManually);
+            if(lastValidTime > maxLastValidTime){
+                maxLastValidTime = lastValidTime;
+            }
+            if(engine->isTimeSyncForcedToBeMaintained()){
+                engine->deactivate();
+                it2 = info->activeEngines.erase(it2);
+                if(info->activeEngines.empty()){
+                    doErase = true;
+                    break;
+                }
+                continue;
+            }
+            ++it2;
         }
-        if(engine->isTimeSyncForcedToBeMaintained()){
-            engine->deactivate();
-            iter = activeEngines.erase(iter);
-            continue;
+        if(doErase){
+            it1 = activeItemInfos.erase(it1);
+        } else {
+            ++it1;
         }
-        ++iter;
     }
+
     return maxLastValidTime;
 }
 
@@ -359,7 +428,7 @@ TimeSyncItemEngine::TimeSyncItemEngine(Item* item)
 
 TimeSyncItemEngine::~TimeSyncItemEngine()
 {
-
+    deactivate();
 }
 
 

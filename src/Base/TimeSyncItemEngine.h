@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_TIME_SYNC_ITEM_ENGINE_H
 #define CNOID_BASE_TIME_SYNC_ITEM_ENGINE_H
 
