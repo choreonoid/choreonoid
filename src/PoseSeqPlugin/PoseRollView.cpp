@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "PoseRollView.h"
 #include "PoseSeqViewBase.h"
 #include "PronunSymbol.h"
@@ -598,6 +593,30 @@ void PoseRollView::Impl::onPoseModified(PoseSeq::iterator it)
 }
 
 
+double PoseRollView::currentTime() const
+{
+    return impl->currentTime;
+}
+
+
+SignalProxy<void(double time)> PoseRollView::sigCurrentTimeChanged()
+{
+    return impl->sigCurrentTimeChanged;
+}
+
+
+bool PoseRollView::isTimeBarSyncEnabled() const
+{
+    return impl->timeSyncCheck.isChecked();
+}
+
+
+SignalProxy<void(bool on)> PoseRollView::sigTimeBarSyncToggled()
+{
+    return impl->timeSyncCheck.sigToggled();
+}
+
+
 void PoseRollView::Impl::onCurrentTimeSpinChanged(double value)
 {
     if(value > timeLength){
@@ -653,6 +672,7 @@ bool PoseRollView::Impl::onTimeChanged(double time)
         currentTimeSpinConnection.block();
         currentTimeSpin.setValue(time);
         currentTimeSpinConnection.unblock();
+        sigCurrentTimeChanged(currentTime);
     }
 
     return (seq && (time < timeScale * seq->endingTime()));

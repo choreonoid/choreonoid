@@ -1,7 +1,3 @@
-/*! @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_POSE_SEQ_PLUGIN_POSE_ROLL_VIEW_H
 #define CNOID_POSE_SEQ_PLUGIN_POSE_ROLL_VIEW_H
 
@@ -21,6 +17,10 @@ public:
     ~PoseRollView();
 
     PoseSeqItem* currentPoseSeqItem();
+    double currentTime() const;
+    SignalProxy<void(double time)> sigCurrentTimeChanged();
+    bool isTimeBarSyncEnabled() const;
+    SignalProxy<void(bool on)> sigTimeBarSyncToggled();
 
 protected:
     virtual bool storeState(Archive& archive) override;

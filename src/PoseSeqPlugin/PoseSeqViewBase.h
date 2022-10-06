@@ -45,6 +45,7 @@ public:
     BodyPtr body;
     double currentTime;
     double timeScale;
+    Signal<void(double time)> sigCurrentTimeChanged;
 
     PoseSeq::iterator currentPoseIter;
     PoseSeqPtr copiedPoses;
