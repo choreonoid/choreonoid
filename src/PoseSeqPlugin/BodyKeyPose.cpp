@@ -57,6 +57,46 @@ Referenced* BodyKeyPose::doClone(CloneMap*) const
 }
 
 
+void BodyKeyPose::setNumJoints(int n)
+{
+    jointInfos.resize(n);
+}
+
+
+void BodyKeyPose::setJointPosition(int jointId, double q)
+{
+    if(jointId >= 0){
+        if(jointId >= (int)jointInfos.size()){
+            setNumJoints(jointId + 1);
+        }
+        JointInfo& info = jointInfos[jointId];
+        info.q = q;
+        info.isValid = true;
+    }
+}
+
+
+void BodyKeyPose::setJointStationaryPoint(int jointId, bool on)
+{
+    if(jointId >= (int)jointInfos.size()){
+        setNumJoints(jointId + 1);
+    }
+    jointInfos[jointId].isStationaryPoint = on;
+}
+
+
+bool BodyKeyPose::invalidateJoint(int jointId)
+{
+    if(jointId < (int)jointInfos.size()){
+        if(jointInfos[jointId].isValid){
+            jointInfos[jointId].isValid = false;
+            return true;
+        }
+    }
+    return false;
+}
+
+
 bool BodyKeyPose::hasSameParts(AbstractPose* unit) const
 {
     auto pose = dynamic_cast<BodyKeyPose*>(unit);
@@ -122,12 +162,12 @@ bool BodyKeyPose::removeIkLink(int linkIndex)
 }
 
 
-BodyKeyPose::LinkInfo& BodyKeyPose::setBaseLink(int linkIndex)
+BodyKeyPose::LinkInfo* BodyKeyPose::setBaseLink(int linkIndex)
 {
     if(baseLinkIter != ikLinks.end()){
         const int oldIndex = baseLinkIter->first;
         if(linkIndex == oldIndex){
-            return baseLinkIter->second;
+            return &baseLinkIter->second;
         }
         baseLinkIter->second.isBaseLink_ = false;
     }
@@ -135,8 +175,49 @@ BodyKeyPose::LinkInfo& BodyKeyPose::setBaseLink(int linkIndex)
     LinkInfo& info = baseLinkIter->second;
     info.isBaseLink_ = true;
 
+    return &info;
+}
+
+
+BodyKeyPose::LinkInfo* BodyKeyPose::setBaseLink(int linkIndex, const Isometry3& position)
+{
+    auto info = setBaseLink(linkIndex);
+    if(info){
+        info->setPosition(position);
+    }
     return info;
 }
+
+
+void BodyKeyPose::invalidateBaseLink()
+{
+    if(baseLinkIter != ikLinks.end()){
+        baseLinkIter->second.isBaseLink_ = false;
+        baseLinkIter = ikLinks.end();
+    }
+}
+
+
+void BodyKeyPose::setZmp(const Vector3& p)
+{
+    isZmpValid_ = true;
+    zmp_ = p;
+}
+
+
+bool BodyKeyPose::invalidateZmp()
+{
+    bool ret = isZmpValid_;
+    isZmpValid_ = false;
+    return ret;
+}
+
+
+void BodyKeyPose::setZmpStationaryPoint(bool on)
+{
+    isZmpStationaryPoint_ = on;
+}
+
 
 
 bool BodyKeyPose::restore(const Mapping& archive, const Body* body)
@@ -181,9 +262,9 @@ bool BodyKeyPose::restore(const Mapping& archive, const Body* body)
                 Vector3 p;
                 Matrix3 R;
                 if(read(ikLinkNode, "translation", p) && read(ikLinkNode, "rotation", R)){
-                    LinkInfo* info = addIkLink(index);
-                    info->p = p;
-                    info->R = R;
+                    LinkInfo* info = getOrCreateIkLink(index);
+                    info->setTranslation(p);
+                    info->setRotation(R);
                     info->setStationaryPoint(ikLinkNode.get("isStationaryPoint", false));
                     if(ikLinkNode.get("isBaseLink", false)){
                         setBaseLink(index);
@@ -265,8 +346,8 @@ void BodyKeyPose::store(Mapping& archive, const Body* body) const
                 ikLinkNode.write("isStationaryPoint", info.isStationaryPoint());
             }
             ikLinkNode.setFloatingNumberFormat("%.9g");
-            write(ikLinkNode, "translation", info.p);
-            write(ikLinkNode, "rotation", info.R);
+            write(ikLinkNode, "translation", Vector3(info.translation()));
+            write(ikLinkNode, "rotation", Matrix3(info.rotation()));
 
             if(info.isTouching()){
 
@@ -297,4 +378,36 @@ void BodyKeyPose::store(Mapping& archive, const Body* body) const
         write(archive, "zmp", zmp_);
         archive.write("isZmpStationaryPoint", isZmpStationaryPoint_);
     }
+}
+
+
+BodyKeyPose::LinkInfo::LinkInfo()
+    : isBaseLink_(false),
+      isStationaryPoint_(false),
+      isTouching_(false),
+      isSlave_(false)
+{
+
+}
+      
+
+void BodyKeyPose::LinkInfo::setTouching(const Vector3& partingDirection, const std::vector<Vector3>& contactPoints)
+{
+    isTouching_ = true;
+    partingDirection_ = partingDirection;
+    contactPoints_ = contactPoints;
+}
+
+
+void BodyKeyPose::LinkInfo::setTouching(bool on)
+{
+    isTouching_ = on;
+    partingDirection_ = Vector3::UnitZ();
+    contactPoints_.clear();
+}
+
+
+void BodyKeyPose::LinkInfo::clearTouching()
+{
+    setTouching(false);
 }

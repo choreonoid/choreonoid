@@ -76,15 +76,15 @@ void StepAdjuster::adjustStepPosition(PoseSeq::iterator poseIter)
                     supportingLinks.erase(it);
                 } else {
                     BodyKeyPose::LinkInfo* prev = it->second;
-                    if(prev->p != info->p){
-                        dp += prev->p - info->p;
-                        info->p = prev->p;
+                    if(prev->p() != info->p()){
+                        dp += prev->p() - info->p();
+                        info->p() = prev->p();
                         modified = true;
                     }
-                    if(prev->R != info->R){
-                        const Matrix3 R = info->R.transpose() * prev->R;
+                    if(prev->R() != info->R()){
+                        const Matrix3 R = info->R().transpose() * prev->R();
                         da += atan2(R(1,0),R(0,0));
-                        info->R = prev->R;
+                        info->R() = prev->R();
                         modified = true;
                     }
                     it->second = info;
@@ -112,8 +112,8 @@ void StepAdjuster::adjustStepPosition(PoseSeq::iterator poseIter)
         if(supportingLinks.find(linkIndex) == supportingLinks.end()){
             BodyKeyPose::LinkInfo& info = it->second;
             if(isDifferent){
-                info.p += stepAdjustmentTranslation;
-                info.R = stepAdjustmentRotation * info.R;
+                info.p() += stepAdjustmentTranslation;
+                info.R() = stepAdjustmentRotation * info.R();
             }
             if(info.isTouching()){
                 supportingLinks.insert(make_pair(linkIndex, &info));
@@ -266,11 +266,11 @@ bool FlipFilter::flipPose(BodyKeyPose* pose)
         auto it = linkFlipMap.find(index);
         if(it != linkFlipMap.end()){
             index = it->second;
-            info = pose->addIkLink(index);
-            info->p = orgInfo.p;
-            info->p.y() = -info->p.y();
-            Matrix3& R = orgInfo.R;
-            info->R <<
+            info = pose->getOrCreateIkLink(index);
+            info->p() = orgInfo.p();
+            info->p().y() = -info->p().y();
+            auto R = orgInfo.R();
+            info->R() <<
                 R(0, 0), -R(0, 1),  R(0, 2),
                 -R(1, 0),  R(1, 1), -R(1, 2),
                 R(2, 0), -R(2, 1),  R(2, 2);
@@ -278,14 +278,15 @@ bool FlipFilter::flipPose(BodyKeyPose* pose)
             modified = true;
 
         } else {
-            info = pose->addIkLink(index);
-            info->p = orgInfo.p;
-            info->R = orgInfo.R;
+            info = pose->getOrCreateIkLink(index);
+            info->setPosition(orgInfo.position());
         }
         info->setStationaryPoint(orgInfo.isStationaryPoint());
         if(orgInfo.isTouching()){
             std::vector<Vector3> contactPoints = orgInfo.contactPoints();
-            for(auto& pointVector : contactPoints) pointVector.y() *= -1;
+            for(auto& pointVector : contactPoints){
+                pointVector.y() *= -1;
+            }
             info->setTouching(orgInfo.partingDirection(), contactPoints);
         }
         info->setSlave(orgInfo.isSlave());
@@ -330,8 +331,8 @@ void cnoid::rotateYawOrientations
             
                 for(auto it = pose->ikLinkBegin(); it != pose->ikLinkEnd(); ++it){
                     BodyKeyPose::LinkInfo& linkInfo = it->second;
-                    linkInfo.p = Rz * (linkInfo.p - center) + center;
-                    linkInfo.R = Rz * linkInfo.R;
+                    linkInfo.p() = Rz * (linkInfo.p() - center) + center;
+                    linkInfo.R() = Rz * linkInfo.R();
                 }
                 
                 if(pose->isZmpValid()){

@@ -25,24 +25,13 @@ public:
 
     BodyKeyPose* clone() const { return static_cast<BodyKeyPose*>(doClone(nullptr)); }
 
-    void setNumJoints(int n){
-        jointInfos.resize(n);
-    }
+    void setNumJoints(int n);
             
     int numJoints() const {
         return jointInfos.size();
     }
 
-    void setJointPosition(int jointId, double q){
-        if(jointId >= 0){
-            if(jointId >= (int)jointInfos.size()){
-                setNumJoints(jointId + 1);
-            }
-            JointInfo& info = jointInfos[jointId];
-            info.q = q;
-            info.isValid = true;
-        }
-    }
+    void setJointPosition(int jointId, double q);
 
     double jointPosition(int jointId) const {
         return jointInfos[jointId].q;
@@ -55,12 +44,7 @@ public:
         return jointInfos[jointId].isValid;
     }
 
-    void setJointStationaryPoint(int jointId, bool on = true){
-        if(jointId >= (int)jointInfos.size()){
-            setNumJoints(jointId + 1);
-        }
-        jointInfos[jointId].isStationaryPoint = on;
-    }
+    void setJointStationaryPoint(int jointId, bool on = true);
 
     bool isJointStationaryPoint(int jointId) const {
         if(jointId >= (int)jointInfos.size()){
@@ -69,43 +53,71 @@ public:
         return jointInfos[jointId].isStationaryPoint;
     }
 
-    bool invalidateJoint(int jointId) {
-        if(jointId < (int)jointInfos.size()){
-            if(jointInfos[jointId].isValid){
-                jointInfos[jointId].isValid = false;
-                return true;
-            }
-        }
-        return false;
-    }
+    bool invalidateJoint(int jointId);
 
     class LinkInfo
     {
     public:
-        Vector3 p;
-        Matrix3 R;
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        
+        LinkInfo();
 
-        LinkInfo() :
-            isBaseLink_(false),
-            isStationaryPoint_(false),
-            isTouching_(false),
-            isSlave_(false) { }
+        Isometry3& T() { return T_; }
+        const Isometry3& T() const { return T_; }
+        Isometry3& position() { return T_; }
+        const Isometry3& position() const { return T_; }
+        template<class Scalar, int Mode, int Options>
+        void setPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T){
+            T_ = T.template cast<Isometry3::Scalar>();
+        }
+        template<class Derived>
+        void setPosition(const Eigen::MatrixBase<Derived>& T){
+            T_ = T.template cast<Isometry3::Scalar>();
+        }
+        template<typename Derived1, typename Derived2>
+        void setPosition(const Eigen::MatrixBase<Derived1>& rotation, const Eigen::MatrixBase<Derived2>& translation){
+            T_.linear() = rotation;
+            T_.translation() = translation;
+        }
+        Isometry3::TranslationPart p() { return T_.translation(); }
+        Isometry3::ConstTranslationPart p() const { return T_.translation(); }
+        Isometry3::TranslationPart translation() { return T_.translation(); }
+        Isometry3::ConstTranslationPart translation() const { return T_.translation(); }
+        template<typename Derived>
+        void setTranslation(const Eigen::MatrixBase<Derived>& p) {
+            T_.translation() = p.template cast<Isometry3::Scalar>();
+        }
+        Isometry3::LinearPart R() { return T_.linear(); }
+        Isometry3::ConstLinearPart R() const { return T_.linear(); }
+        Isometry3::LinearPart rotation() { return T_.linear(); }
+        Isometry3::ConstLinearPart rotation() const { return T_.linear(); }
+        template<typename Derived>
+        void setRotation(const Eigen::MatrixBase<Derived>& R) {
+            T_.linear() = R.template cast<Isometry3::Scalar>();
+        }
+        template<typename T>
+        void setRotation(const Eigen::AngleAxis<T>& a) {
+            T_.linear() = a.template cast<Isometry3::Scalar>().toRotationMatrix();
+        }
+        template<typename Derived>
+        void setRotation(const Eigen::QuaternionBase<Derived>& q) {
+            T_.linear() = q.template cast<Isometry3::Scalar>().toRotationMatrix();
+        }
+        
         bool isBaseLink() const { return isBaseLink_; }
         void setStationaryPoint(bool on){ isStationaryPoint_ = on; }
         bool isStationaryPoint() const { return isStationaryPoint_; }
         bool isTouching() const { return isTouching_; }
         const Vector3& partingDirection() const { return partingDirection_; }
         const std::vector<Vector3>& contactPoints() const { return contactPoints_; }
-        void setTouching(const Vector3& partingDirection, const std::vector<Vector3>& contactPoints) {
-            isTouching_ = true;
-            partingDirection_ = partingDirection;
-            contactPoints_ = contactPoints;
-        }
-        void clearTouching() { isTouching_ = false; }
+        void setTouching(const Vector3& partingDirection, const std::vector<Vector3>& contactPoints);
+        void setTouching(bool on = true);
+        void clearTouching();
         bool isSlave() const { return isSlave_; }
         void setSlave(bool on) { isSlave_ = on; }
                 
     private:
+        Isometry3 T_;
         bool isBaseLink_;
         bool isStationaryPoint_;
         bool isTouching_;
@@ -115,7 +127,9 @@ public:
         friend class BodyKeyPose;
     };
 
-    typedef std::map<int, LinkInfo> LinkInfoMap;
+    typedef std::map<
+        int, LinkInfo, std::less<int>, 
+        Eigen::aligned_allocator<std::pair<const int, LinkInfo>>> LinkInfoMap;
 
     void clearIkLinks();
 
@@ -123,20 +137,20 @@ public:
         return ikLinks.size();
     }
 
-    LinkInfo* addIkLink(int linkIndex){
+    LinkInfo* getOrCreateIkLink(int linkIndex){
         return &ikLinks[linkIndex];
     }
-
+    
     bool removeIkLink(int linkIndex);
 
     const LinkInfo* ikLinkInfo(int linkIndex) const {
         LinkInfoMap::const_iterator p = ikLinks.find(linkIndex);
-        return (p != ikLinks.end()) ? &p->second : 0;
+        return (p != ikLinks.end()) ? &p->second : nullptr;
     }
 
     LinkInfo* ikLinkInfo(int linkIndex) {
         LinkInfoMap::iterator p = ikLinks.find(linkIndex);
-        return (p != ikLinks.end()) ? &p->second : 0;
+        return (p != ikLinks.end()) ? &p->second : nullptr;
     }
             
     LinkInfoMap::iterator ikLinkBegin() { return ikLinks.begin(); }
@@ -144,35 +158,19 @@ public:
     LinkInfoMap::iterator ikLinkEnd() { return ikLinks.end(); }
     const LinkInfoMap::const_iterator ikLinkEnd() const { return ikLinks.end(); }
 
-    LinkInfo& setBaseLink(int linkIndex);
-
-    LinkInfo& setBaseLink(int linkIndex, const Vector3& p, const Matrix3& R){
-        LinkInfo& info = setBaseLink(linkIndex);
-        info.p = p;
-        info.R = R;
-        return info;
-    }
+    LinkInfo* setBaseLink(int linkIndex);
+    LinkInfo* setBaseLink(int linkIndex, const Isometry3& position);
             
     int baseLinkIndex() const {
         return (baseLinkIter != ikLinks.end()) ? baseLinkIter->first : -1;
     }
             
     LinkInfo* baseLinkInfo() {
-        return (baseLinkIter != ikLinks.end()) ? &baseLinkIter->second : 0;
+        return (baseLinkIter != ikLinks.end()) ? &baseLinkIter->second : nullptr;
     }
 
-    void invalidateBaseLink() {
-        if(baseLinkIter != ikLinks.end()){
-            baseLinkIter->second.isBaseLink_ = false;
-            baseLinkIter = ikLinks.end();
-        }
-    }
+    void invalidateBaseLink();
 
-    void setZmp(const Vector3& p){
-        isZmpValid_ = true;
-        zmp_ = p;
-    }
-            
     const Vector3 zmp() const {
         return zmp_;
     }
@@ -181,20 +179,14 @@ public:
         return isZmpValid_;
     }
             
-    bool invalidateZmp() {
-        bool ret = isZmpValid_;
-        isZmpValid_ = false;
-        return ret;
-    }
-            
-    void setZmpStationaryPoint(bool on = true){
-        isZmpStationaryPoint_ = on;
-    }
-            
     bool isZmpStationaryPoint() const {
         return isZmpStationaryPoint_;
     }
 
+    void setZmp(const Vector3& p);
+    void setZmpStationaryPoint(bool on = true);
+    bool invalidateZmp();
+            
     bool hasSameParts(AbstractPose* pose) const override;
     bool restore(const Mapping& archive, const Body* body) override;
     void store(Mapping& archive, const Body* body) const override;

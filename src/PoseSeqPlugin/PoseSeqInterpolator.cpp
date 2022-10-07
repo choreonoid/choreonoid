@@ -43,8 +43,8 @@ struct LinkSample
         segmentType = UNDETERMINED;
         x = it->time();
         isBaseLink = info.isBaseLink();
-        const Vector3& pos = info.p;
-        const Vector3 rpy = rpyFromRot(info.R);
+        auto pos = info.p();
+        auto rpy = rpyFromRot(info.R());
         for(int i=0; i < 3; ++i){
             c[i].y = pos[i];
             c[i].yp = 0.0;
@@ -85,7 +85,7 @@ struct LinkZSample
         poseIter = it;
         segmentType = UNDETERMINED;
         x = it->time();
-        c[0].y = info.p[2];
+        c[0].y = info.p()[2];
         c[0].yp = 0.0;
         isTouching = info.isTouching();
         isEndPoint = info.isStationaryPoint() || isTouching;

@@ -575,9 +575,8 @@ bool PoseSeqItem::Impl::convertSub(BodyPtr orgBody, const Mapping& convInfo)
                 Link* link = body->link(linkName);
                 if(link){
                     const BodyKeyPose::LinkInfo& orgLinkInfo = ikLinkIter->second;
-                    BodyKeyPose::LinkInfo* linkInfo = pose->addIkLink(link->index());
-                    linkInfo->p = orgLinkInfo.p;
-                    linkInfo->R = orgLinkInfo.R;
+                    BodyKeyPose::LinkInfo* linkInfo = pose->getOrCreateIkLink(link->index());
+                    linkInfo->setPosition(orgLinkInfo.position());
                     linkInfo->setStationaryPoint(orgLinkInfo.isStationaryPoint());
                     if(orgLinkInfo.isTouching()){
                         linkInfo->setTouching(orgLinkInfo.partingDirection(), orgLinkInfo.contactPoints());
@@ -929,8 +928,8 @@ bool PoseSeqItem::Impl::updatePosesWithBalancedTrajectories(std::ostream& os)
                 BodyKeyPose::LinkInfo& info = ikLinkIter->second;
                 const Vector3& p = pos[linkIndex].translation();
                 // only update horizontal position
-                info.p[0] = p[0];
-                info.p[1] = p[1];
+                info.p()[0] = p[0];
+                info.p()[1] = p[1];
             }
 
             seq->endPoseModification(it);

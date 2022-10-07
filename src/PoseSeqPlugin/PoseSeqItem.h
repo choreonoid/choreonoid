@@ -18,7 +18,7 @@ public:
     PoseSeqItem();
     PoseSeqItem(const PoseSeqItem& org);
     ~PoseSeqItem();
-            
+
     virtual bool setName(const std::string& name) override;
 
     PoseSeq* poseSeq();

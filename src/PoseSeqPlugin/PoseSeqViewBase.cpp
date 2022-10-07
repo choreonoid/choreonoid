@@ -457,7 +457,7 @@ void PoseSeqViewBase::initializeLinkTree()
     initializeLinkTreeIkLinkColumn();
 
     auto rootLink = body->rootLink();
-    poseForDefaultStateSetting->setBaseLink(rootLink->index(), rootLink->p(), rootLink->R());
+    poseForDefaultStateSetting->setBaseLink(rootLink->index(), rootLink->T());
 
     initializeLinkTreeTraverse(linkTreeWidget->invisibleRootItem());
 }
@@ -493,7 +493,7 @@ void PoseSeqViewBase::initializeLinkTreeIkLinkColumn()
     if(defaultIkLinks.isValid()){
         for(int i=0; i < defaultIkLinks.size(); ++i){
             if(auto link = body->link(defaultIkLinks[i])){
-                poseForDefaultStateSetting->addIkLink(link->index());
+                poseForDefaultStateSetting->getOrCreateIkLink(link->index());
             }
         }
     }
@@ -581,7 +581,7 @@ bool PoseSeqViewBase::setBaseLink(BodyKeyPose* pose, Link* link)
     bool modified = false;
     if(link){
         if(pose->baseLinkIndex() != link->index()){
-            pose->setBaseLink(link->index(), link->p(), link->R());
+            pose->setBaseLink(link->index(), link->T());
             modified = true;
         }
     } else {
@@ -653,7 +653,7 @@ bool PoseSeqViewBase::toggleLink(BodyKeyPose* pose, LinkDeviceTreeItem* item, Li
         if(possibleIkLinkFlag[link->index()]){
             BodyKeyPose::LinkInfo* info = pose->ikLinkInfo(link->index());
             if(!info){
-                info = pose->addIkLink(link->index());
+                info = pose->getOrCreateIkLink(link->index());
                 modified = true;
             }
             if(setCurrentLinkStateToIkLink(link, info)){
@@ -1355,9 +1355,9 @@ void PoseSeqViewBase::onLinkPositionAdjustmentDialogAccepted()
                                 if(linkPositionAdjustmentDialog->targetAxisCheck[i].isChecked()){
                                     double p = linkPositionAdjustmentDialog->positionSpin[i].value();
                                     if(linkPositionAdjustmentDialog->absoluteRadio.isChecked()){
-                                        waistInfo->p[i] = p;
+                                        waistInfo->p()[i] = p;
                                     } else {
-                                        waistInfo->p[i] += p;
+                                        waistInfo->p()[i] += p;
                                     }
                                 }
                             }
@@ -1483,11 +1483,11 @@ PoseSeq::iterator PoseSeqViewBase::insertBodyKeyPose()
             }
             if(possibleIkLinkFlag[link->index()]){
                 if(isChecked(item, validPartColumn) || isChecked(item, ikPartColumn)){
-                    BodyKeyPose::LinkInfo* info = pose->addIkLink(link->index());
+                    BodyKeyPose::LinkInfo* info = pose->getOrCreateIkLink(link->index());
                     info->setStationaryPoint(isChecked(item, stationaryPointColumn));
                     setCurrentLinkStateToIkLink(link, info);
                     if(isChecked(item, baseLinkColumn)){
-                        pose->setBaseLink(link->index(), link->p(), link->R());
+                        pose->setBaseLink(link->index(), link->T());
                     }
                     if(!isChecked(item, ikPartColumn)){
                         info->setSlave(true);
@@ -1636,12 +1636,12 @@ bool PoseSeqViewBase::setCurrentLinkStateToIkLink(Link* link, BodyKeyPose::LinkI
 {
     bool updated = false;
     
-    if(linkInfo->p != link->p()){
-        linkInfo->p = link->p();
+    if(linkInfo->p() != link->p()){
+        linkInfo->p() = link->p();
         updated = true;
     }
-    if(linkInfo->R != link->R()){
-        linkInfo->R = link->R();
+    if(linkInfo->R() != link->R()){
+        linkInfo->R() = link->R();
         updated = true;
     }
     
