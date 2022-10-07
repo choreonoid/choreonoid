@@ -733,7 +733,7 @@ BodyItemInfoPtr LinkDeviceTreeWidget::Impl::getOrCreateBodyItemInfo(BodyItem* bo
             info->setNumLinks(bodyItem->body()->numLinks(), false);
 
             if(listingMode == GroupedTree && !info->linkGroup){
-                info->linkGroup = LinkGroup::create(*bodyItem->body());
+                info->linkGroup = LinkGroup::create(bodyItem->body());
             }
         }
     }
@@ -917,10 +917,10 @@ void LinkDeviceTreeWidget::Impl::createGroupedLinkTreeSub
     int numChildGroups = 0;
     int n = linkGroup->numElements();
     for(int i=0; i < n; ++i){
-        if(linkGroup->isSubGroup(i)){
-            createGroupedLinkTreeSub(body, linkGroup->subGroup(i), item);
+        if(linkGroup->checkIfGroup(i)){
+            createGroupedLinkTreeSub(body, linkGroup->group(i), item);
             ++numChildGroups;
-        } else if(linkGroup->isLinkIndex(i)){
+        } else if(linkGroup->checkIfLink(i)){
             auto link = body->link(linkGroup->linkIndex(i));
             if(link){
                 addLinkDeviceTreeItem(new LinkDeviceTreeItem(link, this), item);

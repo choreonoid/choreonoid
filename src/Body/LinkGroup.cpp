@@ -1,7 +1,3 @@
-/*
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "LinkGroup.h"
 #include "Body.h"
 #include "Link.h"
@@ -10,54 +6,42 @@
 using namespace cnoid;
 
 
-LinkGroup::LinkGroup(private_tag)
+LinkGroup::LinkGroup()
 {
 
 }
 
 
-LinkGroup::LinkGroup(const LinkGroup&)
+LinkGroup* LinkGroup::create(const Body* body)
 {
-
-}
-
-
-LinkGroup::~LinkGroup()
-{
-
-}
-
-
-LinkGroupPtr LinkGroup::create(const Body& body)
-{
-    const Listing& linkGroupList = *body.info()->findListing("linkGroup");
-    LinkGroupPtr group = std::make_shared<LinkGroup>(private_tag());
+    const ListingPtr linkGroupList = body->info()->findListing("linkGroup");
+    auto group = new LinkGroup;
     group->setName("Whole Body");
-    if(!linkGroupList.isValid() || !group->load(body, linkGroupList)){
+    if(!linkGroupList->isValid() || !group->load(body, linkGroupList)){
         group->setFlatLinkList(body);
     }
     return group;
 }
 
 
-bool LinkGroup::load(const Body& body, const Listing& linkGroupList)
+bool LinkGroup::load(const Body* body, const Listing* linkGroupList)
 {
-    for(int i=0; i < linkGroupList.size(); ++i){
+    for(int i=0; i < linkGroupList->size(); ++i){
 
-        const ValueNode& node = linkGroupList[i];
+        auto node = linkGroupList->at(i);
 
-        if(node.isScalar()){
-            Link* link = body.link(node.toString());
+        if(node->isScalar()){
+            Link* link = body->link(node->toString());
             if(!link){
                 return false;
             }
             elements.push_back(link->index());
 
-        } else if(node.isMapping()){
-            const Mapping& group = *node.toMapping();
-            LinkGroupPtr linkGroup = std::make_shared<LinkGroup>(private_tag());
-            linkGroup->setName(group["name"]);
-            if(linkGroup->load(body, *group["links"].toListing())){
+        } else if(node->isMapping()){
+            auto group = node->toMapping();
+            LinkGroupPtr linkGroup = new LinkGroup;
+            linkGroup->setName(group->get("name").toString());
+            if(linkGroup->load(body, group->get("links").toListing())){
                 elements.push_back(linkGroup);
             } else {
                 return false;
@@ -71,9 +55,28 @@ bool LinkGroup::load(const Body& body, const Listing& linkGroupList)
 }
 
 
-void LinkGroup::setFlatLinkList(const Body& body)
+void LinkGroup::setFlatLinkList(const Body* body)
 {
-    for(int i=0; i < body.numLinks(); ++i){
+    for(int i=0; i < body->numLinks(); ++i){
         elements.push_back(i);
     }
+}
+
+
+LinkGroup* LinkGroup::findSubGroup(const std::string& name)
+{
+    int n = numElements();
+    for(int i=0; i < n; ++i){
+        if(checkIfGroup(i)){
+            auto childGroup = group(i);
+            if(childGroup->name() == name){
+                return childGroup;
+            } else {
+                if(auto found = childGroup->findSubGroup(name)){
+                    return found;
+                }
+            }
+        }
+    }
+    return nullptr;
 }
