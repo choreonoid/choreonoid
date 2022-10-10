@@ -717,8 +717,18 @@ bool PoseSeqItem::Impl::endEditing(bool actuallyModified)
             editHistories.push_back(newHistory);
             currentHistory = editHistories.size();
             self->suggestFileUpdate();
-        } 
+        }
+
+        // This does not necessarily have to be done here.
+        // The interpolation information the following function updates
+        // is automatically updated on demand when a interpolation is actually done.
+        updateInterpolation();
+    
+        if(BodyMotionGenerationBar::instance()->isAutoGenerationMode()){
+            updateTrajectory(false);
+        }
     }
+    
     modifyingPoseIter = seq->end();
     inserted.clear();
     modified.clear();
@@ -758,10 +768,8 @@ void PoseSeqItem::Impl::onPoseAboutToBeRemoved(PoseSeq::iterator pose, bool isMo
         isPoseSelectionChangedByEditing = true;
     }
     
-    if(isMoving){
-        if(modified.find(pose) != modified.end()){
-            modified.erase(pose);
-        }
+    if(modified.find(pose) != modified.end()){
+        modified.erase(pose);
     }
 
     if(inserted.find(pose) != inserted.end()){

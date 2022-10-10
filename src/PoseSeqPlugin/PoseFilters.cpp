@@ -12,6 +12,10 @@ namespace {
 class StepAdjuster
 {
 public:
+    StepAdjuster(PoseSeq* seq, const vector<int>& footLinkIndices);
+    bool adjustStepPositions(PoseSeq::iterator origin);
+
+private:
     PoseSeqPtr seq;
     const vector<int>& footLinkIndices;
     map<int, BodyKeyPose::LinkInfo*> supportingLinks;
@@ -19,12 +23,11 @@ public:
     double stepAdjustmentYawDiff;
     Matrix3 stepAdjustmentRotation;
 
-    StepAdjuster(PoseSeq* seq, const vector<int>& footLinkIndices, PoseSeq::iterator origin);
-    void adjustStepPosition(PoseSeq::iterator poseIter);
+    bool adjustStepPosition(PoseSeq::iterator poseIter);
 };
 
 
-StepAdjuster::StepAdjuster(PoseSeq* seq, const vector<int>& footLinkIndices, PoseSeq::iterator origin)
+StepAdjuster::StepAdjuster(PoseSeq* seq, const vector<int>& footLinkIndices)
     : seq(seq),
       footLinkIndices(footLinkIndices)
 {
@@ -32,10 +35,18 @@ StepAdjuster::StepAdjuster(PoseSeq* seq, const vector<int>& footLinkIndices, Pos
     stepAdjustmentTranslation.setZero();
     stepAdjustmentYawDiff = 0.0;
     stepAdjustmentRotation.setIdentity();
+}
 
-    PoseSeq::iterator poseIter;
-    for(poseIter = origin; poseIter != seq->end(); ++poseIter){
-        adjustStepPosition(poseIter);
+
+bool StepAdjuster::adjustStepPositions(PoseSeq::iterator origin)
+{
+    bool modified = false;
+
+    PoseSeq::iterator it;
+    for(auto it = origin; it != seq->end(); ++it){
+        if(adjustStepPosition(it)){
+            modified = true;
+        }
     }
 
     supportingLinks.clear();
@@ -43,25 +54,30 @@ StepAdjuster::StepAdjuster(PoseSeq* seq, const vector<int>& footLinkIndices, Pos
     stepAdjustmentYawDiff = 0.0;
     stepAdjustmentRotation.setIdentity();
 
-    poseIter = origin;
+    it = origin;
+    
     while(true){
-        adjustStepPosition(poseIter);
-        if(poseIter == seq->begin()){
+        if(adjustStepPosition(it)){
+            modified = true;
+        }
+        if(it == seq->begin()){
             break;
         }
-        poseIter--;
+        it--;
     }
+    
+    return modified;
 }
+    
 
-
-void StepAdjuster::adjustStepPosition(PoseSeq::iterator poseIter)
+bool StepAdjuster::adjustStepPosition(PoseSeq::iterator it)
 {
-    auto pose = poseIter->get<BodyKeyPose>();
+    auto pose = it->get<BodyKeyPose>();
     if(!pose){
-        return;
+        return false;
     }
 
-    seq->beginPoseModification(poseIter);
+    seq->beginPoseModification(it);
 
     bool modified = false;
     Vector3 dp = Vector3::Zero();
@@ -125,16 +141,22 @@ void StepAdjuster::adjustStepPosition(PoseSeq::iterator poseIter)
     }
     
     if(modified){
-        seq->endPoseModification(poseIter);
+        seq->endPoseModification(it);
     }
+
+    return modified;
 }
 
 }
 
 
-void cnoid::adjustStepPositions(PoseSeq* seq, const vector<int>& footLinkIndices, PoseSeq::iterator origin)
+/**
+   \return true if step positions are actually modified.
+*/
+bool cnoid::adjustStepPositions(PoseSeq* seq, const vector<int>& footLinkIndices, PoseSeq::iterator origin)
 {
-    StepAdjuster adjuster(seq, footLinkIndices, origin);
+    StepAdjuster adjuster(seq, footLinkIndices);
+    return adjuster.adjustStepPositions(origin);
 }
 
 
@@ -160,7 +182,7 @@ class FlipFilter
 
 public:
     FlipFilter(Body* body);
-    void flip(PoseSeq* seq);
+    bool flip(PoseSeq* seq);
 };
 }
 
@@ -223,16 +245,19 @@ FlipFilter::FlipFilter(Body* body)
 }
 
 
-void FlipFilter::flip(PoseSeq* seq)
+bool FlipFilter::flip(PoseSeq* seq)
 {
+    bool modified = false;
     for(auto it = seq->begin(); it != seq->end(); ++it){
         if(auto pose = it->get<BodyKeyPose>()){
             seq->beginPoseModification(it);
             if(flipPose(pose)){
                 seq->endPoseModification(it);
+                modified = true;
             }
         }
     }
+    return modified;
 }
 
 
@@ -308,10 +333,13 @@ bool FlipFilter::flipPose(BodyKeyPose* pose)
 }
 
 
-void cnoid::flipPoses(PoseSeq* seq, Body* body)
+/**
+   \return true if step positions are actually modified.
+*/
+bool cnoid::flipPoses(PoseSeq* seq, Body* body)
 {
     FlipFilter filiter(body);
-    filiter.flip(seq);
+    return filiter.flip(seq);
 }
     
 
@@ -320,14 +348,13 @@ void cnoid::rotateYawOrientations
 {
     const Matrix3 Rz(AngleAxisd(angle, Vector3::UnitZ()));
     
-    PoseSeq::iterator poseIter;
-    for(poseIter = begin; poseIter != seq->end(); ++poseIter){
+    for(auto it = begin; it != seq->end(); ++it){
 
-        if(auto pose = poseIter->get<BodyKeyPose>()){
+        if(auto pose = it->get<BodyKeyPose>()){
 
             if(pose->numIkLinks() > 0 || pose->isZmpValid()){
 
-                seq->beginPoseModification(poseIter);
+                seq->beginPoseModification(it);
             
                 for(auto it = pose->ikLinkBegin(); it != pose->ikLinkEnd(); ++it){
                     BodyKeyPose::LinkInfo& linkInfo = it->second;
@@ -339,7 +366,7 @@ void cnoid::rotateYawOrientations
                     pose->setZmp(Rz * (pose->zmp() - center) + center);
                 }
 
-                seq->endPoseModification(poseIter);
+                seq->endPoseModification(it);
             }
         }
     }

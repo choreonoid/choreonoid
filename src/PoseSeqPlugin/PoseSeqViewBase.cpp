@@ -559,11 +559,6 @@ void PoseSeqViewBase::togglePoseAttribute(std::function<bool(BodyKeyPose* pose)>
             }
         }
         currentPoseSeqItem->endEditing(modified);
-
-        //! \todo This should be processed by PoseSeq slots
-        if(modified){
-            doAutomaticInterpolationUpdate();
-        }
     }
 }
 
@@ -1083,9 +1078,7 @@ void PoseSeqViewBase::removeSelectedPartsFromPoses()
         }
     }
     
-    if(currentPoseSeqItem->endEditing(removed)){
-        doAutomaticInterpolationUpdate();
-    }
+    currentPoseSeqItem->endEditing(removed);
 }
 
 
@@ -1101,7 +1094,6 @@ bool PoseSeqViewBase::removeSelectedPoses()
             seq->erase(pose);
         }
         currentPoseSeqItem->endEditing();
-        doAutomaticInterpolationUpdate();
         return true;
     }
     
@@ -1145,7 +1137,6 @@ bool PoseSeqViewBase::pasteCopiedPoses(double timeToPaste)
         }
         currentPoseIter = destIter;
         currentPoseSeqItem->endEditing();
-        doAutomaticInterpolationUpdate();        
         return true;
     }
     return false;
@@ -1277,8 +1268,9 @@ void PoseSeqViewBase::onAdjustStepPositionsActivated()
             for(int i=0; i < n; ++i){
                 footLinkIndices[i] = legged->footLink(i)->index();
             }
-            adjustStepPositions(seq, footLinkIndices, origin);
-            doAutomaticInterpolationUpdate();
+            currentPoseSeqItem->beginEditing();
+            bool modified = adjustStepPositions(seq, footLinkIndices, origin);
+            currentPoseSeqItem->endEditing(modified);
         }
     }
 }
@@ -1367,7 +1359,6 @@ void PoseSeqViewBase::onLinkPositionAdjustmentDialogAccepted()
                 }
             
                 currentPoseSeqItem->endEditing();
-                doAutomaticInterpolationUpdate();
             }
         }
     }
@@ -1396,8 +1387,9 @@ void PoseSeqViewBase::onFlipPosesActivated()
 {
     if(currentPoseSeqItem && currentBodyItem){
         MessageView::mainInstance()->notify(_("flipping all the poses against x-z plane ..."));
-        flipPoses(seq, body);
-        doAutomaticInterpolationUpdate();
+        currentPoseSeqItem->beginEditing();
+        bool modified = flipPoses(seq, body);
+        currentPoseSeqItem->endEditing(modified);
     }
 }
 
@@ -1528,9 +1520,10 @@ PoseSeq::iterator PoseSeqViewBase::insertPronunSymbol()
 
 PoseSeq::iterator PoseSeqViewBase::insertPose(AbstractPose* pose)
 {
+    currentPoseSeqItem->beginEditing();
     auto it = seq->insert(currentPoseIter, currentTime / timeScale, pose);
     it->setMaxTransitionTime(transitionTimeSpin.value() / timeScale);
-    doAutomaticInterpolationUpdate();
+    currentPoseSeqItem->endEditing();
     toggleSelection(it, false, false);
 
     currentPoseIter = it;
@@ -1579,11 +1572,6 @@ void PoseSeqViewBase::setCurrentBodyStateToSelectedPoses(bool onlySelected)
                 }
             }
             currentPoseSeqItem->endEditing(updated);
-
-            //! \todo This should be processed by PoseSeq slots
-            if(updated){
-                doAutomaticInterpolationUpdate();
-            }
         }
     }
 }
@@ -1842,19 +1830,6 @@ PoseSeqViewBase::ChildrenState PoseSeqViewBase::updateLinkTreeModelSub
     }
 
     return state;
-}
-
-
-void PoseSeqViewBase::doAutomaticInterpolationUpdate()
-{
-    // This does not necessarily have to be done here.
-    // The interpolation information the following function updates
-    // is automatically updated on demand when a interpolation is actually done.
-    currentPoseSeqItem->updateInterpolation();
-    
-    if(BodyMotionGenerationBar::instance()->isAutoGenerationMode()){
-        currentPoseSeqItem->updateTrajectory();
-    }
 }
 
 

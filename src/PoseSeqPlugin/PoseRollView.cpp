@@ -535,9 +535,7 @@ void PoseRollView::Impl::onPoseTimeSpinChanged(double value)
         
         if(time != selected.front()->time()){
             currentPoseSeqItem->beginEditing();
-            if(currentPoseSeqItem->endEditing(moveSelectedPoses(time))){
-                doAutomaticInterpolationUpdate();
-            }
+            currentPoseSeqItem->endEditing(moveSelectedPoses(time));
             setCurrentTime(scaledTime);
         }
     }
@@ -551,9 +549,7 @@ void PoseRollView::Impl::onPoseTTimeSpinChanged(double value)
         double scaledTTime = value;
         double ttime = scaledTTime / timeScale;
         currentPoseSeqItem->beginEditing();
-        if(currentPoseSeqItem->endEditing(modifyTransitionTimeOfSelectedPoses(ttime))){
-            doAutomaticInterpolationUpdate();
-        }
+        currentPoseSeqItem->endEditing(modifyTransitionTimeOfSelectedPoses(ttime));
     }
 }
 
@@ -1270,7 +1266,6 @@ bool PoseRollView::Impl::onScreenMouseButtonReleaseEvent(QMouseEvent* event)
     case DRAG_TRANSITION_TIME:
         if(dragState == DS_DRAGGED){
             currentPoseSeqItem->endEditing();
-            doAutomaticInterpolationUpdate();
         }
         break;
 

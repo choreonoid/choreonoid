@@ -43,8 +43,8 @@ public:
     */
     SignalProxy<void(const std::vector<PoseSeq::iterator>& selected)> sigPoseSelectionChanged();
 
-    virtual bool updateInterpolation();
-    virtual bool updateTrajectory(bool putMessages = false);
+    bool updateInterpolation();
+    bool updateTrajectory(bool putMessages = false);
 
     void beginEditing();
     bool endEditing(bool actuallyModified = true);

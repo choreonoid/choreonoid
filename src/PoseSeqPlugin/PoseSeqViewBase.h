@@ -108,7 +108,6 @@ public:
     void selectPosesHavingSelectedLinks();
     void selectPosesJustHavingSelectedLinks();
     void removeSelectedPartsFromPoses();
-    void doAutomaticInterpolationUpdate();
     void updateLinkTreeModel();
     bool removeSelectedPoses();
     bool cutSelectedPoses();

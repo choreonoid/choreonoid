@@ -12,10 +12,10 @@ class PoseSeq;
 class KeyPose;
 class Body;
 
-CNOID_EXPORT void adjustStepPositions(
+CNOID_EXPORT bool adjustStepPositions(
     PoseSeq* seq, const std::vector<int>& footLinkIndices, PoseSeq::iterator origin);
 
-CNOID_EXPORT void flipPoses(PoseSeq* seq, Body* body);
+CNOID_EXPORT bool flipPoses(PoseSeq* seq, Body* body);
         
 CNOID_EXPORT void adjustWaistHeight(
     KeyPose* pose, int waistLinkIndex, const std::vector<int>& footLinkIndices, double offset);
