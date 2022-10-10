@@ -1847,12 +1847,13 @@ PoseSeqViewBase::ChildrenState PoseSeqViewBase::updateLinkTreeModelSub
 
 void PoseSeqViewBase::doAutomaticInterpolationUpdate()
 {
-    BodyMotionGenerationBar* generationBar = BodyMotionGenerationBar::instance();
-    if(generationBar->isAutoInterpolationUpdateMode()){
-        currentPoseSeqItem->updateInterpolation(); // not needed ?
-        if(generationBar->isAutoGenerationMode()){
-            currentPoseSeqItem->updateTrajectory();
-        }
+    // This does not necessarily have to be done here.
+    // The interpolation information the following function updates
+    // is automatically updated on demand when a interpolation is actually done.
+    currentPoseSeqItem->updateInterpolation();
+    
+    if(BodyMotionGenerationBar::instance()->isAutoGenerationMode()){
+        currentPoseSeqItem->updateTrajectory();
     }
 }
 

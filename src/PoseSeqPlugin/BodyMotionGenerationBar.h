@@ -48,7 +48,6 @@ public:
     void setBalancer(Balancer* balancer);
     void unsetBalancer();
 
-    bool isAutoInterpolationUpdateMode() const;
     bool isBalancerEnabled() const;
     bool isAutoGenerationMode() const;
     bool isAutoGenerationForNewBodyEnabled() const;
@@ -93,7 +92,6 @@ private:
     TimeBar* timeBar;
     BodyMotionGenerationSetupDialog* setup;
             
-    Action* autoInterpolationUpdateCheck;
     Action* autoGenerationForNewBodyCheck;
     ToolButton* balancerToggle;
     ToolButton* autoGenerationToggle;

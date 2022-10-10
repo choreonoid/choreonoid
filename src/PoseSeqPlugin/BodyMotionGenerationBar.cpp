@@ -314,13 +314,10 @@ void BodyMotionGenerationBar::initializeInstance(ExtensionManager* ext)
         if(auto optionsMenu = MainMenu::instance()->get_Options_Menu()){
             MenuManager& mm = ext->menuManager();
             mm.setCurrent(optionsMenu).setPath(N_("Pose Seq Processing"));
-            bar->autoInterpolationUpdateCheck = mm.addCheckItem(_("Automatic Interpolation Update"));
             bar->autoGenerationForNewBodyCheck = mm.addCheckItem(_("Automatic Generation for a New Body"));
         } else {
-            bar->autoInterpolationUpdateCheck = new Action;
             bar->autoGenerationForNewBodyCheck = new Action;
         }
-        bar->autoInterpolationUpdateCheck->setChecked(true);
         bar->autoGenerationForNewBodyCheck->setChecked(true);
 
         initialized = true;
@@ -564,12 +561,6 @@ bool BodyMotionGenerationBar::restoreState(const Archive& archive)
     return true;
 }
 
-
-bool BodyMotionGenerationBar::isAutoInterpolationUpdateMode() const
-{
-    return autoInterpolationUpdateCheck->isChecked();
-}
-            
 
 bool BodyMotionGenerationBar::isBalancerEnabled() const
 {
