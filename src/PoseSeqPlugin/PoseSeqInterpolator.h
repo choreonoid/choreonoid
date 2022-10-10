@@ -17,7 +17,7 @@ public:
     PoseSeqInterpolator();
 
     void setBody(Body* body);
-    Body* body() const;
+    virtual Body* body() const override;
 
     void setLinearInterpolationJoint(int jointId);
 
@@ -30,8 +30,8 @@ public:
 
     void setTimeScaleRatio(double ratio);
 
-    double beginningTime() const;
-    double endingTime() const;
+    virtual double beginningTime() const override;
+    virtual double endingTime() const override;
             
     void enableStealthyStepMode(bool on);
     void setStealthyStepParameters(
@@ -58,19 +58,19 @@ public:
     bool interpolate(double time);
     bool interpolate(double time, int waistLinkIndex, const Vector3& waistTranslation);
 
-    virtual bool seek(double time);
-    virtual bool seek(double time, int waistLinkIndex, const Vector3& waistTranslation);
+    virtual bool seek(double time) override;
+    virtual bool seek(double time, int waistLinkIndex, const Vector3& waistTranslation) override;
             
     /**
        @return -1 if base link is not set for the time segment
     */
-    int baseLinkIndex() const;
-    virtual bool getBaseLinkPosition(Isometry3& out_T) const;
+    virtual int baseLinkIndex() const override;
+    virtual bool getBaseLinkPosition(Isometry3& out_T) const override;
 
     stdx::optional<double> jointPosition(int jointId) const;
-    stdx::optional<Vector3> ZMP() const;
+    virtual stdx::optional<Vector3> ZMP() const override;
 
-    virtual void getJointPositions(std::vector<stdx::optional<double>>& out_q) const;
+    virtual void getJointPositions(std::vector<stdx::optional<double>>& out_q) const override;
 
 private:
     class Impl;

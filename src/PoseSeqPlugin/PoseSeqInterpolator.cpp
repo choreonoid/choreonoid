@@ -1416,7 +1416,7 @@ void PoseSeqInterpolator::Impl::calcIkJointPositionsSub
                     double len = waistTranslation.norm();
                     double low = 0.0;
                     double hi = len * (1.0 - endLinkInfo->jointSpaceBlendingRatio);
-                    while(true){
+                    while((hi - low) > 1.0e-4){
                         double current = (low + hi) / 2.0;
                         Isometry3 T_end(endLinkInfo->T);
                         T_end.translation() += waistTranslation * (current / len);
@@ -1425,9 +1425,6 @@ void PoseSeqInterpolator::Impl::calcIkJointPositionsSub
                             hi = current;
                         } else {
                             low = current;
-                        }
-                        if((hi - low) < 1.0e-4){
-                            break;
                         }
                     }
                 }
