@@ -525,6 +525,9 @@ void PoseSeqViewBase::initializeLinkTreeTraverse(QTreeWidgetItem* parentItem)
         if(link){
             auto radioButton = new RadioButton;
             baseLinkRadioGroup->addButton(radioButton, link->index());
+            if(!possibleIkLinkFlag[link->index()]){
+                radioButton->setEnabled(false);
+            }
             linkTreeWidget->setAlignedItemWidget(item, baseLinkColumn, radioButton);
         }
 
@@ -899,7 +902,7 @@ bool PoseSeqViewBase::toggleSelection(PoseSeq::iterator pose, bool adding, bool 
         } else {
             if(currentPoseSeqItem->checkSelected(pose)){
                 if(adding){
-                    currentPoseSeqItem->unselectPose(pose, true);
+                    currentPoseSeqItem->deselectPose(pose, true);
                     updated = true;
                 }
             } else {
@@ -922,12 +925,6 @@ bool PoseSeqViewBase::toggleSelection(PoseSeq::iterator pose, bool adding, bool 
     }
 
     return updated;
-}
-
-
-void PoseSeqViewBase::selectAllPoses()
-{
-    currentPoseSeqItem->selectAllPoses(true);
 }
 
 
@@ -1692,7 +1689,7 @@ void PoseSeqViewBase::onPoseAboutToBeRemoved(PoseSeq::iterator it, bool isMoving
         }
     }
 
-    if(currentPoseSeqItem->unselectPose(it, !isMoving)){
+    if(currentPoseSeqItem->deselectPose(it, !isMoving)){
         if(isMoving){
             isSelectedPoseMoving = isMoving;
         }
@@ -1727,7 +1724,8 @@ void PoseSeqViewBase::updateLinkTreeModel()
     }
 
     linkTreeAttributeChangeConnections.block(); // Probably this set of block / unblock is not needed
-
+    baseLinkRadioGroup->setExclusive(false);
+    
     int n = linkTreeWidget->topLevelItemCount();
     for(int i=0; i < n; ++i){
         if(auto item = dynamic_cast<LinkDeviceTreeItem*>(linkTreeWidget->topLevelItem(i))){
@@ -1735,6 +1733,7 @@ void PoseSeqViewBase::updateLinkTreeModel()
         }
     }
 
+    baseLinkRadioGroup->setExclusive(true);
     linkTreeAttributeChangeConnections.unblock();
 }
 

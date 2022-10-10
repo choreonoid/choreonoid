@@ -67,14 +67,12 @@ public:
 
     QLabel poseNameLabel;
     DoubleSpinBox currentTimeSpin;
-    Connection currentTimeSpinConnection;
     DoubleSpinBox poseTimeSpin;
     Connection poseTimeSpinConnection;
     DoubleSpinBox poseTTimeSpin;
     Connection poseTTimeSpinConnection;
 
     DoubleScrollBar* hScrollBar;
-    Connection hScrollBarChangedConnection;
     bool isTmpScrollBlocked;
 
     double left;
@@ -155,7 +153,7 @@ public:
     void onCurrentTimeSpinChanged(double value);
     void setCurrentTime(double time, bool blockScroll = false);
     virtual bool onTimeChanged(double time) override;
-    void setTimeOfScreenLeft(double time, bool changeScrollBar = true, bool forceChange = false);
+    void setTimeOfScreenLeft(double time, bool changeScrollBar, bool forceChange);
     void onHScrollbarChanged(double value);
 
     void onGridResolutionChanged(double value);
@@ -262,7 +260,7 @@ void PoseRollView::Impl::initialize()
     hScrollBar = new DoubleScrollBar(Qt::Horizontal);
     hScrollBar->setSingleStep(0.1);
     hScrollBar->setRange(-leftMargin, timeLength + (2.0 / timeToScreenX));
-    hScrollBarChangedConnection = hScrollBar->sigValueChanged().connect(
+    hScrollBar->sigValueChanged().connect(
         [this](double value){ onHScrollbarChanged(value); });
 
     auto hbox = new QHBoxLayout;
@@ -339,7 +337,7 @@ QHBoxLayout* PoseRollView::Impl::layoutOperationParts()
     currentTimeSpin.setDecimals(3);
     currentTimeSpin.setRange(0.0, 999.999);
     currentTimeSpin.setSingleStep(0.005);
-    currentTimeSpinConnection = currentTimeSpin.sigValueChanged().connect(
+    currentTimeSpin.sigValueChanged().connect(
         [this](double value){ onCurrentTimeSpinChanged(value); });
     hbox->addWidget(&currentTimeSpin);
 
@@ -648,15 +646,15 @@ bool PoseRollView::Impl::onTimeChanged(double time)
     if(!newTimeInCurrentVisibleRange && !isTmpScrollBlocked){
         if(time < left){
             if(left - time < width / 3.0){
-                setTimeOfScreenLeft(left - width * 0.9);
+                setTimeOfScreenLeft(left - width * 0.9, true, false);
             } else {
-                setTimeOfScreenLeft(time - width / 2.0);
+                setTimeOfScreenLeft(time - width / 2.0, true, false);
             }
         } else {
             if(time - right < width / 3.0){
-                setTimeOfScreenLeft(left + width * 0.9);
+                setTimeOfScreenLeft(left + width * 0.9, true, false);
             } else {
-                setTimeOfScreenLeft(time - width / 2.0);
+                setTimeOfScreenLeft(time - width / 2.0, true, false);
             }
         }
     } else if(newTimeInCurrentVisibleRange || (currentTime >= left && currentTime < right)){
@@ -665,9 +663,9 @@ bool PoseRollView::Impl::onTimeChanged(double time)
             
     if(time != currentTime){
         currentTime = time;
-        currentTimeSpinConnection.block();
+        currentTimeSpin.blockSignals(true);
         currentTimeSpin.setValue(time);
-        currentTimeSpinConnection.unblock();
+        currentTimeSpin.blockSignals(false);
         sigCurrentTimeChanged(currentTime);
     }
 
@@ -685,9 +683,9 @@ void PoseRollView::Impl::setTimeOfScreenLeft(double time, bool changeScrollBar, 
         right = left + screenWidth / timeToScreenX;
 
         if(changeScrollBar){
-            hScrollBarChangedConnection.block();
+            hScrollBar->blockSignals(true);
             hScrollBar->setValue(left);
-            hScrollBarChangedConnection.unblock();
+            hScrollBar->blockSignals(false);
         }
         
         screen->update();
@@ -697,7 +695,7 @@ void PoseRollView::Impl::setTimeOfScreenLeft(double time, bool changeScrollBar, 
 
 void PoseRollView::Impl::onHScrollbarChanged(double value)
 {
-    setTimeOfScreenLeft(value, false);
+    setTimeOfScreenLeft(value, false, false);
 }
 
 
@@ -1153,8 +1151,8 @@ void PoseRollView::Impl::pickPoseSub()
         }
     }
 }
-                    
-                
+
+
 bool PoseRollView::Impl::onScreenResizeEvent(QResizeEvent* event)
 {
     screenWidth = event->size().width();
@@ -1329,9 +1327,9 @@ void PoseRollView::Impl::dragScaling()
     double dpx = pressedScreenX / dragOrgScale;
     double dx = dpx * (zoomRatio - 1.0) / zoomRatio;
     
-    hScrollBarChangedConnection.block();
+    hScrollBar->blockSignals(true);
     hScrollBar->setPageStep(screenWidth / timeToScreenX);
-    hScrollBarChangedConnection.unblock();
+    hScrollBar->blockSignals(false);
 
     setTimeOfScreenLeft(dragOrgLeft + dx, true, true);
 }
@@ -1357,7 +1355,9 @@ bool PoseRollView::Impl::onScreenKeyPressEvent(QKeyEvent* event)
         
         switch(event->key()){
         case Qt::Key_A:
-            selectAllPoses();
+            if(currentPoseSeqItem){
+                currentPoseSeqItem->selectAllPoses(true);
+            }
             break;
         case Qt::Key_X:
             cutSelectedPoses();
@@ -1396,7 +1396,19 @@ bool PoseRollView::Impl::onScreenKeyPressEvent(QKeyEvent* event)
         case Qt::Key_Right:
             selectNextPose(isCtrlActive);
             break;
+            
+        case Qt::Key_Escape:
+            if(currentPoseSeqItem){
+                currentPoseSeqItem->clearPoseSelection(true);
+            }
+            break;
 
+        case Qt::Key_Delete:
+            if(currentPoseSeqItem){
+                cutSelectedPoses();
+            }
+            break;
+            
         default:
             handled = false;
             break;
@@ -1483,9 +1495,11 @@ bool PoseRollView::Impl::storeState(Archive& archive)
         if(!timeSyncCheck.isChecked()){
             archive.write("time", currentTime);
         }
-        archive.write("timeLength", timeLength);
-        archive.write("showLipSync", lipSyncCheck->isChecked());
-        archive.write("gridInterval", gridIntervalSpin.value());
+        archive.write("screen_time", left);
+        archive.write("time_length", timeLength);
+        archive.write("show_lip_sync", lipSyncCheck->isChecked());
+        archive.write("grid_interval", gridIntervalSpin.value());
+        archive.write("time_scale", 100.0 / timeToScreenX);
         return true;
     }
     return false;
@@ -1501,10 +1515,37 @@ bool PoseRollView::restoreState(const Archive& archive)
 bool PoseRollView::Impl::restoreState(const Archive& archive)
 {
     updateRowRectsNeeded = true;
-    
-    timeLengthSpin.setValue(archive.get("timeLength", timeLengthSpin.value()));
-    lipSyncCheck->setChecked(archive.get("showLipSync", lipSyncCheck->isChecked()));
-    gridIntervalSpin.setValue(archive.get("gridInterval", gridIntervalSpin.value()));
+    bool doUpdateScreen = false;
+
+    double timeScale;
+    if(archive.read("time_scale", timeScale)){
+        double timeToScreenX = 100.0 / timeScale;
+        if(timeToScreenX != this->timeToScreenX){
+            this->timeToScreenX = timeToScreenX;
+            doUpdateScreen = true;
+        }
+    }
+    double timeLength;
+    if(archive.read({ "time_length", "timeLength" }, timeLength)){
+        if(timeLength != this->timeLength){
+            this->timeLength = timeLength;
+            doUpdateScreen = true;
+        }
+        timeLengthSpin.blockSignals(true);
+        timeLengthSpin.setValue(timeLength);
+        hScrollBar->setRange(-leftMargin, timeLength + (2.0 / timeToScreenX));
+        timeLengthSpin.blockSignals(false);
+    }
+    double screenTime;
+    if(archive.read("screen_time", screenTime)){
+        if(screenTime != left){
+            doUpdateScreen = true;
+        }
+        setTimeOfScreenLeft(screenTime, true, doUpdateScreen);
+    }
+        
+    lipSyncCheck->setChecked(archive.get({ "show_lip_sync", "showLipSync" }, lipSyncCheck->isChecked()));
+    gridIntervalSpin.setValue(archive.get({ "grid_interval", "gridInterval" }, gridIntervalSpin.value()));
         
     PoseSeqViewBase::restoreState(archive);
         

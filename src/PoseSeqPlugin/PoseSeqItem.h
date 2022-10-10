@@ -31,9 +31,9 @@ public:
     //! \return true if any selected item is actually cleared.
     bool clearPoseSelection(bool doNotify = false);
     void selectPose(PoseSeq::iterator pose, bool doNotify = false, bool doSort = true);
-    void selectAllPoses(bool doNotify = false);
     //! \return true if the elemnt is actually unselected from the selected state.
-    bool unselectPose(PoseSeq::iterator pose, bool doNotify = false);
+    bool deselectPose(PoseSeq::iterator pose, bool doNotify = false);
+    void selectAllPoses(bool doNotify = false);
     bool checkSelected(PoseSeq::iterator pose) const;
     void notifyPoseSelectionChange();
 

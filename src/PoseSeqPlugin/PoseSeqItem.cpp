@@ -97,7 +97,7 @@ public:
     bool clearPoseSelection(bool doNotify);
     void selectPose(PoseSeq::iterator pose, bool doNotify, bool doSort);
     void selectAllPoses(bool doNotify);
-    bool unselectPose(PoseSeq::iterator pose, bool doNotify);
+    bool deselectPose(PoseSeq::iterator pose, bool doNotify);
     void onTreePathChanged();
     void convert(BodyPtr orgBody);
     bool convertSub(BodyPtr orgBody, const Mapping& convInfo);
@@ -377,15 +377,15 @@ void PoseSeqItem::Impl::selectAllPoses(bool doNotify)
 }
 
 
-bool PoseSeqItem::unselectPose(PoseSeq::iterator pose, bool doNotify)
+bool PoseSeqItem::deselectPose(PoseSeq::iterator pose, bool doNotify)
 {
-    return impl->unselectPose(pose, doNotify);
+    return impl->deselectPose(pose, doNotify);
 }
 
 
-bool PoseSeqItem::Impl::unselectPose(PoseSeq::iterator pose, bool doNotify)
+bool PoseSeqItem::Impl::deselectPose(PoseSeq::iterator pose, bool doNotify)
 {
-    bool unselected = false;
+    bool deselected = false;
     if(selectedPoseSet.erase(pose) > 0){
         auto found =
             std::equal_range(
@@ -396,12 +396,12 @@ bool PoseSeqItem::Impl::unselectPose(PoseSeq::iterator pose, bool doNotify)
                 return a->time() < b->time();
             });
         selectedPoses.erase(found.first, found.second);
-        unselected = true;
+        deselected = true;
         if(doNotify){
             self->notifyPoseSelectionChange();
         }
     }
-    return unselected;
+    return deselected;
 }
 
 
@@ -761,7 +761,7 @@ void PoseSeqItem::Impl::onPoseInserted(PoseSeq::iterator pose, bool isMoving)
 
 void PoseSeqItem::Impl::onPoseAboutToBeRemoved(PoseSeq::iterator pose, bool isMoving)
 {
-    if(unselectPose(pose, false)){
+    if(deselectPose(pose, false)){
         if(isMoving){
             isSelectedPoseBeingMoved = true;
         }

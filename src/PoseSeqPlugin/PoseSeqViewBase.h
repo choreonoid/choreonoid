@@ -102,7 +102,6 @@ public:
     PoseSeq::iterator insertPronunSymbol();
     PoseSeq::iterator insertPose(AbstractPose* pose); 
     bool toggleSelection(PoseSeq::iterator poseIter, bool adding, bool changeTime);
-    void selectAllPoses();
     void selectAllPosesAfterCurrentPosition();
     void selectAllPosesBeforeCurrentPosition();
     void selectPosesHavingSelectedLinks();
