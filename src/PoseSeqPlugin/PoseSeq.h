@@ -5,10 +5,8 @@
 #include "SequentialPose.h"
 #include <cnoid/ClonableReferenced>
 #include <cnoid/Signal>
-#include <cnoid/ConnectionSet>
+#include <string>
 #include <list>
-#include <map>
-#include <set>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -77,17 +75,12 @@ public:
         return poses.back();
     }
             
-    AbstractPose* find(const std::string& name);
-
     iterator seek(iterator current, double time, bool seekPosToInsert = false);
-    iterator insert(iterator current, double time, AbstractPose* pose);
-    iterator insert(iterator current, double time, const std::string& name);
+    iterator insert(iterator current, double time, AbstractPose* pose, bool doAdjustMaxTransitionTime = false);
     iterator erase(iterator it);
 
     // TODO: Implement the folloing function for efficient batch deletion.
     // void erase(const std::vector<iterator>& poses);
-
-    void rename(iterator it, const std::string newName);
 
     iterator copyElement(iterator seekpos, const_iterator org, double offset = 0.0, CloneMap* cloneMap = nullptr);
 
@@ -128,23 +121,15 @@ private:
     typedef std::list<SequentialPose> PoseList;
     PoseList poses;
     std::string name_;
-
-    typedef std::map<std::string, AbstractPosePtr> PoseMap;
-    PoseMap poseMap;
-    std::set<std::string> storedNames;
-
     Signal<void(iterator, bool isMoving)> sigPoseInserted_;
     Signal<void(iterator, bool isMoving)> sigPoseAboutToBeRemoved_;
     Signal<void(iterator)> sigPoseAboutToBeModified_;
     Signal<void(iterator)> sigPoseModified_;
-
     std::string targetBodyName_;
-
     std::string errorMessage_;
 
-    iterator insertSub(PoseSeq::iterator current, double time, AbstractPose* pose);
-    iterator insert(iterator current, double time, SequentialPose& pose);
-
+    iterator insert(iterator current, double time, SequentialPose& pose, bool doAdjustMaxTransitionTime);
+    
     friend class SequentialPose;
 };
 

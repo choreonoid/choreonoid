@@ -10,6 +10,7 @@
 #include <cnoid/ValueTree>
 #include <cnoid/EigenUtil>
 #include <cnoid/Array2D>
+#include <cnoid/ConnectionSet>
 #include <list>
 #include <vector>
 #include <algorithm>
@@ -146,7 +147,6 @@ struct JointSample
     JointSample(PoseSeq::iterator it, int jointId, bool useLinearInterpolation)
     {
         poseIter = it;
-        auto pose = static_cast<BodyKeyPose*>(it->pose().get());
         if(useLinearInterpolation){
             segmentType = LINEAR;
             isDirty = false;
@@ -155,9 +155,14 @@ struct JointSample
             isDirty = true;
         }
         x = it->time();
-        c[0].y = pose->jointPosition(jointId);
+        if(auto pose = it->get<BodyKeyPose>()){
+            c[0].y = pose->jointPosition(jointId);
+            isEndPoint = pose->isJointStationaryPoint(jointId);
+        } else {
+            c[0].y = 0.0;
+            isEndPoint = false;
+        }
         c[0].yp = 0.0;
-        isEndPoint = pose->isJointStationaryPoint(jointId);
     }
 
     SegmentType segmentType;
@@ -202,16 +207,26 @@ struct ZmpSample
     ZmpSample(PoseSeq::iterator it)
     {
         poseIter = it;
-        auto pose = static_cast<BodyKeyPose*>(it->pose().get());
         segmentType = UNDETERMINED;
         x = it->time();
-        const Vector3& zmp = pose->zmp();
-        for(int i=0; i < 3; ++i){
-            Coeff& ci = c[i];
-            ci.y = zmp[i];
-            ci.yp = 0.0;
+
+        if(auto pose = it->get<BodyKeyPose>()){
+            const Vector3& zmp = pose->zmp();
+            for(int i=0; i < 3; ++i){
+                Coeff& ci = c[i];
+                ci.y = zmp[i];
+                ci.yp = 0.0;
+            }
+            isEndPoint = pose->isZmpStationaryPoint();
+        } else {
+            for(int i=0; i < 3; ++i){
+                Coeff& ci = c[i];
+                ci.y = 0.0;
+                ci.yp = 0.0;
+            }
+            isEndPoint = false;
         }
-        isEndPoint = pose->isZmpStationaryPoint();
+
         isDirty = true;
     }
 
@@ -2107,15 +2122,19 @@ void PoseSeqInterpolator::Impl::insertAuxKeyPosesForStealthySteps()
 
 void PoseSeqInterpolator::Impl::appendPronun(PoseSeq::iterator poseIter)
 {
-    const string& pronun = poseIter->name();
+    PronunSymbol* pronum = poseIter->get<PronunSymbol>();
+    if(!pronum){
+        return;
+    }
+    const string& symbol = pronum->symbol();
 
-    if(pronun.empty()){
+    if(symbol.empty()){
         return;
     }
 
     int vowel = -1;
 
-    switch(tolower(pronun[pronun.size()-1])){
+    switch(tolower(symbol[symbol.size()-1])){
 
     case 'a': vowel = LS_A; break;
     case 'i': vowel = LS_I; break;
@@ -2139,8 +2158,8 @@ void PoseSeqInterpolator::Impl::appendPronun(PoseSeq::iterator poseIter)
     LipSyncSample sample1;
     sample1.shapeId = -1;
 
-    if(vowel != LS_N && pronun.size() >= 2){
-        int consonantChar = tolower(pronun[0]);
+    if(vowel != LS_N && symbol.size() >= 2){
+        int consonantChar = tolower(symbol[0]);
         if(consonantChar == 'm' || consonantChar == 'b' || consonantChar == 'p'){
             sample0.shapeId = LS_N;
         } else {

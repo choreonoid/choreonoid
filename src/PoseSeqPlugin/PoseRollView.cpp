@@ -11,10 +11,12 @@
 #include <QHeaderView>
 #include <QPaintEvent>
 #include <QPainter>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 
@@ -269,6 +271,7 @@ void PoseRollView::Impl::initialize()
     hbox->addWidget(&currentItemLabel);
     hbox->addWidget(new QLabel(":"));
     hbox->addWidget(&poseNameLabel);
+    hbox->addStretch();
 
     gridLayout = new QGridLayout;
     gridLayout->setSpacing(0);
@@ -1076,12 +1079,13 @@ void PoseRollView::Impl::updateTimeSpinConfigurations()
         poseTTimeSpin.setEnabled(false);
         poseTTimeSpin.setValue(0.0);
     } else {
-        auto pose = selected.front();
-        poseNameLabel.setText(pose->name().c_str());
+        auto it = selected.front();
+        ulong id = reinterpret_cast<ulong>(it->pose()) & 0xffffffff;
+        poseNameLabel.setText(format("{0:0X}", id).c_str());
         poseTimeSpin.setEnabled(true);
-        poseTimeSpin.setValue(timeScale * pose->time());
+        poseTimeSpin.setValue(timeScale * it->time());
         poseTTimeSpin.setEnabled(true);
-        poseTTimeSpin.setValue(timeScale * pose->maxTransitionTime());
+        poseTTimeSpin.setValue(timeScale * it->maxTransitionTime());
     }
 
     poseTTimeSpinConnection.unblock();

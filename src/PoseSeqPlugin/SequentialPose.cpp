@@ -5,7 +5,7 @@ using namespace std;
 using namespace cnoid;
 
 
-SequentialPose::SequentialPose(PoseSeq* owner, AbstractPose* pose, double time)
+SequentialPose::SequentialPose(AbstractPose* pose, double time)
     : pose_(pose),
       time_(time)
 {

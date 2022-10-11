@@ -13,12 +13,8 @@ class CNOID_EXPORT SequentialPose
 public:
     SequentialPose(const SequentialPose& org, CloneMap* cloneMap = nullptr);
 
-    const std::string& name() const {
-        return pose_->name();
-    }
-
-    AbstractPosePtr pose() { return pose_; }
-    const AbstractPosePtr pose() const { return pose_; }
+    AbstractPose* pose() { return pose_; }
+    const AbstractPose* pose() const { return pose_; }
 
     template <class PoseType>
     const PoseType* get() const {
@@ -53,7 +49,7 @@ public:
     }
 
 protected:
-    SequentialPose(PoseSeq* owner, AbstractPose* pose, double time);
+    SequentialPose(AbstractPose* pose, double time);
 
 private:
     AbstractPosePtr pose_;

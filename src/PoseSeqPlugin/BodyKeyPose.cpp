@@ -300,7 +300,9 @@ bool BodyKeyPose::restore(const Mapping& archive, const Body* body)
 void BodyKeyPose::store(Mapping& archive, const Body* body) const
 {
     archive.write("type", "Pose");
-    archive.write("name", name(), DOUBLE_QUOTED);
+
+    // For keeping the compatibility of the pose seq file
+    archive.write("name", "", DOUBLE_QUOTED);
 
     ListingPtr jointIndices = new Listing();
     ListingPtr qs = new Listing();

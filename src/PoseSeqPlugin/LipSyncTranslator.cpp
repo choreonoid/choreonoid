@@ -30,9 +30,10 @@ void LipSyncTranslator::translatePoseSeq(PoseSeq& poseSeq)
     clear();
 
     for(PoseSeq::iterator poseIter = poseSeq.begin(); poseIter != poseSeq.end(); ++poseIter){
-        PronunSymbolPtr symbol = poseIter->get<PronunSymbol>();
-        if(symbol && !symbol->name().empty()){
-            appendSyllable(poseIter->time(), symbol->name());
+        if(auto symbol = poseIter->get<PronunSymbol>()){
+            if(!symbol->symbol().empty()){
+                appendSyllable(poseIter->time(), symbol->symbol());
+            }
         }
     }
 }

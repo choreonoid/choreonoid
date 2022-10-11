@@ -35,27 +35,14 @@ PoseSeq::~PoseSeq()
 
 PoseSeq::iterator PoseSeq::copyElement(iterator seekpos, const_iterator org, double offset, CloneMap* cloneMap)
 {
-    bool inserted = false;
+    iterator pos;
 
-    iterator pos = seekpos;
-
-    const string& name = org->name();
-    if(!name.empty()){
-        auto it = poseMap.find(name);
-        if(it != poseMap.end()){
-            pos = insert(seekpos, org->time() + offset, org->name());
-            pos->setMaxTransitionTime(org->maxTransitionTime());
-            inserted = true;
-        }
-    }
-
-    if(!inserted){
-        AbstractPosePtr orgPose = org->pose();
-        if(orgPose){
-            AbstractPosePtr copiedPose = CloneMap::getClone(orgPose, cloneMap);
-            pos = insert(seekpos, org->time() + offset, copiedPose);
-            pos->setMaxTransitionTime(org->maxTransitionTime());
-        }
+    if(auto orgPose = org->pose()){
+        auto copiedPose = CloneMap::getClone(orgPose, cloneMap);
+        pos = insert(seekpos, org->time() + offset, copiedPose);
+        pos->setMaxTransitionTime(org->maxTransitionTime());
+    } else {
+        pos = seekpos;
     }
 
     return seekpos;
@@ -80,7 +67,6 @@ bool PoseSeq::load(const std::string& filename, const Body* body)
 
     /// \todo emit signals
     poses.clear();
-    poseMap.clear();
     
     YAMLReader parser;
     if(parser.load(filename)){
@@ -108,33 +94,20 @@ bool PoseSeq::restore(const Mapping& archive, const Body* body)
     
     for(int i=0; i < refs.size(); ++i){
         const Mapping& ref = *refs[i].toMapping();
-
         bool isInserted = false;
-
         double time = ref["time"].toDouble();
-        
         const ValueNode& referred = ref["refer"];
-
-        if(referred.isScalar()){
-            const string& name = referred;
-            if(!name.empty()){
-                current = insert(current, time, name);
-                isInserted = true;
-            }
-        } else if(referred.isMapping()){
-            const Mapping& mReferred = *referred.toMapping();
-            const string& type = mReferred["type"];
-            AbstractPosePtr pose;
-            if(type == "Pose"){
-                pose = new BodyKeyPose;
-            } else if(type == "PronunSymbol"){
-                pose = new PronunSymbol;
-            }
-            if(pose && pose->restore(mReferred, body)){
-                pose->name_ = mReferred["name"];
-                current = insert(current, time, pose);
-                isInserted = true;
-            }
+        const Mapping& mReferred = *referred.toMapping();
+        const string& type = mReferred["type"];
+        AbstractPosePtr pose;
+        if(type == "Pose"){
+            pose = new BodyKeyPose;
+        } else if(type == "PronunSymbol"){
+            pose = new PronunSymbol;
+        }
+        if(pose && pose->restore(mReferred, body)){
+            current = insert(current, time, pose);
+            isInserted = true;
         }
 
         if(isInserted){
@@ -150,7 +123,6 @@ bool PoseSeq::save(const std::string& filename, const Body* body)
 {
     YAMLWriter writer(filename);
     writer.setKeyOrderPreservationMode(true);
-    storedNames.clear();
     MappingPtr archive = new Mapping;
     archive->setFloatingNumberFormat("%.9g");
     store(*archive, body);
@@ -174,15 +146,8 @@ void PoseSeq::store(Mapping& archive, const Body* body) const
         if(pose.maxTransitionTime() > 0.0){
             refNode->write("maxTransitionTime", pose.maxTransitionTime());
         }
-        const string& name = pose.name();
-        if((storedNames.find(name) == storedNames.end() /* && !pose.isExternalReference()*/) ||
-           name.empty()){
-            const_cast<PoseSeq*>(this)->storedNames.insert(name);
-            MappingPtr childNode = refNode->createMapping("refer");
-            pose.pose()->store(*childNode, body);
-        } else {
-            refNode->write("refer", name, DOUBLE_QUOTED);
-        }
+        MappingPtr childNode = refNode->createMapping("refer");
+        pose.pose()->store(*childNode, body);
     }
 }
 
@@ -202,8 +167,8 @@ bool PoseSeq::exportTalkPluginFile(const std::string& filename)
         if(!poses.empty()){
             bool isInitial = true;
             for(auto& pose : poses){
-                PronunSymbolPtr symbol = pose.get<PronunSymbol>();
-                if(symbol && !symbol->name().empty()){
+                PronunSymbol* symbol = pose.get<PronunSymbol>();
+                if(symbol && !symbol->symbol().empty()){
                     const double time = pose.time();
                     if(isInitial){
                         isInitial = false;
@@ -217,7 +182,7 @@ bool PoseSeq::exportTalkPluginFile(const std::string& filename)
                         }
                     }
                     prevTime = time;
-                    prevSymbol = symbol->name();
+                    prevSymbol = symbol->symbol();
                 }
             }
             
@@ -226,10 +191,10 @@ bool PoseSeq::exportTalkPluginFile(const std::string& filename)
     } else {
         for(auto& pose : poses){
             PronunSymbolPtr symbol = pose.get<PronunSymbol>();
-            if(symbol && !symbol->name().empty()){
+            if(symbol && !symbol->symbol().empty()){
                 const double time = pose.time();
                 double transitionTime = time - prevTime;
-                ofs << symbol->name() << " " << transitionTime << "\n";
+                ofs << symbol->symbol() << " " << transitionTime << "\n";
                 prevTime = time;
             }
         }
@@ -264,7 +229,7 @@ PoseSeq::iterator PoseSeq::changeTime(iterator it, double newTime)
         newpos = it;
     } else {
         sigPoseAboutToBeRemoved_(it, true);
-        SequentialPose newPose(this, it->pose(), newTime);
+        SequentialPose newPose(it->pose(), newTime);
         newPose.setMaxTransitionTime(it->maxTransitionTime());
         poses.erase(it);
         newpos = poses.insert(insertpos, newPose);
@@ -272,16 +237,6 @@ PoseSeq::iterator PoseSeq::changeTime(iterator it, double newTime)
     }
 
     return newpos;
-}
-
-
-AbstractPose* PoseSeq::find(const std::string& name)
-{
-    auto it = poseMap.find(name);
-    if(it != poseMap.end()){
-        return it->second;
-    }
-    return nullptr;
 }
 
 
@@ -324,48 +279,60 @@ PoseSeq::iterator PoseSeq::seek(PoseSeq::iterator current, double time, bool see
 }
             
 
-PoseSeq::iterator PoseSeq::insert(PoseSeq::iterator current, double time, AbstractPose* pose)
+PoseSeq::iterator PoseSeq::insert(iterator current, double time, AbstractPose* pose, bool doAdjustMaxTransitionTime)
 {
-    const string& name = pose->name();
-    if(!name.empty()){
-        auto it = poseMap.find(name);
-        if(it != poseMap.end()){
-            return insertSub(current, time, it->second);
-        } else {
-            poseMap.insert(make_pair(name, pose));
-        }
-    }
-    
-    return insertSub(current, time, pose);
+    SequentialPose sequentialPose(pose, time);
+    return insert(current, time, sequentialPose, doAdjustMaxTransitionTime);
 }
 
 
-PoseSeq::iterator PoseSeq::insertSub(PoseSeq::iterator current, double time, AbstractPose* pose)
-{
-    SequentialPose sequentialPose(this, pose, time);
-    pose->seqLocalReferenceCounter++;
-    return insert(current, time, sequentialPose);
-}
-
-
-PoseSeq::iterator PoseSeq::insert(iterator current, double time, const std::string& name)
-{
-    if(name.empty()){
-        return poses.end();
-    }
-    
-    if(auto punit = find(name)){
-        return insertSub(current, time, punit);
-    } else {
-        SequentialPose pose(this, nullptr, time);
-        return insert(current, time, pose);
-    }
-}
-
-
-PoseSeq::iterator PoseSeq::insert(iterator current, double time, SequentialPose& pose)
+PoseSeq::iterator PoseSeq::insert(iterator current, double time, SequentialPose& pose, bool doAdjustMaxTransitionTime)
 {
     iterator it = seek(current, time);
+
+    if(doAdjustMaxTransitionTime && it != poses.begin()){
+        if(auto bkPose = pose.get<BodyKeyPose>()){
+            bool matched = false;
+            double prevTime = -std::numeric_limits<double>::max();
+            int nj = bkPose->numJoints();
+            auto precedentIter = it;
+            --precedentIter;
+            do {
+                if(auto precedent = precedentIter->get<BodyKeyPose>()){
+                    auto ikLinkIter = bkPose->ikLinkBegin();
+                    while(ikLinkIter != bkPose->ikLinkEnd()){
+                        int linkIndex = ikLinkIter->first;
+                        if(precedent->ikLinkInfo(linkIndex)){
+                            matched = true;
+                            break;
+                        }
+                        ++ikLinkIter;
+                    }
+                    if(!matched){
+                        for(int i=0; i < nj; ++i){
+                            if(bkPose->isJointValid(i) && precedent->isJointValid(i)){
+                                matched = true;
+                                break;
+                            }
+                        }
+                    }
+                    if(matched){
+                        prevTime = precedentIter->time();
+                        break;
+                    }
+                }
+                --precedentIter;
+            } while(precedentIter != poses.begin());
+            
+            if(matched){
+                double tt = time - prevTime;
+                if(tt >= 0.0 && tt <= 10.0){
+                    pose.setMaxTransitionTime(tt);
+                }
+            }
+        }
+    }
+
     it = poses.insert(it, pose);
     sigPoseInserted_(it, false);
     return it;
@@ -375,51 +342,7 @@ PoseSeq::iterator PoseSeq::insert(iterator current, double time, SequentialPose&
 PoseSeq::iterator PoseSeq::erase(iterator it)
 {
     sigPoseAboutToBeRemoved_(it, false);
-
-    AbstractPosePtr unit = it->pose();
-    if(unit){
-        unit->seqLocalReferenceCounter--;
-        if(unit->seqLocalReferenceCounter == 0){
-            const string& name = unit->name();
-            if(!name.empty()){
-                poseMap.erase(name);
-            }
-        }
-    }
-    
     return poses.erase(it);
-}
-
-
-void PoseSeq::rename(iterator it, const std::string newName)
-{
-    // unref current shared pose unit
-    AbstractPosePtr currentPose = it->pose();
-    if(currentPose){
-        const string& currentName = currentPose->name();
-        if(!currentName.empty()){
-            if(--currentPose->seqLocalReferenceCounter == 0){
-                poseMap.erase(currentName);
-            }
-        }
-    }
-        
-    AbstractPosePtr sharedPose = find(newName);
-    if(sharedPose){
-        it->pose_ = sharedPose;
-        sharedPose->seqLocalReferenceCounter++;
-    } else {
-        if(currentPose){
-            AbstractPosePtr newUnit = currentPose->clone();
-            newUnit->name_ = newName;
-            //newUnit->owner = this;
-            newUnit->seqLocalReferenceCounter++;
-            it->pose_ = newUnit;
-            if(!newName.empty()){
-                poseMap.insert(make_pair(newName, newUnit));
-            }
-        }
-    }
 }
 
 

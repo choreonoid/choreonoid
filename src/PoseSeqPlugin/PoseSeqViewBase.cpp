@@ -1518,8 +1518,12 @@ PoseSeq::iterator PoseSeqViewBase::insertPronunSymbol()
 PoseSeq::iterator PoseSeqViewBase::insertPose(AbstractPose* pose)
 {
     currentPoseSeqItem->beginEditing();
-    auto it = seq->insert(currentPoseIter, currentTime / timeScale, pose);
-    it->setMaxTransitionTime(transitionTimeSpin.value() / timeScale);
+    double tt = transitionTimeSpin.value() / timeScale;
+    bool doAdjustTransitionTime = (tt == 0.0);
+    auto it = seq->insert(currentPoseIter, currentTime / timeScale, pose, doAdjustTransitionTime);
+    if(!doAdjustTransitionTime){
+        it->setMaxTransitionTime(tt);
+    }
     currentPoseSeqItem->endEditing();
     toggleSelection(it, false, false);
 

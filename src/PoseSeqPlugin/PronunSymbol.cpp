@@ -13,7 +13,8 @@ PronunSymbol::PronunSymbol()
 
 
 PronunSymbol::PronunSymbol(const PronunSymbol& org)
-    : AbstractPose(org)
+    : AbstractPose(org),
+      symbol_(org.symbol_)
 {
 
 }
@@ -33,12 +34,12 @@ Referenced* PronunSymbol::doClone(CloneMap*) const
 
 bool PronunSymbol::restore(const Mapping& archive, const Body* body)
 {
-    return true;
+    return archive.read("name", symbol_);
 }
 
 
 void PronunSymbol::store(Mapping& archive, const Body* body) const
 {
     archive.write("type", "PronunSymbol");
-    archive.write("name", name(), DOUBLE_QUOTED);
+    archive.write("name", symbol_, DOUBLE_QUOTED);
 }
