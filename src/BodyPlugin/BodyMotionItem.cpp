@@ -397,6 +397,8 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
 
 void BodyMotionItem::doPutProperties(PutPropertyFunction& putProperty)
 {
+    AbstractSeqItem::doPutProperties(putProperty);
+    
     putProperty(_("Body joint velocity update"), isBodyJointVelocityUpdateEnabled_,
                 changeProperty(isBodyJointVelocityUpdateEnabled_));
 }
@@ -404,21 +406,18 @@ void BodyMotionItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool BodyMotionItem::store(Archive& archive)
 {
-    bool result = false;
-    if(overwriteOrSaveWithDialog()){
-        result = archive.writeFileInformation(this);
-        if(result){
-            if(isBodyJointVelocityUpdateEnabled_){
-                archive.write("is_body_joint_velocity_update_enabled", true);
-            }
+    if(AbstractSeqItem::store(archive)){
+        if(isBodyJointVelocityUpdateEnabled_){
+            archive.write("is_body_joint_velocity_update_enabled", true);
         }
+        return true;
     }
-    return result;
+    return false;
 }
 
 
 bool BodyMotionItem::restore(const Archive& archive)
 {
     isBodyJointVelocityUpdateEnabled_ = archive.get("is_body_joint_velocity_update_enabled", false);
-    return archive.loadFileTo(this);
+    return AbstractSeqItem::restore(archive);
 }
