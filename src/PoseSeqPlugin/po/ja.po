@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-06 17:38+0900\n"
+"POT-Creation-Date: 2022-10-15 03:45+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -88,9 +88,6 @@ msgstr "了解(&O)"
 msgid "Pose Seq Processing"
 msgstr "ポーズ列処理"
 
-msgid "Automatic Interpolation Update"
-msgstr "補完自動更新"
-
 msgid "Automatic Generation for a New Body"
 msgstr "新しいボディへの自動生成"
 
@@ -151,8 +148,17 @@ msgstr "ポーズ："
 msgid "Foce new pose"
 msgstr "新規ポーズ強制"
 
+msgid "whole body"
+msgstr "全身"
+
 msgid "Whole Body"
 msgstr "全身"
+
+msgid "Keep within upper body joint ranges"
+msgstr "上半身関節を可動範囲内に制限"
+
+msgid "upper body"
+msgstr "上半身"
 
 msgid "Upper Body"
 msgstr "上半身"
@@ -160,20 +166,26 @@ msgstr "上半身"
 msgid "Waist"
 msgstr "腰"
 
+msgid "head"
+msgstr "頭"
+
 msgid "Head"
 msgstr "頭"
 
-msgid "%1-Arm"
-msgstr "%1腕"
+msgid "L-Arm"
+msgstr "左腕"
 
-msgid "L"
-msgstr "左"
+msgid "R-Arm"
+msgstr "右腕"
 
-msgid "R"
-msgstr "右"
+msgid "arms"
+msgstr "両腕"
 
 msgid "Arms"
 msgstr "両腕"
+
+msgid "chest"
+msgstr "胸"
 
 msgid "Chest"
 msgstr "胸"
@@ -181,29 +193,85 @@ msgstr "胸"
 msgid "^"
 msgstr "↑"
 
-msgid "Offset"
-msgstr "オフセット"
+msgid "Height"
+msgstr "高さ"
+
+msgid "waist"
+msgstr "腰"
 
 msgid "v"
 msgstr "↓"
 
-msgid "%1-Leg"
-msgstr "%1脚"
+msgid "Offset"
+msgstr "オフセット"
 
-msgid "Fit"
-msgstr "フィット"
+msgid "L-Leg"
+msgstr "左脚"
+
+msgid "R-Leg"
+msgstr "右脚"
+
+msgid "Ground"
+msgstr "接地"
+
+msgid "legs"
+msgstr "両脚"
 
 msgid "Legs"
 msgstr "両脚"
 
-msgid "Lower Body"
-msgstr "下半身"
+msgid "Relative positioning for the waist and feet"
+msgstr "腰・足位置の相対化"
 
 msgid "New pose"
 msgstr "新規ポーズ"
 
 msgid "{0:0X} ..."
 msgstr ""
+
+msgid "Not ready to fetch poses"
+msgstr "ポーズを取得する準備ができていません"
+
+msgid "The current pose of {0} cannot be fetched as a new key pose."
+msgstr "{0}の現在の姿勢を新しいキーポーズとして取り込むことができません．"
+
+msgid "The current pose of {0} has been fetched as a new key pose of {1}."
+msgstr "{0}の現在の姿勢を{1}の新しいキーポーズとして取り込みました．"
+
+msgid "The current pose of {0} cannot be fetched."
+msgstr "{0}の現在の姿勢を取り込むことができません．"
+
+msgid "The current pose of {0} has been fetched in the selected key pose(s) of {1}."
+msgstr "{0}の現在の姿勢を{1}の選択キーポーズに取り込みました．"
+
+msgid "Not ready to adjust the waist height."
+msgstr "腰の高さを調整する準備ができていません．"
+
+msgid ""
+"The waist height of the selected key pose cannot be modified due to the inverse kinematics error."
+msgstr "選択されているキーポーズの腰高さは逆運動学のエラーにより変更できません．"
+
+msgid ""
+"The waist height of the selected key poses cannot be modified due to the inverse kinematics error."
+msgstr "選択されているキーポーズの腰高さは逆運動学のエラーにより変更できません．"
+
+msgid "Not ready to adjust the foot height."
+msgstr "足の高さを調整する準備ができていません．"
+
+msgid ""
+"The foot height of the selected key pose cannot be modified due to the inverse kinematics error."
+msgstr "選択されているキーポーズの足の高さは逆運動学のエラーにより変更できません．"
+
+msgid ""
+"The foot height of the selected key poses cannot be modified due to the inverse kinematics error."
+msgstr "選択されているキーポーズの足の高さは逆運動学のエラーにより変更できません．"
+
+msgid "Warning"
+msgstr "警告"
+
+msgid ""
+"Key poses will be removed by unchecking the {0} check. Do you really want to remove the key poses?"
+msgstr "{0}のチェックを外すことでキーポーズが削除されます。本当にキーポーズを削除しますか？"
 
 msgid "Pose Roll"
 msgstr "ポーズロール"
