@@ -49,7 +49,7 @@ public:
 
     template<class ObjectType>
     static ObjectType* getClone(const ObjectType* org, CloneMap* cloneMap){
-        return cloneMap ? cloneMap->getClone(org) : getClone_(org);
+        return cloneMap ? cloneMap->getClone(org) : static_cast<ObjectType*>(getClone_(org));
     }
 
     template<class ObjectType>
