@@ -199,7 +199,7 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
                                 const FcPose& fcPose = fcpPoseIter->second;
                                 BodyKeyPosePtr pose = new BodyKeyPose;
                                 for(size_t j=0; j < part.jointIds.size(); ++j){
-                                    pose->setJointPosition(part.jointIds[j], fcPose.q[j]);
+                                    pose->setJointDisplacement(part.jointIds[j], fcPose.q[j]);
                                 }
                                 poseIter = seq->insert(poseIter, time, pose);
                                 poseIter->setMaxTransitionTime(fcPose.transitionTime);

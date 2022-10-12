@@ -551,7 +551,7 @@ bool PoseSeqItem::Impl::convertSub(BodyPtr orgBody, const Mapping& convInfo)
                     if(i < jointMap.size()){
                         int newJointId = jointMap[i].toInt();
                         if(newJointId >= 0){
-                            pose->setJointPosition(newJointId, orgPose->jointPosition(i));
+                            pose->setJointDisplacement(newJointId, orgPose->jointDisplacement(i));
                             pose->setJointStationaryPoint(newJointId, orgPose->isJointStationaryPoint(i));
                         }
                     }
@@ -927,7 +927,7 @@ bool PoseSeqItem::Impl::updatePosesWithBalancedTrajectories(std::ostream& os)
             MultiValueSeq::Frame q = qseq->frame(frame);
             for(int i=0; i < nj; ++i){
                 if(pose->isJointValid(i)){
-                    pose->setJointPosition(i, q[i]);
+                    pose->setJointDisplacement(i, q[i]);
                 }
             }
             MultiSE3Seq::Frame pos = pseq->frame(frame);

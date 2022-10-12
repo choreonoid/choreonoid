@@ -63,7 +63,7 @@ void BodyKeyPose::setNumJoints(int n)
 }
 
 
-void BodyKeyPose::setJointPosition(int jointId, double q)
+void BodyKeyPose::setJointDisplacement(int jointId, double q)
 {
     if(jointId >= 0){
         if(jointId >= (int)jointInfos.size()){
@@ -230,7 +230,7 @@ bool BodyKeyPose::restore(const Mapping& archive, const Body* body)
         setNumJoints(maxIndex + 1);
         const Listing& qs = *archive["q"].toListing();
         for(int i=0; i < jointIndices.size(); ++i){
-            setJointPosition(jointIndices[i].toInt(), qs[i].toDouble());
+            setJointDisplacement(jointIndices[i].toInt(), qs[i].toDouble());
         }
     }
     const Listing& stationaryPoints = *archive.findListing("spJoints");

@@ -516,7 +516,7 @@ void PoseSeqViewBase::initializeLinkTreeTraverse(QTreeWidgetItem* parentItem)
                 [this, item](Qt::CheckState state){ onValidPartCheckClicked(item, state); });
             
             if(link && link->jointId() >= 0){
-                poseForDefaultStateSetting->setJointPosition(link->jointId(), 0.0);
+                poseForDefaultStateSetting->setJointDisplacement(link->jointId(), 0.0);
             } else if(item->isLinkGroup()){
                 checkBox->setTristate(true);
             }
@@ -641,9 +641,9 @@ bool PoseSeqViewBase::toggleLink(BodyKeyPose* pose, LinkDeviceTreeItem* item, Li
     if(partOn){
         if(jId >= 0){
             bool isSpChecked = isChecked(item, stationaryPointColumn);
-            if(!pose->isJointValid(jId) || pose->jointPosition(jId) != link->q() ||
+            if(!pose->isJointValid(jId) || pose->jointDisplacement(jId) != link->q() ||
                pose->isJointStationaryPoint(jId) != isSpChecked){
-                pose->setJointPosition(jId, link->q());
+                pose->setJointDisplacement(jId, link->q());
                 pose->setJointStationaryPoint(jId, isSpChecked);
                 modified = true;
             }
@@ -1464,7 +1464,7 @@ PoseSeq::iterator PoseSeqViewBase::insertBodyKeyPose()
         auto link = body->link(i);
         if(auto item = linkTreeWidget->itemOfLink(link->index())){
             if(link->jointId() >= 0 && isChecked(item, validPartColumn)){
-                pose->setJointPosition(link->jointId(), link->q());
+                pose->setJointDisplacement(link->jointId(), link->q());
                 hasValidPart = true;
                 if(isChecked(item, stationaryPointColumn)){
                     pose->setJointStationaryPoint(link->jointId());
@@ -1590,8 +1590,8 @@ bool PoseSeqViewBase::setCurrentBodyStateToPose(BodyKeyPose* pose, bool onlySele
             auto joint = body->joint(i);
             if(!onlySelected || linkSelection[joint->index()]){
                 const double q = body->joint(i)->q();
-                if(q != pose->jointPosition(i)){
-                    pose->setJointPosition(i, q);
+                if(q != pose->jointDisplacement(i)){
+                    pose->setJointDisplacement(i, q);
                     updated = true;
                 }
             }

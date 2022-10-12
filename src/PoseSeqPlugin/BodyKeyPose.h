@@ -31,9 +31,9 @@ public:
         return jointInfos.size();
     }
 
-    void setJointPosition(int jointId, double q);
+    void setJointDisplacement(int jointId, double q);
 
-    double jointPosition(int jointId) const {
+    double jointDisplacement(int jointId) const {
         return jointInfos[jointId].q;
     }
 

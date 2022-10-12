@@ -156,7 +156,7 @@ struct JointSample
         }
         x = it->time();
         if(auto pose = it->get<BodyKeyPose>()){
-            c[0].y = pose->jointPosition(jointId);
+            c[0].y = pose->jointDisplacement(jointId);
             isEndPoint = pose->isJointStationaryPoint(jointId);
         } else {
             c[0].y = 0.0;
@@ -1575,7 +1575,7 @@ bool PoseSeqInterpolator::Impl::update()
                 if(pose->isJointValid(i)){
 
                     // make a flipping point stationary point
-                    double q = pose->jointPosition(i);
+                    double q = pose->jointDisplacement(i);
                     double sign = q - jointInfo.prev_q;
                     if(jointInfo.prevSegmentDirectionSign * sign <= 0.0){
                         if(!jointInfo.samples.empty()){

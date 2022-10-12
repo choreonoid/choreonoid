@@ -270,13 +270,13 @@ bool FlipFilter::flipPose(BodyKeyPose* pose)
     pose->setNumJoints(0);
     for(int i=0; i < orgPose->numJoints(); ++i){
         if(orgPose->isJointValid(i)){
-            double q = orgPose->jointPosition(i);
+            double q = orgPose->jointDisplacement(i);
             auto it = jointFlipInfoMap.find(i);
             if(it == jointFlipInfoMap.end()){
-                pose->setJointPosition(i, q);
+                pose->setJointDisplacement(i, q);
             } else {
                 JointFlipInfo& flip = it->second;
-                pose->setJointPosition(flip.counterPartJointId, q * flip.jointPositionSign);
+                pose->setJointDisplacement(flip.counterPartJointId, q * flip.jointPositionSign);
                 modified = true;
             }
         }
