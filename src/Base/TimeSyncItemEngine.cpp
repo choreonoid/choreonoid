@@ -4,6 +4,7 @@
 #include "ItemList.h"
 #include "TimeBar.h"
 #include "ExtensionManager.h"
+#include "LazyCaller.h"
 #include <cnoid/ConnectionSet>
 #include <vector>
 #include <unordered_map>
@@ -46,6 +47,7 @@ public:
     };
     map<ItemPtr, ItemInfo> itemInfoMap;
     set<ItemInfo*> activeItemInfos;
+    LazyCaller refreshActiveItemsLater;
 
     ScopedConnectionSet connections;
 
@@ -56,11 +58,12 @@ public:
     void activateItemEngines(Item* item, ItemInfo* info, bool forceUpdate);
     void deactivateItemEngines(Item* item, ItemInfo* info, bool forceUpdate);
     int createEngines(Item* item, std::vector<TimeSyncItemEnginePtr>& io_engines);
+    void refreshActiveItems();
+    void refreshItem(TimeSyncItemEngine* engine);
     bool onPlaybackInitialized(double time);
     void onPlaybackStarted(double time);
     bool onTimeChanged(double time);
     double onPlaybackStopped(double time, bool isStoppedManually);
-    void refresh(TimeSyncItemEngine* engine);
 };
 
 }
@@ -89,7 +92,8 @@ TimeSyncItemEngineManager::TimeSyncItemEngineManager()
 
 
 TimeSyncItemEngineManager::Impl::Impl()
-    : itemClassRegistry(ItemClassRegistry::instance())
+    : itemClassRegistry(ItemClassRegistry::instance()),
+      refreshActiveItemsLater([this](){ refreshActiveItems(); }, LazyCaller::NormalPriority)
 {
     currentTime = 0.0;
     isDoingPlayback = false;
@@ -206,6 +210,7 @@ void TimeSyncItemEngineManager::Impl::updateItemEngines(Item* item, ItemInfo* in
 
 void TimeSyncItemEngineManager::Impl::activateItemEngines(Item* item, ItemInfo* info, bool forceUpdate)
 {
+    bool updated = false;
     bool prevActiveEngineExistence = !info->activeEngines.empty();
     info->activeEngines.clear();
 
@@ -225,10 +230,12 @@ void TimeSyncItemEngineManager::Impl::activateItemEngines(Item* item, ItemInfo* 
             if(newEngine != existingEngine){
                 if(existingEngine){
                     existingEngine->deactivate();
+                    updated = true;
                 }
             }
             if(!newEngine->isActive_){
                 newEngine->activate();
+                updated = true;
             }
             info->activeEngines.push_back(newEngine);
         }
@@ -242,12 +249,17 @@ void TimeSyncItemEngineManager::Impl::activateItemEngines(Item* item, ItemInfo* 
         if(!prevActiveEngineExistence){
             activeItemInfos.insert(info);
         }
-    } 
+    }
+
+    if(updated){
+        refreshActiveItemsLater();
+    }
 }
 
 
 void TimeSyncItemEngineManager::Impl::deactivateItemEngines(Item* item, ItemInfo* info, bool forceUpdate)
 {
+    bool updated = false;
     bool prevActiveEngineExistence = !info->activeEngines.empty();
 
     auto it = info->activeEngines.begin();
@@ -256,6 +268,7 @@ void TimeSyncItemEngineManager::Impl::deactivateItemEngines(Item* item, ItemInfo
         if(forceUpdate || !engine->isTimeSyncAlwaysMaintained()){
             engine->deactivate();
             it = info->activeEngines.erase(it);
+            updated = true;
         } else {            
             engine->isTimeSyncForcedToBeMaintained_ = true;
             ++it;
@@ -273,7 +286,11 @@ void TimeSyncItemEngineManager::Impl::deactivateItemEngines(Item* item, ItemInfo
 
     if(prevActiveEngineExistence && info->activeEngines.empty()){
         activeItemInfos.erase(info);
-    } 
+    }
+
+    if(updated){
+        refreshActiveItemsLater();
+    }
 }    
 
 
@@ -300,6 +317,26 @@ int TimeSyncItemEngineManager::Impl::createEngines(Item* item, std::vector<TimeS
         id = itemClassRegistry.getSuperClassId(id);
     }
     return numCreatedEngines;
+}
+
+
+void TimeSyncItemEngineManager::Impl::refreshActiveItems()
+{
+    if(!isDoingPlayback){
+        for(auto& info : activeItemInfos){
+            for(auto& engine : info->activeEngines){
+                engine->onTimeChanged(currentTime);
+            }
+        }
+    }
+}
+
+
+void TimeSyncItemEngineManager::Impl::refreshItem(TimeSyncItemEngine* engine)
+{
+    if(!isDoingPlayback){
+        engine->onTimeChanged(currentTime);
+    }
 }
 
 
@@ -407,14 +444,6 @@ double TimeSyncItemEngineManager::Impl::onPlaybackStopped(double time, bool isSt
 }
 
 
-void TimeSyncItemEngineManager::Impl::refresh(TimeSyncItemEngine* engine)
-{
-    if(!isDoingPlayback){
-        engine->onTimeChanged(currentTime);
-    }
-}
-
-
 TimeSyncItemEngine::TimeSyncItemEngine(Item* item)
     : item_(item)
 {
@@ -461,9 +490,6 @@ void TimeSyncItemEngine::activate()
     isActive_ = true;
     if(isUpdatingOngoingTime()){
         setupOngoingTimeUpdate();
-    }
-    if(!managerImpl->isDoingPlayback){
-        onTimeChanged(managerImpl->currentTime);
     }
 }
 
@@ -527,5 +553,5 @@ void TimeSyncItemEngine::stopOngoingTimeUpdate()
 
 void TimeSyncItemEngine::refresh()
 {
-    managerImpl->refresh(this);
+    managerImpl->refreshItem(this);
 }
