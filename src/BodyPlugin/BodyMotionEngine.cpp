@@ -34,7 +34,6 @@ public:
     BodyPtr body;
     shared_ptr<MultiValueSeq> qSeq;
     shared_ptr<MultiSE3Seq> positions;
-    bool calcForwardKinematics;
     std::vector<TimeSyncItemEnginePtr> extraSeqEngines;
     ScopedConnectionSet connections;
         
@@ -91,7 +90,6 @@ BodyMotionEngine::Impl::Impl(BodyMotionEngine* self, BodyItem* bodyItem, BodyMot
     auto motion = motionItem->motion();
     qSeq = motion->jointPosSeq();
     positions = motion->linkPosSeq();
-    calcForwardKinematics = !(positions && positions->numParts() > 1);
     
     updateExtraSeqEngines();
     
@@ -155,7 +153,7 @@ bool BodyMotionEngine::onTimeChanged(double time)
 bool BodyMotionEngine::Impl::onTimeChanged(double time)
 {
     bool isActive = false;
-    bool fkDone = false;
+    bool needFk = false;
     
     if(qSeq){
         const int numAllJoints = std::min(body->numAllJoints(), qSeq->numParts());
@@ -177,6 +175,7 @@ bool BodyMotionEngine::Impl::onTimeChanged(double time)
                     body->joint(i)->dq() = (q[i] - q_prev[i]) / dt;
                 }
             }
+            needFk = true;
         }
     }
     
@@ -195,19 +194,22 @@ bool BodyMotionEngine::Impl::onTimeChanged(double time)
                 link->p() = position.translation();
                 link->R() = position.rotation().toRotationMatrix();
             }
+
+            if(numLinks >= 2){
+                needFk = false;
+            }
         }
-        
-        if(positions->numParts() == 1){
-            body->calcForwardKinematics(); // FK from the root
-            fkDone = true;
-        }
+    }
+
+    if(needFk){
+        body->calcForwardKinematics();
     }
     
     for(size_t i=0; i < extraSeqEngines.size(); ++i){
         isActive |= extraSeqEngines[i]->onTimeChanged(time);
     }
     
-    bodyItem->notifyKinematicStateChange(!fkDone && calcForwardKinematics);
+    bodyItem->notifyKinematicStateChange();
     
     return isActive;
 }
