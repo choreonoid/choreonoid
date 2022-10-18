@@ -98,6 +98,7 @@ public:
     void removeParent(SgObject* parent);
     int numParents() const { return static_cast<int>(parents.size()); }
     bool hasParents() const { return !parents.empty(); }
+    bool checkIfAncestorOf(SgObject* obj) const;
 
     const_parentIter parentBegin() const { return parents.begin(); }
     const_parentIter parentEnd() const { return parents.end(); }

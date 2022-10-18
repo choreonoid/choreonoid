@@ -136,6 +136,22 @@ void SgObject::removeParent(SgObject* parent)
 }
 
 
+bool SgObject::checkIfAncestorOf(SgObject* obj) const
+{
+    if(obj == this){
+        return true;
+    }
+    auto it = obj->parentBegin();
+    while(it != obj->parentEnd()){
+        if(checkIfAncestorOf(*it)){
+            return true;
+        }
+        ++it;
+    }
+    return false;
+}
+
+
 const std::string& SgObject::uri() const
 {
     if(!uriInfo){
