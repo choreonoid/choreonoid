@@ -5,6 +5,7 @@
 
 namespace cnoid {
 
+class SgNode;
 class SgGroup;
 class CloneMap;
 
@@ -21,6 +22,9 @@ public:
 
     //! \return Number of the simplified paths
     int simplifyTransformPathsWithTransformedMeshes(SgGroup* scene, CloneMap& cloneMap);
+    
+    //! \return Number of the removed element collections
+    int removeUnusedMeshElements(SgNode* scene);
 
 private:
     class Impl;

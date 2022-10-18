@@ -2,7 +2,7 @@
 #include "SceneGraph.h"
 #include "SceneDrawables.h"
 #include "CloneMap.h"
-#include <unordered_map>
+#include <map>
 #include <deque>
 
 using namespace std;
@@ -15,20 +15,40 @@ class SceneGraphOptimizer::Impl
 public:
     typedef deque<SgNode*> NodePath;
 
-    struct MeshInfo {
+    struct MeshPathInfo {
         vector<NodePath> paths;
         NodePath commonPath;
     };
     
-    unordered_map<SgMesh*, MeshInfo> meshInfoMap;
+    map<SgMeshPtr, MeshPathInfo> meshPathInfoMap;
 
     int optimizedPathCounter;
+
+    struct MeshElementInfo
+    {
+        //bool isVertexArrayUsed;
+        //bool isNormalArrayUsed;
+        //bool isColorArrayUsed;
+        bool isTexCoordArrayUsed;
+
+        MeshElementInfo()
+            : //isVertexArrayUsed(false),
+              //isNormalArrayUsed(false),
+              //isColorArrayUsed(false),
+              isTexCoordArrayUsed(false)
+        { }
+    };
+
+    map<SgMeshPtr, MeshElementInfo> meshElementInfoMap;
+    int numRemovedMeshElementCollections;
 
     int simplifyTransformPathsWithTransformedMeshes(SgGroup* scene, CloneMap& cloneMap);
     void extractMeshPaths(SgGroup* group, NodePath& path);
     void extractCommonPathsToMeshes();
     void transformMeshes();
     void simplifyMeshPaths(CloneMap& cloneMap);
+    int removeUnusedMeshElements(SgNode* scene);
+    void checkMeshElementUses(SgNode* node);
 };
 
 }
@@ -61,7 +81,7 @@ int SceneGraphOptimizer::Impl::simplifyTransformPathsWithTransformedMeshes(SgGro
     extractCommonPathsToMeshes();
     simplifyMeshPaths(cloneMap);
     
-    meshInfoMap.clear();
+    meshPathInfoMap.clear();
 
     return optimizedPathCounter;
 }
@@ -77,7 +97,7 @@ void SceneGraphOptimizer::Impl::extractMeshPaths(SgGroup* group, NodePath& path)
         } else if(auto shape = dynamic_cast<SgShape*>(node.get())){
             auto mesh = shape->mesh();
             if(mesh && mesh->hasVertices() && mesh->primitiveType() == SgMesh::MeshType){
-                auto& info = meshInfoMap[mesh];
+                auto& info = meshPathInfoMap[mesh];
                 info.paths.push_back(path);
                 info.paths.back().push_back(shape);
                 int i=0;
@@ -91,9 +111,9 @@ void SceneGraphOptimizer::Impl::extractMeshPaths(SgGroup* group, NodePath& path)
 
 void SceneGraphOptimizer::Impl::extractCommonPathsToMeshes()
 {
-    auto iter = meshInfoMap.begin();
+    auto iter = meshPathInfoMap.begin();
     
-    while(iter != meshInfoMap.end()){
+    while(iter != meshPathInfoMap.end()){
 
         auto& info = iter->second;
         auto& paths = info.paths;
@@ -147,7 +167,7 @@ void SceneGraphOptimizer::Impl::extractCommonPathsToMeshes()
             }
         }
         if(commonPath.empty()){
-            iter = meshInfoMap.erase(iter);
+            iter = meshPathInfoMap.erase(iter);
         } else {
             ++iter;
         }
@@ -157,7 +177,7 @@ void SceneGraphOptimizer::Impl::extractCommonPathsToMeshes()
 
 void SceneGraphOptimizer::Impl::simplifyMeshPaths(CloneMap& cloneMap)
 {
-    for(auto& kv : meshInfoMap){
+    for(auto& kv : meshPathInfoMap){
         SgMeshPtr mesh = kv.first;
         Affine3 T = Affine3::Identity();
         auto& info = kv.second;
@@ -205,3 +225,58 @@ void SceneGraphOptimizer::Impl::simplifyMeshPaths(CloneMap& cloneMap)
         }
     }
 }
+
+
+int SceneGraphOptimizer::removeUnusedMeshElements(SgNode* scene)
+{
+    return impl->removeUnusedMeshElements(scene);
+}
+
+
+int SceneGraphOptimizer::Impl::removeUnusedMeshElements(SgNode* scene)
+{
+    meshElementInfoMap.clear();
+    numRemovedMeshElementCollections = 0;
+
+    checkMeshElementUses(scene);
+
+    for(auto& kv : meshElementInfoMap){
+        auto& mesh = kv.first;
+        auto& info = kv.second;
+        if(!info.isTexCoordArrayUsed){
+            if(mesh->hasTexCoords()){
+                mesh->setTexCoords(nullptr);
+                ++numRemovedMeshElementCollections;
+            }
+            if(mesh->hasTexCoordIndices()){
+                mesh->texCoordIndices().clear();
+                ++numRemovedMeshElementCollections;
+            }
+        }
+    }
+
+    return numRemovedMeshElementCollections;
+}
+
+
+void SceneGraphOptimizer::Impl::checkMeshElementUses(SgNode* node)
+{
+    if(auto shape = dynamic_cast<SgShape*>(node)){
+        if(auto mesh = shape->mesh()){
+            auto& info = meshElementInfoMap[mesh];
+            if(shape->texture()){
+                info.isTexCoordArrayUsed = true;
+            }
+        }
+    } else if(auto group = node->toGroupNode()){
+        for(auto& node : *group){
+            checkMeshElementUses(node);
+        }
+    }
+}
+
+    
+                    
+            
+            
+           
