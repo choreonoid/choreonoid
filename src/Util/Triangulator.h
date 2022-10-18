@@ -13,6 +13,7 @@ namespace cnoid {
 template<class TVector3Array> class Triangulator
 {
     typedef typename TVector3Array::value_type TVector3;
+    typedef typename TVector3::Scalar Scalar;
         
     enum Convexity { FLAT, CONVEX, CONCAVE };
         
@@ -43,11 +44,13 @@ template<class TVector3Array> class Triangulator
         TVector3 ccs = a.cross(b);
         
         Convexity convexity;
-        
-        if((ccs.norm() / (a.norm() + b.norm())) < 1.0e-4f){
-            convexity = FLAT;
+        double c = this->ccs.dot(ccs);
+        if(c > static_cast<Scalar>(0.0)){
+            convexity = CONVEX;
+        } else if(c < static_cast<Scalar>(0.0)){
+            convexity = CONCAVE;
         } else {
-            convexity = (this->ccs.dot(ccs) > 0.0f) ? CONVEX : CONCAVE;
+            convexity = FLAT;
         }
         
         return convexity;
@@ -71,13 +74,13 @@ template<class TVector3Array> class Triangulator
             for(size_t i=0; i < workPolygon.size(); ++i){
                 if(!earMask[i]){
                     const TVector3& p = workVertex(i);
-                    if(((a - p).cross(b - p)).dot(ccs) <= 0.0f){
+                    if(((a - p).cross(b - p)).dot(ccs) <= static_cast<Scalar>(0.0)){
                         continue;
                     }
-                    if(((b - p).cross(c - p)).dot(ccs) <= 0.0f){
+                    if(((b - p).cross(c - p)).dot(ccs) <= static_cast<Scalar>(0.0)){
                         continue;
                     }
-                    if(((c - p).cross(a - p)).dot(ccs) <= 0.0f){
+                    if(((c - p).cross(a - p)).dot(ccs) <= static_cast<Scalar>(0.0)){
                         continue;
                     }
                     contains = true;
