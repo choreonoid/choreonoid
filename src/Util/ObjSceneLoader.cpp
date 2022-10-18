@@ -39,6 +39,27 @@ void readVector3Ex(SimpleScanner& scanner, Vector3f& v)
     v.z() = scanner.readFloatEx();
 }
 
+void readVector3Ex(SimpleScanner& scanner, float scale, Vector3f& v)
+{
+    v.x() = scanner.readFloatEx() * scale;
+    v.y() = scanner.readFloatEx() * scale;
+    v.z() = scanner.readFloatEx() * scale;
+}
+
+void readYUpVector3Ex(SimpleScanner& scanner, Vector3f& v)
+{
+    v.y() = scanner.readFloatEx();
+    v.z() = scanner.readFloatEx();
+    v.x() = scanner.readFloatEx();
+}
+
+void readYUpVector3Ex(SimpleScanner& scanner, float scale, Vector3f& v)
+{
+    v.y() = scanner.readFloatEx() * scale;
+    v.z() = scanner.readFloatEx() * scale;
+    v.x() = scanner.readFloatEx() * scale;
+}
+
 };
 
 namespace cnoid {
@@ -46,12 +67,17 @@ namespace cnoid {
 class ObjSceneLoader::Impl
 {
 public:
+    ObjSceneLoader* self;
     SimpleScanner scanner;
     SimpleScanner subScanner;
     string token;
     SgGroupPtr group;
     SgVertexArrayPtr vertices;
     SgNormalArrayPtr normals;
+    float scale;
+    bool doCoordinateConversion;
+    AbstractSceneLoader::UpperAxisType upperAxis;
+    bool doLengthUnitConversion;
     SgTexCoordArrayPtr texCoords;
     SgShapePtr currentShape;
     SgMeshPtr currentMesh;
@@ -86,7 +112,7 @@ public:
     string fileBaseName;
     filesystem::path directoryPath;
 
-    Impl();
+    Impl(ObjSceneLoader* self);
     void clearBufObjects();
     SgNode* load(const string& filename);
     SgNodePtr loadScene();
@@ -119,11 +145,12 @@ public:
 
 ObjSceneLoader::ObjSceneLoader()
 {
-    impl = new Impl;
+    impl = new Impl(this);
 }
 
 
-ObjSceneLoader::Impl::Impl()
+ObjSceneLoader::Impl::Impl(ObjSceneLoader* self)
+    : self(self)
 {
     imageIO.setUpsideDown(true);
     os_ = &nullout();
@@ -162,7 +189,7 @@ void ObjSceneLoader::Impl::clearBufObjects()
 
 SgNode* ObjSceneLoader::load(const std::string& filename)
 {
-    return insertTransformNodesToAdjustLengthUnitAndUpperAxis(impl->load(filename));
+    return impl->load(filename);
 }
 
 
@@ -185,6 +212,21 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
     currentMaterialInfo = nullptr;
     currentMaterialDefInfo = &dummyMaterialInfo;
     currentMaterialDef = dummyMaterialInfo.material;
+
+    doCoordinateConversion = false;
+    scale = 1.0f;
+    auto lengthUnit = self->lengthUnitHint();
+    if(lengthUnit == AbstractSceneLoader::Millimeter){
+        scale = 1.0e-3f;
+        doCoordinateConversion = true;
+    } else if(lengthUnit == AbstractSceneLoader::Inch){
+        scale = 0.0254f;
+        doCoordinateConversion = true;
+    }
+    upperAxis = self->upperAxisHint();
+    if(upperAxis != Z_Upper){
+        doCoordinateConversion = true;
+    }
     
     try {
         scene = loadScene();
@@ -384,14 +426,28 @@ bool ObjSceneLoader::Impl::checkAndAddCurrentNode()
 void ObjSceneLoader::Impl::readVertex()
 {
     vertices->emplace_back();
-    readVector3Ex(scanner, vertices->back());
+
+    if(!doCoordinateConversion){
+        readVector3Ex(scanner, vertices->back());
+    } else {
+        if(upperAxis == Y_Upper){
+            readYUpVector3Ex(scanner, scale, vertices->back());
+        } else {
+            readVector3Ex(scanner, scale, vertices->back());
+        }
+    }
 }
 
 
 void ObjSceneLoader::Impl::readNormal()
 {
     normals->emplace_back();
-    readVector3Ex(scanner, normals->back());
+
+    if(upperAxis == Z_Upper){        
+        readVector3Ex(scanner, normals->back());
+    } else {
+        readYUpVector3Ex(scanner, normals->back());
+    }
 }
 
 
