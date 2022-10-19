@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_SCENE_BODY_H
 #define CNOID_BODY_SCENE_BODY_H
 
@@ -37,7 +33,8 @@ public:
     void insertEffectGroup(SgGroup* effect, SgUpdateRef update = SgUpdateRef());
     void removeEffectGroup(SgGroup* effect, SgUpdateRef update = SgUpdateRef());
     
-    void setVisible(bool on);
+    virtual void setVisible(bool on);
+    bool isVisible() const;
 
     void addSceneDevice(SceneDevice* sdev);
     SceneDevice* getSceneDevice(Device* device);
@@ -47,11 +44,11 @@ public:
     //! \deprecated. Use setTransparency.
     void makeTransparent(float transparency);
     
+    class Impl;
+
 private:
     Link* link_;
     SceneBody* sceneBody_;
-
-    class Impl;
     Impl* impl;
     
     friend class SceneBody;

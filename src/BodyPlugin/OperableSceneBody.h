@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_PLUGIN_OPERABLE_SCENE_BODY_H
 #define CNOID_BODY_PLUGIN_OPERABLE_SCENE_BODY_H
 
@@ -27,8 +23,12 @@ public:
     OperableSceneBody* operableSceneBody();
     const OperableSceneBody* operableSceneBody() const;
 
+    virtual void setVisible(bool on) override;
+
     void showOrigin(bool on);
     bool isOriginShown() const;
+    void showCenterOfMass(bool on);
+    bool isCenterOfMassShown() const;
     void enableHighlight(bool on);
     void showMarker(const Vector3f& color, float transparency);
     void hideMarker();

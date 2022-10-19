@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "SceneBody.h"
 #include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/SceneDrawables>
@@ -19,93 +15,17 @@ namespace {
 class LinkShapeGroup : public SgGroup
 {
 public:
+    SceneLink::Impl* sceneLinkImpl;
     SgNodePtr visualShape;
     SgNodePtr collisionShape;
     ScopedConnection collisionShapeUpdateConnection;
-    bool isVisible;
     bool hasClone;
     
-    LinkShapeGroup(Link* link)
-        : SgGroup(findClassId<LinkShapeGroup>())
-    {
-        visualShape = link->visualShape();
-        if(visualShape){
-            addChild(visualShape);
-        }
-        collisionShape = link->collisionShape();
-        resetCollisionShapeUpdateConnection();
-
-        isVisible = true;
-        hasClone = false;
-    }
-
-    void setVisible(bool on)
-    {
-        isVisible = on;
-    }
-
-    void cloneShapes(CloneMap& cloneMap)
-    {
-        if(!hasClone){
-            bool sameness = (visualShape == collisionShape);
-            if(visualShape){
-                removeChild(visualShape);
-                visualShape = visualShape->cloneNode(cloneMap);
-                addChild(visualShape);
-            }
-            if(collisionShape){
-                if(sameness){
-                    collisionShape = visualShape;
-                } else {
-                    collisionShape = collisionShape->cloneNode(cloneMap);
-                }
-            }
-            resetCollisionShapeUpdateConnection();
-            hasClone = true;
-            notifyUpdate(SgUpdate::REMOVED | SgUpdate::ADDED);
-        }
-    }
-
-    void resetCollisionShapeUpdateConnection()
-    {
-        if(collisionShape && collisionShape != visualShape){
-            collisionShapeUpdateConnection.reset(
-                collisionShape->sigUpdated().connect(
-                    [this](const SgUpdate& u){
-                        SgUpdate update(u);
-                        notifyUpdate(update);
-                    }));
-        } else {
-            collisionShapeUpdateConnection.disconnect();
-        }
-    }
-
-    void render(SceneRenderer* renderer)
-    {
-        renderer->renderCustomGroup(
-            this, [=](){ traverse(renderer, renderer->renderingFunctions()); });
-    }
-
-    void traverse(SceneRenderer* renderer, SceneRenderer::NodeFunctionSet* functions)
-    {
-        int visibility = 0;
-        if(isVisible){
-            static const SceneRenderer::PropertyKey key("collisionDetectionModelVisibility");
-            visibility = renderer->property(key, 1);
-        }
-        for(auto p = cbegin(); p != cend(); ++p){
-            SgNode* node = *p;
-            if(node == visualShape){
-                if(!(visibility & 1)){
-                    continue;
-                }
-            }
-            functions->dispatch(node);
-        }
-        if((visibility & 2) && (collisionShape != visualShape) && collisionShape){
-            functions->dispatch(collisionShape);
-        }
-    }
+    LinkShapeGroup(SceneLink::Impl* sceneLinkImpl, Link* link);
+    void cloneShapes(CloneMap& cloneMap);
+    void resetCollisionShapeUpdateConnection();
+    void render(SceneRenderer* renderer);
+    void traverse(SceneRenderer* renderer, SceneRenderer::NodeFunctionSet* functions);
 };
 
 typedef ref_ptr<LinkShapeGroup> LinkShapeGroupPtr;
@@ -175,8 +95,9 @@ SceneLink::SceneLink(SceneBody* sceneBody, Link* link)
 SceneLink::Impl::Impl(SceneLink* self, Link* link)
     : self(self)
 {
-    mainShapeGroup = new LinkShapeGroup(link);
+    mainShapeGroup = new LinkShapeGroup(this, link);
     topShapeGroup = mainShapeGroup;
+    isVisible = true;
     self->addChild(topShapeGroup);
 }
 
@@ -283,7 +204,13 @@ void SceneLink::Impl::cloneShape(CloneMap& cloneMap)
 
 void SceneLink::setVisible(bool on)
 {
-    impl->mainShapeGroup->setVisible(on);
+    impl->isVisible = on;
+}
+
+
+bool SceneLink::isVisible() const
+{
+    return impl->isVisible;
 }
 
 
@@ -363,6 +290,89 @@ void SceneLink::makeTransparent(float transparency)
 {
     SgUpdate update;
     setTransparency(transparency, update);
+}
+
+
+LinkShapeGroup::LinkShapeGroup(SceneLink::Impl* sceneLinkImpl, Link* link)
+    : SgGroup(findClassId<LinkShapeGroup>()),
+      sceneLinkImpl(sceneLinkImpl)
+{
+    visualShape = link->visualShape();
+    if(visualShape){
+        addChild(visualShape);
+    }
+    collisionShape = link->collisionShape();
+    resetCollisionShapeUpdateConnection();
+
+    hasClone = false;
+}
+
+
+void LinkShapeGroup::cloneShapes(CloneMap& cloneMap)
+{
+    if(!hasClone){
+        bool sameness = (visualShape == collisionShape);
+        if(visualShape){
+            removeChild(visualShape);
+            visualShape = visualShape->cloneNode(cloneMap);
+            addChild(visualShape);
+        }
+        if(collisionShape){
+            if(sameness){
+                collisionShape = visualShape;
+            } else {
+                collisionShape = collisionShape->cloneNode(cloneMap);
+            }
+        }
+        resetCollisionShapeUpdateConnection();
+        hasClone = true;
+        notifyUpdate(SgUpdate::REMOVED | SgUpdate::ADDED);
+    }
+}
+
+
+void LinkShapeGroup::resetCollisionShapeUpdateConnection()
+{
+    if(collisionShape && collisionShape != visualShape){
+        collisionShapeUpdateConnection.reset(
+            collisionShape->sigUpdated().connect(
+                [this](const SgUpdate& u){
+                    SgUpdate update(u);
+                    notifyUpdate(update);
+                }));
+    } else {
+        collisionShapeUpdateConnection.disconnect();
+    }
+}
+
+
+void LinkShapeGroup::render(SceneRenderer* renderer)
+{
+    renderer->renderCustomGroup(
+        this, [=](){ traverse(renderer, renderer->renderingFunctions()); });
+}
+
+
+void LinkShapeGroup::traverse(SceneRenderer* renderer, SceneRenderer::NodeFunctionSet* functions)
+{
+    if(sceneLinkImpl->isVisible){
+        static const SceneRenderer::PropertyKey key("collisionDetectionModelVisibility");
+        int visibility = renderer->property(key, 1);
+
+        for(auto p = cbegin(); p != cend(); ++p){
+            SgNode* node = *p;
+            if(node == visualShape){
+                if(!(visibility & 1)){
+                    continue;
+                }
+            }
+            functions->dispatch(node);
+        }
+
+        if((visibility & 2) && (collisionShape != visualShape) && collisionShape){
+            functions->dispatch(collisionShape);
+        }
+    }
 }
 
 

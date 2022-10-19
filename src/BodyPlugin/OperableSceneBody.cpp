@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "OperableSceneBody.h"
 #include "BodyItem.h"
 #include "BodyItemKinematicsKit.h"
@@ -49,12 +45,17 @@ public:
     SgUpdate& update;
     SgPolygonDrawStylePtr highlightStyle;
     BoundingBoxMarkerPtr bbMarker;
+    CrossMarkerPtr cmMarker;
     bool isOriginShown;
+    bool isCenterOfMassShown;
     bool isPointed;
     bool isColliding;
 
     Impl(OperableSceneBody* sceneBody, OperableSceneLink* self);
+    OperableSceneBody* operableSceneBody();
+    double calcMarkerRadius() const;
     void showOrigin(bool on);
+    void showCenterOfMass(bool on);
 };
 
 class OperableSceneBody::Impl
@@ -141,7 +142,8 @@ public:
     void onCollisionLinkHighlightModeChanged();
     void changeCollisionLinkHighlightMode(bool on);
     void updateVisibleLinkSelectionMode();
-    void onLinkOriginsCheckChanged(bool on);
+    void onLinkOriginsCheckToggled(bool on);
+    void onLinkCmsCheckToggled(bool on);
     void enableHighlight(bool on);
     void calcBodyMarkerRadius();
     double calcLinkMarkerRadius(SceneLink* sceneLink) const;
@@ -219,6 +221,7 @@ OperableSceneLink::Impl::Impl(OperableSceneBody* sceneBody, OperableSceneLink* s
       update(sceneBody->impl->update)
 {
     isOriginShown = false;
+    isCenterOfMassShown = false;
     isPointed = false;
     isColliding = false;
 }
@@ -236,9 +239,58 @@ OperableSceneBody* OperableSceneLink::operableSceneBody()
 }
 
 
+OperableSceneBody* OperableSceneLink::Impl::operableSceneBody()
+{
+    return static_cast<OperableSceneBody*>(self->sceneBody());
+}
+
+
 const OperableSceneBody* OperableSceneLink::operableSceneBody() const
 {
     return static_cast<const OperableSceneBody*>(sceneBody());
+}
+
+
+void OperableSceneLink::setVisible(bool on)
+{
+    SceneLink::setVisible(on);
+
+    bool updated = false;
+
+    if(impl->isOriginShown){
+        auto sceneBodyImpl = operableSceneBody()->impl;
+        if(on){
+            addChildOnce(sceneBodyImpl->linkOriginMarker);
+        } else {
+            removeChild(sceneBodyImpl->linkOriginMarker);
+        }
+        updated = true;
+    }
+    if(impl->isCenterOfMassShown){
+        if(on){
+            addChildOnce(impl->cmMarker);
+        } else {
+            removeChild(impl->cmMarker);
+        }
+        updated = true;
+    }
+    if(updated){
+        notifyUpdate(impl->update.withAction(on ? SgUpdate::Added : SgUpdate::Removed));
+    }
+}
+
+
+double OperableSceneLink::Impl::calcMarkerRadius() const
+{
+    if(auto shape = self->visualShape()){
+        const BoundingBox& bb = shape->boundingBox();
+        if(bb.empty()){
+            return 1.0; // Is this OK?
+        }
+        double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
+        return pow(V, 1.0 / 3.0) * 0.6;
+    }
+    return 1.0;
 }
 
 
@@ -252,7 +304,7 @@ void OperableSceneLink::Impl::showOrigin(bool on)
 {
     if(on != isOriginShown){
 
-        auto& originMarker = static_cast<OperableSceneBody*>(self->sceneBody())->impl->linkOriginMarker;
+        auto& originMarker = operableSceneBody()->impl->linkOriginMarker;
 
         if(on){
             if(!originMarker){
@@ -264,11 +316,15 @@ void OperableSceneLink::Impl::showOrigin(bool on)
                 originMarker->setTransparency(0.0f);
                 originMarker->setDragEnabled(false);
             }
-            self->addChildOnce(originMarker, update);
+            if(self->isVisible()){
+                self->addChildOnce(originMarker, update);
+            }
             
         } else {
-            if(originMarker && originMarker->hasParents()){
-                self->removeChild(originMarker, update);
+            if(self->isVisible()){
+                if(originMarker && originMarker->hasParents()){
+                    self->removeChild(originMarker, update);
+                }
             }
         }
         isOriginShown = on;
@@ -279,6 +335,44 @@ void OperableSceneLink::Impl::showOrigin(bool on)
 bool OperableSceneLink::isOriginShown() const
 {
     return impl->isOriginShown;
+}
+
+
+void OperableSceneLink::showCenterOfMass(bool on)
+{
+    impl->showCenterOfMass(on);
+}
+
+
+void OperableSceneLink::Impl::showCenterOfMass(bool on)
+{
+    if(on != isCenterOfMassShown){
+        if(on){
+            if(!cmMarker){
+                auto radius = calcMarkerRadius();
+                cmMarker = new CrossMarker(radius, Vector3f(0.0f, 1.0f, 0.0f), 2.0);
+                cmMarker->setName("CenterOfMass");
+            }
+            cmMarker->setTranslation(self->link()->centerOfMass());
+            if(self->isVisible()){
+                self->addChildOnce(cmMarker, update);
+            }
+            
+        } else {
+            if(self->isVisible()){
+                if(cmMarker && cmMarker->hasParents()){
+                    self->removeChild(cmMarker, update);
+                }
+            }
+        }
+        isCenterOfMassShown = on;
+    }
+}
+
+
+bool OperableSceneLink::isCenterOfMassShown() const
+{
+    return impl->isCenterOfMassShown;
 }
 
 
@@ -601,10 +695,18 @@ void OperableSceneBody::Impl::updateVisibleLinkSelectionMode()
 }
 
 
-void OperableSceneBody::Impl::onLinkOriginsCheckChanged(bool on)
+void OperableSceneBody::Impl::onLinkOriginsCheckToggled(bool on)
 {
     for(int i=0; i < self->numSceneLinks(); ++i){
         self->operableSceneLink(i)->showOrigin(on);
+    }
+}
+
+
+void OperableSceneBody::Impl::onLinkCmsCheckToggled(bool on)
+{
+    for(int i=0; i < self->numSceneLinks(); ++i){
+        self->operableSceneLink(i)->showCenterOfMass(on);
     }
 }
 
@@ -667,19 +769,6 @@ void OperableSceneBody::Impl::calcBodyMarkerRadius()
 }
 
 
-double OperableSceneBody::Impl::calcLinkMarkerRadius(SceneLink* sceneLink) const
-{
-    SgNode* shape = sceneLink->visualShape();
-    if(shape){
-        const BoundingBox& bb = shape->boundingBox();
-        if (bb.empty()) return 1.0; // Is this OK?
-        double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
-        return pow(V, 1.0 / 3.0) * 0.6;
-    }
-    return 1.0;
-}
-
-
 void OperableSceneBody::Impl::ensureCmMarker()
 {
     if(!cmMarker){
@@ -687,7 +776,7 @@ void OperableSceneBody::Impl::ensureCmMarker()
             calcBodyMarkerRadius();
         }
         cmMarker = new CrossMarker(bodyMarkerRadius, Vector3f(0.0f, 1.0f, 0.0f), 2.0);
-        cmMarker->setName("centerOfMass");
+        cmMarker->setName("CenterOfMass");
     }
 }
 
@@ -719,7 +808,8 @@ bool OperableSceneBody::Impl::ensureZmpMarker()
     if(!zmpMarker){
         if(auto legged = checkLeggedBody()){
             Link* footLink = legged->footLink(0);
-            double radius = calcLinkMarkerRadius(self->sceneLink(footLink->index()));
+            auto sceneLink = self->operableSceneLink(footLink->index());
+            double radius = sceneLink->impl->calcMarkerRadius();
             zmpMarker = new SphereMarker(radius, Vector3f(0.0f, 1.0f, 0.0f), 0.3);
             zmpMarker->addChild(new CrossMarker(radius * 2.5, Vector3f(0.0f, 1.0f, 0.0f), 2.0f));
             zmpMarker->setName("ZMP");
@@ -1507,27 +1597,46 @@ bool OperableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event)
 
     menu->setPath(_("Markers"));
 
-    auto linkOriginAction = new CheckBoxAction(_("Link Origins"));
-    int checkState = Qt::Unchecked;
     int numLinks = self->numSceneLinks();
-    int numOriginShowns = 0;
+    
+    auto linkOriginAction = new CheckBoxAction(_("Link Origins"));
+    int numOriginsShown = 0;
     for(int i=0; i < numLinks; ++i){
         if(self->operableSceneLink(i)->isOriginShown()){
-            ++numOriginShowns;
+            ++numOriginsShown;
         }
     }
-    auto check = linkOriginAction->checkBox();
-    check->setTristate();
-    if(numOriginShowns == 0){
-        check->setCheckState(Qt::Unchecked);
-    } else if(numOriginShowns == numLinks){
-        check->setCheckState(Qt::Checked);
+    auto originsCheck = linkOriginAction->checkBox();
+    originsCheck->setTristate();
+    if(numOriginsShown == 0){
+        originsCheck->setCheckState(Qt::Unchecked);
+    } else if(numOriginsShown == numLinks){
+        originsCheck->setCheckState(Qt::Checked);
     } else {
-        check->setCheckState(Qt::PartiallyChecked);
+        originsCheck->setCheckState(Qt::PartiallyChecked);
     }
     menu->addAction(linkOriginAction);
-    check->sigToggled().connect([&](bool on){ onLinkOriginsCheckChanged(on); });
-        
+    originsCheck->sigToggled().connect([&](bool on){ onLinkOriginsCheckToggled(on); });
+
+    auto linkCmAction = new CheckBoxAction(_("Link Center of Masses"));
+    int numCmsShown = 0;
+    for(int i=0; i < numLinks; ++i){
+        if(self->operableSceneLink(i)->isCenterOfMassShown()){
+            ++numCmsShown;
+        }
+    }
+    auto cmsCheck = linkCmAction->checkBox();
+    cmsCheck->setTristate();
+    if(numCmsShown == 0){
+        cmsCheck->setCheckState(Qt::Unchecked);
+    } else if(numCmsShown == numLinks){
+        cmsCheck->setCheckState(Qt::Checked);
+    } else {
+        cmsCheck->setCheckState(Qt::PartiallyChecked);
+    }
+    menu->addAction(linkCmAction);
+    cmsCheck->sigToggled().connect([&](bool on){ onLinkCmsCheckToggled(on); });
+    
     auto item = menu->addCheckItem(_("Center of Mass"));
     item->setChecked(isCmVisible);
     item->sigToggled().connect([&](bool on){ showCenterOfMass(on); });
