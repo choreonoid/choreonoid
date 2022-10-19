@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ProjectManager.h"
 #include "RootItem.h"
 #include "ItemManager.h"
@@ -179,9 +175,9 @@ ProjectManager::Impl::Impl(ProjectManager* self, ExtensionManager* ext)
     OptionManager& om = ext->optionManager();
     om.addOption("project", boost::program_options::value<vector<string>>(), "load a project file");
     om.sigInputFileOptionsParsed().connect(
-        [&](std::vector<std::string>& inputFiles){ onInputFileOptionsParsed(inputFiles); });
+        [this](std::vector<std::string>& inputFiles){ onInputFileOptionsParsed(inputFiles); });
     om.sigOptionsParsed().connect(
-        [&](boost::program_options::variables_map& v){ onProjectOptionsParsed(v); });
+        [this](boost::program_options::variables_map& v){ onProjectOptionsParsed(v); });
 }
 
 
@@ -454,25 +450,26 @@ ItemList<> ProjectManager::Impl::loadProject
                 }
             }
 
-            ArchiverMapMap::iterator p;
-            for(p = archivers.begin(); p != archivers.end(); ++p){
-                const string& moduleName = p->first;
+            for(auto& kv1 : archivers){
+                const string& moduleName = kv1.first;
+                const ArchiverMap& archiveMap = kv1.second;
                 Archive* moduleArchive = archive->findSubArchive(moduleName);
                 if(moduleArchive->isValid()){
-                    ArchiverMap::iterator q;
-                    for(q = p->second.begin(); q != p->second.end(); ++q){
-                        const string& objectName = q->first;
-                        Archive* objArchive;
-                        if(objectName.empty()){
-                            objArchive = moduleArchive;
-                        } else {
-                            objArchive = moduleArchive->findSubArchive(objectName);
-                        }
-                        if(objArchive->isValid()){
-                            ArchiverInfo& info = q->second;
-                            objArchive->inheritSharedInfoFrom(*archive);
-                            info.restoreFunction(*objArchive);
-                            loaded = true;
+                    for(auto& kv2 : archiveMap){
+                        const ArchiverInfo& info = kv2.second;
+                        if(info.restoreFunction){
+                            const string& objectName = kv2.first;
+                            Archive* objArchive;
+                            if(objectName.empty()){
+                                objArchive = moduleArchive;
+                            } else {
+                                objArchive = moduleArchive->findSubArchive(objectName);
+                            }
+                            if(objArchive->isValid()){
+                                objArchive->inheritSharedInfoFrom(*archive);
+                                info.restoreFunction(*objArchive);
+                                loaded = true;
+                            }
                         }
                     }
                 }
@@ -691,29 +688,30 @@ bool ProjectManager::Impl::saveProject(const string& filename, Item* item, bool 
         saved = true;
     }
 
-    ArchiverMapMap::iterator p;
-    for(p = archivers.begin(); p != archivers.end(); ++p){
+    for(auto& kv1 : archivers){
         ArchivePtr moduleArchive = new Archive;
         moduleArchive->setKeyQuoteStyle(DOUBLE_QUOTED);
-        ArchiverMap::iterator q;
-        for(q = p->second.begin(); q != p->second.end(); ++q){
-            const string& objectName = q->first;
-            ArchivePtr objArchive;
-            if(objectName.empty()){
-                objArchive = moduleArchive;
-            } else {
-                objArchive = new Archive;
-            }
-            objArchive->inheritSharedInfoFrom(*archive);
-            ArchiverInfo& info = q->second;
-            if(info.storeFunction(*objArchive)){
-                if(!objectName.empty()){
-                    moduleArchive->insert(objectName, objArchive);
+        ArchiverMap& archiveMap = kv1.second;
+        for(auto& kv2 : archiveMap){
+            ArchiverInfo& info = kv2.second;
+            if(info.storeFunction){
+                const string& objectName = kv2.first;
+                ArchivePtr objArchive;
+                if(objectName.empty()){
+                    objArchive = moduleArchive;
+                } else {
+                    objArchive = new Archive;
+                }
+                objArchive->inheritSharedInfoFrom(*archive);
+                if(info.storeFunction(*objArchive)){
+                    if(!objectName.empty()){
+                        moduleArchive->insert(objectName, objArchive);
+                    }
                 }
             }
         }
         if(!moduleArchive->empty()){
-            const string& moduleName = p->first;
+            const string& moduleName = kv1.first;
             archive->insert(moduleName, moduleArchive);
             saved = true;
         }
@@ -775,13 +773,13 @@ void ProjectManager::Impl::onProjectOptionsParsed(boost::program_options::variab
 
 void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& inputFiles)
 {
-    auto iter = inputFiles.begin();
-    while(iter != inputFiles.end()){
-        if(filesystem::path(*iter).extension().string() == ".cnoid"){
-            loadProject(*iter, nullptr, true, false, false);
-            iter = inputFiles.erase(iter);
+    auto it = inputFiles.begin();
+    while(it != inputFiles.end()){
+        if(filesystem::path(*it).extension().string() == ".cnoid"){
+            loadProject(*it, nullptr, true, false, false);
+            it = inputFiles.erase(it);
         } else {
-            ++iter;
+            ++it;
         }
     }
 }
