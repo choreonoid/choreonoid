@@ -22,7 +22,7 @@ class BodyItemKinematicsKit;
 class InverseKinematics;
 class PinDragIK;
 class PenetrationBlocker;
-class EditableSceneBody;
+class OperableSceneBody;
 class ItemFileIO;
 
 class CNOID_EXPORT BodyItem : public Item, public LocatableItem, public RenderableItem
@@ -188,8 +188,8 @@ public:
     // RenderableItem function
     virtual SgNode* getScene() override;
 
-    EditableSceneBody* sceneBody();
-    EditableSceneBody* existingSceneBody();
+    OperableSceneBody* sceneBody();
+    OperableSceneBody* existingSceneBody();
     float transparency() const;
     void setTransparency(float t);
 

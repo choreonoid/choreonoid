@@ -1,8 +1,9 @@
 #include "BodySuperimposerAddon.h"
 #include "BodyItem.h"
-#include "EditableSceneBody.h"
+#include "OperableSceneBody.h"
 #include <cnoid/ItemManager>
 #include <cnoid/SceneBody>
+#include <cnoid/Referenced>
 #include <cnoid/CloneMap>
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>

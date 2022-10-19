@@ -5,7 +5,7 @@
 
 #include "BodyItem.h"
 #include "WorldItem.h"
-#include "EditableSceneBody.h"
+#include "OperableSceneBody.h"
 #include "BodyItemKinematicsKitManager.h"
 #include "BodyItemKinematicsKit.h"
 #include "KinematicsBar.h"
@@ -157,7 +157,7 @@ public:
     BodyState initialState;
     BodyState lastEditState;
             
-    EditableSceneBodyPtr sceneBody;
+    OperableSceneBodyPtr sceneBody;
     float transparency;
     Signal<void(int flags)> sigModelUpdated;
 
@@ -1319,7 +1319,7 @@ SignalProxy<void()> LinkLocation::sigLocationChanged()
 }
 
 
-EditableSceneBody* BodyItem::sceneBody()
+OperableSceneBody* BodyItem::sceneBody()
 {
     if(!impl->sceneBody){
         impl->createSceneBody();
@@ -1330,7 +1330,7 @@ EditableSceneBody* BodyItem::sceneBody()
 
 void BodyItem::Impl::createSceneBody()
 {
-    sceneBody = new EditableSceneBody(self);
+    sceneBody = new OperableSceneBody(self);
     sceneBody->setSceneDeviceUpdateConnection(true);
     if(transparency > 0.0f){
         sceneBody->setTransparency(transparency);
@@ -1344,7 +1344,7 @@ SgNode* BodyItem::getScene()
 }
 
 
-EditableSceneBody* BodyItem::existingSceneBody()
+OperableSceneBody* BodyItem::existingSceneBody()
 {
     return impl->sceneBody;
 }

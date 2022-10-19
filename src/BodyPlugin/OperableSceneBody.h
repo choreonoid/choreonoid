@@ -2,8 +2,8 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BODY_PLUGIN_EDITABLE_SCENE_BODY_H
-#define CNOID_BODY_PLUGIN_EDITABLE_SCENE_BODY_H
+#ifndef CNOID_BODY_PLUGIN_OPERABLE_SCENE_BODY_H
+#define CNOID_BODY_PLUGIN_OPERABLE_SCENE_BODY_H
 
 #include <cnoid/SceneWidgetEventHandler>
 #include <cnoid/SceneBody>
@@ -14,15 +14,18 @@ namespace cnoid {
 
 class ExtensionManager;
 class BodyItem;
-class EditableSceneBody;
+class OperableSceneBody;
 
-class CNOID_EXPORT EditableSceneLink : public SceneLink
+class CNOID_EXPORT OperableSceneLink : public SceneLink
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
-    EditableSceneLink(EditableSceneBody* sceneBody, Link* link);
-    ~EditableSceneLink();
+    OperableSceneLink(OperableSceneBody* sceneBody, Link* link);
+    ~OperableSceneLink();
+
+    OperableSceneBody* operableSceneBody();
+    const OperableSceneBody* operableSceneBody() const;
 
     void showOrigin(bool on);
     bool isOriginShown() const;
@@ -35,23 +38,23 @@ private:
     class Impl;
     Impl* impl;
 
-    friend class EditableSceneBody;
+    friend class OperableSceneBody;
 };
-typedef ref_ptr<EditableSceneLink> EditableSceneLinkPtr;
+typedef ref_ptr<OperableSceneLink> OperableSceneLinkPtr;
 
     
-class CNOID_EXPORT EditableSceneBody : public SceneBody, public SceneWidgetEventHandler
+class CNOID_EXPORT OperableSceneBody : public SceneBody, public SceneWidgetEventHandler
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
     static void initializeClass(ExtensionManager* ext);
 
-    EditableSceneBody(BodyItem* bodyItem);
+    OperableSceneBody(BodyItem* bodyItem);
 
     BodyItem* bodyItem();
 
-    EditableSceneLink* editableSceneLink(int index);
+    OperableSceneLink* operableSceneLink(int index);
     void setLinkVisibilities(const std::vector<bool>& visibilities);
 
     virtual void updateSceneModel() override;
@@ -68,20 +71,26 @@ public:
     virtual void onFocusChanged(SceneWidgetEvent* event, bool on) override;
     virtual bool onContextMenuRequest(SceneWidgetEvent* event) override;
 
+    [[deprecated("Use operableSceneLink")]]
+    OperableSceneLink* editableSceneLink(int index) { return operableSceneLink(index); };
+
 protected:
-    virtual ~EditableSceneBody();
+    virtual ~OperableSceneBody();
 
 private:
-    EditableSceneBody(const EditableSceneBody& org);
+    OperableSceneBody(const OperableSceneBody& org);
 
     class Impl;
     Impl* impl;
     
-    friend class EditableSceneLink;
+    friend class OperableSceneLink;
 };
-            
-typedef ref_ptr<EditableSceneBody> EditableSceneBodyPtr;
+
+typedef ref_ptr<OperableSceneBody> OperableSceneBodyPtr;
+
+[[deprecated("Use OperableSceneBody")]]
+typedef OperableSceneBody EditableSceneBody;
 
 }
-    
+
 #endif

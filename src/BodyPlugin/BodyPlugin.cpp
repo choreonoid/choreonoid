@@ -52,7 +52,7 @@
 #include "KinematicsBar.h"
 #include "SimulationBar.h"
 #include "BodyMotionEngine.h"
-#include "EditableSceneBody.h"
+#include "OperableSceneBody.h"
 #include "HrpsysFileIO.h"
 #include "CollisionSeqEngine.h"
 #include "CollisionSeqItem.h"
@@ -136,7 +136,7 @@ bool BodyPlugin::initialize()
     ZMPSeqItem::initializeClass(this); 
     MultiDeviceStateSeqItem::initializeClass(this);
     
-    EditableSceneBody::initializeClass(this);
+    OperableSceneBody::initializeClass(this);
     
     SimulationBar::initialize(this);
     addToolBar(BodyBar::instance());
