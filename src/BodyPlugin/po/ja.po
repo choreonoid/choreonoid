@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-09-08 15:35+0900\n"
+"POT-Creation-Date: 2022-10-19 18:50+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -552,48 +552,6 @@ msgstr "I/Oデバイス"
 msgid "{0} (No I/O)"
 msgstr "{0} (I/O無し)"
 
-msgid "Lock location"
-msgstr "配置ロック"
-
-msgid "Move Forcibly"
-msgstr "強制移動"
-
-msgid "Hold Forcibly"
-msgstr "強制保持"
-
-msgid "Set Free"
-msgstr "フリーに"
-
-msgid "Set Base"
-msgstr "ベースに"
-
-msgid "Set Translation Pin"
-msgstr "並進ピンをセット"
-
-msgid "Set Rotation Pin"
-msgstr "回転ピンをセット"
-
-msgid "Set Both Pins"
-msgstr "両方のピンをセット"
-
-msgid "Level Attitude"
-msgstr "水平姿勢に"
-
-msgid "Markers"
-msgstr "マーカー"
-
-msgid "Link Origins"
-msgstr "リンク原点"
-
-msgid "Center of Mass"
-msgstr "重心"
-
-msgid "Center of Mass Projection"
-msgstr "重心投影点"
-
-msgid "ZMP"
-msgstr "ZMP"
-
 msgid "GLVisionSimulatorItem"
 msgstr "GLビジョンシミュレータアイテム"
 
@@ -1139,6 +1097,51 @@ msgstr "接触マテリアルの数"
 
 msgid "MultiDeviceStateSeqItem"
 msgstr "複数デバイス状態時系列アイテム"
+
+msgid "Lock location"
+msgstr "配置ロック"
+
+msgid "Move Forcibly"
+msgstr "強制移動"
+
+msgid "Hold Forcibly"
+msgstr "強制保持"
+
+msgid "Set Free"
+msgstr "フリーに"
+
+msgid "Set Base"
+msgstr "ベースに"
+
+msgid "Set Translation Pin"
+msgstr "並進ピンをセット"
+
+msgid "Set Rotation Pin"
+msgstr "回転ピンをセット"
+
+msgid "Set Both Pins"
+msgstr "両方のピンをセット"
+
+msgid "Level Attitude"
+msgstr "水平姿勢に"
+
+msgid "Markers"
+msgstr "マーカー"
+
+msgid "Link Origins"
+msgstr "リンク原点"
+
+msgid "Link Center of Masses"
+msgstr "リンク重心"
+
+msgid "Center of Mass"
+msgstr "重心"
+
+msgid "Center of Mass Projection"
+msgstr "重心投影点"
+
+msgid "ZMP"
+msgstr "ZMP"
 
 msgid "RegionIntrusionDetector"
 msgstr "領域侵入検出器"
