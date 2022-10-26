@@ -179,7 +179,8 @@ Item::Item(const Item& org)
 
 
 Item::Impl::Impl(Item* self, const Impl& org)
-    : self(self)
+    : self(self),
+      displayNameModifier(org.displayNameModifier)
 {
     initialize();
     

@@ -160,8 +160,7 @@ void CoordinateFrameItem::onAddedToParent()
     impl->frameListItem = nullptr;
     impl->frameList = nullptr;
 
-    auto newListItem = dynamic_cast<CoordinateFrameListItem*>(parentItem());
-    if(newListItem){
+    if(auto newListItem = parentItem<CoordinateFrameListItem>()){
         if(newListItem->onFrameItemAdded(this)){
             impl->frameListItem = newListItem;
             impl->frameList = newListItem->frameList();

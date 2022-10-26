@@ -208,7 +208,7 @@ void BodyMotionGenerationBar::Impl::onGenerationButtonClicked()
         BodyMotionItem* motionItem = *it;
         if(auto bodyItem = motionItem->findOwnerItem<BodyItem>(true)){
             PoseProvider* provider = nullptr;
-            if(auto poseSeqItem = dynamic_cast<PoseSeqItem*>(motionItem->parentItem())){
+            if(auto poseSeqItem = motionItem->parentItem<PoseSeqItem>()){
                 provider = poseSeqItem->interpolator().get();
             } else {
                 bodyMotionPoseProvider->initialize(bodyItem->body(), motionItem->motion());

@@ -113,7 +113,7 @@ ZMPSeqItem::~ZMPSeqItem()
 
 bool ZMPSeqItem::makeRootRelative(bool on)
 {
-    BodyMotionItem* bodyMotionItem = dynamic_cast<BodyMotionItem*>(parentItem());
+    BodyMotionItem* bodyMotionItem = parentItem<BodyMotionItem>();
     auto& os = mvout(false);
     if(bodyMotionItem){
         if(cnoid::makeRootRelative(*zmpseq_, *bodyMotionItem->motion(), on)){

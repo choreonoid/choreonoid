@@ -201,6 +201,11 @@ public:
     Item* lastChildItem() const { return lastChild_; }
     Item* parentItem() const { return parent_; }
 
+    template<class ItemType>
+    ItemType* parentItem() const {
+        return dynamic_cast<ItemType*>(parent_);
+    }
+
     /**
        @return When the item is embeded one,
        this function returs the first parent item which is not an embeded one.

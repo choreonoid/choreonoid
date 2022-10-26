@@ -477,7 +477,7 @@ bool LinkOverwriteItem::Impl::addNewLink(Body* body)
         parentLink = body->link(additionalLinkParentName);
     }
     if(!parentLink){
-        if(auto parentLinkOverwriteItem = dynamic_cast<LinkOverwriteItem*>(self->parentItem())){
+        if(auto parentLinkOverwriteItem = self->parentItem<LinkOverwriteItem>()){
             if(parentLinkOverwriteItem->isOverwriting()){
                 parentLink = parentLinkOverwriteItem->impl->targetLink;
             }
