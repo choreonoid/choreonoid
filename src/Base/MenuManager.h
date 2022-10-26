@@ -38,9 +38,9 @@ public:
 
     int numItems() const;
 
-    QAction* findItem(const QString& path);
-    QAction* findItem(const std::string& path);
-    QAction* findItem(const char* path);
+    Action* findItem(const QString& path);
+    Action* findItem(const std::string& path);
+    Action* findItem(const char* path);
     MenuManager& setPath(const QString& path);
     MenuManager& setPath(const std::string& path);
     MenuManager& setPath(const char* path);

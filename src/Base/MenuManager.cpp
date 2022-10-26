@@ -101,23 +101,23 @@ int MenuManager::numItems() const
 }
 
 
-QAction* MenuManager::findItem(const QString& path)
+Action* MenuManager::findItem(const QString& path)
 {
     QAction* item;
     QWidget* menu;
     QWidget* upperMenu;
     findPath(path, false, item, menu, upperMenu);
-    return item;
+    return dynamic_cast<Action*>(item);
 }
 
 
-QAction* MenuManager::findItem(const std::string& path)
+Action* MenuManager::findItem(const std::string& path)
 {
     return findItem(QString(path.c_str()));
 }
 
 
-QAction* MenuManager::findItem(const char* path)
+Action* MenuManager::findItem(const char* path)
 {
     return findItem(QString(path));
 }
@@ -143,11 +143,16 @@ void MenuManager::findPath
 
         int next = path.indexOf(QChar('/'), pos);
         int length = (next >= 0) ? (next - pos) : next;
-        QString name = path.mid(pos, length);
-
+        QString targetName = path.mid(pos, length);
+        QString name;
         item = nullptr;
+        
         for(auto& action : menu->actions()){
-            if(action->objectName() == name){
+            name = action->objectName();
+            if(name.isEmpty()){
+                name = action->text();
+            }
+            if(name == targetName){
                 item = action;
                 break;
             }
@@ -157,11 +162,11 @@ void MenuManager::findPath
                 break;
             }
             if(textDomain.empty()){
-                item = new QAction(name, menu);
+                item = new Action(targetName, menu);
             } else {
-                item = new QAction(dgettext(textDomain.c_str(), name.toUtf8()), menu);
+                item = new Action(dgettext(textDomain.c_str(), targetName.toUtf8()), menu);
             }
-            item->setObjectName(name);
+            item->setObjectName(targetName);
             addItem(menu, item);
             item->setMenu(new Menu);
         }
@@ -304,7 +309,7 @@ void MenuManager::addAction(QAction* action)
 
 MenuManager& MenuManager::addSeparator()
 {
-    QAction* separator = new QAction(currentMenu_);
+    Action* separator = new Action(currentMenu_);
     separator->setSeparator(true);
     addItem(currentMenu_, separator);
     return *this;
