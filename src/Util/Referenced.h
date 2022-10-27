@@ -351,7 +351,7 @@ public:
     }
 
     bool expired() const {
-        return !counter || !counter->isObjectAlive();
+        return counter && !counter->isObjectAlive();
     }
 
     void reset(){
