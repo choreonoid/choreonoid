@@ -172,6 +172,16 @@ void DigitalIoDevice::setIn(int index, bool on, bool doNotify)
 }
 
 
+void DigitalIoDevice::resetAllSignals()
+{
+    size_t n = out_.size();
+    out_.clear();
+    out_.resize(n, false);
+    in_.clear();
+    in_.resize(n, false);
+}
+
+
 const std::string& DigitalIoDevice::outLabel(int index) const
 {
     auto iter = impl->outLabelMap.find(index);

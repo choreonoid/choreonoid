@@ -35,6 +35,8 @@ public:
     bool in(int index) const { return in_[index]; }
     void setIn(int index, bool on, bool doNotify = true);
 
+    void resetAllSignals();
+
     const std::string& outLabel(int index) const;
     void setOutLabel(int index, const std::string& label);
     std::vector<std::pair<int, std::string&>> getOutLabels() const;

@@ -350,15 +350,10 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
     iterator = currentProgram->begin();
 
     auto body = io->body();
-    ioDevice = body->findDevice<DigitalIoDevice>();
 
+    ioDevice = body->findDevice<DigitalIoDevice>();
     if(ioDevice){
-        // Reset all the signals
-        const int n = ioDevice->numSignalLines();
-        for(int i=0; i < n; ++i){
-            ioDevice->setOut(i, false, false);
-            ioDevice->setIn(i, false, false);
-        }
+        ioDevice->resetAllSignals();
     }
 
     isLogEnabled = io->enableLog();
