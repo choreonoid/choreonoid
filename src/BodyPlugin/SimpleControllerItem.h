@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_PLUGIN_SIMPLE_CONTROLLER_ITEM_H
 #define CNOID_BODY_PLUGIN_SIMPLE_CONTROLLER_ITEM_H
 
@@ -37,7 +33,7 @@ public:
 protected:
     SimpleControllerItem(const SimpleControllerItem& org);
     virtual Item* doCloneItem(CloneMap* cloneMap) const override;
-    virtual void onTreePathChanged() override;
+    virtual void onTargetBodyItemChanged(BodyItem* bodyItem) override;
     virtual void onDisconnectedFromRoot() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;

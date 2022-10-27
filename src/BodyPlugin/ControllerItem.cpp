@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "ControllerItem.h"
 #include "ControllerLogItem.h"
 #include <cnoid/ItemManager>
@@ -35,6 +30,22 @@ ControllerItem::ControllerItem(const ControllerItem& org)
 
 
 ControllerItem::~ControllerItem()
+{
+
+}
+
+
+void ControllerItem::onTreePathChanged()
+{
+    auto bodyItem = findOwnerItem<BodyItem>();
+    if(targetBodyItem_.expired() || bodyItem != targetBodyItem_.lock()){
+        targetBodyItem_ = bodyItem;
+        onTargetBodyItemChanged(bodyItem);
+    }
+}
+
+
+void ControllerItem::onTargetBodyItemChanged(BodyItem* /* bodyItem */)
 {
 
 }

@@ -1,12 +1,8 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_PLUGIN_CONTROLLER_ITEM_H
 #define CNOID_BODY_PLUGIN_CONTROLLER_ITEM_H
 
 #include "SimulatorItem.h"
+#include "BodyItem.h"
 #include <cnoid/ControllerIO>
 #include "exportdecl.h"
 
@@ -14,8 +10,6 @@ namespace cnoid {
 
 class ControllerIO;
 class ControllerLogItem;
-
-class Body;
 
 class CNOID_EXPORT ControllerItem : public Item
 {
@@ -28,6 +22,8 @@ public:
     ControllerItem();
     ControllerItem(const ControllerItem& org);
     virtual ~ControllerItem();
+
+    BodyItem* targetBodyItem() { return targetBodyItem_.lock(); }
 
     bool isActive() const;
     bool isNoDelayMode() const { return isNoDelayMode_; }
@@ -96,13 +92,16 @@ public:
     SimulatorItem* simulatorItem() { return simulatorItem_.lock(); }
 
 protected:
+    virtual void onTargetBodyItemChanged(BodyItem* bodyItem);
     virtual void onOptionsChanged();
     
+    virtual void onTreePathChanged() override final;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
 private:
+    weak_ref_ptr<BodyItem> targetBodyItem_;
     weak_ref_ptr<SimulatorItem> simulatorItem_;
     bool isNoDelayMode_;
     std::string optionString_;
