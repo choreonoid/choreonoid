@@ -65,6 +65,8 @@ public:
 private:
     class Impl;
     Impl* impl;
+
+    friend class AppUtil;
 };
 
 }

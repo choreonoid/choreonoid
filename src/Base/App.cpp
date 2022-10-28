@@ -653,6 +653,20 @@ SignalProxy<void()> App::sigExecutionStarted()
 }
 
 
+SignalProxy<void(QKeyEvent* event)> AppUtil::sigKeyPressed()
+{
+    //! \todo Support top windows other than the main window
+    return instance_->impl->mainWindow->sigKeyPressed();
+}
+
+
+SignalProxy<void(QKeyEvent* event)> AppUtil::sigKeyReleased()
+{
+    //! \todo Support top windows other than the main window
+    return instance_->impl->mainWindow->sigKeyReleased();
+}
+
+
 SignalProxy<void()> App::sigAboutToQuit()
 {
     return sigAboutToQuit_;

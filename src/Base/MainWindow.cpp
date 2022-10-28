@@ -31,6 +31,9 @@ const bool TRACE_FUNCTIONS = false;
 MainWindow* mainWindow = nullptr;
 bool isLayoutSwitcherAvailable = true;
 
+Signal<void(QKeyEvent* event)> sigKeyPressed_;
+Signal<void(QKeyEvent* event)> sigKeyReleased_;
+
 QSize getAvailableScreenSize()
 {
     return QGuiApplication::primaryScreen()->availableSize();
@@ -684,4 +687,25 @@ void MainWindow::Impl::keyPressEvent(QKeyEvent* event)
         event->ignore();
         break;
     }
+
+    sigKeyPressed_(event);
+}
+
+
+void MainWindow::keyReleaseEvent(QKeyEvent* event)
+{
+    sigKeyReleased_(event);
+    event->ignore();
+}
+
+
+SignalProxy<void(QKeyEvent* event)> MainWindow::sigKeyPressed()
+{
+    return sigKeyPressed_;
+}
+
+
+SignalProxy<void(QKeyEvent* event)> MainWindow::sigKeyReleased()
+{
+    return sigKeyReleased_;
 }
