@@ -5,6 +5,19 @@
   <file>icon/trajectory-generation.svg</file>
   <file>icon/auto-update.svg</file>
   <file>icon/balancer.svg</file>
+  
+  <file>icon/left-arrow.svg</file>
+  <file>icon/left-arrow-rotation.svg</file>
+  <file>icon/right-arrow.svg</file>
+  <file>icon/right-arrow-rotation.svg</file>
+  <file>icon/up-arrow.svg</file>
+  <file>icon/up-arrow-rotation.svg</file>
+  <file>icon/down-arrow.svg</file>
+  <file>icon/down-arrow-rotation.svg</file>
+  <file>icon/front-arrow.svg</file>
+  <file>icon/front-arrow-rotation.svg</file>
+  <file>icon/back-arrow.svg</file>
+  <file>icon/back-arrow-rotation.svg</file>
 
 </qresource>
 </RCC>
