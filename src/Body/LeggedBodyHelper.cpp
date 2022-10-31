@@ -56,7 +56,7 @@ bool LeggedBodyHelper::resetBody(Body* body)
 
     footInfos.clear();
     
-    const Listing& footLinkNodes = *body_->info()->findListing("footLinks");
+    const Listing& footLinkNodes = *body_->info()->findListing({ "foot_links", "footLinks" });
 
     if(footLinkNodes.isValid()){
     
@@ -65,7 +65,13 @@ bool LeggedBodyHelper::resetBody(Body* body)
             const Mapping& footLinkNode = *footLinkNodes[i].toMapping();
             footInfo.link = body_->link(footLinkNode["link"].toString());
             if(footInfo.link){
-                readEx(footLinkNode, "soleCenter", footInfo.soleCenter);
+                readEx(footLinkNode, { "sole_center", "soleCenter" }, footInfo.soleCenter);
+
+                footInfo.toeOffset.setIdentity();
+                Vector3 p;
+                if(read(footLinkNode, "toe_offset", p)){
+                    footInfo.toeOffset.translation() = p;
+                }
                 
                 if(!read(footLinkNode, "homeCop", footInfo.homeCop)){
                     footInfo.homeCop = footInfo.soleCenter;

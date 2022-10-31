@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_POSE_SEQ_PLUGIN_BODY_MOTION_GENERATION_BAR_H
 #define CNOID_POSE_SEQ_PLUGIN_BODY_MOTION_GENERATION_BAR_H
 
@@ -44,7 +40,6 @@ public:
         virtual QWidget* panel() = 0;
     };
 
-    //void setBalancer(BalancerFunc func, QWidget* panel);
     void setBalancer(Balancer* balancer);
     void unsetBalancer();
 
@@ -64,12 +59,20 @@ public:
     double dynamicsTimeRatio() const;
     bool isTimeBarRangeOnly() const;
     int initialWaistTrajectoryMode() const;
-    bool isStealthyStepMode() const;
+    
+    int stepTrajectoryAdjustmentMode() const;
+
+    // Stealthy step mode parameters
     double stealthyHeightRatioThresh() const;
     double flatLiftingHeight() const;
     double flatLandingHeight() const;
     double impactReductionHeight() const;
     double impactReductionTime() const;
+
+    // Toe step mode parameters
+    double toeContactTime() const;
+    double toeContactAngle() const;
+    
     bool isAutoZmpAdjustmentMode() const;
     double minZmpTransitionTime() const;
     double zmpCenteringTimeThresh() const;

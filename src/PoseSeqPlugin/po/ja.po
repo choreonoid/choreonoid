@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-15 03:45+0900\n"
+"POT-Creation-Date: 2022-11-04 21:03+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -34,14 +34,32 @@ msgstr "タイムバーの範囲に適用"
 msgid "Put all link positions"
 msgstr "全リンク位置姿勢を出力"
 
-msgid "Make a new body item"
-msgstr "新しいボディアイテムの生成"
+msgid "Output a new body motion item for a standalone body motion target"
+msgstr "独立型ボディモーションに対して新しいボディモーションアイテムを出力する"
 
-msgid "Stealthy Step Mode"
-msgstr "忍び足モード"
+msgid "Step trajectory adjustment"
+msgstr "ステップ軌道調整"
 
-msgid "This mode makes foot lifting / landing smoother to increase the stability"
-msgstr "本モードでは足の離反・接地をスムーズにして安定性を向上させます"
+msgid "Mode:"
+msgstr "モード："
+
+msgid "No adjustment"
+msgstr "無調整"
+
+msgid "The mode to generate foot step trajectories as a simple interpolation of foot key frames"
+msgstr "足のキーフレームのシンプルな補間としてステップ軌道を生成するモード"
+
+msgid "Stealthy steps"
+msgstr "忍び足"
+
+msgid "The mode to make foot lifting and landing motions smoother to increase the stability"
+msgstr "足の昇降動作をスムーズにして安定性を向上させるモード"
+
+msgid "Toe steps"
+msgstr "つま先"
+
+msgid "The mode to use the toes in foot lifting and landing to increase the stability"
+msgstr "足の昇降時につま先を使用して安定性を向上させるモード"
 
 msgid "Height ratio thresh"
 msgstr "高さ割合の閾値"
@@ -60,6 +78,12 @@ msgstr "衝撃緩和軌道開始高度"
 
 msgid "Impact reduction time"
 msgstr "衝撃緩和軌道時間長"
+
+msgid "Toe contact time"
+msgstr "つま先接触時間"
+
+msgid "Toe contact angle"
+msgstr "つま先接触角度"
 
 msgid "Auto ZMP Mode"
 msgstr "ZMPの自動調整"

@@ -7,10 +7,12 @@
 #include "PronunSymbol.h"
 #include <cnoid/Link>
 #include <cnoid/JointPath>
+#include <cnoid/LeggedBodyHelper>
 #include <cnoid/ValueTree>
 #include <cnoid/EigenUtil>
 #include <cnoid/Array2D>
 #include <cnoid/ConnectionSet>
+#include <cnoid/stdx/optional>
 #include <list>
 #include <vector>
 #include <algorithm>
@@ -38,33 +40,6 @@ struct Coeff
 
 struct LinkSample
 {
-    LinkSample(PoseSeq::iterator it, const BodyKeyPose::LinkInfo& info)
-    {
-        poseIter = it;
-        segmentType = UNDETERMINED;
-        x = it->time();
-        isBaseLink = info.isBaseLink();
-        auto pos = info.p();
-        auto rpy = rpyFromRot(info.R());
-        for(int i=0; i < 3; ++i){
-            c[i].y = pos[i];
-            c[i].yp = 0.0;
-            c[i+3].y = rpy[i];
-            c[i+3].yp = 0.0;
-        }
-        isTouching = info.isTouching();
-        isEndPoint = info.isStationaryPoint() || isTouching;
-        isDirty = true;
-        isSlave = info.isSlave() && !info.isTouching();
-        isAux = false;
-    }
-
-    void invalidateSegment()
-    {
-        segmentType = INVALID;
-        isEndPoint = true;
-    }
-    
     SegmentType segmentType;
     PoseSeq::iterator poseIter;
     double x;
@@ -79,26 +54,8 @@ struct LinkSample
     typedef std::list<LinkSample> Seq;
 };
 
-struct LinkZSample
+struct LinkAuxSample
 {
-    LinkZSample(PoseSeq::iterator it, const BodyKeyPose::LinkInfo& info)
-    {
-        poseIter = it;
-        segmentType = UNDETERMINED;
-        x = it->time();
-        c[0].y = info.p()[2];
-        c[0].yp = 0.0;
-        isTouching = info.isTouching();
-        isEndPoint = info.isStationaryPoint() || isTouching;
-        isDirty = true;
-    }
-
-    void invalidateSegment()
-    {
-        segmentType = INVALID;
-        isEndPoint = true;
-    }
-    
     SegmentType segmentType;
     PoseSeq::iterator poseIter;
     double x;
@@ -107,7 +64,7 @@ struct LinkZSample
     bool isDirty;
     bool isTouching;
 
-    typedef std::list<LinkZSample> Seq;
+    typedef std::list<LinkAuxSample> Seq;
 };
 
     
@@ -118,7 +75,7 @@ struct LinkInfo
     LinkInfo(Body* body, int linkIndex)
     {
         iter = samples.end();
-        zIter = zSamples.end();
+        auxIter = auxSamples.end();
         Link* link = body->link(linkIndex);
         if(link){
             jointId = link->jointId();
@@ -133,8 +90,11 @@ struct LinkInfo
     bool isFootLink;
     LinkSample::Seq samples;
     LinkSample::Seq::iterator iter;
-    LinkZSample::Seq zSamples;
-    LinkZSample::Seq::iterator zIter;
+    LinkAuxSample::Seq auxSamples;
+    LinkAuxSample::Seq::iterator auxIter;
+
+    // Link local coordinate frame used in the interpolation
+    optional<Isometry3> T_offset;
         
     // interpolation state
     Isometry3 T;
@@ -294,9 +254,8 @@ public:
     typedef unordered_map<int, LinkInfo, std::hash<int>, std::equal_to<int>,
                           Eigen::aligned_allocator<pair<const int, LinkInfo>>> LinkInfoMap;
     LinkInfoMap ikLinkInfos;
-
     vector<int> footLinkIndices;
-    vector<Vector3> soleCenters;
+    LeggedBodyHelperPtr legged;
     vector<LinkInfo*> footLinkInfos;
 
     typedef pair<Link*, Link*> LinkPair;
@@ -308,14 +267,18 @@ public:
     double zmpCenteringTimeThresh;
     double zmpTimeMarginBeforeLifting;
     double zmpMaxDistanceFromCenterSqr;
-            
-    bool isStealthyStepMode;
+
+    int stepTrajectoryAdjustmentMode;
+    
     double stealthyHeightRatioThresh;
     double flatLiftingHeight;
     double flatLandingHeight;
     double impactReductionHeight;
     double impactReductionTime;
     double impactReductionVelocity;
+
+    double toeContactTime;
+    double toeContactAngle;
             
     ZmpSample::Seq zmpSamples;
     ZmpSample::Seq::iterator zmpIter;
@@ -359,14 +322,9 @@ public:
 
     void setBody(Body* body0);
     void setLinearInterpolationJoint(int jointId);
-    void addFootLink(int linkIndex, const Vector3& soleCenter);
     void clearLipSyncShapes();
     void setLipSyncShapes(const Mapping& lipSyncShapeNode);
     void setPoseSeq(PoseSeq* seq);
-    void setStealthyStepParameters(
-        double heightRatioThresh,
-        double flatLiftingHeight, double flatLandingHeight,
-        double impactReductionHeight, double impactReductionTime);
     void invalidateCurrentInterpolation();
     bool interpolate(double time, int waistLinkIndex, const Vector3& waistTranslation);
     bool mixLipSyncShape();
@@ -379,24 +337,25 @@ public:
         
     void adjustZmpAndFootKeyPosesForLifting
     (LinkSample::Seq& swingSamples, LinkSample::Seq::iterator pSwing0, LinkSample::Seq::iterator pSwing1,
-     LinkZSample::Seq& swingZSamples, LinkZSample::Seq::iterator pSwingZ0, LinkZSample::Seq::iterator pSwingZ1,
+     LinkAuxSample::Seq& swingAuxSamples, LinkAuxSample::Seq::iterator pSwingAux0, LinkAuxSample::Seq::iterator pSwingAux1,
      ZmpSample::Seq::iterator pZmp0,  const Vector3& zmpOnSupport, bool zmpCenteringDone);
 
     void adjustZmpAndFootKeyPosesForLanding
     (LinkSample::Seq& swingSamples, LinkSample::Seq::iterator pSwing0, LinkSample::Seq::iterator pSwing1,
-     LinkZSample::Seq& swingZSamples, LinkZSample::Seq::iterator pSwingZ0, LinkZSample::Seq::iterator pSwingZ1,
+     LinkAuxSample::Seq& swingAuxSamples, LinkAuxSample::Seq::iterator pSwingAux0, LinkAuxSample::Seq::iterator pSwingAux1,
      ZmpSample::Seq::iterator pZmp1,  const Vector3& zmp1, const Vector3& zmpOnSupport);
 
     bool adjustZmpForBothPhase(
         ZmpSample::Seq::iterator& pZmp0, double time0, double time1,
-        LinkSample::Seq::iterator pRight0, LinkZSample::Seq::iterator pRightZ0,
-        LinkSample::Seq::iterator pLeft0, LinkZSample::Seq::iterator pLeftZ0,
+        LinkInfo* leftInfo, LinkSample::Seq::iterator pRight0,
+        LinkInfo* rightInfo, LinkSample::Seq::iterator pLeft0,
         SupportPhase prevPhase, SupportPhase nextPhase);
 
-    Vector3 getCenterZmp(const LinkSample::Seq::iterator& xyzrpy, const LinkZSample::Seq::iterator& z, int which);
+    Vector3 getCenterZmp(LinkInfo* linkInfo, const LinkSample::Seq::iterator& xyzrpy, int which);
 
     void adjustZmpAndFootKeyPoses();
     void insertAuxKeyPosesForStealthySteps();
+    void insertAuxKeyPosesForToeSteps();
     bool update();
     LinkInfo* getIkLinkInfo(int linkIndex);
     void onPoseInserted(PoseSeq::iterator it);
@@ -811,8 +770,17 @@ PoseSeqInterpolator::Impl::Impl(PoseSeqInterpolator* self)
     zmpTimeMarginBeforeLifting = 0.0;
     zmpMaxDistanceFromCenterSqr = 0.015 * 0.015;
 
-    isStealthyStepMode = false;
-    setStealthyStepParameters(2.0, 0.005, 0.005, 0.012, 0.3);
+    stepTrajectoryAdjustmentMode = NoStepAdjustmentMode;
+
+    stealthyHeightRatioThresh = 2.0;
+    flatLiftingHeight = 0.005;
+    flatLandingHeight = 0.005;
+    impactReductionHeight = 0.012;
+    impactReductionTime = 0.3;
+    impactReductionVelocity = -2.0 * impactReductionHeight / impactReductionTime;
+    
+    toeContactTime = 0.1;
+    toeContactAngle = radian(10.0);
 
     isLipSyncMixEnabled = false;
     
@@ -828,23 +796,28 @@ void PoseSeqInterpolator::setBody(Body* body)
 
 void PoseSeqInterpolator::Impl::setBody(Body* body0)
 {
+    body.reset();
     jointInfos.clear();
     ikLinkInfos.clear();
     footLinkIndices.clear();
-    soleCenters.clear();
     ikJointPathMap.clear();
     validIkLinkFlag.clear();
     clearLipSyncShapes();
         
-    if(!body0){
-        body = nullptr;
-    } else {
+    if(body0){
         body = body0->clone();
         int n = body->numJoints();
         jointInfos.resize(n);
         validIkLinkFlag.resize(body->numLinks(), false);
+
+        legged = getLeggedBodyHelper(body);
+        for(int i=0; i < legged->numFeet(); ++i){
+            footLinkIndices.push_back(legged->footLink(i)->index());
+        }
+        
         invalidateCurrentInterpolation();
     }
+    
     needUpdate = true;
 }
 
@@ -866,20 +839,6 @@ void PoseSeqInterpolator::Impl::setLinearInterpolationJoint(int jointId)
     if(jointId < (int)jointInfos.size()){
         jointInfos[jointId].useLinearInterpolation = true;
     }
-}
-
-
-void PoseSeqInterpolator::addFootLink(int linkIndex, const Vector3& soleCenter)
-{
-    impl->addFootLink(linkIndex, soleCenter);
-}
-
-
-void PoseSeqInterpolator::Impl::addFootLink(int linkIndex, const Vector3& soleCenter)
-{
-    footLinkIndices.push_back(linkIndex);
-    soleCenters.push_back(soleCenter);
-    needUpdate = true;
 }
 
 
@@ -1053,9 +1012,15 @@ void PoseSeqInterpolator::setZmpAdjustmentParameters
 }
 
 
-void PoseSeqInterpolator::enableStealthyStepMode(bool on)
+int PoseSeqInterpolator::stepTrajectoryAdjustmentMode() const
 {
-    impl->isStealthyStepMode = on;
+    return impl->stepTrajectoryAdjustmentMode;
+}
+
+
+void PoseSeqInterpolator::setStepTrajectoryAdjustmentMode(int mode)
+{
+    impl->stepTrajectoryAdjustmentMode = mode;
     impl->needUpdate = true;
 }
 
@@ -1065,25 +1030,21 @@ void PoseSeqInterpolator::setStealthyStepParameters
  double flatLiftingHeight, double flatLandingHeight,
  double impactReductionHeight, double impactReductionTime)
 {
-    impl->setStealthyStepParameters(heightRatioThresh,
-                                    flatLiftingHeight, flatLandingHeight,
-                                    impactReductionHeight, impactReductionTime);
+    impl->stealthyHeightRatioThresh = heightRatioThresh;
+    impl->flatLiftingHeight = flatLiftingHeight;
+    impl->flatLandingHeight = flatLandingHeight;
+    impl->impactReductionHeight = impactReductionHeight;
+    impl->impactReductionTime = impactReductionTime;
+    impl->impactReductionVelocity = -2.0 * impactReductionHeight / impactReductionTime;
+    impl->needUpdate = true;
 }
 
 
-void PoseSeqInterpolator::Impl::setStealthyStepParameters
-(double heightRatioThresh,
- double flatLiftingHeight, double flatLandingHeight,
- double impactReductionHeight, double impactReductionTime)
+void PoseSeqInterpolator::setToeStepParameters(double toeContactAngle, double toeContactTime)
 {
-    this->stealthyHeightRatioThresh = heightRatioThresh;
-    this->flatLiftingHeight = flatLiftingHeight;
-    this->flatLandingHeight = flatLandingHeight;
-    this->impactReductionHeight = impactReductionHeight;
-    this->impactReductionTime = impactReductionTime;
-    this->impactReductionVelocity = -2.0 * impactReductionHeight / impactReductionTime;
-
-    needUpdate = true;
+    impl->toeContactAngle = toeContactAngle;
+    impl->toeContactTime = toeContactTime;
+    impl->needUpdate = true;
 }
 
 
@@ -1136,6 +1097,26 @@ bool PoseSeqInterpolator::seek(double time, int waistLinkIndex, const Vector3& w
 }
 
 
+static void getLinkPosition(LinkInfo& info, const Vector6& xyzrpy, Isometry3& out_T)
+{
+    out_T.translation() = xyzrpy.head<3>();
+    out_T.linear() = rotFromRpy(xyzrpy.tail<3>());
+    if(info.T_offset){
+        out_T = out_T * info.T_offset->inverse();
+    }
+}
+
+
+static void getLinkPosition(LinkInfo& info, const LinkSample::Seq::iterator& it, Isometry3& out_T)
+{
+    Vector6 xyzrpy;
+    for(int i=0; i < 6; ++i){
+        xyzrpy[i] = it->c[i].y;
+    }
+    getLinkPosition(info, xyzrpy, out_T);
+}
+
+
 /**
    \todo Skip interpolation when only waistTranslation changes
 */
@@ -1170,13 +1151,13 @@ bool PoseSeqInterpolator::Impl::interpolate(double time, int waistLinkIndex, con
     bool waistTranslationDone = false;
     this->waistTranslation = waistTranslation;
     
-    double xyzrpy[6];
+    Vector6 xyzrpy;
 
     for(LinkInfoMap::iterator it = ikLinkInfos.begin(); it != ikLinkInfos.end(); ++it){
 
         LinkInfo& info = it->second;
 
-        info.isValid = ::interpolate<6, LinkSample>(info.samples, info.iter, currentTime, xyzrpy);
+        info.isValid = ::interpolate<6, LinkSample>(info.samples, info.iter, currentTime, xyzrpy.data());
 
         if(info.isValid){
 
@@ -1231,21 +1212,28 @@ bool PoseSeqInterpolator::Impl::interpolate(double time, int waistLinkIndex, con
             }
 
             if(info.isFootLink){
-                ::interpolate<1, LinkZSample>(info.zSamples, info.zIter, currentTime, &xyzrpy[2]);
+                if(stepTrajectoryAdjustmentMode == StealthyStepMode){
+                    // Translation z interpolation
+                    ::interpolate<1, LinkAuxSample>(info.auxSamples, info.auxIter, currentTime, &xyzrpy[2]);
+                } else if(stepTrajectoryAdjustmentMode == ToeStepMode){
+                    // Pithc interpolation
+                    ::interpolate<1, LinkAuxSample>(info.auxSamples, info.auxIter, currentTime, &xyzrpy[4]);
+                }
             }
-            
-            const Vector3 p(xyzrpy[0], xyzrpy[1], xyzrpy[2]);
-            
+
+            Isometry3 T;
+            getLinkPosition(info, xyzrpy, T);
+
             const int linkIndex = it->first;
             validIkLinkFlag[linkIndex] = true;
             if(linkIndex == waistLinkIndex){
-                info.T.translation() = p + waistTranslation;
+                info.T.translation() = T.translation() + waistTranslation;
                 waistTranslationDone = true;
             } else {
-                info.T.translation() = p + info.jointSpaceBlendingRatio * waistTranslation;
+                info.T.translation() = T.translation() + info.jointSpaceBlendingRatio * waistTranslation;
             }
             
-            info.T.linear() = rotFromRpy(xyzrpy[3], xyzrpy[4], xyzrpy[5]);
+            info.T.linear() = T.linear();
             if(info.iter->isBaseLink){
                 if(info.iter->x > baseLinkTime){
                     currentBaseLinkInfoIter = it;
@@ -1542,20 +1530,23 @@ bool PoseSeqInterpolator::Impl::update()
     }
     ikLinkInfos.clear();
     zmpSamples.clear();
-
     lipSyncSeq.clear();
 
-    if(isAutoZmpAdjustmentMode || isStealthyStepMode){
-        footLinkInfos.clear();
+    footLinkInfos.clear();
+    if(isAutoZmpAdjustmentMode || stepTrajectoryAdjustmentMode != NoStepAdjustmentMode){
         for(size_t i=0; i < footLinkIndices.size(); ++i){
-            LinkInfo* info = getIkLinkInfo(footLinkIndices[i]);
-            if(info){
+            if(auto info = getIkLinkInfo(footLinkIndices[i])){
                 info->isFootLink = true;
+                if(stepTrajectoryAdjustmentMode == ToeStepMode){
+                    info->T_offset = legged->toeOffset(i);
+                } else {
+                    info->T_offset = stdx::nullopt;
+                }
                 footLinkInfos.push_back(info);
             }
         }
     }
-    
+
     for(PoseSeq::iterator poseIter = poseSeq->begin(); poseIter != poseSeq->end(); ++poseIter){
 
         auto pose = poseIter->get<BodyKeyPose>();
@@ -1598,8 +1589,10 @@ bool PoseSeqInterpolator::Impl::update()
         if(isAutoZmpAdjustmentMode && footLinkInfos.size() == 2){
             adjustZmpAndFootKeyPoses();
         }
-        if(isStealthyStepMode){
+        if(stepTrajectoryAdjustmentMode == StealthyStepMode){
             insertAuxKeyPosesForStealthySteps();
+        } else if(stepTrajectoryAdjustmentMode == ToeStepMode){
+            insertAuxKeyPosesForToeSteps();
         }
     }
 
@@ -1615,8 +1608,8 @@ bool PoseSeqInterpolator::Impl::update()
         initializeInterpolation<6, LinkSample, false>(info.samples);
         info.iter = info.samples.begin();
         if(info.isFootLink){
-            initializeInterpolation<1, LinkZSample, false>(info.zSamples);
-            info.zIter = info.zSamples.begin();
+            initializeInterpolation<1, LinkAuxSample, false>(info.auxSamples);
+            info.auxIter = info.auxSamples.begin();
         }
     }
     
@@ -1644,12 +1637,51 @@ void PoseSeqInterpolator::Impl::appendLinkSamples(PoseSeq::iterator poseIter, Bo
     
             LinkSample::Seq& samples = linkInfo->samples;
             applyMaxTransitionTime<LinkSample>(samples, poseIter);
-            samples.push_back(LinkSample(poseIter, ikLinkInfo));
 
-            if(linkInfo->isFootLink){
-                LinkZSample::Seq& zSamples = linkInfo->zSamples;
-                applyMaxTransitionTime<LinkZSample>(zSamples, poseIter);
-                zSamples.push_back(LinkZSample(poseIter, ikLinkInfo));
+            samples.emplace_back();
+            LinkSample& sample = samples.back();
+
+            sample.segmentType = UNDETERMINED;
+            sample.poseIter = poseIter;
+            sample.x = poseIter->time();
+
+            const Isometry3* T;
+            Isometry3 T_fixed;
+            if(linkInfo->T_offset){
+                T_fixed = ikLinkInfo.T() * (*linkInfo->T_offset);
+                T = &T_fixed;
+            } else {
+                T = &ikLinkInfo.T();
+            }
+            Vector6 xyzrpy;
+            xyzrpy.head<3>() = T->translation();
+            xyzrpy.tail<3>() = rpyFromRot(T->linear());
+            for(int i=0; i < 6; ++i){
+                sample.c[i].y = xyzrpy[i];
+                sample.c[i].yp = 0.0;
+            }
+            
+            sample.isBaseLink = ikLinkInfo.isBaseLink();
+            sample.isTouching = ikLinkInfo.isTouching();
+            sample.isEndPoint = ikLinkInfo.isStationaryPoint() || sample.isTouching;
+            sample.isDirty = true;
+            sample.isSlave = ikLinkInfo.isSlave() && !ikLinkInfo.isTouching();
+            sample.isAux = false;
+
+            if(linkInfo->isFootLink && stepTrajectoryAdjustmentMode != NoStepAdjustmentMode){
+                LinkAuxSample::Seq& auxSamples = linkInfo->auxSamples;
+                applyMaxTransitionTime<LinkAuxSample>(auxSamples, poseIter);
+                auxSamples.emplace_back();
+                LinkAuxSample& sample = auxSamples.back();
+                sample.segmentType = UNDETERMINED;
+                sample.poseIter = poseIter;
+                sample.x = poseIter->time();
+                int auxElement = (stepTrajectoryAdjustmentMode == StealthyStepMode) ? 2 /* Z */ : 4 /* Pitch */;
+                sample.c[0].y = xyzrpy[auxElement];
+                sample.c[0].yp = 0.0;
+                sample.isTouching = ikLinkInfo.isTouching();
+                sample.isEndPoint = ikLinkInfo.isStationaryPoint() || sample.isTouching;
+                sample.isDirty = true;
             }
         }
     }
@@ -1664,7 +1696,7 @@ inline bool PoseSeqInterpolator::Impl::checkZmp(const Vector3& zmp, const Vector
 
 void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPosesForLifting
 (LinkSample::Seq& swingSamples, LinkSample::Seq::iterator pSwing0, LinkSample::Seq::iterator pSwing1,
- LinkZSample::Seq& swingZSamples, LinkZSample::Seq::iterator pSwingZ0, LinkZSample::Seq::iterator pSwingZ1,
+ LinkAuxSample::Seq& swingAuxSamples, LinkAuxSample::Seq::iterator pSwingAux0, LinkAuxSample::Seq::iterator pSwingAux1,
  ZmpSample::Seq::iterator pZmp0,  const Vector3& zmpOnSupport, bool zmpCenteringDone)
 {
     Vector3 zmp0(pZmp0->c[0].y, pZmp0->c[1].y, pZmp0->c[2].y);
@@ -1679,7 +1711,7 @@ void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPosesForLifting
             zmpSamples.insert(++pZmp0, ZmpSample(zmpTime, zmpOnSupport));
             LinkSample::Seq::iterator pAux = swingSamples.insert(pSwing1, LinkSample(*pSwing0));
             pAux->x = auxKeyTime;
-            LinkZSample::Seq::iterator pZAux = swingZSamples.insert(pSwingZ1, LinkZSample(*pSwingZ0));
+            LinkAuxSample::Seq::iterator pZAux = swingAuxSamples.insert(pSwingAux1, LinkAuxSample(*pSwingAux0));
             pZAux->x = auxKeyTime;
         } else {
             double zmpTime = std::max((pZmp0->x + pSwing0->x) / 2.0, pSwing0->x - zmpTimeMarginBeforeLifting);
@@ -1696,7 +1728,7 @@ void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPosesForLifting
 
 void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPosesForLanding
 (LinkSample::Seq& swingSamples, LinkSample::Seq::iterator pSwing0, LinkSample::Seq::iterator pSwing1,
- LinkZSample::Seq& swingZSamples, LinkZSample::Seq::iterator pSwingZ0, LinkZSample::Seq::iterator pSwingZ1,
+ LinkAuxSample::Seq& swingAuxSamples, LinkAuxSample::Seq::iterator pSwingAux0, LinkAuxSample::Seq::iterator pSwingAux1,
  ZmpSample::Seq::iterator pZmp1,  const Vector3& zmp1, const Vector3& zmpOnSupport)
 {
     if(!checkZmp(zmp1, zmpOnSupport)){
@@ -1708,7 +1740,7 @@ void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPosesForLanding
                 zmpSamples.insert(pZmp1, ZmpSample(auxKeyTime, zmpOnSupport));
                 LinkSample::Seq::iterator pAux = swingSamples.insert(pSwing1, LinkSample(*pSwing1));
                 pAux->x = auxKeyTime;
-                LinkZSample::Seq::iterator pZAux = swingZSamples.insert(pSwingZ1, LinkZSample(*pSwingZ1));
+                LinkAuxSample::Seq::iterator pZAux = swingAuxSamples.insert(pSwingAux1, LinkAuxSample(*pSwingAux1));
                 pZAux->x = auxKeyTime;
             } else {
                 zmpSamples.insert(pZmp1, ZmpSample(pSwing1->x, zmpOnSupport));
@@ -1723,20 +1755,20 @@ void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPosesForLanding
 */
 bool PoseSeqInterpolator::Impl::adjustZmpForBothPhase
 (ZmpSample::Seq::iterator& pZmp0, double time0, double time1,
- LinkSample::Seq::iterator pRight0, LinkZSample::Seq::iterator pRightZ0,
- LinkSample::Seq::iterator pLeft0, LinkZSample::Seq::iterator pLeftZ0,
+ LinkInfo* leftInfo, LinkSample::Seq::iterator pRight0,
+ LinkInfo* rightInfo, LinkSample::Seq::iterator pLeft0,
  SupportPhase prevPhase, SupportPhase nextPhase)
 {
     double len = time1 - time0;
     if(len < zmpCenteringTimeThresh){
         return false;
     }
-    
-    Vector3 p0(pRight0->c[0].y, pRight0->c[1].y, pRightZ0->c[0].y);
-    Matrix3 R0(rotFromRpy(pRight0->c[3].y, pRight0->c[4].y, pRight0->c[5].y));
-    Vector3 p1(pLeft0->c[0].y, pLeft0->c[1].y, pLeftZ0->c[0].y);
-    Matrix3 R1(rotFromRpy(pLeft0->c[3].y, pLeft0->c[4].y, pLeft0->c[5].y));
 
+    Isometry3 T0;
+    getLinkPosition(*rightInfo, pRight0, T0);
+    Isometry3 T1;
+    getLinkPosition(*leftInfo, pLeft0, T1);
+    
     double thresh = minZmpTransitionTime * 2.0;
 
     /* Disabled this on 2012/11/02. What is this for?
@@ -1744,9 +1776,12 @@ bool PoseSeqInterpolator::Impl::adjustZmpForBothPhase
        thresh *= 3.0;
        }
     */
+
+    const Vector3& c0 = legged->centerOfSoleLocal(0);
+    const Vector3& c1 = legged->centerOfSoleLocal(1);
     
     if(len > thresh){
-        Vector3 zmp = (p0 + R0 * soleCenters[0] + p1 + R1 * soleCenters[1]) / 2.0;
+        Vector3 zmp = (T0 * c0 + T1 * c1) / 2.0;
         zmp[2] = 0.0;
         zmpSamples.insert(++pZmp0, ZmpSample(time0 + minZmpTransitionTime, zmp));
         pZmp0 = zmpSamples.insert(pZmp0, ZmpSample(time1 - minZmpTransitionTime, zmp));
@@ -1760,7 +1795,7 @@ bool PoseSeqInterpolator::Impl::adjustZmpForBothPhase
                 r = 1.0 - r;
             }
         }
-        Vector3 zmp = (p0 + R0 * soleCenters[0]) * r + (p1 + R1 * soleCenters[1]) * (1.0 - r);
+        Vector3 zmp = (T0 * c0) * r + (T1 * c1) * (1.0 - r);
         zmp[2] = 0.0;
         pZmp0 = zmpSamples.insert(++pZmp0, ZmpSample(time0 + len / 2.0, zmp));
     }
@@ -1770,12 +1805,12 @@ bool PoseSeqInterpolator::Impl::adjustZmpForBothPhase
 
 
 Vector3 PoseSeqInterpolator::Impl::getCenterZmp
-(const LinkSample::Seq::iterator& xyzrpy, const LinkZSample::Seq::iterator& z, int which)
+(LinkInfo* linkInfo, const LinkSample::Seq::iterator& it, int which)
 {
-    const Vector3 p(xyzrpy->c[0].y, xyzrpy->c[1].y, z->c[0].y);
-    const Matrix3 R  = rotFromRpy(xyzrpy->c[3].y, xyzrpy->c[4].y, xyzrpy->c[5].y);
-    Vector3 zmp = p + R * soleCenters[which];
-    zmp[2] = 0.0;
+    Isometry3 T_foot;
+    getLinkPosition(*linkInfo, it, T_foot);
+    Vector3 zmp = T_foot * legged->centerOfSoleLocal(which);
+    zmp.z() = 0.0;
     return zmp;
 }
 
@@ -1783,32 +1818,34 @@ Vector3 PoseSeqInterpolator::Impl::getCenterZmp
 void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPoses()
 {
     // actual left and right may be exchanged
-    LinkSample::Seq& leftSamples = footLinkInfos[LEFT]->samples;
-    LinkSample::Seq& rightSamples = footLinkInfos[RIGHT]->samples;
-    LinkZSample::Seq& leftZSamples = footLinkInfos[LEFT]->zSamples;
-    LinkZSample::Seq& rightZSamples = footLinkInfos[RIGHT]->zSamples;
+    LinkInfo* leftInfo = footLinkInfos[LEFT];
+    LinkInfo* rightInfo = footLinkInfos[RIGHT];
+    LinkSample::Seq& leftSamples = leftInfo->samples;
+    LinkSample::Seq& rightSamples = rightInfo->samples;
+    LinkAuxSample::Seq& leftAuxSamples = leftInfo->auxSamples;
+    LinkAuxSample::Seq& rightAuxSamples = rightInfo->auxSamples;
 
     if(leftSamples.empty() || rightSamples.empty()){
         return;
     }
 
     LinkSample::Seq::iterator pLeft0, pLeft, pLeftNext, pRight0, pRight, pRightNext;
-    LinkZSample::Seq::iterator pLeftZ0, pLeftZ, pLeftZNext, pRightZ0, pRightZ, pRightZNext;
+    LinkAuxSample::Seq::iterator pLeftZ0, pLeftZ, pLeftZNext, pRightZ0, pRightZ, pRightZNext;
     pLeft = pLeftNext = leftSamples.begin();
     pRight = pRightNext = rightSamples.begin();
-    pLeftZ = pLeftZNext = leftZSamples.begin();
-    pRightZ = pRightZNext = rightZSamples.begin();
+    pLeftZ = pLeftZNext = leftAuxSamples.begin();
+    pRightZ = pRightZNext = rightAuxSamples.begin();
 
     // insert initial zmp
     if(zmpSamples.empty()){
         Vector3 zmp0 = Vector3::Zero();
         int n = 0;
         if(pLeft->isTouching){
-            zmp0 += getCenterZmp(pLeft, pLeftZ, LEFT);
+            zmp0 += getCenterZmp(leftInfo, pLeft, LEFT);
             n++;
         }
         if(pRight->isTouching){
-            zmp0 += getCenterZmp(pRight, pRightZ, RIGHT);
+            zmp0 += getCenterZmp(rightInfo, pRight, RIGHT);
             n++;
         }
         if(n >0 ){
@@ -1910,17 +1947,17 @@ void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPoses()
                     zmpCenteringDone =
                         adjustZmpForBothPhase(
                             pZmp0, bothPhaseTime0, time0,
-                            pRight0, pRightZ0, pLeft0, pLeftZ0,
+                            rightInfo, pRight0, leftInfo, pLeft0,
                             phaseBeforeBothPhase, phase);
                 }
                 if(phase == LEFT){
                     adjustZmpAndFootKeyPosesForLifting(
-                        rightSamples, pRight0, pRight, rightZSamples, pRightZ0, pRightZ,
-                        pZmp0, getCenterZmp(pLeft, pLeftZ, LEFT), zmpCenteringDone);
+                        rightSamples, pRight0, pRight, rightAuxSamples, pRightZ0, pRightZ,
+                        pZmp0, getCenterZmp(leftInfo, pLeft, LEFT), zmpCenteringDone);
                 } else if(phase == RIGHT){
                     adjustZmpAndFootKeyPosesForLifting(
-                        leftSamples, pLeft0, pLeft, leftZSamples, pLeftZ0, pLeftZ,
-                        pZmp0, getCenterZmp(pRight, pRightZ, RIGHT), zmpCenteringDone);
+                        leftSamples, pLeft0, pLeft, leftAuxSamples, pLeftZ0, pLeftZ,
+                        pZmp0, getCenterZmp(rightInfo, pRight, RIGHT), zmpCenteringDone);
                 }
             }
                 
@@ -1940,12 +1977,12 @@ void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPoses()
                 }
                 if(prevPhase == LEFT){
                     adjustZmpAndFootKeyPosesForLanding(
-                        rightSamples, pRight0, pRight, rightZSamples, pRightZ0, pRightZ,
-                        pZmp1, zmp1, getCenterZmp(pLeft, pLeftZ, LEFT));
+                        rightSamples, pRight0, pRight, rightAuxSamples, pRightZ0, pRightZ,
+                        pZmp1, zmp1, getCenterZmp(leftInfo, pLeft, LEFT));
                 } else if(prevPhase == RIGHT){
                     adjustZmpAndFootKeyPosesForLanding(
-                        leftSamples, pLeft0, pLeft, leftZSamples, pLeftZ0, pLeftZ,
-                        pZmp1, zmp1, getCenterZmp(pRight, pRightZ, RIGHT));
+                        leftSamples, pLeft0, pLeft, leftAuxSamples, pLeftZ0, pLeftZ,
+                        pZmp1, zmp1, getCenterZmp(rightInfo, pRight, RIGHT));
                 }
                 phaseBeforeBothPhase = prevPhase;
                 bothPhaseTime0 = time;
@@ -1966,11 +2003,11 @@ void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPoses()
         Vector3 zmpf = Vector3::Zero();
         int n = 0;
         if(pLeft->isTouching){
-            zmpf += getCenterZmp(pLeft, pLeftZ, LEFT);
+            zmpf += getCenterZmp(leftInfo, pLeft, LEFT);
             n++;
         }
         if(pRight->isTouching){
-            zmpf += getCenterZmp(pRight, pRightZ, RIGHT);
+            zmpf += getCenterZmp(rightInfo, pRight, RIGHT);
             n++;
         }
         if(n >0 ){
@@ -1981,94 +2018,22 @@ void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPoses()
 }
 
 
-/*
-  void PoseSeqInterpolator::Impl::insertAuxKeyPosesForStealthySteps()
-  {
-  for(size_t i=0; i < footLinkInfos.size(); ++i){
-
-  LinkInfo* linkInfo = footLinkInfos[i];
-
-  LinkSample::Seq& samples = linkInfo->samples;
-  LinkZSample::Seq& zSamples = linkInfo->zSamples;
-
-  if(!samples.empty()){
-  LinkSample::Seq::iterator pprev = samples.begin();
-  LinkSample::Seq::iterator p = pprev;
-  ++p;
-  LinkZSample::Seq::iterator pprevZ = zSamples.begin();
-  LinkZSample::Seq::iterator pZ = pprevZ;
-  ++pZ;
-  while(p != samples.end()){
-
-  if(pprev->isTouching && !p->isTouching){ // lifting
-  double height = pZ->c[0].y - pprevZ->c[0].y;
-  double sheight;
-  if(height >= 4.0 * stealthyHeight){
-  sheight = stealthyHeight;
-  } else {
-  sheight = height / 4.0;
-  }
-  LinkSample::Seq::iterator paux = samples.insert(p, *pprev);
-  paux->x += (sheight / height) * (p->x - pprev->x);
-
-  } else if(!pprev->isTouching && p->isTouching){ // landing
-
-  double touchingHeight = pZ->c[0].y;
-  double height = pprevZ->c[0].y - touchingHeight;
-
-  if(!isStealthyOnlyRotation){
-  double r = 1.0;
-  double time = p->x - pprev->x;
-  if(stealthyMaxRatio * time < stealthyTime){
-  r = (stealthyMaxRatio * time) / stealthyTime;
-  }
-  if(stealthyMaxRatio * height < stealthyHeight){
-  r = std::min(r, (stealthyMaxRatio * height) / stealthyHeight);
-  }
-  double t = r * stealthyTime;
-  double h = r * stealthyHeight;
-  double v = 2.0 * h / t;
-  LinkSample::Seq::iterator paux = samples.insert(p, LinkSample(*p));
-  paux->isAux = true;
-  paux->x -= t;
-  LinkZSample::Seq::iterator pZAux = zSamples.insert(pZ, LinkZSample(*pZ));
-  pZAux->x -= t;
-  pZAux->c[0].y = touchingHeight + h;
-  pZAux->c[0].yp = -v;
-  } else {
-  if(stealthyMaxRatio * height > stealthyHeight){
-  LinkSample::Seq::iterator paux = samples.insert(p, LinkSample(*p));
-  paux->x -= (stealthyHeight / height) * (p->x - pprev->x);
-  }
-  }
-  }
-  pprev = p++;
-  pprevZ = pZ++;
-  }
-  }
-  }
-  }
-*/
-
-
 void PoseSeqInterpolator::Impl::insertAuxKeyPosesForStealthySteps()
 {
     for(size_t i=0; i < footLinkInfos.size(); ++i){
 
         LinkInfo* linkInfo = footLinkInfos[i];
-
         LinkSample::Seq& samples = linkInfo->samples;
-        LinkZSample::Seq& zSamples = linkInfo->zSamples;
+        LinkAuxSample::Seq& auxSamples = linkInfo->auxSamples;
 
         if(!samples.empty()){
             LinkSample::Seq::iterator pprev = samples.begin();
             LinkSample::Seq::iterator p = pprev;
             ++p;
-            LinkZSample::Seq::iterator pprevZ = zSamples.begin();
-            LinkZSample::Seq::iterator pZ = pprevZ;
+            LinkAuxSample::Seq::iterator pprevZ = auxSamples.begin();
+            LinkAuxSample::Seq::iterator pZ = pprevZ;
             ++pZ;
             while(p != samples.end()){
-
                 if(pprev->isTouching && !p->isTouching){ // lifting
                     if(flatLiftingHeight > 0.0){
                         double height = pZ->c[0].y - pprevZ->c[0].y;
@@ -2077,23 +2042,17 @@ void PoseSeqInterpolator::Impl::insertAuxKeyPosesForStealthySteps()
                             paux->x += (flatLiftingHeight / height) * (p->x - pprev->x);
                         }
                     }
-
                 } else if(!pprev->isTouching && p->isTouching){ // landing
-
                     if(flatLandingHeight > 0.0){
-
                         double touchingHeight = pZ->c[0].y;
                         double height = pprevZ->c[0].y - touchingHeight;
-
                         if(height >= stealthyHeightRatioThresh * flatLandingHeight){
-                        
                             LinkSample::Seq::iterator paux = samples.insert(p, LinkSample(*p));
                             const double fallingTime = p->x - pprev->x;
                             paux->isAux = true;
                             paux->x -= (flatLandingHeight / height) * fallingTime;
 
                             if(impactReductionHeight > 0.0 && impactReductionTime < fallingTime / 2.0){
-
                                 const double h = fallingTime;
                                 const double h2 = h * h;
                                 const double h3 = h2 * h;
@@ -2101,9 +2060,8 @@ void PoseSeqInterpolator::Impl::insertAuxKeyPosesForStealthySteps()
                                 const double a3 = 2.0 * (pprevZ->c[0].y - pZ->c[0].y) / h3;
                                 const double s = fallingTime - impactReductionTime;
                                 const double v = 2.0 * a2 * s + 3.0 * a3 * s * s;
-
                                 if(v < impactReductionVelocity){
-                                    LinkZSample::Seq::iterator pZaux = zSamples.insert(pZ, LinkZSample(*pZ));
+                                    LinkAuxSample::Seq::iterator pZaux = auxSamples.insert(pZ, LinkAuxSample(*pZ));
                                     pZaux->x -= impactReductionTime;
                                     pZaux->c[0].y += impactReductionHeight;
                                     pZaux->c[0].yp = impactReductionVelocity;
@@ -2114,6 +2072,52 @@ void PoseSeqInterpolator::Impl::insertAuxKeyPosesForStealthySteps()
                 }
                 pprev = p++;
                 pprevZ = pZ++;
+            }
+        }
+    }
+}
+
+
+void PoseSeqInterpolator::Impl::insertAuxKeyPosesForToeSteps()
+{
+    for(size_t i=0; i < footLinkInfos.size(); ++i){
+
+        LinkInfo* linkInfo = footLinkInfos[i];
+        LinkSample::Seq& samples = linkInfo->samples;
+        LinkAuxSample::Seq& auxSamples = linkInfo->auxSamples;
+
+        if(!samples.empty()){
+            LinkSample::Seq::iterator pprev = samples.begin();
+            LinkSample::Seq::iterator p = pprev;
+            ++p;
+            LinkAuxSample::Seq::iterator pPrevAux = auxSamples.begin();
+            LinkAuxSample::Seq::iterator pAux = pPrevAux;
+            ++pAux;
+            while(p != samples.end()){
+                if(pprev->isTouching && !p->isTouching){ // lifting
+                    double liftingTime = p->x - pprev->x;
+                    if(toeContactTime < liftingTime / 2.0){
+                        auto inserted = samples.insert(p, *pprev);
+                        inserted->isAux = true;
+                        inserted->x += toeContactTime;
+                        auto auxInserted = auxSamples.insert(pAux, *pPrevAux);
+                        auxInserted->x = inserted->x;
+                        auxInserted->c[0].y = toeContactAngle;
+                    }
+
+                } else if(!pprev->isTouching && p->isTouching){ // landing
+                    double fallingTime = p->x - pprev->x;
+                    if(toeContactTime < fallingTime / 2.0){
+                        auto inserted = samples.insert(p, *p);
+                        inserted->isAux = true;
+                        inserted->x -= toeContactTime;
+                        auto auxInserted = auxSamples.insert(pAux, *pAux);
+                        auxInserted->x -= toeContactTime;
+                        auxInserted->c[0].y = toeContactAngle;
+                    }
+                }
+                pprev = p++;
+                pPrevAux = pAux++;
             }
         }
     }

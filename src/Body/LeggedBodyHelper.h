@@ -45,17 +45,25 @@ public:
 
     Vector3 homeCopOfSole(int footIndex) const;
     Vector3 homeCopOfSoles() const;
-        
+
+    const Isometry3& toeOffset(int footIndex) const { return footInfos[footIndex].toeOffset; };
+    
 private:
     BodyPtr body_;
     bool isValid_;
-    struct FootInfo {
+
+    struct FootInfo
+    {
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        
         LinkPtr link;
         LinkPtr kneePitchJoint;
         Vector3 homeCop;
         Vector3 soleCenter;
+        Isometry3 toeOffset;
     };
-    std::vector<FootInfo> footInfos;
+
+    std::vector<FootInfo, Eigen::aligned_allocator<FootInfo>> footInfos;
 };
 
 typedef ref_ptr<LeggedBodyHelper> LeggedBodyHelperPtr;

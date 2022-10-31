@@ -8,7 +8,6 @@
 #include <cnoid/LinkPath>
 #include <cnoid/BodyItem>
 #include <cnoid/BodyMotionItem>
-#include <cnoid/LeggedBodyHelper>
 #include <cnoid/Archive>
 #include <cnoid/PutPropertyFunction>
 #include <fmt/format.h>
@@ -470,13 +469,6 @@ void PoseSeqItem::Impl::onTreePathChanged()
             }
         }
 
-        LeggedBodyHelperPtr legged = getLeggedBodyHelper(ownerBodyItem->body());
-        if(legged->isValid()){
-            for(int i=0; i < legged->numFeet(); ++i){
-                interpolator->addFootLink(legged->footLink(i)->index(), legged->centerOfSoleLocal(i));
-            }
-        }
-
         interpolator->setLipSyncShapes(*ownerBodyItem->body()->info()->findMapping("lipSyncShapes"));
         bodyMotionItem->motion()->setNumJoints(interpolator->body()->numJoints());
 
@@ -606,11 +598,20 @@ void PoseSeqItem::Impl::updateInterpolationParameters()
 {
     interpolator->setTimeScaleRatio(generationBar->timeScaleRatio());
 
-    interpolator->enableStealthyStepMode(generationBar->isStealthyStepMode());
+    /*
+    interpolator->enableStealthyStepMode(
+        generationBar->stepTrajectoryAdjustmentMode() == PoseSeqInterpolator::StealthyStepMode);
+    */
+
+    interpolator->setStepTrajectoryAdjustmentMode(generationBar->stepTrajectoryAdjustmentMode());
+    
     interpolator->setStealthyStepParameters(
         generationBar->stealthyHeightRatioThresh(),
         generationBar->flatLiftingHeight(), generationBar->flatLandingHeight(),
         generationBar->impactReductionHeight(), generationBar->impactReductionTime());
+
+    interpolator->setToeStepParameters(
+        generationBar->toeContactAngle(), generationBar->toeContactTime());
 
     interpolator->enableAutoZmpAdjustmentMode(generationBar->isAutoZmpAdjustmentMode());
     interpolator->setZmpAdjustmentParameters(
