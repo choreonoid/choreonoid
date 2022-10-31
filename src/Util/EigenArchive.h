@@ -140,6 +140,13 @@ void readEx(const Mapping& mapping, const std::string& key, Eigen::MatrixBase<De
     readEx(&mapping, key, x);
 }
 
+
+template<typename Derived>
+void readEx(const Mapping& mapping, std::initializer_list<const char*> keys, Eigen::MatrixBase<Derived>& x)
+{
+    readEx(&mapping, keys, x);
+}
+
     
 template<typename Derived>
 Listing* write(Mapping* mapping, const std::string& key, const Eigen::MatrixBase<Derived>& x)
