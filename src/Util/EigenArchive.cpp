@@ -71,9 +71,21 @@ bool cnoid::readAngleAxis(const Mapping& mapping, const std::string& key, Eigen:
 }
 
 
+bool cnoid::readDegreeAngleAxis(const Mapping* mapping, const std::string& key, Eigen::AngleAxisd& aa)
+{
+    return readAngleAxis_<double>(mapping, key, aa, true);
+}
+
+
 bool cnoid::readDegreeAngleAxis(const Mapping& mapping, const std::string& key, Eigen::AngleAxisd& aa)
 {
     return readAngleAxis_<double>(&mapping, key, aa, true);
+}
+
+
+bool cnoid::readRadianAngleAxis(const Mapping* mapping, const std::string& key, Eigen::AngleAxisd& aa)
+{
+    return readAngleAxis_<double>(mapping, key, aa, false);
 }
 
 
