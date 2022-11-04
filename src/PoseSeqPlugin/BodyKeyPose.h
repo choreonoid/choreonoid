@@ -174,7 +174,7 @@ public:
     const Vector3 zmp() const {
         return zmp_;
     }
-            
+
     bool isZmpValid() const {
         return isZmpValid_;
     }

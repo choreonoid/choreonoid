@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "WaistBalancer.h"
 #include <cnoid/PoseProvider>
 #include <cnoid/LeggedBodyHelper>
@@ -17,20 +13,22 @@ using namespace cnoid;
 
 namespace {
 
-    const bool DoVerticalAccCompensation = true;
-    
+const bool DoVerticalAccCompensation = true;
+
 #if defined(_MSC_VER) && _MSC_VER < 1800
-    inline long lround(double x) {
-        return static_cast<long>((x > 0.0) ? floor(x + 0.5) : ceil(x -0.5));
-    }
+inline long lround(double x) {
+    return static_cast<long>((x > 0.0) ? floor(x + 0.5) : ceil(x -0.5));
+}
 #endif
 
-    struct Zelements {
-        vector<Vector3>& array;
-        int offset;
-        Zelements(vector<Vector3>& array, int offset) : array(array), offset(offset) { }
-        double& operator[](int index) { return array[index + offset].z(); }
-    };
+struct Zelements
+{
+    vector<Vector3>& array;
+    int offset;
+    Zelements(vector<Vector3>& array, int offset) : array(array), offset(offset) { }
+    double& operator[](int index) { return array[index + offset].z(); }
+};
+
 }
 
 
@@ -51,6 +49,12 @@ WaistBalancer::WaistBalancer()
 
     setBoundarySmoother(QUINTIC_SMOOTHER, 0.5);
     setFullTimeRange();
+}
+
+
+void WaistBalancer::setMessageOutputStream(std::ostream& os)
+{
+    os_ = &os;
 }
 
 

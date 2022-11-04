@@ -8,6 +8,7 @@
 
 namespace cnoid {
 
+class BodyItem;
 class BodyMotionItem;
 
 class CNOID_EXPORT PoseSeqItem : public Item
@@ -21,6 +22,7 @@ public:
 
     virtual bool setName(const std::string& name) override;
 
+    BodyItem* targetBodyItem();
     PoseSeq* poseSeq();
     PoseSeqInterpolatorPtr interpolator();
     BodyMotionItem* bodyMotionItem();

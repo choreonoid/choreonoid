@@ -1,13 +1,9 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "PoseSeqEngine.h"
 #include "PoseSeqItem.h"
 #include "BodyMotionGenerationBar.h"
 #include <cnoid/BodyItem>
 #include <cnoid/TimeSyncItemEngine>
+#include <cnoid/ConnectionSet>
 
 using namespace cnoid;
 
