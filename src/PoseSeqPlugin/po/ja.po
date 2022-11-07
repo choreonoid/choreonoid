@@ -5,13 +5,58 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-04 21:03+0900\n"
+"POT-Creation-Date: 2022-11-10 11:50+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Specific Key Pose Selection"
+msgstr "特定のキーポーズの選択"
+
+msgid "Time range:"
+msgstr "時間範囲"
+
+msgid "[s]"
+msgstr "[秒]"
+
+msgid "Target key poses:"
+msgstr "対象キーポーズ："
+
+msgid "All"
+msgstr "全て"
+
+msgid "Including selected parts"
+msgstr "選択部位を含む"
+
+msgid "Matching selected parts"
+msgstr "選択部位と一致する"
+
+msgid "&Clear"
+msgstr "クリア(&C)"
+
+msgid "&Select"
+msgstr "選択(&S)"
+
+msgid "Pose Seq Processing"
+msgstr "ポーズ列処理"
+
+msgid "Automatic Generation for a New Body"
+msgstr "新しいボディへの自動生成"
+
+msgid "BodyMotionGenerationBar"
+msgstr "ボディ動作生成バー"
+
+msgid "Generate body motions"
+msgstr "ボディモーションの生成"
+
+msgid "Automatic Balance Adjustment Mode"
+msgstr "自動更新モード"
+
+msgid "Enable the balancer"
+msgstr "バランス補正の有効化"
 
 msgid "Body Motion Generation Setup"
 msgstr "ボディモーション生成の設定"
@@ -21,9 +66,6 @@ msgstr "タイムスケール"
 
 msgid "Pre-initial"
 msgstr "開始前余白時間"
-
-msgid "[s]"
-msgstr ""
 
 msgid "Post-final"
 msgstr "終了後余白時間"
@@ -79,11 +121,14 @@ msgstr "衝撃緩和軌道開始高度"
 msgid "Impact reduction time"
 msgstr "衝撃緩和軌道時間長"
 
-msgid "Toe contact time"
-msgstr "つま先接触時間"
-
 msgid "Toe contact angle"
 msgstr "つま先接触角度"
+
+msgid "[deg]"
+msgstr "[度]"
+
+msgid "Toe contact time"
+msgstr "つま先接触時間"
 
 msgid "Auto ZMP Mode"
 msgstr "ZMPの自動調整"
@@ -108,24 +153,6 @@ msgstr "リップシンクの合成"
 
 msgid "&Ok"
 msgstr "了解(&O)"
-
-msgid "Pose Seq Processing"
-msgstr "ポーズ列処理"
-
-msgid "Automatic Generation for a New Body"
-msgstr "新しいボディへの自動生成"
-
-msgid "BodyMotionGenerationBar"
-msgstr "ボディ動作生成バー"
-
-msgid "Generate body motions"
-msgstr "ボディモーションの生成"
-
-msgid "Automatic Balance Adjustment Mode"
-msgstr "自動更新モード"
-
-msgid "Enable the balancer"
-msgstr "バランス補正の有効化"
 
 msgid "Choose poseset file"
 msgstr "ポーズ定義ファイルの選択"
@@ -214,17 +241,20 @@ msgstr "胸"
 msgid "Chest"
 msgstr "胸"
 
-msgid "^"
-msgstr "↑"
+msgid "Adjustment coord. system"
+msgstr "調整座標系"
 
-msgid "Height"
-msgstr "高さ"
+msgid "Global"
+msgstr "グローバル"
+
+msgid "Local"
+msgstr "ローカル"
 
 msgid "waist"
 msgstr "腰"
 
-msgid "v"
-msgstr "↓"
+msgid "Height"
+msgstr "高さ"
 
 msgid "Offset"
 msgstr "オフセット"
@@ -244,8 +274,53 @@ msgstr "両脚"
 msgid "Legs"
 msgstr "両脚"
 
-msgid "Relative positioning for the waist and feet"
-msgstr "腰・足位置の相対化"
+msgid "ZMP"
+msgstr ""
+
+msgid "R"
+msgstr "右"
+
+msgid "Center"
+msgstr "中心"
+
+msgid "L"
+msgstr "左"
+
+msgid "Move toward the X-axis positive direction"
+msgstr "X軸プラス方向に移動"
+
+msgid "Move toward the X-axis negative direction"
+msgstr "X軸マイナス方向に移動"
+
+msgid "Move toward the Y-axis positive direction"
+msgstr "Y軸プラス方向に移動"
+
+msgid "Move toward the Y-axis negative direction"
+msgstr "Y軸マイナス方向に移動"
+
+msgid "Move toward the Z-axis positive direction"
+msgstr "Z軸プラス方向に移動"
+
+msgid "Move toward the Z-axis negative direction"
+msgstr "Z軸マイナス方向に移動"
+
+msgid "Rotate in the positive direction around the X-axis"
+msgstr "X軸回りプラス方向に回転"
+
+msgid "Rotate in the negative direction around the X-axis"
+msgstr "X軸回りマイナス方向に回転"
+
+msgid "Rotate in the positive direction around the Y-axis"
+msgstr "Y軸回りプラス方向に回転"
+
+msgid "Rotate in the negative direction around the Y-axis"
+msgstr "Y軸回りマイナス方向に回転"
+
+msgid "Rotate in the positive direction around the Z-axis"
+msgstr "Z軸回りプラス方向に回転"
+
+msgid "Rotate in the negative direction around the Z-axis"
+msgstr "Z軸回りマイナス方向に回転"
 
 msgid "New pose"
 msgstr "新規ポーズ"
@@ -290,6 +365,9 @@ msgid ""
 "The foot height of the selected key poses cannot be modified due to the inverse kinematics error."
 msgstr "選択されているキーポーズの足の高さは逆運動学のエラーにより変更できません．"
 
+msgid "Not ready to adjust ZMP."
+msgstr "ZMPを調整する準備ができていません．"
+
 msgid "Warning"
 msgstr "警告"
 
@@ -303,22 +381,22 @@ msgstr "ポーズロール"
 msgid "PoseRollView"
 msgstr "ポーズロールビュー"
 
-msgid "Select specified key poses"
+msgid "Specific key pose selection"
 msgstr "特定のキーポーズの選択"
 
-msgid "Adjust step positions"
-msgstr "ステップ位置の調整"
+msgid "Step position adjustment"
+msgstr "リンク位置の調整"
 
-msgid "Adjust waist positions of selected key poses"
-msgstr "選択キーポーズの腰位置の調整"
+msgid "Waist positions adjustment"
+msgstr "腰位置の調整"
 
-msgid "Rotate yaw orientations"
-msgstr "Yaw軸向きの変更"
+msgid "Yaw rotation"
+msgstr "Yaw軸回転"
 
-msgid "Update key poses with balanced trajectories"
-msgstr "バランス補正された軌道でキーポーズを更新"
+msgid "Key pose update with balanced trajectories"
+msgstr "バランス補正軌道によるキーポーズの更新"
 
-msgid "Flip poses against the x-z plane"
+msgid "Pose flipping against the x-z plane"
 msgstr "x-z平面に対して反転"
 
 msgid "Show lip-sync elements"
@@ -381,50 +459,14 @@ msgstr "対象ボディ"
 msgid "Bar length"
 msgstr ""
 
-msgid "Link Position Adjustment"
-msgstr "リンク位置調整"
-
-msgid "Absolute"
-msgstr "直指定"
-
-msgid "Relative"
-msgstr "相対指定"
-
-msgid "Yaw Orientation Rotation"
-msgstr "Yaw軸回転"
-
-msgid "Center:"
-msgstr "中心:"
-
-msgid "Angle"
-msgstr "角度"
-
-msgid "[deg]"
-msgstr "[deg]"
-
-msgid "Select Specified Key Poses"
-msgstr "特定のキーポーズを選択"
-
-msgid "Start"
-msgstr "最小時刻"
-
-msgid "End"
-msgstr "最大時刻"
-
-msgid "all parts"
-msgstr "全部位"
-
-msgid "having selected parts"
-msgstr "選択部位を有する"
-
-msgid "just selected parts"
-msgstr "選択部位に一致"
-
 msgid "Select all poses after current position"
 msgstr "現在時刻後の全ポーズを選択"
 
 msgid "Select all poses before current position"
 msgstr "現在時刻前の全ポーズを選択"
+
+msgid "Adjust step positions"
+msgstr "ステップ位置の調整"
 
 msgid "Count selected key poses"
 msgstr "選択ポーズの数"
@@ -443,9 +485,6 @@ msgstr "更新"
 
 msgid "Update the selected pose with the current robot state"
 msgstr "選択ポーズをロボットの現在姿勢で更新"
-
-msgid "All"
-msgstr "全部位"
 
 msgid "The update button updates all the element of the selected pose."
 msgstr "選択ポーズの全ての部位を更新"
@@ -488,3 +527,21 @@ msgstr "選択ポーズは更新されました．"
 
 msgid "Please check parts needed for making a desired pose."
 msgstr "望みの姿勢をつくるのに必要な部位を選択してください．"
+
+msgid "Link Position Adjustment"
+msgstr "リンク位置調整"
+
+msgid "Absolute"
+msgstr "直指定"
+
+msgid "Relative"
+msgstr "相対指定"
+
+msgid "Yaw Orientation Rotation"
+msgstr "Yaw軸回転"
+
+msgid "Center:"
+msgstr "中心:"
+
+msgid "Angle"
+msgstr "角度"
