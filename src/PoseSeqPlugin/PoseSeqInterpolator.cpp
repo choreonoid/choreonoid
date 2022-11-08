@@ -283,6 +283,15 @@ public:
     ZmpSample::Seq zmpSamples;
     ZmpSample::Seq::iterator zmpIter;
 
+    struct ZmpSampleIterPair {
+        ZmpSampleIterPair(PoseSeq::iterator poseIter, ZmpSample::Seq::iterator sampleIter)
+            : poseIter(poseIter), sampleIter(sampleIter) { }
+        PoseSeq::iterator poseIter;
+        ZmpSample::Seq::iterator sampleIter;
+    };
+    
+    vector<ZmpSampleIterPair> orgZmpSampleIterPairs;
+
     enum SupportPhase { RIGHT = 0, LEFT, BOTH, FLOATING, NONE };
 
     enum LipShapeId {
@@ -354,6 +363,7 @@ public:
     Vector3 getCenterZmp(LinkInfo* linkInfo, const LinkSample::Seq::iterator& xyzrpy, int which);
 
     void adjustZmpAndFootKeyPoses();
+    void insertZmpSamplesAtTransitionStartPoints();
     void insertAuxKeyPosesForStealthySteps();
     void insertAuxKeyPosesForToeSteps();
     bool update();
@@ -719,35 +729,30 @@ bool interpolate(
 }
 
 
-/**
-   @return iterator to the last appended sample
-*/
 template <class SampleType>
-typename SampleType::Seq::iterator applyMaxTransitionTime(typename SampleType::Seq& samples, const PoseSeq::iterator poseIter)
+void insertSampleAtTransitionStartPoint
+(typename SampleType::Seq& samples, typename SampleType::Seq::iterator it, const PoseSeq::iterator& poseIter)
 {
-    if(samples.empty()) return samples.end();
-
-    typename SampleType::Seq::iterator prev = --samples.end();
-    if(prev != samples.end()){
+    if(it != samples.begin()){
+        auto prev = it;
+        --prev;
         const double time = poseIter->time();
         const double ttime = poseIter->maxTransitionTime();
         if(ttime > 0.0 && time - prev->x > ttime){
             prev->isEndPoint = true;
-            samples.push_back(*prev);
-            SampleType& sampleForTransition = samples.back();
+            auto inserted = samples.insert(it, *prev);
+            SampleType& sampleForTransition = *inserted;
             sampleForTransition.x = time - ttime;
             sampleForTransition.isEndPoint = true;
-            ++prev;
         }
     }
-    return prev;
 }
-    
-    
+
+
 template <class SampleType>
 void appendSample(typename SampleType::Seq& samples, const SampleType& sample)
 {
-    applyMaxTransitionTime<SampleType>(samples, sample.poseIter);
+    insertSampleAtTransitionStartPoint<SampleType>(samples, samples.end(), sample.poseIter);
     samples.push_back(sample);
 }
 
@@ -1530,6 +1535,7 @@ bool PoseSeqInterpolator::Impl::update()
     }
     ikLinkInfos.clear();
     zmpSamples.clear();
+    orgZmpSampleIterPairs.clear();
     lipSyncSeq.clear();
 
     footLinkInfos.clear();
@@ -1580,7 +1586,18 @@ bool PoseSeqInterpolator::Impl::update()
                 }
             }
             if(pose->isZmpValid()){
-                appendSample(zmpSamples, ZmpSample(poseIter));
+                if(isAutoZmpAdjustmentMode){
+                    zmpSamples.push_back(ZmpSample(poseIter));
+                    /*
+                       Note that the sample at the start of the transition is not inserted here,
+                       but will be inserted later with the insertZmpSamplesAtTransitionStartPoints
+                       function if necessary to avoid the conflict with ZMP samples inserted by the
+                       automatic ZMP adjustment.
+                    */
+                    orgZmpSampleIterPairs.emplace_back(poseIter, --zmpSamples.end());
+                } else {
+                    appendSample(zmpSamples, ZmpSample(poseIter));
+                }
             }
         }            
     }
@@ -1588,6 +1605,7 @@ bool PoseSeqInterpolator::Impl::update()
     if(!footLinkInfos.empty()){
         if(isAutoZmpAdjustmentMode && footLinkInfos.size() == 2){
             adjustZmpAndFootKeyPoses();
+            insertZmpSamplesAtTransitionStartPoints();
         }
         if(stepTrajectoryAdjustmentMode == StealthyStepMode){
             insertAuxKeyPosesForStealthySteps();
@@ -1636,7 +1654,7 @@ void PoseSeqInterpolator::Impl::appendLinkSamples(PoseSeq::iterator poseIter, Bo
             const BodyKeyPose::LinkInfo& ikLinkInfo = it->second;
     
             LinkSample::Seq& samples = linkInfo->samples;
-            applyMaxTransitionTime<LinkSample>(samples, poseIter);
+            insertSampleAtTransitionStartPoint<LinkSample>(samples, samples.end(), poseIter);
 
             samples.emplace_back();
             LinkSample& sample = samples.back();
@@ -1670,7 +1688,7 @@ void PoseSeqInterpolator::Impl::appendLinkSamples(PoseSeq::iterator poseIter, Bo
 
             if(linkInfo->isFootLink && stepTrajectoryAdjustmentMode != NoStepAdjustmentMode){
                 LinkAuxSample::Seq& auxSamples = linkInfo->auxSamples;
-                applyMaxTransitionTime<LinkAuxSample>(auxSamples, poseIter);
+                insertSampleAtTransitionStartPoint<LinkAuxSample>(auxSamples, auxSamples.end(), poseIter);
                 auxSamples.emplace_back();
                 LinkAuxSample& sample = auxSamples.back();
                 sample.segmentType = UNDETERMINED;
@@ -1771,11 +1789,9 @@ bool PoseSeqInterpolator::Impl::adjustZmpForBothPhase
     
     double thresh = minZmpTransitionTime * 2.0;
 
-    /* Disabled this on 2012/11/02. What is this for?
-       if(prevPhase != nextPhase){
-       thresh *= 3.0;
-       }
-    */
+    if(prevPhase != nextPhase){
+        thresh *= 2.0;
+    }
 
     const Vector3& c0 = legged->centerOfSoleLocal(0);
     const Vector3& c1 = legged->centerOfSoleLocal(1);
@@ -1848,7 +1864,7 @@ void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPoses()
             zmp0 += getCenterZmp(rightInfo, pRight, RIGHT);
             n++;
         }
-        if(n >0 ){
+        if(n > 0){
             zmp0 /= n;
         }
         zmpSamples.push_back(ZmpSample(0.0, zmp0));
@@ -2014,6 +2030,14 @@ void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPoses()
             zmpf /= n;
         }
         zmpSamples.push_back(ZmpSample(time + minZmpTransitionTime, zmpf));
+    }
+}
+
+
+void PoseSeqInterpolator::Impl::insertZmpSamplesAtTransitionStartPoints()
+{
+    for(auto& iterPair : orgZmpSampleIterPairs){
+        insertSampleAtTransitionStartPoint<ZmpSample>(zmpSamples, iterPair.sampleIter, iterPair.poseIter);
     }
 }
 
