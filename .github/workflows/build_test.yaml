@@ -1,0 +1,29 @@
+name: build test
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  build:
+    name: build
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu : [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04]
+    runs-on: ${{ matrix.ubuntu }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: update
+        run: sudo apt-get update && sudo apt -y upgrade
+
+      - name: Install dependencies of choreonoid
+        run: sh misc/script/install-requisites-${{ matrix.ubuntu }}.sh
+
+      - name: Build choreonoid
+        run: cmake . && make -j4
