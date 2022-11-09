@@ -77,6 +77,9 @@ Changes since 1.7.0:
 * Enabled the translation of the Qt built-in messages
 * Arranged the main menu items
 * Fixed the display style of temporal items in ItemTreeWidget
+* Supported loading URDF files
+* Improve GLVisionSensorItem to support sensor noises
+* Improve body key pose editing
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
