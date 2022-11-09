@@ -238,7 +238,7 @@ bool BalancerPanel::apply(Body* body, PoseProvider* provider, BodyMotionItem* mo
 
     if(result){
         if(putMessages){
-            mv->notify(format(_("OK ! ({} [s] consumed.)"), (timer.elapsed() / 1000.0)));
+            mv->notify(format(_("OK ! ({} sec consumed.)"), (timer.elapsed() / 1000.0)));
         }
         motionItem->notifyUpdate();
     } else {
