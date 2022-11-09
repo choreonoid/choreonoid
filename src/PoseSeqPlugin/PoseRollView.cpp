@@ -285,17 +285,17 @@ void PoseRollView::Impl::initialize()
     vbox->addLayout(gridLayout, 1);
     self->setLayout(vbox);
 
-    commandMenuManager.addItem(_("Select specified key poses"))->sigTriggered().connect(
-        [this](){ onSelectSpecifiedPosesActivated(); });
-    commandMenuManager.addItem(_("Adjust step positions"))->sigTriggered().connect(
+    commandMenuManager.addItem(_("Specific key pose selection"))->sigTriggered().connect(
+        [this](){ showSpecificKeyPoseSelectionDialog(); });
+    commandMenuManager.addItem(_("Step position adjustment"))->sigTriggered().connect(
         [this](){ onAdjustStepPositionsActivated(); });
-    commandMenuManager.addItem(_("Adjust waist positions of selected key poses"))->sigTriggered().connect(
+    commandMenuManager.addItem(_("Waist positions adjustment"))->sigTriggered().connect(
         [this](){ onAdjustWaistPositionActivated(); });
-    commandMenuManager.addItem(_("Rotate yaw orientations"))->sigTriggered().connect(
+    commandMenuManager.addItem(_("Yaw rotation"))->sigTriggered().connect(
         [this](){ onRotateYawOrientationsActivated(); });
-    commandMenuManager.addItem(_("Update key poses with balanced trajectories"))->sigTriggered().connect(
+    commandMenuManager.addItem(_("Key pose update with balanced trajectories"))->sigTriggered().connect(
         [this](){ onUpdatePosesWithBalancedTrajectoriesActivated(); });
-    commandMenuManager.addItem(_("Flip poses against the x-z plane"))->sigTriggered().connect(
+    commandMenuManager.addItem(_("Pose flipping against the x-z plane"))->sigTriggered().connect(
         [this](){ onFlipPosesActivated(); });
 
     lipSyncCheck = commandMenuManager.addCheckItem(_("Show lip-sync elements"));

@@ -23,8 +23,8 @@
 
 namespace cnoid {
 
-class PoseSelectionDialog; /// \todo this should be independent ?
-class LinkPositionAdjustmentDialog; /// \todo this should be independent ?
+class BodyKeyPoseSelectionDialog;
+class LinkPositionAdjustmentDialog;
 class YawOrientationRotationDialog;
         
 class PoseSeqViewBase
@@ -94,9 +94,11 @@ public:
     Menu popupMenu;
     MenuManager menuManager;
 
-    PoseSelectionDialog* poseSelectionDialog;
+    BodyKeyPoseSelectionDialog* poseSelectionDialog;
     LinkPositionAdjustmentDialog* linkPositionAdjustmentDialog;
     YawOrientationRotationDialog* yawOrientationRotationDialog;
+
+    ArchivePtr stateArchive;
 
     PoseSeq::iterator insertBodyKeyPose();
     PoseSeq::iterator insertPronunSymbol();
@@ -116,8 +118,8 @@ public:
     bool modifyTransitionTimeOfSelectedPoses(double ttime);
     void popupContextMenu(QMouseEvent* event);
 
-    void onSelectSpecifiedPosesActivated();
-    void onPoseSelectionDialogAccepted();
+    BodyKeyPoseSelectionDialog* getOrCreatePoseSelectionDialog();
+    void showSpecificKeyPoseSelectionDialog();
     void onAdjustStepPositionsActivated();
     void onRotateYawOrientationsActivated();
     void onYawOrientationRotationDialogAccepted();

@@ -1,5 +1,3 @@
-# @author Shin'ichiro Nakaoka
-
 # set(CMAKE_BUILD_TYPE Debug)
 
 option(BUILD_POSE_SEQ_PLUGIN "Building PoseSeqPlugin" OFF)
@@ -25,6 +23,7 @@ set(sources
   PoseSeqViewBase.cpp
   PoseRollView.cpp
   BodyMotionGenerationBar.cpp
+  BodyKeyPoseSelectionDialog.cpp
   FcpFileLoader.cpp
 )
 
