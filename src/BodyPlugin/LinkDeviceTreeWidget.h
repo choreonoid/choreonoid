@@ -77,11 +77,15 @@ public:
     SignalProxy<void()> sigLinkSelectionChanged();
     const std::vector<bool>& linkSelection() const;
     const std::vector<int>& selectedLinkIndices() const;
+    const std::vector<bool>& bodyPartLinkSelection() const;
+    const std::vector<int>& selectedBodyPartLinkIndices() const;
 
     // The following functions are available when the cache is enabled
     SignalProxy<void()> sigSelectionChanged(BodyItem* bodyItem);
     const std::vector<bool>& linkSelection(BodyItem* bodyItem);
     const std::vector<int>& selectedLinkIndices(BodyItem* bodyItem);
+    const std::vector<bool>& bodyPartLinkSelection(BodyItem* bodyItem);
+    const std::vector<int>& selectedBodyPartLinkIndices(BodyItem* bodyItem);
 
     // This funtions does not emit sigSelectionChanged.
     void setLinkSelection(BodyItem* bodyItem, const std::vector<bool>& selection);

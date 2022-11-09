@@ -23,29 +23,36 @@ class BodyItemInfo
 {
 public:
     LinkGroupPtr linkGroup;
-    vector<bool> selection;
+    vector<bool> linkSelection;
     vector<int> selectedLinkIndices;
+    vector<bool> bodyPartLinkSelection;
+    vector<int> selectedBodyPartLinkIndices;
     Signal<void()> sigSelectionChanged;
     vector<bool> linkExpansions;
     set<string> expandedParts;
     bool isSelectedLinkIndicesValid;
+    bool isSelectedBodyPartLinkIndicesValid;
     bool isRestoringTreeStateNeeded;
     bool needTreeExpansionUpdate;
     ScopedConnection bodyItemConnection;
     
     BodyItemInfo() {
         isSelectedLinkIndicesValid = false;
+        isSelectedBodyPartLinkIndicesValid = false;
         isRestoringTreeStateNeeded = true;
     }
     void setNumLinks(int n, bool doInitialize) {
         if(doInitialize){
-            selection.clear();
+            linkSelection.clear();
+            bodyPartLinkSelection.clear();
             linkExpansions.clear();
             expandedParts.clear();
         }
-        selection.resize(n, false);
+        linkSelection.resize(n, false);
+        bodyPartLinkSelection.resize(n, false);
         linkExpansions.resize(n, true);
         isSelectedLinkIndicesValid = false;
+        isSelectedBodyPartLinkIndicesValid = false;
     }
 };
 typedef shared_ptr<BodyItemInfo> BodyItemInfoPtr;
@@ -126,11 +133,14 @@ public:
     void restoreSubTreeState(QTreeWidgetItem* item);
     void restoreSubTreeStateIter(QTreeWidgetItem* parentItem);
     void onSelectionChanged();
+    void updateBodyPartLinkSelection(LinkDeviceTreeItem* item, vector<bool>& selection);
     void onItemChanged(QTreeWidgetItem* item, int column);
     Signal<void()>& sigSelectionChangedOf(BodyItem* bodyItem);
     int selectedLinkIndex(BodyItem* bodyItem);
-    const vector<int>& selectedLinkIndices(BodyItem* bodyItem);
     const vector<bool>& linkSelection(BodyItem* bodyItem);
+    const vector<int>& selectedLinkIndices(BodyItem* bodyItem);
+    const vector<bool>& bodyPartLinkSelection(BodyItem* bodyItem);
+    const vector<int>& selectedBodyPartLinkIndices(BodyItem* bodyItem);
     void onCustomContextMenuRequested(const QPoint& pos);
     void setExpansionState(const LinkDeviceTreeItem* item, bool on);
     void onItemExpanded(QTreeWidgetItem* treeWidgetItem);
@@ -970,7 +980,7 @@ void LinkDeviceTreeWidget::Impl::restoreSubTreeStateIter(QTreeWidgetItem* parent
         if(auto item = dynamic_cast<LinkDeviceTreeItem*>(parentItem->child(i))){
             auto link = item->link();
             if(link){
-                item->setSelected(currentBodyItemInfo->selection[link->index()]);
+                item->setSelected(currentBodyItemInfo->linkSelection[link->index()]);
             }
             if(item->childCount() > 0){ // Tree
                 bool expanded = item->isExpanded();
@@ -996,20 +1006,44 @@ void LinkDeviceTreeWidget::Impl::restoreSubTreeStateIter(QTreeWidgetItem* parent
 void LinkDeviceTreeWidget::Impl::onSelectionChanged()
 {
     if(currentBodyItemInfo){
-        auto& selection = currentBodyItemInfo->selection;
+        auto& selection = currentBodyItemInfo->linkSelection;
+        auto& bpSelection = currentBodyItemInfo->bodyPartLinkSelection;
         std::fill(selection.begin(), selection.end(), false);
+        std::fill(bpSelection.begin(), bpSelection.end(), false);
         QList<QTreeWidgetItem*> selected = self->selectedItems();
         for(int i=0; i < selected.size(); ++i){
-            auto item = dynamic_cast<LinkDeviceTreeItem*>(selected[i]);
-            if(item && item->link()){
-                selection[item->link()->index()] = true;
+            if(auto item = dynamic_cast<LinkDeviceTreeItem*>(selected[i])){
+                if(auto link = item->link()){
+                    int index = link->index();
+                    selection[index] = true;
+                    bpSelection[index] = true;
+                } else if(item->isLinkGroup()){
+                    updateBodyPartLinkSelection(item, bpSelection);
+                }
             }
         }
         currentBodyItemInfo->isSelectedLinkIndicesValid = false;
+        currentBodyItemInfo->isSelectedBodyPartLinkIndicesValid = false;
         if(isCacheEnabled){
             currentBodyItemInfo->sigSelectionChanged();
         }
         sigLinkSelectionChanged();
+    }
+}
+
+
+void LinkDeviceTreeWidget::Impl::updateBodyPartLinkSelection(LinkDeviceTreeItem* item, vector<bool>& selection)
+{
+    if(auto link = item->link()){
+        selection[link->index()] = true;
+
+    } else if(item->isLinkGroup()){
+        int n = item->childCount();
+        for(int i=0; i < n; ++i){
+            if(auto childItem = dynamic_cast<LinkDeviceTreeItem*>(item->child(i))){
+                updateBodyPartLinkSelection(childItem, selection);
+            }
+        }
     }
 }
 
@@ -1047,6 +1081,12 @@ const std::vector<int>& LinkDeviceTreeWidget::selectedLinkIndices() const
 }
 
 
+const std::vector<int>& LinkDeviceTreeWidget::selectedBodyPartLinkIndices() const
+{
+    return impl->selectedBodyPartLinkIndices(impl->currentBodyItem);
+}
+
+
 SignalProxy<void()> LinkDeviceTreeWidget::sigSelectionChanged(BodyItem* bodyItem)
 {
     return impl->sigSelectionChangedOf(bodyItem);
@@ -1073,7 +1113,7 @@ const std::vector<bool>& LinkDeviceTreeWidget::linkSelection(BodyItem* bodyItem)
 const vector<bool>& LinkDeviceTreeWidget::Impl::linkSelection(BodyItem* bodyItem)
 {
     if(auto info = getOrCreateBodyItemInfo(bodyItem)){
-        return info->selection;
+        return info->linkSelection;
     } else {
         static vector<bool> emptySelection;
         return emptySelection;
@@ -1095,7 +1135,7 @@ const vector<int>& LinkDeviceTreeWidget::Impl::selectedLinkIndices(BodyItem* bod
         }
         auto& selected = info->selectedLinkIndices;
         selected.clear();
-        const auto& selection = info->selection;
+        const auto& selection = info->linkSelection;
         for(size_t i=0; i < selection.size(); ++i){
             if(selection[i]){
                 selected.push_back(i);
@@ -1108,11 +1148,55 @@ const vector<int>& LinkDeviceTreeWidget::Impl::selectedLinkIndices(BodyItem* bod
 }
 
 
+const std::vector<bool>& LinkDeviceTreeWidget::bodyPartLinkSelection(BodyItem* bodyItem)
+{
+    return impl->bodyPartLinkSelection(bodyItem);
+}
+
+
+const vector<bool>& LinkDeviceTreeWidget::Impl::bodyPartLinkSelection(BodyItem* bodyItem)
+{
+    if(auto info = getOrCreateBodyItemInfo(bodyItem)){
+        return info->bodyPartLinkSelection;
+    } else {
+        static vector<bool> emptySelection;
+        return emptySelection;
+    }
+}
+
+
+const std::vector<int>& LinkDeviceTreeWidget::selectedBodyPartLinkIndices(BodyItem* bodyItem)
+{
+    return impl->selectedBodyPartLinkIndices(bodyItem);
+}
+
+
+const vector<int>& LinkDeviceTreeWidget::Impl::selectedBodyPartLinkIndices(BodyItem* bodyItem)
+{
+    if(auto info = getOrCreateBodyItemInfo(bodyItem)){
+        if(info->isSelectedBodyPartLinkIndicesValid){
+            return info->selectedBodyPartLinkIndices;
+        }
+        auto& selected = info->selectedBodyPartLinkIndices;
+        selected.clear();
+        const auto& selection = info->bodyPartLinkSelection;
+        for(size_t i=0; i < selection.size(); ++i){
+            if(selection[i]){
+                selected.push_back(i);
+            }
+        }
+        info->isSelectedBodyPartLinkIndicesValid = true;
+        return selected;
+    }
+    return emptyLinkIndices;
+}
+
+
 void LinkDeviceTreeWidget::setLinkSelection(BodyItem* bodyItem, const std::vector<bool>& selection)
 {
     if(auto info = impl->getOrCreateBodyItemInfo(bodyItem)){
-        info->selection = selection;
-        info->selection.resize(bodyItem->body()->numLinks(), false);
+        info->linkSelection = selection;
+        info->linkSelection.resize(bodyItem->body()->numLinks(), false);
         info->isSelectedLinkIndicesValid = false;
         if(bodyItem == impl->currentBodyItem){
             impl->restoreTreeState();
@@ -1273,10 +1357,12 @@ bool LinkDeviceTreeWidget::Impl::restoreState(const Archive& archive)
                         for(int i=0; i < selected.size(); ++i){
                             int index = selected[i].toInt();
                             if(index < numLinks){
-                                info->selection[index] = true;
+                                info->linkSelection[index] = true;
+                                info->bodyPartLinkSelection[index] = true;
                             }
                         }
                         info->isSelectedLinkIndicesValid = false;
+                        info->isSelectedBodyPartLinkIndicesValid = false;
 
                         if(info == currentBodyItemInfo){
                             if(isCacheEnabled){
