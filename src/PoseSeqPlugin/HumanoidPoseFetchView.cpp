@@ -20,6 +20,7 @@
 #include <cnoid/Separator>
 #include <cnoid/CheckBox>
 #include <cnoid/Buttons>
+#include <cnoid/ButtonGroup>
 #include <cnoid/DoubleSpinBox>
 #include <QBoxLayout>
 #include <QGridLayout>
@@ -58,6 +59,11 @@ enum FetchOption {
     ZmpAtCenterOfBothFeet,
     ZmpAtRightFoot,
     ZmpAtLeftFoot
+};
+
+enum AdjustmentCoordinateId {
+    GlobalCoordinate,
+    LocalCoordinate
 };
 
 class BodyPartCheckBox : public CheckBox
@@ -172,6 +178,10 @@ public:
 
     vector<CheckBox*> bodyPartChecks;
 
+    ButtonGroup adjustmentCoordRadioGroup;
+    RadioButton globalCoordRadio;
+    RadioButton localCoordRadio;
+
     Impl(HumanoidPoseFetchView* self);
     ~Impl();
     void setTranslationModeCaptions(PushButton* upButtons, PushButton* downButtons, int dimension);
@@ -208,6 +218,8 @@ public:
     bool fetchLegJointDisplacements(
         BodyKeyPose* pose, int which, bool isLegPoseModified, const Isometry3& T_waist, const Isometry3& T_foot,
         bool doUpdatee);
+    void adjustTranslation(Isometry3& T, int axis, double sign);
+    void adjustRotation(Isometry3& T, int axis, double sign);
     void adjustWaistPosition(int axis, double sign);
     void onWaistHeightOffsetCheckToggled(bool on);
     void onWaistHeightSpinValueChanged(double value);
@@ -389,6 +401,16 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
     grid->addWidget(&chestButton, row, 7, 1, 3);
     
     ++row;
+
+    grid->addWidget(new QLabel(_("Adjustment coord. system")), row, 0, 1, 8);
+    globalCoordRadio.setText(_("Global"));
+    grid->addWidget(&globalCoordRadio, row + 1, 0, 1, 6);
+    localCoordRadio.setText(_("Local"));
+    grid->addWidget(&localCoordRadio, row + 2, 0, 1, 6);
+
+    adjustmentCoordRadioGroup.addButton(&globalCoordRadio, GlobalCoordinate);
+    adjustmentCoordRadioGroup.addButton(&localCoordRadio, LocalCoordinate);
+    globalCoordRadio.setChecked(true);
 
     waistCheck.sigToggled().connect(
         [this](bool on){
@@ -1393,6 +1415,32 @@ bool HumanoidPoseFetchView::Impl::fetchLegJointDisplacements
 }
 
 
+void HumanoidPoseFetchView::Impl::adjustTranslation(Isometry3& T, int axis, double sign)
+{
+    double diff = sign * (isSmallStepAdjustmentMode ? 0.001 : 0.01);
+    
+    if(adjustmentCoordRadioGroup.checkedId() == GlobalCoordinate){
+        T.translation()[axis] += diff;
+        
+    } else { // Local coordinate system
+        T.translation() += diff * T.linear().col(axis);
+    }
+}
+
+
+void HumanoidPoseFetchView::Impl::adjustRotation(Isometry3& T, int axis, double sign)
+{
+    double dTheta = sign * radian(isSmallStepAdjustmentMode ? 1.0 : 5.0);
+
+    if(adjustmentCoordRadioGroup.checkedId() == GlobalCoordinate){
+        T.linear() = AngleAxis(dTheta, Vector3::Unit(axis)) * T.linear();
+
+    } else { // Local coordinate system
+        T.linear() = AngleAxis(dTheta, T.linear().col(axis)) * T.linear();
+    }
+}
+
+
 void HumanoidPoseFetchView::Impl::adjustWaistPosition(int axis, double sign)
 {
     if(!poseSeqItem || !checkBodyValidity() || targetPoseIters.empty()){
@@ -1412,11 +1460,9 @@ void HumanoidPoseFetchView::Impl::adjustWaistPosition(int axis, double sign)
                 poseSeq->beginPoseModification(it);
                 Isometry3 T_waist = waistInfo->T();
                 if(isRotationAdjustmentMode){
-                    auto rpy = rpyFromRot(T_waist.linear());
-                    rpy[axis] += sign * radian(isSmallStepAdjustmentMode ? 1.0 : 5.0);
-                    T_waist.linear() = rotFromRpy(rpy);
+                    adjustRotation(T_waist, axis, sign);
                 } else {
-                    T_waist.translation()[axis] += sign * (isSmallStepAdjustmentMode ? 0.001 : 0.01);
+                    adjustTranslation(T_waist, axis, sign);
                 }
                 bool failed = false;
                 for(int i=0; i < 2; ++i){
@@ -1498,11 +1544,9 @@ void HumanoidPoseFetchView::Impl::adjustFootPosition(int which, int axis, double
                 poseSeq->beginPoseModification(it);
                 Isometry3 T_foot = footInfo->T();
                 if(isRotationAdjustmentMode){
-                    auto rpy = rpyFromRot(T_foot.linear());
-                    rpy[axis] += sign * radian(isSmallStepAdjustmentMode ? 1.0 : 5.0);
-                    T_foot.linear() = rotFromRpy(rpy);
+                    adjustRotation(T_foot, axis, sign);
                 } else {
-                    T_foot.translation()[axis] += sign * (isSmallStepAdjustmentMode ? 0.001 : 0.01);
+                    adjustTranslation(T_foot, axis, sign);
                 }
                 bool failed = false;
                 if(auto waistInfo = pose->ikLinkInfo(waistLink->index())){
@@ -1770,6 +1814,13 @@ bool HumanoidPoseFetchView::Impl::storeState(Archive& archive)
     archive.write("waist_height_offset", waistHeightOffset);
     archive.write("is_waist_height_offset_mode", waistHeightOffsetCheck.isChecked());
     archive.write("include_waist_in_leg", legWaistCheck.isChecked());
+
+    if(adjustmentCoordRadioGroup.checkedId() == GlobalCoordinate){
+        archive.write("adjustment_coordinate_system", "global");
+    } else {
+        archive.write("adjustment_coordinate_system", "local");
+    }
+    
     return true;
 }
 
@@ -1796,6 +1847,15 @@ bool HumanoidPoseFetchView::Impl::restoreState(const Archive& archive)
     waistHeightOffsetCheck.blockSignals(true);
     onWaistHeightOffsetCheckToggled(waistHeightOffsetCheck.isChecked());
     waistHeightOffsetCheck.blockSignals(false);
+
+    string cs;
+    if(archive.read("adjustment_coordinate_system", cs)){
+        if(cs == "global"){
+            globalCoordRadio.setChecked(true);
+        } else if(cs == "local"){
+            localCoordRadio.setChecked(true);
+        }
+    }
 
     archive.addPostProcess([this, &archive](){ restoreItems(archive); });
     
