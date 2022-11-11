@@ -18,6 +18,7 @@ set(sources
   BodyHandlerManager.cpp
   CustomJointPathBase.cpp
   JointSpaceConfigurationHandler.cpp
+  LinkedJointHandler.cpp
   BodyCustomizerInterface.cpp
   Material.cpp
   ContactMaterial.cpp
@@ -86,6 +87,7 @@ set(headers
   CustomJointPathHandler.h
   CustomJointPathBase.h
   JointSpaceConfigurationHandler.h
+  LinkedJointHandler.h
   BodyCustomizerInterface.h
   VRMLBody.h
   AbstractBodyLoader.h

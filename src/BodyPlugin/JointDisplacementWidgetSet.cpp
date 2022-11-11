@@ -4,6 +4,7 @@
 #include <cnoid/DisplayValueFormat>
 #include <cnoid/Body>
 #include <cnoid/Link>
+#include <cnoid/LinkedJointHandler>
 #include <cnoid/Archive>
 #include <cnoid/EigenUtil>
 #include <cnoid/Buttons>
@@ -62,8 +63,9 @@ public:
     void setNextTabOrderIndicator(JointIndicator* next);
     bool setRangeLabelValue(QLabel& label, double value, bool isInfinite, int precision);
     void initialize(Link* joint);
-    void updateDisplacement(bool forceUpdate);
+    void updateDisplacementWidgets(bool forceUpdate);
     int getCurrentPhase();
+    void updateDisplacement();
     void onDisplacementInput(double value);
     void onDialInput(double value);
     void onPhaseInput(int phase);
@@ -90,6 +92,7 @@ public:
 
     BodySelectionManager* bodySelectionManager;
     BodyItemPtr currentBodyItem;
+    LinkedJointHandlerPtr linkedJointHandler;
     vector<int> activeJointLinkIndices;
     vector<JointIndicator*> jointIndicators;
     LazyCaller updateJointDisplacementsLater;
@@ -138,7 +141,7 @@ public:
     void focusDial(int index);
     void onOperationFinished();
     void notifyJointDisplacementInput();
-    void updateJointDisplacements();
+    void updateJointDisplacements(JointIndicator* inputIndicator);
     bool storeState(Archive* archive);
     bool restoreState(const Archive* archive);
 };
@@ -202,7 +205,7 @@ JointDisplacementWidgetSet::Impl::Impl
     
     updateIndicatorGrid();
 
-    updateJointDisplacementsLater.setFunction([&](){ updateJointDisplacements(); });
+    updateJointDisplacementsLater.setFunction([&](){ updateJointDisplacements(nullptr); });
     updateJointDisplacementsLater.setPriority(LazyCaller::PRIORITY_LOW);
 
     bodySelectionManager = BodySelectionManager::instance();
@@ -362,10 +365,13 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
         
         updateIndicatorGrid();
 
+        linkedJointHandler.reset();
         kinematicStateChangeConnection.disconnect();
         modelUpdateConnection.disconnect();
 
         if(bodyItem){
+            linkedJointHandler = bodyItem->body()->findHandler<LinkedJointHandler>();
+            
             kinematicStateChangeConnection =
                 bodyItem->sigKinematicStateChanged().connect(updateJointDisplacementsLater);
 
@@ -768,11 +774,11 @@ void JointIndicator::initialize(Link* joint)
     dial.blockSignals(false);
     phaseSpin.blockSignals(false);
 
-    updateDisplacement(true);
+    updateDisplacementWidgets(true);
 }
 
 
-void JointIndicator::updateDisplacement(bool forceUpdate)
+void JointIndicator::updateDisplacementWidgets(bool forceUpdate)
 {
     double q = joint->q();
     
@@ -856,11 +862,27 @@ int JointIndicator::getCurrentPhase()
 }
 
 
+void JointIndicator::updateDisplacement()
+{
+    bool updated = false;
+    if(auto handler = baseImpl->linkedJointHandler){
+        if(handler->updateLinkedJointDisplacements(joint)){
+            handler->limitLinkedJointDisplacementsWithinMovableRanges(joint);
+            baseImpl->updateJointDisplacements(this);
+            updated = true;
+        }
+    }
+    if(!updated){
+        updateDisplacementWidgets(true);
+    }
+    baseImpl->notifyJointDisplacementInput();
+}    
+
+
 void JointIndicator::onDisplacementInput(double value)
 {
     joint->q() = value / unitConversionRatio;
-    updateDisplacement(true);
-    baseImpl->notifyJointDisplacementInput();
+    updateDisplacement();
 }
 
 
@@ -894,8 +916,7 @@ void JointIndicator::onDialInput(double value)
     }
 
     if(valid){
-        updateDisplacement(true);
-        baseImpl->notifyJointDisplacementInput();
+        updateDisplacement();
     }
 }
 
@@ -904,7 +925,7 @@ void JointIndicator::onPhaseInput(int phase)
 {
     int currentPhase = getCurrentPhase();
     joint->q() += (phase - currentPhase) * 2.0 * M_PI;
-    updateDisplacement(true);
+    updateDisplacementWidgets(true);
     baseImpl->notifyJointDisplacementInput();
 }
 
@@ -1016,10 +1037,11 @@ void JointDisplacementWidgetSet::Impl::notifyJointDisplacementInput()
 }
 
 
-void JointDisplacementWidgetSet::Impl::updateJointDisplacements()
+void JointDisplacementWidgetSet::Impl::updateJointDisplacements(JointIndicator* inputIndicator)
 {
     for(size_t i=0; i < activeJointLinkIndices.size(); ++i){
-        jointIndicators[i]->updateDisplacement(false);
+        auto indicator =jointIndicators[i];
+        indicator->updateDisplacementWidgets(indicator == inputIndicator);
     }
 }
 

@@ -5,6 +5,7 @@
 #include "KinematicsBar.h"
 #include "SimulatorItem.h"
 #include <cnoid/JointPath>
+#include <cnoid/LinkedJointHandler>
 #include <cnoid/CoordinateFrame>
 #include <cnoid/PenetrationBlocker>
 #include <cnoid/MenuManager>
@@ -65,6 +66,7 @@ public:
 
     OperableSceneBody* self;
     BodyItemPtr bodyItem;
+    LinkedJointHandlerPtr linkedJointHandler;
 
     SgUpdate update;
 
@@ -1782,6 +1784,10 @@ void OperableSceneBody::Impl::startFK(SceneWidgetEvent* event)
     dragProjector.setInitialPosition(targetLink->position());
     
     orgJointPosition = targetLink->q();
+
+    if(!linkedJointHandler){
+        linkedJointHandler = bodyItem->body()->findHandler<LinkedJointHandler>();
+    }
     
     if(targetLink->isRevoluteJoint()){
         dragProjector.setRotationAxis(targetLink->R() * targetLink->a());
@@ -1803,6 +1809,11 @@ void OperableSceneBody::Impl::dragFKRotation(SceneWidgetEvent* event)
     if(dragProjector.dragRotation(event)){
         double q = orgJointPosition + dragProjector.rotationAngle();
         targetLink->q() = stdx::clamp(q, targetLink->q_lower(), targetLink->q_upper());
+        if(linkedJointHandler){
+            if(linkedJointHandler->updateLinkedJointDisplacements(targetLink)){
+                linkedJointHandler->limitLinkedJointDisplacementsWithinMovableRanges(targetLink);
+            }
+        }
         bodyItem->notifyKinematicStateChange(true);
         dragged = true;
     }
@@ -1814,6 +1825,11 @@ void OperableSceneBody::Impl::dragFKTranslation(SceneWidgetEvent* event)
     if(dragProjector.dragTranslation(event)){
         double q = orgJointPosition + dragProjector.translationAxis().dot(dragProjector.translation());
         targetLink->q() = stdx::clamp(q, targetLink->q_lower(), targetLink->q_upper());
+        if(linkedJointHandler){
+            if(linkedJointHandler->updateLinkedJointDisplacements(targetLink)){
+                linkedJointHandler->limitLinkedJointDisplacementsWithinMovableRanges(targetLink);
+            }
+        }
         bodyItem->notifyKinematicStateChange(true);
         dragged = true;
     }
