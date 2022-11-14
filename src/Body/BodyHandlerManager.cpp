@@ -102,6 +102,7 @@ bool BodyHandlerManager::Impl::loadBodyHandler(Body* body, const string& filenam
     if(createHandler){
         auto handler = createHandler(*os);
         if(handler){
+            handler->body_ = body;
             handler->filename_ = filename;
             if(handler->initialize(body, *os)){
                 loaded = body->addHandler(handler);
