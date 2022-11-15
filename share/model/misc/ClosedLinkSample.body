@@ -142,3 +142,4 @@ extraJoints:
     link1LocalPos: [ 0.2, 0, 0 ]
     link2LocalPos: [ 0, 0.1, 0 ]
 
+body_handlers: ClosedLinkSampleHandler

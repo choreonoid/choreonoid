@@ -1,3 +1,4 @@
+choreonoid_add_body_handler(ClosedLinkSampleHandler ClosedLinkSampleHandler.cpp)
 choreonoid_add_body_customizer(SpringModelCustomizer SpringModelCustomizer.cpp)
 
 install(FILES
