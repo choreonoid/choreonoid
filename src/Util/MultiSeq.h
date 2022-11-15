@@ -116,8 +116,7 @@ public:
     }
 
     const double timeStep() const {
-        const double r = getFrameRate();
-        return (r > 0.0) ? 1.0 / r : 0.0;
+        return (frameRate_ > 0.0) ? 1.0 / frameRate_ : 0.0;
     }
 
     virtual void setNumParts(int newNumParts, bool fillNewElements = false) override {
@@ -208,11 +207,24 @@ public:
         return Container::append();
     }
 
+    int clampFrameIndex(int frameIndex, bool& out_isWithinRange){
+        if(frameIndex < 0){
+            frameIndex = 0;
+            out_isWithinRange = false;
+        } else if(frameIndex >= numFrames()){
+            frameIndex = numFrames() - 1;
+            out_isWithinRange = false;
+        } else {
+            out_isWithinRange = true;
+        }
+        return frameIndex;
+    }
+
     int clampFrameIndex(int frameIndex){
         if(frameIndex < 0){
-            return 0;
+            frameIndex = 0;
         } else if(frameIndex >= numFrames()){
-            return numFrames() - 1;
+            frameIndex = numFrames() - 1;
         }
         return frameIndex;
     }

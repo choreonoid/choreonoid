@@ -98,8 +98,7 @@ void exportPySeqTypes(py::module& m)
         .def("pop_back", &MultiValueSeq::pop_back)
         .def("pop_front", &MultiValueSeq::pop_front, py::arg("n") = 1)
         .def("copySeqProperties", &MultiValueSeq::copySeqProperties)
-        .def("clampFrameIndex", &MultiValueSeq::clampFrameIndex)
-        .def("getClampFrameIndex", &MultiValueSeq::clampFrameIndex)
+        .def("clampFrameIndex", [](MultiValueSeq& self, int index){ return self.clampFrameIndex(index); })
         .def("frame", (MultiValueSeq::Frame (MultiValueSeq::*)(int)) &MultiValueSeq::frame)
         .def("part", (MultiValueSeq::Part (MultiValueSeq::*)(int)) &MultiValueSeq::part)
         .def("loadPlainFormat",
@@ -113,6 +112,7 @@ void exportPySeqTypes(py::module& m)
         .def("isEmpty", &MultiValueSeq::empty)
         .def("getFrame", (MultiValueSeq::Frame (MultiValueSeq::*)(int)) &MultiValueSeq::frame)
         .def("getPart", (MultiValueSeq::Part (MultiValueSeq::*)(int)) &MultiValueSeq::part)
+        .def("getClampFrameIndex", [](MultiValueSeq& self, int index){ return self.clampFrameIndex(index); })
         ;
 
     py::class_<ReferencedObjectSeq, shared_ptr<ReferencedObjectSeq>, AbstractSeq>
