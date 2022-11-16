@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODYPLUGIN_BODY_MOTION_ENGINE_H
 #define CNOID_BODYPLUGIN_BODY_MOTION_ENGINE_H
 
@@ -16,7 +11,6 @@ class ExtensionManager;
 class BodyItem;
 class BodyMotionItem;
 class AbstractSeqItem;
-
 
 class CNOID_EXPORT BodyMotionEngine : public TimeSyncItemEngine
 {

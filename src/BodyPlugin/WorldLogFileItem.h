@@ -38,6 +38,8 @@ public:
     void beginFrameOutput(double time);
     void beginBodyStateOutput();
     void outputLinkPositions(SE3* positions, int size);
+    //! \param positions Sequence of x, y, z, qx, qy, qz, qw, ...
+    void outputLinkPositions(double* positions, int numLinkPositions);
     void outputJointPositions(double* values, int size);
     void beginDeviceStateOutput();
     void outputDeviceState(DeviceState* state);

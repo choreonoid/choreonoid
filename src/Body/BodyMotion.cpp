@@ -12,15 +12,12 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
-namespace {
-//bool TRACE_FUNCTIONS = false;
-}
-
 
 BodyMotion::BodyMotion()
     : AbstractSeq("CompositeSeq"),
-      linkPosSeq_(new MultiSE3Seq()),
-      jointPosSeq_(new MultiValueSeq())
+      positionSeq_(new BodyPositionSeq),
+      linkPosSeq_(new MultiSE3Seq),
+      jointPosSeq_(new MultiValueSeq)
 {
     setSeqContentName("BodyMotion");
     linkPosSeq_->setSeqContentName("MultiLinkPositionSeq");
@@ -30,6 +27,7 @@ BodyMotion::BodyMotion()
 
 BodyMotion::BodyMotion(const BodyMotion& org)
     : AbstractSeq(org),
+      positionSeq_(new BodyPositionSeq(*org.positionSeq_)),
       linkPosSeq_(new MultiSE3Seq(*org.linkPosSeq_)),
       jointPosSeq_(new MultiValueSeq(*org.jointPosSeq_))
 {
@@ -44,6 +42,7 @@ BodyMotion& BodyMotion::operator=(const BodyMotion& rhs)
     if(this != &rhs){
         AbstractSeq::operator=(rhs);
     }
+    *positionSeq_ = *rhs.positionSeq_;
     *linkPosSeq_ = *rhs.linkPosSeq_;
     *jointPosSeq_ = *rhs.jointPosSeq_;
 
@@ -73,12 +72,6 @@ void BodyMotion::setNumJoints(int numJoints, bool clearNewElements)
 }
 
 
-double BodyMotion::frameRate() const
-{
-    return (linkPosSeq_->frameRate() > 0.0) ? linkPosSeq_->frameRate() : jointPosSeq_->frameRate();
-}
-
-
 double BodyMotion::getFrameRate() const
 {
     return frameRate();
@@ -87,33 +80,13 @@ double BodyMotion::getFrameRate() const
 
 void BodyMotion::setFrameRate(double frameRate)
 {
+    positionSeq_->setFrameRate(frameRate);
     linkPosSeq_->setFrameRate(frameRate);
     jointPosSeq_->setFrameRate(frameRate);
 
     for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
         p->second->setFrameRate(frameRate);
     }
-}
-
-
-double BodyMotion::timeStep() const
-{
-    return (linkPosSeq_->frameRate() > 0.0) ? linkPosSeq_->timeStep() : jointPosSeq_->timeStep();
-}
-
-
-int BodyMotion::numFrames() const
-{
-    int maxNumFrames = std::max(linkPosSeq_->numFrames(), jointPosSeq_->numFrames());
-
-    for(auto& kv : extraSeqs){
-        int n = kv.second->getNumFrames();
-        if(n > maxNumFrames){
-            maxNumFrames = n;
-        }
-    }
-    
-    return maxNumFrames;
 }
 
 
@@ -125,6 +98,7 @@ int BodyMotion::getNumFrames() const
 
 void BodyMotion::setNumFrames(int n, bool clearNewArea)
 {
+    positionSeq_->setNumFrames(n);
     linkPosSeq_->setNumFrames(n, clearNewArea);
     jointPosSeq_->setNumFrames(n, clearNewArea);
 
@@ -136,12 +110,13 @@ void BodyMotion::setNumFrames(int n, bool clearNewArea)
 
 double BodyMotion::getOffsetTime() const
 {
-    return linkPosSeq_->offsetTime();
+    return positionSeq_->offsetTime();
 }
 
 
 void BodyMotion::setOffsetTime(double time)
 {
+    positionSeq_->setOffsetTime(time);
     linkPosSeq_->setOffsetTime(time);
     jointPosSeq_->setOffsetTime(time);
 
@@ -153,6 +128,7 @@ void BodyMotion::setOffsetTime(double time)
 
 void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool clearNewArea)
 {
+    positionSeq_->setNumFrames(numFrames);
     linkPosSeq_->setDimension(numFrames, numLinks, clearNewArea);
     jointPosSeq_->setDimension(numFrames, numJoints, clearNewArea);
 
@@ -202,17 +178,27 @@ BodyMotion::ConstFrame::ConstFrame()
     
 static void copyBodyStateToFrame(const Body& body, BodyMotion::Frame& frame)
 {
+    int frameIndex = frame.frame();
     BodyMotion& motion = frame.motion();
-    int numLinks =  std::min(body.numLinks(), motion.numLinks());
-    MultiSE3Seq::Frame p = motion.linkPosSeq()->frame(frame.frame());
-    for(int i=0; i < numLinks; ++i){
-        const Link* link = body.link(i);
-        p[i].set(link->p(), link->R());
-    }
+    int numLinks = std::min(body.numLinks(), motion.numLinks());
     int numJoints = std::min(body.numJoints(), motion.numJoints());
-    MultiValueSeq::Frame q = motion.jointPosSeq()->frame(frame.frame());
+
+    auto& pframe = motion.positionSeq()->frame(frameIndex);
+    pframe.allocate(numLinks, numJoints);
+
+    auto lframe = motion.linkPosSeq()->frame(frameIndex);
+    for(int i=0; i < numLinks; ++i){
+        auto& p = lframe[i];
+        p.set(body.link(i)->position());
+        pframe.linkPosition(i).set(p);
+    }
+
+    auto jframe = motion.jointPosSeq()->frame(frameIndex);
+    auto pjframe = pframe.jointDisplacements(); 
     for(int i=0; i < numJoints; ++i){
-        q[i] = body.joint(i)->q();
+        auto q = body.joint(i)->q();
+        jframe[i] = q;
+        pjframe[i] = q;
     }
 }
     
@@ -220,54 +206,68 @@ static void copyBodyStateToFrame(const Body& body, BodyMotion::Frame& frame)
 template<class FrameType>
 static void copyFrameToBodyState(FrameType& frame, Body& body)
 {
-    const BodyMotion& motion = frame.motion();
-    int numLinks =  std::min(body.numLinks(), motion.numLinks());
-    const MultiSE3Seq::Frame p = motion.linkPosSeq()->frame(frame.frame());
-    for(int i=0; i < numLinks; ++i){
-        Link* link = body.link(i);
-        link->p() = p[i].translation();
-        link->R() = p[i].rotation().toRotationMatrix();
+    auto& pframe = frame.motion().positionSeq()->frame(frame.frame());
+
+    int numLinkPositions = pframe.numLinkPositions();
+    if(numLinkPositions > 0){
+        int n = std::min(body.numLinks(), numLinkPositions);
+        for(int i=0; i < n; ++i){
+            auto link = body.link(i);
+            auto linkPosition = pframe.linkPosition(i);
+            link->setTranslation(linkPosition.translation());
+        }
     }
-    int numJoints = std::min(body.numJoints(), motion.numJoints());
-    const MultiValueSeq::Frame q = motion.jointPosSeq()->frame(frame.frame());
-    for(int i=0; i < numJoints; ++i){
-        body.joint(i)->q() = q[i];
+
+    int numJointDisplacements = pframe.numJointDisplacements();
+    if(numJointDisplacements > 0){
+        int n = std::min(body.numJoints(), numJointDisplacements);
+        auto q = pframe.jointDisplacements();
+        for(int i=0; i < n; ++i){
+            body.joint(i)->q() = q[i];
+        }
     }
 }
 
 
-namespace cnoid {
-
-BodyMotion::Frame operator<<(BodyMotion::Frame frame, const Body& body)
+BodyMotion::Frame cnoid::operator<<(BodyMotion::Frame frame, const Body& body)
 {
     copyBodyStateToFrame(body, frame);
     return frame;
 }
 
-const Body& operator>>(const Body& body, BodyMotion::Frame frame)
-{
-    copyBodyStateToFrame(body, frame);
-    return body;
-}
 
-BodyMotion::ConstFrame operator>>(BodyMotion::ConstFrame frame, Body& body)
+BodyMotion::Frame cnoid::operator>>(BodyMotion::Frame frame, Body& body)
 {
     copyFrameToBodyState(frame, body);
     return frame;
 }
 
-Body& operator<<(Body& body, BodyMotion::Frame frame)
+
+BodyMotion::ConstFrame cnoid::operator>>(BodyMotion::ConstFrame frame, Body& body)
+{
+    copyFrameToBodyState(frame, body);
+    return frame;
+}
+
+
+Body& cnoid::operator<<(Body& body, BodyMotion::Frame frame)
 {
     copyFrameToBodyState(frame, body);
     return body;
 }
 
-Body& operator<<(Body& body, BodyMotion::ConstFrame frame)
+
+Body& cnoid::operator<<(Body& body, BodyMotion::ConstFrame frame)
 {
     copyFrameToBodyState(frame, body);
     return body;
 }
 
+
+const Body& cnoid::operator>>(const Body& body, BodyMotion::Frame frame)
+{
+    copyBodyStateToFrame(body, frame);
+    return body;
 }
 
 

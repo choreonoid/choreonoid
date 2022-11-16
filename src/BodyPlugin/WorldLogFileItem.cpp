@@ -1120,6 +1120,22 @@ void WorldLogFileItem::outputLinkPositions(SE3* positions, int size)
 }
 
 
+void WorldLogFileItem::outputLinkPositions(double* positions, int numLinkPositions)
+{
+    impl->writeBuf.writeID(LINK_POSITIONS);
+    impl->reserveSizeHeader();
+    impl->writeBuf.writeShort(numLinkPositions);
+    impl->writeBuf.writeFloat(positions[0]); // x
+    impl->writeBuf.writeFloat(positions[1]); // y
+    impl->writeBuf.writeFloat(positions[2]); // z
+    impl->writeBuf.writeFloat(positions[6]); // qw
+    impl->writeBuf.writeFloat(positions[3]); // qx
+    impl->writeBuf.writeFloat(positions[4]); // qy
+    impl->writeBuf.writeFloat(positions[5]); // qz
+    impl->fixSizeHeader();
+}    
+
+
 void WorldLogFileItem::outputJointPositions(double* values, int size)
 {
     impl->writeBuf.writeID(JOINT_POSITIONS);

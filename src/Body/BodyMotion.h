@@ -1,6 +1,7 @@
 #ifndef CNOID_BODY_BODY_MOTION_H
 #define CNOID_BODY_BODY_MOTION_H
 
+#include <cnoid/BodyPositionSeq>
 #include <cnoid/MultiValueSeq>
 #include <cnoid/MultiSE3Seq>
 #include <cnoid/Signal>
@@ -28,34 +29,27 @@ public:
     int numLinks() const { return linkPosSeq_->numParts(); }
     int numJoints() const { return jointPosSeq_->numParts(); }
 
-    double frameRate() const;
+    double frameRate() const { return positionSeq_->frameRate(); }
     virtual double getFrameRate() const override;
     virtual void setFrameRate(double frameRate) override;
 
-    double timeStep() const;
+    double timeStep() const { return positionSeq_->timeStep(); }
 
     virtual double getOffsetTime() const override;
     virtual void setOffsetTime(double time) override;
 
-    int numFrames() const;
+    int numFrames() const { return positionSeq_->numFrames(); }
     virtual int getNumFrames() const override;
     virtual void setNumFrames(int n, bool clearNewArea = false) override;
 
-    std::shared_ptr<MultiSE3Seq> linkPosSeq() {
-        return linkPosSeq_;
-    }
+    std::shared_ptr<BodyPositionSeq> positionSeq() { return positionSeq_; }
+    std::shared_ptr<const BodyPositionSeq> positionSeq() const { return positionSeq_; }
 
-    std::shared_ptr<const MultiSE3Seq> linkPosSeq() const {
-        return linkPosSeq_;
-    }
+    std::shared_ptr<MultiSE3Seq> linkPosSeq() { return linkPosSeq_;  }
+    std::shared_ptr<const MultiSE3Seq> linkPosSeq() const { return linkPosSeq_;  }
 
-    std::shared_ptr<MultiValueSeq> jointPosSeq() {
-        return jointPosSeq_;
-    }
-
-    std::shared_ptr<const MultiValueSeq> jointPosSeq() const {
-        return jointPosSeq_;
-    }
+    std::shared_ptr<MultiValueSeq> jointPosSeq() { return jointPosSeq_; }
+    std::shared_ptr<const MultiValueSeq> jointPosSeq() const { return jointPosSeq_; }
 
     class CNOID_EXPORT Frame {
         BodyMotion& motion_;
@@ -153,6 +147,7 @@ protected:
     virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback) override;
         
 private:
+    std::shared_ptr<BodyPositionSeq> positionSeq_;
     std::shared_ptr<MultiSE3Seq> linkPosSeq_;
     std::shared_ptr<MultiValueSeq> jointPosSeq_;
     ExtraSeqMap extraSeqs;
@@ -160,7 +155,9 @@ private:
 };
 
 CNOID_EXPORT BodyMotion::Frame operator<<(BodyMotion::Frame frame, const Body& body);
+CNOID_EXPORT BodyMotion::Frame operator>>(BodyMotion::Frame frame, Body& body);
 CNOID_EXPORT BodyMotion::ConstFrame operator>>(BodyMotion::ConstFrame frame, Body& body);
+
 CNOID_EXPORT Body& operator<<(Body& body, BodyMotion::Frame frame);
 CNOID_EXPORT Body& operator<<(Body& body, BodyMotion::ConstFrame frame);
 CNOID_EXPORT const Body& operator>>(const Body& body, BodyMotion::Frame frame);
