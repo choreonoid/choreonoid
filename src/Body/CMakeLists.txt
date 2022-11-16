@@ -59,6 +59,7 @@ set(sources
   BodyCollisionDetector.cpp
   BodyCollisionDetectorUtil.cpp
   BodyMotion.cpp
+  BodyPositionSeq.cpp
   BodyMotionPoseProvider.cpp
   BodyState.cpp
   ZMPSeq.cpp
@@ -149,6 +150,7 @@ set(headers
   ConstraintForceSolver.h
   PoseProvider.h
   BodyMotion.h
+  BodyPositionSeq.h
   BodyMotionPoseProvider.h
   PoseProviderToBodyMotionConverter.h
   BodyMotionUtil.h
