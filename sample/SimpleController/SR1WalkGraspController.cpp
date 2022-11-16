@@ -59,7 +59,7 @@ public:
             string filename = path.make_preferred().string();
 
             BodyMotion motion;
-            if(!motion.loadStandardYAMLformat(filename)){
+            if(!motion.load(filename)){
                 os << motion.seqMessage() << endl;
                 return false;
             }

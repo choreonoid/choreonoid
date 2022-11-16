@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro NAKAOKA
-*/
-
 #ifndef CNOID_BODY_BODY_MOTION_H
 #define CNOID_BODY_BODY_MOTION_H
 
@@ -137,19 +132,18 @@ public:
         return sigExtraSeqsChanged_;
     }
 
-    //! \deprecated
+    [[deprecated("Use setNumJoints.")]]
     void setNumParts(int numJoints, bool clearNewElements = false){
         setNumJoints(numJoints, clearNewElements);
     }
-
-    //! \deprecated
+    [[deprecated("Use numJoints.")]]
     int getNumParts() const { return numJoints(); }
-    
-    //! \deprecated
+
+    [[deprecated("Use load.")]]
     bool loadStandardYAMLformat(const std::string& filename, std::ostream& os = nullout()){
         return load(filename, os);
     }
-    //! \deprecated
+    [[deprecated("Use save.")]]
     bool saveAsStandardYAMLformat(const std::string& filename, std::ostream& os = nullout()){
         return save(filename, os);
     }
@@ -166,7 +160,6 @@ private:
 };
 
 CNOID_EXPORT BodyMotion::Frame operator<<(BodyMotion::Frame frame, const Body& body);
-CNOID_EXPORT BodyMotion::Frame operator>>(BodyMotion::Frame frame, const Body& body);
 CNOID_EXPORT BodyMotion::ConstFrame operator>>(BodyMotion::ConstFrame frame, Body& body);
 CNOID_EXPORT Body& operator<<(Body& body, BodyMotion::Frame frame);
 CNOID_EXPORT Body& operator<<(Body& body, BodyMotion::ConstFrame frame);

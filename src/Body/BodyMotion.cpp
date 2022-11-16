@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "BodyMotion.h"
 #include "Body.h"
 #include "Link.h"
@@ -223,7 +218,7 @@ static void copyBodyStateToFrame(const Body& body, BodyMotion::Frame& frame)
     
 
 template<class FrameType>
-static void copyFrameToBodyState(FrameType& frame, const Body& body)
+static void copyFrameToBodyState(FrameType& frame, Body& body)
 {
     const BodyMotion& motion = frame.motion();
     int numLinks =  std::min(body.numLinks(), motion.numLinks());
@@ -253,12 +248,6 @@ const Body& operator>>(const Body& body, BodyMotion::Frame frame)
 {
     copyBodyStateToFrame(body, frame);
     return body;
-}
-
-BodyMotion::Frame operator>>(BodyMotion::Frame frame, const Body& body)
-{
-    copyFrameToBodyState(frame, body);
-    return frame;
 }
 
 BodyMotion::ConstFrame operator>>(BodyMotion::ConstFrame frame, Body& body)

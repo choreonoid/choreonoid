@@ -86,7 +86,6 @@ void exportPyBody(py::module& m)
         .def("hasVirtualJointForces", &Body::hasVirtualJointForces)
         .def("setVirtualJointForces", &Body::setVirtualJointForces)
         .def_static("addCustomizerDirectory", &Body::addCustomizerDirectory)
-        .def(BodyMotion::Frame() >> py::self)
 
         // deprecated
         .def("getName", &Body::name)

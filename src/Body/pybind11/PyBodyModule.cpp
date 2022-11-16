@@ -106,8 +106,8 @@ PYBIND11_MODULE(Body, m)
 
     py::class_<BodyMotion, shared_ptr<BodyMotion>> bodyMotion(m, "BodyMotion");
     bodyMotion
-        .def_property("numJoints", &BodyMotion::numJoints, &BodyMotion::setNumParts)
-        .def("setNumJoints", &BodyMotion::setNumParts)
+        .def_property("numJoints", &BodyMotion::numJoints, &BodyMotion::setNumJoints)
+        .def("setNumJoints", &BodyMotion::setNumJoints)
         .def_property_readonly("numLinks", &BodyMotion::numLinks)
         .def_property("frameRate", &BodyMotion::frameRate, &BodyMotion::setFrameRate)
         .def("setFrameRate", &BodyMotion::setFrameRate)
