@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "Body.h"
 #include "BodyHandler.h"
 #include "BodyCustomizerInterface.h"
@@ -30,6 +25,15 @@ struct BodyHandleEntity {
 typedef std::map<std::string, LinkPtr> NameToLinkMap;
 typedef std::map<std::string, Device*> DeviceNameMap;
 typedef std::map<std::string, ReferencedPtr> CacheMap;
+
+struct MultiplexInfo : public Referenced
+{
+    Body* masterBody;
+    Body* lastBody;
+    int numBodies;
+    vector<BodyPtr> bodyCache;
+};
+typedef ref_ptr<MultiplexInfo> MultiplexInfoPtr;
 
 double getCurrentTime()
 {
@@ -61,6 +65,8 @@ public:
     BodyHandleEntity bodyHandleEntity;
     BodyHandle bodyHandle;
 
+    MultiplexInfoPtr multiplexInfo;
+        
     Impl(Body* self);
     void initialize(Body* self, Link* rootLink);
     void removeDeviceFromDeviceNameMap(Device* device);
@@ -778,6 +784,61 @@ void Body::calcTotalMomentum(Vector3& out_P, Vector3& out_L)
 void Body::setCurrentTimeFunction(std::function<double()> func)
 {
     currentTimeFunction = func;
+}
+
+
+int Body::getNumMultiplexBodies() const
+{
+    return impl->multiplexInfo->numBodies;
+}
+
+
+Body* Body::addMultiplexBody()
+{
+    if(!impl->multiplexInfo){
+        impl->multiplexInfo = new MultiplexInfo;
+        impl->multiplexInfo->masterBody = this;
+        impl->multiplexInfo->lastBody = this;
+        impl->multiplexInfo->numBodies = 1;
+    }
+
+    BodyPtr newBody;
+    if(impl->multiplexInfo->bodyCache.empty()){
+        newBody = clone();
+    } else {
+        newBody = impl->multiplexInfo->bodyCache.back();
+        // \todo copy all the link positions
+        newBody->rootLink()->setPosition(rootLink()->position());
+        impl->multiplexInfo->bodyCache.pop_back();
+    }
+        
+    newBody->impl->multiplexInfo = impl->multiplexInfo;
+
+    impl->multiplexInfo->lastBody->nextMultiplexBody_ = newBody;
+    impl->multiplexInfo->lastBody = newBody;
+    impl->multiplexInfo->numBodies++;
+    
+    return newBody;
+}
+
+
+bool Body::doClearMultiplexBodies(bool doClearCache)
+{
+    int count = 0;
+
+    nextMultiplexBody_->impl->multiplexInfo.reset();
+    BodyPtr nextNextMultiplexBody = nextMultiplexBody_->nextMultiplexBody_;
+    nextMultiplexBody_->nextMultiplexBody_.reset();
+    impl->multiplexInfo->bodyCache.push_back(nextMultiplexBody_);
+    nextMultiplexBody_ = nextNextMultiplexBody;
+    ++count;
+
+    if(impl->multiplexInfo){
+        impl->multiplexInfo->lastBody = this;
+        impl->multiplexInfo->numBodies -= count;
+    }
+
+    return count != 0;
 }
 
 

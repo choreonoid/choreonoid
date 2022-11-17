@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-19 18:50+0900\n"
+"POT-Creation-Date: 2022-11-18 12:58+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -201,6 +201,9 @@ msgstr "表示リンクの選択"
 
 msgid "Enable attachment"
 msgstr "アタッチメント有効化"
+
+msgid "Multiplexing number"
+msgstr "多重化数"
 
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"

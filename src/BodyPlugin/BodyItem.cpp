@@ -1622,6 +1622,8 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
         putProperty(_("Enable attachment"), isAttachmentEnabled,
                     [&](bool on){ self->setAttachmentEnabled(on, false); return true; });
     }
+
+    putProperty(_("Multiplexing number"), body->numMultiplexBodies());
 }
 
 

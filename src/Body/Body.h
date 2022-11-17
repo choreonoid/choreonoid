@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_BODY_H
 #define CNOID_BODY_BODY_H
 
@@ -269,6 +264,16 @@ public:
     void addExtraJoint(const ExtraJoint& extraJoint) { extraJoints_.push_back(extraJoint); }
     void clearExtraJoints() { extraJoints_.clear(); }
 
+    int numMultiplexBodies() const { return !nextMultiplexBody_ ? 1 : getNumMultiplexBodies(); }
+    Body* nextMultiplexBody() { return nextMultiplexBody_; }
+    Body* getOrCreateNextMultiplexBody() {
+        return nextMultiplexBody_ ? nextMultiplexBody_.get() : addMultiplexBody();
+    }
+    Body* addMultiplexBody();
+    bool clearMultiplexBodies(bool doClearCache = false){
+        return !nextMultiplexBody_ ? false : doClearMultiplexBodies(doClearCache);
+    }
+
     const Mapping* info() const;
     Mapping* info();
 
@@ -352,12 +357,16 @@ private:
     std::vector<ExtraJoint> extraJoints_;
     std::function<double()> currentTimeFunction;
 
+    BodyPtr nextMultiplexBody_;
+
     class Impl;
     Impl* impl;
 
     Link* cloneLinkTree(const Link* orgLink, CloneMap* cloneMap);
     Link* createEmptyJoint(int jointId);
     Device* findDevice_(const std::string& name) const;
+    int getNumMultiplexBodies() const;
+    bool doClearMultiplexBodies(bool doClearCache);
     Referenced* findCacheSub(const std::string& name);
     const Referenced* findCacheSub(const std::string& name) const;
     void insertCache(const std::string& name, Referenced* cache);
