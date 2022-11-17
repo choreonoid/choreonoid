@@ -32,7 +32,9 @@ public:
     Impl(BodyMotionEngine* self, BodyItem* bodyItem, BodyMotionItem* motionItem);
     void updateExtraSeqEngines();
     bool onTimeChanged(double time);
-    double onPlaybackStopped(double time, bool isStoppedManually);    
+    bool setBodyPosition(Body* body, BodyPositionSeqFrameBlock frameBlock);
+    void setBodyVelocities(Body* body, int frameIndex);
+    double onPlaybackStopped(double time, bool isStoppedManually);
 };
 
 }
@@ -146,60 +148,41 @@ bool BodyMotionEngine::Impl::onTimeChanged(double time)
     bool isActive = false;
 
     if(!positionSeq->empty()){
-        int frameIndex = positionSeq->clampFrameIndex(positionSeq->frameOfTime(time), isActive);
-        auto frame = positionSeq->frame(frameIndex);
-
-        int numAllLinks = body->numLinks();
-        int numLinkPositions = frame.numLinkPositions();
+        int prevNumMultiplexBodies = body->numMultiplexBodies();
         bool needFk = false;
+        int frameIndex = positionSeq->clampFrameIndex(positionSeq->frameOfTime(time), isActive);
+        auto& frame = positionSeq->frame(frameIndex);
+        auto frameBlock = frame.firstBlock();
 
-        if(numLinkPositions == 0){
-            body->rootLink()->translation().x() = 1.0e10; // Hide the body
-            if(numAllLinks >= 2){
-                needFk = true;
-            }
-        } else {
-            int numLinks = std::min(numAllLinks, numLinkPositions);
-            for(int i=0; i < numLinks; ++i){
-                auto link = body->link(i);
-                auto linkPosition = frame.linkPosition(i);
-                link->setTranslation(linkPosition.translation());
-                link->setRotation(linkPosition.rotation());
-            }
-            if(numLinks < numAllLinks){
-                needFk = true;
-            }
+        // Main body
+        if(setBodyPosition(body, frameBlock)){
+            needFk = true;
         }
-
-        int numAllJoints = body->numAllJoints();
-        int numJoints = std::min(numAllJoints, frame.numJointDisplacements());
-        auto displacements = frame.jointDisplacements();
-
-        if(numJoints > 0){
-            for(int i=0; i < numJoints; ++i){
-                body->joint(i)->q() = displacements[i];
-            }
-        }
-
         bool doUpdateVelocities = motionItem->isBodyJointVelocityUpdateEnabled();
         if(doUpdateVelocities){
-            const double dt = positionSeq->timeStep();
-            auto prevFrame = positionSeq->frame((frameIndex == 0) ? 0 : (frameIndex -1));
-            auto prevDisplacements = prevFrame.jointDisplacements();
-            int n = std::min(numJoints, prevFrame.numJointDisplacements());
-            int jointIndex = 0;
-            while(jointIndex < n){
-                auto joint = body->joint(jointIndex);
-                joint->dq() = (joint->q() - prevDisplacements[jointIndex]) / dt;
-                ++jointIndex;
+            setBodyVelocities(body, frameIndex);
+        }
+                
+        // Multiplex bodies
+        frameBlock = frame.nextBlockOf(frameBlock);
+        if(!frameBlock){
+            body->clearMultiplexBodies();
+        } else {
+            Body* multiplexBody = body;
+            while(frameBlock){
+                multiplexBody = multiplexBody->getOrCreateNextMultiplexBody();
+                setBodyPosition(multiplexBody, frameBlock);
+                frameBlock = frame.nextBlockOf(frameBlock);
             }
-            while(jointIndex < numAllJoints){
-                body->joint(jointIndex)->dq() = 0.0;
-            }
+            multiplexBody->clearMultiplexBodies();
         }
 
         if(needFk){
             body->calcForwardKinematics(doUpdateVelocities);
+        }
+        if(body->numMultiplexBodies() != prevNumMultiplexBodies){
+            // Is it better to define and use a signal specific to multiplex body changes?
+            bodyItem->notifyUpdate();
         }
     }
     
@@ -210,8 +193,69 @@ bool BodyMotionEngine::Impl::onTimeChanged(double time)
     }
     
     bodyItem->notifyKinematicStateChange();
-    
+
     return isActive;
+}
+
+
+bool BodyMotionEngine::Impl::setBodyPosition(Body* body, BodyPositionSeqFrameBlock frameBlock)
+{
+    bool needFk = false;
+
+    int numAllLinks = body->numLinks();
+    int numLinkPositions = frameBlock.numLinkPositions();
+    if(numLinkPositions == 0){
+        body->rootLink()->translation().x() = 1.0e10; // Hide the body
+        if(numAllLinks >= 2){
+            needFk = true;
+        }
+    } else {
+        int numLinks = std::min(numAllLinks, numLinkPositions);
+        for(int i=0; i < numLinks; ++i){
+            auto link = body->link(i);
+            auto linkPosition = frameBlock.linkPosition(i);
+            link->setTranslation(linkPosition.translation());
+            link->setRotation(linkPosition.rotation());
+        }
+        if(numLinks < numAllLinks){
+            needFk = true;
+        }
+    }
+
+    int numAllJoints = body->numAllJoints();
+    int numJoints = std::min(numAllJoints, frameBlock.numJointDisplacements());
+    if(numJoints > 0){
+        auto displacements = frameBlock.jointDisplacements();
+        for(int i=0; i < numJoints; ++i){
+            body->joint(i)->q() = displacements[i];
+        }
+    }
+
+    return needFk;
+}
+
+
+// Note that updating velocities are only supported for the main body
+void BodyMotionEngine::Impl::setBodyVelocities(Body* body, int frameIndex)
+{
+    // TODO: set link velocities
+    
+    auto prevFrame = positionSeq->frame((frameIndex == 0) ? 0 : (frameIndex -1));
+    int numAllJoints = body->numAllJoints();
+    int n = std::min(numAllJoints, prevFrame.numJointDisplacements());
+    int jointIndex = 0;
+    if(n > 0){
+        auto prevDisplacements = prevFrame.jointDisplacements();
+        const double dt = positionSeq->timeStep();
+        while(jointIndex < n){
+            auto joint = body->joint(jointIndex);
+            joint->dq() = (joint->q() - prevDisplacements[jointIndex]) / dt;
+            ++jointIndex;
+        }
+    }
+    while(jointIndex < numAllJoints){
+        body->joint(jointIndex)->dq() = 0.0;
+    }
 }
 
 

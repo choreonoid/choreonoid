@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "SimulatorItem.h"
 #include "WorldItem.h"
 #include "ControllerItem.h"
@@ -221,6 +216,7 @@ public:
     void initializeRecordItems();
     void setActive(bool on);
     void bufferRecords();
+    void bufferBodyPosition(Body* body, BodyPositionSeqFrameBlock& block);
     void flushRecords();
     void flushRecordsToBodyMotionItems();
     void flushRecordsToBody();
@@ -1011,13 +1007,13 @@ void SimulationBody::Impl::bufferRecords()
     }
     auto& frame = positionBuf[currentPositionBufIndex++];
     frame.allocate(numLinksToRecord, numJointsToRecord);
-    
-    for(int i=0; i < numLinksToRecord; ++i){
-        frame.linkPosition(i).set(body_->link(i)->T());
-    }
-    auto displacements = frame.jointDisplacements();
-    for(int i=0; i < numJointsToRecord; ++i){
-        displacements[i] = body_->joint(i)->q();
+    bufferBodyPosition(body_, frame);
+
+    Body* multiplexBody = body_->nextMultiplexBody();
+    while(multiplexBody){
+        auto block = frame.extend(numLinksToRecord, numJointsToRecord);
+        bufferBodyPosition(multiplexBody, block);
+        multiplexBody = multiplexBody->nextMultiplexBody();
     }
 
     if(deviceStateBuf.colSize() > 0){
@@ -1033,6 +1029,18 @@ void SimulationBody::Impl::bufferRecords()
                 current[i] = prev[i];
             }
         }
+    }
+}
+
+
+void SimulationBody::Impl::bufferBodyPosition(Body* body, BodyPositionSeqFrameBlock& block)
+{
+    for(int i=0; i < numLinksToRecord; ++i){
+        block.linkPosition(i).set(body->link(i)->T());
+    }
+    auto displacements = block.jointDisplacements();
+    for(int i=0; i < numJointsToRecord; ++i){
+        displacements[i] = body->joint(i)->q();
     }
 }
 

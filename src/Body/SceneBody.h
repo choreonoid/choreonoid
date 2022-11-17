@@ -76,8 +76,7 @@ public:
     SceneLink* sceneLink(int index) { return sceneLinks_[index]; }
     const SceneLink* sceneLink(int index) const { return sceneLinks_[index]; }
 
-    void updateLinkPositions();
-    void updateLinkPositions(SgUpdate& update);
+    void updateLinkPositions(SgUpdateRef update = nullptr);
 
     SceneDevice* getSceneDevice(Device* device);
     void setSceneDeviceUpdateConnection(bool on);
