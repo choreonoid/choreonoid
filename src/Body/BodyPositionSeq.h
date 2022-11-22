@@ -138,6 +138,10 @@ public:
         return BodyPositionSeqFrameBlock(data.empty() ? nullptr : data.data());
     }
 
+    const BodyPositionSeqFrameBlock firstBlock() const {
+        return const_cast<BodyPositionSeqFrame*>(this)->firstBlock();
+    }
+    
     BodyPositionSeqFrameBlock nextBlockOf(const BodyPositionSeqFrameBlock& block){
         double* nextData = block.pdata + block.numLinkPositions() * LinkPositionSize + block.numJointDisplacements() + 2;
         if(nextData >= data.data() + data.size()){
@@ -146,6 +150,10 @@ public:
         return BodyPositionSeqFrameBlock(nextData);
     }
 
+    const BodyPositionSeqFrameBlock nextBlockOf(const BodyPositionSeqFrameBlock& block) const {
+        return const_cast<BodyPositionSeqFrame*>(this)->nextBlockOf(block);
+    }
+    
 private:
     std::vector<double> data;
 };

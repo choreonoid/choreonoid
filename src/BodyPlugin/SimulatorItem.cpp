@@ -4,6 +4,7 @@
 #include "SubSimulatorItem.h"
 #include "SimulationScriptItem.h"
 #include "BodyMotionItem.h"
+#include "BodyMotionEngine.h"
 #include "WorldLogFileItem.h"
 #include "CollisionSeqItem.h"
 #include "CollisionSeqEngine.h"
@@ -1150,17 +1151,7 @@ void SimulationBody::Impl::flushRecordsToBody()
 
     if(currentPositionBufIndex > 0){
         int lastFrame = currentPositionBufIndex - 1;
-        auto& frame = positionBuf[lastFrame];
-        for(int i=0; i < numLinksToRecord; ++i){
-            auto link = orgBody->link(i);
-            auto linkPosition = frame.linkPosition(i);
-            link->setTranslation(linkPosition.translation());
-            link->setRotation(linkPosition.rotation());
-        }
-        auto displacements = frame.jointDisplacements();
-        for(int i=0; i < numJointsToRecord; ++i){
-            orgBody->joint(i)->q() = displacements[i];
-        }
+        BodyMotionEngine::updateBodyPositionWithBodyPositionSeqFrame(orgBody, positionBuf[lastFrame]);
     }
     
     if(!deviceStateBuf.empty()){

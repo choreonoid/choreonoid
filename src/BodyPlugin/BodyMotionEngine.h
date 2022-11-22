@@ -8,8 +8,10 @@
 namespace cnoid {
 
 class ExtensionManager;
+class Body;
 class BodyItem;
 class BodyMotionItem;
+class BodyPositionSeqFrame;
 class AbstractSeqItem;
 
 class CNOID_EXPORT BodyMotionEngine : public TimeSyncItemEngine
@@ -29,6 +31,10 @@ public:
     virtual void onPlaybackStarted(double time) override;
     virtual bool onTimeChanged(double time) override;
     virtual double onPlaybackStopped(double time, bool isStoppedManually) override;
+
+    //! \return true if the forward kinematics from the root link must be processed.
+    static bool updateBodyPositionWithBodyPositionSeqFrame(
+        Body* body, const BodyPositionSeqFrame& frame);
     
 private:
     class Impl;

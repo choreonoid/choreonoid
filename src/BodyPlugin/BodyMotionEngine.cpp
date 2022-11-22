@@ -32,7 +32,7 @@ public:
     Impl(BodyMotionEngine* self, BodyItem* bodyItem, BodyMotionItem* motionItem);
     void updateExtraSeqEngines();
     bool onTimeChanged(double time);
-    bool setBodyPosition(Body* body, BodyPositionSeqFrameBlock frameBlock);
+    static bool setBodyPosition(Body* body, BodyPositionSeqFrameBlock frameBlock);
     void setBodyVelocities(Body* body, int frameIndex);
     double onPlaybackStopped(double time, bool isStoppedManually);
 };
@@ -149,37 +149,20 @@ bool BodyMotionEngine::Impl::onTimeChanged(double time)
 
     if(!positionSeq->empty()){
         int prevNumMultiplexBodies = body->numMultiplexBodies();
-        bool needFk = false;
         int frameIndex = positionSeq->clampFrameIndex(positionSeq->frameOfTime(time), isActive);
         auto& frame = positionSeq->frame(frameIndex);
-        auto frameBlock = frame.firstBlock();
 
-        // Main body
-        if(setBodyPosition(body, frameBlock)){
-            needFk = true;
-        }
+        bool needFk = updateBodyPositionWithBodyPositionSeqFrame(body, frame);
+
         bool doUpdateVelocities = motionItem->isBodyJointVelocityUpdateEnabled();
         if(doUpdateVelocities){
             setBodyVelocities(body, frameIndex);
         }
                 
-        // Multiplex bodies
-        frameBlock = frame.nextBlockOf(frameBlock);
-        if(!frameBlock){
-            body->clearMultiplexBodies();
-        } else {
-            Body* multiplexBody = body;
-            while(frameBlock){
-                multiplexBody = multiplexBody->getOrCreateNextMultiplexBody();
-                setBodyPosition(multiplexBody, frameBlock);
-                frameBlock = frame.nextBlockOf(frameBlock);
-            }
-            multiplexBody->clearMultiplexBodies();
-        }
-
         if(needFk){
             body->calcForwardKinematics(doUpdateVelocities);
         }
+        
         if(body->numMultiplexBodies() != prevNumMultiplexBodies){
             // Is it better to define and use a signal specific to multiplex body changes?
             bodyItem->notifyUpdate();
@@ -195,6 +178,34 @@ bool BodyMotionEngine::Impl::onTimeChanged(double time)
     bodyItem->notifyKinematicStateChange();
 
     return isActive;
+}
+
+
+bool BodyMotionEngine::updateBodyPositionWithBodyPositionSeqFrame(Body* body, const BodyPositionSeqFrame& frame)
+{
+    bool needFk = false;
+
+    // Main body
+    auto frameBlock = frame.firstBlock();
+    if(Impl::setBodyPosition(body, frameBlock)){
+        needFk = true;
+    }
+
+    // Multiplex bodies
+    frameBlock = frame.nextBlockOf(frameBlock);
+    if(!frameBlock){
+        body->clearMultiplexBodies();
+    } else {
+        Body* multiplexBody = body;
+        while(frameBlock){
+            multiplexBody = multiplexBody->getOrCreateNextMultiplexBody();
+            Impl::setBodyPosition(multiplexBody, frameBlock);
+            frameBlock = frame.nextBlockOf(frameBlock);
+        }
+        multiplexBody->clearMultiplexBodies();
+    }
+
+    return needFk;
 }
 
 
