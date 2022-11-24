@@ -27,8 +27,7 @@ public:
     typedef value_type Element; ///< \deprecated. Use value_type.
 
     MultiSeq(const char* seqType)
-        : Container(0, 1),
-          AbstractMultiSeq(seqType) {
+        : AbstractMultiSeq(seqType) {
         frameRate_ = 0.0;
         offsetTime_ = 0.0;
     }
@@ -82,7 +81,7 @@ public:
 
         const int prevNumParts = numParts();
         const int prevNumFrames = numFrames();
-
+        
         Container::resize(newNumFrames, newNumParts);
 
         if(fillNewElements){
@@ -133,10 +132,6 @@ public:
 
     virtual void setNumFrames(int newNumFrames, bool fillNewElements = false) override {
         setDimension(newNumFrames, numParts(), fillNewElements);
-    }
-
-    void clearFrames(){
-        setNumFrames(0);
     }
 
     virtual int getNumParts() const override {
@@ -199,8 +194,20 @@ public:
         return Container::row(index);
     }
 
+    Frame lastFrame() {
+        return Container::last();
+    }
+
+    const Frame lastFrame() const {
+        return Container::last();
+    }
+
     void popFrontFrame() {
         Container::pop_front();
+    }
+
+    void popFrontFrames(int numFrames) {
+        Container::pop_front(numFrames);
     }
 
     Frame appendFrame() {

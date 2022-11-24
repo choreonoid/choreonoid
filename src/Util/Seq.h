@@ -21,9 +21,9 @@ template <typename ElementType> class Seq : public AbstractSeq
 public:
     typedef ElementType value_type;
         
-    Seq(const char* seqType, int nFrames = 0.0)
+    Seq(const char* seqType, int numFrames = 0)
         : AbstractSeq(seqType),
-          container(nFrames)
+          container(numFrames)
     {
         frameRate_ = defaultFrameRate();
         offsetTime_ = 0.0;
