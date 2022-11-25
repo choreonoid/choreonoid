@@ -12,27 +12,28 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
+namespace {
+
+static const string linkPosSeqKey_("MultiLinkPositionSeq");
+static const string jointPosSeqKey_("MultiJointDisplacementSeq");
+
+}
+
 
 BodyMotion::BodyMotion()
     : AbstractSeq("CompositeSeq"),
-      positionSeq_(new BodyPositionSeq),
-      linkPosSeq_(new MultiSE3Seq),
-      jointPosSeq_(new MultiValueSeq)
+      positionSeq_(new BodyPositionSeq)
 {
     setSeqContentName("BodyMotion");
-    linkPosSeq_->setSeqContentName("MultiLinkPositionSeq");
-    jointPosSeq_->setSeqContentName("MultiJointDisplacementSeq");
 }
 
 
 BodyMotion::BodyMotion(const BodyMotion& org)
     : AbstractSeq(org),
-      positionSeq_(new BodyPositionSeq(*org.positionSeq_)),
-      linkPosSeq_(new MultiSE3Seq(*org.linkPosSeq_)),
-      jointPosSeq_(new MultiValueSeq(*org.jointPosSeq_))
+      positionSeq_(new BodyPositionSeq(*org.positionSeq_))
 {
-    for(ExtraSeqMap::const_iterator p = org.extraSeqs.begin(); p != org.extraSeqs.end(); ++p){
-        extraSeqs.insert(ExtraSeqMap::value_type(p->first, p->second->cloneSeq()));
+    for(auto& kv : org.extraSeqs){
+        extraSeqs.insert(ExtraSeqMap::value_type(kv.first, kv.second->cloneSeq()));
     }
 }
 
@@ -42,14 +43,12 @@ BodyMotion& BodyMotion::operator=(const BodyMotion& rhs)
     if(this != &rhs){
         AbstractSeq::operator=(rhs);
     }
-    *positionSeq_ = *rhs.positionSeq_;
-    *linkPosSeq_ = *rhs.linkPosSeq_;
-    *jointPosSeq_ = *rhs.jointPosSeq_;
 
-    //! \todo do copy instead of replacing the pointers to the cloned ones
+    *positionSeq_ = *rhs.positionSeq_;
+
     extraSeqs.clear();
-    for(ExtraSeqMap::const_iterator p = rhs.extraSeqs.begin(); p != rhs.extraSeqs.end(); ++p){
-        extraSeqs.insert(ExtraSeqMap::value_type(p->first, p->second->cloneSeq()));
+    for(auto& kv : rhs.extraSeqs){
+        extraSeqs.insert(ExtraSeqMap::value_type(kv.first, kv.second->cloneSeq()));
     }
     sigExtraSeqsChanged_();
 
@@ -63,15 +62,6 @@ std::shared_ptr<AbstractSeq> BodyMotion::cloneSeq() const
 }
 
 
-/*
-  This function sets the number of joints
-*/
-void BodyMotion::setNumJoints(int numJoints, bool clearNewElements)
-{
-    jointPosSeq_->setNumParts(numJoints, clearNewElements);
-}
-
-
 double BodyMotion::getFrameRate() const
 {
     return frameRate();
@@ -81,11 +71,9 @@ double BodyMotion::getFrameRate() const
 void BodyMotion::setFrameRate(double frameRate)
 {
     positionSeq_->setFrameRate(frameRate);
-    linkPosSeq_->setFrameRate(frameRate);
-    jointPosSeq_->setFrameRate(frameRate);
 
-    for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
-        p->second->setFrameRate(frameRate);
+    for(auto& kv : extraSeqs){
+        kv.second->setFrameRate(frameRate);
     }
 }
 
@@ -96,14 +84,12 @@ int BodyMotion::getNumFrames() const
 }
 
 
-void BodyMotion::setNumFrames(int n, bool clearNewArea)
+void BodyMotion::setNumFrames(int n, bool fillNewElements)
 {
     positionSeq_->setNumFrames(n);
-    linkPosSeq_->setNumFrames(n, clearNewArea);
-    jointPosSeq_->setNumFrames(n, clearNewArea);
 
-    for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
-        p->second->setNumFrames(n, clearNewArea);
+    for(auto& kv : extraSeqs){
+        kv.second->setNumFrames(n, fillNewElements);
     }
 }
 
@@ -117,24 +103,102 @@ double BodyMotion::getOffsetTime() const
 void BodyMotion::setOffsetTime(double time)
 {
     positionSeq_->setOffsetTime(time);
-    linkPosSeq_->setOffsetTime(time);
-    jointPosSeq_->setOffsetTime(time);
 
-    for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
-        p->second->setOffsetTime(time);
+    for(auto& kv : extraSeqs){
+        kv.second->setOffsetTime(time);
     }
-}    
+}
 
 
-void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool clearNewArea)
+std::shared_ptr<MultiSE3Seq> BodyMotion::getOrCreateLinkPosSeq()
+{
+    return getOrCreateExtraSeq<MultiSE3Seq>(
+        linkPosSeqKey_,
+        [this](MultiSE3Seq& seq){
+            seq.setSeqContentName(linkPosSeqKey_);
+            seq.setNumParts(positionSeq_->assumedNumLinkPositions());
+        });
+}
+
+
+std::shared_ptr<MultiValueSeq> BodyMotion::getOrCreateJointPosSeq()
+{
+    return getOrCreateExtraSeq<MultiValueSeq>(
+        jointPosSeqKey_,
+        [this](MultiValueSeq& seq){
+            seq.setSeqContentName(jointPosSeqKey_);
+            seq.setNumParts(positionSeq_->assumedNumJointDisplacements());
+        });
+}
+
+
+void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool fillNewElements)
 {
     positionSeq_->setNumFrames(numFrames);
-    linkPosSeq_->setDimension(numFrames, numLinks, clearNewArea);
-    jointPosSeq_->setDimension(numFrames, numJoints, clearNewArea);
+    positionSeq_->setAssumedNumJointDisplacements(numJoints);
+    positionSeq_->setAssumedNumLinkPositions(numLinks);
 
-    for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
-        p->second->setNumFrames(numFrames, clearNewArea);
+    for(auto& kv : extraSeqs){
+        auto& seq = kv.second;
+        bool done = false;
+        if(auto multiSeq = dynamic_pointer_cast<AbstractMultiSeq>(seq)){
+            if(multiSeq->seqContentName() == linkPosSeqKey_){
+                multiSeq->setDimension(numFrames, numLinks, fillNewElements);
+                done = true;
+            } else if(multiSeq->seqContentName() == jointPosSeqKey_){
+                multiSeq->setDimension(numFrames, numJoints, fillNewElements);
+                done = true;
+            }
+        }
+        if(!done){
+            seq->setNumFrames(numFrames, fillNewElements);
+        }
     }
+}
+
+
+void BodyMotion::setNumJoints(int numJoints, bool fillNewElements)
+{
+    positionSeq_->setAssumedNumJointDisplacements(numJoints);
+    if(auto seq = extraSeq<MultiValueSeq>(jointPosSeqKey_)){
+        seq->setNumParts(numJoints, fillNewElements);
+    }
+}
+
+
+std::shared_ptr<MultiSE3Seq> BodyMotion::linkPosSeq()
+{
+    return getOrCreateLinkPosSeq();
+}
+
+
+std::shared_ptr<const MultiSE3Seq> BodyMotion::linkPosSeq() const
+{
+    return const_cast<BodyMotion*>(this)->getOrCreateLinkPosSeq();
+}
+
+
+std::shared_ptr<MultiValueSeq> BodyMotion::jointPosSeq()
+{
+    return getOrCreateJointPosSeq();
+}
+
+
+std::shared_ptr<const MultiValueSeq> BodyMotion::jointPosSeq() const
+{
+    return const_cast<BodyMotion*>(this)->getOrCreateJointPosSeq();
+}
+
+
+const std::string& BodyMotion::linkPosSeqKey()
+{
+    return linkPosSeqKey_;
+}
+
+
+const std::string& BodyMotion::jointPosSeqKey()
+{
+    return jointPosSeqKey_;
 }
 
 
@@ -178,54 +242,14 @@ BodyMotion::ConstFrame::ConstFrame()
     
 static void copyBodyStateToFrame(const Body& body, BodyMotion::Frame& frame)
 {
-    int frameIndex = frame.frame();
-    BodyMotion& motion = frame.motion();
-    int numLinks = std::min(body.numLinks(), motion.numLinks());
-    int numJoints = std::min(body.numJoints(), motion.numJoints());
-
-    auto& pframe = motion.positionSeq()->frame(frameIndex);
-    pframe.allocate(numLinks, numJoints);
-
-    auto lframe = motion.linkPosSeq()->frame(frameIndex);
-    for(int i=0; i < numLinks; ++i){
-        auto& p = lframe[i];
-        p.set(body.link(i)->position());
-        pframe.linkPosition(i).set(p);
-    }
-
-    auto jframe = motion.jointPosSeq()->frame(frameIndex);
-    auto pjframe = pframe.jointDisplacements(); 
-    for(int i=0; i < numJoints; ++i){
-        auto q = body.joint(i)->q();
-        jframe[i] = q;
-        pjframe[i] = q;
-    }
+    body >> frame.motion().positionSeq()->allocateFrame(frame.frame());
 }
     
 
 template<class FrameType>
 static void copyFrameToBodyState(FrameType& frame, Body& body)
 {
-    auto& pframe = frame.motion().positionSeq()->frame(frame.frame());
-
-    int numLinkPositions = pframe.numLinkPositions();
-    if(numLinkPositions > 0){
-        int n = std::min(body.numLinks(), numLinkPositions);
-        for(int i=0; i < n; ++i){
-            auto link = body.link(i);
-            auto linkPosition = pframe.linkPosition(i);
-            link->setTranslation(linkPosition.translation());
-        }
-    }
-
-    int numJointDisplacements = pframe.numJointDisplacements();
-    if(numJointDisplacements > 0){
-        int n = std::min(body.numJoints(), numJointDisplacements);
-        auto q = pframe.jointDisplacements();
-        for(int i=0; i < n; ++i){
-            body.joint(i)->q() = q[i];
-        }
-    }
+    frame.motion().positionSeq()->frame(frame.frame()) >> body;
 }
 
 
@@ -357,6 +381,7 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
                 }
             } else if(type == "MultiValueSeq"){
                 if(content == jointContent){
+                    auto jointPosSeq_ = jointPosSeq();
                     loaded = jointPosSeq_->readSeq(component, os);
                     if(!loaded) break;
                     jointPosSeq_->setSeqContentName("MultiJointDisplacementSeq");
@@ -418,10 +443,12 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additional
 
             writer.startListing();
 
+            auto linkPosSeq_ = linkPosSeq();
             if(linkPosSeq_->numFrames() > 0){
                 linkPosSeq_->writeSeq(writer);
             }
 
+            auto jointPosSeq_ = jointPosSeq();
             if(jointPosSeq_->numFrames() > 0){
                 string orgContentName;
                 if(version < 3.0){
