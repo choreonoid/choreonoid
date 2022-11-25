@@ -192,9 +192,13 @@ public:
     ScopedConnectionSet deviceStateConnections;
     vector<bool> deviceStateChangeFlag;
     unique_ptr<MultiDeviceStateSeq> deviceStateBuf;
+
     // For the direct output without recording mode
+    unique_ptr<BodyMotionEngineCore> bodyMotionEngine;
+    unique_ptr<BodyPositionSeq> lastPositionBuf;
     unique_ptr<MultiDeviceStateSeqEngineCore> deviceStateEngine;
     unique_ptr<MultiDeviceStateSeq> lastDeviceStateBuf;
+    bool hasLastPosition;
     bool hasLastDeviceStates;
 
     ItemPtr parentOfRecordItems;
@@ -220,9 +224,9 @@ public:
     void bufferBodyPosition(Body* body, BodyPositionSeqFrameBlock& block);
     void flushRecords();
     void flushRecordsToBodyMotionItems();
-    void flushRecordsToBody();
+    void flushRecordsToLastStateBuffers();
+    void updateFrontendBodyStatelWithLastRecords(double time);
     void flushRecordsToWorldLogFile(int bufferFrame);
-    void notifyRecords(double time);
 };
 
 
@@ -862,6 +866,10 @@ void SimulationBody::Impl::initializeRecordBuffers()
 {
     currentPositionBufIndex = 0;
 
+    bodyMotionEngine.reset();
+    lastPositionBuf.reset();
+    hasLastPosition = false;
+
     if(!isDynamic){
         numLinksToRecord = 0;
         numJointsToRecord = 0;
@@ -870,6 +878,11 @@ void SimulationBody::Impl::initializeRecordBuffers()
         numLinksToRecord = simImpl->isAllLinkPositionOutputMode ? body_->numLinks() : 1;
         numJointsToRecord = body_->numAllJoints();
         positionBuf = make_unique<BodyPositionSeq>();
+
+        if(!simImpl->isRecordingEnabled){
+            bodyMotionEngine = make_unique<BodyMotionEngineCore>(bodyItem);
+            lastPositionBuf = make_unique<BodyPositionSeq>(1);
+        }
     }
 
     const DeviceList<>& devices = body_->devices();
@@ -877,8 +890,8 @@ void SimulationBody::Impl::initializeRecordBuffers()
     deviceStateConnections.disconnect();
     deviceStateChangeFlag.clear();
     deviceStateChangeFlag.resize(numDevices, true); // set all the bits to store the initial states
-
     deviceStateBuf.reset();
+    
     deviceStateEngine.reset();
     lastDeviceStateBuf.reset();
     hasLastDeviceStates = false;
@@ -904,8 +917,8 @@ void SimulationBody::Impl::initializeRecordBuffers()
         }
 
         if(!simImpl->isRecordingEnabled){
-            lastDeviceStateBuf = make_unique<MultiDeviceStateSeq>(1, numDevices);
             deviceStateEngine = make_unique<MultiDeviceStateSeqEngineCore>(bodyItem);
+            lastDeviceStateBuf = make_unique<MultiDeviceStateSeq>(1, numDevices);
         }
     }
 }
@@ -1013,7 +1026,7 @@ void SimulationBody::Impl::bufferRecords()
         if(currentPositionBufIndex >= positionBuf->numFrames()){
             positionBuf->setNumFrames(currentPositionBufIndex + 1);
         }
-        auto& frame = (*positionBuf)[currentPositionBufIndex++];
+        auto& frame = positionBuf->frame(currentPositionBufIndex++);
         frame.allocate(numLinksToRecord, numJointsToRecord);
         bufferBodyPosition(body_, frame);
 
@@ -1065,7 +1078,7 @@ void SimulationBody::Impl::flushRecords()
     if(simImpl->isRecordingEnabled){
         flushRecordsToBodyMotionItems();
     } else {
-        flushRecordsToBody();
+        flushRecordsToLastStateBuffers();
     }
 
     currentPositionBufIndex = 0;
@@ -1091,7 +1104,7 @@ void SimulationBody::Impl::flushRecordsToBodyMotionItems()
             positionRecord->rotate();
             offsetChanged = true;
         }
-        auto& srcFrame = (*positionBuf)[i];
+        auto& srcFrame = positionBuf->frame(i);
         positionRecord->back() = srcFrame;
 
         if(numLinksToRecord > 0){
@@ -1153,12 +1166,17 @@ void SimulationBody::Impl::flushRecordsToBodyMotionItems()
 }
 
 
-void SimulationBody::Impl::flushRecordsToBody()
+// This function is called in the no-recording mode.
+void SimulationBody::Impl::flushRecordsToLastStateBuffers()
 {
     if(currentPositionBufIndex > 0){
         int lastFrame = currentPositionBufIndex - 1;
-        BodyMotionEngine::updateBodyPositionWithBodyPositionSeqFrame(bodyItem->body(), (*positionBuf)[lastFrame]);
+        lastPositionBuf->frame(0) = positionBuf->frame(lastFrame);
+        hasLastPosition = true;
+    } else {
+        hasLastPosition = false;
     }
+    
     if(deviceStateBuf){
         if(!deviceStateBuf->empty()){
             auto lastFrame = deviceStateBuf->lastFrame();
@@ -1171,6 +1189,18 @@ void SimulationBody::Impl::flushRecordsToBody()
 }
 
 
+// This function is called in the no-recording mode.
+void SimulationBody::Impl::updateFrontendBodyStatelWithLastRecords(double time)
+{
+    if(hasLastPosition){
+        bodyMotionEngine->updateBodyPosition(lastPositionBuf->frame(0));
+    }
+    if(hasLastDeviceStates){
+        deviceStateEngine->updateBodyDeviceStates(simImpl->currentTime_, lastDeviceStateBuf->lastFrame());
+    }
+}
+
+
 void SimulationBody::Impl::flushRecordsToWorldLogFile(int bufferFrame)
 {
     WorldLogFileItem* log = simImpl->worldLogFileItem;
@@ -1178,7 +1208,7 @@ void SimulationBody::Impl::flushRecordsToWorldLogFile(int bufferFrame)
     log->beginBodyStateOutput();
 
     if(positionBuf){
-        auto& frame = (*positionBuf)[bufferFrame];
+        auto& frame = positionBuf->frame(bufferFrame);
         if(numLinksToRecord > 0){
             log->outputLinkPositions(frame.linkPositionData(), numLinksToRecord);
         }
@@ -1198,20 +1228,6 @@ void SimulationBody::Impl::flushRecordsToWorldLogFile(int bufferFrame)
     }
 
     log->endBodyStateOutput();
-}
-
-
-/**
-   This function is called in the no recording mode
-*/
-void SimulationBody::Impl::notifyRecords(double time)
-{
-    if(isDynamic){
-        bodyItem->notifyKinematicStateChange(!simImpl->isAllLinkPositionOutputMode);
-    }
-    if(hasLastDeviceStates){
-        deviceStateEngine->updateBodyDeviceStates(simImpl->currentTime_, lastDeviceStateBuf->lastFrame());
-    }
 }
 
 
@@ -2345,7 +2361,7 @@ void SimulatorItem::Impl::flushRecords()
     if(!isRecordingEnabled){
         const double time = frame / worldFrameRate;
         for(auto& simBody : activeSimBodies){
-            simBody->impl->notifyRecords(time);
+            simBody->impl->updateFrontendBodyStatelWithLastRecords(time);
         }
     }
 
