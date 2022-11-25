@@ -1,4 +1,5 @@
 #include "BodyPositionSeq.h"
+#include "Body.h"
 
 using namespace std;
 using namespace cnoid;
@@ -27,12 +28,99 @@ BodyPositionSeqFrame::BodyPositionSeqFrame(BodyPositionSeqFrame&& org)
 BodyPositionSeq::BodyPositionSeq(int numFrames)
     : Seq<BodyPositionSeqFrame>("BodyPositionSeq", numFrames)
 {
-
+    assumedNumLinkPositions_ = 0;
+    assumedNumJointDisplacements_ = 0;
 }
 
 
 BodyPositionSeq::BodyPositionSeq(const BodyPositionSeq& org)
     : Seq<BodyPositionSeqFrame>(org)
 {
+    assumedNumLinkPositions_ = org.assumedNumLinkPositions_;
+    assumedNumJointDisplacements_ = org.assumedNumJointDisplacements_;
+}
 
+
+static void setBodyPositionToBodyPositionSeqFrameBlock(const Body& body, BodyPositionSeqFrameBlock block)
+{
+    int numLinks = std::min(body.numLinks(), block.numLinkPositions());
+    for(int i=0; i < numLinks; ++i){
+        block.linkPosition(i).set(body.link(i)->position());
+    }
+    int numJoints = std::min(body.numJoints(), block.numJointDisplacements());
+    auto displacements = block.jointDisplacements();
+    for(int i=0; i < numJoints; ++i){
+        displacements[i] = body.joint(i)->q();
+    }
+}
+
+
+static void updateBodyPositionWithSeqFrameBlockToBody(Body& body, const BodyPositionSeqFrameBlock block)
+{
+    int numLinks = std::min(body.numLinks(), block.numLinkPositions());
+    for(int i=0; i < numLinks; ++i){
+        auto linkPosition = block.linkPosition(i);
+        auto link = body.link(i);
+        link->setTranslation(linkPosition.translation());
+        link->setRotation(linkPosition.rotation());
+    }
+    int numJoints = std::min(body.numJoints(), block.numJointDisplacements());
+    auto displacements = block.jointDisplacements();
+    for(int i=0; i < numJoints; ++i){
+        body.joint(i)->q() = displacements[i];
+    }
+}
+
+
+/**
+   \note The buffer of the frame must be allocated and the allocated number of link positions and joint displacements
+   are copied regardless of the actual number of links and joints in the body
+*/
+BodyPositionSeqFrame& cnoid::operator<<(BodyPositionSeqFrame& frame, const Body& body)
+{
+    setBodyPositionToBodyPositionSeqFrameBlock(body, frame);
+    return frame;
+}
+
+
+BodyPositionSeqFrame& cnoid::operator>>(BodyPositionSeqFrame& frame, Body& body)
+{
+    updateBodyPositionWithSeqFrameBlockToBody(body, frame);
+    return frame;
+}
+
+
+const BodyPositionSeqFrame& cnoid::operator>>(const BodyPositionSeqFrame& frame, Body& body)
+{
+    updateBodyPositionWithSeqFrameBlockToBody(body, frame);
+    return frame;
+}
+
+
+Body& cnoid::operator<<(Body& body, const BodyPositionSeqFrame& frame)
+{
+    updateBodyPositionWithSeqFrameBlockToBody(body, frame);
+    return body;
+}
+
+
+/**
+   \note The buffer of the frame must be allocated and the allocated number of link positions and joint displacements
+   are copied regardless of the actual number of links and joints in the body
+*/
+Body& cnoid::operator>>(Body& body, BodyPositionSeqFrame& frame)
+{
+    setBodyPositionToBodyPositionSeqFrameBlock(body, frame);
+    return body;
+}
+
+
+/**
+   \note The buffer of the frame must be allocated and the allocated number of link positions and joint displacements
+   are copied regardless of the actual number of links and joints in the body
+*/
+const Body& cnoid::operator>>(const Body& body, BodyPositionSeqFrame& frame)
+{
+    setBodyPositionToBodyPositionSeqFrameBlock(body, frame);
+    return body;
 }

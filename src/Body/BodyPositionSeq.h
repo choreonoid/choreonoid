@@ -127,11 +127,12 @@ public:
         pdata = nullptr;
     }
     
-    void allocate(int numLinks, int numJoints){
+    BodyPositionSeqFrame& allocate(int numLinks, int numJoints){
         data.resize(numLinks * LinkPositionSize + numJoints + 2);
         data[0] = numLinks;
         data[numLinks * LinkPositionSize + 1] = numJoints;
         pdata = data.data();
+        return *this;
     }
 
     BodyPositionSeqFrameBlock extend(int numLinks, int numJoints){
@@ -180,7 +181,37 @@ class CNOID_EXPORT BodyPositionSeq : public Seq<BodyPositionSeqFrame>
 public:
     BodyPositionSeq(int numFrames = 0);
     BodyPositionSeq(const BodyPositionSeq& org);
+
+    int assumedNumLinkPositions() const { return assumedNumLinkPositions_; }
+    void setAssumedNumLinkPositions(int n) { assumedNumLinkPositions_ = n; }
+    
+    int assumedNumJointDisplacements() const { return assumedNumJointDisplacements_; }
+    void setAssumedNumJointDisplacements(int n) { assumedNumJointDisplacements_ = n; }
+
+    BodyPositionSeqFrame& appendAllocatedFrame(){
+        return append().allocate(assumedNumLinkPositions_, assumedNumJointDisplacements_);
+    }
+
+    BodyPositionSeqFrame& allocateFrame(int index){
+        if(index >= numFrames()){
+            setNumFrames(index + 1);
+        }
+        return frame(index).allocate(assumedNumLinkPositions_, assumedNumJointDisplacements_);
+    }
+
+private:
+    int assumedNumLinkPositions_;
+    int assumedNumJointDisplacements_;
 };
+
+class Body;
+
+CNOID_EXPORT BodyPositionSeqFrame& operator<<(BodyPositionSeqFrame& frame, const Body& body);
+CNOID_EXPORT BodyPositionSeqFrame& operator>>(BodyPositionSeqFrame& frame, Body& body);
+CNOID_EXPORT const BodyPositionSeqFrame& operator>>(const BodyPositionSeqFrame& frame, Body& body);
+CNOID_EXPORT Body& operator<<(Body& body, const BodyPositionSeqFrame& frame);
+CNOID_EXPORT Body& operator>>(Body& body, BodyPositionSeqFrame& frame);
+CNOID_EXPORT const Body& operator>>(const Body& body, BodyPositionSeqFrame& frame);
 
 }
 
