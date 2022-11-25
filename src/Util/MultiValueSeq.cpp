@@ -25,8 +25,8 @@ MultiValueSeq::MultiValueSeq()
 }
 
 
-MultiValueSeq::MultiValueSeq(int numFrames, int numParts)
-    : BaseSeqType("MultiValueSeq", numFrames, numParts)
+MultiValueSeq::MultiValueSeq(int numFrames, int numParts, bool initializeElements)
+    : BaseSeqType("MultiValueSeq", numFrames, numParts, initializeElements)
 {
 
 }

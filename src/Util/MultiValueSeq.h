@@ -18,7 +18,7 @@ class CNOID_EXPORT MultiValueSeq : public MultiSeq<double>
             
 public:
     MultiValueSeq();
-    MultiValueSeq(int numFrames, int numParts = 1);
+    MultiValueSeq(int numFrames, int numParts = 1, bool initializeElements = false);
     MultiValueSeq(const MultiValueSeq& org);
     virtual ~MultiValueSeq();
 
