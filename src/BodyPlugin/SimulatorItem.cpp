@@ -205,8 +205,6 @@ public:
     string recordItemPrefix;
     shared_ptr<BodyMotion> motion;
     shared_ptr<BodyPositionSeq> positionRecord;
-    shared_ptr<MultiValueSeq> jointPosRecord;
-    shared_ptr<MultiSE3Seq> linkPosRecord;
     shared_ptr<MultiDeviceStateSeq> deviceStateRecord;
 
     Impl(SimulationBody* self, Body* body);
@@ -955,8 +953,6 @@ void SimulationBody::Impl::initializeRecordItems()
     motion->setDimension(0, numJointsToRecord, numLinksToRecord);
     motion->setOffsetTime(0.0);
     positionRecord = motion->positionSeq();
-    jointPosRecord = motion->jointPosSeq();
-    linkPosRecord = motion->linkPosSeq();
 
     if(deviceStateBuf){
         deviceStateRecord = getOrCreateMultiDeviceStateSeq(*motion);
@@ -1106,32 +1102,6 @@ void SimulationBody::Impl::flushRecordsToBodyMotionItems()
         }
         auto& srcFrame = positionBuf->frame(i);
         positionRecord->back() = srcFrame;
-
-        if(numLinksToRecord > 0){
-            if(linkPosRecord->numFrames() >= ringBufferSize){
-                linkPosRecord->popFrontFrame();
-                offsetChanged = true;
-            }
-            auto destFrame = linkPosRecord->appendFrame();
-            for(int j=0; j < numLinksToRecord; ++j){
-                auto srcPosition = srcFrame.linkPosition(j);
-                auto& destPosition = destFrame[j];
-                destPosition.translation() = srcPosition.translation();
-                destPosition.rotation() = srcPosition.rotation();
-            }
-        }
-
-        if(numJointsToRecord > 0){
-            if(jointPosRecord->numFrames() >= ringBufferSize){
-                jointPosRecord->popFrontFrame();
-                offsetChanged = true;
-            }
-            auto displacements = srcFrame.jointDisplacements();
-            auto destFrame = jointPosRecord->appendFrame();
-            for(int j=0; j < numJointsToRecord; ++j){
-                destFrame[j] = displacements[j];
-            }
-        }
     }
 
     if(deviceStateBuf){
@@ -1149,15 +1119,8 @@ void SimulationBody::Impl::flushRecordsToBodyMotionItems()
     if(offsetChanged){
         const int nextFrame = simImpl->currentFrame + 1;
         int offset = nextFrame - ringBufferSize;
-
         if(positionRecord){
             positionRecord->setOffsetTimeFrame(offset);
-        }
-        if(numLinksToRecord > 0){
-            linkPosRecord->setOffsetTimeFrame(offset);
-        }
-        if(numJointsToRecord > 0){
-            jointPosRecord->setOffsetTimeFrame(offset);
         }
         if(deviceStateBuf){
             deviceStateRecord->setOffsetTimeFrame(offset);
