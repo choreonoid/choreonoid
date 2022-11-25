@@ -109,8 +109,18 @@ public:
     BodyPositionSeqFrame();
     BodyPositionSeqFrame(const BodyPositionSeqFrame& org);
     BodyPositionSeqFrame(BodyPositionSeqFrame&& org);
-    BodyPositionSeqFrame& operator=(const BodyPositionSeqFrame& rhs);
-    BodyPositionSeqFrame& operator=(BodyPositionSeqFrame&& rhs);
+    
+    BodyPositionSeqFrame& operator=(const BodyPositionSeqFrame& rhs){
+        data = rhs.data;
+        pdata = data.data();
+        return *this;
+    }
+
+    BodyPositionSeqFrame& operator=(BodyPositionSeqFrame&& rhs){
+        data = std::move(rhs.data);
+        pdata = data.data();
+        return *this;
+    }
 
     void clear(){
         data.clear();
@@ -168,7 +178,7 @@ private:
 class CNOID_EXPORT BodyPositionSeq : public Seq<BodyPositionSeqFrame>
 {
 public:
-    BodyPositionSeq();
+    BodyPositionSeq(int numFrames = 0);
     BodyPositionSeq(const BodyPositionSeq& org);
 };
 

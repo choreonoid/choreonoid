@@ -24,24 +24,8 @@ BodyPositionSeqFrame::BodyPositionSeqFrame(BodyPositionSeqFrame&& org)
 }
 
 
-BodyPositionSeqFrame& BodyPositionSeqFrame::operator=(const BodyPositionSeqFrame& rhs)
-{
-    data = rhs.data;
-    pdata = data.data();
-    return *this;
-}
-
-
-BodyPositionSeqFrame& BodyPositionSeqFrame::operator=(BodyPositionSeqFrame&& rhs)
-{
-    data = std::move(rhs.data);
-    pdata = data.data();
-    return *this;
-}
-
-
-BodyPositionSeq::BodyPositionSeq()
-    : Seq<BodyPositionSeqFrame>("BodyPositionSeq")
+BodyPositionSeq::BodyPositionSeq(int numFrames)
+    : Seq<BodyPositionSeqFrame>("BodyPositionSeq", numFrames)
 {
 
 }
