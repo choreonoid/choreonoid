@@ -352,6 +352,8 @@ void SplineFilterDialog::onAccepted()
     ItemList<BodyMotionItem> bItems = items;
     for(int i=0; i < bItems.size(); ++i){
         auto motion = bItems[i]->motion();
+        motion->updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
+        
         double ifps = inputFrameRateCheck.isChecked()  ? inputFrameRateSpin.value()  : motion->frameRate();
         double ofps = outputFrameRateCheck.isChecked() ? outputFrameRateSpin.value() : motion->frameRate();
         
@@ -360,6 +362,8 @@ void SplineFilterDialog::onAccepted()
 
         applySplineFilter(*motion->jointPosSeq(), ifps, ofps, ratio);
         applySplineFilter(*motion->linkPosSeq(), ifps, ofps, ratio);
+
+        motion->updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
 
         if(auto zmpSeq = getZMPSeq(*motion)){
             applySplineFilter(*zmpSeq, ifps, ofps, ratio);

@@ -907,6 +907,7 @@ bool PoseSeqItem::updatePosesWithBalancedTrajectories(std::ostream& os)
 bool PoseSeqItem::Impl::updatePosesWithBalancedTrajectories(std::ostream& os)
 {
     auto motion = bodyMotionItem->motion();
+    motion->updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
     auto qseq = motion->jointPosSeq();
     auto pseq = motion->linkPosSeq();
 

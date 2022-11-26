@@ -350,6 +350,7 @@ int KinematicFaultChecker::Impl::checkFaults
 
     auto body = bodyItem->body();
     auto motion = motionItem->motion();
+    motion->updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
     auto qseq = motion->jointPosSeq();;
     auto pseq = motion->linkPosSeq();
     

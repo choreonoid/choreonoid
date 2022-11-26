@@ -97,6 +97,7 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
     }
 
     auto motion = motionItem->motion();
+    motion->updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
 
     qseqRef = static_pointer_cast<MultiValueSeq>(motion->jointPosSeq()->cloneSeq());
 

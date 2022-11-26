@@ -120,6 +120,8 @@ void cnoid::clearZMPSeq(BodyMotion& motion)
 
 bool cnoid::makeRootRelative(ZMPSeq& zmpseq, BodyMotion& motion, bool on)
 {
+    motion.updateLinkPosSeqWithBodyPositionSeq();
+    
     if(zmpseq.isRootRelative() != on){
         MultiSE3Seq::Part rootSeq = motion.linkPosSeq()->part(0);
         if(rootSeq.empty()){

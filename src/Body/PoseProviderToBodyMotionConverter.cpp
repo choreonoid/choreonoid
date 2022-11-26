@@ -131,5 +131,7 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
     rootLink->R() = R0;
     body->calcForwardKinematics();
 
+    motion.updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
+
     return true;
 }

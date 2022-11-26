@@ -517,7 +517,9 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
         }
     }
     
-    if(!loaded){
+    if(loaded){
+        updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
+    } else {
         setDimension(0, 1, 1);
     }
     
@@ -527,6 +529,8 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
 
 bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
+    updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
+    
     double version = writer.getOrCreateInfo("formatVersion", 3.0);
     bool isVersion1 = version >= 1.0 && version < 2.0;
     if(version < 2.0){

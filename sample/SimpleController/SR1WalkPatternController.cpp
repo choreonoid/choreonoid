@@ -75,6 +75,7 @@ public:
             io->os() << motion.seqMessage() << endl;
             return false;
         }
+        motion.updateJointPosSeqWithBodyPositionSeq();
         qseq = motion.jointPosSeq();
         if(qseq->numFrames() == 0){
             io->os() << "Empty motion data." << endl;

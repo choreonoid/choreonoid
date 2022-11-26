@@ -171,6 +171,8 @@ public:
             }
         }
 
+        motion->updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
+
         return true;
     }
 

@@ -248,6 +248,10 @@ bool WaistBalancer::apply(PoseProvider* provider_, BodyMotion& motion, bool putA
     rootLink->R() = R0;
     body_->calcForwardKinematics();
 
+    if(result){
+        motion.updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
+    }
+
     return result;
 }
 

@@ -138,7 +138,9 @@ bool GRobotControllerItem::onPlaybackInitialized(double time)
     if(bodyItem){
         auto motionItem = bodyItem->selectedDescendantItems<BodyMotionItem>().toSingle();
         if(motionItem){
-            auto qseq = motionItem->jointPosSeq();
+            auto motion = motionItem->motion();
+            motion->updateJointPosSeqWithBodyPositionSeq();
+            auto qseq = motion->jointPosSeq();
             if(qseq->numFrames() > 0 && qseq->numParts() == controller->numJoints()){
                 if(controller->setMotion(&qseq->at(0, 0), qseq->numFrames(), qseq->getTimeStep())){
                     TimeBar* timeBar = TimeBar::instance();
