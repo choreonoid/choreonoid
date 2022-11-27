@@ -96,7 +96,9 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
         }
     }
 
-    qseqRef = motionItem->motion()->jointPosSeq();
+    auto motion = motionItem->motion();
+
+    qseqRef = static_pointer_cast<MultiValueSeq>(motion->jointPosSeq()->cloneSeq());
 
     if(qseqRef->numFrames() == 0){
         mv->putln(
@@ -114,7 +116,7 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
 
     body = io->body();
 
-    auto lseq = motionItem->motion()->linkPosSeq();
+    auto lseq = motion->linkPosSeq();
     if(lseq->numParts() > 0 && lseq->numFrames() > 0){
         SE3& p = lseq->at(0, 0);
         Link* rootLink = body->rootLink();
