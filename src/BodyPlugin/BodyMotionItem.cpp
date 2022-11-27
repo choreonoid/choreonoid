@@ -2,10 +2,12 @@
 #include "BodyItem.h"
 #include <cnoid/MultiSeqItemCreationPanel>
 #include <cnoid/ItemManager>
+#include <cnoid/MenuManager>
 #include <cnoid/MultiSE3SeqItem>
 #include <cnoid/MultiValueSeqItem>
 #include <cnoid/ZMPSeq>
 #include <cnoid/MessageView>
+#include <cnoid/ItemTreeView>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <fmt/format.h>
@@ -162,6 +164,18 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
                 item->setName("Joint");
             }
             return item;
+        });
+
+    ItemTreeView::customizeContextMenu<BodyMotionItem>(
+        [](BodyMotionItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
+            menuManager.setPath("/").setPath(_("Data conversion"));
+            menuManager.addItem(_("Generate old-format position data items"))->sigTriggered().connect(
+                [item](){ item->motion()->updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq(); });
+            menuManager.addItem(_("Restore position data from old-format data items"))->sigTriggered().connect(
+                [item](){ item->motion()->updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq(); });
+            menuManager.setPath("/");
+            menuManager.addSeparator();
+            menuFunction.dispatchAs<Item>(item);
         });
 
     initialized = true;
@@ -379,7 +393,12 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
 void BodyMotionItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     AbstractSeqItem::doPutProperties(putProperty);
+
+    auto pseq = bodyMotion_->positionSeq();
     
+    putProperty(_("Number of link positions"), pseq->numLinkPositionsHint());
+    putProperty(_("Number of joint displacements"), pseq->numJointDisplacementsHint());
+
     putProperty(_("Body joint velocity update"), isBodyJointVelocityUpdateEnabled_,
                 changeProperty(isBodyJointVelocityUpdateEnabled_));
 }

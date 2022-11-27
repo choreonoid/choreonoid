@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-18 12:58+0900\n"
+"POT-Creation-Date: 2022-12-01 10:20+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -391,6 +391,15 @@ msgstr "ボディモーション"
 msgid "Body Motion (version 1.0)"
 msgstr "ボディモーション バージョン 1.0"
 
+msgid "Data conversion"
+msgstr "データ変換"
+
+msgid "Generate old-format position data items"
+msgstr "旧形式位置データアイテムの生成"
+
+msgid "Restore position data from old-format data items"
+msgstr "位置データを旧形式データアイテムから復元"
+
 msgid "Confirm"
 msgstr "確認"
 
@@ -399,6 +408,12 @@ msgstr "{}のデータを上書きしますか？"
 
 msgid "Do you add the data of \"{0}\" to \"{1}\" as a sequence data element?"
 msgstr "\"{0}\" のデータを \"{1}\" のシーケンスデータ要素として追加しますか？"
+
+msgid "Number of link positions"
+msgstr "リンク位置数"
+
+msgid "Number of joint displacements"
+msgstr "関節変位数"
 
 msgid "Body joint velocity update"
 msgstr "ボディ関節速度の更新"
