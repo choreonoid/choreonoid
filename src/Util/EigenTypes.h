@@ -101,6 +101,10 @@ public:
         p = T.translation();
         q = T.linear();
     }
+    void clear(){
+        p.setZero();
+        q.setIdentity();
+    }
 
     Vector3& translation() { return p; }
     const Vector3& translation() const { return p; }

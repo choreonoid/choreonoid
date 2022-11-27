@@ -45,11 +45,22 @@ public:
     int numLinks() const { return positionSeq_->numLinkPositionsHint(); }
     int numJoints() const { return positionSeq_->numJointDisplacementsHint(); }
 
+    //[[deprecated("Use positionSeq.")]]
     std::shared_ptr<MultiSE3Seq> linkPosSeq();
+    //[[deprecated("Use positionSeq.")]]
     std::shared_ptr<const MultiSE3Seq> linkPosSeq() const;
+    //[[deprecated("Use positionSeq.")]]
     std::shared_ptr<MultiValueSeq> jointPosSeq();
+    //[[deprecated("Use positionSeq.")]]
     std::shared_ptr<const MultiValueSeq> jointPosSeq() const;
 
+    /*
+      The linkPosSeq and jointPosSeq data members were replaced with a new data format,
+      the positionSeq member. The codes that use the old members should be modified to
+      use the new member, or you can convert the data by inserting the following functions.
+    */
+    void updateLinkPosSeqWithBodyPositionSeq();
+    void updateJointPosSeqWithBodyPositionSeq();
     void updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
     void updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
 

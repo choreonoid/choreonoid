@@ -202,6 +202,109 @@ const std::string& BodyMotion::jointPosSeqKey()
 }
 
 
+void BodyMotion::updateLinkPosSeqWithBodyPositionSeq()
+{
+    auto lseq = getOrCreateLinkPosSeq();
+    const int numLinkPosSeqParts = lseq->numParts();
+    if(numLinkPosSeqParts > 0){
+        const int n = numFrames();
+        for(int i=0; i < n; ++i){
+            auto& pframe = positionSeq_->frame(i);
+            auto lframe = lseq->frame(i);
+            int linkIndex = 0;
+            int m = std::min(numLinkPosSeqParts, pframe.numLinkPositions());
+            while(linkIndex < m){
+                auto linkPosition = pframe.linkPosition(linkIndex);
+                lframe[linkIndex].set(linkPosition.translation(), linkPosition.rotation());
+                ++linkIndex;
+            }
+            while(linkIndex < numLinkPosSeqParts){
+                lframe[linkIndex].clear();
+            }
+        }
+    }
+}
+
+
+void BodyMotion::updateJointPosSeqWithBodyPositionSeq()
+{
+    auto jseq = getOrCreateJointPosSeq();
+    const int numJointPosSeqParts = jseq->numParts();
+    if(numJointPosSeqParts > 0){
+        const int n = numFrames();
+        for(int i=0; i < n; ++i){
+            auto& pframe = positionSeq_->frame(i);
+            int jointIndex = 0;
+            auto jframe = jseq->frame(i);
+            auto displacements = pframe.jointDisplacements();
+            int m = std::min(numJointPosSeqParts, pframe.numJointDisplacements());
+            while(jointIndex < m){
+                jframe[jointIndex] = displacements[jointIndex];
+                ++jointIndex;
+            }
+            while(jointIndex < numJointPosSeqParts){
+                jframe[jointIndex] = 0.0;
+            }
+        }
+    }
+}
+
+
+void BodyMotion::updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq()
+{
+    updateLinkPosSeqWithBodyPositionSeq();
+    updateJointPosSeqWithBodyPositionSeq();
+}
+
+
+void BodyMotion::updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq()
+{
+    shared_ptr<AbstractSeq> srcSeq;
+
+    int numLinkPosSeqParts = 0;
+    auto lseq = extraSeq<MultiSE3Seq>(linkPosSeqKey_);
+    if(lseq){
+        numLinkPosSeqParts = lseq->numParts();
+        srcSeq = lseq;
+    }
+    
+    int numJointPosSeqParts = 0;
+    auto jseq = extraSeq<MultiValueSeq>(jointPosSeqKey_);
+    if(jseq){
+        numJointPosSeqParts = jseq->numParts();
+        if(!srcSeq){
+            srcSeq = jseq;
+        }
+    }
+
+    int numSrcFrames = srcSeq->getNumFrames();
+    positionSeq_->setNumLinkPositionsHint(numLinkPosSeqParts);
+    positionSeq_->setNumJointDisplacementsHint(numJointPosSeqParts);
+    positionSeq_->setNumFrames(numSrcFrames);
+    positionSeq_->setFrameRate(srcSeq->getFrameRate());
+    positionSeq_->setOffsetTime(srcSeq->getOffsetTime());
+    
+    for(int i=0; i < numSrcFrames; ++i){
+        auto& pframe = positionSeq_->allocateFrame(i);
+
+        if(numLinkPosSeqParts > 0){
+            auto lframe = lseq->frame(i);
+            for(int j=0; j < numLinkPosSeqParts; ++j){
+                auto linkPosition = pframe.linkPosition(j);
+                linkPosition.set(lframe[j]);
+            }
+        }
+        if(numJointPosSeqParts > 0){
+            auto jframe = jseq->frame(i);
+            auto displacements = pframe.jointDisplacements();
+            for(int j=0; j < numJointPosSeqParts; ++j){
+                displacements[j] = jframe[j];
+            }
+        }
+    }
+}
+
+
 void BodyMotion::setExtraSeq(const std::string& name, std::shared_ptr<AbstractSeq> seq)
 {
     extraSeqs[name] = seq;
@@ -381,10 +484,10 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
                 }
             } else if(type == "MultiValueSeq"){
                 if(content == jointContent){
-                    auto jointPosSeq_ = jointPosSeq();
-                    loaded = jointPosSeq_->readSeq(component, os);
+                    auto jseq = jointPosSeq();
+                    loaded = jseq->readSeq(component, os);
                     if(!loaded) break;
-                    jointPosSeq_->setSeqContentName("MultiJointDisplacementSeq");
+                    jseq->setSeqContentName("MultiJointDisplacementSeq");
                 } else {
                     os << format(_("Unknown content \"{0}\" of type \"{1}\"."), content, type) << endl;
                 }
@@ -443,25 +546,25 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additional
 
             writer.startListing();
 
-            auto linkPosSeq_ = linkPosSeq();
-            if(linkPosSeq_->numFrames() > 0){
-                linkPosSeq_->writeSeq(writer);
+            auto lseq = linkPosSeq();
+            if(lseq->numFrames() > 0){
+                lseq->writeSeq(writer);
             }
 
-            auto jointPosSeq_ = jointPosSeq();
-            if(jointPosSeq_->numFrames() > 0){
+            auto jseq = jointPosSeq();
+            if(jseq->numFrames() > 0){
                 string orgContentName;
                 if(version < 3.0){
-                    orgContentName = jointPosSeq_->seqContentName();
+                    orgContentName = jseq->seqContentName();
                     if(version >= 2.0){
-                        jointPosSeq_->setSeqContentName("JointDisplacement");
+                        jseq->setSeqContentName("JointDisplacement");
                     } else {
-                        jointPosSeq_->setSeqContentName("JointPosition");
+                        jseq->setSeqContentName("JointPosition");
                     }
                 }
-                jointPosSeq_->writeSeq(writer);
+                jseq->writeSeq(writer);
                 if(version < 3.0){
-                    jointPosSeq_->setSeqContentName(orgContentName);
+                    jseq->setSeqContentName(orgContentName);
                 }
             }
             
