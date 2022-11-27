@@ -4,6 +4,7 @@
 #include <cnoid/Seq>
 #include <cnoid/EigenTypes>
 #include <vector>
+#include <algorithm>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -26,36 +27,41 @@ public:
         return pdata ? pdata[static_cast<int>(pdata[0]) * LinkPositionSize + 1] : 0;
     }
 
+    // The order of the link position elements is x, y, z, qx, qy, qz, qw
     class LinkPosition {
     public:
         LinkPosition(double* pdata) : pdata(pdata) { }
+
+        LinkPosition& operator=(const LinkPosition& rhs){
+            std::copy(rhs.pdata, rhs.pdata + 7, pdata);
+            return *this;
+        }
 
         Eigen::Map<Vector3> translation() { return Eigen::Map<Vector3>(pdata); }
         Eigen::Map<const Vector3> translation() const { return Eigen::Map<const Vector3>(pdata); }
         Eigen::Map<Quaternion> rotation() { return Eigen::Map<Quaternion>(pdata + 3); }
         Eigen::Map<const Quaternion> rotation() const { return Eigen::Map<const Quaternion>(pdata + 3); }
+        const Isometry3 position() const {
+            Isometry3 T;
+            T.translation() = translation();
+            T.linear() = rotation().toRotationMatrix();
+            return T;
+        }
+        const Isometry3 T() const {
+            return position();
+        }
 
         void set(const Isometry3& T){
-            auto p = T.translation();
-            for(int i=0; i < 3; ++i){
-                pdata[i] = p[i];
-            }
-            auto q = Quaternion(T.linear());
-            auto& coeffs = q.coeffs(); // x, y, z, w
-            for(int i=0; i < 4; ++i){
-                pdata[i + 3] = coeffs[i];
-            }
+            Eigen::Map<Vector3> translation(pdata);
+            translation = T.translation();
+            Eigen::Map<Quaternion> rotation(pdata + 3);
+            rotation = T.linear();
         }
-            
         void set(const SE3& position){
-            auto p = position.translation();
-            for(int i=0; i < 3; ++i){
-                pdata[i] = p[i];
-            }
-            auto& coeffs = position.rotation().coeffs(); // x, y, z, w
-            for(int i=0; i < 4; ++i){
-                pdata[i + 3] = coeffs[i];
-            }
+            Eigen::Map<Vector3> translation(pdata);
+            translation = position.translation();
+            Eigen::Map<Quaternion> rotation(pdata + 3);
+            rotation = position.rotation();
         }
         
     private:
@@ -79,7 +85,7 @@ public:
     }
     
     double& jointDisplacement(int index){
-        return pdata[static_cast<int>(pdata[0]) * LinkPositionSize + index + 1];
+        return pdata[static_cast<int>(pdata[0]) * LinkPositionSize + index + 2];
     }
 
     double jointDisplacement(int index) const {
@@ -182,26 +188,34 @@ public:
     BodyPositionSeq(int numFrames = 0);
     BodyPositionSeq(const BodyPositionSeq& org);
 
-    int assumedNumLinkPositions() const { return assumedNumLinkPositions_; }
-    void setAssumedNumLinkPositions(int n) { assumedNumLinkPositions_ = n; }
+    int numLinkPositionsHint() const { return numLinkPositionsHint_; }
+    void setNumLinkPositionsHint(int n) { numLinkPositionsHint_ = n; }
     
-    int assumedNumJointDisplacements() const { return assumedNumJointDisplacements_; }
-    void setAssumedNumJointDisplacements(int n) { assumedNumJointDisplacements_ = n; }
+    int numJointDisplacementsHint() const { return numJointDisplacementsHint_; }
+    void setNumJointDisplacementsHint(int n) { numJointDisplacementsHint_ = n; }
 
     BodyPositionSeqFrame& appendAllocatedFrame(){
-        return append().allocate(assumedNumLinkPositions_, assumedNumJointDisplacements_);
+        return append().allocate(numLinkPositionsHint_, numJointDisplacementsHint_);
     }
 
-    BodyPositionSeqFrame& allocateFrame(int index){
+    BodyPositionSeqFrame& allocateFrame(int index, int numLinks, int numJoints){
         if(index >= numFrames()){
             setNumFrames(index + 1);
         }
-        return frame(index).allocate(assumedNumLinkPositions_, assumedNumJointDisplacements_);
+        return frame(index).allocate(numLinks, numJoints);
     }
 
+    BodyPositionSeqFrame& allocateFrame(int index){
+        return allocateFrame(index, numLinkPositionsHint_, numJointDisplacementsHint_);
+    }
+
+    // TODO: Implement the following functions
+    // LinkPositionSeq linkPositionSeq(int linkIndex);
+    // JointDisplacementSeq jointDisplacementSeq(int jointId);
+
 private:
-    int assumedNumLinkPositions_;
-    int assumedNumJointDisplacements_;
+    int numLinkPositionsHint_;
+    int numJointDisplacementsHint_;
 };
 
 class Body;

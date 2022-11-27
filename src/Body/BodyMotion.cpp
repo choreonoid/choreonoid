@@ -116,7 +116,7 @@ std::shared_ptr<MultiSE3Seq> BodyMotion::getOrCreateLinkPosSeq()
         linkPosSeqKey_,
         [this](MultiSE3Seq& seq){
             seq.setSeqContentName(linkPosSeqKey_);
-            seq.setNumParts(positionSeq_->assumedNumLinkPositions());
+            seq.setNumParts(positionSeq_->numLinkPositionsHint());
         });
 }
 
@@ -127,7 +127,7 @@ std::shared_ptr<MultiValueSeq> BodyMotion::getOrCreateJointPosSeq()
         jointPosSeqKey_,
         [this](MultiValueSeq& seq){
             seq.setSeqContentName(jointPosSeqKey_);
-            seq.setNumParts(positionSeq_->assumedNumJointDisplacements());
+            seq.setNumParts(positionSeq_->numJointDisplacementsHint());
         });
 }
 
@@ -135,8 +135,8 @@ std::shared_ptr<MultiValueSeq> BodyMotion::getOrCreateJointPosSeq()
 void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool fillNewElements)
 {
     positionSeq_->setNumFrames(numFrames);
-    positionSeq_->setAssumedNumJointDisplacements(numJoints);
-    positionSeq_->setAssumedNumLinkPositions(numLinks);
+    positionSeq_->setNumJointDisplacementsHint(numJoints);
+    positionSeq_->setNumLinkPositionsHint(numLinks);
 
     for(auto& kv : extraSeqs){
         auto& seq = kv.second;
@@ -159,7 +159,7 @@ void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool f
 
 void BodyMotion::setNumJoints(int numJoints, bool fillNewElements)
 {
-    positionSeq_->setAssumedNumJointDisplacements(numJoints);
+    positionSeq_->setNumJointDisplacementsHint(numJoints);
     if(auto seq = extraSeq<MultiValueSeq>(jointPosSeqKey_)){
         seq->setNumParts(numJoints, fillNewElements);
     }

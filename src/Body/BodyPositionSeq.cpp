@@ -28,16 +28,16 @@ BodyPositionSeqFrame::BodyPositionSeqFrame(BodyPositionSeqFrame&& org)
 BodyPositionSeq::BodyPositionSeq(int numFrames)
     : Seq<BodyPositionSeqFrame>("BodyPositionSeq", numFrames)
 {
-    assumedNumLinkPositions_ = 0;
-    assumedNumJointDisplacements_ = 0;
+    numLinkPositionsHint_ = 0;
+    numJointDisplacementsHint_ = 0;
 }
 
 
 BodyPositionSeq::BodyPositionSeq(const BodyPositionSeq& org)
     : Seq<BodyPositionSeqFrame>(org)
 {
-    assumedNumLinkPositions_ = org.assumedNumLinkPositions_;
-    assumedNumJointDisplacements_ = org.assumedNumJointDisplacements_;
+    numLinkPositionsHint_ = org.numLinkPositionsHint_;
+    numJointDisplacementsHint_ = org.numJointDisplacementsHint_;
 }
 
 

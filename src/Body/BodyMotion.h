@@ -42,8 +42,8 @@ public:
 
     void setDimension(int numFrames, int numJoints, int numLinks, bool fillNewElements = false);
     void setNumJoints(int numJoints, bool fillNewElements = false);
-    int numLinks() const { return positionSeq_->assumedNumLinkPositions(); }
-    int numJoints() const { return positionSeq_->assumedNumJointDisplacements(); }
+    int numLinks() const { return positionSeq_->numLinkPositionsHint(); }
+    int numJoints() const { return positionSeq_->numJointDisplacementsHint(); }
 
     std::shared_ptr<MultiSE3Seq> linkPosSeq();
     std::shared_ptr<const MultiSE3Seq> linkPosSeq() const;
