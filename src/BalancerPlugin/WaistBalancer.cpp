@@ -248,10 +248,6 @@ bool WaistBalancer::apply(PoseProvider* provider_, BodyMotion& motion, bool putA
     rootLink->R() = R0;
     body_->calcForwardKinematics();
 
-    if(result){
-        motion.updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
-    }
-
     return result;
 }
 
@@ -388,7 +384,7 @@ bool WaistBalancer::calcBoundaryCmAdjustmentTrajectorySub(int begin, int directi
             Vector3 p = r * translation;
             boundaryCmAdjustmentTranslations[frame] = p;
             totalCmTranslations[frame] = p;
-			++i;
+            ++i;
         }
     }
 
@@ -849,34 +845,31 @@ bool WaistBalancer::applyCmTranslations(BodyMotion& motion, bool putAllLinkPosit
     }
     
     bool completed = true;
-
+    const int numLinkPositions = (putAllLinkPositions ? body_->numLinks() : 1);
     const int numJoints = body_->numJoints();
-    const int numLinksToPut = (putAllLinkPositions ? body_->numLinks() : 1);
-    
-    motion.setDimension(endingFrame + 1, numJoints, numLinksToPut, true);
-
-    MultiValueSeq& qseq = *motion.jointPosSeq();
-    MultiSE3Seq& pseq = *motion.linkPosSeq();
+    auto pseq = motion.positionSeq();
+    pseq->setNumLinkPositionsHint(numLinkPositions);
+    pseq->setNumJointDisplacementsHint(numJoints);
+    motion.setNumFrames(endingFrame + 1, true);
     auto zmpseq = getOrCreateZMPSeq(motion);
     zmpseq->setRootRelative(false);
 
     initBodyKinematics(beginningFrame, totalCmTranslations[beginningFrame]);
 
-    for(int frame = beginningFrame; frame <= endingFrame; ++frame){
+    for(int frameIndex = beginningFrame; frameIndex <= endingFrame; ++frameIndex){
 
-        completed &= updateBodyKinematics1(frame); 
+        completed &= updateBodyKinematics1(frameIndex); 
 
-        MultiValueSeq::Frame qs = qseq.frame(frame);
-        for(int i=0; i < numJoints; ++i){
-            qs[i] = body_->joint(i)->q();
-        }
-
-        zmpseq->at(frame) = zmp;
-        
-        for(int i=0; i < numLinksToPut; ++i){
+        auto& frame = pseq->allocateFrame(frameIndex);
+        for(int i=0; i < numLinkPositions; ++i){
             Link* link = body_->link(i);
-            pseq.at(frame, i).set(link->T());
+            frame.linkPosition(i).set(link->T());
         }
+        auto displacements = frame.jointDisplacements();
+        for(int i=0; i < numJoints; ++i){
+            displacements[i] = body_->joint(i)->q();
+        }
+        zmpseq->at(frameIndex) = zmp;
 
         updateBodyKinematics2();
     }

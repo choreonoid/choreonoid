@@ -907,17 +907,14 @@ bool PoseSeqItem::updatePosesWithBalancedTrajectories(std::ostream& os)
 bool PoseSeqItem::Impl::updatePosesWithBalancedTrajectories(std::ostream& os)
 {
     auto motion = bodyMotionItem->motion();
-    motion->updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
-    auto qseq = motion->jointPosSeq();
-    auto pseq = motion->linkPosSeq();
-
+    auto pseq = motion->positionSeq();
     double length = seq->endingTime();
     
-    if(qseq->timeLength() < length || pseq->timeLength() < length){
+    if(pseq->timeLength() < length){
         os << "Length of the interpolated trajectories is shorter than key pose sequence.";
         return false;
     }
-    if(pseq->numParts() < targetBodyItem->body()->numLinks()){
+    if(pseq->numLinkPositionsHint() < targetBodyItem->body()->numLinks()){
         os << "Not all link positions are available. Please do interpolate with \"Put all link positions\"";
         return false;
     }
@@ -925,24 +922,23 @@ bool PoseSeqItem::Impl::updatePosesWithBalancedTrajectories(std::ostream& os)
     beginEditing();
     
     for(auto it = seq->begin(); it != seq->end(); ++it){
-
         if(auto pose = it->get<BodyKeyPose>()){
-            
             seq->beginPoseModification(it);
-            
-            int nj = pose->numJoints();
-            int frame = qseq->frameOfTime(it->time());
-            MultiValueSeq::Frame q = qseq->frame(frame);
+
+            int frameIndex = pseq->frameOfTime(it->time());
+            auto& frame = pseq->frame(frameIndex);
+            int nj = std::min(pose->numJoints(), frame.numJointDisplacements());
+            auto displacements = frame.jointDisplacements();
             for(int i=0; i < nj; ++i){
                 if(pose->isJointValid(i)){
-                    pose->setJointDisplacement(i, q[i]);
+                    pose->setJointDisplacement(i, displacements[i]);
                 }
             }
-            MultiSE3Seq::Frame pos = pseq->frame(frame);
+
             for(auto ikLinkIter = pose->ikLinkBegin(); ikLinkIter != pose->ikLinkEnd(); ++ikLinkIter){
                 int linkIndex = ikLinkIter->first;
                 BodyKeyPose::LinkInfo& info = ikLinkIter->second;
-                const Vector3& p = pos[linkIndex].translation();
+                auto p = frame.linkPosition(linkIndex).translation();
                 // only update horizontal position
                 info.p()[0] = p[0];
                 info.p()[1] = p[1];
