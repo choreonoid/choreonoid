@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro NAKAOKA
-*/
-
 #include "PoseProviderToBodyMotionConverter.h"
 #include "Body.h"
 #include "LinkPath.h"
@@ -74,7 +69,7 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
     Vector3 p0 = rootLink->p();
     Matrix3 R0 = rootLink->R();
 
-    std::vector<stdx::optional<double>> jointPositions(numJoints);
+    std::vector<stdx::optional<double>> jointDisplacements(numJoints);
 
     for(int frame = beginningFrame; frame <= endingFrame; ++frame){
 
@@ -94,9 +89,9 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
         }
 
         MultiValueSeq::Frame qs = qseq.frame(frame);
-        provider->getJointPositions(jointPositions);
+        provider->getJointDisplacements(jointDisplacements);
         for(int i=0; i < numJoints; ++i){
-            const auto& q = jointPositions[i];
+            const auto& q = jointDisplacements[i];
             qs[i] = q ? *q : 0.0;
             body->joint(i)->q() = qs[i];
         }

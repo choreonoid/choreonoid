@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "BodyMotionPoseProvider.h"
 #include "JointPath.h"
 #include "LeggedBodyHelper.h"
@@ -21,23 +16,20 @@ inline long lround(double x) {
 
 BodyMotionPoseProvider::BodyMotionPoseProvider()
 {
-
+    isReady = false;
+    T_waist.setIdentity();
+    ZMP_.setZero();
 }
 
 
-BodyMotionPoseProvider::BodyMotionPoseProvider(Body* body_, std::shared_ptr<BodyMotion> motion)
-{
-    initialize(body_, motion);
-}
-
-
-void BodyMotionPoseProvider::initialize(Body* body__, std::shared_ptr<BodyMotion> motion)
+bool BodyMotionPoseProvider::setMotion(Body* body__, std::shared_ptr<BodyMotion> motion)
 {
     body_ = body__->clone();
-    this->motion = motion;
-    footLinkPositions.reset(new MultiSE3MatrixSeq());
+    positionSeq = motion->positionSeq();
+
     footLinks.clear();
     ikPaths.clear();
+    footLinkPositions.clear();
 
     LeggedBodyHelperPtr legged = getLeggedBodyHelper(body_);
     if(legged->isValid()){
@@ -55,58 +47,76 @@ void BodyMotionPoseProvider::initialize(Body* body__, std::shared_ptr<BodyMotion
     } else {
         ZMP_.setZero();
     }
-    updateMotion();
+
+    zmpSeq = getZMPSeq(*motion);
+
+    return updateMotion();
 }
 
 
 bool BodyMotionPoseProvider::updateMotion()
 {
-    const int numFrames = motion->numFrames();
-    footLinkPositions->setDimension(numFrames, footLinks.size());
-    footLinkPositions->setFrameRate(motion->frameRate());
-
-    auto qseq = motion->jointPosSeq();
-    auto pseq = motion->linkPosSeq();
-
-    zmpSeq = getZMPSeq(*motion);
-
-    if(pseq->numParts() < 1){
+    int numLinkPositions = std::min(body_->numLinks(), positionSeq->numLinkPositionsHint());
+    if(numLinkPositions < 1){
+        isReady = false;
         return false;
     }
-
-    Link* rootLink = body_->rootLink();
-    minNumJoints = std::min(body_->numJoints(), qseq->numParts());
-    qTranslated.resize(minNumJoints);
-
-    for(int frame=0; frame < numFrames; ++frame){
-
-        const SE3& p = pseq->at(frame, 0);
-        rootLink->p() = p.translation();
-        rootLink->R() = p.rotation().toRotationMatrix();
-
-        MultiValueSeq::Frame q = qseq->frame(frame);
-
-        for(int i=0; i < minNumJoints; ++i){
-            body_->joint(i)->q() = q[i];
+    bool doForwardKinematics = false;
+    for(auto& footLink : footLinks){
+        if(footLink->index() >= numLinkPositions){
+            doForwardKinematics = true;
+            break;
         }
+    }
+    const int numFrames = positionSeq->numFrames();
+    footLinkPositions.setDimension(numFrames, footLinks.size());
+    footLinkPositions.setFrameRate(positionSeq->frameRate());
 
-        body_->calcForwardKinematics();
-        
-        for(size_t i=0; i < footLinks.size(); ++i){
-            Link* footLink = footLinks[i];
-            Isometry3& p = footLinkPositions->at(frame, i);
-            p.translation() = footLink->p();
-            p.linear() = footLink->R();
+    numJointDisplacements = std::min(body_->numJoints(), positionSeq->numJointDisplacementsHint());
+    qTranslated.resize(numJointDisplacements);
+    
+    if(!doForwardKinematics){
+        for(int frameIndex = 0; frameIndex < numFrames; ++frameIndex){
+            auto& frame = positionSeq->frame(frameIndex);
+            for(size_t i=0; i < footLinks.size(); ++i){
+                auto footLink = footLinks[i];
+                Isometry3& T_foot = footLinkPositions(frameIndex, i);
+                auto position = frame.linkPosition(footLink->index());
+                T_foot.translation() = position.translation();
+                T_foot.linear() = position.rotation().toRotationMatrix();
+            }
+        }
+    } else {
+        auto rootLink = body_->rootLink();
+        for(int frameIndex = 0; frameIndex < numFrames; ++frameIndex){
+            auto& frame = positionSeq->frame(frameIndex);
+            auto position = frame.linkPosition(0);
+            rootLink->setTranslation(position.translation());
+            rootLink->setRotation(position.rotation());
+
+            auto displacements = frame.jointDisplacements();
+            for(int i=0; i < numJointDisplacements; ++i){
+                body_->joint(i)->q() = displacements[i];
+            }
+            body_->calcForwardKinematics();
+
+            for(size_t i=0; i < footLinks.size(); ++i){
+                auto footLink = footLinks[i];
+                Isometry3& T_foot = footLinkPositions(frameIndex, i);
+                T_foot.translation() = footLink->translation();
+                T_foot.linear() = footLink->R();
+            }
         }
     }
 
+    isReady = true;
     return true;
 }
 
 
 Body* BodyMotionPoseProvider::body() const
 {
-    return body_.get();
+    return body_;
 }
 
 
@@ -118,35 +128,41 @@ double BodyMotionPoseProvider::beginningTime() const
 
 double BodyMotionPoseProvider::endingTime() const
 {
-    return (motion->numFrames() - 1) / motion->frameRate();
+    if(isReady){
+        return (positionSeq->numFrames() - 1) / positionSeq->frameRate();
+    }
+    return 0.0;
 }
 
 
 bool BodyMotionPoseProvider::seek
 (double time, int waistLinkIndex, const Vector3& waistTranslation, bool applyWaistTranslation)
 {
-    int frame = lround(time * motion->frameRate());
-    if(frame >= motion->numFrames()){
-        frame = motion->numFrames() - 1;
-    }
-    const MultiValueSeq::Frame q = motion->jointPosSeq()->frame(frame);
-    for(int i=0; i < minNumJoints; ++i){
-        qTranslated[i] = q[i];
-    }
-
-    if(waistLinkIndex != 0){
+    if(!isReady || waistLinkIndex != 0){
         return false;
     }
     
-    const SE3& waist = motion->linkPosSeq()->at(frame, 0);
-    T_waist.translation() = waist.translation();
-    T_waist.linear() = Matrix3(waist.rotation());
+    int frameIndex = lround(time * positionSeq->frameRate());
+    if(frameIndex >= positionSeq->numFrames()){
+        frameIndex = positionSeq->numFrames() - 1;
+    }
+
+    auto& frame = positionSeq->frame(frameIndex);
+    auto displacements = frame.jointDisplacements();
+    for(int i=0; i < numJointDisplacements; ++i){
+        qTranslated[i] = displacements[i];
+    }
+
+    auto waistPosition = frame.linkPosition(0);
+    T_waist.translation() = waistPosition.translation();
+    T_waist.linear() = waistPosition.rotation().toRotationMatrix();
+    
     if(applyWaistTranslation){
         T_waist.translation() += waistTranslation;
         for(size_t i=0; i < footLinks.size(); ++i){
-            const Isometry3& foot = footLinkPositions->at(frame, i);
             auto ikPath = ikPaths[i];
-            ikPath->setBaseLinkGoal(T_waist).calcInverseKinematics(foot);
+            const Isometry3& T_foot = footLinkPositions(frameIndex, i);
+            ikPath->setBaseLinkGoal(T_waist).calcInverseKinematics(T_foot);
             for(int j=0; j < ikPath->numJoints(); ++j){
                 Link* joint = ikPath->joint(j);
                 qTranslated[joint->jointId()] = joint->q();
@@ -156,9 +172,9 @@ bool BodyMotionPoseProvider::seek
 
     if(zmpSeq){
         if(zmpSeq->isRootRelative()){
-            ZMP_.noalias() = T_waist.linear() * zmpSeq->at(frame) + T_waist.translation();
+            ZMP_.noalias() = T_waist.linear() * zmpSeq->at(frameIndex) + T_waist.translation();
         } else {
-            ZMP_.noalias() = zmpSeq->at(frame);
+            ZMP_.noalias() = zmpSeq->at(frameIndex);
         }
     }
     
@@ -191,9 +207,9 @@ bool BodyMotionPoseProvider::getBaseLinkPosition(Isometry3& out_T) const
 }
 
 
-void BodyMotionPoseProvider::getJointPositions(std::vector<stdx::optional<double>>& out_q) const
+void BodyMotionPoseProvider::getJointDisplacements(std::vector<stdx::optional<double>>& out_q) const
 {
-    int n = body_->numJoints();
+    int n = qTranslated.size();
     out_q.resize(n);
     for(int i=0; i < n; ++i){
         out_q[i] = qTranslated[i];

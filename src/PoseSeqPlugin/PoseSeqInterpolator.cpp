@@ -1504,7 +1504,7 @@ stdx::optional<double> PoseSeqInterpolator::jointPosition(int jointId) const
 }
 
 
-void PoseSeqInterpolator::getJointPositions(std::vector<stdx::optional<double>>& out_q) const
+void PoseSeqInterpolator::getJointDisplacements(std::vector<stdx::optional<double>>& out_q) const
 {
     const int n = impl->jointInfos.size();
     out_q.resize(n);

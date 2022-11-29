@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_BODY_MOTION_POSE_PROVIDER_H
 #define CNOID_BODY_BODY_MOTION_POSE_PROVIDER_H
 
@@ -25,30 +20,28 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     
     BodyMotionPoseProvider();
-    BodyMotionPoseProvider(Body* body, std::shared_ptr<BodyMotion> motion);
-
-    void initialize(Body* body, std::shared_ptr<BodyMotion> motion);
-
+    bool setMotion(Body* body, std::shared_ptr<BodyMotion> motion);
     bool updateMotion();
 
-    virtual Body* body() const;
-    virtual double beginningTime() const;
-    virtual double endingTime() const;
-    virtual bool seek(double time);
-    virtual bool seek(double time, int waistLinkIndex, const Vector3& waistTranslation);
-    virtual int baseLinkIndex() const;
-    virtual bool getBaseLinkPosition(Isometry3& out_T) const;
-    virtual void getJointPositions(std::vector<stdx::optional<double>>& out_q) const;
-    virtual stdx::optional<Vector3> ZMP() const;
+    virtual Body* body() const override;
+    virtual double beginningTime() const override;
+    virtual double endingTime() const override;
+    virtual bool seek(double time) override;
+    virtual bool seek(double time, int waistLinkIndex, const Vector3& waistTranslation) override;
+    virtual int baseLinkIndex() const override;
+    virtual bool getBaseLinkPosition(Isometry3& out_T) const override;
+    virtual void getJointDisplacements(std::vector<stdx::optional<double>>& out_q) const override;
+    virtual stdx::optional<Vector3> ZMP() const override;
 
 private:
     BodyPtr body_;
-    std::shared_ptr<BodyMotion> motion;
+    std::shared_ptr<BodyPositionSeq> positionSeq;
     std::shared_ptr<ZMPSeq> zmpSeq;
-    int minNumJoints;
+    int numJointDisplacements;
+    bool isReady;
     std::vector<Link*> footLinks;
     std::vector<std::shared_ptr<JointPath>> ikPaths;
-    std::shared_ptr<MultiSE3MatrixSeq> footLinkPositions;
+    MultiSE3MatrixSeq footLinkPositions;
     std::vector<double> qTranslated;
     Isometry3 T_waist;
     Vector3 ZMP_;

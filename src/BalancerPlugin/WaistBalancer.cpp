@@ -427,10 +427,10 @@ bool WaistBalancer::calcWaistTranslationWithCmAboveZmp
 
         provider->getBaseLinkPosition(baseLink->T());
         
-        provider->getJointPositions(jointPositions);
+        provider->getJointDisplacements(jointDisplacements);
         for(int j=0; j < n; ++j){
             Link* joint = body_->joint(j);
-            const auto& q = jointPositions[j];
+            const auto& q = jointDisplacements[j];
             joint->q() = q ? *q : 0.0;
         }
         fkTraverse.calcForwardKinematics(true);
@@ -469,10 +469,10 @@ void WaistBalancer::initBodyKinematics(int frame, const Vector3& cmTranslation)
     fkTraverse.find(baseLink);
 
     const int n = body_->numJoints();
-    provider->getJointPositions(jointPositions);
+    provider->getJointDisplacements(jointDisplacements);
     for(int i=0; i < n; ++i){
         Link* joint = body_->joint(i);
-        const auto& q = jointPositions[i];
+        const auto& q = jointDisplacements[i];
         joint->q() = q ? *q : 0.0;
         joint->dq() = 0.0;
     }
@@ -558,10 +558,10 @@ bool WaistBalancer::updateBodyKinematics1(int frame)
             baseLink->v() = (T_next.translation() - baseLink->p()) / dt;
             baseLink->w() = omegaFromRot(baseLink->R().transpose() * T_next.linear()) / dt;
 
-            provider->getJointPositions(jointPositions);
+            provider->getJointDisplacements(jointDisplacements);
             for(int i=0; i < n; ++i){
                 Link* joint = body_->joint(i);
-                const auto& q = jointPositions[i];
+                const auto& q = jointDisplacements[i];
                 if(q){
                     joint->dq() = (*q - joint->q()) / dt;
                 } else {
@@ -580,10 +580,10 @@ bool WaistBalancer::updateBodyKinematics1(int frame)
 void WaistBalancer::updateBodyKinematics2()
 {
     const int n = body_->numJoints();
-    provider->getJointPositions(jointPositions);
+    provider->getJointDisplacements(jointDisplacements);
     for(int i=0; i < n; ++i){
         Link* joint = body_->joint(i);
-        const auto& q = jointPositions[i];
+        const auto& q = jointDisplacements[i];
         if(q){
             joint->q() = *q;
         }

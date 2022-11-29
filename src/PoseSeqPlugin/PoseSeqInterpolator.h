@@ -78,7 +78,7 @@ public:
     stdx::optional<double> jointPosition(int jointId) const;
     virtual stdx::optional<Vector3> ZMP() const override;
 
-    virtual void getJointPositions(std::vector<stdx::optional<double>>& out_q) const override;
+    virtual void getJointDisplacements(std::vector<stdx::optional<double>>& out_q) const override;
 
 private:
     class Impl;

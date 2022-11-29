@@ -88,8 +88,8 @@ namespace cnoid {
 class BodyMotionGenerationBar::Impl
 {
 public:
-    BodyMotionPoseProvider* bodyMotionPoseProvider;
-    PoseProviderToBodyMotionConverter* poseProviderToBodyMotionConverter;
+    unique_ptr<BodyMotionPoseProvider> bodyMotionPoseProvider;
+    unique_ptr<PoseProviderToBodyMotionConverter> poseProviderToBodyMotionConverter;
     Balancer* balancer;
     TimeBar* timeBar;
     BodyMotionGenerationSetupDialog* setup;
@@ -99,7 +99,6 @@ public:
     ToolButton* autoGenerationToggle;
 
     Impl(BodyMotionGenerationBar* self);
-    ~Impl();
     void onGenerationButtonClicked();
     bool shapeBodyMotion(
         Body* body, PoseProvider* provider, BodyMotionItem* motionItem, bool putMessages);
@@ -150,8 +149,6 @@ BodyMotionGenerationBar::BodyMotionGenerationBar()
 
 BodyMotionGenerationBar::Impl::Impl(BodyMotionGenerationBar* self)
 {
-    bodyMotionPoseProvider = new BodyMotionPoseProvider;
-    poseProviderToBodyMotionConverter = new PoseProviderToBodyMotionConverter;
     timeBar = TimeBar::instance();
     setup = new BodyMotionGenerationSetupDialog(this);
     balancer = nullptr;
@@ -180,13 +177,6 @@ BodyMotionGenerationBar::~BodyMotionGenerationBar()
 }
 
 
-BodyMotionGenerationBar::Impl::~Impl()
-{
-    delete bodyMotionPoseProvider;
-    delete poseProviderToBodyMotionConverter;
-}
-
-
 void BodyMotionGenerationBar::Impl::onGenerationButtonClicked()
 {
     set<BodyMotionItem*> motionItems; // for avoiding overlap
@@ -211,17 +201,26 @@ void BodyMotionGenerationBar::Impl::onGenerationButtonClicked()
             if(auto poseSeqItem = motionItem->parentItem<PoseSeqItem>()){
                 provider = poseSeqItem->interpolator().get();
             } else {
-                bodyMotionPoseProvider->initialize(bodyItem->body(), motionItem->motion());
-                provider = bodyMotionPoseProvider;
-
-                if(setup->newBodyMotionItemCheck.isChecked()){
-                    BodyMotionItem* newMotionItem = new BodyMotionItem;
-                    newMotionItem->setName(motionItem->name() + "'");
-                    motionItem->parentItem()->insertChild(motionItem->nextItem(), newMotionItem);
-                    motionItem = newMotionItem;
+                if(!bodyMotionPoseProvider){
+                    bodyMotionPoseProvider = make_unique<BodyMotionPoseProvider>();
+                }
+                if(bodyMotionPoseProvider->setMotion(bodyItem->body(), motionItem->motion())){
+                    provider = bodyMotionPoseProvider.get();
+                    if(setup->newBodyMotionItemCheck.isChecked()){
+                        BodyMotionItem* newMotionItem = new BodyMotionItem;
+                        newMotionItem->setName(motionItem->name() + "'");
+                        motionItem->parentItem()->insertChild(motionItem->nextItem(), newMotionItem);
+                        motionItem = newMotionItem;
+                    }
                 }
             }
-            shapeBodyMotion(bodyItem->body(), provider, motionItem, true);
+            if(provider){
+                shapeBodyMotion(bodyItem->body(), provider, motionItem, true);
+            } else {
+                MessageView::instance()->putln(
+                    _("{0} cannot be a target of the body motion generation."),
+                    MessageView::Error);
+            }
         }
     }
 }
@@ -278,6 +277,9 @@ bool BodyMotionGenerationBar::Impl::shapeBodyMotion
 bool BodyMotionGenerationBar::Impl::shapeBodyMotionWithSimpleInterpolation
 (Body* body, PoseProvider* provider, BodyMotionItem* motionItem)
 {
+    if(!poseProviderToBodyMotionConverter){
+        poseProviderToBodyMotionConverter = make_unique<PoseProviderToBodyMotionConverter>();
+    }
     if(setup->onlyTimeBarRangeCheck.isChecked()){
         poseProviderToBodyMotionConverter->setTimeRange(timeBar->minTime(), timeBar->maxTime());
     } else {

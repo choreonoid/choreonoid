@@ -81,7 +81,7 @@ private:
     PoseProvider* provider;
     bool isCalculatingInitialWaistTrajectory;
 
-    std::vector<stdx::optional<double>> jointPositions;
+    std::vector<stdx::optional<double>> jointDisplacements;
 
     int numIterations_;
     int beginningFrame;
