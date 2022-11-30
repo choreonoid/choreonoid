@@ -64,6 +64,7 @@ set(sources
   BodyStateView.cpp
   DigitalIoDeviceView.cpp
   IoConnectionView.cpp
+  BodyPositionGraphViewBase.cpp
   JointGraphView.cpp
   LinkGraphView.cpp
   BodyLinkView.cpp
