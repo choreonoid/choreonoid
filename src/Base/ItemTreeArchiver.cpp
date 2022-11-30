@@ -35,7 +35,7 @@ public:
     ArchivePtr store(Archive& parentArchive, Item* item);
     void registerItemIdIter(Archive& topArchive, Item* item);
     ArchivePtr storeIter(Archive& parentArchive, Item* item, bool& isComplete);
-    bool checkIfTemporal(Item* item);
+    bool checkIfTemporary(Item* item);
     bool checkSubTreeTemporality(Item* item);
     void storeAddons(Archive& archive, Item* item);
     ItemList<> restore(Archive& archive, Item* parentItem, const std::set<std::string>& optionalPlugins);
@@ -210,10 +210,10 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
 
     ListingPtr children = new Listing;
     for(auto childItem = item->childItem(); childItem; childItem = childItem->nextItem()){
-        if(checkIfTemporal(childItem)){
+        if(checkIfTemporary(childItem)){
             continue;
         }
-        if(!isTemporaryItemSaveEnabled && childItem->isTemporal()){
+        if(!isTemporaryItemSaveEnabled && childItem->isTemporary()){
             continue;
         }
         ArchivePtr childArchive = storeIter(*archive, childItem, isComplete);
@@ -232,18 +232,18 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
 }
 
 
-bool ItemTreeArchiver::Impl::checkIfTemporal(Item* item)
+bool ItemTreeArchiver::Impl::checkIfTemporary(Item* item)
 {
-    bool isTemporal = false;
-    if(item->isTemporal()){
+    bool isTemporary = false;
+    if(item->isTemporary()){
         if(isTemporaryItemSaveEnabled || !checkSubTreeTemporality(item)){
-            item->setTemporal(false);
+            item->setTemporary(false);
             item->notifyUpdate();
         } else {
-            isTemporal = true;
+            isTemporary = true;
         }
     }
-    return isTemporal;
+    return isTemporary;
 }
 
 
@@ -253,7 +253,7 @@ bool ItemTreeArchiver::Impl::checkSubTreeTemporality(Item* item)
         if(childItem->isSubItem()){
             continue;
         }
-        if(!childItem->isTemporal()){
+        if(!childItem->isTemporary()){
             return false;
         }
         if(!checkSubTreeTemporality(childItem)){

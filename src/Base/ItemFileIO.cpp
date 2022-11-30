@@ -502,7 +502,7 @@ bool ItemFileIO::Impl::saveItem
             self->storeOptions(optionArchive);
         }
         if(!isExport){
-            item->setTemporal(false);
+            item->setTemporary(false);
             item->updateFileInformation(
                 filename,
                 formatOnLastIO.empty() ? format : formatOnLastIO,

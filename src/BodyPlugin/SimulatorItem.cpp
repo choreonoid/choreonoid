@@ -576,13 +576,13 @@ bool ControllerInfo::enableLog()
     logItem = controller->findChildItem<ControllerLogItem>(logName);
     if(logItem){
         logItem->resetSeq();
-        if(!logItem->isTemporal()){
-            logItem->setTemporal();
+        if(!logItem->isTemporary()){
+            logItem->setTemporary();
             logItem->notifyUpdate();
         }
     } else {
         logItem = controller->createLogItem();
-        logItem->setTemporal();
+        logItem->setTemporary();
         logItem->setName(logName);
         controller->addChildItem(logItem);
     }
@@ -937,14 +937,14 @@ void SimulationBody::Impl::initializeRecordItems()
     bool doAddMotionItem = false;
     auto motionItem = parentOfRecordItems->findChildItem<BodyMotionItem>(recordItemPrefix);
     if(motionItem){
-        if(!motionItem->isTemporal()){
-            motionItem->setTemporal();
+        if(!motionItem->isTemporary()){
+            motionItem->setTemporary();
             motionItem->notifyUpdate();
         }
     } else {
         motionItem = new BodyMotionItem;
         motionItem->setName(recordItemPrefix);
-        motionItem->setTemporal();
+        motionItem->setTemporary();
         doAddMotionItem = true;
     }
 
@@ -1840,13 +1840,13 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
             string collisionSeqName = self->name() + "-collisions";
             auto collisionSeqItem = worldItem->findChildItem<CollisionSeqItem>(collisionSeqName);
             if(collisionSeqItem){
-                if(!collisionSeqItem->isTemporal()){
-                    collisionSeqItem->setTemporal();
+                if(!collisionSeqItem->isTemporary()){
+                    collisionSeqItem->setTemporary();
                     collisionSeqItem->notifyUpdate();
                 }
             } else {
                 collisionSeqItem = new CollisionSeqItem;
-                collisionSeqItem->setTemporal();
+                collisionSeqItem->setTemporary();
                 collisionSeqItem->setName(collisionSeqName);
                 worldItem->addChildItem(collisionSeqItem);
                 logEngine->addCollisionSeqEngine(collisionSeqItem);

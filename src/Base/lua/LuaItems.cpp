@@ -21,8 +21,8 @@ void exportLuaItems(sol::table& module)
         "addSubItem", &Item::addSubItem,
         "isSubItem", &Item::isSubItem,
         "removeFromParentItem", &Item::removeFromParentItem,
-        "isTemporal", &Item::isTemporal,
-        "setTemporal", &Item::setTemporal,
+        "isTemporary", &Item::isTemporary,
+        "setTemporary", &Item::setTemporary,
         "notifyUpdate", &Item::notifyUpdate,
 
         "descendantItems", [](Item* self, sol::table itemClass, sol::this_state s){

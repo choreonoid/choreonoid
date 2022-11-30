@@ -1496,7 +1496,7 @@ int WorldLogFileItem::Impl::replaceWithArchiveItems(Item* item, ItemToItemMap& o
     }
 
     if(!archiveItem){
-        if(!item->isTemporal() &&
+        if(!item->isTemporary() &&
            !item->isSubItem() &&
            item->filePath().empty() &&
            !dynamic_cast<SimulatorItem*>(item) &&

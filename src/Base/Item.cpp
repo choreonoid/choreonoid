@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "Item.h"
 #include "ItemAddon.h"
 #include "RootItem.h"
@@ -348,8 +343,8 @@ Item* Item::cloneSubTree(CloneMap& cloneMap) const
 Item* Item::Impl::cloneSubTreeIter(Item* clone, Item* parentClone, CloneMap& cloneMap) const
 {
     if(!clone){
-        // Skip cloning a temporal item other than the top item
-        if(!parentClone || !self->isTemporal()){
+        // Skip cloning a temporary item other than the top item
+        if(!parentClone || !self->isTemporary()){
             clone = cloneMap.getClone(self);
         }
     }
@@ -435,12 +430,12 @@ void Item::notifyNameChange()
 }
 
 
-void Item::setTemporal(bool on)
+void Item::setTemporary(bool on)
 {
     if(on){
-        setAttribute(Temporal);
+        setAttribute(Temporary);
     } else {
-        unsetAttribute(Temporal);
+        unsetAttribute(Temporary);
     }
 }
 
@@ -738,9 +733,9 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
         isAnyItemInSubTreesBeingAddedOrRemovedSelected = true;
     }
     
-    if(self->isTemporal()){
+    if(self->isTemporary()){
         if(isManualOperation && !item->isSubItem()){
-            self->setTemporal(false);
+            self->setTemporary(false);
         }
     }
 
@@ -1775,9 +1770,9 @@ void Item::putProperties(PutPropertyFunction& putProperty)
             if(!attributes.empty()) attributes += ", ";
             attributes += _("Unique");
         }
-        if(isTemporal()){
+        if(isTemporary()){
             if(!attributes.empty())  attributes += ", ";
-            attributes += _("Temporal");
+            attributes += _("Temporary");
         }
         if(hasAttribute(Builtin)){
             if(!attributes.empty())  attributes += ", ";
@@ -1841,7 +1836,7 @@ void Item::setConsistentWithArchive(bool isConsistent)
 
 bool Item::checkConsistencyWithArchive()
 {
-    if(hasAttribute(SubItem) || hasAttribute(Temporal)){
+    if(hasAttribute(SubItem) || hasAttribute(Temporary)){
         return true;
     }
     return impl->isConsistentWithArchive;

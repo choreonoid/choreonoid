@@ -284,7 +284,7 @@ void RootItem::notifyEventOnSubTreeAdded
     }
 
     if(!impl->isProjectBeingLoaded){
-        if(!item->isSubItem() && !item->isTemporal()){
+        if(!item->isSubItem() && !item->isTemporary()){
             Item::setConsistentWithArchive(false);
         }
     }
@@ -322,7 +322,7 @@ void RootItem::notifyEventOnSubTreeRemoving(Item* item, bool isMoving)
 void RootItem::notifyEventOnSubTreeRemoved(Item* item, bool isMoving)
 {
     if(!impl->isProjectBeingLoaded){
-        if(!item->isSubItem() && !item->isTemporal()){
+        if(!item->isSubItem() && !item->isTemporary()){
             Item::setConsistentWithArchive(false);
         }
     }

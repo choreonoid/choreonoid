@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_ITEM_H
 #define CNOID_BASE_ITEM_H
 
@@ -66,7 +62,7 @@ public:
            This attribute is set if the item is temporarily generated item.
            An item with this attribute is not stored or restored when a project is saved or loaded.
         */
-        Temporal = 1 << 3,
+        Temporary = 1 << 3,
 
         /**
            This attribute is set if the item is a built-in type item, which is automatically created and
@@ -93,6 +89,7 @@ public:
 
         // deprecated
         SUB_ITEM = SubItem,
+        Temporal = Temporary,
         TEMPORAL = Temporal,
         LOAD_ONLY = FileImmutable,
         LocaOnly = FileImmutable
@@ -161,16 +158,20 @@ public:
     /**
        If this is true, the item is not automatically saved or overwritten
        when a project is saved. For example, a motion item which is produced as a
-       simulation result may be an temporal item because a user may not want to
+       simulation result may be an temporary item because a user may not want to
        save the result. If a user manually save the item, the item becomes a
-       non-temporal item. Or if a child item is manually attached to a temporal
-       item, the item becomes non-temporal one as well.
+       non-temporary item. Or if a child item is manually attached to a temporary
+       item, the item becomes non-temporary one as well.
     */
-    bool isTemporal() const {
-        return hasAttribute(Temporal);
+    bool isTemporary() const {
+        return hasAttribute(Temporary);
     }
+    void setTemporary(bool on = true);
 
-    void setTemporal(bool on = true);
+    [[deprecated("Use isTemporary.")]]
+    bool isTemporal() const { return isTemporary(); }
+    [[deprecated("Use setTemporary.")]]
+    void setTemporal(bool on = true) { setTemporary(on); }
 
     bool isSelected() const { return isSelected_; }
     void setSelected(bool on, bool isCurrent = false);

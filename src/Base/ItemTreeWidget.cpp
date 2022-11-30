@@ -169,7 +169,7 @@ public:
     ScopedConnection itemCheckConnection;
     ScopedConnection displayUpdateConnection;
     bool isExpandedBeforeRemoving;
-    bool isTemporalAttributeDisplay;
+    bool isTemporaryAttributeDisplay;
 
     struct DisplayState {
         QColor foregroundColor;
@@ -230,7 +230,7 @@ ItemTreeWidget::ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
     }
 
     isExpandedBeforeRemoving = false;
-    isTemporalAttributeDisplay = false;
+    isTemporaryAttributeDisplay = false;
 
     widgetImpl->updateItemDisplay(this);
     displayUpdateConnection =
@@ -874,14 +874,14 @@ void ItemTreeWidget::Impl::applyDefaultItemDisplay(Item* item, Display& display)
 {
     auto& itwItem = display.itwItem;
 
-    bool isTemporal = item->isTemporal();
+    bool isTemporary = item->isTemporary();
     while(item->isSubItem()){
         item = item->parentItem();
-        isTemporal = item->isTemporal();
+        isTemporary = item->isTemporary();
     }
     
-    if(isTemporal){
-        if(!itwItem->isTemporalAttributeDisplay){
+    if(isTemporary){
+        if(!itwItem->isTemporaryAttributeDisplay){
             ItwItem::DisplayState state;
             auto fg = display.foreground();
             qreal h, s, v;
@@ -898,11 +898,11 @@ void ItemTreeWidget::Impl::applyDefaultItemDisplay(Item* item, Display& display)
             state.fontItalicState = font.italic();
             font.setItalic(true);
             display.setFont(font);
-            itwItem->isTemporalAttributeDisplay = true;
+            itwItem->isTemporaryAttributeDisplay = true;
             itwItem->orgDisplayState = state;
         }
     } else {
-        if(itwItem->isTemporalAttributeDisplay){
+        if(itwItem->isTemporaryAttributeDisplay){
             auto& state = *itwItem->orgDisplayState;
             auto fg = display.foreground();
             fg.setColor(state.foregroundColor);
@@ -910,7 +910,7 @@ void ItemTreeWidget::Impl::applyDefaultItemDisplay(Item* item, Display& display)
             auto font = display.font();
             font.setItalic(state.fontItalicState);
             display.setFont(font);
-            itwItem->isTemporalAttributeDisplay = false;
+            itwItem->isTemporaryAttributeDisplay = false;
         }
     }
 }

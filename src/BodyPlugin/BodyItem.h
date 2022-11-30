@@ -59,7 +59,7 @@ public:
     bool attachToParentBody(bool doNotifyUpdate = true);    
 
     // The current parent body can temporarily be changed by this function
-    //void setTemporalParentBodyItem(BodyItem* parentBodyItem);
+    //void setTemporaryParentBodyItem(BodyItem* parentBodyItem);
     // The parent body item defined by the parent-child relationship in the item tree is restored
     // if the relationship exists. Otherwise, the parent body item is cleared.
     //void resetParentBodyItem();

@@ -45,8 +45,8 @@ void exportPyItems(py::module m)
         .def("removeFromParentItem", &Item::removeFromParentItem)
         .def("insertChild",
              &Item::insertChild, py::arg("position"), py::arg("item"), py::arg("isManualOperation") = false)
-        .def("isTemporal", &Item::isTemporal)
-        .def("setTemporal", &Item::setTemporal, py::arg("on") = true)
+        .def("isTemporary", &Item::isTemporary)
+        .def("setTemporary", &Item::setTemporary, py::arg("on") = true)
         .def("isSelected", &Item::isSelected)
         .def("setSelected", &Item::setSelected, py::arg("on"), py::arg("isCurrent") = false)
         .def("isChecked", [](Item& self){ return self.isChecked(); })
@@ -129,6 +129,10 @@ void exportPyItems(py::module m)
              [](Item& self, bool forceOverwrite, const string& format){
                  return self.overwriteOrSaveWithDialog(forceOverwrite, format); },
              py::arg("forceOverwrite") = false, py::arg("format") = string())
+
+        // deprecated
+        .def("isTemporal", &Item::isTemporary)
+        .def("setTemporal", &Item::setTemporary, py::arg("on") = true)
         ;
 
     py::enum_<Item::CheckId>(itemClass, "CheckId")

@@ -910,7 +910,7 @@ bool ProjectManager::Impl::confirmToCloseProject()
 
 bool ProjectManager::Impl::checkValidItemExistence(Item* item)
 {
-    if(!item->hasAttribute(Item::Builtin) && !item->isTemporal()){
+    if(!item->hasAttribute(Item::Builtin) && !item->isTemporary()){
         return true;
     }
     for(auto child = item->childItem(); child; child = child->nextItem()){

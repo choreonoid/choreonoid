@@ -44,8 +44,8 @@ extern "C" int luaopen_cnoid_Base(lua_State* L)
         .addFunction("addSubItem", &Item::addSubItem)
         .addFunction("isSubItem", &Item::isSubItem)
         .addFunction("detachFromParentItem", &Item::detachFromParentItem)
-        .addFunction("isTemporal", &Item::isTemporal)
-        .addFunction("setTemporal", &Item::setTemporal)
+        .addFunction("isTemporary", &Item::isTemporary)
+        .addFunction("setTemporary", &Item::setTemporary)
         .addFunction("notifyUpdate", &Item::notifyUpdate)
         );
 
