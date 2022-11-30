@@ -892,13 +892,12 @@ void GraphWidget::changeMode(Mode mode)
 void GraphWidgetImpl::changeMode(GraphWidget::Mode mode)
 {
     if(mode != this->mode){
-    
+        this->mode = mode;
         if(mode == GraphWidget::EDIT_MODE){
             for(size_t i=0; i < handlers.size(); ++i){
                 updateControlPoints(handlers[i]->impl);
             }
         }
-
         screen->update();
     }
 }
