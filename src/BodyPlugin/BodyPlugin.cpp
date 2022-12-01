@@ -1,7 +1,3 @@
-/*! @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "BodyPlugin.h"
 #include "BodySelectionManager.h"
 #include "WorldItem.h"
@@ -15,6 +11,7 @@
 #include "ControllerItem.h"
 #include "SimpleControllerItem.h"
 #include "BodyMotionControllerItem.h"
+#include "CollisionDetectionControllerItem.h"
 #include "RegionIntrusionDetectorItem.h"
 #include "ControllerLogItem.h"
 #include "BodyContactPointLoggerItem.h"
@@ -109,6 +106,7 @@ bool BodyPlugin::initialize()
     ControllerItem::initializeClass(this);
     SimpleControllerItem::initializeClass(this);
     BodyMotionControllerItem::initializeClass(this);
+    CollisionDetectionControllerItem::initializeClass(this);
     RegionIntrusionDetectorItem::initializeClass(this);
     ControllerLogItem::initializeClass(this);
     BodyContactPointLoggerItem::initializeClass(this);
