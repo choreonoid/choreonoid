@@ -1284,12 +1284,16 @@ bool MprControllerItemBase::Impl::interpretDelayStatement(MprDelayStatement* sta
 
 void MprControllerItemBase::doPutProperties(PutPropertyFunction& putProperty)
 {
+    ControllerItem::doPutProperties(putProperty);
     putProperty(_("Speed ratio"), impl->speedRatio, changeProperty(impl->speedRatio));
 }
 
 
 bool MprControllerItemBase::store(Archive& archive)
 {
+    if(!ControllerItem::store(archive)){
+        return false;
+    }
     archive.write("enabled", impl->isEnabled);
     archive.write("speed_ratio", impl->speedRatio);
     return true;
@@ -1298,12 +1302,11 @@ bool MprControllerItemBase::store(Archive& archive)
 
 bool MprControllerItemBase::restore(const Archive& archive)
 {
-    archive.read("enabled", impl->isEnabled);
-
-    if(!archive.read("speed_ratio", impl->speedRatio)){
-        archive.read("speedRatio", impl->speedRatio); // old
+    if(!ControllerItem::restore(archive)){
+        return false;
     }
-    
+    archive.read("enabled", impl->isEnabled);
+    archive.read({ "speed_ratio", "speedRatio"}, impl->speedRatio);
     return true;
 }
 
