@@ -157,10 +157,33 @@ CollisionDetector::~CollisionDetector()
 }
 
 
+void CollisionDetector::setGroup(GeometryHandle /* geometry */, int /* groupId */)
+{
+
+}
+
+
+void CollisionDetector::setGroupPairEnabled(int /* groupId1 */, int /* groupId2 */, bool /* on */)
+{
+
+}
+
+
+void CollisionDetector::setDynamicGeometryPairChangeEnabled(bool /* on */)
+{
+
+}
+
+
+bool CollisionDetector::isDynamicGeometryPairChangeEnabled() const
+{
+    return false;
+}
+
+
 // This function should be a pure virtual function
 void CollisionDetector::detectCollisions
 (GeometryHandle /* geometry */, std::function<void(const CollisionPair& collisionPair)> /* callback */)
 {
 
 }
-   

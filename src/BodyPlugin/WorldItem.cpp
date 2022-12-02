@@ -374,13 +374,14 @@ void WorldItem::Impl::updateCollisionDetector(bool forceUpdate)
     for(auto& bodyInfo : coldetBodyInfos){
         BodyItem* bodyItem = bodyInfo.bodyItem;
 
-        bodyCollisionDetector.addBody(
-            bodyItem->body(), bodyInfo.isSelfCollisionDetectionEnabled,
+        bodyCollisionDetector.setLinkAssociatedObjectFunction(
             [&bodyInfo](Link* link, GeometryHandle geometry){
-                ColdetLinkInfo* linkInfo = new ColdetLinkInfo(bodyInfo.bodyItem, link, geometry);
+                auto linkInfo = new ColdetLinkInfo(bodyInfo.bodyItem, link, geometry);
                 bodyInfo.linkInfos.push_back(linkInfo);
                 return linkInfo;
             });
+            
+        bodyCollisionDetector.addBody(bodyItem->body(), bodyInfo.isSelfCollisionDetectionEnabled);
 
         ColdetBodyInfo* pBodyInfo = &bodyInfo;
         sigKinematicStateChangedConnections.add(

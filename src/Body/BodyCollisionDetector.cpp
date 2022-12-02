@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "BodyCollisionDetector.h"
 #include "Body.h"
 #include "Link.h"
@@ -16,12 +11,6 @@
 using namespace std;
 using namespace cnoid;
 
-namespace {
-
-typedef CollisionDetector::GeometryHandle GeometryHandle;
-
-}
-
 namespace cnoid {
 
 class BodyCollisionDetector::Impl
@@ -29,8 +18,7 @@ class BodyCollisionDetector::Impl
 public:
     CollisionDetectorPtr collisionDetector;
     unordered_map<LinkPtr, GeometryHandle> linkToGeometryHandleMap;
-    std::function<Referenced*(Link* link, CollisionDetector::GeometryHandle geometry)>
-    funcToGetObjectAssociatedWithLink;
+    LinkAssociatedObjectFunc linkAssociatedObjectFunc;
     vector<GeometryHandle> linkIndexToGeometryHandleMap;
     vector<bool> linkExclusionFlags;
     unordered_set<IdPair<int>> ignoredLinkPairs;
@@ -38,7 +26,7 @@ public:
     bool isGeometryHandleMapEnabled;
 
     Impl();
-    bool addBody(Body* body, bool isSelfCollisionEnabled);
+    bool addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId);
     void ignoreLinkPair(int linkIndex1, int linkIndex2);
     void checkCollisionDetectionTargets(
         Body* body, Listing* rules, bool isSelfCollisionDetectionEnabled);
@@ -46,7 +34,7 @@ public:
         Body* body, Mapping* info, bool isSelfCollisionDetectionEnabled);
     void setIgnoredLinkPairsWithinLinkChainLevel(Body* body, int distance);
     void setIgnoredLinkPairsWithinLinkChainLevelIter(Link* link, Link* currentLink, Link* prevLink, int distance);
-    bool addLinkRecursively(Link* link, bool isParentStatic);
+    bool addLinkRecursively(Link* link, bool isParentStatic, int groupId);
     double findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2);    
 };
 
@@ -123,25 +111,30 @@ void BodyCollisionDetector::clearBodies()
 }
 
 
-void BodyCollisionDetector::addBody(Body* body, bool isSelfCollisionDetectionEnabled)
+void BodyCollisionDetector::setLinkAssociatedObjectFunction(LinkAssociatedObjectFunc func)
 {
-    impl->funcToGetObjectAssociatedWithLink = nullptr;
-    impl->addBody(body, isSelfCollisionDetectionEnabled);
+    impl->linkAssociatedObjectFunc = func;
 }
 
 
-void BodyCollisionDetector::addBody
-(Body* body, bool isSelfCollisionDetectionEnabled,
- std::function<Referenced*(Link* link, CollisionDetector::GeometryHandle geometry)> getObjectAssociatedWithLink)
+void BodyCollisionDetector::addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId)
 {
-    impl->funcToGetObjectAssociatedWithLink = getObjectAssociatedWithLink;
+    impl->addBody(body, isSelfCollisionDetectionEnabled, groupId);
+}
+
+
+/*
+void BodyCollisionDetector::addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId)
+{
+    //impl->linkAssociatedObjectFunc = getObjectAssociatedWithLink;
     if(impl->addBody(body, isSelfCollisionDetectionEnabled)){
         impl->hasCustomObjectsAssociatedWithLinks = true;
     }
 }
+*/
 
 
-bool BodyCollisionDetector::Impl::addBody(Body* body, bool isSelfCollisionDetectionEnabled)
+bool BodyCollisionDetector::Impl::addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId)
 {
     const int numLinks = body->numLinks();
     linkIndexToGeometryHandleMap.clear();
@@ -165,21 +158,23 @@ bool BodyCollisionDetector::Impl::addBody(Body* body, bool isSelfCollisionDetect
         }
     }
 
-    bool added = addLinkRecursively(body->rootLink(), true);
+    bool added = addLinkRecursively(body->rootLink(), true, groupId);
 
-    if(isSelfCollisionDetectionEnabled){
-        for(auto& pair : ignoredLinkPairs){
-            if(!linkExclusionFlags[pair[0]] && !linkExclusionFlags[pair[1]]){
-                ignoreLinkPair(pair[0], pair[1]);
+    if(added){
+        if(isSelfCollisionDetectionEnabled){
+            for(auto& pair : ignoredLinkPairs){
+                if(!linkExclusionFlags[pair[0]] && !linkExclusionFlags[pair[1]]){
+                    ignoreLinkPair(pair[0], pair[1]);
+                }
             }
-        }
-    } else {
-        // exclude all the self link pairs
-        for(int i = 0; i < numLinks; ++i){
-            if(!linkExclusionFlags[i]){
-                for(int j = i + 1; j < numLinks; ++j){
-                    if(!linkExclusionFlags[j]){
-                        ignoreLinkPair(i, j);
+        } else {
+            // exclude all the self link pairs
+            for(int i = 0; i < numLinks; ++i){
+                if(!linkExclusionFlags[i]){
+                    for(int j = i + 1; j < numLinks; ++j){
+                        if(!linkExclusionFlags[j]){
+                            ignoreLinkPair(i, j);
+                        }
                     }
                 }
             }
@@ -361,7 +356,7 @@ void BodyCollisionDetector::Impl::setIgnoredLinkPairsWithinLinkChainLevelIter
 }
 
 
-bool BodyCollisionDetector::Impl::addLinkRecursively(Link* link, bool isParentStatic)
+bool BodyCollisionDetector::Impl::addLinkRecursively(Link* link, bool isParentStatic, int groupId)
 {
     int linkIndex = link->index();
     bool added = false;
@@ -370,14 +365,17 @@ bool BodyCollisionDetector::Impl::addLinkRecursively(Link* link, bool isParentSt
     if(!linkExclusionFlags[linkIndex]){
         if(auto handle = collisionDetector->addGeometry(link->collisionShape())){
             Referenced* object;
-            if(funcToGetObjectAssociatedWithLink){
-                object = funcToGetObjectAssociatedWithLink(link, *handle);
+            if(linkAssociatedObjectFunc){
+                object = linkAssociatedObjectFunc(link, *handle);
             } else {
                 object = link;
             }
             collisionDetector->setCustomObject(*handle, object);
             if(isStatic){
                 collisionDetector->setGeometryStatic(*handle, object);
+            }
+            if(groupId != 0){
+                collisionDetector->setGroup(*handle, groupId);
             }
             linkIndexToGeometryHandleMap[linkIndex] = *handle;
             if(isGeometryHandleMapEnabled){
@@ -387,10 +385,28 @@ bool BodyCollisionDetector::Impl::addLinkRecursively(Link* link, bool isParentSt
         }
     }    
     for(Link* child = link->child(); child; child = child->sibling()){
-        added |= addLinkRecursively(child, isStatic);
+        added |= addLinkRecursively(child, isStatic, groupId);
     }
 
     return added;
+}
+
+
+void BodyCollisionDetector::setGroup(Body* body, int groupId)
+{
+    for(auto& link : body->links()){
+        setGroup(link, groupId);
+    }
+}
+
+
+void BodyCollisionDetector::setGroup(Link* link, int groupId)
+{
+    auto it = impl->linkToGeometryHandleMap.find(link);
+    if(it != impl->linkToGeometryHandleMap.end()){
+        auto& handle = it->second;
+        impl->collisionDetector->setGroup(handle, groupId);
+    }
 }
 
 
@@ -439,7 +455,8 @@ void BodyCollisionDetector::detectCollisions(std::function<void(const CollisionP
 }
 
 
-void BodyCollisionDetector::detectCollisions(Link* link, std::function<void(const CollisionPair& collisionPair)> callback)
+void BodyCollisionDetector::detectCollisions
+(Link* link, std::function<void(const CollisionPair& collisionPair)> callback)
 {
     if(auto handle = findGeometryHandle(link)){
         impl->collisionDetector->detectCollisions(*handle, callback);

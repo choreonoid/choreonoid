@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_BODY_COLLISION_DETECTOR_H
 #define CNOID_BODY_BODY_COLLISION_DETECTOR_H
 
@@ -26,14 +21,33 @@ public:
 
     void clearBodies();
 
+    typedef CollisionDetector::GeometryHandle GeometryHandle;
+
     bool isGeometryHandleMapEnabled() const;
     void setGeometryHandleMapEnabled(bool on);
-    stdx::optional<CollisionDetector::GeometryHandle> findGeometryHandle(Link* link);
+    stdx::optional<GeometryHandle> findGeometryHandle(Link* link);
 
-    void addBody(Body* body, bool isSelfCollisionDetectionEnabled);
-    void addBody(Body* body, bool isSelfCollisionDetectionEnabled,
-                 std::function<Referenced*(Link* link, CollisionDetector::GeometryHandle geometry)> getObjectAssociatedWithLink);
+    typedef std::function<Referenced*(Link* link, GeometryHandle geometry)> LinkAssociatedObjectFunc;
+    void setLinkAssociatedObjectFunction(LinkAssociatedObjectFunc func);
+    
+    void addBody(Body* body, bool isSelfCollisionDetectionEnabled = true, int groupId = 0);
+
+    //! \note The geometry handle must must be enabled for using this function.
+    void setGroup(Body* body, int groupId);
+    //! \note The geometry handle must must be enabled for using this function.
+    void setGroup(Link* link, int groupId);
+
+    [[deprecated]]
+    void addBody(
+        Body* body,
+        bool isSelfCollisionDetectionEnabled,
+        LinkAssociatedObjectFunc linkAssociatedObjectFunc) {
+        setLinkAssociatedObjectFunction(linkAssociatedObjectFunc);
+        addBody(body, isSelfCollisionDetectionEnabled, 0);
+    }
+    
     bool hasBodies() const;
+    
     bool makeReady();
 
     void updatePositions();

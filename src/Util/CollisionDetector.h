@@ -45,9 +45,29 @@ public:
        \return A handle of the geometry in the collision detector
     */
     virtual stdx::optional<GeometryHandle> addGeometry(SgNode* geometry) = 0;
+
     virtual void setCustomObject(GeometryHandle geometry, Referenced* object) = 0;
     virtual void setGeometryStatic(GeometryHandle geometry, bool isStatic = true) = 0;
+
+    //! The following group operations are currently optional. There may be collsiion detectors that do not support them.
+    virtual void setGroup(GeometryHandle geometry, int groupId);
+    //! \note Every group pair is enabled by default
+    virtual void setGroupPairEnabled(int groupId1, int groupId2, bool on);
+    
+    //! \note This function will be deprecated with the setGeometryPairEnabled function.
     virtual void ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore = true) = 0;
+
+    void setGeometryPairEnabled(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore = true) {
+        ignoreGeometryPair(geometry1, geometry2, !ignore);
+    }
+
+    /**
+       If the dynamic geometry pair change is enabled, geometry pairs for collision detection can be
+       changed after the makeReady funciton is executed. Note that this mode is optional.
+    */
+    virtual void setDynamicGeometryPairChangeEnabled(bool on);
+    virtual bool isDynamicGeometryPairChangeEnabled() const;
+    
     virtual bool makeReady() = 0;
     
     virtual void updatePosition(GeometryHandle geometry, const Isometry3& position) = 0;

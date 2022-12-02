@@ -702,10 +702,11 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
     setKinematicStateToODE(simImpl->doFlipYZ);
 
     if(simImpl->useWorldCollisionDetector){
-        simImpl->bodyCollisionDetector.addBody(
-            body, bodyItem()->isSelfCollisionDetectionEnabled(),
-            [&](Link* link, CollisionDetector::GeometryHandle geometry){
-                return odeLinks[link->index()]; });
+        simImpl->bodyCollisionDetector.setLinkAssociatedObjectFunction(
+            [this](Link* link, CollisionDetector::GeometryHandle geometry){
+                return odeLinks[link->index()];
+            });
+        simImpl->bodyCollisionDetector.addBody(body, bodyItem()->isSelfCollisionDetectionEnabled());
     }
 
     setExtraJoints(simImpl->doFlipYZ);
