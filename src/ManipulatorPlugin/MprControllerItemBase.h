@@ -39,6 +39,9 @@ public:
     double speedRatio() const;
     void setSpeedRatio(double r);
 
+    void setActiveControlState(bool on);
+    bool isActiveControlState() const;
+
     virtual bool initialize(ControllerIO* io) override final;
     virtual bool start() override final;
     virtual void input() override final;

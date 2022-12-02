@@ -91,7 +91,7 @@ public:
     vector<MprVariableListPtr> variableLists;
 
     bool isEnabled;
-    bool isControlActive;
+    bool isActiveControlState;
     typedef MprProgram::iterator Iterator;
     Iterator iterator;
 
@@ -187,7 +187,7 @@ MprControllerItemBase::Impl::Impl(MprControllerItemBase* self)
     : self(self)
 {
     isEnabled = true;
-    isControlActive = false;
+    isActiveControlState = false;
     speedRatio = 1.0;
     currentLog = new MprControllerLog;
 }
@@ -287,13 +287,13 @@ bool MprControllerItemBase::initialize(ControllerIO* io)
         return false;
     }
     
-    impl->isControlActive = false;
+    impl->isActiveControlState = false;
     if(impl->initialize(io)){
         if(onInitialize(io)){
-            impl->isControlActive = true;
+            impl->isActiveControlState = true;
         }
     }
-    return impl->isControlActive;
+    return impl->isActiveControlState;
 }    
 
 
@@ -645,7 +645,7 @@ bool MprControllerItemBase::control()
 
 bool MprControllerItemBase::Impl::control()
 {
-    if(!isControlActive){
+    if(!isActiveControlState){
         return false;
     }
 
@@ -682,7 +682,7 @@ bool MprControllerItemBase::Impl::control()
             hasNextStatement = (iterator != currentProgram->end());
         }
         if(!hasNextStatement){
-            isControlActive = false;
+            isActiveControlState = false;
             break;
         }
 
@@ -705,7 +705,7 @@ bool MprControllerItemBase::Impl::control()
             } else {
                 auto& interpret = p->second;
                 if(!interpret(statement)){
-                    isControlActive = false;
+                    isActiveControlState = false;
                     if(isLogEnabled){
                         currentLog->isErrorState_ = true;
                     }
@@ -713,7 +713,7 @@ bool MprControllerItemBase::Impl::control()
                                        statement->label(0)) << endl;
                     break;
                 }
-                isControlActive = true;
+                isActiveControlState = true;
             }
         }
         
@@ -724,7 +724,7 @@ bool MprControllerItemBase::Impl::control()
         io->outputLog(new MprControllerLog(*currentLog));
     }
         
-    return isControlActive;
+    return isActiveControlState;
 }
 
 
@@ -780,6 +780,18 @@ void MprControllerItemBase::stop()
 bool MprControllerItemBase::onStop()
 {
     return true;
+}
+
+
+void MprControllerItemBase::setActiveControlState(bool on)
+{
+    impl->isActiveControlState = on;
+}
+
+
+bool MprControllerItemBase::isActiveControlState() const
+{
+    return impl->isActiveControlState;
 }
 
 
