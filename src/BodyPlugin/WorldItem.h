@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_PLUGIN_WORLD_ITEM_H
 #define CNOID_BODY_PLUGIN_WORLD_ITEM_H
 
@@ -10,6 +5,7 @@
 #include <cnoid/Item>
 #include <cnoid/ItemList>
 #include <cnoid/RenderableItem>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -40,6 +36,8 @@ public:
     void updateCollisionDetectorLater();
     void updateCollisionDetector();
     void updateCollisions();
+
+    typedef std::shared_ptr<CollisionLinkPair> CollisionLinkPairPtr;
     std::vector<CollisionLinkPairPtr>& collisions() const;
     SignalProxy<void()> sigCollisionsUpdated();
 

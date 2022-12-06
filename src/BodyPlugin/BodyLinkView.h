@@ -1,9 +1,5 @@
-/*! @file
-  @author Shin'ichiro Nakaoka
-*/
-
-#ifndef CNOID_BODYPLUGIN_BODY_LINK_VIEW_H
-#define CNOID_BODYPLUGIN_BODY_LINK_VIEW_H
+#ifndef CNOID_BODY_PLUGIN_BODY_LINK_VIEW_H
+#define CNOID_BODY_PLUGIN_BODY_LINK_VIEW_H
 
 #include <cnoid/View>
 

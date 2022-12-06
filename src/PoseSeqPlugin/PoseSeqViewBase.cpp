@@ -1461,12 +1461,12 @@ bool PoseSeqViewBase::setCurrentLinkStateToIkLink(Link* link, BodyKeyPose::LinkI
     }
     
     std::vector<Vector3> contactPoints;
-    const std::vector<CollisionLinkPairPtr>& collisions = currentBodyItem->collisionsOfLink(link->index());
+    const auto& collisions = currentBodyItem->collisionsOfLink(link->index());
     for(size_t i=0; i < collisions.size(); ++i){
         if(!collisions[i]->isSelfCollision()){
             CollisionLinkPair& collisionPair = *collisions[i];
-            for(auto it = collisionPair.collisions.begin(); it != collisionPair.collisions.end(); ++it){
-                contactPoints.push_back(link->R().transpose()*(it->point - link->p()));
+            for(auto& collision : collisionPair.collisions()){
+                contactPoints.push_back(link->R().transpose() * (collision.point - link->p()));
             }
         }
     }

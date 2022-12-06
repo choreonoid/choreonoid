@@ -1,7 +1,3 @@
-/** 
-    \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_CONSTRAINT_FORCE_SOLVER_H
 #define CNOID_BODY_CONSTRAINT_FORCE_SOLVER_H
 
@@ -66,7 +62,7 @@ public:
 
     // experimental functions
     typedef std::function<bool(Link* link1, Link* link2,
-                               const CollisionArray& collisions,
+                               const std::vector<Collision>& collisions,
                                ContactMaterial* contactMaterial)>  CollisionHandler;
     
     void registerCollisionHandler(const std::string& name, CollisionHandler handler);

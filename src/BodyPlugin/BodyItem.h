@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_PLUGIN_BODY_ITEM_H
 #define CNOID_BODY_PLUGIN_BODY_ITEM_H
 
@@ -12,6 +7,7 @@
 #include <cnoid/LocatableItem>
 #include <cnoid/RenderableItem>
 #include <cnoid/stdx/optional>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -154,6 +150,8 @@ public:
     
     void clearCollisions();
 
+    typedef std::shared_ptr<CollisionLinkPair> CollisionLinkPairPtr;
+    
     std::vector<CollisionLinkPairPtr>& collisions() { return collisions_; }
     const std::vector<CollisionLinkPairPtr>& collisions() const { return collisions_; }
     std::vector<bool>& collisionLinkBitSet() { return collisionLinkBitSet_; }

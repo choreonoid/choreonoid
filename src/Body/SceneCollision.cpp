@@ -1,9 +1,5 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "SceneCollision.h"
+#include "Body.h"
 #include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/SceneRenderer>
 
@@ -60,12 +56,12 @@ void SceneCollision::render(SceneRenderer* renderer)
         lineVertexIndices().clear();
         for(size_t i=0; i < collisionPairs->size(); ++i){
             const CollisionLinkPair& pair = *(*collisionPairs)[i];
-            const vector<Collision>& cols = pair.collisions;
+            const auto& cols = pair.collisions();
 
             // flip the line direction so that the line is always from the staic object to the dynamic one
             double direction = 1.0;
-            if(pair.body[1] && pair.body[0]){
-                direction = (pair.body[1]->isStaticModel() && !pair.body[0]->isStaticModel()) ? -1.0 : 1.0;
+            if(pair.body(1) && pair.body(0)){
+                direction = (pair.body(1)->isStaticModel() && !pair.body(0)->isStaticModel()) ? -1.0 : 1.0;
             }
 
             for(size_t j=0; j < cols.size(); ++j){

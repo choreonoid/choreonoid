@@ -1,10 +1,5 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
-#ifndef CNOID_BODYPLUGIN_AIST_SIMULATOR_ITEM_H
-#define CNOID_BODYPLUGIN_AIST_SIMULATOR_ITEM_H
+#ifndef CNOID_BODY_PLUGIN_AIST_SIMULATOR_ITEM_H
+#define CNOID_BODY_PLUGIN_AIST_SIMULATOR_ITEM_H
 
 #include "SimulatorItem.h"
 #include <cnoid/Collision>
@@ -55,7 +50,7 @@ public:
     virtual void clearForcedPositions() override;
 
     typedef std::function<bool(Link* link1, Link* link2,
-                               const CollisionArray& collisions,
+                               const std::vector<Collision>& collisions,
                                ContactMaterial* contactMaterial)> CollisionHandler;
     
     void registerCollisionHandler(const std::string& name, CollisionHandler handler);

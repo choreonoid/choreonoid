@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_COLLISION_DETECTOR_H
 #define CNOID_UTIL_COLLISION_DETECTOR_H
 
@@ -96,7 +91,7 @@ class CollisionPair
     typedef CollisionDetector::GeometryHandle GeometryHandle;
     GeometryHandle geometries_[2];
     Referenced* objects_[2];
-    CollisionArray collisions_;
+    std::vector<Collision> collisions_;
 
 public:
     CollisionPair() { }
@@ -115,8 +110,8 @@ public:
     const GeometryHandle* geometries() const { return geometries_; }
     Referenced*& object(int i){ return objects_[i]; };
     Referenced* object(int i) const { return objects_[i]; };
-    CollisionArray& collisions() { return collisions_; }
-    const CollisionArray& collisions() const { return collisions_; }
+    std::vector<Collision>& collisions() { return collisions_; }
+    const std::vector<Collision>& collisions() const { return collisions_; }
     void addCollision(const Collision& c){ collisions_.push_back(c); }
     Collision& newCollision() { collisions_.resize(collisions_.size() + 1); return collisions_.back(); }
     void clearCollisions(){ collisions_.clear(); }

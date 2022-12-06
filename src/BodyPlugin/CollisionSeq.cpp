@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shizuko Hattori
-*/
-
 #include "CollisionSeq.h"
 #include <cnoid/RootItem>
 #include <cnoid/WorldItem>
@@ -96,7 +91,7 @@ void CollisionSeq::readCollisionData(int nFrames, const Listing& values)
         Frame f = frame(i);
         f[0] = std::make_shared<CollisionLinkPairList>();
         for(int j=0; j<linkPairs.size(); j++){
-            CollisionLinkPairPtr destLinkPair = std::make_shared<CollisionLinkPair>();
+            auto destLinkPair = std::make_shared<CollisionLinkPair>();
             const Mapping& linkPair = *linkPairs[j].toMapping();
             string body0name = linkPair["body0"].toString();
             string body1name = linkPair["body1"].toString();
@@ -116,14 +111,11 @@ void CollisionSeq::readCollisionData(int nFrames, const Listing& values)
                 body1 = body1Item->body();
                 link1 = body1->link(link1name);
             }
-            destLinkPair->body[0] = body0;
-            destLinkPair->link[0] = link0;
-            destLinkPair->body[1] = body1;
-            destLinkPair->link[1] = link1;
+            destLinkPair->setLinkPair(link0, link1);
             const Listing& collisions = *linkPair.findListing("Collisions");
             for(int k=0; k<collisions.size(); k++){
-                destLinkPair->collisions.push_back(Collision());
-                Collision& destCol = destLinkPair->collisions.back();
+                destLinkPair->collisions().push_back(Collision());
+                Collision& destCol = destLinkPair->collisions().back();
                 const Listing& collision = *collisions[k].toListing();
                 destCol.point = Vector3(collision[0].toDouble(), collision[1].toDouble(), collision[2].toDouble());
                 destCol.normal = Vector3(collision[3].toDouble(), collision[4].toDouble(), collision[5].toDouble());
@@ -142,17 +134,17 @@ void CollisionSeq::writeCollsionData(YAMLWriter& writer, std::shared_ptr<const C
 
     writer.startListing();
     for(auto it = ptr->begin(); it != ptr->end(); ++it){
-        CollisionLinkPairPtr linkPair = *it;
+        auto& linkPair = *it;
         writer.startMapping();
-        writer.putKeyValue("body0",linkPair->body[0]->name());
-        writer.putKeyValue("link0",linkPair->link[0]->name());
-        writer.putKeyValue("body1",linkPair->body[1]->name());
-        writer.putKeyValue("link1",linkPair->link[1]->name());
-        int numCollisions = linkPair->collisions.size();
+        writer.putKeyValue("body0",linkPair->body(0)->name());
+        writer.putKeyValue("link0",linkPair->link(0)->name());
+        writer.putKeyValue("body1",linkPair->body(1)->name());
+        writer.putKeyValue("link1",linkPair->link(1)->name());
+        int numCollisions = linkPair->numCollisions();
         writer.putKey("Collisions");
         writer.startListing();
         for(int j=0; j<numCollisions; j++){
-            Collision& collision = linkPair->collisions[j];
+            Collision& collision = linkPair->collision(j);
             writer.startFlowStyleListing();
             const Vector3& point = collision.point;
             writer.putScalar(point.x());

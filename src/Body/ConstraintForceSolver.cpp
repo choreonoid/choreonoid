@@ -1,9 +1,3 @@
-/**
-   \file
-   \brief Implementation of ConstraintForceSolver class
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifdef __WIN32__
 #define NOMINMAX
 #endif
@@ -2364,17 +2358,13 @@ shared_ptr<CollisionLinkPairList> ConstraintForceSolver::Impl::getCollisions()
 
         for(int j=0; j < numConstraintsInPair; ++j){
             ConstraintPoint& constraint = source.constraintPoints[j];
-            dest->collisions.push_back(Collision());
-            Collision& col = dest->collisions.back();
+            dest->collisions().push_back(Collision());
+            Collision& col = dest->collisions().back();
             col.point = constraint.point;
             col.normal = constraint.normalTowardInside[1];
             col.depth = constraint.depth;
         }
-        for(int j=0; j < 2; ++j){
-            auto link = source.link[j];
-            dest->body[j] = link->body();
-            dest->link[j] = link;
-        }
+        dest->setLinkPair(source.link[0], source.link[1]);
         collisionPairs->push_back(dest);
     }
 

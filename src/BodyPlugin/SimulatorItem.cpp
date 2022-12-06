@@ -31,6 +31,7 @@
 #include <cnoid/SceneGraph>
 #include <cnoid/SceneView>
 #include <cnoid/CloneMap>
+#include <cnoid/CollisionDetector>
 #include <QThread>
 #include <QMutex>
 #include <QElapsedTimer>

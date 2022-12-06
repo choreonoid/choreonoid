@@ -1,7 +1,3 @@
-/** \file
-    \author Shin'ichiro Nakaoka
-*/
-
 #include "BodyLinkView.h"
 #include "BodySelectionManager.h"
 #include "BodyItem.h"
@@ -746,8 +742,7 @@ void BodyLinkView::Impl::updateCollisions()
     worldCollisionString.clear();
 
     if(currentLink){
-        const std::vector<CollisionLinkPairPtr>& collisions =
-            currentBodyItem->collisionsOfLink(currentLink->index());
+        auto& collisions = currentBodyItem->collisionsOfLink(currentLink->index());
         for(size_t i=0; i < collisions.size(); ++i){
             const CollisionLinkPair& collisionPair = *collisions[i];
             if(collisionPair.isSelfCollision()){
@@ -766,10 +761,10 @@ void BodyLinkView::Impl::updateCollisions()
 void BodyLinkView::Impl::addSelfCollision(const CollisionLinkPair& collisionPair, QString& collisionString)
 {
     Link* oppositeLink;
-    if(collisionPair.link[0] == currentLink){
-        oppositeLink = collisionPair.link[1];
+    if(collisionPair.link(0) == currentLink){
+        oppositeLink = collisionPair.link(1);
     } else {
-        oppositeLink = collisionPair.link[0];
+        oppositeLink = collisionPair.link(0);
     }
     if(!collisionString.isEmpty()){
         collisionString += " ";
@@ -780,14 +775,14 @@ void BodyLinkView::Impl::addSelfCollision(const CollisionLinkPair& collisionPair
 
 void BodyLinkView::Impl::addWorldCollision(const CollisionLinkPair& collisionPair, QString& collisionString)
 {
-    int opposite = (collisionPair.link[0] == currentLink) ? 1 : 0;
+    int opposite = (collisionPair.link(0) == currentLink) ? 1 : 0;
 
     if(!collisionString.isEmpty()){
         collisionString += " ";
     }
-    collisionString += collisionPair.body[opposite]->name().c_str();
+    collisionString += collisionPair.body(opposite)->name().c_str();
     collisionString += " / ";
-    collisionString += collisionPair.link[opposite]->name().c_str();
+    collisionString += collisionPair.link(opposite)->name().c_str();
 }
 
 

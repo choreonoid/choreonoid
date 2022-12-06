@@ -1,7 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
 #include "AISTSimulatorItem.h"
 #include "WorldItem.h"
 #include "BodyItem.h"

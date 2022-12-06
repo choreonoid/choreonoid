@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "PenetrationBlocker.h"
 #include <cnoid/SceneGraph>
 
@@ -178,17 +174,15 @@ bool PenetrationBlockerImpl::adjust(Isometry3& io_T, const Vector3& pushDirectio
 void PenetrationBlockerImpl::onCollisionDetected(const CollisionPair& collisionPair)
 {
     double normalSign = (collisionPair.geometry(0) == *targetLinkGeometry) ? -1.0 : 1.0;
-    const CollisionArray& collisions = collisionPair.collisions();
-    for(size_t i=0; i < collisions.size(); ++i){
-        const Collision& c = collisions[i];
-        if(c.depth > targetDepth){
-            const Vector3 normal = normalSign * c.normal;
+    for(auto& collision : collisionPair.collisions()){
+        if(collision.depth > targetDepth){
+            const Vector3 normal = normalSign * collision.normal;
             double d = -normal.dot(s);
             if(d > 0.0){
-                double sdepth = c.depth * d;
+                double sdepth = collision.depth * d;
                 if(sdepth > maxsdepth){
                     maxsdepth = sdepth;
-                    maxdepth = c.depth;
+                    maxdepth = collision.depth;
                     maxnormal = normal;
                 }
             }

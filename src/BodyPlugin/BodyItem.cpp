@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "BodyItem.h"
 #include "WorldItem.h"
 #include "OperableSceneBody.h"
