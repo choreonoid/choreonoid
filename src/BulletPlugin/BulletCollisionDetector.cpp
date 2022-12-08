@@ -598,7 +598,7 @@ void BulletCollisionDetectorImpl::detectCollisions()
 
 void BulletCollisionDetectorImpl::detectObjectCollisions(btCollisionObject* object1, btCollisionObject* object2, CollisionPair& collisionPair)
 {
-    CollisionArray& collisions = collisionPair.collisions();
+    auto& collisions = collisionPair.collisions();
     #ifdef BT_VER_GT_281
     btCollisionObjectWrapper objectWrapper1(0, object1->getCollisionShape(), object1, object1->getWorldTransform(), -1, -1);
     btCollisionObjectWrapper objectWrapper2(0, object2->getCollisionShape(), object2, object2->getWorldTransform(), -1, -1);
@@ -633,7 +633,7 @@ void BulletCollisionDetectorImpl::detectObjectCollisions(btCollisionObject* obje
                         btVector3 ptA = swap? pt.getPositionWorldOnB() : pt.getPositionWorldOnA();
                         btVector3 normal = swap? -pt.m_normalWorldOnB : pt.m_normalWorldOnB;
 
-                        collisions.push_back(Collision());
+                        collisions.emplace_back();
                         Collision& collision = collisions.back();
                         collision.point = Vector3(ptA.x(), ptA.y(), ptA.z());
                         collision.normal = Vector3(normal.x(), normal.y(), normal.z());
