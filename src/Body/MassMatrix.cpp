@@ -90,7 +90,11 @@ void calcMassMatrix(Body* body, const Vector3& g, Eigen::MatrixXd& out_M, Vector
         joint->ddq() = 1.0;
         const int j = i + offset;
         setColumnOfMassMatrix(body, out_M, j);
-        out_M(j, j) += joint->Jm2(); // motor inertia
+        
+        // Note that the following operation is not necessary because the motor inertia is
+        // added in the setColumnOfMassMatrix function.
+        // out_M(j, j) += joint->Jm2(); // motor inertia
+        
         joint->ddq() = 0.0;
     }
 
