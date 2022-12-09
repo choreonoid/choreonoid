@@ -4,11 +4,18 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/stdx/optional>
+#include <memory>
+
+#include <fcl/config.h>
+#if FCL_MAJOR_VERSION==0 && FCL_MINOR_VERSION < 6
+#define CNOID_FCL_05
 #include <fcl/collision.h>
 #include <fcl/BVH/BVH_model.h>
 #include <fcl/BV/BV.h>
 #include <fcl/narrowphase/gjk.h>
-#include <memory>
+#else
+#include <fcl/fcl.h>
+#endif
 
 using namespace std;
 using namespace cnoid;
@@ -17,44 +24,65 @@ namespace {
 
 const bool USE_PRIMITIVE = true;
 
-typedef shared_ptr<fcl::CollisionObject> CollisionObjectPtr;
-typedef fcl::BVHModel<fcl::OBBRSS> MeshModel;
-typedef shared_ptr<MeshModel> MeshModelPtr;
+#ifdef CNOID_FCL_05
+typedef fcl::BVHModel<fcl::OBBRSS> MeshModelf;
+typedef fcl::CollisionObject CollisionObjectf;
+typedef fcl::Box Boxf;
+typedef fcl::Sphere Spheref;
+typedef fcl::Cylinder Cylinderf;
+typedef fcl::Cone Conef;
+typedef fcl::CollisionRequest CollisionRequestf;
+typedef fcl::CollisionResult CollisionResultf;
+typedef fcl::Contact Contactf;
+#else
+typedef fcl::BVHModel<fcl::OBBRSSf> MeshModelf;
+typedef fcl::CollisionObject<float> CollisionObjectf;
+typedef fcl::Box<float> Boxf;
+typedef fcl::Sphere<float> Spheref;
+typedef fcl::Cylinder<float> Cylinderf;
+typedef fcl::Cone<float> Conef;
+typedef fcl::CollisionRequest<float> CollisionRequestf;
+typedef fcl::CollisionResult<float> CollisionResultf;
+typedef fcl::Contact<float> Contactf;
+#endif
 
-class CollisionModel : public Referenced
+class ColdetModel : public Referenced
 {
-public :
-    CollisionObjectPtr meshObject;
-    MeshModelPtr meshModel;
-    vector<CollisionObjectPtr> primitiveObjects;
-    vector<fcl::Transform3f> primitiveLocalPositions;
+public:
+    shared_ptr<MeshModelf> meshModel;
+    shared_ptr<CollisionObjectf> meshObject;
+    vector<shared_ptr<CollisionObjectf>> primitiveObjects;
+    vector<Isometry3> primitiveLocalPositions;
     ReferencedPtr object;
+#ifdef CNOID_FCL_05
     vector<fcl::Vec3f> points;
+#else
+    vector<Vector3f> points;
+#endif
     vector<fcl::Triangle> tri_indices;
     bool isStatic;
 
-    CollisionModel(){
-        primitiveObjects.clear();
-        primitiveLocalPositions.clear();
+    ColdetModel(){
         isStatic = false;
     }
 };
 
-typedef ref_ptr<CollisionModel> CollisionModelPtr;
+typedef ref_ptr<ColdetModel> ColdetModelPtr;
 
 typedef CollisionDetector::GeometryHandle GeometryHandle;
 
-CollisionModel* getCollisionModel(GeometryHandle handle)
+ColdetModel* getColdetModel(GeometryHandle handle)
 {
-    return reinterpret_cast<CollisionModel*>(handle);
+    return reinterpret_cast<ColdetModel*>(handle);
 }
 
-GeometryHandle getHandle(CollisionModel* model)
+GeometryHandle getHandle(ColdetModel* model)
 {
     return reinterpret_cast<GeometryHandle>(model);
 }
 
-inline fcl::Transform3f convertToFclTransform(const Isometry3& T)
+#ifdef CNOID_FCL_05
+fcl::Transform3f convertToFclTransform(const Isometry3& T)
 {
     fcl::Transform3f T_fcl;
     
@@ -70,6 +98,7 @@ inline fcl::Transform3f convertToFclTransform(const Isometry3& T)
 
     return T_fcl;
 }
+#endif
 
 }
 
@@ -78,21 +107,21 @@ namespace cnoid {
 class FCLCollisionDetector::Impl
 {
 public:
-    vector<CollisionModelPtr> models;
-    vector<pair<CollisionModelPtr, CollisionModelPtr>> modelPairs;
+    vector<ColdetModelPtr> models;
+    vector<pair<ColdetModelPtr, ColdetModelPtr>> modelPairs;
     set<IdPair<GeometryHandle>> ignoredPairs;
     MeshExtractor meshExtractor;
     bool isReady;
 
     Impl();
     stdx::optional<GeometryHandle> addGeometry(SgNode* geometry);
-    void addMesh(CollisionModel* geometry, SgMesh* mesh);
-    bool addPrimitive(CollisionModel* model, SgMesh* mesh);
+    void addMesh(ColdetModel* geometry, SgMesh* mesh);
+    bool addPrimitive(ColdetModel* model, SgMesh* mesh);
     void makeReady();
-    void updatePosition(CollisionModel* model, const Isometry3& position);
+    void updatePosition(ColdetModel* model, const Isometry3& position);
     void detectCollisions(std::function<void(const CollisionPair&)> callback);
     void detectObjectCollisions(
-        fcl::CollisionObject* object1, fcl::CollisionObject* object2, CollisionPair& collisionPair);
+        CollisionObjectf* object1, CollisionObjectf* object2, CollisionPair& collisionPair);
 };
 
 }
@@ -152,10 +181,10 @@ stdx::optional<GeometryHandle> FCLCollisionDetector::addGeometry(SgNode* geometr
 stdx::optional<GeometryHandle> FCLCollisionDetector::Impl::addGeometry(SgNode* geometry)
 {
     const int index = models.size();
-    CollisionModel* model = nullptr;
+    ColdetModel* model = nullptr;
 
     if(geometry){
-        model = new CollisionModel;
+        model = new ColdetModel;
         bool extracted =
             meshExtractor.extract(
                 geometry,
@@ -163,7 +192,7 @@ stdx::optional<GeometryHandle> FCLCollisionDetector::Impl::addGeometry(SgNode* g
 
         if(extracted){
             if(!model->points.empty()){
-                model->meshModel = make_shared<MeshModel>();
+                model->meshModel = make_shared<MeshModelf>();
                 model->meshModel->beginModel();
                 model->meshModel->addSubModel(model->points, model->tri_indices);
                 /*
@@ -175,7 +204,7 @@ stdx::optional<GeometryHandle> FCLCollisionDetector::Impl::addGeometry(SgNode* g
                 }
                 */
                 model->meshModel->endModel();
-                model->meshObject = make_shared<fcl::CollisionObject>(model->meshModel);
+                model->meshObject = make_shared<CollisionObjectf>(model->meshModel);
             }
         }
     }
@@ -187,7 +216,7 @@ stdx::optional<GeometryHandle> FCLCollisionDetector::Impl::addGeometry(SgNode* g
 }
 
 
-void FCLCollisionDetector::Impl::addMesh(CollisionModel* model, SgMesh* mesh)
+void FCLCollisionDetector::Impl::addMesh(ColdetModel* model, SgMesh* mesh)
 {
     const Affine3& T = meshExtractor.currentTransform();
 
@@ -208,7 +237,11 @@ void FCLCollisionDetector::Impl::addMesh(CollisionModel* model, SgMesh* mesh)
         points.resize(numVertices);
         for(int i=0; i < numVertices; ++i){
             const Vector3 v = T * vertices[i].cast<Isometry3::Scalar>();;
+#ifdef CNOID_FCL_05
             points[i].setValue(v.x(), v.y(), v.z());
+#else
+            points[i] << v.x(), v.y(), v.z();
+#endif
         }
 
         const int numTriangles = mesh->numTriangles();
@@ -223,7 +256,7 @@ void FCLCollisionDetector::Impl::addMesh(CollisionModel* model, SgMesh* mesh)
 }
 
 
-bool FCLCollisionDetector::Impl::addPrimitive(CollisionModel* model, SgMesh* mesh)
+bool FCLCollisionDetector::Impl::addPrimitive(ColdetModel* model, SgMesh* mesh)
 {
     bool meshAdded = false;
     bool doAddPrimitive = false;
@@ -267,29 +300,29 @@ bool FCLCollisionDetector::Impl::addPrimitive(CollisionModel* model, SgMesh* mes
         switch(mesh->primitiveType()){
         case SgMesh::BOX : {
             const Vector3& s = mesh->primitive<SgMesh::Box>().size;
-            auto box = make_shared<fcl::Box>(s.x() * scale.x(), s.y() * scale.y(), s.z() * scale.z());
-            model->primitiveObjects.push_back(make_shared<fcl::CollisionObject>(box));
+            auto box = make_shared<Boxf>(s.x() * scale.x(), s.y() * scale.y(), s.z() * scale.z());
+            model->primitiveObjects.push_back(make_shared<CollisionObjectf>(box));
             created = true;
             break;
         }
         case SgMesh::SPHERE : {
             double radius = mesh->primitive<SgMesh::Sphere>().radius;
-            auto sphere = make_shared<fcl::Sphere>(radius * scale.x());
-            model->primitiveObjects.push_back(make_shared<fcl::CollisionObject>(sphere));
+            auto sphere = make_shared<Spheref>(radius * scale.x());
+            model->primitiveObjects.push_back(make_shared<CollisionObjectf>(sphere));
             created = true;
             break;
         }
         case SgMesh::CYLINDER : {
             SgMesh::Cylinder cylinder = mesh->primitive<SgMesh::Cylinder>();
-            auto cylinder_ = make_shared<fcl::Cylinder>(cylinder.radius * scale.x(), cylinder.height * scale.y());
-            model->primitiveObjects.push_back(make_shared<fcl::CollisionObject>(cylinder_));
+            auto cylinder_ = make_shared<Cylinderf>(cylinder.radius * scale.x(), cylinder.height * scale.y());
+            model->primitiveObjects.push_back(make_shared<CollisionObjectf>(cylinder_));
             created = true;
             break;
         }
         case SgMesh::CONE : {
             SgMesh::Cone cone = mesh->primitive<SgMesh::Cone>();
-            auto cone_ = make_shared<fcl::Cone>(cone.radius * scale.x(), cone.height * scale.y());
-            model->primitiveObjects.push_back(make_shared<fcl::CollisionObject>(cone_));
+            auto cone_ = make_shared<Conef>(cone.radius * scale.x(), cone.height * scale.y());
+            model->primitiveObjects.push_back(make_shared<CollisionObjectf>(cone_));
             created = true;
             break;
         }
@@ -303,7 +336,7 @@ bool FCLCollisionDetector::Impl::addPrimitive(CollisionModel* model, SgMesh* mes
             } else {
                 T = meshExtractor.currentTransformWithoutScaling();
             }
-            model->primitiveLocalPositions.push_back(convertToFclTransform(T));
+            model->primitiveLocalPositions.push_back(T);
             meshAdded = true;
         }
     }
@@ -314,13 +347,13 @@ bool FCLCollisionDetector::Impl::addPrimitive(CollisionModel* model, SgMesh* mes
 
 void FCLCollisionDetector::setCustomObject(GeometryHandle geometry, Referenced* object)
 {
-    getCollisionModel(geometry)->object = object;
+    getColdetModel(geometry)->object = object;
 }
 
 
 void FCLCollisionDetector::setGeometryStatic(GeometryHandle geometry, bool isStatic)
 {
-    getCollisionModel(geometry)->isStatic = isStatic;
+    getColdetModel(geometry)->isStatic = isStatic;
     impl->isReady = false;
 }
 
@@ -375,25 +408,33 @@ void FCLCollisionDetector::Impl::makeReady()
 
 void FCLCollisionDetector::updatePosition(GeometryHandle geometry, const Isometry3& position)
 {
-    if(auto model = getCollisionModel(geometry)){
+    if(auto model = getColdetModel(geometry)){
         impl->updatePosition(model, position);
     }
 }
 
 
-void FCLCollisionDetector::Impl::updatePosition(CollisionModel* model, const Isometry3& position)
+void FCLCollisionDetector::Impl::updatePosition(ColdetModel* model, const Isometry3& T)
 {
-    auto T = convertToFclTransform(position);
     if(model->meshObject){
-        model->meshObject->setTransform(T);
+#ifdef CNOID_FCL_05
+        model->meshObject->setTransform(convertToFclTransform(T));
+#else
+        model->meshObject->setTransform(T.cast<float>());
+#endif
     }
-    auto pLocalPosition = model->primitiveLocalPositions.begin();
-    for(auto& primitive : model->primitiveObjects){
+    const int n = model->primitiveObjects.size();
+    for(int i=0; i < n; ++i){
+        auto& primitive = model->primitiveObjects[i];
         if(primitive){
-            const auto& T_local = *pLocalPosition;
-            primitive->setTransform(T * T_local);
+            auto& T_local = model->primitiveLocalPositions[i];
+            Isometry3 Tp = T * T_local;
+#ifdef CNOID_FCL_05
+            primitive->setTransform(convertToFclTransform(Tp));
+#else
+            primitive->setTransform(Tp.cast<float>());
+#endif
         }
-        ++pLocalPosition;
     }
 }
 
@@ -459,14 +500,14 @@ void FCLCollisionDetector::Impl::detectCollisions(std::function<void(const Colli
 
 
 void FCLCollisionDetector::Impl::detectObjectCollisions
-(fcl::CollisionObject* object1, fcl::CollisionObject* object2, CollisionPair& collisionPair)
+(CollisionObjectf* object1, CollisionObjectf* object2, CollisionPair& collisionPair)
 {
     vector<Collision>& collisions = collisionPair.collisions();
 
-    fcl::CollisionRequest request(std::numeric_limits<int>::max(), true);
-    fcl::CollisionResult result;
+    CollisionRequestf request(std::numeric_limits<int>::max(), true);
+    CollisionResultf result;
     int numContacts = collide(object1, object2, request, result);
-    std::vector<fcl::Contact> contacts;
+    std::vector<Contactf> contacts;
     result.getContacts(contacts);
 
     for(auto& contact : contacts){
