@@ -150,9 +150,7 @@ private:
     ROSPackageSchemeHandler ROSPackageSchemeHandler_;
     std::unordered_map<string, Vector4> colorMap;
 
-    void createColorMap(
-        const pugi::xml_object_range<pugi::xml_named_node_iterator>&
-            materialNodes);
+    void updateColorMap(const xml_node& materialNode);
     vector<LinkPtr> findRootLinks(
         const std::unordered_map<string, LinkPtr>& linkMap);
     bool loadLink(LinkPtr link, const xml_node& linkNode);
@@ -267,8 +265,14 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
     }
 
     // creates a color dictionary before parsing the robot model
-    auto materialNodes = robotNode.children(MATERIAL);
-    createColorMap(materialNodes);
+    for (xml_node& linkNode : robotNode.children(LINK)) {
+        for (xml_node& visualNode : linkNode.children(VISUAL)) {
+            const xml_node& materialNode = visualNode.child(MATERIAL);
+            if (!materialNode.empty()) {
+                updateColorMap(materialNode);
+            }
+        }
+    }
 
     // creates a link dictionary by loading all links for tree construction
     auto linkNodes = robotNode.children(LINK);
@@ -321,38 +325,31 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
 }
 
 
-void URDFBodyLoader::Impl::createColorMap(
-    const pugi::xml_object_range<pugi::xml_named_node_iterator>& materialNodes)
+void URDFBodyLoader::Impl::updateColorMap(const xml_node& materialNode)
 {
-    colorMap.reserve(std::distance(materialNodes.begin(), materialNodes.end()));
+    const string materialName = materialNode.attribute(NAME).as_string();
+    const xml_node& colorNode = materialNode.child(COLOR);
+    const xml_node& textureNode = materialNode.child(TEXTURE);
 
-    for (xml_node& materialNode : materialNodes) {
-        const string materialName = materialNode.attribute(NAME).as_string();
-        const xml_node& colorNode = materialNode.child(COLOR);
-        const xml_node& textureNode = materialNode.child(TEXTURE);
+    if (!colorNode.empty()) {
+        // case: a 'color' tag exists
+        const string rgbaString = colorNode.attribute(RGBA).as_string();
+        Vector4 rgba = Vector4::Zero();
+        if (toVector4(rgbaString, rgba)) {
+            // normalizes value
+            rgba.array().min(1.0).max(0.0);
 
-        if (materialName.empty()) {
-            continue;
-        } else if (!colorNode.empty()) {
-            // case: a 'color' tag exists
-            const string rgbaString = colorNode.attribute(RGBA).as_string();
-            Vector4 rgba = Vector4::Zero();
-            if (toVector4(rgbaString, rgba)) {
-                // normalizes value
-                rgba.array().min(1.0).max(0.0);
-
-                // tries to register the material
-                auto result = colorMap.emplace(materialName, rgba);
-                if (!result.second) {
-                    os() << "Warning: failed to add material named \""
-                         << materialName << "\"." << endl;
-                }
+            // tries to register the material
+            auto result = colorMap.emplace(materialName, rgba);
+            if (!result.second) {
+                os() << "Warning: failed to add material named \""
+                        << materialName << "\"." << endl;
             }
-        } else if (!textureNode.empty()) {
-            // case: a 'texture' tag exists
-            os() << "Warning: 'texture' tag is currently not supported."
-                 << endl;
         }
+    } else if (!textureNode.empty()) {
+        // case: a 'texture' tag exists
+        os() << "Warning: 'texture' tag is currently not supported."
+                << endl;
     }
 }
 

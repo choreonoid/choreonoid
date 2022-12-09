@@ -1,0 +1,1141 @@
+<robot name="SR1">
+  <!-- root link -->
+  <link name="WAIST">
+    <inertial>
+      <mass value="27.0"/>
+      <origin xyz="0.0 0.0 0.0375"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <geometry>
+        <box size="0.08 0.08 0.08"/>
+      </geometry>
+      <material name="WaistAppearance">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.0 0.0 0.0955"/>
+      <geometry>
+        <box size="0.05 0.05 0.111"/>
+      </geometry>
+      <material name="WaistAppearance"/>
+    </visual>
+
+    <collision>
+      <geometry>
+        <box size="0.08 0.08 0.08"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.0 0.0 0.0955"/>
+      <geometry>
+        <box size="0.05 0.05 0.111"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- right leg -->
+  <joint name="RLEG_HIP_R" type="revolute">
+    <origin xyz="0.0 -0.09 0.0"/>
+    <axis xyz="1 0 0"/>
+    <parent link="WAIST"/>
+    <child link="RLEG_HIP_R"/>
+    <limit lower="-0.785398163397" upper="0.785398163397" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="RLEG_HIP_R">
+    <inertial>
+      <mass value="2.5"/>
+      <origin xyz="0.0 -0.1 0.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 1.57"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+      <material name="Appearance3"/>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 1.57"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="RLEG_HIP_P" type="revolute">
+    <axis xyz="0 1 0"/>
+    <parent link="RLEG_HIP_R"/>
+    <child link="RLEG_HIP_P"/>
+    <limit lower="-1.57" upper="1.57" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="RLEG_HIP_P">
+    <inertial>
+      <mass value="2.0"/>
+      <origin xyz="0.0 0.0 -0.15"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+      <material name="Appearance3"/>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="RLEG_HIP_Y" type="revolute">
+    <origin xyz="0.0 0.0 -0.3535"/>
+    <axis xyz="0 0 1"/>
+    <parent link="RLEG_HIP_P"/>
+    <child link="RLEG_HIP_Y"/>
+    <limit lower="-1.0471975512" upper="1.0471975512" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="RLEG_HIP_Y">
+    <inertial>
+      <mass value="5.1"/>
+      <origin xyz="0.0 -0.04 0.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0.0 0.0 0.1"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+      <material name="Appearance5"/>
+    </visual>
+    <visual>
+      <origin xyz="0.0 0.0 0.22675"/>
+      <geometry>
+        <box size="0.1 0.1 0.1535"/>
+      </geometry>
+      <material name="Appearance5"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 0.0 0.1"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.0 0.0 0.22675"/>
+      <geometry>
+        <box size="0.1 0.1 0.1535"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="RLEG_KNEE" type="revolute">
+    <axis xyz="0 1 0"/>
+    <parent link="RLEG_HIP_Y"/>
+    <child link="RLEG_KNEE"/>
+    <limit lower="0.0" upper="2.61799387799" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="RLEG_KNEE">
+    <inertial>
+      <mass value="7.0"/>
+      <origin xyz="0.0 0.0 -0.3"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+      <material name="Appearance7"/>
+    </visual>
+    <visual>
+      <origin xyz="0.0 0.0 -0.15"/>
+      <geometry>
+        <box size="0.1 0.1 0.2"/>
+      </geometry>
+      <material name="Appearance7"/>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.0 0.0 -0.15"/>
+      <geometry>
+        <box size="0.1 0.1 0.2"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="RLEG_ANKLE_P" type="revolute">
+    <origin xyz="0.0 0.0 -0.3"/>
+    <axis xyz="0 1 0"/>
+    <parent link="RLEG_KNEE"/>
+    <child link="RLEG_ANKLE_P"/>
+    <limit lower="-1.3962634016" upper="0.785398163397" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="RLEG_ANKLE_P">
+    <inertial>
+      <mass value="2.5"/>
+      <origin xyz="-0.15 0.0 0.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+      <material name="Appearance3"/>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="RLEG_ANKLE_R" type="revolute">
+    <axis xyz="1 0 0"/>
+    <parent link="RLEG_ANKLE_P"/>
+    <child link="RLEG_ANKLE_R"/>
+    <limit lower="-0.785398163397" upper="0.785398163397" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="RLEG_ANKLE_R">
+    <inertial>
+      <mass value="1.9"/>
+      <origin xyz="0.28 0.0 -0.2"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0.1 0.0 0.0" rpy="1.57 0.0 1.57"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+      <material name="Appearance6"/>
+    </visual>
+    <visual>
+      <origin xyz="0.055 0.0 -0.05"/>
+      <geometry>
+        <box size="0.25 0.14 0.01"/>
+      </geometry>
+      <material name="Appearance6"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.1 0.0 0.0" rpy="1.57 0.0 1.57"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.055 0.0 -0.05"/>
+      <geometry>
+        <box size="0.25 0.14 0.01"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- right arm -->
+  <joint name="RARM_SHOULDER_P" type="revolute">
+    <origin xyz="0.0 -0.21 0.0"/>
+    <axis xyz="0 1 0"/>
+    <parent link="CHEST"/>
+    <child link="RARM_SHOULDER_P"/>
+    <limit lower="-3.14" upper="3.14" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="RARM_SHOULDER_P">
+    <inertial>
+      <mass value="3.0"/>
+      <origin xyz="0.1 0.0 0.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0.0 0.05 0.0" rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 0.05 0.0" rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="RARM_SHOULDER_R" type="revolute">
+    <axis xyz="1 0 0"/>
+    <parent link="RARM_SHOULDER_P"/>
+    <child link="RARM_SHOULDER_R"/>
+    <limit lower="-3.14" upper="0.785398163397" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="RARM_SHOULDER_R">
+    <inertial>
+      <mass value="0.6"/>
+      <origin xyz="0.0 0.0 -0.1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="0.0 1.57 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+      <material name="Appearance2"/>
+    </visual>
+    <visual>
+      <origin xyz="0.0 0.0 -0.1065"/>
+      <geometry>
+        <box size="0.05 0.05 0.163"/>
+      </geometry>
+      <material name="Appearance2"/>
+    </visual>
+
+    <collision>
+      <origin rpy="0.0 1.57 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.0 0.0 -0.1065"/>
+      <geometry>
+        <box size="0.05 0.05 0.163"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="RARM_SHOULDER_Y" type="revolute">
+    <origin xyz="0.0 0.0 -0.263"/>
+    <axis xyz="0 0 1"/>
+    <parent link="RARM_SHOULDER_R"/>
+    <child link="RARM_SHOULDER_Y"/>
+    <limit lower="-1.57" upper="1.57" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="RARM_SHOULDER_Y">
+    <inertial>
+      <mass value="1.0"/>
+      <origin xyz="0.0 0.0 0.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0.0 0.0 0.05"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 0.0 0.05"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="RARM_ELBOW" type="revolute">
+    <axis xyz="0 1 0"/>
+    <parent link="RARM_SHOULDER_Y"/>
+    <child link="RARM_ELBOW"/>
+    <limit lower="-2.61799387799" upper="0.0" effort="500.0" velocity="0.0"/>
+  </joint>
+
+  <link name="RARM_ELBOW">
+    <inertial>
+      <mass value="0.6"/>
+      <origin xyz="0.0 0.0 -0.3"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+      <material name="Appearance4"/>
+    </visual>
+    <visual>
+      <origin xyz="0.0 0.0 -0.0985"/>
+      <geometry>
+        <box size="0.05 0.05 0.147"/>
+      </geometry>
+      <material name="Appearance4"/>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.0 0.0 -0.0985"/>
+      <geometry>
+        <box size="0.05 0.05 0.147"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="RARM_WRIST_Y" type="revolute">
+    <origin xyz="0.0 0.0 -0.247"/>
+    <axis xyz="0 0 1"/>
+    <parent link="RARM_ELBOW"/>
+    <child link="RARM_WRIST_Y"/>
+    <limit lower="-1.57" upper="1.57" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="RARM_WRIST_Y">
+    <inertial>
+      <mass value="0.4"/>
+      <origin xyz="0.0 0.0 0.1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0.0 0.0 0.05"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 0.0 0.05"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="RARM_WRIST_P" type="revolute">
+    <axis xyz="0 1 0"/>
+    <parent link="RARM_WRIST_Y"/>
+    <child link="RARM_WRIST_P"/>
+    <limit lower="-1.57" upper="1.57" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="RARM_WRIST_P">
+    <inertial>
+      <mass value="0.4"/>
+      <origin xyz="-0.1 0.0 0.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="RARM_WRIST_R" type="revolute">
+    <axis xyz="1 0 0"/>
+    <parent link="RARM_WRIST_P"/>
+    <child link="RARM_WRIST_R"/>
+    <limit lower="-1.57" upper="1.57" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="RARM_WRIST_R">
+    <inertial>
+      <mass value="0.4"/>
+      <origin xyz="0.0 0.0 -0.1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 1.57"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+      <material name="Appearance7"/>
+    </visual>
+    <visual>
+      <origin xyz="0.0 0.0 -0.1125"/>
+      <geometry>
+        <box size="0.05 0.05 0.175"/>
+      </geometry>
+      <material name="Appearance7"/>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 1.57"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.0 0.0 -0.1125"/>
+      <geometry>
+        <box size="0.05 0.05 0.175"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- left leg -->
+  <joint name="LLEG_HIP_R" type="revolute">
+    <origin xyz="0.0 0.09 0.0"/>
+    <axis xyz="1 0 0"/>
+    <parent link="WAIST"/>
+    <child link="LLEG_HIP_R"/>
+    <limit lower="-0.785398163397" upper="0.785398163397" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="LLEG_HIP_R">
+    <inertial>
+      <mass value="2.5"/>
+      <origin xyz="0.0 0.1 0.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 1.57"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+      <material name="Appearance3"/>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 1.57"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="LLEG_HIP_P" type="revolute">
+    <axis xyz="0 1 0"/>
+    <parent link="LLEG_HIP_R"/>
+    <child link="LLEG_HIP_P"/>
+    <limit lower="-1.57" upper="1.57" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="LLEG_HIP_P">
+    <inertial>
+      <mass value="2.0"/>
+      <origin xyz="0.0 0.0 -0.15"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+      <material name="Appearance3"/>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="LLEG_HIP_Y" type="revolute">
+    <origin xyz="0.0 0.0 -0.3535"/>
+    <axis xyz="0 0 1"/>
+    <parent link="LLEG_HIP_P"/>
+    <child link="LLEG_HIP_Y"/>
+    <limit lower="-1.0471975512" upper="1.0471975512" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="LLEG_HIP_Y">
+    <inertial>
+      <mass value="5.1"/>
+      <origin xyz="0.0 0.04 0.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0.0 0.0 0.1"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+      <material name="Appearance5">
+        <color rgba="0.7 0.8 0.7 1.0"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.0 0.0 0.22675"/>
+      <geometry>
+        <box size="0.1 0.1 0.1535"/>
+      </geometry>
+      <material name="Appearance5"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 0.0 0.1"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.0 0.0 0.22675"/>
+      <geometry>
+        <box size="0.1 0.1 0.1535"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="LLEG_KNEE" type="revolute">
+    <axis xyz="0 1 0"/>
+    <parent link="LLEG_HIP_Y"/>
+    <child link="LLEG_KNEE"/>
+    <limit lower="0.0" upper="2.61799387799" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="LLEG_KNEE">
+    <inertial>
+      <mass value="7.0"/>
+      <origin xyz="0.0 0.0 -0.3"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+      <material name="Appearance7"/>
+    </visual>
+    <visual>
+      <origin xyz="0.0 0.0 -0.15"/>
+      <geometry>
+        <box size="0.1 0.1 0.2"/>
+      </geometry>
+      <material name="Appearance7"/>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.0 0.0 -0.15"/>
+      <geometry>
+        <box size="0.1 0.1 0.2"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="LLEG_ANKLE_P" type="revolute">
+    <origin xyz="0.0 0.0 -0.3"/>
+    <axis xyz="0 1 0"/>
+    <parent link="LLEG_KNEE"/>
+    <child link="LLEG_ANKLE_P"/>
+    <limit lower="-1.3962634016" upper="0.785398163397" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="LLEG_ANKLE_P">
+    <inertial>
+      <mass value="2.5"/>
+      <origin xyz="-0.15 0.0 0.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+      <material name="Appearance3"/>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="LLEG_ANKLE_R" type="revolute">
+    <axis xyz="1 0 0"/>
+    <parent link="LLEG_ANKLE_P"/>
+    <child link="LLEG_ANKLE_R"/>
+    <limit lower="-0.785398163397" upper="0.785398163397" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="LLEG_ANKLE_R">
+    <inertial>
+      <mass value="1.9"/>
+      <origin xyz="0.28 0.0 -0.2"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0.1 0.0 0.0" rpy="1.57 0.0 1.57"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+      <material name="Appearance6">
+        <color rgba="0.0 0.5 0.0 1.0"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.055 0.0 -0.05"/>
+      <geometry>
+        <box size="0.25 0.14 0.01"/>
+      </geometry>
+      <material name="Appearance6"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.1 0.0 0.0" rpy="1.57 0.0 1.57"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.055 0.0 -0.05"/>
+      <geometry>
+        <box size="0.25 0.14 0.01"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- left arm -->
+  <joint name="LARM_SHOULDER_P" type="revolute">
+    <origin xyz="0.0 0.21 0.0"/>
+    <axis xyz="0 1 0"/>
+    <parent link="CHEST"/>
+    <child link="LARM_SHOULDER_P"/>
+    <limit lower="-3.14" upper="3.14" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="LARM_SHOULDER_P">
+    <inertial>
+      <mass value="3.0"/>
+      <origin xyz="0.1 0.0 0.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0.0 -0.05 0.0" rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 -0.05 0.0" rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="LARM_SHOULDER_R" type="revolute">
+    <axis xyz="1 0 0"/>
+    <parent link="LARM_SHOULDER_P"/>
+    <child link="LARM_SHOULDER_R"/>
+    <limit lower="-0.785398163397" upper="3.14159265359" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="LARM_SHOULDER_R">
+    <inertial>
+      <mass value="0.6"/>
+      <origin xyz="0.0 0.0 -0.1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="0.0 1.57 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+      <material name="Appearance2"/>
+    </visual>
+    <visual>
+      <origin xyz="0.0 0.0 -0.1065"/>
+      <geometry>
+        <box size="0.05 0.05 0.163"/>
+      </geometry>
+      <material name="Appearance2"/>
+    </visual>
+
+    <collision>
+      <origin rpy="0.0 1.57 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.0 0.0 -0.1065"/>
+      <geometry>
+        <box size="0.05 0.05 0.163"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="LARM_SHOULDER_Y" type="revolute">
+    <origin xyz="0.0 0.0 -0.263"/>
+    <axis xyz="0 0 1"/>
+    <parent link="LARM_SHOULDER_R"/>
+    <child link="LARM_SHOULDER_Y"/>
+    <limit lower="-1.57" upper="1.57" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="LARM_SHOULDER_Y">
+    <inertial>
+      <mass value="1.0"/>
+      <origin xyz="0.0 0.0 0.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0.0 0.0 0.05"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 0.0 0.05"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="LARM_ELBOW" type="revolute">
+    <axis xyz="0 1 0"/>
+    <parent link="LARM_SHOULDER_Y"/>
+    <child link="LARM_ELBOW"/>
+    <limit lower="-2.61799387799" upper="0.0" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="LARM_ELBOW">
+    <inertial>
+      <mass value="0.6"/>
+      <origin xyz="0.0 0.0 -0.3"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+      <material name="Appearance4">
+        <color rgba="0.8 1.0 0.8 1.0"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.0 0.0 -0.0985"/>
+      <geometry>
+        <box size="0.05 0.05 0.147"/>
+      </geometry>
+      <material name="Appearance4"/>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.0 0.0 -0.0985"/>
+      <geometry>
+        <box size="0.05 0.05 0.147"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="LARM_WRIST_Y" type="revolute">
+    <origin xyz="0.0 0.0 -0.247"/>
+    <axis xyz="0 0 1"/>
+    <parent link="LARM_ELBOW"/>
+    <child link="LARM_WRIST_Y"/>
+    <limit lower="-1.57" upper="1.57" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="LARM_WRIST_Y">
+    <inertial>
+      <mass value="0.4"/>
+      <origin xyz="0.0 0.0 0.1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0.0 0.0 0.05"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 0.0 0.05"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="LARM_WRIST_P" type="revolute">
+    <axis xyz="0 1 0"/>
+    <parent link="LARM_WRIST_Y"/>
+    <child link="LARM_WRIST_P"/>
+    <limit lower="-1.57" upper="1.57" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="LARM_WRIST_P">
+    <inertial>
+      <mass value="0.4"/>
+      <origin xyz="-0.1 0.0 0.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="LARM_WRIST_R" type="revolute">
+    <axis xyz="1 0 0"/>
+    <parent link="LARM_WRIST_P"/>
+    <child link="LARM_WRIST_R"/>
+    <limit lower="-1.57" upper="1.57" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="LARM_WRIST_R">
+    <inertial>
+      <mass value="0.4"/>
+      <origin xyz="0.0 0.0 -0.1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="1.57 0.0 1.57"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+      <material name="Appearance7">
+        <color rgba="0.7 0.85 0.7 1.0"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.0 0.0 -0.1125"/>
+      <geometry>
+        <box size="0.05 0.05 0.175"/>
+      </geometry>
+      <material name="Appearance7"/>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 1.57"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.0 0.0 -0.1125"/>
+      <geometry>
+        <box size="0.05 0.05 0.175"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- body -->
+  <joint name="WAIST_P" type="revolute">
+    <origin xyz="0.0 0.0 0.176"/>
+    <axis xyz="0 1 0"/>
+    <parent link="WAIST"/>
+    <child link="WAIST_P"/>
+    <limit lower="-1.57" upper="1.57" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="WAIST_P">
+    <inertial>
+      <mass value="6.0"/>
+      <origin xyz="0.0 0.0 -0.1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <!-- NOTE: the cylinder direction in URDF is Z -->
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+      <material name="Appearance1">
+        <color rgba="0.6 1.0 0.6 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin rpy="1.57 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="WAIST_R" type="revolute">
+    <axis xyz="1 0 0"/>
+    <parent link="WAIST_P"/>
+    <child link="WAIST_R"/>
+    <limit lower="-1.0471975512" upper="1.0471975512" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="WAIST_R">
+    <inertial>
+      <mass value="30.0"/>
+      <origin xyz="0.11 0.0 0.25"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <origin rpy="0.0 1.57 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+      <material name="Appearance2">
+        <color rgba="0.6 0.8 0.6 1.0"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0.0 0.0 0.1625"/>
+      <geometry>
+        <box size="0.05 0.05 0.275"/>
+      </geometry>
+      <material name="Appearance2"/>
+    </visual>
+
+    <collision>
+      <origin rpy="0.0 1.57 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.05"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.0 0.0 0.1625"/>
+      <geometry>
+        <box size="0.05 0.05 0.275"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="CHEST" type="revolute">
+    <origin xyz="0.0 0.0 0.35"/>
+    <axis xyz="0 0 1"/>
+    <parent link="WAIST_R"/>
+    <child link="CHEST"/>
+    <limit lower="-1.57" upper="1.57" effort="500.0" velocity="10.0"/>
+  </joint>
+
+  <link name="CHEST">
+    <inertial>
+      <mass value="13.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+
+    <visual>
+      <geometry>
+        <cylinder radius="0.025" length="0.1"/>
+      </geometry>
+      <material name="Appearance3">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <visual>
+      <geometry>
+        <box size="0.15 0.27 0.05"/>
+      </geometry>
+      <material name="Appearance3"/>
+    </visual>
+    <visual>
+      <origin xyz="0.0 0.0 0.065"/>
+      <geometry>
+        <box size="0.05 0.05 0.03"/>
+      </geometry>
+      <material name="Appearance3"/>
+    </visual>
+    <visual>
+      <origin xyz="-0.015 0.0 0.16"/>
+      <geometry>
+        <box size="0.31 0.16 0.16"/>
+      </geometry>
+      <material>
+        <color rgba="0.5 0.8 0.5 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <cylinder radius="0.025" length="0.1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <box size="0.15 0.27 0.05"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.0 0.0 0.065"/>
+      <geometry>
+        <box size="0.05 0.05 0.03"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="-0.015 0.0 0.16"/>
+      <geometry>
+        <box size="0.31 0.16 0.16"/>
+      </geometry>
+    </collision>
+
+    <!-- cameras has not been described yet -->
+  </link>
+</robot>
