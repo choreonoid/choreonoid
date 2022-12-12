@@ -8,6 +8,8 @@
 namespace cnoid {
 
 /**
+   \note This class is not a sub class of the BodyHandler class.
+   This class is used as one of the base classes of a custom JointPath class.
    \note Configuration ID 0 should be used as the automatic configuration.
 */
 class CNOID_EXPORT JointSpaceConfigurationHandler

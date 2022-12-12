@@ -12,8 +12,6 @@ class CNOID_EXPORT LinkedJointHandler : public virtual BodyHandler
 {
 public:
     virtual bool updateLinkedJointDisplacements(Link* masterJoint = nullptr) = 0;
-
-    // Experimental
     virtual bool limitLinkedJointDisplacementsWithinMovableRanges(Link* masterJoint = nullptr);
 };
 
