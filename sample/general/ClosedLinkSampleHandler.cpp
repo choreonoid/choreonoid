@@ -11,7 +11,7 @@ class ClosedLinkSampleHandler : public LinkedJointHandler
 public:
     virtual BodyHandler* clone(Body* body) override;
     virtual bool initialize(Body* body, std::ostream& os) override;
-    virtual bool updateLinkedJointDisplacements(Link* masterJoint = nullptr) override;
+    virtual bool updateLinkedJointDisplacements(Link* masterJoint, double masterJointDisplacement) override;
 
 private:
     Link* joints[3];
@@ -39,8 +39,11 @@ bool ClosedLinkSampleHandler::initialize(Body* body, std::ostream& os)
 }
 
 
-bool ClosedLinkSampleHandler::updateLinkedJointDisplacements(Link* masterJoint)
+bool ClosedLinkSampleHandler::updateLinkedJointDisplacements(Link* masterJoint, double masterJointDisplacement)
 {
+    if(masterJoint){
+        masterJoint->q() = masterJointDisplacement;
+    }
     if(!masterJoint || masterJoint == joints[0]){
         joints[1]->q() = -joints[0]->q();
         joints[2]->q() = joints[0]->q();

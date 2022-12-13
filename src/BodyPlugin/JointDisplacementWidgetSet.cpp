@@ -65,7 +65,7 @@ public:
     void initialize(Link* joint);
     void updateDisplacementWidgets(bool forceUpdate);
     int getCurrentPhase();
-    void updateDisplacement();
+    void updateDisplacement(double q);
     void onDisplacementInput(double value);
     void onDialInput(double value);
     void onPhaseInput(int phase);
@@ -370,7 +370,7 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
         modelUpdateConnection.disconnect();
 
         if(bodyItem){
-            linkedJointHandler = bodyItem->body()->findHandler<LinkedJointHandler>();
+            linkedJointHandler = LinkedJointHandler::findOrCreateLinkedJointHandler(bodyItem->body());
             
             kinematicStateChangeConnection =
                 bodyItem->sigKinematicStateChanged().connect(updateJointDisplacementsLater);
@@ -862,17 +862,14 @@ int JointIndicator::getCurrentPhase()
 }
 
 
-void JointIndicator::updateDisplacement()
+void JointIndicator::updateDisplacement(double q)
 {
     bool updated = false;
-    if(auto handler = baseImpl->linkedJointHandler){
-        if(handler->updateLinkedJointDisplacements(joint)){
-            handler->limitLinkedJointDisplacementsWithinMovableRanges(joint);
-            baseImpl->updateJointDisplacements(this);
-            updated = true;
-        }
-    }
-    if(!updated){
+    auto& handler = baseImpl->linkedJointHandler;
+    if(handler->updateLinkedJointDisplacements(joint, q)){
+        handler->limitLinkedJointDisplacementsWithinMovableRanges(joint);
+        baseImpl->updateJointDisplacements(this);
+    } else {
         updateDisplacementWidgets(true);
     }
     baseImpl->notifyJointDisplacementInput();
@@ -881,8 +878,7 @@ void JointIndicator::updateDisplacement()
 
 void JointIndicator::onDisplacementInput(double value)
 {
-    joint->q() = value / unitConversionRatio;
-    updateDisplacement();
+    updateDisplacement(value / unitConversionRatio);
 }
 
 
@@ -894,7 +890,7 @@ void JointIndicator::onDialInput(double value)
         double q_shifted = q - 2.0 * M_PI;
         while(q_shifted >= joint->q_lower()){
             if(q_shifted <= joint->q_upper()){
-                joint->q() = q_shifted;
+                q = q_shifted;
                 valid = true;
                 break;
             }
@@ -904,19 +900,18 @@ void JointIndicator::onDialInput(double value)
         double q_shifted = q + 2.0 * M_PI;
         while(q_shifted <= joint->q_upper()){
             if(q_shifted >= joint->q_lower()){
-                joint->q() = q_shifted;
+                q = q_shifted;
                 valid = true;
                 break;
             }
             q_shifted += 2.0 * M_PI;
         }
     } else {
-        joint->q() = q;
         valid = true;
     }
 
     if(valid){
-        updateDisplacement();
+        updateDisplacement(q);
     }
 }
 

@@ -32,3 +32,11 @@ bool BodyHandler::checkVersion(const char* name, int version, int internalVersio
 
     return true;
 }
+
+
+bool BodyHandler::initialize(Body* /* body */, std::ostream& /* os */)
+{
+    return true;
+}
+
+

@@ -1786,7 +1786,7 @@ void OperableSceneBody::Impl::startFK(SceneWidgetEvent* event)
     orgJointPosition = targetLink->q();
 
     if(!linkedJointHandler){
-        linkedJointHandler = bodyItem->body()->findHandler<LinkedJointHandler>();
+        linkedJointHandler = LinkedJointHandler::findOrCreateLinkedJointHandler(bodyItem->body());
     }
     
     if(targetLink->isRevoluteJoint()){
@@ -1808,11 +1808,9 @@ void OperableSceneBody::Impl::dragFKRotation(SceneWidgetEvent* event)
 {
     if(dragProjector.dragRotation(event)){
         double q = orgJointPosition + dragProjector.rotationAngle();
-        targetLink->q() = stdx::clamp(q, targetLink->q_lower(), targetLink->q_upper());
-        if(linkedJointHandler){
-            if(linkedJointHandler->updateLinkedJointDisplacements(targetLink)){
-                linkedJointHandler->limitLinkedJointDisplacementsWithinMovableRanges(targetLink);
-            }
+        double q_clamped = stdx::clamp(q, targetLink->q_lower(), targetLink->q_upper());
+        if(linkedJointHandler->updateLinkedJointDisplacements(targetLink, q_clamped)){
+            linkedJointHandler->limitLinkedJointDisplacementsWithinMovableRanges(targetLink);
         }
         bodyItem->notifyKinematicStateChange(true);
         dragged = true;
@@ -1824,11 +1822,9 @@ void OperableSceneBody::Impl::dragFKTranslation(SceneWidgetEvent* event)
 {
     if(dragProjector.dragTranslation(event)){
         double q = orgJointPosition + dragProjector.translationAxis().dot(dragProjector.translation());
-        targetLink->q() = stdx::clamp(q, targetLink->q_lower(), targetLink->q_upper());
-        if(linkedJointHandler){
-            if(linkedJointHandler->updateLinkedJointDisplacements(targetLink)){
-                linkedJointHandler->limitLinkedJointDisplacementsWithinMovableRanges(targetLink);
-            }
+        double q_clamped = stdx::clamp(q, targetLink->q_lower(), targetLink->q_upper());
+        if(linkedJointHandler->updateLinkedJointDisplacements(targetLink, q_clamped)){
+            linkedJointHandler->limitLinkedJointDisplacementsWithinMovableRanges(targetLink);
         }
         bodyItem->notifyKinematicStateChange(true);
         dragged = true;

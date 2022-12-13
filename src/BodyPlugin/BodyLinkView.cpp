@@ -10,6 +10,7 @@
 #include <cnoid/JointPath>
 #include <cnoid/PinDragIK>
 #include <cnoid/PenetrationBlocker>
+#include <cnoid/LinkedJointHandler>
 #include <cnoid/ConnectionSet>
 #include <cnoid/Archive>
 #include <cnoid/SpinBox>
@@ -85,7 +86,8 @@ public:
 
     WorldItem* currentWorldItem;
     BodyItemPtr currentBodyItem;
-    Link* currentLink;
+    LinkPtr currentLink;
+    LinkedJointHandlerPtr linkedJointHandler;
 
     ScopedConnection bodySelectionManagerConnection;
     ScopedConnectionSet bodyItemConnections;
@@ -150,8 +152,6 @@ BodyLinkView::Impl::Impl(BodyLinkView* self)
     self->setDefaultLayoutArea(CenterArea);
 
     currentWorldItem = nullptr;
-    currentBodyItem = nullptr;
-    currentLink = nullptr;
 
     setupWidgets();
 
@@ -483,8 +483,12 @@ void BodyLinkView::Impl::onCurrentLinkChanged(BodyItem* bodyItem, Link* link)
         activateCurrentBodyItem(false);
         currentBodyItem = bodyItem;
         currentLink = link;
-        activateCurrentBodyItem(true);
+        linkedJointHandler.reset();
 
+        if(bodyItem){
+            linkedJointHandler = LinkedJointHandler::findOrCreateLinkedJointHandler(bodyItem->body());
+            activateCurrentBodyItem(true);
+        }
     } else if(link && link != currentLink){
         currentLink = link;
         update();
@@ -804,7 +808,9 @@ void BodyLinkView::Impl::on_qChanged(double q)
         if(currentLink->isRevoluteJoint()){
             q = radian(q);
         }
-        currentLink->q() = q;
+        if(linkedJointHandler->updateLinkedJointDisplacements(currentLink, q)){
+            linkedJointHandler->limitLinkedJointDisplacementsWithinMovableRanges(currentLink);
+        }
         currentBodyItem->notifyKinematicStateChange(true);
     }
 }

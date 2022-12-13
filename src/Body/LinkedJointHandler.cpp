@@ -3,6 +3,42 @@
 
 using namespace cnoid;
 
+namespace {
+
+class NonLinkedJointHandler : public LinkedJointHandler
+{
+public:
+    virtual BodyHandler* clone(Body* body) override;
+    virtual bool updateLinkedJointDisplacements(Link* masterJoint, double masterJointDisplacement) override;
+};
+
+}
+
+    
+BodyHandler* NonLinkedJointHandler::clone(Body* /* body */)
+{
+    return new NonLinkedJointHandler;
+}
+
+
+LinkedJointHandler* LinkedJointHandler::findOrCreateLinkedJointHandler(Body* body)
+{
+    auto handler = body->findHandler<LinkedJointHandler>();
+    if(!handler){
+        handler = new NonLinkedJointHandler;
+    }
+    return handler;
+}
+
+
+bool NonLinkedJointHandler::updateLinkedJointDisplacements(Link* masterJoint, double masterJointDisplacement)
+{
+    if(masterJoint){
+        masterJoint->q() = masterJointDisplacement;
+    }
+    return false;
+}
+
 
 bool LinkedJointHandler::limitLinkedJointDisplacementsWithinMovableRanges(Link* masterJoint)
 {
@@ -19,8 +55,7 @@ bool LinkedJointHandler::limitLinkedJointDisplacementsWithinMovableRanges(Link* 
                 isLimitOver = true;
             }
             if(isLimitOver){
-                joint->q() = q;
-                updateLinkedJointDisplacements(joint);
+                updateLinkedJointDisplacements(joint, q);
                 updated = true;
             }
         }

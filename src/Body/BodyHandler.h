@@ -21,7 +21,7 @@ class CNOID_EXPORT BodyHandler : public Referenced
 {
 public:
     static bool checkVersion(const char* name, int version, int internalVersion, std::ostream& os);
-    virtual bool initialize(Body* body, std::ostream& os) = 0;
+    virtual bool initialize(Body* body, std::ostream& os);
     virtual BodyHandler* clone(Body* body) = 0;
     Body* body() { return body_; }
     const std::string& filename() const { return filename_; }
