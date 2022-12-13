@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "ForwardDynamicsABM.h"
 #include "DyBody.h"
 #include <cnoid/EigenUtil>
@@ -73,11 +68,11 @@ void ForwardDynamicsABM::calcNextState()
 {
     switch(integrationMode){
 
-    case EULER_METHOD:
-        calcMotionWithEulerMethod();
+    case SemiImplicitEuler:
+        calcMotionWithSemiImplicitEulerMethod();
         break;
 		
-    case RUNGEKUTTA_METHOD:
+    case RungeKutta:
         calcMotionWithRungeKuttaMethod();
         break;
     }
@@ -94,7 +89,7 @@ void ForwardDynamicsABM::calcNextState()
 }
 
 
-void ForwardDynamicsABM::calcMotionWithEulerMethod()
+void ForwardDynamicsABM::calcMotionWithSemiImplicitEulerMethod()
 {
     calcABMLastHalf();
 
@@ -108,18 +103,18 @@ void ForwardDynamicsABM::calcMotionWithEulerMethod()
         root->dv() =
             root->dvo() - root->p().cross(root->dw())
             + root->w().cross(root->vo() + root->w().cross(root->p()));
+        root->vo() += root->dvo() * timeStep;
+        root->w()  += root->dw()  * timeStep;
         Isometry3 T;
         SE3exp(T, root->T(), root->w(), root->vo(), timeStep);
         root->T() = T;
-        root->vo() += root->dvo() * timeStep;
-        root->w()  += root->dw()  * timeStep;
     }
 
     int n = subBody->numLinks();
     for(int i=1; i < n; ++i){
         DyLink* link = subBody->link(i);
-        link->q()  += link->dq()  * timeStep;
         link->dq() += link->ddq() * timeStep;
+        link->q()  += link->dq()  * timeStep;
     }
 }
 

@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "ForwardDynamicsCBM.h"
 #include "DyBody.h"
 #include <cnoid/EigenUtil>
@@ -108,7 +103,7 @@ void ForwardDynamicsCBM::initialize()
 
     initializeSensors();
 
-    if(integrationMode == RUNGEKUTTA_METHOD){
+    if(integrationMode == RungeKutta){
         q0. resize(numLinks);
         dq0.resize(numLinks);
         dq. resize(numLinks);
@@ -170,11 +165,11 @@ void ForwardDynamicsCBM::calcNextState()
 
         switch(integrationMode){
 
-        case EULER_METHOD:
-            calcMotionWithEulerMethod();
+        case SemiImplicitEuler:
+            calcMotionWithSemiImplicitEulerMethod();
             break;
 			
-        case RUNGEKUTTA_METHOD:
+        case RungeKutta:
             calcMotionWithRungeKuttaMethod();
             break;
         }
@@ -195,7 +190,7 @@ void ForwardDynamicsCBM::calcNextState()
 }
 
 
-void ForwardDynamicsCBM::calcMotionWithEulerMethod()
+void ForwardDynamicsCBM::calcMotionWithSemiImplicitEulerMethod()
 {
     sumExternalForces();
     solveUnknownAccels();
@@ -204,18 +199,18 @@ void ForwardDynamicsCBM::calcMotionWithEulerMethod()
     DyLink* root = subBody->rootLink();
 
     if(unknown_rootDof){
+        root->vo() += root->dvo() * timeStep;
+        root->w()  += root->dw()  * timeStep;
         Isometry3 T;
         SE3exp(T, root->T(), root->w(), root->vo(), timeStep);
         root->T() = T;
-        root->vo() += root->dvo() * timeStep;
-        root->w()  += root->dw()  * timeStep;
     }
 
     const int n = torqueModeJoints.size();
     for(int i=0; i < n; ++i){
         DyLink* link = torqueModeJoints[i];
-        link->q()  += link->dq()  * timeStep;
         link->dq() += link->ddq() * timeStep;
+        link->q()  += link->dq()  * timeStep;
     }
 
     calcPositionAndVelocityFK();

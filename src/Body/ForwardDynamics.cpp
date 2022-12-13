@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "ForwardDynamics.h"
 #include "DyBody.h"
 
@@ -15,7 +10,7 @@ ForwardDynamics::ForwardDynamics(DySubBody* subBody)
     g.setZero();
     timeStep = 0.005;
 
-    integrationMode = RUNGEKUTTA_METHOD;
+    integrationMode = SemiImplicitEuler;
     sensorsEnabled = false;
 }
 
@@ -40,13 +35,13 @@ void ForwardDynamics::setGravityAcceleration(const Vector3& g)
 
 void ForwardDynamics::setEulerMethod()
 {
-    integrationMode = EULER_METHOD;
+    integrationMode = SemiImplicitEuler;
 }
 
 
 void ForwardDynamics::setRungeKuttaMethod()
 {
-    integrationMode = RUNGEKUTTA_METHOD;
+    integrationMode = RungeKutta;
 }
 
 

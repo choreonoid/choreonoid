@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_FORWARD_DYNAMICS_H
 #define CNOID_BODY_FORWARD_DYNAMICS_H
 
@@ -57,7 +52,7 @@ protected:
     bool sensorsEnabled;
     BasicSensorSimulationHelper sensorHelper;
 
-    enum { EULER_METHOD, RUNGEKUTTA_METHOD } integrationMode;
+    enum { SemiImplicitEuler, RungeKutta } integrationMode;
 };
 
 }

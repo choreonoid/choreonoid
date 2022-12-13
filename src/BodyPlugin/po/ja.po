@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-14 00:36+0900\n"
+"POT-Creation-Date: 2022-12-14 12:39+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -22,10 +22,10 @@ msgstr "順動力学"
 msgid "Kinematics"
 msgstr "運動学"
 
-msgid "Euler"
-msgstr "オイラー"
+msgid "Semi-implicit Euler"
+msgstr "半陰オイラー"
 
-msgid "Runge Kutta"
+msgid "Runge-Kutta"
 msgstr "ルンゲクッタ"
 
 msgid ""
@@ -132,6 +132,12 @@ msgstr "反転コピー"
 
 msgid "Copy the left side pose to the right side"
 msgstr "左側の姿勢を右側にコピー"
+
+msgid "CollisionSeqItem"
+msgstr "干渉時系列アイテム"
+
+msgid "Collision Data"
+msgstr "干渉データ"
 
 msgid "BodyContactPointLoggerItem"
 msgstr "ボディ接触点ロガーアイテム"
@@ -527,12 +533,6 @@ msgstr "干渉検出コントローラ"
 
 msgid "The function to read CollisionSeq is not implemented."
 msgstr "CollisionSeqを読み込む機能は実装されていません．"
-
-msgid "CollisionSeqItem"
-msgstr "干渉時系列アイテム"
-
-msgid "Collision Data"
-msgstr "干渉データ"
 
 msgid "No delay mode"
 msgstr "無遅延モード"

@@ -18,8 +18,19 @@ public:
     AISTSimulatorItem();
     virtual ~AISTSimulatorItem();
 
-    enum DynamicsMode { FORWARD_DYNAMICS = 0, KINEMATICS, N_DYNAMICS_MODES };
-    enum IntegrationMode { EULER_INTEGRATION = 0, RUNGE_KUTTA_INTEGRATION, N_INTEGRATION_MODES };
+    enum DynamicsMode {
+        ForwardDynamicsMode,
+        KinematicsMode,
+        FORWARD_DYNAMICS = ForwardDynamicsMode,
+        KINEMATICS = KinematicsMode
+    };
+
+    enum IntegrationMode {
+        SemiImplicitEuler,
+        RungeKutta,
+        EULER_INTEGRATION = SemiImplicitEuler,
+        RUNGE_KUTTA_INTEGRATION = RungeKutta
+    };
 
     void setDynamicsMode(int mode);
     void setIntegrationMode(int mode);
@@ -56,7 +67,7 @@ public:
     void registerCollisionHandler(const std::string& name, CollisionHandler handler);
     bool unregisterCollisionHandler(const std::string& name);
 
-    //! \deprecated
+    //[[deprecated]]
     void setFriction(Link* link1, Link* link2, double staticFriction, double dynamicFriction);
 
 protected:

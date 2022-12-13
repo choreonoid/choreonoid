@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_FORWARD_DYNAMICS_ABM_H
 #define CNOID_BODY_FORWARD_DYNAMICS_ABM_H
 
@@ -28,7 +23,7 @@ public:
     
 private:
         
-    void calcMotionWithEulerMethod();
+    void calcMotionWithSemiImplicitEulerMethod();
     void integrateRungeKuttaOneStep(double r, double dt);
     void calcMotionWithRungeKuttaMethod();
 

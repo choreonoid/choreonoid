@@ -1,16 +1,11 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_FORWARD_DYNAMICS_CBM_H
 #define CNOID_BODY_FORWARD_DYNAMICS_CBM_H
 
 #include "ForwardDynamics.h"
 #include "exportdecl.h"
 
-namespace cnoid
-{
+namespace cnoid {
+
 class DyLink;
 class ForceSensorDevice;
 
@@ -39,7 +34,8 @@ public:
     void sumExternalForces();
     void solveUnknownAccels();
     void solveUnknownAccels(const Vector3& fext, const Vector3& tauext);
-    bool solveUnknownAccels(DyLink* link, const Vector3& fext, const Vector3& tauext, const Vector3& rootfext, const Vector3& roottauext);
+    bool solveUnknownAccels(
+        DyLink* link, const Vector3& fext, const Vector3& tauext, const Vector3& rootfext, const Vector3& roottauext);
 
 private:
         
@@ -118,7 +114,7 @@ private:
 
     virtual void initializeSensors();
 
-    void calcMotionWithEulerMethod();
+    void calcMotionWithSemiImplicitEulerMethod();
     void calcMotionWithRungeKuttaMethod();
     void integrateRungeKuttaOneStep(double r, double dt);
     void preserveHighGainModeJointState();

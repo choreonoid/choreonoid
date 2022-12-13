@@ -137,15 +137,15 @@ AISTSimulatorItem::AISTSimulatorItem()
 
 AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self)
     : self(self),
-      dynamicsMode(AISTSimulatorItem::N_DYNAMICS_MODES, CNOID_GETTEXT_DOMAIN_NAME),
-      integrationMode(AISTSimulatorItem::N_INTEGRATION_MODES, CNOID_GETTEXT_DOMAIN_NAME)
+      dynamicsMode(2, CNOID_GETTEXT_DOMAIN_NAME),
+      integrationMode(2, CNOID_GETTEXT_DOMAIN_NAME)
 {
-    dynamicsMode.setSymbol(AISTSimulatorItem::FORWARD_DYNAMICS,  N_("Forward dynamics"));
-    dynamicsMode.setSymbol(AISTSimulatorItem::KINEMATICS,        N_("Kinematics"));
+    dynamicsMode.setSymbol(ForwardDynamicsMode, N_("Forward dynamics"));
+    dynamicsMode.setSymbol(KinematicsMode,      N_("Kinematics"));
 
-    integrationMode.setSymbol(AISTSimulatorItem::EULER_INTEGRATION,  N_("Euler"));
-    integrationMode.setSymbol(AISTSimulatorItem::RUNGE_KUTTA_INTEGRATION,  N_("Runge Kutta"));
-    integrationMode.select(AISTSimulatorItem::RUNGE_KUTTA_INTEGRATION);
+    integrationMode.setSymbol(SemiImplicitEuler, N_("Semi-implicit Euler"));
+    integrationMode.setSymbol(RungeKutta,        N_("Runge-Kutta"));
+    integrationMode.select(SemiImplicitEuler);
     
     gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
 
@@ -373,7 +373,7 @@ SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody, CloneMap&
     cloneMap.setClone(orgBody, body);
     body->copyFrom(orgBody, &cloneMap);
 
-    if(impl->dynamicsMode.is(KINEMATICS) && impl->isKinematicWalkingEnabled){
+    if(impl->dynamicsMode.is(KinematicsMode) && impl->isKinematicWalkingEnabled){
         LeggedBodyHelper* legged = getLeggedBodyHelper(body);
         if(legged->isValid()){
             simBody = new KinematicWalkBody(body, legged);
@@ -401,9 +401,9 @@ bool AISTSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationB
         os << setprecision(30);
     }
 
-    if(integrationMode.is(AISTSimulatorItem::EULER_INTEGRATION)){
+    if(integrationMode.is(SemiImplicitEuler)){
         world.setEulerMethod();
-    } else if(integrationMode.is(AISTSimulatorItem::RUNGE_KUTTA_INTEGRATION)){
+    } else if(integrationMode.is(RungeKutta)){
         world.setRungeKuttaMethod();
     }
     world.setGravityAcceleration(gravity);
@@ -526,7 +526,8 @@ bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activ
 {
     switch(impl->dynamicsMode.which()){
 
-    case FORWARD_DYNAMICS: {
+    case ForwardDynamicsMode:
+    {
         // Update the internal states for a special actuation mode
         bool doRefresh = false;
         for(auto& dyLink : impl->internalStateUpdateLinks){
@@ -546,7 +547,7 @@ bool AISTSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& activ
         break;
     }
         
-    case KINEMATICS:
+    case KinematicsMode:
         impl->stepKinematicsSimulation(activeSimBodies);
         break;
     }
@@ -733,7 +734,7 @@ bool AISTSimulatorItem::store(Archive& archive)
 bool AISTSimulatorItem::Impl::store(Archive& archive)
 {
     archive.write("dynamicsMode", dynamicsMode.selectedSymbol(), DOUBLE_QUOTED);
-    archive.write("integrationMode", integrationMode.selectedSymbol(), DOUBLE_QUOTED);
+    archive.write("integrationMode", integrationMode.is(SemiImplicitEuler) ? "semi-implicit_euler" : "runge-kutta");
     write(archive, "gravity", gravity);
     archive.write("min_friction_coefficient", minFrictionCoefficient);
     archive.write("max_friction_coefficient", maxFrictionCoefficient);
@@ -764,7 +765,11 @@ bool AISTSimulatorItem::Impl::restore(const Archive& archive)
         dynamicsMode.select(symbol);
     }
     if(archive.read("integrationMode", symbol)){
-        integrationMode.select(symbol);
+        if(symbol == "runge-kutta" || symbol == "Runge Kutta"){
+            integrationMode.select(RungeKutta);
+        } else {
+            integrationMode.select(SemiImplicitEuler);
+        }
     }
     read(archive, "gravity", gravity);
     archive.read("min_friction_coefficient", minFrictionCoefficient);

@@ -129,15 +129,19 @@ void exportSimulationClasses(py::module m)
         ;
 
     py::enum_<AISTSimulatorItem::DynamicsMode>(aistSimulatorItemClass, "DynamicsMode")
-        .value("FORWARD_DYNAMICS", AISTSimulatorItem::DynamicsMode::FORWARD_DYNAMICS)
-        .value("KINEMATICS", AISTSimulatorItem::DynamicsMode::KINEMATICS)
-        .value("N_DYNAMICS_MODES", AISTSimulatorItem::DynamicsMode::N_DYNAMICS_MODES)
+        .value("ForwardDynamicsMode", AISTSimulatorItem::ForwardDynamicsMode)
+        .value("KinematicsMode", AISTSimulatorItem::KinematicsMode)
+        // deprecated
+        .value("FORWARD_DYNAMICS", AISTSimulatorItem::ForwardDynamicsMode)
+        .value("KINEMATICS", AISTSimulatorItem::KinematicsMode)
         .export_values();
 
     py::enum_<AISTSimulatorItem::IntegrationMode>(aistSimulatorItemClass, "IntegrationMode")
-        .value("EULER_INTEGRATION", AISTSimulatorItem::IntegrationMode::EULER_INTEGRATION)
-        .value("RUNGE_KUTTA_INTEGRATION", AISTSimulatorItem::IntegrationMode::RUNGE_KUTTA_INTEGRATION)
-        .value("N_INTEGRATION_MODES", AISTSimulatorItem::IntegrationMode::N_INTEGRATION_MODES)
+        .value("SemiImplicitEuler", AISTSimulatorItem::SemiImplicitEuler)
+        .value("RungeKutta", AISTSimulatorItem::RungeKutta)
+        // deprecated
+        .value("EULER_INTEGRATION", AISTSimulatorItem::SemiImplicitEuler)
+        .value("RUNGE_KUTTA_INTEGRATION", AISTSimulatorItem::RungeKutta)
         .export_values();
 
     PyItemList<AISTSimulatorItem>(m, "AISTSimulatorItemList");
