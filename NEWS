@@ -18,7 +18,7 @@ Changes since 1.7.0:
 * Added the Universal Robots UR robot models
 * Fixed the WRS2018 tunnel models
 * The Eigen library contained in the thirdparty directory is used by default on Windows
-* Supported Ubuntu 20.04
+* Supported Ubuntu 20.04 and 22.04
 * Supported Visual C++ 2019
 * Supported Clang
 * Added LocationView and LinkPositionView
@@ -80,6 +80,7 @@ Changes since 1.7.0:
 * Supported loading URDF files
 * Improve GLVisionSensorItem to support sensor noises
 * Improve body key pose editing
+* Introduced LinkedJointHandler and supported the kinematics operations of parallel link models on GUI with the handler
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
