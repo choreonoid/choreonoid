@@ -164,6 +164,12 @@ void CollisionDetector::setGroupPairEnabled(int /* groupId1 */, int /* groupId2 
 }
 
 
+void CollisionDetector::setGeometryEnabled(GeometryHandle /* geometry */, bool /* isEnabled */)
+{
+
+}
+
+
 void CollisionDetector::setDynamicGeometryPairChangeEnabled(bool /* on */)
 {
 

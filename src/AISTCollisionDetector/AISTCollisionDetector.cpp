@@ -37,11 +37,12 @@ class ColdetModelEx : public ColdetModel
 public:
     ReferencedPtr object;
     int groupId;
+    bool isEnabled;
     bool isStatic;
     stdx::optional<Isometry3> localPosition;
     ColdetModelExPtr sibling;
     
-    ColdetModelEx() : groupId(0), isStatic(false) { }
+    ColdetModelEx() : groupId(0), isEnabled(true), isStatic(false) { }
 };
 
 class ColdetModelPairEx;
@@ -303,6 +304,19 @@ void AISTCollisionDetector::Impl::addMesh(ColdetModelEx* model)
 }
 
 
+void AISTCollisionDetector::setCustomObject(GeometryHandle geometry, Referenced* object)
+{
+    getColdetModel(geometry)->object = object;
+}
+
+
+void AISTCollisionDetector::setGeometryStatic(GeometryHandle geometry, bool isStatic)
+{
+    getColdetModel(geometry)->isStatic = isStatic;
+    impl->isReady = false;
+}
+
+
 void AISTCollisionDetector::setGroup(GeometryHandle geometry, int groupId)
 {
     getColdetModel(geometry)->groupId = groupId;
@@ -316,19 +330,6 @@ void AISTCollisionDetector::setGroupPairEnabled(int groupId1, int groupId2, bool
     } else {
         impl->ignoredGroupPairs.insert(IdPair<int>(groupId1, groupId2));
     }
-}
-
-
-void AISTCollisionDetector::setCustomObject(GeometryHandle geometry, Referenced* object)
-{
-    getColdetModel(geometry)->object = object;
-}
-
-
-void AISTCollisionDetector::setGeometryStatic(GeometryHandle geometry, bool isStatic)
-{
-    getColdetModel(geometry)->isStatic = isStatic;
-    impl->isReady = false;
 }
 
 
@@ -347,6 +348,12 @@ void AISTCollisionDetector::ignoreGeometryPair(GeometryHandle geometry1, Geometr
             impl->isReady = false;
         }
     }
+}
+
+
+void AISTCollisionDetector::setGeometryEnabled(GeometryHandle geometry, bool isEnabled)
+{
+    getColdetModel(geometry)->isEnabled = isEnabled;
 }
 
 
@@ -496,9 +503,11 @@ void AISTCollisionDetector::Impl::detectCollisions
             auto model0 = modelPair->model(0);
             auto model1 = modelPair->model(1);
             if(getHandle(modelPair->model(0)) == geometry || getHandle(modelPair->model(1)) == geometry){
-                if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
-                    if(!modelPair->detectCollisions().empty()){
-                        copyCollisionPairCollisions(modelPair, collisionPair);
+                if(model0->isEnabled && model1->isEnabled){
+                    if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
+                        if(!modelPair->detectCollisions().empty()){
+                            copyCollisionPairCollisions(modelPair, collisionPair);
+                        }
                     }
                 }
             }
@@ -536,9 +545,11 @@ void AISTCollisionDetector::Impl::detectCollisions(const std::function<void(cons
     for(ColdetModelPairEx* modelPair : modelPairs){ // Do not use auto&
         collisions.clear();
         do {
-            if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
-                if(!modelPair->detectCollisions().empty()){
-                    copyCollisionPairCollisions(modelPair, collisionPair);
+            if(modelPair->model(0)->isEnabled && modelPair->model(1)->isEnabled){
+                if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
+                    if(!modelPair->detectCollisions().empty()){
+                        copyCollisionPairCollisions(modelPair, collisionPair);
+                    }
                 }
             }
             modelPair = modelPair->sibling;  // Elements in models are overridden here if auto& is used
@@ -597,9 +608,11 @@ void AISTCollisionDetector::Impl::extractCollisionsOfAssignedPairs
         collisionPairs.push_back(CollisionPair());
         CollisionPair& collisionPair = collisionPairs.back();
         do {
-            if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
-                if(!modelPair->detectCollisions().empty()){
-                    copyCollisionPairCollisions(modelPair, collisionPair, true);
+            if(modelPair->model(0)->isEnabled && modelPair->model(1)->isEnabled){
+                if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
+                    if(!modelPair->detectCollisions().empty()){
+                        copyCollisionPairCollisions(modelPair, collisionPair, true);
+                    }
                 }
             }
             modelPair = modelPair->sibling;

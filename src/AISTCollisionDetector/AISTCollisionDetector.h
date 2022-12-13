@@ -19,6 +19,7 @@ public:
     virtual stdx::optional<GeometryHandle> addGeometry(SgNode* geometry) override;
     virtual void setCustomObject(GeometryHandle geometry, Referenced* object) override;
     virtual void setGeometryStatic(GeometryHandle geometry, bool isStatic = true) override;
+    virtual void setGeometryEnabled(GeometryHandle geometry, bool isEnabled) override;
     virtual void setGroup(GeometryHandle geometry, int groupId) override;
     virtual void setGroupPairEnabled(int groupId1, int groupId2, bool on) override;
     virtual void ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore = true) override;
