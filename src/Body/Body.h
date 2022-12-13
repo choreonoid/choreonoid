@@ -5,6 +5,7 @@
 #include "ExtraJoint.h"
 #include "DeviceList.h"
 #include <cnoid/ClonableReferenced>
+#include <cnoid/Signal>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -264,6 +265,10 @@ public:
     void addExtraJoint(const ExtraJoint& extraJoint) { extraJoints_.push_back(extraJoint); }
     void clearExtraJoints() { extraJoints_.clear(); }
 
+    bool existence() const { return existence_; }
+    void setExistence(bool on);
+    SignalProxy<void(bool on)> sigExistenceChanged();
+
     int numMultiplexBodies() const { return !nextMultiplexBody_ ? 1 : getNumMultiplexBodies(); }
     Body* nextMultiplexBody() { return nextMultiplexBody_; }
     Body* getOrCreateNextMultiplexBody() {
@@ -351,12 +356,12 @@ private:
     LinkPtr rootLink_;
     LinkPtr parentBodyLink_;
     bool isStaticModel_;
+    bool existence_;
     std::vector<LinkPtr> jointIdToLinkArray;
     int numActualJoints;
     DeviceList<> devices_;
     std::vector<ExtraJoint> extraJoints_;
     std::function<double()> currentTimeFunction;
-
     BodyPtr nextMultiplexBody_;
 
     class Impl;

@@ -39,7 +39,7 @@ bool BodyMotionEngineCore::updateBodyPosition_(const BodyPositionSeqFrame& frame
 
     // Main body
     auto frameBlock = frame.firstBlock();
-    if(updateSingleBodyPosition(body, frameBlock)){
+    if(updateSingleBodyPosition(body, frameBlock, true)){
         needFk = true;
     }
 
@@ -51,7 +51,7 @@ bool BodyMotionEngineCore::updateBodyPosition_(const BodyPositionSeqFrame& frame
         Body* multiplexBody = body;
         while(frameBlock){
             multiplexBody = multiplexBody->getOrCreateNextMultiplexBody();
-            updateSingleBodyPosition(multiplexBody, frameBlock);
+            updateSingleBodyPosition(multiplexBody, frameBlock, false);
             frameBlock = frame.nextBlockOf(frameBlock);
         }
         multiplexBody->clearMultiplexBodies();
@@ -61,18 +61,20 @@ bool BodyMotionEngineCore::updateBodyPosition_(const BodyPositionSeqFrame& frame
 }
 
 
-bool BodyMotionEngineCore::updateSingleBodyPosition(Body* body, BodyPositionSeqFrameBlock frameBlock)
+bool BodyMotionEngineCore::updateSingleBodyPosition(Body* body, BodyPositionSeqFrameBlock frameBlock, bool isMainBody)
 {
     bool needFk = false;
 
     int numAllLinks = body->numLinks();
     int numLinkPositions = frameBlock.numLinkPositions();
     if(numLinkPositions == 0){
-        body->rootLink()->translation().x() = 1.0e10; // Hide the body
-        if(numAllLinks >= 2){
-            needFk = true;
+        if(body->existence() && isMainBody){
+            body->setExistence(false);
         }
     } else {
+        if(!body->existence() && isMainBody){
+            body->setExistence(true);
+        }
         int numLinks = std::min(numAllLinks, numLinkPositions);
         for(int i=0; i < numLinks; ++i){
             auto link = body->link(i);

@@ -66,6 +66,7 @@ public:
     BodyHandle bodyHandle;
 
     MultiplexInfoPtr multiplexInfo;
+    Signal<void(bool on)> sigExistenceChanged;
         
     Impl(Body* self);
     void initialize(Body* self, Link* rootLink);
@@ -117,6 +118,7 @@ void Body::Impl::initialize(Body* self, Link* rootLink)
 
     self->rootLink_ = nullptr;
     self->setRootLink(rootLink);
+    self->existence_ = true;
 }
 
 
@@ -784,6 +786,21 @@ void Body::calcTotalMomentum(Vector3& out_P, Vector3& out_L)
 void Body::setCurrentTimeFunction(std::function<double()> func)
 {
     currentTimeFunction = func;
+}
+
+
+void Body::setExistence(bool on)
+{
+    if(on != existence_){
+        existence_ = on;
+        impl->sigExistenceChanged(on);
+    }
+}
+
+
+SignalProxy<void(bool on)> Body::sigExistenceChanged()
+{
+    return impl->sigExistenceChanged;
 }
 
 

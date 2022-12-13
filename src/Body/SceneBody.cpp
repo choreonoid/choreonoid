@@ -76,6 +76,7 @@ public:
     SgGroupPtr multiplexSceneBodyGroup;
     std::vector<SceneBodyPtr> multiplexSceneBodies;
     std::vector<SceneBodyPtr> multiplexSceneBodyCache;
+    ScopedConnection existenceConnection;
 
     Impl(SceneBody* self);
     void updateLinkPositions(Body* body, vector<SceneLinkPtr>& sceneLinks, SgUpdateRef update);
@@ -83,6 +84,7 @@ public:
     SceneBody* addMultiplexSceneBody(SgUpdateRef update);
     void removeSubsequentMultiplexSceneBodies(int index, SgUpdateRef update, bool doCache);
     void clearSceneDevices();    
+    void onBodyExistenceChanged(bool on);
 };
 
 }
@@ -415,6 +417,9 @@ void SceneBody::setBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFa
     body_ = body;
     impl->sceneLinkFactory = sceneLinkFactory;
     updateSceneModel();
+
+    impl->existenceConnection =
+        body->sigExistenceChanged().connect([this](bool on){ impl->onBodyExistenceChanged(on); });
 }
 
 
@@ -583,6 +588,24 @@ void SceneBody::updateSceneDevices(double time)
     auto& sceneDevices = impl->sceneDevices;
     for(size_t i=0; i < sceneDevices.size(); ++i){
         sceneDevices[i]->updateScene(time);
+    }
+}
+
+
+void SceneBody::Impl::onBodyExistenceChanged(bool on)
+{
+    if(on){
+        self->addChildOnce(sceneLinkGroup);
+        if(multiplexSceneBodyGroup){
+            self->addChildOnce(multiplexSceneBodyGroup);
+        }
+        self->notifyUpdate(SgUpdate::ADDED);
+    } else {
+        self->removeChild(sceneLinkGroup);
+        if(multiplexSceneBodyGroup){
+            self->removeChild(multiplexSceneBodyGroup);
+        }
+        self->notifyUpdate(SgUpdate::REMOVED);
     }
 }
 

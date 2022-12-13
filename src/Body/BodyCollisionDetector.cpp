@@ -4,6 +4,7 @@
 #include <cnoid/SceneGraph>
 #include <cnoid/IdPair>
 #include <cnoid/ValueTree>
+#include <cnoid/ConnectionSet>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -22,6 +23,7 @@ public:
     vector<GeometryHandle> linkIndexToGeometryHandleMap;
     vector<bool> linkExclusionFlags;
     unordered_set<IdPair<int>> ignoredLinkPairs;
+    ScopedConnectionSet bodyExistenceConnections;
     bool hasCustomObjectsAssociatedWithLinks;
     bool isGeometryHandleMapEnabled;
 
@@ -35,7 +37,8 @@ public:
     void setIgnoredLinkPairsWithinLinkChainLevel(Body* body, int distance);
     void setIgnoredLinkPairsWithinLinkChainLevelIter(Link* link, Link* currentLink, Link* prevLink, int distance);
     bool addLinkRecursively(Link* link, bool isParentStatic, int groupId);
-    double findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2);    
+    double findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2);
+    void onBodyExistenceChanged(Body* body, bool on);    
 };
 
 }
@@ -107,6 +110,7 @@ void BodyCollisionDetector::clearBodies()
         impl->collisionDetector->clearGeometries();
     }
     impl->linkToGeometryHandleMap.clear();
+    impl->bodyExistenceConnections.disconnect();
     impl->hasCustomObjectsAssociatedWithLinks = false;
 }
 
@@ -179,6 +183,9 @@ bool BodyCollisionDetector::Impl::addBody(Body* body, bool isSelfCollisionDetect
                 }
             }
         }
+        bodyExistenceConnections.add(
+            body->sigExistenceChanged().connect(
+                [this, body](bool on){ onBodyExistenceChanged(body, on); }));
     }
 
     return added;
@@ -460,5 +467,17 @@ void BodyCollisionDetector::detectCollisions
 {
     if(auto handle = findGeometryHandle(link)){
         impl->collisionDetector->detectCollisions(*handle, callback);
+    }
+}
+
+
+void BodyCollisionDetector::Impl::onBodyExistenceChanged(Body* body, bool on)
+{
+    for(auto& link : body->links()){
+        auto it = linkToGeometryHandleMap.find(link);
+        if(it != linkToGeometryHandleMap.end()){
+            auto& handle = it->second;
+            collisionDetector->setGeometryEnabled(handle, on);
+        }
     }
 }

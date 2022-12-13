@@ -26,7 +26,7 @@ private:
     BodyPtr body;
 
     bool updateBodyPosition_(const BodyPositionSeqFrame& frame);
-    bool updateSingleBodyPosition(Body* body, BodyPositionSeqFrameBlock frameBlock);
+    bool updateSingleBodyPosition(Body* body, BodyPositionSeqFrameBlock frameBlock, bool isMainBody);
     void updateBodyVelocity(const BodyPositionSeqFrame& prevFrame, double timeStep);
     friend class BodyMotionEngine;
 };

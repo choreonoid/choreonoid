@@ -131,6 +131,8 @@ public:
     bool isAccFkRequested;
     bool isCollisionDetectionEnabled;
     bool isSelfCollisionDetectionEnabled;
+
+    ScopedConnection bodyExistenceConnection;
     
     BodyItem* parentBodyItem;
     ref_ptr<BodyLocation> bodyLocation;
@@ -460,6 +462,8 @@ void BodyItem::setBody(Body* body)
 void BodyItem::Impl::setBody(Body* body_)
 {
     body = body_;
+
+    bodyExistenceConnection = body->sigExistenceChanged().connect([this](bool){ self->notifyUpdate(); });
 
     auto rootLink = body->rootLink();
     if(rootLink->name().empty()){
@@ -1593,32 +1597,34 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Model type"), body->isStaticModel() ? _("Static") : _("Dynamic"));
 
     putProperty(_("Root fixed"), body->isFixedRootModel(),
-                [&](bool on){
+                [this](bool on){
                     body->setRootLinkFixed(on);
                     self->notifyModelUpdate(LinkSpecUpdate);
                     return true;
                 });
     
     putProperty(_("Collision detection"), isCollisionDetectionEnabled,
-                [&](bool on){ return setCollisionDetectionEnabled(on); });
+                [this](bool on){ return setCollisionDetectionEnabled(on); });
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
-                [&](bool on){ return setSelfCollisionDetectionEnabled(on); });
+                [this](bool on){ return setSelfCollisionDetectionEnabled(on); });
     putProperty(_("Location editable"), self->isLocationEditable(),
-                [&](bool on){ setLocationEditable(on, true); return true; });
+                [this](bool on){ setLocationEditable(on, true); return true; });
     putProperty(_("Scene sensitive"), self->isSceneSensitive(),
-                [&](bool on){ self->setSceneSensitive(on); return true; });
+                [this](bool on){ self->setSceneSensitive(on); return true; });
     putProperty.range(0.0, 0.9).decimals(1);
     putProperty(_("Transparency"), transparency,
-                [&](float value){ setTransparency(value); return true; });
+                [this](float value){ setTransparency(value); return true; });
     putProperty(_("Visible link selection"), self->isVisibleLinkSelectionMode_,
                 changeProperty(self->isVisibleLinkSelectionMode_));
 
     if(isAttachable()){
         putProperty(_("Enable attachment"), isAttachmentEnabled,
-                    [&](bool on){ self->setAttachmentEnabled(on, false); return true; });
+                    [this](bool on){ self->setAttachmentEnabled(on, false); return true; });
     }
 
     putProperty(_("Multiplexing number"), body->numMultiplexBodies());
+    putProperty(_("Existence"), body->existence(),
+                [this](bool on){ body->setExistence(on); return true; });
 }
 
 
@@ -1875,7 +1881,7 @@ bool BodyItem::Impl::restore(const Archive& archive)
 
     // The attachment is updated after the sub tree is restored
     archive.addProcessOnSubTreeRestored(
-        [&](){
+        [this](){
             isBeingRestored = false;
             updateAttachment(true, true);
         });

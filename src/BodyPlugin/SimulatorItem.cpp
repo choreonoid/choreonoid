@@ -1024,14 +1024,18 @@ void SimulationBody::Impl::bufferRecords()
             positionBuf->setNumFrames(currentPositionBufIndex + 1);
         }
         auto& frame = positionBuf->frame(currentPositionBufIndex++);
-        frame.allocate(numLinksToRecord, numJointsToRecord);
-        bufferBodyPosition(body_, frame);
+        if(!body_->existence()){
+            frame.clear();
+        } else {
+            frame.allocate(numLinksToRecord, numJointsToRecord);
+            bufferBodyPosition(body_, frame);
 
-        Body* multiplexBody = body_->nextMultiplexBody();
-        while(multiplexBody){
-            auto block = frame.extend(numLinksToRecord, numJointsToRecord);
-            bufferBodyPosition(multiplexBody, block);
-            multiplexBody = multiplexBody->nextMultiplexBody();
+            Body* multiplexBody = body_->nextMultiplexBody();
+            while(multiplexBody){
+                auto block = frame.extend(numLinksToRecord, numJointsToRecord);
+                bufferBodyPosition(multiplexBody, block);
+                multiplexBody = multiplexBody->nextMultiplexBody();
+            }
         }
     }
 
