@@ -6,6 +6,7 @@
 #include <cnoid/stdx/optional>
 #include <cstdint>
 #include "exportdecl.h"
+#include <vector>
 
 namespace cnoid {
 

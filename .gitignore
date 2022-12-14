@@ -2,7 +2,8 @@
 *~
 \#*\#
 /core
-ext/*/
+ext/*
+!ext/CMakeLists.txt
 Makefile
 CMakeFiles/
 cmake_install.cmake
