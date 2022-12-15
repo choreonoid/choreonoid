@@ -4,6 +4,7 @@
 #include "Collision.h"
 #include "Referenced.h"
 #include <cnoid/stdx/optional>
+#include <vector>
 #include <cstdint>
 #include "exportdecl.h"
 

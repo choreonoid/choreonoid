@@ -428,7 +428,7 @@ void AISTCollisionDetector::Impl::makeReady()
 
 bool AISTCollisionDetector::Impl::checkIfGroupPairEnabled(int groupId1, int groupId2)
 {
-    return (ignoredGroupPairs.find(IdPair(groupId1, groupId2)) == ignoredGroupPairs.end());
+    return (ignoredGroupPairs.find(IdPair<>(groupId1, groupId2)) == ignoredGroupPairs.end());
 }
 
 
