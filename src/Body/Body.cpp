@@ -842,13 +842,17 @@ Body* Body::addMultiplexBody()
 bool Body::doClearMultiplexBodies(bool doClearCache)
 {
     int count = 0;
-
-    nextMultiplexBody_->impl->multiplexInfo.reset();
-    BodyPtr nextNextMultiplexBody = nextMultiplexBody_->nextMultiplexBody_;
-    nextMultiplexBody_->nextMultiplexBody_.reset();
-    impl->multiplexInfo->bodyCache.push_back(nextMultiplexBody_);
-    nextMultiplexBody_ = nextNextMultiplexBody;
-    ++count;
+    
+    BodyPtr nextBody = nextMultiplexBody_;
+    while(nextBody){
+        impl->multiplexInfo->bodyCache.push_back(nextBody);
+        nextBody->impl->multiplexInfo.reset();
+        BodyPtr nextNextBody = nextBody->nextMultiplexBody_;
+        nextBody->nextMultiplexBody_.reset();
+        nextBody = nextNextBody;
+        ++count;
+    }
+    nextMultiplexBody_.reset();
 
     if(impl->multiplexInfo){
         impl->multiplexInfo->lastBody = this;
