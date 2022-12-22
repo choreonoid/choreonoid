@@ -104,7 +104,6 @@ public:
     void updateTreeWidgetItems();
     void expandAll(QTreeWidgetItem* twItem);
     ItwItem* findItwItem(Item* item);
-    ItwItem* findOrCreateItwItem(Item* item);
     void addCheckColumn(int checkId);
     void updateCheckColumnIter(QTreeWidgetItem* twItem, int checkId, int column);
     void releaseCheckColumn(int checkId);
@@ -796,16 +795,6 @@ ItwItem* ItemTreeWidget::Impl::findItwItem(Item* item)
 }
 
 
-ItwItem* ItemTreeWidget::Impl::findOrCreateItwItem(Item* item)
-{
-    auto itwItem = findItwItem(item);
-    if(!itwItem){
-        itwItem = new ItwItem(item, this);
-    }
-    return itwItem;
-}
-
-
 void ItemTreeWidget::Impl::addCheckColumn(int checkId)
 {
     if(checkIdToColumnMap.find(checkId) != checkIdToColumnMap.end()){
@@ -918,42 +907,49 @@ void ItemTreeWidget::Impl::applyDefaultItemDisplay(Item* item, Display& display)
 
 void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item, bool isTopLevelItemCandidate)
 {
-    if(!findOrCreateLocalRootItem(false)){
-        return;
-    }
+    auto itwItem = findItwItem(item);
 
-    bool isVisible = false;
-
-    if(item->isOwnedBy(localRootItem) || (isRootItemVisible && (item == localRootItem))){
-        visibilityFunction_isTopLevelItemCandidate = isTopLevelItemCandidate;
-        visibilityFunction_result = true;
-        visibilityFunctions.dispatch(item);
-        isVisible = visibilityFunction_result;
-    }
-    
-    if(!isVisible){
-        if(!isTopLevelItemCandidate){
-            parentTwItem = nullptr;
-        }
-    } else {
-        auto itwItem = findOrCreateItwItem(item);
-        bool isFirstNewChildItem = parentTwItem->childCount() == 0;
-        auto nextItwItem = findNextItwItem(item, isTopLevelItemCandidate);
-        if(nextItwItem){
-            int index = parentTwItem->indexOfChild(nextItwItem);
-            parentTwItem->insertChild(index, itwItem);
-        } else {
-            parentTwItem->addChild(itwItem);
-        }
-        if(projectLoadingWithItemExpansionInfoStack.empty() ||
-           !projectLoadingWithItemExpansionInfoStack.top()){
-            if(!parentTwItem->isExpanded() && isFirstNewChildItem &&
-               (!item->hasAttribute(Item::Attached) || item->hasAttribute(Item::Unique))){
-                parentTwItem->setExpanded(true);
-            }
-        }
-        isTopLevelItemCandidate = false;
+    if(itwItem){
         parentTwItem = itwItem;
+
+    } else {
+        if(!findOrCreateLocalRootItem(false)){
+            return;
+        }
+
+        bool isVisible = false;
+
+        if(item->isOwnedBy(localRootItem) || (isRootItemVisible && (item == localRootItem))){
+            visibilityFunction_isTopLevelItemCandidate = isTopLevelItemCandidate;
+            visibilityFunction_result = true;
+            visibilityFunctions.dispatch(item);
+            isVisible = visibilityFunction_result;
+        }
+    
+        if(!isVisible){
+            if(!isTopLevelItemCandidate){
+                parentTwItem = nullptr;
+            }
+        } else {
+            itwItem = new ItwItem(item, this);
+            bool isFirstNewChildItem = parentTwItem->childCount() == 0;
+            auto nextItwItem = findNextItwItem(item, isTopLevelItemCandidate);
+            if(nextItwItem){
+                int index = parentTwItem->indexOfChild(nextItwItem);
+                parentTwItem->insertChild(index, itwItem);
+            } else {
+                parentTwItem->addChild(itwItem);
+            }
+            if(projectLoadingWithItemExpansionInfoStack.empty() ||
+               !projectLoadingWithItemExpansionInfoStack.top()){
+                if(!parentTwItem->isExpanded() && isFirstNewChildItem &&
+                   (!item->hasAttribute(Item::Attached) || item->hasAttribute(Item::Unique))){
+                    parentTwItem->setExpanded(true);
+                }
+            }
+            isTopLevelItemCandidate = false;
+            parentTwItem = itwItem;
+        }
     }
 
     if(parentTwItem){

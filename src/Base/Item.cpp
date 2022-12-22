@@ -779,8 +779,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
             rootItem->notifyEventOnSubTreeMoved(item, orgSubTreeItems);
 
         } else {
-            bool doEmitSigSubTreeAdded = recursiveTreeChangeCounter == 1;
-            rootItem->notifyEventOnSubTreeAdded(item, orgSubTreeItems, doEmitSigSubTreeAdded);
+            rootItem->notifyEventOnSubTreeAdded(item, orgSubTreeItems);
 
             for(auto& subTreeItem : orgSubTreeItems){
                 if(subTreeItem->isSelected()){
