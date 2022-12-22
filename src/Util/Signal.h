@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_SIGNAL_H
 #define CNOID_UTIL_SIGNAL_H
 
@@ -63,7 +59,8 @@ struct last_value
     typedef T result_type;
     
     template<typename InputIterator>
-    T operator()(InputIterator iter, InputIterator last) const {
+    T operator()(InputIterator iter, InputIterator last) const
+    {
         T value;
         while (iter != last){
             if(iter.isReady()){
@@ -76,10 +73,12 @@ struct last_value
 };
 
 template<>
-struct last_value<void> {
+struct last_value<void>
+{
   public:
     template<typename InputIterator>
-    void operator()(InputIterator iter, InputIterator last) const{
+    void operator()(InputIterator iter, InputIterator last) const
+    {
         while (iter != last){
             if(iter.isReady()) *iter;
             ++iter;
@@ -109,22 +108,20 @@ protected:
     typedef ref_ptr<SlotHolderBase> SlotHolderPtr;
     SlotHolderPtr firstSlot;
     SlotHolderBase* lastSlot;
-    std::vector<SlotHolderPtr>* pSlotsToConnectLater;
+    SlotHolderPtr slotListToConnectLater;
     bool isCallingSlots;
 
     friend class SlotHolderBase;
     
-    SignalBase() : lastSlot(nullptr), pSlotsToConnectLater(nullptr), isCallingSlots(false) { }
+    SignalBase() : lastSlot(nullptr), isCallingSlots(false) { }
 
-    ~SignalBase() {
+    ~SignalBase()
+    {
         disconnectAllSlots();
-        if(pSlotsToConnectLater){
-            delete pSlotsToConnectLater;
-        }
     }
 
-    void connectSlotHolder(SlotHolderBase* slot) {
-
+    void connectSlotHolder(SlotHolderBase* slot)
+    {
         if(!isCallingSlots){
             if(!firstSlot){
                 firstSlot = slot;
@@ -136,29 +133,38 @@ protected:
             }
             slot->owner = this;
         } else {
-            if(!pSlotsToConnectLater){
-                pSlotsToConnectLater = new std::vector<SlotHolderPtr>();
+            if(!slotListToConnectLater){
+                slotListToConnectLater = slot;
+            } else {
+                auto slotHolder = slotListToConnectLater;
+                while(slotHolder->next){
+                    slotHolder = slotHolder->next;
+                }
+                slotHolder->next = slot;
             }
-            pSlotsToConnectLater->push_back(slot);
         }
     }
 
-    void connectSlotsWithPendingConnection(){
-        for(auto& slot : *pSlotsToConnectLater){
+    void connectSlotsWithPendingConnection()
+    {
+        auto slot = slotListToConnectLater;
+        while(slot){
             if(!firstSlot){
                 firstSlot = slot;
                 lastSlot = slot;
             } else {
-                lastSlot->next = slot;
+                // lastSlot->next = slot; // This is not necessary
                 slot->prev = lastSlot;
                 lastSlot = slot;
             }
             slot->owner = this;
+            slot = slot->next;
         }
-        pSlotsToConnectLater->clear();
+        slotListToConnectLater.reset();
     }
 
-    void remove(SlotHolderPtr slot){
+    void remove(SlotHolderPtr slot)
+    {
         if(slot->owner == this){
             SlotHolderBase* next = slot->next;
             SlotHolderBase* prev = slot->prev;
@@ -187,11 +193,13 @@ protected:
     void changeOrder(SlotHolderPtr slot, int orderId);
 
 public:
-    bool hasConnections() const {
+    bool hasConnections() const
+    {
         return (firstSlot != nullptr);
     }        
 
-    int numConnections() const {
+    int numConnections() const
+    {
         int n = 0;
         auto slot = firstSlot;
         while(slot){
@@ -201,14 +209,16 @@ public:
         return n;
     }
 
-    void disconnectAllSlots() {
+    void disconnectAllSlots()
+    {
         while(firstSlot){
             remove(firstSlot);
         }
     }
 
     [[deprecated("Use !hasConnections()")]]
-    bool empty() const {
+    bool empty() const
+    {
         return (firstSlot == nullptr);
     }
 };
@@ -255,7 +265,8 @@ class SlotCallIterator
     std::tuple<Args...>& args;
 
 public:
-    void seekActiveSlot(){
+    void seekActiveSlot()
+    {
         while(currentSlotHolder && (currentSlotHolder->blockCounter > 0)){
             currentSlotHolder = currentSlotHolder->next;
         }
@@ -263,30 +274,41 @@ public:
     
     SlotCallIterator(SlotHolderBase* firstSlot, std::tuple<Args...>& args)
         : currentSlotHolder(static_cast<SlotHolderType*>(firstSlot)),
-          args(args) {
+          args(args)
+    {
+
     }
 
     SlotCallIterator(const SlotCallIterator& org)
-        : currentSlotHolder(org.currentSlotHolder), args(org.args) { }
+        : currentSlotHolder(org.currentSlotHolder),
+          args(org.args)
+    {
 
-    bool operator==(const SlotCallIterator& rhs) const {
+    }
+
+    bool operator==(const SlotCallIterator& rhs) const
+    {
         return (currentSlotHolder == rhs.currentSlotHolder);
     }
 
-    bool operator!=(const SlotCallIterator& rhs) const {
+    bool operator!=(const SlotCallIterator& rhs) const
+    {
         return (currentSlotHolder != rhs.currentSlotHolder);
     }
 
-    SlotCallIterator& operator++() {
+    SlotCallIterator& operator++()
+    {
         currentSlotHolder = static_pointer_cast<SlotHolderType>(currentSlotHolder->next);
         return *this;
     }
 
-    bool isReady() const {
+    bool isReady() const
+    {
         return currentSlotHolder->blockCounter == 0;
     }
     
-    result_type operator*() const {
+    result_type operator*() const
+    {
         return apply(currentSlotHolder->func, args);
     }
 };
@@ -316,66 +338,84 @@ public:
     Connection(const Connection& org) : slot(org.slot) { }
     Connection(Connection&&) = default;
 
-    Connection& operator=(const Connection& rhs) {
+    Connection& operator=(const Connection& rhs)
+    {
         slot = rhs.slot;
         return *this;
     }
 
-    void disconnect() {
+    void disconnect()
+    {
         if(slot) {
             slot->disconnect();
             slot.reset();
         }
     }
 
-    bool connected() const {
+    bool connected() const
+    {
         return slot && slot->connected();
     }
 
-    void block() {
+    void block()
+    {
         if(slot){
             ++(slot->blockCounter);
         }
     }
 
-    void unblock() {
+    void unblock()
+    {
         if(slot && slot->blockCounter > 0){
             --(slot->blockCounter);
         }
     }
 
-    bool isBlocked() const {
+    bool isBlocked() const
+    {
         return slot && (slot->blockCounter > 0);
     }
 
     enum Order { FIRST = 0, LAST };
     
-    Connection& changeOrder(Order order) {
+    Connection& changeOrder(Order order)
+    {
         if(slot){
             slot->changeOrder(order);
         }
         return *this;
     }
 
-    class ScopedBlock {
+    class ScopedBlock
+    {
         Connection* pConnection;
     public:
         ScopedBlock(Connection& connection)
-            : pConnection(&connection) {
+            : pConnection(&connection)
+        {
             connection.block();
         }
-        ScopedBlock(ScopedBlock&& org) : pConnection(org.pConnection){
+
+        ScopedBlock(ScopedBlock&& org) : pConnection(org.pConnection)
+        {
             org.pConnection = nullptr;
         }
+
         ScopedBlock(const ScopedBlock&) = delete;
         ScopedBlock& operator=(const ScopedBlock&) = delete;
-        ~ScopedBlock(){
+        
+        ~ScopedBlock()
+        {
             if(pConnection){
                 pConnection->unblock();
             }
         }
     };
-    ScopedBlock scopedBlock(){ return ScopedBlock(*this); }
+
+    ScopedBlock scopedBlock()
+    {
+        return ScopedBlock(*this);
+    }
 };
 
 
@@ -456,19 +496,29 @@ public:
 private:
     typedef signal_private::SlotHolder<R(Args...), Combiner> SlotHolderType;
 
+    class EmitFunction : public Referenced
+    {
+    public:
+        std::function<void()> func;
+        ref_ptr<EmitFunction> next;
+    };
+    ref_ptr<EmitFunction> recursiveEmitFunction;
+
 public:
     Signal() { }
     Signal(Signal&&) = default;
     Signal(const Signal& org) = delete;
     Signal& operator=(const Signal& rhs) = delete;
 
-    Connection connect(const Function& func){
+    Connection connect(const Function& func)
+    {
         auto slot = new SlotHolderType(func);
         connectSlotHolder(slot);
         return Connection(slot);
     }
 
-    result_type operator()(Args... args){
+    result_type operator()(Args... args)
+    {
         return invoke(std::is_void<result_type>{}, std::forward<Args>(args)...);
     }
 
@@ -476,35 +526,46 @@ public:
     {
         out_results.clear();
         if(firstSlot){
-            typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
-            std::tuple<Args...> argset(args...);
-            isCallingSlots = true;
-            IteratorType iter(firstSlot, argset);
-            IteratorType last(nullptr, argset);
-            while(iter != last){
-                if(iter.isReady()){
-                    out_results.push_back(*iter);
+            if(isCallingSlots){
+                addRecursiveEmit([=]() mutable { operator()(args...); });
+            } else {
+                typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
+                std::tuple<Args...> argset(args...);
+                isCallingSlots = true;
+                IteratorType iter(firstSlot, argset);
+                IteratorType last(nullptr, argset);
+                while(iter != last){
+                    if(iter.isReady()){
+                        out_results.push_back(*iter);
+                    }
+                    ++iter;
                 }
-                ++iter;
-            }
-            isCallingSlots = false;
-            if(pSlotsToConnectLater){
-                connectSlotsWithPendingConnection();
+                isCallingSlots = false;
+                emitRecursiveSignals();
+                if(slotListToConnectLater){
+                    connectSlotsWithPendingConnection();
+                }
             }
         }
     }
 
 private:
-    void invoke(std::true_type, Args&&... args){
+    void invoke(std::true_type, Args&&... args)
+    {
         if(firstSlot){
-            typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
-            Combiner combiner;
-            std::tuple<Args...> argset(args...);
-            isCallingSlots = true;
-            combiner(IteratorType(firstSlot, argset), IteratorType(nullptr, argset));
-            isCallingSlots = false;
-            if(pSlotsToConnectLater){
-                connectSlotsWithPendingConnection();
+            if(isCallingSlots){
+                addRecursiveEmit([=]() mutable { operator()(args...); });
+            } else {
+                typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
+                Combiner combiner;
+                std::tuple<Args...> argset(args...);
+                isCallingSlots = true;
+                combiner(IteratorType(firstSlot, argset), IteratorType(nullptr, argset));
+                isCallingSlots = false;
+                emitRecursiveSignals();
+                if(slotListToConnectLater){
+                    connectSlotsWithPendingConnection();
+                }
             }
         }
     }
@@ -513,17 +574,49 @@ private:
        The combiner operation must always be executed even if there is no slot connected
        to the signal to return the correct default value that is determined by the combiner.
     */
-    result_type invoke(std::false_type, Args&&... args){
-        typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
-        Combiner combiner;
-        std::tuple<Args...> argset(args...);
-        isCallingSlots = true;
-        auto result = combiner(IteratorType(firstSlot, argset), IteratorType(nullptr, argset));
-        isCallingSlots = false;
-        if(pSlotsToConnectLater){
-            connectSlotsWithPendingConnection();
+    result_type invoke(std::false_type, Args&&... args)
+    {
+        if(isCallingSlots){
+            addRecursiveEmit([=]() mutable { return operator()(args...); });
+            return result_type();
+        } else {
+            typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
+            Combiner combiner;
+            std::tuple<Args...> argset(args...);
+            isCallingSlots = true;
+            auto result = combiner(IteratorType(firstSlot, argset), IteratorType(nullptr, argset));
+            isCallingSlots = false;
+            emitRecursiveSignals();
+            if(slotListToConnectLater){
+                connectSlotsWithPendingConnection();
+            }
+            return result;
         }
-        return result;
+    }
+
+    void addRecursiveEmit(const std::function<void()>& f)
+    {
+        auto emitFunction = recursiveEmitFunction;
+        if(emitFunction){
+            while(emitFunction->next){
+                emitFunction = emitFunction->next;
+            }
+            emitFunction->next = new EmitFunction;
+            emitFunction = emitFunction->next;
+        } else {
+            recursiveEmitFunction = new EmitFunction;
+            emitFunction = recursiveEmitFunction;
+        }
+        emitFunction->func = f;
+    }
+
+    void emitRecursiveSignals()
+    {
+        while(recursiveEmitFunction){
+            auto emitFunction = recursiveEmitFunction;
+            recursiveEmitFunction = emitFunction->next;
+            emitFunction->func();
+        }
     }
 };
 
@@ -532,8 +625,10 @@ class LogicalProduct
 {
 public:
     typedef bool result_type;
+
     template<typename InputIterator>
-    bool operator()(InputIterator iter, InputIterator last) const {
+    bool operator()(InputIterator iter, InputIterator last) const
+    {
         bool result = true;
         while(iter != last){
             if(iter.isReady()){
@@ -550,8 +645,10 @@ class LogicalSum
 {
 public:
     typedef bool result_type;
+
     template<typename InputIterator>
-    bool operator()(InputIterator iter, InputIterator last) const {
+    bool operator()(InputIterator iter, InputIterator last) const
+    {
         bool result = false;
         while(iter != last){
             if(iter.isReady()){
@@ -578,9 +675,13 @@ public:
     SignalProxy(SignalType& signal) : signal(&signal) { }
     SignalProxy(const SignalProxy& org) : signal(org.signal) { }
 
-    SignalProxy& operator=(const SignalProxy& rhs) { signal = rhs.signal; }
+    SignalProxy& operator=(const SignalProxy& rhs)
+    {
+        signal = rhs.signal;
+    }
 
-    Connection connect(typename SignalType::Function f){
+    Connection connect(typename SignalType::Function f)
+    {
         if(signal){
             return signal->connect(f);
         } else {
@@ -588,7 +689,10 @@ public:
         }
     };
 
-    bool hasConnections() const { return signal->hasConnections(); }
+    bool hasConnections() const
+    {
+        return signal->hasConnections();
+    }
 
 private:
     SignalType* signal;
