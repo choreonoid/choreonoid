@@ -205,7 +205,7 @@ void PythonPlugin::Impl::onInputFileOptionsParsed(std::vector<std::string>& inpu
     auto iter = inputFiles.begin();
     while(iter != inputFiles.end()){
         if(filesystem::path(*iter).extension().string() == ".py"){
-            executeScriptFileOnStartup(*iter);
+            executeScriptFileOnStartup(toUTF8(*iter));
             iter = inputFiles.erase(iter);
         } else {
             ++iter;
@@ -224,7 +224,7 @@ void PythonPlugin::Impl::onSigOptionsParsed(boost::program_options::variables_ma
         for(auto& script : v["python-item"].as<vector<string>>()){
             PythonScriptItemPtr item = new PythonScriptItem;
             auto rootItem = RootItem::instance();
-            if(item->load(script, rootItem)){
+            if(item->load(toUTF8(script), rootItem)){
                 rootItem->addChildItem(item);
             }
             item->setChecked(true);

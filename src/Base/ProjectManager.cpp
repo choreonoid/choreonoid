@@ -765,7 +765,7 @@ void ProjectManager::Impl::onProjectOptionsParsed(boost::program_options::variab
     if(v.count("project")){
         vector<string> projectFileNames = v["project"].as<vector<string>>();
         for(size_t i=0; i < projectFileNames.size(); ++i){
-            loadProject(projectFileNames[i], nullptr, true, false, false);
+            loadProject(toUTF8(projectFileNames[i]), nullptr, true, false, false);
         }
     }
 }
@@ -776,7 +776,7 @@ void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& in
     auto it = inputFiles.begin();
     while(it != inputFiles.end()){
         if(filesystem::path(*it).extension().string() == ".cnoid"){
-            loadProject(*it, nullptr, true, false, false);
+            loadProject(toUTF8(*it), nullptr, true, false, false);
             it = inputFiles.erase(it);
         } else {
             ++it;
