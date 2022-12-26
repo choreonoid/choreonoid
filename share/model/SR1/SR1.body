@@ -38,6 +38,10 @@ links:
         type: RateGyroSensor
         name: WaistGyro
         id: 0
+      -
+        type: IMU
+        name: WaistIMU
+        id: 0
   -
     name: WAIST_P
     parent: WAIST

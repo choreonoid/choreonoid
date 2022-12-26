@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "BodyStateView.h"
 #include "BodyItem.h"
 #include "BodySelectionManager.h"
@@ -171,12 +167,12 @@ void BodyStateView::Impl::updateStateList(BodyItem* bodyItem)
     int maxNumStateElements = 0;
 
     if(currentBody){
-
         DeviceList<> devices(currentBody->devices());
         DeviceList<> targetDevices;
         targetDevices << devices.extract<ForceSensor>();
         targetDevices << devices.extract<RateGyroSensor>();
         targetDevices << devices.extract<AccelerationSensor>();
+        targetDevices << devices.extract<Imu>();
         std::stable_sort(targetDevices.begin(), targetDevices.end(), DeviceTypeOrder());
             
         for(size_t i=0; i < targetDevices.size(); ++i){

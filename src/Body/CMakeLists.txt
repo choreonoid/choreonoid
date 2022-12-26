@@ -37,6 +37,7 @@ set(sources
   ForceSensor.cpp
   RateGyroSensor.cpp
   AccelerationSensor.cpp
+  Imu.cpp
   BasicSensorSimulationHelper.cpp
   VisionSensor.cpp
   Camera.cpp
@@ -118,6 +119,7 @@ set(headers
   ForceSensor.h
   RateGyroSensor.h
   AccelerationSensor.h
+  Imu.h
   BasicSensorSimulationHelper.h
   VisionSensor.h
   Camera.h

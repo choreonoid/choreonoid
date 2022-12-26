@@ -1,3 +1,4 @@
 #include "src/Body/ForceSensor.h"
 #include "src/Body/RateGyroSensor.h"
 #include "src/Body/AccelerationSensor.h"
+#include "src/Body/Imu.h"

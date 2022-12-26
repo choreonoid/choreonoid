@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "BasicSensorSimulationHelper.h"
 #include "Body.h"
 
@@ -70,7 +65,8 @@ void BasicSensorSimulationHelper::setOldAccelSensorCalcMode(bool on)
 }
 
 
-void BasicSensorSimulationHelper::initialize(Body* body, double timeStep, const Vector3& gravityAcceleration)
+void BasicSensorSimulationHelper::initialize
+(Body* body, double timeStep, const Vector3& gravityAcceleration)
 {
     isActive_ = false;
 
@@ -79,10 +75,10 @@ void BasicSensorSimulationHelper::initialize(Body* body, double timeStep, const 
         forceSensors_.extractFrom(devices);
         rateGyroSensors_.extractFrom(devices);
         accelerationSensors_.extractFrom(devices);
+        imus_.extractFrom(devices);
 
-        if(!forceSensors_.empty() ||
-           !rateGyroSensors_.empty() ||
-           !accelerationSensors_.empty()){
+        if(!forceSensors_.empty() || !rateGyroSensors_.empty()
+           || !accelerationSensors_.empty() || !imus_.empty()){
             impl->initialize(body, timeStep, gravityAcceleration);
             isActive_ = true;
         }
@@ -90,7 +86,8 @@ void BasicSensorSimulationHelper::initialize(Body* body, double timeStep, const 
 }
 
 
-void BasicSensorSimulationHelper::Impl::initialize(Body* body, double timeStep, const Vector3& gravityAcceleration)
+void BasicSensorSimulationHelper::Impl::initialize
+(Body* body, double timeStep, const Vector3& gravityAcceleration)
 {
     this->body = body;
     g = gravityAcceleration;
@@ -100,6 +97,8 @@ void BasicSensorSimulationHelper::Impl::initialize(Body* body, double timeStep, 
     }
 
     const DeviceList<AccelerationSensor>& accelerationSensors = self->accelerationSensors_;
+    const DeviceList<Imu>& imus = self->imus_;
+
     if(accelerationSensors.empty()){
         return;
     }
@@ -137,7 +136,7 @@ void BasicSensorSimulationHelper::Impl::initialize(Body* body, double timeStep, 
         An2.noalias() = Ac * An;
         An = timeStep * An2;
         A += (1.0 / factorial[i]) * An;
-                
+
         Bn2.noalias() = Ac * Bn;
         Bn = timeStep * Bn2;
         B += (1.0 / factorial[i+1]) * Bn;
@@ -160,6 +159,7 @@ void BasicSensorSimulationHelper::Impl::initialize(Body* body, double timeStep, 
 
 void BasicSensorSimulationHelper::updateGyroAndAccelerationSensors()
 {
+    // update angular velocity
     for(size_t i=0; i < rateGyroSensors_.size(); ++i){
         RateGyroSensor* gyro = rateGyroSensors_[i];
         const Link* link = gyro->link();
@@ -167,6 +167,14 @@ void BasicSensorSimulationHelper::updateGyroAndAccelerationSensors()
         gyro->notifyStateChange();
     }
 
+    for(size_t i = 0; i < imus_.size(); ++i){
+        Imu* sensor = imus_[i];
+        const Link* link = sensor->link();
+        sensor->w() = sensor->R_local().transpose() * link->R().transpose() * link->w();
+        sensor->notifyStateChange();
+    }
+
+    // update translational acceleration
     if(!impl->isOldAccelSensorCalcMode){
         for(size_t i=0; i < accelerationSensors_.size(); ++i){
             AccelerationSensor* sensor = accelerationSensors_[i];
@@ -175,25 +183,31 @@ void BasicSensorSimulationHelper::updateGyroAndAccelerationSensors()
             sensor->notifyStateChange();
         }
 
+        for(size_t i = 0; i < imus_.size(); ++i){
+            Imu* sensor = imus_[i];
+            const Link* link = sensor->link();
+            sensor->dv() = sensor->R_local().transpose() * link->R().transpose()
+                           * (link->dv() - impl->g);
+            sensor->notifyStateChange();
+        }
     } else if(!accelerationSensors_.empty()){
         const Matrix2& A = impl->A;
         const Vector2& B = impl->B;
 
         for(size_t i=0; i < accelerationSensors_.size(); ++i){
-
             AccelerationSensor* sensor = accelerationSensors_[i];
             const Link* link = sensor->link();
-            
+
             // kalman filtering
             Impl::KFState& s = impl->kfStates[i];
             const Vector3 o_Vgsens = link->R() * (link->R().transpose() * link->w()).cross(sensor->p_local()) + link->v();
             for(int i=0; i < 3; ++i){
                 s.x[i] = A * s.x[i] + o_Vgsens(i) * B;
             }
-            
+
             Vector3 o_Agsens(s.x[0](1), s.x[1](1), s.x[2](1));
             o_Agsens -= impl->g;
-            
+
             sensor->dv() = sensor->R_local().transpose() * link->R().transpose() * o_Agsens;
             sensor->notifyStateChange();
         }

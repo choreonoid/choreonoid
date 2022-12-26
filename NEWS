@@ -82,6 +82,7 @@ Changes since 1.7.0:
 * Improved body key pose editing
 * Introduced LinkedJointHandler and supported the kinematics operations of parallel link models on GUI with the handler
 * Disabled building of PoseSeqPlugin and BalancerPlugin by default
+* Added the Imu class
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================

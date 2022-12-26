@@ -1,12 +1,9 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "SceneDevice.h"
 #include "Link.h"
 #include "ForceSensor.h"
 #include "RateGyroSensor.h"
 #include "AccelerationSensor.h"
+#include "Imu.h"
 #include "Camera.h"
 #include "RangeCamera.h"
 #include "RangeSensor.h"
@@ -211,6 +208,7 @@ struct SceneDeviceFactoryRegistration
         SceneDevice::registerSceneDeviceFactory<ForceSensor>(createNullSceneDevice);
         SceneDevice::registerSceneDeviceFactory<RateGyroSensor>(createNullSceneDevice);
         SceneDevice::registerSceneDeviceFactory<AccelerationSensor>(createNullSceneDevice);
+        SceneDevice::registerSceneDeviceFactory<Imu>(createNullSceneDevice);
         SceneDevice::registerSceneDeviceFactory<Camera>(createScenePerspectiveCamera);
         SceneDevice::registerSceneDeviceFactory<RangeCamera>(createNullSceneDevice);
         SceneDevice::registerSceneDeviceFactory<RangeSensor>(createNullSceneDevice);
@@ -220,5 +218,3 @@ struct SceneDeviceFactoryRegistration
 } registration;
 
 }
-
-
