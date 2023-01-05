@@ -441,7 +441,7 @@ ItemList<> ProjectManager::Impl::loadProject
                 if(isBuiltinProject || ::isLayoutInclusionMode){
                     mainWindow->setInitialLayout(archive);
                 }
-                if(!isBuiltinProject){
+                if(!isBuiltinProject && !AppUtil::isNoWindowMode()){
                     mainWindow->show();
                 }
             } else {

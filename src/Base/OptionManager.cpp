@@ -61,8 +61,8 @@ bool OptionManager::parseCommandLine1(int argc, char *argv[])
         doContinue = false;
         
     } else {
-        sigInputFileOptionsParsed_[0](inputFiles);
         sigOptionsParsed_[0](info->variables);
+        sigInputFileOptionsParsed_[0](inputFiles);
     }
 
     return doContinue;

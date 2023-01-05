@@ -12,6 +12,7 @@ class CNOID_EXPORT AppUtil
 public:
     static SignalProxy<void()> sigAboutToQuit();
     static void updateGui();
+    static bool isNoWindowMode();
     static SignalProxy<void(QKeyEvent* event)> sigKeyPressed();
     static SignalProxy<void(QKeyEvent* event)> sigKeyReleased();
 };

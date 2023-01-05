@@ -99,6 +99,7 @@ Signal<void()> sigAboutToQuit_;
 
 bool isDoingInitialization_ = true;
 bool isTestMode = false;
+bool isNoWindowMode = false;
 bool ctrl_c_pressed = false;
 
 void onCtrl_C_Input(int)
@@ -155,7 +156,7 @@ public:
     int exec();
     void onMainWindowCloseEvent();
     void onSigOptionsParsed(boost::program_options::variables_map& v);
-    void enableTestMode();
+    void enableMessageViewRedirectToStdOut();
     virtual bool eventFilter(QObject* watched, QEvent* event);
 };
 
@@ -350,6 +351,14 @@ void App::Impl::initialize()
 
     setUTF8ToModuleTextDomain("Util");
 
+    OptionManager& om = ext->optionManager();
+    om.addOption("quit", "stop the application without showing the main window");
+    om.addOption("test-mode", "exit the application when an error occurs and put MessageView text to the standard output");
+    om.addOption("no-window", "Do not show the application window and put MessageView text to the standard output");
+    om.addOption("list-qt-styles", "list all the available qt styles");
+    om.sigOptionsParsed().connect(
+        [&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
+
     mainWindow = MainWindow::initialize(appName, ext);
 
     ViewManager::initializeClass(ext);
@@ -430,13 +439,6 @@ void App::Impl::initialize()
 
     mainWindow->installEventFilter(this);
 
-    OptionManager& om = ext->optionManager();
-    om.addOption("quit", "stop the application without showing the main window");
-    om.addOption("test-mode", "exit the application when an error occurs and put MessageView text to the standard output");
-    om.addOption("list-qt-styles", "list all the available qt styles");
-    om.sigOptionsParsed().connect(
-        [&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
-
     /*
       Some plugins such as OpenRTM plugin are driven by a library which tries to catch SIGINT.
       This may block the normal termination by inputting Ctrl+C.
@@ -502,8 +504,10 @@ int App::Impl::exec()
         if(mainWindow->isVisible()){
             App::updateGui();
         } else {
-            mainWindow->show();
-            mainWindow->waitForWindowSystemToActivate();
+            if(!isNoWindowMode){
+                mainWindow->show();
+                mainWindow->waitForWindowSystemToActivate();
+            }
         }
     }
 
@@ -596,10 +600,16 @@ void App::Impl::onMainWindowCloseEvent()
 
 void App::Impl::onSigOptionsParsed(boost::program_options::variables_map& v)
 {
+    if(v.count("no-window")){
+        isNoWindowMode = true;
+        enableMessageViewRedirectToStdOut();
+    }
+    
     if(v.count("quit")){
         doQuit = true;
     } else if(v.count("test-mode")){
-        enableTestMode();
+        isTestMode = true;
+        enableMessageViewRedirectToStdOut();
     } else if(v.count("list-qt-styles")){
         cout << QStyleFactory::keys().join(" ").toStdString() << endl;
         doQuit = true;
@@ -621,17 +631,21 @@ void App::exit(int returnCode)
 }
 
 
-void App::Impl::enableTestMode()
+void App::Impl::enableMessageViewRedirectToStdOut()
 {
-    isTestMode = true;
-    auto mv = instance_->impl->messageView;
-    cout << fromUTF8(mv->messages());
-    cout.flush();
-    mv->sigMessage().connect(
-        [this](const std::string& text){
-            std::cout << fromUTF8(text);
-            std::cout.flush();
-        });
+    static bool isInitialized = false;
+
+    if(!isInitialized){
+        auto mv = instance_->impl->messageView;
+        cout << fromUTF8(mv->messages());
+        cout.flush();
+        mv->sigMessage().connect(
+            [this](const std::string& text){
+                std::cout << fromUTF8(text);
+                std::cout.flush();
+            });
+        isInitialized = true;
+    }
 }
 
 
@@ -695,6 +709,12 @@ void App::updateGui()
 void AppUtil::updateGui()
 {
     return App::updateGui();
+}
+
+
+bool AppUtil::isNoWindowMode()
+{
+    return ::isNoWindowMode;
 }
 
 
