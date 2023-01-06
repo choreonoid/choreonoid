@@ -91,6 +91,8 @@ set(CNOID_SHARE_DIR ${CHOREONOID_SHARE_DIR})
 set(CNOID_SOURCE_SHARE_DIR ${CHOREONOID_SOURCE_SHARE_DIR})
 set(CNOID_BINARY_SHARE_DIR ${CHOREONOID_BINARY_SHARE_DIR})
 
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # C++ version
 if(NOT CMAKE_CXX_STANDARD)
   set(cxx_standard 11)
@@ -116,7 +118,6 @@ if(NOT CMAKE_CXX_STANDARD)
   endif()
   set(CMAKE_CXX_STANDARD ${cxx_standard} CACHE STRING "C++ version number. Specify either 17, 14 or 11.")
 endif()
-
 
 if(UNIX)
   if(CMAKE_COMPILER_IS_GNUCC)
