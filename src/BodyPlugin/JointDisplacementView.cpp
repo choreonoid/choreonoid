@@ -144,7 +144,7 @@ void JointDisplacementView::Impl::onCurrentBodyItemChanged(BodyItem* bodyItem)
         bool updated = false;
         auto candidate = bodyItem;
         while(candidate){
-            if(candidate->body()->numJoints() > 0){
+            if(candidate->body()->numAllJoints() > 0){
                 targetLabel.setText(candidate->displayName().c_str());
                 displacementWidgetSet->setBodyItem(candidate);
                 updated = true;
