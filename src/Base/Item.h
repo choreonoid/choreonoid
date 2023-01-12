@@ -174,7 +174,7 @@ public:
     void setTemporal(bool on = true) { setTemporary(on); }
 
     bool isSelected() const { return isSelected_; }
-    void setSelected(bool on, bool isCurrent = false);
+    void setSelected(bool on = true, bool isCurrent = false);
     void setSubTreeItemsSelected(bool on);
 
     /**
@@ -184,8 +184,8 @@ public:
     enum CheckId { LogicalSumOfAllChecks = -1, PrimaryCheck = 0 };
     
     bool isChecked(int checkId = PrimaryCheck) const;
-    void setChecked(bool on); // for PrimaryCheck
-    void setChecked(int checkId, bool on);
+    void setChecked(bool on = true); // for PrimaryCheck
+    void setChecked(int checkId, bool on = true);
     int numCheckStates() const;
 
     int numChildren() const { return numChildren_; }
