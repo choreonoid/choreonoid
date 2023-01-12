@@ -102,6 +102,13 @@ void exportSimulationClasses(py::module m)
         .value("N_TIME_RANGE_MODES", SimulatorItem::NumTimeRangeModes)
         .export_values();
 
+    py::enum_<SimulatorItem::RealtimeSyncMode>(simulatorItemClass, "RealtimeSyncMode")
+        .value("NonRealtimeSync", SimulatorItem::NonRealtimeSync)
+        .value("CompensatoryRealtimeSync", SimulatorItem::CompensatoryRealtimeSync)
+        .value("ConservativeRealtimeSync", SimulatorItem::ConservativeRealtimeSync)
+        .value("NumRealtimeSyncModes", SimulatorItem::NumRealtimeSyncModes)
+        .export_values();
+
     PyItemList<SimulatorItem>(m, "SimulatorItemList", simulatorItemClass);
 
     py::class_<AISTSimulatorItem, AISTSimulatorItemPtr, SimulatorItem>
