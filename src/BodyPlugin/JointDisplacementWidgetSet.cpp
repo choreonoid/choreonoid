@@ -1049,9 +1049,6 @@ bool JointDisplacementWidgetSet::storeState(Archive* archive)
 
 bool JointDisplacementWidgetSet::Impl::storeState(Archive* archive)
 {
-    if(isSelectedJointsOnlyModeEnabled){
-        archive->write("show_selected_joints", isSelectedJointsOnlyMode);
-    }
     archive->write("show_joint_ids", isJointIdVisible);
     archive->write("show_joint_names", isJointNameVisible);
     archive->write("overlap_joint_names", isOverlapJointNameMode);
@@ -1059,6 +1056,14 @@ bool JointDisplacementWidgetSet::Impl::storeState(Archive* archive)
     archive->write("show_dials", isDialEnabled);
     archive->write("show_phases", isPhaseEnabled);
     archive->write("limit_ranges", isRangeLimitMode);
+
+    if(isSelectedJointsOnlyModeEnabled){
+        archive->write("show_selected_joints", isSelectedJointsOnlyMode);
+    }
+    if(isPrivateJointEnabled){
+        archive->write("show_private_joints", true);
+    }
+    
     return true;
 }
 
@@ -1071,9 +1076,6 @@ bool JointDisplacementWidgetSet::restoreState(const Archive* archive)
 
 bool JointDisplacementWidgetSet::Impl::restoreState(const Archive* archive)
 {
-    if(isSelectedJointsOnlyModeEnabled){
-        archive->read("show_selected_joints", isSelectedJointsOnlyMode);
-    }
     archive->read("show_joint_ids", isJointIdVisible);
     archive->read("show_joint_names", isJointNameVisible);
     archive->read("overlap_joint_names", isOverlapJointNameMode);
@@ -1081,5 +1083,11 @@ bool JointDisplacementWidgetSet::Impl::restoreState(const Archive* archive)
     archive->read("show_dials", isDialEnabled);
     archive->read("show_phases", isPhaseEnabled);
     archive->read("limit_ranges", isRangeLimitMode);
+
+    if(isSelectedJointsOnlyModeEnabled){
+        archive->read("show_selected_joints", isSelectedJointsOnlyMode);
+    }
+    archive->read("show_private_joints", isPrivateJointEnabled);
+    
     return true;
 }
