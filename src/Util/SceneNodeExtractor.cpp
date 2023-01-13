@@ -25,8 +25,9 @@ static bool extractNodeIter
 
 
 void SceneNodeExtractor::extractNode_
-(SgNode* root, std::function<bool(SgNode* node)> pred, bool includeRoot, SgNodePath& nodePath)
+(SgNode* root, const std::function<bool(SgNode* node)>& pred, bool includeRoot, SgNodePath& nodePath)
 {
+    nodePath.reserve(20);
     if(includeRoot){
         nodePath.push_back(root);
     }
@@ -51,8 +52,10 @@ static void extractNodesIter
 
 
 void SceneNodeExtractor::extractNodes_
-(SgNode* root, std::function<bool(SgNode* node)> pred, bool includeRoot, std::vector<SgNodePath>& nodePaths)
+(SgNode* root, const std::function<bool(SgNode* node)>& pred, bool includeRoot, std::vector<SgNodePath>& nodePaths)
 {
+    nodePaths.reserve(10);
+    
     SgNodePath nodePath;
     nodePath.reserve(10);
 
