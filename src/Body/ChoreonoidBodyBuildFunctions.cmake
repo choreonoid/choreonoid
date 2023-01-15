@@ -40,7 +40,7 @@ function(choreonoid_add_body_handler)
   list(REMOVE_AT ARGV 0)
   add_library(${target} SHARED ${ARGV})
   set_target_properties(${target} PROPERTIES
-    PREFIX "" LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/bodyhandler)
+    PREFIX "" LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}/bodyhandler)
   if(CHOREONOID_ENABLE_INSTALL_RPATH)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..:$ORIGIN/../..")
   endif()
@@ -50,8 +50,8 @@ function(choreonoid_add_body_handler)
     target_link_libraries(${target} CnoidBody)
   endif()
   install(TARGETS ${target}
-    RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/bodyhandler
-    LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/bodyhandler)
+    RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}/bodyhandler
+    LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}/bodyhandler)
 endfunction()
 
 # Deprecated
@@ -67,7 +67,7 @@ function(choreonoid_add_body_customizer)
   set_target_properties(${target} PROPERTIES
     PREFIX ""
     COMPILE_DEFINITIONS "CNOID_BODY_CUSTOMIZER"
-    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/customizer)
+    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}/customizer)
   if(CHOREONOID_ENABLE_INSTALL_RPATH)
     set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
   endif()
@@ -77,8 +77,8 @@ function(choreonoid_add_body_customizer)
     target_link_libraries(${target} CnoidUtil)
   endif()
   install(TARGETS ${target}
-    RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer
-    LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}/customizer)
+    RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}/customizer
+    LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}/customizer)
 endfunction()
 
 # Deprecated
