@@ -20,9 +20,14 @@ private:
 CNOID_IMPLEMENT_BODY_HANDLER_FACTORY(ClosedLinkSampleHandler)
 
 
-BodyHandler* ClosedLinkSampleHandler::clone(Body*)
+BodyHandler* ClosedLinkSampleHandler::clone(Body* body)
 {
-    return new ClosedLinkSampleHandler(*this);
+    auto handler = new ClosedLinkSampleHandler(*this);
+    if(!handler->initialize(body, nullout())){
+        delete handler;
+        handler = nullptr;
+    }
+    return handler;
 }
 
 
@@ -30,8 +35,10 @@ bool ClosedLinkSampleHandler::initialize(Body* body, std::ostream& os)
 {
     const char* ids[3] = { "0", "1", "3" };
     for(int i=0; i < 3; ++i){
-        joints[i] = body->link(format("J{0}", ids[i]));
+        string name(format("J{0}", ids[i]));
+        joints[i] = body->link(name);
         if(!joints[i]){
+            os << name << "is not found." << endl;
             return false;
         }
     }

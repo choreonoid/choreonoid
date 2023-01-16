@@ -79,7 +79,7 @@ BodyHandler* GRobotHandler::clone(Body*)
 }
 
 
-bool GRobotHandler::initialize(Body* body, std::ostream& os)
+bool GRobotHandler::initialize(Body* body, std::ostream& /* os */)
 {
     if(body->modelName() == "GR001"){
         modelType = GR001;

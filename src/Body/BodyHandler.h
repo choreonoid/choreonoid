@@ -3,6 +3,7 @@
 
 #include <cnoid/Referenced>
 #include <cnoid/Config>
+#include <cnoid/NullOut>
 #include <string>
 #include <iosfwd>
 #include <memory>
@@ -21,7 +22,8 @@ class CNOID_EXPORT BodyHandler : public Referenced
 {
 public:
     static bool checkVersion(const char* name, int version, int internalVersion, std::ostream& os);
-    virtual bool initialize(Body* body, std::ostream& os);
+    BodyHandler();
+    virtual bool initialize(Body* body, std::ostream& os = nullout());
     virtual BodyHandler* clone(Body* body) = 0;
     Body* body() { return body_; }
     const std::string& filename() const { return filename_; }
