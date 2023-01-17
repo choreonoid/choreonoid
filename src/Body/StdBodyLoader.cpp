@@ -1963,8 +1963,6 @@ void StdBodyLoader::Impl::addSubBodyLinks(const Body* subBody, Mapping* node)
     }
 
     LinkPtr rootLink = subBodyClone->rootLink();
-
-    readLinkContents(node, rootLink);
     
     LinkInfoPtr linkInfo = new LinkInfo;
     linkInfo->link = rootLink;
@@ -1972,13 +1970,17 @@ void StdBodyLoader::Impl::addSubBodyLinks(const Body* subBody, Mapping* node)
     node->read("parent", linkInfo->parent);
     linkInfos.push_back(linkInfo);
 
-    // Delete the sub body clone to relase its devices
+    // Delete the sub body clone to relase its links and devices
     // so that the devices can be added to the main body.
     subBodyClone.reset();
 
     for(auto& info : subBodyDevices){
         body->addDevice(info.device, info.link);
     }
+
+    // Read the link contents written in the main body file.
+    // The contents overwrite the sub body link contents.
+    readLinkContents(node, rootLink);
 }
 
 
