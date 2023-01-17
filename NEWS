@@ -78,9 +78,10 @@ Changes since 1.7.0:
 * Arranged the main menu items
 * Fixed the display style of temporal items in ItemTreeWidget
 * Supported loading URDF files
-* Improve GLVisionSensorItem to support sensor noises
-* Improve body key pose editing
+* Improved GLVisionSensorItem to support sensor noises
+* Improved body key pose editing
 * Introduced LinkedJointHandler and supported the kinematics operations of parallel link models on GUI with the handler
+* Disabled building of PoseSeqPlugin and BalancerPlugin by default
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
