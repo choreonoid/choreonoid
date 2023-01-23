@@ -32,9 +32,9 @@ public:
     
     void addBody(Body* body, bool isSelfCollisionDetectionEnabled = true, int groupId = 0);
 
-    //! \note The geometry handle must must be enabled for using this function.
+    //! \note The geometry handle must be enabled for using this function.
     void setGroup(Body* body, int groupId);
-    //! \note The geometry handle must must be enabled for using this function.
+    //! \note The geometry handle must be enabled for using this function.
     void setGroup(Link* link, int groupId);
 
     [[deprecated]]

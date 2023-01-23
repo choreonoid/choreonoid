@@ -57,6 +57,7 @@ set(sources
   #KinematicBodyPart.cpp
   KinematicBodySet.cpp
   LeggedBodyHelper.cpp
+  BodyCollisionLinkFilter.cpp
   BodyCollisionDetector.cpp
   BodyCollisionDetectorUtil.cpp
   BodyMotion.cpp
@@ -107,6 +108,7 @@ set(headers
   Material.h
   ContactMaterial.h
   MaterialTable.h
+  BodyCollisionLinkFilter.h
   BodyCollisionDetector.h
   BodyCollisionDetectorUtil.h
   MultiDeviceStateSeq.h
