@@ -410,7 +410,7 @@ public:
     }
 
 protected:
-    virtual Item* doCloneItem(CloneMap* cloneMap) const { return nullptr; }
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override { return nullptr; }
 
     virtual bool initialize(ControllerIO* io) override {
         this->io = io;

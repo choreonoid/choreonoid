@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_PLUGIN_GL_VISION_SIMULATOR_ITEM_H
 #define CNOID_BODY_PLUGIN_GL_VISION_SIMULATOR_ITEM_H
 
@@ -34,8 +29,8 @@ public:
     void setHeadLightEnabled(bool on);
     void setAdditionalLightsEnabled(bool on);
 
-    virtual bool initializeSimulation(SimulatorItem* simulatorItem);
-    virtual void finalizeSimulation();
+    virtual bool initializeSimulation(SimulatorItem* simulatorItem) override;
+    virtual void finalizeSimulation() override;
 
     [[deprecated("Use setThreadMode(SENSOR_THREAD_MODE)")]]
     void setDedicatedSensorThreadsEnabled(bool on);
@@ -44,9 +39,9 @@ public:
 
 protected:
     virtual Item* doCloneItem(CloneMap* cloneMap) const override;
-    virtual void doPutProperties(PutPropertyFunction& putProperty);
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
 
 private:
     Impl* impl;

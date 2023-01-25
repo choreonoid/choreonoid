@@ -1,13 +1,7 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_ARRAY_2D_H
 #define CNOID_UTIL_ARRAY_2D_H
 
 #include <vector>
-#include <iterator>
 
 namespace cnoid {
 
@@ -82,11 +76,16 @@ public:
     class Column
     {
     public:
-
-        class iterator : public std::iterator<std::bidirectional_iterator_tag, ElementType, int> {
+        class iterator {
             typename Container::iterator current;
             int colSize;
         public:
+            using iterator_category = std::bidirectional_iterator_tag;
+            using value_type = ElementType;
+            using difference_type = int; // std::ptrdiff_t ?
+            using pointer = ElementType*;
+            using reference = ElementType&;
+            
             iterator() { }
                 
             iterator(typename Container::iterator current, int colSize)

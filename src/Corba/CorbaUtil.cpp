@@ -1,11 +1,5 @@
-/**
-@author Shin'ichiro Nakaoka
-*/
-
 #include "CorbaUtil.h"
 #include <fmt/format.h>
-
-#include <iterator>
 #include <iostream>
 
 using namespace std;

@@ -1,13 +1,7 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_DEQUE_2D_H
 #define CNOID_UTIL_DEQUE_2D_H
 
 #include <memory>
-#include <iterator>
 
 namespace cnoid {
 
@@ -20,7 +14,7 @@ public:
     typedef ElementType value_type;
     typedef ElementType Element; ///< \deprecated. Use value_type.
     
-    class const_iterator : public std::iterator<std::random_access_iterator_tag, ElementType> {
+    class const_iterator {
 
         friend class Deque2D<ElementType, Allocator>;
         
@@ -36,6 +30,12 @@ public:
         }
             
     public:
+        using iterator_category = std::random_access_iterator_tag;
+        using value_type = ElementType;
+        using difference_type = std::ptrdiff_t;
+        using pointer = ElementType*;
+        using reference = ElementType&;
+        
         const_iterator() { }
 
         const_iterator(const const_iterator& org) {
@@ -235,7 +235,7 @@ public:
             return top[index * colSize];
         }
 
-        class iterator : public std::iterator<std::bidirectional_iterator_tag, ElementType, int> {
+        class iterator {
 
             ElementType* current;
             ElementType* term;
@@ -243,6 +243,11 @@ public:
             int colSize;
                 
         public:
+            using iterator_category = std::bidirectional_iterator_tag;
+            using value_type = ElementType;
+            using difference_type = int; // std::ptrdiff_t ?
+            using pointer = ElementType*;
+            using reference = ElementType&;
                 
             iterator() { }
                 

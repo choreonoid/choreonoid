@@ -21,7 +21,7 @@ public:
     virtual bool restoreState(const Archive& archive) override;
             
 protected:
-    virtual QWidget* indicatorOnInfoBar();
+    virtual QWidget* indicatorOnInfoBar() override;
             
     GraphWidget graph;
     ScopedConnection rootItemConnection;

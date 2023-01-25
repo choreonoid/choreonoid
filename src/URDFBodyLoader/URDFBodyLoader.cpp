@@ -6,7 +6,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <iterator>
 #include <cstdio>
 
 #include <cnoid/Body>

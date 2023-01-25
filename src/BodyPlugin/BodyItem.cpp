@@ -1168,6 +1168,8 @@ Isometry3 BodyLocation::getLocation() const
         return rootLink->offsetPosition();
     case GlobalLocation:
         return rootLink->T();
+    case InvalidLocation:
+    case ParentRelativeLocation:
     defaut:
         break;
     }
