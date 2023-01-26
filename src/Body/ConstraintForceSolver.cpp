@@ -13,6 +13,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/CloneMap>
 #include <cnoid/TimeMeasure>
+#include <cnoid/stdx/clamp>
 #include <fmt/format.h>
 #include <random>
 #include <unordered_map>
@@ -1308,7 +1309,8 @@ void ConstraintForceSolver::Impl::initABMForceElementsWithNoExtForce(DySubBody* 
 
         if(i > 0){
             if(!link->isFixedJoint()){
-                link->cfs.uu0  = link->uu() + link->u() - (link->sv().dot(link->cfs.pf0) + link->sw().dot(link->cfs.ptau0));
+                double u = stdx::clamp(link->u(), link->u_lower(), link->u_upper());
+                link->cfs.uu0  = link->uu() + u - (link->sv().dot(link->cfs.pf0) + link->sw().dot(link->cfs.ptau0));
                 link->cfs.uu = link->cfs.uu0;
             }
         }

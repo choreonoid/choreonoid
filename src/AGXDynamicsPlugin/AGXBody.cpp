@@ -3,6 +3,7 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/ForceSensor>
+#include <cnoid/stdx/clamp>
 #include <mutex>
 #include "AGXVehicleContinuousTrack.h"
 #include "AGXConvexDecomposition.h"
@@ -691,7 +692,8 @@ void AGXLink::setTorqueToAGX()
             double dq_l = std::max(-1.0E12, orgLink->dq_lower());
             double dq_u = std::min(1.0E12, orgLink->dq_upper());
             joint1DOF->getMotor1D()->setSpeed( orgLink->u() < 0 ? dq_l : dq_u);
-            joint1DOF->getMotor1D()->setForceRange( agx::RangeReal(orgLink->u()));
+            double u = stdx::clamp(orgLink->u(), orgLink->u_lower(), orgLink->u_upper());
+            joint1DOF->getMotor1D()->setForceRange(agx::RangeReal(u));
 #endif
             break;
         }
