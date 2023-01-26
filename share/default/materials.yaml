@@ -80,27 +80,29 @@ contact_materials:
   -
     materials: [ Ground, Default ]
     friction: 0.5
-    restitution: 0.4
+    restitution: 0.25
+    youngsModulus: 1.0e9
   -
     materials: [ Ground, Slider ]
     friction: 0.0
     restitution: 0.0
+    youngsModulus: 2.0e9
   -
     materials: [ Ground, Sole ]
     friction: 1.0
     restitution: 0.0
-    friction_model: [ cone, direct ]
+    friction_model: [ iterative, direct ]
   -
     materials: [ Ground, Tire ]
-    friction: 2.0
+    friction: 3.0
     restitution: 0.0
-    friction_model: [ cone, direct ]
+    friction_model: [ box, direct ]
   -
     materials: [ Default, Hand ]
     friction: 1.0
     restitution: 0.0
     surfaceViscosity: 1e-8
-    friction_model: [ cone, direct ]
+    friction_model: [ iterative, direct ]
   -
     materials: [ Ground, TankTracks]
     youngs_modulus: 1e10
@@ -169,10 +171,10 @@ contact_materials:
     materials: [ Steel, Steel ]
     friction: 0.5
     restitution: 0.0
-    friction_model: [ cone, direct ]
+    friction_model: [ iterative, direct ]
   -
     materials: [ Steel, Hand ]
     friction: 1.0
     restitution: 0.0
     surface_viscosity: 1e-8
-    friction_model: [ cone, direct ]
+    friction_model: [ iterative, direct ]
