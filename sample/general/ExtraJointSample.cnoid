@@ -100,7 +100,7 @@ items:
                 recordCollisionData: false
                 controllerOptions: ""
                 dynamicsMode: "Forward dynamics"
-                integrationMode: "Runge Kutta"
+                integrationMode: semi-implicit_euler
                 gravity: [ 0, 0, -9.80665 ]
                 staticFriction: 0.5
                 dynamicFriction: 0.5
@@ -146,7 +146,7 @@ items:
             delay: 0
             simulationOnly: true
             backgroundExecution: false
-            file: "${SHARE}/script/ExtraJoint.py"
+            file: "ExtraJoint.py"
 views: 
   - 
     id: 0

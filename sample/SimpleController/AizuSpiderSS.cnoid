@@ -166,7 +166,7 @@ items:
             recordCollisionData: false
             controllerOptions: "position"
             dynamicsMode: "Forward dynamics"
-            integrationMode: "Runge Kutta"
+            integrationMode: semi-implicit_euler
             gravity: [ 0, 0, -9.80665 ]
             min_friction_coefficient: 0
             max_friction_coefficient: 100
@@ -197,7 +197,7 @@ items:
             recordCollisionData: false
             controllerOptions: "velocity"
             dynamicsMode: "Forward dynamics"
-            integrationMode: "Runge Kutta"
+            integrationMode: semi-implicit_euler
             gravity: [ 0, 0, -9.80665 ]
             min_friction_coefficient: 0
             max_friction_coefficient: 100
@@ -228,7 +228,7 @@ items:
             recordCollisionData: false
             controllerOptions: "torque"
             dynamicsMode: "Forward dynamics"
-            integrationMode: "Runge Kutta"
+            integrationMode: semi-implicit_euler
             gravity: [ 0, 0, -9.80665 ]
             min_friction_coefficient: 0
             max_friction_coefficient: 100

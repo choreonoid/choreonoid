@@ -103,7 +103,7 @@ items:
                 recordCollisionData: false
                 controllerOptions: 
                 dynamicsMode: "Forward dynamics"
-                integrationMode: "Runge Kutta"
+                integrationMode: semi-implicit_euler
                 gravity: [ 0, 0, -9.80665 ]
                 staticFriction: 0.5
                 slipFriction: 0.5
@@ -132,7 +132,7 @@ items:
                 recordCollisionData: false
                 controllerOptions: position
                 dynamicsMode: "Forward dynamics"
-                integrationMode: "Runge Kutta"
+                integrationMode: semi-implicit_euler
                 gravity: [ 0, 0, -9.80665 ]
                 staticFriction: 0.5
                 slipFriction: 0.5
@@ -161,7 +161,7 @@ items:
                 recordCollisionData: false
                 controllerOptions: velocity
                 dynamicsMode: "Forward dynamics"
-                integrationMode: "Runge Kutta"
+                integrationMode: semi-implicit_euler
                 gravity: [ 0, 0, -9.80665 ]
                 staticFriction: 0.5
                 slipFriction: 0.5

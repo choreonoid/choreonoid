@@ -81,5 +81,4 @@ list(APPEND project_files HandyRockDrill.cnoid)
 choreonoid_add_simple_controller(PendulumSampleController PendulumSampleController.cpp)
 list(APPEND project_files PendulumSample.cnoid)
 
-# Install project files
-install(FILES ${project_files} DESTINATION ${CNOID_SHARE_SUBDIR}/project)
+install_project_files(${project_files})

@@ -15,7 +15,4 @@ foreach(file ${motion_files})
   install(FILES ${file} DESTINATION ${CNOID_SHARE_SUBDIR}/${dir})
 endforeach()
 
-install(FILES
-  GR001.cnoid
-  RIC30.cnoid
-  DESTINATION ${CNOID_SHARE_SUBDIR}/project)
+install_project_files(GR001.cnoid RIC30.cnoid)

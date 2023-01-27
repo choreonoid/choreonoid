@@ -75,7 +75,7 @@ items:
             controllerOptions: ""
             scene_view_edit_mode_blocking: false
             dynamicsMode: "Forward dynamics"
-            integrationMode: "Runge Kutta"
+            integrationMode: semi-implicit_euler
             gravity: [ 0, 0, -9.80665 ]
             min_friction_coefficient: 0
             max_friction_coefficient: 100
