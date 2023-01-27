@@ -207,6 +207,7 @@ public:
 
     JoystickImpl(Joystick* self, const string& device);
     ~JoystickImpl();
+    bool findJoystick();
     bool findDevice();
     bool openDevice();
     bool setupDevice();
@@ -237,14 +238,32 @@ JoystickImpl::JoystickImpl(Joystick* self, const string& device)
 {
     fd = -1;
 
+    findJoystick();
+}
+
+
+bool JoystickImpl::findJoystick()
+{
+    bool found = false;
+
+    closeDevice();
+    
     extJoystick = ExtJoystick::findJoystick(device);
 
-    if(!extJoystick){
-        if(!findDevice()){
-            extJoystick = ExtJoystick::findJoystick("*");
+    if(extJoystick){
+        found = true;
+    } else if(findDevice()){
+        found = true;
+    } else {
+        extJoystick = ExtJoystick::findJoystick("*");
+        if(extJoystick){
+            found = true;
         }
     }
+
+    return found;
 }
+    
 
 
 bool JoystickImpl::findDevice()
@@ -385,10 +404,7 @@ void JoystickImpl::closeDevice()
 
 bool Joystick::makeReady()
 {
-    if(isReady()){
-        return true;
-    }
-    return impl->findDevice();
+    return impl->findJoystick();
 }
 
 

@@ -111,6 +111,8 @@ public:
             device.device->notifyStateChange();
         }
 
+        joystick.makeReady();
+
         return true;
     }
 

@@ -41,7 +41,7 @@ public:
         io->enableInput(drive, JointVelocity);
         io->enableOutput(drive);
         
-        if(!joystick.isReady()){
+        if(!joystick.makeReady()){
             os << "Joystick is not ready: " << joystick.errorMessage() << endl;
         }
 

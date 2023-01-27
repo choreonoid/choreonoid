@@ -36,7 +36,7 @@ public:
             qRef[i] = 0;
         }
 
-        if(!joystick.isReady()){
+        if(!joystick.makeReady()){
             os << "Joystick is not ready: " << joystick.errorMessage() << std::endl;
         }
         if(joystick.numAxes() < 5){
