@@ -298,7 +298,7 @@ if(UNIX)
 
   option(ENABLE_GPERFTOOLS_PROFILER "Enable the CPU profiler of the Google Performance Tools")
   if(ENABLE_GPERFTOOLS_PROFILER)
-    pkg_check_modules(GPREFTOOLS_PROFILER libprofiler)
+    pkg_check_modules(GPREFTOOLS_PROFILER libprofiler libtcmalloc QUIET)
     if(NOT GPREFTOOLS_PROFILER_FOUND)
       message(FATAL_ERROR "libprofiler is not found")
     endif()
