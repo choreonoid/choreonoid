@@ -33,11 +33,6 @@ public:
     int numControllers() const;
     ControllerItem* controller(int index = 0) const;
 
-    /**
-       Call this in the initilization when the shapes are accessed after the initialization
-    */
-    void cloneShapesOnce();
-
     virtual bool initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem);
 
     const std::string& recordItemPrefix() const;
@@ -210,8 +205,7 @@ public:
     /**
        \note This signal is emitted in the simulation thread
     */
-    SignalProxy<void(const std::vector<SimulationBodyPtr>& simulationBodies)>
-        sigSimulationBodyListUpdated();
+    SignalProxy<void(const std::vector<SimulationBodyPtr>& simulationBodies)> sigSimulationBodyListUpdated();
 
     /**
        \note This function should be a pure virtual function
