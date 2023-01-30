@@ -20,6 +20,8 @@ public:
     DyWorldBase();
     virtual ~DyWorldBase();
 
+    virtual void clearBodies();
+
     int numBodies() const { return bodies_.size(); }
     DyBody* body(int index) { return bodies_[index]; }
     DyBody* body(const std::string& name) const;
@@ -41,7 +43,6 @@ public:
     int addBody(DyBody* body);
 
     bool hasHighGainDynamics() const { return hasHighGainDynamics_; }
-    void clearBodies();
     void clearCollisionPairs();
     void setTimeStep(double dt);
     double timeStep(void) const { return timeStep_; }
@@ -135,6 +136,11 @@ public:
     TConstraintForceSolver constraintForceSolver;
 
     DyWorld() : constraintForceSolver(*this) { }
+
+    virtual void clearBodies() override {
+        DyWorldBase::clearBodies();
+        constraintForceSolver.clearBodies();
+    }
 
     virtual void initialize() {
         DyWorldBase::initialize();

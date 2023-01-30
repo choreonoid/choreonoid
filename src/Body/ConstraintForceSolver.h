@@ -54,6 +54,7 @@ public:
     [[deprecated("This function does nothing. Set Link::LinkContactState to Link::sensingMode from a controller.")]]
     void enableConstraintForceOutput(bool on);
 
+    void clearBodies();
     void initialize(void);
     void solve();
     void clearExternalForces();

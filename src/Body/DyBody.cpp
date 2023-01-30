@@ -28,7 +28,6 @@ DySubBody::DySubBody(DyLink* rootLink, std::multimap<Link*, ForceSensor*>& force
 void DySubBody::initialize(DyLink* rootLink, std::multimap<Link*, ForceSensor*>& forceSensorMap)
 {
     rootLink_ = rootLink;
-    body_ = rootLink->body();
     forwardDynamicsCBM_ = nullptr;
     isStatic_ = true;
     

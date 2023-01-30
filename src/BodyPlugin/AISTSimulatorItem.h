@@ -72,6 +72,7 @@ public:
 
 protected:
     AISTSimulatorItem(const AISTSimulatorItem& org);
+    virtual void clearSimulation() override;
     virtual SimulationBody* createSimulationBody(Body* orgBody, CloneMap& cloneMap) override;
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies) override;
     virtual bool completeInitializationOfSimulation() override;

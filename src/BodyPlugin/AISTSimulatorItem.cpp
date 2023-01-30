@@ -350,6 +350,13 @@ Item* AISTSimulatorItem::doCloneItem(CloneMap* /* cloneMap */) const
 }
 
 
+void AISTSimulatorItem::clearSimulation()
+{
+    impl->world.clearBodies();
+    impl->internalStateUpdateLinks.clear();
+}
+
+
 SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody, CloneMap& cloneMap)
 {
     if(!orgBody->isStaticModel() && orgBody->mass() <= 0.0){
@@ -419,9 +426,6 @@ bool AISTSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationB
     cfs.setContactDepthCorrection(contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
     
     self->addPostDynamicsFunction([&](){ clearExternalForces(); });
-
-    world.clearBodies();
-    internalStateUpdateLinks.clear();
 
     hasNonRootFreeJoints = false;
     for(size_t i=0; i < simBodies.size(); ++i){

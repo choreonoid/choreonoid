@@ -45,8 +45,9 @@ protected:
        @param dt time step[s]
     */
     static void SE3exp(Isometry3& out_T, const Isometry3& T0, const Vector3& w, const Vector3& vo, double dt);
-		
-    DySubBodyPtr subBody;
+
+    // This must be a raw pointer to avoid a cyclic reference.
+    DySubBody* subBody;
     Vector3 g;
     double timeStep;
     bool sensorsEnabled;
