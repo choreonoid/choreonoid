@@ -63,7 +63,7 @@ include(AGXCompilerFlags )
 set(CMAKE_CXX_STANDARD ${cxx_standard})
 
 # Now locate AgX
-find_package(AGX REQUIRED)
+find_package(AGX REQUIRED QUIET)
 
 if(AGX_FOUND)
   message(STATUS "AGX Dynamics found in \"${AGX_DIR}\".")

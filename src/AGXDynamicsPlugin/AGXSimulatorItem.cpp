@@ -26,6 +26,9 @@ void AGXSimulatorItem::initializeClass(ExtensionManager* ext)
                             MessageView::instance()->putln("Failed to save the simulation to agx file.");
                         }
                     });
+            menuManager.setPath("/");
+            menuManager.addSeparator();
+            menuFunction.dispatchAs<Item>(item);
         });
 }
 

@@ -13,6 +13,8 @@ PYBIND11_MODULE(AGXDynamicsPlugin, m)
 {
     m.doc() = "Choreonoid AGXDynamicsPlugin module";
 
+    py::module::import("cnoid.BodyPlugin");
+
     py::class_<AGXSimulatorItem, SimulatorItem, AGXSimulatorItemPtr> agxSimulatorItemScope (m, "AGXSimulatorItem");
 
     agxSimulatorItemScope
