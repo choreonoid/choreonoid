@@ -89,7 +89,7 @@ public:
 protected:
     LinkOverwriteItem(const LinkOverwriteItem& org, CloneMap* cloneMap);
     virtual Item* doCloneItem(CloneMap* cloneMap) const override;
-    virtual bool onCheckNewOverwritePosition(bool isManualOperation) override;
+    virtual bool onNewOverwritePositionCheck(bool isManualOperation) override;
     virtual void onDisconnectedFromBodyItem() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 

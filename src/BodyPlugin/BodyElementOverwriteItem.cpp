@@ -21,6 +21,13 @@ void BodyElementOverwriteItem::initializeClass(ExtensionManager* ext)
 
 BodyElementOverwriteItem::BodyElementOverwriteItem()
 {
+    /*
+      Set the following attribute temporarily.
+      In order to remove this attribute, we have to implement the code to overwrite a device
+      when the overwrite item is reverted to the item tree again by undo or redo.
+    */
+    setAttribute(ExcludedFromUnifiedEditHistory);
+    
     bodyItem_ = nullptr;
     newBodyItem_ = nullptr;
     isNewBodyItemValid = false;
@@ -47,7 +54,7 @@ bool BodyElementOverwriteItem::onNewTreePositionCheck(bool isManualOperation, st
     newBodyItem_ = findOwnerItem<BodyItem>();
     isNewBodyItemValid = true;
     if(newBodyItem_ && (!bodyItem_ || bodyItem_ == newBodyItem_)){
-        return onCheckNewOverwritePosition(isManualOperation);
+        return onNewOverwritePositionCheck(isManualOperation);
     }
     return false;
 }

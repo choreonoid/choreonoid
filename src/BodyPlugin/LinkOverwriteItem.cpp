@@ -167,7 +167,7 @@ Item* LinkOverwriteItem::doCloneItem(CloneMap* cloneMap) const
 }
 
 
-bool LinkOverwriteItem::onCheckNewOverwritePosition(bool isManualOperation)
+bool LinkOverwriteItem::onNewOverwritePositionCheck(bool /* isManualOperation */)
 {
     bool acceptable = false;
     auto newBodyItem_ = newBodyItem();

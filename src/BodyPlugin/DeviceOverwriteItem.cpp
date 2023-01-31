@@ -197,7 +197,7 @@ Item* DeviceOverwriteItem::doCloneItem(CloneMap* cloneMap) const
 }
 
 
-bool DeviceOverwriteItem::onCheckNewOverwritePosition(bool isManualOperation)
+bool DeviceOverwriteItem::onNewOverwritePositionCheck(bool /* isManualOperation */)
 {
     return true;
 }
