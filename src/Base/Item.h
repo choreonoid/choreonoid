@@ -19,7 +19,6 @@ class Archive;
 class Mapping;
 class ExtensionManager;
 class PutPropertyFunction;
-class UnifiedEditHistory;
 class EditRecord;
 
 class CNOID_EXPORT Item : public ClonableReferenced
@@ -501,9 +500,6 @@ public:
 #endif
 
     void putProperties(PutPropertyFunction& putProperty);
-
-    static void setUnifiedEditHistory(UnifiedEditHistory* history);
-    void addEditRecordToUnifiedEditHistory(EditRecord* record);
 
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);

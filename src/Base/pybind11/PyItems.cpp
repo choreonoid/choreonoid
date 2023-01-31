@@ -34,6 +34,7 @@ void exportPyItems(py::module m)
         .def_static("find", [](const string& path){ return ItemPtr(Item::find(path)); })
         .def_property("name", &Item::name, &Item::setName)
         .def("setName", &Item::setName)
+        .def("setAttribute", &Item::setAttribute)
         .def("hasAttribute", &Item::hasAttribute)
         .def_property_readonly("childItem", &Item::childItem)
         .def_property_readonly("prevItem", &Item::prevItem)
@@ -135,6 +136,19 @@ void exportPyItems(py::module m)
         .def("setTemporal", &Item::setTemporary, py::arg("on") = true)
         ;
 
+    py::enum_<Item::Attribute>(itemClass, "Attribute")
+        .value("Attached", Item::Attached)
+        .value("SubItemAdditionalAttribute", Item::SubItemAdditionalAttribute)
+        .value("SubItem", Item::SubItem)
+        .value("Unique", Item::Unique)
+        .value("Temporary", Item::Temporary)
+        .value("Builtin", Item::Builtin)
+        .value("FileImmutable", Item::FileImmutable)
+        .value("Reloadable", Item::Reloadable)
+        .value("ExcludedFromUnifiedEditHistory", Item::ExcludedFromUnifiedEditHistory)
+        .export_values();
+        ;
+    
     py::enum_<Item::CheckId>(itemClass, "CheckId")
         .value("LogicalSumOfAllChecks", Item::LogicalSumOfAllChecks)
         .value("PrimaryCheck", Item::PrimaryCheck)

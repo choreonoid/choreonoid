@@ -91,7 +91,6 @@ UnifiedEditHistory* UnifiedEditHistory::instance()
 UnifiedEditHistory::UnifiedEditHistory(ExtensionManager* ext)
 {
     impl = new Impl(ext);
-    Item::setUnifiedEditHistory(this);
 }
 
 
@@ -99,7 +98,7 @@ UnifiedEditHistory::Impl::Impl(ExtensionManager* ext)
     : flushNewRecordBufferLater([this](){ flushNewRecordBuffer(); }, LazyCaller::LowPriority)
 {
     currentPosition = 0;
-    maxHistorySize = 100;
+    maxHistorySize = 10;
 
     mv = MessageView::instance();
 

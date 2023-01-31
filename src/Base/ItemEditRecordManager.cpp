@@ -27,10 +27,10 @@ public:
     std::string forwardLabel;
     std::string reverseLabel;
     ItemPtr item;
-    ItemPtr parentItem;
-    ItemPtr nextItem;
-    ItemPtr oldParentItem;
-    ItemPtr oldNextItem;
+    weak_ref_ptr<Item> parentItemRef;
+    weak_ref_ptr<Item> nextItemRef;
+    weak_ref_ptr<Item> oldParentItemRef;
+    weak_ref_ptr<Item> oldNextItemRef;
 
     ItemTreeEditRecord(Item* item);
     ItemTreeEditRecord(const ItemTreeEditRecord& org);
@@ -73,6 +73,7 @@ namespace cnoid {
 class ItemEditRecordManager::Impl
 {
 public:
+    UnifiedEditHistory* unifiedEditHistory;
     ItemPtr movingItem;
     ItemPtr oldParentItem;
     ItemPtr oldNextItem;
@@ -81,9 +82,9 @@ public:
 
     Impl();
     void onSubTreeAdded(Item* item);
+    void manageSubTree(Item* item);
     void onSubTreeRemoving(Item* item, Item* oldParentItem, Item* oldNextItem, bool isMoving);
     void onSubTreeMoved(Item* item);
-    void manageSubTree(Item* item);
     void releaseSubTree(Item* item);
     void onItemNameChanged(Item* item, const string& oldName);
 };
@@ -113,6 +114,8 @@ ItemEditRecordManager::~ItemEditRecordManager()
 
 ItemEditRecordManager::Impl::Impl()
 {
+    unifiedEditHistory = UnifiedEditHistory::instance();
+    
     auto rootItem = RootItem::instance();
 
     rootItemConnections.add(
@@ -132,61 +135,67 @@ ItemEditRecordManager::Impl::Impl()
 
 void ItemEditRecordManager::Impl::onSubTreeAdded(Item* item)
 {
-    auto record = new ItemTreeEditRecord(item);
-    record->setItemAddition();
-    item->addEditRecordToUnifiedEditHistory(record);
-    manageSubTree(item);
+    if(!item->isSubItem() && !item->hasAttribute(Item::ExcludedFromUnifiedEditHistory)){
+        auto record = new ItemTreeEditRecord(item);
+        record->setItemAddition();
+        unifiedEditHistory->addRecord(record);
+        manageSubTree(item);
+    }
+}
+
+
+void ItemEditRecordManager::Impl::manageSubTree(Item* item)
+{
+    auto& connections = itemConnectionSetMap[item];
+    if(connections.empty()){
+        connections.add(
+            item->sigNameChanged().connect(
+                [this, item](const std::string& oldName){
+                    onItemNameChanged(item, oldName);
+                }));
+    }
+    for(auto child = item->childItem(); child; child = child->nextItem()){
+        if(!child->isSubItem()){
+            manageSubTree(child);
+        }
+    }
 }
 
 
 void ItemEditRecordManager::Impl::onSubTreeRemoving(Item* item, Item* oldParentItem, Item* oldNextItem, bool isMoving)
 {
-    if(isMoving){
-        movingItem = item;
-        this->oldParentItem = oldParentItem;
-        this->oldNextItem = oldNextItem;
-    } else {
-        auto record = new ItemTreeEditRecord(item);
-        record->setItemRemoval(oldParentItem, oldNextItem);
-        item->addEditRecordToUnifiedEditHistory(record);
-        releaseSubTree(item);
+    if(!item->isSubItem() && !item->hasAttribute(Item::ExcludedFromUnifiedEditHistory)){
+        if(isMoving){
+            movingItem = item;
+            this->oldParentItem = oldParentItem;
+            this->oldNextItem = oldNextItem;
+        } else {
+            auto record = new ItemTreeEditRecord(item);
+            record->setItemRemoval(oldParentItem, oldNextItem);
+            unifiedEditHistory->addRecord(record);
+            releaseSubTree(item);
+        }
     }
 }
 
 
 void ItemEditRecordManager::Impl::onSubTreeMoved(Item* item)
 {
-    if(item == movingItem){
-        auto record = new ItemTreeEditRecord(item);
-        record->setItemMove(oldParentItem, oldNextItem);
-        item->addEditRecordToUnifiedEditHistory(record);
-    } else {
-        UnifiedEditHistory::instance()->clear();
-        MessageView::instance()->notify(
-            format(_("The edit history has been cleared because inconsistent item move operation on \"{0}\" was carried out."),
-                   item->displayName()),
-            MessageView::Error);
-    }
-    movingItem.reset();
-    oldParentItem.reset();
-    oldNextItem.reset();
-}
-
-
-void ItemEditRecordManager::Impl::manageSubTree(Item* item)
-{
-    if(!item->isSubItem()){
-        auto& connections = itemConnectionSetMap[item];
-        if(connections.empty()){
-            connections.add(
-                item->sigNameChanged().connect(
-                    [this, item](const std::string& oldName){
-                        onItemNameChanged(item, oldName);
-                    }));
+    if(!item->isSubItem() && !item->hasAttribute(Item::ExcludedFromUnifiedEditHistory)){
+        if(item == movingItem){
+            auto record = new ItemTreeEditRecord(item);
+            record->setItemMove(oldParentItem, oldNextItem);
+            unifiedEditHistory->addRecord(record);
+        } else {
+            UnifiedEditHistory::instance()->clear();
+            MessageView::instance()->notify(
+                format(_("The edit history has been cleared because inconsistent item move operation on \"{0}\" was carried out."),
+                       item->displayName()),
+                MessageView::Error);
         }
-        for(auto child = item->childItem(); child; child = child->nextItem()){
-            manageSubTree(child);
-        }
+        movingItem.reset();
+        oldParentItem.reset();
+        oldNextItem.reset();
     }
 }
 
@@ -203,7 +212,7 @@ void ItemEditRecordManager::Impl::releaseSubTree(Item* item)
 void ItemEditRecordManager::Impl::onItemNameChanged(Item* item, const string& oldName)
 {
     if(item->name() != oldName){ // Is this check necessary?
-        item->addEditRecordToUnifiedEditHistory(new ItemNameEditRecord(item, oldName));
+        unifiedEditHistory->addRecord(new ItemNameEditRecord(item, oldName));
     }
 }
 
@@ -224,10 +233,10 @@ ItemTreeEditRecord::ItemTreeEditRecord(const ItemTreeEditRecord& org)
       forwardLabel(org.forwardLabel),
       reverseLabel(org.reverseLabel),
       item(org.item),
-      parentItem(org.parentItem),
-      nextItem(org.nextItem),
-      oldParentItem(org.oldParentItem),
-      oldNextItem(org.oldNextItem)
+      parentItemRef(org.parentItemRef),
+      nextItemRef(org.nextItemRef),
+      oldParentItemRef(org.oldParentItemRef),
+      oldNextItemRef(org.oldNextItemRef)
 {
 
 }
@@ -242,8 +251,9 @@ EditRecord* ItemTreeEditRecord::clone() const
 void ItemTreeEditRecord::setItemAddition()
 {
     action = AddAction;
-    parentItem = item->parentItem();
-    nextItem = item->nextItem();
+    auto parentItem = item->parentItem();
+    parentItemRef = parentItem;
+    nextItemRef = item->nextItem();
 
     forwardLabel =
         format(_("Add \"{0}\" to \"{1}\""),
@@ -256,11 +266,13 @@ void ItemTreeEditRecord::setItemAddition()
 
 bool ItemTreeEditRecord::undoAddition()
 {
-    if(item->parentItem() == parentItem){
-        manager->rootItemConnections.block();
-        item->removeFromParentItem();
-        manager->rootItemConnections.unblock();
-        return true;
+    if(auto parentItem = parentItemRef.lock()){
+        if(item->parentItem() == parentItem){
+            manager->rootItemConnections.block();
+            item->removeFromParentItem();
+            manager->rootItemConnections.unblock();
+            return true;
+        }
     }
     return false;
 }
@@ -268,7 +280,10 @@ bool ItemTreeEditRecord::undoAddition()
 
 bool ItemTreeEditRecord::redoAddition()
 {
-    if(parentItem->isConnectedToRoot()){
+    auto parentItem = parentItemRef.lock();
+    auto nextItem = nextItemRef.lock();
+        
+    if(parentItem && parentItem->isConnectedToRoot()){
         if(!nextItem || nextItem->parentItem() == parentItem){
             manager->rootItemConnections.block();
             bool inserted = parentItem->insertChild(nextItem, item, false);
@@ -283,8 +298,8 @@ bool ItemTreeEditRecord::redoAddition()
 void ItemTreeEditRecord::setItemRemoval(Item* oldParentItem, Item* oldNextItem)
 {
     action = RemoveAction;
-    this->oldParentItem = oldParentItem;
-    this->oldNextItem = oldNextItem;
+    oldParentItemRef = oldParentItem;
+    oldNextItemRef = oldNextItem;
 
     forwardLabel =
         format(_("Remove \"{0}\" from \"{1}\""),
@@ -297,7 +312,10 @@ void ItemTreeEditRecord::setItemRemoval(Item* oldParentItem, Item* oldNextItem)
 
 bool ItemTreeEditRecord::undoRemoval()
 {
-    if(oldParentItem->isConnectedToRoot()){
+    auto oldParentItem = oldParentItemRef.lock();
+    auto oldNextItem = oldNextItemRef.lock();
+
+    if(oldParentItem && oldParentItem->isConnectedToRoot()){
         if(!oldNextItem || oldNextItem->parentItem() == oldParentItem){
             manager->rootItemConnections.block();
             bool inserted = oldParentItem->insertChild(oldNextItem, item, false);
@@ -305,17 +323,20 @@ bool ItemTreeEditRecord::undoRemoval()
             return inserted;
         }
     }
+    
     return false;
 }
 
 
 bool ItemTreeEditRecord::redoRemoval()
 {
-    if(item->parentItem() == oldParentItem){
-        manager->rootItemConnections.block();
-        item->removeFromParentItem();
-        manager->rootItemConnections.unblock();
-        return true;
+    if(auto oldParentItem = oldParentItemRef.lock()){
+        if(item->parentItem() == oldParentItem){
+            manager->rootItemConnections.block();
+            item->removeFromParentItem();
+            manager->rootItemConnections.unblock();
+            return true;
+        }
     }
     return false;
 }
@@ -324,10 +345,11 @@ bool ItemTreeEditRecord::redoRemoval()
 void ItemTreeEditRecord::setItemMove(Item* oldParentItem, Item* oldNextItem)
 {
     action = MoveAction;
-    parentItem = item->parentItem();
-    nextItem = item->nextItem();
-    this->oldParentItem = oldParentItem;
-    this->oldNextItem = oldNextItem;
+    auto parentItem = item->parentItem();
+    parentItemRef = parentItem;
+    nextItemRef = item->nextItem();
+    oldParentItemRef = oldParentItem;
+    oldNextItemRef = oldNextItem;
 
     forwardLabel =
         format(_("Move \"{0}\" from \"{1}\" to \"{2}\""),
@@ -340,12 +362,18 @@ void ItemTreeEditRecord::setItemMove(Item* oldParentItem, Item* oldNextItem)
 
 bool ItemTreeEditRecord::undoMove()
 {
-    if(item->parentItem() == parentItem && oldParentItem->isConnectedToRoot()){
-        if(!oldNextItem || oldNextItem->parentItem() == oldParentItem){
-            manager->rootItemConnections.block();
-            bool inserted = oldParentItem->insertChild(oldNextItem, item, false);
-            manager->rootItemConnections.unblock();
-            return inserted;
+    auto parentItem = parentItemRef.lock();
+    auto oldParentItem = oldParentItemRef.lock();
+    auto oldNextItem = oldNextItemRef.lock();
+
+    if(parentItem && oldParentItem){
+        if(item->parentItem() == parentItem && oldParentItem->isConnectedToRoot()){
+            if(!oldNextItem || oldNextItem->parentItem() == oldParentItem){
+                manager->rootItemConnections.block();
+                bool inserted = oldParentItem->insertChild(oldNextItem, item, false);
+                manager->rootItemConnections.unblock();
+                return inserted;
+            }
         }
     }
     return false;
@@ -354,7 +382,11 @@ bool ItemTreeEditRecord::undoMove()
 
 bool ItemTreeEditRecord::redoMove()
 {
-    if(item->parentItem() == oldParentItem && parentItem->isConnectedToRoot()){
+    auto parentItem = parentItemRef.lock();
+    auto nextItem = nextItemRef.lock();
+    auto oldParentItem = oldParentItemRef.lock();
+
+    if(oldParentItem && item->parentItem() == oldParentItem && parentItem && parentItem->isConnectedToRoot()){
         if(!nextItem || nextItem->parentItem() == parentItem){
             manager->rootItemConnections.block();
             bool inserted = parentItem->insertChild(nextItem, item, false);

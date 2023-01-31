@@ -8,7 +8,6 @@
 #include "PutPropertyFunction.h"
 #include "LazyCaller.h"
 #include "MessageView.h"
-#include "UnifiedEditHistory.h"
 #include "EditRecord.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
@@ -47,9 +46,6 @@ bool isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
 
 std::map<ItemPtr, ItemPtr> replacementToOriginalItemMap;
 std::map<ItemPtr, ItemPtr> originalToReplacementItemMap;
-
-UnifiedEditHistory* unifiedEditHistory = nullptr;
-
 
 LazyCaller clearItemReplacementMapsLater(
     [](){
@@ -1781,6 +1777,10 @@ void Item::putProperties(PutPropertyFunction& putProperty)
             if(!attributes.empty())  attributes += ", ";
             attributes += _("Reloadable");
         }
+        if(hasAttribute(ExcludedFromUnifiedEditHistory)){
+            if(!attributes.empty())  attributes += ", ";
+            attributes += _("No undo");
+        }
     }
     if(!attributes.empty()){
         if(attributes.size() == 1){
@@ -1798,20 +1798,6 @@ void Item::putProperties(PutPropertyFunction& putProperty)
 void Item::doPutProperties(PutPropertyFunction& putProperty)
 {
 
-}
-
-
-void Item::setUnifiedEditHistory(UnifiedEditHistory* history)
-{
-    unifiedEditHistory = history;
-}
-
-
-void Item::addEditRecordToUnifiedEditHistory(EditRecord* record)
-{
-    if(!hasAttribute(ExcludedFromUnifiedEditHistory)){
-        unifiedEditHistory->addRecord(record);
-    }
 }
 
 
