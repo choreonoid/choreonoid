@@ -35,7 +35,14 @@ public:
     void refresh();
 
 private:
-    ItemPtr item_;
+    /**
+       Note that this is not a smart pointer.
+       It is not necessary to use a smart pointer because the time sync item engine object is
+       released when the corresponding item is disconnected from the root, and the smart pointer
+       may cause a cyclic reference, which must be avoided.
+    */
+    Item* item_;
+    
     int ongoingTimeId;
     double ongoingTime;
     bool isActive_;

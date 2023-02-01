@@ -34,8 +34,8 @@ public:
     static BodyContactPointLogEngine* create(
         BodyContactPointLogItem* logItem, BodyContactPointLogEngine* engine0);
     
-    BodyContactPointLoggerItemPtr loggerItem;
-    BodyContactPointLogItemPtr logItem;
+    weak_ref_ptr<BodyContactPointLoggerItem> loggerItemRef;
+    BodyContactPointLogItem* logItem;
 
     BodyContactPointLogEngine(BodyContactPointLogItem* logItem, BodyContactPointLoggerItem* loggerItem);
     ~BodyContactPointLogEngine();
@@ -194,7 +194,7 @@ BodyContactPointLogEngine* BodyContactPointLogEngine::create
 (BodyContactPointLogItem* logItem, BodyContactPointLogEngine* engine0)
 {
     if(auto loggerItem = logItem->findOwnerItem<BodyContactPointLoggerItem>()){
-        if(engine0 && engine0->loggerItem == loggerItem){
+        if(engine0 && engine0->loggerItemRef.lock() == loggerItem){
             return engine0;
         } else {
             return new BodyContactPointLogEngine(logItem, loggerItem);
@@ -207,7 +207,7 @@ BodyContactPointLogEngine* BodyContactPointLogEngine::create
 BodyContactPointLogEngine::BodyContactPointLogEngine
 (BodyContactPointLogItem* logItem, BodyContactPointLoggerItem* loggerItem)
     : TimeSyncItemEngine(logItem),
-      loggerItem(loggerItem),
+      loggerItemRef(loggerItem),
       logItem(logItem)
 {
     loggerItem->sigCheckToggled().connect(
@@ -221,13 +221,16 @@ BodyContactPointLogEngine::BodyContactPointLogEngine
 
 BodyContactPointLogEngine::~BodyContactPointLogEngine()
 {
-    BodyContactPointLoggerItem::Impl::getImpl(loggerItem)->clearScene();
+    if(auto loggerItem = loggerItemRef.lock()){
+        BodyContactPointLoggerItem::Impl::getImpl(loggerItem)->clearScene();
+    }
 }
 
 
 bool BodyContactPointLogEngine::onTimeChanged(double time)
 {
-    if(!loggerItem->isChecked()){
+    auto loggerItem = loggerItemRef.lock();
+    if(!loggerItem || !loggerItem->isChecked()){
         return false;
     }
     auto log = logItem->log();

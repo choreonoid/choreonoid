@@ -19,8 +19,7 @@ ExtraSeqEngineFactoryMap extraSeqEngineFactories;
 
 
 BodyMotionEngineCore::BodyMotionEngineCore(BodyItem* bodyItem)
-    : bodyItem_(bodyItem),
-      body(bodyItem->body())
+    : bodyItemRef(bodyItem)
 {
 
 }
@@ -28,12 +27,14 @@ BodyMotionEngineCore::BodyMotionEngineCore(BodyItem* bodyItem)
 
 void BodyMotionEngineCore::updateBodyPosition(const BodyPositionSeqFrame& frame)
 {
-    bool needFk = updateBodyPosition_(frame);
-    bodyItem_->notifyKinematicStateChange(needFk);
+    if(auto bodyItem_ = bodyItemRef.lock()){
+        bool needFk = updateBodyPosition_(bodyItem_->body(), frame);
+        bodyItem_->notifyKinematicStateChange(needFk);
+    }
 }
 
 
-bool BodyMotionEngineCore::updateBodyPosition_(const BodyPositionSeqFrame& frame)
+bool BodyMotionEngineCore::updateBodyPosition_(Body* body, const BodyPositionSeqFrame& frame)
 {
     bool needFk = false;
 
@@ -101,7 +102,7 @@ bool BodyMotionEngineCore::updateSingleBodyPosition(Body* body, BodyPositionSeqF
 
 
 // Note that updating velocities are only supported for the main body
-void BodyMotionEngineCore::updateBodyVelocity(const BodyPositionSeqFrame& prevFrame, double timeStep)
+void BodyMotionEngineCore::updateBodyVelocity(Body* body, const BodyPositionSeqFrame& prevFrame, double timeStep)
 {
     // TODO: set link velocities
     
@@ -172,15 +173,17 @@ BodyMotionEngine::BodyMotionEngine(BodyItem* bodyItem, BodyMotionItem* motionIte
 void BodyMotionEngine::updateExtraSeqEngines()
 {
     extraSeqEngines.clear();
-    
-    const int n = motionItem_->numExtraSeqItems();
-    for(int i=0; i < n; ++i){
-        const string& key = motionItem_->extraSeqKey(i);
-        AbstractSeqItem* seqItem = motionItem_->extraSeqItem(i);
-        ExtraSeqEngineFactoryMap::iterator q = extraSeqEngineFactories.find(key);
-        if(q != extraSeqEngineFactories.end()){
-            ExtraSeqEngineFactory& createEngine = q->second;
-            extraSeqEngines.push_back(createEngine(core.bodyItem_, seqItem));
+
+    if(auto bodyItem_ = core.bodyItemRef.lock()){
+        const int n = motionItem_->numExtraSeqItems();
+        for(int i=0; i < n; ++i){
+            const string& key = motionItem_->extraSeqKey(i);
+            AbstractSeqItem* seqItem = motionItem_->extraSeqItem(i);
+            ExtraSeqEngineFactoryMap::iterator q = extraSeqEngineFactories.find(key);
+            if(q != extraSeqEngineFactories.end()){
+                ExtraSeqEngineFactory& createEngine = q->second;
+                extraSeqEngines.push_back(createEngine(bodyItem_, seqItem));
+            }
         }
     }
 }
@@ -188,7 +191,9 @@ void BodyMotionEngine::updateExtraSeqEngines()
 
 void BodyMotionEngine::onPlaybackStarted(double time)
 {
-    core.bodyItem_->notifyKinematicStateUpdate(false);
+    if(auto bodyItem_ = core.bodyItemRef.lock()){
+        bodyItem_->notifyKinematicStateUpdate(false);
+    }
 }
 
 
@@ -196,25 +201,31 @@ bool BodyMotionEngine::onTimeChanged(double time)
 {
     bool isActive = false;
 
+    auto bodyItem_ = core.bodyItemRef.lock();
+    if(!bodyItem_){
+        return false;
+    }
+
     if(!positionSeq->empty()){
-        int prevNumMultiplexBodies = core.body->numMultiplexBodies();
+        auto body = bodyItem_->body();
+        int prevNumMultiplexBodies = body->numMultiplexBodies();
         int frameIndex = positionSeq->clampFrameIndex(positionSeq->frameOfTime(time), isActive);
 
-        bool needFk = core.updateBodyPosition_(positionSeq->frame(frameIndex));
+        bool needFk = core.updateBodyPosition_(body, positionSeq->frame(frameIndex));
 
         bool doUpdateVelocities = motionItem_->isBodyJointVelocityUpdateEnabled();
         if(doUpdateVelocities){
             auto& prevFrame = positionSeq->frame((frameIndex == 0) ? 0 : (frameIndex -1));
-            core.updateBodyVelocity(prevFrame, positionSeq->timeStep());
+            core.updateBodyVelocity(body, prevFrame, positionSeq->timeStep());
         }
                 
         if(needFk){
-            core.body->calcForwardKinematics(doUpdateVelocities);
+            body->calcForwardKinematics(doUpdateVelocities);
         }
         
-        if(core.body->numMultiplexBodies() != prevNumMultiplexBodies){
+        if(body->numMultiplexBodies() != prevNumMultiplexBodies){
             // Is it better to define and use a signal specific to multiplex body changes?
-            core.bodyItem_->notifyUpdate();
+            bodyItem_->notifyUpdate();
         }
     }
     
@@ -224,7 +235,7 @@ bool BodyMotionEngine::onTimeChanged(double time)
         }
     }
     
-    core.bodyItem_->notifyKinematicStateChange();
+    bodyItem_->notifyKinematicStateChange();
 
     return isActive;
 }
@@ -232,18 +243,21 @@ bool BodyMotionEngine::onTimeChanged(double time)
 
 double BodyMotionEngine::onPlaybackStopped(double time, bool isStoppedManually)
 {
-    core.bodyItem_->notifyKinematicStateUpdate(false);
-
     double lastValidTime = -1.0;
+
+    if(auto bodyItem_ = core.bodyItemRef.lock()){
+
+        bodyItem_->notifyKinematicStateUpdate(false);
     
-    double last = std::max(0.0, positionSeq->timeOfFrame(positionSeq->numFrames() - 1));
-    if(last < time && last > lastValidTime){
-        lastValidTime = last;
-    }
-    for(auto& engine : extraSeqEngines){
-        double last = engine->onPlaybackStopped(time, isStoppedManually);
+        double last = std::max(0.0, positionSeq->timeOfFrame(positionSeq->numFrames() - 1));
         if(last < time && last > lastValidTime){
             lastValidTime = last;
+        }
+        for(auto& engine : extraSeqEngines){
+            double last = engine->onPlaybackStopped(time, isStoppedManually);
+            if(last < time && last > lastValidTime){
+                lastValidTime = last;
+            }
         }
     }
 

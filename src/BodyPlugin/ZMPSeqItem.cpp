@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "ZMPSeqItem.h"
 #include "BodyItem.h"
 #include "BodyMotionItem.h"
@@ -34,14 +29,14 @@ AbstractSeqItem* createZMPSeqItem(std::shared_ptr<AbstractSeq> seq)
 class ZMPSeqEngine : public TimeSyncItemEngine
 {
     shared_ptr<ZMPSeq> seq;
-    BodyItemPtr bodyItem;
+    weak_ref_ptr<BodyItem> bodyItemRef;
     ScopedConnection connection;
     
 public:
     ZMPSeqEngine(ZMPSeqItem* seqItem, BodyItem* bodyItem)
         : TimeSyncItemEngine(seqItem),
           seq(seqItem->zmpseq()),
-          bodyItem(bodyItem)
+          bodyItemRef(bodyItem)
     {
         connection = seqItem->sigUpdated().connect([this](){ refresh(); });
     }
@@ -49,12 +44,14 @@ public:
     virtual bool onTimeChanged(double time) override
     {
         bool isValidTime = false;
-        if(!seq->empty()){
-            const Vector3& zmp = seq->at(seq->clampFrameIndex(seq->frameOfTime(time), isValidTime));
-            if(seq->isRootRelative()){
-                bodyItem->setZmp(bodyItem->body()->rootLink()->T() * zmp);
-            } else {
-                bodyItem->setZmp(zmp);
+        if(auto bodyItem = bodyItemRef.lock()){
+            if(!seq->empty()){
+                const Vector3& zmp = seq->at(seq->clampFrameIndex(seq->frameOfTime(time), isValidTime));
+                if(seq->isRootRelative()){
+                    bodyItem->setZmp(bodyItem->body()->rootLink()->T() * zmp);
+                } else {
+                    bodyItem->setZmp(zmp);
+                }
             }
         }
         return isValidTime;

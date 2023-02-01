@@ -18,16 +18,15 @@ class BodyMotionEngineCore
 {
 public:
     BodyMotionEngineCore(BodyItem* bodyItem);
-    BodyItem* bodyItem() { return bodyItem_; }
+    BodyItem* bodyItem() { return bodyItemRef.lock(); }
     void updateBodyPosition(const BodyPositionSeqFrame& frame);
 
 private:
-    BodyItemPtr bodyItem_;
-    BodyPtr body;
+    weak_ref_ptr<BodyItem> bodyItemRef;
 
-    bool updateBodyPosition_(const BodyPositionSeqFrame& frame);
+    bool updateBodyPosition_(Body* body, const BodyPositionSeqFrame& frame);
     bool updateSingleBodyPosition(Body* body, BodyPositionSeqFrameBlock frameBlock, bool isMainBody);
-    void updateBodyVelocity(const BodyPositionSeqFrame& prevFrame, double timeStep);
+    void updateBodyVelocity(Body* body, const BodyPositionSeqFrame& prevFrame, double timeStep);
     friend class BodyMotionEngine;
 };
 
@@ -41,7 +40,7 @@ public:
 
     BodyMotionEngine(BodyItem* bodyItem, BodyMotionItem* motionItem);
 
-    BodyItem* bodyItem() { return core.bodyItem_; }
+    BodyItem* bodyItem() { return core.bodyItem(); }
     BodyMotionItem* motionItem() { return motionItem_; }
         
     virtual void onPlaybackStarted(double time) override;
@@ -50,7 +49,7 @@ public:
 
 private:
     BodyMotionEngineCore core;
-    BodyMotionItemPtr motionItem_;
+    BodyMotionItem* motionItem_;
     std::shared_ptr<BodyPositionSeq> positionSeq;
     std::vector<TimeSyncItemEnginePtr> extraSeqEngines;
     ScopedConnectionSet connections;

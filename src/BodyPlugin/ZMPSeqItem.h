@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_PLUGIN_ZMPSEQ_ITEM_H
 #define CNOID_BODY_PLUGIN_ZMPSEQ_ITEM_H
 

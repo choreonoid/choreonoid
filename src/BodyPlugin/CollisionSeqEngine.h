@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shizuko Hattori
-*/
-
 #ifndef CNOID_BODYPLUGIN_COLLISION_SEQ_ENGINE_H
 #define CNOID_BODYPLUGIN_COLLISION_SEQ_ENGINE_H
 
@@ -25,7 +20,7 @@ public:
 
     CollisionSeqItem* collisionSeqItem();
 
-    virtual bool onTimeChanged(double time);
+    virtual bool onTimeChanged(double time) override;
 
 private:
     class Impl;

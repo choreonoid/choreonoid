@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "WorldLogFileItem.h"
 #include "SimulatorItem.h"
 #include "SubSimulatorItem.h"
@@ -371,7 +366,7 @@ ItemList<BodyItem>::iterator findItemOfName(ItemList<BodyItem>& items, const std
 class WorldLogFileEngine : public TimeSyncItemEngine
 {
 public:
-    WorldLogFileItemPtr logItem;
+    WorldLogFileItem* logItem;
     WorldLogFileEngine(WorldLogFileItem* item)
         : TimeSyncItemEngine(item)
     {
