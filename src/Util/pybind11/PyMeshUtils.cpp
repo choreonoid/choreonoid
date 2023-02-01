@@ -35,7 +35,7 @@ void exportPyMeshUtils(py::module& m)
         .def(py::init<>())
         .def_property("divisionNumber", &MeshGenerator::divisionNumber, &MeshGenerator::setDivisionNumber)
         .def("setDivisionNumber", &MeshGenerator::setDivisionNumber)
-        .def_property_readonly_static("defaultDivisionNumber", &MeshGenerator::defaultDivisionNumber)
+        .def_property_readonly_static("defaultDivisionNumber", [](py::object){ return MeshGenerator::defaultDivisionNumber(); })
         .def("setExtraDivisionNumber", &MeshGenerator::setExtraDivisionNumber,
              py::arg("n"), py::arg("flags") = SgMesh::ExtraDivisionPreferred)
         .def_property_readonly("extraDivisionNumber", &MeshGenerator::extraDivisionNumber)
