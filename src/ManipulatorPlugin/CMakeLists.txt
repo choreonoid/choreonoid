@@ -35,6 +35,7 @@ set(sources
 
 set(headers
   MprProgram.h
+  MprPosition.h
   MprPositionList.h
   MprStatementRegistration.h
   MprStatement.h

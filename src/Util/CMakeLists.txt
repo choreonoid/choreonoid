@@ -121,6 +121,7 @@ set(headers
   StringUtil.h
   Tokenizer.h
   EasyScanner.h
+  FloatingNumberString.h
   ValueTree.h
   ValueTreeUtil.h
   YAMLReader.h
@@ -130,6 +131,7 @@ set(headers
   EigenUtil.h
   EigenArchive.h
   MathUtil.h
+  TruncatedSVD.h
   Uuid.h
   GeneralId.h
   Selection.h

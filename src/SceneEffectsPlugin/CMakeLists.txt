@@ -20,7 +20,10 @@ set(sources
   gl_core_3_3.c
   )
 
-set(headers )
+set(headers
+  FountainDevice.h
+  FireDevice.h
+  )
 
 QT5_ADD_RESOURCES(RC_SRCS SceneEffectsPlugin.qrc)
 set(target CnoidSceneEffectsPlugin)

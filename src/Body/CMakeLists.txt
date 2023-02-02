@@ -48,7 +48,6 @@ set(sources
   SpotLight.cpp
   MarkerDevice.cpp
   MultiDeviceStateSeq.cpp
-  ExtraBodyStateAccessor.cpp
   SceneCollision.cpp
   InverseKinematics.cpp
   CompositeIK.cpp
@@ -64,6 +63,7 @@ set(sources
   BodyPositionSeq.cpp
   BodyMotionPoseProvider.cpp
   BodyState.cpp
+  ExtraBodyStateAccessor.cpp
   ZMPSeq.cpp
   ForwardDynamics.cpp
   ForwardDynamicsABM.cpp
@@ -98,6 +98,7 @@ set(headers
   BodyLoader.h
   StdBodyLoader.h
   StdBodyWriter.h
+  StdBodyFileUtil.h
   ZMPSeq.h
   Link.h
   LinkTraverse.h
@@ -159,6 +160,7 @@ set(headers
   PoseProviderToBodyMotionConverter.h
   BodyMotionUtil.h
   BodyState.h
+  ExtraBodyStateAccessor.h
   CollisionLinkPair.h
   ExtraJoint.h
   ControllerIO.h

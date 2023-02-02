@@ -178,6 +178,7 @@ set(headers
   Slider.h
   Dial.h
   Splitter.h
+  Separator.h
   Buttons.h
   ButtonGroup.h
   CheckBox.h
@@ -185,6 +186,7 @@ set(headers
   ComboBox.h
   Dialog.h
   FileDialog.h
+  DescriptionDialog.h
   Timer.h
   SocketNotifier.h
   ImageWidget.h
@@ -197,6 +199,7 @@ set(headers
   ToolBar.h
   View.h
   ViewArea.h
+  InfoBar.h
   ViewManager.h
   LayoutSwitcher.h
   GraphWidget.h
@@ -221,9 +224,11 @@ set(headers
   UnifiedEditHistory.h
   EditRecord.h
   ItemEditRecordManager.h
+  StringListComboBox.h
   DisplayValueFormat.h
   PositionWidget.h
   LocationView.h
+  MultiSeqItemCreationPanel.h
   PutPropertyFunction.h
   RootItem.h
   FolderItem.h
@@ -269,6 +274,8 @@ set(headers
   CoordinateFrameMarker.h
   GLSceneRenderer.h
   GL1SceneRenderer.h
+  GLSLProgram.h
+  ShaderPrograms.h
   GLSLSceneRenderer.h
   SceneRendererConfig.h
   SceneView.h

@@ -13,9 +13,11 @@ set(sources
   )
 
 set(headers
+  PythonPlugin.h
   PythonExecutor.h
   PythonScriptItem.h
   PythonScriptItemImpl.h
+  PythonConsoleView.h
   )
 
 choreonoid_make_gettext_mo_files(${target} mofiles)

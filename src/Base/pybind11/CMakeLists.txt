@@ -3,6 +3,7 @@ set(headers
   PyItemList.h
   PyQObjectHolder.h
   PyQString.h
+  PyQtSignal.h
   exportdecl.h
   )
 

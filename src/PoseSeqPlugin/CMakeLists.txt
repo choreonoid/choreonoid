@@ -35,6 +35,7 @@ set(headers
   PoseSeqInterpolator.h
   PoseFilters.h
   PoseSeqItem.h
+  PoseRollView.h
   BodyMotionGenerationBar.h
   exportdecl.h
   )

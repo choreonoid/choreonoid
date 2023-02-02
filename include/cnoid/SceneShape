@@ -1,1 +1,2 @@
+// Deprecated. Use the SceneDrawables header
 #include "src/Util/SceneDrawables.h"
