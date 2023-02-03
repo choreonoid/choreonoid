@@ -142,12 +142,12 @@ public:
         constraintForceSolver.clearBodies();
     }
 
-    virtual void initialize() {
+    virtual void initialize() override {
         DyWorldBase::initialize();
         constraintForceSolver.initialize();
     }
 
-    virtual void calcNextState(){
+    virtual void calcNextState() override {
         DyWorldBase::setVirtualJointForces();
         constraintForceSolver.solve();
         DyWorldBase::calcNextState();
