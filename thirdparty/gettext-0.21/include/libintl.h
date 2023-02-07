@@ -398,7 +398,7 @@ extern int sprintf (char *, const char *, ...);
 extern int vsprintf (char *, const char *, va_list);
 #endif
 
-#if 1
+#if 0
 
 #if !(defined snprintf && defined _GL_STDIO_H) /* don't override gnulib */
 #undef snprintf
