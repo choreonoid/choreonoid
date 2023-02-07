@@ -32,7 +32,7 @@ public:
     bool saveItem(Item* item);
 
     static QString makeNameFilter(
-        const std::string& caption, const std::vector<std::string>& extensions, bool isAnyEnabled = false);
+        const std::string& caption, const std::vector<std::string>& extensions);
 
 private:
     void setRegisteredFileIOsFor_(const std::type_info& type);

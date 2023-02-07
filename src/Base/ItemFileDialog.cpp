@@ -362,7 +362,7 @@ bool ItemFileDialog::Impl::initializeFileIoFilters()
     for(auto& fileIO : givenFileIOs){
         if(fileIO->hasApi(mode)){
             validFileIOs.push_back(fileIO);
-            filters << makeNameFilter(fileIO->fileTypeCaption(), fileIO->extensions(mode), false);
+            filters << makeNameFilter(fileIO->fileTypeCaption(), fileIO->extensions(mode));
             time_t time;
             if(mode == Load){
                 time = fileIO->lastSelectedTimeInLoadDialog();
@@ -466,11 +466,13 @@ bool ItemFileDialog::Impl::onFileDialogAboutToFinish(int result)
 
 
 QString ItemFileDialog::makeNameFilter
-(const std::string& caption, const std::vector<std::string>& extensions, bool isAnyEnabled)
+(const std::string& caption, const std::vector<std::string>& extensions)
 {
     QString filter(caption.c_str());
 
-    if(!extensions.empty()){
+    if(extensions.empty()){
+        filter += " (*)";
+    } else {
         QString prefix = " (";
         for(auto& ext : extensions){
             filter += prefix;
@@ -479,8 +481,6 @@ QString ItemFileDialog::makeNameFilter
             prefix = " ";
         }
         filter += ")";
-    } else if(isAnyEnabled){
-        filter += " (*)";
     }
 
     return filter;

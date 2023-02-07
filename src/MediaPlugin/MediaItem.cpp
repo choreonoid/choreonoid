@@ -50,7 +50,7 @@ void onSigOptionsParsed(boost::program_options::variables_map& v)
 void MediaItem::initialize(ExtensionManager* ext)
 {
     ext->itemManager().registerClass<MediaItem>(N_("MediaItem"));
-    ext->itemManager().addLoader<MediaItem>(_("Media file"), "MEDIA-GENERIC", "", loadMediaItem);
+    ext->itemManager().addLoader<MediaItem>(_("Media file"), "MEDIA-GENERIC", "*", loadMediaItem);
 
     ext->optionManager().addOption("media", boost::program_options::value<vector<string>>(), _("load an media file"));
     ext->optionManager().sigOptionsParsed(1).connect(onSigOptionsParsed);

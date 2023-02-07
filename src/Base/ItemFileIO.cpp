@@ -278,7 +278,9 @@ std::vector<std::string> ItemFileIO::separateExtensions(const std::string& multi
     do {
         const char* begin = str;
         while(*str != ';' && *str) ++str;
-        extensions.push_back(string(begin, str));
+        if(begin < str){
+            extensions.push_back(string(begin, str));
+        }
     } while(0 != *str++);
 
     return extensions;
