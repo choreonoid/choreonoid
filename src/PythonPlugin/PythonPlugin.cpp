@@ -282,7 +282,7 @@ bool PythonPlugin::Impl::initializeInterpreter()
       set using C functions.
     */	
 #ifdef _WIN32
-    python::module env = python::module::import("os").attr("environ");
+    python::object env = python::module::import("os").attr("environ");
     env["PATH"] = python::str(executableDir() + ";" + std::string(python::str(env["PATH"])));
 #endif
 
