@@ -1,4 +1,4 @@
-if(ENABLE_ASSIMP AND ENABLE_GUI)
+if(ENABLE_ASSIMP)
   choreonoid_add_plugin(CnoidAssimpPlugin AssimpPlugin.cpp)
   target_link_libraries(CnoidAssimpPlugin CnoidAssimpSceneLoader)
 endif()

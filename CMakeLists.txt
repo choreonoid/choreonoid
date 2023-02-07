@@ -262,6 +262,8 @@ function(install_runtime_dlls dll_dir)
 	if(conf STREQUAL general)
 	  if(EXISTS ${dll_dir}/${filename}.dll)
 	    install(PROGRAMS ${dll_dir}/${filename}.dll DESTINATION bin ${OPTIONAL_FLAG})
+	  else()
+	    # message(STATUS "${dll_dir}/${filename}.dll not found!")
 	  endif()
 	elseif(conf STREQUAL optimized)
 	  if(EXISTS ${dll_dir}/${filename}.dll)
@@ -546,10 +548,10 @@ if(ENABLE_GUI)
       optimized icuuc51 debug icuuc51d
       optimized icudt51 debug icudt51d
       # for the Qt 5.3 binary package
-      general icuin52 general icuuc52 general icudt52
-      general icuin53 general icuuc53 general icudt53
-      general icuin54 general icuuc54 general icudt54
-      general icuin55 general icuuc55 general icudt55
+      general icuin52 icuuc52 icudt52
+      general icuin53 icuuc53 icudt53
+      general icuin54 icuuc54 icudt54
+      general icuin55 icuuc55 icudt55
       )
     # It may be better to use the windeployqt command for the following process.
     # See the Qt manual on the Windows deployment.
@@ -574,14 +576,20 @@ if(ENABLE_GUI)
 endif()
 
 # Assimp
-if(MSVC AND (NOT DEFINED ENABLE_ASSIMP))
-  file(GLOB assimp_dirs
-    "c:/Program Files/Assimp/lib/cmake/assimp-*"
-    "c:/local/Assimp*/lib/cmake/assimp-*"
-    "d:/local/Assimp*/lib/cmake/assimp-*")
-  find_package(assimp QUIET HINTS ${assimp_dirs})
-else()
+if(NOT MSVC)
   find_package(assimp)
+else()
+  # Try to detect assmp automatically when the initial configuration
+  if((NOT DEFINED ENABLE_ASSIMP) OR (ENABLE_ASSIMP AND (NOT ASSIM_DIR)))
+    file(GLOB assimp_dirs
+      "c:/Program Files/Assimp/lib/cmake/assimp-*"
+      "c:/local/Assimp*/lib/cmake/assimp-*"
+      "d:/local/Assimp*/lib/cmake/assimp-*")
+    find_package(assimp HINTS ${assimp_dirs})
+    if(assimp_FOUND)
+      message(STATUS "Detecting Assimp ${assimp_VERSION} at ${ASSIMP_ROOT_DIR}")
+    endif()
+  endif()
 endif()
 
 if(assimp_FOUND)
@@ -590,22 +598,20 @@ else()
   set(is_assimp_enabled OFF)
 endif()
 option(ENABLE_ASSIMP "Enable Assimp functions" ${is_assimp_enabled})
+
 if(ENABLE_ASSIMP)
   if(NOT assimp_FOUND)
-    message(FATAL_ERROR "Please specify the directory containing the CMake config files of the ASSIMP library to ASSIMP_DIR.")
+    message(FATAL_ERROR "Please specify the directory containing the CMake config files of the ASSIMP library to assimp_DIR.")
   endif()
-  if(assimp_VERSION_MAJOR GREATER 4)
-    set(ASSIMP_USE_IMPORTED_LIBRARY ON)
+  if(assimp_VERSION VERSION_GREATER_EQUAL 5.1.0)
+    # In this case, the imported library name is set to ASSIMP_LIBRARIES
+    get_target_property(assimp_dll ${ASSIMP_LIBRARIES} IMPORTED_LOCATION_RELEASE)
+    install_runtime_dlls(${ASSIMP_ROOT_DIR}/bin ${assimp_dll})
   else()
-    set(ASSIMP_USE_IMPORTED_LIBRARY OFF)
-  endif()
-  # Assimp imported library does not work correctly for Assimp 5.0.1
-  set(ASSIMP_USE_IMPORTED_LIBRARY OFF)
-  if(NOT ASSIMP_USE_IMPORTED_LIBRARY)
     include_directories(${ASSIMP_INCLUDE_DIRS})
     link_directories(${ASSIMP_LIBRARY_DIRS})
+    install_runtime_dlls(${ASSIMP_ROOT_DIR}/bin ${ASSIMP_LIBRARIES})
   endif()
-  install_runtime_dlls(${ASSIMP_ROOT_DIR}/bin ${ASSIMP_LIBRARIES})
 endif()
 
 option(ENABLE_URDF "Enable URDF functions" ON)
