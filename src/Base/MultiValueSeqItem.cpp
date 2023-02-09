@@ -1,19 +1,15 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "MultiValueSeqItem.h"
 #include "MultiSeqItemCreationPanel.h"
 #include "ItemManager.h"
 #include <ostream>
 #include "gettext.h"
 
+using namespace std;
 using namespace cnoid;
-using namespace std::placeholders;
 
+namespace {
 
-static bool loadPlainSeqFormat(MultiValueSeqItem* item, const std::string& filename, std::ostream& os)
+bool loadPlainSeqFormat(MultiValueSeqItem* item, const string& filename, ostream& os)
 {
     if(item->seq()->loadPlainFormat(filename)){
         return true;
@@ -24,7 +20,7 @@ static bool loadPlainSeqFormat(MultiValueSeqItem* item, const std::string& filen
 }
 
 
-static bool saveAsPlainSeqFormat(MultiValueSeqItem* item, const std::string& filename, std::ostream& os)
+bool saveAsPlainSeqFormat(MultiValueSeqItem* item, const string& filename, ostream& os)
 {
     if(item->seq()->saveAsPlainFormat(filename)){
         return true;
@@ -34,8 +30,10 @@ static bool saveAsPlainSeqFormat(MultiValueSeqItem* item, const std::string& fil
     }
 }
 
+}
 
-template<> void MultiSeqItem<MultiValueSeq>::initializeClass(ExtensionManager* ext)
+
+void MultiValueSeqItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerClass<MultiValueSeqItem, AbstractMultiSeqItem>(N_("MultiValueSeqItem"));
 
@@ -44,10 +42,60 @@ template<> void MultiSeqItem<MultiValueSeq>::initializeClass(ExtensionManager* e
     
     ext->itemManager().addLoaderAndSaver<MultiValueSeqItem>(
         _("Plain Format of a Multi Value Sequence"), "PLAIN-MULTI-VALUE-SEQ", "*",
-        std::bind(loadPlainSeqFormat, _1, _2, _3), std::bind(saveAsPlainSeqFormat, _1, _2, _3), 
+        [](MultiValueSeqItem* item, const string& filename, ostream& os, Item* /* parentItem */){
+            return loadPlainSeqFormat(item, filename, os);
+        },
+        [](MultiValueSeqItem* item, const string& filename, ostream& os, Item* /* parentItem */){
+            return saveAsPlainSeqFormat(item, filename, os);
+        },
         ItemManager::PRIORITY_CONVERSION);
 }
 
-#ifdef _WIN32
-template class MultiSeqItem<MultiValueSeq>;
-#endif
+
+MultiValueSeqItem::MultiValueSeqItem()
+    : seq_(std::make_shared<MultiValueSeq>())
+{
+
+}
+
+
+MultiValueSeqItem::MultiValueSeqItem(std::shared_ptr<MultiValueSeq> seq)
+    : seq_(seq)
+{
+
+}
+
+
+MultiValueSeqItem::MultiValueSeqItem(const MultiValueSeqItem& org)
+    : AbstractMultiSeqItem(org),
+      seq_(std::make_shared<MultiValueSeq>(*org.seq_))
+{
+
+}
+
+
+MultiValueSeqItem::MultiValueSeqItem(const MultiValueSeqItem& org, std::shared_ptr<MultiValueSeq> seq)
+    : AbstractMultiSeqItem(org),
+      seq_(seq)
+{
+
+}
+
+
+Item* MultiValueSeqItem::doCloneItem(CloneMap* /* cloneMap */) const
+{
+    return new MultiValueSeqItem(*this);
+}
+
+
+std::shared_ptr<AbstractMultiSeq> MultiValueSeqItem::abstractMultiSeq()
+{
+    return seq_;
+}
+
+
+void MultiValueSeqItem::resetSeq(std::shared_ptr<MultiValueSeq> seq)
+{
+    seq_ = seq;
+}
+

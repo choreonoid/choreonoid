@@ -12,6 +12,7 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <fmt/format.h>
+#include <cstdint>
 #include "gettext.h"
 
 using namespace std;
@@ -1080,7 +1081,7 @@ void PoseRollView::Impl::updateTimeSpinConfigurations()
         poseTTimeSpin.setValue(0.0);
     } else {
         auto it = selected.front();
-        ulong id = reinterpret_cast<ulong>(it->pose()) & 0xffffffff;
+        unsigned int id = reinterpret_cast<uintptr_t>(it->pose()) & 0xffffffff;
         poseNameLabel.setText(format("{0:0X}", id).c_str());
         poseTimeSpin.setEnabled(true);
         poseTimeSpin.setValue(timeScale * it->time());

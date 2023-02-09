@@ -95,6 +95,7 @@ set(sources
   MultiSE3SeqItem.cpp
   MultiSE3MatrixSeqItem.cpp
   Vector3SeqItem.cpp
+  MultiVector3SeqItem.cpp
   ReferencedObjectSeqItem.cpp
   CoordinateFrameListItem.cpp
   CoordinateFrameItem.cpp

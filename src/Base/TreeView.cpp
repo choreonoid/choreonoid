@@ -53,7 +53,7 @@ void TreeView::setModel(QAbstractItemModel* model)
 
 ItemSelectionModel* TreeView::selectionModel() const
 {
-    return dynamic_cast<ItemSelectionModel*>(selectionModel());
+    return dynamic_cast<ItemSelectionModel*>(QTreeView::selectionModel());
 }
 
 

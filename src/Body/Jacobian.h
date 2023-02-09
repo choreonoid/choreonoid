@@ -17,7 +17,7 @@ template<int elementMask, int rowOffset, int colOffset, bool useTargetLinkLocalP
 void setJacobian(const JointPath& path, Link* targetLink, const Vector3& targetLinkLocalPos,
                  MatrixXd& out_J) {
 
-    const bool isTranslationValid = (elementMask & 0x7);
+    const bool isTranslationValid = static_cast<bool>(elementMask & 0x7);
 
     int n = path.numJoints();
     int i = 0;

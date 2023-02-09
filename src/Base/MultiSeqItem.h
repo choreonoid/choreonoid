@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_MULTI_SEQ_ITEM_H
 #define CNOID_BASE_MULTI_SEQ_ITEM_H
 
@@ -43,7 +38,7 @@ protected:
           seq_(newSeq) { }
 
     void resetSeq(std::shared_ptr<MultiSeqType> seq) { seq_ = seq; }
-        
+
     virtual Item* doCloneItem(CloneMap* /* cloneMap */) const override {
         return new MultiSeqItem<MultiSeqType>(*this);
     }

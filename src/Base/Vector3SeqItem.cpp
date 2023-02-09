@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "Vector3SeqItem.h"
 #include "ItemManager.h"
 #include "gettext.h"

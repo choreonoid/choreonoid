@@ -1,5 +1,3 @@
-# @author Shin'ichiro Nakaoka
-
 option(BUILD_ODE_PLUGIN "Building ODEPlugin" OFF)
 # option(BUILD_GAZEBO_ODE_PLUGIN "Building Gazebo ODE Plugin" OFF)
 option(USE_ODE_STATIC_LIB "Gazebo ODE Plugin and ODE Plugin use a static library." OFF)
@@ -7,8 +5,6 @@ option(USE_ODE_STATIC_LIB "Gazebo ODE Plugin and ODE Plugin use a static library
 if(NOT BUILD_ODE_PLUGIN AND NOT BUILD_GAZEBO_ODE_PLUGIN)
   return()
 endif()
-
-# set(CMAKE_BUILD_TYPE Debug)
 
 if(BUILD_ODE_PLUGIN)
   set(ode ODE)
@@ -115,7 +111,6 @@ if(BUILD_GAZEBO_ODE_PLUGIN)
   
 endif()
 
-add_definitions(-DdDOUBLE)
 if(UNIX AND NOT APPLE)
   # Is this necessary to use both plugins for version 3.0 and 3.1 at the same time ?
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic")

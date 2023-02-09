@@ -557,7 +557,7 @@ bool AABBNoLeafTree::Walk(GenericWalkingCallback callback, void* user_data) cons
 		}																			\
 	}
 
-#ifdef __x86_64
+#if defined(__x86_64) || defined(_WIN64)
 #define REMAP_DATA(member)											\
 	/* Fix data */													\
 	Data = Nodes[i].member;											\

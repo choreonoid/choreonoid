@@ -30,7 +30,6 @@ bool loadPNG(Image& image, const std::string& filename, bool isUpsideDown, ostre
 
     png_size_t number = 8;
     png_byte header[8];
-    int is_png;
         
     size_t n = fread(header, 1, number, fp);
     if(n != number || png_sig_cmp(header, 0, number) != 0){

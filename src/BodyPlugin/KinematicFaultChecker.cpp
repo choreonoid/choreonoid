@@ -300,7 +300,6 @@ void KinematicFaultChecker::Impl::apply()
                 
                 double beginningTime = 0.0;
                 double endingTime = motionItem->motion()->getTimeLength();
-                std::numeric_limits<double>::max();
                 if(onlyTimeBarRangeCheck.isChecked()){
                     TimeBar* timeBar = TimeBar::instance();
                     beginningTime = timeBar->minTime();

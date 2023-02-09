@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_VECTOR3_SEQ_ITEM_H
 #define CNOID_BASE_VECTOR3_SEQ_ITEM_H
 

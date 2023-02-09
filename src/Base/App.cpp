@@ -34,6 +34,7 @@
 #include "MultiSE3SeqItem.h"
 #include "MultiSE3MatrixSeqItem.h"
 #include "Vector3SeqItem.h"
+#include "MultiVector3SeqItem.h"
 #include "ReferencedObjectSeqItem.h"
 #include "CoordinateFrameListItem.h"
 #include "CoordinateFrameItem.h"
@@ -414,6 +415,7 @@ void App::Impl::initialize()
     MultiSE3SeqItem::initializeClass(ext);
     MultiSE3MatrixSeqItem::initializeClass(ext);
     Vector3SeqItem::initializeClass(ext);
+    MultiVector3SeqItem::initializeClass(ext);
     ReferencedObjectSeqItem::initializeClass(ext);
     SceneItem::initializeClass(ext);
     PointSetItem::initializeClass(ext);

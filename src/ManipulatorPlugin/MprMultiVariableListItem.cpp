@@ -171,8 +171,6 @@ void MprMultiVariableListItem::doPutProperties(PutPropertyFunction& putProperty)
                 }
             }
             break;
-        defaut:
-            break;
         }
     }
 

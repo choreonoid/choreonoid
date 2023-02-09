@@ -1714,7 +1714,8 @@ void ItemTreeWidget::Impl::setItwItemSelected(ItwItem* itwItem, bool on)
 
 void ItemTreeWidget::Impl::toggleItwItemCheck(ItwItem* itwItem, int checkId, bool on)
 {
-    if(on != itwItem->checkState(checkId + 1)){
+    auto state = itwItem->checkState(checkId + 1);
+    if(((state != Qt::Checked) && on) || ((state != Qt::Unchecked) && !on)){
         itwItem->setCheckState(checkId + 1, on ? Qt::Checked : Qt::Unchecked);
     }
 }

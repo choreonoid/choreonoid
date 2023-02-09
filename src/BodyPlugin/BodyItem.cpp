@@ -1170,7 +1170,6 @@ Isometry3 BodyLocation::getLocation() const
         return rootLink->T();
     case InvalidLocation:
     case ParentRelativeLocation:
-    defaut:
         break;
     }
     return Isometry3::Identity();

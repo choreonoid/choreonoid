@@ -451,7 +451,8 @@ bool PythonExecutor::Impl::terminateScript()
                    for the handler to check if the termination is requested. By giving the class object,
                    the handler can detect the exception type even in this case.
                 */
-                PyThreadState_SetAsyncExc((long)threadId, pythonPlugin->exitException().ptr());
+                PyThreadState_SetAsyncExc(
+                    reinterpret_cast<uintptr_t>(threadId), pythonPlugin->exitException().ptr());
             }
             if(wait(20)){
                 terminated = true;
