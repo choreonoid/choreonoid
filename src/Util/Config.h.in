@@ -15,6 +15,7 @@
 
 #cmakedefine CNOID_USE_PYTHON2
 #cmakedefine CNOID_ENABLE_GETTEXT
+#cmakedefine CNOID_ENABLE_FREE_TYPE
 #cmakedefine CNOID_ENABLE_GPERFTOOLS_PROFILER
 
 #if defined _WIN32 || defined __CYGWIN__

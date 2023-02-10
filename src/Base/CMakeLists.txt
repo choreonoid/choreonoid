@@ -335,23 +335,26 @@ set(sources ${sources} ${qtsources})
 
 make_gettext_mofiles(${target} mofiles)
 
-choreonoid_add_library(${target} SHARED ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})
-
 if(MSVC)
-  target_link_libraries(${target}
-    CnoidUtil
-    ${CHOREONOID_QT_LIBRARIES}
-    general glu32 opengl32
-    )
+  set(libraries CnoidUtil ${CHOREONOID_QT_LIBRARIES} general glu32 opengl32)
 else()
-  target_link_libraries(${target}
-    CnoidUtil
-    ${CHOREONOID_QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY} OpenGL::GLU
-    icuuc X11 Xfixes
-    )
+  set(libraries
+    CnoidUtil ${CHOREONOID_QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    OpenGL::GLU icuuc X11 Xfixes)
 endif()
 
+if(CNOID_ENABLE_FREE_TYPE)
+  set(sources ${sources} GLFreeType.cpp)
+  if(MSVC)
+    set(libraries ${libraries} Freetype::Freetype)
+  else()
+    set(libraries ${libraries} PkgConfig::FreeType2)
+  endif()
+endif()
+
+choreonoid_add_library(${target} SHARED ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})
 target_compile_definitions(${target} PUBLIC ${CHOREONOID_QT_COMPILE_DEFINITIONS})
+target_link_libraries(${target} ${libraries})
 
 file(MAKE_DIRECTORY ${CNOID_BINARY_SHARE_DIR}/icon)
 file(COPY icon/choreonoid.svg DESTINATION ${CNOID_BINARY_SHARE_DIR}/icon)

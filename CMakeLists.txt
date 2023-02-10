@@ -504,7 +504,7 @@ if(MSVC)
     ${Boost_IOSTREAMS_LIBRARY} ${Boost_ZLIB_LIBRARY})
 endif()
 
-# eigen
+# Eigen
 if(MSVC)
   set(USE_BUNDLED_EIGEN_DEFAULT ON)
 else()
@@ -528,6 +528,27 @@ else()
 endif()
 
 include_directories(${EIGEN3_INCLUDE_DIRS})
+
+# FreeType
+if(NOT MSVC)
+  option(ENABLE_FREE_TYPE "Enable FreeType" ON)
+  if(ENABLE_FREE_TYPE)
+    pkg_check_modules(FreeType2 freetype2 REQUIRED IMPORTED_TARGET)
+  endif()
+else()
+  option(ENABLE_FREE_TYPE "Enable FreeType" OFF)
+  if(ENABLE_FREE_TYPE)
+    file(GLOB freetype_dirs
+      "c:/Program Files/freetype/lib/cmake/freetype*"
+      "c:/local/freetype*/lib/cmake/freetype*"
+      "d:/local/freetype*/lib/cmake/freetype*")
+    find_package(freetype HINTS ${freetype_dirs} REQUIRED)
+    if(freetype_FOUND)
+      message(STATUS "Detecting FreeType ${freetype_VERSION} at ${freetype_DIR}.")
+    endif()
+  endif()
+endif()
+set(CNOID_ENABLE_FREE_TYPE ${ENABLE_FREE_TYPE})
 
 if(ENABLE_GUI)
   # Qt
@@ -580,14 +601,14 @@ if(NOT MSVC)
   find_package(assimp)
 else()
   # Try to detect assmp automatically when the initial configuration
-  if((NOT DEFINED ENABLE_ASSIMP) OR (ENABLE_ASSIMP AND (NOT ASSIM_DIR)))
+  if((NOT DEFINED ENABLE_ASSIMP) OR ENABLE_ASSIMP)
     file(GLOB assimp_dirs
       "c:/Program Files/Assimp/lib/cmake/assimp-*"
       "c:/local/Assimp*/lib/cmake/assimp-*"
       "d:/local/Assimp*/lib/cmake/assimp-*")
     find_package(assimp HINTS ${assimp_dirs})
     if(assimp_FOUND)
-      message(STATUS "Detecting Assimp ${assimp_VERSION} at ${ASSIMP_ROOT_DIR}")
+      message(STATUS "Detecting Assimp ${assimp_VERSION} at ${ASSIMP_ROOT_DIR}.")
     endif()
   endif()
 endif()

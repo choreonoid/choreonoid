@@ -18,6 +18,7 @@ gettext \
 zlib1g-dev \
 libjpeg-dev \
 libpng-dev \
+libfreetype-dev \
 qt5-default \
 libqt5x11extras5-dev \
 libqt5svg5-dev \
