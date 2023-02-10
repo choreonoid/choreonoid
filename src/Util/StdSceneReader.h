@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_STD_SCENE_READER_H
 #define CNOID_UTIL_STD_SCENE_READER_H
 

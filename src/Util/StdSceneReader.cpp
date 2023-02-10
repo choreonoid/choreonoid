@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "StdSceneReader.h"
 #include "SceneDrawables.h"
 #include "SceneLights.h"
@@ -139,6 +134,7 @@ public:
     SgNode* readPerspectiveCamera(Mapping* info);
     SgNode* readOrthographicCamera(Mapping* info);
     SgNode* readFog(Mapping* info);
+    SgNode* readText(Mapping* info);
     SgNode* readResourceAsScene(Mapping* info);
     Resource readResourceNode(Mapping* info, bool doSetUri);
     void extractNamedSceneNodes(Mapping* resourceNode, ResourceInfo* info, Resource& resource);
@@ -219,6 +215,7 @@ StdSceneReader::Impl::Impl(StdSceneReader* self)
                 { "PerspectiveCamera",  &Impl::readPerspectiveCamera },
                 { "OrthographicCamera", &Impl::readOrthographicCamera },
                 { "Fog",                &Impl::readFog },
+                { "Text",               &Impl::readText },
                 { "Resource",           &Impl::readResourceAsScene }
             };
         }
@@ -1611,6 +1608,27 @@ SgNode* StdSceneReader::Impl::readFog(Mapping* info)
         fog->setVisibilityRange(value);
     }
     return fog.retn();
+}
+
+
+SgNode* StdSceneReader::Impl::readText(Mapping* info)
+{
+    SgTextPtr text = new SgText;
+    if(info->read("text", symbol)){
+        text->setText(symbol);
+    }
+    if(info->read("height", value)){
+        text->setTextHeight(value);
+    }
+    if(read(info, "color", color)){
+        text->setColor(color);
+    }
+
+    SgNode* scene = readTransformParameters(info, text);
+    if(scene == text){
+        return text.retn();
+    }
+    return scene;
 }
 
 

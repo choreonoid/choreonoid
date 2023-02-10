@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "SceneDrawables.h"
 #include "CloneMap.h"
 #include "SceneNodeClassRegistry.h"
@@ -21,6 +16,7 @@ struct NodeClassRegistration {
             .registerClass<SgPlot, SgNode>("SgPlot")
             .registerClass<SgPointSet, SgPlot>("SgPointSet")
             .registerClass<SgLineSet, SgPlot>("SgLineSet")
+            .registerClass<SgText, SgNode>("SgText")
             .registerClass<SgOverlay, SgGroup>("SgOverlay")
             .registerClass<SgViewportOverlay, SgOverlay>("SgViewportOverlay");
     }
@@ -1043,7 +1039,57 @@ Referenced* SgLineSet::doClone(CloneMap* cloneMap) const
 {
     return new SgLineSet(*this, cloneMap);
 }
-    
+
+
+SgText::SgText(int classId)
+    : SgNode(classId)
+{
+    setAttribute(Composite | Geometry | Appearance);
+
+    text_ = "Test";
+    color_ << 1.0f, 1.0f, 1.0f;
+    textHeight_ = 32.0f;
+}
+
+
+SgText::SgText()
+    : SgText(findClassId<SgText>())
+{
+
+}
+
+
+SgText::SgText(const SgText& org, CloneMap* /* cloneMap */)
+    : SgNode(org)
+{
+    textHeight_ = org.textHeight_;
+    color_ = org.color_;
+}
+
+
+SgText::~SgText()
+{
+
+}    
+
+
+Referenced* SgText::doClone(CloneMap* cloneMap) const
+{
+    return new SgText(*this, cloneMap);
+}
+
+
+const BoundingBox& SgText::boundingBox() const
+{
+    return SgNode::boundingBox();
+}
+
+
+const BoundingBox& SgText::untransformedBoundingBox() const
+{
+    return SgText::boundingBox();
+}
+
 
 SgOverlay::SgOverlay(int classId)
     : SgGroup(classId)

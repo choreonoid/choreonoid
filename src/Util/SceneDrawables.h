@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_SCENE_DRAWABLES_H
 #define CNOID_UTIL_SCENE_DRAWABLES_H
 
@@ -715,6 +710,40 @@ private:
     SgIndexArray lineVertexIndices_;
     float lineWidth_;
 };
+
+
+class CNOID_EXPORT SgText : public SgNode
+{
+public:
+    SgText();
+    SgText(const SgText& org, CloneMap* cloneMap);
+    ~SgText();
+
+    virtual const BoundingBox& boundingBox() const override;
+    virtual const BoundingBox& untransformedBoundingBox() const override;
+
+    const std::string& text() const { return text_; }
+    void setText(const std::string& text) { text_ = text; }
+
+    float textHeight() const { return textHeight_; }
+    void setTextHeight(double h) { textHeight_ = h; }
+
+    const Vector3f& color() const { return color_; }
+    template<typename Derived> void setColor(const Eigen::MatrixBase<Derived>& c) {
+        color_ = c.template cast<Vector3f::Scalar>();
+    }
+    
+protected:
+    SgText(int classId);
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    std::string text_;
+    float textHeight_;
+    Vector3f color_;
+};
+
+typedef ref_ptr<SgText> SgTextPtr;
 
 
 class CNOID_EXPORT SgOverlay : public SgGroup
