@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "SpreaderController.h"
 #include <cnoid/EigenUtil>
 
@@ -33,8 +29,8 @@ bool SpreaderController::initialize(SimpleControllerIO* io)
     isToSpreadRequested = false;
 
     if(flangeL && flangeR){
-        flangeL->setActuationMode(Link::JOINT_DISPLACEMENT);
-        flangeR->setActuationMode(Link::JOINT_DISPLACEMENT);
+        flangeL->setActuationMode(JointDisplacement);
+        flangeR->setActuationMode(JointDisplacement);
         io->enableIO(flangeL);
         io->enableIO(flangeR);
         return true;

@@ -1,4 +1,3 @@
-
 #ifndef CNOID_BODY_JACOBIAN_H
 #define CNOID_BODY_JACOBIAN_H
 
@@ -30,7 +29,7 @@ void setJacobian(const JointPath& path, Link* targetLink, const Vector3& targetL
                 
         switch(link->jointType()){
                 
-        case Link::ROTATIONAL_JOINT:
+        case Link::RevoluteJoint:
         {
             Vector3 omega = link->R() * link->a();
             if(!path.isJointDownward(i)){
@@ -54,7 +53,7 @@ void setJacobian(const JointPath& path, Link* targetLink, const Vector3& targetL
         }
         break;
             
-        case Link::SLIDE_JOINT:
+        case Link::PrismaticJoint:
         {
             if(isTranslationValid){
                 Vector3 dp = link->R() * link->d();

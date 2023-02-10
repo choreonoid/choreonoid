@@ -1,9 +1,3 @@
-/**
-   \file
-   \brief The header file of the LinkTraverse class
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_LINK_TRAVERSE_H
 #define CNOID_BODY_LINK_TRAVERSE_H
 

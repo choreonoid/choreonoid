@@ -1,9 +1,3 @@
-/** 
-    \file
-    \brief Implementations of the LinkTraverse class
-    \author Shin'ichiro Nakaoka
-*/
-  
 #include "LinkTraverse.h"
 #include <cnoid/CloneMap>
 
@@ -171,7 +165,7 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
 
         switch(child->jointType()){
 
-        case Link::ROTATIONAL_JOINT:
+        case Link::RevoluteJoint:
             link->R().noalias() = child->R() * AngleAxisd(child->q(), child->a()).inverse() * child->Rb().transpose();
             arm.noalias() = link->R() * child->b();
             link->p().noalias() = child->p() - arm;
@@ -188,7 +182,7 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
             }
             break;
             
-        case Link::SLIDE_JOINT:
+        case Link::PrismaticJoint:
             link->R().noalias() = child->R() * child->Rb().transpose();
             arm.noalias() = link->R() * (child->b() + child->Rb() * (child->q() * child->d()));
             link->p().noalias() = child->p() - arm;
@@ -207,7 +201,7 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
             }
             break;
             
-        case Link::FIXED_JOINT:
+        case Link::FixedJoint:
         default:
             link->R().noalias() = child->R() * child->Rb().transpose();
             arm.noalias() = link->R() * child->b();
@@ -234,7 +228,7 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
 
         switch(link->jointType()){
             
-        case Link::ROTATIONAL_JOINT:
+        case Link::RevoluteJoint:
             link->R().noalias() = parent->R() * link->Rb() * AngleAxisd(link->q(), link->a());
             arm.noalias() = parent->R() * link->b();
             link->p().noalias() = parent->p() + arm;
@@ -251,7 +245,7 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
             }
             break;
             
-        case Link::SLIDE_JOINT:
+        case Link::PrismaticJoint:
             link->R().noalias() = parent->R() * link->Rb();
             arm.noalias() = parent->R() * (link->b() + link->Rb() * (link->q() * link->d()));
             link->p().noalias() = parent->p() + arm;
@@ -269,7 +263,7 @@ void LinkTraverse::calcForwardKinematics(bool calcVelocity, bool calcAcceleratio
             }
             break;
 
-        case Link::FIXED_JOINT:
+        case Link::FixedJoint:
         default:
             link->R().noalias() = parent->R() * link->Rb();
             arm.noalias() = parent->R() * link->b();

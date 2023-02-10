@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_ODEPLUGIN_ODE_SIMULATOR_ITEM_H
 #define CNOID_ODEPLUGIN_ODE_SIMULATOR_ITEM_H
 

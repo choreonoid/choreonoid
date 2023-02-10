@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "DyBody.h"
 #include "ForwardDynamicsABM.h"
 #include "ForwardDynamicsCBM.h"
@@ -94,21 +89,21 @@ void DySubBody::calcSpatialForwardKinematics()
         const DyLink* parent = link->parent();
         if(parent){
             switch(link->jointType()){
-            case Link::ROTATIONAL_JOINT:
+            case Link::RevoluteJoint:
                 link->R().noalias() = parent->R() * AngleAxisd(link->q(), link->a());
                 link->p().noalias() = parent->R() * link->b() + parent->p();
                 link->sw().noalias() = parent->R() * link->a();
                 link->sv().noalias() = link->p().cross(link->sw());
                 link->w().noalias() = link->dq() * link->sw() + parent->w();
                 break;
-            case Link::SLIDE_JOINT:
+            case Link::PrismaticJoint:
                 link->p().noalias() = parent->R() * (link->b() + link->q() * link->d()) + parent->p();
                 link->R() = parent->R();
                 link->sw().setZero();
                 link->sv().noalias() = parent->R() * link->d();
                 link->w() = parent->w();
                 break;
-            case Link::FIXED_JOINT:
+            case Link::FixedJoint:
             default:
                 link->p().noalias() = parent->R() * link->b() + parent->p();
                 link->R() = parent->R();

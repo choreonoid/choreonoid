@@ -39,7 +39,7 @@ bool HandyRockDrillController::initialize(SimpleControllerIO* io)
 
     pusher = body->link("PUSHER");
     if(!pusher) return false;
-    pusher->setActuationMode(Link::JOINT_VELOCITY);
+    pusher->setActuationMode(JointVelocity);
     io->enableOutput(pusher);
 
     return true;

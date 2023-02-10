@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "Link.h"
 #include "Body.h"
 #include "Material.h"

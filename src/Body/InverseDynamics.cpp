@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "InverseDynamics.h"
 #include "Link.h"
 #include <cnoid/EigenUtil>
@@ -25,15 +21,15 @@ Vector6 calcInverseDynamicsSub(Link* link, const Vector3& vo_parent, const Vecto
 
     } else {
         switch(link->jointType()){
-        case Link::ROTATIONAL_JOINT:
+        case Link::RevoluteJoint:
             sw.noalias() = link->R() * link->a();
             sv.noalias() = link->p().cross(sw);
             break;
-        case Link::SLIDE_JOINT:
+        case Link::PrismaticJoint:
             sw.setZero();
             sv.noalias() = link->R() * link->d();
             break;
-        case Link::FIXED_JOINT:
+        case Link::FixedJoint:
         default:
             sw.setZero();
             sv.setZero();

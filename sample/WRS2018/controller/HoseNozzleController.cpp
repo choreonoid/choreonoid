@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include <cnoid/SimpleController>
 #include <cnoid/FountainDevice>
 #include <cnoid/EigenUtil>
@@ -67,8 +63,8 @@ public:
         io->enableInput(valve, JOINT_ANGLE);
         io->enableInput(hoseConnector, LINK_POSITION);
         io->enableInput(lever, JOINT_DISPLACEMENT);
-        reactionJoint1->setActuationMode(Link::JOINT_DISPLACEMENT);
-        reactionJoint2->setActuationMode(Link::JOINT_DISPLACEMENT);
+        reactionJoint1->setActuationMode(JointDisplacement);
+        reactionJoint2->setActuationMode(JointDisplacement);
         io->enableIO(reactionJoint1);
         io->enableIO(reactionJoint2);
         reactionCycleTimer = 0.0;

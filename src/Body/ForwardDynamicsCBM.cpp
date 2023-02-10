@@ -380,7 +380,7 @@ void ForwardDynamicsCBM::calcPositionAndVelocityFK()
 
             switch(link->jointType()){
 
-            case Link::SLIDE_JOINT:
+            case Link::PrismaticJoint:
                 link->p().noalias() = parent->R() * (link->b() + link->Rb() * (link->q() * link->d())) + parent->p();
                 link->R().noalias() = parent->R() * link->Rb();
                 link->sw().setZero();
@@ -388,7 +388,7 @@ void ForwardDynamicsCBM::calcPositionAndVelocityFK()
                 link->w() = parent->w();
                 break;
 
-            case Link::ROTATIONAL_JOINT:
+            case Link::RevoluteJoint:
                 link->R().noalias() = parent->R() * link->Rb() * AngleAxisd(link->q(), link->a());
                 link->p().noalias() = parent->R() * link->b() + parent->p();
                 link->sw().noalias() = parent->R() * (link->Rb() * link->a());
@@ -396,7 +396,7 @@ void ForwardDynamicsCBM::calcPositionAndVelocityFK()
                 link->w().noalias() = link->dq() * link->sw() + parent->w();
                 break;
 
-            case Link::FIXED_JOINT:
+            case Link::FixedJoint:
             default:
                 link->p().noalias() = parent->R() * link->b() + parent->p();
                 link->R().noalias() = parent->R() * link->Rb();
@@ -775,7 +775,7 @@ void ForwardDynamicsCBM::calcAccelFKandForceSensorValues(DyLink* link, Vector3& 
         out_f  .noalias() += link->m()   * link->dvo() + link->Iwv().transpose() * link->dw();
         out_tau.noalias() += link->Iwv() * link->dvo() + link->Iww()             * link->dw();
 
-        if(CALC_ALL_JOINT_TORQUES && link->actuationMode() == Link::JOINT_DISPLACEMENT){
+        if(CALC_ALL_JOINT_TORQUES && link->actuationMode() == Link::JointDisplacement){
             link->u() = link->sv().dot(out_f) + link->sw().dot(out_tau);
         }
 

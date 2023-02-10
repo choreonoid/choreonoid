@@ -1,7 +1,3 @@
-/**
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "../Link.h"
 #include "../Body.h"
 #include <cnoid/ValueTree>
@@ -242,10 +238,10 @@ void exportPyLink(py::module& m)
         .value("FixedJoint", Link::FixedJoint)
         .value("PseudoContinuousTrackJoint", Link::PseudoContinuousTrackJoint)
         // deprecated
-        .value("ROTATIONAL_JOINT", Link::JointType::ROTATIONAL_JOINT)
-        .value("SLIDE_JOINT", Link::JointType::SLIDE_JOINT)
-        .value("FREE_JOINT", Link::JointType::FREE_JOINT)
-        .value("FIXED_JOINT", Link::JointType::FIXED_JOINT)
+        .value("ROTATIONAL_JOINT", Link::JointType::RevoluteJoint)
+        .value("SLIDE_JOINT", Link::JointType::PrismaticJoint)
+        .value("FREE_JOINT", Link::JointType::FreeJoint)
+        .value("FIXED_JOINT", Link::JointType::FixedJoint)
         .export_values();
     
     py::enum_<Link::StateFlag>(link, "StateFlag")

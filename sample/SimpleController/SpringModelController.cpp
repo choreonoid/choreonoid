@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-   
 #include <cnoid/SimpleController>
 #include <cnoid/Link>
 
@@ -22,9 +18,9 @@ public:
             return false;
         }
 
-        spring->setActuationMode(Link::JOINT_TORQUE);
+        spring->setActuationMode(JointForce);
         io->enableOutput(spring);
-        io->enableInput(spring, JOINT_DISPLACEMENT | JOINT_VELOCITY);
+        io->enableInput(spring, JointDisplacement | JointVelocity);
         io->setNoDelayMode(true);
 
         return true;

@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include <cnoid/SimpleController>
 #include <cnoid/Config>
 

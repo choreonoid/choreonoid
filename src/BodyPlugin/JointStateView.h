@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_PLUGIN_JOINT_STATE_VIEW_H
 #define CNOID_BODY_PLUGIN_JOINT_STATE_VIEW_H
 

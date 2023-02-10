@@ -1,9 +1,3 @@
-/**
-   \file
-   \brief The header file of the JointPath class
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_JOINT_PATH_H
 #define CNOID_BODY_JOINT_PATH_H
 

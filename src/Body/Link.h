@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_LINK_H
 #define CNOID_BODY_LINK_H
 
@@ -122,7 +117,7 @@ public:
     Isometry3::ConstLinearPart Rb() const { return Tb_.linear(); }
     Isometry3::ConstLinearPart offsetRotation() const { return Tb_.linear(); }
 
-    [[deprecated("This func. always returns the identity matrix")]]
+    [[deprecated("This always returns the identity matrix.")]]
     Matrix3 Rs() const { return Matrix3::Identity(); }
 
     enum JointType {
@@ -142,13 +137,13 @@ public:
         PseudoContinuousTrackJoint = 4,
 
         // Deprecated
-        REVOLUTE_JOINT = RevoluteJoint,
-        ROTATIONAL_JOINT = RevoluteJoint,
-        PRISMATIC_JOINT = PrismaticJoint,
-        SLIDE_JOINT = PrismaticJoint,
-        FREE_JOINT = FreeJoint,
-        FIXED_JOINT = FixedJoint,
-        PSEUDO_CONTINUOUS_TRACK = PseudoContinuousTrackJoint
+        REVOLUTE_JOINT [[deprecated("Use RevoluteJoint.")]] = RevoluteJoint,
+        ROTATIONAL_JOINT [[deprecated("Use RevoluteJoint.")]]  = RevoluteJoint,
+        PRISMATIC_JOINT [[deprecated("Use PrismaticJoint.")]]  = PrismaticJoint,
+        SLIDE_JOINT [[deprecated("Use PrismaticJoint.")]]  = PrismaticJoint,
+        FREE_JOINT [[deprecated("Use FreeJoint.")]]  = FreeJoint,
+        FIXED_JOINT [[deprecated("Use FixedJoint.")]]  = FixedJoint,
+        PSEUDO_CONTINUOUS_TRACK [[deprecated("Use PseudoContinuousTrackJoint.")]]  = PseudoContinuousTrackJoint
     };
 
 #if !defined(__GNUC__) || __GNUC__ > 5
@@ -163,7 +158,7 @@ public:
     JointType jointType() const { return static_cast<JointType>(jointType_); }
     const char* jointTypeLabel() const;
     const char* jointTypeSymbol() const;
-    [[deprecated("Use jointTypeLabel or jointTypeSymbol")]]
+    [[deprecated("Use jointTypeLabel or jointTypeSymbol.")]]
     const char* jointTypeString(bool useUnderscore = false) const;
     bool isFixedJoint() const { return (jointType_ >= FixedJoint); }
     bool isFreeJoint() const { return jointType_ == FreeJoint; }
@@ -172,11 +167,11 @@ public:
     bool hasActualJoint() const { return jointType_ <= 1; }
     
 
-    [[deprecated("Use isRevoluteJoint")]]
+    [[deprecated("Use isRevoluteJoint.")]]
     bool isRotationalJoint() const { return jointType_ == RevoluteJoint; }
-    [[deprecated("Use isPrismaticJoint")]]
+    [[deprecated("Use isPrismaticJoint.")]]
     bool isSlideJoint() const { return jointType_ == PrismaticJoint; }
-    [[deprecated("Use hasActualJoint")]]
+    [[deprecated("Use hasActualJoint.")]]
     bool hasJoint() const { return jointType_ <= 1; }
         
     const Vector3& a() const { return a_; }    
@@ -213,14 +208,14 @@ public:
         NumStateTypes = 11,
 
         // Deprecated
-        NO_ACTUATION = StateNone,
-        JOINT_TORQUE = JointTorque,
-        JOINT_FORCE = JointForce,
-        JOINT_EFFORT = JointEffort,
-        JOINT_ANGLE = JointAngle,
-        JOINT_DISPLACEMENT = JointDisplacement,
-        JOINT_VELOCITY = JointVelocity,
-        LINK_POSITION = LinkPosition
+        NO_ACTUATION [[deprecated("Use StateNone.")]] = StateNone,
+        JOINT_TORQUE [[deprecated("Use JointTorque.")]] = JointTorque,
+        JOINT_FORCE [[deprecated("Use JointForce.")]] = JointForce,
+        JOINT_EFFORT [[deprecated("Use JointEffort.")]] = JointEffort,
+        JOINT_ANGLE [[deprecated("Use JointAngle.")]] = JointAngle,
+        JOINT_DISPLACEMENT [[deprecated("Use JointDisplacement.")]] = JointDisplacement,
+        JOINT_VELOCITY [[deprecated("Use JointVelocity.")]] = JointVelocity,
+        LINK_POSITION [[deprecated("Use LinkPosition.")]] = LinkPosition
     };
 
 #if !defined(__GNUC__) || __GNUC__ > 5

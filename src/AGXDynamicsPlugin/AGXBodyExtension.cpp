@@ -101,7 +101,7 @@ void AGXContinuousTrack::createTrackConstraint()
     hd.lock.enable = false;
     hd.range.enable = false;
     agx::ConstraintRef constraint = AGXObjectFactory::createConstraint(hd);
-    link->setJointType(Link::ROTATIONAL_JOINT);
+    link->setJointType(Link::RevoluteJoint);
     agxFootLinkStart->setAGXConstraint(constraint);
     getAGXBody()->getAGXScene()->getSimulation()->add(constraint);
 

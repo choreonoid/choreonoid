@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_INVERSE_DYNAMICS_H
 #define CNOID_BODY_INVERSE_DYNAMICS_H
 

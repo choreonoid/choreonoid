@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include <cnoid/SimpleController>
 #include <cnoid/ForceSensor>
 #include "RockDrillController.h"
@@ -37,7 +33,7 @@ public:
             return false;
         }
 
-        boaringBase->setActuationMode(Link::JOINT_DISPLACEMENT);
+        boaringBase->setActuationMode(JointDisplacement);
         io->enableIO(boaringBase);
         io->enableInput(forceSensor);
         breakableJoint->on(true);

@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "ODESimulatorItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/PutPropertyFunction>
@@ -799,12 +794,12 @@ void ODEBody::setControlValToODE()
     // Skip the root link
     for(size_t i=1; i < odeLinks.size(); ++i){
         switch(odeLinks[i]->link->actuationMode()){
-        case Link::NO_ACTUATION :
+        case Link::StateNone:
             break;
-        case Link::JOINT_TORQUE :
+        case Link::JointTorque:
             odeLinks[i]->setTorqueToODE();
             break;
-        case Link::JOINT_VELOCITY :
+        case Link::JointVelocity :
             odeLinks[i]->setVelocityToODE();
             break;
         default :

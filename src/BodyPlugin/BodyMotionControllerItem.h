@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_PLUGIN_BODY_MOTION_CONTROLLER_ITEM_H
 #define CNOID_BODY_PLUGIN_BODY_MOTION_CONTROLLER_ITEM_H
 

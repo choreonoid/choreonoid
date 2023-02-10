@@ -34,7 +34,7 @@ bool RockDrillController::initialize(SimpleControllerIO* io)
         io->os() << "PUSHER is not found in " << io->body()->name() << endl;
         return false;
     }
-    pusher->setActuationMode(Link::JOINT_DISPLACEMENT);
+    pusher->setActuationMode(JointDisplacement);
     io->enableOutput(pusher);
 
     time = 0.0;

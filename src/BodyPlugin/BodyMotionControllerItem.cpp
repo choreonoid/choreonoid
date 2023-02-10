@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "BodyMotionControllerItem.h"
 #include "BodyMotionItem.h"
 #include <cnoid/ItemManager>
@@ -130,7 +125,7 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
     MultiValueSeq::Frame q = qseqRef->frame(0);
     for(int i=0; i < numJoints; ++i){
         auto joint = body->joint(i);
-        joint->setActuationMode(Link::JOINT_DISPLACEMENT);
+        joint->setActuationMode(Link::JointDisplacement);
         joint->q() = joint->q_target() = q[i];
     }
     body->calcForwardKinematics();

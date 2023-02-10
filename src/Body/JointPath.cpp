@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-  
 #include "JointPath.h"
 #include "Jacobian.h"
 #include "Body.h"
@@ -189,7 +184,7 @@ void JointPath::calcJacobian(Eigen::MatrixXd& out_J) const
 			
                 switch(link->jointType()){
 				
-                case Link::REVOLUTE_JOINT:
+                case Link::RevoluteJoint:
                 {
                     Vector3 omega = link->R() * link->a();
                     const Vector3 arm = targetLink->p() - link->p();
@@ -200,7 +195,7 @@ void JointPath::calcJacobian(Eigen::MatrixXd& out_J) const
                 }
                 break;
 				
-                case Link::PRISMATIC_JOINT:
+                case Link::PrismaticJoint:
                 {
                     Vector3 dp = link->R() * link->d();
                     if(!isJointDownward(i)){

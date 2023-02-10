@@ -233,7 +233,7 @@ void ForwardDynamicsABM::calcABMPhase1(bool updateNonSpatialVariables)
             
             switch(link->jointType()){
                 
-            case Link::ROTATIONAL_JOINT:
+            case Link::RevoluteJoint:
             {
                 const Vector3 arm = parent->R() * link->b();
                 link->R().noalias() = parent->R() * link->Rb() * AngleAxisd(link->q(), link->a());
@@ -250,7 +250,7 @@ void ForwardDynamicsABM::calcABMPhase1(bool updateNonSpatialVariables)
                 break;
             }
                 
-            case Link::SLIDE_JOINT:
+            case Link::PrismaticJoint:
                 link->p().noalias() = parent->R() * (link->b() + link->Rb() * (link->q() * link->d())) + parent->p();
                 link->R().noalias() = parent->R() * link->Rb();
                 link->sw().setZero();
@@ -265,7 +265,7 @@ void ForwardDynamicsABM::calcABMPhase1(bool updateNonSpatialVariables)
                 }
                 break;
                 
-            case Link::FIXED_JOINT:
+            case Link::FixedJoint:
             default:
                 link->p().noalias() = parent->R() * link->b() + parent->p();
                 link->R().noalias() = parent->R() * link->Rb();

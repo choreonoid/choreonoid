@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "JointStateView.h"
 #include "LinkDeviceTreeWidget.h"
 #include "BodySelectionManager.h"
@@ -327,7 +323,7 @@ void JointStateView::Impl::updateView()
             Link* joint = currentBody->joint(i);
             if(joint){
                 if(auto item = treeWidget.itemOfLink(joint->index())){
-                    if(joint->jointType() == Link::ROTATIONAL_JOINT){
+                    if(joint->jointType() == Link::RevoluteJoint){
                         item->setText(qColumn, QString::number(degree(joint->q()), 'f', 2));
                     } else {
                         item->setText(qColumn, QString::number(joint->q(), 'f', 2));

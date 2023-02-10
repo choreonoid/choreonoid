@@ -95,13 +95,13 @@ bool QuadcopterController::initialize(SimpleControllerIO* io)
     io->enableInput(ioBody->rootLink(), LINK_POSITION);
 
     cameraT = ioBody->link("CAMERA_T");
-    cameraT->setActuationMode(Link::JOINT_TORQUE);
+    cameraT->setActuationMode(Link::JointTorque);
     io->enableIO(cameraT);
     qref = qprev = cameraT->q();
 
     for(int i = 0; i < 4; i++) {
         prop[i] = ioBody->link(propname[i]);
-        prop[i]->setActuationMode(Link::JOINT_TORQUE);
+        prop[i]->setActuationMode(Link::JointTorque);
         io->enableInput(prop[i], JOINT_VELOCITY);
         io->enableOutput(prop[i]);
 

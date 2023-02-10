@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "FireController.h"
 #include <cnoid/EigenUtil>
 
@@ -37,7 +33,7 @@ bool FireController::initialize(SimpleControllerIO* io)
     }
 
     io->enableInput(fireRoot, LINK_POSITION);
-    fireJoint->setActuationMode(Link::JOINT_DISPLACEMENT);
+    fireJoint->setActuationMode(JointDisplacement);
     io->enableOutput(fireJoint);
 
     fireStrength = 200.0;
