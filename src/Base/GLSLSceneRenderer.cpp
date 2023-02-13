@@ -1,10 +1,11 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
+#include <cnoid/Config>
 #include "GLSLSceneRenderer.h"
 #include "ShaderPrograms.h"
+
+#ifdef CNOID_ENABLE_FREE_TYPE
+#include "GLFreeType.h"
+#endif
+
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
@@ -34,9 +35,9 @@ const bool USE_GL_FLOAT_FOR_NORMALS = false;
 // This does not seem to be necessary
 constexpr bool USE_GL_FLUSH_FUNCTION_IN_SHADOW_MAP_RENDERING = false;
 
-constexpr int DepthTextureIndex = 0;
-constexpr int ImageTextureIndex = 1;
-constexpr int ShadowMapTextureIndex = 2;
+constexpr int DepthTextureUnit = 0;
+constexpr int ImageTextureUnit = 1;
+constexpr int ShadowMapTextureUnit = 2;
 
 typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Array;
 
@@ -89,6 +90,7 @@ public:
     GLuint vbos[MAX_NUM_BUFFERS];
     GLsizei numVertices;
     int numBuffers;
+    // Local transform is used with the short integer type vertex elements
     Matrix4* pLocalTransform;
     Matrix4 localTransform;
     SgLineSetPtr boundingBoxLines;
@@ -104,9 +106,9 @@ public:
         glGenVertexArrays(1, &vao);
         pLocalTransform = nullptr;
 
-        connection.reset(
+        connection =
             obj->sigUpdated().connect(
-                [&](const SgUpdate&){ numVertices = 0; }));
+                [this](const SgUpdate&){ numVertices = 0; });
     }
 
     void clearHandles(){
@@ -152,7 +154,7 @@ public:
 
     ~VertexResource() {
         deleteBuffers();
-        if(vao > 0){
+        if(vao){
             glDeleteVertexArrays(1, &vao);
         }
     }
@@ -182,9 +184,9 @@ public:
         height = 0;
         numComponents = 0;
 
-        connection.reset(
+        connection =
             image->sigUpdated().connect(
-                [&](const SgUpdate&){ isImageUpdateNeeded = true; }));
+                [this](const SgUpdate&){ isImageUpdateNeeded = true; });
     }
 
     ~TextureResource(){
@@ -213,6 +215,49 @@ public:
 };
 
 typedef ref_ptr<TextureResource> TextureResourcePtr;
+
+class TextResource : public GLResource
+{
+public:
+    GLuint vao;
+    GLuint vbo;
+    GLuint numVertices;
+    bool isTextUpdateNeeded;
+    ScopedConnection connection;
+
+    TextResource(const TextResource&) = delete;
+    TextResource& operator=(const TextResource&) = delete;
+
+    TextResource(SgText* text)
+    {
+        clearHandles();
+        glGenVertexArrays(1, &vao);
+        connection =
+            text->sigUpdated().connect(
+                [this](const SgUpdate&){ isTextUpdateNeeded = true; });
+    }
+
+    void clearHandles(){
+        vao = 0;
+        vbo = 0;
+        numVertices = 0;
+        isTextUpdateNeeded = true;
+    }
+
+    ~TextResource(){
+        if(vbo){
+            glDeleteBuffers(1, &vbo);
+        }
+        if(vao){
+            glDeleteVertexArrays(1, &vao);
+        }
+    }
+
+    virtual void discard() override { clearHandles(); }
+};
+
+typedef ref_ptr<TextResource> TextResourcePtr;
+
 
 class ResourceRefreshGroupResource : public GLResource
 {
@@ -289,6 +334,7 @@ public:
     unique_ptr<SolidColorExProgram> solidColorExProgram;
     unique_ptr<SolidPointProgram> solidPointProgram;
     unique_ptr<ThickLineProgram> thickLineProgram;
+    unique_ptr<TextProgram> textProgram;
     unique_ptr<OutlineProgram> outlineProgram;
     unique_ptr<MinimumLightingProgram> minimumLightingProgram;
     unique_ptr<FullLightingProgram> fullLightingProgram;
@@ -378,6 +424,10 @@ public:
     float normalVisualizationLength;
     SgMaterialPtr normalVisualizationMaterial;
 
+#ifdef CNOID_ENABLE_FREE_TYPE
+    GLFreeType freeType;
+#endif
+
     // OpenGL states
     enum StateFlag {
         CULL_FACE,
@@ -461,6 +511,8 @@ public:
     void renderFixedPixelSizeGroup(SgFixedPixelSizeGroup* fixedPixelSizeGroup);
     void renderSwitchableGroup(SgSwitchableGroup* group);
     void renderUnpickableGroup(SgUnpickableGroup* group);
+    template<class ResourceType, class ObjectType>
+    ResourceType* getOrCreateGLResource(ObjectType* obj);
     VertexResource* getOrCreateVertexResource(SgObject* obj);
     void drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& modelTransform);
     void drawBoundingBox(VertexResource* resource, const BoundingBox& bbox);
@@ -476,6 +528,7 @@ public:
         const std::function<bool()>& setupShaderProgram);
     void renderPointSet(SgPointSet* pointSet);        
     void renderLineSet(SgLineSet* lineSet);
+    void renderText(SgText* text);
     void renderPolygonDrawStyle(SgPolygonDrawStyle* style);
     void renderTransparentGroup(SgTransparentGroup* transparentGroup);
     void renderOverlay(SgOverlay* overlay);
@@ -621,6 +674,8 @@ void GLSLSceneRenderer::Impl::initialize()
         [&](SgPointSet* node){ renderPointSet(node); });
     normalRenderingFunctions.setFunction<SgLineSet>(
         [&](SgLineSet* node){ renderLineSet(node); });
+    normalRenderingFunctions.setFunction<SgText>(
+        [&](SgText* node){ renderText(node); });
     normalRenderingFunctions.setFunction<SgPolygonDrawStyle>(
         [&](SgPolygonDrawStyle* node){ renderPolygonDrawStyle(node); });
     normalRenderingFunctions.setFunction<SgTransparentGroup>(
@@ -797,6 +852,12 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
 
     if(!isCalledFromDestructor){
         clearResourceMap();
+
+#ifdef CNOID_ENABLE_FREE_TYPE
+        if(isCalledFromConstructor){
+            freeType.clearGL(isGLContextActive);
+        }
+#endif
     }
 
     if(isGLContextActive && !isCalledFromConstructor){
@@ -805,6 +866,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         solidColorExProgram->release();
         solidPointProgram->release();
         thickLineProgram->release();
+        textProgram->release();
         outlineProgram->release();
         minimumLightingProgram->release();
         fullLightingProgram->release();
@@ -834,6 +896,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         solidColorExProgram.reset(new SolidColorExProgram);
         solidPointProgram.reset(new SolidPointProgram);
         thickLineProgram.reset(new ThickLineProgram);
+        textProgram.reset(new TextProgram);
         outlineProgram.reset(new OutlineProgram);
         minimumLightingProgram.reset(new MinimumLightingProgram);
         fullLightingProgram.reset(new FullLightingProgram);
@@ -968,10 +1031,12 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
         solidColorExProgram->initialize();
         solidPointProgram->initialize();
         thickLineProgram->initialize();
+        textProgram->setTextureUnit(ImageTextureUnit);
+        textProgram->initialize();
         outlineProgram->initialize();
         minimumLightingProgram->initialize();
-        fullLightingProgram->setColorTextureIndex(ImageTextureIndex);
-        fullLightingProgram->setShadowMapTextureTopIndex(ShadowMapTextureIndex);
+        fullLightingProgram->setColorTextureUnit(ImageTextureUnit);
+        fullLightingProgram->setShadowMapTextureTopIndex(ShadowMapTextureUnit);
         fullLightingProgram->initialize();
     }
     catch(std::runtime_error& error){
@@ -983,6 +1048,14 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+
+#ifdef CNOID_ENABLE_FREE_TYPE
+# ifdef _WIN32
+    freeType.initializeGL("C:\\Windows\\Fonts\\arial.ttf", 100, ImageTextureUnit);
+# else
+    freeType.initializeGL("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 100, ImageTextureUnit);
+# endif
+#endif
 
     isResourceClearRequested = true;
     isCurrentFogUpdated = false;
@@ -1008,14 +1081,14 @@ void GLSLSceneRenderer::Impl::initializeDepthTexture()
 {
     if(!depthTexture){
         glGenTextures(1, &depthTexture);
-        glActiveTexture(GL_TEXTURE0 + DepthTextureIndex);
+        glActiveTexture(GL_TEXTURE0 + DepthTextureUnit);
         glBindTexture(GL_TEXTURE_2D, depthTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     } else {
-        glActiveTexture(GL_TEXTURE0 + DepthTextureIndex);
+        glActiveTexture(GL_TEXTURE0 + DepthTextureUnit);
         glBindTexture(GL_TEXTURE_2D, depthTexture);
     }
 
@@ -2059,20 +2132,27 @@ void GLSLSceneRenderer::Impl::renderFixedPixelSizeGroup(SgFixedPixelSizeGroup* f
 }
     
 
-VertexResource* GLSLSceneRenderer::Impl::getOrCreateVertexResource(SgObject* obj)
+template<class ResourceType, class ObjectType>
+ResourceType* GLSLSceneRenderer::Impl::getOrCreateGLResource(ObjectType* obj)
 {
-    VertexResource* resource;
+    ResourceType* resource;
     auto p = currentResourceMap->find(obj);
     if(p == currentResourceMap->end()){
-        resource = new VertexResource(obj);
+        resource = new ResourceType(obj);
         p = currentResourceMap->insert(GLResourceMap::value_type(obj, resource)).first;
     } else {
-        resource = static_cast<VertexResource*>(p->second.get());
+        resource = static_cast<ResourceType*>(p->second.get());
     }
     if(isCheckingUnusedResources){
         nextResourceMap->insert(*p);
     }
     return resource;
+}
+
+
+VertexResource* GLSLSceneRenderer::Impl::getOrCreateVertexResource(SgObject* obj)
+{
+    return getOrCreateGLResource<VertexResource>(obj);
 }
 
 
@@ -2246,40 +2326,29 @@ bool GLSLSceneRenderer::Impl::renderTexture(SgTexture* texture)
         return false;
     }
 
-    auto p = currentResourceMap->find(sgImage);
-    TextureResource* resource;
-    if(p != currentResourceMap->end()){
-        resource = static_cast<TextureResource*>(p->second.get());
-        if(resource->isLoaded){
-            glActiveTexture(GL_TEXTURE0 + ImageTextureIndex);
-            glBindTexture(GL_TEXTURE_2D, resource->textureId);
-            glBindSampler(ImageTextureIndex, resource->samplerId);
-            if(resource->isImageUpdateNeeded){
-                loadTextureImage(resource, sgImage->constImage());
-            }
+    auto resource = getOrCreateGLResource<TextureResource>(sgImage);
+    if(resource->isLoaded){
+        glActiveTexture(GL_TEXTURE0 + ImageTextureUnit);
+        glBindTexture(GL_TEXTURE_2D, resource->textureId);
+        glBindSampler(ImageTextureUnit, resource->samplerId);
+        if(resource->isImageUpdateNeeded){
+            loadTextureImage(resource, sgImage->constImage());
         }
     } else {
-        resource = new TextureResource(sgImage);
-        currentResourceMap->insert(GLResourceMap::value_type(sgImage, resource));
-
         GLuint samplerId;
-        glActiveTexture(GL_TEXTURE0 + ImageTextureIndex);
+        glActiveTexture(GL_TEXTURE0 + ImageTextureUnit);
         glGenTextures(1, &resource->textureId);
         glBindTexture(GL_TEXTURE_2D, resource->textureId);
 
         if(loadTextureImage(resource, sgImage->constImage())){
             glGenSamplers(1, &samplerId);
-            glBindSampler(ImageTextureIndex, samplerId);
+            glBindSampler(ImageTextureUnit, samplerId);
             glSamplerParameteri(samplerId, GL_TEXTURE_WRAP_S, texture->repeatS() ? GL_REPEAT : GL_CLAMP_TO_EDGE);
             glSamplerParameteri(samplerId, GL_TEXTURE_WRAP_T, texture->repeatT() ? GL_REPEAT : GL_CLAMP_TO_EDGE);
             glSamplerParameteri(samplerId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glSamplerParameteri(samplerId, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
             resource->samplerId = samplerId;
         }
-    }
-
-    if(isCheckingUnusedResources){
-        nextResourceMap->insert(GLResourceMap::value_type(sgImage, resource)); 
     }
 
     return resource->isLoaded;
@@ -3004,6 +3073,50 @@ void GLSLSceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
                 return true;
             });
     }
+}
+
+
+void GLSLSceneRenderer::Impl::renderText(SgText* text)
+{
+#ifdef CNOID_ENABLE_FREE_TYPE
+
+    auto resource = getOrCreateGLResource<TextResource>(text);
+
+    {
+        LockVertexArrayAPI lock;
+        glBindVertexArray(resource->vao);
+        if(!resource->vbo){
+            glGenBuffers(1, &resource->vbo);
+        }
+        if(resource->isTextUpdateNeeded){
+            freeType.setText(text->text(), text->textHeight());
+            auto& vertices = freeType.vertices();
+            resource->numVertices = vertices.size();
+            if(!vertices.empty()){
+                glBindBuffer(GL_ARRAY_BUFFER, resource->vbo);
+                glVertexAttribPointer((GLuint)0, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+                glBufferData(GL_ARRAY_BUFFER, freeType.vertexDataSize(), vertices.data(), GL_STATIC_DRAW);
+                glEnableVertexAttribArray(0);
+            }
+            resource->isTextUpdateNeeded = false;
+        }
+    }
+
+    if(resource->numVertices > 0){
+        pushProgram(textProgram);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glActiveTexture(GL_TEXTURE0 + ImageTextureUnit);
+        glBindTexture(GL_TEXTURE_2D, freeType.textureId());
+        glBindSampler(ImageTextureUnit, freeType.samplerId());
+        textProgram->setTransform(PV, viewTransform, modelMatrixStack.back(), nullptr);
+        textProgram->setColor(text->color());
+        glDrawArrays(GL_TRIANGLES, 0, resource->numVertices);
+        glDisable(GL_BLEND);
+        popProgram();
+    }
+
+#endif
 }
 
 

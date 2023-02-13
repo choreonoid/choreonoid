@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_GLSL_SCENE_RENDERER_H
 #define CNOID_BASE_GLSL_SCENE_RENDERER_H
 

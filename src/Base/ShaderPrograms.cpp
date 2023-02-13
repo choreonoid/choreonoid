@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "ShaderPrograms.h"
 #include "GLSLProgram.h"
 #include <cnoid/SceneDrawables>
@@ -60,12 +55,11 @@ public:
 };
 
 
-class SolidPointProgram::Impl
+class ThickLineProgram::Impl
 {
 public:
-    GLint projectionMatrixLocation;
-    GLint modelViewMatrixLocation;
-    GLint depthTextureLocation;
+    GLint lineWidthLocation;
+    int lineWidth;
     GLint viewportSizeLocation;
     int viewportWidth;
     int viewportHeight;
@@ -73,11 +67,12 @@ public:
 };
 
 
-class ThickLineProgram::Impl
+class SolidPointProgram::Impl
 {
 public:
-    GLint lineWidthLocation;
-    int lineWidth;
+    GLint projectionMatrixLocation;
+    GLint modelViewMatrixLocation;
+    GLint depthTextureLocation;
     GLint viewportSizeLocation;
     int viewportWidth;
     int viewportHeight;
@@ -173,7 +168,7 @@ public:
     GLint specularExponentLocation;
     GLint alphaLocation;
 
-    int colorTextureIndex;
+    int colorTextureUnit;
     GLint isTextureEnabledLocation;
     GLint colorTextureLocation;
     bool isTextureEnabled;
@@ -393,7 +388,7 @@ SolidColorProgram::SolidColorProgram(std::initializer_list<ShaderSource> sources
 
 SolidColorProgram::Impl::Impl()
 {
-    color.setZero();
+    color.setOnes();
     isColorChangable = true;
 }
 
@@ -411,13 +406,8 @@ void SolidColorProgram::initialize()
     auto& glsl = glslProgram();
     impl->colorLocation = glsl.getUniformLocation("color");
     impl->pointSizeLocation = glsl.getUniformLocation("pointSize");
-}
 
-
-void SolidColorProgram::activate()
-{
-    ShaderProgram::activate();
-    
+    glsl.use();
     glUniform3fv(impl->colorLocation, 1, impl->color.data());
 }
 
@@ -574,7 +564,6 @@ void ThickLineProgram::initialize()
     auto& glsl = glslProgram();
     impl->lineWidthLocation = glsl.getUniformLocation("lineWidth");
     impl->viewportSizeLocation = glsl.getUniformLocation("viewportSize");
-    glsl.use();
 }
 
 
@@ -677,6 +666,44 @@ void SolidPointProgram::setViewportSize(int width, int height)
     impl->viewportWidth = width;
     impl->viewportHeight = height;
     impl->isViewportSizeInvalidated = true;
+}
+
+
+TextProgram::TextProgram()
+    : NolightingProgram(
+        { { ":/Base/shader/Text.vert", GL_VERTEX_SHADER },
+          { ":/Base/shader/Text.frag", GL_FRAGMENT_SHADER } })
+{
+    color.setOnes();
+    textureUnit = 0;
+}
+
+    
+void TextProgram::initialize()
+{
+    NolightingProgram::initialize();
+
+    auto& glsl = glslProgram();
+    colorLocation = glsl.getUniformLocation("textColor");
+    textureLocation = glsl.getUniformLocation("textTexture");
+    glsl.use();
+    glUniform3fv(colorLocation, 1, color.data());
+    glUniform1i(textureLocation, textureUnit);
+}
+
+
+void TextProgram::setColor(const Vector3f& c)
+{
+    if(c != color){
+        glUniform3fv(colorLocation, 1, c.data());
+        color = c;
+    }
+}
+
+
+void TextProgram::setTextureUnit(int textureUnit)
+{
+    this->textureUnit = textureUnit;
 }
 
 
@@ -966,7 +993,7 @@ MaterialLightingProgram::MaterialLightingProgram(std::initializer_list<ShaderSou
 {
     setCapability(Transparency);
     impl = new Impl;
-    impl->colorTextureIndex = 1;
+    impl->colorTextureUnit = 1;
 }
 
 
@@ -976,15 +1003,15 @@ MaterialLightingProgram::~MaterialLightingProgram()
 }
 
 
-void MaterialLightingProgram::setColorTextureIndex(int textureIndex)
+void MaterialLightingProgram::setColorTextureUnit(int textureUnit)
 {
-    impl->colorTextureIndex = textureIndex;
+    impl->colorTextureUnit = textureUnit;
 }
 
 
-int MaterialLightingProgram::colorTextureIndex() const
+int MaterialLightingProgram::colorTextureUnit() const
 {
-    return impl->colorTextureIndex;
+    return impl->colorTextureUnit;
 }
 
 
@@ -1015,10 +1042,9 @@ void MaterialLightingProgram::Impl::initialize(GLSLProgram& glsl)
     isVertexColorEnabledLocation = glsl.getUniformLocation("isVertexColorEnabled");
     isVertexColorEnabled = false;
 
-
     glsl.use();
     glUniform1i(isTextureEnabledLocation, isTextureEnabled);
-    glUniform1i(colorTextureLocation, colorTextureIndex);
+    glUniform1i(colorTextureLocation, colorTextureUnit);
     glUniform1i(isVertexColorEnabledLocation, isVertexColorEnabled);
 }
     

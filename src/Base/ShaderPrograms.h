@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_SHADER_PROGRAMS_H
 #define CNOID_BASE_SHADER_PROGRAMS_H
 
@@ -102,7 +98,6 @@ public:
     ~SolidColorProgram();
 
     virtual void initialize() override;
-    virtual void activate() override;
     virtual void setColor(const Vector3f& color);
     virtual void setMaterial(const SgMaterial* material) override;
     virtual void setPointSize(float s);
@@ -182,6 +177,24 @@ public:
 private:
     class Impl;
     Impl* impl;
+};
+
+
+class CNOID_EXPORT TextProgram : public NolightingProgram
+{
+    TextProgram(const TextProgram&) = delete;
+
+public:
+    TextProgram();
+    virtual void initialize() override;
+    void setColor(const Vector3f& color);
+    void setTextureUnit(int textureUnit);
+    
+private:
+    Vector3f color;
+    GLint colorLocation;
+    int textureUnit;
+    GLint textureLocation;
 };
 
 
@@ -278,8 +291,8 @@ public:
     virtual void activate() override;
     virtual void setMaterial(const SgMaterial* material) override;
     virtual void setVertexColorEnabled(bool on) override;
-    void setColorTextureIndex(int textureIndex);
-    int colorTextureIndex() const;
+    void setColorTextureUnit(int textureUnit);
+    int colorTextureUnit() const;
     void setTextureEnabled(bool on);
     void setMinimumTransparency(float t);
 
