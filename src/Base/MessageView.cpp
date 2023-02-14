@@ -39,6 +39,7 @@ struct PendingMessage
 vector<PendingMessage> initialPendingMessages;
 
 int flushingRef = 0;
+int blockFlushCounter = 0;
 
 const bool PUT_COUT_TOO = false;
 
@@ -286,7 +287,7 @@ MessageView::Impl::Impl(MessageView* self) :
 
     MessageOut::master()->addSink(
         [this](const std::string& message, int type){
-            put(message, type, false, false, true);
+            put(message, type, false, false, true, false);
         });
 
     MessageOut::interactive()->addSink(
@@ -294,7 +295,7 @@ MessageView::Impl::Impl(MessageView* self) :
             switch(type){
             case MessageOut::Normal:
             case MessageOut::Highlighted:
-                put(message, type, false, false, true);
+                put(message, type, false, false, true, false);
                 break;
             case MessageOut::Warning:
                 showWarningDialog(message);
@@ -667,18 +668,32 @@ void MessageView::flush()
 
 void MessageView::Impl::flush()
 {
-    ++flushingRef;
-        
-    QCoreApplication::processEvents(
-        QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers, 1.0);
-    
-    --flushingRef;
+    if(blockFlushCounter == 0){
+        ++flushingRef;
+        QCoreApplication::processEvents(
+            QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers, 1.0);
+        --flushingRef;
+    }
 }
 
 
 bool MessageView::isFlushing()
 {
     return (flushingRef > 0);
+}
+
+
+void MessageView::blockFlush()
+{
+    ++blockFlushCounter;
+}
+
+
+void MessageView::unblockFlush()
+{
+    if(blockFlushCounter > 0){
+        --blockFlushCounter;
+    }
 }
 
 

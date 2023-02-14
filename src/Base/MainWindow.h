@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_MAIN_WINDOW_H
 #define CNOID_BASE_MAIN_WINDOW_H
 

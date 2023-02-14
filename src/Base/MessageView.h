@@ -70,6 +70,9 @@ public:
         
     void flush();
     static bool isFlushing();
+
+    static void blockFlush();
+    static void unblockFlush();
     
     void clear();
       

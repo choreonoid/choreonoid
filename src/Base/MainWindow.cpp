@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "MainWindow.h"
 #include "ViewArea.h"
 #include "InfoBar.h"
@@ -12,6 +8,7 @@
 #include "TimeBar.h"
 #include "UnifiedEditHistory.h"
 #include "LayoutSwitcher.h"
+#include "MessageView.h"
 #include <cnoid/Sleep>
 #include <QResizeEvent>
 #include <QWindowStateChangeEvent>
@@ -351,7 +348,15 @@ void MainWindow::changeEvent(QEvent* event)
 
 void MainWindow::show()
 {
+    /**
+       This is necessary to avoid a crash when the MessageViwe's flush is called from
+       the event handlers resulting from a main window resize event.
+    */
+    MessageView::blockFlush();
+    
     impl->showFirst();
+    
+    MessageView::unblockFlush();
 }
 
 
