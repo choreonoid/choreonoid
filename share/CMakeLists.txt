@@ -14,6 +14,11 @@ if(make_symlink)
     ${CNOID_SOURCE_SHARE_DIR}/default/materials.yaml ${CNOID_BINARY_SHARE_DIR}/default/materials.yaml)
 endif()
 
+# Incremental build issue
+if(IS_SYMLINK ${CNOID_BINARY_SHARE_DIR}/model)
+  file(REMOVE ${CNOID_BINARY_SHARE_DIR}/model)
+endif()
+
 # "model" directory
 install(DIRECTORY model DESTINATION ${CNOID_SHARE_SUBDIR})
 if(make_symlink)
