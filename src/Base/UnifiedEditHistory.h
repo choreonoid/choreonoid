@@ -27,6 +27,7 @@ public:
     void addRecord(EditRecordPtr record);
     void beginEditGroup(const std::string& label, bool isValidForSingleRecord = true);
     void endEditGroup();
+    void flushNewRecordBuffer();
 
     class RecordBlocker : public Referenced
     {

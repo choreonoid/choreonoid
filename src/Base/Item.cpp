@@ -47,13 +47,7 @@ bool isAnyItemInSubTreesBeingAddedOrRemovedSelected = false;
 std::map<ItemPtr, ItemPtr> replacementToOriginalItemMap;
 std::map<ItemPtr, ItemPtr> originalToReplacementItemMap;
 
-LazyCaller clearItemReplacementMapsLater(
-    [](){
-        replacementToOriginalItemMap.clear();
-        originalToReplacementItemMap.clear();
-    },
-    LazyCaller::MinimumPriority);
-        
+LazyCaller clearItemReplacementMapsLater;
 
 bool checkIfAnyItemInSubTreeSelected(Item* item)
 {
@@ -137,6 +131,7 @@ public:
     void traverse(Item* item, const std::function<bool(Item*)>& callback);
     void removeAddon(ItemAddon* addon, bool isMoving);
     ItemAddon* createAddon(const std::type_info& type);
+    static void clearItemReplacementMaps();
 };
 
 }
@@ -1690,10 +1685,21 @@ bool Item::replace(Item* originalItem)
             replaced = true;
         }
 
+        if(!clearItemReplacementMapsLater.hasFunction()){
+            clearItemReplacementMapsLater.setFunction(Impl::clearItemReplacementMaps);
+            clearItemReplacementMapsLater.setPriority(LazyCaller::MinimumPriority);
+        }
         clearItemReplacementMapsLater();
     }
 
     return replaced;
+}
+
+
+void Item::Impl::clearItemReplacementMaps()
+{
+    replacementToOriginalItemMap.clear();
+    originalToReplacementItemMap.clear();
 }
 
 

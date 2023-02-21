@@ -209,6 +209,12 @@ void UnifiedEditHistory::Impl::addRecord(EditRecord* record)
 }
 
 
+void UnifiedEditHistory::flushNewRecordBuffer()
+{
+    impl->flushNewRecordBuffer();
+}
+
+
 void UnifiedEditHistory::Impl::flushNewRecordBuffer()
 {
     if(newRecordBuffer.empty()){

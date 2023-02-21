@@ -1819,6 +1819,7 @@ void ItemTreeWidget::Impl::keyPressEvent(QKeyEvent* event)
             break;
             
         case Qt::Key_R:
+            unifiedEditHistory->flushNewRecordBuffer();
             for(auto& item : getSelectedItems()){
                 item->reload();
             }
