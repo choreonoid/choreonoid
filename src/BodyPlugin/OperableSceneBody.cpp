@@ -65,7 +65,9 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     OperableSceneBody* self;
-    BodyItemPtr bodyItem;
+    // This must not be a smart pointer to avoid a cycline reference.
+    // OperableSceneBody is owned by the corresponding BodyItem object.
+    BodyItem* bodyItem;
     LinkedJointHandlerPtr linkedJointHandler;
 
     SgUpdate update;
