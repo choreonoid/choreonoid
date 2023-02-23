@@ -531,12 +531,9 @@ int App::Impl::exec()
         returnCode = 1;
     }
 
-    for(Item* item = RootItem::instance()->childItem(); item; ){
-        Item* next = item->nextItem(); // removeFromParentItem() may deallocate item
-        item->removeFromParentItem();
-        item = next;
-    }
-
+    UnifiedEditHistory::instance()->terminateRecording();
+    RootItem::instance()->clearChildren();
+    
     pluginManager->finalizePlugins();
     delete ext;
     delete mainWindow;

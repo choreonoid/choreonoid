@@ -50,6 +50,7 @@ public:
     bool undo();
     bool redo();
     void clear();
+    void terminateRecording();
 
     SignalProxy<void()> sigHistoryUpdated();
     SignalProxy<void(int position)> sigCurrentPositionChanged();
