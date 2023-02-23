@@ -55,7 +55,9 @@ bool checkIfAnyItemInSubTreeSelected(Item* item)
         return true;
     }
     for(auto child = item->childItem(); child; child = child->nextItem()){
-        return checkIfAnyItemInSubTreeSelected(child);
+        if(checkIfAnyItemInSubTreeSelected(child)){
+            return true;
+        }
     }
     return false;
 }
@@ -1000,8 +1002,8 @@ void Item::onRemovedFromParent(Item* /* parentItem */, bool /* isParentBeingDele
 
 void Item::clearChildren()
 {
-    while(childItem()){
-        childItem()->removeFromParentItem();
+    while(lastChild_){
+        lastChild_->removeFromParentItem();
     }
 }
 
