@@ -492,7 +492,7 @@ void ConstraintForceSolver::Impl::initExtraJoint(ExtraJoint& extraJoint)
     linkPair->isBelongingToSameSubBody = extraJoint.isForLinksOfSameBody();
     linkPair->isNonContactConstraint = true;
     
-    if(extraJoint.type() == ExtraJoint::EJ_PISTON){
+    if(extraJoint.type() == ExtraJoint::Piston){
         linkPair->constraintPoints.resize(2);
         // generate two vectors orthogonal to the joint axis
         Vector3 u = Vector3::Zero();
@@ -508,7 +508,7 @@ void ConstraintForceSolver::Impl::initExtraJoint(ExtraJoint& extraJoint)
         linkPair->jointConstraintAxes[0] = t1;
         linkPair->jointConstraintAxes[1] = axis.cross(t1).normalized();
 
-    } else if(extraJoint.type() == ExtraJoint::EJ_BALL){
+    } else if(extraJoint.type() == ExtraJoint::Ball){
         linkPair->constraintPoints.resize(3);
         linkPair->jointConstraintAxes[0] = Vector3(1.0, 0.0, 0.0);
         linkPair->jointConstraintAxes[1] = Vector3(0.0, 1.0, 0.0);

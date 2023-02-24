@@ -759,13 +759,13 @@ void ODEBody::setExtraJoints(bool doFlipYZ)
             }
 
             // \todo do the destroy management for these joints
-            if(extraJoint.type() == ExtraJoint::EJ_PISTON){
+            if(extraJoint.type() == ExtraJoint::Piston){
                 jointID = dJointCreatePiston(worldID, 0);
                 dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
                 dJointSetPistonAnchor(jointID, p.x(), p.y(), p.z());
                 dJointSetPistonAxis(jointID, a.x(), a.y(), a.z());
 
-            } else if(extraJoint.type() == ExtraJoint::EJ_BALL){
+            } else if(extraJoint.type() == ExtraJoint::Ball){
                 jointID = dJointCreateBall(worldID, 0);
                 dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
                 dJointSetBallAnchor(jointID, p.x(), p.y(), p.z());

@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_STD_BODY_LOADER_H
 #define CNOID_BODY_STD_BODY_LOADER_H
 

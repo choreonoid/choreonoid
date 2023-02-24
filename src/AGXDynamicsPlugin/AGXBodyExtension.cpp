@@ -39,15 +39,28 @@ void AGXExtraJoint::createJoints()
         const Vector3 a = link->R() * extraJoint.axis();
         agx::ConstraintRef constraint = nullptr;
         switch (extraJoint.type()) {
-        case ExtraJoint::EJ_PISTON: {
+        case ExtraJoint::Hinge:
+        case ExtraJoint::Piston: {
             AGXHingeDesc hd;
             hd.frameAxis = agx::Vec3(a(0), a(1), a(2));
             hd.frameCenter = agx::Vec3(p(0), p(1), p(2));
             hd.rigidBodyA = agxLinkPair[0]->getAGXRigidBody();
             hd.rigidBodyB = agxLinkPair[1]->getAGXRigidBody();
+
+            if(auto info = extraJoint.info()){
+                if(info->read("joint_lock", hd.lock.enable)){
+                    info->read("joint_lock_compliance", hd.lock.compliance);
+                    if(auto range = info->findListing("joint_lock_force_range")){
+                        if(range->isValid() && range->size() == 2){
+                            hd.lock.forceRange = agx::RangeReal(range->at(0)->toDouble(), range->at(1)->toDouble());
+                        }
+                    }
+                }
+            }
             constraint = AGXObjectFactory::createConstraint(hd);
+            break;
         }
-        case  ExtraJoint::EJ_BALL: {
+        case  ExtraJoint::Ball: {
             AGXBallJointDesc bd;
             bd.framePoint = agx::Vec3(p(0), p(1), p(2));
             bd.rigidBodyA = agxLinkPair[0]->getAGXRigidBody();

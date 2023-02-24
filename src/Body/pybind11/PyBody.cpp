@@ -116,8 +116,11 @@ void exportPyBody(py::module& m)
         ;
 
     py::enum_<ExtraJoint::ExtraJointType>(extraJoint, "ExtraJointType")
-        .value("EJ_PISTON", ExtraJoint::ExtraJointType::EJ_PISTON)
-        .value("EJ_BALL", ExtraJoint::ExtraJointType::EJ_BALL)
+        .value("Hinge", ExtraJoint::ExtraJointType::Hinge)
+        .value("Ball", ExtraJoint::ExtraJointType::Ball)
+        .value("Piston", ExtraJoint::ExtraJointType::Piston)
+        .value("EJ_BALL", ExtraJoint::ExtraJointType::Ball)
+        .value("EJ_PISTON", ExtraJoint::ExtraJointType::Piston)
         .export_values();
 }
    

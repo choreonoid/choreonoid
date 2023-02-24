@@ -1220,10 +1220,10 @@ void VRMLBodyLoaderImpl::setExtraJoints()
 
         SFString& jointType = stdx::get<SFString>(f["jointType"]);
         if(jointType == "piston"){
-            joint.setType(ExtraJoint::EJ_PISTON);
+            joint.setType(ExtraJoint::Piston);
             joint.setAxis(stdx::get<SFVec3f>(f["jointAxis"]));
         } else if(jointType == "ball"){
-            joint.setType(ExtraJoint::EJ_BALL);
+            joint.setType(ExtraJoint::Ball);
         } else {
             throw invalid_argument(format(_("JointType \"{}\" is not supported."), jointType));
         }

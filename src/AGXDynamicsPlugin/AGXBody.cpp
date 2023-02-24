@@ -599,7 +599,6 @@ agx::ConstraintRef AGXLink::createAGXConstraint(const Isometry3& T)
             desc.range.set(range);
             desc.range.enable = true;  // range.enable;
             desc.range.range = agx::RangeReal(orgLink->q_lower(), orgLink->q_upper());
-            constraint = AGXObjectFactory::createConstraint(desc);
 
             // Set from Link::ActuationMode
             // motor

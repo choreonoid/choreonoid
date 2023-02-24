@@ -1,19 +1,21 @@
-/**
-   \file
-   \author Shizuko Hattori
-*/
-
 #ifndef CNOID_BODY_EXTRA_JOINT_H
 #define CNOID_BODY_EXTRA_JOINT_H
 
 #include "Link.h"
+#include <cnoid/ValueTree>
         
 namespace cnoid {
 
 class ExtraJoint
 {
 public:    
-    enum ExtraJointType { EJ_PISTON, EJ_BALL };
+    enum ExtraJointType {
+        Hinge,
+        Ball,
+        Piston,
+        EJ_BALL [[deprecated]] = Ball,
+        EJ_PISTON [[deprecated]] = Piston
+    };
     
     ExtraJoint() {
         for(int i=0; i < 2; ++i){
@@ -55,6 +57,10 @@ public:
         return false;
     }
 
+    const Mapping* info() const { return info_; }
+    Mapping* info() { return info_; }
+    void resetInfo(Mapping* info){ info_ = info; }
+
 private:
     ExtraJointType type_;
     Vector3 axis_;
@@ -62,6 +68,7 @@ private:
     Vector3 points[2];
     std::string bodyNames[2];
     std::string linkNames[2];
+    MappingPtr info_;
 };
 
 }

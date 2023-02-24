@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "StdBodyLoader.h"
 #include "BodyLoader.h"
 #include "BodyHandlerManager.h"
@@ -2002,39 +1997,57 @@ void StdBodyLoader::Impl::readExtraJoint(Mapping* info)
 {
     ExtraJoint joint;
 
-    joint.setLink(0, body->link(info->get({ "link1_name", "link1Name" }).toString()));
-    joint.setLink(1, body->link(info->get({ "link2_name", "link2Name" }).toString()));
+    string link1Name;
+    string link2Name;
+
+    if(!extract(info, { "link1_name", "link1Name" }, link1Name)){
+        info->throwException(_("link1_name is not specified"));
+    }
+    if(!extract(info, { "link2_name", "link2Name" }, link2Name)){
+        info->throwException(_("link2_name is not specified"));
+    }
+
+    joint.setLink(0, body->link(link1Name));
+    joint.setLink(1, body->link(link2Name));
 
     for(int i=0; i < 2; ++i){
         if(!joint.link(i)){
             info->throwException(
-                format(_("The link specified in \"link{}Name\" is not found"), (i + 1)));
+                format(_("The link specified in \"link{}_name\" is not found"), (i + 1)));
         }
     }
 
     string jointType;
-    if(!info->read({ "joint_type", "jointType" }, jointType)){
+    if(!extract(info, { "joint_type", "jointType" }, jointType)){
         info->throwException(_("The joint type must be specified with the \"joint_type\" key"));
     }
-    if(jointType == "piston"){
-        joint.setType(ExtraJoint::EJ_PISTON);
-        auto axisNode = info->find({ "axis", "jointAxis" });
+    if(jointType == "hinge"){
+        joint.setType(ExtraJoint::Hinge);
+    } else if(jointType == "ball"){
+        joint.setType(ExtraJoint::Ball);
+    } else if(jointType == "piston"){
+        joint.setType(ExtraJoint::Piston);
+    } else {
+        info->throwException(format(_("Joint type \"{}\" is not available"), jointType));
+    }
+    if(joint.type() == ExtraJoint::Hinge || joint.type() == ExtraJoint::Piston){
+        auto axisNode = info->extract({ "axis", "jointAxis" });
         if(axisNode->isValid()){
             readAxis(axisNode, v);
             joint.setAxis(v);
         } else {
-            info->throwException(_("The axis must be specified for the pistion type"));
+            info->throwException(_("The axis must be specified"));
         }
-    } else if(jointType == "ball"){
-        joint.setType(ExtraJoint::EJ_BALL);
-    } else {
-        info->throwException(format(_("Joint type \"{}\" is not available"), jointType));
+    }
+                  
+    if(extractEigen(info, { "link1_local_pos", "link1LocalPos" }, v)){
+        joint.setPoint(0, v);
+    }
+    if(extractEigen(info, { "link2_local_pos", "link2LocalPos" }, v)){
+        joint.setPoint(1, v);
     }
 
-    readEx(info, { "link1_local_pos", "link1LocalPos" }, v);
-    joint.setPoint(0, v);
-    readEx(info, { "link2_local_pos", "link2LocalPos" }, v);
-    joint.setPoint(1, v);
+    joint.resetInfo(info);
 
     body->addExtraJoint(joint);
 }
