@@ -84,6 +84,11 @@ contact_materials:
     restitution: 0.25
     youngsModulus: 1.0e9
   -
+    materials: [ Default, Slider ]
+    friction: 0.0
+    restitution: 0.0
+    youngsModulus: 2.0e9
+  -
     materials: [ Ground, Slider ]
     friction: 0.0
     restitution: 0.0
@@ -106,7 +111,7 @@ contact_materials:
     surfaceViscosity: 1e-8
     friction_model: [ iterative, direct ]
   -
-    materials: [ Ground, TankTracks]
+    materials: [ Ground, TankTracks ]
     youngs_modulus: 1e10
     friction: 1.0
     secondary_friction: 0.5
