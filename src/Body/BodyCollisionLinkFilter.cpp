@@ -226,16 +226,18 @@ void BodyCollisionLinkFilter::Impl::setIgnoredLinkPairsWithinLinkChainLevel(Body
 void BodyCollisionLinkFilter::Impl::setIgnoredLinkPairsWithinLinkChainLevelIter
 (Link* link, Link* currentLink, Link* prevLink, int distance)
 {
-    auto parent = currentLink->parent();
-    if(parent && parent != prevLink){
-        ignoredLinkPairs.emplace(link->index(), parent->index());
-        if(distance >= 2){
-            setIgnoredLinkPairsWithinLinkChainLevelIter(
-                link, parent, currentLink, distance - 1);
+    if(!currentLink->isFreeJoint()){
+        auto parent = currentLink->parent();
+        if(parent && parent != prevLink){
+            ignoredLinkPairs.emplace(link->index(), parent->index());
+            if(distance >= 2){
+                setIgnoredLinkPairsWithinLinkChainLevelIter(
+                    link, parent, currentLink, distance - 1);
+            }
         }
     }
     for(auto child = currentLink->child(); child; child = child->sibling()){
-        if(child != prevLink){
+        if(child != prevLink && !child->isFreeJoint()){
             ignoredLinkPairs.emplace(link->index(), child->index());
             if(distance >= 2){
                 setIgnoredLinkPairsWithinLinkChainLevelIter(

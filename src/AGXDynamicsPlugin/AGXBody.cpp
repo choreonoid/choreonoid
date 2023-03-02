@@ -873,7 +873,7 @@ void AGXBody::setCollisionExcludeTreeDepth(const Mapping& cdMapping){
     const ValueNodePtr& excludeTreeDepthNode = cdMapping.find("excludeTreeDepth");
     if(!excludeTreeDepthNode->isValid()) return;
     if(!excludeTreeDepthNode->isScalar()) return;
-    const int& excludeTreeDepth = excludeTreeDepthNode->toInt();
+    const int excludeTreeDepth = excludeTreeDepthNode->toInt();
     for(int i = 0; i < numAGXLinks(); ++i){
         AGXLink* agxLink1 = getAGXLink(i);
         for(int j = i+1; j < numAGXLinks(); ++j){
@@ -885,10 +885,18 @@ void AGXBody::setCollisionExcludeTreeDepth(const Mapping& cdMapping){
                 ss << "AGXExcludeTreeDepth_" << agx::UuidGenerator().generate().str() << std::endl;
                 addCollisionGroupNameToDisableCollision(ss.str());
                 if(parent1){
-                    parent1 = parent1->getAGXParentLink();
+                    if(parent1->getOrgLink()->isFreeJoint()){
+                        parent1 = nullptr;
+                    } else {
+                        parent1 = parent1->getAGXParentLink();
+                    }
                 }
                 if(parent2){
-                    parent2 = parent2->getAGXParentLink();
+                    if(parent2->getOrgLink()->isFreeJoint()){
+                        parent2 = nullptr;
+                    } else {
+                        parent2 = parent2->getAGXParentLink();
+                    }
                 }
                 if(!parent1 && !parent2){
                     break;
