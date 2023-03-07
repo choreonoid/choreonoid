@@ -3140,7 +3140,7 @@ void GLSLSceneRenderer::Impl::renderPolygonDrawStyle(SgPolygonDrawStyle* style)
     }
         
     if(isFaceEnabled){
-        if(lightingMode == NormalLighting){
+        if(lightingMode != NoLighting){
             if(isEdgeEnabled){
                 fullLightingProgram->enableWireframe(style->edgeColor(), style->edgeWidth());
                 solidWireframeStyleStack.push_back(style);
