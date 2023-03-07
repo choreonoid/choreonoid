@@ -255,7 +255,7 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
     filesystem::path directory(filePath.parent_path());
     if(filesystem::exists(directory)){
         self->setDirectory(toUTF8(directory.string()));
-        if(filePath.stem().string() == item->name() && !isExportMode){
+        if(toUTF8(filePath.stem().string()) == item->name() && !isExportMode){
             selected = selectFilePathForSaving(filePath);
         }
     }
@@ -335,7 +335,7 @@ std::string ItemFileDialog::Impl::getSaveFilename()
         if(!exts.empty()){
             bool hasExtension = false;
             string dotextension =
-                filesystem::path(fromUTF8(filename)).extension().string();
+                toUTF8(filesystem::path(fromUTF8(filename)).extension().string());
             if(!dotextension.empty()){
                 string extension = dotextension.substr(1); // remove the first dot
                 if(std::find(exts.begin(), exts.end(), extension) != exts.end()){

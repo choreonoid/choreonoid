@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shizuko Hattori
-*/
-
 #include "MessageLogItem.h"
 #include "ExtensionManager.h"
 #include "ItemManager.h"
@@ -23,7 +18,7 @@ using fmt::format;
 
 namespace cnoid {
 
-class MessageLogItemImpl
+class MessageLogItem::Impl
 {
 public:
     MessageLogItem* self;
@@ -35,9 +30,9 @@ public:
     Selection fileMode;
     bool skipEscapeSequence;
 
-    MessageLogItemImpl(MessageLogItem* self);
-    MessageLogItemImpl(MessageLogItem* self, const MessageLogItemImpl& org);
-    ~MessageLogItemImpl();
+    Impl(MessageLogItem* self);
+    Impl(MessageLogItem* self, const Impl& org);
+    ~Impl();
     void startWriting();
     void openFile();
     void onMessageOut(const std::string& text);
@@ -56,14 +51,14 @@ void MessageLogItem::initializeClass(ExtensionManager* ext)
 
 MessageLogItem::MessageLogItem()
 {
-    impl = new MessageLogItemImpl(this);
+    impl = new Impl(this);
 }
 
 
 MessageLogItem::MessageLogItem(const MessageLogItem& org)
     : AbstractTextItem(org)
 {
-    impl = new MessageLogItemImpl(this, *org.impl);
+    impl = new Impl(this, *org.impl);
 }
 
 
@@ -73,7 +68,7 @@ MessageLogItem::~MessageLogItem()
 }
 
 
-MessageLogItemImpl::MessageLogItemImpl(MessageLogItem* self)
+MessageLogItem::Impl::Impl(MessageLogItem* self)
     : self(self),
       mv(MessageView::instance()),
       fileMode(MessageLogItem::N_FILE_MODES, CNOID_GETTEXT_DOMAIN_NAME),
@@ -86,7 +81,7 @@ MessageLogItemImpl::MessageLogItemImpl(MessageLogItem* self)
 }
 
 
-MessageLogItemImpl::MessageLogItemImpl(MessageLogItem* self, const MessageLogItemImpl& org)
+MessageLogItem::Impl::Impl(MessageLogItem* self, const Impl& org)
     : self(self),
       mv(MessageView::instance()),
       fileMode(org.fileMode),
@@ -96,10 +91,11 @@ MessageLogItemImpl::MessageLogItemImpl(MessageLogItem* self, const MessageLogIte
 }
 
 
-MessageLogItemImpl::~MessageLogItemImpl()
+MessageLogItem::Impl::~Impl()
 {
     ofs.close();
 }
+
 
 const std::string& MessageLogItem::textFilename() const
 {
@@ -119,17 +115,17 @@ void MessageLogItem::onConnectedToRoot()
 }
 
 
-void MessageLogItemImpl::startWriting()
+void MessageLogItem::Impl::startWriting()
 {
     openFile();
     
     if(!mvConnection.connected()){
-        mvConnection = mv->sigMessage().connect([&](const std::string& text){ onMessageOut(text); });
+        mvConnection = mv->sigMessage().connect([this](const std::string& text){ onMessageOut(text); });
     }
 }
 
 
-void MessageLogItemImpl::openFile()
+void MessageLogItem::Impl::openFile()
 {
     auto block = mvConnection.scopedBlock();
 
@@ -137,10 +133,11 @@ void MessageLogItemImpl::openFile()
         ofs.close();
     }
 
+    string nativeFilename = fromUTF8(filename);
     if(fileMode.selectedIndex()==MessageLogItem::APPEND){
-        ofs.open(filename, ios_base::out | ios_base::app | ios_base::binary);
+        ofs.open(nativeFilename, ios_base::out | ios_base::app | ios_base::binary);
     }else{
-        stdx::filesystem::path path(fromUTF8(filename));
+        stdx::filesystem::path path(nativeFilename);
         if(stdx::filesystem::exists(path)){
             bool ok = showConfirmDialog(
                 _("Confirm"),
@@ -149,7 +146,7 @@ void MessageLogItemImpl::openFile()
                 return;
             }
         }
-        ofs.open(path.string(), ios_base::out | ios_base::binary);
+        ofs.open(nativeFilename, ios_base::out | ios_base::binary);
     }
 
     if(!ofs){
@@ -168,24 +165,20 @@ void MessageLogItem::onDisconnectedFromRoot()
 }
 
 
-void MessageLogItemImpl::onMessageOut(const std::string& text)
+void MessageLogItem::Impl::onMessageOut(const std::string& text)
 {
     if(ofs.is_open()){
         // skip escapeSequence
         if( skipEscapeSequence && text.find("\x1b", 0) != string::npos ){
-
-// Actually I'd like to use std :: regex,
-// but since I can not compile with version of Ubuntu 14.04, I implemented it with Qt library
-#if 1
             QString qtext(text.c_str());
             qtext.replace(QRegExp("\\\x1b\\[[0-9;]*[A-z]"), "");
             ofs << qtext.toStdString();
-#else
+
+            /* std::regex version
             regex  escapePattern("\\\x1b\\[[0-9;]*[A-z]");
             ofs << regex_replace(text, escapePattern, "");
-#endif
-
-        }else{
+            */
+        } else {
             ofs << text;
         }
         ofs.flush();
@@ -193,7 +186,7 @@ void MessageLogItemImpl::onMessageOut(const std::string& text)
 }
 
 
-void MessageLogItemImpl::setFileName(const string& filename_)
+void MessageLogItem::Impl::setFileName(const string& filename_)
 {
     if(ofs.is_open() && filename==filename_)
         return;
@@ -205,7 +198,7 @@ void MessageLogItemImpl::setFileName(const string& filename_)
         filename += ".log";
     }
 
-     openFile();
+    openFile();
 }
 
 
@@ -230,6 +223,7 @@ bool MessageLogItem::store(Archive& archive)
     return true;
 }
 
+
 bool MessageLogItem::restore(const Archive& archive)
 {
     string symbol;
@@ -242,7 +236,3 @@ bool MessageLogItem::restore(const Archive& archive)
     archive.read({ "skip_escape_sequence", "skipEscapeSequence" }, impl->skipEscapeSequence);
     return true;
 }
-
-
-
-

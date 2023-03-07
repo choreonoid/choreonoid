@@ -12,6 +12,7 @@
 #include "FilePathVariableProcessor.h"
 #include "CloneMap.h"
 #include "NullOut.h"
+#include "UTF8.h"
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <unordered_map>
@@ -390,8 +391,6 @@ bool StdSceneWriter::Impl::writeScene
         return false;
     }
 
-    setBaseDirectory(filesystem::path(filename).parent_path().string());
-
     SgGroupPtr group = new SgGroup;
     if(node){
         group->addChild(node);
@@ -415,8 +414,8 @@ bool StdSceneWriter::Impl::writeScene
     header->write("format_version", "1.0");
     header->write("angle_unit", "degree");
     
-    auto directory = filesystem::path(filename).parent_path().generic_string();
-    setBaseDirectory(directory);
+    setBaseDirectory(
+        toUTF8(filesystem::path(fromUTF8(filename)).parent_path().generic_string()));
     uriDirectoryStack.clear();
 
     numSkippedNode = 0;

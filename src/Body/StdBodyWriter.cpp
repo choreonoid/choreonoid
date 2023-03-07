@@ -128,8 +128,8 @@ bool StdBodyWriter::Impl::writeBody(Body* body, const std::string& filename)
 {
     bool result = false;
     
-    auto directory = filesystem::path(fromUTF8(filename)).parent_path().generic_string();
-    sceneWriter.setBaseDirectory(directory);
+    sceneWriter.setBaseDirectory(
+        toUTF8(filesystem::path(fromUTF8(filename)).parent_path().generic_string()));
 
     updateDeviceWriteFunctions();
 

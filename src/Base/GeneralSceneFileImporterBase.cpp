@@ -140,7 +140,7 @@ std::shared_ptr<AbstractSceneLoader> GeneralSceneFileImporterBase::sceneLoaderOn
 }
 
 
-bool GeneralSceneFileImporterBase::saveScene(SgNode* scene, const std::string& filename)
+bool GeneralSceneFileImporterBase::saveScene(SgNode* /* scene */, const std::string& /* filename */)
 {
     return false;
 }

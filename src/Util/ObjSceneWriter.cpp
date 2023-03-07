@@ -143,15 +143,16 @@ bool ObjSceneWriter::writeScene(const std::string& filename, SgNode* node)
 
 bool ObjSceneWriter::Impl::writeScene(const std::string& filename, SgNode* node)
 {
-    filepath = filesystem::path(filename);
+    string nativeFilename = fromUTF8(filename);
+    filepath = filesystem::path(nativeFilename);
     baseDirPath = filesystem::absolute(filepath).parent_path();
     
     try {
-        gfs.open(fromUTF8(filename).c_str(), ios_base::out | ios_base::binary);
+        gfs.open(nativeFilename.c_str(), ios_base::out | ios_base::binary);
         gfs.exceptions(std::ios_base::failbit);
     }
     catch(const std::exception& ex){
-        os() << format(_("\"{0}\" cannot be open. {1}."), filename, ex.what()) << endl;
+        os() << format(_("\"{0}\" cannot be open. {1}."), nativeFilename, ex.what()) << endl;
         return false;
     }
 
@@ -160,7 +161,7 @@ bool ObjSceneWriter::Impl::writeScene(const std::string& filename, SgNode* node)
     bool result = writeNode(node, Affine3::Identity());
 
     if(!result){
-        os() << format(_("Failed to write a scene into \"{0}\"."), filename) << endl;
+        os() << format(_("Failed to write a scene into \"{0}\"."), nativeFilename) << endl;
     }
 
     gfs.close();
@@ -242,10 +243,10 @@ bool ObjSceneWriter::Impl::findOrWriteMaterial(SgShape* shape)
         try {
             auto mtlFilepath = filepath;
             mtlFilename = mtlFilepath.replace_extension(".mtl").string();
-            mfs.open(fromUTF8(mtlFilename).c_str(), ios_base::out | ios_base::binary);
+            mfs.open(mtlFilename.c_str(), ios_base::out | ios_base::binary);
             mfs.exceptions(std::ios_base::failbit);
 
-            gfs << "mtllib " << mtlFilepath.filename().generic_string() << "\n";
+            gfs << "mtllib " << toUTF8(mtlFilepath.filename().generic_string()) << "\n";
         }
         catch(const std::exception& ex){
             os() << format(_("\"{0}\" cannot be open. {1}."), mtlFilename, ex.what()) << endl;
@@ -317,7 +318,7 @@ void ObjSceneWriter::Impl::writeMaterial(SgMaterial* material, SgTexture* textur
     if(texture){
         auto image = texture->image();
         if(image && image->hasUri()){
-            if(self->findOrCopyImageFile(image, baseDirPath.generic_string())){
+            if(self->findOrCopyImageFile(image, toUTF8(baseDirPath.generic_string()))){
                 mfs << "map_Kd " << image->uri() << "\n";
             }
         }

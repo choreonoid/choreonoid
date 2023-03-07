@@ -1,5 +1,6 @@
 #include "AbstractSceneWriter.h"
 #include "SceneDrawables.h"
+#include "UTF8.h"
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -32,7 +33,7 @@ bool AbstractSceneWriter::findOrCopyImageFile(SgImage* image, const std::string&
     if(uri.find_first_of("file://") == 0){
         uri = uri.substr(7);
     }
-    filesystem::path filePath(uri);
+    filesystem::path filePath(fromUTF8(uri));
 
     if(filePath.is_absolute()){
         orgImageFileFound = filesystem::exists(filePath, ec);
@@ -40,11 +41,11 @@ bool AbstractSceneWriter::findOrCopyImageFile(SgImage* image, const std::string&
     } else if(image->hasAbsoluteUri()){
         auto& absUri = image->absoluteUri();
         if(absUri.find_first_of("file://") == 0){
-            filesystem::path orgFilePath(absUri.substr(7));
+            filesystem::path orgFilePath(fromUTF8(absUri.substr(7)));
             if(filesystem::exists(orgFilePath, ec)){
                 orgImageFileFound = true;
                 if(filePath.is_relative()){
-                    filePath = filesystem::path(outputBaseDir) / filePath;
+                    filePath = filesystem::path(fromUTF8(outputBaseDir)) / filePath;
                 }
                 if(filesystem::equivalent(orgFilePath, filePath, ec)){
                     foundOrCopied = true;

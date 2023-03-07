@@ -195,12 +195,12 @@ SgNode* ObjSceneLoader::load(const std::string& filename)
 
 SgNode* ObjSceneLoader::Impl::load(const string& filename)
 {
-    if(!scanner.open(fromUTF8(filename).c_str())){
+    if(!scanner.open(filename.c_str())){
         os() << format(_("Unable to open file \"{}\"."), filename) << endl;
         return nullptr;
     }
-    filePath = filename;
-    fileBaseName = filePath.stem().string();
+    filePath = fromUTF8(filename);
+    fileBaseName = toUTF8(filePath.stem().string());
     directoryPath = filePath.parent_path();
 
     SgNodePtr scene;
@@ -553,7 +553,8 @@ void ObjSceneLoader::Impl::readMaterial(const std::string& name)
 
 bool ObjSceneLoader::Impl::loadMaterialTemplateLibrary(const std::string& filename)
 {
-    if(!subScanner.open((directoryPath / filename).string())){
+    string fullpath = toUTF8((directoryPath / fromUTF8(filename)).string());
+    if(!subScanner.open(fullpath)){
         os() << format("Material template library file \"{0}\" cannot be open.", filename) << endl;
         return false;
     }

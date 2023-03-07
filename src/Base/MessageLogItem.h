@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shizuko Hattori
-*/
-
 #ifndef CNOID_BASE_MESSAGE_LOG_ITEM_H
 #define CNOID_BASE_MESSAGE_LOG_ITEM_H
 
@@ -10,8 +5,6 @@
 #include "exportdecl.h"
 
 namespace cnoid {
-
-class MessageLogItemImpl;
 
 class CNOID_EXPORT MessageLogItem : public AbstractTextItem
 {
@@ -33,7 +26,8 @@ protected:
     virtual bool restore(const Archive& archive) override;
 
 private:
-    MessageLogItemImpl* impl;
+    class Impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<MessageLogItem> MessageLogItemPtr;
@@ -41,4 +35,3 @@ typedef ref_ptr<MessageLogItem> MessageLogItemPtr;
 }
 
 #endif
-
