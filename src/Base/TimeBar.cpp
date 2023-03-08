@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "TimeBar.h"
 #include "ExtensionManager.h"
 #include "Archive.h"
@@ -29,6 +25,8 @@ const double DEFAULT_FRAME_RATE = 1000.0;
 
 // The following value shoud be same as the display refresh rate to make the animation smooth
 const double DEFAULT_PLAYBACK_FRAMERATE = 60.0;
+
+bool isNegativeTimeEnabled = true;
 
 enum ElementId {
     PlayButton = 0,
@@ -142,6 +140,12 @@ static void onSigOptionsParsed(boost::program_options::variables_map& v)
 }
 
 
+void TimeBar::setNegativeTimeEnabled(bool on)
+{
+    isNegativeTimeEnabled = on;
+}
+
+
 void TimeBar::initialize(ExtensionManager* ext)
 {
     static bool initialized = false;
@@ -224,7 +228,7 @@ TimeBar::Impl::Impl(TimeBar* self)
 
     minTimeSpin = new DoubleSpinBox;
     minTimeSpin->setAlignment(Qt::AlignCenter);
-    minTimeSpin->setRange(-9999.0, 9999.0);
+    minTimeSpin->setRange(isNegativeTimeEnabled ? -9999.0 : 0.0, 9999.0);
     minTimeSpin->sigValueChanged().connect([&](double time){ onMinTimeSpinValueChanged(time); });
     self->addWidget(minTimeSpin, TimeRangeMinSpin);
 
@@ -232,7 +236,7 @@ TimeBar::Impl::Impl(TimeBar* self)
 
     maxTimeSpin = new DoubleSpinBox;
     maxTimeSpin->setAlignment(Qt::AlignCenter);
-    maxTimeSpin->setRange(-9999.0, 9999.0);
+    maxTimeSpin->setRange(isNegativeTimeEnabled ? -9999.0 : 0.0, 9999.0);
     maxTimeSpin->sigValueChanged().connect([&](double time){ onMaxTimeSpinValueChanged(time); });
     self->addWidget(maxTimeSpin, TimeRangeMaxSpin);
 
@@ -428,6 +432,15 @@ void TimeBar::setTimeRange(double minTime, double maxTime)
 bool TimeBar::Impl::setTimeRange(double newMinTime, double newMaxTime, bool doUpdateTimeSpinSlider)
 {
     bool updated = false;
+
+    if(!isNegativeTimeEnabled){
+        if(newMinTime < 0.0){
+            newMinTime = 0.0;
+        }
+        if(newMaxTime < 0.0){
+            newMaxTime = 0.0;
+        }
+    }
     
     if((newMinTime != minTime || newMaxTime != maxTime) && newMinTime <= newMaxTime){
         minTime = newMinTime;
@@ -862,7 +875,7 @@ bool TimeBar::Impl::setTimeBarTime
     bool doExpand = false;
     
     if(time < minTime){
-        if(doAutoExpansion){
+        if(doAutoExpansion && (time >= 0.0 || isNegativeTimeEnabled)){
             minTime = time;
             minTimeSpin->blockSignals(true);
             minTimeSpin->setValue(maxTime);
@@ -1088,8 +1101,14 @@ bool TimeBar::Impl::restoreState(const Archive& archive)
     if(archive.read({ "frame_rate", "frameRate" }, newFrameRate)){
         doUpdateTimeSpinSlider |= setFrameRate(newFrameRate, false, false);
     }
-        
-    archive.read({ "current_time", "currentTime" }, self->time_);
+
+    double newTime;
+    if(archive.read({ "current_time", "currentTime" }, newTime)){
+        if(newTime != self->time_){
+            self->time_ = newTime;
+            doUpdateTimeSpinSlider = true;
+        }
+    }
 
     setPlaybackFrameRate(
         archive.get({ "playback_frame_rate", "playbackFrameRate" }, playbackFrameRate), false);

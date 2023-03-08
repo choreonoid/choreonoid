@@ -8,6 +8,7 @@
 #include "ProjectManager.h"
 #include "MainWindow.h"
 #include "FileDialog.h"
+#include "TimeBar.h"
 #include "DisplayValueFormat.h"
 #include <cnoid/GettextUtil>
 
@@ -108,6 +109,11 @@ public:
     static void setShareDirectoryPresetEnabled(bool on)
     {
         FileDialog::setShareDirectoryPresetEnabled(on);
+    }
+
+    static void setTimeBarNegativeTimeEnabled(bool on)
+    {
+        TimeBar::setNegativeTimeEnabled(on);
     }
 
     void setLengthUnit(DisplayValueFormat::LengthUnit unit)

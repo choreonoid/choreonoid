@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_TIME_BAR_H
 #define CNOID_BASE_TIME_BAR_H
 
@@ -13,6 +9,9 @@ namespace cnoid {
 class CNOID_EXPORT TimeBar : public ToolBar
 {
 public:
+    // The following can be called before the initializeClass function is called to customize TimeBar.
+    static void setNegativeTimeEnabled(bool on);
+        
     static void initialize(ExtensionManager* ext);
     static TimeBar* instance();
 
