@@ -243,17 +243,17 @@ MovieRecorder::Impl::Impl(MovieRecorder* self)
 
     currentEncoderIndex = 0;
 
-    auto config = AppConfig::archive()->findMapping("MovieRecorder");
-    if(config->isValid()){
-        restore(config);
-    }
-
     for(auto& encoder : newEncoders){
         addEncoder(encoder);
     }
     newEncoders.clear();
 
     addEncoder(new SequentialNumberedImageFileEncoder);
+
+    auto config = AppConfig::archive()->findMapping("MovieRecorder");
+    if(config->isValid()){
+        restore(config);
+    }
 }
 
 
