@@ -121,6 +121,8 @@ public:
         const int n = numFrames();
         if(frame >= n){
             frame = (n > 0) ? (n - 1) : 0;
+        } else if(frame < 0){
+            frame = 0;
         }
         return frame;
     }
