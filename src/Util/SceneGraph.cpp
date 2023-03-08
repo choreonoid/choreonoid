@@ -179,6 +179,15 @@ const std::string& SgObject::uriFragment() const
 }
 
 
+const std::string& SgObject::uriMetadataString() const
+{
+    if(!uriInfo){
+        uriInfo.reset(new UriInfo);
+    }
+    return uriInfo->metadata;
+}
+
+
 void SgObject::setUriByFilePathAndBaseDirectory
 (const std::string& filePath, const std::string& baseDirectory)
 {
@@ -224,6 +233,15 @@ void SgObject::setUriFragment(const std::string& fragment)
         uriInfo.reset(new UriInfo);
     }
     uriInfo->fragment = fragment;
+}
+
+
+void SgObject::setUriMetadataString(const std::string& data)
+{
+    if(!uriInfo){
+        uriInfo.reset(new UriInfo);
+    }
+    uriInfo->metadata = data;
 }
 
 

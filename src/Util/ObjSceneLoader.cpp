@@ -215,17 +215,26 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
 
     doCoordinateConversion = false;
     scale = 1.0f;
+    string metadata;
     auto lengthUnit = self->lengthUnitHint();
     if(lengthUnit == AbstractSceneLoader::Millimeter){
         scale = 1.0e-3f;
         doCoordinateConversion = true;
+        metadata = "millimeter";
     } else if(lengthUnit == AbstractSceneLoader::Inch){
         scale = 0.0254f;
         doCoordinateConversion = true;
+        metadata = "inch";
     }
     upperAxis = self->upperAxisHint();
     if(upperAxis != Z_Upper){
         doCoordinateConversion = true;
+        if(upperAxis == Y_Upper){
+            if(!metadata.empty()){
+                metadata += " ";
+            }
+            metadata += "y_upper";
+        }
     }
     
     try {
@@ -237,6 +246,9 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
 
     if(scene){
         scene->setUriByFilePathAndCurrentDirectory(filename);
+        if(!metadata.empty()){
+            scene->setUriMetadataString(metadata);
+        }
     }
 
     scanner.close();

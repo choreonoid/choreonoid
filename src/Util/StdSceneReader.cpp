@@ -69,12 +69,14 @@ public:
         unique_ptr<SceneNodeMap> sceneNodeMap;
         unique_ptr<YAMLReader> yamlReader;
         string directory;
+        string metadata;
     };
     typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
 
     map<string, ResourceInfoPtr> resourceInfoMap;
     
     SceneLoader sceneLoader;
+    bool sceneLoaderConfigurationChanged;
     FilePathVariableProcessorPtr pathVariableProcessor;
     regex uriSchemeRegex;
     bool isUriSchemeRegexReady;
@@ -138,7 +140,7 @@ public:
     SgNode* readResourceAsScene(Mapping* info);
     Resource readResourceNode(Mapping* info, bool doSetUri);
     void extractNamedSceneNodes(Mapping* resourceNode, ResourceInfo* info, Resource& resource);
-    ResourceInfo* getOrCreateResourceInfo(Mapping* resourceNode, const string& uri);
+    ResourceInfo* getOrCreateResourceInfo(Mapping* resourceNode, const string& uri, const string& metadata);
     stdx::filesystem::path findFileInPackage(const string& file);
     void adjustNodeCoordinate(SceneNodeInfo& info);
     void makeSceneNodeMap(ResourceInfo* info);
@@ -222,6 +224,7 @@ StdSceneReader::Impl::Impl(StdSceneReader* self)
     }
     
     os_ = &nullout();
+    sceneLoaderConfigurationChanged = false;
     isUriSchemeRegexReady = false;
     imageIO.setUpsideDown(true);
 }
@@ -1666,8 +1669,9 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info, b
     if(fragmentNode->isValid()){
         resource.fragment = fragmentNode->toString();
     }
+    info->read("metadata", resource.metadata);
     
-    ResourceInfo* resourceInfo = getOrCreateResourceInfo(info, resource.uri);
+    ResourceInfo* resourceInfo = getOrCreateResourceInfo(info, resource.uri, resource.metadata);
     if(resourceInfo){
         resource.directory = resourceInfo->directory;
         bool isYamlResouce = (resourceInfo->yamlReader != nullptr);
@@ -1730,7 +1734,7 @@ void StdSceneReader::Impl::extractNamedSceneNodes
 
 
 StdSceneReader::Impl::ResourceInfo*
-StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const string& uri)
+StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const string& uri, const string& metadata)
 {
     auto iter = resourceInfoMap.find(uri);
 
@@ -1806,6 +1810,30 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const strin
         info->yamlReader = std::move(reader);
 
     } else {
+        if(sceneLoaderConfigurationChanged){
+            sceneLoader.setLengthUnitHint(AbstractSceneLoader::Meter);
+            sceneLoader.setUpperAxisHint(AbstractSceneLoader::Z_Upper);
+            sceneLoaderConfigurationChanged = false;
+        }
+        if(!metadata.empty()){
+            size_t start;
+            size_t end = 0;
+            string symbol;
+            while((start = metadata.find_first_not_of(' ', end)) != std::string::npos) {
+                end = metadata.find(' ', start);
+                symbol = metadata.substr(start, end - start);
+                if(symbol == "millimeter"){
+                    sceneLoader.setLengthUnitHint(AbstractSceneLoader::Millimeter);
+                    sceneLoaderConfigurationChanged = true;
+                } else if(symbol == "inch"){
+                    sceneLoader.setLengthUnitHint(AbstractSceneLoader::Inch);
+                    sceneLoaderConfigurationChanged = true;
+                } else if(symbol == "y_upper"){
+                    sceneLoader.setUpperAxisHint(AbstractSceneLoader::Y_Upper);
+                    sceneLoaderConfigurationChanged = true;
+                }
+            }
+        }
         SgNodePtr scene = sceneLoader.load(filename);
         if(!scene){
             resourceNode->throwException(

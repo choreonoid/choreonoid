@@ -69,6 +69,7 @@ public:
         std::string uri;
         std::string directory;
         std::string fragment;
+        std::string metadata;
     };
     Resource readResourceNode(Mapping* info);
     

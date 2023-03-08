@@ -531,11 +531,15 @@ void StdSceneWriter::Impl::makeLinkToOriginalModelFile(Mapping* archive, SgObjec
         uri = getOrCreatePathVariableProcessor()->parameterize(uri.substr(7));
     }
     archive->write("uri", uri, DOUBLE_QUOTED);
+    auto& metadata = sceneObject->uriMetadataString();
+    if(!metadata.empty()){
+        archive->write("metadata", metadata, DOUBLE_QUOTED);
+    }
 }
 
 
 /*
-  TODO: Check if the scene can be written as the target model file formatd.
+  TODO: Check if the scene can be written as the target model file format.
   If it cannot, give up the writing.
 */
 bool StdSceneWriter::Impl::replaceOriginalModelFile
