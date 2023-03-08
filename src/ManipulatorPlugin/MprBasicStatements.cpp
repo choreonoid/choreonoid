@@ -606,7 +606,7 @@ std::string MprDelayStatement::label(int index) const
     if(index == 0){
         return "Delay";
     } else if(index == 1){
-        return format("{0:.3}", time_);
+        return format("{0: .2f}", time_);
     }
     return string();
 }
