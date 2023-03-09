@@ -292,11 +292,9 @@ void CoordinateFrameItem::Impl::putFrameAttributes(PutPropertyFunction& putPrope
         }
     } else {
         if(id.isInt()){
-            putProperty(_("ID"), id.toInt(),
-                        [&](int value){ return resetFrameId(value); });
+            putProperty.min(1)(_("ID"), id.toInt(), [&](int value){ return resetFrameId(value); });
         } else if(id.isString()){
-            putProperty(_("ID"), id.toString(),
-                        [&](const string& value){ return resetFrameId(value); });
+            putProperty(_("ID"), id.toString(), [&](const string& value){ return resetFrameId(value); });
         }
         if(frame){
             if(!isModeEditable){

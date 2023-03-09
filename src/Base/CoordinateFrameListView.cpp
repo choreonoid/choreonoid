@@ -342,15 +342,17 @@ bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, in
     if(role == Qt::EditRole){
         switch(index.column()){
         case IdColumn: {
-            bool isInt;
-            auto stringId = value.toString();
-            int intId = stringId.toInt(&isInt);
-            if(isInt){
-                frameList->resetId(frame, intId);
+            if(frame->id().isInt()){
+                bool ok;
+                auto intValue = value.toInt(&ok);
+                if(ok){
+                    frameList->resetId(frame, intValue);
+                    updateFlags = CoordinateFrame::IdUpdate;
+                }
             } else {
-                frameList->resetId(frame, stringId.toStdString());
+                frameList->resetId(frame, value.toString().toStdString());
+                updateFlags = CoordinateFrame::IdUpdate;
             }
-            updateFlags = CoordinateFrame::IdUpdate;
             break;
         }
         case NoteColumn:
