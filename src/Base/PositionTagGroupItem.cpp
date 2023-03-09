@@ -312,6 +312,8 @@ PositionTagGroupItem::PositionTagGroupItem(const PositionTagGroupItem& org, Clon
     : Item(org)
 {
     impl = new Impl(this, org.impl, cloneMap);
+
+    setChecked(org.isChecked());
 }
 
 
