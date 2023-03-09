@@ -102,10 +102,11 @@ public:
     FrameLabelFunction frameLabelFunction[2];
 
     ScopedConnection kinematicsBarConnection;
-    
+
     QLabel resultLabel;
     PushButton fetchButton;
     PushButton applyButton;
+    QLabel coordLabel;
 
     enum CoordinateMode { WorldCoordinateMode, BaseFrameCoordinateMode, LocalCoordinateMode, NumCoordinateModes };
     Selection coordinateModeSelection;
@@ -115,7 +116,6 @@ public:
     RadioButton worldCoordRadio;
     RadioButton baseCoordRadio;
     RadioButton localCoordRadio;
-    vector<QWidget*> coordinateModeWidgets;
 
     // Temporary origin of the local coordinate
     Isometry3 T_local0;
@@ -125,7 +125,7 @@ public:
 
     QLabel frameComboLabel[2];
     ComboBox frameCombo[2];
-    bool isFrameComboEnabled[2];
+    bool isFrameSelectionEnabled[2];
     
     QLabel configurationLabel;
     vector<int> currentConfigurationTypes;
@@ -142,6 +142,7 @@ public:
     void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
     void updateTargetLink(Link* link);
     void onKinematicsModeChanged();
+    void setMainInterfaceEnabled(bool on);
     void setCoordinateFrameInterfaceEnabled(int frameComboIndex, bool isEnabled);
     void updateCoordinateFrameCandidates();
     void updateCoordinateFrameCandidates(int frameComboIndex);
@@ -229,28 +230,24 @@ void LinkPositionWidget::Impl::createPanel()
     vbox->addLayout(hbox);
 
     hbox = new QHBoxLayout;
-    auto coordLabel = new QLabel(_("Coord:"));
-    hbox->addWidget(coordLabel);
-    coordinateModeWidgets.push_back(coordLabel);
+    coordLabel.setText(_("Coord:"));
+    hbox->addWidget(&coordLabel);
     
     coordinateModeSelection.setSymbol(WorldCoordinateMode, "world");
     worldCoordRadio.setText(_("World"));
     worldCoordRadio.setChecked(true);
     hbox->addWidget(&worldCoordRadio);
     coordinateModeGroup.addButton(&worldCoordRadio, WorldCoordinateMode);
-    coordinateModeWidgets.push_back(&worldCoordRadio);
 
     coordinateModeSelection.setSymbol(BaseFrameCoordinateMode, "base");
     baseCoordRadio.setText(_("Base"));
     hbox->addWidget(&baseCoordRadio);
     coordinateModeGroup.addButton(&baseCoordRadio, BaseFrameCoordinateMode);
-    coordinateModeWidgets.push_back(&baseCoordRadio);
 
     coordinateModeSelection.setSymbol(LocalCoordinateMode, "local");
     localCoordRadio.setText(_("Local"));
     hbox->addWidget(&localCoordRadio);
     coordinateModeGroup.addButton(&localCoordRadio, LocalCoordinateMode);
-    coordinateModeWidgets.push_back(&localCoordRadio);
 
     coordinateMode = WorldCoordinateMode;
     preferredCoordinateMode = BaseFrameCoordinateMode;
@@ -271,6 +268,8 @@ void LinkPositionWidget::Impl::createPanel()
         [&](const Isometry3& T){ return applyPositionInput(T); },
         [&](){ finishPositionEditing(); });
     vbox->addWidget(positionWidget);
+
+    setMainInterfaceEnabled(false);
 
     auto grid = new QGridLayout;
     int row = 0;
@@ -297,9 +296,8 @@ void LinkPositionWidget::Impl::createPanel()
         
         grid->addWidget(&frameCombo[i], row + i, 1, 1, 2);
 
-        frameComboLabel[i].setEnabled(false);
-        frameCombo[i].setEnabled(false);
-        isFrameComboEnabled[i] = false;
+        setCoordinateFrameInterfaceEnabled(i, false);
+        isFrameSelectionEnabled[i] = false;
     }
     row += 2;
 
@@ -491,16 +489,12 @@ void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* li
         }
     }
 
-    if(!link){
-        return;
-    }
-
     if(bodyItem != targetBodyItem){
         positionWidget->clearPosition();
         targetConnections.disconnect();
-            
+
         targetBodyItem = bodyItem;
-    
+
         if(bodyItem){
             targetConnections.add(
                 bodyItem->sigNameChanged().connect(
@@ -554,20 +548,13 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
     }
 
     bool isEditable = kinematicsKit != nullptr;
-    fetchButton.setEnabled(isEditable);
-    applyButton.setEnabled(isEditable);
-    baseCoordRadio.setEnabled(isBaseCoordinateModeEnabled);
-    positionWidget->setEditable(isEditable);
 
-    frameCombo[BaseFrame].setEnabled(isEditable);
-    frameCombo[OffsetFrame].setEnabled(isEditable);
-    
-    isFrameComboEnabled[BaseFrame] = isBaseCoordinateModeEnabled;
-    isFrameComboEnabled[OffsetFrame] = true;
-    
+    setMainInterfaceEnabled(isEditable);
+    baseCoordRadio.setEnabled(isBaseCoordinateModeEnabled);
+    isFrameSelectionEnabled[BaseFrame] = isBaseCoordinateModeEnabled;
+    isFrameSelectionEnabled[OffsetFrame] = true;
     updateCoordinateFrameCandidates();
     setCoordinateMode(preferredCoordinateMode, false, false);
-
     resultLabel.setText("");
 
     initializeConfigurationInterface();
@@ -582,12 +569,25 @@ void LinkPositionWidget::Impl::onKinematicsModeChanged()
 }
 
 
-void LinkPositionWidget::Impl::setCoordinateFrameInterfaceEnabled(int frameComboIndex, bool isEnabled)
+void LinkPositionWidget::Impl::setMainInterfaceEnabled(bool on)
+{
+    resultLabel.setEnabled(on);
+    fetchButton.setEnabled(on);
+    applyButton.setEnabled(on);
+    coordLabel.setEnabled(on);
+    worldCoordRadio.setEnabled(on);
+    baseCoordRadio.setEnabled(on);
+    localCoordRadio.setEnabled(on);
+    positionWidget->setEnabled(on);
+}
+
+
+void LinkPositionWidget::Impl::setCoordinateFrameInterfaceEnabled(int frameComboIndex, bool on)
 {
     auto& combo = frameCombo[frameComboIndex];
-    if(isEnabled != combo.isEnabled()){
-        combo.setEnabled(isEnabled);
-        frameComboLabel[frameComboIndex].setEnabled(isEnabled);
+    if(on != combo.isEnabled()){
+        combo.setEnabled(on);
+        frameComboLabel[frameComboIndex].setEnabled(on);
     }
 }
 
@@ -617,7 +617,7 @@ void LinkPositionWidget::Impl::updateCoordinateFrameCandidates(int frameComboInd
     bool hasCandidates = false;
     auto& combo = frameCombo[frameComboIndex];
     combo.clear();
-    if(isFrameComboEnabled[frameComboIndex] && frames){
+    if(isFrameSelectionEnabled[frameComboIndex] && frames){
         auto& labelFunction = frameLabelFunction[frameComboIndex];
         if(frames->numFrames() > 0){
             updateCoordinateFrameComboItems(combo, frames, currentFrameId, labelFunction);
