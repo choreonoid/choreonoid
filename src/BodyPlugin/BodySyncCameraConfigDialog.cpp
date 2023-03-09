@@ -322,6 +322,8 @@ void BodySyncCameraConfigDialog::Impl::updateWidgetsWithCurrentCameraStates()
     farClipSpin.setValue(camera->farClipDistance());
     fovSpin.setValue(degree(camera->fieldOfView()));
 
+    parallelTrackingCheck.setChecked(cameraItem->isParallelTrackingMode());
+
     interactiveViewpointChangeCheck.setChecked(
         cameraItem->isInteractiveViewpointChangeEnabled());
 
@@ -397,6 +399,8 @@ void BodySyncCameraConfigDialog::Impl::onCameraPositionSpinValueChanged()
     }
 
     cameraConnection.unblock();
+
+    cameraItem->notifyUpdate();
 }
 
 
@@ -405,6 +409,7 @@ void BodySyncCameraConfigDialog::Impl::onFieldOfViewSpinValueChanged(double fov)
     auto camera = cameraItem->perspectiveCamera();
     camera->setFieldOfView(radian(fov));
     camera->notifyUpdate();
+    cameraItem->notifyUpdate();
 }
 
 
@@ -414,18 +419,21 @@ void BodySyncCameraConfigDialog::Impl::onClipDistanceSpinValueChanged()
     camera->setNearClipDistance(nearClipSpin.value());
     camera->setFarClipDistance(farClipSpin.value());
     camera->notifyUpdate();
+    cameraItem->notifyUpdate();
 }
 
 
 void BodySyncCameraConfigDialog::Impl::onParallelTrackingModeToggled(bool on)
 {
     cameraItem->setParallelTrackingMode(on);
+    cameraItem->notifyUpdate();
 }
 
 
 void BodySyncCameraConfigDialog::Impl::onInteractiveViewpointChangeToggled(bool on)
 {
     cameraItem->setInteractiveViewpointChangeEnabled(on);
+    cameraItem->notifyUpdate();
 }
 
 
