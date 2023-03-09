@@ -83,7 +83,7 @@ public:
     void onProjectOptionsParsed(boost::program_options::variables_map& v);
     void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
     bool onSaveDialogAboutToFinish(int result);
-    bool confirmToCloseProject();
+    bool confirmToCloseProject(bool isAboutToLoadNewProject);
     bool checkValidItemExistence(Item* item);
     bool checkItemTreeConsistencyWithArchive(Item* item);
 
@@ -787,7 +787,7 @@ void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& in
 
 bool ProjectManager::showDialogToLoadProject()
 {
-    if(!impl->confirmToCloseProject()){
+    if(!impl->confirmToCloseProject(true)){
         return false;
     }
     
@@ -864,11 +864,11 @@ bool ProjectManager::Impl::onSaveDialogAboutToFinish(int result)
 
 bool ProjectManager::tryToCloseProject()
 {
-    return impl->confirmToCloseProject();
+    return impl->confirmToCloseProject(false);
 }
 
 
-bool ProjectManager::Impl::confirmToCloseProject()
+bool ProjectManager::Impl::confirmToCloseProject(bool isAboutToLoadNewProject)
 {
     auto rootItem = RootItem::instance();
     
@@ -886,13 +886,23 @@ bool ProjectManager::Impl::confirmToCloseProject()
     QString message;
     QMessageBox::StandardButton clicked;
     if(currentProjectFile.empty()){
-        message = _("Current project has not been saved yet. "
-                    "Do you want to save it as a project file before loading a new project?");
+        if(isAboutToLoadNewProject){
+            message = _("Current project has not been saved yet. "
+                        "Do you want to save it as a project file before loading a new project?");
+        } else {
+            message = _("Current project has not been saved yet. "
+                        "Do you want to save it as a project file before closing the project?");
+        }
         clicked = QMessageBox::warning(
             mw, title, message, QMessageBox::Save | QMessageBox::Cancel | QMessageBox::Ignore);
     } else {
-        message = _("Project \"%1\" has been updated. "
-                    "Do you want to save it before loading a new project?");
+        if(isAboutToLoadNewProject){
+            message = _("Project \"%1\" has been updated. "
+                        "Do you want to save it before loading a new project?");
+        } else {
+            message = _("Project \"%1\" has been updated. "
+                        "Do you want to save it before closing the project?");
+        }
         clicked = QMessageBox::warning(
             mw, title, message.arg(currentProjectName.c_str()),
             QMessageBox::Save | QMessageBox::Cancel | QMessageBox::Ignore);
