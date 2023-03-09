@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-02-01 23:42+0900\n"
+"POT-Creation-Date: 2023-03-09 12:16+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -179,6 +179,12 @@ msgstr "OpenGL {0} が \"{1}\" ビューで利用可能です．\n"
 
 msgid "Driver profile: {0} {1}."
 msgstr "ドライバプロファイル: {0} {1}."
+
+msgid "FT_Init_FreeType failed with error code {0}."
+msgstr "FT_Init_FreeTypeがエラーコード{0}で失敗しました．"
+
+msgid "FT_New_Face for \"{0}\" failed with error code {1}."
+msgstr "\"{0}\" に対するFT_New_Faceがエラーコード{1}で失敗しました."
 
 msgid "Shader \"{}\" is not found."
 msgstr "シェーダ \"{}\" がみつかりません．"
@@ -1165,6 +1171,9 @@ msgstr "フレームあたり要素数"
 msgid "Plain Format of a Multi Value Sequence"
 msgstr "複数値時系列のプレインフォーマット"
 
+msgid "MultiVector3SeqItem"
+msgstr "複数3次元ベクトル時系列アイテム"
+
 msgid "Input file \"{}\" was not processed."
 msgstr "入力ファイル  \"{}\" は処理されませんでした．"
 
@@ -1251,6 +1260,21 @@ msgstr "編集可能"
 msgid "Num points"
 msgstr "ポイント数"
 
+msgid "Roll-pitch-yaw"
+msgstr "ロールピッチヨー"
+
+msgid "Fetch as a unique RPY value"
+msgstr "一意なRPY値として取り込み"
+
+msgid "Quaternion"
+msgstr "クォータニオン"
+
+msgid "Rotation matrix"
+msgstr "回転行列"
+
+msgid "Additional precision"
+msgstr "追加精度"
+
 msgid "PositionTagGroupItem"
 msgstr "ポジションタググループアイテム"
 
@@ -1320,21 +1344,6 @@ msgstr "\"%1\" の親座標系は \"%2\" の座標系に変更されます."
 msgid "The parent coordinate system of \"%1\" is changed to the global coordinate system."
 msgstr "\"%1\" の親座標系はグローバル座標系に変更されます."
 
-msgid "Roll-pitch-yaw"
-msgstr "ロールピッチヨー"
-
-msgid "Fetch as a unique RPY value"
-msgstr "一意なRPY値として取り込み"
-
-msgid "Quaternion"
-msgstr "クォータニオン"
-
-msgid "Rotation matrix"
-msgstr "回転行列"
-
-msgid "Additional precision"
-msgstr "追加精度"
-
 msgid ""
 "The state of the \"{0}\" {1} was not completely restored.\n"
 "{2}"
@@ -1398,8 +1407,16 @@ msgid ""
 "new project?"
 msgstr "現在のプロジェクトは保存されていません．新しいプロジェクトを読み込む前に保存しますか？"
 
+msgid ""
+"Current project has not been saved yet. Do you want to save it as a project file before closing "
+"the project?"
+msgstr "現在のプロジェクトは保存されていません．プロジェクトを閉じる前に保存しますか？"
+
 msgid "Project \"%1\" has been updated. Do you want to save it before loading a new project?"
 msgstr "プロジェクト \"%1\" は更新されています．新しいプロジェクトを読み込む前に保存しますか？"
+
+msgid "Project \"%1\" has been updated. Do you want to save it before closing the project?"
+msgstr "プロジェクト \"%1\" は更新されています．プロジェクトを閉じる前に保存しますか？"
 
 msgid "Save a project"
 msgstr "プロジェクトの保存"
