@@ -167,7 +167,8 @@ public:
     ~Impl();
     void init(bool calledFromCopyConstructor);
     void initBody(bool calledFromCopyConstructor);
-    bool loadModelFile(const std::string& filename);
+    void resetLinkCollisions();
+    bool doAssign(const Item* srcItem);
     void setBody(Body* body);
     void notifyModelUpdate(int flags);
     void setCurrentBaseLink(Link* link, bool forceUpdate, bool doNotify);
@@ -184,7 +185,6 @@ public:
     bool setCollisionDetectionEnabled(bool on);
     bool setSelfCollisionDetectionEnabled(bool on);
     void updateCollisionDetectorLater();
-    bool doAssign(const Item* srcItem);
     void setLocationEditable(bool on, bool updateInitialPositionWhenLocked);
     void createSceneBody();
     void setTransparency(float t);
@@ -333,16 +333,23 @@ void BodyItem::Impl::initBody(bool calledFromCopyConstructor)
         pinDragIK.reset();
     }
 
-    int n = body->numLinks();
-
-    self->collisionsOfLink_.resize(n);
-    self->collisionLinkBitSet_.resize(n);
-    
     if(!calledFromCopyConstructor){
         setCurrentBaseLink(nullptr, true, false);
         zmp.setZero();
         self->storeInitialState();
     }
+
+    resetLinkCollisions();
+}
+
+
+void BodyItem::Impl::resetLinkCollisions()
+{
+    int n = body->numLinks();
+    self->collisionsOfLink_.clear();
+    self->collisionsOfLink_.resize(n);
+    self->collisionLinkBitSet_.clear();
+    self->collisionLinkBitSet_.resize(n);
 }
 
 
@@ -537,6 +544,7 @@ void BodyItem::notifyModelUpdate(int flags)
 void BodyItem::Impl::notifyModelUpdate(int flags)
 {
     if(flags & LinkSetUpdate){
+        resetLinkCollisions();
         setCurrentBaseLink(currentBaseLink, true, false);
         if(kinematicsKitManager){
             kinematicsKitManager->clearKinematicsKits();

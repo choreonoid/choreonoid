@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_PLUGIN_KINEMATICS_BAR_H
 #define CNOID_BODY_PLUGIN_KINEMATICS_BAR_H
 
@@ -40,16 +36,19 @@ public:
     bool isPenetrationBlockMode() const;
     double penetrationBlockDepth() const;
 
+    int collisionDetectionPriority() const { return collisionDetectionPriority_; }
+
     bool isCollisionLinkHighlihtMode() const;
-    int collisionDetectionPriority() const;
     SignalProxy<void()> sigCollisionVisualizationChanged();
 
 protected:
-    virtual bool storeState(Archive& archive);
-    virtual bool restoreState(const Archive& archive);
+    virtual bool storeState(Archive& archive) override;
+    virtual bool restoreState(const Archive& archive) override;
             
 private:
     KinematicsBar();
+
+    int collisionDetectionPriority_;
 
     class Impl;
     Impl* impl;

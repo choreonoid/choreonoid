@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "KinematicsBar.h"
 #include <cnoid/MainWindow>
 #include <cnoid/Archive>
@@ -40,6 +36,7 @@ namespace cnoid {
 class KinematicsBar::Impl
 {
 public:
+    KinematicsBar* self;
     ToolButton* fkToggle;
     ToolButton* presetToggle;
     ToolButton* ikToggle;
@@ -51,7 +48,6 @@ public:
     ToolButton* penetrationBlockToggle;
 
     ToolButton* collisionLinkHighlightToggle;
-    int collisionDetectionPriority;
     Signal<void()> sigCollisionVisualizationChanged;            
 
     KinematicsBarSetupDialog* setup;
@@ -80,6 +76,7 @@ KinematicsBar::KinematicsBar()
 
 
 KinematicsBar::Impl::Impl(KinematicsBar* self)
+    : self(self)
 {
     setup = new KinematicsBarSetupDialog;
     
@@ -217,12 +214,6 @@ bool KinematicsBar::isCollisionLinkHighlihtMode() const
 }
 
 
-int KinematicsBar::collisionDetectionPriority() const
-{
-    return impl->collisionDetectionPriority;
-}
-
-
 SignalProxy<void()> KinematicsBar::sigCollisionVisualizationChanged()
 {
     return impl->sigCollisionVisualizationChanged;
@@ -232,9 +223,9 @@ SignalProxy<void()> KinematicsBar::sigCollisionVisualizationChanged()
 void KinematicsBar::Impl::onLazyCollisionDetectionModeToggled()
 {
     if(setup->lazyCollisionDetectionModeCheck.isChecked()){
-        collisionDetectionPriority = LazyCaller::PRIORITY_NORMAL;
+        self->collisionDetectionPriority_ = LazyCaller::PRIORITY_NORMAL;
     } else {
-        collisionDetectionPriority = LazyCaller::PRIORITY_HIGH;
+        self->collisionDetectionPriority_ = LazyCaller::PRIORITY_HIGH;
     }
 }
 
@@ -308,8 +299,6 @@ bool KinematicsBar::Impl::restoreState(const Archive& archive)
 }
 
 
-namespace {
-
 KinematicsBarSetupDialog::KinematicsBarSetupDialog()
 {
     setWindowTitle(_("Kinematics Operation Setup"));
@@ -378,6 +367,4 @@ void KinematicsBarSetupDialog::restoreState(const Archive& archive)
     penetrationBlockDepthSpin.setValue(archive.get("penetrationBlockDepth", penetrationBlockDepthSpin.value()));
     lazyCollisionDetectionModeCheck.setChecked(
         archive.get("lazyCollisionDetectionMode", lazyCollisionDetectionModeCheck.isChecked()));
-}
-
 }
