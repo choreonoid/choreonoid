@@ -228,7 +228,7 @@ SceneRendererConfig::Impl::Impl(const Impl& org, SceneRendererConfig* self)
     isAdditionalLightSetEnabled = org.isAdditionalLightSetEnabled;
     isShadowCastingAvailable = org.isShadowCastingAvailable;
     isShadowAntiAliasingEnabled = org.isShadowAntiAliasingEnabled;
-    isWorldLightEnabled = org.isWorldLightShadowEnabled;
+    isWorldLightShadowEnabled = org.isWorldLightShadowEnabled;
     isTextureEnabled = org.isTextureEnabled;
     isFogEnabled = org.isFogEnabled;
     isUpsideDownEnabled = org.isUpsideDownEnabled;
