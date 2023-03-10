@@ -386,6 +386,9 @@ void MainWindow::Impl::showFirst()
             }
             self->showFullScreen();
             //isGoingToMaximized = false;
+
+            sigFullScreenToggled(isFullScreen);
+
         } else if(config->get("maximized", false)){
 #ifdef Q_OS_WIN32
             self->resize(getAvailableScreenSize());
@@ -403,7 +406,7 @@ void MainWindow::Impl::showFirst()
             }
             self->showNormal();
         }
-        
+
         viewArea->setViewTabsVisible(config->get({ "show_view_tabs" }, true));
         self->statusBar()->setVisible(config->get("show_status_bar", true));
 
