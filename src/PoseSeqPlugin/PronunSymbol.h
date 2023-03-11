@@ -21,8 +21,8 @@ public:
         symbol_ = symbol;
     }
     
-    virtual bool restore(const Mapping& archive, const Body* body);
-    virtual void store(Mapping& archive, const Body* body) const;
+    virtual bool restore(const Mapping& archive, const Body* body) override;
+    virtual void store(Mapping& archive, const Body* body) const override;
 
 protected:
     virtual Referenced* doClone(CloneMap*) const override;

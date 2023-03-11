@@ -197,9 +197,10 @@ public:
     void selectNextPose(bool isAdding);
     void onMenuButtonClicked();
 
-    bool storeState(Archive& archive);
-    bool restoreState(const Archive& archive);
+    bool storeState(Archive& archive) override;
+    bool restoreState(const Archive& archive) override;
 };
+
 }
 
 
