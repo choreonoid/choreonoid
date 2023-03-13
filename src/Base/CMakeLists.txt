@@ -136,6 +136,7 @@ set(sources
   MultiPointSetItem.cpp
   PositionTagGroupItem.cpp
   PositionTagListWidget.cpp
+  GeometryMeasurementTracker.cpp
   MovieRecorder.cpp
   MovieRecorderBar.cpp
   MovieRecorderDialog.cpp
@@ -288,6 +289,7 @@ set(headers
   MultiPointSetItem.h
   PositionTagGroupItem.h
   PositionTagListWidget.h
+  GeometryMeasurementTracker.h
   MovieRecorder.h
   MovieRecorderBar.h
   MovieRecorderDialog.h

@@ -16,6 +16,7 @@ set(sources
   BodyItemKinematicsKitManager.cpp
   LinkOffsetFrameListItem.cpp
   KinematicBodyItemSet.cpp
+  BodyGeometryMeasurementTracker.cpp
   MaterialTableItem.cpp
   SimulatorItem.cpp
   SubSimulatorItem.cpp
