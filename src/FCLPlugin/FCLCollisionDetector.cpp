@@ -52,7 +52,7 @@ public:
     shared_ptr<MeshModelf> meshModel;
     shared_ptr<CollisionObjectf> meshObject;
     vector<shared_ptr<CollisionObjectf>> primitiveObjects;
-    vector<Isometry3> primitiveLocalPositions;
+    vector<Isometry3, Eigen::aligned_allocator<Isometry3>> primitiveLocalPositions;
     ReferencedPtr object;
 #ifdef CNOID_FCL_05
     vector<fcl::Vec3f> points;
