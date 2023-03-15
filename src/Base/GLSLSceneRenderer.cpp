@@ -1092,9 +1092,9 @@ void GLSLSceneRenderer::Impl::initializeDepthTexture()
         glBindTexture(GL_TEXTURE_2D, depthTexture);
     }
 
-    Array4i vp = self->viewport();
+    auto& vp = self->viewport();
     // NVIDIA GPUs support only the following format for the depth texture used with the default frame buffer
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, vp[2], vp[3], 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, vp.w, vp.h, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if(status != GL_FRAMEBUFFER_COMPLETE){
@@ -1339,7 +1339,7 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
 
         int w, h;
         program->getShadowMapSize(w, h);
-        Array4i vp = self->viewport();
+        auto vp0 = self->viewport(); // preserve the original viewport size
         glViewport(0, 0, w, h);
         self->GLSceneRenderer::updateViewportInformation(0, 0, w, h);
 
@@ -1365,8 +1365,8 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
         popProgram();
         isRenderingShadowMap = false;
 
-        glViewport(0, 0, vp[2], vp[3]);
-        self->GLSceneRenderer::updateViewportInformation(0, 0, vp[2], vp[3]);
+        glViewport(0, 0, vp0.w, vp0.h);
+        self->GLSceneRenderer::updateViewportInformation(0, 0, vp0.w, vp0.h);
     }
         
     pushProgram(program);
@@ -1387,15 +1387,14 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
         initializeGLForRendering();
     }
     
-    int vx, vy, width, height;
-    self->getViewport(vx, vy, width, height);
+    auto& vp = self->viewport();
 
     if(!fboForPicking){
         glGenFramebuffers(1, &fboForPicking);
     }
     glBindFramebuffer(GL_FRAMEBUFFER, fboForPicking);
 
-    if(width != pickingImageWidth || height != pickingImageHeight){
+    if(vp.w != pickingImageWidth || vp.h != pickingImageHeight){
         // color buffer
         if(colorBufferForPicking){
             // The buffer seems to have to be regenerated when the buffer size is changed
@@ -1405,7 +1404,7 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
         }
         glGenRenderbuffers(1, &colorBufferForPicking);
         glBindRenderbuffer(GL_RENDERBUFFER, colorBufferForPicking);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, width, height);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, vp.w, vp.h);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBufferForPicking);
             
         // depth buffer
@@ -1417,11 +1416,11 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
         }
         glGenRenderbuffers(1, &depthBufferForPicking);
         glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForPicking);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, width, height);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, vp.w, vp.h);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForPicking);
 
-        pickingImageWidth = width;
-        pickingImageHeight = height;
+        pickingImageWidth = vp.w;
+        pickingImageHeight = vp.h;
     }
 
     if(!isPickingImageOutputEnabled){
@@ -1488,7 +1487,6 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
             glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForPicking);
         }
-        Vector3 projected;
         if(self->unproject(x, y, depth, pickedPoint)){
             pickedNodePath = *pickingNodePathList[pickIndex];
         }
@@ -1825,16 +1823,16 @@ void GLSLSceneRenderer::Impl::renderTransparentObjects()
         glDepthMask(GL_FALSE);
     }
 
-    for(auto& func : transparentRenderingQueue){
+    while(!transparentRenderingQueue.empty()){
+        auto& func = transparentRenderingQueue.front();
         func();
+        transparentRenderingQueue.pop_front();
     }
 
     if(!isRenderingPickingImage){
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
     }
-
-    transparentRenderingQueue.clear();
 }
 
 
@@ -1851,10 +1849,10 @@ void GLSLSceneRenderer::Impl::renderOverlayObjects()
     }
     if(!depthBufferForOverlay){
         glGenRenderbuffers(1, &depthBufferForOverlay);
-        Array4i vp = self->viewport();
+        auto& vp = self->viewport();
         glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForOverlay);
         // NVIDIA GPUs support only the following format for the depth texture used with the default frame buffer
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, vp[2], vp[3]);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, vp.w, vp.h);
     }
 
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForOverlay);
@@ -1864,10 +1862,11 @@ void GLSLSceneRenderer::Impl::renderOverlayObjects()
         overlayPickIndex0 = pickingNodePathList.size();
     }
 
-    for(auto& func : overlayRenderingQueue){
+    while(!overlayRenderingQueue.empty()){
+        auto& func = overlayRenderingQueue.front();
         func();
+        overlayRenderingQueue.pop_front();
     }
-    overlayRenderingQueue.clear();
 
     if(!transparentRenderingQueue.empty()){
         renderTransparentObjects();
@@ -1901,6 +1900,30 @@ const Matrix4& GLSLSceneRenderer::viewProjectionMatrix() const
 }
 
 
+Vector3 GLSLSceneRenderer::project(const Vector3& p) const
+{
+    Vector4 p2 = impl->PV * Vector4(p.x(), p.y(), p.z(), 1.0);
+    Vector3 p3 = p2.head<3>() / p2.w();
+    auto& v = viewport();
+    double x = ((p3.x() + 1.0) / 2.0) * v.w + v.x;
+    double y = ((p3.y() + 1.0) / 2.0) * v.h + v.y;
+    return Vector3(x, y, p3.z());
+}
+
+
+double GLSLSceneRenderer::projectedPixelSizeRatio(const Vector3& position) const
+{
+    Vector3 p2 = impl->viewTransform * position;
+    Vector4 p3(1.0, 0.0, p2.z(), 1.0);
+    Vector4 q = impl->projectionMatrix * p3;
+    double r = (q.x() / q[3]) * viewport().w / 2.0;
+    if(r < 0.0){
+        r = 0.0;
+    }
+    return r;
+}
+
+
 Matrix4 GLSLSceneRenderer::modelViewMatrix() const
 {
     return (impl->viewTransform * impl->modelMatrixStack.back()).matrix();
@@ -1910,20 +1933,6 @@ Matrix4 GLSLSceneRenderer::modelViewMatrix() const
 Matrix4 GLSLSceneRenderer::modelViewProjectionMatrix() const
 {
     return impl->PV * impl->modelMatrixStack.back().matrix();
-}
-
-
-double GLSLSceneRenderer::projectedPixelSizeRatio(const Vector3& position) const
-{
-    auto vp = viewport();
-    Vector3 p2 = impl->viewTransform * position;
-    Vector4 p3(1.0, 0.0, p2.z(), 1.0);
-    Vector4 q = impl->projectionMatrix * p3;
-    double r = (q.x() / q[3]) * vp[2] / 2.0;
-    if(r < 0.0){
-        r = 0.0;
-    }
-    return r;
 }
 
 
@@ -3089,7 +3098,7 @@ void GLSLSceneRenderer::Impl::renderText(SgText* text)
             glGenBuffers(1, &resource->vbo);
         }
         if(resource->isTextUpdateNeeded){
-            freeType.setText(text->text(), text->textHeight());
+            freeType.setText(text->text(), text->textHeight() * self->devicePixelRatio());
             auto& vertices = freeType.vertices();
             resource->numVertices = vertices.size();
             if(!vertices.empty()){
@@ -3227,11 +3236,10 @@ void GLSLSceneRenderer::Impl::renderViewportOverlay(SgViewportOverlay* overlay)
 void GLSLSceneRenderer::Impl::renderViewportOverlayMain(SgViewportOverlay* overlay)
 {
     const Matrix4 PV0 = PV;
-    SgViewportOverlay::ViewVolume v;
-    int x, y, width, height;
-    self->getViewport(x, y, width, height);
-    overlay->calcViewVolume(width, height, v);
-    self->getOrthographicProjectionMatrix(v.left, v.right, v.bottom, v.top, v.zNear, v.zFar, PV);
+    SgViewportOverlay::ViewVolume vv;
+    auto& vp = self->viewport();
+    overlay->calcViewVolume(vp.w, vp.h, vv);
+    self->getOrthographicProjectionMatrix(vv.left, vv.right, vv.bottom, vv.top, vv.zNear, vv.zFar, PV);
 
     pickedNodePath.clear();
 

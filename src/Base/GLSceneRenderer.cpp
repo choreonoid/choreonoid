@@ -30,8 +30,6 @@ public:
     GLSceneRenderer* self;
     SgGroupPtr sceneRoot;
     SgGroupPtr scene;
-    Array4i viewport;
-    float aspectRatio; // width / height;
     Vector3f backgroundColor;
     Vector3f defaultColor;
     ostream* os_;
@@ -87,8 +85,13 @@ GLSceneRenderer::Impl::Impl(GLSceneRenderer* self, SgGroup* sceneRoot)
     sceneRoot->addChild(scene);
 
     int invaid = std::numeric_limits<int>::min();
-    viewport << invaid, invaid, invaid, invaid;
-    aspectRatio = 1.0f;
+    auto& vp = self->viewport_;
+    vp.x = invaid;
+    vp.y = invaid;
+    vp.w = invaid;
+    vp.h = invaid;
+    self->aspectRatio_ = 1.0f;
+    self->devicePixelRatio_ = 1.0f;
     backgroundColor << 0.1f, 0.1f, 0.3f; // dark blue
     defaultColor << 1.0f, 1.0f, 1.0f;
 
@@ -164,34 +167,15 @@ void GLSceneRenderer::setDefaultColor(const Vector3f& color)
 
 void GLSceneRenderer::updateViewportInformation(int x, int y, int width, int height)
 {
-    auto& vp = impl->viewport;
-    if(x != vp[0] || y != vp[1] || width != vp[2] || height != vp[3]){
-        if(height > 0){
-            impl->aspectRatio = (double)width / height;
-        }
-        vp << x, y, width, height;
+    if(height <= 0){
+        aspectRatio_ = 1.0;
+    } else {
+        aspectRatio_ = static_cast<double>(width) / height;
     }
-}
-
-
-Array4i GLSceneRenderer::viewport() const
-{
-    return impl->viewport;
-}
-
-
-void GLSceneRenderer::getViewport(int& out_x, int& out_y, int& out_width, int& out_height) const
-{
-    out_x = impl->viewport[0];
-    out_y = impl->viewport[1];
-    out_width = impl->viewport[2];
-    out_height = impl->viewport[3];
-}    
-
-
-double GLSceneRenderer::aspectRatio() const
-{
-    return impl->aspectRatio;
+    viewport_.x = x;
+    viewport_.y = y;
+    viewport_.w = width;
+    viewport_.h = height;
 }
 
 
@@ -266,9 +250,9 @@ void GLSceneRenderer::getOrthographicProjectionMatrix
 void GLSceneRenderer::getViewFrustum
 (const SgPerspectiveCamera* camera, double& left, double& right, double& bottom, double& top) const
 {
-    top = camera->nearClipDistance() * tan(camera->fovy(impl->aspectRatio) / 2.0);
+    top = camera->nearClipDistance() * tan(camera->fovy(aspectRatio_) / 2.0);
     bottom = -top;
-    right = top * impl->aspectRatio;
+    right = top * aspectRatio_;
     left = -right;
 }
 
@@ -279,7 +263,7 @@ void GLSceneRenderer::getViewVolume
     float h = camera->height();
     out_top = h / 2.0f;
     out_bottom = -h / 2.0f;
-    float w = h * impl->aspectRatio;
+    float w = h * aspectRatio_;
     out_left = -w / 2.0f;
     out_right = w / 2.0f;
 }
@@ -287,11 +271,9 @@ void GLSceneRenderer::getViewVolume
 
 bool GLSceneRenderer::unproject(double x, double y, double z, Vector3& out_projected) const
 {
-    const Array4i& vp = impl->viewport;
-
     Vector4 p;
-    p[0] = 2.0 * (x - vp[0]) / vp[2] - 1.0;
-    p[1] = 2.0 * (y - vp[1]) / vp[3] - 1.0;
+    p[0] = 2.0 * (x - viewport_.x) / viewport_.w - 1.0;
+    p[1] = 2.0 * (y - viewport_.y) / viewport_.h - 1.0;
     p[2] = 2.0 * z - 1.0;
     p[3] = 1.0;
 

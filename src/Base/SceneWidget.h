@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_SCENE_WIDGET_H
 #define CNOID_BASE_SCENE_WIDGET_H
 
@@ -92,6 +88,12 @@ public:
     void rotateBuiltinCameraView(double dPitch, double dYaw);
     void translateBuiltinCameraView(const Vector3& dp_local);
 
+    /**
+       \note In contrast to SceneRenderer::unproject, this function is used for converting the mouse cursor position
+       to the potition in the scene. The arguments x and y of this function are the mouse cursor coordinate whose
+       resolution may be less than the resolution of the viewport coordinates in high-dpi display environments
+       where the device pixel ratio is greator than 1.0.
+    */
     bool unproject(double x, double y, double z, Vector3& out_projected) const;
         
     void viewAll();

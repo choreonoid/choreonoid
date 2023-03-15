@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "SceneWidget.h"
 #include "SceneBar.h"
 #include "GL1SceneRenderer.h"
@@ -130,6 +126,7 @@ public:
     GLSceneRenderer* renderer;
     GLSLSceneRenderer* glslRenderer;
     GL1SceneRenderer* gl1Renderer;
+    float lastDevicePixelRatio;
     GLuint prevDefaultFramebufferObject;
     bool isRendering;
     bool needToUpdatePreprocessedNodeTree;
@@ -481,6 +478,8 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     renderer->setCurrentCameraAutoRestorationMode(true);
     self->sigObjectNameChanged().connect([this](string name){ renderer->setName(name); });
 
+    lastDevicePixelRatio = 1.0f;
+
     sceneRoot->sigUpdated().connect([this](const SgUpdate& update){ onSceneGraphUpdated(update); });
     tmpEditableArrays.emplace_back();
     pCurrentTmpEditableArray = tmpEditableArrays.begin();
@@ -689,6 +688,9 @@ void SceneWidget::Impl::initializeGL()
 
     renderer->setDefaultFramebufferObject(defaultFramebufferObject());
     
+    lastDevicePixelRatio = devicePixelRatio();
+    renderer->setDevicePixelRatio(lastDevicePixelRatio);
+
     if(renderer->initializeGL()){
         if(glslRenderer){
             auto& vendor = glslRenderer->glVendor();
@@ -1274,8 +1276,8 @@ void SceneWidget::Impl::showPickingImageWindow()
 {
     if(glslRenderer){
         if(!pickingImageWindow){
-            auto vp = renderer->viewport();
-            pickingImageWindow = new ImageWindow(vp[2], vp[3]);
+            auto& vp = renderer->viewport();
+            pickingImageWindow = new ImageWindow(vp.w, vp.h);
         }
         pickingImageWindow->show();
     }
@@ -1350,7 +1352,7 @@ void SceneWidget::Impl::updateLatestEventPath(bool forceFullPicking)
 
     makeCurrent();
 
-    const int r = devicePixelRatio();
+    const int r = lastDevicePixelRatio;
     int px = r * latestEvent.x();
     int py = r * latestEvent.y();
 
@@ -1929,7 +1931,7 @@ void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
 
 bool SceneWidget::unproject(double x, double y, double z, Vector3& out_projected) const
 {
-    const int r = devicePixelRatio();
+    const int r = impl->lastDevicePixelRatio;
     return impl->renderer->unproject(r * x, r * y, z, out_projected);
 }
 
@@ -2122,9 +2124,8 @@ void SceneWidget::Impl::startViewTranslation()
         viewTranslationRatioY = -0.005;
 
     } else {
-        int x, y, width, height;
-        renderer->getViewport(x, y, width, height);
-        const double aspect = (double)width / height;
+        auto& vp = renderer->viewport();
+        const double aspect = static_cast<double>(vp.w) / vp.h;
         double r{}, cw{}, ch{};
         SgCamera* camera = renderer->currentCamera();
         if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
@@ -2137,8 +2138,8 @@ void SceneWidget::Impl::startViewTranslation()
             ch = ortho->height();
             cw = aspect * ch;
         }
-        viewTranslationRatioX = r * cw / width;
-        viewTranslationRatioY = r * ch / height;
+        viewTranslationRatioX = r * cw / vp.w;
+        viewTranslationRatioY = r * ch / vp.h;
     }
     
     orgMouseX = latestEvent.x();

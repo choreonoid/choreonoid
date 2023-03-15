@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_SCENE_RENDERER_H
 #define CNOID_UTIL_SCENE_RENDERER_H
 
@@ -81,7 +76,11 @@ public:
 
     virtual const Affine3& currentModelTransform() const = 0;
     virtual const Matrix4& projectionMatrix() const = 0;
+    virtual const Matrix4& viewProjectionMatrix() const = 0;
+
+    virtual Vector3 project(const Vector3& p) const = 0;
     virtual double projectedPixelSizeRatio(const Vector3& position) const = 0;
+    virtual bool unproject(double x, double y, double z, Vector3& out_projected) const = 0;
 
     /**
        This function updates the information on preprocessed nodes such as

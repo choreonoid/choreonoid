@@ -116,13 +116,12 @@ void ParticlesProgramBase::render
     const Matrix4f P = renderer_->projectionMatrix().cast<float>();
     glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, P.data());
 
-    int x, y, width, height;
-    renderer_->getViewport(x, y, width, height);
+    auto& vp = renderer_->viewport();
     SgCamera* camera = renderer_->currentCamera();
     auto ps = particles->getParticleSystem();
     
     if(SgPerspectiveCamera* persCamera = dynamic_cast<SgPerspectiveCamera*>(camera)){
-        glUniform1f(angle2pixelsLocation, height / persCamera->fovy((double)width / height));
+        glUniform1f(angle2pixelsLocation, vp.h / persCamera->fovy(static_cast<double>(vp.w) / vp.h));
         glUniform1f(pointSizeLocation, ps->particleSize());
     } else if(SgOrthographicCamera* orthoCamera = dynamic_cast<SgOrthographicCamera*>(camera)){
         //float size = 0.08f * height / orthoCamera->height();

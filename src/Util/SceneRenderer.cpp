@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "SceneRenderer.h"
 #include "SceneDrawables.h"
 #include "SceneCameras.h"

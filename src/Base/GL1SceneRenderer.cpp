@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "GL1SceneRenderer.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
@@ -846,13 +841,13 @@ bool GL1SceneRenderer::Impl::doPick(int x, int y)
     glDisable(GL_DITHER);
     glDisable(GL_FOG);
 
-    int vx, vy, vw, vh;
+    GLSceneRenderer::Viewport vp;
     int px, py;
 
     if(USE_RIGHT_BOTTOM_PIXEL_FOR_PICKING){
-        self->getViewport(vx, vy, vw, vh);
-        glViewport(vw - x - 1, -y, vw, vh);
-        px = vw - 1;
+        vp = self->viewport();
+        glViewport(vp.w - x - 1, -y, vp.w, vp.h);
+        px = vp.w - 1;
         py = 0;
     } else {
         px = x;
@@ -889,7 +884,7 @@ bool GL1SceneRenderer::Impl::doPick(int x, int y)
     }
 
     if(USE_RIGHT_BOTTOM_PIXEL_FOR_PICKING){
-        glViewport(vx, vy, vw, vh);
+        glViewport(vp.x, vp.y, vp.w, vp.h);
     }
 
     return !pickedNodePath.empty();
@@ -1855,14 +1850,14 @@ void GL1SceneRenderer::Impl::renderViewportOverlay(SgViewportOverlay* overlay)
     glPushMatrix();
     glLoadIdentity();
 
-    SgViewportOverlay::ViewVolume v;
-    const Array4i vp = self->viewport();
-    overlay->calcViewVolume(vp[2], vp[3], v);
+    SgViewportOverlay::ViewVolume vv;
+    auto& vp = self->viewport();
+    overlay->calcViewVolume(vp.w, vp.h, vv);
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(v.left, v.right, v.bottom, v.top, v.zNear, v.zFar);
+    glOrtho(vv.left, vv.right, vv.bottom, vv.top, vv.zNear, vv.zFar);
 
     renderGroup(overlay);
     
@@ -2249,13 +2244,32 @@ const Matrix4& GL1SceneRenderer::projectionMatrix() const
 }
 
 
+const Matrix4& GL1SceneRenderer::viewProjectionMatrix() const
+{
+    static Matrix4 PV;
+    PV = impl->lastProjectionMatrix * impl->lastViewMatrix.matrix();
+    return PV;
+}
+
+
+Vector3 GL1SceneRenderer::project(const Vector3& p) const
+{
+    Matrix4 PV = impl->lastProjectionMatrix * impl->lastViewMatrix.matrix();
+    Vector4 p2 = PV * Vector4(p.x(), p.y(), p.z(), 1.0);
+    Vector3 p3 = p2.head<3>() / p2.w();
+    auto& v = viewport();
+    double x = ((p3.x() + 1.0) / 2.0) * v.w + v.x;
+    double y = ((p3.y() + 1.0) / 2.0) * v.h + v.y;
+    return Vector3(x, y, p3.z());
+}
+
+
 double GL1SceneRenderer::projectedPixelSizeRatio(const Vector3& position) const
 {
-    auto vp = viewport();
     Vector3 p2 = impl->lastViewMatrix * position;
     Vector4 p3(1.0, 0.0, p2.z(), 1.0);
     Vector4 q = impl->lastProjectionMatrix * p3;
-    double r = (q.x() / q[3]) * vp[2] / 2.0;
+    double r = (q.x() / q[3]) * viewport().w / 2.0;
     if(r < 0.0){
         r = 0.0;
     }

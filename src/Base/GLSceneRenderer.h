@@ -49,12 +49,20 @@ public:
 
     virtual void setViewport(int x, int y, int width, int height) = 0;
     
-    // Call this function instead of setViewport when the viewport is specified by the system.
+    //! Call this function instead of setViewport when the viewport is specified by the system.
     virtual void updateViewportInformation(int x, int y, int width, int height);
-    
-    Array4i viewport() const;
-    void getViewport(int& out_x, int& out_y, int& out_width, int& out_height) const;
-    double aspectRatio() const; // width / height;
+
+    struct Viewport {
+        int x;
+        int y;
+        int w;
+        int h;
+    };
+
+    const Viewport& viewport() const { return viewport_; }
+    float aspectRatio() const { return aspectRatio_; } // width / height;
+    float devicePixelRatio() const { return devicePixelRatio_; }
+    void setDevicePixelRatio(float r){ devicePixelRatio_ = r; }
 
     void getPerspectiveProjectionMatrix(
         double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix);
@@ -63,8 +71,8 @@ public:
     
     void getViewFrustum(const SgPerspectiveCamera* camera, double& left, double& right, double& bottom, double& top) const;
     void getViewVolume(const SgOrthographicCamera* camera, float& out_left, float& out_right, float& out_bottom, float& out_top) const;
-    
-    bool unproject(double x, double y, double z, Vector3& out_projected) const;    
+
+    virtual bool unproject(double x, double y, double z, Vector3& out_projected) const override;
 
     const Vector3f& backgroundColor() const;
     void setBackgroundColor(const Vector3f& color);
@@ -126,6 +134,10 @@ public:
     void showNormalVectors(double length);
 
 private:
+    Viewport viewport_;
+    float aspectRatio_;
+    float devicePixelRatio_;
+    
     class Impl;
     Impl* impl;
 };

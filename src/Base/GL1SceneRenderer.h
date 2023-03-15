@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_GL1_SCENE_RENDERER_H
 #define CNOID_BASE_GL1_SCENE_RENDERER_H
 
@@ -26,6 +21,8 @@ public:
     virtual void clearNodeDecorations(int id) override;
     virtual const Affine3& currentModelTransform() const override;
     virtual const Matrix4& projectionMatrix() const override;
+    virtual const Matrix4& viewProjectionMatrix() const override;
+    virtual Vector3 project(const Vector3& p) const override;
     virtual double projectedPixelSizeRatio(const Vector3& position) const override;
     virtual bool initializeGL() override;
     virtual void flushGL() override;

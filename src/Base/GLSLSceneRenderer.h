@@ -31,11 +31,13 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     virtual const Affine3& currentModelTransform() const override;
     virtual const Matrix4& projectionMatrix() const override;
+    virtual const Matrix4& viewProjectionMatrix() const override;
+    virtual Vector3 project(const Vector3& p) const override;
+    virtual double projectedPixelSizeRatio(const Vector3& position) const override;
+
     const Isometry3& viewTransform() const;
-    const Matrix4& viewProjectionMatrix() const;
     Matrix4 modelViewMatrix() const;
     Matrix4 modelViewProjectionMatrix() const;
-    virtual double projectedPixelSizeRatio(const Vector3& position) const override;
 
     void pushShaderProgram(ShaderProgram* program);
     void popShaderProgram();
