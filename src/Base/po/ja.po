@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-09 12:16+0900\n"
+"POT-Creation-Date: 2023-03-26 03:35+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -137,6 +137,60 @@ msgstr "ラジアン"
 
 msgid "Angle value precision (number of decimals)"
 msgstr "角度値精度（小数点以下桁数）"
+
+msgid "Distance Measurement"
+msgstr "距離測定"
+
+msgid "Object %1"
+msgstr "対象%1"
+
+msgid "Position:"
+msgstr "位置："
+
+msgid "Pick"
+msgstr "ピック"
+
+msgid "Surface"
+msgstr "表面"
+
+msgid "Vertex"
+msgstr "頂点"
+
+msgid "Circle Center"
+msgstr "円中心"
+
+msgid "Shortest Distance"
+msgstr "最短距離"
+
+msgid "Fix one side"
+msgstr "片方を固定"
+
+msgid "Point %1"
+msgstr "点%1"
+
+msgid "Distance"
+msgstr "距離"
+
+msgid "Marker"
+msgstr "マーカ"
+
+msgid "Color"
+msgstr "色"
+
+msgid "Line width"
+msgstr "線幅"
+
+msgid "Overlay"
+msgstr "オーバーレイ"
+
+msgid "&Measure"
+msgstr "測定"
+
+msgid "&Cancel"
+msgstr "キャンセル(&C)"
+
+msgid "Distance Marker Color"
+msgstr "距離マーカの色"
 
 msgid "ExtCommandItem"
 msgstr "外部コマンドアイテム"
@@ -273,9 +327,6 @@ msgstr "設定ダイアログの表示"
 
 msgid "Graph Config"
 msgstr "グラフ設定"
-
-msgid "Line width"
-msgstr "線幅"
 
 msgid "y-range, 10^"
 msgstr "y軸範囲, 10^"
@@ -491,9 +542,6 @@ msgstr "%1の新規生成"
 
 msgid "&Create"
 msgstr "生成(&C)"
-
-msgid "&Cancel"
-msgstr "キャンセル(&C)"
 
 msgid "Name:"
 msgstr "名前"
@@ -740,9 +788,6 @@ msgstr "照度"
 
 msgid "Ambient intensity"
 msgstr "環境照度"
-
-msgid "Color"
-msgstr "色"
 
 msgid "Constant attenuation"
 msgstr "定数減衰"
