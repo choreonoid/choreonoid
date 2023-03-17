@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "MeshFilter.h"
 #include "MeshExtractor.h"
 #include "SceneDrawables.h"
@@ -138,7 +133,7 @@ MeshFilter::Impl::Impl()
 {
     isNormalOverwritingEnabled = false;
     minCreaseAngle = 0.0f;
-    maxCreaseAngle = PI;
+    maxCreaseAngle = static_cast<float>(PI);
 }
 
 
@@ -546,7 +541,7 @@ void MeshFilter::Impl::makeFacesOfVertexMap(SgMesh* mesh, bool removeSameNormalF
                 for(size_t k=0; k < faceIndicesOfVertex.size(); ++k){
                     const auto& adjacentFaceNormal = faceNormals[faceIndicesOfVertex[k]];
                     // the same face is not appended
-                    if(adjacentFaceNormal.isApprox(normal, 5.0e-4)){
+                    if(adjacentFaceNormal.isApprox(normal, 5.0e-4f)){
                         isSameNormalFaceFound = true;
                         break;
                     }

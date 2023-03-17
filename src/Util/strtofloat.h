@@ -46,11 +46,11 @@ template<typename T> T strtofloat(const char* nptr, char** endptr)
         //valid = false; // allow values which end with '.'. For example, "0."
         nptr++;
         if(isdigit((unsigned char)*nptr)){
-            T small = 0.1;
+            T small = static_cast<T>(0.1);
             valid = true;
             do {
                 value += small * (*nptr - '0');
-                small *= 0.1;
+                small *= static_cast<T>(0.1);
                 nptr++;
             } while(isdigit((unsigned char)*nptr));
         }

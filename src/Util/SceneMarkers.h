@@ -1,8 +1,3 @@
-/**
-   @author Shizuko Hattori
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_SCENE_MARKERS_H
 #define CNOID_UTIL_SCENE_MARKERS_H
 
@@ -69,7 +64,7 @@ class CNOID_EXPORT SphereMarker : public SgPosTransform
 {
 public:
     SphereMarker();
-    SphereMarker(double radius, const Vector3f& color, float transparency = 0.0);
+    SphereMarker(double radius, const Vector3f& color, float transparency = 0.0f);
     void setRadius(double r);
     void setColor(const Vector3f& c);
 private:

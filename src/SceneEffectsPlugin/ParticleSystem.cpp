@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ParticleSystem.h"
 #include <cnoid/EigenArchive>
 
@@ -19,7 +14,7 @@ ParticleSystem::ParticleSystem()
     numParticles_ = 500;
     initialSpeedAverage_ = 0.1f;
     initialSpeedVariation_ = 0.1f;
-    emissionRange_ = PI / 3.0f;
+    emissionRange_ = static_cast<float>(PI / 3.0);
     acceleration_.setZero();
 }
 

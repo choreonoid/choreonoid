@@ -814,7 +814,7 @@ bool OperableSceneBody::Impl::ensureZmpMarker()
             Link* footLink = legged->footLink(0);
             auto sceneLink = self->operableSceneLink(footLink->index());
             double radius = sceneLink->impl->calcMarkerRadius();
-            zmpMarker = new SphereMarker(radius, Vector3f(0.0f, 1.0f, 0.0f), 0.3);
+            zmpMarker = new SphereMarker(radius, Vector3f(0.0f, 1.0f, 0.0f), 0.3f);
             zmpMarker->addChild(new CrossMarker(radius * 2.5, Vector3f(0.0f, 1.0f, 0.0f), 2.0f));
             zmpMarker->setName("ZMP");
         }
@@ -1079,11 +1079,11 @@ void OperableSceneBody::Impl::updateMarkersAndManipulators(bool on)
         if(on && isEditMode && !activeSimulatorItem){
             Link* link = sceneLink->link();
             if(link == baseLink){
-                sceneLink->showMarker(Vector3f(1.0f, 0.1f, 0.1f), 0.4);
+                sceneLink->showMarker(Vector3f(1.0f, 0.1f, 0.1f), 0.4f);
             } else if(pin){
                 int pinAxes = pin->pinAxes(link);
                 if(pinAxes & (PinDragIK::TRANSFORM_6D)){
-                    sceneLink->showMarker(Vector3f(1.0f, 1.0f, 0.1f), 0.4);
+                    sceneLink->showMarker(Vector3f(1.0f, 1.0f, 0.1f), 0.4f);
                 }
             }
         }

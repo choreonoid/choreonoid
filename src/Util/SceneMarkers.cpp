@@ -1,8 +1,3 @@
-/**
-   @author Shizuko Hattori
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "SceneMarkers.h"
 #include "MeshGenerator.h"
 #include "EigenUtil.h"
@@ -15,8 +10,8 @@ SceneMarker::SceneMarker()
     setAttribute(Marker);
     
     markerType_ = NO_MARKER;
-    markerSize_ = 0.01;
-    emission_ = 0.5;
+    markerSize_ = 0.01f;
+    emission_ = 0.5f;
 
     material = new SgMaterial;
     Vector3f c(1.0f, 0.0f, 0.0f);

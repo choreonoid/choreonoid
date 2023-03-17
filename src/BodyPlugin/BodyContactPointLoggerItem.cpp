@@ -149,7 +149,7 @@ void BodyContactPointLoggerItem::Impl::updateScene
     for(auto& points : bodyContactPoints){
         for(auto& point : points){
             auto p = point.position().cast<Vector3f::Scalar>();
-            auto f = 1.0e-3 * point.force().cast<Vector3f::Scalar>();
+            auto f = 1.0e-3f * point.force().cast<Vector3f::Scalar>();
             vertices->push_back(p);
             vertices->push_back(p + f);
             contactLineSet->addLine(vertexIndex, vertexIndex + 1);

@@ -248,7 +248,7 @@ void ScenePointPlot::addPoint(PointInfo* info, bool doNotify)
         } else {
             auto i = normalVertices->size();
             normalVertices->push_back(info->position());
-            normalVertices->push_back(info->position() + info->normal() * 0.015);
+            normalVertices->push_back(info->position() + info->normal() * 0.015f);
             lineSet->addLine(i, i + 1);
             if(doNotify){
                 normalVertices->notifyUpdate(update);

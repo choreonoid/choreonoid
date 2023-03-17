@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "FireDevice.h"
 #include "SceneFire.h"
 #include "SceneEffectDeviceTypeRegistration.h"
@@ -25,7 +20,7 @@ FireDevice::FireDevice()
     particleSystem_.setAcceleration(Vector3f(0.0f, 0.0f, 0.05f));
     particleSystem_.setNumParticles(200);
     particleSystem_.setParticleSize(0.25f);
-    particleSystem_.setEmissionRange(PI / 2.0);
+    particleSystem_.setEmissionRange(static_cast<float>(PI / 2.0));
     particleSystem_.setInitialSpeedAverage(0.1f);
     particleSystem_.setInitialSpeedVariation(0.1f);
 }
