@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_THREAD_POOL_H
 #define CNOID_UTIL_THREAD_POOL_H
 
@@ -62,7 +57,11 @@ public:
             finishCondition.wait(lock);
         }
     }
-    
+
+    /**
+       The behavior of this function is probably the same as the wait function,
+       but it is unclear now why this implementation is also necessary.
+    */
     void waitLoop(){
         while(true){
             {
