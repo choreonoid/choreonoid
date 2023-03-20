@@ -127,12 +127,14 @@ int SceneView::registerCustomMode(SceneWidgetEventHandler* modeHandler)
 
 void SceneView::unregisterCustomMode(int id)
 {
-    for(auto& instance : instances_){
-        if(instance->customMode() == id){
-            instance->setCustomMode(0);
+    if(id > 0){
+        for(auto& instance : instances_){
+            if(instance->customMode() == id){
+                instance->setCustomMode(0);
+            }
         }
+        customModeIdToHandlerMap.erase(id);
     }
-    customModeIdToHandlerMap.erase(id);
 }
 
 

@@ -20,6 +20,7 @@ public:
     virtual ~ScenePointSelectionMode();
 
     void setCustomModeId(int id);
+    int customModeId() const;
 
     class PointInfo : public Referenced
     {
@@ -61,10 +62,11 @@ public:
     const std::vector<PointInfoPtr>& selectedPoints() const;
     void clearSelection();
 
-    SignalProxy<void(const std::vector<PointInfoPtr>& points)> sigPointSelectionAdded();
+    SignalProxy<void(const std::vector<PointInfoPtr>& additionalPoints)> sigPointSelectionAdded();
 
 protected:
     virtual std::vector<SgNode*> getTargetSceneNodes(SceneWidgetEvent* event);
+    virtual void onPointSelectionAdded(const std::vector<PointInfoPtr>& additionalPoints);
 
     //virtual void onSelectionModeActivated(SceneWidgetEvent* event);
     //virtual void onSelectionModeDeactivated(SceneWidgetEvent* event);

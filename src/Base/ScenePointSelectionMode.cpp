@@ -87,7 +87,7 @@ public:
     PointInfoPtr highlightedPoint;
     std::vector<PointInfoPtr> selectedPoints;
 
-    Signal<void(const std::vector<PointInfoPtr>& points)> sigPointSelectionAdded;
+    Signal<void(const std::vector<PointInfoPtr>& additionalPoints)> sigPointSelectionAdded;
     
     Impl(ScenePointSelectionMode* self);
     void setupScenePointSelectionMode(SceneWidgetEvent* event);
@@ -295,6 +295,12 @@ void ScenePointSelectionMode::setCustomModeId(int id)
 }
 
 
+int ScenePointSelectionMode::customModeId() const
+{
+    return impl->modeId;
+}
+
+
 const std::vector<PointInfoPtr>& ScenePointSelectionMode::selectedPoints() const
 {
     return impl->selectedPoints;
@@ -308,9 +314,15 @@ void ScenePointSelectionMode::clearSelection()
 }
 
 
-SignalProxy<void(const std::vector<PointInfoPtr>& points)> ScenePointSelectionMode::sigPointSelectionAdded()
+SignalProxy<void(const std::vector<PointInfoPtr>& additionalPoints)> ScenePointSelectionMode::sigPointSelectionAdded()
 {
     return impl->sigPointSelectionAdded;
+}
+
+
+void ScenePointSelectionMode::onPointSelectionAdded(const std::vector<PointInfoPtr>& /* additionalPoints */)
+{
+
 }
 
 
@@ -448,7 +460,7 @@ bool ScenePointSelectionMode::onPointerMoveEvent(SceneWidgetEvent* event)
 }
 
 
-static bool checkRayTraiangleIntersection
+static bool checkRayTriangleIntersection
 (const Vector3& rayOrigin, const Vector3& rayDirection,
  const Vector3& vertex0, const Vector3& vertex1, const Vector3& vertex2,
  bool doCulling, double margin,
@@ -555,7 +567,7 @@ bool ScenePointSelectionMode::Impl::findPointedTriangleVertex
                     auto triangle = mesh->triangle(triangleIndex);
                     double t, u, v;
                     bool intersected =
-                        checkRayTraiangleIntersection(
+                        checkRayTriangleIntersection(
                             origin, direction,
                             vertices[triangle[0]].cast<Vector3::Scalar>(),
                             vertices[triangle[1]].cast<Vector3::Scalar>(),
