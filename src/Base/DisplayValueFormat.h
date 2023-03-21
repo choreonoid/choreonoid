@@ -21,6 +21,12 @@ public:
     int lengthUnit() const { return lengthUnit_; }
     bool isMeter() const { return lengthUnit_ == Meter; }
     bool isMillimeter() const { return lengthUnit_ == Millimeter; }
+    double toDisplayLength(double meter) const {
+        return (lengthUnit_ == Meter) ? meter : meter * 1000.0;
+    }
+    double ratioToDisplayLength() const {
+        return (lengthUnit_ == Meter) ? 1.0 : 1000.0;
+    }
     void setMeterDecimals(int decimals) { meterDecimals_ = decimals; }
     int meterDecimals() const { return meterDecimals_; }
     void setMillimeterDecimals(int decimals){ millimeterDecimals_ = decimals; }
