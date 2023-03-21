@@ -22,6 +22,17 @@ public:
     void setCustomModeId(int id);
     int customModeId() const;
 
+    enum SubMode {
+        SurfacePointMode,
+        MeshVertexMode
+    };
+    void setSubMode(int mode);
+    int subMode() const;
+    
+    void setNormalDetectionEnabled(bool on);
+    void setControlModifierEnabled(bool on);
+    void updateTargetSceneNodes();
+
     class PointInfo : public Referenced
     {
     public:
@@ -38,18 +49,22 @@ public:
         */
         int vertexIndex() const { return vertexIndex_; }
 
+        /**
+           \return The trialngle vertex index when the point is a mesh vertex.
+           Otherwise, -1 is returned.
+        */
         int triangleVertexIndex() const { return triangleVertexIndex_; }
         
-        const Vector3f& position() const { return position_; }
-        const Vector3f& normal() const { return normal_; }
+        const Vector3& position() const { return position_; }
+        const Vector3& normal() const { return normal_; }
         bool hasNormal() const { return hasNormal_; }
 
     private:
         std::shared_ptr<SgNodePath> path_;
         int vertexIndex_;
         int triangleVertexIndex_;
-        Vector3f position_;
-        Vector3f normal_;
+        Vector3 position_;
+        Vector3 normal_;
         bool hasNormal_;
 
         friend class ScenePointSelectionMode::Impl;
@@ -62,10 +77,13 @@ public:
     const std::vector<PointInfoPtr>& selectedPoints() const;
     void clearSelection();
 
+    void setHighlightedPointColor(const Vector3f& coloir);
+    void setSelectedPointColor(const Vector3f& coloir);
+
     SignalProxy<void(const std::vector<PointInfoPtr>& additionalPoints)> sigPointSelectionAdded();
 
 protected:
-    virtual std::vector<SgNode*> getTargetSceneNodes(SceneWidgetEvent* event);
+    virtual std::vector<SgNode*> getTargetSceneNodes(SceneWidget* sceneWidget);
     virtual void onPointSelectionAdded(const std::vector<PointInfoPtr>& additionalPoints);
 
     //virtual void onSelectionModeActivated(SceneWidgetEvent* event);

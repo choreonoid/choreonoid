@@ -4,6 +4,7 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneEffects>
 #include <cnoid/SceneUtil>
+#include <cnoid/SceneNodeClassRegistry>
 #include <map>
 #include <unordered_set>
 #include "gettext.h"
@@ -13,8 +14,6 @@ using namespace cnoid;
 
 namespace {
 
-constexpr bool MAKE_NORMALS_FIXED_PIXEL_SIZE = true;
-
 typedef ScenePointSelectionMode::PointInfo PointInfo;
 typedef ScenePointSelectionMode::PointInfoPtr PointInfoPtr;
 
@@ -22,10 +21,12 @@ class SceneWidgetInfo
 {
 public:
     SceneWidget* widget;
+    bool isDuringPointSelection;
     int nodeDecorationId;
     QMetaObject::Connection connection;
 
     SceneWidgetInfo(){
+        isDuringPointSelection = false;
         nodeDecorationId = 1; // temporary
     }
     ~SceneWidgetInfo(){
@@ -36,25 +37,73 @@ public:
 class FixedPixelSizeNormal : public SgPosTransform
 {
 public:
-    SgLineSetPtr sharedLine;
-    
-    FixedPixelSizeNormal(SgLineSetPtr& sharedLine, SgMaterial* material);
-    void setNormal(const Vector3f& position, const Vector3f& normal);
+    FixedPixelSizeNormal(SgLineSet* normalLine);
+};
 
+class NormalSet : public SgGroup
+{
+public:
+    SgLineSetPtr normalLine;
+
+    NormalSet(SgMaterial* material);
+    void addNormal(const Vector3& position, const Vector3& normal);    
+};
+
+typedef ref_ptr<NormalSet> NormalSetPtr;
+
+class ViewportCrossMarkerSet : public SgViewportOverlay
+{
+public:
+    SgLineSetPtr crossLine;
+
+    struct CrossPosition {
+        Vector3 position;
+        SgPosTransformPtr viewportPosition;
+        CrossPosition(const Vector3& position, SgPosTransform* viewportPosition)
+            : position(position), viewportPosition(viewportPosition) { }
+    };
+    vector<CrossPosition> crossPositions;
+    
+    ViewportCrossMarkerSet(SgMaterial* material);
+    bool clear();
+    void addCross(const Vector3& position);
+    void render(SceneRenderer* renderer);
+    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume) override;
+};
+
+typedef ref_ptr<ViewportCrossMarkerSet> ViewportCrossMarkerSetPtr;
+
+struct ViewportCrossMarkerSetRegistration {
+    ViewportCrossMarkerSetRegistration(){
+        SceneNodeClassRegistry::instance().registerClass<ViewportCrossMarkerSet, SgViewportOverlay>();
+        SceneRenderer::addExtension(
+            [](SceneRenderer* renderer){
+                renderer->renderingFunctions()->setFunction<ViewportCrossMarkerSet>(
+                    [renderer](SgNode* node){
+                        static_cast<ViewportCrossMarkerSet*>(node)->render(renderer);
+                    });
+            });
+    }
 };
 
 class ScenePointPlot : public SgGroup
 {
     SgPointSetPtr pointSet;
-    SgVertexArrayPtr points;
-    SgLineSetPtr lineSet;
-    SgVertexArrayPtr normalVertices;
-    SgGroupPtr fpsNormalGroup;
+    ViewportCrossMarkerSetPtr crossMarkerSet;
+    NormalSetPtr normalSet;
     SgMaterialPtr material_;
+    SgUpdate update;
+    bool isPointSetEnabled;
+    bool isCrossMarkerSetEnabled;
+    bool isNormalSetEnabled;
 
 public:
     ScenePointPlot();
     SgMaterial* material() { return material_; }
+    void updateVisualization(int subMode, bool isNormalDetectionEnabled);
+    void setPointSetEnabled(bool on);
+    void setCrossMarkerSetEnabled(bool on);
+    void setNormalSetEnabled(bool on);
     void clearPoints(bool doNotify);
     void updatePoints(const std::vector<PointInfoPtr>& infos);
     void resetPoint(PointInfo* info);
@@ -74,29 +123,29 @@ class ScenePointSelectionMode::Impl
 public:
     ScenePointSelectionMode* self;
     int modeId;
+    int subMode;
+    bool isNormalDetectionEnabled;
+    bool isControlModifierEnabled;
     std::map<SceneWidget*, SceneWidgetInfo> sceneWidgetInfos;
     unordered_set<SgNodePtr> targetNodes;
 
     SgOverlayPtr pointOverlay;
     ScenePointPlotPtr highlightedPointPlot;
-    SgVertexArrayPtr highlightedPointArray;
-    SgLineSetPtr highlightedPointNormalPlot;
     ScenePointPlotPtr selectedPointPlot;
-    SgVertexArrayPtr selectedPointArray;
-    
     PointInfoPtr highlightedPoint;
     std::vector<PointInfoPtr> selectedPoints;
 
     Signal<void(const std::vector<PointInfoPtr>& additionalPoints)> sigPointSelectionAdded;
     
     Impl(ScenePointSelectionMode* self);
-    void setupScenePointSelectionMode(SceneWidgetEvent* event);
+    void setHighlightedPointColor(const Vector3f& color);
+    void setSelectedPointColor(const Vector3f& color);
+    void setupScenePointSelectionMode(SceneWidget* sceneWidget);
     void clearScenePointSelectionMode(SceneWidget* sceneWidget);
     bool checkIfPointingTargetNode(SceneWidgetEvent* event);
-    bool findPointedTriangleVertex(
-        SgMesh* mesh, const Affine3& T, SceneWidgetEvent* event, int& out_index);
-    void setHighlightedPoint(
-        const SgNodePath& path, SgMesh* mesh, const Affine3& T, int vertexIndex);
+    bool findPointedTriangleVertex(SgMesh* mesh, const Affine3& T, SceneWidgetEvent* event, int& out_index);
+    void setHighlightedPoint(const SgNodePath& path, const Vector3& point);
+    void setHighlightedPoint(const SgNodePath& path, SgMesh* mesh, const Affine3& T, int vertexIndex);
     void clearHighlightedPoint();
     bool onButtonPressEvent(SceneWidgetEvent* event);
 };
@@ -124,79 +173,204 @@ bool ScenePointSelectionMode::PointInfo::hasSameVertexWith(const PointInfo& poin
 }
 
 
-namespace {
-
-FixedPixelSizeNormal::FixedPixelSizeNormal(SgLineSetPtr& sharedLine, SgMaterial* material)
-    : sharedLine(sharedLine)
+FixedPixelSizeNormal::FixedPixelSizeNormal(SgLineSet* normalLine)
 {
-    if(!sharedLine){
-        sharedLine = new SgLineSet;
-        sharedLine->setMaterial(material);
-        auto& vertices = *sharedLine->getOrCreateVertices(2);
-        vertices[0] = Vector3f::Zero();
-        vertices[1] = Vector3f::UnitZ();
-        sharedLine->addLine(0, 1);
-    }
-
     auto fpsg = new SgFixedPixelSizeGroup;
     fpsg->setPixelSizeRatio(32.0f);
-    fpsg->addChild(sharedLine);
+    fpsg->addChild(normalLine);
     addChild(fpsg);
 }
 
 
-void FixedPixelSizeNormal::setNormal(const Vector3f& position, const Vector3f& normal)
+NormalSet::NormalSet(SgMaterial* material)
 {
-    setTranslation(position);
-    setRotation(Quaternion::FromTwoVectors(Vector3::UnitZ(), normal.cast<double>()));
+    normalLine = new SgLineSet;
+    normalLine->setMaterial(material);
+    auto& vertices = *normalLine->getOrCreateVertices(2);
+    vertices[0] = Vector3f::Zero();
+    vertices[1] = Vector3f::UnitZ();
+    normalLine->addLine(0, 1);
+}
+
+
+void NormalSet::addNormal(const Vector3& position, const Vector3& normal)
+{
+    auto normalNode = new FixedPixelSizeNormal(normalLine);
+    normalNode->setTranslation(position);
+    normalNode->setRotation(Quaternion::FromTwoVectors(Vector3::UnitZ(), normal));
+    addChild(normalNode);
+}
+
+
+ViewportCrossMarkerSet::ViewportCrossMarkerSet(SgMaterial* material)
+    : SgViewportOverlay(findClassId<ViewportCrossMarkerSet>())
+{
+    float length = 24.0f;
+    crossLine = new SgLineSet;
+    crossLine->setMaterial(material);
+    auto& vertices = *crossLine->getOrCreateVertices(4);
+    vertices[0] =  length * Vector3f::UnitX();
+    vertices[1] = -length * Vector3f::UnitX();
+    vertices[2] =  length * Vector3f::UnitY();
+    vertices[3] = -length * Vector3f::UnitY();
+    crossLine->addLine(0, 1);
+    crossLine->addLine(2, 3);
+}
+
+
+bool ViewportCrossMarkerSet::clear()
+{
+    if(!crossPositions.empty()){
+        clearChildren();
+        crossPositions.clear();
+        return true;
+    }
+    return false;
+}
+
+
+void ViewportCrossMarkerSet::addCross(const Vector3& position)
+{
+    auto viewportPosition = new SgPosTransform;
+    viewportPosition->addChild(crossLine);
+    addChild(viewportPosition);
+    crossPositions.emplace_back(position, viewportPosition);
+}
+
+
+void ViewportCrossMarkerSet::render(SceneRenderer* renderer)
+{
+    for(auto& p : crossPositions){
+        Vector3 pv = renderer->project(p.position);
+        p.viewportPosition->setTranslation(pv);
+    }
+    renderer->renderingFunctions()->dispatchAs<SgViewportOverlay>(this);    
+}
+
+
+void ViewportCrossMarkerSet::calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume)
+{
+    io_volume.left = 0;
+    io_volume.right = viewportWidth;
+    io_volume.bottom = 0;
+    io_volume.top = viewportHeight;
+    io_volume.zNear = 1.0;
+    io_volume.zFar = -1.0;
 }
 
 
 ScenePointPlot::ScenePointPlot()
 {
     material_ = new SgMaterial;
-    
-    pointSet = new SgPointSet;
-    pointSet->setPointSize(10.0);
-    pointSet->setMaterial(material_);
-    points = pointSet->getOrCreateVertices();
-    addChild(pointSet);
+    isPointSetEnabled = false;
+    isCrossMarkerSetEnabled = false;
+    isNormalSetEnabled = false;
+}
 
-    if(MAKE_NORMALS_FIXED_PIXEL_SIZE){
-        fpsNormalGroup = new SgGroup;
-        addChild(fpsNormalGroup);
-    } else {
-        lineSet = new SgLineSet;
-        lineSet->setMaterial(material_);
-        normalVertices = lineSet->getOrCreateVertices();
-        addChild(lineSet);
+
+void ScenePointPlot::updateVisualization(int subMode, bool isNormalDetectionEnabled)
+{
+    if(subMode == ScenePointSelectionMode::SurfacePointMode){
+        setPointSetEnabled(isNormalDetectionEnabled);
+        setCrossMarkerSetEnabled(!isNormalDetectionEnabled);
+        setNormalSetEnabled(isNormalDetectionEnabled);
+    } else { // MeshVertexMode
+        setPointSetEnabled(true);
+        setCrossMarkerSetEnabled(false);
+        setNormalSetEnabled(isNormalDetectionEnabled);
+    }
+}
+
+
+void ScenePointPlot::setPointSetEnabled(bool on)
+{
+    if(on != isPointSetEnabled){
+        if(on){
+            if(!pointSet){
+                pointSet = new SgPointSet;
+                pointSet->setPointSize(10.0);
+                pointSet->setMaterial(material_);
+                pointSet->getOrCreateVertices();
+            }
+            addChildOnce(pointSet);
+        } else {
+            if(pointSet){
+                removeChild(pointSet);
+            }
+        }
+        isPointSetEnabled = on;
+    }
+}
+
+
+void ScenePointPlot::setCrossMarkerSetEnabled(bool on)
+{
+    if(on != isCrossMarkerSetEnabled){
+        if(on){
+            if(!crossMarkerSet){
+                static ViewportCrossMarkerSetRegistration registration;
+                crossMarkerSet = new ViewportCrossMarkerSet(material_);
+            }
+            addChildOnce(crossMarkerSet);
+        } else {
+            if(crossMarkerSet){
+                removeChild(crossMarkerSet);
+            }
+        }
+        isCrossMarkerSetEnabled = on;
+    }
+}
+
+
+void ScenePointPlot::setNormalSetEnabled(bool on)
+{
+    if(on != isNormalSetEnabled){
+        if(on){
+            if(!normalSet){
+                normalSet = new NormalSet(material_);
+            }
+            addChildOnce(normalSet);
+        } else {
+            if(normalSet){
+                removeChild(normalSet);
+            }
+        }
+        isNormalSetEnabled = on;
     }
 }
 
 
 void ScenePointPlot::clearPoints(bool doNotify)
 {
+    bool isUpdated = false;
     SgTmpUpdate update;
-    
-    if(!points->empty()){
-        points->clear();
-        if(doNotify){
-            points->notifyUpdate(update);
+
+    if(isCrossMarkerSetEnabled){
+        if(crossMarkerSet->clear()){
+            isUpdated = true;
         }
     }
-    if(MAKE_NORMALS_FIXED_PIXEL_SIZE){
-        fpsNormalGroup->clearChildren();
-        if(doNotify){
-            fpsNormalGroup->notifyUpdate(update);
+    
+    if(isNormalSetEnabled){
+        if(!normalSet->empty()){
+            normalSet->clearChildren();
+            isUpdated = true;
         }
-    } else {
-        if(!normalVertices->empty()){
-            normalVertices->clear();
-            lineSet->clearLines();
+    }
+    
+    if(isPointSetEnabled){
+        auto points = pointSet->vertices();
+        if(!points->empty()){
+            points->clear();
             if(doNotify){
-                normalVertices->notifyUpdate(update);
+                points->notifyUpdate(update);
+                doNotify = false;
             }
         }
+    }
+    
+    if(doNotify && isUpdated){
+        notifyUpdate(update);
     }
 }
 
@@ -210,12 +384,10 @@ void ScenePointPlot::updatePoints(const std::vector<PointInfoPtr>& infos)
     }
 
     SgTmpUpdate update;
-    points->notifyUpdate(update);
-
-    if(MAKE_NORMALS_FIXED_PIXEL_SIZE){
-        fpsNormalGroup->notifyUpdate(update);
-    } else {
-        normalVertices->notifyUpdate(update);
+    if(isPointSetEnabled){
+        pointSet->vertices()->notifyUpdate(update);
+    } else if(isCrossMarkerSetEnabled || isNormalSetEnabled){
+        notifyUpdate(update);
     }
 }
 
@@ -229,34 +401,27 @@ void ScenePointPlot::resetPoint(PointInfo* info)
 
 void ScenePointPlot::addPoint(PointInfo* info, bool doNotify)
 {
-    points->push_back(info->position());
+    bool isUpdated = false;
 
-    SgTmpUpdate update;
-    
-    if(doNotify){
-        points->notifyUpdate(update);
+    if(isCrossMarkerSetEnabled){
+        crossMarkerSet->addCross(info->position());
+        isUpdated = true;
     }
-    
-    if(info->hasNormal()){
-        if(MAKE_NORMALS_FIXED_PIXEL_SIZE){
-            auto fpsNormal = new FixedPixelSizeNormal(lineSet, material_);
-            fpsNormal->setNormal(info->position(), info->normal());
-            fpsNormalGroup->addChild(fpsNormal);
-            if(doNotify){
-                fpsNormalGroup->notifyUpdate(update);
-            }
-        } else {
-            auto i = normalVertices->size();
-            normalVertices->push_back(info->position());
-            normalVertices->push_back(info->position() + info->normal() * 0.015f);
-            lineSet->addLine(i, i + 1);
-            if(doNotify){
-                normalVertices->notifyUpdate(update);
-            }
+    if(isNormalSetEnabled && info->hasNormal()){
+        normalSet->addNormal(info->position(), info->normal());
+        isUpdated = true;
+    }
+    if(isPointSetEnabled){
+        auto points = pointSet->vertices();
+        points->push_back(info->position().cast<SgVertexArray::Scalar>());
+        if(doNotify){
+            points->notifyUpdate(update.withAction(SgUpdate::GeometryModified));
+            doNotify = false;
         }
     }
-}
-
+    if(doNotify && isUpdated){
+        notifyUpdate(update.withAction(SgUpdate::Added));
+    }
 }
 
 
@@ -270,14 +435,18 @@ ScenePointSelectionMode::Impl::Impl(ScenePointSelectionMode* self)
     : self(self)
 {
     modeId = 0;
+    subMode = SurfacePointMode;
+    isNormalDetectionEnabled = false;
+    isControlModifierEnabled = true;
 
     highlightedPointPlot = new ScenePointPlot;
-    highlightedPointPlot->material()->setDiffuseColor(Vector3f(1.0f, 1.0f, 0.0f));
+    setHighlightedPointColor(Vector3f(1.0f, 1.0f, 0.0f)); // Yellow
     
     selectedPointPlot = new ScenePointPlot;
-    selectedPointPlot->material()->setDiffuseColor(Vector3f(1.0f, 0.0f, 0.0f));
+    setSelectedPointColor(Vector3f(1.0f, 0.0f, 0.0f)); // Red
     
     pointOverlay = new SgOverlay;
+    pointOverlay->setAttribute(SgObject::MetaScene);
     pointOverlay->addChild(highlightedPointPlot);
     pointOverlay->addChild(selectedPointPlot);
 }
@@ -301,6 +470,53 @@ int ScenePointSelectionMode::customModeId() const
 }
 
 
+int ScenePointSelectionMode::subMode() const
+{
+    return impl->subMode;
+}
+
+
+void ScenePointSelectionMode::setSubMode(int mode)
+{
+    if(mode != impl->subMode){
+        impl->subMode = mode;
+        for(auto& kw : impl->sceneWidgetInfos){
+            auto& info = kw.second;
+            if(info.isDuringPointSelection){
+                impl->setupScenePointSelectionMode(info.widget);
+                info.widget->renderScene();
+            }
+        }
+    }
+}
+
+
+void ScenePointSelectionMode::setNormalDetectionEnabled(bool on)
+{
+    if(on != impl->isNormalDetectionEnabled){
+        impl->isNormalDetectionEnabled = on;
+    }
+}
+
+
+void ScenePointSelectionMode::setControlModifierEnabled(bool on)
+{
+    impl->isControlModifierEnabled = on;
+}
+
+
+void ScenePointSelectionMode::updateTargetSceneNodes()
+{
+    for(auto& kw : impl->sceneWidgetInfos){
+        auto& info = kw.second;
+        if(info.isDuringPointSelection){
+            impl->setupScenePointSelectionMode(info.widget);
+            info.widget->renderScene();
+        }
+    }
+}
+
+
 const std::vector<PointInfoPtr>& ScenePointSelectionMode::selectedPoints() const
 {
     return impl->selectedPoints;
@@ -311,6 +527,7 @@ void ScenePointSelectionMode::clearSelection()
 {
     impl->selectedPoints.clear();
     impl->selectedPointPlot->clearPoints(true);
+    impl->clearHighlightedPoint();
 }
 
 
@@ -332,11 +549,47 @@ ScenePointSelectionMode::PointInfo* ScenePointSelectionMode::highlightedPoint()
 }
 
 
-std::vector<SgNode*> ScenePointSelectionMode::getTargetSceneNodes(SceneWidgetEvent* /* event */)
+void ScenePointSelectionMode::setHighlightedPointColor(const Vector3f& color)
+{
+    impl->setHighlightedPointColor(color);
+}
+
+
+void ScenePointSelectionMode::Impl::setHighlightedPointColor(const Vector3f& color)
+{
+    highlightedPointPlot->material()->setDiffuseColor(color);
+}
+
+
+void ScenePointSelectionMode::setSelectedPointColor(const Vector3f& color)
+{
+    impl->setSelectedPointColor(color);
+}
+
+
+void ScenePointSelectionMode::Impl::setSelectedPointColor(const Vector3f& color)
+{
+    selectedPointPlot->material()->setDiffuseColor(color);
+}
+
+
+std::vector<SgNode*> ScenePointSelectionMode::getTargetSceneNodes(SceneWidget* /* sceneWidget */)
 {
     return std::vector<SgNode*>();
 }
     
+
+void ScenePointSelectionMode::onSceneModeChanged(SceneWidgetEvent* event)
+{
+    auto sw = event->sceneWidget();
+    int activeMode = sw->activeCustomMode();
+    if(activeMode == impl->modeId && sw->isEditMode()){
+        impl->setupScenePointSelectionMode(sw);
+    } else {
+        impl->clearScenePointSelectionMode(sw);
+    }
+}
+
 
 #if 0
 void ScenePointSelectionMode::onSelectionModeActivated(SceneWidgetEvent* /* event */)
@@ -352,21 +605,11 @@ void ScenePointSelectionMode::onSelectionModeDeactivated(SceneWidgetEvent* /* ev
 #endif
 
 
-void ScenePointSelectionMode::onSceneModeChanged(SceneWidgetEvent* event)
+void ScenePointSelectionMode::Impl::setupScenePointSelectionMode(SceneWidget* sceneWidget)
 {
-    auto sw = event->sceneWidget();
-    int activeMode = sw->activeCustomMode();
-    if(activeMode == impl->modeId && sw->isEditMode()){
-        impl->setupScenePointSelectionMode(event);
-    } else {
-        impl->clearScenePointSelectionMode(sw);
-    }
-}
-
-
-void ScenePointSelectionMode::Impl::setupScenePointSelectionMode(SceneWidgetEvent* event)
-{
-    auto sceneWidget = event->sceneWidget();
+    highlightedPointPlot->updateVisualization(subMode, isNormalDetectionEnabled);
+    selectedPointPlot->updateVisualization(subMode, isNormalDetectionEnabled);
+    
     SceneWidgetInfo* info = nullptr;
     auto p = sceneWidgetInfos.find(sceneWidget);
     if(p != sceneWidgetInfos.end()){
@@ -383,22 +626,26 @@ void ScenePointSelectionMode::Impl::setupScenePointSelectionMode(SceneWidgetEven
     SgTmpUpdate update;
     sceneWidget->systemNodeGroup()->addChildOnce(pointOverlay, update);
 
+    info->isDuringPointSelection = true;
+
     int id = info->nodeDecorationId;
     auto renderer = sceneWidget->renderer();
     renderer->clearNodeDecorations(id);
     targetNodes.clear();
-    for(auto& node : self->getTargetSceneNodes(event)){
+    for(auto& node : self->getTargetSceneNodes(sceneWidget)){
         targetNodes.insert(node);
-        SgPolygonDrawStylePtr style = new SgPolygonDrawStyle;
-        style->setPolygonElements(
-            SgPolygonDrawStyle::Face | SgPolygonDrawStyle::Edge | SgPolygonDrawStyle::Vertex);
-        renderer->addNodeDecoration(
-            node,
-            [style](SgNode* node){
-                style->setSingleChild(node);
-                return style;
-            },
-            id);
+        if(subMode == MeshVertexMode){
+            SgPolygonDrawStylePtr style = new SgPolygonDrawStyle;
+            style->setPolygonElements(
+                SgPolygonDrawStyle::Face | SgPolygonDrawStyle::Edge | SgPolygonDrawStyle::Vertex);
+            renderer->addNodeDecoration(
+                node,
+                [style](SgNode* node){
+                    style->setSingleChild(node);
+                    return style;
+                },
+                id);
+        }
     }
 }
 
@@ -411,6 +658,7 @@ void ScenePointSelectionMode::Impl::clearScenePointSelectionMode(SceneWidget* sc
         SgTmpUpdate update;
         sceneWidget->systemNodeGroup()->removeChild(pointOverlay, update);
         sceneWidget->renderer()->clearNodeDecorations(info.nodeDecorationId);
+        info.isDuringPointSelection = false;
     }
     targetNodes.clear();
 }
@@ -442,13 +690,18 @@ bool ScenePointSelectionMode::onPointerMoveEvent(SceneWidgetEvent* event)
     bool pointed = false;
     if(isTargetNode){
         auto& path = event->nodePath();
-        if(auto shape = dynamic_cast<SgShape*>(path.back().get())){
-            auto mesh = shape->mesh();
-            Affine3 T = calcTotalTransform(path);
-            int  pointedIndex;
-            if(impl->findPointedTriangleVertex(mesh, T, event, pointedIndex)){
-                impl->setHighlightedPoint(path, mesh, T, pointedIndex);
-                pointed = true;
+        if(impl->subMode == SurfacePointMode){
+            impl->setHighlightedPoint(path, event->point());
+            pointed = true;
+        } else {
+            if(auto shape = dynamic_cast<SgShape*>(path.back().get())){
+                auto mesh = shape->mesh();
+                Affine3 T = calcTotalTransform(path);
+                int  pointedIndex;
+                if(impl->findPointedTriangleVertex(mesh, T, event, pointedIndex)){
+                    impl->setHighlightedPoint(path, mesh, T, pointedIndex);
+                    pointed = true;
+                }
             }
         }
     }
@@ -588,19 +841,34 @@ bool ScenePointSelectionMode::Impl::findPointedTriangleVertex
 }
 
 
+void ScenePointSelectionMode::Impl::setHighlightedPoint(const SgNodePath& path, const Vector3& point)
+{
+    highlightedPoint = new ScenePointSelectionMode::PointInfo;
+    highlightedPoint->path_ = make_shared<SgNodePath>(path);
+    highlightedPoint->vertexIndex_ = -1;
+    highlightedPoint->triangleVertexIndex_ = -1;
+    highlightedPoint->position_ = point;
+    highlightedPoint->hasNormal_ = false;
+    highlightedPointPlot->resetPoint(highlightedPoint);
+}
+
+
 void ScenePointSelectionMode::Impl::setHighlightedPoint
 (const SgNodePath& path, SgMesh* mesh, const Affine3& T, int triangleVertexIndex)
 {
     highlightedPoint = new ScenePointSelectionMode::PointInfo;
     int vertexIndex = mesh->triangleVertices()[triangleVertexIndex];
     auto vertex = mesh->vertices()->at(vertexIndex);
-    Vector3f v = (T * vertex.cast<double>()).cast<float>();
+    Vector3 v = T * vertex.cast<double>();
     highlightedPoint->path_ = make_shared<SgNodePath>(path);
     highlightedPoint->vertexIndex_ = vertexIndex;
     highlightedPoint->triangleVertexIndex_ = triangleVertexIndex;
     highlightedPoint->position_ = v;
 
-    if(mesh->hasNormals()){
+    if(!isNormalDetectionEnabled){
+        highlightedPoint->hasNormal_ = false;
+
+    } else if(mesh->hasNormals()){
         auto& normals = *mesh->normals();
         int normalIndex = -1;
         if(mesh->hasNormalIndices()){
@@ -609,7 +877,7 @@ void ScenePointSelectionMode::Impl::setHighlightedPoint
             normalIndex = vertexIndex;
         }
         if(normalIndex >= 0){
-            highlightedPoint->normal_ = (T.linear() * normals[normalIndex].cast<double>()).cast<float>();
+            highlightedPoint->normal_ = T.linear() * normals[normalIndex].cast<double>();
             highlightedPoint->hasNormal_ = true;
         }
     }
@@ -647,7 +915,7 @@ bool ScenePointSelectionMode::Impl::onButtonPressEvent(SceneWidgetEvent* event)
         if(isTargetNode && highlightedPoint){
             bool removed = false;
             shared_ptr<SgNodePath> sharedPath;
-            if(!(event->modifiers() & Qt::ControlModifier)){
+            if(isControlModifierEnabled && !(event->modifiers() & Qt::ControlModifier)){
                 selectedPoints.clear();
             } else {
                 for(auto it = selectedPoints.begin(); it != selectedPoints.end(); ++it){
@@ -672,7 +940,7 @@ bool ScenePointSelectionMode::Impl::onButtonPressEvent(SceneWidgetEvent* event)
             isPointSelectionUpdated = true;
 
         } else { // !isTargetNode || !highlightedPoint
-            if(!(event->modifiers() & Qt::ControlModifier)){
+            if(isControlModifierEnabled && !(event->modifiers() & Qt::ControlModifier)){
                 if(!selectedPoints.empty()){
                     selectedPoints.clear();
                     isPointSelectionUpdated = true;
