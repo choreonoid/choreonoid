@@ -94,6 +94,8 @@ void RectRegionMarker::calcViewVolume(double viewportWidth, double viewportHeigh
     io_volume.right = viewportWidth;
     io_volume.bottom = 0;
     io_volume.top = viewportHeight;
+    io_volume.zNear = 1.0;
+    io_volume.zFar = -1.0;
 }
 
 
