@@ -137,6 +137,7 @@ set(sources
   PositionTagGroupItem.cpp
   PositionTagListWidget.cpp
   GeometryMeasurementTracker.cpp
+  DistanceMeasurementDialog.cpp
   MovieRecorder.cpp
   MovieRecorderBar.cpp
   MovieRecorderDialog.cpp
