@@ -89,6 +89,11 @@ protected:
     }
 };
 
+ulong getPoseId(const BodyKeyPose* pose)
+{
+    return reinterpret_cast<ulong>(pose) & 0xffffffff;
+}
+
 }
 
 namespace cnoid {
@@ -105,8 +110,12 @@ public:
     BodyItem* srcBodyItem;
     LinkPtr waistLink;
     vector<LinkPtr> headLinks;
+    LinkPtr headRpyJoints[3];
     vector<LinkPtr> chestLinks;
+    LinkPtr chestRpyJoints[3];
     vector<LinkPtr> armLinkSets[2];
+    // For the body object in the PoseSeqItem's PoseSeqInterpolator
+    shared_ptr<JointPath> armJointPaths[2];
     vector<LinkPtr> legLinkSets[2];
     shared_ptr<JointPath> legJointPaths[2];
     shared_ptr<JointPath> waistToFootJointPaths[2];
@@ -137,16 +146,29 @@ public:
     CheckBox upperBodyWaistCheck;
     BodyPartCheckBox headCheck;
     PushButton headButton;
-    BodyPartCheckBox armChecks[2];
-    PushButton armButtons[2];
+    PushButton headAxisUpButtons[3];
+    PushButton headAxisDownButtons[3];
+
+    struct ArmWidgetSet
+    {
+        BodyPartCheckBox partCheck;
+        PushButton fetchButton;
+        PushButton axisUpButtons[3];
+        PushButton axisDownButtons[3];
+    };
+    ArmWidgetSet armWidgetSets[2];
     BodyPartCheckBox armsCheck;
     PushButton armsButton;
+        
     BodyPartCheckBox chestCheck;
     PushButton chestButton;
-    PushButton waistAxisUpButtons[3];
-    PushButton waistAxisDownButtons[3];
+    PushButton chestAxisUpButtons[3];
+    PushButton chestAxisDownButtons[3];
+
     BodyPartCheckBox waistCheck;
     PushButton waistButton;
+    PushButton waistAxisUpButtons[3];
+    PushButton waistAxisDownButtons[3];
     double adjustedWaistHeight;
     double waistHeightOffset;
     DoubleSpinBox waistHeightSpin;
@@ -161,8 +183,7 @@ public:
         CheckBox groundingCheck;
         PushButton groundingButton;
     };
-
-    LegWidgetSet legWidgetSet[2];
+    LegWidgetSet legWidgetSets[2];
     
     CheckBox legWaistCheck;
     BodyPartCheckBox legsCheck;
@@ -184,8 +205,8 @@ public:
 
     Impl(HumanoidPoseFetchView* self);
     ~Impl();
-    void setTranslationModeCaptions(PushButton* upButtons, PushButton* downButtons, int dimension);
-    void setRotationModeCaptions(PushButton* upButtons, PushButton* downButtons);
+    void setTranslationModeCaptions(PushButton upButtons[], PushButton downButtons[], int dimension);
+    void setRotationModeCaptions(PushButton upButtons[], PushButton downButtons[]);
     int mergeWaistPartCheck(int bodyPart, CheckBox& check);
     void onActivated();
     void onAppKeyPressed(QKeyEvent* event);
@@ -199,10 +220,12 @@ public:
     void setSrcBodyItem(BodyItem* bodyItem, bool doUpdateCombo);
     void setBodyPartLinks(
         Body* body, LinkGroup* group, const string& prefix, vector<LinkPtr>& out_links);
+    void detectRpyJoints(
+        const vector<LinkPtr>& links, LinkPtr out_rpyJoints[], PushButton upButtons[], PushButton downButtons[]);
     bool checkBodyValidity();
     void onSelectedItemsChanged(ItemList<PoseSeqItem> selectedItems);
     void setPoseSeqItem(PoseSeqItem* item);
-    void updateTargetKeyPoses();
+    void updateTargetKeyPoses(bool isForceNewPoseEnabled);
     void clearTargetKeyPoses();    
     void setTargetKeyPoses(const std::vector<PoseSeq::iterator>& poses);
     void updateKeyPoseInterface(BodyKeyPose* pose);
@@ -216,13 +239,21 @@ public:
         BodyKeyPose* pose, int which,
         bool isWaistPositionIncluded, bool isWaistPositionModified, const Isometry3& T_waist, bool doFootGrounding);
     bool fetchLegJointDisplacements(
-        BodyKeyPose* pose, int which, bool isLegPoseModified, const Isometry3& T_waist, const Isometry3& T_foot,
-        bool doUpdatee);
+        int which, bool isLegPoseModified, const Isometry3& T_waist, const Isometry3& T_foot,
+        vector<pair<int, double>>* out_displacements);
     void adjustTranslation(Isometry3& T, int axis, double sign);
     void adjustRotation(Isometry3& T, int axis, double sign);
+    void adjustPosition(Isometry3& T, int axis, double sign);
+    void adjustIkLinkPosition(
+        Link* link, int axis, double sign,
+        std::function<bool(BodyKeyPose* pose, const Isometry3& T_link)> fetchJointDisplacements);
     void adjustWaistPosition(int axis, double sign);
     void onWaistHeightOffsetCheckToggled(bool on);
     void onWaistHeightSpinValueChanged(double value);
+    void adjustHeadRotation(int axis, double sign);
+    void adjustChestRotation(int axis, double sign);
+    void adjustJointAngle(Link* joint, double sign);
+    void adjustHandPosition(int which, int axis, double sign);
     void adjustFootPosition(int which, int axis, double sign);
     void setFootGrounding(int which, bool on);
     void adjustZmp(int axis, double sign);
@@ -288,7 +319,7 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
     topGrid->addWidget(&targetPoseLabel, 2, 1);
     forceNewPoseCheck.setText(_("Foce new pose"));
     forceNewPoseCheck.sigToggled().connect(
-        [this](bool /* on */){ updateTargetKeyPoses(); });
+        [this](bool /* on */){ updateTargetKeyPoses(true); });
     topGrid->addWidget(&forceNewPoseCheck, 2, 2, 1, 2);
     
     mainVBox->addLayout(topGrid);
@@ -309,12 +340,12 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
     wholeBodyButton.setText(_("Whole Body"));
     wholeBodyButton.sigClicked().connect(
         [this](){ fetchOrCreatePoses(WholeBody); });
-    grid->addWidget(&wholeBodyButton, row, 1, 1, 15);
+    grid->addWidget(&wholeBodyButton, row, 1, 1, 13);
     ++row;
 
     jointRangeLimitCheck.setText(_("Keep within upper body joint ranges"));
     jointRangeLimitCheck.setChecked(true);
-    grid->addWidget(&jointRangeLimitCheck, row, 1, 1, 15, Qt::AlignCenter);
+    grid->addWidget(&jointRangeLimitCheck, row, 0, 1, 14, Qt::AlignCenter);
     ++row;
 
     upperBodyCheck.sigToggled().connect(
@@ -322,20 +353,20 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
             handleBodyPartCheck(UpperBody, _("upper body"), upperBodyCheck, on);
         });
     bodyPartChecks.push_back(&upperBodyCheck);
-    grid->addWidget(&upperBodyCheck, row, 3, Qt::AlignRight);
+    grid->addWidget(&upperBodyCheck, row, 2, Qt::AlignRight);
     
     upperBodyButton.setText(_("Upper Body"));
     upperBodyButton.sigClicked().connect(
         [this](){
             fetchOrCreatePoses(
                 mergeWaistPartCheck(UpperBody, upperBodyWaistCheck)); });
-    grid->addWidget(&upperBodyButton, row, 4, 1, 9);
+    grid->addWidget(&upperBodyButton, row, 3, 1, 9);
 
     upperBodyWaistCheck.setText(_("Waist"));
     upperBodyWaistCheck.setChecked(true);
     upperBodyWaistCheck.sigToggled().connect(
-        [this](bool){ updateTargetKeyPoses(); });
-    grid->addWidget(&upperBodyWaistCheck, row, 13, 1, 3, Qt::AlignLeft | Qt::AlignVCenter);
+        [this](bool){ updateTargetKeyPoses(true); });
+    grid->addWidget(&upperBodyWaistCheck, row, 12, 1, 3, Qt::AlignLeft | Qt::AlignVCenter);
     
     ++row;
 
@@ -344,34 +375,67 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
             handleBodyPartCheck(Head, _("head"), headCheck, on);
         });
     bodyPartChecks.push_back(&headCheck);
-    grid->addWidget(&headCheck, row, 6, Qt::AlignRight);
+    grid->addWidget(&headCheck, row, 6, Qt::AlignHCenter | Qt::AlignBottom);
     
     headButton.setText(_("Head"));
     headButton.sigClicked().connect(
         [this](){ fetchOrCreatePoses(Head); });
-    grid->addWidget(&headButton, row, 7, 1, 3);
+    grid->addWidget(&headButton, row + 1, 6, 1, 3);
 
-    ++row;
+    setRotationModeCaptions(headAxisUpButtons, headAxisDownButtons);
+
+    for(int i=0; i < 3; ++i){
+        headAxisUpButtons[i].sigClicked().connect(
+            [this, i](){ adjustHeadRotation(i, +1.0); });
+        headAxisDownButtons[i].sigClicked().connect(
+            [this, i](){ adjustHeadRotation(i, -1.0); });
+    }
+
+    grid->addWidget(&headAxisUpButtons[0], row + 2, 6);
+    grid->addWidget(&headAxisDownButtons[0], row, 8);
+    grid->addWidget(&headAxisUpButtons[1], row + 1, 9);
+    grid->addWidget(&headAxisDownButtons[1], row + 1, 5);
+    grid->addWidget(&headAxisUpButtons[2], row, 7, Qt::AlignCenter);
+    grid->addWidget(&headAxisDownButtons[2], row + 2, 7, Qt::AlignCenter);
+
+    row += 4;
 
     const char* armNames[] = { _("R-Arm"), _("L-Arm") };
 
     for(int i=0; i < 2; ++i){
         int armPart = (i == 0) ? RightArm : LeftArm;
         auto armName = armNames[i];
-        auto check = &armChecks[i];
+        auto& aw = armWidgetSets[i];
 
+        auto check = &aw.partCheck;
         check->sigToggled().connect(
             [this, armPart, armName, check](bool on){
                 handleBodyPartCheck(armPart, armName, *check, on);
             });
         bodyPartChecks.push_back(check);
-        grid->addWidget(check, row, i * 11, Qt::AlignRight | Qt::AlignVCenter);
+        grid->addWidget(check, row - 1, i * 10 + 1, Qt::AlignHCenter | Qt::AlignBottom);
 
-        auto button = &armButtons[i];
-        button->setText(armNames[i]);
+        auto button = &aw.fetchButton;
+        button->setText(armName);
         button->sigClicked().connect(
             [this, armPart](){ fetchOrCreatePoses(armPart); });
-        grid->addWidget(button, row, i * 11 + 1, 1, 4);
+        grid->addWidget(button, row, i * 10 + 1, 1, 3);
+
+        setTranslationModeCaptions(aw.axisUpButtons, aw.axisDownButtons, 3);
+
+        for(int j=0; j < 3; ++j){
+            aw.axisUpButtons[j].sigClicked().connect(
+                [this, i, j](){ adjustHandPosition(i, j, +1.0); });
+            aw.axisDownButtons[j].sigClicked().connect(
+                [this, i, j](){ adjustHandPosition(i, j, -1.0); });
+        }
+
+        grid->addWidget(&aw.axisUpButtons[0], row + 1, i * 10 + 1);
+        grid->addWidget(&aw.axisDownButtons[0], row - 1, i * 10 + 3);
+        grid->addWidget(&aw.axisUpButtons[1], row, i * 10 + 4);
+        grid->addWidget(&aw.axisDownButtons[1], row, i * 10);
+        grid->addWidget(&aw.axisUpButtons[2], row - 1, i * 10 + 2, Qt::AlignCenter);
+        grid->addWidget(&aw.axisDownButtons[2], row + 1, i * 10 + 2, Qt::AlignCenter);
     }
 
     armsCheck.sigToggled().connect(
@@ -379,30 +443,46 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
             handleBodyPartCheck(Arms, _("arms"), armsCheck, on);
         });
     bodyPartChecks.push_back(&armsCheck);
-    grid->addWidget(&armsCheck, row, 5, Qt::AlignRight | Qt::AlignVCenter);
+    grid->addWidget(&armsCheck, row - 1, 7, Qt::AlignHCenter | Qt::AlignBottom);
     
     armsButton.setText(_("Arms"));
     armsButton.sigClicked().connect(
         [this](){ fetchOrCreatePoses(Arms); });
-    grid->addWidget(&armsButton, row, 6, 1, 5);
+    grid->addWidget(&armsButton, row, 6, 1, 3);
 
-    ++row;
+    row += 2;
 
     chestCheck.sigToggled().connect(
         [this](bool on){
             handleBodyPartCheck(Chest, _("chest"), chestCheck, on);
         });
     bodyPartChecks.push_back(&chestCheck);
-    grid->addWidget(&chestCheck, row, 6, Qt::AlignRight | Qt::AlignVCenter);
+    grid->addWidget(&chestCheck, row, 6, Qt::AlignHCenter | Qt::AlignBottom);
     
     chestButton.setText(_("Chest"));
     chestButton.sigClicked().connect(
         [this](){ fetchOrCreatePoses(Chest); });
-    grid->addWidget(&chestButton, row, 7, 1, 3);
-    
-    ++row;
+    grid->addWidget(&chestButton, row + 1, 6, 1, 3);
 
-    grid->addWidget(new QLabel(_("Adjustment coord. system")), row, 0, 1, 8);
+    setRotationModeCaptions(chestAxisUpButtons, chestAxisDownButtons);
+
+    for(int i=0; i < 3; ++i){
+        chestAxisUpButtons[i].sigClicked().connect(
+            [this, i](){ adjustChestRotation(i, +1.0); });
+        chestAxisDownButtons[i].sigClicked().connect(
+            [this, i](){ adjustChestRotation(i, -1.0); });
+    }
+
+    grid->addWidget(&chestAxisUpButtons[0], row + 2, 6);
+    grid->addWidget(&chestAxisDownButtons[0], row, 8);
+    grid->addWidget(&chestAxisUpButtons[1], row + 1, 9);
+    grid->addWidget(&chestAxisDownButtons[1], row + 1, 5);
+    grid->addWidget(&chestAxisUpButtons[2], row, 7, Qt::AlignCenter);
+    grid->addWidget(&chestAxisDownButtons[2], row + 2, 7, Qt::AlignCenter);
+    
+    row += 1;
+
+    grid->addWidget(new QLabel(_("Adjustment coord. system")), row, 0, 1, 5);
     globalCoordRadio.setText(_("Global"));
     grid->addWidget(&globalCoordRadio, row + 1, 0, 1, 6);
     localCoordRadio.setText(_("Local"));
@@ -412,17 +492,19 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
     adjustmentCoordRadioGroup.addButton(&localCoordRadio, LocalCoordinate);
     globalCoordRadio.setChecked(true);
 
+    row += 2;
+
     waistCheck.sigToggled().connect(
         [this](bool on){
             handleBodyPartCheck(Waist, _("waist"), waistCheck, on);
         });
     bodyPartChecks.push_back(&waistCheck);
-    grid->addWidget(&waistCheck, row + 1, 5, Qt::AlignRight | Qt::AlignVCenter);
+    grid->addWidget(&waistCheck, row, 6, Qt::AlignHCenter | Qt::AlignBottom);
     
     waistButton.setText(_("Waist"));
     waistButton.sigClicked().connect(
         [this](){ fetchOrCreatePoses(Waist); });
-    grid->addWidget(&waistButton, row + 1, 7, 1, 3);
+    grid->addWidget(&waistButton, row + 1, 6, 1, 3);
 
     setTranslationModeCaptions(waistAxisUpButtons, waistAxisDownButtons, 3);
 
@@ -433,30 +515,30 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
             [this, i](){ adjustWaistPosition(i, -1.0); });
     }
 
-    grid->addWidget(&waistAxisUpButtons[0], row + 2, 7);
-    grid->addWidget(&waistAxisDownButtons[0], row, 9);
-    grid->addWidget(&waistAxisUpButtons[1], row + 1, 10);
-    grid->addWidget(&waistAxisDownButtons[1], row + 1, 6);
-    grid->addWidget(&waistAxisUpButtons[2], row, 8, Qt::AlignCenter);
-    grid->addWidget(&waistAxisDownButtons[2], row + 2, 8, Qt::AlignCenter);
+    grid->addWidget(&waistAxisUpButtons[0], row + 2, 6);
+    grid->addWidget(&waistAxisDownButtons[0], row, 8);
+    grid->addWidget(&waistAxisUpButtons[1], row + 1, 9);
+    grid->addWidget(&waistAxisDownButtons[1], row + 1, 5);
+    grid->addWidget(&waistAxisUpButtons[2], row, 7, Qt::AlignCenter);
+    grid->addWidget(&waistAxisDownButtons[2], row + 2, 7, Qt::AlignCenter);
 
     adjustedWaistHeight = 0.8;
     waistHeightOffset = 0.0;
     
-    grid->addWidget(new QLabel(_("Height")), row, 11, 1, 4, Qt::AlignCenter | Qt::AlignBottom);
+    grid->addWidget(new QLabel(_("Height")), row, 10, 1, 4, Qt::AlignCenter | Qt::AlignBottom);
 
     waistHeightSpin.setAlignment(Qt::AlignCenter);
     waistHeightSpin.setDecimals(3);
     waistHeightSpin.sigValueChanged().connect(
         [this](double value){ onWaistHeightSpinValueChanged(value); });
-    grid->addWidget(&waistHeightSpin, row + 1, 11, 1, 4);
+    grid->addWidget(&waistHeightSpin, row + 1, 10, 1, 4);
 
     waistHeightOffsetCheck.setText(_("Offset"));
     waistHeightOffsetCheck.setChecked(true);
     waistHeightOffsetCheck.sigToggled().connect(
         [this](bool on){ onWaistHeightOffsetCheckToggled(on); });
     onWaistHeightOffsetCheckToggled(true);
-    grid->addWidget(&waistHeightOffsetCheck, row + 2, 11, 1, 4, Qt::AlignHCenter | Qt::AlignTop);
+    grid->addWidget(&waistHeightOffsetCheck, row + 2, 10, 1, 4, Qt::AlignHCenter | Qt::AlignTop);
 
     row += 3;
 
@@ -465,7 +547,7 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
     for(int i=0; i < 2; ++i){
         int legPart = (i == 0) ? RightLeg : LeftLeg;
         auto legName = legNames[i];
-        auto& lw = legWidgetSet[i];
+        auto& lw = legWidgetSets[i];
 
         auto legCheck = &lw.partCheck;
         legCheck->sigToggled().connect(
@@ -473,7 +555,7 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
                 handleBodyPartCheck(legPart, legName, *legCheck, on);
             });
         bodyPartChecks.push_back(legCheck);
-        grid->addWidget(legCheck, row + 1, i * 10, Qt::AlignRight | Qt::AlignVCenter);
+        grid->addWidget(legCheck, row, i * 10 + 1, Qt::AlignHCenter | Qt::AlignBottom);
 
         auto fetchButton = &lw.fetchButton;
         fetchButton->setText(legName);
@@ -481,7 +563,7 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
             [this, legPart](){
                 fetchOrCreatePoses(mergeWaistPartCheck(legPart, legWaistCheck));
             });
-        grid->addWidget(fetchButton, row + 1, i * 10 + 2, 1, 3);
+        grid->addWidget(fetchButton, row + 1, i * 10 + 1, 1, 3);
 
         setTranslationModeCaptions(lw.axisUpButtons, lw.axisDownButtons, 3);
 
@@ -492,12 +574,12 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
                 [this, i, j](){ adjustFootPosition(i, j, -1.0); });
         }
 
-        grid->addWidget(&lw.axisUpButtons[0], row + 2, i * 10 + 2);
-        grid->addWidget(&lw.axisDownButtons[0], row, i * 10 + 4);
-        grid->addWidget(&lw.axisUpButtons[1], row + 1, i * 10 + 5);
-        grid->addWidget(&lw.axisDownButtons[1], row + 1, i * 10 + 1);
-        grid->addWidget(&lw.axisUpButtons[2], row, i * 10 + 3, Qt::AlignCenter);
-        grid->addWidget(&lw.axisDownButtons[2], row + 2, i * 10 + 3, Qt::AlignCenter);
+        grid->addWidget(&lw.axisUpButtons[0], row + 2, i * 10 + 1);
+        grid->addWidget(&lw.axisDownButtons[0], row, i * 10 + 3);
+        grid->addWidget(&lw.axisUpButtons[1], row + 1, i * 10 + 4);
+        grid->addWidget(&lw.axisDownButtons[1], row + 1, i * 10);
+        grid->addWidget(&lw.axisUpButtons[2], row, i * 10 + 2, Qt::AlignCenter);
+        grid->addWidget(&lw.axisDownButtons[2], row + 2, i * 10 + 2, Qt::AlignCenter);
         
         auto groundingCheck = &lw.groundingCheck;
         bodyPartChecks.push_back(groundingCheck);
@@ -505,14 +587,14 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
             [this, i](bool on){
                 setFootGrounding(i, on);
             });
-        grid->addWidget(groundingCheck, row + 3, i * 10 + 1, Qt::AlignRight | Qt::AlignVCenter);
+        grid->addWidget(groundingCheck, row + 3, i * 10, Qt::AlignRight | Qt::AlignVCenter);
         
         auto groundingButton = &lw.groundingButton;
         groundingButton->setText(_("Ground"));
         groundingButton->sigClicked().connect(
             [this, legPart](){
                 fetchOrCreatePoses(mergeWaistPartCheck(legPart, legWaistCheck), FootGrounding); });
-        grid->addWidget(groundingButton, row + 3, i * 10 + 2, 1, 3);
+        grid->addWidget(groundingButton, row + 3, i * 10 + 1, 1, 3);
     }
 
     legsCheck.sigToggled().connect(
@@ -520,18 +602,18 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
             handleBodyPartCheck(mergeWaistPartCheck(Legs, legWaistCheck), _("legs"), legsCheck, on);
         });
     bodyPartChecks.push_back(&legsCheck);
-    grid->addWidget(&legsCheck, row + 1, 6, Qt::AlignRight | Qt::AlignVCenter);
+    grid->addWidget(&legsCheck, row, 7, Qt::AlignHCenter | Qt::AlignBottom);
     
     legsButton.setText(_("Legs"));
     legsButton.sigClicked().connect(
         [this](){ fetchOrCreatePoses(mergeWaistPartCheck(Legs, legWaistCheck)); });
-    grid->addWidget(&legsButton, row + 1, 7, 1, 3);
+    grid->addWidget(&legsButton, row + 1, 6, 1, 3);
 
     legWaistCheck.setText(_("Waist"));
     legWaistCheck.setChecked(true);
     legWaistCheck.sigToggled().connect(
-        [this](bool){ updateTargetKeyPoses(); });
-    grid->addWidget(&legWaistCheck, row + 2, 7, 1, 3, Qt::AlignCenter);
+        [this](bool){ updateTargetKeyPoses(true); });
+    grid->addWidget(&legWaistCheck, row + 2, 6, 1, 3, Qt::AlignCenter);
 
     row += 4;
 
@@ -543,22 +625,22 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
     bodyPartChecks.push_back(&zmpCheck);
     hbox->addWidget(&zmpCheck);
     hbox->addWidget(new QLabel(_("ZMP")));
-    grid->addLayout(hbox, row, 7, 1, 2, Qt::AlignRight | Qt::AlignVCenter);
+    grid->addLayout(hbox, row, 6, 1, 2, Qt::AlignRight | Qt::AlignVCenter);
     
     zmpRightButton.setText(_("R"));
     zmpRightButton.sigClicked().connect(
         [this](){ fetchOrCreatePoses(Zmp, ZmpAtRightFoot); });
-    grid->addWidget(&zmpRightButton, row + 1, 3, 1, 3, Qt::AlignRight | Qt::AlignVCenter);
+    grid->addWidget(&zmpRightButton, row + 1, 2, 1, 3, Qt::AlignRight | Qt::AlignVCenter);
     
     zmpCenterButton.setText(_("Center"));
     zmpCenterButton.sigClicked().connect(
         [this](){ fetchOrCreatePoses(Zmp, ZmpAtCenterOfBothFeet); });
-    grid->addWidget(&zmpCenterButton, row + 1, 7, 1, 3);
+    grid->addWidget(&zmpCenterButton, row + 1, 6, 1, 3);
     
     zmpLeftButton.setText(_("L"));
     zmpLeftButton.sigClicked().connect(
         [this](){ fetchOrCreatePoses(Zmp, ZmpAtLeftFoot); });
-    grid->addWidget(&zmpLeftButton, row + 1, 11, 1, 3, Qt::AlignLeft | Qt::AlignVCenter);
+    grid->addWidget(&zmpLeftButton, row + 1, 10, 1, 3, Qt::AlignLeft | Qt::AlignVCenter);
 
     setTranslationModeCaptions(zmpAxisUpButtons, zmpAxisDownButtons, 2);
 
@@ -569,10 +651,10 @@ HumanoidPoseFetchView::Impl::Impl(HumanoidPoseFetchView* self)
             [this, i](){ adjustZmp(i, -1.0); });
     }
 
-    grid->addWidget(&zmpAxisUpButtons[0], row + 2, 7);
-    grid->addWidget(&zmpAxisDownButtons[0], row, 9);
-    grid->addWidget(&zmpAxisUpButtons[1], row + 1, 10);
-    grid->addWidget(&zmpAxisDownButtons[1], row + 1, 6);
+    grid->addWidget(&zmpAxisUpButtons[0], row + 2, 6);
+    grid->addWidget(&zmpAxisDownButtons[0], row, 8);
+    grid->addWidget(&zmpAxisUpButtons[1], row + 1, 9);
+    grid->addWidget(&zmpAxisDownButtons[1], row + 1, 5);
 
     // Not implemented yet
     //relativePositionCheck.setText(_("Relative positioning for the waist and feet"));
@@ -606,7 +688,7 @@ HumanoidPoseFetchView::Impl::~Impl()
 
 
 void HumanoidPoseFetchView::Impl::setTranslationModeCaptions
-(PushButton* upButtons, PushButton* downButtons, int dimension)
+(PushButton upButtons[], PushButton downButtons[], int dimension)
 {
     static QIcon frontArrow(":/PoseSeq/icon/front-arrow.svg");
     static QIcon backArrow(":/PoseSeq/icon/back-arrow.svg");
@@ -633,7 +715,7 @@ void HumanoidPoseFetchView::Impl::setTranslationModeCaptions
 }
 
 
-void HumanoidPoseFetchView::Impl::setRotationModeCaptions(PushButton* upButtons, PushButton* downButtons)
+void HumanoidPoseFetchView::Impl::setRotationModeCaptions(PushButton upButtons[], PushButton downButtons[])
 {
     static QIcon frontArrowRotation(":/PoseSeq/icon/front-arrow-rotation.svg");
     static QIcon backArrowRotation(":/PoseSeq/icon/back-arrow-rotation.svg");
@@ -728,13 +810,22 @@ void HumanoidPoseFetchView::Impl::onAppKeyPressed(QKeyEvent* event)
     if(event->key() == Qt::Key_Control){
         setRotationModeCaptions(waistAxisUpButtons, waistAxisDownButtons);
         for(int i=0; i < 2; ++i){
-            auto& lw = legWidgetSet[i];
+            auto& aw = armWidgetSets[i];
+            setRotationModeCaptions(aw.axisUpButtons, aw.axisDownButtons);
+            auto& lw = legWidgetSets[i];
             setRotationModeCaptions(lw.axisUpButtons, lw.axisDownButtons);
         }
         isRotationAdjustmentMode = true;
 
     } else if(event->key() == Qt::Key_Shift){
         isSmallStepAdjustmentMode = true;
+
+    } else if(event->key() == Qt::Key_Alt){
+        if(forceNewPoseCheck.isChecked()){
+            updateTargetKeyPoses(false);
+        } else {
+            clearTargetKeyPoses();
+        }
     }
 }
 
@@ -744,13 +835,22 @@ void HumanoidPoseFetchView::Impl::onAppKeyReleased(QKeyEvent* event)
     if(event->key() == Qt::Key_Control){
         setTranslationModeCaptions(waistAxisUpButtons, waistAxisDownButtons, 3);
         for(int i=0; i < 2; ++i){
-            auto& lw = legWidgetSet[i];
+            auto& aw = armWidgetSets[i];
+            setTranslationModeCaptions(aw.axisUpButtons, aw.axisDownButtons, 3);
+            auto& lw = legWidgetSets[i];
             setTranslationModeCaptions(lw.axisUpButtons, lw.axisDownButtons, 3);
         }
         isRotationAdjustmentMode = false;
 
     } else if(event->key() == Qt::Key_Shift){
         isSmallStepAdjustmentMode = false;
+
+    } else if(event->key() == Qt::Key_Alt){
+        if(forceNewPoseCheck.isChecked()){
+            clearTargetKeyPoses();
+        } else {
+            updateTargetKeyPoses(false);
+        }
     }
 }
 
@@ -852,8 +952,15 @@ void HumanoidPoseFetchView::Impl::setSrcBodyItem(BodyItem* bodyItem, bool doUpda
         waistLink.reset();
         headLinks.clear();
         chestLinks.clear();
+
+        for(int i=0; i < 3; ++i){
+            headRpyJoints[i].reset();
+            chestRpyJoints[i].reset();
+        }
+            
         for(int i=0; i < 2; ++i){
             armLinkSets[i].clear();
+            armJointPaths[i].reset();
             legLinkSets[i].clear();
             legJointPaths[i].reset();
             waistToFootJointPaths[i].reset();
@@ -869,6 +976,7 @@ void HumanoidPoseFetchView::Impl::setSrcBodyItem(BodyItem* bodyItem, bool doUpda
             if(auto upperBodyGroup = linkGroup->findSubGroup("UPPER_BODY")){
                 if(auto headGroup = upperBodyGroup->findSubGroup("HEAD")){
                     setBodyPartLinks(body, headGroup, "", headLinks);
+                    detectRpyJoints(headLinks, headRpyJoints, headAxisUpButtons, headAxisDownButtons);
                 }
                 const char* armGroupNames[2] = { "R_ARM", "L_ARM" };
                 for(int i=0; i < 2; ++i){
@@ -878,19 +986,19 @@ void HumanoidPoseFetchView::Impl::setSrcBodyItem(BodyItem* bodyItem, bool doUpda
                 }
                 if(auto chestGroup = upperBodyGroup->findSubGroup("CHEST")){
                     setBodyPartLinks(body, chestGroup, "", chestLinks);
+                    detectRpyJoints(chestLinks, chestRpyJoints, chestAxisUpButtons, chestAxisDownButtons);
                 }
             }
             const char* legGroupNames[2] = { "R_LEG", "L_LEG" };
             for(int i=0; i < 2; ++i){
                 if(auto legGroup = linkGroup->findSubGroup(legGroupNames[i])){
                     setBodyPartLinks(body, legGroup, "", legLinkSets[i]);
-                    legJointPaths[i] = JointPath::getCustomPath(body, waistLink, legLinkSets[i].back());
-                    
+
                     // Find the foot link
                     for(int j=0; j < leggedBody->numFeet(); ++j){
                         for(auto& link : legLinkSets[i]){
                             if(link == leggedBody->footLink(j)){
-                                waistToFootJointPaths[i] = JointPath::getCustomPath(body, waistLink, link);
+                                waistToFootJointPaths[i] = JointPath::getCustomPath(waistLink, link);
                             }
                         }
                     }
@@ -925,6 +1033,34 @@ void HumanoidPoseFetchView::Impl::setBodyPartLinks
 }
 
 
+void HumanoidPoseFetchView::Impl::detectRpyJoints
+(const vector<LinkPtr>& links, LinkPtr out_rpyJoints[], PushButton upButtons[], PushButton downButtons[])
+{
+    for(int i=0; i < 3; ++i){
+        out_rpyJoints[i].reset();
+    }
+
+    for(auto& link : links){
+        if(link->isRevoluteJoint()){
+            Vector3 a = link->jointAxis();
+            if(a.isApprox(Vector3::UnitX())){
+                out_rpyJoints[0] = link;
+            } else if(a.isApprox(Vector3::UnitY())){
+                out_rpyJoints[1] = link;
+            } else if(a.isApprox(Vector3::UnitZ())){
+                out_rpyJoints[2] = link;
+            }
+        }
+    }
+
+    for(int i=0; i < 3; ++i){
+        bool on = out_rpyJoints[i] != nullptr;
+        upButtons[i].setEnabled(on);
+        downButtons[i].setEnabled(on);
+    }
+}
+
+
 bool HumanoidPoseFetchView::Impl::checkBodyValidity()
 {
     if(!srcBodyItem){
@@ -943,7 +1079,7 @@ bool HumanoidPoseFetchView::Impl::checkBodyValidity()
         if(legLinkSets[i].empty()){
             return false;
         }
-        if(!legJointPaths[i] || !waistToFootJointPaths[i]){
+        if(!waistToFootJointPaths[i]){
             return false;
         }
     }
@@ -974,7 +1110,7 @@ void HumanoidPoseFetchView::Impl::setPoseSeqItem(PoseSeqItem* item)
             poseSeqConnections.add(
                 poseSeqItem->sigPoseSelectionChanged().connect(
                     [this](const std::vector<PoseSeq::iterator>& /* selected */){
-                        updateTargetKeyPoses();
+                        updateTargetKeyPoses(true);
                     }));
             poseSeqConnections.add(
                 poseSeq->sigPoseAboutToBeRemoved().connect(
@@ -985,15 +1121,16 @@ void HumanoidPoseFetchView::Impl::setPoseSeqItem(PoseSeqItem* item)
                             }
                         }
                     }));
-            updateTargetKeyPoses();
+            updateTargetKeyPoses(true);
         }
     }
 }
 
 
-void HumanoidPoseFetchView::Impl::updateTargetKeyPoses()
+void HumanoidPoseFetchView::Impl::updateTargetKeyPoses(bool isForceNewPoseEnabled)
 {
-    if(poseSeqItem && !forceNewPoseCheck.isChecked()){
+    bool doForceNewPose = isForceNewPoseEnabled && forceNewPoseCheck.isChecked();
+    if(poseSeqItem && !doForceNewPose){
         setTargetKeyPoses(poseSeqItem->selectedPoses());
     } else {
         clearTargetKeyPoses();
@@ -1035,7 +1172,7 @@ void HumanoidPoseFetchView::Impl::setTargetKeyPoses(const std::vector<PoseSeq::i
     if(targetPoseIters.empty()){
         targetPoseLabel.setText(_("New pose"));
     } else {
-        ulong id = reinterpret_cast<ulong>(firstKeyPose) & 0xffffffff;
+        ulong id = getPoseId(firstKeyPose);
         if(targetPoseIters.size() == 1){
             targetPoseLabel.setText(format("{0:0X}", id).c_str());
         } else {
@@ -1078,13 +1215,13 @@ void HumanoidPoseFetchView::Impl::updateKeyPoseInterface(BodyKeyPose* pose)
 
     for(int i=0; i < 2; ++i){
         armStates[i] = getBodyPartState(pose, armLinkSets[i], false);
-        armChecks[i].setCheckState(armStates[i]);
+        armWidgetSets[i].partCheck.setCheckState(armStates[i]);
 
         auto legState = getBodyPartState(pose, legLinkSets[i], true);
         if(legState != Qt::Unchecked && legWaistCheck.isChecked()){
             legState = getCombinedState(legState, waistState);
         }
-        legWidgetSet[i].partCheck.setCheckState(legState);
+        legWidgetSets[i].partCheck.setCheckState(legState);
         legStates[i] = legState;
 
         bool isTouching = false;
@@ -1095,7 +1232,7 @@ void HumanoidPoseFetchView::Impl::updateKeyPoseInterface(BodyKeyPose* pose)
                 isTouching = footInfo->isTouching();
             }
         }
-        legWidgetSet[i].groundingCheck.setChecked(isTouching);
+        legWidgetSets[i].groundingCheck.setChecked(isTouching);
     }
     Qt::CheckState armsState = getCombinedState(armStates[0], armStates[1]);
     armsCheck.setCheckState(armsState);
@@ -1237,7 +1374,7 @@ void HumanoidPoseFetchView::Impl::fetchOrCreatePoses(int bodyPart, int fetchOpti
     }
 
     if(modified){
-        updateTargetKeyPoses();
+        updateTargetKeyPoses(true);
     }
 }
 
@@ -1359,7 +1496,7 @@ bool HumanoidPoseFetchView::Impl::fetchLegPose
     bool failed = false;
     if(isWaistPositionIncluded){
         bool isLegPoseModified = isWaistPositionModified || doFootGrounding;
-        if(!fetchLegJointDisplacements(pose, which, isLegPoseModified, T_waist, T_foot, false)){
+        if(!fetchLegJointDisplacements(which, isLegPoseModified, T_waist, T_foot, nullptr)){
             failed = true;
         }
     }
@@ -1373,12 +1510,16 @@ bool HumanoidPoseFetchView::Impl::fetchLegPose
 }
 
 
+/**
+   \param out_displacements The array of a joint id and displacement value pair.
+*/
 bool HumanoidPoseFetchView::Impl::fetchLegJointDisplacements
-(BodyKeyPose* pose, int which, bool isLegPoseModified, const Isometry3& T_waist, const Isometry3& T_foot,
- bool doUpdate)
+(int which, bool isLegPoseModified, const Isometry3& T_waist, const Isometry3& T_foot,
+ vector<pair<int, double>>* out_displacements)
 {
     bool failed = false;
 
+    auto& legLinks = legLinkSets[which];
     auto& waistToFoot = waistToFootJointPaths[which];
     Isometry3 T_waist_org;
     vector<double> q0;
@@ -1397,9 +1538,9 @@ bool HumanoidPoseFetchView::Impl::fetchLegJointDisplacements
             failed = true;
         }
     }
-    if(doUpdate && !failed){
-        for(auto& link : legLinkSets[which]){
-            pose->setJointDisplacement(link->jointId(), link->q());
+    if(out_displacements && !failed){
+        for(auto& link : legLinks){
+            out_displacements->emplace_back(link->jointId(), link->q());
         }
     }
     if(isLegPoseModified){
@@ -1408,7 +1549,11 @@ bool HumanoidPoseFetchView::Impl::fetchLegJointDisplacements
         for(int i=0; i < waistToFoot->numJoints(); ++i){
             waistToFoot->joint(i)->q() = q0[i];
         }
-        legJointPaths[which]->calcForwardKinematics();
+        auto& path = legJointPaths[which];
+        if(!path){
+            path = JointPath::getCustomPath(waistLink, legLinks.back());
+        }
+        path->calcForwardKinematics();
     }
 
     return !failed;
@@ -1441,60 +1586,95 @@ void HumanoidPoseFetchView::Impl::adjustRotation(Isometry3& T, int axis, double 
 }
 
 
-void HumanoidPoseFetchView::Impl::adjustWaistPosition(int axis, double sign)
+void HumanoidPoseFetchView::Impl::adjustPosition(Isometry3& T, int axis, double sign)
+{
+    if(isRotationAdjustmentMode){
+        adjustRotation(T, axis, sign);
+    } else {
+        adjustTranslation(T, axis, sign);
+    }
+}
+
+
+void HumanoidPoseFetchView::Impl::adjustIkLinkPosition
+(Link* link, int axis, double sign,
+ std::function<bool(BodyKeyPose* pose, const Isometry3& T_link)> fetchJointDisplacements)
 {
     if(!poseSeqItem || !checkBodyValidity() || targetPoseIters.empty()){
-        showErrorDialog(_("Not ready to adjust the waist height."));
+        showErrorDialog(_("Not ready to adjust the link position."));
         return;
     }
 
-    bool modified = false;
-    auto poseSeq = poseSeqItem->poseSeq();
-    auto block = poseSeqConnections.scopedBlock();
+    struct LinkAdjustmentBuf {
+        PoseSeq::iterator it;
+        BodyKeyPose* pose;
+        BodyKeyPose::LinkInfo* linkInfo;
+        Isometry3 T_link;
+    };
+    vector<LinkAdjustmentBuf, Eigen::aligned_allocator<LinkAdjustmentBuf>> linkAdjustmentBufs;
+    linkAdjustmentBufs.reserve(targetPoseIters.size());
 
-    poseSeqItem->beginEditing();
+    auto poseSeq = poseSeqItem->poseSeq();
+    bool failed = false;
     
     for(auto& it : targetPoseIters){
         if(auto pose = it->get<BodyKeyPose>()){
-            if(auto waistInfo = pose->ikLinkInfo(waistLink->index())){
-                poseSeq->beginPoseModification(it);
-                Isometry3 T_waist = waistInfo->T();
-                if(isRotationAdjustmentMode){
-                    adjustRotation(T_waist, axis, sign);
-                } else {
-                    adjustTranslation(T_waist, axis, sign);
+            if(auto linkInfo = pose->ikLinkInfo(link->index())){
+                Isometry3 T_link = linkInfo->T();
+                adjustPosition(T_link, axis, sign);
+                LinkAdjustmentBuf buf;
+
+                if(!fetchJointDisplacements(pose, T_link)){
+                    showErrorDialog(
+                        format(_("The {0} position of key pose {1:0X} cannot be adjusted due to the inverse kinematics error."),
+                               link->name(), getPoseId(pose)));
+                    linkAdjustmentBufs.clear();
+                    failed = true;
+                    break;
                 }
-                bool failed = false;
-                for(int i=0; i < 2; ++i){
-                    auto footLink = waistToFootJointPaths[i]->endLink();
-                    if(auto footInfo = pose->ikLinkInfo(footLink->index())){
-                        if(!fetchLegJointDisplacements(pose, i, true, T_waist, footInfo->T(), false)){
-                            failed = true;
-                            break;
-                        }
-                    }
-                }
-                if(!failed){
-                    waistInfo->setPosition(T_waist);
-                    modified = true;
-                }
-                poseSeq->endPoseModification(it);
-                currentPoseIter = it;
+                buf.it = it;
+                buf.pose = pose;
+                buf.linkInfo = linkInfo;
+                buf.T_link = T_link;
+                linkAdjustmentBufs.push_back(buf);
             }
         }
     }
 
-    poseSeqItem->endEditing(modified);
-
-    if(!targetPoseIters.empty() && !modified){
-        if(targetPoseIters.size() == 1){
-            showWarningDialog(
-                _("The waist height of the selected key pose cannot be modified due to the inverse kinematics error."));
-        } else {
-            showWarningDialog(
-                _("The waist height of the selected key poses cannot be modified due to the inverse kinematics error."));
+    if(!linkAdjustmentBufs.empty()){
+        auto block = poseSeqConnections.scopedBlock();
+        poseSeqItem->beginEditing();
+        for(auto& buf : linkAdjustmentBufs){
+            poseSeq->beginPoseModification(buf.it);
+            buf.linkInfo->setPosition(buf.T_link);
+            buf.linkInfo->clearTouching();
+            poseSeq->endPoseModification(buf.it);
+            currentPoseIter = buf.it;
         }
+        poseSeqItem->endEditing(true);
+        updateTargetKeyPoses(true);
+
+    } else if(!failed){
+        showWarningDialog(_("There are no elements in the selected key poses to be adjusted."));
     }
+}
+
+
+void HumanoidPoseFetchView::Impl::adjustWaistPosition(int axis, double sign)
+{
+    adjustIkLinkPosition(
+        waistLink, axis, sign,
+        [this](BodyKeyPose* pose, const Isometry3& T_link){
+            for(int i=0; i < 2; ++i){
+                auto footLink = waistToFootJointPaths[i]->endLink();
+                if(auto footInfo = pose->ikLinkInfo(footLink->index())){
+                    if(!fetchLegJointDisplacements(i, true, T_link, footInfo->T(), nullptr)){
+                        return false;
+                    }
+                }
+            }
+            return true;
+        });
 }
 
 
@@ -1524,62 +1704,219 @@ void HumanoidPoseFetchView::Impl::onWaistHeightSpinValueChanged(double value)
 }
 
 
-void HumanoidPoseFetchView::Impl::adjustFootPosition(int which, int axis, double sign)
+void HumanoidPoseFetchView::Impl::adjustHeadRotation(int axis, double sign)
+{
+    if(auto joint = headRpyJoints[axis]){
+        adjustJointAngle(joint, sign);
+    }
+}
+
+
+void HumanoidPoseFetchView::Impl::adjustChestRotation(int axis, double sign)
+{
+    if(auto joint = chestRpyJoints[axis]){
+        adjustJointAngle(joint, sign);
+    }
+}
+
+
+void HumanoidPoseFetchView::Impl::adjustJointAngle(Link* joint, double sign)
 {
     if(!poseSeqItem || !checkBodyValidity() || targetPoseIters.empty()){
-        showErrorDialog(_("Not ready to adjust the foot height."));
+        showErrorDialog(_("Not ready to adjust the joint angle."));
         return;
     }
 
-    bool modified = false;
-    auto footLink = waistToFootJointPaths[which]->endLink();
-    auto poseSeq = poseSeqItem->poseSeq();
-    auto block = poseSeqConnections.scopedBlock();
+    struct JointAdjustmentBuf {
+        PoseSeq::iterator it;
+        BodyKeyPose* pose;
+        double q;
+    };
+    vector<JointAdjustmentBuf> jointAdjustmentBufs;
+    jointAdjustmentBufs.reserve(targetPoseIters.size());
 
-    poseSeqItem->beginEditing();
+    auto poseSeq = poseSeqItem->poseSeq();
+    int jointId = joint->jointId();
+    bool failed = false;
     
     for(auto& it : targetPoseIters){
         if(auto pose = it->get<BodyKeyPose>()){
-            if(auto footInfo = pose->ikLinkInfo(footLink->index())){
-                poseSeq->beginPoseModification(it);
-                Isometry3 T_foot = footInfo->T();
-                if(isRotationAdjustmentMode){
-                    adjustRotation(T_foot, axis, sign);
-                } else {
-                    adjustTranslation(T_foot, axis, sign);
+            if(pose->isJointValid(jointId)){
+                double dq = sign * radian(isSmallStepAdjustmentMode ? 1.0 : 5.0);
+                double q = pose->jointDisplacement(jointId) + dq;
+                if(q > joint->q_upper() || q < joint->q_lower()){
+                    showErrorDialog(
+                        format(_("The joint angle of {0} in key pose {1:0X} cannot be adjusted due to the joint limit over."),
+                               joint->jointName(), getPoseId(pose)));
+                    jointAdjustmentBufs.clear();
+                    failed = true;
+                    break;
                 }
-                bool failed = false;
-                if(auto waistInfo = pose->ikLinkInfo(waistLink->index())){
-                    if(!fetchLegJointDisplacements(pose, which, true, waistInfo->T(), T_foot, false)){
-                        failed = true;
-                    }
-                }
-                if(!failed){
-                    footInfo->setPosition(T_foot);
-                    footInfo->clearTouching();
-                    modified = true;
-                }
-                poseSeq->endPoseModification(it);
-                currentPoseIter = it;
+                JointAdjustmentBuf buf;
+                buf.it = it;
+                buf.pose = pose;
+                buf.q = q;
+                jointAdjustmentBufs.push_back(buf);
             }
         }
     }
-    poseSeqItem->endEditing(modified);
 
-    if(modified){
-        updateTargetKeyPoses();
+    if(!jointAdjustmentBufs.empty()){
+        auto block = poseSeqConnections.scopedBlock();
+        poseSeqItem->beginEditing();
+        for(auto& buf : jointAdjustmentBufs){
+            poseSeq->beginPoseModification(buf.it);
+            buf.pose->setJointDisplacement(jointId, buf.q);
+            poseSeq->endPoseModification(buf.it);
+            currentPoseIter = buf.it;
+        }
+        poseSeqItem->endEditing(true);
+        updateTargetKeyPoses(true);
+
+    } else if(!failed){
+        showWarningDialog(_("There are no elements in the selected key poses to be adjusted."));
+    }
+}
+    
+
+void HumanoidPoseFetchView::Impl::adjustHandPosition(int which, int axis, double sign)
+{
+    if(!poseSeqItem || targetPoseIters.empty()){
+        showErrorDialog(_("Not ready to adjust the hand position."));
+        return;
+    }
+    for(int i=0; i < 2; ++i){
+        if(armLinkSets[i].empty()){
+            showErrorDialog(_("Not ready to adjust the hand position."));
+            return;
+        }
+    }
+    
+    auto interpolator = poseSeqItem->interpolator();
+    auto body = interpolator->body();
+    if(!body){
+        showErrorDialog(
+            format(_("{0} must be associated with a body item to adjust hand positions."),
+                   poseSeqItem->displayName()));
+        return;
     }
 
-    if(!targetPoseIters.empty() && !modified){
-        if(targetPoseIters.size() == 1){
-            showWarningDialog(
-                _("The foot height of the selected key pose cannot be modified due to the inverse kinematics error."));
-        } else {
-            showWarningDialog(
-                _("The foot height of the selected key poses cannot be modified due to the inverse kinematics error."));
+    auto& path = armJointPaths[which];
+    if(!path){
+        auto& armLinks = armLinkSets[which];
+        Link* baseLink = body->link(armLinks[0]->parent()->index());
+        Link* endLink = body->link(armLinks.back()->index());
+        if(!baseLink || !endLink){
+            showErrorDialog(
+                format(_("The internal body object of {0} does not conform to the source body."),
+                       poseSeqItem->displayName()));
+        }
+        path = JointPath::getCustomPath(baseLink, endLink);
+    }
+
+    struct ArmAdjustmentBuf {
+        PoseSeq::iterator it;
+        BodyKeyPose* pose;
+        vector<double> angles;
+    };
+    vector<ArmAdjustmentBuf> armAdjustmentBufs;
+    armAdjustmentBufs.reserve(targetPoseIters.size());
+    
+    auto poseSeq = poseSeqItem->poseSeq();
+    string message;
+    bool failed = false;
+
+    for(auto& it : targetPoseIters){
+        if(auto pose = it->get<BodyKeyPose>()){
+            bool hasCorrespondingJoints = true;
+            for(auto& joint : *path){
+                if(!pose->isJointValid(joint->jointId())){
+                    hasCorrespondingJoints = false;
+                    break;
+                }
+            }
+            if(hasCorrespondingJoints){
+                if(!interpolator->interpolate(it->time())){
+                    message = format(
+                        _("A hand position of key pose {0:0X} cannot be adjusted due to the interpolation error."),
+                        getPoseId(pose));
+                    failed = true;
+                } else {
+                    Isometry3 T;
+                    interpolator->getBaseLinkPosition(T);
+                    body->rootLink()->setPosition(T);
+                    std::vector<stdx::optional<double>> qs;
+                    interpolator->getJointDisplacements(qs);
+                    for(size_t i=0; i < qs.size(); ++i){
+                        if(auto q = qs[i]){
+                            body->joint(i)->q() = *q;
+                        }
+                    }
+                    body->calcForwardKinematics();
+                    
+                    T = path->endLink()->T();
+                    adjustPosition(T, axis, sign);
+                    
+                    if(!path->calcInverseKinematics(T)){
+                        message = format(
+                            _("A hand position of key pose {0:0X} cannot be adjusted due to the inverse kinematics error."),
+                            getPoseId(pose));
+                        failed = true;
+                    } else {
+                        ArmAdjustmentBuf buf;
+                        buf.it = it;
+                        buf.pose = pose;
+                        int n = path->numJoints();
+                        buf.angles.resize(n);
+                        for(int i=0; i < n; ++i){
+                            buf.angles[i] = path->joint(i)->q();
+                        }
+                        armAdjustmentBufs.push_back(buf);
+                    }
+                    currentPoseIter = it;
+                }
+            }
+            if(failed){
+                break;
+            }
         }
     }
 
+    if(failed){
+        showErrorDialog(message);
+
+    } else if(!armAdjustmentBufs.empty()){
+        auto block = poseSeqConnections.scopedBlock();
+        poseSeqItem->beginEditing();
+        for(auto& buf : armAdjustmentBufs){
+            poseSeq->beginPoseModification(buf.it);
+            for(int i=0; i < path->numJoints(); ++i){
+                auto joint = path->joint(i);
+                buf.pose->setJointDisplacement(joint->jointId(), buf.angles[i]);
+            }
+            poseSeq->endPoseModification(buf.it);
+            currentPoseIter = buf.it;
+        }
+        poseSeqItem->endEditing(true);
+        updateTargetKeyPoses(true);
+
+    } else {
+        showWarningDialog(_("There are no elements in the selected key poses to be adjusted."));
+    }
+}
+
+
+void HumanoidPoseFetchView::Impl::adjustFootPosition(int which, int axis, double sign)
+{
+    auto footLink = waistToFootJointPaths[which]->endLink();
+    adjustIkLinkPosition(
+        footLink, axis, sign,
+        [this, which](BodyKeyPose* pose, const Isometry3& T_link){
+            if(auto waistInfo = pose->ikLinkInfo(waistLink->index())){
+                return fetchLegJointDisplacements(which, true, waistInfo->T(), T_link, nullptr);
+            }
+            return true;
+        });
 }
 
 
@@ -1604,7 +1941,7 @@ void HumanoidPoseFetchView::Impl::setFootGrounding(int which, bool on)
             }
         }
         poseSeqItem->endEditing(modified);
-        updateTargetKeyPoses();
+        updateTargetKeyPoses(true);
     }
 }
 
@@ -1704,7 +2041,7 @@ void HumanoidPoseFetchView::Impl::handleBodyPartCheck
             }
             
             if(modified || needKeyPoseRemoval){
-                updateTargetKeyPoses();
+                updateTargetKeyPoses(true);
             }
         }
     }
