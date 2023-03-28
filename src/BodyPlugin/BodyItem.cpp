@@ -916,7 +916,13 @@ void BodyItem::Impl::getParticularPosition(BodyItem::PositionType position, stdx
                 pos = legged->homeCopOfSoles();
             } else if(position == BodyItem::RIGHT_HOME_COP || position == BodyItem::LEFT_HOME_COP) {
                 if(legged->numFeet() == 2){
-                    pos = legged->homeCopOfSole((position == BodyItem::RIGHT_HOME_COP) ? 0 : 1);
+                    int which;
+                    if(position == BodyItem::LEFT_HOME_COP){
+                        which = LeggedBodyHelper::Left;
+                    }  else {
+                        which = LeggedBodyHelper::Right;
+                    }
+                    pos = legged->homeCopOfSole(which);
                 }
             }
         }

@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "LeggedBodyHelper.h"
 #include "Link.h"
 #include "JointPath.h"

@@ -170,7 +170,7 @@ public:
     void setZmp(const Vector3& zmp);
     void editZmp(const Vector3& zmp);
 
-    enum PositionType { CM_PROJECTION, HOME_COP, RIGHT_HOME_COP, LEFT_HOME_COP, ZERO_MOMENT_POINT };
+    enum PositionType { CM_PROJECTION, HOME_COP, LEFT_HOME_COP, RIGHT_HOME_COP, ZERO_MOMENT_POINT };
             
     stdx::optional<Vector3> getParticularPosition(PositionType posType);
 

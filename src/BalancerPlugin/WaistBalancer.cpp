@@ -697,10 +697,10 @@ void WaistBalancer::initWaistHeightRelaxation()
         os() << _("Waist height relaxation cannot be applied because the robot is not a biped robot.") << endl;
 
     } else {
-        rightKneePitchJoint = legged->kneePitchJoint(0);
-        leftKneePitchJoint = legged->kneePitchJoint(1);
-
-        if(!rightKneePitchJoint || !leftKneePitchJoint){
+        for(int i=0; i < 2; ++i){
+            kneePitchJoints[i] = legged->kneePitchJoint(i);
+        }
+        if(!kneePitchJoints[0] || !kneePitchJoints[1]){
             os() << _("Waist height relaxation cannot be applied because the knee joints are not specified.") << endl;
 
         } else {
@@ -745,7 +745,7 @@ void WaistBalancer::relaxWaistHeightTrajectory()
             T_waist.translation() += dp;
             bool solved =
                 waistFeetIK.calcInverseKinematics(T_waist) &&
-                (rightKneePitchJoint->q() > 0.3 && leftKneePitchJoint->q() > 0.3);
+                (kneePitchJoints[0]->q() > 0.3 && kneePitchJoints[1]->q() > 0.3);
 
             if(solved){
                 if(dz == 0.0){

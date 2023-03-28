@@ -143,8 +143,7 @@ private:
     std::vector<WaistFeetPos, Eigen::aligned_allocator<WaistFeetPos>> waistFeetPosSeq;
     std::vector<double> waistDeltaZseq;
     CompositeIK waistFeetIK;
-    Link* rightKneePitchJoint;
-    Link* leftKneePitchJoint;
+    Link* kneePitchJoints[2];
 
     std::ostream* os_;
     std::ostream& os() { return *os_; }

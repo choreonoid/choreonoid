@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_LEGGED_BODY_HELPER_H
 #define CNOID_BODY_LEGGED_BODY_HELPER_H
 
@@ -28,6 +23,12 @@ public:
     Body* body() const { return body_; }
 
     int numFeet() const { return footInfos.size(); }
+
+    //! The foot link indices should be the same as the following IDs.
+    enum FootID {
+        Left = 0,
+        Right = 1
+    };
 
     Link* footLink(int index) const { return footInfos[index].link; }
 
