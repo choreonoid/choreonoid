@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-10 11:50+0900\n"
+"POT-Creation-Date: 2023-03-29 19:19+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -57,6 +57,9 @@ msgstr "自動更新モード"
 
 msgid "Enable the balancer"
 msgstr "バランス補正の有効化"
+
+msgid "{0} cannot be a target of the body motion generation."
+msgstr "{0}はボディモーション生成の対象にできません．"
 
 msgid "Body Motion Generation Setup"
 msgstr "ボディモーション生成の設定"
@@ -343,27 +346,35 @@ msgstr "{0}の現在の姿勢を取り込むことができません．"
 msgid "The current pose of {0} has been fetched in the selected key pose(s) of {1}."
 msgstr "{0}の現在の姿勢を{1}の選択キーポーズに取り込みました．"
 
-msgid "Not ready to adjust the waist height."
-msgstr "腰の高さを調整する準備ができていません．"
+msgid "Not ready to adjust the link position."
+msgstr "対象リンクの位置を調整する準備ができていません．"
 
-msgid ""
-"The waist height of the selected key pose cannot be modified due to the inverse kinematics error."
-msgstr "選択されているキーポーズの腰高さは逆運動学のエラーにより変更できません．"
+msgid "The {0} position of key pose {1:0X} cannot be adjusted due to the inverse kinematics error."
+msgstr "キーポーズ{1:0X}の{0}の位置は逆運動学のエラーのため調整できません．"
 
-msgid ""
-"The waist height of the selected key poses cannot be modified due to the inverse kinematics error."
-msgstr "選択されているキーポーズの腰高さは逆運動学のエラーにより変更できません．"
+msgid "There are no elements in the selected key poses to be adjusted."
+msgstr "調整対象の要素は選択されているキーポーズにはありません．"
 
-msgid "Not ready to adjust the foot height."
-msgstr "足の高さを調整する準備ができていません．"
+msgid "Not ready to adjust the joint angle."
+msgstr "関節角度を調整する準備ができていません．"
 
-msgid ""
-"The foot height of the selected key pose cannot be modified due to the inverse kinematics error."
-msgstr "選択されているキーポーズの足の高さは逆運動学のエラーにより変更できません．"
+msgid "The joint angle of {0} in key pose {1:0X} cannot be adjusted due to the joint limit over."
+msgstr "キーポーズ{1:0X}の{0}の関節角度は関節リミットオーバーのため調整できません．"
 
-msgid ""
-"The foot height of the selected key poses cannot be modified due to the inverse kinematics error."
-msgstr "選択されているキーポーズの足の高さは逆運動学のエラーにより変更できません．"
+msgid "Not ready to adjust the hand position."
+msgstr "手の位置を調整する準備ができていません．"
+
+msgid "{0} must be associated with a body item to adjust hand positions."
+msgstr "{0}は手の位置を調整するためにボディアイテムと関連付けられている必要があります．"
+
+msgid "The internal body object of {0} does not conform to the source body."
+msgstr "{0}の内部ボディオブジェクトが取得元ボディに一致していません． "
+
+msgid "A hand position of key pose {0:0X} cannot be adjusted due to the interpolation error."
+msgstr "キーポーズ{0:0X}の手の位置は補間エラーのため調整できません．"
+
+msgid "A hand position of key pose {0:0X} cannot be adjusted due to the inverse kinematics error."
+msgstr "キーポーズ{0:0X}の手の位置は逆運動学のエラーのため調整できません．"
 
 msgid "Not ready to adjust ZMP."
 msgstr "ZMPを調整する準備ができていません．"
