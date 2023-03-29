@@ -442,11 +442,11 @@ defaultIKsetup:
   R_ANKLE_R: [ WAIST ]
   L_ANKLE_R: [ WAIST ]
 
-footLinks:
-  - link: R_ANKLE_R
-    soleCenter: [ -0.005, -0.01, -0.022 ]
+foot_links:
   - link: L_ANKLE_R
-    soleCenter: [ -0.005,  0.01, -0.022 ]
+    sole_center: [ -0.005,  0.01, -0.022 ]
+  - link: R_ANKLE_R
+    sole_center: [ -0.005, -0.01, -0.022 ]
 
 symmetricJoints:
   - [ NECK_Y ]

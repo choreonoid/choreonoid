@@ -766,11 +766,11 @@ linkGroup:
       - name: L-LEG
         links: [ LLEG_HIP_R, LLEG_HIP_P, LLEG_HIP_Y, LLEG_KNEE, LLEG_ANKLE_P, LLEG_ANKLE_R ]
 
-footLinks:
-  - link: RLEG_ANKLE_R
-    soleCenter: [ 0.05, 0.0, -0.055 ]
+foot_links:
   - link: LLEG_ANKLE_R
-    soleCenter: [ 0.05, 0.0, -0.055 ]
+    sole_center: [ 0.05, 0.0, -0.055 ]
+  - link: RLEG_ANKLE_R
+    sole_center: [ 0.05, 0.0, -0.055 ]
 
 defaultIKsetup:
   WAIST: [ RLEG_ANKLE_R, LLEG_ANKLE_R ]
