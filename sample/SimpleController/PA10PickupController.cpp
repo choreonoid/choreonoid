@@ -70,7 +70,7 @@ bool PA10PickupController::initialize(SimpleControllerIO* io)
     ikBody = ioBody->clone();
     ikWrist = ikBody->link("J7");
     Link* base = ikBody->rootLink();
-    baseToWrist = JointPath::getCustomPath(ikBody, base, ikWrist);
+    baseToWrist = JointPath::getCustomPath(base, ikWrist);
     base->p().setZero();
     base->R().setIdentity();
     

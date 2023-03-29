@@ -190,7 +190,7 @@ BodyItemKinematicsKit* BodyItemKinematicsKitManager::Impl::findKinematicsKit(Lin
             if(baseLinkIndex == UnspecifiedBaseLinkForPinDragIK){
                 kit->setEndLink(targetLink);
             } else {
-                kit->setInverseKinematics(targetLink, JointPath::getCustomPath(body, baseLink, targetLink));
+                kit->setInverseKinematics(targetLink, JointPath::getCustomPath(baseLink, targetLink));
             }
             needToRegistration = true;
         }
@@ -222,7 +222,7 @@ std::shared_ptr<InverseKinematics> BodyItemKinematicsKitManager::Impl::findPrese
             Link* baseLink = body->link(setup[0].toString());
             if(baseLink){
                 if(setup.size() == 1){
-                    ik = JointPath::getCustomPath(body, baseLink, targetLink);
+                    ik = JointPath::getCustomPath(baseLink, targetLink);
                 } else {
                     auto compositeIK = make_shared<CompositeIK>(body, targetLink);
                     ik = compositeIK;
@@ -247,7 +247,7 @@ std::shared_ptr<InverseKinematics> BodyItemKinematicsKitManager::Impl::findPrese
             auto link = targetLink->parent();
             while(link){
                 if(++dof >= 6){
-                    ik = JointPath::getCustomPath(body, body->rootLink(), targetLink);
+                    ik = JointPath::getCustomPath(body->rootLink(), targetLink);
                     break;
                 }
                 link = link->parent();

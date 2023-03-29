@@ -57,7 +57,8 @@ PYBIND11_MODULE(Body, m)
 
     py::class_<JointPath, shared_ptr<JointPath>>(m, "JointPath")
         .def(py::init<>())
-        .def_static("getCustomPath", &JointPath::getCustomPath)
+        .def_static("getCustomPath",
+                    [](Link* baseLink, Link* endLink){ return JointPath::getCustomPath(baseLink, endLink); })
         .def_property_readonly("empty", &JointPath::empty)
         .def_property_readonly("size", &JointPath::size)
         .def_property_readonly("numJoints", &JointPath::numJoints)
@@ -94,6 +95,8 @@ PYBIND11_MODULE(Body, m)
         .def("setName", &JointPath::setName)
 
         // deprecated
+        .def_static("getCustomPath",
+                    [](Body*, Link* baseLink, Link* endLink){ return JointPath::getCustomPath(baseLink, endLink); })
         .def("getNumJoints", &JointPath::numJoints)
         .def("getJoint", &JointPath::joint)
         .def("getBaseLink", &JointPath::baseLink)
@@ -102,7 +105,9 @@ PYBIND11_MODULE(Body, m)
         .def("getNumIterations", &JointPath::numIterations)
         ;
 
-    m.def("getCustomJointPath", getCustomJointPath);
+    // deprecated
+    m.def("getCustomJointPath",
+          [](Body*, Link* baseLink, Link* endLink){ return JointPath::getCustomPath(baseLink, endLink); });
 
     py::class_<BodyMotion, shared_ptr<BodyMotion>> bodyMotion(m, "BodyMotion");
     bodyMotion

@@ -555,8 +555,9 @@ public:
 }
 
 
-std::shared_ptr<JointPath> JointPath::getCustomPath(Body* body, Link* baseLink, Link* endLink)
+std::shared_ptr<JointPath> JointPath::getCustomPath(Link* baseLink, Link* endLink)
 {
+    auto body = baseLink->body();
     auto customJointPathHandler = body->findHandler<CustomJointPathHandler>();
     if(customJointPathHandler){
         auto customPath = customJointPathHandler->getCustomJointPath(baseLink, endLink);
@@ -571,4 +572,10 @@ std::shared_ptr<JointPath> JointPath::getCustomPath(Body* body, Link* baseLink, 
     }
 
     return make_shared<JointPath>(baseLink, endLink);
+}
+
+
+std::shared_ptr<JointPath> cnoid::getCustomJointPath(Body* /* body */, Link* baseLink, Link* endLink)
+{
+    return JointPath::getCustomPath(baseLink, endLink);
 }

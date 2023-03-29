@@ -1396,7 +1396,7 @@ void PoseSeqInterpolator::Impl::calcIkJointPositionsSub
             if(iter != ikJointPathMap.end()){
                 jointPath = iter->second;
             } else {
-                jointPath = getCustomJointPath(body, baseLink, link);
+                jointPath = JointPath::getCustomPath(baseLink, link);
                 ikJointPathMap[linkPair] = jointPath;
             }
 

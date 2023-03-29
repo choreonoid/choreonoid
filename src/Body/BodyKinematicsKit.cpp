@@ -153,7 +153,7 @@ void BodyKinematicsKit::Impl::setJointPath(Link* baseLink, Link* endLink)
     if(baseLink && endLink && baseLink->body() == endLink->body()){
         body = baseLink->body();
         this->endLink = endLink;
-        jointPath = JointPath::getCustomPath(body, baseLink, endLink);
+        jointPath = JointPath::getCustomPath(baseLink, endLink);
         if(jointPath){
             inverseKinematics = jointPath;
             if(jointPath->hasCustomIK()){

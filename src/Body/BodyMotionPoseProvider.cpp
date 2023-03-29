@@ -35,7 +35,7 @@ bool BodyMotionPoseProvider::setMotion(Body* body__, std::shared_ptr<BodyMotion>
     if(legged->isValid()){
         for(int i=0; i < legged->numFeet(); ++i){
             Link* link = legged->footLink(i);
-            auto ikPath = JointPath::getCustomPath(body_, body_->rootLink(), link);
+            auto ikPath = JointPath::getCustomPath(body_->rootLink(), link);
             if(ikPath){
                 if(ikPath->hasCustomIK() || ikPath->numJoints() == 6){
                     footLinks.push_back(link);

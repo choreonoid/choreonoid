@@ -21,7 +21,12 @@ public:
        This function returns a joint path which may do analytical inverse kinematics
        when the body has the analytical one for a given path.
     */
-    static std::shared_ptr<JointPath> getCustomPath(Body* body, Link* baseLink, Link* endLink);
+    static std::shared_ptr<JointPath> getCustomPath(Link* baseLink, Link* endLink);
+
+    [[deprecated("Use the overload function without the body argument.")]]
+    static std::shared_ptr<JointPath> getCustomPath(Body* /* body */, Link* baseLink, Link* endLink){
+        return getCustomPath(baseLink, endLink);
+    }
     
     JointPath();
     JointPath(Link* base, Link* end);
@@ -171,10 +176,8 @@ private:
     std::string name_;
 };
 
-//! \deprecated Use JointPath::getCustomPath instead of this.
-inline std::shared_ptr<JointPath> getCustomJointPath(Body* body, Link* baseLink, Link* endLink){
-    return JointPath::getCustomPath(body, baseLink, endLink);
-}
+[[deprecated("Use JointPath::getCustomPath.")]]
+CNOID_EXPORT std::shared_ptr<JointPath> getCustomJointPath(Body* body, Link* baseLink, Link* endLink);
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
 typedef std::shared_ptr<JointPath> JointPathPtr;

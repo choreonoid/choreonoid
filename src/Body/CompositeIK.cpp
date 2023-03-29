@@ -38,7 +38,7 @@ void CompositeIK::reset(Body* body, Link* targetLink)
 bool CompositeIK::addBaseLink(Link* baseLink)
 {
     if(baseLink && targetLink_){
-        auto path = JointPath::getCustomPath(body_, baseLink, targetLink_);
+        auto path = JointPath::getCustomPath(baseLink, targetLink_);
         if(path){
             hasCustomIK_ = paths.empty() ? path->hasCustomIK() : (hasCustomIK_ && path->hasCustomIK());
             paths.push_back(path);
