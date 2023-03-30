@@ -152,6 +152,7 @@ public:
     TimeSyncItemEngineManager* manager;
     vector<TimeSyncItemEnginePtr> subEngines;;
     CollisionSeqEnginePtr collisionSeqEngine;
+    vector<BodyItem::ContinuousKinematicUpdateEntry> bodyItemEntries;
     bool doKeepPlayback;
 
     SimulationLogEngine(SimulatorItem::Impl* itemImpl);
@@ -162,7 +163,7 @@ public:
     virtual bool onTimeChanged(double time) override;
     virtual double onPlaybackStopped(double time, bool isStoppedManually) override;
     virtual bool isTimeSyncAlwaysMaintained() const override;
-    void notifyKinematicStateUpdate();
+    void setupBodyItems(bool doStartPlayback);
 };
 
 typedef ref_ptr<SimulationLogEngine> SimulationLogEnginePtr;
@@ -177,6 +178,7 @@ public:
     SimulationBody* self;
     BodyPtr body_;
     BodyItemPtr bodyItem;
+    BodyItem::ContinuousKinematicUpdateEntry continuousKinematicUpdateEntry;
 
     vector<ControllerInfoPtr> controllerInfos;
     SimulatorItem::Impl* simImpl;
@@ -1934,6 +1936,11 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
     }
 
     if(result){
+        // For blocking manual user operations for modifying body kinematic state using the builtin GUIs
+        for(auto& simBody : simBodiesWithBody){
+            auto simpl = simBody->impl;
+            simpl->continuousKinematicUpdateEntry = simpl->bodyItem->startContinuousKinematicUpdate();
+        }
         if(isSceneViewEditModeBlockedDuringSimulation){
             SceneView::blockEditModeForAllViews(self);
         }
@@ -2949,8 +2956,6 @@ SimulationLogEngine* SimulatorItem::Impl::getOrCreateLogEngine()
 }
 
 
-namespace {
-
 SimulationLogEngine::SimulationLogEngine(SimulatorItem::Impl* itemImpl)
     : TimeSyncItemEngine(itemImpl->self),
       itemImpl(itemImpl)
@@ -2984,7 +2989,7 @@ void SimulationLogEngine::addCollisionSeqEngine(CollisionSeqItem* collisionSeqIt
 void SimulationLogEngine::onPlaybackStarted(double /* time */)
 {
     doKeepPlayback = true;
-    notifyKinematicStateUpdate();
+    setupBodyItems(true);
 }
 
 
@@ -3017,23 +3022,25 @@ bool SimulationLogEngine::onTimeChanged(double time)
 double SimulationLogEngine::onPlaybackStopped(double time, bool /* isStoppedManually */)
 {
     doKeepPlayback = false;
-    notifyKinematicStateUpdate();
+    setupBodyItems(false);
 
     double simulationTime = itemImpl->currentTime_;
     return simulationTime < time ? simulationTime : time;
 }
 
 
-void SimulationLogEngine::notifyKinematicStateUpdate()
+void SimulationLogEngine::setupBodyItems(bool doStartPlayback)
 {
-    auto& si = itemImpl;
-    if(si->worldItem){
-        for(auto& bodyItem : si->worldItem->descendantItems<BodyItem>()){
+    bodyItemEntries.clear();
+
+    if(itemImpl->worldItem){
+        for(auto& bodyItem : itemImpl->worldItem->descendantItems<BodyItem>()){
             if(!bodyItem->body()->isStaticModel()){
                 bodyItem->notifyKinematicStateUpdate(false);
             }
+            if(doStartPlayback){
+                bodyItemEntries.push_back(bodyItem->startContinuousKinematicUpdate());
+            }
         }
     }
-}
-
 }
