@@ -65,8 +65,10 @@ public:
     int lastSortedSection;
     Qt::SortOrder lastSortOrder;
     QRect lastPosition;
+    PushButton* applyButton;
 
     JointSpaceConfigurationDialog(LinkPositionWidget::Impl* baseImpl);
+    void setUserInputEnabled(bool on);
     void reset();
     bool updateConfigurationTypes();
     void updateConfigurationStates();
@@ -103,6 +105,8 @@ public:
 
     ScopedConnection kinematicsBarConnection;
 
+    bool isUserInputEnabled;
+
     QLabel resultLabel;
     PushButton fetchButton;
     PushButton applyButton;
@@ -137,6 +141,7 @@ public:
     
     Impl(LinkPositionWidget* self);
     void createPanel();
+    void setUserInputEnabled(bool on);
     void onAttachedMenuRequest(MenuManager& menuManager);
     void setCoordinateMode(int mode, bool doUpdatePreferredMode, bool doUpdateDisplay);
     void setTargetBodyAndLink(BodyItem* bodyItem, Link* link);
@@ -190,14 +195,14 @@ LinkPositionWidget::Impl::Impl(LinkPositionWidget* self)
     createPanel();
     
     targetLinkType = IkLink;
-    
     identityFrame = new CoordinateFrame;
     setBaseFrame(identityFrame);
     setOffsetFrame(identityFrame);
+    isUserInputEnabled = true;
 
     kinematicsBarConnection =
         KinematicsBar::instance()->sigKinematicsModeChanged().connect(
-            [&](){ onKinematicsModeChanged(); });
+            [this](){ onKinematicsModeChanged(); });
 }
 
 
@@ -222,10 +227,10 @@ void LinkPositionWidget::Impl::createPanel()
     resultLabel.setAlignment(Qt::AlignCenter);
     hbox->addWidget(&resultLabel, 1);
     fetchButton.setText(_("Fetch"));
-    fetchButton.sigClicked().connect([&](){ updateDisplay(); });
+    fetchButton.sigClicked().connect([this](){ updateDisplay(); });
     hbox->addWidget(&fetchButton);
     applyButton.setText(_("Apply"));
-    applyButton.sigClicked().connect([&](){ positionWidget->applyPositionInput(); });
+    applyButton.sigClicked().connect([this](){ positionWidget->applyPositionInput(); });
     hbox->addWidget(&applyButton);
     vbox->addLayout(hbox);
 
@@ -253,7 +258,7 @@ void LinkPositionWidget::Impl::createPanel()
     preferredCoordinateMode = BaseFrameCoordinateMode;
 
     coordinateModeGroup.sigButtonToggled().connect(
-        [&](int mode, bool on){
+        [this](int mode, bool on){
             if(on){
                 setCoordinateMode(mode, true, true);
             }
@@ -265,8 +270,8 @@ void LinkPositionWidget::Impl::createPanel()
     positionWidget = new PositionWidget(self);
     positionWidget->setUserInputValuePriorityMode(true);
     positionWidget->setCallbacks(
-        [&](const Isometry3& T){ return applyPositionInput(T); },
-        [&](){ finishPositionEditing(); });
+        [this](const Isometry3& T){ return applyPositionInput(T); },
+        [this](){ finishPositionEditing(); });
     vbox->addWidget(positionWidget);
 
     setMainInterfaceEnabled(false);
@@ -277,12 +282,12 @@ void LinkPositionWidget::Impl::createPanel()
 
     frameComboLabel[BaseFrame].setText(_("Base"));
     frameLabelFunction[BaseFrame] =
-        [&](BodyItemKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame){
+        [this](BodyItemKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame){
             return defaultFrameLabelFunction(frame, isDefaultFrame, _("Body Origin")); };
 
     frameComboLabel[OffsetFrame].setText(_("Offset"));
     frameLabelFunction[OffsetFrame] =
-        [&](BodyItemKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame){
+        [this](BodyItemKinematicsKit* kit, CoordinateFrame* frame, bool isDefaultFrame){
             return defaultFrameLabelFunction(frame, isDefaultFrame, _("Link Origin")); };
 
     for(int i=0; i < 2; ++i){
@@ -342,6 +347,19 @@ void LinkPositionWidget::customizeOffsetFrameLabels(const char* caption, FrameLa
 }
 
 
+void LinkPositionWidget::Impl::setUserInputEnabled(bool on)
+{
+    if(on != isUserInputEnabled){
+        applyButton.setEnabled(on);
+        positionWidget->setEditable(on);
+        if(configurationDialog){
+            configurationDialog->setUserInputEnabled(on);
+        }
+        isUserInputEnabled = on;
+    }
+}
+
+
 void LinkPositionWidget::setOptionMenuTo(MenuManager& menuManager)
 {
     impl->positionWidget->setOptionMenuTo(menuManager);
@@ -351,7 +369,7 @@ void LinkPositionWidget::setOptionMenuTo(MenuManager& menuManager)
     auto disableCustomIkCheck = menuManager.addCheckItem(_("Disable custom IK"));
     disableCustomIkCheck->setChecked(!isCustomIkEnabled());
     disableCustomIkCheck->sigToggled().connect(
-        [&](bool on){ setCustomIkEnabled(on); });
+        [this](bool on){ setCustomIkEnabled(on); });
 }
 
 
@@ -498,15 +516,21 @@ void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* li
         if(bodyItem){
             targetConnections.add(
                 bodyItem->sigNameChanged().connect(
-                    [&](const std::string&){ updateTargetLink(targetLink); }));
+                    [this](const std::string&){ updateTargetLink(targetLink); }));
 
             targetConnections.add(
                 bodyItem->sigKinematicStateChanged().connect(
-                    [&](){ updateDisplayWithCurrentLinkPosition(); }));
+                    [this](){ updateDisplayWithCurrentLinkPosition(); }));
 
             targetConnections.add(
                 bodyItem->sigUpdated().connect(
-                    [&](){ updateTargetLink(targetLink); }));
+                    [this](){ updateTargetLink(targetLink); }));
+
+            targetConnections.add(
+                bodyItem->sigContinuousKinematicUpdateStateChanged().connect(
+                    [this](bool on){ setUserInputEnabled(!on); }));
+
+            setUserInputEnabled(!bodyItem->isDoingContinuousKinematicUpdate());
         }
     }
 
@@ -533,10 +557,10 @@ void LinkPositionWidget::Impl::updateTargetLink(Link* link)
         if(kinematicsKit){
             kinematicsKitConnections.add(
                 kinematicsKit->sigFrameSetChanged().connect(
-                    [&](){ onFrameSetChanged(); }));
+                    [this](){ onFrameSetChanged(); }));
             kinematicsKitConnections.add(
                 kinematicsKit->sigPositionError().connect(
-                    [&](const Isometry3& T_frameCoordinate){
+                    [this](const Isometry3& T_frameCoordinate){
                         onKinematicsKitPositionError(T_frameCoordinate); }));
 
             if(kinematicsKit->baseLink() && link != kinematicsKit->baseLink()){
@@ -869,6 +893,9 @@ void LinkPositionWidget::Impl::showConfigurationDialog()
 {
     if(!configurationDialog){
         configurationDialog = new JointSpaceConfigurationDialog(this);
+        if(targetBodyItem){
+            configurationDialog->setUserInputEnabled(!targetBodyItem->isDoingContinuousKinematicUpdate());
+        }
     }
     
     if(configurationDialog->updateConfigurationTypes()){
@@ -884,8 +911,6 @@ void LinkPositionWidget::Impl::showConfigurationDialog()
 }
 
 
-namespace {
-
 JointSpaceConfigurationDialog::JointSpaceConfigurationDialog(LinkPositionWidget::Impl* baseImpl)
     : Dialog(baseImpl->self, Qt::Tool),
       baseImpl(baseImpl)
@@ -899,7 +924,7 @@ JointSpaceConfigurationDialog::JointSpaceConfigurationDialog(LinkPositionWidget:
     searchBox.setEnabled(false);
     hbox->addWidget(&searchBox, 1);
     feasibleCheck.setText(_("Feasible"));
-    feasibleCheck.sigToggled().connect([&](bool){ updateItemDisplay(); });
+    feasibleCheck.sigToggled().connect([this](bool){ updateItemDisplay(); });
     hbox->addWidget(&feasibleCheck);
     vbox->addLayout(hbox);
 
@@ -908,13 +933,13 @@ JointSpaceConfigurationDialog::JointSpaceConfigurationDialog(LinkPositionWidget:
     header->setSectionResizeMode(QHeaderView::ResizeToContents);
     header->setSectionsClickable(true);
     QObject::connect(header, &QHeaderView::sectionClicked,
-                     [&](int index){ onSectionClicked(index); });
+                     [this](int index){ onSectionClicked(index); });
 
     treeWidget.setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContentsOnFirstShow);
     treeWidget.setRootIsDecorated(false);
 
     treeWidget.sigCurrentItemChanged().connect(
-        [&](QTreeWidgetItem* item, QTreeWidgetItem*){
+        [this](QTreeWidgetItem* item, QTreeWidgetItem*){
             if(item){
                 int id = item->data(0, Qt::UserRole).toInt();
                 applyConfiguration(id);
@@ -924,23 +949,30 @@ JointSpaceConfigurationDialog::JointSpaceConfigurationDialog(LinkPositionWidget:
 
     hbox = new QHBoxLayout;
     auto updateButton = new PushButton(_("&Update"));
-    updateButton->sigClicked().connect([&](){ updateConfigurationStates(); });
+    updateButton->sigClicked().connect([this](){ updateConfigurationStates(); });
     hbox->addWidget(updateButton);
     hbox->addStretch();
 
-    auto applyButton = new PushButton(_("&Apply"));
+    applyButton = new PushButton(_("&Apply"));
     applyButton->setDefault(true);
     auto cancelButton = new PushButton(_("&Cancel"));
     auto buttonBox = new QDialogButtonBox(this);
     buttonBox->addButton(applyButton, QDialogButtonBox::AcceptRole);
     buttonBox->addButton(cancelButton, QDialogButtonBox::RejectRole);
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-    connect(buttonBox, &QDialogButtonBox::rejected, [&](){ onCanceled(); });
+    connect(buttonBox, &QDialogButtonBox::rejected, [this](){ onCanceled(); });
     hbox->addWidget(buttonBox);
 
     vbox->addLayout(hbox);
     
     setLayout(vbox);
+}
+
+
+void JointSpaceConfigurationDialog::setUserInputEnabled(bool on)
+{
+    treeWidget.setEnabled(on);
+    applyButton->setEnabled(on);
 }
 
 
@@ -1122,8 +1154,6 @@ QSize ConfTreeWidget::sizeHint() const
     auto header_ = header();
     auto r = visualItemRect(topLevelItem(c - 1));
     return QSize(-1, r.bottom() + header_->height() + frameWidth * 2 + r.height() / 2);
-}
-
 }
 
 

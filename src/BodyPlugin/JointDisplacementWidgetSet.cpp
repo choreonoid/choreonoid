@@ -59,6 +59,7 @@ public:
 
     JointIndicator(JointDisplacementWidgetSet::Impl* baseImpl, int index);
     void setVisible(bool on);
+    void setUserInputEnabled(bool on);
     int attachTo(QGridLayout* grid, int row, int col, bool overlapJointName);
     void setNextTabOrderIndicator(JointIndicator* next);
     bool setRangeLabelValue(QLabel& label, double value, bool isInfinite, int precision);
@@ -99,6 +100,7 @@ public:
             
     ScopedConnection linkSelectionChangeConnection;
     ScopedConnection kinematicStateChangeConnection;
+    ScopedConnection continuousKinematicUpdateStateChangeConnection;
     ScopedConnection modelUpdateConnection;
 
     DisplayValueFormat* dvFormat;
@@ -112,6 +114,7 @@ public:
     double defaultMaxAngle;
     double angleStep;
 
+    bool isUserInputEnabled;
     bool isSelectedJointsOnlyModeEnabled;
     bool isSelectedJointsOnlyMode;
     bool isPrivateJointEnabled;
@@ -128,6 +131,7 @@ public:
     Impl(JointDisplacementWidgetSet* self, QWidget* baseWidget, QGridLayout* sharedGrid, int* sharedRowCounter);
     ~Impl();
     void updateTargetBodyLabel();
+    void setUserInputEnabled(bool on);
     void setOptionMenuTo(MenuManager& menu);
     void setBodyItem(BodyItem* bodyItem);
     void updateConnectionForSelectedJointsOnlyMode();
@@ -187,6 +191,7 @@ JointDisplacementWidgetSet::Impl::Impl
     
     currentRowSize = 0;
 
+    isUserInputEnabled = true;
     isSelectedJointsOnlyModeEnabled = false;
     isSelectedJointsOnlyMode = false;
     isPrivateJointEnabled = false;
@@ -286,6 +291,17 @@ void JointDisplacementWidgetSet::setVisible(bool on)
 }
 
 
+void JointDisplacementWidgetSet::Impl::setUserInputEnabled(bool on)
+{
+    if(on != isUserInputEnabled){
+        for(auto& indicator : jointIndicators){
+            indicator->setUserInputEnabled(on);
+        }
+        isUserInputEnabled = on;
+    }
+}
+
+
 void JointDisplacementWidgetSet::setOptionMenuTo(MenuManager& menu)
 {
     impl->setOptionMenuTo(menu);
@@ -367,6 +383,7 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
 
         linkedJointHandler.reset();
         kinematicStateChangeConnection.disconnect();
+        continuousKinematicUpdateStateChangeConnection.disconnect();
         modelUpdateConnection.disconnect();
 
         if(bodyItem){
@@ -374,6 +391,12 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
             
             kinematicStateChangeConnection =
                 bodyItem->sigKinematicStateChanged().connect(updateJointDisplacementsLater);
+
+            continuousKinematicUpdateStateChangeConnection =
+                bodyItem->sigContinuousKinematicUpdateStateChanged().connect(
+                    [this](bool on){ setUserInputEnabled(!on); });
+
+            setUserInputEnabled(!bodyItem->isDoingContinuousKinematicUpdate());
 
             modelUpdateConnection =
                 bodyItem->sigModelUpdated().connect(
@@ -546,7 +569,7 @@ JointIndicator::JointIndicator(JointDisplacementWidgetSet::Impl* baseImpl, int i
         [=](double v){ onDisplacementInput(v); });
     spin.sigEditingFinishedWithValueChange().connect(
         [=](){ baseImpl->onOperationFinished(); });
-    
+
     slider.setSingleStep(0.1 * Resolution);
     slider.setProperty("JointSliderIndex", index);
     slider.installEventFilter(baseImpl);
@@ -586,6 +609,15 @@ void JointIndicator::setVisible(bool on)
     nameLabel.setVisible(on && baseImpl->isJointNameVisible);
     lowerLimitLabel.setVisible(on && baseImpl->isSliderEnabled);
     upperLimitLabel.setVisible(on && baseImpl->isSliderEnabled);
+}
+
+
+void JointIndicator::setUserInputEnabled(bool on)
+{
+    spin.setUserInputEnabled(on);
+    slider.setUserInputEnabled(on);
+    dial.setUserInputEnabled(on);
+    phaseSpin.setUserInputEnabled(on);
 }
 
 
