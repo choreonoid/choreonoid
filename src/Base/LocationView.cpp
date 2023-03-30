@@ -592,7 +592,7 @@ void LocationView::Impl::setCurrentLocationCategory(int categoryIndex)
     updatePositionWidgetWithPrimaryLocation();
 
     auto& primaryLocationInfo = locationInfos.front();
-    bool locked = !primaryLocationInfo->location->isEditable();
+    bool locked = primaryLocationInfo->location->isLocked();
     if(numLocations >= 2){
         if(primaryLocationInfo->type == LocationProxy::OffsetLocation){
             locked = true;
@@ -600,7 +600,7 @@ void LocationView::Impl::setCurrentLocationCategory(int categoryIndex)
             for(int i = 1; i < numLocations; ++i){
                 auto& subLocationInfo = locationInfos[i];
                 if(subLocationInfo->type == LocationProxy::OffsetLocation ||
-                   !subLocationInfo->location->isEditable()){
+                   subLocationInfo->location->isLocked()){
                     locked = true;
                     break;
                 }
@@ -659,7 +659,7 @@ void LockCheckBox::nextCheckState()
         bool isLocked = isChecked();
         for(auto& info : impl->currentCategory->locationInfos){
             info->miscConnections.block();
-            info->location->setEditable(isLocked);
+            info->location->setLocked(!isLocked);
             info->miscConnections.unblock();
         }
         impl->setupInterfaceForNewLocations();

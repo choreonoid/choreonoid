@@ -533,8 +533,8 @@ void OperableSceneBody::Impl::onSceneGraphConnection(bool on)
         connections.add(
             bodyItem->getLocationProxy()->sigAttributeChanged().connect(
                 [&](){
-                    bool on = bodyItem->isLocationEditable();
-                    if(!on){
+                    bool locked = bodyItem->isLocationLocked();
+                    if(locked){
                         if(highlightedLink){
                             highlightedLink->enableHighlight(false);
                             highlightedLink = nullptr;
@@ -1017,7 +1017,7 @@ int OperableSceneBody::Impl::checkLinkKinematicsType(Link* link, bool doUpdateIK
     Link* linkChain = link;
     while(true){
         if(!bodyItemChain->isAttachedToParentBody()){
-            if(!bodyItemChain->isLocationEditable() && linkChain->isFixedToRoot()){
+            if(bodyItemChain->isLocationLocked() && linkChain->isFixedToRoot()){
                 return LinkOperationType::None;
             }
             break;
@@ -1560,13 +1560,13 @@ bool OperableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event)
 
     auto menu = event->contextMenu();
     auto locationLockCheck = menu->addCheckItem(_("Lock location"));
-    locationLockCheck->setChecked(!bodyItem->isLocationEditable());
+    locationLockCheck->setChecked(bodyItem->isLocationLocked());
     locationLockCheck->sigToggled().connect(
-        [&](bool on){ bodyItem->setLocationEditable(!on); });
+        [&](bool on){ bodyItem->setLocationLocked(on); });
                     
     activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
     if(activeSimulatorItem){
-        if(pointedSceneLink->link()->isRoot() && bodyItem->isLocationEditable()){
+        if(pointedSceneLink->link()->isRoot() && !bodyItem->isLocationLocked()){
             Action* item1 = menu->addCheckItem(_("Move Forcibly"));
             item1->setChecked(forcedPositionMode == MOVE_FORCED_POSITION);
             item1->sigToggled().connect(

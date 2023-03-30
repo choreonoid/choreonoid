@@ -913,7 +913,7 @@ OffsetLocation::OffsetLocation(LinkOverwriteItem::Impl* impl)
     : LocationProxy(LocationProxy::OffsetLocation),
       impl(impl)
 {
-    setEditable(false);
+    setLocked(true);
 }
 
 

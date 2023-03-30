@@ -26,8 +26,8 @@ public:
     virtual LocationProxyPtr getParentLocationProxy() const override;
     virtual std::string getName() const override;
     virtual Isometry3 getLocation() const override;
-    virtual bool isEditable() const override;
-    virtual void setEditable(bool on) override;
+    virtual bool isLocked() const override;
+    virtual void setLocked(bool on) override;
     virtual bool setLocation(const Isometry3& T) override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
@@ -46,7 +46,7 @@ public:
     ScopedConnection frameConnection;
     ref_ptr<FrameLocation> frameLocation;
     Signal<void()> sigLocationChanged;
-    bool isLocationEditable;
+    bool isLocationLocked;
     bool isChangingCheckStatePassively;
     
     Impl(CoordinateFrameItem* self, CoordinateFrame* frame);
@@ -84,7 +84,7 @@ CoordinateFrameItem::CoordinateFrameItem(const CoordinateFrameItem& org, CloneMa
     : Item(org)
 {
     impl = new Impl(this, CloneMap::getClone(org.impl->frame, cloneMap));
-    impl->isLocationEditable = org.impl->isLocationEditable;
+    impl->isLocationLocked = org.impl->isLocationLocked;
 }
 
 
@@ -103,7 +103,7 @@ CoordinateFrameItem::Impl::Impl(CoordinateFrameItem* self, CoordinateFrame* fram
     self->sigCheckToggled().connect(
         [this](bool on){ onCheckToggled(on); });
 
-    isLocationEditable = true;
+    isLocationLocked = false;
     isChangingCheckStatePassively = false;
 }
 
@@ -323,7 +323,7 @@ void CoordinateFrameItem::Impl::putFrameAttributes(PutPropertyFunction& putPrope
 bool CoordinateFrameItem::store(Archive& archive)
 {
     if(impl->frame->write(archive)){
-        archive.write("locked", !isLocationEditable());
+        archive.write("locked", isLocationLocked());
         return true;
     }
     return false;
@@ -334,7 +334,7 @@ bool CoordinateFrameItem::restore(const Archive& archive)
 {
     if(impl->frame->read(archive)){
         setName(impl->frame->id().label());
-        setLocationEditable(!archive.get("locked", false));
+        setLocationLocked(archive.get("locked", false));
         return true;
     }
     return false;
@@ -357,19 +357,19 @@ bool CoordinateFrameItem::Impl::isDefaultFrame() const
 }
 
 
-bool CoordinateFrameItem::isLocationEditable() const
+bool CoordinateFrameItem::isLocationLocked() const
 {
-    if(!impl->isLocationEditable || impl->isDefaultFrame()){
-        return false;
+    if(impl->isLocationLocked || impl->isDefaultFrame()){
+        return true;
     }
-    return true;
+    return false;
 }
     
 
-void CoordinateFrameItem::setLocationEditable(bool on)
+void CoordinateFrameItem::setLocationLocked(bool on)
 {
-    if(on != impl->isLocationEditable){
-        impl->isLocationEditable = on;
+    if(on != impl->isLocationLocked){
+        impl->isLocationLocked = on;
         if(impl->frameLocation){
             impl->frameLocation->notifyAttributeChange();
         }
@@ -461,15 +461,15 @@ Isometry3 FrameLocation::getLocation() const
 }
 
 
-bool FrameLocation::isEditable() const
+bool FrameLocation::isLocked() const
 {
-    return impl->self->isLocationEditable();
+    return !impl->self->isLocationLocked();
 }
 
 
-void FrameLocation::setEditable(bool on)
+void FrameLocation::setLocked(bool on)
 {
-    impl->self->setLocationEditable(on);
+    impl->self->setLocationLocked(on);
 }
 
 

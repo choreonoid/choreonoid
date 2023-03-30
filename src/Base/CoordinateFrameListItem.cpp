@@ -779,7 +779,7 @@ void FrameMarker::updateFrameLock()
     bool updated = false;
     if(weakFrameItem){
         if(auto item = weakFrameItem.lock()){
-            setDragEnabled(item->isLocationEditable());
+            setDragEnabled(!item->isLocationLocked());
             updated = true;
         }
     }
@@ -852,7 +852,7 @@ void CoordinateFrameListItem::Impl::storeLockedFrameIndices(Archive& archive)
     int index = frameList->hasFirstElementAsDefaultFrame() ? 1 : 0;
     while(index < n){
         if(auto frameItem = self->findFrameItemAt(index)){
-            if(!frameItem->isLocationEditable()){
+            if(frameItem->isLocationLocked()){
                 indices->append(index);
             }
         }
@@ -902,7 +902,7 @@ void CoordinateFrameListItem::Impl::completeFrameItemRestoration(const Archive& 
             for(int i=0; i < locked.size(); ++i){
                 int index = locked[i].toInt();
                 if(auto frameItem = self->findFrameItemAt(index)){
-                    frameItem->setLocationEditable(false);
+                    frameItem->setLocationLocked(true);
                 }
             }
         }

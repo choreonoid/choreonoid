@@ -14,7 +14,7 @@ Signal<bool(LocationProxyPtr location), LogicalSum> sigEditRequest;
 LocationProxy::LocationProxy(LocationType type)
     : locationType_(type)
 {
-    isEditable_ = true;
+    isLocked_ = false;
 }
 
 
@@ -44,16 +44,16 @@ std::string LocationProxy::getCategory() const
 }
 
 
-bool LocationProxy::isEditable() const
+bool LocationProxy::isLocked() const
 {
-    return isEditable_;
+    return isLocked_;
 }
 
 
-void LocationProxy::setEditable(bool on)
+void LocationProxy::setLocked(bool on)
 {
-    if(on != isEditable_){
-        isEditable_ = on;
+    if(on != isLocked_){
+        isLocked_ = on;
         sigAttributeChanged_();
     }
 }

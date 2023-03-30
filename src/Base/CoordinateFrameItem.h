@@ -50,8 +50,8 @@ public:
     // LocatableItem function
     virtual LocationProxyPtr getLocationProxy() override;
 
-    bool isLocationEditable() const;
-    void setLocationEditable(bool on);
+    bool isLocationLocked() const;
+    void setLocationLocked(bool on);
     
     class Impl;
 
