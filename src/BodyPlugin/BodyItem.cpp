@@ -54,6 +54,7 @@ public:
     virtual Isometry3 getLocation() const override;
     virtual bool isLocked() const override;
     virtual void setLocked(bool on) override;
+    virtual bool isDoingContinuousUpdate() const override;
     virtual bool setLocation(const Isometry3& T) override;
     virtual void finishLocationEditing() override;
     virtual Item* getCorrespondingItem() override;
@@ -158,6 +159,8 @@ public:
     float transparency;
     Signal<void(int flags)> sigModelUpdated;
 
+    Signal<void(bool on)> sigContinuousKinematicUpdateStateChanged;
+
     LeggedBodyHelperPtr legged;
     Vector3 zmp;
 
@@ -185,7 +188,7 @@ public:
     bool setCollisionDetectionEnabled(bool on);
     bool setSelfCollisionDetectionEnabled(bool on);
     void updateCollisionDetectorLater();
-    void setLocationLocked(bool on, bool updateInitialPositionWhenLocked);
+    void setLocationLocked(bool on, bool updateInitialPositionWhenLocked, bool doNotiyUpdate);
     void createSceneBody();
     void setTransparency(float t);
     bool updateAttachment(bool on, bool doNotifyUpdate);
@@ -235,8 +238,11 @@ void BodyItem::initializeClass(ExtensionManager* ext)
 BodyItem::BodyItem()
 {
     setAttributes(FileImmutable | Reloadable);
+
     impl = new Impl(this);
     impl->init(false);
+
+    continuousKinematicUpdateCounter = 0;
     isAttachedToParentBody_ = false;
     isVisibleLinkSelectionMode_ = false;
 }
@@ -276,6 +282,8 @@ BodyItem::BodyItem(const BodyItem& org, CloneMap* cloneMap)
 {
     impl = new Impl(this, *org.impl, cloneMap);
     impl->init(true);
+
+    continuousKinematicUpdateCounter = 0;
     isAttachedToParentBody_ = false;
     isVisibleLinkSelectionMode_ = org.isVisibleLinkSelectionMode_;
 
@@ -1130,11 +1138,11 @@ bool BodyItem::isLocationLocked() const
 
 void BodyItem::setLocationLocked(bool on)
 {
-    impl->setLocationLocked(on, true);
+    impl->setLocationLocked(on, true, true);
 }
 
 
-void BodyItem::Impl::setLocationLocked(bool on, bool updateInitialPositionWhenLocked)
+void BodyItem::Impl::setLocationLocked(bool on, bool updateInitialPositionWhenLocked, bool doNotiyUpdate)
 {
     if(self->isAttachedToParentBody_ && !on){
         return;
@@ -1152,7 +1160,9 @@ void BodyItem::Impl::setLocationLocked(bool on, bool updateInitialPositionWhenLo
         if(bodyLocation){
             bodyLocation->notifyAttributeChange();
         }
-        self->notifyUpdate();
+        if(doNotiyUpdate){
+            self->notifyUpdate();
+        }
     }
 }
 
@@ -1208,7 +1218,13 @@ bool BodyLocation::isLocked() const
 
 void BodyLocation::setLocked(bool on)
 {
-    impl->setLocationLocked(on, true);
+    impl->setLocationLocked(on, true, true);
+}
+
+
+bool BodyLocation::isDoingContinuousUpdate() const
+{
+    return impl->self->isDoingContinuousKinematicUpdate();
 }
 
 
@@ -1502,7 +1518,7 @@ void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
         onParentBodyKinematicStateChanged();
 
     } else if(detached){
-        setLocationLocked(false, false);
+        setLocationLocked(false, false, true);
         notifyKinematicStateChange(false, false, false, true);
     }
 
@@ -1530,7 +1546,7 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
                     Isometry3 T_offset = holder->T_local() * attachment->T_local().inverse(Eigen::Isometry);
                     body->rootLink()->setOffsetPosition(T_offset);
                     body->setParent(linkToAttach);
-                    setLocationLocked(true, false);
+                    setLocationLocked(true, false, true);
                     mvout(false) << format(_("{0} has been attached to {1} of {2}."),
                                            self->displayName(), linkToAttach->name(), bodyItem->displayName()) << endl;
                     goto found;
@@ -1569,7 +1585,42 @@ void BodyItem::Impl::onParentBodyKinematicStateChanged()
 }
 
 
-namespace {
+BodyItem::ContinuousKinematicUpdateEntry BodyItem::startContinuousKinematicUpdate()
+{
+    return new ContinuousKinematicUpdateRef(this);
+}
+
+
+SignalProxy<void(bool on)> BodyItem::sigContinuousKinematicUpdateStateChanged()
+{
+    return impl->sigContinuousKinematicUpdateStateChanged;
+}
+
+
+BodyItem::ContinuousKinematicUpdateRef::ContinuousKinematicUpdateRef(BodyItem* item)
+    : bodyItemRef(item)
+{
+    if(++item->continuousKinematicUpdateCounter == 1){
+        item->impl->sigContinuousKinematicUpdateStateChanged(true);
+        if(auto& bodyLocation = item->impl->bodyLocation){
+            bodyLocation->notifyAttributeChange();
+        }
+    }
+}
+
+
+BodyItem::ContinuousKinematicUpdateRef::~ContinuousKinematicUpdateRef()
+{
+    if(auto item = bodyItemRef.lock()){
+        if(--item->continuousKinematicUpdateCounter == 0){
+            item->impl->sigContinuousKinematicUpdateStateChanged(false);
+            if(auto& bodyLocation = item->impl->bodyLocation){
+                bodyLocation->notifyAttributeChange();
+            }
+        }
+    }
+}
+
 
 MyCompositeBodyIK::MyCompositeBodyIK(BodyItem::Impl* bodyItemImpl)
     : bodyItemImpl(bodyItemImpl),
@@ -1599,8 +1650,6 @@ bool MyCompositeBodyIK::calcInverseKinematics(const Isometry3& T)
 std::shared_ptr<InverseKinematics> MyCompositeBodyIK::getParentBodyIK()
 {
     return holderIK;
-}
-
 }
 
 
@@ -1633,7 +1682,7 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
                 [this](bool on){ return setSelfCollisionDetectionEnabled(on); });
     putProperty(_("Lock location"), self->isLocationLocked(),
-                [this](bool on){ setLocationLocked(on, true); return true; });
+                [this](bool on){ setLocationLocked(on, true, true); return true; });
     putProperty(_("Scene sensitive"), self->isSceneSensitive(),
                 [this](bool on){ self->setSceneSensitive(on); return true; });
     putProperty.range(0.0, 0.9).decimals(1);
@@ -1881,11 +1930,11 @@ bool BodyItem::Impl::restore(const Archive& archive)
     }
 
     if(archive.read("lock_location", on)){
-        setLocationLocked(on, false);
+        setLocationLocked(on, false, false);
     } else if(archive.read("location_editable", on) ||
        archive.read("isEditable", on) ||
        archive.read("isSceneBodyDraggable", on)){
-        setLocationLocked(!on, false);
+        setLocationLocked(!on, false, false);
     }
     if(archive.read("scene_sensitive", on)){
         self->setSceneSensitive(on);

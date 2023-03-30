@@ -59,7 +59,7 @@ public:
     // The parent body item defined by the parent-child relationship in the item tree is restored
     // if the relationship exists. Otherwise, the parent body item is cleared.
     //void resetParentBodyItem();
-        
+
     void moveToOrigin();
     enum PresetPoseID { INITIAL_POSE, STANDARD_POSE };
     void setPresetPose(PresetPoseID id);
@@ -183,6 +183,24 @@ public:
     void setLocationLocked(bool on);
     LocationProxyPtr createLinkLocationProxy(Link* link);
 
+    class ContinuousKinematicUpdateRef : public Referenced
+    {
+    private:
+        ContinuousKinematicUpdateRef(BodyItem* item);
+        ~ContinuousKinematicUpdateRef();
+        weak_ref_ptr<BodyItem> bodyItemRef;
+        friend class BodyItem;
+    };
+    typedef ref_ptr<ContinuousKinematicUpdateRef> ContinuousKinematicUpdateEntry;
+
+    ContinuousKinematicUpdateEntry startContinuousKinematicUpdate();
+    bool isDoingContinuousKinematicUpdate() const { return continuousKinematicUpdateCounter > 0; }
+    /**
+       \note The sigUpdated signal is not emitted when the corresponding state changed
+       becasue this is not a permenent state.
+    */
+    SignalProxy<void(bool on)> sigContinuousKinematicUpdateStateChanged();
+    
     // RenderableItem function
     virtual SgNode* getScene() override;
 
@@ -209,6 +227,7 @@ protected:
             
 private:
     Impl* impl;
+    int continuousKinematicUpdateCounter;
     bool isAttachedToParentBody_;
     bool isVisibleLinkSelectionMode_;
     std::vector<CollisionLinkPairPtr> collisions_;
