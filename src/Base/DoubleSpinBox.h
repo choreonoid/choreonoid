@@ -13,11 +13,13 @@ class CNOID_EXPORT DoubleSpinBox : public QDoubleSpinBox
 public:
     DoubleSpinBox(QWidget* parent = nullptr);
 
+    void setUserInputEnabled(bool on) { setReadOnly(!on); }
+    bool isUserInputEnabled() const { return !isReadOnly(); }
     void setUndoRedoKeyInputEnabled(bool on);
     bool isUndoRedoKeyInputEnabled() const { return isUndoRedoKeyInputEnabled_; }
 
     void setValue(double val);
-        
+
     SignalProxy<void(double)> sigValueChanged();
     SignalProxy<void()> sigEditingFinished();
     SignalProxy<void()> sigEditingFinishedWithValueChange();

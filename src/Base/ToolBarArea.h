@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_TOOL_BAR_AREA_H
 #define CNOID_BASE_TOOL_BAR_AREA_H
 

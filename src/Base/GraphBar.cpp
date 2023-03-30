@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "GraphBar.h"
 #include "GraphWidget.h"
 #include "MainWindow.h"
@@ -11,6 +7,7 @@
 #include "ComboBox.h"
 #include "Dialog.h"
 #include <cnoid/ConnectionSet>
+#include <QButtonGroup>
 #include <cmath>
 #include "gettext.h"
 
@@ -202,8 +199,6 @@ void GraphBarImpl::onRenderingTypesToggled()
         (orgRenderingToggle->isChecked(), velRenderingToggle->isChecked(), accRenderingToggle->isChecked());
 }
 
-
-namespace {
 
 ConfigDialog::ConfigDialog(GraphBarImpl* barImpl)
     : connections(barImpl->connections),
@@ -460,6 +455,4 @@ void ConfigDialog::onControlPointStepOrOffsetChanged()
 void ConfigDialog::onHighlightingControlPointToggled(bool on)
 {
     focusedGraphWidget->highlightControlPoints(on);
-}
-
 }

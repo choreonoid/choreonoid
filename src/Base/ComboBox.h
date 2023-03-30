@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro NAKAOKA
-*/
-
 #ifndef CNOID_BASE_COMBO_BOX_H
 #define CNOID_BASE_COMBO_BOX_H
 
@@ -13,8 +9,6 @@ namespace cnoid {
 
 class CNOID_EXPORT ComboBox : public QComboBox
 {
-    Q_OBJECT
-
 public:
     ComboBox(QWidget* parent = nullptr);
     ~ComboBox();
@@ -22,6 +16,10 @@ public:
     void enableI18n(const char* domainname);
     void addI18nItem(const char* text);
     void addI18nItem(const QIcon & icon, const char* text);
+
+    void setUserInputEnabled(bool on) { isUserInputEnabled_ = on; }
+    bool isUserInputEnabled() const { return isUserInputEnabled_; }
+
     QString currentOrgText() const;
     int findOrgText(const std::string& text, bool setFoundItemCurrent = false);
     virtual void showPopup() override;
@@ -32,15 +30,15 @@ public:
     SignalProxy<void(int)> sigHighlighted();
     SignalProxy<void()> sigAboutToShowPopup();
 
-private Q_SLOTS:
-    void onActivated(int index);
-    void onCurrentIndexChanged(int index);
-    void onEditTextChanged(const QString& text);
-    void onHighlighted(int index);
+protected:
+    virtual void keyPressEvent(QKeyEvent* event) override;
+    virtual void mousePressEvent(QMouseEvent* event) override;
+    virtual void wheelEvent(QWheelEvent* event) override;
 
 private:
     class Impl;
     Impl* impl;
+    bool isUserInputEnabled_;
 };
 
 }

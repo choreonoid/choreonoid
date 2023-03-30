@@ -1,22 +1,19 @@
-/**
-   @author Shin'ichiro NAKAOKA
-*/
-
 #include "Slider.h"
 
 using namespace cnoid;
 
+
 Slider::Slider(QWidget* parent)
     : QSlider(parent)
 {
-
+    isUserInputEnabled_ = true;
 }
 
 
 Slider::Slider(Qt::Orientation orientation, QWidget* parent)
     : QSlider(orientation, parent)
 {
-
+    isUserInputEnabled_ = true;
 }
 
 
@@ -50,4 +47,28 @@ SignalProxy<void()> Slider::sigSliderReleased()
                 [this](){ (*sigSliderReleased_)(); });
     }
     return *sigSliderReleased_;
+}
+
+
+void Slider::keyPressEvent(QKeyEvent* event)
+{
+    if(isUserInputEnabled_){
+        QSlider::keyPressEvent(event);
+    }
+}
+
+
+void Slider::mousePressEvent(QMouseEvent* event)
+{
+    if(isUserInputEnabled_){
+        QSlider::mousePressEvent(event);
+    }
+}
+
+
+void Slider::wheelEvent(QWheelEvent* event)
+{
+    if(isUserInputEnabled_){
+        QSlider::wheelEvent(event);
+    }
 }

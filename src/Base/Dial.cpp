@@ -1,7 +1,3 @@
-/**
-   @author Shizuko Hattori
-*/
-
 #include "Dial.h"
 
 using namespace cnoid;
@@ -12,17 +8,18 @@ Dial::Dial(QWidget* parent)
 {
     increasingValue = 0.0;
     preValue = 0;
-    isSigValueChangedConnected = false;
+    isUserInputEnabled_ = true;
 }
 
 
 SignalProxy<void(double)> Dial::sigValueChanged()
 {
-    if(!isSigValueChangedConnected){
-        connect(this, SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
-        isSigValueChangedConnected = true;
+    if(!sigValueChanged_){
+        stdx::emplace(sigValueChanged_);
+        connect(this, (void(QDial::*)(double)) &QDial::valueChanged,
+                [this](double value){ onValueChanged(value); });
     }
-    return sigValueChanged_;
+    return *sigValueChanged_;
 }
         
 
@@ -64,10 +61,34 @@ void Dial::onValueChanged(int value)
         }else{
             increasingValue += diff;
         }
-        sigValueChanged_(increasingValue);
+        (*sigValueChanged_)(increasingValue);
     }else{
-        sigValueChanged_(value);
+        (*sigValueChanged_)(value);
     }
 
     preValue = value;
+}
+
+
+void Dial::keyPressEvent(QKeyEvent* event)
+{
+    if(isUserInputEnabled_){
+        QDial::keyPressEvent(event);
+    }
+}
+
+
+void Dial::mousePressEvent(QMouseEvent* event)
+{
+    if(isUserInputEnabled_){
+        QDial::mousePressEvent(event);
+    }
+}
+
+
+void Dial::wheelEvent(QWheelEvent* event)
+{
+    if(isUserInputEnabled_){
+        QDial::wheelEvent(event);
+    }
 }

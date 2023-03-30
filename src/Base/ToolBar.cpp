@@ -1,12 +1,9 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ToolBar.h"
 #include "ToolBarArea.h"
 #include "MainWindow.h"
 #include "Separator.h"
 #include "Archive.h"
+#include <QButtonGroup>
 #include <QStylePainter>
 #include <QStyleOptionToolBar>
 #include <QMouseEvent>

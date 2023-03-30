@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "TreeWidget.h"
 #include <QHeaderView>
 #include <QPainter>
@@ -45,6 +41,7 @@ TreeWidget::TreeWidget(QWidget* parent)
     : QTreeWidget(parent)
 {
     impl = new Impl;
+    isUserInputEnabled_ = true;
 }
 
 
@@ -114,8 +111,10 @@ SignalProxy<void(QTreeWidgetItem* current, QTreeWidgetItem* previous)> TreeWidge
 {
     if(!impl->sigCurrentItemChanged){
         stdx::emplace(impl->sigCurrentItemChanged);
-        connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),
-            this, SLOT(onCurrentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)));
+        connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, QTreeWidgetItem*)) &QTreeWidget::currentItemChanged,
+                [this](QTreeWidgetItem* current, QTreeWidgetItem* previous){
+                    (*impl->sigCurrentItemChanged)(current, previous);
+                });
     }
     return *impl->sigCurrentItemChanged;
 }
@@ -125,8 +124,10 @@ SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemActivate
 {
     if(!impl->sigItemActivated){
         stdx::emplace(impl->sigItemActivated);
-        connect(this, SIGNAL(itemActivated(QTreeWidgetItem*, int)),
-                this, SLOT(onItemActivated(QTreeWidgetItem*, int)));
+        connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, int)) &QTreeWidget::itemActivated,
+                [this](QTreeWidgetItem* item, int column){
+                    (*impl->sigItemActivated)(item, column);
+                });
     }
     return *impl->sigItemActivated;
 }
@@ -136,8 +137,10 @@ SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemChanged(
 {
     if(!impl->sigItemChanged){
         stdx::emplace(impl->sigItemChanged);
-        connect(this, SIGNAL(itemChanged(QTreeWidgetItem*, int)),
-                this, SLOT(onItemChanged(QTreeWidgetItem*, int)));
+        connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, int)) &QTreeWidget::itemChanged,
+                [this](QTreeWidgetItem* item, int column){
+                    (*impl->sigItemChanged)(item, column);
+                });
     }
     return *impl->sigItemChanged;
 }
@@ -147,8 +150,10 @@ SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemClicked(
 {
     if(!impl->sigItemClicked){
         stdx::emplace(impl->sigItemClicked);
-        connect(this, SIGNAL(itemClicked(QTreeWidgetItem*, int)),
-                this, SLOT(onItemClicked(QTreeWidgetItem*, int)));
+        connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, int)) &QTreeWidget::itemClicked,
+                [this](QTreeWidgetItem* item, int column){
+                    (*impl->sigItemClicked)(item, column);
+                });
     }
     return *impl->sigItemClicked;
 }
@@ -158,8 +163,10 @@ SignalProxy<void(QTreeWidgetItem* item)> TreeWidget::sigItemCollapsed()
 {
     if(!impl->sigItemCollapsed){
         stdx::emplace(impl->sigItemCollapsed);
-        connect(this, SIGNAL(itemCollapsed(QTreeWidgetItem*)),
-                this, SLOT(onItemCollapsed(QTreeWidgetItem*)));
+        connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*)) &QTreeWidget::itemCollapsed,
+                [this](QTreeWidgetItem* item){
+                    (*impl->sigItemCollapsed)(item);
+                });
     }
     return *impl->sigItemCollapsed;
 }
@@ -169,8 +176,10 @@ SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemDoubleCl
 {
     if(!impl->sigItemDoubleClicked){
         stdx::emplace(impl->sigItemDoubleClicked);
-        connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)),
-                this, SLOT(onItemDoubleClicked(QTreeWidgetItem*, int)));
+        connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, int)) &QTreeWidget::itemDoubleClicked,
+                [this](QTreeWidgetItem* item, int column){
+                    (*impl->sigItemDoubleClicked)(item, column);
+                });
     }
     return *impl->sigItemDoubleClicked;
 }
@@ -180,8 +189,10 @@ SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemEntered(
 {
     if(!impl->sigItemEntered){
         stdx::emplace(impl->sigItemEntered);
-        connect(this, SIGNAL(itemEntered(QTreeWidgetItem*, int)),
-                this, SLOT(onItemEntered(QTreeWidgetItem*, int)));
+        connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, int)) &QTreeWidget::itemEntered,
+                [this](QTreeWidgetItem* item, int column){
+                    (*impl->sigItemEntered)(item, column);
+                });
     }
     return *impl->sigItemEntered;
 }
@@ -191,8 +202,10 @@ SignalProxy<void(QTreeWidgetItem* item)> TreeWidget::sigItemExpanded()
 {
     if(!impl->sigItemExpanded){
         stdx::emplace(impl->sigItemExpanded);
-        connect(this, SIGNAL(itemExpanded(QTreeWidgetItem*)),
-                this, SLOT(onItemExpanded(QTreeWidgetItem*)));
+        connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*)) &QTreeWidget::itemExpanded,
+                [this](QTreeWidgetItem* item){
+                    (*impl->sigItemExpanded)(item);
+                });
     }
     return *impl->sigItemExpanded;
 }
@@ -202,8 +215,10 @@ SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemPressed(
 {
     if(!impl->sigItemPressed){
         stdx::emplace(impl->sigItemPressed);
-        connect(this, SIGNAL(itemPressed(QTreeWidgetItem*, int)),
-                this, SLOT(onItemPressed(QTreeWidgetItem*, int)));
+        connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, int)) &QTreeWidget::itemPressed,
+                [this](QTreeWidgetItem* item, int column){
+                    (*impl->sigItemPressed)(item, column);
+                });
     }
     return *impl->sigItemPressed;
 }
@@ -213,30 +228,34 @@ SignalProxy<void()> TreeWidget::sigItemSelectionChanged()
 {
     if(!impl->sigItemSelectionChanged){
         stdx::emplace(impl->sigItemSelectionChanged);
-        connect(this, SIGNAL(itemSelectionChanged()),
-                this, SLOT(onItemSelectionChanged()));
+        connect(this, (void(QTreeWidget::*)()) &QTreeWidget::itemSelectionChanged,
+                [this](){ (*impl->sigItemSelectionChanged)(); });
     }
     return *impl->sigItemSelectionChanged;
 }
 
 
-SignalProxy<void(const QModelIndex &parent, int first, int last)> TreeWidget::sigRowsAboutToBeRemoved()
+SignalProxy<void(const QModelIndex& parent, int first, int last)> TreeWidget::sigRowsAboutToBeRemoved()
 {
     if(!impl->sigRowsAboutToBeRemoved){
         stdx::emplace(impl->sigRowsAboutToBeRemoved);
-        QObject::connect(model(), SIGNAL(rowsAboutToBeRemoved(const QModelIndex&, int, int)),
-                         this, SLOT(onRowsAboutToBeRemoved(const QModelIndex&, int, int)));
+        connect(model(), (void(QAbstractItemModel::*)(const QModelIndex&, int, int)) &QAbstractItemModel::rowsAboutToBeRemoved,
+                [this](const QModelIndex& parent, int first, int last){
+                    (*impl->sigRowsAboutToBeRemoved)(parent, first, last);
+                });
     }
     return *impl->sigRowsAboutToBeRemoved;
 }
 
 
-SignalProxy<void(const QModelIndex &parent, int first, int last)> TreeWidget::sigRowsRemoved()
+SignalProxy<void(const QModelIndex& parent, int first, int last)> TreeWidget::sigRowsRemoved()
 {
     if(!impl->sigRowsRemoved){
         stdx::emplace(impl->sigRowsRemoved);
-        QObject::connect(model(), SIGNAL(rowsRemoved(const QModelIndex&, int, int)),
-                         this, SLOT(onRowsRemoved(const QModelIndex&, int, int)));
+        connect(model(), (void(QAbstractItemModel::*)(const QModelIndex&, int, int)) &QAbstractItemModel::rowsRemoved,
+                [this](const QModelIndex& parent, int first, int last){
+                    (*impl->sigRowsRemoved)(parent, first, last);
+                });
     }
     return *impl->sigRowsRemoved;
 }
@@ -246,8 +265,10 @@ SignalProxy<void(const QModelIndex &parent, int first, int last)> TreeWidget::si
 {
     if(!impl->sigRowsInserted){
         stdx::emplace(impl->sigRowsInserted);
-        QObject::connect(model(), SIGNAL(rowsInserted(const QModelIndex&, int, int)),
-                         this, SLOT(onRowsInserted(const QModelIndex&, int, int)));
+        connect(model(), (void(QAbstractItemModel::*)(const QModelIndex&, int, int)) &QAbstractItemModel::rowsInserted,
+                [this](const QModelIndex& parent, int first, int last){
+                    (*impl->sigRowsInserted)(parent, first, last);
+                });
     }
     return *impl->sigRowsInserted;
 }
@@ -257,90 +278,34 @@ SignalProxy<void(int logicalIndex, int oldSize, int newSize)> TreeWidget::sigSec
 {
     if(!impl->sigSectionResized){
         stdx::emplace(impl->sigSectionResized);
-        QObject::connect(header(), SIGNAL(sectionResized(int, int, int)),
-                         this, SLOT(onSectionResized(int, int, int)));
+        connect(header(), (void(QHeaderView::*)(int, int, int)) &QHeaderView::sectionResized,
+                [this](int logicalIndex, int oldSize, int newSize){
+                    (*impl->sigSectionResized)(logicalIndex, oldSize, newSize);
+                });
     }
     return *impl->sigSectionResized;
 }
 
 
-void TreeWidget::onCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
+void TreeWidget::keyPressEvent(QKeyEvent* event)
 {
-    (*impl->sigCurrentItemChanged)(current, previous);
+    if(isUserInputEnabled_){
+        QTreeWidget::keyPressEvent(event);
+    }
 }
 
 
-void TreeWidget::onItemActivated(QTreeWidgetItem* item, int column)
+void TreeWidget::mousePressEvent(QMouseEvent* event)
 {
-    (*impl->sigItemActivated)(item, column);
-}
-
-void TreeWidget::onItemChanged(QTreeWidgetItem* item, int column)
-{
-    (*impl->sigItemChanged)(item, column);
-}
-
-void TreeWidget::onItemClicked(QTreeWidgetItem* item, int column)
-{
-    (*impl->sigItemClicked)(item, column);
+    if(isUserInputEnabled_){
+        QTreeWidget::mousePressEvent(event);
+    }
 }
 
 
-void TreeWidget::onItemCollapsed(QTreeWidgetItem* item)
+void TreeWidget::wheelEvent(QWheelEvent* event)
 {
-    (*impl->sigItemCollapsed)(item);
-}
-
-
-void TreeWidget::onItemDoubleClicked(QTreeWidgetItem* item, int column)
-{
-    (*impl->sigItemDoubleClicked)(item, column);
-}
-
-
-void TreeWidget::onItemEntered(QTreeWidgetItem* item, int column)
-{
-    (*impl->sigItemEntered)(item, column);
-}
-
-
-void TreeWidget::onItemExpanded(QTreeWidgetItem* item)
-{
-    (*impl->sigItemExpanded)(item);
-}
-
-
-void TreeWidget::onItemPressed(QTreeWidgetItem* item, int column)
-{
-    (*impl->sigItemPressed)(item, column);
-}
-
-
-void TreeWidget::onItemSelectionChanged(void)
-{
-    (*impl->sigItemSelectionChanged)();
-}
-
-
-void TreeWidget::onRowsAboutToBeRemoved(const QModelIndex& parent, int first, int last)
-{
-    (*impl->sigRowsAboutToBeRemoved)(parent, first, last);
-}
-
-
-void TreeWidget::onRowsRemoved(const QModelIndex& parent, int first, int last)
-{
-    (*impl->sigRowsRemoved)(parent, first, last);
-}
-
-
-void TreeWidget::onRowsInserted(const QModelIndex& parent, int first, int last)
-{
-    (*impl->sigRowsInserted)(parent, first, last);
-}
-
-
-void TreeWidget::onSectionResized(int logicalIndex, int oldSize, int newSize)
-{
-    (*impl->sigSectionResized)(logicalIndex, oldSize, newSize);
+    if(isUserInputEnabled_){
+        QTreeWidget::wheelEvent(event);
+    }
 }

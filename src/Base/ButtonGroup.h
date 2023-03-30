@@ -1,35 +1,28 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_BUTTON_GROUP_H
 #define CNOID_BASE_BUTTON_GROUP_H
 
 #include <cnoid/Signal>
 #include <QButtonGroup>
+#include <cnoid/stdx/optional>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class CNOID_EXPORT ButtonGroup : public QButtonGroup
 {
-    Q_OBJECT
-
 public:
-    ButtonGroup(QObject* parent = 0);
+    ButtonGroup(QObject* parent = nullptr);
 
-    SignalProxy<void(int id)> sigButtonClicked();
-    SignalProxy<void(int id, bool checked)> sigButtonToggled();
-
-private Q_SLOTS:
-    void onButtonClicked(int id);
-    void onButtonToggled(int id, bool checked);
+    SignalProxy<void(int id)> sigIdClicked();
+    SignalProxy<void(int id, bool checked)> sigIdToggled();
+    //[[deprecated]]
+    SignalProxy<void(int id)> sigButtonClicked() { return sigIdClicked(); }
+    //[[deprecated]]
+    SignalProxy<void(int id, bool checked)> sigButtonToggled() { return sigIdToggled(); }
 
 private:
-    Signal<void(int id)> sigButtonClicked_;
-    Signal<void(int id, bool checked)> sigButtonToggled_;
-    bool sigButtonClickedConnected;
-    bool sigButtonToggledConnected;
+    stdx::optional<Signal<void(int id)>> sigIdClicked_;
+    stdx::optional<Signal<void(int id, bool checked)>> sigIdToggled_;
 };
 
 }

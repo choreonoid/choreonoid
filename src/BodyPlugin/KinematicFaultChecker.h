@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODYPLUGIN_KINEMATIC_FAULT_CHECKER_H
 #define CNOID_BODYPLUGIN_KINEMATIC_FAULT_CHECKER_H
 

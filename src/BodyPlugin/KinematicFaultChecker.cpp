@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro NAKAOKA
-*/
-
 #include "KinematicFaultChecker.h"
 #include "BodyItem.h"
 #include "BodyMotionItem.h"
@@ -24,6 +20,7 @@
 #include <cnoid/BodyCollisionDetector>
 #include <cnoid/AISTCollisionDetector>
 #include <cnoid/IdPair>
+#include <QButtonGroup>
 #include <QDialogButtonBox>
 #include <QBoxLayout>
 #include <QFrame>

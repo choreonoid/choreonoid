@@ -1,54 +1,55 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "CheckBox.h"
 
 using namespace cnoid;
 
+
 CheckBox::CheckBox(QWidget* parent)
     : QCheckBox(parent)
 {
-    sigStateChangedConnected = false;
-    sigButtonToggledConnected = false;
+    isUserInputEnabled_ = true;
 }
 
 
 CheckBox::CheckBox(const QString& text, QWidget* parent)
     : QCheckBox(text, parent)
 {
-    sigStateChangedConnected = false;
-    sigButtonToggledConnected = false;
+    isUserInputEnabled_ = true;
 }
 
 
 SignalProxy<void(int)> CheckBox::sigStateChanged()
 {
-    if(!sigStateChangedConnected){
-        connect(this, SIGNAL(stateChanged(int)), this, SLOT(onStateChanged(int)));
-        sigStateChangedConnected = true;
+    if(!sigStateChanged_){
+        stdx::emplace(sigStateChanged_);
+        connect(this, (void(QCheckBox::*)(int)) &QCheckBox::stateChanged,
+                [this](int state){ (*sigStateChanged_)(state); });
     }
-    return sigStateChanged_;
+    return *sigStateChanged_;
 }
 
 
 SignalProxy<void(bool)> CheckBox::sigToggled()
 {
-    if(!sigButtonToggledConnected){
-        connect(this, SIGNAL(toggled(bool)), this, SLOT(onToggled(bool)));
-        sigButtonToggledConnected = true;
+    if(!sigToggled_){
+        stdx::emplace(sigToggled_);
+        connect(this, (void(QCheckBox::*)(bool)) &QCheckBox::toggled,
+                [this](bool checked){ (*sigToggled_)(checked); });
     }
-    return sigToggled_;
+    return *sigToggled_;
 }
 
 
-void CheckBox::onStateChanged(int state)
+void CheckBox::keyPressEvent(QKeyEvent* event)
 {
-    sigStateChanged_(state);
+    if(isUserInputEnabled_){
+        QCheckBox::keyPressEvent(event);
+    }
 }
 
 
-void CheckBox::onToggled(bool checked)
+void CheckBox::mousePressEvent(QMouseEvent* event)
 {
-    sigToggled_(checked);
+    if(isUserInputEnabled_){
+        QCheckBox::mousePressEvent(event);
+    }
 }

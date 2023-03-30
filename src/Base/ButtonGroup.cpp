@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ButtonGroup.h"
 
 using namespace cnoid;
@@ -10,38 +6,41 @@ using namespace cnoid;
 ButtonGroup::ButtonGroup(QObject* parent)
     : QButtonGroup(parent)
 {
-    sigButtonClickedConnected = false;
-    sigButtonToggledConnected = false;
+
 }
 
 
-SignalProxy<void(int id)> ButtonGroup::sigButtonClicked()
+SignalProxy<void(int id)> ButtonGroup::sigIdClicked()
 {
-    if(!sigButtonClickedConnected){
-        connect(this, SIGNAL(buttonClicked(int)), this, SLOT(onButtonClicked(int)));
-        sigButtonClickedConnected = true;
+    if(!sigIdClicked_){
+        stdx::emplace(sigIdClicked_);
+        connect(this, (void(QButtonGroup::*)(int))
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+                &QButtonGroup::idClicked,
+#else
+                &QButtonGroup::buttonClicked,
+#endif
+
+                [this](int id){ (*sigIdClicked_)(id); });
     }
-    return sigButtonClicked_;
+    return *sigIdClicked_;
 }
     
 
-SignalProxy<void(int id, bool checked)> ButtonGroup::sigButtonToggled()
+SignalProxy<void(int id, bool checked)> ButtonGroup::sigIdToggled()
 {
-    if(!sigButtonToggledConnected){
-        connect(this, SIGNAL(buttonToggled(int,bool)), this, SLOT(onButtonToggled(int,bool)));
-        sigButtonToggledConnected = true;
+    if(!sigIdToggled_){
+        stdx::emplace(sigIdToggled_);
+        connect(this, (void(QButtonGroup::*)(int,bool))
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+                &QButtonGroup::idToggled,
+#else
+                &QButtonGroup::buttonToggled,
+#endif
+                
+                [this](int id, bool checked){ (*sigIdToggled_)(id, checked); });
     }
-    return sigButtonToggled_;
-}
-
-
-void ButtonGroup::onButtonClicked(int id)
-{
-    sigButtonClicked_(id);
-}
-
-
-void ButtonGroup::onButtonToggled(int id, bool checked)
-{
-    sigButtonToggled_(id, checked);
+    return *sigIdToggled_;
 }

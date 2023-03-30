@@ -1,35 +1,38 @@
-/**
-   @author Shizuko Hattori
-*/
-
 #ifndef CNOID_BASE_DIAL_H
 #define CNOID_BASE_DIAL_H
 
 #include <cnoid/Signal>
 #include <QDial>
+#include <cnoid/stdx/optional>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class CNOID_EXPORT Dial : public QDial
 {
-    Q_OBJECT
-
 public:
     Dial(QWidget* parent = 0);
+    
+    void setUserInputEnabled(bool on) { isUserInputEnabled_ = on; }
+    bool isUserInputEnabled() const { return isUserInputEnabled_; }
+
     void setValue(double value);
     double value();
 
     SignalProxy<void(double)> sigValueChanged();
 
-private Q_SLOTS:
-    void onValueChanged(int value);
+protected:
+    virtual void keyPressEvent(QKeyEvent* event) override;
+    virtual void mousePressEvent(QMouseEvent* event) override;
+    virtual void wheelEvent(QWheelEvent* event) override;
 
 private:
-    Signal<void(double)> sigValueChanged_;
+    void onValueChanged(int value);
+    
+    stdx::optional<Signal<void(double)>> sigValueChanged_;
     double increasingValue;
     int preValue;
-    bool isSigValueChangedConnected;
+    bool isUserInputEnabled_;
 };
 
 }

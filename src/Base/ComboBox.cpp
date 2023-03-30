@@ -31,6 +31,7 @@ ComboBox::ComboBox(QWidget* parent)
     : QComboBox(parent)
 {
     impl = new Impl;
+    isUserInputEnabled_ = true;
 }
 
 
@@ -113,7 +114,8 @@ SignalProxy<void(int)> ComboBox::sigActivated()
 {
     if(!impl->sigActivated){
         stdx::emplace(impl->sigActivated);
-        connect(this, SIGNAL(activated(int)), this, SLOT(onActivated(int)));
+        connect(this, (void(QComboBox::*)(int)) &QComboBox::activated,
+                [this](int index){ (*impl->sigActivated)(index); });
     }
     return *impl->sigActivated;
 }
@@ -123,8 +125,8 @@ SignalProxy<void(int)> ComboBox::sigCurrentIndexChanged()
 {
     if(!impl->sigCurrentIndexChanged){
         stdx::emplace(impl->sigCurrentIndexChanged);
-        connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(onCurrentIndexChanged(int)));
-
+        connect(this, (void(QComboBox::*)(int)) &QComboBox::currentIndexChanged,
+                [this](int index){ (*impl->sigCurrentIndexChanged)(index); });
     }
     return *impl->sigCurrentIndexChanged;
 }
@@ -134,7 +136,8 @@ SignalProxy<void(const QString&)> ComboBox::sigEditTextChanged()
 {
     if(!impl->sigEditTextChanged){
         stdx::emplace(impl->sigEditTextChanged);
-        connect(this, SIGNAL(editTextChanged(const QString&)), this, SLOT(onEditTextChanged(const QString&)));
+        connect(this, (void(QComboBox::*)(const QString&)) &QComboBox::editTextChanged,
+                [this](const QString& text){ (*impl->sigEditTextChanged)(text); });
     }
     return *impl->sigEditTextChanged;
 }
@@ -144,7 +147,8 @@ SignalProxy<void(int)> ComboBox::sigHighlighted()
 {
     if(!impl->sigHighlighted){
         stdx::emplace(impl->sigHighlighted);
-        connect(this, SIGNAL(highlighted(int)), this, SLOT(onHighlighted(int)));
+        connect(this, (void(QComboBox::*)(int)) &QComboBox::highlighted,
+                [this](int index){ (*impl->sigHighlighted)(index); });
     }
     return *impl->sigHighlighted;
 }
@@ -156,25 +160,25 @@ SignalProxy<void()> ComboBox::sigAboutToShowPopup()
 }
 
 
-void ComboBox::onActivated(int index)
+void ComboBox::keyPressEvent(QKeyEvent* event)
 {
-    (*impl->sigActivated)(index);
+    if(isUserInputEnabled_){
+        QComboBox::keyPressEvent(event);
+    }
 }
 
 
-void ComboBox::onCurrentIndexChanged(int index)
+void ComboBox::mousePressEvent(QMouseEvent* event)
 {
-    (*impl->sigCurrentIndexChanged)(index);
+    if(isUserInputEnabled_){
+        QComboBox::mousePressEvent(event);
+    }
 }
 
 
-void ComboBox::onEditTextChanged(const QString& text)
+void ComboBox::wheelEvent(QWheelEvent* event)
 {
-    (*impl->sigEditTextChanged)(text);
-}
-
-
-void ComboBox::onHighlighted(int index)
-{
-    (*impl->sigHighlighted)(index);
+    if(isUserInputEnabled_){
+        QComboBox::wheelEvent(event);
+    }
 }

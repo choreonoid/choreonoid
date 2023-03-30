@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ToolBarArea.h"
 #include "Separator.h"
 #include "ToolBar.h"
@@ -11,7 +7,7 @@
 #include <cnoid/ValueTree>
 #include <QResizeEvent>
 #include <deque>
-#include <vector>
+#include <memory>
 #include <iostream>
 
 using namespace std;

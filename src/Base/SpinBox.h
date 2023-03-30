@@ -1,5 +1,5 @@
-#ifndef CNOID_BASE_SPINBOX_H
-#define CNOID_BASE_SPINBOX_H
+#ifndef CNOID_BASE_SPIN_BOX_H
+#define CNOID_BASE_SPIN_BOX_H
 
 #include <cnoid/Signal>
 #include <QSpinBox>
@@ -14,6 +14,9 @@ class CNOID_EXPORT SpinBox : public QSpinBox
 public:
     SpinBox(QWidget* parent = nullptr);
                                
+    void setUserInputEnabled(bool on) { setReadOnly(!on); }
+    bool isUserInputEnabled() const { return !isReadOnly(); }
+
     SignalProxy<void(int)> sigValueChanged();
     SignalProxy<void()> sigEditingFinished();
 

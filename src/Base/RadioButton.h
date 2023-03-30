@@ -1,31 +1,29 @@
-#ifndef CNOID_BASE_CHECK_BOX_H
-#define CNOID_BASE_CHECK_BOX_H
+#ifndef CNOID_BASE_RADIO_BUTTON_H
+#define CNOID_BASE_RADIO_BUTTON_H
 
 #include <cnoid/Signal>
-#include <QCheckBox>
+#include <QRadioButton>
 #include <cnoid/stdx/optional>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT CheckBox : public QCheckBox
+class CNOID_EXPORT RadioButton : public QRadioButton
 {
 public:
-    CheckBox(QWidget* parent = nullptr);
-    CheckBox(const QString& text, QWidget* parent = nullptr);
-                               
+    RadioButton(QWidget* parent = nullptr);
+    RadioButton(const QString & text, QWidget* parent = nullptr);
+
     void setUserInputEnabled(bool on) { isUserInputEnabled_ = on; }
     bool isUserInputEnabled() const { return isUserInputEnabled_; }
 
-    SignalProxy<void(int)> sigStateChanged();
-    SignalProxy<void(bool)> sigToggled();
+    SignalProxy<void(bool checked)> sigToggled();
 
 protected:
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
 
 private:
-    stdx::optional<Signal<void(int)>> sigStateChanged_;
     stdx::optional<Signal<void(bool)>> sigToggled_;
     bool isUserInputEnabled_;
 };

@@ -2,6 +2,7 @@
 
 using namespace cnoid;
 
+
 SpinBox::SpinBox(QWidget* parent)
     : QSpinBox(parent)
 {

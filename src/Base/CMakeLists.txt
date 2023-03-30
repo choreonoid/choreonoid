@@ -71,7 +71,11 @@ set(sources
   Slider.cpp
   Dial.cpp
   Splitter.cpp
-  Buttons.cpp
+  PushButton.cpp
+  ToggleButton.cpp
+  RadioButton.cpp
+  ToolButton.cpp
+  ToggleToolButton.cpp
   ButtonGroup.cpp
   CheckBox.cpp
   LineEdit.cpp
@@ -182,6 +186,11 @@ set(headers
   Dial.h
   Splitter.h
   Separator.h
+  PushButton.h
+  ToggleButton.h
+  RadioButton.h
+  ToolButton.h
+  ToggleToolButton.h
   Buttons.h
   ButtonGroup.h
   CheckBox.h
@@ -316,14 +325,8 @@ set(qtheaders
   Widget.h
   FloatingNumberBox.h
   ScrollBar.h
-  Dial.h
   Splitter.h
-  Buttons.h
-  ButtonGroup.h
-  CheckBox.h
-  ComboBox.h
   TreeView.h
-  TreeWidget.h
   ItemSelectionModel.h
   Timer.h
   SocketNotifier.h

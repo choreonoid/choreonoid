@@ -6,7 +6,7 @@
 #include "ExtensionManager.h"
 #include "LazyCaller.h"
 #include <cnoid/ConnectionSet>
-#include <vector>
+#include <memory>
 #include <unordered_map>
 #include <map>
 #include <set>
