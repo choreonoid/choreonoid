@@ -52,8 +52,6 @@ public:
     double quantizedTime(double time) const;
     bool setTime(double time, bool doAutoExpansion = false, bool calledFromPlaybackLoop = false, QWidget* callerWidget = nullptr);
     bool setTimeBarTime(double time, bool doAutoExpansion = false, bool calledFromPlaybackLoop = false, QWidget* callerWidget = nullptr);
-    void onTimeSpinChanged(double value);
-    bool onTimeSliderValueChanged(int value);
     bool setTimeRange(double minTime, double maxTime, bool doUpdateTimeSpinSlider);
     void onMinTimeSpinValueChanged(double minTime);
     void onMaxTimeSpinValueChanged(double maxTime);
@@ -206,11 +204,11 @@ TimeBar::Impl::Impl(TimeBar* self)
 
     auto playButton = self->addButton(QIcon(":/Base/icon/play.svg"), PlayButton);
     playButton->setToolTip(_("Start playback"));
-    playButton->sigClicked().connect([&](){ onPlayActivated(); });
+    playButton->sigClicked().connect([this](){ onPlayActivated(); });
 
     resumeButton = self->addButton(resumeIcon, ResumeButton);
     resumeButton->setToolTip(_("Resume playback"));
-    resumeButton->sigClicked().connect([&](){ onResumeActivated(); });
+    resumeButton->sigClicked().connect([this](){ onResumeActivated(); });
 
     auto refreshButton = self->addButton(QIcon(":/Base/icon/refresh.svg"), RefreshButton);
     refreshButton->setToolTip(_("Refresh state at the current time"));
@@ -218,18 +216,20 @@ TimeBar::Impl::Impl(TimeBar* self)
     
     timeSpin = new DoubleSpinBox;
     timeSpin->setAlignment(Qt::AlignCenter);
-    timeSpin->sigValueChanged().connect([&](double value){ onTimeSpinChanged(value); });
+    timeSpin->sigValueChanged().connect(
+        [this](double time){ setTime(time, false, false, timeSpin); });
     self->addWidget(timeSpin, TimeSpin);
 
     timeSlider = new Slider(Qt::Horizontal);
-    timeSlider->sigValueChanged().connect([&](int value){ onTimeSliderValueChanged(value); });
+    timeSlider->sigValueChanged().connect(
+        [this](int value){ setTime(value / pow(10.0, decimals), false, false, timeSlider); });
     timeSlider->setMinimumWidth(timeSlider->sizeHint().width());
     self->addWidget(timeSlider, TimeSlider);
 
     minTimeSpin = new DoubleSpinBox;
     minTimeSpin->setAlignment(Qt::AlignCenter);
     minTimeSpin->setRange(isNegativeTimeEnabled ? -9999.0 : 0.0, 9999.0);
-    minTimeSpin->sigValueChanged().connect([&](double time){ onMinTimeSpinValueChanged(time); });
+    minTimeSpin->sigValueChanged().connect([this](double time){ onMinTimeSpinValueChanged(time); });
     self->addWidget(minTimeSpin, TimeRangeMinSpin);
 
     timeRangeDelimiterLabel = self->addLabel(" : ");
@@ -237,12 +237,12 @@ TimeBar::Impl::Impl(TimeBar* self)
     maxTimeSpin = new DoubleSpinBox;
     maxTimeSpin->setAlignment(Qt::AlignCenter);
     maxTimeSpin->setRange(isNegativeTimeEnabled ? -9999.0 : 0.0, 9999.0);
-    maxTimeSpin->sigValueChanged().connect([&](double time){ onMaxTimeSpinValueChanged(time); });
+    maxTimeSpin->sigValueChanged().connect([this](double time){ onMaxTimeSpinValueChanged(time); });
     self->addWidget(maxTimeSpin, TimeRangeMaxSpin);
 
     auto configButton = self->addButton(QIcon(":/Base/icon/setup.svg"));
     configButton->setToolTip(_("Show the config dialog"));
-    configButton->sigClicked().connect([&](){ configDialog->show(); });
+    configButton->sigClicked().connect([this](){ configDialog->show(); });
 
     setTimeRange(0.0, 30.0, true);
 }
@@ -383,31 +383,6 @@ SignalProxy<void(double time, bool isStoppedManually)> TimeBar::sigPlaybackStopp
 SignalProxy<double(double time, bool isStoppedManually)> TimeBar::sigPlaybackStoppedEx()
 {
     return impl->sigPlaybackStoppedEx;
-}
-
-
-void TimeBar::Impl::onTimeSpinChanged(double value)
-{
-    if(TRACE_FUNCTIONS){
-        cout << "TimeBar::Impl::onTimeSpinChanged()" << endl;
-    }
-    if(isDoingPlayback){
-        stopPlayback(true);
-    }
-    setTime(value, false, false, timeSpin);
-}
-
-
-bool TimeBar::Impl::onTimeSliderValueChanged(int value)
-{
-    if(TRACE_FUNCTIONS){
-        cout << "TimeBar::Impl::onTimeSliderChanged(): value = " << value << endl;
-    }
-    if(isDoingPlayback){
-        stopPlayback(true);
-    }
-    setTime(value / pow(10.0, decimals), false, false, timeSlider);
-    return true;
 }
 
 
@@ -712,6 +687,8 @@ void TimeBar::Impl::startPlayback(double time)
 
         } else {
             isDoingPlayback = true;
+            timeSpin->setUserInputEnabled(false);
+            timeSlider->setUserInputEnabled(false);
 
             const static QString tip(_("Stop animation"));
             resumeButton->setIcon(stopIcon);
@@ -745,6 +722,8 @@ double TimeBar::Impl::stopPlayback(bool isStoppedManually)
     } else {
         killTimer(timerId);
         isDoingPlayback = false;
+        timeSpin->setUserInputEnabled(true);
+        timeSlider->setUserInputEnabled(true);
 
         if(hasOngoingTime && ongoingTime > self->time_ && isOngoingTimeSyncEnabled){
             setTime(ongoingTime);
