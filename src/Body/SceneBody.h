@@ -30,8 +30,8 @@ public:
     const SgNode* collisionShape() const;
     SgNode* collisionShape();
 
-    void insertEffectGroup(SgGroup* effect, SgUpdateRef update = SgUpdateRef());
-    void removeEffectGroup(SgGroup* effect, SgUpdateRef update = SgUpdateRef());
+    void insertEffectGroup(SgGroup* effect, SgUpdateRef update = nullptr);
+    void removeEffectGroup(SgGroup* effect, SgUpdateRef update = nullptr);
     
     virtual void setVisible(bool on);
     bool isVisible() const;
@@ -40,7 +40,7 @@ public:
     SceneDevice* getSceneDevice(Device* device);
 
     float transparency() const;
-    void setTransparency(float transparency, SgUpdateRef update = SgUpdateRef());
+    void setTransparency(float transparency, SgUpdateRef update = nullptr);
     //! \deprecated. Use setTransparency.
     void makeTransparent(float transparency);
     
@@ -84,8 +84,8 @@ public:
 
     void setTransparency(float transparency);
 
-    void insertEffectGroup(SgGroup* effect, SgUpdateRef update = SgUpdateRef());
-    void removeEffectGroup(SgGroup* effect, SgUpdateRef update = SgUpdateRef());
+    void insertEffectGroup(SgGroup* effect, SgUpdateRef update = nullptr);
+    void removeEffectGroup(SgGroup* effect, SgUpdateRef update = nullptr);
 
     virtual void updateSceneModel();
     void updateSceneDeviceModels(bool doNotify);
