@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "SceneEffects.h"
 #include "SceneDrawables.h"
 #include "SceneNodeClassRegistry.h"
@@ -125,7 +120,14 @@ Referenced* SgFog::doClone(CloneMap*) const
 SgHighlight::SgHighlight(int classId)
     : SgGroup(classId)
 {
-    setAttribute(Marker);
+    /**
+       The Marker attribute should be set to this node, but the current implementation requires
+       the nodes to highlight to be child nodes of this node. Since the nodes with the Marker
+       attribute are excluded from the bounding box calculation, the bounding box for the target
+       nodes cannot be obtained if the nodes are contained in this node. To avoid this problem,
+       the Marker attribute is currently not set to this node.
+    */
+    //setAttribute(Marker);
 }
 
 

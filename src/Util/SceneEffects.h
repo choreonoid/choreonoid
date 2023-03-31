@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_SCENE_EFFECTS_H
 #define CNOID_UTIL_SCENE_EFFECTS_H
 
