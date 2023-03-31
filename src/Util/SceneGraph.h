@@ -94,6 +94,12 @@ public:
         notifyUpperNodesOfUpdate(update);
     }
 
+    void notifyUpdate(SgUpdateRef update){
+        if(update){
+            notifyUpdate(*update);
+        }
+    }
+
     void addParent(SgObject* parent, SgUpdateRef update = nullptr);
     void removeParent(SgObject* parent);
     int numParents() const { return static_cast<int>(parents.size()); }
