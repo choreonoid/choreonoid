@@ -59,6 +59,12 @@ void LocationProxy::setLocked(bool on)
 }
 
 
+bool LocationProxy::isDoingContinuousUpdate() const
+{
+    return false;
+}
+
+
 bool LocationProxy::setLocation(const Isometry3& /* T */)
 {
     return false;
