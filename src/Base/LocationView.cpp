@@ -131,7 +131,7 @@ public:
     void setupInterfaceForNewLocations();
     bool checkDependencyOnAnotherLocation(LocationCategory* category, LocationProxyPtr parentLocation);
     void setCurrentLocationCategory(int categoryIndex);
-    void setEditorLocked(bool on);
+    void setEditorLocked(bool locked, bool blocked);
     void clearBaseCoordinateSystems();
     void updateBaseCoordinateSystems();
     void setIndividualRotationMode(bool on);
@@ -498,7 +498,7 @@ void LocationView::Impl::setupInterfaceForNewLocations()
         singleCategoryLabel.show();
         categoryCombo.hide();
         individualRotationCheck.setEnabled(false);
-        setEditorLocked(false);
+        setEditorLocked(false, false);
         positionWidget->clearPosition();
         positionWidget->setEditable(false);
         clearBaseCoordinateSystems();
@@ -608,22 +608,29 @@ void LocationView::Impl::setCurrentLocationCategory(int categoryIndex)
             }
         }
     }
+    bool blocked = locked;
+    if(!blocked){
+        for(auto& info : locationInfos){
+            if(info->location->isDoingContinuousUpdate()){
+                blocked = true;
+                break;
+            }
+        }
+    }
     
-    setEditorLocked(locked);
+    setEditorLocked(locked, blocked);
 }
 
     
-void LocationView::Impl::setEditorLocked(bool on)
+void LocationView::Impl::setEditorLocked(bool locked, bool blocked)
 {
     lockCheck.blockSignals(true);
-    positionWidget->setEditable(!on);
-    lockCheck.setChecked(on);
+    positionWidget->setEditable(!(locked || blocked));
+    lockCheck.setChecked(locked);
     lockCheck.setEnabled(lockCheck.isChangable());
     lockCheck.blockSignals(false);
 }
 
-
-namespace {
 
 bool LockCheckBox::isChangable()
 {
@@ -664,8 +671,6 @@ void LockCheckBox::nextCheckState()
         }
         impl->setupInterfaceForNewLocations();
     }
-}
-
 }
 
 
