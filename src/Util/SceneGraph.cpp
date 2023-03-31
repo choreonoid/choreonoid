@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "SceneGraph.h"
 #include "SceneNodeClassRegistry.h"
 #include "CloneMap.h"
@@ -623,7 +618,11 @@ void SgGroup::moveChildrenTo(SgGroup* group, SgUpdateRef update)
 void SgGroup::insertChainedGroup(SgGroup* group, SgUpdateRef update)
 {
     moveChildrenTo(group);
-    addChild(group, update);
+    addChild(group);
+    if(update){
+        update->addAction(SgUpdate::Added);
+        group->notifyUpdate(*update);
+    }
 }
 
 
@@ -646,10 +645,10 @@ void SgGroup::removeChainedGroup(SgGroup* group, SgUpdateRef update)
             parent->removeChild(group);
             group->moveChildrenTo(parent);
             if(update){
+                update->addAction(SgUpdate::Removed);
                 update->clearPath();
                 update->pushNode(group);
-                notifyUpperNodesOfUpdate(
-                    update->withAction(SgUpdate::Removed), group->hasAttribute(Geometry));
+                notifyUpperNodesOfUpdate(*update);
             }
             break;
         }

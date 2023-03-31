@@ -729,7 +729,7 @@ void OperableSceneBody::Impl::enableHighlight(bool on)
             doUpdate = !highlight->hasParents();
         }
         if(doUpdate){
-            self->insertEffectGroup(highlight, update);
+            self->insertEffectGroup(highlight, update.withAction(SgUpdate::GeometryModified));
 
             // The following code cannot support the case where
             // the number of links is changed by model update.
@@ -743,7 +743,7 @@ void OperableSceneBody::Impl::enableHighlight(bool on)
         }
     } else {
         if(highlight && highlight->hasParents()){
-            self->removeEffectGroup(highlight, update);
+            self->removeEffectGroup(highlight, update.withAction(SgUpdate::GeometryModified));
 
             // The following code cannot support the case where
             // the number of links is changed by model update.
