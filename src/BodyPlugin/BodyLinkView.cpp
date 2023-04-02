@@ -156,7 +156,7 @@ BodyLinkView::Impl::Impl(BodyLinkView* self)
     setupWidgets();
 
     updateKinematicStateLater.setFunction([&](){ updateKinematicState(true); });
-    updateKinematicStateLater.setPriority(LazyCaller::PRIORITY_LOW);
+    updateKinematicStateLater.setPriority(LazyCaller::LowPriority);
 
     bodySelectionManagerConnection = 
         BodySelectionManager::instance()->sigCurrentChanged().connect(

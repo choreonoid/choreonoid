@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_LAZY_SIGNAL_H
 #define CNOID_BASE_LAZY_SIGNAL_H
 
@@ -35,9 +31,9 @@ private:
 template <class SignalType> class LazySignal : public LazySignalBase
 {
 public:
-    LazySignal(int priority = LazyCaller::PRIORITY_HIGH) : LazySignalBase(priority) { }
+    LazySignal(int priority = LazyCaller::HighPriority) : LazySignalBase(priority) { }
 
-    LazySignal(std::function<void()> emitFunction, int priority = LazyCaller::PRIORITY_HIGH)
+    LazySignal(std::function<void()> emitFunction, int priority = LazyCaller::HighPriority)
         : LazySignalBase(emitFunction, priority) {
     }
 

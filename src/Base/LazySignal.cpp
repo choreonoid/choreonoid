@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "LazySignal.h"
 
 using namespace cnoid;

@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "PluginManager.h"
 #include "Plugin.h"
 #include "MainMenu.h"
@@ -173,8 +169,8 @@ PluginManager::PluginManager()
 
 
 PluginManager::Impl::Impl()
-    : unloadPluginsLater([&](){ unloadPluginsActually(); }, LazyCaller::PRIORITY_LOW),
-      reloadPluginsLater([&](){ loadScannedPluginFiles(true); }, LazyCaller::PRIORITY_LOW)
+    : unloadPluginsLater([&](){ unloadPluginsActually(); }, LazyCaller::LowPriority),
+      reloadPluginsLater([&](){ loadScannedPluginFiles(true); }, LazyCaller::LowPriority)
 {
     mout = MessageOut::master();
     mainMenu = nullptr;

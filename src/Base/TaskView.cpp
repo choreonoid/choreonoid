@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "TaskView.h"
 #include "ViewManager.h"
 #include "MenuManager.h"
@@ -247,7 +242,7 @@ TaskViewImpl::TaskViewImpl(TaskView* self)
     isNoExecutionMode = false;
     isActive = false;
 
-    goToNextCommandLater.setPriority(LazyCaller::PRIORITY_NORMAL);
+    goToNextCommandLater.setPriority(LazyCaller::NormalPriority);
     
     commandTimer.setSingleShot(true);
     commandTimer.sigTimeout().connect([&](){ cancelWaiting(true); });

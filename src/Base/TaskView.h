@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_TASK_VIEW_H
 #define CNOID_BASE_TASK_VIEW_H
 

@@ -1,13 +1,10 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "LazyCaller.h"
 #include <QObject>
 #include <QEvent>
 #include <QCoreApplication>
 #include <QThread>
 #include <QSemaphore>
+#include <mutex>
 #include <memory>
 
 using namespace std;
@@ -45,68 +42,74 @@ public:
     }
 };
 typedef std::shared_ptr<SyncInfo> SyncInfoPtr;
-    
 
 class CallEvent : public QEvent
 {
 public:
-    CallEvent(const std::function<void(void)>& function)
+    CallEvent()
+        : QEvent(QEvent::User)
+    { }
+    CallEvent(const std::function<void()>& func)
         : QEvent(QEvent::User),
-          function(function) {
-    }
-    CallEvent(const std::function<void(void)>& function, SyncInfoPtr& syncInfo)
+          func(func)
+    { }
+    CallEvent(const std::function<void(void)>& func, SyncInfoPtr& syncInfo)
         : QEvent(QEvent::User),
-          function(function),
-          syncInfo(syncInfo) {
-    }
+          func(func),
+          syncInfo(syncInfo)
+    { }
     CallEvent(const CallEvent& org)
         : QEvent(QEvent::User),
-          function(org.function),
-          syncInfo(org.syncInfo) {
-    }
+          func(org.func),
+          syncInfo(org.syncInfo)
+    { }
     ~CallEvent() {
         if(syncInfo){
             syncInfo->semaphore.release(); // wake up the caller process
         }
     }
-    std::function<void(void)> function;
+    std::function<void(void)> func;
     SyncInfoPtr syncInfo;
 };
     
-
 class CallEventHandler : public QObject
 {
 public:
     CallEventHandler() {
         mainThreadId = QThread::currentThreadId();
     }
-    virtual bool event(QEvent* e);
+    virtual bool event(QEvent* e) override;
     Qt::HANDLE mainThreadId;
 };
     
 CallEventHandler callEventHandler;
+
 }
 
 namespace cnoid {
 
-class LazyCallerImpl : public QObject
+class LazyCaller::Impl : public QObject
 {
 public:
     LazyCaller* self;
-    std::function<void(void)> function;
+    std::function<void()> func;
     int priority;
-    bool isConservative;
-    LazyCallerImpl(LazyCaller* self);
-    LazyCallerImpl(LazyCaller* self, const std::function<void(void)>& function, int priority);
-    virtual bool event(QEvent* e);
+    
+    Impl(LazyCaller* self);
+    Impl(LazyCaller* self, const std::function<void(void)>& func, int priority);
+    virtual bool event(QEvent* e) override;
 };
 
-class QueuedCallerImpl : public QObject
+class LazyOverwriteCaller::Impl : public QObject
 {
 public:
-    QueuedCaller* self;
-    ~QueuedCallerImpl();
-    virtual bool event(QEvent* e);
+    LazyOverwriteCaller* self;
+    std::function<void()> func;
+    std::mutex funcMutex;
+    int priority;
+    
+    Impl(LazyOverwriteCaller* self);
+    virtual bool event(QEvent* e) override;
 };
 
 }
@@ -118,34 +121,33 @@ bool cnoid::isRunningInMainThread()
 }
 
 
-void cnoid::callLater(const std::function<void(void)>& function, int priority)
+void cnoid::callLater(const std::function<void()>& func, int priority)
 {
-    CallEvent* event = new CallEvent(function);
+    auto event = new CallEvent(func);
     QCoreApplication::postEvent(&callEventHandler, event, toQtPriority(priority));
 }
 
 
-void cnoid::callFromMainThread(const std::function<void(void)>& function, int priority)
+void cnoid::callFromMainThread(const std::function<void()>& func, int priority)
 {
     if(QThread::currentThreadId() == callEventHandler.mainThreadId){
-        function();
+        func();
     } else {
-        CallEvent* event = new CallEvent(function);
+        auto event = new CallEvent(func);
         QCoreApplication::postEvent(&callEventHandler, event, toQtPriority(priority));
     }
 }
 
 
-bool cnoid::callSynchronously(const std::function<void(void)>& function, int priority)
+bool cnoid::callSynchronously(const std::function<void()>& func, int priority)
 {
     if(QThread::currentThreadId() == callEventHandler.mainThreadId){
-        function();
-        //callLater(function, priority);
+        func();
         return true;
     } else {
-        SyncInfoPtr syncInfo = std::make_shared<SyncInfo>();
+        auto syncInfo = std::make_shared<SyncInfo>();
         QCoreApplication::postEvent(
-            &callEventHandler, new CallEvent(function, syncInfo), toQtPriority(priority));
+            &callEventHandler, new CallEvent(func, syncInfo), toQtPriority(priority));
         syncInfo->semaphore.acquire(); // wait for finish
         return syncInfo->completed;
     }
@@ -154,9 +156,8 @@ bool cnoid::callSynchronously(const std::function<void(void)>& function, int pri
 
 bool CallEventHandler::event(QEvent* e)
 {
-    CallEvent* callEvent = dynamic_cast<CallEvent*>(e);
-    if(callEvent){
-        callEvent->function();
+    if(auto callEvent = dynamic_cast<CallEvent*>(e)){
+        callEvent->func();
         if(callEvent->syncInfo){
             callEvent->syncInfo->completed = true;
         }
@@ -167,41 +168,39 @@ bool CallEventHandler::event(QEvent* e)
 
 
 LazyCaller::LazyCaller()
+    : postedEventCounter(0)
 {
-    isPending_ = false;
-    impl = new LazyCallerImpl(this);
+    impl = new Impl(this);
 }
 
 
-LazyCallerImpl::LazyCallerImpl(LazyCaller* self)
-    : self(self)
+LazyCaller::Impl::Impl(LazyCaller* self)
+    : Impl(self, nullptr, HighPriority)
 {
-    priority = LazyCaller::PRIORITY_HIGH;
-    isConservative = false;
+
 }
     
 
-LazyCaller::LazyCaller(const std::function<void(void)>& function, int priority)
+LazyCaller::LazyCaller(const std::function<void()>& func, int priority)
+    : postedEventCounter(0)    
 {
-    isPending_ = false;
-    impl = new LazyCallerImpl(this, function, priority);
+    impl = new Impl(this, func, priority);
 }
 
 
-LazyCallerImpl::LazyCallerImpl(LazyCaller* self, const std::function<void(void)>& function, int priority)
+LazyCaller::Impl::Impl(LazyCaller* self, const std::function<void()>& func, int priority)
     : self(self),
-      function(function),
+      func(func),
       priority(priority)
 {
-    isConservative = false;
+
 }
 
 
 LazyCaller::LazyCaller(const LazyCaller& org)
+    : postedEventCounter(0)    
 {
-    isPending_ = false;
-    impl = new LazyCallerImpl(this, org.impl->function, org.impl->priority);
-    impl->isConservative = org.impl->isConservative;
+    impl = new Impl(this, org.impl->func, org.impl->priority);
 }
 
 
@@ -212,15 +211,15 @@ LazyCaller::~LazyCaller()
 }
 
 
-void LazyCaller::setFunction(const std::function<void(void)>& function)
+void LazyCaller::setFunction(const std::function<void()>& func)
 {
-    impl->function = function;
+    impl->func = func;
 }
 
 
 bool LazyCaller::hasFunction() const
 {
-    return impl->function != nullptr;
+    return impl->func != nullptr;
 }
 
 
@@ -230,93 +229,110 @@ void LazyCaller::setPriority(int priority)
 }
 
 
-void LazyCaller::setConservative(bool on)
-{
-    impl->isConservative = on;
-}
-
-
-void LazyCaller::cancel()
-{
-    if(isPending_){
-        QCoreApplication::removePostedEvents(impl);
-        isPending_ = false;
-    }
-}
-
-
-void LazyCaller::flush()
-{
-    if(isPending_){
-        QCoreApplication::removePostedEvents(impl);
-        isPending_ = false;
-    }
-    impl->function();
-}
-
-
 void LazyCaller::postCallEvent()
 {
-    CallEvent* event = new CallEvent(impl->function);
-    QCoreApplication::postEvent(impl, event, toQtPriority(impl->priority));
+    QCoreApplication::postEvent(impl, new CallEvent(impl->func), toQtPriority(impl->priority));
 }
 
 
-bool LazyCallerImpl::event(QEvent* e)
+bool LazyCaller::Impl::event(QEvent* e)
 {
-    CallEvent* callEvent = dynamic_cast<CallEvent*>(e);
-    if(callEvent){
-        if(isConservative){
-            callEvent->function();
-            self->isPending_ = false;
-        } else {
-            self->isPending_ = false;
-            callEvent->function();
-        }
+    if(auto callEvent = dynamic_cast<CallEvent*>(e)){
+        --self->postedEventCounter;
+        callEvent->func();
         return true;
     }
     return false;
 }
 
 
-QueuedCaller::QueuedCaller()
+void LazyCaller::cancel()
 {
-    impl = new QueuedCallerImpl();
+    QCoreApplication::removePostedEvents(impl);
+    postedEventCounter.store(0);
 }
 
 
-QueuedCaller::~QueuedCaller()
+void LazyCaller::flush()
+{
+    cancel();
+
+    if(impl->func){
+        impl->func();
+    }
+}
+
+
+LazyOverwriteCaller::LazyOverwriteCaller()
+    : postedEventCounter(0)    
+{
+    impl = new Impl(this);
+}
+
+
+LazyOverwriteCaller::Impl::Impl(LazyOverwriteCaller* self)
+    : self(self)
+{
+    priority = HighPriority;
+}
+
+
+LazyOverwriteCaller::~LazyOverwriteCaller()
 {
     cancel();
     delete impl;
 }
 
 
-QueuedCallerImpl::~QueuedCallerImpl()
+void LazyOverwriteCaller::setPriority(int priority)
 {
-    
+    impl->priority = priority;
 }
 
 
-void QueuedCaller::callLater(const std::function<void()>& function, int priority)
+void LazyOverwriteCaller::callLater(const std::function<void()>& func)
 {
-    CallEvent* event = new CallEvent(function);
-    QCoreApplication::postEvent(impl, event, toQtPriority(priority));
+    bool doCall = false;
+    {
+        lock_guard<mutex> guard(impl->funcMutex);
+        impl->func = func;
+        doCall = !isPending();
+    }
+    if(doCall){
+        ++postedEventCounter;
+        QCoreApplication::postEvent(impl, new CallEvent, toQtPriority(impl->priority));
+    }
 }
 
 
-bool QueuedCallerImpl::event(QEvent* e)
+bool LazyOverwriteCaller::Impl::event(QEvent* e)
 {
-    CallEvent* callEvent = dynamic_cast<CallEvent*>(e);
-    if(callEvent){
-        callEvent->function();
+    if(auto callEvent = dynamic_cast<CallEvent*>(e)){
+        std::function<void()> duplicatedFunc;
+        {
+            --self->postedEventCounter;
+            lock_guard<mutex> guard(funcMutex);
+            duplicatedFunc = func;
+        }
+        duplicatedFunc();
         return true;
     }
     return false;
 }
 
 
-void QueuedCaller::cancel()
+void LazyOverwriteCaller::cancel()
 {
     QCoreApplication::removePostedEvents(impl);
+    postedEventCounter.store(0);
+}
+
+
+void LazyOverwriteCaller::flush()
+{
+    cancel();
+
+    if(impl->func){
+        impl->func();
+    }
 }

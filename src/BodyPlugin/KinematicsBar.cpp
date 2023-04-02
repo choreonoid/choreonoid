@@ -223,9 +223,9 @@ SignalProxy<void()> KinematicsBar::sigCollisionVisualizationChanged()
 void KinematicsBar::Impl::onLazyCollisionDetectionModeToggled()
 {
     if(setup->lazyCollisionDetectionModeCheck.isChecked()){
-        self->collisionDetectionPriority_ = LazyCaller::PRIORITY_NORMAL;
+        self->collisionDetectionPriority_ = LazyCaller::NormalPriority;
     } else {
-        self->collisionDetectionPriority_ = LazyCaller::PRIORITY_HIGH;
+        self->collisionDetectionPriority_ = LazyCaller::HighPriority;
     }
 }
 

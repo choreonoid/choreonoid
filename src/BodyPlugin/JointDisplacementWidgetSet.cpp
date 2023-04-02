@@ -211,7 +211,7 @@ JointDisplacementWidgetSet::Impl::Impl
     updateIndicatorGrid();
 
     updateJointDisplacementsLater.setFunction([&](){ updateJointDisplacements(nullptr); });
-    updateJointDisplacementsLater.setPriority(LazyCaller::PRIORITY_LOW);
+    updateJointDisplacementsLater.setPriority(LazyCaller::LowPriority);
 
     bodySelectionManager = BodySelectionManager::instance();
 }
