@@ -234,7 +234,7 @@ bool MprProgramItemBase::setAsStartupProgram(bool on, bool doNotify)
                 impl->isStartupProgram = true;
             }
         }
-        if(on == impl->isStartupProgram){
+        if(doNotify && (on == impl->isStartupProgram)){
             notifyUpdate();
         }
     }
