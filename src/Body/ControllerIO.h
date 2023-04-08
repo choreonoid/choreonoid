@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_CONTROLLER_IO_H
 #define CNOID_BODY_CONTROLLER_IO_H
 
@@ -39,6 +35,7 @@ public:
     // The following functions are only available in simulation
     virtual bool isNoDelayMode() const;
     virtual bool setNoDelayMode(bool on);
+    virtual bool isSimulationFromInitialState() const;
 
     //! \deprecated Use timeStep().
     double worldTimeStep() const { return timeStep(); };

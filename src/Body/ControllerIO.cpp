@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ControllerIO.h"
 #include <cnoid/Tokenizer>
 #include <cnoid/YAMLReader>
@@ -111,3 +107,8 @@ bool ControllerIO::setNoDelayMode(bool on)
     return false;
 }
 
+
+bool ControllerIO::isSimulationFromInitialState() const
+{
+    return false;
+}

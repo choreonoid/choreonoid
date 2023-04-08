@@ -120,6 +120,7 @@ public:
     ControllerLogItemPtr logItem;
     shared_ptr<ReferencedObjectSeq> log;
     bool isLogEnabled_;
+    bool isSimulationFromInitialState_;
 
     ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl);
     ~ControllerInfo();
@@ -138,6 +139,7 @@ public:
 
     virtual bool isNoDelayMode() const override;
     virtual bool setNoDelayMode(bool on) override;
+    virtual bool isSimulationFromInitialState() const override;
 
     bool waitForControlInThreadToFinish();
     void concurrentControlLoop();    
@@ -302,7 +304,7 @@ public:
     double finishTime;
     MessageView* mv;
 
-    bool doReset;
+    bool isSimulationFromInitialState;
     bool isWaitingForSimulationToStop;
     bool isForcedToStopSimulation;
     Signal<void()> sigSimulationAboutToBeStarted;
@@ -512,7 +514,8 @@ ControllerInfo::ControllerInfo(ControllerItem* controller, SimulationBody::Impl*
     : controller(controller),
       body_(simBodyImpl->body_),
       simImpl(simBodyImpl->simImpl),
-      isLogEnabled_(false)
+      isLogEnabled_(false),
+      isSimulationFromInitialState_(simImpl->isSimulationFromInitialState)
 {
     if(controller){
         // ControllerInfo cannot directly set a simulator item to the controller item
@@ -661,6 +664,12 @@ bool ControllerInfo::setNoDelayMode(bool on)
 }
 
 
+bool ControllerInfo::isSimulationFromInitialState() const
+{
+    return isSimulationFromInitialState_;
+}
+
+
 SimulationBody::SimulationBody(Body* body)
 {
     impl = new Impl(this, body);
@@ -729,7 +738,7 @@ bool SimulationBody::Impl::initialize(SimulatorItem* simulatorItem, BodyItem* bo
     body_->initializeState();
 
     isDynamic = !body_->isStaticModel();
-    bool doReset = simImpl->doReset && isDynamic;
+    bool doReset = simImpl->isSimulationFromInitialState && isDynamic;
     extractAssociatedItems(doReset);
     
     if(!isDynamic && body_->numDevices() == 0){
@@ -1250,6 +1259,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self)
     isDoingSimulationLoop = false;
     recordCollisionData = false;
     isSceneViewEditModeBlockedDuringSimulation = false;
+    isSimulationFromInitialState = false;
 
     timeBar = TimeBar::instance();
 }
@@ -1280,6 +1290,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self, const Impl& org)
     isDeviceStateOutputEnabled = org.isDeviceStateOutputEnabled;
     recordCollisionData = org.recordCollisionData;
     controllerOptionString_ = org.controllerOptionString_;
+    isSimulationFromInitialState = false;
 }
     
 
@@ -1685,8 +1696,8 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
     clearSimulation();
     getOrCreateLogEngine()->clearSubEngines();
 
-    this->doReset = doReset;
-    if(doReset){
+    isSimulationFromInitialState = doReset;
+    if(isSimulationFromInitialState){
         for(auto& targetItem : targetItems){
             if(auto bodyItem = dynamic_cast<BodyItem*>(targetItem.get())){
                 bodyItem->restoreInitialState(true);
