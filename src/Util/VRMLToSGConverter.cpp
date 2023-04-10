@@ -273,7 +273,7 @@ SgNode* VRMLToSGConverterImpl::convertGroupNode(AbstractVRMLGroup* vgroup)
         if(VRMLInline* vrmlInline = dynamic_cast<VRMLInline*>(vgroup)){
             auto& urls = vrmlInline->urls;
             if(!urls.empty()){
-                group->setUriByFilePathAndBaseDirectory(urls.front(), baseDirectory);
+                group->setUriWithFilePathAndBaseDirectory(urls.front(), baseDirectory);
             }
         }
     }

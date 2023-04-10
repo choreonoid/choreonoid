@@ -245,7 +245,7 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
     }
 
     if(scene){
-        scene->setUriByFilePathAndCurrentDirectory(filename);
+        scene->setUriWithFilePathAndCurrentDirectory(filename);
         if(!metadata.empty()){
             scene->setUriMetadataString(metadata);
         }
@@ -749,7 +749,7 @@ void ObjSceneLoader::Impl::readTexture(const std::string& mapType)
             SgTexturePtr texture = new SgTexture;
             auto image = texture->getOrCreateImage();
             if(imageIO.load(image->image(), filename, os())){
-                image->setUriByFilePathAndBaseDirectory(
+                image->setUriWithFilePathAndBaseDirectory(
                     token, directoryPath.generic_string());
                 currentMaterialDefInfo->texture = texture;
             }

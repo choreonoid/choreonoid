@@ -1310,7 +1310,7 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping* info, int meshOpti
         info->throwException(_("A resouce specified as a geometry does not have a mesh"));
     }
     if(isDirectResource){
-        mesh->setUriByFilePathAndBaseDirectory(
+        mesh->setUriWithFilePathAndBaseDirectory(
             resource.uri, getOrCreatePathVariableProcessor()->baseDirectory());
         if(!resource.fragment.empty()){
             resource.scene->setUriFragment(resource.fragment);
@@ -1407,7 +1407,7 @@ void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping* info)
                 } else {
                     image = new SgImage;
                     if(imageIO.load(image->image(), filename, os())){
-                        image->setUriByFilePathAndBaseDirectory(
+                        image->setUriWithFilePathAndBaseDirectory(
                             uri, getOrCreatePathVariableProcessor()->baseDirectory());
                         imagePathToSgImageMap[uri] = image;
                     } else {
@@ -1698,7 +1698,7 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info, b
     if(resource.scene){
         resource.scene = readTransformParameters(info, resource.scene);
         if(doSetUri){
-            resource.scene->setUriByFilePathAndBaseDirectory(
+            resource.scene->setUriWithFilePathAndBaseDirectory(
                 resource.uri, getOrCreatePathVariableProcessor()->baseDirectory());
             if(!resource.fragment.empty()){
                 resource.scene->setUriFragment(resource.fragment);

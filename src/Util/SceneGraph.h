@@ -118,13 +118,19 @@ public:
 
     bool hasUri() const { return uriInfo && !uriInfo->uri.empty(); }
     const std::string& uri() const;
+    std::string localFilePath() const;
     bool hasAbsoluteUri() const { return uriInfo && !uriInfo->absoluteUri.empty(); }
     const std::string& absoluteUri() const;
+    std::string localFileAbsolutePath() const;
     bool hasUriFragment() const { return uriInfo && !uriInfo->fragment.empty(); }
     const std::string& uriFragment() const;
     bool hasUriMetadataString() const { return uriInfo && !uriInfo->metadata.empty(); }
     const std::string& uriMetadataString() const;
+    void setUriWithFilePathAndBaseDirectory(const std::string& filePath, const std::string& baseDirectory);
+    [[deprecated("Use setUriWithFilePathAndBaseDirectory.")]]
     void setUriByFilePathAndBaseDirectory(const std::string& filePath, const std::string& baseDirectory);
+    void setUriWithFilePathAndCurrentDirectory(const std::string& filePath);
+    [[deprecated("Use setUriWithFilePathAndCurrentDirectory")]]
     void setUriByFilePathAndCurrentDirectory(const std::string& filePath);
     void setUri(const std::string& uri, const std::string& absoluteUri);
     void setUriFragment(const std::string& fragment);
