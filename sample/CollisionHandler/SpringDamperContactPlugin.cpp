@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include <cnoid/Plugin>
 #include <cnoid/ItemManager>
 #include <cnoid/SubSimulatorItem>
@@ -28,7 +23,7 @@ protected:
     virtual Item* doDuplicate() const;
 
 private:
-    bool calcContactForce(Link* link1, Link* link2, const CollisionArray& collisions, ContactMaterial* cm);
+    bool calcContactForce(Link* link1, Link* link2, const std::vector<Collision>& collisions, ContactMaterial* cm);
 
     weak_ref_ptr<AISTSimulatorItem> weakCurrentSimulator;
 };
@@ -85,9 +80,9 @@ void SpringDamperContactItem::onPositionChanged()
         if(simulator){
             simulator->registerCollisionHandler(
                 "SpringDamperContact",
-                [&](Link* link1, Link* link2, const CollisionArray& collisions, ContactMaterial* cm){
+                [&](Link* link1, Link* link2, const std::vector<Collision>& collisions, ContactMaterial* cm){
                     return calcContactForce(link1, link2, collisions, cm); });
-            
+
             weakCurrentSimulator = simulator;
         }
     }
@@ -101,7 +96,7 @@ bool SpringDamperContactItem::initializeSimulation(SimulatorItem* simulatorItem)
 
 
 bool SpringDamperContactItem::calcContactForce
-(Link* link1, Link* link2, const CollisionArray& collisions, ContactMaterial* cm)
+(Link* link1, Link* link2, const std::vector<Collision>& collisions, ContactMaterial* cm)
 {
     const bool doApplyToLink1 = !link1->isRoot() || !link1->isFixedJoint();
     const bool doApplyToLink2 = !link2->isRoot() || !link2->isFixedJoint();
@@ -126,7 +121,7 @@ bool SpringDamperContactItem::calcContactForce
         }
         const Vector3 ft = -mu * kn * tangent;
         const Vector3 f = fn + ft;
-        
+
         if(doApplyToLink1){
             link1->f_ext() += -f;
             link1->tau_ext() += c.point.cross(-f);
