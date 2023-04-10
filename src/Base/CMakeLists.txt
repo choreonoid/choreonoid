@@ -7,6 +7,7 @@ set(sources
   Menu.cpp
   MainMenu.cpp
   ProjectManager.cpp
+  ProjectPacker.cpp
   PathVariableEditor.cpp
   PluginManager.cpp
   MainWindow.cpp
@@ -208,6 +209,7 @@ set(headers
   ExtensionManager.h
   OptionManager.h
   ProjectManager.h
+  ProjectPacker.h
   PluginManager.h
   Plugin.h
   MessageView.h
@@ -327,7 +329,7 @@ make_gettext_mofiles(${target} mofiles)
 
 set(libraries
   PUBLIC CnoidUtil ${CHOREONOID_QT_LIBRARIES}
-  PRIVATE CnoidGLSceneRenderer)
+  PRIVATE CnoidGLSceneRenderer ${libzip_LIBRARIES})
 
 if(UNIX)
   set(libraries ${libraries} PUBLIC ${Boost_PROGRAM_OPTIONS_LIBRARY} PRIVATE X11 Xfixes)
