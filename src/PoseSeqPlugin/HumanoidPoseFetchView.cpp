@@ -89,9 +89,9 @@ protected:
     }
 };
 
-ulong getPoseId(const BodyKeyPose* pose)
+string getPoseId(const PoseSeq::iterator it, const BodyKeyPose* pose)
 {
-    return reinterpret_cast<ulong>(pose) & 0xffffffff;
+    return format("{0:0X}@{1:.2f}", reinterpret_cast<ulong>(pose) & 0xffffffff, it->time());
 }
 
 }
@@ -245,7 +245,7 @@ public:
     void adjustRotation(Isometry3& T, int axis, double sign);
     void adjustPosition(Isometry3& T, int axis, double sign);
     void adjustIkLinkPosition(
-        Link* link, int axis, double sign,
+        Link* link, int axis, double sign, bool doClearTouching,
         std::function<bool(BodyKeyPose* pose, const Isometry3& T_link)> fetchJointDisplacements);
     void adjustWaistPosition(int axis, double sign);
     void onWaistHeightOffsetCheckToggled(bool on);
@@ -1159,11 +1159,13 @@ void HumanoidPoseFetchView::Impl::setTargetKeyPoses(const std::vector<PoseSeq::i
     targetPoseIters.clear();
 
     BodyKeyPose* firstKeyPose = nullptr;
+    PoseSeq::iterator firstIter;
     for(auto& it : poseIters){
         if(auto bkPose = it->get<BodyKeyPose>()){
             targetPoseIters.push_back(it);
             if(!firstKeyPose){
                 firstKeyPose = bkPose;
+                firstIter = it;
             }
             currentPoseIter = it;
         }
@@ -1172,11 +1174,11 @@ void HumanoidPoseFetchView::Impl::setTargetKeyPoses(const std::vector<PoseSeq::i
     if(targetPoseIters.empty()){
         targetPoseLabel.setText(_("New pose"));
     } else {
-        ulong id = getPoseId(firstKeyPose);
+        string id = getPoseId(firstIter, firstKeyPose);
         if(targetPoseIters.size() == 1){
-            targetPoseLabel.setText(format("{0:0X}", id).c_str());
+            targetPoseLabel.setText(format("{0}", id).c_str());
         } else {
-            targetPoseLabel.setText(format(_("{0:0X} ..."), id).c_str());
+            targetPoseLabel.setText(format(_("{0} ..."), id).c_str());
         }
     }
 
@@ -1597,7 +1599,7 @@ void HumanoidPoseFetchView::Impl::adjustPosition(Isometry3& T, int axis, double 
 
 
 void HumanoidPoseFetchView::Impl::adjustIkLinkPosition
-(Link* link, int axis, double sign,
+(Link* link, int axis, double sign, bool doClearTouching,
  std::function<bool(BodyKeyPose* pose, const Isometry3& T_link)> fetchJointDisplacements)
 {
     if(!poseSeqItem || !checkBodyValidity() || targetPoseIters.empty()){
@@ -1626,8 +1628,8 @@ void HumanoidPoseFetchView::Impl::adjustIkLinkPosition
 
                 if(!fetchJointDisplacements(pose, T_link)){
                     showErrorDialog(
-                        format(_("The {0} position of key pose {1:0X} cannot be adjusted due to the inverse kinematics error."),
-                               link->name(), getPoseId(pose)));
+                        format(_("The {0} position of key pose {1} cannot be adjusted due to the inverse kinematics error."),
+                               link->name(), getPoseId(it, pose)));
                     linkAdjustmentBufs.clear();
                     failed = true;
                     break;
@@ -1647,7 +1649,9 @@ void HumanoidPoseFetchView::Impl::adjustIkLinkPosition
         for(auto& buf : linkAdjustmentBufs){
             poseSeq->beginPoseModification(buf.it);
             buf.linkInfo->setPosition(buf.T_link);
-            buf.linkInfo->clearTouching();
+            if(doClearTouching){
+                buf.linkInfo->clearTouching();
+            }
             poseSeq->endPoseModification(buf.it);
             currentPoseIter = buf.it;
         }
@@ -1663,7 +1667,7 @@ void HumanoidPoseFetchView::Impl::adjustIkLinkPosition
 void HumanoidPoseFetchView::Impl::adjustWaistPosition(int axis, double sign)
 {
     adjustIkLinkPosition(
-        waistLink, axis, sign,
+        waistLink, axis, sign, false,
         [this](BodyKeyPose* pose, const Isometry3& T_link){
             for(int i=0; i < 2; ++i){
                 auto footLink = waistToFootJointPaths[i]->endLink();
@@ -1746,8 +1750,8 @@ void HumanoidPoseFetchView::Impl::adjustJointAngle(Link* joint, double sign)
                 double q = pose->jointDisplacement(jointId) + dq;
                 if(q > joint->q_upper() || q < joint->q_lower()){
                     showErrorDialog(
-                        format(_("The joint angle of {0} in key pose {1:0X} cannot be adjusted due to the joint limit over."),
-                               joint->jointName(), getPoseId(pose)));
+                        format(_("The joint angle of {0} in key pose {1} cannot be adjusted due to the joint limit over."),
+                               joint->jointName(), getPoseId(it, pose)));
                     jointAdjustmentBufs.clear();
                     failed = true;
                     break;
@@ -1838,8 +1842,8 @@ void HumanoidPoseFetchView::Impl::adjustHandPosition(int which, int axis, double
             if(hasCorrespondingJoints){
                 if(!interpolator->interpolate(it->time())){
                     message = format(
-                        _("A hand position of key pose {0:0X} cannot be adjusted due to the interpolation error."),
-                        getPoseId(pose));
+                        _("A hand position of key pose {0} cannot be adjusted due to the interpolation error."),
+                        getPoseId(it, pose));
                     failed = true;
                 } else {
                     Isometry3 T;
@@ -1859,8 +1863,8 @@ void HumanoidPoseFetchView::Impl::adjustHandPosition(int which, int axis, double
                     
                     if(!path->calcInverseKinematics(T)){
                         message = format(
-                            _("A hand position of key pose {0:0X} cannot be adjusted due to the inverse kinematics error."),
-                            getPoseId(pose));
+                            _("A hand position of key pose {0} cannot be adjusted due to the inverse kinematics error."),
+                            getPoseId(it, pose));
                         failed = true;
                     } else {
                         ArmAdjustmentBuf buf;
@@ -1908,9 +1912,20 @@ void HumanoidPoseFetchView::Impl::adjustHandPosition(int which, int axis, double
 
 void HumanoidPoseFetchView::Impl::adjustFootPosition(int which, int axis, double sign)
 {
+    bool doClearTouching = false;
+    if(isRotationAdjustmentMode){
+        if(axis == 0 || axis == 1){
+            doClearTouching = true;
+        }
+    } else {
+        if(axis == 2){
+            doClearTouching = true;
+        }
+    }
+    
     auto footLink = waistToFootJointPaths[which]->endLink();
     adjustIkLinkPosition(
-        footLink, axis, sign,
+        footLink, axis, sign, doClearTouching,
         [this, which](BodyKeyPose* pose, const Isometry3& T_link){
             if(auto waistInfo = pose->ikLinkInfo(waistLink->index())){
                 return fetchLegJointDisplacements(which, true, waistInfo->T(), T_link, nullptr);
