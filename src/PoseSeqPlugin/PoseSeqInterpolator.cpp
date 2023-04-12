@@ -27,7 +27,7 @@ const double epsilon = 1.0e-6;
 
 enum SegmentType { UNDETERMINED, INVALID, CUBIC_SPLINE, CUBIC_CONNECTION, MIN_JERK_CONNECTION, LINEAR, ZERO_LENGTH };
 
-// coefficients for interpolatin
+// coefficients for interpolation
 struct Coeff
 {
     double y;    // sample value
@@ -560,10 +560,15 @@ void usePredeterminedVelocities(typename SampleType::Seq& samples)
             double dt1 = next->x - s->x;
 
             for(int i=3; i < dim; ++i){ // for rotation over 180[deg]
+                double& y0 = s->c[i].y;
                 double& y = next->c[i].y;
-                if(fabs(s->c[i].y - y) > M_PI){
-                    double r = y - floor(y / (2.0 * M_PI)) * 2.0 * M_PI;
-                    y = floor(s->c[i].y / (2.0 * M_PI)) * 2.0 * M_PI + r;
+                if(fabs(y - y0) > M_PI){
+                    double p0 = floor(y0 / (2.0 * M_PI)) * 2.0 * M_PI;
+                    double p = floor(y / (2.0 * M_PI)) * 2.0 * M_PI;
+                    y = y - p + p0;
+                    if(fabs(y - y0) > M_PI){
+                        y += 2.0 * M_PI;
+                    }
                 }
             }
 
