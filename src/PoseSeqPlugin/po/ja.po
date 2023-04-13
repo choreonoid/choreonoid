@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-29 19:19+0900\n"
+"POT-Creation-Date: 2023-04-13 10:20+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -328,7 +328,7 @@ msgstr "Z軸回りマイナス方向に回転"
 msgid "New pose"
 msgstr "新規ポーズ"
 
-msgid "{0:0X} ..."
+msgid "{0} ..."
 msgstr ""
 
 msgid "Not ready to fetch poses"
@@ -349,8 +349,8 @@ msgstr "{0}の現在の姿勢を{1}の選択キーポーズに取り込みまし
 msgid "Not ready to adjust the link position."
 msgstr "対象リンクの位置を調整する準備ができていません．"
 
-msgid "The {0} position of key pose {1:0X} cannot be adjusted due to the inverse kinematics error."
-msgstr "キーポーズ{1:0X}の{0}の位置は逆運動学のエラーのため調整できません．"
+msgid "The {0} position of key pose {1} cannot be adjusted due to the inverse kinematics error."
+msgstr "キーポーズ{1}の{0}の位置は逆運動学のエラーのため調整できません．"
 
 msgid "There are no elements in the selected key poses to be adjusted."
 msgstr "調整対象の要素は選択されているキーポーズにはありません．"
@@ -358,8 +358,8 @@ msgstr "調整対象の要素は選択されているキーポーズにはあり
 msgid "Not ready to adjust the joint angle."
 msgstr "関節角度を調整する準備ができていません．"
 
-msgid "The joint angle of {0} in key pose {1:0X} cannot be adjusted due to the joint limit over."
-msgstr "キーポーズ{1:0X}の{0}の関節角度は関節リミットオーバーのため調整できません．"
+msgid "The joint angle of {0} in key pose {1} cannot be adjusted due to the joint limit over."
+msgstr "キーポーズ{1}の{0}の関節角度は関節リミットオーバーのため調整できません．"
 
 msgid "Not ready to adjust the hand position."
 msgstr "手の位置を調整する準備ができていません．"
@@ -370,11 +370,11 @@ msgstr "{0}は手の位置を調整するためにボディアイテムと関連
 msgid "The internal body object of {0} does not conform to the source body."
 msgstr "{0}の内部ボディオブジェクトが取得元ボディに一致していません． "
 
-msgid "A hand position of key pose {0:0X} cannot be adjusted due to the interpolation error."
-msgstr "キーポーズ{0:0X}の手の位置は補間エラーのため調整できません．"
+msgid "A hand position of key pose {0} cannot be adjusted due to the interpolation error."
+msgstr "キーポーズ{0}の手の位置は補間エラーのため調整できません．"
 
-msgid "A hand position of key pose {0:0X} cannot be adjusted due to the inverse kinematics error."
-msgstr "キーポーズ{0:0X}の手の位置は逆運動学のエラーのため調整できません．"
+msgid "A hand position of key pose {0} cannot be adjusted due to the inverse kinematics error."
+msgstr "キーポーズ{0}の手の位置は逆運動学のエラーのため調整できません．"
 
 msgid "Not ready to adjust ZMP."
 msgstr "ZMPを調整する準備ができていません．"
