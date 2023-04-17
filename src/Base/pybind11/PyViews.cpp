@@ -1,7 +1,3 @@
-/*!
- * @author Shin'ichiro Nakaoka
-*/
-
 #include "PyQObjectHolder.h"
 #include "PyQString.h"
 #include "../MessageView.h"
@@ -88,7 +84,8 @@ void exportPyViews(py::module m)
         ;
 
     m.def("showMessageBox", (void(*)(const std::string&)) &showMessageBox);
-    m.def("showWarningDialog", (void(*)(const std::string&)) &showWarningDialog);
+    m.def("showWarningDialog", (bool(*)(const std::string&, bool)) &showWarningDialog);
+    m.def("showWarningDialog", (bool(*)(const std::string&, const std::string&, bool)) &showWarningDialog);
     m.def("showConfirmDialog", (bool(*)(const std::string&, const std::string&)) &showConfirmDialog);
 
     py::class_<SceneWidget, PyQObjectHolder<SceneWidget>, QWidget> sceneWidget(m, "SceneWidget");

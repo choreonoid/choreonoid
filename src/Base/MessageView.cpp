@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "MessageView.h"
 #include "MainWindow.h"
 #include "ViewManager.h"
@@ -1154,14 +1150,20 @@ void cnoid::showMessageBox(const std::string& message)
 
 bool cnoid::showWarningDialog(const std::string& message, bool doConfirmation)
 {
+    return showWarningDialog(_("Warning"), message, doConfirmation);
+}
+
+
+bool cnoid::showWarningDialog(const std::string& caption, const std::string& message, bool doConfirmation)
+{
     bool result = true;
     
     if(!doConfirmation){
-        QMessageBox::warning(MainWindow::instance(), _("Warning"), message.c_str());
+        QMessageBox::warning(MainWindow::instance(), caption.c_str(), message.c_str());
     } else {
         QMessageBox mbox(MainWindow::instance());
         mbox.setIcon(QMessageBox::Warning);
-        mbox.setWindowTitle(_("Warning"));
+        mbox.setWindowTitle(caption.c_str());
         mbox.setText(message.c_str());
         mbox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
         if(mbox.exec() != QMessageBox::Ok){
