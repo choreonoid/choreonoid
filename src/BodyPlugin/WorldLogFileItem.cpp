@@ -24,7 +24,6 @@
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <QDateTime>
-#include <QMessageBox>
 #include <fstream>
 #include <stack>
 #include <map>
@@ -1289,11 +1288,12 @@ void WorldLogFileItem::Impl::openDialogToSelectDirectoryToSavePlaybackArchive()
         auto filenames = dialog.selectedFiles();
         string filename(filenames.at(0).toStdString());
         if(!filename.empty()){
-            QString message(_("The current project will be replaced with a new project for the log playback. "
-                              "Do you want to continue?"));
-            auto button = QMessageBox::warning(
-                MainWindow::instance(), _("Project replacement"), message, QMessageBox::Ok | QMessageBox::Cancel);
-            if(button == QMessageBox::Ok){
+            bool confirmed = showWarningDialog(
+                _("Project replacement"),
+                _("The current project will be replaced with a new project for the log playback. "
+                  "Do you want to continue?"),
+                true);
+            if(confirmed){
                 saveProjectAsPlaybackArchive(filename);
             }
         }
