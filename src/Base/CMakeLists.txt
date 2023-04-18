@@ -26,6 +26,7 @@ set(sources
   ItemAddon.cpp
   LocatableItem.cpp
   RenderableItem.cpp
+  RenderableItemSceneStatistics.cpp
   PolymorphicItemFunctionSet.cpp
   PutPropertyFunction.cpp
   RootItem.cpp

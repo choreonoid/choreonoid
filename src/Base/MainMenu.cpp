@@ -15,7 +15,7 @@
 #include "MessageView.h"
 #include "PathVariableEditor.h"
 #include "DistanceMeasurementDialog.h"
-#include "RenderableItem.h"
+#include "RenderableItemSceneStatistics.h"
 #include "MovieRecorderDialog.h"
 #include "SceneWidget.h"
 #include "DescriptionDialog.h"
@@ -523,7 +523,7 @@ void MainMenu::setActionAsShowDistanceMeasurementDialog(Action* action)
 
 void MainMenu::setActionAsPutSceneStatistics(Action* action)
 {
-    action->sigTriggered().connect([](){ RenderableItem::putSceneStatistics(); });
+    action->sigTriggered().connect([](){ putRenderableItemSceneStatistics(); });
 }
 
 
