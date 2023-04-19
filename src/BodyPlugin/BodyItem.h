@@ -214,6 +214,11 @@ public:
 
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
+
+    // For projct packing
+    void getDependentFiles(std::vector<std::string>& out_files);
+    void relocateDependentFiles(
+        std::function<std::string(const std::string& path)> getRelocatedFilePath);
     
     class Impl;
 

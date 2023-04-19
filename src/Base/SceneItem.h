@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_SCENE_ITEM_H
 #define CNOID_BASE_SCENE_ITEM_H
 
@@ -45,6 +41,11 @@ public:
 
     void setLightweightRenderingEnabled(bool on);
     bool isLightweightRenderingEnabled() const { return isLightweightRenderingEnabled_; }
+
+    // For projct packing
+    void getDependentFiles(std::vector<std::string>& out_files);
+    void relocateDependentFiles(
+        std::function<std::string(const std::string& path)> getRelocatedFilePath);
 
 protected:
     SceneItem(const SceneItem& org, CloneMap* cloneMap);

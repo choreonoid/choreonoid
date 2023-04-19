@@ -26,6 +26,7 @@
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/AttachmentDevice>
 #include <cnoid/HolderDevice>
+#include <cnoid/RenderableItemUtil>
 #include <cnoid/EigenArchive>
 #include <cnoid/CloneMap>
 #include <fmt/format.h>
@@ -164,6 +165,8 @@ public:
     LeggedBodyHelperPtr legged;
     Vector3 zmp;
 
+    static unique_ptr<RenderableItemUtil> renderableItemUtil;
+
     Impl(BodyItem* self);
     Impl(BodyItem* self, const Impl& org, CloneMap* cloneMap);
     Impl(BodyItem* self, Body* body, bool isSharingShapes);
@@ -200,7 +203,10 @@ public:
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
+    RenderableItemUtil* getOrCreateRenderableItemUtil();
 };
+
+unique_ptr<RenderableItemUtil> BodyItem::Impl::renderableItemUtil;
 
 }
 
@@ -1173,8 +1179,6 @@ LocationProxyPtr BodyItem::createLinkLocationProxy(Link* link)
 }
 
 
-namespace {
-
 BodyLocation::BodyLocation(BodyItem::Impl* impl)
     : LocationProxy(impl->attachmentToParent ? OffsetLocation : GlobalLocation),
       impl(impl)
@@ -1354,8 +1358,6 @@ SignalProxy<void()> LinkLocation::sigLocationChanged()
         static Signal<void()> dummySignal;
         return dummySignal;
     }
-}
-
 }
 
 
@@ -1966,7 +1968,46 @@ bool BodyItem::Impl::restore(const Archive& archive)
 }
 
 
-namespace {
+RenderableItemUtil* BodyItem::Impl::getOrCreateRenderableItemUtil()
+{
+    if(!renderableItemUtil){
+        renderableItemUtil = make_unique<RenderableItemUtil>();
+    }
+    renderableItemUtil->setItem(self);
+    return renderableItemUtil.get();
+}
+
+
+void BodyItem::getDependentFiles(std::vector<std::string>& out_files)
+{
+    auto& fp = filePath();
+    if(!fp.empty()){
+        out_files.push_back(fp);
+
+        auto util = impl->getOrCreateRenderableItemUtil();
+        for(auto& link : impl->body->links()){
+            util->getSceneFilesForArchiving(link->shape(), out_files);
+            if(link->hasDedicatedCollisionShape()){
+                util->getSceneFilesForArchiving(link->collisionShape(), out_files);
+            }
+        }
+    }
+}
+
+
+void BodyItem::relocateDependentFiles
+(std::function<std::string(const std::string& path)> getRelocatedFilePath)
+{
+    auto util = impl->getOrCreateRenderableItemUtil();
+    util->initializeSceneObjectUrlRelocation();
+    for(auto& link : impl->body->links()){
+        util->relocateSceneObjectUris(link->shape(), getRelocatedFilePath);
+        if(link->hasDedicatedCollisionShape()){
+            util->relocateSceneObjectUris(link->collisionShape(), getRelocatedFilePath);
+        }
+    }
+}
+
 
 KinematicStateRecord::KinematicStateRecord(BodyItem::Impl* bodyItemImpl)
     : EditRecord(bodyItemImpl->self),
@@ -2030,6 +2071,4 @@ bool KinematicStateRecord::redo()
     bodyItem->storeKinematicState(bodyItemImpl->lastEditState);
     bodyItemImpl->notifyKinematicStateChange(false, false, false, true);
     return true;
-}
-
 }

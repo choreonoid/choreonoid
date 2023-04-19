@@ -1,11 +1,7 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "SceneItem.h"
 #include "ItemManager.h"
 #include "GeneralSceneFileImporterBase.h"
+#include "RenderableItemUtil.h"
 #include "Archive.h"
 #include "PutPropertyFunction.h"
 #include <cnoid/CloneMap>
@@ -18,6 +14,8 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
+
+static unique_ptr<RenderableItemUtil> renderableItemUtil;
 
 class GeneralSceneFileImporter : public GeneralSceneFileImporterBase
 {
@@ -235,4 +233,34 @@ bool SceneItem::restore(const Archive& archive)
         return true;
     }
     return false;
+}
+
+
+static RenderableItemUtil* getOrCreateRenderableItemUtil(SceneItem* item)
+{
+    if(!renderableItemUtil){
+        renderableItemUtil = make_unique<RenderableItemUtil>();
+    }
+    renderableItemUtil->setItem(item);
+    return renderableItemUtil.get();
+}
+
+
+void SceneItem::getDependentFiles(std::vector<std::string>& out_files)
+{
+    auto& fp = filePath();
+    if(!fp.empty()){
+        out_files.push_back(fp);
+        auto util = getOrCreateRenderableItemUtil(this);
+        util->getSceneFilesForArchiving(out_files);
+    }
+}
+
+
+void SceneItem::relocateDependentFiles
+(std::function<std::string(const std::string& path)> getRelocatedFilePath)
+{
+    auto util = getOrCreateRenderableItemUtil(this);
+    util->initializeSceneObjectUrlRelocation();
+    util->relocateSceneObjectUris(getRelocatedFilePath);
 }

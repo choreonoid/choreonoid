@@ -26,6 +26,7 @@ set(sources
   ItemAddon.cpp
   LocatableItem.cpp
   RenderableItem.cpp
+  RenderableItemUtil.cpp
   RenderableItemSceneStatistics.cpp
   PolymorphicItemFunctionSet.cpp
   PutPropertyFunction.cpp
@@ -223,6 +224,7 @@ set(headers
   ItemAddon.h
   LocatableItem.h
   RenderableItem.h
+  RenderableItemUtil.h
   ImageableItem.h
   TargetItemPicker.h
   UnifiedEditHistory.h
