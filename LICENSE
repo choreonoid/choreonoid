@@ -1,7 +1,7 @@
 
 Choreonoid - An integrated graphical robotics software framework
 
-Copyright (c) 2019-2021 Choreonoid Inc.
+Copyright (c) 2019-2023 Choreonoid Inc.
 
 Copyright (c) 2007-2019
     Shin'ichiro Nakaoka and the Choreonoid development team,
@@ -69,7 +69,7 @@ copyrighted by other developers.
    MIT license (see thirdparty/yaml-0.1.7/LICENSE)
 
  * zlib (http://zlib.net/)
-   see thirdparty/zlib123/README
+   see thirdparty/zlib-1.2.13/LICENSE
 
  * OPCODE (http://www.codercorner.com/Opcode.htm)
    see src/AISTCollisionDetector/Opcode/ReadMe.txt

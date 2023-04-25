@@ -1,9 +1,10 @@
 function(choreonoid_set_target_common_properties target)
-  if(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN)
-    target_compile_options(${target} PRIVATE "-fvisibility=hidden")
-  endif()
   if(MSVC)
     set_target_properties(${target} PROPERTIES DEBUG_POSTFIX d)
+  else()
+    if(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN)
+      target_compile_options(${target} PRIVATE "-fvisibility=hidden")
+    endif()
   endif()
 endfunction()
 
@@ -67,18 +68,19 @@ function(choreonoid_add_library target)
     set(is_static false)
   endif()
 
-  if(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN AND is_static)
-    target_compile_options(${target} PRIVATE "-fPIC")
+  if(NOT MSVC)
+    if(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN AND is_static)
+      target_compile_options(${target} PRIVATE "-fPIC")
+    endif()
+    if(CHOREONOID_ENABLE_INSTALL_RPATH AND (NOT is_static))
+      set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
+    endif()
   endif()
 
   set_target_properties(${target} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
     ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
-
-  if(CHOREONOID_ENABLE_INSTALL_RPATH AND (NOT is_static))
-    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
-  endif()
 
   choreonoid_set_header_files(${ARGN} INSTALL_HEADERS)
 

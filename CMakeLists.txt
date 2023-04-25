@@ -789,6 +789,12 @@ if((NOT LIBYAML_FOUND) OR USE_BUNDLED_LIBYAML)
   set(LIBYAML_LIBRARIES yaml)
 endif()
 
+# zlib
+if(MSVC)
+  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib-1.2.13)
+  add_subdirectory(thirdparty/zlib-1.2.13)
+endif()
+
 # png
 if(MSVC)
   set(USE_BUNDLED_LIBPNG_DEFAULT ON)
@@ -802,9 +808,8 @@ endif()
 if(PNG_FOUND AND NOT USE_BUNDLED_LIBPNG)
   list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${PNG_INCLUDE_DIRS})
 else()
-  set(PNG_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/thirdparty/lpng1232" "${PROJECT_SOURCE_DIR}/thirdparty/zlib123")
+  set(PNG_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/lpng1232)
   set(PNG_LIBRARIES png zlib)
-  add_subdirectory(thirdparty/zlib123)
   add_subdirectory(thirdparty/lpng1232)
 endif()
 

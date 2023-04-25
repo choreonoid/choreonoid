@@ -1,4 +1,4 @@
-include_directories(${PNG_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(png STATIC
   png.c
@@ -21,8 +21,7 @@ add_library(png STATIC
 
 if(MSVC)
   set_target_properties(png PROPERTIES
-    COMPILE_DEFINITIONS "PNG_NO_MMX_CODE;_CRT_SECURE_NO_WARNINGS"
-    COMPILE_OPTIONS -Ob1
+    COMPILE_DEFINITIONS "PNG_NO_MMX_CODE"
     DEBUG_POSTFIX d)
 else()
   set_target_properties(png PROPERTIES COMPILE_OPTIONS -fPIC)
