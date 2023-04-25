@@ -68,8 +68,11 @@ copyrighted by other developers.
  * LibYAML (http://pyyaml.org/wiki/LibYAML)
    MIT license (see thirdparty/yaml-0.1.7/LICENSE)
 
- * zlib (http://zlib.net/)
+ * zlib (https://zlib.net/)
    see thirdparty/zlib-1.2.13/LICENSE
+
+ * libzip (https://libzip.org/)
+   see thirdparty/libzip-1.9.2/LICENSE
 
  * OPCODE (http://www.codercorner.com/Opcode.htm)
    see src/AISTCollisionDetector/Opcode/ReadMe.txt

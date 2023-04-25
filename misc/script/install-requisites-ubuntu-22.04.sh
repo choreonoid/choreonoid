@@ -15,6 +15,7 @@ libyaml-dev \
 libfmt-dev \
 gettext \
 zlib1g-dev \
+libzip-dev \
 libjpeg-dev \
 libpng-dev \
 libfreetype-dev \

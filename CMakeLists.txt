@@ -795,6 +795,20 @@ if(MSVC)
   add_subdirectory(thirdparty/zlib-1.2.13)
 endif()
 
+# libzip
+if(NOT MSVC)
+  pkg_check_modules(libzip libzip)
+  if(NOT libzip_FOUND)
+    message(FATAL_ERROR "libzip is not found.")
+  endif()
+  include_directories(${libzip_INCLUDE_DIRS})
+  link_directories(${libzip_LIBRARY_DIRS})
+else()
+  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libzip-1.9.2/lib)
+  add_subdirectory(thirdparty/libzip-1.9.2)
+  set(libzip_LIBRARIES zip)
+endif()
+
 # png
 if(MSVC)
   set(USE_BUNDLED_LIBPNG_DEFAULT ON)
