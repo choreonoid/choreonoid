@@ -321,7 +321,7 @@ bool ItemFileIO::Impl::preprocessLoadingOrSaving
 (Item* item, std::string& io_filename, const Mapping* options)
 {
     if(currentInvocationType == Direct){
-        FilePathVariableProcessor* pathProcessor = FilePathVariableProcessor::systemInstance();
+        auto pathProcessor = FilePathVariableProcessor::currentInstance();
         io_filename = pathProcessor->expand(io_filename, true);
         if(io_filename.empty()){
             errorMessage = pathProcessor->errorMessage();

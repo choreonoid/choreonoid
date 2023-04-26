@@ -555,7 +555,7 @@ ItemList<> ProjectManager::Impl::loadProject
 
     if(!self->isLoadingProject()){
         Archive::callFinalProcesses();
-        auto vp = FilePathVariableProcessor::systemInstance();
+        auto vp = FilePathVariableProcessor::currentInstance();
         vp->clearBaseDirectory();
         vp->clearProjectDirectory();
 

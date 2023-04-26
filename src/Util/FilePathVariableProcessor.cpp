@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "FilePathVariableProcessor.h"
 #include "ValueTree.h"
 #include "ExecutablePath.h"
@@ -10,6 +6,7 @@
 #include <cnoid/stdx/optional>
 #include <fmt/format.h>
 #include <regex>
+#include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
@@ -19,17 +16,18 @@ namespace filesystem = stdx::filesystem;
 
 namespace cnoid {
 
+ref_ptr<FilePathVariableProcessor> FilePathVariableProcessor::currentInstance_;
+
 class FilePathVariableProcessor::Impl
 {
 public:
-    MappingPtr userVariables;
     stdx::optional<regex> variableRegex;
     filesystem::path baseDirPath;
     filesystem::path projectDirPath;
     string projectDirString;
     bool isProjectDirDifferentFromBaseDir;
 
-    bool isSystemVariableSetEnabled;
+    bool isSubstitutionWithSystemPathVariableEnabled;
     filesystem::path topDirPath;
     string topDirString;
     filesystem::path shareDirPath;
@@ -37,18 +35,33 @@ public:
     filesystem::path homeDirPath;
     string homeDirString;
 
-    string varName;
-    enum BaseType { Base, Project, Var, Share, Top, Home, NumCandidates };
-    filesystem::path relativePath[NumCandidates];
+    enum VarType { Base, Project, User, AppSpecific, Share, Top, Home, NumVarTypes };
 
+    struct VarTypeInfo
+    {
+        string varName;
+        filesystem::path relativePath;
+        int relativePathLength;
+    };
+
+    VarTypeInfo varTypeInfos[NumVarTypes];
+
+    typedef unordered_map<string, std::vector<filesystem::path>> VarNameToPathListMap;
+    VarNameToPathListMap appSpecificVariables;
+    VarNameToPathListMap userVariables;
+    
     string errorMessage;
 
     Impl();
-    void setSystemVariablesEnabled(bool on);
+    Impl(const Impl& org);
     std::string parameterize(const std::string& orgPathString);
-    bool findSubDirectoryOfDirectoryVariable(
-        const filesystem::path& path, std::string& out_varName, filesystem::path& out_relativePath);
-    bool replaceUserVariable(string& io_pathString, const string& varname, int pos, int len);
+    void findRelativePathForDirectory(
+        const filesystem::path& path, int varType, const filesystem::path& dirPath, int additionalPathLength = 0);
+    void findRelativePathForPathVariables(
+        const filesystem::path& path, int varType, const VarNameToPathListMap& variables);
+    int getPathLength(filesystem::path& path, int additionalLength = 0);
+    bool replaceUserVariable(
+        string& io_pathString, const string& varname, int pos, int len, const VarNameToPathListMap& variables);
     std::string expand(const std::string& pathString, bool doMakeNativeAbsolutePath);
 };
 
@@ -61,7 +74,7 @@ FilePathVariableProcessor* FilePathVariableProcessor::systemInstance()
 
     if(!instance){
         instance = new FilePathVariableProcessor;
-        instance->setSystemVariablesEnabled(true);
+        instance->setSubstitutionWithSystemPathVariableEnabled(true);
     }
 
     return instance;
@@ -76,8 +89,50 @@ FilePathVariableProcessor::FilePathVariableProcessor()
 
 FilePathVariableProcessor::Impl::Impl()
 {
-    isSystemVariableSetEnabled = false;
     isProjectDirDifferentFromBaseDir = false;
+    isSubstitutionWithSystemPathVariableEnabled = false;
+
+    topDirPath = executableTopDirPath();
+    topDirString = executableTopDir();
+    varTypeInfos[Top].varName = "PROGRAM_TOP";
+
+    shareDirPath = cnoid::shareDirPath();
+    shareDirString = shareDir();
+    varTypeInfos[Share].varName = "SHARE";
+
+    char* home = getenv("HOME");
+    if(home){
+        homeDirPath = string(home);
+        homeDirString = toUTF8(home);
+    }
+    varTypeInfos[Home].varName = "HOME";
+
+    varTypeInfos[Project].varName = "PROJECT_DIR";
+}
+
+
+FilePathVariableProcessor::FilePathVariableProcessor(const FilePathVariableProcessor& org)
+{
+    impl = new Impl(*org.impl);
+}
+
+
+FilePathVariableProcessor::Impl::Impl(const Impl& org)
+    : isProjectDirDifferentFromBaseDir(false),
+      isSubstitutionWithSystemPathVariableEnabled(org.isSubstitutionWithSystemPathVariableEnabled),
+      topDirPath(org.topDirPath),
+      topDirString(org.topDirString),
+      shareDirPath(org.shareDirPath),
+      shareDirString(org.shareDirString),
+      homeDirPath(org.homeDirPath),
+      homeDirString(org.homeDirString),
+      appSpecificVariables(org.appSpecificVariables),
+      userVariables(org.userVariables)
+{
+    varTypeInfos[Top].varName = "PROGRAM_TOP";
+    varTypeInfos[Share].varName = "SHARE";
+    varTypeInfos[Home].varName = "HOME";
+    varTypeInfos[Project].varName = "PROJECT_DIR";
 }
 
 
@@ -87,46 +142,82 @@ FilePathVariableProcessor::~FilePathVariableProcessor()
 }
 
 
-void FilePathVariableProcessor::setSystemVariablesEnabled(bool on)
+void FilePathVariableProcessor::setSubstitutionWithSystemPathVariableEnabled(bool on)
 {
-    impl->setSystemVariablesEnabled(on);
+    impl->isSubstitutionWithSystemPathVariableEnabled = on;
 }
 
 
-void FilePathVariableProcessor::Impl::setSystemVariablesEnabled(bool on)
+void FilePathVariableProcessor::addAppSpecificVariable(const std::string& name, const stdx::filesystem::path& path)
 {
-    isSystemVariableSetEnabled = on;
-    
-    if(on){
-        topDirString = executableTopDir();
-        topDirPath = executableTopDirPath();
+    impl->appSpecificVariables[name].emplace_back(path);
+}
 
-        shareDirString = shareDir();
-        shareDirPath = cnoid::shareDirPath();
 
-        char* home = getenv("HOME");
-        if(home){
-            homeDirString = toUTF8(home);
-            homeDirPath = string(home);
-        } else {
-            homeDirString.clear();
-            homeDirPath.clear();
+void FilePathVariableProcessor::addUserVariable(const std::string& name, const stdx::filesystem::path& path)
+{
+    impl->userVariables[name].emplace_back(path);
+}
+
+
+void FilePathVariableProcessor::clearUserVariables()
+{
+    impl->userVariables.clear();
+}
+
+
+std::vector<std::pair<std::string, stdx::filesystem::path>> FilePathVariableProcessor::getUserVariables() const
+{
+    std::vector<std::pair<std::string, stdx::filesystem::path>> variables;
+    variables.reserve(impl->userVariables.size());
+    for(auto& kv : impl->userVariables){
+        auto& name = kv.first;
+        auto& paths = kv.second;
+        for(auto& path : paths){
+            variables.emplace_back(make_pair(name, path));
         }
-    } else {
-        topDirString.clear();
-        topDirPath.clear();
-        shareDirString.clear();
-        shareDirPath.clear();
-        homeDirString.clear();
-        homeDirPath.clear();
+    }
+    return variables;
+}
+
+
+void FilePathVariableProcessor::storeUserVariables(Mapping* variables)
+{
+    variables->clear();
+    for(auto& kv : impl->userVariables){
+        auto& name = kv.first;
+        auto& paths = kv.second;
+        if(!paths.empty()){
+            auto list = variables->createListing(name);
+            for(auto& path : paths){
+                list->append(path.generic_string(), DOUBLE_QUOTED);
+            }
+        }
     }
 }
 
 
-void FilePathVariableProcessor::setUserVariables(Mapping* variables)
+void FilePathVariableProcessor::restoreUserVariables(Mapping* variables)
 {
-    if(variables && variables->isValid()){
-        impl->userVariables = variables;
+    impl->userVariables.clear();
+    for(auto& kv : *variables){
+        auto& name = kv.first;
+        auto node = kv.second;
+        if(node->isListing()){
+            auto list = node->toListing();
+            if(!list->empty()){
+                auto& paths = impl->userVariables[name];
+                paths.reserve(list->size());
+                for(auto& node : *list){
+                    if(node->isString()){
+                        filesystem::path path(node->toString());
+                        if(path.is_absolute()){
+                            paths.push_back(path);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -189,127 +280,114 @@ std::string FilePathVariableProcessor::parameterize(const std::string& orgPathSt
 }
 
 
-static int countPathElements(filesystem::path& path)
+std::string FilePathVariableProcessor::Impl::parameterize(const std::string& orgPathString)
 {
-    int count = 0;
+    string output;
+    
+    filesystem::path orgPath(fromUTF8(orgPathString));
+
+    if(orgPath.is_absolute()){
+        for(int i=0; i < NumVarTypes; ++i){
+            varTypeInfos[i].relativePathLength = std::numeric_limits<int>::max();
+        }
+        if(!baseDirPath.empty()){
+            findRelativePathForDirectory(orgPath, Base, baseDirPath);
+        }
+        if(isProjectDirDifferentFromBaseDir){
+            findRelativePathForDirectory(orgPath, Project, projectDirPath);
+        }
+        findRelativePathForPathVariables(orgPath, User, userVariables);
+        findRelativePathForPathVariables(orgPath, AppSpecific, appSpecificVariables);
+        
+        if(isSubstitutionWithSystemPathVariableEnabled){
+            findRelativePathForDirectory(orgPath, Share, shareDirPath);
+            findRelativePathForDirectory(orgPath, Top, topDirPath);
+            if(!homeDirPath.empty()){
+                findRelativePathForDirectory(orgPath, Home, homeDirPath, 1);
+            }
+        }
+
+        int minLength = std::numeric_limits<int>::max();
+        int index = -1;
+        for(int i=0; i < NumVarTypes; ++i){
+            int length = varTypeInfos[i].relativePathLength;
+            if(length < minLength){
+                minLength = length;
+                index = i;
+            }
+        }
+        if(index >= 0){
+            auto& info = varTypeInfos[index];
+            if(index == Base){
+                if(getPathLength(orgPath) < minLength){
+                    output = toUTF8(orgPath.generic_string()); // absolute path
+                } else {
+                    output = toUTF8(info.relativePath.generic_string());
+                }
+            } else {
+                output = format("${{{0}}}/{1}", info.varName, toUTF8(info.relativePath.generic_string()));
+            }
+        }
+    }
+
+    if(output.empty()){
+        output = toUTF8(orgPath.generic_string());
+    }
+
+    return output;
+}
+
+
+void FilePathVariableProcessor::Impl::findRelativePathForDirectory
+(const filesystem::path& path, int varType, const filesystem::path& dirPath, int additionalPathLength)
+{
+    auto& info = varTypeInfos[varType];
+    if(findPathInDirectory(dirPath, path, info.relativePath)){
+        info.relativePathLength = getPathLength(info.relativePath, additionalPathLength);
+    }
+}
+
+
+void FilePathVariableProcessor::Impl::findRelativePathForPathVariables
+(const filesystem::path& path, int varType, const VarNameToPathListMap& variables)
+{
+    auto& info = varTypeInfos[varType];
+    info.relativePath.clear();
+    filesystem::path relativePath;
+    int maxMatchedDepth = 0;
+    for(auto& kv : variables){
+        auto& dirPaths = kv.second;
+        for(auto& dirPath : dirPaths){
+            int n = findPathInDirectory(dirPath, path, relativePath);
+            if(n > maxMatchedDepth){
+                maxMatchedDepth = n;
+                info.relativePath = relativePath;
+                info.varName = kv.first;
+            }
+        }
+    }
+    if(maxMatchedDepth > 0){
+        info.relativePathLength = getPathLength(info.relativePath);
+    }
+}
+
+
+int FilePathVariableProcessor::Impl::getPathLength(filesystem::path& path, int additionalLength)
+{
+    int length = additionalLength;
     bool hasUpElement = false;
     auto iter = path.begin();
     while(iter != path.end()){
         if(*iter == ".."){
             hasUpElement = true;
         }
-        ++count;
+        ++length;
         ++iter;
     }
     if(hasUpElement){
-        ++count;
+        ++length;
     }
-    return count;
-}
-
-
-/**
-   \todo Use integated nested map whose node is a single path element to be more efficient.
-*/
-std::string FilePathVariableProcessor::Impl::parameterize(const std::string& orgPathString)
-{
-    filesystem::path orgPath(fromUTF8(orgPathString));
-
-    // In the case where the path is originally relative one
-    if(!orgPath.is_absolute()){
-        return toUTF8(orgPath.generic_string());
-
-    } else {
-        int distance[NumCandidates];
-        for(int i=0; i < NumCandidates; ++i){
-            distance[i] = std::numeric_limits<int>::max();
-        }
-        
-        if(!baseDirPath.empty() &&
-           findRelativePath(baseDirPath, orgPath, relativePath[Base])){
-            distance[Base] = countPathElements(relativePath[Base]);
-        }
-        if(isProjectDirDifferentFromBaseDir &&
-           findSubDirectory(projectDirPath, orgPath, relativePath[Project])){
-            distance[Project] = countPathElements(relativePath[Project]);
-        }
-        if(userVariables && findSubDirectoryOfDirectoryVariable(orgPath, varName, relativePath[Var])){
-            distance[Var] = countPathElements(relativePath[Var]);
-        }
-        if(isSystemVariableSetEnabled){
-
-            if(findSubDirectory(shareDirPath, orgPath, relativePath[Share])){
-                distance[Share] = countPathElements(relativePath[Share]);
-
-            } else if(findSubDirectory(topDirPath, orgPath, relativePath[Top])){
-                distance[Top] = countPathElements(relativePath[Top]);
-            }
-            if(findSubDirectory(homeDirPath, orgPath, relativePath[Home])){
-                distance[Home] = countPathElements(relativePath[Home]) + 1;
-            }
-        }
-
-        int minDistance = std::numeric_limits<int>::max();
-        int index = -1;
-        for(int i=0; i < NumCandidates; ++i){
-            if(distance[i] < minDistance){
-                minDistance = distance[i];
-                index = i;
-            }
-        }
-        if(index >= 0){
-            switch(index){
-            case Base:
-                if(countPathElements(orgPath) < minDistance){
-                    return toUTF8(orgPath.generic_string()); // absolute path
-                } else {
-                    return toUTF8(relativePath[Base].generic_string());
-                }
-            case Project:
-                return string("${PROJECT_DIR}/") + toUTF8(relativePath[Project].generic_string());
-            case Var:
-                return format("${{{0}}}/{1}", varName, toUTF8(relativePath[Var].generic_string()));
-            case Share:
-                return string("${SHARE}/") + toUTF8(relativePath[Share].generic_string());
-            case Top:
-                return string("${PROGRAM_TOP}/") + toUTF8(relativePath[Top].generic_string());
-            case Home:
-                return string("${HOME}/") + toUTF8(relativePath[Home].generic_string());
-            default:
-                break;
-            }
-        }
-    }
-    
-    return toUTF8(orgPath.generic_string());
-}
-
-
-/**
-   \todo Introduce a tree structure to improve the efficiency of searching matched directories
-*/
-bool FilePathVariableProcessor::Impl::findSubDirectoryOfDirectoryVariable
-(const filesystem::path& path, std::string& out_varName, filesystem::path& out_relativePath)
-{
-    out_relativePath.clear();
-    int maxMatchSize = 0;
-    filesystem::path relativePath;
-    Mapping::const_iterator p;
-    for(p = userVariables->begin(); p != userVariables->end(); ++p){
-        Listing* paths = p->second->toListing();
-        if(paths){
-            for(int i=0; i < paths->size(); ++i){
-                filesystem::path dirPath(paths->at(i)->toString());
-                int n = findSubDirectory(dirPath, path, relativePath);
-                if(n > maxMatchSize){
-                    maxMatchSize = n;
-                    out_relativePath = relativePath;
-                    out_varName = p->first;
-                }
-            }
-        }
-    }
-    return (maxMatchSize > 0);
+    return length;
 }
 
 
@@ -336,10 +414,10 @@ std::string FilePathVariableProcessor::Impl::expand
         int len = match.length();
         string varname = match.str(1);
 
-        if(isSystemVariableSetEnabled && varname == "SHARE"){
+        if(varname == "SHARE"){
             expanded.replace(pos, len, shareDirString);
             
-        } else if(isSystemVariableSetEnabled && varname == "PROGRAM_TOP"){
+        } else if(varname == "PROGRAM_TOP"){
             expanded.replace(pos, len, topDirString);
             
         } else if(varname == "PROJECT_DIR"){
@@ -351,13 +429,18 @@ std::string FilePathVariableProcessor::Impl::expand
                 expanded.replace(pos, len, projectDirString);
             }
             
-        } else if(isSystemVariableSetEnabled && varname == "HOME"){
+        } else if(varname == "HOME"){
             expanded.replace(pos, len, homeDirString);
             
         } else {
-            if(!replaceUserVariable(expanded, varname, pos, len)){
-                expansionFailed = true;
-                expanded.clear();
+            if(!replaceUserVariable(expanded, varname, pos, len, userVariables)){
+                if(!replaceUserVariable(expanded, varname, pos, len, appSpecificVariables)){
+                    expansionFailed = true;
+                    expanded.clear();
+                    errorMessage =
+                        format(_("Path variable \"{0}\" in \"{1}\" is not defined."),
+                               varname, pathString);
+                }
             }
         }
     }
@@ -380,27 +463,30 @@ std::string FilePathVariableProcessor::Impl::expand
 
 
 bool FilePathVariableProcessor::Impl::replaceUserVariable
-(string& io_pathString, const string& varname, int pos, int len)
+(string& io_pathString, const string& varName, int pos, int len, const VarNameToPathListMap& variables)
 {
-    Listing* paths = nullptr;
-    if(userVariables){
-        paths = userVariables->findListing(varname);
-    }
-    if(!paths || !paths->isValid()){
-        errorMessage = format(_("The \"{0}\" variable in \"{1}\" is not defined."), varname, io_pathString);
+    auto it = variables.find(varName);
+    if(it == variables.end()){
         return false;
     }
-
+    auto& paths = it->second;
+    if(paths.empty()){
+        return false;
+    }
+    
     string replaced(io_pathString);
-    replaced.replace(pos, len, paths->at(0)->toString());
+    replaced.replace(pos, len, paths.front().string());
 
-    if(!filesystem::exists(fromUTF8(replaced))){
-        for(int i=1; i < paths->size(); ++i){
-            string replaced2(io_pathString);
-            replaced2.replace(pos, len, paths->at(i)->toString());
-            if(filesystem::exists(fromUTF8(replaced2))){
-                replaced = std::move(replaced2);
-                break;
+    if(paths.size() >= 2){
+        if(!filesystem::exists(fromUTF8(replaced))){
+            string replaced2;
+            for(size_t i=1; i < paths.size(); ++i){
+                replaced2 = io_pathString;
+                replaced2.replace(pos, len, paths[i].string());
+                if(filesystem::exists(fromUTF8(replaced2))){
+                    replaced = std::move(replaced2);
+                    break;
+                }
             }
         }
     }

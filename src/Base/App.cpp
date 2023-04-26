@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "App.h"
 #include "AppUtil.h"
 #include "AppConfig.h"
@@ -345,8 +341,9 @@ void App::Impl::initialize()
     qapplication->setWindowIcon(
         QIcon(!iconFilename.empty() ? iconFilename.c_str() : ":/Base/icon/choreonoid.svg"));
 
-    FilePathVariableProcessor::systemInstance()->setUserVariables(
-        AppConfig::archive()->findMapping({ "path_variables", "pathVariables" }));
+    auto fpvp = FilePathVariableProcessor::systemInstance();
+    fpvp->restoreUserVariables(AppConfig::archive()->findMapping({ "path_variables", "pathVariables" }));
+    FilePathVariableProcessor::setCurrentInstance(fpvp);
 
     ext = new ExtensionManager("Base", false);
 
