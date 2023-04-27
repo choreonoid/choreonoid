@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_FILE_UTIL_H
 #define CNOID_UTIL_FILE_UTIL_H
 
@@ -27,6 +22,12 @@ CNOID_EXPORT stdx::filesystem::path getCompactPath(const stdx::filesystem::path&
 CNOID_EXPORT void makePathCompact(stdx::filesystem::path& io_path);
 
 
+CNOID_EXPORT int findPathInDirectory(
+    const stdx::filesystem::path& directory,
+    const stdx::filesystem::path& path,
+    stdx::filesystem::path& out_subdirectory);
+
+[[deprecated("Use findPathInDirectory.")]]
 CNOID_EXPORT int findSubDirectory(
     const stdx::filesystem::path& directory,
     const stdx::filesystem::path& path,

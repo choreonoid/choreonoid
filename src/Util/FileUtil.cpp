@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "FileUtil.h"
 
 using namespace std;
@@ -59,10 +54,7 @@ void makePathCompact(filesystem::path& io_path)
 }
 
 
-/**
-   \todo Replace this function with std::filesystem::path::lexically_relative
-*/
-int findSubDirectory(const filesystem::path& directory, const filesystem::path& path, filesystem::path& out_subdirectory)
+int findPathInDirectory(const filesystem::path& directory, const filesystem::path& path, filesystem::path& out_subdirectory)
 {
     int numMatchedDepth = 0;
         
@@ -91,6 +83,12 @@ int findSubDirectory(const filesystem::path& directory, const filesystem::path& 
     }
 
     return 0;
+}
+
+
+int findSubDirectory(const filesystem::path& directory, const filesystem::path& path, filesystem::path& out_subdirectory)
+{
+    return findPathInDirectory(directory, path, out_subdirectory);
 }
 
 
