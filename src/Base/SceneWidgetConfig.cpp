@@ -1,12 +1,12 @@
 #include "SceneWidgetConfig.h"
 #include "SceneWidget.h"
-#include "GLSceneRenderer.h"
 #include "Buttons.h"
 #include "ButtonGroup.h"
 #include "CheckBox.h"
 #include "SpinBox.h"
 #include "DoubleSpinBox.h"
 #include "Separator.h"
+#include <cnoid/GLSceneRenderer>
 #include <cnoid/ValueTree>
 #include <cnoid/EigenArchive>
 #include <QBoxLayout>

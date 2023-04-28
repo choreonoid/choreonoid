@@ -481,7 +481,15 @@ bool GL1SceneRenderer::Impl::initializeGL()
 void GL1SceneRenderer::setViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
-    updateViewportInformation(x, y, width, height);
+    GLSceneRenderer::updateViewportInformation(x, y, width, height);
+}
+
+
+void GL1SceneRenderer::updateViewportInformation()
+{
+    int viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    GLSceneRenderer::updateViewportInformation(viewport[0], viewport[1], viewport[2], viewport[3]);
 }
 
 

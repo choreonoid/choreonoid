@@ -1,7 +1,5 @@
 #include "SceneWidget.h"
 #include "SceneBar.h"
-#include "GL1SceneRenderer.h"
-#include "GLSLSceneRenderer.h"
 #include "SceneWidgetEventHandler.h"
 #include "InteractiveCameraTransform.h"
 #include "Archive.h"
@@ -12,6 +10,8 @@
 #include "Timer.h"
 #include "AppConfig.h"
 #include "DisplayValueFormat.h"
+#include <cnoid/GL1SceneRenderer>
+#include <cnoid/GLSLSceneRenderer>
 #include <cnoid/Selection>
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneCameras>
@@ -883,9 +883,7 @@ void SceneWidget::Impl::paintGL()
     }
 
     if(needToUpdateViewportInformation){
-        int viewport[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        renderer->updateViewportInformation(viewport[0], viewport[1], viewport[2], viewport[3]);
+        renderer->updateViewportInformation();
         needToUpdateViewportInformation = false;
     }
 

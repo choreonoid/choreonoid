@@ -113,11 +113,6 @@ set(sources
   LazyCaller.cpp
   LazySignal.cpp
   Licenses.cpp
-  GLSceneRenderer.cpp
-  GL1SceneRenderer.cpp
-  GLSLProgram.cpp
-  ShaderPrograms.cpp
-  GLSLSceneRenderer.cpp
   SceneRendererConfig.cpp
   SceneWidget.cpp
   SceneWidgetEvent.cpp
@@ -154,10 +149,6 @@ set(sources
   VirtualJoystickView.cpp
   MessageLogItem.cpp
   LightingItem.cpp
-  gl_core_3_3.c
-  #gl_core_4_0.c
-  #gl_core_4_4.c
-  gl_1_5.c
   )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
@@ -284,11 +275,6 @@ set(headers
   InteractiveCameraTransform.h
   RectRegionMarker.h
   CoordinateFrameMarker.h
-  GLSceneRenderer.h
-  GL1SceneRenderer.h
-  GLSLProgram.h
-  ShaderPrograms.h
-  GLSLSceneRenderer.h
   SceneRendererConfig.h
   SceneView.h
   SceneViewConfig.h
@@ -341,21 +327,10 @@ set(sources ${sources} ${qtsources})
 
 make_gettext_mofiles(${target} mofiles)
 
-if(MSVC)
-  set(libraries CnoidUtil ${CHOREONOID_QT_LIBRARIES} general glu32 opengl32)
-else()
-  set(libraries
-    CnoidUtil ${CHOREONOID_QT_LIBRARIES} ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    OpenGL::GLU icuuc X11 Xfixes)
-endif()
+set(libraries CnoidGLSceneRenderer ${CHOREONOID_QT_LIBRARIES})
 
-if(CNOID_ENABLE_FREE_TYPE)
-  set(sources ${sources} GLFreeType.cpp)
-  if(MSVC)
-    set(libraries ${libraries} Freetype::Freetype)
-  else()
-    set(libraries ${libraries} PkgConfig::FreeType2)
-  endif()
+if(UNIX)
+  set(libraries ${libraries} ${Boost_PROGRAM_OPTIONS_LIBRARY} X11 Xfixes)
 endif()
 
 choreonoid_add_library(${target} SHARED ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})

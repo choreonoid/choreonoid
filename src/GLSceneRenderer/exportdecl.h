@@ -1,0 +1,37 @@
+#ifndef CNOID_GL_SCENE_RENDERER_EXPORTDECL_H
+# define CNOID_GL_SCENE_RENDERER_EXPORTDECL_H
+
+# if defined _WIN32 || defined __CYGWIN__
+#  define CNOID_GL_SCENE_RENDERER_DLLIMPORT __declspec(dllimport)
+#  define CNOID_GL_SCENE_RENDERER_DLLEXPORT __declspec(dllexport)
+#  define CNOID_GL_SCENE_RENDERER_DLLLOCAL
+# else
+#  if __GNUC__ >= 4
+#   define CNOID_GL_SCENE_RENDERER_DLLIMPORT __attribute__ ((visibility("default")))
+#   define CNOID_GL_SCENE_RENDERER_DLLEXPORT __attribute__ ((visibility("default")))
+#   define CNOID_GL_SCENE_RENDERER_DLLLOCAL  __attribute__ ((visibility("hidden")))
+#  else
+#   define CNOID_GL_SCENE_RENDERER_DLLIMPORT
+#   define CNOID_GL_SCENE_RENDERER_DLLEXPORT
+#   define CNOID_GL_SCENE_RENDERER_DLLLOCAL
+#  endif
+# endif
+
+# ifdef CNOID_GL_SCENE_RENDERER_STATIC
+#  define CNOID_GL_SCENE_RENDERER_DLLAPI
+#  define CNOID_GL_SCENE_RENDERER_LOCAL
+# else
+#  ifdef CnoidGLSceneRenderer_EXPORTS
+#   define CNOID_GL_SCENE_RENDERER_DLLAPI CNOID_GL_SCENE_RENDERER_DLLEXPORT
+#  else
+#   define CNOID_GL_SCENE_RENDERER_DLLAPI CNOID_GL_SCENE_RENDERER_DLLIMPORT
+#  endif
+#  define CNOID_GL_SCENE_RENDERER_LOCAL CNOID_GL_SCENE_RENDERER_DLLLOCAL
+# endif
+
+#endif
+
+#ifdef CNOID_EXPORT
+# undef CNOID_EXPORT
+#endif
+#define CNOID_EXPORT CNOID_GL_SCENE_RENDERER_DLLAPI

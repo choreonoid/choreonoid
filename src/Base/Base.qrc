@@ -51,24 +51,6 @@
 
     <file>icon/eraser-cursor.png</file>
     <file>icon/adjustsize.svg</file>
-  
-    <file>shader/NoLighting.vert</file>
-    <file>shader/NoLighting.frag</file>
-    <file>shader/SolidColor.vert</file>
-    <file>shader/SolidColor.frag</file>
-    <file>shader/SolidColorEx.frag</file>
-    <file>shader/SolidPoint.vert</file>
-    <file>shader/SolidPoint.geom</file>
-    <file>shader/SolidPoint.frag</file>
-    <file>shader/ThickLine.geom</file>
-    <file>shader/Text.vert</file>
-    <file>shader/Text.frag</file>
-    <file>shader/Outline.vert</file>
-    <file>shader/MinLighting.vert</file>
-    <file>shader/MinLighting.frag</file>
-    <file>shader/FullLighting.vert</file>
-    <file>shader/FullLighting.geom</file>
-    <file>shader/FullLighting.frag</file>
 
     <file alias="LICENSE">../../LICENSE</file>
 

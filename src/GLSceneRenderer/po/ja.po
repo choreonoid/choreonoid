@@ -1,0 +1,75 @@
+# Japanese translations for Choreonoid package.
+# This file is distributed under the same license as the Choreonoid package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Choreonoid\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-04-28 23:01+0900\n"
+"PO-Revision-Date: 2021-10-25 12:00+0900\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "OpenGL {0} is available for the \"{1}\" view.\n"
+msgstr "OpenGL {0} が \"{1}\" ビューで利用可能です．\n"
+
+msgid "Driver profile: {0} {1}."
+msgstr "ドライバプロファイル: {0} {1}."
+
+msgid "FT_Init_FreeType failed with error code {0}."
+msgstr "FT_Init_FreeTypeがエラーコード{0}で失敗しました．"
+
+msgid "FT_New_Face for \"{0}\" failed with error code {1}."
+msgstr "\"{0}\" に対するFT_New_Faceがエラーコード{1}で失敗しました."
+
+msgid "Shader \"{}\" is not found."
+msgstr "シェーダ \"{}\" がみつかりません．"
+
+msgid ""
+"Shader compilation of \"{0}\" failed.\n"
+"{1}"
+msgstr ""
+"\"{0}\" のシェーダコンパイルに失敗しました．\n"
+"{1}"
+
+msgid "Shader compilation of \"{}\" failed."
+msgstr "\"{}\" のシェーダコンパイルに失敗しました．"
+
+msgid "Unable to create shader program."
+msgstr "シェーダプログラムを生成できません．"
+
+msgid "Program has not been compiled."
+msgstr "プログラムはコンパイルされていません．"
+
+msgid "Program link failed."
+msgstr "プログラムのリンクに失敗しました．"
+
+msgid "Program is not linked"
+msgstr "プログラムはリンクされていません"
+
+msgid "Program failed to validate"
+msgstr "プログラムの有効化に失敗しました"
+
+msgid "Shader has not been linked."
+msgstr "シェーダがリンクされていません．"
+
+msgid "OpenGL {0}.{1} (GLSL {2}) is available for the \"{3}\" view.\n"
+msgstr "OpenGL {0}.{1} (GLSL {2}) が \"{3}\" ビューで利用可能です．\n"
+
+msgid "Driver profile: {0} {1} {2}.\n"
+msgstr "ドライバプロファイル: {0} {1} {2}.\n"
+
+msgid "Shadow casting is disabled according to the value of CNOID_ENABLE_GLSL_SHADOW.\n"
+msgstr "影の描画はCNOID_ENABLE_GLSL_SHADOWの値に従い無効化されました．\n"
+
+msgid "Shadow casting is enabled according to the value of CNOID_ENABLE_GLSL_SHADOW.\n"
+msgstr "影の描画はCNOID_ENABLE_GLSL_SHADOWの値に従い有効化されました．\n"
+
+msgid "Shadow casting is disabled for this GPU due to some problems.\n"
+msgstr "影の描画はこのGPUに対しては問題があるため無効化されます．\n"
+
+msgid "Framebuffer is not complete.\n"
+msgstr "フレームバッファが不完全です．\n"

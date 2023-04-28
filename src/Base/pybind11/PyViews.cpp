@@ -8,13 +8,13 @@
 #include "../SceneWidget.h"
 #include "../SceneWidgetEvent.h"
 #include "../SceneView.h"
-#include "../GLSceneRenderer.h"
 #include "../InteractiveCameraTransform.h"
 #include "../TaskView.h"
 #include "../ViewManager.h"
 #include "../Menu.h"
 #include <cnoid/PyUtil>
 #include <cnoid/SceneRenderer>
+#include <cnoid/GLSceneRenderer>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
 #include <QWidget>

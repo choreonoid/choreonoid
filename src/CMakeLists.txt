@@ -1,4 +1,5 @@
 add_subdirectory(Util)
+add_subdirectory(GLSceneRenderer)
 add_subdirectory(AISTCollisionDetector)
 add_subdirectory(AssimpSceneLoader)
 add_subdirectory(Body)

@@ -1125,6 +1125,14 @@ void GLSLSceneRenderer::flushGL()
 }
 
 
+void GLSLSceneRenderer::updateViewportInformation()
+{
+    int viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    updateViewportInformation(viewport[0], viewport[1], viewport[2], viewport[3]);
+}
+
+
 void GLSLSceneRenderer::updateViewportInformation(int x, int y, int width, int height)
 {
     GLSceneRenderer::updateViewportInformation(x, y, width, height);

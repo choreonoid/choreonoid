@@ -55,6 +55,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void setDefaultFramebufferObject(unsigned int id) override;
     virtual const std::string& glVendor() const override;
     virtual void setViewport(int x, int y, int width, int height) override;
+    virtual void updateViewportInformation() override;
     virtual void updateViewportInformation(int x, int y, int width, int height) override;
 
     virtual const Vector3& pickedPoint() const override;

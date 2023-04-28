@@ -28,6 +28,7 @@ public:
     virtual void flushGL() override;
     virtual const std::string& glVendor() const override;
     virtual void setViewport(int x, int y, int width, int height) override;
+    virtual void updateViewportInformation() override;
 
     virtual const Vector3& pickedPoint() const override;
     virtual const SgNodePath& pickedNodePath() const override;

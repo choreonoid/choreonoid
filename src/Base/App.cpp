@@ -60,10 +60,10 @@
 #include "GeneralSliderView.h"
 #include "VirtualJoystickView.h"
 #include "MainMenu.h"
-#include "GLSceneRenderer.h"
 #include "Licenses.h"
 #include "MovieRecorderBar.h"
 #include "LazyCaller.h"
+#include <cnoid/GLSceneRenderer>
 #include <cnoid/MessageOut>
 #include <cnoid/Config>
 #include <cnoid/ValueTree>

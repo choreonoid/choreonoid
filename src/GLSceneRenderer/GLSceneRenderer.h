@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_GL_SCENE_RENDERER_H
 #define CNOID_BASE_GL_SCENE_RENDERER_H
 
@@ -48,7 +43,10 @@ public:
     virtual const std::string& glVendor() const = 0;
 
     virtual void setViewport(int x, int y, int width, int height) = 0;
-    
+
+    //! Call this function when the OpenGL viewport is updated by the system.
+    virtual void updateViewportInformation() = 0;
+
     //! Call this function instead of setViewport when the viewport is specified by the system.
     virtual void updateViewportInformation(int x, int y, int width, int height);
 

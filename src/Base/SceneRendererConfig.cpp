@@ -1,12 +1,12 @@
 #include "SceneRendererConfig.h"
 #include "MainWindow.h"
-#include "GLSceneRenderer.h"
 #include "Dialog.h"
 #include "Buttons.h"
 #include "ButtonGroup.h"
 #include "CheckBox.h"
 #include "SpinBox.h"
 #include "DoubleSpinBox.h"
+#include <cnoid/GLSceneRenderer>
 #include <cnoid/SceneLights>
 #include <cnoid/Selection>
 #include <cnoid/ValueTree>

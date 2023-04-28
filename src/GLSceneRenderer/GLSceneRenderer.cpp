@@ -1,12 +1,6 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "GLSceneRenderer.h"
 #include "GL1SceneRenderer.h"
 #include "GLSLSceneRenderer.h"
-#include "MessageView.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/NullOut>

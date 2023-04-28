@@ -330,8 +330,8 @@ void ShaderProgram::setVertexColorEnabled(bool on)
 
 NolightingProgram::NolightingProgram()
     : NolightingProgram(
-        { { ":/Base/shader/NoLighting.vert", GL_VERTEX_SHADER },
-          { ":/Base/shader/NoLighting.frag", GL_FRAGMENT_SHADER } })
+        { { ":/GLSceneRenderer/shader/NoLighting.vert", GL_VERTEX_SHADER },
+          { ":/GLSceneRenderer/shader/NoLighting.frag", GL_FRAGMENT_SHADER } })
 {
 
 }
@@ -372,8 +372,8 @@ void NolightingProgram::setTransform(const Matrix4& PV, const Isometry3& V, cons
 
 SolidColorProgram::SolidColorProgram()
     : SolidColorProgram(
-        { { ":/Base/shader/SolidColor.vert", GL_VERTEX_SHADER },
-          { ":/Base/shader/SolidColor.frag", GL_FRAGMENT_SHADER } })
+        { { ":/GLSceneRenderer/shader/SolidColor.vert", GL_VERTEX_SHADER },
+          { ":/GLSceneRenderer/shader/SolidColor.frag", GL_FRAGMENT_SHADER } })
 {
 
 }
@@ -458,8 +458,8 @@ bool SolidColorProgram::isColorChangable() const
 
 SolidColorExProgram::SolidColorExProgram()
     : SolidColorExProgram(
-        { { ":/Base/shader/SolidColor.vert", GL_VERTEX_SHADER },
-          { ":/Base/shader/SolidColorEx.frag", GL_FRAGMENT_SHADER } })
+        { { ":/GLSceneRenderer/shader/SolidColor.vert", GL_VERTEX_SHADER },
+          { ":/GLSceneRenderer/shader/SolidColorEx.frag", GL_FRAGMENT_SHADER } })
 {
 
 }
@@ -541,9 +541,9 @@ void SolidColorExProgram::setVertexColorEnabled(bool on)
 
 ThickLineProgram::ThickLineProgram()
     : SolidColorExProgram(
-        { { ":/Base/shader/SolidColor.vert", GL_VERTEX_SHADER },
-          { ":/Base/shader/ThickLine.geom", GL_GEOMETRY_SHADER },
-          { ":/Base/shader/SolidColorEx.frag", GL_FRAGMENT_SHADER } })
+        { { ":/GLSceneRenderer/shader/SolidColor.vert", GL_VERTEX_SHADER },
+          { ":/GLSceneRenderer/shader/ThickLine.geom", GL_GEOMETRY_SHADER },
+          { ":/GLSceneRenderer/shader/SolidColorEx.frag", GL_FRAGMENT_SHADER } })
 {
     impl = new Impl;
 }
@@ -595,9 +595,9 @@ void ThickLineProgram::setLineWidth(float width)
 
 SolidPointProgram::SolidPointProgram()
     : SolidColorProgram(
-        { { ":/Base/shader/SolidPoint.vert", GL_VERTEX_SHADER },
-          { ":/Base/shader/SolidPoint.geom", GL_GEOMETRY_SHADER },
-          { ":/Base/shader/SolidPoint.frag", GL_FRAGMENT_SHADER } })
+        { { ":/GLSceneRenderer/shader/SolidPoint.vert", GL_VERTEX_SHADER },
+          { ":/GLSceneRenderer/shader/SolidPoint.geom", GL_GEOMETRY_SHADER },
+          { ":/GLSceneRenderer/shader/SolidPoint.frag", GL_FRAGMENT_SHADER } })
 {
     impl = new Impl;
 }
@@ -671,8 +671,8 @@ void SolidPointProgram::setViewportSize(int width, int height)
 
 TextProgram::TextProgram()
     : NolightingProgram(
-        { { ":/Base/shader/Text.vert", GL_VERTEX_SHADER },
-          { ":/Base/shader/Text.frag", GL_FRAGMENT_SHADER } })
+        { { ":/GLSceneRenderer/shader/Text.vert", GL_VERTEX_SHADER },
+          { ":/GLSceneRenderer/shader/Text.frag", GL_FRAGMENT_SHADER } })
 {
     color.setOnes();
     textureUnit = 0;
@@ -709,8 +709,8 @@ void TextProgram::setTextureUnit(int textureUnit)
 
 OutlineProgram::OutlineProgram()
     : SolidColorProgram(
-        { { ":/Base/shader/Outline.vert", GL_VERTEX_SHADER },
-          { ":/Base/shader/SolidColor.frag", GL_FRAGMENT_SHADER } })
+        { { ":/GLSceneRenderer/shader/Outline.vert", GL_VERTEX_SHADER },
+          { ":/GLSceneRenderer/shader/SolidColor.frag", GL_FRAGMENT_SHADER } })
 {
     setColorChangable(false);
 }
@@ -755,8 +755,8 @@ void LightingProgram::setFog(const SgFog* fog)
 
 MinimumLightingProgram::MinimumLightingProgram()
     : LightingProgram(
-        { { ":/Base/shader/MinLighting.vert", GL_VERTEX_SHADER },
-          { ":/Base/shader/MinLighting.frag", GL_FRAGMENT_SHADER } })
+        { { ":/GLSceneRenderer/shader/MinLighting.vert", GL_VERTEX_SHADER },
+          { ":/GLSceneRenderer/shader/MinLighting.frag", GL_FRAGMENT_SHADER } })
 {
     impl = new Impl;
 }
@@ -1140,9 +1140,9 @@ void MaterialLightingProgram::setMinimumTransparency(float t)
 
 FullLightingProgram::FullLightingProgram()
     : FullLightingProgram(
-        { { ":/Base/shader/FullLighting.vert", GL_VERTEX_SHADER },
-          { ":/Base/shader/FullLighting.geom", GL_GEOMETRY_SHADER },
-          { ":/Base/shader/FullLighting.frag", GL_FRAGMENT_SHADER } })
+        { { ":/GLSceneRenderer/shader/FullLighting.vert", GL_VERTEX_SHADER },
+          { ":/GLSceneRenderer/shader/FullLighting.geom", GL_GEOMETRY_SHADER },
+          { ":/GLSceneRenderer/shader/FullLighting.frag", GL_FRAGMENT_SHADER } })
 {
     
 }

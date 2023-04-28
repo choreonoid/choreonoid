@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-26 03:35+0900\n"
+"POT-Creation-Date: 2023-04-28 23:06+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -227,67 +227,6 @@ msgstr "プロジェクトを保存"
 
 msgid "FolderItem"
 msgstr "フォルダアイテム"
-
-msgid "OpenGL {0} is available for the \"{1}\" view.\n"
-msgstr "OpenGL {0} が \"{1}\" ビューで利用可能です．\n"
-
-msgid "Driver profile: {0} {1}."
-msgstr "ドライバプロファイル: {0} {1}."
-
-msgid "FT_Init_FreeType failed with error code {0}."
-msgstr "FT_Init_FreeTypeがエラーコード{0}で失敗しました．"
-
-msgid "FT_New_Face for \"{0}\" failed with error code {1}."
-msgstr "\"{0}\" に対するFT_New_Faceがエラーコード{1}で失敗しました."
-
-msgid "Shader \"{}\" is not found."
-msgstr "シェーダ \"{}\" がみつかりません．"
-
-msgid ""
-"Shader compilation of \"{0}\" failed.\n"
-"{1}"
-msgstr ""
-"\"{0}\" のシェーダコンパイルに失敗しました．\n"
-"{1}"
-
-msgid "Shader compilation of \"{}\" failed."
-msgstr "\"{}\" のシェーダコンパイルに失敗しました．"
-
-msgid "Unable to create shader program."
-msgstr "シェーダプログラムを生成できません．"
-
-msgid "Program has not been compiled."
-msgstr "プログラムはコンパイルされていません．"
-
-msgid "Program link failed."
-msgstr "プログラムのリンクに失敗しました．"
-
-msgid "Program is not linked"
-msgstr "プログラムはリンクされていません"
-
-msgid "Program failed to validate"
-msgstr "プログラムの有効化に失敗しました"
-
-msgid "Shader has not been linked."
-msgstr "シェーダがリンクされていません．"
-
-msgid "OpenGL {0}.{1} (GLSL {2}) is available for the \"{3}\" view.\n"
-msgstr "OpenGL {0}.{1} (GLSL {2}) が \"{3}\" ビューで利用可能です．\n"
-
-msgid "Driver profile: {0} {1} {2}.\n"
-msgstr "ドライバプロファイル: {0} {1} {2}.\n"
-
-msgid "Shadow casting is disabled according to the value of CNOID_ENABLE_GLSL_SHADOW.\n"
-msgstr "影の描画はCNOID_ENABLE_GLSL_SHADOWの値に従い無効化されました．\n"
-
-msgid "Shadow casting is enabled according to the value of CNOID_ENABLE_GLSL_SHADOW.\n"
-msgstr "影の描画はCNOID_ENABLE_GLSL_SHADOWの値に従い有効化されました．\n"
-
-msgid "Shadow casting is disabled for this GPU due to some problems.\n"
-msgstr "影の描画はこのGPUに対しては問題があるため無効化されます．\n"
-
-msgid "Framebuffer is not complete.\n"
-msgstr "フレームバッファが不完全です．\n"
 
 msgid "The file format of \"{}\" is not supported.\n"
 msgstr "ファイルフォーマット \"{}\" はサポートされていません．\n"
@@ -1305,21 +1244,6 @@ msgstr "編集可能"
 msgid "Num points"
 msgstr "ポイント数"
 
-msgid "Roll-pitch-yaw"
-msgstr "ロールピッチヨー"
-
-msgid "Fetch as a unique RPY value"
-msgstr "一意なRPY値として取り込み"
-
-msgid "Quaternion"
-msgstr "クォータニオン"
-
-msgid "Rotation matrix"
-msgstr "回転行列"
-
-msgid "Additional precision"
-msgstr "追加精度"
-
 msgid "PositionTagGroupItem"
 msgstr "ポジションタググループアイテム"
 
@@ -1388,6 +1312,83 @@ msgstr "\"%1\" の親座標系は \"%2\" の座標系に変更されます."
 
 msgid "The parent coordinate system of \"%1\" is changed to the global coordinate system."
 msgstr "\"%1\" の親座標系はグローバル座標系に変更されます."
+
+msgid "Roll-pitch-yaw"
+msgstr "ロールピッチヨー"
+
+msgid "Fetch as a unique RPY value"
+msgstr "一意なRPY値として取り込み"
+
+msgid "Quaternion"
+msgstr "クォータニオン"
+
+msgid "Rotation matrix"
+msgstr "回転行列"
+
+msgid "Additional precision"
+msgstr "追加精度"
+
+#, fuzzy
+msgid "The archive directory \"{0}\" cannot be cleaned: {1}."
+msgstr "\"{0}\"のファイル形式を確定できません．"
+
+#, fuzzy
+msgid "The archive directory \"{0}\" cannot be created: {1}."
+msgstr "{1}の \"{0}\" ビューを復帰できません．{2}"
+
+#, fuzzy
+msgid "Directory \"{0}\" for \"{1}\" cannot be created in \"{2}\": {3}."
+msgstr "プラグイン \"{1}\" のアドオン \"{0}\" を生成できません．"
+
+msgid "File \"{0}\" cannot be copied into the archive directory \"{1}\": {2}."
+msgstr ""
+
+#, fuzzy
+msgid "The archive project cannot be saved as project file \"{0}\"."
+msgstr "コピーされたアイテムを \"{0}\" にペーストできませんでした．"
+
+msgid ""
+"A relative path \"{0}\" is given to the project archiver as a file path to which {0} depends but "
+"it must be an absolute path."
+msgstr ""
+
+msgid ""
+"The file path \"{0}\" for {1} cannot be relocated to be a file path in the archive directory "
+"\"{2}\"."
+msgstr ""
+
+#, fuzzy
+msgid "The existing archive file \"{0}\" cannot be removed: {1}."
+msgstr ""
+"アプリケーション設定ファイル \"{0}\" を読み込むことができません．\n"
+"{1}"
+
+msgid "Failed to create the archive file \"{0}\": {1}"
+msgstr ""
+
+msgid "Failed to add directory \"{0}\" to the zip archive: {1}"
+msgstr ""
+
+msgid "Failed to add file \"{0}\" to the zip archive: {1}"
+msgstr ""
+
+msgid "Failed to open the archive file \"{0}\": {1}"
+msgstr ""
+
+#, fuzzy
+msgid "Entry {0} in \"{1}\" cannot be extracted."
+msgstr "{0} \"{1}\" を読み出すことができません．"
+
+#, fuzzy
+msgid "Directory \"{0}\" for the archive \"{1}\" cannot be created: {2}."
+msgstr "プラグイン \"{1}\" のアドオン \"{0}\" を生成できません．"
+
+#, fuzzy
+msgid "File \"{0}\" in the archive \"{1}\" cannot be extracted."
+msgstr "{1}の \"{0}\" ビューを復帰できません．"
+
+msgid "Project archive \"{0}\" does not include a project file."
+msgstr ""
 
 msgid ""
 "The state of the \"{0}\" {1} was not completely restored.\n"
@@ -1501,6 +1502,12 @@ msgstr " 法線: {}\n"
 
 msgid " Triangles: {}"
 msgstr " トライアングル: {}"
+
+msgid "The project must be saved to detect the scene files for {0}."
+msgstr ""
+
+msgid "The file \"{0}\" on which {1} depends is not relocatable and will be lost in the archive."
+msgstr ""
 
 msgid "RootItem"
 msgstr "ルートアイテム"
