@@ -41,7 +41,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(target CnoidMulticopterPlugin)
 choreonoid_make_gettext_mo_files(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${qtsources} ${qtforms} ${mofiles} HEADERS ${headers})
-target_link_libraries(${target} CnoidBodyPlugin)
+target_link_libraries(${target} PUBLIC CnoidBodyPlugin)
 
 if(ENABLE_PYTHON AND USE_PYBIND11)
   add_subdirectory(pybind11)

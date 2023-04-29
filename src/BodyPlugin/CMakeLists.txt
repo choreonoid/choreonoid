@@ -1,5 +1,3 @@
-# @author Shin'ichiro Nakaoka
-
 #set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
 #set_source_files_properties(SimulatorItem.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
@@ -146,7 +144,7 @@ if(MSVC)
   set(boost_libraries ${boost_libraries} ${Boost_BZIP2_LIBRARY} ${Boost_ZLIB_LIBRARY})
 endif()
 
-target_link_libraries(${target} CnoidBody ${boost_libraries})
+target_link_libraries(${target} PUBLIC CnoidBody CnoidGLSceneRenderer PRIVATE ${boost_libraries})
 
 if(ENABLE_PYTHON)
   add_subdirectory(pybind11)

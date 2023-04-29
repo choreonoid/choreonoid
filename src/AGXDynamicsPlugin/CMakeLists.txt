@@ -111,17 +111,14 @@ set(headers
 choreonoid_make_gettext_mo_files(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
 
-# Specify which libraries to be used when building in release
-AGX_TARGET_LINK_LIBRARIES(${target} optimized ${AGX_LIBRARIES_RELEASE})
-
-# Specify which libraries to be used when building in debug
+set(agx_libraries optimized ${AGX_LIBRARIES_RELEASE})
 if(AGX_LIBRARIES_DEBUG)
-  AGX_TARGET_LINK_LIBRARIES(${target} debug ${AGX_LIBRARIES_DEBUG})
+  set(agx_libraries ${agx_libraries} debug ${AGX_LIBRARIES_DEBUG})
 else()
-  AGX_TARGET_LINK_LIBRARIES(${target} debug ${AGX_LIBRARIES_RELEASE})
+  set(agx_libraries ${agx_libraries} debug ${AGX_LIBRARIES_RELEASE})
 endif()
 
-target_link_libraries(${target} CnoidBodyPlugin)
+target_link_libraries(${target} PUBLIC CnoidBodyPlugin ${agx_libraries})
 
 add_subdirectory(AGXBodyExtensionPlugin)
 

@@ -18,4 +18,4 @@ set(sources
 set(target CnoidTrafficControlPlugin)
 choreonoid_make_gettext_mo_files(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${mofiles})
-target_link_libraries(${target} CnoidBodyPlugin)
+target_link_libraries(${target} PUBLIC CnoidBodyPlugin)

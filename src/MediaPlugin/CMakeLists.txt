@@ -1,20 +1,10 @@
-# @author Shin'ichiro Nakaoka
-
-if(APPLE)
-  # Gstreamer doesn't support MacOS X
-  #return()
-endif()
-
 option(BUILD_MEDIA_PLUGIN "Building MediaPlugin" OFF)
 
 if(NOT BUILD_MEDIA_PLUGIN)
   return()
 endif()
 
-#set(CMAKE_BUILD_TYPE Debug)
-
 if(UNIX)
-
   set(sources
     MediaPlugin.cpp
     MediaItem.cpp
@@ -29,19 +19,12 @@ if(UNIX)
   include_directories(${SNDFILE_INCLUDE_DIRS})
   set_source_files_properties(AudioItem.cpp PROPERTIES COMPILE_DEFINITIONS "CNOID_MEDIA_PLUGIN_USE_LIBSNDFILE")
 
-  set(libraries 
-    ${GSTREAMER_LIBRARIES}
-    ${SNDFILE_LIBRARIES}
-    X11
-    )
-
-  if(NOT APPLE)
-    pkg_check_modules(LIBPULSE REQUIRED libpulse)
-    include_directories(${LIBPULSE_INCLUDE_DIRS})
-    set(sources ${sources} PulseAudioManager.cpp)
-    set_source_files_properties(MediaPlugin.cpp PROPERTIES COMPILE_DEFINITIONS "CNOID_MEDIA_PLUGIN_USE_PULSEAUDIO")
-    set(libraries ${libraries} ${LIBPULSE_LIBRARIES})
-  endif()
+  pkg_check_modules(LIBPULSE REQUIRED libpulse)
+  include_directories(${LIBPULSE_INCLUDE_DIRS})
+  set(sources ${sources} PulseAudioManager.cpp)
+  set_source_files_properties(MediaPlugin.cpp PROPERTIES COMPILE_DEFINITIONS "CNOID_MEDIA_PLUGIN_USE_PULSEAUDIO")
+  
+  set(libraries PRIVATE ${GSTREAMER_LIBRARIES} ${SNDFILE_LIBRARIES} ${LIBPULSE_LIBRARIES} X11)
 
 elseif(WIN32)
   set(sources
@@ -50,7 +33,7 @@ elseif(WIN32)
     DSMediaView.cpp
     AudioItem.cpp
     )
-  set(libraries Strmiids.lib)
+  set(libraries PRIVATE Strmiids.lib)
 endif()
 
 set(headers

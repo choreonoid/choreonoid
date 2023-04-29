@@ -25,20 +25,20 @@ QT5_ADD_RESOURCES(RC_SRCS GLSceneRenderer.qrc)
 
 make_gettext_mofiles(${target} mofiles)
 
-set(libraries CnoidUtil Qt5::Core)
+set(libraries PUBLIC CnoidUtil PRIVATE Qt5::Core)
 
 if(MSVC)
-  set(libraries ${libraries} general glu32 opengl32)
+  set(libraries ${libraries} PUBLIC general glu32 opengl32)
 else()
-  set(libraries ${libraries} OpenGL::GLU)
+  set(libraries ${libraries} PUBLIC OpenGL::GLU)
 endif()
 
 if(CNOID_ENABLE_FREE_TYPE)
   set(sources ${sources} GLFreeType.cpp)
   if(MSVC)
-    set(libraries ${libraries} Freetype::Freetype)
+    set(libraries ${libraries} PRIVATE Freetype::Freetype)
   else()
-    set(libraries ${libraries} PkgConfig::FreeType2)
+    set(libraries ${libraries} PRIVATE PkgConfig::FreeType2)
   endif()
 endif()
 

@@ -14,5 +14,5 @@ set(sources
 
 set(target CnoidSubmersibleSamplePlugin)
 choreonoid_add_plugin(${target} ${sources})
-target_link_libraries(${target} CnoidBodyPlugin)
+target_link_libraries(${target} PUBLIC CnoidBodyPlugin)
 install_project_files(SubmersibleSample.cnoid)

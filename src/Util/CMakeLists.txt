@@ -222,48 +222,40 @@ set(target CnoidUtil)
 make_gettext_mofiles(${target} mofiles)
 choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers})
 
+set(libraries
+  PUBLIC fmt::fmt ${GETTEXT_LIBRARIES}
+  PRIVATE ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES})
+
 if(UNIX)
-  set(libraries
-    fmt::fmt
-    ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${LIBUUID_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${Boost_SYSTEM_LIBRARY}
-    ${GETTEXT_LIBRARIES}
-    m dl
+  set(libraries ${libraries}
+    PUBLIC ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} m dl
+    PRIVATE ${LIBUUID_LIBRARIES}
     )
-
   if(FILESYSTEM_LIBRARY)
-    set(libraries ${libraries} ${FILESYSTEM_LIBRARY})
+    set(libraries ${libraries} PUBLIC ${FILESYSTEM_LIBRARY})
   endif()
-
   if(ENABLE_GPERFTOOLS_PROFILER)
-    target_link_libraries(${target} ${GPREFTOOLS_PROFILER_LIBRARIES})
-  endif()
-
-  if(APPLE)
-    target_link_libraries(${target} ${libraries} "-framework IOKit -framework Foundation")
-  else()
-    target_link_libraries(${target} ${libraries})
+    set(libraries ${libraries} PRIVATE ${GPREFTOOLS_PROFILER_LIBRARIES})
   endif()
 
 elseif(MSVC)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "YAML_DECLARE_STATIC")
-  set(libraries
-    fmt::fmt
-    ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${GETTEXT_LIBRARIES}
-    winmm Rpcrt4)
+  set(libraries ${libraries}
+    PRIVATE ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} winmm Rpcrt4)
   find_file(XINPUT_DLL "XInput1_4.dll")
   if(XINPUT_DLL)
-    target_link_libraries(${target} ${libraries} XInput)
+    set(libraries ${libraries} PRIVATE XInput)
     add_definitions(-DUSE_XINPUT)
   else()
     find_file(XINPUT_DLL "XInput9_1_0.dll")
     if(XINPUT_DLL)
-      target_link_libraries(${target} ${libraries} XInput9_1_0)
+      set(libraries ${libraries} XInput9_1_0)
       add_definitions(-DUSE_XINPUT)
     endif()
   endif()
 endif()
+
+target_link_libraries(${target} ${libraries})
 
 if(ENABLE_PYTHON)
   add_subdirectory(pybind11)

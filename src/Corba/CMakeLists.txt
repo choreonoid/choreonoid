@@ -14,7 +14,7 @@ set(headers
   )
 
 choreonoid_add_library(${target} SHARED ${sources} HEADERS ${headers})
-target_link_libraries(${target} ${CHOREONOID_OMNIORB_LIBRARIES} fmt::fmt)
+target_link_libraries(${target} PUBLIC ${CHOREONOID_OMNIORB_LIBRARIES} PRIVATE fmt::fmt)
 
 # name server
 set(target cnoid-nameserver)

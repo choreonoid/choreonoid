@@ -1,6 +1,3 @@
-
-# @author Shin'ichiro Nakaoka
-
 #set(CMAKE_BUILD_TYPE Debug)
 
 set(sources
@@ -63,4 +60,4 @@ elseif(UNIX)
 
 set(target CnoidAISTCollisionDetector)
 choreonoid_add_library(${target} SHARED ${sources} HEADERS ${headers})
-target_link_libraries(${target} CnoidUtil)
+target_link_libraries(${target} PUBLIC CnoidUtil)

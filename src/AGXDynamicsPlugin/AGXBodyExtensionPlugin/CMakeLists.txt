@@ -21,12 +21,4 @@ set(sources
 
 choreonoid_make_gettext_mo_files(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources})
-
-AGX_TARGET_LINK_LIBRARIES(${target} optimized ${AGX_LIBRARIES_RELEASE})
-if(AGX_LIBRARIES_DEBUG)
-  AGX_TARGET_LINK_LIBRARIES(${target} debug ${AGX_LIBRARIES_DEBUG})
-else()
-  AGX_TARGET_LINK_LIBRARIES(${target} debug ${AGX_LIBRARIES_RELEASE})
-endif()
-
-target_link_libraries(${target} CnoidAGXDynamicsPlugin)
+target_link_libraries(${target} PUBLIC CnoidAGXDynamicsPlugin)

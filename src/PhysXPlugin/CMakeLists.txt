@@ -1,5 +1,3 @@
-# @author Shizuko Hattori
-
 option(BUILD_PHYSX_PLUGIN "Building PhysXPlugin" OFF)
 mark_as_advanced(BUILD_PHYSX_PLUGIN)
 
@@ -154,4 +152,4 @@ set(headers
 
 make_gettext_mofiles(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
-target_link_libraries(${target} CnoidBodyPlugin ${PHYSX_LIBRARIES})
+target_link_libraries(${target} PUBLIC CnoidBodyPlugin ${PHYSX_LIBRARIES})

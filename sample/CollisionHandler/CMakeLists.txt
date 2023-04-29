@@ -1,6 +1,3 @@
-
-#set(CMAKE_BUILD_TYPE Debug)
-
 if(NOT ENABLE_GUI)
   return()
 endif()
@@ -18,4 +15,4 @@ set(sources
 
 set(target CnoidSpringDamperContactPlugin)
 choreonoid_add_plugin(${target} SHARED ${sources})
-target_link_libraries(${target} CnoidBodyPlugin)
+target_link_libraries(${target} PUBLIC CnoidBodyPlugin)

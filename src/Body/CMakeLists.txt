@@ -1,5 +1,3 @@
-# @author Shin'ichiro Nakaoka
-
 #set(CMAKE_BUILD_TYPE Debug)
 #set_source_files_properties(SceneBody.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
@@ -53,7 +51,6 @@ set(sources
   CompositeIK.cpp
   PinDragIK.cpp
   BodyKinematicsKit.cpp
-  #KinematicBodyPart.cpp
   KinematicBodySet.cpp
   LeggedBodyHelper.cpp
   BodyCollisionLinkFilter.cpp
@@ -140,7 +137,6 @@ set(headers
   CompositeBodyIK.h
   PinDragIK.h
   BodyKinematicsKit.h
-  #KinematicBodyPart.h
   KinematicBodySet.h
   LeggedBodyHelper.h
   PenetrationBlocker.h
@@ -171,11 +167,11 @@ set(headers
 choreonoid_make_gettext_mo_files(${target} mofiles)
 choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers})
 
+set(libraries PUBLIC CnoidUtil CnoidAISTCollisionDetector)
 if(UNIX)
-  target_link_libraries(${target} CnoidUtil CnoidAISTCollisionDetector dl)
-elseif(MSVC)
-  target_link_libraries(${target} CnoidUtil CnoidAISTCollisionDetector)
+  set(libraries ${libraries} PRIVATE dl)
 endif()
+target_link_libraries(${target} ${libraries})
 
 include(ChoreonoidBodyBuildFunctions.cmake)
 if(CHOREONOID_INSTALL_SDK)
@@ -190,13 +186,6 @@ if(BODY_CUSTOMIZERS)
     choreonoid_add_body_customizer(${customizer} ${src})
   endforeach()
 endif()
-
-# TODO: Remove the following code. It is written in CHOREONID_BODY_ADD_SIMPLE_CONTROLLER
-#file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller)
-#install(
-#  DIRECTORY ${PROJECT_BINARY_DIR}/${CNOID_PLUGIN_SUBDIR}/simplecontroller
-#  DESTINATION ${CNOID_PLUGIN_SUBDIR}/simplecontroller
-#  FILES_MATCHING PATTERN "*" EXCLUDE)
 
 if(ENABLE_PYTHON)
   add_subdirectory(pybind11)

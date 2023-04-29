@@ -10,4 +10,4 @@ set(sources
 
 set(target CnoidCompetitionPlugin)
 choreonoid_add_plugin(${target} ${sources})
-target_link_libraries(${target} CnoidBodyPlugin)
+target_link_libraries(${target} PUBLIC CnoidBodyPlugin)

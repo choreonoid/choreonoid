@@ -24,4 +24,4 @@ set(target CnoidPCLPlugin)
 
 make_gettext_mofiles(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
-target_link_libraries(${target} ${PCL_COMMON_LIBRARIES} ${PCL_SURFACE_LIBRARIES} ${PCL_FEATURES_LIBRARIES} pcl_io)
+target_link_libraries(${target} PUBLIC ${PCL_COMMON_LIBRARIES} ${PCL_SURFACE_LIBRARIES} ${PCL_FEATURES_LIBRARIES} pcl_io)

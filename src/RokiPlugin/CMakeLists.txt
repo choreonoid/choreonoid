@@ -28,5 +28,5 @@ set(headers
 
 make_gettext_mofiles(${target} mofiles) 
 choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
-target_link_libraries(${target} CnoidBodyPlugin ${ROKI_LIBRARIES})
+target_link_libraries(${target} PUBLIC CnoidBodyPlugin ${ROKI_LIBRARIES})
 install_runtime_dlls(${ROKI_DIR}/bin ${ROKI_LIBRARIES})

@@ -11,6 +11,6 @@ set(sources
 
 choreonoid_make_gettext_mo_files(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${mofiles})
-target_link_libraries(${target} CnoidBodyPlugin CnoidPythonPlugin)
+target_link_libraries(${target} PUBLIC CnoidBodyPlugin CnoidPythonPlugin)
 
 add_subdirectory(pybind11)

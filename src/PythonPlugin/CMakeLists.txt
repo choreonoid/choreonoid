@@ -22,7 +22,7 @@ set(headers
 
 choreonoid_make_gettext_mo_files(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
-target_link_libraries(${target} CnoidPyUtil)
+target_link_libraries(${target} PUBLIC CnoidPyUtil)
 
 configure_file(rbimporter.py ${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR}/cnoid/ COPYONLY)
 install(FILES rbimporter.py DESTINATION ${CHOREONOID_PYTHON_SUBDIR}/cnoid)

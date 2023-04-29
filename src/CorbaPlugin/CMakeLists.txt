@@ -19,7 +19,7 @@ set(headers
 
 choreonoid_make_gettext_mo_files(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${mofiles} ${idl_cpp_files} HEADERS ${headers})
-target_link_libraries(${target} CnoidCorba)
+target_link_libraries(${target} PUBLIC CnoidCorba)
 
 # test program
 # choreonoid_add_executable(corba-test test.cpp ${idl_cpp_files})

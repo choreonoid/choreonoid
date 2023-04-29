@@ -1,8 +1,3 @@
-
-# @author Shin'ichiro Nakaoka
-
-#set(CMAKE_BUILD_TYPE Debug)
-
 option(BUILD_BALANCER_PLUGIN "Building BalancerPlugin" OFF)
 if(NOT BUILD_BALANCER_PLUGIN)
   return()
@@ -26,4 +21,4 @@ if(WIN32)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "CNOID_USE_GETTEXT_WRAPPER")
 endif()
 
-target_link_libraries(${target} CnoidPoseSeqPlugin)
+target_link_libraries(${target} PUBLIC CnoidPoseSeqPlugin)

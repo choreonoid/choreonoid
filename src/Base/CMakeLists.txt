@@ -1,5 +1,3 @@
-# @author Shin'ichiro Nakaoka
-
 #set(CMAKE_BUILD_TYPE Debug)
 #set_source_files_properties(GLSLSceneRenderer.cpp PROPERTIES COMPILE_FLAGS "-O3 -g")
 
@@ -327,10 +325,12 @@ set(sources ${sources} ${qtsources})
 
 make_gettext_mofiles(${target} mofiles)
 
-set(libraries CnoidGLSceneRenderer ${CHOREONOID_QT_LIBRARIES})
+set(libraries
+  PUBLIC CnoidUtil ${CHOREONOID_QT_LIBRARIES}
+  PRIVATE CnoidGLSceneRenderer)
 
 if(UNIX)
-  set(libraries ${libraries} ${Boost_PROGRAM_OPTIONS_LIBRARY} X11 Xfixes)
+  set(libraries ${libraries} PUBLIC ${Boost_PROGRAM_OPTIONS_LIBRARY} PRIVATE X11 Xfixes)
 endif()
 
 choreonoid_add_library(${target} SHARED ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})

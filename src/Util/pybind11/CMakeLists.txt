@@ -6,7 +6,7 @@ set(headers
   )
 
 choreonoid_add_library(CnoidPyUtil SHARED PyUtil.cpp HEADERS ${headers})
-target_link_libraries(CnoidPyUtil ${PYTHON_LIBRARIES})
+target_link_libraries(CnoidPyUtil PUBLIC ${PYTHON_LIBRARIES})
 
 choreonoid_add_python_module(PyUtil
   PyUtilModule.cpp

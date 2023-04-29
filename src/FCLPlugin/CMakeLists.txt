@@ -27,5 +27,5 @@ link_directories(${FCL_LIBRARY_DIRS})
 
 set(target CnoidFCLPlugin)
 choreonoid_add_plugin(${target} FCLCollisionDetector.cpp)
-target_link_libraries(${target} CnoidBodyPlugin ${FCL_LIBRARIES})
+target_link_libraries(${target} PUBLIC CnoidBodyPlugin PRIVATE ${FCL_LIBRARIES})
 install_runtime_dlls(${FCL_PREFIX}/bin ${FCL_LIBRARIES})
