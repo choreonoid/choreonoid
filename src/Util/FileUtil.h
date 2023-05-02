@@ -33,11 +33,16 @@ CNOID_EXPORT int findSubDirectory(
     const stdx::filesystem::path& path,
     stdx::filesystem::path& out_subdirectory);
 
+CNOID_EXPORT stdx::filesystem::path getRelativePath(
+    const stdx::filesystem::path& path, const stdx::filesystem::path& base);
+
+[[deprecated("Use getRelativePath.")]]
 CNOID_EXPORT bool findRelativePath(
     const stdx::filesystem::path& from,
     const stdx::filesystem::path& to,
     stdx::filesystem::path& out_relativePath);
 
+CNOID_EXPORT stdx::filesystem::path getNativeUniformPath(const stdx::filesystem::path& path);
 
 /**
    This function returs the extension without dot.

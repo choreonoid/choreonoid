@@ -259,9 +259,9 @@ bool PythonExecutor::Impl::exec(std::function<python::object()> execScript, cons
         }
 
         if(!filename.empty()){
-            filesystem::path relative;
-            if(findRelativePath(filesystem::current_path(), filepath, relative)){
-                pythonPlugin->globalNamespace()["__file__"] = toUTF8(relative.string());
+            auto relativePath = getRelativePath(filepath, filesystem::current_path());
+            if(!relativePath.empty()){
+                pythonPlugin->globalNamespace()["__file__"] = toUTF8(relativePath.string());
             }
         }
 

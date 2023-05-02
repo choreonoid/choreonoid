@@ -92,6 +92,72 @@ int findSubDirectory(const filesystem::path& directory, const filesystem::path& 
 }
 
 
+filesystem::path getRelativePath(const filesystem::path& path_, const filesystem::path& base_)
+{
+    filesystem::path relativePath;
+    bool isAbsolute;
+    
+    if(path_.is_absolute()){
+        if(base_.is_absolute()){
+            isAbsolute = true;
+        } else {
+            return relativePath;
+        }
+    } else {
+        if(base_.is_absolute()){
+            return relativePath;
+        }
+        isAbsolute = false;
+    }
+
+    filesystem::path path(filesystem::lexically_normal(path_));
+    filesystem::path base(filesystem::lexically_normal(base_));
+    auto it1 = path.begin();
+    auto it2 = base.begin();
+    bool isFirstElement = true;
+        
+    while(it1 != path.end() && it2 != base.end()){
+        bool matched = false;
+#ifdef _WIN32
+        auto p1 = *it1;
+        auto s1 = p1.make_preferred().string();
+        std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);
+        auto p2 = *it2;
+        auto s2 = p2.make_preferred().string();
+        std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
+        if(s1 == s2){
+            matched = true;
+        }
+#else
+        if(*it1 == *it2){
+            matched = true;
+        }
+#endif
+        if(!matched){
+            break;
+        }
+        ++it1;
+        ++it2;
+        isFirstElement = false;
+    }
+
+    if(isFirstElement && isAbsolute){
+        // There is no relative path
+        return relativePath;
+    }
+
+    while(it2 != base.end()){
+        relativePath /= "..";
+        ++it2;
+    }
+    while(it1 != path.end()){
+        relativePath /= *it1++;
+    }
+
+    return relativePath;
+}
+
+
 bool findRelativePath(const filesystem::path& from_, const filesystem::path& to, filesystem::path& out_relativePath)
 {
 #if __cplusplus > 201402L && !defined(__cpp_lib_experimental_filesystem)
@@ -126,6 +192,25 @@ bool findRelativePath(const filesystem::path& from_, const filesystem::path& to,
     }
     
     return false;
+#endif
+}
+
+
+stdx::filesystem::path getNativeUniformPath(const stdx::filesystem::path& path)
+{
+    auto uniformed = lexically_normal(path);
+    uniformed.make_preferred();
+
+#ifndef _WIN32
+    return uniformed;
+#else
+    filesystem::path lowercased;
+    for(auto& element : uniformed){
+        auto s = element.string();
+        std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+        lowercased /= s;
+    }
+    return lowercased;
 #endif
 }
 
