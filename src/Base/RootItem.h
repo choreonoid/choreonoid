@@ -91,17 +91,6 @@ public:
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
-    /**
-       The root item is initialized to be consistent when the entire project tree is loaded.
-    */
-    virtual void setConsistentWithArchive(bool isConsistent) override;
-
-    /**
-       For the root item, the consistency with the archive means that the structure of
-       the entire project item tree is consistent with that archived in the project file.
-    */
-    virtual bool checkConsistencyWithArchive() override;
-
 protected:
     virtual Item* doCloneItem(CloneMap* cloneMap) const override final;
 

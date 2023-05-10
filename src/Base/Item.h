@@ -503,9 +503,10 @@ public:
 
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);
-    virtual void setConsistentWithArchive(bool isConsistent);
-    virtual bool checkConsistencyWithArchive();
 
+    void setConsistentWithProjectArchive(bool isConsistent);
+    bool isConsistentWithProjectArchive() const;
+    
 protected:
 
     //! Implement the code to copy properties like the assingment operator

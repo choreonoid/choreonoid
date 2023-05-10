@@ -202,7 +202,7 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
         storeAddons(*archive, item);
     }
 
-    item->setConsistentWithArchive(true);
+    item->setConsistentWithProjectArchive(true);
 
     if(subProjectItem && !subProjectItem->isSavingSubProject()){
         return archive;

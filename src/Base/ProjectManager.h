@@ -75,6 +75,9 @@ public:
     ref_ptr<Mapping> storeCurrentLayout();
     void restoreLayout(Mapping* layout);
 
+    bool checkValidItemExistence() const;
+    bool checkIfItemsConsistentWithProjectArchive() const;
+
     class Impl;
 
 private:

@@ -145,7 +145,7 @@ RootItem::RootItem()
     impl = new Impl(this);
     
     addCheckEntry(_("Primary check"));
-    Item::setConsistentWithArchive(true);
+    Item::setConsistentWithProjectArchive(true);
 }
 
 
@@ -284,7 +284,7 @@ void RootItem::notifyEventOnSubTreeAdded(Item* item, std::vector<Item*>& orgSubT
 
     if(!impl->isProjectBeingLoaded){
         if(!item->isSubItem() && !item->isTemporary()){
-            Item::setConsistentWithArchive(false);
+            Item::setConsistentWithProjectArchive(false);
         }
     }
 
@@ -320,7 +320,7 @@ void RootItem::notifyEventOnSubTreeRemoved(Item* item, bool isMoving)
 {
     if(!impl->isProjectBeingLoaded){
         if(!item->isSubItem() && !item->isTemporary()){
-            Item::setConsistentWithArchive(false);
+            Item::setConsistentWithProjectArchive(false);
         }
     }
     
@@ -620,25 +620,4 @@ bool RootItem::store(Archive& archive)
 bool RootItem::restore(const Archive& archive)
 {
     return true;
-}
-
-
-void RootItem::setConsistentWithArchive(bool isConsistent)
-{
-    if(isConsistent){
-        /*
-          \todo It is better to store the information on the current tree structure here
-          and use it when checking the consistency so that the project can be recognized
-          as consistent even if some items are moved in the tree and are moved back to their
-          original position. Such a prcess is not currently implemented and the project is
-          recognized as inconsistent in the above situation.
-        */
-    }
-    Item::setConsistentWithArchive(isConsistent);
-}
-
-    
-bool RootItem::checkConsistencyWithArchive()
-{
-    return Item::checkConsistencyWithArchive();
 }

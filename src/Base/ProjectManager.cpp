@@ -73,7 +73,8 @@ public:
     ItemList<> loadProject(
         const std::string& filename, Item* parentItem,
         bool isInvokingApplication, bool isBuiltinProject, bool doClearExistingProject);
-    void setItemTreeConsistentWithArchive(Item* item);    
+
+    void setItemsConsistentWithProjectArchive(Item* item);
 
     template<class TObject>
     bool storeObjects(Archive& parentArchive, const char* key, vector<TObject*> objects);
@@ -84,8 +85,8 @@ public:
     void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
     bool onSaveDialogAboutToFinish(int result);
     bool confirmToCloseProject(bool isAboutToLoadNewProject);
-    bool checkValidItemExistence(Item* item);
-    bool checkItemTreeConsistencyWithArchive(Item* item);
+    bool checkValidItemExistence(Item* item) const;
+    bool checkIfItemsConsistentWithProjectArchive(Item* item) const;
 
     void connectArchiver(
         const std::string& name,
@@ -309,7 +310,7 @@ void ProjectManager::Impl::clearProject()
 {
     auto rootItem = RootItem::instance();
     rootItem->clearChildren();
-    rootItem->setConsistentWithArchive(true);
+    rootItem->setConsistentWithProjectArchive(true);
     currentProjectName.clear();
     currentProjectFile.clear();
     mainWindow->setProjectTitle("");
@@ -560,7 +561,7 @@ ItemList<> ProjectManager::Impl::loadProject
         vp->clearProjectDirectory();
 
         for(auto& item : topLevelItems){
-            setItemTreeConsistentWithArchive(item);
+            setItemsConsistentWithProjectArchive(item);
         }
     }
 
@@ -574,11 +575,11 @@ ItemList<> ProjectManager::Impl::loadProject
 }
 
 
-void ProjectManager::Impl::setItemTreeConsistentWithArchive(Item* item)
+void ProjectManager::Impl::setItemsConsistentWithProjectArchive(Item* item)
 {
-    item->setConsistentWithArchive(true);
+    item->setConsistentWithProjectArchive(true);
     for(Item* child = item->childItem(); child; child = child->nextItem()){
-        setItemTreeConsistentWithArchive(child);
+        setItemsConsistentWithProjectArchive(child);
     }
 }
 
@@ -876,7 +877,7 @@ bool ProjectManager::Impl::confirmToCloseProject(bool isAboutToLoadNewProject)
         // The current project is empty
         return true;
     }
-    if(checkItemTreeConsistencyWithArchive(rootItem)){
+    if(checkIfItemsConsistentWithProjectArchive(rootItem)){
         return true;
     }
 
@@ -887,10 +888,10 @@ bool ProjectManager::Impl::confirmToCloseProject(bool isAboutToLoadNewProject)
     QMessageBox::StandardButton clicked;
     if(currentProjectFile.empty()){
         if(isAboutToLoadNewProject){
-            message = _("Current project has not been saved yet. "
+            message = _("The current project has not been saved yet. "
                         "Do you want to save it as a project file before loading a new project?");
         } else {
-            message = _("Current project has not been saved yet. "
+            message = _("The current project has not been saved yet. "
                         "Do you want to save it as a project file before closing the project?");
         }
         clicked = QMessageBox::warning(
@@ -918,7 +919,13 @@ bool ProjectManager::Impl::confirmToCloseProject(bool isAboutToLoadNewProject)
 }
 
 
-bool ProjectManager::Impl::checkValidItemExistence(Item* item)
+bool ProjectManager::checkValidItemExistence() const
+{
+    return impl->checkValidItemExistence(RootItem::instance());
+}
+
+
+bool ProjectManager::Impl::checkValidItemExistence(Item* item) const
 {
     if(!item->hasAttribute(Item::Builtin) && !item->isTemporary()){
         return true;
@@ -932,13 +939,19 @@ bool ProjectManager::Impl::checkValidItemExistence(Item* item)
 }
 
 
-bool ProjectManager::Impl::checkItemTreeConsistencyWithArchive(Item* item)
+bool ProjectManager::checkIfItemsConsistentWithProjectArchive() const
 {
-    if(!item->checkConsistencyWithArchive()){
+    return impl->checkIfItemsConsistentWithProjectArchive(RootItem::instance());
+}
+
+
+bool ProjectManager::Impl::checkIfItemsConsistentWithProjectArchive(Item* item) const
+{
+    if(!item->isConsistentWithProjectArchive()){
         return false;
     }
     for(auto child = item->childItem(); child; child = child->nextItem()){
-        if(!checkItemTreeConsistencyWithArchive(child)){
+        if(!checkIfItemsConsistentWithProjectArchive(child)){
             return false;
         }
     }

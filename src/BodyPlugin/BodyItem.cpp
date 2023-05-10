@@ -653,7 +653,7 @@ bool BodyItem::restoreKinematicState(const BodyState& state)
 
 void BodyItem::storeInitialState()
 {
-    Item::setConsistentWithArchive(false);
+    Item::setConsistentWithProjectArchive(false);
     storeKinematicState(impl->initialState);
 }
 

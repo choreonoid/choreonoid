@@ -93,7 +93,7 @@ public:
     MappingPtr fileOptions;
     std::time_t fileModificationTime;
     bool isConsistentWithFile;
-    bool isConsistentWithArchive;
+    bool isConsistentWithProjectArchive;
 
     Impl(Item* self);
     Impl(Item* self, const Impl& org);
@@ -201,7 +201,7 @@ void Item::Impl::initialize()
 
     fileModificationTime = 0;
     isConsistentWithFile = false;
-    isConsistentWithArchive = false;
+    isConsistentWithProjectArchive = false;
 }
 
 
@@ -256,7 +256,7 @@ bool Item::assign(const Item* srcItem)
     bool assigned = doAssign(srcItem);
 
     if(assigned){
-        impl->isConsistentWithArchive = false;
+        impl->isConsistentWithProjectArchive = false;
         
         impl->assignAddons(srcItem);
  
@@ -379,7 +379,7 @@ bool Item::setName(const std::string& name)
     if(name != name_){
         string oldName(name_);
         name_ = name;
-        impl->isConsistentWithArchive = false;
+        impl->isConsistentWithProjectArchive = false;
         impl->notifyNameChange(oldName);
     }
     return true;
@@ -526,7 +526,7 @@ void Item::setChecked(int checkId, bool on)
     
     if(on != current){
 
-        impl->isConsistentWithArchive = false;
+        impl->isConsistentWithProjectArchive = false;
 
         if(!root){
             root = findRootItem();
@@ -1382,7 +1382,7 @@ void Item::Impl::traverse(Item* item, const std::function<bool(Item*)>& callback
 
 void Item::notifyUpdate()
 {
-    impl->isConsistentWithArchive = false;
+    impl->isConsistentWithProjectArchive = false;
     impl->sigUpdated();
 }
 
@@ -1600,12 +1600,16 @@ bool Item::isConsistentWithFile() const
 void Item::setConsistentWithFile(bool isConsistent)
 {
     impl->isConsistentWithFile = isConsistent;
+    if(!isConsistent){
+        impl->isConsistentWithProjectArchive = false;
+    }
 }
 
 
 void Item::suggestFileUpdate()
 {
     impl->isConsistentWithFile = false;
+    impl->isConsistentWithProjectArchive = false;
 }
 
 
@@ -1618,6 +1622,7 @@ void Item::updateFileInformation(const std::string& filename, const std::string&
     } else {
         impl->fileModificationTime = 0;
         impl->isConsistentWithFile = false;
+        impl->isConsistentWithProjectArchive = false;
     }        
     impl->filePath = filename;
     impl->fileFormat = format;
@@ -1629,6 +1634,9 @@ void Item::updateFileInformation(const std::string& filename, const std::string&
 
 void Item::clearFileInformation()
 {
+    if(!impl->filePath.empty() || !impl->fileFormat.empty()){
+        impl->isConsistentWithProjectArchive = false;
+    }
     impl->filePath.clear();
     impl->fileFormat.clear();
     impl->isConsistentWithFile = true;
@@ -1672,7 +1680,7 @@ bool Item::replace(Item* originalItem)
             for(int i=0; i < nc; ++i){
                 setChecked(i, originalItem->isChecked(i));
             }
-            // move children to the reload item
+            // move children to the new item
             ItemPtr child = originalItem->childItem();
             while(child){
                 ItemPtr nextChild = child->nextItem();
@@ -1685,6 +1693,7 @@ bool Item::replace(Item* originalItem)
             originalItem->removeFromParentItem();
             setSelected(isSelected);
             replaced = true;
+            impl->isConsistentWithProjectArchive = false;
         }
 
         if(!clearItemReplacementMapsLater.hasFunction()){
@@ -1821,16 +1830,16 @@ bool Item::restore(const Archive& archive)
 }
 
 
-void Item::setConsistentWithArchive(bool isConsistent)
+void Item::setConsistentWithProjectArchive(bool isConsistent)
 {
-    impl->isConsistentWithArchive = isConsistent;
+    impl->isConsistentWithProjectArchive = isConsistent;
 }
 
 
-bool Item::checkConsistencyWithArchive()
+bool Item::isConsistentWithProjectArchive() const
 {
     if(hasAttribute(SubItem) || hasAttribute(Temporary)){
         return true;
     }
-    return impl->isConsistentWithArchive;
+    return impl->isConsistentWithProjectArchive;
 }
