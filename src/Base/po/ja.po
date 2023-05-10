@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-04-28 23:06+0900\n"
+"POT-Creation-Date: 2023-05-11 15:47+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1328,68 +1328,6 @@ msgstr "回転行列"
 msgid "Additional precision"
 msgstr "追加精度"
 
-#, fuzzy
-msgid "The archive directory \"{0}\" cannot be cleaned: {1}."
-msgstr "\"{0}\"のファイル形式を確定できません．"
-
-#, fuzzy
-msgid "The archive directory \"{0}\" cannot be created: {1}."
-msgstr "{1}の \"{0}\" ビューを復帰できません．{2}"
-
-#, fuzzy
-msgid "Directory \"{0}\" for \"{1}\" cannot be created in \"{2}\": {3}."
-msgstr "プラグイン \"{1}\" のアドオン \"{0}\" を生成できません．"
-
-msgid "File \"{0}\" cannot be copied into the archive directory \"{1}\": {2}."
-msgstr ""
-
-#, fuzzy
-msgid "The archive project cannot be saved as project file \"{0}\"."
-msgstr "コピーされたアイテムを \"{0}\" にペーストできませんでした．"
-
-msgid ""
-"A relative path \"{0}\" is given to the project archiver as a file path to which {0} depends but "
-"it must be an absolute path."
-msgstr ""
-
-msgid ""
-"The file path \"{0}\" for {1} cannot be relocated to be a file path in the archive directory "
-"\"{2}\"."
-msgstr ""
-
-#, fuzzy
-msgid "The existing archive file \"{0}\" cannot be removed: {1}."
-msgstr ""
-"アプリケーション設定ファイル \"{0}\" を読み込むことができません．\n"
-"{1}"
-
-msgid "Failed to create the archive file \"{0}\": {1}"
-msgstr ""
-
-msgid "Failed to add directory \"{0}\" to the zip archive: {1}"
-msgstr ""
-
-msgid "Failed to add file \"{0}\" to the zip archive: {1}"
-msgstr ""
-
-msgid "Failed to open the archive file \"{0}\": {1}"
-msgstr ""
-
-#, fuzzy
-msgid "Entry {0} in \"{1}\" cannot be extracted."
-msgstr "{0} \"{1}\" を読み出すことができません．"
-
-#, fuzzy
-msgid "Directory \"{0}\" for the archive \"{1}\" cannot be created: {2}."
-msgstr "プラグイン \"{1}\" のアドオン \"{0}\" を生成できません．"
-
-#, fuzzy
-msgid "File \"{0}\" in the archive \"{1}\" cannot be extracted."
-msgstr "{1}の \"{0}\" ビューを復帰できません．"
-
-msgid "Project archive \"{0}\" does not include a project file."
-msgstr ""
-
 msgid ""
 "The state of the \"{0}\" {1} was not completely restored.\n"
 "{2}"
@@ -1449,13 +1387,13 @@ msgid "Project files (*.cnoid)"
 msgstr "プロジェクトファイル (*.cnoid)"
 
 msgid ""
-"Current project has not been saved yet. Do you want to save it as a project file before loading a "
-"new project?"
+"The current project has not been saved yet. Do you want to save it as a project file before "
+"loading a new project?"
 msgstr "現在のプロジェクトは保存されていません．新しいプロジェクトを読み込む前に保存しますか？"
 
 msgid ""
-"Current project has not been saved yet. Do you want to save it as a project file before closing "
-"the project?"
+"The current project has not been saved yet. Do you want to save it as a project file before "
+"closing the project?"
 msgstr "現在のプロジェクトは保存されていません．プロジェクトを閉じる前に保存しますか？"
 
 msgid "Project \"%1\" has been updated. Do you want to save it before loading a new project?"
@@ -1469,6 +1407,58 @@ msgstr "プロジェクトの保存"
 
 msgid "Save temporary items"
 msgstr "一時的アイテムを保存"
+
+msgid "Directory \"{0}\" for packing a project already exists and cannot be removed: {1}."
+msgstr "プロジェクトのパッキング用のディレクトリ \"{0}\" が既に存在していて削除できません： {1}．"
+
+msgid "Directory \"{0}\" for packing a project cannot be created: {1}."
+msgstr "プロジェクトのパッキング用のディレクトリ \"{0}\" を作成できません： {1}．"
+
+msgid "Directory \"{0}\" for \"{1}\" cannot be created in \"{2}\": {3}."
+msgstr "\"{1}\" 用のディレクトリ \"{0}\" を \"{2}\" に作成できません： {3}．"
+
+msgid "File \"{0}\" cannot be copied into the directory \"{1}\" for packing: {2}."
+msgstr "ファイル \"{0}\" をパッキング用ディレクトリ \"{1}\" にコピーできません： {2}．"
+
+msgid "The project for packing cannot be saved as project file \"{0}\"."
+msgstr "パッキングするプロジェクトをプロジェクトファイル \"{0}\" として保存できません．"
+
+msgid ""
+"A relative path \"{0}\" is given to the project packer as a file path to which {1} depends but it "
+"must be an absolute path."
+msgstr ""
+"{1}が依存するファイルのパスとして相対パス \"{0}\" がプロジェクトパッカーに与えられましたが、これ"
+"は絶対パスである必要があります．"
+
+msgid "The file path \"{0}\" for {1} cannot be relocated to be a file path in the project pack."
+msgstr "{1}のファイルパス \"{0}\" をプロジェクトパック内のファイルパスに再配置できません．"
+
+msgid "The project pack file \"{0}\" already exists and cannot be removed: {1}."
+msgstr "プロジェクトパックファイル \"{0}\" が既に存在していて、削除もできません： {1}．"
+
+msgid "Failed to create the project pack file \"{0}\": {1}"
+msgstr "プロジェクトパックファイル \"{0}\" を作成することができません： {1}"
+
+msgid "Failed to add directory \"{0}\" to the project pack: {1}"
+msgstr "プロジェクトパックにディレクトリ \"{0}\" を追加することができません： {1}"
+
+msgid "Failed to add file \"{0}\" to the project pack: {1}"
+msgstr "プロジェクトパックにファイル \"{0}\" を追加することができません： {1}"
+
+msgid "Failed to open the project pack file \"{0}\": {1}"
+msgstr "プロジェクトパックファイル \"{0}\" を開くことができません： {1}"
+
+msgid "Entry {0} in \"{1}\" cannot be extracted."
+msgstr "\"{1}\" 内のエントリ{0}を展開できません．"
+
+msgid "Directory \"{0}\" in the project pack \"{1}\" cannot be created: {2}."
+msgstr "プロジェクトパック \"{1}\" のディレクトリ \"{0}\" を作成できません： {2}．"
+
+msgid "File \"{0}\" in the project pack \"{1}\" cannot be extracted."
+msgstr "プロジェクトパック \"{1}\" のファイル \"{0}\" を展開できません．"
+
+msgid "The project pack file \"{0}\" does not include a project file."
+msgstr "プロジェクトパック \"{0}\" はプロジェクトファイルを含んでいません．"
 
 msgid "ReferencedObjectSeqItem"
 msgstr "参照オブジェクト時系列アイテム"
