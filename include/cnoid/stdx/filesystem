@@ -82,6 +82,34 @@ inline path lexically_normal(const path& p){
 #endif
 }
 
+inline bool copy_directory_recursively(const path& src, const path& dest, system::error_code& ec)
+{
+    namespace fs = boost::filesystem;
+
+    if(!fs::exists(src, ec) || !fs::is_directory(src, ec)){
+        return false;
+    }
+    if(!fs::exists(dest, ec)){
+        if(!fs::create_directory(dest)){
+            return false;
+        }
+    }
+    for(fs::directory_iterator it(src); it != fs::directory_iterator(); ++it){
+        fs::path current(it->path());
+        if(fs::is_directory(current)){
+            if(!copy_directory_recursively(current, dest / current.filename(), ec)){
+                return false;
+            }
+        } else {
+            fs::copy_file(current, dest / current.filename(), ec);
+            if(ec){
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 } }
 
 namespace cnoid { namespace stdx {
