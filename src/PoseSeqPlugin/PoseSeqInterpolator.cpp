@@ -94,7 +94,7 @@ struct LinkInfo
     LinkAuxSample::Seq::iterator auxIter;
 
     // Link local coordinate frame used in the interpolation
-    optional<Isometry3> T_offset;
+    stdx::optional<Isometry3> T_offset;
         
     // interpolation state
     Isometry3 T;

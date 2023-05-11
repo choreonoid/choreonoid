@@ -3,6 +3,7 @@
 
 #include "AbstractPose.h"
 #include <cnoid/EigenTypes>
+#include <vector>
 #include <map>
 #include "exportdecl.h"
 

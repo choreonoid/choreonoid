@@ -98,7 +98,10 @@ if(NOT CMAKE_CXX_STANDARD)
   set(cxx_standard 11)
   if(NOT CMAKE_VERSION VERSION_LESS 3.8.0) # CMake 3.8 or later is required to enable C++17
     if(UNIX)
-      check_cxx_compiler_flag("-std=c++17" has_cpp17)
+      # C++17 support of GCC 7 is experimental
+      if(NOT CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8)
+	check_cxx_compiler_flag("-std=c++17" has_cpp17)
+      endif()
     elseif(MSVC)
       check_cxx_compiler_flag("/std:c++17" has_cpp17)
     endif()
