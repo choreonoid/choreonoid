@@ -35,5 +35,7 @@
 
   <file>icon/digital-io-off.svg</file>
   <file>icon/digital-io-on.svg</file>
+
+  <file>icon/question.svg</file>
 </qresource>
 </RCC>

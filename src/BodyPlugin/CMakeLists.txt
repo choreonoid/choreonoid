@@ -68,6 +68,8 @@ set(sources
   JointGraphView.cpp
   LinkGraphView.cpp
   BodyLinkView.cpp
+  BodyLibraryView.cpp
+  BodyLibrarySelectionDialog.cpp
   HrpsysFileIO.cpp
   CollisionSeq.cpp
   CollisionSeqItem.cpp
@@ -122,6 +124,8 @@ set(headers
   JointDisplacementWidgetSet.h
   MultiBodyJointDisplacementWidget.h
   IoConnectionView.h
+  BodyLibraryView.h
+  BodyLibrarySelectionDialog.h
   CollisionSeq.h
   CollisionSeqItem.h
   CollisionSeqEngine.h
