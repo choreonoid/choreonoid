@@ -8,6 +8,7 @@ get_directory_property(compile_definitions COMPILE_DEFINITIONS)
 
 set(modules
   ${CMAKE_CURRENT_BINARY_DIR}/ChoreonoidConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/ChoreonoidConfigVersion.cmake
   ChoreonoidBasicBuildFunctions.cmake
   ChoreonoidFindQt.cmake
   )
@@ -53,6 +54,12 @@ if(UNIX)
     "-E create_symlink ChoreonoidConfig.cmake choreonoid-config.cmake "
     "WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_CMAKE_CONFIG_SUBDIR})")
   install(CODE ${code})
+  string(CONCAT version-script
+    "execute_process(COMMAND ${CMAKE_COMMAND} "
+    "-E create_symlink ChoreonoidConfigVersion.cmake choreonoid-config-version.cmake "
+    "WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_CMAKE_CONFIG_SUBDIR})")
+  install(CODE ${version-script})
 endif()
 
 configure_file(ChoreonoidConfig.cmake.in ChoreonoidConfig.cmake @ONLY)
+configure_file(ChoreonoidConfigVersion.cmake.in ChoreonoidConfigVersion.cmake @ONLY)
