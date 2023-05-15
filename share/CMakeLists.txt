@@ -5,13 +5,19 @@ if(UNIX AND NOT CNOID_SOURCE_SHARE_DIR STREQUAL CNOID_BINARY_SHARE_DIR)
 endif()
 
 # "default" directory
-install(FILES default/materials.yaml DESTINATION ${CNOID_SHARE_SUBDIR}/default)
+set(default_files materials.yaml)
+foreach(file ${default_files})
+  install(FILES default/${file} DESTINATION ${CNOID_SHARE_SUBDIR}/default)
+endforeach()
+  
 if(make_symlink)
   file(MAKE_DIRECTORY ${CNOID_BINARY_SHARE_DIR}/default)
-  add_custom_target(
-    symlink_to_default_materials ALL
-    COMMAND ${CMAKE_COMMAND} -E create_symlink
-    ${CNOID_SOURCE_SHARE_DIR}/default/materials.yaml ${CNOID_BINARY_SHARE_DIR}/default/materials.yaml)
+  foreach(file ${default_files})
+    add_custom_target(
+      symlink_to_default_${file} ALL
+      COMMAND ${CMAKE_COMMAND} -E create_symlink
+      ${CNOID_SOURCE_SHARE_DIR}/default/${file} ${CNOID_BINARY_SHARE_DIR}/default/${file})
+  endforeach()
 endif()
 
 # Incremental build issue
