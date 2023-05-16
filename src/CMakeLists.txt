@@ -15,6 +15,7 @@ if(ENABLE_GUI)
 
   add_subdirectory(PoseSeqPlugin)
   add_subdirectory(BalancerPlugin)
+  add_subdirectory(BodyMotionFilterPlugin)
   add_subdirectory(MocapPlugin)
 
   add_subdirectory(SceneEffectsPlugin)
