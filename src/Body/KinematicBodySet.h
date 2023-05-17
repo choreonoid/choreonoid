@@ -24,9 +24,11 @@ public:
 
     bool empty() const { return bodyParts_.empty(); }
     int maxIndex() const { return bodyParts_.size() - 1; }
-    bool hasMainBodyPartOnly() const {
-        return numValidBodyParts_ == 1 && mainBodyPartIndex_ >= 0;
+
+    bool hasMultiBodyParts() const {
+        return numValidBodyParts_ >= 2 && mainBodyPartIndex_ >= 0;
     }
+    
     std::vector<int> validBodyPartIndices() const;
     
     BodyKinematicsKit* bodyPart(int index) {

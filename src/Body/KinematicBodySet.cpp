@@ -37,11 +37,17 @@ Referenced* KinematicBodySet::doClone(CloneMap* cloneMap) const
 void KinematicBodySet::setBodyPart(int index, BodyKinematicsKit* kinematicsKit)
 {
     if(index >= static_cast<int>(bodyParts_.size())){
-        bodyParts_.resize(index + 1);
+        bodyParts_.resize(index + 1, nullptr);
     }
     auto& part = bodyParts_[index];
     if(!part){
-        ++numValidBodyParts_;
+        if(kinematicsKit){
+            ++numValidBodyParts_;
+        }
+    } else {
+        if(!kinematicsKit){
+            --numValidBodyParts_;
+        }
     }
     part = kinematicsKit;
 }
