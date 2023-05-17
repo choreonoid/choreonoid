@@ -25,6 +25,8 @@ enum BaseLinkId {
     UnspecifiedBaseLinkForPinDragIK = -2
 };
 
+constexpr int MainEndLinkGuessBufSize = 10;
+
 }
     
 namespace cnoid {
@@ -50,6 +52,8 @@ public:
 
     Impl(BodyItem* bodyItem);
     void onBodyItemPositionChanged();
+    Link* guessMainEndLink();
+    void guessMainEndLinkSub(Link* link, int dof, Link** linkOfDof);
     BodyItemKinematicsKit* findKinematicsKit(Link* targetLink, bool isPresetOnly);
     std::shared_ptr<InverseKinematics> findPresetIK(Link* targetLink);
     bool updateCoordinateFramesOf(BodyItemKinematicsKit* kit, bool forceUpdate);
@@ -107,6 +111,41 @@ void BodyItemKinematicsKitManager::Impl::onBodyItemPositionChanged()
 }
 
 
+//  Find a maximum DOF link whose DOF is different from any other links.
+Link* BodyItemKinematicsKitManager::Impl::guessMainEndLink()
+{
+    Link* linkOfDof[MainEndLinkGuessBufSize];
+    for(int i=0; i < MainEndLinkGuessBufSize; ++i){
+        linkOfDof[i] = nullptr;
+    }
+    guessMainEndLinkSub(body->rootLink(), 0, linkOfDof);
+
+    for(int i = MainEndLinkGuessBufSize - 1; i > 0; --i){
+        auto link = linkOfDof[i];
+        if(link && link != body->rootLink()){
+            return link;
+        }
+    }
+    return nullptr;
+}
+
+
+void BodyItemKinematicsKitManager::Impl::guessMainEndLinkSub(Link* link, int dof, Link** linkOfDof)
+{
+    if(!linkOfDof[dof]){
+        linkOfDof[dof] = link;
+    } else {
+        linkOfDof[dof] = body->rootLink();
+    }
+    ++dof;
+    if(dof < MainEndLinkGuessBufSize){
+        for(Link* child = link->child(); child; child = child->sibling()){
+            guessMainEndLinkSub(child, dof, linkOfDof);
+        }
+    }
+}
+
+
 BodyItemKinematicsKit* BodyItemKinematicsKitManager::getCurrentKinematicsKit(Link* targetLink)
 {
     return impl->findKinematicsKit(targetLink, false);
@@ -125,7 +164,7 @@ BodyItemKinematicsKit* BodyItemKinematicsKitManager::Impl::findKinematicsKit(Lin
         if(!isPresetOnly){
             return nullptr;
         } else {
-            targetLink = body->findUniqueEndLink();
+            targetLink = guessMainEndLink();
             if(!targetLink){
                 return nullptr;
             }
