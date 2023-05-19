@@ -659,7 +659,7 @@ void CoordinateFrameListItem::Impl::setFrameMarkerVisible(CoordinateFrame* frame
         if(on){
             self->setChecked(true);
         } else {
-            if(relativeFrameMarkerGroup->empty() == 0 && frameMarkerGroup->numChildren() <= 1){
+            if(relativeFrameMarkerGroup->empty() && frameMarkerGroup->numChildren() <= 1){
                 self->setChecked(false);
             }
         }
