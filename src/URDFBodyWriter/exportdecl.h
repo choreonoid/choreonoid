@@ -1,0 +1,37 @@
+#ifndef CNOID_URDF_BODY_WRITER_EXPORTDECL_H
+# define CNOID_URDF_BODY_WRITER_EXPORTDECL_H
+
+# if defined _WIN32 || defined __CYGWIN__
+#  define CNOID_URDF_BODY_WRITER_DLLIMPORT __declspec(dllimport)
+#  define CNOID_URDF_BODY_WRITER_DLLEXPORT __declspec(dllexport)
+#  define CNOID_URDF_BODY_WRITER_DLLLOCAL
+# else
+#  if __GNUC__ >= 4
+#   define CNOID_URDF_BODY_WRITER_DLLIMPORT __attribute__ ((visibility("default")))
+#   define CNOID_URDF_BODY_WRITER_DLLEXPORT __attribute__ ((visibility("default")))
+#   define CNOID_URDF_BODY_WRITER_DLLLOCAL  __attribute__ ((visibility("hidden")))
+#  else
+#   define CNOID_URDF_BODY_WRITER_DLLIMPORT
+#   define CNOID_URDF_BODY_WRITER_DLLEXPORT
+#   define CNOID_URDF_BODY_WRITER_DLLLOCAL
+#  endif
+# endif
+
+# ifdef CNOID_URDF_BODY_WRITER_STATIC
+#  define CNOID_URDF_BODY_WRITER_DLLAPI
+#  define CNOID_URDF_BODY_WRITER_LOCAL
+# else
+#  ifdef CnoidURDFBodyLoader_EXPORTS
+#   define CNOID_URDF_BODY_WRITER_DLLAPI CNOID_URDF_BODY_WRITER_DLLEXPORT
+#  else
+#   define CNOID_URDF_BODY_WRITER_DLLAPI CNOID_URDF_BODY_WRITER_DLLIMPORT
+#  endif
+#  define CNOID_URDF_BODY_WRITER_LOCAL CNOID_URDF_BODY_WRITER_DLLLOCAL
+# endif
+
+#endif
+
+#ifdef CNOID_EXPORT
+# undef CNOID_EXPORT
+#endif
+#define CNOID_EXPORT CNOID_URDF_BODY_WRITER_DLLAPI

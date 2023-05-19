@@ -5,6 +5,7 @@ add_subdirectory(AssimpSceneLoader)
 add_subdirectory(AssimpSceneWriter)
 add_subdirectory(Body)
 add_subdirectory(URDFBodyLoader)
+add_subdirectory(URDFBodyWriter)
 add_subdirectory(Corba)
 
 if(ENABLE_GUI)
