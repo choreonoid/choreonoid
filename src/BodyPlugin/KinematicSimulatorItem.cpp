@@ -2,6 +2,7 @@
 #include "BodyItem.h"
 #include "WorldItem.h"
 #include "IoConnectionMapItem.h"
+#include <cnoid/LinkedJointHandler>
 #include <cnoid/CloneMap>
 #include <cnoid/HolderDevice>
 #include <cnoid/AttachmentDevice>
@@ -22,6 +23,8 @@ namespace {
 class KinematicSimBody : public SimulationBody
 {
 public:
+    LinkedJointHandlerPtr linkedJointHandler;
+    
     KinematicSimBody(Body* body);
     virtual bool initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem) override;
 };
@@ -214,11 +217,16 @@ bool KinematicSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& 
 bool KinematicSimulatorItem::Impl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
     for(size_t i=0; i < activeSimBodies.size(); ++i){
-        SimulationBody* simBody = activeSimBodies[i];
+        auto simBody = static_cast<KinematicSimBody*>(activeSimBodies[i]);
         auto body = simBody->body();
         for(auto& link : body->links()){
             if(link->actuationMode() == Link::JointDisplacement){
                 link->q() = link->q_target();
+            }
+        }
+        if(auto& linkedJointHandler = simBody->linkedJointHandler){
+            if(linkedJointHandler->updateLinkedJointDisplacements()){
+                linkedJointHandler->limitLinkedJointDisplacementsWithinMovableRanges();
             }
         }
         body->calcForwardKinematics();
@@ -428,7 +436,7 @@ bool KinematicSimulatorItem::restore(const Archive& archive)
 KinematicSimBody::KinematicSimBody(Body* body)
     : SimulationBody(body)
 {
-
+    linkedJointHandler = LinkedJointHandler::findOrCreateLinkedJointHandler(body);
 }
 
 
