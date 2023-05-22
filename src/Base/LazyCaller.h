@@ -35,7 +35,7 @@ public:
     void setPriority(int priority);
 
     bool isPending() const {
-        return postedEventCounter.load() > 0;
+        return isPending_.load();
     }
 
    /**
@@ -43,7 +43,8 @@ public:
        Duplicate requests before the actual function call is ignored.
     */
     void operator()(){
-        if(postedEventCounter.fetch_add(1) == 0){
+        bool expected = false;
+        if(isPending_.compare_exchange_strong(expected, true)){
             postCallEvent();
         }
     }
@@ -54,7 +55,7 @@ public:
 private:
     void postCallEvent();
     
-    std::atomic<int> postedEventCounter;
+    std::atomic<bool> isPending_;
     class Impl;
     Impl* impl;
 };
@@ -69,10 +70,6 @@ public:
     
     void setPriority(int priority);
 
-    bool isPending() const {
-        return postedEventCounter.load() > 0;
-    }
-    
     /**
        Call an arbitrary function specified as the argument from the main thread later.
        For multiple requests before the actual function call, only the function of the
@@ -84,7 +81,6 @@ public:
     void flush();
     
 private:
-    std::atomic<int> postedEventCounter;
     class Impl;
     Impl* impl;
 };

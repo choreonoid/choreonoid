@@ -106,6 +106,7 @@ public:
     LazyOverwriteCaller* self;
     std::function<void()> func;
     std::mutex funcMutex;
+    bool isPending;
     int priority;
     
     Impl(LazyOverwriteCaller* self);
@@ -168,7 +169,7 @@ bool CallEventHandler::event(QEvent* e)
 
 
 LazyCaller::LazyCaller()
-    : postedEventCounter(0)
+    : isPending_(false)
 {
     impl = new Impl(this);
 }
@@ -182,7 +183,7 @@ LazyCaller::Impl::Impl(LazyCaller* self)
     
 
 LazyCaller::LazyCaller(const std::function<void()>& func, int priority)
-    : postedEventCounter(0)    
+    : isPending_(false)    
 {
     impl = new Impl(this, func, priority);
 }
@@ -198,7 +199,7 @@ LazyCaller::Impl::Impl(LazyCaller* self, const std::function<void()>& func, int 
 
 
 LazyCaller::LazyCaller(const LazyCaller& org)
-    : postedEventCounter(0)    
+    : isPending_(false)    
 {
     impl = new Impl(this, org.impl->func, org.impl->priority);
 }
@@ -238,7 +239,7 @@ void LazyCaller::postCallEvent()
 bool LazyCaller::Impl::event(QEvent* e)
 {
     if(auto callEvent = dynamic_cast<CallEvent*>(e)){
-        --self->postedEventCounter;
+        self->isPending_.store(false);
         callEvent->func();
         return true;
     }
@@ -249,7 +250,7 @@ bool LazyCaller::Impl::event(QEvent* e)
 void LazyCaller::cancel()
 {
     QCoreApplication::removePostedEvents(impl);
-    postedEventCounter.store(0);
+    isPending_.store(false);
 }
 
 
@@ -264,7 +265,6 @@ void LazyCaller::flush()
 
 
 LazyOverwriteCaller::LazyOverwriteCaller()
-    : postedEventCounter(0)    
 {
     impl = new Impl(this);
 }
@@ -273,6 +273,7 @@ LazyOverwriteCaller::LazyOverwriteCaller()
 LazyOverwriteCaller::Impl::Impl(LazyOverwriteCaller* self)
     : self(self)
 {
+    isPending = false;
     priority = HighPriority;
 }
 
@@ -292,14 +293,16 @@ void LazyOverwriteCaller::setPriority(int priority)
 
 void LazyOverwriteCaller::callLater(const std::function<void()>& func)
 {
-    bool doCall = false;
+    bool doPost = false;
     {
         lock_guard<mutex> guard(impl->funcMutex);
         impl->func = func;
-        doCall = !isPending();
+        if(!impl->isPending){
+            doPost = true;
+            impl->isPending = true;
+        }
     }
-    if(doCall){
-        ++postedEventCounter;
+    if(doPost){
         QCoreApplication::postEvent(impl, new CallEvent, toQtPriority(impl->priority));
     }
 }
@@ -310,7 +313,7 @@ bool LazyOverwriteCaller::Impl::event(QEvent* e)
     if(auto callEvent = dynamic_cast<CallEvent*>(e)){
         std::function<void()> duplicatedFunc;
         {
-            --self->postedEventCounter;
+            isPending = false;
             lock_guard<mutex> guard(funcMutex);
             duplicatedFunc = func;
         }
@@ -324,7 +327,11 @@ bool LazyOverwriteCaller::Impl::event(QEvent* e)
 void LazyOverwriteCaller::cancel()
 {
     QCoreApplication::removePostedEvents(impl);
-    postedEventCounter.store(0);
+
+    {
+        lock_guard<mutex> guard(impl->funcMutex);
+        impl->isPending = false;
+    }
 }
 
 
