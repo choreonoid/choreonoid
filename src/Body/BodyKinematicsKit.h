@@ -19,6 +19,7 @@ class JointTraverse;
 class CoordinateFrame;
 class CoordinateFrameList;
 class InverseKinematics;
+class LinkedJointHandler;
 class Mapping;
 
 /**
@@ -54,11 +55,13 @@ public:
 
     /**
        This function sets a joint path and sets the joint path mode.
+       The joint traverse from the base link is also set when the joint path is valid.
     */
     void setJointPath(Link* baseLink, Link* endLink);
 
     /**
        This function sets the inverse kinematics without joint path mode.
+       The joint path is also set when the inverse kinematics is for a joint path.
     */
     void setInverseKinematics(Link* endLink, std::shared_ptr<InverseKinematics> ik);
 
@@ -85,14 +88,9 @@ public:
     Body* body();
     const Body* body() const;
 
-    /**
-       Thi is not available in the joint traverse mode.
-    */
+    //! Note that this function returns nullptr when the end link is not specified.
     Link* endLink();
-    
-    /**
-       Thi is not available in the joint traverse mode.
-    */
+    //! Note that this function returns nullptr when the end link is not specified.
     const Link* endLink() const;
 
     [[deprecated("Use endLink")]]
@@ -100,28 +98,27 @@ public:
     [[deprecated("Use endLink")]]
     const Link* link() const { return endLink(); }
     
-    /**
-       This is not available in the inverse kinematics without joint path mode.
-    */
+    //! Note that this function returns nullptr when the base link is not specified.
     Link* baseLink();
-
-    /**
-       This is not available in the inverse kinematics without joint path mode.
-    */
+    //! Note that this function returns nullptr when the base link is not specified.
     const Link* baseLink() const;
     
     bool isManipulator() const;
     
-    /**
-       This is only available in the joint path mode.
-    */
     bool hasJointPath() const;
-    std::shared_ptr<JointPath> jointPath();
 
     /**
-       This is only available in the joint traverse mode.
+       The joint path is only available in the joint path mode.
     */
+    std::shared_ptr<JointPath> jointPath();
+
     bool hasJointTraverse() const;
+
+    /**
+       The joint traverse is available when the base link is specified,
+       and the joint traverse is from the base link. When the joint path
+       is specified, the traverse is set toward the end link.
+    */
     std::shared_ptr<JointTraverse> jointTraverse();
 
     int numJoints() const;
@@ -134,6 +131,11 @@ public:
     */
     std::shared_ptr<InverseKinematics> inverseKinematics();
 
+    /**
+       The linked joint handler is only available when the body has it.
+    */
+    LinkedJointHandler* linkedJointHandler();
+    
     /**
        The configuration handler is only available when the joint path has it.
     */

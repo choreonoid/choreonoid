@@ -6,6 +6,7 @@
 #include "JointTraverse.h"
 #include "HolderDevice.h"
 #include "AttachmentDevice.h"
+#include "LinkedJointHandler.h"
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
@@ -24,6 +25,7 @@ public:
     shared_ptr<InverseKinematics> inverseKinematics;
     shared_ptr<JointSpaceConfigurationHandler> configurationHandler;
     shared_ptr<JointTraverse> jointTraverse;
+    LinkedJointHandlerPtr linkedJointHandler;
     bool isCustomIkDisabled;
     bool isRpySpecified;
     Vector3 referenceRpy;
@@ -92,12 +94,12 @@ BodyKinematicsKit::Impl::Impl(const Impl& org, CloneMap* cloneMap)
 
     } else {
         referenceRpy.setZero();
-        auto bodyClone = cloneMap->getClone(org.body);
-        if(bodyClone){
+        body = cloneMap->getClone(org.body);
+        if(body){
             if(org.endLink){
-                endLink = bodyClone->link(org.endLink->index());
+                endLink = body->link(org.endLink->index());
                 if(auto orgBaseLink = const_cast<Impl&>(org).baseLink()){
-                    auto baseLink = bodyClone->link(orgBaseLink->index());
+                    auto baseLink = body->link(orgBaseLink->index());
                     setJointPath(baseLink, endLink);
                 } else {
                     // The inverse kinematics object should be cloned here.
@@ -105,6 +107,7 @@ BodyKinematicsKit::Impl::Impl(const Impl& org, CloneMap* cloneMap)
             } else if(org.jointTraverse){
                 setJointTraverse(make_shared<JointTraverse>(*org.jointTraverse, cloneMap));
             }
+            linkedJointHandler = LinkedJointHandler::findOrCreateLinkedJointHandler(body);
         }
         baseFrames = cloneMap->getClone(org.baseFrames);
         offsetFrames = cloneMap->getClone(org.offsetFrames);
@@ -149,6 +152,7 @@ void BodyKinematicsKit::Impl::setJointPath(Link* baseLink, Link* endLink)
     inverseKinematics.reset();
     configurationHandler.reset();
     jointTraverse.reset();
+    Body* prevBody = body;
 
     if(baseLink && endLink && baseLink->body() == endLink->body()){
         body = baseLink->body();
@@ -161,7 +165,16 @@ void BodyKinematicsKit::Impl::setJointPath(Link* baseLink, Link* endLink)
                     dynamic_pointer_cast<JointSpaceConfigurationHandler>(jointPath);
                 jointPath->setCustomIkDisabled(isCustomIkDisabled);
             }
+            if(!jointPath->empty()){
+                bool isDownward = jointPath->isJointDownward(0);
+                jointTraverse = make_shared<JointTraverse>(baseLink, !isDownward, isDownward);
+            }
         }
+        if(body != prevBody){
+            linkedJointHandler = LinkedJointHandler::findOrCreateLinkedJointHandler(body);
+        }
+    } else {
+        linkedJointHandler.reset();
     }
 }
 
@@ -178,6 +191,7 @@ void BodyKinematicsKit::Impl::setInverseKinematics(Link* endLink, std::shared_pt
     inverseKinematics.reset();
     configurationHandler.reset();
     jointTraverse.reset();
+    Body* prevBody = body;
 
     body = endLink->body();
     this->endLink = endLink;
@@ -194,6 +208,15 @@ void BodyKinematicsKit::Impl::setInverseKinematics(Link* endLink, std::shared_pt
     jointPath = dynamic_pointer_cast<JointPath>(ik);
     if(jointPath){
         jointPath->setCustomIkDisabled(isCustomIkDisabled);
+
+        if(!jointPath->empty()){
+            bool isDownward = jointPath->isJointDownward(0);
+            jointTraverse = make_shared<JointTraverse>(jointPath->baseLink(), !isDownward, isDownward);
+        }
+    }
+
+    if(body != prevBody){
+        linkedJointHandler = LinkedJointHandler::findOrCreateLinkedJointHandler(body);
     }
 }
 
@@ -218,12 +241,18 @@ void BodyKinematicsKit::setJointTraverse(std::shared_ptr<JointTraverse> jointTra
 
 void BodyKinematicsKit::Impl::setJointTraverse(std::shared_ptr<JointTraverse> jointTraverse)
 {
+    Body* prevBody = body;
+    
     body = jointTraverse->body();
     endLink.reset();
     jointPath.reset();
     inverseKinematics.reset();
     configurationHandler.reset();
     this->jointTraverse = jointTraverse;
+    
+    if(body != prevBody){
+        linkedJointHandler = LinkedJointHandler::findOrCreateLinkedJointHandler(body);
+    }
 }
 
 
@@ -361,6 +390,12 @@ std::vector<Link*> BodyKinematicsKit::joints() const
 std::shared_ptr<InverseKinematics> BodyKinematicsKit::inverseKinematics()
 {
     return impl->inverseKinematics;
+}
+
+
+LinkedJointHandler* BodyKinematicsKit::linkedJointHandler()
+{
+    return impl->linkedJointHandler;
 }
 
 
