@@ -23,8 +23,21 @@ class CNOID_EXPORT BodyHandler : public Referenced
 public:
     static bool checkVersion(const char* name, int version, int internalVersion, std::ostream& os);
     BodyHandler();
+
     virtual bool initialize(Body* body, std::ostream& os = nullout());
-    virtual BodyHandler* clone(Body* body) = 0;
+
+    /**
+       This function simply creates an object of the same type as the original object,
+       and the initialization after cloning is processed by the initialize function.
+    */
+    virtual BodyHandler* clone();
+
+    /**
+       This is a deprecated function. Don't override this.
+       \todo Remove this definition and make the clone function with no argument pure virtual.
+    */
+    virtual BodyHandler* clone(Body* body);
+    
     Body* body() { return body_; }
     const std::string& filename() const { return filename_; }
 

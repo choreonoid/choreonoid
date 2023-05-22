@@ -155,7 +155,15 @@ void Body::copyFrom(const Body* org, CloneMap* cloneMap)
     if(!org->impl->handlers.empty()){
         impl->handlers.reserve(org->impl->handlers.size());
         for(auto& handler : org->impl->handlers){
-            if(auto handlerClone = handler->clone(this)){
+            if(auto handlerClone = handler->clone()){
+                handlerClone->body_ = this;
+                handlerClone->filename_ = handler->filename_;
+                if(handlerClone->initialize(this)){
+                    impl->handlers.push_back(handlerClone);
+                } else {
+                    delete handlerClone;
+                }
+            } else if(auto handlerClone = handler->clone(this)){ // For backward compatibility
                 handlerClone->body_ = this;
                 handlerClone->filename_ = handler->filename_;
                 impl->handlers.push_back(handlerClone);

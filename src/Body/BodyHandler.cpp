@@ -40,9 +40,19 @@ BodyHandler::BodyHandler()
 }
 
 
-bool BodyHandler::initialize(Body* /* body */, std::ostream& /* os */)
+bool BodyHandler::initialize(Body*, std::ostream&)
 {
     return true;
 }
 
 
+BodyHandler* BodyHandler::clone()
+{
+    return nullptr;
+}
+
+
+BodyHandler* BodyHandler::clone(Body*)
+{
+    return nullptr;
+}

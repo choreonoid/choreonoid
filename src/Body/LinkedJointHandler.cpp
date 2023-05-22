@@ -8,14 +8,14 @@ namespace {
 class NonLinkedJointHandler : public LinkedJointHandler
 {
 public:
-    virtual BodyHandler* clone(Body* body) override;
+    virtual BodyHandler* clone() override;
     virtual bool updateLinkedJointDisplacements(Link* masterJoint, double masterJointDisplacement) override;
 };
 
 }
 
     
-BodyHandler* NonLinkedJointHandler::clone(Body* /* body */)
+BodyHandler* NonLinkedJointHandler::clone()
 {
     return new NonLinkedJointHandler;
 }

@@ -9,7 +9,7 @@ using fmt::format;
 class ClosedLinkSampleHandler : public LinkedJointHandler
 {
 public:
-    virtual BodyHandler* clone(Body* body) override;
+    virtual BodyHandler* clone() override;
     virtual bool initialize(Body* body, std::ostream& os) override;
     virtual bool updateLinkedJointDisplacements(Link* masterJoint, double masterJointDisplacement) override;
 
@@ -20,14 +20,9 @@ private:
 CNOID_IMPLEMENT_BODY_HANDLER_FACTORY(ClosedLinkSampleHandler)
 
 
-BodyHandler* ClosedLinkSampleHandler::clone(Body* body)
+BodyHandler* ClosedLinkSampleHandler::clone()
 {
-    auto handler = new ClosedLinkSampleHandler(*this);
-    if(!handler->initialize(body, nullout())){
-        delete handler;
-        handler = nullptr;
-    }
-    return handler;
+    return new ClosedLinkSampleHandler(*this);
 }
 
 
