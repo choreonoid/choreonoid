@@ -336,7 +336,7 @@ bool BodySuperimposerAddon::Impl::updateSuperimposition
         for(int j=0; j < numLinks; ++j){
             linkPositions[j] = body->link(j)->T();
         }
-        const int numJoints = body->numJoints();
+        const int numJoints = body->numAllJoints();
         auto& jointDisplacements = info->tmpJointDisplacements;
         jointDisplacements.resize(numJoints);
         for(int j=0; j < numJoints; ++j){
@@ -358,7 +358,7 @@ bool BodySuperimposerAddon::Impl::updateSuperimposition
                 orgBody->link(j)->setPosition(linkPositions[j]);
             }
             // Restore the original joint displacements
-            const int numJoints = orgBody->numJoints();
+            const int numJoints = orgBody->numAllJoints();
             auto& jointDisplacements = info->tmpJointDisplacements;
             for(int j=0; j < numJoints; ++j){
                 orgBody->joint(j)->q() = jointDisplacements[j];
