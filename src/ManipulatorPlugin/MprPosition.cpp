@@ -4,6 +4,7 @@
 #include <cnoid/BodyKinematicsKit>
 #include <cnoid/KinematicBodySet>
 #include <cnoid/JointPath>
+#include <cnoid/LinkedJointHandler>
 #include <cnoid/JointSpaceConfigurationHandler>
 #include <cnoid/JointTraverse>
 #include <cnoid/CoordinateFrame>
@@ -240,14 +241,15 @@ bool MprFkPosition::fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout)
 
 
 template<class JointContainer>
-bool MprFkPosition::applyJointDisplacements(JointContainer& joints) const
+bool MprFkPosition::applyJointDisplacements(BodyKinematicsKit* kinematicsKit, JointContainer& joints) const
 {
     int nj = std::min(joints.numJoints(), numJoints_);
     for(int i = 0; i < nj; ++i){
         joints.joint(i)->q() = jointDisplacements_[i];
     }
-    joints.calcForwardKinematics();
-
+    if(auto handler = kinematicsKit->linkedJointHandler()){
+        handler->updateLinkedJointDisplacements();
+    }
     return true;
 }
 
@@ -256,9 +258,11 @@ bool MprFkPosition::apply(BodyKinematicsKit* kinematicsKit) const
 {
     bool applied = false;
     if(auto path = kinematicsKit->jointPath()){
-        applied = applyJointDisplacements(*path);
+        applied = applyJointDisplacements(kinematicsKit, *path);
+        kinematicsKit->jointTraverse()->calcForwardKinematics();
     } else if(auto traverse = kinematicsKit->jointTraverse()){
-        applied = applyJointDisplacements(*traverse);
+        applied = applyJointDisplacements(kinematicsKit, *traverse);
+        traverse->calcForwardKinematics();
     }
     return applied;
 }

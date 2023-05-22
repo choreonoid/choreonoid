@@ -144,7 +144,7 @@ private:
     template<class JointContainer>
     bool fetchJointDisplacements(const JointContainer& joints, MessageOut* out);
     template<class JointContainer>
-    bool applyJointDisplacements(JointContainer& joints) const;
+    bool applyJointDisplacements(BodyKinematicsKit* kinematicsKit, JointContainer& joints) const;
     
     JointDisplacementArray jointDisplacements_;
     std::bitset<MaxNumJoints> prismaticJointFlags_;
