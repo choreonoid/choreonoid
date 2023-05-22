@@ -88,8 +88,7 @@ JointPath::JointPath()
 
 
 JointPath::JointPath(Link* base, Link* end)
-    : linkPath_(base, end), 
-      joints_(linkPath_.size())
+    : linkPath_(base, end)
 {
     initialize();
     extractJoints();
@@ -97,11 +96,21 @@ JointPath::JointPath(Link* base, Link* end)
 
 
 JointPath::JointPath(Link* end)
-    : linkPath_(end), 
-      joints_(linkPath_.size())
+    : linkPath_(end)
 {
     initialize();
     extractJoints();
+}
+
+
+bool JointPath::setPath(Link* base, Link* end)
+{
+    if(!linkPath_.setPath(base, end)){
+        return false;
+    }
+    initialize();
+    extractJoints();
+    return true;
 }
 
 
@@ -125,8 +134,8 @@ void JointPath::extractJoints()
         if(linkPath_.isDownward(i)){
             i++;
         }
-        joints_.resize(n); // reserve size n buffer
         joints_.clear();
+        joints_.reserve(n); // reserve size n buffer
         int m = n - 1;
         while(i < m){
             Link* link = linkPath_[i];

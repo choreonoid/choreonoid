@@ -34,6 +34,8 @@ public:
     JointPath(const JointPath& org) = delete;
     JointPath& operator=(const JointPath& rhs) = delete;
 
+    bool setPath(Link* base, Link* end);
+
     bool empty() const {
         return joints_.empty();
     }
