@@ -69,7 +69,10 @@ void exportPySceneGraph(py::module& m)
     py::class_<SgNode, SgNodePtr, SgObject>(m, "SgNode")
         .def(py::init<>())
         .def(py::init<const SgNode&>())
-        .def("isGroupNode", &SgNode::isGroupNode);
+        .def("isGroupNode", &SgNode::isGroupNode)
+        .def("boundingBox", [](SgNode &self) { BoundingBox ret = self.boundingBox(); return ret; })
+        .def("untransformedBoundingBox", [](SgNode &self) { BoundingBox ret = self.untransformedBoundingBox(); return ret; })
+        ;
     
     py::class_<SgGroup, SgGroupPtr, SgNode>(m, "SgGroup")
         .def(py::init<>())
