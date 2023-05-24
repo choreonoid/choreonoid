@@ -204,6 +204,10 @@ public:
         return frameIndex;
     }
 
+    void append(const ElementType& element){
+        container.push_back(element);
+    }
+
     ElementType& append(){
         container.emplace_back();
         return container.back();
