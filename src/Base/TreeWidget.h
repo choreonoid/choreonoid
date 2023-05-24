@@ -39,6 +39,9 @@ public:
     // Signal of QHeaderView owned by TreeWidget
     SignalProxy<void(int logicalIndex, int oldSize, int newSize)> sigSectionResized();
 
+    // Signal of QWidget
+    SignalProxy<void(const QPoint& pos)> sigCustomContextMenuRequested();
+
 protected:
     virtual void paintEvent(QPaintEvent* event) override;
     virtual void scrollContentsBy(int dx, int dy) override;

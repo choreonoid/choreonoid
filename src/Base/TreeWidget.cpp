@@ -30,6 +30,8 @@ public:
     stdx::optional<Signal<void(const QModelIndex& parent, int first, int last)>> sigRowsInserted;
 
     stdx::optional<Signal<void(int logicalIndex, int oldSize, int newSize)>> sigSectionResized;
+    
+    stdx::optional<Signal<void(const QPoint& pos)>> sigCustomContextMenuRequested;
 
     Impl();
 };
@@ -284,6 +286,19 @@ SignalProxy<void(int logicalIndex, int oldSize, int newSize)> TreeWidget::sigSec
                 });
     }
     return *impl->sigSectionResized;
+}
+
+
+SignalProxy<void(const QPoint& pos)> TreeWidget::sigCustomContextMenuRequested()
+{
+    if(!impl->sigCustomContextMenuRequested){
+        stdx::emplace(impl->sigCustomContextMenuRequested);
+        connect(this, (void(QWidget::*)(const QPoint& pos)) &QWidget::customContextMenuRequested,
+                [this](const QPoint& pos){
+                    (*impl->sigCustomContextMenuRequested)(pos);
+                });
+    }
+    return *impl->sigCustomContextMenuRequested;
 }
 
 
