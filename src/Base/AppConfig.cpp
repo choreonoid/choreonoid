@@ -1,13 +1,8 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "AppConfig.h"
 #include "MessageView.h"
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <cnoid/UTF8>
-#include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -41,7 +36,7 @@ bool AppConfig::initialize(const std::string& application_, const std::string& o
 #ifdef _WIN32
     const char* appdata = getenv("APPDATA");
     if(appdata){
-        configDirPath = filesystem::path(appdata) / organization_;
+        configDirPath = filesystem::path(appdata) / fromUTF8(organization_);
     }
 #else
     const char* home = getenv("HOME");
@@ -50,7 +45,7 @@ bool AppConfig::initialize(const std::string& application_, const std::string& o
     }
 #endif
     
-    filePath = fromUTF8(application + ".conf");
+    filePath = fromUTF8(application) + ".conf";
 
     bool loaded = false;
     if(!configDirPath.empty()){
@@ -63,6 +58,16 @@ bool AppConfig::initialize(const std::string& application_, const std::string& o
     }
 
     return loaded;
+}
+
+
+const stdx::filesystem::path& AppConfig::configDataDirPath()
+{
+    static stdx::filesystem::path path;
+    if(path.empty()){
+        path = configDirPath / fromUTF8(application);
+    }
+    return path;
 }
 
 

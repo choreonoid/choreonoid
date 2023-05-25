@@ -1,4 +1,5 @@
 #include "DisplayValueFormat.h"
+#include <cnoid/ValueTree>
 #include "AppConfig.h"
 
 using namespace std;

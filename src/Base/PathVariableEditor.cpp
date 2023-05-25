@@ -4,6 +4,7 @@
 #include "ExtensionManager.h"
 #include "Buttons.h"
 #include <cnoid/FilePathVariableProcessor>
+#include <cnoid/ValueTree>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <QBoxLayout>

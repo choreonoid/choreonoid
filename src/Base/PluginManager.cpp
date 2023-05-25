@@ -7,6 +7,7 @@
 #include "MainWindow.h"
 #include "Action.h"
 #include <cnoid/MessageOut>
+#include <cnoid/ValueTree>
 #include <cnoid/ExecutablePath>
 #include <cnoid/Tokenizer>
 #include <cnoid/Config>

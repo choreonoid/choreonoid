@@ -2,6 +2,7 @@
 #include "AppConfig.h"
 #include "ProjectManager.h"
 #include "MainWindow.h"
+#include <cnoid/ValueTree>
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
