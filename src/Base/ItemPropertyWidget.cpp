@@ -2,7 +2,6 @@
 #include "PolymorphicItemFunctionSet.h"
 #include "PutPropertyFunction.h"
 #include "LazyCaller.h"
-#include "MainWindow.h"
 #include "Buttons.h"
 #include "StringListComboBox.h"
 #include "MenuManager.h"
@@ -553,7 +552,7 @@ void CustomizedItemDelegate::paint
 
 void CustomizedItemDelegate::openFileDialog(FilePathProperty value, FilePathEditor* editor)
 {
-    FileDialog dialog(MainWindow::instance());
+    FileDialog dialog;
     dialog.setWindowTitle(_("Select File"));
     dialog.setViewMode(QFileDialog::List);
     if(value.isExistingFileMode()){
