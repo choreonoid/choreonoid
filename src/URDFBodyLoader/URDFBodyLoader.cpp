@@ -15,6 +15,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/MeshGenerator>
 #include <cnoid/NullOut>
+#include <cnoid/RangeSensor>
 #include <cnoid/SceneLoader>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
@@ -1057,6 +1058,86 @@ bool URDFBodyLoader::Impl::loadSensor(
 
         // registers the camera
         return body->addDevice(camera, parentLink);
+    } else if (!sensorNode.child(RAY).empty()) {
+        RangeSensorPtr rangeSensor = new RangeSensor;
+        rangeSensor->setName(sensorName);
+        rangeSensor->setScanRate(update_rate);
+        rangeSensor->setLocalRotation(rotation);
+        rangeSensor->setLocalTranslation(translation);
+
+        // 'horizontal' tag (optional)
+        const xml_node& horizontalNode = sensorNode.child(RAY).child(HORIZONTAL);
+        if (!horizontalNode.empty()) {
+            // 'samples' attribute (optional, default: 1)
+            const int horizontalSamples = horizontalNode.attribute(SAMPLES)
+                                              .as_int(1);
+            if (horizontalSamples < 1) {
+                os() << "Error: the number of horizontal samples is invalid "
+                        "(ray sensor \""
+                     << sensorName << "\")." << endl;
+                return false;
+            }
+
+            // 'resolution' attribute (optional, default: 1.0) is currently ignored
+
+            // 'min_angle' attribute (optional, default: 0.0)
+            const double horizontalMinAngle
+                = horizontalNode.attribute(MIN_ANGLE).as_double(0.0);
+            // 'max_angle' attribute (optional, default: 0.0)
+            const double horizontalMaxAngle
+                = horizontalNode.attribute(MAX_ANGLE).as_double(0.0);
+            if (horizontalMinAngle > horizontalMaxAngle) {
+                os() << "Error: horizontal max_angle < min_angle (ray sensor \""
+                     << sensorName << "\")." << endl;
+                return false;
+            }
+
+            rangeSensor->setYawRange(horizontalMaxAngle - horizontalMinAngle);
+            rangeSensor->setYawStep(rangeSensor->yawRange()
+                                    / static_cast<double>(horizontalSamples));
+        }
+
+        // 'vertical' tag (optional)
+        const xml_node& verticalNode = sensorNode.child(RAY).child(VERTICAL);
+        if (!verticalNode.empty()) {
+            // 'samples' attribute (optional, default: 1)
+            const int verticalSamples = verticalNode.attribute(SAMPLES).as_int(
+                1);
+            if (verticalSamples < 1) {
+                os() << "Error: the number of vertical samples is invalid (ray "
+                        "sensor \""
+                     << sensorName << "\")." << endl;
+                return false;
+            }
+
+            // 'resolution' attribute (optional, default: 1.0) is currently ignored
+
+            // 'min_angle' attribute (optional, default: 0.0)
+            const double verticalMinAngle = verticalNode.attribute(MIN_ANGLE)
+                                                .as_double();
+            // 'max_angle' attribute (optional, default: 0.0)
+            const double verticalMaxAngle = verticalNode.attribute(MAX_ANGLE)
+                                                .as_double();
+            if (verticalMinAngle > verticalMaxAngle) {
+                os() << "Error: vertical max_angle < min_angle (ray sensor \""
+                     << sensorName << "\")." << endl;
+                return false;
+            }
+
+            rangeSensor->setPitchRange(verticalMaxAngle - verticalMinAngle);
+            rangeSensor->setPitchStep(rangeSensor->pitchRange()
+                                      / static_cast<double>(verticalSamples));
+        }
+
+        // transforms the frame for the ROS-standard specification
+        Matrix3 R;
+        R << 1.0, 0.0, 0.0,
+             0.0, 0.0, 1.0,
+             0.0, -1.0, 0.0;
+        rangeSensor->setOpticalFrameRotation(R);
+
+        // registers the range sensor
+        body->addDevice(rangeSensor, parentLink);
     }
 
     return true;

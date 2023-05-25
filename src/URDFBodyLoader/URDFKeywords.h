@@ -57,10 +57,16 @@ const char CAMERA[] = "camera";
 const char FAR[] = "far";
 const char HEIGHT[] = "height";
 const char HFOV[] = "hfov";
+const char HORIZONTAL[] = "horizontal";
 const char IMAGE[] = "image";
+const char MAX_ANGLE[] = "max_angle";
+const char MIN_ANGLE[] = "min_angle";
 const char NEAR[] = "near";
+const char RAY[] = "ray";
+const char SAMPLES[] = "samples";
 const char SENSOR[] = "sensor";
 const char UPDATE_RATE[] = "update_rate";
+const char VERTICAL[] = "vertical";
 const char WIDTH[] = "width";
 
 }  // namespace cnoid
