@@ -17,21 +17,21 @@ public:
     
     LinkTraverse();
     LinkTraverse(int size);
-    LinkTraverse(Link* root, bool doUpward = false, bool doDownward = true);
+    LinkTraverse(Link* root, bool toUpper = false, bool toLower = true);
     LinkTraverse(const LinkTraverse& org, CloneMap* cloneMap = nullptr);
 
     virtual ~LinkTraverse();
 
     void clear();
 
-    virtual void find(Link* root, bool doUpward = false, bool doDownward = true);
+    virtual void find(Link* root, bool toUpper = false, bool toLower = true);
 
-    void append(Link* link, bool isDownward = true);
+    bool hasRootLowerLinks() const { return hasRootLowerLinks_; }
+    bool hasRootUpperLinks() const { return hasRootUpperLinks_; }
+
+    void append(Link* link, bool isLowerLink = true);
 
     bool remove(Link* link);
-
-    //! @return prepended link
-    Link* prependRootAdjacentLinkToward(Link* link);
 
     Body* body() { return links_.empty() ? nullptr : links_.front()->body(); }
 
@@ -78,15 +78,22 @@ public:
         return (index >= numUpwardConnections);
     }
 	
-    void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false) const;
+    void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false);
+
+    Vector6 calcInverseDynamics();
 
 protected:
     std::vector<LinkPtr> links_;
     int numUpwardConnections;
+    bool hasRootLowerLinks_;
+    bool hasRootUpperLinks_;
 
 private:
-    void traverse(Link* link, bool doUpward, bool doDownward, bool isUpward, Link* prev);
-    Link* findRootAdjacentLink(Link* link, Link* prev, Link* root, bool& isUpward);
+    void traverse(Link* link, bool toUpper, bool toLower, bool isReverseLinkChain, Link* prev);
+    bool checkIfUpperLink(Link* link, Link* upperLink) const;
+    Vector6 calcInverseDynamicsSub(
+        Link* link, const Vector3& vo_upper, const Vector3& dvo_upper,
+        bool goParentDirection, bool goChildDirection, bool isParentDirection, Link* upperLink);
 };
 
 }

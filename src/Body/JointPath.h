@@ -81,7 +81,7 @@ public:
     LinkPath& linkPath() { return linkPath_; }
     const LinkPath& linkPath() const { return linkPath_; }
 
-    void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false) const {
+    void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false) {
         linkPath_.calcForwardKinematics(calcVelocity, calcAcceleration);
     }
 

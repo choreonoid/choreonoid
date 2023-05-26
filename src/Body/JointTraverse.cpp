@@ -20,8 +20,8 @@ JointTraverse::JointTraverse(Body* body)
 }
 
 
-JointTraverse::JointTraverse(Link* baseLink, bool doUpward, bool doDownward)
-    : linkTraverse_(baseLink, doUpward, doDownward)
+JointTraverse::JointTraverse(Link* baseLink, bool toUpper, bool toLower)
+    : linkTraverse_(baseLink, toUpper, toLower)
 {
     joints_.reserve(linkTraverse_.numLinks() - 1);
     for(auto& link : linkTraverse_){

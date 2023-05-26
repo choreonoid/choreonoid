@@ -15,7 +15,7 @@ public:
     //! This constructor sets the default joint traverse of the body
     JointTraverse(Body* body);
     //! This constructor sets the joint traverse from the base link
-    JointTraverse(Link* baseLink, bool doUpward = false, bool doDownward = true);
+    JointTraverse(Link* baseLink, bool toUpper = false, bool toLower = true);
     JointTraverse(const JointTraverse& org, CloneMap* cloneMap = nullptr);
 
     void clear();
@@ -26,8 +26,8 @@ public:
     LinkTraverse& linkTraverse() { return linkTraverse_; }
     const LinkTraverse& linkTraverse() const { return linkTraverse_; }
 
-    void appendLink(Link* link, bool isDownward = true) {
-        linkTraverse_.append(link, isDownward);
+    void appendLink(Link* link, bool isLowerLink = true) {
+        linkTraverse_.append(link, isLowerLink);
     }
     int numLinks() const {
         return linkTraverse_.numLinks();
@@ -56,7 +56,7 @@ public:
     const_iterator begin() const { return joints_.begin(); }
     const_iterator end() const { return joints_.end(); }
 	
-    void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false) const {
+    void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false){
         linkTraverse_.calcForwardKinematics(calcVelocity, calcAcceleration);
     }
 

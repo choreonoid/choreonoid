@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "CompositeIK.h"
 #include "Body.h"
 #include "Link.h"
@@ -112,15 +107,13 @@ bool CompositeIK::calcRemainingPartForwardKinematicsForInverseKinematics()
     if(!remainingLinkTraverse){
         remainingLinkTraverse = make_shared<LinkTraverse>(targetLink_, true, true);
         for(auto& jointPath : paths){
-            for(auto& link : jointPath->linkPath()){
-                remainingLinkTraverse->remove(link);
+            auto& linkPath = jointPath->linkPath();
+            int n = linkPath.numLinks() - 1; // Exclude the end link (target link)
+            for(int i=0; i < n; ++i){
+                remainingLinkTraverse->remove(linkPath[i]);
             }
         }
-        remainingLinkTraverse->prependRootAdjacentLinkToward(targetLink_);
     }
     remainingLinkTraverse->calcForwardKinematics();
     return true;
 }
-
-    
-
