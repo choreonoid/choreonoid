@@ -302,18 +302,26 @@ public:
     ///< inertia tensor (self local, around c)
     const Matrix3& I() const { return I_; }    
 
+    /// \note torque element is around the global origin
     const Vector6& externalWrench() const { return F_ext_; }
+    /// \note torque element is around the global origin
     Vector6& externalWrench() { return F_ext_; }
     Vector6::ConstFixedSegmentReturnType<3>::Type externalForce() const { return F_ext_.head<3>(); }
     Vector6::FixedSegmentReturnType<3>::Type externalForce() { return F_ext_.head<3>(); }
+    /// external torque around the global origin
     Vector6::ConstFixedSegmentReturnType<3>::Type externalTorque() const { return F_ext_.tail<3>(); }
+    /// external torque around the global origin
     Vector6::FixedSegmentReturnType<3>::Type externalTorque() { return F_ext_.tail<3>(); }
 
+    /// \note torque element is around the global origin
     const Vector6& F_ext() const { return F_ext_; }
+    /// \note torque element is around the global origin
     Vector6& F_ext() { return F_ext_; }
     Vector6::ConstFixedSegmentReturnType<3>::Type f_ext() const { return F_ext_.head<3>(); }
     Vector6::FixedSegmentReturnType<3>::Type f_ext() { return F_ext_.head<3>(); }
+    /// external torque around the global origin
     Vector6::ConstFixedSegmentReturnType<3>::Type tau_ext() const { return F_ext_.tail<3>(); }
+    /// external torque around the global origin
     Vector6::FixedSegmentReturnType<3>::Type tau_ext() { return F_ext_.tail<3>(); }
 
     void addExternalForceAtLocalPosition(const Vector3& f_global, const Vector3& p_local){
