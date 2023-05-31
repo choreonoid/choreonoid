@@ -224,7 +224,13 @@ void FilePathVariableProcessor::restoreUserVariables(Mapping* variables)
 
 void FilePathVariableProcessor::setBaseDirectory(const std::string& directory)
 {
-    impl->baseDirPath = filesystem::path(fromUTF8(directory));
+    setBaseDirPath(fromUTF8(directory));
+}
+
+
+void FilePathVariableProcessor::setBaseDirPath(const stdx::filesystem::path& path)
+{
+    impl->baseDirPath = path;
     if(impl->baseDirPath.is_relative()){
         impl->baseDirPath = filesystem::current_path() /  impl->baseDirPath;
     }
@@ -234,7 +240,7 @@ void FilePathVariableProcessor::setBaseDirectory(const std::string& directory)
 
 void FilePathVariableProcessor::clearBaseDirectory()
 {
-    setBaseDirectory("");
+    setBaseDirPath("");
 }
 
 
@@ -244,7 +250,7 @@ std::string FilePathVariableProcessor::baseDirectory() const
 }
 
 
-stdx::filesystem::path FilePathVariableProcessor::baseDirPath() const
+const stdx::filesystem::path& FilePathVariableProcessor::baseDirPath() const
 {
     return impl->baseDirPath;
 }
@@ -252,7 +258,13 @@ stdx::filesystem::path FilePathVariableProcessor::baseDirPath() const
 
 void FilePathVariableProcessor::setProjectDirectory(const std::string& directory)
 {
-    impl->projectDirPath = fromUTF8(directory);
+    setProjectDirPath(fromUTF8(directory));
+}
+
+
+void FilePathVariableProcessor::setProjectDirPath(const stdx::filesystem::path& path)
+{
+    impl->projectDirPath = path;
     if(impl->projectDirPath.is_relative()){
         impl->projectDirPath = filesystem::current_path() /  impl->projectDirPath;
     }
@@ -271,6 +283,12 @@ void FilePathVariableProcessor::clearProjectDirectory()
 const std::string& FilePathVariableProcessor::projectDirectory() const
 {
     return impl->projectDirString;
+}
+
+
+const stdx::filesystem::path& FilePathVariableProcessor::projectDirPath() const
+{
+    return impl->projectDirPath;
 }
 
 

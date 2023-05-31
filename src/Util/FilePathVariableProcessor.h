@@ -34,12 +34,15 @@ public:
     void storeUserVariables(Mapping* variables);
     void restoreUserVariables(Mapping* variables);
     void setBaseDirectory(const std::string& directory);
+    void setBaseDirPath(const stdx::filesystem::path& path);
     void clearBaseDirectory();
     std::string baseDirectory() const;
-    stdx::filesystem::path baseDirPath() const;
+    const stdx::filesystem::path& baseDirPath() const;
     void setProjectDirectory(const std::string& directory);
+    void setProjectDirPath(const stdx::filesystem::path& path);
     void clearProjectDirectory();
     const std::string& projectDirectory() const;
+    const stdx::filesystem::path& projectDirPath() const;
     std::string parameterize(const std::string& path);
     std::string expand(const std::string& path, bool doMakeNativeAbsolutePath);
     const std::string& errorMessage() const;
