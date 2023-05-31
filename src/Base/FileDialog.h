@@ -17,6 +17,16 @@ public:
     FileDialog(QWidget* parent, Qt::WindowFlags f = Qt::WindowFlags());
     ~FileDialog();
 
+    void setWindowTitle(const QString& title){
+        QDialog::setWindowTitle(title);
+    }
+    void setWindowTitle(const std::string& title){
+        QDialog::setWindowTitle(title.c_str());
+    }
+    void setWindowTitle(const char* title){
+        QDialog::setWindowTitle(title);
+    }
+
     void updatePresetDirectories();
     bool selectFilePath(const std::string& filePath);
     void insertOptionPanel(QWidget* panel);
