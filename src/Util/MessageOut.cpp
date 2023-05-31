@@ -162,6 +162,7 @@ void MessageOut::putln(const std::string& message, int type)
 
 std::ostream& MessageOut::cout()
 {
+    lock_guard<mutex> lock(sinkMutex);
     if(!impl->cout){
         impl->streamBuf = make_unique<MessageOutStreamBuf>(*this);
         impl->cout = make_unique<ostream>(impl->streamBuf.get());
@@ -172,6 +173,7 @@ std::ostream& MessageOut::cout()
 
 std::ostream& MessageOut::cerr()
 {
+    lock_guard<mutex> lock(sinkMutex);
     if(!impl->cout){
         impl->errorStreamBuf = make_unique<MessageOutErrorStreamBuf>(*this);
         impl->cerr = make_unique<ostream>(impl->errorStreamBuf.get());
@@ -188,6 +190,7 @@ bool MessageOut::hasErrors() const
 
 void MessageOut::setPendingMode(bool on)
 {
+    lock_guard<mutex> lock(sinkMutex);
     impl->isPendingMode = on;
 }
     
