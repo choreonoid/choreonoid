@@ -16,7 +16,7 @@ public:
     virtual ~ProjectPacker();
 
     void setTopItemForPacking(Item* item);
-    void addReferenceDirectory(const std::string& name, std::string directory);
+    void addReferenceDirectory(std::string directory);
     void clearReferenceDirectories();
     void setUnpackingDirectory(const std::string& directory);
     const std::string& unpackingDirectory() const;

@@ -99,7 +99,7 @@ void ProjectPacker::setTopItemForPacking(Item* item)
 }
 
 
-void ProjectPacker::addReferenceDirectory(const std::string& name, std::string directory)
+void ProjectPacker::addReferenceDirectory(std::string directory)
 {
     bool isAbsolute;
     auto ufPath = impl->getUnifiedFormatPath(directory, isAbsolute);
@@ -390,20 +390,12 @@ void ProjectPacker::Impl::checkFileDependency(Item* item)
 
 bool ProjectPacker::Impl::checkIfPathInReferenceDirectory(const fs::path& path)
 {
-    bool result = false;
     for(auto& refDirPath : refDirPaths){
-        auto relPath = getRelativePath(path, refDirPath);
-        if(!relPath.empty()){
-            result = true;
-            for(auto& element : relPath){
-                if(element.string() == ".."){
-                    result = false;
-                    break;
-                }
-            }
+        if(checkIfSubFilePath(path, refDirPath)){
+            return true;
         }
     }
-    return result;
+    return false;
 }
 
 
