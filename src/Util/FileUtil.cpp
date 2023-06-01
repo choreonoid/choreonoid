@@ -158,6 +158,23 @@ filesystem::path getRelativePath(const filesystem::path& path_, const filesystem
 }
 
 
+bool checkIfSubFilePath(const stdx::filesystem::path& path, const stdx::filesystem::path& base)
+{
+    bool result = false;
+    auto relPath = getRelativePath(path, base);
+    if(!relPath.empty()){
+        result = true;
+        for(auto& element : relPath){
+            if(element.string() == ".."){
+                result = false;
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+
 bool findRelativePath(const filesystem::path& from_, const filesystem::path& to, filesystem::path& out_relativePath)
 {
 #if __cplusplus > 201402L && !defined(__cpp_lib_experimental_filesystem)

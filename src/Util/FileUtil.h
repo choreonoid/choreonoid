@@ -36,6 +36,8 @@ CNOID_EXPORT int findSubDirectory(
 CNOID_EXPORT stdx::filesystem::path getRelativePath(
     const stdx::filesystem::path& path, const stdx::filesystem::path& base);
 
+CNOID_EXPORT bool checkIfSubFilePath(const stdx::filesystem::path& path, const stdx::filesystem::path& base);
+
 [[deprecated("Use getRelativePath.")]]
 CNOID_EXPORT bool findRelativePath(
     const stdx::filesystem::path& from,
