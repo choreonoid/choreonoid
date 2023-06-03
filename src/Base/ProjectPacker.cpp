@@ -290,7 +290,10 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
     
     for(auto& path : allPaths){
         auto relDirPath = getRelativePath(path.parent_path(), topDirPath);
-        auto destDirPath = (packingDirPath / relDirPath).lexically_normal();
+        if(!relDirPath){
+            continue; // Ignore an invalid path
+        }
+        auto destDirPath = (packingDirPath / *relDirPath).lexically_normal();
 
 #ifdef _WIN32
         // Restore the original drive symbol in Windows
@@ -304,7 +307,7 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
         if(ec){
             mout->putErrorln(
                 format(_("Directory \"{0}\" for \"{1}\" cannot be created in \"{2}\": {3}."),
-                       toUTF8(relDirPath.string()),
+                       toUTF8(relDirPath->string()),
                        toUTF8(path.filename().string()),
                        toUTF8(packingDirPath.string()),
                        toUTF8(ec.message())));
@@ -432,7 +435,9 @@ std::string ProjectPacker::Impl::getRelocatedFilePath(const std::string& pathStr
         if(checkIfPathInReferenceDirectory(ufPath)){
             return pathString;
         } else {
-            return toUTF8((packingDirPath / getRelativePath(ufPath, topDirPath)).generic_string());
+            if(auto relPath = getRelativePath(ufPath, topDirPath)){
+                return toUTF8((packingDirPath / *relPath).generic_string());
+            }
         }
     }
     return string();
@@ -510,6 +515,8 @@ bool ProjectPacker::Impl::createProjectZipFile(const string& zipFilename)
         if(fs::exists(zipFilePath)){
             fs::remove(zipFilePath, ec);
         }
+        mout->putErrorln(
+            format(_("Failed to create the project pack file \"{0}\"."), zipFilename));
     }
 
     return zipped;
@@ -518,8 +525,12 @@ bool ProjectPacker::Impl::createProjectZipFile(const string& zipFilename)
 
 bool ProjectPacker::Impl::addDirectoryToZip(zip_t* zip, fs::path dirPath, const fs::path& zipTopDirPath)
 {
-    auto localDirPath = (zipTopDirPath / getRelativePath(dirPath, packingDirPath)).lexically_normal();
-    auto localDirStr = toUTF8(localDirPath.generic_string());
+    auto relDirPath = getRelativePath(dirPath, packingDirPath);
+    if(!relDirPath){
+        return false;
+    }
+    fs::path localDirPath = (zipTopDirPath / *relDirPath).lexically_normal();
+    string localDirStr = toUTF8(localDirPath.generic_string());
     int index = zip_dir_add(zip, localDirStr.c_str(), ZIP_FL_ENC_UTF_8);
     if(index < 0){
         mout->putErrorln(
@@ -535,7 +546,7 @@ bool ProjectPacker::Impl::addDirectoryToZip(zip_t* zip, fs::path dirPath, const 
                 return false;
             }
         } else {
-            auto localPath = zipTopDirPath / getRelativePath(entryPath, packingDirPath);
+            auto localPath = zipTopDirPath / *getRelativePath(entryPath, packingDirPath);
             auto localPathStr = toUTF8(localPath.generic_string());
             auto sourcePath = toUTF8(entryPath.make_preferred().string());
             zip_source_t* source = zip_source_file(zip, sourcePath.c_str(), 0, 0);
@@ -661,7 +672,7 @@ bool ProjectPacker::Impl::extractFiles
 
                         if(unpackedProjectFile.empty()){
                             fs::path filePath(fromUTF8(name));
-                            if(getRelativePath(filePath, *filePath.begin()) == projectFile){
+                            if(*getRelativePath(filePath, *filePath.begin()) == projectFile){
                                 unpackedProjectFile = entryPath.generic_string();
                             }
                         }
