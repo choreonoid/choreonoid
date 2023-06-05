@@ -83,6 +83,7 @@ set(sources
   ExtJoystick.cpp
   Task.cpp
   AbstractTaskSequencer.cpp
+  ZipArchiver.cpp
   CnoidUtil.cpp # This file must be placed at the last position
   )
 
@@ -203,6 +204,7 @@ set(headers
   SharedJoystick.h
   Task.h
   AbstractTaskSequencer.h
+  ZipArchiver.h
   exportdecl.h
   )
 
@@ -224,7 +226,7 @@ choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers}
 
 set(libraries
   PUBLIC fmt::fmt ${GETTEXT_LIBRARIES}
-  PRIVATE ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES})
+  PRIVATE ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${libzip_LIBRARIES})
 
 if(UNIX)
   set(libraries ${libraries}
