@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "CorbaPlugin.h"
 #include "MessageView_impl.h"
 #include "NameServerView.h"
@@ -15,6 +10,7 @@
 #include <cnoid/Process>
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
+#include <cnoid/ValueTree>
 #include <cnoid/stdx/filesystem>
 #include <QTcpSocket>
 #include <fmt/format.h>
@@ -87,8 +83,8 @@ void checkOrInvokeCorbaNameServer()
         }
     }
 }
+
 }
-    
 
 namespace {
     
@@ -172,14 +168,17 @@ public:
         return true;
     }
 };
+
 }
 
 CNOID_IMPLEMENT_PLUGIN_ENTRY(CorbaPlugin);
 
 
 namespace cnoid {
+
 bool takeOverCorbaPluginInitialization(CORBA::ORB_ptr orb)
 {
     return initializeCorbaUtilAndNameServer(orb);
 }
+
 }

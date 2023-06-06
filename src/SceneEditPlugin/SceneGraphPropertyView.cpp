@@ -1,8 +1,3 @@
-/**
-   @author Shizuko Hattori
-   This is implemented based on ItemPropertyView.cpp
-*/
-
 #include "SceneGraphPropertyView.h"
 #include "SceneGraphView.h"
 #include <cnoid/StringListComboBox>
@@ -13,6 +8,7 @@
 #include <cnoid/SceneLights>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneEffects>
+#include <cnoid/ValueTree>
 #include <cnoid/stdx/variant>
 #include <QBoxLayout>
 #include <QTableWidget>

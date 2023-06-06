@@ -1,9 +1,5 @@
-/**
-   @author Shizuko Hattori
-*/
-
-#ifndef CNOID_SCENE_GRAPH_PROPERTY_VIEW_H_INCLUDED 
-#define CNOID_SCENE_GRAPH_PROPERTY_VIEW_H_INCLUDED
+#ifndef CNOID_SCENE_GRAPH_PROPERTY_VIEW_H
+#define CNOID_SCENE_GRAPH_PROPERTY_VIEW_H
 
 #include <cnoid/View>
 
