@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-11 15:47+0900\n"
+"POT-Creation-Date: 2023-06-06 20:26+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1427,8 +1427,8 @@ msgid ""
 "A relative path \"{0}\" is given to the project packer as a file path to which {1} depends but it "
 "must be an absolute path."
 msgstr ""
-"{1}が依存するファイルのパスとして相対パス \"{0}\" がプロジェクトパッカーに与えられましたが、これ"
-"は絶対パスである必要があります．"
+"{1}が依存するファイルのパスとして相対パス \"{0}\" がプロジェクトパッカーに与えられましたが、これは"
+"絶対パスである必要があります．"
 
 msgid "The file path \"{0}\" for {1} cannot be relocated to be a file path in the project pack."
 msgstr "{1}のファイルパス \"{0}\" をプロジェクトパック内のファイルパスに再配置できません．"
@@ -1438,6 +1438,9 @@ msgstr "プロジェクトパックファイル \"{0}\" が既に存在してい
 
 msgid "Failed to create the project pack file \"{0}\": {1}"
 msgstr "プロジェクトパックファイル \"{0}\" を作成することができません： {1}"
+
+msgid "Failed to create the project pack file \"{0}\"."
+msgstr "プロジェクトパックファイル \"{0}\" を作成することができません．}"
 
 msgid "Failed to add directory \"{0}\" to the project pack: {1}"
 msgstr "プロジェクトパックにディレクトリ \"{0}\" を追加することができません： {1}"
@@ -1494,10 +1497,10 @@ msgid " Triangles: {}"
 msgstr " トライアングル: {}"
 
 msgid "The project must be saved to detect the scene files for {0}."
-msgstr ""
+msgstr "{0}のシーンファイルを検出するためにプロジェクトが保存されている必要があります．"
 
 msgid "The file \"{0}\" on which {1} depends is not relocatable and will be lost in the archive."
-msgstr ""
+msgstr "{1}が依存しているファイル \"{0}\" は再配置できないためアーカイブ内で失われます．"
 
 msgid "RootItem"
 msgstr "ルートアイテム"
