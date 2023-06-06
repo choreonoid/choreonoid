@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-07-26 19:10+0900\n"
+"POT-Creation-Date: 2023-06-06 20:22+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -55,8 +55,8 @@ msgstr "回転軸がゼロベクトルです"
 msgid "${{PROJECT_DIR}} of \"{0}\" cannot be expanded."
 msgstr "\"{0}\" の ${{PROJECT_DIR}} は展開できません．"
 
-msgid "The \"{0}\" variable in \"{1}\" is not defined."
-msgstr "\"{1}\" における変数 \"{0}\" は定義されていません．"
+msgid "Path variable \"{0}\" in \"{1}\" is not defined."
+msgstr "\"{1}\" におけるパス変数 \"{0}\" は定義されていません．"
 
 msgid "Seq type \"{0}\" cannot be load into {1}."
 msgstr "Seqタイプ \"{0}\" は{1}にロードできません．"
@@ -345,3 +345,27 @@ msgstr "YAMLファイルにドキュメントが含まれていません．"
 
 msgid "The yaml file does not contains {}-th document."
 msgstr "YAMLファイルに{}番目のドキュメントが含まれていません．"
+
+msgid "The zip file \"{0}\" already exists and cannot be removed: {1}"
+msgstr "ZIPファイル \"{0}\" は既に存在していて削除することができません．{1}"
+
+msgid "Failed to create the zip file \"{0}\": {1}"
+msgstr "ZIPファイル \"{0}\" の作成に失敗しました： {1}"
+
+msgid "Failed to add directory \"{0}\" to the zip file: {1}"
+msgstr "ディレクトリ \"{0}\" のZIPファイルへの追加に失敗しました： {1}"
+
+msgid "Failed to add file \"{0}\" to the zip file: {1}"
+msgstr "ファイル \"{0}\" のZIPファイルへの追加に失敗しました： {1}"
+
+msgid "Failed to open the zip file \"{0}\": {1}"
+msgstr "ZIPファイル \"{0}\" を開くことができません： {1}"
+
+msgid "Entry {0} in the zip file \"{1}\" cannot be extracted."
+msgstr "ZIPファイル  \"{1}\" のエントリ{0}を展開することができません．"
+
+msgid "Directory \"{0}\" in the zip file \"{1}\" cannot be created: {2}"
+msgstr "ZIPファイル  \"{1}\" のディレクトリ \"{0}\" を作成することができません．{2}"
+
+msgid "File \"{0}\" in the zip file \"{1}\" cannot be extracted."
+msgstr "ZIPファイル  \"{1}\" のファイル \"{0}\" を展開することができません．"
