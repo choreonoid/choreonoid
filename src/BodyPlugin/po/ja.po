@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-14 12:39+0900\n"
+"POT-Creation-Date: 2023-06-07 00:19+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -133,17 +133,17 @@ msgstr "反転コピー"
 msgid "Copy the left side pose to the right side"
 msgstr "左側の姿勢を右側にコピー"
 
-msgid "CollisionSeqItem"
-msgstr "干渉時系列アイテム"
-
-msgid "Collision Data"
-msgstr "干渉データ"
-
 msgid "BodyContactPointLoggerItem"
 msgstr "ボディ接触点ロガーアイテム"
 
 msgid "BodyContactPointLogItem"
 msgstr "ボディ接触点ログアイテム"
+
+msgid "Offset {0}"
+msgstr "オフセット {0}"
+
+msgid "Offset {0} ( {1} )"
+msgstr "オフセット {0} ( {1} )"
 
 msgid "BodyItem"
 msgstr "ボディアイテム"
@@ -193,8 +193,8 @@ msgstr "干渉検出"
 msgid "Self-collision detection"
 msgstr "自己干渉検出"
 
-msgid "Location editable"
-msgstr "配置編集"
+msgid "Lock location"
+msgstr "配置ロック"
 
 msgid "Scene sensitive"
 msgstr "シーン感知"
@@ -273,6 +273,191 @@ msgstr "標準シーンファイル"
 
 msgid "OBJ file"
 msgstr "OBJファイル"
+
+msgid "Group selection"
+msgstr "グループの選択"
+
+msgid "Store the body file in the library directory"
+msgstr "ボディファイルをライブラリディレクトリ内に格納する"
+
+msgid "&Accept"
+msgstr "決定(&A)"
+
+msgid "&Cancel"
+msgstr "キャンセル(&C)"
+
+msgid "Top-level"
+msgstr "トップレベル"
+
+msgid "Drop was canceled because item \"{0}\" is duplicated in the drop position."
+msgstr "ドロップ位置でアイテム \"{0}\" が重複するためドロップはキャンセルされました． "
+
+msgid "Group Name:"
+msgstr "グループ名；"
+
+msgid "Body Library"
+msgstr "ボディライブラリ"
+
+msgid "BodyLibraryView"
+msgstr "ボディライブラリビュー"
+
+msgid "Create Group"
+msgstr "グループの作成"
+
+msgid "Create Sub Group"
+msgstr "サブグループの作成"
+
+msgid "&Create"
+msgstr "作成（&C)"
+
+msgid "Group name \"{0}\" is duplicated. Please use another name for a new group."
+msgstr ""
+"グループ名 \"{0}\" は重複しています．新しいグループには別の名前を使用するようにしてください．"
+
+msgid "The body cannot be registered in the body library due to the lack of its name."
+msgstr "このボディは名前が無いためボディライブラリに登録することができません．"
+
+msgid ""
+"Name \"{0}\" of the body is already registered in the same group. Please modify the name or group "
+"to avoid the name duplication."
+msgstr ""
+"ボディの名前 \"{0}\" は同じグループで既に登録されています．名前かグループのどちらかを変更して名前"
+"の重複を避けるようにしてください．"
+
+msgid "Export to Body File"
+msgstr "ボディファイルへのエクスポート"
+
+msgid ""
+"Body item \"{0}\" cannot be registered in the body library because it does not have its "
+"corresponding body file. Do you want to export it as a body file for registration in the body "
+"library?"
+msgstr ""
+"ボディアイテム \"{0}\" は対応するボディファイルを持たないためボディライブラリに登録できません．ボ"
+"ディライブラリに登録するためボディファイルへのエクスポートを行いますか？"
+
+msgid ""
+"The directory \"{0}\" to put the body file in the body library cannot be created. The "
+"registration was canceled."
+msgstr ""
+" ボディライブラリ内でボディファイルを配置するディレクトリ\"{0}\" を作成できません．登録はキャンセ"
+"ルされました．"
+
+msgid "The directory \"{0}\" in the body library cannot be created. The registration was canceled."
+msgstr "ボディライブラリ内のディレクトリ \"{0}\" を作成できません．登録はキャンセルされました．"
+
+msgid ""
+"{0} cannot be stored in the library directory becasue its element file \"{1}\" is not placed in "
+"the same or lower directory as the main model file \"{2}\"."
+msgstr ""
+"{0}はその構成ファイル  \"{1}\" がメインモデルファイル \"{2}\" と同じか下位のディレクトリに配置され"
+"ていないため，ボディライブラリ内に格納できません．"
+
+msgid ""
+"{0} cannot be stored in the library directory due to an error in creating sub directory \"{1}\"."
+msgstr "{0}はサブディレクトリ \"{1}\" の作成エラーによりライブラリディレクトリ内に格納できません．"
+
+msgid "{0} cannot be stored in the library directory due to a file copy error."
+msgstr "{0}はファイルコピーエラーにより、ライブラリディレクトリ内に格納できません．"
+
+msgid "Select Thumbnail Image for {0}"
+msgstr "{0}のサムネイル画像の選択"
+
+msgid "Select"
+msgstr "選択"
+
+msgid "Images files (*.png *.jpg *.jpeg)"
+msgstr "画像ファイル (*.png *.jpg *.jpeg)"
+
+msgid "Any files (*)"
+msgstr "全てのファイル (*)"
+
+msgid "Rename Group"
+msgstr "グループ名の変更"
+
+msgid "Modify Registration Name"
+msgstr "登録名の変更"
+
+msgid "&Apply"
+msgstr "適用(&A)"
+
+msgid ""
+"The name cannot be modified because the corresponding files in the library directory cannot be "
+"moved to the renamed ones."
+msgstr ""
+"ライブラリディレクトリ内で対応するファイルを名前変更後のディレクトリに移動できないため，名前を変更"
+"することができません．"
+
+msgid "Name \"{0}\" is duplicated. Please use another name."
+msgstr "名前 \"{0}\" は重複しています．別の名前を使用してください．"
+
+msgid "Remove Selected Items"
+msgstr "選択アイテムの削除"
+
+msgid ""
+"Do you really want to remove the selected items? Note that files stored internally in the library "
+"directory will also be removed."
+msgstr ""
+"選択アイテムを本当に削除しますか？ライブラリディレクトリ内に格納されているファイルも削除されること"
+"に注意してください．"
+
+msgid "Move Selected Items"
+msgstr "選択アイテムの移動"
+
+msgid "&Move"
+msgstr "移動(&M)"
+
+msgid "Item \"{0}\" cannot be moved to \"{1}\" due to the name duplication."
+msgstr "アイテム \"{0}\" は名前の重複のため \"{1}\" に移動することができません．"
+
+msgid "Load"
+msgstr "読込"
+
+msgid "Move"
+msgstr "移動"
+
+msgid "Remove"
+msgstr "削除"
+
+msgid "Rename"
+msgstr "名前の変更"
+
+msgid "Set Thumbnail"
+msgstr "サムネイルの設定"
+
+msgid "Clear Thumbnail"
+msgstr "サムネイルの解除"
+
+msgid "Failed to load the body library index file \"{0}\": {1}"
+msgstr "ボディライブラリインデックスファイル \"{0}\" を読み込むことができません： {1}"
+
+msgid "Name is not specified for item in the index file \"{0}\"."
+msgstr "インデックスファイル \"{0}\" においてアイテムの名前が指定されていません．"
+
+msgid "Invalid type name \"{0}\" in the index file \"{1}\"."
+msgstr "インデックスファイル \"{1}\" における無効なタイプ名 \"{0}\"．"
+
+msgid "File is not specified for item \"{0}\" in the index file \"{1}\"."
+msgstr "インデックスファイル \"{1}\" においてアイテム \"{0}\" のファイルが指定されていません．"
+
+msgid ""
+"Temporary directory for extracting a body library cannot be created in the library directory: {1}"
+msgstr ""
+"ボディライブラリを展開するための一時ディレクトリをライブラリディレクトリ内に作成できません： {1}"
+
+msgid "Body library archive \"{0}\" has been imported."
+msgstr "ボディライブラリアーカイブ \"{0}\" をインポートしました．"
+
+msgid "Extracted files cannot be copied into the library directory: {1}"
+msgstr "展開されたファイルをライブラリディレクトリにコピーできません： {1}"
+
+msgid "The body library has been exported to \"{0}\"."
+msgstr "ボディライブラリを \"{0}\" にエクスポートしました．"
+
+msgid "A temporary directory for exporting library files cannot be created: {0}"
+msgstr "ボディライブラリをエクスポートするための一時ディレクトリを作成できません： {0}"
+
+msgid "Library files cannot be copied to a temporary directory for exportation: {0}"
+msgstr "ライブラリのファイルをエクスポートのための一時ディレクトリにコピーできません： {0}"
 
 msgid "Body / Link"
 msgstr "ボディ／リンク"
@@ -534,6 +719,12 @@ msgstr "干渉検出コントローラ"
 msgid "The function to read CollisionSeq is not implemented."
 msgstr "CollisionSeqを読み込む機能は実装されていません．"
 
+msgid "CollisionSeqItem"
+msgstr "干渉時系列アイテム"
+
+msgid "Collision Data"
+msgstr "干渉データ"
+
 msgid "No delay mode"
 msgstr "無遅延モード"
 
@@ -710,9 +901,6 @@ msgstr "追加"
 msgid "There are no I/O devices in the world."
 msgstr "ワールドにI/Oデバイスが存在しません．"
 
-msgid "Remove"
-msgstr "削除"
-
 msgid "Joint Displacement"
 msgstr "関節変位"
 
@@ -796,9 +984,6 @@ msgstr "自己干渉チェック"
 
 msgid "Time bar's range only"
 msgstr "タイムバーの範囲内に適用"
-
-msgid "&Apply"
-msgstr "適用(&A)"
 
 msgid "No BodyMotionItems are selected."
 msgstr "BodyMotionアイテムが選択されていません．"
@@ -1041,9 +1226,6 @@ msgstr "実現可能"
 msgid "&Update"
 msgstr "更新(&U)"
 
-msgid "&Cancel"
-msgstr "キャンセル(&C)"
-
 msgid "Joint-space configuration"
 msgstr "関節空間形態"
 
@@ -1121,9 +1303,6 @@ msgstr "接触マテリアルの数"
 
 msgid "MultiDeviceStateSeqItem"
 msgstr "複数デバイス状態時系列アイテム"
-
-msgid "Lock location"
-msgstr "配置ロック"
 
 msgid "Move Forcibly"
 msgstr "強制移動"
@@ -1540,6 +1719,12 @@ msgstr "ワールドログ"
 msgid "Save project as log playback archive"
 msgstr "ログ再生用アーカイブとしてプロジェクトを保存"
 
+msgid "Log file of {0} is corrupt."
+msgstr "{0}のログファイルが壊れています．"
+
+msgid "Corrupt log at time {0} in {1}."
+msgstr "{1}の時刻{0}に破壊されたログ．"
+
 msgid "World Log File (*.log)"
 msgstr "ワールドログファイル (*.log)"
 
@@ -1564,17 +1749,14 @@ msgstr "キャンセル(&C)"
 msgid "Project files (*.cnoid)"
 msgstr "プロジェクトファイル (*.cnoid)"
 
-msgid "Any files (*)"
-msgstr "全てのファイル (*)"
+msgid "Project replacement"
+msgstr "プロジェクトの置き換え"
 
 msgid ""
 "The current project will be replaced with a new project for the log playback. Do you want to "
 "continue?"
 msgstr ""
 "現在のプロジェクトはログ再生のための新しいプロジェクトで置き換えられます．続けてもよろしいですか？"
-
-msgid "Project replacement"
-msgstr "プロジェクトの置き換え"
 
 msgid "The world item of {0} is not found."
 msgstr "\"{0}\" のワールドアイテムがみつかりません．"
@@ -1613,3 +1795,6 @@ msgstr "{0}と関連付けられた動作はルートリンクが含まれてい
 
 msgid "Root relative"
 msgstr "ルート相対"
+
+#~ msgid "Location editable"
+#~ msgstr "配置編集"
