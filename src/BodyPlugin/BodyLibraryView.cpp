@@ -494,50 +494,59 @@ bool BodyLibraryView::setLibraryDirectory(const std::string& directory, bool ens
 
 bool BodyLibraryView::Impl::setLibraryDirectory(const std::string& directory, bool ensureDirectoryAndIndexFile)
 {
-    bool result = true;
+    bool failed = false;
     
     if(directory != libraryDirectory){
+
         saveIndexFileIfUpdated();
 
-        libraryDirectory = directory;
-        libraryDirPath = fs::path(fromUTF8(directory));
-        auto indexFilePath = libraryDirPath / "index.yaml";
-        indexFile = toUTF8(indexFilePath.string());
+        fs::path dirPath(fromUTF8(directory));
+        fs::path filePath = libraryDirPath / "index.yaml";
 
         if(ensureDirectoryAndIndexFile){
-            auto fileStatus = fs::status(indexFilePath);
-            auto fileType = fileStatus.type();
-            bool fileExists = (fileType == fs::file_type::regular);
-            if(!fileExists){
-                if(fileType == fs::file_type::not_found){
-                    auto dirStatus = fs::status(libraryDirPath);
-                    auto dirType = dirStatus.type();
-                    bool directoryExists = (dirType == fs::file_type::directory);
-                    if(!directoryExists){
-                        if(dirType == fs::file_type::not_found){
-                            directoryExists = fs::create_directories(libraryDirPath);
+            try {
+                bool directoryExists = false;
+                auto fileStatus = fs::status(filePath);
+                bool fileExists = fs::is_regular_file(fileStatus);
+                if(!fileExists){
+                    if(!fs::exists(fileStatus)){
+                        auto dirStatus = fs::status(dirPath);
+                        bool directoryExists = is_directory(dirStatus);
+                        if(!directoryExists){
+                            if(!fs::exists(dirStatus)){
+                                directoryExists = fs::create_directories(dirPath);
+                            }
+                        }
+                        if(directoryExists){
+                            // Create an empty index file
+                            std::ofstream file(filePath.string());
+                            file << "elements: [ ]\n";
+                            fileExists = true;
                         }
                     }
-                    if(directoryExists){
-                        // Create an empty index file
-                        std::ofstream file(indexFilePath.string());
-                        file << "elements: [ ]\n";
-                        fileExists = true;
-                    }
+                }
+                if(!fileExists){
+                    failed = true;
                 }
             }
-            if(!fileExists){
-                result = false;
+            catch(const fs::filesystem_error&) {
+                failed = true;
             }
         }
-                    
-        needToLoadIndexFile = true;
-        if(self->isActive()){
-            loadIndexFile();
+
+        if(!failed){
+            libraryDirectory = directory;
+            libraryDirPath = dirPath;
+            indexFile = toUTF8(filePath.string());
+
+            needToLoadIndexFile = true;
+            if(self->isActive()){
+                loadIndexFile();
+            }
         }
     }
     
-    return result;
+    return !failed;
 }
 
 
@@ -708,8 +717,13 @@ bool BodyLibraryView::Impl::ensureDirectory(const fs::path& dirPath, bool doClea
 {
     stdx::error_code ec;
 
-    if(fs::exists(dirPath)){
-        if(!doCleanExistingDir && fs::is_directory(dirPath)){
+    auto status = fs::status(dirPath, ec);
+    if(ec){
+        return false;
+    }
+    
+    if(fs::exists(status)){
+        if(!doCleanExistingDir && fs::is_directory(status)){
             return true;
         }
         if(!fs::remove_all(dirPath, ec)){
@@ -719,6 +733,7 @@ bool BodyLibraryView::Impl::ensureDirectory(const fs::path& dirPath, bool doClea
     if(!fs::create_directories(dirPath, ec)){
         return false;
     }
+    
     return true;
 }
 
@@ -737,20 +752,16 @@ bool BodyLibraryView::Impl::checkIfExistingInternalFilePath(const fs::path& path
 
 bool BodyLibraryView::Impl::copyFile(const fs::path& srcPath, const fs::path& destPath)
 {
-    std::error_code ec;
-
-    auto destDirPath = destPath.parent_path();
-    if(!fs::is_directory(destDirPath)){
-        fs::create_directories(destDirPath, ec);
-        if(ec){
-            return false;
-        }
+    if(!ensureDirectory(destPath.parent_path())){
+        return false;
     }
+
+    stdx::error_code ec;
 
 #if __cplusplus > 201402L
     fs::copy_file(srcPath, destPath, fs::copy_options::overwrite_existing, ec);
 #else
-    fs::copy_file(srcPath, destPath, stdx::copy_option::overwrite_if_exists, ec);
+    fs::copy_file(srcPath, destPath, fs::copy_option::overwrite_if_exists, ec);
 #endif
 
     return !ec;
@@ -764,13 +775,18 @@ bool BodyLibraryView::Impl::renameLibraryItem(LibraryItem* item, const string& n
     fs::path newNamePath(fromUTF8(newName));
     fs::path newDirPath = orgDirPath.parent_path() / newNamePath;
 
-    if(fs::is_directory(orgDirPath)){
-        stdx::error_code ec;
+    stdx::error_code ec;
+    if(!fs::is_directory(orgDirPath, ec)){
+        if(ec){
+            failed = true;
+        }
+    } else {
         fs::rename(orgDirPath, newDirPath, ec);
         if(ec){
             failed = true;
         }
     }
+
     if(!failed){
         item->name = newName;
         relocateItemFileInformationRecursively(item, newDirPath);
@@ -1152,7 +1168,7 @@ bool BodyLibraryView::Impl::storeItemFilesToLibraryDirectory
             libraryItem->thumbnailFile = storedThumbnailFile;
         }
     } else {
-        std::error_code ec;
+        stdx::error_code ec;
         fs::remove_all(destDirPath, ec);
         mout->putErrorln(
             format(_("{0} cannot be stored in the library directory due to a file copy error."),
@@ -1244,13 +1260,11 @@ bool BodyLibraryView::Impl::setBodyThumbnailWithDialog(LibraryItem* item)
         if(isBodyCopiedInLibraryDirectory || checkIfInternalFilePath(selectedFilePath)){
             fs::path ext = selectedFilePath.extension();
             fs::path destDir = getInternalItemDirPath(item);
-            if(ensureDirectory(destDir)){
-                fs::path destFilePath = destDir / "thumbnail";
-                destFilePath += ext;
-                if(fs::copy_file(selectedFilePath, destFilePath)){
-                    copied = true;
-                    item->thumbnailFile = toUTF8(destFilePath.generic_string());
-                }
+            fs::path destFilePath = destDir / "thumbnail";
+            destFilePath += ext;
+            if(copyFile(selectedFilePath, destFilePath)){
+                copied = true;
+                item->thumbnailFile = toUTF8(destFilePath.generic_string());
             }
         }
         if(!copied){
@@ -1854,7 +1868,7 @@ bool BodyLibraryView::Impl::importLibrary(const std::string& filename, MessageOu
     }
 
     fs::path extractionDirPath = libraryDirPath / "tmp";
-    std::error_code ec;
+    stdx::error_code ec;
     
     fs::create_directories(extractionDirPath, ec);
     if(ec){
@@ -1948,7 +1962,7 @@ bool BodyLibraryView::Impl::exportLibrary(const std::string& filename, MessageOu
 bool BodyLibraryView::Impl::exportLibraryToDirectory(const std::string& directory, MessageOut* mout)
 {
     bool failed = false;
-    std::error_code ec;
+    stdx::error_code ec;
     fs::path exportDirPath(fromUTF8(directory));
     if(fs::exists(exportDirPath)){
         fs::remove_all(exportDirPath, ec);
