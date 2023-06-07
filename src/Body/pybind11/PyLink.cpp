@@ -14,7 +14,7 @@ namespace {
 using Matrix4RM = Eigen::Matrix<double, 4, 4, Eigen::RowMajor>;
 using Matrix3RM = Eigen::Matrix<double, 3, 3, Eigen::RowMajor>;
 
-py::object Link_info2(Link& self, const std::string& key, py::object defaultValue)
+py::object Link_getInfo(Link& self, const std::string& key, py::object defaultValue)
 {
     if(!PyFloat_Check(defaultValue.ptr())){
         PyErr_SetString(PyExc_TypeError, "The argument type is not supported");
@@ -211,8 +211,8 @@ void exportPyLink(py::module& m)
         .def("addCollisionShapeNode", [](Link& self, SgNode* shape){ self.addCollisionShapeNode(shape, true); })
         .def("removeShapeNode", [](Link& self, SgNode* shape){ self.removeShapeNode(shape, true); })
         .def("clearShapeNodes", [](Link& self){ self.clearShapeNodes(true); })
-        .def("info", (Mapping*(Link::*)())&Link::info)
-        .def("info", Link_info2)
+        .def_property_readonly("info", (Mapping*(Link::*)())&Link::info)
+        .def("getInfo", Link_getInfo)
         .def("floatInfo", [](Link& self, const std::string& key) { return self.info<double>(key); })
 
         // deprecated
@@ -248,7 +248,6 @@ void exportPyLink(py::module& m)
         .def("getCollisionShape", &Link::collisionShape)
         .def("getAttitude", [](const Link& self){ return self.rotation(); })
         .def("getInfo", (Mapping*(Link::*)())&Link::info)
-        .def("getInfo", Link_info2)
         .def("getFloatInfo", [](Link& self, const std::string& key) { return self.info<double>(key); })
         ;
 

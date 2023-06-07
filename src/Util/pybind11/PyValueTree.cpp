@@ -1,7 +1,3 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "PyUtil.h"
 #include "../ValueTree.h"
 
@@ -12,7 +8,8 @@ namespace py = pybind11;
 namespace {
 
 template<class ValueType>
-py::object ValueNode_read(ValueNode& self){
+py::object ValueNode_read(ValueNode& self)
+{
     ValueType value;
     if(self.read(value)){
         return py::object(py::cast(value));
@@ -21,7 +18,8 @@ py::object ValueNode_read(ValueNode& self){
 }
 
 template<class ValueType>
-py::object Mapping_read(Mapping& self, const string& key){
+py::object Mapping_read(Mapping& self, const string& key)
+{
     ValueType value;
     if(self.read(key, value)){
         return py::object(py::cast(value));
@@ -29,7 +27,8 @@ py::object Mapping_read(Mapping& self, const string& key){
     return py::object();
 }
 
-py::object Mapping_get(Mapping& self, const std::string& key, py::object defaultValue){
+py::object Mapping_get(Mapping& self, const std::string& key, py::object defaultValue)
+{
     if(PyBool_Check(defaultValue.ptr())){
         bool value;
         if(self.read(key, value)){
@@ -56,6 +55,11 @@ py::object Mapping_get(Mapping& self, const std::string& key, py::object default
     return defaultValue;
 }
 
+ValueNodePtr Mapping_getitem(Mapping& self, const std::string& key)
+{
+    return ValueNodePtr(&self[key]);
+}
+
 void Mapping_write(Mapping& self, const std::string &key, py::object value){
     if(PyBool_Check(value.ptr())){
         self.write(key, value.cast<bool>());
@@ -68,6 +72,12 @@ void Mapping_write(Mapping& self, const std::string &key, py::object value){
         throw py::error_already_set();
     }
 }
+
+ValueNodePtr Listing_getitem(Listing& self, int index)
+{
+    return &self[index];
+}
+
 
 } // namespace
 
@@ -85,6 +95,7 @@ void exportPyValueTree(py::module& m)
 
     py::class_<ValueNode, ValueNodePtr, Referenced>(m, "ValueNode")
         .def("isValid", &ValueNode::isValid)
+        .def("__bool__", &ValueNode::isValid)
         .def("toInt", &ValueNode::toInt)
         .def("toFloat", &ValueNode::toDouble)
         .def("toBool", &ValueNode::toBool)
@@ -121,7 +132,7 @@ void exportPyValueTree(py::module& m)
         .def("find", (ValueNode*(Mapping::*)(const std::string&)const) &Mapping::find)
         .def("findMapping", (Mapping*(Mapping::*)(const std::string&)const) &Mapping::findMapping)
         .def("findListing", (Listing*(Mapping::*)(const std::string&)const) &Mapping::findListing)
-        .def("__getitem__", &Mapping::operator[])
+        .def("__getitem__", [](Mapping& self, const std::string& key){ return Mapping_getitem(self, key); })
         .def("insert", (void(Mapping::*)(const string&, ValueNode*)) &Mapping::insert)
         .def("openMapping", &Mapping::openMapping)
         .def("openFlowStyleMapping", &Mapping::openFlowStyleMapping)
@@ -164,7 +175,7 @@ void exportPyValueTree(py::module& m)
         .def("write", (void(Listing::*)(int,int)) &Listing::write)
         .def("write", (void(Listing::*)(int,const string&, StringStyle)) &Listing::write)
         .def("write", [](Listing& self, int i, const string& value){ self.write(i, value); })
-        .def("__getitem__", &Listing::at)
+        .def("__getitem__", [](Listing& self, int index){ return Listing_getitem(self, index); })
         .def("newMapping", &Listing::newMapping)
         .def("append", (void(Listing::*)(ValueNode*)) &Listing::append)
         .def("append", (void(Listing::*)(int)) &Listing::append)

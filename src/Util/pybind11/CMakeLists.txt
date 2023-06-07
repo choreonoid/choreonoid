@@ -11,6 +11,7 @@ target_link_libraries(CnoidPyUtil PUBLIC ${PYTHON_LIBRARIES})
 choreonoid_add_python_module(PyUtil
   PyUtilModule.cpp
   PyReferenced.cpp
+  PyMessageOut.cpp
   PySignal.cpp
   PyValueTree.cpp
   PyEigenTypes.cpp

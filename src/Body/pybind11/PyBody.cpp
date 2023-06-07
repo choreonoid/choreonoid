@@ -1,7 +1,3 @@
-/*!
-  @author Shin'ichiro Nakaoka
- */
-
 #include "../Body.h"
 #include "../BodyMotion.h"
 #include "PyDeviceList.h"
@@ -13,6 +9,20 @@
 using namespace std;
 using namespace cnoid;
 namespace py = pybind11;
+
+namespace {
+
+py::object Body_getInfo(Body& self, const std::string& key, py::object defaultValue)
+{
+    if(!PyFloat_Check(defaultValue.ptr())){
+        PyErr_SetString(PyExc_TypeError, "The argument type is not supported");
+        throw py::error_already_set();
+    }
+    double v = defaultValue.cast<double>();
+    return py::cast(self.info(key, v));
+}
+
+}
 
 namespace cnoid {
 
@@ -84,6 +94,8 @@ void exportPyBody(py::module& m)
         .def("clearExternalForces", &Body::clearExternalForces)
         .def_property_readonly("numExtraJoints", &Body::numExtraJoints)
         .def("clearExtraJoints", &Body::clearExtraJoints)
+        .def_property_readonly("info", (Mapping*(Body::*)())&Body::info)
+        .def("getInfo", Body_getInfo)
         .def("hasVirtualJointForces", &Body::hasVirtualJointForces)
         .def("setVirtualJointForces", &Body::setVirtualJointForces)
         .def_static("addCustomizerDirectory", &Body::addCustomizerDirectory)
