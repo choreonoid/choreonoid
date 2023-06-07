@@ -165,7 +165,8 @@ bool ProjectPacker::Impl::packProjectToZipFile(const std::string& filename, cons
     bool packed = packProjectToDirectory(directory, projectName);
     if(packed){
         packed = createProjectZipFile(filename);
-        fs::remove_all(directory);
+        stdx::error_code ec;        
+        fs::remove_all(directory, ec);
     }
     return packed;
 }
@@ -242,44 +243,53 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
         }
     }
 
-    // Find the top directory of the packed project using breadth-first search
-    topDirPath.clear();
-    deque<PathNode*> nodeQueue;
-    nodeQueue.push_back(&rootNode);
-    while(!nodeQueue.empty()){
-        auto node = nodeQueue.front();
-        nodeQueue.pop_front();
-        if(node->isNecessary){
-            auto& path = node->fullPath;
-            if(node->isShared || !path.has_filename() || !fs::is_regular_file(path)){
-                topDirPath = path;
-            } else {
-                topDirPath = path.remove_filename();
-            }
-            break;
-        }
-        for(auto& kv : node->childNodes){
-            auto childNode = &kv.second;
-            nodeQueue.push_back(childNode);
-        }
-    }
-
-    // Copy the files
     stdx::error_code ec;
-    packingDirPath = fromUTF8(packingDirectory);
-    if(!packingDirPath.is_absolute()){
-        packingDirPath = fs::absolute(packingDirPath);
-    }
+    
+    try {
+        // Find the top directory of the packed project using breadth-first search
+        topDirPath.clear();
+        deque<PathNode*> nodeQueue;
+        nodeQueue.push_back(&rootNode);
+        while(!nodeQueue.empty()){
+            auto node = nodeQueue.front();
+            nodeQueue.pop_front();
+            if(node->isNecessary){
+                auto& path = node->fullPath;
+                if(node->isShared || !path.has_filename() || !fs::is_regular_file(path)){
+                    topDirPath = path;
+                } else {
+                    topDirPath = path.remove_filename();
+                }
+                break;
+            }
+            for(auto& kv : node->childNodes){
+                auto childNode = &kv.second;
+                nodeQueue.push_back(childNode);
+            }
+        }
 
-    if(fs::exists(packingDirPath)){
-        fs::remove_all(packingDirPath, ec);
-        if(ec){
-            mout->putErrorln(
-                format(_("Directory \"{0}\" for packing a project already exists and cannot be removed: {1}."),
-                       toUTF8(packingDirPath.string()), toUTF8(ec.message())));
-            return false;
+        // Copy the files
+        packingDirPath = fromUTF8(packingDirectory);
+        if(!packingDirPath.is_absolute()){
+            packingDirPath = fs::absolute(packingDirPath);
+        }
+
+        if(fs::exists(packingDirPath)){
+            fs::remove_all(packingDirPath, ec);
+            if(ec){
+                mout->putErrorln(
+                    format(_("Directory \"{0}\" for packing a project already exists and cannot be removed: {1}."),
+                           toUTF8(packingDirPath.string()), toUTF8(ec.message())));
+                return false;
+            }
         }
     }
+    catch(const fs::filesystem_error& error) {
+        mout->putErrorln(
+            format(_("File system error in packing a project: {0}"), toUTF8(error.what())));
+        return false;
+    }
+
     fs::create_directories(packingDirPath, ec);
     if(ec){
         mout->putErrorln(
@@ -287,7 +297,7 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
                    toUTF8(packingDirPath.string()), toUTF8(ec.message())));
         return false;
     }
-    
+
     for(auto& path : allPaths){
         auto relDirPath = getRelativePath(path.parent_path(), topDirPath);
         if(!relDirPath){
