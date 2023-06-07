@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-06-06 20:26+0900\n"
+"POT-Creation-Date: 2023-06-07 17:44+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1410,6 +1410,9 @@ msgstr "一時的アイテムを保存"
 
 msgid "Directory \"{0}\" for packing a project already exists and cannot be removed: {1}."
 msgstr "プロジェクトのパッキング用のディレクトリ \"{0}\" が既に存在していて削除できません： {1}．"
+
+msgid "File system error in packing a project: {0}"
+msgstr "プロジェクトをパッキング中のファイルシステムエラー： {0}"
 
 msgid "Directory \"{0}\" for packing a project cannot be created: {1}."
 msgstr "プロジェクトのパッキング用のディレクトリ \"{0}\" を作成できません： {1}．"
