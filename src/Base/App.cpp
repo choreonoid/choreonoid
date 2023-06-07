@@ -74,6 +74,7 @@
 #include <QStyleFactory>
 #include <QThread>
 #include <QLibraryInfo>
+#include <regex>
 #include <iostream>
 #include <csignal>
 
@@ -353,6 +354,7 @@ void App::Impl::initialize()
     om.addOption("quit", "stop the application without showing the main window");
     om.addOption("test-mode", "exit the application when an error occurs and put MessageView text to the standard output");
     om.addOption("no-window", "Do not show the application window and put MessageView text to the standard output");
+    om.addOption("path-variable", boost::program_options::value<vector<string>>(), "Set a path variable in the format \"name=value\"");
     om.addOption("list-qt-styles", "list all the available qt styles");
     om.sigOptionsParsed().connect(
         [&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
@@ -600,7 +602,18 @@ void App::Impl::onSigOptionsParsed(boost::program_options::variables_map& v)
         isNoWindowMode = true;
         enableMessageViewRedirectToStdOut();
     }
-    
+    if(v.count("path-variable")){
+        auto fpvp = FilePathVariableProcessor::systemInstance();
+        static std::regex re("^([a-zA-Z][a-zA-Z_0-9]*)=([^;-?[\\]^'{-~]+)$");
+        std::smatch match;
+        for(auto& var : v["path-variable"].as<vector<string>>()){
+            if(regex_match(var, match, re)){
+                string name = match.str(1);
+                string path = match.str(2);
+                fpvp->addUserVariable(name, path);
+            }
+        }
+    }
     if(v.count("quit")){
         doQuit = true;
     } else if(v.count("test-mode")){
