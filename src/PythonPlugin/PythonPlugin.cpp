@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "PythonPlugin.h"
 #include "PythonConsoleView.h"
 #include "PythonScriptItem.h"
@@ -236,15 +232,18 @@ void PythonPlugin::Impl::onSigOptionsParsed(boost::program_options::variables_ma
 void PythonPlugin::Impl::executeScriptFileOnStartup(const string& scriptFile)
 {
     MessageView::instance()->putln(format(_("Executing python script \"{}\" ..."), scriptFile));
-    executor().execFile(scriptFile);
-    if(!executor().hasException()){
+    
+    auto& exec = executor();
+    exec.execFile(scriptFile);
+    if(!exec.hasException() || exec.isTerminated()){
         MessageView::instance()->putln(_("The script finished."));
     } else {
         MessageView::instance()->putln(_("Failed to run the python script."), MessageView::Error);
         python::gil_scoped_acquire lock;
         MessageView::instance()->put(executor().exceptionText());
-        App::checkErrorAndExitIfTestMode();
     }
+
+    App::checkErrorAndExitIfTestMode();
 }
 
 
