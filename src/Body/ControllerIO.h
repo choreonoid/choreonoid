@@ -8,6 +8,7 @@ namespace cnoid {
 
 class Mapping;
 typedef ref_ptr<Mapping> MappingPtr;
+class MessageOut;
 
 class CNOID_EXPORT ControllerIO
 {
@@ -19,6 +20,7 @@ public:
     virtual std::string optionString() const;
     std::vector<std::string> options() const;
     MappingPtr structuredOptions() const;
+    virtual MessageOut* mout() const;
     virtual std::ostream& os() const;
     virtual double timeStep() const;
     virtual double currentTime() const;

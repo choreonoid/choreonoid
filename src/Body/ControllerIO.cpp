@@ -1,6 +1,7 @@
 #include "ControllerIO.h"
 #include <cnoid/Tokenizer>
 #include <cnoid/YAMLReader>
+#include <cnoid/MessageOut>
 #include <iostream>
 
 using namespace std;
@@ -63,6 +64,12 @@ MappingPtr ControllerIO::structuredOptions() const
         node = new Mapping;
     }
     return node;
+}
+
+
+MessageOut* ControllerIO::mout() const
+{
+    return MessageOut::master();
 }
 
 
