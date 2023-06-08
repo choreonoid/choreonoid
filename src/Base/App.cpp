@@ -99,6 +99,7 @@ bool isDoingInitialization_ = true;
 bool isTestMode = false;
 bool isNoWindowMode = false;
 bool ctrl_c_pressed = false;
+bool exitRequested = false;
 
 void onCtrl_C_Input(int)
 {
@@ -569,7 +570,7 @@ ExtensionManager* App::baseModule()
 bool App::Impl::eventFilter(QObject* watched, QEvent* event)
 {
     if(watched == mainWindow && event->type() == QEvent::Close){
-        if(ctrl_c_pressed || ProjectManager::instance()->tryToCloseProject()){
+        if(ctrl_c_pressed || exitRequested || ProjectManager::instance()->tryToCloseProject()){
             onMainWindowCloseEvent();
             event->accept();
         } else {
@@ -631,6 +632,7 @@ void App::exit(int returnCode)
     if(instance_){
         auto impl = instance_->impl;
         impl->returnCode = returnCode;
+        exitRequested = true;
         if(impl->mainWindow){
             if(!impl->mainWindow->close()){
                 impl->qapplication->exit(returnCode);
