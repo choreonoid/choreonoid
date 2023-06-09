@@ -773,7 +773,7 @@ void HumanoidPoseFetchView::Impl::onActivated()
                     if(!poseRollViewTimeConnection.connected()){
                         setPoseSeqTime(time);
                     }
-                    return true;
+                    return false;
                 }));
 
         baseConnections.add(
@@ -1480,7 +1480,7 @@ bool HumanoidPoseFetchView::Impl::fetchLegPose
  bool doFootGrounding)
 {
     Link* footLink = waistToFootJointPaths[which]->endLink();
-    constexpr double MarginToHaveContactDepth = 0.002;
+    constexpr double MarginToHaveContactDepth = 0.001;
     double ankleHeight = -leggedBody->centerOfSoleLocal(which).z() - MarginToHaveContactDepth;
 
     auto footInfo = pose->getOrCreateIkLink(footLink->index());
