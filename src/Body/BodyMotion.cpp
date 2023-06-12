@@ -522,6 +522,8 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
     } else {
         setDimension(0, 1, 1);
     }
+    clearExtraSeq(linkPosSeqKey_);
+    clearExtraSeq(jointPosSeqKey_);
     
     return loaded;
 }
@@ -529,16 +531,19 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
 
 bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
+    bool doClearLinkPosSeq = extraSeqs.find(linkPosSeqKey_) == extraSeqs.end();
+    bool doClearJointPosSeq = extraSeqs.find(jointPosSeqKey_) == extraSeqs.end();
+    
     updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
     
     double version = writer.getOrCreateInfo("formatVersion", 3.0);
-    bool isVersion1 = version >= 1.0 && version < 2.0;
+
     if(version < 2.0){
         writer.putComment("Body motion data set format version 1.0 defined by Choreonoid\n");
         setSeqType("BodyMotion");
     }
-    
-    return AbstractSeq::doWriteSeq(
+
+    bool result = AbstractSeq::doWriteSeq(
         writer,
         [&](){
             writer.setDoubleFormat("%.9g");
@@ -580,9 +585,18 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additional
             writer.endListing();
         });
 
-    if(isVersion1){
+    if(version < 2.0){
         setSeqType("CompositeSeq");
     }
+
+    if(doClearLinkPosSeq){
+        clearExtraSeq(linkPosSeqKey_);
+    }
+    if(doClearJointPosSeq){
+        clearExtraSeq(jointPosSeqKey_);
+    }
+
+    return result;
 }
 
 
