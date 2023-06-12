@@ -40,10 +40,10 @@ public:
     bool setStance(double width, Link* baseLink);
 
     const Vector3& centerOfSoleLocal(int footIndex) const { return footInfos[footIndex].soleCenter; }
-
     Vector3 centerOfSole(int footIndex) const;
     Vector3 centerOfSoles() const;
 
+    const Vector3& homeCopOfSoleLocal(int footIndex) const { return footInfos[footIndex].homeCop; }
     Vector3 homeCopOfSole(int footIndex) const;
     Vector3 homeCopOfSoles() const;
 
