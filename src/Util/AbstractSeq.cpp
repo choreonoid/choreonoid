@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "AbstractSeq.h"
 #include "YAMLWriter.h"
 #include <fmt/format.h>
@@ -101,7 +96,7 @@ double AbstractSeq::getTimeOfFrame(int frame) const
 
 int AbstractSeq::getFrameOfTime(double time) const
 {
-    return static_cast<int>(time - getOffsetTime()) * getFrameRate();
+    return static_cast<int>((time - getOffsetTime()) * getFrameRate());
 }
 
 
