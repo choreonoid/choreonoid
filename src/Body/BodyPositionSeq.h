@@ -115,7 +115,7 @@ public:
     BodyPositionSeqFrame();
     BodyPositionSeqFrame(const BodyPositionSeqFrame& org);
     BodyPositionSeqFrame(BodyPositionSeqFrame&& org);
-    
+
     BodyPositionSeqFrame& operator=(const BodyPositionSeqFrame& rhs){
         data = rhs.data;
         pdata = data.data();
@@ -178,9 +178,19 @@ private:
 
 /**
    \note This class can contain multiple body states
+
    \note 
    Frame elements:
    nlinks, x, y, z, qx, qy, qz, qw, .... , njoints, q0, q1, q2, ..., nlinks, x, y, z, ...
+
+   \note
+   The frame function defined in the super class returns the reference of a BodyPositionSdqFrame object.
+   The returned object should be assigned to a reference-type variable to avoid copying the frame data.
+   Espacially you must use a reference-type variable to overwrite the frame data.
+   You can also use the frameBlock function, which returns a BodyPositionSeqFrameBlock type value, to
+   access to the frame data. In that case, you don't have to care of the variable type because it only
+   has the pointer to the frame data.
+   
 */
 class CNOID_EXPORT BodyPositionSeq : public Seq<BodyPositionSeqFrame>
 {
@@ -209,6 +219,14 @@ public:
         return allocateFrame(index, numLinkPositionsHint_, numJointDisplacementsHint_);
     }
 
+    BodyPositionSeqFrameBlock frameBlock(int frameIndex){
+        return frame(frameIndex).firstBlock();
+    }
+
+    const BodyPositionSeqFrameBlock frameBlock(int frameIndex) const {
+        return frame(frameIndex).firstBlock();
+    }
+    
     // TODO: Implement the following functions
     // LinkPositionSeq linkPositionSeq(int linkIndex);
     // JointDisplacementSeq jointDisplacementSeq(int jointId);
