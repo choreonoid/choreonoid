@@ -1,34 +1,28 @@
 #include "DistanceMeasurementDialog.h"
+#include "DistanceMeasurementItem.h"
 #include "Item.h"
 #include "RootItem.h"
-#include "RenderableItem.h"
 #include "GeometryMeasurementTracker.h"
 #include "SceneView.h"
 #include "SceneWidget.h"
 #include "ScenePointSelectionMode.h"
 #include "DisplayValueFormat.h"
+#include "MessageView.h"
 #include "Buttons.h"
 #include "ButtonGroup.h"
 #include "ComboBox.h"
 #include "CheckBox.h"
 #include "SpinBox.h"
+#include "LineEdit.h"
 #include "Separator.h"
-#include "LazyCaller.h"
-#include <cnoid/SceneDrawables>
-#include <cnoid/SceneNodeClassRegistry>
-#include <cnoid/SceneRenderer>
-#include <cnoid/MathUtil>
-#include <cnoid/CollisionDetector>
-#include <cnoid/ThreadPool>
-#include <cnoid/IdPair>
-#include <cnoid/stdx/optional>
+#include <cnoid/ConnectionSet>
 #include <QLabel>
 #include <QBoxLayout>
 #include <QGridLayout>
 #include <QDialogButtonBox>
 #include <QColorDialog>
-#include <vector>
 #include <fmt/format.h>
+#include <vector>
 #include "gettext.h"
 
 using namespace std;
@@ -43,9 +37,6 @@ public:
     Item* item;
     shared_ptr<ScopedConnection> itemConnection;
     GeometryMeasurementTrackerPtr tracker;
-    ScopedConnection trackerConnection;
-    vector<stdx::optional<CollisionDetector::GeometryHandle>> geometryHandles;
-    bool isShortestDistanceFixedPoint;
 
     GeometryMeasurementTracker* getOrCreateTracker(){
         if(!tracker){
@@ -56,26 +47,6 @@ public:
 };
 
 typedef ref_ptr<ItemInfo> ItemInfoPtr;
-
-class ViewportText : public SgViewportOverlay
-{
-public:
-    ViewportText(DisplayValueFormat* displayValueFormat);
-    void setMeasurementData(const Vector3& p1, const Vector3& p2, double distance);
-    void setColor(const Vector3f& color);
-    void render(SceneRenderer* renderer);
-    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume) override;
-
-    SgPosTransformPtr distanceTextTransform;
-    SgTextPtr distanceText;
-    DisplayValueFormat* displayValueFormat;
-    string distanceDisplayFormat;
-    double textHeight;
-    Vector3 p1;
-    Vector3 p2;
-};
-
-typedef ref_ptr<ViewportText> ViewportTextPtr;
 
 class ObjectPointPickMode : public ScenePointSelectionMode
 {
@@ -101,17 +72,17 @@ public:
     DistanceMeasurementDialog* self;
 
     std::vector<ItemInfoPtr> candidateItemInfoLists[2];
-    ItemInfoPtr targetItemInfos[2];
-    bool isMeasurementActive;
+
+    DistanceMeasurementItemPtr measurementItem;
+    ScopedConnectionSet measurementItemConnections;
+    DistanceMeasurementItemPtr builtinMeasurementItem;
+    weak_ref_ptr<Item> defaultItemToAddNewMeasurementItem;
+    ItemPtr itemToAddNewMeasurementItem;
+    bool isExistingMeasurementItem;
+    
     ObjectPointPickMode* objectPointPickMode;
     int whichObjectToPickPoint;
     bool isEditModeOriginally;
-    CollisionDetectorPtr collisionDetector;
-    CollisionDetectorDistanceAPI* collisionDetectorDistanceAPI;
-    typedef CollisionDetector::GeometryHandle GeometryHandle;
-    vector<std::pair<GeometryHandle, GeometryHandle>> handlePairs;
-    unique_ptr<ThreadPool> threadPool;
-    LazyCaller updateDistanceLater;
 
     DisplayValueFormat* displayValueFormat;
     string distanceDisplayFormat;
@@ -136,20 +107,25 @@ public:
     PushButton distanceMarkerColorButton;
     QColorDialog* colorDialog;
     CheckBox distanceLineOverlayCheck;
+    CheckBox createMeasurementItemCheck;
+    LineEdit measurementItemNameEdit;
 
     SceneView* sceneView;
     SceneWidget* sceneWidget;
-    SgGroupPtr distanceMarker;
-    SgOverlayPtr distanceLineOverlay;
-    SgLineSetPtr distanceLine;
-    ViewportTextPtr viewportDistanceText;
-    SgUpdate sgUpdate;
 
     Impl(DistanceMeasurementDialog* self);
     ~Impl();
+    void setMeasurementItem(DistanceMeasurementItem* item, bool isNewSession);
+    void updateMeasurementConfigurationWidgets();
+    void finalizeDistanceMeasurement();
+    void onMeasurementItemDisconnectedFromRoot();
+    void onCreateMeasurementItemCheckToggled(bool on);
+    void onMeasurementItemNameEditingFinishied();
     void clearCandidateItems();
     void updateItemCandidates(Item* topItem);
-    void updateItemCombos();
+    void onItemComboAboutToShowPopup(int which);
+    void clearItemComboBox(int which);
+    void updateItemCombo(int which);
     void onItemDisconnectedFromRoot(Item* item);
     void setTargetItem(int which, int itemIndex, bool doUpdateItemComb);
     void setTargetSubEntry(int which, int entryIndex, bool doUpdateCombo);
@@ -159,43 +135,26 @@ public:
     void onObjectPointPicked(const std::vector<ScenePointSelectionMode::PointInfoPtr>& additionalPoints);
     int findPickedItemIndex(ScenePointSelectionMode::PointInfo* pointInfo);
     bool calcCircleCenter(const Vector3& p1, const Vector3& p2, const Vector3& p3, Vector3& out_circleCenter);
+    void onMeasureButtonClicked();
     bool startMeasurement();
-    void stopMeasurement();
-    void onGeometryChanged(int which);
-    void onShortestDistanceFixOneSideConfigurationChanged();
-    void initializeCollisionDetector();
-    void updateCollisionDetectionPositions(int which);
-    void updateShortestDistance();
-    void updateDistance();
+    void onShortestDistanceCheckToggled(bool on);
+    void onShortestDistanceFixOneSideCheckToggled(bool on);
+    void onFixOneSideRadioToggled(int which);
     void updatePointDisplay(int which, Vector3 p);
-    void updateDistanceDisplay(double distance, const Vector3& p1, const Vector3& p2);
+    void updateDistanceDisplay();
     void invalidateDistanceDisplay();
     void showDistanceMarker(bool on);
-    void setDistanceLineOverlayEnabled(bool on);
+    void showDistanceMarkerOfBuiltinMeasurementItem(bool on);
+    void onDistanceLineOverlayCheckToggled(bool on);
     void setDistanceMarkerColor(const QColor& color);
-    void setDistanceMarkerColor(const Vector3f& color);
+    void onDistanceLineWidthChanged(double width);
     void inputDistanceMarkerColorWithColorDialog();
 };
 
 }
 
-struct ViewportTextRegistration {
-    ViewportTextRegistration(){
-        SceneNodeClassRegistry::instance().registerClass<ViewportText, SgViewportOverlay>();
-        SceneRenderer::addExtension(
-            [](SceneRenderer* renderer){
-                renderer->renderingFunctions()->setFunction<ViewportText>(
-                    [renderer](SgNode* node){
-                        static_cast<ViewportText*>(node)->render(renderer);
-                    });
-            });
-    }
-};
-
-
 DistanceMeasurementDialog* DistanceMeasurementDialog::instance()
 {
-    static ViewportTextRegistration registration;
     static DistanceMeasurementDialog* dialog = new DistanceMeasurementDialog;
     return dialog;
 }
@@ -208,25 +167,18 @@ DistanceMeasurementDialog::DistanceMeasurementDialog()
 
 
 DistanceMeasurementDialog::Impl::Impl(DistanceMeasurementDialog* self_)
-    : self(self_),
-      updateDistanceLater([this](){ updateDistance(); }, LazyCaller::LowPriority)
+    : self(self_)
 {
     self->setWindowTitle(_("Distance Measurement"));
 
-    isMeasurementActive = false;
+    defaultItemToAddNewMeasurementItem = RootItem::instance();
+    isExistingMeasurementItem = false;
 
     objectPointPickMode = new ObjectPointPickMode(this);
     objectPointPickMode->sigPointSelectionAdded().connect(
         [this](const std::vector<ScenePointSelectionMode::PointInfoPtr>& additionalPoints){
             onObjectPointPicked(additionalPoints);
         });
-
-    int collisionDetectorIndex = CollisionDetector::factoryIndex("AISTCollisionDetector");
-    collisionDetector = CollisionDetector::create(collisionDetectorIndex);
-    collisionDetectorDistanceAPI = dynamic_cast<CollisionDetectorDistanceAPI*>(collisionDetector.get());
-    if(!collisionDetectorDistanceAPI){
-        collisionDetector.reset();
-    }
 
     displayValueFormat = DisplayValueFormat::instance();
     distanceDisplayFormat = format("{{0:.{0}f}}", displayValueFormat->lengthDecimals());
@@ -235,22 +187,33 @@ DistanceMeasurementDialog::Impl::Impl(DistanceMeasurementDialog* self_)
     auto vbox = new QVBoxLayout;
     self->setLayout(vbox);
 
+    QHBoxLayout* hbox;
+    QGridLayout* grid;
+    int row;
+
+    grid = new QGridLayout;
+    grid->setColumnStretch(0, 1);
+    grid->setColumnStretch(2, 1);
+    row = 0;
     for(int i=0; i < 2; ++i){
         auto objectLabel = new QLabel(QString(_("Object %1")).arg(i + 1));
         objectLabel->setAlignment(Qt::AlignCenter);
-        vbox->addWidget(objectLabel);
-        
-        auto hbox = new QHBoxLayout;
-        hbox->addWidget(&itemCombos[i], 1);
-        hbox->addWidget(new QLabel("-"));
-        hbox->addWidget(&subEntryCombos[i], 1);
-        vbox->addLayout(hbox);
+        grid->addWidget(objectLabel, row++, 0, 1, 3);
+
+        auto& itemCombo = itemCombos[i];
+        itemCombo.setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+        itemCombo.sigAboutToShowPopup().connect(
+            [this, i]{ onItemComboAboutToShowPopup(i); });
+        grid->addWidget(&itemCombo, row, 0);
+        grid->addWidget(new QLabel("-"), row, 1);
+        subEntryCombos[i].setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+        grid->addWidget(&subEntryCombos[i], row++, 2);
 
         hbox = new QHBoxLayout;
         hbox->addWidget(new QLabel(_("Position:")));
         hbox->addWidget(&pointLabels[i]);
         hbox->addStretch();
-        vbox->addLayout(hbox);
+        grid->addLayout(hbox, row++, 0, 1, 3);
 
         hbox = new QHBoxLayout;
         pointPickButtons[i].setText(_("Pick"));
@@ -273,7 +236,7 @@ DistanceMeasurementDialog::Impl::Impl(DistanceMeasurementDialog* self_)
         hbox->addWidget(new QLabel(")"));
         
         hbox->addStretch();
-        vbox->addLayout(hbox);
+        grid->addLayout(hbox, row++, 0, 1, 3);
 
         itemCombos[i].sigCurrentIndexChanged().connect(
             [this, i](int index){ setTargetItem(i, index, false); });
@@ -289,23 +252,17 @@ DistanceMeasurementDialog::Impl::Impl(DistanceMeasurementDialog* self_)
             [this, i](bool){ onCircleCenterCheckToggled(i); });
     }
 
-    auto hbox = new QHBoxLayout;
+    vbox->addLayout(grid);
+
+    hbox = new QHBoxLayout;
     shortestDistanceCheck.setText(_("Shortest Distance"));
-    if(collisionDetector){
-        shortestDistanceCheck.sigToggled().connect(
-            [this](bool){
-                if(isMeasurementActive){
-                    startMeasurement();
-                }
-            });
-    } else {
-        shortestDistanceCheck.setEnabled(false);
-    }
+    shortestDistanceCheck.sigToggled().connect(
+        [this](bool on){ onShortestDistanceCheckToggled(on); });
     hbox->addWidget(&shortestDistanceCheck);
 
     shortestDistanceFixOneSideCheck.setText(_("Fix one side"));
     shortestDistanceFixOneSideCheck.sigToggled().connect(
-        [this](bool){ onShortestDistanceFixOneSideConfigurationChanged(); });
+        [this](bool on){ onShortestDistanceFixOneSideCheckToggled(on); });
     hbox->addWidget(&shortestDistanceFixOneSideCheck);
     
     for(int i=0; i < 2; ++i){
@@ -316,8 +273,8 @@ DistanceMeasurementDialog::Impl::Impl(DistanceMeasurementDialog* self_)
     }
     fixOneSideRadios[0].setChecked(true);
     fixOneSideRadioGroup.sigButtonToggled().connect(
-        [this](int, bool on){
-            if(on){ onShortestDistanceFixOneSideConfigurationChanged(); }
+        [this](int id, bool on){
+            if(on){ onFixOneSideRadioToggled(id); }
         });
                 
     hbox->addStretch();
@@ -328,11 +285,11 @@ DistanceMeasurementDialog::Impl::Impl(DistanceMeasurementDialog* self_)
     vbox->addWidget(new HSeparator);
     vbox->addSpacing(vspace);
     
-    auto grid = new QGridLayout;
+    grid = new QGridLayout;
     grid->setColumnStretch(2, 1);
     grid->setColumnStretch(3, 1);
     grid->setColumnStretch(4, 1);
-    int row = 0;
+    row = 0;
     
     grid->addWidget(new QLabel(_("Distance")), row, 0, Qt::AlignCenter);
     grid->addWidget(new QLabel(":"), row, 1, Qt::AlignCenter);
@@ -369,19 +326,15 @@ DistanceMeasurementDialog::Impl::Impl(DistanceMeasurementDialog* self_)
     distanceLineWidthSpin.setRange(1, 10);
     distanceLineWidthSpin.setValue(2);
     distanceLineWidthSpin.sigValueChanged().connect(
-        [this](int width){
-            distanceLine->setLineWidth(width);
-            distanceLine->notifyUpdate(sgUpdate.withAction(SgUpdate::AppearanceModified));
-        });
+        [this](int width){ onDistanceLineWidthChanged(width); });
     hbox->addWidget(&distanceLineWidthSpin);
-
 
     colorDialog = nullptr;
 
     distanceLineOverlayCheck.setText(_("Overlay"));
     distanceLineOverlayCheck.setChecked(true);
     distanceLineOverlayCheck.sigToggled().connect(
-        [this](bool on){ setDistanceLineOverlayEnabled(on); });
+        [this](bool on){ onDistanceLineOverlayCheckToggled(on); });
     hbox->addWidget(&distanceLineOverlayCheck);
     hbox->addStretch();
 
@@ -391,41 +344,35 @@ DistanceMeasurementDialog::Impl::Impl(DistanceMeasurementDialog* self_)
     vbox->addWidget(new HSeparator);
     vbox->addSpacing(vspace);
 
+    hbox = new QHBoxLayout;
+    createMeasurementItemCheck.setText(_("Create measurement item"));
+    createMeasurementItemCheck.sigToggled().connect(
+        [this](bool on){ onCreateMeasurementItemCheckToggled(on); });
+    hbox->addWidget(&createMeasurementItemCheck);
+    hbox->addWidget(new QLabel(_("Name:")));
+    measurementItemNameEdit.sigEditingFinished().connect(
+        [this]{ onMeasurementItemNameEditingFinishied(); });
+    hbox->addWidget(&measurementItemNameEdit);
+    vbox->addLayout(hbox);
+    
+    vbox->addSpacing(vspace);
+    vbox->addWidget(new HSeparator);
+    vbox->addSpacing(vspace);
+
     auto buttonBox = new QDialogButtonBox(self);
 
     PushButton* measureButton = new PushButton(_("&Measure"));
     measureButton->setDefault(true);
-    measureButton->sigClicked().connect([this](){ startMeasurement(); });
+    measureButton->sigClicked().connect([this](){ onMeasureButtonClicked(); });
     buttonBox->addButton(measureButton, QDialogButtonBox::ActionRole);
     
-    QPushButton* cancelButton = new QPushButton(_("&Cancel"));
-    buttonBox->addButton(cancelButton, QDialogButtonBox::RejectRole);
-    connect(buttonBox, &QDialogButtonBox::rejected,
-            [this](){
-                stopMeasurement();
-                self->reject();
-            });
+    buttonBox->addButton(QDialogButtonBox::Close);
+    connect(buttonBox, SIGNAL(rejected()), self, SLOT(reject()));
 
     vbox->addWidget(buttonBox);
 
     sceneView = SceneView::instance();
     sceneWidget = sceneView->sceneWidget();
-
-    distanceLine = new SgLineSet;
-    distanceLine->getOrCreateVertices(2);
-    distanceLine->addLine(0, 1);
-    distanceLine->setLineWidth(distanceLineWidthSpin.value());
-
-    viewportDistanceText = new ViewportText(displayValueFormat);
-
-    distanceMarker = new SgGroup;
-    distanceMarker->setAttribute(SgObject::MetaScene);
-    distanceMarker->addChild(viewportDistanceText);
-    distanceLineOverlay = new SgOverlay;
-    distanceLineOverlay->addChild(distanceLine);
-    distanceMarker->addChild(distanceLineOverlay);
-
-    setDistanceMarkerColor(Vector3f(1.0f, 0.0f, 0.0f)); // Red
 }
 
 
@@ -441,10 +388,213 @@ DistanceMeasurementDialog::Impl::~Impl()
 }
 
 
-void DistanceMeasurementDialog::show()
+void DistanceMeasurementDialog::show(DistanceMeasurementItem* item)
 {
+    impl->setMeasurementItem(item, true);
     impl->updateItemCandidates(RootItem::instance());
     Dialog::show();
+}
+
+
+void DistanceMeasurementDialog::Impl::setMeasurementItem(DistanceMeasurementItem* item, bool isNewSession)
+{
+    measurementItemConnections.disconnect();
+
+    bool isBuiltinItem = false;
+    
+    if(item){
+        measurementItem = item;
+
+        measurementItemConnections.add(
+            item->sigDisconnectedFromRoot().connect(
+                [this]{ onMeasurementItemDisconnectedFromRoot(); }));
+        
+        measurementItemConnections.add(
+            item->sigMeasurementConfigurationChanged().connect(
+                [this]{ updateMeasurementConfigurationWidgets(); }));
+        
+        measurementItemConnections.add(
+            item->sigCheckToggled().connect(
+                [this](bool){ updateMeasurementConfigurationWidgets(); }));
+
+        measurementItemConnections.add(
+            item->sigNameChanged().connect(
+                [this](const std::string&){ updateMeasurementConfigurationWidgets(); }));
+        
+        itemToAddNewMeasurementItem = item->parentItem();
+        if(isNewSession){
+            isExistingMeasurementItem = true;
+        }
+    } else {
+        if(!builtinMeasurementItem){
+            builtinMeasurementItem = new DistanceMeasurementItem;
+            builtinMeasurementItem->setName(_("Distance Measurement"));
+            builtinMeasurementItem->setChecked(true);
+        }
+        measurementItem = builtinMeasurementItem;
+        if(isNewSession){
+            itemToAddNewMeasurementItem = defaultItemToAddNewMeasurementItem.lock();
+            if(!itemToAddNewMeasurementItem){
+                itemToAddNewMeasurementItem = RootItem::instance();
+            }
+        }
+        isExistingMeasurementItem = false;
+        isBuiltinItem = true;
+    }
+
+    measurementItemConnections.add(
+        measurementItem->sigDistanceUpdated().connect(
+            [this](bool isValid){
+                if(isValid){
+                    updateDistanceDisplay();
+                } else {
+                    invalidateDistanceDisplay();
+                }
+            }));
+
+    updateMeasurementConfigurationWidgets();
+
+    createMeasurementItemCheck.blockSignals(true);
+    createMeasurementItemCheck.setChecked(!isBuiltinItem);
+    createMeasurementItemCheck.blockSignals(false);
+
+    if(isBuiltinItem && measurementItem->isChecked() && measurementItem->isMeasurementActive()){
+        showDistanceMarkerOfBuiltinMeasurementItem(true);
+    }
+}
+
+
+void DistanceMeasurementDialog::Impl::updateMeasurementConfigurationWidgets()
+{
+    shortestDistanceCheck.blockSignals(true);
+    shortestDistanceCheck.setChecked(measurementItem->isShortestDistanceMode());
+    shortestDistanceCheck.blockSignals(false);
+
+    shortestDistanceFixOneSideCheck.blockSignals(true);
+    shortestDistanceFixOneSideCheck.setChecked(measurementItem->isShortestDistanceFixOneSideMode());
+    shortestDistanceFixOneSideCheck.blockSignals(false);
+
+    fixOneSideRadioGroup.blockSignals(true);
+    fixOneSideRadios[measurementItem->shortestDistanceFixedSide()].setChecked(true);
+    fixOneSideRadioGroup.blockSignals(false);
+
+    distanceMarkerCheck.blockSignals(true);
+    distanceMarkerCheck.setChecked(measurementItem->isChecked());
+    distanceMarkerCheck.blockSignals(false);
+
+    distanceLineWidthSpin.blockSignals(true);
+    distanceLineWidthSpin.setValue(measurementItem->distanceLineWidth());
+    distanceLineWidthSpin.blockSignals(false);
+
+    distanceLineOverlayCheck.blockSignals(true);
+    distanceLineOverlayCheck.setChecked(measurementItem->isDistanceLineOverlayEnabled());
+    distanceLineOverlayCheck.blockSignals(false);
+
+    measurementItemNameEdit.blockSignals(true);
+    measurementItemNameEdit.setText(measurementItem->name());
+    measurementItemNameEdit.blockSignals(false);
+}
+
+
+void DistanceMeasurementDialog::Impl::finalizeDistanceMeasurement()
+{
+    if(measurementItem == builtinMeasurementItem){
+        measurementItem->stopMeasurement();
+    }
+    showDistanceMarkerOfBuiltinMeasurementItem(false);
+    clearCandidateItems();
+
+    for(int i=0; i < 2; ++i){
+        activateObjectPointPickMode(i, false);
+    }
+    
+    measurementItemConnections.disconnect();
+    measurementItem.reset();
+    itemToAddNewMeasurementItem.reset();
+}
+                 
+
+void DistanceMeasurementDialog::onFinished(int result)
+{
+    impl->finalizeDistanceMeasurement();
+}
+
+
+void DistanceMeasurementDialog::Impl::onMeasurementItemDisconnectedFromRoot()
+{
+    showErrorDialog(
+        format(_("The Distance measurement item \"{0}\" has been removed from the project and "
+                 "close the distance measurement dialog."),
+               measurementItem->name()));
+    finalizeDistanceMeasurement();
+    self->close();
+}
+
+
+void DistanceMeasurementDialog::setDefaultItemToAddNewMeasurementItem(Item* item)
+{
+    impl->defaultItemToAddNewMeasurementItem = item;
+}
+
+
+void DistanceMeasurementDialog::Impl::onCreateMeasurementItemCheckToggled(bool on)
+{
+    bool doCancel = false;
+    
+    if(on){
+        if(!itemToAddNewMeasurementItem->isConnectedToRoot()){
+            doCancel = true;
+        } else {
+            itemToAddNewMeasurementItem->addChildItem(measurementItem);
+            showDistanceMarkerOfBuiltinMeasurementItem(false);
+            builtinMeasurementItem = static_cast<DistanceMeasurementItem*>(measurementItem->clone());
+            setMeasurementItem(measurementItem, false);
+        }
+    } else {
+        bool doRemove = true;
+        if(isExistingMeasurementItem){
+            bool confirmed = showConfirmDialog(
+                _("Removing Distance Measurement Item"),
+                format(_("The distance measurement item \"{0}\" will be removed from the project. "
+                         "Do you want to continue this operation?"),
+                       measurementItem->name()));
+            if(!confirmed){
+                doRemove = false;
+                doCancel = true;
+            }
+        }
+        if(doRemove){
+            bool isMeasurementActive = measurementItem->isMeasurementActive();
+            itemToAddNewMeasurementItem = measurementItem->parentItem();
+            measurementItemConnections.disconnect();
+            measurementItem->removeFromParentItem(); // Measurement is stopped here
+            builtinMeasurementItem = measurementItem;
+            isExistingMeasurementItem = false;
+            setMeasurementItem(nullptr, false);
+            if(isMeasurementActive){
+                startMeasurement();
+            }
+        }
+    }
+
+    if(doCancel){
+        createMeasurementItemCheck.blockSignals(true);
+        createMeasurementItemCheck.setChecked(!on);
+        createMeasurementItemCheck.blockSignals(false);
+    }
+}
+
+
+void DistanceMeasurementDialog::Impl::onMeasurementItemNameEditingFinishied()
+{
+    auto name = measurementItemNameEdit.string();
+    if(name.empty()){
+        measurementItemNameEdit.blockSignals(true);
+        measurementItemNameEdit.setText(measurementItem->name());
+        measurementItemNameEdit.blockSignals(false);
+    } else {
+        measurementItem->setName(name);
+    }
 }
 
 
@@ -452,10 +602,7 @@ void DistanceMeasurementDialog::Impl::clearCandidateItems()
 {
     for(int i=0; i < 2; ++i){
         candidateItemInfoLists[i].clear();
-        auto& combo = itemCombos[i];
-        combo.blockSignals(true);
-        combo.clear();
-        combo.blockSignals(false);
+        updateItemCombo(i);
     }
 }
 
@@ -469,47 +616,68 @@ void DistanceMeasurementDialog::Impl::updateItemCandidates(Item* topItem)
             if(GeometryMeasurementTracker::checkIfMeasureable(item)){
                 auto connection = make_shared<ScopedConnection>();
                 *connection = item->sigDisconnectedFromRoot().connect(
-                            [this, item](){ onItemDisconnectedFromRoot(item); });
+                    [this, item](){ onItemDisconnectedFromRoot(item); });
                 for(int i=0; i < 2; ++i){
                     ItemInfoPtr info = new ItemInfo;
                     info->item = item;
-                    info->itemConnection =connection;
+                    info->itemConnection = connection;
+                    if(item == measurementItem->targetItem(i)){
+                        info->tracker = measurementItem->targetTracker(i);
+                    }
                     candidateItemInfoLists[i].push_back(info);
                 }
             }
             return true;
         });
 
-    updateItemCombos();
+    for(int i=0; i < 2; ++i){
+        if(auto targetItem = measurementItem->targetItem(i)){
+            updateItemCombo(i);
+        }
+    }
 }
 
 
-void DistanceMeasurementDialog::Impl::updateItemCombos()
+void DistanceMeasurementDialog::Impl::onItemComboAboutToShowPopup(int which)
 {
-    for(int i=0; i < 2; ++i){
-        auto& combo = itemCombos[i];
-        combo.blockSignals(true);
-        Item* currentItem = nullptr;
-        if(targetItemInfos[i]){
-            currentItem = targetItemInfos[i]->item;
-        }
-        combo.clear();
-        for(auto& info : candidateItemInfoLists[i]){
-            combo.addItem(info->item->displayName().c_str());
-            if(info->item == currentItem){
-                combo.setCurrentIndex(combo.count() - 1);
-            } else if(info->tracker){
-                info->tracker.reset();
-            }
-        }
-        combo.blockSignals(false);
+    auto& combo = itemCombos[which];
+    if(combo.count() == 0){
+        updateItemCombo(which);
     }
+}
 
-    for(int i=0; i < 2; ++i){
-        auto& info = targetItemInfos[i];
-        if(!info && !candidateItemInfoLists[i].empty()){
-            setTargetItem(i, itemCombos[i].currentIndex(), false);
+
+void DistanceMeasurementDialog::Impl::clearItemComboBox(int which)
+{
+    auto& itemCombo = itemCombos[which];
+    itemCombo.blockSignals(true);
+    itemCombo.clear();
+    itemCombo.blockSignals(false);
+    
+    auto& subEntryCombo = subEntryCombos[which];
+    subEntryCombo.blockSignals(true);
+    subEntryCombo.clear();
+    subEntryCombo.blockSignals(false);
+}
+
+
+void DistanceMeasurementDialog::Impl::updateItemCombo(int which)
+{
+    clearItemComboBox(which);
+    
+    auto& combo = itemCombos[which];
+    combo.blockSignals(true);
+    Item* currentItem = measurementItem->targetItem(which);
+    for(auto& info : candidateItemInfoLists[which]){
+        combo.addItem(info->item->displayName().c_str());
+        if(info->item == currentItem){
+            combo.setCurrentIndex(combo.count() - 1);
         }
+    }
+    combo.blockSignals(false);
+
+    if(!candidateItemInfoLists[which].empty()){
+        setTargetItem(which, itemCombos[which].currentIndex(), false);
     }
 }
 
@@ -526,31 +694,23 @@ void DistanceMeasurementDialog::Impl::onItemDisconnectedFromRoot(Item* item)
                 ++it;
             }
         }
-    }
-
-    bool isTargetItemRemoved = false;
-    for(int i=0; i < 2; ++i){
-        if(auto info = targetItemInfos[i]){
-            if(info->item == item){
-                targetItemInfos[i].reset();
-                isTargetItemRemoved = true;
-            }
+        auto currentItem = measurementItem->targetItem(i);
+        if(!currentItem || item == currentItem){
+            clearItemComboBox(i);
+        } else {
+            updateItemCombo(i);
         }
     }
-
-    if(isTargetItemRemoved){
-        stopMeasurement();
-    }
-        
-    updateItemCombos();
 }
 
 
 void DistanceMeasurementDialog::Impl::setTargetItem(int which, int itemIndex, bool doUpdateItemComb)
 {
     auto info = candidateItemInfoLists[which][itemIndex];
-    targetItemInfos[which] = info;
+    auto tracker = info->getOrCreateTracker();
 
+    measurementItem->setTargetItem(which, info->item, tracker);
+    
     if(doUpdateItemComb){
         auto& itemCombo = itemCombos[which];
         if(itemIndex < itemCombo.count()){
@@ -560,7 +720,7 @@ void DistanceMeasurementDialog::Impl::setTargetItem(int which, int itemIndex, bo
         }
     }
 
-    if(auto tracker = info->getOrCreateTracker()){
+    if(tracker){
         auto& subCombo = subEntryCombos[which];
         subCombo.blockSignals(true);
         subCombo.clear();
@@ -573,14 +733,13 @@ void DistanceMeasurementDialog::Impl::setTargetItem(int which, int itemIndex, bo
             }
         }
         subCombo.blockSignals(false);
-    }
 
-    if(shortestDistanceFixOneSideCheck.isChecked() || !shortestDistanceCheck.isChecked()){
-        if(auto tracker = info->tracker){
+        if(shortestDistanceFixOneSideCheck.isChecked() || !shortestDistanceCheck.isChecked()){
             updatePointDisplay(which, tracker->getMeasurementPoint());
         }
     }
-    if(isMeasurementActive){
+    
+    if(measurementItem->isMeasurementActive()){
         startMeasurement();
     }
 }
@@ -588,10 +747,8 @@ void DistanceMeasurementDialog::Impl::setTargetItem(int which, int itemIndex, bo
 
 void DistanceMeasurementDialog::Impl::setTargetSubEntry(int which, int entryIndex, bool doUpdateCombo)
 {
-    auto info = targetItemInfos[which];
-
     bool updated = false;
-    if(auto tracker = info->getOrCreateTracker()){
+    if(auto tracker = measurementItem->targetTracker(which)){
         updated = tracker->setCurrentSubEntry(entryIndex);
     }
     
@@ -606,7 +763,7 @@ void DistanceMeasurementDialog::Impl::setTargetSubEntry(int which, int entryInde
         }
     }
 
-    if(isMeasurementActive){
+    if(measurementItem->isMeasurementActive()){
         startMeasurement();
     }
 }
@@ -671,8 +828,8 @@ void DistanceMeasurementDialog::Impl::onObjectPointPicked
     if(!points.empty()){
         auto pointInfo = points.back();
         auto pickedItemIndex = findPickedItemIndex(pointInfo);
-        auto itemInfo = candidateItemInfoLists[whichObjectToPickPoint][pickedItemIndex];
         if(pickedItemIndex >= 0){
+            auto itemInfo = candidateItemInfoLists[whichObjectToPickPoint][pickedItemIndex];
             Vector3 measurementPoint;
             bool doSetMeasurementPoint = false;
             if(!circleCenterCheck[whichObjectToPickPoint].isChecked()){
@@ -695,6 +852,9 @@ void DistanceMeasurementDialog::Impl::onObjectPointPicked
             }
             if(doSetMeasurementPoint){
                 if(itemInfo->tracker->setMeasurementPoint(pointInfo->path(), measurementPoint)){
+                    if(itemCombos[whichObjectToPickPoint].count() == 0){
+                        updateItemCombo(whichObjectToPickPoint);
+                    }
                     setTargetItem(whichObjectToPickPoint, pickedItemIndex, true);
                 }
             }
@@ -751,193 +911,52 @@ bool DistanceMeasurementDialog::Impl::calcCircleCenter
 }
 
 
+void DistanceMeasurementDialog::Impl::onMeasureButtonClicked()
+{
+    if(measurementItem->hasValidTargetItems()){
+        startMeasurement();
+    } else {
+        showErrorDialog(
+            _("The distance measurement cannot be started since the target items are not specified."));
+    }
+}
+
+
 bool DistanceMeasurementDialog::Impl::startMeasurement()
 {
-    if(isMeasurementActive){
-        stopMeasurement();
-    }
-
-    int numValidItems = 0;
-    for(int i=0; i < 2; ++i){
-        auto& info = targetItemInfos[i];
-        if(info && info->item){
-            if(auto tracker = info->getOrCreateTracker()){
-                ++numValidItems;
-            }
-        }
-    }
-
-    if(numValidItems >= 2){
-        isMeasurementActive = true;
-        if(shortestDistanceCheck.isChecked()){
-            initializeCollisionDetector();
-        }
-        for(int i=0; i < 2; ++i){
-            auto info = targetItemInfos[i];
-            info->trackerConnection =
-                info->tracker->sigGeometryChanged().connect(
-                    [this, i](){ onGeometryChanged(i); });
-        }
-        updateDistance();
-        if(distanceMarkerCheck.isChecked()){
-            showDistanceMarker(true);
-        }
-    }
-    
-    return isMeasurementActive;
+    bool isActive = measurementItem->startMeasurement();
+    showDistanceMarker(isActive && distanceMarkerCheck.isChecked());
+    return isActive;
 }
 
 
-void DistanceMeasurementDialog::Impl::stopMeasurement()
+void DistanceMeasurementDialog::Impl::onShortestDistanceCheckToggled(bool on)
 {
-    if(isMeasurementActive){
-        if(distanceMarkerCheck.isChecked()){
-            showDistanceMarker(false);
-        }
-        for(int i=0; i < 2; ++i){
-            auto info = targetItemInfos[i];
-            info->trackerConnection.disconnect();
-            info->geometryHandles.clear();
-        }
-        if(collisionDetector){
-            collisionDetector->clearGeometries();
-        }
-        isMeasurementActive = false;
+    measurementItem->setShortestDistanceMode(on);
+    if(measurementItem->isMeasurementActive()){
+        measurementItem->startMeasurement();
     }
+    measurementItem->notifyMeasurmentConfigurationChange();
 }
 
 
-void DistanceMeasurementDialog::Impl::onGeometryChanged(int which)
+void DistanceMeasurementDialog::Impl::onShortestDistanceFixOneSideCheckToggled(bool on)
 {
-    if(shortestDistanceCheck.isChecked()){
-        updateCollisionDetectionPositions(which);
+    measurementItem->setShortestDistanceFixOneSideMode(on);
+    if(measurementItem->isMeasurementActive()){
+        measurementItem->startMeasurement();
     }
-    updateDistanceLater();
+    measurementItem->notifyMeasurmentConfigurationChange();
 }
 
 
-void DistanceMeasurementDialog::Impl::onShortestDistanceFixOneSideConfigurationChanged()
+void DistanceMeasurementDialog::Impl::onFixOneSideRadioToggled(int which)
 {
-    if(isMeasurementActive && shortestDistanceCheck.isChecked()){
-        startMeasurement();
+    measurementItem->setShortestDistanceFixedSide(which);
+    if(measurementItem->isMeasurementActive()){
+        measurementItem->startMeasurement();
     }
-}
-
-
-void DistanceMeasurementDialog::Impl::initializeCollisionDetector()
-{
-    for(int i=0; i < 2; ++i){
-        auto& info = targetItemInfos[i];
-        info->geometryHandles.clear();
-        auto tracker = info->tracker;
-        if(shortestDistanceFixOneSideCheck.isChecked() && fixOneSideRadioGroup.checkedId() == i){
-            auto shape = new SgShape;
-            auto mesh = shape->getOrCreateMesh();
-            mesh->getOrCreateVertices()->push_back(Vector3f::Zero());
-            mesh->addTriangle(0, 0, 0);
-            auto handle = collisionDetector->addGeometry(shape);
-            info->geometryHandles.push_back(handle);
-            info->isShortestDistanceFixedPoint = true;
-        } else {
-            int n = tracker->getNumShapes();
-            for(int i=0; i < n; ++i){
-                auto handle = collisionDetector->addGeometry(tracker->getShape(i));
-                info->geometryHandles.push_back(handle);
-            }
-            info->isShortestDistanceFixedPoint = false;
-        }
-        updateCollisionDetectionPositions(i);
-    }
-
-    handlePairs.clear();
-    for(auto& handle1 : targetItemInfos[0]->geometryHandles){
-        if(handle1){
-            for(auto& handle2 : targetItemInfos[1]->geometryHandles){
-                if(handle2){
-                    handlePairs.emplace_back(*handle1, *handle2);
-                }
-            }
-        }
-    }
-    int numThreads = std::min(static_cast<unsigned int>(handlePairs.size()), thread::hardware_concurrency());
-    threadPool = make_unique<ThreadPool>(numThreads);
-    
-    collisionDetector->makeReady();
-}
-
-
-void DistanceMeasurementDialog::Impl::updateCollisionDetectionPositions(int which)
-{
-    auto info = targetItemInfos[which];
-    auto tracker = info->tracker;
-    if(info->isShortestDistanceFixedPoint){
-        Isometry3 T = Isometry3::Identity();
-        T.translation() = tracker->getMeasurementPoint();
-        collisionDetector->updatePosition(*info->geometryHandles.front(), T);
-    } else {
-        int n = tracker->getNumShapes();
-        for(int i=0; i < n; ++i){
-            if(auto handle = info->geometryHandles[i]){
-                collisionDetector->updatePosition(*handle, tracker->getShapePosition(i));
-            }
-        }
-    }
-}
-
-
-/**
-   \todo Make the main process to find the shortest distance a background process
-   to improve the response of dragging a target object.
-*/
-void DistanceMeasurementDialog::Impl::updateShortestDistance()
-{
-    double shortestDistance = std::numeric_limits<double>::max();
-    Vector3 p1s, p2s;
-    std::mutex distanceMutex;
-    bool detected = false;
-    
-    for(auto& handlePair : handlePairs){
-        threadPool->start([&](){
-            Vector3 p1, p2;
-            auto distance = collisionDetectorDistanceAPI->detectDistance(
-                handlePair.first, handlePair.second, p1, p2);
-            {
-                std::lock_guard<std::mutex> guard(distanceMutex);
-                if(distance < shortestDistance){
-                    shortestDistance = distance;
-                    p1s = p1;
-                    p2s = p2;
-                    detected = true;
-                }
-            }
-        });
-    }
-    threadPool->wait();
-
-    if(detected){
-        updateDistanceDisplay(shortestDistance, p1s, p2s);
-    } else {
-        invalidateDistanceDisplay();
-    }
-}
-
-
-void DistanceMeasurementDialog::Impl::updateDistance()
-{
-    if(!isMeasurementActive){
-        return;
-    }
-
-    if(shortestDistanceCheck.isChecked()){
-        updateShortestDistance();
-    } else {
-        Vector3 p[2];
-        for(int i=0; i < 2; ++i){
-            p[i] = targetItemInfos[i]->tracker->getMeasurementPoint();
-        }
-        double distance = Vector3(p[1] - p[0]).norm();
-        updateDistanceDisplay(distance, p[0], p[1]);
-    }
+    measurementItem->notifyMeasurmentConfigurationChange();
 }
 
 
@@ -948,29 +967,19 @@ void DistanceMeasurementDialog::Impl::updatePointDisplay(int which, Vector3 p)
 }
     
 
-void DistanceMeasurementDialog::Impl::updateDistanceDisplay(double distance, const Vector3& p1, const Vector3& p2)
+void DistanceMeasurementDialog::Impl::updateDistanceDisplay()
 {
-    if(!isMeasurementActive){
-        return;
-    }
+    double distance = measurementItem->distance();
+    const Vector3& p0 = measurementItem->measurementPoint(0);
+    const Vector3& p1 = measurementItem->measurementPoint(1);
 
-    auto& vertices = *distanceLine->vertices();
-    for(int i=0; i < 2; ++i){
-        const Vector3& p = (i == 0) ? p1 : p2;
-        vertices[i] = p.cast<Vector3f::Scalar>();
-        updatePointDisplay(i, p);
-    }
     distanceLabel.setText(format(distanceDisplayFormat, displayValueFormat->toDisplayLength(distance)).c_str());
+    updatePointDisplay(0, p0);
+    updatePointDisplay(1, p1);
 
-    Vector3 dp = displayValueFormat->ratioToDisplayLength() * (p2 - p1);
+    Vector3 dp = displayValueFormat->ratioToDisplayLength() * (p1 - p0);
     for(int i=0; i < 3; ++i){
         distanceElementLabels[i].setText(format(distanceDisplayFormat, dp(i)).c_str());
-    }
-
-    viewportDistanceText->setMeasurementData(p1, p2, distance);
-    if(distanceMarkerCheck.isChecked()){
-        sgUpdate.setAction(SgUpdate::GeometryModified);
-        vertices.notifyUpdate(sgUpdate);
     }
 }
 
@@ -990,11 +999,24 @@ void DistanceMeasurementDialog::Impl::invalidateDistanceDisplay()
 
 void DistanceMeasurementDialog::Impl::showDistanceMarker(bool on)
 {
-    auto systemNodeGroup = sceneWidget->systemNodeGroup();
-    if(on){
-        systemNodeGroup->addChildOnce(distanceMarker, sgUpdate);
-    } else {
-        systemNodeGroup->removeChild(distanceMarker, sgUpdate);
+    measurementItem->setChecked(on);
+    
+    if(measurementItem == builtinMeasurementItem){
+        showDistanceMarkerOfBuiltinMeasurementItem(on);
+    }
+}
+
+
+void DistanceMeasurementDialog::Impl::showDistanceMarkerOfBuiltinMeasurementItem(bool on)
+{
+    if(builtinMeasurementItem){
+        auto systemNodeGroup = sceneWidget->systemNodeGroup();
+        auto marker = builtinMeasurementItem->getScene();
+        if(on){
+            systemNodeGroup->addChildOnce(marker, true);
+        } else {
+            systemNodeGroup->removeChild(marker, true);
+        }
     }
 }
 
@@ -1008,8 +1030,7 @@ void DistanceMeasurementDialog::Impl::inputDistanceMarkerColorWithColorDialog()
     colorDialog->setOption(QColorDialog::DontUseNativeDialog);
     colorDialog->setWindowTitle(_("Distance Marker Color"));
 
-    auto material = distanceLine->material();
-    Vector3f c = material->diffuseColor();
+    const Vector3f& c = measurementItem->distanceMarkerColor();
     QColor color;
     color.setRgbF(c[0], c[1], c[2], 1.0f);
     colorDialog->setCurrentColor(color);
@@ -1026,104 +1047,27 @@ void DistanceMeasurementDialog::Impl::inputDistanceMarkerColorWithColorDialog()
 }
 
 
-void DistanceMeasurementDialog::Impl::setDistanceLineOverlayEnabled(bool on)
+void DistanceMeasurementDialog::Impl::onDistanceLineOverlayCheckToggled(bool on)
 {
-    if(on){
-        distanceMarker->removeChild(distanceLine);
-        distanceMarker->addChildOnce(distanceLineOverlay, sgUpdate);
-    } else {
-        distanceMarker->removeChild(distanceLineOverlay);
-        distanceMarker->addChildOnce(distanceLine, sgUpdate);
-    }
+    measurementItem->setDistanceLineOverlayEnabled(on);
+    measurementItem->notifyMeasurmentConfigurationChange();
 }
 
 
 void DistanceMeasurementDialog::Impl::setDistanceMarkerColor(const QColor& color)
 {
-    setDistanceMarkerColor(Vector3f(color.redF(), color.greenF(), color.blueF()));
+    Vector3f c(color.redF(), color.greenF(), color.blueF());
+    measurementItem->setDistanceMarkerColor(c);
+    measurementItem->notifyMeasurmentConfigurationChange();
+    objectPointPickMode->setHighlightedPointColor(c);
+    objectPointPickMode->setSelectedPointColor(c);
 }
 
 
-void DistanceMeasurementDialog::Impl::setDistanceMarkerColor(const Vector3f& color)
+void DistanceMeasurementDialog::Impl::onDistanceLineWidthChanged(double width)
 {
-    viewportDistanceText->setColor(color);
-
-    auto material = distanceLine->getOrCreateMaterial();
-    material->setDiffuseColor(color);
-    sgUpdate.setAction(SgUpdate::AppearanceModified);
-    material->notifyUpdate(sgUpdate);
-
-    objectPointPickMode->setHighlightedPointColor(color);
-    objectPointPickMode->setSelectedPointColor(color);
-}
-
-
-void DistanceMeasurementDialog::onFinished(int result)
-{
-    impl->stopMeasurement();
-    impl->clearCandidateItems();
-
-    for(int i=0; i < 2; ++i){
-        impl->activateObjectPointPickMode(i, false);
-    }
-}
-
-
-ViewportText::ViewportText(DisplayValueFormat* displayValueFormat)
-    : SgViewportOverlay(findClassId<ViewportText>()),
-      displayValueFormat(displayValueFormat)
-{
-    distanceDisplayFormat = format("{{0:.{0}f}}mm", displayValueFormat->lengthDecimals());
-    
-    textHeight = 20.0;
-    distanceText = new SgText;
-    distanceText->setTextHeight(textHeight);
-    distanceTextTransform = new SgPosTransform;
-    distanceTextTransform->addChild(distanceText);
-    addChild(distanceTextTransform);
-}
-
-
-void ViewportText::setMeasurementData(const Vector3& p1, const Vector3& p2, double distance)
-{
-    this->p1 = p1;
-    this->p2 = p2;
-    double d = displayValueFormat->toDisplayLength(distance);
-    distanceText->setText(format(distanceDisplayFormat, d).c_str());
-    distanceText->notifyUpdate();
-}
-
-
-void ViewportText::setColor(const Vector3f& color)
-{
-    distanceText->setColor(color);
-}
-
-
-void ViewportText::render(SceneRenderer* renderer)
-{
-    Vector3 q1 = renderer->project(p1);
-    Vector3 q2 = renderer->project(p2);
-    Vector3 p = (q1 + q2) / 2.0;
-    double x = q2.x() - q1.x();
-    double y = q2.y() - q1.y();
-    double theta = degree(atan2(y, x));
-    if((theta > 0 && theta < 90.0) || theta < -90.0){
-        p.y() -= textHeight;
-    }
-    distanceTextTransform->setTranslation(p);
-    renderer->renderingFunctions()->dispatchAs<SgViewportOverlay>(this);    
-}
-
-
-void ViewportText::calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume)
-{
-    io_volume.left = 0;
-    io_volume.right = viewportWidth;
-    io_volume.bottom = 0;
-    io_volume.top = viewportHeight;
-    io_volume.zNear = 1.0;
-    io_volume.zFar = -1.0;
+    measurementItem->setDistanceLineWidth(width);
+    measurementItem->notifyMeasurmentConfigurationChange();
 }
 
 

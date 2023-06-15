@@ -6,14 +6,23 @@
 
 namespace cnoid {
 
-class DistanceMeasurementDialog : public Dialog
+class Item;
+class DistanceMeasurementItem;
+
+class CNOID_EXPORT DistanceMeasurementDialog : public Dialog
 {
 public:
     static DistanceMeasurementDialog* instance();
 
     ~DistanceMeasurementDialog();
 
-    void show();
+    void setDefaultItemToAddNewMeasurementItem(Item* item);
+
+    /**
+       \param item A target DistanceMeasurementItem instance. If nullptr is given,
+       a new instance is created and used internally in the dialog.
+    */
+    void show(DistanceMeasurementItem* item = nullptr);
 
     class Impl;
 

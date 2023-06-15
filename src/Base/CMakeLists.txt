@@ -137,6 +137,7 @@ set(sources
   PositionTagGroupItem.cpp
   PositionTagListWidget.cpp
   GeometryMeasurementTracker.cpp
+  DistanceMeasurementItem.cpp
   DistanceMeasurementDialog.cpp
   MovieRecorder.cpp
   MovieRecorderBar.cpp
@@ -289,6 +290,8 @@ set(headers
   PositionTagGroupItem.h
   PositionTagListWidget.h
   GeometryMeasurementTracker.h
+  DistanceMeasurementItem.h
+  DistanceMeasurementDialog.h
   MovieRecorder.h
   MovieRecorderBar.h
   MovieRecorderDialog.h

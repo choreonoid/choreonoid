@@ -35,6 +35,7 @@
 #include "CoordinateFrameListItem.h"
 #include "CoordinateFrameItem.h"
 #include "PositionTagGroupItem.h"
+#include "DistanceMeasurementItem.h"
 #include "ViewManager.h"
 #include "ItemTreeView.h"
 #include "ItemPropertyView.h"
@@ -423,11 +424,11 @@ void App::Impl::initialize()
     AbstractTextItem::initializeClass(ext);
     ScriptItem::initializeClass(ext);
     MessageLogItem::initializeClass(ext);
-    
     LightingItem::initializeClass(ext);
     CoordinateFrameListItem::initializeClass(ext);
     CoordinateFrameItem::initializeClass(ext);
     PositionTagGroupItem::initializeClass(ext);
+    DistanceMeasurementItem::initializeClass(ext);
 
     MovieRecorderBar::initializeClass(ext);
     CaptureBar::initialize(ext);
