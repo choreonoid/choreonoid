@@ -174,7 +174,7 @@ Item::Impl::Impl(Item* self, const Impl& org)
     
     self->attributes_ =
         org.self->attributes_ &
-        (FileImmutable | Reloadable | ExcludedFromUnifiedEditHistory);
+        (FileImmutable | Reloadable | ExcludedFromUnifiedEditHistory | IncludedInUnifiedEditHistory);
 
     if(self->attributes_ & FileImmutable){
         filePath = org.filePath;
@@ -1794,10 +1794,11 @@ void Item::putProperties(PutPropertyFunction& putProperty)
             if(!attributes.empty())  attributes += ", ";
             attributes += _("Reloadable");
         }
-        if(hasAttribute(ExcludedFromUnifiedEditHistory)){
-            if(!attributes.empty())  attributes += ", ";
-            attributes += _("No undo");
-        }
+    }
+    if(hasAttribute(ExcludedFromUnifiedEditHistory) ||
+       (hasAttribute(SubItem) && !hasAttribute(IncludedInUnifiedEditHistory))){
+        if(!attributes.empty())  attributes += ", ";
+        attributes += _("No undo");
     }
     if(!attributes.empty()){
         if(attributes.size() == 1){

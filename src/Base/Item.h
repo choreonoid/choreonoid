@@ -45,6 +45,9 @@ public:
            The attribute first has the same attributes as Attached.
            In addition to that, the state of the item is stored or restored as a part of the top item of the
            corresponding composite item when the project save or load is performed.
+           Note that items with this attribute are excluded from the built-in undo / redo processing implemented
+           in ItemEditRecordManager as well as the ExcludedFromUnifiedEditHistory attribute.
+           Add the IncludedInUnifiedEditHistory attribute to enable the built-in undo / redo processing.
         */
         SubItem = Attached | SubItemAdditionalAttribute,
 
@@ -84,8 +87,20 @@ public:
         */
         Reloadable = 1 << 6,
 
+        /**
+           Items with this attribute are excluded from the the built-in undo / redo processing implemented
+           in ItemEditRecordManager. Add this attribute to avoid the built-in processing or to implement
+           custom processing for undo / redo operations.
+        */
         ExcludedFromUnifiedEditHistory = 1 << 7,
 
+        /**
+           Add this attribute to enable the built-in undo / redo processing for items with the SubItem attribute.
+           Note that the built-in processing are enabled by default for items without the SubItem attribute.
+           Adding this attribute is only valid for the item with the SubItem attribute.
+        */
+        IncludedInUnifiedEditHistory = 1 << 8,
+        
         // deprecated
         SUB_ITEM = SubItem,
         Temporal = Temporary,

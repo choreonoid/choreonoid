@@ -81,6 +81,7 @@ public:
     unordered_map<ItemPtr, ScopedConnectionSet> itemConnectionSetMap;
 
     Impl();
+    static bool isTargetItem(Item* item);
     void onSubTreeAdded(Item* item);
     void manageSubTree(Item* item);
     void onSubTreeRemoving(Item* item, Item* oldParentItem, Item* oldNextItem, bool isMoving);
@@ -133,9 +134,21 @@ ItemEditRecordManager::Impl::Impl()
 }
 
 
+bool ItemEditRecordManager::Impl::isTargetItem(Item* item)
+{
+    if(item->hasAttribute(Item::ExcludedFromUnifiedEditHistory)){
+        return false;
+    }
+    if(item->isSubItem() && !item->hasAttribute(Item::IncludedInUnifiedEditHistory)){
+        return false;
+    }
+    return true;
+}
+
+
 void ItemEditRecordManager::Impl::onSubTreeAdded(Item* item)
 {
-    if(!item->isSubItem() && !item->hasAttribute(Item::ExcludedFromUnifiedEditHistory)){
+    if(isTargetItem(item)){
         auto record = new ItemTreeEditRecord(item);
         record->setItemAddition();
         unifiedEditHistory->addRecord(record);
@@ -164,7 +177,7 @@ void ItemEditRecordManager::Impl::manageSubTree(Item* item)
 
 void ItemEditRecordManager::Impl::onSubTreeRemoving(Item* item, Item* oldParentItem, Item* oldNextItem, bool isMoving)
 {
-    if(!item->isSubItem() && !item->hasAttribute(Item::ExcludedFromUnifiedEditHistory)){
+    if(isTargetItem(item)){
         if(isMoving){
             movingItem = item;
             this->oldParentItem = oldParentItem;
@@ -181,7 +194,7 @@ void ItemEditRecordManager::Impl::onSubTreeRemoving(Item* item, Item* oldParentI
 
 void ItemEditRecordManager::Impl::onSubTreeMoved(Item* item)
 {
-    if(!item->isSubItem() && !item->hasAttribute(Item::ExcludedFromUnifiedEditHistory)){
+    if(isTargetItem(item)){
         if(item == movingItem){
             auto record = new ItemTreeEditRecord(item);
             record->setItemMove(oldParentItem, oldNextItem);

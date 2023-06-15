@@ -327,8 +327,10 @@ void CoordinateFrameListItem::Impl::updateFrameItems()
 CoordinateFrameItem* CoordinateFrameListItem::Impl::createFrameItem(CoordinateFrame* frame)
 {
     CoordinateFrameItem* item = new CoordinateFrameItem(frame);
-    if(itemizationMode == SubItemization || frameList->isDefaultFrameId(frame->id())){
-        item->setAttribute(Item::SubItem);
+    if(frameList->isDefaultFrameId(frame->id())){
+        item->setAttributes(Item::SubItem);
+    } else if(itemizationMode == SubItemization){
+        item->setAttributes(Item::SubItem | Item::IncludedInUnifiedEditHistory);
     } else if(itemizationMode == IndependentItemization){
         item->setAttribute(Item::Attached);
     }
