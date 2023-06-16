@@ -23,6 +23,7 @@ set(sources
   BodyMotionGenerationBar.cpp
   BodyKeyPoseSelectionDialog.cpp
   FcpFileLoader.cpp
+  FootFixFilter.cpp
 )
 
 set(headers

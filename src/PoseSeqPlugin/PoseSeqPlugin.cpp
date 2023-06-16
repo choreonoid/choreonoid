@@ -7,6 +7,7 @@
 #include "PoseRollView.h"
 #include "HumanoidPoseFetchView.h"
 #include "FcpFileLoader.h"
+#include "FootFixFilter.h"
 #include <fmt/format.h>
 
 using namespace cnoid;
@@ -33,19 +34,9 @@ public:
 #endif
         
         initializeFcpFileLoader(this);
+        initializeFootFixFilter(this);
             
         return true;
-    }
-
-    virtual const char* description() const override {
-        static std::string text =
-            fmt::format("PoseSeq Plugin Version {}\n", CNOID_FULL_VERSION_STRING) +
-            "\n" +
-            "Copyright (c) 2018 Shin'ichiro Nakaoka and Choreonoid Development Team, AIST.\n"
-            "\n" +
-            MITLicenseText();
-    
-        return text.c_str();
     }
 };
 
