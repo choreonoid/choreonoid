@@ -85,6 +85,7 @@ Changes since 1.7.0:
 * Added the Imu class
 * Added the function to render texts in SceneView
 * Added the distance measurement function
+* Added MocapPlugin
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================

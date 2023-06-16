@@ -1,0 +1,407 @@
+# Japanese translations for Choreonoid package.
+# This file is distributed under the same license as the Choreonoid package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Choreonoid\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-04-01 19:50+0900\n"
+"PO-Revision-Date: 2012-02-21 19:18+0000\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Invalid angle unit {0}. It should be either \"deg\" or \"rad\"."
+msgstr "不正な角度単位 {0}．単位は \"deg\" または \"rad\" でなければなりません．"
+
+msgid "Bone name \"{0}\" is overlapping."
+msgstr "ボーン名 \"{0}\" が重複しています．"
+
+msgid "Warning: Link {0} specified in \"bodyMarkers\" is not found."
+msgstr "警告： \"bodyMarkers\" で指定されているリンク {0} がみつかりません．"
+
+msgid "Warning: Empty marker node in \"bodyMarkers\"."
+msgstr "警告： \"bodyMarkers\" に空のマーカノード．"
+
+msgid "Warning: {0}-th element of Link {1} in \"bodyMarkers\" is not a valid vector."
+msgstr "警告： \"bodyMarkers\" のリンク{1}の{0}番目の要素は有効なベクタではありません．"
+
+msgid "No target body motions."
+msgstr "対象ボディモーションがありません．"
+
+msgid "Frame rate {0:.6f} of {1}-th motion is different from {2:.6f} of the first one."
+msgstr "{1}番目のモーションのフレームレート{0:.6f}は最初の{2:.6f}と異なります．"
+
+msgid "Motion {0} is empty."
+msgstr "モーション{0}は空です．"
+
+msgid "Tetrahedralize failed."
+msgstr "4面体化に失敗しました．"
+
+msgid "BodyInteractionMeshItem"
+msgstr "ボディインタラクションメッシュアイテム"
+
+msgid "IM-based Joint Limitter"
+msgstr "IMベースの関節リミッタ"
+
+msgid "Interpolation test using a body interaction mesh"
+msgstr "ボディインタラクションメッシュを用いた補間テスト"
+
+msgid "{0} cannot be set to the interaction mesh"
+msgstr "{0}をインタラクションメッシュにセットできません"
+
+msgid "Calculating the interaction mesh of {0} ..."
+msgstr "インタラクションメッシュ {0} を計算中 ..."
+
+msgid "OK!"
+msgstr ""
+
+msgid "failed."
+msgstr "失敗．"
+
+msgid "IM-based joint limitter"
+msgstr "IMベースの関節リミッタ"
+
+msgid "Solver type"
+msgstr "ソルバタイプ"
+
+msgid "Lagrange multiplier method solver"
+msgstr "ラグランジュ未定乗数法ソルバ"
+
+msgid "Mosek QP solver"
+msgstr "Mosek QPソルバ"
+
+msgid "Total steps"
+msgstr "合計ステップ数"
+
+msgid "Laplacian deformation energy term"
+msgstr "ラプラシアン変形エネルギー項"
+
+msgid "Max Laplacian difference toward the original position"
+msgstr "オリジナル位置への最大ラプラシアン差分"
+
+msgid "Joint damping weight"
+msgstr "関節ダンピングの重み"
+
+msgid "Acceleration term weight"
+msgstr "加速度項の重み"
+
+msgid "Apply acceleration term only for the last step with partial velocity constraints"
+msgstr "加速度項を部分的な速度項と共に最終ステップのみに適用"
+
+msgid "Velocity constraints"
+msgstr "速度拘束"
+
+msgid "Initial steps for shrinking velocity limits"
+msgstr "速度リミット縮小のための初期ステップ数"
+
+msgid "Final steps for keeping previous velocity constraints"
+msgstr "同一速度拘束条件を維持する最終ステップ数"
+
+msgid "Shrink joint limit values globally"
+msgstr "関節リミット値をグローバルに縮小"
+
+msgid "Fix feet positions"
+msgstr "足の位置を固定"
+
+msgid "Only the current pose"
+msgstr "現在姿勢のみ"
+
+msgid "&Apply"
+msgstr "適用(&A)"
+
+msgid "Halfway-{0}"
+msgstr "中間処理-{0}"
+
+msgid "Steps"
+msgstr "ステップ数"
+
+msgid "Do interpolation in the Laplacian coordinate"
+msgstr "ラプラシアン座標で補間"
+
+msgid "Use quadratic form"
+msgstr "二次形式を使用"
+
+msgid "Interpolation Test"
+msgstr "補間テスト"
+
+msgid "Warning: labelMap contains a node which is not a pair of labels."
+msgstr "警告： ラベルマップがラベルのペアで無いノードを含んでいます．"
+
+msgid "Warning: labelMap contains a node which has an empty label."
+msgstr "警告： ラベルマップが空のラベルを有するノードを含んでいます．"
+
+msgid "Warning: Label mapping (\"{0}\", {1}) collides with an existing one."
+msgstr "警告： ラベルのマッピング (\"{0}\", {1}) は既存のものと衝突しています．"
+
+msgid "Warning: Edge \"{0}\" to \"{1}\" is doubly defined."
+msgstr "警告： \"{0}\" から \"{1}\" へのエッジが重複して定義されています．"
+
+msgid "CharacterItem"
+msgstr "キャラクタアイテム"
+
+msgid "Character definition file (YAML)"
+msgstr "キャラクタ定義ファイル (YAML)"
+
+msgid "Number of skeleton edges"
+msgstr "スケルトンエッジ数"
+
+msgid "Number of skeleton segments"
+msgstr "スケルトンセグメント数"
+
+msgid "Number of extra markers"
+msgstr "追加マーカ数"
+
+msgid "Number of marker edges"
+msgstr "マーカエッジ数"
+
+msgid "Number of marker segments"
+msgstr "マーカセグメント数"
+
+msgid "Convert to body motion(s)"
+msgstr "ボディモーションに変換"
+
+msgid "Conversion to body motions"
+msgstr "ボディモーションへの変換"
+
+msgid "Converter"
+msgstr "コンバータ"
+
+msgid "Select the motion item(s) to be converted and the target body item(s)."
+msgstr "変換元のモーションアイテムと対象のボディアイテムを選択してください．"
+
+msgid "Marker motion \"{0}\" has been converted to the motion of \"{1}\"."
+msgstr "マーカモーション \"{0}\" を \"{1}\" のモーションに変換しました．"
+
+msgid "Failed to convert marker motion \"{0}\" to the motion of \"{1}\"."
+msgstr "マーカモーション \"{0}\" から \"{1}\" のモーションへの変換に失敗しました．"
+
+msgid "Select the body item(s) to which {0} will be converted."
+msgstr "{0}の変換先となるボディアイテムを選択してください．"
+
+msgid "Fix foot positions in body motions"
+msgstr "ボディモーションの足位置を固定"
+
+msgid "Waist height diff"
+msgstr "腰高さ差分"
+
+msgid "Transition from / to the standard pose"
+msgstr "標準姿勢遷移"
+
+msgid "Pausing time"
+msgstr "停止時間"
+
+msgid "Transition time"
+msgstr "遷移時間"
+
+msgid "Apply the foot fix filter to {0} of {1}"
+msgstr "{1}の{0}に足固定フィルタを適用"
+
+msgid "Rendering"
+msgstr "レンダリング"
+
+msgid "Frame rate"
+msgstr "フレームレート"
+
+msgid "Number of frames"
+msgstr "フレーム数"
+
+msgid "Time length"
+msgstr "時間長"
+
+msgid "Time step"
+msgstr "タイムステップ"
+
+msgid "Color"
+msgstr "色"
+
+msgid "Line width"
+msgstr "線幅"
+
+msgid "No target marker motions."
+msgstr "対象マーカモーションがありません．"
+
+msgid "MarkerInteractionMeshItem"
+msgstr "マーカインタラクションメッシュアイテム"
+
+msgid "Retargeting with Interaction Mesh"
+msgstr "インタラクションメッシュによるリターゲティング"
+
+msgid "Retargeting"
+msgstr "リターゲティング"
+
+msgid "Warning: Character for {0} is not found."
+msgstr "警告： {0}用のキャラクタがみつかりません．"
+
+msgid "Interaction mesh deformation failed.\n"
+msgstr "インタラクションメッシュの変形に失敗しました．\n"
+
+msgid "Marker Motion Retargeting"
+msgstr "マーカモーションリターゲティング"
+
+msgid "Update laplacian coordinate constant every step"
+msgstr "全ステップでラプラシアン座標定数を更新"
+
+msgid "Laplacian distance weight power"
+msgstr "ラプラシアン距離の重み指数"
+
+msgid "Acceleration constraint weight"
+msgstr "加速度拘束の重み"
+
+msgid "Exclude bones from the laplacian coordinate"
+msgstr "ラプラシアン座標からボーンを除外"
+
+msgid "Follow the original foot positions"
+msgstr "元の足位置を追従"
+
+msgid "Weight for following the original collar positions"
+msgstr "元の襟位置追従の重み"
+
+msgid "RetargetedMarkerMotion"
+msgstr ""
+
+msgid "RetargetedMarkerMotions"
+msgstr ""
+
+msgid "Retargeting based on the intaraction mesh has started."
+msgstr "インタラクションメッシュに基づくリターゲティングを開始しました．"
+
+msgid "Step {0} is being processed."
+msgstr "ステップ{0}を処理中です．"
+
+msgid "Retargeting has completed."
+msgstr "リターゲティングを完了しました．"
+
+msgid "Retargeting failed."
+msgstr "リターゲティングに失敗しました．"
+
+msgid "MarkerMotionItem"
+msgstr "マーカモーションアイテム"
+
+msgid "Marker Motion"
+msgstr "マーカモーション"
+
+msgid "VPM format mocap file"
+msgstr "VPM形式モーキャプファイル"
+
+msgid "TRC format mocap file"
+msgstr "TRC形式モーキャプファイル"
+
+msgid "Position offset"
+msgstr "位置のオフセット"
+
+msgid "Edge rendering"
+msgstr "エッジレンダリング"
+
+msgid "Edge width"
+msgstr "エッジ幅"
+
+msgid "Acclaim ASF/AMC mocap file"
+msgstr "Acclaim ASF/AMCモーキャプファイル"
+
+msgid "Convert skeleton motions to marker motions"
+msgstr "スケルトンモーションをマーカモーションに変換"
+
+msgid "Convert to marker motion"
+msgstr "マーカモーションに変換"
+
+msgid "Converting {0} to the marker motion with {1} ..."
+msgstr "{0}を{1}を用いてマーカモーションに変換中…"
+
+msgid "Converting {0} to the marker motion ..."
+msgstr "{0}をマーカモーションに変換中…"
+
+msgid "OK."
+msgstr ""
+
+msgid "Mosek test lo1"
+msgstr "Mosekテストlo1"
+
+msgid "There is no HIERARCHY part."
+msgstr "HIERARCHYのパートがありません．"
+
+msgid "line break is missing"
+msgstr "改行がありません"
+
+msgid "There is no ROOT node"
+msgstr "ROOTノードがありません"
+
+msgid "There is no MOTION part."
+msgstr "MOTIONのパートがありません．"
+
+msgid "Node name is missing"
+msgstr "ノード名がありません"
+
+msgid "'{' is missing."
+msgstr "'{'がありません．"
+
+msgid "OFFSET values are not correctly specified"
+msgstr "OFFSETの値が正しく指定されていません"
+
+msgid "End node cannot have CHANNELS"
+msgstr "EndノードはCHANNELSを含むことができません"
+
+msgid "End node cannot have JOINT"
+msgstr "EndノードはJOINTを含むことができません"
+
+msgid "End node cannot have End"
+msgstr "EndノードはEndを含むことができません"
+
+msgid "Unknown field"
+msgstr "定義されていないフィールドです"
+
+msgid "OFFSET is missing"
+msgstr "OFFSETがありません"
+
+msgid "CHANNELS is missing"
+msgstr "CHANNELSがありません"
+
+msgid "The number of channels is not correctly specified"
+msgstr "チャンネル数が正しく指定されていません"
+
+msgid "Illeagal format"
+msgstr "不正なフォーマットです"
+
+msgid "Illegal element type"
+msgstr "不正な要素型です"
+
+msgid "The number of frames is not correctly specified"
+msgstr "フレーム数が正しく指定されていません"
+
+msgid "Frame time is not correctly specified"
+msgstr "Frame時刻が正しく指定されていません"
+
+msgid "{0}-th motion element is illegal"
+msgstr "{0}番目の動作要素が不正です"
+
+msgid "The actual number of frames is different from that specified at 'Frames:' field.\n"
+msgstr "実際のフレーム数が' 'Frames:' フィールドで指定されている値と異なっています．\n"
+
+msgid "Load an Acclaim Skeleton (ASF) File"
+msgstr "Acclaimスケルトン(ASF)ファイルの読み込み"
+
+msgid "Load Acclaim Motion Capture (AMC) Files"
+msgstr "Acclaimモーションキャプチャ(AMC)ファイルの読み込み"
+
+msgid "SkeletonMotionItem"
+msgstr "スケルトンモーションアイテム"
+
+msgid "BVH format mocap file"
+msgstr "BVH形式のモーキャプファイル"
+
+msgid "Number of bones"
+msgstr "ボーン数"
+
+msgid "Offset time frame"
+msgstr "オフセット時間フレーム"
+
+msgid "Translation"
+msgstr "並進"
+
+msgid "Yaw rotation"
+msgstr "ヨー回転"
+
+msgid "Scale"
+msgstr "スケール"
