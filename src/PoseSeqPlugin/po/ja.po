@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-04-13 10:20+0900\n"
+"POT-Creation-Date: 2023-06-16 22:39+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -180,6 +180,27 @@ msgstr "FaceControllerのポーズ列ファイル (*.poseseq)"
 
 msgid "FaceController Plugin Pattern Files"
 msgstr "FaceControllerプラグインパターンファイル"
+
+msgid "Fix foot positions in body motions"
+msgstr "ボディモーションの足位置を固定"
+
+msgid "Waist height diff"
+msgstr "腰高さ差分"
+
+msgid "Transition from / to the standard pose"
+msgstr "標準姿勢遷移"
+
+msgid "Pausing time"
+msgstr "停止時間"
+
+msgid "Transition time"
+msgstr "遷移時間"
+
+msgid "&Apply"
+msgstr "適用(&A)"
+
+msgid "Apply the foot fix filter to {0} of {1}"
+msgstr "{1}の{0}に足固定フィルタを適用"
 
 msgid "Humanoid Pose Fetch"
 msgstr "ヒューマノイド姿勢取得"
