@@ -4,7 +4,7 @@ file(GLOB subdirs "*")
 list(SORT subdirs)
 
 foreach(subdir ${subdirs})
-  if(EXISTS ${subdir}/CMakeLists.txt)
+  if(NOT subdir MATCHES "\\.disabled$" AND EXISTS ${subdir}/CMakeLists.txt)
     add_subdirectory(${subdir})
   endif()
 endforeach()
