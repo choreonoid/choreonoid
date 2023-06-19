@@ -1,0 +1,141 @@
+# Japanese translations for Choreonoid package.
+# This file is distributed under the same license as the Choreonoid package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Choreonoid\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-07-26 00:21+0900\n"
+"PO-Revision-Date: 2012-02-21 19:18+0000\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Yaw moment compensation"
+msgstr "Yawモーメント補償"
+
+msgid "Enable yaw moment compensation"
+msgstr "Yawモーメント補償の有効化"
+
+msgid "Yaw moment compensation filter"
+msgstr "Yawモーメント補償フィルタ"
+
+msgid "Joint set used for compensation:"
+msgstr "補償に使用する関節"
+
+msgid "Add"
+msgstr "追加"
+
+msgid "Remove"
+msgstr "削除"
+
+msgid "Joint ID"
+msgstr "関節ID"
+
+msgid "Weight"
+msgstr "重み"
+
+msgid "Vel. limit ratio"
+msgstr "速度リミット比率"
+
+msgid "Coefficients of joint recovery force:"
+msgstr "関節回復力係数："
+
+msgid "P:"
+msgstr ""
+
+msgid "Joint displacement range constraints"
+msgstr "関節変位幅制約"
+
+msgid "Input Motion"
+msgstr "入力動作"
+
+msgid "Model"
+msgstr "モデル"
+
+msgid "Opposing adjustment joint:"
+msgstr "相反調整関節："
+
+msgid "Reference joint:"
+msgstr "参照関節："
+
+msgid "Coefficient of friction:"
+msgstr "摩擦係数："
+
+msgid "Sole radius:"
+msgstr "足裏半径："
+
+msgid "[cm]"
+msgstr ""
+
+msgid "Enable friction moment of both feet support"
+msgstr "両足支持の摩擦モーメントを有効化"
+
+msgid "Floor normal force:"
+msgstr "床抗力："
+
+msgid "Inverse dynamics"
+msgstr "逆動力学"
+
+msgid "Constant"
+msgstr "一定値"
+
+msgid "Output yaw moment sequence"
+msgstr "Yawモーメント時系列出力"
+
+msgid "&Apply"
+msgstr "適用(&A)"
+
+msgid "&Cancel"
+msgstr "キャンセル"
+
+msgid "Body motion \"{0}\" has been converted to \"{1}\" by the yaw moment compensation filter."
+msgstr "ボディモーション \"{0}\" はYawモーメント補償フィルタによって \"{1}\" に変換されました．"
+
+msgid "Failed to apply the yaw moment compensation filter to \"{0}\"."
+msgstr "\"{0}\" にYawモーメント補償フィルタを適用できませんでした．"
+
+msgid "Body motion \"{0}\" has been updated by the yaw moment compensation filter."
+msgstr "ボディモーション \"{0}\" はYawモーメント補償フィルタによって更新されました．"
+
+msgid ""
+"The filter cannot apply to {0} because the parameter values of {1}-th target joint is invalid."
+msgstr "{1}番目の対象関節のパラメータ値が無効なため、フィルタを{0}に適用することができません．"
+
+msgid "{0} is not a biped robot."
+msgstr "{0}は二足のロボットではありません．"
+
+msgid "The input motion data does not have a valid number of time frames."
+msgstr "入力モーションデータは有効な数のタイムフレームを有していません．"
+
+msgid ""
+"The input motion data must contain only the position sequence of the root link as link position "
+"sequences, but it contain position sequenss for {0} links."
+msgstr ""
+"入力モーションデータはリンク位置時系列としてルートリンク位置時系列のみを有していなければなりません"
+"が、{0}リンクの位置時系列を有しています．"
+
+msgid ""
+"The number of joint displacement sequences does not match the number of joints in the target body."
+msgstr "関節変位時系列の数が対象ボディの関節数と一致しません．"
+
+msgid "The input motion data does not contain the ZMP sequence."
+msgstr "入力モーションデータはZMP時系列を含んでいません．"
+
+msgid ""
+"Yaw moment compensation failed at time {0:.3f}: Yaw moment is {1:.3f}, Max yaw friction moment is "
+"{2:.3f}"
+msgstr ""
+"Yawモーメント補償が時刻{0:.3f}で失敗しました： Yawモーメント {1:.3f}, 最大Yaw摩擦モーメント "
+"{2:.3f}"
+
+msgid "QP cannot be solved: {0}."
+msgstr "QPを解くことができません： {0}."
+
+msgid "Joint angle {0:.1f} [deg] of {1} is over the limit at time {2:.3f}."
+msgstr "時刻{2:.3f}における{1}の関節角度 {0:.1f} [deg] はリミットをオーバしています．"
+
+msgid "Joint displacement {0:.3f} [m] of {1} is over the limit at time {2:.3f}."
+msgstr "時刻{2:.3f}における{1}の関節変位 {0:.3f} [m] はリミットをオーバしています．"
