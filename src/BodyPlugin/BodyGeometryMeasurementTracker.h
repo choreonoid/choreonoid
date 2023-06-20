@@ -21,9 +21,10 @@ public:
     virtual bool checkTrackable(const SgNodePath& path) override;
     virtual int getNumSubEntries() override;
     virtual std::string getSubEntryName(int index) override;
+    virtual int findSubEntryIndex(const std::string& name) override;
     virtual int getCurrentSubEntryIndex() override;
     virtual bool setCurrentSubEntry(int index) override;
-    virtual int getNumShapes() const override;
+    virtual int getNumShapes() override;
     virtual SgNode* getShape(int index) override;
     virtual Isometry3 getShapePosition(int index) override;
     virtual SignalProxy<void()> sigGeometryChanged() override;

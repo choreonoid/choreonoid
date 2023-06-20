@@ -188,6 +188,22 @@ std::string BodyGeometryMeasurementTracker::getSubEntryName(int index)
 }
 
 
+int BodyGeometryMeasurementTracker::findSubEntryIndex(const std::string& name)
+{
+    if(needToUpdateSubEntries){
+        updateSubEntries();
+    }    
+    int index = -1;
+    for(size_t i=0; i < subEntries.size(); ++i){
+        if(name == subEntries[i].name){
+            index = i;
+            break;
+        }
+    }
+    return index;
+}
+
+
 int BodyGeometryMeasurementTracker::getCurrentSubEntryIndex()
 {
     return currentSubEntryIndex;
@@ -213,7 +229,7 @@ bool BodyGeometryMeasurementTracker::setCurrentSubEntry(int index)
 }
 
 
-int BodyGeometryMeasurementTracker::getNumShapes() const
+int BodyGeometryMeasurementTracker::getNumShapes()
 {
     auto shape = linkOfPoint->shape();
     return shape->empty() ? 0 : 1;

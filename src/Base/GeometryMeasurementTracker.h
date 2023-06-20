@@ -29,11 +29,13 @@ public:
     // Optional functions to provide the sub-entries of the target item
     virtual int getNumSubEntries();
     virtual std::string getSubEntryName(int index);
+    //! \return -1 if sub entry is not found
+    virtual int findSubEntryIndex(const std::string& name);
     virtual int getCurrentSubEntryIndex();
     virtual bool setCurrentSubEntry(int index);
 
     // For shortest distance measurement
-    virtual int getNumShapes() const = 0;
+    virtual int getNumShapes() = 0;
     virtual SgNode* getShape(int index) = 0;
     virtual Isometry3 getShapePosition(int index) = 0;
 

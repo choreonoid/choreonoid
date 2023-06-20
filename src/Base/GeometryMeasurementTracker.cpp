@@ -47,6 +47,12 @@ std::string GeometryMeasurementTracker::getSubEntryName(int /* index */)
 }
 
 
+int GeometryMeasurementTracker::findSubEntryIndex(const std::string& /* name */)
+{
+    return -1;
+}
+
+
 int GeometryMeasurementTracker::getCurrentSubEntryIndex()
 {
     return -1;
