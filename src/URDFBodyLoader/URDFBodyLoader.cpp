@@ -15,6 +15,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/MeshGenerator>
 #include <cnoid/NullOut>
+#include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
 #include <cnoid/SceneLoader>
 #include <cnoid/UTF8>
@@ -986,12 +987,6 @@ bool URDFBodyLoader::Impl::loadSensor(
 
     // creates a sensor
     if (!sensorNode.child(CAMERA).empty()) {
-        CameraPtr camera = new Camera;
-        camera->setName(sensorName);
-        camera->setFrameRate(update_rate);
-        camera->setLocalRotation(rotation);
-        camera->setLocalTranslation(translation);
-
         // 'image' tag (required)
         const xml_node& imageNode = sensorNode.child(CAMERA).child(IMAGE);
         if (imageNode.empty()) {
@@ -1007,7 +1002,6 @@ bool URDFBodyLoader::Impl::loadSensor(
                  << "\" is invalid." << endl;
             return false;
         }
-        camera->setResolutionX(width);
 
         // 'height' attribute (required)
         const int height = imageNode.attribute(HEIGHT).as_int();
@@ -1016,7 +1010,6 @@ bool URDFBodyLoader::Impl::loadSensor(
                  << "\" is invalid." << endl;
             return false;
         }
-        camera->setResolutionY(height);
 
         // 'format' attribute (required) is currently ignored
         // c.f. http://docs.ros.org/en/noetic/api/sensor_msgs/html/image__encodings_8h_source.html
@@ -1028,7 +1021,6 @@ bool URDFBodyLoader::Impl::loadSensor(
                  << "\" is invalid." << endl;
             return false;
         }
-        camera->setHorizontalFieldOfView(hfov);
 
         // 'near' attribute (required)
         const double near = imageNode.attribute(NEAR).as_double();
@@ -1037,7 +1029,6 @@ bool URDFBodyLoader::Impl::loadSensor(
                  << "\" is invalid." << endl;
             return false;
         }
-        camera->setNearClipDistance(near);
 
         // 'far' attribute (required)
         const double far = imageNode.attribute(FAR).as_double();
@@ -1049,15 +1040,52 @@ bool URDFBodyLoader::Impl::loadSensor(
             os() << "Error: far clip distance must be larger than near one."
                  << endl;
         }
-        camera->setFarClipDistance(far);
 
-        // transforms the frame for the ROS-standard specification
-        const Vector3 a(1.0, -1.0, -1.0);
-        const Matrix3 R = a.asDiagonal();
-        camera->setOpticalFrameRotation(R);
+        if (!imageNode.attribute(DEPTH_FORMAT).empty()) {
+            const std::string depthFormat = imageNode.attribute(DEPTH_FORMAT).as_string();
+            if (depthFormat == MONO8 || depthFormat == MONO16) {
+                // TODO: Support a depth-only camera
 
-        // registers the camera
-        return body->addDevice(camera, parentLink);
+                // constructs a range camera
+                RangeCameraPtr camera = new RangeCamera;
+                camera->setName(sensorName);
+                camera->setFrameRate(update_rate);
+                camera->setLocalRotation(rotation);
+                camera->setLocalTranslation(translation);
+                camera->setResolution(width, height);
+                camera->setHorizontalFieldOfView(hfov);
+                camera->setNearClipDistance(near);
+                camera->setFarClipDistance(far);
+                camera->setOpticalFrame(VisionSensor::OpticalFrameType::CV);
+
+                // set range camera parameters
+                camera->setMinDistance(near);
+                camera->setMaxDistance(far);
+                camera->setImageType(Camera::COLOR_IMAGE);
+
+                // registers the camera
+                return body->addDevice(camera, parentLink);
+            } else {
+                os() << "Error: depth_format of camera \"" << sensorName
+                     << "\" is invalid." << endl;
+                return false;
+            }
+        } else {
+            // constructs a camera
+            CameraPtr camera = new Camera;
+            camera->setName(sensorName);
+            camera->setFrameRate(update_rate);
+            camera->setLocalRotation(rotation);
+            camera->setLocalTranslation(translation);
+            camera->setResolution(width, height);
+            camera->setHorizontalFieldOfView(hfov);
+            camera->setNearClipDistance(near);
+            camera->setFarClipDistance(far);
+            camera->setOpticalFrame(VisionSensor::OpticalFrameType::CV);
+
+            // registers the camera
+            return body->addDevice(camera, parentLink);
+        }
     } else if (!sensorNode.child(RAY).empty()) {
         RangeSensorPtr rangeSensor = new RangeSensor;
         rangeSensor->setName(sensorName);

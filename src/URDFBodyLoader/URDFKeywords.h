@@ -54,6 +54,7 @@ const char XYZ[] = "xyz";
 
 // for sensors
 const char CAMERA[] = "camera";
+const char DEPTH_FORMAT[] = "depth_format";
 const char FAR[] = "far";
 const char HEIGHT[] = "height";
 const char HFOV[] = "hfov";
@@ -61,6 +62,8 @@ const char HORIZONTAL[] = "horizontal";
 const char IMAGE[] = "image";
 const char MAX_ANGLE[] = "max_angle";
 const char MIN_ANGLE[] = "min_angle";
+const char MONO8[] = "mono8";
+const char MONO16[] = "mono16";
 const char NEAR[] = "near";
 const char RAY[] = "ray";
 const char SAMPLES[] = "samples";
