@@ -2029,7 +2029,7 @@ bool BodyLibraryView::Impl::exportLibraryToDirectory(const std::string& director
 
 bool BodyLibraryView::storeState(Archive& archive)
 {
-    return impl->saveIndexFileIfUpdated();
+    return true;
 }
 
 
