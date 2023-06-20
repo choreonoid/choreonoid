@@ -1045,8 +1045,6 @@ SgText::SgText(int classId)
     : SgNode(classId)
 {
     setAttribute(Composite | Geometry | Appearance);
-
-    text_ = "Test";
     color_ << 1.0f, 1.0f, 1.0f;
     textHeight_ = 32.0f;
 }
