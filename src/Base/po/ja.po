@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-06-07 17:44+0900\n"
+"POT-Creation-Date: 2023-06-21 18:34+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -183,14 +183,60 @@ msgstr "線幅"
 msgid "Overlay"
 msgstr "オーバーレイ"
 
+msgid "Create measurement item"
+msgstr "計測アイテムの作成"
+
+msgid "Name:"
+msgstr "名前"
+
 msgid "&Measure"
 msgstr "測定"
 
-msgid "&Cancel"
-msgstr "キャンセル(&C)"
+msgid ""
+"The Distance measurement item \"{0}\" has been removed from the project and close the distance "
+"measurement dialog."
+msgstr "距離測定アイテム \"{0}\" はプロジェクトから削除されました．距離測定ダイアログを閉じます．"
+
+msgid "Removing Distance Measurement Item"
+msgstr "距離測定アイテムの削除"
+
+msgid ""
+"The distance measurement item \"{0}\" will be removed from the project. Do you want to continue "
+"this operation?"
+msgstr "距離測定アイテム \"{0}\" はプロジェクトから削除されます．この処理を続けますか？"
+
+msgid "The distance measurement cannot be started since the target items are not specified."
+msgstr "対象アイテムが指定されていないので距離測定を開始できません．"
 
 msgid "Distance Marker Color"
 msgstr "距離マーカの色"
+
+msgid "DistanceMeasurementItem"
+msgstr "距離測定アイテム"
+
+msgid "Configuration"
+msgstr "設定"
+
+msgid "None"
+msgstr "無し"
+
+msgid "Item{0}"
+msgstr "アイテム{0}"
+
+msgid "Item{0} sub entry"
+msgstr "アイテム{0}サブエントリ"
+
+msgid "Active"
+msgstr "アクティブ"
+
+msgid "Shortest distance mode"
+msgstr "最短距離モード"
+
+msgid "Fix one side for shortest distance"
+msgstr "最短距離の一方を固定"
+
+msgid "Fixed side"
+msgstr "固定する側"
 
 msgid "ExtCommandItem"
 msgstr "外部コマンドアイテム"
@@ -482,8 +528,8 @@ msgstr "%1の新規生成"
 msgid "&Create"
 msgstr "生成(&C)"
 
-msgid "Name:"
-msgstr "名前"
+msgid "&Cancel"
+msgstr "キャンセル(&C)"
 
 msgid "There is no file I/O processor registered for the \"{0}\" type."
 msgstr "アイテム型 \"{0}\" に対してI/Oプロセッサが登録されていません．"
@@ -1070,9 +1116,6 @@ msgstr "マウスカーソルもキャプチャする"
 
 msgid "&Record"
 msgstr "録画(&R)"
-
-msgid "None"
-msgstr ""
 
 msgid "Select Directory"
 msgstr "ディレクトリの選択"
