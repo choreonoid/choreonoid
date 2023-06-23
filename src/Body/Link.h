@@ -223,9 +223,9 @@ public:
 #endif
     static constexpr int JOINT_SURFACE_VELOCITY = DeprecatedJointSurfaceVelocity;
 
-    // \ret Logical sum of the correpsonding StateFlag bits
+    // \ret Logical sum of the corresponding StateFlag bits
     short actuationMode() const { return actuationMode_; }
-    // \param mode Logical sum of the correpsonding StateFlag bits
+    // \param mode Logical sum of the corresponding StateFlag bits
     void setActuationMode(short mode) { actuationMode_ = mode; }
 
     [[deprecated("Just use the link name as a prefix or use the int type as a variable.")]]
@@ -239,9 +239,9 @@ public:
     static constexpr short AllStateHighGainActuationMode =
         LinkPosition | LinkTwist | LinkExtWrench | JointDisplacement | JointVelocity | JointEffort | HighGainActuation;
 
-    // \ret Logical sum of the correpsonding StateFlag bits
+    // \ret Logical sum of the corresponding StateFlag bits
     short sensingMode() const { return sensingMode_; }
-    // \param mode Logical sum of the correpsonding StateFlag bits
+    // \param mode Logical sum of the corresponding StateFlag bits
     void setSensingMode(short mode) { sensingMode_ = mode; }
     void mergeSensingMode(short mode) { sensingMode_ |= mode; }
 
