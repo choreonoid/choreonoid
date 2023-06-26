@@ -16,6 +16,7 @@ choreonoid_add_python_module(PyUtil
   PyValueTree.cpp
   PyEigenTypes.cpp
   PyEigenArchive.cpp
+  PyFilePathVariableProcessor.cpp
   PySeqTypes.cpp
   PySceneGraph.cpp
   PySceneDrawables.cpp

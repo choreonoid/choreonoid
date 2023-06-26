@@ -13,6 +13,7 @@ void exportPySignalTypes(py::module& m);
 void exportPyValueTree(py::module& m);
 void exportPyEigenTypes(py::module& m);
 void exportPyEigenArchive(py::module& m);
+void exportPyFilePathVariableProcessor(py::module& m);
 void exportPySeqTypes(py::module& m);
 void exportPySceneGraph(py::module& m);
 void exportPySceneDrawables(py::module& m);
@@ -33,6 +34,7 @@ PYBIND11_MODULE(Util, m)
     exportPyValueTree(m);
     exportPyEigenTypes(m);
     exportPyEigenArchive(m);
+    exportPyFilePathVariableProcessor(m);
     exportPySeqTypes(m);
     exportPySceneGraph(m);
     exportPySceneDrawables(m);
