@@ -41,6 +41,12 @@ BodyPositionSeq::BodyPositionSeq(const BodyPositionSeq& org)
 }
 
 
+std::shared_ptr<AbstractSeq> BodyPositionSeq::cloneSeq() const
+{
+    return make_shared<BodyPositionSeq>(*this);
+}
+
+
 static void setBodyPositionToBodyPositionSeqFrameBlock(const Body& body, BodyPositionSeqFrameBlock block)
 {
     int numLinks = std::min(body.numLinks(), block.numLinkPositions());

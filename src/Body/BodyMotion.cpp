@@ -205,20 +205,21 @@ const std::string& BodyMotion::jointPosSeqKey()
 void BodyMotion::updateLinkPosSeqWithBodyPositionSeq()
 {
     auto lseq = getOrCreateLinkPosSeq();
-    const int numLinkPosSeqParts = lseq->numParts();
-    if(numLinkPosSeqParts > 0){
+    const int numLinks = positionSeq_->numLinkPositionsHint();
+    if(numLinks > 0){
+        lseq->setNumParts(numLinks);
         const int n = numFrames();
         for(int i=0; i < n; ++i){
             auto& pframe = positionSeq_->frame(i);
             auto lframe = lseq->frame(i);
             int linkIndex = 0;
-            int m = std::min(numLinkPosSeqParts, pframe.numLinkPositions());
+            int m = std::min(numLinks, pframe.numLinkPositions());
             while(linkIndex < m){
                 auto linkPosition = pframe.linkPosition(linkIndex);
                 lframe[linkIndex].set(linkPosition.translation(), linkPosition.rotation());
                 ++linkIndex;
             }
-            while(linkIndex < numLinkPosSeqParts){
+            while(linkIndex < numLinks){
                 lframe[linkIndex].clear();
             }
         }
@@ -229,20 +230,21 @@ void BodyMotion::updateLinkPosSeqWithBodyPositionSeq()
 void BodyMotion::updateJointPosSeqWithBodyPositionSeq()
 {
     auto jseq = getOrCreateJointPosSeq();
-    const int numJointPosSeqParts = jseq->numParts();
-    if(numJointPosSeqParts > 0){
+    const int numJoints = positionSeq_->numJointDisplacementsHint();
+    if(numJoints > 0){
+        jseq->setNumParts(numJoints);
         const int n = numFrames();
         for(int i=0; i < n; ++i){
             auto& pframe = positionSeq_->frame(i);
             int jointIndex = 0;
             auto jframe = jseq->frame(i);
             auto displacements = pframe.jointDisplacements();
-            int m = std::min(numJointPosSeqParts, pframe.numJointDisplacements());
+            int m = std::min(numJoints, pframe.numJointDisplacements());
             while(jointIndex < m){
                 jframe[jointIndex] = displacements[jointIndex];
                 ++jointIndex;
             }
-            while(jointIndex < numJointPosSeqParts){
+            while(jointIndex < numJoints){
                 jframe[jointIndex] = 0.0;
             }
         }
@@ -556,12 +558,12 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additional
             writer.startListing();
 
             auto lseq = linkPosSeq();
-            if(lseq->numFrames() > 0){
+            if(lseq->numFrames() > 0 && lseq->numParts() > 0){
                 lseq->writeSeq(writer);
             }
 
             auto jseq = jointPosSeq();
-            if(jseq->numFrames() > 0){
+            if(jseq->numFrames() > 0 && jseq->numParts() > 0){
                 string orgContentName;
                 if(version < 3.0){
                     orgContentName = jseq->seqContentName();
@@ -577,9 +579,10 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additional
                 }
             }
             
-            for(ExtraSeqMap::iterator p = extraSeqs.begin(); p != extraSeqs.end(); ++p){
-                auto& seq = p->second;
-                seq->writeSeq(writer);
+            for(auto& kv : extraSeqs){
+                if(kv.first != linkPosSeqKey_ && kv.first != jointPosSeqKey_){
+                    kv.second->writeSeq(writer);
+                }
             }
             
             writer.endListing();

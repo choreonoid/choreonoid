@@ -198,6 +198,8 @@ public:
     BodyPositionSeq(int numFrames = 0);
     BodyPositionSeq(const BodyPositionSeq& org);
 
+    virtual std::shared_ptr<AbstractSeq> cloneSeq() const override;
+
     int numLinkPositionsHint() const { return numLinkPositionsHint_; }
     void setNumLinkPositionsHint(int n) { numLinkPositionsHint_ = n; }
     
@@ -227,10 +229,6 @@ public:
         return frame(frameIndex).firstBlock();
     }
     
-    // TODO: Implement the following functions
-    // LinkPositionSeq linkPositionSeq(int linkIndex);
-    // JointDisplacementSeq jointDisplacementSeq(int jointId);
-
 private:
     int numLinkPositionsHint_;
     int numJointDisplacementsHint_;
