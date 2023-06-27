@@ -15,6 +15,7 @@
 #include "CollisionDetectionControllerItem.h"
 #include "RegionIntrusionDetectorItem.h"
 #include "BodyContactPointLoggerItem.h"
+#include "BodyContactPointLogItem.h"
 #include "SubSimulatorItem.h"
 #include "GLVisionSimulatorItem.h"
 #include "SimulationScriptItem.h"
@@ -110,6 +111,7 @@ bool BodyPlugin::initialize()
     CollisionDetectionControllerItem::initializeClass(this);
     RegionIntrusionDetectorItem::initializeClass(this);
     BodyContactPointLoggerItem::initializeClass(this);
+    BodyContactPointLogItem::initializeClass(this);
     SubSimulatorItem::initializeClass(this);
     GLVisionSimulatorItem::initializeClass(this);
     SimulationScriptItem::initializeClass(this);

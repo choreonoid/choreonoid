@@ -1,64 +1,27 @@
 #include "BodyContactPointLoggerItem.h"
 #include <cnoid/ItemManager>
-#include <cnoid/ControllerLogItem>
-#include <cnoid/TimeSyncItemEngine>
 #include <cnoid/SceneDrawables>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 
-namespace {
-
-class BodyContactPointLogItem : public ReferencedObjectSeqItem
-{
-public:
-    BodyContactPointLogItem();
-    BodyContactPointLogItem(const BodyContactPointLogItem& org);
-    virtual Item* doCloneItem(CloneMap* cloneMap) const override;
-};
-
-typedef ref_ptr<BodyContactPointLogItem> BodyContactPointLogItemPtr;
-
-
-class BodyContactPointLog : public Referenced
-{
-public:
-    vector<vector<Link::ContactPoint>> bodyContactPoints;
-};
-
-
-class BodyContactPointLogEngine : public TimeSyncItemEngine
-{
-public:
-    static BodyContactPointLogEngine* create(
-        BodyContactPointLogItem* logItem, BodyContactPointLogEngine* engine0);
-    
-    weak_ref_ptr<BodyContactPointLoggerItem> loggerItemRef;
-    BodyContactPointLogItem* logItem;
-
-    BodyContactPointLogEngine(BodyContactPointLogItem* logItem, BodyContactPointLoggerItem* loggerItem);
-    ~BodyContactPointLogEngine();
-    
-    virtual bool onTimeChanged(double time) override;
-};
-
-}
-
 namespace cnoid {
 
 class BodyContactPointLoggerItem::Impl
 {
 public:
+    BodyContactPointLoggerItem* self;
     ControllerIO* io;
-    Body* body;
+    Body* ioBody;
+    BodyContactPointLogItem::LogFramePtr logFrameToVisualize;
+    bool isChecked;
     SgLineSetPtr contactLineSet;
     SgUpdate update;
 
-    static Impl* getImpl(BodyContactPointLoggerItem* item){ return item->impl; };
-    
-    void updateScene(const vector<vector<Link::ContactPoint>>& bodyContactPoints);
-    void clearScene();
+    Impl(BodyContactPointLoggerItem* self);
+    void onCheckToggled();
+    void updateContactLineSet();
 };
 
 }
@@ -68,25 +31,20 @@ void BodyContactPointLoggerItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager()
         .registerClass<BodyContactPointLoggerItem, ControllerItem>(N_("BodyContactPointLoggerItem"))
-        .addCreationPanel<BodyContactPointLoggerItem>()
-        .registerClass<BodyContactPointLogItem, ReferencedObjectSeqItem>(N_("BodyContactPointLogItem"));
-
-    TimeSyncItemEngineManager::instance()
-        ->registerFactory<BodyContactPointLogItem, BodyContactPointLogEngine>(
-            BodyContactPointLogEngine::create);
+        .addCreationPanel<BodyContactPointLoggerItem>();
 }
 
 
 BodyContactPointLoggerItem::BodyContactPointLoggerItem()
 {
-    impl = new Impl;
+    impl = new Impl(this);
 }
 
 
 BodyContactPointLoggerItem::BodyContactPointLoggerItem(const BodyContactPointLoggerItem& org)
     : ControllerItem(org)
 {
-    impl = new Impl;
+    impl = new Impl(this);
 }
 
 
@@ -96,12 +54,21 @@ Item* BodyContactPointLoggerItem::doCloneItem(CloneMap* /* cloneMap */) const
 }
 
 
+BodyContactPointLoggerItem::Impl::Impl(BodyContactPointLoggerItem* self)
+    : self(self)
+{
+    self->sigCheckToggled(LogicalSumOfAllChecks).connect(
+        [this](bool){ onCheckToggled(); });
+    isChecked = false;
+}
+
+
 bool BodyContactPointLoggerItem::initialize(ControllerIO* io)
 {
     impl->io = io;
-    impl->body = io->body();
+    impl->ioBody = io->body();
     
-    for(auto& link : impl->body->links()){
+    for(auto& link : impl->ioBody->links()){
         link->mergeSensingMode(Link::LinkContactState);
     }
     
@@ -117,12 +84,25 @@ ReferencedObjectSeqItem* BodyContactPointLoggerItem::createLogItem()
 
 void BodyContactPointLoggerItem::outputLogFrame()
 {
-    auto log = new BodyContactPointLog;
-    for(auto& link : impl->body->links()){
-        auto& contacts = link->contactPoints();
-        log->bodyContactPoints.push_back(link->contactPoints());
+    auto logFrame = new BodyContactPointLogItem::LogFrame;
+    int numLinks = impl->ioBody->numLinks();
+    logFrame->bodyContactPoints().resize(numLinks);
+    for(int i=0; i < numLinks; ++i){
+        logFrame->linkContactPoints(i) = impl->ioBody->link(i)->contactPoints();
     }
-    impl->io->outputLogFrame(log);
+    impl->io->outputLogFrame(logFrame);
+}
+
+
+void BodyContactPointLoggerItem::Impl::onCheckToggled()
+{
+    bool on = self->isChecked(LogicalSumOfAllChecks);
+    if(on != isChecked){
+        if(on && contactLineSet){
+            updateContactLineSet();
+        }
+        isChecked = on;
+    }
 }
 
 
@@ -130,128 +110,43 @@ SgNode* BodyContactPointLoggerItem::getScene()
 {
     if(!impl->contactLineSet){
         impl->contactLineSet = new SgLineSet;
+        impl->updateContactLineSet();
     }
     return impl->contactLineSet;
 }
 
 
-void BodyContactPointLoggerItem::Impl::updateScene
-(const vector<vector<Link::ContactPoint>>& bodyContactPoints)
+void BodyContactPointLoggerItem::setLogFrameToVisualize(BodyContactPointLogItem::LogFrame* logFrame)
 {
-    if(!contactLineSet){
+    impl->logFrameToVisualize = logFrame;
+    
+    if(!impl->contactLineSet){
         return;
     }
 
+    impl->updateContactLineSet();
+}
+
+
+void BodyContactPointLoggerItem::Impl::updateContactLineSet()
+{
     contactLineSet->clearLines();
-    auto vertices = contactLineSet->getOrCreateVertices();
-    vertices->clear();
-    int vertexIndex = 0;
-    for(auto& points : bodyContactPoints){
-        for(auto& point : points){
-            auto p = point.position().cast<Vector3f::Scalar>();
-            auto f = 1.0e-3f * point.force().cast<Vector3f::Scalar>();
-            vertices->push_back(p);
-            vertices->push_back(p + f);
-            contactLineSet->addLine(vertexIndex, vertexIndex + 1);
-            vertexIndex += 2;
-        }
-    }
-    contactLineSet->notifyUpdate(update);
-}
 
-
-void BodyContactPointLoggerItem::Impl::clearScene()
-{
-    if(contactLineSet){
-        contactLineSet->clearLines();
-        contactLineSet->notifyUpdate(update);
-    }
-}
-
-
-namespace {
-
-BodyContactPointLogItem::BodyContactPointLogItem()
-{
-
-}
-
-
-BodyContactPointLogItem::BodyContactPointLogItem(const BodyContactPointLogItem& org)
-    : ControllerLogItem(org)
-{
-
-}
-
-
-Item* BodyContactPointLogItem::doCloneItem(CloneMap* /* cloneMap */) const
-{
-    return new BodyContactPointLogItem(*this);
-}
-
-
-BodyContactPointLogEngine* BodyContactPointLogEngine::create
-(BodyContactPointLogItem* logItem, BodyContactPointLogEngine* engine0)
-{
-    if(auto loggerItem = logItem->findOwnerItem<BodyContactPointLoggerItem>()){
-        if(engine0 && engine0->loggerItemRef.lock() == loggerItem){
-            return engine0;
-        } else {
-            return new BodyContactPointLogEngine(logItem, loggerItem);
-        }
-    }
-    return nullptr;
-}
-
-
-BodyContactPointLogEngine::BodyContactPointLogEngine
-(BodyContactPointLogItem* logItem, BodyContactPointLoggerItem* loggerItem)
-    : TimeSyncItemEngine(logItem),
-      loggerItemRef(loggerItem),
-      logItem(logItem)
-{
-    loggerItem->sigCheckToggled().connect(
-        [&](bool on){
-            if(on){
-                refresh();
+    if(logFrameToVisualize){
+        auto vertices = contactLineSet->getOrCreateVertices();
+        vertices->clear();
+        int vertexIndex = 0;
+        for(auto& points : logFrameToVisualize->bodyContactPoints()){
+            for(auto& point : points){
+                auto p = point.position().cast<Vector3f::Scalar>();
+                auto f = 1.0e-3f * point.force().cast<Vector3f::Scalar>();
+                vertices->push_back(p);
+                vertices->push_back(p + f);
+                contactLineSet->addLine(vertexIndex, vertexIndex + 1);
+                vertexIndex += 2;
             }
-        });
-}
-
-
-BodyContactPointLogEngine::~BodyContactPointLogEngine()
-{
-    if(auto loggerItem = loggerItemRef.lock()){
-        BodyContactPointLoggerItem::Impl::getImpl(loggerItem)->clearScene();
-    }
-}
-
-
-bool BodyContactPointLogEngine::onTimeChanged(double time)
-{
-    auto loggerItem = loggerItemRef.lock();
-    if(!loggerItem || !loggerItem->isChecked()){
-        return false;
-    }
-    auto log = logItem->seq();
-    if(log->empty()){
-        return false;
-    }
-    bool isValid;
-    int frame = log->frameOfTime(time);
-    if(frame < log->numFrames()){
-        isValid = true;
-    } else {
-        isValid = false;
-        frame = log->numFrames() - 1;
-    }
-
-    if(auto contactPointLog = dynamic_pointer_cast<BodyContactPointLog>(log->at(frame))){
-        auto loggerItemImpl = BodyContactPointLoggerItem::Impl::getImpl(loggerItem);
-        loggerItemImpl->updateScene(contactPointLog->bodyContactPoints);
+        }
     }
     
-    return isValid;
-}
-
+    contactLineSet->notifyUpdate(update);
 }

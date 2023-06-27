@@ -6,6 +6,8 @@
 #include "../SimulationBar.h"
 #include "../BodyItem.h"
 #include "../SimpleControllerItem.h"
+#include "../BodyContactPointLoggerItem.h"
+#include "../BodyContactPointLogItem.h"
 #include <cnoid/PyBase>
 
 using namespace cnoid;
@@ -230,6 +232,26 @@ void exportSimulationClasses(py::module m)
     py::class_<SimpleControllerItem, SimpleControllerItemPtr, ControllerItem>(m, "SimpleControllerItem")
         .def(py::init<>())
         .def("setController", &SimpleControllerItem::setController)
+        ;
+
+    py::class_<BodyContactPointLogItem, BodyContactPointLogItemPtr, ReferencedObjectSeqItem>
+        bodyContactPointLogItem(m, "BodyContactPointLogItem");
+
+    bodyContactPointLogItem
+        .def(py::init<>())
+        .def("getLogFrame", [](BodyContactPointLogItem& self, int frameIndex){ return self.logFrame(frameIndex); })
+        ;
+
+    py::class_<BodyContactPointLogItem::LogFrame, BodyContactPointLogItem::LogFramePtr>(bodyContactPointLogItem, "LogFrame")
+        .def_property_readonly("bodyContactPoints",
+            [](BodyContactPointLogItem::LogFrame& self){ return self.bodyContactPoints(); })
+        .def("getLinkContactPoints",
+            [](BodyContactPointLogItem::LogFrame& self, int linkIndex){ return self.linkContactPoints(linkIndex); })
+        ;
+
+    py::class_<BodyContactPointLoggerItem, BodyContactPointLoggerItemPtr, ControllerItem>(m, "BodyContactPointLoggerItem")
+        .def(py::init<>())
+        .def("setLogFrameToVisualize", &BodyContactPointLoggerItem::setLogFrameToVisualize)
         ;
 }
 
