@@ -114,7 +114,7 @@ public:
     bool isControlToBeContinued;
 
     std::mutex logMutex;
-    ReferencedPtr lastLogData;
+    ReferencedPtr lastLogFrameObject;
     unique_ptr<ReferencedObjectSeq> logBuf;
     int logBufFrameOffset;
     ReferencedObjectSeqItemPtr logItem;
@@ -134,7 +134,7 @@ public:
 
     virtual bool enableLog() override;
     bool isLogEnabled() const;
-    virtual void outputLog(Referenced* frameLog) override;
+    virtual void outputLogFrame(Referenced* logFrame) override;
     void flushLog();
 
     virtual bool isNoDelayMode() const override;
@@ -611,12 +611,12 @@ bool ControllerInfo::isLogEnabled() const
 }
 
 
-void ControllerInfo::outputLog(Referenced* logData)
+void ControllerInfo::outputLogFrame(Referenced* logFrame)
 {
     std::lock_guard<std::mutex> lock(logMutex);
 
-    if(!lastLogData){
-        lastLogData = logData;
+    if(!lastLogFrameObject){
+        lastLogFrameObject = logFrame;
     }
 
     const int bufFrame = simImpl->currentFrame - logBufFrameOffset;
@@ -626,11 +626,11 @@ void ControllerInfo::outputLog(Referenced* logData)
     logBuf->setNumFrames(numFrames);
 
     for(int i = lastNumFrames; i < numFrames - 1; ++i){
-        logBuf->at(i) = lastLogData;
+        logBuf->at(i) = lastLogFrameObject;
     }
-    logBuf->back() = logData;
+    logBuf->back() = logFrame;
 
-    lastLogData = logData;
+    lastLogFrameObject = logFrame;
 }
 
 
@@ -2240,7 +2240,7 @@ bool SimulatorItem::Impl::stepSimulationMain()
     postDynamicsFunctions.call();
 
     for(auto& controller : loggingControllers){
-        controller->log();
+        controller->outputLogFrame();
     }
 
     {

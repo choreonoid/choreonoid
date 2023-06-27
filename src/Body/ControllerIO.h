@@ -29,11 +29,15 @@ public:
     virtual bool enableLog();
 
     /**
-       Call this function in the controller's control function to put the log data of each frame.
-       The log data object must not be accessed from the controller after it passed to this function.
+       Call this function from the controller's control function or outputLogFrame function to add the log data
+       of each frame. Note that The log data object must not be accessed from the controller after it passed to
+       this function.
     */
-    virtual void outputLog(Referenced* logData);
-    
+    virtual void outputLogFrame(Referenced* logFrame);
+
+    [[deprecated("Use outputLogFrame")]]
+    void outputLog(Referenced* logFrame) { outputLogFrame(logFrame); }
+
     // The following functions are only available in simulation
     virtual bool isNoDelayMode() const;
     virtual bool setNoDelayMode(bool on);

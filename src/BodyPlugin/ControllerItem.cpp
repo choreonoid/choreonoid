@@ -117,6 +117,12 @@ bool ControllerItem::control()
 }
 
 
+void ControllerItem::outputLogFrame()
+{
+    log(); // For backward compatibility
+}
+
+
 void ControllerItem::log()
 {
 

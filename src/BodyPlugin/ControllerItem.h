@@ -66,6 +66,9 @@ public:
     */
     virtual bool control();
 
+    virtual void outputLogFrame();
+
+    // deprecated
     virtual void log();
         
     /**

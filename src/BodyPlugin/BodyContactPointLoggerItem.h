@@ -15,7 +15,7 @@ public:
 
     virtual bool initialize(ControllerIO* io) override;
     virtual ReferencedObjectSeqItem* createLogItem() override;
-    virtual void log() override;
+    virtual void outputLogFrame() override;
 
     virtual SgNode* getScene() override;
 

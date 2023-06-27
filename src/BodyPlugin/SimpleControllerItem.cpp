@@ -135,7 +135,7 @@ public:
     virtual double timeStep() const override;
     virtual double currentTime() const override;
     virtual bool enableLog() override;
-    virtual void outputLog(Referenced* logData) override;
+    virtual void outputLogFrame(Referenced* logFrame) override;
     virtual bool isNoDelayMode() const override;
     virtual bool setNoDelayMode(bool on) override;
 
@@ -672,9 +672,9 @@ bool SimpleControllerItem::Impl::enableLog()
 }
 
 
-void SimpleControllerItem::Impl::outputLog(Referenced* logData)
+void SimpleControllerItem::Impl::outputLogFrame(Referenced* logFrame)
 {
-    if(io) io->outputLog(logData);
+    if(io) io->outputLogFrame(logFrame);
 }
 
 

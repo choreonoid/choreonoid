@@ -115,14 +115,14 @@ ReferencedObjectSeqItem* BodyContactPointLoggerItem::createLogItem()
 }
 
 
-void BodyContactPointLoggerItem::log()
+void BodyContactPointLoggerItem::outputLogFrame()
 {
     auto log = new BodyContactPointLog;
     for(auto& link : impl->body->links()){
         auto& contacts = link->contactPoints();
         log->bodyContactPoints.push_back(link->contactPoints());
     }
-    impl->io->outputLog(log);
+    impl->io->outputLogFrame(log);
 }
 
 

@@ -721,7 +721,7 @@ bool MprControllerItemBase::Impl::control()
     }
 
     if(isLogEnabled && stateChanged){
-        io->outputLog(new MprControllerLog(*currentLog));
+        io->outputLogFrame(new MprControllerLog(*currentLog));
     }
         
     return isActiveControlState;

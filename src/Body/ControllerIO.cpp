@@ -97,7 +97,7 @@ bool ControllerIO::enableLog()
 }
 
 
-void ControllerIO::outputLog(Referenced* frameLog)
+void ControllerIO::outputLogFrame(Referenced* /* logFrame */)
 {
 
 }
