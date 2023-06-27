@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_REFERENCED_OBJECT_SEQ_ITEM_H
 #define CNOID_BASE_REFERENCED_OBJECT_SEQ_ITEM_H
 
@@ -23,11 +18,12 @@ public:
     virtual std::shared_ptr<AbstractSeq> abstractSeq() override;
         
     std::shared_ptr<ReferencedObjectSeq> seq() { return seq_; }
+    std::shared_ptr<const ReferencedObjectSeq> seq() const { return seq_; }
 
     void resetSeq();
 
 protected:
-    ReferencedObjectSeqItem(const ReferencedObjectSeqItem& org);
+    ReferencedObjectSeqItem(const ReferencedObjectSeqItem& org, CloneMap* cloneMap);
 
     /**
        This is for the copy constructor of an inherited class

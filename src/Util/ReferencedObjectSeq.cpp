@@ -1,9 +1,5 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ReferencedObjectSeq.h"
+#include "CloneMap.h"
 
 using namespace cnoid;
 
@@ -15,10 +11,14 @@ ReferencedObjectSeq::ReferencedObjectSeq(int nFrames)
 }
 
 
-ReferencedObjectSeq::ReferencedObjectSeq(const ReferencedObjectSeq& org)
-    : BaseSeqType(org)
+ReferencedObjectSeq::ReferencedObjectSeq(const ReferencedObjectSeq& org, CloneMap* cloneMap)
+    : BaseSeqType(org, cloneMap ? false : true)
 {
-
+    if(cloneMap){
+        for(auto& object : org.container){
+            container.push_back(cloneMap->getClone(object));
+        }
+    }
 }
 
 

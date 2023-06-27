@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ReferencedObjectSeqItem.h"
 #include "ItemManager.h"
 #include "gettext.h"
@@ -30,9 +25,9 @@ ReferencedObjectSeqItem::ReferencedObjectSeqItem(std::shared_ptr<ReferencedObjec
 }
 
 
-ReferencedObjectSeqItem::ReferencedObjectSeqItem(const ReferencedObjectSeqItem& org)
+ReferencedObjectSeqItem::ReferencedObjectSeqItem(const ReferencedObjectSeqItem& org, CloneMap* cloneMap)
     : AbstractSeqItem(org),
-      seq_(std::make_shared<ReferencedObjectSeq>(*org.seq_))
+      seq_(std::make_shared<ReferencedObjectSeq>(*org.seq_, cloneMap))
 {
 
 }
@@ -60,9 +55,9 @@ std::shared_ptr<AbstractSeq> ReferencedObjectSeqItem::abstractSeq()
 }
 
 
-Item* ReferencedObjectSeqItem::doCloneItem(CloneMap* /* cloneMap */) const
+Item* ReferencedObjectSeqItem::doCloneItem(CloneMap* cloneMap) const
 {
-    return new ReferencedObjectSeqItem(*this);
+    return new ReferencedObjectSeqItem(*this, cloneMap);
 }
 
 

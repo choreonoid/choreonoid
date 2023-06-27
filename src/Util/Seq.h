@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_SEQ_H
 #define CNOID_UTIL_SEQ_H
 
@@ -29,10 +24,12 @@ public:
         offsetTime_ = 0.0;
     }
         
-    Seq(const SeqType& org)
-        : AbstractSeq(org),
-          container(org.container)
+    Seq(const SeqType& org, bool doCopyElements = true)
+        : AbstractSeq(org)
     {
+        if(doCopyElements){
+            container = org.container;
+        }
         frameRate_ = org.frameRate_;
         offsetTime_ = org.offsetTime_;
     }

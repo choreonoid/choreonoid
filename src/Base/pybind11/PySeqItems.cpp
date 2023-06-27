@@ -78,7 +78,7 @@ void exportPySeqItems(py::module m)
 
     py::class_<ReferencedObjectSeqItem, ReferencedObjectSeqItemPtr, AbstractSeqItem>(m, "ReferencedObjectSeqItem")
         .def(py::init<>())
-        .def_property_readonly("seq", &ReferencedObjectSeqItem::seq)
+        .def_property_readonly("seq", [](ReferencedObjectSeqItem& self){ return self.seq(); })
         .def("resetSeq", &ReferencedObjectSeqItem::resetSeq)
         ;
 
