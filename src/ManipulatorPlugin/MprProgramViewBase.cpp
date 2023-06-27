@@ -200,7 +200,7 @@ public:
     MprStatement* findStatementAtHierachicalPositionIter(
         const vector<int>& position, MprProgram* program, int level);
     bool findControllerItemAndLogItem(
-        MprControllerItemBase*& controllerItem, ControllerLogItem*& logItem);
+        MprControllerItemBase*& controllerItem, ReferencedObjectSeqItem*& logItem);
     shared_ptr<ReferencedObjectSeq> findLogSeq();
     bool onTimeChanged(double time);
     bool seekToLogPosition(MprControllerItemBase* controllerItem, MprControllerLog* log);
@@ -1259,12 +1259,12 @@ MprStatement* MprProgramViewBase::Impl::findStatementAtHierachicalPositionIter
 
 
 bool MprProgramViewBase::Impl::findControllerItemAndLogItem
-(MprControllerItemBase*& controllerItem, ControllerLogItem*& logItem)
+(MprControllerItemBase*& controllerItem, ReferencedObjectSeqItem*& logItem)
 {
     if(currentProgramItem){
         controllerItem = currentProgramItem->findOwnerItem<MprControllerItemBase>();
         if(controllerItem){
-            logItem = controllerItem->findItem<ControllerLogItem>();
+            logItem = controllerItem->findItem<ReferencedObjectSeqItem>();
             if(logItem){
                 return true;
             }
@@ -1277,7 +1277,7 @@ bool MprProgramViewBase::Impl::findControllerItemAndLogItem
 shared_ptr<ReferencedObjectSeq> MprProgramViewBase::Impl::findLogSeq()
 {
     MprControllerItemBase* controllerItem;
-    ControllerLogItem* logItem;
+    ReferencedObjectSeqItem* logItem;
     if(findControllerItemAndLogItem(controllerItem, logItem)){
         return logItem->seq();
     }
@@ -1291,7 +1291,7 @@ bool MprProgramViewBase::Impl::onTimeChanged(double time)
     bool hit = false;
 
     MprControllerItemBase* controllerItem;
-    ControllerLogItem* logItem;
+    ReferencedObjectSeqItem* logItem;
 
     if(findControllerItemAndLogItem(controllerItem, logItem)){
         auto seq = logItem->seq();

@@ -10,7 +10,7 @@ using namespace cnoid;
 
 namespace {
 
-class BodyContactPointLogItem : public ControllerLogItem
+class BodyContactPointLogItem : public ReferencedObjectSeqItem
 {
 public:
     BodyContactPointLogItem();
@@ -69,7 +69,7 @@ void BodyContactPointLoggerItem::initializeClass(ExtensionManager* ext)
     ext->itemManager()
         .registerClass<BodyContactPointLoggerItem, ControllerItem>(N_("BodyContactPointLoggerItem"))
         .addCreationPanel<BodyContactPointLoggerItem>()
-        .registerClass<BodyContactPointLogItem, ControllerLogItem>(N_("BodyContactPointLogItem"));
+        .registerClass<BodyContactPointLogItem, ReferencedObjectSeqItem>(N_("BodyContactPointLogItem"));
 
     TimeSyncItemEngineManager::instance()
         ->registerFactory<BodyContactPointLogItem, BodyContactPointLogEngine>(
@@ -109,7 +109,7 @@ bool BodyContactPointLoggerItem::initialize(ControllerIO* io)
 }
 
 
-ControllerLogItem* BodyContactPointLoggerItem::createLogItem()
+ReferencedObjectSeqItem* BodyContactPointLoggerItem::createLogItem()
 {
     return new BodyContactPointLogItem;
 }
@@ -233,7 +233,7 @@ bool BodyContactPointLogEngine::onTimeChanged(double time)
     if(!loggerItem || !loggerItem->isChecked()){
         return false;
     }
-    auto log = logItem->log();
+    auto log = logItem->seq();
     if(log->empty()){
         return false;
     }

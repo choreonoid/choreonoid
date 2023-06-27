@@ -1,7 +1,3 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "../SimulatorItem.h"
 #include "../AISTSimulatorItem.h"
 #include "../SubSimulatorItem.h"
@@ -10,7 +6,6 @@
 #include "../SimulationBar.h"
 #include "../BodyItem.h"
 #include "../SimpleControllerItem.h"
-#include "../ControllerLogItem.h"
 #include <cnoid/PyBase>
 
 using namespace cnoid;
@@ -236,14 +231,6 @@ void exportSimulationClasses(py::module m)
         .def(py::init<>())
         .def("setController", &SimpleControllerItem::setController)
         ;
-
-    py::class_<ControllerLogItem, ControllerLogItemPtr, ReferencedObjectSeqItem>(m, "ControllerLogItem")
-        .def(py::init<>())
-        .def_property_readonly("log", &ControllerLogItem::log)
-        .def("resetLog", &ControllerLogItem::resetLog)
-        ;
-
-    PyItemList<ControllerLogItem>(m, "ControllerLogItemList");
 }
 
 }

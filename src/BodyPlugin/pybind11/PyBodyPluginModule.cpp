@@ -1,7 +1,3 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/
-
 #include <cnoid/PyUtil>
 
 using namespace cnoid;
@@ -19,12 +15,13 @@ PYBIND11_MODULE(BodyPlugin, m)
 {
     m.doc() = "Choreonoid BodyPlugin module";
 
-    py::module::import("cnoid.Base");
+    auto base = py::module::import("cnoid.Base");
     py::module::import("cnoid.Body");
 
     exportBodyItem(m);
     exportItems(m);
     exportSimulationClasses(m);
+
+    // For backward compatibility
+    m.attr("ControllerLogItem") = base.attr("ReferencedObjectSeqItem");
 }
-
-

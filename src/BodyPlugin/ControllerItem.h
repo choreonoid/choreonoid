@@ -9,7 +9,7 @@
 namespace cnoid {
 
 class ControllerIO;
-class ControllerLogItem;
+class ReferencedObjectSeqItem;
 
 class CNOID_EXPORT ControllerItem : public Item
 {
@@ -46,7 +46,7 @@ public:
     */
     virtual bool initialize(ControllerIO* io);
 
-    virtual ControllerLogItem* createLogItem();
+    virtual ReferencedObjectSeqItem* createLogItem();
     
     /**
        This function is called after the simulation world is initialized.

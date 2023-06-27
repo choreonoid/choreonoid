@@ -23,7 +23,6 @@ set(sources
   BodyMotionControllerItem.cpp
   CollisionDetectionControllerItem.cpp
   RegionIntrusionDetectorItem.cpp
-  ControllerLogItem.cpp
   BodyContactPointLoggerItem.cpp
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp

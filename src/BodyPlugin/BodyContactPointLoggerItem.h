@@ -14,7 +14,7 @@ public:
     BodyContactPointLoggerItem();
 
     virtual bool initialize(ControllerIO* io) override;
-    virtual ControllerLogItem* createLogItem() override;
+    virtual ReferencedObjectSeqItem* createLogItem() override;
     virtual void log() override;
 
     virtual SgNode* getScene() override;
