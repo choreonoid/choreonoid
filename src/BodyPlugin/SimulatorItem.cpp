@@ -944,8 +944,16 @@ void SimulationBody::Impl::initializeRecordItems()
     bool doAddMotionItem = false;
     auto motionItem = parentOfRecordItems->findChildItem<BodyMotionItem>(recordItemPrefix);
     if(motionItem){
+        bool updated = false;
         if(!motionItem->isTemporary()){
             motionItem->setTemporary();
+            updated = true;
+        }
+        if(motionItem->motion()->hasExtraSeqs()){
+            motionItem->motion()->clearExtraSeqs();
+            updated = true;
+        }
+        if(updated){
             motionItem->notifyUpdate();
         }
     } else {
