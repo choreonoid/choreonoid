@@ -175,7 +175,7 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
 
     createAGXMaterialTable();
 
-    doUpdateLinkContactPoints = false;
+    linksToUpdateContactPoints.clear();
     
     for(auto simBody : simBodies){
         AGXBody* agxBody = static_cast<AGXBody*>(simBody);
@@ -183,15 +183,14 @@ bool AGXSimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
         agxBody->createBody(agxScene);
         agxBody->setSensor(self->worldTimeStep(), g);
 
-        if(!doUpdateLinkContactPoints){
-            for(auto& link : agxBody->body()->links()){
-                if(link->sensingMode() & Link::LinkContactState){
-                    doUpdateLinkContactPoints = true;
-                    break;
-                }
+        for(auto& link : agxBody->body()->links()){
+            if(link->sensingMode() & Link::LinkContactState){
+                linksToUpdateContactPoints.push_back(link);
             }
         }
     }
+
+    clearLinkContactPoints();
 
     setAdditionalAGXMaterialParam();
 
@@ -389,15 +388,26 @@ bool AGXSimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
         if(agxBody->hasGyroOrAccelerationSensors()) agxBody->updateGyroAndAccelerationSensors();
     }
 
-    if(doUpdateLinkContactPoints){
+    if(!linksToUpdateContactPoints.empty()){
         updateLinkContactPoints();
     }
     
     return true;
 }
 
+
+void AGXSimulatorItemImpl::clearLinkContactPoints()
+{
+    for(auto& link : linksToUpdateContactPoints){
+        link->contactPoints().clear();
+    }
+}
+
+
 void AGXSimulatorItemImpl::updateLinkContactPoints()
 {
+    clearLinkContactPoints();
+    
     for(auto& contact : agxScene->getSimulation()->getSpace()->getGeometryContacts()){
         if(contact->isEnabled()){
             for(int i=0; i < 2; ++i){
@@ -418,7 +428,6 @@ void AGXSimulatorItemImpl::updateLinkContactPoints
 {
     auto& srcPoints = contact->points();
     auto& points = link->contactPoints();
-    points.clear();
     points.reserve(srcPoints.size());
     for(auto& point : srcPoints){
         if(point.enabled()){

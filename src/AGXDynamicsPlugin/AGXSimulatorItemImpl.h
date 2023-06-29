@@ -31,6 +31,7 @@ public:
     void createAGXContactMaterial(int id1, int id2, ContactMaterial* mat);
     void setAdditionalAGXMaterialParam();
     bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
+    void clearLinkContactPoints();
     void updateLinkContactPoints();
     void updateLinkContactPoints(agxCollide::GeometryContact* contact, Link* link, double direction);
     void stopSimulation();
@@ -50,7 +51,7 @@ public:
 private:
     ref_ptr<AGXSimulatorItem> self;
     AGXSceneRef agxScene;
-    bool doUpdateLinkContactPoints;
+    std::vector<LinkPtr> linksToUpdateContactPoints;
     Vector3 m_p_gravity;
     int     m_p_numThreads;
     bool    m_p_enableContactReduction;
