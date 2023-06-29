@@ -112,7 +112,8 @@ public:
 
     typedef std::map<std::string, std::shared_ptr<AbstractSeq>> ExtraSeqMap;
     typedef ExtraSeqMap::const_iterator ConstSeqIterator;
-        
+
+    bool hasExtraSeqs() const { return !extraSeqs.empty(); }
     ConstSeqIterator extraSeqBegin() const { return extraSeqs.begin(); }
     ConstSeqIterator extraSeqEnd() const { return extraSeqs.end(); }
         
@@ -148,6 +149,7 @@ public:
         return seq;
     }
 
+    void clearExtraSeqs();
     void clearExtraSeq(const std::string& contentName);
 
     SignalProxy<void()> sigExtraSeqsChanged() {

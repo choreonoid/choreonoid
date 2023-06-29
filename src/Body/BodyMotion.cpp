@@ -210,10 +210,10 @@ std::shared_ptr<const MultiValueSeq> BodyMotion::jointPosSeq() const
 void BodyMotion::updateLinkPosSeqWithBodyPositionSeq()
 {
     auto lseq = getOrCreateLinkPosSeq();
+    const int n = numFrames();
     const int numLinks = positionSeq_->numLinkPositionsHint();
-    if(numLinks > 0){
-        lseq->setNumParts(numLinks);
-        const int n = numFrames();
+    lseq->setDimension(n, numLinks);
+    if(n > 0 && numLinks > 0){
         for(int i=0; i < n; ++i){
             auto& pframe = positionSeq_->frame(i);
             auto lframe = lseq->frame(i);
@@ -235,9 +235,10 @@ void BodyMotion::updateLinkPosSeqWithBodyPositionSeq()
 void BodyMotion::updateJointPosSeqWithBodyPositionSeq()
 {
     auto jseq = getOrCreateJointPosSeq();
+    const int n = numFrames();
     const int numJoints = positionSeq_->numJointDisplacementsHint();
-    if(numJoints > 0){
-        jseq->setNumParts(numJoints);
+    jseq->setDimension(n, numJoints);
+    if(n > 0 && numJoints > 0){
         const int n = numFrames();
         for(int i=0; i < n; ++i){
             auto& pframe = positionSeq_->frame(i);
@@ -317,6 +318,15 @@ void BodyMotion::setExtraSeq(std::shared_ptr<AbstractSeq> seq)
     auto& contentName = seq->seqContentName();
     if(!contentName.empty()){
         extraSeqs[contentName] = seq;
+        sigExtraSeqsChanged_();
+    }
+}
+
+
+void BodyMotion::clearExtraSeqs()
+{
+    if(!extraSeqs.empty()){
+        extraSeqs.clear();
         sigExtraSeqsChanged_();
     }
 }
