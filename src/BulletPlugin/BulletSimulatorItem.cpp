@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shizuko Hattori
-*/
-
 #include "BulletSimulatorItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/PutPropertyFunction>
@@ -639,7 +634,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
 
     switch(link->jointType()){
         
-    case Link::ROTATIONAL_JOINT: {
+    case Link::RevoluteJoint: {
         btVector3 axisA(a(0), a(1), a(2));
         btVector3 pivotA(b(0), b(1), b(2));
         if(multiBody){
@@ -668,7 +663,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
             std::cout << "currentPivotToCurrentCom= " << std::endl;
             std::cout << currentPivotToCurrentCom[0] << " " << currentPivotToCurrentCom[1] << " " << currentPivotToCurrentCom[2] << std::endl;
 #endif
-            if(link->actuationMode() == Link::JOINT_VELOCITY){
+            if(link->actuationMode() == Link::JointVelocity){
                 motor = new btMultiBodyJointMotor(multiBody, link->index()-1, 0, numeric_limits<double>::max());
                 dynamic_cast<btMultiBodyDynamicsWorld*>(dynamicsWorld)->addMultiBodyConstraint(motor);
             }
@@ -694,7 +689,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
         break;
     }
         
-    case Link::SLIDE_JOINT: {
+    case Link::PrismaticJoint: {
         if(multiBody){
             //btMatrix3x3 rot = parent->invShift.getBasis() * shift.getBasis();
             btMatrix3x3 rot = invShift.getBasis() * parent->shift.getBasis();
@@ -711,7 +706,7 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
                     parentComToCurrentPivot, // vector from parent COM to joint axis, in PARENT frame
                     currentPivotToCurrentCom,  // vector from joint axis to my COM, in MY frame
                     isSelfCollisionDetectionEnabled);         // disableParentCollision
-            if(link->actuationMode()==Link::JOINT_VELOCITY){
+            if(link->actuationMode() == Link::JointVelocity){
                 motor = new btMultiBodyJointMotor(multiBody, link->index()-1, 0, numeric_limits<double>::max());
                 dynamic_cast<btMultiBodyDynamicsWorld*>(dynamicsWorld)->addMultiBodyConstraint(motor);
             }
@@ -761,10 +756,10 @@ void BulletLink::createLinkBody(BulletSimulatorItemImpl* simImpl, BulletLink* pa
         break;
         }
 
-    case Link::FREE_JOINT:
+    case Link::FreeJoint:
         break;
         
-    case Link::FIXED_JOINT:
+    case Link::FixedJoint:
     default:
         if(!link->isRoot()){
             if(multiBody){
@@ -1116,12 +1111,12 @@ void BulletBody::setExtraJoints()
     int n = body->numExtraJoints();
 
     for(int j=0; j < n; ++j){
-        ExtraJoint& extraJoint = body->extraJoint(j);
+        ExtraJoint* extraJoint = body->extraJoint(j);
         
         BulletLinkPtr bulletLinkPair[2];
         for(int i=0; i < 2; ++i){
             BulletLinkPtr bulletLink;
-            Link* link = extraJoint.link(i);
+            Link* link = extraJoint->link(i);
             if(link->index() < bulletLinks.size()){
                 bulletLink = bulletLinks[link->index()];
                 if(bulletLink->link == link){
@@ -1136,11 +1131,11 @@ void BulletBody::setExtraJoints()
         if(bulletLinkPair[1]){
             Link* link0 = bulletLinkPair[0]->link;
             Link* link1 = bulletLinkPair[1]->link;
-            Vector3 p0 = extraJoint.point(0);  // link0 local position
-            Vector3 a = extraJoint.axis();        // link0 local axis
-            Vector3 p1 = extraJoint.point(1);  // link1 local position
+            Vector3 p0 = extraJoint->point(0);  // link0 local position
+            Vector3 a = extraJoint->axis();        // link0 local axis
+            Vector3 p1 = extraJoint->point(1);  // link1 local position
 
-            if(extraJoint.type() == ExtraJoint::EJ_PISTON){
+            if(extraJoint->type() == ExtraJoint::Piston){
                 Vector3 u(0,0,1);
                 Vector3 ty = a.cross(u);
                 btMatrix3x3 btR;
@@ -1164,8 +1159,9 @@ void BulletBody::setExtraJoints()
                 frameA.setBasis(btR);
                 frameA.setOrigin(btVector3(p1(0), p1(1), p1(2)));
 
-                btGeneric6DofConstraint* joint = new btGeneric6DofConstraint(*(bulletLinkPair[1]->body), *(bulletLinkPair[0]->body),
-                                                                             bulletLinkPair[1]->invShift*frameA, bulletLinkPair[0]->invShift*frameB, false);
+                btGeneric6DofConstraint* joint = new btGeneric6DofConstraint(
+                    *(bulletLinkPair[1]->body), *(bulletLinkPair[0]->body),
+                    bulletLinkPair[1]->invShift*frameA, bulletLinkPair[0]->invShift*frameB, false);
                 //joint->setLinearLowerLimit(btVector3(0,0,1));  //Lowerlimit > Upperlimit -> axis is free
                 //joint->setLinearUpperLimit(btVector3(0,0,-1));
                 joint->setAngularLowerLimit(btVector3(0,0,1));  
@@ -1173,11 +1169,13 @@ void BulletBody::setExtraJoints()
                 joint->calculateTransforms();
                 dynamicsWorld->addConstraint(joint, true);
                 extraJoints.push_back(joint);
-            }else if(extraJoint.type() == ExtraJoint::EJ_BALL){
+
+            } else if(extraJoint->type() == ExtraJoint::Ball){
                 btVector3 pivotInA(p0(0), p0(1), p0(2));
                 btVector3 pivotInB(p1(0), p1(1), p1(2));
-                btPoint2PointConstraint* joint = new btPoint2PointConstraint(*(bulletLinkPair[0]->body), *(bulletLinkPair[1]->body),
-                                                                             bulletLinkPair[0]->invShift*pivotInA, bulletLinkPair[1]->invShift*pivotInB);
+                btPoint2PointConstraint* joint = new btPoint2PointConstraint(
+                    *(bulletLinkPair[0]->body), *(bulletLinkPair[1]->body),
+                    bulletLinkPair[0]->invShift*pivotInA, bulletLinkPair[1]->invShift*pivotInB);
                 dynamicsWorld->addConstraint(joint, true);
                 extraJoints.push_back(joint);
             }
@@ -1230,12 +1228,12 @@ void BulletBody::setControlValToBullet()
 {
     for(size_t i=1; i < bulletLinks.size(); ++i){
         switch(bulletLinks[i]->link->actuationMode()){
-        case Link::NO_ACTUATION :
+        case Link::StateNone:
             break;
-        case Link::JOINT_TORQUE :
+        case Link::JointEffort :
             bulletLinks[i]->setTorqueToBullet();
             break;
-        case Link::JOINT_VELOCITY :
+        case Link::JointVelocity :
             bulletLinks[i]->setVelocityToBullet();
             break;
         default :

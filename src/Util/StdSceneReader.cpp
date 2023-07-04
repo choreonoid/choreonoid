@@ -512,6 +512,13 @@ bool StdSceneReader::extractRotation(Mapping* info, Matrix3& out_R) const
 }
 
 
+bool StdSceneReader::extractRotation(Mapping* info, const char* key, Matrix3& out_R) const
+{
+    ValueNodePtr value = info->extract(key);
+    return impl->readRotation(value, out_R);
+}
+
+
 bool StdSceneReader::extractRotation(Mapping& info, Matrix3& out_R) const
 {
     return extractRotation(&info, out_R);

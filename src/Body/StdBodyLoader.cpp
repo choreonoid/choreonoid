@@ -367,6 +367,9 @@ public:
     bool extractRotation(Mapping* node, Matrix3& out_R) const {
         return sceneReader.extractRotation(node, out_R);
     }
+    bool extractRotation(Mapping* node, const char* key, Matrix3& out_R) const {
+        return sceneReader.extractRotation(node, key, out_R);
+    }
     bool readTranslation(const Mapping* node, Vector3& out_p) const {
         return sceneReader.readTranslation(node, out_p);
     }
@@ -1995,7 +1998,7 @@ void StdBodyLoader::Impl::readExtraJoints(Mapping* topNode)
 
 void StdBodyLoader::Impl::readExtraJoint(Mapping* info)
 {
-    ExtraJoint joint;
+    ExtraJointPtr joint = new ExtraJoint;
 
     string link1Name;
     string link2Name;
@@ -2007,11 +2010,11 @@ void StdBodyLoader::Impl::readExtraJoint(Mapping* info)
         info->throwException(_("link2_name is not specified"));
     }
 
-    joint.setLink(0, body->link(link1Name));
-    joint.setLink(1, body->link(link2Name));
+    joint->setLink(0, body->link(link1Name));
+    joint->setLink(1, body->link(link2Name));
 
     for(int i=0; i < 2; ++i){
-        if(!joint.link(i)){
+        if(!joint->link(i)){
             info->throwException(
                 format(_("The link specified in \"link{}_name\" is not found"), (i + 1)));
         }
@@ -2021,33 +2024,42 @@ void StdBodyLoader::Impl::readExtraJoint(Mapping* info)
     if(!extract(info, { "joint_type", "jointType" }, jointType)){
         info->throwException(_("The joint type must be specified with the \"joint_type\" key"));
     }
-    if(jointType == "hinge"){
-        joint.setType(ExtraJoint::Hinge);
+    if(jointType == "fixed"){
+        joint->setType(ExtraJoint::Fixed);
+    } else if(jointType == "hinge"){
+        joint->setType(ExtraJoint::Hinge);
     } else if(jointType == "ball"){
-        joint.setType(ExtraJoint::Ball);
+        joint->setType(ExtraJoint::Ball);
     } else if(jointType == "piston"){
-        joint.setType(ExtraJoint::Piston);
+        joint->setType(ExtraJoint::Piston);
     } else {
         info->throwException(format(_("Joint type \"{}\" is not available"), jointType));
     }
-    if(joint.type() == ExtraJoint::Hinge || joint.type() == ExtraJoint::Piston){
-        auto axisNode = info->extract({ "axis", "jointAxis" });
-        if(axisNode->isValid()){
-            readAxis(axisNode, v);
-            joint.setAxis(v);
-        } else {
-            info->throwException(_("The axis must be specified"));
+
+    if(joint->type() == ExtraJoint::Hinge || joint->type() == ExtraJoint::Piston){
+        if(extractEigen(info, { "axis_in_link1", "axis", "jointAxis" }, v)){
+            joint->setAxis(0, v);
+        }
+        if(extractEigen(info, { "axis_in_link2" }, v)){
+            joint->setAxis(1, v);
         }
     }
-                  
-    if(extractEigen(info, { "link1_local_pos", "link1LocalPos" }, v)){
-        joint.setPoint(0, v);
-    }
-    if(extractEigen(info, { "link2_local_pos", "link2LocalPos" }, v)){
-        joint.setPoint(1, v);
-    }
 
-    joint.resetInfo(info);
+    Matrix3 R;
+    if(extractRotation(info, "rotation_in_link1", R)){
+        joint->setLocalRotation(0, R);
+    }
+    if(extractRotation(info, "rotation_in_link2", R)){
+        joint->setLocalRotation(1, R);
+    }
+    if(extractEigen(info, { "translation_in_link1", "link1_local_pos", "link1LocalPos" }, v)){
+        joint->setPoint(0, v);
+    }
+    if(extractEigen(info, { "translation_in_link2", "link2_local_pos", "link2LocalPos" }, v)){
+        joint->setPoint(1, v);
+    }
+    
+    joint->resetInfo(info);
 
     body->addExtraJoint(joint);
 }

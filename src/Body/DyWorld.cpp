@@ -1,7 +1,3 @@
-/**
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "DyWorld.h"
 
 using namespace std;

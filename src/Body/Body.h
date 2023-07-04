@@ -260,9 +260,9 @@ public:
     void clearExternalForces();
 
     int numExtraJoints() const { return static_cast<int>(extraJoints_.size()); }
-    ExtraJoint& extraJoint(int index) { return extraJoints_[index]; }
-    const ExtraJoint& extraJoint(int index) const {  return extraJoints_[index]; }
-    void addExtraJoint(const ExtraJoint& extraJoint) { extraJoints_.push_back(extraJoint); }
+    ExtraJoint* extraJoint(int index) { return extraJoints_[index]; }
+    const ExtraJoint* extraJoint(int index) const {  return extraJoints_[index]; }
+    void addExtraJoint(ExtraJoint* extraJoint) { extraJoints_.push_back(extraJoint); }
     void clearExtraJoints() { extraJoints_.clear(); }
 
     bool existence() const { return existence_; }
@@ -360,7 +360,7 @@ private:
     std::vector<LinkPtr> jointIdToLinkArray;
     int numActualJoints;
     DeviceList<> devices_;
-    std::vector<ExtraJoint> extraJoints_;
+    std::vector<ExtraJointPtr> extraJoints_;
     std::function<double()> currentTimeFunction;
     BodyPtr nextMultiplexBody_;
 

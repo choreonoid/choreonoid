@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_DYWORLD_H
 #define CNOID_BODY_DYWORLD_H
 
@@ -97,9 +92,9 @@ public:
     */
     std::pair<int,bool> getIndexOfLinkPairs(DyLink* link1, DyLink* link2);
 
-    std::vector<ExtraJoint>& extraJoints() { return extraJoints_; }
+    std::vector<ExtraJointPtr>& extraJoints() { return extraJoints_; }
     void clearExtraJoints() { extraJoints_.clear(); }
-    void addExtraJoint(ExtraJoint& extraJoint){ extraJoints_.push_back(extraJoint); }
+    void addExtraJoint(ExtraJoint* extraJoint){ extraJoints_.push_back(extraJoint); }
 
 private:
     double currentTime_;
@@ -125,7 +120,7 @@ private:
 
     int numRegisteredLinkPairs;
 
-    std::vector<ExtraJoint> extraJoints_;
+    std::vector<ExtraJointPtr> extraJoints_;
 
     void extractInternalBodies(Link* link);    
 };

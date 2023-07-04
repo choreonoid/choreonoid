@@ -271,7 +271,7 @@ public:
     void clearBodies();
     void initBody(DyBody* body);
     void initSubBody(DySubBody* subBody);
-    void initExtraJoint(ExtraJoint& extrajoint);
+    void initExtraJoint(ExtraJoint* extrajoint);
     void initWorldExtraJoints();
     void init2Dconstraint(DySubBody* subBody);
     void initialize(void);
@@ -482,33 +482,23 @@ void ConstraintForceSolver::Impl::init2Dconstraint(DySubBody* subBody)
 
 
 // initialize extra joints for making closed links
-void ConstraintForceSolver::Impl::initExtraJoint(ExtraJoint& extraJoint)
+void ConstraintForceSolver::Impl::initExtraJoint(ExtraJoint* extraJoint)
 {
-    if(!extraJoint.link(0) || !extraJoint.link(1)){
+    if(!extraJoint->link(0) || !extraJoint->link(1)){
         return;
     }
     
     ExtraJointLinkPairPtr linkPair = std::make_shared<ExtraJointLinkPair>();
-    linkPair->isBelongingToSameSubBody = extraJoint.isForLinksOfSameBody();
+    linkPair->isBelongingToSameSubBody = extraJoint->isForLinksOfSameBody();
     linkPair->isNonContactConstraint = true;
     
-    if(extraJoint.type() == ExtraJoint::Piston){
+    if(extraJoint->type() == ExtraJoint::Piston){
         linkPair->constraintPoints.resize(2);
-        // generate two vectors orthogonal to the joint axis
-        Vector3 u = Vector3::Zero();
-        int minElem = 0;
-        const Vector3& axis = extraJoint.axis();
-        for(int i=1; i < 3; ++i){
-            if(fabs(axis(i)) < fabs(axis(minElem))){
-                minElem = i;
-            }
-        }
-        u(minElem) = 1.0;
-        const Vector3 t1 = axis.cross(u).normalized();
-        linkPair->jointConstraintAxes[0] = t1;
-        linkPair->jointConstraintAxes[1] = axis.cross(t1).normalized();
+        auto R = extraJoint->localRotation(0);
+        linkPair->jointConstraintAxes[0] = R.col(1); // Y
+        linkPair->jointConstraintAxes[1] = R.col(2); // Z
 
-    } else if(extraJoint.type() == ExtraJoint::Ball){
+    } else if(extraJoint->type() == ExtraJoint::Ball){
         linkPair->constraintPoints.resize(3);
         linkPair->jointConstraintAxes[0] = Vector3(1.0, 0.0, 0.0);
         linkPair->jointConstraintAxes[1] = Vector3(0.0, 1.0, 0.0);
@@ -523,8 +513,8 @@ void ConstraintForceSolver::Impl::initExtraJoint(ExtraJoint& extraJoint)
     }
 
     for(int i=0; i < 2; ++i){
-        linkPair->link[i] = static_cast<DyLink*>(extraJoint.link(i));
-        linkPair->jointPoint[i] = extraJoint.point(i);
+        linkPair->link[i] = static_cast<DyLink*>(extraJoint->link(i));
+        linkPair->jointPoint[i] = extraJoint->point(i);
     }
 
     extraJointLinkPairs.push_back(linkPair);
@@ -533,17 +523,17 @@ void ConstraintForceSolver::Impl::initExtraJoint(ExtraJoint& extraJoint)
 
 void ConstraintForceSolver::Impl::initWorldExtraJoints()
 {
-    for(auto& extraJoint : world.extraJoints()){
+    for(auto& orgJoint : world.extraJoints()){
+        ExtraJointPtr joint = new ExtraJoint(orgJoint->type());
         for(int i=0; i < 2; ++i){
-            if(!extraJoint.link(i)){
-                if(auto body = world.body(extraJoint.bodyName(i))){
-                    if(auto link = body->link(extraJoint.linkName(i))){
-                        extraJoint.setLink(i, link);
-                    }
+            if(auto body = world.body(orgJoint->bodyName(i))){
+                if(auto link = body->link(orgJoint->linkName(i))){
+                    joint->setLink(i, link);
+                    joint->setLocalPosition(i, orgJoint->localPosition(i));
                 }
             }
         }
-        initExtraJoint(extraJoint);
+        initExtraJoint(joint);
     }
 }
 

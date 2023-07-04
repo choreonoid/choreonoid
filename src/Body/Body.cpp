@@ -145,9 +145,15 @@ void Body::copyFrom(const Body* org, CloneMap* cloneMap)
     }
 
     for(auto& orgExtraJoint : org->extraJoints_){
-        ExtraJoint extraJoint(orgExtraJoint);
+        ExtraJointPtr extraJoint = new ExtraJoint(orgExtraJoint->type());
         for(int j=0; j < 2; ++j){
-            extraJoint.setLink(j, link(orgExtraJoint.link(j)->index()));
+            if(auto orgLink = orgExtraJoint->link(j)){
+                extraJoint->setLink(j, link(orgLink->index()));
+            }
+            extraJoint->setLocalPosition(j, orgExtraJoint->localPosition(j));
+        }
+        if(auto info = orgExtraJoint->info()){
+            extraJoint->resetInfo(info->cloneMapping());
         }
         extraJoints_.push_back(extraJoint);
     }

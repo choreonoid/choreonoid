@@ -1,10 +1,5 @@
-/*!
-  @file
-  @author Shizuko Hattori
-*/
-
-#ifndef CNOID_BULLET_PLUGIN_BULLET_SIMULATOR_ITEM_H_INCLUDED
-#define CNOID_BULLET_PLUGIN_BULLET_SIMULATOR_ITEM_H_INCLUDED
+#ifndef CNOID_BULLET_PLUGIN_BULLET_SIMULATOR_ITEM_H
+#define CNOID_BULLET_PLUGIN_BULLET_SIMULATOR_ITEM_H
 
 #include <cnoid/SimulatorItem>
 #include "exportdecl.h"

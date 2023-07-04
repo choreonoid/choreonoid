@@ -6,6 +6,7 @@ set(target CnoidBody)
 set(sources
   Body.cpp
   Link.cpp
+  ExtraJoint.cpp
   LinkTraverse.cpp
   LinkPath.cpp
   JointTraverse.cpp
@@ -98,6 +99,7 @@ set(headers
   StdBodyFileUtil.h
   ZMPSeq.h
   Link.h
+  ExtraJoint.h
   LinkTraverse.h
   LinkPath.h
   JointTraverse.h
@@ -158,7 +160,6 @@ set(headers
   BodyState.h
   ExtraBodyStateAccessor.h
   CollisionLinkPair.h
-  ExtraJoint.h
   ControllerIO.h
   SimpleController.h
   exportdecl.h

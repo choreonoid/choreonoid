@@ -27,18 +27,29 @@ void AGXExtraJoint::createJoints()
     Body* const body = agxBody->body();
     const int n = body->numExtraJoints();
     for (int j = 0; j < n; ++j) {
-        ExtraJoint& extraJoint = body->extraJoint(j);
+        ExtraJoint* extraJoint = body->extraJoint(j);
 
         AGXLink* agxLinkPair[2];
-        agxLinkPair[0] = agxBody->getAGXLink(extraJoint.link(0)->index());
-        agxLinkPair[1] = agxBody->getAGXLink(extraJoint.link(1)->index());
+        agxLinkPair[0] = agxBody->getAGXLink(extraJoint->link(0)->index());
+        agxLinkPair[1] = agxBody->getAGXLink(extraJoint->link(1)->index());
         if (!agxLinkPair[0] || !agxLinkPair[1]) continue;
 
-        Link* const link = extraJoint.link(0);
-        const Vector3 p = link->R() * extraJoint.point(0) + link->p();
-        const Vector3 a = link->R() * extraJoint.axis();
+        Link* const link = extraJoint->link(0);
+        const Vector3 p = link->R() * extraJoint->point(0) + link->p();
+        const Vector3 a = link->R() * extraJoint->axis();
         agx::ConstraintRef constraint = nullptr;
-        switch (extraJoint.type()) {
+
+        switch (extraJoint->type()) {
+        case ExtraJoint::Fixed: {
+            AGXLockJointDesc desc;
+            AGXElementaryConstraint base;
+            desc.set(base);
+            desc.rigidBodyA = agxLinkPair[0]->getAGXRigidBody();
+            desc.rigidBodyB = agxLinkPair[1]->getAGXRigidBody();
+            constraint = AGXObjectFactory::createConstraint(desc);
+            break;
+        }
+            
         case ExtraJoint::Hinge:
         case ExtraJoint::Piston: {
             AGXHingeDesc hd;
@@ -47,7 +58,7 @@ void AGXExtraJoint::createJoints()
             hd.rigidBodyA = agxLinkPair[0]->getAGXRigidBody();
             hd.rigidBodyB = agxLinkPair[1]->getAGXRigidBody();
 
-            if(auto info = extraJoint.info()){
+            if(auto info = extraJoint->info()){
                 if(info->read("joint_lock", hd.lock.enable)){
                     info->read("joint_lock_compliance", hd.lock.compliance);
                     if(auto range = info->findListing("joint_lock_force_range")){
@@ -60,6 +71,7 @@ void AGXExtraJoint::createJoints()
             constraint = AGXObjectFactory::createConstraint(hd);
             break;
         }
+            
         case  ExtraJoint::Ball: {
             AGXBallJointDesc bd;
             bd.framePoint = agx::Vec3(p(0), p(1), p(2));
@@ -67,9 +79,11 @@ void AGXExtraJoint::createJoints()
             bd.rigidBodyB = agxLinkPair[1]->getAGXRigidBody();
             constraint = AGXObjectFactory::createConstraint(bd);
         }
+            
         default:
             break;
         }
+        
         getAGXBody()->getAGXScene()->getSimulation()->add(constraint);
     }
 }

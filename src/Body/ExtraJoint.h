@@ -2,14 +2,19 @@
 #define CNOID_BODY_EXTRA_JOINT_H
 
 #include "Link.h"
+#include <cnoid/Referenced>
 #include <cnoid/ValueTree>
+#include "exportdecl.h"
         
 namespace cnoid {
 
-class ExtraJoint
+class CNOID_EXPORT ExtraJoint : public Referenced
 {
 public:    
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     enum ExtraJointType {
+        Fixed,
         Hinge,
         Ball,
         Piston,
@@ -19,36 +24,59 @@ public:
     
     ExtraJoint() {
         for(int i=0; i < 2; ++i){
-            points[i].setZero();
+            T[i].setIdentity();
             links[i] = nullptr;
         }
+    };
+    ExtraJoint(ExtraJointType type)
+        : ExtraJoint() {
+        type_ = type;
     };
     ExtraJoint(ExtraJointType type, const Vector3& axis)
         : ExtraJoint() {
         type_ = type;
-        axis_ = axis;
+        setAxis(axis);
     };
+
+    ExtraJoint(const ExtraJoint& org) = delete;
+    ExtraJoint& operator=(const ExtraJoint& rhs) = delete;
 
     ExtraJointType type() const { return type_; }
     void setType(const ExtraJointType type) { type_ = type; }
-    
-    const Vector3& axis() const { return axis_; }
-    void setAxis(const Vector3& axis) { axis_ = axis; }
     
     Link* link(int which) const { return links[which]; }
 
     void setLink(int which, Link* link) {
         links[which] = link;
-        if(link){
-            linkNames[which] = link->name();
-        }
     }
-         
-    const Vector3& point(int which) const { return points[which]; }
-    void setPoint(int which, const Vector3& p) { points[which] = p; }
+
+    void setLocalPosition(int which, const Isometry3& T){ this->T[which] = T; }
+    const Isometry3& localPosition(int which) const { return T[which]; }
+
+    void setLocalRotation(int which, const Matrix3& R){ this->T[which].linear() = R; }
+    Isometry3::ConstLinearPart localRotation(int which) const { return T[which].linear(); }
+
+    void setLocalTranslation(int which, const Vector3& p){ this->T[which].translation() = p; }
+    Isometry3::ConstTranslationPart localTranslation(int which) const { return T[which].translation(); }
     
-    const std::string& bodyName(int which) const { return bodyNames[which]; }
-    const std::string& linkName(int which) const { return linkNames[which]; }
+    Vector3 axis(int which = 0) const { return T[which].linear().col(0); }
+    void setAxis(const Vector3& axis) { setAxis(0, axis); }
+    void setAxis(int which, const Vector3& axis) {
+        auto rot = Quaternion::FromTwoVectors(Vector3::UnitX(), axis.normalized());
+        T[which].linear() = rot * Matrix3::Identity();
+    }
+    
+    Isometry3::ConstTranslationPart point(int which) const { return localTranslation(which); }
+    void setPoint(int which, const Vector3& p) { setLocalTranslation(which, p); }
+    
+    std::string linkName(int which) const {
+        if(auto link = links[which]){
+            return link->name();
+        }
+        return std::string();
+    }
+
+    std::string bodyName(int which) const;
 
     bool isForLinksOfSameBody() const {
         if(links[0] && links[1]){
@@ -63,13 +91,18 @@ public:
 
 private:
     ExtraJointType type_;
-    Vector3 axis_;
-    Link* links[2];
-    Vector3 points[2];
-    std::string bodyNames[2];
-    std::string linkNames[2];
+    LinkPtr links[2];
+
+    /**
+       Coordinate frames of the joint in link local coordinates.
+       Note that T[x].linear().col(0) corresponds to the joint axis in each link.
+    */
+    Isometry3 T[2];
+    
     MappingPtr info_;
 };
+
+typedef ref_ptr<ExtraJoint> ExtraJointPtr;
 
 }
 

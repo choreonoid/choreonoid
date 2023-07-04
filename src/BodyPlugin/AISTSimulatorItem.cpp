@@ -332,7 +332,7 @@ void AISTSimulatorItem::setConstraintForceOutputEnabled(bool /* on */)
 }
 
 
-void AISTSimulatorItem::addExtraJoint(ExtraJoint& extraJoint)
+void AISTSimulatorItem::addExtraJoint(ExtraJoint* extraJoint)
 {
     impl->world.addExtraJoint(extraJoint);
 }
