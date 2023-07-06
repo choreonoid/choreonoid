@@ -316,7 +316,6 @@ Vector6 LinkTraverse::calcInverseDynamicsSub
         sw.setZero();
 
     } else {
-        double jointSign;
         if(isReverseLinkChain){
             jointLink = upperLink;
             jointSign = -1.0;
@@ -325,12 +324,12 @@ Vector6 LinkTraverse::calcInverseDynamicsSub
         }
         switch(link->jointType()){
         case Link::RevoluteJoint:
-            sw.noalias() = jointSign * jointLink->R() * jointLink->a();
+            sw.noalias() = jointLink->R() * jointLink->a();
             sv.noalias() = jointLink->p().cross(sw);
             break;
         case Link::PrismaticJoint:
             sw.setZero();
-            sv.noalias() = jointSign * jointLink->R() * jointLink->d();
+            sv.noalias() = jointLink->R() * jointLink->d();
             break;
         case Link::FixedJoint:
         default:
@@ -340,8 +339,8 @@ Vector6 LinkTraverse::calcInverseDynamicsSub
         }
         const Vector3 dsv = upperLink->w().cross(sv) + vo_upper.cross(sw);
         const Vector3 dsw = upperLink->w().cross(sw);
-        link->dw() = upperLink->dw() + dsw * jointLink->dq() + sw * jointLink->ddq();
-        dvo = dvo_upper + dsv * jointLink->dq() + sv * jointLink->ddq();
+        link->dw() = upperLink->dw() + jointSign * jointLink->dq() * dsw + jointSign * jointLink->ddq() * sw;
+        dvo = dvo_upper + jointSign * jointLink->dq() * dsv + jointSign * jointLink->ddq() * sv;
     }
 
     const Vector3 c = link->R() * link->c() + link->p();
