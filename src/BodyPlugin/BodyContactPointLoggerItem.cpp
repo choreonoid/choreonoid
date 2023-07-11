@@ -14,6 +14,7 @@ public:
     BodyContactPointLoggerItem* self;
     ControllerIO* io;
     Body* ioBody;
+    BodyContactPointLogItem::LogFramePtr lastLogFrame;
     BodyContactPointLogItem::LogFramePtr logFrameToVisualize;
     bool isChecked;
     SgLineSetPtr contactLineSet;
@@ -57,6 +58,9 @@ Item* BodyContactPointLoggerItem::doCloneItem(CloneMap* /* cloneMap */) const
 BodyContactPointLoggerItem::Impl::Impl(BodyContactPointLoggerItem* self)
     : self(self)
 {
+    // This is necessary to output the collisions at each corresponding time frame
+    self->setNoDelayMode(false);
+    
     self->sigCheckToggled(LogicalSumOfAllChecks).connect(
         [this](bool){ onCheckToggled(); });
     isChecked = false;
@@ -82,7 +86,11 @@ ReferencedObjectSeqItem* BodyContactPointLoggerItem::createLogItem()
 }
 
 
-void BodyContactPointLoggerItem::outputLogFrame()
+/**
+   The contact point log is output in ControllerItem's output function becasue the output function is
+   called after updating thee contact points if the no delay mode is disabled.
+*/
+void BodyContactPointLoggerItem::output()
 {
     auto logFrame = new BodyContactPointLogItem::LogFrame;
     int numLinks = impl->ioBody->numLinks();
@@ -91,6 +99,7 @@ void BodyContactPointLoggerItem::outputLogFrame()
         logFrame->linkContactPoints(i) = impl->ioBody->link(i)->contactPoints();
     }
     impl->io->outputLogFrame(logFrame);
+    impl->lastLogFrame = logFrame;
 }
 
 

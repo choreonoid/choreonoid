@@ -265,7 +265,6 @@ public:
     ItemList<SubSimulatorItem> subSimulatorItems;
 
     vector<ControllerInfoPtr> activeControllerInfos;
-    vector<ControllerItemPtr> loggingControllers;
     bool doStopSimulationWhenNoActiveControllers;
     bool hasControllers; // Includes non-active controllers
 
@@ -293,7 +292,8 @@ public:
     volatile bool pauseRequested;
     bool needToUpdateSimBodyLists;
     bool hasActiveFreeBodies;
-    bool recordCollisionData;
+    bool isCollisionDataRecordingEnabled;
+    bool doRecordCollisionData;
     bool isSceneViewEditModeBlockedDuringSimulation;
 
     string controllerOptionString_;
@@ -358,6 +358,8 @@ public:
     void onSimulationLoopStarted();
     void updateSimBodyLists();
     bool stepSimulationMain();
+    void bufferRecords();
+    void bufferCollisionRecords();
     void startFlushTimer();
     void flushRecords();
     int flushMainRecords();
@@ -848,8 +850,6 @@ void SimulationBody::Impl::initializeRecording()
     if(simImpl->isRecordingEnabled){
         self->initializeRecordItems();
     }
-
-    self->bufferRecords(); // put the intial state
 }
 
 
@@ -1257,7 +1257,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self)
     isAllLinkPositionOutputMode = true;
     isDeviceStateOutputEnabled = true;
     isDoingSimulationLoop = false;
-    recordCollisionData = false;
+    isCollisionDataRecordingEnabled = false;
     isSceneViewEditModeBlockedDuringSimulation = false;
     isSimulationFromInitialState = false;
 
@@ -1288,7 +1288,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self, const Impl& org)
     isActiveControlTimeRangeMode = org.isActiveControlTimeRangeMode;
     isAllLinkPositionOutputMode = org.isAllLinkPositionOutputMode;
     isDeviceStateOutputEnabled = org.isDeviceStateOutputEnabled;
-    recordCollisionData = org.recordCollisionData;
+    isCollisionDataRecordingEnabled = org.isCollisionDataRecordingEnabled;
     controllerOptionString_ = org.controllerOptionString_;
     isSimulationFromInitialState = false;
 }
@@ -1602,7 +1602,6 @@ void SimulatorItem::Impl::clearSimulation()
 
     subSimulatorItems.clear();
     activeControllerInfos.clear();
-    loggingControllers.clear();
 
     hasControllers = false;
 
@@ -1833,15 +1832,15 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 
     if(result){
 
+        numBufferedFrames = 0;
         for(auto& simBody : activeSimBodies){
             if(simBody->body()){
                 simBody->impl->initializeRecording();
             }
         }
 
-        numBufferedFrames = 1;
-    
-        if(isRecordingEnabled && recordCollisionData){
+        doRecordCollisionData = (isRecordingEnabled && isCollisionDataRecordingEnabled);
+        if(doRecordCollisionData){
             collisionPairsBuf.clear();
             string collisionSeqName = self->name() + "-collisions";
             auto collisionSeqItem = worldItem->findChildItem<CollisionSeqItem>(collisionSeqName);
@@ -1969,7 +1968,6 @@ void SimulatorItem::Impl::updateSimBodyLists()
 {
     activeSimBodies.clear();
     activeControllerInfos.clear();
-    loggingControllers.clear();
     hasActiveFreeBodies = false;
     
     for(size_t i=0; i < allSimBodies.size(); ++i){
@@ -1984,9 +1982,6 @@ void SimulatorItem::Impl::updateSimBodyLists()
         }
         for(auto& info : controllerInfos){
             activeControllerInfos.push_back(info);
-            if(info->isLogEnabled()){
-                loggingControllers.push_back(info->controller);
-            }
        }
     }
 
@@ -2170,13 +2165,13 @@ void SimulatorItem::Impl::run()
 
 bool SimulatorItem::Impl::stepSimulationMain()
 {
-    currentFrame++;
-    currentTime_ = currentFrame / worldFrameRate;
-
     if(needToUpdateSimBodyLists){
         updateSimBodyLists();
     }
-    
+
+    // Recored the positions at the beginning of the current frame
+    bufferRecords();
+
     bool doContinue = !doStopSimulationWhenNoActiveControllers;
 
     preDynamicsFunctions.call();
@@ -2222,11 +2217,10 @@ bool SimulatorItem::Impl::stepSimulationMain()
 
     self->stepSimulation(activeSimBodies);
 
-    shared_ptr<CollisionLinkPairList> collisionPairs;
-    if(isRecordingEnabled && recordCollisionData){
-        collisionPairs = self->getCollisions();
+    if(doRecordCollisionData){
+        bufferCollisionRecords();
     }
-
+    
     if(useControllerThreads){
         for(auto& info : activeControllerInfos){
             if(!info->controller->isNoDelayMode()){
@@ -2239,34 +2233,18 @@ bool SimulatorItem::Impl::stepSimulationMain()
 
     postDynamicsFunctions.call();
 
-    for(auto& controller : loggingControllers){
-        controller->outputLogFrame();
-    }
-
-    {
-        recordBufMutex.lock();
-
-        ++numBufferedFrames;
-        for(size_t i=0; i < activeSimBodies.size(); ++i){
-            activeSimBodies[i]->bufferRecords();
-        }
-        collisionPairsBuf.push_back(collisionPairs);
-        frameAtLastBufferWriting = currentFrame;
-
-        recordBufMutex.unlock();
-    }
-
     for(auto& info : activeControllerInfos){
         if(!info->controller->isNoDelayMode()){
             info->controller->output();
         }
     }
 
+    ++currentFrame;
+    currentTime_ = currentFrame / worldFrameRate;
+
     return doContinue;
 }
 
-
-namespace {
 
 bool ControllerInfo::waitForControlInThreadToFinish()
 {
@@ -2311,6 +2289,26 @@ exitConcurrentControlLoop:
     return;
 }
 
+
+void SimulatorItem::Impl::bufferRecords()
+{
+    recordBufMutex.lock();
+
+    for(size_t i=0; i < activeSimBodies.size(); ++i){
+        activeSimBodies[i]->bufferRecords();
+    }
+    ++numBufferedFrames;
+    frameAtLastBufferWriting = currentFrame;
+
+    recordBufMutex.unlock();
+}
+
+
+void SimulatorItem::Impl::bufferCollisionRecords()
+{
+    recordBufMutex.lock();
+    collisionPairsBuf.push_back(self->getCollisions());
+    recordBufMutex.unlock();
 }
 
 
@@ -2369,7 +2367,7 @@ int SimulatorItem::Impl::flushMainRecords()
     }
 
     bool offsetChanged;
-    if(isRecordingEnabled && recordCollisionData){
+    if(doRecordCollisionData){
         offsetChanged = false;
         for(size_t i=0 ; i < collisionPairsBuf.size(); ++i){
             if(collisionSeq->numFrames() >= ringBufferSize){
@@ -2471,6 +2469,12 @@ void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
 
     for(auto& subSimulator : subSimulatorItems){
         subSimulator->finalizeSimulation();
+    }
+
+    // Record the final state after processing the last frame
+    bufferRecords();
+    if(doRecordCollisionData){
+        bufferCollisionRecords();
     }
 
     flushRecords();
@@ -2798,8 +2802,8 @@ void SimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](bool on){ return onAllLinkPositionOutputModeChanged(on); });
     putProperty(_("Device state output"), isDeviceStateOutputEnabled,
                 changeProperty(isDeviceStateOutputEnabled));
-    putProperty(_("Record collision data"), recordCollisionData,
-                changeProperty(recordCollisionData));
+    putProperty(_("Record collision data"), isCollisionDataRecordingEnabled,
+                changeProperty(isCollisionDataRecordingEnabled));
     putProperty(_("Controller Threads"), useControllerThreadsProperty,
                 changeProperty(useControllerThreadsProperty));
     putProperty(_("Controller options"), controllerOptionString_,
@@ -2831,7 +2835,7 @@ bool SimulatorItem::Impl::store(Archive& archive)
     archive.write("output_all_link_positions", isAllLinkPositionOutputMode);
     archive.write("output_device_states", isDeviceStateOutputEnabled);
     archive.write("use_controller_threads", useControllerThreadsProperty);
-    archive.write("record_collision_data", recordCollisionData);
+    archive.write("record_collision_data", isCollisionDataRecordingEnabled);
     archive.write("controller_options", controllerOptionString_, DOUBLE_QUOTED);
     archive.write("block_scene_view_edit_mode", isSceneViewEditModeBlockedDuringSimulation);
     
@@ -2919,7 +2923,7 @@ bool SimulatorItem::Impl::restore(const Archive& archive)
     self->setAllLinkPositionOutputMode(on);
     
     archive.read({ "output_device_states", "deviceStateOutput" }, isDeviceStateOutputEnabled);
-    archive.read({ "record_collision_data", "recordCollisionData" }, recordCollisionData);
+    archive.read({ "record_collision_data", "recordCollisionData" }, isCollisionDataRecordingEnabled);
     archive.read({ "use_controller_threads", "controllerThreads" }, useControllerThreadsProperty);
     archive.read({ "controller_options", "controllerOptions" }, controllerOptionString_);
     archive.read({ "block_scene_view_edit_mode", "scene_view_edit_mode_blocking" },

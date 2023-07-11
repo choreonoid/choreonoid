@@ -17,7 +17,7 @@ public:
 
     virtual bool initialize(ControllerIO* io) override;
     virtual ReferencedObjectSeqItem* createLogItem() override;
-    virtual void outputLogFrame() override;
+    virtual void output() override;
 
     void setLogFrameToVisualize(BodyContactPointLogItem::LogFrame* logFrame);
 

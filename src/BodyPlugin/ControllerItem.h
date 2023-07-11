@@ -66,11 +66,6 @@ public:
     */
     virtual bool control();
 
-    virtual void outputLogFrame();
-
-    // deprecated
-    virtual void log();
-        
     /**
        @note This function is called from the simulation thread.
     */
