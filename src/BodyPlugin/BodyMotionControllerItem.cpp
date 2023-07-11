@@ -42,6 +42,7 @@ void BodyMotionControllerItem::initializeClass(ExtensionManager* ext)
 BodyMotionControllerItem::BodyMotionControllerItem()
 {
     impl = new BodyMotionControllerItemImpl(this);
+    setNoDelayMode(true);
 }
 
 
