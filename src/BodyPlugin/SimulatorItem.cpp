@@ -102,8 +102,9 @@ class ControllerInfo : public Referenced, public ControllerIO
 {
 public:
     ControllerItemPtr controller;
-    SimulatorItem::Impl* simImpl;
+    SimulationBody::Impl* simBodyImpl;
     Body* body_;
+    SimulatorItem::Impl* simImpl;
 
     std::thread controlThread;
     std::condition_variable controlCondition;
@@ -131,6 +132,9 @@ public:
     virtual double timeStep() const override;
     virtual double currentTime() const override;
     virtual std::string optionString() const override;
+
+    virtual std::shared_ptr<BodyMotion> logBodyMotion() override;
+    virtual SignalProxy<void()> sigLogFlushRequested() override;
 
     virtual bool enableLog() override;
     bool isLogEnabled() const;
@@ -232,7 +236,7 @@ public:
 };
 
 
-class SimulatorItem::Impl : public QThread, public ControllerIO
+class SimulatorItem::Impl : public QThread
 {
 public:
     SimulatorItem* self;
@@ -256,6 +260,7 @@ public:
     int frameAtLastBufferWriting;
     int numBufferedFrames;
     Timer flushTimer;
+    Signal<void()> sigLogFlushRequested;
 
     FunctionSet preDynamicsFunctions;
     FunctionSet midDynamicsFunctions;
@@ -380,14 +385,6 @@ public:
     bool restore(const Archive& archive);
     void restoreTimeSyncItemEngines(const Archive& archive);
     SimulationLogEngine* getOrCreateLogEngine();
-
-    // Functions defined in the ControllerIO class
-    virtual std::string controllerName() const override;
-    virtual Body* body() override;
-    virtual std::string optionString() const override;
-    virtual std::ostream& os() const override;
-    virtual double timeStep() const override;
-    virtual double currentTime() const override;
 };
 
 }
@@ -514,6 +511,7 @@ SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
 
 ControllerInfo::ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl)
     : controller(controller),
+      simBodyImpl(simBodyImpl),
       body_(simBodyImpl->body_),
       simImpl(simBodyImpl->simImpl),
       isLogEnabled_(false),
@@ -570,6 +568,18 @@ double ControllerInfo::currentTime() const
 std::string ControllerInfo::optionString() const
 {
     return simImpl->controllerOptionString_;
+}
+
+
+std::shared_ptr<BodyMotion> ControllerInfo::logBodyMotion()
+{
+    return simBodyImpl->motion;
+}
+
+
+SignalProxy<void()> ControllerInfo::sigLogFlushRequested()
+{
+    return simImpl->sigLogFlushRequested;
 }
 
 
@@ -1605,6 +1615,8 @@ void SimulatorItem::Impl::clearSimulation()
 
     hasControllers = false;
 
+    sigLogFlushRequested.disconnectAllSlots();
+
     self->clearSimulation();
 }
 
@@ -2326,6 +2338,8 @@ void SimulatorItem::Impl::flushRecords()
 {
     int frame = flushMainRecords();
 
+    sigLogFlushRequested();
+
     for(auto& info : loggedControllerInfos){
         info->flushLog();
     }
@@ -2531,12 +2545,6 @@ double SimulatorItem::currentTime() const
 }
 
 
-double SimulatorItem::Impl::currentTime() const
-{
-    return currentTime_;
-}
-
-
 int SimulatorItem::simulationFrame() const
 {
     QMutexLocker locker(&impl->recordBufMutex);
@@ -2548,36 +2556,6 @@ double SimulatorItem::simulationTime() const
 {
     QMutexLocker locker(&impl->recordBufMutex);
     return impl->frameAtLastBufferWriting / impl->worldFrameRate;
-}
-
-
-double SimulatorItem::Impl::timeStep() const
-{
-    return worldTimeStep_;
-}
-
-
-std::string SimulatorItem::Impl::controllerName() const
-{
-    return string();
-}
-
-
-Body* SimulatorItem::Impl::body()
-{
-    return nullptr;
-}
-
-
-std::string SimulatorItem::Impl::optionString() const
-{
-    return controllerOptionString_;
-}
-
-
-std::ostream& SimulatorItem::Impl::os() const
-{
-    return mv->cout();
 }
 
 

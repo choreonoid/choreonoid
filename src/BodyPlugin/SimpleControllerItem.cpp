@@ -103,6 +103,8 @@ public:
         N_BASE_DIRECTORY_TYPES
     };
 
+    Signal<void()> dummySigLogFlushRequested;
+
     Impl(SimpleControllerItem* self);
     Impl(SimpleControllerItem* self, const Impl& org);
     ~Impl();
@@ -134,10 +136,13 @@ public:
     virtual std::ostream& os() const override;
     virtual double timeStep() const override;
     virtual double currentTime() const override;
+    virtual std::shared_ptr<BodyMotion> logBodyMotion() override;
+    virtual SignalProxy<void()> sigLogFlushRequested() override;
     virtual bool enableLog() override;
     virtual void outputLogFrame(Referenced* logFrame) override;
     virtual bool isNoDelayMode() const override;
     virtual bool setNoDelayMode(bool on) override;
+    virtual bool isSimulationFromInitialState() const override;
 
     // virtual functions of SimpleControllerIO
     virtual void enableIO(Link* link) override;
@@ -666,6 +671,18 @@ double SimpleControllerItem::Impl::currentTime() const
 }
 
 
+std::shared_ptr<BodyMotion> SimpleControllerItem::Impl::logBodyMotion()
+{
+    return io ? io->logBodyMotion() : nullptr;
+}
+
+
+SignalProxy<void()> SimpleControllerItem::Impl::sigLogFlushRequested()
+{
+    return io ? io->sigLogFlushRequested() : dummySigLogFlushRequested;
+}
+
+
 bool SimpleControllerItem::Impl::enableLog()
 {
     return io ? io->enableLog() : false;
@@ -788,6 +805,12 @@ bool SimpleControllerItem::Impl::setNoDelayMode(bool on)
 void SimpleControllerItem::Impl::setImmediateMode(bool on)
 {
     setNoDelayMode(on);
+}
+
+
+bool SimpleControllerItem::Impl::isSimulationFromInitialState() const
+{
+    return io ? io->isSimulationFromInitialState() : false;
 }
 
 
