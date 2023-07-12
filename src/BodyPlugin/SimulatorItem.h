@@ -39,11 +39,7 @@ public:
     virtual void initializeRecordBuffers();
     virtual void initializeRecordItems();
 
-    /**
-       Called from the simulation loop thread
-    */
     bool isActive() const;
-    void setActive(bool on);
 
     /**
        Use this instead of Device::notifyStateChange when the state part which

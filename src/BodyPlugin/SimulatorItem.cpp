@@ -225,7 +225,6 @@ public:
     void initializeRecording();
     void initializeRecordBuffers();
     void initializeRecordItems();
-    void setActive(bool on);
     void bufferRecords();
     void bufferBodyPosition(Body* body, BodyPositionSeqFrameBlock& block);
     void flushRecords();
@@ -295,8 +294,6 @@ public:
     bool isDoingSimulationLoop;
     volatile bool stopRequested;
     volatile bool pauseRequested;
-    bool needToUpdateSimBodyLists;
-    bool hasActiveFreeBodies;
     bool isCollisionDataRecordingEnabled;
     bool doRecordCollisionData;
     bool isSceneViewEditModeBlockedDuringSimulation;
@@ -359,6 +356,7 @@ public:
     void setSimulatorItemToControllerItem(ControllerItem* controllerItem);
     void resetSimulatorItemForControllerItem(ControllerItem* controllerItem);
     bool startSimulation(bool doReset);
+    bool initializeSimulation(bool doReset);
     virtual void run() override;
     void onSimulationLoopStarted();
     void updateSimBodyLists();
@@ -983,34 +981,6 @@ bool SimulationBody::isActive() const
 }
 
 
-void SimulationBody::setActive(bool on)
-{
-    impl->setActive(on);
-}
-
-
-void SimulationBody::Impl::setActive(bool on)
-{
-    if(body_){
-        if(on){
-            if(!isActive){
-                simImpl->recordBufMutex.lock();
-                self->initializeRecordBuffers();
-                self->bufferRecords();
-                simImpl->recordBufMutex.unlock();
-                isActive = true;
-                simImpl->needToUpdateSimBodyLists = true;
-            }
-        } else {
-            if(isActive){
-                isActive = false;
-                simImpl->needToUpdateSimBodyLists = true;
-            }
-        }
-    }
-}
-
-
 void SimulationBody::notifyUnrecordedDeviceStateChange(Device* device)
 {
     bool flag = impl->deviceStateChangeFlag[device->index()];
@@ -1604,7 +1574,6 @@ void SimulatorItem::Impl::clearSimulation()
     activeSimBodies.clear();
     loggedControllerInfos.clear();
     simBodyMap.clear();
-    needToUpdateSimBodyLists = true;
 
     preDynamicsFunctions.clear();
     midDynamicsFunctions.clear();
@@ -1682,6 +1651,25 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
         return false;
     }
 
+    bool initialized = initializeSimulation(doReset);
+
+    if(!initialized){
+        mv->notify(format(_("{0} failed to initialize the simulation."), self->displayName()),
+                   MessageView::Error);
+        clearSimulation();
+    }
+
+    return initialized;
+}
+
+
+/*
+  Note that the following function is is not the implementation of the
+  SimulatorItem::initializeSimulation function. SimulatorItem::initializeSimulation implements
+  the special process for each SimulatorItem sub class and is called in the following function.
+*/
+bool SimulatorItem::Impl::initializeSimulation(bool doReset)
+{
     ItemList<Item> targetItems;
     findTargetItems(worldItem, false, targetItems);
     if(targetItems.empty()){
@@ -1702,6 +1690,23 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
         isRecordingEnabled = true;
         isRingBufferMode = recordingMode.is(SimulatorItem::REC_TAIL);
     }
+
+    ringBufferSize = std::numeric_limits<int>::max();
+
+    if(timeRangeMode.is(SimulatorItem::TR_SPECIFIED)){
+        maxFrame = std::max(0, static_cast<int>(lround(timeLength / worldTimeStep_) - 1));
+
+    } else if(timeRangeMode.is(SimulatorItem::TR_TIMEBAR)){
+        maxFrame = std::max(0, static_cast<int>(lround(timeBar->maxTime() / worldTimeStep_) - 1));
+
+    } else if(isRingBufferMode){
+        maxFrame = std::numeric_limits<int>::max();
+        ringBufferSize = timeLength / worldTimeStep_;
+
+    } else {
+        maxFrame = std::numeric_limits<int>::max();
+    }
+
     currentRealtimeSyncMode = realtimeSyncMode.which();
 
     clearSimulation();
@@ -1769,235 +1774,191 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
 
     cloneMap.replacePendingObjects();
     
-    bool result = self->initializeSimulation(simBodiesWithBody);
+    if(!self->initializeSimulation(simBodiesWithBody)){
+        return false;
+    }
 
-    if(result){
+    subSimulatorItems.extractAssociatedItems(self);
+    auto p = subSimulatorItems.begin();
+    while(p != subSimulatorItems.end()){
+        SubSimulatorItem* item = *p;
+        bool initialized = false;
+        if(item->isEnabled()){
+            mv->putln(format(_("SubSimulatorItem \"{}\" has been detected."), item->displayName()));
+            if(item->initializeSimulation(self)){
+                initialized = true;
+            } else {
+                mv->putln(format(_("The initialization of \"{}\" failed."), item->displayName()),
+                          MessageView::Warning);
+            }
+        } else {
+            mv->putln(format(_("SubSimulatorItem \"{}\" is disabled."), item->displayName()));
+        }
+        if(initialized){
+            ++p;
+        } else {
+            p = subSimulatorItems.erase(p);
+        }
+    }
 
-        subSimulatorItems.extractAssociatedItems(self);
-        auto p = subSimulatorItems.begin();
-        while(p != subSimulatorItems.end()){
-            SubSimulatorItem* item = *p;
-            bool initialized = false;
-            if(item->isEnabled()){
-                mv->putln(format(_("SubSimulatorItem \"{}\" has been detected."), item->displayName()));
-                if(item->initializeSimulation(self)){
-                    initialized = true;
-                } else {
-                    mv->putln(format(_("The initialization of \"{}\" failed."), item->displayName()),
+    for(size_t i=0; i < allSimBodies.size(); ++i){
+        SimulationBody* simBody = allSimBodies[i];
+        if(simBody->impl->isActive){
+            activeSimBodies.push_back(simBody);
+        }
+    }
+
+    // Initialize recording
+    numBufferedFrames = 0;
+    frameAtLastBufferWriting = 0;
+    for(auto& simBody : activeSimBodies){
+        if(simBody->body()){
+            simBody->impl->initializeRecording();
+        }
+    }
+
+    doRecordCollisionData = (isRecordingEnabled && isCollisionDataRecordingEnabled);
+    if(doRecordCollisionData){
+        collisionPairsBuf.clear();
+        string collisionSeqName = self->name() + "-collisions";
+        auto collisionSeqItem = worldItem->findChildItem<CollisionSeqItem>(collisionSeqName);
+        if(collisionSeqItem){
+            if(!collisionSeqItem->isTemporary()){
+                collisionSeqItem->setTemporary();
+                collisionSeqItem->notifyUpdate();
+            }
+        } else {
+            collisionSeqItem = new CollisionSeqItem;
+            collisionSeqItem->setTemporary();
+            collisionSeqItem->setName(collisionSeqName);
+            worldItem->addChildItem(collisionSeqItem);
+            logEngine->addCollisionSeqEngine(collisionSeqItem);
+        }
+        collisionSeq = collisionSeqItem->collisionSeq();
+        collisionSeq->setFrameRate(worldFrameRate);
+        collisionSeq->setNumParts(1);
+        collisionSeq->setNumFrames(1);
+        CollisionSeq::Frame frame0 = collisionSeq->frame(0);
+        frame0[0]  = std::make_shared<CollisionLinkPairList>();
+    }
+
+    for(auto& simBody : allSimBodies){
+        auto simBodyImpl = simBody->impl;
+        Body* body = simBodyImpl->body_;
+        auto& controllerInfos = simBodyImpl->controllerInfos;
+        auto iter = controllerInfos.begin();
+        while(iter != controllerInfos.end()){
+            auto& info = *iter;
+            ControllerItem* controller = info->controller;
+            bool ready = false;
+            if(body){
+                ready = controller->start();
+                if(!ready){
+                    mv->putln(format(_("{0} for {1} failed to start."),
+                                     controller->displayName(), simBodyImpl->bodyItem->displayName()),
                               MessageView::Warning);
                 }
             } else {
-                mv->putln(format(_("SubSimulatorItem \"{}\" is disabled."), item->displayName()));
+                ready = controller->start();
+                if(!ready){
+                    mv->putln(format(_("{} failed to start."), controller->displayName()),
+                              MessageView::Warning);
+                }
             }
-            if(initialized){
-                ++p;
+            if(ready){
+                activeControllerInfos.push_back(info);
+                ++iter;
             } else {
-                p = subSimulatorItems.erase(p);
+                iter = controllerInfos.erase(iter);
             }
-        }
-
-        for(auto& simBody : allSimBodies){
-            auto simBodyImpl = simBody->impl;
-            Body* body = simBodyImpl->body_;
-            auto& controllerInfos = simBodyImpl->controllerInfos;
-            auto iter = controllerInfos.begin();
-            while(iter != controllerInfos.end()){
-                auto& info = *iter;
-                ControllerItem* controller = info->controller;
-                bool ready = false;
-                if(body){
-                    ready = controller->start();
-                    if(!ready){
-                        mv->putln(format(_("{0} for {1} failed to start."),
-                                         controller->displayName(), simBodyImpl->bodyItem->displayName()),
-                                  MessageView::Warning);
-                    }
-                } else {
-                    ready = controller->start();
-                    if(!ready){
-                        mv->putln(format(_("{} failed to start."), controller->displayName()),
-                                  MessageView::Warning);
-                    }
-                }
-                if(ready){
-                    ++iter;
-                } else {
-                    iter = controllerInfos.erase(iter);
-                }
-            }
-        }
-
-        updateSimBodyLists();
-
-        doStopSimulationWhenNoActiveControllers = isActiveControlTimeRangeMode && hasControllers;
-
-        if(doStopSimulationWhenNoActiveControllers && activeControllerInfos.empty()){
-            mv->putln(_("The simulation cannot be started because all the controllers are inactive."),
-                      MessageView::Error);
-            result = false;
         }
     }
 
-    if(result){
-        result = self->completeInitializationOfSimulation();
+    doStopSimulationWhenNoActiveControllers = isActiveControlTimeRangeMode && hasControllers;
+
+    if(doStopSimulationWhenNoActiveControllers && activeControllerInfos.empty()){
+        mv->putln(_("The simulation cannot be started because all the controllers are inactive."),
+                  MessageView::Error);
+        return false;
     }
 
-    if(result){
+    if(!self->completeInitializationOfSimulation()){
+        return false;
+    }
 
-        numBufferedFrames = 0;
-        for(auto& simBody : activeSimBodies){
-            if(simBody->body()){
-                simBody->impl->initializeRecording();
-            }
+    isDoingSimulationLoop = true;
+    isWaitingForSimulationToStop = false;
+    isForcedToStopSimulation = false;
+    stopRequested = false;
+    pauseRequested = false;
+
+    useControllerThreads = useControllerThreadsProperty;
+    if(useControllerThreads){
+        for(auto& info : activeControllerInfos){
+            info->isExitingControlLoopRequested = false;
+            info->isControlRequested = false;
+            info->isControlFinished = false;
+            info->isControlToBeContinued = false;
+            info->controlThread = std::thread([info](){ info->concurrentControlLoop(); });
         }
+    }
 
-        doRecordCollisionData = (isRecordingEnabled && isCollisionDataRecordingEnabled);
-        if(doRecordCollisionData){
-            collisionPairsBuf.clear();
-            string collisionSeqName = self->name() + "-collisions";
-            auto collisionSeqItem = worldItem->findChildItem<CollisionSeqItem>(collisionSeqName);
-            if(collisionSeqItem){
-                if(!collisionSeqItem->isTemporary()){
-                    collisionSeqItem->setTemporary();
-                    collisionSeqItem->notifyUpdate();
-                }
-            } else {
-                collisionSeqItem = new CollisionSeqItem;
-                collisionSeqItem->setTemporary();
-                collisionSeqItem->setName(collisionSeqName);
-                worldItem->addChildItem(collisionSeqItem);
-                logEngine->addCollisionSeqEngine(collisionSeqItem);
-            }
-            collisionSeq = collisionSeqItem->collisionSeq();
-            collisionSeq->setFrameRate(worldFrameRate);
-            collisionSeq->setNumParts(1);
-            collisionSeq->setNumFrames(1);
-            CollisionSeq::Frame frame0 = collisionSeq->frame(0);
-            frame0[0]  = std::make_shared<CollisionLinkPairList>();
-        }
-        
-        frameAtLastBufferWriting = 0;
-        isDoingSimulationLoop = true;
-        isWaitingForSimulationToStop = false;
-        isForcedToStopSimulation = false;
-        stopRequested = false;
-        pauseRequested = false;
+    aboutToQuitConnection.disconnect();
+    aboutToQuitConnection = App::sigAboutToQuit().connect(
+        [&](){ stopSimulation(true, true); });
 
-        ringBufferSize = std::numeric_limits<int>::max();
-        
-        if(timeRangeMode.is(SimulatorItem::TR_SPECIFIED)){
-            maxFrame = std::max(0, static_cast<int>(lround(timeLength / worldTimeStep_) - 1));
-            
-        } else if(timeRangeMode.is(SimulatorItem::TR_TIMEBAR)){
-            maxFrame = std::max(0, static_cast<int>(lround(timeBar->maxTime() / worldTimeStep_) - 1));
-                                
-        } else if(isRingBufferMode){
-            maxFrame = std::numeric_limits<int>::max();
-            ringBufferSize = timeLength / worldTimeStep_;
-            
+    worldLogFileItem = nullptr;
+    // Check child items first
+    auto worldLogFileItems = self->descendantItems<WorldLogFileItem>();
+    if(worldLogFileItems.empty()){
+        // Check items in the world secondly
+        worldLogFileItems = worldItem->descendantItems<WorldLogFileItem>();
+    }
+    worldLogFileItem = worldLogFileItems.toSingle(true);
+    if(worldLogFileItem){
+        if(worldLogFileItem->logFile().empty()){
+            worldLogFileItem = nullptr;
         } else {
-            maxFrame = std::numeric_limits<int>::max();
-        }
+            mv->putln(format(_("WorldLogFileItem \"{0}\" has been detected. "
+                               "A simulation result is recoreded to \"{1}\"."),
+                             worldLogFileItem->displayName(), worldLogFileItem->logFile()));
 
-        useControllerThreads = useControllerThreadsProperty;
-        if(useControllerThreads){
-            for(auto& info : activeControllerInfos){
-                info->isExitingControlLoopRequested = false;
-                info->isControlRequested = false;
-                info->isControlFinished = false;
-                info->isControlToBeContinued = false;
-                info->controlThread = std::thread([info](){ info->concurrentControlLoop(); });
+            worldLogFileItem->clearOutput();
+            worldLogFileItem->beginHeaderOutput();
+            for(size_t i=0; i < activeSimBodies.size(); ++i){
+                worldLogFileItem->outputBodyHeader(activeSimBodies[i]->impl->body_->name());
             }
-        }
-
-        aboutToQuitConnection.disconnect();
-        aboutToQuitConnection = App::sigAboutToQuit().connect(
-            [&](){ stopSimulation(true, true); });
-
-        worldLogFileItem = nullptr;
-        // Check child items first
-        auto worldLogFileItems = self->descendantItems<WorldLogFileItem>();
-        if(worldLogFileItems.empty()){
-            // Check items in the world secondly
-            worldLogFileItems = worldItem->descendantItems<WorldLogFileItem>();
-        }
-        worldLogFileItem = worldLogFileItems.toSingle(true);
-        if(worldLogFileItem){
-            if(worldLogFileItem->logFile().empty()){
-                worldLogFileItem = nullptr;
-            } else {
-                mv->putln(format(_("WorldLogFileItem \"{0}\" has been detected. "
-                                   "A simulation result is recoreded to \"{1}\"."),
-                                 worldLogFileItem->displayName(), worldLogFileItem->logFile()));
-
-                worldLogFileItem->clearOutput();
-                worldLogFileItem->beginHeaderOutput();
-                for(size_t i=0; i < activeSimBodies.size(); ++i){
-                    worldLogFileItem->outputBodyHeader(activeSimBodies[i]->impl->body_->name());
-                }
-                worldLogFileItem->endHeaderOutput();
-                worldLogFileItem->notifyUpdate();
-                nextLogFrame = 0;
-                nextLogTime = 0.0;
-                double r = worldLogFileItem->recordingFrameRate();
-                if(r == 0.0){
-                    r = worldFrameRate;
-                }
-                logTimeStep = 1.0 / r;
+            worldLogFileItem->endHeaderOutput();
+            worldLogFileItem->notifyUpdate();
+            nextLogFrame = 0;
+            nextLogTime = 0.0;
+            double r = worldLogFileItem->recordingFrameRate();
+            if(r == 0.0){
+                r = worldFrameRate;
             }
+            logTimeStep = 1.0 / r;
         }
-
-        logEngine->startOngoingTimeUpdate(0.0);
-        flushRecords();
-        start();
-        startFlushTimer();
-
-        mv->notify(format(_("Simulation by {} has started."), self->displayName()));
-
-        sigSimulationStarted();
     }
 
-    if(result){
-        // For blocking manual user operations for modifying body kinematic state using the builtin GUIs
-        for(auto& simBody : simBodiesWithBody){
-            auto simpl = simBody->impl;
-            simpl->continuousKinematicUpdateEntry = simpl->bodyItem->startContinuousKinematicUpdate();
-        }
-        if(isSceneViewEditModeBlockedDuringSimulation){
-            SceneView::blockEditModeForAllViews(self);
-        }
-    } else {
-        mv->notify(format(_("{0} failed to initialize the simulation."), self->displayName()),
-                   MessageView::Error);
-        clearSimulation();
-    }
+    logEngine->startOngoingTimeUpdate(0.0);
+    flushRecords();
+    start();
+    startFlushTimer();
 
-    return result;
-}
+    mv->notify(format(_("Simulation by {} has started."), self->displayName()));
 
-
-void SimulatorItem::Impl::updateSimBodyLists()
-{
-    activeSimBodies.clear();
-    activeControllerInfos.clear();
-    hasActiveFreeBodies = false;
+    sigSimulationStarted();
     
-    for(size_t i=0; i < allSimBodies.size(); ++i){
-        SimulationBody* simBody = allSimBodies[i];
-        auto simBodyImpl = simBody->impl;
-        auto& controllerInfos = simBodyImpl->controllerInfos;
-        if(simBodyImpl->isActive){
-            activeSimBodies.push_back(simBody);
-            if(controllerInfos.empty()){
-                hasActiveFreeBodies = true;
-            }
-        }
-        for(auto& info : controllerInfos){
-            activeControllerInfos.push_back(info);
-       }
+    // For blocking manual user operations for modifying body kinematic state using the builtin GUIs
+    for(auto& simBody : simBodiesWithBody){
+        auto simpl = simBody->impl;
+        simpl->continuousKinematicUpdateEntry = simpl->bodyItem->startContinuousKinematicUpdate();
+    }
+    if(isSceneViewEditModeBlockedDuringSimulation){
+        SceneView::blockEditModeForAllViews(self);
     }
 
-    needToUpdateSimBodyLists = false;
+    return true;
 }
 
 
@@ -2177,10 +2138,6 @@ void SimulatorItem::Impl::run()
 
 bool SimulatorItem::Impl::stepSimulationMain()
 {
-    if(needToUpdateSimBodyLists){
-        updateSimBodyLists();
-    }
-
     // Recored the positions at the beginning of the current frame
     bufferRecords();
 
