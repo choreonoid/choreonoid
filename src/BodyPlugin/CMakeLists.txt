@@ -23,6 +23,7 @@ set(sources
   BodyMotionControllerItem.cpp
   CollisionDetectionControllerItem.cpp
   RegionIntrusionDetectorItem.cpp
+  BodyStateLoggerItem.cpp
   BodyContactPointLoggerItem.cpp
   BodyContactPointLogItem.cpp
   SimulationScriptItem.cpp
@@ -95,6 +96,7 @@ set(headers
   CollisionDetectionControllerItem.h
   RegionIntrusionDetectorItem.h
   ControllerLogItem.h
+  BodyStateLoggerItem.h
   BodyContactPointLoggerItem.h
   BodyContactPointLogItem.h
   SimulationScriptItem.h
