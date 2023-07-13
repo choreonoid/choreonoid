@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-06-07 00:19+0900\n"
+"POT-Creation-Date: 2023-07-14 01:35+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -133,11 +133,19 @@ msgstr "反転コピー"
 msgid "Copy the left side pose to the right side"
 msgstr "左側の姿勢を右側にコピー"
 
-msgid "BodyContactPointLoggerItem"
-msgstr "ボディ接触点ロガーアイテム"
-
 msgid "BodyContactPointLogItem"
 msgstr "ボディ接触点ログアイテム"
+
+#, fuzzy
+msgid "Body Contact Point Log File"
+msgstr "ボディ接触点ログアイテム"
+
+#, fuzzy
+msgid "Body Contact Point Log File (YAML)"
+msgstr "ボディ接触点ログアイテム"
+
+msgid "BodyContactPointLoggerItem"
+msgstr "ボディ接触点ロガーアイテム"
 
 msgid "Offset {0}"
 msgstr "オフセット {0}"
@@ -617,6 +625,15 @@ msgid ""
 "(http://www.codercorner.com/Opcode.htm).\n"
 msgstr ""
 
+msgid "BodyStateLoggerItem"
+msgstr "ボディ状態ロガーアイテム"
+
+msgid "Online logging"
+msgstr "オンラインロギング"
+
+msgid "Joint effort"
+msgstr "関節エフォート"
+
 msgid "Body State"
 msgstr "ボディ状態"
 
@@ -730,9 +747,6 @@ msgstr "無遅延モード"
 
 msgid "Controller options"
 msgstr "コントローラオプション"
-
-msgid "ControllerLogItem"
-msgstr "コントローラログアイテム"
 
 msgid "DeviceOverwriteItem"
 msgstr "デバイス上書きアイテム"
@@ -1594,6 +1608,9 @@ msgstr ""
 msgid "{} must be in a WorldItem to do simulation."
 msgstr "{}はシミュレーション対象のワールド内に配置されている必要があります．"
 
+msgid "{0} failed to initialize the simulation."
+msgstr "{0}のシミュレーションの初期化ができませんでした．"
+
 msgid "The clone of {0} for the simulation cannot be created."
 msgstr "シミュレーション用の{0}のクローンを生成できません．"
 
@@ -1622,9 +1639,6 @@ msgstr ""
 
 msgid "Simulation by {} has started."
 msgstr "{}によるシミュレーションを開始しました．"
-
-msgid "{0} failed to initialize the simulation."
-msgstr "{0}のシミュレーションの初期化ができませんでした．"
 
 msgid "Simulation by {0} has finished at {1} [s]."
 msgstr "{0}によるシミュレーションが{1}秒時点で終了しました．"
@@ -1795,6 +1809,3 @@ msgstr "{0}と関連付けられた動作はルートリンクが含まれてい
 
 msgid "Root relative"
 msgstr "ルート相対"
-
-#~ msgid "Location editable"
-#~ msgstr "配置編集"
