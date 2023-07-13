@@ -60,7 +60,7 @@ static TimeSyncItemEngine* createMultiDeviceStateSeqEngine(BodyItem* bodyItem, A
 
 void MultiDeviceStateSeqEngine::initializeClass(ExtensionManager* /* ext */)
 {
-    BodyMotionEngine::addExtraSeqEngineFactory(MultiDeviceStateSeq::key(), createMultiDeviceStateSeqEngine);
+    BodyMotionEngine::registerExtraSeqEngineFactory(MultiDeviceStateSeq::key(), createMultiDeviceStateSeqEngine);
 }
 
 

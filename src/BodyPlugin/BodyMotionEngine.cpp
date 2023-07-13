@@ -143,10 +143,17 @@ void BodyMotionEngine::initializeClass(ExtensionManager* ext)
 }
 
 
-void BodyMotionEngine::addExtraSeqEngineFactory
+void BodyMotionEngine::registerExtraSeqEngineFactory
 (const std::string& key, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory)
 {
     extraSeqEngineFactories[key] = factory;
+}
+
+
+void BodyMotionEngine::addExtraSeqEngineFactory
+(const std::string& key, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory)
+{
+    registerExtraSeqEngineFactory(key, factory);
 }
 
 

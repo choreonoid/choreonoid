@@ -144,7 +144,7 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
             return item->motion()->save(filename, 1.0, os);
         });
 
-    addExtraSeqItemFactory(
+    registerExtraSeqItemFactory(
         BodyMotion::linkPosSeqKey(),
         [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
             MultiSE3SeqItem* item = nullptr;
@@ -155,7 +155,7 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
             return item;
         });
     
-    addExtraSeqItemFactory(
+    registerExtraSeqItemFactory(
         BodyMotion::jointPosSeqKey(),
         [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
             MultiValueSeqItem* item = nullptr;
@@ -182,10 +182,17 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
 }
 
 
-void BodyMotionItem::addExtraSeqItemFactory
+void BodyMotionItem::registerExtraSeqItemFactory
 (const std::string& key, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory)
 {
     extraSeqItemFactories[key] = factory;
+}
+
+
+void BodyMotionItem::addExtraSeqItemFactory
+(const std::string& key, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory)
+{
+    registerExtraSeqItemFactory(key, factory);
 }
 
 
