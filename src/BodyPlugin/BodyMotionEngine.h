@@ -36,10 +36,10 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     static void registerExtraSeqEngineFactory(
-        const std::string& key, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory);
+        const std::string& contentName, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory);
     [[deprecated("Use registerExtraSeqEngineFactory")]]
     static void addExtraSeqEngineFactory(
-        const std::string& key, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory);
+        const std::string& contentName, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory);
 
     BodyMotionEngine(BodyItem* bodyItem, BodyMotionItem* motionItem);
 

@@ -49,18 +49,17 @@ void MultiDeviceStateSeqEngineCore::updateBodyDeviceStates(double time, const Mu
 }
 
 
-static TimeSyncItemEngine* createMultiDeviceStateSeqEngine(BodyItem* bodyItem, AbstractSeqItem* seqItem)
-{
-    if(auto multiDeviceStateSeqItem = dynamic_cast<MultiDeviceStateSeqItem*>(seqItem)){
-        return new MultiDeviceStateSeqEngine(bodyItem, multiDeviceStateSeqItem);
-    }
-    return nullptr;
-}
-
-
 void MultiDeviceStateSeqEngine::initializeClass(ExtensionManager* /* ext */)
 {
-    BodyMotionEngine::registerExtraSeqEngineFactory(MultiDeviceStateSeq::key(), createMultiDeviceStateSeqEngine);
+    BodyMotionEngine::registerExtraSeqEngineFactory(
+        MultiDeviceStateSeq::key(),
+        [](BodyItem* bodyItem, AbstractSeqItem* seqItem) -> TimeSyncItemEngine* {
+            MultiDeviceStateSeqEngine* engine = nullptr;
+            if(auto multiDeviceStateSeqItem = dynamic_cast<MultiDeviceStateSeqItem*>(seqItem)){
+                engine = new MultiDeviceStateSeqEngine(bodyItem, multiDeviceStateSeqItem);
+            }
+            return engine;
+        });
 }
 
 

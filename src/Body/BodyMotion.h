@@ -64,8 +64,12 @@ public:
     void updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
     void updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
 
-    static const std::string& linkPosSeqKey();
-    static const std::string& jointPosSeqKey();
+    static const std::string& linkPosSeqContentName();
+    [[deprecated("Use linkPosSeqContentName")]]
+    static const std::string& linkPosSeqKey() { return linkPosSeqContentName(); }
+    static const std::string& jointPosSeqContentName();
+    [[deprecated("Use jointPosSeqContentName")]]
+    static const std::string& jointPosSeqKey() { return jointPosSeqContentName(); }
 
     class CNOID_EXPORT Frame {
         BodyMotion& motion_;
@@ -111,18 +115,18 @@ public:
     ConstSeqIterator extraSeqEnd() const { return extraSeqs.end(); }
         
     template <class SeqType>
-    std::shared_ptr<SeqType> extraSeq(const std::string& name) const {
-        ExtraSeqMap::const_iterator p = extraSeqs.find(name);
+    std::shared_ptr<SeqType> extraSeq(const std::string& contentName) const {
+        ExtraSeqMap::const_iterator p = extraSeqs.find(contentName);
         return ((p != extraSeqs.end()) ?
                 std::dynamic_pointer_cast<SeqType>(p->second) : std::shared_ptr<SeqType>());
     }
 
-    void setExtraSeq(const std::string& name, std::shared_ptr<AbstractSeq> seq);
+    void setExtraSeq(const std::string& contentName, std::shared_ptr<AbstractSeq> seq);
 
     template <class SeqType>
     std::shared_ptr<SeqType> getOrCreateExtraSeq(
-        const std::string& name, std::function<void(SeqType& seq)> initFunc = nullptr) {
-        std::shared_ptr<AbstractSeq>& base = extraSeqs[name];
+        const std::string& contentName, std::function<void(SeqType& seq)> initFunc = nullptr) {
+        std::shared_ptr<AbstractSeq>& base = extraSeqs[contentName];
         std::shared_ptr<SeqType> seq;
         if(base){
             seq = std::dynamic_pointer_cast<SeqType>(base);
@@ -141,7 +145,7 @@ public:
         return seq;
     }
 
-    void clearExtraSeq(const std::string& name);
+    void clearExtraSeq(const std::string& contentName);
 
     SignalProxy<void()> sigExtraSeqsChanged() {
         return sigExtraSeqsChanged_;

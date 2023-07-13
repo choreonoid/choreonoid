@@ -25,11 +25,11 @@ ExtraSeqItemFactoryMap extraSeqItemFactories;
 
 struct ExtraSeqItemInfo : public Referenced
 {
-    string key;
+    string contentName;
     AbstractSeqItemPtr item;
     ScopedConnection sigUpdateConnection;
 
-    ExtraSeqItemInfo(const string& key, AbstractSeqItemPtr& item) : key(key), item(item) { }
+    ExtraSeqItemInfo(const string& contentName, AbstractSeqItemPtr& item) : contentName(contentName), item(item) { }
     ~ExtraSeqItemInfo() {
         item->removeFromParentItem();
     }
@@ -145,23 +145,23 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
         });
 
     registerExtraSeqItemFactory(
-        BodyMotion::linkPosSeqKey(),
+        BodyMotion::linkPosSeqContentName(),
         [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
             MultiSE3SeqItem* item = nullptr;
             if(auto linkPosSeq = dynamic_pointer_cast<MultiSE3Seq>(seq)){
                 item = new MultiSE3SeqItem(linkPosSeq);
-                item->setName("Cartesian");
+                item->setName("LinkPosition");
             }
             return item;
         });
     
     registerExtraSeqItemFactory(
-        BodyMotion::jointPosSeqKey(),
+        BodyMotion::jointPosSeqContentName(),
         [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
             MultiValueSeqItem* item = nullptr;
             if(auto jointPosSeq = dynamic_pointer_cast<MultiValueSeq>(seq)){
                 item = new MultiValueSeqItem(jointPosSeq);
-                item->setName("Joint");
+                item->setName("JointDisplacement");
             }
             return item;
         });
@@ -183,16 +183,16 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
 
 
 void BodyMotionItem::registerExtraSeqItemFactory
-(const std::string& key, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory)
+(const std::string& contentName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory)
 {
-    extraSeqItemFactories[key] = factory;
+    extraSeqItemFactories[contentName] = factory;
 }
 
 
 void BodyMotionItem::addExtraSeqItemFactory
-(const std::string& key, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory)
+(const std::string& contentName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory)
 {
-    registerExtraSeqItemFactory(key, factory);
+    registerExtraSeqItemFactory(contentName, factory);
 }
 
 
@@ -287,9 +287,9 @@ int BodyMotionItem::numExtraSeqItems() const
 }
 
 
-const std::string& BodyMotionItem::extraSeqKey(int index) const
+const std::string& BodyMotionItem::extraSeqContentName(int index) const
 {
-    return impl->extraSeqItemInfos[index]->key;
+    return impl->extraSeqItemInfos[index]->contentName;
 }
 
 
@@ -324,10 +324,10 @@ void BodyMotionItem::Impl::updateExtraSeqItems()
     BodyMotion& bodyMotion = *self->bodyMotion_;
     BodyMotion::ConstSeqIterator p;
     for(p = bodyMotion.extraSeqBegin(); p != bodyMotion.extraSeqEnd(); ++p){
-        const string& key = p->first;
+        const string& contentName = p->first;
         auto newSeq = p->second;
         AbstractSeqItemPtr newItem;
-        ExtraSeqItemInfoMap::iterator p = extraSeqItemInfoMap.find(key);
+        ExtraSeqItemInfoMap::iterator p = extraSeqItemInfoMap.find(contentName);
         if(p != extraSeqItemInfoMap.end()){
             ExtraSeqItemInfo* info = p->second;
             AbstractSeqItemPtr& prevItem = info->item;
@@ -337,13 +337,13 @@ void BodyMotionItem::Impl::updateExtraSeqItems()
             }
         }
         if(!newItem){
-            ExtraSeqItemFactoryMap::iterator q = extraSeqItemFactories.find(key);
+            ExtraSeqItemFactoryMap::iterator q = extraSeqItemFactories.find(contentName);
             if(q != extraSeqItemFactories.end()){
                 ExtraSeqItemFactory& factory = q->second;
                 newItem = factory(newSeq);
                 if(newItem){
                     self->addSubItem(newItem);
-                    ExtraSeqItemInfo* info = new ExtraSeqItemInfo(key, newItem);
+                    ExtraSeqItemInfo* info = new ExtraSeqItemInfo(contentName, newItem);
                     info->sigUpdateConnection =
                         newItem->sigUpdated().connect([&](){ onSubItemUpdated(); });
                     extraSeqItemInfos.push_back(info);
@@ -354,7 +354,7 @@ void BodyMotionItem::Impl::updateExtraSeqItems()
     extraSeqItemInfoMap.clear();
     for(size_t i=0; i < extraSeqItemInfos.size(); ++i){
         ExtraSeqItemInfo* info = extraSeqItemInfos[i];
-        extraSeqItemInfoMap.insert(make_pair(info->key, info));
+        extraSeqItemInfoMap.insert(make_pair(info->contentName, info));
     }
 
     sigExtraSeqItemsChanged();

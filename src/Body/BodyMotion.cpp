@@ -14,8 +14,8 @@ using fmt::format;
 
 namespace {
 
-static const string linkPosSeqKey_("MultiLinkPositionSeq");
-static const string jointPosSeqKey_("MultiJointDisplacementSeq");
+static const string linkPosSeqContentName_("MultiLinkPositionSeq");
+static const string jointPosSeqContentName_("MultiJointDisplacementSeq");
 
 }
 
@@ -113,9 +113,9 @@ void BodyMotion::setOffsetTime(double time)
 std::shared_ptr<MultiSE3Seq> BodyMotion::getOrCreateLinkPosSeq()
 {
     return getOrCreateExtraSeq<MultiSE3Seq>(
-        linkPosSeqKey_,
+        linkPosSeqContentName_,
         [this](MultiSE3Seq& seq){
-            seq.setSeqContentName(linkPosSeqKey_);
+            seq.setSeqContentName(linkPosSeqContentName_);
             seq.setNumParts(positionSeq_->numLinkPositionsHint());
         });
 }
@@ -124,9 +124,9 @@ std::shared_ptr<MultiSE3Seq> BodyMotion::getOrCreateLinkPosSeq()
 std::shared_ptr<MultiValueSeq> BodyMotion::getOrCreateJointPosSeq()
 {
     return getOrCreateExtraSeq<MultiValueSeq>(
-        jointPosSeqKey_,
+        jointPosSeqContentName_,
         [this](MultiValueSeq& seq){
-            seq.setSeqContentName(jointPosSeqKey_);
+            seq.setSeqContentName(jointPosSeqContentName_);
             seq.setNumParts(positionSeq_->numJointDisplacementsHint());
         });
 }
@@ -142,10 +142,10 @@ void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool f
         auto& seq = kv.second;
         bool done = false;
         if(auto multiSeq = dynamic_pointer_cast<AbstractMultiSeq>(seq)){
-            if(multiSeq->seqContentName() == linkPosSeqKey_){
+            if(multiSeq->seqContentName() == linkPosSeqContentName_){
                 multiSeq->setDimension(numFrames, numLinks, fillNewElements);
                 done = true;
-            } else if(multiSeq->seqContentName() == jointPosSeqKey_){
+            } else if(multiSeq->seqContentName() == jointPosSeqContentName_){
                 multiSeq->setDimension(numFrames, numJoints, fillNewElements);
                 done = true;
             }
@@ -160,7 +160,7 @@ void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool f
 void BodyMotion::setNumJoints(int numJoints, bool fillNewElements)
 {
     positionSeq_->setNumJointDisplacementsHint(numJoints);
-    if(auto seq = extraSeq<MultiValueSeq>(jointPosSeqKey_)){
+    if(auto seq = extraSeq<MultiValueSeq>(jointPosSeqContentName_)){
         seq->setNumParts(numJoints, fillNewElements);
     }
 }
@@ -190,15 +190,15 @@ std::shared_ptr<const MultiValueSeq> BodyMotion::jointPosSeq() const
 }
 
 
-const std::string& BodyMotion::linkPosSeqKey()
+const std::string& BodyMotion::linkPosSeqContentName()
 {
-    return linkPosSeqKey_;
+    return linkPosSeqContentName_;
 }
 
 
-const std::string& BodyMotion::jointPosSeqKey()
+const std::string& BodyMotion::jointPosSeqContentName()
 {
-    return jointPosSeqKey_;
+    return jointPosSeqContentName_;
 }
 
 
@@ -264,14 +264,14 @@ void BodyMotion::updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq()
     shared_ptr<AbstractSeq> srcSeq;
 
     int numLinkPosSeqParts = 0;
-    auto lseq = extraSeq<MultiSE3Seq>(linkPosSeqKey_);
+    auto lseq = extraSeq<MultiSE3Seq>(linkPosSeqContentName_);
     if(lseq){
         numLinkPosSeqParts = lseq->numParts();
         srcSeq = lseq;
     }
     
     int numJointPosSeqParts = 0;
-    auto jseq = extraSeq<MultiValueSeq>(jointPosSeqKey_);
+    auto jseq = extraSeq<MultiValueSeq>(jointPosSeqContentName_);
     if(jseq){
         numJointPosSeqParts = jseq->numParts();
         if(!srcSeq){
@@ -307,16 +307,16 @@ void BodyMotion::updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq()
 }
 
 
-void BodyMotion::setExtraSeq(const std::string& name, std::shared_ptr<AbstractSeq> seq)
+void BodyMotion::setExtraSeq(const std::string& contentName, std::shared_ptr<AbstractSeq> seq)
 {
-    extraSeqs[name] = seq;
+    extraSeqs[contentName] = seq;
     sigExtraSeqsChanged_();
 }
 
 
-void BodyMotion::clearExtraSeq(const std::string& name)
+void BodyMotion::clearExtraSeq(const std::string& contentName)
 {
-    if(extraSeqs.erase(name) > 0){
+    if(extraSeqs.erase(contentName) > 0){
         sigExtraSeqsChanged_();
     }
 }
@@ -524,8 +524,8 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
     } else {
         setDimension(0, 1, 1);
     }
-    clearExtraSeq(linkPosSeqKey_);
-    clearExtraSeq(jointPosSeqKey_);
+    clearExtraSeq(linkPosSeqContentName_);
+    clearExtraSeq(jointPosSeqContentName_);
     
     return loaded;
 }
@@ -533,8 +533,8 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
 
 bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    bool doClearLinkPosSeq = extraSeqs.find(linkPosSeqKey_) == extraSeqs.end();
-    bool doClearJointPosSeq = extraSeqs.find(jointPosSeqKey_) == extraSeqs.end();
+    bool doClearLinkPosSeq = extraSeqs.find(linkPosSeqContentName_) == extraSeqs.end();
+    bool doClearJointPosSeq = extraSeqs.find(jointPosSeqContentName_) == extraSeqs.end();
     
     updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
     
@@ -580,7 +580,7 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additional
             }
             
             for(auto& kv : extraSeqs){
-                if(kv.first != linkPosSeqKey_ && kv.first != jointPosSeqKey_){
+                if(kv.first != linkPosSeqContentName_ && kv.first != jointPosSeqContentName_){
                     kv.second->writeSeq(writer);
                 }
             }
@@ -593,10 +593,10 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additional
     }
 
     if(doClearLinkPosSeq){
-        clearExtraSeq(linkPosSeqKey_);
+        clearExtraSeq(linkPosSeqContentName_);
     }
     if(doClearJointPosSeq){
-        clearExtraSeq(jointPosSeqKey_);
+        clearExtraSeq(jointPosSeqContentName_);
     }
 
     return result;

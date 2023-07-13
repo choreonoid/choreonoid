@@ -144,16 +144,16 @@ void BodyMotionEngine::initializeClass(ExtensionManager* ext)
 
 
 void BodyMotionEngine::registerExtraSeqEngineFactory
-(const std::string& key, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory)
+(const std::string& contentName, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory)
 {
-    extraSeqEngineFactories[key] = factory;
+    extraSeqEngineFactories[contentName] = factory;
 }
 
 
 void BodyMotionEngine::addExtraSeqEngineFactory
-(const std::string& key, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory)
+(const std::string& contentName, std::function<TimeSyncItemEngine*(BodyItem* bodyItem, AbstractSeqItem* seqItem)> factory)
 {
-    registerExtraSeqEngineFactory(key, factory);
+    registerExtraSeqEngineFactory(contentName, factory);
 }
 
 
@@ -184,9 +184,9 @@ void BodyMotionEngine::updateExtraSeqEngines()
     if(auto bodyItem_ = core.bodyItemRef.lock()){
         const int n = motionItem_->numExtraSeqItems();
         for(int i=0; i < n; ++i){
-            const string& key = motionItem_->extraSeqKey(i);
+            const string& contentName = motionItem_->extraSeqContentName(i);
             AbstractSeqItem* seqItem = motionItem_->extraSeqItem(i);
-            ExtraSeqEngineFactoryMap::iterator q = extraSeqEngineFactories.find(key);
+            ExtraSeqEngineFactoryMap::iterator q = extraSeqEngineFactories.find(contentName);
             if(q != extraSeqEngineFactories.end()){
                 ExtraSeqEngineFactory& createEngine = q->second;
                 extraSeqEngines.push_back(createEngine(bodyItem_, seqItem));

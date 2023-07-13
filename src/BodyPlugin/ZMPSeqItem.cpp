@@ -14,18 +14,6 @@ using fmt::format;
 
 namespace {
 
-AbstractSeqItem* createZMPSeqItem(std::shared_ptr<AbstractSeq> seq)
-{
-    auto zmpseq = dynamic_pointer_cast<ZMPSeq>(seq);
-    if(zmpseq){
-        auto item = new ZMPSeqItem(zmpseq);
-        item->setName("ZMP");
-        return item;
-    }
-    return nullptr;
-}
-
-
 class ZMPSeqEngine : public TimeSyncItemEngine
 {
     shared_ptr<ZMPSeq> seq;
@@ -58,24 +46,35 @@ public:
     }
 };
 
-
-TimeSyncItemEngine* createZMPSeqEngine(BodyItem* bodyItem, AbstractSeqItem* seqItem)
-{
-    ZMPSeqItem* item = dynamic_cast<ZMPSeqItem*>(seqItem);
-    if(item){
-        return new ZMPSeqEngine(item, bodyItem);
-    }
-    return nullptr;
-}
-
 }
 
 
 void ZMPSeqItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerClass<ZMPSeqItem, Vector3SeqItem>(N_("ZMPSeqItem"));
-    BodyMotionItem::registerExtraSeqItemFactory(ZMPSeq::key(), createZMPSeqItem);
-    BodyMotionEngine::registerExtraSeqEngineFactory(ZMPSeq::key(), createZMPSeqEngine);
+
+    auto& zmpSeqKey = ZMPSeq::key();
+    
+    BodyMotionItem::registerExtraSeqItemFactory(
+        zmpSeqKey,
+        [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
+            ZMPSeqItem* item = nullptr;
+            if(auto zmpseq = dynamic_pointer_cast<ZMPSeq>(seq)){
+                item = new ZMPSeqItem(zmpseq);
+                item->setName("ZMP");
+            }
+            return item;
+        });
+    
+    BodyMotionEngine::registerExtraSeqEngineFactory(
+        zmpSeqKey,
+        [](BodyItem* bodyItem, AbstractSeqItem* seqItem) -> TimeSyncItemEngine* {
+            ZMPSeqEngine* engine = nullptr;
+            if(auto item = dynamic_cast<ZMPSeqItem*>(seqItem)){
+                engine = new ZMPSeqEngine(item, bodyItem);
+            }
+            return engine;
+        });
 }
 
 

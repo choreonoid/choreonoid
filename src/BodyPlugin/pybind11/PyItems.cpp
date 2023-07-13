@@ -54,11 +54,13 @@ void exportItems(py::module m)
         .def(py::init<>())
         .def_property_readonly("motion", [](BodyMotionItem* item){ return item->motion(); })
         .def_property_readonly("numExtraSeqItems", &BodyMotionItem::numExtraSeqItems)
-        .def("extraSeqKey", &BodyMotionItem::extraSeqKey)
-        .def("extraSeqItem", (AbstractSeqItem*(BodyMotionItem::*)(int))&BodyMotionItem::extraSeqItem)
+        .def("getExtraSeqContentName", &BodyMotionItem::extraSeqContentName)
+        .def("getExtraSeqItem", (AbstractSeqItem*(BodyMotionItem::*)(int))&BodyMotionItem::extraSeqItem)
         .def("updateExtraSeqItems", &BodyMotionItem::updateExtraSeqItems)
 
         // deprecated
+        .def("extraSeqKey", &BodyMotionItem::extraSeqContentName)
+        .def("extraSeqItem", (AbstractSeqItem*(BodyMotionItem::*)(int))&BodyMotionItem::extraSeqItem)
         .def("getMotion", [](BodyMotionItem* item){ return item->motion(); })
         .def("getNumExtraSeqItems", &BodyMotionItem::numExtraSeqItems)
         ;

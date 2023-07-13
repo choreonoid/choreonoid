@@ -14,10 +14,10 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     static void registerExtraSeqItemFactory(
-        const std::string& key, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory);
+        const std::string& contentName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory);
     [[deprecated("Use registerExtraSeqItemFactory")]]
     static void addExtraSeqItemFactory(
-        const std::string& key, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory);
+        const std::string& contentName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory);
 
     BodyMotionItem();
     BodyMotionItem(std::shared_ptr<BodyMotion> bodyMotion);
@@ -29,7 +29,9 @@ public:
     std::shared_ptr<const BodyMotion> motion() const { return bodyMotion_; }
 
     int numExtraSeqItems() const;
-    const std::string& extraSeqKey(int index) const;
+    const std::string& extraSeqContentName(int index) const;
+    [[deprecated("Use extraSeqContentName.")]]
+    const std::string& extraSeqKey(int index) const { return extraSeqContentName(index); }
     AbstractSeqItem* extraSeqItem(int index);
     const AbstractSeqItem* extraSeqItem(int index) const;
     SignalProxy<void()> sigExtraSeqItemsChanged();
