@@ -451,9 +451,6 @@ public:
 
     StringStyle keyStringStyle() const { return keyStringStyle_; }
 
-    //! \deprecated
-    template <class T> T read(const std::string& key) const { return get<T>(key); }
-
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     Listing* findSequence(const std::string& key) const { return findListing(key); }
     Listing* openSequence(const std::string& key) { return openListing(key); }
