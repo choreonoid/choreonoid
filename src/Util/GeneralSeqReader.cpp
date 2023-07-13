@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "GeneralSeqReader.h"
 #include <fmt/format.h>
 #include "gettext.h"

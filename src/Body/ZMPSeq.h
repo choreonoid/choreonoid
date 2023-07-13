@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_ZMP_SEQ_H
 #define CNOID_BODY_ZMP_SEQ_H
 
@@ -16,7 +11,7 @@ class CNOID_EXPORT ZMPSeq : public Vector3Seq
 public:
     typedef Vector3Seq BaseSeqType;
     
-    static const std::string& key();
+    static const std::string& contentName();
 
     ZMPSeq(int nFrames = 0);
     ZMPSeq(const ZMPSeq& org);

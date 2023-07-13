@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "MultiSE3Seq.h"
 #include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
@@ -151,7 +146,7 @@ static void writeSE3(YAMLWriter& writer, const SE3& value)
 
 bool MultiSE3Seq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    double version = writer.getOrCreateInfo("formatVersion", 2.0);
+    double version = writer.getOrCreateInfo("format_version", 2.0);
     
     return BaseSeqType::doWriteSeq(
         writer,

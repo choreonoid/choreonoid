@@ -145,7 +145,7 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
         });
 
     registerExtraSeqItemFactory(
-        BodyMotion::linkPosSeqContentName(),
+        BodyMotion::linkPositionContentName(),
         [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
             MultiSE3SeqItem* item = nullptr;
             if(auto linkPosSeq = dynamic_pointer_cast<MultiSE3Seq>(seq)){
@@ -156,7 +156,7 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
         });
     
     registerExtraSeqItemFactory(
-        BodyMotion::jointPosSeqContentName(),
+        BodyMotion::jointDisplacementContentName(),
         [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
             MultiValueSeqItem* item = nullptr;
             if(auto jointPosSeq = dynamic_pointer_cast<MultiValueSeq>(seq)){

@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "MultiDeviceStateSeq.h"
 #include "BodyMotion.h"
 #include <cnoid/YAMLWriter>
@@ -125,8 +120,8 @@ const std::string& MultiDeviceStateSeq::partLabel(int partIndex) const
 
 bool MultiDeviceStateSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    double version = writer.info("formatVersion", 3.0);
-    if(version >= 1.0 && version < 2.0){
+    double formatVersion = writer.info("format_version", 4.0);
+    if(formatVersion >= 1.0 && formatVersion < 2.0){
         return false; // not supported for the format verions 1
     }
 
@@ -141,7 +136,7 @@ bool MultiDeviceStateSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> a
                 writer.putKey("components");
                 writer.startListing();
                 for(int i=0; i < m; ++i){
-                    writeDeviceStateSeq(writer, i);
+                    writeDeviceStateSeq(writer, formatVersion, i);
                 }
                 writer.endListing();
             }
@@ -149,7 +144,7 @@ bool MultiDeviceStateSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> a
 }
 
 
-void MultiDeviceStateSeq::writeDeviceStateSeq(YAMLWriter& writer, int deviceIndex)
+void MultiDeviceStateSeq::writeDeviceStateSeq(YAMLWriter& writer, double formatVersion, int deviceIndex)
 {
     auto seq = part(deviceIndex);
     DeviceState* state = seq[0];
@@ -171,9 +166,9 @@ void MultiDeviceStateSeq::writeDeviceStateSeq(YAMLWriter& writer, int deviceInde
         }
     }
     const int numFrames = validFrameIndices.size();
-    writer.putKeyValue("numFrames", numFrames);
+    writer.putKeyValue(formatVersion >= 4.0 ? "num_frames" : "numFrames", numFrames);
     const bool hasFrameTime = validFrameIndices.size() < seq.size();
-    writer.putKeyValue("hasFrameTime", hasFrameTime);
+    writer.putKeyValue(formatVersion >= 4.0 ? "has_frame_time" : "hasFrameTime", hasFrameTime);
 
     writer.putKey("frames");
     writer.startListing();

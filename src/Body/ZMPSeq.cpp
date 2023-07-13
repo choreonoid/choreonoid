@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ZMPSeq.h"
 #include "BodyMotion.h"
 #include <cnoid/YAMLWriter>
@@ -11,14 +6,16 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
-static const string contentName("ZMPSeq");
+
+const string zmpContentName_("ZMP");
+
 }
     
 
 ZMPSeq::ZMPSeq(int nFrames)
     : Vector3Seq(nFrames)
 {
-    setSeqContentName(contentName);
+    setSeqContentName(zmpContentName_);
     isRootRelative_ = false;
 }
 
@@ -33,7 +30,7 @@ ZMPSeq::ZMPSeq(const ZMPSeq& org)
 ZMPSeq::ZMPSeq(const Vector3Seq& org)
     : Vector3Seq(org)
 {
-    setSeqContentName(contentName);
+    setSeqContentName(zmpContentName_);
     isRootRelative_ = false;
 }
 
@@ -65,9 +62,9 @@ std::shared_ptr<AbstractSeq> ZMPSeq::cloneSeq() const
 }
 
 
-const std::string& ZMPSeq::key()
+const std::string& ZMPSeq::contentName()
 {
-    return contentName;
+    return zmpContentName_;
 }
 
 
@@ -83,7 +80,8 @@ bool ZMPSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPart
         writer,
         [&](){
             if(isRootRelative_){
-                writer.putKeyValue("isRootRelative", true);
+                double formatVersion = writer.info("format_version", 4.0);
+                writer.putKeyValue(formatVersion >= 4.0 ? "is_root_relative" : "isRootRelative", true);
             }
             if(additionalPartCallback) additionalPartCallback();
         });
@@ -93,7 +91,7 @@ bool ZMPSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPart
 bool ZMPSeq::doReadSeq(const Mapping* archive, std::ostream& os)
 {
     if(Vector3Seq::doReadSeq(archive, os)){
-        archive->read("isRootRelative", isRootRelative_);
+        archive->read({ "is_root_relative", "isRootRelative" }, isRootRelative_);
         return true;
     }
     return false;
@@ -102,19 +100,19 @@ bool ZMPSeq::doReadSeq(const Mapping* archive, std::ostream& os)
 
 std::shared_ptr<ZMPSeq> cnoid::getZMPSeq(const BodyMotion& motion)
 {
-    return motion.extraSeq<ZMPSeq>(contentName);
+    return motion.extraSeq<ZMPSeq>(zmpContentName_);
 }
 
 
 std::shared_ptr<ZMPSeq> cnoid::getOrCreateZMPSeq(BodyMotion& motion)
 {
-    return motion.getOrCreateExtraSeq<ZMPSeq>(contentName);
+    return motion.getOrCreateExtraSeq<ZMPSeq>(zmpContentName_);
 }
 
 
 void cnoid::clearZMPSeq(BodyMotion& motion)
 {
-    motion.clearExtraSeq(contentName);
+    motion.clearExtraSeq(zmpContentName_);
 }
 
 

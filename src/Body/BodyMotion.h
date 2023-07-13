@@ -64,12 +64,12 @@ public:
     void updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
     void updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
 
-    static const std::string& linkPosSeqContentName();
+    static const std::string& linkPositionContentName();
     [[deprecated("Use linkPosSeqContentName")]]
-    static const std::string& linkPosSeqKey() { return linkPosSeqContentName(); }
-    static const std::string& jointPosSeqContentName();
+    static const std::string& linkPosSeqKey() { return linkPositionContentName(); }
+    static const std::string& jointDisplacementContentName();
     [[deprecated("Use jointPosSeqContentName")]]
-    static const std::string& jointPosSeqKey() { return jointPosSeqContentName(); }
+    static const std::string& jointPosSeqKey() { return jointDisplacementContentName(); }
 
     class CNOID_EXPORT Frame {
         BodyMotion& motion_;

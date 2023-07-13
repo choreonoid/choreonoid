@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_GENERAL_SEQ_READER_H
 #define CNOID_UTIL_GENERAL_SEQ_READER_H
 
@@ -79,7 +74,7 @@ public:
         archive_ = archive;
         seq_ = seq;
         
-        formatVersion_ = archive->get("formatVersion", 1.0);
+        formatVersion_ = archive->get({ "format_version", "formatVersion" }, 1.0);
 
         auto& typeNode = (*archive)["type"];
         auto type = typeNode.toString();
@@ -101,7 +96,7 @@ public:
         }
 
         hasFrameTime_ = false;
-        auto node_hasFrameTime = archive->find("hasFrameTime");
+        auto node_hasFrameTime = archive->find({ "has_frame_time", "hasFrameTime" });
         if(node_hasFrameTime->isValid()){
             if(formatVersion_ < 2.0){
                 node_hasFrameTime->throwException(has_frame_time_unsupported_message(formatVersion_));
@@ -110,11 +105,11 @@ public:
         }
         
         if(!hasFrameTime_){
-            seq->setFrameRate(archive->read<double>("frameRate"));
+            seq->setFrameRate(archive->get<double>({ "frame_rate", "frameRate" }));
         } else {
             if(seq->getFrameRate() <= 0){
                 double r;
-                if(archive->read("frameRate", r)){
+                if(archive->read({ "frame_rate", "frameRate" }, r)){
                     seq->setFrameRate(r);
                 } else {
                     os_ << unkown_frame_rate_for_time_frame_seq_message() << std::endl;
@@ -124,10 +119,9 @@ public:
         }
 
         if(dynamic_cast<AbstractMultiSeq*>(seq)){
-            auto& node = (*archive)["numParts"];
-            numParts_ = node.toInt();
+            numParts_ = archive->get({ "num_parts", "numParts" }, 0);
             if(numParts_ < 1){
-                node.throwException(invalid_num_parts_messaage());
+                archive->throwException(invalid_num_parts_messaage());
             }
         }
 

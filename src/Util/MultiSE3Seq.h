@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_MULTI_SE3_SEQ_H
 #define CNOID_UTIL_MULTI_SE3_SEQ_H
 

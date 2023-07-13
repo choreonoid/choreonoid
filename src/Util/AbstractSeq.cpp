@@ -173,12 +173,21 @@ bool AbstractSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> additiona
         writer.putKeyValue("content", contentName_);
     }
 
-    double version = writer.info("formatVersion", 0.0);
-    if(version == 0.0 || !writer.info("isComponent", false)){
-        writer.putKeyValue("formatVersion", version == 0.0 ? 2.0 : version);
+    bool doWriteFormatVersion = !writer.info("is_component", false);
+    double version = writer.info("format_version", 4.0);
+    if(version >= 4.0){
+        if(doWriteFormatVersion){
+            writer.putKeyValue("format_version", version);
+        }
+        writer.putKeyValue("frame_rate", frameRate);
+        writer.putKeyValue("num_frames", getNumFrames());
+    } else {
+        if(doWriteFormatVersion){
+            writer.putKeyValue("formatVersion", version);
+        }
+        writer.putKeyValue("frameRate", frameRate);
+        writer.putKeyValue("numFrames", getNumFrames());
     }
-    writer.putKeyValue("frameRate", frameRate);
-    writer.putKeyValue("numFrames", getNumFrames());
 
     if(additionalPartCallback) additionalPartCallback();
 
@@ -245,7 +254,8 @@ bool AbstractMultiSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> addi
     return AbstractSeq::doWriteSeq(
         writer,
         [&](){
-            writer.putKeyValue("numParts", getNumParts());
+            double version = writer.info("format_version", 0.0);
+            writer.putKeyValue(version >= 4.0 ? "num_parts" : "numParts", getNumParts());
             if(additionalPartCallback) additionalPartCallback();
         });
 }
@@ -254,7 +264,7 @@ bool AbstractMultiSeq::doWriteSeq(YAMLWriter& writer, std::function<void()> addi
 std::vector<std::string> AbstractMultiSeq::readSeqPartLabels(const Mapping* archive)
 {
     vector<string> labelStrings;
-    const Listing& labels = *archive->findListing("partLabels");
+    const Listing& labels = *archive->findListing({ "part_labels", "partLabels"});
     if(labels.isValid()){
         int n = labels.size();
         labelStrings.reserve(n);
@@ -268,7 +278,8 @@ std::vector<std::string> AbstractMultiSeq::readSeqPartLabels(const Mapping* arch
 
 bool AbstractMultiSeq::writeSeqPartLabels(YAMLWriter& writer)
 {
-    writer.putKey("partLabels");
+    double version = writer.info("format_version",  0.0);
+    writer.putKey(version >= 4.0 ? "part_labels" : "partLabels");
     writer.startFlowStyleListing();
     int n = getNumParts();
     for(int i=0; i < n; ++i){
