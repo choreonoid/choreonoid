@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "YAMLWriter.h"
 #include "NullOut.h"
 #include "UTF8.h"
@@ -44,7 +40,6 @@ public:
     const char* doubleFormat;
     std::stack<State> states;
     State* current;
-    MappingPtr info;
     string linebuf;
     unordered_set<ref_ptr<const ValueNode>> nodeSet;
     typedef unordered_map<ref_ptr<const ValueNode>, int> AnchorMap;
@@ -52,8 +47,8 @@ public:
     int anchorIndex;
     string anchor;
 
-    Impl(const std::string filename);
-    Impl(std::ostream& os);
+    Impl(YAMLWriter* self, const std::string& filename);
+    Impl(YAMLWriter* self, std::ostream& os);
     ~Impl();
 
     ostream& os() { return *os_; }
@@ -91,19 +86,19 @@ public:
 
 YAMLWriter::YAMLWriter()
 {
-    impl = new Impl(nullout());
+    impl = new Impl(this, nullout());
 }
 
 
-YAMLWriter::YAMLWriter(const std::string filename)
+YAMLWriter::YAMLWriter(const std::string& filename)
 {
-    impl = new Impl(filename);
+    impl = new Impl(this, filename);
     openFile(filename);
 }
 
 
-YAMLWriter::Impl::Impl(const std::string filename)
-    : Impl(ofs)
+YAMLWriter::Impl::Impl(YAMLWriter* self, const std::string&)
+    : Impl(self, ofs)
 {
 
 }
@@ -111,11 +106,11 @@ YAMLWriter::Impl::Impl(const std::string filename)
 
 YAMLWriter::YAMLWriter(std::ostream& os)
 {
-    impl = new Impl(os);
+    impl = new Impl(this, os);
 }
 
 
-YAMLWriter::Impl::Impl(std::ostream& os)
+YAMLWriter::Impl::Impl(YAMLWriter* self, std::ostream& os)
     : os_(&os)
 {
     indentWidth = 2;
@@ -129,7 +124,7 @@ YAMLWriter::Impl::Impl(std::ostream& os)
 
     pushState(TOP, false);
 
-    info = new Mapping;
+    self->info_ = new Mapping;
 }    
 
 
@@ -916,82 +911,4 @@ void YAMLWriter::Impl::putListingNode(const Listing* listing)
     }
 
     endListing();
-}
-
-
-const Mapping* YAMLWriter::info() const
-{
-    return impl->info;
-}
-
-
-Mapping* YAMLWriter::info()
-{
-    return impl->info;
-}
-
-
-template<> double YAMLWriter::info(const std::string& key) const
-{
-    return impl->info->get(key).toDouble();
-}
-
-
-template<> double YAMLWriter::info(const std::string& key, const double& defaultValue) const
-{
-    double value;
-    if(impl->info->read(key, value)){
-        return value;
-    }
-    return defaultValue;
-}
-
-
-template<> bool YAMLWriter::info(const std::string& key, const bool& defaultValue) const
-{
-    bool value;
-    if(impl->info->read(key, value)){
-        return value;
-    }
-    return defaultValue;
-}
-
-
-template<> double YAMLWriter::getOrCreateInfo(const std::string& key, const double& defaultValue)
-{
-    double value;
-    if(!impl->info->read(key, value)){
-        impl->info->write(key, defaultValue);
-        value = defaultValue;
-    }
-    return value;
-}
-
-
-template<> bool YAMLWriter::getOrCreateInfo(const std::string& key, const bool& defaultValue)
-{
-    bool value;
-    if(!impl->info->read(key, value)){
-        impl->info->write(key, defaultValue);
-        value = defaultValue;
-    }
-    return value;
-}
-
-
-template<> void YAMLWriter::setInfo(const std::string& key, const double& value)
-{
-    impl->info->write(key, value);
-}
-
-
-template<> void YAMLWriter::setInfo(const std::string& key, const bool& value)
-{
-    impl->info->write(key, value);
-}
-
-
-void YAMLWriter::resetInfo(Mapping* info)
-{
-    impl->info = info;
 }

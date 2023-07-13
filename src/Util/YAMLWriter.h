@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_YAML_WRITER_H
 #define CNOID_UTIL_YAML_WRITER_H
 
@@ -15,7 +11,7 @@ class CNOID_EXPORT YAMLWriter
 {
 public:
     YAMLWriter();
-    YAMLWriter(const std::string filename);
+    YAMLWriter(const std::string& filename);
     YAMLWriter(std::ostream& os);
     ~YAMLWriter();
 
@@ -79,15 +75,41 @@ public:
     void startFlowStyleListing();
     void endListing();
 
-    const Mapping* info() const;
-    Mapping* info();
+    const Mapping* info() const { return info_; }
+    Mapping* info() { return info_; }
     
-    template<typename T> T info(const std::string& key) const;
-    template<typename T> T info(const std::string& key, const T& defaultValue) const;
-    template<typename T> T getOrCreateInfo(const std::string& key, const T& defaultValue);
-    template<typename T> void setInfo(const std::string& key, const T& value);
+    template<typename T>
+    T info(const std::string& key) const {
+        return info_->get(key).to<T>();
+    }
+    
+    template<typename T>
+    T info(const std::string& key, const T& defaultValue) const {
+        T value;
+        if(info_->read(key, value)){
+            return value;
+        }
+        return defaultValue;
+    }
 
-    void resetInfo(Mapping* info);
+    template<typename T>
+    T getOrCreateInfo(const std::string& key, const T& defaultValue) {
+        T value;
+        if(!info_->read(key, value)){
+            info_->write(key, defaultValue);
+            value = defaultValue;
+        }
+        return value;
+    }
+        
+    template<typename T>
+    void setInfo(const std::string& key, const T& value) {
+        info_->write(key, value);
+    }
+
+    void resetInfo(Mapping* info) {
+        info_ = info;
+    }
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     void startSequence() { startListing(); }
@@ -96,17 +118,12 @@ public:
 #endif        
 
 private:
+    MappingPtr info_;
+
     class Impl;
     Impl* impl;
 };
 
-template<> CNOID_EXPORT double YAMLWriter::info(const std::string& key) const;
-template<> CNOID_EXPORT double YAMLWriter::info(const std::string& key, const double& defaultValue) const;
-template<> CNOID_EXPORT bool YAMLWriter::info(const std::string& key, const bool& defaultValue) const;
-template<> CNOID_EXPORT double YAMLWriter::getOrCreateInfo(const std::string& key, const double& defaultValue);
-template<> CNOID_EXPORT bool YAMLWriter::getOrCreateInfo(const std::string& key, const bool& defaultValue);
-template<> CNOID_EXPORT void YAMLWriter::setInfo(const std::string& key, const double& value);
-template<> CNOID_EXPORT void YAMLWriter::setInfo(const std::string& key, const bool& value);
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
 typedef YAMLWriter YamlWriter;
