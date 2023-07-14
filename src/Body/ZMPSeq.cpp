@@ -62,7 +62,7 @@ std::shared_ptr<AbstractSeq> ZMPSeq::cloneSeq() const
 }
 
 
-const std::string& ZMPSeq::contentName()
+const std::string& ZMPSeq::seqContentName()
 {
     return zmpContentName_;
 }

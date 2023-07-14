@@ -6,7 +6,7 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
-static const string contentName("MultiDeviceStateSeq");
+static const string contentName("DeviceState");
 }
 
 
@@ -63,7 +63,7 @@ MultiDeviceStateSeq::~MultiDeviceStateSeq()
 }
 
 
-const std::string& MultiDeviceStateSeq::key()
+const std::string& MultiDeviceStateSeq::seqContentName()
 {
     return contentName;
 }
@@ -152,7 +152,7 @@ void MultiDeviceStateSeq::writeDeviceStateSeq(YAMLWriter& writer, double formatV
     vector<double> buf(stateSize);
     writer.startMapping();
     writer.putKeyValue("type", "DeviceStateSeq");
-    writer.putKeyValue("content", string(state->typeName()) + "StateSeq");
+    writer.putKeyValue("content", string(state->typeName()) + "State");
     writer.putKey("name");
     writer.putDoubleQuotedString(partLabel(deviceIndex));
 

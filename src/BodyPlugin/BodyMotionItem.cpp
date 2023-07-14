@@ -5,7 +5,8 @@
 #include <cnoid/MenuManager>
 #include <cnoid/MultiSE3SeqItem>
 #include <cnoid/MultiValueSeqItem>
-#include <cnoid/ZMPSeq>
+#include <cnoid/Vector3SeqItem>
+#include <cnoid/MultiVector3SeqItem>
 #include <cnoid/MessageView>
 #include <cnoid/ItemTreeView>
 #include <cnoid/PutPropertyFunction>
@@ -21,7 +22,8 @@ namespace {
 
 typedef std::function<AbstractSeqItem*(shared_ptr<AbstractSeq> seq)> ExtraSeqItemFactory;
 typedef map<string, ExtraSeqItemFactory> ExtraSeqItemFactoryMap;
-ExtraSeqItemFactoryMap extraSeqItemFactories;
+ExtraSeqItemFactoryMap extraSeqTypeItemFactories;
+ExtraSeqItemFactoryMap extraSeqContentItemFactories;
 
 struct ExtraSeqItemInfo : public Referenced
 {
@@ -144,28 +146,42 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
             return item->motion()->save(filename, 1.0, os);
         });
 
-    registerExtraSeqItemFactory(
-        BodyMotion::linkPositionContentName(),
+    registerExtraSeqType(
+        "MultiValueSeq",
         [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
-            MultiSE3SeqItem* item = nullptr;
-            if(auto linkPosSeq = dynamic_pointer_cast<MultiSE3Seq>(seq)){
-                item = new MultiSE3SeqItem(linkPosSeq);
-                item->setName("LinkPosition");
+            if(auto multiValueSeq = dynamic_pointer_cast<MultiValueSeq>(seq)){
+                return new MultiValueSeqItem(multiValueSeq);
             }
-            return item;
-        });
-    
-    registerExtraSeqItemFactory(
-        BodyMotion::jointDisplacementContentName(),
-        [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
-            MultiValueSeqItem* item = nullptr;
-            if(auto jointPosSeq = dynamic_pointer_cast<MultiValueSeq>(seq)){
-                item = new MultiValueSeqItem(jointPosSeq);
-                item->setName("JointDisplacement");
-            }
-            return item;
+            return nullptr;
         });
 
+    registerExtraSeqType(
+        "MultiSE3Seq",
+        [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
+            if(auto multiSE3Seq = dynamic_pointer_cast<MultiSE3Seq>(seq)){
+                return new MultiSE3SeqItem(multiSE3Seq);
+            }
+            return nullptr;
+        });
+
+    registerExtraSeqType(
+        "Vector3Seq",
+        [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
+            if(auto vector3Seq = dynamic_pointer_cast<Vector3Seq>(seq)){
+                return new Vector3SeqItem(vector3Seq);
+            }
+            return nullptr;
+        });
+
+    registerExtraSeqType(
+        "MultiVector3Seq",
+        [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
+            if(auto multiVector3Seq = dynamic_pointer_cast<MultiVector3Seq>(seq)){
+                return new MultiVector3SeqItem(multiVector3Seq);
+            }
+            return nullptr;
+        });
+    
     ItemTreeView::customizeContextMenu<BodyMotionItem>(
         [](BodyMotionItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
             menuManager.setPath("/").setPath(_("Data conversion"));
@@ -182,17 +198,17 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
 }
 
 
-void BodyMotionItem::registerExtraSeqItemFactory
-(const std::string& contentName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory)
+void BodyMotionItem::registerExtraSeqType
+(const std::string& typeName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> itemFactory)
 {
-    extraSeqItemFactories[contentName] = factory;
+    extraSeqTypeItemFactories[typeName] = itemFactory;
 }
 
 
-void BodyMotionItem::addExtraSeqItemFactory
-(const std::string& contentName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory)
+void BodyMotionItem::registerExtraSeqContent
+(const std::string& contentName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> itemFactory)
 {
-    registerExtraSeqItemFactory(contentName, factory);
+    extraSeqContentItemFactories[contentName] = itemFactory;
 }
 
 
@@ -322,14 +338,14 @@ void BodyMotionItem::Impl::updateExtraSeqItems()
     extraSeqItemInfos.clear();
 
     BodyMotion& bodyMotion = *self->bodyMotion_;
-    BodyMotion::ConstSeqIterator p;
-    for(p = bodyMotion.extraSeqBegin(); p != bodyMotion.extraSeqEnd(); ++p){
-        const string& contentName = p->first;
-        auto newSeq = p->second;
+
+    for(auto seqIter = bodyMotion.extraSeqBegin(); seqIter != bodyMotion.extraSeqEnd(); ++seqIter){
+        const string& contentName = seqIter->first;
+        auto newSeq = seqIter->second;
         AbstractSeqItemPtr newItem;
-        ExtraSeqItemInfoMap::iterator p = extraSeqItemInfoMap.find(contentName);
-        if(p != extraSeqItemInfoMap.end()){
-            ExtraSeqItemInfo* info = p->second;
+        auto infoIter = extraSeqItemInfoMap.find(contentName);
+        if(infoIter != extraSeqItemInfoMap.end()){
+            ExtraSeqItemInfo* info = infoIter->second;
             AbstractSeqItemPtr& prevItem = info->item;
             if(typeid(prevItem->abstractSeq().get()) == typeid(newSeq.get())){
                 extraSeqItemInfos.push_back(info);
@@ -337,20 +353,30 @@ void BodyMotionItem::Impl::updateExtraSeqItems()
             }
         }
         if(!newItem){
-            ExtraSeqItemFactoryMap::iterator q = extraSeqItemFactories.find(contentName);
-            if(q != extraSeqItemFactories.end()){
-                ExtraSeqItemFactory& factory = q->second;
+            auto contentFactoryIter = extraSeqContentItemFactories.find(contentName);
+            if(contentFactoryIter != extraSeqContentItemFactories.end()){
+                ExtraSeqItemFactory& factory = contentFactoryIter->second;
                 newItem = factory(newSeq);
-                if(newItem){
-                    self->addSubItem(newItem);
-                    ExtraSeqItemInfo* info = new ExtraSeqItemInfo(contentName, newItem);
-                    info->sigUpdateConnection =
-                        newItem->sigUpdated().connect([&](){ onSubItemUpdated(); });
-                    extraSeqItemInfos.push_back(info);
+            }
+            if(!newItem){
+                auto typeFactoryIter = extraSeqTypeItemFactories.find(newSeq->seqType());
+                if(typeFactoryIter != extraSeqTypeItemFactories.end()){
+                    ExtraSeqItemFactory& factory = typeFactoryIter->second;
+                    newItem = factory(newSeq);
                 }
+            }
+            if(newItem){
+                if(newItem->name().empty()){
+                    newItem->setName(contentName);
+                }
+                self->addSubItem(newItem);
+                ExtraSeqItemInfo* info = new ExtraSeqItemInfo(contentName, newItem);
+                info->sigUpdateConnection = newItem->sigUpdated().connect([this](){ onSubItemUpdated(); });
+                extraSeqItemInfos.push_back(info);
             }
         }
     }
+    
     extraSeqItemInfoMap.clear();
     for(size_t i=0; i < extraSeqItemInfos.size(); ++i){
         ExtraSeqItemInfo* info = extraSeqItemInfos[i];

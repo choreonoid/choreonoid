@@ -13,15 +13,13 @@ void MultiDeviceStateSeqItem::initializeClass(ExtensionManager* ext)
     ext->itemManager().registerClass<MultiDeviceStateSeqItem, AbstractMultiSeqItem>(
         N_("MultiDeviceStateSeqItem"));
 
-    BodyMotionItem::registerExtraSeqItemFactory(
-        MultiDeviceStateSeq::key(),
+    BodyMotionItem::registerExtraSeqType(
+        "MultiDeviceStateSeq",
         [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
-            MultiDeviceStateSeqItem* item = nullptr;
             if(auto dseq = dynamic_pointer_cast<MultiDeviceStateSeq>(seq)){
-                item = new MultiDeviceStateSeqItem(dseq);
-                item->setName("DeviceState");
+                return new MultiDeviceStateSeqItem(dseq);
             }
-            return item;
+            return nullptr;
         });
 }
 

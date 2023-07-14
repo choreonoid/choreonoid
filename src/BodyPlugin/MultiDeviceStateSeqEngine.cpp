@@ -52,7 +52,7 @@ void MultiDeviceStateSeqEngineCore::updateBodyDeviceStates(double time, const Mu
 void MultiDeviceStateSeqEngine::initializeClass(ExtensionManager* /* ext */)
 {
     BodyMotionEngine::registerExtraSeqEngineFactory(
-        MultiDeviceStateSeq::key(),
+        MultiDeviceStateSeq::seqContentName(),
         [](BodyItem* bodyItem, AbstractSeqItem* seqItem) -> TimeSyncItemEngine* {
             MultiDeviceStateSeqEngine* engine = nullptr;
             if(auto multiDeviceStateSeqItem = dynamic_cast<MultiDeviceStateSeqItem*>(seqItem)){

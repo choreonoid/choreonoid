@@ -13,11 +13,17 @@ class CNOID_EXPORT BodyMotionItem : public AbstractSeqItem
 public:
     static void initializeClass(ExtensionManager* ext);
 
-    static void registerExtraSeqItemFactory(
-        const std::string& contentName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory);
-    [[deprecated("Use registerExtraSeqItemFactory")]]
+    static void registerExtraSeqType(
+        const std::string& typeName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> itemFactory);
+
+    static void registerExtraSeqContent(
+        const std::string& contentName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> itemFactory);
+
+    [[deprecated("Use registerExtraSeqContent")]]
     static void addExtraSeqItemFactory(
-        const std::string& contentName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory);
+        const std::string& contentName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> itemFactory) {
+        registerExtraSeqContent(contentName, itemFactory);
+    }
 
     BodyMotionItem();
     BodyMotionItem(std::shared_ptr<BodyMotion> bodyMotion);

@@ -13,7 +13,7 @@ class CNOID_EXPORT MultiDeviceStateSeq : public MultiSeq<DeviceStatePtr>
     typedef MultiSeq<DeviceStatePtr> BaseSeqType;
             
 public:
-    static const std::string& key();
+    static const std::string& seqContentName();
 
     MultiDeviceStateSeq();
     MultiDeviceStateSeq(int numFrames, int numDevices = 1);

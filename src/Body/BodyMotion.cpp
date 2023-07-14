@@ -16,6 +16,7 @@ namespace {
 
 static const string linkPositionContentName_("LinkPosition");
 static const string jointDisplacementContentName_("JointDisplacement");
+static const string jointEffortContentName_("JointEffort");
 
 }
 
@@ -29,6 +30,12 @@ const std::string& BodyMotion::linkPositionContentName()
 const std::string& BodyMotion::jointDisplacementContentName()
 {
     return jointDisplacementContentName_;
+}
+
+
+const std::string& BodyMotion::jointEffortContentName()
+{
+    return jointEffortContentName_;
 }
 
 

@@ -11,7 +11,7 @@ class CNOID_EXPORT ZMPSeq : public Vector3Seq
 public:
     typedef Vector3Seq BaseSeqType;
     
-    static const std::string& contentName();
+    static const std::string& seqContentName();
 
     ZMPSeq(int nFrames = 0);
     ZMPSeq(const ZMPSeq& org);

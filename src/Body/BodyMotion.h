@@ -71,6 +71,8 @@ public:
     [[deprecated("Use jointPosSeqContentName")]]
     static const std::string& jointPosSeqKey() { return jointDisplacementContentName(); }
 
+    static const std::string& jointEffortContentName();
+
     class CNOID_EXPORT Frame {
         BodyMotion& motion_;
         int frame_;

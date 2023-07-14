@@ -53,27 +53,24 @@ void ZMPSeqItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerClass<ZMPSeqItem, Vector3SeqItem>(N_("ZMPSeqItem"));
 
-    auto& contentName = ZMPSeq::contentName();
+    auto& contentName = ZMPSeq::seqContentName();
     
-    BodyMotionItem::registerExtraSeqItemFactory(
+    BodyMotionItem::registerExtraSeqContent(
         contentName,
         [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
-            ZMPSeqItem* item = nullptr;
             if(auto zmpseq = dynamic_pointer_cast<ZMPSeq>(seq)){
-                item = new ZMPSeqItem(zmpseq);
-                item->setName("ZMP");
+                return new ZMPSeqItem(zmpseq);
             }
-            return item;
+            return nullptr;
         });
     
     BodyMotionEngine::registerExtraSeqEngineFactory(
         contentName,
         [](BodyItem* bodyItem, AbstractSeqItem* seqItem) -> TimeSyncItemEngine* {
-            ZMPSeqEngine* engine = nullptr;
             if(auto item = dynamic_cast<ZMPSeqItem*>(seqItem)){
-                engine = new ZMPSeqEngine(item, bodyItem);
+                return new ZMPSeqEngine(item, bodyItem);
             }
-            return engine;
+            return nullptr;
         });
 }
 
