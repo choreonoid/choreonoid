@@ -127,13 +127,13 @@ bool cnoid::makeRootRelative(ZMPSeq& zmpseq, BodyMotion& motion, bool on)
         }
         if(on){
             // make the coordinate root relative
-            for(int i=0; i < zmpseq.numFrames(); ++i){
+            for(size_t i=0; i < zmpseq.numFrames(); ++i){
                 const SE3& p = rootSeq[std::min(i, rootSeq.size() - 1)];
                 zmpseq[i] = p.rotation().inverse() * zmpseq[i] - p.translation();
             }
         } else {
             // make the coordinate global
-            for(int i=0; i < zmpseq.numFrames(); ++i){
+            for(size_t i=0; i < zmpseq.numFrames(); ++i){
                 const SE3& p = rootSeq[std::min(i, rootSeq.size() - 1)];
                 zmpseq[i] = p.rotation() * zmpseq[i] + p.translation();
             }

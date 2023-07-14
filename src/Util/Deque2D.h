@@ -154,14 +154,14 @@ public:
     class Row
     {
         ElementType* top;
-        int size_;
+        size_t size_;
 
     public:
         Row() {
             size_ = 0;
         }
         
-        Row(const Deque2D<ElementType, Allocator>& owner, int rowIndex) {
+        Row(const Deque2D<ElementType, Allocator>& owner, size_t rowIndex) {
             size_ = owner.colSize_;
             top = owner.buf;
             if(owner.capacity_ > 0){
@@ -173,19 +173,19 @@ public:
             return (size_ == 0);
         }
 
-        int size() const {
+        size_t size() const {
             return size_;
         }
 
-        Element& operator[](int index){
+        Element& operator[](size_t index){
             return top[index];
         }
 
-        const Element& operator[](int index) const {
+        const Element& operator[](size_t index) const {
             return top[index];
         }
 
-        Element& at(int index) {
+        Element& at(size_t index) {
             return top[index];
         }
 
@@ -206,7 +206,7 @@ public:
             rowSize = 0;
         }
         
-        Column(const Deque2D<ElementType, Allocator>& owner, int column) {
+        Column(const Deque2D<ElementType, Allocator>& owner, size_t column) {
             top = owner.buf + column;
             offset = owner.offset;
             colSize = owner.colSize_;
@@ -219,19 +219,19 @@ public:
             return (rowSize == 0);
         }
 
-        int size() const {
+        size_t size() const {
             return rowSize;
         }
 
-        Element& operator[](int rowIndex){
+        Element& operator[](size_t rowIndex){
             return top[(offset + rowIndex * colSize) % capacity];
         }
 
-        const Element& operator[](int rowIndex) const {
+        const Element& operator[](size_t rowIndex) const {
             return top[(offset + rowIndex * colSize) % capacity];
         }
 
-        Element& at(int index) {
+        Element& at(size_t index) {
             return top[index * colSize];
         }
 
@@ -240,12 +240,12 @@ public:
             ElementType* current;
             ElementType* term;
             ElementType* top;
-            int colSize;
+            size_t colSize;
                 
         public:
             using iterator_category = std::bidirectional_iterator_tag;
             using value_type = ElementType;
-            using difference_type = int; // std::ptrdiff_t ?
+            using difference_type = std::ptrdiff_t;
             using pointer = ElementType*;
             using reference = ElementType&;
                 
@@ -290,15 +290,15 @@ public:
 
     private:
         ElementType* top;
-        int offset;
-        int colSize;
-        int capacity;
-        int rowSize;
+        size_t offset;
+        size_t colSize;
+        size_t capacity;
+        size_t rowSize;
         typename Column::iterator end_;
     };
         
     Deque2D() {
-        buf = 0;
+        buf = nullptr;
         offset = 0;
         rowSize_ = 0;
         colSize_ = 0;
@@ -306,9 +306,9 @@ public:
         size_ = 0;
     }
         
-    Deque2D(int rowSize, int colSize) {
+    Deque2D(size_t rowSize, size_t colSize) {
 
-        buf = 0;
+        buf = nullptr;
         offset = 0;
         rowSize_ = 0;
         colSize_ = 0;
@@ -325,7 +325,7 @@ public:
         rowSize_ = org.rowSize_;
         colSize_ = org.colSize_;
         capacity_ = size_ + colSize_;
-        buf = 0;
+        buf = nullptr;
 
         if(capacity_){
             buf = allocator.allocate(capacity_);
@@ -386,13 +386,13 @@ public:
     }
 
 private:
-    void reallocMemory(int newColSize, int newSize, int newCapacity, bool doCopy) {
+    void reallocMemory(size_t newColSize, size_t newSize, size_t newCapacity, bool doCopy) {
 
         ElementType* newBuf;
         if(newCapacity > 0){
             newBuf = allocator.allocate(newCapacity);
         } else {
-            newBuf = 0;
+            newBuf = nullptr;
         }
         ElementType* p = newBuf;
         ElementType* pend = newBuf + newSize;
@@ -447,16 +447,16 @@ private:
         offset = 0;
     }
 
-    void resizeMain(int newRowSize, int newColSize, bool doCopy) {
+    void resizeMain(size_t newRowSize, size_t newColSize, bool doCopy) {
 
-        const int newSize = newRowSize * newColSize;
+        const size_t newSize = newRowSize * newColSize;
 
         if(newSize == 0){
             reallocMemory(newColSize, newSize, 0, false);
             
         } else {
             // The area for the 'end' iterator should be reserved
-            const int minCapacity = newSize + newColSize;
+            const size_t minCapacity = newSize + newColSize;
         
             if(capacity_ > 0 && minCapacity <= capacity_){
                 if(newColSize != colSize_ && (capacity_ % newColSize > 0)){
@@ -508,8 +508,8 @@ private:
                         }
                     }
                 } else {
-                    int newCapacity;
-                    const int expandedSize = size_ * 3 / 2;
+                    size_t newCapacity;
+                    const size_t expandedSize = size_ * 3 / 2;
                     if(expandedSize > newSize){
                         newCapacity = expandedSize - (expandedSize % newColSize) + newColSize;
                     } else {
@@ -527,26 +527,26 @@ private:
     }
 
 public:
-    void resize(int newRowSize, int newColSize) {
+    void resize(size_t newRowSize, size_t newColSize) {
         resizeMain(newRowSize, newColSize, true);
     }
 
-    void resizeColumn(int newColSize){
+    void resizeColumn(size_t newColSize){
         resize(rowSize_, newColSize);
     }
 
-    int rowSize() const {
+    size_t rowSize() const {
         return rowSize_;
     }
 
     /**
        \todo Make the dedicated implementation for changing the row size only
     */
-    void resizeRow(int newRowSize){
+    void resizeRow(size_t newRowSize){
         resize(newRowSize, colSize_);
     }
 
-    int colSize() const {
+    size_t colSize() const {
         return colSize_;
     }
 
@@ -554,35 +554,35 @@ public:
         resize(0, 0);
     }
 
-    const Element& operator()(int rowIndex, int colIndex) const {
+    const Element& operator()(size_t rowIndex, size_t colIndex) const {
         return buf[(offset + (rowIndex * colSize_)) % capacity_ + colIndex];
     }
 
-    Element& operator()(int rowIndex, int colIndex) {
+    Element& operator()(size_t rowIndex, size_t colIndex) {
         return buf[(offset + (rowIndex * colSize_)) % capacity_ + colIndex];
     }
 
-    const Element& at(int rowIndex, int colIndex) const {
+    const Element& at(size_t rowIndex, size_t colIndex) const {
         return buf[(offset + (rowIndex * colSize_)) % capacity_ + colIndex];
     }
 
-    Element& at(int rowIndex, int colIndex) {
+    Element& at(size_t rowIndex, size_t colIndex) {
         return buf[(offset + (rowIndex * colSize_)) % capacity_ + colIndex];
     }
 
-    Row operator[](int rowIndex) {
+    Row operator[](size_t rowIndex) {
         return Row(*this, rowIndex);
     }
 
-    const Row operator[](int rowIndex) const {
+    const Row operator[](size_t rowIndex) const {
         return Row(*this, rowIndex);
     }
     
-    Row row(int rowIndex) {
+    Row row(size_t rowIndex) {
         return Row(*this, rowIndex);
     }
 
-    const Row row(int rowIndex) const {
+    const Row row(size_t rowIndex) const {
         return Row(*this, rowIndex);
     }
     
@@ -594,11 +594,11 @@ public:
         return Row(*this, rowSize_ - 1);
     }
     
-    Column column(int colIndex) {
+    Column column(size_t colIndex) {
         return Column(*this, colIndex);
     }
 
-    const Column column(int colIndex) const {
+    const Column column(size_t colIndex) const {
         return Column(*this, colIndex);
     }
     
@@ -611,12 +611,12 @@ public:
         resize(rowSize_ - 1, colSize_);
     }
 
-    void pop_front(int numRows = 1) {
-        if(numRows <= 0){
-            return;
-        }
+    void pop_front(size_t numRows = 1) {
         if(numRows > rowSize_){
             numRows = rowSize_;
+        }
+        if(numRows <= 0){
+            return;
         }
         const size_t popSize = numRows * colSize_;
         ElementType* p = buf + offset;
@@ -643,11 +643,11 @@ public:
 private:
     Allocator allocator;
     ElementType* buf;
-    int offset;
-    int rowSize_;
-    int colSize_;
-    int capacity_;
-    int size_;
+    size_t offset;
+    size_t rowSize_;
+    size_t colSize_;
+    size_t capacity_;
+    size_t size_;
     iterator end_;
 };
 

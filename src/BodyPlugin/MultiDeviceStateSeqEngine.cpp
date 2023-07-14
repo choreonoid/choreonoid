@@ -27,7 +27,7 @@ void MultiDeviceStateSeqEngineCore::updateBodyDeviceStates(double time, const Mu
 {
     int deviceIndex = 0;
     int n = deviceInfos.size();
-    int m = std::min(n, states.size());
+    int m = std::min(n, static_cast<int>(states.size()));
     
     while(deviceIndex < m){
         DeviceState* state = states[deviceIndex];

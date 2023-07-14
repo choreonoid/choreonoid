@@ -92,7 +92,7 @@ void exportPySeqTypes(py::module& m)
         .def("resize", &MultiValueSeq::resize)
         .def("clear", &MultiValueSeq::clear)
         .def("at",
-             (MultiValueSeq::Element& (MultiValueSeq::*)(int, int)) &MultiValueSeq::at,
+             (MultiValueSeq::Element& (MultiValueSeq::*)(size_t, size_t)) &MultiValueSeq::at,
              py::return_value_policy::reference_internal)
         .def("append", &MultiValueSeq::append)
         .def("pop_back", &MultiValueSeq::pop_back)
