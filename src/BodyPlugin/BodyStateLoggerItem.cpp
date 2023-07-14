@@ -23,8 +23,13 @@ public:
     shared_ptr<MultiValueSeq> jointEffortBuf;
     ScopedConnection logFlushConnection;
     std::mutex logMutex;
+
     bool isOnlineLoggingMode;
+    bool isAllJointLoggingMode;
+    bool doLogJointEfforts;
+
     bool isOnlineLoggingModeProperty;
+    bool isAllJointLoggingModeProperty;
 
     Impl();
     bool initialize(ControllerIO* io);
@@ -61,6 +66,7 @@ BodyStateLoggerItem::BodyStateLoggerItem(const BodyStateLoggerItem& org)
 BodyStateLoggerItem::Impl::Impl()
 {
     isOnlineLoggingModeProperty = true;
+    isAllJointLoggingModeProperty = false;
 }
 
 
@@ -80,12 +86,15 @@ bool BodyStateLoggerItem::Impl::initialize(ControllerIO* io)
 {
     this->io = io;
     ioBody = io->body();
-    numJoints = ioBody->numJoints();
-    for(auto& joint : ioBody->joints()){
-        joint->mergeSensingMode(Link::JointEffort);
-    }
     logBodyMotion.reset();
+
+    isAllJointLoggingMode = isAllJointLoggingModeProperty;
+    numJoints = isAllJointLoggingMode ? ioBody->numAllJoints() : ioBody->numJoints();
+    for(int i=0; i < numJoints; ++i){
+        ioBody->joint(i)->mergeSensingMode(Link::JointEffort);
+    }
     jointEffortLog.reset();
+    
     return true;
 }
 
@@ -102,21 +111,26 @@ bool BodyStateLoggerItem::Impl::start()
     if(!logBodyMotion){
         return false;
     }
-    jointEffortLog = logBodyMotion->getOrCreateExtraSeq<MultiValueSeq>(BodyMotion::jointEffortContentName());
-    jointEffortLog->setNumFrames(0);
-    jointEffortLog->setOffsetTime(0.0);
-    jointEffortLog->setNumParts(numJoints);
 
-    if(!jointEffortBuf){
-        jointEffortBuf = make_shared<MultiValueSeq>();
-    }
-    jointEffortBuf->setNumFrames(0);
-    jointEffortBuf->setNumParts(numJoints);
+    doLogJointEfforts = (numJoints > 0);
+    if(doLogJointEfforts){
+        jointEffortLog = logBodyMotion->getOrCreateExtraSeq<MultiValueSeq>(BodyMotion::jointEffortContentName());
+        jointEffortLog->setNumFrames(0);
+        jointEffortLog->setOffsetTime(0.0);
+        jointEffortLog->setNumParts(numJoints);
 
-    isOnlineLoggingMode = isOnlineLoggingModeProperty;
-    if(isOnlineLoggingMode){
-        logFlushConnection = io->sigLogFlushRequested().connect([this]{ flushLog(); });
+        if(!jointEffortBuf){
+            jointEffortBuf = make_shared<MultiValueSeq>();
+        }
+        jointEffortBuf->setNumFrames(0);
+        jointEffortBuf->setNumParts(numJoints);
+
+        isOnlineLoggingMode = isOnlineLoggingModeProperty;
+        if(isOnlineLoggingMode){
+            logFlushConnection = io->sigLogFlushRequested().connect([this]{ flushLog(); });
+        }
     }
+    
     return true;
 }    
 
@@ -129,6 +143,10 @@ void BodyStateLoggerItem::input()
 
 void BodyStateLoggerItem::Impl::input()
 {
+    if(!doLogJointEfforts){
+        return;
+    }
+    
     if(isOnlineLoggingMode){
         logMutex.lock();
     }
@@ -144,12 +162,13 @@ void BodyStateLoggerItem::Impl::input()
 
 void BodyStateLoggerItem::Impl::flushLog()
 {
+    int logNumFrames = logBodyMotion->numFrames();
+
     if(isOnlineLoggingMode){
         logMutex.lock();
     }
 
     int bufNumFrames = jointEffortBuf->numFrames();
-    int logNumFrames = logBodyMotion->numFrames();
     for(int i=0; i < bufNumFrames; ++i){
         auto src = jointEffortBuf->frame(i);
         if(jointEffortLog->numFrames() >= logNumFrames){
@@ -157,11 +176,13 @@ void BodyStateLoggerItem::Impl::flushLog()
         }
         std::copy(src.begin(), src.end(), jointEffortLog->appendFrame().begin());
     }
-    jointEffortLog->setOffsetTime(logBodyMotion->offsetTime());
-
+    jointEffortBuf->setNumFrames(0);
+    
     if(isOnlineLoggingMode){
         logMutex.unlock();
     }
+
+    jointEffortLog->setOffsetTime(logBodyMotion->offsetTime());
 }
 
 
@@ -175,6 +196,8 @@ void BodyStateLoggerItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Online logging"), impl->isOnlineLoggingModeProperty,
                 changeProperty(impl->isOnlineLoggingModeProperty));
+    putProperty(_("All joints"), impl->isAllJointLoggingModeProperty,
+                changeProperty(impl->isAllJointLoggingModeProperty));
     putProperty(_("Joint effort"), true);
 }
 
@@ -182,6 +205,7 @@ void BodyStateLoggerItem::doPutProperties(PutPropertyFunction& putProperty)
 bool BodyStateLoggerItem::store(Archive& archive)
 {
     archive.write("online_logging", impl->isOnlineLoggingModeProperty);
+    archive.write("is_all_joint_mode", impl->isAllJointLoggingModeProperty);
 
     ListingPtr stateTypes = new Listing;
 
@@ -200,6 +224,7 @@ bool BodyStateLoggerItem::store(Archive& archive)
 bool BodyStateLoggerItem::restore(const Archive& archive)
 {
     archive.read("online_logging", impl->isOnlineLoggingModeProperty);
+    archive.read("is_all_joint_mode", impl->isAllJointLoggingModeProperty);
 
     auto stateTypes = archive.findListing("log_state_types");
     if(stateTypes->isValid()){
