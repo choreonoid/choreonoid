@@ -39,15 +39,13 @@ public:
     /**
        This function is called before the simulation world is initialized.
 
-       @note If the io->body() returns a null pointer, a controller is not associated with a particular body.
+       \note If the io->body() returns a null pointer, a controller is not associated with a particular body.
        This is for a controller which does some general operations.
            
-       @note This function is called from the main thread.
+       \note This function is called from the main thread.
     */
     virtual bool initialize(ControllerIO* io);
 
-    virtual ReferencedObjectSeqItem* createLogItem();
-    
     /**
        This function is called after the simulation world is initialized.
     */
@@ -59,26 +57,33 @@ public:
     virtual void input();
 
     /*
-      @return false to request stopping
-      @note The body oject given in the initalized function() must not be accessed
+      \return false to request stopping
+      \note The body oject given in the initalized function() must not be accessed
       in this function. The access should be done in input() and output().
-      @note This function is called from the simulation thread.
+      \note This function is called from the simulation thread.
     */
     virtual bool control();
 
     /**
-       @note This function is called from the simulation thread.
+       \note This function is called from the simulation thread.
     */
     virtual void output();
         
     /**
-       @note This function is called from the main thread.
+       \note This function is called from the main thread.
     */
     virtual void stop();
 
-    //! \deprecated Use isNoDelayMode.
+    /**
+       This function works with the enableLog and outputLogFrame functions of ControllerIO.
+       The output log data is stored in the item created by this function.
+       \note The logging form using this function and the above functions should be depcrated in the future.
+    */
+    virtual ReferencedObjectSeqItem* createLogItem();
+
+    [[deprecated("Use isNoDelayMode.")]]
     bool isImmediateMode() const { return isNoDelayMode(); }
-    //! \deprecated Use setsNoDelayMode.
+    [[deprecated("Use setNoDelayMode.")]]
     void setImmediateMode(bool on) { setNoDelayMode(on); }
 
     /**
@@ -93,7 +98,7 @@ protected:
     virtual void onTargetBodyItemChanged(BodyItem* bodyItem);
     virtual void onOptionsChanged();
     
-    virtual void onTreePathChanged() override final;
+    virtual void onTreePathChanged() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
@@ -101,8 +106,8 @@ protected:
 private:
     weak_ref_ptr<BodyItem> targetBodyItem_;
     weak_ref_ptr<SimulatorItem> simulatorItem_;
-    bool isNoDelayMode_;
     std::string optionString_;
+    bool isNoDelayMode_;
 
     friend class SimulatorItem;
     void setSimulatorItem(SimulatorItem* item);
