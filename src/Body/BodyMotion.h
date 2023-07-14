@@ -121,7 +121,7 @@ public:
                 std::dynamic_pointer_cast<SeqType>(p->second) : std::shared_ptr<SeqType>());
     }
 
-    void setExtraSeq(const std::string& contentName, std::shared_ptr<AbstractSeq> seq);
+    void setExtraSeq(std::shared_ptr<AbstractSeq> seq);
 
     template <class SeqType>
     std::shared_ptr<SeqType> getOrCreateExtraSeq(
@@ -133,13 +133,14 @@ public:
         }
         if(!seq){
             seq = std::make_shared<SeqType>();
-            if(initFunc){
-                initFunc(*seq);
-            }
             base = seq;
+            seq->setSeqContentName(contentName);
             seq->setFrameRate(frameRate());
             seq->setNumFrames(numFrames());
             seq->setOffsetTime(offsetTime());
+            if(initFunc){
+                initFunc(*seq);
+            }
             sigExtraSeqsChanged_();
         }
         return seq;

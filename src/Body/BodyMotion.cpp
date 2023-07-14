@@ -20,6 +20,18 @@ static const string jointDisplacementContentName_("JointDisplacement");
 }
 
 
+const std::string& BodyMotion::linkPositionContentName()
+{
+    return linkPositionContentName_;
+}
+
+
+const std::string& BodyMotion::jointDisplacementContentName()
+{
+    return jointDisplacementContentName_;
+}
+
+
 BodyMotion::BodyMotion()
     : AbstractSeq("CompositeSeq"),
       positionSeq_(new BodyPositionSeq)
@@ -115,7 +127,6 @@ std::shared_ptr<MultiSE3Seq> BodyMotion::getOrCreateLinkPosSeq()
     return getOrCreateExtraSeq<MultiSE3Seq>(
         linkPositionContentName_,
         [this](MultiSE3Seq& seq){
-            seq.setSeqContentName(linkPositionContentName_);
             seq.setNumParts(positionSeq_->numLinkPositionsHint());
         });
 }
@@ -126,7 +137,6 @@ std::shared_ptr<MultiValueSeq> BodyMotion::getOrCreateJointPosSeq()
     return getOrCreateExtraSeq<MultiValueSeq>(
         jointDisplacementContentName_,
         [this](MultiValueSeq& seq){
-            seq.setSeqContentName(jointDisplacementContentName_);
             seq.setNumParts(positionSeq_->numJointDisplacementsHint());
         });
 }
@@ -187,18 +197,6 @@ std::shared_ptr<MultiValueSeq> BodyMotion::jointPosSeq()
 std::shared_ptr<const MultiValueSeq> BodyMotion::jointPosSeq() const
 {
     return const_cast<BodyMotion*>(this)->getOrCreateJointPosSeq();
-}
-
-
-const std::string& BodyMotion::linkPositionContentName()
-{
-    return linkPositionContentName_;
-}
-
-
-const std::string& BodyMotion::jointDisplacementContentName()
-{
-    return jointDisplacementContentName_;
 }
 
 
@@ -307,10 +305,13 @@ void BodyMotion::updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq()
 }
 
 
-void BodyMotion::setExtraSeq(const std::string& contentName, std::shared_ptr<AbstractSeq> seq)
+void BodyMotion::setExtraSeq(std::shared_ptr<AbstractSeq> seq)
 {
-    extraSeqs[contentName] = seq;
-    sigExtraSeqsChanged_();
+    auto& contentName = seq->seqContentName();
+    if(!contentName.empty()){
+        extraSeqs[contentName] = seq;
+        sigExtraSeqsChanged_();
+    }
 }
 
 

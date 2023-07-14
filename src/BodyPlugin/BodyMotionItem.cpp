@@ -386,7 +386,7 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
                            _("Confirm"),
                            format(_("Do you add the data of \"{0}\" to \"{1}\" as a sequence data element?"),
                                   childItem_->displayName(), this->displayName()))){
-                        motion()->setExtraSeq(seqItem->name(), seqItem->abstractSeq());
+                        motion()->setExtraSeq(seqItem->abstractSeq());
                         return false; // Not replace the item itself
                     }
                 }
