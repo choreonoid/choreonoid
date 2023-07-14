@@ -421,8 +421,6 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
 {
     setDimension(0, 1, 1);
 
-    bool loaded = false;
-    
     double version;
     if(!archive->read({ "format_version", "formatVersion" }, version)){
         version = 1.0;
@@ -460,6 +458,8 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
             return content;
         };
     }
+
+    bool isError = false;
     
     if(archive->get<string>("type") == type){
         
@@ -477,20 +477,34 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
             
             if((type == "MultiSE3Seq" || (version < 2.0 && (type == "MultiSe3Seq" || type == "MultiAffine3Seq")))){
                 if(content == linkContent){
-                    loaded = linkPosSeq()->readSeq(component, os);
-                    if(!loaded) break;
-                    linkPosSeq()->setSeqContentName(linkPositionContentName_);
+                    if(linkPosSeq()->readSeq(component, os)){
+                        linkPosSeq()->setSeqContentName(linkPositionContentName_);
+                    } else {
+                        isError = true;
+                        break;
+                    }
                 } else {
-                    os << format(_("Unknown content \"{0}\" of type \"{1}\"."), content, type) << endl;
+                    auto seq = getOrCreateExtraSeq<MultiSE3Seq>(content);
+                    if(!seq->readSeq(component, os)){
+                        isError = true;
+                        break;
+                    }
                 }
             } else if(type == "MultiValueSeq"){
                 if(content == jointContent){
                     auto jseq = jointPosSeq();
-                    loaded = jseq->readSeq(component, os);
-                    if(!loaded) break;
-                    jseq->setSeqContentName(jointDisplacementContentName_);
+                    if(jseq->readSeq(component, os)){
+                        jseq->setSeqContentName(jointDisplacementContentName_);
+                    } else {
+                        isError = true;
+                        break;
+                    }
                 } else {
-                    os << format(_("Unknown content \"{0}\" of type \"{1}\"."), content, type) << endl;
+                    auto seq = getOrCreateExtraSeq<MultiValueSeq>(content);
+                    if(!seq->readSeq(component, os)){
+                        isError = true;
+                        break;
+                    }
                 }
             } else if(type == "Vector3Seq") {
                 if((version >= 4.0 && content == "ZMP") ||
@@ -498,18 +512,18 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
                    (version < 3.0 && content == "ZMP") ||
                    ((version < 2.0) && (content == "RelativeZMP" || content == "RelativeZmp"))){
                     auto zmpSeq = getOrCreateZMPSeq(*this);
-                    loaded = zmpSeq->readSeq(component, os);
-                    if(!loaded){
+                    if(zmpSeq->readSeq(component, os)){
+                        if(version < 2.0){
+                            zmpSeq->setRootRelative(content != "ZMP");
+                        }
+                    } else {
+                        isError = true;
                         break;
                     }
-                    if(version < 2.0){
-                        zmpSeq->setRootRelative(content != "ZMP");
-                    }
                 } else {
-                    //----------- user defined Vector3 data --------- 
-                    auto userVec3 = getOrCreateExtraSeq<Vector3Seq>(content);
-                    loaded = userVec3->readSeq(component, os);
-                    if(!loaded){
+                    auto seq = getOrCreateExtraSeq<Vector3Seq>(content);
+                    if(!seq->readSeq(component, os)){
+                        isError = true;
                         break;
                     }
                 }
@@ -519,15 +533,16 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
         }
     }
     
-    if(loaded){
-        updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
-    } else {
+    if(isError){
         setDimension(0, 1, 1);
+    } else {
+        updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
     }
+
     clearExtraSeq(linkPositionContentName_);
     clearExtraSeq(jointDisplacementContentName_);
     
-    return loaded;
+    return !isError;
 }
 
 
