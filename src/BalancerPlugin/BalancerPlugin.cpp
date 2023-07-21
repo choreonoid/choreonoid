@@ -6,6 +6,7 @@
 #include <cnoid/TimeBar>
 #include <cnoid/MessageView>
 #include <cnoid/BodyMotionGenerationBar>
+#include <cnoid/BodyItem>
 #include <cnoid/BodyMotionItem>
 #include <cnoid/CheckBox>
 #include <cnoid/Separator>
@@ -44,7 +45,7 @@ public:
     BalancerPanel();
     QHBoxLayout* newRow(QVBoxLayout* vbox);
     virtual QWidget* panel() override;
-    virtual bool apply(Body* body, PoseProvider* provider, BodyMotionItem* motionItem, bool putMessages) override;
+    virtual bool apply(BodyItem* bodyItem, PoseProvider* provider, BodyMotionItem* motionItem, bool putMessages) override;
     virtual void storeState(Archive* archive) override;
     virtual void restoreState(const Archive* archive) override;
 };
@@ -199,9 +200,9 @@ QHBoxLayout* BalancerPanel::newRow(QVBoxLayout* vbox)
 }
 
 
-bool BalancerPanel::apply(Body* body, PoseProvider* provider, BodyMotionItem* motionItem, bool putMessages)
+bool BalancerPanel::apply(BodyItem* bodyItem, PoseProvider* provider, BodyMotionItem* motionItem, bool putMessages)
 {
-    balancer->setBody(body);
+    balancer->setBody(bodyItem->body());
 
     TimeBar* timeBar = TimeBar::instance();
 

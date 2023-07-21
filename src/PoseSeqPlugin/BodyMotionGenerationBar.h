@@ -2,11 +2,13 @@
 #define CNOID_POSE_SEQ_PLUGIN_BODY_MOTION_GENERATION_BAR_H
 
 #include <cnoid/ToolBar>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class ExtensionManager;
+class BodyItem;
 class Body;
 class PoseProvider;
 class BodyMotionItem;
@@ -22,19 +24,25 @@ public:
     ~BodyMotionGenerationBar();
 
     bool shapeBodyMotion(
-        Body* body, PoseProvider* provider, BodyMotionItem* motionItem, bool putMessages = false);
+        BodyItem* bodyItem, PoseProvider* provider, BodyMotionItem* outputMotionItem, bool putMessages = false);
 
     class Balancer
     {
     public:
         virtual QWidget* panel() = 0;
-        virtual bool apply(Body* body, PoseProvider* provider, BodyMotionItem* motionItem, bool putMessages) = 0;
+        virtual bool apply(BodyItem* bodyItem, PoseProvider* provider, BodyMotionItem* outputMotionItem, bool putMessages) = 0;
         virtual void storeState(Archive* archive) = 0;
         virtual void restoreState(const Archive* archive) = 0;
     };
 
     void setBalancer(Balancer* balancer);
     void unsetBalancer();
+
+    void addMotionFilter(
+        const char* key,
+        const QIcon& buttonIcon,
+        const char* toolTip,
+        std::function<bool(BodyItem* bodyItem, BodyMotionItem* motionItem)> filter);
 
     SignalProxy<void()> sigInterpolationParametersChanged();
 

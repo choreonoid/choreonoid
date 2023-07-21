@@ -655,7 +655,7 @@ bool PoseSeqItem::Impl::updateTrajectory(bool putMessages)
 
     if(targetBodyItem){
         result = generationBar->shapeBodyMotion(
-            targetBodyItem->body(), interpolator.get(), bodyMotionItem, putMessages);
+            targetBodyItem, interpolator.get(), bodyMotionItem, putMessages);
     }
 
     return result;

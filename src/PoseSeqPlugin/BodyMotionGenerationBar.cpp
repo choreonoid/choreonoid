@@ -23,11 +23,13 @@
 #include <cnoid/CheckBox>
 #include <cnoid/Dialog>
 #include <QDialogButtonBox>
+#include <fmt/format.h>
 #include <set>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace {
 
@@ -88,22 +90,41 @@ namespace cnoid {
 class BodyMotionGenerationBar::Impl
 {
 public:
+    BodyMotionGenerationBar* self;
     unique_ptr<BodyMotionPoseProvider> bodyMotionPoseProvider;
     unique_ptr<PoseProviderToBodyMotionConverter> poseProviderToBodyMotionConverter;
+    unique_ptr<BodyMotionPoseProvider> secondBodyMotionPoseProvider;
     Balancer* balancer;
     TimeBar* timeBar;
     BodyMotionGenerationSetupDialog* setup;
     LazySignal< Signal<void()> >sigInterpolationParametersChanged;
     Action* autoGenerationForNewBodyCheck;
+    QIcon balancerIcon;
     ToolButton* balancerToggle;
+    ToolButton* secondBalancerToggle;
     ToolButton* autoGenerationToggle;
 
+    struct ExtraMotionFilter
+    {
+        string key;
+        ToolButton* toggleButton;
+        std::function<bool(BodyItem* bodyItem, BodyMotionItem* motionItem)> function;
+        
+        ExtraMotionFilter(
+            const char* key,
+            ToolButton* button,
+            const std::function<bool(BodyItem* bodyItem, BodyMotionItem* motionItem)>& func)
+            : key(key), toggleButton(button), function(func) { }
+    };
+    vector<ExtraMotionFilter> extraMotionFilters;
+
     Impl(BodyMotionGenerationBar* self);
+    void updateBalancerToggles();
     void onGenerationButtonClicked();
     bool shapeBodyMotion(
-        Body* body, PoseProvider* provider, BodyMotionItem* motionItem, bool putMessages);
+        BodyItem* bodyItem, PoseProvider* provider, BodyMotionItem* motionItem, bool putMessages);
     bool shapeBodyMotionWithSimpleInterpolation(
-        Body* body, PoseProvider* provider, BodyMotionItem* motionItem);
+        BodyItem* bodyItem, PoseProvider* provider, BodyMotionItem* outputMotionItem);
     bool storeState(Archive& archive);
     bool restoreState(const Archive& archive);
 };
@@ -148,6 +169,7 @@ BodyMotionGenerationBar::BodyMotionGenerationBar()
 
 
 BodyMotionGenerationBar::Impl::Impl(BodyMotionGenerationBar* self)
+    : self(self)
 {
     timeBar = TimeBar::instance();
     setup = new BodyMotionGenerationSetupDialog(this);
@@ -160,11 +182,15 @@ BodyMotionGenerationBar::Impl::Impl(BodyMotionGenerationBar* self)
     autoGenerationToggle = self->addToggleButton(QIcon(":/PoseSeq/icon/auto-update.svg"));
     autoGenerationToggle->setToolTip(_("Automatic Balance Adjustment Mode"));
     autoGenerationToggle->setChecked(false);
+
+    balancerIcon = QIcon(":/PoseSeq/icon/balancer.svg");
     
-    balancerToggle = self->addToggleButton(QIcon(":/PoseSeq/icon/balancer.svg"));
+    balancerToggle = self->addToggleButton(balancerIcon);
     balancerToggle->setToolTip(_("Enable the balancer"));
     balancerToggle->setEnabled(false);
     balancerToggle->setChecked(false);
+
+    secondBalancerToggle = nullptr;
 
     self->addButton(QIcon(":/Base/icon/setup.svg"))
         ->sigClicked().connect([this](){ setup->show(); });
@@ -174,6 +200,64 @@ BodyMotionGenerationBar::Impl::Impl(BodyMotionGenerationBar* self)
 BodyMotionGenerationBar::~BodyMotionGenerationBar()
 {
     delete impl;
+}
+
+
+void BodyMotionGenerationBar::setBalancer(Balancer* balancer)
+{
+    impl->balancer = balancer;
+    impl->updateBalancerToggles();
+    if(balancer){
+        impl->setup->vbox->addWidget(balancer->panel());
+    }
+}
+
+
+void BodyMotionGenerationBar::unsetBalancer()
+{
+    impl->updateBalancerToggles();
+    if(impl->balancer){
+        impl->setup->layout()->removeWidget(impl->balancer->panel());
+        impl->balancer = nullptr;
+    }
+}
+
+
+void BodyMotionGenerationBar::Impl::updateBalancerToggles()
+{
+    bool on = balancer != nullptr;
+    
+    balancerToggle->setEnabled(on);
+
+    if(!extraMotionFilters.empty()){
+        if(!secondBalancerToggle){
+            self->setInsertionPosition(3 + extraMotionFilters.size());
+            secondBalancerToggle = self->addToggleButton(balancerIcon);
+            secondBalancerToggle->setToolTip(_("Enable the second balancer"));
+            secondBalancerToggle->setChecked(balancerToggle->isChecked());
+        }
+        if(on){
+            secondBalancerToggle->setEnabled(on);
+        }
+    }
+}    
+
+
+void BodyMotionGenerationBar::addMotionFilter
+(const char* key, const QIcon& buttonIcon, const char* toolTip,
+ std::function<bool(BodyItem* bodyItem, BodyMotionItem* motionItem)> filter)
+{
+    setInsertionPosition(3);
+    auto button = addToggleButton(buttonIcon);
+    button->setToolTip(toolTip);
+    impl->extraMotionFilters.emplace_back(key, button, filter);
+    impl->updateBalancerToggles();
+}
+
+
+SignalProxy<void()> BodyMotionGenerationBar::sigInterpolationParametersChanged()
+{
+    return impl->sigInterpolationParametersChanged.signal();
 }
 
 
@@ -201,81 +285,101 @@ void BodyMotionGenerationBar::Impl::onGenerationButtonClicked()
             if(auto poseSeqItem = motionItem->parentItem<PoseSeqItem>()){
                 provider = poseSeqItem->interpolator().get();
             } else {
-                if(!bodyMotionPoseProvider){
-                    bodyMotionPoseProvider = make_unique<BodyMotionPoseProvider>();
-                }
-                if(bodyMotionPoseProvider->setMotion(bodyItem->body(), motionItem->motion())){
-                    provider = bodyMotionPoseProvider.get();
-                    if(setup->newBodyMotionItemCheck.isChecked()){
-                        BodyMotionItem* newMotionItem = new BodyMotionItem;
-                        newMotionItem->setName(motionItem->name() + "'");
-                        motionItem->parentItem()->insertChild(motionItem->nextItem(), newMotionItem);
-                        motionItem = newMotionItem;
+                if(balancerToggle->isChecked() && balancer){
+                    if(!bodyMotionPoseProvider){
+                        bodyMotionPoseProvider = make_unique<BodyMotionPoseProvider>();
+                    }
+                    if(bodyMotionPoseProvider->setMotion(bodyItem->body(), motionItem->motion())){
+                        provider = bodyMotionPoseProvider.get();
                     }
                 }
+                if(setup->newBodyMotionItemCheck.isChecked()){
+                    BodyMotionItem* newMotionItem;
+                    if(provider){
+                        newMotionItem = new BodyMotionItem;
+                    } else {
+                        newMotionItem = static_cast<BodyMotionItem*>(motionItem->clone());
+                    }
+                    newMotionItem->setTemporary(true);
+                    newMotionItem->setName(motionItem->name() + "'");
+                    motionItem->parentItem()->insertChild(motionItem->nextItem(), newMotionItem);
+                    motionItem = newMotionItem;
+                }
             }
-            if(provider){
-                shapeBodyMotion(bodyItem->body(), provider, motionItem, true);
-            } else {
-                MessageView::instance()->putln(
-                    _("{0} cannot be a target of the body motion generation."),
-                    MessageView::Error);
-            }
+            shapeBodyMotion(bodyItem, provider, motionItem, true);
         }
     }
 }
 
 
-void BodyMotionGenerationBar::setBalancer(Balancer* balancer)
-{
-    impl->balancer = balancer;
-    impl->balancerToggle->setEnabled(balancer != nullptr);
-    if(balancer){
-        impl->setup->vbox->addWidget(balancer->panel());
-    }
-}
-
-
-void BodyMotionGenerationBar::unsetBalancer()
-{
-    impl->balancerToggle->setEnabled(false);
-    if(impl->balancer){
-        impl->setup->layout()->removeWidget(impl->balancer->panel());
-        impl->balancer = nullptr;
-    }
-}
-
-
-SignalProxy<void()> BodyMotionGenerationBar::sigInterpolationParametersChanged()
-{
-    return impl->sigInterpolationParametersChanged.signal();
-}
-
-
 bool BodyMotionGenerationBar::shapeBodyMotion
-(Body* body, PoseProvider* provider, BodyMotionItem* motionItem, bool putMessages)
+(BodyItem* bodyItem, PoseProvider* provider, BodyMotionItem* outputMotionItem, bool putMessages)
 {
-    return impl->shapeBodyMotion(body, provider, motionItem, putMessages);
+    return impl->shapeBodyMotion(bodyItem, provider, outputMotionItem, putMessages);
 }
 
 
 bool BodyMotionGenerationBar::Impl::shapeBodyMotion
-(Body* body, PoseProvider* provider, BodyMotionItem* motionItem, bool putMessages)
+(BodyItem* bodyItem, PoseProvider* provider, BodyMotionItem* motionItem, bool putMessages)
 {
-    bool result = false;
+    bool isProcessed = false;
+    bool failed = false;
     
-    if(balancerToggle->isChecked() && balancer){
-        result = balancer->apply(body, provider, motionItem, putMessages);
-    } else {
-        result = shapeBodyMotionWithSimpleInterpolation(body, provider, motionItem);
+    if(provider){
+        if(balancerToggle->isChecked() && balancer){
+            if(balancer->apply(bodyItem, provider, motionItem, putMessages)){
+                isProcessed = true;
+            } else {
+                failed = true;
+            }
+        } else {
+            if(shapeBodyMotionWithSimpleInterpolation(bodyItem, provider, motionItem)){
+                isProcessed = true;
+            } else {
+                failed = true;
+            }
+        }
     }
 
-    return result;
+    bool isExtraFilterApplied = false;
+    if(!failed){
+        for(auto& filter : extraMotionFilters){
+            if(filter.toggleButton->isChecked()){
+                if(filter.function(bodyItem, motionItem)){
+                    isProcessed = true;
+                    isExtraFilterApplied = true;
+                } else {
+                    failed = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if(!failed && isExtraFilterApplied && secondBalancerToggle->isChecked()){
+        if(!secondBodyMotionPoseProvider){
+            secondBodyMotionPoseProvider = make_unique<BodyMotionPoseProvider>();
+        }
+        secondBodyMotionPoseProvider->setMotion(bodyItem->body(), motionItem->motion());
+        if(!balancer->apply(bodyItem, secondBodyMotionPoseProvider.get(), motionItem, putMessages)){
+            failed = true;
+        }
+    }
+
+    if(isProcessed){
+        motionItem->notifyUpdate();
+    } else {
+        MessageView::instance()->putln(
+            format(_("{0} cannot be a target of the body motion generation."), motionItem->name()),
+            MessageView::Error);
+    }
+
+    return isProcessed && !failed;
 }
         
 
 bool BodyMotionGenerationBar::Impl::shapeBodyMotionWithSimpleInterpolation
-(Body* body, PoseProvider* provider, BodyMotionItem* motionItem)
+(BodyItem* bodyItem, PoseProvider* provider, BodyMotionItem* outputMotionItem)
 {
     if(!poseProviderToBodyMotionConverter){
         poseProviderToBodyMotionConverter = make_unique<PoseProviderToBodyMotionConverter>();
@@ -287,15 +391,10 @@ bool BodyMotionGenerationBar::Impl::shapeBodyMotionWithSimpleInterpolation
     }
     poseProviderToBodyMotionConverter->setAllLinkPositionOutput(setup->se3Check.isChecked());
         
-    auto motion = motionItem->motion();
+    auto motion = outputMotionItem->motion();
     motion->setFrameRate(timeBar->frameRate());
 
-    bool result = poseProviderToBodyMotionConverter->convert(body, provider, *motion);
-    
-    if(result){
-        motionItem->notifyUpdate();
-    }
-    return result;
+    return poseProviderToBodyMotionConverter->convert(bodyItem->body(), provider, *motion);
 }
 
 
@@ -307,10 +406,19 @@ bool BodyMotionGenerationBar::storeState(Archive& archive)
 
 bool BodyMotionGenerationBar::Impl::storeState(Archive& archive)
 {
-    archive.write("autoGenerationForNewBody", autoGenerationForNewBodyCheck->isChecked());
+    archive.write("auto_generation", autoGenerationToggle->isChecked());
+    archive.write("auto_generation_for_new_body", autoGenerationForNewBodyCheck->isChecked());
     archive.write("balancer", balancerToggle->isChecked());
-    archive.write("autoGeneration", autoGenerationToggle->isChecked());
+    if(secondBalancerToggle){
+        archive.write("second_balancer", secondBalancerToggle->isChecked());
+    }
+
+    for(auto& filter : extraMotionFilters){
+        archive.write(filter.key, filter.toggleButton->isChecked());
+    }
+    
     setup->storeState(archive);
+    
     if(balancer){
         balancer->storeState(&archive);
     }
@@ -326,10 +434,25 @@ bool BodyMotionGenerationBar::restoreState(const Archive& archive)
 
 bool BodyMotionGenerationBar::Impl::restoreState(const Archive& archive)
 {
+    autoGenerationToggle->setChecked(
+        archive.get({ "auto_generation", "autoGeneration" }, autoGenerationToggle->isChecked()));
+
     autoGenerationForNewBodyCheck->setChecked(
-        archive.get("autoGenerationForNewBody", autoGenerationForNewBodyCheck->isChecked()));
+        archive.get({ "auto_generation_for_new_body", "autoGenerationForNewBody" },
+                    autoGenerationForNewBodyCheck->isChecked()));
+        
     balancerToggle->setChecked(archive.get("balancer", balancerToggle->isChecked()));
-    autoGenerationToggle->setChecked(archive.get("autoGeneration", autoGenerationToggle->isChecked()));
+    if(secondBalancerToggle){
+        secondBalancerToggle->setChecked(archive.get("second_balancer", secondBalancerToggle->isChecked()));
+    }
+
+    bool on;
+    for(auto& filter : extraMotionFilters){
+        if(archive.read(filter.key, on)){
+            filter.toggleButton->setChecked(on);
+        }
+    }
+    
     setup->restoreState(archive);
     if(balancer){
         balancer->restoreState(&archive);
