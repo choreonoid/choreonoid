@@ -1,0 +1,1438 @@
+format: ChoreonoidBody
+format_version: 2.0
+angle_unit: degree
+name: HRP-4C
+root_link: WAIST
+
+colors:
+  BodySilver: &BodySilver
+    material:
+      diffuse: [ 0.6, 0.6, 0.6 ]
+      specular: [ 1, 1, 1 ]
+      shininess: 1
+  BodyBlack: &BodyBlack
+    material:
+      diffuse: [ 0.3, 0.3, 0.3 ]
+      specular: [ 0.6, 0.6, 0.6 ]
+      shininess: 0.2
+  InnerBlack: &InnerBlack
+    material:
+      diffuse: [ 0.2, 0.2, 0.2 ]
+      ambientIntensity: 0.2
+
+links:
+  -
+    name: WAIST
+    joint_type: free
+    translation: [ 0, 0, 0.784 ]
+    center_of_mass: [ -0.02285557, 0.00088722, 0.14117542 ]
+    mass: 7.6494675347
+    inertia: [
+       0.0627264041, -0.00020122,    0.00128172,
+      -0.00020122,    0.0309062871, -0.00084433,
+       0.00128172,   -0.00084433,    0.0595220368 ]
+    elements:
+      -
+        type: Shape
+        translation: [ -0.025, 0, 0.22 ]
+        geometry: { type: Capsule, height: 0.09, radius: 0.07 }
+        appearance: *InnerBlack
+      -
+        type: Visual
+        elements:
+          - { type: Resource, uri: "mesh/WAIST.obj" }
+          -
+            type: Shape
+            translation: [ -0.033, -0.068, 0.07 ]
+            geometry: { type: Sphere, radius: 0.085 }
+            appearance: *InnerBlack
+          -
+            type: Shape
+            translation: [ -0.033, 0.068, 0.07 ]
+            geometry: { type: Sphere, radius: 0.085 }
+            appearance: *InnerBlack
+      -
+        type: Collision
+        elements:
+          - # upper right front
+            type: Shape
+            translation: [ -0.02, -0.047, 0.18 ]
+            rotation: [ 1, 0, 0, 83 ]
+            geometry: { type: Cylinder, radius: 0.085, height: 0.09 }
+          - # upper right back
+            type: Shape
+            translation: [ -0.04, -0.049, 0.177 ]
+            rotation: [ [ 0, 1, 0, 8 ], [ 1, 0, 0, 83 ] ]
+            geometry: { type: Cylinder, radius: 0.085, height: 0.09 }
+          - # upper left front
+            type: Shape
+            translation: [ -0.02, 0.047, 0.18 ]
+            rotation: [ 1, 0, 0, 97 ]
+            geometry: { type: Cylinder, radius: 0.085, height: 0.09 }
+          - # upper right back
+            type: Shape
+            translation: [ -0.04, 0.049, 0.177 ]
+            rotation: [ [ 0, 1, 0, 8 ], [ 1, 0, 0, 97 ] ]
+            geometry: { type: Cylinder, radius: 0.085, height: 0.09 }
+          - # upper back
+            type: Shape
+            translation: [ -0.111, 0, 0.209 ]
+            rotation: [ 0, 1, 0, 8 ]
+            geometry: { type: Box, size: [ 0.02, 0.12, 0.04 ] }
+          - # right hip
+            type: Shape
+            translation: [ -0.043, -0.049, 0.098 ]
+            geometry: { type: Sphere, radius: 0.11 }
+          - # left hip
+            type: Shape
+            translation: [ -0.043, 0.049, 0.098 ]
+            geometry: { type: Sphere, radius: 0.11 }
+      -
+        type: AccelerationSensor
+        id: 0
+        translation: [ -0.0325, 0, 0.1095 ]
+      -
+        type: RateGyroSensor
+        id: 0
+        translation: [ -0.0325, 0, 0.1095 ]
+  -
+    name: L_HIP_Y
+    parent: WAIST
+    translation: [ 0, 0.0875, 0 ]
+    joint_type: revolute
+    joint_id: 0
+    joint_axis: [ 0, 0, 1 ]
+    joint_range: [ -45, 45 ]
+    joint_velocity_range: [ -500, 500 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 2.3625E-02
+    center_of_mass: [ -0.01667657, 0.00000002, 0.04993135 ]
+    mass: 1.1730262306
+    inertia: [
+       0.0015651781, -0.00000028,   -0.00048566,
+      -0.00000028,    0.0023890751,  0.0,
+      -0.00048566,    0.0,           0.0015458308 ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0, 0, 0.035 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, height: 0.03, radius: 0.057 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ -0.03, 0.003, 0.01 ]
+        geometry: { type: Sphere, radius: 0.062 }
+        appearance: *InnerBlack
+  -
+    name: L_HIP_R
+    parent: L_HIP_Y
+    joint_type: revolute
+    joint_id: 1
+    joint_axis: [ 1, 0, 0 ]
+    joint_range: [ -25, 25 ]
+    joint_velocity_range: [ -313, 312 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 8.8320E-02
+    center_of_mass: [ -0.00431692, 0.00595121, -0.00052352 ]
+    mass: 0.6042195310
+    inertia: [
+       0.0004800669, -0.00001508,   -0.00000065,
+      -0.00001508,    0.0003078626,  0.00000239,
+      -0.00000065,    0.00000239,    0.0006379854 ]
+    elements:
+      Shape:
+        geometry: { type: Sphere, radius: 0.06 }
+        appearance: *InnerBlack
+  -
+    name: L_HIP_P
+    parent: L_HIP_R
+    joint_type: revolute
+    joint_id: 2
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -77, 25 ]
+    joint_velocity_range: [ -310, 310 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 8.9427E-02
+    center_of_mass: [ 0.00318180, -0.00497534, -0.18548853 ]
+    mass: 2.3630254867
+    inertia: [
+      0.0332538144,  0.00007405,    0.00051692,
+      0.00007405,    0.0321032537, -0.00226711,
+      0.00051692,   -0.00226711,    0.0027010666 ]
+    elements:
+      -
+        type: Visual
+        elements:
+          - { type: Resource, uri: "mesh/L_HIP_P.obj" }
+      - type: Collision
+        elements:
+          - # Upper front
+            type: Shape
+            translation: [ -0.009, -0.002, -0.095 ]
+            rotation: [ [ 0, 1, 0, -3 ], [ 1, 0, 0, 85 ] ]
+            geometry: { type: Capsule, height: 0.17, radius: 0.065 }
+          - # Upper back
+            type: Shape
+            translation: [ -0.03, -0.002, -0.095 ]
+            rotation: [ [ 0, 1, 0, -5 ], [ 1, 0, 0, 85 ] ]
+            geometry: { type: Capsule, height: 0.09, radius: 0.055 }
+          - # middle back
+            type: Shape
+            translation: [ -0.02, -0.012, -0.24 ]
+            rotation: [ [ 0, 1, 0, -28 ], [ 1, 0, 0, -5 ] ]
+            geometry: { type: Box, size: [ 0.03, 0.075, 0.062 ] }
+          - # lower front right
+            type: Shape
+            translation: [ 0.015, -0.002, -0.27 ]
+            rotation: [ [ 0, 1, 0, -1 ], [ 1, 0, 0, 83 ] ]
+            geometry: { type: Capsule, height: 0.14, radius: 0.04 }
+          - # lower front left
+            type: Shape
+            translation: [ 0.015, -0.03, -0.27 ]
+            rotation: [ [ 0, 1, 0, -1 ], [ 1, 0, 0, 90 ] ]
+            geometry: { type: Capsule, height: 0.14, radius: 0.04 }
+      -
+        type: Shape
+        translation: [ 0.009, -0.01905, -0.3 ]
+        geometry: { type: Box, size: [ 0.05, 0.088, 0.1 ] }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ -0.014, 0.003, -0.030 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, height: 0.07, radius: 0.066 }
+        appearance: *InnerBlack
+  -
+    name: L_KNEE_P
+    parent: L_HIP_P
+    translation: [ 0, -0.01905, -0.35 ]
+    joint_type: revolute
+    joint_id: 3
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -1, 125 ]
+    joint_velocity_range: [ -232, 232 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 1.5948E-01
+    center_of_mass: [ -0.01074150, -0.00010610, -0.15354069 ]
+    mass: 2.2147492873
+    inertia: [
+       0.0197133233, 0.00000854,   -0.00022695,
+       0.00000854,   0.0199984300,  0.00045369,
+      -0.00022695,   0.00045369,    0.0014329593 ]
+    elements:
+      - type: Visual
+        elements:
+          - { type: Resource, uri: "mesh/L_KNEE_P.obj" }
+      - type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ -0.003, 0, -0.075 ]
+            geometry: { type: Capsule, radius: 0.042, height: 0.023 }
+          -
+            type: Shape
+            translation: [ -0.015, 0, -0.112 ]
+            geometry: { type: Sphere, radius: 0.053 }
+          -
+            type: Shape
+            translation: [ -0.01, 0, -0.175 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Capsule, height: 0.175, radius: 0.045 }
+          -
+            type: Shape
+            translation: [ -0.006, 0.001, -0.278 ]
+            geometry: { type: Capsule, radius: 0.04, height: 0.017 }
+      -
+        type: Shape
+        translation: [ -0.026, -0.002, -0.05 ]
+        rotation: [ 1, 0, 1.3, 90 ]
+        geometry: { type: Cylinder, height: 0.01, radius:  0.047 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ 0.024, 0, -0.03 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, height: 0.021, radius:  0.036 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        geometry: { type: Cylinder, height: 0.089, radius: 0.03 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ -0.011, 0, -0.32 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, height: 0.065, radius: 0.037 }
+        appearance: *InnerBlack
+  -
+    name: L_ANKLE_P
+    parent: L_KNEE_P
+    translation: [ 0, 0, -0.341151 ]
+    joint_type: revolute
+    joint_id: 4
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -57, 16 ]
+    joint_velocity_range: [ -265, 265 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 1.2255E-01
+    center_of_mass: [ 0.00368911, 0.00015844, 0.00129883 ]
+    mass: 0.2781747638
+    inertia: [
+       0.0000840608, -0.00000016,   0.00000133,
+      -0.00000016,    0.0001612049, 0.00000007,
+       0.00000133,    0.00000007,   0.0001798054 ]
+    elements:
+      Shape:
+        translation: [ 0.01, 0, 0 ]
+        geometry: { type: Sphere, radius: 0.043 }
+        appearance: *InnerBlack
+  -
+    name: L_ANKLE_R
+    parent: L_ANKLE_P
+    joint_type: revolute
+    joint_id: 5
+    joint_axis: [ 1, 0, 0 ]
+    joint_range: [ -34, 34 ]
+    joint_velocity_range: [ -560, 560 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 1.9043E-02
+    center_of_mass: [ 0.046151719, 0.002195661, -0.06406231 ]
+    mass: 1.4748253
+    inertia: [
+       0.0009696948, -0.00000158,   -0.00010744,
+      -0.00000158,    0.0012037330,  0.00000409,
+      -0.00010744,    0.00000409,    0.0009324554 ]
+    elements:
+      -
+        type: ForceSensor
+        name: lfsensor
+        translation: [ 0, 0, -0.093 ]
+        id: 1
+
+      - type: Shape
+        translation: [ 0.033, -0.013, -0.079 ]
+        rotation: [ 0, 0, 1, -2.2 ]
+        geometry: { type: Box, size: [ 0.13, 0.055, 0.028 ] }
+        appearance: *BodyBlack
+      - type: Shape
+        translation: [ 0.032, 0.029, -0.079 ]
+        rotation: [ 0, 0, 1, 8.5 ]
+        geometry: { type: Box, size: [ 0.13, 0.04, 0.028 ] }
+        appearance: *BodyBlack
+      - type: Shape
+        translation: [ 0.08, 0.005, -0.079 ]
+        geometry: { type: Box, size: [ 0.04, 0.095, 0.028 ] }
+        appearance: *BodyBlack
+      - type: Shape
+        translation: [ -0.025, 0.0, -0.079 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, division_number: 14, radius: 0.04, height: 0.028 }
+        appearance: *BodyBlack
+      - type: Shape
+        translation: [ 0.04, 0.00, -0.050 ]
+        geometry: { type: Sphere, radius: 0.042 }
+        appearance: *InnerBlack
+      - type: Shape
+        translation: [ 0.115, 0.0065, -0.065 ]
+        geometry: { type: Capsule, radius: 0.025, height: 0.046 }
+        appearance: *InnerBlack
+      -
+        type: Visual
+        resource: { uri: "mesh/L_ANKLE_R.obj" }
+      -
+        type: Collision
+        elements:
+          - type: Shape
+            translation: [ -0.029, 0.0, -0.02 ]
+            rotation: [ [ 0, 1, 0, 18 ], [ 1, 0, 0, 90 ] ]
+            geometry: { type: Capsule, radius: 0.039, height: 0.07 }
+            appearance: *BodySilver
+  -
+    name: L_TOE_P
+    parent: L_ANKLE_R
+    translation: [ 0.115, 0, -0.077 ]
+    joint_type: revolute
+    joint_id: 6
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -60, 10 ]
+    joint_velocity_range: [ -400, 400 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 3.0e-2
+    center_of_mass: [ 0.02, 0, 0 ]
+    mass: 0.22
+    inertia: [
+       0.0002,   -0.00001,  0.000005,
+      -0.00001,   0.0001,   0.000003,
+       0.000005,  0.000003, 0.00025   ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0525, -0.0095, -0.005 ]
+        rotation: [ 0, 0, 1, -12 ]
+        geometry: { type: Box, size: [ 0.02, 0.035, 0.022 ] }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ 0.0313, -0.0159, -0.005 ]
+        rotation: [ 0, 0, 1, 21.5 ]
+        geometry: { type: Box, size: [ 0.0416, 0.044, 0.022 ] }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ 0.01, 0.0035, -0.005 ]
+        geometry: { type: Box, size: [ 0.02, 0.095, 0.022 ] }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ 0.023, 0.0452, -0.005 ]
+        rotation: [ 0, 0, 1, -14.0 ]
+        geometry: { type: Box, size: [ 0.045, 0.01, 0.022 ] }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ 0.033, 0.023, -0.005 ]
+        geometry: { type: Box, size: [ 0.027, 0.042, 0.022 ] }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ 0.047, 0.0205, -0.005 ]
+        rotation: [ 0, 0, 1, 27 ]
+        geometry: { type: Box, size: [ 0.02, 0.0437, 0.022 ] }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ -0.000, -0.0385, -0.002 ]
+        geometry: { type: Cylinder, division_number: 16, height: 0.0125, radius: 0.014 }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ -0.000, 0.047, -0.002 ]
+        geometry: { type: Cylinder, division_number: 16, height: 0.015, radius: 0.014 }
+        appearance: *BodyBlack
+      -
+        type: Visual
+        resource: { uri: "mesh/L_TOE_P.obj" }
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.032, 0.005, 0.019 ]
+            geometry: { type: Capsule, height: 0.06, radius: 0.014 }
+            appearance: *BodySilver
+          -
+            type: Shape
+            translation: [ 0.055, 0.00, 0.015 ]
+            geometry: { type: Capsule, height: 0.04, radius: 0.009 }
+            appearance: *BodySilver
+  -
+    name: R_HIP_Y
+    parent: WAIST
+    translation: [ 0, -0.0875, 0 ]
+    joint_type: revolute
+    joint_id: 7
+    joint_axis: [ 0, 0, 1 ]
+    joint_range: [ -45, 45 ]
+    joint_velocity_range: [ -500, 500 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 2.3625E-02
+    center_of_mass: [ -0.01667657, 0.00000002, 0.04993135 ]
+    mass: 1.1730262306
+    inertia: [
+       0.0015651781, -0.00000028,   -0.00048566,
+      -0.00000028,    0.0023890751,  0.0,
+      -0.00048566,    0.0,           0.0015458308 ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0, 0, 0.035 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, height: 0.03, radius: 0.057 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ -0.03, -0.003, 0.01 ]
+        geometry: { type: Sphere, radius: 0.062 }
+        appearance: *InnerBlack
+  -
+    name: R_HIP_R
+    parent: R_HIP_Y
+    joint_type: revolute
+    joint_id: 8
+    joint_axis: [ 1, 0, 0 ]
+    joint_range: [ -25, 25 ]
+    joint_velocity_range: [ -312, 312 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 8.8320E-02
+    center_of_mass: [ -0.00431692, 0.00595121, -0.00052352 ]
+    mass: 0.6042195310
+    inertia: [
+       0.0004800669, -0.00001508,   -0.00000065,
+      -0.00001508,    0.0003078626,  0.00000239,
+      -0.00000065,    0.00000239,    0.0006379854 ]
+    elements:
+      Shape:
+        geometry: { type: Sphere, radius: 0.06 }
+        appearance: *InnerBlack
+  -
+    name: R_HIP_P
+    parent: R_HIP_R
+    joint_type: revolute
+    joint_id: 9
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -77, 25 ]
+    joint_velocity_range: [ -310, 310 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 8.9427E-02
+    center_of_mass: [ 0.00318782, 0.01585620, -0.18563042 ]
+    mass: 2.3407030579
+    inertia: [
+       0.0327359789, -0.00001208,   0.00051740,
+      -0.00001208,    0.0317846870, 0.00105777,
+       0.00051740,    0.00105777,   0.0024855575 ]
+    elements:
+      -
+        type: Visual
+        elements:
+          - { type: Resource, uri: "mesh/R_HIP_P.obj" }
+      - type: Collision
+        elements:
+          - # Upper front
+            type: Shape
+            translation: [ -0.009, 0.002, -0.095 ]
+            rotation: [ [ 0, 1, 0, -3 ], [ 1, 0, 0, 95 ] ]
+            geometry: { type: Capsule, height: 0.17, radius: 0.065 }
+          - # Upper back
+            type: Shape
+            translation: [ -0.03, 0.002, -0.095 ]
+            rotation: [ [ 0, 1, 0, -5 ], [ 1, 0, 0, 95 ] ]
+            geometry: { type: Capsule, height: 0.09, radius: 0.055 }
+          - # middle back
+            type: Shape
+            translation: [ -0.02, 0.012, -0.24 ]
+            rotation: [ [ 0, 1, 0, -28 ], [ 1, 0, 0, 5 ] ]
+            geometry: { type: Box, size: [ 0.03, 0.075, 0.062 ] }
+          - # lower front right
+            type: Shape
+            translation: [ 0.015, 0.002, -0.27 ]
+            rotation: [ [ 0, 1, 0, -1 ], [ 1, 0, 0, 97 ] ]
+            geometry: { type: Capsule, height: 0.14, radius: 0.04 }
+          - # lower front left
+            type: Shape
+            translation: [ 0.015, 0.03, -0.27 ]
+            rotation: [ [ 0, 1, 0, -1 ], [ 1, 0, 0, 90 ] ]
+            geometry: { type: Capsule, height: 0.14, radius: 0.04 }
+      -
+        type: Shape
+        translation: [ 0.009, 0.01905, -0.3 ]
+        geometry: { type: Box, size: [ 0.05, 0.088, 0.1 ] }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ -0.014, -0.003, -0.030 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, height: 0.07, radius: 0.066 }
+        appearance: *InnerBlack
+  -
+    name: R_KNEE_P
+    parent: R_HIP_P
+    translation: [ 0, 0.01905, -0.35 ]
+    joint_type: revolute
+    joint_id: 10
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -1, 125 ]
+    joint_velocity_range: [ -232, 232 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 1.5948E-01
+    center_of_mass: [ -0.01074150, -0.00010610, -0.15354069 ]
+    mass: 2.2107492873
+    inertia: [
+       0.0196777196, 0.00000854,   -0.00022695,
+       0.00000854,   0.0199623114,  0.00045369,
+      -0.00022695,   0.00045369,    0.0014303713 ]
+    elements:
+      - type: Visual
+        elements:
+          - { type: Resource, uri: "mesh/R_KNEE_P.obj" }
+      - type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ -0.003, 0, -0.075 ]
+            geometry: { type: Capsule, radius: 0.042, height: 0.023 }
+          -
+            type: Shape
+            translation: [ -0.015, 0, -0.112 ]
+            geometry: { type: Sphere, radius: 0.053 }
+          -
+            type: Shape
+            translation: [ -0.01, 0, -0.175 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Capsule, height: 0.175, radius: 0.045 }
+          -
+            type: Shape
+            translation: [ -0.006, -0.001, -0.278 ]
+            geometry: { type: Capsule, radius: 0.04, height: 0.017 }
+      -
+        type: Shape
+        translation: [ -0.026, 0.002, -0.05 ]
+        rotation: [ 1, 0, 1.3, 90 ]
+        geometry: { type: Cylinder, height: 0.01, radius:  0.047 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ 0.024, 0, -0.03 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, height: 0.021, radius:  0.036 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        geometry: { type: Cylinder, height: 0.089, radius: 0.03 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ -0.011, 0, -0.32 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Capsule, height: 0.065, radius: 0.037 }
+        appearance: *InnerBlack
+  -
+    name: R_ANKLE_P
+    parent: R_KNEE_P
+    translation: [ 0, 0, -0.341151 ]
+    joint_type: revolute
+    joint_id: 11
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -57, 16 ]
+    joint_velocity_range: [ -265, 265 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 1.2255E-01
+    center_of_mass: [ 0.00368911, 0.00015844, 0.00129883 ]
+    mass: 0.2781747638
+    inertia: [
+       0.0000840608, -0.00000016,   0.00000133,
+      -0.00000016,    0.0001612049, 0.00000007,
+       0.00000133,    0.00000007,   0.0001798054 ]
+    elements:
+      Shape:
+        translation: [ 0.01, 0, 0 ]
+        geometry: { type: Sphere, radius: 0.043 }
+        appearance: *InnerBlack
+  -
+    name: R_ANKLE_R
+    parent: R_ANKLE_P
+    joint_type: revolute
+    joint_id: 12
+    joint_axis: [ 1, 0, 0 ]
+    joint_range: [ -34, 34 ]
+    joint_velocity_range: [ -560, 560 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 1.9043E-02
+    center_of_mass: [ 0.046151719, -0.002195661, -0.06406231 ]
+    mass: 1.4748253
+    inertia: [
+       0.0009673950,  0.00000158,   -0.00010744,
+       0.00000158,    0.0012008780, -0.00000409,
+      -0.00010744,   -0.00000409,    0.0009302439 ]
+    elements:
+      - type: Shape
+        translation: [ 0.033, 0.013, -0.079 ]
+        rotation: [ 0, 0, 1, 2.2 ]
+        geometry: { type: Box, size: [ 0.13, 0.055, 0.028 ] }
+        appearance: *BodyBlack
+      - type: Shape
+        translation: [ 0.032, -0.029, -0.079 ]
+        rotation: [ 0, 0, 1, -8.5 ]
+        geometry: { type: Box, size: [ 0.13, 0.04, 0.028 ] }
+        appearance: *BodyBlack
+      - type: Shape
+        translation: [ 0.08, -0.005, -0.079 ]
+        geometry: { type: Box, size: [ 0.04, 0.095, 0.028 ] }
+        appearance: *BodyBlack
+      - type: Shape
+        translation: [ -0.025, 0.0, -0.079 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, division_number: 14, radius: 0.04, height: 0.028 }
+        appearance: *BodyBlack
+      - type: Shape
+        translation: [ 0.04, 0.00, -0.050 ]
+        geometry: { type: Sphere, radius: 0.042 }
+        appearance: *InnerBlack
+      - type: Shape
+        translation: [ 0.115, -0.0065, -0.065 ]
+        geometry: { type: Capsule, radius: 0.025, height: 0.046 }
+        appearance: *InnerBlack
+      -
+        type: Visual
+        resource: { uri: "mesh/R_ANKLE_R.obj" }
+      -
+        type: Collision
+        elements:
+          - type: Shape
+            translation: [ -0.029, 0.0, -0.02 ]
+            rotation: [ [ 0, 1, 0, 18 ], [ 1, 0, 0, 90 ] ]
+            geometry: { type: Capsule, radius: 0.039, height: 0.07 }
+            appearance: *BodySilver
+      -
+        type: ForceSensor
+        name: rfsensor
+        translation: [ 0, 0, -0.093 ]
+        id: 0
+  -
+    name: R_TOE_P
+    parent: R_ANKLE_R
+    translation: [ 0.115, 0, -0.077 ]
+    joint_type: revolute
+    joint_id: 13
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -60, 10 ]
+    joint_velocity_range: [ -400, 400 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 3.0e-2
+    center_of_mass: [ 0.02, 0, 0 ]
+    mass: 0.22
+    inertia: [
+      0.0002,    0.00001,   0.000005,
+      0.00001,   0.0001,   -0.000003,
+      0.000005, -0.000003,  0.00025   ]
+    elements:
+      -
+        type: Shape
+        translation: [ 0.0525, 0.0095, -0.005 ]
+        rotation: [ 0, 0, 1, 12 ]
+        geometry: { type: Box, size: [ 0.02, 0.035, 0.022 ] }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ 0.0313, 0.0159, -0.005 ]
+        rotation: [ 0, 0, 1, -21.5 ]
+        geometry: { type: Box, size: [ 0.0416, 0.044, 0.022 ] }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ 0.01, -0.0035, -0.005 ]
+        geometry: { type: Box, size: [ 0.02, 0.095, 0.022 ] }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ 0.023, -0.0452, -0.005 ]
+        rotation: [ 0, 0, 1, 14.0 ]
+        geometry: { type: Box, size: [ 0.045, 0.01, 0.022 ] }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ 0.033, -0.023, -0.005 ]
+        geometry: { type: Box, size: [ 0.027, 0.042, 0.022 ] }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ 0.047, -0.0205, -0.005 ]
+        rotation: [ 0, 0, 1, -27 ]
+        geometry: { type: Box, size: [ 0.02, 0.0437, 0.022 ] }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ -0.000, 0.0385, -0.002 ]
+        geometry: { type: Cylinder, division_number: 16, height: 0.0125, radius: 0.014 }
+        appearance: *BodyBlack
+      -
+        type: Shape
+        translation: [ -0.000, -0.047, -0.002 ]
+        geometry: { type: Cylinder, division_number: 16, height: 0.015, radius: 0.014 }
+        appearance: *BodyBlack
+      -
+        type: Visual
+        resource: { uri: "mesh/R_TOE_P.obj" }
+      -
+        type: Collision
+        elements:
+          -
+            type: Shape
+            translation: [ 0.032, -0.005, 0.019 ]
+            geometry: { type: Capsule, height: 0.06, radius: 0.014 }
+            appearance: *BodySilver
+          -
+            type: Shape
+            translation: [ 0.055, -0.00, 0.015 ]
+            geometry: { type: Capsule, height: 0.04, radius: 0.009 }
+            appearance: *BodySilver
+  -
+    name: CHEST_P
+    parent: WAIST
+    translation: [ 0.01, 0, 0.197 ]
+    joint_type: revolute
+    joint_id: 14
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -12, 30 ]
+    joint_velocity_range: [ -310, 310 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 4.4714E-01
+    center_of_mass: [ -0.00431692, 0.00595121, -0.00052352 ]
+    mass: 0.6042195310
+    inertia: [
+       0.0004800669, -0.00001508,   -0.00000065,
+      -0.00001508,    0.0003078626,  0.00000239,
+      -0.00000065,    0.00000239,    0.0006379854 ]
+    elements:
+      Shape:
+        translation: [ -0.01, 0, 0 ]
+        geometry: { type: Sphere, radius: 0.065 }
+        appearance: *InnerBlack
+  -
+    name: CHEST_R
+    parent: CHEST_P
+    joint_type: revolute
+    joint_id: 15
+    joint_axis: [ 1, 0, 0 ]
+    joint_range: [ -25, 25 ]
+    joint_velocity_range: [ -312, 312 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 4.4160E-01
+    center_of_mass: [ -0.01667657, 0.00000002, 0.04993135 ]
+    mass: 1.1730262306
+    inertia: [
+       0.0015651781, -0.00000028,   -0.00048566,
+      -0.00000028,    0.0023890751,  0.0,
+      -0.00048566,    0.0,    0.0015458308 ]
+  -
+    name: CHEST_Y
+    parent: CHEST_R
+    joint_type: revolute
+    joint_id: 16
+    joint_axis: [ 0, 0, 1 ]
+    joint_range: [ -35, 35 ]
+    joint_velocity_range: [ -333, 333 ]
+    max_joint_effort: 20.0
+    rotor_inertia: 3.8813E-01
+    center_of_mass: [ -0.02717915, -0.00315907, 0.20467921 ]
+    mass: 7.0668728364
+    inertia: [
+       0.0667947197, -0.00008608,    0.00538019,
+      -0.00008608,    0.0542495259, -0.00036618,
+       0.00538019,   -0.00036618,    0.0384863766 ]
+    elements:
+      - { type: Resource, uri: "mesh/CHEST_Y.obj" }
+      -
+        type: Shape
+        translation: [ -0.0175, 0, 0.08 ]
+        geometry: { type: Capsule, height: 0.044, radius: 0.078 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ -0.0227, 0, 0.11 ]
+        geometry: { type: Capsule, height: 0.096, radius: 0.078 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ -0.05, 0, 0.34 ]
+        geometry: { type: Sphere, height: 0.04, radius: 0.058 }
+        appearance: *InnerBlack
+  -
+    name: NECK_Y
+    parent: CHEST_Y
+    translation: [ -0.04, 0, 0.414 ]
+    joint_type: revolute
+    joint_id: 17
+    joint_axis: [ 0, 0, 1 ]
+    joint_range: [ -70, 70 ]
+    joint_velocity_range: [ -231, 231 ]
+    max_joint_effort: 10.0
+    rotor_inertia: 1.2719E-01
+    center_of_mass: [ -0.00096033, 0.00755251, -0.04597109 ]
+    mass: 0.33910658
+    inertia: [
+      0.00017816, 0.00000506, -0.00000563,
+      0.00000506, 0.00018286, -0.00000105,
+      -0.00000563, -0.00000105, 0.00017778 ]    
+    elements:
+      -
+        type: Shape
+        translation: [ 0, 0, -0.05 ]
+        rotation: [ 1, 0, 0, 90 ]
+        geometry: { type: Cylinder, height: 0.06, radius: 0.045 }
+        appearance: *InnerBlack
+  -
+    name: NECK_R
+    parent: NECK_Y
+    joint_type: revolute
+    joint_id: 18
+    joint_axis: [ 1, 0, 0 ]
+    joint_range: [ -23, 23 ]
+    joint_velocity_range: [ -231, 231 ]
+    max_joint_effort: 10.0
+    rotor_inertia: 1.2719E-01
+    center_of_mass: [ -0.00874639, 0.00266105, -0.00000091 ]
+    mass: 0.24847228
+    inertia: [
+      0.00004275, 0.00000579, 0.0,
+      0.00000579, 0.00009459, 0.00000001,
+      0.0,        0.00000001, 0.00010951 ]
+  -
+    name: NECK_P
+    parent: NECK_R
+    joint_type: revolute
+    joint_id: 19
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -30, 25 ]
+    joint_velocity_range: [ -231, 231 ]
+    max_joint_effort: 10.0
+    rotor_inertia: 1.2719E-01
+    center_of_mass: [ 0.02, 0, 0.08 ]
+    mass: 3.0
+    inertia: [
+      0.008, 0.0,   0.0,
+      0.0,   0.008, 0.0,
+      0.0,   0.0,   0.008 ]
+    elements:
+      - type: Resource
+        translation: [ 0, 0, 0.022 ]
+        uri: "mesh/NECK_P.obj"
+      -
+        type: Shape
+        translation: [ 0.002, 0, 0 ]
+        geometry: { type: Sphere, radius: 0.054 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ -0.013, 0, 0.002 ]
+        geometry: { type: Sphere, radius: 0.052 }
+        appearance: *InnerBlack
+  -
+    name: L_SHOULDER_P
+    parent: CHEST_Y
+    translation: [ -0.04, 0.16, 0.285 ]
+    joint_type: revolute
+    joint_id: 20
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -147, 60 ]
+    joint_velocity_range: [ -167, 167 ]
+    max_joint_effort: 15.0
+    rotor_inertia: 1.5525e-1
+    center_of_mass: [ 0.00162613, -0.03527113, -0.00032585 ]
+    mass: 0.4118231752
+    inertia: [
+       0.0003638163, -0.00000008,    0.00000058,
+      -0.00000008,    0.0001362855, -0.00000299,
+       0.00000058,   -0.00000299,    0.0003669567 ]
+    elements:
+      -
+        type: Shape
+        translation: [ -0.002, -0.053, 0 ]
+        geometry: { type: Sphere, radius: 0.04 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ 0.0049, 0, 0 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, height: 0.044, radius: 0.031 }
+        appearance: *InnerBlack
+      -
+        type: Visual
+        elements:
+          -
+            type: Shape
+            translation: [ 0.027, 0, 0 ]
+            scale: [ 0.3, 1, 1 ]
+            geometry: { type: Sphere, radius: 0.03 }
+            appearance: *InnerBlack
+          -
+            type: Shape
+            translation: [ -0.018, 0, 0 ]
+            scale: [ 0.3, 1, 1 ]
+            geometry: { type: Sphere, radius: 0.03 }
+            appearance: *InnerBlack
+  -
+    name: L_SHOULDER_R
+    parent: L_SHOULDER_P
+    joint_type: revolute
+    joint_id: 21
+    joint_axis: [ 1, 0, 0 ]
+    joint_range: [ -10, 89 ]
+    joint_velocity_range: [ -144, 144 ]
+    max_joint_effort: 15.0
+    rotor_inertia: 1.5625E-01
+    center_of_mass: [ 0.00306386, -0.00168295, -0.04387923 ]
+    mass: 0.5758320848
+    inertia: [
+       0.0006234389, -0.00000287,   -0.00005836,
+      -0.00000287,    0.0006831421, -0.00000231,
+      -0.00005836,   -0.00000231,    0.0002096595 ]
+    elements:
+      - { type: Resource, uri: "mesh/L_SHOULDER_R.obj" }
+      -
+        type: Visual
+        elements:
+          - type: Shape
+            translation: [ 0.0, 0.0, -0.048 ]
+            geometry: { type: Box, size: [ 0.047, 0.047, 0.04 ] }
+            appearance: *BodyBlack
+  -
+    name: L_SHOULDER_Y
+    parent: L_SHOULDER_R
+    joint_type: revolute
+    joint_id: 22
+    joint_axis: [ 0, 0, 1 ]
+    joint_range: [ -92, 92 ]
+    joint_velocity_range: [ -289, 289 ]
+    max_joint_effort: 15.0
+    rotor_inertia: 1.6280E-02
+    center_of_mass: [ -0.00133297, -0.00192730, -0.17579642 ]
+    mass: 1.2184445109
+    inertia: [
+       0.0063396784,  0.00000382,   -0.00008525,
+       0.00000382,    0.0063514288, -0.00019039,
+      -0.00008525,   -0.00019039,    0.0006338832 ]
+    elements:
+      - { type: Resource, uri: "mesh/L_SHOULDER_Y.obj" }
+      -
+        type: Shape
+        translation: [ 0, -0.001, -0.253 ]
+        geometry: { type: Box, size: [ 0.045, 0.067, 0.05 ] }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ 0, 0.001, -0.283 ]
+        geometry: { type: Cylinder, height: 0.06, radius: 0.025 }
+        appearance: *InnerBlack
+      -
+        type: Visual
+        elements:
+          -
+            type: Shape
+            translation: [ 0, 0, -0.14 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, height: 0.14, radius: 0.0324 }
+            appearance: *InnerBlack
+          -
+            type: Shape
+            translation: [ 0, 0.03, -0.283 ]
+            scale: [ 1, 0.3, 1 ]
+            geometry: { type: Sphere, radius:  0.025 }
+            appearance: *InnerBlack
+          -
+            type: Shape
+            translation: [ 0, -0.03, -0.283 ]
+            scale: [ 1, 0.3, 1 ]
+            geometry: { type: Sphere, radius: 0.025 }
+            appearance: *InnerBlack
+  -
+    name: L_ELBOW_P
+    parent: L_SHOULDER_Y
+    translation: [ 0, 0, -0.283 ]
+    joint_type: revolute
+    joint_id: 23
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -123, 2 ]
+    joint_velocity_range: [ -20, 120 ]
+    max_joint_effort: 15.0
+    rotor_inertia: 2.2500E-01
+    center_of_mass: [ -0.00201792, 0.01157284, -0.06511607 ]
+    mass: 0.3381091491
+    inertia: [
+       0.0010144427, 0.00000140,   -0.00000763,
+       0.00000140,   0.0010144427,  0.00011293,
+      -0.00000763,   0.00011293,    0.0001107370 ]
+    elements:
+      - { type: Resource, uri: "mesh/L_ELBOW_P.obj" }
+      -
+        type: Shape
+        translation: [ 0.0, 0.008, -0.050 ]
+        rotation: [ 1, 0, 0, 100 ]
+        geometry: { type: Capsule, height: 0.06, radius: 0.033 }
+        appearance: *InnerBlack
+      -
+        type: Visual
+        shape:
+          translation: [ -0.005, 0.019, -0.105 ]
+          rotation: [ 1, 0, 0, 10 ]
+          geometry: { type: Box, size: [ 0.056, 0.03, 0.06 ] }
+          appearance: *InnerBlack
+  -
+    name: L_WRIST_Y
+    parent: L_ELBOW_P
+    rotation: [ 1, 0, 0, 10 ]
+    joint_type: revolute
+    joint_id: 24
+    joint_axis: [ 0, 0, 1 ]
+    joint_range: [ -92, 92 ]
+    joint_velocity_range: [ -218, 218 ]
+    max_joint_effort: 10.0
+    rotor_inertia: 2.7625E-02
+    center_of_mass: [ -0.00746639, 0.00000470, -0.18722205 ]
+    mass: 0.21765302
+    inertia: [
+      0.00013353, 0.00000003, 0.00001088,
+      0.00000003, 0.00016335, 0.00000013,
+      0.00001088, 0.00000013, 0.00005586 ]
+    elements:
+      -
+        type: Resource
+        uri: "mesh/L_WRIST_Y.obj"
+      -
+        type: Shape
+        translation: [ -0.002, 0.0005, -0.223 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.01, height: 0.041 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ 0.005, 0.0005, -0.213 ]
+        geometry: { type: Box, size: [ 0.026, 0.02, 0.02 ] }
+        appearance: *InnerBlack
+      -
+        type: Visual
+        elements:
+          -
+            type: Shape
+            translation: [ -0.002, 0.0, -0.173 ]
+            geometry: { type: Box, size: [ 0.045, 0.028, 0.065 ] }
+            appearance: *InnerBlack
+  -
+    name: L_WRIST_R
+    parent: L_WRIST_Y
+    translation: [ 0, 0, -0.222445 ]
+    joint_type: revolute
+    joint_id: 25
+    joint_axis: X
+    joint_range: [ -84, 84 ]
+    joint_velocity_range: [ -218, 218 ]
+    max_joint_effort: 10.0
+    rotor_inertia: 2.7625E-02
+    center_of_mass: [ 0.01, 0, -0.065 ]
+    mass: 0.4604204
+    inertia: [
+      0.0008, 0.0,    0.0,
+      0.0,    0.0009, 0.0,
+      0.0,    0.0,    0.0002 ]
+    elements:
+      -
+        type: Resource
+        translation: [ 0, -0.002, 0 ]
+        uri: "mesh/L_WRIST_R.obj"
+  -
+    name: R_SHOULDER_P
+    parent: CHEST_Y
+    translation: [ -0.04, -0.16, 0.285 ]
+    joint_type: revolute
+    joint_id: 26
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -147, 60 ]
+    joint_velocity_range: [ -167, 167 ]
+    max_joint_effort: 15.0
+    rotor_inertia: 1.5525e-1
+    center_of_mass: [ 0.00162613, 0.03527113, -0.00032585 ]
+    mass: 0.4120497350
+    inertia: [
+       0.0003640164,  0.00000008,   -0.00000058,
+       0.00000008,    0.0001363604, -0.00000299,
+      -0.00000058,   -0.00000299,    0.0003671586 ]
+    elements:
+      -
+        type: Shape
+        translation: [ -0.002, 0.053, 0 ]
+        geometry: { type: Sphere, radius: 0.04 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ 0.0049, 0, 0 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, height: 0.044, radius: 0.031 }
+        appearance: *InnerBlack
+      -
+        type: Visual
+        elements:
+          -
+            type: Shape
+            translation: [ 0.027, 0, 0 ]
+            scale: [ 0.3, 1, 1 ]
+            geometry: { type: Sphere, radius: 0.03 }
+            appearance: *InnerBlack
+          -
+            type: Shape
+            translation: [ -0.018, 0, 0 ]
+            scale: [ 0.3, 1, 1 ]
+            geometry: { type: Sphere, radius: 0.03 }
+            appearance: *InnerBlack
+  -
+    name: R_SHOULDER_R
+    parent: R_SHOULDER_P
+    joint_type: revolute
+    joint_id: 27
+    joint_axis: [ 1, 0, 0 ]
+    joint_range: [ -89, 10 ]
+    joint_velocity_range: [ -144, 144 ]
+    max_joint_effort: 15.0
+    rotor_inertia: 1.5625E-01
+    center_of_mass: [ 0.00306386, 0.00168295, -0.04387923 ]
+    mass: 0.5781055250
+    inertia: [
+       0.0006259003, -0.00000287,   -0.00005836,
+      -0.00000287,    0.0006858392, -0.00000231,
+      -0.00005836,   -0.00000231,    0.0002104872 ]
+    elements:
+      - { type: Resource, uri: "mesh/R_SHOULDER_R.obj" }
+      -
+        type: Visual
+        elements:
+          - type: Shape
+            translation: [ 0.0, 0.0, -0.048 ]
+            geometry: { type: Box, size: [ 0.047, 0.047, 0.04 ] }
+            appearance: *BodyBlack
+  -
+    name: R_SHOULDER_Y
+    parent: R_SHOULDER_R
+    joint_type: revolute
+    joint_id: 28
+    joint_axis: [ 0, 0, 1 ]
+    joint_range: [ -92, 92 ]
+    joint_velocity_range: [ -289, 289 ]
+    max_joint_effort: 15.0
+    rotor_inertia: 1.6280E-02
+    center_of_mass: [ -0.00133297, -0.00192730, -0.17579642 ]
+    mass: 1.2010393166
+    inertia: [
+       0.0062491176,  0.00000382,   -0.00008525,
+       0.00000382,    0.0062607001, -0.00019039,
+      -0.00008525,   -0.00019039,    0.0006248283 ]
+    elements:
+      - { type: Resource, uri: "mesh/R_SHOULDER_Y.obj" }
+      -
+        type: Shape
+        translation: [ 0, 0.001, -0.253 ]
+        geometry: { type: Box, size: [ 0.045, 0.067, 0.05 ] }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ 0, -0.001, -0.283 ]
+        geometry: { type: Cylinder, height: 0.06, radius: 0.025 }
+        appearance: *InnerBlack
+      -
+        type: Visual
+        elements:
+          -
+            type: Shape
+            translation: [ 0, 0, -0.14 ]
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, height: 0.14, radius: 0.0324 }
+            appearance: *InnerBlack
+          -
+            type: Shape
+            translation: [ 0, -0.03, -0.283 ]
+            scale: [ 1, 0.3, 1 ]
+            geometry: { type: Sphere, radius:  0.026 }
+            appearance: *InnerBlack
+          -
+            type: Shape
+            translation: [ 0, 0.03, -0.283 ]
+            scale: [ 1, 0.3, 1 ]
+            geometry: { type: Sphere, radius: 0.026 }
+            appearance: *InnerBlack
+  -
+    name: R_ELBOW_P
+    parent: R_SHOULDER_Y
+    translation: [ 0, 0, -0.283 ]
+    joint_type: revolute
+    joint_id: 29
+    joint_axis: [ 0, 1, 0 ]
+    joint_range: [ -123, 2 ]
+    joint_velocity_range: [ -120, 120 ]
+    max_joint_effort: 15.0
+    rotor_inertia: 2.2500E-01
+    center_of_mass: [ -0.00193431, -0.01018298, -0.06509650 ]
+    mass: 0.3475143434
+    inertia: [
+       0.0010540489, -0.00000146,   -0.00000720,
+      -0.00000146,    0.0010413742, -0.00013652,
+      -0.00000720,   -0.00013652,    0.0001261526 ]
+    elements:
+      - { type: Resource, uri: "mesh/R_ELBOW_P.obj" }
+      -
+        type: Shape
+        translation: [ 0.0, -0.008, -0.050 ]
+        rotation: [ 1, 0, 0, -100 ]
+        geometry: { type: Capsule, height: 0.06, radius: 0.033 }
+        appearance: *InnerBlack
+      -
+        type: Visual
+        shape:
+          translation: [ -0.005, -0.019, -0.105 ]
+          rotation: [ 1, 0, 0, -10 ]
+          geometry: { type: Box, size: [ 0.056, 0.03, 0.06 ] }
+          appearance: *InnerBlack
+  -
+    name: R_WRIST_Y
+    parent: R_ELBOW_P
+    rotation: [ 1, 0, 0, -10 ]
+    joint_type: revolute
+    joint_id: 30
+    joint_axis: [ 0, 0, 1 ]
+    joint_range: [ -92, 92 ]
+    joint_velocity_range: [ -218, 218 ]
+    max_joint_effort: 10.0
+    rotor_inertia: 2.7625E-02
+    center_of_mass: [ -0.00746639, 0.00000470, -0.18722205 ]
+    mass: 0.21765302
+    inertia: [
+      0.0001666590, 0.00000003,   0.00001088,
+      0.00000003,   0.0001998085, 0.00000013,
+      0.00001088,   0.00000013,   0.0000737877 ]
+    elements:
+      -
+        type: Resource
+        uri: "mesh/R_WRIST_Y.obj"
+      -
+        type: Shape
+        translation: [ -0.002, -0.0005, -0.223 ]
+        rotation: [ 0, 0, 1, 90 ]
+        geometry: { type: Cylinder, radius: 0.01, height: 0.041 }
+        appearance: *InnerBlack
+      -
+        type: Shape
+        translation: [ 0.005, -0.0005, -0.213 ]
+        geometry: { type: Box, size: [ 0.026, 0.02, 0.02 ] }
+        appearance: *InnerBlack
+      -
+        type: Visual
+        elements:
+          -
+            type: Shape
+            translation: [ -0.002, 0.0, -0.173 ]
+            geometry: { type: Box, size: [ 0.045, 0.028, 0.065 ] }
+            appearance: *InnerBlack
+  -
+    name: R_WRIST_R
+    parent: R_WRIST_Y
+    translation: [ 0, 0, -0.2224455 ]
+    joint_type: revolute
+    joint_id: 31
+    joint_axis: X
+    joint_range: [ -84, 84 ]
+    joint_velocity_range: [ -218, 218 ]
+    max_joint_effort: 10.0
+    rotor_inertia: 2.7625E-02
+    center_of_mass: [ 0.01, 0, -0.065 ]
+    mass: 0.4604204
+    inertia: [
+      0.0008, 0.0,     0.0,
+      0.0,    0.0009, 0.0,
+      0.0,    0.0,    0.0002 ]
+    elements:
+      -
+        type: Resource
+        translation: [ 0, 0.002, 0 ]
+        uri: "mesh/R_WRIST_R.obj"
+
+standard_pose: [ 
+  0, 0, -25, 50, -25, 0, 0,
+  0, 0, -25, 50, -25, 0, 0,
+  0, 0, 0,
+  0, 0, 0,
+  5,  10, 0, -15, 0, -10,
+  5, -10, 0, -15, 0,  10 ]
+
+link_group:
+  - name: UPPER-BODY
+    links: 
+      - name: NECK
+        links: [ NECK_Y, NECK_R, NECK_P ]
+      - name: ARMS
+        links:
+          - name: L-ARM
+            links: [ L_SHOULDER_P, L_SHOULDER_R, L_SHOULDER_Y, L_ELBOW_P, L_WRIST_Y, L_WRIST_R ]
+          - name: R-ARM
+            links: [ R_SHOULDER_P, R_SHOULDER_R, R_SHOULDER_Y, R_ELBOW_P, R_WRIST_Y, R_WRIST_R ]
+      - name: CHEST
+        links: [ CHEST_P, CHEST_R, CHEST_Y ]
+  - WAIST
+  - name: LOWER-BODY
+    links:
+      - name: LEGS
+        links:
+        - name: L-LEG
+          links: [ L_HIP_Y, L_HIP_R, L_HIP_P, L_KNEE_P, L_ANKLE_P, L_ANKLE_R, L_TOE_P ]
+        - name: R-LEG
+          links: [ R_HIP_Y, R_HIP_R, R_HIP_P, R_KNEE_P, R_ANKLE_P, R_ANKLE_R, R_TOE_P ]
+
+available_ik_interpolation_links: [ WAIST, R_ANKLE_R, L_ANKLE_R ]
+default_ik_interpolation_links: [ WAIST, R_ANKLE_R, L_ANKLE_R ]
+
+symmetric_joints:
+  - [ CHEST_R ]
+  - [ CHEST_Y ]
+  - [ NECK_Y ]
+  - [ NECK_R ]
+  - [ EYE_Y ]
+  - [ L_SHOULDER_P, R_SHOULDER_P     ]
+  - [ L_SHOULDER_R, R_SHOULDER_R, -1 ]
+  - [ L_SHOULDER_Y, R_SHOULDER_Y, -1 ]
+  - [ L_ELBOW_P,    R_ELBOW_P        ]
+  - [ L_WRIST_Y,    R_WRIST_Y,    -1 ]
+  - [ L_WRIST_R,    R_WRIST_R,    -1 ]
+  - [ L_HIP_Y,      R_HIP_Y,      -1 ]
+  - [ L_HIP_R,      R_HIP_R,      -1 ]
+  - [ L_HIP_P,      R_HIP_P,         ]
+  - [ L_KNEE_P,     R_KNEE_P         ]
+  - [ L_ANKLE_P,    R_ANKLE_P        ]
+  - [ L_ANKLE_R,    R_ANKLE_R,    -1 ]
+  - [ L_TOE_R,      R_TOE_R,         ]
+
+symmetric_ik_links:
+  - [ WAIST ]
+  - [ L_ANKLE_R, R_ANKLE_R ]
+
+default_ik_setup:
+  WAIST: [ L_ANKLE_R, R_ANKLE_R ]
+  R_ANKLE_R: [ WAIST ]
+  L_ANKLE_R: [ WAIST ]
+  CHEST_Y: [ WAIST ]
+  NECK_P: [ CHEST_Y ]
+  R_WRIST_R: [ CHEST_Y ]
+  L_WRIST_R: [ CHEST_Y ]
+
+foot_links:
+  - link: L_ANKLE_R
+    knee_pitch_joint: L_KNEE_P
+    sole_center: [ 0.03, 0.0, -0.093 ]
+  - link: R_ANKLE_R
+    knee_pitch_joint: R_KNEE_P
+    sole_center: [ 0.03, 0.0, -0.093 ]
+
+pose_conversion_info:
+  - target_body_models: [HRP4C ]
+    joint_map: [ 
+      7, 8, 9, 10, 11, 12, 13,
+      0, 1, 2,  3,  4,  5,  6,
+      14, 15, 16,
+      17, 18, 19,
+      -1, -1, -1, -1, -1, -1, -1, -1,
+      26, 27, 28, 29, 30, 31, -1, -1,
+      20, 21, 22, 23, 24, 25, -1, -1 ]
+
+collision_detection_rules:
+  - disabled_link_chain_level: 3
+  - disabled_links: [ CHEST_P, CHEST_R, NECK_Y, NECK_R ]
+  - disabled_link_group: [
+      L_SHOULDER_P, L_SHOULDER_R, L_SHOULDER_Y, R_SHOULDER_P, R_SHOULDER_R, R_SHOULDER_Y ]
+  - disabled_link_group: [
+      L_SHOULDER_P, L_SHOULDER_R, R_SHOULDER_P, R_SHOULDER_R,
+      NECK_Y, NECK_R, NECK_P,
+      L_HIP_Y, L_HIP_R, R_HIP_Y, R_HIP_R ]
+  - enabled_link_group: [ CHEST_Y, L_SHOULDER_Y ]
+  - enabled_link_group: [ CHEST_Y, R_SHOULDER_Y ]
+
+# For AGX
+collisionDetection:
+  excludeTreeDepth: 3
+  excludeLinks: [ CHEST_P, CHEST_R, NECK_Y, NECK_R ]
+  excludeLinkGroups:
+    -
+      name: ShoulderGroup
+      links: [ L_SHOULDER_P, L_SHOULDER_R, L_SHOULDER_Y, R_SHOULDER_P, R_SHOULDER_R, R_SHOULDER_Y ]
+    -
+      name: OutOfContactGroup
+      links: [
+        L_SHOULDER_P, L_SHOULDER_R, R_SHOULDER_P, R_SHOULDER_R, 
+        NECK_Y, NECK_R, NECK_P,
+        L_HIP_Y, L_HIP_R, R_HIP_Y, R_HIP_R ]
+
+body_handlers: HRP4CHandler

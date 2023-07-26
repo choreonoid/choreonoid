@@ -1,0 +1,31 @@
+newmtl MAT1
+Ka 1 1 1
+Kd 0.9 0.9 0.9
+Ks 0.25 0.25 0.25
+Ns 51.8
+Ke 0 0 0
+d 1
+Tr 0
+illum 2
+
+newmtl MAT1_000
+Ka 1 1 1
+Kd 0.9 0.9 0.9
+Ks 0.25 0.25 0.25
+Ns 51.8
+Ke 0 0 0
+d 1
+Tr 0
+illum 2
+map_Kd eye.png
+
+newmtl MAT1_001
+Ka 1 1 1
+Kd 0.9 0.9 0.9
+Ks 0.25 0.25 0.25
+Ns 51.8
+Ke 0 0 0
+d 1
+Tr 0
+illum 2
+map_Kd eye.png
