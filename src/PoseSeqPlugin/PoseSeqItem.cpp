@@ -99,7 +99,7 @@ public:
     bool deselectPose(PoseSeq::iterator pose, bool doNotify);
     void onTreePathChanged();
     void convert(BodyPtr orgBody);
-    bool convertSub(BodyPtr orgBody, const Mapping& convInfo);
+    void convertSub(BodyPtr orgBody, const Mapping& convInfo);
     void updateInterpolationParameters();
     bool updateInterpolation();
     bool updateTrajectory(bool putMessages);
@@ -493,26 +493,23 @@ void PoseSeqItem::Impl::convert(BodyPtr orgBody)
         return;
     }
     
-    const Listing& convInfoTop = *targetBodyItem->body()->info()->findListing("poseConversionInfo");
+    const Listing& convInfoTop = *targetBodyItem->body()->info()->findListing("pose_conversion_info");
     if(convInfoTop.isValid()){
         for(int i=0; i < convInfoTop.size(); ++i){
             const Mapping& convInfo = *convInfoTop[i].toMapping();
-            const Listing& targets = *convInfo["targetBodies"].toListing();
+            const Listing& targets = *convInfo["target_body_models"].toListing();
             for(int j=0; j < targets.size(); ++j){
                 if(targets[j].toString() == orgBody->name()){
-
                     beginEditing();
-                    if(endEditing(convertSub(orgBody, convInfo))){
-                        
-                        self->clearFileInformation();
-                        BodyPtr body = targetBodyItem->body();
-                        seq->setTargetBodyName(body->name());
-                        MessageView::mainInstance()->notify(
-                            format(_("Pose seq \"{0}\" has been converted. Its target has been changed from {1} to {2}"),
-                                   self->displayName(), orgBody->name(), body->name()));
-                        
+                    convertSub(orgBody, convInfo);
+                    endEditing(true);
+                    self->clearFileInformation();
+                    BodyPtr body = targetBodyItem->body();
+                    seq->setTargetBodyName(body->name());
+                    MessageView::mainInstance()->notify(
+                        format(_("Pose seq \"{0}\" has been converted. Its target has been changed from {1} to {2}"),
+                               self->displayName(), orgBody->name(), body->name()));
                         return;
-                    }
                 }
             }
         }
@@ -520,28 +517,21 @@ void PoseSeqItem::Impl::convert(BodyPtr orgBody)
 }
 
 
-bool PoseSeqItem::Impl::convertSub(BodyPtr orgBody, const Mapping& convInfo)
+void PoseSeqItem::Impl::convertSub(BodyPtr orgBody, const Mapping& convInfo)
 {
-    bool converted = false;
-    
-    const Listing& jointMap = *convInfo.findListing("jointMap");
-    const Mapping& linkMap = *convInfo.findMapping("linkMap");
+    const Listing& jointMap = *convInfo.findListing("joint_map");
+    const Mapping& linkMap = *convInfo.findMapping("link_map");
     BodyPtr body = targetBodyItem->body();
-    
-    for(auto it = seq->begin(); it != seq->end(); ++it){
 
+    for(auto it = seq->begin(); it != seq->end(); ++it){
         auto pose = it->get<BodyKeyPose>();
-        
         if(!pose){
             continue;
         }
-
-        bool modified = false;
         seq->beginPoseModification(it);
-        
         BodyKeyPosePtr orgPose = pose->clone();
+
         if(jointMap.isValid()){
-            modified = true;
             pose->setNumJoints(0);
             int n = orgPose->numJoints();
             for(int i=0; i < n; ++i){
@@ -556,47 +546,39 @@ bool PoseSeqItem::Impl::convertSub(BodyPtr orgBody, const Mapping& convInfo)
                 }
             }
         }
-        
-        if(linkMap.isValid()){
-            modified = true;
-            pose->clearIkLinks();
-            int baseLinkIndex = -1;
-            for(auto ikLinkIter = orgPose->ikLinkBegin(); ikLinkIter != orgPose->ikLinkEnd(); ++ikLinkIter){
-                Link* orgLink = orgBody->link(ikLinkIter->first);
-                string linkName;
+
+        pose->clearIkLinks();
+        int baseLinkIndex = -1;
+        for(auto ikLinkIter = orgPose->ikLinkBegin(); ikLinkIter != orgPose->ikLinkEnd(); ++ikLinkIter){
+            Link* orgLink = orgBody->link(ikLinkIter->first);
+            string linkName = orgLink->name();
+            if(linkMap.isValid()){
                 ValueNode* linkNameNode = linkMap.find(orgLink->name());
                 if(linkNameNode->isValid()){
                     linkName = linkNameNode->toString();
-                } else {
-                    linkName = orgLink->name();
-                }
-                Link* link = body->link(linkName);
-                if(link){
-                    const BodyKeyPose::LinkInfo& orgLinkInfo = ikLinkIter->second;
-                    BodyKeyPose::LinkInfo* linkInfo = pose->getOrCreateIkLink(link->index());
-                    linkInfo->setPosition(orgLinkInfo.position());
-                    linkInfo->setStationaryPoint(orgLinkInfo.isStationaryPoint());
-                    if(orgLinkInfo.isTouching()){
-                        linkInfo->setTouching(orgLinkInfo.partingDirection(), orgLinkInfo.contactPoints());
-                    }
-                    linkInfo->setSlave(orgLinkInfo.isSlave());
-                    if(orgLinkInfo.isBaseLink()){
-                        baseLinkIndex = link->index();
-                    }
                 }
             }
-            if(baseLinkIndex >= 0){
-                pose->setBaseLink(baseLinkIndex);
+            Link* link = body->link(linkName);
+            if(link){
+                const BodyKeyPose::LinkInfo& orgLinkInfo = ikLinkIter->second;
+                BodyKeyPose::LinkInfo* linkInfo = pose->getOrCreateIkLink(link->index());
+                linkInfo->setPosition(orgLinkInfo.position());
+                linkInfo->setStationaryPoint(orgLinkInfo.isStationaryPoint());
+                if(orgLinkInfo.isTouching()){
+                    linkInfo->setTouching(orgLinkInfo.partingDirection(), orgLinkInfo.contactPoints());
+                }
+                linkInfo->setSlave(orgLinkInfo.isSlave());
+                if(orgLinkInfo.isBaseLink()){
+                    baseLinkIndex = link->index();
+                }
             }
+        }
+        if(baseLinkIndex >= 0){
+            pose->setBaseLink(baseLinkIndex);
         }
         
-        if(modified){
-            seq->endPoseModification(it);
-            converted = true;
-        }
+        seq->endPoseModification(it);
     }
-
-    return converted;
 }
 
 
