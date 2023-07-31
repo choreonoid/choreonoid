@@ -1670,6 +1670,7 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Root link"), body->rootLink()->name());
     putProperty(_("Base link"), currentBaseLink ? currentBaseLink->name() : "none");
     putProperty.decimals(3)(_("Mass"), body->mass());
+    putProperty(_("Center of mass"), str(self->centerOfMass()));
     putProperty(_("Model type"), body->isStaticModel() ? _("Static") : _("Dynamic"));
 
     putProperty(_("Root fixed"), body->isFixedRootModel(),
