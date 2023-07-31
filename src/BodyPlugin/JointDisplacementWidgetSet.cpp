@@ -704,11 +704,11 @@ void JointIndicator::initialize(Link* joint)
                     upper = 360.0;
                 }
             }
-            if(!setRangeLabelValue(lowerLimitLabel, lower, isLowerInfinite, 0)){
+            if(!setRangeLabelValue(lowerLimitLabel, lower, isLowerInfinite, 1)){
                 lower = -360.0;
                 isValidRange = false;
             }
-            if(!setRangeLabelValue(upperLimitLabel, upper, isUpperInfinite, 0)){
+            if(!setRangeLabelValue(upperLimitLabel, upper, isUpperInfinite, 1)){
                 upper = 360.0;
                 isValidRange = false;
             }
