@@ -190,7 +190,7 @@ public:
 FlipFilter::FlipFilter(Body* body)
     : body(body)
 {
-    const Listing& sjoints = *body->info()->findListing("symmetricJoints");    
+    const Listing& sjoints = *body->info()->findListing({ "symmetric_joints", "symmetricJoints" });
     if(sjoints.isValid() && !sjoints.empty()){
         for(int i=0; i < sjoints.size(); ++i){
             const Listing& jointPair = *sjoints[i].toListing();
@@ -220,7 +220,7 @@ FlipFilter::FlipFilter(Body* body)
         }
     }
 
-    const Listing& slinks = *body->info()->findListing("symmetricIkLinks");    
+    const Listing& slinks = *body->info()->findListing({ "symmetric_ik_links", "symmetricIkLinks" });
     if(slinks.isValid() && !slinks.empty()){
         for(int i=0; i < slinks.size(); ++i){
             const Listing& linkPair = *slinks[i].toListing();

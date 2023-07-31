@@ -140,7 +140,8 @@ void BodyBar::Impl::onSymmetricCopyButtonClicked(int direction, bool doMirrorCop
 
 void BodyBar::Impl::doSymmetricCopy(BodyItem* bodyItem, int direction, bool doMirrorCopy)
 {
-    const Listing& slinks = *bodyItem->body()->info()->findListing("symmetricJoints");
+    const Listing& slinks =
+        *bodyItem->body()->info()->findListing({ "symmetric_joints", "symmetricJoints" });
     if(slinks.isValid() && !slinks.empty()){
         int from = direction;
         int to = 1 - direction;

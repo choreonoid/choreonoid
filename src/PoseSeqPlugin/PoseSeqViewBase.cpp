@@ -316,7 +316,8 @@ void PoseSeqViewBase::initializeLinkTreeIkLinkColumn()
     possibleIkLinkFlag.resize(body->numLinks(), false);
 
     if(body->numLinks() > 0){
-        const Listing& possibleIkLinks = *info.findListing("possibleIkInterpolationLinks");
+        const Listing& possibleIkLinks =
+            *info.findListing({ "available_ik_interpolation_links", "possibleIkInterpolationLinks" });
         if(possibleIkLinks.isValid()){
             for(int i=0; i < possibleIkLinks.size(); ++i){
                 if(auto link = body->link(possibleIkLinks[i])){
@@ -334,7 +335,8 @@ void PoseSeqViewBase::initializeLinkTreeIkLinkColumn()
         }
     }
     
-    const Listing& defaultIkLinks = *info.findListing("defaultIkInterpolationLinks");
+    const Listing& defaultIkLinks =
+        *info.findListing({ "default_ik_interpolation_links", "defaultIkInterpolationLinks" });
     if(defaultIkLinks.isValid()){
         for(int i=0; i < defaultIkLinks.size(); ++i){
             if(auto link = body->link(defaultIkLinks[i])){

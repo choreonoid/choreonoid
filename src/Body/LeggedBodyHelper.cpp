@@ -68,12 +68,12 @@ bool LeggedBodyHelper::resetBody(Body* body)
                     footInfo.toeOffset.translation() = p;
                 }
                 
-                if(!read(footLinkNode, "homeCop", footInfo.homeCop)){
+                if(!read(footLinkNode, { "home_cop", "homeCop" }, footInfo.homeCop)){
                     footInfo.homeCop = footInfo.soleCenter;
                 }
                 
                 string kneePitchJointLabel;
-                if(footLinkNode.read("kneePitchJoint", kneePitchJointLabel)){
+                if(footLinkNode.read({ "knee_pitch_joint", "kneePitchJoint" }, kneePitchJointLabel)){
                     footInfo.kneePitchJoint = body_->joint(kneePitchJointLabel);
                 }
                 

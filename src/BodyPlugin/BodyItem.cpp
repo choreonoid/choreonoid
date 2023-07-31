@@ -804,7 +804,7 @@ void BodyItem::Impl::setPresetPose(BodyItem::PresetPoseID id)
 
     if(id == BodyItem::STANDARD_POSE){
         auto info = body->info();
-        const Listing& pose = *info->findListing("standardPose");
+        const Listing& pose = *info->findListing({ "standard_pose", "standardPose" });
         if(pose.isValid()){
             const int n = std::min(pose.size(), body->numJoints());
             while(jointIndex < n){

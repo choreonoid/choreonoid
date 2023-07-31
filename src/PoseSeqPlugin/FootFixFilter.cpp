@@ -160,7 +160,7 @@ void FootFixFilterDialog::onAccepted()
 
 static void setStandardPose(Body* body)
 {
-    const Listing& pose = *body->info()->findListing("standardPose");
+    const Listing& pose = *body->info()->findListing({ "standard_pose", "standardPose" });
     if(pose.isValid()){
         int jointIndex = 0;
         const int n = std::min(pose.size(), body->numJoints());

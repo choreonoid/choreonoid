@@ -14,7 +14,7 @@ LinkGroup::LinkGroup()
 
 LinkGroup* LinkGroup::create(const Body* body)
 {
-    const ListingPtr linkGroupList = body->info()->findListing("linkGroup");
+    const ListingPtr linkGroupList = body->info()->findListing({ "link_group", "linkGroup" });
     auto group = new LinkGroup;
     group->setName("Whole Body");
     if(!linkGroupList->isValid() || !group->load(body, linkGroupList)){

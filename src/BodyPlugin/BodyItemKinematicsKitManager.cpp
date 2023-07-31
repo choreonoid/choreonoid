@@ -254,7 +254,7 @@ BodyItemKinematicsKit* BodyItemKinematicsKitManager::Impl::findKinematicsKit(Lin
 std::shared_ptr<InverseKinematics> BodyItemKinematicsKitManager::Impl::findPresetIK(Link* targetLink)
 {
     std::shared_ptr<InverseKinematics> ik;
-    const Mapping& setupMap = *body->info()->findMapping("defaultIKsetup");
+    const Mapping& setupMap = *body->info()->findMapping({ "default_ik_setup", "defaultIKsetup" });
     if(setupMap.isValid()){
         const Listing& setup = *setupMap.findListing(targetLink->name());
         if(setup.isValid() && !setup.empty()){
