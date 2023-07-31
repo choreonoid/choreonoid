@@ -17,41 +17,32 @@ LinkGroup* LinkGroup::create(const Body* body)
     const ListingPtr linkGroupList = body->info()->findListing({ "link_group", "linkGroup" });
     auto group = new LinkGroup;
     group->setName("Whole Body");
-    if(!linkGroupList->isValid() || !group->load(body, linkGroupList)){
+    if(linkGroupList->isValid()){
+        group->readElements(body, linkGroupList);
+    } else {
         group->setFlatLinkList(body);
     }
     return group;
 }
 
 
-bool LinkGroup::load(const Body* body, const Listing* linkGroupList)
+void LinkGroup::readElements(const Body* body, const Listing* linkGroupList)
 {
     for(int i=0; i < linkGroupList->size(); ++i){
-
         auto node = linkGroupList->at(i);
-
         if(node->isScalar()){
             Link* link = body->link(node->toString());
-            if(!link){
-                return false;
+            if(link){
+                elements.push_back(link->index());
             }
-            elements.push_back(link->index());
-
         } else if(node->isMapping()){
             auto group = node->toMapping();
             LinkGroupPtr linkGroup = new LinkGroup;
             linkGroup->setName(group->get("name").toString());
-            if(linkGroup->load(body, group->get("links").toListing())){
-                elements.push_back(linkGroup);
-            } else {
-                return false;
-            }
-        } else {
-            return false;
+            linkGroup->readElements(body, group->get("links").toListing());
+            elements.push_back(linkGroup);
         }
     }
-
-    return true;
 }
 
 

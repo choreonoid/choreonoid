@@ -39,7 +39,7 @@ private:
     std::string name_;
     std::vector<Element> elements;
 
-    bool load(const Body* body, const Listing* linkGroupList);
+    void readElements(const Body* body, const Listing* linkGroupList);
     void setFlatLinkList(const Body* body);
 };
 
