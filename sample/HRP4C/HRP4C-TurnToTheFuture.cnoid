@@ -10,8 +10,9 @@ items:
       name: "World"
       plugin: Body
       class: WorldItem
+      is_checked: true
       data: 
-        collision_detection: false
+        collision_detection: true
         collision_detector: AISTCollisionDetector
         default_material_table_file: "${SHARE}/default/materials.yaml"
       children: 
@@ -90,7 +91,7 @@ items:
           plugin: Body
           class: BodyItem
           data: 
-            file: "${HOME}/choreonoid/share/model/misc/floor.body"
+            file: "${SHARE}/model/misc/floor.body"
             format: CHOREONOID-BODY
             rootPosition: [ 0, 0, -0.1 ]
             rootAttitude: [ 
@@ -106,8 +107,8 @@ items:
             fix_root: true
             collisionDetection: true
             selfCollisionDetection: false
-            lock_location: false
-            scene_sensitive: true
+            lock_location: true
+            scene_sensitive: false
             zmp: [ 0, 0, 0 ]
         - 
           id: 6
@@ -189,7 +190,7 @@ views:
       viewpointOperationMode: thirdPerson
       visible_polygon_elements: [ face ]
       highlighting: false
-      collisionLines: false
+      collisionLines: true
       cameras: 
         - 
           camera: [ System, Perspective ]
@@ -237,7 +238,7 @@ views:
     mounted: true
     state: 
       show_joint_ids: true
-      show_joint_names: false
+      show_joint_names: true
       overlap_joint_names: false
       show_sliders: true
       show_dials: false
