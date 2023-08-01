@@ -544,11 +544,15 @@ void OperableSceneBody::Impl::onSceneGraphConnection(bool on)
 
 void OperableSceneBody::Impl::onBodyItemUpdated()
 {
-    if(sceneLinkForPositionDragger){
-        if(bodyItem->isDoingContinuousKinematicUpdate() || bodyItem->isLocationLocked()){
+    bool isUserInputBlocked = bodyItem->isDoingContinuousKinematicUpdate() || bodyItem->isLocationLocked();
+    if(isUserInputBlocked){
+        if(sceneLinkForPositionDragger){
             detachPositionDragger();
         }
+    } else if(isFocused){
+        updateMarkersAndManipulators(true);
     }
+
     updateVisibleLinkSelectionMode();
 }
 
