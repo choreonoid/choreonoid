@@ -157,6 +157,7 @@ bool HRP4CJointPath::calcLegInverseKinematics(const Isometry3& T_global, const I
     q[2] = atan2(-R_kh(0,2), R_kh(2,2));
 
     copyJointDisplacements(q.data());
+    calcForwardKinematics();
 
     return true;
 }
