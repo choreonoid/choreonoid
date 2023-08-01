@@ -19,7 +19,7 @@ Changes since 1.7.0:
 * Fixed the WRS2018 tunnel models
 * The Eigen library contained in the thirdparty directory is used by default on Windows
 * Supported Ubuntu 20.04 and 22.04
-* Supported Visual C++ 2019
+* Supported Visual C++ 2019 and 2022
 * Supported Clang
 * Added LocationView and LinkPositionView
 * The location of an object in the scene can be locked if necessary
@@ -85,7 +85,10 @@ Changes since 1.7.0:
 * Added the Imu class
 * Added the function to render texts in SceneView
 * Added the distance measurement function
+* Separated the GLSceneRenderer module from the Base module
 * Added MocapPlugin
+* Added BodyMotionFilterPlugin implementing YawMomentCompensationFilter
+* Added the HRP-4C model and its samples
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
