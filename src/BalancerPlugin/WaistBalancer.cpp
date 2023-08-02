@@ -46,6 +46,7 @@ WaistBalancer::WaistBalancer()
     dynamicsTimeRatio = 1.0;
     isBoundaryCmAdjustmentEnabled = false;
     isWaistHeightRelaxationEnabled = false;
+    zmpOutputMode = OriginalZmpInput;
 
     setBoundarySmoother(QUINTIC_SMOOTHER, 0.5);
     setFullTimeRange();
@@ -203,6 +204,12 @@ void WaistBalancer::setInitialWaistTrajectoryMode(int mode)
 void WaistBalancer::enableWaistHeightRelaxation(bool on)
 {
     isWaistHeightRelaxationEnabled = on;
+}
+
+
+void WaistBalancer::setZmpOutputMode(int mode)
+{
+    zmpOutputMode = mode;
 }
 
 
@@ -473,6 +480,7 @@ void WaistBalancer::initBodyKinematics(int frame, const Vector3& cmTranslation)
         joint->dq() = 0.0;
     }
 
+    desiredZmp = *provider->ZMP();
     updateCmAndZmp(frame);
 }
 
@@ -488,7 +496,8 @@ void WaistBalancer::updateCmAndZmp(int frame)
         p.x() = -waistLink->p().x();
         p.y() = -waistLink->p().y();
         p.z() = 0.0;
-        desiredZmp = *provider->ZMP();
+
+        // The desired ZMP is assumed to be the current time frame value.
         zmpDiff = desiredZmp;
 
     } else {
@@ -517,12 +526,11 @@ void WaistBalancer::updateCmAndZmp(int frame)
             }
         }
 
+        // The desired ZMP is assumed to be the current time frame value.
         zmp.x() = (dP.x() * desiredZmp.z() - dL.y() + mg * cm.x()) / (dP.z() + mg);
         zmp.y() = (dP.y() * desiredZmp.z() + dL.x() + mg * cm.y()) / (dP.z() + mg);
         zmp.z() = desiredZmp.z();
         zmpDiff = desiredZmp - zmp;
-
-        desiredZmp = *provider->ZMP();
     }
 }
 
@@ -585,6 +593,8 @@ void WaistBalancer::updateBodyKinematics2()
         }
     }
     provider->getBaseLinkPosition(baseLink->T());
+
+    desiredZmp = *provider->ZMP();
 }
 
 
@@ -869,7 +879,12 @@ bool WaistBalancer::applyCmTranslations(BodyMotion& motion, bool putAllLinkPosit
         for(int i=0; i < numJoints; ++i){
             displacements[i] = body_->joint(i)->q();
         }
-        zmpseq->at(frameIndex) = zmp;
+
+        if(zmpOutputMode == ZmpForAdjustedMotion){
+            zmpseq->at(frameIndex) = zmp;
+        } else {
+            zmpseq->at(frameIndex) = desiredZmp;
+        }
 
         updateBodyKinematics2();
     }

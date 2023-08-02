@@ -58,6 +58,9 @@ public:
 
     void enableWaistHeightRelaxation(bool on);
 
+    enum ZmpOutputMode { OriginalZmpInput, ZmpForAdjustedMotion };
+    void setZmpOutputMode(int mode);
+
     bool apply(PoseProvider* provider, BodyMotion& motion, bool putAllLinkPositions = false);
 
 private:
@@ -144,6 +147,8 @@ private:
     std::vector<double> waistDeltaZseq;
     CompositeIK waistFeetIK;
     Link* kneePitchJoints[2];
+
+    int zmpOutputMode;
 
     std::ostream* os_;
     std::ostream& os() { return *os_; }

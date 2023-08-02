@@ -9,6 +9,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/BodyMotionItem>
 #include <cnoid/CheckBox>
+#include <cnoid/RadioButton>
 #include <cnoid/Separator>
 #include <fmt/format.h>
 #include <QSpinBox>
@@ -41,6 +42,8 @@ public:
     QCheckBox waistHeightRelaxationCheck;
     QDoubleSpinBox gravitySpin;
     QDoubleSpinBox dynamicsTimeRatioSpin;
+    RadioButton keepOriginalZmpInputRadio;
+    RadioButton outputZmpForAdjustedMotionRadio;
 
     BalancerPanel();
     QHBoxLayout* newRow(QVBoxLayout* vbox);
@@ -180,6 +183,15 @@ BalancerPanel::BalancerPanel()
     hbox->addWidget(&dynamicsTimeRatioSpin);
     hbox->addStretch();
 
+    hbox = newRow(vbox);
+    hbox->addWidget(new QLabel(_("ZMP output:")));
+    keepOriginalZmpInputRadio.setText(_("Original input"));
+    keepOriginalZmpInputRadio.setChecked(true);
+    hbox->addWidget(&keepOriginalZmpInputRadio);
+    outputZmpForAdjustedMotionRadio.setText(_("ZMP for adjusted motion"));
+    hbox->addWidget(&outputZmpForAdjustedMotionRadio);
+    hbox->addStretch();
+
     setLayout(vbox);
 }
 
@@ -224,6 +236,8 @@ bool BalancerPanel::apply(BodyItem* bodyItem, PoseProvider* provider, BodyMotion
     balancer->enableWaistHeightRelaxation(waistHeightRelaxationCheck.isChecked());
     balancer->setGravity(gravitySpin.value());
     balancer->setDynamicsTimeRatio(dynamicsTimeRatioSpin.value());
+    balancer->setZmpOutputMode(
+        keepOriginalZmpInputRadio.isChecked() ? WaistBalancer::OriginalZmpInput : WaistBalancer::ZmpForAdjustedMotion);
 
     auto mv = MessageView::mainInstance();
     if(putMessages){
@@ -266,6 +280,9 @@ void BalancerPanel::storeState(Archive* archive)
     archive->write("waistHeightRelaxation", waistHeightRelaxationCheck.isChecked());
     archive->write("gravity", gravitySpin.value());
     archive->write("dynamicsTimeRatio", dynamicsTimeRatioSpin.value());
+    archive->write(
+        "zmp_output_mode",
+        keepOriginalZmpInputRadio.isChecked() ? "original" : "adjusted");
 }
 
 
@@ -289,4 +306,13 @@ void BalancerPanel::restoreState(const Archive* archive)
     waistHeightRelaxationCheck.setChecked(archive->get("waistHeightRelaxation", waistHeightRelaxationCheck.isChecked()));
     gravitySpin.setValue(archive->get("gravity", gravitySpin.value()));
     dynamicsTimeRatioSpin.setValue(archive->get("dynamicsTimeRatio", dynamicsTimeRatioSpin.value()));
+
+    std::string mode;
+    if(archive->read("zmp_output_mode", mode)){
+        if(mode == "original"){
+            keepOriginalZmpInputRadio.setChecked(true);
+        } else if(mode == "adjusted"){
+            outputZmpForAdjustedMotionRadio.setChecked(true);
+        }
+    }
 }
