@@ -55,6 +55,7 @@ public:
     DoubleSpinBox constantNormalForceFactorSpin;
     CheckBox bothFeetSupportFrictionCheck;
     CheckBox yawMomentSeqOutputCheck;
+    CheckBox copSeqOutputCheck;
 
     Impl(YawMomentCompensationDialog* self);
     void addTargetJoint(int jointId, double weight, double velLimitRatio);
@@ -237,10 +238,10 @@ YawMomentCompensationDialog::Impl::Impl(YawMomentCompensationDialog* self_)
     hbox->addSpacing(20);
     auto normalForceRadioGroup = new ButtonGroup(self);
     dynamicNormalForceModeRadio.setText(_("Inverse dynamics"));
+    dynamicNormalForceModeRadio.setChecked(true);
     normalForceRadioGroup->addButton(&dynamicNormalForceModeRadio);
     hbox->addWidget(&dynamicNormalForceModeRadio);
     constantNormalForceModeRadio.setText(_("Constant"));
-    constantNormalForceModeRadio.setChecked(true);
     normalForceRadioGroup->addButton(&constantNormalForceModeRadio);
     hbox->addWidget(&constantNormalForceModeRadio);
 
@@ -260,6 +261,12 @@ YawMomentCompensationDialog::Impl::Impl(YawMomentCompensationDialog* self_)
     hbox->addStretch();
     vbox->addLayout(hbox);
 
+    hbox = new QHBoxLayout;
+    copSeqOutputCheck.setText(_("Output center of pressure sequence"));
+    hbox->addWidget(&copSeqOutputCheck);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+    
     vbox->addStretch();
 
     vbox->addWidget(new HSeparator);
@@ -427,6 +434,15 @@ bool YawMomentCompensationDialog::Impl::applyFilter(BodyItem* bodyItem, BodyMoti
         filter->setYawMomentSeqOutput(yawMomentSeq);
     }
 
+    if(!copSeqOutputCheck.isChecked()){
+        filter->setCopSeqOutput(nullptr);
+    } else {
+        auto copSeq = make_shared<Vector3Seq>();
+        copSeq->setSeqContentName("COP");
+        motionItem->motion()->setExtraSeq(copSeq);
+        filter->setCopSeqOutput(copSeq);
+    }
+    
     return filter->apply(body, *motionItem->motion());
 }
 
@@ -466,6 +482,7 @@ bool YawMomentCompensationDialog::Impl::store(Archive& archive)
     archive.write("constant_normal_force", constantNormalForceFactorSpin.value());
     archive.write("enable_both_feet_support_friction", bothFeetSupportFrictionCheck.isChecked());
     archive.write("output_yaw_moment_seq", yawMomentSeqOutputCheck.isChecked());
+    archive.write("output_cop_seq", copSeqOutputCheck.isChecked());
     return true;
 }
 
@@ -522,4 +539,5 @@ void YawMomentCompensationDialog::Impl::restore(const Archive& archive)
         archive.get("enable_both_feet_support_friction", bothFeetSupportFrictionCheck.isChecked()));
 
     yawMomentSeqOutputCheck.setChecked(archive.get("output_yaw_moment_seq", yawMomentSeqOutputCheck.isChecked()));
+    copSeqOutputCheck.setChecked(archive.get("output_cop_seq", copSeqOutputCheck.isChecked()));
 }

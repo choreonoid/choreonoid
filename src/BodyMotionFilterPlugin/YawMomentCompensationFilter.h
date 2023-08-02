@@ -2,6 +2,7 @@
 #define CNOID_BODY_MOTION_FILTER_PLUGIN_YAW_MOMENT_COMPENSATION_FILTER_H
 
 #include <cnoid/MultiValueSeq>
+#include <cnoid/Vector3Seq>
 #include <memory>
 
 namespace cnoid {
@@ -38,6 +39,7 @@ public:
     void setConstantNormalForceFactor(double factor);
     void enableMomentOfBothFeetSupporting(bool on);
     void setYawMomentSeqOutput(std::shared_ptr<MultiValueSeq> yawMomentSeq);
+    void setCopSeqOutput(std::shared_ptr<Vector3Seq> copSeq);
 
     bool apply(Body* body, BodyMotion& motion);
 

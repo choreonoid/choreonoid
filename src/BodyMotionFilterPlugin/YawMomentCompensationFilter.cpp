@@ -40,16 +40,17 @@ public:
     shared_ptr<BodyPositionSeq> positionSeq;
     shared_ptr<ZMPSeq> zmpSeq;
     Vector3 zmp;
+    Vector3 cop;
     int currentFrameIndex;
 
     int numJoints;
     double ankleHeight;
-    Link* lvzLink; // Left  Virtual Z link
-    LinkTraverse lvzTraverse;
-    Link* rvzLink; // Right Virtual Z link
-    LinkTraverse rvzTraverse;
-    Link* supportLink;
-    LinkTraverse* supportLinkTraverse;
+    Link* leftFoot;
+    Link* rightFoot;
+    LinkTraverse leftFootTraverse;
+    LinkTraverse rightFootTraverse;
+    Link* supportFoot;
+    LinkTraverse* supportFootTraverse;
     bool isBothLegsSupporting;
 
     double frictionCoefficient;
@@ -63,11 +64,10 @@ public:
     double kd_recovery;
     double mass_recovery;
 
-    int comIdSupportLink;
-    int comIdDesiredZmp;
-
-    //! temoprary, x is yaw moment, y is max friction moment
+    // element: 0 - max yaw friction, 1 - compensated yaw moment, 2 - negative max yaw friction
     shared_ptr<MultiValueSeq> yawMomentSeqOutput;
+
+    shared_ptr<Vector3Seq> copSeqOutput;
 
     struct JointWeight
     {
@@ -127,6 +127,7 @@ public:
     double dt;
     double dt2;
     double totalNormalForce;
+    double minNormalForce;
     double maxYawFrictionMoment;
 
     int qpErrorId;
@@ -136,16 +137,17 @@ public:
     Impl();
     bool apply(Body* body, BodyMotion* bodyMotion);
     bool setBody(Body* orgBody);
-    Link* createVirtualLink(int footIndex, const char* name);
     bool setBodyMotion(BodyMotion* bodyMotion);
     void compensateMoment();
-    void detectSupportLinkChange();
+    void detectSupportFootChange();
     bool checkIfFootTouchingToFloor(Link* foot);
-    void setSupportLink(Link* link);
+    void setSupportFoot(Link* foot);
     void calcTotalNormalForceOfFloor();
-    void calcMaxYawFrictionMoment();
+    void updateCop();
     void calcCoefficientsOfDynamicEquation();
-    double calcYawMoment();
+    double calcYawMomentAroundCop();
+    double calcResultingYawMomentAroundCop();
+    void calcMaxYawFrictionMoment();
     bool calcCompensationByQuadraticProgramming();
     std::pair<double, double> getInputMotionJointDisplacementRange(Link* joint, double q_input);
     bool checkJointDisplacementRangeOver();
@@ -324,6 +326,12 @@ void YawMomentCompensationFilter::setYawMomentSeqOutput(shared_ptr<MultiValueSeq
 }
 
 
+void YawMomentCompensationFilter::setCopSeqOutput(shared_ptr<Vector3Seq> copSeq)
+{
+    impl->copSeqOutput = copSeq;
+}
+
+
 bool YawMomentCompensationFilter::apply(Body* body, BodyMotion& bodyMotion)
 {
     return impl->apply(body, &bodyMotion);
@@ -374,14 +382,13 @@ bool YawMomentCompensationFilter::Impl::setBody(Body* orgBody)
     }
 
     ankleHeight = -leggedBody->homeCopOfSoleLocal(0).z();
-    
-    lvzLink = createVirtualLink(0, "LVZ");
-    rvzLink = createVirtualLink(1, "RVZ");
-    body->updateLinkTree();
-    lvzTraverse.find(lvzLink, true, true);
-    rvzTraverse.find(rvzLink, true, true);
-    supportLink = nullptr;
-    supportLinkTraverse = nullptr;
+
+    leftFoot = leggedBody->footLink(LeggedBodyHelper::Left);
+    leftFootTraverse.find(leftFoot, true, true);
+    rightFoot = leggedBody->footLink(LeggedBodyHelper::Right);
+    rightFootTraverse.find(rightFoot, true, true);
+    supportFoot = nullptr;
+    supportFootTraverse = nullptr;
 
     dq_prev.resize(numJoints);
 
@@ -442,34 +449,11 @@ bool YawMomentCompensationFilter::Impl::setBody(Body* orgBody)
 
     double mass = body->mass();
     totalNormalForce = constantNormalForceFactor * mass * 9.8;
+    minNormalForce = 0.4 * mass * 9.8;
 
     isBothLegsSupporting = false;
 
     return true;
-}
-
-
-Link* YawMomentCompensationFilter::Impl::createVirtualLink(int footIndex, const char* name)
-{
-    auto footLink = leggedBody->footLink(footIndex);
-    
-    auto vLink = new Link;
-    vLink->setName(name);
-    vLink->setJointType(Link::RevoluteJoint);
-    vLink->setJointAxis(Vector3::UnitZ());
-
-    Matrix3 R = footLink->R();
-    if(!R.isIdentity(1.0e-7)){
-        vLink->setOffsetRotation(R.transpose());
-    }
-    vLink->setOffsetTranslation(leggedBody->homeCopOfSoleLocal(footIndex));
-
-    vLink->setInertia(Matrix3::Zero());
-    vLink->setMass(0.0);
-
-    footLink->appendChild(vLink);
-
-    return vLink;
 }
 
 
@@ -508,7 +492,6 @@ bool YawMomentCompensationFilter::Impl::setBodyMotion(BodyMotion* bodyMotion)
     currentFrameIndex = 0;
     *body << positionSeq->frame(currentFrameIndex);
     body->calcForwardKinematics();
-    zmp = zmpSeq->at(currentFrameIndex);
 
     for(int i=0; i < N; i++){
         double q = body->joint(jointWeights[i].jointId)->q();
@@ -528,8 +511,9 @@ bool YawMomentCompensationFilter::Impl::setBodyMotion(BodyMotion* bodyMotion)
         dq_prev[i] = 0.0;
     }
 
-    setSupportLink(rvzLink);
-    detectSupportLinkChange();
+    setSupportFoot(leftFoot);
+    detectSupportFootChange();
+    updateCop();
 
     dt = bodyMotion->timeStep();
     dt2 = dt * dt;
@@ -538,6 +522,10 @@ bool YawMomentCompensationFilter::Impl::setBodyMotion(BodyMotion* bodyMotion)
         yawMomentSeqOutput->clear();
         yawMomentSeqOutput->setFrameRate(bodyMotion->frameRate());
         yawMomentSeqOutput->setNumParts(3);
+    }
+    if(copSeqOutput){
+        copSeqOutput->clear();
+        copSeqOutput->setFrameRate(bodyMotion->frameRate());
     }
 
     if(opposingAdjustmentJointId >= 0){
@@ -555,9 +543,6 @@ void YawMomentCompensationFilter::Impl::compensateMoment()
     }
 
     calcCoefficientsOfDynamicEquation();
-
-    zmp = zmpSeq->at(currentFrameIndex);
-
     calcMaxYawFrictionMoment();
     
     auto& currentFrame = positionSeq->frame(currentFrameIndex);
@@ -575,7 +560,7 @@ void YawMomentCompensationFilter::Impl::compensateMoment()
     
     if(!resolved || yawMomentSeqOutput){
         if(N > 0){
-            yawMoment = calcYawMoment();
+            yawMoment = calcResultingYawMomentAroundCop();
         } else {
             yawMoment = bz;
         }
@@ -588,7 +573,7 @@ void YawMomentCompensationFilter::Impl::compensateMoment()
         for(int i=1; i <= 10; ++i){
             maxYawFrictionMoment = maxYawFrictionMoment0 + o * i / 10.0;
             resolved = calcCompensationByQuadraticProgramming();
-            yawMoment = calcYawMoment();
+            yawMoment = calcResultingYawMomentAroundCop();
             if(resolved){
                 break;
             }
@@ -638,7 +623,11 @@ void YawMomentCompensationFilter::Impl::compensateMoment()
     body->rootLink()->setPosition(currentFrame.linkPosition(0).T());
     body->calcForwardKinematics();
 
-    detectSupportLinkChange();
+    detectSupportFootChange();
+    updateCop();
+    if(copSeqOutput){
+        copSeqOutput->append(cop);
+    }
 
     for(int i=0; i < N; ++i){
         int jointId = jointWeights[i].jointId;
@@ -647,11 +636,10 @@ void YawMomentCompensationFilter::Impl::compensateMoment()
 }
 
 
-void YawMomentCompensationFilter::Impl::detectSupportLinkChange()
+void YawMomentCompensationFilter::Impl::detectSupportFootChange()
 {
-    auto leftFoot = leggedBody->footLink(0);
-    auto rightFoot = leggedBody->footLink(1);
-
+    zmp = zmpSeq->at(currentFrameIndex);
+    
     bool isLeftTouching = checkIfFootTouchingToFloor(leftFoot);
     bool isRightTouching = checkIfFootTouchingToFloor(rightFoot);
 
@@ -665,8 +653,8 @@ void YawMomentCompensationFilter::Impl::detectSupportLinkChange()
             leftProjection.z() = 0.0;
             Vector3 ltor = rightProjection - leftProjection;
             if(!ltor.isZero()){
-                Vector3 ltoz = zmp - leftProjection;
-                r = ltoz.dot(ltor.normalized()) / ltor.norm();
+                Vector3 ltozmp = zmp - leftProjection;
+                r = ltozmp.dot(ltor.normalized()) / ltor.norm();
             } else {
                 r = 0.5;
             }
@@ -686,15 +674,20 @@ void YawMomentCompensationFilter::Impl::detectSupportLinkChange()
     } else {
         isBothLegsSupporting = false;
         if(r <= 0.1){ // left support
-            if(supportLink != lvzLink){
-                setSupportLink(lvzLink);
+            if(supportFoot != leftFoot){
+                setSupportFoot(leftFoot);
             }
         } else if(r >= 0.9){ // right support
-            if(supportLink != rvzLink){
-                setSupportLink(rvzLink);
+            if(supportFoot != rightFoot){
+                setSupportFoot(rightFoot);
             }
         }
     }
+
+    supportFoot->v().setZero();
+    supportFoot->w().setZero();
+    supportFoot->dv().setZero();
+    supportFoot->dw().setZero();
 }
 
 
@@ -703,7 +696,7 @@ bool YawMomentCompensationFilter::Impl::checkIfFootTouchingToFloor(Link* foot)
     if(foot->p().z() <= (ankleHeight + 1.0e-7)){
         Vector3 rpy = rpyFromRot(foot->R());
         rpy[2] = 0.0;
-        if(rpy.isZero(1.0e-7)){
+        if(rpy.isZero(1.0e-3)){
             return true;
         }
     }
@@ -711,18 +704,13 @@ bool YawMomentCompensationFilter::Impl::checkIfFootTouchingToFloor(Link* foot)
 }
 
 
-void YawMomentCompensationFilter::Impl::setSupportLink(Link* link)
+void YawMomentCompensationFilter::Impl::setSupportFoot(Link* foot)
 {
-    link->v().setZero();
-    link->w().setZero();
-    link->dv().setZero();
-    link->dw().setZero();
-
-    supportLink = link;
-    if(link == lvzLink){
-        supportLinkTraverse = &lvzTraverse;
+    supportFoot = foot;
+    if(foot == leftFoot){
+        supportFootTraverse = &leftFootTraverse;
     } else {
-        supportLinkTraverse = &rvzTraverse;
+        supportFootTraverse = &rightFootTraverse;
     }
 }
 
@@ -731,52 +719,42 @@ void YawMomentCompensationFilter::Impl::calcTotalNormalForceOfFloor()
 {
     // Assume that the body has the previous (filtered) joint angles, velocities and accelerations
 
-    supportLink->dv() << 0.0, 0.0, 9.8; // gravity
-    supportLink->ddq() = 0.0;
+    supportFoot->dv() << 0.0, 0.0, 9.8; // gravity
     
-    supportLinkTraverse->calcForwardKinematics(true, true);
-    supportLinkTraverse->calcInverseDynamics();
+    supportFootTraverse->calcForwardKinematics(true, true);
+    Vector6 F = supportFootTraverse->calcInverseDynamics();
     
-    supportLink->dv().setZero();
+    supportFoot->dv().setZero();
 
-    totalNormalForce = supportLink->f_ext().z();
+    totalNormalForce = std::max(F.head<3>().z(), minNormalForce);
 }
 
 
-// Assume that the feet have the previous frame position and ZMP is the current frame position
-void YawMomentCompensationFilter::Impl::calcMaxYawFrictionMoment()
+// This function update COP, which is ZMP within the supporting area
+void YawMomentCompensationFilter::Impl::updateCop()
 {
-    bool useBothLegSupportFriction = isBothLegsSupporting && isMomentOfBothFeetSupportingEnabled;
+    Vector3 c;
+    double r;
 
-    // max rotation friction moment of disc of radius r (axis is center of disc,
-    // pressure is even) is (2 / 3) * r * u * F
-    maxYawFrictionMoment = 0.6666 * soleRadius * frictionCoefficient * totalNormalForce;
+    if(isBothLegsSupporting){
+        Vector3 p0 = leggedBody->homeCopOfSole(0);
+        Vector3 p1 = leggedBody->homeCopOfSole(1);
+        c = (p0 + p1) / 2.0;
+        c.z() = 0.0;
+        r = (p0 - c).norm() + soleRadius;
+    } else {
+        int footIndex = supportFoot == leftFoot ? LeggedBodyHelper::Left : LeggedBodyHelper::Right;
+        c = leggedBody->homeCopOfSole(footIndex);
+        c.z() = 0.0;
+        r = soleRadius;
+    }
 
-    if(useBothLegSupportFriction){
-        Vector3 lpos = leggedBody->footLink(0)->p();
-        lpos.z() = 0.0;
-        Vector3 rpos = leggedBody->footLink(1)->p();
-        rpos.z() = 0.0;
-
-        Vector3 lr = (rpos - lpos);
-        Vector3 e = lr.normalized();
-
-        double k = e.dot(zmp - lpos);
-        double l = lr.norm();
-
-        double zmpRatio = k / l;
-        if(zmpRatio < 0.0){
-            zmpRatio = 0.0;
-        } else if(zmpRatio > 1.0){
-            zmpRatio = 1.0;
-        }
-
-        double rSoleArm = (1.0 - zmpRatio) * l;
-        double rFrictionMoment = zmpRatio * rSoleArm * frictionCoefficient * totalNormalForce;
-        double lSoleArm = zmpRatio * l;
-        double lFrictionMoment = (1.0 - zmpRatio) * lSoleArm * frictionCoefficient * totalNormalForce;
-        
-        maxYawFrictionMoment += (rFrictionMoment + lFrictionMoment);
+    Vector3 czmp = zmp - c;
+    double l = czmp.norm();
+    if(l > r){
+        cop = (r / l) * czmp + c;
+    } else {
+        cop = zmp;
     }
 }
 
@@ -797,9 +775,7 @@ void YawMomentCompensationFilter::Impl::calcCoefficientsOfDynamicEquation()
                 joint->ddq() = 0.0;
             }
         }
-        supportLinkTraverse->calcForwardKinematics(true, true);
-        supportLinkTraverse->calcInverseDynamics();
-        Hz[i] = supportLink->u();
+        Hz[i] = calcYawMomentAroundCop();
     }
 
     for(int j=0; j < numJoints; ++j){
@@ -813,14 +789,23 @@ void YawMomentCompensationFilter::Impl::calcCoefficientsOfDynamicEquation()
             dq_prev[j] = dq;
         }
     }
-    supportLinkTraverse->calcForwardKinematics(true, true);
-    supportLinkTraverse->calcInverseDynamics();
-    bz = supportLink->u();
+    bz = calcYawMomentAroundCop();
+}
+
+
+double YawMomentCompensationFilter::Impl::calcYawMomentAroundCop()
+{
+    supportFootTraverse->calcForwardKinematics(true, true);
+    Vector6 F = supportFootTraverse->calcInverseDynamics();
+    auto f = F.head<3>();
+    auto tau = F.tail<3>();
+    Vector3 tau_cop = -cop.cross(f) + tau;
+    return tau_cop.z();
 }
 
 
 // Assume that the body has the last states calculated by calcCoefficientsOfDynamicEquation.
-double YawMomentCompensationFilter::Impl::calcYawMoment()
+double YawMomentCompensationFilter::Impl::calcResultingYawMomentAroundCop()
 {
     for(int i=0; i < N; ++i){
         int jointId = jointWeights[i].jointId;
@@ -828,9 +813,45 @@ double YawMomentCompensationFilter::Impl::calcYawMoment()
         double dq = (q_next[i] - joint->q()) / dt;
         joint->ddq() = (dq - dq_prev[jointId]) / dt;
     }
-    supportLinkTraverse->calcForwardKinematics(true, true);
-    supportLinkTraverse->calcInverseDynamics();
-    return supportLink->u();
+    return calcYawMomentAroundCop();
+}
+
+
+// Assume that the feet have the previous frame position
+void YawMomentCompensationFilter::Impl::calcMaxYawFrictionMoment()
+{
+    bool useBothLegSupportFriction = isBothLegsSupporting && isMomentOfBothFeetSupportingEnabled;
+
+    // max rotation friction moment of disc of radius r (axis is center of disc,
+    // pressure is even) is (2 / 3) * r * u * F
+    maxYawFrictionMoment = 0.6666 * soleRadius * frictionCoefficient * totalNormalForce;
+
+    if(useBothLegSupportFriction){
+        Vector3 lpos = leftFoot->p();
+        lpos.z() = 0.0;
+        Vector3 rpos = rightFoot->p();
+        rpos.z() = 0.0;
+
+        Vector3 lr = (rpos - lpos);
+        Vector3 e = lr.normalized();
+
+        double k = e.dot(cop - lpos);
+        double l = lr.norm();
+
+        double copRatio = k / l;
+        if(copRatio < 0.0){
+            copRatio = 0.0;
+        } else if(copRatio > 1.0){
+            copRatio = 1.0;
+        }
+
+        double rSoleArm = (1.0 - copRatio) * l;
+        double rFrictionMoment = copRatio * rSoleArm * frictionCoefficient * totalNormalForce;
+        double lSoleArm = copRatio * l;
+        double lFrictionMoment = (1.0 - copRatio) * lSoleArm * frictionCoefficient * totalNormalForce;
+        
+        maxYawFrictionMoment += (rFrictionMoment + lFrictionMoment);
+    }
 }
 
 
