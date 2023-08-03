@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-07-26 00:21+0900\n"
+"POT-Creation-Date: 2023-08-03 16:55+0900\n"
 "PO-Revision-Date: 2012-02-21 19:18+0000\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -84,6 +84,9 @@ msgstr "一定値"
 
 msgid "Output yaw moment sequence"
 msgstr "Yawモーメント時系列出力"
+
+msgid "Output center of pressure sequence"
+msgstr "圧力中心時系列出力"
 
 msgid "&Apply"
 msgstr "適用(&A)"
