@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_UTF8_H
 #define CNOID_UTIL_UTF8_H
 
