@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-09 21:17+0900\n"
+"POT-Creation-Date: 2023-08-03 10:29+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -69,6 +69,15 @@ msgstr "[m/s^2]"
 
 msgid "Dynamics time ratio"
 msgstr "動力学時間比"
+
+msgid "ZMP output:"
+msgstr "ZMP出力："
+
+msgid "Original input"
+msgstr "元の入力"
+
+msgid "ZMP for adjusted motion"
+msgstr "補正された動作のZMP"
 
 msgid "Applying the waist balance filter with {} iterations ... "
 msgstr "バランス補正を計算回数{}回で適用中…"
