@@ -55,9 +55,9 @@ public:
     Impl();
     Impl(const Impl& org);
     std::string parameterize(const std::string& orgPathString);
-    void findRelativePathForDirectory(
+    bool findSubPathForPathVariable(
         const filesystem::path& path, int varType, const filesystem::path& dirPath, int additionalPathLength = 0);
-    void findRelativePathForPathVariables(
+    void findSubPathForPathVariables(
         const filesystem::path& path, int varType, const VarNameToPathListMap& variables);
     int getPathLength(filesystem::path& path, int additionalLength = 0);
     bool replaceUserVariable(
@@ -309,20 +309,23 @@ std::string FilePathVariableProcessor::Impl::parameterize(const std::string& org
             varTypeInfos[i].relativePathLength = std::numeric_limits<int>::max();
         }
         if(!baseDirPath.empty()){
-            findRelativePathForDirectory(orgPath, Base, baseDirPath);
+            findSubPathForPathVariable(orgPath, Base, baseDirPath);
         }
         if(isProjectDirDifferentFromBaseDir){
-            findRelativePathForDirectory(orgPath, Project, projectDirPath);
+            findSubPathForPathVariable(orgPath, Project, projectDirPath);
         }
-        findRelativePathForPathVariables(orgPath, User, userVariables);
-        findRelativePathForPathVariables(orgPath, AppSpecific, appSpecificVariables);
+        findSubPathForPathVariables(orgPath, User, userVariables);
+        findSubPathForPathVariables(orgPath, AppSpecific, appSpecificVariables);
         
         if(isSubstitutionWithSystemPathVariableEnabled){
-            findRelativePathForDirectory(orgPath, Share, shareDirPath);
-            findRelativePathForDirectory(orgPath, Top, topDirPath);
+            findSubPathForPathVariable(orgPath, Share, shareDirPath);
+            findSubPathForPathVariable(orgPath, Top, topDirPath);
+
+            /*
             if(!homeDirPath.empty()){
-                findRelativePathForDirectory(orgPath, Home, homeDirPath, 1);
+                findSubPathForPathVariable(orgPath, Home, homeDirPath, 1);
             }
+            */
         }
 
         int minLength = std::numeric_limits<int>::max();
@@ -334,6 +337,39 @@ std::string FilePathVariableProcessor::Impl::parameterize(const std::string& org
                 index = i;
             }
         }
+
+        if(index < 0){
+            // Check if a relative path including ".." from the base directory is accepted
+            // or the path is a sub path of the home directory.
+            if(auto fromBase = getRelativePath(orgPath, baseDirPath)){
+                auto commonPath = baseDirPath;
+                auto it = fromBase->begin();
+                while(it != fromBase->end()){
+                    if(*it == ".."){
+                        commonPath = commonPath.parent_path();
+                        ++it;
+                    } else {
+                        break;
+                    }
+                }
+                if(!homeDirPath.empty()){
+                    if(auto homeToCommon = getRelativePath(commonPath, homeDirPath)){
+                        if(homeToCommon->empty()){
+                            if(findSubPathForPathVariable(orgPath, Home, homeDirPath)){
+                                index = Home;
+                            }
+                        }
+                    }
+                }
+                if(index < 0){
+                    index = Base;
+                    auto& info = varTypeInfos[Base];
+                    info.relativePath = *fromBase;
+                    minLength = getPathLength(*fromBase);
+                }
+            }
+        }
+        
         if(index >= 0){
             auto& info = varTypeInfos[index];
             if(index == Base){
@@ -349,24 +385,26 @@ std::string FilePathVariableProcessor::Impl::parameterize(const std::string& org
     }
 
     if(output.empty()){
-        output = toUTF8(orgPath.generic_string());
+        output = toUTF8(orgPath.generic_string()); // absolute path
     }
 
     return output;
 }
 
 
-void FilePathVariableProcessor::Impl::findRelativePathForDirectory
+bool FilePathVariableProcessor::Impl::findSubPathForPathVariable
 (const filesystem::path& path, int varType, const filesystem::path& dirPath, int additionalPathLength)
 {
     auto& info = varTypeInfos[varType];
     if(findPathInDirectory(dirPath, path, info.relativePath)){
         info.relativePathLength = getPathLength(info.relativePath, additionalPathLength);
+        return true;
     }
+    return false;
 }
 
 
-void FilePathVariableProcessor::Impl::findRelativePathForPathVariables
+void FilePathVariableProcessor::Impl::findSubPathForPathVariables
 (const filesystem::path& path, int varType, const VarNameToPathListMap& variables)
 {
     auto& info = varTypeInfos[varType];
