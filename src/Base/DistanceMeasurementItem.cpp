@@ -968,7 +968,12 @@ ViewportText::ViewportText()
     : SgViewportOverlay(findClassId<ViewportText>())
 {
     displayValueFormat = DisplayValueFormat::instance();
-    distanceDisplayFormat = format("{{0:.{0}f}}mm", displayValueFormat->lengthDecimals());
+
+    if(displayValueFormat->isMillimeter()){
+        distanceDisplayFormat = format("{{0:.{0}f}}mm", displayValueFormat->lengthDecimals());
+    } else {
+        distanceDisplayFormat = format("{{0:.{0}f}}m", displayValueFormat->lengthDecimals());
+    }
     
     textHeight = 20.0;
     distanceText = new SgText;
