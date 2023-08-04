@@ -192,6 +192,14 @@ public:
     bool restore(const Mapping& archive, const Body* body) override;
     void store(Mapping& archive, const Body* body) const override;
 
+    /**
+       This is temporarily defined to enable or disable outputting contact points in the store function.
+       In the future, the signature of the store function should be modified so that this kind of global
+       function can be avoided.
+    */
+    static void setContactPointOutputEnabled(bool on);
+    static bool isContactPointOutputEnabled();
+
 protected:
     virtual Referenced* doClone(CloneMap*) const override;    
 

@@ -6,6 +6,12 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+bool isContactPointOutputEnabled_ = false;
+
+}
+
 
 BodyKeyPose::BodyKeyPose()
 {
@@ -356,16 +362,18 @@ void BodyKeyPose::store(Mapping& archive, const Body* body) const
                 ikLinkNode.write("isTouching", true);
                 write(ikLinkNode, "partingDirection", info.partingDirection());
 
-                auto& points = info.contactPoints();
-                if(!points.empty()){
-                    auto& pointList = *ikLinkNode.createListing("contactPoints");
-                    for(auto& point : points){
-                        ListingPtr pointNode = new Listing;
-                        pointNode->setFlowStyle();
-                        for(int i=0; i < 3; ++i){
-                            pointNode->append(point(i));
+                if(isContactPointOutputEnabled_){
+                    auto& points = info.contactPoints();
+                    if(!points.empty()){
+                        auto& pointList = *ikLinkNode.createListing("contactPoints");
+                        for(auto& point : points){
+                            ListingPtr pointNode = new Listing;
+                            pointNode->setFlowStyle();
+                            for(int i=0; i < 3; ++i){
+                                pointNode->append(point(i));
+                            }
+                            pointList.append(pointNode);
                         }
-                        pointList.append(pointNode);
                     }
                 }
             }
@@ -380,6 +388,18 @@ void BodyKeyPose::store(Mapping& archive, const Body* body) const
         write(archive, "zmp", zmp_);
         archive.write("isZmpStationaryPoint", isZmpStationaryPoint_);
     }
+}
+
+
+void BodyKeyPose::setContactPointOutputEnabled(bool on)
+{
+    isContactPointOutputEnabled_ = on;
+}
+
+
+bool BodyKeyPose::isContactPointOutputEnabled()
+{
+    return isContactPointOutputEnabled_;
 }
 
 

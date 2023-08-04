@@ -2,6 +2,7 @@
 #include "BodyKeyPose.h"
 #include "BodyMotionGenerationBar.h"
 #include <cnoid/ItemManager>
+#include <cnoid/ItemFileIO>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MenuManager>
 #include <cnoid/MessageView>
@@ -11,6 +12,7 @@
 #include <cnoid/Archive>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/ConnectionSet>
+#include <cnoid/CheckBox>
 #include <fmt/format.h>
 #include <set>
 #include <deque>
@@ -123,44 +125,91 @@ public:
 
 namespace {
 
-bool loadPoseSeqItem(PoseSeqItem* item, const std::string& filename, std::ostream& os, Item* parentItem)
+class PoseSeqFileIO : public ItemFileIO
 {
-    bool loaded = false;
-    BodyItem* bodyItem = parentItem->findOwnerItem<BodyItem>(true);
-    if(bodyItem){
-        item->clearEditHistory();
-        loaded = item->poseSeq()->load(filename, bodyItem->body());
-        if(loaded){
-            const string& name = item->poseSeq()->name();
-            if(!name.empty()){
-                item->setName(name);
-            }
-            if(item->poseSeq()->targetBodyName() != bodyItem->body()->name()){
-                os<< format( _("Warning: the original target body {0} of \"{1}\" is"
-                               "different from the current target {2}."),
-                             item->poseSeq()->targetBodyName(), item->displayName(), bodyItem->body()->name());
-            }
-            item->notifyUpdate();
-        } else {
-            os << item->poseSeq()->errorMessage();
-        }
-    } else {
-        os << _("PoseSeqItem must be loaded as a child of a BodyItem");
-    }
-    return loaded;
-}
-    
-bool savePoseSeqItem(PoseSeqItem* item, const std::string& filename, std::ostream& os, Item* parentItem)
-{
-    BodyItem* bodyItem = parentItem->findOwnerItem<BodyItem>(true);
-    if(bodyItem){
-        return item->poseSeq()->save(filename, bodyItem->body());
-    } else {
-        os << "PoseSeqItem to save must be a child of a BodyItem ";
-    }
-    return false;
+    CheckBox* contactPointOutputCheck;
+public:
+    PoseSeqFileIO();
+    virtual Item* createItem() override;
+    virtual bool load(Item* item, const std::string& filename) override;
+    virtual bool save(Item* item, const std::string& filename) override;
+    virtual QWidget* getOptionPanelForSaving(Item* item) override;
+};
+
 }
 
+
+PoseSeqFileIO::PoseSeqFileIO()
+    : ItemFileIO("POSE-SEQ-YAML", Load | Save | Options | OptionPanelForSaving)
+{
+    setCaption(_("Pose Sequence"));
+    setFileTypeCaption(_("Pose Sequence File"));
+    setExtension("pseq");
+
+    contactPointOutputCheck = nullptr;
+}
+
+
+Item* PoseSeqFileIO::createItem()
+{
+    return new PoseSeqItem;
+}
+
+
+bool PoseSeqFileIO::load(Item* item, const std::string& filename)
+{
+    bool loaded = false;
+
+    auto bodyItem = parentItem()->findOwnerItem<BodyItem>(true);
+    if(!bodyItem){
+        putError(_("PoseSeqItem must be loaded as a child of a BodyItem"));
+    } else {
+        auto pseqItem = static_cast<PoseSeqItem*>(item);
+        pseqItem->clearEditHistory();
+        auto pseq = pseqItem->poseSeq();
+        loaded = pseq->load(filename, bodyItem->body());
+        if(!loaded){
+            putError(pseq->errorMessage());
+        } else {
+            const string& name = pseq->name();
+            if(!name.empty()){
+                pseqItem->setName(name);
+            }
+            if(pseq->targetBodyName() != bodyItem->body()->name()){
+                putWarning(
+                    format(_("The original target body {0} of \"{1}\" is different from the current target {2}."),
+                           pseq->targetBodyName(), pseqItem->displayName(), bodyItem->body()->name()));
+            }
+            pseqItem->notifyUpdate();
+        }
+    }
+    
+    return loaded;
+}
+
+
+bool PoseSeqFileIO::save(Item* item, const std::string& filename)
+{
+    bool saved = false;
+    auto bodyItem = parentItem()->findOwnerItem<BodyItem>(true);
+    if(bodyItem){
+        saved = static_cast<PoseSeqItem*>(item)->poseSeq()->save(filename, bodyItem->body());
+    } else {
+        putError(_("PoseSeqItem to save must be a child of a BodyItem."));
+    }
+    return saved;
+}
+
+
+QWidget* PoseSeqFileIO::getOptionPanelForSaving(Item* /* item */)
+{
+    if(!contactPointOutputCheck){
+        contactPointOutputCheck = new CheckBox(_("Output contact points"));
+        contactPointOutputCheck->sigToggled().connect(
+            [](bool on){ BodyKeyPose::setContactPointOutputEnabled(on); });
+    }
+    contactPointOutputCheck->setChecked(BodyKeyPose::isContactPointOutputEnabled());
+    return contactPointOutputCheck;
 }
 
 
@@ -172,8 +221,7 @@ void PoseSeqItem::initializeClass(ExtensionManager* ext)
 
     im.addCreationPanel<PoseSeqItem>();
 
-    im.addLoaderAndSaver<PoseSeqItem>(
-        _("Pose Sequence"), "POSE-SEQ-YAML", "pseq", loadPoseSeqItem, savePoseSeqItem);
+    im.addFileIO<PoseSeqItem>(new PoseSeqFileIO);
 
     im.addSaver<PoseSeqItem>(
         _("Talk Plugin File"), "TALK-PLUGIN-FORMAT", "talk",
