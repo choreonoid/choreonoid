@@ -498,6 +498,17 @@ void MovieRecorderDialog::onRecordingStateChanged(bool on)
 {
     recordingToggle->blockSignals(true);
     recordingToggle->setChecked(on);
+
+    /*
+      In the offline mode, Qt events are processed by QCoreApplication:processEvents called in
+      the MoveRecorder::Impl::startOfflineModeRecording function. In this case, if the recording toggle
+      is toggled, the sigToggled signal is recursively emitted, and the corresponding slot is called
+      after the recording is finished. This means a user cannot stop the recording immediately by toggling
+      the recording toggle manually. To avoid confusion, the recording toggle button should be disabled
+      in this case.
+    */
+    recordingToggle->setDisabled(on && recorder_->recordingMode() == MovieRecorder::OfflineMode);
+    
     recordingToggle->blockSignals(false);
 }
 
