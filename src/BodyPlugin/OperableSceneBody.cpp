@@ -147,7 +147,7 @@ public:
     void onCollisionsUpdated();
     void onCollisionLinkHighlightModeChanged();
     void changeCollisionLinkHighlightMode(bool on);
-    void updateVisibleLinkSelectionMode();
+    void updateVisibleLinkSelectionMode(bool isActive);
     void onLinkOriginsCheckToggled(bool on);
     void onLinkCmsCheckToggled(bool on);
     void enableHighlight(bool on);
@@ -507,7 +507,6 @@ BodyItem* OperableSceneBody::bodyItem()
 void OperableSceneBody::Impl::onSceneGraphConnection(bool on)
 {
     connections.disconnect();
-    connectionToSigLinkSelectionChanged.disconnect();
 
     if(on){
 
@@ -525,8 +524,6 @@ void OperableSceneBody::Impl::onSceneGraphConnection(bool on)
             bodyItem->sigContinuousKinematicUpdateStateChanged().connect(
                 [this](bool){ onBodyItemUpdated(); }));
 
-        updateVisibleLinkSelectionMode();
-
         connections.add(
             bodyItem->sigKinematicStateChanged().connect(
                 [this](){ onKinematicStateChanged(); }));
@@ -539,6 +536,8 @@ void OperableSceneBody::Impl::onSceneGraphConnection(bool on)
         
         onCollisionLinkHighlightModeChanged();
     }
+
+    updateVisibleLinkSelectionMode(on);
 }
 
 
@@ -553,7 +552,7 @@ void OperableSceneBody::Impl::onBodyItemUpdated()
         updateMarkersAndManipulators(true);
     }
 
-    updateVisibleLinkSelectionMode();
+    updateVisibleLinkSelectionMode(true);
 }
 
 
@@ -679,9 +678,15 @@ void OperableSceneBody::setLinkVisibilities(const std::vector<bool>& visibilitie
 }
 
 
-void OperableSceneBody::Impl::updateVisibleLinkSelectionMode()
+void OperableSceneBody::Impl::updateVisibleLinkSelectionMode(bool isActive)
 {
-    bool newMode = bodyItem->isVisibleLinkSelectionMode();
+    bool newMode;
+    
+    if(isActive){
+        newMode = bodyItem->isVisibleLinkSelectionMode();
+    } else {
+        newMode = false;
+    }
 
     if(newMode != isVisibleLinkSelectionMode){
         
@@ -698,7 +703,9 @@ void OperableSceneBody::Impl::updateVisibleLinkSelectionMode()
 
         } else {
             connectionToSigLinkSelectionChanged.disconnect();
-            self->setLinkVisibilities(vector<bool>(self->numSceneLinks(), true));
+            if(isActive){
+                self->setLinkVisibilities(vector<bool>(self->numSceneLinks(), true));
+            }
         }
     }
 }
