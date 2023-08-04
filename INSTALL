@@ -1,5 +1,8 @@
+In Ubuntu Linux 22.04, execute the following commands in the source directory:
 
-Please see the following manuals to get the information on how to compile and install Choreonoid.
+./misc/script/install-requisites-ubuntu-22.04.sh
+cmake -B build
+cmake --build build --parallel [NUMBER_OF_CPU_CORES]
+cmake --install build --prefix [INSTALL_DIRECTORY]
 
- * http://choreonoid.org/en/manuals/1.5/install/install.html (English)
- * http://choreonoid.org/ja/manuals/1.5/install/install.html (Japanese)
+Please refer to the Choreonoid manual for more details.

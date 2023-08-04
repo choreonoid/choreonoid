@@ -1,3 +1,6 @@
+Choreonoid 2.0.0 released on August 4, 2023
+===========================================
+
 Changes since 1.7.0:
 
 * Removed the typedefs with suffix 'Ptr' for the smart pointer types using std::shared_ptr
@@ -29,8 +32,6 @@ Changes since 1.7.0:
 * Improved JointSliderView and rename it to JointDisplacementView
 * Added PositionView, which replaces BodyLinkView
 * The GLSL scene renderer is used by default
-* The appearance of the AGX track shoes can be specified
-* Supported the new convex decomposition API introduced in AGX Dynamics 2.31.0.0 or later
 * Multiple body items can be integrated into a composite body
 * Added ManipulatorPlugin
 * Introduced the environmental variable CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS
@@ -86,9 +87,12 @@ Changes since 1.7.0:
 * Added the function to render texts in SceneView
 * Added the distance measurement function
 * Separated the GLSceneRenderer module from the Base module
+* Added BodyStateLoggerItem
 * Added MocapPlugin
 * Added BodyMotionFilterPlugin implementing YawMomentCompensationFilter
 * Added the HRP-4C model and its samples
+* Many other minor feature improvements and bug fixes
+
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
