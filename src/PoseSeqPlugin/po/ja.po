@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-07-24 17:21+0900\n"
+"POT-Creation-Date: 2023-08-04 16:04+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -464,17 +464,26 @@ msgstr "選択ポーズへの遷移時間"
 msgid "Grid:"
 msgstr "グリッド:"
 
-msgid "Warning: the original target body {0} of \"{1}\" isdifferent from the current target {2}."
-msgstr "警告: 元々対象としていた \"{1}\" の{0}は現在対象としている{2}とは異なります．"
+msgid "Pose Sequence"
+msgstr "ポーズ列"
+
+msgid "Pose Sequence File"
+msgstr "ポーズ列ファイル"
 
 msgid "PoseSeqItem must be loaded as a child of a BodyItem"
-msgstr "PoseSeqアイテムはBodyアイテムの小アイテムとして読み込まなければなりません．"
+msgstr "PoseSeqアイテムはBodyアイテムの子アイテムとして読み込まなければなりません．"
+
+msgid "The original target body {0} of \"{1}\" is different from the current target {2}."
+msgstr "元々対象としていた \"{1}\" の{0}は現在対象としている{2}とは異なります．"
+
+msgid "PoseSeqItem to save must be a child of a BodyItem."
+msgstr "PoseSeqアイテムを保存する際はBodyアイテムの子アイテムでなければなりません．"
+
+msgid "Output contact points"
+msgstr "接触点を出力する"
 
 msgid "PoseSeqItem"
 msgstr "ポーズ列アイテム"
-
-msgid "Pose Sequence"
-msgstr "ポーズ列"
 
 msgid "Talk Plugin File"
 msgstr "Talk Plugin ファイル"
