@@ -133,6 +133,8 @@ void AssimpSceneWriter::Impl::callbackMesh()
     SgMesh* mesh = meshExtractor.currentMesh();
     if(mesh->primitiveType() == SgMesh::MeshType && mesh->hasTriangles()) {
         addMesh(mesh);
+    } else if (!generate_primitive_mesh && mesh->hasTriangles()) {
+        addMesh(mesh);
     } else if (generate_primitive_mesh) {
         MeshGenerator mg_;
         SgMesh* gmesh;
@@ -158,13 +160,13 @@ void AssimpSceneWriter::Impl::callbackMesh()
         case SgMesh::ConeType:
         {
             SgMesh::Cone prim = mesh->primitive<SgMesh::Cone>();
-            gmesh = mg_.generateCylinder(prim.radius, prim.height);
+            gmesh = mg_.generateCone(prim.radius, prim.height);
         }
         break;
         case SgMesh::CapsuleType:
         {
             SgMesh::Capsule prim = mesh->primitive<SgMesh::Capsule>();
-            gmesh = mg_.generateCylinder(prim.radius, prim.height);
+            gmesh = mg_.generateCapsule(prim.radius, prim.height);
         }
         break;
         default:
