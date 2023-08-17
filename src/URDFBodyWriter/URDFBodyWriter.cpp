@@ -1,14 +1,11 @@
+#include "URDFBodyWriter.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshExtractor>
 #include <cnoid/AssimpSceneWriter>
 #include <cnoid/DeviceList>
-
-#include "URDFBodyWriter.h"
-
 #include <pugixml.hpp>
-
 #include <iostream>
 #include <sstream>
 #include <iomanip>

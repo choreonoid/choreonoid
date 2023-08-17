@@ -21,8 +21,13 @@ using namespace cnoid;
 #define DEBUG_STREAM(args) \
     std::cerr << "[" << __PRETTY_FUNCTION__ << "]" << args << std::endl
 #else
-#define DEBUG_STREAM(args) \
+ #ifndef _WIN32
+  #define DEBUG_STREAM(args) \
     if(verbose) { self->os() << "[" << __PRETTY_FUNCTION__ << "]" << args << std::endl; }
+ #else
+  #define DEBUG_STREAM(args) \
+    if(verbose) { self->os() << args << std::endl; }
+ #endif
 #endif
 
 namespace {
