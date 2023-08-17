@@ -5,3 +5,7 @@ endif()
 make_gettext_mofiles(CnoidURDFPlugin mofiles)
 choreonoid_add_plugin(CnoidURDFPlugin URDFPlugin.cpp ${mofiles})
 target_link_libraries(CnoidURDFPlugin PUBLIC CnoidBodyPlugin CnoidURDFBodyLoader)
+
+if(ENABLE_PYTHON)
+  add_subdirectory(pybind11)
+endif()
