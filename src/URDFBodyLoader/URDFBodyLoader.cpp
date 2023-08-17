@@ -69,7 +69,13 @@ public:
         const string prefix = "package://";
         if (!(path.size() >= prefix.size()
               && std::equal(prefix.begin(), prefix.end(), path.begin()))) {
-            return path;
+            const string fprefix = "file://";
+            if (!(path.size() >= fprefix.size()
+              && std::equal(fprefix.begin(), fprefix.end(), path.begin()))) {
+                return path;
+            } else {
+                return path.substr(fprefix.size());
+            }
         }
 
         filesystem::path filepath(fromUTF8(path.substr(prefix.size())));

@@ -1,0 +1,5 @@
+if(ENABLE_ASSIMP)
+  set(headers AssimpSceneWriter.h exportdecl.h)
+  choreonoid_add_library(CnoidAssimpSceneWriter SHARED AssimpSceneWriter.cpp HEADERS ${headers})
+  target_link_libraries(CnoidAssimpSceneWriter CnoidUtil ${ASSIMP_LIBRARIES})
+endif()
