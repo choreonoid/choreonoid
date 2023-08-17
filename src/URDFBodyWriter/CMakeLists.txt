@@ -11,4 +11,4 @@ choreonoid_add_library(CnoidURDFBodyWriter SHARED URDFBodyWriter.cpp HEADERS URD
 target_link_libraries(CnoidURDFBodyWriter CnoidBody ${PUGIXML_STATIC_LIBRARIES} CnoidAssimpSceneWriter)
 
 choreonoid_add_executable(choreonoid-body2urdf body2urdf.cpp)
-target_link_libraries(choreonoid-body2urdf CnoidBody CnoidURDFBodyWriter ${Boost_PROGRAM_OPTIONS_LIBRARY})
+target_link_libraries(choreonoid-body2urdf CnoidBody CnoidURDFBodyWriter CnoidAssimpSceneLoader ${Boost_PROGRAM_OPTIONS_LIBRARY})

@@ -1,7 +1,7 @@
 #include <cnoid/URDFBodyWriter>
 #include <cnoid/BodyLoader>
 #include <cnoid/Body>
-
+#include <cnoid/AssimpSceneLoader>
 #include <boost/program_options.hpp>
 
 #include <iostream>
@@ -83,6 +83,9 @@ int main(int argc, char **argv)
         std::cerr << "export-devices: "    << export_devices << std::endl;
         std::cerr << "output: " << outputf << std::endl;
     }
+
+    AssimpSceneLoader::initializeClass();
+    
     BodyLoader bl;
     if (verbose) {
         bl.setMessageSink(std::cerr);
