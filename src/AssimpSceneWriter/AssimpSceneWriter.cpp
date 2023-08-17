@@ -337,7 +337,10 @@ void AssimpSceneWriter::Impl::addMesh(SgMesh *mesh)
     }
     vec_mesh.push_back(pMesh);
     { // Material
-        SgMaterial *material_ = shape->material();
+        SgMaterialPtr material_ = shape->material();
+        if(!material_){
+            material_ = new SgMaterial;
+        }
         aiMaterial* pcMat = new aiMaterial();
         aiString s;
 	if(material_->name().empty()) {
