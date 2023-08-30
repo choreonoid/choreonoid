@@ -463,7 +463,7 @@ Isometry3 FrameLocation::getLocation() const
 
 bool FrameLocation::isLocked() const
 {
-    return !impl->self->isLocationLocked();
+    return impl->self->isLocationLocked();
 }
 
 
