@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "GLVisionSimulatorItem.h"
 #include "SimulatorItem.h"
 #include "WorldItem.h"
@@ -173,7 +168,8 @@ public:
     ~SensorScreenRenderer();
     bool initialize(SensorScenePtr scene, int bodyIndex);
     SgCamera* initializeCamera(int bodyIndex);
-    void initializeGL(SgCamera* sceneCamera);
+    bool initializeGL(SgCamera* sceneCamera);
+    void finalizeGL(bool doMakeCurrent);
     void startRenderingThread();
     void moveRenderingBufferToThread(QThread& thread);
     void moveRenderingBufferToMainThread();
@@ -827,6 +823,12 @@ SensorScreenRenderer::SensorScreenRenderer(GLVisionSimulatorItem::Impl* simImpl,
 }
 
 
+SensorScreenRenderer::~SensorScreenRenderer()
+{
+    finalizeGL(true);
+}
+
+
 bool SensorScreenRenderer::initialize(SensorScenePtr scene, int bodyIndex)
 {
     this->scene = scene;
@@ -836,7 +838,9 @@ bool SensorScreenRenderer::initialize(SensorScenePtr scene, int bodyIndex)
         return false;
     }
 
-    initializeGL(sceneCamera);
+    if(!initializeGL(sceneCamera)){
+        return false;
+    }
 
     hasUpdatedData = false;
 
@@ -951,7 +955,7 @@ SgCamera* SensorScreenRenderer::initializeCamera(int bodyIndex)
 }
 
 
-void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
+bool SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
 {
     glContext = new QOpenGLContext;
 
@@ -964,11 +968,21 @@ void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
         format.setVersion(1, 5);
     }
     glContext->setFormat(format);
-    glContext->create();
+
+    if(!glContext->create()){
+        finalizeGL(false);
+        return false;
+    }
+    
     offscreenSurface = new QOffscreenSurface;
     offscreenSurface->setFormat(format);
     offscreenSurface->create();
-    glContext->makeCurrent(offscreenSurface);
+    if(!offscreenSurface->isValid()){
+        finalizeGL(false);
+        return false;
+    }
+        
+    bool result = glContext->makeCurrent(offscreenSurface);
     frameBuffer = new QOpenGLFramebufferObject(pixelWidth, pixelHeight, QOpenGLFramebufferObject::CombinedDepthStencil);
     frameBuffer->bind();
 
@@ -978,7 +992,12 @@ void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
     }
 
     renderer->setDefaultFramebufferObject(frameBuffer->handle());
-    renderer->initializeGL();
+
+    if(!renderer->initializeGL()){
+        finalizeGL(false);
+        return false;
+    }
+        
     renderer->setViewport(0, 0, pixelWidth, pixelHeight);
     renderer->sceneRoot()->addChild(scene->root);
     flagToUpdatePreprocessedNodeTree = true;
@@ -1015,6 +1034,32 @@ void SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
     }
 
     doneGLContextCurrent();
+    return true;
+}
+
+
+void SensorScreenRenderer::finalizeGL(bool doMakeCurrent)
+{
+    if(glContext){
+        if(doMakeCurrent){
+            makeGLContextCurrent();
+        }
+        if(renderer){
+            delete renderer;
+            renderer = nullptr;
+        }
+        if(frameBuffer){
+            frameBuffer->release();
+            delete frameBuffer;
+            frameBuffer = nullptr;
+        }
+        if(offscreenSurface){
+            delete offscreenSurface;
+            offscreenSurface = nullptr;
+        }
+        delete glContext;
+        glContext = nullptr;
+    }
 }
 
 
@@ -1827,21 +1872,6 @@ void SensorScene::terminate()
     }
     renderingCondition.notify_all();
     renderingThread.wait();
-}
-
-
-SensorScreenRenderer::~SensorScreenRenderer()
-{
-    if(glContext){
-        makeGLContextCurrent();
-        frameBuffer->release();
-        delete frameBuffer;
-        delete glContext;
-        delete offscreenSurface;
-    }
-    if(renderer){
-        delete renderer;
-    }
 }
 
 
