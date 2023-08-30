@@ -7,34 +7,28 @@ views:
     id: 1
     plugin: Base
     class: ItemPropertyView
-    mounted: true
   - 
     id: 2
     plugin: Base
     class: ItemTreeView
-    mounted: true
   - 
     id: 3
     plugin: Base
     class: LocationView
-    mounted: true
   - 
     id: 4
     plugin: Base
     class: MessageView
-    mounted: true
   - 
     id: 5
     plugin: Base
     class: SceneView
-    mounted: true
     state: 
       lightingMode: full
   - 
     id: 7
     plugin: Body
     class: JointDisplacementView
-    mounted: true
     state: 
       show_joint_ids: true
       show_joint_names: false
@@ -42,22 +36,18 @@ views:
     id: 8
     plugin: Body
     class: LinkDeviceListView
-    mounted: true
   - 
     id: 9
     plugin: Body
     class: LinkPositionView
-    mounted: true
   - 
     id: 10
     plugin: Body
     class: LinkPropertyView
-    mounted: true
   - 
     id: 11
     plugin: Python
     class: PythonConsoleView
-    mounted: true
 
 viewAreas: 
   - 

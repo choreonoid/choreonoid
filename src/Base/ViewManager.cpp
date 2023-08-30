@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ViewManager.h"
 #include "PluginManager.h"
 #include "ViewArea.h"
@@ -489,7 +485,14 @@ void ViewManager::registerClass_
 
     if((instantiationFlags & Permanent) && isEnabled){
         if(auto view = info->getOrCreateView()){
-            view->mountOnMainWindow(false);
+            // Note that a permanent view should be mounted on the main window by default
+            // even if it is not included in the builtin project, but the following function
+            // does not work for that purpose. Refer to ViewManager::restoreViewStates function
+            // to consider an implementation that achives it. Note that the permenent view
+            // should also be mounted when the view layout in the main window is reset by the
+            // ViewArea::resetLayout.
+
+            // view->mountOnMainWindow(false);
         }
     }
 }
@@ -747,7 +750,9 @@ namespace {
 struct ViewState {
     View* view;
     ArchivePtr state;
-    ViewState(View* view, ArchivePtr state) : view(view), state(state) { }
+    bool doMount;
+    ViewState(View* view, ArchivePtr state, bool doMount)
+        : view(view), state(state), doMount(doMount) { }
 };
 
 }
@@ -889,11 +894,9 @@ bool ViewManager::restoreViews
                             } else {
                                 state.reset();
                             }
-                            viewsToRestoreState->push_back(ViewState(view, state));
-
-                            if(viewArchive->get("mounted", false)){
-                                view->mountOnMainWindow(false);
-                            }
+                            bool doMount = viewArchive->get("mounted", false);
+                            viewsToRestoreState->push_back(ViewState(view, state, doMount));
+                            
                             restored = true;
                         }
                     }
@@ -927,10 +930,14 @@ bool ViewManager::restoreViewStates(ViewStateInfo& info)
     }
     auto viewsToRestoreState = reinterpret_cast<vector<ViewState>*>(info.data);
     for(auto& viewState : *viewsToRestoreState){
+        auto view = viewState.view;
         if(viewState.state){
-            viewState.view->restoreState(*viewState.state);
+            view->restoreState(*viewState.state);
         }
-        viewState.view->onRestored(static_cast<bool>(viewState.state));
+        view->onRestored(static_cast<bool>(viewState.state));
+        if(viewState.doMount && !view->isMounted()){
+            view->mountOnMainWindow(false);
+        }
     }
     return true;
 }

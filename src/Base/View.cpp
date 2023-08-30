@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "View.h"
 #include "ViewArea.h"
 #include "ViewManager.h"
@@ -109,7 +105,7 @@ View::Impl::Impl(View* self)
     isActive = false;
     hasFocus = false;
     titleFormat = "{}";
-    viewArea = 0;
+    viewArea = nullptr;
     defaultLayoutArea = CenterArea;
     isFontSizeZoomKeysEnabled = false;
     fontZoom = 0;

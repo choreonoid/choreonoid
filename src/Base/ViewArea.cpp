@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ViewArea.h"
 #include "View.h"
 #include "ViewManager.h"
@@ -117,7 +113,6 @@ public:
     bool viewTabsVisible;
     bool isMaximizedBeforeFullScreen;
     bool needToUpdateDefaultPaneAreas;
-    std::unique_ptr<vector<View*>> defaultViewsToShow;
 
     ViewPane* areaToPane[View::NumLayoutAreas];
 
@@ -529,8 +524,6 @@ void ViewArea::Impl::setSingleView(View* view)
     needToUpdateDefaultPaneAreas = false;
 
     addView(pane, view, true);
-
-    defaultViewsToShow.reset();
 }
 
 
@@ -779,22 +772,15 @@ bool ViewArea::addView(View* view)
 
 bool ViewArea::Impl::addView(View* view)
 {
-    if(view->viewArea() == self){
+    if(isBeforeDoingInitialLayout || view->viewArea() == self){
         return false;
-    }
-    if(isBeforeDoingInitialLayout){
-        if(!defaultViewsToShow){
-            defaultViewsToShow.reset(new vector<View*>());
-        }
-        defaultViewsToShow->push_back(view);
     } else {
         if(needToUpdateDefaultPaneAreas){
             detectExistingPaneAreas();
         }
         addView(areaToPane[view->defaultLayoutArea()], view, false);
+        return true;
     }
-
-    return true;
 }
 
 
@@ -1090,7 +1076,6 @@ void ViewArea::Impl::restoreLayout(Archive* archive)
     needToUpdateDefaultPaneAreas = true;
 
     isBeforeDoingInitialLayout = false;
-    defaultViewsToShow.reset();
 }
 
 
@@ -1429,14 +1414,9 @@ void ViewArea::Impl::resetLayout()
 {
     if(isBeforeDoingInitialLayout){
         isBeforeDoingInitialLayout = false;
-        createDefaultPanes();
-        if(defaultViewsToShow){
-            for(size_t i=0; i < defaultViewsToShow->size(); ++i){
-                addView((*defaultViewsToShow)[i]);
-            }
-            defaultViewsToShow.reset();
-        }
     } else {
+        // TODO: Load the layout of the builtin project and add the remaining
+        // views with the permanent attribute.
         vector<View*> views;
         getAllViews(views);
         clearAllPanes();
