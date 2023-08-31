@@ -17,9 +17,6 @@ using namespace cnoid;
 
 namespace {
 
-BodyItemBodyFileIO* bodyFileIO;
-ItemFileIO* meshFileIO;
-
 /**
    \todo This class should be integrated with StdSceneFileExporter
 */
@@ -68,6 +65,10 @@ public:
     virtual void createOptionPanelForSaving() override;
 };
 
+
+BodyItemBodyFileIO* bodyFileIO;
+SceneFileImporter* meshFileIO;
+
 }
 
 
@@ -84,13 +85,13 @@ void BodyItem::registerBodyItemFileIoSet(ItemManager* im)
 }
 
 
-ItemFileIO* BodyItem::bodyFileIO()
+BodyItemBodyFileIO* BodyItem::bodyFileIO()
 {
     return ::bodyFileIO;
 }
 
 
-ItemFileIO* BodyItem::meshFileIO()
+GeneralSceneFileImporterBase* BodyItem::meshFileIO()
 {
     return ::meshFileIO;
 }

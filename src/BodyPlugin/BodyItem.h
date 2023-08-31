@@ -19,7 +19,8 @@ class InverseKinematics;
 class PinDragIK;
 class PenetrationBlocker;
 class OperableSceneBody;
-class ItemFileIO;
+class BodyItemBodyFileIO;
+class GeneralSceneFileImporterBase;
 
 class CNOID_EXPORT BodyItem : public Item, public LocatableItem, public RenderableItem
 {
@@ -28,10 +29,19 @@ public:
 
     // The following functions are Implemented in BodyItemFileIO.cpp
     static void registerBodyItemFileIoSet(ItemManager* im);
-    //! The actual type of the IO object returned by this function is BodyItemBodyFileIO.
-    static ItemFileIO* bodyFileIO();
-    static ItemFileIO* meshFileIO();
-        
+
+    /**
+       \return An ItemFileIO object for loading and saving a body file.
+       \note BodyItemBodyFileIO is defined in the <cnoid/BodyItemFileIO> header.
+    */
+    static BodyItemBodyFileIO* bodyFileIO();
+
+    /**
+       \return An ItemFileIO object for loading a mesh file as a body.
+       \note GeneralSceneFileImporterBase is defined in the <cnoid/GeneralSceneFileImporterBase> header.
+    */
+    static GeneralSceneFileImporterBase* meshFileIO();
+
     BodyItem();
     BodyItem(const std::string& name);
     virtual ~BodyItem();
