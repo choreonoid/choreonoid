@@ -17,6 +17,9 @@ public:
     GeneralSceneFileImporterBase(int api);
     ~GeneralSceneFileImporterBase();
 
+    enum LengthUnitType { Meter, Millimeter, Inch };
+    void setCurrentLengthUnitHint(LengthUnitType unitType);
+
 protected:
     SgNode* loadScene(const std::string& filename);
     std::shared_ptr<AbstractSceneLoader> sceneLoaderOnLastLoading();

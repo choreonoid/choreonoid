@@ -177,11 +177,31 @@ bool GeneralSceneFileImporterBase::restoreOptions(const Mapping* archive)
 }
 
 
+void GeneralSceneFileImporterBase::setCurrentLengthUnitHint(LengthUnitType unitType)
+{
+    switch(unitType){
+    case Meter:      impl->lengthUnitHint.select(SceneLoader::Meter);      break;
+    case Millimeter: impl->lengthUnitHint.select(SceneLoader::Millimeter); break;
+    case Inch:       impl->lengthUnitHint.select(SceneLoader::Inch);       break;
+    default: break;
+    }
+}
+
+
 QWidget* GeneralSceneFileImporterBase::getOptionPanelForLoading()
 {
     if(!impl->optionPanel){
         impl->createOptionPanel();
     }
+
+    impl->unitCombo->blockSignals(true);
+    impl->unitCombo->setCurrentIndex(impl->lengthUnitHint.which());
+    impl->unitCombo->blockSignals(false);
+    
+    impl->axisCombo->blockSignals(true);
+    impl->axisCombo->setCurrentIndex(impl->upperAxisHint.which());
+    impl->axisCombo->blockSignals(false);
+    
     return impl->optionPanel;
 }
 
@@ -192,18 +212,25 @@ void GeneralSceneFileImporterBase::Impl::createOptionPanel()
     auto hbox = new QHBoxLayout;
     hbox->setContentsMargins(0, 0, 0, 0);
     optionPanel->setLayout(hbox);
+
     hbox->addWidget(new QLabel(_("[ Mesh import hints ]")));
+
     hbox->addWidget(new QLabel(_("Unit:")));
     unitCombo = new ComboBox;
     unitCombo->addItem(_("Meter"));
     unitCombo->addItem(_("Millimeter"));
     unitCombo->addItem(_("Inch"));
+    unitCombo->sigCurrentIndexChanged().connect(
+        [this](int index){ lengthUnitHint.select(index); });
     hbox->addWidget(unitCombo);
+    
     hbox->addWidget(new QLabel(_("Upper axis:")));
     axisCombo = new ComboBox;
     for(int i=0; i < SceneLoader::NumUpperAxisTypes; ++i){
         axisCombo->addItem(upperAxisHint.label(i));
     }
+    axisCombo->sigCurrentIndexChanged().connect(
+        [this](int index){ upperAxisHint.select(index); });
     hbox->addWidget(axisCombo);
 }
 
