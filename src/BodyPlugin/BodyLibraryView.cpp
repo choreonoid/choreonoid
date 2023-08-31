@@ -501,7 +501,7 @@ bool BodyLibraryView::Impl::setLibraryDirectory(const std::string& directory, bo
         saveIndexFileIfUpdated();
 
         fs::path dirPath(fromUTF8(directory));
-        fs::path filePath = libraryDirPath / "index.yaml";
+        fs::path filePath = dirPath / "index.yaml";
 
         if(ensureDirectoryAndIndexFile){
             try {
@@ -716,14 +716,12 @@ fs::path BodyLibraryView::Impl::getInternalItemDirPath(QTreeWidgetItem* parentIt
 bool BodyLibraryView::Impl::ensureDirectory(const fs::path& dirPath, bool doCleanExistingDir)
 {
     stdx::error_code ec;
-
-    auto status = fs::status(dirPath, ec);
+    bool dirExists = fs::exists(dirPath, ec);
     if(ec){
         return false;
     }
-    
-    if(fs::exists(status)){
-        if(!doCleanExistingDir && fs::is_directory(status)){
+    if(dirExists){
+        if(!doCleanExistingDir && fs::is_directory(dirPath)){
             return true;
         }
         if(!fs::remove_all(dirPath, ec)){
@@ -733,7 +731,6 @@ bool BodyLibraryView::Impl::ensureDirectory(const fs::path& dirPath, bool doClea
     if(!fs::create_directories(dirPath, ec)){
         return false;
     }
-    
     return true;
 }
 
