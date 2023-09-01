@@ -1,13 +1,5 @@
 #include "URDFBodyLoader.h"
 #include "URDFKeywords.h"
-
-#include <memory>
-#include <ostream>
-#include <string>
-#include <unordered_map>
-#include <vector>
-#include <cstdio>
-
 #include <cnoid/Body>
 #include <cnoid/BodyLoader>
 #include <cnoid/Camera>
@@ -18,10 +10,18 @@
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
 #include <cnoid/SceneLoader>
+#include <cnoid/UriSchemeProcessor>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <pugixml.hpp>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <unordered_map>
+#include <vector>
+#include <cstdio>
+#include "gettext.h"
 
 using namespace cnoid;
 
@@ -34,6 +34,7 @@ using std::string;
 using std::vector;
 
 namespace {
+
 struct Registration
 {
     Registration()
@@ -45,74 +46,7 @@ struct Registration
     }
 } registration;
 
-
-class ROSPackageSchemeHandler
-{
-    vector<string> packagePaths;
-
-public:
-    ROSPackageSchemeHandler()
-    {
-        const char* str = getenv("ROS_PACKAGE_PATH");
-        if (str) {
-            do {
-                const char* begin = str;
-                while (*str != ':' && *str)
-                    str++;
-                packagePaths.push_back(string(begin, str));
-            } while (0 != *str++);
-        }
-    }
-
-    string operator()(const string& path, std::ostream& os)
-    {
-        const string prefix = "package://";
-        if (!(path.size() >= prefix.size()
-              && std::equal(prefix.begin(), prefix.end(), path.begin()))) {
-            return path;
-        }
-
-        filesystem::path filepath(fromUTF8(path.substr(prefix.size())));
-        auto iter = filepath.begin();
-        if (iter == filepath.end()) {
-            return string();
-        }
-
-        filesystem::path directory = *iter++;
-        filesystem::path relativePath;
-        while (iter != filepath.end()) {
-            relativePath /= *iter++;
-        }
-
-        bool found = false;
-        filesystem::path combined;
-
-        for (auto element : packagePaths) {
-            filesystem::path packagePath(element);
-            combined = packagePath / filepath;
-            if (exists(combined)) {
-                found = true;
-                break;
-            }
-            combined = packagePath / relativePath;
-            if (exists(combined)) {
-                found = true;
-                break;
-            }
-        }
-
-        if (found) {
-            return toUTF8(combined.string());
-        } else {
-            os << format("\"{}\" is not found in the ROS package directories.",
-                         path)
-               << endl;
-            return string();
-        }
-    }
-};
-
-}  // namespace
+}
 
 namespace cnoid {
 
@@ -140,18 +74,15 @@ bool toVector4(const std::string& s, Vector4& out_v)
 class URDFBodyLoader::Impl
 {
 public:
+    int jointCounter_ = 0;
+    SceneLoader sceneLoader;
+    UriSchemeProcessor uriSchemeProcessor;
+    std::unordered_map<string, Vector4> colorMap;
     std::ostream* os_;
     std::ostream& os() { return *os_; }
 
     Impl();
     bool load(Body* body, const string& filename);
-
-private:
-    int jointCounter_ = 0;
-    SceneLoader sceneLoader_;
-    ROSPackageSchemeHandler ROSPackageSchemeHandler_;
-    std::unordered_map<string, Vector4> colorMap;
-
     void updateColorMap(const xml_node& materialNode);
     vector<LinkPtr> findRootLinks(
         const std::unordered_map<string, LinkPtr>& linkMap);
@@ -194,6 +125,19 @@ URDFBodyLoader::~URDFBodyLoader()
 void URDFBodyLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+    impl->sceneLoader.setMessageSink(os);
+}
+
+
+void URDFBodyLoader::setDefaultDivisionNumber(int n)
+{
+    impl->sceneLoader.setDefaultDivisionNumber(n);
+}
+
+
+void URDFBodyLoader::setDefaultCreaseAngle(double theta)
+{
+    impl->sceneLoader.setDefaultCreaseAngle(theta);
 }
 
 
@@ -261,6 +205,8 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
         os() << "Error: multiple 'robot' tags are found.";
         return false;
     }
+
+    uriSchemeProcessor.setBaseDirectoryFor(filename);
 
     // gets the 'robot' tag
     const xml_node& robotNode = doc.child(ROBOT);
@@ -722,17 +668,21 @@ bool URDFBodyLoader::Impl::readGeometryTag(const xml_node& geometryNode,
         }
 
         // loads a mesh file
-        const string filename
-            = geometryNode.child(MESH).attribute(FILENAME).as_string();
+        string uri = geometryNode.child(MESH).attribute(FILENAME).as_string();
         bool isSupportedFormat = false;
-        mesh = dynamic_cast<SgNode*>(
-            sceneLoader_.load(ROSPackageSchemeHandler_(filename, os()),
-                              isSupportedFormat));
-        if (!isSupportedFormat) {
-            os() << "Error: format of the specified mesh file \"" << filename
-                 << "\" is not supported." << endl;
-            return false;
+
+        auto filePath = uriSchemeProcessor.getFilePath(uri);
+        if(filePath.empty()){
+            os() << uriSchemeProcessor.errorMessage() << endl;
+        } else {
+            mesh = sceneLoader.load(filePath, isSupportedFormat);
+            if (!isSupportedFormat) {
+                os() << format(_("Error: format of the specified mesh file \"{0}\" is not supported."), uri) << endl;
+                return false;
+            }
         }
+
+        mesh->setUri(uri, filePath);
 
         // scales the mesh
         if (!geometryNode.child(MESH).attribute(SCALE).empty()) {
