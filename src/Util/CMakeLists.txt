@@ -13,6 +13,7 @@ set(sources
   FileUtil.cpp
   ExecutablePath.cpp
   FilePathVariableProcessor.cpp
+  UriSchemeProcessor.cpp
   GettextUtil.cpp
   UTF8.cpp
   NullOut.cpp
@@ -115,6 +116,7 @@ set(headers
   FileUtil.h
   ExecutablePath.h
   FilePathVariableProcessor.h
+  UriSchemeProcessor.h
   GettextUtil.h
   UTF8.h
   NullOut.h
