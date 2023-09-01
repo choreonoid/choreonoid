@@ -111,6 +111,7 @@ public:
     filesystem::path filePath;
     string fileBaseName;
     filesystem::path directoryPath;
+    string directory;
 
     Impl(ObjSceneLoader* self);
     void clearBufObjects();
@@ -123,9 +124,9 @@ public:
     void readTextureCoordinate();
     void readFace();
     bool readFaceElement(int axis);
-    bool loadMaterialTemplateLibrary(const std::string& name);
+    bool loadMaterialTemplateLibrary(std::string filename);
     void readMaterial(const std::string& name);
-    void createNewMaterial(const string& name);
+    void createNewMaterial(const string& name, const string& filename);
     void readAmbientColor();
     void readDiffuseColor();
     void readSpecularColor();
@@ -202,6 +203,7 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
     filePath = fromUTF8(filename);
     fileBaseName = toUTF8(filePath.stem().string());
     directoryPath = filePath.parent_path();
+    directory = toUTF8(directoryPath.generic_string());
 
     SgNodePtr scene;
 
@@ -563,7 +565,8 @@ void ObjSceneLoader::Impl::readMaterial(const std::string& name)
 }
 
 
-bool ObjSceneLoader::Impl::loadMaterialTemplateLibrary(const std::string& filename)
+// Note that the filename argument must not be a reference type to avoid conflicts in the "token" variable.
+bool ObjSceneLoader::Impl::loadMaterialTemplateLibrary(std::string filename)
 {
     string fullpath = toUTF8((directoryPath / fromUTF8(filename)).string());
     if(!subScanner.open(fullpath)){
@@ -577,7 +580,7 @@ bool ObjSceneLoader::Impl::loadMaterialTemplateLibrary(const std::string& filena
         
         if(subScanner.checkStringAtCurrentPosition("newmtl")){
             subScanner.readStringToEOL(token);
-            createNewMaterial(token);
+            createNewMaterial(token, filename);
         } else {
             subScanner.skipSpacesAndTabs();
             switch(subScanner.peekChar()){
@@ -669,10 +672,13 @@ bool ObjSceneLoader::Impl::loadMaterialTemplateLibrary(const std::string& filena
 }
 
 
-void ObjSceneLoader::Impl::createNewMaterial(const string& name)
+void ObjSceneLoader::Impl::createNewMaterial(const string& name, const string& filename)
 {
     currentMaterialDefInfo = &materialMap[name];
-    currentMaterialDefInfo->material->setName(name);
+    auto material = currentMaterialDefInfo->material;
+    material->setName(name);
+    material->setUriWithFilePathAndBaseDirectory(filename, directory);
+    material->setUriFragment(name);
     currentMaterialDef = currentMaterialDefInfo->material;
 }
 
@@ -749,8 +755,7 @@ void ObjSceneLoader::Impl::readTexture(const std::string& mapType)
             SgTexturePtr texture = new SgTexture;
             auto image = texture->getOrCreateImage();
             if(imageIO.load(image->image(), filename, os())){
-                image->setUriWithFilePathAndBaseDirectory(
-                    token, directoryPath.generic_string());
+                image->setUriWithFilePathAndBaseDirectory(token, directory);
                 currentMaterialDefInfo->texture = texture;
             }
         }
