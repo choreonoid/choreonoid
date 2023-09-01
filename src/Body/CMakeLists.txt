@@ -28,6 +28,7 @@ set(sources
   BodyLoader.cpp
   StdBodyLoader.cpp
   StdBodyWriter.cpp
+  ROSPackageSchemeHandler.cpp
   Device.cpp
   HolderDevice.cpp
   AttachmentDevice.cpp
