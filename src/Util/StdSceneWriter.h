@@ -24,6 +24,8 @@ public:
 
     virtual void setMessageSink(std::ostream& os) override;
 
+    void setMainSceneName(const std::string& name);
+
     // One of the settings is valid for the following two functions
     void setBaseDirectory(const std::string& directory);
     void setFilePathVariableProcessor(FilePathVariableProcessor* processor);
@@ -51,7 +53,15 @@ public:
     //enum AngleUnit { Degree, Radian };
     //void setAngleUnit(AngleUnit unit);
 
+    void clear();
+    
+    /**
+       This function only create a ValuNode node describing the given scene graph node.
+       \note The clear function must be executed when this function is used to write a set of scenes
+       to eliminate the effect of the previous writing.
+    */
     ref_ptr<ValueNode> writeScene(SgNode* node);
+    
     virtual bool writeScene(const std::string& filename, SgNode* node) override;
     bool writeScene(const std::string& filename, const std::vector<SgNode*>& nodes);
 
