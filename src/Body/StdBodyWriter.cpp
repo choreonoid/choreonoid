@@ -127,9 +127,12 @@ bool StdBodyWriter::writeBody(Body* body, const std::string& filename)
 bool StdBodyWriter::Impl::writeBody(Body* body, const std::string& filename)
 {
     bool result = false;
-    
-    sceneWriter.setBaseDirectory(
-        toUTF8(filesystem::path(fromUTF8(filename)).parent_path().generic_string()));
+
+    sceneWriter.clear();
+
+    filesystem::path path(fromUTF8(filename));
+    sceneWriter.setMainSceneName(toUTF8(path.stem().generic_string()));
+    sceneWriter.setBaseDirectory(toUTF8(path.parent_path().generic_string()));
 
     updateDeviceWriteFunctions();
 
