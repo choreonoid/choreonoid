@@ -9,6 +9,7 @@
 #include "SceneLoader.h"
 #include "YAMLReader.h"
 #include "EigenArchive.h"
+#include "UriSchemeProcessor.h"
 #include "FilePathVariableProcessor.h"
 #include "NullOut.h"
 #include "ImageIO.h"
@@ -18,7 +19,6 @@
 #include <fmt/format.h>
 #include <unordered_map>
 #include <mutex>
-#include <regex>
 #include "gettext.h"
 
 using namespace std;
@@ -74,12 +74,11 @@ public:
     typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
 
     map<string, ResourceInfoPtr> resourceInfoMap;
-    
+
+    string baseDirectory;
     SceneLoader sceneLoader;
     bool sceneLoaderConfigurationChanged;
-    FilePathVariableProcessorPtr pathVariableProcessor;
-    regex uriSchemeRegex;
-    bool isUriSchemeRegexReady;
+    unique_ptr<UriSchemeProcessor> uriSchemeProcessor;
     typedef map<string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
 
@@ -88,8 +87,6 @@ public:
 
     static NodeFunctionMap nodeFunctionMap;
     static std::mutex nodeFunctionMapMutex;
-    static unordered_map<string, UriSchemeHandler> uriSchemeHandlerMap;
-    static std::mutex uriSchemeHandlerMutex;
 
     Impl(StdSceneReader* self);
     ~Impl();
@@ -100,7 +97,8 @@ public:
     bool readRotation(const ValueNode* info, Matrix3& out_R) const;
     bool readTranslation(const ValueNode* info, Vector3& out_p) const;
 
-    FilePathVariableProcessor* getOrCreatePathVariableProcessor();
+    std::string getBaseDirectory() const;
+    void ensureUriSchemeProcessor(FilePathVariableProcessor* fpvp = nullptr);
     SgNode* readNode(Mapping* info);
     SgNode* readNode(Mapping* info, const string& type);
     SgNode* readNodeNode(Mapping* info);
@@ -163,8 +161,6 @@ public:
 
 StdSceneReader::Impl::NodeFunctionMap StdSceneReader::Impl::nodeFunctionMap;
 std::mutex StdSceneReader::Impl::nodeFunctionMapMutex;
-unordered_map<string, StdSceneReader::UriSchemeHandler> StdSceneReader::Impl::uriSchemeHandlerMap;
-std::mutex StdSceneReader::Impl::uriSchemeHandlerMutex;
 
 }
 
@@ -183,13 +179,6 @@ bool extract(Mapping* mapping, const char* key, ValueType& out_value)
 
 }
 
-
-void StdSceneReader::registerUriSchemeHandler(const std::string& scheme, UriSchemeHandler handler)
-{
-    std::lock_guard<std::mutex> guard(Impl::uriSchemeHandlerMutex);
-    Impl::uriSchemeHandlerMap[scheme] = handler;
-}
-                                                 
 
 StdSceneReader::StdSceneReader()
 {
@@ -225,7 +214,6 @@ StdSceneReader::Impl::Impl(StdSceneReader* self)
     
     os_ = &nullout();
     sceneLoaderConfigurationChanged = false;
-    isUriSchemeRegexReady = false;
     imageIO.setUpsideDown(true);
 }
 
@@ -264,40 +252,58 @@ int StdSceneReader::defaultDivisionNumber() const
 
 void StdSceneReader::setBaseDirectory(const std::string& directory)
 {
-    impl->getOrCreatePathVariableProcessor()->setBaseDirectory(directory);
+    impl->baseDirectory = directory;
+    if(impl->uriSchemeProcessor){
+        impl->uriSchemeProcessor->filePathVariableProcessor()->setBaseDirectory(directory);
+    }
 }
 
 
 std::string StdSceneReader::baseDirectory() const
 {
-    if(impl->pathVariableProcessor){
-        return impl->pathVariableProcessor->baseDirectory();
+    return impl->getBaseDirectory();
+}
+
+
+std::string StdSceneReader::Impl::getBaseDirectory() const
+{
+    if(uriSchemeProcessor){
+        return uriSchemeProcessor->filePathVariableProcessor()->baseDirectory();
+    } else {
+        return baseDirectory;
     }
-    return string();
 }
 
 
 stdx::filesystem::path StdSceneReader::baseDirPath() const
 {
-    if(impl->pathVariableProcessor){
-        return impl->pathVariableProcessor->baseDirPath();
+    if(impl->uriSchemeProcessor){
+        return impl->uriSchemeProcessor->filePathVariableProcessor()->baseDirPath();
+    } else {
+        return fromUTF8(impl->baseDirectory);
     }
-    return stdx::filesystem::path();
 }
 
 
-void StdSceneReader::setFilePathVariableProcessor(FilePathVariableProcessor* processor)
+void StdSceneReader::Impl::ensureUriSchemeProcessor(FilePathVariableProcessor* fpvp)
 {
-    impl->pathVariableProcessor = processor;
+    if(!uriSchemeProcessor){
+        uriSchemeProcessor = make_unique<UriSchemeProcessor>();
+        if(!fpvp){
+            fpvp = new FilePathVariableProcessor;
+            fpvp->setBaseDirectory(baseDirectory);
+        }
+    }
+    if(fpvp){
+        uriSchemeProcessor->setFilePathVariableProcessor(fpvp);
+    }
 }
 
 
-FilePathVariableProcessor* StdSceneReader::Impl::getOrCreatePathVariableProcessor()
+void StdSceneReader::setFilePathVariableProcessor(FilePathVariableProcessor* fpvp)
 {
-    if(!pathVariableProcessor){
-        pathVariableProcessor = new FilePathVariableProcessor;
-    }
-    return pathVariableProcessor;
+    impl->ensureUriSchemeProcessor(fpvp);
+    impl->baseDirectory = fpvp->baseDirectory();
 }
 
 
@@ -1317,8 +1323,7 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping* info, int meshOpti
         info->throwException(_("A resouce specified as a geometry does not have a mesh"));
     }
     if(isDirectResource){
-        mesh->setUriWithFilePathAndBaseDirectory(
-            resource.uri, getOrCreatePathVariableProcessor()->baseDirectory());
+        mesh->setUriWithFilePathAndBaseDirectory(resource.uri, getBaseDirectory());
         if(!resource.fragment.empty()){
             resource.scene->setUriFragment(resource.fragment);
         }
@@ -1405,17 +1410,16 @@ void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping* info)
             auto it = imagePathToSgImageMap.find(uri);
             if(it != imagePathToSgImageMap.end()){
                 image = it->second;
-            }else{
-                auto fpvp = getOrCreatePathVariableProcessor();
-                auto filename = fpvp->expand(uri, true);
+            } else {
+                ensureUriSchemeProcessor();
+                auto filename = uriSchemeProcessor->getFilePath(uri);
                 if(filename.empty()){
-                    os() << format(_("Warning: texture uri \"{0}\" is not valid: {1}"),
-                                   uri, fpvp->errorMessage()) << endl;
+                    os() << format(_("Warning: texture URI \"{0}\" is not valid: {1}"),
+                                   uri, uriSchemeProcessor->errorMessage()) << endl;
                 } else {
                     image = new SgImage;
                     if(imageIO.load(image->image(), filename, os())){
-                        image->setUriWithFilePathAndBaseDirectory(
-                            uri, getOrCreatePathVariableProcessor()->baseDirectory());
+                        image->setUriWithFilePathAndBaseDirectory(uri, getBaseDirectory());
                         imagePathToSgImageMap[uri] = image;
                     } else {
                         image.reset();
@@ -1705,8 +1709,7 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info, b
     if(resource.scene){
         resource.scene = readTransformParameters(info, resource.scene);
         if(doSetUri){
-            resource.scene->setUriWithFilePathAndBaseDirectory(
-                resource.uri, getOrCreatePathVariableProcessor()->baseDirectory());
+            resource.scene->setUriWithFilePathAndBaseDirectory(resource.uri, getBaseDirectory());
             if(!resource.fragment.empty()){
                 resource.scene->setUriFragment(resource.fragment);
             }
@@ -1749,67 +1752,23 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const strin
         return iter->second;
     }
 
-    if(!isUriSchemeRegexReady){
-        uriSchemeRegex.assign("^(.+)://(.+)$");
-        isUriSchemeRegexReady = true;
-    }
-    smatch match;
-    string filename;
-    bool hasScheme = false;
-    bool isFileScheme = false;
-        
-    if(regex_match(uri, match, uriSchemeRegex)){
-        hasScheme = true;
-        if(match.size() == 3){
-            const string scheme = match.str(1);
-            if(scheme == "file"){
-                filename = match.str(2);
-                isFileScheme = true;
-            } else {
-                std::lock_guard<std::mutex> guard(uriSchemeHandlerMutex);
-                auto iter = uriSchemeHandlerMap.find(scheme);
-                if(iter == uriSchemeHandlerMap.end()){
-                    resourceNode->throwException(
-                        format(_("The \"{0}\" scheme of \"{1}\" is not available"), scheme, uri));
-                } else {
-                    auto& handler = iter->second;
-                    filename = handler(match.str(2), os());
-                    isFileScheme = true;
-                }
-            }
-        }
-    }
-
-    if(!hasScheme){
-        filename = uri;
-        isFileScheme = true;
-    }
-
-    if(isFileScheme){
-        auto pvp = getOrCreatePathVariableProcessor();
-        filename = pvp->expand(filename, true);
-        if(filename.empty()){
-            resourceNode->throwException(
-                format(_("The resource URI \"{0}\" is not valid: {1}"),
-                       uri, pvp->errorMessage()));
-        }
-    } else {
-        if(filename.empty()){
-            resourceNode->throwException(
-                format(_("The resource URI \"{}\" is not valid"), uri));
-        }
+    ensureUriSchemeProcessor();
+    string file = uriSchemeProcessor->getFilePath(uri);
+    
+    if(file.empty()){
+        resourceNode->throwException(uriSchemeProcessor->errorMessage());
     }
 
     ResourceInfoPtr info = new ResourceInfo;
 
-    filesystem::path filepath(fromUTF8(filename));
-    string ext = filepath.extension().string();
+    filesystem::path filePath(fromUTF8(file));
+    string ext = filePath.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     if(ext == ".yaml" || ext == ".yml"){
         unique_ptr<YAMLReader> reader(new YAMLReader);
         reader->importAnchors(*mainYamlReader);
-        if(!reader->load(filename)){
+        if(!reader->load(file)){
             resourceNode->throwException(
                 format(_("YAML resource \"{0}\" cannot be loaded ({1})"),
                  uri, reader->errorMessage()));
@@ -1841,7 +1800,7 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const strin
                 }
             }
         }
-        SgNodePtr scene = sceneLoader.load(filename);
+        SgNodePtr scene = sceneLoader.load(file);
         if(!scene){
             resourceNode->throwException(
                 format(_("The resource is not found at URI \"{}\""), uri));
@@ -1849,7 +1808,7 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const strin
         info->scene = scene;
     }
 
-    info->directory = toUTF8(filepath.parent_path().string());
+    info->directory = toUTF8(filePath.parent_path().string());
     
     resourceInfoMap[uri] = info;
 

@@ -1,4 +1,3 @@
-#include <cnoid/StdSceneReader>
 #include <cnoid/UriSchemeProcessor>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
@@ -77,7 +76,6 @@ public:
 struct ROSPackageSchemeHandlerRegistration {
     ROSPackageSchemeHandlerRegistration(){
         UriSchemeProcessor::registerUriSchemeHandler("package", ROSPackageSchemeHandler());
-        StdSceneReader::registerUriSchemeHandler("package", ROSPackageSchemeHandler());
     }
 } rosPackageSchemeHandlerRegistration;
 

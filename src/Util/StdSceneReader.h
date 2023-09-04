@@ -76,8 +76,6 @@ public:
     
     typedef std::function<std::string(const std::string& path, std::ostream& os)> UriSchemeHandler;
     
-    static void registerUriSchemeHandler(const std::string& scheme, UriSchemeHandler handler);
-
     [[deprecated("Use readAngle(const Mapping* info, const char* key, double& angle) const")]]
     bool readAngle(const Mapping& info, const char* key, double& angle) const;
     [[deprecated("Use readAngle(const Mapping* info, const char* key, float& angle) const")]]
