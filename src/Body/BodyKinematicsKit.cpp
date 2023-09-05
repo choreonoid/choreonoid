@@ -419,7 +419,7 @@ std::string BodyKinematicsKit::configurationLabel(int id) const
     if(impl->configurationHandler){
         string label;
         for(auto& element : impl->configurationHandler->getConfigurationStateNames(id)){
-            if(!label.empty()){
+            if(!label.empty() && !element.empty()){
                 label.append("-");
             }
             label.append(element);
