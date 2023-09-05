@@ -3,6 +3,7 @@
 
 #include "MprPosition.h"
 #include <cnoid/BodyItemKinematicsKit>
+#include <cnoid/CheckBox>
 #include <QLabel>
 #include <QGridLayout>
 
@@ -31,10 +32,14 @@ private:
         int jointDisplacementColumnSize, bool isJointNameLabelEnabled);
     void detachJointLabels();
     void updateJointLabels(BodyItemKinematicsKit* kinematicsKit, MprFkPosition* position, bool isJointNameLabelEnabled);
-    
+    void onAutoConfigCheckToggled(bool on);
+
     QGridLayout* sharedGrid;
     int currentRow;
     MprPosition::PositionType currentPositionType;
+    BodyItemKinematicsKitPtr currentKinematicsKit;
+    MprIkPositionPtr currentIkPosition;
+    
     QLabel bodyPartLabel;
 
     QWidget ikPanel;
@@ -42,6 +47,7 @@ private:
     QLabel rpyLabels[3];
     QLabel coordinateFrameLabels[2];
     QLabel configLabel;
+    CheckBox autoConfigCheck;
     
     QLabel jointNameLabels[MprPosition::MaxNumJoints];
     QLabel jointDisplacementLabels[MprPosition::MaxNumJoints];
@@ -53,4 +59,3 @@ typedef ref_ptr<MprPositionLabelSet> MprPositionLabelSetPtr;
 }
 
 #endif
-

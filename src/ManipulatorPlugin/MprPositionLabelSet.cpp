@@ -63,9 +63,14 @@ void MprPositionLabelSet::createIkPanel()
     localGrid2->addWidget(&coordinateFrameLabels[1], row, 2);
     ++row;
 
+    autoConfigCheck.setText(_("Auto"));
+    autoConfigCheck.sigToggled().connect([this](bool on) {
+        onAutoConfigCheckToggled(on); 
+    });
     localGrid2->addWidget(new QLabel(_("Config")), row, 0);
     localGrid2->addWidget(new QLabel(":"), row, 1);
     localGrid2->addWidget(&configLabel, row, 2);
+    localGrid2->addWidget(&autoConfigCheck, row, 3);
     ++row;
 
     localGrid2->setColumnStretch(0, 0);
@@ -135,6 +140,8 @@ void MprPositionLabelSet::detachIkPanel()
         ikPanel.hide();
         currentRow = -1;
         currentPositionType = MprPosition::InvalidPositionType;
+        currentKinematicsKit.reset();
+        currentIkPosition.reset();
     }
 }
 
@@ -168,8 +175,14 @@ void MprPositionLabelSet::updateIkPanel(BodyItemKinematicsKit* kinematicsKit, Mp
     if(kinematicsKit->configurationHandler()){
         string configName = kinematicsKit->configurationLabel(configIndex);
         configLabel.setText(format("{0:X} ( {1} )", configIndex, configName).c_str());
+        currentKinematicsKit = kinematicsKit;
+        currentIkPosition = position;
+
+        autoConfigCheck.setChecked(0 == configIndex);
+        autoConfigCheck.setEnabled(true);
     } else {
         configLabel.setText(QString::number(configIndex));
+        autoConfigCheck.setEnabled(false);
     }
 }
 
@@ -293,5 +306,26 @@ void MprPositionLabelSet::updateJointLabels
             displacementLabel.setText(QString::number(lengthRatio * q, 'f', 3));
         }
         displacementLabel.setVisible(true);
+    }
+}
+
+void MprPositionLabelSet::onAutoConfigCheckToggled(bool on)
+{
+    if(currentIkPosition){
+        int configIndex = currentIkPosition->configuration();
+        if(currentKinematicsKit) {
+            if(on) {
+                configIndex = 0;
+            } else {
+                configIndex = currentKinematicsKit->currentConfigurationType();
+            }
+            currentIkPosition->setConfiguration(configIndex);
+            string configName = currentKinematicsKit->configurationLabel(configIndex);
+            configLabel.setText(format("{0:X} ( {1} )", configIndex, configName).c_str());
+        } else {
+            configLabel.setText(QString::number(configIndex));
+        }
+    } else {
+        configLabel.setText(QString("( Not found )"));
     }
 }

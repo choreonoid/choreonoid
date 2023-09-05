@@ -163,6 +163,9 @@ msgstr "ツール"
 msgid "Config"
 msgstr "形態"
 
+msgid "Auto"
+msgstr "自動"
+
 msgid "{0} cannot be loaded as a Manipulator program file"
 msgstr "{0}はマニピュレータプログラムファイルとして読み込むことができません"
 
