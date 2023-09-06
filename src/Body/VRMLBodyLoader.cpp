@@ -462,7 +462,7 @@ void VRMLBodyLoaderImpl::readTopNodes()
     
     if(humanoidNodeLoaded){
         setExtraJoints();
-    } else if(!nonHumanoidNodeGroup->children.empty()){
+    } else if(nonHumanoidNodeGroup && !nonHumanoidNodeGroup->children.empty()){
         SgNodePtr scene = sgConverter.convert(nonHumanoidNodeGroup);
         if(scene){
             Link* link = body->createLink();
