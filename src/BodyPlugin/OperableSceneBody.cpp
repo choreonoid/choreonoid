@@ -115,6 +115,7 @@ public:
     bool dragged;
 
     PositionDraggerPtr linkOriginMarker;
+    vector<bool> linkOriginMarkerVisibilities;
     SgHighlightPtr highlight;
     SgGroupPtr markerGroup;
     CrossMarkerPtr cmMarker;
@@ -311,7 +312,10 @@ void OperableSceneLink::Impl::showOrigin(bool on)
 {
     if(on != isOriginShown){
 
-        auto& originMarker = operableSceneBody()->impl->linkOriginMarker;
+        auto sceneBody = operableSceneBody();
+        auto& originMarker = sceneBody->impl->linkOriginMarker;
+        auto& visibilities = sceneBody->impl->linkOriginMarkerVisibilities;
+        int linkIndex = self->link()->index();
 
         if(on){
             if(!originMarker){
@@ -327,12 +331,18 @@ void OperableSceneLink::Impl::showOrigin(bool on)
                 self->addChildOnce(originMarker, update);
             }
             
+            if(linkIndex >= visibilities.size()){
+                visibilities.resize(linkIndex + 1);
+            }
+            visibilities[linkIndex] = true;
+            
         } else {
             if(self->isVisible()){
                 if(originMarker && originMarker->hasParents()){
                     self->removeChild(originMarker, update);
                 }
             }
+            visibilities[linkIndex] = false;
         }
         isOriginShown = on;
     }
@@ -573,8 +583,17 @@ void OperableSceneBody::Impl::updateSceneModel()
     dragMode = DRAG_NONE;
     isDragging = false;
     dragged = false;
-    
+
     self->SceneBody::updateSceneModel();
+
+    // Restore the visibilities of link origin markers
+    int n = std::min(self->numSceneLinks(), (int)linkOriginMarkerVisibilities.size());
+    for(int i=0; i < n; ++i){
+        if(linkOriginMarkerVisibilities[i]){
+            self->operableSceneLink(i)->showOrigin(true);
+        }
+    }
+    linkOriginMarkerVisibilities.resize(n);
 }
 
 
