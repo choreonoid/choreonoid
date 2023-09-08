@@ -225,6 +225,21 @@ public:
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
+    bool isBeingRestored() const;
+
+    /**
+       This function can be used to notify the system of update done by an item in the sub tree
+       during restoring the body item.
+    */
+    void requestUpdateNotificationOnSubTreeRestored();
+
+    /**
+       This function can be used to restore the non-root link states again when the link
+       structure is modified by an item in the sub tree such as LinkOverwriteItem
+       during restoring the body item.
+    */
+    void requestNonRootLinkStatesRestorationOnSubTreeRestored();
+
     // For projct packing
     void getDependentFiles(std::vector<std::string>& out_files);
     void relocateDependentFiles(

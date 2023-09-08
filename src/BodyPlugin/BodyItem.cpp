@@ -123,6 +123,8 @@ public:
     BodyPtr body;
 
     bool isBeingRestored; // flag to check if this item and its sub tree is being restored
+    bool isUpdateNotificationOnSubTreeRestoredRequested;
+    bool isNonRootLinkStateRestorationOnSubTreeRestoredRequested;
     bool isSharingShapes;
     bool isLocationLocked;
     bool isKinematicStateChangeNotifiedByParentBodyItem;
@@ -203,6 +205,7 @@ public:
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
     bool restore(const Archive& archive);
+    void restoreNonRootLinkStates(const Archive& archive);
     RenderableItemUtil* getOrCreateRenderableItemUtil();
 };
 
@@ -216,12 +219,12 @@ static void onSigOptionsParsed(boost::program_options::variables_map& variables)
     if(variables.count("body")){
     	vector<string> bodyFileNames = variables["body"].as<vector<string>>();
     	for(size_t i=0; i < bodyFileNames.size(); ++i){
-    		BodyItemPtr item(new BodyItem);
-                auto rootItem = RootItem::instance();
-    		if(item->load(bodyFileNames[i], rootItem, "CHOREONOID-BODY")){
-                    item->setChecked(true);
-                    rootItem->addChildItem(item);
-    		}
+            BodyItemPtr item(new BodyItem);
+            auto rootItem = RootItem::instance();
+            if(item->load(bodyFileNames[i], rootItem, "CHOREONOID-BODY")){
+                item->setChecked(true);
+                rootItem->addChildItem(item);
+            }
     	}
     }
 }
@@ -1847,6 +1850,90 @@ bool BodyItem::Impl::restore(const Archive& archive)
     read(archive, "initialRootAttitude", R);
     initialState.setRootLinkPosition(SE3(p, R));
 
+    restoreNonRootLinkStates(archive);
+
+    bool on;
+    if(archive.read("fix_root", on)){
+        body->setRootLinkFixed(on);
+    } else if(archive.read("staticModel", on)){ // Old format
+        // Incomplete restoration for the old format
+        if(on){
+            body->setRootLinkFixed(true);
+        } else if(body->isStaticModel()){
+            body->setRootLinkFixed(false);
+        }
+    }
+    if(archive.read("collisionDetection", on)){
+        setCollisionDetectionEnabled(on);
+    }
+    if(archive.read("selfCollisionDetection", on)){
+        setSelfCollisionDetectionEnabled(on);
+    }
+    if(archive.read("lock_location", on)){
+        setLocationLocked(on, false, false);
+    } else if(archive.read("location_editable", on) ||
+       archive.read("isEditable", on) ||
+       archive.read("isSceneBodyDraggable", on)){
+        setLocationLocked(!on, false, false);
+    }
+    if(archive.read("scene_sensitive", on)){
+        self->setSceneSensitive(on);
+    }
+    archive.read("visible_link_selection_mode", self->isVisibleLinkSelectionMode_);
+    archive.read("enable_attachment", isAttachmentEnabled);
+
+    double t;
+    if(archive.read("transparency", t)){
+        setTransparency(t);
+    }
+
+    read(archive, "zmp", zmp);
+
+    isUpdateNotificationOnSubTreeRestoredRequested = false;
+    isNonRootLinkStateRestorationOnSubTreeRestoredRequested = false;
+
+    archive.addProcessOnSubTreeRestored(
+        [this, &archive](){
+            isBeingRestored = false;
+
+            bool doNotifyUpdate = false;
+            bool doNotifyKinematicStateChange = false;
+
+            // The attachment is updated after the sub tree is restored
+            if(updateAttachment(true, false)){
+                doNotifyUpdate = true;
+            }
+            if(isNonRootLinkStateRestorationOnSubTreeRestoredRequested){
+                restoreNonRootLinkStates(archive);
+                doNotifyUpdate = true;
+                doNotifyKinematicStateChange = true;
+                isNonRootLinkStateRestorationOnSubTreeRestoredRequested = false;
+            }
+            if(isUpdateNotificationOnSubTreeRestoredRequested){
+                doNotifyUpdate = true;
+                isUpdateNotificationOnSubTreeRestoredRequested = false;
+            }
+
+            if(doNotifyUpdate || doNotifyKinematicStateChange){
+                // Update notifications should be done after all the post processes
+                archive.addProcessOnSubTreeRestored(
+                    [this, doNotifyUpdate, doNotifyKinematicStateChange](){
+                        if(doNotifyUpdate){
+                            self->notifyUpdate();
+                        }
+                        if(doNotifyKinematicStateChange){
+                            self->notifyKinematicStateChange(true);
+                        }
+                    });
+            }
+        });
+
+    return true;
+}
+
+
+void BodyItem::Impl::restoreNonRootLinkStates(const Archive& archive)
+{
     Listing* qs;
     bool useNewJointDisplacementFormat = false;
 
@@ -1913,59 +2000,28 @@ bool BodyItem::Impl::restore(const Archive& archive)
         setCurrentBaseLink(body->link(baseLinkName), false, false);
     }
 
-    bool on;
-    if(archive.read("fix_root", on)){
-        body->setRootLinkFixed(on);
-    } else if(archive.read("staticModel", on)){ // Old format
-        // Incomplete restoration for the old format
-        if(on){
-            body->setRootLinkFixed(true);
-        } else if(body->isStaticModel()){
-            body->setRootLinkFixed(false);
-        }
-    }
-
-    if(archive.read("collisionDetection", on)){
-        setCollisionDetectionEnabled(on);
-    }
-    if(archive.read("selfCollisionDetection", on)){
-        setSelfCollisionDetectionEnabled(on);
-    }
-
-    if(archive.read("lock_location", on)){
-        setLocationLocked(on, false, false);
-    } else if(archive.read("location_editable", on) ||
-       archive.read("isEditable", on) ||
-       archive.read("isSceneBodyDraggable", on)){
-        setLocationLocked(!on, false, false);
-    }
-    if(archive.read("scene_sensitive", on)){
-        self->setSceneSensitive(on);
-    }
-    archive.read("visible_link_selection_mode", self->isVisibleLinkSelectionMode_);
-       
     auto kinematicsNode = archive.findMapping("link_kinematics");
     if(kinematicsNode->isValid()){
         getOrCreateKinematicsKitManager()->restoreState(*kinematicsNode);
     }
+}
 
-    archive.read("enable_attachment", isAttachmentEnabled);
 
-    double t;
-    if(archive.read("transparency", t)){
-        setTransparency(t);
-    }
+bool BodyItem::isBeingRestored() const
+{
+    return impl->isBeingRestored;
+}
 
-    read(archive, "zmp", zmp);
 
-    // The attachment is updated after the sub tree is restored
-    archive.addProcessOnSubTreeRestored(
-        [this](){
-            isBeingRestored = false;
-            updateAttachment(true, true);
-        });
-        
-    return true;
+void BodyItem::requestUpdateNotificationOnSubTreeRestored()
+{
+    impl->isUpdateNotificationOnSubTreeRestoredRequested = true;
+}
+
+
+void BodyItem::requestNonRootLinkStatesRestorationOnSubTreeRestored()
+{
+    impl->isNonRootLinkStateRestorationOnSubTreeRestoredRequested = true;
 }
 
 
