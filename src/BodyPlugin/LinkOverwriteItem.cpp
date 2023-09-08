@@ -368,17 +368,25 @@ bool LinkOverwriteItem::Impl::updateOverwriting(BodyItem* bodyItem)
     }
 
     if(updated){
+        bool isKinematicStateChangeNotificationRequested = false;
+        
         if((additionalLink && newTargetLink) ||
            (targetElementSet & (JointType | JointId | JointName))){
             body->updateLinkTree();
+            if(bodyItem->isBeingRestored()){
+                bodyItem->requestNonRootLinkStatesRestorationOnSubTreeRestored();
+                isKinematicStateChangeNotificationRequested = true;
+            }
         }
 
         bodyItem->notifyModelUpdate(
             BodyItem::LinkSetUpdate | BodyItem::LinkSpecUpdate |
             BodyItem::DeviceSetUpdate | BodyItem::ShapeUpdate);
 
-        if(targetElementSet & (OffsetPosition | JointType | JointAxis)){
-            bodyItem->notifyKinematicStateChange(true);
+        if(!isKinematicStateChangeNotificationRequested){
+            if(targetElementSet & (OffsetPosition | JointType | JointAxis)){
+                bodyItem->notifyKinematicStateChange(true);
+            }
         }
 
         // todo: Execute the following code only when the target body item is changed
