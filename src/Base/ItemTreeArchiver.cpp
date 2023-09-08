@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ItemTreeArchiver.h"
 #include "ItemAddon.h"
 #include "RootItem.h"
@@ -11,6 +7,7 @@
 #include "Archive.h"
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
+#include <list>
 #include <set>
 #include <fmt/format.h>
 #include "gettext.h"
@@ -334,7 +331,7 @@ void ItemTreeArchiver::Impl::restoreItemIter
     string className;
     bool isRootItem = false;
     bool isOptional = false;
-    std::vector<std::function<void()>> processesOnSubTreeRestored;
+    std::list<std::function<void()>> processesOnSubTreeRestored;
     archive.setPointerToProcessesOnSubTreeRestored(&processesOnSubTreeRestored);
 
     try {
@@ -378,8 +375,12 @@ void ItemTreeArchiver::Impl::restoreItemIter
                 restoreItemIter(*childArchive, item, io_topLevelItems, level);
             }
         }
-        for(auto& func : processesOnSubTreeRestored){
+
+        archive.setPointerToProcessesOnSubTreeRestored(&processesOnSubTreeRestored);
+        while(!processesOnSubTreeRestored.empty()){
+            auto& func = processesOnSubTreeRestored.front();
             func();
+            processesOnSubTreeRestored.pop_front();
         }
     }
 }

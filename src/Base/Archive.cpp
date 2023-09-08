@@ -45,7 +45,7 @@ public:
         
     Item* currentParentItem;
 
-    vector<function<void()>>* pointerToProcessesOnSubTreeRestored;
+    list<function<void()>>* pointerToProcessesOnSubTreeRestored;
     vector<FunctionInfo> postProcesses;
     vector<FunctionInfo> nextPostProcesses;
     bool isDoingPostProcesses;
@@ -119,9 +119,10 @@ void Archive::addProcessOnSubTreeRestored(const std::function<void()>& func) con
 }
 
 
-void Archive::setPointerToProcessesOnSubTreeRestored(std::vector<std::function<void()>>* pfunc)
+void Archive::setPointerToProcessesOnSubTreeRestored(void* pfunc)
 {
-    shared->pointerToProcessesOnSubTreeRestored = pfunc;
+    shared->pointerToProcessesOnSubTreeRestored =
+        reinterpret_cast<std::list<std::function<void()>>*>(pfunc);
 }
 
 
