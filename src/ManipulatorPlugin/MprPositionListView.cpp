@@ -336,16 +336,19 @@ bool PositionListModel::checkIfJointSpacePosition(MprPosition* position) const
 
 QVariant PositionListModel::getPositionData(MprPosition* position, int posColumnIndex) const
 {
-    if(position->isComposite()){
-        if(posColumnIndex < static_cast<int>(bodyPartIndices.size())){
-            int positionIndex = bodyPartIndices[posColumnIndex];
-            auto pi = position->compositePosition()->position(positionIndex);
-            if(pi){
-                return getSinglePositionData(pi);
+    if(posColumnIndex < static_cast<int>(bodyPartIndices.size())){
+        int positionIndex = bodyPartIndices[posColumnIndex];
+        if(positionIndex >= 0){
+            if(!position->isComposite()){
+                if(positionIndex == mainBodyPartIndex){
+                    return getSinglePositionData(position);
+                }
+            } else {
+                if(auto pi = position->compositePosition()->position(positionIndex)){
+                    return getSinglePositionData(pi);
+                }
             }
         }
-    } else {
-        return getSinglePositionData(position);
     }
     return QVariant();
 }
