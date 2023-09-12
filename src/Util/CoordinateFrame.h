@@ -34,7 +34,8 @@ public:
     bool resetId(const GeneralId& id);
 
     enum Mode { Local, Global };
-    void setMode(int mode) { mode_ = mode; }
+    //! \return true if the specified mode is successfully set
+    bool setMode(int mode);
     int mode() const { return mode_; }
     bool isLocal() const { return mode_ == Local; }
     bool isGlobal() const { return mode_ == Global; }

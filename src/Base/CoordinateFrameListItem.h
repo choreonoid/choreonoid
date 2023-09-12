@@ -96,8 +96,9 @@ protected:
 
 private:
     friend class CoordinateFrameItem;
-    // Called from CoordinateFrameItem::onPositionChanged
+    // Called from CoordinateFrameItem::onAddedToParent
     bool onFrameItemAdded(CoordinateFrameItem* frameItem);
+    // Called from CoordinateFrameItem::onAddedToParent and onRemvoedFromParent
     void onFrameItemRemoved(CoordinateFrameItem* frameItem);
     
 private:

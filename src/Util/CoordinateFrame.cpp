@@ -56,6 +56,24 @@ bool CoordinateFrame::resetId(const GeneralId& id)
 }
 
 
+bool CoordinateFrame::setMode(int mode)
+{
+    if(mode == mode_){
+        return true;
+    } else {
+        if(mode == Global){
+            if(auto frameList = ownerFrameList_.lock()){
+                if(frameList->isForOffsetFrames()){
+                    return false; // Offset frame cannot be global.
+                }
+            }
+        }
+        mode_ = mode;
+    }
+    return true;
+}
+
+
 void CoordinateFrame::setNote(const std::string& note, bool doNotify)
 {
     if(note != note_){

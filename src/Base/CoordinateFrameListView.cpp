@@ -355,17 +355,20 @@ bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, in
             }
             break;
         }
+
         case NoteColumn:
             frame->setNote(value.toString().toStdString());
             updateFlags = CoordinateFrame::NoteUpdate;
             break;
 
-        case GlobalCheckColumn: {
-            bool isGlobal = value.toBool();
-            int mode = isGlobal ? CoordinateFrame::Global : CoordinateFrame::Local;
-            frameListItem->switchFrameMode(frame, mode, true);
+        case GlobalCheckColumn:
+            if(frameListItem->isForBaseFrames()){
+                bool isGlobal = value.toBool();
+                int mode = isGlobal ? CoordinateFrame::Global : CoordinateFrame::Local;
+                frameListItem->switchFrameMode(frame, mode, true);
+            }
             break;
-        }
+
         case VisibleCheckColumn:
             frameListItem->setFrameMarkerVisible(frame, value.toBool());
             Q_EMIT dataChanged(index, index, {role});

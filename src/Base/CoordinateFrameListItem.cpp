@@ -576,18 +576,19 @@ bool CoordinateFrameListItem::switchFrameMode(CoordinateFrame* frame, int mode, 
     if(!parentLocation){
         return false;
     }
+    if(!frame->setMode(mode)){
+        return false;
+    }
+
     auto T_base = parentLocation->getGlobalLocation();
     if(mode == CoordinateFrame::Global){
         frame->setPosition(T_base * frame->T());
     } else { // Local
         frame->setPosition(T_base.inverse(Eigen::Isometry) * frame->T());
     }
-    frame->setMode(mode);
-
     if(doNotify){
         frame->notifyUpdate(CoordinateFrame::ModeUpdate | CoordinateFrame::PositionUpdate);
     }
-    
     return true;
 }
 

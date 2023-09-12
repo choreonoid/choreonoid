@@ -50,13 +50,14 @@ CoordinateFrameList::CoordinateFrameList(const CoordinateFrameList& org)
 {
     impl = new Impl(this);
 
+    hasFirstElementAsDefaultFrame_ = org.hasFirstElementAsDefaultFrame_;
+    impl->name = org.impl->name;
+    frameType_ = org.frameType_;
+
     impl->frames.reserve(org.impl->frames.size());
     for(auto& frame : org.impl->frames){
         append(new CoordinateFrame(*frame));
     }
-    hasFirstElementAsDefaultFrame_ = org.hasFirstElementAsDefaultFrame_;
-    impl->name = org.impl->name;
-    frameType_ = org.frameType_;
 }
 
 
@@ -76,13 +77,15 @@ Referenced* CoordinateFrameList::doClone(CloneMap* cloneMap) const
 CoordinateFrameList& CoordinateFrameList::operator=(const CoordinateFrameList& rhs)
 {
     impl->clear(true);
+
+    hasFirstElementAsDefaultFrame_ = rhs.hasFirstElementAsDefaultFrame_;
+    impl->name = rhs.impl->name;
+    frameType_ = rhs.frameType_;
+
     const int n = rhs.numFrames();
     for(int i=0; i < n; ++i){
         append(new CoordinateFrame(*rhs.frameAt(i)));
     }
-    hasFirstElementAsDefaultFrame_ = rhs.hasFirstElementAsDefaultFrame_;
-    impl->name = rhs.impl->name;
-    frameType_ = rhs.frameType_;
     
     return *this;
 }
@@ -170,6 +173,9 @@ CoordinateFrame* CoordinateFrameList::findFrame(const GeneralId& id) const
 bool CoordinateFrameList::insert(int index, CoordinateFrame* frame)
 {
     if(frame->ownerFrameList_ || !frame->id().isValid() || findFrame(frame->id())){
+        return false;
+    }
+    if(frame->isGlobal() && isForOffsetFrames()){
         return false;
     }
 
