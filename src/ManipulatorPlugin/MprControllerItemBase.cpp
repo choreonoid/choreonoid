@@ -1104,15 +1104,20 @@ bool MprControllerItemBase::Impl::interpretAssignStatement(MprAssignStatement* s
     while(pos != end){
         if(!isNextTermOperator){
             auto pos0 = pos;
-            if(auto term = getTermValue(pos, end)){
-                termValues.push_back(*term);
-                termStrings.push_back(string(pos0, pos));
+            auto termValue = getTermValue(pos, end);
+            string termString(pos0, pos);
+            if(termValue){
+                termValues.push_back(*termValue);
+                termStrings.push_back(termString);
                 isNextTermOperator = true;
             } else {
-                if(regex_search(pos, end, match, termPattern)){
+                if(termString.empty()){
+                    termString = string(pos0, end);
+                }
+                if(regex_search(termString, match, termPattern)){
                     invalidTerm = match.str(1);
                 } else {
-                    invalidTerm = string(match[0].first, match[0].second);
+                    invalidTerm = termString;
                 }
                 isValidExpression = false;
             }
@@ -1133,11 +1138,13 @@ bool MprControllerItemBase::Impl::interpretAssignStatement(MprAssignStatement* s
         }
     }
 
-    if(termValues.empty()){
-        isValidExpression = false;
-    } else if(!isNextTermOperator){
-        io->os() << format(_("Expression ends with operator {0}."), operators.back()) << endl;
-        isValidExpression = false;
+    if(isValidExpression){
+        if(termValues.empty()){
+            isValidExpression = false;
+        } else if(!isNextTermOperator){
+            io->os() << format(_("Expression ends with operator {0}."), operators.back()) << endl;
+            isValidExpression = false;
+        }
     }
     if(!isValidExpression){
         return false;
