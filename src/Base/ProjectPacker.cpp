@@ -166,7 +166,7 @@ bool ProjectPacker::Impl::packProjectToZipFile(const std::string& filename, cons
     if(packed){
         packed = createProjectZipFile(filename);
         stdx::error_code ec;        
-        fs::remove_all(directory, ec);
+        fs::remove_all(fromUTF8(directory), ec);
     }
     return packed;
 }
@@ -507,7 +507,7 @@ bool ProjectPacker::Impl::createProjectZipFile(const string& zipFilename)
     }
         
     int errorp;
-    zip_t* zip = zip_open(zipFilePath.make_preferred().string().c_str(), ZIP_CREATE, &errorp);
+    zip_t* zip = zip_open(toUTF8(zipFilePath.make_preferred().string()).c_str(), ZIP_CREATE, &errorp);
     if(!zip){
         zip_error_t error;
         zip_error_init_with_code(&error, errorp);

@@ -125,7 +125,7 @@ void RenderableItemUtil::Impl::getSceneFiles(SgObject* object, std::vector<std::
     
     if(isAbsolutePathOnly){
         if(uniformPath.empty()){
-            uniformPath = getNativeUniformPath(absolutePath);
+            uniformPath = getNativeUniformPath(fromUTF8(absolutePath));
         }
         if(uniformPath != itemFilePath){
             mout->putWarningln(
