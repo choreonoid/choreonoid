@@ -94,18 +94,30 @@ void DigitalIoConnection::setNames(int which, const std::string& bodyName, const
 
 bool DigitalIoConnection::establishConnection()
 {
-    if(!hasDeviceInstances()){
-        connection.disconnect();
-        return false;
+    bool connected = false;
+    
+    if(hasDeviceInstances()){
+        auto srcDevice = outDevice();
+        auto srcIndex = outSignalIndex();
+        if(srcIndex < srcDevice->numSignalLines()){
+            DigitalIoDevicePtr destDevice = inDevice();
+            auto destIndex = inSignalIndex();
+            if(destIndex < destDevice->numSignalLines()){
+                connection.reset(
+                    srcDevice->sigOutput(srcIndex).connect(
+                        [destDevice, destIndex](bool on){
+                            destDevice->setIn(destIndex, on, true);
+                        }));
+                connected = true;
+            }
+        }
     }
 
-    DigitalIoDevicePtr destDevice = inDevice();
-    auto destIndex = inSignalIndex();
-    connection.reset(
-        outDevice()->sigOutput(outSignalIndex()).connect(
-            [destDevice, destIndex](bool on){
-                destDevice->setIn(destIndex, on, true); }));
-    return true;
+    if(!connected){
+        connection.disconnect();
+    }
+
+    return connected;
 }
 
 
