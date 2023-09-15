@@ -268,22 +268,12 @@ QVariant ConnectionMapModel::data(const QModelIndex& index, int role) const
 
 QVariant ConnectionMapModel::getDeviceLabel(DigitalIoConnection* connection, DigitalIoConnection::IoType which) const
 {
-    auto device = connection->device(which);
-    if(device){
-        auto body = device->body();
-        if(device->name().empty()){
-            return body->name().c_str();
-        } else {
-            return format("{0} - {1}", body->name(), device->name()).c_str();
-        }
+    auto& bodyName = connection->bodyName(which);
+    auto& deviceName = connection->deviceName(which);
+    if(deviceName.empty()){
+        return bodyName.c_str();
     } else {
-        auto& bodyName = connection->bodyName(which);
-        auto& deviceName = connection->deviceName(which);
-        if(deviceName.empty()){
-            return bodyName.c_str();
-        } else {
-            return format("{0} - {1}", bodyName, deviceName).c_str();
-        }
+        return format("{0} - {1}", bodyName, deviceName).c_str();
     }
 }
 
@@ -461,16 +451,9 @@ SignalDeviceComboBox::SignalDeviceComboBox
 {
     setFrame(false);
 
-    string currentBodyName;
-    string currentDeviceName;
     auto currentDevice = connection->device(which);
-    if(currentDevice){
-        currentBodyName = currentDevice->body()->name();
-        currentDeviceName = currentDevice->name();
-    } else {
-        currentBodyName = connection->bodyName(which);
-        currentDeviceName = connection->deviceName(which);
-    }
+    auto& currentBodyName = connection->bodyName(which);
+    auto& currentDeviceName = connection->deviceName(which);
     bool isCurrentDeviceAvailable = false;
     
     if(view->targetItem){
@@ -491,7 +474,7 @@ SignalDeviceComboBox::SignalDeviceComboBox
             });
     }
 
-    if(!isCurrentDeviceAvailable && !currentBodyName.empty()){
+    if(!isCurrentDeviceAvailable){
         int index = count();
         addItem(getDeviceLabel(currentBodyName, currentDeviceName));
         setCurrentIndex(index);
