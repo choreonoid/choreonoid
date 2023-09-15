@@ -30,6 +30,10 @@ public:
 
     enum IoType { In = 0, Out = 1 };
 
+    void setDevice(int which, DigitalIoDevice* device);
+    void setNames(int which, const std::string& bodyName, const std::string& deviceName);
+    void setSignalIndex(int which, int index){ signalIndex_[which] = index; }
+
     DigitalIoDevice* device(int which) const { return device_[which]; }
     int signalIndex(int which) const { return signalIndex_[which]; }
     const std::string& bodyName(int which) const;
@@ -38,10 +42,6 @@ public:
     bool hasDeviceInstances() const {
         return (device_[In] != nullptr) && (device_[Out] != nullptr);
     }
-
-    void setDevice(int which, DigitalIoDevice* device);
-    void setNames(int which, const std::string& bodyName, const std::string& deviceName);
-    void setSignalIndex(int which, int index){ signalIndex_[which] = index; }
 
     DigitalIoDevice* outDevice(){ return device(Out); }
     int outSignalIndex() const { return signalIndex(Out); }
