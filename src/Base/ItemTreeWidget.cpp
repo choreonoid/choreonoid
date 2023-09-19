@@ -251,13 +251,13 @@ ItemTreeWidget::ItwItem::~ItwItem()
 void ItemTreeWidget::ItwItem::setData(int column, int role, const QVariant& value)
 {
     if(column == 0){
-        QTreeWidgetItem::setData(column, role, value);
-
-        if(role == Qt::EditRole){
-            if(value.type() == QVariant::String){
-                if(!value.toString().isEmpty()){
-                    item->setName(value.toString().toStdString());
-                }
+        if(role != Qt::EditRole){
+            QTreeWidgetItem::setData(column, role, value);
+        } else {
+            // Prevent setting an empty name
+            if(value.type() == QVariant::String && !value.toString().isEmpty()){
+                QTreeWidgetItem::setData(column, role, value);
+                item->setName(value.toString().toStdString());
             }
         }
     } else if(column >= 1 && role == Qt::CheckStateRole && widgetImpl->isCheckColumnShown){
