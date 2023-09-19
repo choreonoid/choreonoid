@@ -311,7 +311,7 @@ void MprTagTraceStatementPanel::Impl::onTagGroupComboActivated(int comboIndex)
     auto name = tagGroupCombo.currentText().toStdString();
     if(name != statement->tagGroupName()){
         // Clear the current tag group to force update
-        statement->setTagGroup(nullptr, false, false);
+        statement->setTagGroup(nullptr, false, false, false);
         statement->setTagGroupName(name);
         self->currentProgramItem()->resolveStatementReferences(statement);
         self->onTouchup();

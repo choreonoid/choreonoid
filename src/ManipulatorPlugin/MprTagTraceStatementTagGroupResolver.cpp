@@ -56,8 +56,7 @@ public:
 void StatementInfo::invalidateTagGroup()
 {
     tagGroupConnections.disconnect();
-    statement->setTagGroup(nullptr, false, true);
-    statement->notifyUpdate();
+    statement->setTagGroup(nullptr, false, true, true);
 }
 
 
@@ -139,8 +138,7 @@ void Resolver::setNewTagGroup(StatementInfo* info, PositionTagGroupItem* tagGrou
 {
     auto statement = info->statement;
 
-    statement->setTagGroup(tagGroupItem->tagGroup(), false, true);
-    statement->notifyUpdate();
+    statement->setTagGroup(tagGroupItem->tagGroup(), false, true, true);
 
     info->tagGroupConnections.add(
         tagGroupItem->sigNameChanged().connect(

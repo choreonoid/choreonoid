@@ -67,7 +67,7 @@ std::string MprTagTraceStatement::label(int index) const
 
 
 void MprTagTraceStatement::setTagGroup
-(PositionTagGroup* tags, bool doUpdateTagGroupName, bool doUpdateTagTraceProgram)
+(PositionTagGroup* tags, bool doUpdateTagGroupName, bool doUpdateTagTraceProgram, bool doNotifyUpdate)
 {
     if(tags != tagGroup_){
         tagGroupConnections.disconnect();
@@ -84,6 +84,9 @@ void MprTagTraceStatement::setTagGroup
         }
         if(doUpdateTagTraceProgram){
             updateTagTraceProgram();
+        }
+        if(doNotifyUpdate){
+            notifyUpdate();
         }
     }
 }
@@ -240,7 +243,7 @@ bool MprTagTraceStatement::read(MprProgram* program, const Mapping* archive)
     offsetFrameId_.read(archive, "offset_frame");
 
     if(tagGroup_ && (tagGroup_->name() != tagGroupName_)){
-        setTagGroup(nullptr, false, true);
+        setTagGroup(nullptr, false, true, false);
     }
 
     targetBodyIndex_ = -1;
