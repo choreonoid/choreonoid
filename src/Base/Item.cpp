@@ -1223,20 +1223,15 @@ SignalProxy<void(bool on)> Item::sigCheckToggled(int checkId)
 }
 
 
-Item* Item::find(const std::string& path, const std::function<bool(Item* item)>& pred)
+Item* Item::find(const std::function<bool(Item* item)>& pred)
 {
-    return RootItem::instance()->findItem(path, pred, true);
+    return RootItem::instance()->findItem(pred, true);
 }
 
 
-Item* Item::findItem
-(const std::string& path, std::function<bool(Item* item)> pred, bool isRecursive) const
+Item* Item::findItem(std::function<bool(Item* item)> pred, bool isRecursive) const
 {
-    ItemPath ipath(path);
-    if(ipath.begin() == ipath.end()){
-        return impl->findItem(pred, isRecursive);
-    }
-    return impl->findItem(ipath.begin(), ipath.end(), pred, isRecursive);
+    return impl->findItem(pred, isRecursive);
 }
 
 
@@ -1256,6 +1251,19 @@ Item* Item::Impl::findItem(const std::function<bool(Item* item)>& pred, bool isR
         }
     }
     return nullptr;
+}
+
+
+Item* Item::find(const std::string& path, const std::function<bool(Item* item)>& pred)
+{
+    return RootItem::instance()->findItem(path, pred, true);
+}
+
+
+Item* Item::findItem(const std::string& path, std::function<bool(Item* item)> pred, bool isRecursive) const
+{
+    ItemPath ipath(path);
+    return impl->findItem(ipath.begin(), ipath.end(), pred, isRecursive);
 }
 
 

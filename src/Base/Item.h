@@ -274,48 +274,66 @@ public:
     }
 
     /**
+       This is equivalent to RootItem::instance<ItemType>()->findItem();
+    */
+    template<class ItemType>
+    static ItemType* find() {
+        return static_cast<ItemType*>(find(getItemPredicate<ItemType>()));
+    }
+    /**
        This is equivalent to RootItem::instance()->findItem(path);
     */
     static Item* find(const std::string& path) {
         return find(path, nullptr);
     }
+    /**
+       This is equivalent to RootItem::instance<ItemType>()->findItem(path);
+    */
     template<class ItemType>
-    ItemType* find(const std::string& path = "") {
+    static ItemType* find(const std::string& path) {
         return static_cast<ItemType*>(find(path, getItemPredicate<ItemType>()));
     }
     
+    template<class ItemType>
+    ItemType* findItem(std::function<bool(ItemType* item)> pred = nullptr) const {
+        return static_cast<ItemType*>(
+            findItem(getItemPredicate<ItemType>(pred), true));
+    }
+
     /**
        Find an item that has the corresponding path to it in the sub tree
     */
     Item* findItem(const std::string& path) const {
         return findItem(path, nullptr, true);
     }
+    
+    /**
+       Find an item that has the corresponding path to it in the sub tree
+    */
     template<class ItemType>
     ItemType* findItem(const std::string& path) const {
-        return static_cast<ItemType*>(
-            findItem(path, getItemPredicate<ItemType>(), true));
-    }
-    template<class ItemType>
-    ItemType* findItem(std::function<bool(ItemType* item)> pred = nullptr) const {
-        return static_cast<ItemType*>(
-            findItem("", getItemPredicate<ItemType>(pred), true));
+        return static_cast<ItemType*>(findItem(path, getItemPredicate<ItemType>(), true));
     }
     
+    template<class ItemType>
+    ItemType* findChildItem(std::function<bool(ItemType* item)> pred = nullptr) const {
+        return static_cast<ItemType*>(findItem(getItemPredicate<ItemType>(pred), false));
+    }
+
     /**
        Find an item that has the corresponding path from a child item to it
     */
     Item* findChildItem(const std::string& path, std::function<bool(Item* item)> pred = nullptr) const {
         return findItem(path, pred, false);
     }
+    
+    /**
+       Find an item that has the corresponding path from a child item to it
+    */
     template<class ItemType>
     ItemType* findChildItem(const std::string& path, std::function<bool(ItemType* item)> pred = nullptr) const {
         return static_cast<ItemType*>(
             findItem(path, getItemPredicate<ItemType>(pred), false));
-    }
-    template<class ItemType>
-    ItemType* findChildItem(std::function<bool(ItemType* item)> pred = nullptr) const {
-        return static_cast<ItemType*>(
-            findItem("", getItemPredicate<ItemType>(pred), false));
     }
 
     /**
@@ -597,9 +615,10 @@ private:
     std::string name_;
     bool isSelected_;
 
+    static Item* find(const std::function<bool(Item* item)>& pred);
     static Item* find(const std::string& path, const std::function<bool(Item* item)>& pred);
-    Item* findItem(
-        const std::string& path, std::function<bool(Item* item)> pred, bool isRecursive) const;
+    Item* findItem(std::function<bool(Item* item)> pred, bool isRecursive) const;
+    Item* findItem(const std::string& path, std::function<bool(Item* item)> pred, bool isRecursive) const;
     int countDescendantItems_(std::function<bool(Item* item)> pred);
     ItemList<Item> getDescendantItems(std::function<bool(Item* item)> pred, bool isRecursive) const;
     void validateClassId() const;

@@ -436,7 +436,6 @@ Item* Archive::findItem(const ValueNode* idNode) const
                         item = item->findChildItem(
                             idPath[i].toString(), [](Item* item){ return item->isSubItem(); });
                         if(!item){
-                            item = nullptr;
                             break;
                         }
                     }
