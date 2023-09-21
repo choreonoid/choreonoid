@@ -53,6 +53,7 @@ void exportBodyItem(py::module m)
         .def("doLegIkToMoveCm", &BodyItem::doLegIkToMoveCm)
         .def("setStance", &BodyItem::setStance)
 
+        .def("notifyModelUpdate", &BodyItem::notifyModelUpdate)
         // deprecated
         .def("enableCollisionDetection", &BodyItem::setCollisionDetectionEnabled)
         .def("enableSelfCollisionDetection", &BodyItem::setSelfCollisionDetectionEnabled)
@@ -75,6 +76,14 @@ void exportBodyItem(py::module m)
         .value("RIGHT_HOME_COP", BodyItem::PositionType::RIGHT_HOME_COP)
         .value("LEFT_HOME_COP", BodyItem::PositionType::LEFT_HOME_COP)
         .value("ZERO_MOMENT_POINT", BodyItem::PositionType::ZERO_MOMENT_POINT)
+        .export_values();
+
+    py::enum_<BodyItem::ModelUpdateFlag>(bodyItem, "ModelUpdateFlag")
+        .value("LinkSetUpdate",    BodyItem::LinkSetUpdate)
+        .value("LinkSpecUpdate",   BodyItem::LinkSpecUpdate)
+        .value("DeviceSetUpdate",  BodyItem::DeviceSetUpdate)
+        .value("DeviceSpecUpdate", BodyItem::DeviceSpecUpdate)
+        .value("ShapeUpdate",      BodyItem::ShapeUpdate)
         .export_values();
 
     PyItemList<BodyItem>(m, "BodyItemList");
