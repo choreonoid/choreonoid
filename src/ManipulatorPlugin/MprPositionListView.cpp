@@ -50,7 +50,7 @@ public:
     int mainBodyPartIndex;
     QStringList positionHeaderStrings;
     MprPositionListPtr positionList;
-    ScopedConnectionSet positionListConnections;
+    ScopedConnectionSet connections;
     QFont monoFont;
     DisplayValueFormat* valueFormat;
     
@@ -150,6 +150,16 @@ void PositionListModel::setProgramItem(MprProgramItemBase* programItem)
 {
     beginResetModel();
 
+    /*
+      In the Visual C++ debug mode, the following function call may cause a crash when
+      setProgramItem is called at the time the position list view is hidden. The crash
+      will always occur when the view is visible and the application is finished. The
+      crash never occur in the Visual C++ release mode or other environments. Also, if
+      the connection to bodyItemSet->sigBodySetChanged() is not held in connections,
+      the crash does not occur. The cause of the crash is currently unknown.
+    */
+    connections.disconnect();
+    
     this->programItem = programItem;
     columnCount_ = NumMinimumColumns;
     bodyPartIndices.clear();
@@ -157,7 +167,7 @@ void PositionListModel::setProgramItem(MprProgramItemBase* programItem)
     positionHeaderStrings.clear();
 
     if(!programItem){
-        this->positionList = nullptr;
+        this->positionList.reset();
 
     } else {
         if(auto bodyItemSet = programItem->targetBodyItemSet()){
@@ -169,6 +179,18 @@ void PositionListModel::setProgramItem(MprProgramItemBase* programItem)
                 }
                 columnCount_ += positionHeaderStrings.size() - 1;
             }
+            /*
+              Adding the following connection to connections causes the crash
+              described above. If the connection is held in a single connection
+              holder such as ScopedConnection, the result is the same.
+            */
+            connections.add(
+                bodyItemSet->sigBodySetChanged().connect(
+                    [this](){
+                        if(this->programItem){
+                            setProgramItem(this->programItem);
+                        }
+                    }));
         }
         this->positionList = programItem->program()->positionList();
     }
@@ -177,17 +199,16 @@ void PositionListModel::setProgramItem(MprProgramItemBase* programItem)
         positionHeaderStrings.append(_("Position"));
     }
 
-    positionListConnections.disconnect();
     if(positionList){
-        positionListConnections.add(
+        connections.add(
             positionList->sigPositionAdded().connect(
-                [&](int index){ onPositionAdded(index); }));
-        positionListConnections.add(
+                [this](int index){ onPositionAdded(index); }));
+        connections.add(
             positionList->sigPositionRemoved().connect(
-                [&](int index, MprPosition*){ onPositionRemoved(index); }));
-        positionListConnections.add(
+                [this](int index, MprPosition*){ onPositionRemoved(index); }));
+        connections.add(
             positionList->sigPositionUpdated().connect(
-                [&](int index, int flags){ onPositionUpdated(index, flags); }));
+                [this](int index, int flags){ onPositionUpdated(index, flags); }));
     }
 
     endResetModel();
@@ -719,10 +740,10 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
     hbox->addWidget(&targetLabel, 0, Qt::AlignVCenter);
     hbox->addStretch();
     addButton.setText(_("Add"));
-    addButton.sigClicked().connect([&](){ addPositionIntoCurrentIndex(false); });
+    addButton.sigClicked().connect([this](){ addPositionIntoCurrentIndex(false); });
     hbox->addWidget(&addButton);
     touchupButton.setText(_("Touch-up"));
-    touchupButton.sigClicked().connect([&](){ touchupCurrentPosition(); });
+    touchupButton.sigClicked().connect([this](){ touchupCurrentPosition(); });
     hbox->addWidget(&touchupButton);
     vbox->addLayout(hbox);
 
@@ -772,7 +793,7 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
     self->setLayout(vbox);
 
     targetItemPicker.sigTargetItemChanged().connect(
-        [&](MprProgramItemBase* item){ setProgramItem(item); });
+        [this](MprProgramItemBase* item){ setProgramItem(item); });
 
     bodySyncMode = defaultBodySyncMode;
 }
@@ -789,8 +810,7 @@ void MprPositionListView::onAttachedMenuRequest(MenuManager& menuManager)
     auto twoStageCheck = menuManager.addCheckItem(_("Two-stage sync"));
     twoStageCheck->setChecked(impl->bodySyncMode == TwoStageBodySync);
     twoStageCheck->sigToggled().connect(
-        [&](bool on){ impl->setBodySyncMode(on ? TwoStageBodySync : DirectBodySync); });
-
+        [this](bool on){ impl->setBodySyncMode(on ? TwoStageBodySync : DirectBodySync); });
 }
 
 
@@ -828,9 +848,23 @@ void MprPositionListView::Impl::addPositionIntoCurrentIndex(bool doInsert)
 void MprPositionListView::Impl::addPosition(int row, bool doInsert)
 {
     if(positionList){
-        if(auto kinematicsKit = programItem->targetMainKinematicsKit()){
-            MprPositionPtr position = new MprIkPosition;
-            if(position->fetch(kinematicsKit, MessageOut::interactive())){
+        if(auto bodyItemSet = programItem->targetBodyItemSet()){
+            MprPositionPtr position;
+            if(!bodyItemSet->hasMultiBodyParts()){
+                position = new MprIkPosition;
+            } else {
+                auto composite = new MprCompositePosition;
+                for(auto index : bodyItemSet->validBodyPartIndices()){
+                    auto kinematicsKit = bodyItemSet->bodyPart(index);
+                    if(kinematicsKit && kinematicsKit->isManipulator()){
+                        composite->setPosition(index, new MprIkPosition);
+                    } else {
+                        composite->setPosition(index, new MprFkPosition);
+                    }
+                }
+                position = composite;
+            }
+            if(position->fetch(bodyItemSet, MessageOut::interactive())){
                 position->setId(positionList->createNextId());
                 positionListModel->addPosition(row, position, doInsert);
             }
