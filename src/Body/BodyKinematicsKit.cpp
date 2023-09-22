@@ -474,7 +474,7 @@ void BodyKinematicsKit::resetReferenceRpy()
 bool BodyKinematicsKit::isManipulator() const
 {
     if(impl->body && impl->endLink &&
-       impl->endLink == impl->body->findUniqueEndLink() &&
+       impl->endLink == impl->body->guessMainEndLink() &&
        impl->configurationHandler){
         return true;
     }

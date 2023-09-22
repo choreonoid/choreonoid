@@ -14,6 +14,8 @@ namespace {
 
 const bool PUT_DEBUG_MESSAGE = true;
 
+constexpr int MainEndLinkGuessBufSize = 10;
+
 #ifndef uint
 typedef unsigned int uint;
 #endif
@@ -70,6 +72,7 @@ public:
         
     Impl(Body* self);
     void initialize(Body* self, Link* rootLink);
+    void guessMainEndLinkSub(Link* link, Link* rootLink, int dof, Link** linkOfDof);
     void removeDeviceFromDeviceNameMap(Device* device);
     bool installCustomizer(BodyCustomizerInterface* customizerInterface);
 };
@@ -454,6 +457,43 @@ Link* Body::lastSerialLink() const
         link = link->child();
     }
     return link;
+}
+
+
+//  Find a maximum DOF link whose DOF is different from any other links.
+Link* Body::guessMainEndLink() const
+{
+    Link* linkOfDof[MainEndLinkGuessBufSize];
+    for(int i=0; i < MainEndLinkGuessBufSize; ++i){
+        linkOfDof[i] = nullptr;
+    }
+    
+    impl->guessMainEndLinkSub(rootLink_, rootLink_, 0, linkOfDof);
+
+    for(int i = MainEndLinkGuessBufSize - 1; i > 0; --i){
+        auto link = linkOfDof[i];
+        if(link && link != rootLink_){
+            return link;
+        }
+    }
+    
+    return nullptr;
+}
+
+
+void Body::Impl::guessMainEndLinkSub(Link* link, Link* rootLink, int dof, Link** linkOfDof)
+{
+    if(!linkOfDof[dof]){
+        linkOfDof[dof] = link;
+    } else {
+        linkOfDof[dof] = rootLink;
+    }
+    ++dof;
+    if(dof < MainEndLinkGuessBufSize){
+        for(Link* child = link->child(); child; child = child->sibling()){
+            guessMainEndLinkSub(child, rootLink, dof, linkOfDof);
+        }
+    }
 }
 
 
