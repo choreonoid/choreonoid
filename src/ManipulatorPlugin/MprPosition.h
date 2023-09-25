@@ -235,7 +235,6 @@ public:
     }
 
     void setPosition(int index, MprPosition* position);
-    void clearPosition(int index);
     void clearPositions();
     bool empty() const { return numValidPositions_ == 0; }
     int maxPositionIndex() const { return positions_.size() - 1; }
