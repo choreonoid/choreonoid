@@ -26,6 +26,7 @@ void exportPyDeviceTypes(py::module& m)
         .def("__repr__",
              [](const Device &self) {
                  return string("<cnoid.Body.") + self.typeName() + " named '" + self.name() + "'>"; })
+        .def_property_readonly("typeName", &Device::typeName)
         .def_property("index", &Device::index, &Device::setIndex)
         .def("setIndex", &Device::setIndex)
         .def_property("id", &Device::id, &Device::setId)
