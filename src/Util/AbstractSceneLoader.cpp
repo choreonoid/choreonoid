@@ -61,6 +61,9 @@ void AbstractSceneLoader::setUpperAxisHint(UpperAxisType hint)
 */
 SgNode* AbstractSceneLoader::insertTransformNodesToAdjustLengthUnitAndUpperAxis(SgNode* node)
 {
+    if(!node){
+        return nullptr;
+    }
     if(lengthUnitHint_ != Meter){
         auto scale = new SgScaleTransform;
         if(lengthUnitHint_ == Millimeter){
@@ -84,6 +87,9 @@ SgNode* AbstractSceneLoader::insertTransformNodesToAdjustLengthUnitAndUpperAxis(
 */
 SgNode* AbstractSceneLoader::insertTransformNodeToAdjustUpperAxis(SgNode* node)
 {
+    if(!node){
+        return nullptr;
+    }
     if(upperAxisHint_ == Y_Upper){
         auto transform = new SgPosTransform;
         Matrix3 R;
