@@ -128,6 +128,7 @@ public:
     void copySelectedItems();
     void copySelectedItemsWithSubTrees();
     bool pasteItems(bool doCheckPositionAcceptance = true);
+    ItemList<Item> getCopiedItems();
     bool checkCuttable(Item* item) const;
     bool checkCopiable(Item* item) const;
     bool checkPastable(Item* pasteParentItem) const;

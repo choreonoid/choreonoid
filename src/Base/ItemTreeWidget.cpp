@@ -1471,6 +1471,12 @@ bool ItemTreeWidget::Impl::pasteItems(bool doCheckPositionAcceptance)
 }
 
 
+ItemList<Item> ItemTreeWidget::getCopiedItems()
+{
+    return impl->copiedItems;
+}
+
+
 bool ItemTreeWidget::checkCuttable(Item* item) const
 {
     return !item->hasAttribute(Item::Attached);
