@@ -140,11 +140,13 @@ void DigitalIoDevice::setNumSignalLines(int n)
 void DigitalIoDevice::setOut(int index, bool on, bool doNotify)
 {
     if(index < out_.size()){
-        out_[index] = on;
+        if(out_[index] != on){
+            out_[index] = on;
 
-        if(doNotify && impl){
-            impl->sigOutputMap[index](on);
-            notifyStateChange();
+            if(doNotify && impl){
+                impl->sigOutputMap[index](on);
+                notifyStateChange();
+            }
         }
     }
 }
@@ -153,24 +155,26 @@ void DigitalIoDevice::setOut(int index, bool on, bool doNotify)
 void DigitalIoDevice::setIn(int index, bool on, bool doNotify)
 {
     if(index < in_.size()){
-        in_[index] = on;
+        if(in_[index] != on){
+            in_[index] = on;
 
-        auto iter = impl->inputToDeviceSwitchConnectionMap.find(index);
-        if(iter != impl->inputToDeviceSwitchConnectionMap.end()){
-            auto& deviceName = iter->second;
-            if(auto body_ = body()){
-                if(auto device = body_->findDevice(deviceName)){
-                    device->on(on);
-                    if(doNotify){
-                        device->notifyStateChange();
+            auto iter = impl->inputToDeviceSwitchConnectionMap.find(index);
+            if(iter != impl->inputToDeviceSwitchConnectionMap.end()){
+                auto& deviceName = iter->second;
+                if(auto body_ = body()){
+                    if(auto device = body_->findDevice(deviceName)){
+                        device->on(on);
+                        if(doNotify){
+                            device->notifyStateChange();
+                        }
                     }
                 }
             }
-        }
-        
-        if(doNotify && impl){
-            impl->sigInputMap[index](on);
-            notifyStateChange();
+
+            if(doNotify && impl){
+                impl->sigInputMap[index](on);
+                notifyStateChange();
+            }
         }
     }
 }
