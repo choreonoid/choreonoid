@@ -526,7 +526,8 @@ void DistanceMeasurementDialog::Impl::onMeasurementItemDisconnectedFromRoot()
         format(_("The Distance measurement item \"{0}\" has been removed from the project and "
                  "close the distance measurement dialog."),
                measurementItem->name()));
-    finalizeDistanceMeasurement();
+
+    // The finalizeDistanceMeasurement function is called when the dialog is closed
     self->close();
 }
 
