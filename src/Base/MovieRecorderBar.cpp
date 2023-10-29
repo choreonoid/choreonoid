@@ -30,9 +30,15 @@ MovieRecorderBar::MovieRecorderBar()
     
     recordingToggle = addToggleButton(recordIcon);
     recordingToggle->setToolTip(_("Toggle Recording"));
-    recordingToggle->sigToggled().connect(
-        [this](bool on){ onRecordingButtonToggled(on); });
 
+    /**
+       Use QObject::connect function directly instead of sigToggled so that toggle off
+       to stop recording can be processed during QCoreApplication::processEvents
+       called inside the slot function.
+    */
+    QObject::connect(recordingToggle, &QPushButton::toggled,
+                     [this](bool on){ onRecordingButtonToggled(on); });
+    
     viewMarkerToggle = addToggleButton(QIcon(":/Base/icon/recordtarget.svg"));
     viewMarkerToggle->setToolTip(_("Toggle Target View Marker"));
     viewMarkerToggle->sigToggled().connect(
