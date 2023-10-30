@@ -1102,6 +1102,9 @@ void MovieRecorder::Impl::updateViewMarker()
     } else {
         if(viewMarker){
             viewMarker->hide();
+            if(!targetView){
+                viewMarker->setParent(nullptr);
+            }
         }
     }
 }

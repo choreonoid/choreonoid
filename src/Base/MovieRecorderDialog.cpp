@@ -466,15 +466,9 @@ void MovieRecorderDialog::updateViewCombo()
         }
     }
 
-    /*
-      The following code is disabled because clearing the target view despite that
-      the view exists may conflict with other process on specifying the target view.
-    */
-    /*
     if(!selected){
         onTargetViewComboIndexChanged(0);
     }
-    */
 
     targetViewCombo->blockSignals(false);
 }
