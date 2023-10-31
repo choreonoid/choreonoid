@@ -387,13 +387,11 @@ endif()
 # Python
 if(WIN32)
   option(ENABLE_PYTHON "Enable Python" OFF)
-  set(USE_BUNDLED_PYBIND11_DEFAULT ON)
 else()
   option(ENABLE_PYTHON "Enable Python" ON)
-  set(USE_BUNDLED_PYBIND11_DEFAULT OFF)
 endif()
 
-option(USE_BUNDLED_PYBIND11 "Use the Pybind11 library bundled with Choreonoid" ${USE_BUNDLED_PYBIND11_DEFAULT})
+option(USE_BUNDLED_PYBIND11 "Use the Pybind11 library bundled with Choreonoid" ON)
 
 option(USE_PYTHON3 "Use Python version 3 instead of version 2" ON)
 # for Config.h
