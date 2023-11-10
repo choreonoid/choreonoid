@@ -786,6 +786,10 @@ void Mapping::insert(const Mapping* other, bool doArrangeElementIndices)
         throwNotMappingException();
     }
 
+    if(other->empty()){
+        return;
+    }
+
     if(doArrangeElementIndices){
         int minIndexInOther = std::numeric_limits<int>::max();
         int maxIndexInOther = 0;
