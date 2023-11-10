@@ -30,6 +30,9 @@ public:
     void setExtModelFileMode(int mode);
     int extModelFileMode() const;
 
+    void setTransformIntegrationEnabled(bool on);
+    bool isTransformIntegrationEnabled() const;
+
     bool writeBody(Body* body, const std::string& filename);
 
     StdSceneWriter* sceneWriter();

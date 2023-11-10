@@ -229,7 +229,7 @@ void BodyItemBodyFileIO::fetchOptionPanelForSaving()
     ensureBodyWriter();
     int mode = extModelFileModeCombo->currentData().toInt();
     bodyWriter_->setExtModelFileMode(mode);
-    //bodyWriter_->setTransformIntegrationEnabled(transformIntegrationCheck->isChecked());
+    bodyWriter_->setTransformIntegrationEnabled(transformIntegrationCheck->isChecked());
 }
 
 

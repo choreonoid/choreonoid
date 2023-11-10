@@ -118,6 +118,18 @@ int StdBodyWriter::extModelFileMode() const
 }
 
 
+void StdBodyWriter::setTransformIntegrationEnabled(bool on)
+{
+    impl->sceneWriter.setTransformIntegrationEnabled(on);
+}
+
+
+bool StdBodyWriter::isTransformIntegrationEnabled() const
+{
+    return impl->sceneWriter.isTransformIntegrationEnabled();
+}
+
+
 bool StdBodyWriter::writeBody(Body* body, const std::string& filename)
 {
     return impl->writeBody(body, filename);
