@@ -78,6 +78,7 @@ public:
     SceneLoader sceneLoader;
     UriSchemeProcessor uriSchemeProcessor;
     std::unordered_map<string, Vector4> colorMap;
+    std::unordered_map<string, SgNodePtr> meshMap;
     MeshGenerator meshGenerator;
     std::ostream* os_;
     std::ostream& os() { return *os_; }
@@ -159,6 +160,7 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
     // initialized members
     jointCounter_ = 0;
     colorMap.clear();
+    meshMap.clear();
 
     pugi::xml_parse_result result;
 
@@ -663,15 +665,21 @@ SgNode* URDFBodyLoader::Impl::readMeshGeometry(const xml_node& geometryNode)
         return nullptr;
     }
 
-    SgNodePtr scene = sceneLoader.load(filePath, isSupportedFormat);
-    if (!scene) {
-        if(!isSupportedFormat) {
-            os() << format(_("Error: format of the specified mesh file \"{0}\" is not supported."), uri) << endl;
+    SgNodePtr scene;
+    auto it = meshMap.find(filePath);
+    if (it != meshMap.end()) {
+        scene = it->second;
+    } else {
+        scene = sceneLoader.load(filePath, isSupportedFormat);
+        if (!scene) {
+            if(!isSupportedFormat) {
+                os() << format(_("Error: format of the specified mesh file \"{0}\" is not supported."), uri) << endl;
+            }
+            return nullptr;
         }
-        return nullptr;
+        scene->setUri(uri, filePath);
+        meshMap[filePath] = scene;
     }
-
-    scene->setUri(uri, filePath);
 
     // scales the mesh
     if (!geometryNode.child(MESH).attribute(SCALE).empty()) {
