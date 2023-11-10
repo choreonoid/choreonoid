@@ -78,6 +78,7 @@ public:
     SceneLoader sceneLoader;
     UriSchemeProcessor uriSchemeProcessor;
     std::unordered_map<string, Vector4> colorMap;
+    MeshGenerator meshGenerator;
     std::ostream* os_;
     std::ostream& os() { return *os_; }
 
@@ -95,8 +96,12 @@ public:
                        Matrix3& rotation);
     void printReadingInertiaTagError(const string& attribute_name);
     bool readInertiaTag(const xml_node& inertiaNode, Matrix3& inertiaMatrix);
-    bool readGeometryTag(const xml_node& geometryNode, SgNodePtr& mesh);
-    void setMaterialToAllShapeNodes(SgNodePtr& node, SgMaterialPtr& material);
+    SgNode* readGeometryTag(const xml_node& geometryNode);
+    SgNode* readMeshGeometry(const xml_node& geometryNode);
+    SgNode* readBoxGeometry(const xml_node& geometryNode);
+    SgNode* readCylinderGeometry(const xml_node& geometryNode);
+    SgNode* readSphereGeometry(const xml_node& geometryNode);
+    void setMaterialToAllShapeNodes(SgNode* node, SgMaterial* material);
     bool loadJoint(std::unordered_map<string, LinkPtr>& linkMap,
                    const xml_node& jointNode);
     bool loadSensor(Body* body,
@@ -437,14 +442,14 @@ bool URDFBodyLoader::Impl::loadVisualTag(LinkPtr& link,
         return false;
     }
 
-    SgNodePtr mesh = new SgNode;
-    if (!readGeometryTag(geometryNode, mesh)) {
+    SgNodePtr shape = readGeometryTag(geometryNode);
+
+    if(!shape){
         os() << "Error: loading visual geometry failed";
     }
 
     // 'material' tag (optional)
     const xml_node& materialNode = visualNode.child(MATERIAL);
-    SgMaterialPtr material = new SgMaterial;
     if (!materialNode.empty()) {
         const string materialName = materialNode.attribute(NAME).as_string();
         const xml_node& colorNode = materialNode.child(COLOR);
@@ -457,32 +462,35 @@ bool URDFBodyLoader::Impl::loadVisualTag(LinkPtr& link,
                 // normalizes value
                 rgba.array().min(1.0).max(0.0);
 
+                SgMaterialPtr material = new SgMaterial;
                 material->setTransparency(1.0 - rgba[3]);
                 material->setDiffuseColor(Vector3(rgba[0], rgba[1], rgba[2]));
-                setMaterialToAllShapeNodes(mesh, material);
+                setMaterialToAllShapeNodes(shape, material);
             }
         } else if (!textureNode.empty()) {
             // case: a 'texture' tag exists
-            os() << "Warning: 'texture' tag is currently not supported."
-                 << endl;
+            os() << "Warning: 'texture' tag is currently not supported." << endl;
+            
         } else if (!materialName.empty()) {
             // case: neither a 'color' tag nor 'texture' tag does not exist
             //       but a material name is specified
-            try {
-                const Vector4 rgba = colorMap.at(materialName);
-                material->setTransparency(1.0 - rgba[3]);
-                material->setDiffuseColor(Vector3(rgba[0], rgba[1], rgba[2]));
-                setMaterialToAllShapeNodes(mesh, material);
-            } catch (std::out_of_range&) {
+            auto it = colorMap.find(materialName);
+            if (it == colorMap.end()) {
                 os() << "Warning: a material named \"" << materialName
                      << "\" is not found." << endl;
+            } else {
+                const Vector4& rgba = it->second;
+                SgMaterialPtr material = new SgMaterial;
+                material->setTransparency(1.0 - rgba[3]);
+                material->setDiffuseColor(Vector3(rgba[0], rgba[1], rgba[2]));
+                setMaterialToAllShapeNodes(shape, material);
             }
         }
     }
 
-    SgPosTransformPtr transformation = new SgPosTransform(originalPose);
-    transformation->addChild(mesh);
-    link->addVisualShapeNode(transformation);
+    auto transform = new SgPosTransform(originalPose);
+    transform->addChild(shape);
+    link->addVisualShapeNode(transform);
 
     return true;
 }
@@ -510,14 +518,14 @@ bool URDFBodyLoader::Impl::loadCollisionTag(LinkPtr& link,
         return false;
     }
 
-    SgNodePtr mesh = new SgNode;
-    if (!readGeometryTag(geometryNode, mesh)) {
+    SgNode* shape = readGeometryTag(geometryNode);
+    if (!shape) {
         os() << "Error: loading collision geometry failed";
     }
 
-    SgPosTransformPtr transformation = new SgPosTransform(originalPose);
-    transformation->addChild(mesh);
-    link->addCollisionShapeNode(transformation);
+    auto transform = new SgPosTransform(originalPose);
+    transform->addChild(shape);
+    link->addCollisionShapeNode(transform);
 
     return true;
 }
@@ -608,116 +616,142 @@ bool URDFBodyLoader::Impl::readInertiaTag(const xml_node& inertiaNode,
 }
 
 
-bool URDFBodyLoader::Impl::readGeometryTag(const xml_node& geometryNode,
-                                           SgNodePtr& mesh)
+SgNode* URDFBodyLoader::Impl::readGeometryTag(const xml_node& geometryNode)
 {
     int n = std::distance(geometryNode.begin(), geometryNode.end());
     if (n < 1) {
         os() << "Error: no geometry is found." << endl;
+        return nullptr;
     } else if (n > 1) {
         os() << "Error: one link can have only one geometry." << endl;
+        return nullptr;
     }
 
-    MeshGenerator meshGenerator;
-    SgShapePtr shape = new SgShape;
+    SgNode* scene = nullptr;
 
-    if (!geometryNode.child(BOX).empty()) {
-        Vector3 size = Vector3::Zero();
-        if (!toVector3(geometryNode.child(BOX).attribute(SIZE).as_string(),
-                       size)) {
-            os() << "Error: box size is written in invalid format." << endl;
-        }
-
-        shape->setMesh(meshGenerator.generateBox(size));
-        mesh = shape;
+    if (!geometryNode.child(MESH).empty()) {
+        scene = readMeshGeometry(geometryNode);
+    } else if (!geometryNode.child(BOX).empty()) {
+        scene = readBoxGeometry(geometryNode);
     } else if (!geometryNode.child(CYLINDER).empty()) {
-        if (geometryNode.child(CYLINDER).attribute(RADIUS).empty()) {
-            os() << "Error: cylinder radius is not defined." << endl;
-            return false;
-        }
-        if (geometryNode.child(CYLINDER).attribute(LENGTH).empty()) {
-            os() << "Error: cylinder length is not defined." << endl;
-            return false;
-        }
-        const double radius
-            = geometryNode.child(CYLINDER).attribute(RADIUS).as_double();
-        const double length
-            = geometryNode.child(CYLINDER).attribute(LENGTH).as_double();
-
-        shape->setMesh(meshGenerator.generateCylinder(radius, length));
-
-        SgPosTransformPtr transformation = new SgPosTransform;
-        transformation->setRotation(rotFromRpy(Vector3(M_PI / 2.0, 0.0, 0.0)));
-        transformation->translation().setZero();
-        transformation->addChild(shape);
-        mesh = transformation;
+        scene = readCylinderGeometry(geometryNode);
     } else if (!geometryNode.child(SPHERE).empty()) {
-        if (geometryNode.child(SPHERE).attribute(RADIUS).empty()) {
-            os() << "Error: sphere radius is not defined." << endl;
-            return false;
-        }
-        const double radius
-            = geometryNode.child(SPHERE).attribute(RADIUS).as_double();
-
-        shape->setMesh(meshGenerator.generateSphere(radius));
-        mesh = shape;
-    } else if (!geometryNode.child(MESH).empty()) {
-        if (geometryNode.child(MESH).attribute(FILENAME).empty()) {
-            os() << "Error: mesh file is not specified." << endl;
-            return false;
-        }
-
-        // loads a mesh file
-        string uri = geometryNode.child(MESH).attribute(FILENAME).as_string();
-        bool isSupportedFormat = false;
-
-        auto filePath = uriSchemeProcessor.getFilePath(uri);
-        if(filePath.empty()){
-            os() << uriSchemeProcessor.errorMessage() << endl;
-        } else {
-            mesh = sceneLoader.load(filePath, isSupportedFormat);
-            if (!isSupportedFormat) {
-                os() << format(_("Error: format of the specified mesh file \"{0}\" is not supported."), uri) << endl;
-                return false;
-            }
-        }
-
-        mesh->setUri(uri, filePath);
-
-        // scales the mesh
-        if (!geometryNode.child(MESH).attribute(SCALE).empty()) {
-            Vector3 scale = Vector3::Ones();
-            if (!toVector3(geometryNode.child(MESH).attribute(SCALE).as_string(),
-                           scale)) {
-                os() << "Error: mesh scale is written in invalid format."
-                     << endl;
-
-                return false;
-            }
-
-            SgScaleTransformPtr scaler = new SgScaleTransform;
-            scaler->setScale(scale);
-            scaler->addChild(mesh);
-            mesh = scaler;
-        }
+        scene = readSphereGeometry(geometryNode);
     } else {
         os() << "Error: unsupported geometry \""
              << geometryNode.first_child().name() << "\" is described." << endl;
-        return false;
     }
 
-    return true;
+    return scene;
 }
 
 
-void URDFBodyLoader::Impl::setMaterialToAllShapeNodes(SgNodePtr& node,
-                                                      SgMaterialPtr& material)
+SgNode* URDFBodyLoader::Impl::readMeshGeometry(const xml_node& geometryNode)
+{
+    if (geometryNode.child(MESH).attribute(FILENAME).empty()) {
+        os() << "Error: mesh file is not specified." << endl;
+        return nullptr;
+    }
+
+    // loads a mesh file
+    string uri = geometryNode.child(MESH).attribute(FILENAME).as_string();
+    bool isSupportedFormat = false;
+
+    auto filePath = uriSchemeProcessor.getFilePath(uri);
+    if (filePath.empty()) {
+        os() << uriSchemeProcessor.errorMessage() << endl;
+        return nullptr;
+    }
+
+    SgNodePtr scene = sceneLoader.load(filePath, isSupportedFormat);
+    if (!scene) {
+        if(!isSupportedFormat) {
+            os() << format(_("Error: format of the specified mesh file \"{0}\" is not supported."), uri) << endl;
+        }
+        return nullptr;
+    }
+
+    scene->setUri(uri, filePath);
+
+    // scales the mesh
+    if (!geometryNode.child(MESH).attribute(SCALE).empty()) {
+        Vector3 scale = Vector3::Ones();
+        if (!toVector3(geometryNode.child(MESH).attribute(SCALE).as_string(), scale)) {
+            os() << "Error: mesh scale is written in invalid format." << endl;
+            return nullptr;
+        }
+        auto scaler = new SgScaleTransform;
+        scaler->setScale(scale);
+        scaler->addChild(scene);
+        scene = scaler;
+    }
+
+    return scene.retn();
+}
+
+
+SgNode* URDFBodyLoader::Impl::readBoxGeometry(const xml_node& geometryNode)
+{
+    Vector3 size = Vector3::Zero();
+
+    if (!toVector3(geometryNode.child(BOX).attribute(SIZE).as_string(), size)) {
+        os() << "Error: box size is written in invalid format." << endl;
+        return nullptr;
+    }
+
+    auto shape = new SgShape;
+    shape->setMesh(meshGenerator.generateBox(size));
+
+    return shape;
+}
+
+
+SgNode* URDFBodyLoader::Impl::readCylinderGeometry(const xml_node& geometryNode)
+{
+    if (geometryNode.child(CYLINDER).attribute(RADIUS).empty()) {
+        os() << "Error: cylinder radius is not defined." << endl;
+        return nullptr;
+    }
+    if (geometryNode.child(CYLINDER).attribute(LENGTH).empty()) {
+        os() << "Error: cylinder length is not defined." << endl;
+        return nullptr;
+    }
+
+    auto shape = new SgShape;
+    double radius = geometryNode.child(CYLINDER).attribute(RADIUS).as_double();
+    double length = geometryNode.child(CYLINDER).attribute(LENGTH).as_double();
+    shape->setMesh(meshGenerator.generateCylinder(radius, length));
+
+    auto transform = new SgPosTransform;
+    transform->setRotation(AngleAxis(M_PI / 2.0, Vector3::UnitX()));
+    transform->addChild(shape);
+
+    return transform;
+}
+
+
+SgNode* URDFBodyLoader::Impl::readSphereGeometry(const xml_node& geometryNode)
+{
+    if (geometryNode.child(SPHERE).attribute(RADIUS).empty()) {
+        os() << "Error: sphere radius is not defined." << endl;
+        return nullptr;
+    }
+
+    auto shape = new SgShape;
+    double radius = geometryNode.child(SPHERE).attribute(RADIUS).as_double();
+    shape->setMesh(meshGenerator.generateSphere(radius));
+
+    return shape;
+}
+
+
+void URDFBodyLoader::Impl::setMaterialToAllShapeNodes(SgNode* node, SgMaterial* material)
 {
     if (auto group = node->toGroupNode()) {
         for (auto& child : *group) {
             setMaterialToAllShapeNodes(child, material);
         }
-    } else if (auto shape = dynamic_cast<SgShape*>(node.get())) {
+    } else if (auto shape = dynamic_cast<SgShape*>(node)) {
         shape->setMaterial(material);
     }
 }
