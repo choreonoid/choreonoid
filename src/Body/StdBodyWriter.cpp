@@ -230,7 +230,7 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
     node->write("name", link->name(), DOUBLE_QUOTED);
 
     if(auto parent = link->parent()){
-        node->write("parent", link->parent()->name());
+        node->write("parent", link->parent()->name(), DOUBLE_QUOTED);
     }
 
     auto b = link->offsetTranslation();
@@ -243,7 +243,7 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
     }
 
     if(!link->jointName().empty()){
-        node->write("joint_name", link->jointName());
+        node->write("joint_name", link->jointName(), DOUBLE_QUOTED);
     }
 
     node->write("joint_type", link->jointTypeSymbol());
