@@ -34,6 +34,7 @@ public:
     StdSceneWriter* self;
     PolymorphicSceneNodeFunctionSet writeFunctions;
     MappingPtr currentArchive;
+    SgNodePtr nodeToIntegrate;
     bool isDegreeMode;
     bool isTopGroupNodeSkippingEnabled;
     bool isTransformIntegrationEnabled;
@@ -493,6 +494,11 @@ ValueNodePtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
     writeFunctions.dispatch(node);
     currentArchive.reset();
 
+    if(nodeToIntegrate){
+        node = nodeToIntegrate;
+        nodeToIntegrate.reset();
+    }
+
     if(node->isGroupNode()){
         auto group = node->toGroupNode();
         ListingPtr elements = new Listing;
@@ -656,6 +662,15 @@ void StdSceneWriter::Impl::writePosTransform(Mapping* archive, SgPosTransform* t
     Vector3 p(transform->translation());
     if(!p.isZero()){
         write(archive, "translation", p);
+    }
+
+    if(isTransformIntegrationEnabled){
+        if(transform->numChildren() == 1){
+            if(auto scaleNode = dynamic_cast<SgScaleTransform*>(transform->child(0))){
+                write(archive, "scale", scaleNode->scale());
+                nodeToIntegrate = scaleNode;
+            }
+        }
     }
 }
 
