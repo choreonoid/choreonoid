@@ -46,10 +46,6 @@ struct Registration
     }
 } registration;
 
-}
-
-namespace cnoid {
-
 bool toVector4(const std::string& s, Vector4& out_v)
 {
     const char* nptr = s.c_str();
@@ -70,11 +66,50 @@ bool toVector4(const std::string& s, Vector4& out_v)
     return true;
 }
 
+struct ShapeDescription
+{
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
+    Isometry3 origin;
+    enum ShapeType { None, Mesh, Box, Cylinder, Sphere } shapeType;
+    string meshUri;
+    Vector3 meshScale;
+    Vector3 boxSize;
+    double radius;
+    double length;
+    SgMaterialPtr material;
+
+    ShapeDescription()
+        : origin(Isometry3::Identity()),
+          shapeType(None),
+          meshScale(Vector3::Ones()),
+          boxSize(Vector3::Zero()),
+          radius(0.0),
+          length(0.0)
+    { }
+
+    bool operator!=(const ShapeDescription& rhs) const {
+        return
+            !origin.isApprox(rhs.origin) ||
+            shapeType != rhs.shapeType ||
+            meshUri != rhs.meshUri ||
+            meshScale != rhs.meshScale ||
+            boxSize != rhs.boxSize ||
+            radius != rhs.radius ||
+            length != rhs.length;
+    }
+};
+
+} // namespace
+
+namespace cnoid {
 
 class URDFBodyLoader::Impl
 {
 public:
     int jointCounter_ = 0;
+    vector<ShapeDescription, Eigen::aligned_allocator<ShapeDescription>> visualDescriptions;
+    vector<ShapeDescription, Eigen::aligned_allocator<ShapeDescription>> collisionDescriptions;
     SceneLoader sceneLoader;
     UriSchemeProcessor uriSchemeProcessor;
     std::unordered_map<string, Vector4> colorMap;
@@ -86,28 +121,22 @@ public:
     Impl();
     bool load(Body* body, const string& filename);
     void updateColorMap(const xml_node& materialNode);
-    vector<LinkPtr> findRootLinks(
-        const std::unordered_map<string, LinkPtr>& linkMap);
+    vector<LinkPtr> findRootLinks(const std::unordered_map<string, LinkPtr>& linkMap);
     bool loadLink(LinkPtr link, const xml_node& linkNode);
     bool loadInertialTag(LinkPtr& link, const xml_node& inertialNode);
-    bool loadVisualTag(LinkPtr& link, const xml_node& visualNode);
-    bool loadCollisionTag(LinkPtr& link, const xml_node& collisionNode);
-    bool readOriginTag(const xml_node& originNode,
-                       Vector3& translation,
-                       Matrix3& rotation);
+    bool readOriginTag(const xml_node& originNode, Vector3& translation, Matrix3& rotation);
+    bool readOriginTag(const xml_node& originNode, Isometry3& origin);
     void printReadingInertiaTagError(const string& attribute_name);
     bool readInertiaTag(const xml_node& inertiaNode, Matrix3& inertiaMatrix);
-    SgNode* readGeometryTag(const xml_node& geometryNode);
-    SgNode* readMeshGeometry(const xml_node& geometryNode);
-    SgNode* readBoxGeometry(const xml_node& geometryNode);
-    SgNode* readCylinderGeometry(const xml_node& geometryNode);
-    SgNode* readSphereGeometry(const xml_node& geometryNode);
+    bool readShapeDescription(const xml_node& shapeNode, ShapeDescription& description);
+    bool readGeometryTag(const xml_node& geometryNode, ShapeDescription& description);
+    SgNode* createShape(ShapeDescription& description);
+    SgNode* createMesh(ShapeDescription& description);
+    SgMaterial* readMaterialTag(const xml_node& materialNode);
     void setMaterialToAllShapeNodes(SgNode* node, SgMaterial* material);
-    bool loadJoint(std::unordered_map<string, LinkPtr>& linkMap,
-                   const xml_node& jointNode);
-    bool loadSensor(Body* body,
-                    std::unordered_map<string, LinkPtr>& linkMap,
-                    const xml_node& sensorNode);
+    bool loadJoint(std::unordered_map<string, LinkPtr>& linkMap, const xml_node& jointNode);
+    bool loadSensor(
+        Body* body, std::unordered_map<string, LinkPtr>& linkMap, const xml_node& sensorNode);
 };
 }  // namespace cnoid
 
@@ -356,28 +385,75 @@ bool URDFBodyLoader::Impl::loadLink(LinkPtr link, const xml_node& linkNode)
         }
     }
 
-    // 'visual' (optional, multiple definition are allowed)
+    // 'visual' (optional, multiple definitions are allowed)
+    visualDescriptions.clear();
     if (linkNode.child(VISUAL).empty()) {
         os() << "Debug: link \"" << name << "\" has no visual data." << endl;
     } else {
         const auto visualNodes = linkNode.children(VISUAL);
         for (xml_node& visualNode : visualNodes) {
-            if (!loadVisualTag(link, visualNode)) {
-                os() << "in link \"" << name << "\"." << endl;
+            visualDescriptions.emplace_back();
+            auto& description = visualDescriptions.back();
+            if (!readShapeDescription(visualNode, description)) {
+                os() << " in a visual tag in link \"" << name << "\"." << endl;
                 return false;
+            }
+            // 'material' tag (optional)
+            const xml_node& materialNode = visualNode.child(MATERIAL);
+            if (!materialNode.empty()) {
+                description.material = readMaterialTag(materialNode);
+            }
+        }
+        for (auto& description : visualDescriptions) {
+            auto shape = createShape(description);
+            if (!shape) {
+                os() << " in a visual tag in link \"" << name << "\"." << endl;
+                return false;
+            } else {
+                link->addVisualShapeNode(shape);
+                if (description.material) {
+                    setMaterialToAllShapeNodes(shape, description.material);
+                    description.material.reset(); // For comparison with collision descriptions
+                }
             }
         }
     }
-
-    // 'collision' (optional, multiple definition are allowed)
+                
+    // 'collision' (optional, multiple definitions are allowed)
+    collisionDescriptions.clear();
     if (linkNode.child(COLLISION).empty()) {
         os() << "Debug: link \"" << name << "\" has no collision data." << endl;
     } else {
         const auto collisionNodes = linkNode.children(COLLISION);
         for (xml_node& collisionNode : collisionNodes) {
-            if (!loadCollisionTag(link, collisionNode)) {
-                os() << " in link \"" << name << "\"." << endl;
+            collisionDescriptions.emplace_back();
+            if (!readShapeDescription(collisionNode, collisionDescriptions.back())) {
+                os() << " in a collision tag in link \"" << name << "\"." << endl;
                 return false;
+            }
+        }
+        bool isDifferent = true;
+        if (collisionDescriptions.size() == visualDescriptions.size()) {
+            isDifferent = false;
+            for(size_t i=0; i < collisionDescriptions.size(); ++i){
+                if (collisionDescriptions[i] != visualDescriptions[i]) {
+                    isDifferent = true;
+                    break;
+                }
+            }
+        }
+        if (!isDifferent) {
+            // Share the shape between visual and collision
+            link->visualShape()->copyChildrenTo(link->collisionShape());
+        } else {
+            for (auto& description : collisionDescriptions) {
+                auto shape = createShape(description);
+                if (!shape) {
+                    os() << " in a collision tag in link \"" << name << "\"." << endl;
+                    return false;
+                } else {
+                    link->addCollisionShapeNode(shape);
+                }
             }
         }
     }
@@ -422,117 +498,6 @@ bool URDFBodyLoader::Impl::loadInertialTag(LinkPtr& link,
 }
 
 
-bool URDFBodyLoader::Impl::loadVisualTag(LinkPtr& link,
-                                         const xml_node& visualNode)
-{
-    // 'origin' tag (optional)
-    const xml_node& originNode = visualNode.child(ORIGIN);
-    Vector3 translation = Vector3::Zero();
-    Matrix3 rotation = Matrix3::Identity();
-    if (!readOriginTag(originNode, translation, rotation)) {
-        os() << " in a visual tag";
-        return false;
-    }
-    Isometry3 originalPose;
-    originalPose.linear() = rotation;
-    originalPose.translation() = translation;
-
-    // 'geometry' tag (required)
-    const xml_node& geometryNode = visualNode.child(GEOMETRY);
-    if (geometryNode.empty()) {
-        os() << "Error: visual geometry is not found";
-        return false;
-    }
-
-    SgNodePtr shape = readGeometryTag(geometryNode);
-
-    if(!shape){
-        os() << "Error: loading visual geometry failed";
-    }
-
-    // 'material' tag (optional)
-    const xml_node& materialNode = visualNode.child(MATERIAL);
-    if (!materialNode.empty()) {
-        const string materialName = materialNode.attribute(NAME).as_string();
-        const xml_node& colorNode = materialNode.child(COLOR);
-        const xml_node& textureNode = materialNode.child(TEXTURE);
-        if (!colorNode.empty()) {
-            // case: a 'color' tag exists
-            const string rgbaString = colorNode.attribute(RGBA).as_string();
-            Vector4 rgba = Vector4::Zero();
-            if (toVector4(rgbaString, rgba)) {
-                // normalizes value
-                rgba.array().min(1.0).max(0.0);
-
-                SgMaterialPtr material = new SgMaterial;
-                material->setTransparency(1.0 - rgba[3]);
-                material->setDiffuseColor(Vector3(rgba[0], rgba[1], rgba[2]));
-                setMaterialToAllShapeNodes(shape, material);
-            }
-        } else if (!textureNode.empty()) {
-            // case: a 'texture' tag exists
-            os() << "Warning: 'texture' tag is currently not supported." << endl;
-            
-        } else if (!materialName.empty()) {
-            // case: neither a 'color' tag nor 'texture' tag does not exist
-            //       but a material name is specified
-            auto it = colorMap.find(materialName);
-            if (it == colorMap.end()) {
-                os() << "Warning: a material named \"" << materialName
-                     << "\" is not found." << endl;
-            } else {
-                const Vector4& rgba = it->second;
-                SgMaterialPtr material = new SgMaterial;
-                material->setTransparency(1.0 - rgba[3]);
-                material->setDiffuseColor(Vector3(rgba[0], rgba[1], rgba[2]));
-                setMaterialToAllShapeNodes(shape, material);
-            }
-        }
-    }
-
-    auto transform = new SgPosTransform(originalPose);
-    transform->addChild(shape);
-    link->addVisualShapeNode(transform);
-
-    return true;
-}
-
-
-bool URDFBodyLoader::Impl::loadCollisionTag(LinkPtr& link,
-                                            const xml_node& collisionNode)
-{
-    // 'origin' tag (optional)
-    const xml_node& originNode = collisionNode.child(ORIGIN);
-    Vector3 translation = Vector3::Zero();
-    Matrix3 rotation = Matrix3::Identity();
-    if (!readOriginTag(originNode, translation, rotation)) {
-        os() << " in a collision tag";
-        return false;
-    }
-    Isometry3 originalPose;
-    originalPose.linear() = rotation;
-    originalPose.translation() = translation;
-
-    // 'geometry' tag (required)
-    const xml_node& geometryNode = collisionNode.child(GEOMETRY);
-    if (geometryNode.empty()) {
-        os() << "Error: collision geometry is not found";
-        return false;
-    }
-
-    SgNode* shape = readGeometryTag(geometryNode);
-    if (!shape) {
-        os() << "Error: loading collision geometry failed";
-    }
-
-    auto transform = new SgPosTransform(originalPose);
-    transform->addChild(shape);
-    link->addCollisionShapeNode(transform);
-
-    return true;
-}
-
-
 bool URDFBodyLoader::Impl::readOriginTag(const xml_node& originNode,
                                          Vector3& translation,
                                          Matrix3& rotation)
@@ -559,6 +524,32 @@ bool URDFBodyLoader::Impl::readOriginTag(const xml_node& originNode,
         }
         rotation = rotFromRpy(origin_rpy);
     }
+    return true;
+}
+
+
+bool URDFBodyLoader::Impl::readOriginTag(const xml_node& originNode, Isometry3& origin)
+{
+    const string origin_xyz_str = originNode.attribute(XYZ).as_string();
+    if (!origin_xyz_str.empty()) {
+        Vector3 origin_xyz;
+        if (!toVector3(origin_xyz_str, origin_xyz)) {
+            os() << "Error: origin xyz is written in invalid format";
+            return false;
+        }
+        origin.translation() = origin_xyz;
+    }
+
+    const string origin_rpy_str = originNode.attribute(RPY).as_string();
+    if (!origin_rpy_str.empty()) {
+        Vector3 origin_rpy;
+        if (!toVector3(origin_rpy_str, origin_rpy)) {
+            os() << "Error: origin rpy is written in invalid format";
+            return false;
+        }
+        origin.linear() = rotFromRpy(origin_rpy);
+    }
+    
     return true;
 }
 
@@ -618,78 +609,165 @@ bool URDFBodyLoader::Impl::readInertiaTag(const xml_node& inertiaNode,
 }
 
 
-SgNode* URDFBodyLoader::Impl::readGeometryTag(const xml_node& geometryNode)
+bool URDFBodyLoader::Impl::readShapeDescription(const xml_node& shapeNode, ShapeDescription& description)
+{
+    // 'origin' tag (optional)
+    const xml_node& originNode = shapeNode.child(ORIGIN);
+    if (!readOriginTag(originNode, description.origin)) {
+        return false;
+    }
+
+    // 'geometry' tag (required)
+    const xml_node& geometryNode = shapeNode.child(GEOMETRY);
+    if (geometryNode.empty()) {
+        os() << "Error: geometry is not found";
+        return false;
+    }
+
+    if (!readGeometryTag(geometryNode, description)) {
+        os() << "Error: loading collision geometry failed";
+        return false;
+    }
+
+    return true;
+}    
+    
+
+bool URDFBodyLoader::Impl::readGeometryTag(const xml_node& geometryNode, ShapeDescription& description)
 {
     int n = std::distance(geometryNode.begin(), geometryNode.end());
     if (n < 1) {
-        os() << "Error: no geometry is found." << endl;
-        return nullptr;
+        os() << "Error: no geometry is found";
+        return false;
     } else if (n > 1) {
-        os() << "Error: one link can have only one geometry." << endl;
-        return nullptr;
+        os() << "Error: one link can have only one geometry";
+        return false;
     }
-
-    SgNode* scene = nullptr;
 
     if (!geometryNode.child(MESH).empty()) {
-        scene = readMeshGeometry(geometryNode);
+        description.shapeType = ShapeDescription::Mesh;
+
+        if (geometryNode.child(MESH).attribute(FILENAME).empty()) {
+            os() << "Error: mesh file is not specified";
+            return false;
+        }
+        description.meshUri = geometryNode.child(MESH).attribute(FILENAME).as_string();
+
+        if (!geometryNode.child(MESH).attribute(SCALE).empty()) {
+            if (!toVector3(geometryNode.child(MESH).attribute(SCALE).as_string(), description.meshScale)) {
+                os() << "Error: mesh scale is written in invalid format";
+                return false;
+            }
+        }
     } else if (!geometryNode.child(BOX).empty()) {
-        scene = readBoxGeometry(geometryNode);
+        description.shapeType = ShapeDescription::Box;
+        if (!toVector3(geometryNode.child(BOX).attribute(SIZE).as_string(), description.boxSize)) {
+            os() << "Error: box size is written in invalid format";
+            return false;
+        }
     } else if (!geometryNode.child(CYLINDER).empty()) {
-        scene = readCylinderGeometry(geometryNode);
+        description.shapeType = ShapeDescription::Cylinder;
+        if (geometryNode.child(CYLINDER).attribute(RADIUS).empty()) {
+            os() << "Error: cylinder radius is not defined";
+            return false;
+        }
+        if (geometryNode.child(CYLINDER).attribute(LENGTH).empty()) {
+            os() << "Error: cylinder length is not defined";
+            return false;
+        }
+        description.radius = geometryNode.child(CYLINDER).attribute(RADIUS).as_double();
+        description.length = geometryNode.child(CYLINDER).attribute(LENGTH).as_double();
+        
     } else if (!geometryNode.child(SPHERE).empty()) {
-        scene = readSphereGeometry(geometryNode);
+        if (geometryNode.child(SPHERE).attribute(RADIUS).empty()) {
+            os() << "Error: sphere radius is not defined";
+            return false;
+        }
+        description.radius = geometryNode.child(SPHERE).attribute(RADIUS).as_double();
+
     } else {
         os() << "Error: unsupported geometry \""
-             << geometryNode.first_child().name() << "\" is described." << endl;
+             << geometryNode.first_child().name() << "\" is described";
+        return false;
     }
 
-    return scene;
+    return true;
 }
 
 
-SgNode* URDFBodyLoader::Impl::readMeshGeometry(const xml_node& geometryNode)
+SgNode* URDFBodyLoader::Impl::createShape(ShapeDescription& description)
 {
-    if (geometryNode.child(MESH).attribute(FILENAME).empty()) {
-        os() << "Error: mesh file is not specified." << endl;
-        return nullptr;
+    SgNodePtr shape;
+
+    switch (description.shapeType) {
+    case ShapeDescription::Mesh:
+        shape = createMesh(description);
+        break;
+    case ShapeDescription::Box: {
+        auto box = new SgShape;
+        box->setMesh(meshGenerator.generateBox(description.boxSize));
+        shape = box;
+        break;
+    }
+    case ShapeDescription::Cylinder: {
+        auto cylinder = new SgShape;
+        cylinder->setMesh(meshGenerator.generateCylinder(description.radius, description.length));
+        auto transform = new SgPosTransform;
+        transform->setRotation(AngleAxis(M_PI / 2.0, Vector3::UnitX()));
+        transform->addChild(cylinder);
+        shape = transform;
+        break;
+    }
+    case ShapeDescription::Sphere: {
+        auto sphere = new SgShape;
+        sphere->setMesh(meshGenerator.generateSphere(description.radius));
+        shape = sphere;
+        break;
+    }
+    default:
+        break;
     }
 
-    // loads a mesh file
-    string uri = geometryNode.child(MESH).attribute(FILENAME).as_string();
-    bool isSupportedFormat = false;
+    if(!description.origin.isApprox(Isometry3::Identity())){
+        auto transform = new SgPosTransform(description.origin);
+        transform->addChild(shape);
+        shape = transform;
+    }
 
-    auto filePath = uriSchemeProcessor.getFilePath(uri);
+    return shape.retn();
+}
+
+
+SgNode* URDFBodyLoader::Impl::createMesh(ShapeDescription& description)
+{
+    SgNodePtr scene;
+
+    string filePath = uriSchemeProcessor.getFilePath(description.meshUri);
     if (filePath.empty()) {
         os() << uriSchemeProcessor.errorMessage() << endl;
         return nullptr;
     }
-
-    SgNodePtr scene;
+    
     auto it = meshMap.find(filePath);
     if (it != meshMap.end()) {
         scene = it->second;
     } else {
+        bool isSupportedFormat = false;
         scene = sceneLoader.load(filePath, isSupportedFormat);
         if (!scene) {
             if(!isSupportedFormat) {
-                os() << format(_("Error: format of the specified mesh file \"{0}\" is not supported."), uri) << endl;
+                os() << format(_("Error: format of the specified mesh file \"{0}\" is not supported"),
+                               description.meshUri);
             }
             return nullptr;
         }
-        scene->setUri(uri, filePath);
+        scene->setUri(description.meshUri, filePath);
         meshMap[filePath] = scene;
     }
 
-    // scales the mesh
-    if (!geometryNode.child(MESH).attribute(SCALE).empty()) {
-        Vector3 scale = Vector3::Ones();
-        if (!toVector3(geometryNode.child(MESH).attribute(SCALE).as_string(), scale)) {
-            os() << "Error: mesh scale is written in invalid format." << endl;
-            return nullptr;
-        }
+    if (description.meshScale != Vector3::Ones()) {
         auto scaler = new SgScaleTransform;
-        scaler->setScale(scale);
+        scaler->setScale(description.meshScale);
         scaler->addChild(scene);
         scene = scaler;
     }
@@ -698,58 +776,44 @@ SgNode* URDFBodyLoader::Impl::readMeshGeometry(const xml_node& geometryNode)
 }
 
 
-SgNode* URDFBodyLoader::Impl::readBoxGeometry(const xml_node& geometryNode)
+SgMaterial* URDFBodyLoader::Impl::readMaterialTag(const xml_node& materialNode)
 {
-    Vector3 size = Vector3::Zero();
+    SgMaterialPtr material;
+    
+    const string materialName = materialNode.attribute(NAME).as_string();
+    const xml_node& colorNode = materialNode.child(COLOR);
+    const xml_node& textureNode = materialNode.child(TEXTURE);
+    if (!colorNode.empty()) {
+        // case: a 'color' tag exists
+        const string rgbaString = colorNode.attribute(RGBA).as_string();
+        Vector4 rgba = Vector4::Zero();
+        if (toVector4(rgbaString, rgba)) {
+            // normalizes value
+            rgba.array().min(1.0).max(0.0);
 
-    if (!toVector3(geometryNode.child(BOX).attribute(SIZE).as_string(), size)) {
-        os() << "Error: box size is written in invalid format." << endl;
-        return nullptr;
+            material = new SgMaterial;
+            material->setTransparency(1.0 - rgba[3]);
+            material->setDiffuseColor(Vector3(rgba[0], rgba[1], rgba[2]));
+        }
+    } else if (!textureNode.empty()) {
+        // case: a 'texture' tag exists
+        os() << "Warning: 'texture' tag is currently not supported." << endl;
+
+    } else if (!materialName.empty()) {
+        // case: neither a 'color' tag nor 'texture' tag does not exist
+        //       but a material name is specified
+        auto it = colorMap.find(materialName);
+        if (it == colorMap.end()) {
+            os() << "Warning: a material named \"" << materialName << "\" is not found." << endl;
+        } else {
+            const Vector4& rgba = it->second;
+            material = new SgMaterial;
+            material->setTransparency(1.0 - rgba[3]);
+            material->setDiffuseColor(Vector3(rgba[0], rgba[1], rgba[2]));
+        }
     }
 
-    auto shape = new SgShape;
-    shape->setMesh(meshGenerator.generateBox(size));
-
-    return shape;
-}
-
-
-SgNode* URDFBodyLoader::Impl::readCylinderGeometry(const xml_node& geometryNode)
-{
-    if (geometryNode.child(CYLINDER).attribute(RADIUS).empty()) {
-        os() << "Error: cylinder radius is not defined." << endl;
-        return nullptr;
-    }
-    if (geometryNode.child(CYLINDER).attribute(LENGTH).empty()) {
-        os() << "Error: cylinder length is not defined." << endl;
-        return nullptr;
-    }
-
-    auto shape = new SgShape;
-    double radius = geometryNode.child(CYLINDER).attribute(RADIUS).as_double();
-    double length = geometryNode.child(CYLINDER).attribute(LENGTH).as_double();
-    shape->setMesh(meshGenerator.generateCylinder(radius, length));
-
-    auto transform = new SgPosTransform;
-    transform->setRotation(AngleAxis(M_PI / 2.0, Vector3::UnitX()));
-    transform->addChild(shape);
-
-    return transform;
-}
-
-
-SgNode* URDFBodyLoader::Impl::readSphereGeometry(const xml_node& geometryNode)
-{
-    if (geometryNode.child(SPHERE).attribute(RADIUS).empty()) {
-        os() << "Error: sphere radius is not defined." << endl;
-        return nullptr;
-    }
-
-    auto shape = new SgShape;
-    double radius = geometryNode.child(SPHERE).attribute(RADIUS).as_double();
-    shape->setMesh(meshGenerator.generateSphere(radius));
-
-    return shape;
+    return material.retn();
 }
 
 
