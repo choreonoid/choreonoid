@@ -20,6 +20,9 @@ public:
     SceneGraphOptimizer& operator=(const SceneGraphOptimizer&) = delete;
     SceneGraphOptimizer& operator=(SceneGraphOptimizer&&) = delete;
 
+    void setUriNodePreservingMode(bool on);
+    bool isUriNodePreservingMode() const;
+
     //! \return Number of the simplified paths
     int simplifyTransformPathsWithTransformedMeshes(SgGroup* scene, CloneMap& cloneMap);
     

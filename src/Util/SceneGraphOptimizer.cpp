@@ -42,6 +42,9 @@ public:
     map<SgMeshPtr, MeshElementInfo> meshElementInfoMap;
     int numRemovedMeshElementCollections;
 
+    bool isUriNodePreservingMode;
+
+    Impl();
     int simplifyTransformPathsWithTransformedMeshes(SgGroup* scene, CloneMap& cloneMap);
     void extractMeshPaths(SgGroup* group, NodePath& path);
     void extractCommonPathsToMeshes();
@@ -60,9 +63,27 @@ SceneGraphOptimizer::SceneGraphOptimizer()
 }
 
 
+SceneGraphOptimizer::Impl::Impl()
+{
+    isUriNodePreservingMode = true;
+}
+
+
 SceneGraphOptimizer::~SceneGraphOptimizer()
 {
     delete impl;
+}
+
+
+void SceneGraphOptimizer::setUriNodePreservingMode(bool on)
+{
+    impl->isUriNodePreservingMode = on;
+}
+
+
+bool SceneGraphOptimizer::isUriNodePreservingMode() const
+{
+    return impl->isUriNodePreservingMode;
 }
 
 
@@ -134,6 +155,13 @@ void SceneGraphOptimizer::Impl::extractCommonPathsToMeshes()
                 bool isSameTransform = false;
                 auto node1 = commonPath[j - 1];
                 auto node2 = anotherPath[k - 1];
+
+                if(isUriNodePreservingMode){
+                    if(node1->hasUri() || node2->hasUri()){
+                        break;
+                    }
+                }
+                    
                 Affine3 T1;
                 Affine3 T2;
                 if(!node1->isTransformNode()){
@@ -166,6 +194,7 @@ void SceneGraphOptimizer::Impl::extractCommonPathsToMeshes()
                 commonPath.pop_front();
             }
         }
+
         if(commonPath.empty()){
             iter = meshPathInfoMap.erase(iter);
         } else {
