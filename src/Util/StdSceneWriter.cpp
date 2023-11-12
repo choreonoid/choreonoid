@@ -71,6 +71,8 @@ public:
     pair<ListingPtr, bool> findOrCreateListing(SgObject* object);
     ValueNodePtr writeSceneNode(SgNode* node);
     void makeLinkToOriginalModelFile(Mapping* archive, SgObject* sceneObject);
+    void copyModelFilesAndLinkToCopiedFile(Mapping* archive, SgObject* sceneObject);
+    string copyModelFiles(SgObject* sceneObject);
     bool replaceOriginalModelFile(
         Mapping* archive, SgNode* node, bool isAppearanceEnabled, SgObject* objectOfUri);
     void processUnknownNode(Mapping* archive, SgNode* node);
@@ -399,12 +401,15 @@ bool StdSceneWriter::Impl::writeScene
         }
     }
 
-    if(isTransformIntegrationEnabled && (extModelFileMode != LinkToOriginalModelFiles)){
+    if(isTransformIntegrationEnabled &&
+       extModelFileMode != LinkToOriginalModelFiles &&
+       extModelFileMode != CopyModelFiles){
         SceneGraphOptimizer optimizer;
         CloneMap cloneMap;
         SgObject::setNonNodeCloning(cloneMap, false);
         group = cloneMap.getClone(group);
         SgObject::setNonNodeCloning(cloneMap, true);
+        optimizer.setUriNodePreservingMode(extModelFileMode != EmbedModels);
         optimizer.simplifyTransformPathsWithTransformedMeshes(group, cloneMap);
     }
        
@@ -475,19 +480,19 @@ ValueNodePtr StdSceneWriter::Impl::writeSceneNode(SgNode* node)
         return archive;
     }
 
-    if(node->hasUri()){
-        if(extModelFileMode != EmbedModels){
-            writeObjectHeader(archive, "Resource", node);
-            if(extModelFileMode == LinkToOriginalModelFiles){
-                makeLinkToOriginalModelFile(archive, node);
-            } else {
-                if(!replaceOriginalModelFile(archive, node, true, node)){
-                    // TODO: write the models as embeded models when the replacement fails
-                    archive.reset();
-                }
+    if(node->hasUri() && (extModelFileMode != EmbedModels)){
+        writeObjectHeader(archive, "Resource", node);
+        if(extModelFileMode == LinkToOriginalModelFiles){
+            makeLinkToOriginalModelFile(archive, node);
+        } else if(extModelFileMode == CopyModelFiles){
+            copyModelFilesAndLinkToCopiedFile(archive, node);
+        } else {
+            if(!replaceOriginalModelFile(archive, node, true, node)){
+                // TODO: write the models as embeded models when the replacement fails
+                archive.reset();
             }
-            return archive;
         }
+        return archive;
     }
 
     currentArchive = archive;
@@ -538,6 +543,97 @@ void StdSceneWriter::Impl::makeLinkToOriginalModelFile(Mapping* archive, SgObjec
     if(!metadata.empty()){
         archive->write("metadata", metadata, DOUBLE_QUOTED);
     }
+}
+
+
+void StdSceneWriter::Impl::copyModelFilesAndLinkToCopiedFile(Mapping* archive, SgObject* sceneObject)
+{
+    ensureUriSchemeProcessor();
+    
+    string relativeFilePathToCopiedFile = copyModelFiles(sceneObject);
+    
+    if(relativeFilePathToCopiedFile.empty()){
+        makeLinkToOriginalModelFile(archive, sceneObject);
+        os() << format(_("Warning: Model file \"{0}\" cannot be copied."), sceneObject->uri()) << endl;
+    } else {
+        archive->write("uri", relativeFilePathToCopiedFile, DOUBLE_QUOTED);
+        auto& metadata = sceneObject->uriMetadataString();
+        if(!metadata.empty()){
+            archive->write("metadata", metadata, DOUBLE_QUOTED);
+        }
+    }
+}
+
+
+string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
+{
+    string relativeFilePathToCopiedFile;
+
+    if(sceneObject->hasUri()){
+        stdx::error_code ec;
+        string srcFile = sceneObject->localFileAbsolutePath();
+        filesystem::path srcFilePath(fromUTF8(srcFile));
+        if(!srcFilePath.empty()){
+            if(!filesystem::exists(srcFilePath, ec)){
+                os() << format(_("Warning: File \"{0}\" is not found."), srcFile) << endl;
+            } else {
+                uriSchemeProcessor->detectScheme(sceneObject->uri());
+                filesystem::path uriPath = fromUTF8(uriSchemeProcessor->path());
+                uriPath = uriPath.lexically_normal();
+                if(uriPath.has_root_path()){
+                    uriPath = uriPath.relative_path();
+                }
+                // Remove ".." elements
+                filesystem::path relativeFilePath;
+                for(auto& element : uriPath){
+                    if(element != ".."){
+                        relativeFilePath /= element;
+                    }
+                }
+                if(!relativeFilePath.empty()){
+                    filesystem::path destFilePath = baseDirPath / relativeFilePath;
+                    if(!filesystem::equivalent(srcFilePath, destFilePath, ec)){
+                        filesystem::path destDirPath = destFilePath.parent_path();
+                        filesystem::create_directories(destDirPath, ec);
+                        if(!ec){
+#if __cplusplus > 201402L
+                            filesystem::copy_file(
+                                srcFilePath, destFilePath, filesystem::copy_options::update_existing, ec);
+                            os() << format("Copy \"{0}\" to \"{1}\".",
+                                           toUTF8(srcFilePath.string()), toUTF8(destFilePath.string())) << endl;
+#else
+                            bool doCopy = true;
+                            if(filesystem::exists(destFilePath, ec)){
+                                auto srcTime = filesystem::last_write_time(srcFilePath, ec); 
+                                auto destTime = filesystem::last_write_time(destFilePath, ec);
+                                if(destTime >= srcTime){
+                                    doCopy = false;
+                                }
+                            }
+                            if(doCopy){
+                                filesystem::copy_file(
+                                    srcFilePath, destFilePath, filesystem::copy_option::overwrite_if_exists, ec);
+                            }
+#endif
+                        }
+                    }
+                    if(!ec){
+                        relativeFilePathToCopiedFile = fromUTF8(relativeFilePath.generic_string());
+                    } else {
+                        os() << format(_("Warning: File \"{0}\" cannot be copied: {1}"),
+                                       sceneObject->localFileAbsolutePath(), ec.message()) << endl;
+                    }
+                }
+            }
+        }
+    }
+
+    int n = sceneObject->numChildObjects();
+    for(int i=0; i < n; ++i){
+        copyModelFiles(sceneObject->childObject(i));
+    }
+
+    return relativeFilePathToCopiedFile;
 }
 
 
@@ -712,9 +808,11 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgShape* shape)
     }
     
     if(mesh->hasUri() && (extModelFileMode != EmbedModels)){
-        archive->write("type", "Resource");
+        writeObjectHeader(archive, "Resource", mesh);
         if(extModelFileMode == LinkToOriginalModelFiles){
             makeLinkToOriginalModelFile(archive, mesh);
+        } else if(extModelFileMode == CopyModelFiles){
+            copyModelFilesAndLinkToCopiedFile(archive, mesh);
         } else {
             if(!replaceOriginalModelFile(archive, shape, false, mesh)){
                 // TODO: write the models as embeded models when the replacement fails

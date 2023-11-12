@@ -35,6 +35,7 @@ public:
     enum ExtModelFileMode {
         EmbedModels,
         LinkToOriginalModelFiles,
+        CopyModelFiles,
         ReplaceWithStdSceneFiles,
         ReplaceWithObjModelFiles
     };
