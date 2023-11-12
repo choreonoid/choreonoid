@@ -85,6 +85,21 @@ SgObject* SgObject::childObject(int /* index */)
 }
 
 
+SgObject* SgObject::findObject_(std::function<bool(SgObject* object)>& pred)
+{
+    if(pred(this)){
+        return this;
+    }
+    int n = numChildObjects();
+    for(int i=0; i < n; ++i){
+        if(auto found = childObject(i)->findObject_(pred)){
+            return found;
+        }
+    }
+    return nullptr;
+}
+
+
 void SgObject::notifyUpperNodesOfUpdate(SgUpdate& update)
 {
     notifyUpperNodesOfUpdate(update, update.hasAction(SgUpdate::GeometryModified));
@@ -218,7 +233,7 @@ void SgObject::setUriWithFilePathAndBaseDirectory
         }
         path = baseDirPath / path;
     }
-    setUri(filePath, format("file://{0}", toUTF8(path.generic_string())));
+    setUri(filePath, toUTF8(path.generic_string()));
 }
 
 
@@ -235,7 +250,7 @@ void SgObject::setUriWithFilePathAndCurrentDirectory(const std::string& filePath
     if(path.is_relative()){
         path = filesystem::current_path() / path;
     }
-    setUri(filePath, format("file://{0}", toUTF8(path.generic_string())));
+    setUri(filePath, toUTF8(path.generic_string()));
 }
 
 

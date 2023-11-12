@@ -9,6 +9,7 @@
 #include <vector>
 #include <set>
 #include <memory>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -73,6 +74,10 @@ public:
 
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
+
+    SgObject* findObject(std::function<bool(SgObject* object)> pred) {
+        return findObject_(pred);
+    }
 
     SignalProxy<void(const SgUpdate& update)> sigUpdated() {
         return sigUpdated_;
@@ -167,6 +172,8 @@ private:
     };
     
     mutable std::unique_ptr<UriInfo> uriInfo;
+
+    SgObject* findObject_(std::function<bool(SgObject* object)>& pred);
 };
 
 typedef ref_ptr<SgObject> SgObjectPtr;
