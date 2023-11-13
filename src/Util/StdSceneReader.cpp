@@ -69,6 +69,7 @@ public:
         unique_ptr<SceneNodeMap> sceneNodeMap;
         unique_ptr<YAMLReader> yamlReader;
         string directory;
+        string file;
         string metadata;
     };
     typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
@@ -1323,7 +1324,7 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping* info, int meshOpti
         info->throwException(_("A resouce specified as a geometry does not have a mesh"));
     }
     if(isDirectResource){
-        mesh->setUriWithFilePathAndBaseDirectory(resource.uri, getBaseDirectory());
+        mesh->setUri(resource.uri, resource.file);
         if(!resource.fragment.empty()){
             resource.scene->setUriFragment(resource.fragment);
         }
@@ -1419,7 +1420,7 @@ void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping* info)
                 } else {
                     image = new SgImage;
                     if(imageIO.load(image->image(), filename, os())){
-                        image->setUriWithFilePathAndBaseDirectory(uri, getBaseDirectory());
+                        image->setUri(uri, filename);
                         imagePathToSgImageMap[uri] = image;
                     } else {
                         image.reset();
@@ -1684,6 +1685,7 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info, b
     
     ResourceInfo* resourceInfo = getOrCreateResourceInfo(info, resource.uri, resource.metadata);
     if(resourceInfo){
+        resource.file = resourceInfo->file;
         resource.directory = resourceInfo->directory;
         bool isYamlResouce = (resourceInfo->yamlReader != nullptr);
         if(resource.fragment.empty()){
@@ -1704,14 +1706,14 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info, b
                 }
             }
         }
-    }
 
-    if(resource.scene){
-        resource.scene = readTransformParameters(info, resource.scene);
-        if(doSetUri){
-            resource.scene->setUriWithFilePathAndBaseDirectory(resource.uri, getBaseDirectory());
-            if(!resource.fragment.empty()){
-                resource.scene->setUriFragment(resource.fragment);
+        if(resource.scene){
+            resource.scene = readTransformParameters(info, resource.scene);
+            if(doSetUri){
+                resource.scene->setUri(resource.uri, resource.file);
+                if(!resource.fragment.empty()){
+                    resource.scene->setUriFragment(resource.fragment);
+                }
             }
         }
     }
@@ -1752,23 +1754,22 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const strin
         return iter->second;
     }
 
-    ensureUriSchemeProcessor();
-    string file = uriSchemeProcessor->getFilePath(uri);
+    ResourceInfoPtr info = new ResourceInfo;
     
-    if(file.empty()){
+    ensureUriSchemeProcessor();
+    info->file = uriSchemeProcessor->getFilePath(uri);
+    if(info->file.empty()){
         resourceNode->throwException(uriSchemeProcessor->errorMessage());
     }
 
-    ResourceInfoPtr info = new ResourceInfo;
-
-    filesystem::path filePath(fromUTF8(file));
+    filesystem::path filePath(fromUTF8(info->file));
     string ext = filePath.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     if(ext == ".yaml" || ext == ".yml"){
         unique_ptr<YAMLReader> reader(new YAMLReader);
         reader->importAnchors(*mainYamlReader);
-        if(!reader->load(file)){
+        if(!reader->load(info->file)){
             resourceNode->throwException(
                 format(_("YAML resource \"{0}\" cannot be loaded ({1})"),
                  uri, reader->errorMessage()));
@@ -1800,7 +1801,7 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const strin
                 }
             }
         }
-        SgNodePtr scene = sceneLoader.load(file);
+        SgNodePtr scene = sceneLoader.load(info->file);
         if(!scene){
             resourceNode->throwException(
                 format(_("The resource is not found at URI \"{}\""), uri));

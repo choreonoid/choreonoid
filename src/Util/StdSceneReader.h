@@ -68,6 +68,7 @@ public:
         SgNodePtr scene;
         ValueNodePtr info;
         std::string uri;
+        std::string file;
         std::string directory;
         std::string fragment;
         std::string metadata;
