@@ -780,6 +780,16 @@ void StdSceneWriter::Impl::writeScaleTransform(Mapping* archive, SgScaleTransfor
 
 void StdSceneWriter::Impl::writeShape(Mapping* archive, SgShape* shape)
 {
+    if(auto mesh = shape->mesh()){
+        if(mesh->hasUri() && !shape->material() && !shape->texture()){
+            // Write the mesh as a resouce node
+            if(auto geometry = writeGeometry(shape)){
+                archive->insert(geometry);
+                return;
+            }
+        }
+    }
+    
     writeObjectHeader(archive, "Shape", shape);
 
     if(isAppearanceEnabled){
@@ -800,14 +810,22 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgShape* shape)
         return nullptr;
     }
 
+    bool isResource = mesh->hasUri() && (extModelFileMode != EmbedModels);
+
     MappingPtr archive;
-    bool found;
-    std::tie(archive, found) = findOrCreateMapping(mesh);
-    if(found){
-        return archive;
+    if(isResource){
+        // Geometry resource nodes should not be shared to make scene files more readable
+        // by avoiding aliases and anchors for URIs.
+        archive = new Mapping;
+    } else {
+        bool found;
+        std::tie(archive, found) = findOrCreateMapping(mesh);
+        if(found){
+            return archive;
+        }
     }
     
-    if(mesh->hasUri() && (extModelFileMode != EmbedModels)){
+    if(isResource){
         writeObjectHeader(archive, "Resource", mesh);
         if(extModelFileMode == LinkToOriginalModelFiles){
             makeLinkToOriginalModelFile(archive, mesh);
