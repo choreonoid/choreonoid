@@ -137,7 +137,7 @@ public:
     SgNode* readFog(Mapping* info);
     SgNode* readText(Mapping* info);
     SgNode* readResourceAsScene(Mapping* info);
-    Resource readResourceNode(Mapping* info, bool doSetUri);
+    Resource readResourceNode(Mapping* info);
     void extractNamedSceneNodes(Mapping* resourceNode, ResourceInfo* info, Resource& resource);
     ResourceInfo* getOrCreateResourceInfo(Mapping* resourceNode, const string& uri, const string& metadata);
     stdx::filesystem::path findFileInPackage(const string& file);
@@ -1304,13 +1304,11 @@ SgVertexArray* StdSceneReader::Impl::readVertices(Listing* srcVertices)
 
 SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping* info, int meshOptions)
 {
-    auto resource = readResourceNode(info, false);
+    auto resource = readResourceNode(info);
 
     SgNode* scene = nullptr;
-    bool isDirectResource = false;
     if(resource.scene){
         scene = resource.scene;
-        isDirectResource = true;
     } else if(resource.info){
         scene = readNode(resource.info->toMapping());
     }
@@ -1322,12 +1320,6 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping* info, int meshOpti
     auto mesh = shape->mesh();
     if(!mesh){
         info->throwException(_("A resouce specified as a geometry does not have a mesh"));
-    }
-    if(isDirectResource){
-        mesh->setUri(resource.uri, resource.file);
-        if(!resource.fragment.empty()){
-            resource.scene->setUriFragment(resource.fragment);
-        }
     }
         
     double creaseAngle;
@@ -1649,7 +1641,7 @@ SgNode* StdSceneReader::Impl::readText(Mapping* info)
 
 SgNode* StdSceneReader::Impl::readResourceAsScene(Mapping* info)
 {
-    auto resource = readResourceNode(info, true);
+    auto resource = readResourceNode(info);
     if(resource.scene){
         return resource.scene;
     } else if(resource.info){
@@ -1661,17 +1653,17 @@ SgNode* StdSceneReader::Impl::readResourceAsScene(Mapping* info)
 
 StdSceneReader::Resource StdSceneReader::readResourceNode(Mapping* info)
 {
-    return impl->readResourceNode(info, true);
+    return impl->readResourceNode(info);
 }
 
 
 StdSceneReader::Resource StdSceneReader::readResourceNode(Mapping& info)
 {
-    return impl->readResourceNode(&info, true);
+    return impl->readResourceNode(&info);
 }
 
 
-StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info, bool doSetUri)
+StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info)
 {
     Resource resource;
 
@@ -1709,10 +1701,10 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info, b
 
         if(resource.scene){
             resource.scene = readTransformParameters(info, resource.scene);
-            if(doSetUri){
-                resource.scene->setUri(resource.uri, resource.file);
+            if(auto uriObject = resource.scene->findObject([](SgObject* object){ return object->hasUri(); })){
+                uriObject->setUri(resource.uri, resource.file);
                 if(!resource.fragment.empty()){
-                    resource.scene->setUriFragment(resource.fragment);
+                    uriObject->setUriFragment(resource.fragment);
                 }
             }
         }
