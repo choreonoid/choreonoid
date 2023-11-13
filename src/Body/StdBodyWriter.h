@@ -24,6 +24,7 @@ public:
     enum ExtModelFileMode {
         EmbedModels = StdSceneWriter::EmbedModels,
         LinkToOriginalModelFiles = StdSceneWriter::LinkToOriginalModelFiles,
+        CopyModelFiles           = StdSceneWriter::CopyModelFiles,
         ReplaceWithStdSceneFiles = StdSceneWriter::ReplaceWithStdSceneFiles,
         ReplaceWithObjModelFiles = StdSceneWriter::ReplaceWithObjModelFiles
     };

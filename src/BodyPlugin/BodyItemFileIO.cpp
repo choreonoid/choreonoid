@@ -138,6 +138,8 @@ void BodyItemFileIoBase::addExtModelFileModeCombo(QBoxLayout* box)
     extModelFileModeCombo->addItem(
         _("Link to the original model files"), StdSceneWriter::LinkToOriginalModelFiles);
     extModelFileModeCombo->addItem(
+        _("Copy model files"), StdSceneWriter::CopyModelFiles);
+    extModelFileModeCombo->addItem(
         _("Embed models"), StdSceneWriter::EmbedModels);
     extModelFileModeCombo->addItem(
         _("Replace with standard scene files"), StdSceneWriter::ReplaceWithStdSceneFiles);

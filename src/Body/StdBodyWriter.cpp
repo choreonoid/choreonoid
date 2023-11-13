@@ -87,34 +87,13 @@ void StdBodyWriter::setMessageSink(std::ostream& os)
 
 void StdBodyWriter::setExtModelFileMode(int mode)
 {
-    switch(mode){
-    case EmbedModels:
-        impl->sceneWriter.setExtModelFileMode(StdSceneWriter::EmbedModels);
-        break;
-    case LinkToOriginalModelFiles:
-        impl->sceneWriter.setExtModelFileMode(StdSceneWriter::LinkToOriginalModelFiles);
-        break;
-    case ReplaceWithStdSceneFiles:
-        impl->sceneWriter.setExtModelFileMode(StdSceneWriter::ReplaceWithStdSceneFiles);
-        break;
-    case ReplaceWithObjModelFiles:
-        impl->sceneWriter.setExtModelFileMode(StdSceneWriter::ReplaceWithObjModelFiles);
-        break;
-    default:
-        break;
-    }
+    impl->sceneWriter.setExtModelFileMode(mode);
 }
 
 
 int StdBodyWriter::extModelFileMode() const
 {
-    switch(impl->sceneWriter.extModelFileMode()){
-    case StdSceneWriter::EmbedModels: return EmbedModels;
-    case StdSceneWriter::LinkToOriginalModelFiles: return LinkToOriginalModelFiles;
-    case StdSceneWriter::ReplaceWithStdSceneFiles: return ReplaceWithStdSceneFiles;
-    case StdSceneWriter::ReplaceWithObjModelFiles: return ReplaceWithObjModelFiles;
-    default: return -1;
-    }
+    return impl->sceneWriter.extModelFileMode();
 }
 
 
