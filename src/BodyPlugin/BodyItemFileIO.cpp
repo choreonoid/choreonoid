@@ -8,12 +8,15 @@
 #include <cnoid/ObjSceneWriter>
 #include <cnoid/ItemManager>
 #include <cnoid/SceneGraph>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <QLabel>
 #include <QSpinBox>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -235,7 +238,16 @@ void BodyItemBodyFileIO::fetchOptionPanelForSaving()
 
 bool BodyItemBodyFileIO::save(BodyItem* item, const std::string& filename)
 {
-    if(ensureBodyWriter()->writeBody(item->body(), filename)){
+    ensureBodyWriter();
+
+    filesystem::path itemFilePath(fromUTF8(item->filePath()));
+    if(!itemFilePath.empty()){
+        bodyWriter_->setOriginalBaseDirectory(toUTF8(itemFilePath.parent_path().generic_string()));
+    } else {
+        bodyWriter_->setOriginalBaseDirectory("");
+    }
+    
+    if(bodyWriter_->writeBody(item->body(), filename)){
         if(auto overwriteAddon = item->findAddon<BodyOverwriteAddon>()){
             overwriteAddon->removeOverwriteItems(false);
         }

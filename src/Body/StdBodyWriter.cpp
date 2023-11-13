@@ -118,6 +118,12 @@ int StdBodyWriter::extModelFileMode() const
 }
 
 
+void StdBodyWriter::setOriginalBaseDirectory(const std::string& directory)
+{
+    impl->sceneWriter.setOriginalBaseDirectory(directory);
+}
+
+
 void StdBodyWriter::setTransformIntegrationEnabled(bool on)
 {
     impl->sceneWriter.setTransformIntegrationEnabled(on);
@@ -144,7 +150,7 @@ bool StdBodyWriter::Impl::writeBody(Body* body, const std::string& filename)
 
     filesystem::path path(fromUTF8(filename));
     sceneWriter.setMainSceneName(toUTF8(path.stem().generic_string()));
-    sceneWriter.setBaseDirectory(toUTF8(path.parent_path().generic_string()));
+    sceneWriter.setOutputBaseDirectory(toUTF8(path.parent_path().generic_string()));
 
     updateDeviceWriteFunctions();
 
