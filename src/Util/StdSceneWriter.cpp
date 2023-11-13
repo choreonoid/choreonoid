@@ -49,7 +49,8 @@ public:
     unique_ptr<ObjSceneWriter> objSceneWriter;
     int numSkippedNode;
     string mainSceneName;
-    filesystem::path baseDirPath;
+    filesystem::path outputBaseDirPath;
+    filesystem::path originalBaseDirPath;
     set<string> extModelFiles;
     typedef unordered_map<SgObjectPtr, ValueNodePtr> SceneToYamlNodeMap;
     SceneToYamlNodeMap sceneToYamlNodeMap;
@@ -64,7 +65,7 @@ public:
     YAMLWriter* getOrCreateYamlWriter();
     StdSceneWriter* getOrCreateSubSceneWriter();
     ObjSceneWriter* getOrCreateObjSceneWriter();
-    void setBaseDirectory(const std::string& directory);
+    void setOutputBaseDirectory(const std::string& directory);
     void ensureUriSchemeProcessor(FilePathVariableProcessor* fpvp = nullptr);
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
     pair<MappingPtr, bool> findOrCreateMapping(SgObject* object);
@@ -172,7 +173,8 @@ void StdSceneWriter::Impl::copyConfigurations(const Impl* org)
     isAppearanceEnabled = org->isAppearanceEnabled;
     isMeshEnabled = org->isMeshEnabled;
     extModelFileMode = org->extModelFileMode;
-    baseDirPath = org->baseDirPath;
+    outputBaseDirPath = org->outputBaseDirPath;
+    originalBaseDirPath = org->originalBaseDirPath;
     os_ = org->os_;
     if(org->yamlWriter){
         getOrCreateYamlWriter()->setIndentWidth(org->yamlWriter->indentWidth());
@@ -234,15 +236,21 @@ void StdSceneWriter::setMainSceneName(const std::string& name)
 }
 
 
-void StdSceneWriter::setBaseDirectory(const std::string& directory)
+void StdSceneWriter::setOutputBaseDirectory(const std::string& directory)
 {
-    impl->setBaseDirectory(directory);
+    impl->setOutputBaseDirectory(directory);
 }
 
 
-void StdSceneWriter::Impl::setBaseDirectory(const std::string& directory)
+void StdSceneWriter::setBaseDirectory(const std::string& directory)
 {
-    baseDirPath = fromUTF8(directory);
+    impl->setOutputBaseDirectory(directory);
+}
+
+
+void StdSceneWriter::Impl::setOutputBaseDirectory(const std::string& directory)
+{
+    outputBaseDirPath = fromUTF8(directory);
     if(uriSchemeProcessor){
         uriSchemeProcessor->filePathVariableProcessor()->setBaseDirectory(directory);
     }
@@ -255,7 +263,7 @@ void StdSceneWriter::Impl::ensureUriSchemeProcessor(FilePathVariableProcessor* f
         uriSchemeProcessor = make_unique<UriSchemeProcessor>();
         if(!fpvp){
             fpvp = new FilePathVariableProcessor;
-            fpvp->setBaseDirPath(baseDirPath);
+            fpvp->setBaseDirPath(outputBaseDirPath);
         }
     }
     if(fpvp){
@@ -267,7 +275,7 @@ void StdSceneWriter::Impl::ensureUriSchemeProcessor(FilePathVariableProcessor* f
 void StdSceneWriter::setFilePathVariableProcessor(FilePathVariableProcessor* fpvp)
 {
     impl->ensureUriSchemeProcessor(fpvp);
-    impl->baseDirPath = fpvp->baseDirPath();
+    impl->outputBaseDirPath = fpvp->baseDirPath();
 }
 
 
@@ -286,6 +294,12 @@ void StdSceneWriter::setExtModelFileMode(int mode)
 int StdSceneWriter::extModelFileMode() const
 {
     return impl->extModelFileMode;
+}
+
+
+void StdSceneWriter::setOriginalBaseDirectory(const std::string& directory)
+{
+    impl->originalBaseDirPath = fromUTF8(directory);
 }
 
 
@@ -418,7 +432,7 @@ bool StdSceneWriter::Impl::writeScene
     header->write("format_version", "1.0");
     header->write("angle_unit", "degree");
     
-    setBaseDirectory(toUTF8(filesystem::path(fromUTF8(filename)).parent_path().generic_string()));
+    setOutputBaseDirectory(toUTF8(filesystem::path(fromUTF8(filename)).parent_path().generic_string()));
 
     numSkippedNode = 0;
 
@@ -577,21 +591,26 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
             if(!filesystem::exists(srcFilePath, ec)){
                 os() << format(_("Warning: File \"{0}\" is not found."), srcFile) << endl;
             } else {
-                uriSchemeProcessor->detectScheme(sceneObject->uri());
-                filesystem::path uriPath = fromUTF8(uriSchemeProcessor->path());
-                uriPath = uriPath.lexically_normal();
-                if(uriPath.has_root_path()){
-                    uriPath = uriPath.relative_path();
-                }
-                // Remove ".." elements
                 filesystem::path relativeFilePath;
-                for(auto& element : uriPath){
-                    if(element != ".."){
-                        relativeFilePath /= element;
+                if(!originalBaseDirPath.empty()){
+                    findPathInDirectory(originalBaseDirPath, srcFilePath, relativeFilePath);
+                }
+                if(relativeFilePath.empty()){
+                    uriSchemeProcessor->detectScheme(sceneObject->uri());
+                    filesystem::path uriPath = fromUTF8(uriSchemeProcessor->path());
+                    uriPath = uriPath.lexically_normal();
+                    if(uriPath.has_root_path()){
+                        uriPath = uriPath.relative_path();
+                    }
+                    // Remove ".." elements
+                    for(auto& element : uriPath){
+                        if(element != ".."){
+                            relativeFilePath /= element;
+                        }
                     }
                 }
                 if(!relativeFilePath.empty()){
-                    filesystem::path destFilePath = baseDirPath / relativeFilePath;
+                    filesystem::path destFilePath = outputBaseDirPath / relativeFilePath;
                     if(!filesystem::equivalent(srcFilePath, destFilePath, ec)){
                         filesystem::path destDirPath = destFilePath.parent_path();
                         filesystem::create_directories(destDirPath, ec);
@@ -599,8 +618,8 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
 #if __cplusplus > 201402L
                             filesystem::copy_file(
                                 srcFilePath, destFilePath, filesystem::copy_options::update_existing, ec);
-                            os() << format("Copy \"{0}\" to \"{1}\".",
-                                           toUTF8(srcFilePath.string()), toUTF8(destFilePath.string())) << endl;
+                            //os() << format("Copy \"{0}\" to \"{1}\".",
+                            //               toUTF8(srcFilePath.string()), toUTF8(destFilePath.string())) << endl;
 #else
                             bool doCopy = true;
                             if(filesystem::exists(destFilePath, ec)){
@@ -647,11 +666,8 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
     ensureUriSchemeProcessor();
 
     filesystem::path path;
-    if(uriSchemeProcessor->detectScheme(objectOfUri->uri())){
-        path = fromUTF8(uriSchemeProcessor->path());
-    } else {
-        path = fromUTF8(objectOfUri->uri());
-    }
+    uriSchemeProcessor->detectScheme(objectOfUri->uri());
+    path = fromUTF8(uriSchemeProcessor->path());
     path = path.stem();
     if(!mainSceneName.empty()){
         path = filesystem::path(fromUTF8(mainSceneName)) / path;
@@ -666,7 +682,7 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
     } else {
         path += ".scen";
     }
-    auto fullPath = filesystem::lexically_normal(baseDirPath / path);
+    auto fullPath = filesystem::lexically_normal(outputBaseDirPath / path);
     auto filename = fullPath.string();
 
     bool replaced = false;
@@ -1155,7 +1171,7 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
 
     if(auto image = texture->image()){
         if(image->hasUri()){
-            filesystem::path imageDirPath = baseDirPath;
+            filesystem::path imageDirPath = outputBaseDirPath;
             if(!mainSceneName.empty()){
                 imageDirPath /= filesystem::path(fromUTF8(mainSceneName));
             }
@@ -1164,7 +1180,7 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
                 uriSchemeProcessor->detectScheme(image->uri());
                 filesystem::path path(fromUTF8(uriSchemeProcessor->path()));
                 path = imageDirPath / path.filename();
-                if(auto relPath = getRelativePath(path, baseDirPath)){
+                if(auto relPath = getRelativePath(path, outputBaseDirPath)){
                     archive->write("uri", toUTF8(relPath->generic_string()), DOUBLE_QUOTED);
                 }
                 isValid = true;

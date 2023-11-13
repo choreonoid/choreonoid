@@ -27,8 +27,11 @@ public:
     void setMainSceneName(const std::string& name);
 
     // One of the settings is valid for the following two functions
-    void setBaseDirectory(const std::string& directory);
+    void setOutputBaseDirectory(const std::string& directory);
     void setFilePathVariableProcessor(FilePathVariableProcessor* processor);
+
+    [[deprecated("Use setOutputBaseDirectory.")]]
+    void setBaseDirectory(const std::string& directory);
 
     void setIndentWidth(int n);
 
@@ -41,6 +44,14 @@ public:
     };
     void setExtModelFileMode(int mode);
     int extModelFileMode() const;
+
+    /**
+       Set the base directory of the files from which the target scene graph was loaded.
+       If this directory is specified, relative file path from the main scene file to
+       each external model files copied from the original model files may be simplified
+       in the CopyModelFiles mode.
+    */
+    void setOriginalBaseDirectory(const std::string& directory);
 
     void setTopGroupNodeSkippingEnabled(bool on);
     bool isTopGroupNodeSkippingEnabled() const;
