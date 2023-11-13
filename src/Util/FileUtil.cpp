@@ -54,7 +54,7 @@ void makePathCompact(filesystem::path& io_path)
 }
 
 
-int findPathInDirectory(const filesystem::path& directory, const filesystem::path& path, filesystem::path& out_subdirectory)
+int findPathInDirectory(const filesystem::path& directory, const filesystem::path& path, filesystem::path& out_relativePath)
 {
     int numMatchedDepth = 0;
         
@@ -74,9 +74,9 @@ int findPathInDirectory(const filesystem::path& directory, const filesystem::pat
         }
             
         if(p == directory.end()){
-            out_subdirectory.clear();
+            out_relativePath.clear();
             while(q != compactPath.end()){
-                out_subdirectory /= *q++;
+                out_relativePath /= *q++;
             }
             return numMatchedDepth;
         }

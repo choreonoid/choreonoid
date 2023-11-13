@@ -26,7 +26,7 @@ CNOID_EXPORT void makePathCompact(stdx::filesystem::path& io_path);
 CNOID_EXPORT int findPathInDirectory(
     const stdx::filesystem::path& directory,
     const stdx::filesystem::path& path,
-    stdx::filesystem::path& out_subdirectory);
+    stdx::filesystem::path& out_relativePath);
 
 [[deprecated("Use findPathInDirectory.")]]
 CNOID_EXPORT int findSubDirectory(
