@@ -26,6 +26,7 @@
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/AttachmentDevice>
 #include <cnoid/HolderDevice>
+#include <cnoid/LinkedJointHandler>
 #include <cnoid/RenderableItemUtil>
 #include <cnoid/EigenArchive>
 #include <cnoid/CloneMap>
@@ -825,6 +826,10 @@ void BodyItem::Impl::setPresetPose(BodyItem::PresetPoseID id)
     while(jointIndex < n){
         Link* joint = body->joint(jointIndex++);
         joint->q() = joint->q_initial();
+    }
+
+    if(auto linkedJointHandler = body->findHandler<LinkedJointHandler>()){
+        linkedJointHandler->updateLinkedJointDisplacements();
     }
 
     fkTraverse.calcForwardKinematics();
