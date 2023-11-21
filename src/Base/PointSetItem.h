@@ -1,12 +1,9 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_POINT_SET_ITEM_H
 #define CNOID_BASE_POINT_SET_ITEM_H
 
 #include "Item.h"
 #include "RenderableItem.h"
+#include "LocatableItem.h"
 #include <cnoid/EigenTypes>
 #include <cnoid/stdx/optional>
 #include "exportdecl.h"
@@ -16,7 +13,7 @@ namespace cnoid {
 class SgPointSet;
 class PolyhedralRegion;
 
-class CNOID_EXPORT PointSetItem : public Item, public RenderableItem
+class CNOID_EXPORT PointSetItem : public Item, public RenderableItem, public LocatableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -30,24 +27,17 @@ public:
     SgPointSet* pointSet();
 
     virtual void notifyUpdate() override;
-
     virtual SgNode* getScene() override;
+    virtual LocationProxyPtr getLocationProxy() override;
 
     const Isometry3& offsetPosition() const;
     void setOffsetPosition(const Isometry3& T);
-    SignalProxy<void(const Isometry3& T)> sigOffsetPositionChanged();
+    Vector3 offsetTranslation() const;
+    void setOffsetTranslation(const Vector3& p);
+    SignalProxy<void()> sigOffsetPositionChanged();
     void notifyOffsetPositionChange(bool doNotifyScene = true);
 
     SgPointSet* getTransformedPointSet() const;
-
-    [[deprecated("Use offsetPosition.")]]
-    const Isometry3& offsetTransform() const { return offsetPosition(); }
-    [[deprecated("Use setOffsetPosition.")]]
-    void setOffsetTransform(const Isometry3& T) { setOffsetPosition(T); }
-    [[deprecated("Use sigOffsetPositionChanged.")]]
-     SignalProxy<void(const Isometry3& T)> sigOffsetTransformChanged() { return sigOffsetPositionChanged(); }
-    [[deprecated("Use notifyOffsetPositionChange.")]]
-    void notifyOffsetTransformChange() { notifyOffsetPositionChange(); }
 
     enum RenderingMode {
         POINT, VOXEL, N_RENDERING_MODES

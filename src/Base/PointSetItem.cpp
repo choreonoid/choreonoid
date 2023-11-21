@@ -1,11 +1,7 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "PointSetItem.h"
 #include "RectRegionMarker.h"
 #include "ItemManager.h"
+#include "ItemFileIO.h"
 #include "MenuManager.h"
 #include "PutPropertyFunction.h"
 #include "Archive.h"
@@ -25,7 +21,13 @@ using namespace cnoid;
 
 namespace {
 
-class ScenePointSet;
+class PointSetItemPcdFileIo : public ItemFileIoBase<PointSetItem>
+{
+public:
+    PointSetItemPcdFileIo();
+    virtual bool load(PointSetItem* item, const std::string& filename) override;
+    virtual bool save(PointSetItem* item, const std::string& filename) override;
+};
 
 class ScenePointSet : public SgPosTransform, public SceneWidgetEventHandler
 {
@@ -44,8 +46,6 @@ public:
     ScopedConnection eraserModeMenuItemConnection;
     bool isEditable_;
 
-    Signal<void(const Isometry3& T)> sigOffsetPositionChanged;
-    
     Signal<void()> sigAttentionPointsChanged;
     SgGroupPtr attentionPointMarkerGroup;
     
@@ -75,6 +75,18 @@ public:
 
 typedef ref_ptr<ScenePointSet> ScenePointSetPtr;
 
+class PointSetLocation : public LocationProxy
+{
+public:
+    PointSetItem* item;
+
+    PointSetLocation(PointSetItem* item);
+    virtual std::string getName() const override;
+    virtual Isometry3 getLocation() const override;
+    virtual bool setLocation(const Isometry3& T) override;
+    virtual SignalProxy<void()> sigLocationChanged() override;
+};
+
 }
 
 namespace cnoid {
@@ -86,7 +98,9 @@ public:
     SgPointSetPtr pointSet;
     ScenePointSetPtr scene;
     ScopedConnection pointSetUpdateConnection;
+    Signal<void()> sigOffsetPositionChanged;
     Signal<void(const PolyhedralRegion& region)> sigPointsInRegionRemoved;
+    ref_ptr<PointSetLocation> location;
 
     Impl(PointSetItem* self);
     Impl(PointSetItem* self, const Impl& org, CloneMap* cloneMap);
@@ -103,30 +117,43 @@ public:
 }
 
 
-static bool loadPCD(PointSetItem* item, const std::string& filename, std::ostream& os)
+PointSetItemPcdFileIo::PointSetItemPcdFileIo()
+    : ItemFileIoBase("PCD", Load | Save)
+{
+    setCaption(_("Point Cloud"));
+    setFileTypeCaption("PCD");
+    setExtensionForLoading("pcd");
+    addFormatAlias("PCD-FILE");
+}
+
+
+bool PointSetItemPcdFileIo::load(PointSetItem* item, const std::string& filename)
 {
     try {
         cnoid::loadPCD(item->pointSet(), filename);
-        os << item->pointSet()->vertices()->size() << " points have been loaded.";
-        item->pointSet()->notifyUpdate();
+        os() << item->pointSet()->vertices()->size() << " points have been loaded.";
+        auto itype = currentInvocationType();
+        if(itype == Dialog || itype == DragAndDrop){
+            item->setChecked(true);
+        }
         return true;
     } catch (boost::exception& ex) {
         if(std::string const * message = boost::get_error_info<error_info_message>(ex)){
-            os << *message;
+            putError(*message);
         }
     }
     return false;
 }
 
 
-static bool saveAsPCD(PointSetItem* item, const std::string& filename, std::ostream& os)
+bool PointSetItemPcdFileIo::save(PointSetItem* item, const std::string& filename)
 {
     try {
         cnoid::savePCD(item->pointSet(), filename, item->offsetPosition());
         return true;
     } catch (boost::exception& ex) {
         if(std::string const * message = boost::get_error_info<error_info_message>(ex)){
-            os << *message;
+            putError(*message);
         }
     }
     return false;
@@ -140,14 +167,7 @@ void PointSetItem::initializeClass(ExtensionManager* ext)
         ItemManager& im = ext->itemManager();
         im.registerClass<PointSetItem>(N_("PointSetItem"));
         im.addCreationPanel<PointSetItem>();
-        im.addLoaderAndSaver<PointSetItem>(
-            _("Point Cloud (PCD)"), "PCD-FILE", "pcd",
-            [](PointSetItem* item, const std::string& filename, std::ostream& os, Item*){
-                return ::loadPCD(item, filename, os); },
-            [](PointSetItem* item, const std::string& filename, std::ostream& os, Item*){
-                return ::saveAsPCD(item, filename, os); },
-            ItemManager::PRIORITY_CONVERSION);
-        
+        im.addFileIO<PointSetItem>(new PointSetItemPcdFileIo);
         initialized = true;
     }
 }
@@ -216,16 +236,25 @@ bool PointSetItem::setName(const std::string& name)
 }
 
 
+void PointSetItem::notifyUpdate()
+{
+    impl->scene->updateVisualization(true);
+    Item::notifyUpdate();
+}
+
+
 SgNode* PointSetItem::getScene()
 {
     return impl->scene;
 }
 
 
-void PointSetItem::notifyUpdate()
+LocationProxyPtr PointSetItem::getLocationProxy()
 {
-    impl->scene->updateVisualization(true);
-    Item::notifyUpdate();
+    if(!impl->location){
+        impl->location = new PointSetLocation(this);
+    }
+    return impl->location;
 }
 
 
@@ -253,15 +282,27 @@ void PointSetItem::setOffsetPosition(const Isometry3& T)
 }
 
 
-SignalProxy<void(const Isometry3& T)> PointSetItem::sigOffsetPositionChanged()
+Vector3 PointSetItem::offsetTranslation() const
 {
-    return impl->scene->sigOffsetPositionChanged;
+    return impl->scene->translation();
+}
+
+
+void PointSetItem::setOffsetTranslation(const Vector3& p)
+{
+    impl->scene->setTranslation(p);
+}
+
+
+SignalProxy<void()> PointSetItem::sigOffsetPositionChanged()
+{
+    return impl->sigOffsetPositionChanged;
 }
 
 
 void PointSetItem::notifyOffsetPositionChange(bool doNotifyScene)
 {
-    impl->scene->sigOffsetPositionChanged(impl->scene->T());
+    impl->sigOffsetPositionChanged();
     if(doNotifyScene){
         impl->scene->notifyUpdate(impl->scene->update.withAction(SgUpdate::Modified));
     }
@@ -594,6 +635,17 @@ bool PointSetItem::store(Archive& archive)
 
 bool PointSetItem::restore(const Archive& archive)
 {
+    std::string filename, formatId;
+    if(archive.read("file", filename) && archive.read("format", formatId)){
+        filename = archive.resolveRelocatablePath(filename);
+        if(filename.empty()){
+            return false; // Invalid relocatable path
+        }
+        if(!load(filename, archive.currentParentItem(), formatId)){
+            return false;
+        }
+    }
+    
     ScenePointSet* scene = impl->scene;
 
     Vector3 translation;
@@ -620,21 +672,9 @@ bool PointSetItem::restore(const Archive& archive)
     scene->setVoxelSize(archive.get({ "voxel_size", "voxelSize" }, voxelSize()));
     setEditable(archive.get({ "is_editable", "isEditable" }, isEditable()));
 
-    std::string filename, formatId;
-    if(archive.read("file", filename) && archive.read("format", formatId)){
-        filename = archive.resolveRelocatablePath(filename);
-        if(filename.empty()){
-            return false; // Invalid relocatable path
-        }
-        return load(filename, archive.currentParentItem(), formatId);
-    }
-    
-    // Restoration succeeds when there is no associated file information
     return true;
 }
 
-
-namespace {
 
 ScenePointSet::ScenePointSet(PointSetItem::Impl* pointSetItemImpl)
     : weakPointSetItem(pointSetItemImpl->self),
@@ -960,4 +1000,36 @@ void ScenePointSet::onRegionFixed(const PolyhedralRegion& region)
     }
 }
 
+
+PointSetLocation::PointSetLocation(PointSetItem* item)
+    : LocationProxy(GlobalLocation),
+      item(item)
+{
+
+}
+
+
+std::string PointSetLocation::getName() const
+{
+    return fmt::format(_("Offset position of {0}"), item->displayName());
+}
+
+
+Isometry3 PointSetLocation::getLocation() const
+{
+    return item->offsetPosition();
+}
+
+
+bool PointSetLocation::setLocation(const Isometry3& T)
+{
+    item->setOffsetPosition(T);
+    item->notifyUpdate();
+    return true;
+}
+
+
+SignalProxy<void()> PointSetLocation::sigLocationChanged()
+{
+    return item->sigOffsetPositionChanged();
 }

@@ -134,7 +134,7 @@ void MultiPointSetItem::initializeClass(ExtensionManager* ext)
         im.registerClass<MultiPointSetItem>(N_("MultiPointSetItem"));
         im.addCreationPanel<MultiPointSetItem>();
         im.addLoaderAndSaver<MultiPointSetItem>(
-            _("Multi Point Sets"), "MULTI-PCD-SET", "yaml",
+            _("Multi Point Clouds"), "MULTI-PCD-SET", "yaml",
             [](MultiPointSetItem* item, const std::string& filename, std::ostream& os, Item*){
                 return MultiPointSetItem::Impl::loadItem(item, filename); },
             [](MultiPointSetItem* item, const std::string& filename, std::ostream& os, Item*){
