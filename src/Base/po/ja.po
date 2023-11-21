@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-06-21 18:34+0900\n"
+"POT-Creation-Date: 2023-11-21 22:03+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1123,8 +1123,8 @@ msgstr "ディレクトリの選択"
 msgid "MultiPointSetItem"
 msgstr "複数ポイントセットアイテム"
 
-msgid "Multi Point Sets"
-msgstr "複数ポイントセット"
+msgid "Multi Point Clouds"
+msgstr "複数ポイントクラウド"
 
 msgid "All"
 msgstr "全て"
@@ -1275,17 +1275,20 @@ msgstr "プラグインの読み込み"
 msgid "Plugin files (*.%1)"
 msgstr "プラグインファイル (*.%1)"
 
+msgid "Point Cloud"
+msgstr "ポイントクラウド"
+
 msgid "PointSetItem"
 msgstr "ポイントセットアイテム"
-
-msgid "Point Cloud (PCD)"
-msgstr "ポイントクラウド(PCD)"
 
 msgid "Editable"
 msgstr "編集可能"
 
 msgid "Num points"
 msgstr "ポイント数"
+
+msgid "Offset position of {0}"
+msgstr "{0}のオフセット位置"
 
 msgid "PositionTagGroupItem"
 msgstr "ポジションタググループアイテム"
