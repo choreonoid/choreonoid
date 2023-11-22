@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-07-14 01:35+0900\n"
+"POT-Creation-Date: 2023-11-23 00:38+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -136,13 +136,11 @@ msgstr "左側の姿勢を右側にコピー"
 msgid "BodyContactPointLogItem"
 msgstr "ボディ接触点ログアイテム"
 
-#, fuzzy
 msgid "Body Contact Point Log File"
-msgstr "ボディ接触点ログアイテム"
+msgstr "ボディ接触点ログファイル"
 
-#, fuzzy
 msgid "Body Contact Point Log File (YAML)"
-msgstr "ボディ接触点ログアイテム"
+msgstr "ボディ接触点ログファイル（YAML）"
 
 msgid "BodyContactPointLoggerItem"
 msgstr "ボディ接触点ロガーアイテム"
@@ -182,6 +180,9 @@ msgstr "ベースリンク"
 
 msgid "Mass"
 msgstr "質量"
+
+msgid "Center of mass"
+msgstr "重心"
 
 msgid "Dynamic"
 msgstr "動的"
@@ -239,6 +240,9 @@ msgstr "外部モデルファイルモード："
 
 msgid "Link to the original model files"
 msgstr "元のモデルファイルにリンク"
+
+msgid "Copy model files"
+msgstr "元のモデルファイルをコピー"
 
 msgid "Embed models"
 msgstr "モデルを埋め込む"
@@ -631,6 +635,9 @@ msgstr "ボディ状態ロガーアイテム"
 msgid "Online logging"
 msgstr "オンラインロギング"
 
+msgid "All joints"
+msgstr "全関節"
+
 msgid "Joint effort"
 msgstr "関節エフォート"
 
@@ -984,9 +991,6 @@ msgstr "関節速度チェック"
 msgid "Limit ratio"
 msgstr "仕様制約値に対する割合"
 
-msgid "All joints"
-msgstr "全関節"
-
 msgid "Selected joints"
 msgstr "選択関節"
 
@@ -1272,9 +1276,6 @@ msgstr "並進オフセット"
 
 msgid "Offset rotation"
 msgstr "回転オフセット"
-
-msgid "Center of mass"
-msgstr "重心"
 
 msgid "Inertia tensor"
 msgstr "慣性テンソル"
