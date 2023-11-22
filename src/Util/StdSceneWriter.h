@@ -45,6 +45,9 @@ public:
     void setExtModelFileMode(int mode);
     int extModelFileMode() const;
 
+    void setOriginalSceneExtModelFileUriRewritingEnabled(bool on);
+    bool isOriginalSceneExtModelFileUriRewritingEnabled() const;
+
     /**
        Set the base directory of the files from which the target scene graph was loaded.
        If this directory is specified, relative file path from the main scene file to
@@ -76,6 +79,8 @@ public:
     
     virtual bool writeScene(const std::string& filename, SgNode* node) override;
     bool writeScene(const std::string& filename, const std::vector<SgNode*>& nodes);
+
+    void rewriteOriginalSceneExtModelFileUris();
 
 private:
     class Impl;

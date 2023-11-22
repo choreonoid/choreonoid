@@ -32,6 +32,7 @@ class StdSceneWriter::Impl
 {
 public:
     StdSceneWriter* self;
+
     PolymorphicSceneNodeFunctionSet writeFunctions;
     MappingPtr currentArchive;
     SgNodePtr nodeToIntegrate;
@@ -41,7 +42,6 @@ public:
     bool isAppearanceEnabled;
     bool isReplacingExistingModelFile;
     bool isMeshEnabled;
-    int extModelFileMode;
     SgMaterialPtr defaultMaterial;
     unique_ptr<UriSchemeProcessor> uriSchemeProcessor;
     unique_ptr<YAMLWriter> yamlWriter;
@@ -49,11 +49,16 @@ public:
     unique_ptr<ObjSceneWriter> objSceneWriter;
     int numSkippedNode;
     string mainSceneName;
+    string outputBaseDirectory;
     filesystem::path outputBaseDirPath;
     filesystem::path originalBaseDirPath;
-    set<string> extModelFiles;
     typedef unordered_map<SgObjectPtr, ValueNodePtr> SceneToYamlNodeMap;
     SceneToYamlNodeMap sceneToYamlNodeMap;
+
+    int extModelFileMode;
+    bool isOriginalSceneExtModelFileUriRewritingEnabled;
+    unordered_map<SgObjectPtr, string> uriRewritingMap;
+    set<string> extModelFiles;
     regex uriSchemeRegex;
     bool isUriSchemeRegexReady;
 
@@ -68,6 +73,7 @@ public:
     void setOutputBaseDirectory(const std::string& directory);
     void ensureUriSchemeProcessor(FilePathVariableProcessor* fpvp = nullptr);
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
+    void rewriteOriginalSceneExtModelFileUris();
     pair<MappingPtr, bool> findOrCreateMapping(SgObject* object);
     pair<ListingPtr, bool> findOrCreateListing(SgObject* object);
     ValueNodePtr writeSceneNode(SgNode* node);
@@ -151,6 +157,7 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
     isAppearanceEnabled = true;
     isReplacingExistingModelFile = false;
     isMeshEnabled = true;
+    isOriginalSceneExtModelFileUriRewritingEnabled = false;
     extModelFileMode = EmbedModels;
     isUriSchemeRegexReady = false;
 
@@ -173,6 +180,7 @@ void StdSceneWriter::Impl::copyConfigurations(const Impl* org)
     isAppearanceEnabled = org->isAppearanceEnabled;
     isMeshEnabled = org->isMeshEnabled;
     extModelFileMode = org->extModelFileMode;
+    outputBaseDirectory = org->outputBaseDirectory;
     outputBaseDirPath = org->outputBaseDirPath;
     originalBaseDirPath = org->originalBaseDirPath;
     os_ = org->os_;
@@ -250,6 +258,7 @@ void StdSceneWriter::setBaseDirectory(const std::string& directory)
 
 void StdSceneWriter::Impl::setOutputBaseDirectory(const std::string& directory)
 {
+    outputBaseDirectory = directory;
     outputBaseDirPath = fromUTF8(directory);
     if(uriSchemeProcessor){
         uriSchemeProcessor->filePathVariableProcessor()->setBaseDirectory(directory);
@@ -275,6 +284,7 @@ void StdSceneWriter::Impl::ensureUriSchemeProcessor(FilePathVariableProcessor* f
 void StdSceneWriter::setFilePathVariableProcessor(FilePathVariableProcessor* fpvp)
 {
     impl->ensureUriSchemeProcessor(fpvp);
+    impl->outputBaseDirectory = fpvp->baseDirectory();
     impl->outputBaseDirPath = fpvp->baseDirPath();
 }
 
@@ -294,6 +304,18 @@ void StdSceneWriter::setExtModelFileMode(int mode)
 int StdSceneWriter::extModelFileMode() const
 {
     return impl->extModelFileMode;
+}
+
+
+void StdSceneWriter::setOriginalSceneExtModelFileUriRewritingEnabled(bool on)
+{
+    impl->isOriginalSceneExtModelFileUriRewritingEnabled = on;
+}
+
+
+bool StdSceneWriter::isOriginalSceneExtModelFileUriRewritingEnabled() const
+{
+    return impl->isOriginalSceneExtModelFileUriRewritingEnabled;
 }
 
 
@@ -354,8 +376,9 @@ bool StdSceneWriter::isMeshEnabled() const
 void StdSceneWriter::clear()
 {
     impl->mainSceneName.clear();
-    impl->extModelFiles.clear();
     impl->sceneToYamlNodeMap.clear();
+    impl->uriRewritingMap.clear();
+    impl->extModelFiles.clear();
 }
 
 
@@ -456,6 +479,22 @@ bool StdSceneWriter::Impl::writeScene
     sceneToYamlNodeMap.clear();    
     
     return true;
+}
+
+
+void StdSceneWriter::rewriteOriginalSceneExtModelFileUris()
+{
+    impl->rewriteOriginalSceneExtModelFileUris();
+}
+
+
+void StdSceneWriter::Impl::rewriteOriginalSceneExtModelFileUris()
+{
+    for(auto& kv : uriRewritingMap){
+        auto& object = kv.first;
+        auto& uri = kv.second;
+        object->setUriWithFilePathAndBaseDirectory(uri, outputBaseDirectory);
+    }
 }
 
 
@@ -637,7 +676,10 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
                         }
                     }
                     if(!ec){
-                        relativeFilePathToCopiedFile = fromUTF8(relativeFilePath.generic_string());
+                        relativeFilePathToCopiedFile = toUTF8(relativeFilePath.generic_string());
+                        if(isOriginalSceneExtModelFileUriRewritingEnabled){
+                            uriRewritingMap[sceneObject] = relativeFilePathToCopiedFile;
+                        }
                     } else {
                         os() << format(_("Warning: File \"{0}\" cannot be copied: {1}"),
                                        sceneObject->localFileAbsolutePath(), ec.message()) << endl;
@@ -647,9 +689,11 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
         }
     }
 
-    int n = sceneObject->numChildObjects();
-    for(int i=0; i < n; ++i){
-        copyModelFiles(sceneObject->childObject(i));
+    if(!relativeFilePathToCopiedFile.empty()){
+        int n = sceneObject->numChildObjects();
+        for(int i=0; i < n; ++i){
+            copyModelFiles(sceneObject->childObject(i));
+        }
     }
 
     return relativeFilePathToCopiedFile;
@@ -706,6 +750,10 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
         }
         filesystem::create_directories(fullPath.parent_path(), ec);
         if(!ec){
+            /*
+              TODO: If isOriginalSceneExtModelFileUriRewritingEnabled is true,
+              a similar option should be applied for the following sub writers.
+            */
             if(extModelFileMode == ReplaceWithObjModelFiles){
                 auto writer = getOrCreateObjSceneWriter();
                 writer->setMaterialEnabled(isAppearanceEnabled);
@@ -719,8 +767,12 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
     }
 
     if(replaced){
-        archive->write("uri", path.generic_string(), DOUBLE_QUOTED);
-        
+        string uri = toUTF8(path.generic_string());
+        archive->write("uri", uri, DOUBLE_QUOTED);
+
+        if(isOriginalSceneExtModelFileUriRewritingEnabled){
+            uriRewritingMap[objectOfUri] = uri;
+        }
     } else {
         if(ec){
             os() << format(_("Warning: Failed to replace model file \"{0}\" with \"{1}\". {2}"),

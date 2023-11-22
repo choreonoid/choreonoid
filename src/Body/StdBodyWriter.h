@@ -30,6 +30,9 @@ public:
     void setExtModelFileMode(int mode);
     int extModelFileMode() const;
 
+    void setOriginalShapeExtModelFileUriRewritingEnabled(bool on);
+    bool isOriginalShapeExtModelFileUriRewritingEnabled() const;
+
     /**
        Set the base directory of the files from which external model (mesh) files are loaded.
        If this directory is specified, relative file path from the body file to each

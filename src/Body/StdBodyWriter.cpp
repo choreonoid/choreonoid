@@ -118,6 +118,18 @@ int StdBodyWriter::extModelFileMode() const
 }
 
 
+void StdBodyWriter::setOriginalShapeExtModelFileUriRewritingEnabled(bool on)
+{
+    impl->sceneWriter.setOriginalSceneExtModelFileUriRewritingEnabled(on);
+}
+
+
+bool StdBodyWriter::isOriginalShapeExtModelFileUriRewritingEnabled() const
+{
+    return impl->sceneWriter.isOriginalSceneExtModelFileUriRewritingEnabled();
+}
+
+
 void StdBodyWriter::setOriginalBaseDirectory(const std::string& directory)
 {
     impl->sceneWriter.setOriginalBaseDirectory(directory);
@@ -165,6 +177,10 @@ bool StdBodyWriter::Impl::writeBody(Body* body, const std::string& filename)
             yamlWriter.putNode(topNode);
             result = true;
             yamlWriter.closeFile();
+
+            if(sceneWriter.isOriginalSceneExtModelFileUriRewritingEnabled()){
+                sceneWriter.rewriteOriginalSceneExtModelFileUris();
+            }
         }
     }
     

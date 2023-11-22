@@ -212,6 +212,7 @@ StdBodyWriter* BodyItemBodyFileIO::ensureBodyWriter()
     if(!bodyWriter_){
         bodyWriter_ = new StdBodyWriter;
         bodyWriter_->setMessageSink(os());
+        bodyWriter_->setOriginalShapeExtModelFileUriRewritingEnabled(true);
     }
     return bodyWriter_;
 }
