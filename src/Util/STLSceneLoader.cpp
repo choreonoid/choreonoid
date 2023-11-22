@@ -814,6 +814,7 @@ void AsciiMeshLoader::loadTriangles()
         string name;
         if(scanner.readString(name)){
             sharedMesh->setName(name);
+            sharedMesh->setUriObjectName(name);
         }
         scanner.checkLFEx();
         scanner.getLine();

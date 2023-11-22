@@ -748,7 +748,8 @@ void StdSceneWriter::Impl::writeObjectHeader(Mapping* archive, const char* typeN
         typeNode->setAsHeaderInMapping();
         archive->insert("type", typeNode);
     }
-    if(!object->name().empty()){
+    const auto& name = object->name();
+    if(!name.empty() && (!object->hasUriObjectName() || name != object->uriObjectName())){
         archive->write("name", object->name());
     }
     if(object->hasAttribute(SgObject::MetaScene)){

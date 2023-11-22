@@ -204,6 +204,15 @@ std::string SgObject::localFileAbsolutePath() const
 }
 
 
+const std::string& SgObject::uriObjectName() const
+{
+    if(!uriInfo){
+        uriInfo.reset(new UriInfo);
+    }
+    return uriInfo->objectName;
+}
+
+
 const std::string& SgObject::uriFragment() const
 {
     if(!uriInfo){
@@ -271,6 +280,15 @@ void SgObject::setUri(const std::string& uri, const std::string& absoluteUri)
     } else {
         uriInfo->absoluteUri = format("file://{0}", absoluteUri);
     }
+}
+
+
+void SgObject::setUriObjectName(const std::string& name)
+{
+    if(!uriInfo){
+        uriInfo.reset(new UriInfo);
+    }
+    uriInfo->objectName = name;
 }
 
 

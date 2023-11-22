@@ -127,6 +127,8 @@ public:
     bool hasAbsoluteUri() const { return uriInfo && !uriInfo->absoluteUri.empty(); }
     const std::string& absoluteUri() const;
     std::string localFileAbsolutePath() const;
+    bool hasUriObjectName() const { return uriInfo && !uriInfo->objectName.empty(); }
+    const std::string& uriObjectName() const;
     bool hasUriFragment() const { return uriInfo && !uriInfo->fragment.empty(); }
     const std::string& uriFragment() const;
     bool hasUriMetadataString() const { return uriInfo && !uriInfo->metadata.empty(); }
@@ -138,6 +140,7 @@ public:
     [[deprecated("Use setUriWithFilePathAndCurrentDirectory")]]
     void setUriByFilePathAndCurrentDirectory(const std::string& filePath);
     void setUri(const std::string& uri, const std::string& absoluteUri);
+    void setUriObjectName(const std::string& name);
     void setUriFragment(const std::string& fragment);
     void setUriMetadataString(const std::string& data);
     void clearUri() { uriInfo.reset(); }
@@ -167,6 +170,7 @@ private:
     struct UriInfo {
         std::string uri;
         std::string absoluteUri;
+        std::string objectName;
         std::string fragment;
         std::string metadata;
     };
