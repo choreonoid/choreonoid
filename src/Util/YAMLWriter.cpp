@@ -58,8 +58,7 @@ public:
     void newLine();
     void indent();
     bool makeValuePutReady();
-    void putAnchor();
-    bool startValuePut();
+    bool startValuePut(bool doPutValueInSameLine);
     void endValuePut();
     void putString(const std::string& value);
     void putString(const char* value);
@@ -115,7 +114,7 @@ YAMLWriter::Impl::Impl(YAMLWriter* self, std::ostream& os)
 {
     indentWidth = 2;
     isCurrentNewLine = true;
-    current = 0;
+    current = nullptr;
     numDocuments = 0;
     isKeyOrderPreservationMode = false;
     messageSink_ = &nullout();
@@ -307,20 +306,12 @@ bool YAMLWriter::Impl::makeValuePutReady()
 }
 
 
-void YAMLWriter::Impl::putAnchor()
-{
-    if(!anchor.empty()){
-        os() << anchor;
-        anchor.clear();
-    }
-}
-
-
-bool YAMLWriter::Impl::startValuePut()
+bool YAMLWriter::Impl::startValuePut(bool doPutValueInSameLine)
 {
     if(!makeValuePutReady()){
         return false;
     }
+    
     if(current->type == LISTING && current->isFlowStyle){
         if(current->hasValuesBeenPut){
             os() << ", ";
@@ -332,7 +323,16 @@ bool YAMLWriter::Impl::startValuePut()
             isCurrentNewLine = false;
         }
     }
-    putAnchor();
+
+    // Put an anchor
+    if(!anchor.empty()){
+        os() << anchor;
+        if(doPutValueInSameLine || current->isFlowStyle){
+            os() << " ";
+        }
+        anchor.clear();
+    }
+
     return true;
 }
 
@@ -351,7 +351,7 @@ void YAMLWriter::Impl::endValuePut()
 
 void YAMLWriter::Impl::putString(const std::string& value)
 {
-    if(startValuePut()){
+    if(startValuePut(true)){
         if(value.empty()){
             os() << "\"\"";
         } else {
@@ -364,7 +364,7 @@ void YAMLWriter::Impl::putString(const std::string& value)
 
 void YAMLWriter::Impl::putString(const char* value)
 {
-    if(startValuePut()){
+    if(startValuePut(true)){
         if(value[0] == '\0'){
             os() << "\"\"";
         } else {
@@ -389,7 +389,7 @@ void YAMLWriter::putString(const std::string& value)
 
 template<class StringType> void YAMLWriter::Impl::putSingleQuotedString(const StringType& value)
 {
-    if(startValuePut()){
+    if(startValuePut(true)){
         os() << "'" << value << "'";
         endValuePut();
     }
@@ -410,7 +410,7 @@ void YAMLWriter::putSingleQuotedString(const std::string& value)
 
 void YAMLWriter::Impl::putDoubleQuotedString(const char* value)
 {
-    if(startValuePut()){
+    if(startValuePut(true)){
         os() << "\"";
         while(true){
             switch(*value){
@@ -430,7 +430,7 @@ end:
 
 void YAMLWriter::Impl::putDoubleQuotedString(const string& value)
 {
-    if(startValuePut()){
+    if(startValuePut(true)){
         os() << "\"";
         for(size_t i=0; i < value.size(); ++i){
             switch(value[i]){
@@ -465,7 +465,7 @@ void YAMLWriter::Impl::putBlockStyleString(const std::string& value, bool isLite
         throw ex;
     }
     
-    if(startValuePut()){
+    if(startValuePut(true)){
 
         if(isLiteral){
             os() << "|\n";
@@ -571,7 +571,7 @@ void YAMLWriter::startFlowStyleMapping()
 
 void YAMLWriter::Impl::startMappingSub(bool isFlowStyle)
 {
-    if(startValuePut()){
+    if(startValuePut(isFlowStyle)){
         int parentType = current->type;
         State& state = pushState(MAPPING, isFlowStyle);
         if(state.isFlowStyle){
@@ -662,7 +662,7 @@ void YAMLWriter::startFlowStyleListing()
 
 void YAMLWriter::Impl::startListingSub(bool isFlowStyle)
 {
-    if(startValuePut()){
+    if(startValuePut(isFlowStyle)){
         State& state = pushState(LISTING, isFlowStyle);
         if(state.isFlowStyle){
             os() << "[ ";
@@ -804,12 +804,12 @@ bool YAMLWriter::Impl::setAnchorOrPutAliasForSharedNode(const ValueNode* node)
     if(it != anchorMap.end()){
         auto inserted = nodeSet.insert(node);
         if(!inserted.second){
-            startValuePut();
+            startValuePut(false);
             os() << format("*A{}", it->second);
             endValuePut();
             return true;
         } else {
-            anchor = format("&A{} ", it->second);
+            anchor = format("&A{}", it->second);
         }
     }
     return false;
