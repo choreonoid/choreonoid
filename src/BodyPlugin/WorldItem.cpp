@@ -434,12 +434,15 @@ void WorldItem::Impl::updateCollisions(bool forceUpdate)
             newParentBodyLink = bodyItem->body()->parentBodyLink();
         }
         if(newParentBodyLink != prevParentBodyLink){
-            auto rootLinkGeometry = bodyInfo.linkInfos[0]->geometry;
-            if(prevParentBodyLink){
-                ignoreLinkPair(collisionDetector, rootLinkGeometry, prevParentBodyLink, false);
-            }
-            if(newParentBodyLink){
-                ignoreLinkPair(collisionDetector, rootLinkGeometry, newParentBodyLink, true);
+            auto& linkInfos = bodyInfo.linkInfos;
+            if(!linkInfos.empty()){
+                auto rootLinkGeometry = linkInfos.front()->geometry;
+                if(prevParentBodyLink){
+                    ignoreLinkPair(collisionDetector, rootLinkGeometry, prevParentBodyLink, false);
+                }
+                if(newParentBodyLink){
+                    ignoreLinkPair(collisionDetector, rootLinkGeometry, newParentBodyLink, true);
+                }
             }
             bodyInfo.parentBodyLink = newParentBodyLink;
         }
