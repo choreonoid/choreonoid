@@ -15,6 +15,8 @@ set(sources
   LinkOffsetFrameListItem.cpp
   KinematicBodyItemSet.cpp
   BodyGeometryMeasurementTracker.cpp
+  BodyPoseItem.cpp
+  BodyPoseListItem.cpp
   MaterialTableItem.cpp
   SimulatorItem.cpp
   SubSimulatorItem.cpp
@@ -88,6 +90,8 @@ set(headers
   BodyItemKinematicsKitManager.h
   LinkOffsetFrameListItem.h
   KinematicBodyItemSet.h
+  BodyPoseItem.h
+  BodyPoseListItem.h
   MaterialTableItem.h
   SimulatorItem.h
   SubSimulatorItem.h

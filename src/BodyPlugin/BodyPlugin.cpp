@@ -4,6 +4,8 @@
 #include "BodyWorldAddon.h"
 #include "BodyItem.h"
 #include "BodyGeometryMeasurementTracker.h"
+#include "BodyPoseItem.h"
+#include "BodyPoseListItem.h"
 #include "LinkOffsetFrameListItem.h"
 #include "MaterialTableItem.h"
 #include "SimulatorItem.h"
@@ -101,6 +103,8 @@ bool BodyPlugin::initialize()
     BodyWorldAddon::initializeClass(this);
     BodyItem::initializeClass(this);
     BodyGeometryMeasurementTracker::initializeClass();
+    BodyPoseItem::initializeClass(this);
+    BodyPoseListItem::initializeClass(this);
     LinkOffsetFrameListItem::initializeClass(this);
     MaterialTableItem::initializeClass(this);
     SimulatorItem::initializeClass(this);
