@@ -72,6 +72,7 @@ ItemTreeView::Impl::Impl(ItemTreeView* self)
     self->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     itemTreeWidget = new ItemTreeWidget(self);
+    itemTreeWidget->setItemNameEditByDoubleClickEnabled(false);
     itemTreeWidget->setRootItem(RootItem::instance(), false);
 
     auto vbox = new QVBoxLayout;
@@ -107,6 +108,9 @@ void ItemTreeView::setExpanded(Item* item, bool on)
 
 void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
 {
+    auto rename = menu.addItem(_("Rename"));
+    menu.addSeparator();
+    
     auto cut = menu.addItem(_("Cut"));
     auto copy1 = menu.addItem(_("Copy (single)"));
     auto copy2 = menu.addItem(_("Copy (sub tree)"));
@@ -126,6 +130,7 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
     auto clearSelection = menu.addItem(_("Clear selection"));
 
     if(!item){
+        rename->setEnabled(false);
         cut->setEnabled(false);
         copy1->setEnabled(false);
         copy2->setEnabled(false);
@@ -136,6 +141,9 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
         clearSelection->setEnabled(false);
 
     } else {
+        rename->sigTriggered().connect(
+            [this, item](){ itemTreeWidget->editItemName(item); });
+            
         if(itemTreeWidget->checkCuttable(item)){
             cut->sigTriggered().connect(
                 [this](){ itemTreeWidget->cutSelectedItems(); });

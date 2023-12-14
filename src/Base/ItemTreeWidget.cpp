@@ -603,6 +603,16 @@ void ItemTreeWidget::Impl::releaseFromSelectionSyncGroup()
 }
 
 
+void ItemTreeWidget::setItemNameEditByDoubleClickEnabled(bool on)
+{
+    if(on){
+        impl->setEditTriggers(impl->editTriggers() | QAbstractItemView::DoubleClicked);
+    } else {
+        impl->setEditTriggers(impl->editTriggers() & ~QAbstractItemView::DoubleClicked);
+    }
+}
+
+
 void ItemTreeWidget::setDragDropEnabled(bool on)
 {
     if(on){

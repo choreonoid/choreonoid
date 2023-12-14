@@ -35,7 +35,10 @@ public:
     void setRootItemUpdateFunction(std::function<Item*(bool doCreate)> func);
     void setRootItemVisible(bool on);
     bool isRootItemVisible() const;
+    
+    void setItemNameEditByDoubleClickEnabled(bool on);
     void setDragDropEnabled(bool on);
+    
     void setCheckColumnShown(bool on);
     bool checkItemVisibility(Item* item) const;
 
