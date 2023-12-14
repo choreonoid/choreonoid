@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-11-21 22:03+0900\n"
+"POT-Creation-Date: 2023-12-14 22:18+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -469,10 +469,10 @@ msgid "Exporting {0} to a file is not supported"
 msgstr "{0}のファイルエクスポートはサポートされていません"
 
 msgid "Save {}"
-msgstr "{}の保存"
+msgstr "{} の保存"
 
 msgid "Export {}"
-msgstr "{}のエクスポート"
+msgstr "{} のエクスポート"
 
 msgid "%1 already exists. Do you want to replace it? "
 msgstr "既存のファイル %1 を上書きしてもよいですか？"
@@ -659,6 +659,9 @@ msgstr "アイテムツリービュー"
 
 msgid "Items"
 msgstr "アイテム"
+
+msgid "Rename"
+msgstr "名前を変更"
 
 msgid "Cut"
 msgstr "切り取り"
