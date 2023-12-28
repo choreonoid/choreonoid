@@ -9,11 +9,12 @@
   <file>icon/block.svg</file>
   <file>icon/collisionoutline.svg</file>
 
-  <file>icon/storepose.svg</file>
-  <file>icon/restorepose.svg</file>
   <file>icon/origin.svg</file>
   <file>icon/initialpose.svg</file>
   <file>icon/stdpose.svg</file>
+  <file>icon/poserec.svg</file>
+  <file>icon/storepose.svg</file>
+  <file>icon/restorepose.svg</file>
   <file>icon/right-to-left.svg</file>
   <file>icon/left-to-right.svg</file>
   <file>icon/flip.svg</file>

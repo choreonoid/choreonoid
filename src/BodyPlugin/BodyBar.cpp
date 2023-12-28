@@ -1,16 +1,17 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "BodyBar.h"
 #include "BodyItem.h"
+#include "BodyPoseItem.h"
+#include "BodyPoseListItem.h"
 #include "BodySelectionManager.h"
 #include <cnoid/RootItem>
+#include <cnoid/MessageView>
 #include <cnoid/Archive>
+#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+using fmt::format;
 
 namespace cnoid {
 
@@ -21,10 +22,11 @@ public:
 
     Impl(BodyBar* self);
     void applyBodyItemOperation(std::function<void(BodyItem* bodyItem)> func);
-    void onCopyButtonClicked();
-    void onPasteButtonClicked();
     void onOriginButtonClicked();
     void onPoseButtonClicked(BodyItem::PresetPoseID id);
+    void onPoseRecButtonClicked();
+    void onPoseUpdateButtonClicked();
+    void onPoseRecallButtonClicked();
     void onSymmetricCopyButtonClicked(int direction, bool doMirrorCopy);
     void doSymmetricCopy(BodyItem* bodyItem, int direction, bool doMirrorCopy);
 };
@@ -50,37 +52,41 @@ BodyBar::Impl::Impl(BodyBar* self)
 {
     ToolButton* button;
     
-    button = self->addButton(QIcon(":/Body/icon/storepose.svg"));
-    button->setToolTip(_("Memory the current pose"));
-    button->sigClicked().connect([&](){ onCopyButtonClicked(); });
-
-    button = self->addButton(QIcon(":/Body/icon/restorepose.svg"));
-    button->setToolTip(_("Recall the memorized pose"));
-    button->sigClicked().connect([&](){ onPasteButtonClicked(); });
-    
     button = self->addButton(QIcon(":/Body/icon/origin.svg"));
     button->setToolTip(_("Move the selected bodies to the origin"));
-    button->sigClicked().connect([&](){ onOriginButtonClicked(); });
+    button->sigClicked().connect([this](){ onOriginButtonClicked(); });
 
     button = self->addButton(QIcon(":/Body/icon/initialpose.svg"));
     button->setToolTip(_("Set the preset initial pose to the selected bodies"));
-    button->sigClicked().connect([&](){ onPoseButtonClicked(BodyItem::INITIAL_POSE); });
+    button->sigClicked().connect([this](){ onPoseButtonClicked(BodyItem::INITIAL_POSE); });
 
     button = self->addButton(QIcon(":/Body/icon/stdpose.svg"));
     button->setToolTip(_("Set the preset standard pose to the selected bodies"));
-    button->sigClicked().connect([&](){ onPoseButtonClicked(BodyItem::STANDARD_POSE); });
+    button->sigClicked().connect([this](){ onPoseButtonClicked(BodyItem::STANDARD_POSE); });
 
+    button = self->addButton(QIcon(":/Body/icon/poserec.svg"));
+    button->setToolTip(_("Record pose"));
+    button->sigClicked().connect([this](){ onPoseRecButtonClicked(); });
+
+    button = self->addButton(QIcon(":/Body/icon/storepose.svg"));
+    button->setToolTip(_("Update recoreded pose"));
+    button->sigClicked().connect([this](){ onPoseUpdateButtonClicked(); });
+
+    button = self->addButton(QIcon(":/Body/icon/restorepose.svg"));
+    button->setToolTip(_("Recall recorded pose"));
+    button->sigClicked().connect([this](){ onPoseRecallButtonClicked(); });
+    
     button = self->addButton(QIcon(":/Body/icon/right-to-left.svg"));
     button->setToolTip(_("Copy the right side pose to the left side"));
-    button->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(1, false); });
+    button->sigClicked().connect([this](){ onSymmetricCopyButtonClicked(1, false); });
 
     button = self->addButton(QIcon(":/Body/icon/flip.svg"));
     button->setToolTip(_("Mirror copy"));
-    button->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(0, true); });
+    button->sigClicked().connect([this](){ onSymmetricCopyButtonClicked(0, true); });
 
     button = self->addButton(QIcon(":/Body/icon/left-to-right.svg"));
     button->setToolTip(_("Copy the left side pose to the right side"));
-    button->sigClicked().connect([&](){ onSymmetricCopyButtonClicked(0, false); });
+    button->sigClicked().connect([this](){ onSymmetricCopyButtonClicked(0, false); });
 
     bodySelectionManager = BodySelectionManager::instance();
 }
@@ -105,18 +111,6 @@ void BodyBar::Impl::applyBodyItemOperation(std::function<void(BodyItem* bodyItem
 }
 
 
-void BodyBar::Impl::onCopyButtonClicked()
-{
-    applyBodyItemOperation([](BodyItem* bodyItem){ bodyItem->copyKinematicState(); });
-}
-
-
-void BodyBar::Impl::onPasteButtonClicked()
-{
-    applyBodyItemOperation([](BodyItem* bodyItem){ bodyItem->pasteKinematicState(); });
-}
-
-
 void BodyBar::Impl::onOriginButtonClicked()
 {
     applyBodyItemOperation([](BodyItem* bodyItem){ bodyItem->moveToOrigin(); });
@@ -126,6 +120,79 @@ void BodyBar::Impl::onOriginButtonClicked()
 void BodyBar::Impl::onPoseButtonClicked(BodyItem::PresetPoseID id)
 {
     applyBodyItemOperation([id](BodyItem* bodyItem){ bodyItem->setPresetPose(id); });
+}
+
+
+void BodyBar::Impl::onPoseRecButtonClicked()
+{
+    auto selected = RootItem::instance()->selectedItems();
+
+    ItemList<BodyPoseListItem> poseListItems(selected);
+    ItemList<BodyItem> bodyItems(selected);
+    if(bodyItems.empty() && poseListItems.empty()){
+        if(auto bodyItem = bodySelectionManager->currentBodyItem()){
+            bodyItems.push_back(bodyItem);
+        }
+    }
+
+    bool canceled = false;
+
+    for(auto& bodyItem : bodyItems){
+        if(auto poseListItem = bodyItem->findItem<BodyPoseListItem>()){
+            auto found = std::find(poseListItems.begin(), poseListItems.end(), poseListItem);
+            if(found == poseListItems.end()){
+                poseListItems.push_back(poseListItem);
+            }
+        } else {
+            bool doCreate = showConfirmDialog(
+                _("Pose list item creation"),
+                format(_("Do you want to create a pose list item for {0}? "
+                         "The pose list is necessary for recording poses."),
+                       bodyItem->displayName()));
+            if(doCreate){
+                auto poseListItem = new BodyPoseListItem;
+                bodyItem->addChildItem(poseListItem);
+                poseListItems.push_back(poseListItem);
+            } else {
+                canceled = true;
+            }
+        }
+    }
+
+    if(!poseListItems.empty()){
+        for(auto& poseListItem : poseListItems){
+            poseListItem->recordCurrentPose();
+        }
+    } else if(!canceled){
+        showWarningDialog(
+            _("Unable to record a pose as a pose item because no target body item or pose list item is specified."));
+    }
+}
+
+
+void BodyBar::Impl::onPoseUpdateButtonClicked()
+{
+    ItemList<BodyPoseItem> poseItems(RootItem::instance()->selectedItems());
+
+    if(poseItems.empty()){
+
+    } else {
+
+    }
+}
+
+
+void BodyBar::Impl::onPoseRecallButtonClicked()
+{
+    ItemList<BodyPoseItem> poseItems(RootItem::instance()->selectedItems());
+
+    if(poseItems.empty()){
+
+    } else {
+        for(auto& poseItem : poseItems){
+            poseItem->applyBodyPose();
+        }
+    }
 }
 
 
