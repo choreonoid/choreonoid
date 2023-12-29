@@ -20,6 +20,7 @@ class Mapping;
 class ExtensionManager;
 class PutPropertyFunction;
 class EditRecord;
+class ItemTreeWidget;
 
 class CNOID_EXPORT Item : public ClonableReferenced
 {
@@ -593,6 +594,8 @@ protected:
     */
     virtual bool onChildItemAboutToBeAdded(Item* childItem, bool isManualOperation);
 
+    virtual void onDoubleClicked();
+
     /**
        This function is used to put a standard properties of the item.
        You can implement the standard properties by overriding this function.
@@ -622,6 +625,8 @@ private:
     int countDescendantItems_(std::function<bool(Item* item)> pred);
     ItemList<Item> getDescendantItems(std::function<bool(Item* item)> pred, bool isRecursive) const;
     void validateClassId() const;
+
+    friend class ItemTreeWidget;
 };
 
 #ifndef CNOID_BASE_MVOUT_DECLARED

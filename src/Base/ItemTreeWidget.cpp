@@ -137,6 +137,7 @@ public:
     void onTreeWidgetSelectionChanged();
     void updateItemSelectionIter(QTreeWidgetItem* twItem, unordered_set<Item*>& selectedItemSet);
     void onTreeWidgetCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
+    void onTreeWidgetItemDoubleClicked(QTreeWidgetItem* item, int column);
     void setItwItemSelected(ItwItem* itwItem, bool on);
     void toggleItwItemCheck(ItwItem* itwItem, int checkId, bool on);
     void zoomFontSize(int pointSizeDiff);
@@ -415,56 +416,61 @@ void ItemTreeWidget::Impl::initialize()
 
     projectRootItemConnections.add(
         projectRootItem->sigCheckEntryAdded().connect(
-            [&](int checkId){ addCheckColumn(checkId); }));
+            [this](int checkId){ addCheckColumn(checkId); }));
 
     projectRootItemConnections.add(
         projectRootItem->sigCheckEntryReleased().connect(
-            [&](int checkId){ releaseCheckColumn(checkId); }));
+            [this](int checkId){ releaseCheckColumn(checkId); }));
 
     subTreeAddedOrMovedConnections.add(
         projectRootItem->sigSubTreeAdded().connect(
-            [&](Item* item){ onSubTreeAddedOrMoved(item); }));
+            [this](Item* item){ onSubTreeAddedOrMoved(item); }));
 
     subTreeAddedOrMovedConnections.add(
         projectRootItem->sigSubTreeMoved().connect(
-            [&](Item* item){ onSubTreeAddedOrMoved(item); }));
+            [this](Item* item){ onSubTreeAddedOrMoved(item); }));
 
     projectRootItemConnections.add(subTreeAddedOrMovedConnections);
 
     projectRootItemConnections.add(
         projectRootItem->sigSubTreeRemoved().connect(
-            [&](Item* item, bool){ onSubTreeRemoved(item); }));
+            [this](Item* item, bool){ onSubTreeRemoved(item); }));
 
     projectRootItemConnections.add(
         projectRootItem->sigItemAssigned().connect(
-            [&](Item* assigned, const Item* srcItem){ onItemAssigned(assigned, srcItem); }));
+            [this](Item* assigned, const Item* srcItem){ onItemAssigned(assigned, srcItem); }));
 
     sigRowsAboutToBeRemoved().connect(
-        [&](const QModelIndex& parent, int start, int end){
+        [this](const QModelIndex& parent, int start, int end){
             onTreeWidgetRowsAboutToBeRemoved(parent, start, end); });
     
     sigRowsInserted().connect(
-        [&](const QModelIndex& parent, int start, int end){
+        [this](const QModelIndex& parent, int start, int end){
             onTreeWidgetRowsInserted(parent, start, end);  });
 
     treeWidgetSelectionChangeConnections.add(
         sigItemSelectionChanged().connect(
-            [&](){ onTreeWidgetSelectionChanged(); }));
+            [this](){ onTreeWidgetSelectionChanged(); }));
 
     treeWidgetSelectionChangeConnections.add(
         sigCurrentItemChanged().connect(
-            [&](QTreeWidgetItem* current, QTreeWidgetItem* previous){
+            [this](QTreeWidgetItem* current, QTreeWidgetItem* previous){
                 onTreeWidgetCurrentItemChanged(current, previous); }));
+
+    sigItemDoubleClicked().connect(
+        [this](QTreeWidgetItem* item, int column){
+            onTreeWidgetItemDoubleClicked(item, column);
+        });
 
     pSelectionSyncGroup = nullptr;
     
     projectManagerConnections.add(
         projectManager->sigProjectAboutToBeLoaded().connect(
-            [&](int recursiveLevel){ onProjectAboutToBeLoaded(recursiveLevel); }));
+            [this](int recursiveLevel){ onProjectAboutToBeLoaded(recursiveLevel); }));
 
     projectManagerConnections.add(
         projectManager->sigProjectLoaded().connect(
-            [&](int recursiveLevel){ onProjectLoaded(recursiveLevel); }));
+            [this](int recursiveLevel){ onProjectLoaded(recursiveLevel); }));
 
     fontPointSizeDiff = 0;
 
@@ -1312,7 +1318,7 @@ void ItemTreeWidget::Impl::copySelectedItems()
 
     forEachTopItems(
         getSelectedItems(),
-        [&](Item* item, unordered_set<Item*>& itemSet){
+        [this, &cloneMap](Item* item, unordered_set<Item*>& itemSet){
             if(auto clone = cloneMap.getClone(item)){
                 copiedItems.push_back(clone);
                 copySelectedItemsInSubTree(item, clone, itemSet, cloneMap);
@@ -1367,7 +1373,7 @@ void ItemTreeWidget::Impl::copySelectedItemsWithSubTrees()
 
     forEachTopItems(
         getSelectedItems(),
-        [&](Item* item, unordered_set<Item*>&){
+        [this, &cloneMap](Item* item, unordered_set<Item*>&){
             if(auto clone = item->cloneSubTree(cloneMap)){
                 copiedItems.push_back(clone);
             }
@@ -1391,7 +1397,7 @@ void ItemTreeWidget::Impl::cutSelectedItems()
     bool cuttable = true;
     forEachTopItems(
         selectedItems,
-        [&](Item* item, unordered_set<Item*>&){
+        [this, &cuttable](Item* item, unordered_set<Item*>&){
             if(!self->checkCuttable(item)){
                 cuttable = false;
                 return false;
@@ -1413,7 +1419,7 @@ void ItemTreeWidget::Impl::cutSelectedItems()
     
     forEachTopItems(
         selectedItems,
-        [&](Item* item, unordered_set<Item*>&){
+        [this](Item* item, unordered_set<Item*>&){
             copiedItems.push_back(item);
             item->removeFromParentItem();
             return true;
@@ -1714,6 +1720,14 @@ void ItemTreeWidget::Impl::onTreeWidgetCurrentItemChanged(QTreeWidgetItem* curre
 }
 
 
+void ItemTreeWidget::Impl::onTreeWidgetItemDoubleClicked(QTreeWidgetItem* item, int /* column */)
+{
+    if(auto itwItem = dynamic_cast<ItwItem*>(item)){
+        itwItem->item->onDoubleClicked();
+    }
+}
+
+
 void ItemTreeWidget::Impl::setItwItemSelected(ItwItem* itwItem, bool on)
 {
     if(on != itwItem->isSelected()){
@@ -1896,7 +1910,7 @@ void ItemTreeWidget::Impl::dragEnterEvent(QDragEnterEvent* event)
     // Instead of the above method, the current selected items are used as the items being dragged.
     forEachTopItems(
         getSelectedItems(),
-        [&](Item* item, unordered_set<Item*>&){
+        [this](Item* item, unordered_set<Item*>&){
             dragItems.push_back(item);
             return true;
         });

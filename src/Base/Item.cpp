@@ -1821,6 +1821,12 @@ void Item::putProperties(PutPropertyFunction& putProperty)
 }
 
 
+void Item::onDoubleClicked()
+{
+
+}
+
+
 void Item::doPutProperties(PutPropertyFunction& putProperty)
 {
 
