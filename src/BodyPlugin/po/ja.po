@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-11-23 00:38+0900\n"
+"POT-Creation-Date: 2024-01-07 22:51+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -109,12 +109,6 @@ msgstr "旧加速センサモード"
 msgid "BodyBar"
 msgstr "ボディバー"
 
-msgid "Memory the current pose"
-msgstr "現在姿勢を記憶"
-
-msgid "Recall the memorized pose"
-msgstr "記憶した姿勢の呼び出し"
-
 msgid "Move the selected bodies to the origin"
 msgstr "選択ボディを原点へ移動"
 
@@ -124,6 +118,15 @@ msgstr "選択ボディを初期姿勢に"
 msgid "Set the preset standard pose to the selected bodies"
 msgstr "選択ボディを標準姿勢に"
 
+msgid "Record pose"
+msgstr "姿勢の記録"
+
+msgid "Update recoreded pose"
+msgstr "記録姿勢の更新"
+
+msgid "Recall recorded pose"
+msgstr "記録姿勢の呼び出し"
+
 msgid "Copy the right side pose to the left side"
 msgstr "右側の姿勢を左側にコピー"
 
@@ -132,6 +135,19 @@ msgstr "反転コピー"
 
 msgid "Copy the left side pose to the right side"
 msgstr "左側の姿勢を右側にコピー"
+
+msgid "Pose list item creation"
+msgstr "姿勢リストアイテムの作成"
+
+msgid ""
+"Do you want to create a pose list item for {0}? The pose list is necessary for recording poses."
+msgstr "{0}用の姿勢リストアイテムを作成しますか？姿勢の記録には姿勢リストが必要です。"
+
+msgid ""
+"Unable to record a pose as a pose item because no target body item or pose list item is specified."
+msgstr ""
+"対象のボディアイテムまたは姿勢リストアイテムが指定されていないので、姿勢を姿勢アイテムとして記録す"
+"ることができません。"
 
 msgid "BodyContactPointLogItem"
 msgstr "ボディ接触点ログアイテム"
@@ -628,6 +644,33 @@ msgid ""
 "The Collision deteciton module used in this plugin is implemented using the OPCODE library "
 "(http://www.codercorner.com/Opcode.htm).\n"
 msgstr ""
+
+msgid "Apply pose"
+msgstr "姿勢の適用"
+
+msgid "Fetch pose"
+msgstr "姿勢の取込"
+
+msgid "Pose{0}{1}{2}"
+msgstr "姿勢{1}{2}"
+
+msgid "PoseList"
+msgstr "姿勢リスト"
+
+msgid "Pose item"
+msgstr "姿勢アイテム"
+
+msgid "Pose list file"
+msgstr "姿勢リストファイル"
+
+msgid "Archive mode"
+msgstr "アーカイブモード"
+
+msgid "Body Pose List"
+msgstr "ボディ姿勢リスト"
+
+msgid "Body Pose List File"
+msgstr "ボディ姿勢リストファイル"
 
 msgid "BodyStateLoggerItem"
 msgstr "ボディ状態ロガーアイテム"
