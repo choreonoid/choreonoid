@@ -145,6 +145,7 @@ public:
     virtual bool setName(const std::string& name);
     virtual std::string displayName() const;
     void setDisplayNameModifier(std::function<std::string(const Item* item)> modifier);
+    bool hasDisplayNameModifier() const;
     SignalProxy<void(const std::string& oldName)> sigNameChanged();
     //! This function notifies the system of a displayName change
     void notifyNameChange();

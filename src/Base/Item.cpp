@@ -402,6 +402,12 @@ void Item::setDisplayNameModifier(std::function<std::string(const Item* item)> m
 }
 
 
+bool Item::hasDisplayNameModifier() const
+{
+    return (impl->displayNameModifier != nullptr);
+}
+
+
 SignalProxy<void(const std::string& oldName)> Item::sigNameChanged()
 {
     return impl->sigNameChanged;
