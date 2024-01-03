@@ -42,17 +42,19 @@ public:
 
     IdToViewMap idToViewMap;
     ViewToIdMap viewToIdMap;
-        
+
+    Item* currentItem;
     Item* currentParentItem;
 
-    list<function<void()>>* pointerToProcessesOnSubTreeRestored;
+    typedef list<function<void()>> ProcessList;
+    map<Item*, ProcessList> processesOnSubTreeRestored;
     vector<FunctionInfo> postProcesses;
     vector<FunctionInfo> nextPostProcesses;
     bool isDoingPostProcesses;
 
     ArchiveSharedData(){
+        currentItem = nullptr;
         currentParentItem = nullptr;
-        pointerToProcessesOnSubTreeRestored = nullptr;
         isDoingPostProcesses = false;
     }
 };
@@ -113,16 +115,24 @@ void Archive::inheritSharedInfoFrom(Archive& archive)
 
 void Archive::addProcessOnSubTreeRestored(const std::function<void()>& func) const
 {
-    if(shared->pointerToProcessesOnSubTreeRestored){
-        shared->pointerToProcessesOnSubTreeRestored->push_back(func);
-    }
+    addProcessOnSubTreeRestored(shared->currentItem, func);
 }
 
 
-void Archive::setPointerToProcessesOnSubTreeRestored(void* pfunc)
+void Archive::addProcessOnSubTreeRestored(Item* item, const std::function<void()>& func) const
 {
-    shared->pointerToProcessesOnSubTreeRestored =
-        reinterpret_cast<std::list<std::function<void()>>*>(pfunc);
+    shared->processesOnSubTreeRestored[item].push_back(func);
+}
+
+
+void Archive::callProcessesOnSubTreeRestored(Item* item)
+{
+    auto& processes = shared->processesOnSubTreeRestored[item];
+    while(!processes.empty()){
+        auto& process = processes.front();
+        process();
+        processes.pop_front();
+    }
 }
 
 
@@ -480,6 +490,14 @@ View* Archive::findView(int id) const
         }
     }
     return nullptr;
+}
+
+
+void Archive::setCurrentItem(Item* item)
+{
+    if(shared){
+        shared->currentItem = item;
+    }
 }
 
 

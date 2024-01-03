@@ -331,8 +331,6 @@ void ItemTreeArchiver::Impl::restoreItemIter
     string className;
     bool isRootItem = false;
     bool isOptional = false;
-    std::list<std::function<void()>> processesOnSubTreeRestored;
-    archive.setPointerToProcessesOnSubTreeRestored(&processesOnSubTreeRestored);
 
     try {
         item = restoreItem(archive, parentItem, itemName, className, isRootItem, isOptional);
@@ -376,12 +374,8 @@ void ItemTreeArchiver::Impl::restoreItemIter
             }
         }
 
-        archive.setPointerToProcessesOnSubTreeRestored(&processesOnSubTreeRestored);
-        while(!processesOnSubTreeRestored.empty()){
-            auto& func = processesOnSubTreeRestored.front();
-            func();
-            processesOnSubTreeRestored.pop_front();
-        }
+        archive.setCurrentItem(item);
+        archive.callProcessesOnSubTreeRestored(item);
     }
 }
 
@@ -424,6 +418,8 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
         }
         return nullptr;
     }
+
+    archive.setCurrentItem(item);
 
     ++numArchivedItems;
         

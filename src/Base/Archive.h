@@ -30,6 +30,8 @@ public:
        which will be done after all the previously added processes.
     */
     void addProcessOnSubTreeRestored(const std::function<void()>& func) const;
+
+    void addProcessOnSubTreeRestored(Item* item, const std::function<void()>& func) const;
     
     void addPostProcess(const std::function<void()>& func, int priority = 0) const;
     void addFinalProcess(const std::function<void()>& func) const;
@@ -96,17 +98,12 @@ private:
     ref_ptr<ArchiveSharedData> shared;
 
     Item* findItem(int id) const;
+    void setCurrentItem(Item* item);
     void setCurrentParentItem(Item* parentItem);
     static Archive* invalidArchive();
     void registerItemId(const Item* item, int id);
     void registerViewId(const View* view, int id);
-
-    /*
-      This functions is called from ItemTreeArchiver.
-      Actual type of pfunclist is a pointer to std::list<std::function<void()>>.
-    */
-    void setPointerToProcessesOnSubTreeRestored(void* pfunclist);
-
+    void callProcessesOnSubTreeRestored(Item* item);
     void callPostProcesses();
     static void callFinalProcesses();
 
