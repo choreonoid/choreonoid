@@ -255,10 +255,13 @@ void ItemTreeWidget::ItwItem::setData(int column, int role, const QVariant& valu
         if(role != Qt::EditRole){
             QTreeWidgetItem::setData(column, role, value);
         } else {
-            // Prevent setting an empty name
-            if(value.type() == QVariant::String && !value.toString().isEmpty()){
-                QTreeWidgetItem::setData(column, role, value);
-                item->setName(value.toString().toStdString());
+            if(value.type() == QVariant::String){
+                auto newName = value.toString().toStdString();
+                // Item name is only updated when the name is not empty and is different from the item display name.
+                if(!newName.empty() && newName != item->displayName()){
+                    QTreeWidgetItem::setData(column, role, value);
+                    item->setName(value.toString().toStdString());
+                }
             }
         }
     } else if(column >= 1 && role == Qt::CheckStateRole && widgetImpl->isCheckColumnShown){
