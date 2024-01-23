@@ -252,6 +252,9 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
     }
 
     // creates a color dictionary before parsing the robot model
+    for (xml_node& materialNode : robotNode.children(MATERIAL)) {
+        updateColorMap(materialNode);
+    }
     for (xml_node& linkNode : robotNode.children(LINK)) {
         for (xml_node& visualNode : linkNode.children(VISUAL)) {
             const xml_node& materialNode = visualNode.child(MATERIAL);
