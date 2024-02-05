@@ -32,6 +32,7 @@ set(sources
   Device.cpp
   HolderDevice.cpp
   AttachmentDevice.cpp
+  ConveyorDevice.cpp
   DigitalIoDevice.cpp
   IoConnectionMap.cpp
   ForceSensor.cpp
@@ -117,6 +118,7 @@ set(headers
   DeviceList.h
   HolderDevice.h
   AttachmentDevice.h
+  ConveyorDevice.h
   DigitalIoDevice.h
   IoConnectionMap.h
   ForceSensor.h
