@@ -31,6 +31,7 @@ public:
     void setLinkAssociatedObjectFunction(LinkAssociatedObjectFunc func);
     
     void addBody(Body* body, bool isSelfCollisionDetectionEnabled = true, int groupId = 0);
+    void addLink(Link* link, int groupId = 0);
 
     //! \note The geometry handle must be enabled for using this function.
     void setGroup(Body* body, int groupId);
@@ -45,6 +46,8 @@ public:
         setLinkAssociatedObjectFunction(linkAssociatedObjectFunc);
         addBody(body, isSelfCollisionDetectionEnabled, 0);
     }
+
+    bool removeBody(Body* body);
     
     bool hasBodies() const;
     

@@ -23,10 +23,12 @@ public:
     ScopedConnectionSet bodyExistenceConnections;
     bool hasCustomObjectsAssociatedWithLinks;
     bool isGeometryHandleMapEnabled;
+    bool isGeometryRemovalSupported;
 
     Impl();
     bool addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId);
     bool addLinkRecursively(Link* link, bool isParentStatic, int groupId);
+    stdx::optional<CollisionDetector::GeometryHandle> addLink(Link* link, bool isStatic, int groupId);
     double findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2);
     void onBodyExistenceChanged(Body* body, bool on);    
 };
@@ -53,6 +55,7 @@ BodyCollisionDetector::Impl::Impl()
     
     hasCustomObjectsAssociatedWithLinks = false;
     isGeometryHandleMapEnabled = false;
+    isGeometryRemovalSupported = false;
 }
 
 
@@ -72,6 +75,7 @@ BodyCollisionDetector::~BodyCollisionDetector()
 void BodyCollisionDetector::setCollisionDetector(CollisionDetector* collisionDetector)
 {
     impl->collisionDetector = collisionDetector;
+    impl->isGeometryRemovalSupported = collisionDetector->isGeometryRemovalSupported();
     clearBodies();
 }
 
@@ -166,32 +170,51 @@ bool BodyCollisionDetector::Impl::addLinkRecursively(Link* link, bool isParentSt
     bool isStatic = isParentStatic && link->isFixedJoint();
 
     if(bodyCollisionLinkFilter.checkIfEnabledLinkIndex(linkIndex)){
-        if(auto handle = collisionDetector->addGeometry(link->collisionShape())){
-            Referenced* object;
-            if(linkAssociatedObjectFunc){
-                object = linkAssociatedObjectFunc(link, *handle);
-            } else {
-                object = link;
-            }
-            collisionDetector->setCustomObject(*handle, object);
-            if(isStatic){
-                collisionDetector->setGeometryStatic(*handle, object);
-            }
-            if(groupId != 0){
-                collisionDetector->setGroup(*handle, groupId);
-            }
+        if(auto handle = addLink(link, isStatic, groupId)){
             linkIndexToGeometryHandleMap[linkIndex] = *handle;
-            if(isGeometryHandleMapEnabled){
-                linkToGeometryHandleMap[link] = *handle;
-            }
             added = true;
         }
-    }    
+    }
     for(Link* child = link->child(); child; child = child->sibling()){
         added |= addLinkRecursively(child, isStatic, groupId);
     }
 
     return added;
+}
+
+
+stdx::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::Impl::addLink(Link* link, bool isStatic, int groupId)
+{
+    bool added = false;
+
+    stdx::optional<GeometryHandle> handle = collisionDetector->addGeometry(link->collisionShape());
+    
+    if(handle){
+        Referenced* object;
+        if(linkAssociatedObjectFunc){
+            object = linkAssociatedObjectFunc(link, *handle);
+        } else {
+            object = link;
+        }
+        collisionDetector->setCustomObject(*handle, object);
+        if(isStatic){
+            collisionDetector->setGeometryStatic(*handle, object);
+        }
+        if(groupId != 0){
+            collisionDetector->setGroup(*handle, groupId);
+        }
+        if(isGeometryHandleMapEnabled){
+            linkToGeometryHandleMap[link] = *handle;
+        }
+    }
+
+    return handle;
+}
+
+
+void BodyCollisionDetector::addLink(Link* link, int groupId)
+{
+    impl->addLink(link, link->isStatic(), groupId);
 }
 
 
@@ -210,6 +233,25 @@ void BodyCollisionDetector::setGroup(Link* link, int groupId)
         auto& handle = it->second;
         impl->collisionDetector->setGroup(handle, groupId);
     }
+}
+
+
+bool BodyCollisionDetector::removeBody(Body* body)
+{
+    bool removed = false;
+    if(impl->isGeometryHandleMapEnabled && impl->isGeometryRemovalSupported){
+        for(auto& link : body->links()){
+            auto it = impl->linkToGeometryHandleMap.find(link);
+            if(it != impl->linkToGeometryHandleMap.end()){
+                auto& handle = it->second;
+                if(impl->collisionDetector->removeGeometry(handle)){
+                    impl->linkToGeometryHandleMap.erase(it);
+                    removed = true;
+                }
+            }
+        }
+    }
+    return removed;
 }
 
 
