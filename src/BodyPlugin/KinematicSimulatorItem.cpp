@@ -6,12 +6,14 @@
 #include <cnoid/CloneMap>
 #include <cnoid/HolderDevice>
 #include <cnoid/AttachmentDevice>
+#include <cnoid/ConveyorDevice>
 #include <cnoid/IoConnectionMap>
 #include <cnoid/ItemManager>
 #include <cnoid/AISTCollisionDetector>
 #include <cnoid/BodyCollisionDetector>
-
+#include <cnoid/MessageView>
 #include <fmt/format.h>
+#include <unordered_set>
 #include "gettext.h"
 
 using namespace std;
@@ -52,6 +54,18 @@ public:
 };
 typedef ref_ptr<HolderInfo> HolderInfoPtr;
 
+class ConveyorInfo : public Referenced
+{
+public:
+    ConveyorDevicePtr conveyor;
+    BodyPtr conveyorBody;
+    unordered_set<Body*> bodiesOnConveyor;
+
+    ConveyorInfo(ConveyorDevice* conveyor)
+        : conveyor(conveyor), conveyorBody(conveyor->link()->body()) { }
+};
+typedef ref_ptr<ConveyorInfo> ConveyorInfoPtr;
+
 }
 
 namespace cnoid {
@@ -62,21 +76,32 @@ public:
     KinematicSimulatorItem* self;
     vector<HolderInfoPtr> holderInfos;
     vector<HolderInfoPtr> activeHolderInfos;
+    vector<ConveyorInfoPtr> conveyorInfos;
     vector<IoConnectionMapPtr> ioConnectionMaps;
     unique_ptr<BodyCollisionDetector> bodyCollisionDetector;
+    bool needToUpdateBodyPositionsInCollisionDetector;
+    bool needToRemakeCollisionDetectorReady;
+    bool needToBreakSimulation;
+    double timeStep;
 
     Impl(KinematicSimulatorItem* self);
     Impl(KinematicSimulatorItem* self, const Impl& org);
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
-    void onHolderCollisionDetected(HolderInfo* info, Link* link, const CollisionPair& collisionPair);
+    void updateBodyPositionsInCollisionDetector();
+    void onMultiplexBodyForCollisionDetectionBodyAddedOrRemoved(Body* body, bool isAdded);
     void onHolderStateChanged(HolderInfo* info);
     void activateHolder(HolderInfo* info);
     vector<Body*> findAttachableBodies(HolderInfo* info, const Isometry3& T_holder);
     void findAttachableBodiesByCollision(HolderInfo* info, vector<Body*>& out_bodies);
+    void onHolderCollisionDetected(HolderInfo* info, Link* link, const CollisionPair& collisionPair);
     void findAttachableBodiesByDistance(HolderDevice* holder, const Isometry3& T_holder, vector<Body*>& out_bodies);
     void findAttachableBodiesByName(HolderDevice* holder, const Isometry3& T_holder, vector<Body*>& out_bodies);
     void deactivateHolder(HolderInfo* info);
+    void moveConveyors();
+    void onConveyorCollisionDetected(ConveyorInfo* info, Link* link, const CollisionPair& collisionPair);
+    void moveBodiesOnLinearConveyor(ConveyorInfo* info);
+    void moveBodiesOnRotaryConveyor(ConveyorInfo* info);
 };
 
 }
@@ -133,7 +158,8 @@ Item* KinematicSimulatorItem::doCloneItem(CloneMap* /* cloneMap */) const
 void KinematicSimulatorItem::clearSimulation()
 {
     impl->holderInfos.clear();    
-    impl->activeHolderInfos.clear();    
+    impl->activeHolderInfos.clear();
+    impl->conveyorInfos.clear();
     impl->ioConnectionMaps.clear();
     if(impl->bodyCollisionDetector){
         impl->bodyCollisionDetector->clearBodies();
@@ -155,6 +181,8 @@ bool KinematicSimulatorItem::initializeSimulation(const std::vector<SimulationBo
 
 bool KinematicSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
+    needToBreakSimulation = false;
+    
     /*
       This is a temporary implementation.
       This should be implemented in IoConnectionMapItem.
@@ -172,10 +200,11 @@ bool KinematicSimulatorItem::Impl::initializeSimulation(const std::vector<Simula
         ioConnectionMaps.push_back(connectionMap);
     }
 
-    bool hasHolderDeviceWithCollisionCondition = false;
+    bool hasHolderDevicesWithCollisionCondition = false;
     
     for(auto& simBody : simBodies){
-        for(auto& holder : simBody->body()->devices<HolderDevice>()){
+        auto body = simBody->body();
+        for(auto& holder : body->devices<HolderDevice>()){
             auto info = new HolderInfo(holder);
             holderInfos.push_back(info);
             if(holder->numAttachments() > 0){
@@ -183,27 +212,56 @@ bool KinematicSimulatorItem::Impl::initializeSimulation(const std::vector<Simula
                 activeHolderInfos.push_back(info);
             }
             if(holder->holdCondition() == HolderDevice::Collision){
-                hasHolderDeviceWithCollisionCondition = true;
+                hasHolderDevicesWithCollisionCondition = true;
             }
             holder->sigStateChanged().connect(
                 [this, info](){ onHolderStateChanged(info); });
         }
+        for(auto& conveyor : body->devices<ConveyorDevice>()){
+            auto info = new ConveyorInfo(conveyor);
+            conveyorInfos.push_back(info);
+        }
     }
 
-    if(hasHolderDeviceWithCollisionCondition){
+    needToRemakeCollisionDetectorReady = false;
+    if(hasHolderDevicesWithCollisionCondition || !conveyorInfos.empty()){
         if(!bodyCollisionDetector){
             bodyCollisionDetector = make_unique<BodyCollisionDetector>(new AISTCollisionDetector);
             bodyCollisionDetector->setGeometryHandleMapEnabled(true);
         }
+        
         bodyCollisionDetector->clearBodies();
         for(auto& simBody : simBodies){
-            if(simBody->isActive()){
-                bodyCollisionDetector->addBody(simBody->body(), false);
+            auto body = simBody->body();
+            auto conveyors = body->devices<ConveyorDevice>();
+            if(!conveyors.empty()){
+                for(auto& conveyor : conveyors){
+                    bodyCollisionDetector->addLink(conveyor->link());
+                }
+            } else if(simBody->isActive()){
+                bodyCollisionDetector->addBody(body, false);
+                if(bodyCollisionDetector->collisionDetector()->isGeometryRemovalSupported()){
+                    body->sigMultiplexBodyAddedOrRemoved().connect(
+                        [this](Body* body, bool isAdded){
+                            onMultiplexBodyForCollisionDetectionBodyAddedOrRemoved(body, isAdded);
+                        });
+                } else {
+                    body->sigMultiplexBodyAddedOrRemoved().connect(
+                        [this](Body* /* body */, bool /* isAdded */){
+                            MessageView::instance()->putln(
+                                _("Body multiplexing is not supported by the kinematics simulator item with "
+                                  "the current collision detector that does not support the geometry removal function."),
+                                MessageView::Error);
+                            needToBreakSimulation = true;
+                        });
+                }
             }
         }
         bodyCollisionDetector->makeReady();
     }
-    
+
+    timeStep = self->worldTimeStep();
+
     return true;
 }
 
@@ -216,6 +274,12 @@ bool KinematicSimulatorItem::stepSimulation(const std::vector<SimulationBody*>& 
 
 bool KinematicSimulatorItem::Impl::stepSimulation(const std::vector<SimulationBody*>& activeSimBodies)
 {
+    needToUpdateBodyPositionsInCollisionDetector = true;
+    
+    if(!conveyorInfos.empty()){
+        moveConveyors();
+    }
+    
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         auto simBody = static_cast<KinematicSimBody*>(activeSimBodies[i]);
         auto body = simBody->body();
@@ -249,35 +313,32 @@ bool KinematicSimulatorItem::Impl::stepSimulation(const std::vector<SimulationBo
         }
     }
 
-    if(bodyCollisionDetector && bodyCollisionDetector->hasBodies()){
-        bodyCollisionDetector->updatePositions();
-        for(auto& info : holderInfos){
-            info->collidingLinks.clear();
-            auto link = info->holder->link();
-            bodyCollisionDetector->detectCollisions(
-                link,
-                [&](const CollisionPair& collisionPair){
-                    onHolderCollisionDetected(info, link, collisionPair);
-                });
-        }
-    }
-    
-    return true;
+    return !needToBreakSimulation;
 }
 
 
-void KinematicSimulatorItem::Impl::onHolderCollisionDetected
-(HolderInfo* info, Link* link, const CollisionPair& collisionPair)
+void KinematicSimulatorItem::Impl::updateBodyPositionsInCollisionDetector()
 {
-    Link* anotherLink = nullptr;
-    for(int i=0; i < 2; ++i){
-        if(collisionPair.object(i) == link){
-            anotherLink = static_cast<Link*>(collisionPair.object(1 - i));
-            break;
-        }
+    if(needToRemakeCollisionDetectorReady){
+        bodyCollisionDetector->makeReady();
+        needToRemakeCollisionDetectorReady = false;
     }
-    if(anotherLink){
-        info->collidingLinks.push_back(anotherLink);
+    if(needToUpdateBodyPositionsInCollisionDetector){
+        if(bodyCollisionDetector){
+            bodyCollisionDetector->updatePositions();
+        }
+        needToUpdateBodyPositionsInCollisionDetector = false;
+    }
+}
+
+
+void KinematicSimulatorItem::Impl::onMultiplexBodyForCollisionDetectionBodyAddedOrRemoved(Body* body, bool isAdded)
+{
+    if(isAdded){
+        bodyCollisionDetector->addBody(body, false);
+        needToRemakeCollisionDetectorReady = true;
+    } else {
+        bodyCollisionDetector->removeBody(body);
     }
 }
 
@@ -345,12 +406,37 @@ vector<Body*> KinematicSimulatorItem::Impl::findAttachableBodies(HolderInfo* inf
 void KinematicSimulatorItem::Impl::findAttachableBodiesByCollision
 (HolderInfo* info, vector<Body*>& out_bodies)
 {
+    updateBodyPositionsInCollisionDetector();
+    info->collidingLinks.clear();
+    auto link = info->holder->link();
+    bodyCollisionDetector->detectCollisions(
+        link,
+        [&](const CollisionPair& collisionPair){
+            onHolderCollisionDetected(info, link, collisionPair);
+        });
+    
     for(auto& link : info->collidingLinks){
         auto body = link->body();
         auto rootLink = body->rootLink();
         if(link == rootLink && rootLink->isFreeJoint()){
             out_bodies.push_back(body);
         }
+    }
+}
+
+
+void KinematicSimulatorItem::Impl::onHolderCollisionDetected
+(HolderInfo* info, Link* link, const CollisionPair& collisionPair)
+{
+    Link* anotherLink = nullptr;
+    for(int i=0; i < 2; ++i){
+        if(collisionPair.object(i) == link){
+            anotherLink = static_cast<Link*>(collisionPair.object(1 - i));
+            break;
+        }
+    }
+    if(anotherLink){
+        info->collidingLinks.push_back(anotherLink);
     }
 }
 
@@ -405,6 +491,81 @@ void KinematicSimulatorItem::Impl::deactivateHolder(HolderInfo* info)
             std::find(activeHolderInfos.begin(), activeHolderInfos.end(), info),
             activeHolderInfos.end());
         info->isActive = false;
+    }
+}
+
+
+void KinematicSimulatorItem::Impl::moveConveyors()
+{
+    for(auto& info : conveyorInfos){
+        auto conveyor = info->conveyor;
+        if(conveyor->on()){
+            conveyor->setDisplacement(conveyor->displacement() + conveyor->speed() * timeStep);
+            
+            info->bodiesOnConveyor.clear();
+            updateBodyPositionsInCollisionDetector();
+            auto link = info->conveyor->link();
+            bodyCollisionDetector->detectCollisions(
+                link,
+                [this, info, link](const CollisionPair& collisionPair){
+                    onConveyorCollisionDetected(info, link, collisionPair);
+                });
+
+            if(!info->bodiesOnConveyor.empty()){
+                if(conveyor->isLinearConveyor()){
+                    moveBodiesOnLinearConveyor(info);
+                } else if(conveyor->isRotaryConveyor()){
+                    moveBodiesOnRotaryConveyor(info);
+                }
+            }
+        }
+    }
+}
+
+
+void KinematicSimulatorItem::Impl::onConveyorCollisionDetected
+(ConveyorInfo* info, Link* link, const CollisionPair& collisionPair)
+{
+    Link* anotherLink = nullptr;
+    for(int i=0; i < 2; ++i){
+        if(collisionPair.object(i) == link){
+            anotherLink = static_cast<Link*>(collisionPair.object(1 - i));
+            break;
+        }
+    }
+    if(anotherLink){
+        auto body = anotherLink->body();
+        if(body != info->conveyorBody){
+            info->bodiesOnConveyor.insert(body);
+        }
+    }
+}
+
+
+void KinematicSimulatorItem::Impl::moveBodiesOnLinearConveyor(ConveyorInfo* info)
+{
+    auto conveyor = info->conveyor;
+    auto link = conveyor->link();
+    Vector3 direction = link->R() * conveyor->R_local() * conveyor->axis();
+    Vector3 dp = timeStep * conveyor->speed() * direction;
+
+    for(auto& body : info->bodiesOnConveyor){
+        body->rootLink()->T().translation() += dp;
+    }
+}
+
+
+void KinematicSimulatorItem::Impl::moveBodiesOnRotaryConveyor(ConveyorInfo* info)
+{
+    auto conveyor = info->conveyor;
+    auto link = conveyor->link();
+    Isometry3 Tc = link->T() * conveyor->T_local();
+    Isometry3 Tci = Tc.inverse();
+
+    for(auto& body : info->bodiesOnConveyor){
+        Isometry3 T0 = Tci * body->rootLink()->T();
+        Isometry3 T1 = AngleAxis(timeStep * conveyor->speed(), conveyor->axis()) * T0;
+        body->rootLink()->T() = Tc * T1;
     }
 }
 
