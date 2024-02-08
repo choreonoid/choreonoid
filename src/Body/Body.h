@@ -279,6 +279,7 @@ public:
     bool clearMultiplexBodies(bool doClearCache = false){
         return !nextMultiplexBody_ ? false : doClearMultiplexBodies(doClearCache);
     }
+    SignalProxy<void(Body* body, bool isAdded)> sigMultiplexBodyAddedOrRemoved();
 
     const Mapping* info() const;
     Mapping* info();
