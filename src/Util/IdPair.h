@@ -61,6 +61,10 @@ public:
             return false;
         }
     }
+
+    bool hasId(T id_) const {
+        return (id[0] == id_ || id[1] == id_);
+    }
 };
 
 }
