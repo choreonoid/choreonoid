@@ -182,6 +182,18 @@ bool CollisionDetector::isDynamicGeometryPairChangeEnabled() const
 }
 
 
+bool CollisionDetector::removeGeometry(GeometryHandle /* geometry */)
+{
+    return false;
+}
+
+
+bool CollisionDetector::isGeometryRemovalSupported() const
+{
+    return false;
+}
+
+
 // This function should be a pure virtual function
 void CollisionDetector::detectCollisions
 (GeometryHandle /* geometry */, std::function<void(const CollisionPair& collisionPair)> /* callback */)

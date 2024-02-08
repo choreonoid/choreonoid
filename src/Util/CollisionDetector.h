@@ -70,6 +70,9 @@ public:
     virtual void setDynamicGeometryPairChangeEnabled(bool on);
     virtual bool isDynamicGeometryPairChangeEnabled() const;
 
+    virtual bool removeGeometry(GeometryHandle geometry);
+    virtual bool isGeometryRemovalSupported() const;
+
     virtual bool makeReady() = 0;
     
     virtual void updatePosition(GeometryHandle geometry, const Isometry3& position) = 0;

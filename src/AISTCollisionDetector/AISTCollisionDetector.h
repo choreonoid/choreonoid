@@ -25,6 +25,8 @@ public:
     virtual void ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore = true) override;
     virtual void setDynamicGeometryPairChangeEnabled(bool on) override;
     virtual bool isDynamicGeometryPairChangeEnabled() const override;
+    virtual bool removeGeometry(GeometryHandle geometry) override;
+    virtual bool isGeometryRemovalSupported() const override;
     virtual bool makeReady() override;
     virtual void updatePosition(GeometryHandle geometry, const Isometry3& position) override;
     virtual void updatePositions(std::function<void(Referenced* object, Isometry3*& out_Position)> positionQuery) override;

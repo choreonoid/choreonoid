@@ -372,6 +372,52 @@ bool AISTCollisionDetector::isDynamicGeometryPairChangeEnabled() const
 }
 
 
+bool AISTCollisionDetector::removeGeometry(GeometryHandle geometry)
+{
+    bool removed = false;
+    ColdetModelExPtr model = getColdetModel(geometry);
+    
+    auto mi = impl->models.rbegin();
+    while(mi != impl->models.rend()){
+        if(*mi == model){
+            impl->models.erase(--(mi.base()));
+            removed = true;
+            break;
+        }
+        ++mi;
+    }
+
+    if(removed){
+        auto pi = impl->modelPairs.begin();
+        while(pi != impl->modelPairs.end()){
+            auto& modelPair = *pi;
+            if(modelPair->model(0) == model || modelPair->model(1) == model){
+                pi = impl->modelPairs.erase(pi);
+            } else {
+                ++pi;
+            }
+        }
+        auto ii = impl->ignoredPairs.begin();
+        while(ii != impl->ignoredPairs.end()){
+            auto& idPair = *ii;
+            if(idPair.hasId(geometry)){
+                ii = impl->ignoredPairs.erase(ii);
+            } else {
+                ++ii;
+            }
+        }
+    }
+
+    return removed;
+}
+
+
+bool AISTCollisionDetector::isGeometryRemovalSupported() const
+{
+    return true;
+}
+
+
 bool AISTCollisionDetector::makeReady()
 {
     impl->makeReady();
