@@ -90,6 +90,7 @@ Changes since 1.7.0:
 * Added BodyStateLoggerItem
 * Added MocapPlugin
 * Added BodyMotionFilterPlugin implementing YawMomentCompensationFilter
+* Added FFmpegPlugin
 * Added the HRP-4C model and its samples
 * Many other minor feature improvements and bug fixes
 
