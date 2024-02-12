@@ -352,9 +352,6 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
     auto body = io->body();
 
     ioDevice = body->findDevice<DigitalIoDevice>();
-    if(ioDevice){
-        ioDevice->resetAllSignals();
-    }
 
     isLogEnabled = io->enableLog();
     
@@ -616,6 +613,9 @@ KinematicBodySet* MprControllerItemBase::kinematicBodySetForInternalUse()
 bool MprControllerItemBase::start()
 {
     impl->currentLog->isErrorState_ = false;
+    if(impl->ioDevice){
+        impl->ioDevice->resetAllSignals(true);
+    }
     return onStart();
 }
 
