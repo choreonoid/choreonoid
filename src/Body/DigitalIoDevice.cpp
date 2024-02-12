@@ -180,13 +180,13 @@ void DigitalIoDevice::setIn(int index, bool on, bool doNotify)
 }
 
 
-void DigitalIoDevice::resetAllSignals()
+void DigitalIoDevice::resetAllSignals(bool doNotify)
 {
-    size_t n = out_.size();
-    out_.clear();
-    out_.resize(n, false);
-    in_.clear();
-    in_.resize(n, false);
+    int n = out_.size();
+    for(int i=0; i < n; ++i){
+        setOut(i, false, doNotify);
+        setIn(i, false, doNotify);
+    }
 }
 
 
@@ -420,6 +420,16 @@ std::vector<std::pair<int, std::string&>> DigitalIoDevice::getInputToDeviceSwitc
         list.emplace_back(kv.first, kv.second);
     }
     return list;
+}
+
+
+std::string DigitalIoDevice::getInputToDeviceSwitchConnectionDeviceName(int inputIndex) const
+{
+    auto it = impl->inputToDeviceSwitchConnectionMap.find(inputIndex);
+    if(it != impl->inputToDeviceSwitchConnectionMap.end()){
+        return it->second;
+    }
+    return string();
 }
 
 

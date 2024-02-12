@@ -35,7 +35,7 @@ public:
     bool in(int index) const { return in_[index]; }
     void setIn(int index, bool on, bool doNotify = true);
 
-    void resetAllSignals();
+    void resetAllSignals(bool doNotify = true);
 
     const std::string& outLabel(int index) const;
     void setOutLabel(int index, const std::string& label);
@@ -57,6 +57,7 @@ public:
     // Tentative api. The role of this API will be replaced with the StdActionController device.
     void setInputToDeviceSwitchConnection(int inputIndex, const std::string& deviceName);
     std::vector<std::pair<int, std::string&>> getInputToDeviceSwitchConnections() const;
+    std::string getInputToDeviceSwitchConnectionDeviceName(int inputIndex) const;
     void removeInputToDeviceSwitchConnection(int inputIndex);
     void clearInputToDeviceSwitchConnections();
     bool readInputToDeviceSwitchConnections(const Mapping& archive);
