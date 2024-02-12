@@ -10,25 +10,41 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+struct BodyInfo : public Referenced
+{
+    ScopedConnectionSet connections;
+};
+typedef ref_ptr<BodyInfo> BodyInfoPtr;
+
+typedef unordered_map<BodyPtr, BodyInfoPtr> BodyInfoMap;
+
+}
+
 namespace cnoid {
 
 class BodyCollisionDetector::Impl
 {
 public:
     CollisionDetectorPtr collisionDetector;
+    BodyInfoMap bodyInfoMap;
     unordered_map<LinkPtr, GeometryHandle> linkToGeometryHandleMap;
     LinkAssociatedObjectFunc linkAssociatedObjectFunc;
     vector<GeometryHandle> linkIndexToGeometryHandleMap;
     BodyCollisionLinkFilter bodyCollisionLinkFilter;
-    ScopedConnectionSet bodyExistenceConnections;
+    bool needToMakeCollisionDetectorReady;
     bool hasCustomObjectsAssociatedWithLinks;
     bool isGeometryHandleMapEnabled;
     bool isGeometryRemovalSupported;
+    bool isMultiplexBodySupportEnabled;
 
     Impl();
-    bool addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId);
+    bool addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId, bool isMultiplexBody);
     bool addLinkRecursively(Link* link, bool isParentStatic, int groupId);
     stdx::optional<CollisionDetector::GeometryHandle> addLink(Link* link, bool isStatic, int groupId);
+    bool removeBody(Body* body, bool isMultiplexBody);
+    void onMultiplexBodyAddedOrRemoved(Body* body, bool isAdded, bool isSelfCollisionDetectionEnabled, int groupId);
     double findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2);
     void onBodyExistenceChanged(Body* body, bool on);    
 };
@@ -53,16 +69,18 @@ BodyCollisionDetector::Impl::Impl()
             }
         });
     
+    needToMakeCollisionDetectorReady = true;
     hasCustomObjectsAssociatedWithLinks = false;
     isGeometryHandleMapEnabled = false;
     isGeometryRemovalSupported = false;
+    isMultiplexBodySupportEnabled = false;
 }
 
 
 BodyCollisionDetector::BodyCollisionDetector(CollisionDetector* collisionDetector)
 {
     impl = new Impl;
-    impl->collisionDetector = collisionDetector;
+    setCollisionDetector(collisionDetector);
 }
 
 
@@ -75,7 +93,11 @@ BodyCollisionDetector::~BodyCollisionDetector()
 void BodyCollisionDetector::setCollisionDetector(CollisionDetector* collisionDetector)
 {
     impl->collisionDetector = collisionDetector;
-    impl->isGeometryRemovalSupported = collisionDetector->isGeometryRemovalSupported();
+    if(collisionDetector){
+        impl->isGeometryRemovalSupported = collisionDetector->isGeometryRemovalSupported();
+    } else {
+        impl->isGeometryRemovalSupported = false;
+    }
     clearBodies();
 }
 
@@ -112,8 +134,9 @@ void BodyCollisionDetector::clearBodies()
     if(impl->collisionDetector){
         impl->collisionDetector->clearGeometries();
     }
+    impl->bodyInfoMap.clear();
     impl->linkToGeometryHandleMap.clear();
-    impl->bodyExistenceConnections.disconnect();
+    impl->needToMakeCollisionDetectorReady = true;
     impl->hasCustomObjectsAssociatedWithLinks = false;
 }
 
@@ -124,9 +147,27 @@ void BodyCollisionDetector::setLinkAssociatedObjectFunction(LinkAssociatedObject
 }
 
 
+bool BodyCollisionDetector::isMultiplexBodySupported() const
+{
+    return impl->isGeometryRemovalSupported;
+}
+
+
+bool BodyCollisionDetector::isMultiplexBodySupportEnabled() const
+{
+    return impl->isMultiplexBodySupportEnabled;
+}
+
+
+void BodyCollisionDetector::setMultiplexBodySupportEnabled(bool on)
+{
+    impl->isMultiplexBodySupportEnabled = on && isMultiplexBodySupported();
+}
+
+
 void BodyCollisionDetector::addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId)
 {
-    impl->addBody(body, isSelfCollisionDetectionEnabled, groupId);
+    impl->addBody(body, isSelfCollisionDetectionEnabled, groupId, false);
 }
 
 
@@ -141,8 +182,14 @@ void BodyCollisionDetector::addBody(Body* body, bool isSelfCollisionDetectionEna
 */
 
 
-bool BodyCollisionDetector::Impl::addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId)
+bool BodyCollisionDetector::Impl::addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId, bool isMultiplexBody)
 {
+    BodyInfoPtr info = new BodyInfo;
+    auto inserted = bodyInfoMap.insert(BodyInfoMap::value_type(body, info));
+    if(!inserted.second){
+        return false; // already added
+    }
+    
     const int numLinks = body->numLinks();
     linkIndexToGeometryHandleMap.clear();
     linkIndexToGeometryHandleMap.resize(numLinks, 0);
@@ -151,12 +198,27 @@ bool BodyCollisionDetector::Impl::addBody(Body* body, bool isSelfCollisionDetect
     
     bool added = addLinkRecursively(body->rootLink(), true, groupId);
 
-    if(added){
+    if(!added){
+        bodyInfoMap.erase(inserted.first);
+
+    } else {
         bodyCollisionLinkFilter.apply();
 
-        bodyExistenceConnections.add(
-            body->sigExistenceChanged().connect(
-                [this, body](bool on){ onBodyExistenceChanged(body, on); }));
+        if(!isMultiplexBody){
+            info->connections.add(
+                body->sigExistenceChanged().connect(
+                    [this, body](bool on){ onBodyExistenceChanged(body, on); }));
+
+            if(isMultiplexBodySupportEnabled){
+                info->connections.add(
+                    body->sigMultiplexBodyAddedOrRemoved().connect(
+                        [this, isSelfCollisionDetectionEnabled, groupId](Body* body, bool isAdded){
+                            onMultiplexBodyAddedOrRemoved(body, isAdded, isSelfCollisionDetectionEnabled, groupId);
+                        }));
+            }
+        }
+
+        needToMakeCollisionDetectorReady = true;
     }
 
     return added;
@@ -215,6 +277,7 @@ stdx::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::Impl::a
 void BodyCollisionDetector::addLink(Link* link, int groupId)
 {
     impl->addLink(link, link->isStatic(), groupId);
+    impl->needToMakeCollisionDetectorReady = true;
 }
 
 
@@ -238,20 +301,38 @@ void BodyCollisionDetector::setGroup(Link* link, int groupId)
 
 bool BodyCollisionDetector::removeBody(Body* body)
 {
+    return impl->removeBody(body, false);
+}
+
+
+bool BodyCollisionDetector::Impl::removeBody(Body* body, bool /* isMultiplexBody */)
+{
     bool removed = false;
-    if(impl->isGeometryHandleMapEnabled && impl->isGeometryRemovalSupported){
+    if(isGeometryHandleMapEnabled && isGeometryRemovalSupported){
         for(auto& link : body->links()){
-            auto it = impl->linkToGeometryHandleMap.find(link);
-            if(it != impl->linkToGeometryHandleMap.end()){
+            auto it = linkToGeometryHandleMap.find(link);
+            if(it != linkToGeometryHandleMap.end()){
                 auto& handle = it->second;
-                if(impl->collisionDetector->removeGeometry(handle)){
-                    impl->linkToGeometryHandleMap.erase(it);
+                if(collisionDetector->removeGeometry(handle)){
+                    linkToGeometryHandleMap.erase(it);
                     removed = true;
                 }
             }
         }
+        bodyInfoMap.erase(body);
     }
     return removed;
+}
+
+
+void BodyCollisionDetector::Impl::onMultiplexBodyAddedOrRemoved
+(Body* body, bool isAdded, bool isSelfCollisionDetectionEnabled, int groupId)
+{
+    if(isAdded){
+        addBody(body, isSelfCollisionDetectionEnabled, groupId, true);
+    } else {
+        removeBody(body, true);
+    }
 }
 
 
@@ -261,9 +342,14 @@ bool BodyCollisionDetector::hasBodies() const
 }
 
 
-bool BodyCollisionDetector::makeReady()
+bool BodyCollisionDetector::makeReady(bool doForce)
 {
-    return impl->collisionDetector->makeReady();
+    bool ready = !impl->needToMakeCollisionDetectorReady;
+    if(doForce || !ready){
+        ready = impl->collisionDetector->makeReady();
+        impl->needToMakeCollisionDetectorReady = false;
+    }
+    return ready;
 }
 
 

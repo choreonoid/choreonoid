@@ -29,6 +29,10 @@ public:
 
     typedef std::function<Referenced*(Link* link, GeometryHandle geometry)> LinkAssociatedObjectFunc;
     void setLinkAssociatedObjectFunction(LinkAssociatedObjectFunc func);
+
+    bool isMultiplexBodySupported() const;
+    bool isMultiplexBodySupportEnabled() const;
+    void setMultiplexBodySupportEnabled(bool on);
     
     void addBody(Body* body, bool isSelfCollisionDetectionEnabled = true, int groupId = 0);
     void addLink(Link* link, int groupId = 0);
@@ -51,7 +55,7 @@ public:
     
     bool hasBodies() const;
     
-    bool makeReady();
+    bool makeReady(bool doForce = false);
 
     void updatePositions();
     void updatePositions(std::function<void(Referenced* object, Isometry3*& out_position)> positionQuery);
