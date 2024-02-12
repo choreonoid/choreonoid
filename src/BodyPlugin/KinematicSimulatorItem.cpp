@@ -80,7 +80,6 @@ public:
     vector<IoConnectionMapPtr> ioConnectionMaps;
     unique_ptr<BodyCollisionDetector> bodyCollisionDetector;
     bool needToUpdateBodyPositionsInCollisionDetector;
-    bool needToRemakeCollisionDetectorReady;
     bool needToBreakSimulation;
     double timeStep;
 
@@ -89,7 +88,6 @@ public:
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
     void updateBodyPositionsInCollisionDetector();
-    void onMultiplexBodyForCollisionDetectionBodyAddedOrRemoved(Body* body, bool isAdded);
     void onHolderStateChanged(HolderInfo* info);
     void activateHolder(HolderInfo* info);
     vector<Body*> findAttachableBodies(HolderInfo* info, const Isometry3& T_holder);
@@ -223,11 +221,11 @@ bool KinematicSimulatorItem::Impl::initializeSimulation(const std::vector<Simula
         }
     }
 
-    needToRemakeCollisionDetectorReady = false;
     if(hasHolderDevicesWithCollisionCondition || !conveyorInfos.empty()){
         if(!bodyCollisionDetector){
             bodyCollisionDetector = make_unique<BodyCollisionDetector>(new AISTCollisionDetector);
             bodyCollisionDetector->setGeometryHandleMapEnabled(true);
+            bodyCollisionDetector->setMultiplexBodySupportEnabled(true);
         }
         
         bodyCollisionDetector->clearBodies();
@@ -240,12 +238,8 @@ bool KinematicSimulatorItem::Impl::initializeSimulation(const std::vector<Simula
                 }
             } else if(simBody->isActive()){
                 bodyCollisionDetector->addBody(body, false);
-                if(bodyCollisionDetector->collisionDetector()->isGeometryRemovalSupported()){
-                    body->sigMultiplexBodyAddedOrRemoved().connect(
-                        [this](Body* body, bool isAdded){
-                            onMultiplexBodyForCollisionDetectionBodyAddedOrRemoved(body, isAdded);
-                        });
-                } else {
+
+                if(!bodyCollisionDetector->isMultiplexBodySupportEnabled()){
                     body->sigMultiplexBodyAddedOrRemoved().connect(
                         [this](Body* /* body */, bool /* isAdded */){
                             MessageView::instance()->putln(
@@ -319,26 +313,12 @@ bool KinematicSimulatorItem::Impl::stepSimulation(const std::vector<SimulationBo
 
 void KinematicSimulatorItem::Impl::updateBodyPositionsInCollisionDetector()
 {
-    if(needToRemakeCollisionDetectorReady){
-        bodyCollisionDetector->makeReady();
-        needToRemakeCollisionDetectorReady = false;
-    }
     if(needToUpdateBodyPositionsInCollisionDetector){
         if(bodyCollisionDetector){
+            bodyCollisionDetector->makeReady();
             bodyCollisionDetector->updatePositions();
         }
         needToUpdateBodyPositionsInCollisionDetector = false;
-    }
-}
-
-
-void KinematicSimulatorItem::Impl::onMultiplexBodyForCollisionDetectionBodyAddedOrRemoved(Body* body, bool isAdded)
-{
-    if(isAdded){
-        bodyCollisionDetector->addBody(body, false);
-        needToRemakeCollisionDetectorReady = true;
-    } else {
-        bodyCollisionDetector->removeBody(body);
     }
 }
 
@@ -447,13 +427,16 @@ void KinematicSimulatorItem::Impl::findAttachableBodiesByDistance
     const double maxDistance = holder->maxHoldDistance();
     for(auto& simBody : self->simulationBodies()){
         if(simBody->isActive()){
-            auto body = simBody->body();
-            auto rootLink = body->rootLink();
-            if(rootLink->isFreeJoint()){
-                double d = (rootLink->translation() - T_holder.translation()).norm();
-                if(d < maxDistance){
-                    out_bodies.push_back(body);
+            Body* body = simBody->body();
+            while(body){
+                auto rootLink = body->rootLink();
+                if(rootLink->isFreeJoint()){
+                    double d = (rootLink->translation() - T_holder.translation()).norm();
+                    if(d < maxDistance){
+                        out_bodies.push_back(body);
+                    }
                 }
+                body = body->nextMultiplexBody();
             }
         }
     }
@@ -467,13 +450,16 @@ void KinematicSimulatorItem::Impl::findAttachableBodiesByName
     for(auto& simBody : self->simulationBodies()){
         if(simBody->isActive()){
             auto body = simBody->body();
-            auto rootLink = body->rootLink();
-            if(rootLink->isFreeJoint()){
-                if(body->name() == holder->holdTargetName()){
-                    double d = (rootLink->translation() - T_holder.translation()).norm();
-                    if(d < maxDistance){
-                        out_bodies.push_back(body);
+            if(body->name() == holder->holdTargetName()){
+                while(body){
+                    auto rootLink = body->rootLink();
+                    if(rootLink->isFreeJoint()){
+                        double d = (rootLink->translation() - T_holder.translation()).norm();
+                        if(d < maxDistance){
+                            out_bodies.push_back(body);
+                        }
                     }
+                    body = body->nextMultiplexBody();
                 }
             }
         }
