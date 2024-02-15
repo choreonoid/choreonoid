@@ -7,6 +7,7 @@
 #include <cnoid/Camera>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
+#include <cnoid/ConveyorDevice>
 #include <cnoid/Archive>
 #include <cnoid/EigenArchive>
 #include <cnoid/MessageView>
@@ -120,6 +121,11 @@ void DeviceOverwriteItem::initializeClass(ExtensionManager* ext)
         "RangeSensor",
         [](RangeSensor* device, const Mapping* info){ return device->readSpecifications(info); },
         [](RangeSensor* device, Mapping* info){ return device->writeSpecifications(info); });
+
+    DeviceOverwriteMediator::registerStdMediator<ConveyorDevice>(
+        "ConveyorDevice",
+        [](ConveyorDevice* device, const Mapping* info){ return device->readSpecifications(info); },
+        [](ConveyorDevice* device, Mapping* info){ return device->writeSpecifications(info); });
 }
 
 
@@ -130,7 +136,8 @@ DeviceOverwriteItem::DeviceOverwriteItem()
 
 
 DeviceOverwriteItem::Impl::Impl(DeviceOverwriteItem* self)
-    : self(self)
+    : self(self),
+      mediatorId("std")
 {
     isAdditionalDevice = false;
 }
@@ -307,6 +314,10 @@ bool DeviceOverwriteItem::Impl::setDevice
             return false;
         }
         deviceAdded = true;
+    }
+
+    if(self->name().empty()){
+        self->setName(device->name());
     }
 
     if(deviceShape){
