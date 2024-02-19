@@ -1024,7 +1024,7 @@ Isometry3 PointSetLocation::getLocation() const
 bool PointSetLocation::setLocation(const Isometry3& T)
 {
     item->setOffsetPosition(T);
-    item->notifyUpdate();
+    item->notifyOffsetPositionChange();
     return true;
 }
 
