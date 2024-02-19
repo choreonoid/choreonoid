@@ -133,6 +133,7 @@ set(sources
   SceneItemFileIO.cpp
   GeneralSceneFileImporterBase.cpp
   PointSetItem.cpp
+  PointSetGeometryMeasurementTracker.cpp
   MultiPointSetItem.cpp
   PositionTagGroupItem.cpp
   PositionTagListWidget.cpp

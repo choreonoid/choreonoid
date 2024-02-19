@@ -20,6 +20,7 @@
 #include "ExtCommandItem.h"
 #include "SceneItem.h"
 #include "PointSetItem.h"
+#include "PointSetGeometryMeasurementTracker.h"
 #include "MultiPointSetItem.h"
 #include "LightingItem.h"
 #include "AbstractTextItem.h"
@@ -420,6 +421,7 @@ void App::Impl::initialize()
     ReferencedObjectSeqItem::initializeClass(ext);
     SceneItem::initializeClass(ext);
     PointSetItem::initializeClass(ext);
+    PointSetGeometryMeasurementTracker::initializeClass();
     MultiPointSetItem::initializeClass(ext);
     AbstractTextItem::initializeClass(ext);
     ScriptItem::initializeClass(ext);
