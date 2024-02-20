@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "PointCloudUtil.h"
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
@@ -15,10 +10,17 @@
 using namespace std;
 using namespace cnoid;
 
-SgMesh* cnoid::createSurfaceMesh(SgPointSet* pointSet)
+SgMesh* cnoid::applyPCLGreedyProjectionTriangulation
+(SgPointSet* pointSet,
+ int normalEstimationKSearch,
+ double normalEstimationSearchRadius,
+ int maxNearestNeighbors, double mu,
+ double searchRadius,
+ double minAngle, double maxAngle,
+ double maxSurfaceAngle, bool normalConsistency)
 {
     if(!pointSet->hasVertices()){
-        return 0;
+        return nullptr;
     }
 
     SgVertexArray* vertices = pointSet->vertices();
@@ -41,19 +43,16 @@ SgMesh* cnoid::createSurfaceMesh(SgPointSet* pointSet)
     tree->setInputCloud(cloud);
     n.setInputCloud(cloud);
     n.setSearchMethod(tree);
-    //n.setRadiusSearch(0.03);
-    n.setViewPoint(0.0, 0.0, 0.5);
-    n.setKSearch(20);
+    if(normalEstimationKSearch > 0){
+        n.setKSearch(normalEstimationKSearch);
+    }
+    if(normalEstimationSearchRadius > 0.0){
+        n.setRadiusSearch(normalEstimationSearchRadius);
+    }
+    //n.setViewPoint(0.0, 0.0, 0.0);
     n.compute(*normals);
     //* normals should not contain the point normals + surface curvatures
 
-    /*
-    SgNormalArray& meshNormals = *mesh->setNormals(new SgNormalArray(normals->size()));
-    for(size_t i=0; i < normals->size(); ++i){
-        meshNormals[i] = Eigen::Map<const Vector3f>(normals->points[i].normal);
-    }
-    */
-    
     // Concatenate the XYZ and normal fields*
     pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointNormal>);
     pcl::concatenateFields(*cloud, *normals, *cloud_with_normals);
@@ -68,15 +67,15 @@ SgMesh* cnoid::createSurfaceMesh(SgPointSet* pointSet)
     pcl::PolygonMesh polygonMesh;
     
     // Set the maximum distance between connected points (maximum edge length)
-    gp3.setSearchRadius(0.025);
+    gp3.setSearchRadius(searchRadius);
     
     // Set typical values for the parameters
-    gp3.setMu(2.5);
-    gp3.setMaximumNearestNeighbors(100);
-    gp3.setMaximumSurfaceAngle(M_PI / 4.0); // 45 degrees
-    gp3.setMinimumAngle(M_PI / 18.0); // 10 degrees
-    gp3.setMaximumAngle(2.0 * M_PI / 3.0); // 120 degrees
-    gp3.setNormalConsistency(false);
+    gp3.setMaximumNearestNeighbors(maxNearestNeighbors);
+    gp3.setMu(mu);
+    gp3.setMinimumAngle(minAngle);
+    gp3.setMaximumAngle(maxAngle);
+    gp3.setMaximumSurfaceAngle(maxSurfaceAngle);
+    gp3.setNormalConsistency(normalConsistency);
     gp3.setConsistentVertexOrdering(true);
     
     // Get result
@@ -93,7 +92,7 @@ SgMesh* cnoid::createSurfaceMesh(SgPointSet* pointSet)
     const int numTriangles = triangles.size();
     mesh->reserveNumTriangles(numTriangles);
     for(int i=0; i < numTriangles; ++i){
-        const vector<uint32_t>& triangleVertices = triangles[i].vertices;
+        const auto& triangleVertices = triangles[i].vertices;
         if(triangleVertices.size() == 3){
             mesh->addTriangle(triangleVertices[0], triangleVertices[1], triangleVertices[2]);
         }
@@ -109,7 +108,7 @@ stdx::optional<double> cnoid::alignPointCloud
     typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;    
 
     if(!target->hasVertices() || !source->hasVertices()){
-        return boost::none;
+        return stdx::nullopt;
     }
 
     const SgVertexArray& targetPoints = *target->vertices();
@@ -148,5 +147,5 @@ stdx::optional<double> cnoid::alignPointCloud
     if(icp.hasConverged()){
         return icp.getFitnessScore();
     }
-    return boost::none;
+    return stdx::nullopt;
 }
