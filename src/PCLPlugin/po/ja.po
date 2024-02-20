@@ -1,0 +1,74 @@
+# Japanese translations for Choreonoid PCLPlugin.
+# This file is distributed under the same license as the Choreonoid package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Choreonoid\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-03-07 16:11+0900\n"
+"PO-Revision-Date: 2024-02-20 14:48+0900\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Convert point set to mesh"
+msgstr "点群からメッシュへの変換"
+
+msgid "Convert to mesh"
+msgstr "メッシュに変換"
+
+msgid "Point Set to Mesh Conversion"
+msgstr "点群からメッシュへの変換"
+
+msgid "Normal estimation nearest neighbors:"
+msgstr "法線推定の最近傍点："
+
+msgid "Radius"
+msgstr "半径"
+
+msgid "Max nearest neighbors"
+msgstr "最大最近傍点数"
+
+msgid "Mu"
+msgstr "μ"
+
+msgid "Search radius"
+msgstr "探索半径"
+
+msgid "Triangle angle range"
+msgstr "三角形辺角度範囲"
+
+msgid "Max surface angle"
+msgstr "最大面角度"
+
+msgid "Normal consistency"
+msgstr "法線の一貫性"
+
+msgid "Output item type:"
+msgstr "出力アイテムタイプ："
+
+msgid "Scene item"
+msgstr "シーンアイテム"
+
+msgid "Body item"
+msgstr "ボディアイテム"
+
+msgid "&Convert"
+msgstr "変換"
+
+msgid "Convert \"%1\" to Mesh"
+msgstr "\"%1\" のメッシュへの変換"
+
+msgid "Convert \"{0}\" to mesh data ..."
+msgstr "\"{0}\" をメッシュに変換..."
+
+msgid "{0}_Mesh"
+msgstr ""
+
+msgid " Done."
+msgstr "完了．"
+
+msgid "Failed."
+msgstr "失敗．"
