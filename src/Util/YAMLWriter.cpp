@@ -296,7 +296,7 @@ bool YAMLWriter::Impl::makeValuePutReady()
                 newLine();
             }
             indent();
-            os() << "- ";
+            os() << "-";
         }
         isCurrentNewLine = false;
         return true;
@@ -311,17 +311,29 @@ bool YAMLWriter::Impl::startValuePut(bool doPutValueInSameLine)
     if(!makeValuePutReady()){
         return false;
     }
+
+    bool spaceInserted = false;
     
-    if(current->type == LISTING && current->isFlowStyle){
-        if(current->hasValuesBeenPut){
-            os() << ", ";
+    if(current->type == LISTING){
+        if(current->isFlowStyle){
+            if(current->hasValuesBeenPut){
+                os() << ",";
+            }
+            if(doInsertLineFeed){
+                newLine();
+                indent();
+                doInsertLineFeed = false;
+                isCurrentNewLine = false;
+            } else {
+                os() << " ";
+            }
+            spaceInserted = true;
         }
-        if(doInsertLineFeed){
-            newLine();
-            indent();
-            doInsertLineFeed = false;
-            isCurrentNewLine = false;
-        }
+    }
+
+    if(doPutValueInSameLine && !spaceInserted){
+        os() << " ";
+        spaceInserted = true;
     }
 
     // Put an anchor
@@ -598,13 +610,13 @@ template<class KeyStringType> void YAMLWriter::Impl::putKey(const KeyStringType&
 
         switch(style){
         case SINGLE_QUOTED:
-            os() << "'" << key << "': ";
+            os() << "'" << key << "':";
             break;
         case DOUBLE_QUOTED:
-            os() << "\"" << key << "\": ";
+            os() << "\"" << key << "\":";
             break;
         default:
-            os() << key << ": ";
+            os() << key << ":";
             break;
         }
 
@@ -633,7 +645,7 @@ void YAMLWriter::Impl::endMapping()
             os() << " }";
         } else {
             if(!current->hasValuesBeenPut){
-                os() << "{ }"; // Put an empty mapping
+                os() << " { }"; // Put an empty mapping
             }
         }
         popState();
@@ -665,7 +677,7 @@ void YAMLWriter::Impl::startListingSub(bool isFlowStyle)
     if(startValuePut(isFlowStyle)){
         State& state = pushState(LISTING, isFlowStyle);
         if(state.isFlowStyle){
-            os() << "[ ";
+            os() << "[";
             isCurrentNewLine = false;
             doInsertLineFeed = false;
         }
