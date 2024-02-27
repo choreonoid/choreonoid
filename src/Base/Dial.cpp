@@ -16,8 +16,8 @@ SignalProxy<void(double)> Dial::sigValueChanged()
 {
     if(!sigValueChanged_){
         stdx::emplace(sigValueChanged_);
-        connect(this, (void(QDial::*)(double)) &QDial::valueChanged,
-                [this](double value){ onValueChanged(value); });
+        connect(this, (void(QDial::*)(int)) &QDial::valueChanged,
+                [this](int value){ onValueChanged(value); });
     }
     return *sigValueChanged_;
 }
@@ -51,19 +51,19 @@ void Dial::setValue(double value)
 
 void Dial::onValueChanged(int value)
 {
-    if(wrapping()){
+    if(!wrapping()){
+        (*sigValueChanged_)(value);
+    } else {
         double diff = (double)value - (double)preValue;
         double dial_range = (double)maximum() - (double)minimum();
-        if( diff > dial_range/2.0 ){
+        if(diff > dial_range/2.0){
             increasingValue -= (dial_range - diff);
-        }else if( diff < -dial_range/2.0 ){
+        } else if(diff < -dial_range/2.0){
             increasingValue += (dial_range + diff);
-        }else{
+        } else {
             increasingValue += diff;
         }
         (*sigValueChanged_)(increasingValue);
-    }else{
-        (*sigValueChanged_)(value);
     }
 
     preValue = value;
