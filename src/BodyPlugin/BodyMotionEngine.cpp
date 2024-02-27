@@ -232,7 +232,7 @@ bool BodyMotionEngine::onTimeChanged(double time)
         
         if(body->numMultiplexBodies() != prevNumMultiplexBodies){
             // Is it better to define and use a signal specific to multiplex body changes?
-            bodyItem_->notifyUpdate();
+            bodyItem_->notifyUpdateWithProjectFileConsistency();
         }
     }
     

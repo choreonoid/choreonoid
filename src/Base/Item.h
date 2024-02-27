@@ -441,6 +441,7 @@ public:
     SignalProxy<void(bool on)> sigCheckToggled(int checkId = PrimaryCheck);
 
     virtual void notifyUpdate();
+    void notifyUpdateWithProjectFileConsistency();
     SignalProxy<void()> sigUpdated();
 
     bool setAddon(ItemAddon* addon);

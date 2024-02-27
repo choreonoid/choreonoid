@@ -1401,6 +1401,14 @@ void Item::notifyUpdate()
 }
 
 
+void Item::notifyUpdateWithProjectFileConsistency()
+{
+    bool isConsistentWithProjectArchive = impl->isConsistentWithProjectArchive;
+    notifyUpdate();
+    impl->isConsistentWithProjectArchive = isConsistentWithProjectArchive;
+}
+
+
 SignalProxy<void()> Item::sigUpdated()
 {
     return impl->sigUpdated;
