@@ -772,6 +772,7 @@ void JointIndicator::initialize(Link* joint)
         spin.setEnabled(true);
 
         dial.setRange(lower * Resolution, upper * Resolution);
+        dial.setWrapping(false);
         dial.setNotchesVisible(true);
         dial.setEnabled(true);
         
@@ -783,6 +784,9 @@ void JointIndicator::initialize(Link* joint)
         spin.setDecimals(0);
         spin.setRange(0.0, 0.0);
         spin.setEnabled(false);
+        dial.setRange(0, 0);
+        dial.setWrapping(false);
+        dial.setNotchesVisible(false);
     }
     
     hasPhases = false;
