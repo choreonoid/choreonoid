@@ -29,10 +29,12 @@ public:
 
     ItemTreeWidget* itemTreeWidget();
 
-    template<class TargetItemType>
-    void registerPanel(ItemTreePanelBase* panel);
+    void registerPanel(
+        std::function<ItemTreePanelBase*()> instanceFunction,
+        std::function<bool(Item* item)> pred);
 
     template<class TargetItemType>
+    [[deprecated]]
     void registerPanel(
         std::function<ItemTreePanelBase*(TargetItemType* item)> panelFunction,
         std::function<QSize()> minimumSizeHintFunction)
@@ -117,17 +119,6 @@ public:
     
     virtual bool onActivated(TopItemType* topItem, TargetItemType* targetItem, bool isNewItem) = 0;
 };
-
-
-template<class TargetItemType>
-void ItemTreePanelDialog::registerPanel(ItemTreePanelBase* panel)
-{
-    registerPanel_(
-        typeid(TargetItemType),
-        [panel](Item*){ return panel; },
-        [panel](){ return panel->minimumSizeHint(); });
-}
-
 
 }
 

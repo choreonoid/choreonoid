@@ -15,14 +15,32 @@ using fmt::format;
 
 namespace {
 
+struct PanelFactory
+{
+    std::function<ItemTreePanelBase*()> instanceFunction;
+    std::function<bool(Item* item)> pred;
+    PanelFactory(
+        const std::function<ItemTreePanelBase*()>& instanceFunction,
+        const std::function<bool(Item* item)>& pred)
+        : instanceFunction(instanceFunction), pred(pred) { }
+};
+
 class PanelArea : public QWidget
 {
 public:
+    vector<PanelFactory>& panelFactories;
     vector<function<QSize()>> minimumPanelSizeHintFunctions;
+
+    PanelArea(vector<PanelFactory>& panelFactories) : panelFactories(panelFactories) { }
 
     virtual QSize minimumSizeHint() const override
     {
         auto size = QWidget::minimumSizeHint();
+        for(auto& factory : panelFactories){
+            if(auto panel = factory.instanceFunction()){
+                size = size.expandedTo(panel->minimumSizeHint());
+            }
+        }
         for(auto& sizeHintFunc : minimumPanelSizeHintFunctions){
             auto panelSize = sizeHintFunc();
             size = size.expandedTo(panelSize);
@@ -47,7 +65,9 @@ public:
     bool isLastValidPanelKeepingMode;
     bool isSinglePanelSyncMode;
     bool needToUpdatePanel;
-    PolymorphicItemFunctionSet  panelFunctions;
+    
+    vector<PanelFactory> panelFactories;
+    PolymorphicItemFunctionSet  polymorphicPanelFunctions;
     ItemTreePanelBase* panelToActivate;
     ItemTreePanelBase* currentPanel;
     QHBoxLayout topWidgetLayout;
@@ -162,7 +182,8 @@ ItemTreePanelDialog::ItemTreePanelDialog(QWidget* parent, Qt::WindowFlags f)
 
 
 ItemTreePanelDialog::Impl::Impl(ItemTreePanelDialog* self)
-    : self(self)
+    : self(self),
+      panelArea(panelFactories)
 {
     self->setEnterKeyClosePreventionMode(true);
 }
@@ -279,12 +300,19 @@ ItemTreeWidget* ItemTreePanelDialog::itemTreeWidget()
 }
 
 
+void ItemTreePanelDialog::registerPanel
+(std::function<ItemTreePanelBase*()> instanceFunction, std::function<bool(Item* item)> pred)
+{
+    impl->panelFactories.emplace_back(instanceFunction, pred);
+}
+
+
 void ItemTreePanelDialog::registerPanel_
 (const std::type_info& type,
  const std::function<ItemTreePanelBase*(Item* item)>& panelFunction,
  const std::function<QSize()>& minimumSizeHintFunction)
 {
-    impl->panelFunctions.setFunction(
+    impl->polymorphicPanelFunctions.setFunction(
         type, [this, panelFunction](Item* item){ impl->panelToActivate = panelFunction(item); });
 
     impl->panelArea.minimumPanelSizeHintFunctions.push_back(minimumSizeHintFunction);
@@ -399,7 +427,18 @@ void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem, bool do
 
     panelToActivate = nullptr;
     if(item){
-        panelFunctions.dispatch(item);
+        for(auto it = panelFactories.rbegin(); it != panelFactories.rend(); ++it){
+            auto& factory = *it;
+            if(factory.pred(item)){
+                panelToActivate = factory.instanceFunction();
+                if(panelToActivate){
+                    break;
+                }
+            }
+        }
+        if(!panelToActivate){
+            polymorphicPanelFunctions.dispatch(item);
+        }
     }
 
     if(!doKeepLastPanel || panelToActivate){
