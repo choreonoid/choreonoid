@@ -234,13 +234,28 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
         node->write("parent", link->parent()->name(), DOUBLE_QUOTED);
     }
 
+    bool hasOffsetPosition = false;
     auto b = link->offsetTranslation();
     if(!b.isZero()){
         write(node, "translation", b);
+        hasOffsetPosition = true;
     }
     auto aa = AngleAxis(link->offsetRotation());
     if(aa.angle() != 0.0){
         writeDegreeAngleAxis(node, "rotation", aa);
+        hasOffsetPosition = true;
+    }
+
+    // Write the current position as translation and rotation for the root link
+    if(!hasOffsetPosition && link->isRoot()){
+        auto b = link->translation();
+        if(!b.isZero()){
+            write(node, "translation", b);
+        }
+        auto aa = AngleAxis(link->rotation());
+        if(aa.angle() != 0.0){
+            writeDegreeAngleAxis(node, "rotation", aa);
+        }
     }
 
     if(!link->jointName().empty()){
