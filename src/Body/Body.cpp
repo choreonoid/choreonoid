@@ -5,6 +5,7 @@
 #include <cnoid/SceneGraph>
 #include <cnoid/EigenUtil>
 #include <cnoid/ValueTree>
+#include <utility>
 #include <iostream>
 
 using namespace std;
@@ -919,6 +920,20 @@ bool Body::doClearMultiplexBodies(bool doClearCache)
     }
 
     return removed;
+}
+
+
+void Body::exchangePositionWithMultiplexBody(Body* multiplexBody)
+{
+    int n = numLinks();
+    for(int i=0; i < n; ++i){
+        Link* link_ = link(i);
+        Link* multiplexLink = multiplexBody->link(i);
+        Isometry3 T = link_->T();
+        link_->setPosition(multiplexLink->T());
+        multiplexLink->setPosition(T);
+        std::swap(link_->q(), multiplexLink->q());
+    }
 }
 
 

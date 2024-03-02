@@ -5,6 +5,7 @@
 #include <cnoid/SceneUtil>
 #include <cnoid/SceneRenderer>
 #include <cnoid/CloneMap>
+#include <list>
 #include "gettext.h"
 
 using namespace std;
@@ -75,13 +76,14 @@ public:
     std::function<SceneLink*(Link*)> sceneLinkFactory;
     SgGroupPtr multiplexSceneBodyGroup;
     std::vector<SceneBodyPtr> multiplexSceneBodies;
-    std::vector<SceneBodyPtr> multiplexSceneBodyCache;
+    std::list<SceneBodyPtr> multiplexSceneBodyCache;
     ScopedConnection existenceConnection;
 
     Impl(SceneBody* self);
+    void setBody(Body* body);
     void updateLinkPositions(Body* body, vector<SceneLinkPtr>& sceneLinks, SgUpdateRef& update);
     void updateMultiplexBodyPositions(SgUpdateRef& update);
-    SceneBody* addMultiplexSceneBody(SgUpdateRef& update);
+    SceneBody* addMultiplexSceneBody(Body* multiplexBody, SgUpdateRef& update);
     void removeSubsequentMultiplexSceneBodies(int index, SgUpdateRef& update, bool doCache);
     void clearSceneDevices();    
     void onBodyExistenceChanged(bool on);
@@ -414,12 +416,19 @@ SceneBody::~SceneBody()
 
 void SceneBody::setBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFactory)
 {
-    body_ = body;
     impl->sceneLinkFactory = sceneLinkFactory;
-    updateSceneModel();
+    impl->setBody(body);
+}
 
-    impl->existenceConnection =
-        body->sigExistenceChanged().connect([this](bool on){ impl->onBodyExistenceChanged(on); });
+
+void SceneBody::Impl::setBody(Body* body)
+{
+    if(body != self->body_){
+        self->body_ = body;
+        self->updateSceneModel();
+        existenceConnection =
+            body->sigExistenceChanged().connect([this](bool on){ onBodyExistenceChanged(on); });
+    }
 }
 
 
@@ -506,8 +515,9 @@ void SceneBody::Impl::updateMultiplexBodyPositions(SgUpdateRef& update)
         SceneBody* sceneBody;
         if(multiplexBodyIndex < multiplexSceneBodies.size()){
             sceneBody = multiplexSceneBodies[multiplexBodyIndex];
+            sceneBody->impl->setBody(multiplexBody);
         } else {
-            sceneBody = addMultiplexSceneBody(update);
+            sceneBody = addMultiplexSceneBody(multiplexBody, update);
         }
         auto& sceneLinks = sceneBody->sceneLinks_;
         updateLinkPositions(multiplexBody, sceneLinks, update);
@@ -518,16 +528,16 @@ void SceneBody::Impl::updateMultiplexBodyPositions(SgUpdateRef& update)
 }
 
 
-SceneBody* SceneBody::Impl::addMultiplexSceneBody(SgUpdateRef& update)
+SceneBody* SceneBody::Impl::addMultiplexSceneBody(Body* multiplexBody, SgUpdateRef& update)
 {
     SceneBodyPtr sceneBody;
 
     if(multiplexSceneBodyCache.empty()){
-        sceneBody = new SceneBody(self->body_);
-        //sceneBody = new SceneBody(*self);
+        sceneBody = new SceneBody(multiplexBody);
     } else {
-        sceneBody = multiplexSceneBodyCache.back();
-        multiplexSceneBodyCache.pop_back();
+        sceneBody = multiplexSceneBodyCache.front();
+        sceneBody->impl->setBody(multiplexBody);
+        multiplexSceneBodyCache.pop_front();
     }
     multiplexSceneBodies.push_back(sceneBody);
 

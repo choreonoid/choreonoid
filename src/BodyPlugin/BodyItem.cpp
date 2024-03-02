@@ -158,6 +158,8 @@ public:
 
     BodyState initialState;
     BodyState lastEditState;
+
+    BodyPtr exchangedMultiplexBody;
             
     OperableSceneBodyPtr sceneBody;
     float transparency;
@@ -785,6 +787,13 @@ void BodyItem::Impl::createPenetrationBlocker(Link* link, bool excludeSelfCollis
         blocker->setDepth(KinematicsBar::instance()->penetrationBlockDepth());
         blocker->start();
     }
+}
+
+
+void BodyItem::exchangeWithMultiplexBody(Body* multiplexBody)
+{
+    impl->body->exchangePositionWithMultiplexBody(multiplexBody);
+    impl->exchangedMultiplexBody = multiplexBody;
 }
 
 

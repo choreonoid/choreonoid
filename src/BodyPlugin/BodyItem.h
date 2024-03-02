@@ -111,6 +111,8 @@ public:
     std::shared_ptr<PinDragIK> checkPinDragIK();
     std::shared_ptr<PenetrationBlocker> createPenetrationBlocker(Link* link, bool excludeSelfCollisions = false);
 
+    void exchangeWithMultiplexBody(Body* multiplexBody);
+
     enum ModelUpdateFlag {
         LinkSetUpdate = 1 << 0,
         LinkSpecUpdate = 1 << 1,

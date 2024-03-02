@@ -279,6 +279,7 @@ public:
     bool clearMultiplexBodies(bool doClearCache = false){
         return !nextMultiplexBody_ ? false : doClearMultiplexBodies(doClearCache);
     }
+    void exchangePositionWithMultiplexBody(Body* multiplexBody);
     SignalProxy<void(Body* body, bool isAdded)> sigMultiplexBodyAddedOrRemoved();
 
     const Mapping* info() const;

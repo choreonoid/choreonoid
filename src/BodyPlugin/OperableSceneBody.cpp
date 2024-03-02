@@ -993,7 +993,16 @@ OperableSceneBody::Impl::PointedType OperableSceneBody::Impl::findPointedObject(
     PointedType pointedType = PT_NONE;
     pointedSceneLink = nullptr;
     for(size_t i = path.size() - 1; i >= 1; --i){
-        pointedSceneLink = dynamic_cast<OperableSceneLink*>(path[i].get());
+        if(auto sceneLink = dynamic_cast<SceneLink*>(path[i].get())){
+            auto sceneBody = sceneLink->sceneBody();
+            if(sceneBody == self){
+                pointedSceneLink = dynamic_cast<OperableSceneLink*>(sceneLink);
+            } else { // multiplex body
+                pointedSceneLink = operableSceneLink(sceneLink->link()->index());
+                bodyItem->exchangeWithMultiplexBody(sceneBody->body());
+                onKinematicStateChanged();
+            }
+        }
         if(pointedSceneLink){
             pointedType = PT_SCENE_LINK;
             break;
