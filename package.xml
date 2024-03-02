@@ -14,7 +14,8 @@
   <url type="repository">https://github.com/choreonoid/choreonoid/</url>
   <url type="bugtracker">https://github.com/choreonoid/choreonoid/issues</url>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
+  <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake</buildtool_depend>
 
   <depend>boost</depend>
   <build_export_depend>eigen</build_export_depend>
