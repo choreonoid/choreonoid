@@ -373,6 +373,18 @@ bool DigitalIoDevice::writeDescription(Mapping* info) const
 bool DigitalIoDevice::writeSpecifications(Mapping* info) const
 {
     info->write("num_signal_lines", numSignalLines());
+
+    if(!impl->inputToDeviceSwitchConnectionMap.empty()){
+        auto connectionsNode = info->openListing("input_to_device_switch_connections");
+        for(auto& kv : impl->inputToDeviceSwitchConnectionMap){
+            auto node = new Listing;
+            node->setFlowStyle();
+            node->append(kv.first);
+            node->append(kv.second, DOUBLE_QUOTED);
+            connectionsNode->append(node);
+        }
+    }
+    
     return true;
 }
 
@@ -389,16 +401,6 @@ bool DigitalIoDevice::writeConfiguration(Mapping* info) const
         auto inLabelsNode = info->openMapping("in_labels");
         for(auto& kv : impl->inLabelMap){
             inLabelsNode->write(std::to_string(kv.first), kv.second, DOUBLE_QUOTED);
-        }
-    }
-    if(!impl->inputToDeviceSwitchConnectionMap.empty()){
-        auto connectionsNode = info->openListing("input_to_device_switch_connections");
-        for(auto& kv : impl->inputToDeviceSwitchConnectionMap){
-            auto node = new Listing;
-            node->setFlowStyle();
-            node->append(kv.first);
-            node->append(kv.second, DOUBLE_QUOTED);
-            connectionsNode->append(node);
         }
     }
 
