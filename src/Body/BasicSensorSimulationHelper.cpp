@@ -1,5 +1,6 @@
 #include "BasicSensorSimulationHelper.h"
 #include "Body.h"
+#include "Link.h"
 
 using namespace std;
 using namespace cnoid;
@@ -82,6 +83,16 @@ void BasicSensorSimulationHelper::initialize
             impl->initialize(body, timeStep, gravityAcceleration);
             isActive_ = true;
         }
+    }
+
+    for(RateGyroSensor* sensor : rateGyroSensors_) {
+        sensor->link()->mergeSensingMode(Link::LinkTwist);
+    }
+    for(AccelerationSensor* sensor : accelerationSensors_) {
+        sensor->link()->mergeSensingMode(Link::LinkAcceleration);
+    }
+    for(Imu* sensor : imus_) {
+        sensor->link()->mergeSensingMode(Link::LinkTwist | Link::LinkAcceleration);        
     }
 }
 
