@@ -24,6 +24,9 @@ public:
     double toDisplayLength(double meter) const {
         return (lengthUnit_ == Meter) ? meter : meter * 1000.0;
     }
+    double toMeter(double displayLength) const {
+        return (lengthUnit_ == Meter) ? displayLength : displayLength / 1000.0;
+    }
     double ratioToDisplayLength() const {
         return (lengthUnit_ == Meter) ? 1.0 : 1000.0;
     }
