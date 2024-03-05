@@ -19,6 +19,7 @@
 #include "SubProjectItem.h"
 #include "ExtCommandItem.h"
 #include "SceneItem.h"
+#include "SceneGeometryMeasurementTracker.h"
 #include "PointSetItem.h"
 #include "PointSetGeometryMeasurementTracker.h"
 #include "MultiPointSetItem.h"
@@ -420,6 +421,7 @@ void App::Impl::initialize()
     MultiVector3SeqItem::initializeClass(ext);
     ReferencedObjectSeqItem::initializeClass(ext);
     SceneItem::initializeClass(ext);
+    SceneGeometryMeasurementTracker::initializeClass();
     PointSetItem::initializeClass(ext);
     PointSetGeometryMeasurementTracker::initializeClass();
     MultiPointSetItem::initializeClass(ext);

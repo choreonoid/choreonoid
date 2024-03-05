@@ -131,6 +131,7 @@ set(sources
   SceneBar.cpp
   SceneItem.cpp
   SceneItemFileIO.cpp
+  SceneGeometryMeasurementTracker.cpp
   GeneralSceneFileImporterBase.cpp
   PointSetItem.cpp
   PointSetGeometryMeasurementTracker.cpp
