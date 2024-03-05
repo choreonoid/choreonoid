@@ -27,8 +27,6 @@ public:
     SgPointSet* pointSet();
 
     virtual void notifyUpdate() override;
-    virtual SgNode* getScene() override;
-    virtual LocationProxyPtr getLocationProxy() override;
 
     const Isometry3& offsetPosition() const;
     void setOffsetPosition(const Isometry3& T);
@@ -74,6 +72,12 @@ public:
 
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
+
+    // RenderableItem
+    virtual SgNode* getScene() override;
+    
+    // LocatableItem
+    virtual LocationProxyPtr getLocationProxy() override;
 
     class Impl;
 

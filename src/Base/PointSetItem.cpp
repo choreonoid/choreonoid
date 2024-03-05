@@ -243,21 +243,6 @@ void PointSetItem::notifyUpdate()
 }
 
 
-SgNode* PointSetItem::getScene()
-{
-    return impl->scene;
-}
-
-
-LocationProxyPtr PointSetItem::getLocationProxy()
-{
-    if(!impl->location){
-        impl->location = new PointSetLocation(this);
-    }
-    return impl->location;
-}
-
-
 const SgPointSet* PointSetItem::pointSet() const
 {
     return impl->pointSet;
@@ -676,6 +661,12 @@ bool PointSetItem::restore(const Archive& archive)
 }
 
 
+SgNode* PointSetItem::getScene()
+{
+    return impl->scene;
+}
+
+
 ScenePointSet::ScenePointSet(PointSetItem::Impl* pointSetItemImpl)
     : weakPointSetItem(pointSetItemImpl->self),
       orgPointSet(pointSetItemImpl->pointSet),
@@ -998,6 +989,15 @@ void ScenePointSet::onRegionFixed(const PolyhedralRegion& region)
     if(item){
         item->removePoints(region);
     }
+}
+
+
+LocationProxyPtr PointSetItem::getLocationProxy()
+{
+    if(!impl->location){
+        impl->location = new PointSetLocation(this);
+    }
+    return impl->location;
 }
 
 

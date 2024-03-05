@@ -28,8 +28,8 @@ PointSetGeometryMeasurementTracker::PointSetGeometryMeasurementTracker(PointSetI
 
     connections.add(
         pointSetItem->sigOffsetPositionChanged().connect(
-            [this](){
-                sigGeometryChanged_(); }));
+            [this](){ sigGeometryChanged_(); }));
+
     connections.add(
         pointSet->vertices()->sigUpdated().connect(
             [this](const SgUpdate& update){
