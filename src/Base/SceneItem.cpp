@@ -55,6 +55,23 @@ public:
 }
 
 
+namespace cnoid {
+
+class SceneItem::Location : public LocationProxy
+{
+public:
+    SceneItem* item;
+
+    Location(SceneItem* item);
+    virtual std::string getName() const override;
+    virtual Isometry3 getLocation() const override;
+    virtual bool setLocation(const Isometry3& T) override;
+    virtual SignalProxy<void()> sigLocationChanged() override;
+};
+
+}
+
+
 void SceneItem::initializeClass(ExtensionManager* ext)
 {
     static bool initialized = false;
@@ -107,16 +124,11 @@ bool SceneItem::setName(const std::string& name)
 }
 
 
-SgNode* SceneItem::getScene()
-{
-    return topNode_;
-}
-
-
 void SceneItem::setTranslation(const Vector3& translation)
 {
     topNode_->setTranslation(translation);
     topNode_->notifyUpdate();
+    notifyUpdate();
 }
 
 
@@ -124,6 +136,7 @@ void SceneItem::setTranslation(const Vector3f& translation)
 {
     topNode_->setTranslation(translation);
     topNode_->notifyUpdate();
+    notifyUpdate();
 }
 
 
@@ -131,6 +144,7 @@ void SceneItem::setRotation(const AngleAxis& rotation)
 {
     topNode_->setRotation(rotation);
     topNode_->notifyUpdate();
+    notifyUpdate();
 }
 
 
@@ -138,6 +152,7 @@ void SceneItem::setRotation(const AngleAxisf& rotation)
 {
     topNode_->setRotation(rotation);
     topNode_->notifyUpdate();
+    notifyUpdate();
 }
 
 
@@ -157,7 +172,7 @@ void SceneItem::setLightweightRenderingEnabled(bool on)
         }
     }
     isLightweightRenderingEnabled_ = on;
-}       
+}
 
 
 void SceneItem::doPutProperties(PutPropertyFunction& putProperty)
@@ -263,4 +278,54 @@ void SceneItem::relocateDependentFiles
     auto util = getOrCreateRenderableItemUtil(this);
     util->initializeSceneObjectUrlRelocation();
     util->relocateSceneObjectUris(getRelocatedFilePath);
+}
+
+
+SgNode* SceneItem::getScene()
+{
+    return topNode_;
+}
+
+
+LocationProxyPtr SceneItem::getLocationProxy()
+{
+    if(!location){
+        location = new Location(this);
+    }
+    return location;
+}
+
+
+SceneItem::Location::Location(SceneItem* item)
+    : LocationProxy(GlobalLocation),
+      item(item)
+{
+
+}
+
+
+std::string SceneItem::Location::getName() const
+{
+    return fmt::format(_("Offset position of {0}"), item->displayName());
+}
+
+
+Isometry3 SceneItem::Location::getLocation() const
+{
+    return item->topNode_->position();
+}
+
+
+bool SceneItem::Location::setLocation(const Isometry3& T)
+{
+    item->topNode_->setPosition(T);
+    item->topNode_->notifyUpdate();
+    item->notifyUpdate();
+    return true;
+}
+
+
+SignalProxy<void()> SceneItem::Location::sigLocationChanged()
+{
+    return item->sigUpdated();
 }

@@ -3,6 +3,7 @@
 
 #include "Item.h"
 #include "RenderableItem.h"
+#include "LocatableItem.h"
 #include <cnoid/SceneGraph>
 #include "exportdecl.h"
 
@@ -11,7 +12,7 @@ namespace cnoid {
 class ItemManager;
 class ItemFileIO;
 
-class CNOID_EXPORT SceneItem : public Item, public RenderableItem
+class CNOID_EXPORT SceneItem : public Item, public RenderableItem, public LocatableItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -24,9 +25,6 @@ public:
     virtual ~SceneItem();
 
     virtual bool setName(const std::string& name) override;
-
-    // RenderableItem
-    virtual SgNode* getScene() override;
 
     SgPosTransform* topNode() { return topNode_; }
     const SgPosTransform* topNode() const { return topNode_; }
@@ -47,6 +45,12 @@ public:
     void relocateDependentFiles(
         std::function<std::string(const std::string& path)> getRelocatedFilePath);
 
+    // RenderableItem
+    virtual SgNode* getScene() override;
+
+    // LocatableItem
+    virtual LocationProxyPtr getLocationProxy() override;
+
 protected:
     SceneItem(const SceneItem& org, CloneMap* cloneMap);
     virtual Item* doCloneItem(CloneMap* cloneMap) const override;
@@ -57,6 +61,9 @@ protected:
 private:
     SgPosTransformPtr topNode_;
     bool isLightweightRenderingEnabled_;
+
+    class Location;
+    ref_ptr<Location> location;
 
     bool onTranslationChanged(const std::string& value);
     bool onRotationChanged(const std::string& value);
