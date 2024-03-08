@@ -8,7 +8,7 @@ endif()
 # Install PCL packages by the following command in Ubuntu
 # sudo apt install libpcl-dev
 
-find_package(PCL REQUIRED common io surface features)
+find_package(PCL REQUIRED common features io registration surface)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
@@ -31,4 +31,4 @@ choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
 target_link_libraries(
   ${target} PUBLIC
   CnoidBodyPlugin
-  ${PCL_COMMON_LIBRARIES} ${PCL_SURFACE_LIBRARIES} ${PCL_FEATURES_LIBRARIES} pcl_io)
+  ${PCL_COMMON_LIBRARIES} ${PCL_FEATURES_LIBRARIES} ${PCL_REGISTRATION_LIBRARIES} ${PCL_SURFACE_LIBRARIES})
