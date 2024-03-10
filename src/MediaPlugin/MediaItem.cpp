@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "MediaItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/OptionManager>
@@ -21,6 +16,8 @@ namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
+vector<string> mediaFilesToLoad;
+
 bool loadMediaItem(MediaItemPtr item, const std::string& filepath, std::ostream& os, Item* parentItem)
 {
     bool loaded = item->setMediaFilePath(filepath);
@@ -30,16 +27,12 @@ bool loadMediaItem(MediaItemPtr item, const std::string& filepath, std::ostream&
     return loaded;
 }
 
-void onSigOptionsParsed(boost::program_options::variables_map& v)
+void onSigOptionsParsed(OptionManager*)
 {
-    if(v.count("media")){
-        vector<string> mediaFilenames = v["media"].as<vector<string>>();
-            
-        for(size_t i=0; i < mediaFilenames.size(); ++i){
-            MediaItemPtr item(new MediaItem());
-            if(item->setMediaFilePath(mediaFilenames[i])){
-                RootItem::instance()->addChildItem(item);
-            }
+    for(auto& file : mediaFilesToLoad){
+        MediaItemPtr item = new MediaItem;
+        if(item->setMediaFilePath(file)){
+            RootItem::instance()->addChildItem(item);
         }
     }
 }
@@ -52,8 +45,9 @@ void MediaItem::initialize(ExtensionManager* ext)
     ext->itemManager().registerClass<MediaItem>(N_("MediaItem"));
     ext->itemManager().addLoader<MediaItem>(_("Media file"), "MEDIA-GENERIC", "*", loadMediaItem);
 
-    ext->optionManager().addOption("media", boost::program_options::value<vector<string>>(), _("load an media file"));
-    ext->optionManager().sigOptionsParsed(1).connect(onSigOptionsParsed);
+    auto om = OptionManager::instance();
+    om->add_option("--media", mediaFilesToLoad, _("load an media file"));
+    om->sigOptionsParsed(1).connect(onSigOptionsParsed);
 }
 
 

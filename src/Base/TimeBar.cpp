@@ -130,9 +130,9 @@ public:
 }
 
 
-static void onSigOptionsParsed(boost::program_options::variables_map& v)
+static void onSigOptionsParsed(OptionManager* om)
 {
-    if(v.count("start-playback")){
+    if(om->count("--start-playback")){
         TimeBar::instance()->startPlayback();
     }
 }
@@ -150,9 +150,9 @@ void TimeBar::initialize(ExtensionManager* ext)
     if(!initialized){
         ext->addToolBar(TimeBar::instance());
 
-        ext->optionManager()
-            .addOption("start-playback", "start playback automatically")
-            .sigOptionsParsed(1).connect(onSigOptionsParsed);
+        auto om = OptionManager::instance();
+        om->add_flag("--start-playback", "start playback automatically");
+        om->sigOptionsParsed(1).connect(onSigOptionsParsed);
             
         initialized = true;
     }

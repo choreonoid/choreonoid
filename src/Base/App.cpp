@@ -103,6 +103,7 @@ bool isTestMode = false;
 bool isNoWindowMode = false;
 bool ctrl_c_pressed = false;
 bool exitRequested = false;
+vector<string> additionalPathVariables;
 
 void onCtrl_C_Input(int)
 {
@@ -115,7 +116,7 @@ void onCtrl_C_Input(int)
 
 #ifdef Q_OS_WIN32
 int argc_winmain;
-vector<char*> argv_winmain{ "application" };
+vector<char*> argv_winmain;
 
 BOOL WINAPI consoleCtrlHandler(DWORD ctrlChar)
 {
@@ -141,6 +142,7 @@ public:
     string iconFilename;
     string builtinProjectFile;
     MessageOut* mout;
+    OptionManager* optionManager;
     PluginManager* pluginManager;
     ExtensionManager* ext;
     MainWindow* mainWindow;
@@ -151,13 +153,13 @@ public:
     int returnCode;
     bool isAppInitialized;
     bool doQuit;
-    
+    bool doListQtStyles;
+
     Impl(App* self, int& argc, char** argv, const std::string& appName, const std::string& organization);
     ~Impl();
     void initialize();
     int exec();
     void onMainWindowCloseEvent();
-    void onSigOptionsParsed(boost::program_options::variables_map& v);
     void enableMessageViewRedirectToStdOut();
     virtual bool eventFilter(QObject* watched, QEvent* event);
 };
@@ -177,23 +179,21 @@ App::App
  const std::string& appName, const std::string& organization)
 {
 #ifndef UNICODE
-    vector<string> args = boost::program_options::split_winmain(lpCmdLine);
-    for(size_t i=0; i < args.size(); ++i){
-        char* arg = new char[args[i].size() + 1];
-        strcpy(arg, args[i].c_str());
-        argv_winmain.push_back(arg);
+    for(int i=0; i < __argc; ++i){
+        argv_winmain.push_back(__argv[i]);
     }
 #else
-    vector<wstring> wargs = boost::program_options::split_winmain(lpCmdLine);
     vector<char> buf;
     vector<string> args(wargs.size());
     int codepage = _getmbcp();
-    for(size_t i=0; i < args.size(); ++i){
-        const int size = WideCharToMultiByte(codepage, 0, &wargs[i][0], wargs[i].size(), NULL, 0, NULL, NULL);
+    for(int i=0; i < __argc; ++i){
+        wchar_t* warg = __wargv[i];
+        size_t wargsize = wcslen(warg);
+        const int size = WideCharToMultiByte(codepage, 0, warg, wargsize, NULL, 0, NULL, NULL);
         char* arg;
         if(size > 0){
             arg = new char[size + 1];
-            WideCharToMultiByte(codepage, 0, &wargs[i][0], wargs[i].size(), arg, size + 1, NULL, NULL);
+            WideCharToMultiByte(codepage, 0, warg, wargsize, arg, size + 1, NULL, NULL);
         } else {
             arg = new char[1];
             arg[0] = '\0';
@@ -231,7 +231,7 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     returnCode = 0;
     isAppInitialized = false;
     doQuit = false;
-
+    doListQtStyles = false;
 
     // OpenGL settings
     GLSceneRenderer::initializeClass();
@@ -354,15 +354,28 @@ void App::Impl::initialize()
 
     setUTF8ToModuleTextDomain("Util");
 
-    OptionManager& om = ext->optionManager();
-    om.addOption("quit", "stop the application without showing the main window");
-    om.addOption("test-mode", "exit the application when an error occurs and put MessageView text to the standard output");
-    om.addOption("no-window", "Do not show the application window and put MessageView text to the standard output");
-    om.addOption("path-variable", boost::program_options::value<vector<string>>(), "Set a path variable in the format \"name=value\"");
-    om.addOption("list-qt-styles", "list all the available qt styles");
-    om.sigOptionsParsed().connect(
-        [&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
+    optionManager = new OptionManager(appName);
 
+    optionManager->add_flag(
+        "--quit", doQuit,
+        "stop the application without showing the main window");
+    
+    optionManager->add_flag(
+        "--test-mode", isTestMode,
+        "exit the application when an error occurs and put MessageView text to the standard output");
+    
+    optionManager->add_flag(
+        "--no-window", isNoWindowMode,
+        "Do not show the application window and put MessageView text to the standard output");
+    
+    optionManager->add_flag(
+        "--list-qt-styles", doListQtStyles,
+        "list all the available qt styles");
+
+    optionManager->add_option(
+        "--path-variable", additionalPathVariables,
+        "Set a path variable in the format \"name=value\"");
+    
     mainWindow = MainWindow::initialize(appName, ext);
 
     ViewManager::initializeClass(ext);
@@ -502,8 +515,41 @@ int App::Impl::exec()
     }
         
     isDoingInitialization_ = false;
-    
-    if(!ext->optionManager().parseCommandLine1(argc, argv)){
+
+    try{
+#ifdef Q_OS_WIN32
+        argv = optionManager->ensure_utf8(argv);
+#endif
+        optionManager->parse(argc, argv);
+
+        if(isNoWindowMode){
+            enableMessageViewRedirectToStdOut();
+        }
+        if(!additionalPathVariables.empty()){
+            auto fpvp = FilePathVariableProcessor::systemInstance();
+            std::regex re("^([a-zA-Z][a-zA-Z_0-9]*)=([^;-?[\\]^'{-~]+)$");
+            std::smatch match;
+            for(auto& var : additionalPathVariables){
+                if(regex_match(var, match, re)){
+                    string name = match.str(1);
+                    string path = match.str(2);
+                    fpvp->addUserVariable(name, path);
+                }
+            }
+        }
+        if(!doQuit){
+            if(isTestMode){
+                enableMessageViewRedirectToStdOut();
+            } else if(doListQtStyles){
+                cout << QStyleFactory::keys().join(" ").toStdString() << endl;
+                doQuit = true;
+            }
+        }
+        
+        optionManager->processOptionsPhase1();
+
+    } catch (const CLI::ParseError& error) {
+        optionManager->exit(error);
         doQuit = true;
     }
 
@@ -516,12 +562,9 @@ int App::Impl::exec()
                 mainWindow->waitForWindowSystemToActivate();
             }
         }
-    }
-
-    if(!doQuit){
         callLater(
             [this](){
-                ext->optionManager().parseCommandLine2();
+                optionManager->processOptionsPhase2();
                 sigExecutionStarted_();
             });
         
@@ -601,36 +644,6 @@ void App::Impl::onMainWindowCloseEvent()
     }
 }    
 
-
-void App::Impl::onSigOptionsParsed(boost::program_options::variables_map& v)
-{
-    if(v.count("no-window")){
-        isNoWindowMode = true;
-        enableMessageViewRedirectToStdOut();
-    }
-    if(v.count("path-variable")){
-        auto fpvp = FilePathVariableProcessor::systemInstance();
-        static std::regex re("^([a-zA-Z][a-zA-Z_0-9]*)=([^;-?[\\]^'{-~]+)$");
-        std::smatch match;
-        for(auto& var : v["path-variable"].as<vector<string>>()){
-            if(regex_match(var, match, re)){
-                string name = match.str(1);
-                string path = match.str(2);
-                fpvp->addUserVariable(name, path);
-            }
-        }
-    }
-    if(v.count("quit")){
-        doQuit = true;
-    } else if(v.count("test-mode")){
-        isTestMode = true;
-        enableMessageViewRedirectToStdOut();
-    } else if(v.count("list-qt-styles")){
-        cout << QStyleFactory::keys().join(" ").toStdString() << endl;
-        doQuit = true;
-    }
-}
-    
 
 void App::exit(int returnCode)
 {

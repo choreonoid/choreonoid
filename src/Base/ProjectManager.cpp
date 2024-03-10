@@ -39,6 +39,7 @@ bool isTemporaryItemSaveCheckAvailable = true;
 int projectBeingLoadedCounter = 0;
 MainWindow* mainWindow = nullptr;
 MessageView* mv = nullptr;
+vector<string> projectFilesToLoad;
 
 class SaveDialog : public FileDialog
 {
@@ -81,7 +82,7 @@ public:
         
     bool saveProject(const string& filename, Item* item, bool doSaveTemporaryItems);
         
-    void onProjectOptionsParsed(boost::program_options::variables_map& v);
+    void onProjectOptionsParsed();
     void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
     bool onSaveDialogAboutToFinish(int result);
     bool confirmToCloseProject(bool isAboutToLoadNewProject);
@@ -173,12 +174,12 @@ ProjectManager::Impl::Impl(ProjectManager* self, ExtensionManager* ext)
     saveDialog = nullptr;
     isMainInstance = true;
 
-    OptionManager& om = ext->optionManager();
-    om.addOption("project", boost::program_options::value<vector<string>>(), "load a project file");
-    om.sigInputFileOptionsParsed().connect(
+    auto om = OptionManager::instance();
+    om->add_option("--project", projectFilesToLoad, "load a project file");
+    om->sigInputFileOptionsParsed().connect(
         [this](std::vector<std::string>& inputFiles){ onInputFileOptionsParsed(inputFiles); });
-    om.sigOptionsParsed().connect(
-        [this](boost::program_options::variables_map& v){ onProjectOptionsParsed(v); });
+    om->sigOptionsParsed().connect(
+        [this](OptionManager*){ onProjectOptionsParsed(); });
 }
 
 
@@ -761,13 +762,10 @@ bool ProjectManager::overwriteCurrentProject()
 }
 
     
-void ProjectManager::Impl::onProjectOptionsParsed(boost::program_options::variables_map& v)
+void ProjectManager::Impl::onProjectOptionsParsed()
 {
-    if(v.count("project")){
-        vector<string> projectFileNames = v["project"].as<vector<string>>();
-        for(size_t i=0; i < projectFileNames.size(); ++i){
-            loadProject(toUTF8(projectFileNames[i]), nullptr, true, false, false);
-        }
+    for(auto& file : projectFilesToLoad){
+        loadProject(file, nullptr, true, false, false);
     }
 }
 
@@ -776,8 +774,8 @@ void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& in
 {
     auto it = inputFiles.begin();
     while(it != inputFiles.end()){
-        if(filesystem::path(*it).extension().string() == ".cnoid"){
-            loadProject(toUTF8(*it), nullptr, true, false, false);
+        if(filesystem::path(fromUTF8(*it)).extension().string() == ".cnoid"){
+            loadProject(*it, nullptr, true, false, false);
             it = inputFiles.erase(it);
         } else {
             ++it;

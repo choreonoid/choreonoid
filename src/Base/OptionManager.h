@@ -1,40 +1,24 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_OPTION_MANAGER_H
 #define CNOID_BASE_OPTION_MANAGER_H
 
-#include "ExtensionManager.h"
+#include <CLI11.hpp>
 #include <cnoid/Signal>
-#include <boost/program_options.hpp>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT OptionManager
+class CNOID_EXPORT OptionManager : public CLI::App
 {
 public:
-    OptionManager& addOption(const char* name, const char* description);
-    OptionManager& addOption(const char* name, const boost::program_options::value_semantic* s);
-    OptionManager& addOption(const char* name, const boost::program_options::value_semantic* s, const char* description);
+    static OptionManager* instance();
 
-    /**
-       Positional option is replaced with input file options that can obtained by the sigInputFileOptionsParsed signal.
-    */
-    // OptionManager& addPositionalOption(const char* name, int maxCount);
+    OptionManager(const std::string& appDescription);
 
+    void processOptionsPhase1();
+    void processOptionsPhase2();
+    
     SignalProxy<void(std::vector<std::string>& inputFiles)> sigInputFileOptionsParsed(int phase = 0);
-    SignalProxy<void(boost::program_options::variables_map& variables)> sigOptionsParsed(int phase = 0);
-
-    bool parseCommandLine1(int argc, char *argv[]);
-    void parseCommandLine2();
-
-private:
-    OptionManager();
-    ~OptionManager();
-
-    friend class ExtensionManager;
+    SignalProxy<void(OptionManager* om)> sigOptionsParsed(int phase = 0);
 };
 
 }

@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro NAKAOKA
-*/
-
 #ifndef CNOID_BASE_EXTENSION_MANAGER_H
 #define CNOID_BASE_EXTENSION_MANAGER_H
 
@@ -33,6 +29,8 @@ public:
     ItemManager& itemManager();
     ViewManager& viewManager();
     MenuManager& menuManager();
+
+    [[deprecated("Use OptionManager::instance()")]]
     OptionManager& optionManager();
 
     //! \note This function can only be called before calling the App::initialize function.

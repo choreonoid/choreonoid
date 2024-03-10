@@ -6,7 +6,6 @@ build-essential \
 cmake-curses-gui \
 libboost-dev \
 libboost-system-dev \
-libboost-program-options-dev \
 libboost-iostreams-dev \
 libboost-filesystem-dev \
 libeigen3-dev \

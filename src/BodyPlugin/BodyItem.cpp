@@ -44,6 +44,8 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
+vector<string> bodyFilesToLoad;
+
 BodyState kinematicStateCopy;
 
 class BodyLocation : public LocationProxy
@@ -217,17 +219,14 @@ unique_ptr<RenderableItemUtil> BodyItem::Impl::renderableItemUtil;
 }
 
 
-static void onSigOptionsParsed(boost::program_options::variables_map& variables)
+static void onSigOptionsParsed(OptionManager*)
 {
-    if(variables.count("body")){
-    	vector<string> bodyFileNames = variables["body"].as<vector<string>>();
-    	for(size_t i=0; i < bodyFileNames.size(); ++i){
-            BodyItemPtr item(new BodyItem);
-            auto rootItem = RootItem::instance();
-            if(item->load(bodyFileNames[i], rootItem, "CHOREONOID-BODY")){
-                item->setChecked(true);
-                rootItem->addChildItem(item);
-            }
+    for(auto& file : bodyFilesToLoad){
+        BodyItemPtr item = new BodyItem;
+        auto rootItem = RootItem::instance();
+        if(item->load(file, rootItem, "CHOREONOID-BODY")){
+            item->setChecked(true);
+            rootItem->addChildItem(item);
     	}
     }
 }
@@ -241,9 +240,9 @@ void BodyItem::initializeClass(ExtensionManager* ext)
     // Implemented in BodyItemFileIO.cpp
     registerBodyItemFileIoSet(im);
 
-    OptionManager& om = ext->optionManager();
-    om.addOption("body", boost::program_options::value< vector<string> >(), "load a body file");
-    om.sigOptionsParsed(1).connect(onSigOptionsParsed);
+    auto om = OptionManager::instance();
+    om->add_option("--body", bodyFilesToLoad, "load a body file");
+    om->sigOptionsParsed(1).connect(onSigOptionsParsed);
 }
 
 

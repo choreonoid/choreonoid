@@ -478,7 +478,7 @@ endif()
 # boost
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_ADDITIONAL_VERSIONS "1.62" "1.63" "1.64" "1.65" "1.66" "1.67" "1.68" "1.69" "1.70" "1.71" "1.72" "1.73" "1.74" "1.75")
-set(boost_packages program_options iostreams system)
+set(boost_packages iostreams system)
 if(CMAKE_CXX_STANDARD LESS 17)
   set(boost_packages ${boost_packages} filesystem)
 endif()
@@ -502,7 +502,7 @@ list(APPEND CHOREONOID_SDK_LIBRARY_DIRS ${Boost_LIBRARY_DIRS})
 if(MSVC)
   set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS BOOST_ALL_DYN_LINK ${BOOST_LIB_DIAGNOSTIC})
   install_runtime_dlls(${Boost_LIBRARY_DIRS}
-    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_IOSTREAMS_LIBRARY} ${Boost_ZLIB_LIBRARY})
 endif()
 
@@ -886,6 +886,10 @@ if(NOT PUGIXML_STATIC_FOUND OR USE_BUNDLED_PUGIXML)
   set(PUGIXML_STATIC_LIBRARIES pugixml)
   unset(PUGIXML_STATIC_LIBRARY_DIRS)
 endif()
+
+# CLI11
+set(CLI11_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/CLI11)
+include_directories(${CLI11_INCLUDE_DIRS})
 
 add_subdirectory(src)
 add_subdirectory(include)

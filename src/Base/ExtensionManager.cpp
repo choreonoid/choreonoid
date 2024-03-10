@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro NAKAOKA
-*/
-
 #include "ExtensionManager.h"
 #include "ItemManager.h"
 #include "ViewManager.h"
@@ -139,8 +135,7 @@ MenuManager& ExtensionManager::menuManager()
 
 OptionManager& ExtensionManager::optionManager()
 {
-    static OptionManager optionManager;
-    return optionManager;
+    return *OptionManager::instance();
 }
 
 

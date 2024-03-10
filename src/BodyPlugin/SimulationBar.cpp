@@ -1,15 +1,12 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "SimulationBar.h"
 #include "SimulatorItem.h"
 #include "WorldItem.h"
+#include <cnoid/ExtensionManager>
+#include <cnoid/OptionManager>
 #include <cnoid/TimeBar>
 #include <cnoid/RootItem>
 #include <cnoid/MessageView>
 #include <cnoid/UnifiedEditHistory>
-#include <cnoid/OptionManager>
 #include <cnoid/Archive>
 #include <fmt/format.h>
 #include <functional>
@@ -19,14 +16,18 @@ using namespace std;
 using namespace cnoid;
 using fmt::format;
 
-static SimulationBar* instance_ = nullptr;
-    
+namespace {
 
-static void onSigOptionsParsed(boost::program_options::variables_map& v)
+SimulationBar* instance_ = nullptr;
+bool doStartSimulation = false;
+
+void onSigOptionsParsed(OptionManager*)
 {
-    if(v.count("start-simulation")){
+    if(doStartSimulation){
         instance_->startSimulation(true);
     }
+}
+
 }
 
 
@@ -35,10 +36,10 @@ void SimulationBar::initialize(ExtensionManager* ext)
     if(!instance_){
         instance_ = new SimulationBar;
         ext->addToolBar(instance_);
-        
-        ext->optionManager()
-            .addOption("start-simulation", "start simulation automatically")
-            .sigOptionsParsed(1).connect(onSigOptionsParsed);
+
+        auto om = OptionManager::instance();
+        om->add_flag("--start-simulation", doStartSimulation, "start simulation automatically");
+        om->sigOptionsParsed(1).connect(onSigOptionsParsed);
     }
 }
 
@@ -52,31 +53,30 @@ SimulationBar* SimulationBar::instance()
 SimulationBar::SimulationBar()
     : ToolBar(N_("SimulationBar"))
 {
-    
     auto storeButton = addButton(QIcon(":/Body/icon/store-world-initial.svg"));
     storeButton->setToolTip(_("Store body positions to the initial world state"));
-    storeButton->sigClicked().connect([&](){ onStoreInitialClicked(); });
+    storeButton->sigClicked().connect([this](){ onStoreInitialClicked(); });
     
     auto restoreButton = addButton(QIcon(":/Body/icon/restore-world-initial.svg"));
     restoreButton->setToolTip(_("Restore body positions from the initial world state"));
-    restoreButton->sigClicked().connect([&](){ onRestoreInitialClicked(); });
+    restoreButton->sigClicked().connect([this](){ onRestoreInitialClicked(); });
 
     auto startButton = addButton(QIcon(":/Body/icon/start-simulation.svg"));
     startButton->setToolTip(_("Start simulation from the beginning"));
-    startButton->sigClicked().connect([&](){ startSimulation(true); });
+    startButton->sigClicked().connect([this](){ startSimulation(true); });
 
     auto restartButton = addButton(QIcon(":/Body/icon/restart-simulation.svg"));
     restartButton->setToolTip(_("Start simulation from the current state"));
-    restartButton->sigClicked().connect([&](){ startSimulation(false); });
+    restartButton->sigClicked().connect([this](){ startSimulation(false); });
     
     pauseToggle = addToggleButton(QIcon(":/Body/icon/pause-simulation.svg"));
     pauseToggle->setToolTip(_("Pause simulation"));
-    pauseToggle->sigClicked().connect([&](){ onPauseSimulationClicked(); });
+    pauseToggle->sigClicked().connect([this](){ onPauseSimulationClicked(); });
     pauseToggle->setChecked(false);
 
     stopButton = addButton(QIcon(":/Body/icon/stop-simulation.svg"));
     stopButton->setToolTip(_("Stop simulation"));
-    stopButton->sigClicked().connect([&](){ onStopSimulationClicked(); });
+    stopButton->sigClicked().connect([this](){ onStopSimulationClicked(); });
     stopButton->installEventFilter(this);
     isStopConfirmationEnabled = false;
 }
@@ -248,14 +248,14 @@ void SimulationBar::onStopSimulationClicked()
     pauseToggle->blockSignals(false);
 
     forEachSimulator(
-        [&](SimulatorItem* simulator){ simulator->stopSimulation(true); });
+        [](SimulatorItem* simulator){ simulator->stopSimulation(true); });
 }
 
 
 void SimulationBar::onPauseSimulationClicked()
 {
     forEachSimulator(
-        [&](SimulatorItem* simulator){ pauseSimulation(simulator); });
+        [this](SimulatorItem* simulator){ pauseSimulation(simulator); });
 }
 
 

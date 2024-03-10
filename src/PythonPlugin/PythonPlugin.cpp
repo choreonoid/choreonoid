@@ -36,6 +36,10 @@ namespace filesystem = cnoid::stdx::filesystem;
 namespace {
 
 PythonPlugin* pythonPlugin = nullptr;
+
+vector<string> scriptFilesToExecute;
+vector<string> scriptFilesToLoad;
+
 MappingPtr pythonConfig;
 Action* redirectionCheck;
 Action* refreshModulesCheck;
@@ -106,7 +110,7 @@ public:
     bool finalize();
 
     void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
-    void onSigOptionsParsed(boost::program_options::variables_map& v);
+    void onSigOptionsParsed();
     void executeScriptFileOnStartup(const string& scriptFile);
     bool storeProperties(Archive& archive);
     void restoreProperties(const Archive& archive);
@@ -180,13 +184,15 @@ bool PythonPlugin::Impl::initialize()
     PythonScriptItem::initializeClass(self);
     PythonConsoleView::initializeClass(self);
     
-    OptionManager& opm = self->optionManager();
-    opm.addOption("python,p", boost::program_options::value< vector<string> >(), "execute a python script");
-    opm.addOption("python-item", boost::program_options::value< vector<string> >(), "load a python script as an item");
-    opm.sigInputFileOptionsParsed(1).connect(
+    auto om = OptionManager::instance();
+    om->add_option("--python,-p", scriptFilesToExecute, "execute a python script");
+    om->add_option("--python-item", scriptFilesToLoad, "load a python script as an item");
+    
+    om->sigInputFileOptionsParsed(1).connect(
         [&](std::vector<std::string>& inputFiles){ onInputFileOptionsParsed(inputFiles); });
-    opm.sigOptionsParsed(1).connect(
-        [&](boost::program_options::variables_map& v){ onSigOptionsParsed(v); });
+    
+    om->sigOptionsParsed(1).connect(
+        [&](OptionManager*){ onSigOptionsParsed(); });
 
     self->setProjectArchiver(
         [&](Archive& archive){ return storeProperties(archive); },
@@ -200,8 +206,8 @@ void PythonPlugin::Impl::onInputFileOptionsParsed(std::vector<std::string>& inpu
 {
     auto iter = inputFiles.begin();
     while(iter != inputFiles.end()){
-        if(filesystem::path(*iter).extension().string() == ".py"){
-            executeScriptFileOnStartup(toUTF8(*iter));
+        if(filesystem::path(fromUTF8(*iter)).extension().string() == ".py"){
+            executeScriptFileOnStartup(*iter);
             iter = inputFiles.erase(iter);
         } else {
             ++iter;
@@ -210,21 +216,18 @@ void PythonPlugin::Impl::onInputFileOptionsParsed(std::vector<std::string>& inpu
 }
 
 
-void PythonPlugin::Impl::onSigOptionsParsed(boost::program_options::variables_map& v)
+void PythonPlugin::Impl::onSigOptionsParsed()
 {
-    if(v.count("python")){
-        for(auto& script : v["python"].as<vector<string>>()){
-            executeScriptFileOnStartup(toUTF8(script));
+    for(auto& script : scriptFilesToExecute){
+        executeScriptFileOnStartup(script);
+    }
+    for(auto& script : scriptFilesToLoad){
+        PythonScriptItemPtr item = new PythonScriptItem;
+        auto rootItem = RootItem::instance();
+        if(item->load(script, rootItem)){
+            rootItem->addChildItem(item);
         }
-    } else if(v.count("python-item")){
-        for(auto& script : v["python-item"].as<vector<string>>()){
-            PythonScriptItemPtr item = new PythonScriptItem;
-            auto rootItem = RootItem::instance();
-            if(item->load(toUTF8(script), rootItem)){
-                rootItem->addChildItem(item);
-            }
-            item->setChecked(true);
-        }
+        item->setChecked(true);
     }
 }
 

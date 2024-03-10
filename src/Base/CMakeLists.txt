@@ -340,7 +340,7 @@ set(libraries
   PRIVATE CnoidGLSceneRenderer ${libzip_LIBRARIES})
 
 if(UNIX)
-  set(libraries ${libraries} PUBLIC ${Boost_PROGRAM_OPTIONS_LIBRARY} PRIVATE X11 Xfixes)
+  set(libraries ${libraries} PRIVATE X11 Xfixes)
 endif()
 
 choreonoid_add_library(${target} SHARED ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})
