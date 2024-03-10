@@ -210,11 +210,15 @@ set(headers
   exportdecl.h
   )
 
-include_directories(
-  ${LIBYAML_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${JPEG_INCLUDE_DIRS} ${LIBUUID_INCLUDE_DIRS})
+set(include_dirs ${LIBYAML_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${JPEG_INCLUDE_DIRS} ${LIBUUID_INCLUDE_DIRS})
+if(MSVC)
+  include_directories(BEFORE ${include_dirs})
+else()
+  include_directories(${include_dirs})
+endif()
+include_directories(BEFORE ${PROJECT_SOURCE_DIR}/thirdparty/fast_float-0.8.0/include)
 link_directories(${LIBYAML_LIBRARY_DIRS})
 
-include_directories(${PROJECT_SOURCE_DIR}/thirdparty/fast_float-0.8.0/include)
 
 if(ENABLE_GPERFTOOLS_PROFILER)
   include_directories(${GPREFTOOLS_PROFILER_INCLUDE_DIRS})
@@ -244,8 +248,7 @@ if(UNIX)
 
 elseif(MSVC)
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "YAML_DECLARE_STATIC")
-  set(libraries ${libraries}
-    PRIVATE ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} winmm Rpcrt4)
+  set(libraries ${libraries} PRIVATE winmm Rpcrt4)
   find_file(XINPUT_DLL "XInput1_4.dll")
   if(XINPUT_DLL)
     set(libraries ${libraries} PRIVATE XInput)

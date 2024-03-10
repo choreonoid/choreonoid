@@ -31,11 +31,11 @@ set(ZLIB_SRCS
     zutil.c
 )
 
-add_library(zlib STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+add_library(zlib_cnoid STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 
-set_target_properties(zlib PROPERTIES DEBUG_POSTFIX d)
+set_target_properties(zlib_cnoid PROPERTIES DEBUG_POSTFIX d)
 
 if(INSTALL_SDK)
   install(FILES zlib.h zconf.h DESTINATION ${CHOREONOID_HEADER_SUBDIR})
-  install(TARGETS zlib LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+  install(TARGETS zlib_cnoid LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 endif()

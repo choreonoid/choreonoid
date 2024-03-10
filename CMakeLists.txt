@@ -824,7 +824,7 @@ if(PNG_FOUND AND NOT USE_BUNDLED_LIBPNG)
   list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${PNG_INCLUDE_DIRS})
 else()
   set(PNG_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/lpng1232)
-  set(PNG_LIBRARIES png zlib)
+  set(PNG_LIBRARIES png_cnoid zlib_cnoid)
   add_subdirectory(thirdparty/lpng1232)
 endif()
 

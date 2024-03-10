@@ -120,7 +120,7 @@ add_library(zip STATIC
   zip_source_winzip_aes_encode.c
   )
 
-target_link_libraries(zip zlib advapi32)
+target_link_libraries(zip zlib_cnoid advapi32)
 set_target_properties(zip PROPERTIES DEBUG_POSTFIX d)
 
 if(INSTALL_SDK)

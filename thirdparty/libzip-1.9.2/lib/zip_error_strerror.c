@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <zlib.h>
+#include "../zlib-1.2.13/zlib.h"
 
 #include "zipint.h"
 
