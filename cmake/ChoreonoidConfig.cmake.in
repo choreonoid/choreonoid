@@ -52,7 +52,6 @@ set(CHOREONOID_LIBRARY_DIRS "@library_dirs@")
 
 if(@has_boost_libs_for_util_libs@)
   find_package(Boost @boost_version@ EXACT COMPONENTS @boost_components_for_util_libs@)
-  list(APPEND CHOREONOID_UTIL_LIBRARIES @boost_libs_for_util_libs@)
 endif()
 
 add_library(Choreonoid::CnoidUtil SHARED IMPORTED GLOBAL)
@@ -72,13 +71,18 @@ endif()
 # to specify INTERFACE for an imported library, and it is supported in CMake 3.11 and later.
 # To be able to use CMake 3.10, the following alternative descriptions with the set_property command are used.
 #target_compile_definitions(Choreonoid::CnoidUtil INTERFACE ${CHOREONOID_COMPILE_DEFINITIONS})
-#target_include_directories(Choreonoid::CnoidUtil INTERFACE ${CHOREONOID_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+#target_include_directories(Choreonoid::CnoidUtil INTERFACE ${CHOREONOID_INCLUDE_DIRS})
 set_property(TARGET Choreonoid::CnoidUtil APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS
   ${CHOREONOID_COMPILE_DEFINITIONS})
-set_property(TARGET Choreonoid::CnoidUtil APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-  ${CHOREONOID_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+if(@has_boost_libs_for_util_libs@)
+  set_property(TARGET Choreonoid::CnoidUtil APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+    ${CHOREONOID_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+else()
+  set_property(TARGET Choreonoid::CnoidUtil APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+    ${CHOREONOID_INCLUDE_DIRS})
+endif()
 
-target_link_libraries(Choreonoid::CnoidUtil INTERFACE @util_dependencies@;${Boost_LIBRARIES})
+target_link_libraries(Choreonoid::CnoidUtil INTERFACE @util_dependencies@)
 set(CHOREONOID_UTIL_LIBRARIES Choreonoid::CnoidUtil)
 
 add_library(Choreonoid::CnoidBase SHARED IMPORTED GLOBAL)

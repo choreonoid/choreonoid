@@ -12,21 +12,11 @@ set(modules
   ChoreonoidFindQt.cmake
   )
 
-set(util_dependencies fmt)
+set(util_dependencies fmt ${FILESYSTEM_LIBRARY})
 
-set(has_boost_libs_for_util_libs true)
-set(boost_version ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION})
-# set(boost_version ${Boost_VERSION_STRING})
-set(boost_components_for_util_libs system)
-set(boost_libs_for_util_libs ${Boost_SYSTEM_LIBRARY})
-
-if(CMAKE_CXX_STANDARD LESS 17)
-  list(APPEND boost_components_for_util_libs filesystem)
-  list(APPEND boost_libs_for_util_libs ${Boost_FILESYSTEM_LIBRARY})
-else() # C++17
-  if(UNIX)
-    list(APPEND util_dependencies stdc++fs)
-  endif()
+if(has_boost_libs_for_util_libs)
+  set(boost_version ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION})
+  set(boost_components_for_util_libs system filesystem)
 endif()
 
 if(UNIX)
