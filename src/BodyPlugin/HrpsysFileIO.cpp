@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "HrpsysFileIO.h"
 #include "BodyMotionItem.h"
 #include "BodyItem.h"
@@ -16,11 +11,6 @@
 #include <cnoid/stdx/filesystem>
 #include <QMessageBox>
 #include <fmt/format.h>
-#include <boost/iostreams/filtering_stream.hpp>
-#ifndef _WINDOWS
-#include <boost/iostreams/filter/gzip.hpp>
-#include <boost/iostreams/filter/bzip2.hpp>
-#endif
 #include <fstream>
 #include <list>
 #include <vector>
@@ -88,22 +78,11 @@ public:
 
     bool loadLogFile(BodyMotionItem* item, const std::string& filename, std::ostream& os)
     {
-        boost::iostreams::filtering_istream is;
-
-#ifndef _WINDOWS
-        string ext = filesystem::path(fromUTF8(filename)).extension().string();
-        if(ext == ".gz"){
-            is.push(boost::iostreams::gzip_decompressor());
-        } else if(ext == ".bz2"){
-            is.push(boost::iostreams::bzip2_decompressor());
-        }
-#endif
         ifstream ifs(fromUTF8(filename).c_str());
         if(!ifs){
             os << format(_("\"{}\" cannot be opened."), filename) << endl;
             return false;
         }
-        is.push(ifs);
         
         elements.clear();
         frames.clear();
@@ -111,7 +90,7 @@ public:
 
         regex header("(^\\s*%)(.*$)");
         smatch match; 
-        while(getline(is, line)){
+        while(getline(ifs, line)){
             if(regex_match(line, match, header)){
                 if(match.size() == 3){
                     readHeader(match[2].str());
@@ -127,7 +106,7 @@ public:
 
         Tokenizer<CharSeparator<char>> tokens(CharSeparator<char>(" \t\r\n"));
 
-        while(getline(is, line)){
+        while(getline(ifs, line)){
             tokens.assign(line);
             auto it = tokens.begin();
             if(it != tokens.end()){
@@ -313,5 +292,5 @@ void cnoid::initializeHrpsysFileIO(ExtensionManager* ext)
         ItemManager::PRIORITY_CONVERSION);
 
     im.addLoader<BodyMotionItem>(
-        _("HRPSYS Log File"), "HRPSYS-LOG", "log;log.gz;log.bz2", loadLogFile, ItemManager::PRIORITY_CONVERSION);
+        _("HRPSYS Log File"), "HRPSYS-LOG", "log", loadLogFile, ItemManager::PRIORITY_CONVERSION);
 }

@@ -150,12 +150,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 choreonoid_add_plugin(${target} ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})
 
-set(boost_libraries ${Boost_IOSTREAMS_LIBRARY})
-if(MSVC)
-  set(boost_libraries ${boost_libraries} ${Boost_BZIP2_LIBRARY} ${Boost_ZLIB_LIBRARY})
-endif()
-
-target_link_libraries(${target} PUBLIC CnoidBody CnoidGLSceneRenderer PRIVATE ${boost_libraries})
+target_link_libraries(${target} PUBLIC CnoidBody CnoidGLSceneRenderer)
 
 if(ENABLE_PYTHON)
   add_subdirectory(pybind11)
