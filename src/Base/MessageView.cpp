@@ -11,17 +11,15 @@
 #include <QMessageBox>
 #include <QCoreApplication>
 #include <QThread>
-#include <boost/iostreams/concepts.hpp>
-#include <boost/iostreams/stream_buffer.hpp>
 #include <stack>
 #include <regex>
+#include <streambuf>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 using fmt::format;
-namespace iostreams = boost::iostreams;
 
 namespace {
 
@@ -39,12 +37,16 @@ int blockFlushCounter = 0;
 
 const bool PUT_COUT_TOO = false;
 
-class TextSink : public iostreams::sink
+class MessageViewStreamBuf : public std::basic_streambuf<char>
 {
 public:
-    TextSink(MessageView::Impl* viewImpl, bool doFlush);
-    std::streamsize write(const char* s, std::streamsize n);
+    MessageViewStreamBuf(MessageView::Impl* viewImpl, bool doFlush);
 
+protected:
+    virtual int_type overflow(int_type c) override;
+    virtual int sync() override;
+
+    vector<char> buf;
     MessageView::Impl* viewImpl;
     bool doFlush;
 };
@@ -122,12 +124,10 @@ public:
     QColor orgBackColor;
     vector<int> escseqParams;
 
-    TextSink textSink;
-    iostreams::stream_buffer<TextSink> sbuf;
+    MessageViewStreamBuf sbuf;
     std::ostream os;
         
-    TextSink textSink_flush;
-    iostreams::stream_buffer<TextSink> sbuf_flush;
+    MessageViewStreamBuf sbuf_flush;
     std::ostream os_flush;
         
     bool exitEventLoopRequested;
@@ -156,20 +156,36 @@ public:
 }
 
 
-namespace {
-
-TextSink::TextSink(MessageView::Impl* viewImpl, bool doFlush)
+MessageViewStreamBuf::MessageViewStreamBuf(MessageView::Impl* viewImpl, bool doFlush)
     : viewImpl(viewImpl),
       doFlush(doFlush)
 {
-
+    buf.resize(4096);
+    auto p = &buf.front();
+    setp(p, p + buf.size());
 }
 
 
-std::streamsize TextSink::write(const char* s, std::streamsize n)
+MessageViewStreamBuf::int_type MessageViewStreamBuf::overflow(int_type c)
 {
-    viewImpl->put(string(s, n), false, false, doFlush, true);
-    return n;
+    sync();
+
+    if(c != traits_type::eof()){
+        buf[0] = c;
+        pbump(1);
+        return traits_type::not_eof(c);
+    } else {
+        return traits_type::eof();
+    }
+}
+
+
+int MessageViewStreamBuf::sync()
+{
+    auto p = &buf.front();
+    viewImpl->put(string(p, pptr() - p), false, false, doFlush, true);
+    setp(p, p + buf.size());
+    return 0;
 }
 
 
@@ -210,8 +226,6 @@ bool TextEditEx::isLatestMessageVisible()
 {
     int scrollPos = getScrollPos();
     return (scrollPos > maxScrollPos() - 3 * scrollSingleStep());
-}
-
 }
 
 
@@ -265,11 +279,9 @@ MessageView::Impl::Impl(MessageView* self) :
     self(self),
     mainThreadId(QThread::currentThreadId()),
     textEdit(nullptr),
-    textSink(this, false),
-    sbuf(textSink),
+    sbuf(this, false),
     os(&sbuf),
-    textSink_flush(this, true),
-    sbuf_flush(textSink_flush),
+    sbuf_flush(this, true),
     os_flush(&sbuf_flush)
 {
     self->setDefaultLayoutArea(BottomCenterArea);
