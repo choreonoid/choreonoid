@@ -4,9 +4,6 @@ sudo --preserve-env=DEBIAN_FRONTEND,TZ \
 apt-get -y install \
 build-essential \
 cmake-curses-gui \
-libboost-dev \
-libboost-system-dev \
-libboost-iostreams-dev \
 libeigen3-dev \
 uuid-dev \
 libxfixes-dev \
