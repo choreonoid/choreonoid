@@ -3,7 +3,6 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshFilter>
 #include <cnoid/ImageIO>
-#include <cnoid/Exception>
 #include <cnoid/NullOut>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>

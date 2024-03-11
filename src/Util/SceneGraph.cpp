@@ -1,13 +1,13 @@
 #include "SceneGraph.h"
 #include "SceneNodeClassRegistry.h"
 #include "CloneMap.h"
-#include "Exception.h"
 #include "UTF8.h"
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <unordered_map>
 #include <typeindex>
 #include <mutex>
+#include <stdexcept>
 
 using namespace std;
 using namespace cnoid;
@@ -729,7 +729,7 @@ void SgGroup::removeChainedGroup(SgGroup* group, SgUpdateRef update)
 
 void SgGroup::throwTypeMismatchError()
 {
-    throw type_mismatch_error();
+    throw std::runtime_error("type mismatch");
 }
 
 

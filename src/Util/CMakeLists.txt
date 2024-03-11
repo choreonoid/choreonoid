@@ -108,7 +108,6 @@ set(headers
   PolymorphicPointerArray.h
   Signal.h
   ConnectionSet.h
-  Exception.h
   Sleep.h
   ThreadPool.h
   Timeval.h
@@ -236,7 +235,7 @@ set(libraries
 
 if(UNIX)
   set(libraries ${libraries}
-    PUBLIC ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} m dl
+    PUBLIC ${CMAKE_THREAD_LIBS_INIT} m dl
     PRIVATE ${LIBUUID_LIBRARIES}
     )
   if(FILESYSTEM_LIBRARY)

@@ -1,7 +1,7 @@
 #include "DyBody.h"
 #include "ForwardDynamicsABM.h"
 #include "ForwardDynamicsCBM.h"
-#include <cnoid/Exception>
+#include <stdexcept>
 
 using namespace std;
 using namespace cnoid;
@@ -177,7 +177,7 @@ void DyLink::prependChild(Link* link)
     if(DyLink* dyLink = dynamic_cast<DyLink*>(link)){
         Link::prependChild(dyLink);
     } else {
-        throw type_mismatch_error();
+        throw std::runtime_error("type mismatch");
     }
 }
 
@@ -187,7 +187,7 @@ void DyLink::appendChild(Link* link)
     if(DyLink* dyLink = dynamic_cast<DyLink*>(link)){
         Link::appendChild(dyLink);
     } else {
-        throw type_mismatch_error();
+        throw std::runtime_error("type mismatch");
     }
 }
 

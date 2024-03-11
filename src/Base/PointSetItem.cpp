@@ -13,7 +13,7 @@
 #include <cnoid/PointSetUtil>
 #include <cnoid/PolyhedralRegion>
 #include <cnoid/CloneMap>
-#include <cnoid/Exception>
+#include <stdexcept>
 #include "gettext.h"
 
 using namespace std;
@@ -137,10 +137,8 @@ bool PointSetItemPcdFileIo::load(PointSetItem* item, const std::string& filename
             item->setChecked(true);
         }
         return true;
-    } catch (boost::exception& ex) {
-        if(std::string const * message = boost::get_error_info<error_info_message>(ex)){
-            putError(*message);
-        }
+    } catch (const std::exception& ex) {
+        putError(ex.what());
     }
     return false;
 }
@@ -151,10 +149,8 @@ bool PointSetItemPcdFileIo::save(PointSetItem* item, const std::string& filename
     try {
         cnoid::savePCD(item->pointSet(), filename, item->offsetPosition());
         return true;
-    } catch (boost::exception& ex) {
-        if(std::string const * message = boost::get_error_info<error_info_message>(ex)){
-            putError(*message);
-        }
+    } catch (const std::exception& ex) {
+        putError(ex.what());
     }
     return false;
 }

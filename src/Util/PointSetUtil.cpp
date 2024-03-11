@@ -1,17 +1,11 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "PointSetUtil.h"
 #include <cnoid/EasyScanner>
-#include <cnoid/Exception>
 #include <cnoid/UTF8>
 #include <fstream>
 #include <iomanip>
+#include <stdexcept>
 
 using namespace std;
-using namespace boost;
 using namespace cnoid;
 
 namespace {
@@ -101,7 +95,7 @@ void readPoints(SgPointSet* out_pointSet, EasyScanner& scanner, const std::vecto
     }
 
     if(vertices->empty()){
-        throw file_read_error() << error_info_message("No valid points");
+        throw std::runtime_error("No valid points");
     } else {
         out_pointSet->setVertices(vertices);
         out_pointSet->setNormals(normals);
@@ -166,7 +160,7 @@ void cnoid::loadPCD(SgPointSet* out_pointSet, const std::string& filename)
             scanner.readLFEOFex("The field value is not correctly specified.");
         }
     } catch(EasyScanner::Exception& ex){
-        throw file_read_error() << error_info_message(ex.getFullMessage());
+        throw std::runtime_error(ex.getFullMessage());
     }
 }
 
@@ -174,7 +168,7 @@ void cnoid::loadPCD(SgPointSet* out_pointSet, const std::string& filename)
 void cnoid::savePCD(SgPointSet* pointSet, const std::string& filename, const Isometry3& viewpoint)
 {
     if(!pointSet->hasVertices()){
-        throw empty_data_error() << error_info_message("Empty pointset");
+        throw std::runtime_error("Empty pointset");
     }
 
     bool hasColors = pointSet->hasColors() && pointSet->colorIndices().empty();

@@ -1,20 +1,15 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "BodyLoader.h"
 #include "StdBodyLoader.h"
 #include "VRMLBodyLoader.h"
 #include "Body.h"
 #include <cnoid/SceneLoader>
 #include <cnoid/ValueTree>
-#include <cnoid/Exception>
 #include <cnoid/NullOut>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
 #include <mutex>
+#include <stdexcept>
 #include "gettext.h"
 
 using namespace std;
@@ -298,10 +293,6 @@ bool BodyLoader::Impl::load(Body* body, const std::string& filename)
 
     } catch(const ValueNode::Exception& ex){
         (*os) << ex.message();
-    } catch(const nonexistent_key_error& error){
-        if(const std::string* message = boost::get_error_info<error_info_message>(error)){
-            (*os) << *message;
-        }
     } catch(const std::exception& ex){
         (*os) << ex.what();
     }

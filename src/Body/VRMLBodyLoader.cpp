@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "VRMLBodyLoader.h"
 #include "Body.h"
 #include "ForceSensor.h"
@@ -13,7 +8,6 @@
 #include "RangeSensor.h"
 #include "PointLight.h"
 #include "SpotLight.h"
-#include <cnoid/Exception>
 #include <cnoid/EasyScanner>
 #include <cnoid/VRMLParser>
 #include <cnoid/VRMLToSGConverter>
@@ -22,6 +16,7 @@
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
+#include <stdexcept>
 #include "gettext.h"
 
 using namespace std;
@@ -186,12 +181,9 @@ template<class ValueType> ValueType getValue(VRMLProtoInstance* node, const char
 {
     VRMLProtoFieldMap::const_iterator p = node->fields.find(fieldName);
     if(p == node->fields.end()){
-        BOOST_THROW_EXCEPTION(
-            nonexistent_key_error()
-            << error_info_key(fieldName)
-            << error_info_message(
-                format(_("Node \"{0}\" should have the field \"{1}\""),
-                       node->proto->protoName, fieldName)));
+        throw invalid_argument(
+            format(_("Node \"{0}\" should have the field \"{1}\""),
+                   node->proto->protoName, fieldName));
     }
     return stdx::get<ValueType>(p->second);
 }
@@ -410,10 +402,6 @@ bool VRMLBodyLoaderImpl::load(Body* body, const std::string& filename)
         os() << ex.message() << endl;
     } catch(EasyScanner::Exception & ex){
         os() << ex.getFullMessage() << endl;
-    } catch(const nonexistent_key_error& error){
-        if(const std::string* message = boost::get_error_info<error_info_message>(error)){
-            os() << *message << endl;
-        }
     } catch(const std::exception& ex){
         os() << ex.what() << endl;
     }

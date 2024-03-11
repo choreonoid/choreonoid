@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "MultiPointSetItem.h"
 #include "ItemManager.h"
 #include "MenuManager.h"
@@ -17,9 +12,9 @@
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <cnoid/SceneMarkers>
-#include <cnoid/Exception>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
+#include <stdexcept>
 #include "gettext.h"
 
 using namespace std;
@@ -899,10 +894,8 @@ bool MultiPointSetItem::Impl::outputPointSetItem(int index)
             outputFileListing->insert(index, info);
             result = true;
 
-        } catch (boost::exception& ex) {
-            if(std::string const * message = boost::get_error_info<error_info_message>(ex)){
-                mvout() << *message << endl;
-            }
+        } catch (const std::exception& ex){
+            mvout() << ex.what() << endl;
         }
     }
 

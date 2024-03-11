@@ -117,9 +117,6 @@ public:
 
     void throwException(const std::string& message) const;
 
-    /**
-       \todo integrate the exception classes with the common ones defined in Exception.h
-    */
     class CNOID_EXPORT Exception {
     public:
         Exception();

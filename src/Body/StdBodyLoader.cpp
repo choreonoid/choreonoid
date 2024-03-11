@@ -4,7 +4,6 @@
 #include "Body.h"
 #include <cnoid/StdSceneReader>
 #include <cnoid/EigenArchive>
-#include <cnoid/Exception>
 #include <cnoid/YAMLReader>
 #include <cnoid/NullOut>
 #include <cnoid/UTF8>
@@ -12,6 +11,7 @@
 #include <fmt/format.h>
 #include <unordered_map>
 #include <mutex>
+#include <stdexcept>
 #include "gettext.h"
 #include <iostream>
 
@@ -674,10 +674,8 @@ bool StdBodyLoader::Impl::readTopNode(Body* body, Mapping* topNode)
         
     } catch(const ValueNode::Exception& ex){
         os() << ex.message();
-    } catch(const nonexistent_key_error& error){
-        if(const std::string* message = boost::get_error_info<error_info_message>(error)){
-            os() << *message << endl;
-        }
+    } catch(const std::exception& ex){
+        os() << ex.what() << endl;
     } catch(...){
         clear();
         throw;

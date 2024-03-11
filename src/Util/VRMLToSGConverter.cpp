@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "VRMLToSGConverter.h"
 #include "SceneDrawables.h"
 #include "SceneLights.h"
@@ -12,7 +8,6 @@
 #include "MeshGenerator.h"
 #include "ImageIO.h"
 #include "SceneLoader.h"
-#include "Exception.h"
 #include "NullOut.h"
 #include "EigenUtil.h"
 #include "UTF8.h"
