@@ -40,7 +40,6 @@ if(ENABLE_GUI)
   add_subdirectory(CorbaPlugin)
   add_subdirectory(TrafficControlPlugin)
   add_subdirectory(FCLPlugin)
-  add_subdirectory(SDFPlugin)
   add_subdirectory(PCLPlugin)
   add_subdirectory(CompetitionPlugin)
 
