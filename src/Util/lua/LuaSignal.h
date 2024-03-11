@@ -1,17 +1,29 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_LUA_SIGNAL_H
 #define CNOID_UTIL_LUA_SIGNAL_H
 
 #include "../Signal.h"
 #include <sol.hpp>
-#include <boost/type_traits.hpp>
+#include <type_traits>
 
 namespace cnoid {
 
 namespace signal_private {
+
+template<typename T>
+class function_traits
+{
+    static_assert(sizeof( T ) == 0, "function_traits<T>: T is not a function type");
+};
+
+template<typename R, typename... Ts>
+struct function_traits<R(Ts...)>
+{
+    constexpr static const std::size_t arity = sizeof...(Ts);
+    using result_type = R;
+};
+
+template<typename R, typename... Ts>
+struct function_traits<R(Ts...) const> : function_traits<R(Ts...)> {};
 
 template<typename T> struct lua_function_caller0 {
     sol::function func;
@@ -118,7 +130,7 @@ class lua_signal_impl;
 template<typename Signature, typename Combiner>
 class lua_signal_impl<0, Signature, Combiner>
 {
-    typedef boost::function_traits<Signature> traits;
+    typedef function_traits<Signature> traits;
 public:
     typedef lua_function_caller0<typename traits::result_type> caller;
 };
@@ -126,7 +138,7 @@ public:
 template<typename Signature, typename Combiner>
 class lua_signal_impl<1, Signature, Combiner>
 {
-    typedef boost::function_traits<Signature> traits;
+    typedef function_traits<Signature> traits;
 public:
     typedef lua_function_caller1<typename traits::result_type,
                                  typename traits::arg1_type> caller;
@@ -135,7 +147,7 @@ public:
 template<typename Signature, typename Combiner>
 class lua_signal_impl<2, Signature, Combiner>
 {
-    typedef boost::function_traits<Signature> traits;
+    typedef function_traits<Signature> traits;
 public:
     typedef lua_function_caller2<typename traits::result_type,
                                  typename traits::arg1_type,
@@ -151,11 +163,11 @@ template<
         typename signal_private::function_traits<Signature>::result_type>
     >
 class LuaSignal : public signal_private::lua_signal_impl<
-    (boost::function_traits<Signature>::arity), Signature, Combiner>
+    (function_traits<Signature>::arity), Signature, Combiner>
 {
     typedef Signal<Signature, Combiner> SignalType;
     typedef SignalProxy<Signature, Combiner> SignalProxyType;
-    typedef signal_private::lua_signal_impl<(boost::function_traits<Signature>::arity), Signature, Combiner> base_type;
+    typedef signal_private::lua_signal_impl<(function_traits<Signature>::arity), Signature, Combiner> base_type;
     
     static Connection connect(SignalType& self, sol::function func){
         return self.connect(typename base_type::caller(func));
@@ -187,7 +199,7 @@ void LuaSignal(const char* name, sol::table& module)
 {
     typedef Signal<Signature, Combiner> SignalType;
     typedef SignalProxy<Signature, Combiner> SignalProxyType;
-    typedef signal_private::lua_signal_impl<(boost::function_traits<Signature>::arity), Signature, Combiner> signal_impl;
+    typedef signal_private::lua_signal_impl<(function_traits<Signature>::arity), Signature, Combiner> signal_impl;
     
     module.new_usertype<SignalType>(
         name,

@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "LuaConsoleView.h"
 #include "LuaInterpreter.h"
 #include <cnoid/ViewManager>
@@ -11,9 +7,8 @@
 #include <QBoxLayout>
 #include <QTextBlock>
 #include <lua.hpp>
-#include <boost/iostreams/concepts.hpp>
-#include <boost/iostreams/stream_buffer.hpp>
 #include <regex>
+#include <streambuf>
 #include "gettext.h"
 
 using namespace std;
@@ -23,11 +18,16 @@ namespace {
 
 const unsigned int HISTORY_SIZE = 100;
 
-class TextSink : public boost::iostreams::sink
+class ConsoleViewStreamBuf : public std::basic_streambuf<char>
 {
 public:
-    TextSink(LuaConsoleViewImpl* view) : view(view) { }
-    std::streamsize write(const char* s, std::streamsize n);
+    ConsoleViewStreamBuf(LuaConsoleViewImpl* view);
+
+protected:
+    virtual int_type overflow(int_type c) override;
+    virtual int sync() override;
+
+    vector<char> buf;
     LuaConsoleViewImpl* view;
 };
 
@@ -46,8 +46,7 @@ public:
     std::vector<string> splitStringVec;
     std::vector<string> keywords;
 
-    TextSink textSink;
-    boost::iostreams::stream_buffer<TextSink> sbuf;
+    ConsoleViewStreamBuf sbuf;
     std::ostream os;
 
     LuaConsoleViewImpl(LuaConsoleView* self);
@@ -86,8 +85,7 @@ LuaConsoleView::LuaConsoleView()
 
 LuaConsoleViewImpl::LuaConsoleViewImpl(LuaConsoleView* self)
     : self(self),
-      textSink(this),
-      sbuf(textSink),
+      sbuf(this),
       os(&sbuf)
 {
     self->setDefaultLayoutArea(View::BottomCenterArea);
@@ -212,11 +210,36 @@ void LuaConsoleViewImpl::keyPressEvent(QKeyEvent* event)
 }
 
 
-std::streamsize TextSink::write(const char* s, std::streamsize n)
+ConsoleViewStreamBuf::ConsoleViewStreamBuf(LuaConsoleViewImpl* view, bool doFlush)
+    : view(view)
 {
-    auto text = QString::fromLocal8Bit(s, n);
+    buf.resize(4096);
+    auto p = &buf.front();
+    setp(p, p + buf.size());
+}
+
+
+ConsoleViewStreamBuf::int_type ConsoleViewStreamBuf::overflow(int_type c)
+{
+    sync();
+
+    if(c != traits_type::eof()){
+        buf[0] = c;
+        pbump(1);
+        return traits_type::not_eof(c);
+    } else {
+        return traits_type::eof();
+    }
+}
+
+
+int ConsoleViewStreamBuf::sync()
+{
+    auto p = &buf.front();
+    auto text = QString::fromLocal8Bit(p, pptr() - p);
     callFromMainThread([=](){ view->put(text); });
-    return n;
+    setp(p, p + buf.size());
+    return 0;
 }
 
 
