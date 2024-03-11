@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "PythonConsoleView.h"
 #include "PythonPlugin.h"
 #include <cnoid/PyUtil>
@@ -12,7 +8,6 @@
 #include <QTextBlock>
 #include <QEventLoop>
 #include <QMimeData>
-#include <boost/algorithm/string.hpp>
 #include <QMimeData>
 #include <list>
 #include "gettext.h"
@@ -372,7 +367,19 @@ void PythonConsoleView::Impl::tabComplete()
     beforeCursorString = beforeCursorString.substr(0,maxSplitIdx);
 
     std::vector<string> dottedStrings;
-    boost::split(dottedStrings, lastWord, boost::is_any_of("."));
+    size_t pos = 0;
+    while(true){
+        size_t dotpos = lastWord.find('.', pos);
+        if(dotpos == pos){
+            break;
+        }
+        size_t n = (dotpos == string::npos) ? string::npos : (dotpos - pos);
+        dottedStrings.push_back(lastWord.substr(pos, n));
+        if(dotpos == string::npos){
+            break;
+        }
+        pos = dotpos + 1;
+    }
     string lastDottedString = dottedStrings.back();// word after last dot
 
     std::vector<string> moduleNames = dottedStrings;// words before last dot
