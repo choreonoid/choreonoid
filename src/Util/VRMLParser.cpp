@@ -10,7 +10,6 @@
 #include "NullOut.h"
 #include "UTF8.h"
 #include <cnoid/stdx/filesystem>
-#include <boost/algorithm/string/predicate.hpp>
 #include <list>
 #include <cmath>
 #include <vector>
@@ -575,7 +574,7 @@ VRMLNodePtr VRMLParserImpl::readNode(VRMLNodeCategory nodeCategory)
     */
 
     if(!scanner->readWord()){
-        return 0;
+        return nullptr;
     }
 
     string def_name;
@@ -779,7 +778,7 @@ VRMLUnsupportedNodePtr VRMLParserImpl::skipScriptNode()
     }
 
     //	return new VRMLUnsupportedNode( "Script" );
-    return NULL;
+    return nullptr;
 }
 
 
@@ -803,7 +802,7 @@ VRMLUnsupportedNodePtr VRMLParserImpl::skipExternProto()
     readSFString( url );
 
     //	return new VRMLUnsupportedNode( "EXTERNPROTO" );
-    return NULL;
+    return nullptr;
 }
 
 
@@ -818,19 +817,27 @@ VRMLNodePtr VRMLParserImpl::readInlineNode(VRMLNodeCategory nodeCategory)
 
         VRMLInlinePtr inlineNode = new VRMLInline();
         for(size_t i=0; i < inlineUrls.size(); ++i){
-            string url(fromUTF8(inlineUrls[i]));
-            if(boost::algorithm::iends_with(url, "wrl")){
-                inlineNode->children.push_back(newInlineSource(url));
-            } else {
+            auto& url = inlineUrls[i];
+            bool isVrml = false;
+            auto len = url.size();
+            if(len > 4){
+                auto pos = len - 4;
+                if(url.find(".wrl", pos, 4) == pos){
+                    inlineNode->children.push_back(newInlineSource(url));
+                    isVrml = true;
+                }
+            }
+            if(!isVrml){
                 auto nonVrmlInline = new VRMLNonVrmlInline;
                 nonVrmlInline->url = getRealPath(url);
                 inlineNode->children.push_back(nonVrmlInline);
             }
-            inlineNode->urls.push_back(inlineUrls[i]);
+            inlineNode->urls.push_back(url);
         }
         return inlineNode;
     }
-    return 0;
+
+    return nullptr;
 }
 
 
@@ -2434,7 +2441,7 @@ SFNode VRMLParserImpl::readSFNode(VRMLNodeCategory nodeCategory)
     if(scanner->readSymbol(F_IS)){
         return stdx::get<SFNode>(readProtoField(SFNODE));
     } else if(scanner->readSymbol(V_NULL)){
-        return 0;
+        return nullptr;
     } else {
         return readNode(nodeCategory);
     }
