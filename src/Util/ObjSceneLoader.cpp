@@ -747,11 +747,11 @@ void ObjSceneLoader::Impl::readTexture(const std::string& mapType)
 {
     if(mapType == "Kd"){
         if(subScanner.readStringToEOL(token)){
-            filesystem::path path(token);
+            filesystem::path path(fromUTF8(token));
             if(path.is_relative()){
                 path = directoryPath / path;
             }
-            auto filename = path.string();
+            auto filename = toUTF8(path.string());
             SgTexturePtr texture = new SgTexture;
             auto image = texture->getOrCreateImage();
             if(imageIO.load(image->image(), filename, os())){
@@ -771,7 +771,7 @@ void ObjSceneLoader::Impl::normalizeNormals()
         if(fabs(n0.norm() - 1.0) > 1.0e-3){
             os() << format(_("Warning: Mesh file \"{}\" contains unnormalized normals and "
                              "the normalization process is appiled to all normals."),
-                           filePath.filename().string()) << endl;
+                           toUTF8(filePath.filename().string())) << endl;
             for(auto& n : *normals){
                 n.normalize();
             }
