@@ -1,5 +1,4 @@
 option(BUILD_PCL_PLUGIN "Building PCLPlugin" OFF)
-mark_as_advanced(BUILD_PCL_PLUGIN)
 
 if(NOT BUILD_PCL_PLUGIN)
   return()

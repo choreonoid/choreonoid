@@ -1,4 +1,5 @@
 option(BUILD_GROBOT_PLUGIN "Building GRobotPlugin" OFF)
+mark_as_advanced(BUILD_GROBOT_PLUGIN)
 
 if(NOT BUILD_GROBOT_PLUGIN)
   return()
