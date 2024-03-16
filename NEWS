@@ -1,3 +1,26 @@
+Choreonoid 2.1.0 released on March 17, 2024
+===========================================
+
+Changes since 2.0.0:
+
+* Improved the function to write a body / scene file
+* Improved the URDF loader
+* Improved the OBJ mesh file loader
+* Fixed the recording toggle button in MovieRecorderBar so that toggle-off to stop recording can be processed during recording
+* Fixed the FPS test button in the SceneView config dialog so that click to cancel the test can be processed during testing
+* Fixed the dial widgets in JointDisplacementView to work correctly
+* Improved LocationView to support SceneItem and PointSetItem
+* Improved the distance measurement function to support SceneItem and PointSetItem
+* Added BodyPoseItem and BodyPoseListItem for recording body poses
+* Added the conveyor device and improve KinematicSimulatorItem to support it
+* Enabled GUI operations on multiplex bodies
+* Added a function to convert a point set to a mesh to PCLPlugin
+* Removed SDFPlugin
+* Replaced boost.program_options with CLI11
+* Removed dependency on the boost C++ library
+* Improved the package.xml configuration for building with ROS 2
+* Many other minor feature improvements and bug fixes
+
 Choreonoid 2.0.0 released on August 4, 2023
 ===========================================
 
@@ -93,7 +116,6 @@ Changes since 1.7.0:
 * Added FFmpegPlugin
 * Added the HRP-4C model and its samples
 * Many other minor feature improvements and bug fixes
-
 
 Choreonoid 1.7.0 released on May 8, 2019
 ========================================
