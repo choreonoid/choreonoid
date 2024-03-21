@@ -10,6 +10,7 @@
 #include <cnoid/FileUtil>
 #include <cnoid/UTF8>
 #include <cnoid/ConnectionSet>
+#include <cnoid/PluginManager>
 #include <cnoid/ProjectManager>
 #include <cnoid/ItemManager>
 #include <QLibrary>
@@ -90,7 +91,6 @@ public:
 
     std::string controllerModuleName;
     std::string controllerModuleFilename;
-    filesystem::path controllerDirPath;
     QLibrary controllerModule;
     bool doReloading;
     bool isSymbolExportEnabled;
@@ -109,6 +109,9 @@ public:
     Impl(SimpleControllerItem* self, const Impl& org);
     ~Impl();
     void doCommonInitializationInConstructor();
+    bool checkIfControllerModuleInControllerDirectory(
+        const filesystem::path& modulePath, filesystem::path& out_controllerDirPath);
+    bool checkIfControllerModulePathExists(const filesystem::path& modulePath);
     void setController(const std::string& name);
     bool loadController();
     bool configureController(BodyItem* bodyItem);
@@ -164,8 +167,6 @@ public:
 }
 
 
-namespace {
-
 MySimpleControllerConfig::MySimpleControllerConfig(SimpleControllerItem::Impl* impl)
     : SimpleControllerConfig(impl),
       impl(impl)
@@ -177,8 +178,6 @@ MySimpleControllerConfig::MySimpleControllerConfig(SimpleControllerItem::Impl* i
 Referenced* MySimpleControllerConfig::bodyItem()
 {
     return impl->self->targetBodyItem();
-}
-
 }
 
 
@@ -208,8 +207,6 @@ SimpleControllerItem::Impl::Impl(SimpleControllerItem* self)
     doReloading = false;
     isSymbolExportEnabled = false;
 
-    controllerDirPath = pluginDirPath() / "simplecontroller";
-
     baseDirectoryType.setSymbol(NO_BASE_DIRECTORY, N_("None"));
     baseDirectoryType.setSymbol(CONTROLLER_DIRECTORY, N_("Controller directory"));
     baseDirectoryType.setSymbol(PROJECT_DIRECTORY, N_("Project directory"));
@@ -228,7 +225,6 @@ SimpleControllerItem::Impl::Impl(SimpleControllerItem* self, const Impl& org)
     : self(self),
       config(this),
       controllerModuleName(org.controllerModuleName),
-      controllerDirPath(org.controllerDirPath),
       baseDirectoryType(org.baseDirectoryType)
 {
     doCommonInitializationInConstructor();
@@ -296,6 +292,42 @@ SimpleController* SimpleControllerItem::controller()
 }
 
 
+bool SimpleControllerItem::Impl::checkIfControllerModuleInControllerDirectory
+(const filesystem::path& modulePath, filesystem::path& out_controllerDirPath)
+{
+    bool isInControllerDirectories = false;
+
+    for(auto& pluginDir : PluginManager::instance()->pluginDirectories()){
+        out_controllerDirPath = filesystem::path(fromUTF8(pluginDir)) / "simplecontroller";
+        if(modulePath.is_absolute()){
+            if(modulePath.parent_path() == out_controllerDirPath){
+                isInControllerDirectories = true;
+                break;
+            }
+        } else {
+            if(checkIfControllerModulePathExists(out_controllerDirPath / modulePath)){
+                isInControllerDirectories = true;
+                break;
+            }
+        }
+    }
+
+    return isInControllerDirectories;
+}
+
+
+bool SimpleControllerItem::Impl::checkIfControllerModulePathExists(const filesystem::path& modulePath)
+{
+    if(filesystem::exists(modulePath)){
+        return true;
+    }
+    filesystem::path pathWithExtension = modulePath;
+    pathWithExtension += ".";
+    pathWithExtension += DLL_EXTENSION;
+    return filesystem::exists(pathWithExtension);
+}
+    
+
 void SimpleControllerItem::setController(const std::string& name)
 {
     impl->setController(name);
@@ -312,7 +344,8 @@ void SimpleControllerItem::Impl::setController(const std::string& name)
         filesystem::path modulePath(fromUTF8(name));
         if(modulePath.is_absolute()){
             baseDirectoryType.select(NO_BASE_DIRECTORY);
-            if(modulePath.parent_path() == controllerDirPath){
+            filesystem::path controllerDirPath;
+            if(checkIfControllerModuleInControllerDirectory(modulePath, controllerDirPath)){
                 baseDirectoryType.select(CONTROLLER_DIRECTORY);
                 modulePath = modulePath.filename();
             } else {
@@ -347,7 +380,14 @@ bool SimpleControllerItem::Impl::loadController()
     filesystem::path modulePath(fromUTF8(controllerModuleName));
     if(!modulePath.is_absolute()){
         if(baseDirectoryType.is(CONTROLLER_DIRECTORY)){
-            modulePath = controllerDirPath / modulePath;
+            for(auto& pluginDir : PluginManager::instance()->pluginDirectories()){
+                filesystem::path controllerDirPath = filesystem::path(fromUTF8(pluginDir)) / "simplecontroller";
+                filesystem::path moduleFullPath = controllerDirPath / modulePath;
+                if(checkIfControllerModulePathExists(moduleFullPath)){
+                    modulePath = moduleFullPath;
+                    break;
+                }
+            }
         } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
             string projectDir = ProjectManager::instance()->currentProjectDirectory();
             if(!projectDir.empty()){
@@ -1080,7 +1120,13 @@ void SimpleControllerItem::Impl::doPutProperties(PutPropertyFunction& putPropert
 {
     FilePathProperty moduleProperty(controllerModuleName);
     if(baseDirectoryType.is(CONTROLLER_DIRECTORY)){
-        moduleProperty.setBaseDirectory(toUTF8(controllerDirPath.string()));
+        filesystem::path modulePath(fromUTF8(controllerModuleName));
+        filesystem::path dirPath;
+        if(checkIfControllerModuleInControllerDirectory(modulePath, dirPath)){
+            moduleProperty.setBaseDirectory(toUTF8(dirPath.string()));
+        } else {
+            moduleProperty.setBaseDirectory(toUTF8((pluginDirPath() / "simplecontroller").string()));
+        }
     } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
         moduleProperty.setBaseDirectory(ProjectManager::instance()->currentProjectDirectory());
     }
