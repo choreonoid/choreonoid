@@ -6,8 +6,6 @@
 */
 
 #include <cnoid/App>
-#include <cnoid/UTF8>
-#include <cstdlib>
 
 using namespace cnoid;
 
@@ -31,9 +29,6 @@ int main(int argc, char *argv[])
 
 int execute(cnoid::App& app)
 {
-    if(auto pluginPath = getenv("CNOID_PLUGIN_PATH")){
-        app.addPluginPath(toUTF8(pluginPath));
-    }
     app.setBuiltinProject(":/Base/project/layout.cnoid");
     return app.exec();
 }
