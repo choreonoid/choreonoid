@@ -1,3 +1,12 @@
+Choreonoid 2.1.1 released on March 21, 2024
+===========================================
+
+Changes since 2.1.0:
+
+* Improve the plugin path management
+  * Add the command line option "--add-plugin-dir-as-prefix"
+  * Improve SimpleControllerItem to support additional controller directories in the plugin path
+
 Choreonoid 2.1.0 released on March 17, 2024
 ===========================================
 
