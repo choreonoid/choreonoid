@@ -104,6 +104,7 @@ bool isNoWindowMode = false;
 bool ctrl_c_pressed = false;
 bool exitRequested = false;
 vector<string> additionalPathVariables;
+vector<string> pluginDirsAsPrefix;
 
 void onCtrl_C_Input(int)
 {
@@ -222,7 +223,11 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     mout->setPendingMode(true);
     
     AppConfig::initialize(appName, organization);
+
     pluginManager = PluginManager::instance();
+    if(auto pluginPathList = getenv("CNOID_PLUGIN_PATH")){
+        pluginManager->addPluginPathList(toUTF8(pluginPathList));
+    }
 
     ext = nullptr;
     mainWindow = nullptr;
@@ -317,7 +322,7 @@ void App::setIcon(const std::string& filename)
 void App::addPluginPath(const std::string& path)
 {
     if(!path.empty()){
-        impl->pluginManager->addPluginPath(path);
+        impl->pluginManager->addPluginPathList(path);
     }
 }
 
@@ -375,6 +380,10 @@ void App::Impl::initialize()
     optionManager->add_option(
         "--path-variable", additionalPathVariables,
         "Set a path variable in the format \"name=value\"");
+
+    optionManager->add_option(
+        "--add-plugin-dir-as-prefix", pluginDirsAsPrefix,
+        "Add a plugin directory as an install path prefix");
     
     mainWindow = MainWindow::initialize(appName, ext);
 
@@ -544,6 +553,10 @@ int App::Impl::exec()
                 cout << QStyleFactory::keys().join(" ").toStdString() << endl;
                 doQuit = true;
             }
+        }
+
+        for(auto& prefix : pluginDirsAsPrefix){
+            pluginManager->addPluginDirectoryAsPrefix(prefix);
         }
         
         optionManager->processOptionsPhase1();

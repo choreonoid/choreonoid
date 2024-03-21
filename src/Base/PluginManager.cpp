@@ -100,7 +100,7 @@ public:
     MainMenu* mainMenu;
 
     string pluginDirectory;
-    vector<string> pluginPaths;
+    vector<string> pluginDirectories;
     QRegExp pluginNamePattern;
 
     vector<PluginInfoPtr> allPluginInfos;
@@ -121,7 +121,7 @@ public:
     LazyCaller unloadPluginsLater;
     LazyCaller reloadPluginsLater;
 
-    void addPluginPath(const std::string& path);
+    void addPluginDirectory(const std::string& directory, bool doMakeAbsolute);
     void loadPlugins(bool doActivation);
     void scanPluginFiles(const std::string& pathString, bool isUTF8, bool isRecursive);
     void loadScannedPluginFiles(bool doActivation);
@@ -176,7 +176,7 @@ PluginManager::Impl::Impl()
     mout = MessageOut::master();
     mainMenu = nullptr;
 
-    addPluginPath(cnoid::pluginDir());
+    addPluginDirectory(cnoid::pluginDir(), false);
 
     pluginNamePattern.setPattern(
         QString(DLL_PREFIX) + "Cnoid(.+)Plugin" + DEBUG_SUFFIX + "\\." + DLL_EXTENSION);
@@ -208,24 +208,70 @@ PluginManager::Impl::~Impl()
 
 
 /**
-   @param path semicolon or colon separeted path list.
+   @param pathList semicolon or colon separeted absolute path list.
 */
-void PluginManager::addPluginPath(const std::string& pathString)
+void PluginManager::addPluginPathList(const std::string& pathList)
 {
-    for(auto& path : Tokenizer<CharSeparator<char>>(pathString, CharSeparator<char>(PATH_DELIMITER))){
-        impl->addPluginPath(path);
+    for(auto& dir : Tokenizer<CharSeparator<char>>(pathList, CharSeparator<char>(PATH_DELIMITER))){
+        impl->addPluginDirectory(dir, false);
     }
 }
-    
 
-void PluginManager::Impl::addPluginPath(const std::string& path)
+
+void PluginManager::addPluginPath(const std::string& pathList)
 {
-    pluginPaths.push_back(path);
+    addPluginPathList(pathList);
+}
+
+
+void PluginManager::addPluginDirectory(const std::string& directory)
+{
+    impl->addPluginDirectory(directory, true);
+}
+
+
+void PluginManager::Impl::addPluginDirectory(const std::string& directory, bool doMakeAbsolute)
+{
+    string directoryFromUTF8;
+    if(doMakeAbsolute){
+        directoryFromUTF8 = fromUTF8(directory);
+        filesystem::path path(directoryFromUTF8);
+        if(!path.is_absolute()){
+            string absDirectory = filesystem::absolute(path).string();
+            pluginDirectories.insert(pluginDirectories.begin(), toUTF8(absDirectory));
+#ifdef Q_OS_WIN32
+            // Add the plugin directory to PATH
+            qputenv("PATH", format("{0};{1}", absDirectory, qgetenv("PATH")).c_str());
+#endif
+            return;
+        }
+    }
+    
+    pluginDirectories.insert(pluginDirectories.begin(), directory);
     
 #ifdef Q_OS_WIN32
     // Add the plugin directory to PATH
-    qputenv("PATH", format("{0};{1}", fromUTF8(path), qgetenv("PATH")).c_str());
+    if(directoryFromUTF8.empty()){
+        directoryFromUTF8 = fromUTF8(directory);
+    }
+    qputenv("PATH", format("{0};{1}", directoryFromUTF8, qgetenv("PATH")).c_str());
 #endif
+}
+
+
+/**
+   @param directory the install prefix of the corresponding plugin module.
+*/
+void PluginManager::addPluginDirectoryAsPrefix(const std::string& prefix)
+{
+    addPluginDirectory(
+        toUTF8((filesystem::path(fromUTF8(prefix)) / CNOID_PLUGIN_SUBDIR).string()));
+}
+
+
+const std::vector<std::string> PluginManager::pluginDirectories() const
+{
+    return impl->pluginDirectories;
 }
 
 
@@ -252,8 +298,8 @@ void PluginManager::loadPlugins(bool doActivation)
 void PluginManager::Impl::loadPlugins(bool doActivation)
 {
     if(allPluginInfos.empty()){ // Not scanned yet
-        for(auto& path : pluginPaths){
-            scanPluginFiles(path, true, false);
+        for(auto& dir : pluginDirectories){
+            scanPluginFiles(dir, true, false);
         }
     }
     loadScannedPluginFiles(doActivation);
@@ -776,7 +822,7 @@ int PluginManager::numPlugins() const
 }
 
 
-const std::string& PluginManager::pluginPath(int index) const
+const std::string& PluginManager::pluginFile(int index) const
 {
     return impl->allPluginInfos[index]->pathString;
 }

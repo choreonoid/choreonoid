@@ -27,7 +27,9 @@ public:
 
     ~App();
 
+    [[deprecated("Use PluginManager::addPluginPathList")]]
     void addPluginPath(const std::string& path);
+
     bool requirePluginToCustomizeApplication(const std::string& pluginName);
 
     // Optional setting

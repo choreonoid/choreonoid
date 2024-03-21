@@ -1,11 +1,8 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_PLUGIN_MANAGER_H
 #define CNOID_BASE_PLUGIN_MANAGER_H
 
 #include <string>
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -19,7 +16,13 @@ public:
 	
     ~PluginManager();
 
-    void addPluginPath(const std::string& path);
+    void addPluginPathList(const std::string& pathList);
+    [[deprecated("Use addPluginPathList")]]
+    void addPluginPath(const std::string& pathList);
+    
+    void addPluginDirectory(const std::string& directory);
+    void addPluginDirectoryAsPrefix(const std::string& prefix);
+    const std::vector<std::string> pluginDirectories() const;
     bool isStartupLoadingDisabled() const;
     void doStartupLoading();
     void loadPlugins(bool doActivation);
@@ -32,7 +35,7 @@ public:
     void flushMessagesTo(std::ostream& os);
 
     int numPlugins() const;
-    const std::string& pluginPath(int index) const;
+    const std::string& pluginFile(int index) const;
     const std::string& pluginName(int index) const;
 
     enum PluginStatus { NOT_LOADED, LOADED, ACTIVE, FINALIZED, UNLOADED, INVALID, CONFLICT };
