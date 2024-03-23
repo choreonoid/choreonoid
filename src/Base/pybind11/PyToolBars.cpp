@@ -86,7 +86,16 @@ void exportPyToolBars(py::module m)
              })
         ;
 
-    py::class_<TimeBar, PyQObjectHolder<TimeBar>, ToolBar>(m, "TimeBar")
+    py::class_<TimeBar, PyQObjectHolder<TimeBar>, ToolBar> timeBarClass(m, "TimeBar");
+
+    py::enum_<TimeBar::TimeOption>(timeBarClass, "TimeOption")
+        .value("Truncate", TimeBar::Truncate)
+        .value("Round", TimeBar::Round)
+        .value("Expand", TimeBar::Expand)
+        .export_values();
+        ;
+
+    timeBarClass
         .def_property_readonly_static("instance", [](py::object){ return TimeBar::instance(); })
         .def_property_readonly("sigPlaybackInitialized", &TimeBar::sigPlaybackInitialized)
         .def_property_readonly("sigPlaybackStarted", &TimeBar::sigPlaybackStarted)
@@ -94,7 +103,7 @@ void exportPyToolBars(py::module m)
         .def_property_readonly("sigPlaybackStopped", &TimeBar::sigPlaybackStopped)
         .def_property_readonly("sigPlaybackStoppedEx", &TimeBar::sigPlaybackStoppedEx)
         .def_property("time", &TimeBar::time, &TimeBar::setTime)
-        .def("setTime", &TimeBar::setTime)
+        .def("setTime", &TimeBar::setTime, py::arg("time"), py::arg("options") = TimeBar::Truncate)
         .def_property_readonly("realPlaybackTime", &TimeBar::realPlaybackTime)
         .def_property_readonly("minTime", &TimeBar::minTime)
         .def_property_readonly("maxTime", &TimeBar::maxTime)
