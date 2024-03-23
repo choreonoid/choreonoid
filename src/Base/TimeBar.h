@@ -34,8 +34,13 @@ public:
     SignalProxy<double(double time, bool isStoppedManually)> sigPlaybackStoppedEx();
     
     inline double time() const { return time_; }
-        
-    bool setTime(double time);
+
+    enum TimeOption {
+        Truncate = 0,
+        Round = 1 << 0,
+        Expand = 1 << 1
+    };
+    bool setTime(double time,int options = Truncate);
     void refresh();
 
     double realPlaybackTime() const;

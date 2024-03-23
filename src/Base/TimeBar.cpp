@@ -50,7 +50,7 @@ public:
     ~Impl();
 
     double quantizedTime(double time) const;
-    bool setTime(double time, bool doAutoExpansion = false, bool calledFromPlaybackLoop = false, QWidget* callerWidget = nullptr);
+    bool setTime(double time, int options = Truncate, bool calledFromPlaybackLoop = false, QWidget* callerWidget = nullptr);
     bool setTimeBarTime(double time, bool doAutoExpansion = false, bool calledFromPlaybackLoop = false, QWidget* callerWidget = nullptr);
     bool setTimeRange(double minTime, double maxTime, bool doUpdateTimeSpinSlider);
     void onMinTimeSpinValueChanged(double minTime);
@@ -217,12 +217,12 @@ TimeBar::Impl::Impl(TimeBar* self)
     timeSpin = new DoubleSpinBox;
     timeSpin->setAlignment(Qt::AlignCenter);
     timeSpin->sigValueChanged().connect(
-        [this](double time){ setTime(time, false, false, timeSpin); });
+        [this](double time){ setTime(time, Truncate, false, timeSpin); });
     self->addWidget(timeSpin, TimeSpin);
 
     timeSlider = new Slider(Qt::Horizontal);
     timeSlider->sigValueChanged().connect(
-        [this](int value){ setTime(value / pow(10.0, decimals), false, false, timeSlider); });
+        [this](int value){ setTime(value / pow(10.0, decimals), Truncate, false, timeSlider); });
     timeSlider->setMinimumWidth(timeSlider->sizeHint().width());
     self->addWidget(timeSlider, TimeSlider);
 
@@ -777,7 +777,8 @@ void TimeBar::Impl::timerEvent(QTimerEvent*)
         }
     }
 
-    if(!setTime(time, doAutoExpansion, true) || doStopAtLastOngoingTime){
+    int options = doAutoExpansion ? (Truncate | Expand) : Truncate;
+    if(!setTime(time, options, true) || doStopAtLastOngoingTime){
         double lastValidTime = stopPlayback(false);
         
         if(!doStopAtLastOngoingTime && isRepeatMode){
@@ -797,9 +798,9 @@ double TimeBar::Impl::quantizedTime(double time) const
 }
 
 
-bool TimeBar::setTime(double time)
+bool TimeBar::setTime(double time, int options)
 {
-    return impl->setTime(time);
+    return impl->setTime(time, options);
 }
 
 
@@ -808,7 +809,7 @@ bool TimeBar::setTime(double time)
    decrease the performance or not.
 */
 bool TimeBar::Impl::setTime
-(double time, bool doAutoExpansion, bool calledFromPlaybackLoop, QWidget* callerWidget)
+(double time, int options, bool calledFromPlaybackLoop, QWidget* callerWidget)
 {
     if(TRACE_FUNCTIONS){
         cout << "TimeBar::Impl::setTime(" << time << ", " << calledFromPlaybackLoop << ")" << endl;
@@ -818,7 +819,15 @@ bool TimeBar::Impl::setTime
         return false;
     }
 
-    const double newTime = quantizedTime(time);
+    double newTime;
+    if(options & Round){
+        double ftime1 = time * self->frameRate_;
+        double ftime2 = floor(ftime1);
+        ftime2 += std::round(ftime1 - ftime2);
+        newTime = ftime2 / self->frameRate_;
+    } else {
+        newTime = quantizedTime(time);
+    }
 
     // Avoid redundant update
     if(calledFromPlaybackLoop || callerWidget){
@@ -831,8 +840,9 @@ bool TimeBar::Impl::setTime
     }
 
     bool isValid = false;
-    
-    bool isWithinTimeRange = setTimeBarTime(newTime, doAutoExpansion, calledFromPlaybackLoop, callerWidget);
+
+    bool doExpansion = options & Expand;
+    bool isWithinTimeRange = setTimeBarTime(newTime, doExpansion, calledFromPlaybackLoop, callerWidget);
     if(isWithinTimeRange || calledFromPlaybackLoop){
         sigTimeChanged.emitAndGetAllResults(self->time_, playbackContinueFlags);
         for(auto flag : playbackContinueFlags){
