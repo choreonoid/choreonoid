@@ -191,7 +191,7 @@ int MessageViewStreamBuf::sync()
 
 void TextEditEx::keyPressEvent(QKeyEvent* event)
 {
-    if ((event->modifiers().testFlag(Qt::ControlModifier))){
+    if((event->modifiers().testFlag(Qt::ControlModifier))){
         switch(event->key()){
         case Qt::Key_C:
         case Qt::Key_A:
@@ -206,8 +206,8 @@ void TextEditEx::keyPressEvent(QKeyEvent* event)
         ensureCursorVisible();
         break;
     default:
+        TextEdit::keyPressEvent(event);
         break;
-        //TextEdit::keyPressEvent(event);
     }
 }
 
