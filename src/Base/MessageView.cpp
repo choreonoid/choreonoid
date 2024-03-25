@@ -191,14 +191,6 @@ int MessageViewStreamBuf::sync()
 
 void TextEditEx::keyPressEvent(QKeyEvent* event)
 {
-    if((event->modifiers().testFlag(Qt::ControlModifier))){
-        switch(event->key()){
-        case Qt::Key_C:
-        case Qt::Key_A:
-            TextEdit::keyPressEvent(event);
-            break;
-        }
-    }
     switch(event->key()){
     case Qt::Key_Return:
         moveCursor(QTextCursor::End);
@@ -327,7 +319,7 @@ void MessageView::Impl::createTextEdit()
 
     textEdit->setObjectName("TextEdit");
     textEdit->setFrameShape(QFrame::NoFrame);
-    //textEdit->setReadOnly(true);
+    textEdit->setReadOnly(true);
     textEdit->setTextInteractionFlags(
         Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
     textEdit->setWordWrapMode(QTextOption::WrapAnywhere);
