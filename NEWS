@@ -1,3 +1,7 @@
+Changes since 2.1.1:
+
+* Added a function to change the numerical value format including their units and precisions displayed in GUI
+
 Choreonoid 2.1.1 released on March 21, 2024
 ===========================================
 
