@@ -46,6 +46,7 @@ public:
     double distance() const;
     
     SignalProxy<void(bool isValid)> sigDistanceUpdated();
+    bool hasValidDistance() const;
 
     // RenderableItem
     virtual SgNode* getScene() override;

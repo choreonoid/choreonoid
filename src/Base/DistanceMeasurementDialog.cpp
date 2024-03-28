@@ -85,6 +85,7 @@ public:
     bool isEditModeOriginally;
 
     DisplayValueFormat* displayValueFormat;
+    ScopedConnection displayValueFormatConnection;
     string distanceDisplayFormat;
     string pointDisplayFormat;
     
@@ -101,6 +102,7 @@ public:
     ButtonGroup fixOneSideRadioGroup;
     RadioButton fixOneSideRadios[2];
     QLabel distanceLabel;
+    QLabel distanceUnitLabel;
     QLabel distanceElementLabels[3];
     CheckBox distanceMarkerCheck;
     SpinBox distanceLineWidthSpin;
@@ -115,6 +117,7 @@ public:
 
     Impl(DistanceMeasurementDialog* self);
     ~Impl();
+    void updateDisplayValueFormat();
     void setMeasurementItem(DistanceMeasurementItem* item, bool isNewSession);
     void updateMeasurementConfigurationWidgets();
     void finalizeDistanceMeasurement();
@@ -181,9 +184,11 @@ DistanceMeasurementDialog::Impl::Impl(DistanceMeasurementDialog* self_)
         });
 
     displayValueFormat = DisplayValueFormat::instance();
-    distanceDisplayFormat = format("{{0:.{0}f}}", displayValueFormat->lengthDecimals());
-    pointDisplayFormat = format("( {{0:.{0}f}}, {{1:.{0}f}}, {{2:.{0}f}} )", displayValueFormat->lengthDecimals());
-
+    displayValueFormatConnection =
+        displayValueFormat->sigFormatChanged().connect(
+            [this](){ updateDisplayValueFormat(); });
+    updateDisplayValueFormat();
+        
     auto vbox = new QVBoxLayout;
     self->setLayout(vbox);
 
@@ -284,16 +289,16 @@ DistanceMeasurementDialog::Impl::Impl(DistanceMeasurementDialog* self_)
     vbox->addSpacing(vspace);
     vbox->addWidget(new HSeparator);
     vbox->addSpacing(vspace);
-    
+
+    hbox = new QHBoxLayout;
     grid = new QGridLayout;
     grid->setColumnStretch(2, 1);
-    grid->setColumnStretch(3, 1);
-    grid->setColumnStretch(4, 1);
     row = 0;
     
     grid->addWidget(new QLabel(_("Distance")), row, 0, Qt::AlignCenter);
     grid->addWidget(new QLabel(":"), row, 1, Qt::AlignCenter);
     grid->addWidget(&distanceLabel, row, 2, Qt::AlignCenter);
+    grid->addWidget(&distanceUnitLabel, row, 3, Qt::AlignLeft);
     ++row;
 
     static const char* xyzLabels[] = { "X", "Y", "Z" };
@@ -304,7 +309,9 @@ DistanceMeasurementDialog::Impl::Impl(DistanceMeasurementDialog* self_)
         ++row;
     }
 
-    vbox->addLayout(grid);
+    hbox->addLayout(grid);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
 
     vbox->addSpacing(vspace);
     vbox->addWidget(new HSeparator);
@@ -385,6 +392,19 @@ DistanceMeasurementDialog::~DistanceMeasurementDialog()
 DistanceMeasurementDialog::Impl::~Impl()
 {
     delete objectPointPickMode;
+}
+
+
+void DistanceMeasurementDialog::Impl::updateDisplayValueFormat()
+{
+    if(displayValueFormat->isMeter()){
+        pointDisplayFormat = format("( {{0:.{0}f}}, {{1:.{0}f}}, {{2:.{0}f}} ) [m]", displayValueFormat->lengthDecimals());
+    } else {
+        pointDisplayFormat = format("( {{0:.{0}f}}, {{1:.{0}f}}, {{2:.{0}f}} ) [mm]", displayValueFormat->lengthDecimals());
+    }
+    distanceDisplayFormat = format("{{0:.{0}f}}", displayValueFormat->lengthDecimals());
+
+    updateDistanceDisplay();
 }
 
 
@@ -970,17 +990,20 @@ void DistanceMeasurementDialog::Impl::updatePointDisplay(int which, Vector3 p)
 
 void DistanceMeasurementDialog::Impl::updateDistanceDisplay()
 {
-    double distance = measurementItem->distance();
-    const Vector3& p0 = measurementItem->measurementPoint(0);
-    const Vector3& p1 = measurementItem->measurementPoint(1);
+    if(measurementItem && measurementItem->hasValidDistance()){
+        double distance = measurementItem->distance();
+        const Vector3& p0 = measurementItem->measurementPoint(0);
+        const Vector3& p1 = measurementItem->measurementPoint(1);
 
-    distanceLabel.setText(format(distanceDisplayFormat, displayValueFormat->toDisplayLength(distance)).c_str());
-    updatePointDisplay(0, p0);
-    updatePointDisplay(1, p1);
+        distanceLabel.setText(format(distanceDisplayFormat, displayValueFormat->toDisplayLength(distance)).c_str());
+        distanceUnitLabel.setText(displayValueFormat->isMeter() ? _("[m]") : _("[mm]"));
+        updatePointDisplay(0, p0);
+        updatePointDisplay(1, p1);
 
-    Vector3 dp = displayValueFormat->ratioToDisplayLength() * (p1 - p0);
-    for(int i=0; i < 3; ++i){
-        distanceElementLabels[i].setText(format(distanceDisplayFormat, dp(i)).c_str());
+        Vector3 dp = displayValueFormat->ratioToDisplayLength() * (p1 - p0);
+        for(int i=0; i < 3; ++i){
+            distanceElementLabels[i].setText(format(distanceDisplayFormat, dp(i)).c_str());
+        }
     }
 }
 
@@ -991,6 +1014,7 @@ void DistanceMeasurementDialog::Impl::invalidateDistanceDisplay()
         pointLabels[i].setText("---");
     }
     distanceLabel.setText("---");
+    distanceUnitLabel.setText("");
     for(int i=0; i < 3; ++i){
         distanceElementLabels[i].setText("---");
     }

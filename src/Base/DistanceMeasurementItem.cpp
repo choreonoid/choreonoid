@@ -52,7 +52,9 @@ class ViewportText : public SgViewportOverlay
 {
 public:
     ViewportText();
+    void updateDisplayValueFormat(bool doUpdateText);
     void setMeasurementData(const Vector3& p1, const Vector3& p2, double distance);
+    void updateText();
     void setColor(const Vector3f& color);
     void render(SceneRenderer* renderer);
     virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume) override;
@@ -60,10 +62,12 @@ public:
     SgPosTransformPtr distanceTextTransform;
     SgTextPtr distanceText;
     DisplayValueFormat* displayValueFormat;
+    ScopedConnection displayValueFormatConnection;
     string distanceDisplayFormat;
     double textHeight;
     Vector3 p1;
     Vector3 p2;
+    double distance;
 };
 
 typedef ref_ptr<ViewportText> ViewportTextPtr;
@@ -105,6 +109,7 @@ public:
     LazyCaller calcDistanceLater;
     double distance;
     Signal<void(bool isValid)> sigDistanceUpdated;
+    bool hasValidDistance;
     
     Vector3f markerColor;
     int distanceLineWidth;
@@ -194,6 +199,7 @@ DistanceMeasurementItem::Impl::Impl(DistanceMeasurementItem* self)
     isShortestDistanceFixOneSideMode = false;
     shortestDistanceFixedSide = 0;
     distance = 0.0;
+    hasValidDistance = false;
     markerColor << 1.0f, 0.0f, 0.0f; // Red;
     distanceLineWidth = 2;
     isDistanceLineOverlayEnabled = true;
@@ -432,6 +438,7 @@ void DistanceMeasurementItem::Impl::stopMeasurement()
             collisionDetector->clearGeometries();
         }
         isMeasurementActive = false;
+        hasValidDistance = false;
         updateDistanceMarker();
     }
 }
@@ -456,6 +463,12 @@ double DistanceMeasurementItem::distance() const
 SignalProxy<void(bool isValid)> DistanceMeasurementItem::sigDistanceUpdated()
 {
     return impl->sigDistanceUpdated;
+}
+
+
+bool DistanceMeasurementItem::hasValidDistance() const
+{
+    return impl->isMeasurementActive && impl->hasValidDistance;
 }
 
 
@@ -573,6 +586,8 @@ void DistanceMeasurementItem::Impl::calcShortestDistance()
     }
     threadPool->wait();
 
+    hasValidDistance = detected;
+
     if(detected){
         updateDistance(shortestDistance, p1s, p2s);
     }
@@ -600,6 +615,7 @@ void DistanceMeasurementItem::Impl::calcDistance()
         }
         double d = Vector3(p[1] - p[0]).norm();
         updateDistance(d, p[0], p[1]);
+        hasValidDistance = true;
         sigDistanceUpdated(true);
         self->notifyUpdate();
     }
@@ -967,20 +983,31 @@ void DistanceMeasurementItem::Impl::restoreItems(const Archive& archive)
 ViewportText::ViewportText()
     : SgViewportOverlay(findClassId<ViewportText>())
 {
-    displayValueFormat = DisplayValueFormat::instance();
-
-    if(displayValueFormat->isMillimeter()){
-        distanceDisplayFormat = format("{{0:.{0}f}}mm", displayValueFormat->lengthDecimals());
-    } else {
-        distanceDisplayFormat = format("{{0:.{0}f}}m", displayValueFormat->lengthDecimals());
-    }
-    
     textHeight = 20.0;
     distanceText = new SgText;
     distanceText->setTextHeight(textHeight);
     distanceTextTransform = new SgPosTransform;
     distanceTextTransform->addChild(distanceText);
     addChild(distanceTextTransform);
+
+    displayValueFormat = DisplayValueFormat::instance();
+    displayValueFormatConnection = 
+        displayValueFormat->sigFormatChanged().connect(
+            [this](){ updateDisplayValueFormat(true); });
+    updateDisplayValueFormat(false);
+}
+
+
+void ViewportText::updateDisplayValueFormat(bool doUpdateText)
+{
+    if(displayValueFormat->isMillimeter()){
+        distanceDisplayFormat = format("{{0:.{0}f}}mm", displayValueFormat->lengthDecimals());
+    } else {
+        distanceDisplayFormat = format("{{0:.{0}f}}m", displayValueFormat->lengthDecimals());
+    }
+    if(doUpdateText){
+        updateText();
+    }
 }
 
 
@@ -988,6 +1015,13 @@ void ViewportText::setMeasurementData(const Vector3& p1, const Vector3& p2, doub
 {
     this->p1 = p1;
     this->p2 = p2;
+    this->distance = distance;
+    updateText();
+}
+
+
+void ViewportText::updateText()
+{
     double d = displayValueFormat->toDisplayLength(distance);
     distanceText->setText(format(distanceDisplayFormat, d).c_str());
     distanceText->notifyUpdate();
