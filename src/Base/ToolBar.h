@@ -17,6 +17,7 @@ class Listing;
 class ExtensionManager;
 class ToolBarArea;
 class MainWindow;
+class ButtonGroup;
 
 class CNOID_EXPORT ToolBar : public QWidget
 {
@@ -40,7 +41,7 @@ public:
     ToolButton* addRadioButton(const QIcon& icon, int id = -1);
     ToolButton* addRadioButton(const char* const* xpm, int id = -1);
     void requestNewRadioGroup();
-    QButtonGroup* currentRadioGroup();
+    ButtonGroup* currentRadioGroup();
         
     void addAction(QAction* action, int id = -1);
     void addWidget(QWidget* widget, int id = -1);
@@ -106,7 +107,7 @@ private:
     QHBoxLayout* elementLayout;
     QWidget* handle;
     int insertionPosition;
-    QButtonGroup* radioGroup;
+    ButtonGroup* radioGroup;
     MainWindow* mainWindow;
     ToolBarArea* toolBarArea_;
 

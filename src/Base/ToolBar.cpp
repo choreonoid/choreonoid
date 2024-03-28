@@ -2,8 +2,8 @@
 #include "ToolBarArea.h"
 #include "MainWindow.h"
 #include "Separator.h"
+#include "ButtonGroup.h"
 #include "Archive.h"
-#include <QButtonGroup>
 #include <QStylePainter>
 #include <QStyleOptionToolBar>
 #include <QMouseEvent>
@@ -255,10 +255,10 @@ void ToolBar::requestNewRadioGroup()
 }
 
 
-QButtonGroup* ToolBar::currentRadioGroup()
+ButtonGroup* ToolBar::currentRadioGroup()
 {
     if(isNewRadioGroupRequested){
-        radioGroup = new QButtonGroup(this);
+        radioGroup = new ButtonGroup(this);
         isNewRadioGroupRequested = false;
     }
     return radioGroup;
