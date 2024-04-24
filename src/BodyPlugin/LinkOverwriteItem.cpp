@@ -565,6 +565,12 @@ SgPosTransform* LinkOverwriteItem::Impl::getShapeOffsetTransform(Link* link)
                 return transform;
             }
         }
+        auto collisionShape = link->collisionShape();
+        if(collisionShape->numChildren() == 1){
+            if(auto transform = dynamic_cast<SgPosTransform*>(collisionShape->child(0))){
+                return transform;
+            }
+        }
     }
     return nullptr;
 }
@@ -699,8 +705,23 @@ bool LinkOverwriteItem::Impl::store(Archive& archive)
             }
         }
         sceneWriter->setFilePathVariableProcessor(archive.filePathVariableProcessor());
-        if(auto sceneArchive = sceneWriter->writeScene(link->shape())){
-            archive.insert("shape", sceneArchive);
+
+        auto visualShape = link->visualShape();
+        auto collisionShape = link->collisionShape();
+        bool hasDedicatedCollisionShape = link->hasDedicatedCollisionShape();
+
+        if(!visualShape->empty()){
+            auto visualShapeArchive = sceneWriter->writeScene(visualShape);
+            if(!hasDedicatedCollisionShape){
+                archive.insert("shape", visualShapeArchive);
+            } else {
+                archive.insert("visual_shape", visualShapeArchive);
+            }
+        }
+        if(!collisionShape->empty() && hasDedicatedCollisionShape){
+            if(auto collisionShapeArchive = sceneWriter->writeScene(collisionShape)){
+                archive.insert("collision_shape", collisionShapeArchive);
+            }
         }
     }
     
@@ -810,6 +831,20 @@ bool LinkOverwriteItem::Impl::restore(const Archive& archive)
     if(shapeArchive->isValid()){
         if(auto shape = ensureSceneReader(archive)->readScene(shapeArchive)){
             link->addShapeNode(shape);
+            elementSet |= Shape;
+        }
+    }
+    auto visualShapeArchive = archive.find("visual_shape");
+    if(visualShapeArchive->isValid()){
+        if(auto visualShape = ensureSceneReader(archive)->readScene(visualShapeArchive)){
+            link->addVisualShapeNode(visualShape);
+            elementSet |= Shape;
+        }
+    }
+    auto collisionShapeArchive = archive.find("collision_shape");
+    if(collisionShapeArchive->isValid()){
+        if(auto collisionShape = ensureSceneReader(archive)->readScene(collisionShapeArchive)){
+            link->addCollisionShapeNode(collisionShape);
             elementSet |= Shape;
         }
     }
