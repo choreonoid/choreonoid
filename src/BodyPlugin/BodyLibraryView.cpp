@@ -768,16 +768,14 @@ bool BodyLibraryView::Impl::copyFile(const fs::path& srcPath, const fs::path& de
 bool BodyLibraryView::Impl::renameLibraryItem(LibraryItem* item, const string& newName)
 {
     bool failed = false;
+
     fs::path orgDirPath = getInternalItemDirPath(item);
-    fs::path newNamePath(fromUTF8(newName));
-    fs::path newDirPath = orgDirPath.parent_path() / newNamePath;
+    fs::path newDirPath;
 
     stdx::error_code ec;
-    if(!fs::is_directory(orgDirPath, ec)){
-        if(ec){
-            failed = true;
-        }
-    } else {
+    if(fs::is_directory(orgDirPath, ec)){
+        fs::path newNamePath(fromUTF8(newName));
+        newDirPath = orgDirPath.parent_path() / newNamePath;
         fs::rename(orgDirPath, newDirPath, ec);
         if(ec){
             failed = true;
@@ -786,8 +784,10 @@ bool BodyLibraryView::Impl::renameLibraryItem(LibraryItem* item, const string& n
 
     if(!failed){
         item->name = newName;
-        relocateItemFileInformationRecursively(item, newDirPath);
-        updateItemImagesRecursively(item);
+        if(!newDirPath.empty()){
+            relocateItemFileInformationRecursively(item, newDirPath);
+            updateItemImagesRecursively(item);
+        }
         saveIndexFile();
     }
 
