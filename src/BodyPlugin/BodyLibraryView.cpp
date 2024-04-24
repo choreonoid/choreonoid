@@ -268,39 +268,55 @@ void ExTreeWidget::dropEvent(QDropEvent* event)
 {
     if(auto data = dynamic_cast<const ExMimeData*>(event->mimeData())){
         QTreeWidgetItem* itemAtDrop = itemAt(event->pos());
-        if(auto libraryItem = dynamic_cast<LibraryItem*>(itemAtDrop)){
-            if(!libraryItem->isGroup){
-                itemAtDrop = libraryItem->parent();
-            }
-        }
-        if(!itemAtDrop){
-            itemAtDrop = invisibleRootItem();
-        }
-        bool duplicated = false;
-        string duplicatedName;
-        for(auto& item : data->libraryItems){
-            if(item->parent() != itemAtDrop){ // Drop to another group?
-                if(viewImpl->checkNameDuplication(itemAtDrop, item->name)){
-                    duplicatedName = item->name;
-                    duplicated = true;
-                    break;
+        DropIndicatorPosition dropIndicator = dropIndicatorPosition();
+        switch(dropIndicator){
+        case QAbstractItemView::OnItem:
+            if(auto libraryItem = dynamic_cast<LibraryItem*>(itemAtDrop)){
+                if(!libraryItem->isGroup){
+                    itemAtDrop = libraryItem->parent();
                 }
             }
-        }
-        if(duplicated){
-            showErrorDialog(
-                format(_("Drop was canceled because item \"{0}\" is duplicated in the drop position."),
-                       duplicatedName));
-            return; // Ignore the drop
+            break;
+        case QAbstractItemView::AboveItem:
+        case QAbstractItemView::BelowItem:
+            if(itemAtDrop){
+                itemAtDrop = itemAtDrop->parent();
+            }
+            break;
+        case QAbstractItemView::OnViewport:
+            if(!itemAtDrop){
+                itemAtDrop = invisibleRootItem();
+            }
+            break;
+        default:
+            break;
         }
 
-        viewImpl->libraryItemToOrgDirPathMap.clear();
-        for(auto& item : data->libraryItems){
-            viewImpl->libraryItemToOrgDirPathMap[item] = viewImpl->getInternalItemDirPath(item);
+        if(itemAtDrop){
+            bool duplicated = false;
+            string duplicatedName;
+            for(auto& item : data->libraryItems){
+                if(item->parent() != itemAtDrop){ // Drop to another group?
+                    if(viewImpl->checkNameDuplication(itemAtDrop, item->name)){
+                        duplicatedName = item->name;
+                        duplicated = true;
+                        break;
+                    }
+                }
+            }
+            if(duplicated){
+                showErrorDialog(
+                    format(_("Drop was canceled because item \"{0}\" is duplicated in the drop position."),
+                           duplicatedName));
+            } else {
+                viewImpl->libraryItemToOrgDirPathMap.clear();
+                for(auto& item : data->libraryItems){
+                    viewImpl->libraryItemToOrgDirPathMap[item] = viewImpl->getInternalItemDirPath(item);
+                }
+                TreeWidget::dropEvent(event);
+            }
         }
-        
     }
-    TreeWidget::dropEvent(event);
 }
 
 
