@@ -339,24 +339,38 @@ void ProgramViewDelegate::paint(QPainter* painter, const QStyleOptionViewItem& o
 {
     auto item = viewImpl->itemFromIndex(index);
     auto statement = item->statement();
-    
     int column = index.column();
     int span = item->delegate->impl->actualLabelSpan(statement, column);
+    
     if(span == 1){
         QStyledItemDelegate::paint(painter, option, index);
-    } else if(span > 1){
-        auto rect = viewImpl->visualRect(index);
-        for(int i=1; i < span; ++i){
-            auto rect2 = viewImpl->visualRect(viewImpl->indexFromItem(item, column + i));
-            rect = rect.united(rect2);
+
+    } else {
+#ifdef _WIN32
+        QStyledItemDelegate::paint(painter, option, index);
+#endif
+        if(span >= 2){
+            auto rect = viewImpl->visualRect(index);
+            for(int i=1; i < span; ++i){
+                auto rect2 = viewImpl->visualRect(viewImpl->indexFromItem(item, column + i));
+                rect = rect.united(rect2);
+            }
+            painter->save();
+
+#ifdef _WIN32
+            constexpr bool doHighlight = false;
+#else
+            constexpr bool doHighlight = true;
+#endif
+            if(doHighlight && (option.state & QStyle::State_Selected)){
+                painter->fillRect(rect, option.palette.highlight());
+                painter->setPen(option.palette.highlightedText().color());
+            } else {
+                painter->setPen(item->foreground(column).color());
+            }
+            painter->drawText(rect, 0, statement->label(column).c_str());
+            painter->restore();
         }
-        painter->save();
-        if(option.state & QStyle::State_Selected){
-            painter->fillRect(rect, option.palette.highlight());
-            painter->setPen(option.palette.highlightedText().color());
-        }
-        painter->drawText(rect, 0, statement->label(column).c_str());
-        painter->restore();
     }
 }
 
