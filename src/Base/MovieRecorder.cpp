@@ -1243,11 +1243,19 @@ void ViewMarker::setTargetView(View* view)
     ViewArea* viewArea = view->viewArea();
     setParent(viewArea);
 
-    QPoint p = view->viewAreaPos();
-    setGeometry(p.x(), p.y(), view->width(), view->height());
-
-    QRegion rect(view->rect());
-    setMask(rect.xored(QRegion(4, 4, view->width() - 8, view->height() - 8)));
+    QWidget* parent = view->parentWidget();
+    if(view->width() <= parent->width() && view->height() <= parent->height()){
+        QPoint p = view->viewAreaPos();
+        setGeometry(p.x(), p.y(), view->width(), view->height());
+        QRegion rect(view->rect());
+        setMask(rect.xored(QRegion(4, 4, view->width() - 8, view->height() - 8)));
+    } else {
+        QPoint p(0, 0);
+        p = parent->mapTo(viewArea, p);
+        setGeometry(p.x(), p.y(), parent->width(), parent->height());
+        QRegion rect(parent->rect());
+        setMask(rect.xored(QRegion(4, 4, parent->width() - 8, parent->height() - 8)));
+    }
 }
 
 
