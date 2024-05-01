@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-07 22:51+0900\n"
+"POT-Creation-Date: 2024-05-01 18:26+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1082,6 +1082,11 @@ msgstr "{0:7.3f} [秒]: {1}と{2}の干渉を検出"
 msgid "KinematicSimulatorItem"
 msgstr "運動学シミュレータアイテム"
 
+msgid ""
+"Body multiplexing is not supported by the kinematics simulator item with the current collision "
+"detector that does not support the geometry removal function."
+msgstr ""
+
 msgid "KinematicsBar"
 msgstr "運動学バー"
 
@@ -1214,6 +1219,21 @@ msgstr "リンク軌道"
 
 msgid "LinkGraphView"
 msgstr "リンクグラフビュー"
+
+msgid "Link Mass Summary"
+msgstr "リンク質量集約"
+
+msgid "LinkMassSummaryView"
+msgstr "リンク質量集約ビュー"
+
+msgid "Mass:"
+msgstr "質量："
+
+msgid "Center of mass:"
+msgstr "重心："
+
+msgid "Show 3D Marker"
+msgstr "3Dマーカの表示"
 
 msgid "LinkOffsetFrameListItem"
 msgstr "リンクオフセットフレームリストアイテム"
