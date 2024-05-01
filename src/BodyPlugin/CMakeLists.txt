@@ -60,6 +60,7 @@ set(sources
   LinkPositionView.cpp
   LinkPositionWidget.cpp
   LinkPropertyView.cpp
+  LinkMassSummaryView.cpp
   JointDisplacementWidgetSet.cpp
   MultiBodyJointDisplacementWidget.cpp
   JointDisplacementView.cpp

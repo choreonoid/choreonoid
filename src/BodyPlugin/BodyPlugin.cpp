@@ -41,6 +41,7 @@
 #include "LinkDeviceListView.h"
 #include "LinkPositionView.h"
 #include "LinkPropertyView.h"
+#include "LinkMassSummaryView.h"
 #include "JointDisplacementView.h"
 #include "JointStateView.h"
 #include "BodyStateView.h"
@@ -149,6 +150,7 @@ bool BodyPlugin::initialize()
     LinkDeviceListView::initializeClass(this);
     LinkPositionView::initializeClass(this);
     LinkPropertyView::initializeClass(this);
+    LinkMassSummaryView::initializeClass(this);
     JointDisplacementView::initializeClass(this);
     JointStateView::initializeClass(this);
     BodyStateView::initializeClass(this);
