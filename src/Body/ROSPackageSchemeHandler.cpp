@@ -22,13 +22,24 @@ class ROSPackageSchemeHandler
 public:
     ROSPackageSchemeHandler()
     {
-        const char* str = getenv("ROS_PACKAGE_PATH");
-        if(str){
+        const char* rpp = getenv("ROS_PACKAGE_PATH"); // for ROS 1
+        if(rpp){
             do {
-                const char* begin = str;
-                while(*str != ':' && *str) str++;
-                packagePaths.push_back(string(begin, str));
-            } while (0 != *str++);
+                const char* begin = rpp;
+                while(*rpp != ':' && *rpp) rpp++;
+                packagePaths.push_back(string(begin, rpp));
+            } while (0 != *rpp++);
+        }
+        
+        const char* app = getenv("AMENT_PREFIX_PATH"); // for ROS 2
+        if(app){
+            do {
+                const char* begin = app;
+                while(*app != ':' && *app) app++;
+                filesystem::path path(string(begin, app));
+                path /= "share";
+                packagePaths.push_back(path.string());
+            } while (0 != *app++);
         }
     }
 
