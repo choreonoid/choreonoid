@@ -125,7 +125,7 @@ public:
     void loadPlugins(bool doActivation);
     void scanPluginFiles(const std::string& pathString, bool isUTF8, bool isRecursive);
     void loadScannedPluginFiles(bool doActivation);
-    bool loadPlugin(int index);
+    bool loadPlugin(int index, bool isLoadingMultiplePlugins);
     bool activatePlugin(int index);
     bool unloadPlugin(int index);
     bool unloadPlugin(const std::string& name, bool doReloading);
@@ -371,14 +371,25 @@ void PluginManager::Impl::loadScannedPluginFiles(bool doActivation)
         int numNotLoaded = 0;
         for(size_t i=0; i < allPluginInfos.size(); ++i){
             if(allPluginInfos[i]->status == PluginManager::NOT_LOADED){
-                if(loadPlugin(i)){
+                if(loadPlugin(i, true)){
                     ++numLoaded;
                 } else {
                     ++numNotLoaded;
                 }
             }
         }
-        if(numLoaded == 0 || numNotLoaded == 0){
+        if(numLoaded == 0){
+            if(numNotLoaded > 0){
+                for(auto& plugin : allPluginInfos){
+                    if(plugin->status == PluginManager::NOT_LOADED){
+                        mout->putErrorln(format(_("Loading {0} failed.\n"), plugin->name));
+                        if(!plugin->lastErrorMessage.empty()){
+                            mout->putErrorln(plugin->lastErrorMessage);
+                        }
+                        plugin->status = PluginManager::INVALID;
+                    }
+                }
+            }
             break;
         }
     }
@@ -432,14 +443,14 @@ void PluginManager::Impl::loadScannedPluginFiles(bool doActivation)
 
 bool PluginManager::loadPlugin(int index)
 {
-    if(impl->loadPlugin(index)){
+    if(impl->loadPlugin(index, false)){
         return impl->activatePlugin(index);
     }
     return false;
 }
 
 
-bool PluginManager::Impl::loadPlugin(int index)
+bool PluginManager::Impl::loadPlugin(int index, bool isLoadingMultiplePlugins)
 {
     PluginInfoPtr& info = allPluginInfos[index];
     
@@ -468,9 +479,17 @@ bool PluginManager::Impl::loadPlugin(int index)
 
         if(!(info->dll.load())){
             info->lastErrorMessage = fmt::format(_("System error: {0}"), info->dll.errorString().toStdString());
-            mout->putErrorln(info->lastErrorMessage);
-            info->status = PluginManager::INVALID;
-
+            if(isLoadingMultiplePlugins){
+                /*
+                  A plugin without the RPATH information may not be loaded if it is loaded before
+                  the plugins it depends on are loaded. In such cases, loading the plugin again
+                  after the other plugins have been loaded may allow it to be loaded.
+                */
+                return false;
+            } else {
+                mout->putErrorln(info->lastErrorMessage);
+                info->status = PluginManager::INVALID;
+            }
         } else {
             QFunctionPointer symbol = info->dll.resolve("getChoreonoidPlugin");
             if(!symbol){
