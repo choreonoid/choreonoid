@@ -121,7 +121,7 @@ public:
     LazyCaller unloadPluginsLater;
     LazyCaller reloadPluginsLater;
 
-    void addPluginDirectory(const std::string& directory, bool doMakeAbsolute);
+    bool addPluginDirectory(const std::string& directory, bool doMakeAbsolute);
     void loadPlugins(bool doActivation);
     void scanPluginFiles(const std::string& pathString, bool isUTF8, bool isRecursive);
     void loadScannedPluginFiles(bool doActivation);
@@ -224,48 +224,47 @@ void PluginManager::addPluginPath(const std::string& pathList)
 }
 
 
-void PluginManager::addPluginDirectory(const std::string& directory)
+bool PluginManager::addPluginDirectory(const std::string& directory)
 {
-    impl->addPluginDirectory(directory, true);
+    return impl->addPluginDirectory(fromUTF8(directory), true);
 }
 
 
-void PluginManager::Impl::addPluginDirectory(const std::string& directory, bool doMakeAbsolute)
+bool PluginManager::Impl::addPluginDirectory(const std::string& nativeDirectory, bool doMakeAbsolute)
 {
-    string directoryFromUTF8;
-    if(doMakeAbsolute){
-        directoryFromUTF8 = fromUTF8(directory);
-        filesystem::path path(directoryFromUTF8);
-        if(!path.is_absolute()){
-            string absDirectory = filesystem::absolute(path).string();
-            pluginDirectories.insert(pluginDirectories.begin(), toUTF8(absDirectory));
-#ifdef Q_OS_WIN32
-            // Add the plugin directory to PATH
-            qputenv("PATH", format("{0};{1}", absDirectory, qgetenv("PATH")).c_str());
-#endif
-            return;
+    filesystem::path path(nativeDirectory);
+
+    if(!path.is_absolute()){
+        if(!doMakeAbsolute){
+            return false;
         }
+        path = filesystem::absolute(path);
+    }
+
+    stdx::error_code ec;
+    if(!filesystem::is_directory(path, ec)){
+        return false;
     }
     
-    pluginDirectories.insert(pluginDirectories.begin(), directory);
+    auto pathString = path.string();
+    pluginDirectories.insert(pluginDirectories.begin(), toUTF8(pathString));
     
 #ifdef Q_OS_WIN32
     // Add the plugin directory to PATH
-    if(directoryFromUTF8.empty()){
-        directoryFromUTF8 = fromUTF8(directory);
-    }
-    qputenv("PATH", format("{0};{1}", directoryFromUTF8, qgetenv("PATH")).c_str());
+    qputenv("PATH", format("{0};{1}", pathString, qgetenv("PATH")).c_str());
 #endif
+
+    return true;
 }
 
 
 /**
    @param directory the install prefix of the corresponding plugin module.
 */
-void PluginManager::addPluginDirectoryAsPrefix(const std::string& prefix)
+bool PluginManager::addPluginDirectoryAsPrefix(const std::string& prefix)
 {
-    addPluginDirectory(
-        toUTF8((filesystem::path(fromUTF8(prefix)) / CNOID_PLUGIN_SUBDIR).string()));
+    return impl->addPluginDirectory(
+        (filesystem::path(fromUTF8(prefix)) / CNOID_PLUGIN_SUBDIR).string(), false);
 }
 
 

@@ -20,8 +20,8 @@ public:
     [[deprecated("Use addPluginPathList")]]
     void addPluginPath(const std::string& pathList);
     
-    void addPluginDirectory(const std::string& directory);
-    void addPluginDirectoryAsPrefix(const std::string& prefix);
+    bool addPluginDirectory(const std::string& directory);
+    bool addPluginDirectoryAsPrefix(const std::string& prefix);
     const std::vector<std::string> pluginDirectories() const;
     bool isStartupLoadingDisabled() const;
     void doStartupLoading();
