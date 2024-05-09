@@ -67,6 +67,7 @@
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
 #include <cnoid/FilePathVariableProcessor>
+#include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <fmt/format.h>
 #include <Eigen/Core>
@@ -286,6 +287,19 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
 #endif
 
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+
+#ifdef Q_OS_WIN32
+    // Make a bundled Python available if it exists in the Choreonoid top directory.
+    std::smatch match;
+    for(auto& dir : filesystem::directory_iterator(executableTopDirPath())){
+        static std::regex re("^Python\\d+$");
+        string dirString = dir.path().filename().string();
+        if(regex_match(dirString, match, re)){
+            qputenv("PATH", fmt::format("{0};{1}", dir.path().string(), qgetenv("PATH")).c_str());
+            break;
+        }
+    }
+#endif
 }
 
 
