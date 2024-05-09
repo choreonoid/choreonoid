@@ -610,9 +610,12 @@ int App::Impl::exec()
     RootItem::instance()->clearChildren();
     
     pluginManager->finalizePlugins();
-    delete ext;
     delete mainWindow;
     mainWindow = nullptr;
+
+    // Note that the application must be terminated without deleting
+    // the base extension manager pointed by the 'ext' variable
+    // to avoid crashes due to destructors accessing invalid objects.
     
     return returnCode;
 }
