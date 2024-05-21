@@ -76,7 +76,7 @@ endif()
   #endif()
 #endif()
 
-include_directories(${AGX_INCLUDE_DIR})
+include_directories(${AGX_INCLUDE_DIR} ${AGX_INCLUDE_DIR}/external)
 link_directories(${AGX_LIBRARY_DIR})
 
 set(target CnoidAGXDynamicsPlugin)
