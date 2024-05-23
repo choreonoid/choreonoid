@@ -81,6 +81,7 @@ private:
     SpinBox* imageHeightSpin;
     CheckBox* mouseCursorCheck;
     ToggleButton* recordingToggle;
+    std::vector<QWidget*> configurationWidgets;
 };
 
 }

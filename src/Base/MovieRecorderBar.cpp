@@ -97,7 +97,9 @@ void MovieRecorderBar::onRecordingButtonToggled(bool on)
 {
     auto recorder = MovieRecorder::instance();
     if(on){
-        recorder->startRecording();
+        if(!recorder->startRecording()){
+            onRecordingStateChanged(false);
+        }
     } else {
         recorder->stopRecording();
     }

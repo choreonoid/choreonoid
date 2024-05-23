@@ -30,6 +30,8 @@ MovieRecorderDialog::MovieRecorderDialog()
     recorder_ = MovieRecorder::instance();
 
     setWindowTitle(_("Movie Recorder"));
+
+    configurationWidgets.reserve(18);
     
     auto vbox = new QVBoxLayout;
     setLayout(vbox);
@@ -38,12 +40,14 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox->addWidget(new QLabel(_("Target view")));
 
     targetViewCombo = new ComboBox(this);
+    configurationWidgets.push_back(targetViewCombo);
     widgetConnections.add(
         targetViewCombo->sigCurrentIndexChanged().connect(
             [this](int index){ onTargetViewComboIndexChanged(index); }));
     hbox->addWidget(targetViewCombo);
 
     viewMarkerCheck = new CheckBox(_("Show the marker"), this);
+    configurationWidgets.push_back(viewMarkerCheck);
     widgetConnections.add(
         viewMarkerCheck->sigToggled().connect(
             [this](bool on){
@@ -51,7 +55,6 @@ MovieRecorderDialog::MovieRecorderDialog()
                 recorder_->setViewMarkerVisible(on);
             }));
     hbox->addWidget(viewMarkerCheck);
-    
     hbox->addStretch();
     vbox->addLayout(hbox);
 
@@ -61,6 +64,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     modeRadioButtons.resize(MovieRecorder::NumRecordingModes);
     for(int i=0; i < MovieRecorder::NumRecordingModes; ++i){
         auto radio = new RadioButton(this);
+        configurationWidgets.push_back(radio);
         auto mode = static_cast<MovieRecorder::RecordingMode>(i);
         radio->setText(MovieRecorder::translatedRecordingModeLabel(mode));
         modeGroup->addButton(radio, i);
@@ -93,6 +97,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Format")));
     encoderCombo = new ComboBox(this);
+    configurationWidgets.push_back(encoderCombo);
     widgetConnections.add(
         encoderCombo->sigCurrentIndexChanged().connect(
             [this](int index){
@@ -107,6 +112,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Directory")));
     directoryEntry = new LineEdit(this);
+    configurationWidgets.push_back(directoryEntry);
     widgetConnections.add(
         directoryEntry->sigTextChanged().connect(
             [this](const QString& directory){
@@ -116,6 +122,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox->addWidget(directoryEntry);
 
     directoryButton = new PushButton;
+    configurationWidgets.push_back(directoryButton);
     QIcon folderIcon = QIcon::fromTheme("folder");
     if(folderIcon.isNull()){
         directoryButton->setText(_("Select"));
@@ -130,6 +137,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("File base name")));
     baseNameEntry = new LineEdit(this);
+    configurationWidgets.push_back(baseNameEntry);
     widgetConnections.add(
         baseNameEntry->sigTextChanged().connect(
             [this](const QString& baseName){
@@ -143,6 +151,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Frame rate")));
     fpsSpin = new DoubleSpinBox(this);
+    configurationWidgets.push_back(fpsSpin);
     fpsSpin->setDecimals(1);
     fpsSpin->setRange(1.0, 9999.9);
     fpsSpin->setSingleStep(0.1);
@@ -159,6 +168,7 @@ MovieRecorderDialog::MovieRecorderDialog()
 
     hbox = new QHBoxLayout;
     startingTimeCheck = new CheckBox(_("Start time"), this);
+    configurationWidgets.push_back(startingTimeCheck);
     widgetConnections.add(
         startingTimeCheck->sigToggled().connect(
             [this](bool on){
@@ -169,6 +179,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox->addWidget(startingTimeCheck);
 
     startingTimeSpin = new DoubleSpinBox(this);
+    configurationWidgets.push_back(startingTimeSpin);
     startingTimeSpin->setDecimals(2);
     startingTimeSpin->setRange(0.00, 9999.99);
     startingTimeSpin->setSingleStep(0.1);
@@ -183,6 +194,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox->addSpacing(4);
 
     finishingTimeCheck = new CheckBox(_("Finish time"), this);
+    configurationWidgets.push_back(finishingTimeCheck);
     widgetConnections.add(
         finishingTimeCheck->sigToggled().connect(
             [this](bool on){
@@ -193,6 +205,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox->addWidget(finishingTimeCheck);
 
     finishingTimeSpin = new DoubleSpinBox(this);
+    configurationWidgets.push_back(finishingTimeSpin);
     finishingTimeSpin->setDecimals(2);
     finishingTimeSpin->setRange(0.00, 9999.99);
     finishingTimeSpin->setSingleStep(0.1);
@@ -209,6 +222,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     
     hbox = new QHBoxLayout;
     imageSizeCheck = new CheckBox(_("Image size"), this);
+    configurationWidgets.push_back(imageSizeCheck);
     widgetConnections.add(
         imageSizeCheck->sigToggled().connect(
             [this](bool on){
@@ -220,6 +234,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox->addWidget(imageSizeCheck);
 
     imageWidthSpin = new SpinBox(this);
+    configurationWidgets.push_back(imageWidthSpin);
     imageWidthSpin->setRange(1, 9999);
     imageWidthSpin->setValue(640);
     widgetConnections.add(
@@ -233,6 +248,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox->addWidget(new QLabel("x"));
 
     imageHeightSpin = new SpinBox(this);
+    configurationWidgets.push_back(imageHeightSpin);
     imageHeightSpin->setRange(1, 9999);
     widgetConnections.add(
         imageHeightSpin->sigValueChanged().connect(
@@ -247,6 +263,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     if(MovieRecorder::isMouseCursorCaptureAvailable()){
         hbox = new QHBoxLayout;
         mouseCursorCheck = new CheckBox(_("Capture the mouse cursor"), this);
+        configurationWidgets.push_back(mouseCursorCheck);
         widgetConnections.add(
             mouseCursorCheck->sigToggled().connect(
                 [this](bool on){
@@ -268,8 +285,15 @@ MovieRecorderDialog::MovieRecorderDialog()
     auto buttonBox = new QDialogButtonBox(this);
     recordingToggle = new ToggleButton(_("&Record"), this);
     recordingToggle->setDefault(true);
-    recordingToggle->sigToggled().connect(
-        [this](bool on){ onRecordingButtonToggled(on); });
+
+    /**
+       Use QObject::connect function directly instead of sigToggled so that toggle off
+       to stop recording can be processed during QCoreApplication::processEvents
+       called inside the slot function.
+    */
+    QObject::connect(recordingToggle, &QPushButton::toggled,
+                     [this](bool on){ onRecordingButtonToggled(on); });
+
     buttonBox->addButton(recordingToggle, QDialogButtonBox::ActionRole);
     hbox->addWidget(buttonBox);
 
@@ -492,18 +516,23 @@ void MovieRecorderDialog::onRecordingStateChanged(bool on)
 {
     recordingToggle->blockSignals(true);
     recordingToggle->setChecked(on);
-
-    /*
-      In the offline mode, Qt events are processed by QCoreApplication:processEvents called in
-      the MoveRecorder::Impl::startOfflineModeRecording function. In this case, if the recording toggle
-      is toggled, the sigToggled signal is recursively emitted, and the corresponding slot is called
-      after the recording is finished. This means a user cannot stop the recording immediately by toggling
-      the recording toggle manually. To avoid confusion, the recording toggle button should be disabled
-      in this case.
-    */
-    recordingToggle->setDisabled(on && recorder_->recordingMode() == MovieRecorder::OfflineMode);
-    
     recordingToggle->blockSignals(false);
+
+    for(auto& widget : configurationWidgets){
+        widget->setEnabled(!on);
+    }
+    if(!on){
+        if(!startingTimeCheck->isChecked()){
+            startingTimeSpin->setEnabled(false);
+        }
+        if(!finishingTimeCheck->isChecked()){
+            finishingTimeSpin->setEnabled(false);
+        }
+        if(!imageSizeCheck->isChecked()){
+            imageWidthSpin->setEnabled(false);
+            imageHeightSpin->setEnabled(false);
+        }
+    }
 }
 
 
