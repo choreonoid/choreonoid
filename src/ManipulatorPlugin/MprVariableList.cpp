@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <functional>
+#include <algorithm>
 #include "gettext.h"
 
 using namespace std;
