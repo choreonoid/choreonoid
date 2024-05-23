@@ -1,5 +1,6 @@
 #include "CloneMap.h"
 #include "ClonableReferenced.h"
+#include <string>
 #include <unordered_map>
 #include <vector>
 #include <mutex>

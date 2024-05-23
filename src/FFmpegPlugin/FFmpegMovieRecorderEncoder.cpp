@@ -71,7 +71,7 @@ bool FFmpegMovieRecorderEncoder::doEncoding(std::string fileBasename)
 #else
     const char* encoderName = "libx264";
 #endif
-    AVCodec* codec = avcodec_find_encoder_by_name(encoderName);
+    const AVCodec* codec = avcodec_find_encoder_by_name(encoderName);
     if(!codec){
         setErrorMessage(format(_("Encoder \"{0}\" is not found."), encoderName));
         return false;
