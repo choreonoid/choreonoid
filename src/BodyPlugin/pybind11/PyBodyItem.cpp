@@ -1,7 +1,3 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "../BodyItem.h"
 #include <cnoid/BodyState>
 #include <cnoid/PyBase>
@@ -33,8 +29,6 @@ void exportBodyItem(py::module m)
         .def("calcForwardKinematics",
              &BodyItem::calcForwardKinematics,
              py::arg("calcVelocity") = false, py::arg("calcAcceleration") = false)
-        .def("copyKinematicState", &BodyItem::copyKinematicState)
-        .def("pasteKinematicState", &BodyItem::pasteKinematicState)
         .def("storeKinematicState", &BodyItem::storeKinematicState)
         .def("restoreKinematicState", &BodyItem::restoreKinematicState)
         .def("storeInitialState", &BodyItem::storeInitialState)

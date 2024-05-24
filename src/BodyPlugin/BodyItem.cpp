@@ -46,7 +46,11 @@ const bool TRACE_FUNCTIONS = false;
 
 vector<string> bodyFilesToLoad;
 
-BodyState kinematicStateCopy;
+class BodyStateEx : public BodyState
+{
+public:
+    Vector3 zmp;
+};
 
 class BodyLocation : public LocationProxy
 {
@@ -100,11 +104,11 @@ class KinematicStateRecord : public EditRecord
 public:
     BodyItemPtr bodyItem;
     BodyItem::Impl* bodyItemImpl;
-    BodyState newState;
-    BodyState oldState;
+    BodyStateEx newState;
+    BodyStateEx oldState;
     
     KinematicStateRecord(BodyItem::Impl* bodyItemImpl);
-    KinematicStateRecord(BodyItem::Impl* bodyItemImpl, const BodyState& oldState);
+    KinematicStateRecord(BodyItem::Impl* bodyItemImpl, const BodyStateEx& oldState);
     KinematicStateRecord(const KinematicStateRecord& org);
 
     virtual EditRecord* clone() const override;
@@ -158,8 +162,8 @@ public:
     unique_ptr<BodyItemKinematicsKitManager> kinematicsKitManager;
     shared_ptr<PinDragIK> pinDragIK;
 
-    BodyState initialState;
-    BodyState lastEditState;
+    BodyStateEx initialState;
+    BodyStateEx lastEditState;
 
     BodyPtr exchangedMultiplexBody;
             
@@ -185,6 +189,8 @@ public:
     void setBody(Body* body);
     void notifyModelUpdate(int flags);
     void setCurrentBaseLink(Link* link, bool forceUpdate, bool doNotify);
+    void storeKinematicStateEx(BodyStateEx& state);
+    void restoreKinematicStateEx(const BodyStateEx& state);
     bool makeRootFixed();
     bool makeRootFree();
     BodyItemKinematicsKitManager* getOrCreateKinematicsKitManager();
@@ -457,7 +463,7 @@ void BodyItem::onTreePathChanged()
 
 void BodyItem::onConnectedToRoot()
 {
-    storeKinematicState(impl->lastEditState);
+    impl->storeKinematicStateEx(impl->lastEditState);
 }    
 
 
@@ -625,48 +631,43 @@ void BodyItem::calcForwardKinematics(bool calcVelocity, bool calcAcceleration)
 }
 
 
-void BodyItem::copyKinematicState()
-{
-    storeKinematicState(kinematicStateCopy);
-}
-
-
-void BodyItem::pasteKinematicState()
-{
-    restoreKinematicState(kinematicStateCopy);
-    notifyKinematicStateChange(false);    
-}
-
-
 void BodyItem::storeKinematicState(BodyState& state)
 {
     state.storePositions(*impl->body);
-    state.setZMP(impl->zmp);
 }
 
 
-/**
-   @return false if the restored state is same as the current state
-*/
-bool BodyItem::restoreKinematicState(const BodyState& state)
+void BodyItem::Impl::storeKinematicStateEx(BodyStateEx& state)
 {
-    state.getZMP(impl->zmp);
+    state.storePositions(*body);
+    state.zmp = zmp;
+}
+
+
+void BodyItem::restoreKinematicState(const BodyState& state)
+{
     state.restorePositions(*impl->body);
-    return true;
+}
+
+
+void BodyItem::Impl::restoreKinematicStateEx(const BodyStateEx& state)
+{
+    state.restorePositions(*body);
+    zmp = state.zmp;
 }
 
 
 void BodyItem::storeInitialState()
 {
     Item::setConsistentWithProjectArchive(false);
-    storeKinematicState(impl->initialState);
+    impl->storeKinematicStateEx(impl->initialState);
 }
 
 
 void BodyItem::restoreInitialState(bool doNotify)
 {
-    bool restored = restoreKinematicState(impl->initialState);
-    if(restored && doNotify){
+    impl->restoreKinematicStateEx(impl->initialState);
+    if(doNotify){
         notifyKinematicStateUpdate();
     }
 }
@@ -1067,7 +1068,7 @@ void BodyItem::notifyKinematicStateUpdate(bool doNotifyStateChange)
 
     auto record = new KinematicStateRecord(impl, impl->lastEditState);
     UnifiedEditHistory::instance()->addRecord(record);
-    storeKinematicState(impl->lastEditState);
+    impl->storeKinematicStateEx(impl->lastEditState);
 }
 
 
@@ -1174,7 +1175,7 @@ void BodyItem::Impl::setLocationLocked(bool on, bool updateInitialPositionWhenLo
         isLocationLocked = on;
 
         if(on && updateInitialPositionWhenLocked){
-            initialState.setRootLinkPosition(body->rootLink()->T());
+            initialState.rootLinkPosition().set(body->rootLink()->T());
         }
         if(sceneBody){
             sceneBody->notifyUpdate();
@@ -1747,14 +1748,15 @@ bool BodyItem::Impl::store(Archive& archive)
     int n = body->numAllJoints();
     if(n > 0){
         bool doWriteInitialJointDisplacements = false;
-        BodyState::Data& initialJointDisplacements = initialState.data(BodyState::JOINT_POSITIONS);
+        auto initialJointDisplacements = initialState.jointDisplacements();
+        int numInitialJointDisplacements = initialState.numJointDisplacements();
         qs = archive.createFlowStyleListing("jointDisplacements");
         qs->setFloatingNumberFormat("%g");
         for(int i=0; i < n; ++i){
             double q = body->joint(i)->q();
             qs->append(degree(q), 10, n);
             if(!doWriteInitialJointDisplacements){
-                if(i < initialJointDisplacements.size() && q != initialJointDisplacements[i]){
+                if(i < numInitialJointDisplacements && q != initialJointDisplacements[i]){
                     doWriteInitialJointDisplacements = true;
                 }
             }
@@ -1762,35 +1764,17 @@ bool BodyItem::Impl::store(Archive& archive)
         if(doWriteInitialJointDisplacements){
             qs = archive.createFlowStyleListing("initialJointDisplacements");
             qs->setFloatingNumberFormat("%g");
-            for(size_t i=0; i < initialJointDisplacements.size(); ++i){
+            for(size_t i=0; i < numInitialJointDisplacements; ++i){
                 qs->append(degree(initialJointDisplacements[i]), 10, n);
             }
         }
     }
 
-    // Old format. Remove this after version 1.8 is released.
-    qs = archive.createFlowStyleListing("jointPositions");
-    qs->setFloatingNumberFormat("%g");
-    n = body->numAllJoints();
-    for(int i=0; i < n; ++i){
-        qs->append(body->joint(i)->q(), 10, n);
-    }
-
     //! \todo replace the following code with the ValueTree serialization function of BodyState
-    SE3 initialRootPosition;
-    if(initialState.getRootLinkPosition(initialRootPosition)){
+    if(initialState.hasLinkPositions()){
+        auto initialRootPosition = initialState.rootLinkPosition();
         write(archive, "initialRootPosition", initialRootPosition.translation());
         write(archive, "initialRootAttitude", Matrix3(initialRootPosition.rotation()));
-    }
-
-    // Old format. Remove this after version 1.8 is released.
-    BodyState::Data& initialJointPositions = initialState.data(BodyState::JOINT_POSITIONS);
-    if(!initialJointPositions.empty()){
-        qs = archive.createFlowStyleListing("initialJointPositions");
-        qs->setFloatingNumberFormat("%g");
-        for(size_t i=0; i < initialJointPositions.size(); ++i){
-            qs->append(initialJointPositions[i], 10, n);
-        }
     }
 
     archive.write("fix_root", body->isFixedRootModel());
@@ -1857,11 +1841,11 @@ bool BodyItem::Impl::restore(const Archive& archive)
     }
 
     //! \todo replace the following code with the ValueTree serialization function of BodyState
-    initialState.clear();
+    initialState.allocate(1, 0);
 
     read(archive, "initialRootPosition", p);
     read(archive, "initialRootAttitude", R);
-    initialState.setRootLinkPosition(SE3(p, R));
+    initialState.rootLinkPosition().set(SE3(p, R));
 
     restoreNonRootLinkStates(archive);
 
@@ -1955,8 +1939,8 @@ void BodyItem::Impl::restoreNonRootLinkStates(const Archive& archive)
     if(qs->isValid()){
         useNewJointDisplacementFormat = true;
         int nj = std::min(qs->size(), body->numAllJoints());
-        BodyState::Data& q_initial = initialState.data(BodyState::JOINT_POSITIONS);
-        q_initial.resize(nj);
+        initialState.allocate(1, nj);
+        auto q_initial = initialState.jointDisplacements();
         for(int i=0; i < nj; ++i){
             double q = radian((*qs)[i].toDouble());
             body->joint(i)->q() = q;
@@ -1986,7 +1970,6 @@ void BodyItem::Impl::restoreNonRootLinkStates(const Archive& archive)
         }
         qs = archive.findListing("initialJointPositions");
         if(qs->isValid()){
-            BodyState::Data& q = initialState.data(BodyState::JOINT_POSITIONS);
             int n = body->numAllJoints();
             int m = qs->size();
             if(m != n){
@@ -1997,12 +1980,13 @@ void BodyItem::Impl::restoreNonRootLinkStates(const Archive& archive)
                 }
                 m = std::min(m, n);
             }
-            q.resize(n);
-            for(int i=0; i < m; ++i){
-                q[i] = (*qs)[i].toDouble();
+            initialState.allocate(1, n);
+            auto q_initial = initialState.jointDisplacements();
+            for(int i = 0; i < m; ++i){
+                q_initial[i] = (*qs)[i].toDouble();
             }
-            for(int i=m; i < n; ++i){
-                q[i] = body->joint(i)->q();
+            for(int i = m; i < n; ++i){
+                q_initial[i] = body->joint(i)->q();
             }
         }
     }
@@ -2084,18 +2068,18 @@ KinematicStateRecord::KinematicStateRecord(BodyItem::Impl* bodyItemImpl)
       bodyItem(bodyItemImpl->self),
       bodyItemImpl(bodyItemImpl)
 {
-    bodyItem->storeKinematicState(newState);
+    bodyItemImpl->storeKinematicStateEx(newState);
     oldState = newState;
 }
 
 
-KinematicStateRecord::KinematicStateRecord(BodyItem::Impl* bodyItemImpl, const BodyState& oldState)
+KinematicStateRecord::KinematicStateRecord(BodyItem::Impl* bodyItemImpl, const BodyStateEx& oldState)
     : EditRecord(bodyItemImpl->self),
       bodyItem(bodyItemImpl->self),
       bodyItemImpl(bodyItemImpl),
       oldState(oldState)
 {
-    bodyItem->storeKinematicState(newState);
+    bodyItemImpl->storeKinematicStateEx(newState);
 }
 
 
@@ -2128,8 +2112,8 @@ std::string KinematicStateRecord::label() const
 
 bool KinematicStateRecord::undo()
 {
-    bodyItem->restoreKinematicState(oldState);
-    bodyItem->storeKinematicState(bodyItemImpl->lastEditState);
+    bodyItemImpl->restoreKinematicStateEx(oldState);
+    bodyItemImpl->storeKinematicStateEx(bodyItemImpl->lastEditState);
     bodyItemImpl->notifyKinematicStateChange(false, false, false, true);
     return true;
 }
@@ -2137,8 +2121,8 @@ bool KinematicStateRecord::undo()
 
 bool KinematicStateRecord::redo()
 {
-    bodyItem->restoreKinematicState(newState);
-    bodyItem->storeKinematicState(bodyItemImpl->lastEditState);
+    bodyItemImpl->restoreKinematicStateEx(newState);
+    bodyItemImpl->storeKinematicStateEx(bodyItemImpl->lastEditState);
     bodyItemImpl->notifyKinematicStateChange(false, false, false, true);
     return true;
 }

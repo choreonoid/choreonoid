@@ -59,10 +59,10 @@ set(sources
   BodyCollisionLinkFilter.cpp
   BodyCollisionDetector.cpp
   BodyCollisionDetectorUtil.cpp
-  BodyMotion.cpp
-  BodyPositionSeq.cpp
-  BodyMotionPoseProvider.cpp
   BodyState.cpp
+  BodyStateSeq.cpp
+  BodyMotion.cpp
+  BodyMotionPoseProvider.cpp
   ExtraBodyStateAccessor.cpp
   ZMPSeq.cpp
   ForwardDynamics.cpp
@@ -155,12 +155,12 @@ set(headers
   MassMatrix.h
   ConstraintForceSolver.h
   PoseProvider.h
+  BodyState.h
+  BodyStateSeq.h
   BodyMotion.h
-  BodyPositionSeq.h
   BodyMotionPoseProvider.h
   PoseProviderToBodyMotionConverter.h
   BodyMotionUtil.h
-  BodyState.h
   ExtraBodyStateAccessor.h
   CollisionLinkPair.h
   ControllerIO.h

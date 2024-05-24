@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "BodyState.h"
 #include "Body.h"
 #include "Link.h"
@@ -11,180 +6,117 @@ using namespace std;
 using namespace cnoid;
 
 
-BodyState::BodyState()
+void BodyStateBlock::storeStateOfBody(const Body* body)
 {
+    int numLinks = std::min(body->numLinks(), numLinkPositions());
+    if(numLinks > 0){
+        auto rootLink = body->rootLink();
+        if(auto parentLink = body->parentBodyLink()){
+            Isometry3 T_parent_inv = parentLink->T().inverse(Eigen::Isometry);
+            for(int i=0; i < numLinks; ++i){
+                linkPosition(i).set(T_parent_inv * body->link(i)->T());
+            }
+        } else {
+            for(int i=0; i < numLinks; ++i){
+                linkPosition(i).set(body->link(i)->T());
+            }
+        }
+    }
+    
+    int numJoints = std::min(body->numJoints(), numJointDisplacements());
+    auto displacements = jointDisplacements();
+    for(int i=0; i < numJoints; ++i){
+        displacements[i] = body->joint(i)->q();
+    }
+}
 
+
+bool BodyStateBlock::restoreStateToBody(Body* body) const
+{
+    int numJoints = std::min(body->numJoints(), numJointDisplacements());
+    auto displacements = jointDisplacements();
+    for(int i=0; i < numJoints; ++i){
+        body->joint(i)->q() = displacements[i];
+    }
+
+    int numLinks = std::min(body->numLinks(), numLinkPositions());
+    if(numLinks > 0){
+        if(auto parentLink = body->parentBodyLink()){
+            const Isometry3& T_parent = parentLink->T();
+            body->rootLink()->setPosition(T_parent * linkPosition(0).T());
+            body->calcForwardKinematics();
+            for(int i=1; i < numLinks; ++i){
+                body->link(i)->setPosition(T_parent * linkPosition(i).T());
+            }
+        } else {
+            body->rootLink()->setPosition(linkPosition(0).T());
+            body->calcForwardKinematics();
+            for(int i=1; i < numLinks; ++i){
+                body->link(i)->setPosition(linkPosition(i).T());
+            }
+        }
+    }
+
+    return (numLinks > 0) || (numJoints > 0);
+}
+
+
+BodyState::BodyState(const Body* body)
+{
+    storeStateOfBody(body);
 }
 
 
 BodyState::BodyState(const Body& body)
 {
-    storePositions(body);
+    storeStateOfBody(&body);
 }
 
 
-BodyState::BodyState(const BodyState& state)
-    : DataMap<double>(state)
+void BodyState::storeStateOfBody(const Body* body)
 {
-
-}
-    
-
-void BodyState::setRootLinkPosition(const Isometry3& T)
-{
-    Data& p = data(LINK_POSITIONS);
-    p.resize(7);
-    Eigen::Map<Vector3> pmap(&p[0]);
-    pmap = T.translation();
-    Eigen::Map<Quaternion> qmap(&p[3]);
-    qmap = T.linear();
+    allocate(body->numLinks(), body->numJoints());
+    BodyStateBlock::storeStateOfBody(body);
 }
 
 
-void BodyState::setRootLinkPosition(const SE3& position)
+BodyState& cnoid::operator<<(BodyState& state, const Body& body)
 {
-    Data& p = data(LINK_POSITIONS);
-    p.resize(7);
-    Eigen::Map<Vector3> pmap(&p[0]);
-    pmap = position.translation();
-    Eigen::Map<Quaternion> qmap(&p[3]);
-    qmap = position.rotation();
-}
-
-
-void BodyState::storePositions(const Body& body)
-{
-    Data& q = data(JOINT_POSITIONS);
-    const int n = body.numAllJoints();
-    q.resize(n);
-    for(int i=0; i < n; ++i){
-        q[i] = body.joint(i)->q();
-    }
-
-    auto rootLink = body.rootLink();
-    if(auto parentLink = body.parentBodyLink()){
-        setRootLinkPosition(parentLink->T().inverse(Eigen::Isometry) * rootLink->T());
-    } else {
-        setRootLinkPosition(rootLink->T());
-    }
-}
-
-
-void BodyState::setZMP(const Vector3& zmp)
-{
-    Data& zmpData = data(ZMP);
-    zmpData.resize(3);
-    Eigen::Map<Vector3> zmpMap(&zmpData[0]);
-    zmpMap = zmp;
-}
-
-
-bool BodyState::getRootLinkPosition(SE3& out_position) const
-{
-    const Data& p = data(LINK_POSITIONS);
-    if(p.size() >= 7){
-        out_position.translation() = Eigen::Map<const Vector3>(&p[0]);
-        out_position.rotation() = Eigen::Map<const Quaternion>(&p[3]);
-        return true;
-    }
-    return false;
-}
-
-
-bool BodyState::getRootLinkPosition(Isometry3& T) const
-{
-    const Data& p = data(LINK_POSITIONS);
-    if(p.size() >= 7){
-        T.translation() = Eigen::Map<const Vector3>(&p[0]);
-        T.linear() = Eigen::Map<const Quaternion>(&p[3]).toRotationMatrix();
-        return true;
-    }
-    return false;
-}
-
-
-bool BodyState::restorePositions(Body& io_body) const
-{
-    bool isComplete = true;
-    
-    const Data& q = data(JOINT_POSITIONS);
-
-    size_t n = io_body.numAllJoints();
-    if(q.size() < n){
-        n = q.size();
-        isComplete = false;
-    } 
-    for(size_t i=0; i < n; ++i){
-        io_body.joint(i)->q() = q[i];
-    }
-
-    const Data& p = data(LINK_POSITIONS);
-    if(p.size() < 7){
-        isComplete = false;
-    } else {
-        Isometry3 T0;
-        if(auto parentLink = io_body.parentBodyLink()){
-            T0 = parentLink->T();
-        } else {
-            T0.setIdentity();
-        }
-        Isometry3 T;
-        T.translation() = Eigen::Map<const Vector3>(&p[0]);
-        T.linear() = Eigen::Map<const Quaternion>(&p[3]).toRotationMatrix();
-        io_body.rootLink()->setPosition(T0 * T);
-
-        io_body.calcForwardKinematics();
-
-        if(p.size() > 7){
-            const int numRemainingLinks = (p.size() - 7) / 7;
-            for(int i = 1; i < numRemainingLinks + 1; ++i){
-                Link* link = io_body.link(i);
-                T.translation() = Eigen::Map<const Vector3>(&p[i*7]);
-                T.linear() = Eigen::Map<const Quaternion>(&p[i*7 + 3]).toRotationMatrix();
-                link->setPosition(T0 * T);
-            }
-        }
-    }
-
-    return isComplete;
-}
-
-
-bool BodyState::getZMP(Vector3& out_zmp) const
-{
-    const Data& zmp = data(ZMP);
-    if(zmp.size() == 3){
-        out_zmp = Eigen::Map<const Vector3>(&zmp[0]);
-        return true;
-    }
-    return false;
-}
-        
-
-namespace cnoid {
-
-BodyState& operator<<(BodyState& state, const Body& body)
-{
-    state.storePositions(body);
+    state.storeStateOfBody(&body);
     return state;
 }
 
-const BodyState& operator>>(const BodyState& state, Body& body)
+
+BodyState& cnoid::operator>>(BodyState& state, Body& body)
 {
-    state.restorePositions(body);
+    state.restoreStateToBody(&body);
     return state;
 }
 
-Body& operator<<(Body& body, const BodyState& state)
+
+const BodyState& cnoid::operator>>(const BodyState& state, Body& body)
 {
-    state.restorePositions(body);
+    state.restoreStateToBody(&body);
+    return state;
+}
+
+
+Body& cnoid::operator<<(Body& body, const BodyState& state)
+{
+    state.restoreStateToBody(&body);
     return body;
 }
 
-const Body& operator>>(const Body& body, BodyState& state)
+
+Body& cnoid::operator>>(Body& body, BodyState& state)
 {
-    state.storePositions(body);
+    state.storeStateOfBody(&body);
     return body;
 }
 
+
+const Body& cnoid::operator>>(const Body& body, BodyState& state)
+{
+    state.storeStateOfBody(&body);
+    return body;
 }

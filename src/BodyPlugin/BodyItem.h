@@ -79,11 +79,8 @@ public:
 
     void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false);
 
-    void copyKinematicState();
-    void pasteKinematicState();
-
     void storeKinematicState(BodyState& state);
-    bool restoreKinematicState(const BodyState& state);
+    void restoreKinematicState(const BodyState& state);
 
     void storeInitialState();
     void restoreInitialState(bool doNotify = true);
