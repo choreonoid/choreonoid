@@ -61,7 +61,7 @@ public:
                 os << motion.seqMessage() << endl;
                 return false;
             }
-            motion.updateJointPosSeqWithBodyPositionSeq();
+            motion.updateJointPosSeqWithBodyStateSeq();
             qseq = motion.jointPosSeq();
             if(qseq->numFrames() == 0){
                 os << "Empty motion data." << endl;

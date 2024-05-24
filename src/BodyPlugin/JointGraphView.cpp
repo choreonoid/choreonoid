@@ -22,7 +22,7 @@ JointGraphView::JointGraphView()
 }
 
 
-void JointGraphView::addTrajectory(ItemInfo& info, Link* link, std::shared_ptr<BodyPositionSeq> seq)
+void JointGraphView::addTrajectory(ItemInfo& info, Link* link, std::shared_ptr<BodyStateSeq> seq)
 {
     int id = link->jointId();
     if(id < 0 || id >= seq->numJointDisplacementsHint()){

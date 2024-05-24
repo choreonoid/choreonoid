@@ -248,7 +248,7 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
         } else {
             motion.setFrameRate(frameRate);
 
-            motion.updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
+            motion.updateBodyStateSeqWithLinkPosSeqAndJointPosSeq();
         }
     }
     
@@ -262,7 +262,7 @@ bool cnoid::loadHrpsysSeqFileSet(BodyMotion& motion, const std::string& filename
 
 bool cnoid::saveHrpsysSeqFileSet(BodyMotion& motion, Body* body, const std::string& filename, std::ostream& os)
 {
-    motion.updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
+    motion.updateLinkPosSeqAndJointPosSeqWithBodyStateSeq();
     
     stdx::filesystem::path orgpath(fromUTF8(filename));
 

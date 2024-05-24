@@ -186,9 +186,9 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
         [](BodyMotionItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
             menuManager.setPath("/").setPath(_("Data conversion"));
             menuManager.addItem(_("Generate old-format position data items"))->sigTriggered().connect(
-                [item](){ item->motion()->updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq(); });
+                [item](){ item->motion()->updateLinkPosSeqAndJointPosSeqWithBodyStateSeq(); });
             menuManager.addItem(_("Restore position data from old-format data items"))->sigTriggered().connect(
-                [item](){ item->motion()->updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq(); });
+                [item](){ item->motion()->updateBodyStateSeqWithLinkPosSeqAndJointPosSeq(); });
             menuManager.setPath("/");
             menuManager.addSeparator();
             menuFunction.dispatchAs<Item>(item);
@@ -427,10 +427,10 @@ void BodyMotionItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     AbstractSeqItem::doPutProperties(putProperty);
 
-    auto pseq = bodyMotion_->positionSeq();
+    auto sseq = bodyMotion_->stateSeq();
     
-    putProperty(_("Number of link positions"), pseq->numLinkPositionsHint());
-    putProperty(_("Number of joint displacements"), pseq->numJointDisplacementsHint());
+    putProperty(_("Number of link positions"), sseq->numLinkPositionsHint());
+    putProperty(_("Number of joint displacements"), sseq->numJointDisplacementsHint());
 
     putProperty(_("Body joint velocity update"), isBodyJointVelocityUpdateEnabled_,
                 changeProperty(isBodyJointVelocityUpdateEnabled_));

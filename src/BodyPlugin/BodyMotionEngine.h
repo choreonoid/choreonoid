@@ -4,7 +4,7 @@
 #include <cnoid/TimeSyncItemEngine>
 #include <cnoid/BodyItem>
 #include <cnoid/BodyMotionItem>
-#include <cnoid/BodyPositionSeq>
+#include <cnoid/BodyStateSeq>
 #include <cnoid/ConnectionSet>
 #include <memory>
 #include <vector>
@@ -19,14 +19,14 @@ class BodyMotionEngineCore
 public:
     BodyMotionEngineCore(BodyItem* bodyItem);
     BodyItem* bodyItem() { return bodyItemRef.lock(); }
-    void updateBodyPosition(const BodyPositionSeqFrame& frame);
+    void updateBodyPosition(const BodyState& state);
 
 private:
     weak_ref_ptr<BodyItem> bodyItemRef;
 
-    bool updateBodyPosition_(Body* body, const BodyPositionSeqFrame& frame);
-    bool updateSingleBodyPosition(Body* body, BodyPositionSeqFrameBlock frameBlock, bool isMainBody);
-    void updateBodyVelocity(Body* body, const BodyPositionSeqFrame& prevFrame, double timeStep);
+    bool updateBodyPosition_(Body* body, const BodyState& state);
+    bool updateSingleBodyPosition(Body* body, BodyStateBlock stateBlock, bool isMainBody);
+    void updateBodyVelocity(Body* body, const BodyState& prevState, double timeStep);
     friend class BodyMotionEngine;
 };
 
@@ -53,7 +53,7 @@ public:
 private:
     BodyMotionEngineCore core;
     BodyMotionItem* motionItem_;
-    std::shared_ptr<BodyPositionSeq> positionSeq;
+    std::shared_ptr<BodyStateSeq> stateSeq;
     std::vector<TimeSyncItemEnginePtr> extraSeqEngines;
     ScopedConnectionSet connections;
 

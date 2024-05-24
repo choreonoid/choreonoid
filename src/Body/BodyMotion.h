@@ -1,7 +1,7 @@
 #ifndef CNOID_BODY_BODY_MOTION_H
 #define CNOID_BODY_BODY_MOTION_H
 
-#include <cnoid/BodyPositionSeq>
+#include <cnoid/BodyStateSeq>
 #include <cnoid/MultiValueSeq>
 #include <cnoid/MultiSE3Seq>
 #include <cnoid/Signal>
@@ -23,46 +23,68 @@ public:
     BodyMotion& operator=(const BodyMotion& rhs);
     virtual std::shared_ptr<AbstractSeq> cloneSeq() const override;
 
-    double frameRate() const { return positionSeq_->frameRate(); }
+    double frameRate() const { return stateSeq_->frameRate(); }
     virtual double getFrameRate() const override;
     virtual void setFrameRate(double frameRate) override;
 
-    double timeStep() const { return positionSeq_->timeStep(); }
+    double timeStep() const { return stateSeq_->timeStep(); }
 
-    double offsetTime() const { return positionSeq_->offsetTime(); }
+    double offsetTime() const { return stateSeq_->offsetTime(); }
     virtual double getOffsetTime() const override;
     virtual void setOffsetTime(double time) override;
 
-    int numFrames() const { return positionSeq_->numFrames(); }
+    int numFrames() const { return stateSeq_->numFrames(); }
     virtual int getNumFrames() const override;
     virtual void setNumFrames(int n, bool fillNewElements = false) override;
 
-    std::shared_ptr<BodyPositionSeq> positionSeq() { return positionSeq_; }
-    std::shared_ptr<const BodyPositionSeq> positionSeq() const { return positionSeq_; }
+    std::shared_ptr<BodyStateSeq> stateSeq() { return stateSeq_; }
+    std::shared_ptr<const BodyStateSeq> stateSeq() const { return stateSeq_; }
+
+    [[deprecated("Use stateseq.")]]
+    std::shared_ptr<BodyStateSeq> positionSeq() { return stateSeq_; }
+    [[deprecated("Use stateseq.")]]
+    std::shared_ptr<const BodyStateSeq> positionSeq() const { return stateSeq_; }
 
     void setDimension(int numFrames, int numJoints, int numLinks, bool fillNewElements = false);
     void setNumJoints(int numJoints, bool fillNewElements = false);
-    int numLinks() const { return positionSeq_->numLinkPositionsHint(); }
-    int numJoints() const { return positionSeq_->numJointDisplacementsHint(); }
+    int numLinks() const { return stateSeq_->numLinkPositionsHint(); }
+    int numJoints() const { return stateSeq_->numJointDisplacementsHint(); }
 
-    //[[deprecated("Use positionSeq.")]]
+    //[[deprecated("Use stateSeq.")]]
     std::shared_ptr<MultiSE3Seq> linkPosSeq();
-    //[[deprecated("Use positionSeq.")]]
+    //[[deprecated("Use stateSeq.")]]
     std::shared_ptr<const MultiSE3Seq> linkPosSeq() const;
-    //[[deprecated("Use positionSeq.")]]
+    //[[deprecated("Use stateSeq.")]]
     std::shared_ptr<MultiValueSeq> jointPosSeq();
-    //[[deprecated("Use positionSeq.")]]
+    //[[deprecated("Use stateSeq.")]]
     std::shared_ptr<const MultiValueSeq> jointPosSeq() const;
 
     /*
       The linkPosSeq and jointPosSeq data members were replaced with a new data format,
-      the positionSeq member. The codes that use the old members should be modified to
+      the stateSeq member. The codes that use the old members should be modified to
       use the new member, or you can convert the data by inserting the following functions.
     */
-    void updateLinkPosSeqWithBodyPositionSeq();
-    void updateJointPosSeqWithBodyPositionSeq();
-    void updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
-    void updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
+    void updateLinkPosSeqWithBodyStateSeq();
+    void updateJointPosSeqWithBodyStateSeq();
+    void updateLinkPosSeqAndJointPosSeqWithBodyStateSeq();
+    void updateBodyStateSeqWithLinkPosSeqAndJointPosSeq();
+
+    [[deprecated("Use updateLinkPosSeqWithBodyStateSeq.")]]
+    void updateLinkPosSeqWithBodyPositionSeq() {
+        updateLinkPosSeqWithBodyStateSeq();
+    }
+    [[deprecated("Use updateJointPosSeqWithBodyStateSeq.")]]
+    void updateJointPosSeqWithBodyPositionSeq() {
+        updateJointPosSeqWithBodyStateSeq();
+    }
+    [[deprecated("Use updateLinkPosSeqAndJointPosSeqWithBodyStateSeq.")]]
+    void updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq() {
+        updateLinkPosSeqAndJointPosSeqWithBodyStateSeq();
+    }
+    [[deprecated("Use updateBodyStateSeqWithLinkPosSeqAndJointPosSeq.")]]
+    void updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq() {
+        updateBodyStateSeqWithLinkPosSeqAndJointPosSeq();
+    }
 
     static const std::string& linkPositionContentName();
     [[deprecated("Use linkPosSeqContentName")]]
@@ -180,7 +202,7 @@ private:
     std::shared_ptr<MultiSE3Seq> getOrCreateLinkPosSeq();
     std::shared_ptr<MultiValueSeq> getOrCreateJointPosSeq();
     
-    std::shared_ptr<BodyPositionSeq> positionSeq_;
+    std::shared_ptr<BodyStateSeq> stateSeq_;
     ExtraSeqMap extraSeqs;
     Signal<void()> sigExtraSeqsChanged_;
 };

@@ -51,7 +51,7 @@ void LinkGraphView::setupElementToggleSet
 }
 
 
-void LinkGraphView::addTrajectory(ItemInfo& info, Link* link, std::shared_ptr<BodyPositionSeq> seq)
+void LinkGraphView::addTrajectory(ItemInfo& info, Link* link, std::shared_ptr<BodyStateSeq> seq)
 {
     if(link->index() >= seq->numLinkPositionsHint()){
         return;

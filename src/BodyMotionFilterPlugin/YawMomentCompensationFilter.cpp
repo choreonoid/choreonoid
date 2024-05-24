@@ -37,7 +37,7 @@ public:
     BodyPtr body;
     LeggedBodyHelperPtr leggedBody;
     BodyMotion* bodyMotion;
-    shared_ptr<BodyPositionSeq> positionSeq;
+    shared_ptr<BodyStateSeq> stateSeq;
     shared_ptr<ZMPSeq> zmpSeq;
     Vector3 zmp;
     Vector3 cop;
@@ -466,16 +466,16 @@ bool YawMomentCompensationFilter::Impl::setBodyMotion(BodyMotion* bodyMotion)
         return false;
     }
 
-    positionSeq = bodyMotion->positionSeq();
+    stateSeq = bodyMotion->stateSeq();
 
-    if(positionSeq->numLinkPositionsHint() != 1){
+    if(stateSeq->numLinkPositionsHint() != 1){
         mout->putErrorln(
             format(_("The input motion data must contain only the position sequence of the root link as "
                      "link position sequences, but it contain position sequenss for {0} links."),
-                   positionSeq->numLinkPositionsHint()));
+                   stateSeq->numLinkPositionsHint()));
         return false;
     }
-    if(positionSeq->numJointDisplacementsHint() != body->numJoints()){
+    if(stateSeq->numJointDisplacementsHint() != body->numJoints()){
         mout->putErrorln(
             _("The number of joint displacement sequences does not match "
               "the number of joints in the target body."));
@@ -490,7 +490,7 @@ bool YawMomentCompensationFilter::Impl::setBodyMotion(BodyMotion* bodyMotion)
     }
 
     currentFrameIndex = 0;
-    *body << positionSeq->frame(currentFrameIndex);
+    *body << stateSeq->frame(currentFrameIndex);
     body->calcForwardKinematics();
 
     for(int i=0; i < N; i++){
@@ -545,7 +545,7 @@ void YawMomentCompensationFilter::Impl::compensateMoment()
     calcCoefficientsOfDynamicEquation();
     calcMaxYawFrictionMoment();
     
-    auto& currentFrame = positionSeq->frame(currentFrameIndex);
+    auto& currentFrame = stateSeq->frame(currentFrameIndex);
 
     for(int i=0; i < N; i++){
         theta_in[i] = currentFrame.jointDisplacement(jointWeights[i].jointId);
@@ -762,8 +762,8 @@ void YawMomentCompensationFilter::Impl::updateCop()
 // Assume that the body has the previous (filtered) joint angles.
 void YawMomentCompensationFilter::Impl::calcCoefficientsOfDynamicEquation()
 {
-    auto& currentFrame = positionSeq->frame(currentFrameIndex);
-    auto& prevFrame = positionSeq->frame(currentFrameIndex == 0 ? 0 : currentFrameIndex - 1);
+    auto& currentFrame = stateSeq->frame(currentFrameIndex);
+    auto& prevFrame = stateSeq->frame(currentFrameIndex == 0 ? 0 : currentFrameIndex - 1);
 
     for(int i=0; i < N; ++i){
         for(int j=0; j < numJoints; ++j){
@@ -1005,9 +1005,9 @@ const char* YawMomentCompensationFilter::Impl::lastQpErrorMessage()
 void YawMomentCompensationFilter::Impl::adjustOpposingAdjustmentJointTrajectory()
 {
     auto joint = body->joint(opposingAdjustmentJointId);
-    int numFrames = positionSeq->numFrames();
+    int numFrames = stateSeq->numFrames();
     for(int i=0; i < numFrames; ++i){
-        auto& currentFrame = positionSeq->frame(i);
+        auto& currentFrame = stateSeq->frame(i);
         auto& q = currentFrame.jointDisplacement(opposingAdjustmentJointId);
         auto q_adjusted = q - opposingAdjustmentReferenceJointDiffSeq[i];
         if((q_adjusted <= joint->q_upper() || q_adjusted <= q) &&

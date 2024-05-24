@@ -857,9 +857,9 @@ bool WaistBalancer::applyCmTranslations(BodyMotion& motion, bool putAllLinkPosit
     bool completed = true;
     const int numLinkPositions = (putAllLinkPositions ? body_->numLinks() : 1);
     const int numJoints = body_->numJoints();
-    auto pseq = motion.positionSeq();
-    pseq->setNumLinkPositionsHint(numLinkPositions);
-    pseq->setNumJointDisplacementsHint(numJoints);
+    auto sseq = motion.stateSeq();
+    sseq->setNumLinkPositionsHint(numLinkPositions);
+    sseq->setNumJointDisplacementsHint(numJoints);
     motion.setNumFrames(endingFrame + 1, true);
     auto zmpseq = getOrCreateZMPSeq(motion);
     zmpseq->setRootRelative(false);
@@ -870,7 +870,7 @@ bool WaistBalancer::applyCmTranslations(BodyMotion& motion, bool putAllLinkPosit
 
         completed &= updateBodyKinematics1(frameIndex); 
 
-        auto& frame = pseq->allocateFrame(frameIndex);
+        auto& frame = sseq->allocateFrame(frameIndex);
         for(int i=0; i < numLinkPositions; ++i){
             Link* link = body_->link(i);
             frame.linkPosition(i).set(link->T());

@@ -13,7 +13,7 @@ public:
     JointGraphView();
 
 protected:
-    virtual void addTrajectory(ItemInfo& info, Link* link, std::shared_ptr<BodyPositionSeq> seq) override;
+    virtual void addTrajectory(ItemInfo& info, Link* link, std::shared_ptr<BodyStateSeq> seq) override;
 
 private:
     void onDataRequest(ItemInfo& info, int jointId, int frameIndex0, int size, double* out_values);

@@ -25,7 +25,7 @@ BodyMotionPoseProvider::BodyMotionPoseProvider()
 bool BodyMotionPoseProvider::setMotion(Body* body__, std::shared_ptr<BodyMotion> motion)
 {
     body_ = body__->clone();
-    positionSeq = motion->positionSeq();
+    stateSeq = motion->stateSeq();
 
     footLinks.clear();
     ikPaths.clear();
@@ -56,7 +56,7 @@ bool BodyMotionPoseProvider::setMotion(Body* body__, std::shared_ptr<BodyMotion>
 
 bool BodyMotionPoseProvider::updateMotion()
 {
-    int numLinkPositions = std::min(body_->numLinks(), positionSeq->numLinkPositionsHint());
+    int numLinkPositions = std::min(body_->numLinks(), stateSeq->numLinkPositionsHint());
     if(numLinkPositions < 1){
         isReady = false;
         return false;
@@ -68,16 +68,16 @@ bool BodyMotionPoseProvider::updateMotion()
             break;
         }
     }
-    const int numFrames = positionSeq->numFrames();
+    const int numFrames = stateSeq->numFrames();
     footLinkPositions.setDimension(numFrames, footLinks.size());
-    footLinkPositions.setFrameRate(positionSeq->frameRate());
+    footLinkPositions.setFrameRate(stateSeq->frameRate());
 
-    numJointDisplacements = std::min(body_->numJoints(), positionSeq->numJointDisplacementsHint());
+    numJointDisplacements = std::min(body_->numJoints(), stateSeq->numJointDisplacementsHint());
     qTranslated.resize(numJointDisplacements);
     
     if(!doForwardKinematics){
         for(int frameIndex = 0; frameIndex < numFrames; ++frameIndex){
-            auto& frame = positionSeq->frame(frameIndex);
+            auto& frame = stateSeq->frame(frameIndex);
             for(size_t i=0; i < footLinks.size(); ++i){
                 auto footLink = footLinks[i];
                 Isometry3& T_foot = footLinkPositions(frameIndex, i);
@@ -89,7 +89,7 @@ bool BodyMotionPoseProvider::updateMotion()
     } else {
         auto rootLink = body_->rootLink();
         for(int frameIndex = 0; frameIndex < numFrames; ++frameIndex){
-            auto& frame = positionSeq->frame(frameIndex);
+            auto& frame = stateSeq->frame(frameIndex);
             auto position = frame.linkPosition(0);
             rootLink->setTranslation(position.translation());
             rootLink->setRotation(position.rotation());
@@ -129,7 +129,7 @@ double BodyMotionPoseProvider::beginningTime() const
 double BodyMotionPoseProvider::endingTime() const
 {
     if(isReady){
-        return (positionSeq->numFrames() - 1) / positionSeq->frameRate();
+        return (stateSeq->numFrames() - 1) / stateSeq->frameRate();
     }
     return 0.0;
 }
@@ -142,12 +142,12 @@ bool BodyMotionPoseProvider::seek
         return false;
     }
     
-    int frameIndex = lround(time * positionSeq->frameRate());
-    if(frameIndex >= positionSeq->numFrames()){
-        frameIndex = positionSeq->numFrames() - 1;
+    int frameIndex = lround(time * stateSeq->frameRate());
+    if(frameIndex >= stateSeq->numFrames()){
+        frameIndex = stateSeq->numFrames() - 1;
     }
 
-    auto& frame = positionSeq->frame(frameIndex);
+    auto& frame = stateSeq->frame(frameIndex);
     auto displacements = frame.jointDisplacements();
     for(int i=0; i < numJointDisplacements; ++i){
         qTranslated[i] = displacements[i];

@@ -44,9 +44,9 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
     const int numJoints = body->numJoints();
     const int numLinkPositions = (allLinkPositionOutputMode ? body->numLinks() : 1);
 
-    auto pseq = motion.positionSeq();
-    pseq->setNumLinkPositionsHint(numLinkPositions);
-    pseq->setNumJointDisplacementsHint(numJoints);
+    auto sseq = motion.stateSeq();
+    sseq->setNumLinkPositionsHint(numLinkPositions);
+    sseq->setNumJointDisplacementsHint(numJoints);
     motion.setNumFrames(endingFrame + 1, true);
 
     ZMPSeq& zmpSeq = *getOrCreateZMPSeq(motion);
@@ -89,7 +89,7 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
             provider->getBaseLinkPosition(baseLink->T());
         }
 
-        auto& frame = pseq->allocateFrame(frameIndex);
+        auto& frame = sseq->allocateFrame(frameIndex);
 
         provider->getJointDisplacements(srcJointDisplacements);
         auto displacements = frame.jointDisplacements();

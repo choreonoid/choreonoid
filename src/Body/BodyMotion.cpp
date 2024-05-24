@@ -41,7 +41,7 @@ const std::string& BodyMotion::jointEffortContentName()
 
 BodyMotion::BodyMotion()
     : AbstractSeq("CompositeSeq"),
-      positionSeq_(new BodyPositionSeq)
+      stateSeq_(new BodyStateSeq)
 {
     setSeqContentName("BodyMotion");
 }
@@ -49,7 +49,7 @@ BodyMotion::BodyMotion()
 
 BodyMotion::BodyMotion(const BodyMotion& org)
     : AbstractSeq(org),
-      positionSeq_(new BodyPositionSeq(*org.positionSeq_))
+      stateSeq_(new BodyStateSeq(*org.stateSeq_))
 {
     for(auto& kv : org.extraSeqs){
         extraSeqs.insert(ExtraSeqMap::value_type(kv.first, kv.second->cloneSeq()));
@@ -63,7 +63,7 @@ BodyMotion& BodyMotion::operator=(const BodyMotion& rhs)
         AbstractSeq::operator=(rhs);
     }
 
-    *positionSeq_ = *rhs.positionSeq_;
+    *stateSeq_ = *rhs.stateSeq_;
 
     extraSeqs.clear();
     for(auto& kv : rhs.extraSeqs){
@@ -89,7 +89,7 @@ double BodyMotion::getFrameRate() const
 
 void BodyMotion::setFrameRate(double frameRate)
 {
-    positionSeq_->setFrameRate(frameRate);
+    stateSeq_->setFrameRate(frameRate);
 
     for(auto& kv : extraSeqs){
         kv.second->setFrameRate(frameRate);
@@ -105,7 +105,7 @@ int BodyMotion::getNumFrames() const
 
 void BodyMotion::setNumFrames(int n, bool fillNewElements)
 {
-    positionSeq_->setNumFrames(n);
+    stateSeq_->setNumFrames(n);
 
     for(auto& kv : extraSeqs){
         kv.second->setNumFrames(n, fillNewElements);
@@ -115,13 +115,13 @@ void BodyMotion::setNumFrames(int n, bool fillNewElements)
 
 double BodyMotion::getOffsetTime() const
 {
-    return positionSeq_->offsetTime();
+    return stateSeq_->offsetTime();
 }
 
 
 void BodyMotion::setOffsetTime(double time)
 {
-    positionSeq_->setOffsetTime(time);
+    stateSeq_->setOffsetTime(time);
 
     for(auto& kv : extraSeqs){
         kv.second->setOffsetTime(time);
@@ -134,7 +134,7 @@ std::shared_ptr<MultiSE3Seq> BodyMotion::getOrCreateLinkPosSeq()
     return getOrCreateExtraSeq<MultiSE3Seq>(
         linkPositionContentName_,
         [this](MultiSE3Seq& seq){
-            seq.setNumParts(positionSeq_->numLinkPositionsHint());
+            seq.setNumParts(stateSeq_->numLinkPositionsHint());
         });
 }
 
@@ -144,16 +144,16 @@ std::shared_ptr<MultiValueSeq> BodyMotion::getOrCreateJointPosSeq()
     return getOrCreateExtraSeq<MultiValueSeq>(
         jointDisplacementContentName_,
         [this](MultiValueSeq& seq){
-            seq.setNumParts(positionSeq_->numJointDisplacementsHint());
+            seq.setNumParts(stateSeq_->numJointDisplacementsHint());
         });
 }
 
 
 void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool fillNewElements)
 {
-    positionSeq_->setNumFrames(numFrames);
-    positionSeq_->setNumJointDisplacementsHint(numJoints);
-    positionSeq_->setNumLinkPositionsHint(numLinks);
+    stateSeq_->setNumFrames(numFrames);
+    stateSeq_->setNumJointDisplacementsHint(numJoints);
+    stateSeq_->setNumLinkPositionsHint(numLinks);
 
     for(auto& kv : extraSeqs){
         auto& seq = kv.second;
@@ -176,7 +176,7 @@ void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool f
 
 void BodyMotion::setNumJoints(int numJoints, bool fillNewElements)
 {
-    positionSeq_->setNumJointDisplacementsHint(numJoints);
+    stateSeq_->setNumJointDisplacementsHint(numJoints);
     if(auto seq = extraSeq<MultiValueSeq>(jointDisplacementContentName_)){
         seq->setNumParts(numJoints, fillNewElements);
     }
@@ -207,15 +207,15 @@ std::shared_ptr<const MultiValueSeq> BodyMotion::jointPosSeq() const
 }
 
 
-void BodyMotion::updateLinkPosSeqWithBodyPositionSeq()
+void BodyMotion::updateLinkPosSeqWithBodyStateSeq()
 {
     auto lseq = getOrCreateLinkPosSeq();
     const int n = numFrames();
-    const int numLinks = positionSeq_->numLinkPositionsHint();
+    const int numLinks = stateSeq_->numLinkPositionsHint();
     lseq->setDimension(n, numLinks);
     if(n > 0 && numLinks > 0){
         for(int i=0; i < n; ++i){
-            auto& pframe = positionSeq_->frame(i);
+            auto& pframe = stateSeq_->frame(i);
             auto lframe = lseq->frame(i);
             int linkIndex = 0;
             int m = std::min(numLinks, pframe.numLinkPositions());
@@ -232,16 +232,16 @@ void BodyMotion::updateLinkPosSeqWithBodyPositionSeq()
 }
 
 
-void BodyMotion::updateJointPosSeqWithBodyPositionSeq()
+void BodyMotion::updateJointPosSeqWithBodyStateSeq()
 {
     auto jseq = getOrCreateJointPosSeq();
     const int n = numFrames();
-    const int numJoints = positionSeq_->numJointDisplacementsHint();
+    const int numJoints = stateSeq_->numJointDisplacementsHint();
     jseq->setDimension(n, numJoints);
     if(n > 0 && numJoints > 0){
         const int n = numFrames();
         for(int i=0; i < n; ++i){
-            auto& pframe = positionSeq_->frame(i);
+            auto& pframe = stateSeq_->frame(i);
             int jointIndex = 0;
             auto jframe = jseq->frame(i);
             auto displacements = pframe.jointDisplacements();
@@ -258,14 +258,14 @@ void BodyMotion::updateJointPosSeqWithBodyPositionSeq()
 }
 
 
-void BodyMotion::updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq()
+void BodyMotion::updateLinkPosSeqAndJointPosSeqWithBodyStateSeq()
 {
-    updateLinkPosSeqWithBodyPositionSeq();
-    updateJointPosSeqWithBodyPositionSeq();
+    updateLinkPosSeqWithBodyStateSeq();
+    updateJointPosSeqWithBodyStateSeq();
 }
 
 
-void BodyMotion::updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq()
+void BodyMotion::updateBodyStateSeqWithLinkPosSeqAndJointPosSeq()
 {
     shared_ptr<AbstractSeq> srcSeq;
 
@@ -286,14 +286,14 @@ void BodyMotion::updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq()
     }
 
     int numSrcFrames = srcSeq->getNumFrames();
-    positionSeq_->setNumLinkPositionsHint(numLinkPosSeqParts);
-    positionSeq_->setNumJointDisplacementsHint(numJointPosSeqParts);
-    positionSeq_->setNumFrames(numSrcFrames);
-    positionSeq_->setFrameRate(srcSeq->getFrameRate());
-    positionSeq_->setOffsetTime(srcSeq->getOffsetTime());
+    stateSeq_->setNumLinkPositionsHint(numLinkPosSeqParts);
+    stateSeq_->setNumJointDisplacementsHint(numJointPosSeqParts);
+    stateSeq_->setNumFrames(numSrcFrames);
+    stateSeq_->setFrameRate(srcSeq->getFrameRate());
+    stateSeq_->setOffsetTime(srcSeq->getOffsetTime());
     
     for(int i=0; i < numSrcFrames; ++i){
-        auto& pframe = positionSeq_->allocateFrame(i);
+        auto& pframe = stateSeq_->allocateFrame(i);
 
         if(numLinkPosSeqParts > 0){
             auto lframe = lseq->frame(i);
@@ -365,14 +365,14 @@ BodyMotion::ConstFrame::ConstFrame()
     
 static void copyBodyStateToFrame(const Body& body, BodyMotion::Frame& frame)
 {
-    body >> frame.motion().positionSeq()->allocateFrame(frame.frame());
+    body >> frame.motion().stateSeq()->allocateFrame(frame.frame());
 }
     
 
 template<class FrameType>
 static void copyFrameToBodyState(FrameType& frame, Body& body)
 {
-    frame.motion().positionSeq()->frame(frame.frame()) >> body;
+    frame.motion().stateSeq()->frame(frame.frame()) >> body;
 }
 
 
@@ -553,7 +553,7 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
     if(isError){
         setDimension(0, 1, 1);
     } else {
-        updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
+        updateBodyStateSeqWithLinkPosSeqAndJointPosSeq();
     }
 
     clearExtraSeq(linkPositionContentName_);
@@ -568,7 +568,7 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additional
     bool doClearLinkPosSeq = extraSeqs.find(linkPositionContentName_) == extraSeqs.end();
     bool doClearJointPosSeq = extraSeqs.find(jointDisplacementContentName_) == extraSeqs.end();
     
-    updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
+    updateLinkPosSeqAndJointPosSeqWithBodyStateSeq();
     
     double version = writer.getOrCreateInfo("format_version", 4.0);
 

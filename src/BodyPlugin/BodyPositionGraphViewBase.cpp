@@ -54,7 +54,7 @@ void BodyPositionGraphViewBase::onSelectedItemsChanged(ItemList<BodyMotionItem> 
             itemInfos.emplace_back();
             auto& info = itemInfos.back();
             info.item = item;
-            info.seq = item->motion()->positionSeq();
+            info.seq = item->motion()->stateSeq();
             info.bodyItem = bodyItem;
 
             info.connections.add(

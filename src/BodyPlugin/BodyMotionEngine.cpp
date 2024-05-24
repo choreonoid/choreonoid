@@ -25,35 +25,35 @@ BodyMotionEngineCore::BodyMotionEngineCore(BodyItem* bodyItem)
 }
 
 
-void BodyMotionEngineCore::updateBodyPosition(const BodyPositionSeqFrame& frame)
+void BodyMotionEngineCore::updateBodyPosition(const BodyState& state)
 {
     if(auto bodyItem_ = bodyItemRef.lock()){
-        bool needFk = updateBodyPosition_(bodyItem_->body(), frame);
+        bool needFk = updateBodyPosition_(bodyItem_->body(), state);
         bodyItem_->notifyKinematicStateChange(needFk);
     }
 }
 
 
-bool BodyMotionEngineCore::updateBodyPosition_(Body* body, const BodyPositionSeqFrame& frame)
+bool BodyMotionEngineCore::updateBodyPosition_(Body* body, const BodyState& state)
 {
     bool needFk = false;
 
     // Main body
-    auto frameBlock = frame.firstBlock();
-    if(updateSingleBodyPosition(body, frameBlock, true)){
+    auto stateBlock = state.firstBlock();
+    if(updateSingleBodyPosition(body, stateBlock, true)){
         needFk = true;
     }
 
     // Multiplex bodies
-    frameBlock = frame.nextBlockOf(frameBlock);
-    if(!frameBlock){
+    stateBlock = state.nextBlockOf(stateBlock);
+    if(!stateBlock){
         body->clearMultiplexBodies();
     } else {
         Body* multiplexBody = body;
-        while(frameBlock){
+        while(stateBlock){
             multiplexBody = multiplexBody->getOrCreateNextMultiplexBody();
-            updateSingleBodyPosition(multiplexBody, frameBlock, false);
-            frameBlock = frame.nextBlockOf(frameBlock);
+            updateSingleBodyPosition(multiplexBody, stateBlock, false);
+            stateBlock = state.nextBlockOf(stateBlock);
         }
         multiplexBody->clearMultiplexBodies();
     }
@@ -62,12 +62,12 @@ bool BodyMotionEngineCore::updateBodyPosition_(Body* body, const BodyPositionSeq
 }
 
 
-bool BodyMotionEngineCore::updateSingleBodyPosition(Body* body, BodyPositionSeqFrameBlock frameBlock, bool isMainBody)
+bool BodyMotionEngineCore::updateSingleBodyPosition(Body* body, BodyStateBlock stateBlock, bool isMainBody)
 {
     bool needFk = false;
 
     int numAllLinks = body->numLinks();
-    int numLinkPositions = frameBlock.numLinkPositions();
+    int numLinkPositions = stateBlock.numLinkPositions();
     if(numLinkPositions == 0){
         if(body->existence() && isMainBody){
             body->setExistence(false);
@@ -79,7 +79,7 @@ bool BodyMotionEngineCore::updateSingleBodyPosition(Body* body, BodyPositionSeqF
         int numLinks = std::min(numAllLinks, numLinkPositions);
         for(int i=0; i < numLinks; ++i){
             auto link = body->link(i);
-            auto linkPosition = frameBlock.linkPosition(i);
+            auto linkPosition = stateBlock.linkPosition(i);
             link->setTranslation(linkPosition.translation());
             link->setRotation(linkPosition.rotation());
         }
@@ -89,9 +89,9 @@ bool BodyMotionEngineCore::updateSingleBodyPosition(Body* body, BodyPositionSeqF
     }
 
     int numAllJoints = body->numAllJoints();
-    int numJoints = std::min(numAllJoints, frameBlock.numJointDisplacements());
+    int numJoints = std::min(numAllJoints, stateBlock.numJointDisplacements());
     if(numJoints > 0){
-        auto displacements = frameBlock.jointDisplacements();
+        auto displacements = stateBlock.jointDisplacements();
         for(int i=0; i < numJoints; ++i){
             body->joint(i)->q() = displacements[i];
         }
@@ -102,15 +102,15 @@ bool BodyMotionEngineCore::updateSingleBodyPosition(Body* body, BodyPositionSeqF
 
 
 // Note that updating velocities are only supported for the main body
-void BodyMotionEngineCore::updateBodyVelocity(Body* body, const BodyPositionSeqFrame& prevFrame, double timeStep)
+void BodyMotionEngineCore::updateBodyVelocity(Body* body, const BodyState& prevState, double timeStep)
 {
     // TODO: set link velocities
     
     int numAllJoints = body->numAllJoints();
-    int n = std::min(numAllJoints, prevFrame.numJointDisplacements());
+    int n = std::min(numAllJoints, prevState.numJointDisplacements());
     int jointIndex = 0;
     if(n > 0){
-        auto prevDisplacements = prevFrame.jointDisplacements();
+        auto prevDisplacements = prevState.jointDisplacements();
         while(jointIndex < n){
             auto joint = body->joint(jointIndex);
             joint->dq() = (joint->q() - prevDisplacements[jointIndex]) / timeStep;
@@ -163,7 +163,7 @@ BodyMotionEngine::BodyMotionEngine(BodyItem* bodyItem, BodyMotionItem* motionIte
       motionItem_(motionItem)
 {
     auto motion = motionItem->motion();
-    positionSeq = motion->positionSeq();
+    stateSeq = motion->stateSeq();
     
     updateExtraSeqEngines();
     
@@ -213,17 +213,17 @@ bool BodyMotionEngine::onTimeChanged(double time)
         return false;
     }
 
-    if(!positionSeq->empty()){
+    if(!stateSeq->empty()){
         auto body = bodyItem_->body();
         int prevNumMultiplexBodies = body->numMultiplexBodies();
-        int frameIndex = positionSeq->clampFrameIndex(positionSeq->frameOfTime(time), isActive);
+        int frameIndex = stateSeq->clampFrameIndex(stateSeq->frameOfTime(time), isActive);
 
-        bool needFk = core.updateBodyPosition_(body, positionSeq->frame(frameIndex));
+        bool needFk = core.updateBodyPosition_(body, stateSeq->frame(frameIndex));
 
         bool doUpdateVelocities = motionItem_->isBodyJointVelocityUpdateEnabled();
         if(doUpdateVelocities){
-            auto& prevFrame = positionSeq->frame((frameIndex == 0) ? 0 : (frameIndex -1));
-            core.updateBodyVelocity(body, prevFrame, positionSeq->timeStep());
+            auto& prevFrame = stateSeq->frame((frameIndex == 0) ? 0 : (frameIndex -1));
+            core.updateBodyVelocity(body, prevFrame, stateSeq->timeStep());
         }
                 
         if(needFk){
@@ -256,7 +256,7 @@ double BodyMotionEngine::onPlaybackStopped(double time, bool isStoppedManually)
 
         bodyItem_->notifyKinematicStateUpdate(false);
     
-        double last = std::max(0.0, positionSeq->timeOfFrame(positionSeq->numFrames() - 1));
+        double last = std::max(0.0, stateSeq->timeOfFrame(stateSeq->numFrames() - 1));
         if(last < time && last > lastValidTime){
             lastValidTime = last;
         }

@@ -937,14 +937,14 @@ bool PoseSeqItem::updatePosesWithBalancedTrajectories(std::ostream& os)
 bool PoseSeqItem::Impl::updatePosesWithBalancedTrajectories(std::ostream& os)
 {
     auto motion = bodyMotionItem->motion();
-    auto pseq = motion->positionSeq();
+    auto sseq = motion->stateSeq();
     double length = seq->endingTime();
     
-    if(pseq->timeLength() < length){
+    if(sseq->timeLength() < length){
         os << "Length of the interpolated trajectories is shorter than key pose sequence.";
         return false;
     }
-    if(pseq->numLinkPositionsHint() < targetBodyItem->body()->numLinks()){
+    if(sseq->numLinkPositionsHint() < targetBodyItem->body()->numLinks()){
         os << "Not all link positions are available. Please do interpolate with \"Put all link positions\"";
         return false;
     }
@@ -955,8 +955,8 @@ bool PoseSeqItem::Impl::updatePosesWithBalancedTrajectories(std::ostream& os)
         if(auto pose = it->get<BodyKeyPose>()){
             seq->beginPoseModification(it);
 
-            int frameIndex = pseq->frameOfTime(it->time());
-            auto& frame = pseq->frame(frameIndex);
+            int frameIndex = sseq->frameOfTime(it->time());
+            auto& frame = sseq->frame(frameIndex);
             int nj = std::min(pose->numJoints(), frame.numJointDisplacements());
             auto displacements = frame.jointDisplacements();
             for(int i=0; i < nj; ++i){

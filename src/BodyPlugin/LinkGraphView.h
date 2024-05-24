@@ -15,7 +15,7 @@ public:
     LinkGraphView();
 
 protected:
-    virtual void addTrajectory(ItemInfo& info, Link* link, std::shared_ptr<BodyPositionSeq> seq) override;
+    virtual void addTrajectory(ItemInfo& info, Link* link, std::shared_ptr<BodyStateSeq> seq) override;
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;
             

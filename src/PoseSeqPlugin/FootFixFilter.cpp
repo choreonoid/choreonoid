@@ -288,7 +288,7 @@ bool FootFixFilterDialog::fixFootPositions
     const int numTransitionFrames = transitionTime * orgMotion.frameRate();
 
     *body << orgMotion.frame(0);
-    BodyState orgInitialState(*body);
+    BodyState orgInitialState(body);
     BodyState initialState;
 
     int phase2Begin = numPausingFrames;
@@ -310,7 +310,7 @@ bool FootFixFilterDialog::fixFootPositions
     int phase5Begin = phase4Begin + numOrgFrames;
 
     *body << orgMotion.frame(numOrgFrames - 1);
-    BodyState orgFinalState(*body);
+    BodyState orgFinalState(body);
 
     int phase6Begin = phase5Begin + numPausingFrames;
 

@@ -3,7 +3,7 @@
 
 #include "BodyItem.h"
 #include "BodyMotionItem.h"
-#include <cnoid/BodyPositionSeq>
+#include <cnoid/BodyStateSeq>
 #include <cnoid/View>
 #include <cnoid/GraphWidget>
 #include <cnoid/ItemList>
@@ -32,7 +32,7 @@ protected:
             connections.disconnect();
         }
         BodyMotionItemPtr item;
-        std::shared_ptr<BodyPositionSeq> seq;
+        std::shared_ptr<BodyStateSeq> seq;
         BodyItemPtr bodyItem;
         ScopedConnectionSet connections;
         std::vector<GraphDataHandlerPtr> handlers;
@@ -50,7 +50,7 @@ protected:
     void setupGraphWidget();
     void onDataItemUpdated(ItemInfo& info);
 
-    virtual void addTrajectory(ItemInfo& info, Link* link, std::shared_ptr<BodyPositionSeq> seq) = 0;
+    virtual void addTrajectory(ItemInfo& info, Link* link, std::shared_ptr<BodyStateSeq> seq) = 0;
 };
 
 }

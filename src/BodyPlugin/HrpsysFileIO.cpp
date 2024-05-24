@@ -150,7 +150,7 @@ public:
             }
         }
 
-        motion->updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
+        motion->updateBodyStateSeqWithLinkPosSeqAndJointPosSeq();
 
         return true;
     }

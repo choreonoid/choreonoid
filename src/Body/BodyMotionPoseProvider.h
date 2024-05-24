@@ -35,7 +35,7 @@ public:
 
 private:
     BodyPtr body_;
-    std::shared_ptr<BodyPositionSeq> positionSeq;
+    std::shared_ptr<BodyStateSeq> stateSeq;
     std::shared_ptr<ZMPSeq> zmpSeq;
     int numJointDisplacements;
     bool isReady;

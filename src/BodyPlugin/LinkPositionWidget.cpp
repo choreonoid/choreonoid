@@ -1002,7 +1002,7 @@ bool JointSpaceConfigurationDialog::updateConfigurationTypes()
     }
 
     T0 = jointPath->endLink()->T();
-    bodyState0.storePositions(*body);
+    bodyState0.storeStateOfBody(body);
     
     auto name = jointPath->name();
     if(name.empty()){
@@ -1048,7 +1048,7 @@ void JointSpaceConfigurationDialog::updateConfigurationStates()
     }
     
     T0 = jointPath->endLink()->T();
-    bodyState0.storePositions(*body);
+    bodyState0.storeStateOfBody(body);
 
     for(int i=0; i < n; ++i){
         auto item = treeWidget.topLevelItem(i);
@@ -1067,7 +1067,7 @@ void JointSpaceConfigurationDialog::updateConfigurationStates()
     }
 
     configuration->resetPreferredConfigurationType();
-    bodyState0.restorePositions(*body);
+    bodyState0.restoreStateToBody(body);
     jointPath->endLink()->T() = T0;
 
     updateItemDisplay();
@@ -1128,7 +1128,7 @@ void JointSpaceConfigurationDialog::applyConfiguration(int id)
 void JointSpaceConfigurationDialog::onCanceled()
 {
     if(body){
-        bodyState0.restorePositions(*body);
+        bodyState0.restoreStateToBody(body);
         jointPath->endLink()->T() = T0;
         baseImpl->targetBodyItem->notifyKinematicStateChange();
     }
