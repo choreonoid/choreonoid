@@ -24,9 +24,16 @@ void BodyStateBlock::storeStateOfBody(const Body* body)
     }
     
     int numJoints = std::min(body->numJoints(), numJointDisplacements());
-    auto displacements = jointDisplacements();
-    for(int i=0; i < numJoints; ++i){
-        displacements[i] = body->joint(i)->q();
+    if(numJoints > 0){
+        auto displacements = jointDisplacements();
+        for(int i=0; i < numJoints; ++i){
+            displacements[i] = body->joint(i)->q();
+        }
+    }
+
+    int numDevices = std::min(body->numDevices(), numDeviceStates());
+    for(int i=0; i < numDevices; ++i){
+        setDeviceState(i, body->device(i)->cloneState());
     }
 }
 
@@ -57,6 +64,15 @@ bool BodyStateBlock::restoreStateToBody(Body* body) const
         }
     }
 
+    int numDevices = std::min(body->numDevices(), numDeviceStates());
+    for(int i=0; i < numDevices; ++i){
+        if(auto state = deviceState(i)){
+            auto device = body->device(i);
+            device->copyStateFrom(*state);
+            device->notifyStateChange();
+        }
+    }
+
     return (numLinks > 0) || (numJoints > 0);
 }
 
@@ -75,7 +91,7 @@ BodyState::BodyState(const Body& body)
 
 void BodyState::storeStateOfBody(const Body* body)
 {
-    allocate(body->numLinks(), body->numJoints());
+    allocate(body->numLinks(), body->numJoints(), body->numDevices());
     BodyStateBlock::storeStateOfBody(body);
 }
 
