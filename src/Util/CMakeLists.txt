@@ -29,7 +29,6 @@ set(sources
   Uuid.cpp
   GeneralId.cpp
   Selection.cpp
-  DataMap.cpp
   AbstractSeq.cpp
   MultiValueSeq.cpp
   MultiSE3Seq.cpp
@@ -137,7 +136,6 @@ set(headers
   Uuid.h
   GeneralId.h
   Selection.h
-  DataMap.h
   IdPair.h
   Array2D.h
   Deque2D.h
