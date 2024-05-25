@@ -92,7 +92,13 @@ BodyState::BodyState(const Body& body)
 void BodyState::storeStateOfBody(const Body* body)
 {
     allocate(body->numLinks(), body->numJoints(), body->numDevices());
-    BodyStateBlock::storeStateOfBody(body);
+    firstBlock().storeStateOfBody(body);
+}
+
+
+bool BodyState::restoreStateToBody(Body* body) const
+{
+    return firstBlock().restoreStateToBody(body);
 }
 
 

@@ -21,27 +21,27 @@ public:
     explicit operator bool() const { return !empty(); }
 
     int numLinkPositions() const {
-        return pData ? pData[0] : 0;
+        return pData[0];
     }
 
     bool hasLinkPositions() const {
-        return pData && (pData[0] > 0);
+        return pData[0] > 0;
     }
 
     int numJointDisplacements() const {
-        return pData ? pData[1] : 0;
+        return pData[1];
     }
 
     bool hasJointDisplacements() const {
-        return pData && (pData[1] > 0);
+        return pData[1] > 0;
     }
 
     int numDeviceStates() const {
-        return pData ? pData[2] : 0;
+        return pData[2];
     }
 
     bool hasDeviceStates() const {
-        return pData && (pData[2] > 0);
+        return pData[2] > 0;
     }
 
     // The order of the link position elements is x, y, z, qx, qy, qz, qw
@@ -102,7 +102,7 @@ public:
     }
 
     const LinkPosition linkPosition(int index) const {
-        return LinkPosition(const_cast<double*>(pData + HeaderSize + index * LinkPositionSize));
+        return const_cast<BodyStateBlock*>(this)->linkPosition(index);
     }
 
     LinkPosition rootLinkPosition() {
@@ -114,11 +114,11 @@ public:
     }
 
     double* linkPositionData(){
-        return pData ? pData + HeaderSize : nullptr;
+        return pData + HeaderSize;
     }
 
     const double* linkPositionData() const {
-        return pData ? pData + HeaderSize : nullptr;
+        return pData + HeaderSize;
     }
 
     double& jointDisplacement(int index){
@@ -170,21 +170,19 @@ protected:
    Elements:
    n links, n joints, n device states, device state offset, x, y, z, qx, qy, qz, qw, .... , q0, q1, q2, ...
 */
-class CNOID_EXPORT BodyState : public BodyStateBlock
+class CNOID_EXPORT BodyState
 {
 public:
-    BodyState() : BodyStateBlock(nullptr, nullptr) { }
+    BodyState() { }
 
     BodyState(const BodyState& org)
         : data(org.data), deviceData(org.deviceData) {
-        pData = data.data();
-        pDeviceData = deviceData.data();
+
     }
 
     BodyState(BodyState&& org)
         : data(std::move(org.data)), deviceData(std::move(org.deviceData)) {
-        pData = data.data();
-        pDeviceData = deviceData.data();
+
     }
 
     BodyState(const Body* body);
@@ -194,29 +192,23 @@ public:
 
     BodyState& operator=(const BodyState& rhs){
         data = rhs.data;
-        pData = data.data();
         deviceData = rhs.deviceData;
-        pDeviceData = deviceData.data();
         return *this;
     }
 
     BodyState& operator=(BodyState&& rhs){
         data = std::move(rhs.data);
-        pData = data.data();
         deviceData = std::move(rhs.deviceData);
-        pDeviceData = deviceData.data();
         return *this;
     }
 
     void clear(){
         data.clear();
-        pData = nullptr;
         deviceData.clear();
-        pDeviceData = nullptr;
     }
 
     BodyState& allocate(int numLinks, int numJoints = 0, int numDevices = 0){
-        data.resize(HeaderSize + numLinks * LinkPositionSize + numJoints);
+        data.resize(BodyStateBlock::HeaderSize + numLinks * BodyStateBlock::LinkPositionSize + numJoints);
         data[0] = numLinks;
         data[1] = numJoints;
         data[2] = numDevices;
@@ -224,15 +216,13 @@ public:
             deviceData.resize(numDevices);
             data[3] = 0; // offset in device data
         }
-        pData = data.data();
-        pDeviceData = deviceData.data();
         return *this;
     }
 
     BodyStateBlock extend(int numLinks, int numJoints = 0, int numDevices = 0){
         int prevDataSize = data.size();
-        data.resize(prevDataSize + HeaderSize + numLinks * LinkPositionSize + numJoints);
-        pData = data.data();
+        data.resize(prevDataSize + BodyStateBlock::HeaderSize + numLinks * BodyStateBlock::LinkPositionSize + numJoints);
+        auto pData = data.data();
         double* block = pData + prevDataSize;
         block[0] = numLinks;
         block[1] = numJoints;
@@ -241,8 +231,7 @@ public:
             block[3] = deviceData.size();
             deviceData.resize(deviceData.size() + numDevices);
         }
-        pDeviceData = deviceData.data();
-        return BodyStateBlock(block, pDeviceData);
+        return BodyStateBlock(block, deviceData.data());
     }
 
     BodyStateBlock firstBlock(){
@@ -254,7 +243,10 @@ public:
     }
     
     BodyStateBlock nextBlockOf(const BodyStateBlock& block){
-        double* nextData = block.pData + HeaderSize + block.numLinkPositions() * LinkPositionSize + block.numJointDisplacements();
+        double* nextData =
+            block.pData + BodyStateBlock::HeaderSize +
+            block.numLinkPositions() * BodyStateBlock::LinkPositionSize +
+            block.numJointDisplacements();
         if(nextData >= data.data() + data.size()){
             nextData = nullptr;
             return BodyStateBlock(nextData, nullptr);
@@ -266,7 +258,88 @@ public:
         return const_cast<BodyState*>(this)->nextBlockOf(block);
     }
 
+    bool empty() const { return data.empty(); }
+    explicit operator bool() const { return !empty(); }
+
+    int numLinkPositions() const {
+        return data[0];
+    }
+
+    bool hasLinkPositions() const {
+        return data[0] > 0;
+    }
+
+    int numJointDisplacements() const {
+        return data[1];
+    }
+
+    bool hasJointDisplacements() const {
+        return data[1] > 0;
+    }
+
+    int numDeviceStates() const {
+        return data[2];
+    }
+
+    bool hasDeviceStates() const {
+        return data[2] > 0;
+    }
+    
+    BodyStateBlock::LinkPosition linkPosition(int index) {
+        return BodyStateBlock::LinkPosition(
+            data.data() + BodyStateBlock::HeaderSize + index * BodyStateBlock::LinkPositionSize);
+    }
+
+    const BodyStateBlock::LinkPosition linkPosition(int index) const {
+        return const_cast<BodyState*>(this)->linkPosition(index);
+    }
+
+    BodyStateBlock::LinkPosition rootLinkPosition() {
+        return BodyStateBlock::LinkPosition(data.data() + BodyStateBlock::HeaderSize);
+    }
+
+    const BodyStateBlock::LinkPosition rootLinkPosition() const {
+        return const_cast<BodyState*>(this)->rootLinkPosition();
+    }
+
+    double* linkPositionData(){
+        return data.data()+ BodyStateBlock::HeaderSize;
+    }
+
+    const double* linkPositionData() const {
+        return const_cast<BodyState*>(this)->linkPositionData();
+    }
+
+    double& jointDisplacement(int index){
+        return data[BodyStateBlock::HeaderSize + static_cast<int>(data[0]) * BodyStateBlock::LinkPositionSize + index];
+    }
+
+    double jointDisplacement(int index) const {
+        return const_cast<BodyState*>(this)->jointDisplacement(index);
+    }
+
+    double* jointDisplacements(){
+        return data.data() + BodyStateBlock::HeaderSize + static_cast<int>(data[0]) * BodyStateBlock::LinkPositionSize;
+    }
+
+    const double* jointDisplacements() const {
+        return const_cast<BodyState*>(this)->jointDisplacements();
+    }
+
+    DeviceState* deviceState(int index) {
+        return deviceData[index];
+    }
+
+    const DeviceState* deviceState(int index) const {
+        return deviceData[index];
+    }
+
+    void setDeviceState(int index, DeviceState* state) {
+        deviceData[index] = state;
+    }
+
     void storeStateOfBody(const Body* body);
+    bool restoreStateToBody(Body* body) const;
 
     [[deprecated("Use storeStateOfBody.")]]
     void storePositions(const Body& body){

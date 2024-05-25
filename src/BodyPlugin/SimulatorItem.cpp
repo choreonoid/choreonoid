@@ -1014,7 +1014,8 @@ void SimulationBody::Impl::bufferRecords()
             frame.clear();
         } else {
             frame.allocate(numLinksToRecord, numJointsToRecord);
-            bufferBodyState(body_, frame);
+            auto firstBlock = frame.firstBlock();
+            bufferBodyState(body_, firstBlock);
 
             Body* multiplexBody = body_->nextMultiplexBody();
             while(multiplexBody){
