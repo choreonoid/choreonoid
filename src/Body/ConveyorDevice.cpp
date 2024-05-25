@@ -13,7 +13,7 @@ using namespace cnoid;
 
 ConveyorDevice::ConveyorDevice()
 {
-    on_ = false;
+    on_ = true;
     displacement_ = 0.0;
     speed_ = 0.0;
     
