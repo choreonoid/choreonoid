@@ -97,6 +97,10 @@ public:
         }
     }
 
+    void resize(int n){
+        container.resize(n);
+    }
+
     void clear() {
         container.clear();
     }
@@ -216,6 +220,14 @@ public:
         container.pop_front();
     }
 
+    void popFront() {
+        container.pop_front();
+    }
+
+    void popBack() {
+        container.pop_back();
+    }
+    
 protected:
     std::deque<ElementType> container;
     double frameRate_;
