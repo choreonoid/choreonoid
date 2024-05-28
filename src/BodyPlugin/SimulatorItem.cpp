@@ -1151,7 +1151,7 @@ void SimulationBody::Impl::flushRecordsToLastStateBuffers()
 void SimulationBody::Impl::updateFrontendBodyStatelWithLastRecords(double time)
 {
     if(hasLastState){
-        bodyMotionEngine->updateBodyPosition(lastStateBuf);
+        bodyMotionEngine->updateBodyState(time, lastStateBuf);
     }
 }
 

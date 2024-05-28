@@ -5,6 +5,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/BodyMotionItem>
 #include <cnoid/BodyStateSeq>
+#include <cnoid/Device>
 #include <cnoid/ConnectionSet>
 #include <memory>
 #include <vector>
@@ -19,13 +20,20 @@ class BodyMotionEngineCore
 public:
     BodyMotionEngineCore(BodyItem* bodyItem);
     BodyItem* bodyItem() { return bodyItemRef.lock(); }
-    void updateBodyPosition(const BodyState& state);
+    void updateBodyState(double time, const BodyState& state);
 
 private:
     weak_ref_ptr<BodyItem> bodyItemRef;
 
-    bool updateBodyPosition_(Body* body, const BodyState& state);
-    bool updateSingleBodyPosition(Body* body, BodyStateBlock stateBlock, bool isMainBody);
+    struct DeviceInfo {
+        DevicePtr device;
+        DeviceStatePtr prevState;
+        ScopedConnection connection;
+    };
+    std::vector<DeviceInfo> deviceInfos;
+    
+    bool updateBodyState_(double time, Body* body, const BodyState& state);
+    bool updateSingleBodyState(double time, Body* body, BodyStateBlock stateBlock, bool isMainBody);
     void updateBodyVelocity(Body* body, const BodyState& prevState, double timeStep);
     friend class BodyMotionEngine;
 };

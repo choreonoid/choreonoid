@@ -21,26 +21,36 @@ ExtraSeqEngineFactoryMap extraSeqEngineFactories;
 BodyMotionEngineCore::BodyMotionEngineCore(BodyItem* bodyItem)
     : bodyItemRef(bodyItem)
 {
-
+    auto& devices = bodyItem->body()->devices();
+    int numDevices = devices.size();
+    deviceInfos.resize(numDevices);
+    for(size_t i=0; i < numDevices; ++i){
+        auto& info = deviceInfos[i];
+        info.device = devices[i];
+        auto& prevState = info.prevState;
+        info.connection =
+            info.device->sigStateChanged().connect(
+                [this, &prevState](){ prevState.reset(); });
+    }
 }
 
 
-void BodyMotionEngineCore::updateBodyPosition(const BodyState& state)
+void BodyMotionEngineCore::updateBodyState(double time, const BodyState& state)
 {
     if(auto bodyItem_ = bodyItemRef.lock()){
-        bool needFk = updateBodyPosition_(bodyItem_->body(), state);
+        bool needFk = updateBodyState_(time, bodyItem_->body(), state);
         bodyItem_->notifyKinematicStateChange(needFk);
     }
 }
 
 
-bool BodyMotionEngineCore::updateBodyPosition_(Body* body, const BodyState& state)
+bool BodyMotionEngineCore::updateBodyState_(double time, Body* body, const BodyState& state)
 {
     bool needFk = false;
 
     // Main body
     auto stateBlock = state.firstBlock();
-    if(updateSingleBodyPosition(body, stateBlock, true)){
+    if(updateSingleBodyState(time, body, stateBlock, true)){
         needFk = true;
     }
 
@@ -52,7 +62,7 @@ bool BodyMotionEngineCore::updateBodyPosition_(Body* body, const BodyState& stat
         Body* multiplexBody = body;
         while(stateBlock){
             multiplexBody = multiplexBody->getOrCreateNextMultiplexBody();
-            updateSingleBodyPosition(multiplexBody, stateBlock, false);
+            updateSingleBodyState(time, multiplexBody, stateBlock, false);
             stateBlock = state.nextBlockOf(stateBlock);
         }
         multiplexBody->clearMultiplexBodies();
@@ -62,12 +72,12 @@ bool BodyMotionEngineCore::updateBodyPosition_(Body* body, const BodyState& stat
 }
 
 
-bool BodyMotionEngineCore::updateSingleBodyPosition(Body* body, BodyStateBlock stateBlock, bool isMainBody)
+bool BodyMotionEngineCore::updateSingleBodyState(double time, Body* body, BodyStateBlock bodyStateBlock, bool isMainBody)
 {
     bool needFk = false;
 
     int numAllLinks = body->numLinks();
-    int numLinkPositions = stateBlock.numLinkPositions();
+    int numLinkPositions = bodyStateBlock.numLinkPositions();
     if(numLinkPositions == 0){
         if(body->existence() && isMainBody){
             body->setExistence(false);
@@ -79,7 +89,7 @@ bool BodyMotionEngineCore::updateSingleBodyPosition(Body* body, BodyStateBlock s
         int numLinks = std::min(numAllLinks, numLinkPositions);
         for(int i=0; i < numLinks; ++i){
             auto link = body->link(i);
-            auto linkPosition = stateBlock.linkPosition(i);
+            auto linkPosition = bodyStateBlock.linkPosition(i);
             link->setTranslation(linkPosition.translation());
             link->setRotation(linkPosition.rotation());
         }
@@ -89,11 +99,35 @@ bool BodyMotionEngineCore::updateSingleBodyPosition(Body* body, BodyStateBlock s
     }
 
     int numAllJoints = body->numAllJoints();
-    int numJoints = std::min(numAllJoints, stateBlock.numJointDisplacements());
+    int numJoints = std::min(numAllJoints, bodyStateBlock.numJointDisplacements());
     if(numJoints > 0){
-        auto displacements = stateBlock.jointDisplacements();
+        auto displacements = bodyStateBlock.jointDisplacements();
         for(int i=0; i < numJoints; ++i){
             body->joint(i)->q() = displacements[i];
+        }
+    }
+
+    if(!deviceInfos.empty()){
+        int deviceIndex = 0;
+        int n = deviceInfos.size();
+        int m = std::min(n, bodyStateBlock.numDeviceStates());
+
+        while(deviceIndex < m){
+            DeviceState* deviceState = bodyStateBlock.deviceState(deviceIndex);
+            auto& info = deviceInfos[deviceIndex];
+            if(deviceState != info.prevState){
+                info.device->copyStateFrom(*deviceState);
+                info.connection.block();
+                info.device->notifyStateChange();
+                info.connection.unblock();
+                info.prevState = deviceState;
+            }
+            info.device->notifyTimeChange(time);
+            ++deviceIndex;
+        }
+
+        while(deviceIndex < n){
+            deviceInfos[deviceIndex++].device->notifyTimeChange(time);
         }
     }
 
@@ -218,7 +252,7 @@ bool BodyMotionEngine::onTimeChanged(double time)
         int prevNumMultiplexBodies = body->numMultiplexBodies();
         int frameIndex = stateSeq->clampFrameIndex(stateSeq->frameOfTime(time), isActive);
 
-        bool needFk = core.updateBodyPosition_(body, stateSeq->frame(frameIndex));
+        bool needFk = core.updateBodyState_(time, body, stateSeq->frame(frameIndex));
 
         bool doUpdateVelocities = motionItem_->isBodyJointVelocityUpdateEnabled();
         if(doUpdateVelocities){
@@ -229,7 +263,7 @@ bool BodyMotionEngine::onTimeChanged(double time)
         if(needFk){
             body->calcForwardKinematics(doUpdateVelocities);
         }
-        
+
         if(body->numMultiplexBodies() != prevNumMultiplexBodies){
             // Is it better to define and use a signal specific to multiplex body changes?
             bodyItem_->notifyUpdateWithProjectFileConsistency();
