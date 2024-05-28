@@ -8,6 +8,9 @@
 
 namespace cnoid {
 
+/**
+   \note This class is deprecated. BodyStateSeq can contain a multi device state sequence.
+*/
 class CNOID_EXPORT MultiDeviceStateSeq : public MultiSeq<DeviceStatePtr>
 {
     typedef MultiSeq<DeviceStatePtr> BaseSeqType;
@@ -43,6 +46,7 @@ class BodyMotion;
 CNOID_EXPORT std::shared_ptr<MultiDeviceStateSeq> getMultiDeviceStateSeq(const BodyMotion& motion);
 CNOID_EXPORT std::shared_ptr<MultiDeviceStateSeq> getOrCreateMultiDeviceStateSeq(BodyMotion& motion);
 CNOID_EXPORT void clearMultiDeviceStateSeq(BodyMotion& motion);
+
 }
 
 #endif

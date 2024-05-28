@@ -25,7 +25,6 @@
 #include "BodyMotionItem.h"
 #include "ZMPSeqItem.h"
 #include "MultiDeviceStateSeqItem.h"
-#include "MultiDeviceStateSeqEngine.h"
 #include "WorldLogFileItem.h"
 #include "IoConnectionMapItem.h"
 #include "SensorVisualizerItem.h"
@@ -124,8 +123,10 @@ bool BodyPlugin::initialize()
     SimulationScriptItem::initializeClass(this);
     BodyMotionItem::initializeClass(this);
     BodyMotionEngine::initializeClass(this);
+
+    // It may be better to remove this item.
     MultiDeviceStateSeqItem::initializeClass(this);
-    MultiDeviceStateSeqEngine::initializeClass(this);
+    
     ZMPSeqItem::initializeClass(this); 
     WorldLogFileItem::initializeClass(this);
     IoConnectionMapItem::initializeClass(this);

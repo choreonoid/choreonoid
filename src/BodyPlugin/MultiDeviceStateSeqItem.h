@@ -7,6 +7,10 @@
 
 namespace cnoid {
 
+/**
+   \note This class is deprecated. BodyStateSeq contained in BodyMotionItem can be used
+   to store a multi device state sequence.
+*/
 class MultiDeviceStateSeqItem : public AbstractMultiSeqItem
 {
 public:

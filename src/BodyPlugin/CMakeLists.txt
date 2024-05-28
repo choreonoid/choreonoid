@@ -36,7 +36,6 @@ set(sources
   BodyMotionItem.cpp
   BodyMotionEngine.cpp
   MultiDeviceStateSeqItem.cpp
-  MultiDeviceStateSeqEngine.cpp
   ZMPSeqItem.cpp
   WorldLogFileItem.cpp
   IoConnectionMapItem.cpp
@@ -110,7 +109,6 @@ set(headers
   GLVisionSimulatorItem.h
   BodyMotionItem.h
   ZMPSeqItem.h
-  MultiDeviceStateSeqItem.h
   WorldLogFileItem.h
   IoConnectionMapItem.h
   SensorVisualizerItem.h
