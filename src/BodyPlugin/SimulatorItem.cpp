@@ -1704,16 +1704,15 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
 
     if(timeRangeMode.is(SimulatorItem::TR_SPECIFIED)){
         maxFrame = std::max(0, static_cast<int>(lround(timeLength / worldTimeStep_) - 1));
-
-    } else if(timeRangeMode.is(SimulatorItem::TR_TIMEBAR)){
-        maxFrame = std::max(0, static_cast<int>(lround(timeBar->maxTime() / worldTimeStep_) - 1));
-
-    } else if(isRingBufferMode){
-        maxFrame = std::numeric_limits<int>::max();
-        ringBufferSize = timeLength / worldTimeStep_;
-
     } else {
-        maxFrame = std::numeric_limits<int>::max();
+        if(timeRangeMode.is(SimulatorItem::TR_TIMEBAR)){
+            maxFrame = std::max(0, static_cast<int>(lround(timeBar->maxTime() / worldTimeStep_) - 1));
+        } else {
+            maxFrame = std::numeric_limits<int>::max(); // TR_UNLIMITED
+        }
+        if(isRingBufferMode){
+            ringBufferSize = timeLength / worldTimeStep_;
+        }
     }
 
     currentRealtimeSyncMode = realtimeSyncMode.which();
