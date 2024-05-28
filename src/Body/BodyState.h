@@ -202,6 +202,19 @@ public:
         return *this;
     }
 
+    void assign(BodyState&& another, bool moveKinematicData, bool moveDeviceStates) {
+        if(moveKinematicData){
+            data = std::move(another.data);
+        } else {
+            data = another.data;
+        }
+        if(moveDeviceStates){
+            deviceData = std::move(another.deviceData);
+        } else {
+            deviceData = another.deviceData;
+        }
+    }
+
     void clear(){
         data.clear();
         deviceData.clear();

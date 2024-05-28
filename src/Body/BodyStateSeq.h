@@ -30,19 +30,22 @@ public:
     int numJointDisplacementsHint() const { return numJointDisplacementsHint_; }
     void setNumJointDisplacementsHint(int n) { numJointDisplacementsHint_ = n; }
 
+    int numDeviceStatesHint() const { return numDeviceStatesHint_; }
+    void setNumDeviceStatesHint(int n) { numDeviceStatesHint_ = n; }
+    
     BodyState& appendAllocatedFrame(){
-        return append().allocate(numLinkPositionsHint_, numJointDisplacementsHint_);
+        return append().allocate(numLinkPositionsHint_, numJointDisplacementsHint_, numDeviceStatesHint_);
     }
 
-    BodyState& allocateFrame(int index, int numLinks, int numJoints){
+    BodyState& allocateFrame(int index, int numLinks, int numJoints, int numDeviceStates){
         if(index >= numFrames()){
             setNumFrames(index + 1);
         }
-        return frame(index).allocate(numLinks, numJoints);
+        return frame(index).allocate(numLinks, numJoints, numDeviceStates);
     }
 
     BodyState& allocateFrame(int index){
-        return allocateFrame(index, numLinkPositionsHint_, numJointDisplacementsHint_);
+        return allocateFrame(index, numLinkPositionsHint_, numJointDisplacementsHint_, numDeviceStatesHint_);
     }
 
     BodyStateBlock frameBlock(int frameIndex){
@@ -56,6 +59,7 @@ public:
 private:
     int numLinkPositionsHint_;
     int numJointDisplacementsHint_;
+    int numDeviceStatesHint_;
 };
 
 [[deprecated("Use BodyStateSeq.")]]

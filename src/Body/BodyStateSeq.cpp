@@ -10,6 +10,7 @@ BodyStateSeq::BodyStateSeq(int numFrames)
 {
     numLinkPositionsHint_ = 0;
     numJointDisplacementsHint_ = 0;
+    numDeviceStatesHint_ = 0;
 }
 
 
@@ -18,6 +19,7 @@ BodyStateSeq::BodyStateSeq(const BodyStateSeq& org)
 {
     numLinkPositionsHint_ = org.numLinkPositionsHint_;
     numJointDisplacementsHint_ = org.numJointDisplacementsHint_;
+    numDeviceStatesHint_ = org.numDeviceStatesHint_;
 }
 
 

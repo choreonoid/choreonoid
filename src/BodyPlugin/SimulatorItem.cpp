@@ -5,7 +5,6 @@
 #include "SimulationScriptItem.h"
 #include "BodyMotionItem.h"
 #include "BodyMotionEngine.h"
-#include "MultiDeviceStateSeqEngine.h"
 #include "WorldLogFileItem.h"
 #include "CollisionSeqItem.h"
 #include "CollisionSeqEngine.h"
@@ -23,7 +22,6 @@
 #include <cnoid/LazyCaller>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
-#include <cnoid/MultiDeviceStateSeq>
 #include <cnoid/ReferencedObjectSeqItem>
 #include <cnoid/Timer>
 #include <cnoid/ConnectionSet>
@@ -192,29 +190,27 @@ public:
     bool isActive;
     bool isDynamic;
     bool areShapesCloned;
+    bool doRecord;
 
-    unique_ptr<BodyStateSeq> stateBuf;
-    int currentStateBufIndex;
+    // This buf always has the first element to keep unchanged states
+    BodyStateSeq bodyStateBuf;
+    int currentBodyStateBufIndex;
     int numLinksToRecord;
     int numJointsToRecord;
+    int numDevicesToRecord;
     
     ScopedConnectionSet deviceStateConnections;
     vector<bool> deviceStateChangeFlag;
-    unique_ptr<MultiDeviceStateSeq> deviceStateBuf;
-
-    // For the direct output without recording mode
-    unique_ptr<BodyMotionEngineCore> bodyMotionEngine;
-    unique_ptr<BodyStateSeq> lastStateBuf;
-    unique_ptr<MultiDeviceStateSeqEngineCore> deviceStateEngine;
-    unique_ptr<MultiDeviceStateSeq> lastDeviceStateBuf;
-    bool hasLastState;
-    bool hasLastDeviceStates;
 
     ItemPtr parentOfRecordItems;
     string recordItemPrefix;
     shared_ptr<BodyMotion> motion;
-    shared_ptr<BodyStateSeq> stateRecord;
-    shared_ptr<MultiDeviceStateSeq> deviceStateRecord;
+    shared_ptr<BodyStateSeq> bodyStateRecord;
+
+    // For the direct output without recording mode
+    unique_ptr<BodyMotionEngineCore> bodyMotionEngine;
+    BodyState lastStateBuf;
+    bool hasLastState;
 
     Impl(SimulationBody* self, Body* body);
     bool initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem);
@@ -226,7 +222,8 @@ public:
     void initializeRecordBuffers();
     void initializeRecordItems();
     void bufferRecords();
-    void bufferBodyState(Body* body, BodyStateBlock& block);
+    void bufferBodyKinematicState(Body* body, BodyStateBlock& stateBlock);
+    void bufferBodyDeviceState(Body* body, BodyStateBlock& stateBlock, BodyStateBlock& prevStateBlock);
     void flushRecords();
     void flushRecordsToBodyMotionItems();
     void flushRecordsToLastStateBuffers();
@@ -271,6 +268,7 @@ public:
     vector<ControllerInfoPtr> activeControllerInfos;
     bool doStopSimulationWhenNoActiveControllers;
     bool hasControllers; // Includes non-active controllers
+    bool needToBufferAllFrames;
 
     CollisionDetectorPtr collisionDetector;
 
@@ -694,6 +692,7 @@ SimulationBody::Impl::Impl(SimulationBody* self, Body* body)
     areShapesCloned = false;
     isActive = false;
     isDynamic = false;
+    doRecord = false;
 }
 
 
@@ -869,47 +868,31 @@ void SimulationBody::initializeRecordBuffers()
 
 void SimulationBody::Impl::initializeRecordBuffers()
 {
-    currentStateBufIndex = 0;
-
+    currentBodyStateBufIndex = 0;
+    bodyStateBuf.clear();
     bodyMotionEngine.reset();
-    lastStateBuf.reset();
+    lastStateBuf.clear();
     hasLastState = false;
 
     if(!isDynamic){
         numLinksToRecord = 0;
         numJointsToRecord = 0;
-        stateBuf.reset();
     } else {
         numLinksToRecord = simImpl->isAllLinkPositionOutputMode ? body_->numLinks() : 1;
         numJointsToRecord = body_->numAllJoints();
-        stateBuf = make_unique<BodyStateSeq>();
-
         if(!simImpl->isRecordingEnabled){
             bodyMotionEngine = make_unique<BodyMotionEngineCore>(bodyItem);
-            lastStateBuf = make_unique<BodyStateSeq>(1);
         }
     }
 
-    const DeviceList<>& devices = body_->devices();
-    const int numDevices = devices.size();
+    numDevicesToRecord = 0;
     deviceStateConnections.disconnect();
     deviceStateChangeFlag.clear();
-    deviceStateChangeFlag.resize(numDevices, true); // set all the bits to store the initial states
-    deviceStateBuf.reset();
-    
-    deviceStateEngine.reset();
-    lastDeviceStateBuf.reset();
-    hasLastDeviceStates = false;
-    
-    if(!devices.empty() && simImpl->isDeviceStateOutputEnabled){
-        /**
-           Temporary parameters to avoid a bug in storing device states by reserving sufficient buffer size.
-           The original bug is in Deque2D's resize operation.
-        */
-        deviceStateBuf = make_unique<MultiDeviceStateSeq>(100, numDevices);
 
-        // This buf always has the first element to keep unchanged states
-        deviceStateBuf->setDimension(1, numDevices); 
+    if(simImpl->isDeviceStateOutputEnabled){
+        const DeviceList<>& devices = body_->devices();
+        numDevicesToRecord = devices.size();
+        deviceStateChangeFlag.resize(numDevicesToRecord, true); // set all the bits to store the initial states
         for(size_t i=0; i < devices.size(); ++i){
             deviceStateConnections.add(
                 devices[i]->sigStateChanged().connect(
@@ -918,13 +901,20 @@ void SimulationBody::Impl::initializeRecordBuffers()
                                   is called from several threads. */
                         deviceStateChangeFlag[i] = true;
                     }));
-            
         }
+    }
 
-        if(!simImpl->isRecordingEnabled){
-            deviceStateEngine = make_unique<MultiDeviceStateSeqEngineCore>(bodyItem);
-            lastDeviceStateBuf = make_unique<MultiDeviceStateSeq>(1, numDevices);
-        }
+    if(numLinksToRecord || numJointsToRecord || numDevicesToRecord){
+        doRecord = true;
+        bodyStateBuf.setNumLinkPositionsHint(numLinksToRecord);
+        bodyStateBuf.setNumJointDisplacementsHint(numJointsToRecord);
+        bodyStateBuf.setNumDeviceStatesHint(numDevicesToRecord);
+        bodyStateBuf.setFrameRate(simImpl->worldFrameRate);
+        // This buf always has the first element to keep unchanged device states
+        bodyStateBuf.appendAllocatedFrame();
+        currentBodyStateBufIndex = 1;
+    } else {
+        doRecord = false;
     }
 }
 
@@ -964,18 +954,14 @@ void SimulationBody::Impl::initializeRecordItems()
     }
 
     motion = motionItem->motion();
-    motion->setFrameRate(simImpl->worldFrameRate);
-    motion->setDimension(0, numJointsToRecord, numLinksToRecord);
+    motion->setNumFrames(0);
     motion->setOffsetTime(0.0);
-    stateRecord = motion->stateSeq();
-
-    if(deviceStateBuf){
-        deviceStateRecord = getOrCreateMultiDeviceStateSeq(*motion);
-        deviceStateRecord->initialize(body_->devices());
-    } else {
-        clearMultiDeviceStateSeq(*motion);
-    }
-
+    motion->setFrameRate(simImpl->worldFrameRate);
+    bodyStateRecord = motion->stateSeq();
+    bodyStateRecord->setNumLinkPositionsHint(numLinksToRecord);
+    bodyStateRecord->setNumJointDisplacementsHint(numJointsToRecord);
+    bodyStateRecord->setNumDeviceStatesHint(numDevicesToRecord);
+    
     if(doAddMotionItem){
         parentOfRecordItems->addChildItem(motionItem);
     }
@@ -1005,52 +991,81 @@ void SimulationBody::bufferRecords()
 
 void SimulationBody::Impl::bufferRecords()
 {
-    if(stateBuf){
-        if(currentStateBufIndex >= stateBuf->numFrames()){
-            stateBuf->setNumFrames(currentStateBufIndex + 1);
+    if(doRecord){
+
+        if(!simImpl->needToBufferAllFrames){
+            if(currentBodyStateBufIndex >= 2){
+                bodyStateBuf[0] = std::move(bodyStateBuf[1]);
+                bodyStateBuf.popBack();
+                currentBodyStateBufIndex = 1;
+            }
         }
-        auto& frame = stateBuf->frame(currentStateBufIndex++);
+
+        auto& state = bodyStateBuf.append();
+        
         if(!body_->existence()){
-            frame.clear();
+            state.clear();
+
+            if(numDevicesToRecord){
+                deviceStateChangeFlag.clear();
+                deviceStateChangeFlag.resize(numDevicesToRecord, true);
+            }
+            
         } else {
-            frame.allocate(numLinksToRecord, numJointsToRecord);
-            auto firstBlock = frame.firstBlock();
-            bufferBodyState(body_, firstBlock);
+            state.allocate(numLinksToRecord, numJointsToRecord, numDevicesToRecord);
+            auto firstBlock = state.firstBlock();
+            bufferBodyKinematicState(body_, firstBlock);
 
             Body* multiplexBody = body_->nextMultiplexBody();
             while(multiplexBody){
-                auto block = frame.extend(numLinksToRecord, numJointsToRecord);
-                bufferBodyState(multiplexBody, block);
+                auto block = state.extend(numLinksToRecord, numJointsToRecord, numDevicesToRecord);
+                bufferBodyKinematicState(multiplexBody, block);
                 multiplexBody = multiplexBody->nextMultiplexBody();
             }
-        }
-    }
 
-    if(deviceStateBuf){
-        const int prevIndex = std::max(0, deviceStateBuf->numFrames() - 1);
-        auto currentFrame = deviceStateBuf->appendFrame();
-        auto prevFrame = deviceStateBuf->frame(prevIndex);
-        const DeviceList<>& devices = body_->devices();
-        for(size_t i=0; i < devices.size(); ++i){
-            if(deviceStateChangeFlag[i]){
-                currentFrame[i] = devices[i]->cloneState();
-                deviceStateChangeFlag[i] = false;
-            } else {
-                currentFrame[i] = prevFrame[i];
+            if(numDevicesToRecord){
+                const int prevIndex = std::max(0, currentBodyStateBufIndex - 1);
+                auto& prevState = bodyStateBuf.frame(prevIndex);
+                auto prevStateBlock = prevState.firstBlock();
+                auto block = state.firstBlock();
+                bufferBodyDeviceState(body_, block, prevStateBlock);
+
+                Body* multiplexBody = body_->nextMultiplexBody();
+                while(multiplexBody){
+                    block = state.nextBlockOf(block);
+                    prevStateBlock = prevState.nextBlockOf(prevStateBlock);
+                    bufferBodyDeviceState(multiplexBody, block, prevStateBlock);
+                    multiplexBody = multiplexBody->nextMultiplexBody();
+                }
             }
+
+            ++currentBodyStateBufIndex;
         }
     }
 }
 
 
-void SimulationBody::Impl::bufferBodyState(Body* body, BodyStateBlock& block)
+void SimulationBody::Impl::bufferBodyKinematicState(Body* body, BodyStateBlock& stateBlock)
 {
     for(int i=0; i < numLinksToRecord; ++i){
-        block.linkPosition(i).set(body->link(i)->T());
+        stateBlock.linkPosition(i).set(body->link(i)->T());
     }
-    auto displacements = block.jointDisplacements();
+    auto displacements = stateBlock.jointDisplacements();
     for(int i=0; i < numJointsToRecord; ++i){
         displacements[i] = body->joint(i)->q();
+    }
+}
+
+
+void SimulationBody::Impl::bufferBodyDeviceState(Body* body, BodyStateBlock& stateBlock, BodyStateBlock& prevStateBlock)
+{
+    for(int i=0; i < numDevicesToRecord; ++i){
+        if(deviceStateChangeFlag[i]){
+            stateBlock.setDeviceState(i, body->device(i)->cloneState());
+            deviceStateChangeFlag[i] = false;
+        } else {
+            stateBlock.setDeviceState(i, prevStateBlock.deviceState(i));
+        }
     }
 }
 
@@ -1068,15 +1083,6 @@ void SimulationBody::Impl::flushRecords()
     } else {
         flushRecordsToLastStateBuffers();
     }
-
-    currentStateBufIndex = 0;
-
-    if(deviceStateBuf){
-        // keep the last state so that unchanged states can be shared
-        const int numFrames = deviceStateBuf->numFrames();
-        const int numPops = (numFrames >= 2) ? (numFrames - 1) : 0;
-        deviceStateBuf->popFrontFrames(numPops);
-    }
 }
 
 
@@ -1085,38 +1091,38 @@ void SimulationBody::Impl::flushRecordsToBodyMotionItems()
     const int ringBufferSize = simImpl->ringBufferSize;
     bool offsetChanged = false;
 
-    for(int i=0; i < currentStateBufIndex; ++i){
-        if(stateRecord->numFrames() < ringBufferSize){
-            stateRecord->append();
-        } else {
-            stateRecord->rotate();
+    // Step 1 (Use the move copy)
+    int lastFrameIndex = currentBodyStateBufIndex - 1;
+    // The follwoing loop begins with the second element to skip the first element that retains the unchanged device states
+    for(int i=1; i < lastFrameIndex; ++i){
+        bodyStateRecord->append();
+        if(bodyStateRecord->numFrames() > ringBufferSize){
+            bodyStateRecord->popFront();
             offsetChanged = true;
         }
-        auto& srcFrame = stateBuf->frame(i);
-        stateRecord->back() = srcFrame;
+        bodyStateRecord->back() = std::move(bodyStateBuf.frame(i));
     }
 
-    if(deviceStateBuf){
-        // This loop begins with the second element to skip the first element to keep the unchanged states
-        for(int i=1; i < deviceStateBuf->numFrames(); ++i){ 
-            auto buf = deviceStateBuf->frame(i);
-            if(deviceStateRecord->numFrames() >= ringBufferSize){
-                deviceStateRecord->popFrontFrame();
-                offsetChanged = true;
-            }
-            std::copy(buf.begin(), buf.end(), deviceStateRecord->appendFrame().begin());
+    // Step 2 (Copy the last frame with the device states retained)
+    if(lastFrameIndex >= 1){
+        bodyStateRecord->append();
+        if(bodyStateRecord->numFrames() > ringBufferSize){
+            bodyStateRecord->popFront();
+            offsetChanged = true;
         }
+        auto& lastState = bodyStateBuf.frame(lastFrameIndex);
+        bodyStateRecord->back() = lastState;
+        bodyStateBuf.front().assign(std::move(lastState), true, false);
     }
-    
+
+    // This buf always has the first element to keep unchanged device states
+    bodyStateBuf.resize(1);
+    currentBodyStateBufIndex = 1;
+
     if(offsetChanged){
         const int nextFrame = simImpl->currentFrame + 1;
         int offset = nextFrame - ringBufferSize;
-        if(stateRecord){
-            stateRecord->setOffsetTimeFrame(offset);
-        }
-        if(deviceStateBuf){
-            deviceStateRecord->setOffsetTimeFrame(offset);
-        }
+        bodyStateRecord->setOffsetTimeFrame(offset);
     }
 }
 
@@ -1124,22 +1130,19 @@ void SimulationBody::Impl::flushRecordsToBodyMotionItems()
 // This function is called in the no-recording mode.
 void SimulationBody::Impl::flushRecordsToLastStateBuffers()
 {
-    if(currentStateBufIndex > 0){
-        int lastFrame = currentStateBufIndex - 1;
-        lastStateBuf->frame(0) = stateBuf->frame(lastFrame);
-        hasLastState = true;
-    } else {
+    if(currentBodyStateBufIndex <= 1){
         hasLastState = false;
-    }
-    
-    if(deviceStateBuf){
-        if(!deviceStateBuf->empty()){
-            auto lastFrame = deviceStateBuf->lastFrame();
-            std::copy(lastFrame.begin(), lastFrame.end(), lastDeviceStateBuf->begin());
-            hasLastDeviceStates = true;
-        } else {
-            hasLastDeviceStates = false;
-        }
+
+    } else {
+        int lastFrameIndex = currentBodyStateBufIndex - 1;
+        auto& lastState = bodyStateBuf.frame(lastFrameIndex);
+        lastStateBuf = lastState;
+        bodyStateBuf.front().assign(std::move(lastState), true, false);
+        hasLastState = true;
+
+        // This buf always has the first element to keep unchanged device states
+        bodyStateBuf.resize(1);
+        currentBodyStateBufIndex = 1;
     }
 }
 
@@ -1148,10 +1151,7 @@ void SimulationBody::Impl::flushRecordsToLastStateBuffers()
 void SimulationBody::Impl::updateFrontendBodyStatelWithLastRecords(double time)
 {
     if(hasLastState){
-        bodyMotionEngine->updateBodyPosition(lastStateBuf->frame(0));
-    }
-    if(hasLastDeviceStates){
-        deviceStateEngine->updateBodyDeviceStates(simImpl->currentTime_, lastDeviceStateBuf->lastFrame());
+        bodyMotionEngine->updateBodyPosition(lastStateBuf);
     }
 }
 
@@ -1162,26 +1162,24 @@ void SimulationBody::Impl::flushRecordsToWorldLogFile(int bufferFrame)
 
     log->beginBodyStateOutput();
 
-    if(stateBuf){
-        auto& frame = stateBuf->frame(bufferFrame);
-        if(numLinksToRecord > 0){
-            log->outputLinkPositions(frame.linkPositionData(), numLinksToRecord);
+    if(bufferFrame < bodyStateBuf.numFrames()){
+        // Skip the front frame that retains the unchanged device states
+        auto& state = bodyStateBuf.frame(bufferFrame + 1);
+        if(numLinksToRecord){
+            log->outputLinkPositions(state.linkPositionData(), numLinksToRecord);
         }
-        if(numJointsToRecord > 0){
-            log->outputJointPositions(frame.jointDisplacements(), numJointsToRecord);
+        if(numJointsToRecord){
+            log->outputJointPositions(state.jointDisplacements(), numJointsToRecord);
+        }
+        if(numDevicesToRecord){
+            log->beginDeviceStateOutput();
+            for(int i=0; i < numDevicesToRecord; ++i){
+                log->outputDeviceState(state.deviceState(i));
+            }
+            log->endDeviceStateOutput();
         }
     }
     
-    if(deviceStateBuf){
-        // Skip the first element because it is used for sharing an unchanged state
-        auto states = deviceStateBuf->frame(bufferFrame + 1);
-        log->beginDeviceStateOutput();
-        for(int i=0; i < states.size(); ++i){
-            log->outputDeviceState(states[i]);
-        }
-        log->endDeviceStateOutput();
-    }
-
     log->endBodyStateOutput();
 }
 
@@ -1593,6 +1591,8 @@ void SimulatorItem::Impl::clearSimulation()
 
     hasControllers = false;
 
+    worldLogFileItem.reset();
+
     sigLogFlushRequested.disconnectAllSlots();
 
     self->clearSimulation();
@@ -1784,6 +1784,7 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
     cloneMap.replacePendingObjects();
     
     if(!self->initializeSimulation(simBodiesWithBody)){
+        clearSimulation();
         return false;
     }
 
@@ -1809,6 +1810,17 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
             p = subSimulatorItems.erase(p);
         }
     }
+
+    worldLogFileItem = nullptr;
+    // Check child items first
+    auto worldLogFileItems = self->descendantItems<WorldLogFileItem>();
+    if(worldLogFileItems.empty()){
+        // Check items in the world secondly
+        worldLogFileItems = worldItem->descendantItems<WorldLogFileItem>();
+    }
+    worldLogFileItem = worldLogFileItems.toSingle(true);
+
+    needToBufferAllFrames = (isRecordingEnabled || worldLogFileItem);
 
     for(size_t i=0; i < allSimBodies.size(); ++i){
         SimulationBody* simBody = allSimBodies[i];
@@ -1888,10 +1900,12 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
     if(doStopSimulationWhenNoActiveControllers && activeControllerInfos.empty()){
         mv->putln(_("The simulation cannot be started because all the controllers are inactive."),
                   MessageView::Error);
+        clearSimulation();
         return false;
     }
 
     if(!self->completeInitializationOfSimulation()){
+        clearSimulation();
         return false;
     }
 
@@ -1916,14 +1930,6 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
     aboutToQuitConnection = App::sigAboutToQuit().connect(
         [&](){ stopSimulation(true, true); });
 
-    worldLogFileItem = nullptr;
-    // Check child items first
-    auto worldLogFileItems = self->descendantItems<WorldLogFileItem>();
-    if(worldLogFileItems.empty()){
-        // Check items in the world secondly
-        worldLogFileItems = worldItem->descendantItems<WorldLogFileItem>();
-    }
-    worldLogFileItem = worldLogFileItems.toSingle(true);
     if(worldLogFileItem){
         if(worldLogFileItem->logFile().empty()){
             worldLogFileItem = nullptr;
