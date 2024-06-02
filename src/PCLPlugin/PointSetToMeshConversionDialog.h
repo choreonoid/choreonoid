@@ -10,7 +10,7 @@ namespace cnoid
 class ExtensionManager;
 class PointSetItem;
 
-class PointSetToMeshConversionDialog : public Dialog
+class CNOID_EXPORT PointSetToMeshConversionDialog : public Dialog
 {
 public:
     static void initializeClass(ExtensionManager* ext);
