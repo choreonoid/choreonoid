@@ -35,7 +35,7 @@ public:
     void setMultiplexBodySupportEnabled(bool on);
     
     void addBody(Body* body, bool isSelfCollisionDetectionEnabled = true, int groupId = 0);
-    void addLink(Link* link, int groupId = 0);
+    stdx::optional<GeometryHandle> addLink(Link* link, int groupId = 0);
 
     //! \note The geometry handle must be enabled for using this function.
     void setGroup(Body* body, int groupId);

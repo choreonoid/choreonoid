@@ -274,10 +274,10 @@ stdx::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::Impl::a
 }
 
 
-void BodyCollisionDetector::addLink(Link* link, int groupId)
+stdx::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::addLink(Link* link, int groupId)
 {
-    impl->addLink(link, link->isStatic(), groupId);
     impl->needToMakeCollisionDetectorReady = true;
+    return impl->addLink(link, link->isStatic(), groupId);
 }
 
 
