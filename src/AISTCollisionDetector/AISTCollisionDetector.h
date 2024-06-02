@@ -2,6 +2,7 @@
 #define CNOID_AIST_COLLISION_DETECTOR_AIST_COLLISION_DETECTOR_H
 
 #include <cnoid/CollisionDetector>
+#include <cnoid/stdx/optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -39,6 +40,8 @@ public:
 
     // experimental
     void setNumThreads(int n);
+    stdx::optional<double> detectDistanceToRayIntersection(
+        GeometryHandle geometry, const Vector3& point, const Vector3& direction);
 
 private:
     class Impl;

@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ColdetModel.h"
 #include "ColdetModelInternalModel.h"
 #include "Opcode/Opcode.h"
@@ -360,7 +356,7 @@ void ColdetModel::setPrimitivePosition(const double* R, const double* p)
 }
 
 
-double ColdetModel::computeDistanceWithRay(const double *point, 
+stdx::optional<double> ColdetModel::computeDistanceWithRay(const double *point, 
                                            const double *dir)
 {
     Opcode::RayCollider RC;
@@ -371,7 +367,7 @@ double ColdetModel::computeDistanceWithRay(const double *point,
     udword Cache;
     RC.Collide(world_ray, internalModel->model, transform, &Cache);
     if (CF.mDistance == FLT_MAX){
-        return 0;
+        return stdx::nullopt;
     }else{
         return CF.mDistance;
     }

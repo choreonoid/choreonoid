@@ -1,12 +1,9 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_AIST_COLLISION_DETECTOR_COLDET_MODEL_H
 #define CNOID_AIST_COLLISION_DETECTOR_COLDET_MODEL_H
 
 #include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
+#include <cnoid/stdx/optional>
 #include <string>
 #include <vector>
 #include "exportdecl.h"
@@ -191,9 +188,9 @@ public:
      * @brief compute distance between a point and this mesh along ray
      * @param point a point
      * @param dir direction of ray
-     * @return distance if ray collides with this mesh, FLT_MAX otherwise
+     * @return distance if ray collides with this mesh
      */
-    double computeDistanceWithRay(const double *point, const double *dir);
+    stdx::optional<double> computeDistanceWithRay(const double *point, const double *dir);
 
     /**
      * @brief check collision between this triangle mesh and a point cloud

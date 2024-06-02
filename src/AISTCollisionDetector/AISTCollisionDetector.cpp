@@ -688,3 +688,10 @@ double AISTCollisionDetector::detectDistance
     return ColdetModelPair::computeDistance(
         getColdetModel(geometry1), getColdetModel(geometry2), out_point1.data(), out_point2.data());
 }
+
+
+stdx::optional<double> AISTCollisionDetector::detectDistanceToRayIntersection
+(GeometryHandle geometry, const Vector3& point, const Vector3& direction)
+{
+    return getColdetModel(geometry)->computeDistanceWithRay(point.data(), direction.data());
+}
