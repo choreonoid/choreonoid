@@ -78,7 +78,9 @@ bool BodyMotionEngineCore::updateSingleBodyState(double time, Body* body, BodySt
 
     int numAllLinks = body->numLinks();
     int numLinkPositions = bodyStateBlock.numLinkPositions();
-    if(numLinkPositions == 0){
+    int numDeviceStates = bodyStateBlock.numDeviceStates();
+
+    if(numLinkPositions == 0 && numDeviceStates == 0){
         if(body->existence() && isMainBody){
             body->setExistence(false);
         }
@@ -110,7 +112,7 @@ bool BodyMotionEngineCore::updateSingleBodyState(double time, Body* body, BodySt
     if(!deviceInfos.empty()){
         int deviceIndex = 0;
         int n = deviceInfos.size();
-        int m = std::min(n, bodyStateBlock.numDeviceStates());
+        int m = std::min(n, numDeviceStates);
 
         while(deviceIndex < m){
             DeviceState* deviceState = bodyStateBlock.deviceState(deviceIndex);
