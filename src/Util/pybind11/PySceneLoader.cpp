@@ -2,6 +2,8 @@
 #include "../SceneLoader.h"
 #include "../StdSceneLoader.h"
 #include "../StdSceneWriter.h"
+#include "../StdSceneReader.h"
+#include "../YAMLReader.h"
 #include <iostream>
 
 namespace py = pybind11;
@@ -33,6 +35,37 @@ void exportPySceneLoader(py::module& m)
         SgNodePtr p = self.load(filename); return p; })
     //
     .def("setMessageSinkStdErr", [](StdSceneLoader &self) {
+        self.setMessageSink(std::cerr); })
+    ;
+
+    py::class_<StdSceneReader>(m, "StdSceneReader")
+    .def(py::init())
+    .def("setDefaultDivisionNumber", &StdSceneReader::setDefaultDivisionNumber)
+    .def("readNode", [](StdSceneReader &self, Mapping *info, const std::string &type) {
+                         return self.readNode(info, type);
+                     })
+    .def("readFromYamlString", [](StdSceneReader &self, const std::string &yaml_str, const std::string &type) {
+                                   YAMLReader yr;
+                                   SgNode *res = nullptr;
+                                   if(yr.parse(yaml_str)) {
+                                       ValueNode *vn = yr.document();
+                                       if (vn->isMapping()) {
+                                           Mapping *mp = vn->toMapping();
+                                           if (!!mp) {
+                                               if (type.size() > 0) {
+                                                   res = self.readNode(mp, type);
+                                                   return py::cast(res);
+                                               } else {
+                                                   res = self.readNode(mp);
+                                                   return py::cast(res);
+                                               }
+                                           }
+                                       }
+                                   }
+                                   return py::cast(res);
+                               })
+    //
+    .def("setMessageSinkStdErr", [](StdSceneReader &self) {
         self.setMessageSink(std::cerr); })
     ;
 
