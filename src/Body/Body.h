@@ -270,6 +270,8 @@ public:
     void setExistence(bool on);
     SignalProxy<void(bool on)> sigExistenceChanged();
 
+    bool isMultiplexBody() const;
+    Body* multiplexMainBody();
     int numMultiplexBodies() const { return !nextMultiplexBody_ ? 1 : getNumMultiplexBodies(); }
     Body* nextMultiplexBody() { return nextMultiplexBody_; }
     Body* getOrCreateNextMultiplexBody() {
