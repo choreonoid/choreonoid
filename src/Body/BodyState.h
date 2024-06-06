@@ -256,15 +256,16 @@ public:
     }
     
     BodyStateBlock nextBlockOf(const BodyStateBlock& block){
-        double* nextData =
-            block.pData + BodyStateBlock::HeaderSize +
-            block.numLinkPositions() * BodyStateBlock::LinkPositionSize +
-            block.numJointDisplacements();
-        if(nextData >= data.data() + data.size()){
-            nextData = nullptr;
-            return BodyStateBlock(nextData, nullptr);
+        if(block){
+            double* nextData =
+                block.pData + BodyStateBlock::HeaderSize +
+                block.numLinkPositions() * BodyStateBlock::LinkPositionSize +
+                block.numJointDisplacements();
+            if(nextData < data.data() + data.size()){
+                return BodyStateBlock(nextData, deviceData.data() + static_cast<int>(nextData[3]));
+            }
         }
-        return BodyStateBlock(nextData, deviceData.data() + static_cast<int>(nextData[3]));
+        return BodyStateBlock(nullptr, nullptr);
     }
 
     const BodyStateBlock nextBlockOf(const BodyStateBlock& block) const {
