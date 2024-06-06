@@ -224,6 +224,7 @@ public:
     void bufferRecords();
     void bufferBodyKinematicState(Body* body, BodyStateBlock& stateBlock);
     void bufferBodyDeviceState(Body* body, BodyStateBlock& stateBlock, BodyStateBlock& prevStateBlock);
+    void bufferBodyDeviceState(Body* body, BodyStateBlock& stateBlock);
     void flushRecords();
     void flushRecordsToBodyMotionItems();
     void flushRecordsToLastStateBuffers();
@@ -1034,7 +1035,12 @@ void SimulationBody::Impl::bufferRecords()
                 while(multiplexBody){
                     block = state.nextBlockOf(block);
                     prevStateBlock = prevState.nextBlockOf(prevStateBlock);
-                    bufferBodyDeviceState(multiplexBody, block, prevStateBlock);
+                    if(prevStateBlock){
+                        bufferBodyDeviceState(multiplexBody, block, prevStateBlock);
+                    } else {
+                        // No previous state
+                        bufferBodyDeviceState(multiplexBody, block);
+                    }
                     multiplexBody = multiplexBody->nextMultiplexBody();
                 }
             }
@@ -1066,6 +1072,15 @@ void SimulationBody::Impl::bufferBodyDeviceState(Body* body, BodyStateBlock& sta
         } else {
             stateBlock.setDeviceState(i, prevStateBlock.deviceState(i));
         }
+    }
+}
+
+
+void SimulationBody::Impl::bufferBodyDeviceState(Body* body, BodyStateBlock& stateBlock)
+{
+    for(int i=0; i < numDevicesToRecord; ++i){
+        stateBlock.setDeviceState(i, body->device(i)->cloneState());
+        deviceStateChangeFlag[i] = false;
     }
 }
 
