@@ -34,7 +34,6 @@ public:
     vector<GeometryHandle> linkIndexToGeometryHandleMap;
     BodyCollisionLinkFilter bodyCollisionLinkFilter;
     bool needToMakeCollisionDetectorReady;
-    bool hasCustomObjectsAssociatedWithLinks;
     bool isGeometryHandleMapEnabled;
     bool isGeometryRemovalSupported;
     bool isMultiplexBodySupportEnabled;
@@ -43,7 +42,7 @@ public:
     bool addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId, bool isMultiplexBody);
     bool addLinkRecursively(Link* link, bool isParentStatic, int groupId);
     stdx::optional<CollisionDetector::GeometryHandle> addLink(Link* link, bool isStatic, int groupId);
-    bool removeBody(Body* body, bool isMultiplexBody);
+    bool removeBody(Body* body);
     void onMultiplexBodyAddedOrRemoved(Body* body, bool isAdded, bool isSelfCollisionDetectionEnabled, int groupId);
     double findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2);
     void onBodyExistenceChanged(Body* body, bool on);    
@@ -70,7 +69,6 @@ BodyCollisionDetector::Impl::Impl()
         });
     
     needToMakeCollisionDetectorReady = true;
-    hasCustomObjectsAssociatedWithLinks = false;
     isGeometryHandleMapEnabled = false;
     isGeometryRemovalSupported = false;
     isMultiplexBodySupportEnabled = false;
@@ -137,7 +135,6 @@ void BodyCollisionDetector::clearBodies()
     impl->bodyInfoMap.clear();
     impl->linkToGeometryHandleMap.clear();
     impl->needToMakeCollisionDetectorReady = true;
-    impl->hasCustomObjectsAssociatedWithLinks = false;
 }
 
 
@@ -169,17 +166,6 @@ void BodyCollisionDetector::addBody(Body* body, bool isSelfCollisionDetectionEna
 {
     impl->addBody(body, isSelfCollisionDetectionEnabled, groupId, false);
 }
-
-
-/*
-void BodyCollisionDetector::addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId)
-{
-    //impl->linkAssociatedObjectFunc = getObjectAssociatedWithLink;
-    if(impl->addBody(body, isSelfCollisionDetectionEnabled)){
-        impl->hasCustomObjectsAssociatedWithLinks = true;
-    }
-}
-*/
 
 
 bool BodyCollisionDetector::Impl::addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId, bool isMultiplexBody)
@@ -215,6 +201,12 @@ bool BodyCollisionDetector::Impl::addBody(Body* body, bool isSelfCollisionDetect
                         [this, isSelfCollisionDetectionEnabled, groupId](Body* body, bool isAdded){
                             onMultiplexBodyAddedOrRemoved(body, isAdded, isSelfCollisionDetectionEnabled, groupId);
                         }));
+            }
+        }
+
+        if(isMultiplexBodySupportEnabled){
+            if(auto multiplexBody = body->nextMultiplexBody()){
+                addBody(multiplexBody, isSelfCollisionDetectionEnabled, groupId, true);
             }
         }
 
@@ -301,11 +293,11 @@ void BodyCollisionDetector::setGroup(Link* link, int groupId)
 
 bool BodyCollisionDetector::removeBody(Body* body)
 {
-    return impl->removeBody(body, false);
+    return impl->removeBody(body);
 }
 
 
-bool BodyCollisionDetector::Impl::removeBody(Body* body, bool /* isMultiplexBody */)
+bool BodyCollisionDetector::Impl::removeBody(Body* body)
 {
     bool removed = false;
     if(isGeometryHandleMapEnabled && isGeometryRemovalSupported){
@@ -321,6 +313,9 @@ bool BodyCollisionDetector::Impl::removeBody(Body* body, bool /* isMultiplexBody
         }
         bodyInfoMap.erase(body);
     }
+    if(removed){
+        needToMakeCollisionDetectorReady = true;
+    }
     return removed;
 }
 
@@ -331,7 +326,7 @@ void BodyCollisionDetector::Impl::onMultiplexBodyAddedOrRemoved
     if(isAdded){
         addBody(body, isSelfCollisionDetectionEnabled, groupId, true);
     } else {
-        removeBody(body, true);
+        removeBody(body);
     }
 }
 
@@ -365,11 +360,9 @@ stdx::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::findGeo
 
 void BodyCollisionDetector::updatePositions()
 {
-    if(!impl->hasCustomObjectsAssociatedWithLinks){
-        impl->collisionDetector->updatePositions(
-            [](Referenced* object, Isometry3*& out_position){
-                out_position = &(static_cast<Link*>(object)->position()); });
-    }
+    impl->collisionDetector->updatePositions(
+        [](Referenced* object, Isometry3*& out_position){
+            out_position = &(static_cast<Link*>(object)->position()); });
 }
 
 
