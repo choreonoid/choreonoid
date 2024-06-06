@@ -15,6 +15,7 @@
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <fmt/format.h>
+#include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
@@ -26,33 +27,21 @@ namespace {
 
 typedef CollisionDetector::GeometryHandle GeometryHandle;
 
-struct ColdetLinkInfo : public Referenced
+struct ColdetBodyInfo : public Referenced
 {
     BodyItem* bodyItem;
-    Link* link;
-    GeometryHandle geometry;
-    ColdetLinkInfo(BodyItem* bodyItem, Link* link, GeometryHandle geometry)
-        : bodyItem(bodyItem), link(link), geometry(geometry) { }
-};
-typedef ref_ptr<ColdetLinkInfo> ColdetLinkInfoPtr;
-    
-struct ColdetBodyInfo
-{
-    BodyItem* bodyItem;
-    vector<ColdetLinkInfoPtr> linkInfos;
     LinkPtr parentBodyLink;
-    bool kinematicStateChanged;
     bool isSelfCollisionDetectionEnabled;
     bool isModelUpdated;
 
     ColdetBodyInfo(BodyItem* bodyItem)
         : bodyItem(bodyItem),
-          kinematicStateChanged(false),
           isModelUpdated(false)
     {
         isSelfCollisionDetectionEnabled = bodyItem->isSelfCollisionDetectionEnabled();
     }
 };
+typedef ref_ptr<ColdetBodyInfo> ColdetBodyInfoPtr;
 
 }
 
@@ -69,13 +58,15 @@ public:
 
     Selection collisionDetectorType;
     BodyCollisionDetector bodyCollisionDetector;
-    vector<ColdetBodyInfo> coldetBodyInfos;
+    vector<ColdetBodyInfoPtr> coldetBodyInfos;
+    unordered_map<BodyPtr, BodyItem*> bodyToBodyItemMap;
     std::shared_ptr<vector<CollisionLinkPairPtr>> collisions;
     Signal<void()> sigCollisionsUpdated;
-    LazyCaller updateCollisionDetectorLater;
+    LazyCaller updateCollisionDetectionBodiesLater;
     LazyCaller updateCollisionsLater;
     SceneCollisionPtr sceneCollision;
     bool isCollisionDetectionEnabled;
+    bool isCollisionDetectionBetweenMultiplexBodiesEnabled;
     bool needToUpdateCollisionsLater;
     
     bool needToUpdateUnifiedMaterialTable;
@@ -90,13 +81,14 @@ public:
     void init();
     ~Impl();
     void onSubTreeChanged();
-    bool selectCollisionDetector(int index);
+    bool selectCollisionDetector(int index, bool doUpdateCollisionDetectionBodies);
     void enableCollisionDetection(bool on);
     void clearCollisionDetector();
-    void updateCollisionDetector(bool forceUpdate);
-    void updateColdetBodyInfos(vector<ColdetBodyInfo>& infos);
+    void updateCollisionDetectionBodies(bool forceUpdate);
+    void updateColdetBodyInfos(vector<ColdetBodyInfoPtr>& infos);
     void updateCollisions(bool forceUpdate);
-    void ignoreLinkPair(CollisionDetector* detector, GeometryHandle linkGeometry, Link* parentBodyLink, bool ignore);
+    void setLinkPairIgnored(
+        CollisionDetector* detector, GeometryHandle linkGeometry, Link* parentBodyLink, bool ignore);
     void extractCollisions(const CollisionPair& collisionPair);
     MaterialTable* getOrLoadDefaultMaterialTable(bool checkFileUpdate);
     MaterialTable* getOrCreateUnifiedMaterialTable();
@@ -124,7 +116,7 @@ WorldItem::Impl::Impl(WorldItem* self)
     : self(self),
       os(mvout()),
       updateCollisionsLater([&](){ updateCollisions(false); }),
-      updateCollisionDetectorLater([&](){ updateCollisionDetector(false); })
+      updateCollisionDetectionBodiesLater([&](){ updateCollisionDetectionBodies(false); })
 {
     const int n = CollisionDetector::numFactories();
     collisionDetectorType.resize(n);
@@ -133,6 +125,7 @@ WorldItem::Impl::Impl(WorldItem* self)
     };
     collisionDetectorType.select("AISTCollisionDetector");
     isCollisionDetectionEnabled = false;
+    isCollisionDetectionBetweenMultiplexBodiesEnabled = false;
 
     init();
 
@@ -151,11 +144,12 @@ WorldItem::Impl::Impl(WorldItem* self, const Impl& org)
     : self(self),
       os(org.os),
       updateCollisionsLater([&](){ updateCollisions(false); }),
-      updateCollisionDetectorLater([&](){ updateCollisionDetector(false); }),
+      updateCollisionDetectionBodiesLater([&](){ updateCollisionDetectionBodies(false); }),
       defaultMaterialTableFile(org.defaultMaterialTableFile)
 {
     collisionDetectorType = org.collisionDetectorType;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
+    isCollisionDetectionBetweenMultiplexBodiesEnabled = org.isCollisionDetectionBetweenMultiplexBodiesEnabled;
 
     init();
 }
@@ -164,8 +158,6 @@ WorldItem::Impl::Impl(WorldItem* self, const Impl& org)
 void WorldItem::Impl::init()
 {
     kinematicsBar = KinematicsBar::instance();
-    bodyCollisionDetector.setCollisionDetector(CollisionDetector::create(collisionDetectorType.selectedIndex()));
-    bodyCollisionDetector.setGeometryHandleMapEnabled(true);
     collisions = std::make_shared<vector<CollisionLinkPairPtr>>();
     sceneCollision = new SceneCollision(collisions);
     sceneCollision->setAttribute(SgObject::MetaScene);
@@ -174,6 +166,8 @@ void WorldItem::Impl::init()
     needToUpdateCollisionsLater = false;
     needToUpdateUnifiedMaterialTable = true;
 
+    selectCollisionDetector(collisionDetectorType.selectedIndex(), false);
+    
     self->sigSubTreeChanged().connect([&](){ onSubTreeChanged(); });
 }
 
@@ -199,7 +193,7 @@ WorldItem::Impl::~Impl()
 void WorldItem::Impl::onSubTreeChanged()
 {
     if(isCollisionDetectionEnabled){
-        updateCollisionDetectorLater();
+        updateCollisionDetectionBodiesLater();
     }
     needToUpdateUnifiedMaterialTable = true;
 }
@@ -225,7 +219,7 @@ ItemList<BodyItem> WorldItem::coldetBodyItems() const
 {
     ItemList<BodyItem> bodyItems;
     for(auto& info : impl->coldetBodyInfos){
-        bodyItems.push_back(info.bodyItem);
+        bodyItems.push_back(info->bodyItem);
     }
     return bodyItems;
 }
@@ -239,19 +233,21 @@ std::vector<WorldItem::CollisionLinkPairPtr>& WorldItem::collisions() const
 
 bool WorldItem::selectCollisionDetector(const std::string& name)
 {
-    return impl->selectCollisionDetector(CollisionDetector::factoryIndex(name));
+    return impl->selectCollisionDetector(CollisionDetector::factoryIndex(name), true);
 }
 
 
-bool WorldItem::Impl::selectCollisionDetector(int index)
+bool WorldItem::Impl::selectCollisionDetector(int index, bool doUpdateCollisionDetectionBodies)
 {
     if(index >= 0 && index < collisionDetectorType.size()){
         CollisionDetector* newCollisionDetector = CollisionDetector::create(index);
         if(newCollisionDetector){
             bodyCollisionDetector.setCollisionDetector(newCollisionDetector);
+            bodyCollisionDetector.setGeometryHandleMapEnabled(true);
+
             collisionDetectorType.select(index);
-            if(isCollisionDetectionEnabled){
-                updateCollisionDetector(true);
+            if(doUpdateCollisionDetectionBodies && isCollisionDetectionEnabled){
+                updateCollisionDetectionBodies(true);
             }
             return true;
         }
@@ -283,7 +279,7 @@ void WorldItem::Impl::enableCollisionDetection(bool on)
         
     } else if(!isCollisionDetectionEnabled && on){
         isCollisionDetectionEnabled = true;
-        updateCollisionDetector(true);
+        updateCollisionDetectionBodies(true);
         changed = true;
     }
 
@@ -300,6 +296,18 @@ bool WorldItem::isCollisionDetectionEnabled()
 }
 
 
+void WorldItem::setCollisionDetectionBetweenMultiplexBodiesEnabled(bool on)
+{
+    impl->isCollisionDetectionBetweenMultiplexBodiesEnabled = on;
+}
+
+
+bool WorldItem::isCollisionDetectionBetweenMultiplexBodiesEnabled() const
+{
+    return impl->isCollisionDetectionBetweenMultiplexBodiesEnabled;
+}
+
+
 void WorldItem::Impl::clearCollisionDetector()
 {
     bodyCollisionDetector.clearBodies();
@@ -308,24 +316,18 @@ void WorldItem::Impl::clearCollisionDetector()
     needToUpdateCollisionsLater = false;
 
     for(auto& info : coldetBodyInfos){
-        info.bodyItem->clearCollisions();
+        info->bodyItem->clearCollisions();
     }
 }
 
 
-void WorldItem::updateCollisionDetectorLater()
+void WorldItem::updateCollisionDetectionBodies()
 {
-    impl->updateCollisionDetectorLater();
+    impl->updateCollisionDetectionBodies(true);
 }
 
 
-void WorldItem::updateCollisionDetector()
-{
-    impl->updateCollisionDetector(true);
-}
-
-
-void WorldItem::Impl::updateCollisionDetector(bool forceUpdate)
+void WorldItem::Impl::updateCollisionDetectionBodies(bool forceUpdate)
 {
     if(!isCollisionDetectionEnabled){
         return;
@@ -334,15 +336,15 @@ void WorldItem::Impl::updateCollisionDetector(bool forceUpdate)
     if(forceUpdate){
         updateColdetBodyInfos(coldetBodyInfos);
     } else {
-        vector<ColdetBodyInfo> infos;
+        vector<ColdetBodyInfoPtr> infos;
         updateColdetBodyInfos(infos);
         if(infos.size() == coldetBodyInfos.size()){
             bool unchanged = std::equal(
                 infos.begin(), infos.end(), coldetBodyInfos.begin(),
-                [](ColdetBodyInfo& info1, ColdetBodyInfo& info2){
-                    return (info1.bodyItem == info2.bodyItem &&
-                            info1.isSelfCollisionDetectionEnabled == info2.isSelfCollisionDetectionEnabled &&
-                            !info2.isModelUpdated);
+                [](ColdetBodyInfoPtr& info1, ColdetBodyInfoPtr& info2){
+                    return (info1->bodyItem == info2->bodyItem &&
+                            info1->isSelfCollisionDetectionEnabled == info2->isSelfCollisionDetectionEnabled &&
+                            !info2->isModelUpdated);
                 });
             if(unchanged){
                 // A set of body items are not changed
@@ -356,51 +358,54 @@ void WorldItem::Impl::updateCollisionDetector(bool forceUpdate)
         coldetBodyInfos.swap(infos);
     }
 
+    bodyToBodyItemMap.clear();
+    for(auto& info : coldetBodyInfos){
+        bodyToBodyItemMap[info->bodyItem->body()] = info->bodyItem;
+    }
+
     clearCollisionDetector();
 
+    bodyCollisionDetector.setMultiplexBodySupportEnabled(isCollisionDetectionBetweenMultiplexBodiesEnabled);
+
     for(auto& bodyInfo : coldetBodyInfos){
-        BodyItem* bodyItem = bodyInfo.bodyItem;
+        BodyItem* bodyItem = bodyInfo->bodyItem;
 
-        bodyCollisionDetector.setLinkAssociatedObjectFunction(
-            [&bodyInfo](Link* link, GeometryHandle geometry){
-                auto linkInfo = new ColdetLinkInfo(bodyInfo.bodyItem, link, geometry);
-                bodyInfo.linkInfos.push_back(linkInfo);
-                return linkInfo;
-            });
-            
-        bodyCollisionDetector.addBody(bodyItem->body(), bodyInfo.isSelfCollisionDetectionEnabled);
+        bodyCollisionDetector.addBody(bodyItem->body(), bodyInfo->isSelfCollisionDetectionEnabled);
 
-        ColdetBodyInfo* pBodyInfo = &bodyInfo;
         bodyItemConnections.add(
             bodyItem->sigKinematicStateChanged().connect(
-                [this, pBodyInfo](){
-                    pBodyInfo->kinematicStateChanged = true;
+                [this, bodyInfo](){
                     updateCollisionsLater.setPriority(kinematicsBar->collisionDetectionPriority());
                     updateCollisionsLater();
                 }));
         bodyItemConnections.add(
             bodyItem->sigModelUpdated().connect(
-                [this, pBodyInfo](int flags){
+                [this, bodyInfo](int flags){
                     if(flags & (BodyItem::LinkSetUpdate | BodyItem::LinkSpecUpdate | BodyItem::ShapeUpdate)){
-                        pBodyInfo->isModelUpdated = true;
-                        updateCollisionDetectorLater();
+                        bodyInfo->isModelUpdated = true;
+                        updateCollisionDetectionBodiesLater();
                     }
                 }));
     }
 
-    bodyCollisionDetector.makeReady();
     updateCollisions(true);
 }
 
 
-void WorldItem::Impl::updateColdetBodyInfos(vector<ColdetBodyInfo>& infos)
+void WorldItem::Impl::updateColdetBodyInfos(vector<ColdetBodyInfoPtr>& infos)
 {
     infos.clear();
     for(auto bodyItem : self->descendantItems<BodyItem>()){
         if(bodyItem->isCollisionDetectionEnabled()){
-            infos.push_back(ColdetBodyInfo(bodyItem));
+            infos.push_back(new ColdetBodyInfo(bodyItem));
         }
     }
+}
+
+
+void WorldItem::updateCollisionDetectionBodiesLater()
+{
+    impl->updateCollisionDetectionBodiesLater();
 }
 
 
@@ -412,42 +417,35 @@ void WorldItem::updateCollisions()
 
 void WorldItem::Impl::updateCollisions(bool forceUpdate)
 {
-    if(updateCollisionDetectorLater.isPending()){
+    if(updateCollisionDetectionBodiesLater.isPending()){
         needToUpdateCollisionsLater = true;
         return;
     }
+
+    bodyCollisionDetector.makeReady();
+    bodyCollisionDetector.updatePositions();
     
     auto collisionDetector = bodyCollisionDetector.collisionDetector();
 
     for(auto& bodyInfo : coldetBodyInfos){
-        auto bodyItem = bodyInfo.bodyItem;
+        auto bodyItem = bodyInfo->bodyItem;
         bodyItem->clearCollisions();
-        if(bodyInfo.kinematicStateChanged || forceUpdate){
-            for(auto& linkInfo : bodyInfo.linkInfos){
-                collisionDetector->updatePosition(
-                    linkInfo->geometry, linkInfo->link->position());
-            }
-        }
-        Link* prevParentBodyLink = bodyInfo.parentBodyLink;
-        Link* newParentBodyLink = nullptr;
-        if(bodyItem->isAttachedToParentBody()){
-            newParentBodyLink = bodyItem->body()->parentBodyLink();
-        }
+
+        auto body = bodyItem->body();
+        Link* newParentBodyLink = bodyItem->isAttachedToParentBody() ? body->parentBodyLink() : nullptr;
+        Link* prevParentBodyLink = bodyInfo->parentBodyLink;
         if(newParentBodyLink != prevParentBodyLink){
-            auto& linkInfos = bodyInfo.linkInfos;
-            if(!linkInfos.empty()){
-                auto rootLinkGeometry = linkInfos.front()->geometry;
+            auto rootLink = body->rootLink();
+            if(auto pRootLinkGeometry = bodyCollisionDetector.findGeometryHandle(rootLink)){
                 if(prevParentBodyLink){
-                    ignoreLinkPair(collisionDetector, rootLinkGeometry, prevParentBodyLink, false);
+                    setLinkPairIgnored(collisionDetector, *pRootLinkGeometry, prevParentBodyLink, false);
                 }
                 if(newParentBodyLink){
-                    ignoreLinkPair(collisionDetector, rootLinkGeometry, newParentBodyLink, true);
+                    setLinkPairIgnored(collisionDetector, *pRootLinkGeometry, newParentBodyLink, true);
                 }
             }
-            bodyInfo.parentBodyLink = newParentBodyLink;
+            bodyInfo->parentBodyLink = newParentBodyLink;
         }
-        
-        bodyInfo.kinematicStateChanged = false;
     }
     
     collisions->clear();
@@ -458,14 +456,14 @@ void WorldItem::Impl::updateCollisions(bool forceUpdate)
     sceneCollision->setDirty();
     
     for(auto& info : coldetBodyInfos){
-        info.bodyItem->notifyCollisionUpdate();
+        info->bodyItem->notifyCollisionUpdate();
     }
     
     sigCollisionsUpdated();
 }
 
 
-void WorldItem::Impl::ignoreLinkPair
+void WorldItem::Impl::setLinkPairIgnored
 (CollisionDetector* detector, GeometryHandle linkGeometry, Link* parentBodyLink, bool ignore)
 {
     while(parentBodyLink){
@@ -485,17 +483,21 @@ void WorldItem::Impl::extractCollisions(const CollisionPair& collisionPair)
 {
     CollisionLinkPairPtr collisionLinkPair = std::make_shared<CollisionLinkPair>();
     collisionLinkPair->setCollisions(collisionPair.collisions());
-    BodyItem* bodyItem = nullptr;
+    BodyItem* anotherBodyItem = nullptr;
     for(int i=0; i < 2; ++i){
-        ColdetLinkInfo* linkInfo = static_cast<ColdetLinkInfo*>(collisionPair.object(i));
-        if(linkInfo->bodyItem != bodyItem){
-            bodyItem = linkInfo->bodyItem;
-            bodyItem->collisions().push_back(collisionLinkPair);
+        auto link = static_cast<Link*>(collisionPair.object(i));
+        auto mainBody = link->body()->multiplexMainBody();
+        auto it = bodyToBodyItemMap.find(mainBody);
+        if(it != bodyToBodyItemMap.end()){
+            auto bodyItem = it->second;
+            if(bodyItem != anotherBodyItem){
+                bodyItem->collisions().push_back(collisionLinkPair);
+                anotherBodyItem = bodyItem;
+            }
+            bodyItem->collisionsOfLink(link->index()).push_back(collisionLinkPair);
+            bodyItem->collisionLinkBitSet()[link->index()] = true;
         }
-        Link* link = linkInfo->link;
         collisionLinkPair->setLink(i, link);
-        bodyItem->collisionsOfLink(link->index()).push_back(collisionLinkPair);
-        bodyItem->collisionLinkBitSet()[link->index()] = true;
     }
     collisions->push_back(collisionLinkPair);
 }
@@ -605,14 +607,21 @@ SgNode* WorldItem::getScene()
 void WorldItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Collision detection"), isCollisionDetectionEnabled(),
-                [&](bool on){ setCollisionDetectionEnabled(on); return true; });
+                [this](bool on){ setCollisionDetectionEnabled(on); return true; });
     putProperty(_("Collision detector"), impl->collisionDetectorType,
-                [&](int index){ return impl->selectCollisionDetector(index); });
+                [this](int index){ return impl->selectCollisionDetector(index, true); });
 
+    putProperty(_("Collision detection between multiplex bodies"), impl->isCollisionDetectionBetweenMultiplexBodiesEnabled,
+                [this](bool on){
+                    setCollisionDetectionBetweenMultiplexBodiesEnabled(on);
+                    impl->updateCollisionDetectionBodies(true);
+                    return true;
+                });
+    
     FilePathProperty materialFileProperty(
         impl->defaultMaterialTableFile, { _("Contact material definition file (*.yaml)") });
     putProperty(_("Default material table"), materialFileProperty,
-                [&](const string& filename){ setDefaultMaterialTableFile(filename); return true; });
+                [this](const string& filename){ setDefaultMaterialTableFile(filename); return true; });
 }
 
 
@@ -620,6 +629,9 @@ bool WorldItem::store(Archive& archive)
 {
     archive.write("collision_detection", isCollisionDetectionEnabled());
     archive.write("collision_detector", impl->collisionDetectorType.selectedSymbol());
+    if(impl->isCollisionDetectionBetweenMultiplexBodiesEnabled){
+        archive.write("collision_detection_between_multiplex_bodies", true);
+    }
     archive.writeRelocatablePath("default_material_table_file", impl->defaultMaterialTableFile);
     return true;
 }
@@ -634,11 +646,14 @@ bool WorldItem::restore(const Archive& archive)
     if(archive.get({ "collision_detection", "collisionDetection" }, false)){
         archive.addPostProcess([&](){ impl->enableCollisionDetection(true); });
     }
+    archive.read("collision_detection_between_multiplex_bodies", impl->isCollisionDetectionBetweenMultiplexBodiesEnabled);
+    
     if(archive.read({ "default_material_table_file", "materialTableFile" }, symbol)){
         symbol = archive.resolveRelocatablePath(symbol);
         if(!symbol.empty()){
             setDefaultMaterialTableFile(symbol);
         }
     }
+    
     return true;
 }

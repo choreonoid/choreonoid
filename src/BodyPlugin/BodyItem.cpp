@@ -1114,7 +1114,7 @@ void BodyItem::Impl::updateCollisionDetectorLater()
     
     WorldItem* worldItem = self->findOwnerItem<WorldItem>();
     if(worldItem){
-        worldItem->updateCollisionDetectorLater();
+        worldItem->updateCollisionDetectionBodiesLater();
     }
 }
 

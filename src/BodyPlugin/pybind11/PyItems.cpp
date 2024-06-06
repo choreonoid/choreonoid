@@ -24,13 +24,17 @@ void exportItems(py::module m)
         .def("selectCollisionDetector", &WorldItem::selectCollisionDetector)
         .def("isCollisionDetectionEnabled", &WorldItem::isCollisionDetectionEnabled)
         .def("setCollisionDetectionEnabled", &WorldItem::setCollisionDetectionEnabled)
-        .def("updateCollisionDetectorLater", &WorldItem::updateCollisionDetectorLater)
-        .def("updateCollisionDetector", &WorldItem::updateCollisionDetector)
+        .def("updateCollisionDetectionBodies", &WorldItem::updateCollisionDetectionBodies)
+        .def("updateCollisionDetectionBodiesLater", &WorldItem::updateCollisionDetectionBodiesLater)
         .def("updateCollisions", &WorldItem::updateCollisions)
         .def_property_readonly("sigCollisionsUpdated", &WorldItem::sigCollisionsUpdated)
         .def("setDefaultMaterialTableFile", &WorldItem::setDefaultMaterialTableFile)
         .def_property_readonly("defaultMaterialTable", [](WorldItem& self){ return self.defaultMaterialTable(); })
         .def_property_readonly("materialTable", &WorldItem::materialTable)
+
+        // deprecated
+        .def("updateCollisionDetector", &WorldItem::updateCollisionDetectionBodies)
+        .def("updateCollisionDetectorLater", &WorldItem::updateCollisionDetectionBodiesLater)
         ;
 
     PyItemList<WorldItem>(m, "WorldItemList");

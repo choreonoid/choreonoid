@@ -30,11 +30,12 @@ public:
     bool selectCollisionDetector(const std::string& name);
     CollisionDetector* collisionDetector();
     void setCollisionDetectionEnabled(bool on);
-    [[deprecated("Use setCollisionDetectionEnabled()")]]
-    void enableCollisionDetection(bool on){ setCollisionDetectionEnabled(on); }
     bool isCollisionDetectionEnabled();
-    void updateCollisionDetectorLater();
-    void updateCollisionDetector();
+    void setCollisionDetectionBetweenMultiplexBodiesEnabled(bool on);
+    bool isCollisionDetectionBetweenMultiplexBodiesEnabled() const;
+    
+    void updateCollisionDetectionBodies();
+    void updateCollisionDetectionBodiesLater();
     void updateCollisions();
 
     typedef std::shared_ptr<CollisionLinkPair> CollisionLinkPairPtr;
@@ -48,9 +49,19 @@ public:
     // RenderableItem
     virtual SgNode* getScene() override;
 
-    //! \deprecated
+
+    [[deprecated("Use coldetBodyItems.")]]
     ItemList<BodyItem> collisionBodyItems() const { return coldetBodyItems(); }
 
+    [[deprecated("Use setCollisionDetectionEnabled.")]]
+    void enableCollisionDetection(bool on){ setCollisionDetectionEnabled(on); }
+
+    [[deprecated("Use updateCollisionDetectionBodies.")]]
+    void updateCollisionDetector() { updateCollisionDetectionBodies(); }
+
+    [[deprecated("Use updateCollisionDetectionBodiesLater.")]]
+    void updateCollisionDetectorLater() { updateCollisionDetectionBodiesLater(); }
+    
 protected:
     WorldItem(const WorldItem& org);
     virtual Item* doCloneItem(CloneMap* cloneMap) const override;
