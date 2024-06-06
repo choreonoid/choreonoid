@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-05-01 18:26+0900\n"
+"POT-Creation-Date: 2024-06-06 11:33+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1781,6 +1781,9 @@ msgstr "デフォルトマテリアルテーブル \"{}\" の再読込ができ�
 
 msgid "Collision detector"
 msgstr "干渉検出器"
+
+msgid "Collision detection between multiplex bodies"
+msgstr "多重化ボディ間の干渉検出"
 
 msgid "Contact material definition file (*.yaml)"
 msgstr "接触マテリアル定義ファイル (*.yaml)"
