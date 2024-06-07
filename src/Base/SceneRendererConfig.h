@@ -4,6 +4,7 @@
 #include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
 #include <QWidget>
+#include <QPushButton>
 #include <string>
 #include "exportdecl.h"
 
@@ -32,7 +33,8 @@ public:
 
     virtual void showConfigDialog();
 
-    static bool inputColorWithColorDialog(const std::string& title, Vector3f& io_color);
+    static bool inputColorWithColorDialog(const std::string& title, Vector3f& io_color, QPushButton* button);
+    static void setColorButtonColor(QPushButton* button, const Vector3f& color);
 
     class Impl;
 

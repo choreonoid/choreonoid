@@ -533,10 +533,20 @@ bool SceneRendererConfig::Impl::restore(const Mapping* archive)
 
     isTextureEnabled = archive->get("texture", true);
     isFogEnabled = archive->get("fog", true);
-    read(archive, { "background_color", "backgroundColor" }, backgroundColor);
+
+    if(read(archive, { "background_color", "backgroundColor" }, backgroundColor)){
+        if(widgetSet){
+            setColorButtonColor(widgetSet->backgroundColorButton, backgroundColor);
+        }
+    }
+    auto defaultColor0 = defaultColor;
     if(!read(archive, { "default_color", "defaultColor" }, defaultColor)){
         defaultColor << 1.0f, 1.0f, 1.0f;
     }
+    if(widgetSet && defaultColor != defaultColor0){
+        setColorButtonColor(widgetSet->defaultColorButton, defaultColor);
+    }
+    
     archive->read({ "line_width", "lineWidth" }, lineWidth);
     archive->read({ "point_size", "pointSize" }, pointSize);
     isUpsideDownEnabled = archive->get({ "upside_down", "upsideDown" }, false);
@@ -622,7 +632,7 @@ void SceneRendererConfig::updateConfigWidgets()
 }
 
 
-bool SceneRendererConfig::inputColorWithColorDialog(const std::string& title, Vector3f& io_color)
+bool SceneRendererConfig::inputColorWithColorDialog(const std::string& title, Vector3f& io_color, QPushButton* button)
 {
     auto& c = io_color;
     QColor newColor =
@@ -632,9 +642,22 @@ bool SceneRendererConfig::inputColorWithColorDialog(const std::string& title, Ve
     
     if(newColor.isValid()){
         io_color << newColor.redF(), newColor.greenF(), newColor.blueF();
+        if(button){
+            setColorButtonColor(button, io_color);
+        }
         return true;
     }
     return false;
+}
+
+
+void SceneRendererConfig::setColorButtonColor(QPushButton* button, const Vector3f& color)
+{
+    QColor c;
+    c.setRgbF(color[0], color[1], color[2]);
+    QString s("border: 1px solid black; background-color: #" + QString::number(c.rgb(), 16).toUpper() + ";");
+    button->setStyleSheet(s);
+    button->update();
 }
 
 
@@ -822,20 +845,22 @@ ConfigWidgetSet::ConfigWidgetSet(SceneRendererConfig::Impl* config_)
         });
     signalObjects.push_back(fogCheck);
 
-    backgroundColorButton = new PushButton(_("Background color"), ownerWidget);
+    backgroundColorButton = new PushButton(ownerWidget);
+    SceneRendererConfig::setColorButtonColor(backgroundColorButton, config->backgroundColor);
     backgroundColorButton->sigClicked().connect(
         [this](){
             if(SceneRendererConfig::inputColorWithColorDialog(
-                   _("Background Color"), config->backgroundColor)){
+                   _("Background Color"), config->backgroundColor, backgroundColorButton)){
                 config->updateRenderers(Drawing, true);
             }
         });
 
-    defaultColorButton = new PushButton(_("Default color"), ownerWidget);
+    defaultColorButton = new PushButton(ownerWidget);
+    SceneRendererConfig::setColorButtonColor(defaultColorButton, config->defaultColor);
     defaultColorButton->sigClicked().connect(
         [this](){
             if(SceneRendererConfig::inputColorWithColorDialog(
-                   _("Default Color"), config->defaultColor)){
+                   _("Default Color"), config->defaultColor, defaultColorButton)){
                 config->updateRenderers(Drawing, true);
             }
         });

@@ -418,16 +418,19 @@ bool SceneWidgetConfig::Impl::restore(const Mapping* archive)
     }
     
     static const char* planes[] = { "floor", "xz", "yz" };
+    static const char* grid_color_keys[] = { "xy_grid_color", "xz_grid_color", "yz_grid_color" };
     for(int i=0; i < 3; ++i){
         auto& info = gridInfos[i];
         auto& plane = planes[i];
         archive->read(format("{}Grid", plane), info.isEnabled);
         archive->read(format("{}GridSpan", plane), info.span);
         archive->read(format("{}GridInterval", plane), info.interval);
+        if(read(archive, grid_color_keys[i], info.color)){
+            if(widgetSet){
+                setColorButtonColor(widgetSet->gridWidgetSets[i].colorButton, info.color);
+            }
+        }
     }
-    read(archive, "xy_grid_color", gridInfos[0].color);
-    read(archive, "xz_grid_color", gridInfos[1].color);
-    read(archive, "yz_grid_color", gridInfos[2].color);
 
     isNormalVisualizationEnabled = archive->get("normalVisualization", false);
     normalLength = archive->get("normalLength", defaultNormalLength);
@@ -650,15 +653,17 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
         signalObjects.push_back(intervalSpin);
         gws.intervalSpin = intervalSpin;
 
-        gws.colorButton = new PushButton(_("Color"), ownerWidget);
-        gws.colorButton->sigClicked().connect(
-            [this, i, gridLabels](){
+        auto colorButton = new PushButton(ownerWidget);
+        SceneRendererConfig::setColorButtonColor(colorButton, config->gridInfos[i].color);
+        colorButton->sigClicked().connect(
+            [this, i, gridLabels, colorButton](){
                 auto& color = config->gridInfos[i].color;
                 if(SceneRendererConfig::inputColorWithColorDialog(
-                       format(_("{0} Color"), gridLabels[i]), color)){
+                       format(_("{0} Color"), gridLabels[i]), color, colorButton)){
                     config->updateSceneWidgets(GridCategory, true);
                 }
             });
+        gws.colorButton = colorButton;
     }
     
     normalVisualizationCheck = new CheckBox(_("Normal Visualization"), ownerWidget);
@@ -784,8 +789,9 @@ QWidget* ConfigWidgetSet::createBackgroundPanel()
     auto grid = new QGridLayout;
     grid->setContentsMargins(0, 0, 0, 0);
     backgroundPanel->setLayout(grid);
-    
-    grid->addWidget(backgroundColorButton, 0, 0);
+
+    grid->addWidget(new QLabel(_("Background color")), 0, 0, Qt::AlignCenter);
+    grid->addWidget(backgroundColorButton, 1, 0);
     grid->addWidget(coordinateAxesCheck, 2, 0);
     grid->addWidget(new VSeparator, 0, 2, 3, 1);
 
@@ -796,7 +802,8 @@ QWidget* ConfigWidgetSet::createBackgroundPanel()
         grid->addWidget(gws.spanSpin, i, 6);
         grid->addWidget(new QLabel(_("Interval")), i, 7);
         grid->addWidget(gws.intervalSpin, i, 8);
-        grid->addWidget(gws.colorButton, i, 9);
+        grid->addWidget(new QLabel(_("Color")), i, 9);
+        grid->addWidget(gws.colorButton, i, 10);
     }
 
     grid->setColumnStretch(10, 10);
@@ -818,6 +825,7 @@ QWidget* ConfigWidgetSet::createDrawingPanel()
     QHBoxLayout* hbox;
 
     hbox = new QHBoxLayout;
+    hbox->addWidget(new QLabel(_("Default color")));
     hbox->addWidget(defaultColorButton);
     hbox->addWidget(new QLabel(_("Default line width")));
     hbox->addWidget(lineWidthSpin);
