@@ -646,26 +646,26 @@ void BodyItem::calcForwardKinematics(bool calcVelocity, bool calcAcceleration)
 
 void BodyItem::storeKinematicState(BodyState& state)
 {
-    state.storeStateOfBody(impl->body);
+    state.storeMultiplexStateOfBody(impl->body);
 }
 
 
 void BodyItem::Impl::storeKinematicStateEx(BodyStateEx& state)
 {
-    state.storeStateOfBody(body);
+    state.storeMultiplexStateOfBody(body);
     state.zmp = zmp;
 }
 
 
 void BodyItem::restoreKinematicState(const BodyState& state)
 {
-    state.restoreStateToBody(impl->body);
+    state.restoreMultiplexStateToBody(impl->body);
 }
 
 
 void BodyItem::Impl::restoreKinematicStateEx(const BodyStateEx& state)
 {
-    state.restoreStateToBody(body);
+    state.restoreMultiplexStateToBody(body);
     zmp = state.zmp;
 }
 
