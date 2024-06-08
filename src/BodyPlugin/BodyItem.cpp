@@ -568,6 +568,18 @@ void BodyItem::notifyModelUpdate(int flags)
 
 void BodyItem::Impl::notifyModelUpdate(int flags)
 {
+    bool hasMultiplexBody = body->nextMultiplexBody();
+    if(hasMultiplexBody){
+        if(flags & LinkSetUpdate){
+            body->clearMultiplexBodies(true);
+        } else {
+            BodyState state;
+            state.storeMultiplexStateOfBody(body);
+            body->clearMultiplexBodies(true);
+            state.restoreMultiplexStateToBody(body);
+        }
+    }
+    
     if(flags & LinkSetUpdate){
         resetLinkCollisions();
         setCurrentBaseLink(currentBaseLink, true, false);
@@ -577,7 +589,8 @@ void BodyItem::Impl::notifyModelUpdate(int flags)
     }
 
     if(sceneBody){
-        if(flags & (LinkSetUpdate | LinkSpecUpdate | ShapeUpdate)){
+        if(hasMultiplexBody ||
+           (flags & (LinkSetUpdate | LinkSpecUpdate | ShapeUpdate))){
             sceneBody->updateSceneModel();
             if(transparency > 0.0f){
                 sceneBody->setTransparency(transparency);

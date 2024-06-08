@@ -442,7 +442,11 @@ void SceneBody::updateSceneModel()
     }
 
     SgUpdateRef noUpdate;
-    impl->removeSubsequentMultiplexSceneBodies(0, noUpdate, false);
+
+    bool isMainBody = body_->isMultiplexMainBody();
+    if(isMainBody){
+        impl->removeSubsequentMultiplexSceneBodies(0, noUpdate, false);
+    }
 
     const int n = body_->numLinks();
     for(int i=0; i < n; ++i){
@@ -451,9 +455,14 @@ void SceneBody::updateSceneModel()
         impl->lastEffectGroup->addChild(sLink);
         sceneLinks_.push_back(sLink);
     }
-    impl->updateLinkPositions(body_, sceneLinks_, noUpdate);
 
     updateSceneDeviceModels(false);
+
+    if(isMainBody){
+        updateLinkPositions(noUpdate);
+    } else {
+        impl->updateLinkPositions(body_, sceneLinks_, noUpdate);
+    }
     
     notifyUpdate(SgUpdate::REMOVED | SgUpdate::ADDED | SgUpdate::MODIFIED);
 }
@@ -555,8 +564,9 @@ void SceneBody::Impl::removeSubsequentMultiplexSceneBodies(int index, SgUpdateRe
 {
     int n = multiplexSceneBodies.size();
     if(index < n){
+        int lastIndex = n - 1;
         for(size_t i = index; i < n; ++i){
-            multiplexSceneBodyGroup->removeChildAt(index, update);
+            multiplexSceneBodyGroup->removeChildAt(lastIndex--, update);
             if(doCache){
                 multiplexSceneBodyCache.push_back(multiplexSceneBodies[i]);
             }
