@@ -355,6 +355,9 @@ public:
     void storeStateOfBody(const Body* body);
     bool restoreStateToBody(Body* body) const;
 
+    void storeMultiplexStateOfBody(const Body* body);
+    bool restoreMultiplexStateToBody(Body* body) const;
+    
     [[deprecated("Use storeStateOfBody.")]]
     void storePositions(const Body& body){
         storeStateOfBody(&body);

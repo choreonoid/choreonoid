@@ -102,6 +102,44 @@ bool BodyState::restoreStateToBody(Body* body) const
 }
 
 
+void BodyState::storeMultiplexStateOfBody(const Body* body)
+{
+    const int numLinks = body->numLinks();
+    const int numJoints = body->numJoints();
+    const int numDevices = body->numDevices();
+    allocate(numLinks, numJoints, numDevices);
+    firstBlock().storeStateOfBody(body);
+
+    auto multiplexBody = body->nextMultiplexBody();
+    while(multiplexBody){
+        auto block = extend(numLinks, numJoints, numDevices);
+        block.storeStateOfBody(multiplexBody);
+        multiplexBody = multiplexBody->nextMultiplexBody();
+    }
+}
+
+
+bool BodyState::restoreMultiplexStateToBody(Body* body) const
+{
+    bool restored = false;
+    
+    auto block = firstBlock();
+    restored = block.restoreStateToBody(body);
+    
+    block = nextBlockOf(block);
+    while(block){
+        body = body->getOrCreateNextMultiplexBody();
+        if(block.restoreStateToBody(body)){
+            restored = true;
+        }
+        block = nextBlockOf(block);
+    }
+    body->clearMultiplexBodies();
+
+    return restored;
+}
+
+
 BodyState& cnoid::operator<<(BodyState& state, const Body& body)
 {
     state.storeStateOfBody(&body);
