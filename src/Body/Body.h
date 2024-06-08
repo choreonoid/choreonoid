@@ -271,9 +271,11 @@ public:
     SignalProxy<void(bool on)> sigExistenceChanged();
 
     bool isMultiplexBody() const;
+    bool isMultiplexMainBody() const;
     Body* multiplexMainBody();
     int numMultiplexBodies() const { return !nextMultiplexBody_ ? 1 : getNumMultiplexBodies(); }
     Body* nextMultiplexBody() { return nextMultiplexBody_; }
+    const Body* nextMultiplexBody() const { return nextMultiplexBody_; }
     Body* getOrCreateNextMultiplexBody() {
         return nextMultiplexBody_ ? nextMultiplexBody_.get() : addMultiplexBody();
     }

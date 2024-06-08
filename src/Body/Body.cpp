@@ -31,7 +31,7 @@ typedef std::map<std::string, ReferencedPtr> CacheMap;
 
 struct MultiplexInfo : public Referenced
 {
-    Body* masterBody;
+    Body* mainBody;
     Body* lastBody;
     int numBodies;
     vector<BodyPtr> bodyCache;
@@ -866,7 +866,7 @@ SignalProxy<void(bool on)> Body::sigExistenceChanged()
 bool Body::isMultiplexBody() const
 {
     if(impl->multiplexInfo){
-        if(this != impl->multiplexInfo->masterBody){
+        if(this != impl->multiplexInfo->mainBody){
             return true;
         }
     }
@@ -874,9 +874,15 @@ bool Body::isMultiplexBody() const
 }
 
 
+bool Body::isMultiplexMainBody() const
+{
+    return impl->multiplexInfo ? (impl->multiplexInfo->mainBody == this) : true;
+}
+
+
 Body* Body::multiplexMainBody()
 {
-    return impl->multiplexInfo ? impl->multiplexInfo->masterBody : this;
+    return impl->multiplexInfo ? impl->multiplexInfo->mainBody : this;
 }
 
 
@@ -890,7 +896,7 @@ MultiplexInfo* Body::Impl::getOrCreateMultiplexInfo(Body* self)
 {
     if(!multiplexInfo){
         multiplexInfo = new MultiplexInfo;
-        multiplexInfo->masterBody = self;
+        multiplexInfo->mainBody = self;
         multiplexInfo->lastBody = self;
         multiplexInfo->numBodies = 1;
     }
@@ -930,7 +936,9 @@ bool Body::doClearMultiplexBodies(bool doClearCache)
 
     BodyPtr nextBody = nextMultiplexBody_;
     while(nextBody){
-        impl->multiplexInfo->bodyCache.push_back(nextBody);
+        if(!doClearCache){
+            impl->multiplexInfo->bodyCache.push_back(nextBody);
+        }
         nextBody->impl->multiplexInfo.reset();
         BodyPtr nextNextBody = nextBody->nextMultiplexBody_;
         nextBody->nextMultiplexBody_.reset();
