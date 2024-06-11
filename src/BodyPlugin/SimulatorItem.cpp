@@ -215,7 +215,7 @@ public:
     Impl(SimulationBody* self, Body* body);
     bool initialize(SimulatorItem* simulatorItem, BodyItem* bodyItem);
     bool initialize(SimulatorItem::Impl* simImpl, ControllerItem* controllerItem);
-    void extractAssociatedItems(bool doReset);
+    void extractAssociatedItems();
     void extractControllerItems(Item* item, ControllerItem* parentControllerItem);
     void copyStateToBodyItem();
     void initializeRecording();
@@ -748,14 +748,9 @@ bool SimulationBody::Impl::initialize(SimulatorItem* simulatorItem, BodyItem* bo
     body_->initializeState();
 
     isDynamic = !body_->isStaticModel();
-    bool doReset = simImpl->isSimulationFromInitialState && isDynamic;
-    extractAssociatedItems(doReset);
-    
-    if(!isDynamic && body_->numDevices() == 0){
-        return true;
-    }
+    extractAssociatedItems();
 
-    isActive = true;
+    isActive = isDynamic || (body_->numDevices() > 0);
     
     return true;
 }
@@ -779,7 +774,7 @@ bool SimulationBody::Impl::initialize(SimulatorItem::Impl* simImpl, ControllerIt
 }
 
 
-void SimulationBody::Impl::extractAssociatedItems(bool doReset)
+void SimulationBody::Impl::extractAssociatedItems()
 {
     extractControllerItems(bodyItem->childItem(), nullptr);
     
