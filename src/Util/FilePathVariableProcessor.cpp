@@ -154,6 +154,12 @@ void FilePathVariableProcessor::addAppSpecificVariable(const std::string& name, 
 }
 
 
+void FilePathVariableProcessor::addAppSpecificVariable(const std::string& name, const std::string& path)
+{
+    impl->appSpecificVariables[name].emplace_back(fromUTF8(path));
+}
+
+
 void FilePathVariableProcessor::addUserVariable(const std::string& name, const stdx::filesystem::path& path)
 {
     impl->userVariables[name].emplace_back(path);

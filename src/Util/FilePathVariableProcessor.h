@@ -28,6 +28,7 @@ public:
 
     void setSubstitutionWithSystemPathVariableEnabled(bool on);
     void addAppSpecificVariable(const std::string& name, const stdx::filesystem::path& path);
+    void addAppSpecificVariable(const std::string& name, const std::string& path);
     void addUserVariable(const std::string& name, const stdx::filesystem::path& path);
     std::vector<std::pair<std::string, stdx::filesystem::path>> getUserVariables() const;
     void clearUserVariables();
