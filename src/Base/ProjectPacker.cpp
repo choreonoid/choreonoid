@@ -255,10 +255,19 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
             nodeQueue.pop_front();
             if(node->isNecessary){
                 auto& path = node->fullPath;
-                if(node->isShared || !path.has_filename() || !fs::is_regular_file(path)){
+                bool has_filename = path.has_filename();
+#ifndef _WIN32
+                bool is_directory = fs::is_directory(path);
+#else                
+                // Restore the original drive symbol in Windows
+                static regex re("^\\\\([A-Za-z])");
+                fs::path pathForCheck = regex_replace(path.string(), re, "$1:");
+                bool is_directory = fs::is_directory(pathForCheck);
+#endif
+                if(node->isShared || !has_filename || is_directory){
                     topDirPath = path;
                 } else {
-                    topDirPath = path.remove_filename();
+                    topDirPath = path.parent_path();
                 }
                 break;
             }
@@ -268,7 +277,6 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
             }
         }
 
-        // Copy the files
         packingDirPath = fromUTF8(packingDirectory);
         if(!packingDirPath.is_absolute()){
             packingDirPath = fs::absolute(packingDirPath);
@@ -298,6 +306,7 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
         return false;
     }
 
+    // Copy the files
     for(auto& path : allPaths){
         auto relDirPath = getRelativePath(path.parent_path(), topDirPath);
         if(!relDirPath){
