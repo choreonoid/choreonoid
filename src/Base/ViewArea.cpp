@@ -5,6 +5,7 @@
 #include "MessageView.h"
 #include "MainWindow.h"
 #include "Timer.h"
+#include "QtEventUtil.h"
 #include <QApplication>
 #include <QBoxLayout>
 #include <QSplitter>
@@ -211,17 +212,20 @@ public:
     
     CustomSplitter(ViewArea::Impl* viewAreaImpl, QWidget* parent = nullptr)
         : QSplitter(parent),
-          viewAreaImpl(viewAreaImpl) {
+          viewAreaImpl(viewAreaImpl)
+    {
         defaultOpaqueResize = opaqueResize();
     }
 
     CustomSplitter(ViewArea::Impl* viewAreaImpl, Qt::Orientation orientation, QWidget* parent = nullptr)
         : QSplitter(orientation, parent),
-          viewAreaImpl(viewAreaImpl) {
+          viewAreaImpl(viewAreaImpl)
+    {
         defaultOpaqueResize = opaqueResize();
     }
 
-    bool moveSplitterPosition(int d){
+    bool moveSplitterPosition(int d)
+    {
         QList<int> s = sizes();
         if(s.size() >= 2){
             s[0] += d;
@@ -233,7 +237,7 @@ public:
         return true;
     }
 
-    QSplitterHandle* createHandle();
+    virtual QSplitterHandle* createHandle() override;
 };
 
 
@@ -245,12 +249,14 @@ class CustomSplitterHandle : public QSplitterHandle
 public:
     CustomSplitterHandle(CustomSplitter* splitter)
         : QSplitterHandle(splitter->orientation(), splitter),
-          splitter(splitter) {
+          splitter(splitter)
+    {
         setFocusPolicy(Qt::WheelFocus);
         isDragging = false;
     }
 
-    virtual void mousePressEvent(QMouseEvent* event){
+    virtual void mousePressEvent(QMouseEvent* event) override
+    {
         if(event->button() == Qt::LeftButton){
             isDragging = true;
             splitter->viewAreaImpl->showViewSizeLabels(splitter);
@@ -260,24 +266,29 @@ public:
                 splitter->setOpaqueResize(splitter->defaultOpaqueResize);
             }
         }
-        QSplitterHandle::mouseMoveEvent(event);
+
+        QSplitterHandle::mousePressEvent(event);
     }
 
-    virtual void mouseMoveEvent(QMouseEvent* event){
+    virtual void mouseMoveEvent(QMouseEvent* event) override
+    {
         QSplitterHandle::mouseMoveEvent(event);
+
         if(isDragging){
             splitter->viewAreaImpl->showViewSizeLabels(splitter);
         }
     }
     
-    virtual void mouseReleaseEvent(QMouseEvent* event) {
+    virtual void mouseReleaseEvent(QMouseEvent* event) override
+    {
         QSplitterHandle::mouseReleaseEvent(event);
+
         isDragging = false;
         splitter->setOpaqueResize(splitter->defaultOpaqueResize);
     }
 
-    virtual void keyPressEvent(QKeyEvent* event) {
-
+    virtual void keyPressEvent(QKeyEvent* event) override
+    {
         bool processed = false;
         int r = 1;
         if(event->modifiers() & Qt::ShiftModifier){
@@ -1431,7 +1442,8 @@ void ViewArea::Impl::resetLayout()
 bool ViewArea::Impl::viewTabMousePressEvent(ViewPane* pane, QMouseEvent* event)
 {
     if(event->button() == Qt::LeftButton){
-        tabDragStartPosition = event->pos();
+        tabDragStartPosition = getPosition(event);
+
     } else if(event->button() == Qt::RightButton){
         if(View* view = pane->currentView()){
             viewMenuManager.setNewPopupMenu(self);
@@ -1443,8 +1455,8 @@ bool ViewArea::Impl::viewTabMousePressEvent(ViewPane* pane, QMouseEvent* event)
             }
             viewMenuManager.addItem(_("Separate the view"))
                 ->sigTriggered().connect([this, view](){ separateView(view); });
-                
-            viewMenuManager.popupMenu()->popup(event->globalPos());
+
+            viewMenuManager.popupMenu()->popup(getGlobalPosition(event));
         }
     }
     return false;
@@ -1455,8 +1467,9 @@ bool ViewArea::Impl::viewTabMouseMoveEvent(ViewPane* pane, QMouseEvent* event)
 {
     if(!isViewDragging){
         if(event->buttons() & Qt::LeftButton){
-            if((event->pos() - tabDragStartPosition).manhattanLength() > QApplication::startDragDistance()){
-                if(!pane->tabBar()->geometry().contains(event->pos())){
+            QPoint pos = getPosition(event);
+            if((pos - tabDragStartPosition).manhattanLength() > QApplication::startDragDistance()){
+                if(!pane->tabBar()->geometry().contains(pos)){
                     draggedView = pane->currentView();
                     if(draggedView){
                         isViewDragging = true;
@@ -1481,8 +1494,9 @@ bool ViewArea::Impl::viewTabMouseMoveEvent(ViewPane* pane, QMouseEvent* event)
         dragDestPane = nullptr;
 
         // find a window other than the rubber band
-        QPoint p = event->globalPos();
+        const QPoint globalPosition = getGlobalPosition(event);
         QWidget* window = nullptr;
+        QPoint p = globalPosition;
         for(int i=0; i < 3; ++i){
             window = QApplication::topLevelAt(p);
             if(window && !dynamic_cast<QRubberBand*>(window)){
@@ -1495,14 +1509,14 @@ bool ViewArea::Impl::viewTabMouseMoveEvent(ViewPane* pane, QMouseEvent* event)
             if(!dragDestViewArea){
                 if(MainWindow* mainWindow = dynamic_cast<MainWindow*>(window)){
                     ViewArea* viewArea = mainWindow->viewArea();
-                    if(viewArea->rect().contains(viewArea->mapFromGlobal(event->globalPos()))){
+                    if(viewArea->rect().contains(viewArea->mapFromGlobal(globalPosition))){
                         dragDestViewArea = viewArea;
                     }
                 }
             }
         }
         if(dragDestViewArea){
-            QWidget* pointed = dragDestViewArea->childAt(dragDestViewArea->mapFromGlobal(event->globalPos()));
+            QWidget* pointed = dragDestViewArea->childAt(dragDestViewArea->mapFromGlobal(globalPosition));
             while(pointed){
                 dragDestPane = dynamic_cast<ViewPane*>(pointed);
                 if(dragDestPane){
@@ -1512,7 +1526,7 @@ bool ViewArea::Impl::viewTabMouseMoveEvent(ViewPane* pane, QMouseEvent* event)
                 pointed = pointed->parentWidget();
             }
         } else {
-            dragViewOutside(event->globalPos());
+            dragViewOutside(globalPosition);
         }
         if(prevViewArea != dragDestViewArea){
             if(prevViewArea){
@@ -1533,7 +1547,7 @@ bool ViewArea::Impl::viewTabMouseReleaseEvent(QMouseEvent *event)
         removeView(dragSrcPane, draggedView, isMovingInViewArea);
         if(!dragDestPane){
             rubberBand->hide();
-            dropViewOutside(event->globalPos());
+            dropViewOutside(getGlobalPosition(event));
         } else {
             Impl* destImpl = dragDestViewArea->impl;
             destImpl->rubberBand->hide();
@@ -1570,8 +1584,9 @@ void ViewArea::Impl::showRectangle(QRect r)
 void ViewArea::Impl::dragView(QMouseEvent* event)
 {
     dropEdge = LEFT;
-        
-    QPoint p = dragDestViewArea->mapFromGlobal(event->globalPos());
+
+    const QPoint globalPosition = getGlobalPosition(event);
+    const QPoint p = dragDestViewArea->mapFromGlobal(globalPosition);
     const int w = dragDestViewArea->width();
     const int h = dragDestViewArea->height();
     
@@ -1592,7 +1607,7 @@ void ViewArea::Impl::dragView(QMouseEvent* event)
         dragViewOnOuterEdge();
     } else {
         isViewDraggingOnOuterEdge = false;
-        dragViewInsidePane(dragDestPane->mapFromGlobal(event->globalPos()));
+        dragViewInsidePane(dragDestPane->mapFromGlobal(globalPosition));
     }
 }
 

@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "CaptureBar.h"
 #include "ExtensionManager.h"
 #include "MessageView.h"
@@ -10,6 +6,7 @@
 #include "SceneView.h"
 #include "SceneWidget.h"
 #include "FileDialog.h"
+#include "QtEventUtil.h"
 #include <QApplication>
 #include <QPainter>
 #include "gettext.h"
@@ -69,7 +66,7 @@ void CaptureBar::mousePressEvent(QMouseEvent* event)
 {
     if(event->button() == Qt::LeftButton){
         releaseMouse();
-        QWidget* widget = QApplication::widgetAt(event->globalPos());
+        QWidget* widget = QApplication::widgetAt(getGlobalPosition(event));
         while(widget){
             if(ToolBar* bar = dynamic_cast<ToolBar*>(widget)){
                 captureToolbar(bar);
@@ -116,7 +113,7 @@ void CaptureBar::onCaptureButtonRightClicked(QMouseEvent* event)
     }
     check->setChecked(isTabInclusionMode && *isTabInclusionMode);
     check->sigToggled().connect([this](bool on){ setTabInclusionMode(on); });
-    menuManager.popupMenu()->popup(event->globalPos());
+    menuManager.popupMenu()->popup(getGlobalPosition(event));
 }
 
 

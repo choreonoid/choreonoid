@@ -34,8 +34,8 @@ set(sources
   MulticopterPlugin.cpp
   )
 
-QT5_WRAP_CPP(qtsources MonitorForm.h)
-qt5_wrap_ui(qtforms MonitorForm.ui)
+choreonoid_qt_wrap_cpp(qtsources MonitorForm.h)
+choreonoid_qt_wrap_ui(qtforms MonitorForm.ui)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(target CnoidMulticopterPlugin)

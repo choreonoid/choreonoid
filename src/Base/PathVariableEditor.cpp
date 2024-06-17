@@ -3,6 +3,7 @@
 #include "MainWindow.h"
 #include "ExtensionManager.h"
 #include "Buttons.h"
+#include "QVariantUtil.h"
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/ValueTree>
 #include <cnoid/UTF8>
@@ -25,20 +26,22 @@ public:
     QString path;
         
     PathVariableItem(const QString& path)
-        : path(path) {
+        : path(path)
+    {
         setFlags(Qt::ItemIsEnabled|Qt::ItemIsEditable);
     }
 
-    virtual QVariant data(int role) const {
-
+    virtual QVariant data(int role) const
+    {
         if(role == Qt::DisplayRole || role == Qt::EditRole){
             return path;
         }
         return QTableWidgetItem::data(role);
     }
 
-    virtual void setData(int role, const QVariant& value) {
-        if(role == Qt::EditRole && value.type() == QVariant::String){
+    virtual void setData(int role, const QVariant& value)
+    {
+        if(role == Qt::EditRole && checkIfString(value)){
             path = value.toString();
         } else {
             QTableWidgetItem::setData(role, value);

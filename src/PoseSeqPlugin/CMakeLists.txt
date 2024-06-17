@@ -46,7 +46,7 @@ if(ENABLE_HUMANOID_POSE_FETCH_VIEW)
 set(sources ${sources} HumanoidPoseFetchView.cpp)
 endif()
 
-qt5_add_resources(RC_SRCS PoseSeqPlugin.qrc)
+choreonoid_qt_add_resources(RC_SRCS PoseSeqPlugin.qrc)
 
 choreonoid_make_gettext_mo_files(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})

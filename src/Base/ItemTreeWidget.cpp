@@ -6,6 +6,8 @@
 #include "MessageView.h"
 #include "UnifiedEditHistory.h"
 #include "Archive.h"
+#include "QtEventUtil.h"
+#include "QVariantUtil.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/CloneMap>
 #include <QMouseEvent>
@@ -255,7 +257,7 @@ void ItemTreeWidget::ItwItem::setData(int column, int role, const QVariant& valu
         if(role != Qt::EditRole){
             QTreeWidgetItem::setData(column, role, value);
         } else {
-            if(value.type() == QVariant::String){
+            if(checkIfString(value)){
                 auto newName = value.toString().toStdString();
                 // Item name is only updated when the name is not empty and is different from the item display name.
                 if(!newName.empty() && newName != item->displayName()){
@@ -892,16 +894,24 @@ void ItemTreeWidget::Impl::applyDefaultItemDisplay(Item* item, Display& display)
         if(!itwItem->isTemporaryAttributeDisplay){
             ItwItem::DisplayState state;
             auto fg = display.foreground();
-            qreal h, s, v;
             state.foregroundColor = fg.color();
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            float h, s, v;
+            typedef float hsv_t;
+#else
+            qreal h, s, v;
+            typedef qreal hsv_t;
+#endif
             state.foregroundColor.getHsvF(&h, &s, &v);
-            if(v >= 0.8){
-                v = 0.6;
-            } else if(v <= 0.2){
-                v = 0.4;
+            if(v >= static_cast<hsv_t>(0.8)){
+                v = static_cast<hsv_t>(0.6);
+            } else if(v <= static_cast<hsv_t>(0.2)){
+                v = static_cast<hsv_t>(0.4);
             }
             fg.setColor(QColor::fromHsvF(h, s, v));
             display.setForeground(fg);
+
             auto font = display.font();
             state.fontItalicState = font.italic();
             font.setItalic(true);
@@ -1811,7 +1821,7 @@ void ItemTreeWidget::Impl::mousePressEvent(QMouseEvent* event)
             }
         }
         if(menuManager.numItems() > 0){
-            menuManager.popupMenu()->popup(event->globalPos());
+            menuManager.popupMenu()->popup(getGlobalPosition(event));
         }
     }
 }
@@ -1927,7 +1937,7 @@ void ItemTreeWidget::Impl::dragMoveEvent(QDragMoveEvent* event)
     Item* parentItem = nullptr;
 
     Item* itemAtDropPosition = localRootItem;
-    if(auto itwItem = dynamic_cast<ItwItem*>(itemAt(event->pos()))){
+    if(auto itwItem = dynamic_cast<ItwItem*>(itemAt(getPosition(event)))){
         itemAtDropPosition = itwItem->item;
     }
     if(itemAtDropPosition){

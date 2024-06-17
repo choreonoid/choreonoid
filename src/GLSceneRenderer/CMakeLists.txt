@@ -21,11 +21,11 @@ set(headers
 
 set(target CnoidGLSceneRenderer)
 
-QT5_ADD_RESOURCES(RC_SRCS GLSceneRenderer.qrc)
+choreonoid_qt_add_resources(RC_SRCS GLSceneRenderer.qrc)
 
 make_gettext_mofiles(${target} mofiles)
 
-set(libraries PUBLIC CnoidUtil PRIVATE Qt5::Core)
+set(libraries PUBLIC CnoidUtil PRIVATE ${CHOREONOID_QT_CORE_LIBRARY})
 
 if(MSVC)
   set(libraries ${libraries} PUBLIC general glu32 opengl32)

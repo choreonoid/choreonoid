@@ -4,6 +4,7 @@
 #include "Separator.h"
 #include "ButtonGroup.h"
 #include "Archive.h"
+#include "QtEventUtil.h"
 #include <QStylePainter>
 #include <QStyleOptionToolBar>
 #include <QMouseEvent>
@@ -65,7 +66,7 @@ public:
 
     virtual void mouseMoveEvent(QMouseEvent* event) {
         if(isDragging){
-            toolBar->toolBarArea()->dragToolBar(toolBar, event->globalPos() - dragOrgLocalPos);
+            toolBar->toolBarArea()->dragToolBar(toolBar, getGlobalPosition(event) - dragOrgLocalPos);
         }
     }
 

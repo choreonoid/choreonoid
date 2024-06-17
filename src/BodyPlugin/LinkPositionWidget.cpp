@@ -860,7 +860,7 @@ void LinkPositionWidget::Impl::setConfigurationInterfaceEnabled(bool on)
     }
     if(!on){
         configurationLabel.setText("-----");
-        configurationLabel.setToolTip(QString::Null());
+        configurationLabel.setToolTip(QString());
     }
 }
     

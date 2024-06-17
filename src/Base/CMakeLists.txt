@@ -1,6 +1,3 @@
-#set(CMAKE_BUILD_TYPE Debug)
-#set_source_files_properties(GLSLSceneRenderer.cpp PROPERTIES COMPILE_FLAGS "-O3 -g")
-
 set(sources
   App.cpp
   MenuManager.cpp
@@ -305,6 +302,8 @@ set(headers
   TaskView.h
   MessageLogItem.h
   LightingItem.h
+  QtEventUtil.h
+  QVariantUtil.h
   exportdecl.h
   )
 
@@ -328,8 +327,8 @@ set(qtheaders
   TextEdit.h
   )
 
-QT5_ADD_RESOURCES(RC_SRCS Base.qrc)
-QT5_WRAP_CPP(qtsources ${qtheaders})
+choreonoid_qt_add_resources(RC_SRCS Base.qrc)
+choreonoid_qt_wrap_cpp(qtsources ${qtheaders})
 
 set(sources ${sources} ${qtsources})
 

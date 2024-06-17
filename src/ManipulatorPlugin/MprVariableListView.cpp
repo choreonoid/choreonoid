@@ -10,6 +10,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/Buttons>
 #include <cnoid/ButtonGroup>
+#include <cnoid/QtEventUtil>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QTableView>
@@ -243,20 +244,20 @@ QVariant VariableListModel::headerData(int section, Qt::Orientation orientation,
                 if(variableList){
                     if(variableList->isNumberIdEnabled()){
                         if(!variableList->isStringIdEnabled()){
-                            return _("No.");
+                            return QString(_("No."));
                         }
                     } else {
-                        return _("Name");
+                        return QString(_("Name"));
                     }
                 }
-                return _("ID");
+                return QString(_("ID"));
                 break;
             case ValueTypeColumn:
-                return _("Type");
+                return QString(_("Type"));
             case ValueColumn:
-                return _("Value");
+                return QString(_("Value"));
             case NoteColumn:
-                return _("Note");
+                return QString(_("Note"));
             }
         } else {
             return QString::number(section);
@@ -264,7 +265,7 @@ QVariant VariableListModel::headerData(int section, Qt::Orientation orientation,
     }
     else if(role == Qt::TextAlignmentRole){
         if(orientation == Qt::Horizontal){
-            return Qt::AlignLeft + Qt::AlignVCenter;
+            return static_cast<Qt::Alignment::Int>(Qt::AlignLeft | Qt::AlignVCenter);
         }
     }
     return QVariant();
@@ -310,15 +311,15 @@ QVariant VariableListModel::data(const QModelIndex& index, int role) const
         } else if(column == ValueTypeColumn){
             switch(variable->valueType()){
             case MprVariable::Int:
-                return _("Integer");
+                return QString(_("Integer"));
             case MprVariable::Double:
-                return _("Real");
+                return QString(_("Real"));
             case MprVariable::Bool:
-                return _("Logical");
+                return QString(_("Logical"));
             case MprVariable::String:
-                return _("String");
+                return QString(_("String"));
             default:
-                return _("Unknown");
+                return QString(_("Unknown"));
             }
 
         } else if(column == ValueColumn){
@@ -328,7 +329,7 @@ QVariant VariableListModel::data(const QModelIndex& index, int role) const
             case MprVariable::Double:
                 return QString("%1").arg(variable->doubleValue(), 0, 'g');
             case MprVariable::Bool:
-                return variable->boolValue() ? _("True") : _("False");
+                return variable->boolValue() ? QString(_("True")) : QString(_("False"));
             case MprVariable::String:
                 return variable->stringValue().c_str();
             default:
@@ -339,7 +340,7 @@ QVariant VariableListModel::data(const QModelIndex& index, int role) const
             return variable->note().c_str();
         }
     } else if(role == Qt::TextAlignmentRole){
-        return (Qt::AlignLeft + Qt::AlignVCenter);
+        return static_cast<Qt::Alignment::Int>(Qt::AlignLeft | Qt::AlignVCenter);
     }
             
     return QVariant();
@@ -880,7 +881,7 @@ void MprVariableListView::Impl::mousePressEvent(QMouseEvent* event)
     if(event->button() == Qt::RightButton){
         int row = rowAt(event->pos().y());
         if(row >= 0){
-            showContextMenu(row, event->globalPos());
+            showContextMenu(row, getGlobalPosition(event));
         }
     }
 }

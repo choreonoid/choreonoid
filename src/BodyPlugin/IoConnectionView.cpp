@@ -10,6 +10,7 @@
 #include <cnoid/RootItem>
 #include <cnoid/MessageView>
 #include <cnoid/Buttons>
+#include <cnoid/QtEventUtil>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QComboBox>
@@ -180,15 +181,15 @@ QVariant ConnectionMapModel::headerData(int section, Qt::Orientation orientation
         if(orientation == Qt::Horizontal){
             switch(section){
             case 0:
-                return _("Output Device");
+                return QString(_("Output Device"));
             case 1:
-                return _("Signal No");
+                return QString(_("Signal No"));
             case 3:
-                return _("Input Device");
+                return QString(_("Input Device"));
             case 4:
-                return _("Signal No");
+                return QString(_("Signal No"));
             case 5:
-                return _("Note");
+                return QString(_("Note"));
             default:
                 return QVariant();
             }
@@ -256,7 +257,7 @@ QVariant ConnectionMapModel::data(const QModelIndex& index, int role) const
         }
     } else if(role == Qt::TextAlignmentRole){
         if(index.column() == NoteColumn){
-            return Qt::AlignLeft + Qt::AlignVCenter;
+            return static_cast<Qt::Alignment::Int>(Qt::AlignLeft | Qt::AlignVCenter);
         } else {
             return Qt::AlignCenter;
         }
@@ -694,7 +695,7 @@ void IoConnectionView::Impl::mousePressEvent(QMouseEvent* event)
     if(event->button() == Qt::RightButton){
         int row = rowAt(event->pos().y());
         if(row >= 0){
-            showContextMenu(row, event->globalPos());
+            showContextMenu(row, getGlobalPosition(event));
         }
     }
 }

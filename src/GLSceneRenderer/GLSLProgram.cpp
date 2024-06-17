@@ -54,7 +54,7 @@ void GLSLProgram::loadShader(const char* filename, int shaderType)
     file.open(QIODevice::ReadOnly);
     const QByteArray data = file.readAll();
     const GLchar* codes[] = { data.data() };
-    const GLint codeSizes[] = { data.size() };
+    const GLint codeSizes[] = { static_cast<int>(data.size()) };
 
     GLuint shaderHandle = glCreateShader(shaderType);
     

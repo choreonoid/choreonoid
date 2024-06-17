@@ -181,11 +181,19 @@ MainWindow::Impl::Impl(MainWindow* self, const std::string& appName, ExtensionMa
         cout << "size = (" << self->width() << ", " << self->height() << ")" << endl;
     }
 
+    QSize asize = getAvailableScreenSize();
+
     int width, height;
     if(config->read("width", width) && config->read("height", height)){
-        normalSize = QSize(width, height);
+        /**
+           In the case of Qt6 on Windows, if the resize function is called with a size larger than
+           the available screen size before the window is shown, the program crashes when the show
+           or showNormal function is called. To avoid this crash, the size given to the resize function
+           must be constrained to the actual screen size.
+        */
+        normalSize = QSize(width, height).boundedTo(asize);
     } else {
-        normalSize = getAvailableScreenSize();
+        normalSize = asize;
 
         if(TRACE_FUNCTIONS){
             cout << "AvailableScreenSize = (" << normalSize.width() << ", " << normalSize.height() << ")" << endl;
@@ -399,6 +407,7 @@ void MainWindow::Impl::showFirst()
             }
             self->showMaximized();
             //isGoingToMaximized = false;
+
         } else {
             self->resize(normalSize);
             if(TRACE_FUNCTIONS){

@@ -170,14 +170,8 @@ void MessageLogItem::Impl::onMessageOut(const std::string& text)
     if(ofs.is_open()){
         // skip escapeSequence
         if( skipEscapeSequence && text.find("\x1b", 0) != string::npos ){
-            QString qtext(text.c_str());
-            qtext.replace(QRegExp("\\\x1b\\[[0-9;]*[A-z]"), "");
-            ofs << qtext.toStdString();
-
-            /* std::regex version
-            regex  escapePattern("\\\x1b\\[[0-9;]*[A-z]");
+            static regex escapePattern("\\\x1b\\[[0-9;]*[A-z]");
             ofs << regex_replace(text, escapePattern, "");
-            */
         } else {
             ofs << text;
         }

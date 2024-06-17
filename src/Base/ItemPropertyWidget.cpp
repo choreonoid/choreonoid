@@ -6,6 +6,8 @@
 #include "StringListComboBox.h"
 #include "MenuManager.h"
 #include "FileDialog.h"
+#include "QtEventUtil.h"
+#include "QVariantUtil.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
@@ -227,7 +229,7 @@ QVariant PropertyItem::data(int role) const
                 */
                 auto boolValue = get<bool>(value);
                 if(role == Qt::DisplayRole){
-                    return boolValue ? _("True") : _("False");
+                    return boolValue ? QString(_("True")) : QString(_("False"));
                 } else if(role == Qt::EditRole){
                     return QStringList({ (boolValue ? "0" : "1"), _("True"),  _("False") });
                 }
@@ -290,25 +292,49 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
 
     if(role == Qt::EditRole){
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        switch(qvalue.typeId()){
+#else
         switch(qvalue.type()){
-                
+#endif
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        case QMetaType::Bool:
+#else
         case QVariant::Bool:
+#endif
             accepted = stdx::get<std::function<bool(bool)>>(func)(qvalue.toBool());
             break;
                 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        case QMetaType::QString:
+#else
         case QVariant::String:
+#endif
             accepted = stdx::get<std::function<bool(const string&)>>(func)(qvalue.toString().toStdString());
             break;
                 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        case QMetaType::Int:
+#else
         case QVariant::Int:
+#endif
             accepted = stdx::get<std::function<bool(int)>>(func)(qvalue.toInt());
             break;
                 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        case QMetaType::Double:
+#else
         case QVariant::Double:
+#endif
             accepted = stdx::get<std::function<bool(double)>>(func)(qvalue.toDouble());
             break;
                 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        case QMetaType::QStringList:
+#else
         case QVariant::StringList:
+#endif
         {
             const QStringList& slist = qvalue.toStringList();
             if(!slist.empty()){
@@ -405,9 +431,9 @@ bool CustomizedTableWidget::isPointingBorder(int x)
 void CustomizedTableWidget::mouseMoveEvent(QMouseEvent* event)
 {
     if(isResizing){
-        int border = std::max(0, event->x() + offsetX);
+        int border = std::max(0, getPosition(event).x() + offsetX);
         setColumnWidth(0, border);
-    } else if(isPointingBorder(event->x())){
+    } else if(isPointingBorder(getPosition(event).x())){
         setCursor(Qt::SizeHorCursor);
     } else {
         setCursor(QCursor());
@@ -418,7 +444,7 @@ void CustomizedTableWidget::mouseMoveEvent(QMouseEvent* event)
 
 void CustomizedTableWidget::mousePressEvent(QMouseEvent* event)
 {
-    if(isPointingBorder(event->x())){
+    if(isPointingBorder(getPosition(event).x())){
         isResizing = true;
     } else {
         QTableWidget::mousePressEvent(event);
@@ -531,7 +557,7 @@ void CustomizedItemDelegate::setModelData
 
 QString CustomizedItemDelegate::displayText(const QVariant& value, const QLocale& locale) const
 {
-    if(value.type() == QVariant::Double){
+    if(checkIfDouble(value)){
         return QString::number(value.toDouble(), 'f', decimals);
     }
     return QStyledItemDelegate::displayText(value, locale);
@@ -659,7 +685,12 @@ ItemPropertyWidget::Impl::Impl(ItemPropertyWidget* self)
     
     QItemEditorCreatorBase* selectionEditorCreator =
         new QStandardItemEditorCreator<StringListComboBox>();
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    factory->registerEditor(QMetaType::QStringList, selectionEditorCreator);
+#else
     factory->registerEditor(QVariant::StringList, selectionEditorCreator);
+#endif
     
     delegate->setItemEditorFactory(factory);
 

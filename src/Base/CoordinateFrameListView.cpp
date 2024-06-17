@@ -8,6 +8,7 @@
 #include "Archive.h"
 #include "DisplayValueFormat.h"
 #include "Buttons.h"
+#include "QtEventUtil.h"
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
@@ -215,9 +216,9 @@ QVariant FrameListModel::headerData(int section, Qt::Orientation orientation, in
             case IdColumn:
                 return " ID ";
             case NoteColumn:
-                return _("Note");
+                return QString(_("Note"));
             case PositionColumn:
-                return _("Position");
+                return QString(_("Position"));
             default:
                 return QVariant();
             }
@@ -312,7 +313,7 @@ QVariant FrameListModel::data(const QModelIndex& index, int role) const
         }
     } else if(role == Qt::TextAlignmentRole){
         if(column == NoteColumn){
-            return (Qt::AlignLeft + Qt::AlignVCenter);
+            return static_cast<Qt::Alignment::Int>(Qt::AlignLeft | Qt::AlignVCenter);
         } else {
             return Qt::AlignCenter;
         }
@@ -780,7 +781,7 @@ void CoordinateFrameListView::Impl::mousePressEvent(QMouseEvent* event)
     if(event->button() == Qt::RightButton){
         int row = rowAt(event->pos().y());
         if(row >= 0){
-            showContextMenu(row, event->globalPos());
+            showContextMenu(row, getGlobalPosition(event));
         }
     }
 }

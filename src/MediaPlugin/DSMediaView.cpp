@@ -421,7 +421,7 @@ void DSMediaViewImpl::load()
 #define EIF(x)                                                          \
     result = (x);                                                       \
     if(FAILED(result)) {                                                \
-        throw DSException(format("FAILED(hr=0x{:x}) in" TEXT(#x), result)); \
+        throw DSException(format("FAILED(hr=0x{:x}) in" #x, result));   \
     }
 
     struct DSException {

@@ -11,6 +11,7 @@ namespace Multicopter {
 class LinkAttribute
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     LinkAttribute(){
         _isNull = true;

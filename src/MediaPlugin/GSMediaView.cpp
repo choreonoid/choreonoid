@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "GSMediaView.h"
 #include "MediaItem.h"
 #include <cnoid/TimeBar>
@@ -19,7 +15,13 @@
 #include <QEvent>
 #include <QResizeEvent>
 #include <QPainter>
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QGuiApplication>
+#else
 #include <QX11Info>
+#endif
+
 #include <X11/Xlib.h>
 #include <gst/gst.h>
 #include <gst/video/videooverlay.h>
@@ -283,9 +285,21 @@ void GSMediaViewImpl::onWindowIdChanged()
     if(display && gc){
         XFreeGC(display, gc);
     }
+
+    Display* display = nullptr;
+    int appScreen = 0;
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    if(auto x11App = qGuiApp->nativeInterface<QNativeInterface::QX11Application>()){
+        display = x11App->display();
+    }
+#else
     display = QX11Info::display();
+    appScreen = QX11Info::appScreen();
+#endif
+
     gc = XCreateGC(display, windowId, 0, 0);
-    unsigned long black = BlackPixel(display, QX11Info::appScreen());
+    unsigned long black = BlackPixel(display, appScreen);
     XSetForeground(display, gc, black);
     gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(playbin), windowId);
 }

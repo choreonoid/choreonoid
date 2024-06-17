@@ -62,7 +62,12 @@ void exportPyQtModelViewClasses(py::module m)
         .def("indexWidget", &QAbstractItemView::indexWidget)
         //.def("isPersistentEditorOpen", &QAbstractItemView::isPersistentEditorOpen) // require Qt 5.10 or later
         .def("itemDelegate", (QAbstractItemDelegate*(QAbstractItemView::*)()const) &QAbstractItemView::itemDelegate)
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        .def("itemDelegateForIndex", (QAbstractItemDelegate*(QAbstractItemView::*)(const QModelIndex&)const) &QAbstractItemView::itemDelegateForIndex)
+#else
         .def("itemDelegate", (QAbstractItemDelegate*(QAbstractItemView::*)(const QModelIndex&)const) &QAbstractItemView::itemDelegate)
+#endif
         .def("itemDelegateForColumn", &QAbstractItemView::itemDelegateForColumn)
         .def("itemDelegateForRow", &QAbstractItemView::itemDelegateForRow)
         .def("keyboardSearch", &QAbstractItemView::keyboardSearch)
@@ -109,6 +114,11 @@ void exportPyQtModelViewClasses(py::module m)
         .def("scrollToBottom", &QAbstractItemView::scrollToBottom)
         .def("scrollToTop", &QAbstractItemView::scrollToTop)
         .def("selectAll", &QAbstractItemView::selectAll)
+
+        // deprecated
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        .def("itemDelegate", (QAbstractItemDelegate*(QAbstractItemView::*)(const QModelIndex&)const) &QAbstractItemView::itemDelegateForIndex)
+#endif
         ;
 
     py::class_<QItemSelectionModel, PyQObjectHolder<QItemSelectionModel>, QObject>
@@ -403,7 +413,12 @@ void exportPyQtModelViewClasses(py::module m)
         .def("setSizeHint", &QTableWidgetItem::setSizeHint)
         .def("setStatusTip", &QTableWidgetItem::setStatusTip)
         .def("setText", &QTableWidgetItem::setText)
-        .def("setTextAlignment", &QTableWidgetItem::setTextAlignment)
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        .def("setTextAlignment", (void(QTableWidgetItem::*)(Qt::Alignment)) &QTableWidgetItem::setTextAlignment)
+#else
+        .def("setTextAlignment", (void(QTableWidgetItem::*)(int)) &QTableWidgetItem::setTextAlignment)
+#endif
         .def("setToolTip", &QTableWidgetItem::setToolTip)
         .def("setWhatsThis", &QTableWidgetItem::setWhatsThis)
         .def("sizeHint", &QTableWidgetItem::sizeHint)

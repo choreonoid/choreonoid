@@ -143,13 +143,13 @@ QVariant IoDeviceModel::headerData(int section, Qt::Orientation orientation, int
         if(orientation == Qt::Horizontal){
             switch(section){
             case InLabelColumn:
-                return _("Input label");
+                return QString(_("Input label"));
             case InStateColumn:
-                return _("Input");
+                return QString(_("Input"));
             case OutLabelColumn:
-                return _("Output label");
+                return QString(_("Output label"));
             case OutStateColumn:
-                return _("Output");
+                return QString(_("Output"));
             }
         } else {
             return QString::number(section);
@@ -159,7 +159,7 @@ QVariant IoDeviceModel::headerData(int section, Qt::Orientation orientation, int
             switch(section){
             case InLabelColumn:
             case OutLabelColumn:
-                return Qt::AlignLeft + Qt::AlignVCenter;
+                return static_cast<Qt::Alignment::Int>(Qt::AlignLeft | Qt::AlignVCenter);
             default:
                 return Qt::AlignCenter;
             }
@@ -208,7 +208,7 @@ QVariant IoDeviceModel::data(const QModelIndex& modelIndex, int role) const
             if(isOnOffIconMode){
                 return on;
             } else {
-                return on ? _("On") : _("Off");
+                return on ? QString(_("On")) : QString(_("Off"));
             }
             break;
         default:
@@ -218,7 +218,7 @@ QVariant IoDeviceModel::data(const QModelIndex& modelIndex, int role) const
         switch(column){
         case InLabelColumn:
         case OutLabelColumn:
-            return (Qt::AlignLeft + Qt::AlignVCenter);
+            return static_cast<Qt::Alignment::Int>(Qt::AlignLeft | Qt::AlignVCenter);
         default:
             return Qt::AlignCenter;
         }

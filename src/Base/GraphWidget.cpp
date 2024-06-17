@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "GraphWidget.h"
 #include "GraphBar.h"
 #include "ToolBar.h"
@@ -9,6 +5,7 @@
 #include "ToolBarArea.h"
 #include "ScrollBar.h"
 #include "View.h"
+#include "QtEventUtil.h"
 #include <cnoid/ConnectionSet>
 #include <QGridLayout>
 #include <QPainter>
@@ -1068,11 +1065,12 @@ bool GraphWidgetImpl::onScreenMouseButtonPressEvent(QMouseEvent* event)
     screen->setFocus(Qt::MouseFocusReason);
     
     dragState = DRAG_NONE;
-    
-    pressedScreenX = event->x();
-    pressedScreenY = event->y();
-    dragPrevScreenX = event->x();
-    dragPrevScreenY = event->y();
+
+    auto position = getPosition(event);
+    pressedScreenX = position.x();
+    pressedScreenY = position.y();
+    dragPrevScreenX = position.x();
+    dragPrevScreenY = position.y();
 
     dragOrgLeftX = leftX;
     dragOrgCenterY = centerY;
@@ -1114,8 +1112,9 @@ bool GraphWidgetImpl::onScreenMouseButtonReleaseEvent(QMouseEvent*)
 
 bool GraphWidgetImpl::onScreenMouseMoveEvent(QMouseEvent* event)
 {
-    currentScreenX = event->x();
-    currentScreenY = event->y();
+    auto position = getPosition(event);
+    currentScreenX = position.x();
+    currentScreenY = position.y();
 
     switch(dragState){
 
@@ -1196,7 +1195,8 @@ bool GraphWidgetImpl::onScreenKeyPressEvent(QKeyEvent* event)
         case Qt::Key_Space:
         {
             QMouseEvent mouseEvent(QEvent::MouseButtonPress,
-                                   QPoint(currentScreenX, currentScreenY),
+                                   QPointF(currentScreenX, currentScreenY),
+                                   QPointF(currentScreenX, currentScreenY),
                                    Qt::MiddleButton, Qt::MiddleButton,
                                    event->modifiers());
             unprocessed = !onScreenMouseButtonPressEvent(&mouseEvent);
@@ -1228,7 +1228,8 @@ bool GraphWidgetImpl::onScreenKeyReleaseEvent(QKeyEvent* event)
     case Qt::Key_Space:
     {
         QMouseEvent mouseEvent(QEvent::MouseButtonPress,
-                               QPoint(currentScreenX, currentScreenY),
+                               QPointF(currentScreenX, currentScreenY),
+                               QPointF(currentScreenX, currentScreenY),
                                Qt::MiddleButton, Qt::MiddleButton,
                                event->modifiers());
         unprocessed = !onScreenMouseButtonReleaseEvent(&mouseEvent);
@@ -1867,8 +1868,16 @@ void GraphWidgetImpl::drawLimits(QPainter& painter, GraphDataHandlerImpl* data)
         
 void GraphWidgetImpl::drawGrid(QPainter& painter)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    typedef float rgb_t;
+#else
+    typedef double rgb_t;
+#endif
     QColor color;
-    color.setRgbF(0.8, 0.8, 0.8);
+    color.setRgbF(
+        static_cast<rgb_t>(0.8),
+        static_cast<rgb_t>(0.8),
+        static_cast<rgb_t>(0.8));
     pen.setColor(color);
     painter.setPen(pen);
 

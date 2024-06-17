@@ -143,7 +143,7 @@ set(target CnoidBodyPlugin)
 
 choreonoid_make_gettext_mo_files(${target} mofiles)
 
-qt5_add_resources(RC_SRCS BodyPlugin.qrc)
+choreonoid_qt_add_resources(RC_SRCS BodyPlugin.qrc)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 

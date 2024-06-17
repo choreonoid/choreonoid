@@ -10,6 +10,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/InfoBar>
 #include <cnoid/Dialog>
+#include <cnoid/QtEventUtil>
 #include <fmt/format.h>
 #include <QDialogButtonBox>
 #include <QHeaderView>
@@ -1037,7 +1038,7 @@ bool PoseSeqViewBase::modifyTransitionTimeOfSelectedPoses(double ttime)
 
 void PoseSeqViewBase::popupContextMenu(QMouseEvent* event)
 {
-    popupMenu.popup(event->globalPos());
+    popupMenu.popup(getGlobalPosition(event));
 }
 
 

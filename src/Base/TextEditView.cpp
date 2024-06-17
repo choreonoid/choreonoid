@@ -17,7 +17,6 @@
 #include <QFile>
 #include <QLabel>
 #include <QMessageBox>
-#include <QTextCodec>
 #include <QTextDocumentWriter>
 #include <sstream>
 #include "gettext.h"

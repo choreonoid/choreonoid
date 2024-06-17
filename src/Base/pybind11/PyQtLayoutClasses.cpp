@@ -43,8 +43,15 @@ void exportPyQtLayoutClasses(py::module m)
         .def_property_readonly("contentsMargins", &QLayout::contentsMargins)
         .def_property_readonly("contentsRect", &QLayout::contentsRect)
         .def_property_readonly("count", &QLayout::count)
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)        
+        .def("getIndexOf", (int(QLayout::*)(const QWidget*)const) &QLayout::indexOf)
+        .def("getIndexOf", (int(QLayout::*)(const QLayoutItem*)const) &QLayout::indexOf)
+#else
         .def("getIndexOf", (int(QLayout::*)(QWidget*)const) &QLayout::indexOf)
         .def("getIndexOf", (int(QLayout::*)(QLayoutItem*)const) &QLayout::indexOf)
+#endif
+
         .def("isEnabled", &QLayout::isEnabled)
         .def("itemAt", &QLayout::itemAt)
         .def_property_readonly("menuBar", &QLayout::menuBar)

@@ -8,7 +8,7 @@
 #include <QTextBlock>
 #include <QEventLoop>
 #include <QMimeData>
-#include <QMimeData>
+#include <QRegularExpression>
 #include <list>
 #include "gettext.h"
 
@@ -683,7 +683,7 @@ void PythonConsoleView::Impl::insertFromMimeData(const QMimeData* source)
 
     } else {
         QString text = source->text();
-        QStringList lines = text.split(QRegExp("(\r\n|\r|\n)"));
+        QStringList lines = text.split(QRegularExpression("(\r\n|\r|\n)"));
         int n = lines.size();
         if(n > 0){
             for(int i=0; i < n - 1; ++i){
@@ -693,7 +693,7 @@ void PythonConsoleView::Impl::insertFromMimeData(const QMimeData* source)
             const QString& lastLine = lines[n-1];
             if(!lastLine.isEmpty()){
                 put(lastLine);
-                if(text.contains(QRegExp("[\r\n]$"))){
+                if(text.contains(QRegularExpression("[\r\n]$"))){
                     execCommand();
                 }
             }

@@ -171,7 +171,7 @@ endif()
 
 if(MSVC)
   set(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN OFF)
-  set(compiler_general_options "/MP /source-charset:utf-8 /wd4018 /wd4068 /wd4244 /wd4250 /wd4251 /wd4267 /wd4275 /wd4800 /wd4819")
+  set(compiler_general_options "/MP /wd4018 /wd4068 /wd4244 /wd4250 /wd4251 /wd4267 /wd4275 /wd4800 /wd4819")
   set(compiler_release_options "/O2 /Ob2 /Oi /Gy /GS- /fp:fast")
 
   if(${MSVC_VERSION} GREATER_EQUAL 1915)
@@ -551,47 +551,74 @@ endif()
 set(CNOID_ENABLE_FREE_TYPE ${ENABLE_FREE_TYPE})
 
 if(ENABLE_GUI)
+
   # Qt
   include(cmake/ChoreonoidFindQt.cmake)
-  choreonoid_find_qt_package(Core Gui Widgets Network Svg)
+
+  if(NOT CHOREONOID_QT_MAJOR_VERSION)
+    if(MSVC)
+      choreonoid_find_qt_msvc_cmake_prefix_paths(6 qt_prefix_paths)
+    endif()
+    find_package(Qt6 QUIET COMPONENTS Core HINTS ${qt_prefix_paths})
+    if(Qt6_FOUND)
+      set(default_qt_major_version 6)
+    else()
+      set(default_qt_major_version 5)
+    endif()
+  endif()
+  set(CHOREONOID_QT_MAJOR_VERSION ${default_qt_major_version}
+    CACHE STRING "Specify the major version of Qt; either 5 or 6.")
+  choreonoid_find_qt_package()
   set(CMAKE_AUTOMOC OFF)
 
   if(MSVC)
-    list(APPEND QT_INST_LIBRARIES
-      optimized Qt5Core debug Qt5Cored
-      optimized Qt5Gui debug Qt5Guid
-      optimized Qt5Network debug Qt5Networkd
-      optimized Qt5Widgets debug Qt5Widgetsd
-      optimized Qt5Svg debug Qt5Svgd
-      optimized libEGL debug libEGLd
-      optimized libGLESv2 debug libGLESv2d
-      optimized icuin51 debug icuin51d
-      optimized icuuc51 debug icuuc51d
-      optimized icudt51 debug icudt51d
-      # for the Qt 5.3 binary package
-      general icuin52 icuuc52 icudt52
-      general icuin53 icuuc53 icudt53
-      general icuin54 icuuc54 icudt54
-      general icuin55 icuuc55 icudt55
-      )
-    # It may be better to use the windeployqt command for the following process.
-    # See the Qt manual on the Windows deployment.
-    install_runtime_dlls(${_qt5Core_install_prefix}/bin ${QT_INST_LIBRARIES})
-    install(DIRECTORY ${_qt5Core_install_prefix}/plugins/platforms DESTINATION bin FILES_MATCHING PATTERN "qwindows*.dll")
-    install(DIRECTORY ${_qt5Core_install_prefix}/plugins/imageformats DESTINATION bin FILES_MATCHING PATTERN "*.dll")
-    install(DIRECTORY ${_qt5Core_install_prefix}/plugins/styles DESTINATION bin FILES_MATCHING PATTERN "*.dll")
+    if(CHOREONOID_QT_MAJOR_VERSION EQUAL 6)
+      list(APPEND QT_INST_LIBRARIES
+	optimized Qt6Core debug Qt6Cored
+	optimized Qt6Gui debug Qt6Guid
+	optimized Qt6Network debug Qt6Networkd
+	optimized Qt6Widgets debug Qt6Widgetsd
+	optimized Qt6OpenGL debug Qt6OpenGLd
+	optimized Qt6OpenGLWidgets debug Qt6OpenGLWidgetsd
+	optimized Qt6Svg debug Qt6Svgd
+	)
+    elseif(CHOREONOID_QT_MAJOR_VERSION EQUAL 5)
+      list(APPEND QT_INST_LIBRARIES
+	optimized Qt5Core debug Qt5Cored
+	optimized Qt5Gui debug Qt5Guid
+	optimized Qt5Network debug Qt5Networkd
+	optimized Qt5Widgets debug Qt5Widgetsd
+	optimized Qt5Svg debug Qt5Svgd
+	optimized libEGL debug libEGLd
+	optimized libGLESv2 debug libGLESv2d
+	optimized icuin51 debug icuin51d
+	optimized icuuc51 debug icuuc51d
+	optimized icudt51 debug icudt51d
+	# for the Qt 5.3 binary package
+	general icuin52 icuuc52 icudt52
+	general icuin53 icuuc53 icudt53
+	general icuin54 icuuc54 icudt54
+	general icuin55 icuuc55 icudt55
+	)
+    endif()
+
+    install_runtime_dlls(${QT_INSTALL_PREFIX}/bin ${QT_INST_LIBRARIES})
+    install(DIRECTORY ${QT_INSTALL_PREFIX}/plugins/platforms DESTINATION bin FILES_MATCHING PATTERN "qwindows*.dll")
+    install(DIRECTORY ${QT_INSTALL_PREFIX}/plugins/imageformats DESTINATION bin FILES_MATCHING PATTERN "*.dll")
+    install(DIRECTORY ${QT_INSTALL_PREFIX}/plugins/styles DESTINATION bin FILES_MATCHING PATTERN "*.dll")
   endif()
 
   function(install_qt_message_files_for_languages)
     if(MSVC)
       foreach(lang ${ARGV})
 	install(
-	  DIRECTORY ${_qt5Core_install_prefix}/translations
+	  DIRECTORY ${QT_INSTALL_PREFIX}/translations
 	  DESTINATION bin
 	  FILES_MATCHING PATTERN "*_${lang}.qm")
       endforeach()
     endif()
   endfunction()
+
   # Install Japanese messages by default
   install_qt_message_files_for_languages(ja)
 endif()

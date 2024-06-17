@@ -8,6 +8,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/UnifiedEditHistory>
 #include <cnoid/Archive>
+#include <cnoid/QtEventUtil>
 #include <fmt/format.h>
 #include <functional>
 #include "gettext.h"
@@ -229,7 +230,7 @@ void SimulationBar::onStopButtonRightClicked(QMouseEvent* event)
     auto check = menuManager.addCheckItem(_("Enable Confirmation Dialog"));
     check->setChecked(isStopConfirmationEnabled);
     check->sigToggled().connect([this](bool on){ isStopConfirmationEnabled = on; });
-    menuManager.popupMenu()->popup(event->globalPos());
+    menuManager.popupMenu()->popup(getGlobalPosition(event));
 }
 
 

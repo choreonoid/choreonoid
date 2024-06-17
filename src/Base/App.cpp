@@ -73,7 +73,6 @@
 #include <Eigen/Core>
 #include <QApplication>
 #include <QTranslator>
-#include <QTextCodec>
 #include <QSurfaceFormat>
 #include <QStyleFactory>
 #include <QThread>
@@ -81,6 +80,10 @@
 #include <regex>
 #include <iostream>
 #include <csignal>
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#include <QTextCodec>
+#endif
 
 #ifdef Q_OS_WIN32
 #include <windows.h>
@@ -223,11 +226,13 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
 
     QSurfaceFormat::setDefaultFormat(glFormat);
 
-#if (QT_VERSION < QT_VERSION_CHECK(5, 6, 0))
-    QCoreApplication::setAttribute(Qt::AA_X11InitThreads);
-#endif
-    
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+
+    // The following attribute is currently disabled because the actual scaling
+    // enabled by this attribute seems too large.
+    // QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
 
     /*
       This attribute is necessary to render the scene on a scene view when the view is
@@ -236,7 +241,7 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     */
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)) && (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
     QCoreApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton);
 #endif
 
@@ -249,7 +254,9 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     setlocale(LC_NUMERIC, "C");
 #endif
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+#endif
 
 #ifdef Q_OS_WIN32
     // Make a bundled Python available if it exists in the Choreonoid top directory.
@@ -319,10 +326,15 @@ void App::initialize()
 void App::Impl::initialize()
 {
     if(checkCurrentLocaleLanguageSupport()){
-        translator.load(
-            "qt_" + QLocale::system().name(),
-            QLibraryInfo::location(QLibraryInfo::TranslationsPath));
-        qapplication->installTranslator(&translator);
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        QString translationsPath = QLibraryInfo::path(QLibraryInfo::TranslationsPath);
+#else
+        QString translationsPath = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
+#endif
+        if(translator.load("qt_" + QLocale::system().name(), translationsPath)){
+            qapplication->installTranslator(&translator);
+        }
     }
 
     qapplication->setWindowIcon(

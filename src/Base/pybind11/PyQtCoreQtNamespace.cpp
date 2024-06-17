@@ -50,10 +50,9 @@ void exportPyQtCoreQtNamespace(py::module m)
         .value("ItemIsDropEnabled", Qt::ItemIsDropEnabled)
         .value("ItemIsUserCheckable", Qt::ItemIsUserCheckable)
         .value("ItemIsEnabled", Qt::ItemIsEnabled)
-        //.value("ItemIsAutoTristate", Qt::ItemIsAutoTristate) // No supprted by Qt 5.5
-        .value("ItemIsTristate", Qt::ItemIsTristate)
-        .value("ItemNeverHasChildren", Qt::ItemNeverHasChildren)
+        .value("ItemIsAutoTristate", Qt::ItemIsAutoTristate)
         .value("ItemIsUserTristate", Qt::ItemIsUserTristate)
+        .value("ItemNeverHasChildren", Qt::ItemNeverHasChildren)
         .export_values();
 
     py::class_<QFlags<Qt::ItemFlag>>(qt, "ItemFlags")

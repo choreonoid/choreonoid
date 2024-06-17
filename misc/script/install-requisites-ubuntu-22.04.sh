@@ -19,6 +19,7 @@ qtbase5-dev \
 libqt5x11extras5-dev \
 libqt5svg5-dev \
 qttranslations5-l10n \
+libglu1-mesa-dev \
 python3-dev \
 python3-numpy \
 libassimp-dev \

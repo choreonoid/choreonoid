@@ -7,6 +7,7 @@
 #include <cnoid/Separator>
 #include <cnoid/EigenUtil>
 #include <cnoid/ViewManager>
+#include <cnoid/QtEventUtil>
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QPaintEvent>
@@ -1174,9 +1175,10 @@ bool PoseRollView::Impl::onScreenMouseButtonPressEvent(QMouseEvent* event)
 {
     screen->setFocus(Qt::MouseFocusReason);
 
-    pressedScreenX = event->x();
-    pointerX = event->x();
-    pointerY = event->y();
+    auto pos = getPosition(event);
+    pressedScreenX = pos.x();
+    pointerX = pos.x();
+    pointerY = pos.y();
     dragOrgLeft = left;
 
     dragMode = DRAG_NONE;
@@ -1228,8 +1230,9 @@ void PoseRollView::Impl::pickPoseOnButtonPress(bool isAdding)
  
 bool PoseRollView::Impl::onScreenMouseMoveEvent(QMouseEvent* event)
 {
-    pointerX = event->x();
-    pointerY = event->y();
+    auto pos = getPosition(event);
+    pointerX = pos.x();
+    pointerY = pos.y();
 
     switch(dragMode){
 
@@ -1347,7 +1350,8 @@ bool PoseRollView::Impl::onScreenKeyPressEvent(QKeyEvent* event)
 
     if(event->key() == Qt::Key_Space){
         QMouseEvent mouseEvent(QEvent::MouseButtonPress,
-                               QPoint(pointerX, pointerY),
+                               QPointF(pointerX, pointerY),
+                               QPointF(pointerX, pointerY),
                                Qt::MiddleButton, Qt::MiddleButton,
                                event->modifiers());
         return onScreenMouseButtonPressEvent(&mouseEvent);
@@ -1429,7 +1433,8 @@ bool PoseRollView::Impl::onScreenKeyReleaseEvent(QKeyEvent* event)
 {
     if(event->key() == Qt::Key_Space){
         QMouseEvent mouseEvent(QEvent::MouseButtonPress,
-                               QPoint(pointerX, pointerY),
+                               QPointF(pointerX, pointerY),
+                               QPointF(pointerX, pointerY),
                                Qt::MiddleButton, Qt::MiddleButton,
                                event->modifiers());
         return onScreenMouseButtonReleaseEvent(&mouseEvent);

@@ -15,12 +15,12 @@
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <QLibrary>
-#include <QRegExp>
 #include <QFileDialog>
 #include <vector>
 #include <map>
 #include <set>
 #include <list>
+#include <regex>
 #include <fmt/format.h>
 
 #ifdef Q_OS_WIN32
@@ -101,7 +101,7 @@ public:
 
     string pluginDirectory;
     vector<string> pluginDirectories;
-    QRegExp pluginNamePattern;
+    std::regex pluginNamePattern;
 
     vector<PluginInfoPtr> allPluginInfos;
     PluginMap nameToPluginInfoMap;
@@ -178,8 +178,7 @@ PluginManager::Impl::Impl()
 
     addPluginDirectory(cnoid::pluginDir(), false);
 
-    pluginNamePattern.setPattern(
-        QString(DLL_PREFIX) + "Cnoid(.+)Plugin" + DEBUG_SUFFIX + "\\." + DLL_EXTENSION);
+    pluginNamePattern.assign(string(DLL_PREFIX) + "Cnoid(.+)Plugin" + DEBUG_SUFFIX + "\\." + DLL_EXTENSION);
 
     // for the base module
     PluginInfoPtr info = std::make_shared<PluginInfo>();
@@ -346,13 +345,14 @@ void PluginManager::Impl::scanPluginFiles(const std::string& pathString, bool is
                 pPathStringUtf8 = &tmpPathStringUtf8;
             }
             const string& pathStringUtf8 = *pPathStringUtf8;
-            QString filename(toUTF8(pluginPath.filename().string()).c_str());
-            if(isNamingConventionCheckDisabled || pluginNamePattern.exactMatch(filename)){
-                PluginMap::iterator p = pathToPluginInfoMap.find(pathStringUtf8);
-                if(p == pathToPluginInfoMap.end()){
+            string filename(toUTF8(pluginPath.filename().string()));
+            std::smatch match;
+            if(isNamingConventionCheckDisabled || regex_match(filename, match, pluginNamePattern)){
+                auto it = pathToPluginInfoMap.find(pathStringUtf8);
+                if(it == pathToPluginInfoMap.end()){
                     PluginInfoPtr info = std::make_shared<PluginInfo>();
                     // Set a tentative name extracted from the plugin file name
-                    info->name = pluginNamePattern.cap(1).toStdString();
+                    info->name = match.str(1);
                     info->pathString = pathStringUtf8;
                     allPluginInfos.push_back(info);
                     pathToPluginInfoMap[info->pathString] = info;
@@ -951,7 +951,6 @@ void PluginManager::Impl::showDialogToLoadPlugin()
             string filename = toUTF8(path.make_preferred().string());
 
             // This code was taken from 'scanPluginFiles'. This should be unified.
-            //if(pluginNamePattern.exactMatch(QString(getFilename(pluginPath).c_str()))){
             if(true){
                 PluginMap::iterator p = pathToPluginInfoMap.find(filename);
                 if(p == pathToPluginInfoMap.end()){

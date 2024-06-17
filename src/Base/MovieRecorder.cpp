@@ -17,6 +17,7 @@
 #include <QPainter>
 #include <QProgressDialog>
 #include <QCoreApplication>
+#include <QGuiApplication>
 #include <fmt/format.h>
 #include <thread>
 #include <mutex>
@@ -26,7 +27,11 @@
 
 // For the mouse cursor capture
 #ifdef Q_OS_LINUX
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QX11Info>
+#endif
+
 #include <X11/extensions/Xfixes.h>
 static constexpr bool hasMouseCursorCaptureFeature = true;
 #else
@@ -899,28 +904,40 @@ void MovieRecorder::Impl::captureViewImage(bool waitForPrevOutput)
 void MovieRecorder::Impl::drawMouseCursorImage(QPainter& painter)
 {
 #ifdef Q_OS_LINUX
-    XFixesCursorImage* cursor = XFixesGetCursorImage(QX11Info::display());
-    if(cursor){
-        if(cursor->pixels){
-            QImage cursorImage;
-            if(sizeof(long) == 4){
-                cursorImage = QImage((uchar*)cursor->pixels,
-                                     cursor->width, cursor->height,
-                                     QImage::Format_ARGB32);
-            } else {
-                tmpImageBuf.resize(cursor->width * cursor->height);
-                for(size_t i=0; i < tmpImageBuf.size(); ++i){
-                    tmpImageBuf[i] = (quint32)cursor->pixels[i];
+
+    Display* display = nullptr;
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    if(auto x11App = qGuiApp->nativeInterface<QNativeInterface::QX11Application>()){
+        display = x11App->display();
+    }
+#else
+    display = QX11Info::display();
+#endif
+
+    if(display){
+        if(auto cursor = XFixesGetCursorImage(display)){
+            if(cursor->pixels){
+                QImage cursorImage;
+                if(sizeof(long) == 4){
+                    cursorImage = QImage((uchar*)cursor->pixels,
+                                         cursor->width, cursor->height,
+                                         QImage::Format_ARGB32);
+                } else {
+                    tmpImageBuf.resize(cursor->width * cursor->height);
+                    for(size_t i=0; i < tmpImageBuf.size(); ++i){
+                        tmpImageBuf[i] = (quint32)cursor->pixels[i];
+                    }
+                    cursorImage = QImage((uchar*)(&tmpImageBuf.front()),
+                                         cursor->width, cursor->height,
+                                         QImage::Format_ARGB32);
                 }
-                cursorImage = QImage((uchar*)(&tmpImageBuf.front()),
-                                     cursor->width, cursor->height,
-                                     QImage::Format_ARGB32);
+                QPoint mousePos = QCursor::pos() - targetView->mapToGlobal(QPoint(0, 0));
+                mousePos -= QPoint(cursor->xhot, cursor->yhot);
+                painter.drawImage(mousePos, cursorImage);
             }
-            QPoint mousePos = QCursor::pos() - targetView->mapToGlobal(QPoint(0, 0));
-            mousePos -= QPoint(cursor->xhot, cursor->yhot);
-            painter.drawImage(mousePos, cursorImage);
+            XFree(cursor);
         }
-        XFree(cursor);
     }
 #endif
 }

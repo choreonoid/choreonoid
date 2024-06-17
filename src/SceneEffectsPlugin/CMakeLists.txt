@@ -25,7 +25,7 @@ set(headers
   FireDevice.h
   )
 
-QT5_ADD_RESOURCES(RC_SRCS SceneEffectsPlugin.qrc)
+choreonoid_qt_add_resources(RC_SRCS SceneEffectsPlugin.qrc)
 set(target CnoidSceneEffectsPlugin)
 make_gettext_mofiles(${target} mofiles)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

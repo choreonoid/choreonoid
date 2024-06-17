@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ItemManager.h"
 #include "Item.h"
 #include "ItemAddon.h"
@@ -277,9 +273,8 @@ void ItemManager::Impl::registerClass
         info->className = className;
 
         // set the class name without the "Item" suffix
-        QString name(className.c_str());
-        name.replace(QRegExp("Item$"), "");
-        info->name = name.toStdString();
+        static std::regex pattern("Item$");
+        info->name = regex_replace(className, pattern, "");
     }
 
     if(singletonInstance){

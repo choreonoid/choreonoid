@@ -21,6 +21,7 @@
 #include <cnoid/FileDialog>
 #include <cnoid/LineEdit>
 #include <cnoid/PushButton>
+#include <cnoid/QtEventUtil>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
@@ -68,7 +69,13 @@ public:
     
     ExTreeWidget(BodyLibraryView::Impl* viewImpl);
     LibraryItem* getLibraryItem(const QModelIndex& index);
-    virtual QMimeData* mimeData(const QList<QTreeWidgetItem *> items) const override;
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    virtual QMimeData* mimeData(const QList<QTreeWidgetItem*>& items) const override;
+#else
+    virtual QMimeData* mimeData(const QList<QTreeWidgetItem*> items) const override;
+#endif
+
     virtual void startDrag(Qt::DropActions supportedActions) override;
     virtual void dropEvent(QDropEvent* event) override;
 };
@@ -228,7 +235,11 @@ LibraryItem* ExTreeWidget::getLibraryItem(const QModelIndex& index)
 }
 
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+QMimeData* ExTreeWidget::mimeData(const QList<QTreeWidgetItem*>& items) const
+#else
 QMimeData* ExTreeWidget::mimeData(const QList<QTreeWidgetItem*> items) const
+#endif
 {
     auto mimeData = new ExMimeData;
 
@@ -267,7 +278,7 @@ void ExTreeWidget::startDrag(Qt::DropActions supportedActions)
 void ExTreeWidget::dropEvent(QDropEvent* event)
 {
     if(auto data = dynamic_cast<const ExMimeData*>(event->mimeData())){
-        QTreeWidgetItem* itemAtDrop = itemAt(event->pos());
+        QTreeWidgetItem* itemAtDrop = itemAt(getPosition(event));
         DropIndicatorPosition dropIndicator = dropIndicatorPosition();
         switch(dropIndicator){
         case QAbstractItemView::OnItem:

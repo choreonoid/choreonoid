@@ -4,6 +4,7 @@
 #include "Buttons.h"
 #include "Dialog.h"
 #include "LineEdit.h"
+#include "QtEventUtil.h"
 #include <cnoid/ValueTree>
 #include <QBoxLayout>
 #include <QLabel>
@@ -219,8 +220,7 @@ void LayoutSwitcher::Impl::onLayoutContextMenuRequest(LayoutInfo* info, QMouseEv
         [this, info](){ updateLayout(info); });
     menuManager.addItem("Remove")->sigTriggered().connect(
         [this, info](){ removeLayout(info); });
-    menuManager.popupMenu()->popup(event->globalPos());
-    //menuManager.popupMenu()->popup(button->mapToGlobal(QPoint(0,0)));
+    menuManager.popupMenu()->popup(getGlobalPosition(event));
 }
 
 

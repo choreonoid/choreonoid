@@ -328,7 +328,7 @@ void MainMenu::setActionAsSaveProjectAs(Action* action)
 
 void MainMenu::setActionAsProjectLayoutToggle(Action* action)
 {
-    static_cast<Menu*>(action->parentWidget())->sigAboutToShow().connect(
+    qobject_cast<Menu*>(action->parent())->sigAboutToShow().connect(
         [action](){ action->setChecked(ProjectManager::instance()->isLayoutInclusionMode()); });
     action->sigToggled().connect([](bool on){ ProjectManager::instance()->setLayoutInclusionMode(on); });
 }
@@ -348,7 +348,7 @@ void MainMenu::setActionAsExitApplication(Action* action)
 
 void MainMenu::setActionAsUndo(Action* action)
 {
-    static_cast<Menu*>(action->parentWidget())->sigAboutToShow().connect(
+    qobject_cast<Menu*>(action->parent())->sigAboutToShow().connect(
         [action](){ action->setEnabled(UnifiedEditHistory::instance()->isUndoable()); });
     action->sigTriggered().connect([](){ UnifiedEditHistory::instance()->undo(); });
 }
@@ -356,7 +356,7 @@ void MainMenu::setActionAsUndo(Action* action)
 
 void MainMenu::setActionAsRedo(Action* action)
 {
-    static_cast<Menu*>(action->parentWidget())->sigAboutToShow().connect(
+    qobject_cast<Menu*>(action->parent())->sigAboutToShow().connect(
         [action](){ action->setEnabled(UnifiedEditHistory::instance()->isRedoable()); });
     action->sigTriggered().connect([](){ UnifiedEditHistory::instance()->redo(); });
 }
@@ -479,7 +479,7 @@ void MainMenu::onViewOperationMenuAboutToShow(Menu* menu, int viewMenuType)
 
 void MainMenu::setActionAsViewTabToggle(Action* action)
 {
-    static_cast<Menu*>(action->parentWidget())->sigAboutToShow().connect(
+    qobject_cast<Menu*>(action->parent())->sigAboutToShow().connect(
         [action](){ action->setChecked(MainWindow::instance()->viewArea()->viewTabsVisible()); });
     action->sigToggled().connect(
         [](bool on){ MainWindow::instance()->viewArea()->setViewTabsVisible(on); });
@@ -488,7 +488,7 @@ void MainMenu::setActionAsViewTabToggle(Action* action)
 
 void MainMenu::setActionAsStatusBarToggle(Action* action)
 {
-    static_cast<Menu*>(action->parentWidget())->sigAboutToShow().connect(
+    qobject_cast<Menu*>(action->parent())->sigAboutToShow().connect(
         [action](){ action->setChecked(InfoBar::instance()->isVisible()); });
     action->sigToggled().connect([](bool on){ InfoBar::instance()->setVisible(on); });
 }

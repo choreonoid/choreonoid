@@ -14,6 +14,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/EigenUtil>
 #include <cnoid/MessageOut>
+#include <cnoid/QtEventUtil>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QTableView>
@@ -257,11 +258,11 @@ QVariant PositionListModel::headerData(int section, Qt::Orientation orientation,
         if(orientation == Qt::Horizontal){
             switch(section){
             case IdColumn:
-                return " ID ";
+                return QString(" ID ");
             case NoteColumn:
-                return _("Note");
+                return QString(_("Note"));
             case JointSpaceCheckColumn:
-                return _("J");
+                return QString(_("J"));
             default:
                 {
                     int posColumnIndex = section - MainPositionColumn;
@@ -328,7 +329,7 @@ QVariant PositionListModel::data(const QModelIndex& index, int role) const
         }
     } else if(role == Qt::TextAlignmentRole){
         if(column == NoteColumn || column >= MainPositionColumn){
-            return (Qt::AlignLeft + Qt::AlignVCenter);
+            return static_cast<Qt::Alignment::Int>(Qt::AlignLeft | Qt::AlignVCenter);
         } else {
             return Qt::AlignCenter;
         }
@@ -924,7 +925,7 @@ void MprPositionListView::Impl::mousePressEvent(QMouseEvent* event)
 
     if(event->button() == Qt::RightButton){
         if(positionList){
-            showContextMenu(rowAt(event->pos().y()), event->globalPos());
+            showContextMenu(rowAt(event->pos().y()), getGlobalPosition(event));
         }
     }
 }

@@ -17,6 +17,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/Archive>
 #include <cnoid/MessageOut>
+#include <cnoid/QtEventUtil>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QMouseEvent>
@@ -681,7 +682,13 @@ void MprProgramViewBase::Impl::setupWidgets()
     QItemEditorFactory* factory = new QItemEditorFactory;
     QItemEditorCreatorBase* stringListEditorCreator =
         new QStandardItemEditorCreator<StringListComboBox>();
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    factory->registerEditor(QMetaType::QStringList, stringListEditorCreator);
+#else
     factory->registerEditor(QVariant::StringList, stringListEditorCreator);
+#endif
+
     mainDelegate->setItemEditorFactory(factory);
     
     setItemDelegate(mainDelegate);
@@ -1703,7 +1710,7 @@ void MprProgramViewBase::Impl::mousePressEvent(QMouseEvent* event)
     }
     
     if(event->button() == Qt::RightButton){
-        showContextMenu(statement, event->globalPos());
+        showContextMenu(statement, getGlobalPosition(event));
     }
 }
 
@@ -1894,25 +1901,27 @@ void MprProgramViewBase::Impl::dropEvent(QDropEvent *event)
 {
     bool insertAbove = false;
     bool insertBelow = false;
-    auto destinationItem = dynamic_cast<StatementItem*>(itemAt(event->pos()));
+    auto destinationItem = dynamic_cast<StatementItem*>(itemAt(getPosition(event)));
     if(!destinationItem){
         destinationItem = dynamic_cast<StatementItem*>(topLevelItem(topLevelItemCount() - 1));
         insertBelow = true;
     }
 
-    if(event->pos().y() < 4){
+    const auto pos = getPosition(event);
+
+    if(pos.y() < 4){
         insertAbove = true;
 
-    } else if(itemAt(event->pos()) == nullptr){
+    } else if(itemAt(pos) == nullptr){
         insertBelow = true;
 
     } else {
-        auto checkPos = QPoint(event->pos().x(), event->pos().y() - 4);
-        if(itemAt(event->pos()) != itemAt(checkPos)){
+        auto checkPos = QPoint(pos.x(), pos.y() - 4);
+        if(itemAt(pos) != itemAt(checkPos)){
             insertAbove = true;
         }
-        checkPos = QPoint(event->pos().x(), event->pos().y() + 4);
-        if(itemAt(event->pos()) != itemAt(checkPos)){
+        checkPos = QPoint(pos.x(), pos.y() + 4);
+        if(itemAt(pos) != itemAt(checkPos)){
             insertBelow = true;
         }
     }

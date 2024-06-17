@@ -401,14 +401,18 @@ ItemList<> ProjectManager::Impl::loadProject
             }
         } else {
             QResource resource(filename.c_str());
-            if(resource.isValid()){
+            if(!resource.isValid()){
+                mv->putln(format(_("Resource \"{0}\" is not found."), filename), MessageView::Error);
+            } else {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+                auto data = resource.uncompressedData();
+#else
                 auto data = qUncompress(QByteArray((const char*)resource.data(), (int)resource.size()));
+#endif
                 parsed = reader.parse(data.constData(), data.size());
                 if(!parsed){
                     mv->putln(reader.errorMessage(), MessageView::Error);
                 }
-            } else {
-                mv->putln(format(_("Resource \"{0}\" is not found."), filename), MessageView::Error);
             }
         }
         

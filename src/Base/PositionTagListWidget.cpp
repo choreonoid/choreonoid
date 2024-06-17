@@ -2,6 +2,7 @@
 #include "MenuManager.h"
 #include "PositionTagGroupItem.h"
 #include "DisplayValueFormat.h"
+#include "QtEventUtil.h"
 #include <cnoid/PositionTagGroup>
 #include <cnoid/PositionTag>
 #include <cnoid/EigenUtil>
@@ -167,7 +168,7 @@ QVariant TagGroupModel::headerData(int section, Qt::Orientation orientation, int
             case IndexColumn:
                 return " No ";
             case PositionColumn:
-                return _("Position");
+                return QString(_("Position"));
             default:
                 return QVariant();
             }
@@ -215,7 +216,7 @@ QVariant TagGroupModel::data(const QModelIndex& index, int role) const
         }
     } else if(role == Qt::TextAlignmentRole){
         if(column == PositionColumn){
-            return (Qt::AlignLeft + Qt::AlignVCenter);
+            return static_cast<Qt::Alignment::Int>(Qt::AlignLeft | Qt::AlignVCenter);
         } else {
             return Qt::AlignCenter;
         }
@@ -540,7 +541,7 @@ void PositionTagListWidget::mousePressEvent(QMouseEvent* event)
             // Show the context menu
             impl->contextMenuManager.setNewPopupMenu(this);
             impl->sigContextMenuRequest(impl->contextMenuManager);
-            impl->contextMenuManager.popupMenu()->popup(event->globalPos());
+            impl->contextMenuManager.popupMenu()->popup(getGlobalPosition(event));
         }
     }
 }
