@@ -13,6 +13,7 @@ public:
     static PythonPlugin* instance();
 
     PythonPlugin();
+    ~PythonPlugin();
 
     python::module mainModule();
     python::object globalNamespace();

@@ -99,6 +99,7 @@ public:
     python::module rollbackImporterModule;
 
     Impl(PythonPlugin* self);
+    ~Impl();
     
     bool initialize();
     bool initializeInterpreter();
@@ -147,6 +148,18 @@ PythonPlugin::Impl::Impl(PythonPlugin* self)
 }
 
 
+PythonPlugin::~PythonPlugin()
+{
+    delete impl;
+}
+
+
+PythonPlugin::Impl::~Impl()
+{
+    gil_scoped_release.reset();
+}
+
+
 bool PythonPlugin::initialize()
 {
     return impl->initialize();
@@ -176,6 +189,8 @@ bool PythonPlugin::Impl::initialize()
     if(!initializeInterpreter()){
         return false;
     }
+
+    gil_scoped_release.reset(new pybind11::gil_scoped_release());
 
 #ifdef Q_OS_LINUX
     exportLibPythonSymbols();
@@ -342,9 +357,6 @@ bool PythonPlugin::Impl::initializeInterpreter()
     builtins.attr("exit") = exitFunc;
     builtins.attr("quit") = exitFunc;
     sysModule.attr("exit") = exitFunc;
-
-    gil_scoped_release.reset(new pybind11::gil_scoped_release());
-    //gil_scoped_release = new pybind11::gil_scoped_release();
 
     return true;
 }
