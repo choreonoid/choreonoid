@@ -687,7 +687,7 @@ void SceneWidget::Impl::initializeGL()
     }
 
     renderer->setDefaultFramebufferObject(defaultFramebufferObject());
-    
+
     lastDevicePixelRatio = devicePixelRatio();
     renderer->setDevicePixelRatio(lastDevicePixelRatio);
 
@@ -1350,9 +1350,8 @@ void SceneWidget::Impl::updateLatestEventPath(bool forceFullPicking)
 
     makeCurrent();
 
-    const int r = lastDevicePixelRatio;
-    int px = r * latestEvent.x();
-    int py = r * latestEvent.y();
+    int px = lastDevicePixelRatio * latestEvent.x();
+    int py = lastDevicePixelRatio * latestEvent.y();
 
     isRendering = true;
     bool picked = renderer->pick(px, py);
@@ -1929,7 +1928,7 @@ void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
 
 bool SceneWidget::unproject(double x, double y, double z, Vector3& out_projected) const
 {
-    const int r = impl->lastDevicePixelRatio;
+    const float r = impl->lastDevicePixelRatio;
     return impl->renderer->unproject(r * x, r * y, z, out_projected);
 }
 
