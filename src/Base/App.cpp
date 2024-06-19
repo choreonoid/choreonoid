@@ -117,9 +117,6 @@ void onCtrl_C_Input(int)
 }
 
 #ifdef Q_OS_WIN32
-int argc_winmain;
-vector<char*> argv_winmain;
-
 BOOL WINAPI consoleCtrlHandler(DWORD ctrlChar)
 {
     callLater([](){ MainWindow::instance()->close(); });
@@ -173,40 +170,6 @@ App::App(int& argc, char** argv, const std::string& appName, const std::string& 
 {
     impl = new Impl(this, argc, argv, appName, organization);
 }
-
-
-#ifdef _WIN32
-App::App
-(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow,
- const std::string& appName, const std::string& organization)
-{
-#ifndef UNICODE
-    for(int i=0; i < __argc; ++i){
-        argv_winmain.push_back(__argv[i]);
-    }
-#else
-    vector<char> buf;
-    vector<string> args(wargs.size());
-    int codepage = _getmbcp();
-    for(int i=0; i < __argc; ++i){
-        wchar_t* warg = __wargv[i];
-        size_t wargsize = wcslen(warg);
-        const int size = WideCharToMultiByte(codepage, 0, warg, wargsize, NULL, 0, NULL, NULL);
-        char* arg;
-        if(size > 0){
-            arg = new char[size + 1];
-            WideCharToMultiByte(codepage, 0, warg, wargsize, arg, size + 1, NULL, NULL);
-        } else {
-            arg = new char[1];
-            arg[0] = '\0';
-        }
-        argv_winmain.push_back(arg);
-    }
-#endif
-    argc_winmain = argv_winmain.size();
-    impl = new Impl(this, argc_winmain, &argv_winmain[0], appName, organization);
-}
-#endif
 
 
 App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, const std::string& organization)

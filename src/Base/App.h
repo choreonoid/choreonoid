@@ -3,11 +3,6 @@
 
 #include <cnoid/Signal>
 #include <string>
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -19,12 +14,6 @@ class CNOID_EXPORT App
         
 public:
     App(int& argc, char** argv, const std::string& appName, const std::string& organization);
-
-#ifdef _WIN32
-    App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow,
-        const std::string& appName, const std::string& organization);
-#endif
-
     ~App();
 
     [[deprecated("Use PluginManager::addPluginPathList")]]
