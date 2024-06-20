@@ -9,6 +9,7 @@
 #include "DisplayValueFormat.h"
 #include "Buttons.h"
 #include "QtEventUtil.h"
+#include "QtSvgUtil.h"
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
@@ -227,10 +228,10 @@ QVariant FrameListModel::headerData(int section, Qt::Orientation orientation, in
         }
     } else if(role == Qt::DecorationRole){
         if(section == GlobalCheckColumn){
-            static QIcon global(":/Base/icon/global.svg");
+            static QIcon global(QtSvgUtil::createIconFromSvgFile(":/Base/icon/global.svg"));
             return global;
         } else if(section == VisibleCheckColumn){
-            static QIcon visibilityIcon(":/Base/icon/visualshape.svg");
+            static QIcon visibilityIcon(QtSvgUtil::createIconFromSvgFile(":/Base/icon/visualshape.svg"));
             return visibilityIcon;
         }
     } else if(role == Qt::TextAlignmentRole){

@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "FileBar.h"
 #include "ExtensionManager.h"
 #include "ProjectManager.h"
@@ -32,8 +28,8 @@ FileBar::FileBar()
     : ToolBar(N_("FileBar"))
 {
     setVisibleByDefault(true);
-    
-    auto button = addButton(QIcon(":/Base/icon/projectsave.svg"));
+
+    auto button = addButton(":/Base/icon/projectsave.svg");
     button->setToolTip(_("Save the project"));
     button->sigClicked().connect([](){ ProjectManager::instance()->overwriteCurrentProject(); });
 }

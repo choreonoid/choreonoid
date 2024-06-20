@@ -22,6 +22,7 @@
 #include <cnoid/ButtonGroup>
 #include <cnoid/CheckBox>
 #include <cnoid/Dialog>
+#include <cnoid/QtSvgUtil>
 #include <QDialogButtonBox>
 #include <fmt/format.h>
 #include <set>
@@ -175,15 +176,15 @@ BodyMotionGenerationBar::Impl::Impl(BodyMotionGenerationBar* self)
     setup = new BodyMotionGenerationSetupDialog(this);
     balancer = nullptr;
 
-    auto generationButton = self->addButton(QIcon(":/PoseSeq/icon/trajectory-generation.svg"));
+    auto generationButton = self->addButton(":/PoseSeq/icon/trajectory-generation.svg");
     generationButton->setToolTip(_("Generate body motions"));
     generationButton->sigClicked().connect([this](){ onGenerationButtonClicked(); });
 
-    autoGenerationToggle = self->addToggleButton(QIcon(":/PoseSeq/icon/auto-update.svg"));
+    autoGenerationToggle = self->addToggleButton(":/PoseSeq/icon/auto-update.svg");
     autoGenerationToggle->setToolTip(_("Automatic Balance Adjustment Mode"));
     autoGenerationToggle->setChecked(false);
 
-    balancerIcon = QIcon(":/PoseSeq/icon/balancer.svg");
+    balancerIcon = QtSvgUtil::createIconFromSvgFile(":/PoseSeq/icon/balancer.svg");
     
     balancerToggle = self->addToggleButton(balancerIcon);
     balancerToggle->setToolTip(_("Enable the balancer"));
@@ -192,7 +193,7 @@ BodyMotionGenerationBar::Impl::Impl(BodyMotionGenerationBar* self)
 
     secondBalancerToggle = nullptr;
 
-    self->addButton(QIcon(":/Base/icon/setup.svg"))
+    self->addButton(":/Base/icon/setup.svg")
         ->sigClicked().connect([this](){ setup->show(); });
 }
 

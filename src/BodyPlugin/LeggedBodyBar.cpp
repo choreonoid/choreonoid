@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "LeggedBodyBar.h"
 #include "BodySelectionManager.h"
 #include "BodyItem.h"
@@ -52,33 +48,33 @@ LeggedBodyBar::Impl::Impl(LeggedBodyBar* self)
 
     ToolButton* button;
     
-    button = self->addButton(QIcon(":/Body/icon/center-cm.svg"));
+    button = self->addButton(":/Body/icon/center-cm.svg");
     button->setToolTip(_("Move the center of mass to the position where its projection corresponds to the support feet cener"));
     button->sigClicked().connect([&](){ onCmButtonClicked(BodyItem::HOME_COP); });
     
-    button = self->addButton(QIcon(":/Body/icon/zmp-to-cm.svg"));
+    button = self->addButton(":/Body/icon/zmp-to-cm.svg");
     button->setToolTip(_("Move the center of mass to fit its projection to ZMP"));
     button->sigClicked().connect([&](){ onCmButtonClicked(BodyItem::ZERO_MOMENT_POINT); });
     
-    button = self->addButton(QIcon(":/Body/icon/cm-to-zmp.svg"));
+    button = self->addButton(":/Body/icon/cm-to-zmp.svg");
     button->setToolTip(_("Set ZMP to the projection of the center of mass"));
     button->sigClicked().connect([&](){ onZmpButtonClicked(BodyItem::CM_PROJECTION); });
 
-    button = self->addButton(QIcon(":/Body/icon/right-zmp.svg"));
+    button = self->addButton(":/Body/icon/right-zmp.svg");
     button->setToolTip(_("Set ZMP under the right foot"));
     button->sigClicked().connect([&](){ onZmpButtonClicked(BodyItem::RIGHT_HOME_COP); });
 
-    button = self->addButton(QIcon(":/Body/icon/center-zmp.svg"));
+    button = self->addButton(":/Body/icon/center-zmp.svg");
     button->setToolTip(_("Set ZMP at the center of the feet"));
     button->sigClicked().connect([&](){ onZmpButtonClicked(BodyItem::HOME_COP); });
 
-    button = self->addButton(QIcon(":/Body/icon/left-zmp.svg"));
+    button = self->addButton(":/Body/icon/left-zmp.svg");
     button->setToolTip(_("Set ZMP under the left foot"));
     button->sigClicked().connect([&](){ onZmpButtonClicked(BodyItem::LEFT_HOME_COP); });
 
     self->addSeparator();
 
-    button = self->addButton(QIcon(":/Body/icon/stancelength.svg"));
+    button = self->addButton(":/Body/icon/stancelength.svg");
     button->setToolTip(_("Adjust the width between the feet"));
     button->sigClicked().connect([&](){ onStanceButtonClicked(); });
 

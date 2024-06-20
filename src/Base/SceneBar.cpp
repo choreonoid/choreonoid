@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "SceneBar.h"
 #include "SceneView.h"
 #include "SceneViewConfig.h"
@@ -143,7 +139,7 @@ void SceneBar::Impl::initialize()
 
     currentSceneView = nullptr;
     
-    editModeToggle = self->addToggleButton(QIcon(":/Base/icon/sceneedit.svg"), EditModeToggle);
+    editModeToggle = self->addToggleButton(":/Base/icon/sceneedit.svg", EditModeToggle);
     editModeToggle->setToolTip(_("Switch to the edit mode"));
     editModeToggle->sigToggled().connect([&](bool on){ onEditModeButtonToggled(on); });
 
@@ -151,7 +147,7 @@ void SceneBar::Impl::initialize()
     customModeButtonGroup.sigButtonToggled().connect(
         [&](int mode, bool on){ onCustomModeButtonToggled(mode, on); });
     
-    firstPersonModeToggle = self->addToggleButton(QIcon(":/Base/icon/walkthrough.svg"), FirstPersonModeToggle);
+    firstPersonModeToggle = self->addToggleButton(":/Base/icon/walkthrough.svg", FirstPersonModeToggle);
     firstPersonModeToggle->setToolTip(_("First-person viewpoint control mode"));
     firstPersonModeToggle->sigToggled().connect([&](bool on){ onFirstPersonModeButtonToggled(on); });
 
@@ -175,7 +171,7 @@ void SceneBar::Impl::initialize()
         [&](int index){ onCameraComboCurrentIndexChanged(index); });
     self->addWidget(cameraCombo, CameraCombo);
 
-    auto fittingButton = self->addButton(QIcon(":/Base/icon/viewfitting.svg"), FittingButton);
+    auto fittingButton = self->addButton(":/Base/icon/viewfitting.svg", FittingButton);
     fittingButton->setToolTip(_("Move the camera to look at the objects"));
     fittingButton->sigClicked().connect(
         [&](){
@@ -184,20 +180,20 @@ void SceneBar::Impl::initialize()
             sceneWidget->setViewpointOperationMode(SceneWidget::ThirdPersonMode);
         });
 
-    vertexToggle = self->addToggleButton(QIcon(":/Base/icon/vertex.svg"), VertexToggle);
+    vertexToggle = self->addToggleButton(":/Base/icon/vertex.svg", VertexToggle);
     vertexToggle->setToolTip(_("Vertex rendering"));
     vertexToggle->sigToggled().connect([&](bool){ onPolygonModeButtonToggled(); });
 
-    auto wireframeToggle = self->addToggleButton(QIcon(":/Base/icon/wireframe.svg"), WireframeToggle);
+    auto wireframeToggle = self->addToggleButton(":/Base/icon/wireframe.svg", WireframeToggle);
     wireframeToggle->setToolTip(_("Wireframe rendering"));
     polygonModeGroup.addButton(wireframeToggle, 0);
 
     auto solidWireframeToggle =
-        self->addToggleButton(QIcon(":/Base/icon/solidwireframe.svg"), SolidWireframeToggle);
+        self->addToggleButton(":/Base/icon/solidwireframe.svg", SolidWireframeToggle);
     solidWireframeToggle->setToolTip(_("Solid wireframe rendering"));
     polygonModeGroup.addButton(solidWireframeToggle, 1);
 
-    auto solidPolygonToggle = self->addToggleButton(QIcon(":/Base/icon/solidpolygon.svg"), SolidPolygonToggle);
+    auto solidPolygonToggle = self->addToggleButton(":/Base/icon/solidpolygon.svg", SolidPolygonToggle);
     solidPolygonToggle->setToolTip(_("Polygon rendering"));
     polygonModeGroup.addButton(solidPolygonToggle, 2);
 
@@ -206,28 +202,28 @@ void SceneBar::Impl::initialize()
             if(on){ onPolygonModeButtonToggled(); }
         });
 
-    highlightToggle = self->addToggleButton(QIcon(":/Base/icon/highlight.svg"), HighlightToggle);
+    highlightToggle = self->addToggleButton(":/Base/icon/highlight.svg", HighlightToggle);
     highlightToggle->setToolTip(_("Highlight selected objects"));
     highlightToggle->sigToggled().connect([&](bool on){ onHighlightingToggled(on); });
 
-    visualModelToggle = self->addToggleButton(QIcon(":/Base/icon/visualshape.svg"), VisualModelToggle);
+    visualModelToggle = self->addToggleButton(":/Base/icon/visualshape.svg", VisualModelToggle);
     visualModelToggle->setToolTip(_("Show visual models"));
     visualModelToggle->setChecked(true);
     visualModelToggle->sigToggled().connect([&](bool){ updateCollisionModelVisibility(); });
 
-    modelTypeFlipButton = self->addButton(QIcon(":/Base/icon/shapeflip.svg"), ModelTypeFlipButton);
+    modelTypeFlipButton = self->addButton(":/Base/icon/shapeflip.svg", ModelTypeFlipButton);
     modelTypeFlipButton->setToolTip(_("Flip active model types"));
     modelTypeFlipButton->sigClicked().connect([&](){ flipVisibleModels(); });
 
-    collisionModelToggle = self->addToggleButton(QIcon(":/Base/icon/collisionshape.svg"), CollisionModelToggle);
+    collisionModelToggle = self->addToggleButton(":/Base/icon/collisionshape.svg", CollisionModelToggle);
     collisionModelToggle->setToolTip(_("Show the collision detection models"));
     collisionModelToggle->sigToggled().connect([&](bool){ updateCollisionModelVisibility();});
 
-    collisionLineToggle = self->addToggleButton(QIcon(":/Base/icon/collisionlines.svg"), CollisionLineToggle);
+    collisionLineToggle = self->addToggleButton(":/Base/icon/collisionlines.svg", CollisionLineToggle);
     collisionLineToggle->setToolTip(_("Toggle the collision line visibility"));
     collisionLineToggle->sigToggled().connect([&](bool on){ onCollisionLineButtonToggled(on); });
 
-    auto configButton = self->addButton(QIcon(":/Base/icon/setup.svg"), ConfigButton);
+    auto configButton = self->addButton(":/Base/icon/setup.svg", ConfigButton);
     configButton->setToolTip(_("Show the config dialog"));
     configButton->sigClicked().connect([&](){ currentSceneView->sceneViewConfig()->showConfigDialog(); });
 
@@ -546,27 +542,27 @@ void SceneBar::Impl::enableViewButtonSet()
 
     ToolButton* button;
 
-    button = self->addButton(QIcon(":/Base/icon/frontview.svg"), FrontViewButton);
+    button = self->addButton(":/Base/icon/frontview.svg", FrontViewButton);
     button->setToolTip(_("Front view"));
     button->sigClicked().connect([&](){ onViewButtonClicked(FrontViewButton); });
 
-    button = self->addButton(QIcon(":/Base/icon/backview.svg"), BackViewButton);
+    button = self->addButton(":/Base/icon/backview.svg", BackViewButton);
     button->setToolTip(_("Back view"));
     button->sigClicked().connect([&](){ onViewButtonClicked(BackViewButton); });
 
-    button = self->addButton(QIcon(":/Base/icon/topview.svg"), TopViewButton);
+    button = self->addButton(":/Base/icon/topview.svg", TopViewButton);
     button->setToolTip(_("Top view"));
     button->sigClicked().connect([&](){ onViewButtonClicked(TopViewButton); });
 
-    button = self->addButton(QIcon(":/Base/icon/bottomview.svg"), BottomViewButton);
+    button = self->addButton(":/Base/icon/bottomview.svg", BottomViewButton);
     button->setToolTip(_("Bottom view"));
     button->sigClicked().connect([&](){ onViewButtonClicked(BottomViewButton); });
 
-    button = self->addButton(QIcon(":/Base/icon/rightview.svg"), RightViewButton);
+    button = self->addButton(":/Base/icon/rightview.svg", RightViewButton);
     button->setToolTip(_("Right view"));
     button->sigClicked().connect([&](){ onViewButtonClicked(RightViewButton); });
 
-    button = self->addButton(QIcon(":/Base/icon/leftview.svg"), LeftViewButton);
+    button = self->addButton(":/Base/icon/leftview.svg", LeftViewButton);
     button->setToolTip(_("Left view"));
     button->sigClicked().connect([&](){ onViewButtonClicked(LeftViewButton); });
 

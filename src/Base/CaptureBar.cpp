@@ -37,7 +37,7 @@ CaptureBar::CaptureBar()
 {
     lastCaptureWidget = nullptr;
     
-    captureButton = addButton(QIcon(":/Base/icon/scenecapture.svg"));
+    captureButton = addButton(":/Base/icon/scenecapture.svg");
     captureButton->setToolTip(_("Capture the image of a view or toolbar"));
     captureButton->sigClicked().connect( [this](){ grabMouse(); });
     captureButton->installEventFilter(this);

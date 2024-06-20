@@ -5,6 +5,7 @@
 #include "ButtonGroup.h"
 #include "Archive.h"
 #include "QtEventUtil.h"
+#include "QtSvgUtil.h"
 #include <QStylePainter>
 #include <QStyleOptionToolBar>
 #include <QMouseEvent>
@@ -157,7 +158,14 @@ void ToolBar::registerElement(QWidget* element, int id)
 ToolButton* ToolBar::addButton(const QString& text, int id)
 {
     auto button = addButton(id);
-    button->setText(text);
+
+    if(text.startsWith(':') && text.endsWith(".svg")){
+        button->setIconSize(mainWindow->iconSize());
+        button->setIcon(QtSvgUtil::createIconFromSvgFile(text));
+    } else {
+        button->setText(text);
+    }
+    
     return button;
 }
 

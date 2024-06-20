@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ScriptBar.h"
 #include "ScriptItem.h"
 #include <cnoid/ExtensionManager>
@@ -25,7 +21,7 @@ void ScriptBar::initialize(ExtensionManager* ext)
 ScriptBar::ScriptBar()
     : ToolBar(N_("ScriptBar"))
 {
-    auto button = addButton(QIcon(":/Base/icon/script.svg"));
+    auto button = addButton(":/Base/icon/script.svg");
     button->setToolTip(_("Execute scripts"));
     button->sigClicked().connect([&](){ executeCheckedScriptItems(); });
 }

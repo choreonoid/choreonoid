@@ -80,23 +80,23 @@ KinematicsBar::Impl::Impl(KinematicsBar* self)
 {
     setup = new KinematicsBarSetupDialog;
     
-    fkToggle = self->addToggleButton(QIcon(":/Body/icon/fk.svg"));
+    fkToggle = self->addToggleButton(":/Body/icon/fk.svg");
     fkToggle->setToolTip(_("Enable forward kinematics"));
     fkToggle->setChecked(true);
     fkToggle->sigToggled().connect([&](bool on){ sigKinematicsModeChanged(); });
     
-    presetToggle = self->addToggleButton(QIcon(":/Body/icon/fkik.svg"));
+    presetToggle = self->addToggleButton(":/Body/icon/fkik.svg");
     presetToggle->setToolTip(_("Use preset Kinematics"));
     presetToggle->setChecked(true);
     presetToggle->sigToggled().connect([&](bool on){ sigKinematicsModeChanged(); });
     
-    ikToggle = self->addToggleButton(QIcon(":/Body/icon/ik.svg"));
+    ikToggle = self->addToggleButton(":/Body/icon/ik.svg");
     ikToggle->setToolTip(_("Enable inverse kinematics"));
     ikToggle->setChecked(true);
     ikToggle->sigToggled().connect([&](bool on){ sigKinematicsModeChanged(); });
     self->addSpacing();
 
-    draggerToggle = self->addToggleButton(QIcon(":/Body/icon/rotation.svg"));
+    draggerToggle = self->addToggleButton(":/Body/icon/rotation.svg");
     draggerToggle->setToolTip(_("Enable link orientation editing"));
     draggerToggle->setChecked(true);
 
@@ -110,17 +110,17 @@ KinematicsBar::Impl::Impl(KinematicsBar* self)
       jointPositionLimitToggle->setChecked(true);
     */
     
-    penetrationBlockToggle = self->addToggleButton(QIcon(":/Body/icon/block.svg"));
+    penetrationBlockToggle = self->addToggleButton(":/Body/icon/block.svg");
     penetrationBlockToggle->setToolTip(_("Penetration block mode"));
     penetrationBlockToggle->setChecked(false);
 
-    collisionLinkHighlightToggle = self->addToggleButton(QIcon(":/Body/icon/collisionoutline.svg"));
+    collisionLinkHighlightToggle = self->addToggleButton(":/Body/icon/collisionoutline.svg");
     collisionLinkHighlightToggle->setToolTip(_("Highlight colliding links"));
     collisionLinkHighlightToggle->setChecked(false);
     collisionLinkHighlightToggle->sigToggled().connect(
         [this](bool){ sigCollisionVisualizationChanged(); });
 
-    self->addButton(QIcon(":/Base/icon/setup.svg"))
+    self->addButton(":/Base/icon/setup.svg")
         ->sigClicked().connect([this](){ setup->show(); });
     
     setup->lazyCollisionDetectionModeCheck.sigToggled().connect(

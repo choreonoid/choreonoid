@@ -2,6 +2,7 @@
 #include "ExtensionManager.h"
 #include "Archive.h"
 #include "OptionManager.h"
+#include "QtSvgUtil.h"
 #include "SpinBox.h"
 #include "Slider.h"
 #include "Buttons.h"
@@ -179,9 +180,7 @@ TimeBar::TimeBar()
 
 
 TimeBar::Impl::Impl(TimeBar* self)
-    : self(self),
-      resumeIcon(QIcon(":/Base/icon/resume.svg")),
-      stopIcon(QIcon(":/Base/icon/stop.svg"))
+    : self(self)
 {
     self->setVisibleByDefault(true);
     self->setStretchable(true);
@@ -202,15 +201,18 @@ TimeBar::Impl::Impl(TimeBar* self)
     isOngoingTimeSyncEnabled = true;
     timerId = 0;
 
-    auto playButton = self->addButton(QIcon(":/Base/icon/play.svg"), PlayButton);
+    auto playButton = self->addButton(":/Base/icon/play.svg", PlayButton);
     playButton->setToolTip(_("Start playback"));
     playButton->sigClicked().connect([this](){ onPlayActivated(); });
+
+    resumeIcon = QtSvgUtil::createIconFromSvgFile(":/Base/icon/resume.svg");
+    stopIcon = QtSvgUtil::createIconFromSvgFile(":/Base/icon/stop.svg");
 
     resumeButton = self->addButton(resumeIcon, ResumeButton);
     resumeButton->setToolTip(_("Resume playback"));
     resumeButton->sigClicked().connect([this](){ onResumeActivated(); });
 
-    auto refreshButton = self->addButton(QIcon(":/Base/icon/refresh.svg"), RefreshButton);
+    auto refreshButton = self->addButton(":/Base/icon/refresh.svg", RefreshButton);
     refreshButton->setToolTip(_("Refresh state at the current time"));
     refreshButton->sigClicked().connect([this](){ this->self->refresh(); });
     
@@ -240,7 +242,7 @@ TimeBar::Impl::Impl(TimeBar* self)
     maxTimeSpin->sigValueChanged().connect([this](double time){ onMaxTimeSpinValueChanged(time); });
     self->addWidget(maxTimeSpin, TimeRangeMaxSpin);
 
-    auto configButton = self->addButton(QIcon(":/Base/icon/setup.svg"));
+    auto configButton = self->addButton(":/Base/icon/setup.svg");
     configButton->setToolTip(_("Show the config dialog"));
     configButton->sigClicked().connect([this](){ configDialog->show(); });
 

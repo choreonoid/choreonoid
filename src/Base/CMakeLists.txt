@@ -150,6 +150,7 @@ set(sources
   VirtualJoystickView.cpp
   MessageLogItem.cpp
   LightingItem.cpp
+  QtSvgUtil.cpp
   )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
@@ -304,6 +305,7 @@ set(headers
   LightingItem.h
   QtEventUtil.h
   QVariantUtil.h
+  QtSvgUtil.h
   exportdecl.h
   )
 

@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_PLUGIN_LEGGED_BODY_BAR_H
 #define CNOID_BODY_PLUGIN_LEGGED_BODY_BAR_H
 

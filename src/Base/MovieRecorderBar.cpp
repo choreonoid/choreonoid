@@ -2,6 +2,7 @@
 #include "MovieRecorder.h"
 #include "MovieRecorderDialog.h"
 #include "ExtensionManager.h"
+#include "QtSvgUtil.h"
 #include "gettext.h"
 
 using namespace std;
@@ -22,11 +23,12 @@ void MovieRecorderBar::initializeClass(ExtensionManager* ext)
 
 
 MovieRecorderBar::MovieRecorderBar()
-    : ToolBar(N_("MovieRecorderBar")),
-      recordIcon(":/Base/icon/record.svg"),
-      recordBlinkIcon(":/Base/icon/record2.svg")
+    : ToolBar(N_("MovieRecorderBar"))
 {
     recorder = nullptr;
+
+    recordIcon = QtSvgUtil::createIconFromSvgFile(":/Base/icon/record.svg");
+    recordBlinkIcon = QtSvgUtil::createIconFromSvgFile(":/Base/icon/record2.svg");
     
     recordingToggle = addToggleButton(recordIcon);
     recordingToggle->setToolTip(_("Toggle Recording"));
@@ -39,12 +41,12 @@ MovieRecorderBar::MovieRecorderBar()
     QObject::connect(recordingToggle, &QPushButton::toggled,
                      [this](bool on){ onRecordingButtonToggled(on); });
     
-    viewMarkerToggle = addToggleButton(QIcon(":/Base/icon/recordtarget.svg"));
+    viewMarkerToggle = addToggleButton(":/Base/icon/recordtarget.svg");
     viewMarkerToggle->setToolTip(_("Toggle Target View Marker"));
     viewMarkerToggle->sigToggled().connect(
         [this](bool on){ onViewMarkerButtonToggled(on); });
     
-    auto configButton = addButton(QIcon(":/Base/icon/setup.svg"));
+    auto configButton = addButton(":/Base/icon/setup.svg");
     configButton->setToolTip(_("Show the config dialog"));
     configButton->sigClicked().connect(
         [this](){ showMovieRecorderDialog(); });

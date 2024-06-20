@@ -111,20 +111,20 @@ GraphBar::GraphBar() : ToolBar(N_("GraphBar"))
 GraphBarImpl::GraphBarImpl(GraphBar* self)
     : self(self)
 {
-    orgRenderingToggle = self->addToggleButton(QIcon(":/Base/icon/graph.svg"));
+    orgRenderingToggle = self->addToggleButton(":/Base/icon/graph.svg");
     orgRenderingToggle->setToolTip(_("Plot trajectories of the target data on the graph view"));
     orgRenderingToggle->setChecked(true);
     connections.add(
         orgRenderingToggle->sigToggled().connect(
             [&](bool){ onRenderingTypesToggled(); }));
 
-    velRenderingToggle = self->addToggleButton(QIcon(":/Base/icon/velocitygraph.svg"));
+    velRenderingToggle = self->addToggleButton(":/Base/icon/velocitygraph.svg");
     velRenderingToggle->setToolTip(_("Plot velocity trajectories"));
     connections.add(
         velRenderingToggle->sigToggled().connect(
             [&](bool){ onRenderingTypesToggled(); }));
 
-    accRenderingToggle = self->addToggleButton(QIcon(":/Base/icon/accgraph.svg"));
+    accRenderingToggle = self->addToggleButton(":/Base/icon/accgraph.svg");
     accRenderingToggle->setToolTip(_("Plot acceleration trajectories"));
     // Hide this button because the acc trajectory is currently not supported by the graph wieget
     accRenderingToggle->hide();
@@ -135,7 +135,7 @@ GraphBarImpl::GraphBarImpl(GraphBar* self)
 
     configDialog = nullptr;
 
-    auto configButton = self->addButton(QIcon(":/Base/icon/setup.svg"));
+    auto configButton = self->addButton(":/Base/icon/setup.svg");
     configButton->setToolTip(_("Show the config dialog"));
 
     configButton->sigClicked().connect([&](){
