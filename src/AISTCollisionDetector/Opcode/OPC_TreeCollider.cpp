@@ -272,9 +272,9 @@ void AABBTreeCollider::InitQuery(const Matrix4x4* world0, const Matrix4x4* world
 	}
 
 
-	//Modified by S-cubed, Inc.
-	//行列を Boost の形式にあわせる。
-	//  Prim-Prim テストを TriOverlap.cpp で行うため。
+        // Modified by S-cubed, Inc.
+        // Adjust matrices to Boost format.
+        // Prim-Prim tests are done in TriOverlap.cpp.
         if(collisionPairInserter){
             
             for(udword i=0; i<3; i++){
@@ -297,8 +297,8 @@ void AABBTreeCollider::InitQuery(const Matrix4x4* world0, const Matrix4x4* world
             collisionPairInserter->CD_Trans2[0] = (double) t1.x;
             collisionPairInserter->CD_Trans2[1] = (double) t1.y;
             collisionPairInserter->CD_Trans2[2] = (double) t1.z;
-            
-            //s1, s2 は 1.0 のみなので、固定。
+
+            // s1 and s2 are fixed at 1.0.
             collisionPairInserter->CD_s1 = 1.0;
             collisionPairInserter->CD_s2 = 1.0;
         }
@@ -580,7 +580,7 @@ void AABBTreeCollider::PrimTest(udword id0, udword id1)
 
 	// Modified by S-cubed, Inc.
 	// Transform from space 0 (old : 1) to space 1 (old : 0)
-	// CD では変換が逆なのであわせる。
+	// Adjust for the reversed transformation in CD.
 	Point u0,u1,u2;
 	TransformPoint(u0, *VP0.Vertex[0], mR0to1, mT0to1);
 	TransformPoint(u1, *VP0.Vertex[1], mR0to1, mT0to1);
@@ -651,7 +651,7 @@ void AABBTreeCollider::_CollideTriBox(const AABBNoLeafNode* b)
 {
 	// Perform triangle-box overlap test
   // Modified by S-cubed, Inc.
-  //NoleafNode は使用しない
+  // NoleafNode is not used.
   //	if(!TriBoxOverlap(b->mAABB.mCenter, b->mAABB.mExtents))	return;
 
 	// Keep same triangle, deal with first child
@@ -674,7 +674,7 @@ void AABBTreeCollider::_CollideTriBox(const AABBNoLeafNode* b)
 void AABBTreeCollider::_CollideBoxTri(const AABBNoLeafNode* b)
 {
   // Modified by S-cubed, Inc.
-  //NoleafNode は使用しない
+  // NoleafNode is not used.
 	// Perform triangle-box overlap test
 	//if(!TriBoxOverlap(b->mAABB.mCenter, b->mAABB.mExtents))	return;
 
@@ -863,7 +863,7 @@ void AABBTreeCollider::_CollideTriBox(const AABBQuantizedNoLeafNode* b)
 
 	// Perform triangle-box overlap test
 	// Modified by S-cubed, Inc.
-	//NoleafNode は使用しない
+	// NoleafNode is not used.
 	//if(!TriBoxOverlap(Pb, eb))	return;
 
 	if(b->HasPosLeaf())	PrimTestTriIndex(b->GetPosPrimitive());
@@ -891,7 +891,7 @@ void AABBTreeCollider::_CollideBoxTri(const AABBQuantizedNoLeafNode* b)
 
  
 	// Modified by S-cubed, Inc.
-	//NoleafNode は使用しない
+	// NoleafNode is not used.
 	// Perform triangle-box overlap test
 	//	if(!TriBoxOverlap(Pa, ea))	return;
 
