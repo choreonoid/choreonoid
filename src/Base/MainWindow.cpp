@@ -36,12 +36,10 @@ QSize getAvailableScreenSize()
     return QGuiApplication::primaryScreen()->availableSize();
 }
 
-#ifdef Q_OS_WIN32
 QSize getScreenSize()
 {
     return QGuiApplication::primaryScreen()->size();
 }
-#endif
 
 #ifdef Q_OS_UNIX
 class WindowActivationChecker : public QObject
@@ -147,7 +145,18 @@ MainWindow::Impl::Impl(MainWindow* self, const std::string& appName, ExtensionMa
 
     isBeforeDoingInitialLayout = true;
     isMaximized = false;
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    /**
+       In Qt6, it seems impossible to initially show the main window in the full screen state.
+       Even if the showFullScreen function is called first, the window state becomes only maximized
+       and if you try to showFullScreen again, the program crashes.
+    */
+    isFullScreen = false;
+#else
     isFullScreen = config->get({ "full_screen", "fullScreen" }, false);
+#endif
+    
     isGoingToMaximized = false;
     
     centralWidget = new QWidget(self);
@@ -385,28 +394,21 @@ void MainWindow::Impl::showFirst()
         
         if(isFullScreen){
             isMaximizedJustBeforeFullScreen = config->get("maximized", false);
-#ifdef Q_OS_WIN32
             self->resize(getScreenSize());
-#endif
             isGoingToMaximized = true;
             if(TRACE_FUNCTIONS){
                 cout << "showFullScreen();" << endl;
             }
             self->showFullScreen();
-            //isGoingToMaximized = false;
-
             sigFullScreenToggled(isFullScreen);
 
         } else if(config->get("maximized", false)){
-#ifdef Q_OS_WIN32
             self->resize(getAvailableScreenSize());
-#endif
             isGoingToMaximized = true;
             if(TRACE_FUNCTIONS){
                 cout << "showMaximized();" << endl;
             }
             self->showMaximized();
-            //isGoingToMaximized = false;
 
         } else {
             self->resize(normalSize);
@@ -538,7 +540,7 @@ void MainWindow::Impl::resizeEvent(QResizeEvent* event)
         isBeforeDoingInitialLayout = false;
 
 #else
-        bool isMaximized = self->windowState() & (Qt::WindowMaximized | Qt::WindowFullScreen);
+        bool isMaximized = self->windowState() & Qt::WindowMaximized;
 
         if(!isMaximized || self->isVisible()){
             if(!isMaximized){
@@ -548,11 +550,9 @@ void MainWindow::Impl::resizeEvent(QResizeEvent* event)
                 */
                 toolBarArea->resize(event->size().width(), toolBarArea->height());
             }
-
             if(TRACE_FUNCTIONS){
                 cout << "MainWindow::Impl::resizeEvent(): initializeLayout" << endl;
             }
-            
             restoreLayout(initialLayoutArchive);
             initialLayoutArchive = 0;
             isBeforeDoingInitialLayout = false;
