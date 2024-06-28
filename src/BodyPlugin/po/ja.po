@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-06 11:33+0900\n"
+"POT-Creation-Date: 2024-06-28 14:22+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -653,6 +653,9 @@ msgstr "姿勢の取込"
 
 msgid "Pose{0}{1}{2}"
 msgstr "姿勢{1}{2}"
+
+msgid "BodyPoseListItem"
+msgstr "ボディ姿勢リストアイテム"
 
 msgid "PoseList"
 msgstr "姿勢リスト"

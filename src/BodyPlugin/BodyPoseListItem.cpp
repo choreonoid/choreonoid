@@ -34,7 +34,7 @@ public:
 void BodyPoseListItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager()
-        .registerClass<BodyPoseListItem>("BodyPoseListItem")
+        .registerClass<BodyPoseListItem>(N_("BodyPoseListItem"))
         .addCreationPanel<BodyPoseListItem>()
         .addFileIO<BodyPoseListItem>(new BodyPoseListFileIO);
 
