@@ -1435,4 +1435,26 @@ collisionDetection:
         NECK_Y, NECK_R, NECK_P,
         L_HIP_Y, L_HIP_R, R_HIP_Y, R_HIP_R ]
 
+body_markers:
+  - [ WAIST, [ 0.0, 0.16, 0.22 ], [ 0.0, -0.16, 0.22 ] ]
+  - L_HIP_Y
+  - L_KNEE_P
+  - L_ANKLE_P
+  - [ L_TOE_P, [ 0.0, 0.05, 0.0 ], [ 0.0, -0.05, 0.0 ], [ 0.05, 0, 0 ] ]
+  - R_HIP_Y
+  - R_KNEE_P
+  - R_ANKLE_P
+  - [ R_TOE_P, [ 0.0, 0.05, 0.0 ], [ 0.0, -0.05, 0.0 ], [ 0.05, 0, 0 ] ]
+  - CHEST_P
+  - NECK_Y
+  - [ NECK_P, [ 0.105, 0, 0.11], [ -0.08, 0.0, 0.11 ], [ 0, 0.08, 0.11 ], [ 0, -0.08, 0.11] ]
+  - L_SHOULDER_P
+  - L_ELBOW_P
+  - [ L_WRIST_R ]
+  - [ L_WRIST_R, [ 0.065, 0, -0.1 ], [ -0.045, 0, -0.07 ], [ 0, 0, -0.19 ] ]
+  - R_SHOULDER_P
+  - R_ELBOW_P
+  - [ R_WRIST_R ]
+  - [ R_WRIST_R, [ 0.065, 0, -0.1 ], [ -0.045, 0, -0.07 ], [ 0, 0, -0.19 ] ]
+
 body_handlers: HRP4CHandler
