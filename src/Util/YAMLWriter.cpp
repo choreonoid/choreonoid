@@ -696,7 +696,7 @@ void YAMLWriter::Impl::endListing()
             os() << " ]";
         } else {
             if(!current->hasValuesBeenPut){
-                os() << "[ ]"; // Put an empty listing
+                os() << " [ ]"; // Put an empty listing
             }
         }
         popState();
