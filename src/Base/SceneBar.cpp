@@ -10,12 +10,11 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneCameras>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -409,7 +408,7 @@ void SceneBar::Impl::onSceneRendererCamerasChanged(SceneWidget* sceneWidget)
             renderer->getSimplifiedCameraPathStrings(i, pathStrings);
             string label;
             if(pathStrings.empty()){
-                label = format("Camera {}", i);
+                label = formatC("Camera {}", i);
             } else if(pathStrings.size() == 1){
                 label = pathStrings.front();
             } else {

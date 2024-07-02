@@ -17,12 +17,11 @@
 #include <cnoid/CloneMap>
 #include <cnoid/EigenArchive>
 #include <cnoid/MessageView>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -795,7 +794,7 @@ bool LinkOverwriteItem::Impl::restore(const Archive& archive)
         } else if(symbol == "fixed"){
             link->setJointType(Link::FixedJoint);
         } else {
-            archive.throwException(format(_("Illegal jointType value \"{0}\""), symbol));
+            archive.throwException(formatR(_("Illegal jointType value \"{0}\""), symbol));
         }
         elementSet |= JointType;
     }
@@ -862,7 +861,7 @@ bool LinkOverwriteItem::Impl::restoreShapeWrittenInOldFormat(const Archive& arch
     auto bodyItem = archive.currentParentItem()->findOwnerItem<BodyItem>(true);
     if(!bodyItem){
         MessageView::instance()->putln(
-            format(_("The target body item of \"{0}\" is not found."), self->displayName()),
+            formatR(_("The target body item of \"{0}\" is not found."), self->displayName()),
             MessageView::Error);
         return false;
     }
@@ -976,7 +975,7 @@ std::string OffsetLocation::getName() const
 {
     auto name = LocationProxy::getName();
     if(isShapeOffsetLocation()){
-        return format(_("{0} Shape"), name);
+        return formatR(_("{0} Shape"), name);
     }
     return name;
 }

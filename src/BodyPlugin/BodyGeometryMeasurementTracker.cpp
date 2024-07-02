@@ -2,12 +2,11 @@
 #include "BodyItemKinematicsKit.h"
 #include "OperableSceneBody.h"
 #include <cnoid/CoordinateFrameList>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 
 static GeometryMeasurementTracker* createBodyGeometryMeasurementTracker(Item* item)
@@ -149,9 +148,9 @@ void BodyGeometryMeasurementTracker::updateSubEntries()
                     auto& note =frame->note();
                     string name;
                     if(note.empty()){
-                        name = format(_("Offset {0}"), frame->id().label());
+                        name = formatR(_("Offset {0}"), frame->id().label());
                     } else {
-                        name = format(_("Offset {0} ( {1} )"), frame->id().label(), note);
+                        name = formatR(_("Offset {0} ( {1} )"), frame->id().label(), note);
                     }
                     subEntries.emplace_back(name, link, frame);
                     ++frameIndex;

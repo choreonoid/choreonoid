@@ -4,12 +4,10 @@
 #include <cnoid/BodyItem>
 #include <cnoid/MessageView>
 #include <cnoid/CloneMap>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 
 void BodyElementOverwriteItem::initializeClass(ExtensionManager* ext)

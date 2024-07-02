@@ -1,12 +1,7 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "PolygonMeshTriangulator.h"
 #include "Triangulator.h"
 #include "SceneDrawables.h"
-#include <fmt/format.h>
+#include "Format.h"
 
 using namespace std;
 using namespace cnoid;
@@ -119,7 +114,7 @@ SgMesh* PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh* orgMesh)
         const int index = vertexIndices[i];
         if(index >= numVertices){
             if(numInvalidIndices == 0){
-                addErrorMessage(fmt::format("Vertex index {0} is over the number of vertices ({1}).", index, numVertices));
+                addErrorMessage(formatC("Vertex index {0} is over the number of vertices ({1}).", index, numVertices));
             }
             ++numInvalidIndices;
         } else if(index >= 0){
@@ -150,8 +145,9 @@ SgMesh* PolygonMeshTriangulatorImpl::triangulate(SgPolygonMesh* orgMesh)
     }
 
     if(numInvalidIndices > 1){
-        addErrorMessage(fmt::format("There are {0} invalied vertex indices that are over the number of vertices ({1}).",
-                numInvalidIndices, numVertices));
+        addErrorMessage(
+            formatC("There are {0} invalied vertex indices that are over the number of vertices ({1}).",
+                    numInvalidIndices, numVertices));
     }
     if(mesh->numTriangles() == 0){
         addErrorMessage("There is no valid polygons to triangulete.");
@@ -258,7 +254,7 @@ bool PolygonMeshTriangulatorImpl::setIndices
             }
             const int index = orgIndices[orgPos];
             if(index < 0 || index >= numElements){
-                addErrorMessage(fmt::format(message3(elementTypeId), index));
+                addErrorMessage(formatR(message3(elementTypeId), index));
                 result = false;
                 break;
             }

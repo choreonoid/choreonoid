@@ -62,7 +62,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/ItemManager>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace cnoid;
@@ -181,7 +181,7 @@ bool BodyPlugin::finalize()
 const char* BodyPlugin::description() const
 {
     static std::string text =
-        fmt::format("Body Plugin Version {}\n", CNOID_FULL_VERSION_STRING) +
+        formatC("Body Plugin Version {}\n", CNOID_FULL_VERSION_STRING) +
         "\n" +
         "Copyrigh (c) 2018 Shin'ichiro Nakaoka and Choreonoid Development Team, AIST.\n"
         "\n" +

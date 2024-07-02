@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "BodyMarkerItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
@@ -12,12 +7,11 @@
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/EigenArchive>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -252,7 +246,7 @@ bool BodyMarkerItem::Impl::updateTarget()
             if(!targetLink){
                 isValid = false;
                 mv->putln(
-                    format(_("Target link \"{0}\" of \"{1}\" is not found."), targetLinkName, self->displayName()),
+                    formatR(_("Target link \"{0}\" of \"{1}\" is not found."), targetLinkName, self->displayName()),
                     MessageView::Warning);
             }
         }
@@ -261,7 +255,7 @@ bool BodyMarkerItem::Impl::updateTarget()
                 targetLink = nullptr;
                 isValid = false;
                 mv->putln(
-                    format(_("Target node \"{0}\" of \"{1}\" is not found."), targetNodeName, self->displayName()),
+                    formatR(_("Target node \"{0}\" of \"{1}\" is not found."), targetNodeName, self->displayName()),
                     MessageView::Warning);
             }
         }

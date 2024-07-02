@@ -1,7 +1,7 @@
 #include "MprVariableList.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <vector>
 #include <unordered_map>
 #include <functional>
@@ -10,7 +10,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -402,7 +401,7 @@ bool MprVariableList::read(const Mapping* archive)
     auto& typeNode = archive->get("type");
     if(typeNode.toString() != "ManipulatorVariableList"){
         typeNode.throwException(
-            format(_("{0} cannot be loaded as a manipulator variable list"), typeNode.toString()));
+            formatR(_("{0} cannot be loaded as a manipulator variable list"), typeNode.toString()));
     }
         
     auto versionNode = archive->find("format_version");
@@ -411,7 +410,7 @@ bool MprVariableList::read(const Mapping* archive)
     }
     auto version = versionNode->toDouble();
     if(version != 1.0){
-        versionNode->throwException(format(_("Format version {0} is not supported."), version));
+        versionNode->throwException(formatR(_("Format version {0} is not supported."), version));
     }
 
     clear();
@@ -448,9 +447,9 @@ bool MprVariableList::read(const Mapping* archive)
             if(variable->read(node)){
                 if(!isStringIdEnabled_ && variable->id().isString()){
                     node->throwException(
-                        format(_("String \"{0}\" is specified as ID, but "
-                                 "the string id type is not supported in this system"),
-                               variable->id().toString()));
+                        formatR(_("String \"{0}\" is specified as ID, but "
+                                  "the string id type is not supported in this system"),
+                                variable->id().toString()));
                 }
                 append(variable);
             }

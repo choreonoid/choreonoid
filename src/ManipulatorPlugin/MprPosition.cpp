@@ -12,12 +12,11 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/CloneMap>
 #include <cnoid/MessageOut>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 constexpr int MprPosition::MaxNumJoints;
 
@@ -32,8 +31,8 @@ bool checkJointDisplacementRanges(JointTraverse& traverse, MessageOut* mout)
             if(joint->q() < joint->q_lower() || joint->q() > joint->q_upper()){
                 if(mout){
                     mout->putError(
-                        format(_("The joint displacement of {0} is out of its movable range."),
-                               joint->jointName()));
+                        formatR(_("The joint displacement of {0} is out of its movable range."),
+                                joint->jointName()));
                 }
                 isOver = true;
                 break;
@@ -420,8 +419,8 @@ bool MprIkPosition::fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout)
             if(state > 0){
                 if(mout){
                     mout->putError(
-                        format(_("The current manipulator position is not valid: {0}."),
-                               configuration->getNearSingularPointFactorString(state)));
+                        formatR(_("The current manipulator position is not valid: {0}."),
+                                configuration->getNearSingularPointFactorString(state)));
                 }
                 failed = true;
             }
@@ -684,7 +683,7 @@ bool MprCompositePosition::fetch(KinematicBodySet* bodySet, MessageOut* mout)
 
         if(numFetchedElements != numPositionElements){
             if(id().isValid()){
-                mout->putWarning(format(_("Could not fetch all the elements of position {0}."), id().label()));
+                mout->putWarning(formatR(_("Could not fetch all the elements of position {0}."), id().label()));
             } else {
                 mout->putWarning(_("Could not fetch all the elements of the position."));
             }
@@ -751,7 +750,7 @@ bool MprCompositePosition::read(const Mapping* archive)
             } else if(type == "CompositePosition"){
                 typeNode.throwException(_("The recursive structure of CompositePosition is not supported"));
             } else {
-                typeNode.throwException(format(_("{0} is not supported"), type));
+                typeNode.throwException(formatR(_("{0} is not supported"), type));
             }
             if(position->read(node)){
                 setPosition(index, position);

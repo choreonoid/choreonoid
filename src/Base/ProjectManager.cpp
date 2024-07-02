@@ -18,18 +18,17 @@
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
 #include <QResource>
 #include <QMessageBox>
 #include <string>
 #include <vector>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
-using fmt::format;
 
 namespace {
 
@@ -335,7 +334,7 @@ bool ProjectManager::Impl::restoreObjectStates
                 }
             } catch(const ValueNode::Exception& ex){
                 mv->putln(
-                    format(_("The state of the \"{0}\" {1} was not completely restored.\n{2}"),
+                    formatR(_("The state of the \"{0}\" {1} was not completely restored.\n{2}"),
                     name, nameSuffix, ex.message()),
                     MessageView::Warning);
             }
@@ -384,7 +383,7 @@ ItemList<> ProjectManager::Impl::loadProject
 
     try {
         if(!isBuiltinProject){
-            mv->notify(format(_("Loading project file \"{}\" ..."), filename));
+            mv->notify(formatR(_("Loading project file \"{}\" ..."), filename));
             if(!isInvokingApplication){
                 mv->flush();
             }
@@ -402,7 +401,7 @@ ItemList<> ProjectManager::Impl::loadProject
         } else {
             QResource resource(filename.c_str());
             if(!resource.isValid()){
-                mv->putln(format(_("Resource \"{0}\" is not found."), filename), MessageView::Error);
+                mv->putln(formatR(_("Resource \"{0}\" is not found."), filename), MessageView::Error);
             } else {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
                 auto data = resource.uncompressedData();
@@ -506,16 +505,16 @@ ItemList<> ProjectManager::Impl::loadProject
                 numArchivedItems = itemTreeArchiver.numArchivedItems();
                 numRestoredItems = itemTreeArchiver.numRestoredItems();
                 if(!isBuiltinProject){
-                    mv->putln(format(_("{0} / {1} item(s) have been loaded."), numRestoredItems, numArchivedItems));
+                    mv->putln(formatR(_("{0} / {1} item(s) have been loaded."), numRestoredItems, numArchivedItems));
                 }
 
                 if(numRestoredItems < numArchivedItems){
                     int numUnloaded = numArchivedItems - numRestoredItems;
                     if(!isBuiltinProject){
-                        mv->putln(format(_("{0} item(s) were not loaded."), numUnloaded), MessageView::Warning);
+                        mv->putln(formatR(_("{0} item(s) were not loaded."), numUnloaded), MessageView::Warning);
                     } else {
-                        mv->putln(format(_("{0} item(s) were not loaded in the builtin project \"{1}\"."),
-                                         numUnloaded, filename), MessageView::Warning);
+                        mv->putln(formatR(_("{0} item(s) were not loaded in the builtin project \"{1}\"."),
+                                          numUnloaded, filename), MessageView::Warning);
                     }
                 }
                 
@@ -539,9 +538,9 @@ ItemList<> ProjectManager::Impl::loadProject
 
                 if(!isBuiltinProject){
                     if(numRestoredItems == numArchivedItems){
-                        mv->notify(format(_("Project \"{}\" has been completely loaded."), filename));
+                        mv->notify(formatR(_("Project \"{}\" has been completely loaded."), filename));
                     } else {
-                        mv->notify(format(_("Project \"{}\" has been partially loaded."), filename));
+                        mv->notify(formatR(_("Project \"{}\" has been partially loaded."), filename));
                     }
                 }
             }
@@ -552,7 +551,7 @@ ItemList<> ProjectManager::Impl::loadProject
 
     if(!loaded){
         mv->notify(
-            format(_("Loading project \"{}\" failed. Any valid objects were not loaded."), filename),
+            formatR(_("Loading project \"{}\" failed. Any valid objects were not loaded."), filename),
             MessageView::Error);
         clearCurrentProjectFile();
     }
@@ -649,7 +648,7 @@ bool ProjectManager::Impl::saveProject(const string& filename, Item* item, bool 
     YAMLWriter writer(filename);
     if(!writer.isFileOpen()){
         mv->put(
-            format(_("Can't open file \"{}\" for writing.\n"), filename),
+            formatR(_("Can't open file \"{}\" for writing.\n"), filename),
             MessageView::Error);
         return false;
     }
@@ -666,9 +665,9 @@ bool ProjectManager::Impl::saveProject(const string& filename, Item* item, bool 
     
     mv->putln();
     if(isSubProject){
-        mv->notify(format(_("Saving sub project {0} as \"{1}\" ..."), item->displayName(), filename));
+        mv->notify(formatR(_("Saving sub project {0} as \"{1}\" ..."), item->displayName(), filename));
     } else {
-        mv->notify(format(_("Saving the project as \"{}\" ..."), filename));
+        mv->notify(formatR(_("Saving the project as \"{}\" ..."), filename));
     }
     mv->flush();
     

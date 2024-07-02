@@ -8,15 +8,14 @@
 #include <cnoid/RadioButton>
 #include <cnoid/ButtonGroup>
 #include <cnoid/CheckBox>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QStyle>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -225,7 +224,7 @@ void LinkMassSummaryView::Impl::setTargetLinks(const std::vector<bool>& selectio
             targetLabel.setText(targetLinks.front()->name().c_str());
         } else {
             targetLabel.setText(
-                format("{0} ... ({1} links)", targetLinks[0]->name(), numTargetLinks).c_str());
+                formatC("{0} ... ({1} links)", targetLinks[0]->name(), numTargetLinks).c_str());
         }
     }
 

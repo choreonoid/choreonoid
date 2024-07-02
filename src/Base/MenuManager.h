@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro NAKAOKA
-*/
-
 #ifndef CNOID_BASE_MENU_MANAGER_H
 #define CNOID_BASE_MENU_MANAGER_H
 

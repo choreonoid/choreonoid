@@ -6,12 +6,11 @@
 #include <cnoid/CoordinateFrame>
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/CloneMap>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -440,15 +439,15 @@ std::string FrameLocation::getName() const
         if(auto parent = const_cast<FrameLocation*>(this)->getParentLocationProxy()){
             auto parentName = parent->getName();
             if(note.empty()){
-                return format("{0} {1} {2}", parentName, listName, id);
+                return formatC("{0} {1} {2}", parentName, listName, id);
             } else {
-                return format("{0} {1} {2} ( {3} )", parentName, listName, id, note);
+                return formatC("{0} {1} {2} ( {3} )", parentName, listName, id, note);
             }
         } else {
             if(note.empty()){
-                return format("{0} {1}", listName, id);
+                return formatC("{0} {1}", listName, id);
             } else {
-                return format("{0} {1} ( {2} )", listName, id, note);
+                return formatC("{0} {1} ( {2} )", listName, id, note);
             }
         }
     }

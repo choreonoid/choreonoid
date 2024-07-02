@@ -1,12 +1,7 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_FLOATING_NUMBER_STRING_H
 #define CNOID_UTIL_FLOATING_NUMBER_STRING_H
 
-#include <string>
-#include <fmt/format.h>
+#include "Format.h"
 
 #ifdef _MSC_VER
 #if !defined(INFINITY)
@@ -71,7 +66,7 @@ public:
 
     FloatingNumberString& operator=(double rhs){
         v = rhs;
-        s = fmt::format("{:g}", rhs);
+        s = formatC("{:g}", rhs);
         return *this;
     }
 

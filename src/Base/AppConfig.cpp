@@ -3,13 +3,12 @@
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <cnoid/UTF8>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
-using fmt::format;
 
 namespace {
 
@@ -96,7 +95,7 @@ static bool loadConfig(const std::string& filename)
 static void putLoadError(const string& filename, const string& message)
 {
     MessageView::postMessageBeforeInitialization(
-        format(_("Application config file \"{0}\" cannot be loaded.\n{1}"), filename, message),
+        formatR(_("Application config file \"{0}\" cannot be loaded.\n{1}"), filename, message),
         MessageView::Error);
 }
 
@@ -120,7 +119,7 @@ bool AppConfig::flush()
                     "\"{}\" is not a directory.\n"
                     "It should be directory to contain the config file.\n"
                     "The configuration cannot be stored into the file system";
-                showWarningDialog(format(_(m), configDirPath.string()));
+                showWarningDialog(formatR(_(m), configDirPath.string()));
                 return false;
             }
         } else {

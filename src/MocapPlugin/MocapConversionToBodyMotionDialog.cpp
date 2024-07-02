@@ -12,14 +12,13 @@
 #include <cnoid/Archive>
 #include <cnoid/Button>
 #include <cnoid/Separator>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <QLabel>
 #include <QDialogButtonBox>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -246,16 +245,16 @@ void MocapConversionToBodyMotionDialog::convertMotionItemToBodyMotionItem(Motion
     auto mout = MessageOut::master();
 
     if(result){
-        bodyMotionItem->setName(format("{0}-{1}", motionItem->name(), bodyItem->name()));
+        bodyMotionItem->setName(formatC("{0}-{1}", motionItem->name(), bodyItem->name()));
         bodyMotionItem->setTemporary(true);
         bodyItem->addChildItem(bodyMotionItem);
         bodyMotionItem->setSelected(true);
         mout->putln(
-            format(_("Motion \"{0}\" has been converted to the motion of \"{1}\"."),
-                   motionItem->name(), bodyItem->name()));
+            formatR(_("Motion \"{0}\" has been converted to the motion of \"{1}\"."),
+                    motionItem->name(), bodyItem->name()));
     } else {
         mout->putErrorln(
-            format(_("Failed to convert motion \"{0}\" to the motion of \"{1}\"."),
-                   motionItem->name(), bodyItem->name()));
+            formatR(_("Failed to convert motion \"{0}\" to the motion of \"{1}\"."),
+                    motionItem->name(), bodyItem->name()));
     }
 }

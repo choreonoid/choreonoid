@@ -9,13 +9,12 @@
 #include <cnoid/UnifiedEditHistory>
 #include <cnoid/Archive>
 #include <cnoid/QtEventUtil>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <functional>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -110,7 +109,7 @@ static void storeInitialBodyState(BodyItem* bodyItem)
 {
     bodyItem->storeInitialState();
     MessageView::instance()->putln(
-        format(_("Current state of {} has been set to the initial state."), bodyItem->displayName()));
+        formatR(_("Current state of {} has been set to the initial state."), bodyItem->displayName()));
 }
 
 
@@ -165,15 +164,15 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
     for(auto& simulator : simulators){
         auto world = simulator->findOwnerItem<WorldItem>();
         if(!world){
-            mv->notify(format(_("{} cannot be processed because it is not related with a world."),
-                              simulator->displayName()));
+            mv->notify(formatR(_("{} cannot be processed because it is not related with a world."),
+                               simulator->displayName()));
         } else {
             if(auto simulator2 = worldToSimulatorMap[world]){
                 callback(simulator);
             } else {
                 mv->notify(
-                    format(_("{} cannot be processed because another simulator in the same world is also selected."),
-                           simulator->displayName()),
+                    formatR(_("{} cannot be processed because another simulator in the same world is also selected."),
+                            simulator->displayName()),
                     MessageView::Warning);
             }
         }

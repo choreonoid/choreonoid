@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_VALUE_TREE_H
 #define CNOID_UTIL_VALUE_TREE_H
 

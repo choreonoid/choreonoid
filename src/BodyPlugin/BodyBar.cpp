@@ -6,12 +6,11 @@
 #include <cnoid/RootItem>
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -146,9 +145,9 @@ void BodyBar::Impl::onPoseRecButtonClicked()
         } else {
             bool doCreate = showConfirmDialog(
                 _("Pose list item creation"),
-                format(_("Do you want to create a pose list item for {0}? "
-                         "The pose list is necessary for recording poses."),
-                       bodyItem->displayName()));
+                formatR(_("Do you want to create a pose list item for {0}? "
+                          "The pose list is necessary for recording poses."),
+                        bodyItem->displayName()));
             if(doCreate){
                 auto poseListItem = new BodyPoseListItem;
                 bodyItem->addChildItem(poseListItem);

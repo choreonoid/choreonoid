@@ -1,7 +1,3 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "StdSceneLoader.h"
 #include "StdSceneReader.h"
 #include "SceneLoader.h"
@@ -9,13 +5,12 @@
 #include "ValueTree.h"
 #include "NullOut.h"
 #include "UTF8.h"
+#include "Format.h"
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -115,11 +110,11 @@ SgNode* StdSceneLoader::Impl::load(const std::string& filename)
             
             auto sceneSrc = topNode->find("scene");
             if(!sceneSrc->isValid()){
-                os() << format(_("Scene file \"{}\" does not have the \"scene\" node."), filename) << endl;
+                os() << formatR(_("Scene file \"{}\" does not have the \"scene\" node."), filename) << endl;
             } else {
                 scene = sceneReader.readScene(sceneSrc);
                 if(!scene){
-                    os() << format(_("Scene file \"{}\" is an empty scene."), filename) << endl;
+                    os() << formatR(_("Scene file \"{}\" is an empty scene."), filename) << endl;
                     scene = new SgNode;
                 }
             }

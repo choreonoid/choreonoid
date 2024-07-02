@@ -1,7 +1,7 @@
 #include "ImageIO.h"
 #include "UTF8.h"
+#include "Format.h"
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <png.h>
 #include <algorithm>
 
@@ -14,7 +14,6 @@ extern "C" {
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = stdx::filesystem;
 
 namespace {
@@ -24,7 +23,7 @@ bool loadPNG(Image& image, const std::string& filename, bool isUpsideDown, ostre
     FILE* fp = fopen(fromUTF8(filename).c_str(), "rb");
 
     if(!fp){
-        os << format(_("Image file \"{0}\" cannot be loaded. {1}"), filename, strerror(errno)) << endl;
+        os << formatR(_("Image file \"{0}\" cannot be loaded. {1}"), filename, strerror(errno)) << endl;
         return false;
     }
 
@@ -34,14 +33,14 @@ bool loadPNG(Image& image, const std::string& filename, bool isUpsideDown, ostre
     size_t n = fread(header, 1, number, fp);
     if(n != number || png_sig_cmp(header, 0, number) != 0){
         fclose(fp);
-        os << format(_("Image file \"{0}\" is not the PNG format."), filename) << endl;
+        os << formatR(_("Image file \"{0}\" is not the PNG format."), filename) << endl;
         return false;
     }
 
     png_structp pPng = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if(!pPng){
         fclose(fp);
-        os << format(_("Failed to create png_struct in loading \"{0}\""), filename) << endl;
+        os << formatR(_("Failed to create png_struct in loading \"{0}\""), filename) << endl;
         return false;
     }
         
@@ -49,7 +48,7 @@ bool loadPNG(Image& image, const std::string& filename, bool isUpsideDown, ostre
     if(!pInfo){
         png_destroy_read_struct(&pPng, NULL, NULL);
         fclose(fp);
-        os << format(_("Failed to create png_info in loading \"{0}\""), filename) << endl;
+        os << formatR(_("Failed to create png_info in loading \"{0}\""), filename) << endl;
         return false;
     }
         
@@ -105,7 +104,7 @@ bool loadPNG(Image& image, const std::string& filename, bool isUpsideDown, ostre
             
     default:
         image.reset();
-        os << format(_("Image file \"{0}\" cannot be loaded because its color type is not supported."), filename)
+        os << formatR(_("Image file \"{0}\" cannot be loaded because its color type is not supported."), filename)
            << endl;
     }
         
@@ -137,28 +136,28 @@ bool savePNG(const Image& image, const std::string& filename, bool isUpsideDown,
 {
     png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if(!png_ptr){
-        os << format(_("Internal error in saving \"{0}\"."), filename) << endl;
+        os << formatR(_("Internal error in saving \"{0}\"."), filename) << endl;
         return false;
     }
 
     png_infop info_ptr = png_create_info_struct(png_ptr);
     if(!info_ptr){
         png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-        os << format(_("Internal error in saving \"{0}\"."), filename) << endl;
+        os << formatR(_("Internal error in saving \"{0}\"."), filename) << endl;
         return false;
     }
 
     FILE* fp = fopen(filename.c_str(), "wb");
     if(!fp){
         png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-        os << format(_("Image file \"{0}\" cannot be saved. {1}"), filename, strerror(errno)) << endl;
+        os << formatR(_("Image file \"{0}\" cannot be saved. {1}"), filename, strerror(errno)) << endl;
         return false;
     }
     
     if(setjmp(png_jmpbuf(png_ptr))){
         png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
         fclose(fp);
-        os << format(_("Internal error in saving \"{0}\"."), filename) << endl;
+        os << formatR(_("Internal error in saving \"{0}\"."), filename) << endl;
         return false;
     }
 
@@ -207,7 +206,7 @@ bool loadJPEG(Image& image, const std::string& filename, bool isUpsideDown, ostr
 {
     FILE* fp = fopen(fromUTF8(filename).c_str(), "rb");
     if(!fp){
-        os << format(_("Image file \"{0}\" cannot be loaded. {1}"), filename, strerror(errno)) << endl;
+        os << formatR(_("Image file \"{0}\" cannot be loaded. {1}"), filename, strerror(errno)) << endl;
         return false;
     }
 
@@ -254,7 +253,7 @@ bool loadTGA(Image& image, const std::string& filename, bool isUpsideDown, ostre
 {
     FILE* fp = fopen(filename.c_str(), "rb");
     if(!fp){
-        os << format(_("Image file \"{0}\" cannot be loaded. {1}"), filename, strerror(errno)) << endl;
+        os << formatR(_("Image file \"{0}\" cannot be loaded. {1}"), filename, strerror(errno)) << endl;
         return false;
     }
 
@@ -266,7 +265,7 @@ bool loadTGA(Image& image, const std::string& filename, bool isUpsideDown, ostre
         memcmp(header,header_buf,sizeof(header))!=0 ||
         fread(header_buf2, 1, sizeof(header_buf2), fp)!=sizeof(header_buf2) ){
         fclose(fp);
-        os << format(_("Image file \"{0}\" is not the uncompressed TGA format."), filename) << endl;
+        os << formatR(_("Image file \"{0}\" is not the uncompressed TGA format."), filename) << endl;
         return false;
     }
 
@@ -279,7 +278,7 @@ bool loadTGA(Image& image, const std::string& filename, bool isUpsideDown, ostre
     {
         fclose(fp);
         image.setSize(0, 0);
-        os << format(_("Image file \"{0}\" is empty."), filename) << endl;
+        os << formatR(_("Image file \"{0}\" is empty."), filename) << endl;
         return false;
     }
 
@@ -299,7 +298,7 @@ bool loadTGA(Image& image, const std::string& filename, bool isUpsideDown, ostre
             unsigned char imageBuf[4];
             if( fread(imageBuf, 1, bytesPerPixel, fp)!=bytesPerPixel ){
                 fclose(fp);
-                os << format(_("Internal error in loading \"{0}\"."), filename) << endl;
+                os << formatR(_("Internal error in loading \"{0}\"."), filename) << endl;
                 return false;
             }
 
@@ -340,7 +339,7 @@ bool ImageIO::load(Image& image, const std::string& filename, std::ostream& os)
     } else if(ext == ".tga"){
         loaded = loadTGA(image, filename, isUpsideDown_, os);
     } else {
-        os << format(_("The image file format of \"{0}\" is not supported."), fpath.string()) << endl;
+        os << formatR(_("The image file format of \"{0}\" is not supported."), fpath.string()) << endl;
     }
 
     return loaded;
@@ -358,7 +357,7 @@ bool ImageIO::save(const Image& image, const std::string& filename, std::ostream
     if(ext == ".png"){
         saved = savePNG(image, filename, isUpsideDown_, os);
     } else {
-        os << format(_("The image file format of \"{0}\" is not supported."), fpath.string()) << endl;
+        os << formatR(_("The image file format of \"{0}\" is not supported."), fpath.string()) << endl;
     }
 
     return saved;

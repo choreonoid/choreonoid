@@ -1,6 +1,3 @@
-#include <cnoid/Config>
-#include <cnoid/Plugin>
-#include <cnoid/App>
 #include "PoseSeqItem.h"
 #include "PoseSeqEngine.h"
 #include "BodyMotionGenerationBar.h"
@@ -8,7 +5,9 @@
 #include "HumanoidPoseFetchView.h"
 #include "FcpFileLoader.h"
 #include "FootFixFilter.h"
-#include <fmt/format.h>
+#include <cnoid/Config>
+#include <cnoid/Plugin>
+#include <cnoid/App>
 
 using namespace cnoid;
 

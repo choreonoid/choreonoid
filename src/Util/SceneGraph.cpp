@@ -2,8 +2,8 @@
 #include "SceneNodeClassRegistry.h"
 #include "CloneMap.h"
 #include "UTF8.h"
+#include "Format.h"
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <unordered_map>
 #include <typeindex>
 #include <mutex>
@@ -11,7 +11,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = stdx::filesystem;
 
 namespace {
@@ -278,7 +277,7 @@ void SgObject::setUri(const std::string& uri, const std::string& absoluteUri)
     if(absoluteUri.compare(0, 7, "file://") == 0){
         uriInfo->absoluteUri = absoluteUri;
     } else {
-        uriInfo->absoluteUri = format("file://{0}", absoluteUri);
+        uriInfo->absoluteUri = formatC("file://{0}", absoluteUri);
     }
 }
 

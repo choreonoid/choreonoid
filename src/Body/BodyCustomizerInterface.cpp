@@ -1,7 +1,6 @@
 /**
    \file
    \brief The implementation for the BodyCustomizer class
-   \author Shin'ichiro Nakaoka
 */
 
 #include "BodyCustomizerInterface.h"
@@ -10,12 +9,12 @@
 #include <cnoid/Tokenizer>
 #include <cnoid/FileUtil>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
 #include <map>
 #include <set>
 #include <cstdlib>
 #include <iostream>
-#include <fmt/format.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -28,7 +27,6 @@
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
-using fmt::format;
 
 namespace {
 
@@ -83,8 +81,8 @@ static bool loadCustomizerDll
             if(customizerInterface){
 				
                 if(!checkInterface(customizerInterface)){
-                    os << format(_("Body customizer \"{}\" is incomatible and cannot be loaded."),
-                                 toUTF8(nativeFilename)) << endl;
+                    os << formatR(_("Body customizer \"{}\" is incomatible and cannot be loaded."),
+                                  toUTF8(nativeFilename)) << endl;
                 } else {
                 
                     const char** names = customizerInterface->getTargetModelNames();
@@ -99,8 +97,8 @@ static bool loadCustomizerDll
                         }
                         modelNames += name;
                     }
-                    os << format(_("Body customizer \"{0}\" for {1} has been loaded."),
-                                 toUTF8(nativeFilename), modelNames) << endl;
+                    os << formatR(_("Body customizer \"{0}\" for {1} has been loaded."),
+                                  toUTF8(nativeFilename), modelNames) << endl;
                 }
             }
         }

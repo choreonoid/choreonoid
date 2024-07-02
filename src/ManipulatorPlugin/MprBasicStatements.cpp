@@ -2,13 +2,12 @@
 #include "MprStatementRegistration.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <regex>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 
 MprEmptyStatement::MprEmptyStatement()
@@ -87,7 +86,7 @@ Referenced* MprCommentStatement::doClone(CloneMap*) const
 std::string MprCommentStatement::label(int index) const
 {
     if(index == 0){
-        return format("# {}", comment_);
+        return formatC("# {}", comment_);
     }
     return string();
 }
@@ -428,7 +427,7 @@ bool MprAssignStatement::read(MprProgram* program, const Mapping* archive)
     if(archive->read("variable", variableExpression_)){
         std::smatch match;
         if(regex_match(variableExpression_, match, regex("^[+-]?\\d+$"))){
-            variableExpression_ = format("var[{}]", variableExpression_);
+            variableExpression_ = formatC("var[{}]", variableExpression_);
         }
     }
     if(!archive->read("value", valueExpression_)){
@@ -474,7 +473,7 @@ std::string MprSignalStatement::label(int index) const
     if(index == 0){
         return "Set";
     } else if(index == 1){
-        return format("Out[{0}]", signalIndex_);
+        return formatC("Out[{0}]", signalIndex_);
     } else if(index == 2){
         return on_ ? "on" : "off";
     }
@@ -606,7 +605,7 @@ std::string MprDelayStatement::label(int index) const
     if(index == 0){
         return "Delay";
     } else if(index == 1){
-        return format("{0: .2f}", time_);
+        return formatC("{0: .2f}", time_);
     }
     return string();
 }

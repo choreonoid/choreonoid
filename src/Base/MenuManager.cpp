@@ -1,12 +1,8 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "MenuManager.h"
 #include "MainWindow.h"
 #include "MessageView.h"
+#include <cnoid/Format>
 #include <QMenuBar>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
@@ -205,7 +201,7 @@ MenuManager& MenuManager::setPath(const QString& path)
 
     if(!currentMenu_){
         MessageView::instance()->putln(
-            fmt::format(_("MenuManager failed to set the current menu path to {0}."), path.toStdString()),
+            formatR(_("MenuManager failed to set the current menu path to {0}."), path.toStdString()),
             MessageView::Error);
     }
 

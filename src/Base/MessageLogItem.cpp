@@ -6,15 +6,14 @@
 #include "Archive.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
 #include <fstream>
 #include <regex>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -141,7 +140,7 @@ void MessageLogItem::Impl::openFile()
         if(stdx::filesystem::exists(path)){
             bool ok = showConfirmDialog(
                 _("Confirm"),
-                format(_(" \"{}\" already exists.\n Do you want to replace it? " ), filename));
+                formatR(_(" \"{}\" already exists.\n Do you want to replace it? " ), filename));
             if(!ok){
                 return;
             }
@@ -150,10 +149,10 @@ void MessageLogItem::Impl::openFile()
     }
 
     if(!ofs){
-        mv->putln(format(_("Couldn't open file \"{}\" for writing.\n"), filename),
+        mv->putln(formatR(_("Couldn't open file \"{}\" for writing.\n"), filename),
                   MessageView::Error);
     }else{
-        mv->putln(format(_("Opened file \"{}\" for writing.\n"), filename));
+        mv->putln(formatR(_("Opened file \"{}\" for writing.\n"), filename));
     }
 }
 

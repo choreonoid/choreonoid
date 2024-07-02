@@ -2,13 +2,12 @@
 #include "MprPosition.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -327,7 +326,7 @@ bool MprPositionList::read(const Mapping* archive)
     auto& typeNode = archive->get("type");
     if(typeNode.toString() != "ManipulatorPositionList"){
         typeNode.throwException(
-            format(_("{0} cannot be loaded as a manipulator position set"), typeNode.toString()));
+            formatR(_("{0} cannot be loaded as a manipulator position set"), typeNode.toString()));
     }
         
     auto versionNode = archive->find("format_version");
@@ -336,7 +335,7 @@ bool MprPositionList::read(const Mapping* archive)
     }
     auto version = versionNode->toDouble();
     if(version != 1.0){
-        versionNode->throwException(format(_("Format version {0} is not supported."), version));
+        versionNode->throwException(formatR(_("Format version {0} is not supported."), version));
     }
 
     clear();
@@ -355,7 +354,7 @@ bool MprPositionList::read(const Mapping* archive)
             } else if(type == "CompositePosition"){
                 position = new MprCompositePosition;
             } else {
-                typeNode.throwException(format(_("{0} is not supported"), type));
+                typeNode.throwException(formatR(_("{0} is not supported"), type));
             }
             if(position){
                 if(position->read(node)){

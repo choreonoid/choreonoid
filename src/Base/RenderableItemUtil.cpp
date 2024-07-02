@@ -6,13 +6,12 @@
 #include <cnoid/FileUtil>
 #include <cnoid/UTF8>
 #include <cnoid/MessageOut>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace fs = stdx::filesystem;
 
 namespace cnoid {
@@ -91,8 +90,8 @@ bool RenderableItemUtil::Impl::getSceneFilesForArchiving(SgObject* object, std::
         baseDirPath = fromUTF8(ProjectManager::instance()->currentProjectDirectory());
         if(baseDirPath.empty()){
             mout->putErrorln(
-                format(_("The project must be saved to detect the scene files for {0}."),
-                       item->displayName()));
+                formatR(_("The project must be saved to detect the scene files for {0}."),
+                        item->displayName()));
             return false;
         }
     }
@@ -129,8 +128,8 @@ void RenderableItemUtil::Impl::getSceneFiles(SgObject* object, std::vector<std::
         }
         if(uniformPath != itemFilePath){
             mout->putWarningln(
-                format(_("The file \"{0}\" on which {1} depends is not relocatable and will be lost in the archive."),
-                       object->absoluteUri(), item->displayName()));
+                formatR(_("The file \"{0}\" on which {1} depends is not relocatable and will be lost in the archive."),
+                        object->absoluteUri(), item->displayName()));
         }
     }
 

@@ -6,8 +6,8 @@
 #include <cnoid/ValueTree>
 #include <cnoid/NullOut>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <mutex>
 #include <stdexcept>
 #include "gettext.h"
@@ -92,8 +92,8 @@ public:
         }
         if(!isSupported){
             (*os) <<
-                fmt::format(_("The file format of \"{}\" is not supported by the body loader.\n"),
-                            toUTF8(filesystem::path(fromUTF8(filename)).filename().string()));
+                formatR(_("The file format of \"{}\" is not supported by the body loader.\n"),
+                        toUTF8(filesystem::path(fromUTF8(filename)).filename().string()));
         }
 
         return (scene != nullptr);

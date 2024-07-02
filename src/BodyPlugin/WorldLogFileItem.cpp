@@ -21,8 +21,8 @@
 #include <cnoid/FileDialog>
 #include <cnoid/Archive>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <QDateTime>
 #include <fstream>
 #include <stack>
@@ -32,7 +32,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = stdx::filesystem;
 
 namespace {
@@ -704,7 +703,7 @@ bool WorldLogFileItem::Impl::readTopHeader()
             } catch(CorruptLogException&){
                 bodyNames.clear();
                 MessageView::instance()->putln(
-                    format(_("Log file of {0} is corrupt."), self->displayName()),
+                    formatR(_("Log file of {0} is corrupt."), self->displayName()),
                     MessageView::Error);
             }
         }
@@ -826,7 +825,7 @@ bool WorldLogFileItem::Impl::recallStateAtTime(double time)
     }
     catch(CorruptLogException&){
         MessageView::instance()->putln(
-            format(_("Corrupt log at time {0} in {1}."), time, self->displayName()),
+            formatR(_("Corrupt log at time {0} in {1}."), time, self->displayName()),
             MessageView::Error);
     }
 
@@ -1305,7 +1304,7 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
 {
     auto worldItem = self->findOwnerItem<WorldItem>();
     if(!worldItem){
-        showWarningDialog(format(_("The world item of {0} is not found."), self->displayName()));
+        showWarningDialog(formatR(_("The world item of {0} is not found."), self->displayName()));
         return;
     }
 
@@ -1325,7 +1324,7 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
 
     auto logFilePath = filesystem::absolute(fromUTF8(getActualFilename()), ec);
     if(!filesystem::exists(logFilePath ,ec)){
-        showWarningDialog(format(_("Log file of {0} does not exist."), self->displayName()));
+        showWarningDialog(formatR(_("Log file of {0} does not exist."), self->displayName()));
         return;
     }
 
@@ -1344,8 +1343,8 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
     info.archiveDirPath = projectFilePath.parent_path() / projectFilePath.stem();
     filesystem::create_directories(info.archiveDirPath, ec);
     if(ec){
-        showWarningDialog(format(_("Archive directory \"{0}\" cannot be created: {1}"),
-                                 info.archiveDirPath.string(), ec.message()));
+        showWarningDialog(formatR(_("Archive directory \"{0}\" cannot be created: {1}"),
+                                  info.archiveDirPath.string(), ec.message()));
         return;
     }
 
@@ -1363,10 +1362,10 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
             ec);
         if(ec){
             showWarningDialog(
-                format(_("Log file \"{0}\" cannot be copied to \"{1}\": {2}"),
-                       toUTF8(logFilePath.filename().string()),
-                       toUTF8(info.archiveDirPath.string()),
-                       ec.message()));
+                formatR(_("Log file \"{0}\" cannot be copied to \"{1}\": {2}"),
+                        toUTF8(logFilePath.filename().string()),
+                        toUTF8(info.archiveDirPath.string()),
+                        ec.message()));
             return;
         }
         setLogFile(toUTF8((info.archiveDirPath / logFilePath.filename()).generic_string()));
@@ -1436,7 +1435,7 @@ ItemPtr WorldLogFileItem::Impl::createArchiveModelItem(Item* modelItem, ArchiveI
         }
         string baseNameWithId;
         while(true){
-            baseNameWithId = format("{0}-{1}", baseName, counter++);
+            baseNameWithId = formatC("{0}-{1}", baseName, counter++);
             if(info.baseNameCounterMap.find(baseNameWithId) == info.baseNameCounterMap.end()){
                 baseName = baseNameWithId;
                 break;
@@ -1451,8 +1450,8 @@ ItemPtr WorldLogFileItem::Impl::createArchiveModelItem(Item* modelItem, ArchiveI
     filesystem::create_directories(modelDirPath, ec);
     if(ec){
         MessageView::instance()->putln(
-            format(_("Directory \"{0}\" cannot be created: {1}."),
-                   toUTF8(modelDirPath.filename().string()), ec.message()),
+            formatR(_("Directory \"{0}\" cannot be created: {1}."),
+                    toUTF8(modelDirPath.filename().string()), ec.message()),
             MessageView::Error);
     } else {
         archiveModelItem = modelItem->clone();

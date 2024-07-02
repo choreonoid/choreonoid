@@ -11,14 +11,13 @@
 #include "NullOut.h"
 #include "EigenUtil.h"
 #include "UTF8.h"
+#include "Format.h"
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <tuple>
 
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
-using fmt::format;
 
 namespace cnoid {
 
@@ -351,7 +350,7 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                             if(faceSet->defName.empty()){
                                 message = "Error of an IndexedFaceSet node: \n";
                             } else {
-                                message = format("Error of IndexedFaceSet node \"{}\": \n", faceSet->defName);
+                                message = formatC("Error of IndexedFaceSet node \"{}\": \n", faceSet->defName);
                             }
                             putMessage(message + errorMessage);
                         }
@@ -396,7 +395,7 @@ SgNode* VRMLToSGConverterImpl::convertShapeNode(VRMLShape* vshape)
                 converted = convertPointSet(pointSet);
                 
             } else {
-                putMessage(format("VRML {} node is not supported as a geometry.", vrmlGeometry->typeName()));
+                putMessage(formatC("VRML {} node is not supported as a geometry.", vrmlGeometry->typeName()));
             }
             
             if(mesh){
@@ -523,11 +522,11 @@ SgMeshPtr VRMLToSGConverterImpl::createMeshFromIndexedFaceSet(VRMLIndexedFaceSet
 
     if(!removedFaceIndices.empty()){
         if(vface->defName.empty()){
-            putMessage(format("An IndexedFaceSet node contains {} non-triangle polygon(s).",
-                    removedFaceIndices.size()));
+            putMessage(formatC("An IndexedFaceSet node contains {} non-triangle polygon(s).",
+                               removedFaceIndices.size()));
         } else {
-            putMessage(format("IndexedFaceSet node \"{0}\" contains {1} non-triangle polygon(s).",
-                    vface->defName, removedFaceIndices.size()));
+            putMessage(formatC("IndexedFaceSet node \"{0}\" contains {1} non-triangle polygon(s).",
+                               vface->defName, removedFaceIndices.size()));
         }
     }
 

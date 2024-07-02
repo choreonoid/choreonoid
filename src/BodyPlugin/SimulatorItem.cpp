@@ -30,6 +30,7 @@
 #include <cnoid/SceneView>
 #include <cnoid/CloneMap>
 #include <cnoid/CollisionDetector>
+#include <cnoid/Format>
 #include <QThread>
 #include <QMutex>
 #include <QElapsedTimer>
@@ -38,12 +39,10 @@
 #include <condition_variable>
 #include <set>
 #include <deque>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -1651,11 +1650,13 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
     for(auto& simulatorItem : worldItem->descendantItems<SimulatorItem>()){
         if(simulatorItem->isRunning()){
             if(simulatorItem == self){
-                mv->putln(format(_("{0} is doing its simulation."), self->displayName(), MessageView::Warning));
+                mv->putln(
+                    formatR(_("{0} is doing its simulation."), self->displayName()),
+                    MessageView::Warning);
             } else {
                 mv->putln(
-                    format(_("{0} cannot start the simulation because {1} in the same world is doing its simulation."),
-                           self->displayName(), simulatorItem->displayName()),
+                    formatR(_("{0} cannot start the simulation because {1} in the same world is doing its simulation."),
+                            self->displayName(), simulatorItem->displayName()),
                     MessageView::Error);
             }
             return false;
@@ -1665,7 +1666,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
     stopSimulation(true, true);
 
     if(!worldItem){
-        mv->putln(format(_("{} must be in a WorldItem to do simulation."), self->displayName()),
+        mv->putln(formatR(_("{} must be in a WorldItem to do simulation."), self->displayName()),
                   MessageView::Error);
         return false;
     }
@@ -1673,7 +1674,7 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
     bool initialized = initializeSimulation(doReset);
 
     if(!initialized){
-        mv->notify(format(_("{0} failed to initialize the simulation."), self->displayName()),
+        mv->notify(formatR(_("{0} failed to initialize the simulation."), self->displayName()),
                    MessageView::Error);
         clearSimulation();
     }
@@ -1752,7 +1753,7 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
             }
 
             if(!simBody){
-                mv->putln(format(_("The clone of {0} for the simulation cannot be created."), orgBody->name()),
+                mv->putln(formatR(_("The clone of {0} for the simulation cannot be created."), orgBody->name()),
                           MessageView::Warning);
             } else {
                 if(simBody->body()){
@@ -1803,15 +1804,15 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
         SubSimulatorItem* item = *p;
         bool initialized = false;
         if(item->isEnabled()){
-            mv->putln(format(_("SubSimulatorItem \"{}\" has been detected."), item->displayName()));
+            mv->putln(formatR(_("SubSimulatorItem \"{}\" has been detected."), item->displayName()));
             if(item->initializeSimulation(self)){
                 initialized = true;
             } else {
-                mv->putln(format(_("The initialization of \"{}\" failed."), item->displayName()),
+                mv->putln(formatR(_("The initialization of \"{}\" failed."), item->displayName()),
                           MessageView::Warning);
             }
         } else {
-            mv->putln(format(_("SubSimulatorItem \"{}\" is disabled."), item->displayName()));
+            mv->putln(formatR(_("SubSimulatorItem \"{}\" is disabled."), item->displayName()));
         }
         if(initialized){
             ++p;
@@ -1884,14 +1885,14 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
             if(body){
                 ready = controller->start();
                 if(!ready){
-                    mv->putln(format(_("{0} for {1} failed to start."),
-                                     controller->displayName(), simBodyImpl->bodyItem->displayName()),
+                    mv->putln(formatR(_("{0} for {1} failed to start."),
+                                      controller->displayName(), simBodyImpl->bodyItem->displayName()),
                               MessageView::Warning);
                 }
             } else {
                 ready = controller->start();
                 if(!ready){
-                    mv->putln(format(_("{} failed to start."), controller->displayName()),
+                    mv->putln(formatR(_("{} failed to start."), controller->displayName()),
                               MessageView::Warning);
                 }
             }
@@ -1943,9 +1944,9 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
         if(worldLogFileItem->logFile().empty()){
             worldLogFileItem = nullptr;
         } else {
-            mv->putln(format(_("WorldLogFileItem \"{0}\" has been detected. "
-                               "A simulation result is recoreded to \"{1}\"."),
-                             worldLogFileItem->displayName(), worldLogFileItem->logFile()));
+            mv->putln(formatR(_("WorldLogFileItem \"{0}\" has been detected. "
+                                "A simulation result is recoreded to \"{1}\"."),
+                              worldLogFileItem->displayName(), worldLogFileItem->logFile()));
 
             worldLogFileItem->clearOutput();
             worldLogFileItem->beginHeaderOutput();
@@ -1969,7 +1970,7 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
     start();
     startFlushTimer();
 
-    mv->notify(format(_("Simulation by {} has started."), self->displayName()));
+    mv->notify(formatR(_("Simulation by {} has started."), self->displayName()));
 
     sigSimulationStarted();
     
@@ -2475,11 +2476,11 @@ void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
     flushRecords();
     logEngine->stopOngoingTimeUpdate();
 
-    mv->notify(format(_("Simulation by {0} has finished at {1} [s]."), self->displayName(), finishTime));
+    mv->notify(formatR(_("Simulation by {0} has finished at {1} [s]."), self->displayName(), finishTime));
 
     if(finishTime > 0.0){
-        mv->putln(format(_("Computation time is {0} [s], computation time / simulation time = {1}."),
-                         actualSimulationTime, (actualSimulationTime / finishTime)));
+        mv->putln(formatR(_("Computation time is {0} [s], computation time / simulation time = {1}."),
+                          actualSimulationTime, (actualSimulationTime / finishTime)));
     }
 
     clearSimulation();

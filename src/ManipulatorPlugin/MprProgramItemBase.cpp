@@ -14,13 +14,12 @@
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/MessageOut>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -247,8 +246,8 @@ MprPosition* MprProgramItemBase::Impl::findPositionOrShowWarning(MprPositionStat
     MprPosition* position = statement->position();
     if(!position && mout){
         mout->putError(
-            format(_("Position {0} is not found in {1}."),
-                   statement->positionLabel(), self->name()).c_str());
+            formatR(_("Position {0} is not found in {1}."),
+                    statement->positionLabel(), self->name()).c_str());
     }
     return position;
 }
@@ -323,7 +322,7 @@ bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll, M
                         if(tcpName.empty()){
                             auto& id = tcpFrame->id();
                             if(id.isInt()){
-                                tcpName = format(_("TCP {0}"), id.toInt());
+                                tcpName = formatR(_("TCP {0}"), id.toInt());
                             } else {
                                 tcpName = id.toString();
                             }
@@ -336,8 +335,8 @@ bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll, M
                         errorMessage += "\n";
                     }
                     errorMessage +=
-                        format(_("{0} of {1} cannot be moved to position {2}."),
-                               tcpName, bodyItem->displayName(), position->id().label());
+                        formatR(_("{0} of {1} cannot be moved to position {2}."),
+                                tcpName, bodyItem->displayName(), position->id().label());
                 }
             }
         }
@@ -481,8 +480,8 @@ bool MprProgramItemBase::Impl::touchupPosition(MprPosition* position, MessageOut
     if(!targetBodyItemSet){
         if(mout){
             mout->putError(
-                format(_("Program item \"{0}\" is not associated with any manipulator."),
-                       self->displayName()));
+                formatR(_("Program item \"{0}\" is not associated with any manipulator."),
+                        self->displayName()));
         }
         return false;
     }

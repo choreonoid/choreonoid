@@ -14,13 +14,11 @@
 #include <cnoid/ComboBox>
 #include <QLabel>
 #include <QBoxLayout>
-#include <fmt/format.h>
 #include <set>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 

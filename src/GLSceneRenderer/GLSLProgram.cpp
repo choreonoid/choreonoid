@@ -1,16 +1,11 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "GLSLProgram.h"
 #include <QFile>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <stdexcept>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 
 GLSLProgram::GLSLProgram()
@@ -48,7 +43,7 @@ void GLSLProgram::loadShader(const char* filename, int shaderType)
     QFile file(filename);
 
     if(!file.exists()){
-        throw std::runtime_error(format(_("Shader \"{}\" is not found."), filename));
+        throw std::runtime_error(formatR(_("Shader \"{}\" is not found."), filename));
     }
     
     file.open(QIODevice::ReadOnly);
@@ -71,9 +66,9 @@ void GLSLProgram::loadShader(const char* filename, int shaderType)
             vector<char> log(length);
             GLsizei written;
             glGetShaderInfoLog(shaderHandle, length, &written, &log[0]);
-            msg = format(_("Shader compilation of \"{0}\" failed.\n{1}"), filename, &log[0]);
+            msg = formatR(_("Shader compilation of \"{0}\" failed.\n{1}"), filename, &log[0]);
         } else {
-            msg = format(_("Shader compilation of \"{}\" failed."), filename);
+            msg = formatR(_("Shader compilation of \"{}\" failed."), filename);
         }
         glDeleteShader(shaderHandle);
         throw std::runtime_error(msg);
@@ -112,7 +107,7 @@ void GLSLProgram::link()
             vector<char> log(length);
             GLsizei written;
             glGetProgramInfoLog(programHandle, length, &written, &log[0]);
-            msg = format("Program link failed:\n{}", &log[0]);
+            msg = formatC("Program link failed:\n{}", &log[0]);
         } else {
             msg = _("Program link failed.");
         }
@@ -142,7 +137,7 @@ void GLSLProgram::validate()
             vector<char> log(length);
             GLsizei written;
             glGetProgramInfoLog(programHandle, length, &written, &log[0]);
-            msg = format("Program failed to validate\n{}", &log[0]);
+            msg = formatC("Program failed to validate\n{}", &log[0]);
         } else {
             msg = _("Program failed to validate");
         }

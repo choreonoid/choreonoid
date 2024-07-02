@@ -4,12 +4,11 @@
 #include <cnoid/ItemFileIO>
 #include <cnoid/YAMLWriter>
 #include <cnoid/TimeSyncItemEngine>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -142,7 +141,7 @@ bool BodyContactPointLogFileIO::save(Item* item, const std::string& filename)
                     }
                 }
                 if(!hasName){
-                    writer.putKey(format("link{0}", i), DOUBLE_QUOTED);
+                    writer.putKey(formatC("link{0}", i), DOUBLE_QUOTED);
                 }
                 writer.startListing();
                 for(auto& point : linkContactPoints){

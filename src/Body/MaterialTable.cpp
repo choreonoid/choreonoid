@@ -1,13 +1,8 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "MaterialTable.h"
 #include <cnoid/YAMLReader>
 #include <cnoid/IdPair>
 #include <cnoid/CloneMap>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
@@ -16,7 +11,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -292,12 +286,12 @@ void MaterialTable::Impl::loadMaterials(Mapping* topNode, std::ostream& os)
             Mapping* info = materialList[i].toMapping();
             MaterialPtr material = new Material(info);
             if(material->name().empty()){
-                os << format(_("Nameless material is defined at the {}th material item."), i) << endl;
+                os << formatR(_("Nameless material is defined at the {}th material item."), i) << endl;
             } else {
                 auto inserted = names.insert(material->name());
                 if(!inserted.second){
-                    os << format(_("Material name \"{}\" is duplicated. The defenition is updated with the last item."),
-                            material->name()) << endl;
+                    os << formatR(_("Material name \"{}\" is duplicated. The defenition is updated with the last item."),
+                                  material->name()) << endl;
                 }
                 addMaterial(material);
             }

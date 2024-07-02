@@ -16,8 +16,8 @@
 #include <cnoid/MessageView>
 #include <cnoid/OptionManager>
 #include <cnoid/Archive>
+#include <cnoid/Format>
 #include <pybind11/embed.h>
-#include <fmt/format.h>
 #include <regex>
 #include <iostream>
 
@@ -30,7 +30,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
@@ -249,7 +248,7 @@ void PythonPlugin::Impl::onSigOptionsParsed()
 
 void PythonPlugin::Impl::executeScriptFileOnStartup(const string& scriptFile)
 {
-    MessageView::instance()->putln(format(_("Executing python script \"{}\" ..."), scriptFile));
+    MessageView::instance()->putln(formatR(_("Executing python script \"{}\" ..."), scriptFile));
     
     auto& exec = executor();
     exec.execFile(scriptFile);
@@ -315,7 +314,7 @@ bool PythonPlugin::Impl::initializeInterpreter()
 #ifndef _WIN32
     auto pythonPath0 = getenv("PYTHONPATH");
     if(pythonPath0){
-        setenv("PYTHONPATH", format("{0}:{1}", moduleDir, pythonPath0).c_str(), 1);
+        setenv("PYTHONPATH", formatC("{0}:{1}", moduleDir, pythonPath0).c_str(), 1);
     } else {
         setenv("PYTHONPATH", moduleDir.c_str(), 1);
     }
@@ -493,8 +492,8 @@ void PythonPlugin::Impl::restoreProperties(const Archive& archive)
                     sysModule.attr("path").attr("insert")(0, nativePath.make_preferred().string());
                     additionalSearchPathList.push_back(newPath);
                     mv->putln(
-                        format(_("PythonPlugin: \"{}\" has been added to the Python module search path list."),
-                               newPath));
+                        formatR(_("PythonPlugin: \"{}\" has been added to the Python module search path list."),
+                                newPath));
                 }
             }
         }

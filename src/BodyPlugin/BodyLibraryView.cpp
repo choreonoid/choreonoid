@@ -33,7 +33,7 @@
 #include <QPainter>
 #include <QMessageBox>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <unordered_set>
 #include <map>
 #include <fstream>
@@ -41,7 +41,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace fs = stdx::filesystem;
 
 namespace {
@@ -317,8 +316,8 @@ void ExTreeWidget::dropEvent(QDropEvent* event)
             }
             if(duplicated){
                 showErrorDialog(
-                    format(_("Drop was canceled because item \"{0}\" is duplicated in the drop position."),
-                           duplicatedName));
+                    formatR(_("Drop was canceled because item \"{0}\" is duplicated in the drop position."),
+                            duplicatedName));
             } else {
                 viewImpl->libraryItemToOrgDirPathMap.clear();
                 for(auto& item : data->libraryItems){
@@ -980,8 +979,8 @@ bool BodyLibraryView::Impl::createGroupWithDialog(QTreeWidgetItem* parentItem)
             created = true;
         } else {
             showErrorDialog(
-                format(_("Group name \"{0}\" is duplicated. Please use another name for a new group."),
-                       groupName));
+                formatR(_("Group name \"{0}\" is duplicated. Please use another name for a new group."),
+                        groupName));
         }
     }
 
@@ -1014,9 +1013,9 @@ bool BodyLibraryView::Impl::registerBodyWithDialog
     
     if(checkNameDuplication(groupItem, name)){
         showErrorDialog(
-            format(_("Name \"{0}\" of the body is already registered in the same group. "
-                     "Please modify the name or group to avoid the name duplication."),
-                   name));
+            formatR(_("Name \"{0}\" of the body is already registered in the same group. "
+                      "Please modify the name or group to avoid the name duplication."),
+                    name));
         return false;
     }
 
@@ -1070,7 +1069,7 @@ string BodyLibraryView::Impl::exportBodyFileToLibraryDirectory(BodyItem* bodyIte
     bool confirmed =
         showConfirmDialog(
             _("Export to Body File"),
-            format(
+            formatR(
                 _("Body item \"{0}\" cannot be registered in the body library because "
                   "it does not have its corresponding body file. "
                   "Do you want to export it as a body file for registration in the body library?"),
@@ -1082,9 +1081,9 @@ string BodyLibraryView::Impl::exportBodyFileToLibraryDirectory(BodyItem* bodyIte
     auto dirPath = getInternalItemDirPath(groupItem, name);
     if(!ensureDirectory(dirPath, true)){
         showErrorDialog(
-            format(_("The directory \"{0}\" to put the body file in the body library cannot be created. "
-                     "The registration was canceled."),
-                   toUTF8(dirPath.string())));
+            formatR(_("The directory \"{0}\" to put the body file in the body library cannot be created. "
+                      "The registration was canceled."),
+                    toUTF8(dirPath.string())));
         return file;
     }
     
@@ -1093,9 +1092,9 @@ string BodyLibraryView::Impl::exportBodyFileToLibraryDirectory(BodyItem* bodyIte
 
     if(!bodyItem->save(file, "CHOREONOID-BODY")){
         showErrorDialog(
-            format(_("The directory \"{0}\" in the body library cannot be created. "
-                     "The registration was canceled."),
-                   toUTF8(dirPath.string())));
+            formatR(_("The directory \"{0}\" in the body library cannot be created. "
+                      "The registration was canceled."),
+                    toUTF8(dirPath.string())));
         file.clear();
     }
 
@@ -1136,17 +1135,17 @@ bool BodyLibraryView::Impl::storeItemFilesToLibraryDirectory
             fs::path filePath(fromUTF8(file));
             if(!checkIfSubFilePath(filePath, orgBodyFileDirPath)){
                 mout->putErrorln(
-                    format(_("{0} cannot be stored in the library directory becasue its element file \"{1}\" "
-                             "is not placed in the same or lower directory as the main model file \"{2}\"."),
-                           libraryItem->name, file, libraryItem->file));
+                    formatR(_("{0} cannot be stored in the library directory becasue its element file \"{1}\" "
+                              "is not placed in the same or lower directory as the main model file \"{2}\"."),
+                            libraryItem->name, file, libraryItem->file));
                 return false;
             }
         }
 
         if(!ensureDirectory(destDirPath, true)){
             mout->putErrorln(
-                format(_("{0} cannot be stored in the library directory due to an error in creating sub directory \"{1}\"."),
-                       libraryItem->name, toUTF8(destDirPath.string())));
+                formatR(_("{0} cannot be stored in the library directory due to an error in creating sub directory \"{1}\"."),
+                        libraryItem->name, toUTF8(destDirPath.string())));
             return false;
         }
 
@@ -1195,8 +1194,8 @@ bool BodyLibraryView::Impl::storeItemFilesToLibraryDirectory
         stdx::error_code ec;
         fs::remove_all(destDirPath, ec);
         mout->putErrorln(
-            format(_("{0} cannot be stored in the library directory due to a file copy error."),
-                   libraryItem->name));
+            formatR(_("{0} cannot be stored in the library directory due to a file copy error."),
+                    libraryItem->name));
     }
 
     return !failedToCopyFiles;
@@ -1254,7 +1253,7 @@ bool BodyLibraryView::Impl::setBodyThumbnailWithDialog(LibraryItem* item)
     }
 
     FileDialog dialog;
-    dialog.setWindowTitle(format(_("Select Thumbnail Image for {0}"), item->name));
+    dialog.setWindowTitle(formatR(_("Select Thumbnail Image for {0}"), item->name));
     dialog.setViewMode(QFileDialog::List);
     dialog.setFileMode(QFileDialog::ExistingFile);
     dialog.setLabelText(QFileDialog::Accept, _("Select"));
@@ -1356,7 +1355,7 @@ bool BodyLibraryView::Impl::renameLibraryItemWithDialog(LibraryItem* item)
                 }
             } else {
                 showErrorDialog(
-                    format(_("Name \"{0}\" is duplicated. Please use another name."), newName));
+                    formatR(_("Name \"{0}\" is duplicated. Please use another name."), newName));
             }
         }
     }
@@ -1463,7 +1462,7 @@ void BodyLibraryView::Impl::moveSelectedItemsWithDialog(QTreeWidgetItem* destIte
                 return true;
             }
             MessageOut::master()->putErrorln(
-                format(_("Item \"{0}\" cannot be moved to \"{1}\" due to the name duplication."),
+                formatR(_("Item \"{0}\" cannot be moved to \"{1}\" due to the name duplication."),
                        item->name, destItem->text(0).toStdString()));
             duplicated = true;
             return false;
@@ -1700,7 +1699,7 @@ bool BodyLibraryView::Impl::loadIndexFile()
         }
     } catch(const ValueNode::Exception& ex){
         MessageOut::master()->putErrorln(
-            format(_("Failed to load the body library index file \"{0}\": {1}"),
+            formatR(_("Failed to load the body library index file \"{0}\": {1}"),
                    indexFile, ex.message()));
     }
     if(doFinalizePathVariableProcessor){
@@ -1739,7 +1738,7 @@ LibraryItem* BodyLibraryView::Impl::readLibraryItem(Mapping* info)
     string name;
     if(!info->extract("name", name)){
         mout->putErrorln(
-            format(_("Name is not specified for item in the index file \"{0}\"."), indexFile));
+            formatR(_("Name is not specified for item in the index file \"{0}\"."), indexFile));
         return nullptr;
     }
             
@@ -1752,7 +1751,7 @@ LibraryItem* BodyLibraryView::Impl::readLibraryItem(Mapping* info)
             isGroup = true;
         } else {
             mout->putErrorln(
-                format(_("Invalid type name \"{0}\" in the index file \"{1}\"."), type, indexFile));
+                formatR(_("Invalid type name \"{0}\" in the index file \"{1}\"."), type, indexFile));
             return nullptr;
         }
     }
@@ -1766,7 +1765,7 @@ LibraryItem* BodyLibraryView::Impl::readLibraryItem(Mapping* info)
         string file;
         if(!info->extract("file", file)){
             mout->putErrorln(
-                format(_("File is not specified for item \"{0}\" in the index file \"{1}\"."),
+                formatR(_("File is not specified for item \"{0}\" in the index file \"{1}\"."),
                        name, indexFile));
             return nullptr;
         }
@@ -1897,8 +1896,8 @@ bool BodyLibraryView::Impl::importLibrary(const std::string& filename, MessageOu
     fs::create_directories(extractionDirPath, ec);
     if(ec){
         mout->putErrorln(
-            format(_("Temporary directory for extracting a body library cannot be created in the library directory: {1}"),
-                   toUTF8(ec.message())));
+            formatR(_("Temporary directory for extracting a body library cannot be created in the library directory: {1}"),
+                    toUTF8(ec.message())));
         return false;
     }
 
@@ -1939,12 +1938,12 @@ bool BodyLibraryView::Impl::importLibrary(const std::string& filename, MessageOu
             }
             string fname = toUTF8(filePath.filename().string());
             mout->putln(
-                format(_("Body library archive \"{0}\" has been imported."), fname));
+                formatR(_("Body library archive \"{0}\" has been imported."), fname));
             imported = true;
         } else {
             mout->putErrorln(
-                format(_("Extracted files cannot be copied into the library directory: {1}"),
-                       toUTF8(ec.message())));
+                formatR(_("Extracted files cannot be copied into the library directory: {1}"),
+                        toUTF8(ec.message())));
         }
     }
 
@@ -1972,7 +1971,7 @@ bool BodyLibraryView::Impl::exportLibrary(const std::string& filename, MessageOu
         if(archiver.createZipFile(filename, directory)){
             string fname = toUTF8(fs::path(fromUTF8(filename)).filename().string());
             mout->putln(
-                format(_("The body library has been exported to \"{0}\"."), fname));
+                formatR(_("The body library has been exported to \"{0}\"."), fname));
             exported = true;
         } else {
             mout->putErrorln(archiver.errorMessage());
@@ -2002,8 +2001,8 @@ bool BodyLibraryView::Impl::exportLibraryToDirectory(const std::string& director
     }
     if(failed){
         mout->putErrorln(
-            format(_("A temporary directory for exporting library files cannot be created: {0}"),
-                   toUTF8(ec.message())));
+            formatR(_("A temporary directory for exporting library files cannot be created: {0}"),
+                    toUTF8(ec.message())));
         return false;
     }
     
@@ -2016,8 +2015,8 @@ bool BodyLibraryView::Impl::exportLibraryToDirectory(const std::string& director
 #endif
     if(ec){
         mout->putErrorln(
-            format(_("Library files cannot be copied to a temporary directory for exportation: {0}"),
-                   toUTF8(ec.message())));
+            formatR(_("Library files cannot be copied to a temporary directory for exportation: {0}"),
+                    toUTF8(ec.message())));
         return false;
     }
 

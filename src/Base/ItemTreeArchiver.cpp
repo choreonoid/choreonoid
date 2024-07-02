@@ -7,14 +7,13 @@
 #include "Archive.h"
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
+#include <cnoid/Format>
 #include <list>
 #include <set>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -139,7 +138,7 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
     
     if(!ItemManager::getClassIdentifier(item, pluginName, className)){
         mv->putln(
-            format(_("\"{}\" cannot be stored. Its type is not registered."), item->displayName()),
+            formatR(_("\"{}\" cannot be stored. Its type is not registered."), item->displayName()),
             MessageView::Error);
         isComplete = false;
         return nullptr;
@@ -151,14 +150,14 @@ ArchivePtr ItemTreeArchiver::Impl::storeIter(Archive& parentArchive, Item* item,
     ArchivePtr dataArchive;
 
     if(!item->isSubItem()){
-        mv->putln(format(_("Storing {0} \"{1}\""), className, item->displayName()));
+        mv->putln(formatR(_("Storing {0} \"{1}\""), className, item->displayName()));
         mv->flush();
 
         dataArchive = new Archive;
         dataArchive->inheritSharedInfoFrom(parentArchive);
 
         if(!item->store(*dataArchive)){
-            mv->putln(format(_("\"{}\" cannot be stored."), item->displayName()), MessageView::Error);
+            mv->putln(formatR(_("\"{}\" cannot be stored."), item->displayName()), MessageView::Error);
             isComplete = false;
             return nullptr;
         }
@@ -270,8 +269,8 @@ void ItemTreeArchiver::Impl::storeAddons(Archive& archive, Item* item)
             string name, moduleName;
             if(!ItemManager::getAddonIdentifier(addon, moduleName, name)){
                 mv->putln(
-                    format(_("Addon \"{0}\" of item \"{1}\" cannot be stored. Its type is not registered."),
-                           typeid(*addon).name(), item->displayName()),
+                    formatR(_("Addon \"{0}\" of item \"{1}\" cannot be stored. Its type is not registered."),
+                            typeid(*addon).name(), item->displayName()),
                     MessageView::Error);
             } else {
                 ArchivePtr addonArchive = new Archive;
@@ -283,8 +282,8 @@ void ItemTreeArchiver::Impl::storeAddons(Archive& archive, Item* item)
                 } else {
                     //! \note Storing the addon data is just skipped when the store function returns false.
                     /*
-                    mv->putln(format(_("Addon \"{0}\" of item \"{1}\" cannot be stored."),
-                                     name, item->name()),
+                    mv->putln(formatR(_("Addon \"{0}\" of item \"{1}\" cannot be stored."),
+                                      name, item->name()),
                               MessageView::Error);
                     */
                 }
@@ -342,13 +341,13 @@ void ItemTreeArchiver::Impl::restoreItemIter
         if(!isOptional){
             if(!itemName.empty()){
                 if(!className.empty()){
-                    mv->putln(format(_("{0} \"{1}\" cannot be restored."), className, itemName), MessageView::Error);
+                    mv->putln(formatR(_("{0} \"{1}\" cannot be restored."), className, itemName), MessageView::Error);
                 } else {
-                    mv->putln(format(_("\"{0}\" cannot be restored."), itemName), MessageView::Error);
+                    mv->putln(formatR(_("\"{0}\" cannot be restored."), itemName), MessageView::Error);
                 }
             } else {
                 if(!className.empty()){
-                    mv->putln(format(_("An instance of {0} cannot be restored."), className), MessageView::Error);
+                    mv->putln(formatR(_("An instance of {0} cannot be restored."), className), MessageView::Error);
                 } else {
                     mv->putln(_("An instance of unkown item type cannot be restored."), MessageView::Error);
                 }                    
@@ -394,7 +393,7 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
         ItemPtr subItem = parentItem->findChildItem(itemName, [](Item* item){ return item->isSubItem(); });
         if(!subItem){
             mv->putln(
-                format(_("Sub item \"{}\" is not found. Its children cannot be restored."), itemName),
+                formatR(_("Sub item \"{}\" is not found. Its children cannot be restored."), itemName),
                 MessageView::Error);
         }
         restoreItemStates(archive, subItem);
@@ -412,7 +411,7 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
         io_isOptional = (pOptionalPlugins->find(pluginName) != pOptionalPlugins->end());
         if(!io_isOptional){
             mv->putln(
-                format(_("{0} of {1}Plugin is not a registered item type."), className, pluginName),
+                formatR(_("{0} of {1}Plugin is not a registered item type."), className, pluginName),
                 MessageView::Error);
             ++numArchivedItems;
         }
@@ -438,7 +437,7 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
             item->setAttribute(Item::Attached);
         }
         
-        mv->putln(format(_("Restoring {0} \"{1}\""), className, itemName));
+        mv->putln(formatR(_("Restoring {0} \"{1}\""), className, itemName));
         mv->flush();
 
         ValueNodePtr dataNode = archive.find("data");
@@ -460,8 +459,8 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
         if(item){
             if(!parentItem->addChildItem(item)){
                 mv->putln(
-                    format(_("{0} \"{1}\" cannot be added to \"{2}\" as a child item."),
-                           className, itemName, parentItem->displayName()),
+                    formatR(_("{0} \"{1}\" cannot be added to \"{2}\" as a child item."),
+                            className, itemName, parentItem->displayName()),
                     MessageView::Error);
                 item.reset();
             } else {
@@ -489,21 +488,21 @@ void ItemTreeArchiver::Impl::restoreAddons(Archive& archive, Item* item)
                 auto addonArchive = dynamic_cast<Archive*>(addonList->at(i)->toMapping());
                 addonArchive->inheritSharedInfoFrom(archive);
                 if(!(addonArchive->read("name", name) && addonArchive->read("plugin", moduleName))){
-                    mv->putln(format(_("The name and plugin are not specified at addon {0}."), i),
+                    mv->putln(formatR(_("The name and plugin are not specified at addon {0}."), i),
                               MessageView::Error);
                 } else {
                     ItemAddonPtr addon = ItemManager::createAddon(moduleName, name);
                     if(!addon){
-                        mv->putln(format(_("Addon \"{0}\" of plugin \"{1}\" cannot be created."),
-                                         name, moduleName), MessageView::Error);
+                        mv->putln(formatR(_("Addon \"{0}\" of plugin \"{1}\" cannot be created."),
+                                          name, moduleName), MessageView::Error);
                     } else {
                         if(!item->setAddon(addon)){
-                            mv->putln(format(_("Addon \"{0}\" cannot be added to item \"{1}\"."),
-                                             name, item->displayName()), MessageView::Error);
+                            mv->putln(formatR(_("Addon \"{0}\" cannot be added to item \"{1}\"."),
+                                              name, item->displayName()), MessageView::Error);
                         } else {
                             if(!addon->restore(*addonArchive)){
-                                mv->putln(format(_("Addon \"{0}\" of plugin \"{1}\" cannot be restored."),
-                                                 name, moduleName), MessageView::Error);
+                                mv->putln(formatR(_("Addon \"{0}\" of plugin \"{1}\" cannot be restored."),
+                                                  name, moduleName), MessageView::Error);
                                 item->removeAddon(addon);
                             }
                         }

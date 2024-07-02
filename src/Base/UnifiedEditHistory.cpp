@@ -5,13 +5,12 @@
 #include "Action.h"
 #include "MessageView.h"
 #include "LazyCaller.h"
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <deque>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -381,7 +380,7 @@ bool UnifiedEditHistory::Impl::undo()
     if(currentPosition < static_cast<int>(records.size())){
         auto record = records[currentPosition];
         if(record->applyUndo()){
-            mv->notify(format(_("Undo: {0}."), record->label()));
+            mv->notify(formatR(_("Undo: {0}."), record->label()));
             ++currentPosition;
             sigCurrentPositionChanged(currentPosition);
             done = true;
@@ -409,7 +408,7 @@ bool UnifiedEditHistory::Impl::redo()
     if(currentPosition >= 1){
         auto record = records[currentPosition - 1];
         if(record->applyRedo()){
-            mv->notify(format(_("Redo: {0}."), record->label()));
+            mv->notify(formatR(_("Redo: {0}."), record->label()));
             --currentPosition;
             sigCurrentPositionChanged(currentPosition);
             done = true;

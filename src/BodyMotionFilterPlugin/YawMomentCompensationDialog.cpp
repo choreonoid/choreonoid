@@ -15,15 +15,14 @@
 #include <cnoid/PushButton>
 #include <cnoid/Separator>
 #include <cnoid/TreeWidget>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -332,12 +331,12 @@ void YawMomentCompensationDialog::onAccepted()
             if(impl->applyFilter(bodyItem, outputMotionItem)){
                 motionItem->parentItem()->insertChild(motionItem->nextItem(), outputMotionItem);
                 impl->mout->putln(
-                    format(_("Body motion \"{0}\" has been converted to \"{1}\" by the yaw moment compensation filter."),
-                           motionItem->name(), outputMotionItem->name()));
+                    formatR(_("Body motion \"{0}\" has been converted to \"{1}\" by the yaw moment compensation filter."),
+                            motionItem->name(), outputMotionItem->name()));
             } else {
                 impl->mout->putln(
-                    format(_("Failed to apply the yaw moment compensation filter to \"{0}\"."),
-                           motionItem->name()));
+                    formatR(_("Failed to apply the yaw moment compensation filter to \"{0}\"."),
+                            motionItem->name()));
             }
         }
     }
@@ -350,12 +349,12 @@ bool YawMomentCompensationDialog::applyFilter(BodyItem* bodyItem, BodyMotionItem
 
     if(result){
         impl->mout->putln(
-            format(_("Body motion \"{0}\" has been updated by the yaw moment compensation filter."),
-                   motionItem->name()));
+            formatR(_("Body motion \"{0}\" has been updated by the yaw moment compensation filter."),
+                    motionItem->name()));
     } else {
         impl->mout->putln(
-            format(_("Failed to apply the yaw moment compensation filter to \"{0}\"."),
-                   motionItem->name()));
+            formatR(_("Failed to apply the yaw moment compensation filter to \"{0}\"."),
+                    motionItem->name()));
     }
 
     return result;
@@ -398,8 +397,8 @@ bool YawMomentCompensationDialog::Impl::applyFilter(BodyItem* bodyItem, BodyMoti
 
     if(!isValid){
         mout->putErrorln(
-            format(_("The filter cannot apply to {0} because the parameter values of {1}-th target joint is invalid."),
-                   bodyItem->name(), index + 1));
+            formatR(_("The filter cannot apply to {0} because the parameter values of {1}-th target joint is invalid."),
+                    bodyItem->name(), index + 1));
         return false;
     }
             

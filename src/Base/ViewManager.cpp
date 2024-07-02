@@ -5,12 +5,12 @@
 #include "Dialog.h"
 #include "Archive.h"
 #include "Action.h"
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLineEdit>
 #include <QLabel>
 #include <QDialogButtonBox>
 #include <QPushButton>
-#include <fmt/format.h>
 #include <list>
 #include <regex>
 #include <unordered_set>
@@ -19,7 +19,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -781,10 +780,10 @@ static View* restoreView
     string errorMessage;
 
     if(!info){
-        errorMessage = format(_("{0} is not registered in {1}."), className, moduleName);
+        errorMessage = formatR(_("{0} is not registered in {1}."), className, moduleName);
 
     } else if(!info->isEnabled){
-        errorMessage = format(_("{0} is disabled by the application."), className);
+        errorMessage = formatR(_("{0} is disabled by the application."), className);
 
     } else {
         archive->read("name", instanceName);
@@ -830,15 +829,15 @@ static View* restoreView
         string message;
         if(instanceName.empty()){
             if(errorMessage.empty()){
-                message = format(_("{0} cannot be restored."), className);
+                message = formatR(_("{0} cannot be restored."), className);
             } else {
-                message = format(_("{0} cannot be restored: {1}"), className, errorMessage);
+                message = formatR(_("{0} cannot be restored: {1}"), className, errorMessage);
             }
         } else {
             if(errorMessage.empty()){
-                message = format(_("The \"{0}\" view of {1} cannot be restored."), instanceName, className);
+                message = formatR(_("The \"{0}\" view of {1} cannot be restored."), instanceName, className);
             } else {
-                message = format(_("The \"{0}\" view of {1} cannot be restored: {2}"), instanceName, className, errorMessage);
+                message = formatR(_("The \"{0}\" view of {1} cannot be restored: {2}"), instanceName, className, errorMessage);
             }
         }
         MessageView::instance()->putln(message, MessageView::Error);
@@ -879,8 +878,8 @@ bool ViewManager::restoreViews
                         if(enableMissingPluginWarnings &&
                            optionalPlugins->find(moduleName) == optionalPlugins->end()){
                             MessageView::instance()->putln(
-                                format(_("The \"{0}\" plugin for \"{1}\" is not found. The view cannot be restored."),
-                                       moduleName, className),
+                                formatR(_("The \"{0}\" plugin for \"{1}\" is not found. The view cannot be restored."),
+                                        moduleName, className),
                                 MessageView::Error);
                         }
                     } else {

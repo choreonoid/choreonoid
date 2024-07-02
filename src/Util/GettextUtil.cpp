@@ -1,13 +1,8 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "GettextUtil.h"
+#include "Format.h"
 #include <cnoid/Config>
 #include <cnoid/ExecutablePath>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <unordered_set>
 #include <regex>
 #include <string>
@@ -141,7 +136,7 @@ const char* getText(const char* domainname, const char* msgid)
 
 std::string bindModuleTextDomain(const std::string& moduleName, const std::string& customLabel, bool useUTF8)
 {
-    string domainName(fmt::format("Cnoid{0}-{1}.{2}", moduleName, CNOID_MAJOR_VERSION, CNOID_MINOR_VERSION));
+    string domainName(formatC("Cnoid{0}-{1}.{2}", moduleName, CNOID_MAJOR_VERSION, CNOID_MINOR_VERSION));
 
 #ifdef CNOID_ENABLE_GETTEXT
 
@@ -196,7 +191,7 @@ std::string bindModuleTextDomain(const std::string& moduleName, const std::strin
 void setUTF8ToModuleTextDomain(const std::string& moduleName)
 {
 #ifdef CNOID_ENABLE_GETTEXT
-    string domainName(fmt::format("Cnoid{0}-{1}.{2}", moduleName, CNOID_MAJOR_VERSION, CNOID_MINOR_VERSION));
+    string domainName(formatC("Cnoid{0}-{1}.{2}", moduleName, CNOID_MAJOR_VERSION, CNOID_MINOR_VERSION));
     bind_textdomain_codeset(domainName.c_str(), "utf-8");
 #endif
 }

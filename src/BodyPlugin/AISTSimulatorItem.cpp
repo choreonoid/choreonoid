@@ -16,7 +16,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
 #include <cnoid/IdPair>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <mutex>
 #include <iomanip>
 #include <fstream>
@@ -24,7 +24,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 // for Windows
 #undef min
@@ -361,16 +360,16 @@ SimulationBody* AISTSimulatorItem::createSimulationBody(Body* orgBody, CloneMap&
 {
     if(!orgBody->isStaticModel() && orgBody->mass() <= 0.0){
         impl->mv->putln(
-            format(_("The mass of {0} is {1}, which cannot be simulated by AISTSimulatorItem."),
-                   orgBody->name(), orgBody->mass()),
+            formatR(_("The mass of {0} is {1}, which cannot be simulated by AISTSimulatorItem."),
+                    orgBody->name(), orgBody->mass()),
             MessageView::Error);
         return nullptr;
     }
         
     if(orgBody->parentBody()){
         impl->mv->putln(
-            format(_("{0} is attached to {1}, but attached bodies are not supported by AISTSimulatorItem."),
-                   orgBody->name(), orgBody->parentBody()->name()),
+            formatR(_("{0} is attached to {1}, but attached bodies are not supported by AISTSimulatorItem."),
+                    orgBody->name(), orgBody->parentBody()->name()),
             MessageView::Error);
         return nullptr;
     }
@@ -434,9 +433,9 @@ bool AISTSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationB
     if(hasNonRootFreeJoints && !self->isAllLinkPositionOutputMode()){
         bool confirmed = showConfirmDialog(
             _("Confirmation of all link position recording mode"),
-            format(_("{0}: There is a model that has free-type joints other than the root link "
-                     "and all the link positions should be recorded in this case. "
-                     "Do you enable the mode to do it?"), self->displayName()));
+            formatR(_("{0}: There is a model that has free-type joints other than the root link "
+                      "and all the link positions should be recorded in this case. "
+                      "Do you enable the mode to do it?"), self->displayName()));
         if(confirmed){
             self->setAllLinkPositionOutputMode(true);
             self->notifyUpdate();
@@ -444,8 +443,8 @@ bool AISTSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationB
     }
 
     if(world.hasHighGainDynamics()){
-        mv->putln(format(_("{} uses the ForwardDynamicsCBM module to perform the high-gain control."),
-                         self->displayName()));
+        mv->putln(formatR(_("{} uses the ForwardDynamicsCBM module to perform the high-gain control."),
+                          self->displayName()));
     }
 
     cfs.setFrictionCoefficientRange(minFrictionCoefficient, maxFrictionCoefficient);
@@ -481,8 +480,8 @@ void AISTSimulatorItem::Impl::addBody(AISTSimBody* simBody)
                     continue;
                 } else {
                     mv->putln(
-                        format(_("{0}: Actuation mode \"{1}\" cannot be used for the pseudo continuous track link {2} of {3}"),
-                               self->displayName(), Link::getStateModeString(mode), link->name(), body->name()),
+                        formatR(_("{0}: Actuation mode \"{1}\" cannot be used for the pseudo continuous track link {2} of {3}"),
+                                self->displayName(), Link::getStateModeString(mode), link->name(), body->name()),
                         MessageView::Warning);
                 }
             }
@@ -498,8 +497,8 @@ void AISTSimulatorItem::Impl::addBody(AISTSimBody* simBody)
                 }
             } else {
                 mv->putln(
-                    format(_("{0}: Actuation mode \"{1}\" specified for the {2} link of {3} is not supported."),
-                           self->displayName(), Link::getStateModeString(mode), link->name(), body->name()),
+                    formatR(_("{0}: Actuation mode \"{1}\" specified for the {2} link of {3} is not supported."),
+                            self->displayName(), Link::getStateModeString(mode), link->name(), body->name()),
                     MessageView::Warning);
             }
         }

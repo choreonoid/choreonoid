@@ -3,13 +3,13 @@
 #include "Body.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <algorithm>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
+
 
 DigitalIoConnection::DigitalIoConnection()
 {
@@ -243,13 +243,13 @@ bool IoConnectionMap::read(const Mapping& archive)
     auto& typeNode = archive.get("type");
     if(typeNode.toString() != "IoConnectionMap"){
         typeNode.throwException(
-            format(_("{0} cannot be loaded as a signal I/O connection map"), typeNode.toString()));
+            formatR(_("{0} cannot be loaded as a signal I/O connection map"), typeNode.toString()));
     }
         
     auto& versionNode = archive.get("format_version");
     auto version = versionNode.toDouble();
     if(version != 1.0){
-        versionNode.throwException(format(_("Format version {0} is not supported."), version));
+        versionNode.throwException(formatR(_("Format version {0} is not supported."), version));
     }
 
     auto& connectionNodes = *archive.findListing("connections");

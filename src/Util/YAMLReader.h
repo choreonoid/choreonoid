@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_YAML_READER_H
 #define CNOID_UTIL_YAML_READER_H
 

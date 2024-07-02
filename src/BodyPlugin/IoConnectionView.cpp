@@ -11,6 +11,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/Buttons>
 #include <cnoid/QtEventUtil>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QComboBox>
@@ -21,12 +22,10 @@
 #include <QStyledItemDelegate>
 #include <QKeyEvent>
 #include <QMouseEvent>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -274,7 +273,7 @@ QVariant ConnectionMapModel::getDeviceLabel(DigitalIoConnection* connection, Dig
     if(deviceName.empty()){
         return bodyName.c_str();
     } else {
-        return format("{0} - {1}", bodyName, deviceName).c_str();
+        return formatC("{0} - {1}", bodyName, deviceName).c_str();
     }
 }
 

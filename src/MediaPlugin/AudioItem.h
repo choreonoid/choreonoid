@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_MEDIA_PLUGIN_AUDIO_ITEM_H
 #define CNOID_MEDIA_PLUGIN_AUDIO_ITEM_H
 

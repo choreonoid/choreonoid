@@ -14,7 +14,7 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshGenerator>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
@@ -432,7 +432,7 @@ void SkeletonMotionItem::SceneSkeletonMotion::updateBonePosition(Bone* bone, int
     if(parentBone){
         if(index == sceneBones.size()){
             auto boneNode = new SceneBone(boneShape);
-            boneNode->setName(fmt::format("{0} --> {1}", parentBone->name(), bone->name()));
+            boneNode->setName(formatC("{0} --> {1}", parentBone->name(), bone->name()));
             sceneBones.push_back(boneNode);
         }
         SceneBone* sceneBone = sceneBones[index];
@@ -454,7 +454,7 @@ bool SkeletonMotionItem::SceneSkeletonMotion::onPointerMoveEvent(SceneWidgetEven
     for(auto it = path.rbegin(); it != path.rend(); ++it){
         auto& node = *it;
         if(auto boneNode = dynamic_cast<SceneBone*>(node.get())){
-            event->updateIndicator(fmt::format("Bone \"{0}\"", boneNode->name()));
+            event->updateIndicator(formatC("Bone \"{0}\"", boneNode->name()));
             return true;
         }
     }
@@ -500,7 +500,7 @@ SkeletonMotionItem::Location::Location(SkeletonMotionItem* item)
 
 std::string SkeletonMotionItem::Location::getName() const
 {
-    return fmt::format(_("Offset position of {0}"), item->displayName());
+    return formatR(_("Offset position of {0}"), item->displayName());
 }
 
 

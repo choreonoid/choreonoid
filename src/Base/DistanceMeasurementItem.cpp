@@ -16,14 +16,13 @@
 #include <cnoid/MathUtil>
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
+#include <cnoid/Format>
 #include <cnoid/stdx/optional>
-#include <fmt/format.h>
 #include <vector>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -804,12 +803,12 @@ void DistanceMeasurementItem::Impl::doPutProperties(PutPropertyFunction& putProp
         if(itemName.empty()){
             itemName = _("None");
         }
-        putProperty(format(_("Item{0}"), i + 1), itemName);
+        putProperty(formatR(_("Item{0}"), i + 1), itemName);
 
         if(subEntryName.empty()){
             subEntryName = _("None");
         }
-        putProperty(format(_("Item{0} sub entry"), i + 1), subEntryName);
+        putProperty(formatR(_("Item{0} sub entry"), i + 1), subEntryName);
     }
     
     putProperty(_("Active"), isMeasurementActive,
@@ -899,7 +898,7 @@ bool DistanceMeasurementItem::Impl::store(Archive& archive)
     for(int i=0; i < 2; ++i){
         if(auto info = targetInfos[i]){
             if(auto item = info->item){
-                string itemKey = format("item{0}", i + 1);
+                string itemKey = formatC("item{0}", i + 1);
                 archive.writeItemId(itemKey, item);
                 if(auto tracker = info->tracker){
                     int subEntryIndex = tracker->getCurrentSubEntryIndex();
@@ -955,7 +954,7 @@ void DistanceMeasurementItem::Impl::restoreItems(const Archive& archive)
     bool restored = false;
     
     for(int i=0; i < 2; ++i){
-        string itemKey = format("item{0}", i + 1);
+        string itemKey = formatC("item{0}", i + 1);
         if(auto item = archive.findItem<Item>(itemKey)){
             auto info = setTargetItem(i, item, nullptr);
             int subEntryIndex = 0;
@@ -1001,9 +1000,9 @@ ViewportText::ViewportText()
 void ViewportText::updateDisplayValueFormat(bool doUpdateText)
 {
     if(displayValueFormat->isMillimeter()){
-        distanceDisplayFormat = format("{{0:.{0}f}}mm", displayValueFormat->lengthDecimals());
+        distanceDisplayFormat = formatC("{{0:.{0}f}}mm", displayValueFormat->lengthDecimals());
     } else {
-        distanceDisplayFormat = format("{{0:.{0}f}}m", displayValueFormat->lengthDecimals());
+        distanceDisplayFormat = formatC("{{0:.{0}f}}m", displayValueFormat->lengthDecimals());
     }
     if(doUpdateText){
         updateText();
@@ -1023,7 +1022,7 @@ void ViewportText::setMeasurementData(const Vector3& p1, const Vector3& p2, doub
 void ViewportText::updateText()
 {
     double d = displayValueFormat->toDisplayLength(distance);
-    distanceText->setText(format(distanceDisplayFormat, d).c_str());
+    distanceText->setText(formatR(distanceDisplayFormat, d).c_str());
     distanceText->notifyUpdate();
 }
 

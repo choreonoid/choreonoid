@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "PulseAudioManager.h"
 #include "AudioItem.h"
 #include "MediaUtil.h"
@@ -14,8 +9,8 @@
 #include <cnoid/MessageView>
 #include <cnoid/LazyCaller>
 #include <cnoid/Archive>
+#include <cnoid/Format>
 #include <pulse/pulseaudio.h>
-#include <fmt/format.h>
 #include <map>
 #include <cmath>
 //#include <iostream> // for debug
@@ -23,7 +18,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -339,7 +333,7 @@ void PulseAudioManager::Impl::onItemCheckToggled(Item* item, bool isChecked)
                 }
             } else {
                 mv->putln(
-                    format(_("Audio item \"{0}\" cannot be initialized."), audioItem->displayName()),
+                    formatR(_("Audio item \"{0}\" cannot be initialized."), audioItem->displayName()),
                     MessageView::Error);
             }
         } else {
@@ -556,7 +550,7 @@ bool Source::connectStream()
     int result = pa_stream_connect_playback(stream, NULL, pattr, flags, NULL, NULL);
     if(result < 0){
         manager->mv->putln(
-            format(_("PulseAudio stream cannot be connected: {0}"), pa_strerror(result)),
+            formatR(_("PulseAudio stream cannot be connected: {0}"), pa_strerror(result)),
             MessageView::Error);
     } else {
 
@@ -645,7 +639,7 @@ void Source::initializePlayback(double time)
         
         if(writableSize <= 0){
             manager->mv->putln(
-                format(_("PulseAudio stream for {0} cannot be written."), audioItem->displayName()),
+                formatR(_("PulseAudio stream for {0} cannot be written."), audioItem->displayName()),
                 MessageView::Error);
             disconnectStream();
             
@@ -749,8 +743,8 @@ void Source::adjustTime(const char* reason)
     pa_threaded_mainloop_unlock(manager->mainloop);
 
     manager->mv->putln(
-        format(_("PulseAudioManager: Buffer of {0} {1}. Its playback time is adjusted to {2}."),
-               audioItem->displayName(), reason, time),
+        formatR(_("PulseAudioManager: Buffer of {0} {1}. Its playback time is adjusted to {2}."),
+                audioItem->displayName(), reason, time),
         MessageView::Error);
 }
 

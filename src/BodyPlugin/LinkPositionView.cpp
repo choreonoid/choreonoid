@@ -7,16 +7,15 @@
 #include <cnoid/Archive>
 #include <cnoid/ActionGroup>
 #include <cnoid/ConnectionSet>
+#include <cnoid/Format>
 #include <QLabel>
 #include <QStyle>
 #include <QBoxLayout>
 #include <QScrollArea>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -116,8 +115,7 @@ bool LinkPositionView::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* link
     auto targetLink = positionWidget->targetLink();
     if(targetBodyItem && targetLink){
         targetLabel.setText(
-            format("{0} / {1}",
-                   targetBodyItem->displayName(), targetLink->name()).c_str());
+            formatC("{0} / {1}", targetBodyItem->displayName(), targetLink->name()).c_str());
     } else {
         targetLabel.setText("------");
     }

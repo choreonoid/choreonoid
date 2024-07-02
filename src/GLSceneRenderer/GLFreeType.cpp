@@ -1,12 +1,11 @@
 #include "GLFreeType.h"
 #include <cnoid/MessageOut>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include FT_ERRORS_H
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 
 static const char* getFreeTypeErrorString(FT_Error error_code)
@@ -79,7 +78,7 @@ bool GLFreeType::initializeGL(const char* faceName, int resolution, GLuint textu
             if(auto message = getFreeTypeErrorString(error)){
                 messageOut->putErrorln(message);
             } else {
-                messageOut->putErrorln(format(_("FT_Init_FreeType failed with error code {0}."), error));
+                messageOut->putErrorln(formatR(_("FT_Init_FreeType failed with error code {0}."), error));
             }
             ft = nullptr;
         }
@@ -101,7 +100,7 @@ bool GLFreeType::initializeGL(const char* faceName, int resolution, GLuint textu
         if(auto message = getFreeTypeErrorString(error)){
             messageOut->putErrorln(message);
         } else {
-            messageOut->putErrorln(format(_("FT_New_Face for \"{0}\" failed with error code {1}."), faceName, error));
+            messageOut->putErrorln(formatR(_("FT_New_Face for \"{0}\" failed with error code {1}."), faceName, error));
         }
         face = nullptr;
 

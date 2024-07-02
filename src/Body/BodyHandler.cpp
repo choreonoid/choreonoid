@@ -1,5 +1,5 @@
 #include "BodyHandler.h"
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <ostream>
 #include "gettext.h"
 
@@ -19,14 +19,14 @@ bool BodyHandler::checkVersion(const char* name, int version, int internalVersio
     int patch2 = version2 % 100;
 
     if(major1 != major2 || minor1 != minor2){
-        os << fmt::format(_("Body handler {0} built with Choreonoid {1}.{2} cannot be used on Choreonoid {3}.{4}"),
-                          name, major1, minor1, major2, minor2) << endl;
+        os << formatR(_("Body handler {0} built with Choreonoid {1}.{2} cannot be used on Choreonoid {3}.{4}"),
+                      name, major1, minor1, major2, minor2) << endl;
         return false;
     }
 
     if(internalVersion != cnoid::getInternalVersion()){
-        os << fmt::format(_("Body handler {1} built with Choreonoid {1}.{2}.{3} cannot be used on Choreonoid {4}.{5}.{6}"),
-                          name, major1, minor1, patch1, major2, minor2, patch2) << endl;
+        os << formatR(_("Body handler {1} built with Choreonoid {1}.{2}.{3} cannot be used on Choreonoid {4}.{5}.{6}"),
+                      name, major1, minor1, patch1, major2, minor2, patch2) << endl;
         return false;
     }
 

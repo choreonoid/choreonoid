@@ -1,13 +1,9 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_EIGEN_ARCHIVE_H
 #define CNOID_UTIL_EIGEN_ARCHIVE_H
 
 #include "ValueTree.h"
 #include "EigenUtil.h"
-#include <fmt/format.h>
+#include "Format.h"
 #include <functional>
 #include <initializer_list>
 #include "exportdecl.h"
@@ -21,7 +17,7 @@ void readEx(const Listing* listing, Eigen::MatrixBase<Derived>& x)
     const int nc = x.cols();
     if(listing->size() != nr * nc){
         listing->throwException(
-            fmt::format("A {0} x {1} matrix / vector value is expected", nr, nc));
+            formatC("A {0} x {1} matrix / vector value is expected", nr, nc));
     }
     int index = 0;
     for(int i=0; i < nr; ++i){

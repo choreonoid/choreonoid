@@ -11,6 +11,7 @@
 #include <cnoid/Buttons>
 #include <cnoid/ButtonGroup>
 #include <cnoid/QtEventUtil>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QTableView>
@@ -21,12 +22,10 @@
 #include <QSpinBox>
 #include <QKeyEvent>
 #include <QMouseEvent>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -367,7 +366,7 @@ bool VariableListModel::setData(const QModelIndex& index, const QVariant& value,
                         Q_EMIT dataChanged(index, index, {role});
                     } else {
                         showWarningDialog(
-                            format(_("ID {0} is already in use."), newId.label()));
+                            formatR(_("ID {0} is already in use."), newId.label()));
                     }
                 }
             }
@@ -719,7 +718,7 @@ void MprVariableListView::Impl::setTargetMultiVariableListItem(MprMultiVariableL
     if(item){
         if(auto controller = item->findOwnerItem<MprControllerItemBase>()){
             targetLabel.setText(
-                format("{0} - {1}", controller->displayName(), item->displayName()).c_str());
+                formatC("{0} - {1}", controller->displayName(), item->displayName()).c_str());
         } else {
             targetLabel.setText(item->displayName().c_str());
         }

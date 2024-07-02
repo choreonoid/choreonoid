@@ -1,7 +1,7 @@
 #include "YAMLWriter.h"
 #include "NullOut.h"
 #include "UTF8.h"
-#include <fmt/format.h>
+#include "Format.h"
 #include <iostream>
 #include <algorithm>
 #include <stack>
@@ -11,7 +11,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -821,11 +820,11 @@ bool YAMLWriter::Impl::setAnchorOrPutAliasForSharedNode(const ValueNode* node)
         auto inserted = nodeSet.insert(node);
         if(!inserted.second){
             startValuePut(true);
-            os() << format("*A{}", it->second);
+            os() << formatC("*A{}", it->second);
             endValuePut();
             return true;
         } else {
-            anchor = format("&A{}", it->second);
+            anchor = formatC("&A{}", it->second);
         }
     }
     return false;

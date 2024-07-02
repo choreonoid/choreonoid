@@ -13,12 +13,12 @@
 #include "Timer.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
 #include <QPainter>
 #include <QProgressDialog>
 #include <QCoreApplication>
 #include <QGuiApplication>
-#include <fmt/format.h>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -679,7 +679,7 @@ bool MovieRecorder::Impl::initializeRecording()
     filesystem::path dirPath = fromUTF8(directory);
     if(filesystem::exists(dirPath)){
         if(!filesystem::is_directory(dirPath)){
-            showWarningDialog(fmt::format(_("{} is not a directory."), toUTF8(dirPath.string())));
+            showWarningDialog(formatR(_("{} is not a directory."), toUTF8(dirPath.string())));
             return false;
         }
     } else {
@@ -733,9 +733,9 @@ bool MovieRecorder::Impl::startOfflineModeRecording()
     bool doContinue = true;
 
     mv->putln(
-        fmt::format(startingMessage,
-                    targetView->windowTitle().toStdString(),
-                    translatedRecordingModeLabel(recordingMode)));
+        formatR(startingMessage,
+                targetView->windowTitle().toStdString(),
+                translatedRecordingModeLabel(recordingMode)));
     
     isRecording = true;
     sigRecordingStateChanged(true);
@@ -782,8 +782,8 @@ void MovieRecorder::Impl::prepareForOnlineModeRecording()
                 [&](double /* time */){ startOnlineModeRecording(); }));
         
         mv->putln(
-            fmt::format(_("The online mode recording for {} is ready."),
-                        targetView->windowTitle().toStdString()));
+            formatR(_("The online mode recording for {} is ready."),
+                    targetView->windowTitle().toStdString()));
     }
 }
 
@@ -801,7 +801,7 @@ void MovieRecorder::Impl::startOnlineModeRecording()
             [&](double /* time */, bool isStoppedManually){ onPlaybackStopped(isStoppedManually); }));
 
     mv->putln(
-        fmt::format(
+        formatR(
             startingMessage,
             targetView->windowTitle().toStdString(),
             translatedRecordingModeLabel(recordingMode)));
@@ -844,7 +844,7 @@ void MovieRecorder::Impl::onPlaybackStopped(bool isStoppedManually)
 void MovieRecorder::Impl::startDirectModeRecording()
 {
     mv->putln(
-        fmt::format(
+        formatR(
             startingMessage,
             targetView->windowTitle().toStdString(),
             translatedRecordingModeLabel(recordingMode)));
@@ -1072,9 +1072,9 @@ void MovieRecorder::Impl::stopRecording(bool isFinished)
 
         auto viewName = targetView->windowTitle().toStdString();
         if(isFinished){
-            mv->putln(fmt::format(_("Recording of {} has been finished."), viewName));
+            mv->putln(formatR(_("Recording of {} has been finished."), viewName));
         } else {
-            mv->putln(fmt::format(_("Recording of {} has been stopped."), viewName));
+            mv->putln(formatR(_("Recording of {} has been stopped."), viewName));
         }
 
         targetView->updateGeometry();
@@ -1327,7 +1327,7 @@ bool SequentialNumberedImageFileEncoder::doEncoding(std::string fileBaseName)
         if(!captured){
             break;
         }
-        string filename = fmt::format(fFilename, captured->frame);
+        string filename = formatR(fFilename, captured->frame);
         bool saved = false;
         if(stdx::get_variant_index(captured->image) == 0){
             QPixmap& pixmap = stdx::get<QPixmap>(captured->image);
@@ -1337,7 +1337,7 @@ bool SequentialNumberedImageFileEncoder::doEncoding(std::string fileBaseName)
             saved = image.save(filename.c_str());
         }
         if(!saved){
-            setErrorMessage(fmt::format(_("Saving an image to \"{}\" failed."), filename));
+            setErrorMessage(formatR(_("Saving an image to \"{}\" failed."), filename));
             failed = false;
             break;
         }

@@ -3,13 +3,12 @@
 */
 
 #include "MulticopterPluginHeader.h"
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <fstream>
 
 using namespace std;
 using namespace cnoid;
 using namespace Multicopter;
-using fmt::format;
 
 LinkManager* LinkManager::_inst = 0;
 
@@ -297,12 +296,12 @@ LinkManager::saveBody(const cnoid::Body* body, const string& fileName)
         for(int i=0 ; i<triArySize ; ++i){
             Triangle3d tri = triAry[i];
             for(int j=0 ; j<3 ; ++j){
-                out << format("v {0:f} {1:f} {2:f}", tri[j].x(), tri[j].y(), tri[j].z()) << endl;
+                out << formatC("v {0:f} {1:f} {2:f}", tri[j].x(), tri[j].y(), tri[j].z()) << endl;
             }
         }
 
         for(int i=0 ; i<triArySize ; ++i){
-            out << format("f {0:d} {1:d} {2:d}", (vtxIdx+1), (vtxIdx+2), (vtxIdx+3)) << endl;
+            out << formatC("f {0:d} {1:d} {2:d}", (vtxIdx+1), (vtxIdx+2), (vtxIdx+3)) << endl;
             vtxIdx +=3;
         }
     }

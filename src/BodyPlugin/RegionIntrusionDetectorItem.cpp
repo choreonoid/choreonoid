@@ -9,12 +9,11 @@
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/EigenArchive>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -197,8 +196,8 @@ bool RegionIntrusionDetectorItem::Impl::initialize(ControllerIO* io)
     auto body = io->body();
     ioDevice = body->findDevice<DigitalIoDevice>();
     if(!ioDevice){
-        io->os() << format(_("\"{0}\" cannot work with \"{1}\" because it does not have a digital IO device."),
-                           self->name(), body->name()) << endl;
+        io->os() << formatR(_("\"{0}\" cannot work with \"{1}\" because it does not have a digital IO device."),
+                            self->name(), body->name()) << endl;
         return false;
     }
 

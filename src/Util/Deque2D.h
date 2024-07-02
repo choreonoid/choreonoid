@@ -9,6 +9,7 @@ template <typename ElementType, typename Allocator = std::allocator<ElementType>
 class Deque2D
 {
     typedef Deque2D<ElementType, Allocator> Deque2DType;
+    typedef std::allocator_traits<Allocator> AllocatorTraits;
     
 public:
     typedef ElementType value_type;
@@ -335,7 +336,7 @@ public:
             ElementType* q = org.buf + org.offset;
             ElementType* qterm = org.buf + org.capacity_;
             while(p != pend){
-                allocator.construct(p++, *q++);
+                AllocatorTraits::construct(allocator, p++, *q++);
                 if(q == qterm){
                     q = org.buf;
                 }
@@ -366,15 +367,15 @@ public:
 
             if(p <= pend){
                 while(p != pend){
-                    allocator.destroy(p++);
+                    AllocatorTraits::destroy(allocator, p++);
                 }
             } else {
                 for(ElementType* q = buf; q != pend; ++q){
-                    allocator.destroy(q);
+                    AllocatorTraits::destroy(allocator, q);
                 }
                 const ElementType* pterm = buf + capacity_;
                 for(ElementType* q = p; q != pterm; ++q){
-                    allocator.destroy(q);
+                    AllocatorTraits::destroy(allocator, q);
                 }
             }
             allocator.deallocate(buf, capacity_);
@@ -405,15 +406,15 @@ private:
                 ElementType* q = buf + offset;
                 if(q <= qend){
                     while(q != qend && p != pend){
-                        allocator.construct(p++, *q++);
+                        AllocatorTraits::construct(allocator, p++, *q++);
                     }
                 } else {
                     for(ElementType* r = buf; r != qend && p != pend; ++r){
-                        allocator.construct(p++, *r);
+                        AllocatorTraits::construct(allocator, p++, *r);
                     }
                     ElementType* qterm = buf + capacity_;
                     for(ElementType* r = q; r != qterm && p != pend; ++r){
-                        allocator.construct(p++, *r);
+                        AllocatorTraits::construct(allocator, p++, *r);
                     }
                 }
             }
@@ -421,22 +422,22 @@ private:
             ElementType* q = buf + offset;
             if(q <= qend){
                 while(q != qend){
-                    allocator.destroy(q++);
+                    AllocatorTraits::destroy(allocator, q++);
                 }
             } else {
                 for(ElementType* r = buf; r != qend; ++r){
-                    allocator.destroy(r);
+                    AllocatorTraits::destroy(allocator, r);
                 }
                 ElementType* qterm = buf + capacity_;
                 for(ElementType* r = q; r != qterm; ++r){
-                    allocator.destroy(r);
+                    AllocatorTraits::destroy(allocator, r);
                 }
             }
         }
         
         // construct new elements
         while(p != pend){
-            allocator.construct(p++, ElementType());
+            AllocatorTraits::construct(allocator, p++, ElementType());
         }
 
         if(buf){
@@ -467,15 +468,15 @@ private:
                     const ElementType* pend = buf + (offset + newSize) % capacity_;
                     if(p <= pend){
                         while(p != pend){
-                            allocator.construct(p++, ElementType());
+                            AllocatorTraits::construct(allocator, p++, ElementType());
                         }
                     } else {
                         for(ElementType* r = buf; r != pend; ++r){
-                            allocator.construct(r, ElementType());
+                            AllocatorTraits::construct(allocator, r, ElementType());
                         }
                         const ElementType* pterm = buf + capacity_;
                         for(ElementType* r = p; r != pterm; ++r){
-                            allocator.construct(r, ElementType());
+                            AllocatorTraits::construct(allocator, r, ElementType());
                         }
                     }
                 } else if(newSize < size_){
@@ -483,15 +484,15 @@ private:
                     ElementType* pend = buf + (offset + size_) % capacity_;
                     if(p <= pend){
                         while(p != pend){
-                            allocator.destroy(p++);
+                            AllocatorTraits::destroy(allocator, p++);
                         }
                     } else {
                         for(ElementType* r = buf; r != pend; ++r){
-                            allocator.destroy(r);
+                            AllocatorTraits::destroy(allocator, r);
                         }
                         const ElementType* pterm = buf + capacity_;
                         for(ElementType* r = p; r != pterm; ++r){
-                            allocator.destroy(r);
+                            AllocatorTraits::destroy(allocator, r);
                         }
                     }
                 }
@@ -504,7 +505,7 @@ private:
                         ElementType* pend = buf + newSize;
                         // construct new elements
                         while(p != pend){
-                            allocator.construct(p++, ElementType());
+                            AllocatorTraits::construct(allocator, p++, ElementType());
                         }
                     }
                 } else {
@@ -624,15 +625,15 @@ public:
 
         if(p <= pend){
             while(p != pend){
-                allocator.destroy(p++);
+                AllocatorTraits::destroy(allocator, p++);
             }
         } else {
             for(ElementType* r = buf; r != pend; ++r){
-                allocator.destroy(r);
+                AllocatorTraits::destroy(allocator, r);
             }
             const ElementType* pterm = buf + capacity_;
             for(ElementType* r = p; r != pterm; ++r){
-                allocator.destroy(r);
+                AllocatorTraits::destroy(allocator, r);
             }
         }
         offset = (offset + popSize) % capacity_;

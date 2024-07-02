@@ -1,11 +1,5 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "Image.h"
 #include "ImageIO.h"
-#include <fmt/format.h>
 
 using namespace std;
 using namespace cnoid;

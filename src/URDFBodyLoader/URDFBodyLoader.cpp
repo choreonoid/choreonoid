@@ -12,8 +12,8 @@
 #include <cnoid/SceneLoader>
 #include <cnoid/UriSchemeProcessor>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <pugixml.hpp>
 #include <memory>
 #include <ostream>
@@ -26,7 +26,6 @@
 using namespace cnoid;
 
 namespace filesystem = cnoid::stdx::filesystem;
-using fmt::format;
 using pugi::xml_attribute;
 using pugi::xml_node;
 using std::endl;
@@ -205,7 +204,7 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
         // parses and reads a xacro-formatted URDF
         char buffer[128];
         std::string urdf_content;
-        FILE* pipe = popen(format("{0}/cnoid-xacro {1}", executableDir(), filename).c_str(), "r");
+        FILE* pipe = popen(formatC("{0}/cnoid-xacro {1}", executableDir(), filename).c_str(), "r");
         if (!pipe) {
             os() << "Error: popen() for xacro parsing failed." << endl;
             return false;
@@ -759,8 +758,8 @@ SgNode* URDFBodyLoader::Impl::createMesh(ShapeDescription& description)
         scene = sceneLoader.load(filePath, isSupportedFormat);
         if (!scene) {
             if(!isSupportedFormat) {
-                os() << format(_("Error: format of the specified mesh file \"{0}\" is not supported"),
-                               description.meshUri);
+                os() << formatR(_("Error: format of the specified mesh file \"{0}\" is not supported"),
+                                description.meshUri);
             }
             return nullptr;
         }

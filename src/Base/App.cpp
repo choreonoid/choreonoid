@@ -69,7 +69,7 @@
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <Eigen/Core>
 #include <QApplication>
 #include <QTranslator>
@@ -265,7 +265,7 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
         static std::regex re("^Python\\d+$");
         string dirString = dir.path().filename().string();
         if(regex_match(dirString, match, re)){
-            qputenv("PATH", fmt::format("{0};{1}", dir.path().string(), qgetenv("PATH")).c_str());
+            qputenv("PATH", formatC("{0};{1}", dir.path().string(), qgetenv("PATH")).c_str());
             break;
         }
     }
@@ -449,9 +449,9 @@ void App::Impl::initialize()
     CaptureBar::initialize(ext);
     
     messageView->putln(
-        fmt::format(_("The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: {3})."),
-                    EIGEN_WORLD_VERSION, EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
-                    Eigen::SimdInstructionSetsInUse()));
+        formatR(_("The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: {3})."),
+                EIGEN_WORLD_VERSION, EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
+                Eigen::SimdInstructionSetsInUse()));
 
     pluginManager->doStartupLoading();
 

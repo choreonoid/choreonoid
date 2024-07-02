@@ -1,19 +1,14 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "VRMLSceneLoader.h"
 #include "SceneLoader.h"
 #include "VRMLParser.h"
 #include "VRMLToSGConverter.h"
 #include "EasyScanner.h"
 #include "NullOut.h"
-#include <fmt/format.h>
+#include "Format.h"
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -99,7 +94,7 @@ SgNode* VRMLSceneLoader::Impl::load(const std::string& filename)
     }
 
     if(group->empty()){
-        os() << format(_("VRML file \"{}\" does not have any valid entity."), filename) << endl;
+        os() << formatR(_("VRML file \"{}\" does not have any valid entity."), filename) << endl;
         return nullptr;
     }
 

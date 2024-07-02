@@ -1,12 +1,11 @@
 #include "MprPositionLabelSet.h"
 #include <cnoid/DisplayValueFormat>
 #include <cnoid/MathUtil>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 
 MprPositionLabelSet::MprPositionLabelSet(QGridLayout* sharedGrid)
@@ -174,7 +173,7 @@ void MprPositionLabelSet::updateIkPanel(BodyItemKinematicsKit* kinematicsKit, Mp
     int configIndex = position->configuration();
     if(kinematicsKit->configurationHandler()){
         string configName = kinematicsKit->configurationLabel(configIndex);
-        configLabel.setText(format("{0:X} ( {1} )", configIndex, configName).c_str());
+        configLabel.setText(formatC("{0:X} ( {1} )", configIndex, configName).c_str());
         currentKinematicsKit = kinematicsKit;
         currentIkPosition = position;
 
@@ -321,7 +320,7 @@ void MprPositionLabelSet::onAutoConfigCheckToggled(bool on)
             }
             currentIkPosition->setConfiguration(configIndex);
             string configName = currentKinematicsKit->configurationLabel(configIndex);
-            configLabel.setText(format("{0:X} ( {1} )", configIndex, configName).c_str());
+            configLabel.setText(formatC("{0:X} ( {1} )", configIndex, configName).c_str());
         } else {
             configLabel.setText(QString::number(configIndex));
         }

@@ -14,15 +14,14 @@
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/ConnectionSet>
 #include <cnoid/EigenUtil>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
-#include <fmt/format.h>
 #include <set>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -518,25 +517,25 @@ void LocationView::Impl::setupInterfaceForNewLocations()
             int n = locationInfos.size();
             if(numCategories == 1){
                 if(n == 1){
-                    singleCategoryLabel.setText(format(_("<b>{0}</b>"), location->getName()).c_str());
+                    singleCategoryLabel.setText(formatR(_("<b>{0}</b>"), location->getName()).c_str());
                 } else if(n == 2){
                     singleCategoryLabel.setText(
-                        format(_("<b>{0}</b> + {1}"), location->getName(), locationInfos[1]->location->getName()).c_str());
+                        formatR(_("<b>{0}</b> + {1}"), location->getName(), locationInfos[1]->location->getName()).c_str());
                 } else {
                     singleCategoryLabel.setText(
-                        format(_("<b>{0}</b> + {1} objects"),  location->getName(), n - 1).c_str());
+                        formatR(_("<b>{0}</b> + {1} objects"),  location->getName(), n - 1).c_str());
                 }
             } else {
                 // Note that the default combo box implementation does not accept rich texts for its items and plain
                 // texts are now used as follows. Rich texts may be used by introducing a custom delegate.
                 if(n == 1){
-                    categoryCombo.addItem(format(location->getName()).c_str());
+                    categoryCombo.addItem(formatR(location->getName()).c_str());
                 } else if(n == 2){
                     categoryCombo.addItem(
-                        format(_("{0} + {1}"), location->getName(), locationInfos[1]->location->getName()).c_str());
+                        formatR(_("{0} + {1}"), location->getName(), locationInfos[1]->location->getName()).c_str());
                 } else {
                     categoryCombo.addItem(
-                        format(_("{0} + {1} objects"),  location->getName(), n - 1).c_str());
+                        formatR(_("{0} + {1} objects"),  location->getName(), n - 1).c_str());
                 }
             }
 
@@ -708,9 +707,9 @@ void LocationView::Impl::updateBaseCoordinateSystems()
         if(parentLocation){
             string label;
             if(locationInfo->type == LocationProxy::OffsetLocation){
-                label = format(_("Offset ( {} )"), parentLocation->getName());
+                label = formatR(_("Offset ( {} )"), parentLocation->getName());
             } else {
-                label = format(_("Parent ( {} )"), parentLocation->getName());
+                label = formatR(_("Parent ( {} )"), parentLocation->getName());
             }
             parentCoord = new CoordinateInfo(label, ParentCoord, ParentCoordIndex);
             parentCoord->parentPositionFunc =

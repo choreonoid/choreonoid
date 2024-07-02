@@ -23,14 +23,13 @@
 #include <cnoid/CheckBox>
 #include <cnoid/Dialog>
 #include <cnoid/QtSvgUtil>
+#include <cnoid/Format>
 #include <QDialogButtonBox>
-#include <fmt/format.h>
 #include <set>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -371,7 +370,7 @@ bool BodyMotionGenerationBar::Impl::shapeBodyMotion
         motionItem->notifyUpdate();
     } else {
         MessageView::instance()->putln(
-            format(_("{0} cannot be a target of the body motion generation."), motionItem->name()),
+            formatR(_("{0} cannot be a target of the body motion generation."), motionItem->name()),
             MessageView::Error);
     }
 

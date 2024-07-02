@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "ExtCommandItem.h"
 #include "ItemManager.h"
 #include "ItemTreeView.h"
@@ -12,8 +7,8 @@
 #include "Archive.h"
 #include <cnoid/Sleep>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
@@ -119,8 +114,9 @@ bool ExtCommandItem::execute()
 #endif
 
         if(process.waitForStarted()){
-            mv->putln(fmt::format(_("External command \"{0}\" has been executed by item \"{1}\"."),
-                    actualCommand, displayName()));
+            mv->putln(
+                formatR(_("External command \"{0}\" has been executed by item \"{1}\"."),
+                        actualCommand, displayName()));
             if(waitingTimeAfterStarted_ > 0.0){
                 msleep(waitingTimeAfterStarted_ * 1000.0);
             }
@@ -128,7 +124,7 @@ bool ExtCommandItem::execute()
             result = true;
 
         } else {
-            mv->put(fmt::format(_("External command \"{}\" cannot be executed."), actualCommand));
+            mv->put(formatR(_("External command \"{}\" cannot be executed."), actualCommand));
             if(!filesystem::exists(fromUTF8(actualCommand))){
                 mv->putln(_(" The command does not exist."));
             } else {

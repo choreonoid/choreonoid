@@ -12,8 +12,8 @@
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <typeinfo>
 #include <vector>
 #include <map>
@@ -689,7 +689,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
 {
     if(item == self){
         MessageView::instance()->putln(
-            fmt::format(_("Item \"{0}\" was about to be inserted into itself."), item->name()),
+            formatR(_("Item \"{0}\" was about to be inserted into itself."), item->name()),
             MessageView::Error);
         return false;
     }
@@ -1787,7 +1787,7 @@ void Item::putProperties(PutPropertyFunction& putProperty)
         if(impl->addonMap.size() == 1){
             putProperty(_("Addon"), addon->name());
         } else {
-            putProperty(fmt::format(_("Addon {0}"), addonIndex++ + 1), addon->name());
+            putProperty(formatR(_("Addon {0}"), addonIndex++ + 1), addon->name());
         }
     }
 

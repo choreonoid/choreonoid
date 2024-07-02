@@ -1,14 +1,13 @@
 #include "ZipArchiver.h"
-#include <cnoid/FileUtil>
-#include <cnoid/UTF8>
+#include "FileUtil.h"
+#include "UTF8.h"
+#include "Format.h"
 #include <cnoid/stdx/filesystem>
 #include <zip.h>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace fs = stdx::filesystem;
 
 namespace cnoid {
@@ -85,8 +84,8 @@ bool ZipArchiver::Impl::createZipFile(const std::string& zipFilename, const std:
             errorType = ExistingZipFileRemovalError;
             systemErrorMessage = toUTF8(ec.message());
             errorMessage =
-                format(_("The zip file \"{0}\" already exists and cannot be removed: {1}"),
-                       zipFilename, systemErrorMessage);
+                formatR(_("The zip file \"{0}\" already exists and cannot be removed: {1}"),
+                        zipFilename, systemErrorMessage);
             return false;
         }
     }
@@ -99,8 +98,8 @@ bool ZipArchiver::Impl::createZipFile(const std::string& zipFilename, const std:
         errorType = ZipFileCreationError;
         systemErrorMessage = zip_error_strerror(&error);
         errorMessage =
-            format(_("Failed to create the zip file \"{0}\": {1}"),
-                   zipFilename, systemErrorMessage);
+            formatR(_("Failed to create the zip file \"{0}\": {1}"),
+                    zipFilename, systemErrorMessage);
         return false;
     }
 
@@ -135,7 +134,7 @@ bool ZipArchiver::Impl::addDirectoryToZip
         errorType = DirectoryAdditionError;
         systemErrorMessage = zip_strerror(zip);
         errorMessage =
-            format(_("Failed to add directory \"{0}\" to the zip file: {1}"), localDirStr, systemErrorMessage);
+            formatR(_("Failed to add directory \"{0}\" to the zip file: {1}"), localDirStr, systemErrorMessage);
         return false;
     }
 
@@ -154,8 +153,8 @@ bool ZipArchiver::Impl::addDirectoryToZip
                 errorType = FileAdditionError;
                 systemErrorMessage = zip_strerror(zip);
                 errorMessage =
-                    format(_("Failed to add file \"{0}\" to the zip file: {1}"),
-                           localPathStr, systemErrorMessage);
+                    formatR(_("Failed to add file \"{0}\" to the zip file: {1}"),
+                            localPathStr, systemErrorMessage);
                 return false;
             }
             int index = zip_file_add(zip, localPathStr.c_str(), source, ZIP_FL_ENC_UTF_8);
@@ -164,8 +163,8 @@ bool ZipArchiver::Impl::addDirectoryToZip
                 errorType = FileAdditionError;
                 systemErrorMessage = zip_strerror(zip);
                 errorMessage =
-                    format(_("Failed to add file \"{0}\" to the zip file: {1}"),
-                           localPathStr, systemErrorMessage);
+                    formatR(_("Failed to add file \"{0}\" to the zip file: {1}"),
+                            localPathStr, systemErrorMessage);
                 return false;
             }
             // The deflate compression is applied by default. The following code is not necessary.
@@ -173,8 +172,8 @@ bool ZipArchiver::Impl::addDirectoryToZip
             if(zip_set_file_compression(zip, index, ZIP_CM_DEFLATE, 0) < 0){
                 zip_source_free(source);
                 mout->putErrorln(
-                    format(_("Failed to compress file \"{0}\": {1}"),
-                           localPathStr, zip_strerror(zip)));
+                    formatR(_("Failed to compress file \"{0}\": {1}"),
+                            localPathStr, zip_strerror(zip)));
                 return false;
             }
             */
@@ -205,8 +204,8 @@ bool ZipArchiver::Impl::extractZipFile(const std::string& zipFilename, const std
         errorType = ZipFileOpenError;
         systemErrorMessage = zip_error_strerror(&error);
         errorMessage = 
-            format(_("Failed to open the zip file \"{0}\": {1}"),
-                   zipFilename, systemErrorMessage);;
+            formatR(_("Failed to open the zip file \"{0}\": {1}"),
+                    zipFilename, systemErrorMessage);;
         return false;
     }
 
@@ -237,7 +236,7 @@ bool ZipArchiver::Impl::extractFilesFromZipFile
         if(zip_stat_index(zip, i, 0, &stat) < 0){
             errorType = EntryExtractionError;
             systemErrorMessage.clear();
-            errorMessage = format(_("Entry {0} in the zip file \"{1}\" cannot be extracted."), i, zipFilename);
+            errorMessage = formatR(_("Entry {0} in the zip file \"{1}\" cannot be extracted."), i, zipFilename);
             return false;
         } else {
             string name(stat.name);
@@ -260,8 +259,8 @@ bool ZipArchiver::Impl::extractFilesFromZipFile
                     errorType = DirectoryCreationError;
                     systemErrorMessage = toUTF8(ec.message());
                     errorMessage =
-                        format(_("Directory \"{0}\" in the zip file \"{1}\" cannot be created: {2}"),
-                               name, zipFilename, systemErrorMessage);
+                        formatR(_("Directory \"{0}\" in the zip file \"{1}\" cannot be created: {2}"),
+                                name, zipFilename, systemErrorMessage);
                     return false;
                 }
             } else {
@@ -296,8 +295,8 @@ bool ZipArchiver::Impl::extractFilesFromZipFile
                     errorType = FileExtractionError;
                     systemErrorMessage.clear();
                     errorMessage = 
-                        format(_("File \"{0}\" in the zip file \"{1}\" cannot be extracted."),
-                               name, zipFilename);
+                        formatR(_("File \"{0}\" in the zip file \"{1}\" cannot be extracted."),
+                                name, zipFilename);
                     return false;
                 }
                     

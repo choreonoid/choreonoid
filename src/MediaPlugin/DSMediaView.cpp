@@ -1,8 +1,3 @@
-/**
-   @author Saeki, Keisuke
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "DSMediaView.h"
 #include "MediaItem.h"
 #include <cnoid/TimeBar>
@@ -15,18 +10,17 @@
 #include <cnoid/MenuManager>
 #include <cnoid/MainMenu>
 #include <cnoid/Sleep>
+#include <cnoid/Format>
 #include <QPainter>
 #include <Dshow.h>
 #include <iostream>
 #include <algorithm>
 #include <windows.h>
 #include <mbctype.h>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
@@ -421,7 +415,7 @@ void DSMediaViewImpl::load()
 #define EIF(x)                                                          \
     result = (x);                                                       \
     if(FAILED(result)) {                                                \
-        throw DSException(format("FAILED(hr=0x{:x}) in" #x, result));   \
+        throw DSException(formatC("FAILED(hr=0x{:x}) in" #x, result));   \
     }
 
     struct DSException {
@@ -689,7 +683,7 @@ HRESULT DSMediaViewImpl::HandleDShowEvent()
                 if (SUCCEEDED(result = mediaControl->Stop())){
                     currentState = Stopped;
                 } else {
-                    mv->putln(format(_("Failed({}) to stop media clip!\n"), result));
+                    mv->putln(formatR(_("Failed({}) to stop media clip!\n"), result));
                     unload();
                     break;
                 }

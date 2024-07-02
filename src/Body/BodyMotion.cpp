@@ -5,12 +5,11 @@
 #include <cnoid/Vector3Seq>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -443,7 +442,7 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
         version = 1.0;
     }
     if(version >= 5.0){
-        os << format(_("Format version {} is not supported"), version) << endl;
+        os << formatR(_("Format version {} is not supported"), version) << endl;
         return false;
     }
     
@@ -545,7 +544,7 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
                     }
                 }
             } else {
-                os << format(_("Unknown type \"{}\"."), type) << endl;
+                os << formatR(_("Unknown type \"{}\"."), type) << endl;
             }
         }
     }

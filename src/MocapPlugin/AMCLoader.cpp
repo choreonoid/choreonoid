@@ -1,12 +1,11 @@
 #include "AMCLoader.h"
 #include "Skeleton.h"
 #include "Bone.h"
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -258,7 +257,7 @@ void AMCLoader::readUnits()
                 toRadian = 1.0;
             } else {
                 scanner.throwException(
-                    format(_("Invalid angle unit {0}. It should be either \"deg\" or \"rad\"."), scanner.stringValue));
+                    formatR(_("Invalid angle unit {0}. It should be either \"deg\" or \"rad\"."), scanner.stringValue));
             }
             break;
 
@@ -445,7 +444,7 @@ void AMCLoader::readBone()
         case S_NAME:
             bone->setName(scanner.readWordEx());
             if(boneInfoMap.find(bone->name()) != boneInfoMap.end()){
-                scanner.throwException(format(_("Bone name \"{0}\" is overlapping."), bone->name()));
+                scanner.throwException(formatR(_("Bone name \"{0}\" is overlapping."), bone->name()));
             }
             boneInfoMap[bone->name()] = boneInfo;
             break;
@@ -695,7 +694,7 @@ void AMCLoader::readBoneJointPosition(const std::string& boneName, int frame)
 {
     auto p = boneInfoMap.find(boneName);
     if(p == boneInfoMap.end()){
-        scanner.throwException(format("Bone \"{0}\" is not defined.", boneName));
+        scanner.throwException(formatC("Bone \"{0}\" is not defined.", boneName));
     }
 
     SkeletonMotion::Frame f = skeletonMotion->frame(frame);

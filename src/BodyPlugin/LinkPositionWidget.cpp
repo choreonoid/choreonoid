@@ -22,18 +22,17 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/EigenUtil>
 #include <cnoid/Selection>
+#include <cnoid/Format>
 #include <QScrollArea>
 #include <QLabel>
 #include <QGridLayout>
 #include <QStyle>
 #include <QDialogButtonBox>
-#include <fmt/format.h>
 #include <unordered_set>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -730,7 +729,7 @@ string LinkPositionWidget::Impl::defaultFrameLabelFunction
     if(note.empty()){
         return id.label();
     }
-    return format("{0}: {1}", id.label(), note.c_str());
+    return formatC("{0}: {1}", id.label(), note.c_str());
 }
 
 
@@ -1008,7 +1007,7 @@ bool JointSpaceConfigurationDialog::updateConfigurationTypes()
     if(name.empty()){
         setWindowTitle(_("Joint-space configuration"));
     } else {
-        setWindowTitle(format(_("{} configuration"), name).c_str());
+        setWindowTitle(formatR(_("{} configuration"), name).c_str());
     }
 
     int n = configuration->getNumConfigurationTypes();

@@ -5,12 +5,11 @@
 #include "MessageView.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/PolymorphicSceneNodeFunctionSet>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -78,11 +77,11 @@ void cnoid::putRenderableItemSceneStatistics()
     for(auto& item : RootItem::instance()->selectedItems()){
         if(auto renderable = dynamic_cast<RenderableItem*>(item.get())){
             if(auto scene = renderable->getScene()){
-                os << format(_(" Scene \"{}\":"), item->displayName()) << endl;
+                os << formatR(_(" Scene \"{}\":"), item->displayName()) << endl;
                 counter.count(scene);
-                os << format(_("  Vertices: {}\n"), counter.numVertices);
-                os << format(_("  Normals: {}\n"), counter.numNormals);
-                os << format(_("  Triangles: {}"), counter.numTriangles) << endl;
+                os << formatR(_("  Vertices: {}\n"), counter.numVertices);
+                os << formatR(_("  Normals: {}\n"), counter.numNormals);
+                os << formatR(_("  Triangles: {}"), counter.numTriangles) << endl;
                 totalNumVertics += counter.numVertices;
                 totalNumNormals += counter.numNormals;
                 totalNumTriangles += counter.numTriangles;
@@ -94,9 +93,9 @@ void cnoid::putRenderableItemSceneStatistics()
     if(!numSceneItems){
         os << _("No valid scene item is selected.") << endl;
     } else {
-        os << format(_("The total number of {} scene items:\n"), numSceneItems);
-        os << format(_(" Vertices: {}\n"), totalNumVertics);
-        os << format(_(" Normals: {}\n"), totalNumNormals);
-        os << format(_(" Triangles: {}"), totalNumTriangles) << endl;
+        os << formatR(_("The total number of {} scene items:\n"), numSceneItems);
+        os << formatR(_(" Vertices: {}\n"), totalNumVertics);
+        os << formatR(_(" Normals: {}\n"), totalNumNormals);
+        os << formatR(_(" Triangles: {}"), totalNumTriangles) << endl;
     }
 }

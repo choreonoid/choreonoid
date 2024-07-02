@@ -1,12 +1,7 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "PlainSeqFileLoader.h"
 #include "UTF8.h"
+#include "Format.h"
 #include <cnoid/Tokenizer>
-#include <fmt/format.h>
 #include <fstream>
 #include "gettext.h"
 
@@ -19,7 +14,7 @@ bool PlainSeqFileLoader::load(const std::string& filename, std::ostream& os)
     ifstream is(fromUTF8(filename).c_str());
   
     if(!is){
-        os << fmt::format(_("\"{}\" cannot be opened."), filename) << endl;
+        os << formatR(_("\"{}\" cannot be opened."), filename) << endl;
         return false;
     }
   
@@ -43,13 +38,13 @@ bool PlainSeqFileLoader::load(const std::string& filename, std::ostream& os)
         if(nColumns == 0){
             nColumns = v.size();
         } else if(v.size() != nColumns){
-            os << fmt::format(_("\"{}\" contains different size columns."), filename) << endl;
+            os << formatR(_("\"{}\" contains different size columns."), filename) << endl;
             return false;
         }
     }
 
     if(nColumns < 2 || nLines < 1){
-        os << fmt::format(_("\"{}\": Empty sequence."), filename) << endl;
+        os << formatR(_("\"{}\": Empty sequence."), filename) << endl;
         return false;
     }
   
@@ -62,7 +57,7 @@ bool PlainSeqFileLoader::load(const std::string& filename, std::ostream& os)
         double time1 = (*(++it))[0];
         timeStep_ = time1 - time0;
         if(timeStep_ <= 0.0){
-            os << fmt::format(_("\"{}\": Time values are not arranged."), filename) << endl;
+            os << formatR(_("\"{}\": Time values are not arranged."), filename) << endl;
             return false;
         }
     } else {

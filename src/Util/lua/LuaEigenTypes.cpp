@@ -1,13 +1,7 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "LuaUtil.h"
 #include "../EigenUtil.h"
-#include <fmt/format.h>
 
 using namespace std;
-using fmt::format;
 using namespace cnoid;
 
 namespace cnoid {

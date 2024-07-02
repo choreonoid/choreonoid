@@ -5,8 +5,8 @@
 #include "IdPair.h"
 #include "UTF8.h"
 #include "NullOut.h"
+#include "Format.h"
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <fstream>
 #include <map>
 #include <set>
@@ -15,7 +15,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace cnoid {
@@ -152,7 +151,7 @@ bool ObjSceneWriter::Impl::writeScene(const std::string& filename, SgNode* node)
         gfs.exceptions(std::ios_base::failbit);
     }
     catch(const std::exception& ex){
-        os() << format(_("\"{0}\" cannot be open. {1}."), nativeFilename, ex.what()) << endl;
+        os() << formatR(_("\"{0}\" cannot be open. {1}."), nativeFilename, ex.what()) << endl;
         return false;
     }
 
@@ -161,7 +160,7 @@ bool ObjSceneWriter::Impl::writeScene(const std::string& filename, SgNode* node)
     bool result = writeNode(node, Affine3::Identity());
 
     if(!result){
-        os() << format(_("Failed to write a scene into \"{0}\"."), nativeFilename) << endl;
+        os() << formatR(_("Failed to write a scene into \"{0}\"."), nativeFilename) << endl;
     }
 
     gfs.close();
@@ -249,7 +248,7 @@ bool ObjSceneWriter::Impl::findOrWriteMaterial(SgShape* shape)
             gfs << "mtllib " << toUTF8(mtlFilepath.filename().generic_string()) << "\n";
         }
         catch(const std::exception& ex){
-            os() << format(_("\"{0}\" cannot be open. {1}."), mtlFilename, ex.what()) << endl;
+            os() << formatR(_("\"{0}\" cannot be open. {1}."), mtlFilename, ex.what()) << endl;
             return false;
         }
     }
@@ -289,7 +288,7 @@ void ObjSceneWriter::Impl::writeMaterial(SgMaterial* material, SgTexture* textur
         }
         string label;
         while(true){
-            label = format("{0}_{1:03d}", name, (*pLabelIdCounter)++);
+            label = formatC("{0}_{1:03d}", name, (*pLabelIdCounter)++);
             auto inserted = materialLabelSet.insert(label);
             if(inserted.second){
                 out_label = label;
@@ -340,7 +339,7 @@ void ObjSceneWriter::Impl::writeMesh(SgMesh* mesh, const Affine3& T)
             auto& counter = inserted.first->second;
             string nameWithId;
             while(true){
-                nameWithId = format("{0}_{1}", name, counter++);
+                nameWithId = formatC("{0}_{1}", name, counter++);
                 if(objectNameCounterMap.find(nameWithId) == objectNameCounterMap.end()){
                     name = nameWithId;
                     break;
@@ -408,8 +407,8 @@ void ObjSceneWriter::Impl::writeMesh(SgMesh* mesh, const Affine3& T)
             Matrix3 E = R * R.transpose();
             bool doNormalization = !E.isApprox(Matrix3::Identity());
             if(doNormalization){
-                os() << format(_("The normal vectors of mesh \"{0}\" are normalized because "
-                                 "its corresponding scene graph has a scaling factor."), name) << endl;
+                os() << formatR(_("The normal vectors of mesh \"{0}\" are normalized because "
+                                  "its corresponding scene graph has a scaling factor."), name) << endl;
                 for(auto& n : *normals){
                     Vector3f vn = Vector3(R * n.cast<double>()).normalized().cast<float>();
                     gfs << "vn " << vn.x() << " " << vn.y() << " " << vn.z() << "\n";

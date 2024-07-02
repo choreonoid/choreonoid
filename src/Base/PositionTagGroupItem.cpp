@@ -18,7 +18,7 @@
 #include <cnoid/SceneDrawables>
 #include <cnoid/ConnectionSet>
 #include <cnoid/EigenArchive>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
@@ -27,7 +27,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -1471,7 +1470,7 @@ TagGroupLocationProxy::TagGroupLocationProxy(PositionTagGroupItem::Impl* impl)
 
 std::string TagGroupLocationProxy::getName() const
 {
-    return format(_("{0}: Origin"), impl->self->displayName());
+    return formatR(_("{0}: Origin"), impl->self->displayName());
 }
 
 
@@ -1538,7 +1537,7 @@ PositionTag* TagLocationProxy::getTag() const
 
 std::string TagLocationProxy::getName() const
 {
-    return format(_("{0}: Tag {1}"), impl->self->displayName(), tagIndex);
+    return formatR(_("{0}: Tag {1}"), impl->self->displayName(), tagIndex);
 }
 
 
@@ -1596,7 +1595,7 @@ TagParentLocationProxy::TagParentLocationProxy(PositionTagGroupItem::Impl* impl)
 
 std::string TagParentLocationProxy::getName() const
 {
-    return format(_("{0}: Origin"), impl->self->name());
+    return formatR(_("{0}: Origin"), impl->self->name());
 }
 
 

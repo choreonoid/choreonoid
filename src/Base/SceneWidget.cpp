@@ -20,6 +20,7 @@
 #include <cnoid/SceneEffects>
 #include <cnoid/CoordinateAxesOverlay>
 #include <cnoid/ConnectionSet>
+#include <cnoid/Format>
 #include <QOpenGLWidget>
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -27,7 +28,6 @@
 #include <QMessageBox>
 #include <QCoreApplication>
 #include <QPainter>
-#include <fmt/format.h>
 #include <set>
 #include <iostream>
 #include "gettext.h"
@@ -842,7 +842,7 @@ void SceneWidget::Impl::warnRecursiveEditableNodeSetChange()
     if(name.empty()){
         message = _("Recursive editable node set change on a scene widget.");
     } else {
-        message = fmt::format(_("Recursive editable node set change on scene widget {0}."), name);
+        message = formatR(_("Recursive editable node set change on scene widget {0}."), name);
     }
     MessageView::instance()->putln(message, MessageView::Warning);
 }
@@ -873,8 +873,8 @@ void SceneWidget::Impl::paintGL()
         if(needToClearGLOnFrameBufferChange && prevDefaultFramebufferObject > 0){
             renderer->clearGL();
             MessageView::instance()->putln(
-                fmt::format(_("The OpenGL resources of {0} has been cleared."),
-                            self->objectName().toStdString()));
+                formatR(_("The OpenGL resources of {0} has been cleared."),
+                        self->objectName().toStdString()));
         }
 
         // The default FBO must be updated after the clearGL function
@@ -1806,17 +1806,17 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
             auto valueFormat = DisplayValueFormat::instance();
             string text;
             if(name.empty()){
-                text = fmt::format("{0}: ({{0:.{1}f}} {{1:.{1}f}} {{2:.{1}f}})",
-                                   _("Global Position"), valueFormat->lengthDecimals());
+                text = formatC("{0}: ({{0:.{1}f}} {{1:.{1}f}} {{2:.{1}f}})",
+                               _("Global Position"), valueFormat->lengthDecimals());
             } else {
-                text = fmt::format("{0}: {1}, {2}: ({{0:.{3}f}} {{1:.{3}f}} {{2:.{3}f}})",
-                                   _("Object"), name, _("Global Position"), valueFormat->lengthDecimals());
+                text = formatC("{0}: {1}, {2}: ({{0:.{3}f}} {{1:.{3}f}} {{2:.{3}f}})",
+                               _("Object"), name, _("Global Position"), valueFormat->lengthDecimals());
             }
             const Vector3& p = latestEvent.point();
             if(valueFormat->isMeter()){
-                updateIndicator(fmt::format(text, p.x(), p.y(), p.z()));
+                updateIndicator(formatR(text, p.x(), p.y(), p.z()));
             } else if(valueFormat->isMillimeter()){
-                updateIndicator(fmt::format(text, p.x() * 1000.0, p.y() * 1000.0, p.z() * 100.0));
+                updateIndicator(formatR(text, p.x() * 1000.0, p.y() * 1000.0, p.z() * 100.0));
             }
         }
     }

@@ -1,11 +1,9 @@
-
 /*! @file
   @brief The header file of a text scanner class
-  @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_UTIL_EASYSCANNER_H_INCLUDED
-#define CNOID_UTIL_EASYSCANNER_H_INCLUDED
+#ifndef CNOID_UTIL_EASY_SCANNER_H
+#define CNOID_UTIL_EASY_SCANNER_H
 
 #include <unordered_map>
 #include <string>

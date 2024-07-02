@@ -14,6 +14,7 @@
 #include "CheckBox.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
 #include <QLayout>
 #include <QLabel>
@@ -22,7 +23,6 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QSignalMapper>
-#include <fmt/format.h>
 #include <chrono>
 #include <set>
 #include <sstream>
@@ -374,8 +374,8 @@ static Item* createItem
                         item = instance;
                     } else {
                         messageView->putln(
-                            fmt::format(_("{0} is a singleton item type and its instance exists in the project item tree."),
-                                        info->className),
+                            formatR(_("{0} is a singleton item type and its instance exists in the project item tree."),
+                                    info->className),
                             MessageView::Warning);
                         searchOtherModules = false;
                     }
@@ -425,7 +425,7 @@ Item* ItemManager::createItemWithDialog_
     
     auto iter = itemClassIdToInfoMap.find(itemClassRegistry->getClassId(type));
     if(iter == itemClassIdToInfoMap.end()){
-        showWarningDialog(fmt::format(_("Class {} is not registered as an item class."), type.name()));
+        showWarningDialog(formatR(_("Class {} is not registered as an item class."), type.name()));
 
     } else {
         auto& info = iter->second;
@@ -434,7 +434,7 @@ Item* ItemManager::createItemWithDialog_
             dialog = info->creationDialogs.front();
         }
         if(!dialog){
-            showWarningDialog(fmt::format(_("The panel to create {} is not registered."), info->className));
+            showWarningDialog(formatR(_("The panel to create {} is not registered."), info->className));
         } else {
             if(!parentItem){
                 parentItem = RootItem::instance();
@@ -578,8 +578,8 @@ Item* CreationDialog::createItem(Item* parentItem, Item* protoItem)
                 protoItem->clearNonSubItemChildren();
             } else {
                 showWarningDialog(
-                    fmt::format(_("{0} is a singleton item type and its instance exists in the project item tree."),
-                                classInfo->className));
+                    formatR(_("{0} is a singleton item type and its instance exists in the project item tree."),
+                            classInfo->className));
                 return nullptr;
             }
         }
@@ -791,11 +791,11 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
     if(p == itemClassIdToInfoMap.end()){
         if(filename.empty()){
             messageView->putln(
-                fmt::format(_("There is no file I/O processor registered for the \"{0}\" type."), type.name()),
+                formatR(_("There is no file I/O processor registered for the \"{0}\" type."), type.name()),
                 MessageView::Error);
         } else {
             messageView->putln(
-                fmt::format(_("\"{0}\" cannot be accessed because there is no file I/O processor registered for the \"{1}\" type."),
+                formatR(_("\"{0}\" cannot be accessed because there is no file I/O processor registered for the \"{1}\" type."),
                             filename, type.name()),
                 MessageView::Error);
         }
@@ -838,12 +838,11 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
     if(!targetFileIO){
         if(format.empty()){
             messageView->putln(
-                fmt::format(_("The file format for accessing \"{0}\" cannot be determined."), filename),
+                formatR(_("The file format for accessing \"{0}\" cannot be determined."), filename),
                 MessageView::Error);
         } else {
             messageView->putln(
-                fmt::format(_("Unknown file format \"{0}\" is specified in accessing \"{1}\"."),
-                            format, filename),
+                formatR(_("Unknown file format \"{0}\" is specified in accessing \"{1}\"."), format, filename),
                 MessageView::Error);
         }
     }
@@ -995,9 +994,9 @@ static bool checkFileImmutable(Item* item)
     bool doContinue = true;
     if(item->hasAttribute(Item::FileImmutable)){
         doContinue = showWarningDialog(
-            fmt::format(_("\"{0}\" is an item that usually does not need to be saved. "
-                     "Do you really want to save this item?"),
-                   item->displayName()),
+            formatR(_("\"{0}\" is an item that usually does not need to be saved. "
+                      "Do you really want to save this item?"),
+                    item->displayName()),
             true);
     }
     return doContinue;

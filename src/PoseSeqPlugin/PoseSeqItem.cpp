@@ -13,7 +13,7 @@
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/ConnectionSet>
 #include <cnoid/CheckBox>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <set>
 #include <deque>
 #include <algorithm>
@@ -21,7 +21,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -177,8 +176,8 @@ bool PoseSeqFileIO::load(Item* item, const std::string& filename)
             }
             if(pseq->targetBodyName() != bodyItem->body()->name()){
                 putWarning(
-                    format(_("The original target body {0} of \"{1}\" is different from the current target {2}."),
-                           pseq->targetBodyName(), pseqItem->displayName(), bodyItem->body()->name()));
+                    formatR(_("The original target body {0} of \"{1}\" is different from the current target {2}."),
+                            pseq->targetBodyName(), pseqItem->displayName(), bodyItem->body()->name()));
             }
             pseqItem->notifyUpdate();
         }
@@ -555,8 +554,8 @@ void PoseSeqItem::Impl::convert(BodyPtr orgBody)
                     BodyPtr body = targetBodyItem->body();
                     seq->setTargetBodyName(body->name());
                     MessageView::mainInstance()->notify(
-                        format(_("Pose seq \"{0}\" has been converted. Its target has been changed from {1} to {2}"),
-                               self->displayName(), orgBody->name(), body->name()));
+                        formatR(_("Pose seq \"{0}\" has been converted. Its target has been changed from {1} to {2}"),
+                                self->displayName(), orgBody->name(), body->name()));
                         return;
                 }
             }

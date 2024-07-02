@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "LuaScriptItem.h"
 #include "LuaInterpreter.h"
 #include <cnoid/ItemManager>
@@ -12,7 +7,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
@@ -128,7 +123,7 @@ bool LuaScriptItem::setScriptFilename(const std::string& filename)
     filesystem::path scriptPath(filename);
     if(!filesystem::exists(scriptPath)){
         MessageView::instance()->putln(
-            fmt::format(
+            formatR(
                 _("Lua script file \"{}\" cannot be loaded. The file does not exist."),
                 filename));
     } else {
@@ -189,7 +184,7 @@ bool LuaScriptItemImpl::execute()
         auto msg = lua_tostring(L, -1);
         if(msg == nullptr){
             mv->putln(
-                fmt::format(_("Error in loading Lua script \"{}\"."), scriptFilename),
+                formatR(_("Error in loading Lua script \"{}\"."), scriptFilename),
                 MessageView::Error);
         } else {
             mv->putln(msg, MessageView::Error);

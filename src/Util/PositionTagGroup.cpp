@@ -3,13 +3,12 @@
 #include "UTF8.h"
 #include "Tokenizer.h"
 #include "EigenUtil.h"
-#include <fmt/format.h>
+#include "Format.h"
 #include <fstream>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -203,13 +202,13 @@ bool PositionTagGroup::read(const Mapping* archive)
     auto& typeNode = archive->get("type");
     if(typeNode.toString() != "PositionTagGroup"){
         typeNode.throwException(
-            format(_("{0} cannot be loaded as a position tag group"), typeNode.toString()));
+            formatR(_("{0} cannot be loaded as a position tag group"), typeNode.toString()));
     }
 
     auto versionNode = archive->find("format_version");
     auto version = versionNode->toDouble();
     if(version != 1.0){
-        versionNode->throwException(format(_("Format version {0} is not supported."), version));
+        versionNode->throwException(formatR(_("Format version {0} is not supported."), version));
     }
 
     archive->read("name", impl->name);
@@ -256,7 +255,7 @@ bool PositionTagGroup::loadCsvFile
 {
     ifstream is(fromUTF8(filename).c_str());
     if(!is){
-        os << format(_("\"{}\" cannot be opened."), filename) << endl;
+        os << formatR(_("\"{}\" cannot be opened."), filename) << endl;
         return false;
     }
   
@@ -273,7 +272,7 @@ bool PositionTagGroup::loadCsvFile
             int i = 0;
             for(auto& token : tokens){
                 if(i > 5){
-                    os << format(_("Too many elements at line {0} of \"{1}\"."), lineNumber, filename) << endl;
+                    os << formatR(_("Too many elements at line {0} of \"{1}\"."), lineNumber, filename) << endl;
                     return false;
                 }
                 xyzrpy[i++] = std::stod(token);
@@ -287,7 +286,7 @@ bool PositionTagGroup::loadCsvFile
         }
     }
     catch(std::logic_error& ex){
-        os << format(_("{0} at line {1} of \"{2}\"."), ex.what(), lineNumber, filename) << endl;
+        os << formatR(_("{0} at line {1} of \"{2}\"."), ex.what(), lineNumber, filename) << endl;
         return false;
     }
 

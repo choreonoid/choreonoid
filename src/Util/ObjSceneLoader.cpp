@@ -5,13 +5,13 @@
 #include "Triangulator.h"
 #include "ImageIO.h"
 #include "NullOut.h"
+#include "Format.h"
 #include <unordered_map>
 #include <algorithm>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = stdx::filesystem;
 
 namespace {
@@ -197,7 +197,7 @@ SgNode* ObjSceneLoader::load(const std::string& filename)
 SgNode* ObjSceneLoader::Impl::load(const string& filename)
 {
     if(!scanner.open(filename.c_str())){
-        os() << format(_("Unable to open file \"{}\"."), filename) << endl;
+        os() << formatR(_("Unable to open file \"{}\"."), filename) << endl;
         return nullptr;
     }
     filePath = fromUTF8(filename);
@@ -299,7 +299,7 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
                 loadMaterialTemplateLibrary(token);
             } else {
                 scanner.readString(token);
-                scanner.throwEx(format("Unsupported directive '{0}'", token));
+                scanner.throwEx(formatC("Unsupported directive '{0}'", token));
             }
             break;
 
@@ -309,7 +309,7 @@ SgNodePtr ObjSceneLoader::Impl::loadScene()
                 readMaterial(token);
             } else {
                 scanner.readString(token);
-                scanner.throwEx(format("Unsupported directive '{0}'", token));
+                scanner.throwEx(formatC("Unsupported directive '{0}'", token));
             }
             break;
 
@@ -402,13 +402,13 @@ bool ObjSceneLoader::Impl::checkAndAddCurrentNode()
 
     } else if(!currentNormalIndices->empty() && (currentNormalIndices->size() != currentVertexIndices->size())){
         throw std::runtime_error(
-            format("The number of the face normal indices is different from that of vertices in {0}.",
-                   currentShape->name()));
+            formatC("The number of the face normal indices is different from that of vertices in {0}.",
+                          currentShape->name()));
 
     } else if(!currentTexCoordIndices->empty() && (currentTexCoordIndices->size() != currentVertexIndices->size())){
         throw std::runtime_error(
-            format("The number of the tex coord indices is different from that of vertices in {0}.",
-                   currentShape->name()));
+            formatC("The number of the tex coord indices is different from that of vertices in {0}.",
+                          currentShape->name()));
     }
 
     if(isValid){
@@ -570,7 +570,7 @@ bool ObjSceneLoader::Impl::loadMaterialTemplateLibrary(std::string filename)
 {
     string fullpath = toUTF8((directoryPath / fromUTF8(filename)).string());
     if(!subScanner.open(fullpath)){
-        os() << format("Material template library file \"{0}\" cannot be open.", filename) << endl;
+        os() << formatC("Material template library file \"{0}\" cannot be open.", filename) << endl;
         return false;
     }
 
@@ -769,9 +769,9 @@ void ObjSceneLoader::Impl::normalizeNormals()
          // check if the first element is normalized
         auto& n0 = normals->front();
         if(fabs(n0.norm() - 1.0) > 1.0e-3){
-            os() << format(_("Warning: Mesh file \"{}\" contains unnormalized normals and "
-                             "the normalization process is appiled to all normals."),
-                           toUTF8(filePath.filename().string())) << endl;
+            os() << formatR(_("Warning: Mesh file \"{}\" contains unnormalized normals and "
+                              "the normalization process is appiled to all normals."),
+                            toUTF8(filePath.filename().string())) << endl;
             for(auto& n : *normals){
                 n.normalize();
             }

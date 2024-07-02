@@ -10,13 +10,12 @@
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Selection>
 #include <cnoid/Archive>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <regex>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -124,7 +123,7 @@ void BodyPoseListItem::addPoseItem(BodyPoseItem* item)
                 }
             }
         }
-        item->setName(format("Pose {0}", maxPoseNumber + 1));
+        item->setName(formatC("Pose {0}", maxPoseNumber + 1));
     }
     addChildItem(item);
 

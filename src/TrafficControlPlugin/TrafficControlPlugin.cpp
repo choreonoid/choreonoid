@@ -6,7 +6,7 @@
 #include "TCSimulatorItem.h"
 #include "DynamicTCSimulatorItem.h"
 #include <cnoid/Plugin>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
@@ -40,7 +40,7 @@ public:
     virtual const char* description() const override
     {
         static std::string text =
-            fmt::format("TrafficControl Plugin Version {}\n", CNOID_FULL_VERSION_STRING) +
+            formatC("TrafficControl Plugin Version {}\n", CNOID_FULL_VERSION_STRING) +
             "\n" +
             "Copyrigh (c) 2018 Japan Atomic Energy Agency.\n"
             "\n" +

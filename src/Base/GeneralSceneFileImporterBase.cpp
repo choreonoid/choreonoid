@@ -4,15 +4,14 @@
 #include <cnoid/ValueTree>
 #include <cnoid/ComboBox>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
 #include <QBoxLayout>
 #include <QLabel>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -125,7 +124,7 @@ SgNode* GeneralSceneFileImporterBase::Impl::loadScene(GeneralSceneFileImporterBa
     if(!scene){
         if(!isSupported){
             auto fname = toUTF8(stdx::filesystem::path(fromUTF8(filename)).filename().string());
-            self->putError(format(_("The file format of \"{}\" is not supported.\n"), fname));
+            self->putError(formatR(_("The file format of \"{}\" is not supported.\n"), fname));
         }
         return nullptr;
     }

@@ -12,7 +12,7 @@
 #include <cnoid/SceneEffects>
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <GL/glu.h>
 #include <unordered_map>
 #include <unordered_set>
@@ -25,7 +25,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -952,10 +951,10 @@ bool GLSLSceneRenderer::Impl::initializeGL()
     glRendererString = (const char*)glGetString(GL_RENDERER);
     glslVersionString = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-    os() << format(_("OpenGL {0}.{1} (GLSL {2}) is available for the \"{3}\" view.\n"),
-                   major, minor, glslVersionString, self->name());
-    os() << format(_("Driver profile: {0} {1} {2}.\n"),
-                   glVendorString, glRendererString, glVersionString);
+    os() << formatR(_("OpenGL {0}.{1} (GLSL {2}) is available for the \"{3}\" view.\n"),
+                    major, minor, glslVersionString, self->name());
+    os() << formatR(_("Driver profile: {0} {1} {2}.\n"),
+                    glVendorString, glRendererString, glVersionString);
 
     char* CNOID_ENABLE_GLSL_SHADOW = getenv("CNOID_ENABLE_GLSL_SHADOW");
     if(CNOID_ENABLE_GLSL_SHADOW){
@@ -1016,7 +1015,7 @@ void GLSLSceneRenderer::Impl::checkGPU()
     }
 
     if(!isShadowCastingAvailable){
-        os() << format(_("Shadow casting is disabled for this GPU due to some problems.\n"));
+        os() << formatR(_("Shadow casting is disabled for this GPU due to some problems.\n"));
     }
 }
 

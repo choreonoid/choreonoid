@@ -13,15 +13,14 @@
 #include <cnoid/MaterialTable>
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
-using fmt::format;
 
 namespace {
 
@@ -548,7 +547,7 @@ MaterialTable* WorldItem::Impl::getOrLoadDefaultMaterialTable(bool checkFileUpda
                         defaultMaterialTable = newMaterialTable;
                         defaultMaterialTableTimestamp = newTimestamp;
                         MessageView::instance()->putln(
-                            format(_("Default material table \"{}\" has been reloaded."), defaultMaterialTableFile));
+                            formatR(_("Default material table \"{}\" has been reloaded."), defaultMaterialTableFile));
                     } else {
                         failedToLoad = true;
                     }
@@ -559,7 +558,7 @@ MaterialTable* WorldItem::Impl::getOrLoadDefaultMaterialTable(bool checkFileUpda
 
     if(failedToLoad){
         MessageView::instance()->putln(
-            format(_("Reloading default material table \"{}\" failed."), defaultMaterialTableFile),
+            formatR(_("Reloading default material table \"{}\" failed."), defaultMaterialTableFile),
             MessageView::Warning);
     }
 

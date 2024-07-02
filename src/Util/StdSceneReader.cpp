@@ -14,16 +14,15 @@
 #include "NullOut.h"
 #include "ImageIO.h"
 #include "UTF8.h"
+#include "Format.h"
 #include <cnoid/stdx/filesystem>
 #include <cnoid/Config>
-#include <fmt/format.h>
 #include <unordered_map>
 #include <mutex>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = stdx::filesystem;
 
 namespace cnoid {
@@ -153,7 +152,7 @@ public:
         if(it != sharedObjectMap.end()){
             object = dynamic_cast<ObjectType*>(it->second.get());
             if(!object){
-                info->throwException(format(_("Alias to non-{0} node is specified."), objectTypeName));
+                info->throwException(formatR(_("Alias to non-{0} node is specified."), objectTypeName));
             }
         }
         return object;
@@ -353,7 +352,7 @@ void StdSceneReader::readHeader(Mapping* info)
     double version = versionNode->toDouble();
     if(version >= 2.1){
         info->throwException(
-            format(_("Version {0} of the Choreonoid scene file format is not supported"), version));
+            formatR(_("Version {0} of the Choreonoid scene file format is not supported"), version));
     }
     readHeader(info, version);
 }
@@ -363,7 +362,7 @@ void StdSceneReader::readHeader(Mapping* info, double formatVersion)
 {
     if(formatVersion >= 2.1){
         info->throwException(
-            format(_("Version {0} of the Choreonoid scene file format is not supported"), formatVersion));
+            formatR(_("Version {0} of the Choreonoid scene file format is not supported"), formatVersion));
     }
 
     if(auto angleUnitNode = info->extract({ "angle_unit", "angleUnit" })){
@@ -649,10 +648,10 @@ SgNode* StdSceneReader::Impl::readNode(Mapping* info, const string& type)
     auto it = nodeFunctionMap.find(type);
     if(it == nodeFunctionMap.end()){
         if(info->get({ "is_optional", "isOptional" }, false)){
-            os() << format(_("Warning: the node type \"{}\" is not defined. Reading this node has been skipped."), type) << endl;
+            os() << formatR(_("Warning: the node type \"{}\" is not defined. Reading this node has been skipped."), type) << endl;
             return nullptr;
         }
-        info->throwException(format(_("The node type \"{}\" is not defined."), type));
+        info->throwException(formatR(_("The node type \"{}\" is not defined."), type));
     }
 
     NodeFunction funcToReadNode = it->second;
@@ -735,8 +734,8 @@ void StdSceneReader::Impl::readNodeList(ValueNode* elements, SgGroup* group, boo
                     auto& type2 = typeNode->toString();
                     if(type2 != type){
                         element->throwException(
-                            format(_("The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"),
-                                   type2, type));
+                            formatR(_("The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"),
+                                    type2, type));
                     }
                 }
                 if(SgNodePtr scene = readNode(element, type)){
@@ -746,7 +745,7 @@ void StdSceneReader::Impl::readNodeList(ValueNode* elements, SgGroup* group, boo
         }
     } else {
         elements->throwException(
-            format(_("A scalar value is not accepted")));
+            formatR(_("A scalar value is not accepted")));
     }
 }
 
@@ -898,7 +897,7 @@ SgMesh* StdSceneReader::Impl::readGeometry(Mapping* info, int meshOptions)
         mesh = readElevationGrid(info, meshOptions);
     } else {
         typeNode.throwException(
-            format(_("Unknown geometry \"{}\""), type));
+            formatR(_("Unknown geometry \"{}\""), type));
     }
 
     if(mesh){
@@ -1407,8 +1406,8 @@ void StdSceneReader::Impl::readTexture(SgShape* shape, Mapping* info)
                 ensureUriSchemeProcessor();
                 auto filename = uriSchemeProcessor->getFilePath(uri);
                 if(filename.empty()){
-                    os() << format(_("Warning: texture URI \"{0}\" is not valid: {1}"),
-                                   uri, uriSchemeProcessor->errorMessage()) << endl;
+                    os() << formatR(_("Warning: texture URI \"{0}\" is not valid: {1}"),
+                                    uri, uriSchemeProcessor->errorMessage()) << endl;
                 } else {
                     image = new SgImage;
                     if(imageIO.load(image->image(), filename, os())){
@@ -1693,8 +1692,8 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info)
                 resource.info = resourceInfo->yamlReader->findAnchoredNode(resource.fragment);
                 if(!resource.info){
                     info->throwException(
-                        format(_("Fragment \"{0}\" is not found in \"{1}\"."),
-                               resource.fragment, resource.uri));
+                        formatR(_("Fragment \"{0}\" is not found in \"{1}\"."),
+                                resource.fragment, resource.uri));
                 }
             }
         }
@@ -1724,7 +1723,7 @@ void StdSceneReader::Impl::extractNamedSceneNodes
     auto iter = nodeMap->find(resource.fragment);
     if(iter == nodeMap->end()){
         resourceNode->throwException(
-            format(_("Fragment \"{0}\" is not found in \"{1}\"."), resource.fragment, resource.uri));
+            formatR(_("Fragment \"{0}\" is not found in \"{1}\"."), resource.fragment, resource.uri));
     } else {
         SceneNodeInfo& nodeInfo = iter->second;
         if(nodeInfo.parent){
@@ -1763,7 +1762,7 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const strin
         reader->importAnchors(*mainYamlReader);
         if(!reader->load(info->file)){
             resourceNode->throwException(
-                format(_("YAML resource \"{0}\" cannot be loaded ({1})"),
+                formatR(_("YAML resource \"{0}\" cannot be loaded ({1})"),
                  uri, reader->errorMessage()));
         }
         info->yamlReader = std::move(reader);
@@ -1796,7 +1795,7 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const strin
         SgNodePtr scene = sceneLoader.load(info->file);
         if(!scene){
             resourceNode->throwException(
-                format(_("The resource is not found at URI \"{}\""), uri));
+                formatR(_("The resource is not found at URI \"{}\""), uri));
         }
         info->scene = scene;
     }

@@ -3,13 +3,12 @@
 */
 
 #include "MulticopterPluginHeader.h"
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <fstream>
 
 using namespace std;
 using namespace cnoid;
 using namespace Multicopter;
-using fmt::format;
 
 void
 stringArray2Coordinate(std::vector<std::string>& strAry, double& org, double& len, int& size)
@@ -69,7 +68,7 @@ FluidEnvironment::load(const string& fileName)
     ifstream in;
     in.open(fileName.data());
     if( !in ){
-        UtilityImpl::printErrorMessage(format("Air Definition File({}) is not existed", fileName));
+        UtilityImpl::printErrorMessage(formatC("Air Definition File({}) is not existed", fileName));
         return false;
     }
     
@@ -83,15 +82,15 @@ FluidEnvironment::load(const string& fileName)
     lineCount++;
     UtilityImpl::splitStringArray(buff, buffAry);
     if( buffAry.size() != 2 ){
-        UtilityImpl::printErrorMessage(format("[Line:{}] Air Definition File is not valid", lineCount));
+        UtilityImpl::printErrorMessage(formatC("[Line:{}] Air Definition File is not valid", lineCount));
         return false;
     }
     if( buffAry[0] != AIR_DEFINITION_FILE_TAG){
-        UtilityImpl::printErrorMessage(format("[Line:{}] Air Definition File is not valid", lineCount));
+        UtilityImpl::printErrorMessage(formatC("[Line:{}] Air Definition File is not valid", lineCount));
         return false;
     }
     if( buffAry[1] != AIR_DEFINITION_FILE_VERSION){
-        UtilityImpl::printErrorMessage(format("[Line:{}] Air Definition File is not valid", lineCount));
+        UtilityImpl::printErrorMessage(formatC("[Line:{}] Air Definition File is not valid", lineCount));
         return false;
     }
 
@@ -102,7 +101,7 @@ FluidEnvironment::load(const string& fileName)
         try{
             stringArray2Coordinate(buffAry, fulEnv._orgPos[i], fulEnv._gridLen[i], fulEnv._gridSize[i]);
             if(fulEnv._gridLen[i] <=0 || fulEnv._gridSize[i]<= 0 ){
-                UtilityImpl::printErrorMessage(format("[Line:{}] Air Definition File is not valid", lineCount));
+                UtilityImpl::printErrorMessage(formatC("[Line:{}] Air Definition File is not valid", lineCount));
                 return false;
             }
         }
@@ -134,21 +133,21 @@ FluidEnvironment::load(const string& fileName)
         Vector3i idx;        
         FluidValue dat;
         if( stringArray2Data(buffAry, idx, dat) == false ){
-            UtilityImpl::printErrorMessage(format("[Line:{}] Air Definition File is not valid", lineCount));
+            UtilityImpl::printErrorMessage(formatC("[Line:{}] Air Definition File is not valid", lineCount));
             return false;
         }
         if(dat.density<=0 || dat.viscosity <= 0){
-            UtilityImpl::printErrorMessage(format("[Line:{}] Air Definition File is not valid", lineCount));
+            UtilityImpl::printErrorMessage(formatC("[Line:{}] Air Definition File is not valid", lineCount));
             return false;
         }
         if((idx.x()>=xgrid)||(idx.y()>=ygrid)||(idx.z()>=zgrid)){
-            UtilityImpl::printErrorMessage(format("[Line:{}] Air Definition File is not valid", lineCount));
+            UtilityImpl::printErrorMessage(formatC("[Line:{}] Air Definition File is not valid", lineCount));
             return false;
         }
 
         FluidValue tmp=fulEnv._valAry(idx.x(), idx.y(), idx.z());
         if(tmp.density != 0 && tmp.viscosity!=0){
-            UtilityImpl::printWarningMessage(format("[Line:{}] That index has already been entered", lineCount));
+            UtilityImpl::printWarningMessage(formatC("[Line:{}] That index has already been entered", lineCount));
         }
         fulEnv._valAry(idx.x(), idx.y(), idx.z()) = dat;
     }

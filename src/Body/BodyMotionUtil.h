@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_BODY_MOTION_UTIL_H
 #define CNOID_BODY_BODY_MOTION_UTIL_H
 

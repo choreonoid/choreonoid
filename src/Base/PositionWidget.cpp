@@ -8,16 +8,15 @@
 #include "Separator.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
+#include <cnoid/Format>
 #include <QLabel>
 #include <QGridLayout>
 #include <QMouseEvent>
-#include <fmt/format.h>
 #include <bitset>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -610,7 +609,7 @@ void PositionWidget::Impl::updateRotationMatrix(const Matrix3& R)
     for(int i=0; i < 3; ++i){
         for(int j=0; j < 3; ++j){
             rotationMatrixElementLabel[i][j].setText(
-                format("{: .6f}", R(i, j)).c_str());
+                formatC("{: .6f}", R(i, j)).c_str());
         }
     }
 }

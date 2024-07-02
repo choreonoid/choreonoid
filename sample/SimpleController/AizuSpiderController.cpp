@@ -285,7 +285,7 @@ void AizuSpiderController::updateFlipperTargetPositions()
         for(int i=0; i < NUM_FLIPPERS; ++i){
             qa += jointInfos[i].qref;
         }
-        qa /= NUM_FLIPPERS;
+        qa /= static_cast<double>(NUM_FLIPPERS);
         double dqmax = dt * 0.5;
         for(int i=0; i < NUM_FLIPPERS; ++i){
             double dq = qa - jointInfos[i].qref;

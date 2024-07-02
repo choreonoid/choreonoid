@@ -1,15 +1,11 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "ValueTree.h"
 #include "UTF8.h"
 #include "MathUtil.h"
+#include "Format.h"
 #include <stack>
 #include <iostream>
 #include <yaml.h>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include "gettext.h"
 
 #ifdef _WIN32
@@ -101,13 +97,13 @@ std::string ValueNode::Exception::message() const
 {
     if(!message_.empty()){
         if(line_ >= 0){
-            return fmt::format(_("{0} at line {1}, column {2}."), message_, line_, column_);
+            return formatR(_("{0} at line {1}, column {2}."), message_, line_, column_);
         } else {
-            return fmt::format("{}.", message_);
+            return formatC("{}.", message_);
         }
     } else {
         if(line_ >= 0){
-            return fmt::format(_("Error at line {0}, column {1}."), line_, column_);
+            return formatR(_("Error at line {0}, column {1}."), line_, column_);
         } else {
             return string();
         }
@@ -195,7 +191,7 @@ int ValueNode::toInt() const
     if(endptr == nptr){
         ScalarTypeMismatchException ex;
         ex.setPosition(line(), column());
-        ex.setMessage(fmt::format(_("The value \"{}\" must be an integer value"), scalar->stringValue_));
+        ex.setMessage(formatR(_("The value \"{}\" must be an integer value"), scalar->stringValue_));
         throw ex;
     }
 
@@ -246,7 +242,7 @@ double ValueNode::toDouble() const
     if(endptr == nptr){
         ScalarTypeMismatchException ex;
         ex.setPosition(line(), column());
-        ex.setMessage(fmt::format(_("The value \"{}\" must be a floating point number"), scalar->stringValue_));
+        ex.setMessage(formatR(_("The value \"{}\" must be a floating point number"), scalar->stringValue_));
         throw ex;
     }
 
@@ -269,7 +265,7 @@ float ValueNode::toFloat() const
     if(endptr == nptr){
         ScalarTypeMismatchException ex;
         ex.setPosition(line(), column());
-        ex.setMessage(fmt::format(_("The value \"{}\" must be a floating point number"), scalar->stringValue_));
+        ex.setMessage(formatR(_("The value \"{}\" must be a floating point number"), scalar->stringValue_));
         throw ex;
     }
 
@@ -315,7 +311,7 @@ bool ValueNode::toBool() const
     
     ScalarTypeMismatchException ex;
     ex.setPosition(line(), column());
-    ex.setMessage(fmt::format(_("The value \"{}\" must be a boolean value"), scalar->stringValue_));
+    ex.setMessage(formatR(_("The value \"{}\" must be a boolean value"), scalar->stringValue_));
     throw ex;
 }
 
@@ -397,7 +393,7 @@ void ValueNode::throwNotScalarException() const
 {
     NotScalarException ex;
     ex.setPosition(line(), column());
-    ex.setMessage(fmt::format(_("A {} value must be a scalar value"), getTypeName(typeBits)));
+    ex.setMessage(formatR(_("A {} value must be a scalar value"), getTypeName(typeBits)));
     throw ex;
 }
 
@@ -750,7 +746,7 @@ void Mapping::throwKeyNotFoundException(const std::string& key) const
     KeyNotFoundException ex;
     ex.setPosition(line(), column());
     ex.setKey(key);
-    ex.setMessage(fmt::format(_("Key \"{}\" is not found in the mapping"), key));
+    ex.setMessage(formatR(_("Key \"{}\" is not found in the mapping"), key));
     throw ex;
 }
 

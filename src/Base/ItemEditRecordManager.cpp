@@ -7,13 +7,12 @@
 #include "RootItem.h"
 #include "MessageView.h"
 #include <cnoid/ConnectionSet>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -202,7 +201,7 @@ void ItemEditRecordManager::Impl::onSubTreeMoved(Item* item)
         } else {
             UnifiedEditHistory::instance()->clear();
             MessageView::instance()->notify(
-                format(_("The edit history has been cleared because inconsistent item move operation on \"{0}\" was carried out."),
+                formatR(_("The edit history has been cleared because inconsistent item move operation on \"{0}\" was carried out."),
                        item->displayName()),
                 MessageView::Error);
         }
@@ -269,10 +268,10 @@ void ItemTreeEditRecord::setItemAddition()
     nextItemRef = item->nextItem();
 
     forwardLabel =
-        format(_("Add \"{0}\" to \"{1}\""),
+        formatR(_("Add \"{0}\" to \"{1}\""),
                item->displayName(), parentItem->displayName());
     reverseLabel =
-        format(_("Remove \"{0}\" from \"{1}\""),
+        formatR(_("Remove \"{0}\" from \"{1}\""),
                item->displayName(), parentItem->displayName());
 }
 
@@ -315,10 +314,10 @@ void ItemTreeEditRecord::setItemRemoval(Item* oldParentItem, Item* oldNextItem)
     oldNextItemRef = oldNextItem;
 
     forwardLabel =
-        format(_("Remove \"{0}\" from \"{1}\""),
+        formatR(_("Remove \"{0}\" from \"{1}\""),
                item->displayName(), oldParentItem->displayName());
     reverseLabel =
-        format(_("Add \"{0}\" to \"{1}\""),
+        formatR(_("Add \"{0}\" to \"{1}\""),
                item->displayName(), oldParentItem->displayName());
 }
 
@@ -365,10 +364,10 @@ void ItemTreeEditRecord::setItemMove(Item* oldParentItem, Item* oldNextItem)
     oldNextItemRef = oldNextItem;
 
     forwardLabel =
-        format(_("Move \"{0}\" from \"{1}\" to \"{2}\""),
+        formatR(_("Move \"{0}\" from \"{1}\" to \"{2}\""),
                item->displayName(), oldParentItem->displayName(), parentItem->displayName());
     reverseLabel =
-        format(_("Move \"{0}\" from \"{1}\" to \"{2}\""),
+        formatR(_("Move \"{0}\" from \"{1}\" to \"{2}\""),
                item->displayName(), parentItem->displayName(), oldParentItem->displayName());
 }
 
@@ -470,9 +469,9 @@ EditRecord* ItemNameEditRecord::clone() const
 std::string ItemNameEditRecord::label() const
 {
     if(!isReverse()){
-        return format(_("Rename \"{0}\" to \"{1}\""), oldName, newName);
+        return formatR(_("Rename \"{0}\" to \"{1}\""), oldName, newName);
     } else {
-        return format(_("Rename \"{0}\" to \"{1}\""), newName, oldName);
+        return formatR(_("Rename \"{0}\" to \"{1}\""), newName, oldName);
     }
 }
 

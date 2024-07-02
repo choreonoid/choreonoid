@@ -16,15 +16,14 @@
 #include <cnoid/Button>
 #include <cnoid/SpinBox>
 #include <cnoid/Array2D>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -313,8 +312,8 @@ void SplineFilterDialog::onAccepted()
         double ifps = inputFrameRateCheck.isChecked()  ? inputFrameRateSpin.value()  : seq->frameRate();
         double ofps = outputFrameRateCheck.isChecked() ? outputFrameRateSpin.value() : seq->frameRate();
         
-        os << format(_("Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = {2}"),
-                     vItems[i]->displayName(), ifps, ofps) << endl;
+        os << formatR(_("Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = {2}"),
+                      vItems[i]->displayName(), ifps, ofps) << endl;
         
         applySplineFilter(*seq, ifps, ofps, ratio);
     }
@@ -325,8 +324,8 @@ void SplineFilterDialog::onAccepted()
         double ifps = inputFrameRateCheck.isChecked()  ? inputFrameRateSpin.value()  : seq->frameRate();
         double ofps = outputFrameRateCheck.isChecked() ? outputFrameRateSpin.value() : seq->frameRate();
         
-        os << format(_("Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = {2}"),
-                     v3Items[i]->displayName(), ifps, ofps) << endl;
+        os << formatR(_("Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = {2}"),
+                      v3Items[i]->displayName(), ifps, ofps) << endl;
         
         applySplineFilter(*seq, ifps, ofps, ratio);
     }
@@ -337,8 +336,8 @@ void SplineFilterDialog::onAccepted()
         double ifps = inputFrameRateCheck.isChecked()  ? inputFrameRateSpin.value()  : seq->frameRate();
         double ofps = outputFrameRateCheck.isChecked() ? outputFrameRateSpin.value() : seq->frameRate();
         
-        os << format(_("Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = {2}"),
-                     sItems[i]->displayName(), ifps, ofps) << endl;
+        os << formatR(_("Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = {2}"),
+                      sItems[i]->displayName(), ifps, ofps) << endl;
         
         applySplineFilter(*seq, ifps, ofps, ratio);
     }
@@ -351,8 +350,8 @@ void SplineFilterDialog::onAccepted()
         double ifps = inputFrameRateCheck.isChecked()  ? inputFrameRateSpin.value()  : motion->frameRate();
         double ofps = outputFrameRateCheck.isChecked() ? outputFrameRateSpin.value() : motion->frameRate();
         
-        os << format(_("Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = {2}"),
-                     bItems[i]->displayName(), ifps, ofps) << endl;
+        os << formatR(_("Applying B-Spline filter to {0}: input frame rate = {1}, output frame rate = {2}"),
+                      bItems[i]->displayName(), ifps, ofps) << endl;
 
         applySplineFilter(*motion->jointPosSeq(), ifps, ofps, ratio);
         applySplineFilter(*motion->linkPosSeq(), ifps, ofps, ratio);

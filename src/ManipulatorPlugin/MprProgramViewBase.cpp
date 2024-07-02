@@ -18,6 +18,7 @@
 #include <cnoid/Archive>
 #include <cnoid/MessageOut>
 #include <cnoid/QtEventUtil>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QMouseEvent>
@@ -28,14 +29,12 @@
 #include <QItemEditorFactory>
 #include <QStandardItemEditorCreator>
 #include <QMenuBar>
-#include <fmt/format.h>
 #include <unordered_map>
 #include <array>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -918,7 +917,7 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
 
     if(auto bodyItem = currentProgramItem->targetBodyItem()){
         programNameLabel.setText(
-            format("{0} - {1}", bodyItem->displayName(), currentProgramItem->displayName()).c_str());
+            formatC("{0} - {1}", bodyItem->displayName(), currentProgramItem->displayName()).c_str());
     } else {
         programNameLabel.setText(currentProgramItem->displayName().c_str());
     }

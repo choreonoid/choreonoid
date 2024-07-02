@@ -6,7 +6,7 @@
 #include <cnoid/ZMPSeq>
 #include <cnoid/MessageOut>
 #include <cnoid/stdx/clamp>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <vector>
 #include "gettext.h"
 
@@ -14,7 +14,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 extern "C" int ql0001_(
     int* m, int* me, int* mmax, int* n, int* nmax, int* mnn,
@@ -232,7 +231,7 @@ void YawMomentCompensationFilter::clearJointWeights()
 void YawMomentCompensationFilter::setJointWeight(int jointId, bool isEnabled, double weight, double vLimitRatio)
 {
     if(DebugMode){
-        cout << format("setJointWeight({0}, {1}, {2}, {3})", jointId, isEnabled, weight, vLimitRatio) << endl;
+        cout << formatC("setJointWeight({0}, {1}, {2}, {3})", jointId, isEnabled, weight, vLimitRatio) << endl;
     }
         
     if(jointId >= impl->allJointWeights.size()){
@@ -377,7 +376,7 @@ bool YawMomentCompensationFilter::Impl::setBody(Body* orgBody)
 
     leggedBody = new LeggedBodyHelper(body);
     if(!leggedBody->isValid() || leggedBody->numFeet() != 2){
-        mout->putErrorln(format(_("{0} is not a biped robot."), body->name()));
+        mout->putErrorln(formatR(_("{0} is not a biped robot."), body->name()));
         return false;
     }
 
@@ -470,9 +469,9 @@ bool YawMomentCompensationFilter::Impl::setBodyMotion(BodyMotion* bodyMotion)
 
     if(stateSeq->numLinkPositionsHint() != 1){
         mout->putErrorln(
-            format(_("The input motion data must contain only the position sequence of the root link as "
-                     "link position sequences, but it contain position sequenss for {0} links."),
-                   stateSeq->numLinkPositionsHint()));
+            formatR(_("The input motion data must contain only the position sequence of the root link as "
+                      "link position sequences, but it contain position sequenss for {0} links."),
+                    stateSeq->numLinkPositionsHint()));
         return false;
     }
     if(stateSeq->numJointDisplacementsHint() != body->numJoints()){
@@ -583,10 +582,10 @@ void YawMomentCompensationFilter::Impl::compensateMoment()
     
     if(doPutNotification){
         mout->putWarningln(
-            format(_("Yaw moment compensation failed at time {0:.3f}: Yaw moment is {1:.3f}, Max yaw friction moment is {2:.3f}"),
-                   currentFrameIndex * dt, yawMoment, maxYawFrictionMoment0));
+            formatR(_("Yaw moment compensation failed at time {0:.3f}: Yaw moment is {1:.3f}, Max yaw friction moment is {2:.3f}"),
+                    currentFrameIndex * dt, yawMoment, maxYawFrictionMoment0));
         if(!resolved){
-            mout->putWarningln(format(_("QP cannot be solved: {0}."), lastQpErrorMessage()));
+            mout->putWarningln(formatR(_("QP cannot be solved: {0}."), lastQpErrorMessage()));
         }
     }
 
@@ -972,12 +971,12 @@ bool YawMomentCompensationFilter::Impl::checkJointDisplacementRangeOver()
             
             if(joint->isRevoluteJoint()){
                 mout->putWarningln(
-                    format(_("Joint angle {0:.1f} [deg] of {1} is over the limit at time {2:.3f}."),
-                           degree(joint->q()), joint->jointName(), currentFrameIndex * dt));
+                    formatR(_("Joint angle {0:.1f} [deg] of {1} is over the limit at time {2:.3f}."),
+                            degree(joint->q()), joint->jointName(), currentFrameIndex * dt));
             } else {
                 mout->putWarningln(
-                    format(_("Joint displacement {0:.3f} [m] of {1} is over the limit at time {2:.3f}."),
-                           joint->q(), joint->jointName(), currentFrameIndex * dt));
+                    formatR(_("Joint displacement {0:.3f} [m] of {1} is over the limit at time {2:.3f}."),
+                            joint->q(), joint->jointName(), currentFrameIndex * dt));
             }
         }
     }

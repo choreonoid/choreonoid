@@ -8,9 +8,9 @@
 #include <cnoid/Config>
 #include <cnoid/Tokenizer>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
 #include <QMessageBox>
-#include <fmt/format.h>
 #include <fstream>
 #include <list>
 #include <vector>
@@ -22,7 +22,6 @@
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
-using fmt::format;
 
 namespace {
 
@@ -80,7 +79,7 @@ public:
     {
         ifstream ifs(fromUTF8(filename).c_str());
         if(!ifs){
-            os << format(_("\"{}\" cannot be opened."), filename) << endl;
+            os << formatR(_("\"{}\" cannot be opened."), filename) << endl;
             return false;
         }
         
@@ -117,7 +116,7 @@ public:
                     frame[i] = std::stod(*it);
                 }
                 if(i < numElements /* || it != tokens.end() */ ){
-                    os << format(_("\"{}\" contains different size columns."), filename) << endl;
+                    os << formatR(_("\"{}\" contains different size columns."), filename) << endl;
                     return false;
                 }
             }
@@ -232,7 +231,7 @@ bool exportHrpsysSeqFileSet(BodyMotionItem* item, const std::string& filename, s
     double frameRate = item->motion()->frameRate();
     if(frameRate != 200.0){
         if(!confirm(
-               format(
+               formatR(
                    _("The frame rate of a body motion exported as HRPSYS files should be standard value 200, "
                      "but the frame rate of \"{0}\" is {1}. The exported data may cause a problem.\n\n"
                      "Do you continue to export ?"),
@@ -254,7 +253,7 @@ bool exportHrpsysSeqFileSet(BodyMotionItem* item, const std::string& filename, s
                                    "Do you continue to export ?"));
             } else {
                 result = confirm(
-                    format(
+                    formatR(
                         _("{} faults have been detected. Please check the report in the MessageView.\n\n"
                           "Do you continue to export ?"), numFaults));
             }

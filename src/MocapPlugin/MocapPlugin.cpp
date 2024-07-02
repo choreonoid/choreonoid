@@ -12,12 +12,11 @@
 #include <cnoid/RootItem>
 #include <cnoid/BodyItem>
 #include <cnoid/MessageOut>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
   
@@ -102,10 +101,10 @@ void MocapPlugin::convertSkeletonMotionItemToMarkerMotionItem(SkeletonMotionItem
     if(mocapMappingItem){
         mocapMapping = mocapMappingItem->mocapMapping();
         mout->put(
-            format(_("Converting {0} to the marker motion with {1} ..."),
-                   skeletonMotionItem->name(), mocapMappingItem->name()));
+            formatR(_("Converting {0} to the marker motion with {1} ..."),
+                    skeletonMotionItem->name(), mocapMappingItem->name()));
     } else {
-        mout->put(format(_("Converting {0} to the marker motion ..."), skeletonMotionItem->name()));
+        mout->put(formatR(_("Converting {0} to the marker motion ..."), skeletonMotionItem->name()));
     }
                 
     SkeletonToMarkerMotionConverter converter;
@@ -128,7 +127,7 @@ void MocapPlugin::onContextMenuItemToConvertToBodyMotionActivated(Item* motionIt
 {
     if(RootItem::instance()->selectedItems<BodyItem>().empty()){
         showWarningDialog(
-            format(_("Select the body item(s) to which {0} will be converted."), motionItem->displayName()));
+            formatR(_("Select the body item(s) to which {0} will be converted."), motionItem->displayName()));
         return;
     }
 

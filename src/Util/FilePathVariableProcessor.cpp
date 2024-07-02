@@ -3,15 +3,14 @@
 #include "ExecutablePath.h"
 #include "FileUtil.h"
 #include "UTF8.h"
+#include "Format.h"
 #include <cnoid/stdx/optional>
-#include <fmt/format.h>
 #include <regex>
 #include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = stdx::filesystem;
 
 namespace cnoid {
@@ -385,7 +384,7 @@ std::string FilePathVariableProcessor::Impl::parameterize(const std::string& org
                     output = toUTF8(info.relativePath.generic_string());
                 }
             } else {
-                output = format("${{{0}}}/{1}", info.varName, toUTF8(info.relativePath.generic_string()));
+                output = formatC("${{{0}}}/{1}", info.varName, toUTF8(info.relativePath.generic_string()));
             }
         }
     }
@@ -484,7 +483,7 @@ std::string FilePathVariableProcessor::Impl::expand
             
         } else if(varname == "PROJECT_DIR"){
             if(projectDirString.empty()){
-                errorMessage = format(_("${{PROJECT_DIR}} of \"{0}\" cannot be expanded."), pathString);
+                errorMessage = formatR(_("${{PROJECT_DIR}} of \"{0}\" cannot be expanded."), pathString);
                 expansionFailed = true;
                 expanded.clear();
             } else {
@@ -500,8 +499,8 @@ std::string FilePathVariableProcessor::Impl::expand
                     expansionFailed = true;
                     expanded.clear();
                     errorMessage =
-                        format(_("Path variable \"{0}\" in \"{1}\" is not defined."),
-                               varname, pathString);
+                        formatR(_("Path variable \"{0}\" in \"{1}\" is not defined."),
+                                varname, pathString);
                 }
             }
         }

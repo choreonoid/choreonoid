@@ -10,12 +10,12 @@
 #include "QVariantUtil.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/CloneMap>
+#include <cnoid/Format>
 #include <QMouseEvent>
 #include <QHeaderView>
 #include <QModelIndex>
 #include <QBoxLayout>
 #include <cnoid/stdx/optional>
-#include <fmt/format.h>
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
@@ -24,7 +24,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -1426,7 +1425,7 @@ void ItemTreeWidget::Impl::cutSelectedItems()
 
     bool editGroupCreated = false;
     if(selectedItems.size() > 1){
-        unifiedEditHistory->beginEditGroup(format(_("Cut items in {0}"), getViewTitle()));
+        unifiedEditHistory->beginEditGroup(formatR(_("Cut items in {0}"), getViewTitle()));
         editGroupCreated = true;
     }
     
@@ -1465,15 +1464,15 @@ bool ItemTreeWidget::Impl::pasteItems(bool doCheckPositionAcceptance)
         if(doCheckPositionAcceptance){
             if(!self->checkPastable(parentItem)){
                 showWarningDialog(
-                    format(_("The copied items cannot be pasted to \"{0}\"."),
-                           parentItem->displayName()));
+                    formatR(_("The copied items cannot be pasted to \"{0}\"."),
+                            parentItem->displayName()));
                 isPastable = false;
             }
         }
         if(isPastable){
             bool editGroupCreated = false;
             if(copiedItems.size() > 1){
-                unifiedEditHistory->beginEditGroup(format(_("Paste items in {0}"), getViewTitle()), false);
+                unifiedEditHistory->beginEditGroup(formatR(_("Paste items in {0}"), getViewTitle()), false);
                 editGroupCreated = true;
             }
             CloneMap cloneMap;
@@ -1977,7 +1976,7 @@ void ItemTreeWidget::Impl::dropEvent(QDropEvent* event)
 
     bool editGroupCreated = false;
     if(dragItems.size() > 1){
-        unifiedEditHistory->beginEditGroup(format(_("Drop items in {0}"), getViewTitle()));
+        unifiedEditHistory->beginEditGroup(formatR(_("Drop items in {0}"), getViewTitle()));
         editGroupCreated = true;
     }
     
@@ -1996,7 +1995,7 @@ std::string ItemTreeWidget::Impl::getViewTitle()
 {
     string viewTitle;
     if(auto view = findOwnerView()){
-        viewTitle = format(_("the {0} view"), view->windowTitle().toStdString());
+        viewTitle = formatR(_("the {0} view"), view->windowTitle().toStdString());
     } else {
         viewTitle = "a view";
     }

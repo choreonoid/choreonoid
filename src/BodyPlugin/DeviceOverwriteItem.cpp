@@ -16,13 +16,12 @@
 #include <cnoid/StdSceneWriter>
 #include <cnoid/ConnectionSet>
 #include <cnoid/CloneMap>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -634,7 +633,7 @@ bool DeviceOverwriteItem::Impl::restore(const Archive& archive)
     auto bodyItem = archive.currentParentItem()->findOwnerItem<BodyItem>(true);
     if(!bodyItem){
         MessageView::instance()->putln(
-            format(_("The target body item of \"{0}\" is not found."), self->name()),
+            formatR(_("The target body item of \"{0}\" is not found."), self->name()),
             MessageView::Error);
         return false;
     }

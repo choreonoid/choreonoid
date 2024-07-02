@@ -5,17 +5,16 @@
 #include <cnoid/ImageIO>
 #include <cnoid/NullOut>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
 #include <cnoid/stdx/optional>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#include <fmt/format.h>
 #include <map>
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
@@ -185,7 +184,7 @@ SgGroup* AssimpSceneLoader::Impl::convertAiNode(aiNode* node)
         double d = T.linear().determinant();
         if(ENABLE_WARNING_FOR_FLIPPED_COORDINATE){
             if(d < 0){
-                os() << format("Warning: Flip transform is included in node \"{0}\".\n", node->mName.C_Str());
+                os() << formatC("Warning: Flip transform is included in node \"{0}\".\n", node->mName.C_Str());
             }
         }
         if(ENABLE_FLIPPED_COORDINATE_EXPANSION){

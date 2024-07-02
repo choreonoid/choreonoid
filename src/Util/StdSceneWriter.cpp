@@ -15,15 +15,14 @@
 #include "CloneMap.h"
 #include "NullOut.h"
 #include "UTF8.h"
+#include "Format.h"
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <unordered_map>
 #include <regex>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace cnoid {
@@ -468,7 +467,7 @@ bool StdSceneWriter::Impl::writeScene
     if(numSkippedNode == 1){
         os() << _("Warning: There is an unsupported node.") << endl;
     } else if(numSkippedNode >= 2){
-        os() << format(_("Warning: {0} unsupported nodes were skipped to output."), numSkippedNode) << endl;
+        os() << formatR(_("Warning: {0} unsupported nodes were skipped to output."), numSkippedNode) << endl;
     }
     
     yamlWriter->putNode(header);
@@ -607,7 +606,7 @@ void StdSceneWriter::Impl::copyModelFilesAndLinkToCopiedFile(Mapping* archive, S
     
     if(relativeFilePathToCopiedFile.empty()){
         makeLinkToOriginalModelFile(archive, sceneObject);
-        os() << format(_("Warning: Model file \"{0}\" cannot be copied."), sceneObject->uri()) << endl;
+        os() << formatR(_("Warning: Model file \"{0}\" cannot be copied."), sceneObject->uri()) << endl;
     } else {
         archive->write("uri", relativeFilePathToCopiedFile, DOUBLE_QUOTED);
         auto& metadata = sceneObject->uriMetadataString();
@@ -628,7 +627,7 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
         filesystem::path srcFilePath(fromUTF8(srcFile));
         if(!srcFilePath.empty()){
             if(!filesystem::exists(srcFilePath, ec)){
-                os() << format(_("Warning: File \"{0}\" is not found."), srcFile) << endl;
+                os() << formatR(_("Warning: File \"{0}\" is not found."), srcFile) << endl;
             } else {
                 filesystem::path relativeFilePath;
                 if(!originalBaseDirPath.empty()){
@@ -681,8 +680,8 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
                             uriRewritingMap[sceneObject] = relativeFilePathToCopiedFile;
                         }
                     } else {
-                        os() << format(_("Warning: File \"{0}\" cannot be copied: {1}"),
-                                       sceneObject->localFileAbsolutePath(), ec.message()) << endl;
+                        os() << formatR(_("Warning: File \"{0}\" cannot be copied: {1}"),
+                                        sceneObject->localFileAbsolutePath(), ec.message()) << endl;
                     }
                 }
             }
@@ -742,8 +741,8 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
             if(absUri.find_first_of("file://") == 0){
                 filesystem::path orgFilePath(absUri.substr(7));
                 if(filesystem::equivalent(fullPath, orgFilePath, ec)){
-                    os() << format(_("Model file \"{0}\" cannot be replaced with the same format file in the same directory"),
-                                   filename) << endl;
+                    os() << formatR(_("Model file \"{0}\" cannot be replaced with the same format file in the same directory"),
+                                    filename) << endl;
                     return false;
                 }
             }
@@ -775,11 +774,11 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
         }
     } else {
         if(ec){
-            os() << format(_("Warning: Failed to replace model file \"{0}\" with \"{1}\". {2}"),
-                           objectOfUri->uri(), filename, ec.message()) << endl;
+            os() << formatR(_("Warning: Failed to replace model file \"{0}\" with \"{1}\". {2}"),
+                            objectOfUri->uri(), filename, ec.message()) << endl;
         } else {
-            os() << format(_("Warning: Failed to replace model file \"{0}\" with \"{1}\"."),
-                           objectOfUri->uri(), filename) << endl;
+            os() << formatR(_("Warning: Failed to replace model file \"{0}\" with \"{1}\"."),
+                            objectOfUri->uri(), filename) << endl;
         }
     }
     

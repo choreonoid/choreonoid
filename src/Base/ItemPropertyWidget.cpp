@@ -11,6 +11,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/variant>
 #include <cnoid/stdx/filesystem>
 #include <QTableWidget>
@@ -23,14 +24,12 @@
 #include <QStandardItemEditorCreator>
 #include <QKeyEvent>
 #include <QApplication>
-#include <fmt/format.h>
 #include <regex>
 #include <cmath>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
@@ -629,7 +628,7 @@ void CustomizedItemDelegate::openFileDialog(FilePathProperty value, FilePathEdit
             std::smatch match;
             for(auto& filter : value.filters()){
                 if(regex_match(filter, match, pattern1)){
-                    regex pattern2(format("^(.+)(\\.{})$", match.str(1)), std::regex_constants::icase);
+                    regex pattern2(formatC("^(.+)(\\.{})$", match.str(1)), std::regex_constants::icase);
                     if(regex_match(filename, match, pattern2)){
                         filename = regex_replace(filename, pattern2, "$1");
                         break;

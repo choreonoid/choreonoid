@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "RootItem.h"
 #include "ExtensionManager.h"
 #include "ItemManager.h"
@@ -9,7 +5,7 @@
 #include "ProjectManager.h"
 #include "MenuManager.h"
 #include "Archive.h"
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <iostream>
 #include "gettext.h"
 
@@ -104,7 +100,7 @@ void putItemTreeWithPolymorphicIds()
     cout << "Number of item classes: " << registry.numRegisteredClasses() << endl;
     for(auto& item : RootItem::instance()->descendantItems()){
         int id = item->classId();
-        cout << fmt::format(
+        cout << formatC(
             "{}: id {} : {}", item->name(), id, registry.getSuperClassId(id)) << endl;
     }
 }

@@ -1,8 +1,8 @@
 #include "UriSchemeProcessor.h"
 #include "FilePathVariableProcessor.h"
 #include "UTF8.h"
+#include "Format.h"
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <sstream>
 #include <mutex>
 #include <regex>
@@ -161,7 +161,7 @@ std::string UriSchemeProcessor::Impl::getFilePath(const std::string& uri)
             auto it = uriSchemeHandlerMap.find(scheme);
             if(it == uriSchemeHandlerMap.end()){
                 errorStream <<
-                    fmt::format(_("The \"{0}\" scheme in URI \"{1}\" is not supported."), scheme, uri);
+                    formatR(_("The \"{0}\" scheme in URI \"{1}\" is not supported."), scheme, uri);
                 errorStream.flush();
             } else {
                 auto& handler = it->second;

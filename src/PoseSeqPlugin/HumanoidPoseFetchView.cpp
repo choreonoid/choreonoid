@@ -22,17 +22,16 @@
 #include <cnoid/Buttons>
 #include <cnoid/ButtonGroup>
 #include <cnoid/DoubleSpinBox>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QGridLayout>
 #include <QLabel>
 #include <QKeyEvent>
 #include <cnoid/stdx/clamp>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -91,7 +90,7 @@ protected:
 
 string getPoseId(const PoseSeq::iterator it, const BodyKeyPose* pose)
 {
-    return format("{0:0X}@{1:.2f}", reinterpret_cast<ulong>(pose) & 0xffffffff, it->time());
+    return formatC("{0:0X}@{1:.2f}", reinterpret_cast<ulong>(pose) & 0xffffffff, it->time());
 }
 
 }
@@ -911,7 +910,7 @@ void HumanoidPoseFetchView::Impl::updateSrcBodyItemCombo()
                 srcBodyItemCombo.setItemText(index, QString("%1 (1)").arg(name.c_str()));
             }
             if(counter >= 2){
-                name = format("{0} ({1})", name, counter);
+                name = formatC("{0} ({1})", name, counter);
             }
             srcBodyItemCombo.addItem(name.c_str());
             srcBodyItemCandidates.push_back(bodyItem);
@@ -1176,9 +1175,9 @@ void HumanoidPoseFetchView::Impl::setTargetKeyPoses(const std::vector<PoseSeq::i
     } else {
         string id = getPoseId(firstIter, firstKeyPose);
         if(targetPoseIters.size() == 1){
-            targetPoseLabel.setText(format("{0}", id).c_str());
+            targetPoseLabel.setText(formatC("{0}", id).c_str());
         } else {
-            targetPoseLabel.setText(format(_("{0} ..."), id).c_str());
+            targetPoseLabel.setText(formatR(_("{0} ..."), id).c_str());
         }
     }
 
@@ -1335,8 +1334,8 @@ void HumanoidPoseFetchView::Impl::fetchOrCreatePoses(int bodyPart, int fetchOpti
         BodyKeyPosePtr pose = new BodyKeyPose;
         if(!fetchPose(pose, bodyPart, fetchOption)){
             showErrorDialog(
-                format(_("The current pose of {0} cannot be fetched as a new key pose."),
-                       srcBodyItem->displayName()));
+                formatR(_("The current pose of {0} cannot be fetched as a new key pose."),
+                        srcBodyItem->displayName()));
         } else {
             poseSeqItem->beginEditing();
             auto it = poseSeq->insert(currentPoseIter, poseSeqTime, pose, true);
@@ -1345,8 +1344,8 @@ void HumanoidPoseFetchView::Impl::fetchOrCreatePoses(int bodyPart, int fetchOpti
             poseSeqItem->selectPose(it, true);
             currentPoseIter = it;
             InfoBar::instance()->notify(
-                format(_("The current pose of {0} has been fetched as a new key pose of {1}."),
-                       srcBodyItem->displayName(), poseSeqItem->displayName()));
+                formatR(_("The current pose of {0} has been fetched as a new key pose of {1}."),
+                        srcBodyItem->displayName(), poseSeqItem->displayName()));
             modified = true;
         }
     } else {
@@ -1357,8 +1356,8 @@ void HumanoidPoseFetchView::Impl::fetchOrCreatePoses(int bodyPart, int fetchOpti
                 poseSeq->beginPoseModification(it);
                 if(!fetchPose(pose, bodyPart, fetchOption)){
                     showErrorDialog(
-                        format(_("The current pose of {0} cannot be fetched."),
-                               srcBodyItem->displayName()));
+                        formatR(_("The current pose of {0} cannot be fetched."),
+                                srcBodyItem->displayName()));
                     break;
                 }
                 poseSeq->endPoseModification(it);
@@ -1371,8 +1370,8 @@ void HumanoidPoseFetchView::Impl::fetchOrCreatePoses(int bodyPart, int fetchOpti
             modified = true;
         }
         InfoBar::instance()->notify(
-            format(_("The current pose of {0} has been fetched in the selected key pose(s) of {1}."),
-                   srcBodyItem->displayName(), poseSeqItem->displayName()));
+            formatR(_("The current pose of {0} has been fetched in the selected key pose(s) of {1}."),
+                    srcBodyItem->displayName(), poseSeqItem->displayName()));
     }
 
     if(modified){
@@ -1628,8 +1627,8 @@ void HumanoidPoseFetchView::Impl::adjustIkLinkPosition
 
                 if(!fetchJointDisplacements(pose, T_link)){
                     showErrorDialog(
-                        format(_("The {0} position of key pose {1} cannot be adjusted due to the inverse kinematics error."),
-                               link->name(), getPoseId(it, pose)));
+                        formatR(_("The {0} position of key pose {1} cannot be adjusted due to the inverse kinematics error."),
+                                link->name(), getPoseId(it, pose)));
                     linkAdjustmentBufs.clear();
                     failed = true;
                     break;
@@ -1750,8 +1749,8 @@ void HumanoidPoseFetchView::Impl::adjustJointAngle(Link* joint, double sign)
                 double q = pose->jointDisplacement(jointId) + dq;
                 if(q > joint->q_upper() || q < joint->q_lower()){
                     showErrorDialog(
-                        format(_("The joint angle of {0} in key pose {1} cannot be adjusted due to the joint limit over."),
-                               joint->jointName(), getPoseId(it, pose)));
+                        formatR(_("The joint angle of {0} in key pose {1} cannot be adjusted due to the joint limit over."),
+                                joint->jointName(), getPoseId(it, pose)));
                     jointAdjustmentBufs.clear();
                     failed = true;
                     break;
@@ -1800,8 +1799,8 @@ void HumanoidPoseFetchView::Impl::adjustHandPosition(int which, int axis, double
     auto body = interpolator->body();
     if(!body){
         showErrorDialog(
-            format(_("{0} must be associated with a body item to adjust hand positions."),
-                   poseSeqItem->displayName()));
+            formatR(_("{0} must be associated with a body item to adjust hand positions."),
+                    poseSeqItem->displayName()));
         return;
     }
 
@@ -1812,8 +1811,8 @@ void HumanoidPoseFetchView::Impl::adjustHandPosition(int which, int axis, double
         Link* endLink = body->link(armLinks.back()->index());
         if(!baseLink || !endLink){
             showErrorDialog(
-                format(_("The internal body object of {0} does not conform to the source body."),
-                       poseSeqItem->displayName()));
+                formatR(_("The internal body object of {0} does not conform to the source body."),
+                        poseSeqItem->displayName()));
         }
         path = JointPath::getCustomPath(baseLink, endLink);
     }
@@ -1841,7 +1840,7 @@ void HumanoidPoseFetchView::Impl::adjustHandPosition(int which, int axis, double
             }
             if(hasCorrespondingJoints){
                 if(!interpolator->interpolate(it->time())){
-                    message = format(
+                    message = formatR(
                         _("A hand position of key pose {0} cannot be adjusted due to the interpolation error."),
                         getPoseId(it, pose));
                     failed = true;
@@ -1862,7 +1861,7 @@ void HumanoidPoseFetchView::Impl::adjustHandPosition(int which, int axis, double
                     adjustPosition(T, axis, sign);
                     
                     if(!path->calcInverseKinematics(T)){
-                        message = format(
+                        message = formatR(
                             _("A hand position of key pose {0} cannot be adjusted due to the inverse kinematics error."),
                             getPoseId(it, pose));
                         failed = true;
@@ -2134,7 +2133,7 @@ bool HumanoidPoseFetchView::Impl::confirmKeyPoseRemovalByUncheckingBodypart
     bool confirmed =
         showConfirmDialog(
             _("Warning"),
-            format(
+            formatR(
                 _("Key poses will be removed by unchecking the {0} check. "
                   "Do you really want to remove the key poses?"),
                 bodyPartName));

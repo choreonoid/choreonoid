@@ -11,7 +11,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/Timer>
 #include <cnoid/LazyCaller>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <QEvent>
 #include <QResizeEvent>
 #include <QPainter>
@@ -443,7 +443,7 @@ void GSMediaViewImpl::putGstMessage
     GError* err;
     parse(message, &err, &debug);
     g_free(debug);
-    mv->putln(fmt::format("{0}: {1}", prefix, err->message), MessageView::Highlight);
+    mv->putln(formatC("{0}: {1}", prefix, err->message), MessageView::Highlight);
     g_error_free(err);
 }
     

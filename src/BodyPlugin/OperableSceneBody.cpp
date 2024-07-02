@@ -24,8 +24,8 @@
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
 #include <cnoid/CheckBoxAction>
+#include <cnoid/Format>
 #include <cnoid/stdx/clamp>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
@@ -1463,9 +1463,9 @@ bool OperableSceneBody::Impl::onPointerMoveEvent(SceneWidgetEvent* event)
             }
             const Vector3 p = pointedSceneLink->T().inverse() * event->point();
             event->updateIndicator(
-                fmt::format("{0} / {1} : ({2:.3f}, {3:.3f}, {4:.3f})",
-                            bodyItem->displayName(), pointedSceneLink->link()->name(),
-                            p.x(), p.y(), p.z()));
+                formatC("{0} / {1} : ({2:.3f}, {3:.3f}, {4:.3f})",
+                        bodyItem->displayName(), pointedSceneLink->link()->name(),
+                        p.x(), p.y(), p.z()));
         }
     } else {
         if(!isDragging){

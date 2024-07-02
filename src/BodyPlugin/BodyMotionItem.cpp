@@ -11,12 +11,11 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -399,8 +398,8 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
                             existingFound = true;
                             if(showConfirmDialog(
                                    _("Confirm"),
-                                   format(_("Do you overwrite the data of \"{}\"?"),
-                                          orgSeqItem->displayName()))){
+                                   formatR(_("Do you overwrite the data of \"{}\"?"),
+                                           orgSeqItem->displayName()))){
                                 *orgSeqItem->abstractSeq() = *seqItem->abstractSeq();
                                 return false; // Not replace the item itself
                             }
@@ -410,8 +409,8 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
                 if(!existingFound){
                     if(showConfirmDialog(
                            _("Confirm"),
-                           format(_("Do you add the data of \"{0}\" to \"{1}\" as a sequence data element?"),
-                                  childItem_->displayName(), this->displayName()))){
+                           formatR(_("Do you add the data of \"{0}\" to \"{1}\" as a sequence data element?"),
+                                   childItem_->displayName(), this->displayName()))){
                         motion()->setExtraSeq(seqItem->abstractSeq());
                         return false; // Not replace the item itself
                     }

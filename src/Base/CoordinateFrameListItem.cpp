@@ -7,13 +7,12 @@
 #include "MessageView.h"
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/ConnectionSet>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -410,9 +409,9 @@ bool CoordinateFrameListItem::onChildItemAboutToBeAdded(Item* childItem, bool is
             return true;
         } else if(isManualOperation){
             showWarningDialog(
-                format(_("\"{0}\" cannot be added to \"{1}\" because "
-                         "the item of ID {2} already exists in it. "),
-                       getFrameItemDisplayName(frameItem), displayName(), frame->id().label()));
+                formatR(_("\"{0}\" cannot be added to \"{1}\" because "
+                          "the item of ID {2} already exists in it. "),
+                        getFrameItemDisplayName(frameItem), displayName(), frame->id().label()));
         }
     }
     return false;

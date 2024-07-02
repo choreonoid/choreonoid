@@ -8,7 +8,7 @@
 #include <cnoid/CloneMap>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
@@ -18,7 +18,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -473,7 +472,7 @@ bool MprProgram::Impl::read(const Mapping* archive)
         auto& typeNode = archive->get("type");
         if(typeNode.toString() != "ManipulatorProgram"){
             typeNode.throwException(
-                format(_("{0} cannot be loaded as a Manipulator program file"), typeNode.toString()));
+                formatR(_("{0} cannot be loaded as a Manipulator program file"), typeNode.toString()));
         }
         
         auto versionNode = archive->find("format_version");
@@ -482,7 +481,7 @@ bool MprProgram::Impl::read(const Mapping* archive)
         }
         auto version = versionNode->toDouble();
         if(version != 1.0){
-            versionNode->throwException(format(_("Format version {0} is not supported."), version));
+            versionNode->throwException(formatR(_("Format version {0} is not supported."), version));
         }
 
         archive->read("name", name);
@@ -517,7 +516,7 @@ bool MprProgram::Impl::read(const Mapping* archive)
                 statement = MprStatementRegistration::create(type);
             }
             if(!statement){
-                typeNode.throwException(format(_("Statement type \"{0}\" is not supported"), type));
+                typeNode.throwException(formatR(_("Statement type \"{0}\" is not supported"), type));
             }
             if(statement->read(self, node)){
                 self->append(statement, false);

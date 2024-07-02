@@ -5,8 +5,8 @@
 #include <cnoid/ValueTree>
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
@@ -378,17 +378,17 @@ bool ItemFileIO::Impl::loadItem
 
     if(!preprocessLoadingOrSaving(item, filename, options)){
         if(errorMessage.empty()){
-            self->putError(fmt::format(_("{0} cannot be loaded."), item->displayName()));
+            self->putError(formatR(_("{0} cannot be loaded."), item->displayName()));
         } else {
             self->putError(
-                fmt::format(_("{0} cannot be loaded because {1}"), item->displayName(), errorMessage));
+                formatR(_("{0} cannot be loaded because {1}"), item->displayName(), errorMessage));
             errorMessage.clear();
         }
         return false;
     }
     this->parentItem = parentItem;
 
-    mv->notify(fmt::format(_("Loading {0} \"{1}\""), caption, filename));
+    mv->notify(formatR(_("Loading {0} \"{1}\""), caption, filename));
     mv->flush();
 
     actuallyLoadedItem = item;
@@ -463,16 +463,16 @@ bool ItemFileIO::Impl::saveItem
 {
     if(filename.empty()){
         self->putError(
-            fmt::format(_("{0} cannot be saved with empty filename."), item->displayName()));
+            formatR(_("{0} cannot be saved with empty filename."), item->displayName()));
         return false;
     }
 
     if(!preprocessLoadingOrSaving(item, filename, options)){
         if(errorMessage.empty()){
-            self->putError(fmt::format(_("{0} cannot be saved."), item->displayName()));
+            self->putError(formatR(_("{0} cannot be saved."), item->displayName()));
         } else {
             self->putError(
-                fmt::format(_("{0} cannot be saved because {1}"), item->displayName(), errorMessage));
+                formatR(_("{0} cannot be saved because {1}"), item->displayName(), errorMessage));
             errorMessage.clear();
         }
         return false;
@@ -482,12 +482,10 @@ bool ItemFileIO::Impl::saveItem
     bool isExport = (interfaceLevel == Conversion);
     if(!isExport){
         mv->notify(
-            fmt::format(_("Saving {0} \"{1}\" to \"{2}\""),
-                        caption, item->displayName(), filename));
+            formatR(_("Saving {0} \"{1}\" to \"{2}\""), caption, item->displayName(), filename));
     } else {
         mv->notify(
-            fmt::format(_("Exporting {0} \"{1}\" into \"{2}\""),
-                        caption, item->displayName(), filename));
+            formatR(_("Exporting {0} \"{1}\" into \"{2}\""), caption, item->displayName(), filename));
     }
     mv->flush();
 

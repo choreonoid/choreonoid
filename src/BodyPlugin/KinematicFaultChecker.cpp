@@ -20,18 +20,17 @@
 #include <cnoid/BodyCollisionDetector>
 #include <cnoid/AISTCollisionDetector>
 #include <cnoid/IdPair>
+#include <cnoid/Format>
 #include <QButtonGroup>
 #include <QDialogButtonBox>
 #include <QBoxLayout>
 #include <QFrame>
 #include <QLabel>
-#include <fmt/format.h>
 #include <map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -279,10 +278,10 @@ void KinematicFaultChecker::Impl::apply()
             BodyMotionItem* motionItem = items.get(i);
             BodyItem* bodyItem = motionItem->findOwnerItem<BodyItem>();
             if(!bodyItem){
-                mv->notify(format(_("{} is not owned by any BodyItem. Check skiped."), motionItem->displayName()));
+                mv->notify(formatR(_("{} is not owned by any BodyItem. Check skiped."), motionItem->displayName()));
             } else {
                 mv->putln();
-                mv->notify(format(_("Applying the Kinematic Fault Checker to {} ..."),
+                mv->notify(formatR(_("Applying the Kinematic Fault Checker to {} ..."),
                                   motionItem->headItem()->displayName()));
                 
                 vector<bool> linkSelection;
@@ -314,7 +313,7 @@ void KinematicFaultChecker::Impl::apply()
                     if(n == 1){
                         mv->notify(_("A fault has been detected."));
                     } else {
-                        mv->notify(format(_("{} faults have been detected."), n));
+                        mv->notify(formatR(_("{} faults have been detected."), n));
                     }
                 } else {
                     mv->notify(_("No faults have been detected."));
@@ -489,11 +488,11 @@ void KinematicFaultChecker::Impl::putJointPositionFault(int frame, Link* joint)
         }
 
         if(m != 0.0){
-            os << format(_("{0:7.3f} [s]: Position limit over of {1} ({2} is beyond the range ({3} , {4}) with margin {5}.)"),
-                         (frame / frameRate), joint->name(), q, l, u, m) << endl;
+            os << formatR(_("{0:7.3f} [s]: Position limit over of {1} ({2} is beyond the range ({3} , {4}) with margin {5}.)"),
+                          (frame / frameRate), joint->name(), q, l, u, m) << endl;
         } else {
-            os << format(_("{0:7.3f} [s]: Position limit over of {1} ({2} is beyond the range ({3} , {4}).)"),
-                         (frame / frameRate), joint->name(), q, l, u) << endl;
+            os << formatR(_("{0:7.3f} [s]: Position limit over of {1} ({2} is beyond the range ({3} , {4}).)"),
+                          (frame / frameRate), joint->name(), q, l, u) << endl;
         }
 
         numFaults++;
@@ -519,8 +518,8 @@ void KinematicFaultChecker::Impl::putJointVelocityFault(int frame, Link* joint)
         double r = (dq < 0.0) ? (dq / l) : (dq / u);
         r *= 100.0;
 
-        os << format(_("{0:7.3f} [s]: Velocity limit over of {1} ({2} is {3:.0f}% of the range ({4} , {5}).)"),
-                     (frame / frameRate), joint->name(), dq, r, l, u) << endl;
+        os << formatR(_("{0:7.3f} [s]: Velocity limit over of {1} ({2} is {3:.0f}% of the range ({4} , {5}).)"),
+                      (frame / frameRate), joint->name(), dq, r, l, u) << endl;
         
         numFaults++;
     }
@@ -546,8 +545,8 @@ void KinematicFaultChecker::Impl::putSelfCollision(Body* body, int frame, const 
     if(putMessage){
         Link* link0 = static_cast<Link*>(collisionPair.object(0));
         Link* link1 = static_cast<Link*>(collisionPair.object(1));
-        os << format(_("{0:7.3f} [s]: Collision between {1} and {2}"),
-                     (frame / frameRate), link0->name(), link1->name()) << endl;
+        os << formatR(_("{0:7.3f} [s]: Collision between {1} and {2}"),
+                      (frame / frameRate), link0->name(), link1->name()) << endl;
         numFaults++;
     }
 }

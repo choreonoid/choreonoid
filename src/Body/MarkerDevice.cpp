@@ -1,15 +1,10 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "MarkerDevice.h"
 #include "StdBodyFileUtil.h"
 #include <cnoid/SceneDevice>
 #include <cnoid/SceneMarkers>
 #include <cnoid/StdBodyLoader>
 #include <cnoid/EigenArchive>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
@@ -234,7 +229,7 @@ bool MarkerDevice::readSpecifications(const Mapping* info)
             setMarkerType(MarkerDevice::AXES_MARKER);
         } else {
             info->throwException(
-                fmt::format(_("Unknown marker type '{}'"), type));
+                formatR(_("Unknown marker type '{}'"), type));
         }
     }
 

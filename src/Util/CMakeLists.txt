@@ -115,6 +115,7 @@ set(headers
   ExecutablePath.h
   FilePathVariableProcessor.h
   UriSchemeProcessor.h
+  Format.h
   GettextUtil.h
   UTF8.h
   NullOut.h

@@ -11,14 +11,13 @@
 #include <cnoid/CheckBox>
 #include <cnoid/RadioButton>
 #include <cnoid/Separator>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <QSpinBox>
 #include <QComboBox>
 #include <QElapsedTimer>
 #include "gettext.h"
 
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -241,7 +240,7 @@ bool BalancerPanel::apply(BodyItem* bodyItem, PoseProvider* provider, BodyMotion
 
     auto mv = MessageView::mainInstance();
     if(putMessages){
-        mv->notify(format(_("Applying the waist balance filter with {} iterations ... "), balancer->numIterations()));
+        mv->notify(formatR(_("Applying the waist balance filter with {} iterations ... "), balancer->numIterations()));
         mv->flush();
     }
 
@@ -253,7 +252,7 @@ bool BalancerPanel::apply(BodyItem* bodyItem, PoseProvider* provider, BodyMotion
 
     if(result){
         if(putMessages){
-            mv->notify(format(_("OK ! ({} sec consumed.)"), (timer.elapsed() / 1000.0)));
+            mv->notify(formatR(_("OK ! ({} sec consumed.)"), (timer.elapsed() / 1000.0)));
         }
         motionItem->notifyUpdate();
     } else {

@@ -1,18 +1,17 @@
 #include "GeneralSeqReader.h"
-#include <fmt/format.h>
+#include "Format.h"
 #include "gettext.h"
 
 using namespace cnoid;
-using fmt::format;
 
 std::string GeneralSeqReader::mismatched_seq_type_message(const std::string& type, AbstractSeq* seq)
 {
-    return format(_("Seq type \"{0}\" cannot be load into {1}."), type, seq->seqType());
+    return formatR(_("Seq type \"{0}\" cannot be load into {1}."), type, seq->seqType());
 }
 
 std::string GeneralSeqReader::has_frame_time_unsupported_message(double formatVersion)
 {
-    return format(_("The \"hasFrameTime\" parameter is not availabe in format version {}."), formatVersion);
+    return formatR(_("The \"hasFrameTime\" parameter is not availabe in format version {}."), formatVersion);
 }
 
 std::string GeneralSeqReader::unkown_frame_rate_for_time_frame_seq_message()

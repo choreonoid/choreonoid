@@ -30,7 +30,7 @@
 #include <cnoid/RenderableItemUtil>
 #include <cnoid/EigenArchive>
 #include <cnoid/CloneMap>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <bitset>
 #include <algorithm>
 #include <iostream>
@@ -38,7 +38,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -1520,8 +1519,8 @@ void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
     if(!bodyItem){
         if(attachmentToParent){
             auto holderLink = attachmentToParent->holder()->link();
-            mvout(false) << format(_("{0} has been detached from {1} of {2}."),
-                                   self->displayName(), holderLink->name(), holderLink->body()->name()) << endl;
+            mvout(false) << formatR(_("{0} has been detached from {1} of {2}."),
+                                    self->displayName(), holderLink->name(), holderLink->body()->name()) << endl;
         }
     }
 
@@ -1579,8 +1578,8 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
                     body->rootLink()->setOffsetPosition(T_offset);
                     body->setParent(linkToAttach);
                     setLocationLocked(true, false, true);
-                    mvout(false) << format(_("{0} has been attached to {1} of {2}."),
-                                           self->displayName(), linkToAttach->name(), bodyItem->displayName()) << endl;
+                    mvout(false) << formatR(_("{0} has been attached to {1} of {2}."),
+                                            self->displayName(), linkToAttach->name(), bodyItem->displayName()) << endl;
                     goto found;
                 }
             }
@@ -1972,7 +1971,7 @@ void BodyItem::Impl::restoreNonRootLinkStates(const Archive& archive)
             if(qs->size() != nj){
                 if(qs->size() != body->numJoints()){
                     MessageView::instance()->putln(
-                        format(_("Mismatched size of the stored joint positions for {}"), self->displayName()),
+                        formatR(_("Mismatched size of the stored joint positions for {}"), self->displayName()),
                         MessageView::Warning);
                 }
                 nj = std::min(qs->size(), nj);
@@ -1988,7 +1987,7 @@ void BodyItem::Impl::restoreNonRootLinkStates(const Archive& archive)
             if(m != n){
                 if(m != body->numJoints()){
                     MessageView::instance()->putln(
-                        format(_("Mismatched size of the stored initial joint positions for {}"), self->displayName()),
+                        formatR(_("Mismatched size of the stored initial joint positions for {}"), self->displayName()),
                         MessageView::Warning);
                 }
                 m = std::min(m, n);
@@ -2116,9 +2115,9 @@ EditRecord* KinematicStateRecord::clone() const
 std::string KinematicStateRecord::label() const
 {
     if(!isReverse()){
-        return format(_("Change the position of \"{0}\""), bodyItem->displayName());
+        return formatR(_("Change the position of \"{0}\""), bodyItem->displayName());
     } else {
-        return format(_("Restore the position of \"{0}\""), bodyItem->displayName());
+        return formatR(_("Restore the position of \"{0}\""), bodyItem->displayName());
     }
 }
 

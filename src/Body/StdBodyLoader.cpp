@@ -7,8 +7,8 @@
 #include <cnoid/YAMLReader>
 #include <cnoid/NullOut>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <unordered_map>
 #include <mutex>
 #include <stdexcept>
@@ -18,7 +18,6 @@
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
-using fmt::format;
 
 namespace {
 
@@ -768,7 +767,7 @@ bool StdBodyLoader::Impl::readBody(Mapping* topNode)
     double version = versionNode->toDouble();
     if(version >= 2.1){
         topNode->throwException(
-            format(_("Version {0} of the Choreonoid body format is not supported"), version));
+            formatR(_("Version {0} of the Choreonoid body format is not supported"), version));
     }
 
     sceneReader.setBaseDirectory(toUTF8(mainFilePath.parent_path().string()));
@@ -818,7 +817,7 @@ bool StdBodyLoader::Impl::readBody(Mapping* topNode)
         auto p = linkMap.find(rootLinkName);
         if(p == linkMap.end()){
             rootLinkNode->throwException(
-                format(_("Link \"{}\" specified in \"rootLink\" is not defined"), rootLinkName));
+                formatR(_("Link \"{}\" specified in \"rootLink\" is not defined"), rootLinkName));
         }
         rootLink = p->second;
 
@@ -834,18 +833,18 @@ bool StdBodyLoader::Impl::readBody(Mapping* topNode)
         if(parent.empty()){
             if(info->link != rootLink){
                 info->node->throwException(
-                    format(_("The parent of {} is not specified"), link->name()));
+                    formatR(_("The parent of {} is not specified"), link->name()));
             }
         } else {
             auto p = linkMap.find(parent);
             if(p == linkMap.end()){
                 info->node->throwException(
-                    format(_("Parent link \"{0}\" of {1} is not defined"), parent, link->name()));
+                    formatR(_("Parent link \"{0}\" of {1} is not defined"), parent, link->name()));
             } else {
                 Link* parentLink = p->second;
                 if(link->isOwnerOf(parentLink)){
                     info->node->throwException(
-                        format(_("Adding \"{0}\" to link \"{1}\" will result in a cyclic reference"),
+                        formatR(_("Adding \"{0}\" to link \"{1}\" will result in a cyclic reference"),
                                 link->name(), parent));
                 }
                 parentLink->appendChild(link);
@@ -860,7 +859,7 @@ bool StdBodyLoader::Impl::readBody(Mapping* topNode)
         if(numValidJointIds < validJointIdSet.size()){
             for(size_t i=0; i < validJointIdSet.size(); ++i){
                 if(!validJointIdSet[i]){
-                    os() << format(_("Warning: Joint ID {} is not specified."), i) << endl;
+                    os() << formatR(_("Warning: Joint ID {} is not specified."), i) << endl;
                 }
             }
         }
@@ -885,7 +884,7 @@ void StdBodyLoader::Impl::readNodeInLinks(Mapping* node, const string& nodeType)
         auto& typeNodeValue = typeNode->toString();
         if(!nodeType.empty() && typeNodeValue != nodeType){
             node->throwException(
-                format(_("The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"),
+                formatR(_("The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"),
                         typeNodeValue, nodeType));
         }
         pNodeType = &typeNodeValue;
@@ -902,7 +901,7 @@ void StdBodyLoader::Impl::readNodeInLinks(Mapping* node, const string& nodeType)
 
     } else {
         node->throwException(
-            format(_("A {} node cannot be specified in links"), type));
+            formatR(_("A {} node cannot be specified in links"), type));
     }
 }
 
@@ -922,7 +921,7 @@ void StdBodyLoader::Impl::setLinkName(Link* link, const string& name, ValueNode*
     link->setName(name);
     
     if(!linkMap.insert(make_pair(name, link)).second){
-        node->throwException(format(_("Duplicated link name \"{}\""), name));
+        node->throwException(formatR(_("Duplicated link name \"{}\""), name));
     }
 }
 
@@ -932,7 +931,7 @@ void StdBodyLoader::Impl::setJointName(Link* link, const string& jointName, Valu
     link->setJointName(jointName);
     
     if(!jointNameSet.insert(jointName).second){
-        node->throwException(format(_("Duplicated joint name \"{}\""), jointName));
+        node->throwException(formatR(_("Duplicated joint name \"{}\""), jointName));
     }
 }
 
@@ -1055,8 +1054,8 @@ void StdBodyLoader::Impl::setJointId(Link* link, int id)
             ++numValidJointIds;
             validJointIdSet[id] = true;
         } else {
-            os() << format(_("Warning: Joint ID {0} of {1} is duplicated."),
-                    id, link->name()) << endl;
+            os() << formatR(_("Warning: Joint ID {0} of {1} is duplicated."),
+                            id, link->name()) << endl;
         }
     }
 }
@@ -1086,7 +1085,7 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
             link->setActuationMode(Link::JointVelocity);
         } else {
             jointTypeNode->throwException(
-                format(_("Illegal jointType value \"{0}\""), jointType));
+                formatR(_("Illegal jointType value \"{0}\""), jointType));
         }
     }
 
@@ -1112,9 +1111,9 @@ void StdBodyLoader::Impl::readJointContents(Link* link, Mapping* node)
         } else if(mode == "jointSurfaceVelocity"){ // deprecated
             if(jointTypeNode &&
                (link->jointType() != Link::PseudoContinuousTrackJoint || link->jointType() != Link::FixedJoint)){
-                os() << format(_("Warning: Actuation mode \"jointSurfaceVelocity\" is specified in {0}. "
-                                 "The mode is deprecated and the joint type should be the pseudo continuous track in this case."),
-                               link->name()) << endl;
+                os() << formatR(_("Warning: Actuation mode \"jointSurfaceVelocity\" is specified in {0}. "
+                                  "The mode is deprecated and the joint type should be the pseudo continuous track in this case."),
+                                link->name()) << endl;
             }
             link->setJointType(Link::PseudoContinuousTrackJoint);
             link->setActuationMode(Link::JointVelocity);
@@ -1431,7 +1430,7 @@ bool StdBodyLoader::Impl::readElementContents(ValueNode* elementsNode)
                     auto& type2 = typeNode->toString();
                     if(type2 != type){
                         element->throwException(
-                            format(_("The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"),
+                            formatR(_("The node type \"{0}\" is different from the type \"{1}\" specified in the parent node"),
                                     type2, type));
                     }
                 }
@@ -1785,7 +1784,7 @@ void StdBodyLoader::Impl::readContinuousTrackNode(Mapping* node)
 
 void StdBodyLoader::Impl::addTrackLink(int index, LinkPtr link, Mapping* node, string& io_parent, double initialAngle)
 {
-    setLinkName(link, format("{0}{1}", link->name(), index), node);
+    setLinkName(link, formatC("{0}{1}", link->name(), index), node);
 
     link->setInitialJointAngle(initialAngle);
 
@@ -1832,7 +1831,7 @@ void StdBodyLoader::Impl::readSubBodyNode(Mapping* node)
             if(subLoader->load(subBody, filename)){
                 subBodyMap[filename] = subBody;
             } else {
-                os() << format(_("SubBody specified by uri \"{}\" cannot be loaded."), uri) << endl;
+                os() << formatR(_("SubBody specified by uri \"{}\" cannot be loaded."), uri) << endl;
                 subBody.reset();
             }
         } catch(const ValueNode::Exception& ex){
@@ -1950,7 +1949,7 @@ void StdBodyLoader::Impl::readExtraJoint(Mapping* info)
     for(int i=0; i < 2; ++i){
         if(!joint->link(i)){
             info->throwException(
-                format(_("The link specified in \"link{}_name\" is not found"), (i + 1)));
+                formatR(_("The link specified in \"link{}_name\" is not found"), (i + 1)));
         }
     }
 
@@ -1967,7 +1966,7 @@ void StdBodyLoader::Impl::readExtraJoint(Mapping* info)
     } else if(jointType == "piston"){
         joint->setType(ExtraJoint::Piston);
     } else {
-        info->throwException(format(_("Joint type \"{}\" is not available"), jointType));
+        info->throwException(formatR(_("Joint type \"{}\" is not available"), jointType));
     }
 
     if(joint->type() == ExtraJoint::Hinge || joint->type() == ExtraJoint::Piston){

@@ -1,21 +1,15 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "Vector3Seq.h"
 #include "PlainSeqFileLoader.h"
 #include "ValueTree.h"
 #include "YAMLWriter.h"
 #include "GeneralSeqReader.h"
 #include "UTF8.h"
-#include <fmt/format.h>
+#include "Format.h"
 #include <fstream>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 
 Vector3Seq::Vector3Seq(int nFrames)
@@ -97,7 +91,7 @@ bool Vector3Seq::loadPlainFormat(const std::string& filename, std::ostream& os)
     }
 
     if(loader.numParts() < 3){
-        os << format(_("\"{}\" does not have 3 columns for 3d vector elements."), filename) << endl;
+        os << formatR(_("\"{}\" does not have 3 columns for 3d vector elements."), filename) << endl;
         return false;
     }
   
@@ -121,18 +115,16 @@ bool Vector3Seq::saveAsPlainFormat(const std::string& filename, std::ostream& os
     file.setf(ios::fixed);
 
     if(!file){
-        os << format(_("\"{}\" cannot be opened."), filename) << endl;
+        os << formatR(_("\"{}\" cannot be opened."), filename) << endl;
         return false;
     }
-
-    const string f("{0:.4f} {1:.6f} {2:.6f} {3:.6f}\n");
 
     const int n = numFrames();
     const double r = frameRate();
 
     for(int i=0; i < n; ++i){
         const Vector3& v = (*this)[i];
-        file << format(f, (i / r), v.x(), v.y(), v.z());
+        file << formatC("{0:.4f} {1:.6f} {2:.6f} {3:.6f}\n", (i / r), v.x(), v.y(), v.z());
     }
     
     return true;

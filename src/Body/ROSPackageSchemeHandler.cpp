@@ -1,7 +1,7 @@
 #include <cnoid/UriSchemeProcessor>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <vector>
 #include <cstdlib>
 #include "gettext.h"
@@ -90,7 +90,7 @@ public:
         if(found){
             return toUTF8(combined.string());
         } else {
-            os << fmt::format(_("\"{}\" is not found in the ROS package directories."), path);
+            os << formatR(_("\"{}\" is not found in the ROS package directories."), path);
             os.flush();
             return string();
         }

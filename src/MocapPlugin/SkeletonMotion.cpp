@@ -2,13 +2,12 @@
 #include "Bone.h"
 #include <cnoid/EasyScanner>
 #include <cnoid/EigenUtil>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <fstream>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -306,7 +305,7 @@ void SkeletonMotion::readBvhMotion(EasyScanner& scanner)
                     c[i] = radian(scanner.doubleValue);
                 }
             } else {
-                scanner.throwException(format(_("{0}-th motion element is illegal"), i));
+                scanner.throwException(formatR(_("{0}-th motion element is illegal"), i));
             }
         }
         scanner.readLFEOFex(_("line break is missing"));

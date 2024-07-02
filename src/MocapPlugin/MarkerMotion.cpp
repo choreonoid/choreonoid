@@ -2,12 +2,11 @@
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <cnoid/EasyScanner>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 
 MarkerMotion::MarkerMotion()
@@ -116,10 +115,10 @@ bool MarkerMotion::doReadSeq(const Mapping* archive, std::ostream& os)
 
     if(!isValidContent){
         if(content.empty()){
-            os << format("Content of {0} should be \"MarkerMotion\" but it is not specified.", seqType()) << endl;
+            os << formatC("Content of {0} should be \"MarkerMotion\" but it is not specified.", seqType()) << endl;
         } else {
-            os << format("Content \"{0}\" of {1} is different from the required content \"MarkerMotion\".",
-                         content, seqType()) << endl;
+            os << formatC("Content \"{0}\" of {1} is different from the required content \"MarkerMotion\".",
+                          content, seqType()) << endl;
         }
     } else {
         if(MultiVector3Seq::doReadSeq(archive, os)){
@@ -235,8 +234,8 @@ int MarkerMotion::readVpmSegment
         setTimeStep(timeStep); // initial setup
     } else if(timeStep != prevTimeStep){
         addSeqMessage(
-            format("Warning: Frame time {0} of Segment {1} is different from {2} of the previous segment.\n",
-                   timeStep, label, prevTimeStep));
+            formatC("Warning: Frame time {0} of Segment {1} is different from {2} of the previous segment.\n",
+                    timeStep, label, prevTimeStep));
     }
 
     double x, y, z;
@@ -250,8 +249,8 @@ int MarkerMotion::readVpmSegment
 
     if(segment.size() != numFrames){
         addSeqMessage(
-            format("Warning: Frames: {0} of Segment {1} is different from the actual number of frames {2}.\n",
-                   numFrames, label,segment.size()));
+            formatC("Warning: Frames: {0} of Segment {1} is different from the actual number of frames {2}.\n",
+                    numFrames, label,segment.size()));
     }
     
     return segment.size();
@@ -292,7 +291,7 @@ bool MarkerMotion::loadTRC(const std::string& filename)
             scanner.throwException("NumFrames value is invalid");
         }
         if(Units != "mm"){
-            scanner.throwException(format("Unit {0} is not supported.", scanner.stringValue));
+            scanner.throwException(formatC("Unit {0} is not supported.", scanner.stringValue));
         }   
 
         scanner >> "Frame#" >> "Time";
@@ -331,13 +330,13 @@ bool MarkerMotion::loadTRC(const std::string& filename)
                 p *= 0.001; // to meter
                 if(markerIndex == NumMarkers){
                     scanner.throwException(
-                        format("Frame {0} has elements more than the number of markers", frameIndex));
+                        formatC("Frame {0} has elements more than the number of markers", frameIndex));
                 }
                 markers[markerIndex++] = p;
             }
             if(markerIndex + 1 < NumMarkers){
                 scanner.throwException(
-                    format("Frame {0} does not contain all marker positions", frameIndex));
+                    formatC("Frame {0} does not contain all marker positions", frameIndex));
             }
         }
             

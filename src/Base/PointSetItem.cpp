@@ -13,6 +13,7 @@
 #include <cnoid/PointSetUtil>
 #include <cnoid/PolyhedralRegion>
 #include <cnoid/CloneMap>
+#include <cnoid/Format>
 #include <stdexcept>
 #include "gettext.h"
 
@@ -1007,7 +1008,7 @@ PointSetLocation::PointSetLocation(PointSetItem* item)
 
 std::string PointSetLocation::getName() const
 {
-    return fmt::format(_("Offset position of {0}"), item->displayName());
+    return formatR(_("Offset position of {0}"), item->displayName());
 }
 
 

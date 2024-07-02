@@ -4,7 +4,7 @@
 #include <cnoid/SpinBox>
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace cnoid;
@@ -124,8 +124,8 @@ void LeggedBodyBar::Impl::moveCm(BodyItem* bodyItem, BodyItem::PositionType posi
     }
     if(!bodyItem->doLegIkToMoveCm(c, true)){
         MessageView::instance()->notify(
-            fmt::format(_("The center of mass of {} cannt be moved to the target position\n"),
-                        bodyItem->displayName()));
+            formatR(_("The center of mass of {} cannt be moved to the target position\n"),
+                    bodyItem->displayName()));
     }
 }
 

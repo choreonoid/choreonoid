@@ -5,12 +5,11 @@
 #include <cnoid/SceneLights>
 #include <cnoid/SceneEffects>
 #include <cnoid/EigenUtil>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -786,7 +785,7 @@ void MinimumLightingProgram::Impl::initialize(GLSLProgram& glsl)
     string lightFormat("lights[{}].");
     for(int i=0; i < maxNumLights; ++i){
         auto& light = lightInfos[i];
-        string prefix = format(lightFormat, i);
+        string prefix = formatR(lightFormat, i);
         light.directionLocation = glsl.getUniformLocation(prefix + "direction");
         light.intensityLocation = glsl.getUniformLocation(prefix + "intensity");
         light.ambientIntensityLocation = glsl.getUniformLocation(prefix + "ambientIntensity");
@@ -900,7 +899,7 @@ void BasicLightingProgram::Impl::initialize(GLSLProgram& glsl)
     string lightFormat("lights[{}].");
     for(int i=0; i < maxNumLights; ++i){
         auto& light = lightInfos[i];
-        string prefix = format(lightFormat, i);
+        string prefix = formatR(lightFormat, i);
         light.positionLocation = glsl.getUniformLocation(prefix + "position");
         light.intensityLocation = glsl.getUniformLocation(prefix + "intensity");
         light.ambientIntensityLocation = glsl.getUniformLocation(prefix + "ambientIntensity");
@@ -1270,9 +1269,9 @@ void FullLightingProgram::Impl::initializeShadowInfo(GLSLProgram& glsl, int inde
 {
     ShadowInfo& shadow = shadowInfos[index];
 
-    shadow.shadowMatrixLocation = glsl.getUniformLocation(format("shadowMatrices[{}]", index));
+    shadow.shadowMatrixLocation = glsl.getUniformLocation(formatC("shadowMatrices[{}]", index));
     
-    string prefix = format("shadows[{}].", index);
+    string prefix = formatC("shadows[{}].", index);
     shadow.lightIndexLocation = glsl.getUniformLocation(prefix + "lightIndex");
     shadow.shadowMapLocation = glsl.getUniformLocation(prefix + "shadowMap");
 

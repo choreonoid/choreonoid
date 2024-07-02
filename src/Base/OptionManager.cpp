@@ -1,6 +1,6 @@
 #include "OptionManager.h"
 #include "MessageView.h"
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
@@ -62,7 +62,7 @@ void OptionManager::processOptionsPhase2()
 
     for(auto& file : inputFiles){
         MessageView::instance()->putln(
-            fmt::format(_("Input file \"{}\" was not processed."), file),
+            formatR(_("Input file \"{}\" was not processed."), file),
             MessageView::Warning);
     }
 }

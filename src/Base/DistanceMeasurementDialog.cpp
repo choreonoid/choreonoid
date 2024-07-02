@@ -16,18 +16,17 @@
 #include "LineEdit.h"
 #include "Separator.h"
 #include <cnoid/ConnectionSet>
+#include <cnoid/Format>
 #include <QLabel>
 #include <QBoxLayout>
 #include <QGridLayout>
 #include <QDialogButtonBox>
 #include <QColorDialog>
-#include <fmt/format.h>
 #include <vector>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -398,11 +397,11 @@ DistanceMeasurementDialog::Impl::~Impl()
 void DistanceMeasurementDialog::Impl::updateDisplayValueFormat()
 {
     if(displayValueFormat->isMeter()){
-        pointDisplayFormat = format("( {{0:.{0}f}}, {{1:.{0}f}}, {{2:.{0}f}} ) [m]", displayValueFormat->lengthDecimals());
+        pointDisplayFormat = formatC("( {{0:.{0}f}}, {{1:.{0}f}}, {{2:.{0}f}} ) [m]", displayValueFormat->lengthDecimals());
     } else {
-        pointDisplayFormat = format("( {{0:.{0}f}}, {{1:.{0}f}}, {{2:.{0}f}} ) [mm]", displayValueFormat->lengthDecimals());
+        pointDisplayFormat = formatC("( {{0:.{0}f}}, {{1:.{0}f}}, {{2:.{0}f}} ) [mm]", displayValueFormat->lengthDecimals());
     }
-    distanceDisplayFormat = format("{{0:.{0}f}}", displayValueFormat->lengthDecimals());
+    distanceDisplayFormat = formatC("{{0:.{0}f}}", displayValueFormat->lengthDecimals());
 
     updateDistanceDisplay();
 }
@@ -543,9 +542,9 @@ void DistanceMeasurementDialog::onFinished(int result)
 void DistanceMeasurementDialog::Impl::onMeasurementItemDisconnectedFromRoot()
 {
     showErrorDialog(
-        format(_("The Distance measurement item \"{0}\" has been removed from the project and "
-                 "close the distance measurement dialog."),
-               measurementItem->name()));
+        formatR(_("The Distance measurement item \"{0}\" has been removed from the project and "
+                  "close the distance measurement dialog."),
+                measurementItem->name()));
 
     // The finalizeDistanceMeasurement function is called when the dialog is closed
     self->close();
@@ -576,9 +575,9 @@ void DistanceMeasurementDialog::Impl::onCreateMeasurementItemCheckToggled(bool o
         if(isExistingMeasurementItem){
             bool confirmed = showConfirmDialog(
                 _("Removing Distance Measurement Item"),
-                format(_("The distance measurement item \"{0}\" will be removed from the project. "
-                         "Do you want to continue this operation?"),
-                       measurementItem->name()));
+                formatR(_("The distance measurement item \"{0}\" will be removed from the project. "
+                          "Do you want to continue this operation?"),
+                        measurementItem->name()));
             if(!confirmed){
                 doRemove = false;
                 doCancel = true;
@@ -984,7 +983,7 @@ void DistanceMeasurementDialog::Impl::onFixOneSideRadioToggled(int which)
 void DistanceMeasurementDialog::Impl::updatePointDisplay(int which, Vector3 p)
 {
     p *= displayValueFormat->ratioToDisplayLength();
-    pointLabels[which].setText(format(pointDisplayFormat, p.x(), p.y(), p.z()).c_str());
+    pointLabels[which].setText(formatR(pointDisplayFormat, p.x(), p.y(), p.z()).c_str());
 }
     
 
@@ -995,14 +994,14 @@ void DistanceMeasurementDialog::Impl::updateDistanceDisplay()
         const Vector3& p0 = measurementItem->measurementPoint(0);
         const Vector3& p1 = measurementItem->measurementPoint(1);
 
-        distanceLabel.setText(format(distanceDisplayFormat, displayValueFormat->toDisplayLength(distance)).c_str());
+        distanceLabel.setText(formatR(distanceDisplayFormat, displayValueFormat->toDisplayLength(distance)).c_str());
         distanceUnitLabel.setText(displayValueFormat->isMeter() ? _("[m]") : _("[mm]"));
         updatePointDisplay(0, p0);
         updatePointDisplay(1, p1);
 
         Vector3 dp = displayValueFormat->ratioToDisplayLength() * (p1 - p0);
         for(int i=0; i < 3; ++i){
-            distanceElementLabels[i].setText(format(distanceDisplayFormat, dp(i)).c_str());
+            distanceElementLabels[i].setText(formatR(distanceDisplayFormat, dp(i)).c_str());
         }
     }
 }

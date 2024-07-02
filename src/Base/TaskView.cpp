@@ -10,6 +10,7 @@
 #include "App.h"
 #include "Archive.h"
 #include <cnoid/ConnectionSet>
+#include <cnoid/Format>
 #include <cnoid/stdx/optional>
 #include <QBoxLayout>
 #include <QLabel>
@@ -17,12 +18,10 @@
 #include <QApplication>
 #include <set>
 #include <iostream>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -487,7 +486,7 @@ void TaskViewImpl::addTask(Task* task)
         setCurrentTask(0, true);
     }
 
-    os << format(_("Task \"{}\" has been added."), task->name()) << endl;
+    os << formatR(_("Task \"{}\" has been added."), task->name()) << endl;
 }
 
 
@@ -508,8 +507,8 @@ bool TaskViewImpl::updateTask(Task* task)
     } else {
         if(isWaiting()){
             mv->putln(
-                format(_("Task \"{}\" cannot be updated now because it is wating for a command to finish."),
-                       task->name()),
+                formatR(_("Task \"{}\" cannot be updated now because it is wating for a command to finish."),
+                        task->name()),
                 MessageView::Warning);
             
         } else {
@@ -544,7 +543,7 @@ bool TaskViewImpl::updateTask(Task* task)
                     task->restoreState(self, *info.state);
                 }
             }
-            os << format(_("Task \"{}\" has been updated with the new one."), task->name()) << endl;
+            os << formatR(_("Task \"{}\" has been updated with the new one."), task->name()) << endl;
             updated = true;
         }
     }
@@ -1254,7 +1253,7 @@ void TaskViewImpl::goToNextTask()
                 if(setCurrentTaskByName(nextTask, true, true)){
                     ++currentIndexInSerializedTasks;
                 } else {
-                    mv->putln(format(_("Next task \"{}\" is not found."), nextTask),
+                    mv->putln(formatR(_("Next task \"{}\" is not found."), nextTask),
                               MessageView::Warning);
                 }
             }

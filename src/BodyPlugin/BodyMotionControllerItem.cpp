@@ -5,12 +5,11 @@
 #include <cnoid/ControllerIO>
 #include <cnoid/MessageView>
 #include <cnoid/PutPropertyFunction>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -79,7 +78,7 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
     auto motionItems = self->descendantItems<BodyMotionItem>();
     if(motionItems.empty()){
         mv->putln(
-            format(_("Any body motion item for {} is not found."), self->displayName()),
+            formatR(_("Any body motion item for {} is not found."), self->displayName()),
             MessageView::Error);
         return false;
     }
@@ -99,14 +98,14 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
 
     if(qseqRef->numFrames() == 0){
         mv->putln(
-            format(_("{0} for {1} is empty."), motionItem->displayName(), self->displayName()),
+            formatR(_("{0} for {1} is empty."), motionItem->displayName(), self->displayName()),
             MessageView::Error);
         return false;
     }
     if(fabs(qseqRef->frameRate() - (1.0 / io->timeStep())) > 1.0e-6){
         mv->putln(
-            format(_("Frame rate {0} of \"{1}\" is different from the simulation frame rate {2}."),
-                   qseqRef->frameRate(), motionItem->displayName(), 1.0 / io->timeStep()),
+            formatR(_("Frame rate {0} of \"{1}\" is different from the simulation frame rate {2}."),
+                    qseqRef->frameRate(), motionItem->displayName(), 1.0 / io->timeStep()),
             MessageView::Error);
         return false;
     }

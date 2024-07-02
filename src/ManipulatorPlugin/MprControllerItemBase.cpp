@@ -14,7 +14,7 @@
 #include <cnoid/LazyCaller>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <unordered_map>
 #include <regex>
 #include <cctype>
@@ -23,7 +23,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -307,24 +306,24 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
     
     auto programItems = self->descendantItems<MprProgramItemBase>();
     if(programItems.empty()){
-        mv->putln(format(_("Any program item for {} is not found."),
-                         self->displayName()), MessageView::Error);
+        mv->putln(formatR(_("Any program item for {} is not found."),
+                          self->displayName()), MessageView::Error);
         return false;
     }
     
     startupProgramItem.reset();
     for(auto& programItem : programItems){
         if(!programItem->resolveAllReferences()){
-            mv->putln(format(_("Program \"{0}\" is incomplete due to unresolved references."),
-                             programItem->displayName()), MessageView::Warning);
+            mv->putln(formatR(_("Program \"{0}\" is incomplete due to unresolved references."),
+                              programItem->displayName()), MessageView::Warning);
         }
         if(programItem->isStartupProgram()){
             startupProgramItem = programItem;
         }
     }
     if(!startupProgramItem){
-        mv->putln(format(_("The startup program for {0} is not specified."),
-                         self->displayName()), MessageView::Error);
+        mv->putln(formatR(_("The startup program for {0} is not specified."),
+                          self->displayName()), MessageView::Error);
         return false;
     }
     startupProgram = cloneMap.getClone(startupProgramItem->program());
@@ -342,7 +341,7 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
     }
     
     if(!self->initializeVariables()){
-        mv->putln(format(_("Variables for {} cannot be initialized."), self->displayName()),
+        mv->putln(formatR(_("Variables for {} cannot be initialized."), self->displayName()),
                   MessageView::Error);
         return false;
     }
@@ -495,7 +494,7 @@ stdx::optional<MprVariable::Value> MprControllerItemBase::evalExpressionAsVariab
         if(auto variable = impl->findVariable(id)){
             return variable->value();
         }
-        impl->io->os() << format(_("Variable {0} is not defined."), id.label()) << endl;
+        impl->io->os() << formatR(_("Variable {0} is not defined."), id.label()) << endl;
     }
     return stdx::nullopt;
 }
@@ -699,7 +698,7 @@ bool MprControllerItemBase::Impl::control()
         } else {
             auto p = interpreterMap.find(typeid(*statement));
             if(p == interpreterMap.end()){
-                io->os() << format(_("{0} cannot be executed because the interpreter for it is not found."),
+                io->os() << formatR(_("{0} cannot be executed because the interpreter for it is not found."),
                                    statement->label(0)) << endl;
                 ++iterator;
             } else {
@@ -709,8 +708,8 @@ bool MprControllerItemBase::Impl::control()
                     if(isLogEnabled){
                         currentLog->isErrorState_ = true;
                     }
-                    io->os() << format(_("Failed to execute {0} statement. The control was terminated."),
-                                       statement->label(0)) << endl;
+                    io->os() << formatR(_("Failed to execute {0} statement. The control was terminated."),
+                                        statement->label(0)) << endl;
                     break;
                 }
                 isActiveControlState = true;
@@ -916,8 +915,8 @@ bool MprControllerItemBase::Impl::interpretCallStatement(MprCallStatement* state
     auto program = self->findProgram(programName);
 
     if(!program){
-        io->os() << format(_("Program \"{0}\" specified in a call statement does not exist."),
-                           programName) << endl;
+        io->os() << formatR(_("Program \"{0}\" specified in a call statement does not exist."),
+                            programName) << endl;
         return false;
     }
 
@@ -974,7 +973,7 @@ stdx::optional<bool> MprControllerItemBase::Impl::evalConditionalExpression(cons
         }
     }
     if(!isExpressionValid){
-        io->os() << format(_("Conditional expression \"{0}\" is invalid."), expression) << endl;
+        io->os() << formatR(_("Conditional expression \"{0}\" is invalid."), expression) << endl;
         return stdx::nullopt;
     }
 
@@ -1051,7 +1050,7 @@ stdx::optional<MprVariable::Value> MprControllerItemBase::Impl::getTermValue
         errno = 0;
         long number = strtol(match.str(0).c_str(), nullptr, 10);
         if(errno == ERANGE || number < INT_MIN || number > INT_MAX){
-            io->os() << format(_("Integer value {0} is out of range."), match.str(0)) << endl;
+            io->os() << formatR(_("Integer value {0} is out of range."), match.str(0)) << endl;
         } else {
             value = std::stoi(match.str(0));
             pos = match[0].second;
@@ -1086,8 +1085,8 @@ bool MprControllerItemBase::Impl::interpretAssignStatement(MprAssignStatement* s
 {
     auto& expression = statement->valueExpression();
     if(expression.empty()){
-        io->os() << format(_("Expression assigned to variable {0} is empty."),
-                           statement->variableExpression()) << endl;
+        io->os() << formatR(_("Expression assigned to variable {0} is empty."),
+                            statement->variableExpression()) << endl;
         return false;
     }
 
@@ -1133,7 +1132,7 @@ bool MprControllerItemBase::Impl::interpretAssignStatement(MprAssignStatement* s
             }
         }
         if(!isValidExpression){
-            io->os() << format(_("Term \"{0}\" is invalid."), invalidTerm) << endl;
+            io->os() << formatR(_("Term \"{0}\" is invalid."), invalidTerm) << endl;
             break;
         }
     }
@@ -1142,7 +1141,7 @@ bool MprControllerItemBase::Impl::interpretAssignStatement(MprAssignStatement* s
         if(termValues.empty()){
             isValidExpression = false;
         } else if(!isNextTermOperator){
-            io->os() << format(_("Expression ends with operator {0}."), operators.back()) << endl;
+            io->os() << formatR(_("Expression ends with operator {0}."), operators.back()) << endl;
             isValidExpression = false;
         }
     }
@@ -1157,10 +1156,10 @@ bool MprControllerItemBase::Impl::interpretAssignStatement(MprAssignStatement* s
         char op = operators[operatorIndex++];
         if(!applyBinaryOperation(value, op, termValues[termIndex++])){
             isValidExpression = false;
-            io->os() << format(_("Type mismatch in expresion \"{0} {1} {2}\""),
-                               termStrings[termIndex-2],
-                               op,
-                               termStrings[termIndex-1]) << endl;
+            io->os() << formatR(_("Type mismatch in expresion \"{0} {1} {2}\""),
+                                termStrings[termIndex-2],
+                                op,
+                                termStrings[termIndex-1]) << endl;
             break;
         }
     }
@@ -1259,8 +1258,8 @@ bool MprControllerItemBase::Impl::applyBinaryOperation
 bool MprControllerItemBase::Impl::interpretSetSignalStatement(MprSignalStatement* statement)
 {
     if(!ioDevice){
-        io->os() << format(_("{0} cannot be executed because {1} does not have a signal I/O device"),
-                           statement->label(0), io->body()->name()) << endl;
+        io->os() << formatR(_("{0} cannot be executed because {1} does not have a signal I/O device"),
+                            statement->label(0), io->body()->name()) << endl;
     } else {
         self->pushOutputOnceFunction(
             [this, statement](){

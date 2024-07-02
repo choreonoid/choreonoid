@@ -1,13 +1,8 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "AudioItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <ostream>
 
 #ifdef CNOID_MEDIA_PLUGIN_USE_LIBSNDFILE
@@ -18,7 +13,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 std::shared_ptr< std::vector<float> > emptySamplingData;
@@ -131,14 +125,14 @@ bool AudioItem::loadAudioFile(const std::string& filename, std::ostream& os, Ite
         os << sf_strerror(sndfile);
 
     } else if(sfinfo.channels < 1 || sfinfo.channels > 2){
-        os << format("channels = {:d}", sfinfo.channels);
+        os << formatC("channels = {:d}", sfinfo.channels);
 
     } else {
         if(false){
-            os << format(" format mask = {0:x}, sub mask = {1:x}, endian = {2:x}\n",
-                         (sfinfo.format & SF_FORMAT_TYPEMASK),
-                         (sfinfo.format & SF_FORMAT_SUBMASK),
-                         (sfinfo.format & SF_FORMAT_ENDMASK));
+            os << formatC(" format mask = {0:x}, sub mask = {1:x}, endian = {2:x}\n",
+                          (sfinfo.format & SF_FORMAT_TYPEMASK),
+                          (sfinfo.format & SF_FORMAT_SUBMASK),
+                          (sfinfo.format & SF_FORMAT_ENDMASK));
         }
 
         numChannels_ = sfinfo.channels;

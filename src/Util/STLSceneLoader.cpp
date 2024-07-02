@@ -1,7 +1,3 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "STLSceneLoader.h"
 #include "SimpleScanner.h"
 #include "SceneDrawables.h"
@@ -9,7 +5,7 @@
 #include "NullOut.h"
 #include "strtofloat.h"
 #include "UTF8.h"
-#include <fmt/format.h>
+#include "Format.h"
 #include <fstream>
 #include <thread>
 #include <stdexcept>
@@ -18,7 +14,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -477,7 +472,7 @@ SgNode* STLSceneLoader::Impl::load(const string& filename)
 {
     ifstream ifs(fromUTF8(filename).c_str(), std::ios::in | std::ios::binary);
     if(!ifs.is_open()){
-        os() << format(_("Unable to open file \"{}\"."), filename) << endl;
+        os() << formatR(_("Unable to open file \"{}\"."), filename) << endl;
         return nullptr;
     }
     
@@ -521,11 +516,11 @@ SgNode* STLSceneLoader::Impl::load(const string& filename)
 SgMeshPtr STLSceneLoader::Impl::loadBinaryFormat(const string& filename, ifstream& ifs, size_t numTriangles)
 {
     if(numTriangles == 0){
-        os() << format(_("No triangles in \"{1}\"."), filename) << endl;
+        os() << formatR(_("No triangles in \"{1}\"."), filename) << endl;
         return nullptr;
     }
     if(numTriangles > (1 << 31) / 3){
-        os() << format(_("Unable to load \"{1}\". Its file size is too large."), filename) << endl;
+        os() << formatR(_("Unable to load \"{1}\". Its file size is too large."), filename) << endl;
         return nullptr;
     }
     

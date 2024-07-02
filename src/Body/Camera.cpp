@@ -5,13 +5,11 @@
 #include <cnoid/ValueTree>
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
-#include <fmt/format.h>
 #include <cmath>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 

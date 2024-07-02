@@ -1,5 +1,5 @@
 #include "FFmpegMovieRecorderEncoder.h"
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <cstdio>
 
 extern "C" {
@@ -13,7 +13,6 @@ extern "C" {
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -73,7 +72,7 @@ bool FFmpegMovieRecorderEncoder::doEncoding(std::string fileBasename)
 #endif
     const AVCodec* codec = avcodec_find_encoder_by_name(encoderName);
     if(!codec){
-        setErrorMessage(format(_("Encoder \"{0}\" is not found."), encoderName));
+        setErrorMessage(formatR(_("Encoder \"{0}\" is not found."), encoderName));
         return false;
     }
 
@@ -104,7 +103,7 @@ bool FFmpegMovieRecorderEncoder::doEncoding(std::string fileBasename)
     if(ret != 0){
         char error[64];
         av_make_error_string(error , AV_ERROR_MAX_STRING_SIZE, ret);
-        setErrorMessage(format(_("Executing avcodec_open2 failed: {0}"), error));
+        setErrorMessage(formatR(_("Executing avcodec_open2 failed: {0}"), error));
         return false;
     }
 
@@ -169,7 +168,7 @@ bool FFmpegMovieRecorderEncoder::doEncoding(std::string fileBasename)
             av_packet_rescale_ts(&packet, codec_context->time_base, stream->time_base);
             ret = av_interleaved_write_frame(format_context, &packet);
             if(ret != 0){
-                setErrorMessage(format(_("Executing av_interleaved_write_frame failed: {0}"), ret));
+                setErrorMessage(formatR(_("Executing av_interleaved_write_frame failed: {0}"), ret));
                 failed = true;
                 break;
             }

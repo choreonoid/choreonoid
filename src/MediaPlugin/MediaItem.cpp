@@ -5,13 +5,12 @@
 #include <cnoid/Archive>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
@@ -94,11 +93,11 @@ bool MediaItem::setMediaFilePath(const std::string& filepath)
     if(filesystem::exists(fpath) && !filesystem::is_directory(fpath)){
         mediaFilePath_ = filepath;
         filesystem::path fullpath(filesystem::absolute(fpath));
-        mediaURI_ = format("file://{}", toUTF8(fullpath.generic_string()));
+        mediaURI_ = formatC("file://{}", toUTF8(fullpath.generic_string()));
         return true;
 
     } else {
-        lastErrorMessage_ = format(_("Media file \"{}\" does not exist."), filepath);
+        lastErrorMessage_ = formatR(_("Media file \"{}\" does not exist."), filepath);
         return false;
     }
 }

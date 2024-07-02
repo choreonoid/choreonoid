@@ -2,16 +2,15 @@
 #include "Item.h"
 #include "ItemTreeWidget.h"
 #include <cnoid/PolymorphicItemFunctionSet>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QStyle>
 #include <QKeyEvent>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -485,7 +484,7 @@ void ItemTreePanelDialog::Impl::activateItem(Item* item, bool isNewItem, bool do
             }
             defaultPanelLabel.show();
             defaultPanelLabel.setText(
-                format(_("\"{0}\" is not a target item."), item->name()).c_str());
+                formatR(_("\"{0}\" is not a target item."), item->name()).c_str());
         }
         if(!item->isSelected()){
             itemTreeWidgetConnection.block();

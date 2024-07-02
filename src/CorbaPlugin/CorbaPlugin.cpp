@@ -11,16 +11,15 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/ValueTree>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
 #include <QTcpSocket>
-#include <fmt/format.h>
 #include <thread>
 #include <iostream>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
@@ -65,7 +64,7 @@ void checkOrInvokeCorbaNameServer()
             auto serverExecPath = executableTopDirPath() / "bin" / nameServerCommand;
 
             if(!filesystem::exists(serverExecPath)){
-                mv->putln(format(_("Namer server {} is not found."), nameServerCommand));
+                mv->putln(formatR(_("Namer server {} is not found."), nameServerCommand));
                     
             } else {
                 string command = serverExecPath.make_preferred().string();
@@ -75,9 +74,9 @@ void checkOrInvokeCorbaNameServer()
                 nameServerProcess.start(command.c_str(), QStringList());
 #endif
                 if(nameServerProcess.waitForStarted() && nameServerProcess.waitForReadyRead()){
-                    mv->putln(format(_("Name server process {} has been invoked."), nameServerCommand));
+                    mv->putln(formatR(_("Name server process {} has been invoked."), nameServerCommand));
                 } else {
-                    mv->putln(format(_("Name server \"{}\" cannot be invoked."), toUTF8(command)));
+                    mv->putln(formatR(_("Name server \"{}\" cannot be invoked."), toUTF8(command)));
                 }
             }
         }

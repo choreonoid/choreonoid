@@ -1,7 +1,6 @@
 /**
    \file
    \brief The definitions of the body customizer interface for increasing binary compatibility
-   \author Shin'ichiro Nakaoka
 */
 
 #ifndef CNOID_BODY_BODY_CUSTOMIZER_INTERFACE_H

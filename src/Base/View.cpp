@@ -8,11 +8,10 @@
 #include <QKeyEvent>
 #include <QTabWidget>
 #include <QStyle>
-#include <fmt/format.h>
+#include <cnoid/Format>
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -162,7 +161,7 @@ void View::setName(const std::string& name)
 
 void View::Impl::updateTitle()
 {
-    self->setWindowTitle(format(titleFormat, name).c_str());
+    self->setWindowTitle(formatR(titleFormat, name).c_str());
 }
 
 

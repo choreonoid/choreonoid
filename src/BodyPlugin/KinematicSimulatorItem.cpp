@@ -12,13 +12,11 @@
 #include <cnoid/AISTCollisionDetector>
 #include <cnoid/BodyCollisionDetector>
 #include <cnoid/MessageView>
-#include <fmt/format.h>
 #include <unordered_set>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 

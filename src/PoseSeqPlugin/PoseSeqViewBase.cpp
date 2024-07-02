@@ -11,7 +11,7 @@
 #include <cnoid/InfoBar>
 #include <cnoid/Dialog>
 #include <cnoid/QtEventUtil>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <QDialogButtonBox>
 #include <QHeaderView>
 #include <QMouseEvent>
@@ -21,7 +21,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -1227,7 +1226,7 @@ void PoseSeqViewBase::countSelectedPoses()
         n = currentPoseSeqItem->selectedPoses().size();
     }
     MessageView::mainInstance()->notify(
-        format(_("The number of selected key poses is {0}."), n));
+        formatR(_("The number of selected key poses is {0}."), n));
 }
 
 

@@ -13,9 +13,9 @@
 #include <cnoid/PluginManager>
 #include <cnoid/ProjectManager>
 #include <cnoid/ItemManager>
+#include <cnoid/Format>
 #include <QLibrary>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <set>
 #include <bitset>
 #include <algorithm>
@@ -23,7 +23,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
@@ -371,8 +370,8 @@ void SimpleControllerItem::Impl::setController(const std::string& name)
 bool SimpleControllerItem::Impl::loadController()
 {
     if(controllerModuleName.empty()){
-        mv->put(format(_("The controller module of {0} is not specified."),
-                       self->displayName()),
+        mv->put(formatR(_("The controller module of {0} is not specified."),
+                        self->displayName()),
                 MessageView::Warning);
         return false;
     }
@@ -394,10 +393,10 @@ bool SimpleControllerItem::Impl::loadController()
                 modulePath = filesystem::path(fromUTF8(projectDir)) / modulePath;
             } else {
                 mv->putln(
-                    format(_("Controller module \"{0}\" of {1} is specified as a relative "
-                             "path from the project directory, but the project directory "
-                             "has not been determined yet."),
-                           controllerModuleName, self->displayName()),
+                    formatR(_("Controller module \"{0}\" of {1} is specified as a relative "
+                              "path from the project directory, but the project directory "
+                              "has not been determined yet."),
+                            controllerModuleName, self->displayName()),
                     MessageView::Error);
                 return false;
             }
@@ -408,15 +407,15 @@ bool SimpleControllerItem::Impl::loadController()
     controllerModule.setFileName(controllerModuleFilename.c_str());
         
     if(controllerModule.isLoaded()){
-        mv->putln(format(_("The controller module of {} has already been loaded."), self->displayName()));
+        mv->putln(formatR(_("The controller module of {} has already been loaded."), self->displayName()));
             
         // This should be called to make the reference to the DLL.
         // Otherwise, QLibrary::unload() unloads the DLL without considering this instance.
         controllerModule.load();
             
     } else {
-        mv->put(format(_("Loading the controller module \"{1}\" of {0} ... "),
-                       self->displayName(), controllerModuleFilename));
+        mv->put(formatR(_("Loading the controller module \"{1}\" of {0} ... "),
+                        self->displayName(), controllerModuleFilename));
         if(!controllerModule.load()){
             mv->put(_("Failed.\n"));
             mv->putln(controllerModule.errorString(), MessageView::Error);
@@ -435,8 +434,8 @@ bool SimpleControllerItem::Impl::loadController()
 
     controller = factory();
     if(!controller){
-        mv->putln(format(_("The controller factory of {} failed to create a controller instance."),
-                         self->displayName()),
+        mv->putln(formatR(_("The controller factory of {} failed to create a controller instance."),
+                          self->displayName()),
                   MessageView::Error);
         unloadController();
         return false;
@@ -458,7 +457,7 @@ bool SimpleControllerItem::Impl::configureController(BodyItem* bodyItem)
             if(controller->configure(&config)){
                 isConfigured = true;
             } else {
-                mv->putln(format(_("{} failed to configure the controller"), self->displayName()),
+                mv->putln(formatR(_("{} failed to configure the controller"), self->displayName()),
                           MessageView::Error);
                 isConfigured = false;
             }
@@ -488,8 +487,8 @@ void SimpleControllerItem::Impl::unloadController()
     }
 
     if(controllerModule.unload()){
-        mv->putln(format(_("The controller module \"{1}\" of {0} has been unloaded."),
-                         self->displayName(), controllerModuleFilename));
+        mv->putln(formatR(_("The controller module \"{1}\" of {0} has been unloaded."),
+                          self->displayName(), controllerModuleFilename));
     }
 
     isConfigured = false;
@@ -581,7 +580,7 @@ SimpleController* SimpleControllerItem::Impl::initialize(ControllerIO* io, Share
         }
     }
     if(!isConfigured){
-        mv->putln(format(_("{} is not configured."), self->displayName()), MessageView::Error);
+        mv->putln(formatR(_("{} is not configured."), self->displayName()), MessageView::Error);
         return nullptr;
     }
 
@@ -598,7 +597,7 @@ SimpleController* SimpleControllerItem::Impl::initialize(ControllerIO* io, Share
     clearIoTargets();
 
     if(!controller->initialize(this)){
-        mv->putln(format(_("{}'s initialize method failed."), self->displayName()), MessageView::Error);
+        mv->putln(formatR(_("{}'s initialize method failed."), self->displayName()), MessageView::Error);
         sharedInfo.reset();
         return nullptr;
     }
@@ -864,7 +863,7 @@ bool SimpleControllerItem::Impl::start()
 {
     bool result = true;
     if(!controller->start()){
-        mv->putln(format(_("{} failed to start"), self->displayName()), MessageView::Warning);
+        mv->putln(formatR(_("{} failed to start"), self->displayName()), MessageView::Warning);
         result = false;
     } else {
         for(auto& subController : subControllerItems){
@@ -1130,7 +1129,7 @@ void SimpleControllerItem::Impl::doPutProperties(PutPropertyFunction& putPropert
     } else if(baseDirectoryType.is(PROJECT_DIRECTORY)){
         moduleProperty.setBaseDirectory(ProjectManager::instance()->currentProjectDirectory());
     }
-    moduleProperty.setFilters({ format(_("Simple Controller Module (*.{})"), DLL_EXTENSION) });
+    moduleProperty.setFilters({ formatR(_("Simple Controller Module (*.{})"), DLL_EXTENSION) });
     moduleProperty.setExtensionRemovalModeForFileDialogSelection(true);
 
     putProperty(_("Controller module"), moduleProperty,

@@ -5,10 +5,9 @@
 #include "MulticopterPluginHeader.h"
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
-#include <fmt/format.h>
+#include <cnoid/Format>
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
 using namespace Multicopter;
 
@@ -181,7 +180,7 @@ MulticopterSimulatorItem::setAirDefinitionFile(const std::string& filename)
             simMgr->setNewFluidEnvironment();
             _airDefinitionFileName.clear();
             UtilityImpl::printErrorMessage(
-                fmt::format("Air definition file \"{}\" is not valid", _airDefinitionFileName));
+                formatC("Air definition file \"{}\" is not valid", _airDefinitionFileName));
         }
     }
     if(result){

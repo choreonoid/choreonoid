@@ -5,15 +5,14 @@
 #include "MainWindow.h"
 #include "MessageView.h"
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
 #include <QMessageBox>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
-using fmt::format;
 
 namespace cnoid {
 
@@ -140,7 +139,7 @@ ItemList<Item> ItemFileDialog::Impl::loadItems(Item* parentItem, bool doAddition
         } else {
             title = _("Import {0}");
         }
-        self->setWindowTitle(format(title, validFileIOs.front()->caption()).c_str());
+        self->setWindowTitle(formatR(title, validFileIOs.front()->caption()).c_str());
     }
     self->setAcceptMode(QFileDialog::AcceptOpen);
 
@@ -170,8 +169,8 @@ ItemList<Item> ItemFileDialog::Impl::loadItems(Item* parentItem, bool doAddition
             isSingleton = true;
             if(item->parentItem()){
                 showWarningDialog(
-                    format(_("The singleton instance of {} has already been loaded."),
-                           targetFileIO->caption()));
+                    formatR(_("The singleton instance of {} has already been loaded."),
+                            targetFileIO->caption()));
                 goto exit;
             }
         }
@@ -228,12 +227,12 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
         } else {
             message = _("Exporting {0} to a file is not supported");
         }
-        MessageView::instance()->putln(format(message, item->displayName()), MessageView::Highlight);
+        MessageView::instance()->putln(formatR(message, item->displayName()), MessageView::Highlight);
         currentItemToSave.reset();
         return false;
     }
 
-    string itemLabel = format("{0} \"{1}\"", validFileIOs.front()->caption(), item->displayName());
+    string itemLabel = formatC("{0} \"{1}\"", validFileIOs.front()->caption(), item->displayName());
     
     if(self->windowTitle().isEmpty()){
         string title;
@@ -242,7 +241,7 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
         } else {
             title = _("Export {}");
         }
-        self->setWindowTitle(format(title, itemLabel).c_str());
+        self->setWindowTitle(formatR(title, itemLabel).c_str());
     }
     self->setAcceptMode(QFileDialog::AcceptSave);
     self->setLabelText(QFileDialog::Accept, _("Save"));

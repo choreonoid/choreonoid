@@ -8,15 +8,14 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/NullOut>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <mutex>
 #include <typeindex>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
@@ -225,7 +224,7 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
     MappingPtr node = new Mapping;
 
     if(link->name().empty()){
-        os() << format(_("The name of the link {0} is not specified.")) << endl;
+        os() << formatR(_("The name of the link {0} is not specified.")) << endl;
         return nullptr;
     }
     node->write("name", link->name(), DOUBLE_QUOTED);
@@ -396,13 +395,13 @@ void StdBodyWriter::Impl::writeLinkDevices(Listing* elementsNode, Link* link)
         auto q = deviceWriterMap.find(typeid(*device));
         if(q == deviceWriterMap.end()){
             if(device->name().empty()){
-                os() << format(_("Warning: {0} of {1} cannot be written "
-                                 "because its writing function is not provided."),
-                               device->typeName(), link->name()) << endl;
+                os() << formatR(_("Warning: {0} of {1} cannot be written "
+                                  "because its writing function is not provided."),
+                                device->typeName(), link->name()) << endl;
             } else {
-                os() << format(_("Warning: Device \"{0}\" of the {1} type cannot be written "
-                                 "because its writing function is not provided."),
-                               device->name(), device->typeName()) << endl;
+                os() << formatR(_("Warning: Device \"{0}\" of the {1} type cannot be written "
+                                  "because its writing function is not provided."),
+                                device->name(), device->typeName()) << endl;
             }
         } else {
             auto& writer = q->second;
@@ -411,11 +410,11 @@ void StdBodyWriter::Impl::writeLinkDevices(Listing* elementsNode, Link* link)
                 elementsNode->append(node);
             } else {
                 if(device->name().empty()){
-                    os() << format(_("Warning: Writing {0} of {1} failed."),
-                                   device->typeName(), link->name()) << endl;
+                    os() << formatR(_("Warning: Writing {0} of {1} failed."),
+                                    device->typeName(), link->name()) << endl;
                 } else {
-                    os() << format(_("Warning: Writing device \"{0}\" of the {1} type failed."),
-                                   device->name(), device->typeName()) << endl;
+                    os() << formatR(_("Warning: Writing device \"{0}\" of the {1} type failed."),
+                                    device->name(), device->typeName()) << endl;
                 }
             }
         }

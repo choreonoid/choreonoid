@@ -13,6 +13,7 @@
 #include <cnoid/CoordinateFrameList>
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QTableView>
@@ -22,12 +23,10 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QGuiApplication>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -295,12 +294,12 @@ QVariant FrameListModel::data(const QModelIndex& index, int role) const
             auto rpy = degree(rpyFromRot(T.linear()));
 
             if(valueFormat->isMillimeter()){
-                return format("{0: 9.3f} {1: 9.3f} {2: 9.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
-                              p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0,
-                              rpy[0], rpy[1], rpy[2]).c_str();
+                return formatC("{0: 9.3f} {1: 9.3f} {2: 9.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
+                               p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0,
+                               rpy[0], rpy[1], rpy[2]).c_str();
             } else {
-                return format("{0: 6.3f} {1: 6.3f} {2: 6.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
-                              p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
+                return formatC("{0: 6.3f} {1: 6.3f} {2: 6.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
+                               p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
             }
         }
         case GlobalCheckColumn:
@@ -696,7 +695,7 @@ void CoordinateFrameListView::Impl::setCoordinateFrameListItem(CoordinateFrameLi
         string caption;
         if(auto parentLocation = item->getFrameParentLocationProxy()){
             targetLabel.setText(
-                format("{0} - {1}",  parentLocation->getName(), item->displayName()).c_str());
+                formatC("{0} - {1}",  parentLocation->getName(), item->displayName()).c_str());
         } else {
             targetLabel.setText(item->displayName().c_str());
         }

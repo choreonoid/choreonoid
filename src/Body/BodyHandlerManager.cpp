@@ -4,8 +4,8 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/FileUtil>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <unordered_map>
 #include <iostream>
 #ifdef _WIN32
@@ -17,7 +17,6 @@
 
 using namespace std;
 using namespace cnoid;
-using namespace fmt;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
@@ -111,11 +110,11 @@ bool BodyHandlerManager::Impl::loadBodyHandler(Body* body, const string& filenam
     }
 
     if(loaded){
-        *os << format(_("Body handler {0} has been loaded to {1}."),
-                      handlerName, body->modelName()) << endl;
+        *os << formatR(_("Body handler {0} has been loaded to {1}."),
+                       handlerName, body->modelName()) << endl;
     } else {
-        *os << format(_("Body handler {0} cannot be loaded to {1}."),
-                      handlerName, body->modelName()) << endl;
+        *os << formatR(_("Body handler {0} cannot be loaded to {1}."),
+                       handlerName, body->modelName()) << endl;
     }
     
     return loaded;
@@ -140,7 +139,7 @@ CreateCnoidBodyHandlerFunc BodyHandlerManager::Impl::loadHandlerFactory
     }
 
     if(!factory){
-        *os << format(_("Body handler {0} was not found."), handlerName) << endl;
+        *os << formatR(_("Body handler {0} was not found."), handlerName) << endl;
     }
 
     return factory;
@@ -161,14 +160,14 @@ CreateCnoidBodyHandlerFunc BodyHandlerManager::Impl::loadHandlerFactoryWithFullP
         factory = (CreateCnoidBodyHandlerFunc)resolveDllSymbol(dll, "createCnoidBodyHandler");
         if(!factory){
             unloadDll(dll);
-            *os << format(_("Body handler {0} found at \"{1}\" does not have the factory function \"createCnoidBodyHandler\"."),
-                          handlerName, toUTF8(path.string())) << endl;
+            *os << formatR(_("Body handler {0} found at \"{1}\" does not have the factory function \"createCnoidBodyHandler\"."),
+                           handlerName, toUTF8(path.string())) << endl;
         }
     }
 
     if(factory){
-        *os << format(_("Body handler {0} was found at \"{1}\"."),
-                      handlerName, toUTF8(path.string())) << endl;
+        *os << formatR(_("Body handler {0} was found at \"{1}\"."),
+                       handlerName, toUTF8(path.string())) << endl;
     }
 
     return factory;

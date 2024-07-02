@@ -1,3 +1,0 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/

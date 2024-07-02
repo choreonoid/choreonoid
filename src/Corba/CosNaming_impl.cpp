@@ -3,7 +3,6 @@
 #include "CosNaming_impl.h"
 #include <omniORB4/omniURI.h>
 #include <iostream>
-#include <fmt/format.h>
 
 using namespace std;
 using namespace cnoid;

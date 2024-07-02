@@ -9,15 +9,14 @@
 #include <cnoid/GLSceneRenderer>
 #include <cnoid/ValueTree>
 #include <cnoid/EigenArchive>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QGridLayout>
 #include <QLabel>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -328,9 +327,9 @@ bool SceneWidgetConfig::Impl::store(Mapping* archive)
     for(int i=0; i < 3; ++i){
         auto& info = gridInfos[i];
         auto& plane = planes[i];
-        archive->write(format("{}Grid", plane), info.isEnabled);
-        archive->write(format("{}GridSpan", plane), info.span);
-        archive->write(format("{}GridInterval", plane), info.interval);
+        archive->write(formatC("{}Grid", plane), info.isEnabled);
+        archive->write(formatC("{}GridSpan", plane), info.span);
+        archive->write(formatC("{}GridInterval", plane), info.interval);
     }
     write(archive, "xy_grid_color", gridInfos[0].color);
     write(archive, "xz_grid_color", gridInfos[1].color);
@@ -422,9 +421,9 @@ bool SceneWidgetConfig::Impl::restore(const Mapping* archive)
     for(int i=0; i < 3; ++i){
         auto& info = gridInfos[i];
         auto& plane = planes[i];
-        archive->read(format("{}Grid", plane), info.isEnabled);
-        archive->read(format("{}GridSpan", plane), info.span);
-        archive->read(format("{}GridInterval", plane), info.interval);
+        archive->read(formatC("{}Grid", plane), info.isEnabled);
+        archive->read(formatC("{}GridSpan", plane), info.span);
+        archive->read(formatC("{}GridInterval", plane), info.interval);
         if(read(archive, grid_color_keys[i], info.color)){
             if(widgetSet){
                 setColorButtonColor(widgetSet->gridWidgetSets[i].colorButton, info.color);
@@ -659,7 +658,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
             [this, i, gridLabels, colorButton](){
                 auto& color = config->gridInfos[i].color;
                 if(SceneRendererConfig::inputColorWithColorDialog(
-                       format(_("{0} Color"), gridLabels[i]), color, colorButton)){
+                       formatR(_("{0} Color"), gridLabels[i]), color, colorButton)){
                     config->updateSceneWidgets(GridCategory, true);
                 }
             });

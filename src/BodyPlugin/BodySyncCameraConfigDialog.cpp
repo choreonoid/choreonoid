@@ -14,15 +14,14 @@
 #include <cnoid/DoubleSpinBox>
 #include <cnoid/LengthSpinBox>
 #include <cnoid/CheckBox>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -240,7 +239,7 @@ BodySyncCameraItem* BodySyncCameraConfigDialog::showToCreateCameraItem(BodyItem*
     setWindowTitle(_("Camera Creation"));
     
     BodySyncCameraItemPtr cameraItem = new BodySyncCameraItem;
-    cameraItem->setName(format(_("{0} Camera"), bodyItem->name()));
+    cameraItem->setName(formatR(_("{0} Camera"), bodyItem->name()));
     cameraItem->setChecked(true);
     cameraItem->setParallelTrackingMode(false);
     cameraItem->setInteractiveViewpointChangeEnabled(false);

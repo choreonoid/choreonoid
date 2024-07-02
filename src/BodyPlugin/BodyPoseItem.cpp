@@ -7,13 +7,12 @@
 #include <cnoid/Archive>
 #include <cnoid/ValueTree>
 #include <cnoid/MathUtil>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <regex>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 
 void BodyPoseItem::initializeClass(ExtensionManager* ext)
@@ -60,7 +59,7 @@ std::string BodyPoseItem::displayName() const
     static regex re("^Pose( ?)( *)(\\d+)$");
     smatch match;
     if(regex_match(name(), match, re)){
-        return format(_("Pose{0}{1}{2}"), match.str(1), match.str(2), match.str(3));
+        return formatR(_("Pose{0}{1}{2}"), match.str(1), match.str(2), match.str(3));
     }
     return name();
 }

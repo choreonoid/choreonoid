@@ -1,12 +1,11 @@
 #include "MocapMapping.h"
 #include <cnoid/YAMLReader>
 #include <cnoid/EigenArchive>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 
 MocapMapping::MocapMapping()
@@ -150,8 +149,8 @@ void MocapMapping::loadLabelMap(Listing& labelMapNode, std::ostream& os)
                 } else {
                     pair<LabelMap::iterator, bool> ret = labelMap_.insert(m);
                     if(!ret.second){
-                        os << format(_("Warning: Label mapping (\"{0}\", {1}) collides with an existing one."),
-                                     m.first, m.second) << endl;
+                        os << formatR(_("Warning: Label mapping (\"{0}\", {1}) collides with an existing one."),
+                                      m.first, m.second) << endl;
                     }
                 }
             }
@@ -174,8 +173,8 @@ void MocapMapping::loadEdges
             }
             if(!edge->label[0].empty() && !edge->label[1].empty()){
                 if(!namePairs.insert(NamePair(edge->label[0], edge->label[1])).second){ // exsiting pair?
-                    os << format(_("Warning: Edge \"{0}\" to \"{1}\" is doubly defined."),
-                                 edge->label[0], edge->label[1]) << endl;
+                    os << formatR(_("Warning: Edge \"{0}\" to \"{1}\" is doubly defined."),
+                                  edge->label[0], edge->label[1]) << endl;
                 } else {
                     edges.push_back(edge);
                 }

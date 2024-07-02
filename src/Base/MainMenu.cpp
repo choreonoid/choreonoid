@@ -25,12 +25,10 @@
 #include <QFile>
 #include <QTextStream>
 #include <QString>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 

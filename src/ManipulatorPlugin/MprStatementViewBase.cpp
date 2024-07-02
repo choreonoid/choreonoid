@@ -4,7 +4,7 @@
 #include "MprProgramItemBase.h"
 #include "MprStatement.h"
 #include <cnoid/Archive>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QScrollArea>
@@ -13,7 +13,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -193,7 +192,7 @@ void MprStatementViewBase::Impl::onSelectedStatementsChanged
 
     if(needToUpdateCaption){
         if(statement){
-            setCaption(format("<b>{0}</b>", statement->label(0)));
+            setCaption(formatC("<b>{0}</b>", statement->label(0)));
         } else {
             setCaption("---");
         }            

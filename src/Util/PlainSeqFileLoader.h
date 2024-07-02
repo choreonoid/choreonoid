@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_PLAIN_SEQ_FILE_LOADER_H
 #define CNOID_UTIL_PLAIN_SEQ_FILE_LOADER_H
 

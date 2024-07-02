@@ -5,12 +5,10 @@
 #include <cnoid/BodyCollisionDetector>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 

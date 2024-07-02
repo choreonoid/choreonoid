@@ -8,6 +8,7 @@
 #include <cnoid/SceneLoader>
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneEffects>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
@@ -306,7 +307,7 @@ SceneItem::Location::Location(SceneItem* item)
 
 std::string SceneItem::Location::getName() const
 {
-    return fmt::format(_("Offset position of {0}"), item->displayName());
+    return formatR(_("Offset position of {0}"), item->displayName());
 }
 
 

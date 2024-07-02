@@ -9,12 +9,11 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QDialogButtonBox>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -275,7 +274,7 @@ void SceneViewConfig::Impl::createConfigDialog()
 {
     dialog = new Dialog;
     dialog->setWindowTitle(
-        format(_("Configuration of {0}"), self->getTargetSceneViewSetCaption()).c_str());
+        formatR(_("Configuration of {0}"), self->getTargetSceneViewSetCaption()).c_str());
 
     auto vbox = new QVBoxLayout;
     

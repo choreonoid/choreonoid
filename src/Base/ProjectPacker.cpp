@@ -7,7 +7,7 @@
 #include <cnoid/FileUtil>
 #include <cnoid/UTF8>
 #include <cnoid/Config>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <zip.h>
 #include <map>
 #include <deque>
@@ -18,7 +18,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace fs = stdx::filesystem;
 
 namespace cnoid {
@@ -286,23 +285,23 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
             fs::remove_all(packingDirPath, ec);
             if(ec){
                 mout->putErrorln(
-                    format(_("Directory \"{0}\" for packing a project already exists and cannot be removed: {1}."),
-                           toUTF8(packingDirPath.string()), toUTF8(ec.message())));
+                    formatR(_("Directory \"{0}\" for packing a project already exists and cannot be removed: {1}."),
+                            toUTF8(packingDirPath.string()), toUTF8(ec.message())));
                 return false;
             }
         }
     }
     catch(const fs::filesystem_error& error) {
         mout->putErrorln(
-            format(_("File system error in packing a project: {0}"), toUTF8(error.what())));
+            formatR(_("File system error in packing a project: {0}"), toUTF8(error.what())));
         return false;
     }
 
     fs::create_directories(packingDirPath, ec);
     if(ec){
         mout->putErrorln(
-            format(_("Directory \"{0}\" for packing a project cannot be created: {1}."),
-                   toUTF8(packingDirPath.string()), toUTF8(ec.message())));
+            formatR(_("Directory \"{0}\" for packing a project cannot be created: {1}."),
+                    toUTF8(packingDirPath.string()), toUTF8(ec.message())));
         return false;
     }
 
@@ -325,7 +324,7 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
         fs::create_directories(destDirPath, ec);
         if(ec){
             mout->putErrorln(
-                format(_("Directory \"{0}\" for \"{1}\" cannot be created in \"{2}\": {3}."),
+                formatR(_("Directory \"{0}\" for \"{1}\" cannot be created in \"{2}\": {3}."),
                        toUTF8(relDirPath->string()),
                        toUTF8(path.filename().string()),
                        toUTF8(packingDirPath.string()),
@@ -345,7 +344,7 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
 #endif
         if(ec){
             mout->putErrorln(
-                format(_("File \"{0}\" cannot be copied into the directory \"{1}\" for packing: {2}."),
+                formatR(_("File \"{0}\" cannot be copied into the directory \"{1}\" for packing: {2}."),
                        toUTF8(path.string()),
                        toUTF8(destDirPath.generic_string()),
                        toUTF8(ec.message())));
@@ -363,8 +362,8 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
 
     if(!saved){
         mout->putErrorln(
-            format(_("The project for packing cannot be saved as project file \"{0}\"."),
-                   projectFile));
+            formatR(_("The project for packing cannot be saved as project file \"{0}\"."),
+                    projectFile));
     }
 
     return true;
@@ -382,9 +381,9 @@ void ProjectPacker::Impl::checkFileDependency(Item* item)
         fs::path ufPath = getUnifiedFormatPath(file, isAbsolute);
         if(!isAbsolute){
             mout->putErrorln(
-                format(_("A relative path \"{0}\" is given to the project packer as a file path to which {1} depends"
-                         " but it must be an absolute path."),
-                       file, item->displayName()));
+                formatR(_("A relative path \"{0}\" is given to the project packer as a file path to which {1} depends"
+                          " but it must be an absolute path."),
+                        file, item->displayName()));
             continue;
         }
         if(!checkIfPathInReferenceDirectory(ufPath)){
@@ -482,8 +481,8 @@ Item* ProjectPacker::getPackingItem(Item* item)
         auto relocatedPath = getRelocatedFilePath(filePath);
         if(relocatedPath.empty()){
             mout_->putErrorln(
-                format(_("The file path \"{0}\" for {1} cannot be relocated to be a file path in the project pack."),
-                       filePath, item->displayName()));
+                formatR(_("The file path \"{0}\" for {1} cannot be relocated to be a file path in the project pack."),
+                        filePath, item->displayName()));
         } else {
             if(relocatedPath != filePath){
                 Mapping* options = nullptr;
@@ -509,8 +508,8 @@ bool ProjectPacker::Impl::createProjectZipFile(const string& zipFilename)
         fs::remove(zipFilePath, ec);
         if(ec){
             mout->putErrorln(
-                format(_("The project pack file \"{0}\" already exists and cannot be removed: {1}."),
-                       zipFilename, toUTF8(ec.message())));
+                formatR(_("The project pack file \"{0}\" already exists and cannot be removed: {1}."),
+                        zipFilename, toUTF8(ec.message())));
             return false;
         }
     }
@@ -521,8 +520,8 @@ bool ProjectPacker::Impl::createProjectZipFile(const string& zipFilename)
         zip_error_t error;
         zip_error_init_with_code(&error, errorp);
         mout->putErrorln(
-            format(_("Failed to create the project pack file \"{0}\": {1}"),
-                   zipFilename, zip_error_strerror(&error)));
+            formatR(_("Failed to create the project pack file \"{0}\": {1}"),
+                    zipFilename, zip_error_strerror(&error)));
         return false;
     }
 
@@ -535,7 +534,7 @@ bool ProjectPacker::Impl::createProjectZipFile(const string& zipFilename)
             fs::remove(zipFilePath, ec);
         }
         mout->putErrorln(
-            format(_("Failed to create the project pack file \"{0}\"."), zipFilename));
+            formatR(_("Failed to create the project pack file \"{0}\"."), zipFilename));
     }
 
     return zipped;
@@ -553,8 +552,8 @@ bool ProjectPacker::Impl::addDirectoryToZip(zip_t* zip, fs::path dirPath, const 
     int index = zip_dir_add(zip, localDirStr.c_str(), ZIP_FL_ENC_UTF_8);
     if(index < 0){
         mout->putErrorln(
-            format(_("Failed to add directory \"{0}\" to the project pack: {1}"),
-                   localDirStr, zip_strerror(zip)));
+            formatR(_("Failed to add directory \"{0}\" to the project pack: {1}"),
+                    localDirStr, zip_strerror(zip)));
         return false;
     }
 
@@ -571,16 +570,16 @@ bool ProjectPacker::Impl::addDirectoryToZip(zip_t* zip, fs::path dirPath, const 
             zip_source_t* source = zip_source_file(zip, sourcePath.c_str(), 0, 0);
             if(!source){
                 mout->putErrorln(
-                    format(_("Failed to add file \"{0}\" to the project pack: {1}"),
-                           localPathStr, zip_strerror(zip)));
+                    formatR(_("Failed to add file \"{0}\" to the project pack: {1}"),
+                            localPathStr, zip_strerror(zip)));
                 return false;
             }
             int index = zip_file_add(zip, localPathStr.c_str(), source, ZIP_FL_ENC_UTF_8);
             if(index < 0){
                 zip_source_free(source);
                 mout->putErrorln(
-                    format(_("Failed to add file \"{0}\" to the project pack: {1}"),
-                           localPathStr, zip_strerror(zip)));
+                    formatR(_("Failed to add file \"{0}\" to the project pack: {1}"),
+                            localPathStr, zip_strerror(zip)));
                 return false;
             }
             // The deflate compression is applied by default. The following code is not necessary.
@@ -588,8 +587,8 @@ bool ProjectPacker::Impl::addDirectoryToZip(zip_t* zip, fs::path dirPath, const 
             if(zip_set_file_compression(zip, index, ZIP_CM_DEFLATE, 0) < 0){
                 zip_source_free(source);
                 mout->putErrorln(
-                    format(_("Failed to compress file \"{0}\" in the project pack: {1}"),
-                           localPathStr, zip_strerror(zip)));
+                    formatR(_("Failed to compress file \"{0}\" in the project pack: {1}"),
+                            localPathStr, zip_strerror(zip)));
                 return false;
             }
             */
@@ -618,8 +617,8 @@ bool ProjectPacker::Impl::unpackProject(const std::string& projectPackFile)
         zip_error_t error;
         zip_error_init_with_code(&error, errorp);
         mout->putErrorln(
-            format(_("Failed to open the project pack file \"{0}\": {1}"),
-                   projectPackFile, zip_error_strerror(&error)));
+            formatR(_("Failed to open the project pack file \"{0}\": {1}"),
+                    projectPackFile, zip_error_strerror(&error)));
         return false;
     }
 
@@ -651,7 +650,7 @@ bool ProjectPacker::Impl::extractFiles
         zip_stat_t stat;
         if(zip_stat_index(zip, i, 0, &stat) < 0){
             mout->putErrorln(
-                format(_("Entry {0} in \"{1}\" cannot be extracted."), i, zipFilename));
+                formatR(_("Entry {0} in \"{1}\" cannot be extracted."), i, zipFilename));
             return false;
         } else {
             string name(stat.name);
@@ -660,8 +659,8 @@ bool ProjectPacker::Impl::extractFiles
                 fs::create_directories(entryPath, ec);
                 if(ec){
                     mout->putErrorln(
-                        format(_("Directory \"{0}\" in the project pack \"{1}\" cannot be created: {2}."),
-                               name, zipFilename, toUTF8(ec.message())));
+                        formatR(_("Directory \"{0}\" in the project pack \"{1}\" cannot be created: {2}."),
+                                name, zipFilename, toUTF8(ec.message())));
                     return false;
                 }
             } else {
@@ -699,8 +698,8 @@ bool ProjectPacker::Impl::extractFiles
                 }
                 if(failed){
                     mout->putErrorln(
-                        format(_("File \"{0}\" in the project pack \"{1}\" cannot be extracted."),
-                               name, zipFilename));
+                        formatR(_("File \"{0}\" in the project pack \"{1}\" cannot be extracted."),
+                                name, zipFilename));
                     return false;
                 }
                     
@@ -717,7 +716,7 @@ bool ProjectPacker::loadPackedProject(const std::string& projectPackFile)
     if(impl->unpackProject(projectPackFile)){
         if(impl->unpackedProjectFile.empty()){
             mout_->putErrorln(
-                format(_("The project pack file \"{0}\" does not include a project file."), projectPackFile));
+                formatR(_("The project pack file \"{0}\" does not include a project file."), projectPackFile));
             return false;
         }
         return impl->loadUnpackedProject(impl->unpackedProjectFile);

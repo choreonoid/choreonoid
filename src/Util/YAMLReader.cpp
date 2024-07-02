@@ -1,20 +1,15 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "YAMLReader.h"
 #include "UTF8.h"
+#include "Format.h"
 #include <cerrno>
 #include <stack>
 #include <iostream>
 #include <yaml.h>
-#include <fmt/format.h>
 #include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 const bool debugTrace = false;
@@ -365,7 +360,7 @@ void YAMLReaderImpl::setAnchor(ValueNode* node, yaml_char_t* anchor, const yaml_
         anchorMap.insert(AnchorMap::value_type((char*)anchor, node));
     if(!inserted.second){
         ValueNode::Exception ex;
-        ex.setMessage(format(_("Anchor \"{}\" is duplicated"), (char*)anchor));
+        ex.setMessage(formatR(_("Anchor \"{}\" is duplicated"), (char*)anchor));
         ex.setPosition(mark.line, mark.column);
         throw ex;
     }
@@ -555,7 +550,7 @@ void YAMLReaderImpl::onAlias(yaml_event_t& event)
 
     if(!node){
         ValueNode::Exception ex;
-        ex.setMessage(format(_("Anchor \"{}\" is not defined"), (char*)event.data.alias.anchor));
+        ex.setMessage(formatR(_("Anchor \"{}\" is not defined"), (char*)event.data.alias.anchor));
         const yaml_mark_t& mark = event.start_mark;
         ex.setPosition(mark.line, mark.column);
         throw ex;
@@ -604,7 +599,7 @@ ValueNode* YAMLReader::document(int index)
             ex.setMessage(_("The yaml file does not contains any documents."));
         } else {
             ex.setMessage(
-                format(_("The yaml file does not contains {}-th document."), index));
+                formatR(_("The yaml file does not contains {}-th document."), index));
         }
         ex.setPosition(-1, -1);
         throw ex;

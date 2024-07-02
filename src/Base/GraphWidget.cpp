@@ -7,10 +7,10 @@
 #include "View.h"
 #include "QtEventUtil.h"
 #include <cnoid/ConnectionSet>
+#include <cnoid/Format>
 #include <QGridLayout>
 #include <QPainter>
 #include <QFocusEvent>
-#include <fmt/format.h>
 #include <cmath>
 #include <deque>
 #include <limits>
@@ -1145,7 +1145,7 @@ bool GraphWidgetImpl::onScreenMouseMoveEvent(QMouseEvent* event)
     //vRuler.property_position() = y;
 
     statusLabel.setText(
-        fmt::format(_("Graph: Position = ({0:.5f}, {1:.5f})"), x, y).c_str());
+        formatR(_("Graph: Position = ({0:.5f}, {1:.5f})"), x, y).c_str());
 
     dragPrevScreenX = currentScreenX;
     dragPrevScreenY = currentScreenY;

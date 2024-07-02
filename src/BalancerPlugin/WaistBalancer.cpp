@@ -5,7 +5,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
 #include <cnoid/GaussianFilter>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
@@ -515,7 +515,7 @@ void WaistBalancer::updateCmAndZmp(int frame)
         inertial_g = g + ddz;
         
         if(inertial_g < inertial_g_thresh){
-            os() << fmt::format(
+            os() << formatR(
                 _("Warning: The body is floating at {0} (Vertical CM acceleration is {1})."),
                 (frame * timeStep), (ddz))
                  << endl;

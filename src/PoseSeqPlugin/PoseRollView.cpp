@@ -8,17 +8,16 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/ViewManager>
 #include <cnoid/QtEventUtil>
+#include <cnoid/Format>
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QPaintEvent>
 #include <QPainter>
-#include <fmt/format.h>
 #include <cstdint>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -1084,7 +1083,7 @@ void PoseRollView::Impl::updateTimeSpinConfigurations()
     } else {
         auto it = selected.front();
         unsigned int id = reinterpret_cast<uintptr_t>(it->pose()) & 0xffffffff;
-        poseNameLabel.setText(format("{0:0X}", id).c_str());
+        poseNameLabel.setText(formatC("{0:0X}", id).c_str());
         poseTimeSpin.setEnabled(true);
         poseTimeSpin.setValue(timeScale * it->time());
         poseTTimeSpin.setEnabled(true);

@@ -6,7 +6,7 @@
 #include "TextEdit.h"
 #include <cnoid/MessageOut>
 #include <cnoid/Tokenizer>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QMessageBox>
 #include <QCoreApplication>
@@ -19,7 +19,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -535,7 +534,7 @@ void MessageView::Impl::put
         } else if(type == Warning){
             prefix = _("Warning: ");
         }
-        put(format("\x1b[31m{0} {1}\x1b[0m", prefix, message), doLF, doNotify, doFlush, true);
+        put(formatC("\x1b[31m{0} {1}\x1b[0m", prefix, message), doLF, doNotify, doFlush, true);
     }
 }
 

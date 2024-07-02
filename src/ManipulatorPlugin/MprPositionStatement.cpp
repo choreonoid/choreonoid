@@ -3,11 +3,10 @@
 #include "MprStatementRegistration.h"
 #include "MprPositionList.h"
 #include <cnoid/ValueTree>
-#include <fmt/format.h>
+#include <cnoid/Format>
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 
 MprPositionStatement::MprPositionStatement()
@@ -47,10 +46,10 @@ std::string MprPositionStatement::positionLabel() const
     if(positionId_.isInt()){
         if(auto holder = holderProgram()){
             if(holder->hasLocalPositionList()){
-                return format("({0})", positionId_.toInt());
+                return formatC("({0})", positionId_.toInt());
             }
         }
-        return format("P{0}", positionId_.toInt());
+        return formatC("P{0}", positionId_.toInt());
 
     } else {
         return positionId_.toString();

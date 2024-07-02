@@ -17,6 +17,7 @@
 #include <cnoid/SpinBox>
 #include <cnoid/FloatingNumberBox>
 #include <cnoid/PoseSeqInterpolator>
+#include <cnoid/Format>
 #include <cnoid/stdx/optional>
 #include <Eigen/StdVector>
 #include <QLabel>
@@ -26,7 +27,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -136,8 +136,8 @@ void FootFixFilterDialog::onAccepted()
         BodyMotionItem* orgMotionItem = motionItems[i];
         BodyItem* bodyItem = orgMotionItem->findOwnerItem<BodyItem>();
         if(bodyItem){
-            os << format(_("Apply the foot fix filter to {0} of {1}"),
-                         orgMotionItem->name(), bodyItem->name()) << endl;
+            os << formatR(_("Apply the foot fix filter to {0} of {1}"),
+                          orgMotionItem->name(), bodyItem->name()) << endl;
             
             BodyMotionItemPtr filterdMotionItem = new BodyMotionItem;
             BodyPtr body = bodyItem->body()->clone();

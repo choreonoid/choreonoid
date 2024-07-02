@@ -4,6 +4,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/DigitalIoDevice>
 #include <cnoid/Archive>
+#include <cnoid/Format>
 #include <QTableView>
 #include <QHeaderView>
 #include <QAbstractTableModel>
@@ -12,12 +13,10 @@
 #include <QLabel>
 #include <QComboBox>
 #include <QEvent>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -472,10 +471,10 @@ void DigitalIoDeviceView::Impl::onCurrentBodyItemChanged(BodyItem* bodyItem)
                     deviceName = "Digital I/O";
                 }
                 targetLabel.setText(
-                    format("{0} - {1}", bodyItem->displayName(), deviceName).c_str());
+                    formatC("{0} - {1}", bodyItem->displayName(), deviceName).c_str());
             } else {
                 targetLabel.setText(
-                    format(_("{0} (No I/O)"), bodyItem->displayName()).c_str());
+                    formatR(_("{0} (No I/O)"), bodyItem->displayName()).c_str());
             }
 
         }

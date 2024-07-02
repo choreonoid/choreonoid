@@ -1,13 +1,12 @@
 #include "AbstractSceneWriter.h"
 #include "SceneDrawables.h"
 #include "UTF8.h"
+#include "Format.h"
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = stdx::filesystem;
 
 
@@ -73,8 +72,8 @@ bool AbstractSceneWriter::findOrCopyImageFile(SgImage* image, const std::string&
                         }
                     }
                     if(ec){
-                        os() << format(_("Warning: Texture image file \"{0}\" cannot be copied: {1}"),
-                                       uri, ec.message()) << endl;
+                        os() << formatR(_("Warning: Texture image file \"{0}\" cannot be copied: {1}"),
+                                        uri, ec.message()) << endl;
                     }
                 }
             }
@@ -82,7 +81,7 @@ bool AbstractSceneWriter::findOrCopyImageFile(SgImage* image, const std::string&
     }
     
     if(!orgImageFileFound){
-        os() << format(_("Warning: Texture image file \"{0}\" is not found."), uri) << endl;
+        os() << formatR(_("Warning: Texture image file \"{0}\" is not found."), uri) << endl;
     }
 
     return foundOrCopied;

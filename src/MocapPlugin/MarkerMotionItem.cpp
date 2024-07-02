@@ -14,12 +14,11 @@
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneProjector>
 #include <cnoid/MeshGenerator>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -450,7 +449,7 @@ bool SceneMarkerMotion::setTargetMarker(Marker* marker, SceneWidgetEvent* event)
     if(marker){
         marker->material->setDiffuseColor(Vector3f(1.0, 0.0, 0.0)); // set red
         event->updateIndicator(
-            format("Marker: {0} of {1}", motion->markerLabel(marker->index), item->name()));
+            formatC("Marker: {0} of {1}", motion->markerLabel(marker->index), item->name()));
     } else {
         event->updateIndicator("");
     }

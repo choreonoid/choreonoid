@@ -4,13 +4,11 @@
 #include "BodyMotionEngine.h"
 #include <cnoid/ItemManager>
 #include <cnoid/PutPropertyFunction>
-#include <fmt/format.h>
+#include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
-using namespace std::placeholders;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -109,16 +107,16 @@ bool ZMPSeqItem::makeRootRelative(bool on)
     auto& os = mvout(false);
     if(bodyMotionItem){
         if(cnoid::makeRootRelative(*zmpseq_, *bodyMotionItem->motion(), on)){
-            os << format(_("{0} of {1} has been converted to {2}."),
-                         displayName(), bodyMotionItem->displayName(),
-                         (on ? _("the root relative coordinate") : _("the global coordinate")))
+            os << formatR(_("{0} of {1} has been converted to {2}."),
+                          displayName(), bodyMotionItem->displayName(),
+                          (on ? _("the root relative coordinate") : _("the global coordinate")))
                << endl;
             return true;
         }
     }
-    os << format(_("{0}'s coordinate system cannot be changed "
-                   "because there is no root link motion associated with {0}."),
-                 displayName()) << endl;
+    os << formatR(_("{0}'s coordinate system cannot be changed "
+                    "because there is no root link motion associated with {0}."),
+                  displayName()) << endl;
     return false;
 }
 

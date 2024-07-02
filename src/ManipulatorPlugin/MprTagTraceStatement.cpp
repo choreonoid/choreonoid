@@ -9,12 +9,10 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/CloneMap>
 #include <cnoid/MessageOut>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 
 MprTagTraceStatement::MprTagTraceStatement()

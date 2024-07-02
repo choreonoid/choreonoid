@@ -2,9 +2,9 @@
 #define CNOID_UTIL_SIMPLE_SCANNER_H
 
 #include "UTF8.h"
+#include "Format.h"
 #include <cnoid/stdx/filesystem>
 #include <fast_float/fast_float.h>
-#include <fmt/format.h>
 #include <fstream>
 #include <stdexcept>
 #include <cstdlib>
@@ -225,7 +225,7 @@ public:
     {
         const char* org = str;
         if(!checkString(str)){
-            throwEx(fmt::format("\"{}\" is expected", org));
+            throwEx(formatC("\"{}\" is expected", org));
         }
     }
 
@@ -340,8 +340,8 @@ public:
     {
         stdx::filesystem::path path(fromUTF8(filename));
         throw std::runtime_error(
-            fmt::format("{0} at line {1} of \"{2}\".",
-                        error, lineNumber, toUTF8(path.filename().string())));
+            formatC("{0} at line {1} of \"{2}\".",
+                    error, lineNumber, toUTF8(path.filename().string())));
     }
 };
 

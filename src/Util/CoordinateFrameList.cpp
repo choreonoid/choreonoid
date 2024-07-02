@@ -1,14 +1,13 @@
 #include "CoordinateFrameList.h"
+#include "Format.h"
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
-#include <fmt/format.h>
 #include <vector>
 #include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -303,7 +302,7 @@ bool CoordinateFrameList::read(const Mapping& archive)
     auto& typeNode = archive.get("type");
     if(typeNode.toString() != "CoordinateFrameList"){
         typeNode.throwException(
-            format(_("{0} cannot be loaded as a coordinate frame list"), typeNode.toString()));
+            formatR(_("{0} cannot be loaded as a coordinate frame list"), typeNode.toString()));
     }
 
     auto versionNode = archive.find("format_version");
@@ -312,7 +311,7 @@ bool CoordinateFrameList::read(const Mapping& archive)
     }
     auto version = versionNode->toDouble();
     if(version != 1.0){
-        versionNode->throwException(format(_("Format version {0} is not supported."), version));
+        versionNode->throwException(formatR(_("Format version {0} is not supported."), version));
     }
 
     string symbol;

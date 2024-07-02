@@ -1,14 +1,13 @@
 #include "ArchiveSession.h"
 #include "Uuid.h"
+#include "Format.h"
 #include <vector>
 #include <unordered_map>
 #include <iostream>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -97,7 +96,7 @@ bool ArchiveSession::addReference(const Uuid& uuid, Referenced* object, bool doU
         if(!info.object){
             info.object = object;
         } else if(info.object != object){
-            putWarning(format(_("UUID \"{0}\" is a duplicate of the existing ID.\n"), uuid.toString()));
+            putWarning(formatR(_("UUID \"{0}\" is a duplicate of the existing ID.\n"), uuid.toString()));
             return false;
         }
     }

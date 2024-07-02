@@ -15,17 +15,16 @@
 #include <cnoid/SpinBox>
 #include <cnoid/DoubleSpinBox>
 #include <cnoid/CheckBox>
+#include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
 #include <QStyle>
 #include <pcl/console/print.h>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace cnoid {
 
@@ -305,7 +304,7 @@ void PointSetToMeshConversionDialog::Impl::convertTargetItems()
 void PointSetToMeshConversionDialog::Impl::convertPointSetItemToMeshItem(PointSetItem* pointSetItem)
 {
     auto mv = MessageView::instance();
-    mv->put(format(_("Convert \"{0}\" to mesh data ..."), pointSetItem->displayName()));
+    mv->put(formatR(_("Convert \"{0}\" to mesh data ..."), pointSetItem->displayName()));
     mv->flush();
 
     auto pclVerbosityLevel = pcl::console::getVerbosityLevel();
@@ -345,7 +344,7 @@ void PointSetToMeshConversionDialog::Impl::convertPointSetItemToMeshItem(PointSe
         }
 
         if(meshItem){
-            meshItem->setName(format(_("{0}_Mesh"), pointSetItem->name()));
+            meshItem->setName(formatR(_("{0}_Mesh"), pointSetItem->name()));
             meshItem->setTemporary();
             meshItem->unsetAttribute(Item::FileImmutable);
             meshItem->setChecked();

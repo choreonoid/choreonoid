@@ -22,12 +22,12 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/StringUtil>
 #include <cnoid/Tokenizer>
+#include <cnoid/Format>
 #include <QThread>
 #include <QApplication>
 #include <QOpenGLContext>
 #include <QOffscreenSurface>
 #include <QOpenGLFramebufferObject>
-#include <fmt/format.h>
 #include <mutex>
 #include <condition_variable>
 #include <queue>
@@ -37,7 +37,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 namespace {
 
@@ -528,8 +527,8 @@ bool GLVisionSimulatorItem::Impl::initializeSimulation(SimulatorItem* simulatorI
                 Device* device = body->device(j);
                 if(dynamic_cast<Camera*>(device) || dynamic_cast<RangeSensor*>(device)){
                     if(sensorNameSet.empty() || sensorNameSet.find(device->name()) != sensorNameSet.end()){
-                        os << format(_("{0} detected vision sensor \"{1}\" of {2} as a target.\n"),
-                                     self->displayName(), device->name(), simBody->body()->name());
+                        os << formatR(_("{0} detected vision sensor \"{1}\" of {2} as a target.\n"),
+                                      self->displayName(), device->name(), simBody->body()->name());
                         sensorRenderers.push_back(new SensorRenderer(this, device, simBody, i));
                     }
                 }
@@ -538,7 +537,7 @@ bool GLVisionSimulatorItem::Impl::initializeSimulation(SimulatorItem* simulatorI
     }
 
     if(sensorRenderers.empty()){
-        os << format(_("{} has no target sensors"), self->displayName()) << endl;
+        os << formatR(_("{} has no target sensors"), self->displayName()) << endl;
         return false;
     }
 
@@ -568,8 +567,8 @@ bool GLVisionSimulatorItem::Impl::initializeSimulation(SimulatorItem* simulatorI
         if(renderer->initialize(simBodies)){
             ++p;
         } else {
-            os << format(_("{0}: Target sensor \"{1}\" cannot be initialized.\n"),
-                    self->displayName(), renderer->device->name());
+            os << formatR(_("{0}: Target sensor \"{1}\" cannot be initialized.\n"),
+                          self->displayName(), renderer->device->name());
             p = sensorRenderers.erase(p);
         }
     }

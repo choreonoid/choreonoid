@@ -1,12 +1,8 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "Joystick.h"
 #include "ExtJoystick.h"
+#include "Format.h"
 #include <cnoid/Config>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include <linux/joystick.h>
 #include <sys/ioctl.h>
 #include <string>
@@ -22,7 +18,6 @@
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = stdx::filesystem;
 
 namespace {
@@ -276,11 +271,10 @@ bool JoystickImpl::findDevice()
     } else {
         closeDevice();
         
-        string filebase("/dev/input/js{}");
         regex sonyMotionSensors("^Sony.*Motion Sensors$");
         int id = 0;
         while(true){
-            string file = format(filebase, id);
+            string file = formatC("/dev/input/js{}", id);
             if(!filesystem::exists(filesystem::path(file))){
                 break;
             }
@@ -322,7 +316,7 @@ bool JoystickImpl::openDevice()
     fd = open(device.c_str(), O_RDONLY | O_NONBLOCK);
 
     if(fd < 0){
-        errorMessage = format("Device \"{0}\": {1}", device, strerror(errno));
+        errorMessage = formatC("Device \"{0}\": {1}", device, strerror(errno));
         return false;
     }
     errorMessage.clear();

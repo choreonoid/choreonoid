@@ -1,19 +1,13 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "PythonScriptItemImpl.h"
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/UTF8>
+#include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 namespace filesystem = cnoid::stdx::filesystem;
 
 
@@ -57,7 +51,7 @@ bool PythonScriptItemImpl::setScriptFilename(const std::string& filename)
         }
         return true;
     } else {
-        mv->putln(format(_("Python script file \"{}\" cannot be loaded. The file does not exist."), filename));
+        mv->putln(formatR(_("Python script file \"{}\" cannot be loaded. The file does not exist."), filename));
         return false;
     }
 }
@@ -91,14 +85,14 @@ bool PythonScriptItemImpl::execute()
     PythonExecutor::State state = executor.state();
     if(state == PythonExecutor::RUNNING_FOREGROUND){
         showWarningDialog(
-            format(_("Python script \"{}\" is now running in the foreground. "
+            formatR(_("Python script \"{}\" is now running in the foreground. "
                      "The execution of the script cannot be overlapped."), iname));
         return false;
     } else if(state == PythonExecutor::RUNNING_BACKGROUND){
         bool doRestart = showConfirmDialog(
             _("Python Script Termination"),
-            format(_("Python script \"{}\" is running now. "
-                     "Do you want to terminate and restart it?"), iname));
+            formatR(_("Python script \"{}\" is running now. "
+                      "Do you want to terminate and restart it?"), iname));
         if(!doRestart){
             return false;
         } else if(!terminate()){
@@ -110,16 +104,16 @@ bool PythonScriptItemImpl::execute()
     bool result = false;
 
     if(scriptFilename_.empty()){
-        mv->putln(format(_(" Python script \"{}\" is empty."), iname));
+        mv->putln(formatR(_(" Python script \"{}\" is empty."), iname));
 
     } else {
         filesystem::path scriptPath(fromUTF8(scriptFilename_));
 
         if(!filesystem::exists(scriptPath)){
-            mv->putln(format(_("The file of Python script \"{}\" does not exist."), iname));
+            mv->putln(formatR(_("The file of Python script \"{}\" does not exist."), iname));
 
         } else {
-            mv->putln(format(_("Execution of Python script \"{}\" has been started."), iname));
+            mv->putln(formatR(_("Execution of Python script \"{}\" has been started."), iname));
 
             sigFinishedConnection.disconnect();
             sigFinishedConnection =
@@ -137,9 +131,9 @@ bool PythonScriptItemImpl::executeCode(const char* code)
 {
     if(executor.state() != PythonExecutor::NOT_RUNNING){
         mv->putln(
-            format(_("Python script \"{}\" is now running in the foreground. "
-                     "The code cannot be executed now."),
-                     scriptItem()->identityName()));
+            formatR(_("Python script \"{}\" is now running in the foreground. "
+                      "The code cannot be executed now."),
+                    scriptItem()->identityName()));
         return false;
     }
     return executor.execCode(code);
@@ -165,12 +159,12 @@ void PythonScriptItemImpl::onScriptFinished()
     const string iname = scriptItem()->identityName();
 
     if(executor.isTerminated()){
-        mv->putln(format(_("The execution of Python script \"{}\" has been terminated."), iname));
+        mv->putln(formatR(_("The execution of Python script \"{}\" has been terminated."), iname));
     } else if(executor.hasException()){
-        mv->putln(format(_("The execution of Python script \"{0}\" failed.\n{1}"),
+        mv->putln(formatR(_("The execution of Python script \"{0}\" failed.\n{1}"),
                 iname, executor.exceptionText()));
     } else {
-        mv->putln(format(_("The execution of Python script \"{}\" has been finished."), iname));
+        mv->putln(formatR(_("The execution of Python script \"{}\" has been finished."), iname));
     }
     
     sigScriptFinished_();
@@ -184,9 +178,9 @@ bool PythonScriptItemImpl::terminate()
     
     if(executor.state() == PythonExecutor::RUNNING_BACKGROUND){
         if(executor.terminate()){
-            mv->putln(format(_("Python script \"{}\" has been terminated."), iname));
+            mv->putln(formatR(_("Python script \"{}\" has been terminated."), iname));
         } else {
-            mv->putln(format(_("Python script \"{}\" cannot be terminated. "
+            mv->putln(formatR(_("Python script \"{}\" cannot be terminated. "
                                "Some internal errors may happen."), iname));
             result = false;
         }

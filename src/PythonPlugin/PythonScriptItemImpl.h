@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_IMPL_H
 #define CNOID_PYTHON_PLUGIN_PYTHON_SCRIPT_ITEM_IMPL_H
 

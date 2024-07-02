@@ -13,8 +13,8 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/CloneMap>
 #include <cnoid/TimeMeasure>
+#include <cnoid/Format>
 #include <cnoid/stdx/clamp>
-#include <fmt/format.h>
 #include <random>
 #include <unordered_map>
 #include <limits>
@@ -340,7 +340,7 @@ public:
             os << "Matrix " << name << ": \n";
             for(int i=0; i < M.rows(); i++){
                 for(int j=0; j < M.cols(); j++){
-                    os << fmt::format(" {:.50g} ", M(i, j));
+                    os << formatC(" {:.50g} ", M(i, j));
                 }
                 os << std::endl;
             }
