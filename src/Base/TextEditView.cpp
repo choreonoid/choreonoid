@@ -112,7 +112,7 @@ TextEditView::Impl::Impl(TextEditView* self)
     vbox->setSpacing(0);
     QHBoxLayout* hbox = new QHBoxLayout();
     setCurrentFileName();
-    fileNameLabel.setFrameStyle(QFrame::Box | QFrame::Sunken);
+    fileNameLabel.setFrameStyle(static_cast<int>(QFrame::Box) | static_cast<int>(QFrame::Sunken));
     fileNameLabel.setSizePolicy(QSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred));
     hbox->addWidget(&fileNameLabel, 10);
     PushButton* saveButton = new PushButton(_("Save"));

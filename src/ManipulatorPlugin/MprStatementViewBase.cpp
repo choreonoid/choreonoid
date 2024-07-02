@@ -61,7 +61,7 @@ MprStatementViewBase::Impl::Impl(MprStatementViewBase* self)
     auto vbox = new QVBoxLayout;
     vbox->setSpacing(0);
 
-    captionLabel.setFrameStyle(QFrame::Box | QFrame::Sunken);
+    captionLabel.setFrameStyle(static_cast<int>(QFrame::Box) | static_cast<int>(QFrame::Sunken));
     vbox->addWidget(&captionLabel);
 
     scrollArea.setFrameShape(QFrame::NoFrame);

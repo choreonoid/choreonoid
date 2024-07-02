@@ -75,7 +75,7 @@ LinkDeviceListView::Impl::Impl(LinkDeviceListView* self)
     vbox->addLayout(hbox);
 
     auto hframe = new QFrame;
-    hframe->setFrameStyle(QFrame::HLine | QFrame::Sunken);
+    hframe->setFrameStyle(static_cast<int>(QFrame::HLine) | static_cast<int>(QFrame::Sunken));
     vbox->addWidget(hframe);
 
     treeWidget.setCacheEnabled(true);

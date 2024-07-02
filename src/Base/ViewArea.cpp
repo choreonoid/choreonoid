@@ -946,7 +946,7 @@ void ViewArea::Impl::showViewSizeLabels(QSplitter* splitter)
             label = viewSizeLabels[i];
         } else {
             label = new QLabel(self);
-            label->setFrameStyle(QFrame::Box | QFrame::Raised);
+            label->setFrameStyle(static_cast<int>(QFrame::Box) | static_cast<int>(QFrame::Raised));
             label->setLineWidth(0);
             label->setMidLineWidth(1);
             label->setAutoFillBackground(true);

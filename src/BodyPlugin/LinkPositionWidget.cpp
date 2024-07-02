@@ -222,7 +222,7 @@ void LinkPositionWidget::Impl::createPanel()
     self->setLayout(vbox);
 
     auto hbox = new QHBoxLayout;
-    resultLabel.setFrameStyle(QFrame::Box | QFrame::Sunken);
+    resultLabel.setFrameStyle(static_cast<int>(QFrame::Box) | static_cast<int>(QFrame::Sunken));
     resultLabel.setAlignment(Qt::AlignCenter);
     hbox->addWidget(&resultLabel, 1);
     fetchButton.setText(_("Fetch"));

@@ -392,7 +392,7 @@ DigitalIoDeviceView::Impl::Impl(DigitalIoDeviceView* self)
     vbox->addSpacing(vs);
 
     auto hframe = new QFrame;
-    hframe->setFrameStyle(QFrame::HLine | QFrame::Sunken);
+    hframe->setFrameStyle(static_cast<int>(QFrame::HLine) | static_cast<int>(QFrame::Sunken));
     vbox->addWidget(hframe);
     setFrameShape(QFrame::NoFrame);
     setSelectionMode(QAbstractItemView::SingleSelection);

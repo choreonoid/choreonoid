@@ -653,7 +653,7 @@ void MprProgramViewBase::Impl::setupWidgets()
     hbox->addStretch();
     vbox->addLayout(hbox);
     
-    programNameLabel.setFrameStyle(QFrame::Box | QFrame::Sunken);
+    programNameLabel.setFrameStyle(static_cast<int>(QFrame::Box) | static_cast<int>(QFrame::Sunken));
     vbox->addWidget(&programNameLabel);
 
     // TreeWidget setup

@@ -593,7 +593,7 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
 
     // Setup the table
     auto hframe = new QFrame;
-    hframe->setFrameStyle(QFrame::HLine | QFrame::Sunken);
+    hframe->setFrameStyle(static_cast<int>(QFrame::HLine) | static_cast<int>(QFrame::Sunken));
     vbox->addWidget(hframe);
     setFrameShape(QFrame::NoFrame);
     setSelectionBehavior(QAbstractItemView::SelectRows);
