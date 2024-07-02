@@ -551,9 +551,9 @@ UtilityImpl::linkAttributeFromBodyMappingInfo(Body* body, std::map<const Link*, 
 
     for(auto it =begin(linkAry);it!=end(linkAry);++it){
         string linkName = (*it)->name();
-         LinkAttribute attr;
+        LinkAttribute attr;
 
-         attr.setEffectMode(effectMode);
+        attr.setEffectMode(effectMode);
         if(effectMode==2){
             linkAttrMap[*it] = attr;
             continue;

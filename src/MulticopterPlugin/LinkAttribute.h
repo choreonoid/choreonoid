@@ -80,12 +80,12 @@ public:
         _isNull = false;
     }
 
-    std::vector<bool> linkForceApplyFlgAry() const{
+    const std::vector<bool>& linkForceApplyFlgAry() const{
         return _linkForceApplyFlagAry;
     }
 
-    void setLinkForceApplyFlgAry(std::vector<bool> applyFlgAry){
-        _linkForceApplyFlagAry=applyFlgAry;
+    void setLinkForceApplyFlgAry(const std::vector<bool>& applyFlgAry){
+        _linkForceApplyFlagAry = applyFlgAry;
     }
 
     int effectMode() const{
@@ -93,8 +93,8 @@ public:
     }
 
     void setEffectMode(int effectMode){
-        if(effectMode<0 || 2 < effectMode )effectMode=0;
-        _effectMode=effectMode;
+        if(effectMode<0 || 2 < effectMode ) effectMode = 0;
+        _effectMode = effectMode;
     }
 
     bool logMode() const{
@@ -110,7 +110,7 @@ public:
     }
 
     void setGeometryHandle(cnoid::stdx::optional<cnoid::CollisionDetector::GeometryHandle> handle){
-        _handle=handle;
+        _handle = handle;
     }
 
 protected:
