@@ -291,49 +291,25 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
 
     if(role == Qt::EditRole){
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        switch(qvalue.typeId()){
-#else
-        switch(qvalue.type()){
-#endif
+        switch(variantType(qvalue)){
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        case QMetaType::Bool:
-#else
-        case QVariant::Bool:
-#endif
+        case QVariantBoolType:
             accepted = stdx::get<std::function<bool(bool)>>(func)(qvalue.toBool());
             break;
                 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        case QMetaType::QString:
-#else
-        case QVariant::String:
-#endif
+        case QVariantStringType:
             accepted = stdx::get<std::function<bool(const string&)>>(func)(qvalue.toString().toStdString());
             break;
                 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        case QMetaType::Int:
-#else
-        case QVariant::Int:
-#endif
+        case QVariantIntType:
             accepted = stdx::get<std::function<bool(int)>>(func)(qvalue.toInt());
             break;
                 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        case QMetaType::Double:
-#else
-        case QVariant::Double:
-#endif
+        case QVariantDoubleType:
             accepted = stdx::get<std::function<bool(double)>>(func)(qvalue.toDouble());
             break;
                 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        case QMetaType::QStringList:
-#else
-        case QVariant::StringList:
-#endif
+        case QVariantStringListType:
         {
             const QStringList& slist = qvalue.toStringList();
             if(!slist.empty()){

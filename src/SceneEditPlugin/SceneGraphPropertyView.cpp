@@ -9,6 +9,7 @@
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneEffects>
 #include <cnoid/ValueTree>
+#include <cnoid/QVariantUtil>
 #include <cnoid/stdx/variant>
 #include <QBoxLayout>
 #include <QTableWidget>
@@ -114,7 +115,7 @@ public:
     }
 
     virtual QString displayText(const QVariant& value, const QLocale& locale) const {
-        if(value.type() == QVariant::Double){
+        if(checkIfDouble(value)){
             return QString::number(value.toDouble(), 'f', decimals);
         }
         return QStyledItemDelegate::displayText(value, locale);
@@ -223,21 +224,22 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
 {
     bool accepted = false;
     if(role == Qt::EditRole){
-        switch(qvalue.type()){
-                
-        case QVariant::Bool:
+
+        switch(variantType(qvalue)){
+
+        case QVariantBoolType:
             accepted = stdx::get<std::function<bool(bool)>>(func)(qvalue.toBool());
             break;
                 
-        case QVariant::String:
+        case QVariantStringType:
             accepted = stdx::get<std::function<bool(const string&)>>(func)(qvalue.toString().toStdString());
             break;
                 
-        case QVariant::Int:
+        case QVariantIntType:
             accepted = stdx::get<std::function<bool(int)>>(func)(qvalue.toInt());
             break;
                 
-        case QVariant::Double:
+        case QVariantDoubleType:
             accepted = stdx::get<std::function<bool(double)>>(func)(qvalue.toDouble());
             break;
         default:

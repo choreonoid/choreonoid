@@ -5,22 +5,43 @@
 
 namespace cnoid {
 
-inline bool checkIfString(const QVariant& value)
+inline int variantType(const QVariant& value)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    return (value.typeId() == QMetaType::QString);
+    return value.typeId();
 #else
-    return (value.type() == QVariant::String);
+    return value.type();
 #endif
+}
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+enum QVariantTypes
+{
+    QVariantBoolType = QMetaType::Bool,
+    QVariantStringType = QMetaType::QString,
+    QVariantIntType = QMetaType::Int,
+    QVariantDoubleType = QMetaType::Double,
+    QVariantStringListType = QMetaType::QStringList,
+};
+#else
+enum QVariantTypes
+{
+    QVariantBoolType = QVariant::Bool,
+    QVariantStringType = QVariant::String,
+    QVariantIntType = QVariant::Int,
+    QVariantDoubleType = QVariant::Double,
+    QVariantStringListType = QVariant::StringList,
+};
+#endif
+
+inline bool checkIfString(const QVariant& value)
+{
+    return variantType(value) == QVariantStringType;
 }
 
 inline bool checkIfDouble(const QVariant& value)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    return (value.typeId() == QMetaType::Double);
-#else
-    return (value.type() == QVariant::Double);
-#endif
+    return variantType(value) == QVariantDoubleType;
 }
 
 }
