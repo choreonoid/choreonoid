@@ -293,10 +293,10 @@ void LinkPositionWidget::Impl::createPanel()
         grid->addWidget(&frameComboLabel[i], row + i, 0, Qt::AlignLeft /* Qt::AlignJustify */);
         
         frameCombo[i].sigAboutToShowPopup().connect(
-            [=](){ updateCoordinateFrameCandidates(i); });
+            [this, i](){ updateCoordinateFrameCandidates(i); });
         
         frameCombo[i].sigActivated().connect(
-            [=](int index){ onFrameComboActivated(i, index); });
+            [this, i](int index){ onFrameComboActivated(i, index); });
         
         grid->addWidget(&frameCombo[i], row + i, 1, 1, 2);
 

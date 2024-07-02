@@ -381,7 +381,7 @@ FilePathEditor::FilePathEditor(CustomizedItemDelegate* delegate, QWidget* parent
     hbox->addWidget(lineEdit);
     setFocusProxy(lineEdit);
     auto button = new PushButton(QApplication::style()->standardIcon(QStyle::SP_FileDialogStart), "", this);
-    button->sigClicked().connect([=](){ itemDelegate->openFileDialog(currentValue, this); });
+    button->sigClicked().connect([this](){ itemDelegate->openFileDialog(currentValue, this); });
     hbox->addWidget(button);
 }
 
@@ -738,13 +738,13 @@ void ItemPropertyWidget::Impl::setCurrentItem(Item* item)
         if(item){
             itemConnections.add(
                 item->sigUpdated().connect(
-                    [&](){ updateProperties(); }));
+                    [this](){ updateProperties(); }));
             itemConnections.add(
                 item->sigNameChanged().connect(
-                    [&](const std::string& /* oldName */){ updateProperties(); }));
+                    [this](const std::string& /* oldName */){ updateProperties(); }));
             itemConnections.add(
                 item->sigDisconnectedFromRoot().connect(
-                    [&](){ setCurrentItem(nullptr); }));
+                    [this](){ setCurrentItem(nullptr); }));
         }
         currentItem = item;
         updateProperties(true);
@@ -793,10 +793,10 @@ void ItemPropertyWidget::resetColumnSizes()
 void ItemPropertyWidget::setOperationMenu(MenuManager& menuManager)
 {
     menuManager.addItem(_("Update"))->sigTriggered().connect(
-        [&](){ updateProperties(); });
+        [this](){ updateProperties(); });
     
     menuManager.addItem(_("Reset Column Sizes"))->sigTriggered().connect(
-        [&](){ resetColumnSizes(); });
+        [this](){ resetColumnSizes(); });
 }
 
 

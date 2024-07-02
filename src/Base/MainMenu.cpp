@@ -110,7 +110,7 @@ void MainMenu::setMenuItems()
         // Add a menu item to show a dialog to load a plugin if the startup plugin loading is disabled
         // This is for the debug use
         mm.setPath(N_("Plugin")).addItem(_("Load Plugin"))
-            ->sigTriggered().connect([&](){ pluginManager->showDialogToLoadPlugin(); });
+            ->sigTriggered().connect([this, pluginManager](){ pluginManager->showDialogToLoadPlugin(); });
         mm.addSeparator();
     }
     
@@ -369,19 +369,19 @@ void MainMenu::setMenuAsToolBarVisibilityMenu(Menu* menu)
 
 void MainMenu::setMenuAsViewVisibilityMenu(Menu* menu)
 {
-    menu->sigAboutToShow().connect([=](){ onViewOperationMenuAboutToShow(menu, ViewVisibilityMenu); });
+    menu->sigAboutToShow().connect([this, menu](){ onViewOperationMenuAboutToShow(menu, ViewVisibilityMenu); });
 }
 
 
 void MainMenu::setMenuAsViewCreationMenu(Menu* menu)
 {
-    menu->sigAboutToShow().connect([=](){ onViewOperationMenuAboutToShow(menu, ViewCreationMenu); });
+    menu->sigAboutToShow().connect([this, menu](){ onViewOperationMenuAboutToShow(menu, ViewCreationMenu); });
 }
 
 
 void MainMenu::setMenuAsViewDeletionMenu(Menu* menu, bool isItemToDeleteAllHiddenViewsEnabled)
 {
-    menu->sigAboutToShow().connect([=](){ onViewOperationMenuAboutToShow(menu, ViewDeletionMenu); });
+    menu->sigAboutToShow().connect([this, menu](){ onViewOperationMenuAboutToShow(menu, ViewDeletionMenu); });
     this->isItemToDeleteAllHiddenViewsEnabled = isItemToDeleteAllHiddenViewsEnabled;
 }
 

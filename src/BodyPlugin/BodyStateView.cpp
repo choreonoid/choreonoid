@@ -104,8 +104,8 @@ BodyStateView::Impl::Impl(BodyStateView* self)
     vbox->addWidget(&stateTreeWidget);
     self->setLayout(vbox);
 
-    self->sigActivated().connect([&](){ onActivated(true); });
-    self->sigDeactivated().connect([&](){ onActivated(false); });
+    self->sigActivated().connect([this](){ onActivated(true); });
+    self->sigDeactivated().connect([this](){ onActivated(false); });
 
     //self->enableFontSizeZoomKeys(true);
 }
@@ -142,7 +142,7 @@ void BodyStateView::Impl::onActivated(bool on)
         setCurrentBodyItem(bsm->currentBodyItem());
         bodyItemChangeConnection =
             bsm->sigCurrentBodyItemChanged().connect(
-                [&](BodyItem* bodyItem){ setCurrentBodyItem(bodyItem); });
+                [this](BodyItem* bodyItem){ setCurrentBodyItem(bodyItem); });
     }
 }
 
@@ -187,7 +187,7 @@ void BodyStateView::Impl::updateStateList(BodyItem* bodyItem)
             }
             stateConnections.add(
                 device->sigStateChanged().connect(
-                    [=](){ updateDeviceStates(device, i); }));
+                    [this, device, i](){ updateDeviceStates(device, i); }));
             updateDeviceStates(device, i);
         }
 
@@ -211,7 +211,7 @@ void BodyStateView::Impl::updateStateList(BodyItem* bodyItem)
                 }
                 stateConnections.add(
                     accessor.sigStateChanged().connect(
-                        [&](){ updateExtraStates(); }));
+                        [this](){ updateExtraStates(); }));
             }
             extraStateItemMap.push_back(itemMap);
         }

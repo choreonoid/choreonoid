@@ -149,16 +149,16 @@ void FrameListModel::setFrameListItem(CoordinateFrameListItem* frameListItem)
     if(frameList){
         frameListConnections.add(
             frameList->sigFrameAdded().connect(
-                [&](int index){ onFrameAdded(index); }));
+                [this](int index){ onFrameAdded(index); }));
         frameListConnections.add(
             frameList->sigFrameRemoved().connect(
-                [&](int index, CoordinateFrame*){ onFrameRemoved(index); }));
+                [this](int index, CoordinateFrame*){ onFrameRemoved(index); }));
         frameListConnections.add(
             frameList->sigFrameUpdated().connect(
-                [&](int index, int flags){ onFrameUpdated(index, flags); }));
+                [this](int index, int flags){ onFrameUpdated(index, flags); }));
         frameListConnections.add(
             frameListItem->sigFrameMarkerVisibilityChanged().connect(
-                [&](int index, bool /* on */){ onFrameMarkerViisibilityChanged(index); }));
+                [this](int index, bool /* on */){ onFrameMarkerViisibilityChanged(index); }));
     }
             
     endResetModel();
@@ -587,7 +587,7 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
     hbox->addWidget(&targetLabel, 0, Qt::AlignVCenter);
     hbox->addStretch();
     addButton.setText(_("Add"));
-    addButton.sigClicked().connect([&](){ addFrameIntoCurrentIndex(false); });
+    addButton.sigClicked().connect([this](){ addFrameIntoCurrentIndex(false); });
     hbox->addWidget(&addButton);
     vbox->addLayout(hbox);
 
@@ -638,7 +638,7 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
 
     isIndependentItemizationListSupported = false;
     targetItemPicker.setTargetPredicate(
-        [&](CoordinateFrameListItem* item){
+        [this](CoordinateFrameListItem* item){
             if(!isIndependentItemizationListSupported){
                 return item->itemizationMode() != CoordinateFrameListItem::IndependentItemization;
             }
@@ -646,7 +646,7 @@ CoordinateFrameListView::Impl::Impl(CoordinateFrameListView* self)
         });
     
     targetItemPicker.sigTargetItemChanged().connect(
-        [&](CoordinateFrameListItem* item){
+        [this](CoordinateFrameListItem* item){
             setCoordinateFrameListItem(item);
         });
 
@@ -677,7 +677,7 @@ void CoordinateFrameListView::onAttachedMenuRequest(MenuManager& menuManager)
     auto supportCheck = menuManager.addCheckItem(_("Support offset frames"));
     supportCheck->setChecked(impl->isIndependentItemizationListSupported);
     supportCheck->sigToggled().connect(
-        [&](bool on){
+        [this](bool on){
             impl->isIndependentItemizationListSupported = on;
             impl->targetItemPicker.refresh();
         });
@@ -792,11 +792,11 @@ void CoordinateFrameListView::Impl::showContextMenu(int row, QPoint globalPos)
     contextMenuManager.setNewPopupMenu(this);
 
     contextMenuManager.addItem(_("Add"))
-        ->sigTriggered().connect([=](){ addFrame(row, false); });
+        ->sigTriggered().connect([this, row](){ addFrame(row, false); });
 
     if(row > 0 || (frameList && !frameList->hasFirstElementAsDefaultFrame())){
         contextMenuManager.addItem(_("Remove"))
-            ->sigTriggered().connect([=](){ removeSelectedFrames(); });
+            ->sigTriggered().connect([this, row](){ removeSelectedFrames(); });
     }
     
     contextMenuManager.popupMenu()->popup(globalPos);

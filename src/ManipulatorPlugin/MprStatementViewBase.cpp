@@ -105,7 +105,7 @@ void MprStatementViewBase::Impl::onActivated()
 
     programViewConnection =
         programView->sigSelectedStatementsChanged().connect(
-            [=](std::vector<MprStatementPtr>& statements){
+            [this, programView](std::vector<MprStatementPtr>& statements){
                 onSelectedStatementsChanged(programView, statements);
             });
 

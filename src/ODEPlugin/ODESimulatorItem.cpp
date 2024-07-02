@@ -353,12 +353,14 @@ void ODELink::createGeometry(ODEBody* odeBody, bool doFlipYZ)
     if(link->collisionShape()){
         MeshExtractor* extractor = new MeshExtractor;
         if(extractor->extract(
-               link->collisionShape(), [=](){ addMesh(extractor, odeBody, doFlipYZ); })){
+               link->collisionShape(),
+               [this, extractor, odeBody, doFlipYZ](){ addMesh(extractor, odeBody, doFlipYZ); })){
             if(!vertices.empty()){
                 triMeshDataID = dGeomTriMeshDataCreate();
-                dGeomTriMeshDataBuildSingle(triMeshDataID,
-                                            &vertices[0], sizeof(Vertex), vertices.size(),
-                                            &triangles[0],triangles.size() * 3, sizeof(Triangle));
+                dGeomTriMeshDataBuildSingle(
+                    triMeshDataID,
+                    &vertices[0], sizeof(Vertex), vertices.size(),
+                    &triangles[0],triangles.size() * 3, sizeof(Triangle));
             
                 dGeomID gId = dCreateTriMesh(odeBody->spaceID, triMeshDataID, 0, 0, 0);
                 geomID.push_back(gId);
@@ -1275,11 +1277,11 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
 
     if(useWorldCollisionDetector){
         bodyCollisionDetector.updatePositions(
-            [&](Referenced* object, Isometry3*& out_Position){
+            [](Referenced* object, Isometry3*& out_Position){
                 out_Position = &(static_cast<ODELink*>(object)->link->position()); });
         
         bodyCollisionDetector.detectCollisions(
-            [&](const CollisionPair& collisionPair){ onCollisionPairDetected(collisionPair); });
+            [this](const CollisionPair& collisionPair){ onCollisionPairDetected(collisionPair); });
         
     } else {
         if(MEASURE_PHYSICS_CALCULATION_TIME){

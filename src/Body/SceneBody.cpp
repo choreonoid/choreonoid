@@ -359,7 +359,7 @@ void LinkShapeGroup::resetCollisionShapeUpdateConnection()
 void LinkShapeGroup::render(SceneRenderer* renderer)
 {
     renderer->renderCustomGroup(
-        this, [=](){ traverse(renderer, renderer->renderingFunctions()); });
+        this, [this, renderer](){ traverse(renderer, renderer->renderingFunctions()); });
 }
 
 

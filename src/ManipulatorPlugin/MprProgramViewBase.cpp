@@ -602,7 +602,7 @@ MprProgramViewBase::Impl::Impl(MprProgramViewBase* self)
     setupWidgets();
 
     targetItemPicker.sigTargetItemChanged().connect(
-        [&](MprProgramItemBase* item){ setProgramItem(item); });
+        [this](MprProgramItemBase* item){ setProgramItem(item); });
 
     dummyStatement = new MprDummyStatement;
     statementItemOperationCallCounter = 0;
@@ -699,32 +699,32 @@ void MprProgramViewBase::Impl::setupWidgets()
     rheader.setSectionResizeMode(1, QHeaderView::ResizeToContents);
     rheader.setSectionResizeMode(2, QHeaderView::ResizeToContents);
     rheader.setSectionResizeMode(3, QHeaderView::Stretch);
-    sigSectionResized().connect([&](int, int, int){ updateGeometry(); });
+    sigSectionResized().connect([this](int, int, int){ updateGeometry(); });
 
-    sigItemSelectionChanged().connect([&](){ onItemSelectionChanged(); });
+    sigItemSelectionChanged().connect([this](){ onItemSelectionChanged(); });
 
     sigCurrentItemChanged().connect(
-        [&](QTreeWidgetItem* current, QTreeWidgetItem* previous){
+        [this](QTreeWidgetItem* current, QTreeWidgetItem* previous){
             onCurrentTreeWidgetItemChanged(current, previous); });
 
     sigItemClicked().connect(
-        [&](QTreeWidgetItem* item, int column){
+        [this](QTreeWidgetItem* item, int column){
             onTreeWidgetItemClicked(item, column); });
 
     sigItemDoubleClicked().connect(
-        [&](QTreeWidgetItem* item, int column){
+        [this](QTreeWidgetItem* item, int column){
             onTreeWidgetItemDoubleClicked(item, column); });
 
     sigRowsInserted().connect(
-        [&](const QModelIndex& parent, int start, int end){
+        [this](const QModelIndex& parent, int start, int end){
             onRowsInserted(parent, start, end);  });
 
     sigRowsAboutToBeRemoved().connect(
-        [&](const QModelIndex& parent, int start, int end){
+        [this](const QModelIndex& parent, int start, int end){
             onRowsAboutToBeRemoved(parent, start, end); });
 
     sigRowsRemoved().connect(
-        [&](const QModelIndex& parent, int start, int end){
+        [this](const QModelIndex& parent, int start, int end){
             onRowsRemoved(parent, start, end); });
     
     vbox->addWidget(this);
@@ -822,10 +822,10 @@ void MprProgramViewBase::setStatementInMenuBarEnabled(QString path, bool on)
 void MprProgramViewBase::onAttachedMenuRequest(MenuManager& menuManager)
 {
     menuManager.addItem(_("Refresh"))->sigTriggered().connect(
-        [&](){ updateStatementTree(); });
+        [this](){ updateStatementTree(); });
 
     menuManager.addItem(_("Renumbering"))->sigTriggered().connect(
-        [&](){
+        [this](){
             if(impl->currentProgramItem){
                 impl->currentProgramItem->program()->renumberPositionIds();
                 impl->currentProgramItem->notifyUpdate();
@@ -896,21 +896,21 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
         
     programConnections.add(
         currentProgramItem->sigNameChanged().connect(
-            [&](const std::string&){ setProgramItem(currentProgramItem); }));
+            [this](const std::string&){ setProgramItem(currentProgramItem); }));
     
     programConnections.add(
         program->sigStatementInserted().connect(
-            [&](MprProgram::iterator iter){
+            [this](MprProgram::iterator iter){
                 onStatementInserted(iter); }));
     
     programConnections.add(
         program->sigStatementRemoved().connect(
-            [&](MprStatement* statement, MprProgram* program){
+            [this](MprStatement* statement, MprProgram* program){
                 onStatementRemoved(program, statement); }));
     
     programConnections.add(
         program->sigStatementUpdated().connect(
-            [&](MprStatement* statement){
+            [this](MprStatement* statement){
                 onStatementUpdated(statement); }));
     
     programNameLabel.setStyleSheet("font-weight: bold");
@@ -1591,7 +1591,7 @@ void MprProgramViewBase::Impl::onRowsAboutToBeRemoved(const QModelIndex& parent,
 
     forEachStatementInTreeEditEvent(
         parent, start, end,
-        [&](MprStructuredStatement*, MprProgram* program, int, MprStatement* statement){
+        [this](MprStructuredStatement*, MprProgram* program, int, MprStatement* statement){
             programConnections.block();
             program->remove(statement);
             programConnections.unblock();
@@ -1648,7 +1648,7 @@ void MprProgramViewBase::Impl::onRowsInserted(const QModelIndex& parent, int sta
     
     forEachStatementInTreeEditEvent(
         parent, start, end,
-        [&](MprStructuredStatement*, MprProgram* program, int index, MprStatement* statement){
+        [this](MprStructuredStatement*, MprProgram* program, int index, MprStatement* statement){
             programConnections.block();
             program->insert(program->begin() + index, statement);
             programConnections.unblock();
@@ -1758,16 +1758,16 @@ void MprProgramViewBase::Impl::showContextMenu(MprStatement* statement, QPoint g
 void MprProgramViewBase::Impl::setBaseContextMenu(MenuManager& menuManager)
 {
     auto cutAction = menuManager.addItem(_("Cut"));
-    cutAction->sigTriggered().connect([=](){ copySelectedStatements(true); });
+    cutAction->sigTriggered().connect([this](){ copySelectedStatements(true); });
 
     auto copyAction = menuManager.addItem(_("Copy"));
-    copyAction->sigTriggered().connect([=](){ copySelectedStatements(false); });
+    copyAction->sigTriggered().connect([this](){ copySelectedStatements(false); });
 
     auto pasteAction = menuManager.addItem(_("Paste"));
     if(statementsToPaste.empty()){
         pasteAction->setEnabled(false);
     } else {
-        pasteAction->sigTriggered().connect([=](){ pasteStatements(); });
+        pasteAction->sigTriggered().connect([this](){ pasteStatements(); });
     }
 
     if(auto currentStatementItem = dynamic_cast<StatementItem*>(currentItem())){
@@ -1786,7 +1786,7 @@ void MprProgramViewBase::Impl::setBaseContextMenu(MenuManager& menuManager)
 
     menuManager.addItem(_("Insert empty line"))
         ->sigTriggered().connect(
-            [=](){
+            [this](){
                 insertStatement(
                     new MprEmptyStatement,
                     selectedItems().empty() ? AfterTargetPosition : BeforeTargetPosition);
@@ -1975,11 +1975,11 @@ void MprProgramViewBase::Impl::dropEvent(QDropEvent *event)
         if(parent){
             int index = parent->indexOfChild(targetItem);
             parent->takeChild(index);
-            rollbackFunction = [&]() { parent->insertChild(index, targetItem); };
+            rollbackFunction = [parent, index, targetItem]() { parent->insertChild(index, targetItem); };
         } else {
             int index = indexOfTopLevelItem(targetItem);
             takeTopLevelItem(index);
-            rollbackFunction = [&]() { insertTopLevelItem(index, targetItem); };
+            rollbackFunction = [this, index, targetItem]() { insertTopLevelItem(index, targetItem); };
         }
 
         // insert target to the new position

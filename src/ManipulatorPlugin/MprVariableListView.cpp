@@ -891,11 +891,11 @@ void MprVariableListView::Impl::showContextMenu(int row, QPoint globalPos)
     contextMenuManager.setNewPopupMenu(this);
 
     contextMenuManager.addItem(_("Add"))
-        ->sigTriggered().connect([=](){ addVariable(row, false); });
+        ->sigTriggered().connect([this, row](){ addVariable(row, false); });
 
     if(variableListModel->numVariables() > 0){
         contextMenuManager.addItem(_("Remove"))
-            ->sigTriggered().connect([=](){ removeSelectedVariables(); });
+            ->sigTriggered().connect([this](){ removeSelectedVariables(); });
     }
     
     contextMenuManager.popupMenu()->popup(globalPos);

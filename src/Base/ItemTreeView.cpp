@@ -80,10 +80,10 @@ ItemTreeView::Impl::Impl(ItemTreeView* self)
     self->setLayout(vbox);
 
     itemTreeWidget->customizeRootContextMenu(
-        [&](MenuManager& menu){ onContextMenuRequested(nullptr, menu); });
+        [this](MenuManager& menu){ onContextMenuRequested(nullptr, menu); });
     
     itemTreeWidget->customizeContextMenu<Item>(
-        [&](Item* item, MenuManager& menu, ItemFunctionDispatcher){
+        [this](Item* item, MenuManager& menu, ItemFunctionDispatcher){
             onContextMenuRequested(item, menu); });
 }
 
@@ -184,7 +184,7 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
         }
 
         clearSelection->sigTriggered().connect(
-            [=](){ itemTreeWidget->clearSelection(); });
+            [this](){ itemTreeWidget->clearSelection(); });
     }
 
     if(itemTreeWidget->checkPastable(item)){
@@ -208,7 +208,7 @@ bool ItemTreeView::storeState(Archive& archive)
 bool ItemTreeView::restoreState(const Archive& archive)
 {
     if(impl->itemTreeWidget->restoreState(archive)){
-        archive.addPostProcess([&](){ impl->restoreState(archive); });
+        archive.addPostProcess([this, &archive](){ impl->restoreState(archive); });
         return true;
     }
     return false;
@@ -225,9 +225,9 @@ void ItemTreeView::Impl::restoreState(const Archive& archive)
        ItemTreeView when the corresponding data is stored in it.
     */
     restoreItemStates(
-        archive, "selected", [&](Item* item){ item->setSelected(true); });
+        archive, "selected", [this](Item* item){ item->setSelected(true); });
     restoreItemStates(
-        archive, "checked", [&](Item* item){ item->setChecked(true); });
+        archive, "checked", [this](Item* item){ item->setChecked(true); });
 }
 
 

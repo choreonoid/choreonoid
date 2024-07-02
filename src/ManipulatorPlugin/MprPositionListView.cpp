@@ -935,11 +935,11 @@ void MprPositionListView::Impl::showContextMenu(int row, QPoint globalPos)
     contextMenuManager.setNewPopupMenu(this);
 
     contextMenuManager.addItem(_("Add"))
-        ->sigTriggered().connect([=](){ addPosition(row >= 0 ? row : 0, false); });
+        ->sigTriggered().connect([this, row](){ addPosition(row >= 0 ? row : 0, false); });
 
     if(row >= 0){
         contextMenuManager.addItem(_("Remove"))
-            ->sigTriggered().connect([=](){ removeSelectedPositions(); });
+            ->sigTriggered().connect([this](){ removeSelectedPositions(); });
     }
     
     contextMenuManager.popupMenu()->popup(globalPos);

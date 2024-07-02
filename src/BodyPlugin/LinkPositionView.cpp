@@ -138,7 +138,7 @@ void LinkPositionView::onAttachedMenuRequest(MenuManager& menu)
     menu.addRadioItem(checkGroup, _("IK priority link"));
     checkGroup->actions()[impl->positionWidget->targetLinkType()]->setChecked(true);
     checkGroup->sigTriggered().connect(
-        [=](QAction* check){
+        [this, checkGroup](QAction* check){
             impl->positionWidget->setTargetLinkType(checkGroup->actions().indexOf(check)); });
                                            
     menu.setPath("/");

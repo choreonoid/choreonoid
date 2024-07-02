@@ -185,7 +185,7 @@ PythonExecutor::State PythonExecutor::state() const
 bool PythonExecutor::eval(const std::string& code)
 {
     return impl->exec(
-        [=](){ return pybind11::eval(code.c_str(), impl->pythonPlugin->globalNamespace()); },
+        [this, code](){ return pybind11::eval(code.c_str(), impl->pythonPlugin->globalNamespace()); },
         "");
 }
 
@@ -193,7 +193,7 @@ bool PythonExecutor::eval(const std::string& code)
 bool PythonExecutor::execCode(const std::string& code)
 {
     return impl->exec(
-        [=](){
+        [this, code](){
             return pybind11::eval<pybind11::eval_statements>(
                 code.c_str(), impl->pythonPlugin->globalNamespace()); },
         "");
@@ -203,7 +203,7 @@ bool PythonExecutor::execCode(const std::string& code)
 bool PythonExecutor::execFile(const std::string& filename)
 {
     return impl->exec(
-        [=](){ return pybind11::eval_file(filename.c_str(), impl->pythonPlugin->globalNamespace()); },
+        [this, filename](){ return pybind11::eval_file(filename.c_str(), impl->pythonPlugin->globalNamespace()); },
         filename);
 }
 
@@ -316,7 +316,7 @@ bool PythonExecutor::Impl::execMain(std::function<python::object()> execScript)
     stateMutex.unlock();
     
     if(QThread::isRunning()){
-        callLater([&](){ onBackgroundExecutionFinished(); });
+        callLater([this](){ onBackgroundExecutionFinished(); });
     } else {
         sigFinished();
     }

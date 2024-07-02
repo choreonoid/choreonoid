@@ -231,7 +231,7 @@ void ToolBarArea::Impl::setVisibilityMenuItems(Menu* menu)
         if(toolBar->isVisible()){
             action->setChecked(true);
         }
-        action->sigToggled().connect([=](bool on){ onVisiblityCheckToggled(toolBar, on); });
+        action->sigToggled().connect([this, toolBar](bool on){ onVisiblityCheckToggled(toolBar, on); });
         menu->addAction(action);
     }
 }

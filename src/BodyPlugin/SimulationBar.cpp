@@ -183,7 +183,7 @@ void SimulationBar::forEachSimulator(std::function<void(SimulatorItem* simulator
 void SimulationBar::startSimulation(bool doReset)
 {
     forEachSimulator(
-        [=](SimulatorItem* simulator){ startSimulation(simulator, doReset); },
+        [this, doReset](SimulatorItem* simulator){ startSimulation(simulator, doReset); },
         true);
 }
 

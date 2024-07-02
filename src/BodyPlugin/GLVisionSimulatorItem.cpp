@@ -575,15 +575,15 @@ bool GLVisionSimulatorItem::Impl::initializeSimulation(SimulatorItem* simulatorI
     os.flush();
 
     if(!sensorRenderers.empty()){
-        simulatorItem->addPreDynamicsFunction([&](){ onPreDynamics(); });
-        simulatorItem->addPostDynamicsFunction([&](){ onPostDynamics(); });
+        simulatorItem->addPreDynamicsFunction([this](){ onPreDynamics(); });
+        simulatorItem->addPostDynamicsFunction([this](){ onPostDynamics(); });
 
         if(useQueueThreadForAllSensors){
             while(!sensorQueue.empty()){
                 sensorQueue.pop();
             }
             isQueueRenderingTerminationRequested = false;
-            queueThread.start([&](){ queueRenderingLoop(); });
+            queueThread.start([this](){ queueRenderingLoop(); });
             for(size_t i=0; i < sensorRenderers.size(); ++i){
                 for(auto& screen : sensorRenderers[i]->screens){
                     screen->moveRenderingBufferToThread(queueThread);
@@ -1070,11 +1070,12 @@ void SensorRenderer::startSharedRenderingThread()
 
     bool doDoneGLContextCurrent = (screens.size() >= 2);
     
-    sharedScene->renderingThread.start([=](){
+    sharedScene->renderingThread.start(
+        [this, doDoneGLContextCurrent](){
             sharedScene->concurrentRenderingLoop(
-                [&](SensorScreenRenderer*& currentGLContextScreen){
+                [this, doDoneGLContextCurrent](SensorScreenRenderer*& currentGLContextScreen){
                     render(currentGLContextScreen, doDoneGLContextCurrent); },
-                [&](){ finalizeRendering(); });
+                [this](){ finalizeRendering(); });
         });
 
     for(auto& screen : screens){
@@ -1089,11 +1090,11 @@ void SensorScreenRenderer::startRenderingThread()
     // This may be unnecessary
     std::unique_lock<std::mutex> lock(scene->renderingMutex);
         
-    scene->renderingThread.start([&](){
+    scene->renderingThread.start([this](){
             scene->concurrentRenderingLoop(
-                [&](SensorScreenRenderer*& currentGLContextScreen){
+                [this](SensorScreenRenderer*& currentGLContextScreen){
                     render(currentGLContextScreen); },
-                [&](){ finalizeRendering(); });
+                [this](){ finalizeRendering(); });
         });
 
     moveRenderingBufferToThread(scene->renderingThread);
@@ -1884,13 +1885,13 @@ void GLVisionSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 void GLVisionSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Target bodies"), bodyNameListString,
-                [&](const string& names){ return updateNames(names, bodyNameListString, bodyNames); });
+                [this](const string& names){ return updateNames(names, bodyNameListString, bodyNames); });
     putProperty(_("Target sensors"), sensorNameListString,
-                [&](const string& names){ return updateNames(names, sensorNameListString, sensorNames); });
+                [this](const string& names){ return updateNames(names, sensorNameListString, sensorNames); });
     putProperty(_("Max frame rate"), maxFrameRate, changeProperty(maxFrameRate));
     putProperty(_("Max latency [s]"), maxLatency, changeProperty(maxLatency));
     putProperty(_("Record vision data"), isVisionDataRecordingEnabled, changeProperty(isVisionDataRecordingEnabled));
-    putProperty(_("Thread mode"), threadMode, [&](int index){ return threadMode.select(index); });
+    putProperty(_("Thread mode"), threadMode, [this](int index){ return threadMode.select(index); });
     putProperty(_("Best effort"), isBestEffortModeProperty, changeProperty(isBestEffortModeProperty));
     putProperty(_("All scene objects"), shootAllSceneObjects, changeProperty(shootAllSceneObjects));
     putProperty.min(1.0);

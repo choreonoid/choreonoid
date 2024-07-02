@@ -527,7 +527,7 @@ public:
         out_results.clear();
         if(firstSlot){
             if(isCallingSlots){
-                addRecursiveEmit([=]() mutable { operator()(args...); });
+                addRecursiveEmit([this, args...]() mutable { operator()(args...); });
             } else {
                 typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
                 std::tuple<Args...> argset(args...);
@@ -554,7 +554,7 @@ private:
     {
         if(firstSlot){
             if(isCallingSlots){
-                addRecursiveEmit([=]() mutable { operator()(args...); });
+                addRecursiveEmit([this, args...]() mutable { operator()(args...); });
             } else {
                 typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;
                 Combiner combiner;
@@ -577,7 +577,7 @@ private:
     result_type invoke(std::false_type, Args&&... args)
     {
         if(isCallingSlots){
-            addRecursiveEmit([=]() mutable { return operator()(args...); });
+            addRecursiveEmit([this, args...]() mutable { return operator()(args...); });
             return result_type();
         } else {
             typedef signal_private::SlotCallIterator<SlotHolderType, Args...> IteratorType;

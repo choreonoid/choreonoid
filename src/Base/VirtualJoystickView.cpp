@@ -138,8 +138,8 @@ VirtualJoystickViewImpl::VirtualJoystickViewImpl(VirtualJoystickView* self)
             }
         }
 
-        button.sigPressed().connect([=](){ onButtonPressed(i); });
-        button.sigReleased().connect([=](){ onButtonReleased(i); });
+        button.sigPressed().connect([this, i](){ onButtonPressed(i); });
+        button.sigReleased().connect([this, i](){ onButtonReleased(i); });
     }
 
     QHBoxLayout* hbox = new QHBoxLayout;

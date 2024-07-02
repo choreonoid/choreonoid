@@ -458,7 +458,8 @@ SignalDeviceComboBox::SignalDeviceComboBox
     
     if(view->targetItem){
         view->targetItem->forEachIoDevice(
-            [&](BodyItem* bodyItem, DigitalIoDevice* device){
+            [this, currentDevice, &currentBodyName, &currentDeviceName, &isCurrentDeviceAvailable]
+            (BodyItem* bodyItem, DigitalIoDevice* device){
                 auto body = device->body();
                 int index = count();
                 addItem(getDeviceLabel(body->name(), device->name()));
@@ -523,7 +524,7 @@ IoConnectionView::Impl::Impl(IoConnectionView* self)
     hbox->addWidget(&targetLabel, 0, Qt::AlignVCenter);
     hbox->addSpacing(hs);
     addButton.setText(_("Add"));
-    addButton.sigClicked().connect([&](){ addConnectionIntoCurrentIndex(false); });
+    addButton.sigClicked().connect([this](){ addConnectionIntoCurrentIndex(false); });
     hbox->addWidget(&addButton);
     hbox->addStretch();
     vbox->addLayout(hbox);
@@ -560,7 +561,7 @@ IoConnectionView::Impl::Impl(IoConnectionView* self)
     self->setLayout(vbox);
 
     targetItemPicker.sigTargetItemChanged().connect(
-        [&](IoConnectionMapItem* item){
+        [this](IoConnectionMapItem* item){
             setConnectionMapItem(item); });
 }
 
@@ -705,10 +706,10 @@ void IoConnectionView::Impl::showContextMenu(int row, QPoint globalPos)
     contextMenuManager.setNewPopupMenu(this);
 
     contextMenuManager.addItem(_("Add"))
-        ->sigTriggered().connect([=](){ addNewConnection(row, false); });
+        ->sigTriggered().connect([this, row](){ addNewConnection(row, false); });
 
     contextMenuManager.addItem(_("Remove"))
-        ->sigTriggered().connect([=](){ removeSelectedConnections(); });
+        ->sigTriggered().connect([this](){ removeSelectedConnections(); });
     
     contextMenuManager.popupMenu()->popup(globalPos);
 }

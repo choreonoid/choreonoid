@@ -166,11 +166,11 @@ MultiPointSetItem::Impl::Impl(MultiPointSetItem* self)
 
     itemSelectionChangedConnection.reset(
         RootItem::instance()->sigSelectedItemsChanged().connect(
-            [=](const ItemList<>&){ onSelectedItemsChanged(); }));
+            [this](const ItemList<>&){ onSelectedItemsChanged(); }));
 
     subTreeChangedConnection.reset(
         self->sigSubTreeChanged().connect(
-            [&](){ onSubTreeChanged(); }));
+            [this](){ onSubTreeChanged(); }));
 
     isAutoSaveMode = false;
 }
@@ -263,7 +263,7 @@ void MultiPointSetItem::Impl::onSubTreeChanged()
             info->index = i;
             info->pointSetUpdateConnection.reset(
                 item->pointSet()->sigUpdated().connect(
-                    [&, item](const SgUpdate&){ onPointSetUpdated(item); }));
+                    [this, item](const SgUpdate&){ onPointSetUpdated(item); }));
             itemInfoMap.insert(ItemInfoMap::value_type(item, info));
             
             sigPointSetItemAdded(i);
@@ -533,25 +533,24 @@ Item* MultiPointSetItem::doCloneItem(CloneMap* /* cloneMap */) const
 void MultiPointSetItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Visibility"), impl->visibilityMode,
-                [&](int mode){
-                    setVisibilityMode(mode); impl->updateVisibilities(); return true; });
+                [this](int mode){ setVisibilityMode(mode); impl->updateVisibilities(); return true; });
     putProperty(_("Auto save"), false);
     putProperty(_("Num point sets"), numPointSetItems());
     putProperty(_("Rendering mode"), impl->renderingMode,
-                [&](int mode){ return impl->onRenderingModePropertyChanged(mode); });
+                [this](int mode){ return impl->onRenderingModePropertyChanged(mode); });
 
     putProperty.min(0.0);
     putProperty.decimals(1)
         (_("Point size"), pointSize(),
-         [&](double size){ setPointSize(size); return true; });
+         [this](double size){ setPointSize(size); return true; });
     putProperty.decimals(4)
         (_("Voxel size"), voxelSize(),
-         [&](double size){ setVoxelSize(size); return true; });
+         [this](double size){ setVoxelSize(size); return true; });
     
     putProperty(_("Translation"), str(Vector3(offsetPosition().translation())),
-                [&](const string& value){ return impl->onTopTranslationPropertyChanged(value); });
+                [this](const string& value){ return impl->onTopTranslationPropertyChanged(value); });
     Vector3 rpy(TO_DEGREE * rpyFromRot(offsetPosition().linear()));
-    putProperty(_("Rotation"), str(rpy), [&](const string& value){ return impl->onTopRotationPropertyChanged(value); });
+    putProperty(_("Rotation"), str(rpy), [this](const string& value){ return impl->onTopRotationPropertyChanged(value); });
 }
 
 
@@ -661,9 +660,9 @@ SceneMultiPointSet::SceneMultiPointSet(MultiPointSetItem::Impl* multiPointSetIte
     regionMarker = new RectRegionMarker;
     regionMarker->setEditModeCursor(QCursor(QPixmap(":/Base/icon/eraser-cursor.png"), 3, 2));
     regionMarker->sigRegionFixed().connect(
-        [&](const PolyhedralRegion& region){ onRegionFixed(region); });
+        [this](const PolyhedralRegion& region){ onRegionFixed(region); });
     regionMarker->sigContextMenuRequest().connect(
-        [&](SceneWidgetEvent* event){ onContextMenuRequestInEraserMode(event); });
+        [this](SceneWidgetEvent* event){ onContextMenuRequestInEraserMode(event); });
     isEditable = true;
 }
 
@@ -778,13 +777,13 @@ bool SceneMultiPointSet::onContextMenuRequest(SceneWidgetEvent* event)
 {
     auto menu = event->contextMenu();
     menu->addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
-        [&](){ clearAttentionPoints(true); });
+        [this](){ clearAttentionPoints(true); });
 
     if(!regionMarker->isEditing()){
         SceneWidget* sceneWidget = event->sceneWidget();
         eraserModeMenuItemConnection.reset(
             menu->addItem(_("PointSet: Start Eraser Mode"))->sigTriggered().connect(
-                [&, sceneWidget](){ regionMarker->startEditing(sceneWidget); }));
+                [this, sceneWidget](){ regionMarker->startEditing(sceneWidget); }));
     }
 
     return true;
@@ -794,7 +793,7 @@ bool SceneMultiPointSet::onContextMenuRequest(SceneWidgetEvent* event)
 void SceneMultiPointSet::onContextMenuRequestInEraserMode(SceneWidgetEvent* event)
 {
     auto item = event->contextMenu()->addItem(_("PointSet: Exit Eraser Mode"))
-        ->sigTriggered().connect([&](){ regionMarker->finishEditing(); });
+        ->sigTriggered().connect([this](){ regionMarker->finishEditing(); });
     eraserModeMenuItemConnection.reset(item);
 }
 
