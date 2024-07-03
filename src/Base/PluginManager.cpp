@@ -249,7 +249,8 @@ bool PluginManager::Impl::addPluginDirectory(const std::string& nativeDirectory,
     
 #ifdef Q_OS_WIN32
     // Add the plugin directory to PATH
-    qputenv("PATH", formatC("{0};{1}", pathString, qgetenv("PATH")).c_str());
+    auto pathenv = QString::fromLocal8Bit(qgetenv("PATH"));
+    qputenv("PATH", QString("%1;%2").arg(pathString.c_str()).arg(pathenv).toLocal8Bit());
 #endif
 
     return true;

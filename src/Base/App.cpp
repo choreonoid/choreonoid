@@ -265,7 +265,8 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
         static std::regex re("^Python\\d+$");
         string dirString = dir.path().filename().string();
         if(regex_match(dirString, match, re)){
-            qputenv("PATH", formatC("{0};{1}", dir.path().string(), qgetenv("PATH")).c_str());
+            auto pathenv = QString::fromLocal8Bit(qgetenv("PATH"));
+            qputenv("PATH", QString("%1;%2").arg(dir.path().string().c_str()).arg(pathenv).toLocal8Bit());
             break;
         }
     }
