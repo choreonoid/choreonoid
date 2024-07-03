@@ -63,7 +63,7 @@ copyrighted by other developers.
    see thirdparty/CLI11/LICENSE
 
  * Eigen (http://eigen.tuxfamily.org)
-   see thirdparty/eigen-3.2.10/COPYING.README
+   see thirdparty/eigen-3.4.0/COPYING.README
 
  * fast_float (https://github.com/fastfloat/fast_float)
    see thirdparty/fast_float-0.8.0/LICENSE.rst
