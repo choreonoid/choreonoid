@@ -266,23 +266,15 @@ void PythonPlugin::Impl::executeScriptFileOnStartup(const string& scriptFile)
 
 bool PythonPlugin::Impl::initializeInterpreter()
 {
-    interpreter.reset(new pybind11::scoped_interpreter(false));
-    //interpreter = new pybind11::scoped_interpreter(false);
-
     /*
       Some python modules require argv and missing argv may cause AttributeError.a
       (Ex. AttributeError: 'module' object has no attribute 'argv')
-      To avoid this problem, set dummy argv to python interpreter by PySys_SetArgvEx.
+      To avoid this problem, set dummy argv to python interpreter.
     */
-#ifdef CNOID_USE_PYTHON2
     char dummy_str[] = "choreonoid"; // avoid deprecated conversion from string constant
     char* dummy_argv[] = { dummy_str };
-#else
 
-    wchar_t dummy_str[] = L"choreonoid"; // avoid deprecated conversion from string constant
-    wchar_t* dummy_argv[] = { dummy_str };
-#endif
-    PySys_SetArgvEx(1, dummy_argv, 0);
+    interpreter.reset(new pybind11::scoped_interpreter(false, 1, dummy_argv, false));
 
     mainModule = python::module::import("__main__");
     globalNamespace = mainModule.attr("__dict__");
