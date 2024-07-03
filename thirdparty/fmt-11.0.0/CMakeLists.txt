@@ -167,7 +167,10 @@ option(FMT_CUDA_TEST "Generate the cuda-test target." OFF)
 option(FMT_OS "Include OS-specific APIs." ON)
 option(FMT_MODULE "Build a module instead of a traditional library." OFF)
 option(FMT_SYSTEM_HEADERS "Expose headers with marking them as system." OFF)
-option(FMT_UNICODE "Enable Unicode support." ON)
+
+# Modified by Choreonoid
+# option(FMT_UNICODE "Enable Unicode support." ON)
+option(FMT_UNICODE "Enable Unicode support." OFF)
 
 if (FMT_TEST AND FMT_MODULE)
   # The tests require {fmt} to be compiled as traditional library
@@ -313,6 +316,11 @@ if (FMT_PEDANTIC)
   target_compile_options(fmt PRIVATE ${PEDANTIC_COMPILE_FLAGS})
 endif ()
 
+# Added by Choreonoid
+if(UNIX)
+  target_compile_options(fmt PRIVATE -fPIC)
+endif()
+
 if (cxx_std_11 IN_LIST CMAKE_CXX_COMPILE_FEATURES)
   target_compile_features(fmt PUBLIC cxx_std_11)
 else ()
@@ -355,10 +363,14 @@ endif ()
 add_library(fmt-header-only INTERFACE)
 add_library(fmt::fmt-header-only ALIAS fmt-header-only)
 
-if (MSVC AND FMT_UNICODE)
-  # Unicode support requires compiling with /utf-8.
-  target_compile_options(fmt PUBLIC $<$<COMPILE_LANGUAGE:CXX>:/utf-8>)
-  target_compile_options(fmt-header-only INTERFACE $<$<COMPILE_LANGUAGE:CXX>:/utf-8>)
+if (MSVC)
+  if(FMT_UNICODE)
+    # Unicode support requires compiling with /utf-8.
+    target_compile_options(fmt PUBLIC $<$<COMPILE_LANGUAGE:CXX>:/utf-8>)
+    target_compile_options(fmt-header-only INTERFACE $<$<COMPILE_LANGUAGE:CXX>:/utf-8>)
+  else() # Added by Choreonoid
+    target_compile_definitions(fmt PUBLIC FMT_UNICODE=0)
+  endif()
 endif ()
 
 target_compile_definitions(fmt-header-only INTERFACE FMT_HEADER_ONLY=1)
