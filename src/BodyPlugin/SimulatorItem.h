@@ -1,8 +1,8 @@
 #ifndef CNOID_BODY_PLUGIN_SIMULATOR_ITEM_H
 #define CNOID_BODY_PLUGIN_SIMULATOR_ITEM_H
 
-#include "CollisionSeq.h"
 #include <cnoid/Item>
+#include <cnoid/CollisionLinkPairList>
 #include <cnoid/EigenTypes>
 #include <vector>
 #include <memory>

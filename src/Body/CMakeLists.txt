@@ -163,6 +163,7 @@ set(headers
   BodyMotionUtil.h
   ExtraBodyStateAccessor.h
   CollisionLinkPair.h
+  CollisionLinkPairList.h
   ControllerIO.h
   SimpleController.h
   exportdecl.h

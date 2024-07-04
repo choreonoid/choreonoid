@@ -1,7 +1,7 @@
 #ifndef CNOID_BODY_COLLISION_SEQ_H
 #define CNOID_BODY_COLLISION_SEQ_H
 
-#include <cnoid/CollisionLinkPair>
+#include <cnoid/CollisionLinkPairList>
 #include <cnoid/MultiSeq>
 #include <cnoid/YAMLWriter>
 #include <memory>
@@ -11,8 +11,6 @@ namespace cnoid {
 
 class YAMLWriter;
 class CollisionSeqItem;
-
-typedef std::vector<std::shared_ptr<CollisionLinkPair>> CollisionLinkPairList;
 
 class CNOID_EXPORT CollisionSeq : public MultiSeq<std::shared_ptr<CollisionLinkPairList>>
 {

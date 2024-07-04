@@ -1,7 +1,7 @@
 #ifndef CNOID_BODY_CONSTRAINT_FORCE_SOLVER_H
 #define CNOID_BODY_CONSTRAINT_FORCE_SOLVER_H
 
-#include <cnoid/CollisionSeq>
+#include "CollisionLinkPairList.h"
 #include "exportdecl.h"
 
 namespace cnoid {
