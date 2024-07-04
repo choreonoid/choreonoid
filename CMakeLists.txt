@@ -5,9 +5,8 @@ if(MSVC)
   # * The install command can specifiy a target defined in a sub directory since version 3.13
   cmake_minimum_required(VERSION 3.13)
 else()
-  # CMake version 3.5.1 is installed in Ubuntu 16.04.
-  # (Version 3.10.2 is installed in Ubuntu 18.04.)
-  cmake_minimum_required(VERSION 3.5)
+  # CMake version 3.10.2 is installed in Ubuntu 18.04.
+  cmake_minimum_required(VERSION 3.10)
 endif()
 
 cmake_policy(SET CMP0003 NEW)
@@ -95,10 +94,23 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # C++ version
 if(CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD ${CMAKE_CXX_STANDARD} CACHE STRING "C++ version number. Specify either 17 or 14.")
+  set(CMAKE_CXX_STANDARD ${CMAKE_CXX_STANDARD} CACHE STRING "C++ version number. Specify either 20, 17 or 14.")
+
 else()
-  set(cxx_standard 11)
-  if(NOT CMAKE_VERSION VERSION_LESS 3.8.0) # CMake 3.8 or later is required to enable C++17
+  set(cxx_standard 14)
+
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.12.0) # C++20 is supported by CMake 3.12 or later
+    if(UNIX)
+      check_cxx_compiler_flag("-std=c++20" has_cpp20)
+    elseif(MSVC)
+      check_cxx_compiler_flag("/std:c++20" has_cpp20)
+    endif()
+    if(has_cpp20)
+      set(cxx_standard 20)
+    endif()
+  endif()
+
+  if(NOT has_cpp20)
     if(UNIX)
       # C++17 support of GCC 7 is experimental
       if(NOT CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8)
@@ -111,13 +123,8 @@ else()
       set(cxx_standard 17)
     endif()
   endif()
-  if(NOT has_cpp17)
-    check_cxx_compiler_flag("-std=c++14" has_cpp14)
-    if(has_cpp14)
-      set(cxx_standard 14)
-    endif()
-  endif()
-  set(CMAKE_CXX_STANDARD ${cxx_standard} CACHE STRING "C++ version number. Specify either 17, 14.")
+
+  set(CMAKE_CXX_STANDARD ${cxx_standard} CACHE STRING "C++ version number. Specify either 20, 17 or 14.")
 endif()
 
 if(CMAKE_CXX_STANDARD LESS 14)
