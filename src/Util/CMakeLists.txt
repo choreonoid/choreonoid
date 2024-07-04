@@ -23,7 +23,6 @@ set(sources
   ValueTree.cpp
   YAMLReader.cpp
   YAMLWriter.cpp
-  ArchiveSession.cpp
   EigenUtil.cpp
   EigenArchive.cpp
   Uuid.cpp
@@ -128,7 +127,6 @@ set(headers
   ValueTreeUtil.h
   YAMLReader.h
   YAMLWriter.h
-  ArchiveSession.h
   EigenTypes.h
   EigenUtil.h
   EigenArchive.h
