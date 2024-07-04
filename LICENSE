@@ -42,6 +42,9 @@ copyrighted by other developers.
  * Double Arm Construction Robot (V7)
    see share/model/DoubleArmV7/LICENSE
 
+ * HRP-4C
+   see share/model/HRP4C/LICENSE
+
  * Kinova JACO2 Arm
    see share/model/JACO2/LICENSE
 
@@ -93,7 +96,7 @@ copyrighted by other developers.
    see thirdparty/pugixml-1.11/readme.txt
 
  * pybind11 (https://github.com/pybind/pybind11)
-   see thirdparty/pybind11-2.10.3/LICENSE
+   see thirdparty/pybind11-2.12.0/LICENSE
 
  * Sol (https://github.com/ThePhD/sol2)
    see thirdparty/sol2/LICENSE
@@ -109,8 +112,7 @@ copyrighted by other developers.
 Some binary distributions of Choreonoid may include the binaries of the
 following libraries:
 
-* Qt (http://qt-project.org/)
-* Boost C++ Libraries (http://www.boost.org/)
+* Qt (http://www.qt.io/)
 * Assimp (https://www.assimp.org/)
 * Open Dynamics Engine (http://www.ode.org/)
 * Bullet Physics Library (http://bulletphysics.org/)
