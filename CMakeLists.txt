@@ -178,7 +178,7 @@ endif()
 
 if(MSVC)
   set(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN OFF)
-  set(compiler_general_options "/MP /wd4018 /wd4068 /wd4244 /wd4250 /wd4251 /wd4267 /wd4275 /wd4800 /wd4819")
+  set(compiler_general_options "/MP /bigobj /wd4018 /wd4068 /wd4244 /wd4250 /wd4251 /wd4267 /wd4275 /wd4800 /wd4819")
   set(compiler_release_options "/O2 /Ob2 /Oi /Gy /GS- /fp:fast")
 
   if(${MSVC_VERSION} GREATER_EQUAL 1915)
