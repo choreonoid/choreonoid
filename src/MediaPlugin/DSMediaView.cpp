@@ -460,7 +460,7 @@ void DSMediaViewImpl::load()
             EIF(videoWindow->SetWindowForeground(OATRUE));
             EIF(videoWindow->put_Visible(OATRUE));
         }
-        catch (const DSException& ex){
+        catch (const DSException&){
             // comes here if loaded file is pure audio (e.g. wav file) and the filter graph has no video renderer attached to it
             videoWindow = nullptr;
             basicVideo = nullptr;
