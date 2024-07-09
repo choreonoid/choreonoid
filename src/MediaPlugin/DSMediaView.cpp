@@ -211,24 +211,19 @@ DSMediaViewImpl::~DSMediaViewImpl()
 
 }
 
-
-/*
-  bool DSMediaView::event(QEvent* event)
-  {
-  if(TRACE_FUNCTIONS){
-  cout << "DSMediaView::event()" << endl;
-  }
+bool DSMediaView::event(QEvent* event){
+    if(TRACE_FUNCTIONS){
+        cout << "DSMediaView::event()" << endl;
+    }
     
-  if(event->type() == QEvent::WinIdChange){
-  impl->onWindowIdChanged();
-  return true;
-  }
-  //return QWidget::event(event);
+    if(event->type() == QEvent::WinIdChange){
+        impl->onWindowIdChanged();
+        return true;
+    }
+    return QWidget::event(event);
 
-  return false;
-  }
-*/
-
+    //return false;
+}
 
 namespace {
     
@@ -447,23 +442,30 @@ void DSMediaViewImpl::load()
         if(!bCanSeek){
             mv->putln(_("This media file is not able to seek!"));
         }
-
+        
         // Query for video interfaces, which may not be relevant for audio files
         EIF(graphBuilder->QueryInterface(IID_IVideoWindow, (void**)&videoWindow));
         EIF(graphBuilder->QueryInterface(IID_IBasicVideo, (void**)&basicVideo));
 
         // Have the graph signal event via window callbacks for performance
         EIF(mediaEvent->SetNotifyWindow((OAHWND)hwnd, WM_DSHOW_NOTIFY, 0));
+
+        try{
+            // Setup the video window
+            EIF(videoWindow->put_Owner((OAHWND)hwnd));
+            EIF(videoWindow->put_WindowStyle(WS_CHILD | WS_CLIPSIBLINGS));
+
+            EIF(adjustVideoWindow());
+
+            EIF(videoWindow->SetWindowForeground(OATRUE));
+            EIF(videoWindow->put_Visible(OATRUE));
+        }
+        catch (const DSException& ex){
+            // comes here if loaded file is pure audio (e.g. wav file) and the filter graph has no video renderer attached to it
+            videoWindow = nullptr;
+            basicVideo = nullptr;
+        }
         
-        // Setup the video window
-        EIF(videoWindow->put_Owner((OAHWND)hwnd));
-        EIF(videoWindow->put_WindowStyle(WS_CHILD | WS_CLIPSIBLINGS));
-
-        EIF(adjustVideoWindow());
-
-        EIF(videoWindow->SetWindowForeground(OATRUE));
-        EIF(videoWindow->put_Visible(OATRUE));
-
         connectTimeBarSignals();
 
         seekMedia(TimeBar::instance()->time());

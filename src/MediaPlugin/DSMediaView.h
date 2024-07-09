@@ -21,7 +21,7 @@ public:
     virtual bool restoreState(const Archive& archive);
 
 protected:
-    //virtual bool event(QEvent* event);
+    virtual bool event(QEvent* event);
     virtual void resizeEvent(QResizeEvent* event);
     virtual void paintEvent(QPaintEvent* event);
     virtual QPaintEngine* paintEngine () const;
