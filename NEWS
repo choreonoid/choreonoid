@@ -1,6 +1,26 @@
+Choreonoid 2.2.0 released on July 11, 2024
+==========================================
+
 Changes since 2.1.1:
 
-* Added a function to change the numerical value format including their units and precisions displayed in GUI
+* Added support for Ubuntu 24.04
+* Added support for Qt6
+* Added support for C++20
+* Enabled a toolbar for setting display format of numerical units and precision in GUI
+* Added the link mass summary view
+* Improve the movie recorder
+ * Always display the marker inside the target view
+ * Allow cancellation of recording even during recording
+* Added support for loading mesh files in ROS 2 packages
+* Fixed bugs in YAML file output
+* Fixed a bug in URDF file loading
+* Fixed a bug related to sensor value updates in simulation
+* Fixed a bug related to high-DPI display environments
+* Improved the icon image resolutions in high-DPI display environments
+* Upgraded pybind11 to version 2.10.3
+* Upgraded the bundled fmtlib to version 11.0.0
+* Upgraded the bundled Eigen library to version 3.4.0
+* Various minor feature improvements, bug fixes, and internal implementation enhancements
 
 Choreonoid 2.1.1 released on March 21, 2024
 ===========================================

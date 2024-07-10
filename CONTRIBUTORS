@@ -1,9 +1,12 @@
 
 The development of Choreonoid was started by Shin'ichiro Nakaoka.
 
-Choreonoid has been developed as part of several research projects done at
+Choreonoid was originally developed as part of several research projects conducted at
 Humanoid Research Group, Intelligent Systems Research Institute,
 National Institute of Advanced Industrial Scicence and Technology (AIST).
+
+The developement of Choreonoid was taken over by Choreonoid Inc., which was established
+in 2018 to promote Choreonoid-related activities, and development is still ongoing.
 
 Following people contributed to Choreonoid (alphabetical order):
 
@@ -13,18 +16,24 @@ Ko Ayusawa
 Mehdi Benallegue
 Benjamin Chrétien
 Rafael Cisneros
+Shohei Fujii
+Pierre Gergondet 
 Isao Hara
 Kensuke Harada
 Shizuko Hattori
+Naoki Hiraoka
 Hirohisa Hirukawa
 Hisashi Ikari
 Shuuji Kajita
 Yohei Kakiuchi
 Fumio Kanehiro
 Kunio Kojima
+Ryo Koyama
 Iori Kumagai
+Yasuhiro Masutani
 Yosuke Matsusaka
 Shougo Matsushita
+Kanako Miura
 Mitsuharu Morisawa
 Thomas Moulard
 Shin'ichiro Nakaoka
@@ -36,6 +45,8 @@ Takuro Sasaki
 Ikumi Susa
 Kenta Suzuki
 Soichiro Suzuki
+Arnaud Tanguy
 Yuichi Tazaki
 Tokuo Tsuji
 Kazuhito Yokoi
+Kotaro Yoshimoto
