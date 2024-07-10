@@ -248,7 +248,7 @@ static bool toVectorX_(const std::string& s, VectorType& out_v)
         nptr++;
     }
     // returns true if the number of elements matches the vector size
-    return endptr == nptr;
+    return nptr == s.c_str() + s.size();
 }
 
 
