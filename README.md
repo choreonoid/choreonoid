@@ -18,6 +18,8 @@ You can simulate the dynamics of robots and environments on Choreonoid. Light-lo
 
 ![simulation](https://choreonoid.github.io/images/readme/dynamics_simulation.png)
 
+(Robot: JAXON by [JSK Laboratory](http://www.jsk.t.u-tokyo.ac.jp/) | Field: from [Humanoid Virtual Athletics Challenge](https://ytazz.github.io/vnoid/) )
+
 ## Choreographing
 
 Choreonoid provides a function for choreographing robot motions. Visualization tools and dynamics engines strongly support your motion editing. As an example, Choreonoid enabled the HRP-4C humanoid robot to dance with human dancers in 2010. You can see the video [here](https://www.youtube.com/watch?v=xcZJqiUrbnI).
