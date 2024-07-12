@@ -56,6 +56,7 @@ set(sources
   BodyKinematicsKit.cpp
   KinematicBodySet.cpp
   LeggedBodyHelper.cpp
+  ZmpDevice.cpp
   BodyCollisionLinkFilter.cpp
   BodyCollisionDetector.cpp
   BodyCollisionDetectorUtil.cpp
@@ -144,6 +145,7 @@ set(headers
   BodyKinematicsKit.h
   KinematicBodySet.h
   LeggedBodyHelper.h
+  ZmpDevice.h
   PenetrationBlocker.h
   ForwardDynamics.h
   ForwardDynamicsABM.h

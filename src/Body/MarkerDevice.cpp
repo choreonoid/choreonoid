@@ -301,5 +301,3 @@ registerMarkerDevice(
         return marker->writeSpecifications(info);
     });
 }
-
-
