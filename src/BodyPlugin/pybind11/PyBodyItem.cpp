@@ -51,8 +51,6 @@ void exportBodyItem(py::module m)
         .def("clearCollisions", &BodyItem::clearCollisions)
         .def_property_readonly("centerOfMass", &BodyItem::centerOfMass)
         .def("doLegIkToMoveCm", &BodyItem::doLegIkToMoveCm)
-        .def_property_readonly("zmp", &BodyItem::zmp)
-        .def("setZmp", &BodyItem::setZmp)
         .def("setStance", &BodyItem::setStance)
 
         // deprecated
@@ -62,7 +60,6 @@ void exportBodyItem(py::module m)
         .def("getCurrentBaseLink", &BodyItem::currentBaseLink)
         .def("getSigKinematicStateChanged", &BodyItem::sigKinematicStateChanged)
         .def("getCenterOfMass", &BodyItem::centerOfMass)
-        .def("getZmp", &BodyItem::zmp)
         // This function has been removed. The following is an incomplete wrapper.
         .def("makeBodyStatic", [](BodyItem& self){ self.body()->setRootLinkFixed(true); })
         ;
