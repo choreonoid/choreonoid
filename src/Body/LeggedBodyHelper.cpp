@@ -263,3 +263,38 @@ Vector3 LeggedBodyHelper::homeCopOfSoles() const
     }
     return p / n;
 }
+
+
+ZmpDevice* LeggedBodyHelper::getOrCreateZmpDevice()
+{
+    if(!zmpDevice_){
+        if(isValid_){
+            zmpDevice_ = body_->findDevice<ZmpDevice>();
+            if(!zmpDevice_){
+                zmpDevice_ = new ZmpDevice;
+                body_->addDevice(zmpDevice_, body_->rootLink());
+            }
+        }
+    }
+    return zmpDevice_;
+}
+
+
+Vector3 LeggedBodyHelper::zmp() const
+{
+    if(zmpDevice_){
+        return zmpDevice_->zmp();
+    }
+    return Vector3::Zero();
+}
+
+
+void LeggedBodyHelper::setZmp(const Vector3& zmp, bool doNotify)
+{
+    if(getOrCreateZmpDevice()){
+        zmpDevice_->setZmp(zmp);
+        if(doNotify){
+            zmpDevice_->notifyStateChange();
+        }
+    }
+}

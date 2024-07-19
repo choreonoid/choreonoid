@@ -3,6 +3,7 @@
 
 #include "Body.h"
 #include "InverseKinematics.h"
+#include "ZmpDevice.h"
 #include <memory>
 #include "exportdecl.h"
 
@@ -48,7 +49,11 @@ public:
     Vector3 homeCopOfSoles() const;
 
     const Isometry3& toeOffset(int footIndex) const { return footInfos[footIndex].toeOffset; };
-    
+
+    ZmpDevice* getOrCreateZmpDevice();
+    Vector3 zmp() const;
+    void setZmp(const Vector3& zmp, bool doNotify = false);
+
 private:
     BodyPtr body_;
     bool isValid_;
@@ -65,6 +70,8 @@ private:
     };
 
     std::vector<FootInfo, Eigen::aligned_allocator<FootInfo>> footInfos;
+
+    ZmpDevicePtr zmpDevice_;
 };
 
 typedef ref_ptr<LeggedBodyHelper> LeggedBodyHelperPtr;
