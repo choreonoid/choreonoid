@@ -11,6 +11,7 @@
 #include <cnoid/PinDragIK>
 #include <cnoid/PenetrationBlocker>
 #include <cnoid/LinkedJointHandler>
+#include <cnoid/LeggedBodyHelper>
 #include <cnoid/ConnectionSet>
 #include <cnoid/Archive>
 #include <cnoid/SpinBox>
@@ -726,11 +727,10 @@ void BodyLinkView::Impl::updateKinematicState(bool blockSignals)
             }
         }
 
-        if(currentBodyItem->isLeggedBody()){
-            const Vector3& zmp = currentBodyItem->zmp();
-            for(int i=0; i < 3; ++i){
-                zmpXyzSpin[i].setValue(zmp[i]);
-            }
+        auto legged = getLeggedBodyHelper(currentBodyItem->body());
+        Vector3 zmp = legged->zmp();
+        for(int i=0; i < 3; ++i){
+            zmpXyzSpin[i].setValue(zmp[i]);
         }
         
         if(blockSignals){
@@ -963,12 +963,14 @@ void BodyLinkView::Impl::doInverseKinematics(Vector3 p, Matrix3 R)
 void BodyLinkView::Impl::onZmpXyzChanged()
 {
     if(currentBodyItem){
-        Vector3 zmp;
-        for(int i=0; i < 3; ++i){
-            zmp[i] = zmpXyzSpin[i].value();
+        auto legged = getLeggedBodyHelper(currentBodyItem->body());
+        if(legged->isValid()){
+            Vector3 zmp;
+            for(int i=0; i < 3; ++i){
+                zmp[i] = zmpXyzSpin[i].value();
+            }
+            legged->setZmp(zmp, true);
         }
-        currentBodyItem->setZmp(zmp);
-        currentBodyItem->notifyKinematicStateChange(false);
     }
 }
 

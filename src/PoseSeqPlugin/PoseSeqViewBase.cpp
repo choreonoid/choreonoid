@@ -465,9 +465,9 @@ bool PoseSeqViewBase::toggleZmp(BodyKeyPose* pose, bool on)
 {
     bool modified = false;
     if(on){
-        const Vector3& zmp = currentBodyItem->zmp();
+        auto zmp = legged->zmp();
         if(!pose->isZmpValid() || zmp != pose->zmp()){
-            pose->setZmp(currentBodyItem->zmp());
+            pose->setZmp(zmp);
             modified = true;
         }
     } else {
@@ -684,6 +684,7 @@ void PoseSeqViewBase::setCurrentPoseSeqItem(PoseSeqItem* poseSeqItem)
     seq.reset();
     currentBodyItem.reset();
     body.reset();
+    legged.reset();
 
     if(!poseSeqItem){
         if(linkTreeWidget->bodyItem()){
@@ -703,6 +704,7 @@ void PoseSeqViewBase::setCurrentPoseSeqItem(PoseSeqItem* poseSeqItem)
         currentBodyItem = poseSeqItem->findOwnerItem<BodyItem>();
         if(currentBodyItem){
             body = currentBodyItem->body();
+            legged = getLeggedBodyHelper(body);
         }
         linkTreeWidget->setBodyItem(currentBodyItem);
         if(currentBodyItem){
@@ -1316,7 +1318,7 @@ PoseSeq::iterator PoseSeqViewBase::insertBodyKeyPose()
     }
 
     if(isChecked(zmpRow, validPartColumn)){
-        pose->setZmp(currentBodyItem->zmp());
+        pose->setZmp(legged->zmp());
         hasValidPart = true;
         if(isChecked(zmpRow, stationaryPointColumn)){
             pose->setZmpStationaryPoint();
@@ -1435,7 +1437,7 @@ bool PoseSeqViewBase::setCurrentBodyStateToPose(BodyKeyPose* pose, bool onlySele
     }
 
     if(pose->isZmpValid()){
-        const Vector3& zmp = currentBodyItem->zmp();
+        auto zmp = legged->zmp();
         if(zmp != pose->zmp()){
             pose->setZmp(zmp);
             updated = true;

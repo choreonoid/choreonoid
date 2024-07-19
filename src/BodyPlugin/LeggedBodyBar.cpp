@@ -1,6 +1,7 @@
 #include "LeggedBodyBar.h"
 #include "BodySelectionManager.h"
 #include "BodyItem.h"
+#include <cnoid/LeggedBodyHelper>
 #include <cnoid/SpinBox>
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
@@ -135,7 +136,10 @@ void LeggedBodyBar::Impl::onZmpButtonClicked(BodyItem::PositionType position)
     applyBodyItemOperation(
         [this, position](BodyItem* bodyItem){
             if(auto p = bodyItem->getParticularPosition(position)){
-                bodyItem->editZmp(*p);
+                auto legged = getLeggedBodyHelper(bodyItem->body());
+                if(legged->isValid()){
+                    legged->setZmp(*p, true);
+                }
             }
         });
 }

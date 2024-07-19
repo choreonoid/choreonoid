@@ -3,6 +3,7 @@
 #include "BodyMotionGenerationBar.h"
 #include <cnoid/BodyItem>
 #include <cnoid/TimeSyncItemEngine>
+#include <cnoid/LeggedBodyHelper>
 #include <cnoid/ConnectionSet>
 
 using namespace cnoid;
@@ -16,6 +17,7 @@ public:
     PoseSeqInterpolatorPtr interpolator;
     BodyMotionGenerationBar* bodyMotionGenerationBar;
     LinkTraverse fkTraverse;
+    LeggedBodyHelperPtr legged;
     ScopedConnectionSet connections;
 
     PoseSeqEngine(PoseSeqItem* poseSeqItem, BodyItem* bodyItem)
@@ -24,6 +26,7 @@ public:
     {
         interpolator = poseSeqItem->interpolator();
         bodyMotionGenerationBar = BodyMotionGenerationBar::instance();
+        legged = getLeggedBodyHelper(bodyItem->body());
 
         connections.add(
             poseSeqItem->sigUpdated().connect([this](){ refresh(); }));
@@ -58,7 +61,7 @@ public:
             
             auto zmp = interpolator->ZMP();
             if(zmp){
-                bodyItem->setZmp(*zmp);
+                legged->setZmp(*zmp, true);
             }
 
             bodyItem->notifyKinematicStateChange(true);

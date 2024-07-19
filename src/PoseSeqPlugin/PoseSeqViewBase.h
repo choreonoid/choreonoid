@@ -6,16 +6,17 @@
 #include <cnoid/ItemList>
 #include <cnoid/View>
 #include <cnoid/LinkDeviceTreeWidget>
-#include <cnoid/ConnectionSet>
 #include <cnoid/TimeBar>
 #include <cnoid/Archive>
 #include <cnoid/MenuManager>
 #include <cnoid/Link>
+#include <cnoid/BodyItem>
+#include <cnoid/LeggedBodyHelper>
+#include <cnoid/ConnectionSet>
 #include <cnoid/Buttons>
 #include <cnoid/CheckBox>
 #include <cnoid/ButtonGroup>
 #include <cnoid/SpinBox>
-#include <cnoid/BodyItem>
 #include <QBoxLayout>
 #include <QLabel>
 #include <ostream>
@@ -43,6 +44,7 @@ public:
     bool isSelectedPoseMoving;
     BodyItemPtr currentBodyItem;
     BodyPtr body;
+    LeggedBodyHelperPtr legged;
     double currentTime;
     double timeScale;
     Signal<void(double time)> sigCurrentTimeChanged;

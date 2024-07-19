@@ -2,6 +2,7 @@
 #include "BodyItem.h"
 #include "BodyMotionItem.h"
 #include "BodyMotionEngine.h"
+#include <cnoid/LeggedBodyHelper>
 #include <cnoid/ItemManager>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Format>
@@ -15,28 +16,28 @@ namespace {
 class ZMPSeqEngine : public TimeSyncItemEngine
 {
     shared_ptr<ZMPSeq> seq;
-    weak_ref_ptr<BodyItem> bodyItemRef;
+    LeggedBodyHelperPtr legged;
     ScopedConnection connection;
     
 public:
     ZMPSeqEngine(ZMPSeqItem* seqItem, BodyItem* bodyItem)
         : TimeSyncItemEngine(seqItem),
-          seq(seqItem->zmpseq()),
-          bodyItemRef(bodyItem)
+          seq(seqItem->zmpseq())
     {
+        legged = getLeggedBodyHelper(bodyItem->body());
         connection = seqItem->sigUpdated().connect([this](){ refresh(); });
     }
 
     virtual bool onTimeChanged(double time) override
     {
         bool isValidTime = false;
-        if(auto bodyItem = bodyItemRef.lock()){
+        if(legged->isValid()){
             if(!seq->empty()){
                 const Vector3& zmp = seq->at(seq->clampFrameIndex(seq->frameOfTime(time), isValidTime));
                 if(seq->isRootRelative()){
-                    bodyItem->setZmp(bodyItem->body()->rootLink()->T() * zmp);
+                    legged->setZmp(legged->body()->rootLink()->T() * zmp, true);
                 } else {
-                    bodyItem->setZmp(zmp);
+                    legged->setZmp(zmp, true);
                 }
             }
         }
