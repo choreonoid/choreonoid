@@ -235,7 +235,6 @@ void SphereMarker::initialize(double radius, const Vector3f& color, float transp
 void SphereMarker::setRadius(double r)
 {
     scale->setScale(r);
-    scale->notifyUpdate();
 }
 
 
@@ -243,8 +242,13 @@ void SphereMarker::setColor(const Vector3f& c)
 {
     material->setDiffuseColor(c);
     material->setEmissiveColor(c);
-    material->notifyUpdate();
 }
+
+
+void SphereMarker::setTransparency(float transparency)
+{
+    material->setTransparency(transparency);
+}    
 
 
 BoundingBoxMarker::BoundingBoxMarker(const BoundingBox& bbox, const Vector3f& color, float transparency, double width)

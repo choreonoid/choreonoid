@@ -67,6 +67,8 @@ public:
     SphereMarker(double radius, const Vector3f& color, float transparency = 0.0f);
     void setRadius(double r);
     void setColor(const Vector3f& c);
+    void setTransparency(float transparency);
+
 private:
     void initialize(double radius, const Vector3f& color, float transparency);
     SgScaleTransformPtr scale;
