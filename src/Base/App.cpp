@@ -20,10 +20,11 @@
 #include "ExtCommandItem.h"
 #include "SceneItem.h"
 #include "SceneGeometryMeasurementTracker.h"
+#include "CameraItem.h"
+#include "LightingItem.h"
 #include "PointSetItem.h"
 #include "PointSetGeometryMeasurementTracker.h"
 #include "MultiPointSetItem.h"
-#include "LightingItem.h"
 #include "AbstractTextItem.h"
 #include "ScriptItem.h"
 #include "MessageLogItem.h"
@@ -434,13 +435,14 @@ void App::Impl::initialize()
     ReferencedObjectSeqItem::initializeClass(ext);
     SceneItem::initializeClass(ext);
     SceneGeometryMeasurementTracker::initializeClass();
+    CameraItem::initializeClass(ext);
+    LightingItem::initializeClass(ext);
     PointSetItem::initializeClass(ext);
     PointSetGeometryMeasurementTracker::initializeClass();
     MultiPointSetItem::initializeClass(ext);
     AbstractTextItem::initializeClass(ext);
     ScriptItem::initializeClass(ext);
     MessageLogItem::initializeClass(ext);
-    LightingItem::initializeClass(ext);
     CoordinateFrameListItem::initializeClass(ext);
     CoordinateFrameItem::initializeClass(ext);
     PositionTagGroupItem::initializeClass(ext);

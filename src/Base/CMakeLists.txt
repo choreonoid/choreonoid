@@ -130,6 +130,9 @@ set(sources
   SceneItemFileIO.cpp
   SceneGeometryMeasurementTracker.cpp
   GeneralSceneFileImporterBase.cpp
+  CameraItem.cpp
+  CameraConfigDialog.cpp
+  LightingItem.cpp
   PointSetItem.cpp
   PointSetGeometryMeasurementTracker.cpp
   MultiPointSetItem.cpp
@@ -149,7 +152,6 @@ set(sources
   TaskView.cpp
   VirtualJoystickView.cpp
   MessageLogItem.cpp
-  LightingItem.cpp
   QtSvgUtil.cpp
   )
 
@@ -285,6 +287,9 @@ set(headers
   SceneItem.h
   SceneItemFileIO.h
   GeneralSceneFileImporterBase.h
+  CameraItem.h
+  CameraConfigDialog.h
+  LightingItem.h
   PointSetItem.h
   MultiPointSetItem.h
   PositionTagGroupItem.h
@@ -302,7 +307,6 @@ set(headers
   TextEdit.h
   TaskView.h
   MessageLogItem.h
-  LightingItem.h
   QtEventUtil.h
   QVariantUtil.h
   QtSvgUtil.h
