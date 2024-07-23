@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-12-14 22:18+0900\n"
+"POT-Creation-Date: 2024-07-26 11:55+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -44,6 +44,84 @@ msgid ""
 msgstr ""
 "アプリケーション設定ファイル \"{0}\" を読み込むことができません．\n"
 "{1}"
+
+msgid "Name:"
+msgstr "名前："
+
+msgid "Align with the builtin camera"
+msgstr "組み込みカメラに合わせる"
+
+msgid "Camera type:"
+msgstr "カメラタイプ："
+
+msgid "Perspective"
+msgstr "透視投影"
+
+msgid "Orthographic"
+msgstr "並行投影"
+
+msgid "Position:"
+msgstr "位置："
+
+msgid "Look-at:"
+msgstr "視線方向："
+
+msgid "Up vector:"
+msgstr "上方向："
+
+msgid "Field of View:"
+msgstr "視野角："
+
+msgid "[deg]"
+msgstr ""
+
+msgid "Near Clip:"
+msgstr "近方クリップ："
+
+msgid "Far Clip:"
+msgstr "遠方クリップ："
+
+msgid "Interactive viewpoint change"
+msgstr "インタラクティブな視点変更"
+
+msgid "Activate in the scene view"
+msgstr "シーンビューで有効化"
+
+msgid "&OK"
+msgstr "&OK"
+
+msgid "Camera Creation"
+msgstr "カメラの作成"
+
+msgid "Camera"
+msgstr "カメラ"
+
+msgid "Camera Configuration"
+msgstr "カメラの設定"
+
+msgid "CameraItem"
+msgstr "カメラアイテム"
+
+msgid "Activate camera"
+msgstr "このカメラを使用"
+
+msgid "Apply to built-in camera"
+msgstr "組み込みカメラに適用"
+
+msgid "Camera configuration"
+msgstr "カメラの設定"
+
+msgid "Camera type"
+msgstr "カメラタイプ"
+
+msgid "Field Of View"
+msgstr "視野角"
+
+msgid "Near clip distance"
+msgstr "近方クリップ距離"
+
+msgid "Far clip distance"
+msgstr "近方クリップ距離"
 
 msgid "CaptureBar"
 msgstr "キャプチャバー"
@@ -144,9 +222,6 @@ msgstr "距離測定"
 msgid "Object %1"
 msgstr "対象%1"
 
-msgid "Position:"
-msgstr "位置："
-
 msgid "Pick"
 msgstr "ピック"
 
@@ -186,9 +261,6 @@ msgstr "オーバーレイ"
 msgid "Create measurement item"
 msgstr "計測アイテムの作成"
 
-msgid "Name:"
-msgstr "名前"
-
 msgid "&Measure"
 msgstr "測定"
 
@@ -207,6 +279,12 @@ msgstr "距離測定アイテム \"{0}\" はプロジェクトから削除され
 
 msgid "The distance measurement cannot be started since the target items are not specified."
 msgstr "対象アイテムが指定されていないので距離測定を開始できません．"
+
+msgid "[m]"
+msgstr ""
+
+msgid "[mm]"
+msgstr ""
 
 msgid "Distance Marker Color"
 msgstr "距離マーカの色"
@@ -1219,6 +1297,9 @@ msgstr "パス"
 msgid "&Apply"
 msgstr "適用(&A)"
 
+msgid "Loading {0} failed.\n"
+msgstr "{0}の読み込みに失敗しました．\n"
+
 msgid "{0}-plugin cannot be initialized because required plugin(s) {1} are not found.\n"
 msgstr "必要なプラグイン{1}が見つからないため，{0}プラグインの初期化ができません．\n"
 
@@ -1620,6 +1701,9 @@ msgstr "右面ビュー"
 msgid "Left view"
 msgstr "左面ビュー"
 
+msgid "Isometric view"
+msgstr "等角投影ビュー"
+
 msgid "Scene"
 msgstr "シーン"
 
@@ -1689,14 +1773,8 @@ msgstr "テクスチャ"
 msgid "Fog"
 msgstr "フォグ"
 
-msgid "Background color"
-msgstr "背景色"
-
 msgid "Background Color"
 msgstr "背景色"
-
-msgid "Default color"
-msgstr "デフォルト色"
 
 msgid "Default Color"
 msgstr "デフォルト色"
@@ -1728,9 +1806,6 @@ msgstr "シーンビュー"
 msgid "Configuration of {0}"
 msgstr "{0}の設定"
 
-msgid "Camera"
-msgstr "カメラ"
-
 msgid "Lighting"
 msgstr "ライティング"
 
@@ -1745,12 +1820,6 @@ msgstr "デバッグ"
 
 msgid "OpengGL image buffer for picking"
 msgstr "ピッキング用OpenGL画像バッファ"
-
-msgid "Perspective"
-msgstr "透視投影"
-
-msgid "Orthographic"
-msgstr "並行投影"
 
 msgid "OpenGL initialization failed."
 msgstr "OpenGLの初期化に失敗しました．"
@@ -1836,11 +1905,17 @@ msgstr "遠方"
 msgid "Vertical axis"
 msgstr "垂直軸"
 
+msgid "Background color"
+msgstr "背景色"
+
 msgid "Span"
 msgstr "長さ"
 
 msgid "Interval"
 msgstr "間隔"
+
+msgid "Default color"
+msgstr "デフォルト色"
 
 msgid "ScriptBar"
 msgstr "スクリプトバー"
@@ -1987,9 +2062,6 @@ msgstr "進行中の更新に同期"
 
 msgid "Automatically expand the time range"
 msgstr "時間範囲の自動拡張"
-
-msgid "&OK"
-msgstr "&OK"
 
 msgid "Stop animation"
 msgstr "アニメーションの停止"
