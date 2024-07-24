@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-28 14:22+0900\n"
+"POT-Creation-Date: 2024-07-24 12:36+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -702,50 +702,14 @@ msgstr "オン"
 msgid "BodySuperimposer"
 msgstr "ボディスーパーインポーザ"
 
-msgid "Name:"
-msgstr "名前："
-
-msgid "Align with the builtin camera"
-msgstr "組み込みカメラの位置に設定"
-
 msgid "Align with the target origin"
 msgstr "ターゲット原点に設定"
 
 msgid "Coordinate System:"
 msgstr "座標系："
 
-msgid "Position:"
-msgstr "位置："
-
-msgid "Direction:"
-msgstr "視線方向："
-
-msgid "Up:"
-msgstr "上方向："
-
-msgid "Field of View:"
-msgstr "視野角："
-
-msgid "[deg]"
-msgstr ""
-
-msgid "Near Clip:"
-msgstr "近方クリップ："
-
-msgid "Far Clip:"
-msgstr "遠方クリップ："
-
 msgid "Parallel tracking"
 msgstr "平行トラッキング"
-
-msgid "Interactive viewpoint change"
-msgstr "インタラクティブな視点変更"
-
-msgid "Activate in the scene view"
-msgstr "シーンビューで有効化"
-
-msgid "&OK"
-msgstr ""
 
 msgid "Camera Creation"
 msgstr "カメラの作成"
@@ -753,35 +717,14 @@ msgstr "カメラの作成"
 msgid "{0} Camera"
 msgstr "{0}カメラ"
 
-msgid "Camera Configuration"
-msgstr "カメラの設定"
-
 msgid "BodySyncCameraItem"
 msgstr "ボディ同期カメラ"
 
 msgid "Camera configuration"
 msgstr "カメラの設定"
 
-msgid "Perspective"
-msgstr "透視投影"
-
-msgid "Orthographic"
-msgstr "並行投影"
-
 msgid "Target link"
 msgstr "対象リンク"
-
-msgid "Camera type"
-msgstr "カメラ タイプ"
-
-msgid "Field Of View"
-msgstr "視野角"
-
-msgid "Near clip distance"
-msgstr "近方クリップ距離"
-
-msgid "Far clip distance"
-msgstr "遠方クリップ距離"
 
 msgid "CollisionDetectionController"
 msgstr "干渉検出コントローラ"
@@ -1125,6 +1068,9 @@ msgstr ""
 
 msgid "angle"
 msgstr "角度"
+
+msgid "[deg]"
+msgstr ""
 
 msgid "Penetration block depth"
 msgstr "貫通防止における許容深度"
