@@ -11,6 +11,7 @@
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneCameras>
 #include <cnoid/Format>
+#include <cnoid/EigenUtil>
 #include "gettext.h"
 
 using namespace std;
@@ -41,7 +42,8 @@ enum ElementId {
     TopViewButton = 72,
     BottomViewButton = 73,
     RightViewButton = 74,
-    LeftViewButton = 75
+    LeftViewButton = 75,
+    IsometricViewButton = 76
 };
 
 }
@@ -140,15 +142,15 @@ void SceneBar::Impl::initialize()
     
     editModeToggle = self->addToggleButton(":/Base/icon/sceneedit.svg", EditModeToggle);
     editModeToggle->setToolTip(_("Switch to the edit mode"));
-    editModeToggle->sigToggled().connect([&](bool on){ onEditModeButtonToggled(on); });
+    editModeToggle->sigToggled().connect([this](bool on){ onEditModeButtonToggled(on); });
 
     customModeButtonGroup.setExclusive(false);
     customModeButtonGroup.sigButtonToggled().connect(
-        [&](int mode, bool on){ onCustomModeButtonToggled(mode, on); });
+        [this](int mode, bool on){ onCustomModeButtonToggled(mode, on); });
     
     firstPersonModeToggle = self->addToggleButton(":/Base/icon/walkthrough.svg", FirstPersonModeToggle);
     firstPersonModeToggle->setToolTip(_("First-person viewpoint control mode"));
-    firstPersonModeToggle->sigToggled().connect([&](bool on){ onFirstPersonModeButtonToggled(on); });
+    firstPersonModeToggle->sigToggled().connect([this](bool on){ onFirstPersonModeButtonToggled(on); });
 
     cameraCombo = new ComboBox;
 
@@ -167,13 +169,13 @@ void SceneBar::Impl::initialize()
     
     cameraCombo->setToolTip(_("Projection method / camera selection"));
     cameraCombo->sigCurrentIndexChanged().connect(
-        [&](int index){ onCameraComboCurrentIndexChanged(index); });
+        [this](int index){ onCameraComboCurrentIndexChanged(index); });
     self->addWidget(cameraCombo, CameraCombo);
 
     auto fittingButton = self->addButton(":/Base/icon/viewfitting.svg", FittingButton);
     fittingButton->setToolTip(_("Move the camera to look at the objects"));
     fittingButton->sigClicked().connect(
-        [&](){
+        [this]{
             auto sceneWidget = currentSceneView->sceneWidget();
             sceneWidget->viewAll();
             sceneWidget->setViewpointOperationMode(SceneWidget::ThirdPersonMode);
@@ -181,7 +183,7 @@ void SceneBar::Impl::initialize()
 
     vertexToggle = self->addToggleButton(":/Base/icon/vertex.svg", VertexToggle);
     vertexToggle->setToolTip(_("Vertex rendering"));
-    vertexToggle->sigToggled().connect([&](bool){ onPolygonModeButtonToggled(); });
+    vertexToggle->sigToggled().connect([this](bool){ onPolygonModeButtonToggled(); });
 
     auto wireframeToggle = self->addToggleButton(":/Base/icon/wireframe.svg", WireframeToggle);
     wireframeToggle->setToolTip(_("Wireframe rendering"));
@@ -197,38 +199,38 @@ void SceneBar::Impl::initialize()
     polygonModeGroup.addButton(solidPolygonToggle, 2);
 
     polygonModeGroup.sigButtonToggled().connect(
-        [&](int, bool on){
+        [this](int, bool on){
             if(on){ onPolygonModeButtonToggled(); }
         });
 
     highlightToggle = self->addToggleButton(":/Base/icon/highlight.svg", HighlightToggle);
     highlightToggle->setToolTip(_("Highlight selected objects"));
-    highlightToggle->sigToggled().connect([&](bool on){ onHighlightingToggled(on); });
+    highlightToggle->sigToggled().connect([this](bool on){ onHighlightingToggled(on); });
 
     visualModelToggle = self->addToggleButton(":/Base/icon/visualshape.svg", VisualModelToggle);
     visualModelToggle->setToolTip(_("Show visual models"));
     visualModelToggle->setChecked(true);
-    visualModelToggle->sigToggled().connect([&](bool){ updateCollisionModelVisibility(); });
+    visualModelToggle->sigToggled().connect([this](bool){ updateCollisionModelVisibility(); });
 
     modelTypeFlipButton = self->addButton(":/Base/icon/shapeflip.svg", ModelTypeFlipButton);
     modelTypeFlipButton->setToolTip(_("Flip active model types"));
-    modelTypeFlipButton->sigClicked().connect([&](){ flipVisibleModels(); });
+    modelTypeFlipButton->sigClicked().connect([this](){ flipVisibleModels(); });
 
     collisionModelToggle = self->addToggleButton(":/Base/icon/collisionshape.svg", CollisionModelToggle);
     collisionModelToggle->setToolTip(_("Show the collision detection models"));
-    collisionModelToggle->sigToggled().connect([&](bool){ updateCollisionModelVisibility();});
+    collisionModelToggle->sigToggled().connect([this](bool){ updateCollisionModelVisibility();});
 
     collisionLineToggle = self->addToggleButton(":/Base/icon/collisionlines.svg", CollisionLineToggle);
     collisionLineToggle->setToolTip(_("Toggle the collision line visibility"));
-    collisionLineToggle->sigToggled().connect([&](bool on){ onCollisionLineButtonToggled(on); });
+    collisionLineToggle->sigToggled().connect([this](bool on){ onCollisionLineButtonToggled(on); });
 
     auto configButton = self->addButton(":/Base/icon/setup.svg", ConfigButton);
     configButton->setToolTip(_("Show the config dialog"));
-    configButton->sigClicked().connect([&](){ currentSceneView->sceneViewConfig()->showConfigDialog(); });
+    configButton->sigClicked().connect([this]{ currentSceneView->sceneViewConfig()->showConfigDialog(); });
 
     sceneViewFocusConnection =
         SceneView::sigLastFocusSceneViewChanged().connect(
-            [&](SceneView* view){ setCurrentSceneView(view); });
+            [this](SceneView* view){ setCurrentSceneView(view); });
 
     setCurrentSceneView(SceneView::instance());
 
@@ -543,28 +545,32 @@ void SceneBar::Impl::enableViewButtonSet()
 
     button = self->addButton(":/Base/icon/frontview.svg", FrontViewButton);
     button->setToolTip(_("Front view"));
-    button->sigClicked().connect([&](){ onViewButtonClicked(FrontViewButton); });
+    button->sigClicked().connect([this]{ onViewButtonClicked(FrontViewButton); });
 
     button = self->addButton(":/Base/icon/backview.svg", BackViewButton);
     button->setToolTip(_("Back view"));
-    button->sigClicked().connect([&](){ onViewButtonClicked(BackViewButton); });
+    button->sigClicked().connect([this]{ onViewButtonClicked(BackViewButton); });
 
     button = self->addButton(":/Base/icon/topview.svg", TopViewButton);
     button->setToolTip(_("Top view"));
-    button->sigClicked().connect([&](){ onViewButtonClicked(TopViewButton); });
+    button->sigClicked().connect([this]{ onViewButtonClicked(TopViewButton); });
 
     button = self->addButton(":/Base/icon/bottomview.svg", BottomViewButton);
     button->setToolTip(_("Bottom view"));
-    button->sigClicked().connect([&](){ onViewButtonClicked(BottomViewButton); });
+    button->sigClicked().connect([this]{ onViewButtonClicked(BottomViewButton); });
 
     button = self->addButton(":/Base/icon/rightview.svg", RightViewButton);
     button->setToolTip(_("Right view"));
-    button->sigClicked().connect([&](){ onViewButtonClicked(RightViewButton); });
+    button->sigClicked().connect([this]{ onViewButtonClicked(RightViewButton); });
 
     button = self->addButton(":/Base/icon/leftview.svg", LeftViewButton);
     button->setToolTip(_("Left view"));
-    button->sigClicked().connect([&](){ onViewButtonClicked(LeftViewButton); });
+    button->sigClicked().connect([this]{ onViewButtonClicked(LeftViewButton); });
 
+    button = self->addButton(":/Base/icon/isometricview.svg", IsometricViewButton);
+    button->setToolTip(_("Isometric view"));
+    button->sigClicked().connect([this]{ onViewButtonClicked(IsometricViewButton); });
+    
     isViewButtonSetEnabled = true;
 }
 
@@ -572,32 +578,42 @@ void SceneBar::Impl::enableViewButtonSet()
 void SceneBar::Impl::onViewButtonClicked(ElementId button)
 {
     if(currentSceneView){
+        AngleAxis aa;
+        switch(button){
+        case FrontViewButton:
+            aa = AngleAxis(M_PI_2, Vector3::UnitZ()) * AngleAxis(M_PI_2, Vector3::UnitX());
+            break;
+        case BackViewButton:
+            aa = AngleAxis(-M_PI_2, Vector3::UnitZ()) * AngleAxis(M_PI_2, Vector3::UnitX());
+            break;
+        case TopViewButton:
+            aa = AngleAxis(-M_PI_2, Vector3::UnitZ());
+            break;
+        case BottomViewButton:
+            aa = AngleAxis(M_PI_2, Vector3::UnitZ()) * AngleAxis(M_PI, Vector3::UnitX());
+            break;
+        case RightViewButton:
+            aa = AngleAxis(M_PI, Vector3::UnitZ()) * AngleAxis(M_PI_2, Vector3::UnitX());
+            break;
+        case LeftViewButton:
+            aa = AngleAxis(M_PI_2, Vector3::UnitX());
+            break;
+        case IsometricViewButton:
+            aa =
+                AngleAxis(M_PI_4, Vector3::UnitZ()) * AngleAxis(radian(-35.264), Vector3::UnitY()) *
+                AngleAxis(M_PI_2, Vector3::UnitZ()) * AngleAxis(M_PI_2, Vector3::UnitX());
+            break;
+        default:
+            break;
+        }
         auto sceneWidget = currentSceneView->sceneWidget();
         if(auto transform = sceneWidget->activeInteractiveCameraTransform()){
-            switch(button){
-            case FrontViewButton:
-                transform->setRotation(AngleAxis(M_PI_2, Vector3::UnitZ()) * AngleAxis(M_PI_2, Vector3::UnitX()));
-                break;
-            case BackViewButton:
-                transform->setRotation(AngleAxis(-M_PI_2, Vector3::UnitZ()) * AngleAxis(M_PI_2, Vector3::UnitX()));
-                break;
-            case TopViewButton:
-                transform->setRotation(AngleAxis(-M_PI_2, Vector3::UnitZ()));
-                break;
-            case BottomViewButton:
-                transform->setRotation(AngleAxis(M_PI_2, Vector3::UnitZ()) * AngleAxis(M_PI, Vector3::UnitX()));
-                break;
-            case RightViewButton:
-                transform->setRotation(AngleAxis(M_PI, Vector3::UnitZ()) * AngleAxis(M_PI_2, Vector3::UnitX()));
-                break;
-            case LeftViewButton:
-                transform->setRotation(AngleAxis(M_PI_2, Vector3::UnitX()));
-                break;
-            default:
-                break;
-            }
-            sceneWidget->viewAll();
+            transform->setRotation(aa);
+        } else {
+            sceneWidget->renderer()->setCurrentCamera(sceneWidget->builtinOrthographicCamera());
+            sceneWidget->builtinCameraTransform()->setRotation(aa);
         }
+        sceneWidget->viewAll();
     }
 }
 
