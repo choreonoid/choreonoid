@@ -16,6 +16,7 @@
 #include "PathVariableEditor.h"
 #include "DistanceMeasurementDialog.h"
 #include "RenderableItemSceneStatistics.h"
+#include "RenderableItemSceneExporter.h"
 #include "MovieRecorderDialog.h"
 #include "SceneWidget.h"
 #include "DescriptionDialog.h"
@@ -110,7 +111,7 @@ void MainMenu::setMenuItems()
         // Add a menu item to show a dialog to load a plugin if the startup plugin loading is disabled
         // This is for the debug use
         mm.setPath(N_("Plugin")).addItem(_("Load Plugin"))
-            ->sigTriggered().connect([this, pluginManager](){ pluginManager->showDialogToLoadPlugin(); });
+            ->sigTriggered().connect([this, pluginManager]{ pluginManager->showDialogToLoadPlugin(); });
         mm.addSeparator();
     }
     
@@ -153,6 +154,7 @@ void MainMenu::setMenuItems()
     set_Tools_Menu(mm.currentMenu());
     setActionAsShowDistanceMeasurementDialog(mm.addItem(_("Distance Measurement")));
     setActionAsPutSceneStatistics(mm.addItem(_("Put Scene Statistics")));
+    setActionAsExportSelectedRenderableItemScene(mm.addItem(_("Export Scene")));
     setActionAsShowMovieRecorderDialog(mm.addItem(_("Movie Recorder")));
 
     //------------------------ Filters ------------------------
@@ -172,13 +174,13 @@ void MainMenu::setMenuItems()
     
     auto vsyncItem = mm.addCheckItem(_("Vertical Sync"));
     glMenu->sigAboutToShow().connect(
-        [vsyncItem](){ vsyncItem->setChecked(SceneWidget::isVerticalSyncMode()); });
+        [vsyncItem]{ vsyncItem->setChecked(SceneWidget::isVerticalSyncMode()); });
     vsyncItem->sigToggled().connect(
         [](bool on){ SceneWidget::setVerticalSyncMode(on); });
 
     auto lowMemoryItem = mm.addCheckItem(_("Low GPU Memory Consumption Mode"));
     glMenu->sigAboutToShow().connect(
-        [lowMemoryItem](){ lowMemoryItem->setChecked(SceneWidget::isLowMemoryConsumptionMode()); });
+        [lowMemoryItem]{ lowMemoryItem->setChecked(SceneWidget::isLowMemoryConsumptionMode()); });
     lowMemoryItem->sigToggled().connect(
         [](bool on){ SceneWidget::setLowMemoryConsumptionMode(on); });
 
@@ -252,7 +254,7 @@ Action* MainMenu::addMenuItem
 void MainMenu::setActionAsReloadSelectedItems(Action* action)
 {
     action->sigTriggered().connect(
-        [](){
+        []{
             for(auto& item : RootItem::instance()->selectedItems()){
                 item->reload();
             }
@@ -263,7 +265,7 @@ void MainMenu::setActionAsReloadSelectedItems(Action* action)
 void MainMenu::setActionAsSaveSelectedItems(Action* action)
 {
     action->sigTriggered().connect(
-        [](){
+        []{
             for(auto& item : RootItem::instance()->selectedItems()){
                 item->overwriteOrSaveWithDialog(true, "");
             }
@@ -274,7 +276,7 @@ void MainMenu::setActionAsSaveSelectedItems(Action* action)
 void MainMenu::setActionAsSaveSelectedItemsAs(Action* action)
 {
     action->sigTriggered().connect(
-        [](){
+        []{
             for(auto& item : RootItem::instance()->selectedItems()){
                 item->saveWithFileDialog();
             }
@@ -285,7 +287,7 @@ void MainMenu::setActionAsSaveSelectedItemsAs(Action* action)
 void MainMenu::setActionAsExportSelectedItems(Action* action)
 {
     action->sigTriggered().connect(
-        [](){
+        []{
             ItemFileDialog dialog;
             dialog.setExportMode();
             for(auto& item : RootItem::instance()->selectedItems()){
@@ -306,82 +308,82 @@ void MainMenu::setActionAsExportSelectedItems(Action* action)
 void MainMenu::setActionAsOpenProject(Action* action)
 {
     action->sigTriggered().connect(
-        [](){ ProjectManager::instance()->showDialogToLoadProject(); });
+        []{ ProjectManager::instance()->showDialogToLoadProject(); });
 }
 
 
 void MainMenu::setActionAsSaveProject(Action* action)
 {
     action->sigTriggered().connect(
-        [](){ ProjectManager::instance()->overwriteCurrentProject(); });
+        []{ ProjectManager::instance()->overwriteCurrentProject(); });
 }
 
 
 void MainMenu::setActionAsSaveProjectAs(Action* action)
 {
     action->sigTriggered().connect(
-        [](){ ProjectManager::instance()->showDialogToSaveProject(); });
+        []{ ProjectManager::instance()->showDialogToSaveProject(); });
 }
 
 
 void MainMenu::setActionAsProjectLayoutToggle(Action* action)
 {
     qobject_cast<Menu*>(action->parent())->sigAboutToShow().connect(
-        [action](){ action->setChecked(ProjectManager::instance()->isLayoutInclusionMode()); });
+        [action]{ action->setChecked(ProjectManager::instance()->isLayoutInclusionMode()); });
     action->sigToggled().connect([](bool on){ ProjectManager::instance()->setLayoutInclusionMode(on); });
 }
 
 
 void MainMenu::setActionAsShowPathVariableEditor(Action* action)
 {
-    action->sigTriggered().connect([](){ PathVariableEditor::instance()->show(); });
+    action->sigTriggered().connect([]{ PathVariableEditor::instance()->show(); });
 }
 
 
 void MainMenu::setActionAsExitApplication(Action* action)
 {
-    action->sigTriggered().connect([](){ MainWindow::instance()->close(); });
+    action->sigTriggered().connect([]{ MainWindow::instance()->close(); });
 }
 
 
 void MainMenu::setActionAsUndo(Action* action)
 {
     qobject_cast<Menu*>(action->parent())->sigAboutToShow().connect(
-        [action](){ action->setEnabled(UnifiedEditHistory::instance()->isUndoable()); });
-    action->sigTriggered().connect([](){ UnifiedEditHistory::instance()->undo(); });
+        [action]{ action->setEnabled(UnifiedEditHistory::instance()->isUndoable()); });
+    action->sigTriggered().connect([]{ UnifiedEditHistory::instance()->undo(); });
 }
 
 
 void MainMenu::setActionAsRedo(Action* action)
 {
     qobject_cast<Menu*>(action->parent())->sigAboutToShow().connect(
-        [action](){ action->setEnabled(UnifiedEditHistory::instance()->isRedoable()); });
-    action->sigTriggered().connect([](){ UnifiedEditHistory::instance()->redo(); });
+        [action]{ action->setEnabled(UnifiedEditHistory::instance()->isRedoable()); });
+    action->sigTriggered().connect([]{ UnifiedEditHistory::instance()->redo(); });
 }
 
 
 void MainMenu::setMenuAsToolBarVisibilityMenu(Menu* menu)
 {
     menu->sigAboutToShow().connect(
-        [menu](){ MainWindow::instance()->toolBarArea()->setVisibilityMenuItems(menu); });
+        [menu]{ MainWindow::instance()->toolBarArea()->setVisibilityMenuItems(menu); });
 }
 
 
 void MainMenu::setMenuAsViewVisibilityMenu(Menu* menu)
 {
-    menu->sigAboutToShow().connect([this, menu](){ onViewOperationMenuAboutToShow(menu, ViewVisibilityMenu); });
+    menu->sigAboutToShow().connect([this, menu]{ onViewOperationMenuAboutToShow(menu, ViewVisibilityMenu); });
 }
 
 
 void MainMenu::setMenuAsViewCreationMenu(Menu* menu)
 {
-    menu->sigAboutToShow().connect([this, menu](){ onViewOperationMenuAboutToShow(menu, ViewCreationMenu); });
+    menu->sigAboutToShow().connect([this, menu]{ onViewOperationMenuAboutToShow(menu, ViewCreationMenu); });
 }
 
 
 void MainMenu::setMenuAsViewDeletionMenu(Menu* menu, bool isItemToDeleteAllHiddenViewsEnabled)
 {
-    menu->sigAboutToShow().connect([this, menu](){ onViewOperationMenuAboutToShow(menu, ViewDeletionMenu); });
+    menu->sigAboutToShow().connect([this, menu]{ onViewOperationMenuAboutToShow(menu, ViewDeletionMenu); });
     this->isItemToDeleteAllHiddenViewsEnabled = isItemToDeleteAllHiddenViewsEnabled;
 }
 
@@ -439,7 +441,7 @@ void MainMenu::onViewOperationMenuAboutToShow(Menu* menu, int viewMenuType)
                 auto action = new Action(menu);
                 action->setText(viewClass->translatedDefaultInstanceName());
                 action->sigTriggered().connect(
-                    [viewClass](){
+                    [viewClass]{
                         if(auto view = viewClass->createViewWithDialog()){
                             view->mountOnMainWindow(true);
                         }
@@ -456,7 +458,7 @@ void MainMenu::onViewOperationMenuAboutToShow(Menu* menu, int viewMenuType)
                 auto action = new Action(menu);
                 action->setText(view->windowTitle());
                 action->sigTriggered().connect(
-                    [view](){ ViewManager::deleteView(view); });
+                    [view]{ ViewManager::deleteView(view); });
                 menu->addAction(action);
             }
         }
@@ -469,7 +471,7 @@ void MainMenu::onViewOperationMenuAboutToShow(Menu* menu, int viewMenuType)
         auto action = new Action(menu);
         action->setText(_("Delete All Unmounted Views"));
         action->sigTriggered().connect(
-            [](){ViewManager::deleteUnmountedViews();  });
+            []{ViewManager::deleteUnmountedViews();  });
         menu->addAction(action);
     }
 }
@@ -478,7 +480,7 @@ void MainMenu::onViewOperationMenuAboutToShow(Menu* menu, int viewMenuType)
 void MainMenu::setActionAsViewTabToggle(Action* action)
 {
     qobject_cast<Menu*>(action->parent())->sigAboutToShow().connect(
-        [action](){ action->setChecked(MainWindow::instance()->viewArea()->viewTabsVisible()); });
+        [action]{ action->setChecked(MainWindow::instance()->viewArea()->viewTabsVisible()); });
     action->sigToggled().connect(
         [](bool on){ MainWindow::instance()->viewArea()->setViewTabsVisible(on); });
 }
@@ -487,7 +489,7 @@ void MainMenu::setActionAsViewTabToggle(Action* action)
 void MainMenu::setActionAsStatusBarToggle(Action* action)
 {
     qobject_cast<Menu*>(action->parent())->sigAboutToShow().connect(
-        [action](){ action->setChecked(InfoBar::instance()->isVisible()); });
+        [action]{ action->setChecked(InfoBar::instance()->isVisible()); });
     action->sigToggled().connect([](bool on){ InfoBar::instance()->setVisible(on); });
 }
 
@@ -509,31 +511,37 @@ void MainMenu::setActionAsFullScreenToggle(Action* action)
 
 void MainMenu::setActionAsResetMainWindowLayout(Action* action)
 {
-    action->sigTriggered().connect([](){ MainWindow::instance()->resetLayout(); });
+    action->sigTriggered().connect([]{ MainWindow::instance()->resetLayout(); });
 }
 
 
 void MainMenu::setActionAsShowDistanceMeasurementDialog(Action* action)
 {
-    action->sigTriggered().connect([](){ DistanceMeasurementDialog::instance()->show(); });
+    action->sigTriggered().connect([]{ DistanceMeasurementDialog::instance()->show(); });
 }
 
 
 void MainMenu::setActionAsPutSceneStatistics(Action* action)
 {
-    action->sigTriggered().connect([](){ putRenderableItemSceneStatistics(); });
+    action->sigTriggered().connect([]{ putRenderableItemSceneStatistics(); });
+}
+
+
+void MainMenu::setActionAsExportSelectedRenderableItemScene(Action* action)
+{
+    action->sigTriggered().connect([]{ showDialogToExportSelectedRenderableItemScene(); });
 }
 
 
 void MainMenu::setActionAsShowMovieRecorderDialog(Action* action)
 {
-    action->sigTriggered().connect([](){ MovieRecorderDialog::instance()->show(); });
+    action->sigTriggered().connect([]{ MovieRecorderDialog::instance()->show(); });
 }
 
 
 void MainMenu::setActionAsShowDialogAboutChoreonoid(Action* action)
 {
-    action->sigTriggered().connect([](){ showDialogAboutChoreonoid(); });
+    action->sigTriggered().connect([]{ showDialogAboutChoreonoid(); });
 }
 
 

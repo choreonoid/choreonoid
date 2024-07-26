@@ -25,6 +25,7 @@ set(sources
   RenderableItem.cpp
   RenderableItemUtil.cpp
   RenderableItemSceneStatistics.cpp
+  RenderableItemSceneExporter.cpp
   PolymorphicItemFunctionSet.cpp
   PutPropertyFunction.cpp
   RootItem.cpp
@@ -228,6 +229,7 @@ set(headers
   LocatableItem.h
   RenderableItem.h
   RenderableItemUtil.h
+  RenderableItemSceneExporter.h
   ImageableItem.h
   TargetItemPicker.h
   UnifiedEditHistory.h

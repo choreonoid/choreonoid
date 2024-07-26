@@ -79,6 +79,7 @@ protected:
     void setActionAsResetMainWindowLayout(Action* action);
     void setActionAsShowDistanceMeasurementDialog(Action* action);
     void setActionAsPutSceneStatistics(Action* action);
+    void setActionAsExportSelectedRenderableItemScene(Action* action);
     void setActionAsShowMovieRecorderDialog(Action* action);
     void setActionAsShowDialogAboutChoreonoid(Action* action);
 
