@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-26 11:55+0900\n"
+"POT-Creation-Date: 2024-08-09 23:11+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1008,6 +1008,9 @@ msgstr "ツール"
 msgid "Put Scene Statistics"
 msgstr "シーン統計情報の表示"
 
+msgid "Export Scene"
+msgstr "シーンのエクスポート"
+
 msgid "Movie Recorder"
 msgstr "動画レコーダ"
 
@@ -1598,6 +1601,29 @@ msgstr "プロジェクトパック \"{0}\" はプロジェクトファイルを
 
 msgid "ReferencedObjectSeqItem"
 msgstr "参照オブジェクト時系列アイテム"
+
+msgid "Export the scene of selected items"
+msgstr "選択アイテムのシーンのエクスポート"
+
+msgid "Export"
+msgstr "エクスポート"
+
+msgid "No selected items."
+msgstr "アイテムが選択されていません．"
+
+msgid "Scene to export is empty."
+msgstr "エクスポートするシーンが空です．"
+
+msgid ""
+"Export the scene of the following items to \"{0}\":\n"
+" "
+msgstr "以下のアイテムのシーンを \"{0}\" にエクスポートします：\n "
+
+msgid "Completed!"
+msgstr "完了！"
+
+msgid "Failed."
+msgstr "失敗．"
 
 msgid "Scene statistics:"
 msgstr "シーン統計情報:"
