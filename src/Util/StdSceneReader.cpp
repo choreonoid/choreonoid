@@ -1700,11 +1700,27 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info)
 
         if(resource.scene){
             resource.scene = readTransformParameters(info, resource.scene);
-            if(auto uriObject = resource.scene->findObject([](SgObject* object){ return object->hasUri(); })){
-                uriObject->setUri(resource.uri, resource.file);
-                if(!resource.fragment.empty()){
-                    uriObject->setUriFragment(resource.fragment);
-                }
+
+            SgObject* uriObject = resource.scene->findObject(
+                [&resource](SgObject* object){
+                    if(object->hasUri()){
+                        size_t pos = object->uri().rfind(resource.uri);
+                        if(pos != string::npos){
+                            if(object->uri().size() - pos == resource.uri.size()){
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                });
+            
+            if(!uriObject){
+                uriObject = resource.scene;
+            }
+
+            uriObject->setUri(resource.uri, resource.file);
+            if(!resource.fragment.empty()){
+                uriObject->setUriFragment(resource.fragment);
             }
         }
     }
