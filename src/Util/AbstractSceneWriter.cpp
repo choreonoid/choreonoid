@@ -29,7 +29,7 @@ bool AbstractSceneWriter::findOrCopyImageFile(SgImage* image, const std::string&
     stdx::error_code ec;
     
     auto uri = image->uri();
-    if(uri.find_first_of("file://") == 0){
+    if(uri.find("file://") == 0){
         uri = uri.substr(7);
     }
     filesystem::path filePath(fromUTF8(uri));
@@ -39,7 +39,7 @@ bool AbstractSceneWriter::findOrCopyImageFile(SgImage* image, const std::string&
 
     } else if(image->hasAbsoluteUri()){
         auto& absUri = image->absoluteUri();
-        if(absUri.find_first_of("file://") == 0){
+        if(absUri.find("file://") == 0){
             filesystem::path orgFilePath(fromUTF8(absUri.substr(7)));
             if(filesystem::exists(orgFilePath, ec)){
                 orgImageFileFound = true;

@@ -648,7 +648,7 @@ bool ObjSceneLoader::Impl::loadMaterialTemplateLibrary(std::string filename)
 
             case 'm':
                 if(subScanner.readStringAtCurrentPosition(token)){
-                    if(token.find_first_of("map_") == 0){
+                    if(token.find("map_") == 0){
                         readTexture(token.substr(4));
                     } else {
                         isUnknownDirective = true;

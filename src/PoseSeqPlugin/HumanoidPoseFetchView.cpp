@@ -1021,7 +1021,7 @@ void HumanoidPoseFetchView::Impl::setBodyPartLinks
         if(group->checkIfLink(i)){
             if(auto link = body->link(group->linkIndex(i))){
                 if(!prefix.empty()){
-                    if(link->name().find_first_of(prefix) != 0){
+                    if(link->name().find(prefix) != 0){
                         continue;
                     }
                 }

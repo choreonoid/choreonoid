@@ -738,7 +738,7 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
     } else { // New reference
         if(objectOfUri->hasAbsoluteUri()){
             auto& absUri = objectOfUri->absoluteUri();
-            if(absUri.find_first_of("file://") == 0){
+            if(absUri.find("file://") == 0){
                 filesystem::path orgFilePath(absUri.substr(7));
                 if(filesystem::equivalent(fullPath, orgFilePath, ec)){
                     os() << formatR(_("Model file \"{0}\" cannot be replaced with the same format file in the same directory"),
