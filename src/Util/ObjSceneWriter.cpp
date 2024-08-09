@@ -131,6 +131,8 @@ void ObjSceneWriter::Impl::clear()
     materialLabelSet.clear();
     lastMaterialPair = MaterialPair(nullptr, nullptr);
     materialLabelIdCounter = 0;
+
+    self->clearImageFileInformation();
 }    
 
 
@@ -317,8 +319,9 @@ void ObjSceneWriter::Impl::writeMaterial(SgMaterial* material, SgTexture* textur
     if(texture){
         auto image = texture->image();
         if(image && image->hasUri()){
-            if(self->findOrCopyImageFile(image, toUTF8(baseDirPath.generic_string()))){
-                mfs << "map_Kd " << image->uri() << "\n";
+            string copiedFile;
+            if(self->findOrCopyImageFile(image, toUTF8(baseDirPath.generic_string()), copiedFile)){
+                mfs << "map_Kd " << copiedFile << "\n";
             }
         }
     }

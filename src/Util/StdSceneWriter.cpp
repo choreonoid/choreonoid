@@ -378,6 +378,7 @@ void StdSceneWriter::clear()
     impl->sceneToYamlNodeMap.clear();
     impl->uriRewritingMap.clear();
     impl->extModelFiles.clear();
+    clearImageFileInformation();
 }
 
 
@@ -1224,18 +1225,18 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
     if(auto image = texture->image()){
         if(image->hasUri()){
             filesystem::path imageDirPath = outputBaseDirPath;
+            filesystem::path mainSceneNamePath;
             if(!mainSceneName.empty()){
-                imageDirPath /= filesystem::path(fromUTF8(mainSceneName));
+                mainSceneNamePath = filesystem::path(fromUTF8(mainSceneName));
+                imageDirPath /= mainSceneNamePath;
             }
-            if(self->findOrCopyImageFile(image, toUTF8(imageDirPath.string()))){
-                ensureUriSchemeProcessor();
-                uriSchemeProcessor->detectScheme(image->uri());
-                filesystem::path path(fromUTF8(uriSchemeProcessor->path()));
-                path = imageDirPath / path.filename();
-                if(auto relPath = getRelativePath(path, outputBaseDirPath)){
-                    archive->write("uri", toUTF8(relPath->generic_string()), DOUBLE_QUOTED);
+            string copiedFile;
+            if(self->findOrCopyImageFile(image, toUTF8(imageDirPath.string()), copiedFile)){
+                filesystem::path path(fromUTF8(copiedFile));
+                if(path.is_relative() && !mainSceneName.empty()){
+                    path = mainSceneNamePath / path;
                 }
-                isValid = true;
+                archive->write("uri", toUTF8(path.generic_string()), DOUBLE_QUOTED);
                 if(texture->repeatS() == texture->repeatT()){
                     archive->write("repeat", texture->repeatS());
                 } else {
@@ -1243,6 +1244,7 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
                     repeat.append(texture->repeatS());
                     repeat.append(texture->repeatT());
                 }
+                isValid = true;
             }
         }
     }
