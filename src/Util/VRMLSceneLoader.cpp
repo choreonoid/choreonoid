@@ -105,5 +105,7 @@ SgNode* VRMLSceneLoader::Impl::load(const std::string& filename)
     }
     group.reset();
 
+    node->setUriWithFilePathAndCurrentDirectory(filename);
+
     return node.retn();
 }
