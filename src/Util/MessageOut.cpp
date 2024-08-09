@@ -1,5 +1,6 @@
 #include "MessageOut.h"
-#include <sstream>
+#include <streambuf>
+#include <ostream>
 #include <vector>
 #include <mutex>
 #include <memory>
@@ -11,28 +12,17 @@ namespace {
 
 mutex sinkMutex;
 
-class MessageOutStreamBuf : public std::stringbuf
+class MessageOutStreamBuf : public std::basic_streambuf<char>
 {
 public:
-    MessageOut& mout;
-    MessageOutStreamBuf(MessageOut& mout)
-        : mout(mout) { }
-    virtual int sync() override {
-        mout.put(str());
-        return 0;
-    }
-};
+    MessageOutStreamBuf(MessageOut& mout, int messageType);
 
-class MessageOutErrorStreamBuf : public std::stringbuf
-{
-public:
+    virtual int_type overflow(int_type c) override;
+    virtual int sync() override;
+
     MessageOut& mout;
-    MessageOutErrorStreamBuf(MessageOut& mout)
-        : mout(mout) { }
-    virtual int sync() override {
-        mout.putError(str());
-        return 0;
-    }
+    int messageType;
+    vector<char> buf;
 };
 
 class Sink : public Referenced
@@ -68,12 +58,45 @@ public:
 
     unique_ptr<MessageOutStreamBuf> streamBuf;
     unique_ptr<ostream> cout;
-    unique_ptr<MessageOutErrorStreamBuf> errorStreamBuf;
+    unique_ptr<MessageOutStreamBuf> errorStreamBuf;
     unique_ptr<ostream> cerr;
 
     Impl(MessageOut* self);
 };
 
+}
+
+
+MessageOutStreamBuf::MessageOutStreamBuf(MessageOut& mout, int messageType)
+    : mout(mout),
+      messageType(messageType)
+{
+    buf.resize(4096);
+    auto p = &buf.front();
+    setp(p, p + buf.size());
+}
+
+
+MessageOutStreamBuf::int_type MessageOutStreamBuf::overflow(int_type c)
+{
+    sync();
+
+    if(c != traits_type::eof()){
+        buf[0] = c;
+        pbump(1);
+        return traits_type::not_eof(c);
+    } else {
+        return traits_type::eof();
+    }
+}
+
+
+int MessageOutStreamBuf::sync()
+{
+    auto p = &buf.front();
+    mout.put(string(p, pptr() - p), messageType);
+    setp(p, p + buf.size());
+    return 0;
 }
 
 
@@ -164,7 +187,7 @@ std::ostream& MessageOut::cout()
 {
     lock_guard<mutex> lock(sinkMutex);
     if(!impl->cout){
-        impl->streamBuf = make_unique<MessageOutStreamBuf>(*this);
+        impl->streamBuf = make_unique<MessageOutStreamBuf>(*this, Normal);
         impl->cout = make_unique<ostream>(impl->streamBuf.get());
     }
     return *impl->cout;
@@ -175,7 +198,7 @@ std::ostream& MessageOut::cerr()
 {
     lock_guard<mutex> lock(sinkMutex);
     if(!impl->cout){
-        impl->errorStreamBuf = make_unique<MessageOutErrorStreamBuf>(*this);
+        impl->errorStreamBuf = make_unique<MessageOutStreamBuf>(*this, Error);
         impl->cerr = make_unique<ostream>(impl->errorStreamBuf.get());
     }
     return *impl->cerr;
