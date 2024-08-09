@@ -786,11 +786,14 @@ void ObjSceneLoader::Impl::updateAmbientIntensities()
         auto& info = kv.second;
         auto& material = info.material;
         if(material){
-            float a = info.ambientColor.norm();
+            float intensity = 1.0f;
             float d = material->diffuseColor().norm();
-            float intensity = a / d;
-            if(intensity >= (1.0f - 1.0e-3)){
-                intensity = 1.0f;
+            if(d > 0.0f){
+                float a = info.ambientColor.norm();
+                intensity = a / d;
+                if(intensity >= (1.0f - 1.0e-3)){
+                    intensity = 1.0f;
+                }
             }
             material->setAmbientIntensity(intensity);
         }
