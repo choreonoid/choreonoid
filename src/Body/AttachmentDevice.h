@@ -35,6 +35,7 @@ public:
     std::string category() const;
     void setCategory(const std::string& category);
     void clearCategory();
+    bool isAttachableTo(HolderDevice* holder) const;
 
     bool readSpecifications(const Mapping* info);
     bool writeSpecifications(Mapping* info) const;

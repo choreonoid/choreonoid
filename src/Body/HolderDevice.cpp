@@ -13,7 +13,7 @@ namespace cnoid {
 class HolderDevice::NonState
 {
 public:
-    std::string category;
+    vector<std::string> categories;
     int holdCondition;
     double maxHoldDistance;
     std::string holdTargetName;
@@ -53,7 +53,7 @@ HolderDevice::HolderDevice(const HolderDevice& org, bool copyStateOnly, CloneMap
 
 
 HolderDevice::NonState::NonState(const NonState& org, CloneMap* cloneMap)
-    : category(org.category),
+    : categories(org.categories),
       holdTargetName(org.holdTargetName)
 {
     holdCondition = org.holdCondition;
@@ -114,7 +114,7 @@ Referenced* HolderDevice::doClone(CloneMap* cloneMap) const
 
 void HolderDevice::copyHolderDeviceFrom(const HolderDevice* other)
 {
-    ns->category = other->ns->category;
+    ns->categories = other->ns->categories;
     ns->holdCondition = other->ns->holdCondition;
     ns->maxHoldDistance = other->ns->maxHoldDistance;
     ns->holdTargetName = other->ns->holdTargetName;
@@ -152,10 +152,60 @@ void HolderDevice::on(bool on)
 }
 
 
-std::string HolderDevice::category() const
+std::vector<std::string> HolderDevice::categories() const
 {
     if(ns){
-        return ns->category;
+        return ns->categories;
+    }
+    return vector<string>();
+}
+
+
+bool HolderDevice::hasCategories() const
+{
+    return ns && !ns->categories.empty();
+}
+
+
+bool HolderDevice::hasCategory(const char* category) const
+{
+    if(ns){
+        for(auto& c : ns->categories){
+            if(c == category){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+bool HolderDevice::hasCategory(const std::string& category) const
+{
+    return hasCategory(category.c_str());
+}
+
+            
+void HolderDevice::addCategory(const std::string& category)
+{
+    if(!category.empty() && ns){
+        ns->categories.push_back(category);
+    }
+}
+
+
+void HolderDevice::clearCategories()
+{
+    if(ns){
+        ns->categories.clear();
+    }
+}
+
+
+std::string HolderDevice::category() const
+{
+    if(ns && !ns->categories.empty()){
+        return ns->categories.front();
     }
     return string();
 }
@@ -164,7 +214,8 @@ std::string HolderDevice::category() const
 void HolderDevice::setCategory(const std::string& category)
 {
     if(ns){
-        ns->category = category;
+        ns->categories.clear();
+        ns->categories.push_back(category);
     }
 }
 
@@ -299,29 +350,45 @@ double* HolderDevice::writeState(double* out_buf) const
 
 bool HolderDevice::readDescription(const Mapping* info)
 {
-    if(!info->read("category", ns->category)){
-        ns->category.clear();
+    string symbol;
+    
+    clearCategories();
+    if(auto& categories = *info->findListing("categories")){
+        for(auto& category : categories){
+            addCategory(category->toString());
+        }
+    } else if(info->read("category", symbol)){
+        addCategory(symbol);
     }
-    string condition;
-    if(info->read("hold_condition", condition)){
-        if(condition == "distance"){
+
+    if(info->read("hold_condition", symbol)){
+        if(symbol == "distance"){
             ns->holdCondition = Distance;
-        } else if(condition == "collision"){
+        } else if(symbol == "collision"){
             ns->holdCondition = Collision;
-        } else if(condition == "name"){
+        } else if(symbol == "name"){
             ns->holdCondition = Name;
         }
     }
     info->read("max_hold_distance", ns->maxHoldDistance);
     info->read("hold_target_name", ns->holdTargetName);
+    
     return true;
 }
 
 
 bool HolderDevice::writeDescription(Mapping* info) const
 {
-    if(!ns->category.empty()){
-        info->write("category", ns->category);
+    if(!ns->categories.empty()){
+        if(ns->categories.size() == 1){
+            // For backward compatibility
+            info->write("category", ns->categories.front());
+        } else {
+            auto categories = info->openListing("categories");
+            for(auto& category : ns->categories){
+                categories->append(category);
+            }
+        }
     }
     string condition;
     switch(ns->holdCondition){

@@ -134,8 +134,9 @@ std::string AttachmentDevice::category() const
 
 void AttachmentDevice::setCategory(const std::string& category)
 {
-    clearCategory();
-    category_ = new string;
+    if(!category_){
+        category_ = new string;
+    }
     *category_ = category;
 }
 
@@ -146,6 +147,21 @@ void AttachmentDevice::clearCategory()
         delete category_;
     }
     category_ = nullptr;
+}
+
+
+bool AttachmentDevice::isAttachableTo(HolderDevice* holder) const
+{
+    if(body() == holder->body()){
+        return false;
+    }
+    if(!holder->hasCategories()){
+        return true;
+    }
+    if(!category_){
+        return false;
+    }
+    return holder->hasCategory(*category_);
 }
 
 

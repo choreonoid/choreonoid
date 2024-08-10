@@ -1523,7 +1523,7 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
     for(auto& attachment : body->devices<AttachmentDevice>()){
         if(attachment->link()->isRoot()){
             for(auto& holder : bodyItem->body()->devices<HolderDevice>()){
-                if(attachment->category() == holder->category()){
+                if(attachment->isAttachableTo(holder)){
                     holder->addAttachment(attachment);
                     holder->on(true);
                     attachment->on(true);

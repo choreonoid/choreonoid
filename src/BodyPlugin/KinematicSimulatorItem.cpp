@@ -341,7 +341,7 @@ void KinematicSimulatorItem::Impl::activateHolder(HolderInfo* info)
         auto rootLink = body->rootLink();
         AttachmentDevice* attachment = nullptr;
         for(auto& device : body->devices<AttachmentDevice>()){
-            if(device->link() == rootLink && device->category() == holder->category()){
+            if(device->link() == rootLink && device->isAttachableTo(holder)){
                 attachment = device;
                 break;
             }
@@ -422,10 +422,11 @@ void KinematicSimulatorItem::Impl::onHolderCollisionDetected
 void KinematicSimulatorItem::Impl::findAttachableBodiesByDistance
 (HolderDevice* holder, const Isometry3& T_holder, vector<Body*>& out_bodies)
 {
+    auto holderBody = holder->body();
     const double maxDistance = holder->maxHoldDistance();
     for(auto& simBody : self->simulationBodies()){
-        if(simBody->isActive()){
-            Body* body = simBody->body();
+        Body* body = simBody->body();
+        if(body != holderBody && simBody->isActive()){
             while(body){
                 auto rootLink = body->rootLink();
                 if(rootLink->isFreeJoint()){

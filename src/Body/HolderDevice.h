@@ -30,7 +30,16 @@ public:
     virtual bool on() const override;
     virtual void on(bool on) override;
 
+    std::vector<std::string> categories() const;
+    bool hasCategories() const;
+    bool hasCategory(const char* category) const;
+    bool hasCategory(const std::string& category) const;
+    void addCategory(const std::string& category);
+    void clearCategories();
+
+    [[deprecated("Use hasCategory or categories.")]]
     std::string category() const;
+    [[deprecated("Use addCategory.")]]
     void setCategory(const std::string& category);
 
     enum HoldCondition { Distance, Collision, Name };
