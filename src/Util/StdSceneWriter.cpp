@@ -689,11 +689,9 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
         }
     }
 
-    if(!relativeFilePathToCopiedFile.empty()){
-        int n = sceneObject->numChildObjects();
-        for(int i=0; i < n; ++i){
-            copyModelFiles(sceneObject->childObject(i));
-        }
+    int n = sceneObject->numChildObjects();
+    for(int i=0; i < n; ++i){
+        copyModelFiles(sceneObject->childObject(i));
     }
 
     return relativeFilePathToCopiedFile;
