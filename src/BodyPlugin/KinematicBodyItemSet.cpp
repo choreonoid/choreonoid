@@ -27,10 +27,24 @@ Referenced* KinematicBodyItemSet::doClone(CloneMap* cloneMap) const
 void KinematicBodyItemSet::setBodyPart(int index, BodyKinematicsKit* kinematicsKit)
 {
     if(auto kit = dynamic_cast<BodyItemKinematicsKit*>(kinematicsKit)){
+        bodyItemConnectionMap[index] =
+            kit->bodyItem()->sigDisconnectedFromRoot().connect(
+                [this, index]{
+                    removeBodyPart(index);
+                    notifyBodySetChange();
+                });
         KinematicBodySet::setBodyPart(index, kit);
+        
     } else {
         throw std::invalid_argument("Type mismatch in the KinematicBodyItemSet::setBodyPart function");
     }
+}
+
+
+void KinematicBodyItemSet::removeBodyPart(int index)
+{
+    bodyItemConnectionMap.erase(index);
+    KinematicBodySet::removeBodyPart(index);
 }
 
 

@@ -17,7 +17,9 @@ public:
     }
 
     virtual void setBodyPart(int index, BodyKinematicsKit* kinematicsKit);
-    void clearBodyPart(int index);
+    virtual void removeBodyPart(int index);
+    [[deprecated("Use removeBodyPart.")]]
+    void clearBodyPart(int index) { removeBodyPart(index); }
     void clear();
     void setMainBodyPartIndex(int index) { mainBodyPartIndex_ = index; }
     int mainBodyPartIndex() const { return mainBodyPartIndex_; }

@@ -3,6 +3,7 @@
 
 #include "BodyItemKinematicsKit.h"
 #include <cnoid/KinematicBodySet>
+#include <map>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -15,9 +16,10 @@ public:
     KinematicBodyItemSet();
 
     void setBodyItemPart(int index, BodyItemKinematicsKit* kinematicsKit) {
-        KinematicBodySet::setBodyPart(index, kinematicsKit);
+        setBodyPart(index, kinematicsKit);
     }
     virtual void setBodyPart(int index, BodyKinematicsKit* kinematicsKit) override;
+    virtual void removeBodyPart(int index) override;
 
     BodyItemKinematicsKit* bodyItemPart(int index){
         return static_cast<BodyItemKinematicsKit*>(bodyPart(index));
@@ -53,6 +55,9 @@ public:
 protected:
     KinematicBodyItemSet(const KinematicBodyItemSet& org, CloneMap* cloneMap);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    std::map<int, ScopedConnection> bodyItemConnectionMap;
 };
 
 typedef ref_ptr<KinematicBodyItemSet> KinematicBodyItemSetPtr;

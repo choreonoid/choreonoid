@@ -53,7 +53,7 @@ void KinematicBodySet::setBodyPart(int index, BodyKinematicsKit* kinematicsKit)
 }
 
     
-void KinematicBodySet::clearBodyPart(int index)
+void KinematicBodySet::removeBodyPart(int index)
 {
     if(index < static_cast<int>(bodyParts_.size())){
         auto& part = bodyParts_[index];
@@ -80,6 +80,11 @@ void KinematicBodySet::clearBodyPart(int index)
 
 void KinematicBodySet::clear()
 {
+    for(size_t i=0; i < bodyParts_.size(); ++i){
+        if(bodyParts_[i]){
+            removeBodyPart(i);
+        }
+    }
     bodyParts_.clear();
     numValidBodyParts_ = 0;
     mainBodyPartIndex_ = -1;
