@@ -79,6 +79,12 @@ public:
         return findObject_(pred);
     }
 
+    enum TraverseStatus { Continue, Next, Stop };
+
+    bool traverseObjects(std::function<TraverseStatus(SgObject* object)> pred) {
+        return traverseObjects_(pred);
+    }
+
     SignalProxy<void(const SgUpdate& update)> sigUpdated() {
         return sigUpdated_;
     }
@@ -178,6 +184,7 @@ private:
     mutable std::unique_ptr<UriInfo> uriInfo;
 
     SgObject* findObject_(std::function<bool(SgObject* object)>& pred);
+    bool traverseObjects_(std::function<TraverseStatus(SgObject* object)>& pred);
 };
 
 typedef ref_ptr<SgObject> SgObjectPtr;
@@ -229,6 +236,10 @@ public:
     void releaseDecorationReference() { --decorationRefCounter; }
     bool isDecoratedSomewhere() const { return decorationRefCounter > 0; }
 
+    bool traverseNodes(std::function<TraverseStatus(SgNode* node)> pred) {
+        return traverseNodes_(pred);
+    }
+
 protected:
     SgNode(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
@@ -237,6 +248,8 @@ private:
     int classId_;
     int decorationRefCounter;
 
+    bool traverseNodes_(std::function<TraverseStatus(SgNode* node)>& pred);
+    
     //! \deprecated
     static int registerNodeType(const std::type_info& nodeType, const std::type_info& superType);    
 };

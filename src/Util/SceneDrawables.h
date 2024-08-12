@@ -16,6 +16,8 @@ public:
     SgMaterial();
     SgMaterial(const SgMaterial& org);
 
+    void copyMaterialPropertiesFrom(const SgMaterial* other);
+
     float ambientIntensity() const { return ambientIntensity_; }
     void setAmbientIntensity(float intensity) { ambientIntensity_ = intensity; }
     const Vector3f& diffuseColor() const { return diffuseColor_; }

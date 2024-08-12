@@ -40,12 +40,18 @@ SgMaterial::SgMaterial()
 SgMaterial::SgMaterial(const SgMaterial& org)
     : SgObject(org)
 {
-    ambientIntensity_ = org.ambientIntensity_;
-    diffuseColor_ = org.diffuseColor_;
-    emissiveColor_ = org.emissiveColor_;
-    specularColor_ = org.specularColor_;
-    specularExponent_ = org.specularExponent_;
-    transparency_ = org.transparency_;
+    copyMaterialPropertiesFrom(&org);
+}
+
+
+void SgMaterial::copyMaterialPropertiesFrom(const SgMaterial* other)
+{
+    ambientIntensity_ = other->ambientIntensity_;
+    diffuseColor_ = other->diffuseColor_;
+    emissiveColor_ = other->emissiveColor_;
+    specularColor_ = other->specularColor_;
+    specularExponent_ = other->specularExponent_;
+    transparency_ = other->transparency_;
 }
 
 

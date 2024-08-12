@@ -99,6 +99,25 @@ SgObject* SgObject::findObject_(std::function<bool(SgObject* object)>& pred)
 }
 
 
+bool SgObject::traverseObjects_(std::function<TraverseStatus(SgObject* object)>& pred)
+{
+    auto status = pred(this);
+    if(status == Stop){
+        return false;
+    }
+    if(status == Next){
+        return true;
+    }
+    int n = numChildObjects();
+    for(int i=0; i < n; ++i){
+        if(!childObject(i)->traverseObjects_(pred)){
+            return false;
+        }
+    }
+    return true;
+}
+
+
 void SgObject::notifyUpperNodesOfUpdate(SgUpdate& update)
 {
     notifyUpperNodesOfUpdate(update, update.hasAction(SgUpdate::GeometryModified));
@@ -422,6 +441,26 @@ SgNodePath SgNode::findNode(const std::string& name, Affine3& out_T)
     out_T.setIdentity();
     findNodeSub(this, name, path, out_T, out_T);
     return path;
+}
+
+
+bool SgNode::traverseNodes_(std::function<TraverseStatus(SgNode* node)>& pred)
+{
+    auto status = pred(this);
+    if(status == Stop){
+        return false;
+    }
+    if(status == Next){
+        return true;
+    }
+    if(auto group = toGroupNode()){
+        for(auto& child : *group){
+            if(!child->traverseNodes_(pred)){
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 
