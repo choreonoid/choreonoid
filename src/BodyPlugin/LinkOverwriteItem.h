@@ -39,27 +39,64 @@ public:
         Inertia            = 1 << 9,
         CenterOfMass       = 1 << 10,
         Material           = 1 << 11,
-        Shape              = 1 << 12,
-        AllElements =
+        ShapeOffset        = 1 << 12,
+        ShapeColor         = 1 << 13,
+        Shape              = 1 << 14,
+        AllNonShapeElements =
           OffsetPosition | JointType | JointAxis | JointId | JointName | JointRange |
-          JointVelocityRange | JointEffortRange | Mass | Inertia | CenterOfMass |
-          Material | Shape,
+          JointVelocityRange | JointEffortRange | Mass | Inertia | CenterOfMass | Material
     };
 
-    void setTargetElementSet(int elementSet);
-    void addTargetElement(int element);
-    int targetElementSet() const;
+    void setOverwriteElementSet(int elementSet);
+    void addOverwriteElement(int element);
+    void addOverwriteElementSet(int elementSet);
+    int overwriteElementSet() const;
+    bool hasOverwriteElement(int element) const;
 
+    [[deprecated("Use setOverwriteElementSet.")]]
+    void setTargetElementSet(int elementSet) { setOverwriteElementSet(elementSet); }
+    [[deprecated("Use addOverwriteElement.")]]
+    void addTargetElement(int element) { addOverwriteElement(element); }
+    [[deprecated("Use overwriteElementSet.")]]
+    int targetElementSet() const { return overwriteElementSet(); }
+
+    /**
+       When a LinkOverwriteItem overwrites an existing link, the information of the link elements to be overwritten is
+       stored in a reference link, which is a separate object from the existing link.
+       Note that if the overwritten elements are only shape elements, the reference link is not necessary.
+    */
     bool setReferenceLink(Link* referenceLink, bool isRootLink = false);
     Link* referenceLink();
     bool isRootLink() const;
     
     Link* originalLinkClone();
     
+    /**
+       When a LinkOverwriteItem creates a new link, the new link is stored as an "additional link".
+       In this case, the LinkOverwriteItem does not have the reference link.
+    */
     bool setAdditionalLink(Link* additionalLink, const std::string& parentLinkName = std::string());
     Link* additionalLink();
 
+    void setShapeOffset(const Isometry3& T, bool doOverwrite = false);
+    const Isometry3& shapeOffset() const;
+    void setShapeColor(const Vector3f& color, bool doOverwrite = false);
+    const Vector3f& shapeColor() const;
+    void resetShapeColor(bool doNotify = false);
+
+    void setShape(SgNode* shape);
+    void setVisualShape(SgNode* shape);
+    void setCollisionShape(SgNode* shape);
+    SgNode* visualShape();
+    SgNode* collisionShape();
+
+    std::string findOriginalShapeFile() const;
+
+    /**
+       The source link is either the reference link or additional link.
+    */
     Link* sourceLink();
+    
     Link* targetLink();
 
     bool isOverwriting() const;
@@ -68,8 +105,6 @@ public:
 
     bool updateOverwriting();
     virtual void releaseOverwriteTarget() override;
-
-    SgPosTransform* shapeOffsetTransform();
 
     // LocatableItem function
     virtual LocationProxyPtr getLocationProxy() override;

@@ -18,6 +18,8 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/MessageView>
 #include <cnoid/Format>
+#include <unordered_map>
+#include <unordered_set>
 #include "gettext.h"
 
 using namespace std;
@@ -57,13 +59,31 @@ class LinkOverwriteItem::Impl
 {
 public:
     LinkOverwriteItem* self;
-    int targetElementSet;
+    int overwriteElementSet;
     LinkPtr targetLink;
     LinkPtr referenceLink;
     LinkPtr additionalLink;
     string additionalLinkParentName;
     LinkPtr originalLinkClone;
     bool isRootLink;
+
+    Isometry3 shapeOffset;
+    SgPosTransformPtr shapeOffsetTransform;
+    SgPosTransformPtr collisionShapeOffsetTransform;
+    Vector3f shapeColor;
+
+    struct MaterialInfo
+    {
+        SgMaterialPtr orgMaterialClone;
+        bool isUpdated;
+    };
+    unordered_map<SgMaterialPtr, MaterialInfo> materialMap;
+    unordered_set<SgShapePtr> noMaterialShapes;
+    SgMaterialPtr materialForNoMaterialShapes;
+    
+    SgNodePtr visualShape;
+    SgNodePtr collisionShape;
+    SgUpdate sgUpdate;
 
     PositionDraggerPtr originMarker;
     OffsetLocationPtr offsetLocation;
@@ -77,11 +97,19 @@ public:
     Impl(LinkOverwriteItem* self, const Impl& org, CloneMap* cloneMap);
     bool updateOverwriting(BodyItem* bodyItem);
     void overwriteExistingLink(Link* existingLink);
-    void copyTargetElements(Link* srcLink, Link* destLink, int elementSet);
+    void copyOverwriteLinkElements(Link* srcLink, Link* destLink);
+    void overwriteShapeElements(Link* link);
+    void cancelOverwritingShapeElements(Link* link);
+    void overwriteShapeOffset(Link* link, bool doNotify);
+    void cancelOverwritingShapeOffset(Link* link, bool doNotify);
+    void overwriteShapeColor(Link* link, bool doNotify);
+    void cancelOverwritingShapeColor(Link* link, bool doNotify);
+    void restoreOriginalShapeMaterials(Link* link, bool doNotify);
+    void restoreOverwritingShapeMaterials(Link* link, bool doNotify);
+    void notifyMaterialUpdates(int noMaterialShapeAction);
     bool addNewLink(Body* body);
     void releaseOverwriteTarget();
     void cancelOverwriting();
-    SgPosTransform* getShapeOffsetTransform(Link* link);
     bool restoreShapeWrittenInOldFormat(const Archive& archive, ValueNode* shapeArchive);
     void setReferenceLinkToRestoreShapeWritteinInOldFormat(Link* orgLink, SgNode* newShape);
     SgPosTransform* extractOrInsertOffsetTransform(vector<SgNodePath>& nodePaths);
@@ -119,8 +147,10 @@ LinkOverwriteItem::LinkOverwriteItem()
 LinkOverwriteItem::Impl::Impl(LinkOverwriteItem* self)
     : self(self)
 {
-    targetElementSet = NoElement;
+    overwriteElementSet = NoElement;
     isRootLink = false;
+    shapeOffset.setIdentity();
+    shapeColor.setOnes();
     locationTargetType = LinkOffsetLocation;
 }
 
@@ -134,7 +164,7 @@ LinkOverwriteItem::LinkOverwriteItem(const LinkOverwriteItem& org, CloneMap* clo
 
 LinkOverwriteItem::Impl::Impl(LinkOverwriteItem* self, const Impl& org, CloneMap* cloneMap)
     : self(self),
-      targetElementSet(org.targetElementSet),
+      overwriteElementSet(org.overwriteElementSet),
       additionalLinkParentName(org.additionalLinkParentName)
 {
     if(org.targetLink && cloneMap && self->bodyItem()){
@@ -146,11 +176,18 @@ LinkOverwriteItem::Impl::Impl(LinkOverwriteItem* self, const Impl& org, CloneMap
     if(org.additionalLink){
         additionalLink = CloneMap::getClone(org.additionalLink, cloneMap);
     }
-    if(org.originalLinkClone){
-        originalLinkClone = CloneMap::getClone(org.originalLinkClone, cloneMap);
-    }
     isRootLink = org.isRootLink;
     locationTargetType = org.locationTargetType;
+
+    shapeOffset = org.shapeOffset;
+    shapeColor = org.shapeColor;
+
+    if(org.visualShape){
+        visualShape = CloneMap::getClone(org.visualShape, cloneMap);
+    }
+    if(org.collisionShape){
+        collisionShape = CloneMap::getClone(org.collisionShape, cloneMap);
+    }
 }
 
 
@@ -210,21 +247,33 @@ bool LinkOverwriteItem::setName(const std::string& name)
 }
 
 
-void LinkOverwriteItem::setTargetElementSet(int elementSet)
+void LinkOverwriteItem::setOverwriteElementSet(int elementSet)
 {
-    impl->targetElementSet = elementSet;
+    impl->overwriteElementSet = elementSet;
 }
 
 
-void LinkOverwriteItem::addTargetElement(int element)
+void LinkOverwriteItem::addOverwriteElement(int element)
 {
-    impl->targetElementSet |= element;
+    impl->overwriteElementSet |= element;
 }
 
 
-int LinkOverwriteItem::targetElementSet() const
+void LinkOverwriteItem::addOverwriteElementSet(int elementSet)
 {
-    return impl->targetElementSet;
+    impl->overwriteElementSet |= elementSet;
+}    
+
+
+int LinkOverwriteItem::overwriteElementSet() const
+{
+    return impl->overwriteElementSet;
+}
+
+
+bool LinkOverwriteItem::hasOverwriteElement(int element) const
+{
+    return impl->overwriteElementSet & element;
 }
 
 
@@ -280,6 +329,110 @@ Link* LinkOverwriteItem::additionalLink()
 }
 
 
+void LinkOverwriteItem::setShapeOffset(const Isometry3& T, bool doOverwrite)
+{
+    impl->shapeOffset = T;
+    impl->overwriteElementSet |= ShapeOffset;
+    if(doOverwrite && impl->targetLink){
+        impl->overwriteShapeOffset(impl->targetLink, true);
+        if(auto bodyItem_ = bodyItem()){
+            bodyItem_->notifyModelUpdate(BodyItem::ShapeUpdate);
+        }
+    }
+}
+
+
+const Isometry3& LinkOverwriteItem::shapeOffset() const
+{
+    return impl->shapeOffset;
+}
+
+
+void LinkOverwriteItem::setShapeColor(const Vector3f& color, bool doOverwrite)
+{
+    impl->shapeColor = color;
+    impl->overwriteElementSet |= ShapeColor;
+    if(doOverwrite && impl->targetLink){
+        impl->overwriteShapeColor(impl->targetLink, true);
+        if(auto bodyItem_ = bodyItem()){
+            bodyItem_->notifyModelUpdate(BodyItem::ShapeUpdate);
+        }
+    }
+}
+
+
+void LinkOverwriteItem::resetShapeColor(bool doNotify)
+{
+    impl->cancelOverwritingShapeColor(impl->targetLink, doNotify);
+    if(doNotify){
+        if(auto bodyItem_ = bodyItem()){
+            bodyItem_->notifyModelUpdate(BodyItem::ShapeUpdate);
+        }
+    }        
+}
+
+
+const Vector3f& LinkOverwriteItem::shapeColor() const
+{
+    return impl->shapeColor;
+}
+
+
+void LinkOverwriteItem::setShape(SgNode* shape)
+{
+    setVisualShape(shape);
+    setCollisionShape(shape);
+}
+
+
+void LinkOverwriteItem::setVisualShape(SgNode* shape)
+{
+    impl->overwriteElementSet |= Shape;
+    impl->visualShape = shape;
+}
+
+
+void LinkOverwriteItem::setCollisionShape(SgNode* shape)
+{
+    impl->overwriteElementSet |= Shape;
+    impl->collisionShape = shape;
+}
+
+
+SgNode* LinkOverwriteItem::visualShape()
+{
+    return impl->visualShape;
+}
+
+
+SgNode* LinkOverwriteItem::collisionShape()
+{
+    return impl->collisionShape;
+}
+
+
+std::string LinkOverwriteItem::findOriginalShapeFile() const
+{
+    string filename;
+
+    if(impl->targetLink){
+        auto pred = [](SgObject* object){ return object->hasUri(); };
+        SgObject* uriObject = impl->targetLink->visualShape()->findObject(pred);
+        if(!uriObject){
+            uriObject = impl->targetLink->collisionShape()->findObject(pred);
+        }
+        if(uriObject){
+            filename = uriObject->localFileAbsolutePath();
+            if(filename.empty()){
+                filename = uriObject->localFilePath();
+            }
+        }
+    }
+        
+    return filename;
+}
+
+
 Link* LinkOverwriteItem::sourceLink()
 {
     return impl->referenceLink ? impl->referenceLink : impl->additionalLink;
@@ -328,7 +481,15 @@ bool LinkOverwriteItem::Impl::updateOverwriting(BodyItem* bodyItem)
     auto body = bodyItem->body();
     Link* newTargetLink = nullptr;
 
-    if(!targetLink){
+    if(targetLink){
+        if(referenceLink){
+            overwriteExistingLink(targetLink);
+            updated = true;
+        } else if(additionalLink){
+            overwriteShapeElements(targetLink);
+            updated = true;
+        }
+    } else {
         if(referenceLink){
             if(isRootLink){
                 newTargetLink = body->rootLink();
@@ -349,6 +510,7 @@ bool LinkOverwriteItem::Impl::updateOverwriting(BodyItem* bodyItem)
                     updated = true;
                 } else if(additionalLink){
                     updated = addNewLink(body);
+                    overwriteShapeElements(newTargetLink);
                 }
                 if(updated){
                     targetLink = newTargetLink;
@@ -357,20 +519,13 @@ bool LinkOverwriteItem::Impl::updateOverwriting(BodyItem* bodyItem)
                 }
             }
         }
-    } else {
-        if(referenceLink){
-            overwriteExistingLink(targetLink);
-            updated = true;
-        } else if(additionalLink){
-            updated = true;
-        }
     }
 
     if(updated){
         bool isKinematicStateChangeNotificationRequested = false;
         
         if((additionalLink && newTargetLink) ||
-           (targetElementSet & (JointType | JointId | JointName))){
+           (overwriteElementSet & (JointType | JointId | JointName))){
             body->updateLinkTree();
             if(bodyItem->isBeingRestored()){
                 bodyItem->requestNonRootLinkStatesRestorationOnSubTreeRestored();
@@ -383,7 +538,7 @@ bool LinkOverwriteItem::Impl::updateOverwriting(BodyItem* bodyItem)
             BodyItem::DeviceSetUpdate | BodyItem::ShapeUpdate);
 
         if(!isKinematicStateChangeNotificationRequested){
-            if(targetElementSet & (OffsetPosition | JointType | JointAxis)){
+            if(overwriteElementSet & (OffsetPosition | JointType | JointAxis)){
                 bodyItem->notifyKinematicStateChange(true);
             }
         }
@@ -398,8 +553,8 @@ bool LinkOverwriteItem::Impl::updateOverwriting(BodyItem* bodyItem)
         }
 
         if(offsetLocation){
-            if(((targetElementSet & OffsetPosition) && (locationTargetType == LinkOffsetLocation)) ||
-               ((targetElementSet & Shape) && (locationTargetType == ShapeOffsetLocation))){
+            if(((overwriteElementSet & OffsetPosition) && (locationTargetType == LinkOffsetLocation)) ||
+               ((overwriteElementSet & ShapeOffset) && (locationTargetType == ShapeOffsetLocation))){
                 offsetLocation->sigLocationChanged_();
             }
         }
@@ -416,59 +571,277 @@ void LinkOverwriteItem::Impl::overwriteExistingLink(Link* existingLink)
     if(!originalLinkClone){
         originalLinkClone = existingLink->clone();
     }
-    copyTargetElements(referenceLink, existingLink, targetElementSet);
+    copyOverwriteLinkElements(referenceLink, existingLink);
+    overwriteShapeElements(existingLink);
 }
 
 
-void LinkOverwriteItem::Impl::copyTargetElements(Link* srcLink, Link* destLink, int elementSet)
+void LinkOverwriteItem::Impl::copyOverwriteLinkElements(Link* srcLink, Link* destLink)
 {
     if(isRootLink){
         destLink->setName(srcLink->name());
     }
-    if(elementSet & OffsetPosition){
+    if(overwriteElementSet & OffsetPosition){
         destLink->setOffsetPosition(srcLink->offsetPosition());
     }
-    if(elementSet & JointType){
+    if(overwriteElementSet & JointType){
         destLink->setJointType(srcLink->jointType());
     }
-    if(elementSet & JointAxis){
+    if(overwriteElementSet & JointAxis){
         destLink->setJointAxis(srcLink->jointAxis());
     }
-    if(elementSet & JointId){
+    if(overwriteElementSet & JointId){
         destLink->setJointId(srcLink->jointId());
     }
-    if(elementSet & JointName){
+    if(overwriteElementSet & JointName){
         destLink->setJointName(srcLink->jointName());
     }
-    if(elementSet & JointRange){
+    if(overwriteElementSet & JointRange){
         destLink->setJointRange(srcLink->q_lower(), srcLink->q_upper());
     }
-    if(elementSet & JointVelocityRange){
+    if(overwriteElementSet & JointVelocityRange){
         destLink->setJointVelocityRange(srcLink->dq_lower(), srcLink->dq_upper());
     }
-    if(elementSet & JointEffortRange){
+    if(overwriteElementSet & JointEffortRange){
         destLink->setJointEffortRange(srcLink->u_lower(), srcLink->u_upper());
     }
-    if(elementSet & Mass){
+    if(overwriteElementSet & Mass){
         destLink->setMass(srcLink->mass());
     }
-    if(elementSet & Inertia){
+    if(overwriteElementSet & Inertia){
         destLink->setInertia(srcLink->I());
     }
-    if(elementSet & CenterOfMass){
+    if(overwriteElementSet & CenterOfMass){
         destLink->setCenterOfMass(srcLink->centerOfMass());
     }
-    if(elementSet & Material){
+    if(overwriteElementSet & Material){
         destLink->setMaterial(srcLink->materialId());
     }
-    if(elementSet & Shape){
-        SgUpdate update;
-        destLink->clearShapeNodes(update);
-        for(auto& node : *srcLink->visualShape()){
-            destLink->addVisualShapeNode(node, update);
+}
+
+
+void LinkOverwriteItem::Impl::overwriteShapeElements(Link* link)
+{
+    if(overwriteElementSet & Shape){
+        link->clearShapeNodes(sgUpdate);
+        link->addVisualShapeNode(visualShape, sgUpdate);
+        link->addCollisionShapeNode(collisionShape, sgUpdate);
+        shapeOffsetTransform.reset();
+        collisionShapeOffsetTransform.reset();
+    }
+    overwriteShapeOffset(link, true);
+    overwriteShapeColor(link, true);
+}
+
+
+void LinkOverwriteItem::Impl::cancelOverwritingShapeElements(Link* link)
+{
+    cancelOverwritingShapeOffset(link, true);
+    cancelOverwritingShapeColor(link, true);
+
+    if(overwriteElementSet & Shape){
+        if(originalLinkClone){
+            link->clearShapeNodes(sgUpdate);
+            for(auto& node : *originalLinkClone->visualShape()){
+                link->addVisualShapeNode(node, sgUpdate);
+            }
+            for(auto& node : *originalLinkClone->collisionShape()){
+                link->addCollisionShapeNode(node, sgUpdate);
+            }
         }
-        for(auto& node : *srcLink->collisionShape()){
-            destLink->addCollisionShapeNode(node, update);
+    }
+}
+
+
+void LinkOverwriteItem::Impl::overwriteShapeOffset(Link* link, bool doNotify)
+{
+    if(overwriteElementSet & ShapeOffset){
+        if(shapeOffsetTransform || collisionShapeOffsetTransform){
+            if(shapeOffsetTransform){
+                shapeOffsetTransform->setPosition(shapeOffset);
+                if(doNotify){
+                    shapeOffsetTransform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
+                }
+            }
+            if(collisionShapeOffsetTransform && collisionShapeOffsetTransform != shapeOffsetTransform){
+                collisionShapeOffsetTransform->setPosition(shapeOffset);
+                if(doNotify){
+                    collisionShapeOffsetTransform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
+                }
+            }
+        } else {
+            bool hasDedicatedCollisionShape = link->hasDedicatedCollisionShape();
+            auto visualShape = link->visualShape();
+            if(!visualShape->empty()){
+                shapeOffsetTransform = new SgPosTransform(shapeOffset);
+                visualShape->moveChildrenTo(shapeOffsetTransform);
+                visualShape->addChild(shapeOffsetTransform);
+                if(doNotify){
+                    visualShape->notifyUpdate(sgUpdate.withAction(SgUpdate::Added | SgUpdate::Removed));
+                }
+            }
+            auto collisionShape = link->collisionShape();
+            if(!hasDedicatedCollisionShape){
+                if(shapeOffsetTransform){
+                    collisionShape->clearChildren();
+                    collisionShape->addChild(shapeOffsetTransform);
+                    collisionShapeOffsetTransform = shapeOffsetTransform;
+                    if(doNotify){
+                        collisionShape->notifyUpdate(sgUpdate.withAction(SgUpdate::Added | SgUpdate::Removed));
+                    }
+                }
+            } else if(!collisionShape->empty()){
+                collisionShapeOffsetTransform = new SgPosTransform(shapeOffset);
+                collisionShape->moveChildrenTo(collisionShapeOffsetTransform);
+                collisionShape->addChild(collisionShapeOffsetTransform);
+                if(doNotify){
+                    collisionShape->notifyUpdate(sgUpdate.withAction(SgUpdate::Added | SgUpdate::Removed));
+                }
+            }
+        }
+    } else if(shapeOffsetTransform || collisionShapeOffsetTransform){
+        cancelOverwritingShapeOffset(link, doNotify);
+    }
+}
+
+
+void LinkOverwriteItem::Impl::cancelOverwritingShapeOffset(Link* link, bool doNotify)
+{
+    if(shapeOffsetTransform){
+        auto shape = link->visualShape();
+        shape->contains(shapeOffsetTransform);
+        shape->removeChild(shapeOffsetTransform);
+        shapeOffsetTransform->copyChildrenTo(shape);
+        shapeOffsetTransform.reset();
+        if(doNotify){
+            shape->notifyUpdate(sgUpdate.withAction(SgUpdate::Added | SgUpdate::Removed));
+        }
+    }
+    if(collisionShapeOffsetTransform){
+        auto shape = link->collisionShape();
+        shape->contains(collisionShapeOffsetTransform);
+        shape->removeChild(collisionShapeOffsetTransform);
+        collisionShapeOffsetTransform->moveChildrenTo(shape);
+        collisionShapeOffsetTransform.reset();
+        if(doNotify){
+            shape->notifyUpdate(sgUpdate.withAction(SgUpdate::Added | SgUpdate::Removed));
+        }
+    }
+}
+
+
+void LinkOverwriteItem::Impl::overwriteShapeColor(Link* link, bool doNotify)
+{
+    if(overwriteElementSet & ShapeColor){
+        for(auto& kv : materialMap){
+            kv.second.isUpdated = false;
+        }
+        if(!materialForNoMaterialShapes){
+            materialForNoMaterialShapes = new SgMaterial;
+        }
+        materialForNoMaterialShapes->setDiffuseColor(shapeColor);
+        bool materialForNoMaterialShapesAdded = false;
+
+        link->shape()->traverseNodes(
+            [this, &materialForNoMaterialShapesAdded](SgNode* node) -> SgObject::TraverseStatus {
+                if(auto shape = dynamic_cast<SgShape*>(node)){
+                    if(noMaterialShapes.find(shape) == noMaterialShapes.end()){
+                        if(auto material = shape->material()){
+                            auto& info = materialMap[material];
+                            if(!info.isUpdated){
+                                if(!info.orgMaterialClone){
+                                    info.orgMaterialClone = static_cast<SgMaterial*>(material->clone());
+                                }
+                                material->setDiffuseColor(shapeColor);
+                                if(!material->emissiveColor().isZero()){
+                                    material->setEmissiveColor(shapeColor);
+                                }
+                                info.isUpdated = true;
+                            }
+                        } else {
+                            shape->setMaterial(materialForNoMaterialShapes);
+                            noMaterialShapes.insert(shape);
+                            materialForNoMaterialShapesAdded = true;
+                        }
+                    }
+                }
+                return SgObject::Continue;
+            });
+
+        if(doNotify){
+            sgUpdate.setAction(SgUpdate::Modified);
+            for(auto& kv : materialMap){
+                kv.first->notifyUpdate(sgUpdate);
+            }
+            if(materialForNoMaterialShapesAdded){
+                sgUpdate.addAction(SgUpdate::Added);
+                materialForNoMaterialShapes->notifyUpdate(sgUpdate);
+            }
+        }
+
+    } else if(!materialMap.empty() || materialForNoMaterialShapes){
+        cancelOverwritingShapeColor(link, doNotify);
+    }
+}
+
+
+void LinkOverwriteItem::Impl::cancelOverwritingShapeColor(Link* link, bool doNotify)
+{
+    restoreOriginalShapeMaterials(link, doNotify);
+    materialMap.clear();
+    noMaterialShapes.clear();
+    materialForNoMaterialShapes.reset();
+    overwriteElementSet &= ~ShapeColor;
+}
+
+
+void LinkOverwriteItem::Impl::restoreOriginalShapeMaterials(Link* link, bool doNotify)
+{
+    for(auto& kv : materialMap){
+        auto& material = kv.first;
+        auto& info = kv.second;
+        if(info.orgMaterialClone){
+            material->copyMaterialPropertiesFrom(info.orgMaterialClone);
+        }
+    }
+    for(auto& shape : noMaterialShapes){
+        shape->setMaterial(nullptr);
+    }
+    if(doNotify){
+        notifyMaterialUpdates(SgUpdate::Removed);
+    }
+}
+
+
+void LinkOverwriteItem::Impl::restoreOverwritingShapeMaterials(Link* link, bool doNotify)
+{
+    for(auto& kv : materialMap){
+        auto& material = kv.first;
+        material->setDiffuseColor(shapeColor);
+        if(!material->emissiveColor().isZero()){
+            material->setEmissiveColor(shapeColor);
+        }
+    }
+    for(auto& shape : noMaterialShapes){
+        shape->setMaterial(materialForNoMaterialShapes);
+    }
+    if(doNotify){
+        notifyMaterialUpdates(SgUpdate::Added);
+    }
+}
+
+
+void LinkOverwriteItem::Impl::notifyMaterialUpdates(int noMaterialShapeAction)
+{
+    sgUpdate.setAction(SgUpdate::Modified);
+    for(auto& kv : materialMap){
+        auto& material = kv.first;
+        material->notifyUpdate(sgUpdate);
+    }
+    if(!noMaterialShapes.empty()){
+        sgUpdate.addAction(noMaterialShapeAction);
+        for(auto& shape : noMaterialShapes){
+            shape->notifyUpdate(sgUpdate);
         }
     }
 }
@@ -522,6 +895,11 @@ void LinkOverwriteItem::Impl::releaseOverwriteTarget()
     additionalLink.reset();
     originalLinkClone.reset();
     isRootLink = false;
+    shapeOffsetTransform.reset();
+    collisionShapeOffsetTransform.reset();
+    materialMap.clear();
+    noMaterialShapes.clear();
+    materialForNoMaterialShapes.reset();
 }
 
 
@@ -531,12 +909,17 @@ void LinkOverwriteItem::Impl::cancelOverwriting()
     
     if(targetLink){
         if(auto body = targetLink->body()){
-            if(originalLinkClone){
-                copyTargetElements(originalLinkClone, targetLink, targetElementSet);
+            if(referenceLink){
+                if(originalLinkClone){
+                    copyOverwriteLinkElements(originalLinkClone, targetLink);
+                }
+                cancelOverwritingShapeElements(targetLink);
                 updated = true;
-            } else if(auto parent = targetLink->parent()){
-                parent->removeChild(targetLink);
-                updated = true;
+            } else if(additionalLink){
+                if(auto parent = targetLink->parent()){
+                    parent->removeChild(targetLink);
+                    updated = true;
+                }
             }
             if(updated){
                 body->updateLinkTree();
@@ -552,26 +935,6 @@ void LinkOverwriteItem::Impl::cancelOverwriting()
                 BodyItem::LinkSetUpdate | BodyItem::DeviceSetUpdate | BodyItem::ShapeUpdate);
         }
     }
-}
-
-
-SgPosTransform* LinkOverwriteItem::Impl::getShapeOffsetTransform(Link* link)
-{
-    if(link){
-        auto shape = link->shape();
-        if(shape->numChildren() == 1){
-            if(auto transform = dynamic_cast<SgPosTransform*>(shape->child(0))){
-                return transform;
-            }
-        }
-        auto collisionShape = link->collisionShape();
-        if(collisionShape->numChildren() == 1){
-            if(auto transform = dynamic_cast<SgPosTransform*>(collisionShape->child(0))){
-                return transform;
-            }
-        }
-    }
-    return nullptr;
 }
 
 
@@ -651,7 +1014,8 @@ bool LinkOverwriteItem::Impl::store(Archive& archive)
         archive.write("is_root", true);
     }
 
-    if(self->isAddingLink()){
+    bool isAddingLink = self->isAddingLink();
+    if(isAddingLink){
         archive.write("is_additional", true);
         if(auto parentLink = link->parent()){
             archive.write("parent", parentLink->name(), DOUBLE_QUOTED);
@@ -662,7 +1026,7 @@ bool LinkOverwriteItem::Impl::store(Archive& archive)
     
     archive.setFloatingNumberFormat("%.9g");
     
-    if(targetElementSet & OffsetPosition){
+    if(overwriteElementSet & OffsetPosition){
         // The "translation" value is always written so that the restore function can
         // know that the OffsetPosition is an element to overwrite.
         write(archive, "translation", link->offsetTranslation());
@@ -671,29 +1035,41 @@ bool LinkOverwriteItem::Impl::store(Archive& archive)
             writeDegreeAngleAxis(archive, "rotation", aa);
         }
     }
-    if(targetElementSet & JointType){
+    if(overwriteElementSet & JointType){
         archive.write("joint_type", link->jointTypeSymbol());
     }
-    if(targetElementSet & JointAxis){
+    if(overwriteElementSet & JointAxis){
         write(archive, "joint_axis", link->jointAxis());
     }
-    if(targetElementSet & JointId){
+    if(overwriteElementSet & JointId){
         archive.write("joint_id", link->jointId());
     }
-    if(targetElementSet & JointName){
+    if(overwriteElementSet & JointName){
         archive.write("joint_name", link->jointName(), DOUBLE_QUOTED);
     }
-    if(targetElementSet & JointRange){
+    if(overwriteElementSet & JointRange){
         StdBodyWriter::writeJointDisplacementRange(&archive, link, true);
     }
-    if(targetElementSet & JointVelocityRange){
+    if(overwriteElementSet & JointVelocityRange){
         StdBodyWriter::writeJointVelocityRange(&archive, link, true);
     }
-    if(targetElementSet & JointEffortRange){
+    if(overwriteElementSet & JointEffortRange){
         StdBodyWriter::writeJointEffortRange(&archive, link, true);
     }
 
-    if(targetElementSet & Shape){
+    if(overwriteElementSet & ShapeOffset){
+        write(archive, "shape_translation", shapeOffset.translation());
+        AngleAxis aa(shapeOffset.linear());
+        if(aa.angle() != 0.0){
+            writeDegreeAngleAxis(archive, "shape_rotation", aa);
+        }
+    }
+    
+    if(overwriteElementSet & ShapeColor){
+        write(archive, "shape_color", shapeColor);
+    }
+    
+    if(overwriteElementSet & Shape){
         if(!sceneWriter){
             sceneWriter = sharedSceneWriter.lock();
             if(!sceneWriter){
@@ -705,11 +1081,11 @@ bool LinkOverwriteItem::Impl::store(Archive& archive)
         }
         sceneWriter->setFilePathVariableProcessor(archive.filePathVariableProcessor());
 
-        auto visualShape = link->visualShape();
-        auto collisionShape = link->collisionShape();
-        bool hasDedicatedCollisionShape = link->hasDedicatedCollisionShape();
-
-        if(!visualShape->empty()){
+        if(overwriteElementSet & ShapeColor){
+            restoreOriginalShapeMaterials(link, false);
+        }
+        bool hasDedicatedCollisionShape = (visualShape != collisionShape);
+        if(visualShape){
             auto visualShapeArchive = sceneWriter->writeScene(visualShape);
             if(!hasDedicatedCollisionShape){
                 archive.insert("shape", visualShapeArchive);
@@ -717,13 +1093,16 @@ bool LinkOverwriteItem::Impl::store(Archive& archive)
                 archive.insert("visual_shape", visualShapeArchive);
             }
         }
-        if(!collisionShape->empty() && hasDedicatedCollisionShape){
+        if(collisionShape && hasDedicatedCollisionShape){
             if(auto collisionShapeArchive = sceneWriter->writeScene(collisionShape)){
                 archive.insert("collision_shape", collisionShapeArchive);
             }
         }
+        if(overwriteElementSet & ShapeColor){
+            restoreOverwritingShapeMaterials(link, false);
+        }
     }
-    
+
     return true;
 }
 
@@ -765,7 +1144,7 @@ bool LinkOverwriteItem::Impl::restore(const Archive& archive)
     LinkPtr link = new Link;
     link->setName(self->name());
 
-    int elementSet = NoElement;
+    overwriteElementSet = NoElement;
 
     if(!archive.get("is_additional", false)){
         self->setReferenceLink(link, archive.get("is_root", false));
@@ -781,7 +1160,7 @@ bool LinkOverwriteItem::Impl::restore(const Archive& archive)
         if(readDegreeAngleAxis(archive, "rotation", aa)){
             link->setOffsetRotation(aa);
         }
-        elementSet |= OffsetPosition;
+        overwriteElementSet |= OffsetPosition;
     }
     string symbol;
     if(archive.read("joint_type", symbol)){
@@ -796,17 +1175,17 @@ bool LinkOverwriteItem::Impl::restore(const Archive& archive)
         } else {
             archive.throwException(formatR(_("Illegal jointType value \"{0}\""), symbol));
         }
-        elementSet |= JointType;
+        overwriteElementSet |= JointType;
     }
     Vector3 a;
     if(read(archive, "joint_axis", a)){
         link->setJointAxis(a);
-        elementSet |= JointAxis;
+        overwriteElementSet |= JointAxis;
     }
     int id;
     if(archive.read("joint_id", id)){
         link->setJointId(id);
-        elementSet |= JointId;
+        overwriteElementSet |= JointId;
     }
     if(archive.read("joint_name", symbol)){
         if(symbol.empty()){
@@ -814,45 +1193,56 @@ bool LinkOverwriteItem::Impl::restore(const Archive& archive)
         } else {
             link->setJointName(symbol);
         }
-        elementSet |= JointName;
+        overwriteElementSet |= JointName;
     }
     if(StdBodyLoader::readJointDisplacementRange(&archive, link)){
-        elementSet |= JointRange;
+        overwriteElementSet |= JointRange;
     }
     if(StdBodyLoader::readJointVelocityRange(&archive, link)){
-        elementSet |= JointVelocityRange;
+        overwriteElementSet |= JointVelocityRange;
     }
     if(StdBodyLoader::readJointEffortRange(&archive, link)){
-        elementSet |= JointEffortRange;
+        overwriteElementSet |= JointEffortRange;
+    }
+
+    if(read(archive, "shape_translation", p)){
+        Isometry3 T;
+        T.translation() = p;
+        AngleAxis aa;
+        if(readDegreeAngleAxis(archive, "shape_rotation", aa)){
+            T.linear() = aa.toRotationMatrix();
+        } else {
+            T.linear().setIdentity();
+        }
+        self->setShapeOffset(T);
+    }
+    
+    Vector3f c;
+    if(read(archive, "shape_color", c)){
+        shapeColor = c;
+        overwriteElementSet |= ShapeColor;
     }
 
     auto shapeArchive = archive.find("shape");
     if(shapeArchive->isValid()){
         if(auto shape = ensureSceneReader(archive)->readScene(shapeArchive)){
-            link->addShapeNode(shape);
-            elementSet |= Shape;
+            self->setShape(shape);
         }
     }
     auto visualShapeArchive = archive.find("visual_shape");
     if(visualShapeArchive->isValid()){
         if(auto visualShape = ensureSceneReader(archive)->readScene(visualShapeArchive)){
-            link->addVisualShapeNode(visualShape);
-            elementSet |= Shape;
+            self->setVisualShape(visualShape);
         }
     }
     auto collisionShapeArchive = archive.find("collision_shape");
     if(collisionShapeArchive->isValid()){
         if(auto collisionShape = ensureSceneReader(archive)->readScene(collisionShapeArchive)){
-            link->addCollisionShapeNode(collisionShape);
-            elementSet |= Shape;
+            self->setCollisionShape(collisionShape);
         }
     }
 
-    if(elementSet){
-        self->setTargetElementSet(elementSet);
-    }
-
-    return elementSet != NoElement;
+    return true;
 }
 
 
@@ -876,17 +1266,38 @@ bool LinkOverwriteItem::Impl::restoreShapeWrittenInOldFormat(const Archive& arch
 }
 
 
+bool checkHintsInMetadata(SgObject* object, bool& out_isNotMeter, bool& out_isYUpperAxis)
+{
+    auto metadata = object->uriMetadata();
+    if(!metadata){
+        return false;
+    }
+    string symbol;
+    if(metadata->read("length_unit", symbol)){
+        if(symbol != "meter"){
+            out_isNotMeter = true;
+        }
+    }
+    if(metadata->read("upper_axis", symbol)){
+        if(symbol == "Y"){
+            out_isYUpperAxis = true;
+        }
+    }
+    return true;
+}
+
+
 void LinkOverwriteItem::Impl::setReferenceLinkToRestoreShapeWritteinInOldFormat(Link* orgLink, SgNode* newShape)
 {
-    SgPosTransformPtr shapeOffset = nullptr;
+    SgPosTransformPtr shapeOffsetNode = nullptr;
     vector<SgNodePath> shapeNodePaths;
     SceneNodeExtractor nodeExtractor;
 
     if(newShape){
-        shapeOffset = dynamic_cast<SgPosTransform*>(newShape);
-        if(!shapeOffset){
-            shapeOffset = new SgPosTransform;
-            shapeOffset->addChild(newShape);
+        shapeOffsetNode = dynamic_cast<SgPosTransform*>(newShape);
+        if(!shapeOffsetNode){
+            shapeOffsetNode = new SgPosTransform;
+            shapeOffsetNode->addChild(newShape);
         }
         shapeNodePaths = nodeExtractor.extractNodes<SgShape>(newShape, true);
     }
@@ -895,21 +1306,30 @@ void LinkOverwriteItem::Impl::setReferenceLinkToRestoreShapeWritteinInOldFormat(
     SgObject::setNonNodeCloning(cloneMap, false);
     SgNodePtr shapeClone = cloneMap.getClone(orgLink->shape());
     vector<SgNodePath> existingShapeNodePaths = nodeExtractor.extractNodes<SgShape>(shapeClone, false);
+    bool doRemoveScalingForLengthUnitConversion = false;
+    bool doRemoveRotationForUpperAxisConversion = false;
 
     if(existingShapeNodePaths.empty()){
         if(!newShape){
-            shapeOffset = new SgPosTransform;
+            shapeOffsetNode = new SgPosTransform;
         }
     } else {
         if(!newShape){
-            shapeOffset = extractOrInsertOffsetTransform(existingShapeNodePaths);
+            shapeOffsetNode = extractOrInsertOffsetTransform(existingShapeNodePaths);
         } else {
             int n = std::min(shapeNodePaths.size(), existingShapeNodePaths.size());
             for(int i=0; i < n; ++i){
                 auto shapeNode = static_cast<SgShape*>(shapeNodePaths[i].back().get());
                 auto existingShapeNode = static_cast<SgShape*>(existingShapeNodePaths[i].back().get());
                 if(!shapeNode->mesh()){
-                    shapeNode->setMesh(existingShapeNode->mesh());
+                    auto existingMesh = existingShapeNode->mesh();
+                    shapeNode->setMesh(existingMesh);
+                    
+                    if(!checkHintsInMetadata(
+                           existingShapeNode, doRemoveScalingForLengthUnitConversion, doRemoveRotationForUpperAxisConversion)){
+                        checkHintsInMetadata(
+                            existingMesh, doRemoveScalingForLengthUnitConversion, doRemoveRotationForUpperAxisConversion);
+                    }
                 }
                 if(!shapeNode->material()){
                     shapeNode->setMaterial(existingShapeNode->material());
@@ -918,12 +1338,30 @@ void LinkOverwriteItem::Impl::setReferenceLinkToRestoreShapeWritteinInOldFormat(
         }
     }
 
+    Isometry3 T = shapeOffsetNode->position();
+    if(doRemoveRotationForUpperAxisConversion){
+        Matrix3 R;
+        R << 0, 0, 1,
+             1, 0, 0,
+             0, 1, 0;
+        T.linear() = T.linear() * R.transpose();
+    }
+    if(!T.matrix().isIdentity()){
+        self->setShapeOffset(T);
+    }
+    if(!shapeOffsetNode->empty()){
+        SgNode* node = shapeOffsetNode->child(0);
+        if(doRemoveScalingForLengthUnitConversion){
+            if(auto scale = dynamic_cast<SgScaleTransform*>(node)){
+                node = scale->child(0);
+            }
+        }
+        self->setShape(node);
+    }
+
     LinkPtr link = new Link;
     link->setName(orgLink->name());
-    link->addShapeNode(shapeOffset, true);
-
     self->setReferenceLink(link);
-    self->setTargetElementSet(Shape);
 }
 
 
@@ -987,9 +1425,7 @@ Isometry3 OffsetLocation::getLocation() const
         if(isLinkOffsetLocation()){
             return impl->targetLink->offsetPosition();
         } else if(isShapeOffsetLocation()){
-            if(auto transform = impl->getShapeOffsetTransform(impl->targetLink)){
-                return transform->T();
-            }
+            return impl->shapeOffset;
         }
     }
     return Isometry3::Identity();
@@ -1004,11 +1440,8 @@ bool OffsetLocation::setLocation(const Isometry3& T)
             sourceLink->setOffsetPosition(T);
             updated = true;
         } else if(isShapeOffsetLocation()){
-            if(auto transform = impl->getShapeOffsetTransform(sourceLink)){
-                transform->setPosition(T);
-                transform->notifyUpdate();
-                updated = true;
-            }
+            impl->self->setShapeOffset(T, true);
+            updated = true;
         }
     }
     if(updated){
