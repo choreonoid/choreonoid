@@ -62,6 +62,8 @@ public:
     // Util functions
     void selectNameFilter(int index);
     
+    static QString makeNameFilter(const std::string& caption, const std::vector<std::string>& extensions);
+    
 private:
     class Impl;
     Impl* impl;

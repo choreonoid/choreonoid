@@ -462,25 +462,3 @@ bool ItemFileDialog::Impl::onFileDialogAboutToFinish(int result)
 
     return finished;
 }
-
-
-QString ItemFileDialog::makeNameFilter
-(const std::string& caption, const std::vector<std::string>& extensions)
-{
-    QString filter(caption.c_str());
-
-    if(extensions.empty()){
-        filter += " (*)";
-    } else {
-        QString prefix = " (";
-        for(auto& ext : extensions){
-            filter += prefix;
-            filter += "*.";
-            filter += ext.c_str();
-            prefix = " ";
-        }
-        filter += ")";
-    }
-
-    return filter;
-}
