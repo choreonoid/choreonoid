@@ -450,7 +450,7 @@ void Link::setMaterial(const std::string& name)
 
 bool Link::hasShape() const
 {
-    return !visualShape_->empty() || !collisionShape_->empty();\
+    return !visualShape_->empty() || !collisionShape_->empty();
 }
 
 
