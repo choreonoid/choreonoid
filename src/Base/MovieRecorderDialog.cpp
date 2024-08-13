@@ -6,11 +6,9 @@
 #include "LineEdit.h"
 #include "CheckBox.h"
 #include "ComboBox.h"
-#include "Dialog.h"
 #include "FileDialog.h"
 #include "Separator.h"
 #include <QDialogButtonBox>
-#include <QFileDialog>
 #include "gettext.h"
 
 using namespace std;
