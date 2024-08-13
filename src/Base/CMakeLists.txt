@@ -131,6 +131,7 @@ set(sources
   SceneItemFileIO.cpp
   SceneGeometryMeasurementTracker.cpp
   GeneralSceneFileImporterBase.cpp
+  GeneralSceneFileLoadDialog.cpp
   CameraItem.cpp
   CameraConfigDialog.cpp
   LightingItem.cpp
@@ -289,6 +290,7 @@ set(headers
   SceneItem.h
   SceneItemFileIO.h
   GeneralSceneFileImporterBase.h
+  GeneralSceneFileLoadDialog.h
   CameraItem.h
   CameraConfigDialog.h
   LightingItem.h
