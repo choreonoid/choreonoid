@@ -14,8 +14,9 @@ public:
     virtual void setMessageSink(std::ostream& os) override;
     virtual SgNode* load(const std::string& filename) override;
 
-private:
     class Impl;
+
+private:
     Impl* impl;
 };
 

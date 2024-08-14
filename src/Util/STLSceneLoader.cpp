@@ -46,6 +46,10 @@ public:
     SgNormalArrayPtr normals;
     SgIndexArray* normalIndices;
 
+    bool isUpperAxisY;
+    bool doScaling;
+    float scale;
+
     /**
        The following two variables are only used in BinaryMeshLoader.
        Defining them here instead of BinaryMeshLoader can improve the loading speed.
@@ -70,12 +74,12 @@ public:
 
     string errorMessage;
 
-    MeshLoader(size_t numTriangles);
+    MeshLoader(STLSceneLoader::Impl* loaderImpl, size_t numTriangles);
     MeshLoader(const MeshLoader& mainLoader);
     template<typename AddIndexFunction>
-    void addNormal(const Vector3f& normal, AddIndexFunction addIndex);
+    void addNormal(Vector3f& normal, AddIndexFunction addIndex);
     template<typename AddIndexFunction>
-    void addVertex(const Vector3f& vertex, AddIndexFunction addIndex);
+    void addVertex(Vector3f& vertex, AddIndexFunction addIndex);
     bool join();
     int findElement(
         const Vector3f& element, const SgVectorArray<Vector3f>& prevElements, int searchLength);
@@ -96,11 +100,11 @@ public:
 class BinaryMeshLoader : public MeshLoader
 {
 public:
-    BinaryMeshLoader(size_t numTriangles) : MeshLoader(numTriangles) { }
+    BinaryMeshLoader(STLSceneLoader::Impl* loaderImpl, size_t numTriangles) : MeshLoader(loaderImpl, numTriangles) { }
     BinaryMeshLoader(const BinaryMeshLoader& mainLoader) : MeshLoader(mainLoader) { }
     void initializeArrays(size_t triangleOffset, size_t numTriangles);
-    void addNormal(const Vector3f& normal);
-    void addVertex(const Vector3f& vertex);
+    void addNormal(Vector3f& normal);
+    void addVertex(Vector3f& vertex);
     void load(ifstream& ifs, size_t triangleOffset, size_t numTriangles);
     void loadConcurrently(const string& filename, size_t triangleOffset, size_t numTriangles);
 };
@@ -116,10 +120,10 @@ public:
     string filename;
     bool isSuccessfullyLoaded;
     
-    AsciiMeshLoader(const string& filename, bool doOpen);
+    AsciiMeshLoader(STLSceneLoader::Impl* loaderImpl, const string& filename, bool doOpen);
     AsciiMeshLoader(const AsciiMeshLoader& mainLoader);
-    void addNormal(const Vector3f& normal);
-    void addVertex(const Vector3f& vertex);
+    void addNormal(Vector3f& normal);
+    void addVertex(Vector3f& vertex);
     bool seekToTriangleBorderPosition(pos_type position);
     bool load();
     void loadConcurrently();
@@ -144,11 +148,15 @@ namespace cnoid {
 class STLSceneLoader::Impl
 {
 public:
+    STLSceneLoader* self;
+    bool isUpperAxisY;
+    bool doScaling;
+    float scale;
     size_t maxNumThreads;
     ostream* os_;
     ostream& os() { return *os_; }
 
-    Impl();
+    Impl(STLSceneLoader* self);
     SgNode* load(const string& filename);
     SgMeshPtr loadBinaryFormat(const string& filename, ifstream& ifs, size_t numTriangles);
     SgMeshPtr loadBinaryFormatConcurrently(
@@ -162,9 +170,7 @@ public:
 }
 
 
-namespace {
-
-MeshLoader::MeshLoader(size_t numTriangles)
+MeshLoader::MeshLoader(STLSceneLoader::Impl* loaderImpl, size_t numTriangles)
     : sharedMesh(new SgMesh),
       numTriangles(numTriangles)
 {
@@ -178,6 +184,10 @@ MeshLoader::MeshLoader(size_t numTriangles)
     
     sharedMesh->setNumTriangles(numTriangles);
     normalIndices->resize(numTriangles * 3);
+
+    isUpperAxisY = loaderImpl->isUpperAxisY;
+    doScaling = loaderImpl->doScaling;
+    scale = loaderImpl->scale;
 }
 
 
@@ -190,6 +200,10 @@ MeshLoader::MeshLoader(const MeshLoader& mainLoader)
     triangleVertices = nullptr;
     normals = new SgNormalArray;
     normalIndices = nullptr;
+
+    isUpperAxisY = mainLoader.isUpperAxisY;
+    doScaling = mainLoader.doScaling;
+    scale = mainLoader.scale;
 }
 
 
@@ -214,8 +228,18 @@ static inline bool isApprox(const Vector3f& v1, const Vector3f& v2)
     
 
 template<typename AddIndexFunction>
-void MeshLoader::addNormal(const Vector3f& normal, AddIndexFunction addIndex)
+void MeshLoader::addNormal(Vector3f& normal, AddIndexFunction addIndex)
 {
+    if(isUpperAxisY){
+        float y = normal.y();
+        normal.y() = normal.x();
+        normal.x() = normal.z();
+        normal.z() = y;
+    }
+    if(doScaling){
+        normal *= scale;
+    }
+    
     bool found = false;
     int index = normals->size() - 1;
 
@@ -232,15 +256,25 @@ void MeshLoader::addNormal(const Vector3f& normal, AddIndexFunction addIndex)
 
     if(!found){
         index = normals->size();
-        normals->push_back(normal);
+        normals->emplace_back(normal);
     }
     addIndex(index);
 }
 
 
 template<typename AddIndexFunction>
-void MeshLoader::addVertex(const Vector3f& vertex, AddIndexFunction addIndex)
+void MeshLoader::addVertex(Vector3f& vertex, AddIndexFunction addIndex)
 {
+    if(isUpperAxisY){
+        float y = vertex.y();
+        vertex.y() = vertex.x();
+        vertex.x() = vertex.z();
+        vertex.z() = y;
+    }
+    if(doScaling){
+        vertex *= scale;
+    }
+    
     bool found = false;
     int index = vertices->size() - 1;
 
@@ -259,7 +293,7 @@ void MeshLoader::addVertex(const Vector3f& vertex, AddIndexFunction addIndex)
         addIndex(index);
     } else {
         addIndex(vertices->size());
-        vertices->push_back(vertex);
+        vertices->emplace_back(vertex);
         bbox.expandBy(vertex);
     }
 }
@@ -433,16 +467,15 @@ SgMeshPtr MeshLoader::completeMesh(bool doShrink)
     return sharedMesh;
 }
 
-}
-
 
 STLSceneLoader::STLSceneLoader()
 {
-    impl = new Impl;
+    impl = new Impl(this);
 }
 
 
-STLSceneLoader::Impl::Impl()
+STLSceneLoader::Impl::Impl(STLSceneLoader* self)
+    : self(self)
 {
     maxNumThreads = std::max((unsigned)1, thread::hardware_concurrency());
 
@@ -464,7 +497,7 @@ void STLSceneLoader::setMessageSink(std::ostream& os)
 
 SgNode* STLSceneLoader::load(const std::string& filename)
 {
-    return insertTransformNodesToAdjustLengthUnitAndUpperAxis(impl->load(filename));
+    return impl->load(filename);
 }
 
 
@@ -492,6 +525,21 @@ SgNode* STLSceneLoader::Impl::load(const string& filename)
         }
     }
 
+    isUpperAxisY = false;
+    doScaling = false;
+    scale = 1.0f;
+    
+    if(self->upperAxisHint() == Y_Upper){
+        isUpperAxisY = true;
+    }
+    if(self->lengthUnitHint() == Millimeter){
+        doScaling = true;
+        scale = 1.0e-3f;
+    } else if(self->lengthUnitHint() == Inch){
+        doScaling = true;
+        scale = 0.0254f;
+    }
+
     SgMeshPtr mesh;
     if(isBinary){
         mesh = loadBinaryFormat(filename, ifs, numTriangles);
@@ -506,6 +554,7 @@ SgNode* STLSceneLoader::Impl::load(const string& filename)
     }
 
     mesh->setUriWithFilePathAndCurrentDirectory(filename);
+    self->storeLengthUnitAndUpperAxisHintsAsMetadata(mesh);
 
     auto shape = new SgShape;
     shape->setMesh(mesh);
@@ -524,7 +573,7 @@ SgMeshPtr STLSceneLoader::Impl::loadBinaryFormat(const string& filename, ifstrea
         return nullptr;
     }
     
-    BinaryMeshLoader mainLoader(numTriangles);
+    BinaryMeshLoader mainLoader(this, numTriangles);
 
     size_t numThreads = std::min(maxNumThreads, std::max(size_t(1), numTriangles / NumTrianglesPerThread));
 
@@ -569,8 +618,6 @@ SgMeshPtr STLSceneLoader::Impl::loadBinaryFormatConcurrently
 }
 
 
-namespace {
-
 void BinaryMeshLoader::initializeArrays(size_t triangleOffset, size_t numTriangles)
 {
     this->triangleOffset = triangleOffset;
@@ -586,7 +633,7 @@ void BinaryMeshLoader::initializeArrays(size_t triangleOffset, size_t numTriangl
 }
 
 
-void BinaryMeshLoader::addNormal(const Vector3f& normal)
+void BinaryMeshLoader::addNormal(Vector3f& normal)
 {
     MeshLoader::addNormal(
         normal,
@@ -598,7 +645,7 @@ void BinaryMeshLoader::addNormal(const Vector3f& normal)
 }
 
 
-void BinaryMeshLoader::addVertex(const Vector3f& vertex)
+void BinaryMeshLoader::addVertex(Vector3f& vertex)
 {
     MeshLoader::addVertex(
         vertex,
@@ -628,10 +675,14 @@ void BinaryMeshLoader::load(ifstream& ifs, size_t triangleOffset, size_t numTria
     char data[datasize];
     for(size_t i = 0; i < numTriangles; ++i){
         ifs.read(data, datasize);
-        addNormal(Vector3f(reinterpret_cast<float*>(data)));
-        addVertex(Vector3f(reinterpret_cast<float*>(&data[12])));
-        addVertex(Vector3f(reinterpret_cast<float*>(&data[24])));
-        addVertex(Vector3f(reinterpret_cast<float*>(&data[36])));
+        Vector3f normal(reinterpret_cast<float*>(data));
+        addNormal(normal);
+        Vector3f v0(reinterpret_cast<float*>(&data[12]));
+        addVertex(v0);
+        Vector3f v1(reinterpret_cast<float*>(&data[24]));
+        addVertex(v1);
+        Vector3f v2(reinterpret_cast<float*>(&data[36]));
+        addVertex(v2);
     }
 }
 
@@ -643,8 +694,6 @@ void BinaryMeshLoader::loadConcurrently(const string& filename, size_t triangleO
             ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
             load(ifs, triangleOffset, numTriangles);
         });
-}
-
 }
 
 
@@ -661,14 +710,14 @@ SgMeshPtr STLSceneLoader::Impl::loadAsciiFormat(const string& filename, pos_type
     SgMeshPtr mesh;
     
     bool doOpen = (numThreads == 1);
-    AsciiMeshLoader mainLoader(filename, doOpen);
+    AsciiMeshLoader mainLoader(this, filename, doOpen);
     
     if(numThreads == 1){
         if(mainLoader.load()){
             mesh = mainLoader.completeMesh(true);
         }
     } else {
-        mesh =loadAsciiFormatConcurrently(filename, mainLoader, fileSize, numThreads);
+        mesh = loadAsciiFormatConcurrently(filename, mainLoader, fileSize, numThreads);
     }
     
     return mesh;
@@ -723,10 +772,8 @@ SgMeshPtr STLSceneLoader::Impl::loadAsciiFormatConcurrently
 }
 
 
-namespace {
-
-AsciiMeshLoader::AsciiMeshLoader(const string& filename, bool doOpen)
-    : MeshLoader(0),
+AsciiMeshLoader::AsciiMeshLoader(STLSceneLoader::Impl* loaderImpl, const string& filename, bool doOpen)
+    : MeshLoader(loaderImpl, 0),
       filename(filename)
 {
     if(doOpen){
@@ -756,7 +803,7 @@ bool AsciiMeshLoader::seekToTriangleBorderPosition(pos_type position)
 }
 
 
-void AsciiMeshLoader::addNormal(const Vector3f& normal)
+void AsciiMeshLoader::addNormal(Vector3f& normal)
 {
     MeshLoader::addNormal(
         normal,
@@ -768,7 +815,7 @@ void AsciiMeshLoader::addNormal(const Vector3f& normal)
 }
 
 
-void AsciiMeshLoader::addVertex(const Vector3f& vertex)
+void AsciiMeshLoader::addVertex(Vector3f& vertex)
 {
     MeshLoader::addVertex(
         vertex,
@@ -868,8 +915,6 @@ void AsciiMeshLoader::initializeIntegration(MeshLoader* prevLoader)
     if(prevLoader){
         triangleOffset = prevLoader->triangleOffset + prevLoader->numTriangles;
     }
-}
-
 }
 
 
