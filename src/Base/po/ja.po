@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-08-09 23:11+0900\n"
+"POT-Creation-Date: 2024-08-17 16:07+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -355,8 +355,26 @@ msgstr "フォルダアイテム"
 msgid "The file format of \"{}\" is not supported.\n"
 msgstr "ファイルフォーマット \"{}\" はサポートされていません．\n"
 
-msgid "[ Mesh import hints ]"
-msgstr "[ メッシュインポートヒント ]"
+msgid "Load a scene file"
+msgstr "シーンファイルの読み込み"
+
+msgid "Scene file"
+msgstr "シーンファイル"
+
+msgid "Load"
+msgstr "読み込み"
+
+msgid "Loading the file \"{0}\" ..."
+msgstr "ファイル \"{0}\" を読み込み中…"
+
+msgid " OK!"
+msgstr ""
+
+msgid " Failed."
+msgstr " 失敗．"
+
+msgid "[ import hints ]"
+msgstr "[ インポートヒント ]"
 
 msgid "Unit:"
 msgstr "単位："
@@ -530,9 +548,6 @@ msgstr "{0}の読み込み"
 
 msgid "Import {0}"
 msgstr "{0}のインポート"
-
-msgid "Load"
-msgstr "読み込み"
 
 msgid "Import"
 msgstr "インポート"
@@ -1617,7 +1632,9 @@ msgstr "エクスポートするシーンが空です．"
 msgid ""
 "Export the scene of the following items to \"{0}\":\n"
 " "
-msgstr "以下のアイテムのシーンを \"{0}\" にエクスポートします：\n "
+msgstr ""
+"以下のアイテムのシーンを \"{0}\" にエクスポートします：\n"
+" "
 
 msgid "Completed!"
 msgstr "完了！"
