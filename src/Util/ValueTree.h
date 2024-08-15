@@ -444,6 +444,8 @@ public:
 
     StringStyle keyStringStyle() const { return keyStringStyle_; }
 
+    size_t getContentHash() const;
+
 #ifdef CNOID_BACKWARD_COMPATIBILITY
     Listing* findSequence(const std::string& key) const { return findListing(key); }
     Listing* openSequence(const std::string& key) { return openListing(key); }
@@ -599,6 +601,8 @@ public:
     iterator end() { return values.end(); }
     const_iterator begin() const { return values.begin(); }
     const_iterator end() const { return values.end(); };
+
+    size_t getContentHash() const;
 
 private:
 

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <yaml.h>
 #include <cnoid/stdx/filesystem>
+#include <functional>
 #include "gettext.h"
 
 #ifdef _WIN32
@@ -41,6 +42,10 @@ ListingPtr invalidListing;
 
 constexpr double PI = 3.141592653589793238462643383279502884;
 constexpr double TO_RADIAN = PI / 180.0;
+
+void hash_combine(std::size_t& seed, std::size_t hash) {
+    seed ^= hash + 0x9e3779b9 + (seed<<6) + (seed>>2);
+}
 
 }
 
@@ -1081,6 +1086,24 @@ void Mapping::writePath(const std::string &key, const std::string& value)
 }
 
 
+size_t Mapping::getContentHash() const
+{
+    size_t seed = 0;
+    std::hash<string> hasher;
+    for(auto& kv : *this){
+        auto& node = kv.second;
+        if(node->isScalar()){
+            hash_combine(seed, hasher(node->toString()));
+        } else if(node->isMapping()){
+            hash_combine(seed, node->toMapping()->getContentHash());
+        } else if(node->isListing()){
+            hash_combine(seed, node->toListing()->getContentHash());
+        }
+    }
+    return seed;
+}
+        
+         
 Listing::Listing()
 {
     typeBits = LISTING;
@@ -1269,4 +1292,21 @@ void Listing::insert(int index, ValueNode* node)
 void Listing::write(int i, const std::string& value, StringStyle stringStyle)
 {
     values[i] = new ScalarNode(value, stringStyle);
+}
+
+
+size_t Listing::getContentHash() const
+{
+    size_t seed = 0;
+    std::hash<string> hasher;
+    for(auto& node : *this){
+        if(node->isScalar()){
+            hash_combine(seed, hasher(node->toString()));
+        } else if(node->isMapping()){
+            hash_combine(seed, node->toMapping()->getContentHash());
+        } else if(node->isListing()){
+            hash_combine(seed, node->toListing()->getContentHash());
+        }
+    }
+    return seed;
 }
