@@ -73,12 +73,12 @@ public:
     };
     typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
 
-    map<string, ResourceInfoPtr> resourceInfoMap;
+    unordered_map<string, ResourceInfoPtr> resourceInfoMap;
 
     string baseDirectory;
     SceneLoader sceneLoader;
     unique_ptr<UriSchemeProcessor> uriSchemeProcessor;
-    typedef map<string, SgImagePtr> ImagePathToSgImageMap;
+    typedef unordered_map<string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
 
     typedef SgNode* (Impl::*NodeFunction)(Mapping* info);
@@ -1791,7 +1791,14 @@ void StdSceneReader::Impl::extractNamedSceneNodes
 StdSceneReader::Impl::ResourceInfo*
 StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const string& uri, Mapping* metadata)
 {
-    auto iter = resourceInfoMap.find(uri);
+    string uriWithMetadata;
+    if(!metadata){
+        uriWithMetadata = uri;
+    } else {
+        uriWithMetadata = formatC("{0}?metadata={1:0x}", uri, metadata->getContentHash());
+    }
+    
+    auto iter = resourceInfoMap.find(uriWithMetadata);
 
     if(iter != resourceInfoMap.end()){
         return iter->second;
@@ -1835,7 +1842,7 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const strin
 
     info->directory = toUTF8(filePath.parent_path().string());
     
-    resourceInfoMap[uri] = info;
+    resourceInfoMap[uriWithMetadata] = info;
 
     return info;
 }
