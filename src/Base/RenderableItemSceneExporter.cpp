@@ -23,7 +23,7 @@ void cnoid::showDialogToExportSelectedRenderableItemScene()
     dialog.setLabelText(QFileDialog::Accept, _("Export"));
     dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
     dialog.setNameFilter("OBJ file (*.obj)");
-    dialog.updatePresetDirectories();
+    dialog.updatePresetDirectories(true);
     if(dialog.exec() == QDialog::Accepted){
         auto mout = MessageOut::master();
         string filename = dialog.selectedFiles().value(0).toStdString();

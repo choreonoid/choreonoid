@@ -553,7 +553,7 @@ void MovieRecorderDialog::showDirectorySelectionDialog()
     dialog.setViewMode(QFileDialog::List);
     dialog.setFileMode(QFileDialog::Directory);
     dialog.setOption(QFileDialog::ShowDirsOnly);
-    dialog.updatePresetDirectories();
+    dialog.updatePresetDirectories(true);
     dialog.setDirectory(directoryEntry->text());
 
     if(dialog.exec()){

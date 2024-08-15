@@ -1257,7 +1257,7 @@ bool BodyLibraryView::Impl::setBodyThumbnailWithDialog(LibraryItem* item)
     dialog.setViewMode(QFileDialog::List);
     dialog.setFileMode(QFileDialog::ExistingFile);
     dialog.setLabelText(QFileDialog::Accept, _("Select"));
-    dialog.updatePresetDirectories();
+    dialog.updatePresetDirectories(true);
 
     fs::path filePath(fromUTF8(item->file));
     bool isBodyCopiedInLibraryDirectory = checkIfInternalFilePath(filePath);

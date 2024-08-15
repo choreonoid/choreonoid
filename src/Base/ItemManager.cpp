@@ -1157,7 +1157,7 @@ string getOpenFileName(const string& caption, const string& extensions)
     dialog.setWindowTitle(caption.c_str());
     dialog.setNameFilter(makeNameFilterString(caption, extensions));
     dialog.setFileMode(QFileDialog::ExistingFile);
-    dialog.updatePresetDirectories();
+    dialog.updatePresetDirectories(true);
     if(dialog.exec() == QDialog::Accepted){
         filename = dialog.selectedFiles().value(0).toStdString();
     }
@@ -1172,7 +1172,7 @@ vector<string> getOpenFileNames(const string& caption, const string& extensions)
     dialog.setWindowTitle(caption.c_str());
     dialog.setNameFilter(makeNameFilterString(caption, extensions));
     dialog.setFileMode(QFileDialog::ExistingFiles);
-    dialog.updatePresetDirectories();
+    dialog.updatePresetDirectories(true);
     if(dialog.exec() == QDialog::Accepted){
         for(auto& file : dialog.selectedFiles()){
             filenames.push_back(file.toStdString());

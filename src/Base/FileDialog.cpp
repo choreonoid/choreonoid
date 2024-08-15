@@ -45,7 +45,7 @@ public:
     Signal<bool(int result), LogicalProduct> sigAboutToFinish;
     
     Impl(FileDialog* self);
-    void updatePresetDirectories();    
+    void updatePresetDirectories(bool doSetCurrentDirectory);
     void onFilterSelected(const QString& selected);
     void onFinished(int result);
     void storeRecentDirectories();
@@ -110,13 +110,13 @@ FileDialog::~FileDialog()
 }
 
 
-void FileDialog::updatePresetDirectories()
+void FileDialog::updatePresetDirectories(bool doSetCurrentDirectory)
 {
-    impl->updatePresetDirectories();
+    impl->updatePresetDirectories(doSetCurrentDirectory);
 }
 
 
-void FileDialog::Impl::updatePresetDirectories()
+void FileDialog::Impl::updatePresetDirectories(bool doSetCurrentDirectory)
 {
     QList<QUrl> urls;
 
@@ -160,26 +160,28 @@ void FileDialog::Impl::updatePresetDirectories()
         setHistory(qhistory);
     }
 
-    bool directoryDetermined = false;
-    if(!isBeforeChoosingAnyFile){
-        auto qhistory = history();
-        if(!qhistory.empty()){
-            setDirectory(qhistory.last());
-            directoryDetermined = true;
+    if(doSetCurrentDirectory){
+        bool directoryDetermined = false;
+        if(!isBeforeChoosingAnyFile){
+            auto qhistory = history();
+            if(!qhistory.empty()){
+                setDirectory(qhistory.last());
+                directoryDetermined = true;
+            }
+        }
+        if(!directoryDetermined){
+            auto projectDir = ProjectManager::instance()->currentProjectDirectory();
+            if(!projectDir.empty()){
+                setDirectory(projectDir.c_str());
+            } else {
+#ifdef Q_OS_WIN32
+                setDirectory(QDir::homePath() + "/Documents");
+#else
+                setDirectory(QDir::current());
+#endif
+            }
         }
     }
-    if(!directoryDetermined){
-        auto projectDir = ProjectManager::instance()->currentProjectDirectory();
-        if(!projectDir.empty()){
-            setDirectory(projectDir.c_str());
-        } else {
-#ifdef Q_OS_WIN32
-            setDirectory(QDir::homePath() + "/Documents");
-#else
-            setDirectory(QDir::current());
-#endif
-        }
-    } 
 }
 
 

@@ -27,7 +27,7 @@ public:
         QDialog::setWindowTitle(title);
     }
 
-    void updatePresetDirectories();
+    void updatePresetDirectories(bool doSetCurrentDirectory = true);
     bool selectFilePath(const std::string& filePath);
     void insertOptionPanel(QWidget* panel);
 

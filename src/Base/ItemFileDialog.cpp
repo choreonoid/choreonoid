@@ -149,7 +149,7 @@ ItemList<Item> ItemFileDialog::Impl::loadItems(Item* parentItem, bool doAddition
         self->setLabelText(QFileDialog::Accept, _("Import"));
     }
 
-    self->updatePresetDirectories();
+    self->updatePresetDirectories(true);
 
     if(self->exec() == QDialog::Accepted){
 
@@ -247,7 +247,7 @@ bool ItemFileDialog::Impl::saveItem(Item* item)
     self->setLabelText(QFileDialog::Accept, _("Save"));
     self->setFileMode(QFileDialog::AnyFile);
 
-    self->updatePresetDirectories();
+    self->updatePresetDirectories(true);
 
     bool selected = false;
     filesystem::path filePath(fromUTF8(item->filePath()));

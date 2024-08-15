@@ -805,7 +805,7 @@ bool ProjectManager::showDialogToLoadProject()
     filters << _("Any files (*)");
     dialog.setNameFilters(filters);
 
-    dialog.updatePresetDirectories();
+    dialog.updatePresetDirectories(true);
 
     bool loaded = false;
     if(dialog.exec()){
@@ -827,7 +827,7 @@ bool ProjectManager::showDialogToSaveProject()
         dialog = new SaveDialog(impl);
     }
 
-    dialog->updatePresetDirectories();
+    dialog->updatePresetDirectories(true);
 
     if(!dialog->selectFilePath(impl->currentProjectFile)){
         dialog->selectFile(impl->currentProjectName);

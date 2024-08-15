@@ -1271,7 +1271,7 @@ void WorldLogFileItem::Impl::openDialogToSelectDirectoryToSavePlaybackArchive()
     dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setLabelText(QFileDialog::Accept, _("Save"));
     dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
-    dialog.updatePresetDirectories();
+    dialog.updatePresetDirectories(true);
 
     QStringList filters;
     filters << _("Project files (*.cnoid)");

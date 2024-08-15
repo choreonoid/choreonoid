@@ -219,7 +219,7 @@ void CaptureBar::save(QWidget* widget, std::function<bool(const QString& filenam
     filters << _("Any files (*)");
     dialog.setNameFilters(filters);
 
-    dialog.updatePresetDirectories();
+    dialog.updatePresetDirectories(true);
 
     dialog.setDirectory(getConfig()->get("directory", QDir::currentPath().toStdString()));
         

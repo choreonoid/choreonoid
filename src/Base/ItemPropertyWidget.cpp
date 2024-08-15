@@ -565,7 +565,7 @@ void CustomizedItemDelegate::openFileDialog(FilePathProperty value, FilePathEdit
     }
     dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
 
-    dialog.updatePresetDirectories();
+    dialog.updatePresetDirectories(true);
 
     filesystem::path directory;
     if(!value.baseDirectory().empty()){
