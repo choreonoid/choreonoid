@@ -1,6 +1,3 @@
-/**
- @author Shin'ichiro Nakaoka
-*/
 #ifndef CNOID_UTIL_ABSTRACT_SCENE_LOADER_H
 #define CNOID_UTIL_ABSTRACT_SCENE_LOADER_H
 
@@ -28,11 +25,15 @@ public:
     virtual void setUpperAxisHint(UpperAxisType hint);
     UpperAxisType upperAxisHint() const { return upperAxisHint_; }
 
+    void clearHintsForLoading();
+    void restoreLengthUnitAndUpperAxisHints(Mapping* metadata);
+
     virtual SgNode* load(const std::string& filename) = 0;
 
 protected:
     SgNode* insertTransformNodesToAdjustLengthUnitAndUpperAxis(SgNode* node);
     SgNode* insertTransformNodeToAdjustUpperAxis(SgNode* node);
+    void storeLengthUnitAndUpperAxisHintsAsMetadata(SgObject* object);
 
 private:
     LengthUnitType lengthUnitHint_;

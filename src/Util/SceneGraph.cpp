@@ -1,6 +1,7 @@
 #include "SceneGraph.h"
 #include "SceneNodeClassRegistry.h"
 #include "CloneMap.h"
+#include "ValueTree.h"
 #include "UTF8.h"
 #include "Format.h"
 #include <cnoid/stdx/filesystem>
@@ -240,12 +241,12 @@ const std::string& SgObject::uriFragment() const
 }
 
 
-const std::string& SgObject::uriMetadataString() const
+Mapping* SgObject::uriMetadata() const
 {
-    if(!uriInfo){
-        uriInfo.reset(new UriInfo);
+    if(uriInfo){
+        return static_cast<Mapping*>(uriInfo->metadata.get());
     }
-    return uriInfo->metadata;
+    return nullptr;
 }
 
 
@@ -319,7 +320,7 @@ void SgObject::setUriFragment(const std::string& fragment)
 }
 
 
-void SgObject::setUriMetadataString(const std::string& data)
+void SgObject::setUriMetadata(Mapping* data)
 {
     if(!uriInfo){
         uriInfo.reset(new UriInfo);

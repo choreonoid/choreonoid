@@ -19,6 +19,7 @@ class SgNode;
 typedef ref_ptr<SgNode> SgNodePtr;
 class SgGroup;
 class SgTransform;
+class Mapping;
 
 typedef std::vector<SgNodePtr> SgNodePath;
 
@@ -137,8 +138,8 @@ public:
     const std::string& uriObjectName() const;
     bool hasUriFragment() const { return uriInfo && !uriInfo->fragment.empty(); }
     const std::string& uriFragment() const;
-    bool hasUriMetadataString() const { return uriInfo && !uriInfo->metadata.empty(); }
-    const std::string& uriMetadataString() const;
+
+    Mapping* uriMetadata() const;
     void setUriWithFilePathAndBaseDirectory(const std::string& filePath, const std::string& baseDirectory);
     [[deprecated("Use setUriWithFilePathAndBaseDirectory.")]]
     void setUriByFilePathAndBaseDirectory(const std::string& filePath, const std::string& baseDirectory);
@@ -148,7 +149,7 @@ public:
     void setUri(const std::string& uri, const std::string& absoluteUri);
     void setUriObjectName(const std::string& name);
     void setUriFragment(const std::string& fragment);
-    void setUriMetadataString(const std::string& data);
+    void setUriMetadata(Mapping* data);
     void clearUri() { uriInfo.reset(); }
 
     bool isNode() const { return hasAttribute(Node); }
@@ -178,7 +179,7 @@ private:
         std::string absoluteUri;
         std::string objectName;
         std::string fragment;
-        std::string metadata;
+        ReferencedPtr metadata; // Actual type is MappingPtr
     };
     
     mutable std::unique_ptr<UriInfo> uriInfo;

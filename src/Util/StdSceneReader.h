@@ -71,7 +71,7 @@ public:
         std::string file;
         std::string directory;
         std::string fragment;
-        std::string metadata;
+        MappingPtr metadata;
     };
     Resource readResourceNode(Mapping* info);
     

@@ -1,16 +1,13 @@
-/**
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "AbstractSceneLoader.h"
+#include "ValueTree.h"
 
+using namespace std;
 using namespace cnoid;
 
 
 AbstractSceneLoader::AbstractSceneLoader()
 {
-    lengthUnitHint_ = Meter;
-    upperAxisHint_ = Z_Upper;
+    clearHintsForLoading();
 }
 
 
@@ -47,6 +44,33 @@ void AbstractSceneLoader::setLengthUnitHint(LengthUnitType hint)
 void AbstractSceneLoader::setUpperAxisHint(UpperAxisType hint)
 {
     upperAxisHint_ = hint;
+}
+
+
+void AbstractSceneLoader::clearHintsForLoading()
+{
+    lengthUnitHint_ = Meter;
+    upperAxisHint_ = Z_Upper;
+}
+
+
+void AbstractSceneLoader::restoreLengthUnitAndUpperAxisHints(Mapping* metadata)
+{
+    if(metadata){
+        string symbol;
+        if(metadata->read("length_unit", symbol)){
+            if(symbol == "millimeter"){
+                lengthUnitHint_ = Millimeter;
+            } else if(symbol == "inch"){
+                lengthUnitHint_ = Inch;
+            }
+        }
+        if(metadata->read("upper_axis", symbol)){
+            if(symbol == "Y"){
+                upperAxisHint_ = Y_Upper;
+            }
+        }
+    }
 }
 
 
@@ -101,4 +125,21 @@ SgNode* AbstractSceneLoader::insertTransformNodeToAdjustUpperAxis(SgNode* node)
         node = transform;
     }
     return node;
+}
+
+
+void AbstractSceneLoader::storeLengthUnitAndUpperAxisHintsAsMetadata(SgObject* object)
+{
+    MappingPtr metadata = new Mapping;
+    if(lengthUnitHint_ == Millimeter){
+        metadata->write("length_unit", "millimeter");
+    } else if(lengthUnitHint_ == Inch){
+        metadata->write("length_unit", "inch");
+    }
+    if(upperAxisHint_ == Y_Upper){
+        metadata->write("upper_axis", "Y");
+    }
+    if(!metadata->empty()){
+        object->setUriMetadata(metadata);
+    }
 }

@@ -592,9 +592,8 @@ void StdSceneWriter::Impl::makeLinkToOriginalModelFile(Mapping* archive, SgObjec
     }
         
     archive->write("uri", uri, DOUBLE_QUOTED);
-    auto& metadata = sceneObject->uriMetadataString();
-    if(!metadata.empty()){
-        archive->write("metadata", metadata, DOUBLE_QUOTED);
+    if(auto metadata = sceneObject->uriMetadata()){
+        archive->insert("metadata", metadata);
     }
 }
 
@@ -610,9 +609,8 @@ void StdSceneWriter::Impl::copyModelFilesAndLinkToCopiedFile(Mapping* archive, S
         os() << formatR(_("Warning: Model file \"{0}\" cannot be copied."), sceneObject->uri()) << endl;
     } else {
         archive->write("uri", relativeFilePathToCopiedFile, DOUBLE_QUOTED);
-        auto& metadata = sceneObject->uriMetadataString();
-        if(!metadata.empty()){
-            archive->write("metadata", metadata, DOUBLE_QUOTED);
+        if(auto metadata = sceneObject->uriMetadata()){
+            archive->insert("metadata", metadata);
         }
     }
 }
