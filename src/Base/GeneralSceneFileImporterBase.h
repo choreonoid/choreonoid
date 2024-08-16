@@ -31,7 +31,6 @@ protected:
     virtual void storeOptions(Mapping* archive) override;
     virtual bool restoreOptions(const Mapping* archive) override;
     virtual QWidget* getOptionPanelForLoading() override;
-    virtual void fetchOptionPanelForLoading() override;
 
 private:
     class Impl;
