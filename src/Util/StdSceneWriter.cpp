@@ -636,8 +636,7 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
                     findPathInDirectory(originalBaseDirPath, srcFilePath, relativeFilePath);
                 }
                 if(relativeFilePath.empty()){
-                    uriSchemeProcessor->detectScheme(sceneObject->uri());
-                    filesystem::path uriPath = fromUTF8(uriSchemeProcessor->path());
+                    filesystem::path uriPath = fromUTF8(uriSchemeProcessor->getFilePath(sceneObject->uri()));
                     uriPath = uriPath.lexically_normal();
                     if(uriPath.has_root_path()){
                         uriPath = uriPath.relative_path();
