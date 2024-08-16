@@ -6,6 +6,7 @@
 #include <cnoid/StdBodyWriter>
 #include <cnoid/StdSceneWriter>
 #include <cnoid/ObjSceneWriter>
+#include <cnoid/FilePathVariableProcessor>
 #include <cnoid/ItemManager>
 #include <cnoid/SceneGraph>
 #include <cnoid/UTF8>
@@ -215,6 +216,8 @@ StdBodyWriter* BodyItemBodyFileIO::ensureBodyWriter()
         bodyWriter_ = new StdBodyWriter;
         bodyWriter_->setMessageSink(os());
         bodyWriter_->setOriginalShapeExtModelFileUriRewritingEnabled(true);
+        bodyWriter_->sceneWriter()->setFilePathVariableProcessor(
+            FilePathVariableProcessor::systemInstance());
     }
     return bodyWriter_;
 }
@@ -408,6 +411,8 @@ StdSceneWriter* StdSceneFileExporter::ensureSceneWriter()
         sceneWriter.reset(new StdSceneWriter);
         sceneWriter->setMessageSink(os());
         sceneWriter->setIndentWidth(1);
+        sceneWriter->setFilePathVariableProcessor(
+            FilePathVariableProcessor::systemInstance());
     }
     return sceneWriter.get();
 }

@@ -3,6 +3,7 @@
 #include "ItemManager.h"
 #include <cnoid/StdSceneLoader>
 #include <cnoid/StdSceneWriter>
+#include <cnoid/FilePathVariableProcessor>
 #include "gettext.h"
 
 using namespace std;
@@ -69,6 +70,7 @@ StdSceneWriter* SceneItemStdSceneFileExporter::ensureSceneWriter()
     if(!sceneWriter_){
         sceneWriter_.reset(new StdSceneWriter);
         sceneWriter_->setMessageSink(os());
+        sceneWriter_->setFilePathVariableProcessor(FilePathVariableProcessor::systemInstance());
     }
     return sceneWriter_.get();
 }

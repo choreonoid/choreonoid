@@ -73,7 +73,6 @@ FilePathVariableProcessor* FilePathVariableProcessor::systemInstance()
 
     if(!instance){
         instance = new FilePathVariableProcessor;
-        instance->setSubstitutionWithSystemPathVariableEnabled(true);
     }
 
     return instance;
@@ -89,7 +88,7 @@ FilePathVariableProcessor::FilePathVariableProcessor()
 FilePathVariableProcessor::Impl::Impl()
 {
     isProjectDirDifferentFromBaseDir = false;
-    isSubstitutionWithSystemPathVariableEnabled = false;
+    isSubstitutionWithSystemPathVariableEnabled = true;
 
     topDirPath = executableTopDirPath();
     topDirString = executableTopDir();

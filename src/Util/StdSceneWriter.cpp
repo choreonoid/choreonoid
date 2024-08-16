@@ -43,6 +43,7 @@ public:
     bool isMeshEnabled;
     SgMaterialPtr defaultMaterial;
     unique_ptr<UriSchemeProcessor> uriSchemeProcessor;
+    FilePathVariableProcessorPtr filePathVariableProcessor;
     unique_ptr<YAMLWriter> yamlWriter;
     unique_ptr<StdSceneWriter> subSceneWriter;
     unique_ptr<ObjSceneWriter> objSceneWriter;
@@ -70,7 +71,7 @@ public:
     StdSceneWriter* getOrCreateSubSceneWriter();
     ObjSceneWriter* getOrCreateObjSceneWriter();
     void setOutputBaseDirectory(const std::string& directory);
-    void ensureUriSchemeProcessor(FilePathVariableProcessor* fpvp = nullptr);
+    void ensureUriSchemeProcessor();
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
     void rewriteOriginalSceneExtModelFileUris();
     pair<MappingPtr, bool> findOrCreateMapping(SgObject* object);
@@ -183,6 +184,7 @@ void StdSceneWriter::Impl::copyConfigurations(const Impl* org)
     outputBaseDirPath = org->outputBaseDirPath;
     originalBaseDirPath = org->originalBaseDirPath;
     os_ = org->os_;
+    filePathVariableProcessor = org->filePathVariableProcessor;
     if(org->yamlWriter){
         getOrCreateYamlWriter()->setIndentWidth(org->yamlWriter->indentWidth());
     }
@@ -265,26 +267,27 @@ void StdSceneWriter::Impl::setOutputBaseDirectory(const std::string& directory)
 }
 
 
-void StdSceneWriter::Impl::ensureUriSchemeProcessor(FilePathVariableProcessor* fpvp)
+void StdSceneWriter::Impl::ensureUriSchemeProcessor()
 {
     if(!uriSchemeProcessor){
         uriSchemeProcessor = make_unique<UriSchemeProcessor>();
-        if(!fpvp){
-            fpvp = new FilePathVariableProcessor;
-            fpvp->setBaseDirPath(outputBaseDirPath);
+        if(!filePathVariableProcessor){
+            filePathVariableProcessor = new FilePathVariableProcessor;
+            filePathVariableProcessor->setBaseDirPath(outputBaseDirPath);
         }
-    }
-    if(fpvp){
-        uriSchemeProcessor->setFilePathVariableProcessor(fpvp);
+        uriSchemeProcessor->setFilePathVariableProcessor(filePathVariableProcessor);
     }
 }
 
 
 void StdSceneWriter::setFilePathVariableProcessor(FilePathVariableProcessor* fpvp)
 {
-    impl->ensureUriSchemeProcessor(fpvp);
+    impl->filePathVariableProcessor = fpvp;
     impl->outputBaseDirectory = fpvp->baseDirectory();
     impl->outputBaseDirPath = fpvp->baseDirPath();
+    if(impl->uriSchemeProcessor){
+        impl->uriSchemeProcessor->setFilePathVariableProcessor(fpvp);
+    }
 }
 
 
