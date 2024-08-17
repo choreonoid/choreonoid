@@ -10,6 +10,7 @@
 #include "FileDialog.h"
 #include "TimeBar.h"
 #include "DisplayValueFormat.h"
+#include "GeneralSceneFileLoadDialog.h"
 #include <cnoid/GettextUtil>
 
 namespace cnoid {
@@ -114,6 +115,11 @@ public:
     static void setTimeBarNegativeTimeEnabled(bool on)
     {
         TimeBar::setNegativeTimeEnabled(on);
+    }
+
+    static void setGeneralSceneFileLoadDialogDefaultLengthUnitHint(SceneLoader::LengthUnitType hint)
+    {
+        GeneralSceneFileLoadDialog::setDefaultLengthUnitHint(hint);
     }
 
     void setLengthUnit(DisplayValueFormat::LengthUnit unit)
