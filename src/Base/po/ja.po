@@ -58,7 +58,7 @@ msgid "Perspective"
 msgstr "透視投影"
 
 msgid "Orthographic"
-msgstr "並行投影"
+msgstr "平行投影"
 
 msgid "Position:"
 msgstr "位置："
