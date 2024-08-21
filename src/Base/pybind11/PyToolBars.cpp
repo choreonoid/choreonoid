@@ -135,8 +135,5 @@ void exportPyToolBars(py::module m)
         .def("getPlaybackSpeedScale", &TimeBar::playbackSpeedRatio)
         .def("getPlaybackFrameRate", &TimeBar::playbackFrameRate)
         ;
-
-        PySignal<bool(double time), LogicalProduct>(m, "SigPlaybackInitialized");
-        PySignal<bool(double time), LogicalSum>(m, "SigTimeChanged");
     }
 }

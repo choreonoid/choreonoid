@@ -13,11 +13,14 @@ namespace cnoid {
 
 void exportPySignalTypes(py::module& m)
 {
-    PySignal<void()>(m, "VoidSignal");
-    PySignal<void(bool)>(m,"BoolSignal");
-    PySignal<void(int)>(m, "IntSignal");
-    PySignal<void(double)>(m, "DoubleSignal");
-    PySignal<void(const std::string&)>(m, "StringSignal");
+    PySignal<void()>(m, "VoidVoidSignal");
+    PySignal<void(bool)>(m,"VoidBoolSignal");
+    PySignal<void(int)>(m, "VoidIntSignal");
+    PySignal<void(double)>(m, "VoidDoubleSignal");
+    PySignal<bool(double)>(m, "BoolDoubleSignal");
+    PySignal<void(double,bool)>(m, "VoidDoubleBoolSignal");
+    PySignal<double(double,bool)>(m, "DoubleDoubleBoolSignal");
+    PySignal<void(const std::string&)>(m, "VoidStringSignal");
 
     py::class_<Connection>(m, "Connection")
         .def(py::init<>())
