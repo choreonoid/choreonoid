@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "SmokeDevice.h"
 #include "SceneSmoke.h"
 #include "SceneEffectDeviceTypeRegistration.h"

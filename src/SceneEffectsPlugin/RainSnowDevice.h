@@ -1,17 +1,13 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_SCENE_EFFECTS_PLUGIN_RAIN_SNOW_DEVICE_H
 #define CNOID_SCENE_EFFECTS_PLUGIN_RAIN_SNOW_DEVICE_H
 
 #include "ParticleSystem.h"
 #include <cnoid/Device>
+#include "exportdecl.h"
 
 namespace cnoid {
 
-class RainSnowDevice : public Device
+class CNOID_EXPORT RainSnowDevice : public Device
 {
 public:
     void copyStateFrom(const RainSnowDevice& other);

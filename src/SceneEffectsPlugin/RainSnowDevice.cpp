@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "RainSnowDevice.h"
 #include "SceneRainSnow.h"
 #include "SceneEffectDeviceTypeRegistration.h"

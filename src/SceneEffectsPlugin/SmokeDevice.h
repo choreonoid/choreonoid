@@ -1,17 +1,13 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_SCENE_EFFECTS_PLUGIN_SMOKE_DEVICE_H
 #define CNOID_SCENE_EFFECTS_PLUGIN_SMOKE_DEVICE_H
 
 #include "ParticleSystem.h"
 #include <cnoid/Device>
+#include "exportdecl.h"
 
 namespace cnoid {
 
-class SmokeDevice : public Device
+class CNOID_EXPORT SmokeDevice : public Device
 {
 public:
     SmokeDevice();
