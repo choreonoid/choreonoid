@@ -2,6 +2,7 @@
 #define CNOID_BODY_PLUGIN_GL_VISION_SIMULATOR_ITEM_H
 
 #include "SubSimulatorItem.h"
+#include <cnoid/EigenTypes>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -25,8 +26,10 @@ public:
     void setThreadMode(int mode);
     void setBestEffortMode(bool on);
     void setRangeSensorPrecisionRatio(double r);
+    void setBackgroundColor(const Vector3f& c);
     void setAllSceneObjectsEnabled(bool on);
     void setHeadLightEnabled(bool on);
+    void setWorldLightEnabled(bool on);
     void setAdditionalLightsEnabled(bool on);
 
     virtual bool initializeSimulation(SimulatorItem* simulatorItem) override;

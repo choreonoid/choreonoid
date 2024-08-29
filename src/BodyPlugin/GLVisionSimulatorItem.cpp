@@ -23,6 +23,7 @@
 #include <cnoid/StringUtil>
 #include <cnoid/Tokenizer>
 #include <cnoid/Format>
+#include <cnoid/EigenArchive>
 #include <QThread>
 #include <QApplication>
 #include <QOpenGLContext>
@@ -263,9 +264,11 @@ public:
     vector<string> sensorNames;
     string sensorNameListString;
     Selection threadMode;
+    Vector3f backgroundColor;
     bool isBestEffortModeProperty;
     bool shootAllSceneObjects;
     bool isHeadLightEnabled;
+    bool isWorldLightEnabled;
     bool areAdditionalLightsEnabled;
     double maxFrameRate;
     double maxLatency;
@@ -317,16 +320,20 @@ GLVisionSimulatorItem::Impl::Impl(GLVisionSimulatorItem* self)
       threadMode(GLVisionSimulatorItem::N_THREAD_MODES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     simulatorItem = nullptr;
-    maxFrameRate = 1000.0;
-    maxLatency = 1.0;
+
+    isVisionDataRecordingEnabled = false;
+
     rangeSensorPrecisionRatio = 2.0;
     depthError = 0.0;
 
-    isVisionDataRecordingEnabled = false;
+    backgroundColor << 0.0f, 0.0f, 0.0f;
     isBestEffortModeProperty = true;
-    isHeadLightEnabled = true;
-    areAdditionalLightsEnabled = true;
     shootAllSceneObjects = true;
+    isHeadLightEnabled = true;
+    isWorldLightEnabled = true;
+    areAdditionalLightsEnabled = true;
+    maxFrameRate = 1000.0;
+    maxLatency = 1.0;
 
     threadMode.setSymbol(GLVisionSimulatorItem::SINGLE_THREAD_MODE, N_("Single"));
     threadMode.setSymbol(GLVisionSimulatorItem::SENSOR_THREAD_MODE, N_("Sensor"));
@@ -353,14 +360,18 @@ GLVisionSimulatorItem::Impl::Impl(GLVisionSimulatorItem* self, const Impl& org)
     simulatorItem = nullptr;
 
     isVisionDataRecordingEnabled = org.isVisionDataRecordingEnabled;
+    
     rangeSensorPrecisionRatio = org.rangeSensorPrecisionRatio;
     depthError = org.depthError;
+    
     bodyNameListString = getNameListString(bodyNames);
     sensorNameListString = getNameListString(sensorNames);
     threadMode = org.threadMode;
+    backgroundColor = org.backgroundColor;
     isBestEffortModeProperty = org.isBestEffortModeProperty;
     shootAllSceneObjects = org.shootAllSceneObjects;
     isHeadLightEnabled = org.isHeadLightEnabled;
+    isWorldLightEnabled = org.isWorldLightEnabled;
     areAdditionalLightsEnabled = org.areAdditionalLightsEnabled;
     maxFrameRate = org.maxFrameRate;
     maxLatency = org.maxLatency;
@@ -445,6 +456,12 @@ void GLVisionSimulatorItem::setRangeSensorPrecisionRatio(double r)
 }
 
 
+void GLVisionSimulatorItem::setBackgroundColor(const Vector3f& c)
+{
+    impl->backgroundColor = c;
+}
+
+
 void GLVisionSimulatorItem::setAllSceneObjectsEnabled(bool on)
 {
     impl->setProperty(impl->shootAllSceneObjects, on);
@@ -454,6 +471,12 @@ void GLVisionSimulatorItem::setAllSceneObjectsEnabled(bool on)
 void GLVisionSimulatorItem::setHeadLightEnabled(bool on)
 {
     impl->setProperty(impl->isHeadLightEnabled, on);
+}
+
+
+void GLVisionSimulatorItem::setWorldLightEnabled(bool on)
+{
+    impl->setProperty(impl->isWorldLightEnabled, on);
 }
 
 
@@ -1002,11 +1025,13 @@ bool SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
     flagToUpdatePreprocessedNodeTree = true;
     renderer->extractPreprocessedNodes();
     renderer->setCurrentCamera(sceneCamera);
+    renderer->setBackgroundColor(simImpl->backgroundColor);
 
     if(rangeSensorForRendering){
         renderer->setLightingMode(GLSceneRenderer::NoLighting);
     } else {
-        if(screenId != FRONT_SCREEN){
+        renderer->headLight()->on(simImpl->isHeadLightEnabled);
+        if(simImpl->isHeadLightEnabled && screenId != FRONT_SCREEN){
             SgDirectionalLight* headLight = dynamic_cast<SgDirectionalLight*>(renderer->headLight());
             if(headLight){
                 switch(screenId){
@@ -1028,7 +1053,8 @@ bool SensorScreenRenderer::initializeGL(SgCamera* sceneCamera)
                 }
             }
         }
-        renderer->headLight()->on(simImpl->isHeadLightEnabled);
+        
+        renderer->worldLight()->on(simImpl->isWorldLightEnabled);
         renderer->enableAdditionalLights(simImpl->areAdditionalLightsEnabled);
     }
 
@@ -1898,7 +1924,19 @@ void GLVisionSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProper
     putProperty(_("Precision ratio of range sensors"),
                 rangeSensorPrecisionRatio, changeProperty(rangeSensorPrecisionRatio));
     putProperty.reset()(_("Depth error"), depthError, changeProperty(depthError));
+
+    putProperty(_("Background color"), str(backgroundColor),
+                [this](const string& value){
+                    Vector3f c;
+                    if(toVector3(value, c)){
+                        backgroundColor = c;
+                        return true;
+                    }
+                    return false;
+                });
+                        
     putProperty(_("Head light"), isHeadLightEnabled, changeProperty(isHeadLightEnabled));
+    putProperty(_("World light"), isWorldLightEnabled, changeProperty(isWorldLightEnabled));
     putProperty(_("Additional lights"), areAdditionalLightsEnabled, changeProperty(areAdditionalLightsEnabled));
     putProperty(_("Anti-aliasing"), isAntiAliasingEnabled, changeProperty(isAntiAliasingEnabled));
 }
@@ -1923,7 +1961,9 @@ bool GLVisionSimulatorItem::Impl::store(Archive& archive)
     archive.write("all_scene_objects", shootAllSceneObjects);
     archive.write("range_sensor_precision_ratio", rangeSensorPrecisionRatio);
     archive.write("depth_error", depthError);
+    write(archive, "background_color", backgroundColor);
     archive.write("enable_head_light", isHeadLightEnabled);    
+    archive.write("enable_world_light", isWorldLightEnabled);    
     archive.write("enable_additional_lights", areAdditionalLightsEnabled);
     archive.write("antialiasing", isAntiAliasingEnabled);
     return true;
@@ -1951,7 +1991,9 @@ bool GLVisionSimulatorItem::Impl::restore(const Archive& archive)
     archive.read({ "all_scene_objects", "allSceneObjects" }, shootAllSceneObjects);
     archive.read({ "range_sensor_precision_ratio", "rangeSensorPrecisionRatio" }, rangeSensorPrecisionRatio);
     archive.read({ "depth_error", "depthError" }, depthError);
+    read(archive, "background_color", backgroundColor);
     archive.read({ "enable_head_light", "enableHeadLight" }, isHeadLightEnabled);
+    archive.read("enable_world_light", isWorldLightEnabled);
     archive.read({ "enable_additional_lights", "enableAdditionalLights" }, areAdditionalLightsEnabled);
     archive.read({ "antialiasing", "antiAliasing" }, isAntiAliasingEnabled);
 
