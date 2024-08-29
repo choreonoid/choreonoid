@@ -86,7 +86,7 @@ GLSceneRenderer::Impl::Impl(GLSceneRenderer* self, SgGroup* sceneRoot)
     vp.h = invaid;
     self->aspectRatio_ = 1.0f;
     self->devicePixelRatio_ = 1.0f;
-    backgroundColor << 0.1f, 0.1f, 0.3f; // dark blue
+    backgroundColor << 0.0f, 0.0f, 0.0f; // black
     defaultColor << 1.0f, 1.0f, 1.0f;
 
     os_ = &nullout();
