@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-24 12:36+0900\n"
+"POT-Creation-Date: 2024-08-29 12:03+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -720,9 +720,6 @@ msgstr "{0}カメラ"
 msgid "BodySyncCameraItem"
 msgstr "ボディ同期カメラ"
 
-msgid "Camera configuration"
-msgstr "カメラの設定"
-
 msgid "Target link"
 msgstr "対象リンク"
 
@@ -828,8 +825,14 @@ msgstr "レンジセンサ精度係数"
 msgid "Depth error"
 msgstr "深度エラー"
 
+msgid "Background color"
+msgstr "背景色"
+
 msgid "Head light"
 msgstr "ヘッドライト"
+
+msgid "World light"
+msgstr "ワールドライト"
 
 msgid "Additional lights"
 msgstr "追加のライト"
