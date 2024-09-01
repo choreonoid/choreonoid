@@ -681,6 +681,7 @@ bool URDFBodyLoader::Impl::readGeometryTag(const xml_node& geometryNode, ShapeDe
         description.length = geometryNode.child(CYLINDER).attribute(LENGTH).as_double();
         
     } else if (!geometryNode.child(SPHERE).empty()) {
+        description.shapeType = ShapeDescription::Sphere;
         if (geometryNode.child(SPHERE).attribute(RADIUS).empty()) {
             os() << "Error: sphere radius is not defined";
             return false;
