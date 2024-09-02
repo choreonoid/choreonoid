@@ -403,15 +403,7 @@ bool BodyItem::Impl::doAssign(const Item* srcItem)
             setCurrentBaseLink(baseLink, false, false);
         }
     }
-    // copy the current kinematic state
     Body* srcBody = srcBodyItem->body();
-    for(int i=0; i < srcBody->numLinks(); ++i){
-        Link* srcLink = srcBody->link(i);
-        Link* link = body->link(srcLink->name());
-        if(link){
-            link->q() = srcLink->q();
-        }
-    }
     if(baseLink){
         baseLink->p() = srcBaseLink->p();
         baseLink->R() = srcBaseLink->R();
@@ -420,9 +412,20 @@ bool BodyItem::Impl::doAssign(const Item* srcItem)
         body->rootLink()->R() = srcBody->rootLink()->R();
     }
     
-    initialState = srcImpl->initialState;
+    // copy the current kinematic state
+    int numSrcLinks = srcBody->numLinks();
+    for(int i=0; i < numSrcLinks; ++i){
+        Link* srcLink = srcBody->link(i);
+        Link* link = body->link(srcLink->name());
+        if(link){
+            link->q() = srcLink->q();
+        }
+    }
+
+    self->calcForwardKinematics();
+    self->storeKinematicState(initialState);
     
-    self->notifyKinematicStateChange(true);
+    self->notifyKinematicStateChange();
 
     return true;
 }
