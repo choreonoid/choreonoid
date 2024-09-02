@@ -1,0 +1,45 @@
+format: ChoreonoidBody
+formatVersion: 2.0
+name: FencedFloor
+links:
+  -
+    name: Floor
+    jointType: fixed
+    material: Ground
+    elements:
+      Shape:
+        translation: [ 0, 0, -0.1 ]
+        geometry: { type: Box, size: [ 10.0, 10.0, 0.2 ] }
+        appearance: { material: { diffuseColor: [ 0, 0, 1 ] }}
+  -
+    name: Fence1
+    parent: Floor
+    translation: [ 4.95, 0, 0.2 ]
+    jointType: fixed
+    elements:
+      Shape: &Fence1
+        geometry: { type: Box, size: [ 0.1, 10.0, 0.4 ] }
+        appearance: &App1 { material: { diffuseColor: [ 0.7, 0.7, 0.7 ] }}
+  -
+    name: Fence2
+    parent: Floor
+    translation: [ -4.95, 0, 0.2 ]
+    jointType: fixed
+    elements:
+      Shape: *Fence1
+  -
+    name: Fence3
+    parent: Floor
+    translation: [ 0, 4.95, 0.2 ]
+    jointType: fixed
+    elements:
+      Shape: &Fence2
+        geometry: { type: Box, size: [ 9.8, 0.1, 0.4 ] }
+        appearance: *App1
+  -
+    name: Fence4
+    parent: Floor
+    translation: [ 0, -4.95, 0.2 ]
+    jointType: fixed
+    elements:
+      Shape: *Fence2
