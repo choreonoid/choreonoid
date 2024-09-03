@@ -655,7 +655,11 @@ Item* Item::localRootItem() const
 
 bool Item::addChildItem(Item* item, bool isManualOperation)
 {
-    return impl->doInsertChildItem(item, nullptr, isManualOperation);
+    if(item->parentItem() == this){
+        return true; // Already inserted
+    } else {
+        return impl->doInsertChildItem(item, nullptr, isManualOperation);
+    }
 }
 
 
@@ -674,7 +678,12 @@ bool Item::insertChildItem(Item* item, Item* nextItem, bool isManualOperation)
 bool Item::addSubItem(Item* item)
 {
     item->setAttribute(SubItem);
-    return impl->doInsertChildItem(item, nullptr, false);
+
+    if(item->parentItem() == this){
+        return true; // Already inserted
+    } else {
+        return impl->doInsertChildItem(item, nullptr, false);
+    }
 }
 
 
