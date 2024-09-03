@@ -1235,7 +1235,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self)
     recordingMode.setSymbol(FullRecording, N_("full"));
     recordingMode.setSymbol(TailRecording, N_("tail"));
     recordingMode.setSymbol(NoRecording, N_("off"));
-    recordingMode.select(FullRecording);
+    recordingMode.select(TailRecording);
 
     timeRangeMode.setSymbol(UnlimitedTime, N_("Unlimited"));
     timeRangeMode.setSymbol(SpecifiedTime, N_("Specified time"));
@@ -1247,7 +1247,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self)
     realtimeSyncMode.setSymbol(ConservativeRealtimeSync, N_("On (Conservative)"));
     realtimeSyncMode.select(CompensatoryRealtimeSync);
 
-    timeLength = 180.0; // 3 min.
+    timeLength = 300.0; // 5 min.
     useControllerThreadsProperty = true;
     isActiveControlTimeRangeMode = false;
     isAllLinkPositionOutputMode = true;
