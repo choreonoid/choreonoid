@@ -141,8 +141,12 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
         clearSelection->setEnabled(false);
 
     } else {
-        rename->sigTriggered().connect(
-            [this, item](){ itemTreeWidget->editItemName(item); });
+        if(item->isSubItem() || item->hasAttribute(Item::Attached)){
+            rename->setEnabled(false);
+        } else {
+            rename->sigTriggered().connect(
+                [this, item](){ itemTreeWidget->editItemName(item); });
+        }
             
         if(itemTreeWidget->checkCuttable(item)){
             cut->sigTriggered().connect(
