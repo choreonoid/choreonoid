@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_PLUGIN_SENSOR_VISUALIZER_ITEM_H
 #define CNOID_BODY_PLUGIN_SENSOR_VISUALIZER_ITEM_H
 
