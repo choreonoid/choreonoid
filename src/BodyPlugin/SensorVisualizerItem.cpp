@@ -408,7 +408,9 @@ void SensorVisualizerItem::Impl::addSensorVisualizerItem(Body* body)
         }
         if(item->bodyItem != bodyItem){
             item->setBodyItem(bodyItem);
-            self->addSubItem(item);
+            if(item->parentItem() != self){
+                self->addSubItem(item);
+            }
         }
     }
 }
@@ -432,7 +434,9 @@ void SensorVisualizerItem::Impl::addVisionSensorVisualizerItem(Body* body)
         }
         if(item->bodyItem != bodyItem){
             item->setBodyItem(bodyItem, sensor);
-            self->addSubItem(item);
+            if(item->parentItem() != self){
+                self->addSubItem(item);
+            }
         }
     }
 }
