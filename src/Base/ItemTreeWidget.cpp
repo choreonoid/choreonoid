@@ -115,7 +115,7 @@ public:
     ItwItem* findNextItwItemInSubTree(Item* item, bool doTraverse);
     bool isItemUnderTreeWidgetInternalOperation(Item* item);
     void onSubTreeAddedOrMoved(Item* item);
-    void onSubTreeRemoved(Item* item);
+    void onSubTreeRemoved(Item* item, bool isMoving);
     void onItemAssigned(Item* assigned, const Item* srcItem);
 
     void getItemsIter(ItwItem* itwItem, ItemList<>& itemList);
@@ -438,7 +438,7 @@ void ItemTreeWidget::Impl::initialize()
 
     projectRootItemConnections.add(
         projectRootItem->sigSubTreeRemoved().connect(
-            [this](Item* item, bool){ onSubTreeRemoved(item); }));
+            [this](Item* item, bool isMoving){ onSubTreeRemoved(item, isMoving); }));
 
     projectRootItemConnections.add(
         projectRootItem->sigItemAssigned().connect(
@@ -937,10 +937,19 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
 {
     auto itwItem = findItwItem(item);
 
-    if(itwItem){
-        parentTwItem = itwItem;
+    bool doExpand = false;
 
-    } else {
+    if(itwItem){
+        if(itwItem->parent()){
+            parentTwItem = itwItem;
+        } else { // Item is moving
+            doExpand = itwItem->isExpandedBeforeRemoving;
+            delete itwItem;
+            itwItem = nullptr;
+        }
+    }
+
+    if(!itwItem){
         if(!findOrCreateLocalRootItem(false)){
             return;
         }
@@ -984,6 +993,10 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
         for(Item* child = item->childItem(); child; child = child->nextItem()){
             insertItem(parentTwItem, child, isTopLevelItemCandidate);
         }
+    }
+
+    if(itwItem && doExpand){
+        itwItem->setExpanded(true);
     }
 }
 
@@ -1074,7 +1087,7 @@ void ItemTreeWidget::Impl::onSubTreeAddedOrMoved(Item* item)
 }
 
 
-void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item)
+void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item, bool isMoving)
 {
     if(isItemUnderTreeWidgetInternalOperation(item) || !localRootItem){
         return;
@@ -1083,15 +1096,18 @@ void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item)
     isChangingTreeWidgetTreeStructure++;
 
     if(auto itwItem = findItwItem(item)){
+        itwItem->isExpandedBeforeRemoving = itwItem->isExpanded();
         if(auto parentTwItem = itwItem->parent()){
             parentTwItem->removeChild(itwItem);
         } else {
             takeTopLevelItem(indexOfTopLevelItem(itwItem));
         }
-        delete itwItem;
+        if(!isMoving){
+            delete itwItem;
+        }
     } else {
         for(auto child = item->childItem(); child; child = child->nextItem()){
-            onSubTreeRemoved(child);
+            onSubTreeRemoved(child, isMoving);
         }
     }
 
