@@ -784,6 +784,7 @@ void JointIndicator::initialize(Link* joint)
         spin.setDecimals(0);
         spin.setRange(0.0, 0.0);
         spin.setEnabled(false);
+        dial.setValue(0);
         dial.setRange(0, 0);
         dial.setWrapping(false);
         dial.setNotchesVisible(false);
