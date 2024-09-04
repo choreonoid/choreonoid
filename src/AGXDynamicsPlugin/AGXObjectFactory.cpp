@@ -49,7 +49,11 @@ agxSDK::SimulationRef AGXObjectFactory::createSimulation(const AGXSimulationDesc
     sim->getSpace()->setContactReductionThreshold(desc.contactReductionThreshhold);
     sim->getDynamicsSystem()->setEnableContactWarmstarting(desc.enableContactWarmstarting);
     sim->getMergeSplitHandler()->setEnable(desc.enableAMOR);
+
+#if AGX_MAJOR_VERSION < 38    
     sim->getDynamicsSystem()->getAutoSleep()->setEnable(desc.enableAutoSleep);
+#endif
+
     return sim;
 }
 
@@ -107,7 +111,11 @@ LinkRigidBodyRef AGXObjectFactory::createLinkRigidBody(const AGXRigidBodyDesc& d
     rigid->setPosition(desc.p);
     rigid->setRotation(desc.R);
     rigid->setName(desc.name);
+
+#if AGX_MAJOR_VERSION < 38    
     rigid->getAutoSleepProperties().setEnable(desc.enableAutoSleep);
+#endif
+
     return rigid;
 }
 

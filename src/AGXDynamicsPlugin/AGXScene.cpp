@@ -132,12 +132,18 @@ void AGXScene::setGravity(const agx::Vec3 & g)
 
 bool AGXScene::getEnableAutoSleep() const
 {
+#if AGX_MAJOR_VERSION >= 38
+    return false;
+#else
     return getSimulation()->getDynamicsSystem()->getAutoSleep()->getEnable();
+#endif
 }
 
 void AGXScene::setEnableAutoSleep(const bool & bOn)
 {
+#if AGX_MAJOR_VERSION < 38
     getSimulation()->getDynamicsSystem()->getAutoSleep()->setEnable(bOn);
+#endif
 }
 
 bool AGXScene::saveSceneToAGXFile()
