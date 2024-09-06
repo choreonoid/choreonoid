@@ -610,7 +610,7 @@ void LocationView::Impl::setCurrentLocationCategory(int categoryIndex)
     bool blocked = locked;
     if(!blocked){
         for(auto& info : locationInfos){
-            if(info->location->isDoingContinuousUpdate()){
+            if(info->location->isContinuousUpdateState()){
                 blocked = true;
                 break;
             }
@@ -762,7 +762,7 @@ void LocationView::Impl::updateBaseCoordinateSystems()
 
             Item* targetItem = locationInfo->item;
             if(!targetItem){
-                targetItem = location->getCorrespondingItem();
+                targetItem = location->locatableItem();
             }
             
             for(int i=0; i < n; ++i){

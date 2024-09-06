@@ -114,12 +114,11 @@ public:
 
     TagGroupLocationProxy(PositionTagGroupItem::Impl* impl);
     virtual std::string getName() const override;
-    virtual Item* getCorrespondingItem() override;
     virtual Isometry3 getLocation() const override;
     virtual bool setLocation(const Isometry3& T) override;
     virtual void finishLocationEditing() override;
     virtual SignalProxy<void()> sigLocationChanged() override;
-    virtual LocationProxyPtr getParentLocationProxy() const override;
+    virtual LocationProxyPtr getParentLocationProxy() override;
 };
 
 typedef ref_ptr<TagGroupLocationProxy> TagGroupLocationProxyPtr;
@@ -141,7 +140,7 @@ public:
     virtual bool setLocation(const Isometry3& T) override;
     virtual void finishLocationEditing() override;
     virtual SignalProxy<void()> sigLocationChanged() override;
-    virtual LocationProxyPtr getParentLocationProxy() const override;
+    virtual LocationProxyPtr getParentLocationProxy() override;
 };
 
 typedef ref_ptr<TagLocationProxy> TagLocationProxyPtr;
@@ -156,7 +155,7 @@ public:
     virtual std::string getName() const override;
     virtual Isometry3 getLocation() const override;
     virtual SignalProxy<void()> sigLocationChanged() override;
-    virtual LocationProxyPtr getParentLocationProxy() const override;
+    virtual LocationProxyPtr getParentLocationProxy() override;
 };
 
 typedef ref_ptr<TagParentLocationProxy> TagParentLocationProxyPtr;
@@ -1461,22 +1460,16 @@ bool SceneTagGroup::onContextMenuRequest(SceneWidgetEvent* event)
 
 
 TagGroupLocationProxy::TagGroupLocationProxy(PositionTagGroupItem::Impl* impl)
-    : LocationProxy(ParentRelativeLocation),
+    : LocationProxy(impl->self, ParentRelativeLocation),
       impl(impl)
 {
-
+    setNameDependencyOnItemName();
 }
 
 
 std::string TagGroupLocationProxy::getName() const
 {
     return formatR(_("{0}: Origin"), impl->self->displayName());
-}
-
-
-Item* TagGroupLocationProxy::getCorrespondingItem()
-{
-    return impl->self;
 }
 
 
@@ -1505,17 +1498,19 @@ SignalProxy<void()> TagGroupLocationProxy::sigLocationChanged()
 }
 
 
-LocationProxyPtr TagGroupLocationProxy::getParentLocationProxy() const
+LocationProxyPtr TagGroupLocationProxy::getParentLocationProxy()
 {
     return impl->groupParentLocation;
 }
 
 
 TagLocationProxy::TagLocationProxy(PositionTagGroupItem::Impl* impl, int tagIndex)
-    : LocationProxy(ParentRelativeLocation),
+    : LocationProxy(impl->self, ParentRelativeLocation),
       impl(impl),
       tagIndex(tagIndex)
 {
+    setNameDependencyOnItemName();
+    
     connection.reset(
         impl->tagGroup->sigTagPositionUpdated().connect(
             [&](int index){
@@ -1579,23 +1574,23 @@ SignalProxy<void()> TagLocationProxy::sigLocationChanged()
 }
 
 
-LocationProxyPtr TagLocationProxy::getParentLocationProxy() const
+LocationProxyPtr TagLocationProxy::getParentLocationProxy()
 {
     return impl->tagParentLocation;
 }
 
 
 TagParentLocationProxy::TagParentLocationProxy(PositionTagGroupItem::Impl* impl)
-    : LocationProxy(ParentRelativeLocation),
+    : LocationProxy(impl->self, ParentRelativeLocation),
       impl(impl)
 {
-
+    setNameDependencyOnItemName();
 }
 
 
 std::string TagParentLocationProxy::getName() const
 {
-    return formatR(_("{0}: Origin"), impl->self->name());
+    return formatR(_("{0}: Origin"), impl->self->displayName());
 }
 
 
@@ -1611,7 +1606,7 @@ SignalProxy<void()> TagParentLocationProxy::sigLocationChanged()
 }
 
 
-LocationProxyPtr TagParentLocationProxy::getParentLocationProxy() const
+LocationProxyPtr TagParentLocationProxy::getParentLocationProxy()
 {
     if(impl->groupParentLocation){
         return impl->groupParentLocation;

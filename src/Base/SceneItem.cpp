@@ -298,10 +298,10 @@ LocationProxyPtr SceneItem::getLocationProxy()
 
 
 SceneItem::Location::Location(SceneItem* item)
-    : LocationProxy(GlobalLocation),
+    : LocationProxy(item, GlobalLocation),
       item(item)
 {
-
+    setNameDependencyOnItemName();
 }
 
 

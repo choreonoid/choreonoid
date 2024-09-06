@@ -40,8 +40,7 @@ public:
     DeviceLocation(DeviceOverwriteItem::Impl* impl);
     virtual Isometry3 getLocation() const override;
     virtual bool setLocation(const Isometry3& T) override;
-    virtual Item* getCorrespondingItem() override;
-    virtual LocationProxyPtr getParentLocationProxy() const override;
+    virtual LocationProxyPtr getParentLocationProxy() override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
 
@@ -462,7 +461,7 @@ LocationProxyPtr DeviceOverwriteItem::getLocationProxy()
 
 
 DeviceLocation::DeviceLocation(DeviceOverwriteItem::Impl* impl)
-    : LocationProxy(OffsetLocation),
+    : LocationProxy(impl->self, OffsetLocation),
       impl(impl)
 {
     setLocked(true);
@@ -489,13 +488,7 @@ bool DeviceLocation::setLocation(const Isometry3& T)
 }
 
 
-Item* DeviceLocation::getCorrespondingItem()
-{
-    return impl->self;
-}
-
-
-LocationProxyPtr DeviceLocation::getParentLocationProxy() const
+LocationProxyPtr DeviceLocation::getParentLocationProxy()
 {
     if(!impl->linkLocation){
         if(impl->device){

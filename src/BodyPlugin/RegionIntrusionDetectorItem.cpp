@@ -24,7 +24,6 @@ public:
     Signal<void()> sigLocationChanged_;
 
     RegionLocation(RegionIntrusionDetectorItem::Impl* impl);
-    virtual Item* getCorrespondingItem() override;
     virtual Isometry3 getLocation() const override;
     virtual bool setLocation(const Isometry3& T) override;
     virtual SignalProxy<void()> sigLocationChanged() override;
@@ -261,16 +260,10 @@ LocationProxyPtr RegionIntrusionDetectorItem::getLocationProxy()
 
 
 RegionLocation::RegionLocation(RegionIntrusionDetectorItem::Impl* impl)
-    : LocationProxy(GlobalLocation),
+    : LocationProxy(impl->self, GlobalLocation),
       impl(impl)
 {
 
-}
-
-
-Item* RegionLocation::getCorrespondingItem()
-{
-    return impl->self;
 }
 
 

@@ -55,28 +55,23 @@ public:
     virtual Isometry3 getLocation() const override;
     virtual bool isLocked() const override;
     virtual void setLocked(bool on) override;
-    virtual bool isDoingContinuousUpdate() const override;
+    virtual bool isContinuousUpdateState() const override;
     virtual bool setLocation(const Isometry3& T) override;
     virtual void finishLocationEditing() override;
-    virtual Item* getCorrespondingItem() override;
-    virtual LocationProxyPtr getParentLocationProxy() const override;
+    virtual LocationProxyPtr getParentLocationProxy() override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
     
 class LinkLocation : public LocationProxy
 {
 public:
-    weak_ref_ptr<BodyItem> refBodyItem;
     weak_ref_ptr<Link> refLink;
 
-    LinkLocation();
     LinkLocation(BodyItem* bodyItem, Link* link);
-    void setTarget(BodyItem* bodyItem, Link* link);
     virtual std::string getName() const override;
     virtual Isometry3 getLocation() const override;
     virtual bool isLocked() const override;
-    virtual Item* getCorrespondingItem() override;
-    virtual LocationProxyPtr getParentLocationProxy() const override;
+    virtual LocationProxyPtr getParentLocationProxy() override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
 
@@ -1168,7 +1163,7 @@ LocationProxyPtr BodyItem::createLinkLocationProxy(Link* link)
 
 
 BodyLocation::BodyLocation(BodyItem::Impl* impl)
-    : LocationProxy(impl->attachmentToParent ? OffsetLocation : GlobalLocation),
+    : LocationProxy(impl->self, impl->attachmentToParent ? OffsetLocation : GlobalLocation),
       impl(impl)
 {
 
@@ -1214,7 +1209,7 @@ void BodyLocation::setLocked(bool on)
 }
 
 
-bool BodyLocation::isDoingContinuousUpdate() const
+bool BodyLocation::isContinuousUpdateState() const
 {
     return impl->self->isDoingContinuousKinematicUpdate();
 }
@@ -1246,24 +1241,22 @@ void BodyLocation::finishLocationEditing()
 }
 
 
-Item* BodyLocation::getCorrespondingItem()
-{
-    return impl->self;
-}
-
-
-LocationProxyPtr BodyLocation::getParentLocationProxy() const
+LocationProxyPtr BodyLocation::getParentLocationProxy()
 {
     if(impl->parentBodyItem){
-        if(impl->attachmentToParent){
-            if(!impl->parentLinkLocation){
-                impl->parentLinkLocation = new LinkLocation;
-            }
-            auto parentLink = impl->body->parentBodyLink();
-            impl->parentLinkLocation->setTarget(impl->parentBodyItem, parentLink);
-            return impl->parentLinkLocation;
-        } else {
+        if(!impl->attachmentToParent){
             return impl->parentBodyItem->getLocationProxy();
+        } else {
+            auto parentLink = impl->body->parentBodyLink();
+            if(impl->parentLinkLocation){
+                if(impl->parentLinkLocation->refLink.lock() != parentLink){
+                    impl->parentLinkLocation.reset();
+                }
+            }
+            if(!impl->parentLinkLocation){
+                impl->parentLinkLocation = new LinkLocation(impl->parentBodyItem, parentLink);
+            }
+            return impl->parentLinkLocation;
         }
     }
     return nullptr;
@@ -1276,26 +1269,11 @@ SignalProxy<void()> BodyLocation::sigLocationChanged()
 }
 
 
-LinkLocation::LinkLocation()
-    : LocationProxy(GlobalLocation)
-{
-
-}
-
-
 LinkLocation::LinkLocation(BodyItem* bodyItem, Link* link)
-    : LocationProxy(GlobalLocation),
-      refBodyItem(bodyItem),
+    : LocationProxy(bodyItem, GlobalLocation),
       refLink(link)
 {
-
-}
-
-
-void LinkLocation::setTarget(BodyItem* bodyItem, Link* link)
-{
-    refBodyItem = bodyItem;
-    refLink = link;
+    setNameDependencyOnItemName();
 }
 
 
@@ -1323,16 +1301,10 @@ bool LinkLocation::isLocked() const
 }
 
 
-Item* LinkLocation::getCorrespondingItem()
+LocationProxyPtr LinkLocation::getParentLocationProxy()
 {
-    return refBodyItem.lock();
-}
-
-
-LocationProxyPtr LinkLocation::getParentLocationProxy() const
-{
-    if(auto body = refBodyItem.lock()){
-        body->getLocationProxy();
+    if(auto bodyItem = static_cast<BodyItem*>(locatableItem())){
+        bodyItem->getLocationProxy();
     }
     return nullptr;
 }
@@ -1340,7 +1312,7 @@ LocationProxyPtr LinkLocation::getParentLocationProxy() const
 
 SignalProxy<void()> LinkLocation::sigLocationChanged()
 {
-    if(auto bodyItem = refBodyItem.lock()){
+    if(auto bodyItem = static_cast<BodyItem*>(locatableItem())){
         return bodyItem->sigKinematicStateChanged();
     } else {
         static Signal<void()> dummySignal;

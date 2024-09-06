@@ -44,8 +44,7 @@ public:
     virtual std::string getName() const override;
     virtual Isometry3 getLocation() const override;
     virtual bool setLocation(const Isometry3& T) override;
-    virtual Item* getCorrespondingItem() override;
-    virtual LocationProxyPtr getParentLocationProxy() const override;
+    virtual LocationProxyPtr getParentLocationProxy() override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
 
@@ -1390,10 +1389,11 @@ SgPosTransform* LinkOverwriteItem::Impl::extractOrInsertOffsetTransform(vector<S
 
 
 OffsetLocation::OffsetLocation(LinkOverwriteItem::Impl* impl)
-    : LocationProxy(LocationProxy::OffsetLocation),
+    : LocationProxy(impl->self, LocationProxy::OffsetLocation),
       impl(impl)
 {
     setLocked(true);
+    setNameDependencyOnItemName();
 }
 
 
@@ -1451,13 +1451,7 @@ bool OffsetLocation::setLocation(const Isometry3& T)
 }
 
 
-Item* OffsetLocation::getCorrespondingItem()
-{
-    return impl->self;
-}
-
-
-LocationProxyPtr OffsetLocation::getParentLocationProxy() const
+LocationProxyPtr OffsetLocation::getParentLocationProxy()
 {
     if(impl->targetLink){
         if(isLinkOffsetLocation()){

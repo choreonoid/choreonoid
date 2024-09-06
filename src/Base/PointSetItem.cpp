@@ -999,10 +999,10 @@ LocationProxyPtr PointSetItem::getLocationProxy()
 
 
 PointSetLocation::PointSetLocation(PointSetItem* item)
-    : LocationProxy(GlobalLocation),
+    : LocationProxy(item, GlobalLocation),
       item(item)
 {
-
+    setNameDependencyOnItemName();
 }
 
 

@@ -492,10 +492,10 @@ void SceneBone::setPosition(const Vector3f& p0, const Vector3f& p1)
 
 
 SkeletonMotionItem::Location::Location(SkeletonMotionItem* item)
-    : LocationProxy(GlobalLocation),
+    : LocationProxy(item, GlobalLocation),
       item(item)
 {
-
+    setNameDependencyOnItemName();
 }
 
 std::string SkeletonMotionItem::Location::getName() const

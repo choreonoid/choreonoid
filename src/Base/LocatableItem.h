@@ -15,6 +15,10 @@ typedef ref_ptr<LocationProxy> LocationProxyPtr;
 class CNOID_EXPORT LocationProxy : public Referenced
 {
 public:
+    virtual ~LocationProxy();
+
+    Item* locatableItem() { return locatableItemRef.lock(); }
+
     enum LocationType {
         InvalidLocation,
         GlobalLocation,
@@ -23,11 +27,9 @@ public:
         // this maeks the global coordinate unavailable in the user interface
         OffsetLocation
     };
-
-    virtual ~LocationProxy();
-
     LocationType locationType() const { return locationType_; }
     void setLocationType(LocationType type) { locationType_ = type; }
+    
     virtual std::string getName() const;
 
     /**
@@ -40,11 +42,10 @@ public:
     virtual Isometry3 getLocation() const = 0;
     virtual bool isLocked() const;
     virtual void setLocked(bool on);
-    virtual bool isDoingContinuousUpdate() const;
+    virtual bool isContinuousUpdateState() const;
     virtual bool setLocation(const Isometry3& T);
     virtual void finishLocationEditing();
-    virtual Item* getCorrespondingItem();
-    virtual LocationProxyPtr getParentLocationProxy() const;
+    virtual LocationProxyPtr getParentLocationProxy();
     virtual void expire();
     virtual SignalProxy<void()> sigLocationChanged() = 0;
     virtual SignalProxy<void()> sigAttributeChanged();
@@ -57,10 +58,18 @@ public:
 
     static SignalProxy<bool(LocationProxyPtr location), LogicalSum> sigEditRequest();
 
+    [[deprecated("Use isContinuousUpdateState.")]]
+    bool isDoingContinuousUpdate() const { return isContinuousUpdateState(); }
+    
+    [[deprecated("Use locatableItem.")]]
+    Item* getCorrespondingItem() { return locatableItem(); }
+
 protected:
-    LocationProxy(LocationType type);
+    LocationProxy(Item* locatableItem, LocationType type);
+    void setNameDependencyOnItemName();
 
 private:
+    weak_ref_ptr<Item> locatableItemRef;
     LocationType locationType_;
     bool isLocked_;
     Signal<void()> sigAttributeChanged_;

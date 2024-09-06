@@ -21,8 +21,7 @@ public:
 
     FrameLocation(CoordinateFrameItem::Impl* impl);
     void updateLocationType();
-    virtual Item* getCorrespondingItem() override;
-    virtual LocationProxyPtr getParentLocationProxy() const override;
+    virtual LocationProxyPtr getParentLocationProxy() override;
     virtual std::string getName() const override;
     virtual Isometry3 getLocation() const override;
     virtual bool isLocked() const override;
@@ -378,11 +377,10 @@ void CoordinateFrameItem::setLocationLocked(bool on)
 
 
 FrameLocation::FrameLocation(CoordinateFrameItem::Impl* impl)
-    : LocationProxy(InvalidLocation),
+    : LocationProxy(impl->self, InvalidLocation),
       impl(impl)
 {
-    impl->self->sigNameChanged().connect(
-        [&](const std::string& /* oldName */){ notifyAttributeChange(); });
+    setNameDependencyOnItemName();
 }
 
 
@@ -410,13 +408,7 @@ void FrameLocation::updateLocationType()
 }
 
 
-Item* FrameLocation::getCorrespondingItem()
-{
-    return impl->self;
-}
-
-
-LocationProxyPtr FrameLocation::getParentLocationProxy() const
+LocationProxyPtr FrameLocation::getParentLocationProxy()
 {
     if(impl->frame->isLocal()){
         if(impl->frameListItem){

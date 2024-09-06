@@ -11,8 +11,9 @@ Signal<bool(LocationProxyPtr location), LogicalSum> sigEditRequest;
 }
 
 
-LocationProxy::LocationProxy(LocationType type)
-    : locationType_(type)
+LocationProxy::LocationProxy(Item* locatableItem, LocationType type)
+    : locatableItemRef(locatableItem),
+      locationType_(type)
 {
     isLocked_ = false;
 }
@@ -24,13 +25,23 @@ LocationProxy::~LocationProxy()
 }
 
 
+void LocationProxy::setNameDependencyOnItemName()
+{
+    if(auto item = locatableItem()){
+        if(!itemNameConnection_.connected()){
+            itemNameConnection_ = item->sigNameChanged().connect(
+                [this](const std::string&){ notifyAttributeChange(); });
+        }
+    }
+}
+
+
 std::string LocationProxy::getName() const
 {
     auto self = const_cast<LocationProxy*>(this);
-    if(auto item = self->getCorrespondingItem()){
+    if(auto item = self->locatableItem()){
         if(!itemNameConnection_.connected()){
-            self->itemNameConnection_ = item->sigNameChanged().connect(
-                [self](const std::string&){ self->notifyAttributeChange(); });
+            self->setNameDependencyOnItemName();
         }
         return item->displayName();
     }
@@ -59,7 +70,7 @@ void LocationProxy::setLocked(bool on)
 }
 
 
-bool LocationProxy::isDoingContinuousUpdate() const
+bool LocationProxy::isContinuousUpdateState() const
 {
     return false;
 }
@@ -77,15 +88,9 @@ void LocationProxy::finishLocationEditing()
 }
 
 
-Item* LocationProxy::getCorrespondingItem()
+LocationProxyPtr LocationProxy::getParentLocationProxy()
 {
-    return nullptr;
-}
-
-
-LocationProxyPtr LocationProxy::getParentLocationProxy() const
-{
-    if(auto item = const_cast<LocationProxy*>(this)->getCorrespondingItem()){
+    if(auto item = locatableItem()){
         if(auto parentLocatableItem = item->findOwnerItem<LocatableItem>()){
             return parentLocatableItem->getLocationProxy();
         }
@@ -107,7 +112,7 @@ Isometry3 LocationProxy::getGlobalLocationOf(const Isometry3 T) const
         return T;
     case ParentRelativeLocation:
     case OffsetLocation:
-        if(auto parent = getParentLocationProxy()){
+        if(auto parent = const_cast<LocationProxy*>(this)->getParentLocationProxy()){
             return parent->getGlobalLocation() * T;
         } else {
             return T;
