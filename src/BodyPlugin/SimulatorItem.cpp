@@ -98,7 +98,8 @@ struct FunctionSet
 class ControllerInfo : public Referenced, public ControllerIO
 {
 public:
-    ControllerItemPtr controller;
+    ControllerItemPtr controllerItem;
+    vector<Item::ContinuousUpdateEntry> continuousUpdateEntries;
     SimulationBody::Impl* simBodyImpl;
     Body* body_;
     SimulatorItem::Impl* simImpl;
@@ -181,7 +182,7 @@ public:
     SimulationBody* self;
     BodyPtr body_;
     BodyItemPtr bodyItem;
-    Item::ContinuousUpdateEntry continuousUpdateEntry;
+    vector<Item::ContinuousUpdateEntry> continuousUpdateEntries;
 
     vector<ControllerInfoPtr> controllerInfos;
     SimulatorItem::Impl* simImpl;
@@ -242,6 +243,7 @@ public:
     vector<SimulationBody*> simBodiesWithBody;
     vector<SimulationBody*> activeSimBodies;
     vector<ControllerInfoPtr> loggedControllerInfos;
+    vector<Item::ContinuousUpdateEntry> continuousUpdateEntries;
 
     BodyItemToSimBodyMap simBodyMap;
 
@@ -505,35 +507,35 @@ SimulatorItem* SimulatorItem::findActiveSimulatorItemFor(Item* item)
 }
 
 
-ControllerInfo::ControllerInfo(ControllerItem* controller, SimulationBody::Impl* simBodyImpl)
-    : controller(controller),
+ControllerInfo::ControllerInfo(ControllerItem* controllerItem, SimulationBody::Impl* simBodyImpl)
+    : controllerItem(controllerItem),
       simBodyImpl(simBodyImpl),
       body_(simBodyImpl->body_),
       simImpl(simBodyImpl->simImpl),
       isLogEnabled_(false),
       isSimulationFromInitialState_(simImpl->isSimulationFromInitialState)
 {
-    if(controller){
+    if(controllerItem){
         // ControllerInfo cannot directly set a simulator item to the controller item
         // because ControllerItem::setSimulatorItem is a private function.
-        simImpl->setSimulatorItemToControllerItem(controller);
+        simImpl->setSimulatorItemToControllerItem(controllerItem);
     }
 }
 
 
 ControllerInfo::~ControllerInfo()
 {
-    if(controller){
+    if(controllerItem){
         // ControllerInfo cannot directly reset a simulator item for the controller item
         // because ControllerItem::setSimulatorItem is a private function.
-        simImpl->resetSimulatorItemForControllerItem(controller);
+        simImpl->resetSimulatorItemForControllerItem(controllerItem);
     }
 }
 
 
 std::string ControllerInfo::controllerName() const
 {
-    return controller ? controller->name() : string();
+    return controllerItem ? controllerItem->name() : string();
 }
 
 
@@ -585,8 +587,8 @@ bool ControllerInfo::enableLog()
     logBuf->setFrameRate(simImpl->worldFrameRate);
     logBufFrameOffset = 0;
 
-    string logName = simImpl->self->name() + "-" + controller->name();
-    logItem = controller->findChildItem<ReferencedObjectSeqItem>(logName);
+    string logName = simImpl->self->name() + "-" + controllerItem->name();
+    logItem = controllerItem->findChildItem<ReferencedObjectSeqItem>(logName);
     if(logItem){
         logItem->resetSeq();
         if(!logItem->isTemporary()){
@@ -594,11 +596,12 @@ bool ControllerInfo::enableLog()
             logItem->notifyUpdate();
         }
     } else {
-        logItem = controller->createLogItem();
+        logItem = controllerItem->createLogItem();
         logItem->setTemporary();
         logItem->setName(logName);
-        controller->addChildItem(logItem);
+        controllerItem->addChildItem(logItem);
     }
+    continuousUpdateEntries.push_back(logItem->startContinuousUpdate());
     log = logItem->seq();
     log->setNumFrames(0);
     log->setFrameRate(simImpl->worldFrameRate);
@@ -661,13 +664,13 @@ void ControllerInfo::flushLog()
 
 bool ControllerInfo::isNoDelayMode() const
 {
-    return controller->isNoDelayMode();
+    return controllerItem->isNoDelayMode();
 }
 
 
 bool ControllerInfo::setNoDelayMode(bool on)
 {
-    controller->setNoDelayMode(on);
+    controllerItem->setNoDelayMode(on);
     return on;
 }
 
@@ -723,7 +726,7 @@ int SimulationBody::numControllers() const
 ControllerItem* SimulationBody::controller(int index) const
 {
     if(index < static_cast<int>(impl->controllerInfos.size())){
-        return impl->controllerInfos[index]->controller;
+        return impl->controllerInfos[index]->controllerItem;
     }
     return nullptr;
 }
@@ -739,6 +742,7 @@ bool SimulationBody::Impl::initialize(SimulatorItem* simulatorItem, BodyItem* bo
 {
     simImpl = simulatorItem->impl;
     this->bodyItem = bodyItem;
+    continuousUpdateEntries.push_back(bodyItem->startContinuousUpdate());
     deviceStateConnections.disconnect();
     controllerInfos.clear();
     recordItemPrefix = simImpl->self->name() + "-" + bodyItem->name();
@@ -765,6 +769,7 @@ bool SimulationBody::Impl::initialize(SimulatorItem::Impl* simImpl, ControllerIt
     ControllerInfoPtr info = new ControllerInfo(controllerItem, this);
 
     if(controllerItem->initialize(info)){
+        info->continuousUpdateEntries.push_back(controllerItem->startContinuousUpdate());
         controllerInfos.push_back(info);
         initialized = true;
     }
@@ -781,13 +786,13 @@ void SimulationBody::Impl::extractAssociatedItems()
         parentOfRecordItems = bodyItem;
 
     } else if(controllerInfos.size() == 1){
-        parentOfRecordItems = controllerInfos.front()->controller;
+        parentOfRecordItems = controllerInfos.front()->controllerItem;
 
     } else {
         // find the common owner of all the controllers
         int minDepth = std::numeric_limits<int>::max();
         for(size_t i=0; i < controllerInfos.size(); ++i){
-            Item* owner = controllerInfos[i]->controller->parentItem();
+            Item* owner = controllerInfos[i]->controllerItem->parentItem();
             int depth = 0;
             Item* item = owner;
             while(item && item != bodyItem){
@@ -948,6 +953,7 @@ void SimulationBody::Impl::initializeRecordItems()
         doAddMotionItem = true;
     }
 
+    continuousUpdateEntries.push_back(motionItem->startContinuousUpdate());
     motion = motionItem->motion();
     motion->setNumFrames(0);
     motion->setOffsetTime(0.0);
@@ -1589,6 +1595,7 @@ void SimulatorItem::Impl::clearSimulation()
     simBodiesWithBody.clear();
     activeSimBodies.clear();
     loggedControllerInfos.clear();
+    continuousUpdateEntries.clear();
     simBodyMap.clear();
 
     preDynamicsFunctions.clear();
@@ -1773,10 +1780,10 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
             }
             bodyItem->notifyKinematicStateChange();
             
-        } else if(auto controller = dynamic_cast<ControllerItem*>(targetItem.get())){
+        } else if(auto controllerItem = dynamic_cast<ControllerItem*>(targetItem.get())){
             // ControllerItem which is not associated with a body
             SimulationBodyPtr simBody = new SimulationBody(nullptr);
-            if(simBody->impl->initialize(this, controller)){
+            if(simBody->impl->initialize(this, controllerItem)){
                 allSimBodies.push_back(simBody);
             }
         } else if(auto script = dynamic_cast<SimulationScriptItem*>(targetItem.get())){
@@ -1815,6 +1822,7 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
             mv->putln(formatR(_("SubSimulatorItem \"{}\" is disabled."), item->displayName()));
         }
         if(initialized){
+            continuousUpdateEntries.push_back(item->startContinuousUpdate());
             ++p;
         } else {
             p = subSimulatorItems.erase(p);
@@ -1871,6 +1879,8 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
         collisionSeq->setNumFrames(1);
         CollisionSeq::Frame frame0 = collisionSeq->frame(0);
         frame0[0]  = std::make_shared<CollisionLinkPairList>();
+
+        continuousUpdateEntries.push_back(collisionSeqItem->startContinuousUpdate());
     }
 
     for(auto& simBody : allSimBodies){
@@ -1880,23 +1890,24 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
         auto iter = controllerInfos.begin();
         while(iter != controllerInfos.end()){
             auto& info = *iter;
-            ControllerItem* controller = info->controller;
+            ControllerItem* controllerItem = info->controllerItem;
             bool ready = false;
             if(body){
-                ready = controller->start();
+                ready = controllerItem->start();
                 if(!ready){
                     mv->putln(formatR(_("{0} for {1} failed to start."),
-                                      controller->displayName(), simBodyImpl->bodyItem->displayName()),
+                                      controllerItem->displayName(), simBodyImpl->bodyItem->displayName()),
                               MessageView::Warning);
                 }
             } else {
-                ready = controller->start();
+                ready = controllerItem->start();
                 if(!ready){
-                    mv->putln(formatR(_("{} failed to start."), controller->displayName()),
+                    mv->putln(formatR(_("{} failed to start."), controllerItem->displayName()),
                               MessageView::Warning);
                 }
             }
             if(ready){
+                info->continuousUpdateEntries.push_back(controllerItem->startContinuousUpdate());
                 activeControllerInfos.push_back(info);
                 ++iter;
             } else {
@@ -1963,7 +1974,11 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
             }
             logTimeStep = 1.0 / r;
         }
+        continuousUpdateEntries.push_back(worldLogFileItem->startContinuousUpdate());
     }
+
+    continuousUpdateEntries.push_back(worldItem->startContinuousUpdate());
+    continuousUpdateEntries.push_back(self->startContinuousUpdate());
 
     logEngine->startOngoingTimeUpdate(0.0);
     flushRecords();
@@ -1974,11 +1989,6 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
 
     sigSimulationStarted();
     
-    // For blocking manual user operations for modifying body kinematic state using the builtin GUIs
-    for(auto& simBody : simBodiesWithBody){
-        auto simpl = simBody->impl;
-        simpl->continuousUpdateEntry = simpl->bodyItem->startContinuousUpdate();
-    }
     if(isSceneViewEditModeBlockedDuringSimulation){
         SceneView::blockEditModeForAllViews(self);
     }
@@ -2172,21 +2182,21 @@ bool SimulatorItem::Impl::stepSimulationMain()
 
     if(!useControllerThreads){
         for(auto& info : activeControllerInfos){
-            auto& controller = info->controller;
-            controller->input();
-            doContinue |= controller->control();
-            if(controller->isNoDelayMode()){
-                controller->output();
+            auto& controllerItem = info->controllerItem;
+            controllerItem->input();
+            doContinue |= controllerItem->control();
+            if(controllerItem->isNoDelayMode()){
+                controllerItem->output();
             }
         }
     } else {
         bool hasNoDelayModeControllers = false;
         for(auto& info : activeControllerInfos){
-            auto& controller = info->controller;
-            if(controller->isNoDelayMode()){
+            auto& controllerItem = info->controllerItem;
+            if(controllerItem->isNoDelayMode()){
                 hasNoDelayModeControllers = true;
             }
-            info->controller->input();
+            info->controllerItem->input();
             {
                 std::lock_guard<std::mutex> lock(info->controlMutex);                
                 info->isControlRequested = true;
@@ -2197,11 +2207,11 @@ bool SimulatorItem::Impl::stepSimulationMain()
             // Todo: Process the controller that finishes control earlier first to
             // reduce the total elapsed time before finishing all the output functions.
             for(auto& info : activeControllerInfos){
-                if(info->controller->isNoDelayMode()){
+                if(info->controllerItem->isNoDelayMode()){
                     if(info->waitForControlInThreadToFinish()){
                         doContinue = true;
                     }
-                    info->controller->output();
+                    info->controllerItem->output();
                 }
             }
         }
@@ -2217,7 +2227,7 @@ bool SimulatorItem::Impl::stepSimulationMain()
     
     if(useControllerThreads){
         for(auto& info : activeControllerInfos){
-            if(!info->controller->isNoDelayMode()){
+            if(!info->controllerItem->isNoDelayMode()){
                 if(info->waitForControlInThreadToFinish()){
                     doContinue = true;
                 }
@@ -2228,8 +2238,8 @@ bool SimulatorItem::Impl::stepSimulationMain()
     postDynamicsFunctions.call();
 
     for(auto& info : activeControllerInfos){
-        if(!info->controller->isNoDelayMode()){
-            info->controller->output();
+        if(!info->controllerItem->isNoDelayMode()){
+            info->controllerItem->output();
         }
     }
 
@@ -2269,7 +2279,7 @@ void ControllerInfo::concurrentControlLoop()
             }
         }
 
-        bool doContinue = controller->control();
+        bool doContinue = controllerItem->control();
         
         {
             std::lock_guard<std::mutex> lock(controlMutex);
@@ -2457,8 +2467,7 @@ void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
     
     for(auto& simBody : allSimBodies){
         for(auto& info : simBody->impl->controllerInfos){
-            auto& controller = info->controller;
-            controller->stop();
+            info->controllerItem->stop();
         }
     }
     self->finalizeSimulation();
