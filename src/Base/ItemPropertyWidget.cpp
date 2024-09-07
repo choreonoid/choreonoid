@@ -134,6 +134,7 @@ public:
     ItemPtr currentItem;
     ScopedConnectionSet itemConnections;
     PolymorphicItemFunctionSet  propertyFunctions;
+    bool isEditable;
 
     double minValue;
     double maxValue;
@@ -152,6 +153,7 @@ public:
     void updateProperties(bool isItemChanged = false);
     void addProperty(const std::string& name, PropertyItem* propertyItem);
     void onTargetItemSpecified(Item* item);
+    void setEditable(bool on);
     void zoomFontSize(int pointSizeDiff);
     
     // PutPropertyFunction's virtual functions
@@ -209,7 +211,11 @@ PropertyItem::PropertyItem(ItemPropertyWidget::Impl* view, ValueVariant value, F
       value(value),
       func(func)
 {
-    setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable);
+    int flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+    if(view->isEditable){
+        flags |= Qt::ItemIsEditable;
+    }
+    setFlags(static_cast<Qt::ItemFlag>(flags));
     hasValidFunction = true;
 }
 
@@ -711,17 +717,26 @@ void ItemPropertyWidget::Impl::setCurrentItem(Item* item)
 {
     if(item != currentItem){
         itemConnections.disconnect();
+        isEditable = false;
+        
         if(item){
             itemConnections.add(
                 item->sigUpdated().connect(
-                    [this](){ updateProperties(); }));
+                    [this]{ updateProperties(); }));
             itemConnections.add(
                 item->sigNameChanged().connect(
                     [this](const std::string& /* oldName */){ updateProperties(); }));
             itemConnections.add(
                 item->sigDisconnectedFromRoot().connect(
-                    [this](){ setCurrentItem(nullptr); }));
+                    [this]{ setCurrentItem(nullptr); }));
+            itemConnections.add(
+                item->sigContinuousUpdateStateChanged().connect(
+                    [this](bool on){ setEditable(!on); }));
+
+            isEditable = !item->isContinuousUpdateState();
+                
         }
+        
         currentItem = item;
         updateProperties(true);
     }
@@ -901,6 +916,13 @@ void ItemPropertyWidget::Impl::operator()
 (const std::string& name, const FilePathProperty& filepath, const std::function<bool(const std::string&)>& func)
 {
     addProperty(name, new PropertyItem(this, filepath, func) );
+}
+
+
+void ItemPropertyWidget::Impl::setEditable(bool on)
+{
+    isEditable = on;
+    updateProperties(false);
 }
 
 
