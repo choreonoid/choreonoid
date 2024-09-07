@@ -526,10 +526,10 @@ void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* li
                     [this](){ updateTargetLink(targetLink); }));
 
             targetConnections.add(
-                bodyItem->sigContinuousKinematicUpdateStateChanged().connect(
+                bodyItem->sigContinuousUpdateStateChanged().connect(
                     [this](bool on){ setUserInputEnabled(!on); }));
 
-            setUserInputEnabled(!bodyItem->isDoingContinuousKinematicUpdate());
+            setUserInputEnabled(!bodyItem->isContinuousUpdateState());
         }
     }
 
@@ -893,7 +893,7 @@ void LinkPositionWidget::Impl::showConfigurationDialog()
     if(!configurationDialog){
         configurationDialog = new JointSpaceConfigurationDialog(this);
         if(targetBodyItem){
-            configurationDialog->setUserInputEnabled(!targetBodyItem->isDoingContinuousKinematicUpdate());
+            configurationDialog->setUserInputEnabled(!targetBodyItem->isContinuousUpdateState());
         }
     }
     

@@ -55,7 +55,6 @@ public:
     virtual Isometry3 getLocation() const override;
     virtual bool isLocked() const override;
     virtual void setLocked(bool on) override;
-    virtual bool isContinuousUpdateState() const override;
     virtual bool setLocation(const Isometry3& T) override;
     virtual void finishLocationEditing() override;
     virtual LocationProxyPtr getParentLocationProxy() override;
@@ -159,8 +158,6 @@ public:
     float transparency;
     Signal<void(int flags)> sigModelUpdated;
 
-    Signal<void(bool on)> sigContinuousKinematicUpdateStateChanged;
-
     LeggedBodyHelperPtr legged;
 
     static unique_ptr<RenderableItemUtil> renderableItemUtil;
@@ -244,7 +241,6 @@ BodyItem::BodyItem()
     impl = new Impl(this);
     impl->init(false);
 
-    continuousKinematicUpdateCounter = 0;
     isAttachedToParentBody_ = false;
     isVisibleLinkSelectionMode_ = false;
 }
@@ -285,7 +281,6 @@ BodyItem::BodyItem(const BodyItem& org, CloneMap* cloneMap)
     impl = new Impl(this, *org.impl, cloneMap);
     impl->init(true);
 
-    continuousKinematicUpdateCounter = 0;
     isAttachedToParentBody_ = false;
     isVisibleLinkSelectionMode_ = org.isVisibleLinkSelectionMode_;
 
@@ -1209,12 +1204,6 @@ void BodyLocation::setLocked(bool on)
 }
 
 
-bool BodyLocation::isContinuousUpdateState() const
-{
-    return impl->self->isDoingContinuousKinematicUpdate();
-}
-
-
 bool BodyLocation::setLocation(const Isometry3& T)
 {
     auto rootLink = impl->body->rootLink();
@@ -1544,43 +1533,6 @@ void BodyItem::Impl::onParentBodyKinematicStateChanged()
     isProcessingInverseKinematicsIncludingParentBody = false;
     //! \todo requestVelFK and requestAccFK should be set appropriately
     notifyKinematicStateChange(true, false, false, true);
-}
-
-
-BodyItem::ContinuousKinematicUpdateEntry BodyItem::startContinuousKinematicUpdate()
-{
-    return new ContinuousKinematicUpdateRef(this);
-}
-
-
-SignalProxy<void(bool on)> BodyItem::sigContinuousKinematicUpdateStateChanged()
-{
-    return impl->sigContinuousKinematicUpdateStateChanged;
-}
-
-
-BodyItem::ContinuousKinematicUpdateRef::ContinuousKinematicUpdateRef(BodyItem* item)
-    : bodyItemRef(item)
-{
-    if(++item->continuousKinematicUpdateCounter == 1){
-        item->impl->sigContinuousKinematicUpdateStateChanged(true);
-        if(auto& bodyLocation = item->impl->bodyLocation){
-            bodyLocation->notifyAttributeChange();
-        }
-    }
-}
-
-
-BodyItem::ContinuousKinematicUpdateRef::~ContinuousKinematicUpdateRef()
-{
-    if(auto item = bodyItemRef.lock()){
-        if(--item->continuousKinematicUpdateCounter == 0){
-            item->impl->sigContinuousKinematicUpdateStateChanged(false);
-            if(auto& bodyLocation = item->impl->bodyLocation){
-                bodyLocation->notifyAttributeChange();
-            }
-        }
-    }
 }
 
 

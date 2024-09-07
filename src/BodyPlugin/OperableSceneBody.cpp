@@ -541,7 +541,7 @@ void OperableSceneBody::Impl::onSceneGraphConnection(bool on)
                 [this](){ onBodyItemUpdated(); }));
 
         connections.add(
-            bodyItem->sigContinuousKinematicUpdateStateChanged().connect(
+            bodyItem->sigContinuousUpdateStateChanged().connect(
                 [this](bool){ onBodyItemUpdated(); }));
 
         connections.add(
@@ -563,7 +563,7 @@ void OperableSceneBody::Impl::onSceneGraphConnection(bool on)
 
 void OperableSceneBody::Impl::onBodyItemUpdated()
 {
-    bool isUserInputBlocked = bodyItem->isDoingContinuousKinematicUpdate() || bodyItem->isLocationLocked();
+    bool isUserInputBlocked = bodyItem->isContinuousUpdateState() || bodyItem->isLocationLocked();
     if(isUserInputBlocked){
         if(sceneLinkForPositionDragger){
             detachPositionDragger();
@@ -1359,7 +1359,7 @@ bool OperableSceneBody::Impl::onButtonPressEvent(SceneWidgetEvent* event)
     PointedType pointedType = findPointedObject(event->nodePath());
 
     if(pointedType == PT_ZMP && event->button() == Qt::LeftButton){
-        if(!bodyItem->isDoingContinuousKinematicUpdate()){
+        if(!bodyItem->isContinuousUpdateState()){
             startZmpTranslation(event);
             return true;
         }
@@ -1408,7 +1408,7 @@ bool OperableSceneBody::Impl::onButtonPressEvent(SceneWidgetEvent* event)
         if(event->button() == Qt::LeftButton){
             updateMarkersAndManipulators(true);
 
-            if(!bodyItem->isDoingContinuousKinematicUpdate()){
+            if(!bodyItem->isContinuousUpdateState()){
                 if(operationType == LinkOperationType::FK){
                     startFK(event);
                 } else if(operationType == LinkOperationType::IK){

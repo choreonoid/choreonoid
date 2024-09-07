@@ -72,6 +72,15 @@ void LocationProxy::setLocked(bool on)
 
 bool LocationProxy::isContinuousUpdateState() const
 {
+    auto self = const_cast<LocationProxy*>(this);
+    if(auto item = self->locatableItem()){
+        if(!self->continuousUpdateStateConnection_.connected()){
+            self->continuousUpdateStateConnection_ =
+                item->sigContinuousUpdateStateChanged().connect(
+                    [self](bool){ self->notifyAttributeChange(); });
+        }
+        return item->isContinuousUpdateState();
+    }
     return false;
 }
 

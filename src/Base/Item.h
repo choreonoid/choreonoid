@@ -465,6 +465,26 @@ public:
     std::vector<ItemAddon*> addons();
     std::vector<const ItemAddon*> addons() const;
 
+    class ContinuousUpdateRef : public Referenced
+    {
+    private:
+        ContinuousUpdateRef(Item* item);
+        ~ContinuousUpdateRef();
+        weak_ref_ptr<Item> itemRef;
+        friend class Item;
+    };
+    typedef ref_ptr<ContinuousUpdateRef> ContinuousUpdateEntry;
+
+    ContinuousUpdateEntry startContinuousUpdate();
+    bool isContinuousUpdateState() const { return continuousUpdateCounter > 0; }
+    bool isContinuousUpdateStateSubTree() const;
+    
+    /**
+       \note The sigUpdated signal is not emitted when the continuous update state is changed
+       becasue the state is not a permenent one.
+    */
+    SignalProxy<void(bool on)> sigContinuousUpdateStateChanged();
+
     /**
        This function loads the data of the item from a file by using a registered FileIO object.
        To make this function available, a FileIO object must be registered to an ItemManager
@@ -617,6 +637,7 @@ private:
     Item* lastChild_;
     int numChildren_;
     unsigned int attributes_;
+    int continuousUpdateCounter;
     std::string name_;
     bool isSelected_;
 

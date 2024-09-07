@@ -100,7 +100,7 @@ public:
             
     ScopedConnection linkSelectionChangeConnection;
     ScopedConnection kinematicStateChangeConnection;
-    ScopedConnection continuousKinematicUpdateStateChangeConnection;
+    ScopedConnection continuousUpdateStateChangeConnection;
     ScopedConnection modelUpdateConnection;
 
     DisplayValueFormat* dvFormat;
@@ -383,7 +383,7 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
 
         linkedJointHandler.reset();
         kinematicStateChangeConnection.disconnect();
-        continuousKinematicUpdateStateChangeConnection.disconnect();
+        continuousUpdateStateChangeConnection.disconnect();
         modelUpdateConnection.disconnect();
 
         if(bodyItem){
@@ -392,11 +392,11 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
             kinematicStateChangeConnection =
                 bodyItem->sigKinematicStateChanged().connect(updateJointDisplacementsLater);
 
-            continuousKinematicUpdateStateChangeConnection =
-                bodyItem->sigContinuousKinematicUpdateStateChanged().connect(
+            continuousUpdateStateChangeConnection =
+                bodyItem->sigContinuousUpdateStateChanged().connect(
                     [this](bool on){ setUserInputEnabled(!on); });
 
-            setUserInputEnabled(!bodyItem->isDoingContinuousKinematicUpdate());
+            setUserInputEnabled(!bodyItem->isContinuousUpdateState());
 
             modelUpdateConnection =
                 bodyItem->sigModelUpdated().connect(

@@ -188,23 +188,27 @@ public:
     void setLocationLocked(bool on);
     LocationProxyPtr createLinkLocationProxy(Link* link);
 
-    class ContinuousKinematicUpdateRef : public Referenced
-    {
-    private:
-        ContinuousKinematicUpdateRef(BodyItem* item);
-        ~ContinuousKinematicUpdateRef();
-        weak_ref_ptr<BodyItem> bodyItemRef;
-        friend class BodyItem;
-    };
-    typedef ref_ptr<ContinuousKinematicUpdateRef> ContinuousKinematicUpdateEntry;
+    [[deprecated]]
+    typedef ContinuousUpdateEntry ContinuousKinematicUpdateEntry;
 
-    ContinuousKinematicUpdateEntry startContinuousKinematicUpdate();
-    bool isDoingContinuousKinematicUpdate() const { return continuousKinematicUpdateCounter > 0; }
+    [[deprecated]]
+    ContinuousKinematicUpdateEntry startContinuousKinematicUpdate() {
+        return Item::startContinuousUpdate();
+    }
+
+    [[deprecated]]
+    bool isDoingContinuousKinematicUpdate() const {
+        return Item::isContinuousUpdateState();
+    }
+    
     /**
        \note The sigUpdated signal is not emitted when the corresponding state changed
        becasue this is not a permenent state.
     */
-    SignalProxy<void(bool on)> sigContinuousKinematicUpdateStateChanged();
+    [[deprecated]]
+    SignalProxy<void(bool on)> sigContinuousKinematicUpdateStateChanged(){
+        return Item::sigContinuousUpdateStateChanged();
+    }
     
     // RenderableItem function
     virtual SgNode* getScene() override;
@@ -252,7 +256,6 @@ protected:
             
 private:
     Impl* impl;
-    int continuousKinematicUpdateCounter;
     bool isAttachedToParentBody_;
     bool isVisibleLinkSelectionMode_;
     std::vector<CollisionLinkPairPtr> collisions_;

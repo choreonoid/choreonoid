@@ -86,6 +86,7 @@ public:
     Signal<void(int checkId, bool on)> sigAnyCheckToggled;
     Signal<void(bool on)> sigLogicalSumOfAllChecksToggled;
     map<int, Signal<void(bool on)>> checkIdToSignalMap;
+    Signal<void(bool on)> sigContinuousUpdateStateChanged;
 
     // for file overwriting management, mainly accessed by ItemManager::Impl
     std::string filePath;
@@ -133,6 +134,7 @@ public:
     void traverse(Item* item, const std::function<bool(Item*)>& callback);
     void removeAddon(ItemAddon* addon, bool isMoving);
     ItemAddon* createAddon(const std::type_info& type);
+    void notifyContinuousUpdateStateChangeRecursively(bool on);
     static void clearItemReplacementMaps();
 };
 
@@ -197,6 +199,7 @@ void Item::Impl::initialize()
     self->lastChild_ = nullptr;
     self->numChildren_ = 0;
     self->attributes_ = 0;
+    self->continuousUpdateCounter = 0;
     self->isSelected_ = false;
 
     fileModificationTime = 0;
@@ -1526,6 +1529,70 @@ std::vector<const ItemAddon*> Item::addons() const
         addons_.push_back(kv.second);
     }
     return addons_;
+}
+
+
+Item::ContinuousUpdateEntry Item::startContinuousUpdate()
+{
+    return new ContinuousUpdateRef(this);
+}
+
+
+bool Item::isContinuousUpdateStateSubTree() const
+{
+    if(isContinuousUpdateState()){
+        return true;
+    }
+    if(parent_){
+        return parent_->isContinuousUpdateStateSubTree();
+    }
+    return false;
+}
+
+
+SignalProxy<void(bool on)> Item::sigContinuousUpdateStateChanged()
+{
+    return impl->sigContinuousUpdateStateChanged;
+}
+
+
+void Item::Impl::notifyContinuousUpdateStateChangeRecursively(bool on)
+{
+    for(auto child = self->childItem(); child; child = child->nextItem()){
+        if(!child->isContinuousUpdateState()){
+            child->impl->sigContinuousUpdateStateChanged(on);
+            child->impl->notifyContinuousUpdateStateChangeRecursively(on);
+        }
+    }
+}
+
+
+Item::ContinuousUpdateRef::ContinuousUpdateRef(Item* item)
+    : itemRef(item)
+{
+    if(item->continuousUpdateCounter == 0){
+        bool hasOnInUpperNodes = item->isContinuousUpdateStateSubTree();
+        ++item->continuousUpdateCounter;
+        item->impl->sigContinuousUpdateStateChanged(true);
+        if(!hasOnInUpperNodes){
+            item->impl->notifyContinuousUpdateStateChangeRecursively(true);
+        }
+    }
+}
+
+
+Item::ContinuousUpdateRef::~ContinuousUpdateRef()
+{
+    if(auto item = itemRef.lock()){
+        if(item->continuousUpdateCounter == 1){
+            bool hasOnInUpperNodes = item->isContinuousUpdateStateSubTree();
+            --item->continuousUpdateCounter;
+            item->impl->sigContinuousUpdateStateChanged(false);
+            if(!hasOnInUpperNodes){
+                item->impl->notifyContinuousUpdateStateChangeRecursively(false);
+            }
+        }
+    }
 }
 
 

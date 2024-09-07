@@ -155,7 +155,7 @@ public:
     TimeSyncItemEngineManager* manager;
     vector<TimeSyncItemEnginePtr> subEngines;;
     CollisionSeqEnginePtr collisionSeqEngine;
-    vector<BodyItem::ContinuousKinematicUpdateEntry> bodyItemEntries;
+    vector<Item::ContinuousUpdateEntry> bodyItemEntries;
     bool doKeepPlayback;
 
     SimulationLogEngine(SimulatorItem::Impl* itemImpl);
@@ -181,7 +181,7 @@ public:
     SimulationBody* self;
     BodyPtr body_;
     BodyItemPtr bodyItem;
-    BodyItem::ContinuousKinematicUpdateEntry continuousKinematicUpdateEntry;
+    Item::ContinuousUpdateEntry continuousUpdateEntry;
 
     vector<ControllerInfoPtr> controllerInfos;
     SimulatorItem::Impl* simImpl;
@@ -1977,7 +1977,7 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
     // For blocking manual user operations for modifying body kinematic state using the builtin GUIs
     for(auto& simBody : simBodiesWithBody){
         auto simpl = simBody->impl;
-        simpl->continuousKinematicUpdateEntry = simpl->bodyItem->startContinuousKinematicUpdate();
+        simpl->continuousUpdateEntry = simpl->bodyItem->startContinuousUpdate();
     }
     if(isSceneViewEditModeBlockedDuringSimulation){
         SceneView::blockEditModeForAllViews(self);
@@ -3014,7 +3014,7 @@ void SimulationLogEngine::setupBodyItems(bool doStartPlayback)
                 bodyItem->notifyKinematicStateUpdate(false);
             }
             if(doStartPlayback){
-                bodyItemEntries.push_back(bodyItem->startContinuousKinematicUpdate());
+                bodyItemEntries.push_back(bodyItem->startContinuousUpdate());
             }
         }
     }

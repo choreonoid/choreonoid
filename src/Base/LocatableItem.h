@@ -75,6 +75,7 @@ private:
     Signal<void()> sigAttributeChanged_;
     Signal<void()> sigExpired_;
     ScopedConnection itemNameConnection_;
+    ScopedConnection continuousUpdateStateConnection_;
 };
 
 class CNOID_EXPORT LocatableItem
