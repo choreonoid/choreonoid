@@ -479,14 +479,27 @@ void SimulatorItem::initializeClass(ExtensionManager* ext)
     ItemTreeView::customizeContextMenu<SimulatorItem>(
         [](SimulatorItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
             menuManager.setPath("/").setPath(_("Simulation"));
-            menuManager.addItem(_("Start"))->sigTriggered().connect(
-                [item](){ item->startSimulation(); });
-            menuManager.addItem(_("Pause"))->sigTriggered().connect(
-                [item](){ item->pauseSimulation(); });
-            menuManager.addItem(_("Resume"))->sigTriggered().connect(
-                [item](){ item->restartSimulation(); });
-            menuManager.addItem(_("Finish"))->sigTriggered().connect(
-                [item](){ item->stopSimulation(true); });
+            auto start = menuManager.addItem(_("Start"));
+            auto pause = menuManager.addItem(_("Pause"));
+            auto resume = menuManager.addItem(_("Resume"));
+            auto finish = menuManager.addItem(_("Finish"));
+
+            if(item->isRunning()){
+                start->setEnabled(false);
+                pause->sigTriggered().connect([item]{ item->pauseSimulation(); });
+                finish->sigTriggered().connect([item]{ item->stopSimulation(true); });
+            } else {
+                start->sigTriggered().connect([item]{ item->startSimulation(); });
+                pause->setEnabled(false);
+                finish->setEnabled(false);
+            }
+            if(item->isPausing()){
+                pause->setEnabled(false);
+                resume->sigTriggered().connect([item]{ item->restartSimulation(); });
+            } else {
+                resume->setEnabled(false);
+            }
+            
             menuManager.setPath("/");
             menuManager.addSeparator();
             menuFunction.dispatchAs<Item>(item);
@@ -2444,6 +2457,7 @@ void SimulatorItem::Impl::stopSimulation(bool isForced, bool doSync)
         }
         isForcedToStopSimulation = isForced;
         stopRequested = true;
+        pauseRequested = false;
         
         if(doSync){
             wait();

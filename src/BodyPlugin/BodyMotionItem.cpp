@@ -184,10 +184,17 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
     ItemTreeView::customizeContextMenu<BodyMotionItem>(
         [](BodyMotionItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
             menuManager.setPath("/").setPath(_("Data conversion"));
-            menuManager.addItem(_("Generate old-format position data items"))->sigTriggered().connect(
-                [item](){ item->motion()->updateLinkPosSeqAndJointPosSeqWithBodyStateSeq(); });
-            menuManager.addItem(_("Restore position data from old-format data items"))->sigTriggered().connect(
-                [item](){ item->motion()->updateBodyStateSeqWithLinkPosSeqAndJointPosSeq(); });
+            auto generate = menuManager.addItem(_("Generate old-format position data items"));
+            auto restore = menuManager.addItem(_("Restore position data from old-format data items"));
+            if(item->isContinuousUpdateStateSubTree()){
+                generate->setEnabled(false);
+                restore->setEnabled(false);
+            } else {
+                generate->sigTriggered().connect(
+                    [item]{ item->motion()->updateLinkPosSeqAndJointPosSeqWithBodyStateSeq(); });
+                restore->sigTriggered().connect(
+                    [item](){ item->motion()->updateBodyStateSeqWithLinkPosSeqAndJointPosSeq(); });
+            }
             menuManager.setPath("/");
             menuManager.addSeparator();
             menuFunction.dispatchAs<Item>(item);
