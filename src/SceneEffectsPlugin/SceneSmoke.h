@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_SCENE_EFFECTS_PLUGIN_SCENE_SMOKE_H
 #define CNOID_SCENE_EFFECTS_PLUGIN_SCENE_SMOKE_H
 

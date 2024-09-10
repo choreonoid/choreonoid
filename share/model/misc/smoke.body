@@ -8,4 +8,4 @@ links:
     name: Base
     jointType: fixed
     elements:
-      SmokeDevice: { }
+      SmokeDevice: { tint_color: [ 1.0, 1.0, 1.0 ] }

@@ -26,6 +26,7 @@ struct LightInfo {
 
 uniform LightInfo lights[10];
 
+uniform vec3 tintColor = vec3(1.0, 1.0, 1.0);
 uniform vec3 fogColor;
 uniform float maxFogDist;
 uniform float minFogDist;
@@ -72,7 +73,7 @@ void main()
 {
     vec4 texColor = texture(particleTex, gl_PointCoord);
 
-    vec3 color = texColor.xyz;
+    vec3 color = texColor.xyz * tintColor;
     vec3 c = vec3(0.0);
     for(int i=0; i < numLights; ++i){
         c += calcLightingColor(color, lights[i]);

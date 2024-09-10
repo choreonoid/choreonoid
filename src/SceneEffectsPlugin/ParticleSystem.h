@@ -41,6 +41,9 @@ public:
     const Vector3f& acceleration() const { return acceleration_; }
     void setAcceleration(const Vector3f& a){ acceleration_ = a; }
 
+    const Vector3f& tintColor() const { return tintColor_; }
+    void setTintColor(const Vector3f& c){ tintColor_ = c; }
+    
     void readParameters(const Mapping* info);
     void writeParameters(Mapping* info) const;
 
@@ -54,6 +57,7 @@ private:
     float initialSpeedVariation_;
     float emissionRange_;
     Vector3f acceleration_;
+    Vector3f tintColor_;
 };
 
 }

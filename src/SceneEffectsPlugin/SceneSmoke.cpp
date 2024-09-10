@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "SceneEffectsPlugin.h"
 #include "SceneSmoke.h"
 #include "ParticlesProgram.h"
@@ -25,11 +20,13 @@ public:
 
     GLint lifeTimeLocation;
     GLint accelLocation;
+    GLint tintColorLocation;
 
     // Variables to detect changes causing the buffer update
     int numParticles;
     float lifeTime;
     float emissionRange;
+    Vector3f tintColor;
 
     GLuint initVelBuffer;
     GLuint offsetTimeBuffer;
@@ -79,7 +76,7 @@ SmokeProgram::SmokeProgram(GLSLSceneRenderer* renderer)
         ":/SceneEffectsPlugin/shader/Smoke.vert",
         ":/SceneEffectsPlugin/shader/Particles.frag")
 {
-
+    tintColor.setOnes();
 }
 
 
@@ -92,6 +89,7 @@ bool SmokeProgram::initializeRendering(SceneParticles* particles)
     auto& glsl = glslProgram();
     lifeTimeLocation = glsl.getUniformLocation("lifeTime");
     accelLocation = glsl.getUniformLocation("accel");
+    tintColorLocation = glsl.getUniformLocation("tintColor");
 
     glGenBuffers(1, &initVelBuffer);
     glGenBuffers(1, &offsetTimeBuffer);
@@ -177,6 +175,11 @@ void SmokeProgram::render(SceneSmoke* smoke)
     Vector3f accel = globalAttitude().transpose() * ps.acceleration();
     glUniform3fv(accelLocation, 1, accel.data());
 
+    if(!tintColor.isApprox(ps.tintColor())){
+        tintColor = ps.tintColor();
+        glUniform3fv(tintColorLocation, 1, tintColor.data());
+    }
+    
     /*
     GLint blendSrc, blendDst;
     glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrc);
