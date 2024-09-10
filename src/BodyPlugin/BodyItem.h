@@ -192,7 +192,7 @@ public:
     typedef ContinuousUpdateEntry ContinuousKinematicUpdateEntry;
 
     [[deprecated]]
-    ContinuousKinematicUpdateEntry startContinuousKinematicUpdate() {
+    ContinuousUpdateEntry startContinuousKinematicUpdate() {
         return Item::startContinuousUpdate();
     }
 
