@@ -2,12 +2,13 @@
 #define CNOID_SCENE_EFFECTS_PLUGIN_PARTICLE_SYSTEMS_H
 
 #include <cnoid/EigenTypes>
+#include "exportdecl.h"
 
 namespace cnoid {
 
 class Mapping;
 
-class ParticleSystem
+class CNOID_EXPORT ParticleSystem
 {
 public:
     ParticleSystem();
