@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-08-17 16:07+0900\n"
+"POT-Creation-Date: 2024-09-10 11:33+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -797,6 +797,16 @@ msgstr "コピーされたアイテムを \"{0}\" にペーストできません
 
 msgid "Paste items in {0}"
 msgstr "複数のアイテムを{0}上で貼り付け"
+
+msgid "Item \"{0}\" cannot be reloaded currently, as it is being continuously updated."
+msgstr ""
+"アイテム \"{0}\" は継続的に更新中のため、今は再読込することができません．"
+
+msgid ""
+"Item \"{0}\" cannot be reloaded currently, as it is a part of a sub-tree being continuously "
+"updated."
+msgstr ""
+"アイテム \"{0}\" は継続的に更新中のサブツリーの一部であるため、今は再読込することができません．"
 
 msgid "Drop items in {0}"
 msgstr "複数のアイテムを{0}上でドロップ"
