@@ -409,6 +409,12 @@ void YAMLReaderImpl::onMappingEnd(yaml_event_t& event)
         cout << "YAMLReaderImpl::onMappingEnd()" << endl;
     }
 
+    if(auto mapping = nodeStack.top().node->toMapping()){
+        if(mapping->empty()){
+            mapping->setFlowStyle(false);
+        }
+    }
+
     popNode(event);
 }
 
