@@ -56,6 +56,8 @@ public:
         return pointer;
     }
 
+    void deleteManagedObjects();
+
     void setProjectArchiver(
         const std::string& name,
         std::function<bool(Archive&)> storeFunction,

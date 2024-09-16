@@ -497,9 +497,9 @@ App::~App()
 
 App::Impl::~Impl()
 {
-    AppConfig::flush();
     delete qapplication;
     delete pluginManager;
+    AppConfig::flush();
 }
 
 
@@ -588,6 +588,7 @@ int App::Impl::exec()
     RootItem::instance()->clearChildren();
     
     pluginManager->finalizePlugins();
+    ext->deleteManagedObjects();
     delete mainWindow;
     mainWindow = nullptr;
 

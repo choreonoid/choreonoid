@@ -235,6 +235,12 @@ void ExtensionManager::Impl::deleteManagedObjects()
 }
 
 
+void ExtensionManager::deleteManagedObjects()
+{
+    impl->deleteManagedObjects();
+}
+
+
 void ExtensionManager::setProjectArchiver(
     const std::string& name,
     std::function<bool(Archive&)> storeFunction,
