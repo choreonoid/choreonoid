@@ -12,9 +12,13 @@ Signal<bool(LocationProxyPtr location), LogicalSum> sigEditRequest;
 
 
 LocationProxy::LocationProxy(Item* locatableItem, LocationType type)
-    : locatableItemRef(locatableItem),
+    : locatableItem_(locatableItem),
       locationType_(type)
 {
+    if(locatableItem){
+        itemConnection = locatableItem->sigDisconnectedFromRoot().connect(
+            [this]{ locatableItem_ = nullptr; });
+    }
     isLocked_ = false;
 }
 
@@ -27,9 +31,9 @@ LocationProxy::~LocationProxy()
 
 void LocationProxy::setNameDependencyOnItemName()
 {
-    if(auto item = locatableItem()){
-        if(!itemNameConnection_.connected()){
-            itemNameConnection_ = item->sigNameChanged().connect(
+    if(locatableItem_){
+        if(!itemNameConnection.connected()){
+            itemNameConnection = locatableItem_->sigNameChanged().connect(
                 [this](const std::string&){ notifyAttributeChange(); });
         }
     }
@@ -39,11 +43,11 @@ void LocationProxy::setNameDependencyOnItemName()
 std::string LocationProxy::getName() const
 {
     auto self = const_cast<LocationProxy*>(this);
-    if(auto item = self->locatableItem()){
-        if(!itemNameConnection_.connected()){
+    if(locatableItem_){
+        if(!itemNameConnection.connected()){
             self->setNameDependencyOnItemName();
         }
-        return item->displayName();
+        return locatableItem_->displayName();
     }
     return std::string();
 }
@@ -73,13 +77,13 @@ void LocationProxy::setLocked(bool on)
 bool LocationProxy::isContinuousUpdateState() const
 {
     auto self = const_cast<LocationProxy*>(this);
-    if(auto item = self->locatableItem()){
-        if(!self->continuousUpdateStateConnection_.connected()){
-            self->continuousUpdateStateConnection_ =
-                item->sigContinuousUpdateStateChanged().connect(
+    if(locatableItem_){
+        if(!self->continuousUpdateStateConnection.connected()){
+            self->continuousUpdateStateConnection =
+                locatableItem_->sigContinuousUpdateStateChanged().connect(
                     [self](bool){ self->notifyAttributeChange(); });
         }
-        return item->isContinuousUpdateState();
+        return locatableItem_->isContinuousUpdateState();
     }
     return false;
 }
@@ -99,8 +103,8 @@ void LocationProxy::finishLocationEditing()
 
 LocationProxyPtr LocationProxy::getParentLocationProxy()
 {
-    if(auto item = locatableItem()){
-        if(auto parentLocatableItem = item->findOwnerItem<LocatableItem>()){
+    if(locatableItem_){
+        if(auto parentLocatableItem = locatableItem_->findOwnerItem<LocatableItem>()){
             return parentLocatableItem->getLocationProxy();
         }
     }

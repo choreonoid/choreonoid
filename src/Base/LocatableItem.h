@@ -17,7 +17,7 @@ class CNOID_EXPORT LocationProxy : public Referenced
 public:
     virtual ~LocationProxy();
 
-    Item* locatableItem() { return locatableItemRef.lock(); }
+    Item* locatableItem() { return locatableItem_; }
 
     enum LocationType {
         InvalidLocation,
@@ -69,13 +69,14 @@ protected:
     void setNameDependencyOnItemName();
 
 private:
-    weak_ref_ptr<Item> locatableItemRef;
+    Item* locatableItem_;
     LocationType locationType_;
     bool isLocked_;
     Signal<void()> sigAttributeChanged_;
     Signal<void()> sigExpired_;
-    ScopedConnection itemNameConnection_;
-    ScopedConnection continuousUpdateStateConnection_;
+    ScopedConnection itemConnection;
+    ScopedConnection itemNameConnection;
+    ScopedConnection continuousUpdateStateConnection;
 };
 
 class CNOID_EXPORT LocatableItem
