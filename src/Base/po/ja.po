@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-10 11:33+0900\n"
+"POT-Creation-Date: 2024-10-03 23:13+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -44,6 +44,9 @@ msgid ""
 msgstr ""
 "アプリケーション設定ファイル \"{0}\" を読み込むことができません．\n"
 "{1}"
+
+msgid "Note that item \"{0}\" will be saved to the original file \"{1}\"."
+msgstr "アイテム \"{0}\" は元ファイルである \"{1}\" に保存されることになります．"
 
 msgid "Name:"
 msgstr "名前："
@@ -582,11 +585,11 @@ msgstr "{0}を読み込むことができません: {1}"
 msgid "Loading {0} \"{1}\""
 msgstr "{0} \"{1}\" を読み込み中"
 
-msgid " -> failed.\n"
-msgstr " -> 失敗.\n"
+msgid " -> failed."
+msgstr " -> 失敗."
 
-msgid " -> ok!\n"
-msgstr " -> 完了!\n"
+msgid " -> ok!"
+msgstr " -> 完了!"
 
 msgid "{0} cannot be saved with empty filename."
 msgstr "ファイル名が指定されていないので{0}を保存できません．"
@@ -799,8 +802,7 @@ msgid "Paste items in {0}"
 msgstr "複数のアイテムを{0}上で貼り付け"
 
 msgid "Item \"{0}\" cannot be reloaded currently, as it is being continuously updated."
-msgstr ""
-"アイテム \"{0}\" は継続的に更新中のため、今は再読込することができません．"
+msgstr "アイテム \"{0}\" は継続的に更新中のため、今は再読込することができません．"
 
 msgid ""
 "Item \"{0}\" cannot be reloaded currently, as it is a part of a sub-tree being continuously "
@@ -978,6 +980,12 @@ msgstr "プロジェクトに名前を付けて保存"
 
 msgid "Project File Options"
 msgstr "プロジェクトファイルオプション"
+
+msgid "Recovery from Backup"
+msgstr "バックアップからの回復"
+
+msgid "Backup Configuration"
+msgstr "バックアップの設定"
 
 msgid "Edit Path Variables"
 msgstr "パス変数の設定"
@@ -1328,8 +1336,8 @@ msgstr "適用(&A)"
 msgid "Loading {0} failed.\n"
 msgstr "{0}の読み込みに失敗しました．\n"
 
-msgid "{0}-plugin cannot be initialized because required plugin(s) {1} are not found.\n"
-msgstr "必要なプラグイン{1}が見つからないため，{0}プラグインの初期化ができません．\n"
+msgid "{0}-plugin cannot be initialized because required plugin(s) {1} are not found."
+msgstr "必要なプラグイン{1}が見つからないため，{0}プラグインの初期化ができません．"
 
 msgid "Plugin file \"{}\" has already been activated.\n"
 msgstr "プラグインファイル \"{}\" は既に読み込まれています．\n"
@@ -1353,8 +1361,8 @@ msgstr ""
 "{0}プラグインの内部バージョンがシステムの内部バージョンと一致しません．\n"
 "問題を避けるため，プラグインファイル \"{1}\" は削除か更新を行なってください．\n"
 
-msgid "Plugin file \"{0}\" conflicts with \"{1}\"."
-msgstr "{0}プラグインは \"{1}\" と競合しています．"
+msgid "Plugin file \"{0}\" conflicts with \"{1}\".\n"
+msgstr "{0}プラグインは \"{1}\" と競合しています．\n"
 
 msgid "Loading the plugin failed.\n"
 msgstr "プラグインの読み込みができませんでした．\n"
@@ -1375,11 +1383,11 @@ msgstr ""
 "プラグインの読み込みができませんでした．\n"
 "{0}"
 
-msgid "{0}-plugin cannot be finalized.\n"
-msgstr "{}プラグインを終了できません．\n"
+msgid "{0}-plugin cannot be finalized."
+msgstr "{}プラグインを終了できません．"
 
-msgid "Plugin DLL \"{}\" has been unloaded.\n"
-msgstr "プラグインDLL \"{}\" が解放されました．\n"
+msgid "Plugin DLL \"{}\" has been unloaded."
+msgstr "プラグインDLL \"{}\" が解放されました．"
 
 msgid "Load plugins"
 msgstr "プラグインの読み込み"
@@ -1487,11 +1495,62 @@ msgid "Additional precision"
 msgstr "追加精度"
 
 msgid ""
-"The state of the \"{0}\" {1} was not completely restored.\n"
-"{2}"
+"The application has crashed, and auto-backup project files are available for project recovery. Do "
+"you want to show the dialog for recovery?"
 msgstr ""
-"\"{0}\" {1} の状態は完全には復帰できませんでした．\n"
-"{2}"
+"アプリケーションがクラッシュしましたが、プロジェクト回復のための自動バックアップされたプロジェクト"
+"ファイルが利用可能です。回復用のダイアログを表示しますか？"
+
+msgid "The project backup directory \"{0}\" cannot be created: {1}"
+msgstr "プロジェクトパックディレクトリ \"{0}\" を作成することができません： {1}"
+
+msgid "Automatically saving project \"{0}\" to \"{1}\" as backup ..."
+msgstr "プロジェクト \"{0}\" を \"{1}\" にバックアップとして自動保存中 …"
+
+msgid "Automatically saving project \"{0}\" to \"{1}\" as backup ... done."
+msgstr "プロジェクト \"{0}\" を \"{1}\" にバックアップとして自動保存中 … 完了．"
+
+msgid "Project Auto-Backup Configuration"
+msgstr "プロジェクト自動バックアップの設定"
+
+msgid "Enable auto backup"
+msgstr "自動バックアップの有効化"
+
+msgid "Time interval"
+msgstr "時間間隔"
+
+msgid "sec."
+msgstr "秒"
+
+msgid "Max number of backups"
+msgstr "最大バックアップ数"
+
+msgid "Pause auto backup during playback"
+msgstr "プレイバック中は自動バックアップを停止"
+
+msgid "Pause auto backup during continuous update"
+msgstr "継続更新中は自動バックアップを停止"
+
+msgid "Backup before starting continuous update"
+msgstr "継続更新開始前にバックアップ"
+
+msgid "Backup Project Recovery"
+msgstr "バックアッププロジェクトの回復"
+
+msgid "Date and Time"
+msgstr "日時"
+
+msgid "Project"
+msgstr "プロジェクト"
+
+msgid "&Recovery"
+msgstr "回復(&R)"
+
+msgid "Selected backup is not found."
+msgstr "選択されたバックアップがみつかりません．"
+
+msgid "The state of the \"{0}\" {1} was not completely restored.\n"
+msgstr "\"{0}\" {1} の状態は完全には復帰できませんでした．\n"
 
 msgid "Loading project file \"{}\" ..."
 msgstr "プロジェクトファイル \"{}\" を読み込み中…"
@@ -1501,6 +1560,12 @@ msgstr "リソース \"{}\" がみつかりません．"
 
 msgid "The project file is empty."
 msgstr "プロジェクトファイルは空です．"
+
+msgid "This is a backup of an unsaved project."
+msgstr "これは未保存プロジェクトのバックアップです．"
+
+msgid "This is a backup of \"{0}\"."
+msgstr "これは \"{0}\" のバックアップです．"
 
 msgid "{0} / {1} item(s) have been loaded."
 msgstr "{0} / {1} のアイテムが読みこまれました．"
@@ -1517,14 +1582,17 @@ msgstr "プロジェクト \"{}\" を完全に読み込みました．"
 msgid "Project \"{}\" has been partially loaded."
 msgstr "プロジェクト \"{}\" を部分的に読み込みました．"
 
+msgid "This project backup has been loaded as an unsaved project."
+msgstr "このプロジェクトバックアップは未保存プロジェクトとして読み込まれました．"
+
+msgid "This project backup has been loaded as project \"{0}\"."
+msgstr "このプロジェクトバックアップはプロジェクト \"{0}\" として読み込まれました．"
+
 msgid "Loading project \"{}\" failed. Any valid objects were not loaded."
 msgstr "プロジェクト \"{}\" の読み込みに失敗しました．いかなるオブジェクトもロードされていません．"
 
-msgid "Can't open file \"{}\" for writing.\n"
-msgstr "\"{}\" は書き込み用ファイルとして開けません．\n"
-
-msgid "Saving sub project {0} as \"{1}\" ..."
-msgstr "サブプロジェクト \"{0}\" を \"{1}\" に保存中…"
+msgid "Can't open file \"{}\" for writing."
+msgstr "\"{}\" は書き込み用ファイルとして開けません．"
 
 msgid "Saving the project as \"{}\" ..."
 msgstr "プロジェクトを \"{}\" に保存中…"
@@ -1532,8 +1600,14 @@ msgstr "プロジェクトを \"{}\" に保存中…"
 msgid "Saving the project file has been finished."
 msgstr "プロジェクトファイルの保存が完了しました."
 
+msgid "Saving the sub-project file has been finished."
+msgstr "サブプロジェクトファイルの保存が完了しました."
+
 msgid "Saving the project file failed."
 msgstr "プロジェクトファイルの保存に失敗しました．"
+
+msgid "Saving the sub-project file failed."
+msgstr "サブプロジェクトファイルの保存に失敗しました．"
 
 msgid "Open a project"
 msgstr "プロジェクトを開く"
