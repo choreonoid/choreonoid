@@ -5,6 +5,7 @@ set(sources
   MainMenu.cpp
   ProjectManager.cpp
   ProjectPacker.cpp
+  ProjectBackupManager.cpp
   PathVariableEditor.cpp
   PluginManager.cpp
   MainWindow.cpp
@@ -217,6 +218,7 @@ set(headers
   OptionManager.h
   ProjectManager.h
   ProjectPacker.h
+  ProjectBackupManager.h
   PluginManager.h
   Plugin.h
   MessageView.h

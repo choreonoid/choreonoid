@@ -10,6 +10,7 @@
 #include "MessageView.h"
 #include "RootItem.h"
 #include "ProjectManager.h"
+#include "ProjectBackupManager.h"
 #include "UnifiedEditHistory.h"
 #include "UnifiedEditHistoryView.h"
 #include "ItemEditRecordManager.h"
@@ -387,6 +388,7 @@ void App::Impl::initialize()
     
     ItemManager::initializeClass(ext);
     ProjectManager::initializeClass(ext);
+    ProjectBackupManager::initializeClass();
     RootItem::initializeClass(ext);
     UnifiedEditHistory::initializeClass(ext);
     UnifiedEditHistoryView::initializeClass(ext);

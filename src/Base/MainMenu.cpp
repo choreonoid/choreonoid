@@ -4,6 +4,7 @@
 #include "ItemManager.h"
 #include "ItemFileDialog.h"
 #include "ProjectManager.h"
+#include "ProjectBackupManager.h"
 #include "PluginManager.h"
 #include "ViewManager.h"
 #include "RootItem.h"
@@ -26,6 +27,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QString>
+#include <exception>
 #include "gettext.h"
 
 using namespace std;
@@ -102,6 +104,13 @@ void MainMenu::setMenuItems()
     
     mm.setPath(N_("Project File Options"));
     setActionAsProjectLayoutToggle(mm.addCheckItem(_("Layout")));
+    setActionAsShowProjectRecoveryDialog(mm.addItem(_("Recovery from Backup")));
+    setActionAsShowProjectBackupConfigDialog(mm.addItem(_("Backup Configuration")));
+
+    // For test
+    //setActionAsProjectBackupTest(mm.addItem("Backup Test"));
+    //setActionAsCrashTest(mm.addItem("Crash Test"));
+    
     setActionAsShowPathVariableEditor(mm.addItem(_("Edit Path Variables")));
 
     mm.goBackToUpperMenu().addSeparator();
@@ -334,6 +343,24 @@ void MainMenu::setActionAsProjectLayoutToggle(Action* action)
 }
 
 
+void MainMenu::setActionAsShowProjectRecoveryDialog(Action* action)
+{
+    action->sigTriggered().connect([]{ ProjectBackupManager::instance()->showRecoveryDialog(); });
+}
+
+
+void MainMenu::setActionAsShowProjectBackupConfigDialog(Action* action)
+{
+    action->sigTriggered().connect([]{ ProjectBackupManager::instance()->showConfigDialog(); });
+}
+
+
+void MainMenu::setActionAsProjectBackupTest(Action* action)
+{
+    action->sigTriggered().connect([]{ ProjectBackupManager::instance()->saveProjectAsBackup(); });
+}
+
+
 void MainMenu::setActionAsShowPathVariableEditor(Action* action)
 {
     action->sigTriggered().connect([]{ PathVariableEditor::instance()->show(); });
@@ -542,6 +569,12 @@ void MainMenu::setActionAsShowMovieRecorderDialog(Action* action)
 void MainMenu::setActionAsShowDialogAboutChoreonoid(Action* action)
 {
     action->sigTriggered().connect([]{ showDialogAboutChoreonoid(); });
+}
+
+
+void MainMenu::setActionAsCrashTest(Action* action)
+{
+    action->sigTriggered().connect([]{ throw std::runtime_error("crash test"); });
 }
 
 
