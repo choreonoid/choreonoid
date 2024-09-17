@@ -261,8 +261,8 @@ void StdSceneWriter::Impl::setOutputBaseDirectory(const std::string& directory)
 {
     outputBaseDirectory = directory;
     outputBaseDirPath = fromUTF8(directory);
-    if(uriSchemeProcessor){
-        uriSchemeProcessor->filePathVariableProcessor()->setBaseDirectory(directory);
+    if(filePathVariableProcessor){
+        filePathVariableProcessor->setBaseDirectory(directory);
     }
 }
 
