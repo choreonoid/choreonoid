@@ -1,10 +1,11 @@
 #include "Archive.h"
 #include "Item.h"
-#include "MessageView.h"
 #include <cnoid/FilePathVariableProcessor>
+#include <cnoid/MessageOut>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <map>
+#include <list>
 #include <deque>
 #include "gettext.h"
 
@@ -51,6 +52,9 @@ public:
     vector<FunctionInfo> postProcesses;
     vector<FunctionInfo> nextPostProcesses;
     bool isDoingPostProcesses;
+    bool isSavingProjectAsBackup;
+
+    MessageOut* mout;
 
     ArchiveSharedData(){
         currentItem = nullptr;
@@ -89,7 +93,8 @@ Archive::~Archive()
 }
 
 
-void Archive::initSharedInfo(const std::string& projectFile, bool isSubProject)
+void Archive::initSharedInfo
+(const std::string& projectFile, bool isSubProject, MessageOut* mout, bool isSavingProjectAsBackup)
 {
     shared = new ArchiveSharedData;
 
@@ -104,6 +109,9 @@ void Archive::initSharedInfo(const std::string& projectFile, bool isSubProject)
     auto projectDir = toUTF8(filesystem::absolute(fromUTF8(projectFile)).parent_path().generic_string());
     shared->pathVariableProcessor->setBaseDirectory(projectDir);
     shared->pathVariableProcessor->setProjectDirectory(projectDir);
+
+    shared->mout = mout;
+    shared->isSavingProjectAsBackup = isSavingProjectAsBackup;
 }
 
 
@@ -260,8 +268,7 @@ std::string Archive::resolveRelocatablePath(const std::string& relocatable, bool
 {
     auto expanded = shared->pathVariableProcessor->expand(relocatable, doAbsolutize);
     if(expanded.empty()){
-        MessageView::instance()->putln(
-            shared->pathVariableProcessor->errorMessage(), MessageView::Warning);
+        mout()->putErrorln(shared->pathVariableProcessor->errorMessage());
     }
     return expanded;
 }
@@ -533,4 +540,13 @@ FilePathVariableProcessor* Archive::filePathVariableProcessor() const
         return shared->pathVariableProcessor;
     }
     return nullptr;
+}
+
+
+MessageOut* Archive::mout() const
+{
+    if(shared){
+        return shared->mout;
+    }
+    return MessageOut::nullout();
 }

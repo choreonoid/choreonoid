@@ -2,7 +2,6 @@
 #include "RootItem.h"
 #include "ItemManager.h"
 #include "ViewManager.h"
-#include "MessageView.h"
 #include "ToolBar.h"
 #include "Archive.h"
 #include "ItemTreeArchiver.h"
@@ -13,6 +12,7 @@
 #include "FileDialog.h"
 #include "MainWindow.h"
 #include "CheckBox.h"
+#include <cnoid/MessageOut>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
 #include <cnoid/FilePathVariableProcessor>
@@ -37,7 +37,6 @@ bool isLayoutInclusionMode = true;
 bool isTemporaryItemSaveCheckAvailable = true;
 int projectBeingLoadedCounter = 0;
 MainWindow* mainWindow = nullptr;
-MessageView* mv = nullptr;
 vector<string> projectFilesToLoad;
 
 class SaveDialog : public FileDialog
@@ -68,7 +67,7 @@ public:
         
     template <class TObject>
     bool restoreObjectStates(
-        Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix);
+        Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix, MessageOut* mout);
 
     ItemList<> loadProject(
         const std::string& filename, Item* parentItem,
@@ -79,7 +78,7 @@ public:
     template<class TObject>
     bool storeObjects(Archive& parentArchive, const char* key, vector<TObject*> objects);
         
-    bool saveProject(const string& filename, Item* item, bool doSaveTemporaryItems);
+    bool saveProject(const string& filename, Item* item, bool doSaveTemporaryItems, bool isBackupMode);
         
     void onProjectOptionsParsed();
     void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
@@ -153,7 +152,6 @@ void ProjectManager::initializeClass(ExtensionManager* ext)
     if(!instance_){
         instance_ = ext->manage(new ProjectManager(ext));
         mainWindow = MainWindow::instance();
-        mv = MessageView::instance();
     }
 }
 
@@ -233,16 +231,23 @@ void ProjectManager::setCurrentProjectName(const std::string& name)
 
 void ProjectManager::Impl::setCurrentProjectFile(const string& filename)
 {
-    filesystem::path path(fromUTF8(filename));
-    auto name = toUTF8(path.stem().string());
-    currentProjectName = name;
-    mainWindow->setProjectTitle(name);
+    if(filename.empty()){
+        currentProjectName.clear();
+        currentProjectFile.clear();
+        currentProjectDirectory.clear();
+    } else {
+        filesystem::path path(fromUTF8(filename));
+        auto name = toUTF8(path.stem().string());
+        currentProjectName = name;
 
-    // filesystem::canonical can only be used with C++17
-    path = filesystem::lexically_normal(filesystem::absolute(path));
+        // filesystem::canonical can only be used with C++17
+        path = filesystem::lexically_normal(filesystem::absolute(path));
 
-    currentProjectFile = toUTF8(path.string());
-    currentProjectDirectory = toUTF8(path.parent_path().string());
+        currentProjectFile = toUTF8(path.string());
+        currentProjectDirectory = toUTF8(path.parent_path().string());
+    }
+
+    mainWindow->setProjectTitle(currentProjectName);
 }
 
 
@@ -319,7 +324,7 @@ void ProjectManager::Impl::clearProject()
 
 template <class TObject>
 bool ProjectManager::Impl::restoreObjectStates
-(Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix)
+(Archive* projectArchive, Archive* states, const vector<TObject*>& objects, const char* nameSuffix, MessageOut* mout)
 {
     bool restored = false;
     for(size_t i=0; i < objects.size(); ++i){
@@ -333,10 +338,9 @@ bool ProjectManager::Impl::restoreObjectStates
                     restored = true;
                 }
             } catch(const ValueNode::Exception& ex){
-                mv->putln(
-                    formatR(_("The state of the \"{0}\" {1} was not completely restored.\n{2}"),
-                    name, nameSuffix, ex.message()),
-                    MessageView::Warning);
+                mout->putWarningln(
+                    formatR(_("The state of the \"{0}\" {1} was not completely restored.\n"),
+                            name, nameSuffix, ex.message()));
             }
         }
     }
@@ -360,14 +364,17 @@ ItemList<> ProjectManager::Impl::loadProject
 (const std::string& filename, Item* parentItem,
  bool isInvokingApplication, bool isBuiltinProject, bool doClearExistingProject)
 {
+    auto mout = MessageOut::master();
+    
     ItemList<> topLevelItems;
     
     if(doClearExistingProject){
         clearProject();
-        mv->flush();
+        mout->flush();
         sigProjectCleared();
     }
 
+    bool isBackup = false;
     bool isTopProject = (projectBeingLoadedCounter == 0);
     if(isTopProject && parentItem){
         projectBeingLoadedCounter = 1;
@@ -383,9 +390,9 @@ ItemList<> ProjectManager::Impl::loadProject
 
     try {
         if(!isBuiltinProject){
-            mv->notify(formatR(_("Loading project file \"{}\" ..."), filename));
+            mout->notify(formatR(_("Loading project file \"{}\" ..."), filename));
             if(!isInvokingApplication){
-                mv->flush();
+                mout->flush();
             }
         }
 
@@ -396,12 +403,12 @@ ItemList<> ProjectManager::Impl::loadProject
         if(!isBuiltinProject){
             parsed = reader.load(filename);
             if(!parsed){
-                mv->putln(reader.errorMessage(), MessageView::Error);
+                mout->putErrorln(reader.errorMessage());
             }
         } else {
             QResource resource(filename.c_str());
             if(!resource.isValid()){
-                mv->putln(formatR(_("Resource \"{0}\" is not found."), filename), MessageView::Error);
+                mout->putErrorln(formatR(_("Resource \"{0}\" is not found."), filename));
             } else {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
                 auto data = resource.uncompressedData();
@@ -410,13 +417,13 @@ ItemList<> ProjectManager::Impl::loadProject
 #endif
                 parsed = reader.parse(data.constData(), data.size());
                 if(!parsed){
-                    mv->putln(reader.errorMessage(), MessageView::Error);
+                    mout->putErrorln(reader.errorMessage());
                 }
             }
         }
         
         if(parsed && reader.numDocuments() == 0){
-            mv->putln(_("The project file is empty."), MessageView::Warning);
+            mout->putWarningln(_("The project file is empty."));
 
         } else if(parsed){
 
@@ -426,7 +433,17 @@ ItemList<> ProjectManager::Impl::loadProject
             }
 
             Archive* archive = static_cast<Archive*>(reader.document()->toMapping());
-            archive->initSharedInfo(filename, isSubProject);
+            archive->initSharedInfo(filename, isSubProject, mout, false);
+
+            string backupSourceFile;
+            isBackup = archive->read("backup_source", backupSourceFile);
+            if(isBackup){
+                if(backupSourceFile.empty()){
+                    mout->putln(_("This is a backup of an unsaved project."));
+                } else {
+                    mout->putln(formatR(_("This is a backup of \"{0}\"."), backupSourceFile));
+                }
+            }
 
             std::set<string> optionalPlugins;
             Listing& optionalPluginsNode = *archive->findListing("optionalPlugins");
@@ -486,7 +503,7 @@ ItemList<> ProjectManager::Impl::loadProject
 
             Archive* barStates = archive->findSubArchive("toolbars");
             if(barStates->isValid()){
-                if(restoreObjectStates(archive, barStates, mainWindow->toolBars(), "bar")){
+                if(restoreObjectStates(archive, barStates, mainWindow->toolBars(), "bar", mout)){
                     loaded = true;
                 }
             }
@@ -494,7 +511,8 @@ ItemList<> ProjectManager::Impl::loadProject
             if(isInvokingApplication && !isBuiltinProject){
                 mainWindow->waitForWindowSystemToActivate();
             }
-            
+
+            itemTreeArchiver.setMessageOut(mout);
             itemTreeArchiver.reset();
             Archive* items = archive->findSubArchive("items");
             if(items->isValid()){
@@ -505,16 +523,18 @@ ItemList<> ProjectManager::Impl::loadProject
                 numArchivedItems = itemTreeArchiver.numArchivedItems();
                 numRestoredItems = itemTreeArchiver.numRestoredItems();
                 if(!isBuiltinProject){
-                    mv->putln(formatR(_("{0} / {1} item(s) have been loaded."), numRestoredItems, numArchivedItems));
+                    mout->putln(formatR(_("{0} / {1} item(s) have been loaded."), numRestoredItems, numArchivedItems));
                 }
 
                 if(numRestoredItems < numArchivedItems){
                     int numUnloaded = numArchivedItems - numRestoredItems;
                     if(!isBuiltinProject){
-                        mv->putln(formatR(_("{0} item(s) were not loaded."), numUnloaded), MessageView::Warning);
+                        mout->putWarningln(
+                            formatR(_("{0} item(s) were not loaded."), numUnloaded));
                     } else {
-                        mv->putln(formatR(_("{0} item(s) were not loaded in the builtin project \"{1}\"."),
-                                          numUnloaded, filename), MessageView::Warning);
+                        mout->putWarningln(
+                            formatR(_("{0} item(s) were not loaded in the builtin project \"{1}\"."),
+                                    numUnloaded, filename));
                     }
                 }
                 
@@ -528,31 +548,42 @@ ItemList<> ProjectManager::Impl::loadProject
                     if(archive->get("isNewProjectTemplate", false)){
                         clearCurrentProjectFile();
                     } else {
-                        setCurrentProjectFile(filename);
+                        if(!isBackup){
+                            setCurrentProjectFile(filename);
+                        } else {
+                            setCurrentProjectFile(backupSourceFile);
+                        }
                     }
                 }
 
-                mv->flush();
+                mout->flush();
 
                 archive->callPostProcesses();
 
                 if(!isBuiltinProject){
                     if(numRestoredItems == numArchivedItems){
-                        mv->notify(formatR(_("Project \"{}\" has been completely loaded."), filename));
+                        mout->notify(formatR(_("Project \"{}\" has been completely loaded."), filename));
                     } else {
-                        mv->notify(formatR(_("Project \"{}\" has been partially loaded."), filename));
+                        mout->notify(formatR(_("Project \"{}\" has been partially loaded."), filename));
+                    }
+                }
+                if(!isSubProject && isBackup){
+                    if(backupSourceFile.empty()){
+                        mout->putln(_("This project backup has been loaded as an unsaved project."));
+                    } else {
+                        mout->putln(
+                            formatR(_("This project backup has been loaded as project \"{0}\"."), backupSourceFile));
                     }
                 }
             }
         }
     } catch (const ValueNode::Exception& ex){
-        mv->put(ex.message());
+        mout->putErrorln(ex.message());
     }
 
     if(!loaded){
-        mv->notify(
-            formatR(_("Loading project \"{}\" failed. Any valid objects were not loaded."), filename),
-            MessageView::Error);
+        mout->notifyError(
+            formatR(_("Loading project \"{}\" failed. Any valid objects were not loaded."), filename));
         clearCurrentProjectFile();
     }
 
@@ -564,8 +595,10 @@ ItemList<> ProjectManager::Impl::loadProject
         vp->clearBaseDirectory();
         vp->clearProjectDirectory();
 
-        for(auto& item : topLevelItems){
-            setItemsConsistentWithProjectArchive(item);
+        if(!isBackup){
+            for(auto& item : topLevelItems){
+                setItemsConsistentWithProjectArchive(item);
+            }
         }
     }
 
@@ -581,7 +614,17 @@ ItemList<> ProjectManager::Impl::loadProject
 
 void ProjectManager::Impl::setItemsConsistentWithProjectArchive(Item* item)
 {
-    item->setConsistentWithProjectArchive(true);
+    // The following check is necessary in the backup mode.
+    // In this mode, each item that is saved to a file is loaded from a backup file,
+    // but the file to save is replaced with the original file. In this case, the file consistency
+    // flag must be set to false when the backup file is not equivalent to the original file.
+    // This check maintains the flags for those items.
+    bool doUpdate = item->isConsistentWithFile();
+
+    if(doUpdate){ 
+        item->setConsistentWithProjectArchive(true);
+    }
+    
     for(Item* child = item->childItem(); child; child = child->nextItem()){
         setItemsConsistentWithProjectArchive(child);
     }
@@ -591,7 +634,7 @@ void ProjectManager::Impl::setItemsConsistentWithProjectArchive(Item* item)
 void ProjectManager::restoreLayout(Mapping* layout)
 {
     ArchivePtr archive = new Archive;
-    archive->initSharedInfo("dummy", false);
+    archive->initSharedInfo("dummy", false, MessageOut::master(), false);
     archive->insert(layout, false);
 
     ViewManager::ViewStateInfo viewStateInfo;
@@ -600,7 +643,7 @@ void ProjectManager::restoreLayout(Mapping* layout)
         if(ViewManager::restoreViewStates(viewStateInfo)){
             Archive* barStates = archive->findSubArchive("toolbars");
             if(barStates->isValid()){
-                impl->restoreObjectStates(archive, barStates, mainWindow->toolBars(), "bar");
+                impl->restoreObjectStates(archive, barStates, mainWindow->toolBars(), "bar", MessageOut::master());
             }
         }
     }
@@ -639,17 +682,32 @@ template<class TObject> bool ProjectManager::Impl::storeObjects
 
 bool ProjectManager::saveProject(const string& filename, Item* item)
 {
-    return impl->saveProject(filename, item, false);
+    return impl->saveProject(filename, item, false, false);
 }
 
 
-bool ProjectManager::Impl::saveProject(const string& filename, Item* item, bool doSaveTemporaryItems)
+bool ProjectManager::saveProjectAsBackup(const string& filename, Item* item)
 {
+    return impl->saveProject(filename, item, false, true);
+}
+
+
+bool ProjectManager::Impl::saveProject
+(const string& filename, Item* item, bool doSaveTemporaryItems, bool isBackupMode)
+{
+    MessageOutPtr mout;
+    ofstream ofs;
+    
+    if(!isBackupMode){
+        mout = MessageOut::master();
+    } else {
+        ofs.open(fromUTF8(filename + ".log"));
+        mout = new MessageOut(ofs);
+    }
+            
     YAMLWriter writer(filename);
     if(!writer.isFileOpen()){
-        mv->put(
-            formatR(_("Can't open file \"{}\" for writing.\n"), filename),
-            MessageView::Error);
+        mout->putErrorln(formatR(_("Can't open file \"{}\" for writing."), filename));
         return false;
     }
 
@@ -663,21 +721,25 @@ bool ProjectManager::Impl::saveProject(const string& filename, Item* item, bool 
         item = rootItem;
     }
     
-    mv->putln();
+    mout->put("\n");
     if(isSubProject){
-        mv->notify(formatR(_("Saving sub project {0} as \"{1}\" ..."), item->displayName(), filename));
+        mout->notify(formatR(_("Saving sub project {0} as \"{1}\" ..."), item->displayName(), filename));
     } else {
-        mv->notify(formatR(_("Saving the project as \"{}\" ..."), filename));
+        mout->notify(formatR(_("Saving the project as \"{}\" ..."), filename));
     }
-    mv->flush();
     
     bool saved = false;
     
+    itemTreeArchiver.setMessageOut(mout);
     itemTreeArchiver.reset();
     itemTreeArchiver.setTemporaryItemSaveEnabled(doSaveTemporaryItems);
 
     ArchivePtr archive = new Archive;
-    archive->initSharedInfo(filename, isSubProject);
+    archive->initSharedInfo(filename, isSubProject, mout, isBackupMode);
+
+    if(isBackupMode){
+        archive->write("backup_source", currentProjectFile, DOUBLE_QUOTED);
+    }
 
     ArchivePtr itemArchive = itemTreeArchiver.store(archive, item);
 
@@ -730,12 +792,12 @@ bool ProjectManager::Impl::saveProject(const string& filename, Item* item, bool 
     if(saved){
         writer.setKeyOrderPreservationMode(true);
         writer.putNode(archive);
-        mv->notify(_("Saving the project file has been finished."));
-        if(!isSubProject){
+        mout->notify(_("Saving the project file has been finished."));
+        if(!isBackupMode && !isSubProject){
             setCurrentProjectFile(filename);
         }
     } else {
-        mv->notify(_("Saving the project file failed."), MessageView::Error);
+        mout->notifyError(_("Saving the project file failed."));
         clearCurrentProjectFile();
     }
 
@@ -746,7 +808,7 @@ bool ProjectManager::Impl::saveProject(const string& filename, Item* item, bool 
 ref_ptr<Mapping> ProjectManager::storeCurrentLayout()
 {
     ArchivePtr archive = new Archive;
-    archive->initSharedInfo("dummy", false);
+    archive->initSharedInfo("dummy", false, MessageOut::master(), false);
     ViewManager::storeViewStates(archive, "views", true);
     mainWindow->storeLayout(archive);
     return archive;
@@ -759,7 +821,7 @@ bool ProjectManager::overwriteCurrentProject()
     if(impl->currentProjectFile.empty()){
         saved = showDialogToSaveProject();
     } else {
-        saved = impl->saveProject(impl->currentProjectFile, nullptr, false);
+        saved = impl->saveProject(impl->currentProjectFile, nullptr, false, false);
     }
     return saved;
 }
@@ -836,7 +898,7 @@ bool ProjectManager::showDialogToSaveProject()
     bool saved = false;
     if(dialog->exec() == QDialog::Accepted){
         saved = impl->saveProject(
-            dialog->getSaveFilename(), nullptr, dialog->temporaryItemSaveCheck.isChecked());
+            dialog->getSaveFilename(), nullptr, dialog->temporaryItemSaveCheck.isChecked(), false);
     }
 
     return saved;

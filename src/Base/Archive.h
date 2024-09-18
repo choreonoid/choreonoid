@@ -14,6 +14,7 @@ class ViewManager;
 class ProjectManager;
 class FilePathVariableProcessor;
 class ArchiveSharedData;
+class MessageOut;
 
 class CNOID_EXPORT Archive : public Mapping
 {
@@ -22,7 +23,8 @@ public:
     Archive(int line, int column);
     virtual ~Archive();
 
-    void initSharedInfo(const std::string& projectFile, bool isSubProject);
+    void initSharedInfo(
+        const std::string& projectFile, bool isSubProject, MessageOut* mout, bool isSavingProjectAsBackup);
     void inheritSharedInfoFrom(Archive& archive);
 
     /**
@@ -66,12 +68,6 @@ public:
     bool readRelocatablePath(const std::string& key, std::string& out_value) const;
     std::string readItemFilePath() const;
     
-    //! \deprecated
-    [[deprecated("Use resolveRelocatablePath(path, false).")]]
-    std::string expandPathVariables(const std::string& path) const {
-        return resolveRelocatablePath(path, false);
-    }
-
     bool loadFileTo(Item* item) const;
     bool loadFileTo(Item* item, const std::string& filepath) const;
 
@@ -79,20 +75,25 @@ public:
     bool writeRelocatablePath(const std::string& key, const std::string& path);
     bool writeFileInformation(Item* item);
 
-    //! \deprecated
-    [[deprecated("Use loadFileTo(Item* item, const std::string& filepath)")]]
-    bool loadFileTo(const std::string& filepath, Item* item) const {
-        return loadFileTo(item, filepath);
-    }
-    //! \deprecated
-    [[deprecated]]
-    bool loadItemFile(Item* item, const std::string& fileNameKey, const std::string& fileFormatKey = std::string()) const;
-    
     Item* currentParentItem() const;
 
     std::string projectDirectory() const;
 
     FilePathVariableProcessor* filePathVariableProcessor() const;
+
+    MessageOut* mout() const;
+
+    [[deprecated("Use resolveRelocatablePath(path, false).")]]
+    std::string expandPathVariables(const std::string& path) const {
+        return resolveRelocatablePath(path, false);
+    }
+    [[deprecated("Use loadFileTo(Item* item, const std::string& filepath)")]]
+    bool loadFileTo(const std::string& filepath, Item* item) const {
+        return loadFileTo(item, filepath);
+    }
+    [[deprecated]]
+    bool loadItemFile(Item* item, const std::string& fileNameKey, const std::string& fileFormatKey = std::string()) const;
+    
 
 private:
     ref_ptr<ArchiveSharedData> shared;
