@@ -28,10 +28,14 @@ public:
 class Sink : public Referenced
 {
 public:
-    std::function<void(const std::string& message, int type)> function;
+    std::function<void(const std::string& message, int type)> messageFunc;
+    std::function<void(const std::string& message, int type)> notifyFunc;
+    std::function<void()> flushFunc;
 
-    Sink(const std::function<void(const std::string& message, int type)>& func)
-        : function(func) { }
+    Sink(const std::function<void(const std::string& message, int type)>& messageFunc,
+         const std::function<void(const std::string& message, int type)>& notifyFunc,
+         const std::function<void()>& flushFunc)
+        : messageFunc(messageFunc), notifyFunc(notifyFunc), flushFunc(flushFunc) { }
 };
 typedef ref_ptr<Sink> SinkPtr;
     
@@ -56,10 +60,12 @@ public:
     bool isPendingMode;
     bool hasErrors;
 
-    unique_ptr<MessageOutStreamBuf> streamBuf;
+    ostream* direct_cout;
     unique_ptr<ostream> cout;
-    unique_ptr<MessageOutStreamBuf> errorStreamBuf;
+    unique_ptr<MessageOutStreamBuf> streamBuf;
+    ostream* direct_cerr;
     unique_ptr<ostream> cerr;
+    unique_ptr<MessageOutStreamBuf> errorStreamBuf;
 
     Impl(MessageOut* self);
 };
@@ -95,6 +101,7 @@ int MessageOutStreamBuf::sync()
 {
     auto p = &buf.front();
     mout.put(string(p, pptr() - p), messageType);
+    mout.flush();
     setp(p, p + buf.size());
     return 0;
 }
@@ -120,11 +127,37 @@ MessageOut::MessageOut()
 }
 
 
+MessageOut::MessageOut
+(std::function<void(const std::string& message, int type)> messageFunc,
+ std::function<void(const std::string& message, int type)> notifyFunc,
+ std::function<void()> flushFunc)
+{
+    impl = new Impl(this);
+    addSink(messageFunc, notifyFunc, flushFunc);
+}
+
+
+MessageOut::MessageOut(std::ostream& sink)
+{
+    impl = new Impl(this);
+
+    addSink(
+        [&sink](const std::string& message, int /* type */){ sink << message; },
+        [](const std::string& /* message */, int /* type */){ },
+        [&sink]{ sink.flush(); });
+    
+    impl->direct_cout = &sink;
+    impl->direct_cerr = &sink;
+}
+
+
 MessageOut::Impl::Impl(MessageOut* self)
     : self(self)
 {
     isPendingMode = false;
     hasErrors = false;
+    direct_cout = nullptr;
+    direct_cerr = nullptr;
 }
 
 
@@ -141,10 +174,13 @@ void MessageOut::clearSinks()
 }
     
 
-MessageOut::SinkHandle MessageOut::addSink(std::function<void(const std::string& message, int type)> func)
+MessageOut::SinkHandle MessageOut::addSink
+(std::function<void(const std::string& message, int type)> messageFunc,
+ std::function<void(const std::string& message, int type)> notifyFunc,
+ std::function<void()> flushFunc)
 {
     lock_guard<mutex> lock(sinkMutex);
-    impl->sinks.push_back(new Sink(func));
+    impl->sinks.push_back(new Sink(messageFunc, notifyFunc, flushFunc));
     return impl->sinks.back();
 }
 
@@ -169,7 +205,7 @@ void MessageOut::put(const std::string& message, int type)
     }
     if(!impl->isPendingMode){
         for(auto& sink : impl->sinks){
-            sink->function(message, type);
+            sink->messageFunc(message, type);
         }
     } else {
         impl->pendingMessages.emplace_back(message, type);
@@ -180,12 +216,35 @@ void MessageOut::put(const std::string& message, int type)
 void MessageOut::putln(const std::string& message, int type)
 {
     put(message + "\n", type);
+    flush();
+}
+
+
+void MessageOut::notify(const std::string& message, int type)
+{
+    putln(message, type);
+    for(auto& sink : impl->sinks){
+        sink->notifyFunc(message, type);
+    }
+}
+
+
+void MessageOut::flush()
+{
+    if(!impl->isPendingMode){
+        for(auto& sink : impl->sinks){
+            sink->flushFunc();
+        }
+    }
 }
 
 
 std::ostream& MessageOut::cout()
 {
     lock_guard<mutex> lock(sinkMutex);
+    if(impl->direct_cout){
+        return *impl->direct_cout;
+    }
     if(!impl->cout){
         impl->streamBuf = make_unique<MessageOutStreamBuf>(*this, Normal);
         impl->cout = make_unique<ostream>(impl->streamBuf.get());
@@ -197,6 +256,9 @@ std::ostream& MessageOut::cout()
 std::ostream& MessageOut::cerr()
 {
     lock_guard<mutex> lock(sinkMutex);
+    if(impl->direct_cerr){
+        return *impl->direct_cerr;
+    }
     if(!impl->cout){
         impl->errorStreamBuf = make_unique<MessageOutStreamBuf>(*this, Error);
         impl->cerr = make_unique<ostream>(impl->errorStreamBuf.get());
@@ -223,7 +285,8 @@ void MessageOut::flushPendingMessages()
     lock_guard<mutex> lock(sinkMutex);
     for(auto& message : impl->pendingMessages){
         for(auto& sink : impl->sinks){
-            sink->function(message.text, message.type);
+            sink->messageFunc(message.text, message.type);
+            sink->flushFunc();
         }
     }
     impl->pendingMessages.clear();

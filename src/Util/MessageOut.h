@@ -14,7 +14,11 @@ public:
     static MessageOut* interactive();
 
     MessageOut();
-    MessageOut(std::function<void(const std::string& message, int type)> sink);
+    MessageOut(
+        std::function<void(const std::string& message, int type)> messageFunc,
+        std::function<void(const std::string& message, int type)> notifyFunc,
+        std::function<void()> flushFunc);
+    MessageOut(std::ostream& sink);
     MessageOut(MessageOut* parent);
     ~MessageOut();
 
@@ -23,25 +27,26 @@ public:
     typedef ReferencedPtr SinkHandle;
 
     void clearSinks();
-    SinkHandle addSink(std::function<void(const std::string& message, int type)> sink);
+    SinkHandle addSink(
+        std::function<void(const std::string& message, int type)> messageFunc,
+        std::function<void(const std::string& message, int type)> notifyFunc,
+        std::function<void()> flushFunc);
     int numSinks() const;
     SinkHandle sinkHandle(int index);
     void removeSink(SinkHandle sink);
 
-    void put(const std::string& message, int type);
-    void putln(const std::string& message, int type);
+    void put(const std::string& message, int type = Normal);
+    void putln(const std::string& message, int type = Normal);
+    void notify(const std::string& message, int type = Normal);
 
-    void put(const std::string& message){
-        put(message, Normal);
-    }
-    void putln(const std::string& message){
-        putln(message, Normal);
-    }
     void putHighlighted(const std::string& message){
         put(message, Highlighted);
     }
     void putHighlightedln(const std::string& message){
         putln(message, Highlighted);
+    }
+    void notifyHighlighted(const std::string& message){
+        notify(message, Highlighted);
     }
     void putWarning(const std::string& message){
         put(message, Warning);
@@ -49,15 +54,23 @@ public:
     void putWarningln(const std::string& message){
         putln(message, Warning);
     }
+    void notifyWarning(const std::string& message){
+        notify(message, Warning);
+    }
     void putError(const std::string& message){
         put(message, Error);
     }
     void putErrorln(const std::string& message){
         putln(message, Error);
     }
+    void notifyError(const std::string& message){
+        notify(message, Error);
+    }
 
     std::ostream& cout();
     std::ostream& cerr();
+
+    void flush();
 
     void setPendingMode(bool on);
     void flushPendingMessages();

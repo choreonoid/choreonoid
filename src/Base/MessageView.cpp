@@ -286,15 +286,19 @@ MessageView::Impl::Impl(MessageView* self) :
 
     MessageOut::master()->addSink(
         [this](const std::string& message, int type){
-            put(message, type, false, false, true, false);
-        });
+            put(message, type, false, false, false, false);
+        },
+        [](const std::string& message, int /* type */){
+            InfoBar::instance()->notify(message);
+        },
+        [this]{ flush(); });
 
     MessageOut::interactive()->addSink(
         [this](const std::string& message, int type){
             switch(type){
             case MessageOut::Normal:
             case MessageOut::Highlighted:
-                put(message, type, false, false, true, false);
+                put(message, type, false, false, false, false);
                 break;
             case MessageOut::Warning:
                 showWarningDialog(message);
@@ -305,7 +309,11 @@ MessageView::Impl::Impl(MessageView* self) :
             default:
                 break;
             }
-        });
+        },
+        [](const std::string& message, int /* type */){
+            InfoBar::instance()->notify(message);
+        },
+        [this]{ flush(); });
 }
 
 
