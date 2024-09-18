@@ -381,9 +381,11 @@ void PluginManager::Impl::loadScannedPluginFiles(bool doActivation)
             if(numNotLoaded > 0){
                 for(auto& plugin : allPluginInfos){
                     if(plugin->status == PluginManager::NOT_LOADED){
-                        mout->putErrorln(formatR(_("Loading {0} failed.\n"), plugin->name));
+                        mout->putError(formatR(_("Loading {0} failed.\n"), plugin->name));
                         if(!plugin->lastErrorMessage.empty()){
                             mout->putErrorln(plugin->lastErrorMessage);
+                        } else {
+                            mout->flush();
                         }
                         plugin->status = PluginManager::INVALID;
                     }
@@ -428,8 +430,8 @@ void PluginManager::Impl::loadScannedPluginFiles(bool doActivation)
                                 lacks += info->requisites[j];
                             }
                         }
-                        mout->putError(
-                            formatR(_("{0}-plugin cannot be initialized because required plugin(s) {1} are not found.\n"),
+                        mout->putErrorln(
+                            formatR(_("{0}-plugin cannot be initialized because required plugin(s) {1} are not found."),
                                     info->name, lacks));
                     }
                 }
@@ -452,13 +454,16 @@ bool PluginManager::loadPlugin(int index)
 bool PluginManager::Impl::loadPlugin(int index, bool isLoadingMultiplePlugins)
 {
     PluginInfoPtr& info = allPluginInfos[index];
+    bool hasMessages = false;
     
     if(info->status == PluginManager::ACTIVE){
         mout->put(formatR(_("Plugin file \"{}\" has already been activated.\n"), info->pathString));
+        hasMessages = true;
 
     } else if(info->status == PluginManager::NOT_LOADED){
         if(false){
             mout->put(formatR(_("Detecting plugin file \"{}\".\n"), info->pathString));
+            hasMessages = true;
         }
 
         info->dll.setFileName(info->pathString.c_str());
@@ -494,8 +499,9 @@ bool PluginManager::Impl::loadPlugin(int index, bool isLoadingMultiplePlugins)
             if(!symbol){
                 info->status = PluginManager::INVALID;
                 info->lastErrorMessage = _("The plugin entry function \"getChoreonoidPlugin\" is not found.\n");
-                info->lastErrorMessage += info->dll.errorString().toStdString();
-                mout->putErrorln(info->lastErrorMessage);
+                info->lastErrorMessage += info->dll.errorString().toStdString() + "\n";
+                mout->putError(info->lastErrorMessage);
+                hasMessages = true;
 
             } else {
                 Plugin::PluginEntry getCnoidPluginFunc = (Plugin::PluginEntry)(symbol);
@@ -505,6 +511,7 @@ bool PluginManager::Impl::loadPlugin(int index, bool isLoadingMultiplePlugins)
                 if(!plugin){
                     info->status = PluginManager::INVALID;
                     mout->putError(_("The plugin object cannot be created.\n"));
+                    hasMessages = true;
 
                 } else {
                     info->status = PluginManager::LOADED;
@@ -517,6 +524,7 @@ bool PluginManager::Impl::loadPlugin(int index, bool isLoadingMultiplePlugins)
                                 _("The internal version of the {0} plugin is different from the system internal version.\n"
                                   "The plugin file \"{1}\" should be removed or updated to avoid a problem.\n"),
                                 info->name, info->pathString));
+                        hasMessages = true;
                     }
                         
                     const int numRequisites = plugin->numRequisites();
@@ -547,9 +555,10 @@ bool PluginManager::Impl::loadPlugin(int index, bool isLoadingMultiplePlugins)
             PluginInfoPtr& another = p->second;
             another->status = PluginManager::CONFLICT;
             info->lastErrorMessage =
-                formatR(_("Plugin file \"{0}\" conflicts with \"{1}\"."),
+                formatR(_("Plugin file \"{0}\" conflicts with \"{1}\".\n"),
                         info->pathString, another->pathString);
-            mout->putErrorln(info->lastErrorMessage);
+            mout->putError(info->lastErrorMessage);
+            hasMessages = true;
         }
     }
 
@@ -557,6 +566,11 @@ bool PluginManager::Impl::loadPlugin(int index, bool isLoadingMultiplePlugins)
         info->lastErrorMessage.clear();
     } else {
         mout->putError(_("Loading the plugin failed.\n"));
+        hasMessages = true;
+    }
+
+    if(hasMessages){
+        mout->flush();
     }
 
     return (info->status == PluginManager::LOADED);
@@ -566,11 +580,13 @@ bool PluginManager::Impl::loadPlugin(int index, bool isLoadingMultiplePlugins)
 bool PluginManager::Impl::activatePlugin(int index)
 {
     string errorMessage;
+    bool hasMessages = false;
 
     PluginInfoPtr info = allPluginInfos[index];
     
     if(info->status == PluginManager::ACTIVE){
         mout->putWarning(formatR(_("Plugin file \"{}\" has already been activated.\n"), info->pathString));
+        hasMessages = true;
 
     } else if(info->status == PluginManager::LOADED){
 
@@ -648,12 +664,18 @@ bool PluginManager::Impl::activatePlugin(int index)
                 }
                 
                 mout->put(formatR(_("{}-plugin has been activated.\n"), info->name));
+                hasMessages = true;
             }
         }
     }
 
     if(!errorMessage.empty()){
         mout->putErrorln(formatR(_("Loading the plugin failed.\n{0}"), errorMessage));
+        hasMessages = true;
+    }
+
+    if(hasMessages){
+        mout->flush();
     }
 
     return (info->status == PluginManager::ACTIVE);
@@ -727,8 +749,8 @@ bool PluginManager::Impl::finalizePlugin(PluginInfoPtr info)
             if(allDependentsFinalized){
                 info->plugin->isActive_ = false;
                 if(!info->plugin->finalize()){
-                    MessageOut::master()->putError(
-                        formatR(_("{0}-plugin cannot be finalized.\n"), info->name));
+                    mout->putErrorln(
+                        formatR(_("{0}-plugin cannot be finalized."), info->name));
                 } else {
                     bool isUnloadable = info->plugin->isUnloadable();
                     info->status = PluginManager::FINALIZED;
@@ -765,7 +787,7 @@ void PluginManager::Impl::unloadPluginsActually()
         if(info->dll.unload()){
             info->status = PluginManager::UNLOADED;
             nameToPluginInfoMap.erase(info->name);
-            mout->put(formatR(_("Plugin DLL \"{}\" has been unloaded.\n"), info->pathString));
+            mout->putln(formatR(_("Plugin DLL \"{}\" has been unloaded."), info->pathString));
             if(info->doReloading){
                 info->status = PluginManager::NOT_LOADED;
                 info->doReloading = false;

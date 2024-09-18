@@ -47,7 +47,7 @@ public:
     MprPosition* findPositionOrShowWarning(MprPositionStatement* statement, MessageOut* mout);
     BodyItemKinematicsKit* findKinematicsKit();
     bool moveTo(MprPosition* position, bool doUpdateAll, MessageOut* mout);
-    bool superimposePosition(MprPosition* position, MessageOut* mout);
+    bool superimposePosition(MprPosition* position);
     bool touchupPosition(MprPosition* position, MessageOut* mout);
 };
 
@@ -245,7 +245,7 @@ MprPosition* MprProgramItemBase::Impl::findPositionOrShowWarning(MprPositionStat
 {
     MprPosition* position = statement->position();
     if(!position && mout){
-        mout->putError(
+        mout->putErrorln(
             formatR(_("Position {0} is not found in {1}."),
                     statement->positionLabel(), self->name()).c_str());
     }
@@ -343,7 +343,7 @@ bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll, M
     }
 
     if(!errorMessage.empty() && mout){
-        mout->putError(errorMessage);
+        mout->putErrorln(errorMessage);
     }
 
     return updated;
@@ -353,15 +353,15 @@ bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll, M
 bool MprProgramItemBase::superimposePosition(MprPositionStatement* statement, MessageOut* mout)
 {
     if(auto position = impl->findPositionOrShowWarning(statement, mout)){
-        return impl->superimposePosition(position, mout);
+        return impl->superimposePosition(position);
     }
     return false;
 }
 
 
-bool MprProgramItemBase::superimposePosition(MprPosition* position, MessageOut* mout)
+bool MprProgramItemBase::superimposePosition(MprPosition* position, MessageOut* /* mout */)
 {
-    return impl->superimposePosition(position, mout);
+    return impl->superimposePosition(position);
 }
 
 
@@ -369,7 +369,7 @@ bool MprProgramItemBase::superimposePosition(MprPosition* position, MessageOut* 
    \todo Simplify the following implementation by using an independent BodySuperimposerAddons
    for each body item and updating the positions of all the boides simultaneously.
 */
-bool MprProgramItemBase::Impl::superimposePosition(MprPosition* position, MessageOut* mout)
+bool MprProgramItemBase::Impl::superimposePosition(MprPosition* position)
 {
     if(!targetBodyItemSet){
         return false;

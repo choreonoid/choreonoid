@@ -30,7 +30,7 @@ bool checkJointDisplacementRanges(JointTraverse& traverse, MessageOut* mout)
         if(joint->hasActualJoint()){
             if(joint->q() < joint->q_lower() || joint->q() > joint->q_upper()){
                 if(mout){
-                    mout->putError(
+                    mout->putErrorln(
                         formatR(_("The joint displacement of {0} is out of its movable range."),
                                 joint->jointName()));
                 }
@@ -418,7 +418,7 @@ bool MprIkPosition::fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout)
             int state = configuration->getCurrentNearSingularPointState();
             if(state > 0){
                 if(mout){
-                    mout->putError(
+                    mout->putErrorln(
                         formatR(_("The current manipulator position is not valid: {0}."),
                                 configuration->getNearSingularPointFactorString(state)));
                 }
@@ -683,9 +683,9 @@ bool MprCompositePosition::fetch(KinematicBodySet* bodySet, MessageOut* mout)
 
         if(numFetchedElements != numPositionElements){
             if(id().isValid()){
-                mout->putWarning(formatR(_("Could not fetch all the elements of position {0}."), id().label()));
+                mout->putWarningln(formatR(_("Could not fetch all the elements of position {0}."), id().label()));
             } else {
-                mout->putWarning(_("Could not fetch all the elements of the position."));
+                mout->putWarningln(_("Could not fetch all the elements of the position."));
             }
         }
     }
