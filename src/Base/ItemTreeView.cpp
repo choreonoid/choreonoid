@@ -129,7 +129,8 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
     auto selectAll = menu.addItem(_("Select all"));
     auto clearSelection = menu.addItem(_("Clear selection"));
 
-    bool isContinuousUpdateStateSubTree = item->isContinuousUpdateStateSubTree();
+    bool isContinuousUpdateStateSubTree =
+        item ? item->isContinuousUpdateStateSubTree() : false;
 
     if(!item || isContinuousUpdateStateSubTree){
         rename->setEnabled(false);
@@ -199,7 +200,7 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
             [this](){ itemTreeWidget->toggleSelectedItemChecks(); });
     }
 
-    if(itemTreeWidget->checkPastable(item) && !(item && isContinuousUpdateStateSubTree)){
+    if(itemTreeWidget->checkPastable(item) && !isContinuousUpdateStateSubTree){
         paste->setEnabled(true);
         paste->sigTriggered().connect(
             [this](){ itemTreeWidget->pasteItems(); });
