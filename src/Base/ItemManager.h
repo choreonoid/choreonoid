@@ -274,7 +274,9 @@ private:
         Item* item, const std::string& filename, const std::string& format, const Mapping* options = nullptr);
     static bool saveItemWithDialog(Item* item, const std::string& format = std::string(), bool doCheckFileImmutable = true);
     
-    static bool overwriteItem(Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog = false);
+    static bool overwriteItem(
+        Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog = false,
+        time_t cutoffTime = 0);
     static bool overwriteItemOrSaveItemWithDialog(Item* item, bool forceOverwrite, const std::string& format){
         return overwriteItem(item, forceOverwrite, format, true);
     }

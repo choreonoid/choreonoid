@@ -1035,7 +1035,7 @@ bool ItemManager::saveItemWithDialog(Item* item, const std::string& format, bool
 
 
 bool ItemManager::overwriteItem
-(Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog)
+(Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog, time_t cutoffTime)
 {
     if(doSaveItemWithDialog){
         if(!checkFileImmutable(item)){
@@ -1053,10 +1053,23 @@ bool ItemManager::overwriteItem
     } else {
         if(!filename.empty()){
             filesystem::path fpath(fromUTF8(filename));
-            if(!filesystem::exists(fpath) ||
-               filesystem::last_write_time_to_time_t(fpath) > item->fileModificationTime()){
+            if(!filesystem::exists(fpath)){
                 needToOverwrite = true;
-                filename.clear();
+                if(doSaveItemWithDialog){
+                    filename.clear();
+                }
+            } else if(cutoffTime == 0){
+                if(filesystem::last_write_time_to_time_t(fpath) != item->fileModificationTime()){
+                    // The actual file was replaced with another file
+                    needToOverwrite = true;
+                    if(doSaveItemWithDialog){
+                        filename.clear();
+                    }
+                }
+            } else { // The cutoff-time is specified
+                if(filesystem::last_write_time_to_time_t(fpath) < cutoffTime){
+                    needToOverwrite = true;
+                }
             }
         }
     }
