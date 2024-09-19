@@ -1,9 +1,9 @@
 #include "ItemFileIO.h"
 #include "ItemManager.h"
-#include "MessageView.h"
 #include <cnoid/NullOut>
 #include <cnoid/ValueTree>
 #include <cnoid/FilePathVariableProcessor>
+#include <cnoid/MessageOut>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
@@ -32,8 +32,7 @@ public:
     int currentInvocationType;
     Item* parentItem;
     Item* actuallyLoadedItem;
-    std::ostream* os;
-    MessageView* mv;
+    MessageOutPtr mout;
     std::string errorMessage;
     std::time_t lastSelectedTimeInLoadDialog;
     std::time_t lastSelectedTimeInSaveDialog;
@@ -68,8 +67,7 @@ ItemFileIO::Impl::Impl(ItemFileIO* self, const std::string& format, int api)
     isItemNameUpdateInSavingEnabled = true;
     currentInvocationType = Direct;
     parentItem = nullptr;
-    mv = MessageView::instance();
-    os = &mv->cout(true);
+    mout = MessageOut::master();
     lastSelectedTimeInLoadDialog = 0;
     lastSelectedTimeInSaveDialog = 0;
 }
@@ -107,8 +105,7 @@ ItemFileIO::Impl::Impl(ItemFileIO* self, const Impl& org)
 {
     currentInvocationType = Direct;
     parentItem = nullptr;
-    mv = MessageView::instance();
-    os = &mv->cout(true);
+    mout = org.mout;
 }
     
 
@@ -388,15 +385,14 @@ bool ItemFileIO::Impl::loadItem
     }
     this->parentItem = parentItem;
 
-    mv->notify(formatR(_("Loading {0} \"{1}\""), caption, filename));
-    mv->flush();
+    mout->notify(formatR(_("Loading {0} \"{1}\""), caption, filename));
 
     actuallyLoadedItem = item;
     bool loaded = self->load(item, filename);
-    mv->flush();
+    mout->flush();
 
     if(!loaded){
-        mv->put(_(" -> failed.\n"), MessageView::Highlight);
+        mout->putErrorln(_(" -> failed."));
     } else {
         if(item->name().empty()){
             item->setName(toUTF8(filesystem::path(fromUTF8(filename)).stem().string()));
@@ -419,9 +415,8 @@ bool ItemFileIO::Impl::loadItem
             parentItem->insertChild(nextItem, item, true);
         }
         
-        mv->put(_(" -> ok!\n"));
+        mout->putln(_(" -> ok!"));
     }
-    mv->flush();
 
     this->parentItem = nullptr;
     actuallyLoadedItem = nullptr;
@@ -481,19 +476,18 @@ bool ItemFileIO::Impl::saveItem
 
     bool isExport = (interfaceLevel == Conversion);
     if(!isExport){
-        mv->notify(
+        mout->notify(
             formatR(_("Saving {0} \"{1}\" to \"{2}\""), caption, item->displayName(), filename));
     } else {
-        mv->notify(
+        mout->notify(
             formatR(_("Exporting {0} \"{1}\" into \"{2}\""), caption, item->displayName(), filename));
     }
-    mv->flush();
 
     bool saved = self->save(item, filename);
-    mv->flush();
+    mout->flush();
 
     if(!saved){
-        mv->put(_(" -> failed.\n"), MessageView::Highlight);
+        mout->putErrorln(_(" -> failed."));
 
     } else {
         MappingPtr optionArchive;
@@ -514,9 +508,8 @@ bool ItemFileIO::Impl::saveItem
                 item->setName(newName);
             }
         }
-        mv->put(_(" -> ok!\n"));
+        mout->putln(_(" -> ok!"));
     }
-    mv->flush();
 
     this->parentItem = nullptr;
 
@@ -592,21 +585,33 @@ int ItemFileIO::currentInvocationType() const
 }
 
 
+void ItemFileIO::setMessageOut(MessageOut* mout)
+{
+    impl->mout = mout;
+}
+
+
+MessageOut* ItemFileIO::mout()
+{
+    return impl->mout;
+}
+
+
 std::ostream& ItemFileIO::os()
 {
-    return *impl->os;
+    return impl->mout->cout();
 }
 
 
 void ItemFileIO::putWarning(const std::string& message)
 {
-    impl->mv->putln(message, MessageView::Warning);
+    impl->mout->putWarningln(message);
 }
 
 
 void ItemFileIO::putError(const std::string& message)
 {
-    impl->mv->putln(message, MessageView::Error);
+    impl->mout->putErrorln(message);
 }
 
 

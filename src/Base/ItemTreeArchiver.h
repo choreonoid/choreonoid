@@ -9,12 +9,14 @@
 namespace cnoid {
 
 class Item;
+class MessageOut;
 
 class CNOID_EXPORT ItemTreeArchiver
 {
 public:
     ItemTreeArchiver();
     ~ItemTreeArchiver();
+    void setMessageOut(MessageOut* mout);
     void reset();
     void setTemporaryItemSaveEnabled(bool on);
     bool isTemporaryItemSaveEnabled() const;

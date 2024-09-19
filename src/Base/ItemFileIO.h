@@ -16,6 +16,7 @@ class Item;
 class ItemManager;
 class ItemFileDialog;
 class Mapping;
+class MessageOut;
 
 class CNOID_EXPORT ItemFileIO : public Referenced
 {
@@ -142,6 +143,8 @@ protected:
     // Save API
     virtual bool save(Item* item, const std::string& filename);
     
+    void setMessageOut(MessageOut* mout);
+    MessageOut* mout();
     std::ostream& os();
     void putWarning(const std::string& message);
     void putError(const std::string& message);
