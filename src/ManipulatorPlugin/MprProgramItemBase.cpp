@@ -542,14 +542,13 @@ void MprProgramItemBase::doPutProperties(PutPropertyFunction& putProperty)
 
 bool MprProgramItemBase::store(Archive& archive)
 {
-    if(overwriteOrSaveWithDialog()){
-        archive.writeFileInformation(this);
+    if(archive.saveItemToFile(this)){
         if(impl->isStartupProgram){
             archive.write("is_startup_program", true);
         }
         return true;
     }
-    return true;
+    return false;
 }
 
 
