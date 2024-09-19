@@ -1,7 +1,9 @@
 #include "Archive.h"
 #include "Item.h"
+#include "ProjectBackupManager.h"
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/MessageOut>
+#include <cnoid/Format>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <map>
@@ -295,20 +297,60 @@ std::string Archive::readItemFilePath() const
     }
     return filepath;
 }
-        
+
+
+bool Archive::loadFileTo(Item* item, bool& out_hasFileInformation) const
+{
+    bool loaded = false;
+    auto mout_ = mout();
+    out_hasFileInformation = false;
+
+    string file;
+    string fileFormat;
+    string backupFile;
+    string backupFileFormat;
+
+    if(read({ "file", "filename" }, file)){
+        out_hasFileInformation = true;
+        file = resolveRelocatablePath(file);
+    }
+    read("format", fileFormat);
+    read("backup_file", backupFile);
+    read("backup_file_format", backupFileFormat);
+
+    if(backupFile.empty()){
+        if(!file.empty()){
+            loaded = item->load(file, currentParentItem(), fileFormat, this, mout_);
+        }
+    } else  {
+        backupFile = resolveRelocatablePath(backupFile);
+        if(!backupFile.empty()){
+            loaded = item->load(backupFile, currentParentItem(), backupFileFormat, this, mout_);
+            if(loaded){
+                item->updateFileInformation(file, fileFormat, item->fileOptions(), false);
+                if(!file.empty()){
+                    filesystem::path filePath(fromUTF8(file));
+                    filesystem::path backupPath(fromUTF8(backupFile));
+                    std::error_code ec;
+                    if(!filesystem::equivalent(filePath, backupPath, ec)){
+                        item->setConsistentWithFile(false);
+                    }
+                    mout_->putln(
+                        formatR(_("Note that item \"{0}\" will be saved to the original file \"{1}\"."),
+                                item->displayName(), file));
+                }
+            }
+        }
+    }
+    
+    return loaded;
+}
+
 
 bool Archive::loadFileTo(Item* item) const
 {
-    string file;
-    if(read({ "file", "filename" }, file)){
-        file = resolveRelocatablePath(file);
-        if(!file.empty()){
-            string format;
-            read("format", format);
-            return item->load(file, currentParentItem(), format, this);
-        }
-    }
-    return false;
+    bool hasFileInformation;
+    return loadFileTo(item, hasFileInformation);
 }
 
 
@@ -362,6 +404,71 @@ bool Archive::writeFileInformation(Item* item)
         return true;
     }
     return false;
+}
+
+
+bool Archive::saveItemToFile(Item* item)
+{
+    if(!shared){
+        return false;
+    }
+    
+    bool saved = false;
+    
+    if(!shared->isSavingProjectAsBackup){
+        if(item->overwriteOrSaveWithDialog()){
+            writeFileInformation(item);
+            saved = true;
+        }
+    } else {
+        auto backupManager = ProjectBackupManager::instance();
+        filesystem::path backupFilePath;
+        filesystem::path hardLinkFilePath;
+        string fileFormat;
+        
+        if(backupManager->getItemBackupFileInformation(item, backupFilePath, hardLinkFilePath, fileFormat)){
+
+            string backupFilename = toUTF8(backupFilePath.string());
+
+            if(!hardLinkFilePath.empty()){
+                stdx::error_code ec;
+                filesystem::create_hard_link(hardLinkFilePath, backupFilePath, ec);
+                if(ec){
+                    mout()->putErrorln(toUTF8(ec.message()));
+                } else {
+                    saved = true;
+                }
+            } else {
+                string orgFilename = item->filePath();
+                string orgFileFormat = item->fileFormat();
+                time_t orgModificationTime = item->fileModificationTime();
+                bool orgProjectConsistency = item->isConsistentWithProjectArchive();
+                bool orgFileConsistency = item->isConsistentWithFile();
+
+                item->updateFileInformation(backupFilename, item->fileFormat(), item->fileOptions(), false);
+                item->setConsistentWithFile(false);
+                saved = item->overwrite(false, std::string(), orgModificationTime, mout());
+
+                fileFormat = item->fileFormat();
+                backupManager->setItemBackupFileFormat(item, fileFormat);
+                
+                item->updateFileInformation(orgFilename, orgFileFormat, item->fileOptions(), false);
+                item->setConsistentWithFile(orgFileConsistency);
+                item->setConsistentWithProjectArchive(orgProjectConsistency);
+            }
+
+            if(saved){
+                writeFileInformation(item);
+                if(!writeRelocatablePath("backup_file", backupFilename)){
+                    saved = false;
+                } else if(!fileFormat.empty()){
+                    write("backup_file_format", fileFormat);
+                }
+            }
+        }
+    }
+    
+    return saved;
 }
 
 
@@ -540,6 +647,12 @@ FilePathVariableProcessor* Archive::filePathVariableProcessor() const
         return shared->pathVariableProcessor;
     }
     return nullptr;
+}
+
+
+bool Archive::isSavingProjectAsBackup() const
+{
+    return shared ? shared->isSavingProjectAsBackup : false;
 }
 
 

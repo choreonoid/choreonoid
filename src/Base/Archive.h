@@ -67,20 +67,20 @@ public:
     std::string resolveRelocatablePath(const std::string& relocatable, bool doAbsolutize = true) const;
     bool readRelocatablePath(const std::string& key, std::string& out_value) const;
     std::string readItemFilePath() const;
-    
+
+    bool loadFileTo(Item* item, bool& out_hasFileInformation) const;
     bool loadFileTo(Item* item) const;
     bool loadFileTo(Item* item, const std::string& filepath) const;
 
     std::string getRelocatablePath(const std::string& path) const;
     bool writeRelocatablePath(const std::string& key, const std::string& path);
     bool writeFileInformation(Item* item);
+    bool saveItemToFile(Item* item);
 
     Item* currentParentItem() const;
-
     std::string projectDirectory() const;
-
     FilePathVariableProcessor* filePathVariableProcessor() const;
-
+    bool isSavingProjectAsBackup() const;
     MessageOut* mout() const;
 
     [[deprecated("Use resolveRelocatablePath(path, false).")]]
