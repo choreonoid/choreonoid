@@ -269,14 +269,15 @@ private:
     // The following static functions are called from functions in the Item class
     static bool loadItem(
         Item* item, const std::string& filename, Item* parentItem, const std::string& format,
-        const Mapping* options = nullptr);
+        const Mapping* options = nullptr, MessageOut* mout = nullptr);
     static bool saveItem(
-        Item* item, const std::string& filename, const std::string& format, const Mapping* options = nullptr);
+        Item* item, const std::string& filename, const std::string& format,
+        const Mapping* options = nullptr, MessageOut* mout = nullptr);
     static bool saveItemWithDialog(Item* item, const std::string& format = std::string(), bool doCheckFileImmutable = true);
     
     static bool overwriteItem(
         Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog = false,
-        time_t cutoffTime = 0);
+        time_t cutoffTime = 0, MessageOut* mout = nullptr);
     static bool overwriteItemOrSaveItemWithDialog(Item* item, bool forceOverwrite, const std::string& format){
         return overwriteItem(item, forceOverwrite, format, true);
     }

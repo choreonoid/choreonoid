@@ -94,6 +94,7 @@ public:
     MappingPtr fileOptions;
     std::time_t fileModificationTime;
     bool isConsistentWithFile;
+    int fileConsistencyId;
     bool isConsistentWithProjectArchive;
 
     Impl(Item* self);
@@ -186,6 +187,7 @@ Item::Impl::Impl(Item* self, const Impl& org)
         }
         fileModificationTime = org.fileModificationTime;
         isConsistentWithFile = org.isConsistentWithFile;
+        fileConsistencyId = org.fileConsistencyId;
     }
 }
 
@@ -204,6 +206,7 @@ void Item::Impl::initialize()
 
     fileModificationTime = 0;
     isConsistentWithFile = false;
+    fileConsistencyId = 0;
     isConsistentWithProjectArchive = false;
 }
 
@@ -1596,15 +1599,17 @@ Item::ContinuousUpdateRef::~ContinuousUpdateRef()
 }
 
 
-bool Item::load(const std::string& filename, const std::string& format, const Mapping* options)
+bool Item::load
+(const std::string& filename, const std::string& format, const Mapping* options, MessageOut* mout)
 {
-    return ItemManager::loadItem(this, filename, parentItem(), format, options);
+    return ItemManager::loadItem(this, filename, parentItem(), format, options, mout);
 }
 
 
-bool Item::load(const std::string& filename, Item* parent, const std::string& format, const Mapping* options)
+bool Item::load
+(const std::string& filename, Item* parent, const std::string& format, const Mapping* options, MessageOut* mout)
 {
-    return ItemManager::loadItem(this, filename, parent, format, options);
+    return ItemManager::loadItem(this, filename, parent, format, options, mout);
 }
 
 
@@ -1620,9 +1625,9 @@ bool Item::isFileSavable() const
 }
 
 
-bool Item::save(const std::string& filename, const std::string& format, const Mapping* options)
+bool Item::save(const std::string& filename, const std::string& format, const Mapping* options, MessageOut* mout)
 {
-    return ItemManager::saveItem(this, filename, format, options);
+    return ItemManager::saveItem(this, filename, format, options, mout);
 }
 
 
@@ -1632,16 +1637,15 @@ bool Item::saveWithFileDialog()
 }
 
 
-bool Item::overwriteOrSaveWithDialog(bool forceOverwrite, const std::string& format)
+bool Item::overwrite(bool forceOverwrite, const std::string& format, time_t cutoffTime, MessageOut* mout)
 {
-    return ItemManager::overwriteItemOrSaveItemWithDialog(this, forceOverwrite, format);
+    return ItemManager::overwriteItem(this, forceOverwrite, format, false, cutoffTime, mout);
 }
 
 
-bool Item::overwrite(bool forceOverwrite, const std::string& format)
+bool Item::overwriteOrSaveWithDialog(bool forceOverwrite, const std::string& format)
 {
-    // The fourth argument is currently true for the backward compatibility.
-    return ItemManager::overwriteItem(this, forceOverwrite, format, true);
+    return ItemManager::overwriteItemOrSaveItemWithDialog(this, forceOverwrite, format);
 }
 
 
@@ -1660,6 +1664,12 @@ std::string Item::fileName() const
 const std::string& Item::fileFormat() const
 {
     return impl->fileFormat;
+}
+
+
+Mapping* Item::fileOptions()
+{
+    return impl->fileOptions;
 }
 
 
@@ -1695,6 +1705,12 @@ bool Item::isConsistentWithFile() const
 }
 
 
+int Item::fileConsistencyId() const
+{
+    return impl->fileConsistencyId;
+}
+
+
 void Item::setConsistentWithFile(bool isConsistent)
 {
     impl->isConsistentWithFile = isConsistent;
@@ -1707,11 +1723,13 @@ void Item::setConsistentWithFile(bool isConsistent)
 void Item::suggestFileUpdate()
 {
     impl->isConsistentWithFile = false;
+    impl->fileConsistencyId++;
     impl->isConsistentWithProjectArchive = false;
 }
 
 
-void Item::updateFileInformation(const std::string& filename, const std::string& format, Mapping* options)
+void Item::updateFileInformation
+(const std::string& filename, const std::string& format, Mapping* options, bool doNotify)
 {
     filesystem::path fpath(fromUTF8(filename));
     if(filesystem::exists(fpath)){
@@ -1726,7 +1744,9 @@ void Item::updateFileInformation(const std::string& filename, const std::string&
     impl->fileFormat = format;
     impl->fileOptions = options;
 
-    notifyUpdate();
+    if(doNotify){
+        notifyUpdate();
+    }
 }
 
 

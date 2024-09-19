@@ -12,6 +12,7 @@
 #include "MainMenu.h"
 #include "Action.h"
 #include "CheckBox.h"
+#include <cnoid/MessageOut>
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
@@ -932,12 +933,22 @@ void ItemManager::addSaver_
 
 
 bool ItemManager::loadItem
-(Item* item, const std::string& filename, Item* parentItem, const std::string& format, const Mapping* options)
+(Item* item, const std::string& filename, Item* parentItem, const std::string& format, const Mapping* options,
+ MessageOut* mout)
 {
+    bool loaded = false;
     if(auto fileIO = Impl::findMatchedFileIO(typeid(*item), filename, format, ItemFileIO::Load)){
-        return fileIO->loadItem(item, filename, parentItem, false, nullptr, options);
+        MessageOutPtr orgMout;
+        if(mout){
+            orgMout = fileIO->mout();
+            fileIO->setMessageOut(mout);
+        }
+        loaded = fileIO->loadItem(item, filename, parentItem, false, nullptr, options);
+        if(mout){
+            fileIO->setMessageOut(orgMout);
+        }
     }
-    return false;
+    return loaded;
 }
 
 
@@ -980,12 +991,21 @@ Item* ItemManager::findOriginalItemForReloadedItem(Item* item)
 
 
 bool ItemManager::saveItem
-(Item* item, const std::string& filename, const std::string& format, const Mapping* options)
+(Item* item, const std::string& filename, const std::string& format, const Mapping* options, MessageOut* mout)
 {
+    bool saved = false;
     if(auto fileIO = Impl::findMatchedFileIO(typeid(*item), filename, format, ItemFileIO::Save)){
-        return fileIO->saveItem(item, filename, options);
+        MessageOutPtr orgMout;
+        if(mout){
+            orgMout = fileIO->mout();
+            fileIO->setMessageOut(mout);
+        }
+        saved = fileIO->saveItem(item, filename, options);
+        if(mout){
+            fileIO->setMessageOut(orgMout);
+        }
     }
-    return false;
+    return saved;
 }
 
 
@@ -1035,7 +1055,8 @@ bool ItemManager::saveItemWithDialog(Item* item, const std::string& format, bool
 
 
 bool ItemManager::overwriteItem
-(Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog, time_t cutoffTime)
+(Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog, time_t cutoffTime,
+ MessageOut* mout)
 {
     if(doSaveItemWithDialog){
         if(!checkFileImmutable(item)){
@@ -1080,7 +1101,7 @@ bool ItemManager::overwriteItem
     bool synchronized = !needToOverwrite;
     if(!synchronized){
         if(!filename.empty() && format.empty()){
-            synchronized = saveItem(item, filename, lastFormat, item->fileOptions());
+            synchronized = saveItem(item, filename, lastFormat, item->fileOptions(), mout);
         } 
         if(!synchronized && doSaveItemWithDialog){
             synchronized = saveItemWithDialog(item, format, false);
