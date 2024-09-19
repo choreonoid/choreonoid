@@ -121,6 +121,13 @@ MessageOut* MessageOut::interactive()
 }
 
 
+MessageOut* MessageOut::nullout()
+{
+    static MessageOutPtr instance = new MessageOut;
+    return instance;
+}
+
+
 MessageOut::MessageOut()
 {
     impl = new Impl(this);

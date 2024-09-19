@@ -12,6 +12,7 @@ class CNOID_EXPORT MessageOut : public Referenced
 public:
     static MessageOut* master();
     static MessageOut* interactive();
+    static MessageOut* nullout();
 
     MessageOut();
     MessageOut(
