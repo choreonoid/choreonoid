@@ -107,11 +107,13 @@ void MprProgramItemBase::Impl::initialize()
 
     topLevelProgram->sigStatementRemoved().connect(
         [&](MprStatement*, MprProgram*){
-            self->suggestFileUpdate(); });
+            self->suggestFileUpdate();
+        });
 
     topLevelProgram->sigStatementUpdated().connect(
         [&](MprStatement*){
-            self->suggestFileUpdate(); });
+            self->suggestFileUpdate();
+        });
 }
     
 

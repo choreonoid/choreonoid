@@ -27,9 +27,10 @@ public:
     MprProgram* self;
     weak_ref_ptr<MprStructuredStatement> holderStatement;
     MprPositionListPtr positionList;
-    Signal<void(MprStatement* statement)> sigStatementUpdated;
     Signal<void(iterator iter)> sigStatementInserted;
     Signal<void(MprStatement* statement, MprProgram* program)> sigStatementRemoved;
+    Signal<void(MprStatement* statement)> sigStatementUpdated;
+    Signal<void(MprStatement* statement)> sigStatementReferenceUpdated;
     std::string name;
     std::function<PositionTagGroup*(const std::string& name)> positionTagGroupFinder;
 
@@ -222,6 +223,18 @@ void MprProgram::notifyStatementUpdate(MprStatement* statement) const
 }
 
 
+void MprProgram::notifyStatementReferenceUpdate(MprStatement* statement) const
+{
+    impl->sigStatementReferenceUpdated(statement);
+
+    if(auto hs = holderStatement()){
+        if(auto hp = hs->holderProgram()){
+            hp->notifyStatementReferenceUpdate(statement);
+        }
+    }
+}
+
+
 SignalProxy<void(MprProgram::iterator iter)> MprProgram::sigStatementInserted()
 {
     return impl->sigStatementInserted;
@@ -238,6 +251,12 @@ MprProgram::sigStatementRemoved()
 SignalProxy<void(MprStatement* statement)> MprProgram::sigStatementUpdated()
 {
     return impl->sigStatementUpdated;
+}
+
+
+SignalProxy<void(MprStatement* statement)> MprProgram::sigStatementReferenceUpdated()
+{
+    return impl->sigStatementReferenceUpdated;
 }
 
 

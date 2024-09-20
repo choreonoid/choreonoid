@@ -29,7 +29,8 @@ public:
     const std::string& originalTagGroupName() const { return tagGroupName(); }
 
     void setTagGroup(
-        PositionTagGroup* tags, bool doUpdateTagGroupName, bool doUpdateTagTraceProgram, bool doNotifyUpdate);
+        PositionTagGroup* tags, bool doUpdateTagGroupName, bool doUpdateTagTraceProgram,
+        bool doNotifyReferenceUpdate);
     PositionTagGroup* tagGroup() { return tagGroup_; }
 
     //! The position of the tag group on the base coordinate frame

@@ -912,6 +912,11 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
         program->sigStatementUpdated().connect(
             [this](MprStatement* statement){
                 onStatementUpdated(statement); }));
+
+    programConnections.add(
+        program->sigStatementReferenceUpdated().connect(
+            [this](MprStatement* statement){
+                onStatementUpdated(statement); }));
     
     programNameLabel.setStyleSheet("font-weight: bold");
 

@@ -65,7 +65,7 @@ std::string MprTagTraceStatement::label(int index) const
 
 
 void MprTagTraceStatement::setTagGroup
-(PositionTagGroup* tags, bool doUpdateTagGroupName, bool doUpdateTagTraceProgram, bool doNotifyUpdate)
+(PositionTagGroup* tags, bool doUpdateTagGroupName, bool doUpdateTagTraceProgram, bool doNotifyReferenceUpdate)
 {
     if(tags != tagGroup_){
         tagGroupConnections.disconnect();
@@ -83,8 +83,10 @@ void MprTagTraceStatement::setTagGroup
         if(doUpdateTagTraceProgram){
             updateTagTraceProgram();
         }
-        if(doNotifyUpdate){
-            notifyUpdate();
+        if(doNotifyReferenceUpdate){
+            if(auto holder = holderProgram()){
+                holder->notifyStatementReferenceUpdate(this);
+            }
         }
     }
 }

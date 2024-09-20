@@ -1,6 +1,7 @@
 #include "MprStatementPanel.h"
 #include "MprProgramItemBase.h"
 #include <cnoid/KinematicBodyItemSet>
+#include <cnoid/ConnectionSet>
 
 using namespace std;
 using namespace cnoid;
@@ -14,7 +15,7 @@ public:
     MprProgramItemBasePtr programItem;
     MprStatementPtr statement;
     function<void(const std::string& caption)> setCaption;
-    ScopedConnection statementUpdateConnection;
+    ScopedConnectionSet statementUpdateConnections;
 
     Impl(MprStatementPanel* self);
 };
@@ -56,14 +57,22 @@ void MprStatementPanel::activate
     impl->statement = statement;
     impl->setCaption = setCaption;
 
-    impl->statementUpdateConnection =
+    impl->statementUpdateConnections.add(
         programItem->program()->sigStatementUpdated().connect(
             [this](MprStatement* updated){
                 if(updated == impl->statement){
                     onStatementUpdated();
                 }
-            });
+            }));
 
+    impl->statementUpdateConnections.add(
+        programItem->program()->sigStatementReferenceUpdated().connect(
+            [this](MprStatement* updated){
+                if(updated == impl->statement){
+                    onStatementUpdated();
+                }
+            }));
+    
     setEditable(statement->holderProgram()->isEditable());
 
     onActivated();
@@ -77,7 +86,7 @@ void MprStatementPanel::deactivate()
     impl->programItem.reset();
     impl->statement.reset();
     impl->setCaption = nullptr;
-    impl->statementUpdateConnection.disconnect();
+    impl->statementUpdateConnections.disconnect();
 }
 
 

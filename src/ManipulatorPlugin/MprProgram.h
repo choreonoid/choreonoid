@@ -63,8 +63,10 @@ public:
     SignalProxy<void(MprProgram::iterator iter)> sigStatementInserted();
     SignalProxy<void(MprStatement* statement, MprProgram* program)> sigStatementRemoved();
     SignalProxy<void(MprStatement* statement)> sigStatementUpdated();
+    SignalProxy<void(MprStatement* statement)> sigStatementReferenceUpdated();
     
     void notifyStatementUpdate(MprStatement* statement) const;
+    void notifyStatementReferenceUpdate(MprStatement* statement) const;
 
     MprStructuredStatement* holderStatement() const;
     bool isTopLevelProgram() const;
