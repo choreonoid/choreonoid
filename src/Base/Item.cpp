@@ -205,7 +205,7 @@ void Item::Impl::initialize()
     self->isSelected_ = false;
 
     fileModificationTime = 0;
-    isConsistentWithFile = false;
+    isConsistentWithFile = true;
     fileConsistencyId = 0;
     isConsistentWithProjectArchive = false;
 }
