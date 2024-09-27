@@ -325,7 +325,7 @@ bool ValueNode::read(std::string& out_value) const
 {
     if(isScalar()){
         out_value = static_cast<const ScalarNode* const>(this)->stringValue_;
-        return !out_value.empty();
+        return true;
     }
     return false;
 }
