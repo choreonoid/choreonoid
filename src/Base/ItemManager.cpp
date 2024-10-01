@@ -838,9 +838,17 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
 
     if(!targetFileIO){
         if(format.empty()){
-            messageView->putln(
-                formatR(_("The file format for accessing \"{0}\" cannot be determined."), filename),
-                MessageView::Error);
+            for(auto& fileIO : fileIOs){
+                if(fileIO->hasApi(ioTypeFlag)){
+                    targetFileIO = fileIO;
+                    break;
+                }
+            }
+            if(!targetFileIO){
+                messageView->putln(
+                    formatR(_("The file format for accessing \"{0}\" cannot be determined."), filename),
+                    MessageView::Error);
+            }
         } else {
             messageView->putln(
                 formatR(_("Unknown file format \"{0}\" is specified in accessing \"{1}\"."), format, filename),
