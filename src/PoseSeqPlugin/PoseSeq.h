@@ -51,6 +51,8 @@ public:
         return poses.size();
     }
 
+    void clear();
+
     iterator begin(){
         return poses.begin();
     }

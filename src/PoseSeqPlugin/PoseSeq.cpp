@@ -61,6 +61,15 @@ void PoseSeq::setName(const std::string& name)
 }
 
 
+void PoseSeq::clear()
+{
+    auto it = poses.begin();
+    while(it != poses.end()){
+        it = erase(it);
+    }
+}
+
+
 bool PoseSeq::load(const std::string& filename, const Body* body)
 {
     errorMessage_.clear();

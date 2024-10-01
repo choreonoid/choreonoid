@@ -1006,8 +1006,13 @@ bool PoseSeqItem::store(Archive& archive)
 
 bool PoseSeqItem::Impl::store(Archive& archive)
 {
-    if(self->overwriteOrSaveWithDialog()){
-        archive.writeFileInformation(self);
+    bool stored = false;
+    if(seq->empty() && self->filePath().empty()){
+        stored = true;
+    } else {
+        stored = archive.saveItemToFile(self);
+    }
+    if(stored){
         archive.write("bar_length", barLength);
         if(bodyMotionItem->isSelected()){
             archive.write("is_body_motion_selected", true);
@@ -1015,9 +1020,8 @@ bool PoseSeqItem::Impl::store(Archive& archive)
         if(bodyMotionItem->isChecked()){
             archive.write("is_body_motion_checked", true);
         }
-        return true;
     }
-    return false;
+    return stored;
 }
 
 
@@ -1029,7 +1033,13 @@ bool PoseSeqItem::restore(const Archive& archive)
 
 bool PoseSeqItem::Impl::restore(const Archive& archive)
 {
-    if(archive.loadFileTo(self)){
+    bool hasFileInformation;
+    bool loaded = archive.loadFileTo(self, hasFileInformation);
+    if(loaded || !hasFileInformation){
+        if(!loaded){
+            seq->clear();
+            self->setConsistentWithFile(true);
+        }
         archive.read({ "bar_length", "barLength" }, barLength);
         if(archive.get("is_body_motion_selected", false)){
             bodyMotionItem->setSelected(true);
