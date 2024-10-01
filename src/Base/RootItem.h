@@ -84,6 +84,9 @@ public:
 
     SignalProxy<void(Item* item, bool on)> sigCheckToggled(int checkId = PrimaryCheck);
 
+    bool hasAnyItemsInContinuousUpdateState() const;
+    SignalProxy<void(bool on)> sigTreeContinuousUpdateStateExistenceChanged();
+
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
@@ -100,6 +103,8 @@ private:
     void notifyEventOnSubTreeMoved(Item* item, std::vector<Item*>& orgSubTreeItems);
     void notifyEventOnSubTreeRemoving(Item* item, bool isMoving);
     void notifyEventOnSubTreeRemoved(Item* item, bool isMoving);
+    void incrementContinuousUpdateStateItemRef();
+    void decrementContinuousUpdateStateItemRef();
     void emitSigItemAssinged(Item* assigned, const Item* srcItem);
     void emitSigItemNameChanged(Item* item, const std::string& oldName);
     void emitSigSelectionChanged(Item* item, bool on, bool isCurrent);

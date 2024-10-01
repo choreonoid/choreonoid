@@ -123,7 +123,7 @@ public:
         Item* newParentItem, Item* newNextItem, bool isManualOperation, vector<function<void()>>& callbacksWhenAdded);
     bool checkNewTreePositionAcceptanceIter(bool isManualOperation, vector<function<void()>>& callbacksWhenAdded);
     void collectSubTreeItems(vector<Item*>& items, Item* item);
-    void callFuncOnConnectedToRoot();
+    void callFuncOnConnectedToRoot(RootItem* rootItem);
     void justRemoveSelfFromParent();
     void doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted);
     void notifySubTreeItemsOfTreePositionChange(Item* prevParentItem, Item* prevNextSibling);
@@ -131,7 +131,7 @@ public:
         Item* topItem, Item* prevTopParentItem, Item* topPathChangedItem, bool isPathChanged = false);
     void addToItemsToEmitSigSubTreeChanged();
     static void emitSigSubTreeChanged();
-    void emitSigDisconnectedFromRootForSubTree();
+    void emitSigDisconnectedFromRootForSubTree(RootItem* rootItem);
     void traverse(Item* item, const std::function<bool(Item*)>& callback);
     void removeAddon(ItemAddon* addon, bool isMoving);
     ItemAddon* createAddon(const std::type_info& type);
@@ -784,7 +784,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
            committed on October 31, 2018, and the reason why the order was changed at that time is not clear.
         */
         if(!isMoving){
-            item->impl->callFuncOnConnectedToRoot();
+            item->impl->callFuncOnConnectedToRoot(rootItem);
         }
 
         item->impl->notifySubTreeItemsOfTreePositionChange(prevParentItem, prevNextSibling);
@@ -925,11 +925,14 @@ void Item::Impl::collectSubTreeItems(vector<Item*>& items, Item* item)
 }
 
 
-void Item::Impl::callFuncOnConnectedToRoot()
+void Item::Impl::callFuncOnConnectedToRoot(RootItem* rootItem)
 {
     self->onConnectedToRoot();
+    if(self->isContinuousUpdateState()){
+        rootItem->incrementContinuousUpdateStateItemRef();
+    }
     for(Item* child = self->childItem(); child; child = child->nextItem()){
-        child->impl->callFuncOnConnectedToRoot();
+        child->impl->callFuncOnConnectedToRoot(rootItem);
     }
 }
 
@@ -997,7 +1000,7 @@ void Item::Impl::doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted
         rootItem->notifyEventOnSubTreeRemoved(self, isMoving);
         if(!isMoving){
             notifySubTreeItemsOfTreePositionChange(prevParent, prevNextSibling);
-            emitSigDisconnectedFromRootForSubTree();
+            emitSigDisconnectedFromRootForSubTree(rootItem);
         }
     }
 
@@ -1167,11 +1170,16 @@ void Item::Impl::emitSigSubTreeChanged()
 }
 
 
-void Item::Impl::emitSigDisconnectedFromRootForSubTree()
+void Item::Impl::emitSigDisconnectedFromRootForSubTree(RootItem* rootItem)
 {
     for(Item* child = self->childItem(); child; child = child->nextItem()){
-        child->impl->emitSigDisconnectedFromRootForSubTree();
+        child->impl->emitSigDisconnectedFromRootForSubTree(rootItem);
     }
+    
+    if(self->isContinuousUpdateState()){
+        rootItem->decrementContinuousUpdateStateItemRef();
+    }
+    
     sigDisconnectedFromRoot();
 
     self->onDisconnectedFromRoot();
@@ -1580,6 +1588,9 @@ Item::ContinuousUpdateRef::ContinuousUpdateRef(Item* item)
         if(!hasOnInUpperNodes){
             item->impl->notifyContinuousUpdateStateChangeRecursively(true);
         }
+        if(auto rootItem = item->findRootItem()){
+            rootItem->incrementContinuousUpdateStateItemRef();
+        }
     }
 }
 
@@ -1593,6 +1604,9 @@ Item::ContinuousUpdateRef::~ContinuousUpdateRef()
             item->impl->sigContinuousUpdateStateChanged(false);
             if(!hasOnInUpperNodes){
                 item->impl->notifyContinuousUpdateStateChangeRecursively(false);
+            }
+            if(auto rootItem = item->findRootItem()){
+                rootItem->decrementContinuousUpdateStateItemRef();
             }
         }
     }

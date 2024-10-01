@@ -67,6 +67,9 @@ public:
     Signal<void(Item* assigned, const Item* srcItem)> sigItemAssigned;
     Signal<void(Item* item, const std::string& oldName)> sigItemNameChanged;
 
+    Signal<void(bool on)> sigTreeContinuousUpdateStateExistenceChanged;
+    int continuousUpdateStateItemRef;
+
     Impl(RootItem* self);
     void selectItemIter(Item* item, Item* itemToSelect);
     bool updateSelectedItemsIter(Item* item);
@@ -166,6 +169,8 @@ RootItem::Impl::Impl(RootItem* self)
                 isProjectBeingLoaded = false;
             }
         });
+
+    continuousUpdateStateItemRef = 0;    
 }
 
 
@@ -322,6 +327,24 @@ void RootItem::notifyEventOnSubTreeRemoved(Item* item, bool isMoving)
     
     
     impl->sigSubTreeRemoved(item, isMoving);
+}
+
+
+void RootItem::incrementContinuousUpdateStateItemRef()
+{
+    ++impl->continuousUpdateStateItemRef;
+    if(impl->continuousUpdateStateItemRef == 1){
+        impl->sigTreeContinuousUpdateStateExistenceChanged(true);
+    }
+}
+
+
+void RootItem::decrementContinuousUpdateStateItemRef()
+{
+    --impl->continuousUpdateStateItemRef;
+    if(impl->continuousUpdateStateItemRef == 0){
+        impl->sigTreeContinuousUpdateStateExistenceChanged(false);
+    }
 }
 
 
@@ -604,6 +627,18 @@ SignalProxy<void(Item* item, bool on)> RootItem::sigCheckToggled(int checkId)
         }
     }
     return impl->sigCheckToggledDummy;
+}
+
+
+bool RootItem::hasAnyItemsInContinuousUpdateState() const
+{
+    return impl->continuousUpdateStateItemRef > 0;
+}
+
+
+SignalProxy<void(bool on)> RootItem::sigTreeContinuousUpdateStateExistenceChanged()
+{
+    return impl->sigTreeContinuousUpdateStateExistenceChanged;
 }
 
 
