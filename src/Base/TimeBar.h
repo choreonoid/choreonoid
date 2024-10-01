@@ -68,7 +68,10 @@ public:
     void startPlayback();
     void startPlayback(double time);
     void stopPlayback(bool isStoppedManually = false);
-    bool isDoingPlayback();
+    bool isDoingPlayback() const;
+
+    //! In contrast to isDoingPlayback(), this function returns true even when initializing or finalizing the playback.
+    bool isPlaybackProcessing() const;
 
     bool isOngoingTimeSyncEnabled() const;
     void setOngoingTimeSyncEnabled(bool on);

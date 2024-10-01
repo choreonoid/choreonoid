@@ -98,6 +98,7 @@ public:
     bool isRepeatMode;
     bool isAutoExpansionMode;
     bool isDoingPlayback;
+    bool isPlaybackProcessing;
     bool hasOngoingTime;
     bool isOngoingTimeSyncEnabled;
     map<int, double> ongoingTimeMap;
@@ -197,6 +198,7 @@ TimeBar::Impl::Impl(TimeBar* self)
     isRepeatMode = false;
     isAutoExpansionMode = true;
     isDoingPlayback = false;
+    isPlaybackProcessing = false;
     hasOngoingTime = false;
     isOngoingTimeSyncEnabled = true;
     timerId = 0;
@@ -663,6 +665,8 @@ void TimeBar::Impl::startPlayback(double time)
 {
     stopPlayback(false);
 
+    isPlaybackProcessing = true;
+
     bool isOngoingTimeValid = hasOngoingTime && isOngoingTimeSyncEnabled;
     if(isOngoingTimeValid){
         time = ongoingTime;
@@ -704,6 +708,10 @@ void TimeBar::Impl::startPlayback(double time)
             timerId = startTimer(interval, Qt::PreciseTimer);
             elapsedTimer.start();
         }
+    }
+
+    if(!isDoingPlayback){
+        isPlaybackProcessing = false;
     }
 }
 
@@ -750,13 +758,21 @@ double TimeBar::Impl::stopPlayback(bool isStoppedManually)
         }
     }
 
+    isPlaybackProcessing = false;
+
     return lastValidTime;
 }
 
 
-bool TimeBar::isDoingPlayback()
+bool TimeBar::isDoingPlayback() const
 {
     return impl->isDoingPlayback;
+}
+
+
+bool TimeBar::isPlaybackProcessing() const
+{
+    return impl->isPlaybackProcessing;
 }
 
 
