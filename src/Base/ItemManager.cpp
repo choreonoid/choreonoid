@@ -1102,8 +1102,10 @@ bool ItemManager::overwriteItem
             }
         }
     }
-    if(!needToOverwrite && !item->isConsistentWithFile()){
-        needToOverwrite = true;
+    if(!needToOverwrite){
+        if(!item->isConsistentWithFile() || (filename.empty() && doSaveItemWithDialog)){
+            needToOverwrite = true;
+        }
     }
 
     bool synchronized = !needToOverwrite;
