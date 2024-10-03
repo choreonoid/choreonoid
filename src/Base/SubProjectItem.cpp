@@ -28,7 +28,6 @@ public:
     std::string projectFileToLoad;
     Selection saveMode;
     bool isSavingSubProject;
-    ScopedConnectionSet updateConnections;
     unique_ptr<ProjectManager> projectManager_;
 
     Impl(SubProjectItem* self);
@@ -36,8 +35,6 @@ public:
     bool loadSubProject(const std::string& filename);
     ProjectManager* projectManager();
     void doLoadSubProject(const std::string& filename);
-    void enableSubProjectUpdateDetection();
-    void onSubProjectUpdated();
     bool saveSubProject(const std::string& filename);
 };
 
@@ -160,38 +157,8 @@ void SubProjectItem::Impl::doLoadSubProject(const std::string& filename)
             itemTreeView->itemTreeWidget()->setExpanded(self);
         }
     }
-
-    if(saveMode.is(SubProjectItem::AUTOMATIC_SAVE)){
-        enableSubProjectUpdateDetection();
-    }
 }
 
-
-void SubProjectItem::Impl::enableSubProjectUpdateDetection()
-{
-    updateConnections.disconnect();
-
-    for(auto& item : self->descendantItems()){
-        updateConnections.add(
-            item->sigNameChanged().connect(
-                [&](const std::string&){ onSubProjectUpdated(); }));
-        updateConnections.add(
-            item->sigUpdated().connect(
-                [&](){ onSubProjectUpdated(); }));
-    }
-
-    updateConnections.add(
-        self->sigSubTreeChanged().connect(
-            [&](){ onSubProjectUpdated(); }));
-}
-
-
-void SubProjectItem::Impl::onSubProjectUpdated()
-{
-    self->suggestFileUpdate();
-    self->notifyUpdate();
-}
-    
 
 bool SubProjectItem::Impl::saveSubProject(const std::string& filename)
 {
@@ -218,10 +185,7 @@ void SubProjectItem::setSaveMode(int mode)
 {
     if(impl->saveMode.select(mode)){
         if(mode == MANUAL_SAVE){
-            impl->updateConnections.disconnect();
             setConsistentWithFile(true);
-        } else {
-            impl->enableSubProjectUpdateDetection();
         }
     }
 }
@@ -241,10 +205,16 @@ void SubProjectItem::doPutProperties(PutPropertyFunction& putProperty)
 bool SubProjectItem::store(Archive& archive)
 {
     if(!impl->isSavingSubProject){
-        if(overwriteOrSaveWithDialog()){
-            archive.writeFileInformation(this);
-            archive.write("save_mode", impl->saveMode.selectedSymbol(), DOUBLE_QUOTED);
+        if(impl->saveMode.is(SubProjectItem::AUTOMATIC_SAVE)){
+            if(!ProjectManager::checkIfItemsConsistentWithProjectArchive(this)){
+                // To save the sub-tree as a sub-project file
+                suggestFileUpdate();
+            }
         }
+        if(!archive.saveItemToFile(this)){
+            return false;
+        }
+        archive.write("save_mode", impl->saveMode.selectedSymbol(), DOUBLE_QUOTED);
     }
     return true;
 }
