@@ -1,5 +1,6 @@
 #include "ProjectManager.h"
 #include "RootItem.h"
+#include "SubProjectItem.h"
 #include "ItemManager.h"
 #include "ViewManager.h"
 #include "ToolBar.h"
@@ -1012,6 +1013,11 @@ bool ProjectManager::Impl::checkIfItemsConsistentWithProjectArchive(Item* item) 
 {
     if(!item->isConsistentWithProjectArchive()){
         return false;
+    }
+    if(auto subProjectItem = dynamic_cast<SubProjectItem*>(item)){
+        if(subProjectItem->saveMode() == SubProjectItem::MANUAL_SAVE){
+            return true; // Do not check sub-project items if the sub-project is the manusal save mode.
+        }
     }
     for(auto child = item->childItem(); child; child = child->nextItem()){
         if(!checkIfItemsConsistentWithProjectArchive(child)){
