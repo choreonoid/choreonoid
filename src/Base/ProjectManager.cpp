@@ -85,8 +85,8 @@ public:
     void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
     bool onSaveDialogAboutToFinish(int result);
     bool confirmToCloseProject(bool isAboutToLoadNewProject);
-    bool checkValidItemExistence(Item* item) const;
-    bool checkIfItemsConsistentWithProjectArchive(Item* item) const;
+    static bool checkValidItemExistence(Item* item);
+    static bool checkIfItemsConsistentWithProjectArchive(Item* item, bool isTopItem = true);
 
     void connectArchiver(
         const std::string& name,
@@ -722,10 +722,8 @@ bool ProjectManager::Impl::saveProject
         item = rootItem;
     }
     
-    mout->put("\n");
-    if(isSubProject){
-        mout->notify(formatR(_("Saving sub project {0} as \"{1}\" ..."), item->displayName(), filename));
-    } else {
+    if(!isSubProject){
+        mout->put("\n");
         mout->notify(formatR(_("Saving the project as \"{}\" ..."), filename));
     }
     
@@ -793,12 +791,20 @@ bool ProjectManager::Impl::saveProject
     if(saved){
         writer.setKeyOrderPreservationMode(true);
         writer.putNode(archive);
-        mout->notify(_("Saving the project file has been finished."));
+        if(!isSubProject){
+            mout->notify(_("Saving the project file has been finished."));
+        } else {
+            mout->notify(_("Saving the sub-project file has been finished."));
+        }
         if(!isBackupMode && !isSubProject){
             setCurrentProjectFile(filename);
         }
     } else {
-        mout->notifyError(_("Saving the project file failed."));
+        if(!isSubProject){
+            mout->notifyError(_("Saving the project file failed."));
+        } else {
+            mout->notifyError(_("Saving the sub-project file failed."));
+        }            
         clearCurrentProjectFile();
     }
 
@@ -983,13 +989,13 @@ bool ProjectManager::Impl::confirmToCloseProject(bool isAboutToLoadNewProject)
 }
 
 
-bool ProjectManager::checkValidItemExistence() const
+bool ProjectManager::checkValidItemExistence()
 {
-    return impl->checkValidItemExistence(RootItem::instance());
+    return Impl::checkValidItemExistence(RootItem::instance());
 }
 
 
-bool ProjectManager::Impl::checkValidItemExistence(Item* item) const
+bool ProjectManager::Impl::checkValidItemExistence(Item* item)
 {
     if(!item->hasAttribute(Item::Builtin) && !item->isTemporary()){
         return true;
@@ -1003,24 +1009,26 @@ bool ProjectManager::Impl::checkValidItemExistence(Item* item) const
 }
 
 
-bool ProjectManager::checkIfItemsConsistentWithProjectArchive() const
+bool ProjectManager::checkIfItemsConsistentWithProjectArchive(Item* topItem)
 {
-    return impl->checkIfItemsConsistentWithProjectArchive(RootItem::instance());
+    return Impl::checkIfItemsConsistentWithProjectArchive(topItem ? topItem : RootItem::instance(), true);
 }
 
 
-bool ProjectManager::Impl::checkIfItemsConsistentWithProjectArchive(Item* item) const
+bool ProjectManager::Impl::checkIfItemsConsistentWithProjectArchive(Item* item, bool isTopItem)
 {
-    if(!item->isConsistentWithProjectArchive()){
-        return false;
-    }
-    if(auto subProjectItem = dynamic_cast<SubProjectItem*>(item)){
-        if(subProjectItem->saveMode() == SubProjectItem::MANUAL_SAVE){
-            return true; // Do not check sub-project items if the sub-project is the manusal save mode.
+    if(!isTopItem){
+        if(!item->isConsistentWithProjectArchive()){
+            return false;
+        }
+        if(auto subProjectItem = dynamic_cast<SubProjectItem*>(item)){
+            if(subProjectItem->saveMode() == SubProjectItem::MANUAL_SAVE){
+                return true; // Do not check sub-project items if the sub-project is the manusal save mode.
+            }
         }
     }
     for(auto child = item->childItem(); child; child = child->nextItem()){
-        if(!checkIfItemsConsistentWithProjectArchive(child)){
+        if(!checkIfItemsConsistentWithProjectArchive(child, false)){
             return false;
         }
     }

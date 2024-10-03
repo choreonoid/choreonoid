@@ -76,8 +76,8 @@ public:
     ref_ptr<Mapping> storeCurrentLayout();
     void restoreLayout(Mapping* layout);
 
-    bool checkValidItemExistence() const;
-    bool checkIfItemsConsistentWithProjectArchive() const;
+    static bool checkValidItemExistence();
+    static bool checkIfItemsConsistentWithProjectArchive(Item* topItem = nullptr /* RootItem */);
 
     class Impl;
 
