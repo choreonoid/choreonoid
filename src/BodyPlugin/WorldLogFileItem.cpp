@@ -17,6 +17,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/TimeBar>
 #include <cnoid/TimeSyncItemEngine>
+#include <cnoid/Timer>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/FileDialog>
 #include <cnoid/Archive>
@@ -24,6 +25,7 @@
 #include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
 #include <QDateTime>
+#include <QElapsedTimer>
 #include <fstream>
 #include <stack>
 #include <map>
@@ -372,15 +374,11 @@ class WorldLogFileEngine : public TimeSyncItemEngine
 {
 public:
     WorldLogFileItem* logItem;
-    WorldLogFileEngine(WorldLogFileItem* item)
-        : TimeSyncItemEngine(item)
-    {
-        logItem = item;
-    }
-    virtual bool onTimeChanged(double time) {
-        return logItem->recallStateAtTime(time);
-    }
+    WorldLogFileEngine(WorldLogFileItem* item);
+    virtual bool onTimeChanged(double time) override;
+    virtual double onPlaybackStopped(double time, bool isStoppedManually) override;
 };
+typedef ref_ptr<WorldLogFileEngine> WorldLogFileEnginePtr;
 
 typedef map<ItemPtr, ItemPtr> ItemToItemMap;
 
@@ -426,6 +424,7 @@ public:
     int currentDeviceStateCacheArrayIndex;
     vector<double> doubleWriteBuf;
 
+    filesystem::path readFilePath;
     ifstream ifs;
     ReadBuf readBuf;
     ReadBuf readBuf2;
@@ -435,10 +434,19 @@ public:
     double currentReadFrameTime;
     bool isCurrentFrameDataLoaded;
     bool isOverRange;
-        
+
     vector<BodyInfoPtr> bodyInfos;
     ScopedConnection worldSubTreeChangedConnection;
     bool isBodyInfoUpdateNeeded;
+
+    WorldLogFileEnginePtr logEngine;
+    Timer* livePlaybackTimer;
+    int livePlaybackLastFramePos;
+    std::uintmax_t livePlaybackLogFileSize;
+    int livePlaybackReadInterval; // msec
+    double livePlaybackReadTimeout; // sec
+    QElapsedTimer livePlaybackReadTimeoutTimer;
+    bool doCheckLivePlaybackReadTimeout;
     
     Impl(WorldLogFileItem* self);
     Impl(WorldLogFileItem* self, Impl& org);
@@ -450,6 +458,7 @@ public:
     bool readTopHeader();
     bool readFrameHeader(int pos);
     bool seek(double time);
+    bool seekToLivePlaybackLastFrame();
     bool loadCurrentFrameData();
     bool recallStateAtTime(double time);
     void readBodyStates(double time);
@@ -471,6 +480,12 @@ public:
     int createArchiveItemMap(Item* item, ArchiveInfo& info);
     ItemPtr createArchiveModelItem(Item* modelItem, ArchiveInfo& info, bool isBodyItem);
     int replaceWithArchiveItems(Item* item, ItemToItemMap& orgItemToArchiveItemMap);
+    WorldLogFileEngine* getOrCreateLogEngine();
+    bool setLivePlaybackReadInterval(int interval);
+    bool setLivePlaybackReadTimeout(double timeout);
+    void startLivePlayback();
+    void stopLivePlayback();    
+    void onLivePlaybackTimerTimeOut();
 };
 
 }
@@ -490,6 +505,8 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
     ItemTreeView::customizeContextMenu<WorldLogFileItem>(
         [](WorldLogFileItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
             menuManager.setPath("/");
+            menuManager.addItem(_("Start Live Playback"))->sigTriggered().connect(
+                [item]{ item->impl->startLivePlayback(); });
             menuManager.addItem(_("Save project as log playback archive"))->sigTriggered().connect(
                 [item](){ item->impl->openDialogToSelectDirectoryToSavePlaybackArchive(); });
             menuManager.setPath("/");
@@ -499,8 +516,8 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
 
     TimeSyncItemEngineManager::instance()
         ->registerFactory<WorldLogFileItem, WorldLogFileEngine>(
-            [](WorldLogFileItem* item, WorldLogFileEngine* engine0){
-                return engine0 ? engine0 : new WorldLogFileEngine(item);
+            [](WorldLogFileItem* item, WorldLogFileEngine* /* engine0 */){
+                return item->impl->getOrCreateLogEngine();
             });
 }
 
@@ -521,6 +538,10 @@ WorldLogFileItem::Impl::Impl(WorldLogFileItem* self)
     isTimeStampSuffixEnabled = false;
     recordingFrameRate = 0.0;
     isBodyInfoUpdateNeeded = true;
+    livePlaybackTimer = nullptr;
+    livePlaybackLogFileSize = 0;
+    livePlaybackReadInterval = 10;
+    livePlaybackReadTimeout = 0.0;
 }
 
 
@@ -539,7 +560,12 @@ WorldLogFileItem::Impl::Impl(WorldLogFileItem* self, Impl& org)
 {
     isTimeStampSuffixEnabled = org.isTimeStampSuffixEnabled;
     recordingFrameRate = org.recordingFrameRate;
+    currentReadFramePos = 0;
     isBodyInfoUpdateNeeded = true;
+    livePlaybackTimer = nullptr;
+    livePlaybackLogFileSize = 0;
+    livePlaybackReadInterval = org.livePlaybackReadInterval;
+    livePlaybackReadTimeout = org.livePlaybackReadTimeout;
 }
 
 
@@ -551,7 +577,10 @@ WorldLogFileItem::~WorldLogFileItem()
 
 WorldLogFileItem::Impl::~Impl()
 {
-
+    if(livePlaybackTimer){
+        delete livePlaybackTimer;
+        livePlaybackTimer = nullptr;
+    }
 }
 
 
@@ -686,9 +715,9 @@ bool WorldLogFileItem::Impl::readTopHeader()
     if(ifs.is_open()){
         ifs.close();
     }
-    string fname = fromUTF8(getActualFilename());
-    if(filesystem::exists(fname)){
-        ifs.open(fname.c_str(), ios::in | ios::binary);
+    readFilePath = filesystem::path(fromUTF8(getActualFilename()));
+    if(filesystem::exists(readFilePath)){
+        ifs.open(readFilePath.string(), ios::in | ios::binary);
         if(ifs.is_open()){
             readBuf.clear();
             try {
@@ -1232,28 +1261,36 @@ void WorldLogFileItem::doPutProperties(PutPropertyFunction& putProperty)
     FilePathProperty logFileProperty(filePath(), { string(_("World Log File (*.log)")) });
     logFileProperty.setExistingFileMode(false);
     putProperty(_("Log file"), logFileProperty,
-                [&](const string& file){ return impl->setLogFile(file); });
+                [this](const string& file){ return impl->setLogFile(file); });
     putProperty(_("Actual log file"), FilePathProperty(impl->getActualFilename()));
     putProperty(_("Time-stamp suffix"), impl->isTimeStampSuffixEnabled,
                 changeProperty(impl->isTimeStampSuffixEnabled));
     putProperty(_("Recording frame rate"), impl->recordingFrameRate,
                 changeProperty(impl->recordingFrameRate));
+    putProperty.min(1)(_("Live playback read interval (ms)"), impl->livePlaybackReadInterval,
+                       [this](int value){ return setLivePlaybackReadInterval(value); });
+    putProperty.min(0.0)(_("Live playback read timeout"), impl->livePlaybackReadTimeout,
+                         [this](double value){ return setLivePlaybackReadTimeout(value); });
 }
 
 
 bool WorldLogFileItem::store(Archive& archive)
 {
     archive.writeFileInformation(this);
-    archive.write("timeStampSuffix", impl->isTimeStampSuffixEnabled);
-    archive.write("recordingFrameRate", impl->recordingFrameRate);
+    archive.write("time_stamp_suffix", impl->isTimeStampSuffixEnabled);
+    archive.write("recording_frame_rate", impl->recordingFrameRate);
+    archive.write("live_playback_read_interval_ms", impl->livePlaybackReadInterval);
+    archive.write("live_playback_read_timeout", impl->livePlaybackReadTimeout);
     return true;
 }
 
 
 bool WorldLogFileItem::restore(const Archive& archive)
 {
-    archive.read("timeStampSuffix", impl->isTimeStampSuffixEnabled);
-    archive.read("recordingFrameRate", impl->recordingFrameRate);
+    archive.read({"time_stamp_suffix", "timeStampSuffix" }, impl->isTimeStampSuffixEnabled);
+    archive.read({"recording_frame_rate", "recordingFrameRate" }, impl->recordingFrameRate);
+    setLivePlaybackReadInterval(archive.get("live_playback_read_interval_ms", impl->livePlaybackReadInterval));
+    setLivePlaybackReadTimeout(archive.get("live_playback_read_timeout", impl->livePlaybackReadTimeout));
 
     std::string filename;
     if(archive.read({ "file", "filename" }, filename)){
@@ -1525,4 +1562,173 @@ int WorldLogFileItem::Impl::replaceWithArchiveItems(Item* item, ItemToItemMap& o
     item->setSelected(false);
 
     return numValidItems;
+}
+
+
+WorldLogFileEngine* WorldLogFileItem::Impl::getOrCreateLogEngine()
+{
+    if(!logEngine){
+        logEngine = new WorldLogFileEngine(self);
+    }
+    return logEngine;
+}
+
+
+bool WorldLogFileItem::setLivePlaybackReadInterval(int interval)
+{
+    return impl->setLivePlaybackReadInterval(interval);
+}
+
+
+bool WorldLogFileItem::Impl::setLivePlaybackReadInterval(int interval)
+{
+    if(interval >= 1){
+        if(interval != livePlaybackReadInterval){
+            livePlaybackReadInterval = interval;
+            if(livePlaybackTimer){
+                bool isActive = livePlaybackTimer->isActive();
+                if(isActive){
+                    livePlaybackTimer->stop();
+                }
+                livePlaybackTimer->setInterval(interval);
+                if(isActive){
+                    livePlaybackTimer->start();
+                }
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+
+bool WorldLogFileItem::setLivePlaybackReadTimeout(double timeout)
+{
+    if(timeout >= 0.0){
+        impl->livePlaybackReadTimeout = timeout;
+        return true;
+    }
+    return false;
+}
+
+
+void WorldLogFileItem::startLivePlayback()
+{
+    impl->startLivePlayback();
+}
+
+
+void WorldLogFileItem::Impl::startLivePlayback()
+{
+    livePlaybackLastFramePos = 0;
+    seekToLivePlaybackLastFrame();
+    double time = currentReadFrameTime;
+    if(time < 0.0){
+        time = 0.0;
+    }
+
+    getOrCreateLogEngine()->startOngoingTimeUpdate(time);
+
+    if(!livePlaybackTimer){
+        livePlaybackTimer = new Timer;
+        livePlaybackTimer->sigTimeout().connect(
+            [this]{ onLivePlaybackTimerTimeOut(); });
+        livePlaybackTimer->setInterval(10);
+    }
+
+    doCheckLivePlaybackReadTimeout = false;
+    
+    livePlaybackTimer->start();
+}
+
+
+void WorldLogFileItem::stopLivePlayback()
+{
+    impl->stopLivePlayback();
+}
+
+
+void WorldLogFileItem::Impl::stopLivePlayback()
+{
+    if(livePlaybackTimer){
+        livePlaybackTimer->stop();
+    }
+    if(logEngine){
+        logEngine->stopOngoingTimeUpdate();
+    }
+}
+
+
+void WorldLogFileItem::Impl::onLivePlaybackTimerTimeOut()
+{
+    if(seekToLivePlaybackLastFrame()){
+        logEngine->updateOngoingTime(currentReadFrameTime);
+
+        if(livePlaybackReadTimeout > 0.0){
+            doCheckLivePlaybackReadTimeout = true;
+            livePlaybackReadTimeoutTimer.start();
+        }
+    } else {
+        if(doCheckLivePlaybackReadTimeout){
+            if(livePlaybackReadTimeoutTimer.elapsed() >= livePlaybackReadTimeout * 1000.0){
+                stopLivePlayback();
+            }
+        }
+    }
+}
+
+
+//! \return true if a new frame is found
+bool WorldLogFileItem::Impl::seekToLivePlaybackLastFrame()
+{
+    if(currentReadFramePos == 0){
+        if(!readTopHeader()){
+            return false;
+        }
+    }
+    int framePos = currentReadFramePos;
+    while(true){
+        if(!readFrameHeader(framePos)){
+            break;
+        }
+        framePos += frameHeaderSize + currentReadFrameDataSize;
+    }
+
+    bool hasNewFrames = currentReadFramePos > livePlaybackLastFramePos;
+    livePlaybackLastFramePos = currentReadFramePos;
+    
+    std::error_code ec;
+    std::uintmax_t prevFileSize = livePlaybackLogFileSize;
+    livePlaybackLogFileSize = filesystem::file_size(readFilePath, ec);
+    
+    if(!hasNewFrames){
+        if(livePlaybackLogFileSize < prevFileSize || prevFileSize < 0){
+            readTopHeader();
+            return seekToLivePlaybackLastFrame();
+        }
+    }
+    
+    return hasNewFrames;
+}
+
+
+WorldLogFileEngine::WorldLogFileEngine(WorldLogFileItem* item)
+    : TimeSyncItemEngine(item)
+{
+    logItem = item;
+}
+
+
+bool WorldLogFileEngine::onTimeChanged(double time)
+{
+    return logItem->recallStateAtTime(time);
+}
+
+
+double WorldLogFileEngine::onPlaybackStopped(double time, bool /* isStoppedManually */)
+{
+    if(isUpdatingOngoingTime()){
+        logItem->stopLivePlayback();
+    }
+    return time;
 }

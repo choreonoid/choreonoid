@@ -47,6 +47,11 @@ public:
     bool recallStateAtTime(double time);
     void invalidateLastStateConsistency();
 
+    bool setLivePlaybackReadInterval(int interval);
+    bool setLivePlaybackReadTimeout(double timeout);
+    void startLivePlayback();
+    void stopLivePlayback();
+
     virtual void notifyUpdate() override;
 
 protected:
