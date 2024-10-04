@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-08-29 12:03+0900\n"
+"POT-Creation-Date: 2024-10-05 00:01+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1749,6 +1749,9 @@ msgstr "ワールドログファイルアイテム"
 msgid "World Log"
 msgstr "ワールドログ"
 
+msgid "Start Live Playback"
+msgstr "ライブ再生の開始"
+
 msgid "Save project as log playback archive"
 msgstr "ログ再生用アーカイブとしてプロジェクトを保存"
 
@@ -1772,6 +1775,12 @@ msgstr "タイムスタンプ接尾辞"
 
 msgid "Recording frame rate"
 msgstr "記録フレームレート"
+
+msgid "Live playback read interval (ms)"
+msgstr "ライブ再生読込時間間隔（ミリ秒）"
+
+msgid "Live playback read timeout"
+msgstr "ライブ再生読込タイムアウト"
 
 msgid "Save"
 msgstr "保存"
