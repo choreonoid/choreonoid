@@ -62,22 +62,48 @@ int findPathInDirectory(const filesystem::path& directory, const filesystem::pat
     if(directory.is_absolute() && path.is_absolute()){
         filesystem::path compactPath = filesystem::lexically_normal(path);
 
-        filesystem::path::const_iterator p = directory.begin();
-        filesystem::path::const_iterator q = compactPath.begin();
+        filesystem::path::const_iterator it1 = directory.begin();
+        filesystem::path::const_iterator it2 = compactPath.begin();
 
-        while(p != directory.end() && q != compactPath.end()){
-            if(!(*p == *q)){
+        while(it1 != directory.end() && it2 != compactPath.end()){
+            bool matched = false;
+#ifdef _WIN32
+            auto p1 = *it1;
+            auto s1 = p1.make_preferred().string();
+            std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);
+            auto p2 = *it2;
+            auto s2 = p2.make_preferred().string();
+            std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
+
+            // In Windows, directory and file names cannot end with a period(.).
+            // Any trailing period should be removed for comarison purpose.
+            if(!s1.empty() && s1.back() == '.'){
+                s1.pop_back();
+            }
+            if(!s2.empty() && s2.back() == '.'){
+                s2.pop_back();
+            }
+            
+            if(s1 == s2){
+                matched = true;
+            }
+#else
+            if(*it1 == *it2){
+                matched = true;
+            }
+#endif
+            if(!matched){
                 break;
             }
             ++numMatchedDepth;
-            ++p;
-            ++q;
+            ++it1;
+            ++it2;
         }
             
-        if(p == directory.end()){
+        if(it1 == directory.end()){
             out_relativePath.clear();
-            while(q != compactPath.end()){
-                out_relativePath /= *q++;
+            while(it2 != compactPath.end()){
+                out_relativePath /= *it2++;
             }
             return numMatchedDepth;
         }
@@ -126,6 +152,16 @@ stdx::optional<stdx::filesystem::path> getRelativePath(const filesystem::path& p
         auto p2 = *it2;
         auto s2 = p2.make_preferred().string();
         std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
+
+        // In Windows, directory and file names cannot end with a period(.).
+        // Any trailing period should be removed for comarison purpose.
+        if(!s1.empty() && s1.back() == '.'){
+            s1.pop_back();
+        }
+        if(!s2.empty() && s2.back() == '.'){
+            s2.pop_back();
+        }
+
         if(s1 == s2){
             matched = true;
         }
