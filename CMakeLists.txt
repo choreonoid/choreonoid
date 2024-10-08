@@ -584,6 +584,9 @@ if(ENABLE_GUI)
   endif()
   set(CHOREONOID_QT_MAJOR_VERSION ${default_qt_major_version}
     CACHE STRING "Specify the major version of Qt; either 5 or 6.")
+  if(CHOREONOID_QT_MAJOR_VERSION GREATER_EQUAL 6 AND CMAKE_CXX_STANDARD LESS_EQUAL 14)
+    message(FATAL_ERROR "Qt6 requires C++17 or higher.")
+  endif()
   choreonoid_find_qt_package()
   set(CMAKE_AUTOMOC OFF)
 
