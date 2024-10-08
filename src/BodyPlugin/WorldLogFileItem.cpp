@@ -1697,7 +1697,7 @@ bool WorldLogFileItem::Impl::seekToLivePlaybackLastFrame()
     bool hasNewFrames = currentReadFramePos > livePlaybackLastFramePos;
     livePlaybackLastFramePos = currentReadFramePos;
     
-    std::error_code ec;
+    stdx::error_code ec;
     std::uintmax_t prevFileSize = livePlaybackLogFileSize;
     livePlaybackLogFileSize = filesystem::file_size(readFilePath, ec);
     

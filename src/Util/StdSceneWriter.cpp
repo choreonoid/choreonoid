@@ -18,7 +18,6 @@
 #include "Format.h"
 #include <cnoid/stdx/filesystem>
 #include <unordered_map>
-#include <regex>
 #include "gettext.h"
 
 using namespace std;
@@ -59,8 +58,6 @@ public:
     bool isOriginalSceneExtModelFileUriRewritingEnabled;
     unordered_map<SgObjectPtr, string> uriRewritingMap;
     set<string> extModelFiles;
-    regex uriSchemeRegex;
-    bool isUriSchemeRegexReady;
 
     ostream* os_;
     ostream& os() { return *os_; }
@@ -159,7 +156,6 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
     isMeshEnabled = true;
     isOriginalSceneExtModelFileUriRewritingEnabled = false;
     extModelFileMode = EmbedModels;
-    isUriSchemeRegexReady = false;
 
     os_ = &nullout();    
 }

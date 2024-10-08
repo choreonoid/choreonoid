@@ -9,6 +9,7 @@
 #include <map>
 #include <list>
 #include <deque>
+#include <algorithm>
 #include "gettext.h"
 
 using namespace std;
@@ -331,7 +332,7 @@ bool Archive::loadFileTo(Item* item, bool& out_hasFileInformation) const
                 if(!file.empty()){
                     filesystem::path filePath(fromUTF8(file));
                     filesystem::path backupPath(fromUTF8(backupFile));
-                    std::error_code ec;
+                    stdx::error_code ec;
                     if(!filesystem::equivalent(filePath, backupPath, ec)){
                         item->setConsistentWithFile(false);
                     }
