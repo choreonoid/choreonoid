@@ -283,8 +283,6 @@ BodyItem::BodyItem(const BodyItem& org, CloneMap* cloneMap)
 
     isAttachedToParentBody_ = false;
     isVisibleLinkSelectionMode_ = org.isVisibleLinkSelectionMode_;
-
-    setChecked(org.isChecked());
 }
 
 
