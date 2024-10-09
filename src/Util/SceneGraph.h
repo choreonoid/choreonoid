@@ -317,7 +317,7 @@ public:
     bool removeChild(SgNode* node, SgUpdateRef update = nullptr);
     void removeChildAt(int index, SgUpdateRef update = nullptr);
     void clearChildren(SgUpdateRef update = nullptr);
-    void copyChildrenTo(SgGroup* group, SgUpdateRef update = nullptr);
+    void copyChildrenTo(SgGroup* group, SgUpdateRef update = nullptr) const;
     void moveChildrenTo(SgGroup* group, SgUpdateRef update = nullptr);
 
     [[deprecated("Use insertChild(int index, SgNode* node, SgUpdateRef update)")]]

@@ -688,10 +688,11 @@ void SgGroup::clearChildren(SgUpdateRef update)
 }
 
 
-void SgGroup::copyChildrenTo(SgGroup* group, SgUpdateRef update)
+void SgGroup::copyChildrenTo(SgGroup* group, SgUpdateRef update) const
 {
     for(size_t i=0; i < children.size(); ++i){
-        group->addChild(child(i), update);
+        auto node = const_cast<SgNode*>(child(i));
+        group->addChild(node, update);
     }
 }
 
