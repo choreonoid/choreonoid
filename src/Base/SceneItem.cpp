@@ -99,6 +99,7 @@ SceneItem::SceneItem(const SceneItem& org, CloneMap* cloneMap)
     // shallow copy
     auto orgTopNode = org.topNode();
     topNode_ = new SgPosTransform(*orgTopNode);
+    orgTopNode->copyChildrenTo(topNode_);
     if(cloneMap){
         cloneMap->setClone(orgTopNode, topNode_);
     }
