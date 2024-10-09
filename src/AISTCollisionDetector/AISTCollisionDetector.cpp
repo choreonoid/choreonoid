@@ -627,8 +627,9 @@ void AISTCollisionDetector::Impl::detectCollisionsInParallel(const std::function
         if(size == 0){
             break;
         }
-        threadPool->start([this, i, index, size](){
-                extractCollisionsOfAssignedPairs(index, index + size, collisionPairArrays[i]); });
+        threadPool->post([this, i, index, size](){
+            extractCollisionsOfAssignedPairs(index, index + size, collisionPairArrays[i]);
+        });
         index += size;
     }
     threadPool->waitLoop();

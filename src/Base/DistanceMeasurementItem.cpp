@@ -568,7 +568,7 @@ void DistanceMeasurementItem::Impl::calcShortestDistance()
     bool detected = false;
     
     for(auto& handlePair : handlePairs){
-        threadPool->start([&](){
+        threadPool->post([&](){
             Vector3 p1, p2;
             auto distance = collisionDetectorDistanceAPI->detectDistance(
                 handlePair.first, handlePair.second, p1, p2);

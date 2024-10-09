@@ -44,11 +44,25 @@ public:
     }
     
     int size() const { return threads.size(); }
-    
-    void start(std::function<void()> f) {
+
+    void dispatch(std::function<void()> f) {
+        std::unique_lock<std::mutex> lock(mutex);
+        while(numActiveThreads == static_cast<int>(threads.size())){
+            finishCondition.wait(lock);
+        }
+        queue.push(f);
+        condition.notify_one();
+    }
+
+    void post(std::function<void()> f) {
         std::lock_guard<std::mutex> guard(mutex);
         queue.push(f);
         condition.notify_one();
+    }
+
+    [[deprecated("Use dispatch or post.")]]
+    void start(std::function<void()> f) {
+        post(f);
     }
     
     void wait(){
