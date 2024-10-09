@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_MESH_GENERATOR_H
 #define CNOID_UTIL_MESH_GENERATOR_H
 
@@ -17,6 +12,8 @@ class MeshFilter;
 class CNOID_EXPORT MeshGenerator
 {
 public:
+    static MeshGenerator* mainThreadInstance();
+
     MeshGenerator();
     MeshGenerator(const MeshGenerator& org);
     ~MeshGenerator();

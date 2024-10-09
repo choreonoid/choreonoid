@@ -1,13 +1,9 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "MeshGenerator.h"
 #include "MeshFilter.h"
 #include "MeshExtractor.h"
 #include "EigenUtil.h"
 #include "Triangulator.h"
+#include <memory>
 
 using namespace std;
 using namespace cnoid;
@@ -17,6 +13,14 @@ namespace {
 constexpr int defaultDivisionNumber = 20;
 
 }
+
+
+MeshGenerator* MeshGenerator::mainThreadInstance()
+{
+    static auto instance = std::make_unique<MeshGenerator>();
+    return instance.get();
+}
+
 
 MeshGenerator::MeshGenerator()
 {
