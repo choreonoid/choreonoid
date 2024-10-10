@@ -1978,7 +1978,7 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
                 worldLogFileItem->outputBodyHeader(activeSimBodies[i]->impl->body_->name());
             }
             worldLogFileItem->endHeaderOutput();
-            worldLogFileItem->notifyUpdate();
+            worldLogFileItem->notifyUpdateWithProjectFileConsistency();
             nextLogFrame = 0;
             nextLogTime = 0.0;
             double r = worldLogFileItem->recordingFrameRate();
