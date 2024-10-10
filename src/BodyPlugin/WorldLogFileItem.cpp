@@ -21,6 +21,7 @@
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/FileDialog>
 #include <cnoid/Archive>
+#include <cnoid/MessageOut>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
@@ -447,6 +448,8 @@ public:
     double livePlaybackReadTimeout; // sec
     QElapsedTimer livePlaybackReadTimeoutTimer;
     bool doCheckLivePlaybackReadTimeout;
+
+    MessageOut* mout;
     
     Impl(WorldLogFileItem* self);
     Impl(WorldLogFileItem* self, Impl& org);
@@ -542,6 +545,7 @@ WorldLogFileItem::Impl::Impl(WorldLogFileItem* self)
     livePlaybackLogFileSize = 0;
     livePlaybackReadInterval = 10;
     livePlaybackReadTimeout = 0.0;
+    mout = MessageOut::master();
 }
 
 
@@ -566,6 +570,7 @@ WorldLogFileItem::Impl::Impl(WorldLogFileItem* self, Impl& org)
     livePlaybackLogFileSize = 0;
     livePlaybackReadInterval = org.livePlaybackReadInterval;
     livePlaybackReadTimeout = org.livePlaybackReadTimeout;
+    mout = MessageOut::master();
 }
 
 
@@ -731,9 +736,8 @@ bool WorldLogFileItem::Impl::readTopHeader()
                 }
             } catch(CorruptLogException&){
                 bodyNames.clear();
-                MessageView::instance()->putln(
-                    formatR(_("Log file of {0} is corrupt."), self->displayName()),
-                    MessageView::Error);
+                MessageOut::master()->putErrorln(
+                    formatR(_("Log file of {0} is corrupt."), self->displayName()));
             }
         }
     }
@@ -764,11 +768,30 @@ bool WorldLogFileItem::Impl::readFrameHeader(int pos)
         ifs.seekg(currentReadFramePos);
         return false;
     }
+
+    int prevFrameOffset;
+    double frameTime;
+    int dataSize;
+    try {
+        prevFrameOffset = readBuf.readSeekOffset();
+        frameTime = readBuf.readFloat();
+        dataSize = readBuf.readSeekOffset();
+    } catch(CorruptLogException&){
+        bodyNames.clear();
+        mout->putErrorln(formatR(_("Log file of {0} is corrupt."), self->displayName()));
+        ifs.seekg(currentReadFramePos);
+        return false;
+    }
+
+    if(!readBuf.checkSize(currentReadFrameDataSize)){
+        ifs.seekg(currentReadFramePos);
+        return false;
+    }
     
     currentReadFramePos = pos;
-    prevReadFrameOffset = readBuf.readSeekOffset();
-    currentReadFrameTime = readBuf.readFloat();
-    currentReadFrameDataSize = readBuf.readSeekOffset();
+    prevReadFrameOffset = prevFrameOffset;
+    currentReadFrameTime = frameTime;
+    currentReadFrameDataSize = dataSize;
 
     return true;
 }
@@ -853,9 +876,7 @@ bool WorldLogFileItem::Impl::recallStateAtTime(double time)
         }
     }
     catch(CorruptLogException&){
-        MessageView::instance()->putln(
-            formatR(_("Corrupt log at time {0} in {1}."), time, self->displayName()),
-            MessageView::Error);
+        mout->putErrorln(formatR(_("Corrupt log at time {0} in {1}."), time, self->displayName()));
     }
 
     return isValid;
@@ -1365,9 +1386,7 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
         return;
     }
 
-    auto mv = MessageView::instance();
-    mv->putln(_("Creating the project for the log playback ..."));
-    mv->flush();
+    mout->putln(_("Creating the project for the log playback ..."));
     
     auto projectFilePath = filesystem::absolute(fromUTF8(projectFile), ec);
     if(ec){
@@ -1486,10 +1505,9 @@ ItemPtr WorldLogFileItem::Impl::createArchiveModelItem(Item* modelItem, ArchiveI
 
     filesystem::create_directories(modelDirPath, ec);
     if(ec){
-        MessageView::instance()->putln(
+        mout->putErrorln(
             formatR(_("Directory \"{0}\" cannot be created: {1}."),
-                    toUTF8(modelDirPath.filename().string()), ec.message()),
-            MessageView::Error);
+                    toUTF8(modelDirPath.filename().string()), ec.message()));
     } else {
         archiveModelItem = modelItem->clone();
         auto filePath = modelDirPath / nativeBaseName;
