@@ -2,6 +2,8 @@
 #define _USE_MATH_DEFINES
 #endif
 
+#include <unsupported/Eigen/EulerAngles>
+
 #include "PoseSeqInterpolator.h"
 #include "BodyKeyPose.h"
 #include "PronunSymbol.h"
@@ -674,7 +676,7 @@ bool interpolate(
 
     const SampleType& s0 = *p;
     const SampleType& s1 = *next;
-
+    
     if(s0.isDirty){
         return false;
     }
@@ -698,6 +700,7 @@ bool interpolate(
         break;
 
     case CUBIC_CONNECTION:
+    {
         for(int i=0; i < dim; ++i){
             const double& a0 = s0.c[i].y;
             const double& a1 = s0.c[i].a;
@@ -708,8 +711,24 @@ bool interpolate(
             const double h3 = h2 * h;
             out_result[i] = (a0 + a1 * h + a2 * h2 + a3 * h3);
         }
+        double r = (x - s0.x) / (s1.x - s0.x);
+        if constexpr (std::is_same_v<SampleType, LinkSample>) {
+            Eigen::Quaterniond q0 = 
+                Eigen::AngleAxisd(s0.c[5].y, Eigen::Vector3d::UnitZ()) *
+                Eigen::AngleAxisd(s0.c[4].y, Eigen::Vector3d::UnitY()) *
+                Eigen::AngleAxisd(s0.c[3].y, Eigen::Vector3d::UnitX());
+            Eigen::Quaterniond q1 =
+                Eigen::AngleAxisd(s1.c[5].y, Eigen::Vector3d::UnitZ()) *
+                Eigen::AngleAxisd(s1.c[4].y, Eigen::Vector3d::UnitY()) *
+                Eigen::AngleAxisd(s1.c[3].y, Eigen::Vector3d::UnitX());
+            Eigen::Quaterniond q_interp = q0.slerp(r, q1);
+            Eigen::VectorXd RPY = Eigen::EulerAngles<double, Eigen::EulerSystemZYX>(q_interp.normalized().toRotationMatrix()).angles().reverse();
+            out_result[3] = RPY[0];
+            out_result[4] = RPY[1];
+            out_result[5] = RPY[2];
+        }
         break;
-
+    }
     case MIN_JERK_CONNECTION:
         for(int i=0; i < dim; ++i){
             double r = (x - s0.x) / (s1.x - s0.x);
