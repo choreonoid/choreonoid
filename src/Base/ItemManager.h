@@ -23,6 +23,15 @@ public:
     ItemCreationPanel();
     virtual bool initializeCreation(Item* protoItem, Item* parentItem) = 0;
     virtual bool updateItem(Item* protoItem, Item* parentItem) = 0;
+
+protected:
+    void initializePanelWithNameEntry();
+    void initializeNameEntryForCreation(Item* protoItem);
+    bool updateItemWithNameEntry(Item* protoItem);
+
+private:
+    // This is actually a QLineEdit widget and is created by initializePanelWithNameEntry.
+    QWidget* nameEntry;
 };
 
 template<class ItemType>
@@ -44,7 +53,6 @@ private:
 
 class CNOID_EXPORT DefaultItemCreationPanel : public ItemCreationPanel
 {
-    QWidget* nameEntry;
 public:
     DefaultItemCreationPanel();
     virtual bool initializeCreation(Item* protoItem, Item* parentItem) override;

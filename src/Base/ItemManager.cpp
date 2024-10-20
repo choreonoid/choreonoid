@@ -12,6 +12,7 @@
 #include "MainMenu.h"
 #include "Action.h"
 #include "CheckBox.h"
+#include <cnoid/CloneMap>
 #include <cnoid/MessageOut>
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
@@ -590,12 +591,14 @@ Item* CreationDialog::createItem(Item* parentItem, Item* protoItem)
         defaultProtoItem->setName(classInfo->name);
         protoItem = defaultProtoItem;
     }
+
     ItemPtr newInstance;
     if(creationPanel->initializeCreation(protoItem, parentItem)){
         if(exec() == QDialog::Accepted){
             if(creationPanel->updateItem(protoItem, parentItem)){
                 if((protoItem == defaultProtoItem) && !isSingleton){
-                    newInstance = protoItem->clone();
+                    CloneMap cloneMap;
+                    newInstance = protoItem->cloneSubTree(cloneMap);
                 } else {
                     newInstance = protoItem;
                 }
@@ -625,11 +628,11 @@ Item* CreationDialog::getOrCreateDefaultProtoItem()
 
 ItemCreationPanel::ItemCreationPanel()
 {
-
+    nameEntry = nullptr;
 }
 
 
-DefaultItemCreationPanel::DefaultItemCreationPanel()
+void ItemCreationPanel::initializePanelWithNameEntry()
 {
     QHBoxLayout* layout = new QHBoxLayout;
     layout->addWidget(new QLabel(_("Name:")));
@@ -637,19 +640,45 @@ DefaultItemCreationPanel::DefaultItemCreationPanel()
     layout->addWidget(nameEntry);
     setLayout(layout);
 }
+
+    
+void ItemCreationPanel::initializeNameEntryForCreation(Item* protoItem)
+{
+    if(nameEntry){
+        static_cast<QLineEdit*>(nameEntry)->setText(protoItem->name().c_str());
+    }
+}
+
+
+bool ItemCreationPanel::updateItemWithNameEntry(Item* protoItem)
+{
+    if(nameEntry){
+        auto nameEntry_ = static_cast<QLineEdit*>(nameEntry);
+        if(!nameEntry_->text().isEmpty()){
+            protoItem->setName(nameEntry_->text().toStdString());
+            return true;
+        }
+    }
+    return false;
+}
+
+
+DefaultItemCreationPanel::DefaultItemCreationPanel()
+{
+    initializePanelWithNameEntry();
+}
         
 
 bool DefaultItemCreationPanel::initializeCreation(Item* protoItem, Item* /* parentItem */)
 {
-    static_cast<QLineEdit*>(nameEntry)->setText(protoItem->name().c_str());
+    initializeNameEntryForCreation(protoItem);
     return true;
 }
             
 
 bool DefaultItemCreationPanel::updateItem(Item* protoItem, Item* /* parentItem */)
 {
-    protoItem->setName(static_cast<QLineEdit*>(nameEntry)->text().toStdString());
-    return true;
+    return updateItemWithNameEntry(protoItem);
 }
 
 
