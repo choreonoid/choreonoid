@@ -33,7 +33,7 @@ private:
     std::vector<DeviceInfo> deviceInfos;
     
     bool updateBodyState_(double time, Body* body, const BodyState& state);
-    bool updateSingleBodyState(double time, Body* body, BodyStateBlock stateBlock, bool isMainBody);
+    bool updateSingleBodyState(double time, Body* body, BodyStateBlock stateBlock);
     void updateBodyVelocity(Body* body, const BodyState& prevState, double timeStep);
     friend class BodyMotionEngine;
 };

@@ -1057,9 +1057,9 @@ void SimulationBody::Impl::bufferRecords()
                     multiplexBody = multiplexBody->nextMultiplexBody();
                 }
             }
-
-            ++currentBodyStateBufIndex;
         }
+        
+        ++currentBodyStateBufIndex;
     }
 }
 
