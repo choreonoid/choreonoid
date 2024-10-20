@@ -1,5 +1,4 @@
 #include "MultiValueSeqItem.h"
-#include "MultiSeqItemCreationPanel.h"
 #include "ItemManager.h"
 #include <ostream>
 #include "gettext.h"
@@ -37,9 +36,6 @@ void MultiValueSeqItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerClass<MultiValueSeqItem, AbstractMultiSeqItem>(N_("MultiValueSeqItem"));
 
-    ext->itemManager().addCreationPanel<MultiValueSeqItem>(
-        new MultiSeqItemCreationPanel(_("Number of values in a frame")));
-    
     ext->itemManager().addLoaderAndSaver<MultiValueSeqItem>(
         _("Plain Format of a Multi Value Sequence"), "PLAIN-MULTI-VALUE-SEQ", "*",
         [](MultiValueSeqItem* item, const string& filename, ostream& os, Item* /* parentItem */){

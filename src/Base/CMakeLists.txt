@@ -46,7 +46,6 @@ set(sources
   DisplayValueFormat.cpp
   PositionWidget.cpp
   LocationView.cpp
-  MultiSeqItemCreationPanel.cpp
   ToolBar.cpp
   TimeBar.cpp
   ScriptBar.cpp
@@ -242,7 +241,6 @@ set(headers
   DisplayValueFormat.h
   PositionWidget.h
   LocationView.h
-  MultiSeqItemCreationPanel.h
   PutPropertyFunction.h
   RootItem.h
   FolderItem.h

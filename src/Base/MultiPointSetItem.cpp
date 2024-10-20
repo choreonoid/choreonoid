@@ -127,7 +127,6 @@ void MultiPointSetItem::initializeClass(ExtensionManager* ext)
     if(!initialized){
         ItemManager& im = ext->itemManager();
         im.registerClass<MultiPointSetItem>(N_("MultiPointSetItem"));
-        im.addCreationPanel<MultiPointSetItem>();
         im.addLoaderAndSaver<MultiPointSetItem>(
             _("Multi Point Clouds"), "MULTI-PCD-SET", "yaml",
             [](MultiPointSetItem* item, const std::string& filename, std::ostream& os, Item*){

@@ -163,7 +163,6 @@ void PointSetItem::initializeClass(ExtensionManager* ext)
     if(!initialized){
         ItemManager& im = ext->itemManager();
         im.registerClass<PointSetItem>(N_("PointSetItem"));
-        im.addCreationPanel<PointSetItem>();
         im.addFileIO<PointSetItem>(new PointSetItemPcdFileIo);
         initialized = true;
     }

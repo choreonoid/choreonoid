@@ -1,6 +1,5 @@
 #include "BodyMotionItem.h"
 #include "BodyItem.h"
-#include <cnoid/MultiSeqItemCreationPanel>
 #include <cnoid/ItemManager>
 #include <cnoid/MenuManager>
 #include <cnoid/MultiSE3SeqItem>
@@ -40,14 +39,6 @@ typedef ref_ptr<ExtraSeqItemInfo> ExtraSeqItemInfoPtr;
     
 typedef std::map<std::string, ExtraSeqItemInfoPtr> ExtraSeqItemInfoMap;
 
-class BodyMotionItemCreationPanel : public MultiSeqItemCreationPanel
-{
-public:
-    BodyMotionItemCreationPanel();
-    virtual void doExtraInitialization(AbstractSeqItem* protoItem, Item* parentItem) override;
-    virtual void doExtraItemUpdate(AbstractSeqItem* protoItem, Item* parentItem) override;
-};
-
 }
 
 namespace cnoid {
@@ -70,52 +61,6 @@ public:
 }
 
 
-BodyMotionItemCreationPanel::BodyMotionItemCreationPanel()
-    : MultiSeqItemCreationPanel(_("Number of joints"))
-{
-
-}
-
-
-void BodyMotionItemCreationPanel::doExtraInitialization(AbstractSeqItem* protoItem, Item* parentItem)
-{
-    BodyItemPtr bodyItem = dynamic_cast<BodyItem*>(parentItem);
-    if(!bodyItem){
-        bodyItem = parentItem->findOwnerItem<BodyItem>();
-    }
-    if(bodyItem){
-        auto motionItem = static_cast<BodyMotionItem*>(protoItem);
-        auto jointPosSeq = motionItem->motion()->jointPosSeq();
-        int numJoints = bodyItem->body()->numJoints();
-        if(numJoints != jointPosSeq->numParts()){
-            jointPosSeq->setNumParts(numJoints, true);
-        }
-    }
-}
-
-
-void BodyMotionItemCreationPanel::doExtraItemUpdate(AbstractSeqItem* protoItem, Item* parentItem)
-{
-    BodyItemPtr bodyItem = dynamic_cast<BodyItem*>(parentItem);
-    if(!bodyItem){
-        bodyItem = parentItem->findOwnerItem<BodyItem>();
-    }
-    if(bodyItem){
-        auto motionItem = static_cast<BodyMotionItem*>(protoItem);
-        auto body = bodyItem->body();
-        auto qseq = motionItem->motion()->jointPosSeq();
-        int n = std::min(body->numJoints(), qseq->numParts());
-        for(int i=0; i < n; ++i){
-            auto joint = body->joint(i);
-            if(joint->q_initial() != 0.0){
-                auto part = qseq->part(i);
-                std::fill(part.begin(), part.end(), joint->q_initial());
-            }
-        }
-    }
-}
-
-
 void BodyMotionItem::initializeClass(ExtensionManager* ext)
 {
     static bool initialized = false;
@@ -127,8 +72,6 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
     ItemManager& im = ext->itemManager();
     
     im.registerClass<BodyMotionItem, AbstractSeqItem>(N_("BodyMotionItem"));
-
-    im.addCreationPanel<BodyMotionItem>(new BodyMotionItemCreationPanel);
 
     im.addLoaderAndSaver<BodyMotionItem>(
         _("Body Motion"), "BODY-MOTION-YAML", "seq;yaml",

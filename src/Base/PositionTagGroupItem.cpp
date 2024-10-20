@@ -284,7 +284,6 @@ void PositionTagGroupItem::initializeClass(ExtensionManager* ext)
     if(!initialized){
         auto& im = ext->itemManager();
         im.registerClass<PositionTagGroupItem>(N_("PositionTagGroupItem"));
-        im.addCreationPanel<PositionTagGroupItem>();
         initialized = true;
     }
 }

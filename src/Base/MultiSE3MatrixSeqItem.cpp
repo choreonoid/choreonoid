@@ -1,5 +1,4 @@
 #include "MultiSE3MatrixSeqItem.h"
-#include "MultiSeqItemCreationPanel.h"
 #include "ItemManager.h"
 #include "gettext.h"
 
@@ -10,9 +9,6 @@ void MultiSE3MatrixSeqItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerClass<MultiSE3MatrixSeqItem, AbstractMultiSeqItem>(
         N_("MultiSE3MatrixSeqItem"));
-    
-    ext->itemManager().addCreationPanel<MultiSE3MatrixSeqItem>(
-        new MultiSeqItemCreationPanel(_("Number of SE3 values in a frame")));
 }
 
 
