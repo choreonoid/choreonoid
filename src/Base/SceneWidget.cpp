@@ -1636,6 +1636,12 @@ void SceneWidget::Impl::mousePressEvent(QMouseEvent* event)
 
     if(!handled){
         if(event->button() == Qt::RightButton){
+            if(dragMode != NO_DRAGGING){
+                if(focusedEditable){
+                    focusedEditable.handler->onPointerLeaveEvent(&latestEvent);
+                }
+                dragMode = NO_DRAGGING;
+            }
             if(isEditMode){
                 showEditModePopupMenu(getGlobalPosition(event));
             } else {

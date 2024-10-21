@@ -1028,6 +1028,11 @@ OperableSceneBody::Impl::PointedType OperableSceneBody::Impl::findPointedObject(
 {
     PointedType pointedType = PT_NONE;
     pointedSceneLink = nullptr;
+
+    if(path.empty()){
+        return pointedType;
+    }
+    
     for(size_t i = path.size() - 1; i >= 1; --i){
         if(auto sceneLink = dynamic_cast<SceneLink*>(path[i].get())){
             auto sceneBody = sceneLink->sceneBody();
@@ -1552,6 +1557,8 @@ void OperableSceneBody::onPointerLeaveEvent(SceneWidgetEvent* event)
 
 void OperableSceneBody::Impl::onPointerLeaveEvent(SceneWidgetEvent* event)
 {
+    finishEditing();
+
     if(highlightedLink){
         highlightedLink->enableHighlight(false);
         highlightedLink = nullptr;
@@ -1637,6 +1644,8 @@ bool OperableSceneBody::onContextMenuRequest(SceneWidgetEvent* event)
 
 bool OperableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event)
 {
+    finishEditing();
+
     PointedType pointedType = findPointedObject(event->nodePath());
 
     if(pointedType != PT_SCENE_LINK){
