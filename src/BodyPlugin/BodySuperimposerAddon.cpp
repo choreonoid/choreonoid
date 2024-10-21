@@ -39,7 +39,6 @@ public:
     BodyItem* bodyItem;
     ScopedConnectionSet bodyItemConnections;
     vector<BodyInfoPtr> bodyInfos;
-    typedef vector<Isometry3, Eigen::aligned_allocator<Isometry3>> PositionArray;
     bool needToCheckSuperimposedBodies;
     SgGroupPtr topGroup;
     float transparency;

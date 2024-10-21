@@ -1031,12 +1031,13 @@ OperableSceneBody::Impl::PointedType OperableSceneBody::Impl::findPointedObject(
     for(size_t i = path.size() - 1; i >= 1; --i){
         if(auto sceneLink = dynamic_cast<SceneLink*>(path[i].get())){
             auto sceneBody = sceneLink->sceneBody();
-            if(sceneBody == self){
-                pointedSceneLink = dynamic_cast<OperableSceneLink*>(sceneLink);
-            } else { // multiplex body
+            auto body = sceneBody->body();
+            if(body->isMultiplexBody() && !body->isMultiplexMainBody()){ // multiplex body
                 pointedSceneLink = operableSceneLink(sceneLink->link()->index());
                 bodyItem->exchangeWithMultiplexBody(sceneBody->body());
                 onKinematicStateChanged();
+            } else if(sceneBody == self){
+                pointedSceneLink = dynamic_cast<OperableSceneLink*>(sceneLink);
             }
         }
         if(pointedSceneLink){
