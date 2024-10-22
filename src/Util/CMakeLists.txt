@@ -97,6 +97,7 @@ endif()
 
 set(headers
   ${CMAKE_CURRENT_BINARY_DIR}/Config.h
+  CompilerWarningControlMacros.h
   Referenced.h
   CloneMap.h
   ClonableReferenced.h
