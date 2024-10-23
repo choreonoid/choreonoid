@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "RectRegionMarker.h"
 #include "SceneWidget.h"
 #include "MenuManager.h"
@@ -147,9 +142,7 @@ void RectRegionMarker::startEditing(SceneWidget* sceneWidget)
 
     impl->sceneWidgetConnection =
         sceneWidget->sigAboutToBeDestroyed().connect(
-            [&](){
-                finishEditing();
-            });
+            [this]{ finishEditing(); });
 }
 
 
@@ -164,6 +157,7 @@ void RectRegionMarker::finishEditing()
     if(impl->sceneWidget){
         impl->sceneWidget->deactivateCustomMode(this);
         impl->sceneWidget->sceneRoot()->removeChild(this);
+        impl->sceneWidgetConnection.disconnect();
         impl->sceneWidget = nullptr;
     }
 }

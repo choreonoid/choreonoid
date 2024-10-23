@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BASE_RECT_REGION_MARKER_H
 #define CNOID_BASE_RECT_REGION_MARKER_H
 
