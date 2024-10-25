@@ -10,7 +10,6 @@ namespace cnoid {
 class CNOID_EXPORT HierarchicalClassRegistryBase
 {
 public:
-    HierarchicalClassRegistryBase();
     ~HierarchicalClassRegistryBase();
 
     void reserve(int n);
@@ -25,6 +24,7 @@ public:
     int numRegisteredClasses() const;
 
 protected:
+    HierarchicalClassRegistryBase(const std::type_info& baseType, const char* baseTypeName);
     int getClassId(const std::type_info& type, int unknownClassId = -1) const;
 
 private:
@@ -36,8 +36,8 @@ template<class BaseClass>
 class HierarchicalClassRegistry : public HierarchicalClassRegistryBase
 {
 public:
-    HierarchicalClassRegistry() {
-        registerClassAsTypeInfo(typeid(BaseClass), typeid(BaseClass));
+    HierarchicalClassRegistry(const char* baseClassName = nullptr)
+        : HierarchicalClassRegistryBase(typeid(BaseClass), baseClassName) {
     }
 
     HierarchicalClassRegistry(const HierarchicalClassRegistry& org) = delete;

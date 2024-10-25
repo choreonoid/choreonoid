@@ -1,8 +1,11 @@
 #include "HierarchicalClassRegistry.h"
+#include "Format.h"
 #include <mutex>
 #include <unordered_map>
 #include <typeindex>
 #include <vector>
+#include <stdexcept>
+#include <typeindex>
 
 using namespace std;
 using namespace cnoid;
@@ -17,16 +20,32 @@ public:
     PolymorphicIdMap polymorphicIdMap;
     std::vector<int> superClassPolymorphicIdMap;
     std::vector<std::string> classNameMap;
+    std::type_index baseTypeIndex;
 
+    Impl(const std::type_info& baseType, const char* baseTypeName);
     int registerClassAsTypeInfo(const std::type_info& type, const std::type_info& superType, const char* name);
 };
 
 }
 
 
-HierarchicalClassRegistryBase::HierarchicalClassRegistryBase()
+HierarchicalClassRegistryBase::HierarchicalClassRegistryBase(const std::type_info& baseType, const char* baseTypeName)
 {
-    impl = new Impl;
+    impl = new Impl(baseType, baseTypeName);
+}
+
+
+HierarchicalClassRegistryBase::Impl::Impl(const std::type_info& baseType, const char* baseTypeName)
+    : baseTypeIndex(baseType)
+{
+    std::lock_guard<std::mutex> lock(polymorphicIdMutex);
+
+    int baseClassId = 0;
+    polymorphicIdMap[baseType] = baseClassId;
+    superClassPolymorphicIdMap.push_back(-1);
+    if(baseTypeName){
+        classNameMap.push_back(baseTypeName);
+    }
 }
 
 
@@ -56,29 +75,44 @@ int HierarchicalClassRegistryBase::Impl::registerClassAsTypeInfo
 {
     std::lock_guard<std::mutex> lock(polymorphicIdMutex);
 
-    int superClassId;
-    auto iter = polymorphicIdMap.find(superType);
-    if(iter != polymorphicIdMap.end()){
-        superClassId = iter->second;
-    } else {
-        superClassId = polymorphicIdMap.size();
-        polymorphicIdMap[superType] = superClassId;
+    if(type == superType){
+        if(std::type_index(type) == baseTypeIndex){
+            if(name){
+                if(classNameMap.empty()){
+                    classNameMap.resize(1);
+                }
+                classNameMap[0] = name;
+            }
+            return 0;
+        }
+        if(name){
+            throw std::invalid_argument(
+                formatC("Cannot register type {0} as its own supertype in HierarchicalClassRegistry.", name));
+        } else {
+            throw std::invalid_argument(
+                "Cannot register a type as its own supertype in HierarchicalClassRegistry.");
+        }
     }
-    const bool hasSuperClass = (type != superType);
-    int id;
+
+    auto it = polymorphicIdMap.find(superType);
+    if(it == polymorphicIdMap.end()){
+        if(name){
+            throw std::invalid_argument(
+                formatC("Specified supertype of {0} is not registered in HierarchicalClassRegistry.", name));
+        } else {
+            throw std::invalid_argument(
+                formatC("Specified supertype of {0} is not registered in HierarchicalClassRegistry.", type.name()));
+        }
+    }
+    int superClassId = it->second;
     
-    if(!hasSuperClass){
-        id = superClassId;
-    } else {
-        id = polymorphicIdMap.size();
-        polymorphicIdMap[type] = id;
-    }
+    int id = polymorphicIdMap.size();
+    polymorphicIdMap[type] = id;
+
     if(id >= static_cast<int>(superClassPolymorphicIdMap.size())){
         superClassPolymorphicIdMap.resize(id + 1, -1);
     }
-    if(hasSuperClass){
-        superClassPolymorphicIdMap[id] = superClassId;
-    }
+    superClassPolymorphicIdMap[id] = superClassId;
 
     if(name){
         if(id >= static_cast<int>(classNameMap.size())){
