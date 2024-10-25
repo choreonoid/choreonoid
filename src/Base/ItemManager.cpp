@@ -579,7 +579,7 @@ Item* CreationDialog::createItem(Item* parentItem, Item* protoItem)
                 protoItem->removeFromParentItem();
                 protoItem->clearNonSubItemChildren();
             } else {
-                showWarningDialog(
+                showErrorDialog(
                     formatR(_("{0} is a singleton item type and its instance exists in the project item tree."),
                             classInfo->className));
                 return nullptr;
@@ -588,7 +588,9 @@ Item* CreationDialog::createItem(Item* parentItem, Item* protoItem)
     }
     if(!protoItem){
         defaultProtoItem = classInfo->factory();
-        defaultProtoItem->setName(classInfo->name);
+        if(defaultProtoItem->name().empty()){
+            defaultProtoItem->setName(classInfo->name);
+        }
         protoItem = defaultProtoItem;
     }
 
@@ -599,6 +601,11 @@ Item* CreationDialog::createItem(Item* parentItem, Item* protoItem)
                 if((protoItem == defaultProtoItem) && !isSingleton){
                     CloneMap cloneMap;
                     newInstance = protoItem->cloneSubTree(cloneMap);
+                    if(!newInstance){
+                        showErrorDialog(
+                            formatR(_("New {0} cannot be created from its prototype item."),
+                                    classInfo->className));
+                    }
                 } else {
                     newInstance = protoItem;
                 }
