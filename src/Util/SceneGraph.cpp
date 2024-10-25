@@ -1179,7 +1179,6 @@ namespace {
 struct NodeClassRegistration {
     NodeClassRegistration() {
         SceneNodeClassRegistry::instance()
-            .registerClass<SgNode>("SgNode")
             .registerClass<SgGroup, SgNode>("SgGroup")
             .registerClass<SgInvariantGroup, SgGroup>("SgInvariantGroup")
             .registerClass<SgTransform, SgGroup>("SgTransform")
