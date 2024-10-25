@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-03 23:13+0900\n"
+"POT-Creation-Date: 2024-10-25 16:33+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -626,6 +626,9 @@ msgstr "生成(&C)"
 
 msgid "&Cancel"
 msgstr "キャンセル(&C)"
+
+msgid "New {0} cannot be created from its prototype item."
+msgstr "新しい{0}をそのプロトタイプアイテムから生成することができません．"
 
 msgid "There is no file I/O processor registered for the \"{0}\" type."
 msgstr "アイテム型 \"{0}\" に対してI/Oプロセッサが登録されていません．"
@@ -1288,9 +1291,6 @@ msgstr "PointSet: 消去モード終了"
 msgid "MultiSE3MatrixSeqItem"
 msgstr "複数SE3行列時系列アイテム"
 
-msgid "Number of SE3 values in a frame"
-msgstr "フレームあたりSE3要素数"
-
 msgid "Multi SE3 Seq"
 msgstr "複数SE3時系列"
 
@@ -1308,9 +1308,6 @@ msgstr "複数値時系列グラフビュー"
 
 msgid "MultiValueSeqItem"
 msgstr "複数値時系列アイテム"
-
-msgid "Number of values in a frame"
-msgstr "フレームあたり要素数"
 
 msgid "Plain Format of a Multi Value Sequence"
 msgstr "複数値時系列のプレインフォーマット"
