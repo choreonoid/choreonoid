@@ -38,8 +38,11 @@ BodyMotionEngineCore::BodyMotionEngineCore(BodyItem* bodyItem)
 void BodyMotionEngineCore::updateBodyState(double time, const BodyState& state)
 {
     if(auto bodyItem_ = bodyItemRef.lock()){
-        bool needFk = updateBodyState_(time, bodyItem_->body(), state);
-        bodyItem_->notifyKinematicStateChange(needFk);
+        auto body = bodyItem_->body();
+        if(updateBodyState_(time, body, state)){
+            calcForwardKinematics(body, false);
+        }
+        bodyItem_->notifyKinematicStateChange();
     }
 }
 
@@ -160,6 +163,14 @@ void BodyMotionEngineCore::updateBodyVelocity(Body* body, const BodyState& prevS
 }
 
 
+void BodyMotionEngineCore::calcForwardKinematics(Body* mainBody, bool doUpdateVelocities)
+{
+    for(auto& body : mainBody->multiplexBodies()){
+        body->calcForwardKinematics(doUpdateVelocities);
+    }
+}
+
+
 static TimeSyncItemEngine* createBodyMotionEngine(BodyMotionItem* motionItem, BodyMotionEngine* engine0)
 {
     if(auto bodyItem = motionItem->findOwnerItem<BodyItem>()){
@@ -264,7 +275,7 @@ bool BodyMotionEngine::onTimeChanged(double time)
         }
                 
         if(needFk){
-            body->calcForwardKinematics(doUpdateVelocities);
+            core.calcForwardKinematics(body, doUpdateVelocities);
         }
 
         if(body->numMultiplexBodies() != prevNumMultiplexBodies){

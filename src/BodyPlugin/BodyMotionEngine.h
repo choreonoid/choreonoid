@@ -35,6 +35,7 @@ private:
     bool updateBodyState_(double time, Body* body, const BodyState& state);
     bool updateSingleBodyState(double time, Body* body, BodyStateBlock stateBlock);
     void updateBodyVelocity(Body* body, const BodyState& prevState, double timeStep);
+    void calcForwardKinematics(Body* mainBody, bool doUpdateVelocities);
     friend class BodyMotionEngine;
 };
 
