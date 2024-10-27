@@ -80,7 +80,7 @@ public:
     ScopedConnection existenceConnection;
 
     Impl(SceneBody* self);
-    void setBody(Body* body);
+    bool setBody(Body* body);
     void updateLinkPositions(Body* body, vector<SceneLinkPtr>& sceneLinks);
     void updateMultiplexBodyPositions();
     SceneBody* addMultiplexSceneBody(Body* multiplexBody);
@@ -421,14 +421,17 @@ void SceneBody::setBody(Body* body, std::function<SceneLink*(Link*)> sceneLinkFa
 }
 
 
-void SceneBody::Impl::setBody(Body* body)
+bool SceneBody::Impl::setBody(Body* body)
 {
+    bool updatedActually = false;
     if(body != self->body_){
         self->body_ = body;
         self->updateSceneModel();
         existenceConnection =
             body->sigExistenceChanged().connect([this](bool on){ onBodyExistenceChanged(on); });
+        updatedActually = true;
     }
+    return updatedActually;
 }
 
 
@@ -521,14 +524,17 @@ void SceneBody::Impl::updateMultiplexBodyPositions()
     int multiplexBodyIndex = 0;
     while(multiplexBody){
         SceneBody* sceneBody;
+        bool linkPositionsUpdated = false;
         if(multiplexBodyIndex < multiplexSceneBodies.size()){
             sceneBody = multiplexSceneBodies[multiplexBodyIndex];
-            sceneBody->impl->setBody(multiplexBody);
+            linkPositionsUpdated = sceneBody->impl->setBody(multiplexBody);
         } else {
             sceneBody = addMultiplexSceneBody(multiplexBody);
         }
-        auto& sceneLinks = sceneBody->sceneLinks_;
-        updateLinkPositions(multiplexBody, sceneLinks);
+        if(!linkPositionsUpdated){
+            auto& sceneLinks = sceneBody->sceneLinks_;
+            updateLinkPositions(multiplexBody, sceneLinks);
+        }
         multiplexBody = multiplexBody->nextMultiplexBody();
         ++multiplexBodyIndex;
     }
