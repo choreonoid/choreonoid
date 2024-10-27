@@ -286,6 +286,42 @@ public:
     void exchangePositionWithMultiplexBody(Body* multiplexBody);
     SignalProxy<void(Body* body, bool isAdded)> sigMultiplexBodyAddedOrRemoved();
 
+    class MultiplexBodyIterator {
+        Body* current;
+    public:
+        explicit MultiplexBodyIterator(Body* body = nullptr) : current(body) { }
+        Body*& operator*() { return current; }
+        Body** operator->() { return &current; }
+        MultiplexBodyIterator& operator++() {
+            if(current){
+                current = current->nextMultiplexBody_;
+            }
+            return *this;
+        }
+        MultiplexBodyIterator operator++(int) {
+            MultiplexBodyIterator tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+        bool operator==(const MultiplexBodyIterator& other) const {
+            return current == other.current;
+        }
+        bool operator!=(const MultiplexBodyIterator& other) const {
+            return current != other.current;
+        }
+    };
+
+    class MultiplexBodyList
+    {
+        Body* mainBody;
+    public:
+        MultiplexBodyList(Body* mainBody) : mainBody(mainBody) { }
+        MultiplexBodyIterator begin() { return MultiplexBodyIterator(mainBody); }
+        MultiplexBodyIterator end() { return MultiplexBodyIterator(nullptr); }
+    };
+
+    MultiplexBodyList multiplexBodies() { return MultiplexBodyList(this); }
+
     const Mapping* info() const;
     Mapping* info();
 
