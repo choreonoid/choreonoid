@@ -274,18 +274,19 @@ bool KinematicSimulatorItem::Impl::stepSimulation(const std::vector<SimulationBo
     
     for(size_t i=0; i < activeSimBodies.size(); ++i){
         auto simBody = static_cast<KinematicSimBody*>(activeSimBodies[i]);
-        auto body = simBody->body();
-        for(auto& link : body->links()){
-            if(link->actuationMode() == Link::JointDisplacement){
-                link->q() = link->q_target();
+        for(auto& body : simBody->body()->multiplexBodies()){
+            for(auto& link : body->links()){
+                if(link->actuationMode() == Link::JointDisplacement){
+                    link->q() = link->q_target();
+                }
             }
-        }
-        if(auto& linkedJointHandler = simBody->linkedJointHandler){
-            if(linkedJointHandler->updateLinkedJointDisplacements()){
-                linkedJointHandler->limitLinkedJointDisplacementsWithinMovableRanges();
+            if(auto& linkedJointHandler = simBody->linkedJointHandler){
+                if(linkedJointHandler->updateLinkedJointDisplacements()){
+                    linkedJointHandler->limitLinkedJointDisplacementsWithinMovableRanges();
+                }
             }
+            body->calcForwardKinematics();
         }
-        body->calcForwardKinematics();
     }
 
     for(auto& info : activeHolderInfos){
