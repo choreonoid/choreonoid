@@ -887,15 +887,12 @@ void SimulationBody::Impl::initializeRecordBuffers()
     lastStateBuf.clear();
     hasLastState = false;
 
-    if(!isDynamic){
-        numLinksToRecord = 0;
-        numJointsToRecord = 0;
-    } else {
+    if(isDynamic){
         numLinksToRecord = simImpl->isAllLinkPositionOutputMode ? body_->numLinks() : 1;
         numJointsToRecord = body_->numAllJoints();
-        if(!simImpl->isRecordingEnabled){
-            bodyMotionEngine = make_unique<BodyMotionEngineCore>(bodyItem);
-        }
+    } else {
+        numLinksToRecord = 0;
+        numJointsToRecord = 0;
     }
 
     numDevicesToRecord = 0;
@@ -917,17 +914,22 @@ void SimulationBody::Impl::initializeRecordBuffers()
         }
     }
 
-    if(numLinksToRecord || numJointsToRecord || numDevicesToRecord){
+    if(numLinksToRecord == 0 && numJointsToRecord == 0 && numDevicesToRecord == 0){
+        doRecord = false;
+    } else {
         doRecord = true;
         bodyStateBuf.setNumLinkPositionsHint(numLinksToRecord);
         bodyStateBuf.setNumJointDisplacementsHint(numJointsToRecord);
         bodyStateBuf.setNumDeviceStatesHint(numDevicesToRecord);
         bodyStateBuf.setFrameRate(simImpl->worldFrameRate);
+        
         // This buf always has the first element to keep unchanged device states
         bodyStateBuf.appendAllocatedFrame();
         currentBodyStateBufIndex = 1;
-    } else {
-        doRecord = false;
+
+        if(!simImpl->isRecordingEnabled){
+            bodyMotionEngine = make_unique<BodyMotionEngineCore>(bodyItem);
+        }
     }
 }
 
