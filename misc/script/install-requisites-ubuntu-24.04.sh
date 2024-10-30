@@ -1,7 +1,7 @@
 #!/bin/sh
 
 sudo --preserve-env=DEBIAN_FRONTEND,TZ \
-apt-get install \
+apt-get -y install \
 build-essential \
 cmake-curses-gui \
 libeigen3-dev \
