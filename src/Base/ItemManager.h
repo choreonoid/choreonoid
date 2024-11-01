@@ -147,8 +147,12 @@ public:
         return static_cast<ItemType*>(getPrototypeInstance_(typeid(ItemType)));
     }
 
-    template <class ItemType> ItemManager& addCreationPanel(ItemCreationPanel* panel = nullptr) {
-        addCreationPanel_(typeid(ItemType), panel);
+    template <class ItemType> ItemManager& addCreationPanel(ItemCreationPanel* panel, bool isVisibleInMainMenu = true) {
+        addCreationPanel_(typeid(ItemType), panel, isVisibleInMainMenu);
+        return *this;
+    }
+    template <class ItemType> ItemManager& addCreationPanel(bool isVisibleInMainMenu = true) {
+        addCreationPanel_(typeid(ItemType), nullptr, isVisibleInMainMenu);
         return *this;
     }
 
@@ -256,7 +260,7 @@ private:
         const std::string& className, const std::type_info& type, const std::type_info& superType,
         std::function<Item*()> factory, Item* singletonInstance);
     void addAlias_(const std::type_info& type, const std::string& className, const std::string& moduleName);
-    void addCreationPanel_(const std::type_info& type, ItemCreationPanel* panel);
+    void addCreationPanel_(const std::type_info& type, ItemCreationPanel* panel, bool isVisibleInMainMenu);
     static Item* getPrototypeInstance_(const std::type_info& type);
 
     void registerFileIO_(const std::type_info& type, ItemFileIO* fileIO);

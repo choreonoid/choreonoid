@@ -121,8 +121,8 @@ public:
     void registerClass(
         function<Item*()>& factory, Item* singletonInstance, int classId, const string& className);
 
-    void addCreationPanel(const std::type_info& type, ItemCreationPanel* panel);
-    CreationDialog* createCreationDialog(const std::type_info& type);
+    void addCreationPanel(const std::type_info& type, ItemCreationPanel* panel, bool isVisibleInMainMenu);
+    CreationDialog* createCreationDialog(const std::type_info& type, bool isVisibleInMainMenu);
     static void onNewItemActivated(CreationDialog* dialog);
 
     ClassInfoPtr registerFileIO(const type_info& typeId, ItemFileIO* fileIO);
@@ -146,6 +146,7 @@ public:
     ClassInfo* classInfo;
     ItemCreationPanel* creationPanel;
     QVBoxLayout* panelLayout;
+    QAction* mainMenuItemAction;
     ItemPtr defaultProtoItem;
     bool isSingleton;
 };
@@ -461,15 +462,15 @@ Item* ItemManager::createItemWithDialog_
 }
 
 
-void ItemManager::addCreationPanel_(const std::type_info& type, ItemCreationPanel* panel)
+void ItemManager::addCreationPanel_(const std::type_info& type, ItemCreationPanel* panel, bool isVisibleInMainMenu)
 {
-    impl->addCreationPanel(type, panel);
+    impl->addCreationPanel(type, panel, isVisibleInMainMenu);
 }
 
 
-void ItemManager::Impl::addCreationPanel(const std::type_info& type, ItemCreationPanel* panel)
+void ItemManager::Impl::addCreationPanel(const std::type_info& type, ItemCreationPanel* panel, bool isVisibleInMainMenu)
 {
-    CreationDialog* dialog = createCreationDialog(type);
+    CreationDialog* dialog = createCreationDialog(type, isVisibleInMainMenu);
     if(dialog){
         if(panel){
             dialog->addPanel(panel);
@@ -482,7 +483,7 @@ void ItemManager::Impl::addCreationPanel(const std::type_info& type, ItemCreatio
 }
 
 
-CreationDialog* ItemManager::Impl::createCreationDialog(const std::type_info& type)
+CreationDialog* ItemManager::Impl::createCreationDialog(const std::type_info& type, bool isVisibleInMainMenu)
 {
     CreationDialog* dialog = nullptr;
     
@@ -504,10 +505,18 @@ CreationDialog* ItemManager::Impl::createCreationDialog(const std::type_info& ty
         dialog->hide();
         info->creationDialogs.push_back(dialog);
 
-        mainMenu->add_File_New_Item(
-            translatedName,
-            [=](){ onNewItemActivated(dialog); },
-            registeredCreationPanels.empty());
+        auto action =
+            mainMenu->add_File_New_Item(
+                translatedName,
+                [=](){ onNewItemActivated(dialog); },
+                registeredCreationPanels.empty());
+
+        if(action){
+            dialog->mainMenuItemAction = action;
+            if(!isVisibleInMainMenu){
+                action->setVisible(false);
+            }
+        }
     }
 
     return dialog;
@@ -537,6 +546,7 @@ CreationDialog::CreationDialog
 (const QString& title, ClassInfo* classInfo, Item* singletonInstance)
     : QDialog(MainWindow::instance()),
       classInfo(classInfo),
+      mainMenuItemAction(nullptr),
       defaultProtoItem(singletonInstance),
       isSingleton((bool)singletonInstance)
 {
