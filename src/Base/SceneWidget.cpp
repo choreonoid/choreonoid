@@ -1038,6 +1038,12 @@ void SceneWidget::setCursor(const QCursor cursor)
 }
 
 
+void SceneWidget::setDefaultCursor()
+{
+    impl->setCursor(impl->defaultCursor);
+}
+
+
 void SceneWidget::Impl::resetCursor()
 {
     self->setCursor(isEditMode ? editModeCursor : defaultCursor);
