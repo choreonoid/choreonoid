@@ -6,6 +6,7 @@
 #define CNOID_BASE_SCENE_WIDGET_EVENT_H
 
 #include <cnoid/SceneGraph>
+#include <Qt>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -44,6 +45,8 @@ public:
        @return a Qt::MouseButton value
     */
     int button() const { return button_; }
+    bool isLeftButtonPressed() const { return button_ == Qt::LeftButton; }
+    bool isRightButtonPressed() const { return button_ == Qt::RightButton; }
 
     /**
        @return a Qt::KeyboardModifiers value
