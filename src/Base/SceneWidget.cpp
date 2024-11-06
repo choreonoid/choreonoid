@@ -106,7 +106,35 @@ struct EditableNodeInfo
     void clear(){ node.reset(); handler = nullptr; }
 };
 
-            
+
+template<class VectorType>
+class Interpolator
+{
+public:
+    double x0;
+    VectorType y0;
+    VectorType a;
+    VectorType b;
+
+    Interpolator(double x0, VectorType y0, double x1, VectorType y1)
+        : x0(x0), y0(y0)
+    {
+        double h = x1 - x0;
+        double h2 = h * h;
+        double h3 = h2 * h;
+        a = 2.0 * (y0 - y1) / h3;
+        b = 3.0 * (y1 - y0) / h2;
+    }
+
+    VectorType interpolate(double x) const
+    {
+        double h = x - x0;
+        double h2 = h * h;
+        double h3 = h2 * h;
+        return a * h3 + b * h2 + y0;
+    }
+};
+
 }
 
 namespace cnoid {
@@ -268,9 +296,13 @@ public:
     void renderFps();
 
     void onCurrentCameraChanged();
-    void setVisiblePolygonElements(int elementFlags);
     int visiblePolygonElements() const;
     void setCollisionLineVisibility(bool on);
+    void setVisiblePolygonElements(int elementFlags);
+    void setCameraPositionLookingFor(
+        const Vector3& eye, const Vector3& direction, const Vector3& up, double transitionTime);
+    void setCameraPositionLookingAt(
+        const Vector3& eye, const Vector3& center, const Vector3& up, double transitionTime);
 
     void resetCursor();
     void setEditMode(bool on, bool doAdvertise);
@@ -2746,9 +2778,131 @@ void SceneWidget::setShowFPS(bool on)
 }
 
 
-void SceneWidget::setCameraPosition(const Vector3& eye, const Vector3& direction, const Vector3& up)
+void SceneWidget::setCameraPosition
+(const Vector3& eye, const Vector3& direction, const Vector3& up)
 {
-    impl->builtinCameraTransform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
+    impl->setCameraPositionLookingFor(eye, direction, up, 0.0);
+}
+
+
+void SceneWidget::setCameraPositionLookingFor
+(const Vector3& eye, const Vector3& direction, const Vector3& up, double transitionTime)
+{
+    impl->setCameraPositionLookingFor(eye, direction, up, transitionTime);
+}
+
+
+void SceneWidget::Impl::setCameraPositionLookingFor
+(const Vector3& eye, const Vector3& direction, const Vector3& up, double transitionTime)
+{
+    if(transitionTime == 0.0){
+        builtinCameraTransform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
+        return;
+    }
+
+    typedef Eigen::Matrix<double, 6, 1> Vector6;
+
+    Vector6 pos0;
+    auto& T0 = builtinCameraTransform->T();
+    pos0.head<3>() = T0.translation(); // eye
+    pos0.tail<3>() = rpyFromRot(T0.linear()); // rpy
+
+    Vector6 pos1;
+    Vector3 rpy1 = rpyFromRot(SgCamera::positionLookingFor(eye, direction, up).linear());
+    pos1 << eye, rpy1;
+
+    Interpolator interp(0.0, pos0, transitionTime, pos1);
+
+    QElapsedTimer timer;
+    timer.start();
+
+    while(true){
+        double time = timer.elapsed() / 1000.0;
+        if(time >= transitionTime){
+            break;
+        }
+        Vector6 pos = interp.interpolate(time);
+        Isometry3 T;
+        T.translation() = pos.head<3>(); // eye
+        T.linear() = rotFromRpy(pos.tail<3>());
+        builtinCameraTransform->setPosition(T);
+        repaint();
+
+        QCoreApplication::processEvents();
+    }
+
+    builtinCameraTransform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
+    update();
+}
+
+
+void SceneWidget::setCameraPositionLookingAt
+(const Vector3& eye, const Vector3& center, const Vector3& up, double transitionTime)
+{
+    impl->setCameraPositionLookingAt(eye, center, up, transitionTime);
+}
+
+
+void SceneWidget::Impl::setCameraPositionLookingAt
+(const Vector3& eye, const Vector3& center, const Vector3& up, double transitionTime)
+{
+    if(transitionTime == 0.0){
+        builtinCameraTransform->setPosition(SgCamera::positionLookingAt(eye, center, up));
+    }
+
+    auto& T0 = builtinCameraTransform->T();
+    Vector3 d = SgCamera::direction(T0);
+    Vector3 eye0 = T0.translation();
+    double t = -(eye0 - center).dot(d);
+    Vector3 center0 = eye0 + t * d;
+    Vector3 up0 = SgCamera::up(T0);
+    Vector3 upRotationAxis = up0.cross(up).normalized();
+    if(upRotationAxis.isZero()){
+        for(int i=0; i < 2; ++i){
+            upRotationAxis = Vector3::Unit(i).cross(up).normalized();
+            if(!upRotationAxis.isZero()){
+                break;
+            }
+        }
+    }
+    double theta = acos(up0.dot(up));
+
+    typedef Eigen::Matrix<double, 7, 1> Vector7;
+    Vector7 pos0;
+    pos0.head<3>() = eye0;
+    pos0.segment<3>(3) = center0;
+    pos0(6) = 0.0;
+
+    Vector7 pos1;
+    pos1 << eye, center, theta;
+
+    Interpolator interp(0.0, pos0, transitionTime, pos1);
+
+    QElapsedTimer timer;
+    timer.start();
+
+    auto setCameraPosition =
+        [&](double time){
+        };
+
+    while(true){
+        double time = timer.elapsed() / 1000.0;
+        if(time >= transitionTime){
+            break;
+        }
+        Vector7 pos = interp.interpolate(time);
+        Vector3 eye = pos.head<3>();
+        Vector3 center = pos.segment<3>(3);
+        double theta = pos(6);
+        Vector3 up = Vector3(AngleAxis(theta, upRotationAxis) * up0).normalized();
+        builtinCameraTransform->setPosition(SgCamera::positionLookingAt(eye, center, up));
+        repaint();
+
+        QCoreApplication::processEvents();
+    }
+
+    builtinCameraTransform->setPosition(SgCamera::positionLookingAt(eye, center, up));
+    update();
 }
 
 

@@ -137,6 +137,8 @@ public:
     void setColor(const Vector4& color);
 
     void setCameraPosition(const Vector3& eye, const Vector3& direction, const Vector3& up);
+    void setCameraPositionLookingFor(const Vector3& eye, const Vector3& direction, const Vector3& up, double transitionTime = 0.0);
+    void setCameraPositionLookingAt(const Vector3& eye, const Vector3& center, const Vector3& up, double transitionTime = 0.0);
     void setFieldOfView(double value);
     void setClipDistances(double nearDistance, double farDistance);
     void setInteractiveCameraRollRestricted(bool on);
