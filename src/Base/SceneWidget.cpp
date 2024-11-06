@@ -1512,20 +1512,25 @@ void SceneWidget::Impl::keyPressEvent(QKeyEvent* event)
     bool handled = false;
 
     if(isEditMode){
-        auto info = applyEditableFunction(
-            focusedEditablePath,
-            [&](SgNode* node, SceneWidgetEventHandler* handler){
-                bool handled = false;
-                if(customNodeEventHandler){
-                    handled = customNodeEventHandler(node, handler, &latestEvent);
-                }
-                if(!handled){
-                    handled = handler->onKeyPressEvent(&latestEvent);
-                }
-                return handled;
-            });
-        if(info){
-            handled = true;
+        if(activeCustomModeHandler){
+            handled = activeCustomModeHandler->onKeyPressEvent(&latestEvent);
+        }
+        if(!handled){
+            auto info = applyEditableFunction(
+                focusedEditablePath,
+                [&](SgNode* node, SceneWidgetEventHandler* handler){
+                    bool handled = false;
+                    if(customNodeEventHandler){
+                        handled = customNodeEventHandler(node, handler, &latestEvent);
+                    }
+                    if(!handled){
+                        handled = handler->onKeyPressEvent(&latestEvent);
+                    }
+                    return handled;
+                });
+            if(info){
+                handled = true;
+            }
         }
     }
 
@@ -1592,13 +1597,18 @@ void SceneWidget::Impl::keyReleaseEvent(QKeyEvent* event)
         handled = true;
         
     } else if(isEditMode){
-        if(focusedEditable){
-            if(customNodeEventHandler){
-                handled = customNodeEventHandler(
-                    focusedEditable.node, focusedEditable.handler, &latestEvent);
-            }
-            if(!handled){
-                handled = focusedEditable.handler->onKeyReleaseEvent(&latestEvent);
+        if(activeCustomModeHandler){
+            handled = activeCustomModeHandler->onKeyReleaseEvent(&latestEvent);
+        }
+        if(!handled){
+            if(focusedEditable){
+                if(customNodeEventHandler){
+                    handled = customNodeEventHandler(
+                        focusedEditable.node, focusedEditable.handler, &latestEvent);
+                }
+                if(!handled){
+                    handled = focusedEditable.handler->onKeyReleaseEvent(&latestEvent);
+                }
             }
         }
     }
