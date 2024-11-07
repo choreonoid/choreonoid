@@ -24,6 +24,7 @@ public:
     CoordinateFrameItem(CoordinateFrame* frame);
     virtual ~CoordinateFrameItem();
 
+    virtual bool setName(const std::string& name) override;
     virtual std::string displayName() const override;
 
     CoordinateFrameListItem* frameListItem();
