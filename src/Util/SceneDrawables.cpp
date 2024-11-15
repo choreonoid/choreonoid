@@ -1,6 +1,7 @@
 #include "SceneDrawables.h"
 #include "CloneMap.h"
 #include "SceneNodeClassRegistry.h"
+#include "Format.h"
 
 using namespace std;
 using namespace cnoid;
@@ -577,8 +578,60 @@ void SgMesh::rotate(const Matrix3f& R)
         }
     }
     setPrimitive(SgMesh::Mesh()); // clear the primitive information
-}    
-    
+}
+
+
+void SgMesh::putInformation(std::ostream& os)
+{
+    os << "vertices:\n";
+    if(!hasVertices()){
+        os << " empty\n";
+    } else {
+        int n = vertices_->size();
+        for(int i=0; i < n; ++i){
+            auto& v = vertices_->at(i);
+            os << formatC(" {0}: {1}, {2}, {3}\n", i, v.x(), v.y(), v.z());
+        }
+    }
+    os << "\n";
+
+    os << "triangles:\n";
+    if(!hasTriangles()){
+        os << " empty\n";
+    } else {
+        int n = numTriangles();
+        for(int i=0; i < n; ++i){
+            auto tri = triangle(i);
+            os << formatC(" {0}: {1}, {2}, {3}\n", i, tri[0], tri[1], tri[2]);
+        }
+    }
+    os << "\n";
+
+    os << "normals:\n";
+    if(!hasNormals()){
+        os << " empty\n";
+    } else {
+        int n = normals_->size();
+        for(int i=0; i < n; ++i){
+            auto& v = normals_->at(i);
+            os << formatC(" {0}: {1}, {2}, {3}\n", i, v.x(), v.y(), v.z());
+        }
+    }
+    os << "\n";
+
+    os << "normal indices:\n";
+    if(!hasNormalIndices()){
+        os << " empty\n";
+    } else {
+        int n = normalIndices_.size();
+        for(int i=0; i < n; ++i){
+            auto index = normalIndices_[i];
+            os << formatC(" {0}: {1}\n", i, index);
+        }
+    }
+    os << endl;
+}
+
 
 SgPolygonMesh::SgPolygonMesh()
 {
@@ -1044,6 +1097,35 @@ SgLineSet::SgLineSet(const SgLineSet& org, CloneMap* cloneMap)
 Referenced* SgLineSet::doClone(CloneMap* cloneMap) const
 {
     return new SgLineSet(*this, cloneMap);
+}
+
+
+void SgLineSet::putInformation(std::ostream& os)
+{
+    os << "vertices:\n";
+    if(!hasVertices()){
+        os << " empty\n";
+    } else {
+        int n = vertices_->size();
+        for(int i=0; i < n; ++i){
+            auto& v = vertices_->at(i);
+            os << formatC(" {0}: {1}, {2}, {3}\n", i, v.x(), v.y(), v.z());
+        }
+    }
+    os << "\n";
+
+    os << "lines:\n";
+    if(numLines() == 0){
+        os << " empty\n";
+    } else {
+        int n = numLines();
+        for(int i=0; i < n; ++i){
+            auto l = line(i);
+            os << formatC(" {0}: {1} - {2}\n", i, l[0], l[1]);
+        }
+    }
+    
+    os << endl;
 }
 
 

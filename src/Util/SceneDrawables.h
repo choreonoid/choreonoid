@@ -479,6 +479,9 @@ public:
     void translate(const Vector3f& translation);
     void rotate(const Matrix3f& R);
 
+    // For debug
+    void putInformation(std::ostream& os);
+
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
@@ -606,7 +609,7 @@ public:
     const SgIndexArray& normalIndices() const { return normalIndices_; }
     SgIndexArray& normalIndices() { return normalIndices_; }
 
-private:
+protected:
     BoundingBox bbox;
     SgVertexArrayPtr vertices_;
     SgMaterialPtr material_;
@@ -703,6 +706,9 @@ public:
        The default value of this is zero and the current system value is used then.
     */
     float lineWidth() const { return lineWidth_; }
+
+    // For debug
+    void putInformation(std::ostream& os);
 
 protected:
     SgLineSet(int classId);
