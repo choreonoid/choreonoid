@@ -1,1 +1,1 @@
-#include "../choreonoid-nx/src/Base/SceneWidgetEvent.h"
+#include "src/Base/SceneWidgetEvent.h"
