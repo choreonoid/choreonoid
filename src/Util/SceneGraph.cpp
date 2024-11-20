@@ -679,6 +679,17 @@ void SgGroup::removeChildAt(int index, SgUpdateRef update)
 }
 
 
+void SgGroup::removeChildrenAfter(int index, SgUpdateRef update)
+{
+    if(index < static_cast<int>(children.size())){
+        auto it = children.begin() + index + 1;
+        while(it != children.end()){
+            it = removeChild(it, update);
+        }
+    }
+}
+
+
 void SgGroup::clearChildren(SgUpdateRef update)
 {
     iterator p = children.begin();

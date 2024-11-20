@@ -316,6 +316,7 @@ public:
     iterator removeChild(iterator childIter, SgUpdateRef update = nullptr);
     bool removeChild(SgNode* node, SgUpdateRef update = nullptr);
     void removeChildAt(int index, SgUpdateRef update = nullptr);
+    void removeChildrenAfter(int index, SgUpdateRef update = nullptr);
     void clearChildren(SgUpdateRef update = nullptr);
     void copyChildrenTo(SgGroup* group, SgUpdateRef update = nullptr) const;
     void moveChildrenTo(SgGroup* group, SgUpdateRef update = nullptr);
