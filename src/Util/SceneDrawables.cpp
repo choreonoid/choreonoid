@@ -380,11 +380,20 @@ SgVertexArray* SgMeshBase::setVertices(SgVertexArray* vertices)
 }
 
 
+SgVertexArray* SgMeshBase::getOrCreateVertices()
+{
+    if(!vertices_){
+        setVertices(new SgVertexArray);
+    }
+    return vertices_;
+}
+
+
 SgVertexArray* SgMeshBase::getOrCreateVertices(int size)
 {
     if(!vertices_){
         setVertices(new SgVertexArray(size));
-    } else if(size > 0){
+    } else {
         vertices_->resize(size);
     }
     return vertices_;
@@ -428,11 +437,20 @@ SgColorArray* SgMeshBase::setColors(SgColorArray* colors)
 }
 
 
+SgColorArray* SgMeshBase::getOrCreateColors()
+{
+    if(!colors_){
+        setColors(new SgColorArray);
+    }
+    return colors_;
+}
+
+
 SgColorArray* SgMeshBase::getOrCreateColors(int size)
 {
     if(!colors_){
         setColors(new SgColorArray(size));
-    } else if(size > 0){
+    } else {
         colors_->resize(size);
     }
     return colors_;
@@ -964,11 +982,20 @@ SgVertexArray* SgPlot::setVertices(SgVertexArray* vertices)
 }
 
 
+SgVertexArray* SgPlot::getOrCreateVertices()
+{
+    if(!vertices_){
+        setVertices(new SgVertexArray);
+    }
+    return vertices_;
+}
+
+
 SgVertexArray* SgPlot::getOrCreateVertices(int size)
 {
     if(!vertices_){
         setVertices(new SgVertexArray(size));
-    } else if(size > 0){
+    } else {
         vertices_->resize(size);
     }
     return vertices_;
@@ -1011,11 +1038,20 @@ SgColorArray* SgPlot::setColors(SgColorArray* colors)
 }
 
 
+SgColorArray* SgPlot::getOrCreateColors()
+{
+    if(!colors_){
+        setColors(new SgColorArray);
+    }
+    return colors_;
+}
+
+
 SgColorArray* SgPlot::getOrCreateColors(int size)
 {
     if(!colors_){
         setColors(new SgColorArray(size));
-    } else if(size > 0){
+    } else {
         colors_->resize(size);
     }
     return colors_;

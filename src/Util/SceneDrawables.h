@@ -262,7 +262,8 @@ public:
     SgVertexArray* vertices() { return vertices_; }
     const SgVertexArray* vertices() const { return vertices_; }
     SgVertexArray* setVertices(SgVertexArray* vertices);
-    SgVertexArray* getOrCreateVertices(int size = 0);
+    SgVertexArray* getOrCreateVertices();
+    SgVertexArray* getOrCreateVertices(int size);
         
     bool hasNormals() const { return (normals_ && !normals_->empty()); }
     SgNormalArray* normals() { return normals_; }
@@ -274,7 +275,8 @@ public:
     SgColorArray* colors() { return colors_; }
     const SgColorArray* colors() const { return colors_; }
     SgColorArray* setColors(SgColorArray* colors);
-    SgColorArray* getOrCreateColors(int size = 0);
+    SgColorArray* getOrCreateColors();
+    SgColorArray* getOrCreateColors(int size);
 
     bool hasTexCoords() const { return (texCoords_ && !texCoords_->empty()); }
     SgTexCoordArray* texCoords() { return texCoords_; }
@@ -578,7 +580,8 @@ public:
     SgVertexArray* vertices() { return vertices_; }
     const SgVertexArray* vertices() const { return vertices_; }
     SgVertexArray* setVertices(SgVertexArray* vertices);
-    SgVertexArray* getOrCreateVertices(int size = 0);
+    SgVertexArray* getOrCreateVertices();
+    SgVertexArray* getOrCreateVertices(int size);
         
     SgMaterial* material() { return material_; }
     const SgMaterial* material() const { return material_; }
@@ -589,7 +592,8 @@ public:
     SgColorArray* colors() { return colors_; }
     const SgColorArray* colors() const { return colors_; }
     SgColorArray* setColors(SgColorArray* colors);
-    SgColorArray* getOrCreateColors(int size = 0);
+    SgColorArray* getOrCreateColors();
+    SgColorArray* getOrCreateColors(int size);
 
     const SgIndexArray& colorIndices() const { return colorIndices_; }
     SgIndexArray& colorIndices() { return colorIndices_; }
