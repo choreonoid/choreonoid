@@ -1,1 +1,1 @@
-#include "src/BodyPlugin/GLVisionSimulatorItem.h"
+#include "src/GLVisionSimulatorPlugin/GLVisionSimulatorItem.h"

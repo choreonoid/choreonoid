@@ -20,7 +20,6 @@
 #include "BodyContactPointLoggerItem.h"
 #include "BodyContactPointLogItem.h"
 #include "SubSimulatorItem.h"
-#include "GLVisionSimulatorItem.h"
 #include "SimulationScriptItem.h"
 #include "BodyMotionItem.h"
 #include "ZMPSeqItem.h"
@@ -119,7 +118,6 @@ bool BodyPlugin::initialize()
     BodyContactPointLoggerItem::initializeClass(this);
     BodyContactPointLogItem::initializeClass(this);
     SubSimulatorItem::initializeClass(this);
-    GLVisionSimulatorItem::initializeClass(this);
     SimulationScriptItem::initializeClass(this);
     BodyMotionItem::initializeClass(this);
     BodyMotionEngine::initializeClass(this);
@@ -194,4 +192,5 @@ const char* BodyPlugin::description() const
 }
 
 
-CNOID_IMPLEMENT_PLUGIN_ENTRY(BodyPlugin);
+CNOID_IMPLEMENT_PLUGIN_ENTRY(BodyPlugin)
+

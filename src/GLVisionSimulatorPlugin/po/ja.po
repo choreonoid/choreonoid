@@ -1,0 +1,79 @@
+# Japanese translations for Choreonoid package.
+# This file is distributed under the same license as the Choreonoid package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Choreonoid\n"
+"POT-Creation-Date: 2024-12-30 22:10+0900\n"
+"PO-Revision-Date: 2024-12-30 22:10+0900\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "GLVisionSimulatorItem"
+msgstr "GLビジョンシミュレータアイテム"
+
+msgid "Single"
+msgstr "単一"
+
+msgid "Sensor"
+msgstr "センサ"
+
+msgid "Screen"
+msgstr "スクリーン"
+
+msgid "{0} detected vision sensor \"{1}\" of {2} as a target.\n"
+msgstr "{0} は {2} の \"{1}\" を対象視覚センサとして検出しました．\n"
+
+msgid "{} has no target sensors"
+msgstr "{}は対象センサを有していません"
+
+msgid "{0}: Target sensor \"{1}\" cannot be initialized.\n"
+msgstr "{0}: 対象センサ \"{1}\" の初期化に失敗しました．\n"
+
+msgid "Target bodies"
+msgstr "対象ボディ"
+
+msgid "Target sensors"
+msgstr "対象センサ"
+
+msgid "Max frame rate"
+msgstr "最大フレームレート"
+
+msgid "Max latency [s]"
+msgstr "最大レイテンシ[秒]"
+
+msgid "Record vision data"
+msgstr "ビジョンデータの記録"
+
+msgid "Thread mode"
+msgstr "スレッドモード"
+
+msgid "Best effort"
+msgstr "ベストエフォート"
+
+msgid "All scene objects"
+msgstr "全てのシーンオブジェクト"
+
+msgid "Precision ratio of range sensors"
+msgstr "レンジセンサ精度係数"
+
+msgid "Depth error"
+msgstr "深度エラー"
+
+msgid "Background color"
+msgstr "背景色"
+
+msgid "Head light"
+msgstr "ヘッドライト"
+
+msgid "World light"
+msgstr "ワールドライト"
+
+msgid "Additional lights"
+msgstr "追加のライト"
+
+msgid "Anti-aliasing"
+msgstr "アンチエイリアシング"

@@ -1,7 +1,7 @@
-#ifndef CNOID_BODY_PLUGIN_GL_VISION_SIMULATOR_ITEM_H
-#define CNOID_BODY_PLUGIN_GL_VISION_SIMULATOR_ITEM_H
+#ifndef CNOID_GL_VISION_SENSOR_PLUGIN_GL_VISION_SIMULATOR_ITEM_H
+#define CNOID_GL_VISION_SENSOR_PLUGIN_GL_VISION_SIMULATOR_ITEM_H
 
-#include "SubSimulatorItem.h"
+#include <cnoid/SubSimulatorItem>
 #include <cnoid/EigenTypes>
 #include "exportdecl.h"
 

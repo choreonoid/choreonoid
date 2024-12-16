@@ -1,8 +1,3 @@
-/**
-   \author Shizuko Hattori
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "FisheyeLensConverter.h"
 #include <cmath>
 #include <iostream>

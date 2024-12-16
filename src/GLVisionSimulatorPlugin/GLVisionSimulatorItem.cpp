@@ -1,8 +1,8 @@
 #include "GLVisionSimulatorItem.h"
-#include "SimulatorItem.h"
-#include "WorldItem.h"
 #include "FisheyeLensConverter.h"
 #include <cnoid/ItemManager>
+#include <cnoid/SimulatorItem>
+#include <cnoid/WorldItem>
 #include <cnoid/MessageView>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
@@ -302,8 +302,10 @@ public:
 
 void GLVisionSimulatorItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<GLVisionSimulatorItem, SubSimulatorItem>(N_("GLVisionSimulatorItem"));
-    ext->itemManager().addCreationPanel<GLVisionSimulatorItem>();
+    auto& im = ext->itemManager();
+    im.registerClass<GLVisionSimulatorItem, SubSimulatorItem>(N_("GLVisionSimulatorItem"));
+    im.addAlias<GLVisionSimulatorItem>("GLVisionSimulatorItem", "Body");
+    im.addCreationPanel<GLVisionSimulatorItem>();
 }
 
 

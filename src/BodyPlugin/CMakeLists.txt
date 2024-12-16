@@ -31,8 +31,6 @@ set(sources
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
   KinematicSimulatorItem.cpp
-  GLVisionSimulatorItem.cpp
-  FisheyeLensConverter.cpp
   BodyMotionItem.cpp
   BodyMotionEngine.cpp
   MultiDeviceStateSeqItem.cpp
@@ -106,7 +104,6 @@ set(headers
   SimulationScriptItem.h
   AISTSimulatorItem.h
   KinematicSimulatorItem.h
-  GLVisionSimulatorItem.h
   BodyMotionItem.h
   ZMPSeqItem.h
   WorldLogFileItem.h

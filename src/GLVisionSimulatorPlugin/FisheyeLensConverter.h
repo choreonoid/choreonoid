@@ -1,10 +1,5 @@
-/**
-   \author Shizuko Hattori
-   \author Shin'ichiro Nakaoka
-*/
-
-#ifndef CNOID_BODYPLUGIN_FISHEYE_LENS_CONVERTER_H
-#define CNOID_BODYPLUGIN_FISHEYE_LENS_CONVERTER_H
+#ifndef CNOID_GL_VISION_SENSOR_PLUGIN_FISHEYE_LENS_CONVERTER_H
+#define CNOID_GL_VISION_SENSOR_PLUGIN_FISHEYE_LENS_CONVERTER_H
 
 #include <cnoid/Image>
 #include <vector>

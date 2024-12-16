@@ -10,6 +10,7 @@ if(ENABLE_GUI)
   add_subdirectory(Base)
   add_subdirectory(AssimpPlugin)
   add_subdirectory(BodyPlugin)
+  add_subdirectory(GLVisionSimulatorPlugin)
   add_subdirectory(URDFPlugin)
   add_subdirectory(ManipulatorPlugin)
 
