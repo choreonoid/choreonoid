@@ -566,7 +566,9 @@ void usePredeterminedVelocities(typename SampleType::Seq& samples)
                     double p0 = floor(y0 / (2.0 * M_PI)) * 2.0 * M_PI;
                     double p = floor(y / (2.0 * M_PI)) * 2.0 * M_PI;
                     y = y - p + p0;
-                    if(fabs(y - y0) > M_PI){
+                    if(y > y0 + M_PI){
+                        y -= 2.0 * M_PI;
+                    } else if(y < y0 - M_PI){
                         y += 2.0 * M_PI;
                     }
                 }
