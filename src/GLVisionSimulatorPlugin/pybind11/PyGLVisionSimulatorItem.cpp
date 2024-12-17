@@ -23,9 +23,9 @@ PYBIND11_MODULE(BodyPlugin, m)
         .def("setThreadMode", &GLVisionSimulatorItem::setThreadMode)
         .def("setBestEffortMode", &GLVisionSimulatorItem::setBestEffortMode)
         .def("setRangeSensorPrecisionRatio", &GLVisionSimulatorItem::setRangeSensorPrecisionRatio)
-        .def("setAllSceneObjectsEnabled", &GLVisionSimulatorItem::setAllSceneObjectsEnabled)
+        .def("setEveryRenderableItemEnabled", &GLVisionSimulatorItem::setEveryRenderableItemEnabled)
         .def("setHeadLightEnabled", &GLVisionSimulatorItem::setHeadLightEnabled)
-        .def("setAdditionalLightsEnabled", &GLVisionSimulatorItem::setAdditionalLightsEnabled)
+        .def("setAdditionalLightSetEnabled", &GLVisionSimulatorItem::setAdditionalLightSetEnabled)
 
         // deprecated
         .def("setDedicatedSensorThreadsEnabled",
@@ -33,6 +33,8 @@ PYBIND11_MODULE(BodyPlugin, m)
                  self.setThreadMode(
                      on ? GLVisionSimulatorItem::SENSOR_THREAD_MODE : GLVisionSimulatorItem::SINGLE_THREAD_MODE);
              })
+        .def("setAdditionalLightsEnabled", &GLVisionSimulatorItem::setAdditionalLightSetEnabled)
+        .def("setAllSceneObjectsEnabled", &GLVisionSimulatorItem::setEveryRenderableItemEnabled)
         ;
 
     py::enum_<GLVisionSimulatorItem::ThreadMode>(glVisionSimulatorItemClass, "ThreadMode")

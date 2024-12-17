@@ -1,6 +1,7 @@
 #ifndef CNOID_GL_VISION_SENSOR_PLUGIN_FISHEYE_LENS_CONVERTER_H
 #define CNOID_GL_VISION_SENSOR_PLUGIN_FISHEYE_LENS_CONVERTER_H
 
+#include "GLVisionSensorRenderingScreen.h"
 #include <cnoid/Image>
 #include <vector>
 #include <memory>
@@ -10,9 +11,7 @@ namespace cnoid {
 class FisheyeLensConverter
 {
 public:
-    enum ScreenId {
-        NO_SCREEN = -1, FRONT_SCREEN, LEFT_SCREEN, RIGHT_SCREEN, TOP_SCREEN, BOTTOM_SCREEN, BACK_SCREEN
-    };
+    enum ScreenId { NO_SCREEN = -1, FRONT_SCREEN, LEFT_SCREEN, RIGHT_SCREEN, TOP_SCREEN , BOTTOM_SCREEN, BACK_SCREEN };
 
     FisheyeLensConverter();
     void initialize(int width, int height, double fov, int screenWidth);

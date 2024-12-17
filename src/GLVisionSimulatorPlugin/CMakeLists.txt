@@ -9,11 +9,19 @@ set(target CnoidGLVisionSimulatorPlugin)
 set(sources
   GLVisionSimulatorPlugin.cpp
   GLVisionSimulatorItem.cpp
+  GLVisionSensorScene.cpp
+  GLVisionSensorRenderingScreen.cpp
+  GLVisionSensorSimulator.cpp
+  GLCameraSimulator.cpp
+  GLRangeCameraSimulator.cpp
+  GLRangeSensorSimulator.cpp
+  GLFisheyeCameraSimulator.cpp
   FisheyeLensConverter.cpp
 )
 
 set(headers
   GLVisionSimulatorItem.h
+  GLVisionSensorSimulator.h
   exportdecl.h
   )
 
