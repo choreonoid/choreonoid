@@ -24,13 +24,18 @@ RangeSensor::RangeSensor()
     : spec(new Spec)
 {
     setScanRate(10.0);
+
+    maxYawAngle_ = radian(60.0);
+    minYawAngle_ = -maxYawAngle_;
+    setYawStep(1.0);
+
+    minPitchAngle_ = 0.0;
+    maxPitchAngle_ = 0.0;
+    setPitchStep(0.0);
     
-    yawRange_ = radian(120.0);
-    yawStep_ = 1.0;
-    pitchRange_ = 0.0;
-    pitchStep_ = 0.0;
     minDistance_ = 0.1;
     maxDistance_ = 10.0;
+    
     rangeData_ = std::make_shared<RangeData>();
 
     spec->detectionRate = 1.0;
@@ -74,17 +79,36 @@ void RangeSensor::copyRangeSensorStateFrom(const RangeSensor& other, bool doCopy
         VisionSensor::copyVisionSensorStateFrom(other);
     }
 
-    yawRange_ = other.yawRange_;
+    minYawAngle_ = other.minYawAngle_;
+    maxYawAngle_ = other.maxYawAngle_;
     yawStep_ = other.yawStep_;
-    pitchRange_ = other.pitchRange_;
+    
+    minPitchAngle_ = other.minPitchAngle_;
+    maxPitchAngle_ = other.maxPitchAngle_;
     pitchStep_ = other.pitchStep_;
+
+    numYawSamples_ = other.numYawSamples_;
+    numPitchSamples_ = other.numPitchSamples_;
+    isNumYawSamplesCalculatedFromYawStep_ = other.isNumYawSamplesCalculatedFromYawStep_;
+    isNumPitchSamplesCalculatedFromPitchStep_ = other.isNumPitchSamplesCalculatedFromPitchStep_;
+    
     minDistance_ = other.minDistance_;
     maxDistance_ = other.maxDistance_;
 
-    if(doCopyRangeData && !other.rangeData_->empty()){
-        rangeData_ = other.rangeData_;
+    if(doCopyRangeData){
+        if(!other.rangeData_->empty()){
+            rangeData_ = other.rangeData_;
+        } else {            
+            rangeData_ = std::make_shared<RangeData>();
+        }
+        if(other.sphericalAngleData_ && !other.sphericalAngleData_->empty()){
+            sphericalAngleData_ = other.sphericalAngleData_;
+        } else {
+            sphericalAngleData_.reset();
+        }
     } else {
         rangeData_ = std::make_shared<RangeData>();
+        sphericalAngleData_.reset();
     }
 }
 
@@ -109,22 +133,100 @@ void RangeSensor::forEachActualType(std::function<bool(const std::type_info& typ
 }
 
 
-int RangeSensor::numYawSamples() const
+void RangeSensor::setYawRange(double minAngle, double maxAngle)
 {
-    if(yawStep_ > 0.0){
-        return static_cast<int>(yawRange_ / yawStep_ + 1.0e-7) + 1;
-    } else {
-        return 1;
+    if(maxAngle >= minAngle){
+        minYawAngle_ = minAngle;
+        maxYawAngle_ = maxAngle;
+        if(isNumYawSamplesCalculatedFromYawStep_){
+            setYawStep(yawStep_);
+        } else {
+            setNumYawSamples(numYawSamples_);
+        }
     }
 }
 
 
-int RangeSensor::numPitchSamples() const
+void RangeSensor::setYawRange(double angle)
 {
-    if(pitchStep_ > 0.0){
-        return static_cast<int>(pitchRange_ / pitchStep_ + 1.0e-7) + 1;
-    } else {
-        return 1;
+    double h = std::abs(angle / 2.0);
+    setYawRange(-h, h);
+}
+
+
+void RangeSensor::setNumYawSamples(int n)
+{
+    if(n >= 1){
+        numYawSamples_ = n;
+        if(n == 1){
+            yawStep_ = 0.0;
+        } else {
+            yawStep_ = yawRange() / (n - 1);
+        }
+        isNumYawSamplesCalculatedFromYawStep_ = false;
+    }
+}
+
+
+void RangeSensor::setYawStep(double step)
+{
+    if(step >= 0.0){
+        yawStep_ = step;
+        if(step == 0.0){
+            numYawSamples_ = 1;
+        } else {
+            numYawSamples_ = static_cast<int>(yawRange() / step + 1.0e-7) + 1;
+        }
+        isNumYawSamplesCalculatedFromYawStep_ = true;
+    }
+}
+
+
+void RangeSensor::setPitchRange(double minAngle, double maxAngle)
+{
+    if(maxAngle >= minAngle){
+        minPitchAngle_ = minAngle;
+        maxPitchAngle_ = maxAngle;
+        if(isNumPitchSamplesCalculatedFromPitchStep_){
+            setPitchStep(pitchStep_);
+        } else {
+            setNumPitchSamples(numPitchSamples_);
+        }
+    }
+}
+
+
+void RangeSensor::setPitchRange(double angle)
+{
+    double h = std::abs(angle / 2.0);
+    setPitchRange(-h, h);
+}
+
+
+void RangeSensor::setNumPitchSamples(int n)
+{
+    if(n >= 1){
+        numPitchSamples_ = n;
+        if(n == 1){
+            pitchStep_ = 0.0;
+        } else {
+            pitchStep_ = pitchRange() / (n - 1);
+        }
+        isNumPitchSamplesCalculatedFromPitchStep_ = false;
+    }
+}
+
+
+void RangeSensor::setPitchStep(double step)
+{
+    if(step >= 0.0){
+        pitchStep_ = step;
+        if(step == 0.0){
+            numPitchSamples_ = 1;
+        } else {
+            numPitchSamples_ = static_cast<int>(pitchRange() / step + 1.0e-7) + 1;
+        }
+        isNumPitchSamplesCalculatedFromPitchStep_ = true;
     }
 }
 
@@ -180,12 +282,6 @@ void RangeSensor::setRangeData(std::shared_ptr<RangeData>& data)
 }
 
 
-void RangeSensor::clearState()
-{
-    clearRangeData();
-}
-
-
 void RangeSensor::clearRangeData()
 {
     if(rangeData_.use_count() == 1){
@@ -193,6 +289,39 @@ void RangeSensor::clearRangeData()
     } else {
         rangeData_ = std::make_shared<RangeData>();
     }
+}
+
+
+std::vector<Vector2f>& RangeSensor::sphericalAngleData()
+{
+    if(!sphericalAngleData_ || sphericalAngleData_.use_count() > 1){
+        sphericalAngleData_ = std::make_shared<std::vector<Vector2f>>(*sphericalAngleData_);
+    }
+    return *sphericalAngleData_;
+}
+
+std::vector<Vector2f>& RangeSensor::newSphericalAngleData()
+{
+    sphericalAngleData_ = std::make_shared<std::vector<Vector2f>>();
+    return *sphericalAngleData_;
+}
+
+
+void RangeSensor::setSphericalAngleData(std::shared_ptr<std::vector<Vector2f>>& angleData)
+{
+    if(angleData.use_count() == 1){
+        sphericalAngleData_ = angleData;
+    } else {
+        sphericalAngleData_ = std::make_shared<std::vector<Vector2f>>(*angleData);
+    }
+    angleData.reset();
+}
+
+
+void RangeSensor::clearState()
+{
+    clearRangeData();
+    clearSphericalAngleData();
 }
 
 
@@ -205,26 +334,30 @@ int RangeSensor::stateSize() const
 const double* RangeSensor::readState(const double* buf)
 {
     buf = VisionSensor::readState(buf);
-    yawRange_ = buf[0];
-    yawStep_ = buf[1];
-    pitchRange_ = buf[2];
-    pitchStep_ = buf[3];
-    minDistance_ = buf[4];
-    maxDistance_ = buf[5];
-    return buf + 6;
+    minYawAngle_ = buf[0];
+    maxYawAngle_ = buf[1];
+    numYawSamples_ = buf[2];
+    minPitchAngle_ = buf[3];
+    maxPitchAngle_ = buf[4];
+    numPitchSamples_ = buf[5];
+    minDistance_ = buf[6];
+    maxDistance_ = buf[7];
+    return buf + 8;
 }
 
 
 double* RangeSensor::writeState(double* out_buf) const
 {
     out_buf = VisionSensor::writeState(out_buf);
-    out_buf[0] = yawRange_;
-    out_buf[1] = yawStep_;
-    out_buf[2] = pitchRange_;
-    out_buf[3] = pitchStep_;
-    out_buf[4] = minDistance_;
-    out_buf[5] = maxDistance_;
-    return out_buf + 6;
+    out_buf[0] = minYawAngle_;
+    out_buf[1] = maxYawAngle_;
+    out_buf[2] = numYawSamples_;
+    out_buf[3] = minPitchAngle_;
+    out_buf[4] = maxPitchAngle_;
+    out_buf[5] = numPitchSamples_;
+    out_buf[6] = minDistance_;
+    out_buf[7] = maxDistance_;
+    return out_buf + 8;
 }
 
 
@@ -233,11 +366,34 @@ bool RangeSensor::readSpecifications(const Mapping* info)
     if(!VisionSensor::readSpecifications(info)){
         return false;
     }
+    
+    double minAngle;
+    double maxAngle;
+    double range;
+    if(info->readAngle("min_yaw_angle", minAngle) && info->readAngle("max_yaw_angle", maxAngle)){
+        setYawRange(minAngle, maxAngle);
+    } else if(info->readAngle({ "yaw_range", "yawRange", "scanAngle" }, range)){
+        setYawRange(range);
+    }
+    if(info->readAngle("min_pitch_angle", minAngle) && info->readAngle("max_pitch_angle", maxAngle)){
+        setPitchRange(minAngle, maxAngle);
+    } else if(info->readAngle({ "pitch_range", "pitchRange" }, range)){
+        setPitchRange(range);
+    }
 
-    info->readAngle({ "yaw_range", "yawRange", "scanAngle" }, yawRange_);
-    info->readAngle({ "yaw_step", "yawStep", "scanStep" }, yawStep_);
-    info->readAngle({ "pitch_range", "pitchRange" }, pitchRange_);
-    info->readAngle({ "pitch_step", "pitchStep" }, pitchStep_);
+    double step;
+    int samples;
+    if(info->readAngle({ "yaw_step", "yawStep", "scanStep" }, step)){
+        setYawStep(step);
+    } else if(info->read("yaw_samples", samples)){
+        setNumYawSamples(samples);
+    }
+    if(info->readAngle({ "pitch_step", "pitchStep" }, step)){
+        setPitchStep(step);
+    } else if(info->read("pitch_samples", samples)){
+        setNumPitchSamples(samples);
+    }
+
     info->read({ "min_distance", "minDistance" }, minDistance_);
     info->read({ "max_distance", "maxDistance" }, maxDistance_);
 
@@ -259,10 +415,25 @@ bool RangeSensor::writeSpecifications(Mapping* info) const
         return false;
     }
     
-    info->write("yaw_range", degree(yawRange_));
-    info->write("yaw_step", degree(yawStep_));
-    info->write("pitch_range", degree(pitchRange_));
-    info->write("pitch_step", degree(pitchStep_));
+    info->write("min_yaw_angle", degree(minYawAngle_));
+    info->write("max_yaw_angle", degree(maxYawAngle_));
+
+    if(isNumYawSamplesCalculatedFromYawStep_){
+        info->write("yaw_step", yawStep_);
+    } else {
+        info->write("yaw_samples", numYawSamples_);
+    }
+
+    if(minPitchAngle_ != 0.0 || maxPitchAngle_ != 0.0){
+        info->write("min_pitch_angle", degree(minPitchAngle_));
+        info->write("max_pitch_angle", degree(maxPitchAngle_));
+        if(isNumPitchSamplesCalculatedFromPitchStep_){
+            info->write("pitch_step", pitchStep_);
+        } else {
+            info->write("pitch_samples", numPitchSamples_);
+        }
+    }
+    
     info->write("min_distance", minDistance_);
     info->write("max_distance", maxDistance_);
     info->write("scan_rate", scanRate());
@@ -276,7 +447,7 @@ bool RangeSensor::writeSpecifications(Mapping* info) const
 namespace {
 
 StdBodyFileDeviceTypeRegistration<RangeSensor>
-registerHolderDevice(
+registerRangeSensor(
     "RangeSensor",
      [](StdBodyLoader* loader, const Mapping* info){
          RangeSensorPtr sensor = new RangeSensor;
@@ -285,8 +456,7 @@ registerHolderDevice(
         }
         return false;
     },
-    [](StdBodyWriter* /* writer */, Mapping* info, const RangeSensor* sensor)
-    {
+    [](StdBodyWriter* /* writer */, Mapping* info, const RangeSensor* sensor){
         return sensor->writeSpecifications(info);
     });
 }

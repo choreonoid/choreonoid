@@ -19,17 +19,27 @@ public:
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual void clearState() override;
 
-    double yawRange() const { return yawRange_; }
-    void setYawRange(double theta) { yawRange_ = theta; }
+    double minYawAngle() const { return minYawAngle_; }
+    double maxYawAngle() const { return maxYawAngle_; }
+    double yawRange() const { return maxYawAngle_ - minYawAngle_; }
+    void setYawRange(double minAngle, double maxAngle);
+    void setYawRange(double angle);
+    int numYawSamples() const { return numYawSamples_; }
+    void setNumYawSamples(int n);
     double yawStep() const { return yawStep_; }
-    void setYawStep(double s) { yawStep_ = s; }
-    int numYawSamples() const;
-
-    double pitchRange() const { return pitchRange_; }
-    void setPitchRange(double theta) { pitchRange_ = theta; }
+    void setYawStep(double step);
+    bool isNumYawSamplesCalculatedFromYawStep() const { return isNumYawSamplesCalculatedFromYawStep_; }
+    
+    double minPitchAngle() const { return minPitchAngle_; }
+    double maxPitchAngle() const { return maxPitchAngle_; }
+    double pitchRange() const { return maxPitchAngle_ - minPitchAngle_; }
+    void setPitchRange(double minAngle, double maxAngle);
+    void setPitchRange(double angle);
+    int numPitchSamples() const { return numPitchSamples_; }
+    void setNumPitchSamples(int n);
     double pitchStep() const { return pitchStep_; }
-    void setPitchStep(double s) { pitchStep_ = s; }
-    int numPitchSamples() const;
+    void setPitchStep(double step);
+    bool isNumPitchSamplesCalculatedFromPitchStep() const { return isNumPitchSamplesCalculatedFromPitchStep_; }
 
     double maxDistance() const { return maxDistance_; }
     void setMaxDistance(double d) { maxDistance_ = d; }
@@ -66,7 +76,26 @@ public:
     */
     void setRangeData(std::shared_ptr<RangeData>& rangeData);
 
-    void clearRangeData();    
+    void clearRangeData();
+
+    bool hasSphericalAngleData() const { return sphericalAngleData_ && !sphericalAngleData_->empty(); }
+    const std::vector<Vector2f>& sphericalAngleData() const { return *sphericalAngleData_; }
+    const std::vector<Vector2f>& constSpherialAngleData() const { return *sphericalAngleData_; }
+    std::vector<Vector2f>& sphericalAngleData();
+    std::vector<Vector2f>& newSphericalAngleData();
+    std::shared_ptr<std::vector<Vector2f>> sharedSphericalAngleData() const { return sphericalAngleData_; }
+    void setSphericalAngleData(std::shared_ptr<std::vector<Vector2f>>& angleData);
+    void clearSphericalAngleData() { sphericalAngleData_.reset(); }
+
+    Vector2 getSphericalAngle(int rangeDataIndex) const {
+        if(sphericalAngleData_){
+            return (*sphericalAngleData_)[rangeDataIndex].cast<double>();
+        } else {
+            const int yawIndex = rangeDataIndex % numYawSamples_;
+            const int pitchIndex = rangeDataIndex / numYawSamples_;
+            return Vector2(yawIndex * yawStep_ + minYawAngle_, pitchIndex * pitchStep_ + minPitchAngle_);
+        }
+    }
 
     virtual int stateSize() const override;
     virtual const double* readState(const double* buf) override;
@@ -81,10 +110,17 @@ protected:
 
 private:
     std::shared_ptr<RangeData> rangeData_;
-    double yawRange_;
+    std::shared_ptr<std::vector<Vector2f>> sphericalAngleData_;
+    double minYawAngle_;
+    double maxYawAngle_;
     double yawStep_;
-    double pitchRange_;
+    double minPitchAngle_;
+    double maxPitchAngle_;
     double pitchStep_;
+    int numYawSamples_;
+    int numPitchSamples_;
+    bool isNumYawSamplesCalculatedFromYawStep_;
+    bool isNumPitchSamplesCalculatedFromPitchStep_;
     double minDistance_;
     double maxDistance_;
 
