@@ -96,15 +96,15 @@ void ImageWidget::zoom(double scale)
     }
 
     QSize r = rect().size();
-	QTransform invT = transform_.inverted();
-	double x,y;
-	invT.map(r.width()/2,r.height()/2,&x,&y);
+    QTransform invT = transform_.inverted();
+    double x,y;
+    invT.map(r.width()/2,r.height()/2,&x,&y);
 
-	transform_.translate(x,y);
-	transform_.scale(scale, scale);
-	transform_.translate(-x,-y);
+    transform_.translate(x,y);
+    transform_.scale(scale, scale);
+    transform_.translate(-x,-y);
 
-	update();
+    update();
 }
 
 
@@ -157,7 +157,6 @@ void ImageWidget::paintEvent(QPaintEvent* event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::SmoothPixmapTransform);
     painter.setWorldTransform(transform_);
-    pixmap_.setDevicePixelRatio(devicePixelRatio());
     painter.drawPixmap(0, 0, pixmap_);
 }
 
