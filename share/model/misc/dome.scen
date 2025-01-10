@@ -1,0 +1,9 @@
+format: ChoreonoidScene
+formatVersion: 2.0
+
+scene:
+  - type: Shape
+    geometry: { type: Sphere, radius: 5.0 }
+    appearance:
+      material:
+        diffuseColor: [ 0.7, 0.7, 0.7 ]
