@@ -3144,40 +3144,40 @@ void GLSLSceneRenderer::Impl::renderPolygonDrawStyle(SgPolygonDrawStyle* style)
         return;
     }
     
-    int elements = style->polygonElements();
     int matrixIndex = -1;
 
-    bool isFaceEnabled = elements & SgPolygonDrawStyle::Face;
-    bool isEdgeEnabled = elements & SgPolygonDrawStyle::Edge;
-    bool isVertexEnabled = elements & SgPolygonDrawStyle::Vertex;
-    
-    if(isVertexEnabled || (!isFaceEnabled && isEdgeEnabled)){
-        matrixIndex = modelMatrixBuffer.size();
-        modelMatrixBuffer.push_back(modelMatrixStack.back());
-    }
-        
-    if(isFaceEnabled){
-        if(lightingMode != NoLighting){
-            if(isEdgeEnabled){
-                fullLightingProgram->enableWireframe(style->edgeColor(), style->edgeWidth());
-                solidWireframeStyleStack.push_back(style);
-            }
+    if(style->isEdgeEnabled()){
+        if(lightingMode == NormalLighting &&
+           (style->isFaceEnabled() || style->edgeWidth() > 1.0f || style->edgeColor()(3) > 0.0f)){
+            fullLightingProgram->enableWireframe(style->edgeColor(), style->edgeWidth(), style->isFaceEnabled());
+            solidWireframeStyleStack.push_back(style);
             renderGroup(style);
-            if(isEdgeEnabled){
-                solidWireframeStyleStack.pop_back();
-                if(solidWireframeStyleStack.empty()){
-                    fullLightingProgram->disableWireframe();
-                } else {
-                    auto prevStyle = solidWireframeStyleStack.back();
-                    fullLightingProgram->enableWireframe(prevStyle->edgeColor(), prevStyle->edgeWidth());
-                }
+            solidWireframeStyleStack.pop_back();
+            if(solidWireframeStyleStack.empty()){
+                fullLightingProgram->disableWireframe();
+            } else {
+                auto prevStyle = solidWireframeStyleStack.back();
+                fullLightingProgram->enableWireframe(
+                    prevStyle->edgeColor(), prevStyle->edgeWidth(), prevStyle->isFaceEnabled());
+            }
+        } else {
+            if(style->isFaceEnabled()){
+                renderGroup(style);
+            } else {
+                matrixIndex = modelMatrixBuffer.size();
+                modelMatrixBuffer.push_back(modelMatrixStack.back());
+                pureWireframeRenderingNodes.emplace_back(style, matrixIndex);
             }
         }
-    } else if(isEdgeEnabled){
-        pureWireframeRenderingNodes.emplace_back(style, matrixIndex);
+    } else if(style->isFaceEnabled()){
+        renderGroup(style);
     }
-
-    if(isVertexEnabled){
+        
+    if(style->isVertexEnabled()){
+        if(matrixIndex < 0){
+            matrixIndex = modelMatrixBuffer.size();
+            modelMatrixBuffer.push_back(modelMatrixStack.back());
+        }
         vertexRenderingNodes.emplace_back(style, matrixIndex);
     }
 }

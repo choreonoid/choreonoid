@@ -78,6 +78,7 @@ uniform float maxFogDist;
 uniform float minFogDist;
 uniform bool isFogEnabled = false;
 
+uniform bool isFaceEnabled;
 uniform bool isWireframeEnabled;
 uniform vec4 wireframeColor;
 uniform float wireframeWidth;
@@ -105,69 +106,82 @@ uniform bool isShadowAntiAliasingEnabled;
 layout(location = 0) out vec4 color4;
 
 vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor);
-void renderWireframe();
+float calcEdgeDistance();
 
 void main()
 {
-    vec3 color;
-    float alpha2;
-
-    if(isTextureEnabled){
-        vec4 texColor4 = texture(colorTexture, inData.texCoord);
-        vec3 texColor = vec3(texColor4);
-        alpha2 = alpha * texColor4.a;
-        color = emissionColor * texColor;
-        for(int i=0; i < numLights; ++i){
-            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], texColor);
-            color += lights[i].ambientIntensity * ambientColor * texColor;
-        }
-    } else {
-        vec3 baseColor;
-        if(isVertexColorEnabled){
-            baseColor = inData.colorV;
-        } else {
-            baseColor = diffuseColor;
-        }
-        alpha2 = alpha;
-        color = emissionColor;
-        for(int i=0; i < numLights; ++i){
-            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], baseColor);
-            color += lights[i].ambientIntensity * ambientColor;
-        }
-    }
-
-    for(int i=0; i < numShadows; ++i){
-        float shadow;
-        vec4 shadowCoord = inData.shadowCoords[i];
-        if(isShadowAntiAliasingEnabled){
-            shadow  = textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2(-1, -1));
-            shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2(-1,  1));
-            shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2( 1,  1));
-            shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2( 1, -1));
-            shadow *= 0.25;
-        } else {
-            shadow = textureProj(shadows[i].shadowMap, shadowCoord);
-        }
-        reflectionElements[shadows[i].lightIndex] *= shadow;
-    }
-
-    for(int i=0; i < numLights; ++i){
-        color += reflectionElements[i];
-    }
-
-    color4 = vec4(color, alpha2);
-
+    float edgeDistance;
     if(isWireframeEnabled){
-        renderWireframe();
+        edgeDistance = calcEdgeDistance();
+        if(!isFaceEnabled && edgeDistance > wireframeWidth){
+            discard;
+        }
     }
 
-    if(isFogEnabled){
-        float dist = abs(inData.position.z);
-        float f = (maxFogDist - dist) / (maxFogDist - minFogDist);
-        f = clamp(f, 0.0, 1.0);
-        color4 = mix(vec4(fogColor, 1.0), color4, f);
-    }
+    if(!isFaceEnabled && wireframeColor.a > 0.0){
+        color4 = wireframeColor;
 
+    } else {
+        vec3 color;
+        float alpha2;
+        
+        if(isTextureEnabled){
+            vec4 texColor4 = texture(colorTexture, inData.texCoord);
+            vec3 texColor = vec3(texColor4);
+            alpha2 = alpha * texColor4.a;
+            color = emissionColor * texColor;
+            for(int i=0; i < numLights; ++i){
+                reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], texColor);
+                color += lights[i].ambientIntensity * ambientColor * texColor;
+            }
+        } else {
+            vec3 baseColor;
+            if(isVertexColorEnabled){
+                baseColor = inData.colorV;
+            } else {
+                baseColor = diffuseColor;
+            }
+            alpha2 = alpha;
+            color = emissionColor;
+            for(int i=0; i < numLights; ++i){
+                reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], baseColor);
+                color += lights[i].ambientIntensity * ambientColor;
+            }
+        }
+
+        for(int i=0; i < numShadows; ++i){
+            float shadow;
+            vec4 shadowCoord = inData.shadowCoords[i];
+            if(isShadowAntiAliasingEnabled){
+                shadow  = textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2(-1, -1));
+                shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2(-1,  1));
+                shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2( 1,  1));
+                shadow += textureProjOffset(shadows[i].shadowMap, shadowCoord, ivec2( 1, -1));
+                shadow *= 0.25;
+            } else {
+                shadow = textureProj(shadows[i].shadowMap, shadowCoord);
+            }
+            reflectionElements[shadows[i].lightIndex] *= shadow;
+        }
+
+        for(int i=0; i < numLights; ++i){
+            color += reflectionElements[i];
+        }
+
+        if(isWireframeEnabled){
+            float mixVal = smoothstep(wireframeWidth + 1, wireframeWidth - 1, edgeDistance) * wireframeColor.a;
+            color = mix(color, wireframeColor.rgb, mixVal);
+        }
+
+        color4 = vec4(color, alpha2);
+
+        if(isFogEnabled){
+            float dist = abs(inData.position.z);
+            float f = (maxFogDist - dist) / (maxFogDist - minFogDist);
+            f = clamp(f, 0.0, 1.0);
+            color4 = mix(vec4(fogColor, 1.0), color4, f);
+        }
+    }
 }
 
 
@@ -239,7 +253,7 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
 }
 
 
-void renderWireframe()
+float calcEdgeDistance()
 {
     float edgeDistance;
     
@@ -289,6 +303,5 @@ void renderWireframe()
 #endif
     }
 
-    float mixVal = smoothstep(wireframeWidth + 1, wireframeWidth - 1, edgeDistance) * wireframeColor.a;
-    color4.rgb = mix(color4.rgb, wireframeColor.rgb, mixVal);
+    return edgeDistance;
 }

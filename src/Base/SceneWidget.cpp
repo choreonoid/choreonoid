@@ -2560,6 +2560,10 @@ void SceneWidget::Impl::setVisiblePolygonElements(int elementFlags)
         bool notified = false;
         polygonDrawStyle->setPolygonElements(elementFlags);
 
+        auto edgeColor = polygonDrawStyle->edgeColor();
+        edgeColor(3) = polygonDrawStyle->isFaceEnabled() ? 1.0 : 0.0;
+        polygonDrawStyle->setEdgeColor(edgeColor);
+
         if(!polygonDrawStyle->hasParents() && elementFlags != SgPolygonDrawStyle::Face){
             sceneRoot->removeChild(scene);
             polygonDrawStyle->addChild(scene);

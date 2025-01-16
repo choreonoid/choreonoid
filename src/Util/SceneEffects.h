@@ -40,6 +40,9 @@ public:
     };
     void setPolygonElements(int elementFlags) { polygonElements_ = elementFlags; };
     int polygonElements() const { return polygonElements_; }
+    bool isFaceEnabled() const { return polygonElements_ & Face; }
+    bool isEdgeEnabled() const { return polygonElements_ & Edge; }
+    bool isVertexEnabled() const { return polygonElements_ & Vertex; }
     const Vector4f& edgeColor() const { return edgeColor_; }
     void setEdgeColor(const Vector4f& c) { edgeColor_ = c; }
     float edgeWidth() const { return edgeWidth_; }

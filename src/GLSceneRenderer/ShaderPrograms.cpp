@@ -201,10 +201,12 @@ public:
     // For the wireframe overlay rendering
     int viewportWidth, viewportHeight;
     GLint viewportMatrixLocation;
+    GLint isFaceEnabledLocation;
     GLint isWireframeEnabledLocation;
     GLint wireframeColorLocation;
     GLint wireframeWidthLocation;
     bool isViewportMatrixInvalidated;
+    bool isFaceEnabled;
     bool isWireframeEnabled;
     Vector4f wireframeColor;
     float wireframeWidth;
@@ -1162,6 +1164,7 @@ FullLightingProgram::Impl::Impl(FullLightingProgram* self)
 
     viewportWidth = 1000;
     viewportHeight = 1000;
+    isFaceEnabled = true;
     isWireframeEnabled = false;
     wireframeColor << 0.4f, 0.4f, 0.4f, 0.8f;
     wireframeWidth = 0.5f;
@@ -1233,6 +1236,7 @@ void FullLightingProgram::Impl::initialize(GLSLProgram& glsl)
 
     viewportMatrixLocation = glsl.getUniformLocation("viewportMatrix");
     isViewportMatrixInvalidated = true;
+    isFaceEnabledLocation = glsl.getUniformLocation("isFaceEnabled");
     isWireframeEnabledLocation = glsl.getUniformLocation("isWireframeEnabled");
     wireframeColorLocation = glsl.getUniformLocation("wireframeColor");
     wireframeWidthLocation = glsl.getUniformLocation("wireframeWidth");
@@ -1387,9 +1391,11 @@ void FullLightingProgram::setTransform
 }
 
 
-void FullLightingProgram::enableWireframe(const Vector4f& color, float width)
+void FullLightingProgram::enableWireframe(const Vector4f& color, float width, bool isFaceEnabled)
 {
-    if(!impl->isWireframeEnabled || color != impl->wireframeColor || width != impl->wireframeWidth){
+    if(!impl->isWireframeEnabled || color != impl->wireframeColor || width != impl->wireframeWidth ||
+       impl->isFaceEnabled != isFaceEnabled){
+        impl->isFaceEnabled = isFaceEnabled;
         impl->isWireframeEnabled = true;
         impl->wireframeColor = color;
         impl->wireframeWidth = width;
@@ -1403,6 +1409,7 @@ void FullLightingProgram::enableWireframe(const Vector4f& color, float width)
 void FullLightingProgram::disableWireframe()
 {
     if(impl->isWireframeEnabled){
+        impl->isFaceEnabled = true;
         impl->isWireframeEnabled = false;
         if(isActive()){
             impl->updateShaderWireframeState();
@@ -1432,7 +1439,9 @@ void FullLightingProgram::Impl::updateShaderWireframeState()
         glUniformMatrix4fv(viewportMatrixLocation, 1, GL_FALSE, V.data());
         isViewportMatrixInvalidated = false;
     }
+    glUniform1i(isFaceEnabledLocation, isFaceEnabled);
     glUniform1i(isWireframeEnabledLocation, isWireframeEnabled);
+    
     if(isWireframeEnabled){
         glUniform4fv(wireframeColorLocation, 1, wireframeColor.data());
         glUniform1f(wireframeWidthLocation, wireframeWidth);
