@@ -1045,6 +1045,7 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
     }
 
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
     glDisable(GL_DITHER);
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
