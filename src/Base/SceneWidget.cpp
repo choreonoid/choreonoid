@@ -2045,7 +2045,7 @@ Isometry3 SceneWidget::Impl::getNormalizedCameraTransform(const Isometry3& T)
     }
     y = z.cross(x);
         
-    Isometry3 N;
+    Isometry3 N(Isometry3::Identity());
     N.linear() << x, y, z;
     N.translation() = T.translation();
     return N;
@@ -2118,7 +2118,7 @@ void SceneWidget::Impl::dragViewRotation()
     const double dx = latestEvent.x() - orgMouseX;
     const double dy = latestEvent.y() - orgMouseY;
 
-    Isometry3 R;
+    Isometry3 R(Isometry3::Identity());
     if(isCameraRollRistricted){
         Vector3 up = Vector3::Unit(verticalAxis);
         R = AngleAxis(-dx * dragAngleRatio, up) *
