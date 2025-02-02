@@ -1347,8 +1347,8 @@ void SceneWidget::Impl::updateLatestEvent(QKeyEvent* event)
 
 void SceneWidget::Impl::updateLatestEvent(int x, int y, int modifiers)
 {
-    latestEvent.x_ = x;
-    latestEvent.y_ = height() - y - 1;
+    latestEvent.x_ = lastDevicePixelRatio * x;
+    latestEvent.y_ = lastDevicePixelRatio * (height() - y - 1);
     latestEvent.modifiers_ = modifiers;
 }
 
@@ -1390,8 +1390,8 @@ void SceneWidget::Impl::updateLatestEventPath(bool forceFullPicking)
 
     makeCurrent();
 
-    int px = lastDevicePixelRatio * latestEvent.x();
-    int py = lastDevicePixelRatio * latestEvent.y();
+    int px = latestEvent.x();
+    int py = latestEvent.y();
 
     isRendering = true;
     bool picked = renderer->pick(px, py);
@@ -1986,8 +1986,7 @@ void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
 
 bool SceneWidget::unproject(double x, double y, double z, Vector3& out_projected) const
 {
-    const float r = impl->lastDevicePixelRatio;
-    return impl->renderer->unproject(r * x, r * y, z, out_projected);
+    return impl->renderer->unproject(x, y, z, out_projected);
 }
 
 
@@ -2094,10 +2093,10 @@ void SceneWidget::Impl::startViewRotation()
 
     if(isFirstPersonMode()){
         orgPointedPos = orgCameraPosition.translation();
-        dragAngleRatio = 0.01f;
+        dragAngleRatio = 0.01f / lastDevicePixelRatio;
     } else {
         orgPointedPos = lastClickedPoint;
-        dragAngleRatio = 0.01f;
+        dragAngleRatio = 0.01f / lastDevicePixelRatio;
     }
     
     dragMode = VIEW_ROTATION;
@@ -2175,8 +2174,8 @@ void SceneWidget::Impl::startViewTranslation()
     const Isometry3& C = interactiveCameraTransform->T();
 
     if(isFirstPersonMode()){
-        viewTranslationRatioX = -0.005;
-        viewTranslationRatioY = -0.005;
+        viewTranslationRatioX = -0.005 / lastDevicePixelRatio;
+        viewTranslationRatioY = -0.005 / lastDevicePixelRatio;
 
     } else {
         auto& vp = renderer->viewport();
