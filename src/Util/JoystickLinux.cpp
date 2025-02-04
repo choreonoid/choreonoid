@@ -27,8 +27,12 @@ enum ModelID {
     PS4v2,   // new hid-sony driver (kernel version 4.10 or later)
     PS3,     // old hid-sony driver (kernel version 4.9 or earlier)
     PS3v2,   // new hid-sony driver (kernel version 4.10 or later)
+    PS5,
     XBOX,
+    XBOXe2,
+    XBOXbt,
     F310,
+    F710,
     LDA,     // Logicool Dual Action
     UNSUPPORTED,
     NUM_MODELS
@@ -114,6 +118,14 @@ const int PS3v2_Buttons[] = {
     SELECT_BUTTON, START_BUTTON, LOGO_BUTTON, L_STICK_BUTTON, R_STICK_BUTTON,
     DIRECTIONAL_PAD_UP_BUTTON, DIRECTIONAL_PAD_DOWN_BUTTON, DIRECTIONAL_PAD_LEFT_BUTTON, DIRECTIONAL_PAD_RIGHT_BUTTON };
 
+const int PS5_Axes[] = {
+    L_STICK_H_AXIS,  L_STICK_V_AXIS, L_TRIGGER_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS, R_TRIGGER_AXIS,
+    DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
+
+const int PS5_Buttons[] = {
+    A_BUTTON, B_BUTTON, Y_BUTTON, X_BUTTON, L_BUTTON, R_BUTTON, INVALID_BUTTON, INVALID_BUTTON,
+    SELECT_BUTTON, START_BUTTON, LOGO_BUTTON, L_STICK_BUTTON, R_STICK_BUTTON };
+
 const int XBOX_Axes[] = {
     L_STICK_H_AXIS, L_STICK_V_AXIS, L_TRIGGER_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS, R_TRIGGER_AXIS,
     DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
@@ -122,6 +134,22 @@ const int XBOX_Buttons[] = {
     A_BUTTON, B_BUTTON, X_BUTTON, Y_BUTTON, L_BUTTON, R_BUTTON, SELECT_BUTTON, START_BUTTON, LOGO_BUTTON,
     L_STICK_BUTTON, R_STICK_BUTTON };
 
+const int XBOXe2_Axes[] = {
+    L_STICK_H_AXIS, L_STICK_V_AXIS, L_TRIGGER_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS, R_TRIGGER_AXIS,
+    DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
+
+const int XBOXe2_Buttons[] = {
+    A_BUTTON, B_BUTTON, X_BUTTON, Y_BUTTON, L_BUTTON, R_BUTTON, SELECT_BUTTON, START_BUTTON, LOGO_BUTTON,
+    L_STICK_BUTTON, R_STICK_BUTTON, INVALID_BUTTON, INVALID_BUTTON, INVALID_BUTTON, INVALID_BUTTON };
+
+const int XBOXbt_Axes[] = {
+    L_STICK_H_AXIS, L_STICK_V_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS, R_TRIGGER_AXIS, L_TRIGGER_AXIS,
+    DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
+
+const int XBOXbt_Buttons[] = {
+    A_BUTTON, B_BUTTON, INVALID_BUTTON, X_BUTTON, Y_BUTTON, INVALID_BUTTON, L_BUTTON, R_BUTTON, INVALID_BUTTON, INVALID_BUTTON,
+    SELECT_BUTTON, START_BUTTON, LOGO_BUTTON, L_STICK_BUTTON, R_STICK_BUTTON, INVALID_BUTTON };
+
 const int F310_Axes[] = {
     L_STICK_H_AXIS, L_STICK_V_AXIS, L_TRIGGER_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS, R_TRIGGER_AXIS,
     DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
@@ -129,7 +157,15 @@ const int F310_Axes[] = {
 const int F310_Buttons[] = {
     A_BUTTON, B_BUTTON, X_BUTTON, Y_BUTTON, L_BUTTON, R_BUTTON, SELECT_BUTTON, START_BUTTON, LOGO_BUTTON,
     L_STICK_BUTTON, R_STICK_BUTTON };
-    
+
+const int F710_Axes[] = {
+    L_STICK_H_AXIS, L_STICK_V_AXIS, L_TRIGGER_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS, R_TRIGGER_AXIS,
+    DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
+
+const int F710_Buttons[] = {
+    A_BUTTON, B_BUTTON, X_BUTTON, Y_BUTTON, L_BUTTON, R_BUTTON, SELECT_BUTTON, START_BUTTON, LOGO_BUTTON,
+    L_STICK_BUTTON, R_STICK_BUTTON };
+
 const int LDA_Axes[] = {
     L_STICK_H_AXIS, L_STICK_V_AXIS, R_STICK_H_AXIS, R_STICK_V_AXIS, DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
     
@@ -152,23 +188,36 @@ struct ModelInfo {
 const map<string, ModelID> modelIdMap = {
     { "Sony Computer Entertainment Wireless Controller", PS4 },
     { "Sony Interactive Entertainment Wireless Controller", PS4 },
+    { "Wireless Controller", PS4 },  // Bluetooth
     { "Sony Interactive Entertainment DUALSHOCK®4 USB Wireless Adaptor", PS4 },
     { "Sony PLAYSTATION(R)3 Controller", PS3 },
+    { "Sony Interactive Entertainment DualSense Wireless Controller", PS5 },
+    { "DualSense Wireless Controller", PS5 }, // Bluetooth
+    { "Sony Interactive Entertainment DualSense Edge Wireless Controller", PS5 },
+    { "DualSense Edge Wireless Controller", PS5 }, // Bluetooth
     { "Microsoft X-Box 360 pad", XBOX },
     { "Microsoft X-Box One pad", XBOX },
+    { "Microsoft Xbox Series S|X Controller", XBOX },
+    { "Microsoft X-Box One Elite 2 pad", XBOXe2 },
+    { "Xbox Wireless Controller", XBOXbt }, // Bluetooth
     { "Logitech Gamepad F310", F310 },
+    { "Logitech Gamepad F710", F710 },
     { "Logicool Logicool Dual Action", LDA }
 };
 
 const vector<ModelInfo> modelInfos = {
-    { PS4,         PS4_Axes,   PS4_Buttons,   true  },
-    { PS4v2,       PS4v2_Axes, PS4v2_Buttons, true  },
-    { PS3,         PS3_Axes,   PS3_Buttons,   true  },
-    { PS3v2,       PS3v2_Axes, PS3v2_Buttons, true  },
-    { XBOX,        XBOX_Axes,  XBOX_Buttons,  false },
-    { F310,        F310_Axes,  F310_Buttons,  false },
-    { LDA,         LDA_Axes,   LDA_Buttons,  false },
-    { UNSUPPORTED, nullptr,    nullptr,       false }
+    { PS4,         PS4_Axes,    PS4_Buttons,    true  },
+    { PS4v2,       PS4v2_Axes,  PS4v2_Buttons,  true  },
+    { PS3,         PS3_Axes,    PS3_Buttons,    true  },
+    { PS3v2,       PS3v2_Axes,  PS3v2_Buttons,  true  },
+    { PS5,         PS5_Axes,    PS5_Buttons,    true  },
+    { XBOX,        XBOX_Axes,   XBOX_Buttons,   false },
+    { XBOXe2,      XBOXe2_Axes, XBOXe2_Buttons, false },
+    { XBOXbt,      XBOXbt_Axes, XBOXbt_Buttons, false },
+    { F310,        F310_Axes,   F310_Buttons,   false },
+    { F710,        F710_Axes,   F710_Buttons,   false },
+    { LDA,         LDA_Axes,    LDA_Buttons,    false },
+    { UNSUPPORTED, nullptr,     nullptr,        false }
 };
 
 }

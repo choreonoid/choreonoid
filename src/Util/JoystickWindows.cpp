@@ -45,6 +45,7 @@ namespace {
       //PS3v2,   
         XBOX_360,
         XBOX_ONE,
+        XBOX_BTH,
         F310,
         F710,
         UNSUPPORTED,
@@ -104,6 +105,14 @@ namespace {
         A_BUTTON, B_BUTTON, X_BUTTON, Y_BUTTON, L_BUTTON, R_BUTTON, SELECT_BUTTON, START_BUTTON,
         L_STICK_BUTTON, R_STICK_BUTTON, INVALID_BUTTON };
 
+    const int XBOX_BTH_Axes[] = {
+        L_STICK_H_AXIS, L_STICK_V_AXIS, L_TRIGGER_AXIS, R_STICK_V_AXIS, R_STICK_H_AXIS, INVALID_AXIS,
+        DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
+
+    const int XBOX_BTH_Buttons[] = {
+        A_BUTTON, B_BUTTON, X_BUTTON, Y_BUTTON, L_BUTTON, R_BUTTON, SELECT_BUTTON, START_BUTTON,
+        L_STICK_BUTTON, R_STICK_BUTTON, INVALID_BUTTON, INVALID_BUTTON, INVALID_BUTTON, INVALID_BUTTON, INVALID_BUTTON, INVALID_BUTTON };
+
     const int F310_Axes[] = {
         L_STICK_H_AXIS, L_STICK_V_AXIS, L_TRIGGER_AXIS, R_STICK_V_AXIS, R_STICK_H_AXIS, INVALID_AXIS,
         DIRECTIONAL_PAD_H_AXIS, DIRECTIONAL_PAD_V_AXIS };
@@ -129,16 +138,19 @@ namespace {
     const map<int, ModelID> modelIdMap = {
         { 0x054C<<16 | 0x09CC, PS4 },  // Sony Interactive Entertainment
         { 0x054C<<16 | 0x05C4, PS4 },  // Sony Computer Entertainment
+        { 0x054C<<16 | 0x0BA0, PS4 },  // DUALSHOCK4 USB Wireless Adaptor
         { 0x045E<<16 | 0x028E, XBOX_360 },
-        { 0x045E<<16 | 0x02FF, XBOX_ONE },
+        { 0x045E<<16 | 0x02FF, XBOX_ONE },  // Xbox Wireless Controller for Xbox Series X|S and Xbox One
+        { 0x045E<<16 | 0x0B13, XBOX_BTH },  // Bluetooth connection for Xbox Series X|S
         { 0x046D<<16 | 0xC21D, F310 },
         { 0x046D<<16 | 0xC21F, F710 }
     };
 
     map<ModelID, ModelInfo> modelInfos = {
         { PS4, { PS4,    PS4_Axes,   PS4_Buttons } },
-        { XBOX_360, { XBOX_360,  XBOX_360_Axes,  XBOX_360_Buttons } },
-        { XBOX_ONE,{ XBOX_ONE,  nullptr,  nullptr } },
+        { XBOX_360, { XBOX_360, XBOX_360_Axes, XBOX_360_Buttons } },
+        { XBOX_ONE, { XBOX_ONE,       nullptr,          nullptr } },
+        { XBOX_BTH, { XBOX_BTH, XBOX_BTH_Axes, XBOX_BTH_Buttons } },
         { F310, { F310,  F310_Axes,  F310_Buttons } }, 
         { F710, { F710,  F710_Axes,  F710_Buttons } },
         { UNSUPPORTED, { UNSUPPORTED, nullptr,    nullptr } }
