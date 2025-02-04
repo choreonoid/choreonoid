@@ -206,7 +206,6 @@ public:
     EditableArrayList tmpEditableArrays;
     EditableArrayList::iterator pCurrentTmpEditableArray;
     vector<EditableNodeInfo> pointedEditablePath;
-    EditableNodeInfo lastMouseMovedEditable;
     EditableNodeInfo focusedEditable;
     vector<EditableNodeInfo> focusedEditablePath;
 
@@ -230,6 +229,7 @@ public:
     int mousePressX;
     int mousePressY;
     QMouseEvent* lastMouseMoveEvent;
+    SceneWidgetEventHandler* lastMouseMoveHandler;
     NodeEventHandler customNodeEventHandler;
 
     SceneWidgetEventHandler* activeCustomModeHandler;
@@ -544,6 +544,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     latestEvent.sceneWidget_ = self;
     lastClickedPoint.setZero();
     lastMouseMoveEvent = nullptr;
+    lastMouseMoveHandler = nullptr;
 
     activeCustomModeHandler = nullptr;
     activeCustomModeId = 0;
@@ -833,10 +834,10 @@ void SceneWidget::Impl::checkRemovedEditableNodes(SgNode* node)
 
         list<EditableNodeInfo> editablesToClearFocus;
         for(auto& editable : removedEditables){
-            if(editable == lastMouseMovedEditable){
+            if(editable.handler == lastMouseMoveHandler){
                 latestEvent.type_ = SceneWidgetEvent::PointerLeave;
-                lastMouseMovedEditable.handler->onPointerLeaveEvent(&latestEvent);
-                lastMouseMovedEditable.clear();
+                lastMouseMoveHandler->onPointerLeaveEvent(&latestEvent);
+                lastMouseMoveHandler = nullptr;
             }
             if(!focusedEditablePath.empty()){
                 auto iter = focusedEditablePath.begin();
@@ -850,7 +851,7 @@ void SceneWidget::Impl::checkRemovedEditableNodes(SgNode* node)
                     }
                 }
             }
-            if(focusedEditablePath.empty() && !lastMouseMovedEditable){
+            if(focusedEditablePath.empty() && !lastMouseMoveHandler){
                 break;
             }
         }
@@ -1811,9 +1812,12 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
 
     if(!handled){
         updateLatestEventPath();
-        
+
+        SceneWidgetEventHandler* handler = nullptr;
+
         if(activeCustomModeHandler){
             handled = activeCustomModeHandler->onPointerMoveEvent(&latestEvent);
+            handler = activeCustomModeHandler;
         }
         if(!handled && isEditMode){
             auto mouseMovedEditable =
@@ -1838,17 +1842,19 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
                     QWidget::setFocus(Qt::MouseFocusReason);
                 }
                 */
+                handler = mouseMovedEditable.handler;
             }
-            if(lastMouseMovedEditable != mouseMovedEditable){
-                if(!mouseMovedEditable){
-                    resetCursor();
-                }
-                if(lastMouseMovedEditable){
-                    latestEvent.type_ = SceneWidgetEvent::PointerLeave;
-                    lastMouseMovedEditable.handler->onPointerLeaveEvent(&latestEvent);
-                }
-                lastMouseMovedEditable = mouseMovedEditable;
+        }
+
+        if(handler != lastMouseMoveHandler){
+            if(!handler){
+                resetCursor();
             }
+            if(lastMouseMoveHandler){
+                latestEvent.type_ = SceneWidgetEvent::PointerLeave;
+                lastMouseMoveHandler->onPointerLeaveEvent(&latestEvent);
+            }
+            lastMouseMoveHandler = handler;
         }
     }
 
@@ -1929,10 +1935,10 @@ void SceneWidget::Impl::findObjectNameFromChildren(SgObject* object, string& nam
 void SceneWidget::Impl::leaveEvent(QEvent* event)
 {
     latestEvent.type_ = SceneWidgetEvent::PointerLeave;
-    
-    if(lastMouseMovedEditable){
-        lastMouseMovedEditable.handler->onPointerLeaveEvent(&latestEvent);
-        lastMouseMovedEditable.clear();
+
+    if(lastMouseMoveHandler){
+        lastMouseMoveHandler->onPointerLeaveEvent(&latestEvent);
+        lastMouseMoveHandler = nullptr;
     }
     if(lastMouseMoveEvent){
         delete lastMouseMoveEvent;
