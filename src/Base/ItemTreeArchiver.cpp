@@ -441,19 +441,25 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
         mout->putln(formatR(_("Restoring {0} \"{1}\""), className, itemName));
 
         ValueNodePtr dataNode = archive.find("data");
+        ArchivePtr dataArchive;
         if(dataNode->isValid()){
             if(!dataNode->isMapping()){
                 mout->putErrorln(_("The 'data' key does not have mapping-type data."));
                 item.reset();
             } else {
-                Archive* dataArchive = static_cast<Archive*>(dataNode->toMapping());
-                dataArchive->inheritSharedInfoFrom(archive);
-                dataArchive->setCurrentParentItem(parentItem);
-                if(!item->restore(*dataArchive)){
-                    item.reset();
-                } else {
-                    restoreAddons(archive, item);
-                }
+                dataArchive = static_cast<Archive*>(dataNode->toMapping());
+            }
+        }
+        if(item){
+            if(!dataArchive){
+                dataArchive = new Archive;
+            }
+            dataArchive->inheritSharedInfoFrom(archive);
+            dataArchive->setCurrentParentItem(parentItem);
+            if(!item->restore(*dataArchive)){
+                item.reset();
+            } else {
+                restoreAddons(archive, item);
             }
         }
         if(item){
