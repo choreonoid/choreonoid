@@ -165,11 +165,9 @@ class ItemTreeWidget::ItwItem : public QTreeWidgetItem
 public:
     Item* item;
     ItemTreeWidget::Impl* widgetImpl;
-    ScopedConnection itemNameConnection;
     ScopedConnection itemSelectionConnection;
     ScopedConnection itemCheckConnection;
-    ScopedConnection displayUpdateConnection;
-    ScopedConnection continuousUpdateStateConnection;
+    ScopedConnectionSet itemConnections;
     bool isNameEditable;
     bool isExpandedBeforeRemoving;
     bool isTemporaryAttributeDisplay;
@@ -206,18 +204,22 @@ ItemTreeWidget::ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
 
     updateEditFlags();
 
-    continuousUpdateStateConnection =
+    itemConnections.add(
+        item->sigAttributeChanged().connect(
+            [this]{ updateEditFlags(); }));
+
+    itemConnections.add(
         item->sigContinuousUpdateStateChanged().connect(
-            [this](bool){ updateEditFlags(); });
+            [this](bool){ updateEditFlags(); }));
 
     setToolTip(0, QString());
 
     setText(0, item->displayName().c_str());
-    itemNameConnection =
+    itemConnections.add(
         item->sigNameChanged().connect(
             [this](const std::string& /* oldName */){
                 setText(0, this->item->displayName().c_str());
-            });
+            }));
 
     widgetImpl->setItwItemSelected(this, item->isSelected());
 
@@ -243,9 +245,9 @@ ItemTreeWidget::ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
     isTemporaryAttributeDisplay = false;
 
     widgetImpl->updateItemDisplay(this);
-    displayUpdateConnection =
+    itemConnections.add(
         item->sigUpdated().connect(
-            [this](){ this->widgetImpl->updateItemDisplay(this); });
+            [this](){ this->widgetImpl->updateItemDisplay(this); }));
 }
 
 

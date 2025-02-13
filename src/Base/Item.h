@@ -190,6 +190,9 @@ public:
     [[deprecated("Use setTemporary.")]]
     void setTemporal(bool on = true) { setTemporary(on); }
 
+    SignalProxy<void()> sigAttributeChanged();
+    void notifyAttributeChange();
+
     bool isSelected() const { return isSelected_; }
     void setSelected(bool on = true, bool isCurrent = false);
     void setSubTreeItemsSelected(bool on);

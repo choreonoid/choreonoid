@@ -76,6 +76,7 @@ public:
     std::unordered_map<std::type_index, ItemAddonPtr> addonMap;
 
     Signal<void(const std::string& oldName)> sigNameChanged;
+    Signal<void()> sigAttributeChanged;
     Signal<void()> sigDisconnectedFromRoot;
     Signal<void()> sigUpdated;
     Signal<void()> sigTreePathChanged;
@@ -443,6 +444,18 @@ void Item::setTemporary(bool on)
     } else {
         unsetAttribute(Temporary);
     }
+}
+
+
+SignalProxy<void()> Item::sigAttributeChanged()
+{
+    return impl->sigAttributeChanged;
+}
+
+
+void Item::notifyAttributeChange()
+{
+    impl->sigAttributeChanged();
 }
 
 
@@ -993,7 +1006,9 @@ void Item::Impl::doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted
 
     justRemoveSelfFromParent();
 
-    self->unsetAttribute(SubItem);
+    if(self->isSubItem()){
+        self->unsetAttribute(SubItem);
+    }
 
     self->onRemovedFromParent(prevParent, isParentBeingDeleted);
 
