@@ -279,6 +279,7 @@ public:
     void renderTransform(SgTransform* transform);
     void renderShape(SgShape* shape);
     void renderUnpickableGroup(SgUnpickableGroup* group);
+    void renderPickableInvisibleGroup(SgPickableInvisibleGroup* group);
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture, bool withMaterial);
     void renderTransparentShapes();
@@ -386,6 +387,8 @@ void GL1SceneRenderer::Impl::initialize()
         [&](SgSwitchableGroup* node){ renderSwitchableGroup(node); });
     renderingFunctions.setFunction<SgUnpickableGroup>(
         [&](SgUnpickableGroup* node){ renderUnpickableGroup(node); });
+    renderingFunctions.setFunction<SgPickableInvisibleGroup>(
+        [&](SgPickableInvisibleGroup* node){ renderPickableInvisibleGroup(node); });
     renderingFunctions.setFunction<SgShape>(
         [&](SgShape* node){ renderShape(node); });
     renderingFunctions.setFunction<SgPointSet>(
@@ -1086,6 +1089,14 @@ void GL1SceneRenderer::Impl::renderShape(SgShape* shape)
 void GL1SceneRenderer::Impl::renderUnpickableGroup(SgUnpickableGroup* group)
 {
     if(!isRenderingPickingImage){
+        renderGroup(group);
+    }
+}
+
+
+void GL1SceneRenderer::Impl::renderPickableInvisibleGroup(SgPickableInvisibleGroup* group)
+{
+    if(isRenderingPickingImage){
         renderGroup(group);
     }
 }

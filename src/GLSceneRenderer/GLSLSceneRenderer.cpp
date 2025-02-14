@@ -510,6 +510,7 @@ public:
     void renderFixedPixelSizeGroup(SgFixedPixelSizeGroup* fixedPixelSizeGroup);
     void renderSwitchableGroup(SgSwitchableGroup* group);
     void renderUnpickableGroup(SgUnpickableGroup* group);
+    void renderPickableInvisibleGroup(SgPickableInvisibleGroup* group);
     template<class ResourceType, class ObjectType>
     ResourceType* getOrCreateGLResource(ObjectType* obj);
     VertexResource* getOrCreateVertexResource(SgObject* obj);
@@ -667,6 +668,8 @@ void GLSLSceneRenderer::Impl::initialize()
         [&](SgSwitchableGroup* node){ renderSwitchableGroup(node); });
     normalRenderingFunctions.setFunction<SgUnpickableGroup>(
         [&](SgUnpickableGroup* node){ renderUnpickableGroup(node); });
+    normalRenderingFunctions.setFunction<SgPickableInvisibleGroup>(
+        [&](SgPickableInvisibleGroup* node){ renderPickableInvisibleGroup(node); });
     normalRenderingFunctions.setFunction<SgShape>(
         [&](SgShape* node){ renderShape(node); });
     normalRenderingFunctions.setFunction<SgPointSet>(
@@ -2098,6 +2101,14 @@ void GLSLSceneRenderer::Impl::renderSwitchableGroup(SgSwitchableGroup* group)
 void GLSLSceneRenderer::Impl::renderUnpickableGroup(SgUnpickableGroup* group)
 {
     if(!isRenderingPickingImage){
+        renderGroup(group);
+    }
+}
+
+
+void GLSLSceneRenderer::Impl::renderPickableInvisibleGroup(SgPickableInvisibleGroup* group)
+{
+    if(isRenderingPickingImage){
         renderGroup(group);
     }
 }

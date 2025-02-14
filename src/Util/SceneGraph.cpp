@@ -1171,6 +1171,26 @@ Referenced* SgUnpickableGroup::doClone(CloneMap* cloneMap) const
 }
 
 
+SgPickableInvisibleGroup::SgPickableInvisibleGroup()
+    : SgGroup(findClassId<SgPickableInvisibleGroup>())
+{
+
+}
+
+
+SgPickableInvisibleGroup::SgPickableInvisibleGroup(const SgPickableInvisibleGroup& org, CloneMap* cloneMap)
+    : SgGroup(org, cloneMap)
+{
+
+}
+
+
+Referenced* SgPickableInvisibleGroup::doClone(CloneMap* cloneMap) const
+{
+    return new SgPickableInvisibleGroup(*this, cloneMap);
+}
+
+
 SgPreprocessed::SgPreprocessed(int classId)
     : SgNode(classId)
 {
@@ -1199,6 +1219,7 @@ struct NodeClassRegistration {
             .registerClass<SgFixedPixelSizeGroup, SgGroup>("SgFixedPixelSizeGroup")
             .registerClass<SgSwitchableGroup, SgGroup>("SgSwitchableGroup")
             .registerClass<SgUnpickableGroup, SgGroup>("SgUnpickableGroup")
+            .registerClass<SgPickableInvisibleGroup, SgGroup>("SgPickableInvisibleGroup")
             .registerClass<SgPreprocessed, SgNode>("SgPreprocessed");
     }
 } registration;

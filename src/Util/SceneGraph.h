@@ -637,6 +637,19 @@ protected:
 typedef ref_ptr<SgUnpickableGroup> SgUnpickableGroupPtr;
 
 
+class CNOID_EXPORT SgPickableInvisibleGroup : public SgGroup
+{
+public:
+    SgPickableInvisibleGroup();
+    SgPickableInvisibleGroup(const SgPickableInvisibleGroup& org, CloneMap* cloneMap = nullptr);
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+};
+
+typedef ref_ptr<SgPickableInvisibleGroup> SgPickableInvisibleGroupPtr;
+
+
 class CNOID_EXPORT SgPreprocessed : public SgNode
 {
 protected:
