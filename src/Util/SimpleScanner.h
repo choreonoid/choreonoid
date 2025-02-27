@@ -176,6 +176,13 @@ public:
         return checkCharAtCurrentPosition(chara);
     }
 
+    void checkCharEx(int chara)
+    {
+        if(!checkChar(chara)){
+            throwEx("Invalid chara");
+        }
+    }
+
     bool checkLF()
     {
         skipSpaces();
@@ -300,16 +307,38 @@ public:
         out_string.assign(pos0, pos - pos0);
         return !out_string.empty();
     }
-    
-    float readFloatEx()
+
+    void readEx(float& out_value)
     {
-        float value;
-        auto result = fast_float::from_chars(pos, bufEndPos, value);
+        auto result = fast_float::from_chars(pos, bufEndPos, out_value);
         if(result.ec == std::errc()){
             pos = result.ptr;
         } else {
             throwEx("Invalid value");
         }
+    }
+    
+    float readFloatEx()
+    {
+        float value;
+        readEx(value);
+        return value;
+    }
+
+    void readEx(double& out_value)
+    {
+        auto result = fast_float::from_chars(pos, bufEndPos, out_value);
+        if(result.ec == std::errc()){
+            pos = result.ptr;
+        } else {
+            throwEx("Invalid value");
+        }
+    }
+
+    double readDoubleEx()
+    {
+        double value;
+        readEx(value);
         return value;
     }
 
