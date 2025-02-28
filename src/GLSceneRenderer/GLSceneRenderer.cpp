@@ -76,7 +76,7 @@ GLSceneRenderer::Impl::Impl(GLSceneRenderer* self, SgGroup* sceneRoot)
       sceneRoot(sceneRoot)
 {
     scene = new SgGroup();
-    sceneRoot->addChild(scene);
+    sceneRoot->insertChild(0, scene);
 
     int invaid = std::numeric_limits<int>::min();
     auto& vp = self->viewport_;
