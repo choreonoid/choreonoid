@@ -556,6 +556,11 @@ public:
         values.push_back(node);
     }
 
+    void append(ValueNode* node, int maxColumns, int numValues = 0) {
+        insertLF(maxColumns, numValues);
+        values.push_back(node);
+    }
+
     void insert(int index, ValueNode* node);
         
     void append(int value);
