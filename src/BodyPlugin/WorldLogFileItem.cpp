@@ -1014,10 +1014,8 @@ void WorldLogFileItem::Impl::readDeviceState(DeviceInfo& devInfo, Device* device
     for(int i=0; i < stateSize; ++i){
         state[i] = buf.readFloat();
     }
-    if(stateSize <= size){
-        device->readState(&state.front());
-        device->notifyStateChange();
-    }
+    device->readState(&state.front(), size);
+    device->notifyStateChange();
     devInfo.isConsistent = true;
 }
 
@@ -1027,12 +1025,10 @@ void WorldLogFileItem::Impl::readLastDeviceState(DeviceInfo& devInfo, Device* de
     size_t pos = readBuf.readSeekOffset();
     if(pos == devInfo.lastStateSeekPos){
         if(!devInfo.isConsistent){
-            auto buf = &devInfo.lastState.front();
-            if(buf){
-                device->readState(buf);
-                device->notifyStateChange();
-                devInfo.isConsistent = true;
-            }
+            auto& lastState = devInfo.lastState;
+            device->readState(lastState.data(), lastState.size());
+            device->notifyStateChange();
+            devInfo.isConsistent = true;
         }
     } else {
         ifs.seekg(pos);

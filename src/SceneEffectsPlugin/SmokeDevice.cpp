@@ -99,7 +99,7 @@ int SmokeDevice::stateSize() const
 }
 
 
-const double* SmokeDevice::readState(const double* buf)
+const double* SmokeDevice::readState(const double* buf, int size)
 {
     int i = 0;
     auto& ps = particleSystem_;
@@ -114,9 +114,10 @@ const double* SmokeDevice::readState(const double* buf)
     ps.setEmissionRange(buf[i++]);
     ps.setAcceleration(Vector3f(buf[i], buf[i+1], buf[i+2]));
     i += 3;
-    ps.setTintColor(Vector3f(buf[i], buf[i+1], buf[i+2]));
-    i += 3;
-    
+    if(size >= 14){
+        ps.setTintColor(Vector3f(buf[i], buf[i+1], buf[i+2]));
+        i += 3;
+    }
     return buf + i;
 }
 

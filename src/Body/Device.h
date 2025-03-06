@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_DEVICE_H
 #define CNOID_BODY_DEVICE_H
 
@@ -39,7 +34,10 @@ public:
        @return The position in the buf after reading.
        The value is used when the super class's readState is called by the inherited class.
     */
-    virtual const double* readState(const double* buf) = 0;
+    virtual const double* readState(const double* buf, int size);
+
+    // Deprecated.
+    virtual const double* readState(const double* buf);
 
     /**
        @return The position in the buf after reading.
