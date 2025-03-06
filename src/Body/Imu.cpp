@@ -87,7 +87,7 @@ int Imu::stateSize() const
 }
 
 
-const double* Imu::readState(const double* buf)
+const double* Imu::readState(const double* buf, int /* size */)
 {
     w_ = Eigen::Map<const Vector3>(buf);
     dv_ = Eigen::Map<const Vector3>(buf + 3);

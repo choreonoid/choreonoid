@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_RATE_GYRO_SENSOR_H
 #define CNOID_BODY_RATE_GYRO_SENSOR_H
 
@@ -27,7 +22,7 @@ public:
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual void clearState() override;
     virtual int stateSize() const override;
-    virtual const double* readState(const double* buf) override;
+    virtual const double* readState(const double* buf, int size) override;
     virtual double* writeState(double* out_buf) const override;
 
     const Vector3& w() const { return w_; }

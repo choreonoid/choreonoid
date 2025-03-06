@@ -271,7 +271,7 @@ int DigitalIoDevice::stateSize() const
 }
 
 
-const double* DigitalIoDevice::readState(const double* buf)
+const double* DigitalIoDevice::readState(const double* buf, int /* size */)
 {
     int i = 0;
     on_ = buf[i++];

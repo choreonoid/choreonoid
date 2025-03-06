@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "ForceSensor.h"
 #include "StdBodyFileUtil.h"
 #include <cnoid/EigenArchive>
@@ -87,7 +82,7 @@ int ForceSensor::stateSize() const
 }
 
 
-const double* ForceSensor::readState(const double* buf)
+const double* ForceSensor::readState(const double* buf, int /* size */)
 {
     F_ = Eigen::Map<const Vector6>(buf);
     return buf + 6;

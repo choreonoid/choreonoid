@@ -50,7 +50,7 @@ int RainSnowDevice::stateSize() const
 }
 
 
-const double* RainSnowDevice::readState(const double* buf)
+const double* RainSnowDevice::readState(const double* buf, int /* size */)
 {
     on_ = buf[0];
     return buf + 1;

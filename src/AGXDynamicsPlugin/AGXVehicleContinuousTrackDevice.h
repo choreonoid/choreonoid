@@ -87,7 +87,7 @@ public:
     virtual DeviceState* cloneState() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual int stateSize() const override;
-    virtual const double* readState(const double* buf) override;
+    virtual const double* readState(const double* buf, int size) override;
     virtual double* writeState(double* out_buf) const override;
 
     void initialize();

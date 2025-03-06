@@ -181,9 +181,9 @@ int Camera::stateSize() const
 }
 
 
-const double* Camera::readState(const double* buf)
+const double* Camera::readState(const double* buf, int size)
 {
-    buf = VisionSensor::readState(buf);
+    buf = VisionSensor::readState(buf, size);
     resolutionX_ = buf[0];
     resolutionY_ = buf[1];
     nearClipDistance_ = buf[2];

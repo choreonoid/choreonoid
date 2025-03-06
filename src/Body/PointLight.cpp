@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "PointLight.h"
 #include "StdBodyFileUtil.h"
 #include <cnoid/EigenArchive>
@@ -89,9 +84,9 @@ int PointLight::stateSize() const
 }
 
 
-const double* PointLight::readState(const double* buf)
+const double* PointLight::readState(const double* buf, int size)
 {
-    buf = Light::readState(buf);
+    buf = Light::readState(buf, size);
     constantAttenuation_ = buf[0];
     linearAttenuation_ = buf[1];
     quadraticAttenuation_ = buf[2];

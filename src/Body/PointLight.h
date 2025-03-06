@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_POINT_LIGHT_H
 #define CNOID_BODY_POINT_LIGHT_H
 
@@ -27,7 +22,7 @@ public:
 
     static int pointLightStateSize();
     virtual int stateSize() const override;
-    virtual const double* readState(const double* buf) override;
+    virtual const double* readState(const double* buf, int size) override;
     virtual double* writeState(double* out_buf) const override;
 
     float constantAttenuation() const { return constantAttenuation_; }

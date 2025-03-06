@@ -116,7 +116,7 @@ int VisionSensor::visionSensorStateSize()
 }
 
 
-const double* VisionSensor::readState(const double* buf)
+const double* VisionSensor::readState(const double* buf, int /* size */)
 {
     on_ = buf[0];
     frameRate_ = buf[1];

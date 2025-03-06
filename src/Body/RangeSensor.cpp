@@ -331,9 +331,9 @@ int RangeSensor::stateSize() const
 }
 
 
-const double* RangeSensor::readState(const double* buf)
+const double* RangeSensor::readState(const double* buf, int size)
 {
-    buf = VisionSensor::readState(buf);
+    buf = VisionSensor::readState(buf, size);
     minYawAngle_ = buf[0];
     maxYawAngle_ = buf[1];
     numYawSamples_ = buf[2];

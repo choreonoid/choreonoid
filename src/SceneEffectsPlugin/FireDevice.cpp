@@ -98,7 +98,7 @@ int FireDevice::stateSize() const
 }
 
 
-const double* FireDevice::readState(const double* buf)
+const double* FireDevice::readState(const double* buf, int /* size */)
 {
     int i = 0;
     auto& ps = particleSystem_;

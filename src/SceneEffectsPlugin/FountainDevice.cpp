@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "FountainDevice.h"
 #include "SceneFountain.h"
 #include "SceneEffectDeviceTypeRegistration.h"
@@ -101,7 +96,7 @@ int FountainDevice::stateSize() const
 }
 
 
-const double* FountainDevice::readState(const double* buf)
+const double* FountainDevice::readState(const double* buf, int /* size */)
 {
     int i = 0;
     auto& ps = particleSystem_;

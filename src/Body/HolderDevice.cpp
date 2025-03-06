@@ -332,7 +332,7 @@ int HolderDevice::stateSize() const
 }
 
 
-const double* HolderDevice::readState(const double* buf)
+const double* HolderDevice::readState(const double* buf, int /* size */)
 {
     int i = 0;
     on_ = buf[i++];

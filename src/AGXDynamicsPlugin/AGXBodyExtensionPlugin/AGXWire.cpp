@@ -51,7 +51,7 @@ public:
     virtual DeviceState* cloneState() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual int stateSize() const override;
-    virtual const double* readState(const double* buf) override;
+    virtual const double* readState(const double* buf, int size) override;
     virtual double* writeState(double* out_buf) const override;
 
     void setDesc(const AGXWireDeviceDesc& desc);
@@ -156,7 +156,7 @@ int AGXWireDevice::stateSize() const
     return 3 * MAX_NUM_WIRE_NODES_FOR_LOG + 2;
 }
 
-const double* AGXWireDevice::readState(const double* buf)
+const double* AGXWireDevice::readState(const double* buf, int /* size */)
 {
     int i = 0;
     const int n = buf[i++];

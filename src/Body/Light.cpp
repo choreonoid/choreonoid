@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "Light.h"
 #include <cnoid/EigenArchive>
 
@@ -58,7 +53,7 @@ int Light::lightStateSize()
 }
 
 
-const double* Light::readState(const double* buf)
+const double* Light::readState(const double* buf, int /* size */)
 {
     on_ = buf[0];
     color_ = Eigen::Map<const Vector3>(buf + 1).cast<float>();

@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "SpotLight.h"
 #include "StdBodyFileUtil.h"
 #include <cnoid/EigenArchive>
@@ -83,9 +78,9 @@ int SpotLight::stateSize() const
 }
 
 
-const double* SpotLight::readState(const double* buf)
+const double* SpotLight::readState(const double* buf, int size)
 {
-    buf = PointLight::readState(buf);
+    buf = PointLight::readState(buf, size);
     direction_ = Eigen::Map<const Vector3>(buf);
     beamWidth_ = buf[3];
     cutOffAngle_ = buf[4];

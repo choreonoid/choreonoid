@@ -87,7 +87,7 @@ int ZmpDevice::stateSize() const
 }
 
 
-const double* ZmpDevice::readState(const double* buf)
+const double* ZmpDevice::readState(const double* buf, int /* size */)
 {
     int i = 0;
     on_ = buf[i++];

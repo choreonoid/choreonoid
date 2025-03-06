@@ -171,7 +171,7 @@ int MarkerDevice::stateSize() const
 }
 
 
-const double* MarkerDevice::readState(const double* buf)
+const double* MarkerDevice::readState(const double* buf, int /* size */)
 {
     int i = 0;
     on_ = buf[i++];

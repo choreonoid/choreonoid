@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "RateGyroSensor.h"
 #include "StdBodyFileUtil.h"
 #include <cnoid/EigenArchive>
@@ -87,7 +82,7 @@ int RateGyroSensor::stateSize() const
 }
 
 
-const double* RateGyroSensor::readState(const double* buf)
+const double* RateGyroSensor::readState(const double* buf, int /* size */)
 {
     w_ = Eigen::Map<const Vector3>(buf);
     return buf + 3;

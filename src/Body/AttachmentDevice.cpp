@@ -171,7 +171,7 @@ int AttachmentDevice::stateSize() const
 }
         
 
-const double* AttachmentDevice::readState(const double* buf)
+const double* AttachmentDevice::readState(const double* buf, int /* size */)
 {
     int i = 0;
     on_ = buf[i++];

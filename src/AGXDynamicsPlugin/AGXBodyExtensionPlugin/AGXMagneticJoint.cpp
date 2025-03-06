@@ -34,7 +34,7 @@ public:
     virtual DeviceState* cloneState() const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual int stateSize() const override;
-    virtual const double* readState(const double* buf) override;
+    virtual const double* readState(const double* buf, int size) override;
     virtual double* writeState(double* out_buf) const override;
 
     void setDesc(const AGXMagneticJointDeviceDesc& desc);
@@ -116,7 +116,7 @@ int AGXMagneticJointDevice::stateSize() const
     return 1;
 }
 
-const double* AGXMagneticJointDevice::readState(const double* buf)
+const double* AGXMagneticJointDevice::readState(const double* buf, int /* size */)
 {
     return buf + 1;
 }

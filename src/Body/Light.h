@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_LIGHT_H
 #define CNOID_BODY_LIGHT_H
 
@@ -35,7 +30,7 @@ public:
     void setIntensity(float intensity) { intensity_ = intensity; }
         
     static int lightStateSize();
-    virtual const double* readState(const double* buf) override;
+    virtual const double* readState(const double* buf, int size) override;
     virtual double* writeState(double* out_buf) const override;
 
     bool readSpecifications(const Mapping* info);

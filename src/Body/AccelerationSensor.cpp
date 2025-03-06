@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "AccelerationSensor.h"
 #include "StdBodyFileUtil.h"
 #include <cnoid/EigenArchive>
@@ -87,7 +82,7 @@ int AccelerationSensor::stateSize() const
 }
 
 
-const double* AccelerationSensor::readState(const double* buf)
+const double* AccelerationSensor::readState(const double* buf, int /* size */)
 {
     dv_ = Eigen::Map<const Vector3>(buf);
     return buf + 3;

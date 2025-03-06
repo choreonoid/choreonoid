@@ -102,7 +102,7 @@ int ConveyorDevice::stateSize() const
 }
         
 
-const double* ConveyorDevice::readState(const double* buf)
+const double* ConveyorDevice::readState(const double* buf, int /* size */)
 {
     int i = 0;
     on_ = buf[i++];

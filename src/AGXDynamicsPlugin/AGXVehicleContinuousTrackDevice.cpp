@@ -287,7 +287,7 @@ int AGXVehicleContinuousTrackDevice::stateSize() const
 }
 
 
-const double* AGXVehicleContinuousTrackDevice::readState(const double* buf)
+const double* AGXVehicleContinuousTrackDevice::readState(const double* buf, int /* size */)
 {
     if(m_trackStates.size() < numberOfNodes){
         m_trackStates.resize(numberOfNodes);

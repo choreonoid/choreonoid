@@ -335,7 +335,7 @@ int RotorDevice::stateSize() const
     return 19;
 }
 
-const double* RotorDevice::readState(const double* buf)
+const double* RotorDevice::readState(const double* buf, int /* size */)
 {
     _on = (buf[0] > 0.0) ? true : false;
     _pos = Eigen::Map<const Eigen::Vector3d>(&(buf[1]));
