@@ -136,7 +136,7 @@ void exportPyViews(py::module m)
                  }
                  return py::cast(nullptr);
              })
-        .def("viewAll", &SceneWidget::viewAll)
+        .def("fitViewToAll", &SceneWidget::fitViewToAll)
         .def("setVisiblePolygonElements", &SceneWidget::setVisiblePolygonElements)
         .def_property_readonly("visiblePolygonElements", &SceneWidget::visiblePolygonElements)
         .def("setHighlightingEnabled", &SceneWidget::setHighlightingEnabled)
@@ -154,7 +154,6 @@ void exportPyViews(py::module m)
         .def("setBackgroundColor", &SceneWidget::setBackgroundColor)
         .def_property_readonly("backgroundColor", &SceneWidget::backgroundColor)
         .def("setColor", &SceneWidget::setBackgroundColor)
-        .def("setCameraPosition", &SceneWidget::setCameraPosition)
         .def("setFieldOfView", &SceneWidget::setFieldOfView)
         .def("setHeight", &SceneWidget::setHeight)
         .def("setClipDistances", &SceneWidget::setClipDistances)
@@ -196,6 +195,11 @@ void exportPyViews(py::module m)
                      renderer->setNormalVisualizationLength(length);
                  }
              })
+        .def("setCameraPosition",
+             [](SceneWidget& self, const Vector3& eye, const Vector3& direction, const Vector3& up){
+                 self.setCameraPositionLookingFor(eye, direction, up);
+             })
+        .def("viewAll", &SceneWidget::fitViewToAll)
         ;
 
     py::class_<SceneView, PyQObjectHolder<SceneView>, View>(m, "SceneView")

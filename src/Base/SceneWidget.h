@@ -95,9 +95,11 @@ public:
        where the device pixel ratio is greator than 1.0.
     */
     bool unproject(double x, double y, double z, Vector3& out_projected) const;
-        
-    void viewAll();
 
+    void fitViewToAll(double transitionTime = 0.0);
+    void fitViewTo(const SgNodePath& path, double transitionTime = 0.0);
+    void fitViewTo(const BoundingBox& bbox, double transitionTime = 0.0);
+    
     // This is same as SgPolygonDrawStyle::PolygonElement
     enum PolygonElement {
         PolygonFace = 1,
@@ -136,7 +138,7 @@ public:
     Vector3 backgroundColor();
     void setColor(const Vector4& color);
 
-    void setCameraPosition(const Vector3& eye, const Vector3& direction, const Vector3& up);
+    void setCameraPosition(const Vector3& position, double transitionTime = 0.0);
     void setCameraPositionLookingFor(const Vector3& eye, const Vector3& direction, const Vector3& up, double transitionTime = 0.0);
     void setCameraPositionLookingAt(const Vector3& eye, const Vector3& center, const Vector3& up, double transitionTime = 0.0);
     void setFieldOfView(double value);
@@ -180,6 +182,10 @@ public:
     SignalProxy<void(bool isFocused)> sigWidgetFocusChanged();
     SignalProxy<void()> sigAboutToBeDestroyed();
 
+    [[deprecated("Use fitViewToAll")]]
+    void viewAll(double transitionTime = 0.0);
+    [[deprecated("Use setCameraPositionLookingFor")]]
+    void setCameraPosition(const Vector3& eye, const Vector3& direction, const Vector3& up);
     [[deprecated("This function does nothing.")]]
     void setWorldLightEnabled(bool on);
     [[deprecated]]

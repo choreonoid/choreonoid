@@ -299,6 +299,7 @@ public:
     int visiblePolygonElements() const;
     void setCollisionLineVisibility(bool on);
     void setVisiblePolygonElements(int elementFlags);
+    void setCameraPosition(const Vector3& position, double transitionTime);
     void setCameraPositionLookingFor(
         const Vector3& eye, const Vector3& direction, const Vector3& up, double transitionTime);
     void setCameraPositionLookingAt(
@@ -310,7 +311,8 @@ public:
     void advertiseSceneModeChange(bool doModeSyncRequest);
     void advertiseSceneModeChangeInSubTree(SgNode* node);
     void activateCustomMode(SceneWidgetEventHandler* modeHandler, int modeId);
-    void viewAll();
+    void fitViewTo(const SgNodePath& path, double transitionTime);
+    void fitViewTo(const BoundingBox& bbox, double transitionTime);
 
     void showPickingImageWindow();
     void onUpsideDownToggled(bool on);
@@ -1266,22 +1268,57 @@ SceneWidget::ViewpointOperationMode SceneWidget::viewpointOperationMode() const
 }
 
 
-void SceneWidget::viewAll()
+void SceneWidget::fitViewToAll(double transitionTime)
 {
-    impl->viewAll();
+    SgNodePath path = { impl->renderer->scene() };
+    impl->fitViewTo(path, transitionTime);
 }
 
 
-void SceneWidget::Impl::viewAll()
+void SceneWidget::viewAll(double transitionTime)
 {
-    if(!hasActiveInteractiveCamera()){
-        return;
-    }
-    
-    const BoundingBox& bbox = renderer->scene()->boundingBox();
+    fitViewToAll(transitionTime);
+}
+
+
+void SceneWidget::fitViewTo(const SgNodePath& path, double transitionTime)
+{
+    impl->fitViewTo(path, transitionTime);
+}
+
+
+void SceneWidget::Impl::fitViewTo(const SgNodePath& path, double transitionTime)
+{
+    BoundingBox bbox = path.back()->boundingBox();
     if(bbox.empty()){
         return;
     }
+    Affine3 T_node = Affine3::Identity();
+    for(auto it = path.rbegin(); it != path.rend(); ++it){
+        if(auto transform = (*it)->toTransformNode()){
+            T_node = transform->getTransform() * T_node;
+        }
+    }
+    if(!T_node.matrix().isApprox(Matrix4::Identity())){
+        bbox.transform(T_node);
+    }
+    
+    fitViewTo(bbox, transitionTime);
+}
+
+
+void SceneWidget::fitViewTo(const BoundingBox& bbox, double transitionTime)
+{
+    impl->fitViewTo(bbox, transitionTime);
+}
+
+
+void SceneWidget::Impl::fitViewTo(const BoundingBox& bbox, double transitionTime)
+{
+    if(!hasActiveInteractiveCamera() || bbox.empty()){
+        return;
+    }
+
     const double radius = bbox.boundingSphereRadius();
 
     double left, right, bottom, top;
@@ -1289,24 +1326,26 @@ void SceneWidget::Impl::viewAll()
 
     const double a = renderer->aspectRatio();
     double length = (a >= 1.0) ? (top - bottom) : (right - left);
-    
-    Isometry3& T = interactiveCameraTransform->T();
-    T.translation() +=
-        (bbox.center() - T.translation())
-        + T.rotation() * Vector3(0, 0, 2.0 * radius * builtinPersCamera->nearClipDistance() / length);
 
+    Isometry3 T_camera = interactiveCameraTransform->T();
+    double z = 2.0 * radius * builtinPersCamera->nearClipDistance() / length;
+    T_camera.translation() = bbox.center() + T_camera.rotation() * Vector3(0, 0, z);
 
-    if(auto ortho = dynamic_cast<SgOrthographicCamera*>(renderer->currentCamera())){
+    auto currentCamera = renderer->currentCamera();
+    if(currentCamera == builtinPersCamera){
+        setCameraPosition(T_camera.translation(), transitionTime);
+
+    } else if(auto ortho = dynamic_cast<SgOrthographicCamera*>(currentCamera)){
         if(a >= 1.0){
             ortho->setHeight(radius * 2.0);
         } else {
             ortho->setHeight(radius * 2.0 / a);
         }
+        interactiveCameraTransform->setTranslation(T_camera.translation());
         ortho->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
-
-    } else {
-        interactiveCameraTransform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
     }
+
+    lastClickedPoint = bbox.center();
 }
 
 
@@ -2794,6 +2833,34 @@ void SceneWidget::setCameraPosition
 }
 
 
+void SceneWidget::setCameraPosition(const Vector3& position, double transitionTime)
+{
+    impl->setCameraPosition(position, transitionTime);
+}
+
+
+void SceneWidget::Impl::setCameraPosition(const Vector3& position, double transitionTime)
+{
+    if(transitionTime > 0.0){
+        Vector3 p0 = builtinCameraTransform->translation();
+        Interpolator interp(0.0, p0, transitionTime, position);
+        QElapsedTimer timer;
+        timer.start();
+        while(true){
+            double time = timer.elapsed() / 1000.0;
+            if(time >= transitionTime){
+                break;
+            }
+            builtinCameraTransform->setTranslation(interp.interpolate(time));
+            repaint();
+            QCoreApplication::processEvents();
+        }
+    }
+    builtinCameraTransform->setTranslation(position);
+    builtinCameraTransform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
+}
+
+
 void SceneWidget::setCameraPositionLookingFor
 (const Vector3& eye, const Vector3& direction, const Vector3& up, double transitionTime)
 {
@@ -2804,44 +2871,39 @@ void SceneWidget::setCameraPositionLookingFor
 void SceneWidget::Impl::setCameraPositionLookingFor
 (const Vector3& eye, const Vector3& direction, const Vector3& up, double transitionTime)
 {
-    if(transitionTime == 0.0){
-        builtinCameraTransform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
-        return;
-    }
+    if(transitionTime > 0.0){
+        typedef Eigen::Matrix<double, 6, 1> Vector6;
 
-    typedef Eigen::Matrix<double, 6, 1> Vector6;
+        Vector6 pos0;
+        auto& T0 = builtinCameraTransform->T();
+        pos0.head<3>() = T0.translation(); // eye
+        pos0.tail<3>() = rpyFromRot(T0.linear()); // rpy
 
-    Vector6 pos0;
-    auto& T0 = builtinCameraTransform->T();
-    pos0.head<3>() = T0.translation(); // eye
-    pos0.tail<3>() = rpyFromRot(T0.linear()); // rpy
+        Vector6 pos1;
+        Vector3 rpy1 = rpyFromRot(SgCamera::positionLookingFor(eye, direction, up).linear());
+        pos1 << eye, rpy1;
 
-    Vector6 pos1;
-    Vector3 rpy1 = rpyFromRot(SgCamera::positionLookingFor(eye, direction, up).linear());
-    pos1 << eye, rpy1;
+        Interpolator interp(0.0, pos0, transitionTime, pos1);
+        QElapsedTimer timer;
+        timer.start();
 
-    Interpolator interp(0.0, pos0, transitionTime, pos1);
-
-    QElapsedTimer timer;
-    timer.start();
-
-    while(true){
-        double time = timer.elapsed() / 1000.0;
-        if(time >= transitionTime){
-            break;
+        while(true){
+            double time = timer.elapsed() / 1000.0;
+            if(time >= transitionTime){
+                break;
+            }
+            Vector6 pos = interp.interpolate(time);
+            Isometry3 T;
+            T.translation() = pos.head<3>(); // eye
+            T.linear() = rotFromRpy(pos.tail<3>());
+            builtinCameraTransform->setPosition(T);
+            repaint();
+            QCoreApplication::processEvents();
         }
-        Vector6 pos = interp.interpolate(time);
-        Isometry3 T;
-        T.translation() = pos.head<3>(); // eye
-        T.linear() = rotFromRpy(pos.tail<3>());
-        builtinCameraTransform->setPosition(T);
-        repaint();
-
-        QCoreApplication::processEvents();
     }
 
     builtinCameraTransform->setPosition(SgCamera::positionLookingFor(eye, direction, up));
-    update();
+    builtinCameraTransform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
 }
 
 
@@ -2855,63 +2917,56 @@ void SceneWidget::setCameraPositionLookingAt
 void SceneWidget::Impl::setCameraPositionLookingAt
 (const Vector3& eye, const Vector3& center, const Vector3& up, double transitionTime)
 {
-    if(transitionTime == 0.0){
-        builtinCameraTransform->setPosition(SgCamera::positionLookingAt(eye, center, up));
-    }
-
-    auto& T0 = builtinCameraTransform->T();
-    Vector3 d = SgCamera::direction(T0);
-    Vector3 eye0 = T0.translation();
-    double t = -(eye0 - center).dot(d);
-    Vector3 center0 = eye0 + t * d;
-    Vector3 up0 = SgCamera::up(T0);
-    Vector3 upRotationAxis = up0.cross(up).normalized();
-    if(upRotationAxis.isZero()){
-        for(int i=0; i < 2; ++i){
-            upRotationAxis = Vector3::Unit(i).cross(up).normalized();
-            if(!upRotationAxis.isZero()){
-                break;
+    if(transitionTime > 0.0){
+        auto& T0 = builtinCameraTransform->T();
+        Vector3 d = SgCamera::direction(T0);
+        Vector3 eye0 = T0.translation();
+        double t = -(eye0 - center).dot(d);
+        Vector3 center0 = eye0 + t * d;
+        Vector3 up0 = SgCamera::up(T0);
+        Vector3 upRotationAxis = up0.cross(up).normalized();
+        if(upRotationAxis.isZero()){
+            for(int i=0; i < 2; ++i){
+                upRotationAxis = Vector3::Unit(i).cross(up).normalized();
+                if(!upRotationAxis.isZero()){
+                    break;
+                }
             }
         }
-    }
-    double theta = acos(up0.dot(up));
+        double theta = acos(up0.dot(up));
 
-    typedef Eigen::Matrix<double, 7, 1> Vector7;
-    Vector7 pos0;
-    pos0.head<3>() = eye0;
-    pos0.segment<3>(3) = center0;
-    pos0(6) = 0.0;
+        typedef Eigen::Matrix<double, 7, 1> Vector7;
+        Vector7 pos0;
+        pos0.head<3>() = eye0;
+        pos0.segment<3>(3) = center0;
+        pos0(6) = 0.0;
 
-    Vector7 pos1;
-    pos1 << eye, center, theta;
+        Vector7 pos1;
+        pos1 << eye, center, theta;
 
-    Interpolator interp(0.0, pos0, transitionTime, pos1);
+        Interpolator interp(0.0, pos0, transitionTime, pos1);
 
-    QElapsedTimer timer;
-    timer.start();
+        QElapsedTimer timer;
+        timer.start();
 
-    auto setCameraPosition =
-        [&](double time){
-        };
-
-    while(true){
-        double time = timer.elapsed() / 1000.0;
-        if(time >= transitionTime){
-            break;
+        while(true){
+            double time = timer.elapsed() / 1000.0;
+            if(time >= transitionTime){
+                break;
+            }
+            Vector7 pos = interp.interpolate(time);
+            Vector3 eye = pos.head<3>();
+            Vector3 center = pos.segment<3>(3);
+            double theta = pos(6);
+            Vector3 up = Vector3(AngleAxis(theta, upRotationAxis) * up0).normalized();
+            builtinCameraTransform->setPosition(SgCamera::positionLookingAt(eye, center, up));
+            repaint();
+            QCoreApplication::processEvents();
         }
-        Vector7 pos = interp.interpolate(time);
-        Vector3 eye = pos.head<3>();
-        Vector3 center = pos.segment<3>(3);
-        double theta = pos(6);
-        Vector3 up = Vector3(AngleAxis(theta, upRotationAxis) * up0).normalized();
-        builtinCameraTransform->setPosition(SgCamera::positionLookingAt(eye, center, up));
-        repaint();
-
-        QCoreApplication::processEvents();
     }
 
     builtinCameraTransform->setPosition(SgCamera::positionLookingAt(eye, center, up));
-    update();
+    builtinCameraTransform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
 }
 
 
