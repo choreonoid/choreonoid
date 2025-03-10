@@ -121,19 +121,11 @@ bool SgObject::traverseObjects_(std::function<TraverseStatus(SgObject* object)>&
 
 void SgObject::notifyUpperNodesOfUpdate(SgUpdate& update)
 {
-    notifyUpperNodesOfUpdate(update, update.hasAction(SgUpdate::GeometryModified));
-}
-
-
-void SgObject::notifyUpperNodesOfUpdate(SgUpdate& update, bool doInvalidateBoundingBox)
-{
     update.pushNode(this);
-    if(doInvalidateBoundingBox){
-        invalidateBoundingBox();
-    }
+    invalidateBoundingBox();
     sigUpdated_(update);
     for(const_parentIter p = parents.begin(); p != parents.end(); ++p){
-        (*p)->notifyUpperNodesOfUpdate(update, doInvalidateBoundingBox);
+        (*p)->notifyUpperNodesOfUpdate(update);
     }
     update.popNode();
 }
@@ -146,8 +138,7 @@ void SgObject::addParent(SgObject* parent, SgUpdateRef update)
     if(update){
         update->clearPath();
         update->pushNode(this);
-        parent->notifyUpperNodesOfUpdate(
-            update->withAction(SgUpdate::Added), hasAttribute(Geometry));
+        parent->notifyUpperNodesOfUpdate(update->withAction(SgUpdate::Added));
     }
 
     if(parents.size() == 1){
@@ -391,12 +382,14 @@ std::string SgNode::className() const
 
 const BoundingBox& SgNode::boundingBox() const
 {
+    setBoundingBoxCacheReady();
     return emptyBoundingBox;
 }
 
 
 const BoundingBox& SgNode::untransformedBoundingBox() const
 {
+    setBoundingBoxCacheReady();
     return boundingBox();
 }
 
@@ -648,8 +641,7 @@ SgGroup::iterator SgGroup::removeChild(iterator childIter, SgUpdateRef update)
         next = children.erase(childIter);
         update->clearPath();
         update->pushNode(child);
-        notifyUpperNodesOfUpdate(
-            update->withAction(SgUpdate::Removed), child->hasAttribute(Geometry));
+        notifyUpperNodesOfUpdate(update->withAction(SgUpdate::Removed));
     }
     return next;
 }
@@ -765,6 +757,33 @@ void SgGroup::removeChainedGroup(SgGroup* group, SgUpdateRef update)
             break;
         }
         next = next->nextChainedGroup();
+    }
+}
+
+
+std::vector<SgNodePath> SgGroup::findPathsTo(SgNode* node) const
+{
+    std::vector<SgNodePath> paths;
+    SgNodePath path;
+    path.push_back(node);
+    findPathsTo(paths, path, this);
+    return paths;
+}
+
+
+void SgGroup::findPathsTo(std::vector<SgNodePath>& paths, SgNodePath& path, const SgNode* topNode) const
+{
+    if(this == topNode){
+        std::reverse(path.begin(), path.end());
+        paths.push_back(std::move(path));
+    } else {
+        for(auto it = parentBegin(); it != parentEnd(); ++it){
+            if(auto group = (*it)->toGroupNode()){
+                SgNodePath upperPath(path);
+                upperPath.push_back(group);
+                group->findPathsTo(paths, upperPath, topNode);
+            }
+        }
     }
 }
 

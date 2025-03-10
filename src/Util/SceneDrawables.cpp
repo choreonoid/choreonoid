@@ -352,7 +352,7 @@ SgObject* SgMeshBase::childObject(int index)
 }
 
 
-void SgMeshBase::updateBoundingBox()
+void SgMeshBase::updateBoundingBox() const
 {
     if(!vertices_){
         bbox.clear();
@@ -363,6 +363,7 @@ void SgMeshBase::updateBoundingBox()
         }
         bbox = bboxf;
     }
+    setBoundingBoxCacheReady();
 }
 
 
@@ -512,7 +513,7 @@ Referenced* SgMesh::doClone(CloneMap* cloneMap) const
 }
 
 
-void SgMesh::updateBoundingBox()
+void SgMesh::updateBoundingBox() const
 {
     if(!USE_FACES_FOR_BOUNDING_BOX_CALCULATION){
         SgMeshBase::updateBoundingBox();
@@ -528,6 +529,7 @@ void SgMesh::updateBoundingBox()
             }
             bbox = bboxf;
         }
+        setBoundingBoxCacheReady();
     }
 }
 
@@ -670,7 +672,7 @@ Referenced* SgPolygonMesh::doClone(CloneMap* cloneMap) const
 }
 
 
-void SgPolygonMesh::updateBoundingBox()
+void SgPolygonMesh::updateBoundingBox() const
 {
     if(!USE_FACES_FOR_BOUNDING_BOX_CALCULATION){
         SgMeshBase::updateBoundingBox();
@@ -688,6 +690,7 @@ void SgPolygonMesh::updateBoundingBox()
             }
             bbox = bboxf;
         }
+        setBoundingBoxCacheReady();
     }
 }
 
@@ -770,6 +773,7 @@ SgObject* SgShape::childObject(int index)
 
 const BoundingBox& SgShape::boundingBox() const
 {
+    setBoundingBoxCacheReady();
     if(mesh()){
         return mesh()->boundingBox();
     }
@@ -792,6 +796,7 @@ SgMesh* SgShape::setMesh(SgMesh* mesh)
     if(mesh){
         mesh->addParent(this);
     }
+    invalidateBoundingBox();
     return mesh;
 }
 
@@ -926,6 +931,9 @@ SgObject* SgPlot::childObject(int index)
 
 const BoundingBox& SgPlot::boundingBox() const
 {
+    if(!hasValidBoundingBoxCache()){
+        updateBoundingBox();
+    }
     return bbox;
 }
 
@@ -936,7 +944,7 @@ const BoundingBox& SgPlot::untransformedBoundingBox() const
 }
 
 
-void SgPlot::updateBoundingBox()
+void SgPlot::updateBoundingBox() const
 {
     if(!vertices_){
         bbox.clear();
@@ -947,6 +955,14 @@ void SgPlot::updateBoundingBox()
         }
         bbox = bboxf;
     }
+    setBoundingBoxCacheReady();
+}
+
+
+void SgPlot::setBoundingBox(const BoundingBox& bbox)
+{
+    this->bbox = bbox;
+    setBoundingBoxCacheReady();
 }
 
 

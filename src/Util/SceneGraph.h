@@ -164,7 +164,6 @@ protected:
     SgObject(const SgObject& org);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
     void notifyUpperNodesOfUpdate(SgUpdate& update);
-    void notifyUpperNodesOfUpdate(SgUpdate& update, bool doInvalidateBoundingBox);
             
 private:
     unsigned short attributes_;
@@ -347,6 +346,8 @@ public:
         return nullptr;
     }
 
+    std::vector<SgNodePath> findPathsTo(SgNode* node) const;
+
 protected:
     SgGroup(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
@@ -354,6 +355,7 @@ protected:
 
 private:
     Container children;
+    void findPathsTo(std::vector<SgNodePath>& paths, SgNodePath& path, const SgNode* topNode) const;
     static void throwTypeMismatchError();
 };
 
@@ -384,6 +386,8 @@ class CNOID_EXPORT SgTransform : public SgGroup
 public:
     virtual void getTransform(Affine3& out_T) const = 0;
     virtual const BoundingBox& untransformedBoundingBox() const override;
+
+    Affine3 getTransform() { Affine3 T; getTransform(T); return T; }
     
 protected:
     SgTransform(int classId);

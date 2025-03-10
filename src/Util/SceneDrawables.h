@@ -253,8 +253,14 @@ public:
     virtual int numChildObjects() const override;
     virtual SgObject* childObject(int index) override;
 
-    const BoundingBox& boundingBox() const { return bbox; }
-    virtual void updateBoundingBox();
+    const BoundingBox& boundingBox() const {
+        if(!hasValidBoundingBoxCache()){
+            updateBoundingBox();
+        }
+        return bbox;
+    }
+    
+    virtual void updateBoundingBox() const;
     void setBoundingBox(const BoundingBox& bb){ bbox = bb; };
     void setBoundingBox(const BoundingBoxf& bb){ bbox = bb; };
 
@@ -309,7 +315,7 @@ public:
     void setSolid(bool on) { isSolid_ = on; }
 
 protected:
-    BoundingBox bbox;
+    mutable BoundingBox bbox;
     SgVertexArrayPtr vertices_;
     SgIndexArray faceVertexIndices_;
     SgNormalArrayPtr normals_;
@@ -331,7 +337,7 @@ public:
     SgMesh();
     SgMesh(const SgMesh& org, CloneMap* cloneMap = nullptr);
 
-    virtual void updateBoundingBox() override;
+    virtual void updateBoundingBox() const override;
 
     /**
        Triangle indices (triangles variable) should be CCW.
@@ -501,7 +507,7 @@ public:
     SgPolygonMesh();
     SgPolygonMesh(const SgPolygonMesh& org, CloneMap* cloneMap = nullptr);
 
-    virtual void updateBoundingBox() override;
+    virtual void updateBoundingBox() const override;
     
     /**
        The array of vertex indices corresponding to polygons.
@@ -572,7 +578,8 @@ public:
 
     virtual const BoundingBox& boundingBox() const override;
     virtual const BoundingBox& untransformedBoundingBox() const override;
-    void updateBoundingBox();
+    void updateBoundingBox() const;
+    void setBoundingBox(const BoundingBox& bbox);
 
     void clear();
 
@@ -614,7 +621,7 @@ public:
     SgIndexArray& normalIndices() { return normalIndices_; }
 
 protected:
-    BoundingBox bbox;
+    mutable BoundingBox bbox;
     SgVertexArrayPtr vertices_;
     SgMaterialPtr material_;
     SgColorArrayPtr colors_;
