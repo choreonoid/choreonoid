@@ -177,7 +177,7 @@ void SceneBar::Impl::initialize()
     fittingButton->sigClicked().connect(
         [this]{
             auto sceneWidget = currentSceneView->sceneWidget();
-            sceneWidget->viewAll();
+            sceneWidget->fitViewToAll(0.5);
             sceneWidget->setViewpointOperationMode(SceneWidget::ThirdPersonMode);
         });
 
@@ -613,7 +613,7 @@ void SceneBar::Impl::onViewButtonClicked(ElementId button)
             sceneWidget->renderer()->setCurrentCamera(sceneWidget->builtinOrthographicCamera());
             sceneWidget->builtinCameraTransform()->setRotation(aa);
         }
-        sceneWidget->viewAll();
+        sceneWidget->fitViewToAll();
     }
 }
 
