@@ -15,18 +15,18 @@ void exportPySceneDrawables(py::module& m)
         .def("setAmbientIntensity", &SgMaterial::setAmbientIntensity)
         .def_property("diffuseColor",
                       &SgMaterial::diffuseColor,
-                      [](SgMaterial& self, const Vector3f c){ self.setDiffuseColor(c); })
-        .def("setDiffuseColor", [](SgMaterial& self, const Vector3f c){ self.setDiffuseColor(c); })
+                      [](SgMaterial& self, const Vector3f& c){ self.setDiffuseColor(c); })
+        .def("setDiffuseColor", [](SgMaterial& self, const Vector3f& c){ self.setDiffuseColor(c); })
         .def_property("emissiveColor",
                       &SgMaterial::emissiveColor,
-                      [](SgMaterial& self, const Vector3f c){ self.setEmissiveColor(c); })
-        .def("setEmissiveColor", [](SgMaterial& self, const Vector3f c){ self.setEmissiveColor(c); })
+                      [](SgMaterial& self, const Vector3f& c){ self.setEmissiveColor(c); })
+        .def("setEmissiveColor", [](SgMaterial& self, const Vector3f& c){ self.setEmissiveColor(c); })
         .def_property("specularExponent", &SgMaterial::specularExponent, &SgMaterial::specularExponent)
         .def("setSpecularExponent", &SgMaterial::setSpecularExponent)
         .def_property("specularColor",
                       &SgMaterial::specularColor,
-                      [](SgMaterial& self, const Vector3f c){ self.setSpecularColor(c); })
-        .def("setSpecularColor", [](SgMaterial& self, const Vector3f c){ self.setSpecularColor(c); })
+                      [](SgMaterial& self, const Vector3f& c){ self.setSpecularColor(c); })
+        .def("setSpecularColor", [](SgMaterial& self, const Vector3f& c){ self.setSpecularColor(c); })
         .def_property("transparency", &SgMaterial::transparency, &SgMaterial::setTransparency)
         .def("setTransparency", &SgMaterial::setTransparency)
         ;
