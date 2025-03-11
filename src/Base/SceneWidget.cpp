@@ -190,9 +190,8 @@ public:
     ScopedConnection modeSyncConnection;
     std::set<ReferencedPtr> editModeBlockRequesters;
 
-    Selection viewpointOperationMode;
-    bool isFirstPersonMode() const {
-        return (viewpointOperationMode.which() != ThirdPersonMode); }
+    int viewpointOperationMode;
+    bool isFirstPersonMode() const { return (viewpointOperationMode == FirstPersonMode); }
         
     enum DragMode { NO_DRAGGING, ABOUT_TO_EDIT, EDITING, VIEW_ROTATION, VIEW_TRANSLATION, VIEW_ZOOM } dragMode;
 
@@ -535,10 +534,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     isEditMode = false;
     isHighlightingEnabled = false;
     isModeSyncEnabled = false;
-    viewpointOperationMode.resize(2);
-    viewpointOperationMode.setSymbol(ThirdPersonMode, "thirdPerson");
-    viewpointOperationMode.setSymbol(FirstPersonMode, "firstPerson");
-    viewpointOperationMode.select(ThirdPersonMode);
+    viewpointOperationMode = ThirdPersonMode;
     dragMode = NO_DRAGGING;
     defaultCursor = self->cursor();
     editModeCursor = QCursor(Qt::PointingHandCursor);
@@ -1257,14 +1253,14 @@ Vector3 SceneWidget::lastClickedPoint() const
 
 void SceneWidget::setViewpointOperationMode(ViewpointOperationMode mode)
 {
-    impl->viewpointOperationMode.select(mode);
+    impl->viewpointOperationMode = mode;
     impl->emitSigStateChangedLater();
 }
 
 
 SceneWidget::ViewpointOperationMode SceneWidget::viewpointOperationMode() const
 {
-    return static_cast<ViewpointOperationMode>(impl->viewpointOperationMode.which());
+    return static_cast<ViewpointOperationMode>(impl->viewpointOperationMode);
 }
 
 
@@ -3071,8 +3067,10 @@ bool SceneWidget::storeState(Archive& archive)
 
 bool SceneWidget::Impl::storeState(Archive& archive)
 {
-    archive.write("editMode", isEditMode);
-    archive.write("viewpointOperationMode", viewpointOperationMode.selectedSymbol());
+    archive.write("operation_mode", isEditMode ? "edit" : "view");
+    archive.write("viewpoint_operation_mode",
+                  viewpointOperationMode == FirstPersonMode ? "first_person" : "third_person");
+    write(archive, "focus_position", lastClickedPoint);
 
     auto vpeList = archive.createFlowStyleListing("visible_polygon_elements");
     int vpe = self->visiblePolygonElements();
@@ -3087,7 +3085,7 @@ bool SceneWidget::Impl::storeState(Archive& archive)
     }
 
     archive.write("highlighting", isHighlightingEnabled);
-    archive.write("collisionLines", collisionLineVisibility);
+    archive.write("collision_lines", collisionLineVisibility);
 
     ListingPtr cameraListing = new Listing;
     set<SgPosTransform*> storedTransforms;
@@ -3138,12 +3136,12 @@ Mapping* SceneWidget::Impl::storeCameraState
     writeCameraPath(*state, "camera", cameraIndex);
 
     if(cameraIndex == renderer->currentCameraIndex()){
-        state->write("isCurrent", true);
+        state->write("is_current", true);
     }
 
     if(isBuiltinCamera){
         if(auto ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
-            state->write("orthoHeight", ortho->height());
+            state->write("ortho_height", ortho->height());
         }
         if(cameraTransform){
             auto& T = cameraTransform->T();
@@ -3165,13 +3163,23 @@ bool SceneWidget::restoreState(const Archive& archive)
 
 bool SceneWidget::Impl::restoreState(const Archive& archive)
 {
-    setEditMode(archive.get("editMode", isEditMode), false);
-    
     string symbol;
-    if(archive.read("viewpointOperationMode", symbol)){
-        self->setViewpointOperationMode(
-            ViewpointOperationMode(viewpointOperationMode.index(symbol)));
+
+    if(archive.read("operation_mode", symbol)){
+        setEditMode(symbol == "edit", false);
+    } else {
+        setEditMode(archive.get("editMode", isEditMode), false);
     }
+    
+    if(archive.read({"viewpoint_operation_mode", "viewpointOperationMode"}, symbol)){
+        if(symbol == "third_person" || symbol == "thirdPerson"){
+            self->setViewpointOperationMode(ThirdPersonMode);
+        } else if(symbol == "first_person" || symbol == "firstPerson"){
+            self->setViewpointOperationMode(FirstPersonMode);
+        }
+    }
+
+    read(archive, "focus_position", lastClickedPoint);
 
     auto& vpeList = *archive.findListing("visible_polygon_elements");
     if(vpeList.isValid()){
@@ -3192,7 +3200,7 @@ bool SceneWidget::Impl::restoreState(const Archive& archive)
     }
 
     archive.read("highlighting", isHighlightingEnabled);
-    setCollisionLineVisibility(archive.get("collisionLines", collisionLineVisibility));
+    setCollisionLineVisibility(archive.get({"collision_lines", "collisionLines"}, collisionLineVisibility));
     
     const Listing& cameraListing = *archive.findListing("cameras");
     if(cameraListing.isValid()){
@@ -3259,7 +3267,7 @@ bool SceneWidget::Impl::restoreCameraStates(const Listing& cameraListing, bool i
             SgCamera* camera = renderer->camera(cameraIndex);
             if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
                 double height;
-                if(state.read("orthoHeight", height)){
+                if(state.read({"ortho_height", "orthoHeight"}, height)){
                     ortho->setHeight(height);
                     updated = true;
                 }
@@ -3267,7 +3275,7 @@ bool SceneWidget::Impl::restoreCameraStates(const Listing& cameraListing, bool i
             if(updated){
                 camera->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
             }
-            if(state.get("isCurrent", false)){
+            if(state.get({"is_current", "isCurrent"}, false)){
                 renderer->setCurrentCamera(cameraIndex);
                 restored = true;
                 if(isSecondTrial){
