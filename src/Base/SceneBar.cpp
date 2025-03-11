@@ -4,7 +4,10 @@
 #include "SceneWidget.h"
 #include "ExtensionManager.h"
 #include "InteractiveCameraTransform.h"
+#include "RootItem.h"
+#include "RenderableItem.h"
 #include "Archive.h"
+#include "MessageView.h"
 #include "ComboBox.h"
 #include "ButtonGroup.h"
 #include <cnoid/ConnectionSet>
@@ -26,16 +29,17 @@ enum ElementId {
     FirstPersonModeToggle = 1,
     CameraCombo = 2,
     FittingButton = 3,
-    VertexToggle = 4,
-    WireframeToggle = 5,
-    SolidWireframeToggle = 6,
-    SolidPolygonToggle = 7,
-    HighlightToggle = 8,
-    VisualModelToggle = 9,
-    ModelTypeFlipButton = 10,
-    CollisionModelToggle = 11,
-    CollisionLineToggle = 12,
-    ConfigButton = 13,
+    FittingSelectedButton = 4,
+    VertexToggle = 5,
+    WireframeToggle = 6,
+    SolidWireframeToggle = 7,
+    SolidPolygonToggle = 8,
+    HighlightToggle = 9,
+    VisualModelToggle = 10,
+    ModelTypeFlipButton = 11,
+    CollisionModelToggle = 12,
+    CollisionLineToggle = 13,
+    ConfigButton = 14,
 
     FrontViewButton = 70,
     BackViewButton = 71,
@@ -90,6 +94,8 @@ public:
     void onCameraComboCurrentIndexChanged(int index);
     void onEditModeButtonToggled(bool on);
     void onFirstPersonModeButtonToggled(bool on);
+    void fitViewToAll();
+    void fitViewToSelectedItems();
     void onPolygonModeButtonToggled();
     void onHighlightingToggled(bool on);
     void flipVisibleModels();
@@ -173,14 +179,13 @@ void SceneBar::Impl::initialize()
     self->addWidget(cameraCombo, CameraCombo);
 
     auto fittingButton = self->addButton(":/Base/icon/viewfitting.svg", FittingButton);
-    fittingButton->setToolTip(_("Move the camera to look at the objects"));
-    fittingButton->sigClicked().connect(
-        [this]{
-            auto sceneWidget = currentSceneView->sceneWidget();
-            sceneWidget->fitViewToAll(0.5);
-            sceneWidget->setViewpointOperationMode(SceneWidget::ThirdPersonMode);
-        });
+    fittingButton->setToolTip(_("Fit view to all objects"));
+    fittingButton->sigClicked().connect([this]{ fitViewToAll(); });
 
+    auto fittingSelectedButton = self->addButton(":/Base/icon/viewfitting2.svg", FittingSelectedButton);
+    fittingSelectedButton->setToolTip(_("Fit view to selected items"));
+    fittingSelectedButton->sigClicked().connect([this]{ fitViewToSelectedItems(); });
+    
     vertexToggle = self->addToggleButton(":/Base/icon/vertex.svg", VertexToggle);
     vertexToggle->setToolTip(_("Vertex rendering"));
     vertexToggle->sigToggled().connect([this](bool){ onPolygonModeButtonToggled(); });
@@ -464,6 +469,38 @@ void SceneBar::Impl::onFirstPersonModeButtonToggled(bool on)
     currentSceneView->sceneWidget()->setViewpointOperationMode(
         on ? SceneWidget::FirstPersonMode : SceneWidget::ThirdPersonMode);
     sceneViewConnections.unblock();
+}
+
+
+void SceneBar::Impl::fitViewToAll()
+{
+    auto sceneWidget = currentSceneView->sceneWidget();
+    sceneWidget->setViewpointOperationMode(SceneWidget::ThirdPersonMode);
+    sceneWidget->fitViewToAll(0.5);
+}
+
+
+void SceneBar::Impl::fitViewToSelectedItems()
+{
+    auto selectedItems = RootItem::instance()->selectedDescendantItems();
+    if(selectedItems.empty()){
+        showErrorDialog(_("Please select the items that you want to fit the view to."));
+        return;
+    }
+        
+    BoundingBox bbox;
+    for(auto& item : selectedItems){
+        if(auto renderableItem = dynamic_cast<RenderableItem*>(item.get())){
+            bbox.expandBy(renderableItem->getScene()->boundingBox());
+        }
+    }
+    if(!bbox.empty()){
+        auto sceneWidget = currentSceneView->sceneWidget();
+        sceneWidget->setViewpointOperationMode(SceneWidget::ThirdPersonMode);
+        sceneWidget->fitViewTo(bbox, 0.5);
+    } else {
+        showErrorDialog(_("No scene objects for selected items."));
+    }
 }
 
 
