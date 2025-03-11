@@ -103,6 +103,11 @@ public:
             });
     }
 
+    template<class ItemType>
+    std::function<void(Item* item)> getContextMenuFunction(){
+        return getContextMenuFunction_(typeid(ItemType));
+    }
+
     void updateTreeWidgetItems();
     void setExpanded(Item* item, bool on = true);
     void expandAll(Item* item);
@@ -149,6 +154,7 @@ private:
     void customizeContextMenu_(
         const std::type_info& type,
         std::function<void(Item* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction)> func);
+    std::function<void(Item* item)> getContextMenuFunction_(const std::type_info& type);
     
     Impl* impl;
 };

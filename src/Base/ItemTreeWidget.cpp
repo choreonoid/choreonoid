@@ -753,6 +753,12 @@ void ItemTreeWidget::customizeContextMenu_
 }
 
 
+std::function<void(Item* item)> ItemTreeWidget::getContextMenuFunction_(const std::type_info& type)
+{
+    return impl->contextMenuFunctions.getFunction(type);
+}
+
+
 void ItemTreeWidget::customizeRootContextMenu(std::function<void(MenuManager& menuManager)> func)
 {
     impl->rootContextMenuFunction = func;

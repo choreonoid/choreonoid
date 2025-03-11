@@ -39,6 +39,14 @@ public:
         }
     }
 
+    template<class ItemType>
+    static std::function<void(Item* item)> getContextMenuFunction(){
+        if(auto view = findInstance()){
+            return view->itemTreeWidget()->getContextMenuFunction<ItemType>();
+        }
+        return nullptr;
+    }
+
     void setExpanded(Item* item, bool on = true);
 
     template <class ItemType>
