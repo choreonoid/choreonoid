@@ -4,13 +4,13 @@
 #include "Item.h"
 #include "RenderableItem.h"
 #include "LocatableItem.h"
+#include <cnoid/SceneDrawables>
 #include <cnoid/EigenTypes>
 #include <cnoid/stdx/optional>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class SgPointSet;
 class PolyhedralRegion;
 
 class CNOID_EXPORT PointSetItem : public Item, public RenderableItem, public LocatableItem
@@ -35,7 +35,11 @@ public:
     SignalProxy<void()> sigOffsetPositionChanged();
     void notifyOffsetPositionChange(bool doNotifyScene = true);
 
-    SgPointSet* getTransformedPointSet() const;
+    const Vector3& scale() const;
+    bool setScale(const Vector3& s);
+
+    SgPointSetPtr getTransformedPointSet() const;
+    SgPointSetPtr getScaledPointSet() const;
 
     enum RenderingMode {
         POINT, VOXEL, N_RENDERING_MODES

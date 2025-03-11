@@ -312,7 +312,7 @@ void PointSetToMeshConversionDialog::Impl::convertPointSetItemToMeshItem(PointSe
     
     SgMeshPtr mesh =
         applyPCLGreedyProjectionTriangulation(
-            pointSetItem->pointSet(),
+            pointSetItem->getScaledPointSet(),
             normalEstimationKSearchRadio.isChecked() ? normalEstimationKSearchSpin.value() : 0,
             normalEstimationSearchRadiusRadio.isChecked() ? normalEstimationSearchRadius : 0.0,
             maxNearestNeighborSpin.value(), mu,
@@ -353,11 +353,13 @@ void PointSetToMeshConversionDialog::Impl::convertPointSetItemToMeshItem(PointSe
         }
     }
 
-    if(!meshItem){
+    if(meshItem){
+        mv->flush();
+    } else {
         mv->putln(_("Failed."));
+        mv->flush();
+        showErrorDialog(_("Conversion to mesh data failed."));
     }
-
-    mv->flush();
 }
 
 

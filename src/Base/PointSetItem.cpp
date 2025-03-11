@@ -8,7 +8,6 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneWidget>
 #include <cnoid/SceneWidgetEventHandler>
-#include <cnoid/SceneDrawables>
 #include <cnoid/SceneMarkers>
 #include <cnoid/PointSetUtil>
 #include <cnoid/PolyhedralRegion>
@@ -36,7 +35,9 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     weak_ref_ptr<PointSetItem> weakPointSetItem;
+    PointSetItem::Impl* itemImpl;
     SgPointSetPtr orgPointSet;
+    SgScaleTransformPtr visiblePointSetScale;
     SgPointSetPtr visiblePointSet;
     SgUpdate update;
     SgShapePtr voxels;
@@ -50,7 +51,7 @@ public:
     Signal<void()> sigAttentionPointsChanged;
     SgGroupPtr attentionPointMarkerGroup;
     
-    ScenePointSet(PointSetItem::Impl* pointSetItem);
+    ScenePointSet(PointSetItem::Impl* itemImpl);
 
     void setPointSize(double size);
     void setVoxelSize(double size);
@@ -98,6 +99,7 @@ public:
     PointSetItem* self;
     SgPointSetPtr pointSet;
     ScenePointSetPtr scene;
+    Vector3 scale;
     ScopedConnection pointSetUpdateConnection;
     Signal<void()> sigOffsetPositionChanged;
     Signal<void(const PolyhedralRegion& region)> sigPointsInRegionRemoved;
@@ -108,11 +110,13 @@ public:
     void initialize();
     void setRenderingMode(int mode);
     bool onEditableChanged(bool on);
+    SgPointSetPtr createTransformedPointSet(const Affine3& T);
     void removePoints(const PolyhedralRegion& region);
     template<class ElementContainer>
     void removeSubElements(ElementContainer& elements, SgIndexArray& indices, const vector<int>& indicesToRemove);
     bool onTranslationPropertyChanged(const std::string& value);
     bool onRotationPropertyChanged(const std::string& value);
+    bool onScalePropertyChanged(const std::string& value);
 };
 
 }
@@ -181,6 +185,7 @@ PointSetItem::Impl::Impl(PointSetItem* self)
 {
     pointSet = new SgPointSet;
     scene = new ScenePointSet(this);
+    scale.setOnes();
 
     initialize();
 }
@@ -199,6 +204,7 @@ PointSetItem::Impl::Impl(PointSetItem* self, const Impl& org, CloneMap* cloneMap
     pointSet = CloneMap::getClone(org.pointSet, cloneMap);
     scene = new ScenePointSet(this);
     scene->T() = org.scene->T();
+    scale = org.scale;
 
     initialize();
 }
@@ -291,17 +297,57 @@ void PointSetItem::notifyOffsetPositionChange(bool doNotifyScene)
 }
 
 
-SgPointSet* PointSetItem::getTransformedPointSet() const
+const Vector3& PointSetItem::scale() const
 {
-    SgPointSet* transformed = new SgPointSet;
+    return impl->scale;
+}
+
+
+bool PointSetItem::setScale(const Vector3& s)
+{
+    bool isValid = false;
+    if(s.minCoeff() > 0.0){
+        if(s != impl->scale){
+            impl->scale = s;
+            notifyUpdate();
+        }
+        isValid = true;
+    }
+    return isValid;
+}
+
+
+SgPointSetPtr PointSetItem::getTransformedPointSet() const
+{
+    Affine3 T = offsetPosition();
+    T.linear() *= Eigen::Scaling(impl->scale);
+    return impl->createTransformedPointSet(T);
+}
+
+
+SgPointSetPtr PointSetItem::getScaledPointSet() const
+{
+    Affine3 T = Affine3::Identity();
+    T.linear() = Eigen::Scaling(impl->scale);
+    return impl->createTransformedPointSet(T);
+}
+
+
+SgPointSetPtr PointSetItem::Impl::createTransformedPointSet(const Affine3& T)
+{
+    SgPointSetPtr transformed = new SgPointSet;
     SgVertexArray& points = *transformed->getOrCreateVertices();
-    SgVertexArray* orgPoints = impl->pointSet->vertices();
+    SgVertexArray* orgPoints = pointSet->vertices();
     if(orgPoints){
         const int n = orgPoints->size();
         points.resize(n);
-        const Isometry3& T = offsetPosition();
         for(int i=0; i < n; ++i){
             points[i] = (T * (*orgPoints)[i].cast<Isometry3::Scalar>()).cast<SgVertexArray::Scalar>();
+        }
+        if(pointSet->hasValidBoundingBoxCache()){
+            auto bbox = pointSet->boundingBox();
+            bbox.transform(T);
+            transformed->setBoundingBox(bbox);
         }
     }
     return transformed;
@@ -454,7 +500,8 @@ void PointSetItem::removePoints(const PolyhedralRegion& region)
 void PointSetItem::Impl::removePoints(const PolyhedralRegion& region)
 {
     vector<int> indicesToRemove;
-    const Isometry3 T = scene->T();
+    Affine3 T = scene->T();
+    T.linear() *= Eigen::Scaling(scale);
     SgVertexArray orgPoints(*pointSet->vertices());
     const int numOrgPoints = orgPoints.size();
 
@@ -568,6 +615,16 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
                 [&](const string& value){ return impl->onTranslationPropertyChanged(value); });
     Vector3 rpy(TO_DEGREE * rpyFromRot(offsetPosition().linear()));
     putProperty(_("Rotation"), str(rpy), [&](const string& value){ return impl->onRotationPropertyChanged(value);});
+
+    auto& s = impl->scale;
+    putProperty.min(0.01).max(100.0).decimals(2);
+    if(s.x() == s.y() && s.y() == s.z()){
+        putProperty(_("Scale"), formatC("{0:g}", s.x()),
+                    [this](const string& value){ return impl->onScalePropertyChanged(value); });
+    } else {
+        putProperty(_("Scale"), str(s),
+                    [this](const string& value){ return impl->onScalePropertyChanged(value); });
+    }
 }
 
 
@@ -595,6 +652,25 @@ bool PointSetItem::Impl::onRotationPropertyChanged(const std::string& value)
 }
 
 
+bool PointSetItem::Impl::onScalePropertyChanged(const std::string& value)
+{
+    bool isValid = false;
+    Vector3 scale;
+    if(toVector3(value, scale)){
+        isValid = self->setScale(scale);
+    } else {
+        try {
+            double s = std::stod(value);
+            isValid = self->setScale(Vector3(s, s, s));
+        }
+        catch(...){
+
+        }
+    }
+    return isValid;
+}
+
+
 bool PointSetItem::store(Archive& archive)
 {
     archive.writeFileInformation(this);
@@ -602,6 +678,9 @@ bool PointSetItem::store(Archive& archive)
     ScenePointSet* scene = impl->scene;
     write(archive, "translation", Vector3(scene->translation()));
     writeDegreeAngleAxis(archive, "rotation", AngleAxis(scene->rotation()));
+    if(impl->scale != Vector3::Ones()){
+        write(archive, "scale", impl->scale);
+    }
     // The following element is used to distinguish the value type from the old one using radian.
     // The old format is deprecated, and writing the following element should be omitted in the future.
     archive.write("angle_unit", "degree");
@@ -616,6 +695,14 @@ bool PointSetItem::store(Archive& archive)
 
 bool PointSetItem::restore(const Archive& archive)
 {
+    // Scale must be updated before loading point cloud data
+    auto scaleNode = archive.findListing("scale");
+    if(scaleNode->isValid()){
+        for(int i=0; i < 3; ++i){
+            impl->scale[i] = (*scaleNode)[i].toDouble();
+        }
+    }
+    
     std::string filename, formatId;
     if(archive.read("file", filename) && archive.read("format", formatId)){
         filename = archive.resolveRelocatablePath(filename);
@@ -644,7 +731,7 @@ bool PointSetItem::restore(const Archive& archive)
     if(hasRot){
         scene->setRotation(rot);
     }
-    
+
     string symbol;
     if(archive.read({ "rendering_mode", "renderingMode" }, symbol)){
         impl->setRenderingMode(scene->renderingMode.index(symbol));
@@ -663,9 +750,10 @@ SgNode* PointSetItem::getScene()
 }
 
 
-ScenePointSet::ScenePointSet(PointSetItem::Impl* pointSetItemImpl)
-    : weakPointSetItem(pointSetItemImpl->self),
-      orgPointSet(pointSetItemImpl->pointSet),
+ScenePointSet::ScenePointSet(PointSetItem::Impl* itemImpl)
+    : weakPointSetItem(itemImpl->self),
+      itemImpl(itemImpl),
+      orgPointSet(itemImpl->pointSet),
       renderingMode(PointSetItem::N_RENDERING_MODES)
 {
     visiblePointSet = new SgPointSet;
@@ -803,8 +891,6 @@ void ScenePointSet::updateVisualization(bool updateContents)
 {
     if(invariant){
         removeChild(invariant);
-        invariant->removeChild(visiblePointSet);
-        invariant->removeChild(voxels);
     }
     invariant = new SgInvariantGroup;
     
@@ -812,7 +898,16 @@ void ScenePointSet::updateVisualization(bool updateContents)
         if(updateContents){
             updateVisiblePointSet();
         }
-        invariant->addChild(visiblePointSet);
+        if(itemImpl->scale == Vector3::Ones()){
+            invariant->addChild(visiblePointSet);
+        } else {
+            if(!visiblePointSetScale){
+                visiblePointSetScale = new SgScaleTransform;
+            }
+            visiblePointSetScale->setScale(itemImpl->scale);
+            visiblePointSetScale->addChild(visiblePointSet);
+            invariant->addChild(visiblePointSetScale);
+        }
     } else {
         if(updateContents){
             updateVoxels();
@@ -832,7 +927,6 @@ void ScenePointSet::updateVisiblePointSet()
     visiblePointSet->normalIndices() = orgPointSet->normalIndices();
     visiblePointSet->setColors(orgPointSet->colors());
     visiblePointSet->colorIndices() = orgPointSet->colorIndices();
-    visiblePointSet->notifyUpdate(update);
 }
 
 
@@ -856,16 +950,17 @@ void ScenePointSet::updateVoxels()
         SgIndexArray& normalIndices = mesh->normalIndices();
         normalIndices.reserve(12 * 3 * n);
         mesh->reserveNumTriangles(n * 12);
-        const float s = voxelSize / 2.0;
+        const float h = voxelSize / 2.0;
+        const Vector3& s = itemImpl->scale;
         for(int i=0; i < n; ++i){
             const int top = vertices.size();
             const Vector3f& p = points[i];
-            const float x0 = p.x() + s;
-            const float x1 = p.x() - s;
-            const float y0 = p.y() + s;
-            const float y1 = p.y() - s;
-            const float z0 = p.z() + s;
-            const float z1 = p.z() - s;
+            const float x0 = s.x() * p.x() + h;
+            const float x1 = s.x() * p.x() - h;
+            const float y0 = s.y() * p.y() + h;
+            const float y1 = s.y() * p.y() - h;
+            const float z0 = s.z() * p.z() + h;
+            const float z1 = s.z() * p.z() - h;
             vertices.push_back(Vector3f(x0, y0, z0));
             vertices.push_back(Vector3f(x1, y0, z0));
             vertices.push_back(Vector3f(x1, y1, z0));
