@@ -63,9 +63,30 @@ public:
     }
 
     template <class Object>
+    Function getFunction()
+    {
+        return getFunction(registry.template getClassId<Object>(0));
+    }
+
+    Function getFunction(const std::type_info& type)
+    {
+        return getFunction(registry.getClassId(type));
+    }
+
+    Function getFunction(int id)
+    {
+        if(id >= validDispatchTableSize){
+            if(!const_cast<PolymorphicFunctionSet*>(this)->updateDispatchTable(id)){
+                return nullptr;
+            }
+        }
+        return dispatchTable[id];
+    }
+
+    template <class Object>
     void resetFunction(bool doUpdate = false)
     {
-        int id = registry.template classId<Object>();
+        int id = registry.template getClassId<Object>();
         if(id >= 0 && id < dispatchTable.size()){
             if(validDispatchTableSize > id){
                 validDispatchTableSize = id;
