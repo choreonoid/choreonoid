@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-25 16:33+0900\n"
+"POT-Creation-Date: 2025-03-13 16:15+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -1404,6 +1404,9 @@ msgstr "編集可能"
 msgid "Num points"
 msgstr "ポイント数"
 
+msgid "Scale"
+msgstr "スケール"
+
 msgid "Offset position of {0}"
 msgstr "{0}のオフセット位置"
 
@@ -1777,8 +1780,11 @@ msgstr "一人称視点制御"
 msgid "Projection method / camera selection"
 msgstr "投影法／カメラの選択"
 
-msgid "Move the camera to look at the objects"
-msgstr "全ての物体が見えるように視点を移動"
+msgid "Fit view to all objects"
+msgstr "シーン全体に視点をフィット"
+
+msgid "Fit view to selected items"
+msgstr "選択アイテムに視点をフィット"
 
 msgid "Vertex rendering"
 msgstr "頂点描画"
@@ -1806,6 +1812,12 @@ msgstr "干渉チェック用モデルを表示"
 
 msgid "Toggle the collision line visibility"
 msgstr "干渉線の表示"
+
+msgid "Please select the items that you want to fit the view to."
+msgstr "ビューをフィットさせたいアイテムを選択してください．"
+
+msgid "No scene objects for selected items."
+msgstr "選択アイテムのシーンオブジェクトがありません．"
 
 msgid "Front view"
 msgstr "正面ビュー"
