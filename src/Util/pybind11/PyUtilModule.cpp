@@ -1,6 +1,7 @@
 #include "PyUtil.h"
 #include "../ExecutablePath.h"
 #include "../FloatingNumberString.h"
+#include "../CloneMap.h"
 
 using namespace cnoid;
 namespace py = pybind11;
@@ -66,4 +67,6 @@ PYBIND11_MODULE(Util, m)
         // deprecated
         .def("getValue", &FloatingNumberString::value)
         ;
+
+    py::class_<CloneMap> cloneMap(m, "CloneMap");
 }

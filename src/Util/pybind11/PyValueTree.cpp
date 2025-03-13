@@ -152,6 +152,11 @@ void exportPyValueTree(py::module& m)
         .def("write", [](Mapping& self, const string &key, const string& value, StringStyle style){ self.write(key, value, style); })
         .def("write", Mapping_write)
         .def("write", (void(Mapping::*)(const string&, ValueNode*)) &Mapping::write)
+        .def("__len__", &Mapping::size)
+        .def("keys", [](Mapping &self) {
+            std::vector<std::string> res;
+            for (auto it = self.begin(); it != self.end(); it++) res.push_back(it->first);
+            return res; })
 
         // deprecated
         .def("isEmpty", &Mapping::empty)
@@ -183,6 +188,7 @@ void exportPyValueTree(py::module& m)
         .def("append", (void(Listing::*)(const string&, StringStyle)) &Listing::append)
         .def("append", [](Listing& self, const string& value){ self.append(value); })
         .def("appendLF", &Listing::appendLF)
+        .def("__len__", &Listing::size)
 
         // deprecated
         .def("isEmpty", &Listing::empty)
