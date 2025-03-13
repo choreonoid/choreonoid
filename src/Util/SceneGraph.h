@@ -473,6 +473,8 @@ typedef ref_ptr<SgPosTransform> SgPosTransformPtr;
 class CNOID_EXPORT SgScaleTransform : public SgTransform
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     SgScaleTransform();
     SgScaleTransform(double scale);
     SgScaleTransform(const Vector3& scale);
@@ -485,19 +487,49 @@ public:
     template<typename Derived>
     void setScale(const Eigen::MatrixBase<Derived>& s) {
         scale_ = s.template cast<Vector3::Scalar>();
+        isTransformInvalidated = true;
     }
     void setScale(double s){
         scale_.setConstant(s);
+        isTransformInvalidated = true;
     }
 
-    Eigen::DiagonalWrapper<const Vector3> T() const { return scale_.asDiagonal(); }
+    const Matrix3& scaleOrientation() const { return R_; }
+    bool hasScaleOrientation() const { return !R_.isIdentity(); }
+
+    template<typename Derived>
+    void setScaleOrientation(const Eigen::MatrixBase<Derived>& R) {
+        R_ = R.template cast<Isometry3::Scalar>();
+        isTransformInvalidated = true;
+    }
+    template<typename T>
+    void setScaleOrientation(const Eigen::AngleAxis<T>& aa) {
+        R_ = aa.template cast<Isometry3::Scalar>().toRotationMatrix();
+        isTransformInvalidated = true;
+    }
+    template<typename T>
+    void setScaleOrientation(const Eigen::Quaternion<T>& q) {
+        R_ = q.template cast<Isometry3::Scalar>().toRotationMatrix();
+        isTransformInvalidated = true;
+    }
+    
+    Affine3 getTransform() const {
+        if(isTransformInvalidated){
+            updateTransform();
+        }
+        return T_;
+    }
 
 protected:
     SgScaleTransform(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
+    void updateTransform() const;
 
 private:
     Vector3 scale_;
+    Matrix3 R_;
+    mutable Affine3 T_;
+    mutable bool isTransformInvalidated;
 };
 
 typedef ref_ptr<SgScaleTransform> SgScaleTransformPtr;

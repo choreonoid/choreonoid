@@ -911,6 +911,9 @@ SgScaleTransform::SgScaleTransform(int classId)
     : SgTransform(classId)
 {
     scale_.setOnes();
+    R_.setIdentity();
+    T_.translation().setZero();
+    isTransformInvalidated = true;
 }
 
 
@@ -925,7 +928,9 @@ SgScaleTransform::SgScaleTransform(double scale)
     : SgTransform(findClassId<SgScaleTransform>()),
       scale_(scale, scale, scale)
 {
-
+    R_.setIdentity();
+    T_.translation().setZero();
+    isTransformInvalidated = true;
 }
 
 
@@ -933,15 +938,19 @@ SgScaleTransform::SgScaleTransform(const Vector3& scale)
     : SgTransform(findClassId<SgScaleTransform>()),
       scale_(scale)
 {
-
+    R_.setIdentity();
+    T_.translation().setZero();
+    isTransformInvalidated = true;
 }
 
 
 SgScaleTransform::SgScaleTransform(const SgScaleTransform& org, CloneMap* cloneMap)
     : SgTransform(org, cloneMap),
-      scale_(org.scale_)
+      scale_(org.scale_),
+      R_(org.R_)
 {
-
+    T_.translation().setZero();
+    isTransformInvalidated = true;
 }
 
 
@@ -964,15 +973,25 @@ const BoundingBox& SgScaleTransform::boundingBox() const
         }
     }
     untransformedBboxCache = bboxCache;
-    bboxCache.transform(Affine3(scale_.asDiagonal()));
+    bboxCache.transform(getTransform());
     setBoundingBoxCacheReady();
     return bboxCache;
 }
 
 
+void SgScaleTransform::updateTransform() const
+{
+    T_.linear() = R_ * scale_.asDiagonal() * R_.transpose();
+    isTransformInvalidated = false;
+}
+
+
 void SgScaleTransform::getTransform(Affine3& out_T) const
 {
-    out_T = scale_.asDiagonal();
+    if(isTransformInvalidated){
+        updateTransform();
+    }
+    out_T = T_;
 }
 
 
