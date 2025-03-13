@@ -100,6 +100,7 @@ public:
     SgPointSetPtr pointSet;
     ScenePointSetPtr scene;
     Vector3 scale;
+    Matrix3 scaleOrientation;
     ScopedConnection pointSetUpdateConnection;
     Signal<void()> sigOffsetPositionChanged;
     Signal<void(const PolyhedralRegion& region)> sigPointsInRegionRemoved;
@@ -117,6 +118,7 @@ public:
     bool onTranslationPropertyChanged(const std::string& value);
     bool onRotationPropertyChanged(const std::string& value);
     bool onScalePropertyChanged(const std::string& value);
+    bool onScaleOrientationPropertyChanged(const std::string& value);
 };
 
 }
@@ -186,6 +188,7 @@ PointSetItem::Impl::Impl(PointSetItem* self)
     pointSet = new SgPointSet;
     scene = new ScenePointSet(this);
     scale.setOnes();
+    scaleOrientation.setIdentity();
 
     initialize();
 }
@@ -205,6 +208,7 @@ PointSetItem::Impl::Impl(PointSetItem* self, const Impl& org, CloneMap* cloneMap
     scene = new ScenePointSet(this);
     scene->T() = org.scene->T();
     scale = org.scale;
+    scaleOrientation = org.scaleOrientation;
 
     initialize();
 }
@@ -213,7 +217,7 @@ PointSetItem::Impl::Impl(PointSetItem* self, const Impl& org, CloneMap* cloneMap
 void PointSetItem::Impl::initialize()
 {
     pointSetUpdateConnection.reset(
-        pointSet->sigUpdated().connect([&](const SgUpdate&){ self->notifyUpdate(); }));
+        pointSet->sigUpdated().connect([this](const SgUpdate&){ self->notifyUpdate(); }));
 }
 
 
@@ -303,13 +307,15 @@ const Vector3& PointSetItem::scale() const
 }
 
 
-bool PointSetItem::setScale(const Vector3& s)
+bool PointSetItem::setScale(const Vector3& s, bool doNotify)
 {
     bool isValid = false;
     if(s.minCoeff() > 0.0){
         if(s != impl->scale){
             impl->scale = s;
-            notifyUpdate();
+            if(doNotify){
+                notifyUpdate();
+            }
         }
         isValid = true;
     }
@@ -317,18 +323,54 @@ bool PointSetItem::setScale(const Vector3& s)
 }
 
 
+const Matrix3& PointSetItem::scaleOrientation() const
+{
+    return impl->scaleOrientation;
+}
+
+
+void PointSetItem::setScaleOrientation(const Matrix3& R, bool doNotify)
+{
+    if(R != impl->scaleOrientation){
+        impl->scaleOrientation = R;
+        if(doNotify){
+            notifyUpdate();
+        }
+    }
+}
+
+
+Matrix3 PointSetItem::getScaleMatrix() const
+{
+    return Matrix3(impl->scaleOrientation * Eigen::Scaling(impl->scale) * impl->scaleOrientation.transpose());
+}
+
+
+Affine3 PointSetItem::getScaleTransform() const
+{
+    Affine3 T;
+    T.linear() = getScaleMatrix();
+    T.translation().setZero();
+    return T;
+}
+
+
+Affine3 PointSetItem::getTransform() const
+{
+    return offsetPosition() * getScaleTransform();
+}
+
+
 SgPointSetPtr PointSetItem::getTransformedPointSet() const
 {
-    Affine3 T = offsetPosition();
-    T.linear() *= Eigen::Scaling(impl->scale);
-    return impl->createTransformedPointSet(T);
+    return impl->createTransformedPointSet(getScaleTransform());
 }
 
 
 SgPointSetPtr PointSetItem::getScaledPointSet() const
 {
     Affine3 T = Affine3::Identity();
-    T.linear() = Eigen::Scaling(impl->scale);
+    T.linear() = getScaleMatrix();
     return impl->createTransformedPointSet(T);
 }
 
@@ -500,8 +542,7 @@ void PointSetItem::removePoints(const PolyhedralRegion& region)
 void PointSetItem::Impl::removePoints(const PolyhedralRegion& region)
 {
     vector<int> indicesToRemove;
-    Affine3 T = scene->T();
-    T.linear() *= Eigen::Scaling(scale);
+    Affine3 T = self->getTransform();
     SgVertexArray orgPoints(*pointSet->vertices());
     const int numOrgPoints = orgPoints.size();
 
@@ -598,7 +639,7 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
     ScenePointSet* scene = impl->scene;
     putProperty(_("File"), fileName());
     putProperty(_("Rendering mode"), scene->renderingMode,
-                [&](int mode){ impl->setRenderingMode(mode); return true; });
+                [this](int mode){ impl->setRenderingMode(mode); return true; });
 
     putProperty.min(0.0);
     putProperty.decimals(1)
@@ -608,13 +649,14 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
         (_("Voxel size"), voxelSize(),
          [=](double size){ scene->setVoxelSize(size); return true; });
     
-    putProperty(_("Editable"), isEditable(), [&](bool on){ return impl->onEditableChanged(on); });
+    putProperty(_("Editable"), isEditable(), [this](bool on){ return impl->onEditableChanged(on); });
     const SgVertexArray* points = impl->pointSet->vertices();
     putProperty(_("Num points"), static_cast<int>(points ? points->size() : 0));
     putProperty(_("Translation"), str(Vector3(offsetPosition().translation())),
-                [&](const string& value){ return impl->onTranslationPropertyChanged(value); });
+                [this](const string& value){ return impl->onTranslationPropertyChanged(value); });
     Vector3 rpy(TO_DEGREE * rpyFromRot(offsetPosition().linear()));
-    putProperty(_("Rotation"), str(rpy), [&](const string& value){ return impl->onRotationPropertyChanged(value);});
+    putProperty(_("Rotation"), str(rpy),
+                [this](const string& value){ return impl->onRotationPropertyChanged(value);});
 
     auto& s = impl->scale;
     putProperty.min(0.01).max(100.0).decimals(2);
@@ -625,6 +667,10 @@ void PointSetItem::doPutProperties(PutPropertyFunction& putProperty)
         putProperty(_("Scale"), str(s),
                     [this](const string& value){ return impl->onScalePropertyChanged(value); });
     }
+
+    Vector3 srpy(TO_DEGREE * rpyFromRot(impl->scaleOrientation));
+    putProperty(_("Scale orientation"), str(srpy),
+                [this](const string& value){ return impl->onScaleOrientationPropertyChanged(value); });
 }
 
 
@@ -657,17 +703,28 @@ bool PointSetItem::Impl::onScalePropertyChanged(const std::string& value)
     bool isValid = false;
     Vector3 scale;
     if(toVector3(value, scale)){
-        isValid = self->setScale(scale);
+        isValid = self->setScale(scale, true);
     } else {
         try {
             double s = std::stod(value);
-            isValid = self->setScale(Vector3(s, s, s));
+            isValid = self->setScale(Vector3(s, s, s), true);
         }
         catch(...){
 
         }
     }
     return isValid;
+}
+
+
+bool PointSetItem::Impl::onScaleOrientationPropertyChanged(const std::string& value)
+{
+    Vector3 rpy;
+    if(toVector3(value, rpy)){
+        self->setScaleOrientation(rotFromRpy(TO_RADIAN * rpy), true);
+        return true;
+    }
+    return false;
 }
 
 
@@ -681,6 +738,7 @@ bool PointSetItem::store(Archive& archive)
     if(impl->scale != Vector3::Ones()){
         write(archive, "scale", impl->scale);
     }
+    writeDegreeAngleAxis(archive, "scale_orientation", AngleAxis(impl->scaleOrientation));
     // The following element is used to distinguish the value type from the old one using radian.
     // The old format is deprecated, and writing the following element should be omitted in the future.
     archive.write("angle_unit", "degree");
@@ -702,6 +760,10 @@ bool PointSetItem::restore(const Archive& archive)
             impl->scale[i] = (*scaleNode)[i].toDouble();
         }
     }
+    AngleAxis scaleOrientation;
+    if(readDegreeAngleAxis(archive, "scale_orientation", scaleOrientation)){
+        impl->scaleOrientation = scaleOrientation;
+    }
     
     std::string filename, formatId;
     if(archive.read("file", filename) && archive.read("format", formatId)){
@@ -720,16 +782,16 @@ bool PointSetItem::restore(const Archive& archive)
     if(read(archive, "translation", translation)){
         scene->setTranslation(translation);
     }
-    AngleAxis rot;
+    AngleAxis rotation;
     string unit;
-    bool hasRot = false;
+    bool hasRotation = false;
     if(archive.read("angle_unit", unit) && unit == "degree"){
-        hasRot = readDegreeAngleAxis(archive, "rotation", rot);
+        hasRotation = readDegreeAngleAxis(archive, "rotation", rotation);
     } else { // for the backward compatibility
-        hasRot = readAngleAxis(archive, "rotation", rot);
+        hasRotation = readAngleAxis(archive, "rotation", rotation);
     }
-    if(hasRot){
-        scene->setRotation(rot);
+    if(hasRotation){
+        scene->setRotation(rotation);
     }
 
     string symbol;
@@ -769,9 +831,9 @@ ScenePointSet::ScenePointSet(PointSetItem::Impl* itemImpl)
     regionMarker = new RectRegionMarker;
     regionMarker->setEditModeCursor(QCursor(QPixmap(":/Base/icon/eraser-cursor.png"), 3, 2));
     regionMarker->sigRegionFixed().connect(
-        [&](const PolyhedralRegion& region){ onRegionFixed(region); });
+        [this](const PolyhedralRegion& region){ onRegionFixed(region); });
     regionMarker->sigContextMenuRequest().connect(
-        [&](SceneWidgetEvent* event){ onContextMenuRequestInEraserMode(event); });
+        [this](SceneWidgetEvent* event){ onContextMenuRequestInEraserMode(event); });
 
     isEditable_ = false;
 }
@@ -905,6 +967,7 @@ void ScenePointSet::updateVisualization(bool updateContents)
                 visiblePointSetScale = new SgScaleTransform;
             }
             visiblePointSetScale->setScale(itemImpl->scale);
+            visiblePointSetScale->setScaleOrientation(itemImpl->scaleOrientation);
             visiblePointSetScale->addChild(visiblePointSet);
             invariant->addChild(visiblePointSetScale);
         }
@@ -951,16 +1014,16 @@ void ScenePointSet::updateVoxels()
         normalIndices.reserve(12 * 3 * n);
         mesh->reserveNumTriangles(n * 12);
         const float h = voxelSize / 2.0;
-        const Vector3& s = itemImpl->scale;
+        Matrix3 S = itemImpl->self->getScaleMatrix();
         for(int i=0; i < n; ++i){
             const int top = vertices.size();
-            const Vector3f& p = points[i];
-            const float x0 = s.x() * p.x() + h;
-            const float x1 = s.x() * p.x() - h;
-            const float y0 = s.y() * p.y() + h;
-            const float y1 = s.y() * p.y() - h;
-            const float z0 = s.z() * p.z() + h;
-            const float z1 = s.z() * p.z() - h;
+            const Vector3 p = S * points[i].cast<double>();
+            const float x0 = p.x() + h;
+            const float x1 = p.x() - h;
+            const float y0 = p.y() + h;
+            const float y1 = p.y() - h;
+            const float z0 = p.z() + h;
+            const float z1 = p.z() - h;
             vertices.push_back(Vector3f(x0, y0, z0));
             vertices.push_back(Vector3f(x1, y0, z0));
             vertices.push_back(Vector3f(x1, y1, z0));
@@ -1052,7 +1115,7 @@ bool ScenePointSet::onContextMenuRequest(SceneWidgetEvent* event)
     if(isEditable_){
         auto menu = event->contextMenu();
         menu->addItem(_("PointSet: Clear Attention Points"))->sigTriggered().connect(
-            [&](){ clearAttentionPoints(true); });
+            [this]{ clearAttentionPoints(true); });
 
         if(!regionMarker->isEditing()){
             SceneWidget* sceneWidget = event->sceneWidget();
@@ -1069,7 +1132,7 @@ bool ScenePointSet::onContextMenuRequest(SceneWidgetEvent* event)
 void ScenePointSet::onContextMenuRequestInEraserMode(SceneWidgetEvent* event)
 {
     auto item = event->contextMenu()->addItem(_("PointSet: Exit Eraser Mode"))
-        ->sigTriggered().connect([&](){ regionMarker->finishEditing(); });
+        ->sigTriggered().connect([this]{ regionMarker->finishEditing(); });
     eraserModeMenuItemConnection.reset(item);
 }
 

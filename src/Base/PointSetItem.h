@@ -36,7 +36,14 @@ public:
     void notifyOffsetPositionChange(bool doNotifyScene = true);
 
     const Vector3& scale() const;
-    bool setScale(const Vector3& s);
+    bool setScale(const Vector3& s, bool doNotify = false);
+    const Matrix3& scaleOrientation() const;
+    void setScaleOrientation(const Matrix3& R, bool doNotify = false);
+    Matrix3 getScaleMatrix() const;
+    Affine3 getScaleTransform() const;
+
+    // This include offset
+    Affine3 getTransform() const;
 
     SgPointSetPtr getTransformedPointSet() const;
     SgPointSetPtr getScaledPointSet() const;
