@@ -838,6 +838,10 @@ void StdSceneWriter::Impl::writeScaleTransform(Mapping* archive, SgScaleTransfor
 {
     writeObjectHeader(archive, "Transform", transform);
     write(archive, "scale", transform->scale());
+    AngleAxis aa(transform->scaleOrientation());
+    if(aa.angle() != 0.0){
+        writeDegreeAngleAxis(archive, "scale_orientation", aa);
+    }
 }
 
 

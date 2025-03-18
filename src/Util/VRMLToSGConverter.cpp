@@ -303,18 +303,15 @@ pair<SgNode*, SgGroup*> VRMLToSGConverterImpl::createTransformNodeSet(VRMLTransf
     } else {
         SgScaleTransform* scale = new SgScaleTransform;
         scale->setScale(vt->scale);
+        scale->setScaleOrientation(vt->scaleOrientation);
         transform->addChild(scale);
-        if(vt->center.isZero() && !vt->scaleOrientation.angle()){
+        if(!vt->center.isZero()){
             transform->setTransform(T * R);
             return make_pair(transform, scale);
         } else {
+            transform->setTransform(T * C * R);
             SgPosTransform* transform2 = new SgPosTransform;
-            const AngleAxisd& SR = vt->scaleOrientation;
-            Affine3d S;
-            S.linear() = vt->scale.asDiagonal();
-            S.translation().setZero();
-            transform->setTransform(T * C * R * SR);
-            transform2->setTransform(SR.inverse() * C.inverse());
+            transform2->setTranslation(-vt->center);
             scale->addChild(transform2);
             return make_pair(transform, transform2);
         }

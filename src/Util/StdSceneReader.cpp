@@ -779,6 +779,9 @@ SgNode* StdSceneReader::Impl::readTransform(Mapping* info)
     } else {
         SgScaleTransformPtr scale = new SgScaleTransform;
         scale->setScale(v);
+        if(self->readRotation(info, "scale_orientation", R)){
+            scale->setScaleOrientation(R);
+        }
         if(group){
             group->addChild(scale);
         } else {
