@@ -93,6 +93,8 @@ public:
     
     bool isBestEffortIkMode() const;
     void setBestEffortIkMode(bool on);
+    bool isIkJointLimitEnabled() const { return isIkJointLimitEnabled_; }
+    void setIkJointLimitEnabled(bool on) { isIkJointLimitEnabled_ = on; }
     void setNumericalIkMaxIkError(double e);
     void setNumericalIkDeltaScale(double s);
     void setNumericalIkMaxIterations(int n);
@@ -174,6 +176,7 @@ private:
     NumericalIK* numericalIK;
     int numUpwardJointConnections;
     bool needForwardKinematicsBeforeIK;
+    bool isIkJointLimitEnabled_;
     bool isCustomIkDisabled_;
     std::string name_;
 };

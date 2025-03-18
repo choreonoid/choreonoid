@@ -147,6 +147,9 @@ public:
     bool isCustomIkDisabled() const;
     void setCustomIkDisabled(bool on);
 
+    bool isIkJointLimitEnabled() const;
+    void setIkJointLimitEnabled(bool on);
+
     Vector3 referenceRpy() const;
     void setReferenceRpy(const Vector3& rpy);
     void resetReferenceRpy();

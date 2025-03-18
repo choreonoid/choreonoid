@@ -453,6 +453,20 @@ void BodyKinematicsKit::setCustomIkDisabled(bool on)
 }
 
 
+bool BodyKinematicsKit::isIkJointLimitEnabled() const
+{
+    return impl->jointPath && impl->jointPath->isIkJointLimitEnabled();
+}
+
+
+void BodyKinematicsKit::setIkJointLimitEnabled(bool on)
+{
+    if(impl->jointPath){
+        impl->jointPath->setIkJointLimitEnabled(on);
+    }
+}
+
+
 Vector3 BodyKinematicsKit::referenceRpy() const
 {
     return impl->referenceRpy;

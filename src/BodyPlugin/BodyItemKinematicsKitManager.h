@@ -17,6 +17,9 @@ public:
     BodyItemKinematicsKitManager(BodyItem* bodyItem);
     ~BodyItemKinematicsKitManager();
 
+    bool isIkJointLimitEnabled() const; 
+    void setIkJointLimitEnabled(bool on);
+
     BodyItemKinematicsKit* getCurrentKinematicsKit(Link* targetLink);
     BodyItemKinematicsKit* findPresetKinematicsKit(Link* targetLink = nullptr);
 

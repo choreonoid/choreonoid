@@ -34,6 +34,7 @@ class BodyItemKinematicsKitManager::Impl
 public:
     BodyItem* bodyItem;
     Body* body;
+    bool isIkJointLimitEnabled;
 
     // Key is pair(target link index, base link index);
     // Use an integer index value as a key to keep the number of instances growing
@@ -70,6 +71,8 @@ BodyItemKinematicsKitManager::Impl::Impl(BodyItem* bodyItem)
     : bodyItem(bodyItem),
       body(bodyItem->body())
 {
+    isIkJointLimitEnabled = true;
+    
     bodySelectionManager = BodySelectionManager::instance();
 
     bodyItemConnection =
@@ -83,6 +86,22 @@ BodyItemKinematicsKitManager::Impl::Impl(BodyItem* bodyItem)
 BodyItemKinematicsKitManager::~BodyItemKinematicsKitManager()
 {
     delete impl;
+}
+
+
+bool BodyItemKinematicsKitManager::isIkJointLimitEnabled() const
+{
+    return impl->isIkJointLimitEnabled;
+}
+
+
+void BodyItemKinematicsKitManager::setIkJointLimitEnabled(bool on)
+{
+    impl->isIkJointLimitEnabled = on;
+    for(auto& kv : impl->linkPairToKinematicsKitMap){
+        auto& kit = kv.second;
+        kit->setIkJointLimitEnabled(on);
+    }
 }
 
 
@@ -170,6 +189,7 @@ BodyItemKinematicsKit* BodyItemKinematicsKitManager::Impl::findKinematicsKit(Lin
             if(presetIK){
                 kit = new BodyItemKinematicsKit(bodyItem);
                 kit->setInverseKinematics(targetLink, presetIK);
+                kit->setIkJointLimitEnabled(isIkJointLimitEnabled);
                 needToRegistration = true;
             }
         }
@@ -192,6 +212,7 @@ BodyItemKinematicsKit* BodyItemKinematicsKitManager::Impl::findKinematicsKit(Lin
             } else {
                 kit->setInverseKinematics(targetLink, JointPath::getCustomPath(baseLink, targetLink));
             }
+            kit->setIkJointLimitEnabled(isIkJointLimitEnabled);
             needToRegistration = true;
         }
         if(needToRegistration && kit){

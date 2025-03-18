@@ -149,6 +149,8 @@ public:
     unique_ptr<BodyItemKinematicsKitManager> kinematicsKitManager;
     shared_ptr<PinDragIK> pinDragIK;
 
+    bool isJointRangeLimitEnabled;
+
     BodyState initialState;
     BodyState lastEditState;
 
@@ -260,6 +262,7 @@ BodyItem::Impl::Impl(BodyItem* self)
     isAttachmentEnabled = true;
     isCollisionDetectionEnabled = true;
     isSelfCollisionDetectionEnabled = false;
+    isJointRangeLimitEnabled = true;
 }
 
 
@@ -293,6 +296,7 @@ BodyItem::Impl::Impl(BodyItem* self, const Impl& org, CloneMap* cloneMap)
     transparency = org.transparency;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
+    isJointRangeLimitEnabled = org.isJointRangeLimitEnabled;
 
     if(org.currentBaseLink){
         setCurrentBaseLink(body->link(org.currentBaseLink->index()), true, false);
@@ -686,6 +690,7 @@ BodyItemKinematicsKitManager* BodyItem::Impl::getOrCreateKinematicsKitManager()
 {
     if(!kinematicsKitManager){
         kinematicsKitManager.reset(new BodyItemKinematicsKitManager(self));
+        kinematicsKitManager->setIkJointLimitEnabled(isJointRangeLimitEnabled);
     }
     return kinematicsKitManager.get();
 }
@@ -763,6 +768,23 @@ void BodyItem::Impl::createPenetrationBlocker(Link* link, bool excludeSelfCollis
         }
         blocker->setDepth(KinematicsBar::instance()->penetrationBlockDepth());
         blocker->start();
+    }
+}
+
+
+bool BodyItem::isJointRangeLimitEnabled() const
+{
+    return impl->isJointRangeLimitEnabled;
+}
+
+
+void BodyItem::setJointRangeLimitEnabled(bool on)
+{
+    if(on != impl->isJointRangeLimitEnabled){
+        impl->isJointRangeLimitEnabled = on;
+        if(impl->kinematicsKitManager){
+            impl->kinematicsKitManager->setIkJointLimitEnabled(on);
+        }
     }
 }
 
@@ -1598,6 +1620,12 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                 [this](bool on){ setLocationLocked(on, true, true); return true; });
     putProperty(_("Scene sensitive"), self->isSceneSensitive(),
                 [this](bool on){ self->setSceneSensitive(on); return true; });
+
+    if(body->numJoints() > 0){
+        putProperty(_("Enable joint limits"), isJointRangeLimitEnabled,
+                    [this](bool on){ self->setJointRangeLimitEnabled(on); return true; });
+    }
+    
     putProperty.range(0.0, 0.9).decimals(1);
     putProperty(_("Transparency"), transparency,
                 [this](float value){ setTransparency(value); return true; });
@@ -1675,6 +1703,11 @@ bool BodyItem::Impl::store(Archive& archive)
     archive.write("selfCollisionDetection", isSelfCollisionDetectionEnabled);
     archive.write("lock_location", self->isLocationLocked());
     archive.write("scene_sensitive", self->isSceneSensitive());
+
+    if(!isJointRangeLimitEnabled){
+        archive.write("enable_joint_limits", isJointRangeLimitEnabled);
+    }
+    
     if(self->isVisibleLinkSelectionMode_){
         archive.write("visible_link_selection_mode", true);
     }
@@ -1766,6 +1799,9 @@ bool BodyItem::Impl::restore(const Archive& archive)
     }
     if(archive.read("scene_sensitive", on)){
         self->setSceneSensitive(on);
+    }
+    if(archive.read("enable_joint_limits", on)){
+        self->setJointRangeLimitEnabled(on);
     }
     archive.read("visible_link_selection_mode", self->isVisibleLinkSelectionMode_);
     archive.read("enable_attachment", isAttachmentEnabled);
