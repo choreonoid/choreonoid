@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-13 16:15+0900\n"
+"POT-Creation-Date: 2025-03-20 00:11+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -918,6 +918,9 @@ msgstr "ロック"
 msgid "Coord :"
 msgstr "座標系："
 
+msgid "Keep Local Coordinate System"
+msgstr "ローカル座標系を保持"
+
 msgid "Individual Rotation"
 msgstr "個別回転"
 
@@ -1406,6 +1409,9 @@ msgstr "ポイント数"
 
 msgid "Scale"
 msgstr "スケール"
+
+msgid "Scale orientation"
+msgstr "スケール方向"
 
 msgid "Offset position of {0}"
 msgstr "{0}のオフセット位置"

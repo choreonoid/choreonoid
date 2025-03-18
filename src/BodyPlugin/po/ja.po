@@ -4,7 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
-"POT-Creation-Date: 2024-12-30 22:09+0900\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-03-19 00:21+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -222,6 +223,9 @@ msgstr "配置ロック"
 
 msgid "Scene sensitive"
 msgstr "シーン感知"
+
+msgid "Enable joint limits"
+msgstr "関節リミットの有効化"
 
 msgid "Transparency"
 msgstr "透明度"
