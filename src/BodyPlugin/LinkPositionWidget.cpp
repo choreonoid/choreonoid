@@ -519,7 +519,7 @@ void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* li
 
             targetConnections.add(
                 bodyItem->sigKinematicStateChanged().connect(
-                    [this](){ updateDisplayWithCurrentLinkPosition(); }));
+                    [this](){ updateDisplay(); }));
 
             targetConnections.add(
                 bodyItem->sigUpdated().connect(
@@ -535,7 +535,7 @@ void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* li
 
     if(link != targetLink){
         updateTargetLink(link);
-        updateDisplayWithCurrentLinkPosition();
+        updateDisplay();
     }
 }
 
