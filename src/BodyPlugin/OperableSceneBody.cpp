@@ -25,6 +25,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/CheckBoxAction>
 #include <cnoid/Format>
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/stdx/clamp>
 #include "gettext.h"
 
@@ -1503,11 +1504,15 @@ bool OperableSceneBody::Impl::onPointerMoveEvent(SceneWidgetEvent* event)
                     highlightedLink = pointedSceneLink;
                 }
             }
-            const Vector3 p = pointedSceneLink->T().inverse() * event->point();
-            event->updateIndicator(
-                formatC("{0} / {1} : ({2:.3f}, {3:.3f}, {4:.3f})",
-                        bodyItem->displayName(), pointedSceneLink->link()->name(),
-                        p.x(), p.y(), p.z()));
+            auto valueFormat = DisplayValueFormat::instance();
+            string text = formatC(
+                "{0} / {1} : ({{0:.{2}f}}, {{1:.{2}f}}, {{2:.{2}f}})",
+                bodyItem->displayName(), pointedSceneLink->link()->name(), valueFormat->lengthDecimals());
+            Vector3 p = pointedSceneLink->T().inverse() * event->point();
+            if(valueFormat->isMillimeter()){
+                p *= 1000.0;
+            }
+            event->updateIndicator(formatR(text,  p.x(), p.y(), p.z()));
         }
     } else {
         if(!isDragging){
