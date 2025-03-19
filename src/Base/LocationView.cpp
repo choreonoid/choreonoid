@@ -79,6 +79,16 @@ struct CoordinateInfo : public Referenced
 
 typedef ref_ptr<CoordinateInfo> CoordinateInfoPtr;
 
+struct LocalFrameCache : public Referenced
+{
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    Isometry3 T;
+    ScopedConnection sigExpiredConnection;
+};
+
+typedef ref_ptr<LocalFrameCache> LocalFrameCachePtr;
+
 class LockCheckBox : public CheckBox
 {
 public:
@@ -104,6 +114,7 @@ public:
     set<LocationProxy*> managedLocations;
     LazyCaller setupInterfaceForNewLocationsLater;
     Isometry3 T_primary; // The latest primary object global location
+    map<LocationProxyPtr, LocalFrameCachePtr> localFrameCacheMap;
     Connection itemSelectionConnection;
     Connection editRequestConnection;
     map<ItemPtr, ScopedConnection> itemConnectionMap;
@@ -117,6 +128,7 @@ public:
     QLabel coordinateLabel;
     ComboBox coordinateCombo;
     int lastCoordIndex;
+    CheckBox localFramePreservationCheck;
     CheckBox individualRotationCheck;
         
     Impl(LocationView* self);
@@ -133,6 +145,8 @@ public:
     void setEditorLocked(bool locked, bool blocked);
     void clearBaseCoordinateSystems();
     void updateBaseCoordinateSystems();
+    void onCoordinateComboActivated(int index);
+    void onLocalFramePreservationModeChanged(bool on);
     void setIndividualRotationMode(bool on);
     void updatePositionWidgetWithPrimaryLocation();
     bool updateTargetLocationWithInputPosition(const Isometry3& T_input);
@@ -171,7 +185,7 @@ LocationView::Impl::Impl(LocationView* self)
     hbox->addWidget(&singleCategoryLabel, 1);
     categoryCombo.hide();
     categoryCombo.sigCurrentIndexChanged().connect(
-        [&](int index){ setCurrentLocationCategory(index); });
+        [this](int index){ setCurrentLocationCategory(index); });
     hbox->addWidget(&categoryCombo, 1);
     lockCheck.setText(_("Lock"));
     hbox->addWidget(&lockCheck);
@@ -181,24 +195,31 @@ LocationView::Impl::Impl(LocationView* self)
     coordinateLabel.setText(_("Coord :"));
     hbox->addWidget(&coordinateLabel, 0);
     coordinateCombo.sigAboutToShowPopup().connect(
-        [&](){ updateBaseCoordinateSystems(); });
+        [this]{ updateBaseCoordinateSystems(); });
     coordinateCombo.sigActivated().connect(
-        [&](int){ updatePositionWidgetWithPrimaryLocation(); });
+        [this](int index){ onCoordinateComboActivated(index); });
     hbox->addWidget(&coordinateCombo, 1);
     vbox->addLayout(hbox);
 
     positionWidget = new PositionWidget(self);
     positionWidget->setCallbacks(
-        [&](const Isometry3& T){ return updateTargetLocationWithInputPosition(T); },
-        [&](){ finishLocationEditing(); });
+        [this](const Isometry3& T){ return updateTargetLocationWithInputPosition(T); },
+        [this](){ finishLocationEditing(); });
     vbox->addWidget(positionWidget);
 
     hbox = new QHBoxLayout;
     hbox->addStretch();
+
+    localFramePreservationCheck.setText(_("Keep Local Coordinate System"));
+    localFramePreservationCheck.setEnabled(false);
+    localFramePreservationCheck.sigToggled().connect(
+        [this](bool on) { onLocalFramePreservationModeChanged(on); });
+    hbox->addWidget(&localFramePreservationCheck);
+    
     individualRotationCheck.setText(_("Individual Rotation"));
     individualRotationCheck.setEnabled(false);
     individualRotationCheck.sigToggled().connect(
-        [&](bool on){ setIndividualRotationMode(on); });
+        [this](bool on){ setIndividualRotationMode(on); });
     hbox->addWidget(&individualRotationCheck);
     vbox->addLayout(hbox);
 
@@ -263,7 +284,7 @@ void LocationView::Impl::onSelectedItemsChanged(const ItemList<>& items)
                 if(!connection.connected()){
                     connection.reset(
                         locatable->getSigLocationProxiesChanged().connect(
-                            [&](){ onSelectedItemsChanged(RootItem::instance()->selectedItems()); }));
+                            [this]{ onSelectedItemsChanged(RootItem::instance()->selectedItems()); }));
                 }
             } else if(auto location = locatable->getLocationProxy()){
                 if(managedLocations.find(location) == managedLocations.end()){
@@ -729,6 +750,23 @@ void LocationView::Impl::updateBaseCoordinateSystems()
     }
 
     Isometry3 T = location->getLocation();
+    LocalFrameCache* cache;
+    auto it = localFrameCacheMap.find(location);
+    if(it != localFrameCacheMap.end()){
+        cache = it->second;
+    } else {
+        cache = new LocalFrameCache;
+        cache->T = T;
+        cache->sigExpiredConnection =
+            location->sigExpired().connect(
+                [this, location]{ localFrameCacheMap.erase(location); });
+        localFrameCacheMap[location] = cache;
+    }
+    if(localFramePreservationCheck.isChecked()){
+        T = cache->T;
+    } else {
+        cache->T = T;
+    }
     auto localCoord = new CoordinateInfo(_("Local"), LocalCoord, LocalCoordIndex, T);
     localCoord->isLocal = true;
     localCoord->R0 = T.linear();
@@ -804,6 +842,24 @@ void LocationView::Impl::updateBaseCoordinateSystems()
 }
 
 
+void LocationView::Impl::onCoordinateComboActivated(int index)
+{
+    bool coordType = coordinates[coordinateCombo.currentIndex()]->type;
+    localFramePreservationCheck.setEnabled(coordType);
+    updatePositionWidgetWithPrimaryLocation();
+}
+
+
+void LocationView::Impl::onLocalFramePreservationModeChanged(bool on)
+{
+    if(!on){
+        localFrameCacheMap.clear();
+        updateBaseCoordinateSystems();
+        updatePositionWidgetWithPrimaryLocation();
+    }
+}
+
+
 void LocationView::Impl::setIndividualRotationMode(bool on)
 {
     individualRotationCheck.blockSignals(true);
@@ -837,11 +893,14 @@ void LocationView::Impl::updatePositionWidgetWithPrimaryLocation()
 
     if(coord->type == LocalCoord){
         Isometry3 T_location = location->getLocation();
-        Matrix3 R_prev = coord->T.linear();
-        Matrix3 R_current = T_location.linear();
-        // When the rotation is changed, the translation origin is reset
-        if(!R_current.isApprox(R_prev, 1e-6)){
-            coord->T = T_location;
+        
+        if(!localFramePreservationCheck.isChecked()){
+            Matrix3 R_prev = coord->T.linear();
+            Matrix3 R_current = T_location.linear();
+            // When the rotation is changed, the translation origin is reset
+            if(!R_current.isApprox(R_prev, 1e-6)){
+                coord->T = T_location;
+            }
         }
         T_display.translation() = (coord->T.inverse(Eigen::Isometry) * T_location).translation();
         T_display.linear() = coord->R0.transpose() * T_location.linear();
@@ -898,12 +957,15 @@ bool LocationView::Impl::updateTargetLocationWithInputPosition(const Isometry3& 
     if(coord->type == LocalCoord){
         T_location.linear() = coord->R0 * T_input.linear();
         T_location.translation() = coord->T * T_input.translation();
-        if(!T_location.linear().isApprox(coord->T.linear(), 1e-6)){
-            coord->T = T_location;
-            Isometry3 T_display;
-            T_display.linear() = T_input.linear();
-            T_display.translation().setZero();
-            positionWidget->setPosition(T_display);
+        if(!localFramePreservationCheck.isChecked()){
+            if(!T_location.linear().isApprox(coord->T.linear(), 1e-6)){
+                // When the rotation is changed, the translation origin is reset
+                coord->T = T_location;
+                Isometry3 T_display;
+                T_display.linear() = T_input.linear();
+                T_display.translation().setZero();
+                positionWidget->setPosition(T_display);
+            }
         }
     } else {
         if(locationInfo->isRelativeLocation && (coord->type == ParentCoord)){
