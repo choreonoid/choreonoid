@@ -215,10 +215,10 @@ public:
     void onDraggerDragFinished();
 
     bool initializeIK();
-    void startIK(SceneWidgetEvent* event);
+    bool startIK(SceneWidgetEvent* event);
     void dragIK(SceneWidgetEvent* event);
     void doIK(const Isometry3& position);
-    void startFK(SceneWidgetEvent* event);
+    bool startFK(SceneWidgetEvent* event);
     void dragFKRotation(SceneWidgetEvent* event);
     void dragFKTranslation(SceneWidgetEvent* event);
     void startLinkOperationDuringSimulation(SceneWidgetEvent* event);
@@ -1132,6 +1132,8 @@ int OperableSceneBody::Impl::checkLinkKinematicsType(Link* link, bool doUpdateIK
         if(link->isRoot()){
             if(!baseLink || link == baseLink){
                 type = LinkOperationType::IK;
+            } else if(baseLink){
+                type = LinkOperationType::FK;
             }
         } else {
             if(baseLink && link == baseLink){
@@ -1417,12 +1419,11 @@ bool OperableSceneBody::Impl::onButtonPressEvent(SceneWidgetEvent* event)
 
             if(!bodyItem->isContinuousUpdateState()){
                 if(operationType == LinkOperationType::FK){
-                    startFK(event);
+                    handled = startFK(event);
                 } else if(operationType == LinkOperationType::IK){
-                    startIK(event);
+                    handled = startIK(event);
                 }
             }
-            handled = true;
         }
     }
 
@@ -1826,8 +1827,9 @@ bool OperableSceneBody::Impl::initializeIK()
 }
 
 
-void OperableSceneBody::Impl::startIK(SceneWidgetEvent* event)
+bool OperableSceneBody::Impl::startIK(SceneWidgetEvent* event)
 {
+    bool handled = false;
     Body* body = self->body();
     Link* baseLink = bodyItem->currentBaseLink();
 
@@ -1839,14 +1841,18 @@ void OperableSceneBody::Impl::startIK(SceneWidgetEvent* event)
         dragProjector.setTranslationAlongViewPlane();
         if(dragProjector.startTranslation(event)){
             dragMode = LINK_IK_TRANSLATION;
-        }
-        fkTraverse.find(baseLink ? baseLink : body->rootLink(), true, true);
-        if(kinematicsBar->isPenetrationBlockMode()){
-            penetrationBlocker = bodyItem->createPenetrationBlocker(targetLink, true);
-        } else {
-            penetrationBlocker.reset();
+            handled = true;
+
+            fkTraverse.find(baseLink ? baseLink : body->rootLink(), true, true);
+            if(kinematicsBar->isPenetrationBlockMode()){
+                penetrationBlocker = bodyItem->createPenetrationBlocker(targetLink, true);
+            } else {
+                penetrationBlocker.reset();
+            }
         }
     }
+
+    return handled;
 }
 
 
@@ -1880,8 +1886,37 @@ void OperableSceneBody::Impl::doIK(const Isometry3& position)
 }
 
 
-void OperableSceneBody::Impl::startFK(SceneWidgetEvent* event)
+bool OperableSceneBody::Impl::startFK(SceneWidgetEvent* event)
 {
+    auto baseLink = bodyItem->currentBaseLink();
+    LinkPath linkPath(baseLink ? baseLink : self->body()->rootLink(), targetLink);
+    if(linkPath.size() <= 1){
+        return false;
+    }
+    int targetLinkIndex = linkPath.size() - 1;
+    double axisDirection = 1.0;
+    while(true){
+        if(targetLinkIndex == 0){
+            return false;
+        }
+        if(!linkPath.isDownward(targetLinkIndex - 1)){
+            --targetLinkIndex;
+            axisDirection = -1.0;
+        }
+        bool isFixedJointSkipped = false;
+        while(linkPath[targetLinkIndex]->isFixedJoint()){
+            if(targetLinkIndex == 0){
+                return false;
+            }
+            --targetLinkIndex;
+            isFixedJointSkipped = true;
+        }
+        if(!isFixedJointSkipped){
+            break;
+        }
+    }
+    targetLink = linkPath[targetLinkIndex];
+
     dragProjector.setInitialPosition(targetLink->position());
     
     orgJointPosition = targetLink->q();
@@ -1891,17 +1926,19 @@ void OperableSceneBody::Impl::startFK(SceneWidgetEvent* event)
     }
     
     if(targetLink->isRevoluteJoint()){
-        dragProjector.setRotationAxis(targetLink->R() * targetLink->a());
+        dragProjector.setRotationAxis(targetLink->R() * (axisDirection * targetLink->a()));
         if(dragProjector.startRotation(event)){
             dragMode = LINK_FK_ROTATION;
         }
         
     } else if(targetLink->isPrismaticJoint()){
-        dragProjector.setTranslationAxis(targetLink->R() * targetLink->d());
+        dragProjector.setTranslationAxis(targetLink->R() * (axisDirection * targetLink->d()));
         if(dragProjector.startTranslation(event)){
             dragMode = LINK_FK_TRANSLATION;
         }
     }
+
+    return true;
 }
 
 
