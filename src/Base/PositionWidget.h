@@ -19,6 +19,7 @@ public:
     ~PositionWidget();
 
     void setOptionMenuTo(MenuManager& menuManager);
+    void setRpyVisible(bool on);
     void setEditable(bool on);
     void setUserInputValuePriorityMode(bool on);
     void setAdditionalPrecisionInterfaceEnabled(bool on);

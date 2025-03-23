@@ -80,7 +80,7 @@ public:
     Impl(PositionWidget* self);
     void updateValueFormat(bool doRefresh);
     void setOptionMenuTo(MenuManager& menu);
-    void setRpyEnabled(bool on);
+    void setRpyVisible(bool on);
     void setQuaternionEnabled(bool on);
     void setRotationMatrixEnabled(bool on);
     void resetInputWidgetStyles();
@@ -363,7 +363,7 @@ void PositionWidget::Impl::setOptionMenuTo(MenuManager& menu)
     auto rpyCheck = menu.addCheckItem(_("Roll-pitch-yaw"));
     rpyCheck->setChecked(isRpyEnabled);
     rpyCheck->sigToggled().connect(
-        [&](bool on){ setRpyEnabled(on); refreshPosition(); });
+        [&](bool on){ setRpyVisible(on); refreshPosition(); });
 
     auto uniqueRpyCheck = menu.addCheckItem(_("Fetch as a unique RPY value"));
     uniqueRpyCheck->setChecked(isUniqueRpyMode);
@@ -379,6 +379,23 @@ void PositionWidget::Impl::setOptionMenuTo(MenuManager& menu)
     rotationMatrixCheck->setChecked(isRotationMatrixEnabled);
     rotationMatrixCheck->sigToggled().connect(
         [&](bool on){ setRotationMatrixEnabled(on); refreshPosition(); });
+}
+
+
+void PositionWidget::setRpyVisible(bool on)
+{
+    impl->setRpyVisible(on);
+}
+
+
+void PositionWidget::Impl::setRpyVisible(bool on)
+{
+    if(on != isRpyEnabled){
+        isRpyEnabled = on;
+        for(auto& widget : rpyWidgets){
+            widget->setVisible(on);
+        }
+    }
 }
 
 
@@ -444,17 +461,6 @@ void PositionWidget::setPositionCallback(std::function<bool(const Isometry3& T)>
 const Isometry3& PositionWidget::currentPosition() const
 {
     return impl->T_last;
-}
-
-
-void PositionWidget::Impl::setRpyEnabled(bool on)
-{
-    if(on != isRpyEnabled){
-        isRpyEnabled = on;
-        for(auto& widget : rpyWidgets){
-            widget->setVisible(on);
-        }
-    }
 }
 
 
@@ -769,7 +775,7 @@ void PositionWidget::restoreState(const Archive* archive)
 void PositionWidget::Impl::restoreState(const Archive* archive)
 {
     auto block = userInputConnections.scopedBlock();
-    setRpyEnabled(archive->get("show_rpy", isRpyEnabled));
+    setRpyVisible(archive->get("show_rpy", isRpyEnabled));
     archive->read("unique_rpy", isUniqueRpyMode);
     setQuaternionEnabled(archive->get("show_quaternion", isQuaternionEnabled));
     setRotationMatrixEnabled(archive->get("show_rotation_matrix", isRotationMatrixEnabled));
