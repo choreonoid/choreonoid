@@ -1510,9 +1510,7 @@ bool OperableSceneBody::Impl::onPointerMoveEvent(SceneWidgetEvent* event)
                 "{0} / {1} : ({{0:.{2}f}}, {{1:.{2}f}}, {{2:.{2}f}})",
                 bodyItem->displayName(), pointedSceneLink->link()->name(), valueFormat->lengthDecimals());
             Vector3 p = pointedSceneLink->T().inverse() * event->point();
-            if(valueFormat->isMillimeter()){
-                p *= 1000.0;
-            }
+            valueFormat->updateToDisplayPosition(p);
             event->updateIndicator(formatR(text,  p.x(), p.y(), p.z()));
         }
     } else {

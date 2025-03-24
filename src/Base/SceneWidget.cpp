@@ -236,6 +236,9 @@ public:
 
     bool collisionLineVisibility;
 
+    DisplayValueFormat* valueFormat;
+    ScopedConnection valueFormatConnection;
+
     ref_ptr<CoordinateAxesOverlay> coordinateAxesOverlay;
 
     SgInvariantGroupPtr gridGroup;
@@ -315,6 +318,7 @@ public:
 
     void showPickingImageWindow();
     void onUpsideDownToggled(bool on);
+    void onDisplayValueFormatChanged();
         
     void updateLatestEvent(QKeyEvent* event);
     void updateLatestEvent(int x, int y, int modifiers);
@@ -584,7 +588,13 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
     collisionLineVisibility = false;
 
-    coordinateAxesOverlay = new CoordinateAxesOverlay;
+    valueFormat = DisplayValueFormat::instance();
+    valueFormatConnection = valueFormat->sigFormatChanged().connect(
+        [this]{ onDisplayValueFormatChanged(); });
+
+    coordinateAxesOverlay = new CoordinateAxesOverlay(
+        valueFormat->isRightHandedCoordinateSystem() ?
+        CoordinateAxesOverlay::RightHanded : CoordinateAxesOverlay::LeftHanded);
 
     for(auto& info : gridInfos){
         info.span = 10.0;
@@ -1364,6 +1374,14 @@ void SceneWidget::Impl::onUpsideDownToggled(bool on)
 }
 
 
+void SceneWidget::Impl::onDisplayValueFormatChanged()
+{
+    coordinateAxesOverlay->setCoordinateSystem(
+        valueFormat->isRightHandedCoordinateSystem() ?
+        CoordinateAxesOverlay::RightHanded : CoordinateAxesOverlay::LeftHanded);
+}
+
+
 void SceneWidget::Impl::updateLatestEvent(QKeyEvent* event)
 {
     switch(event->type()){
@@ -1898,7 +1916,6 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
             updateIndicator("");
         } else {
             string name = findObjectNameFromNodePath(latestEvent.nodePath());
-            auto valueFormat = DisplayValueFormat::instance();
             string text;
             if(name.empty()){
                 text = formatC("{0}: ({{0:.{1}f}} {{1:.{1}f}} {{2:.{1}f}})",
@@ -1907,12 +1924,9 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
                 text = formatC("{0}: {1}, {2}: ({{0:.{3}f}} {{1:.{3}f}} {{2:.{3}f}})",
                                _("Object"), name, _("Global Position"), valueFormat->lengthDecimals());
             }
-            const Vector3& p = latestEvent.point();
-            if(valueFormat->isMeter()){
-                updateIndicator(formatR(text, p.x(), p.y(), p.z()));
-            } else if(valueFormat->isMillimeter()){
-                updateIndicator(formatR(text, p.x() * 1000.0, p.y() * 1000.0, p.z() * 100.0));
-            }
+            Vector3 p = latestEvent.point();
+            valueFormat->updateToDisplayPosition(p);
+            updateIndicator(formatR(text, p.x(), p.y(), p.z()));
         }
     }
 

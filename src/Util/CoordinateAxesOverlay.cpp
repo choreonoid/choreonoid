@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "CoordinateAxesOverlay.h"
 #include "SceneNodeClassRegistry.h"
 #include "SceneRenderer.h"
@@ -31,7 +27,7 @@ struct NodeClassRegistration {
 }
 
 
-CoordinateAxesOverlay::CoordinateAxesOverlay()
+CoordinateAxesOverlay::CoordinateAxesOverlay(CoordinateSystem coordinateSystem)
     : SgViewportOverlay(findClassId<CoordinateAxesOverlay>()),
       superClassId(findClassId<SgViewportOverlay>())
 {
@@ -48,7 +44,7 @@ CoordinateAxesOverlay::CoordinateAxesOverlay()
     
     //auto invariant = new SgInvariantGroup;
     
-    axesTransform = new SgPosTransform;
+    topTransform = new SgPosTransform;
     
     for(int i=0; i < 3; ++i){
         SgShape* shape = new SgShape;
@@ -56,16 +52,29 @@ CoordinateAxesOverlay::CoordinateAxesOverlay()
         SgMaterial* material = new SgMaterial;
         material->setDiffuseColor(colors[i]);
         shape->setMaterial(material);
-        SgPosTransform* transform = new SgPosTransform;
-        transform->addChild(shape);
-        if(i == 0){
-            transform->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
-        } else if(i == 2){
-            transform->setRotation(AngleAxis( PI / 2.0, Vector3::UnitX()));
-        }
-        axesTransform->addChild(transform);
+        auto axisTransform = new SgPosTransform;
+        axisTransform->addChild(shape);
+        topTransform->addChild(axisTransform);
+        axisTransforms[i] = axisTransform;
     }
-    addChild(axesTransform);
+    axisTransforms[0]->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
+    axisTransforms[2]->setRotation(AngleAxis( PI / 2.0, Vector3::UnitX()));
+
+    setCoordinateSystem(coordinateSystem);
+
+    addChild(topTransform);
+}
+
+
+void CoordinateAxesOverlay::setCoordinateSystem(CoordinateSystem coordinateSystem)
+{
+    // Set the direction of Y-axis
+    if(coordinateSystem == RightHanded){
+        axisTransforms[1]->setRotation(Matrix3::Identity());
+    } else {
+        axisTransforms[1]->setRotation(AngleAxis(PI, Vector3::UnitX()));
+    }
+    axisTransforms[1]->notifyUpdate();
 }
 
 
@@ -84,6 +93,6 @@ void CoordinateAxesOverlay::calcViewVolume(double viewportWidth, double viewport
 void CoordinateAxesOverlay::render(SceneRenderer* renderer)
 {
     const Isometry3& T = renderer->currentCameraPosition();
-    axesTransform->setRotation(T.linear().transpose());
+    topTransform->setRotation(T.linear().transpose());
     renderer->renderingFunctions()->dispatch(this, superClassId);
 }

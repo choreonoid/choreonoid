@@ -1,10 +1,7 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "PositionDragger.h"
 #include "SceneDragProjector.h"
 #include "SceneWidget.h"
+#include "DisplayValueFormat.h"
 #include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneUtil>
@@ -45,6 +42,17 @@ constexpr double StdRotationHandleSizeRatio = 0.6;
 constexpr double WideUnitHandleWidth = 0.08;
 constexpr double WideRotationHandleSizeRatio = 0.5;
 constexpr float DefaultTransparency = 0.4f;
+
+class HandleGroup : public SgGroup
+{
+public:
+    SgPosTransformPtr yTranslationAxisTransform;
+    SgPosTransformPtr xRotationAxisTransform;
+    SgPosTransformPtr zRotationAxisTransform;
+    double translationAxisOffset;
+};
+
+typedef ref_ptr<HandleGroup> HandleGroupPtr;
 
 class SgHandleVariantSelector : public SgGroup
 {
@@ -119,7 +127,10 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     
     PositionDragger* self;
-    map<int, SgNodePtr> widthLevelToHandleShapeMap;
+    DisplayValueFormat* valueFormat;
+    int currentDisplayCoordinateSystem;
+    ScopedConnection valueFormatConnection;
+    map<int, HandleGroupPtr> widthLevelToHandleShapeMap;
     AxisBitSet draggableAxisBitSet;
     SgSwitchPtr axisSwitch[6];
     int handleType;
@@ -151,10 +162,12 @@ public:
     Signal<void()> sigDragFinished;
 
     Impl(PositionDragger* self, int mode, int axes);
-    SgNode* createHandle(double widthRatio);
-    SgNode* createTranslationHandle(double widthRatio);
-    SgNode* createRotationRingHandle(double widthRatio);
-    SgNode* createRotationDiscHandle(double widthRatio);
+    void onDisplayValueFormatChanged();
+    HandleGroup* createHandleGroup(double widthRatio);
+    void setHandleGroupCoordinateSystem(HandleGroup* handleGroup, int coordinateSystem);
+    void createTranslationHandle(HandleGroup* handleGroup, double widthRatio);
+    void createRotationRingHandle(HandleGroup* handleGroup, double widthRatio);
+    void createRotationDiscHandle(HandleGroup* handleGroup, double widthRatio);
     double calcWidthRatio(double pixelSizeRatio);
     SgNode* getOrCreateHandleVariant(double pixelSizeRatio, bool isForPicking);
     void clearHandleVariants();
@@ -255,6 +268,11 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
 {
     auto& registry = SceneNodeClassRegistry::instance();
 
+    valueFormat = DisplayValueFormat::instance();
+    currentDisplayCoordinateSystem = valueFormat->coordinateSystem();
+    valueFormatConnection = valueFormat->sigFormatChanged().connect(
+        [this]{ onDisplayValueFormatChanged(); });
+
     handleSize = 1.0;
     
     if(!registry.hasRegistration<SgHandleVariantSelector>()){
@@ -276,7 +294,6 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
         axisSwitch[i] = new SgSwitch(draggableAxisBitSet[i]);
     }
     
-
     displayMode = DisplayInEditMode;
     isEditMode = false;
     isOverlayMode = false;
@@ -312,23 +329,55 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
 }
 
 
-SgNode* PositionDragger::Impl::createHandle(double widthRatio)
+void PositionDragger::Impl::onDisplayValueFormatChanged()
 {
-    auto draggerAxes = new SgGroup;
+    if(valueFormat->coordinateSystem() != currentDisplayCoordinateSystem){
+        currentDisplayCoordinateSystem = valueFormat->coordinateSystem();
+        for(auto& kv : widthLevelToHandleShapeMap){
+            setHandleGroupCoordinateSystem(kv.second, currentDisplayCoordinateSystem);
+        }
+    }
+}
+
+
+HandleGroup* PositionDragger::Impl::createHandleGroup(double widthRatio)
+{
+    auto handleGroup = new HandleGroup;
     
-    draggerAxes->addChild(createTranslationHandle(widthRatio));
+    createTranslationHandle(handleGroup, widthRatio);
 
     if(handleType != WideHandle){
-        draggerAxes->addChild(createRotationRingHandle(widthRatio));
+        createRotationRingHandle(handleGroup, widthRatio);
     } else {
-        draggerAxes->addChild(createRotationDiscHandle(widthRatio));
+        createRotationDiscHandle(handleGroup, widthRatio);
     }
 
-    return draggerAxes;
+    if(currentDisplayCoordinateSystem == DisplayValueFormat::LeftHanded){
+        setHandleGroupCoordinateSystem(handleGroup, currentDisplayCoordinateSystem);
+    }
+
+    return handleGroup;
+}
+
+
+void PositionDragger::Impl::setHandleGroupCoordinateSystem(HandleGroup* handleGroup, int coordinateSystem)
+{
+    if(coordinateSystem == DisplayValueFormat::RightHanded){
+        handleGroup->yTranslationAxisTransform->setRotation(Matrix3::Identity());
+        handleGroup->yTranslationAxisTransform->translation().y() = handleGroup->translationAxisOffset;
+        handleGroup->xRotationAxisTransform->setRotation(AngleAxis(PI / 2.0, Vector3::UnitZ()));
+        handleGroup->zRotationAxisTransform->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitX()));
+    } else {
+        handleGroup->yTranslationAxisTransform->setRotation(AngleAxis(PI, Vector3::UnitX()));
+        handleGroup->yTranslationAxisTransform->translation().y() = -handleGroup->translationAxisOffset;
+        handleGroup->xRotationAxisTransform->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
+        handleGroup->zRotationAxisTransform->setRotation(AngleAxis(PI / 2.0, Vector3::UnitX()));
+    }
+    handleGroup->notifyUpdate();
 }
 
     
-SgNode* PositionDragger::Impl::createTranslationHandle(double widthRatio)
+void PositionDragger::Impl::createTranslationHandle(HandleGroup* handleGroup, double widthRatio)
 {
     auto scale = new SgScaleTransform(handleSize);
 
@@ -359,14 +408,17 @@ SgNode* PositionDragger::Impl::createTranslationHandle(double widthRatio)
         arrow->addChild(shape);
         if(i == 0){
             arrow->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
+        } else if(i == 1){
+            handleGroup->yTranslationAxisTransform = arrow;
         } else if(i == 2){
             arrow->setRotation(AngleAxis(PI / 2.0, Vector3::UnitX()));
         }
         if(handleType == PositiveOnlyHandle){
-            arrow->translation()[i] = stickLength / 2.0;
+            handleGroup->translationAxisOffset = stickLength / 2.0;
         } else {
-            arrow->translation()[i] = -extraEndLength / 2.0;
+            handleGroup->translationAxisOffset = -extraEndLength / 2.0;
         }
+        arrow->translation()[i] = handleGroup->translationAxisOffset;
         arrow->setName(AxisNames[i]);
 
         auto axis = new SgSwitchableGroup(axisSwitch[i]);
@@ -374,11 +426,11 @@ SgNode* PositionDragger::Impl::createTranslationHandle(double widthRatio)
         scale->addChild(axis);
     }
 
-    return scale;
+    handleGroup->addChild(scale);
 }
 
 
-SgNode* PositionDragger::Impl::createRotationRingHandle(double widthRatio)
+void PositionDragger::Impl::createRotationRingHandle(HandleGroup* handleGroup, double widthRatio)
 {
     auto scale = new SgScaleTransform(handleSize * rotationHandleSizeRatio);
 
@@ -398,8 +450,10 @@ SgNode* PositionDragger::Impl::createRotationRingHandle(double widthRatio)
         auto ring = new SgPosTransform;
         if(i == 0){ // x-axis
             ring->setRotation(AngleAxis(PI / 2.0, Vector3::UnitZ()));
+            handleGroup->xRotationAxisTransform = ring;
         } else if(i == 2) { // z-axis
             ring->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitX()));
+            handleGroup->zRotationAxisTransform = ring;
         }
         ring->addChild(ringShape);
         ring->setName(AxisNames[i + 3]);
@@ -410,11 +464,11 @@ SgNode* PositionDragger::Impl::createRotationRingHandle(double widthRatio)
         scale->addChild(axis);
     }
 
-    return scale;
+    handleGroup->addChild(scale);
 }
 
 
-SgNode* PositionDragger::Impl::createRotationDiscHandle(double widthRatio)
+void PositionDragger::Impl::createRotationDiscHandle(HandleGroup* handleGroup, double widthRatio)
 {
     auto scale = new SgScaleTransform(handleSize * rotationHandleSizeRatio);
 
@@ -439,8 +493,10 @@ SgNode* PositionDragger::Impl::createRotationDiscHandle(double widthRatio)
             auto disc = new SgPosTransform;
             if(i == 0){ // x-axis
                 disc->setRotation(AngleAxis(-PI / 2.0, Vector3::UnitZ()));
+                handleGroup->xRotationAxisTransform = disc;
             } else if(i == 2) { // z-axis
                 disc->setRotation(AngleAxis(PI / 2.0, Vector3::UnitX()));
+                handleGroup->zRotationAxisTransform = disc;
             }
             disc->addChild(shape);
             disc->setName(AxisNames[i + 3]);
@@ -451,7 +507,7 @@ SgNode* PositionDragger::Impl::createRotationDiscHandle(double widthRatio)
         scale->addChild(axis);
     }
 
-    return scale;
+    handleGroup->addChild(scale);
 }
 
 
@@ -490,9 +546,9 @@ SgNode* PositionDragger::Impl::getOrCreateHandleVariant(double pixelSizeRatio, b
     if(p != widthLevelToHandleShapeMap.end()){
         return p->second;
     } else {
-        auto shape = createHandle(widthLevel / resolution);
-        widthLevelToHandleShapeMap[widthLevel] = shape;
-        return shape;
+        auto handleGroup = createHandleGroup(widthLevel / resolution);
+        widthLevelToHandleShapeMap[widthLevel] = handleGroup;
+        return handleGroup;
     }
 }
 

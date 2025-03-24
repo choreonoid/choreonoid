@@ -86,8 +86,8 @@ public:
     void resetInputWidgetStyles();
     void clearPosition();
     void refreshPosition();
-    void setPosition(const Isometry3& T);
-    void updateRotationMatrix(const Matrix3& R);
+    void displayPosition(const Isometry3& T);
+    void displayRotationMatrix(Matrix3& R);
     Vector3 getRpyInput();
     void onPositionInput(InputElementSet inputElements);
     void onPositionInputRpy(InputElementSet inputElements);
@@ -508,7 +508,8 @@ void PositionWidget::Impl::clearPosition()
         quatSpin[i].setValue(0.0);
     }
     quatSpin[3].setValue(1.0);
-    updateRotationMatrix(Matrix3::Identity());
+    Matrix3 R = Matrix3::Identity();
+    displayRotationMatrix(R);
 
     userInputConnections.unblock();
 }
@@ -522,7 +523,7 @@ void PositionWidget::refreshPosition()
 
 void PositionWidget::Impl::refreshPosition()
 {
-    setPosition(T_last);
+    displayPosition(T_last);
 }
 
 
@@ -534,15 +535,16 @@ void PositionWidget::setReferenceRpy(const Vector3& rpy)
 
 void PositionWidget::setPosition(const Isometry3& T)
 {
-    impl->setPosition(T);
+    impl->displayPosition(T);
 }
 
 
-void PositionWidget::Impl::setPosition(const Isometry3& T)
+void PositionWidget::Impl::displayPosition(const Isometry3& T)
 {
     userInputConnections.block();
 
     Vector3 p = T.translation();
+    valueFormat->updateToDisplayCoordPosition(p);
     for(int i=0; i < 3; ++i){
         auto& spin = xyzSpin[i];
         if(!isUserInputValuePriorityMode || !spin.hasFocus()){
@@ -564,10 +566,11 @@ void PositionWidget::Impl::setPosition(const Isometry3& T)
             }
             referenceRpy = rpy;
         }
+        valueFormat->updateToDisplayCoordRpy(rpy);
+        rpy_last = rpy;
         for(int i=0; i < 3; ++i){
             rpySpin[i].setValue(angleRatio * rpy[i]);
         }
-        rpy_last = rpy;
     }
     
     if(isQuaternionEnabled){
@@ -581,16 +584,17 @@ void PositionWidget::Impl::setPosition(const Isometry3& T)
             }
         }
         if(!skipUpdate){
-            Eigen::Quaterniond quat(R);
-            quatSpin[0].setValue(quat.x());
-            quatSpin[1].setValue(quat.y());
-            quatSpin[2].setValue(quat.z());
-            quatSpin[3].setValue(quat.w());
+            Eigen::Quaterniond q(R);
+            valueFormat->updateToDisplayCoordRotation(q);
+            quatSpin[0].setValue(q.x());
+            quatSpin[1].setValue(q.y());
+            quatSpin[2].setValue(q.z());
+            quatSpin[3].setValue(q.w());
         }
     }
     
     if(isRotationMatrixEnabled){
-        updateRotationMatrix(R);
+        displayRotationMatrix(R);
     }
 
     resetInputWidgetStyles();
@@ -606,12 +610,13 @@ void PositionWidget::setRpy(const Vector3& rpy)
     setReferenceRpy(rpy);
     Isometry3 T = currentPosition();
     T.linear() = rotFromRpy(rpy);
-    setPosition(T);
+    impl->displayPosition(T);
 }
 
 
-void PositionWidget::Impl::updateRotationMatrix(const Matrix3& R)
+void PositionWidget::Impl::displayRotationMatrix(Matrix3& R)
 {
+    valueFormat->updateToDisplayCoordRotation(R);
     for(int i=0; i < 3; ++i){
         for(int j=0; j < 3; ++j){
             rotationMatrixElementLabel[i][j].setText(
@@ -633,6 +638,7 @@ Vector3 PositionWidget::Impl::getRpyInput()
     for(int i=0; i < 3; ++i){
         rpy[i] = rpySpin[i].value() / angleRatio;
     }
+    valueFormat->updateToRightHandedRpy(rpy);
     return rpy;
 }
 
@@ -659,11 +665,12 @@ void PositionWidget::Impl::onPositionInput(InputElementSet inputElements)
 
 void PositionWidget::Impl::onPositionInputRpy(InputElementSet inputElements)
 {
+    Vector3 p;
     Vector3 rpy;
 
     for(int i=0; i < 3; ++i){
         if(inputElements[TX + i]){
-            T_last.translation()[i] = xyzSpin[i].value() / lengthRatio;
+            p[i] = xyzSpin[i].value() / lengthRatio;
         }
         if(rpy_last && !inputElements[RX + i]){
             rpy[i] = (*rpy_last)[i];
@@ -671,8 +678,11 @@ void PositionWidget::Impl::onPositionInputRpy(InputElementSet inputElements)
             rpy[i] = rpySpin[i].value() / angleRatio;
         }
     }
-    T_last.linear() = rotFromRpy(rpy);
     rpy_last = rpy;
+    valueFormat->updateToRightHandedPosition(p);
+    valueFormat->updateToRightHandedRpy(rpy);
+    T_last.translation() = p;
+    T_last.linear() = rotFromRpy(rpy);
     
     notifyPositionInput(T_last, inputElements);
 
@@ -682,16 +692,20 @@ void PositionWidget::Impl::onPositionInputRpy(InputElementSet inputElements)
 
 void PositionWidget::Impl::onPositionInputQuaternion(InputElementSet inputElements)
 {
+    Vector3 p;
     for(int i=0; i < 3; ++i){
         if(inputElements[TX + i]){
-            T_last.translation()[i] = xyzSpin[i].value() / lengthRatio;
+            p[i] = xyzSpin[i].value() / lengthRatio;
         }
     }
+    valueFormat->updateToRightHandedPosition(p);
+    T_last.translation() = p;
     rpy_last = stdx::nullopt;
     
     Eigen::Quaterniond quat =
         Eigen::Quaterniond(
             quatSpin[3].value(), quatSpin[0].value(), quatSpin[1].value(), quatSpin[2].value());
+    valueFormat->updateToRightHandedRotation(quat);
 
     if(quat.norm() > 1.0e-6){
         quat.normalize();
