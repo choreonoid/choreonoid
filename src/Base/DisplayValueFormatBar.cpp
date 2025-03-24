@@ -20,6 +20,7 @@ public:
     SpinBox lengthPrecisionSpin;
     ComboBox angleUnitCombo;
     SpinBox anglePrecisionSpin;
+    ComboBox coordinateSystemCombo;
 
     Impl(DisplayValueFormatBar* self);
     void onDisplayValueFormatChanged(bool doBlockSignals);
@@ -27,6 +28,7 @@ public:
     void updateLengthDecimals(int decimals);
     void updateAngleUnit(int unitType);
     void updateAngleDecimals(int decimals);
+    void updateCoordinateSystem(int system);
 };
 
 }
@@ -62,6 +64,7 @@ DisplayValueFormatBar::Impl::Impl(DisplayValueFormatBar* self)
     lengthPrecisionSpin.setToolTip(_("Length value precision (number of decimals)"));
     self->addWidget(&lengthPrecisionSpin);
 
+    self->addSpacing();
     angleUnitCombo.addItem(_("Degree"), DisplayValueFormat::Degree);
     angleUnitCombo.addItem(_("Radian"), DisplayValueFormat::Radian);
     self->addWidget(&angleUnitCombo);
@@ -70,6 +73,11 @@ DisplayValueFormatBar::Impl::Impl(DisplayValueFormatBar* self)
     anglePrecisionSpin.setRange(0, 10);
     anglePrecisionSpin.setToolTip(_("Angle value precision (number of decimals)"));
     self->addWidget(&anglePrecisionSpin);
+
+    self->addSpacing();
+    coordinateSystemCombo.addItem(_("Right-handed"), DisplayValueFormat::RightHanded);
+    coordinateSystemCombo.addItem(_("Left-handed"), DisplayValueFormat::LeftHanded);
+    self->addWidget(&coordinateSystemCombo);
 
     onDisplayValueFormatChanged(false);
 
@@ -81,6 +89,8 @@ DisplayValueFormatBar::Impl::Impl(DisplayValueFormatBar* self)
         [this](int index){ updateAngleUnit(angleUnitCombo.itemData(index).toInt()); });
     anglePrecisionSpin.sigValueChanged().connect(
         [this](int decimals){ updateAngleDecimals(decimals); });
+    coordinateSystemCombo.sigCurrentIndexChanged().connect(
+        [this](int index){ updateCoordinateSystem(coordinateSystemCombo.itemData(index).toInt()); });
 }
 
 
@@ -97,6 +107,7 @@ void DisplayValueFormatBar::Impl::onDisplayValueFormatChanged(bool doBlockSignal
         lengthPrecisionSpin.blockSignals(true);
         angleUnitCombo.blockSignals(true);
         anglePrecisionSpin.blockSignals(true);
+        coordinateSystemCombo.blockSignals(true);
     }
 
     int numLengthUnits = lengthUnitCombo.count();
@@ -116,12 +127,21 @@ void DisplayValueFormatBar::Impl::onDisplayValueFormatChanged(bool doBlockSignal
         }
     }
     anglePrecisionSpin.setValue(displayValueFormat->angleDecimals());
+
+    int numCoordinateSystems = coordinateSystemCombo.count();
+    for(int i=0; i < numCoordinateSystems; ++i){
+        if(coordinateSystemCombo.itemData(i).toInt() == displayValueFormat->coordinateSystem()){
+            coordinateSystemCombo.setCurrentIndex(i);
+            break;
+        }
+    }
     
     if(doBlockSignals){
         lengthUnitCombo.blockSignals(false);
         lengthPrecisionSpin.blockSignals(false);
         angleUnitCombo.blockSignals(false);
         anglePrecisionSpin.blockSignals(false);
+        coordinateSystemCombo.blockSignals(false);
     }
 }
 
@@ -165,6 +185,14 @@ void DisplayValueFormatBar::Impl::updateAngleDecimals(int decimals)
 {
     displayValueFormat->setAngleDecimals(decimals);
     displayValueFormat->setAngleStep(pow(10.0, -decimals));
+    auto block = displayValueFormatConnection.scopedBlock();
+    displayValueFormat->notifyFormatChange();
+}
+
+
+void DisplayValueFormatBar::Impl::updateCoordinateSystem(int system)
+{
+    displayValueFormat->setCoordinateSystem(static_cast<DisplayValueFormat::CoordinateSystem>(system));
     auto block = displayValueFormatConnection.scopedBlock();
     displayValueFormat->notifyFormatChange();
 }

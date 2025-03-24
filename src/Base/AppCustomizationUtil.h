@@ -151,6 +151,11 @@ public:
     {
         displayValueFormat->setAngleStep(step);
     }
+
+    void setCoordinateSystem(DisplayValueFormat::CoordinateSystem system)
+    {
+        displayValueFormat->setCoordinateSystem(system);
+    }
 };
 
 }

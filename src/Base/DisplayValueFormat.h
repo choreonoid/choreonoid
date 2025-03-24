@@ -2,6 +2,7 @@
 #define CNOID_BASE_DISPLAY_VALUE_FORMAT_H
 
 #include <cnoid/Signal>
+#include <cnoid/EigenTypes>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -76,6 +77,57 @@ public:
     void setAngleStepForcedMode(bool on) { isAngleStepForcedMode_ = on; }
     bool isAngleStepForcedMode() const { return isAngleStepForcedMode_; }
 
+    enum CoordinateSystem { RightHanded, LeftHanded };
+    void setCoordinateSystem(CoordinateSystem system) { coordinateSystem_ = system; }
+    int coordinateSystem() const { return coordinateSystem_; }
+    bool isLeftHandedCoordinateSystem() const { return coordinateSystem_ == LeftHanded; }
+    bool isRightHandedCoordinateSystem() const { return coordinateSystem_ == RightHanded; }
+
+    void updateToDisplayCoordPosition(Vector3& p) const {
+        if(isLeftHandedCoordinateSystem()){
+            p.y() = -p.y();
+        }
+    }
+    void updateToRightHandedPosition(Vector3& p) const {
+        if(isLeftHandedCoordinateSystem()){
+            p.y() = -p.y();
+        }
+    }
+    void updateToDisplayCoordRotation(Matrix3& R) const {
+        if(isLeftHandedCoordinateSystem()){
+            R.transposeInPlace();
+        }
+    }
+    void updateToDisplayCoordRpy(Vector3& rpy) const {
+        if(isLeftHandedCoordinateSystem()){
+            rpy.x() = -rpy.x();
+            rpy.z() = -rpy.z();
+        }
+    }
+    void updateToRightHandedRpy(Vector3& rpy) const {
+        if(isLeftHandedCoordinateSystem()){
+            rpy.x() = -rpy.x();
+            rpy.z() = -rpy.z();
+        }
+    }
+    void updateToDisplayCoordRotation(Quaterniond& q) const {
+        if(isLeftHandedCoordinateSystem()){
+            q.x() = -q.x();
+            q.z() = -q.z();
+        }
+    }
+    void updateToRightHandedRotation(Quaterniond& q) const {
+        if(isLeftHandedCoordinateSystem()){
+            q.x() = -q.x();
+            q.z() = -q.z();
+        }
+    }
+
+    void updateToDisplayPosition(Vector3& p) const {
+        p *= ratioToDisplayLength();
+        updateToDisplayCoordPosition(p);
+    }
+
     void notifyFormatChange();
     SignalProxy<void()> sigFormatChanged() { return sigFormatChanged_; }
 
@@ -100,6 +152,7 @@ private:
     double radianStep_;
     bool isAngleDecimalsForcedMode_;
     bool isAngleStepForcedMode_;
+    int coordinateSystem_;
 
     Signal<void()> sigFormatChanged_;
 };

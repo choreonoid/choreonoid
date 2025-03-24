@@ -25,6 +25,8 @@ DisplayValueFormat::DisplayValueFormat()
     radianStep_ = 0.01;
     isAngleDecimalsForcedMode_ = false;
     isAngleStepForcedMode_ = false;
+
+    coordinateSystem_ = RightHanded;
 }
 
 
