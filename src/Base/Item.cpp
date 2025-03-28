@@ -351,6 +351,9 @@ Item* Item::Impl::cloneSubTreeIter(Item* clone, Item* parentClone, CloneMap& clo
     }
     if(clone){
         if(!clone->isSubItem() && parentClone){
+            if(self->hasAttribute(Attached)){
+                clone->setAttribute(Attached);
+            }
             parentClone->addChildItem(clone);
         }
         for(Item* child = self->childItem(); child; child = child->nextItem()){
