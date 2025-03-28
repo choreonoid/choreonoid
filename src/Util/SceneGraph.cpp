@@ -389,7 +389,6 @@ const BoundingBox& SgNode::boundingBox() const
 
 const BoundingBox& SgNode::untransformedBoundingBox() const
 {
-    setBoundingBoxCacheReady();
     return boundingBox();
 }
 
