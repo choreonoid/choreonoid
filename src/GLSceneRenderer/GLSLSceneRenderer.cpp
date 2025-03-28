@@ -500,7 +500,7 @@ public:
     void popProgram();
     void setPickColor(int pickIndex);
     void pushPickNode(SgNode* node);
-    int pushPickEndNode(SgNode* node, bool doSetPickColor);
+    int pushPickEndNode(SgNode* node);
     void popPickNode();
     void dispatchRenderingFunction(SgNode* node);
     void renderChildNodes(SgGroup* group);
@@ -1988,19 +1988,15 @@ void GLSLSceneRenderer::Impl::pushPickNode(SgNode* node)
 /**
    @return the index of the current object in picking
 */
-int GLSLSceneRenderer::Impl::pushPickEndNode(SgNode* node, bool doSetPickColor)
+int GLSLSceneRenderer::Impl::pushPickEndNode(SgNode* node)
 {
     if(!isRenderingPickingImage){
         return 0;
-    } else {
-        currentNodePath.push_back(node);
-        int pickIndex = pickingNodePathList.size();
-        pickingNodePathList.push_back(std::make_shared<SgNodePath>(currentNodePath));
-        if(doSetPickColor){
-            setPickColor(pickIndex);
-        }
-        return pickIndex;
     }
+    currentNodePath.push_back(node);
+    int pickIndex = pickingNodePathList.size();
+    pickingNodePathList.push_back(std::make_shared<SgNodePath>(currentNodePath));
+    return pickIndex;
 }
 
 
@@ -2238,7 +2234,7 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
             }
         }
         if(!isTransparent){
-            auto pickIndex = pushPickEndNode(shape, false);
+            auto pickIndex = pushPickEndNode(shape);
             renderShapeMain(shape, modelMatrixStack.back(), pickIndex);
             popPickNode();
         } else {
@@ -2246,7 +2242,7 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
                 SgShapePtr shapePtr = shape;
                 int matrixIndex = modelMatrixBuffer.size();
                 modelMatrixBuffer.push_back(modelMatrixStack.back());
-                auto pickIndex = pushPickEndNode(shape, false);
+                auto pickIndex = pushPickEndNode(shape);
                 transparentRenderingQueue.emplace_back(
                     [this, shapePtr, matrixIndex, pickIndex](){
                         renderShapeMain(shapePtr, modelMatrixBuffer[matrixIndex], pickIndex); });
@@ -2983,7 +2979,7 @@ void GLSLSceneRenderer::Impl::renderPlot
         }
     }        
     
-    auto pickIndex = pushPickEndNode(plot, false);
+    auto pickIndex = pushPickEndNode(plot);
 
     bool isTransparent = false;
     if(!isRenderingPickingImage){
