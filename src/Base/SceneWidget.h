@@ -182,6 +182,9 @@ public:
     SignalProxy<void(bool isFocused)> sigWidgetFocusChanged();
     SignalProxy<void()> sigAboutToBeDestroyed();
 
+    // For debug
+    void showPickingImageWindow();
+
     [[deprecated("Use fitViewToAll")]]
     void viewAll(double transitionTime = 0.0);
     [[deprecated("Use setCameraPositionLookingFor")]]

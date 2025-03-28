@@ -316,7 +316,6 @@ public:
     void fitViewTo(const SgNodePath& path, double transitionTime);
     void fitViewTo(const BoundingBox& bbox, double transitionTime);
 
-    void showPickingImageWindow();
     void onUpsideDownToggled(bool on);
     void onDisplayValueFormatChanged();
         
@@ -376,6 +375,9 @@ public:
     void restoreCurrentCamera(const Mapping& cameraData);
 
     void activateSystemNode(SgNode* node, bool on);
+
+    // For debug
+    void showPickingImageWindow();
 };
 
 }
@@ -1352,18 +1354,6 @@ void SceneWidget::Impl::fitViewTo(const BoundingBox& bbox, double transitionTime
     }
 
     lastClickedPoint = bbox.center();
-}
-
-
-void SceneWidget::Impl::showPickingImageWindow()
-{
-    if(glslRenderer){
-        if(!pickingImageWindow){
-            auto& vp = renderer->viewport();
-            pickingImageWindow = new ImageWindow(vp.w, vp.h);
-        }
-        pickingImageWindow->show();
-    }
 }
 
 
@@ -3423,5 +3413,23 @@ void SceneWidget::Impl::activateSystemNode(SgNode* node, bool on)
         systemGroup->addChildOnce(node, sgUpdate);
     } else {
         systemGroup->removeChild(node, sgUpdate);
+    }
+}
+
+
+void SceneWidget::showPickingImageWindow()
+{
+    impl->showPickingImageWindow();
+}
+
+
+void SceneWidget::Impl::showPickingImageWindow()
+{
+    if(glslRenderer){
+        if(!pickingImageWindow){
+            auto& vp = renderer->viewport();
+            pickingImageWindow = new ImageWindow(vp.w, vp.h);
+        }
+        pickingImageWindow->show();
     }
 }

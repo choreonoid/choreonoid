@@ -15,6 +15,12 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+constexpr bool EnableDebugPanel = false;
+
+}
+
 namespace cnoid {
 
 class SceneViewConfig::Impl
@@ -287,7 +293,7 @@ void SceneViewConfig::Impl::createConfigDialog()
     vbox->addLayout(new HSeparatorBox(new QLabel(_("Drawing"))));
     vbox->addWidget(self->getOrCreateDrawingPanel());
 
-    if(false){
+    if(EnableDebugPanel){
         vbox->addLayout(new HSeparatorBox(new QLabel(_("Debug"))));
         vbox->addWidget(self->getOrCreateDebugPanel());
     }

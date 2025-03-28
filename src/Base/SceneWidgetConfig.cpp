@@ -534,7 +534,7 @@ void SceneWidgetConfig::Impl::cancelFpsTest()
 void SceneWidgetConfig::Impl::showPickingImageWindow()
 {
     for(auto& widget : sceneWidgets){
-        //widget->showPickingImageWindow();
+        widget->showPickingImageWindow();
     }
 }
 
