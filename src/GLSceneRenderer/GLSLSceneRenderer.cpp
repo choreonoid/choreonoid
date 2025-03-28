@@ -1480,12 +1480,10 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fboForPicking);
     glReadBuffer(GL_COLOR_ATTACHMENT0);
 
-    GLfloat color[4];
-    glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, color);
-    if(isPickingImageOutputEnabled){
-        color[2] = 0.0f;
-    }
-    int pickIndex = (int)(color[0] * 255) + ((int)(color[1] * 255) << 8) + ((int)(color[2] * 255) << 16) - 1;
+    unsigned char data[4];
+    //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    int pickIndex = data[0] + (data[1] << 8) + (data[2] << 16) - 1;
 
     pickedNodePath.clear();
 
@@ -1977,7 +1975,7 @@ void GLSLSceneRenderer::Impl::setPickColor(int pickIndex)
     }
     currentSolidColorProgram->setColor(color);
 }
-        
+
 
 void GLSLSceneRenderer::Impl::pushPickNode(SgNode* node)
 {
