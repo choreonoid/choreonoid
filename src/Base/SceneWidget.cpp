@@ -1191,8 +1191,11 @@ void SceneWidget::Impl::advertiseSceneModeChangeInSubTree(SgNode* node)
         }
     }
     if(auto group = node->toGroupNode()){
-        for(auto& child : *group){
-            advertiseSceneModeChangeInSubTree(child);
+        // Note that the children may be changed by a node handler called from here
+        int childIndex = 0;
+        while(childIndex < group->numChildren()){
+            advertiseSceneModeChangeInSubTree(group->child(childIndex));
+            ++childIndex;
         }
     }
 }
