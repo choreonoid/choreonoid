@@ -28,6 +28,7 @@ Device::Device()
     ns->id = -1;
     ns->link = nullptr;
     T_local().setIdentity();
+    info_ = new Mapping;
 }
 
 
@@ -49,6 +50,7 @@ void Device::copySpecFrom(const Device* other)
     ns->id = other->ns->id;
     ns->name = other->ns->name;
     ns->T_local = other->ns->T_local;
+    info_ = other->info_;
 }
 
 
@@ -81,7 +83,7 @@ const Body* Device::body() const
 
 Body* Device::body()
 {
-    return ns->link ? ns->link->body() : nullptr;    
+    return ns->link ? ns->link->body() : nullptr;
 }
 
 
@@ -106,4 +108,10 @@ bool Device::on() const
 void Device::on(bool)
 {
 
+}
+
+
+void Device::resetInfo(Mapping* info)
+{
+    info_ = info;
 }

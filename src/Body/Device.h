@@ -4,6 +4,7 @@
 #include <cnoid/ClonableReferenced>
 #include <cnoid/EigenTypes>
 #include <cnoid/Signal>
+#include <cnoid/ValueTree>
 #include <string>
 #include "exportdecl.h"
 
@@ -17,7 +18,7 @@ class CNOID_EXPORT DeviceState : public ClonableReferenced
 protected:
     DeviceState() { }
     DeviceState(const DeviceState&) { }
-        
+
 public:
     virtual ~DeviceState() { }
 
@@ -61,11 +62,12 @@ class CNOID_EXPORT Device : public DeviceState
         Signal<void()> sigStateChanged;
         Signal<void(double time)> sigTimeChanged;
     };
-        
+
     NonState* ns;
+    MappingPtr info_;
 
 protected:
-    Device(); 
+    Device();
     Device(const Device& org, bool copyStateOnly = false);
     void copySpecFrom(const Device* other);
 
@@ -99,7 +101,7 @@ public:
 
     const Body* body() const;
     Body* body();
-    
+
     Isometry3& T_local() { return ns->T_local; }
     const Isometry3& T_local() const { return ns->T_local; }
     const Isometry3& localPosition() const { return ns->T_local; }
@@ -140,6 +142,11 @@ public:
     void notifyTimeChange(double time) {
         ns->sigTimeChanged(time);
     }
+
+    const Mapping* info() const { return info_; }
+    Mapping* info() { return info_;}
+
+    void resetInfo(Mapping* info);
 
     [[deprecated("Please use T_local() instead")]]
     const Isometry3& T_local_org() const { return ns->T_local; };

@@ -1731,6 +1731,8 @@ bool StdBodyLoader::Impl::readDevice(Device* device, const Mapping* info)
     device->setLocalRotation(T.linear());
     body->addDevice(device, currentLink);
 
+    device->resetInfo(info->cloneMapping());
+
     return false;
 }
 
