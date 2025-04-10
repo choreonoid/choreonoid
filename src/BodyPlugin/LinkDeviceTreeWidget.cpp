@@ -980,7 +980,8 @@ void LinkDeviceTreeWidget::Impl::restoreSubTreeStateIter(QTreeWidgetItem* parent
         if(auto item = dynamic_cast<LinkDeviceTreeItem*>(parentItem->child(i))){
             auto link = item->link();
             if(link){
-                item->setSelected(currentBodyItemInfo->linkSelection[link->index()]);
+                bool isSelected = currentBodyItemInfo->linkSelection[link->index()];
+                item->setSelected(isSelected);
             }
             if(item->childCount() > 0){ // Tree
                 bool expanded = item->isExpanded();
@@ -1352,6 +1353,7 @@ bool LinkDeviceTreeWidget::Impl::restoreState(const Archive& archive)
                 if(bodyItem){
                     int numLinks = bodyItem->body()->numLinks();
                     BodyItemInfoPtr info = getOrCreateBodyItemInfo(bodyItem);
+                    bool doRestoreTreeState = false;
                     if(auto& selected = *node.findListing("selected_links")){
                         info->setNumLinks(numLinks, true);
                         for(int i=0; i < selected.size(); ++i){
@@ -1369,6 +1371,7 @@ bool LinkDeviceTreeWidget::Impl::restoreState(const Archive& archive)
                                 currentBodyItemInfo->sigSelectionChanged();
                             }
                             sigLinkSelectionChanged();
+                            doRestoreTreeState = true;
                         }
                     }
                     if(auto& unexpanded = *node.findListing("unexpanded_links")){
@@ -1378,10 +1381,20 @@ bool LinkDeviceTreeWidget::Impl::restoreState(const Archive& archive)
                                 info->linkExpansions[index] = false;
                             }
                         }
+                        if(info == currentBodyItemInfo){
+                            doRestoreTreeState = true;
+                        }
                     }
-                    const Listing& expanded = *node.findListing("expanded_parts");
-                    for(int i=0; i < expanded.size(); ++i){
-                        info->expandedParts.insert(expanded[i]);
+                    if(auto& expanded = *node.findListing("expanded_parts")){
+                        for(int i=0; i < expanded.size(); ++i){
+                            info->expandedParts.insert(expanded[i]);
+                        }
+                        if(info == currentBodyItemInfo){
+                            doRestoreTreeState = true;
+                        }
+                    }
+                    if(doRestoreTreeState){
+                        restoreTreeState();
                     }
                 }
             }
