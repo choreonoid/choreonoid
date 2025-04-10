@@ -44,7 +44,8 @@ public:
     PositionWidget* self;
 
     Isometry3 T_last;
-    stdx::optional<Vector3> rpy_last;
+    Vector3 lastTranslationInput;
+    stdx::optional<Vector3> lastRpyInput;
     std::function<bool(const Isometry3& T)> callbackOnPositionInput;
     std::function<void()> callbackOnPositionInputFinished;
     //vector<QWidget*> inputPanelWidgets;
@@ -285,6 +286,7 @@ PositionWidget::Impl::Impl(PositionWidget* self_)
     mainvbox->addLayout(hbox);
 
     T_last.setIdentity();
+    lastTranslationInput.setZero();
     lastInputAttitudeMode = RollPitchYawMode;
 
     updateValueFormat(false);
@@ -551,8 +553,9 @@ void PositionWidget::Impl::displayPosition(const Isometry3& T)
             spin.setValue(lengthRatio * p[i]);
         }
     }
+    lastTranslationInput = p;
 
-    rpy_last = stdx::nullopt;
+    lastRpyInput = stdx::nullopt;
     Matrix3 R = T.linear();
     if(isRpyEnabled){
         Vector3 rpy;
@@ -567,7 +570,7 @@ void PositionWidget::Impl::displayPosition(const Isometry3& T)
             referenceRpy = rpy;
         }
         valueFormat->updateToDisplayCoordRpy(rpy);
-        rpy_last = rpy;
+        lastRpyInput = rpy;
         for(int i=0; i < 3; ++i){
             rpySpin[i].setValue(angleRatio * rpy[i]);
         }
@@ -665,20 +668,19 @@ void PositionWidget::Impl::onPositionInput(InputElementSet inputElements)
 
 void PositionWidget::Impl::onPositionInputRpy(InputElementSet inputElements)
 {
-    Vector3 p;
     Vector3 rpy;
-
     for(int i=0; i < 3; ++i){
         if(inputElements[TX + i]){
-            p[i] = xyzSpin[i].value() / lengthRatio;
+            lastTranslationInput[i] = xyzSpin[i].value() / lengthRatio;
         }
-        if(rpy_last && !inputElements[RX + i]){
-            rpy[i] = (*rpy_last)[i];
+        if(lastRpyInput && !inputElements[RX + i]){
+            rpy[i] = (*lastRpyInput)[i];
         } else {
             rpy[i] = rpySpin[i].value() / angleRatio;
         }
     }
-    rpy_last = rpy;
+    lastRpyInput = rpy;
+    Vector3 p = lastTranslationInput;
     valueFormat->updateToRightHandedPosition(p);
     valueFormat->updateToRightHandedRpy(rpy);
     T_last.translation() = p;
@@ -692,15 +694,15 @@ void PositionWidget::Impl::onPositionInputRpy(InputElementSet inputElements)
 
 void PositionWidget::Impl::onPositionInputQuaternion(InputElementSet inputElements)
 {
-    Vector3 p;
     for(int i=0; i < 3; ++i){
         if(inputElements[TX + i]){
-            p[i] = xyzSpin[i].value() / lengthRatio;
+            lastTranslationInput[i] = xyzSpin[i].value() / lengthRatio;
         }
     }
+    Vector3 p = lastTranslationInput;
     valueFormat->updateToRightHandedPosition(p);
     T_last.translation() = p;
-    rpy_last = stdx::nullopt;
+    lastRpyInput = stdx::nullopt;
     
     Eigen::Quaterniond quat =
         Eigen::Quaterniond(
