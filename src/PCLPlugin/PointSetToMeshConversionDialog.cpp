@@ -26,11 +26,18 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+bool doCloseDialogAfterConversion = false;
+
+}
+
 namespace cnoid {
 
 class PointSetToMeshConversionDialog::Impl
 {
 public:
+    PointSetToMeshConversionDialog* self;
     PointSetItemPtr targetPointSetItem;
 
     double normalEstimationSearchRadius;
@@ -84,6 +91,12 @@ PointSetToMeshConversionDialog* PointSetToMeshConversionDialog::instance()
 }
 
 
+void PointSetToMeshConversionDialog::setAutoCloseAfterConversion(bool on)
+{
+    doCloseDialogAfterConversion = on;
+}
+
+
 PointSetToMeshConversionDialog::PointSetToMeshConversionDialog()
 {
     impl = new Impl(this);
@@ -97,7 +110,8 @@ PointSetToMeshConversionDialog::~PointSetToMeshConversionDialog()
 
 
 PointSetToMeshConversionDialog::Impl::Impl(PointSetToMeshConversionDialog* self)
-    : buttonBox(self)
+    : self(self),
+      buttonBox(self)
 {
     self->setWindowTitle(_("Point Set to Mesh Conversion"));
 
@@ -297,6 +311,10 @@ void PointSetToMeshConversionDialog::Impl::convertTargetItems()
     }
     for(auto& button : buttonBox.buttons()){
         button->setEnabled(true);
+    }
+
+    if(doCloseDialogAfterConversion){
+        self->accept();
     }
 }
 

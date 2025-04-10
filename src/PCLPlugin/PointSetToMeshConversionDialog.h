@@ -15,6 +15,7 @@ class CNOID_EXPORT PointSetToMeshConversionDialog : public Dialog
 public:
     static void initializeClass(ExtensionManager* ext);
     static PointSetToMeshConversionDialog* instance();
+    static void setAutoCloseAfterConversion(bool on);
 
     void show(PointSetItem* targetItem = nullptr);
 
