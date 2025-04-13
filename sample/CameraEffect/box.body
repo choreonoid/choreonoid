@@ -1,0 +1,46 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+
+name: "Box"
+rootLink: base
+links:
+  -
+    name: base
+    jointType: free
+    translation: [ 0, 0, 0.06 ]
+    mass: 1.0
+    inertia: [
+      0.01, 0,       0,
+      0,       0.01, 0,
+      0,       0,       0.01 ]
+    elements:
+      -
+        type: Shape
+        geometry: { type: Box, size: [ 0.12, 0.12, 0.12 ] }
+        appearance:
+          material:
+            diffuseColor: [ 0.0, 1.0, 0.0 ]
+      - &camera
+        type: Camera
+        name: Nofilter
+        translation: [ 0.06, 0, 0 ]
+        rotation: [ [ 1, 0, 0, 90 ], [ 0, 1, 0, -90 ] ]
+        format: COLOR
+        fieldOfView: 62
+        nearClipDistance: 0.02
+        width: 640
+        height: 480
+        frameRate: 30
+        apply_camera_effect: true
+        elements:
+          -
+            type: Shape
+            rotation: [ 1, 0, 0, 90 ]
+            geometry: { type: Cylinder, radius: 0.03, height: 0.02 }
+            appearance: { material: { diffuseColor: [ 0.2, 0.2, 0.8 ], transparency: 0.5 } }
+      - { <<: *camera, name: Salt, salt_amount: 0.3, salt_chance: 1.0 }
+      - { <<: *camera, name: Pepper, pepper_amount: 0.3, pepper_chance: 1.0 }
+      - { <<: *camera, name: HSV, hsv: [ 0.3, 0.0, 0.0 ] }
+      - { <<: *camera, name: RGB, rgb: [ 0.3, 0.0, 0.0 ] }
+      - { <<: *camera, name: Barrel, coef_b: -1.0, coef_d: 1.5 }
+      - { <<: *camera, name: Mosaic, mosaic_chance: 0.5, kernel: 16 }

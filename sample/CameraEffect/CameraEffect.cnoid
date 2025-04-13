@@ -1,0 +1,528 @@
+items:
+  id: 0
+  name: "RootItem"
+  plugin: Base
+  class: RootItem
+  is_builtin_item: true
+  children:
+    -
+      id: 1
+      name: "World"
+      plugin: Body
+      class: WorldItem
+      data:
+        collision_detection: false
+        collision_detector: AISTCollisionDetector
+        default_material_table_file: "${SHARE}/default/materials.yaml"
+      children:
+        -
+          id: 2
+          name: "Box"
+          plugin: Body
+          class: BodyItem
+          is_checked: true
+          data:
+            file: "box.body"
+            format: CHOREONOID-BODY
+            rootPosition: [ -2, -0.5, 0.0597500037 ]
+            rootAttitude: [
+              1, -1.86813724e-09, -4.48447678e-08,
+              1.86813775e-09, 1, 1.13733267e-08,
+              4.48447678e-08, -1.13733268e-08, 1 ]
+            initialRootPosition: [ -2, -0.5, 0.0597500037 ]
+            initialRootAttitude: [
+              1, -1.86813724e-09, -4.48447678e-08,
+              1.86813775e-09, 1, 1.13733267e-08,
+              4.48447678e-08, -1.13733268e-08, 1 ]
+            fix_root: false
+            collisionDetection: true
+            selfCollisionDetection: false
+            lock_location: false
+            scene_sensitive: true
+          children:
+            -
+              id: 3
+              name: "SensorVisualizer"
+              plugin: Body
+              class: SensorVisualizerItem
+              data:
+                sub_items:
+                  -
+                    class: CameraImageVisualizerItem
+                    name: Nofilter
+                    is_checked: true
+                  -
+                    class: CameraImageVisualizerItem
+                    name: Salt
+                    is_checked: true
+                  -
+                    class: CameraImageVisualizerItem
+                    name: Pepper
+                    is_checked: true
+                  -
+                    class: CameraImageVisualizerItem
+                    name: HSV
+                    is_checked: true
+                  -
+                    class: CameraImageVisualizerItem
+                    name: RGB
+                    is_checked: true
+                  -
+                    class: CameraImageVisualizerItem
+                    name: Barrel
+                    is_checked: true
+                  -
+                    class: CameraImageVisualizerItem
+                    name: Mosaic
+                    is_checked: true
+        -
+          id: 4
+          name: "Labo1"
+          plugin: Body
+          class: BodyItem
+          is_checked: true
+          data:
+            file: "${SHARE}/model/Labo1/Labo1.body"
+            format: CHOREONOID-BODY
+            rootPosition: [ 0, 0, 0 ]
+            rootAttitude: [
+              1, 0, 0,
+              0, 1, 0,
+              0, 0, 1 ]
+            jointDisplacements: [ 0 ]
+            initialRootPosition: [ 0, 0, 0 ]
+            initialRootAttitude: [
+              1, 0, 0,
+              0, 1, 0,
+              0, 0, 1 ]
+            fix_root: true
+            collisionDetection: true
+            selfCollisionDetection: false
+            lock_location: false
+            scene_sensitive: true
+        -
+          id: 5
+          name: "AISTSimulator"
+          plugin: Body
+          class: AISTSimulatorItem
+          data:
+            time_step: 0.001
+            realtime_sync_mode: compensatory
+            recording: tail
+            time_range_mode: unlimited
+            time_length: 300
+            is_active_control_time_range_mode: false
+            output_all_link_positions: false
+            output_device_states: true
+            use_controller_threads: true
+            record_collision_data: false
+            controller_options: ""
+            block_scene_view_edit_mode: false
+            dynamicsMode: "Forward dynamics"
+            integrationMode: semi-implicit_euler
+            gravity: [ 0, 0, -9.80665 ]
+            min_friction_coefficient: 0
+            max_friction_coefficient: 100
+            cullingThresh: 0.005
+            contactCullingDepth: 0.05
+            errorCriterion: 0.001
+            maxNumIterations: 25
+            contactCorrectionDepth: 0.00025
+            contactCorrectionVelocityRatio: 5
+            kinematicWalking: false
+            2Dmode: false
+            oldAccelSensorMode: false
+          children:
+            -
+              id: 6
+              name: "GLVisionSimulator"
+              plugin: GLVisionSimulator
+              class: GLVisionSimulatorItem
+              data:
+                enabled: true
+                max_frame_rate: 1000
+                max_latency: 1
+                record_vision_data: true
+                thread_mode: Sensor
+                best_effort: true
+                all_scene_objects: true
+                range_sensor_precision_ratio: 2
+                depth_error: 0
+                background_color: [ 0, 0, 0 ]
+                enable_head_light: true
+                enable_world_light: true
+                enable_additional_lights: true
+                antialiasing: false
+views:
+  -
+    id: 0
+    plugin: Base
+    class: GeneralSliderView
+  -
+    id: 1
+    name: "Nofilter"
+    plugin: Base
+    class: ImageView
+    mounted: true
+    state:
+      imageable_item: [ 3, "Nofilter" ]
+  -
+    id: 2
+    name: "Salt"
+    plugin: Base
+    class: ImageView
+    mounted: true
+    state:
+      imageable_item: [ 3, "Salt" ]
+  -
+    id: 3
+    name: "Pepper"
+    plugin: Base
+    class: ImageView
+    mounted: true
+    state:
+      imageable_item: [ 3, "Pepper" ]
+  -
+    id: 4
+    name: "HSV"
+    plugin: Base
+    class: ImageView
+    mounted: true
+    state:
+      imageable_item: [ 3, "HSV" ]
+  -
+    id: 5
+    name: "RGB"
+    plugin: Base
+    class: ImageView
+    mounted: true
+    state:
+      imageable_item: [ 3, "RGB" ]
+  -
+    id: 6
+    name: "Barrel"
+    plugin: Base
+    class: ImageView
+    mounted: true
+    state:
+      imageable_item: [ 3, "Barrel" ]
+  -
+    id: 7
+    name: "Mosaic"
+    plugin: Base
+    class: ImageView
+    mounted: true
+    state:
+      imageable_item: [ 3, "Mosaic" ]
+  -
+    id: 8
+    plugin: Base
+    class: ItemPropertyView
+    mounted: true
+  -
+    id: 9
+    plugin: Base
+    class: ItemTreeView
+    mounted: true
+    state:
+      expanded: [ 1, 2, 3, 5 ]
+  -
+    id: 10
+    plugin: Base
+    class: LocationView
+    mounted: true
+    state:
+      show_rpy: true
+      unique_rpy: false
+      show_quaternion: false
+      show_rotation_matrix: false
+      coordinate: world
+  -
+    id: 11
+    plugin: Base
+    class: MessageView
+    mounted: true
+  -
+    id: 12
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state:
+      operation_mode: view
+      viewpoint_operation_mode: third_person
+      focus_position: [ -0.869827, -0.182721, -0.00317891 ]
+      visible_polygon_elements: [ face ]
+      highlighting: false
+      collision_lines: false
+      cameras:
+        -
+          camera: [ System, Perspective ]
+          is_current: true
+          eye: [ -3.81237, -1.67073, 1.47002 ]
+          direction: [ 0.90123, 0.386613, -0.195741 ]
+          up: [ 0.179887, 0.0771687, 0.980656 ]
+        -
+          camera: [ System, Orthographic ]
+          ortho_height: 20
+      lighting_mode: normal
+      culling_mode: enabled
+      shading_mode: smooth
+      world_light: true
+      world_light_intensity: 0.5
+      ambient_light: true
+      ambient_light_intensity: 0.5
+      head_light: true
+      head_light_intensity: 0.5
+      world_light_shadow: true
+      shadow_lights:
+        - { index: 0, enabled: false }
+        - { index: 1, enabled: false }
+      background_color: [ 0.1, 0.1, 0.3 ]
+      line_width: 1
+      point_size: 1
+      field_of_view: 35
+      clip_distances: [ 0.04, 200 ]
+      floorGrid: true
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGrid: false
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      yzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      xy_grid_color: [ 0.9, 0.9, 0.9 ]
+      xz_grid_color: [ 0.9, 0.9, 0.9 ]
+      yz_grid_color: [ 0.9, 0.9, 0.9 ]
+  -
+    id: 13
+    plugin: Body
+    class: JointDisplacementView
+    mounted: true
+    state:
+      show_joint_ids: true
+      show_joint_names: false
+      overlap_joint_names: false
+      show_sliders: true
+      show_dials: false
+      show_phases: true
+      limit_ranges: false
+      show_selected_joints: false
+  -
+    id: 14
+    plugin: Body
+    class: LinkDeviceListView
+    mounted: true
+    state:
+      element_type: all
+      listing_mode: list
+      current_body_item: 2
+      body_items:
+        -
+          id: 2
+          selected_links: [ 0 ]
+  -
+    id: 15
+    plugin: Body
+    class: LinkPositionView
+    mounted: true
+    state:
+      coordinate_mode: world
+      preferred_coordinate_mode: base
+      show_rpy: true
+      unique_rpy: false
+      show_quaternion: false
+      show_rotation_matrix: false
+      target_link_type: ik_link
+  -
+    id: 16
+    plugin: Body
+    class: LinkPropertyView
+    mounted: true
+  -
+    id: 17
+    plugin: Python
+    class: PythonConsoleView
+    mounted: true
+toolbars:
+  "TimeBar":
+    current_time: 0
+    min_time: 0
+    max_time: 30
+    frame_rate: 1000
+    playback_frame_rate: 60
+    idle_loop_driven_mode: false
+    playback_speed_ratio: 1
+    sync_to_ongoing_updates: true
+    auto_expansion: true
+  "LeggedBodyBar":
+    stanceWidth: 0.15
+  "KinematicsBar":
+    forward_kinematics: true
+    inverse_kinematics: true
+    preset_kinematics: true
+    enablePositionDragger: true
+    penetrationBlock: false
+    collisionLinkHighlight: false
+    snapDistance: 0.025
+    penetrationBlockDepth: 0.0005
+    lazyCollisionDetectionMode: true
+Body:
+  "BodySelectionManager":
+    current_body_item: 2
+    current_link: "base"
+  "KinematicFaultChecker":
+    checkJointPositions: true
+    angleMargin: 0
+    translationMargin: 0
+    checkJointVelocities: true
+    velocityLimitRatio: 100
+    targetJoints: all
+    checkSelfCollisions: true
+    onlyTimeBarRange: false
+  "OperableSceneBody":
+    scene_bodies:
+      -
+        body_item: 2
+        show_cm: false
+        show_cm_projection: false
+        show_zmp: false
+      -
+        body_item: 4
+        show_cm: false
+        show_cm_projection: false
+        show_zmp: false
+  "SplineFilterDialog":
+    isInputFrameRateSpecified: false
+    inputFrameRate: 200
+    isOutputFrameRateSpecified: false
+    outputFrameRate: 200
+viewAreas:
+  -
+    type: embedded
+    tabs: true
+    contents:
+      type: splitter
+      orientation: horizontal
+      sizes: [ 1887, 599 ]
+      children:
+        -
+          type: splitter
+          orientation: horizontal
+          sizes: [ 488, 1395 ]
+          children:
+            -
+              type: splitter
+              orientation: vertical
+              sizes: [ 704, 704 ]
+              children:
+                -
+                  type: pane
+                  views: [ 9 ]
+                -
+                  type: pane
+                  views: [ 8, 16 ]
+                  current: 8
+            -
+              type: splitter
+              orientation: vertical
+              sizes: [ 1056, 352 ]
+              children:
+                -
+                  type: splitter
+                  orientation: vertical
+                  sizes: [ 526, 526 ]
+                  children:
+                    -
+                      type: splitter
+                      orientation: horizontal
+                      sizes: [ 696, 695 ]
+                      children:
+                        -
+                          type: splitter
+                          orientation: horizontal
+                          sizes: [ 346, 346 ]
+                          children:
+                            -
+                              type: pane
+                              views: [ 12 ]
+                            -
+                              type: pane
+                              views: [ 1 ]
+                        -
+                          type: splitter
+                          orientation: horizontal
+                          sizes: [ 346, 345 ]
+                          children:
+                            -
+                              type: pane
+                              views: [ 2 ]
+                            -
+                              type: pane
+                              views: [ 3 ]
+                    -
+                      type: splitter
+                      orientation: horizontal
+                      sizes: [ 696, 695 ]
+                      children:
+                        -
+                          type: splitter
+                          orientation: horizontal
+                          sizes: [ 346, 346 ]
+                          children:
+                            -
+                              type: pane
+                              views: [ 4 ]
+                            -
+                              type: pane
+                              views: [ 5 ]
+                        -
+                          type: splitter
+                          orientation: horizontal
+                          sizes: [ 346, 345 ]
+                          children:
+                            -
+                              type: pane
+                              views: [ 6 ]
+                            -
+                              type: pane
+                              views: [ 7 ]
+                -
+                  type: pane
+                  views: [ 11, 17 ]
+                  current: 11
+        -
+          type: splitter
+          orientation: vertical
+          sizes: [ 310, 1098 ]
+          children:
+            -
+              type: pane
+              views: [ 10 ]
+            -
+              type: splitter
+              orientation: vertical
+              sizes: [ 428, 666 ]
+              children:
+                -
+                  type: pane
+                  views: [ 15 ]
+                -
+                  type: pane
+                  views: [ 14, 13 ]
+                  current: 14
+layoutOfToolBars:
+  rows:
+    -
+      - { name: "FileBar", x: 0, priority: 0 }
+      - { name: "ScriptBar", x: 0, priority: 1 }
+      - { name: "SimulationBar", x: 0, priority: 2 }
+      - { name: "TimeBar", x: 0, priority: 0 }
+    -
+      - { name: "BodyBar", x: 0, priority: 0 }
+      - { name: "KinematicsBar", x: 0, priority: 1 }
+      - { name: "SceneBar", x: 0, priority: 2 }
+      - { name: "GraphBar", x: 0, priority: 3 }
+      - { name: "CaptureBar", x: 0, priority: 4 }
+      - { name: "DisplayValueFormatBar", x: 0, priority: 5 }
+      - { name: "ImageViewBar", x: 1600, priority: 0 }

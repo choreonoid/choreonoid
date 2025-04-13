@@ -13,6 +13,7 @@ if(ENABLE_GUI)
   add_subdirectory(GLVisionSimulatorPlugin)
   add_subdirectory(URDFPlugin)
   add_subdirectory(ManipulatorPlugin)
+  add_subdirectory(GLCameraEffectPlugin)
 
   add_subdirectory(PoseSeqPlugin)
   add_subdirectory(BalancerPlugin)
