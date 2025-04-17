@@ -1962,13 +1962,12 @@ void BodyItem::getDependentFiles(std::vector<std::string>& out_files)
     auto& fp = filePath();
     if(!fp.empty()){
         out_files.push_back(fp);
-
-        auto util = impl->getOrCreateRenderableItemUtil();
-        for(auto& link : impl->body->links()){
-            util->getSceneFilesForArchiving(link->shape(), out_files);
-            if(link->hasDedicatedCollisionShape()){
-                util->getSceneFilesForArchiving(link->collisionShape(), out_files);
-            }
+    }
+    auto util = impl->getOrCreateRenderableItemUtil();
+    for(auto& link : impl->body->links()){
+        util->getSceneFilesForArchiving(link->shape(), out_files);
+        if(link->hasDedicatedCollisionShape()){
+            util->getSceneFilesForArchiving(link->collisionShape(), out_files);
         }
     }
 }
