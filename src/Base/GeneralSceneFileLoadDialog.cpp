@@ -133,9 +133,8 @@ void GeneralSceneFileLoadDialog::OptionSet::setLengthUnitHint(AbstractSceneLoade
     if(panel_){
         auto& combo = panel_->unitCombo;
         combo.setCurrentIndex(combo.findData(hint));
-    } else {
-        lengthUnitHint_ = hint;
     }
+    lengthUnitHint_ = hint;
 }
 
 
@@ -144,9 +143,8 @@ void GeneralSceneFileLoadDialog::OptionSet::setUpperAxisHint(SceneLoader::UpperA
     if(panel_){
         auto& combo = panel_->axisCombo;
         combo.setCurrentIndex(combo.findData(hint));
-    } else {
-        upperAxisHint_ = hint;
     }
+    upperAxisHint_ = hint;
 }
 
 
