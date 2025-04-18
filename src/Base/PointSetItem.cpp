@@ -363,15 +363,13 @@ Affine3 PointSetItem::getTransform() const
 
 SgPointSetPtr PointSetItem::getTransformedPointSet() const
 {
-    return impl->createTransformedPointSet(getScaleTransform());
+    return impl->createTransformedPointSet(getTransform());
 }
 
 
 SgPointSetPtr PointSetItem::getScaledPointSet() const
 {
-    Affine3 T = Affine3::Identity();
-    T.linear() = getScaleMatrix();
-    return impl->createTransformedPointSet(T);
+    return impl->createTransformedPointSet(getScaleTransform());
 }
 
 
@@ -386,10 +384,29 @@ SgPointSetPtr PointSetItem::Impl::createTransformedPointSet(const Affine3& T)
         for(int i=0; i < n; ++i){
             points[i] = (T * (*orgPoints)[i].cast<Isometry3::Scalar>()).cast<SgVertexArray::Scalar>();
         }
+        if(pointSet->hasColors()){
+            transformed->setColors(new SgColorArray(*pointSet->colors()));
+        }
         if(pointSet->hasValidBoundingBoxCache()){
             auto bbox = pointSet->boundingBox();
             bbox.transform(T);
             transformed->setBoundingBox(bbox);
+        }
+    }
+    return transformed;
+}
+
+
+std::vector<Vector3> PointSetItem::getTransformedVertices() const
+{
+    std::vector<Vector3> transformed;
+    SgVertexArray* orgPoints = impl->pointSet->vertices();
+    if(orgPoints){
+        const int n = orgPoints->size();
+        transformed.resize(n);
+        Affine3 T = getTransform();
+        for(int i=0; i < n; ++i){
+            transformed[i] = T * (*orgPoints)[i].cast<Isometry3::Scalar>();
         }
     }
     return transformed;
@@ -733,6 +750,7 @@ bool PointSetItem::store(Archive& archive)
     archive.writeFileInformation(this);
 
     ScenePointSet* scene = impl->scene;
+    archive.setFloatingNumberFormat("%.15g");
     write(archive, "translation", Vector3(scene->translation()));
     writeDegreeAngleAxis(archive, "rotation", AngleAxis(scene->rotation()));
     if(impl->scale != Vector3::Ones()){
@@ -743,6 +761,7 @@ bool PointSetItem::store(Archive& archive)
     // The old format is deprecated, and writing the following element should be omitted in the future.
     archive.write("angle_unit", "degree");
     archive.write("rendering_mode", scene->renderingMode.selectedSymbol());
+    archive.setFloatingNumberFormat("%g");
     archive.write("point_size", pointSize());
     archive.write("voxel_size", scene->voxelSize);
     archive.write("is_editable", isEditable());

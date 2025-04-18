@@ -47,6 +47,7 @@ public:
 
     SgPointSetPtr getTransformedPointSet() const;
     SgPointSetPtr getScaledPointSet() const;
+    std::vector<Vector3> getTransformedVertices() const;
 
     enum RenderingMode {
         POINT, VOXEL, N_RENDERING_MODES
