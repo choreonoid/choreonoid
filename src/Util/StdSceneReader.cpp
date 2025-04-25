@@ -1667,8 +1667,16 @@ StdSceneReader::Resource StdSceneReader::readResourceNode(Mapping& info)
 StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info)
 {
     Resource resource;
-
     resource.uri = (*info)["uri"].toString();
+
+    // Convert to the absolute path when a path variable is used
+    if(resource.uri.size() >= 2 && resource.uri.find("${") == 0){
+        ensureUriSchemeProcessor();
+        resource.uri = uriSchemeProcessor->getFilePath(resource.uri);
+        if(resource.uri.empty()){
+            info->throwException(uriSchemeProcessor->errorMessage());
+        }
+    }
 
     auto fragmentNode = info->find({ "fragment", "node" });
     if(fragmentNode->isValid()){
