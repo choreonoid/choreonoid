@@ -1069,6 +1069,7 @@ bool LinkOverwriteItem::Impl::store(Archive& archive)
     }
     
     if(overwriteElementSet & Shape){
+        bool isNewSceneWriter = false;
         if(!sceneWriter){
             sceneWriter = sharedSceneWriter.lock();
             if(!sceneWriter){
@@ -1076,7 +1077,11 @@ bool LinkOverwriteItem::Impl::store(Archive& archive)
                 sceneWriter->setTopGroupNodeSkippingEnabled(true);
                 sceneWriter->setExtModelFileMode(StdSceneWriter::LinkToOriginalModelFiles);
                 sharedSceneWriter = sceneWriter;
+                isNewSceneWriter = true;
             }
+        }
+        if(!isNewSceneWriter){
+            sceneWriter->clear();
         }
         sceneWriter->setFilePathVariableProcessor(archive.filePathVariableProcessor());
 
@@ -1108,6 +1113,7 @@ bool LinkOverwriteItem::Impl::store(Archive& archive)
 
 shared_ptr<StdSceneReader> LinkOverwriteItem::Impl::ensureSceneReader(const Archive& archive)
 {
+    bool isNewSceneReader = false;
     if(!sceneReader){
         sceneReader = sharedSceneReader.lock();
         if(!sceneReader){
@@ -1115,7 +1121,11 @@ shared_ptr<StdSceneReader> LinkOverwriteItem::Impl::ensureSceneReader(const Arch
             sceneReader->setGroupOptimizationEnabled(false); // temporary
             sceneReader->setAngleUnit(StdSceneReader::DEGREE);
             sharedSceneReader = sceneReader;
+            isNewSceneReader = true;
         }
+    }
+    if(!isNewSceneReader){
+        sceneReader->clear();
     }
     sceneReader->setFilePathVariableProcessor(archive.filePathVariableProcessor());
     return sceneReader;
