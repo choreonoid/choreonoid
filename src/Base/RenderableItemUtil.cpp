@@ -104,35 +104,13 @@ bool RenderableItemUtil::Impl::getSceneFilesForArchiving(SgObject* object, std::
 
 void RenderableItemUtil::Impl::getSceneFiles(SgObject* object, std::vector<std::string>& out_files)
 {
-    string filePath = object->localFilePath();
     string absolutePath = object->localFileAbsolutePath();
-    fs::path uniformPath;
-    bool isAbsolutePathOnly = false;
-                          
-    if(!filePath.empty()){
-        if(fs::path(fromUTF8(filePath)).is_absolute()){
-            isAbsolutePathOnly = true;
-        } else {
-            uniformPath = getNativeUniformPath(fromUTF8(absolutePath));
-            if(uniformPath != itemFilePath){
-                out_files.push_back(absolutePath);
-            }
-        }
-    } else if(object->hasAbsoluteUri()){
-        isAbsolutePathOnly = true;
-    }
-    
-    if(isAbsolutePathOnly){
-        if(uniformPath.empty()){
-            uniformPath = getNativeUniformPath(fromUTF8(absolutePath));
-        }
+    if(!absolutePath.empty()){
+        fs::path uniformPath = getNativeUniformPath(fromUTF8(absolutePath));
         if(uniformPath != itemFilePath){
-            mout->putWarningln(
-                formatR(_("The file \"{0}\" on which {1} depends is not relocatable and will be lost in the archive."),
-                        object->absoluteUri(), item->displayName()));
+            out_files.push_back(absolutePath);
         }
     }
-
     int n = object->numChildObjects();
     for(int i=0; i < n; ++i){
         getSceneFiles(object->childObject(i), out_files);
