@@ -21,9 +21,7 @@ public:
     void setUnpackingDirectory(const std::string& directory);
     const std::string& unpackingDirectory() const;
     bool packProjectToZipFile(const std::string& filename);
-    bool packProjectToZipFile(const std::string& filename, const std::string& projectName);
     bool packProjectToDirectory(const std::string& packingDirectory);
-    bool packProjectToDirectory(const std::string& packingDirectory, const std::string& projectName);
     bool loadPackedProject(const std::string& projectPackFile);
     bool unpackProject(const std::string& projectPackFile);
     bool loadUnpackedProject(const std::string& projectFile);

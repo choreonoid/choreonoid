@@ -152,12 +152,6 @@ bool ProjectPacker::packProjectToZipFile(const std::string& filename)
 }
 
 
-bool ProjectPacker::packProjectToZipFile(const std::string& filename, const std::string& projectName)
-{
-    return impl->packProjectToZipFile(filename, projectName);
-}
-
-
 bool ProjectPacker::Impl::packProjectToZipFile(const std::string& filename, const std::string& projectName)
 {
     auto directory = filename + ".tmp";
@@ -175,12 +169,6 @@ bool ProjectPacker::packProjectToDirectory(const std::string& packingDirectory)
 {
     fs::path dirPath(fromUTF8(packingDirectory));
     string projectName = toUTF8(dirPath.filename().string());
-    return impl->packProjectToDirectory(packingDirectory, projectName);
-}
-
-
-bool ProjectPacker::packProjectToDirectory(const std::string& packingDirectory, const std::string& projectName)
-{
     return impl->packProjectToDirectory(packingDirectory, projectName);
 }
 
