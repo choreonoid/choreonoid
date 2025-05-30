@@ -5,6 +5,9 @@
 #include "ImageableItem.h"
 #include "Archive.h"
 #include "ComboBox.h"
+#include "Action.h"
+#include "ActionGroup.h"
+#include "MenuManager.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/Image>
 #include <QImage>
@@ -152,6 +155,32 @@ void ImageView::onFocusChanged(bool on)
     if(on){
         ImageViewBar::instance()->impl->onFocusViewChanged(this);
     }
+}
+
+
+void ImageView::onAttachedMenuRequest(MenuManager& menuManager)
+{
+    this->setFocus();
+
+    menuManager.setPath("/").setPath(_("Select an imageable item"));
+    auto checkGroup = new ActionGroup(menuManager.topMenu());
+    auto ivb = ImageViewBar::instance();
+    for(auto name : ivb->imageNames()) {
+        menuManager.addRadioItem(checkGroup, name.c_str());
+    }
+    int currentIndex = ivb->indexOfCurrentImage();
+    checkGroup->actions()[currentIndex]->setChecked(true);
+    checkGroup->sigTriggered().connect(
+        [this, checkGroup](QAction* check){
+            int index = checkGroup->actions().indexOf(check);
+            ImageViewBar::instance()->setCurrentImage(index); });
+
+    menuManager.setPath("/");
+    auto adjust = menuManager.addCheckItem(_("Adjust image size according to view"));
+    adjust->setChecked(ivb->imageSizeAdjusted());
+    adjust->sigToggled().connect([this](bool on){ ImageViewBar::instance()->setImageSizeAdjusted(on); });
+    menuManager.setPath("/");
+    menuManager.addSeparator();
 }
 
 
@@ -376,6 +405,41 @@ ImageableItem* ImageViewBar::Impl::getSelectedImageableItem()
 }
 
 
+vector<string> ImageViewBar::imageNames() const
+{
+    vector<string> names;
+    for(int i = 0; i < impl->imageCombo->count(); ++i) {
+        string name = impl->imageCombo->itemText(i).toStdString();
+        names.push_back(name);
+    }
+    return names;
+}
+
+
+void ImageViewBar::setCurrentImage(int index)
+{
+    impl->imageCombo->setCurrentIndex(index);
+}
+
+
+int ImageViewBar::indexOfCurrentImage() const
+{
+    return impl->imageCombo->currentIndex();
+}
+
+
+void ImageViewBar::setImageSizeAdjusted(bool on)
+{
+    impl->onAdjustSizeClicked(on);
+}
+
+
+bool ImageViewBar::imageSizeAdjusted()
+{
+    return impl->adjustSizeToggle->isChecked();
+}
+
+
 ImageableItem* ImageViewBar::Impl::getImageableItem(int index)
 {
     const QVariant qv = imageCombo->itemData(index);
@@ -390,7 +454,7 @@ ImageableItem* ImageViewBar::Impl::getImageableItem(int index)
 void ImageViewBar::Impl::onFocusViewChanged(ImageView* imageView)
 {
     targetView = imageView;
-    
+
     if(targetView){
         if(auto imageable = targetView->getImageableItem()){
             int index = imageCombo->findData(QVariant::fromValue(imageable));

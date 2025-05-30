@@ -3,6 +3,8 @@
 
 #include "View.h"
 #include "ToolBar.h"
+#include <string>
+#include <vector>
 #include "exportdecl.h"
 
 class QImage;
@@ -11,13 +13,13 @@ namespace cnoid {
 
 class Image;
 class ImageableItem;
-    
+
 class CNOID_EXPORT ImageView : public View
 {
 public:
     static void initializeClass(ExtensionManager* ext);
     static ImageView* instance();
-        
+
     ImageView();
     ~ImageView();
 
@@ -37,6 +39,7 @@ public:
 protected:
     virtual void onDeactivated() override;
     virtual void onFocusChanged(bool on) override;
+    virtual void onAttachedMenuRequest(MenuManager& menuManager) override;
 
 private:
     class Impl;
@@ -51,6 +54,11 @@ public:
     static ImageViewBar* instance();
 
     ImageableItem* getSelectedImageableItem();
+    std::vector<std::string> imageNames() const;
+    void setCurrentImage(int index);
+    int indexOfCurrentImage() const;
+    void setImageSizeAdjusted(bool on);
+    bool imageSizeAdjusted();
 
 private:
     class Impl;
