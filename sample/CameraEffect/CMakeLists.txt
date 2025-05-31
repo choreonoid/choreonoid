@@ -18,3 +18,6 @@ install(FILES ${models} DESTINATION ${CNOID_SHARE_SUBDIR}/CameraEffect)
 install(FILES
   CameraEffect.cnoid
   DESTINATION ${CNOID_SHARE_SUBDIR}/CameraEffect)
+
+add_subdirectory(SampleCameraEffectPlugin)
+choreonoid_add_simple_controller(SampleCameraEffectController SampleCameraEffectController.cpp)

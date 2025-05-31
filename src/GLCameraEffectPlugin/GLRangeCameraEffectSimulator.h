@@ -5,6 +5,7 @@
 #include <cnoid/GLRangeCameraSimulator>
 #include <cnoid/GLVisionSimulatorItem>
 #include <cnoid/RangeCamera>
+#include <cnoid/ConnectionSet>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -27,6 +28,7 @@ protected:
     std::shared_ptr<Image> image;
     ImageFilter filter;
     bool applyCameraEffect;
+    ScopedConnection connection;
 };
 
 }  // namespace cnoid

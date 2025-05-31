@@ -18,9 +18,12 @@ bool GLCameraEffectSimulator::doInitialize(
     //     return false;
     // }
 
+    connection.disconnect();
     applyCameraEffect = camera->info()->get("apply_camera_effect", false);
     if (applyCameraEffect) {
         filter.readCameraInfo(camera->info());
+        connection = camera->sigInfoChanged().connect(
+            [&](){ filter.readCameraInfo(camera->info()); });
     }
 
     double frameRate = std::max(0.1,

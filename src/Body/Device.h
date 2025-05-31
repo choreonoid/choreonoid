@@ -49,7 +49,20 @@ public:
 typedef ref_ptr<DeviceState> DeviceStatePtr;
 
 
-class CNOID_EXPORT Device : public DeviceState
+class CNOID_EXPORT DeviceConfig
+{
+protected:
+    DeviceConfig() { }
+    DeviceConfig(const DeviceConfig&) { }
+
+public:
+    ~DeviceConfig() { }
+
+    virtual void copyConfigFrom(const DeviceConfig& other) = 0;
+};
+
+
+class CNOID_EXPORT Device : public DeviceState, public DeviceConfig
 {
     struct NonState {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -63,8 +76,13 @@ class CNOID_EXPORT Device : public DeviceState
         Signal<void(double time)> sigTimeChanged;
     };
 
+    struct Config {
+        MappingPtr info;
+        Signal<void()> sigInfoChanged;
+    };
+
     NonState* ns;
-    MappingPtr info_;
+    Config* config;
 
 protected:
     Device();
@@ -143,10 +161,21 @@ public:
         ns->sigTimeChanged(time);
     }
 
-    const Mapping* info() const { return info_; }
-    Mapping* info() { return info_;}
+    void copyInfoFrom(const Device& other);
+    virtual void copyConfigFrom(const DeviceConfig& other);
 
-    void resetInfo(Mapping* info);
+    const Mapping* info() const { return config->info; }
+    Mapping* info() { return config->info; }
+
+    void resetInfo(Mapping* info) { config->info = info; }
+
+    SignalProxy<void()> sigInfoChanged() {
+        return config->sigInfoChanged;
+    }
+
+    void notifyInfoChange() {
+        config->sigInfoChanged();
+    }
 
     [[deprecated("Please use T_local() instead")]]
     const Isometry3& T_local_org() const { return ns->T_local; };

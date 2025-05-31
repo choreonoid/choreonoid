@@ -31,8 +31,10 @@ struct SharedInfo : public Referenced
 {
     BodyPtr ioBody;
     ScopedConnectionSet inputDeviceStateConnections;
+    ScopedConnectionSet inputDeviceConfigConnections;
     vector<bool> inputEnabledDeviceFlag;
     vector<bool> inputDeviceStateChangeFlag;
+    vector<bool> inputDeviceConfigChangeFlag;
 };
 
 typedef ref_ptr<SharedInfo> SharedInfoPtr;
@@ -60,7 +62,7 @@ public:
     SharedInfoPtr sharedInfo;
 
     vector<unsigned short> inputLinkIndices;
-    
+
     vector<short> linkIndexToInputStateTypeMap;
 
     // This vector contains input state types of all the links.
@@ -75,11 +77,13 @@ public:
         vector<short> stateTypes;
     };
     vector<LinkOutputStateInfo> linkOutputStateInfos;
-    
+
     bool isOldTargetVariableMode;
 
     ConnectionSet outputDeviceStateConnections;
+    ConnectionSet outputDeviceConfigConnections;
     vector<bool> outputDeviceStateChangeFlag;
+    vector<bool> outputDeviceConfigChangeFlag;
 
     vector<SimpleControllerItemPtr> subControllerItems;
 
@@ -123,7 +127,9 @@ public:
     bool start();
     void input();
     void onInputDeviceStateChanged(int deviceIndex);
+    void onInputDeviceConfigChanged(int deviceIndex);
     void onOutputDeviceStateChanged(int deviceIndex);
+    void onOutputDeviceConfigChanged(int deviceIndex);
     void output();
     bool onReloadingChanged(bool on);
     bool setSymbolExportEnabled(bool on);
@@ -201,7 +207,7 @@ SimpleControllerItem::Impl::Impl(SimpleControllerItem* self)
       baseDirectoryType(N_BASE_DIRECTORY_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 {
     doCommonInitializationInConstructor();
-    
+
     isOldTargetVariableMode = false;
     doReloading = false;
     isSymbolExportEnabled = false;
@@ -227,7 +233,7 @@ SimpleControllerItem::Impl::Impl(SimpleControllerItem* self, const Impl& org)
       baseDirectoryType(org.baseDirectoryType)
 {
     doCommonInitializationInConstructor();
-    
+
     isOldTargetVariableMode = org.isOldTargetVariableMode;
     doReloading = org.doReloading;
     isSymbolExportEnabled = org.isSymbolExportEnabled;
@@ -244,6 +250,7 @@ SimpleControllerItem::Impl::~Impl()
 {
     unloadController();
     outputDeviceStateConnections.disconnect();
+    outputDeviceConfigConnections.disconnect();
 }
 
 
@@ -254,7 +261,7 @@ void SimpleControllerItem::Impl::doCommonInitializationInConstructor()
     ioBody = nullptr;
     io = nullptr;
     mv = MessageView::instance();
-}    
+}
 
 
 Item* SimpleControllerItem::doCloneItem(CloneMap* /* cloneMap */) const
@@ -325,7 +332,7 @@ bool SimpleControllerItem::Impl::checkIfControllerModulePathExists(const filesys
     pathWithExtension += DLL_EXTENSION;
     return filesystem::exists(pathWithExtension);
 }
-    
+
 
 void SimpleControllerItem::setController(const std::string& name)
 {
@@ -375,7 +382,7 @@ bool SimpleControllerItem::Impl::loadController()
                 MessageView::Warning);
         return false;
     }
-    
+
     filesystem::path modulePath(fromUTF8(controllerModuleName));
     if(!modulePath.is_absolute()){
         if(baseDirectoryType.is(CONTROLLER_DIRECTORY)){
@@ -405,14 +412,14 @@ bool SimpleControllerItem::Impl::loadController()
 
     controllerModuleFilename = toUTF8(modulePath.make_preferred().string());
     controllerModule.setFileName(controllerModuleFilename.c_str());
-        
+
     if(controllerModule.isLoaded()){
         mv->putln(formatR(_("The controller module of {} has already been loaded."), self->displayName()));
-            
+
         // This should be called to make the reference to the DLL.
         // Otherwise, QLibrary::unload() unloads the DLL without considering this instance.
         controllerModule.load();
-            
+
     } else {
         mv->put(formatR(_("Loading the controller module \"{1}\" of {0} ... "),
                         self->displayName(), controllerModuleFilename));
@@ -423,7 +430,7 @@ bool SimpleControllerItem::Impl::loadController()
         }
         mv->putln(_("OK!"));
     }
-        
+
     SimpleController::Factory factory =
         (SimpleController::Factory)controllerModule.resolve("createSimpleController");
     if(!factory){
@@ -452,7 +459,7 @@ bool SimpleControllerItem::Impl::configureController(BodyItem* bodyItem)
         if(isConfigured){
             controller->unconfigure();
             isConfigured = false;
-        }            
+        }
         if(bodyItem){
             if(controller->configure(&config)){
                 isConfigured = true;
@@ -472,7 +479,7 @@ void SimpleControllerItem::Impl::unloadController()
     if(controller && isConfigured){
         controller->unconfigure();
     }
-    
+
     /** The following code is necessary to clear the ioBody object that may have the reference
         to the objects defined in the controller DLL. When the controller DLL is unloaded,
         the definition is removed from the process, and the process may crash if the object is
@@ -480,7 +487,7 @@ void SimpleControllerItem::Impl::unloadController()
         is unloaded.
     */
     sharedInfo.reset();
-    
+
     if(controller){
         delete controller;
         controller = nullptr;
@@ -502,14 +509,23 @@ void SimpleControllerItem::Impl::updateInputEnabledDevices()
     sharedInfo->inputDeviceStateChangeFlag.resize(devices.size(), false);
     sharedInfo->inputDeviceStateConnections.disconnect();
 
+    sharedInfo->inputDeviceConfigChangeFlag.clear();
+    sharedInfo->inputDeviceConfigChangeFlag.resize(devices.size(), false);
+    sharedInfo->inputDeviceConfigConnections.disconnect();
+
     const auto& flag = sharedInfo->inputEnabledDeviceFlag;
     for(size_t i=0; i < devices.size(); ++i){
         if(flag[i]){
             sharedInfo->inputDeviceStateConnections.add(
                 devices[i]->sigStateChanged().connect(
                     [this, i](){ onInputDeviceStateChanged(i); }));
+
+            sharedInfo->inputDeviceConfigConnections.add(
+                devices[i]->sigInfoChanged().connect(
+                    [this, i](){ onInputDeviceConfigChanged(i); }));
         } else {
             sharedInfo->inputDeviceStateConnections.add(Connection()); // null connection
+            sharedInfo->inputDeviceConfigConnections.add(Connection());  // null connection
         }
     }
 }
@@ -520,6 +536,7 @@ void SimpleControllerItem::Impl::initializeIoBody()
     ioBody = simulationBody->clone();
 
     outputDeviceStateConnections.disconnect();
+    outputDeviceConfigConnections.disconnect();
     const DeviceList<>& ioDevices = ioBody->devices();
     outputDeviceStateChangeFlag.clear();
     outputDeviceStateChangeFlag.resize(ioDevices.size(), false);
@@ -527,6 +544,14 @@ void SimpleControllerItem::Impl::initializeIoBody()
         outputDeviceStateConnections.add(
             ioDevices[i]->sigStateChanged().connect(
                 [this, i](){ onOutputDeviceStateChanged(i); }));
+    }
+
+    outputDeviceConfigChangeFlag.clear();
+    outputDeviceConfigChangeFlag.resize(ioDevices.size(), false);
+    for(size_t i=0; i < ioDevices.size(); ++i) {
+        outputDeviceConfigConnections.add(
+            ioDevices[i]->sigInfoChanged().connect(
+                [this, i](){ onOutputDeviceConfigChanged(i); }));
     }
 
     sharedInfo->inputEnabledDeviceFlag.clear();
@@ -602,7 +627,7 @@ SimpleController* SimpleControllerItem::Impl::initialize(ControllerIO* io, Share
         return nullptr;
     }
 
-    for(Item* child = self->childItem(); child; child = child->nextItem()){ 
+    for(Item* child = self->childItem(); child; child = child->nextItem()){
        SimpleControllerItem* childControllerItem = dynamic_cast<SimpleControllerItem*>(child);
         if(childControllerItem){
             SimpleController* childController = childControllerItem->impl->initialize(io, sharedInfo);
@@ -662,7 +687,7 @@ std::string SimpleControllerItem::Impl::controllerName() const
 {
     return self->name();
 }
-        
+
 
 Body* SimpleControllerItem::Impl::body()
 {
@@ -739,7 +764,7 @@ void SimpleControllerItem::Impl::enableIO(Link* link)
     enableInput(link);
     enableOutput(link);
 }
-        
+
 
 void SimpleControllerItem::Impl::enableInput(Link* link)
 {
@@ -755,7 +780,7 @@ void SimpleControllerItem::Impl::enableInput(Link* link)
         defaultInputStateTypes |= Link::LinkPosition;
     }
     enableInput(link, defaultInputStateTypes);
-}        
+}
 
 
 void SimpleControllerItem::Impl::enableInput(Link* link, int stateFlags)
@@ -765,7 +790,7 @@ void SimpleControllerItem::Impl::enableInput(Link* link, int stateFlags)
     }
     linkIndexToInputStateTypeMap[link->index()] |= stateFlags;
     link->mergeSensingMode(stateFlags);
-}        
+}
 
 
 void SimpleControllerItem::Impl::setLinkInput(Link* link, int stateFlags)
@@ -814,7 +839,7 @@ void SimpleControllerItem::Impl::setJointOutput(int stateFlags)
         setLinkOutput(ioBody->joint(i), stateFlags);
     }
 }
-    
+
 
 void SimpleControllerItem::Impl::enableInput(Device* device)
 {
@@ -883,7 +908,7 @@ bool SimpleControllerItem::Impl::start()
 void SimpleControllerItem::input()
 {
     impl->input();
-    
+
     for(size_t i=0; i < impl->subControllerItems.size(); ++i){
         impl->subControllerItems[i]->impl->input();
     }
@@ -948,12 +973,29 @@ void SimpleControllerItem::Impl::input()
             flag[i] = false;
         }
     }
+
+    auto& flag2 = sharedInfo->inputDeviceConfigChangeFlag;
+    for(size_t i=0; i < flag2.size(); ++i) {
+        if(flag2[i]) {
+            Device* ioDevice = ioDevices[i];
+            ioDevice->copyConfigFrom(*devices[i]);
+            outputDeviceConfigConnections.block(i);
+            ioDevice->notifyInfoChange();
+            outputDeviceConfigConnections.unblock(i);
+            flag2[i] = false;
+        }
+    }
 }
 
 
 void SimpleControllerItem::Impl::onInputDeviceStateChanged(int deviceIndex)
 {
     sharedInfo->inputDeviceStateChangeFlag[deviceIndex] = true;
+}
+
+void SimpleControllerItem::Impl::onInputDeviceConfigChanged(int deviceIndex)
+{
+    sharedInfo->inputDeviceConfigChangeFlag[deviceIndex] = true;
 }
 
 
@@ -966,7 +1008,7 @@ bool SimpleControllerItem::control()
             result = true;
         }
     }
-        
+
     return result;
 }
 
@@ -977,10 +1019,16 @@ void SimpleControllerItem::Impl::onOutputDeviceStateChanged(int deviceIndex)
 }
 
 
+void SimpleControllerItem::Impl::onOutputDeviceConfigChanged(int deviceIndex)
+{
+    outputDeviceConfigChangeFlag[deviceIndex] = true;
+}
+
+
 void SimpleControllerItem::output()
 {
     impl->output();
-    
+
     for(size_t i=0; i < impl->subControllerItems.size(); ++i){
         impl->subControllerItems[i]->impl->output();
     }
@@ -1038,7 +1086,7 @@ void SimpleControllerItem::Impl::output()
                 simLink->dv() = ioLink->dv();
                 simLink->dw() = ioLink->dw();
                 break;
-                
+
             case Link::LinkExtWrench:
                 simLink->F_ext() += ioLink->F_ext();
                 break;
@@ -1059,6 +1107,17 @@ void SimpleControllerItem::Impl::output()
             device->notifyStateChange();
             sharedInfo->inputDeviceStateConnections.unblock(i);
             outputDeviceStateChangeFlag[i] = false;
+        }
+    }
+
+    for(size_t i=0; i < outputDeviceConfigChangeFlag.size(); ++i) {
+        if(outputDeviceConfigChangeFlag[i]){
+            Device* device = devices[i];
+            device->copyConfigFrom(*ioDevices[i]);
+            sharedInfo->inputDeviceConfigConnections.block(i);
+            device->notifyInfoChange();
+            sharedInfo->inputDeviceConfigConnections.unblock(i);
+            outputDeviceConfigChangeFlag[i] = false;
         }
     }
 }
@@ -1134,7 +1193,7 @@ void SimpleControllerItem::Impl::doPutProperties(PutPropertyFunction& putPropert
 
     putProperty(_("Controller module"), moduleProperty,
                 [&](const FilePathProperty& property){ setController(property.filename()); return true; });
-    
+
     putProperty(_("Base directory"), baseDirectoryType, changeProperty(baseDirectoryType));
 
     putProperty(_("Reloading"), doReloading, [&](bool on){ return onReloadingChanged(on); });

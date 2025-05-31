@@ -19,9 +19,12 @@ bool GLRangeCameraEffectSimulator::doInitialize(
     //     return false;
     // }
 
+    connection.disconnect();
     applyCameraEffect = camera->info()->get("apply_camera_effect", false);
     if (applyCameraEffect) {
         filter.readCameraInfo(rangeCamera->info());
+        connection = rangeCamera->sigInfoChanged().connect(
+            [&](){ filter.readCameraInfo(rangeCamera->info()); });
     }
 
     double frameRate = std::max(0.1,

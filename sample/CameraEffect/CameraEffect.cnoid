@@ -75,8 +75,20 @@ items:
                     class: CameraImageVisualizerItem
                     name: Mosaic
                     is_checked: true
+            -
+              id: 4
+              name: "CameraEffectController"
+              plugin: Body
+              class: SimpleControllerItem
+              data:
+                isNoDelayMode: false
+                controllerOptions: ""
+                controller: "SampleCameraEffectController"
+                base_directory: "Controller directory"
+                reloading: false
+                export_symbols: false
         -
-          id: 4
+          id: 5
           name: "Labo1"
           plugin: Body
           class: BodyItem
@@ -101,7 +113,7 @@ items:
             lock_location: false
             scene_sensitive: true
         -
-          id: 5
+          id: 6
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
@@ -134,7 +146,7 @@ items:
             oldAccelSensorMode: false
           children:
             -
-              id: 6
+              id: 7
               name: "GLVisionSimulator"
               plugin: GLVisionSimulator
               class: GLVisionSimulatorItem
@@ -153,6 +165,13 @@ items:
                 enable_world_light: true
                 enable_additional_lights: true
                 antialiasing: false
+            -
+              id: 8
+              name: "SampleCameraEffectSimulator"
+              plugin: SampleCameraEffect
+              class: SampleCameraEffectSimulatorItem
+              data:
+                enabled: true
 views:
   -
     id: 0
@@ -225,7 +244,7 @@ views:
     class: ItemTreeView
     mounted: true
     state:
-      expanded: [ 1, 2, 3, 5 ]
+      expanded: [ 1, 2, 3, 6 ]
   -
     id: 10
     plugin: Base
@@ -260,7 +279,7 @@ views:
           is_current: true
           eye: [ -3.81237, -1.67073, 1.47002 ]
           direction: [ 0.90123, 0.386613, -0.195741 ]
-          up: [ 0.179887, 0.0771687, 0.980656 ]
+          up: [ 0.179887, 0.0771695, 0.980656 ]
         -
           camera: [ System, Orthographic ]
           ortho_height: 20
@@ -296,6 +315,11 @@ views:
       yz_grid_color: [ 0.9, 0.9, 0.9 ]
   -
     id: 13
+    plugin: Base
+    class: VirtualJoystickView
+    mounted: true
+  -
+    id: 14
     plugin: Body
     class: JointDisplacementView
     mounted: true
@@ -309,7 +333,7 @@ views:
       limit_ranges: false
       show_selected_joints: false
   -
-    id: 14
+    id: 15
     plugin: Body
     class: LinkDeviceListView
     mounted: true
@@ -322,7 +346,7 @@ views:
           id: 2
           selected_links: [ 0 ]
   -
-    id: 15
+    id: 16
     plugin: Body
     class: LinkPositionView
     mounted: true
@@ -335,12 +359,12 @@ views:
       show_rotation_matrix: false
       target_link_type: ik_link
   -
-    id: 16
+    id: 17
     plugin: Body
     class: LinkPropertyView
     mounted: true
   -
-    id: 17
+    id: 18
     plugin: Python
     class: PythonConsoleView
     mounted: true
@@ -388,7 +412,7 @@ Body:
         show_cm_projection: false
         show_zmp: false
       -
-        body_item: 4
+        body_item: 5
         show_cm: false
         show_cm_projection: false
         show_zmp: false
@@ -414,24 +438,24 @@ viewAreas:
             -
               type: splitter
               orientation: vertical
-              sizes: [ 704, 704 ]
+              sizes: [ 718, 718 ]
               children:
                 -
                   type: pane
                   views: [ 9 ]
                 -
                   type: pane
-                  views: [ 8, 16 ]
+                  views: [ 8, 17 ]
                   current: 8
             -
               type: splitter
               orientation: vertical
-              sizes: [ 1056, 352 ]
+              sizes: [ 1077, 359 ]
               children:
                 -
                   type: splitter
                   orientation: vertical
-                  sizes: [ 526, 526 ]
+                  sizes: [ 537, 536 ]
                   children:
                     -
                       type: splitter
@@ -488,13 +512,21 @@ viewAreas:
                               type: pane
                               views: [ 7 ]
                 -
-                  type: pane
-                  views: [ 11, 17 ]
-                  current: 11
+                  type: splitter
+                  orientation: horizontal
+                  sizes: [ 696, 695 ]
+                  children:
+                    -
+                      type: pane
+                      views: [ 11, 18 ]
+                      current: 11
+                    -
+                      type: pane
+                      views: [ 13 ]
         -
           type: splitter
           orientation: vertical
-          sizes: [ 310, 1098 ]
+          sizes: [ 316, 1120 ]
           children:
             -
               type: pane
@@ -502,15 +534,15 @@ viewAreas:
             -
               type: splitter
               orientation: vertical
-              sizes: [ 428, 666 ]
+              sizes: [ 437, 679 ]
               children:
                 -
                   type: pane
-                  views: [ 15 ]
+                  views: [ 16 ]
                 -
                   type: pane
-                  views: [ 14, 13 ]
-                  current: 14
+                  views: [ 15, 14 ]
+                  current: 15
 layoutOfToolBars:
   rows:
     -

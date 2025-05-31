@@ -28,7 +28,9 @@ Device::Device()
     ns->id = -1;
     ns->link = nullptr;
     T_local().setIdentity();
-    info_ = new Mapping;
+
+    config = new Config;
+    config->info = nullptr;
 }
 
 
@@ -42,6 +44,9 @@ Device::Device(const Device& org, bool copyStateOnly)
         ns->link = nullptr;
         copySpecFrom(&org);
     }
+
+    config = new Config;
+    copyConfigFrom(org);
 }
 
 
@@ -50,7 +55,6 @@ void Device::copySpecFrom(const Device* other)
     ns->id = other->ns->id;
     ns->name = other->ns->name;
     ns->T_local = other->ns->T_local;
-    info_ = other->info_;
 }
 
 
@@ -65,6 +69,9 @@ Device::~Device()
 {
     if(ns){
         delete ns;
+    }
+    if(config){
+        delete config;
     }
 }
 
@@ -111,7 +118,13 @@ void Device::on(bool)
 }
 
 
-void Device::resetInfo(Mapping* info)
+void Device::copyInfoFrom(const Device& other)
 {
-    info_ = info;
+    config->info = other.config->info->cloneMapping();
+}
+
+
+void Device::copyConfigFrom(const DeviceConfig& other)
+{
+    copyInfoFrom(static_cast<const Device&>(other));
 }
