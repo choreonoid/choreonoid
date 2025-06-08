@@ -244,6 +244,8 @@ void ImageView::Impl::setImageableItem(ImageableItem* imageable)
                     imageable->sigImageUpdated().connect(
                         [&](){ updateImage(); }));
                 updateImage();
+
+                self->setScalingEnabled(self->isScalingEnabled());
             }
         }
     }

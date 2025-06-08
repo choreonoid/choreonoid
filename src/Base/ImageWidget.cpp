@@ -26,15 +26,13 @@ ImageWidget::ImageWidget(QWidget* parent, Qt::WindowFlags f)
 
 void ImageWidget::setScalingEnabled(bool on)
 {
-    if(on != isScalingEnabled_){
-        isScalingEnabled_ = on;
-        if(!pixmap_.isNull()){
-            reset();
-        }
+    isScalingEnabled_ = on;
+    if(!pixmap_.isNull()){
+        reset();
     }
 }
 
-    
+
 bool ImageWidget::isScalingEnabled() const
 {
     return isScalingEnabled_;
