@@ -13,9 +13,9 @@ class CNOID_EXPORT ImageWidget : public QWidget
 public:
     explicit ImageWidget(QWidget* parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
 
-    void setPixmap(const QPixmap& pixmap);
-    void setImage(const Image& image);
-    void setImage(const QImage& image);
+    void setPixmap(const QPixmap& pixmap, bool doRest = false);
+    void setImage(const Image& image, bool doRest = false);
+    void setImage(const QImage& image, bool doRest = false);
 
     void setScalingEnabled(bool on);
     bool isScalingEnabled() const;

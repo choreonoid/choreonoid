@@ -26,9 +26,11 @@ ImageWidget::ImageWidget(QWidget* parent, Qt::WindowFlags f)
 
 void ImageWidget::setScalingEnabled(bool on)
 {
-    isScalingEnabled_ = on;
-    if(!pixmap_.isNull()){
-        reset();
+    if(on != isScalingEnabled_){
+        isScalingEnabled_ = on;
+        if(!pixmap_.isNull()){
+            reset();
+        }
     }
 }
 
@@ -39,25 +41,37 @@ bool ImageWidget::isScalingEnabled() const
 }
 
 
-void ImageWidget::setPixmap(const QPixmap& pixmap)
+void ImageWidget::setPixmap(const QPixmap& pixmap, bool doRest)
 {
     std::lock_guard<std::mutex> lock(mtx);
     pixmap_ = pixmap;
+
+    if(doRest){
+        transform_ = initialTransform_;
+        fitted = false;
+        settedT = true;
+    }
     fitCenter();
     update();
 }
 
 
-void ImageWidget::setImage(const QImage& image)
+void ImageWidget::setImage(const QImage& image, bool doRest)
 {
     std::lock_guard<std::mutex> lock(mtx);
     pixmap_ = QPixmap::fromImage(image);
+    
+    if(doRest){
+        transform_ = initialTransform_;
+        fitted = false;
+        settedT = true;
+    }
     fitCenter();
     update();
 }
 
 
-void ImageWidget::setImage(const Image& image)
+void ImageWidget::setImage(const Image& image, bool doRest)
 {
     int w = image.width();
     int h = image.height();
@@ -81,6 +95,11 @@ void ImageWidget::setImage(const Image& image)
             QImage(image.pixels(), image.width(), image.height(), f));
     }
 
+    if(doRest){
+        transform_ = initialTransform_;
+        fitted = false;
+        settedT = true;
+    }
     fitCenter();
     update();
 }

@@ -37,7 +37,7 @@ public:
     Impl(ImageView* self);
     ~Impl();
 
-    void updateImage();
+    void updateImage(bool doReset);
     void setImageableItem(ImageableItem* imageable);
 
     bool storeState(Archive& archive);
@@ -99,12 +99,12 @@ ImageView::Impl::~Impl()
 }
 
 
-void ImageView::Impl::updateImage()
+void ImageView::Impl::updateImage(bool doReset)
 {
     bool updated = false;
     if(currentImageable){
         if(auto image = currentImageable->getImage()){
-            imageWidget->setImage(*image);
+            imageWidget->setImage(*image, doReset);
             updated = true;
         }
     }
@@ -134,7 +134,7 @@ ImageView::ImageView()
 {
     impl = new Impl(this);
     instances.push_back(this);
-    impl->updateImage();
+    impl->updateImage(false);
 }
 
 
@@ -242,10 +242,8 @@ void ImageView::Impl::setImageableItem(ImageableItem* imageable)
                         [&](){ setImageableItem(nullptr); }));
                 itemConnections.add(
                     imageable->sigImageUpdated().connect(
-                        [&](){ updateImage(); }));
-                updateImage();
-
-                self->setScalingEnabled(self->isScalingEnabled());
+                        [&](){ updateImage(false); }));
+                updateImage(true);
             }
         }
     }
