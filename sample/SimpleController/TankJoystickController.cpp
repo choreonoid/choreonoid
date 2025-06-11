@@ -1,8 +1,3 @@
-/**
-   Tank Controller
-   @author Shin'ichiro Nakaoka
-*/
-
 #include <cnoid/SimpleController>
 #include <cnoid/SpotLight>
 #include <cnoid/RangeCamera>
@@ -36,8 +31,7 @@ class TankJoystickController : public SimpleController
               stateChanged(false)
         { }
     };
-    vector<DeviceInfo> devices;
-    SpotLightPtr spotLight;
+    vector<DeviceInfo> deviceInfos;
     
     Joystick joystick;
 
@@ -97,18 +91,19 @@ public:
 
         dt = io->timeStep();
 
-        devices = {
+        deviceInfos = {
             { body->findDevice<SpotLight>("Light"),    Joystick::A_BUTTON },
             { body->findDevice<RangeCamera>("Kinect"), Joystick::B_BUTTON },
             { body->findDevice<Camera>("Theta"),       Joystick::X_BUTTON },
             { body->findDevice<RangeSensor>("VLP-16"), Joystick::Y_BUTTON }
         };
-        spotLight = dynamic_pointer_cast<SpotLight>(devices[0].device);
 
         // Turn on all the devices
-        for(auto& device : devices){
-            device.device->on(true);
-            device.device->notifyStateChange();
+        for(auto& info : deviceInfos){
+            if(info.device){
+                info.device->on(true);
+                info.device->notifyStateChange();
+            }
         }
 
         joystick.makeReady();
@@ -168,7 +163,7 @@ public:
             }
         }
 
-        for(auto& info : devices){
+        for(auto& info : deviceInfos){
             if(info.device){
                 bool stateChanged = false;
                 bool buttonState = joystick.getButtonState(info.buttonId);
