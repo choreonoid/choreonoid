@@ -709,7 +709,7 @@ bool StdBodyLoader::Impl::checkFormat(Mapping* topNode)
 
 bool StdBodyLoader::Impl::loadAnotherFormatBodyFile(Mapping* topNode)
 {
-    auto modelFileNode = topNode->extract("modelFile");
+    auto modelFileNode = topNode->extract({ "model_file", "modelFile" });
     if(!modelFileNode){
         topNode->throwException(_("Neither format nor modelFile are specified"));
     }
