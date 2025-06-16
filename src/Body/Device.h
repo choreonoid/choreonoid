@@ -49,20 +49,7 @@ public:
 typedef ref_ptr<DeviceState> DeviceStatePtr;
 
 
-class CNOID_EXPORT DeviceConfig
-{
-protected:
-    DeviceConfig() { }
-    DeviceConfig(const DeviceConfig&) { }
-
-public:
-    ~DeviceConfig() { }
-
-    virtual void copyConfigFrom(const DeviceConfig& other) = 0;
-};
-
-
-class CNOID_EXPORT Device : public DeviceState, public DeviceConfig
+class CNOID_EXPORT Device : public DeviceState
 {
     struct NonState {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -76,13 +63,9 @@ class CNOID_EXPORT Device : public DeviceState, public DeviceConfig
         Signal<void(double time)> sigTimeChanged;
     };
 
-    struct Config {
-        MappingPtr info;
-        Signal<void()> sigInfoChanged;
-    };
-
     NonState* ns;
-    Config* config;
+    MappingPtr info_;
+    Signal<void()> sigInfoChanged_;
 
 protected:
     Device();
@@ -161,20 +144,17 @@ public:
         ns->sigTimeChanged(time);
     }
 
-    void copyInfoFrom(const Device& other);
-    virtual void copyConfigFrom(const DeviceConfig& other);
+    const Mapping* info() const { return info_; }
+    Mapping* info() { return info_; }
 
-    const Mapping* info() const { return config->info; }
-    Mapping* info() { return config->info; }
-
-    void resetInfo(Mapping* info) { config->info = info; }
+    void resetInfo(Mapping* info) { info_ = info; }
 
     SignalProxy<void()> sigInfoChanged() {
-        return config->sigInfoChanged;
+        return sigInfoChanged_;
     }
 
     void notifyInfoChange() {
-        config->sigInfoChanged();
+        sigInfoChanged_();
     }
 
     [[deprecated("Please use T_local() instead")]]

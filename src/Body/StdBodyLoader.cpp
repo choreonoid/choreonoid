@@ -5,6 +5,7 @@
 #include <cnoid/StdSceneReader>
 #include <cnoid/EigenArchive>
 #include <cnoid/YAMLReader>
+#include <cnoid/CloneMap>
 #include <cnoid/NullOut>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
@@ -83,6 +84,8 @@ public:
     vector<string> nameStack;
     typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Vector;
     Affine3Vector transformStack;
+    
+    CloneMap deviceInfoCloneMap;
 
     struct RigidBody
     {
@@ -593,6 +596,7 @@ bool StdBodyLoader::Impl::clear()
     numValidJointIds = 0;
     subBodyMap.clear();
     subBodies.clear();
+    deviceInfoCloneMap.clear();
     return true;
 }    
 
@@ -1731,7 +1735,7 @@ bool StdBodyLoader::Impl::readDevice(Device* device, const Mapping* info)
     device->setLocalRotation(T.linear());
     body->addDevice(device, currentLink);
 
-    device->resetInfo(info->cloneMapping());
+    device->resetInfo(info->clone(deviceInfoCloneMap));
 
     return false;
 }
@@ -1770,7 +1774,7 @@ void StdBodyLoader::Impl::readContinuousTrackNode(Mapping* node)
 
     LinkPtr firstLink = readLinkContents(node);
     LinkPtr subsequentLink = firstLink->clone();
-    subsequentLink->resetInfo(subsequentLink->info()->cloneMapping());
+    subsequentLink->resetInfo(subsequentLink->info()->clone());
     
     firstLink->setJointType(Link::FreeJoint);
     firstLink->setInfo("isContinuousTrack", true);

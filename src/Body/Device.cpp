@@ -29,8 +29,7 @@ Device::Device()
     ns->link = nullptr;
     T_local().setIdentity();
 
-    config = new Config;
-    config->info = nullptr;
+    info_ = nullptr;
 }
 
 
@@ -44,9 +43,11 @@ Device::Device(const Device& org, bool copyStateOnly)
         ns->link = nullptr;
         copySpecFrom(&org);
     }
-
-    config = new Config;
-    copyConfigFrom(org);
+    if(org.info_){
+        info_ = org.info_->deepClone();
+    } else {
+        info_ = nullptr;
+    }
 }
 
 
@@ -69,9 +70,6 @@ Device::~Device()
 {
     if(ns){
         delete ns;
-    }
-    if(config){
-        delete config;
     }
 }
 
@@ -115,16 +113,4 @@ bool Device::on() const
 void Device::on(bool)
 {
 
-}
-
-
-void Device::copyInfoFrom(const Device& other)
-{
-    config->info = other.config->info->cloneMapping();
-}
-
-
-void Device::copyConfigFrom(const DeviceConfig& other)
-{
-    copyInfoFrom(static_cast<const Device&>(other));
 }

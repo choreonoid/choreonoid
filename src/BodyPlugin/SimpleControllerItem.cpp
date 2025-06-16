@@ -3,6 +3,7 @@
 #include <cnoid/BodyItem>
 #include <cnoid/Body>
 #include <cnoid/Link>
+#include <cnoid/CloneMap>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include <cnoid/MessageView>
@@ -31,10 +32,10 @@ struct SharedInfo : public Referenced
 {
     BodyPtr ioBody;
     ScopedConnectionSet inputDeviceStateConnections;
-    ScopedConnectionSet inputDeviceConfigConnections;
+    ScopedConnectionSet inputDeviceInfoConnections;
     vector<bool> inputEnabledDeviceFlag;
     vector<bool> inputDeviceStateChangeFlag;
-    vector<bool> inputDeviceConfigChangeFlag;
+    vector<bool> inputDeviceInfoChangeFlag;
 };
 
 typedef ref_ptr<SharedInfo> SharedInfoPtr;
@@ -80,10 +81,11 @@ public:
 
     bool isOldTargetVariableMode;
 
-    ConnectionSet outputDeviceStateConnections;
-    ConnectionSet outputDeviceConfigConnections;
+    ScopedConnectionSet outputDeviceStateConnections;
+    ScopedConnectionSet outputDeviceInfoConnections;
     vector<bool> outputDeviceStateChangeFlag;
-    vector<bool> outputDeviceConfigChangeFlag;
+    vector<bool> outputDeviceInfoChangeFlag;
+    CloneMap deviceInfoCloneMap;
 
     vector<SimpleControllerItemPtr> subControllerItems;
 
@@ -127,9 +129,9 @@ public:
     bool start();
     void input();
     void onInputDeviceStateChanged(int deviceIndex);
-    void onInputDeviceConfigChanged(int deviceIndex);
+    void onInputDeviceInfoChanged(int deviceIndex);
     void onOutputDeviceStateChanged(int deviceIndex);
-    void onOutputDeviceConfigChanged(int deviceIndex);
+    void onOutputDeviceInfoChanged(int deviceIndex);
     void output();
     bool onReloadingChanged(bool on);
     bool setSymbolExportEnabled(bool on);
@@ -249,8 +251,6 @@ SimpleControllerItem::~SimpleControllerItem()
 SimpleControllerItem::Impl::~Impl()
 {
     unloadController();
-    outputDeviceStateConnections.disconnect();
-    outputDeviceConfigConnections.disconnect();
 }
 
 
@@ -509,9 +509,9 @@ void SimpleControllerItem::Impl::updateInputEnabledDevices()
     sharedInfo->inputDeviceStateChangeFlag.resize(devices.size(), false);
     sharedInfo->inputDeviceStateConnections.disconnect();
 
-    sharedInfo->inputDeviceConfigChangeFlag.clear();
-    sharedInfo->inputDeviceConfigChangeFlag.resize(devices.size(), false);
-    sharedInfo->inputDeviceConfigConnections.disconnect();
+    sharedInfo->inputDeviceInfoChangeFlag.clear();
+    sharedInfo->inputDeviceInfoChangeFlag.resize(devices.size(), false);
+    sharedInfo->inputDeviceInfoConnections.disconnect();
 
     const auto& flag = sharedInfo->inputEnabledDeviceFlag;
     for(size_t i=0; i < devices.size(); ++i){
@@ -520,12 +520,12 @@ void SimpleControllerItem::Impl::updateInputEnabledDevices()
                 devices[i]->sigStateChanged().connect(
                     [this, i](){ onInputDeviceStateChanged(i); }));
 
-            sharedInfo->inputDeviceConfigConnections.add(
+            sharedInfo->inputDeviceInfoConnections.add(
                 devices[i]->sigInfoChanged().connect(
-                    [this, i](){ onInputDeviceConfigChanged(i); }));
+                    [this, i](){ onInputDeviceInfoChanged(i); }));
         } else {
             sharedInfo->inputDeviceStateConnections.add(Connection()); // null connection
-            sharedInfo->inputDeviceConfigConnections.add(Connection());  // null connection
+            sharedInfo->inputDeviceInfoConnections.add(Connection());  // null connection
         }
     }
 }
@@ -536,7 +536,7 @@ void SimpleControllerItem::Impl::initializeIoBody()
     ioBody = simulationBody->clone();
 
     outputDeviceStateConnections.disconnect();
-    outputDeviceConfigConnections.disconnect();
+    outputDeviceInfoConnections.disconnect();
     const DeviceList<>& ioDevices = ioBody->devices();
     outputDeviceStateChangeFlag.clear();
     outputDeviceStateChangeFlag.resize(ioDevices.size(), false);
@@ -546,12 +546,12 @@ void SimpleControllerItem::Impl::initializeIoBody()
                 [this, i](){ onOutputDeviceStateChanged(i); }));
     }
 
-    outputDeviceConfigChangeFlag.clear();
-    outputDeviceConfigChangeFlag.resize(ioDevices.size(), false);
+    outputDeviceInfoChangeFlag.clear();
+    outputDeviceInfoChangeFlag.resize(ioDevices.size(), false);
     for(size_t i=0; i < ioDevices.size(); ++i) {
-        outputDeviceConfigConnections.add(
+        outputDeviceInfoConnections.add(
             ioDevices[i]->sigInfoChanged().connect(
-                [this, i](){ onOutputDeviceConfigChanged(i); }));
+                [this, i](){ onOutputDeviceInfoChanged(i); }));
     }
 
     sharedInfo->inputEnabledDeviceFlag.clear();
@@ -974,14 +974,15 @@ void SimpleControllerItem::Impl::input()
         }
     }
 
-    auto& flag2 = sharedInfo->inputDeviceConfigChangeFlag;
+    auto& flag2 = sharedInfo->inputDeviceInfoChangeFlag;
     for(size_t i=0; i < flag2.size(); ++i) {
         if(flag2[i]) {
             Device* ioDevice = ioDevices[i];
-            ioDevice->copyConfigFrom(*devices[i]);
-            outputDeviceConfigConnections.block(i);
+            // Deep copy without node sharing for device-specific info
+            ioDevice->resetInfo(devices[i]->info()->deepClone());
+            outputDeviceInfoConnections.block(i);
             ioDevice->notifyInfoChange();
-            outputDeviceConfigConnections.unblock(i);
+            outputDeviceInfoConnections.unblock(i);
             flag2[i] = false;
         }
     }
@@ -993,9 +994,9 @@ void SimpleControllerItem::Impl::onInputDeviceStateChanged(int deviceIndex)
     sharedInfo->inputDeviceStateChangeFlag[deviceIndex] = true;
 }
 
-void SimpleControllerItem::Impl::onInputDeviceConfigChanged(int deviceIndex)
+void SimpleControllerItem::Impl::onInputDeviceInfoChanged(int deviceIndex)
 {
-    sharedInfo->inputDeviceConfigChangeFlag[deviceIndex] = true;
+    sharedInfo->inputDeviceInfoChangeFlag[deviceIndex] = true;
 }
 
 
@@ -1019,9 +1020,9 @@ void SimpleControllerItem::Impl::onOutputDeviceStateChanged(int deviceIndex)
 }
 
 
-void SimpleControllerItem::Impl::onOutputDeviceConfigChanged(int deviceIndex)
+void SimpleControllerItem::Impl::onOutputDeviceInfoChanged(int deviceIndex)
 {
-    outputDeviceConfigChangeFlag[deviceIndex] = true;
+    outputDeviceInfoChangeFlag[deviceIndex] = true;
 }
 
 
@@ -1110,14 +1111,15 @@ void SimpleControllerItem::Impl::output()
         }
     }
 
-    for(size_t i=0; i < outputDeviceConfigChangeFlag.size(); ++i) {
-        if(outputDeviceConfigChangeFlag[i]){
+    for(size_t i=0; i < outputDeviceInfoChangeFlag.size(); ++i) {
+        if(outputDeviceInfoChangeFlag[i]){
             Device* device = devices[i];
-            device->copyConfigFrom(*ioDevices[i]);
-            sharedInfo->inputDeviceConfigConnections.block(i);
+            // Deep copy without node sharing for device-specific info
+            device->resetInfo(ioDevices[i]->info()->deepClone());
+            sharedInfo->inputDeviceInfoConnections.block(i);
             device->notifyInfoChange();
-            sharedInfo->inputDeviceConfigConnections.unblock(i);
-            outputDeviceConfigChangeFlag[i] = false;
+            sharedInfo->inputDeviceInfoConnections.unblock(i);
+            outputDeviceInfoChangeFlag[i] = false;
         }
     }
 }
