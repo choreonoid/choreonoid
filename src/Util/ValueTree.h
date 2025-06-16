@@ -1,7 +1,8 @@
 #ifndef CNOID_UTIL_VALUE_TREE_H
 #define CNOID_UTIL_VALUE_TREE_H
 
-#include "Referenced.h"
+#include "ClonableReferenced.h"
+#include "CloneMap.h"
 #include <map>
 #include <vector>
 #include <string>
@@ -27,7 +28,7 @@ enum StringStyle { PLAIN_STRING, YAML_PLAIN_STRING = PLAIN_STRING,
 };
 #endif
 
-class CNOID_EXPORT ValueNode : public Referenced
+class CNOID_EXPORT ValueNode : public ClonableReferenced
 {
     struct Initializer {
         Initializer();
@@ -35,7 +36,19 @@ class CNOID_EXPORT ValueNode : public Referenced
     static Initializer initializer;
         
 public:
-    virtual ValueNode* clone() const;
+    /**
+     * Clone methods providing convenient API with reference parameter.
+     * These delegate to doClone() which contains the actual implementation.
+     */
+    ValueNode* clone() const {
+        return doClone(nullptr);
+    }
+    ValueNode* clone(CloneMap& cloneMap) const {
+        return doClone(&cloneMap);
+    }
+    
+    // Using covariant return type - returns ValueNode* instead of Referenced*
+    virtual ValueNode* doClone(CloneMap* cloneMap) const override;
 
     enum TypeBit {
         INVALID_NODE = 0,
@@ -216,7 +229,16 @@ public:
     ScalarNode(int value);
     ScalarNode(double value, const char* floatingNumberFormat_ = nullptr);
     
-    virtual ValueNode* clone() const;
+    // Type-safe clone methods
+    ScalarNode* clone() const {
+        return doClone(nullptr);
+    }
+    ScalarNode* clone(CloneMap& cloneMap) const {
+        return doClone(&cloneMap);
+    }
+    
+    // Using covariant return type - returns ScalarNode* instead of ValueNode*
+    virtual ScalarNode* doClone(CloneMap* cloneMap) const override;
 
     const std::string& stringValue() const { return stringValue_; }
     StringStyle stringStyle() const { return stringStyle_; }
@@ -260,8 +282,24 @@ public:
     Mapping(int line, int column);
     virtual ~Mapping();
 
-    virtual ValueNode* clone() const;
-    virtual Mapping* cloneMapping() const;
+    // Type-safe clone methods
+    Mapping* clone() const {
+        return doClone(nullptr);
+    }
+    Mapping* clone(CloneMap& cloneMap) const {
+        return doClone(&cloneMap);
+    }
+    
+    // Using covariant return type - returns Mapping* instead of ValueNode*
+    virtual Mapping* doClone(CloneMap* cloneMap) const override;
+    
+    // Deep clone without node sharing (all nodes are duplicated)
+    Mapping* deepClone() const;
+    
+    [[deprecated("Use clone() instead")]]
+    Mapping* cloneMapping() const {
+        return clone();
+    }
     
     bool empty() const { return values.empty(); }
     int size() const { return static_cast<int>(values.size()); }
@@ -457,6 +495,7 @@ public:
 private:
 
     Mapping(const Mapping& org);
+    Mapping(const Mapping& org, CloneMap* cloneMap);
     Mapping& operator=(const Mapping&);
 
     Mapping* openMapping_(const std::string& key, bool doOverwrite);
@@ -497,7 +536,19 @@ public:
     Listing(int size);
     ~Listing();
         
-    virtual ValueNode* clone() const;
+    // Type-safe clone methods
+    Listing* clone() const {
+        return doClone(nullptr);
+    }
+    Listing* clone(CloneMap& cloneMap) const {
+        return doClone(&cloneMap);
+    }
+    
+    // Using covariant return type - returns Listing* instead of ValueNode*
+    virtual Listing* doClone(CloneMap* cloneMap) const override;
+    
+    // Deep clone without node sharing (all nodes are duplicated)
+    Listing* deepClone() const;
 
     typedef Container::iterator iterator;
     typedef Container::const_iterator const_iterator;
@@ -615,6 +666,7 @@ private:
     Listing(int line, int column, int reservedSize);
         
     Listing(const Listing& org);
+    Listing(const Listing& org, CloneMap* cloneMap);
     Listing& operator=(const Listing&);
 
     void insertLF(int maxColumns, int numValues);

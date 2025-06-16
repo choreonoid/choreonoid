@@ -1,4 +1,5 @@
 #include "ValueTree.h"
+#include "CloneMap.h"
 #include "UTF8.h"
 #include "MathUtil.h"
 #include "Format.h"
@@ -126,7 +127,7 @@ ValueNode::ValueNode(const ValueNode& org)
 }
 
 
-ValueNode* ValueNode::clone() const
+ValueNode* ValueNode::doClone(CloneMap*) const
 {
     return new ValueNode(*this);
 }
@@ -482,7 +483,7 @@ ScalarNode::ScalarNode(const ScalarNode& org)
 }
 
 
-ValueNode* ScalarNode::clone() const
+ScalarNode* ScalarNode::doClone(CloneMap*) const
 {
     return new ScalarNode(*this);
 }
@@ -519,21 +520,54 @@ Mapping::Mapping(const Mapping& org)
       mode(org.mode),
       floatingNumberFormat_(org.floatingNumberFormat_),
       isFlowStyle_(org.isFlowStyle_),
-      keyStringStyle_(org.keyStringStyle_)
+      keyStringStyle_(org.keyStringStyle_),
+      indexCounter(org.indexCounter)
 {
     
 }
 
 
-ValueNode* Mapping::clone() const
+Mapping::Mapping(const Mapping& org, CloneMap* cloneMap)
+    : ValueNode(org),
+      mode(org.mode),
+      floatingNumberFormat_(org.floatingNumberFormat_),
+      isFlowStyle_(org.isFlowStyle_),
+      keyStringStyle_(org.keyStringStyle_),
+      indexCounter(org.indexCounter)
 {
-    return new Mapping(*this);
+    if(cloneMap){
+        // Deep copy with node sharing tracked by CloneMap
+        for(auto& kv : org.values){
+            ValueNode* clonedNode = CloneMap::getClone(kv.second.get(), cloneMap);
+            if(clonedNode){
+                values[kv.first] = clonedNode;
+            }
+        }
+    } else {
+        // Deep copy without node sharing - all nodes are duplicated
+        for(auto& kv : org.values){
+            ValueNode* clonedNode = kv.second->doClone(nullptr);
+            if(clonedNode){
+                values[kv.first] = clonedNode;
+            }
+        }
+    }
 }
 
 
-Mapping* Mapping::cloneMapping() const
+Mapping* Mapping::doClone(CloneMap* cloneMap) const
 {
-    return new Mapping(*this);
+    if(cloneMap){
+        return new Mapping(*this, cloneMap);
+    } else {
+        return new Mapping(*this);
+    }
+}
+
+
+Mapping* Mapping::deepClone() const
+{
+    return new Mapping(*this, nullptr);
 }
 
 
@@ -1162,9 +1196,47 @@ Listing::Listing(const Listing& org)
 }
 
 
-ValueNode* Listing::clone() const
+Listing::Listing(const Listing& org, CloneMap* cloneMap)
+    : ValueNode(org),
+      floatingNumberFormat_(org.floatingNumberFormat_),
+      isFlowStyle_(org.isFlowStyle_),
+      doInsertLFBeforeNextElement(org.doInsertLFBeforeNextElement)
 {
-    return new Listing(*this);
+    if(cloneMap){
+        // Deep copy with node sharing tracked by CloneMap
+        values.reserve(org.values.size());
+        for(auto& value : org.values){
+            ValueNode* clonedNode = CloneMap::getClone(value.get(), cloneMap);
+            if(clonedNode){
+                values.push_back(clonedNode);
+            }
+        }
+    } else {
+        // Deep copy without node sharing - all nodes are duplicated
+        values.reserve(org.values.size());
+        for(auto& value : org.values){
+            ValueNode* clonedNode = value->doClone(nullptr);
+            if(clonedNode){
+                values.push_back(clonedNode);
+            }
+        }
+    }
+}
+
+
+Listing* Listing::doClone(CloneMap* cloneMap) const
+{
+    if(cloneMap){
+        return new Listing(*this, cloneMap);
+    } else {
+        return new Listing(*this);
+    }
+}
+
+
+Listing* Listing::deepClone() const
+{
+    return new Listing(*this, nullptr);
 }
 
 
