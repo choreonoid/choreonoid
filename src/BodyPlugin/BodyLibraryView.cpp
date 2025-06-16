@@ -202,7 +202,7 @@ LibraryItem::LibraryItem(const LibraryItem& other)
     (*this) = other;
 
     if(other.extraInfo){
-        extraInfo = other.extraInfo->cloneMapping();
+        extraInfo = other.extraInfo->clone();
     }
 }
 

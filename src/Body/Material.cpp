@@ -75,7 +75,7 @@ Material::Material(const Material& org)
 {
     roughness_ = org.roughness_;
     viscosity_ = org.viscosity_;
-    info_ = org.info_->cloneMapping();
+    info_ = org.info_->clone();
 }
 
 
@@ -84,7 +84,7 @@ Material::Material(const Mapping* info)
     roughness_ = 0.5;
     viscosity_ = 1.0;
 
-    info_ = info->cloneMapping();
+    info_ = info->clone();
     info_->extract("name", name_);
     info_->extract("roughness", roughness_);
     info_->extract("viscosity", viscosity_);

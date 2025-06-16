@@ -484,7 +484,7 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
         for(int i=0; i < components.size(); ++i){
 
             // Merge the parameters of the parent node into the child (component) node
-            MappingPtr component = components[i].toMapping()->cloneMapping();
+            MappingPtr component = components[i].toMapping()->clone();
             component->insert(archive);
 
             const ValueNode& typeNode = (*component)["type"];

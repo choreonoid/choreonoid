@@ -159,7 +159,7 @@ void Body::copyFrom(const Body* org, CloneMap* cloneMap)
             extraJoint->setLocalPosition(j, orgExtraJoint->localPosition(j));
         }
         if(auto info = orgExtraJoint->info()){
-            extraJoint->resetInfo(info->cloneMapping());
+            extraJoint->resetInfo(info->clone());
         }
         extraJoints_.push_back(extraJoint);
     }
