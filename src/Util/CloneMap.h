@@ -3,7 +3,6 @@
 
 #include "Referenced.h"
 #include <functional>
-#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -116,13 +115,16 @@ public:
         operator int() const { return id_; }
     };
 
-    bool flag(int id) const { return flags[id]; }
-    void setFlag(int id, bool on) { flags[id] = on; }
+    bool flag(int id) const { return flags & (1u << id); }
+    void setFlag(int id, bool on) { 
+        if(on) flags |= (1u << id);
+        else flags &= ~(1u << id);
+    }
 
 private:
     class Impl;
     Impl* impl;
-    std::vector<bool> flags;
+    uint32_t flags = 0;
 
     Referenced* findClone_(const Referenced* org);
     Referenced* findOrCreateClone_(const Referenced* org);

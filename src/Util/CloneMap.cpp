@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include <mutex>
+#include <stdexcept>
 
 using namespace std;
 using namespace cnoid;
@@ -47,7 +48,6 @@ public:
 CloneMap::CloneMap()
 {
     impl = new Impl;
-    flags.resize(idCounter, false);
 }
 
 
@@ -60,7 +60,6 @@ CloneMap::Impl::Impl()
 CloneMap::CloneMap(const CloneFunction& cloneFunction)
 {
     impl = new Impl(cloneFunction);
-    flags.resize(idCounter, false);
 }
 
 
@@ -75,7 +74,6 @@ CloneMap::CloneMap(const CloneMap& org)
     : flags(org.flags)
 {
     impl = new Impl(*org.impl);
-    flags.resize(idCounter, false);
 }
 
 
@@ -207,6 +205,9 @@ int CloneMap::getFlagId(const char* name)
     auto iter = flagNameToIdMap.find(name);
     if(iter != flagNameToIdMap.end()){
         return iter->second;
+    }
+    if(idCounter >= 32){
+        throw std::runtime_error("CloneMap: Maximum number of flags (32) exceeded");
     }
     int id = idCounter;
     flagNameToIdMap[name] = idCounter++;
