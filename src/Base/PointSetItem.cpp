@@ -42,7 +42,7 @@ public:
     SgUpdate update;
     SgShapePtr voxels;
     float voxelSize;
-    SgInvariantGroupPtr invariant;
+    SgNodePtr pointSetTopNode;
     Selection renderingMode;
     RectRegionMarkerPtr regionMarker;
     ScopedConnection eraserModeMenuItemConnection;
@@ -63,6 +63,7 @@ public:
     bool removeAttentionPoint(const Vector3& point, double distanceThresh, bool doNotify);
     void notifyAttentionPointChange();
     void updateVisualization(bool updateContents);
+    void updatePointSetTopNode(SgNode* newNode);
     void updateVisiblePointSet();
     void updateVoxels();
     bool isEditable() const { return isEditable_; }
@@ -862,7 +863,7 @@ void ScenePointSet::setPointSize(double size)
 {
     if(size != visiblePointSet->pointSize()){
         visiblePointSet->setPointSize(size);
-        if(renderingMode.is(PointSetItem::POINT) && invariant){
+        if(renderingMode.is(PointSetItem::POINT) && pointSetTopNode){
             updateVisualization(false);
         }
     }
@@ -872,7 +873,7 @@ void ScenePointSet::setVoxelSize(double size)
 {
     if(size != voxelSize){
         voxelSize = size;
-        if(renderingMode.is(PointSetItem::VOXEL) && invariant){
+        if(renderingMode.is(PointSetItem::VOXEL) && pointSetTopNode){
             updateVisualization(true);
         }
     }
@@ -970,35 +971,41 @@ void ScenePointSet::notifyAttentionPointChange()
 
 void ScenePointSet::updateVisualization(bool updateContents)
 {
-    if(invariant){
-        removeChild(invariant);
-    }
-    invariant = new SgInvariantGroup;
-    
     if(renderingMode.is(PointSetItem::POINT)){
         if(updateContents){
             updateVisiblePointSet();
         }
         if(itemImpl->scale == Vector3::Ones()){
-            invariant->addChild(visiblePointSet);
+            updatePointSetTopNode(visiblePointSet);
         } else {
             if(!visiblePointSetScale){
                 visiblePointSetScale = new SgScaleTransform;
+                visiblePointSetScale->addChild(visiblePointSet);
             }
             visiblePointSetScale->setScale(itemImpl->scale);
             visiblePointSetScale->setScaleOrientation(itemImpl->scaleOrientation);
-            visiblePointSetScale->addChild(visiblePointSet);
-            invariant->addChild(visiblePointSetScale);
+            updatePointSetTopNode(visiblePointSetScale);
         }
-    } else {
+    } else { // Voxel mode
         if(updateContents){
             updateVoxels();
         }
-        invariant->addChild(voxels);
+        updatePointSetTopNode(voxels);
     }
-    addChild(invariant, update);
 
     clearAttentionPoints(true);
+}
+
+
+void ScenePointSet::updatePointSetTopNode(SgNode* newNode)
+{
+    if(pointSetTopNode != newNode){
+        if(pointSetTopNode){
+            removeChild(pointSetTopNode, update.withAction(SgUpdate::Removed));
+        }
+        addChild(newNode, update.withAction(SgUpdate::Added));
+        pointSetTopNode = newNode;
+    }
 }
 
 
@@ -1009,6 +1016,7 @@ void ScenePointSet::updateVisiblePointSet()
     visiblePointSet->normalIndices() = orgPointSet->normalIndices();
     visiblePointSet->setColors(orgPointSet->colors());
     visiblePointSet->colorIndices() = orgPointSet->colorIndices();
+    visiblePointSet->notifyUpdate(update.withAction(SgUpdate::Modified));
 }
 
 
@@ -1097,6 +1105,7 @@ void ScenePointSet::updateVoxels()
         }
     }
     voxels->setMesh(mesh);
+    voxels->notifyUpdate(update.withAction(SgUpdate::Modified));
 }
 
 
