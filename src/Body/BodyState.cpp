@@ -10,16 +10,8 @@ void BodyStateBlock::storeStateOfBody(const Body* body)
 {
     int numLinks = std::min(body->numLinks(), numLinkPositions());
     if(numLinks > 0){
-        auto rootLink = body->rootLink();
-        if(auto parentLink = body->parentBodyLink()){
-            Isometry3 T_parent_inv = parentLink->T().inverse(Eigen::Isometry);
-            for(int i=0; i < numLinks; ++i){
-                linkPosition(i).set(T_parent_inv * body->link(i)->T());
-            }
-        } else {
-            for(int i=0; i < numLinks; ++i){
-                linkPosition(i).set(body->link(i)->T());
-            }
+        for(int i=0; i < numLinks; ++i){
+            linkPosition(i).set(body->link(i)->T());
         }
     }
     
@@ -48,19 +40,10 @@ bool BodyStateBlock::restoreStateToBody(Body* body) const
 
     int numLinks = std::min(body->numLinks(), numLinkPositions());
     if(numLinks > 0){
-        if(auto parentLink = body->parentBodyLink()){
-            const Isometry3& T_parent = parentLink->T();
-            body->rootLink()->setPosition(T_parent * linkPosition(0).T());
-            body->calcForwardKinematics();
-            for(int i=1; i < numLinks; ++i){
-                body->link(i)->setPosition(T_parent * linkPosition(i).T());
-            }
-        } else {
-            body->rootLink()->setPosition(linkPosition(0).T());
-            body->calcForwardKinematics();
-            for(int i=1; i < numLinks; ++i){
-                body->link(i)->setPosition(linkPosition(i).T());
-            }
+        body->rootLink()->setPosition(linkPosition(0).T());
+        body->calcForwardKinematics();
+        for(int i=1; i < numLinks; ++i){
+            body->link(i)->setPosition(linkPosition(i).T());
         }
     }
 
