@@ -133,6 +133,7 @@ public:
     ScopedConnection bodyExistenceConnection;
     
     BodyItem* parentBodyItem;
+    string parentLinkName;
     ref_ptr<BodyLocation> bodyLocation;
     ref_ptr<LinkLocation> parentLinkLocation;
     AttachmentDevicePtr attachmentToParent;
@@ -191,6 +192,7 @@ public:
     void setLocationLocked(bool on, bool updateInitialPositionWhenLocked, bool doNotiyUpdate);
     void createSceneBody();
     void setTransparency(float t);
+    void setParentLink(const std::string& name);
     bool updateAttachment(bool on, bool doNotifyUpdate);
     bool isAttachable() const;
     void setParentBodyItem(BodyItem* bodyItem);
@@ -293,10 +295,9 @@ BodyItem::Impl::Impl(BodyItem* self, const Impl& org, CloneMap* cloneMap)
     : Impl(self, CloneMap::getClone(org.body, cloneMap), true)
 {
     isAttachmentEnabled = org.isAttachmentEnabled;
-    transparency = org.transparency;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
-    isJointRangeLimitEnabled = org.isJointRangeLimitEnabled;
+    parentLinkName = org.parentLinkName;
 
     if(org.currentBaseLink){
         setCurrentBaseLink(body->link(org.currentBaseLink->index()), true, false);
@@ -304,7 +305,10 @@ BodyItem::Impl::Impl(BodyItem* self, const Impl& org, CloneMap* cloneMap)
         setCurrentBaseLink(nullptr, true, false);
     }
 
+    isJointRangeLimitEnabled = org.isJointRangeLimitEnabled;
+
     initialState = org.initialState;
+    transparency = org.transparency;
 }
 
 
@@ -380,11 +384,12 @@ bool BodyItem::Impl::doAssign(const Item* srcItem)
     
     auto srcImpl = srcBodyItem->impl;
     self->isVisibleLinkSelectionMode_ = srcBodyItem->isVisibleLinkSelectionMode_;
-    isAttachmentEnabled = srcImpl->isAttachmentEnabled;
     isLocationLocked = srcImpl->isLocationLocked;
-    transparency = srcImpl->transparency;
+    isAttachmentEnabled = srcImpl->isAttachmentEnabled;
     isCollisionDetectionEnabled = srcImpl->isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = srcImpl->isSelfCollisionDetectionEnabled;
+    parentLinkName = srcImpl->parentLinkName;
+    transparency = srcImpl->transparency;
     
     // copy the base link property
     Link* baseLink = nullptr;
@@ -1391,6 +1396,15 @@ BodyItem* BodyItem::parentBodyItem()
 }
 
 
+void BodyItem::Impl::setParentLink(const std::string& name)
+{
+    if(name != parentLinkName){
+        parentLinkName = name;
+        setRelativeOffsetPositionFromParentBody();
+    }
+}
+
+
 void BodyItem::setAttachmentEnabled(bool on, bool doNotifyUpdate)
 {
     impl->isAttachmentEnabled = on;
@@ -1532,8 +1546,16 @@ found:
 
 void BodyItem::Impl::setRelativeOffsetPositionFromParentBody()
 {
+    auto parentBody = parentBodyItem->body();
+    Link* parentLink = nullptr;
+    if(!parentLinkName.empty()){
+        parentLink = parentBody->link(parentLinkName);
+    }
+    if(!parentLink){
+        parentLink = parentBody->rootLink();
+    }
+    auto T_inv = parentLink->T().inverse(Eigen::Isometry);
     auto rootLink = body->rootLink();
-    auto T_inv = parentBodyItem->body()->rootLink()->T().inverse(Eigen::Isometry);
     rootLink->setOffsetPosition(T_inv * rootLink->T());
 }
 
@@ -1544,7 +1566,14 @@ void BodyItem::Impl::onParentBodyKinematicStateChanged()
     if(attachmentToParent){
         parentLink = attachmentToParent->holder()->link();
     } else {
-        parentLink = parentBodyItem->body()->rootLink();
+        parentLink = nullptr;
+        auto parentBody = parentBodyItem->body();
+        if(!parentLinkName.empty()){
+            parentLink = parentBody->link(parentLinkName);
+        }
+        if(!parentLink){
+            parentLink = parentBody->rootLink();
+        }
     }
     auto rootLink = body->rootLink();
     rootLink->setPosition(parentLink->T() * rootLink->Tb());
@@ -1611,11 +1640,15 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                     notifyModelUpdate(LinkSpecUpdate);
                     return true;
                 });
+
+    putProperty(_("Parent link"), parentLinkName,
+                [this](const string& name){ setParentLink(name); return true; });
     
-    putProperty(_("Collision detection"), isCollisionDetectionEnabled,
-                [this](bool on){ return setCollisionDetectionEnabled(on); });
-    putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
-                [this](bool on){ return setSelfCollisionDetectionEnabled(on); });
+    if(isAttachable()){
+        putProperty(_("Enable attachment"), isAttachmentEnabled,
+                    [this](bool on){ self->setAttachmentEnabled(on, false); return true; });
+    }
+
     putProperty(_("Lock location"), self->isLocationLocked(),
                 [this](bool on){ setLocationLocked(on, true, true); return true; });
     putProperty(_("Scene sensitive"), self->isSceneSensitive(),
@@ -1626,16 +1659,16 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                     [this](bool on){ self->setJointRangeLimitEnabled(on); return true; });
     }
     
+    putProperty(_("Collision detection"), isCollisionDetectionEnabled,
+                [this](bool on){ return setCollisionDetectionEnabled(on); });
+    putProperty(_("Self-collision detection"), isSelfCollisionDetectionEnabled,
+                [this](bool on){ return setSelfCollisionDetectionEnabled(on); });
+
     putProperty.range(0.0, 0.9).decimals(1);
     putProperty(_("Transparency"), transparency,
                 [this](float value){ setTransparency(value); return true; });
     putProperty(_("Visible link selection"), self->isVisibleLinkSelectionMode_,
                 changeProperty(self->isVisibleLinkSelectionMode_));
-
-    if(isAttachable()){
-        putProperty(_("Enable attachment"), isAttachmentEnabled,
-                    [this](bool on){ self->setAttachmentEnabled(on, false); return true; });
-    }
 
     putProperty(_("Multiplexing number"), body->numMultiplexBodies());
     putProperty(_("Existence"), body->existence(),
@@ -1719,6 +1752,9 @@ bool BodyItem::Impl::store(Archive& archive)
         }
     }
 
+    if(!parentLinkName.empty()){
+        archive.write("parent_link", parentLinkName, DOUBLE_QUOTED);
+    }
     if(isAttachable()){
         archive.write("enable_attachment", isAttachmentEnabled);
     }
@@ -1804,6 +1840,7 @@ bool BodyItem::Impl::restore(const Archive& archive)
         self->setJointRangeLimitEnabled(on);
     }
     archive.read("visible_link_selection_mode", self->isVisibleLinkSelectionMode_);
+    archive.read("parent_link", parentLinkName);
     archive.read("enable_attachment", isAttachmentEnabled);
 
     double t;
