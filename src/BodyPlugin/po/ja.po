@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-19 00:21+0900\n"
+"POT-Creation-Date: 2025-11-18 15:31+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -212,11 +212,20 @@ msgstr "静的"
 msgid "Root fixed"
 msgstr "ルート固定"
 
-msgid "Collision detection"
-msgstr "干渉検出"
+msgid "Parent link"
+msgstr "親リンク"
 
-msgid "Self-collision detection"
-msgstr "自己干渉検出"
+msgid "Attached"
+msgstr "固定"
+
+msgid "Coordinated"
+msgstr "連動"
+
+msgid "Unlinked"
+msgstr "独立"
+
+msgid "Parent body linkage"
+msgstr "親ボディ連結"
 
 msgid "Lock location"
 msgstr "配置ロック"
@@ -227,20 +236,26 @@ msgstr "シーン感知"
 msgid "Enable joint limits"
 msgstr "関節リミットの有効化"
 
+msgid "Collision detection"
+msgstr "干渉検出"
+
+msgid "Self-collision detection"
+msgstr "自己干渉検出"
+
 msgid "Transparency"
 msgstr "透明度"
 
 msgid "Visible link selection"
 msgstr "表示リンクの選択"
 
-msgid "Enable attachment"
-msgstr "アタッチメント有効化"
-
 msgid "Multiplexing number"
 msgstr "多重化数"
 
 msgid "Existence"
 msgstr "存在"
+
+msgid "Unknown parent body linkage type"
+msgstr "不明な親ボディ連結タイプ"
 
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
@@ -711,9 +726,6 @@ msgstr "座標系："
 msgid "Parallel tracking"
 msgstr "平行トラッキング"
 
-msgid "Camera Creation"
-msgstr "カメラの作成"
-
 msgid "{0} Camera"
 msgstr "{0}カメラ"
 
@@ -987,9 +999,6 @@ msgstr "リンク姿勢編集の許可"
 
 msgid "Penetration block mode"
 msgstr "貫通ブロックモード"
-
-msgid "Highlight colliding links"
-msgstr "干渉リンクのハイライト表示"
 
 msgid "Kinematics Operation Setup"
 msgstr "運動学操作の設定"
