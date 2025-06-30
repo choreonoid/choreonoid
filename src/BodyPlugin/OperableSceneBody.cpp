@@ -4,26 +4,28 @@
 #include "BodySelectionManager.h"
 #include "KinematicsBar.h"
 #include "SimulatorItem.h"
-#include <cnoid/JointPath>
-#include <cnoid/LinkedJointHandler>
-#include <cnoid/CoordinateFrame>
-#include <cnoid/PenetrationBlocker>
+#include <cnoid/ExtensionManager>
 #include <cnoid/MenuManager>
+#include <cnoid/RootItem>
 #include <cnoid/SceneWidget>
+#include <cnoid/SceneDragProjector>
+#include <cnoid/GLSceneRenderer>
 #include <cnoid/SceneEffects>
 #include <cnoid/SceneMarkers>
-#include <cnoid/SceneDragProjector>
-#include <cnoid/PositionDragger>
-#include <cnoid/GLSceneRenderer>
-#include <cnoid/SceneDevice>
+#include <cnoid/SceneNodeClassRegistry>
+#include <cnoid/SceneRenderer>
+#include <cnoid/JointPath>
+#include <cnoid/LinkedJointHandler>
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/PinDragIK>
-#include <cnoid/EigenUtil>
-#include <cnoid/RootItem>
-#include <cnoid/ExtensionManager>
+#include <cnoid/PenetrationBlocker>
+#include <cnoid/SceneDevice>
+#include <cnoid/PositionDragger>
+#include <cnoid/CheckBoxAction>
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
-#include <cnoid/CheckBoxAction>
+#include <cnoid/CoordinateFrame>
+#include <cnoid/EigenUtil>
 #include <cnoid/Format>
 #include <cnoid/DisplayValueFormat>
 #include <cnoid/stdx/clamp>
@@ -71,19 +73,20 @@ class OperableSceneLink::Impl
 {
 public:
     OperableSceneLink* self;
+    OperableSceneBody::Impl* sceneBodyImpl;
     SgUpdate& update;
     SgPolygonDrawStylePtr highlightStyle;
     BoundingBoxMarkerPtr bbMarker;
     CrossMarkerPtr cmMarker;
     bool isOriginShown;
     bool isCenterOfMassShown;
-    bool isPointed;
-    bool isColliding;
 
     Impl(OperableSceneBody* sceneBody, OperableSceneLink* self);
-    OperableSceneBody* operableSceneBody();
     void showOrigin(bool on);
     void showCenterOfMass(bool on);
+    void enableHighlight(const Vector4f& color, double edgeWidth);
+    void disableHighlight();
+    void render(SceneRenderer* renderer);
 };
 
 class OperableSceneBody::Impl
@@ -100,7 +103,6 @@ public:
     SgUpdate update;
 
     ScopedConnectionSet connections;
-    ScopedConnection connectionToSigCollisionsUpdated;
     vector<bool> collisionLinkBitSet;
     ScopedConnection connectionToSigLinkSelectionChanged;
 
@@ -172,8 +174,6 @@ public:
     void onSelectionChanged(bool on);
     void onKinematicStateChanged();
     void onCollisionsUpdated();
-    void onCollisionLinkHighlightModeChanged();
-    void changeCollisionLinkHighlightMode(bool on);
     void updateVisibleLinkSelectionMode(bool isActive);
     void onLinkOriginsCheckToggled(bool on);
     void onLinkCmsCheckToggled(bool on);
@@ -241,9 +241,8 @@ public:
 
 }
 
-
 OperableSceneLink::OperableSceneLink(OperableSceneBody* sceneBody, Link* link)
-    : SceneLink(sceneBody, link)
+    : SceneLink(findClassId<OperableSceneLink>(), sceneBody, link)
 {
     impl = new Impl(sceneBody, this);
 }
@@ -251,12 +250,11 @@ OperableSceneLink::OperableSceneLink(OperableSceneBody* sceneBody, Link* link)
 
 OperableSceneLink::Impl::Impl(OperableSceneBody* sceneBody, OperableSceneLink* self)
     : self(self),
+      sceneBodyImpl(sceneBody->impl),
       update(sceneBody->impl->update)
 {
     isOriginShown = false;
     isCenterOfMassShown = false;
-    isPointed = false;
-    isColliding = false;
 }
 
 
@@ -269,12 +267,6 @@ OperableSceneLink::~OperableSceneLink()
 OperableSceneBody* OperableSceneLink::operableSceneBody()
 {
     return static_cast<OperableSceneBody*>(sceneBody());
-}
-
-
-OperableSceneBody* OperableSceneLink::Impl::operableSceneBody()
-{
-    return static_cast<OperableSceneBody*>(self->sceneBody());
 }
 
 
@@ -291,11 +283,10 @@ void OperableSceneLink::setVisible(bool on)
     bool updated = false;
 
     if(impl->isOriginShown){
-        auto sceneBodyImpl = operableSceneBody()->impl;
         if(on){
-            addChildOnce(sceneBodyImpl->linkOriginMarker);
+            addChildOnce(impl->sceneBodyImpl->linkOriginMarker);
         } else {
-            removeChild(sceneBodyImpl->linkOriginMarker);
+            removeChild(impl->sceneBodyImpl->linkOriginMarker);
         }
         updated = true;
     }
@@ -322,10 +313,8 @@ void OperableSceneLink::showOrigin(bool on)
 void OperableSceneLink::Impl::showOrigin(bool on)
 {
     if(on != isOriginShown){
-
-        auto sceneBody = operableSceneBody();
-        auto& originMarker = sceneBody->impl->linkOriginMarker;
-        auto& visibilities = sceneBody->impl->linkOriginMarkerVisibilities;
+        auto& originMarker = sceneBodyImpl->linkOriginMarker;
+        auto& visibilities = sceneBodyImpl->linkOriginMarkerVisibilities;
         int linkIndex = self->link()->index();
 
         if(on){
@@ -406,24 +395,35 @@ bool OperableSceneLink::isCenterOfMassShown() const
 
 void OperableSceneLink::enableHighlight(bool on)
 {
-    if(!visualShape()){
-        return;
-    }
-    auto& highlightStyle = impl->highlightStyle;
     if(on){
+        impl->enableHighlight(Vector4f(1.0f, 1.0f, 0.0f, 0.75f), 0.7f);
+    } else {
+        impl->disableHighlight();
+    }
+}
+
+
+void OperableSceneLink::Impl::enableHighlight(const Vector4f& color, double edgeWidth)
+{
+    if(self->visualShape()){
         if(!highlightStyle){
             highlightStyle = new SgPolygonDrawStyle;
             highlightStyle->setPolygonElements(SgPolygonDrawStyle::Face | SgPolygonDrawStyle::Edge);
-            highlightStyle->setEdgeColor(Vector4f(1.0f, 1.0f, 0.0f, 0.75f));
-            highlightStyle->setEdgeWidth(0.7f);
         }
+        highlightStyle->setEdgeColor(color);
+        highlightStyle->setEdgeWidth(edgeWidth);
+
         if(!highlightStyle->hasParents()){
-            insertEffectGroup(highlightStyle, impl->update);
+            self->insertEffectGroup(highlightStyle, update);
         }
-    } else {
-        if(highlightStyle && highlightStyle->hasParents()){
-            removeEffectGroup(highlightStyle, impl->update);
-        }
+    }
+}
+
+
+void OperableSceneLink::Impl::disableHighlight()
+{
+    if(highlightStyle && highlightStyle->hasParents()){
+        self->removeEffectGroup(highlightStyle, update);
     }
 }
 
@@ -449,18 +449,41 @@ void OperableSceneLink::hideMarker()
 }
 
 
-void OperableSceneLink::setColliding(bool on)
+void OperableSceneLink::Impl::render(SceneRenderer* renderer)
 {
-    if(!impl->isColliding && on){
-        if(!impl->isPointed){
-            
-        }
-        impl->isColliding = true;
-    } else if(impl->isColliding && !on){
-        if(!impl->isPointed){
-            
-        }
-        impl->isColliding = false;
+    static const SceneRenderer::PropertyKey key("CollisionHighlighting");
+
+    bool highlightCollision = false;
+    if(renderer->property(key, false)){ // Check if collision highlighting enabled
+        int linkIndex = self->link()->index();
+        highlightCollision = sceneBodyImpl->collisionLinkBitSet[linkIndex];
+    }
+    
+    if(!highlightCollision){
+        renderer->renderingFunctions()->dispatchAs<SgPosTransform>(self);
+    } else {
+        renderer->renderCustomTransform(
+            self,
+            [this, renderer]{
+                auto shapeGroup = self->shapeGroup();
+                auto renderingFunctions = renderer->renderingFunctions();
+                auto it = self->begin();
+                while(it != self->end()){
+                    auto node = *it++;
+                    if(node != shapeGroup){
+                        renderingFunctions->dispatch(node);
+                    } else {
+                        auto orgTintColor = renderer->tintColor();
+                        renderer->setTintColor(Vector3f(1.0f, 0.0f, 0.0f));
+                        renderingFunctions->dispatch(node);
+                        renderer->setTintColor(orgTintColor);
+                        break;
+                    }
+                }
+                while(it != self->end()){
+                    renderingFunctions->dispatch(*it++);
+                }
+            });
     }
 }
 
@@ -530,7 +553,6 @@ void OperableSceneBody::Impl::onSceneGraphConnection(bool on)
     connections.disconnect();
 
     if(on){
-
         connections.add(
             bodyItem->sigSelectionChanged().connect(
                 [this](bool on){ onSelectionChanged(on); }));
@@ -552,10 +574,10 @@ void OperableSceneBody::Impl::onSceneGraphConnection(bool on)
         onKinematicStateChanged();
 
         connections.add(
-            kinematicsBar->sigCollisionVisualizationChanged().connect(
-                [this](){ onCollisionLinkHighlightModeChanged(); }));
-        
-        onCollisionLinkHighlightModeChanged();
+            bodyItem->sigCollisionsUpdated().connect(
+                [this](){ onCollisionsUpdated(); }));
+
+        collisionLinkBitSet = bodyItem->collisionLinkBitSet();
     }
 
     updateVisibleLinkSelectionMode(on);
@@ -588,7 +610,7 @@ void OperableSceneBody::Impl::updateSceneModel()
     pointedSceneLink = nullptr;
     targetLink = nullptr;
     if(highlightedLink){
-        highlightedLink->enableHighlight(false);
+        highlightedLink->impl->disableHighlight();
         highlightedLink = nullptr;
     }
     dragMode = DRAG_NONE;
@@ -649,35 +671,6 @@ void OperableSceneBody::Impl::onCollisionsUpdated()
 {
     if(bodyItem->collisionLinkBitSet() != collisionLinkBitSet){
         collisionLinkBitSet = bodyItem->collisionLinkBitSet();
-        const int n = self->numSceneLinks();
-        for(int i=0; i < n; ++i){
-            operableSceneLink(i)->setColliding(collisionLinkBitSet[i]);
-        }
-        self->notifyUpdate(update.withAction(SgUpdate::Modified));
-    }
-}
-
-
-void OperableSceneBody::Impl::onCollisionLinkHighlightModeChanged()
-{
-    changeCollisionLinkHighlightMode(kinematicsBar->isCollisionLinkHighlihtMode());
-}
-
-
-void OperableSceneBody::Impl::changeCollisionLinkHighlightMode(bool on)
-{
-    if(!connectionToSigCollisionsUpdated.connected() && on){
-        connectionToSigCollisionsUpdated =
-            bodyItem->sigCollisionsUpdated().connect(
-                [this](){ onCollisionsUpdated(); });
-        onCollisionsUpdated();
-
-    } else if(connectionToSigCollisionsUpdated.connected() && !on){
-        connectionToSigCollisionsUpdated.disconnect();
-        const int n = self->numSceneLinks();
-        for(int i=0; i < n; ++i){
-            operableSceneLink(i)->setColliding(false);
-        }
         self->notifyUpdate(update.withAction(SgUpdate::Modified));
     }
 }
@@ -1311,7 +1304,7 @@ void OperableSceneBody::Impl::onSceneModeChanged(SceneWidgetEvent* event)
         } else {
             finishEditing();
             if(highlightedLink){
-                highlightedLink->enableHighlight(false);
+                highlightedLink->impl->disableHighlight();
                 highlightedLink = nullptr;
             }
             updateMarkersAndManipulators(false);
@@ -1359,7 +1352,7 @@ bool OperableSceneBody::onButtonPressEvent(SceneWidgetEvent* event)
 bool OperableSceneBody::Impl::onButtonPressEvent(SceneWidgetEvent* event)
 {
     if(highlightedLink){
-        highlightedLink->enableHighlight(false);
+        highlightedLink->impl->disableHighlight();
         highlightedLink = nullptr;
     }
     
@@ -1426,7 +1419,7 @@ bool OperableSceneBody::Impl::onButtonPressEvent(SceneWidgetEvent* event)
     }
 
     if((dragMode != DRAG_NONE) && highlightedLink){
-        highlightedLink->enableHighlight(false);
+        highlightedLink->impl->disableHighlight();
         self->notifyUpdate(update.withAction(SgUpdate::Modified));
     }
 
@@ -1497,7 +1490,7 @@ bool OperableSceneBody::Impl::onPointerMoveEvent(SceneWidgetEvent* event)
             if(checkLinkOperationType(pointedSceneLink, false) != LinkOperationType::None){
                 if(pointedSceneLink != highlightedLink){
                     if(highlightedLink){
-                        highlightedLink->enableHighlight(false);
+                        highlightedLink->impl->disableHighlight();
                     }
                     pointedSceneLink->enableHighlight(true);
                     highlightedLink = pointedSceneLink;
@@ -1562,7 +1555,7 @@ void OperableSceneBody::Impl::onPointerLeaveEvent(SceneWidgetEvent* event)
     finishEditing();
 
     if(highlightedLink){
-        highlightedLink->enableHighlight(false);
+        highlightedLink->impl->disableHighlight();
         highlightedLink = nullptr;
     }
 }
@@ -2163,6 +2156,13 @@ void OperableSceneBody::Impl::restoreSceneBodyProperties(const Archive& archive)
 
 void OperableSceneBody::initializeClass(ExtensionManager* ext)
 {
+    SceneNodeClassRegistry::instance().registerClass<OperableSceneLink, SgPosTransform>("OperableSceneLink");
+    SceneRenderer::addExtension(
+        [](SceneRenderer* renderer){
+            renderer->renderingFunctions()->setFunction<OperableSceneLink>(
+                [renderer](OperableSceneLink* node){ node->impl->render(renderer); });
+        });
+
     ext->setProjectArchiver(
         "OperableSceneBody",
         OperableSceneBody::Impl::storeProperties,

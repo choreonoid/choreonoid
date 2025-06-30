@@ -15,7 +15,7 @@ class OperableSceneBody;
 class CNOID_EXPORT OperableSceneLink : public SceneLink
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     OperableSceneLink(OperableSceneBody* sceneBody, Link* link);
     ~OperableSceneLink();
@@ -32,7 +32,6 @@ public:
     void enableHighlight(bool on);
     void showMarker(const Vector3f& color, float transparency);
     void hideMarker();
-    void setColliding(bool on);
 
 private:
     class Impl;
