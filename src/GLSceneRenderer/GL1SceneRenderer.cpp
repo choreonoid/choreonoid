@@ -989,7 +989,7 @@ void GL1SceneRenderer::Impl::renderGroup(SgGroup* group)
 }
 
 
-void GL1SceneRenderer::renderCustomGroup(SgGroup* group, std::function<void()> traverseFunction)
+void GL1SceneRenderer::renderCustomGroup(SgGroup* group, const std::function<void()>& traverseFunction)
 {
     impl->pushPickNode(group);
     traverseFunction();
@@ -1041,7 +1041,7 @@ void GL1SceneRenderer::Impl::renderTransform(SgTransform* transform)
 }
 
 
-void GL1SceneRenderer::renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction)
+void GL1SceneRenderer::renderCustomTransform(SgTransform* transform, const std::function<void()>& traverseFunction)
 {
     Affine3 T;
     transform->getTransform(T);

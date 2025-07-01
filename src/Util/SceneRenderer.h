@@ -30,8 +30,8 @@ public:
     typedef PolymorphicSceneNodeFunctionSet NodeFunctionSet;
 
     virtual PolymorphicSceneNodeFunctionSet* renderingFunctions() = 0;
-    virtual void renderCustomGroup(SgGroup* group, std::function<void()> traverseFunction) = 0;
-    virtual void renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction) = 0;
+    virtual void renderCustomGroup(SgGroup* group, const std::function<void()>& traverseFunction) = 0;
+    virtual void renderCustomTransform(SgTransform* transform, const std::function<void()>& traverseFunction) = 0;
     virtual void renderNode(SgNode* node) = 0;
 
     typedef std::function<SgNode*(SgNode* targetNode)> NodeDecorationFunction;

@@ -14,8 +14,8 @@ public:
 
     virtual void setOutputStream(std::ostream& os) override;
     virtual PolymorphicSceneNodeFunctionSet* renderingFunctions() override;
-    virtual void renderCustomGroup(SgGroup* transform, std::function<void()> traverseFunction) override;
-    virtual void renderCustomTransform(SgTransform* transform, std::function<void()> traverseFunction) override;
+    virtual void renderCustomGroup(SgGroup* transform, const std::function<void()>& traverseFunction) override;
+    virtual void renderCustomTransform(SgTransform* transform, const std::function<void()>& traverseFunction) override;
     virtual void renderNode(SgNode* node) override;
     virtual void addNodeDecoration(SgNode* targetNode, NodeDecorationFunction func, int id) override;
     virtual void clearNodeDecorations(int id) override;
