@@ -72,7 +72,6 @@ public:
     SceneLink* self;
     SceneBody::Impl* sceneBodyImpl;
     LinkShapeGroupPtr mainShapeGroup;
-    SgGroupPtr topShapeGroup;
     bool isVisible;
     std::vector<SceneDevicePtr> sceneDevices;
     SgGroupPtr deviceGroup;
@@ -114,21 +113,34 @@ public:
 
 SceneLink::SceneLink(SceneBody* sceneBody, Link* link)
 {
+    initialize(sceneBody, link);
+}
+
+
+SceneLink::SceneLink(int classId, SceneBody* sceneBody, Link* link)
+    : SgPosTransform(classId)
+{
+    initialize(sceneBody, link);
+}
+
+
+void SceneLink::initialize(SceneBody* sceneBody, Link* link)
+{
     link_ = link;
     sceneBody_ = sceneBody;
     setName(link->name());
     impl = new Impl(this, link);
     impl->sceneBodyImpl = sceneBody_->impl;
-}
+    topShapeGroup = impl->mainShapeGroup;
+}    
 
 
 SceneLink::Impl::Impl(SceneLink* self, Link* link)
     : self(self)
 {
     mainShapeGroup = new LinkShapeGroup(this, link);
-    topShapeGroup = mainShapeGroup;
     isVisible = true;
-    self->addChild(topShapeGroup);
+    self->addChild(mainShapeGroup);
 }
 
 
@@ -171,10 +183,10 @@ void SceneLink::insertEffectGroup(SgGroup* effect, SgUpdateRef update)
 
 void SceneLink::Impl::insertEffectGroup(SgGroup* effect, SgUpdateRef& update)
 {
-    self->removeChild(topShapeGroup);
-    effect->addChild(topShapeGroup);
+    self->removeChild(self->topShapeGroup);
+    effect->addChild(self->topShapeGroup);
     self->addChild(effect);
-    topShapeGroup = effect;
+    self->topShapeGroup = effect;
     if(update){
         self->notifyUpdate(update->withAction(SgUpdate::ADDED | SgUpdate::REMOVED));
     }
@@ -201,11 +213,11 @@ bool SceneLink::Impl::removeEffectGroup(SgGroup* parent, SgGroupPtr effect, SgUp
                 break;
             }
         }
-        if(topShapeGroup == effect){
+        if(self->topShapeGroup == effect){
             if(childGroup){
-                topShapeGroup = childGroup;
+                self->topShapeGroup = childGroup;
             } else {
-                topShapeGroup = mainShapeGroup;
+                self->topShapeGroup = mainShapeGroup;
             }
         }
         effect->clearChildren();

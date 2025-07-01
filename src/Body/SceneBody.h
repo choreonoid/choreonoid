@@ -25,6 +25,7 @@ public:
     Link* link() { return link_; }
     const Link* link() const { return link_; }
 
+    const SgGroup* shapeGroup() const { return topShapeGroup; }
     const SgNode* visualShape() const;
     SgNode* visualShape();
     const SgNode* collisionShape() const;
@@ -46,9 +47,15 @@ public:
     
     class Impl;
 
+protected:
+    SceneLink(int classId, SceneBody* sceneBody, Link* link);
+
 private:
+    void initialize(SceneBody* sceneBody, Link* link);
+
     Link* link_;
     SceneBody* sceneBody_;
+    SgGroupPtr topShapeGroup;
     Impl* impl;
     
     friend class SceneBody;
