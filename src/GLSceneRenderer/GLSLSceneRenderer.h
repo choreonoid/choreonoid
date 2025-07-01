@@ -101,7 +101,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 protected:
     virtual void doRender() override;
     virtual bool doPick(int x, int y) override;
-    
+    virtual void onTintColorChanged() override;
+
 private:
     Impl* impl;
 };

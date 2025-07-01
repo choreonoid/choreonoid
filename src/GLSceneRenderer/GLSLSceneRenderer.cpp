@@ -392,13 +392,14 @@ public:
     int pickingImageHeight;
 
     LightingMode lightingMode;
-    bool needToUpdateOverlayDepthBufferSize;
-    
     SgMaterialPtr defaultMaterial;
+    SgMaterialPtr tintColorMaterial;
     GLfloat defaultPointSize;
     GLfloat defaultLineWidth;
     float minTransparency;
     vector<int> shadowLightIndices;
+    bool needToUpdateOverlayDepthBufferSize;
+    bool hasTintColor;
 
     unordered_set<SgNodePtr> invisibleNodeSet;
     GLResourceMap resourceMaps[2];
@@ -723,6 +724,8 @@ void GLSLSceneRenderer::Impl::initialize()
 
     defaultSmoothShading = true;
     defaultMaterial = new SgMaterial;
+    tintColorMaterial = new SgMaterial;
+    hasTintColor = false;
     defaultPointSize = 1.0f;
     defaultLineWidth = 1.0f;
     minTransparency = 0.0f;
@@ -2368,9 +2371,24 @@ void GLSLSceneRenderer::Impl::applyCullingMode(SgMesh* mesh)
 }
 
 
+void GLSLSceneRenderer::onTintColorChanged()
+{
+    if(auto color = tintColor()){
+        impl->tintColorMaterial->setDiffuseColor(*color);
+        impl->hasTintColor = true;
+    } else {
+        impl->hasTintColor = false;
+    }
+}
+
+
 void GLSLSceneRenderer::Impl::renderMaterial(const SgMaterial* material)
 {
-    currentProgram->setMaterial(material ? material : defaultMaterial);
+    if(hasTintColor){
+        currentProgram->setMaterial(tintColorMaterial);
+    } else {
+        currentProgram->setMaterial(material ? material : defaultMaterial);
+    }
 }
 
 
