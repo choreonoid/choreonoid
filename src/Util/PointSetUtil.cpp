@@ -43,6 +43,7 @@ void readPoints(SgPointSet* out_pointSet, EasyScanner& scanner, const std::vecto
         } else if(element == E_RGB){
             hasColors = true;
             colors = new SgColorArray();
+            colors->reserve(numPoints);
         }
     }
 
@@ -56,16 +57,14 @@ void readPoints(SgPointSet* out_pointSet, EasyScanner& scanner, const std::vecto
 
         bool hasIllegalValue = false;
         for(int i=0; i < numElements; ++i){
-            //double value = scanner.readDoubleEx("Illeagel point values");
-
-            if(!scanner.readDouble()){
+            if(!scanner.readFloat()){
                 // put warning here
                 hasIllegalValue = true;
                 scanner.skipToLineEnd();
                 break;
                     
             } else {
-                double value = scanner.doubleValue;
+                float value = scanner.floatValue;
                 switch(elements[i]){
                 case E_X: vertex.x() = value; break;
                 case E_Y: vertex.y() = value; break;
@@ -75,9 +74,9 @@ void readPoints(SgPointSet* out_pointSet, EasyScanner& scanner, const std::vecto
                 case E_NORMAL_Z: normal.z() = value; break;
                 case E_RGB:
                     rgb.float_value = value;
-                    color[0] = rgb.red / 255.0;
-                    color[1] = rgb.green / 255.0;
-                    color[2] = rgb.blue / 255.0;
+                    color[0] = rgb.red / 255.0f;
+                    color[1] = rgb.green / 255.0f;
+                    color[2] = rgb.blue / 255.0f;
                     break;
                 }
             }
