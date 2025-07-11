@@ -29,6 +29,7 @@ set(sources
   MprPositionLabelSet.cpp
   MprTagTraceStatementPanel.cpp
   MprTagTraceStatementTagGroupResolver.cpp
+  MprPositionListWidget.cpp
   MprPositionListView.cpp
   MprVariableListView.cpp
   MprBodyItemUtil.cpp
@@ -56,6 +57,7 @@ set(headers
   MprPositionStatementPanel.h
   MprTagTraceStatementPanel.h
   MprTagTraceStatementTagGroupResolver.h
+  MprPositionListWidget.h
   MprPositionListView.h
   MprVariableListView.h
   MprBodyItemUtil.h
