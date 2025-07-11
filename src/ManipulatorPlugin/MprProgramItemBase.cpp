@@ -5,6 +5,7 @@
 #include "MprPositionStatement.h"
 #include "MprStructuredStatement.h"
 #include "MprControllerItemBase.h"
+#include "MprBodyItemUtil.h"
 #include <cnoid/ItemManager>
 #include <cnoid/BodyItem>
 #include <cnoid/BodySuperimposerAddon>
@@ -46,7 +47,6 @@ public:
     void initialize();
     MprPosition* findPositionOrShowWarning(MprPositionStatement* statement, MessageOut* mout);
     BodyItemKinematicsKit* findKinematicsKit();
-    bool moveTo(MprPosition* position, bool doUpdateAll, MessageOut* mout);
     bool superimposePosition(MprPosition* position);
     bool touchupPosition(MprPosition* position, MessageOut* mout);
 };
@@ -273,8 +273,11 @@ BodyItemKinematicsKit* MprProgramItemBase::Impl::findKinematicsKit()
 
 bool MprProgramItemBase::moveTo(MprPositionStatement* statement, MessageOut* mout)
 {
+    if(!impl->targetBodyItemSet){
+        return false;
+    }
     if(auto position = impl->findPositionOrShowWarning(statement, mout)){
-        return impl->moveTo(position, true, mout);
+        return applyPosition(impl->targetBodyItemSet, position, true, mout);
     }
     return false;
 }
@@ -282,80 +285,20 @@ bool MprProgramItemBase::moveTo(MprPositionStatement* statement, MessageOut* mou
 
 bool MprProgramItemBase::moveTo(MprPosition* position, MessageOut* mout)
 {
-    return impl->moveTo(position, true, mout);
-}
-
-
-bool MprProgramItemBase::Impl::moveTo(MprPosition* position, bool doUpdateAll, MessageOut* mout)
-{
-    if(!targetBodyItemSet){
+    if(!impl->targetBodyItemSet){
         return false;
     }
-    bool updated = false;
-
-    string errorMessage;
-
-    auto composite = position->castOrConvertToCompositePosition(targetBodyItemSet);
-
-    for(auto index : composite->findMatchedPositionIndices(targetBodyItemSet)){
-        auto subPosition = composite->position(index);
-        auto bodyPart = targetBodyItemSet->bodyItemPart(index);
-        auto bodyItem = bodyPart->bodyItem();
-        if(subPosition->apply(bodyPart)){
-            updated = true;
-            if(doUpdateAll){
-                bodyItem->notifyKinematicStateUpdate();
-                if(auto ikPosition = subPosition->ikPosition()){
-                    bodyPart->setReferenceRpy(ikPosition->referenceRpy());
-                    bodyPart->setCurrentBaseFrame(ikPosition->baseFrameId());
-                    bodyPart->setCurrentOffsetFrame(ikPosition->offsetFrameId());
-                    bodyPart->notifyFrameSetChange();
-                }
-            }
-        } else {
-            if(auto ikPosition = subPosition->ikPosition()){
-                if(doUpdateAll){
-                    bodyPart->notifyPositionError(subPosition->ikPosition()->position());
-                }
-                if(mout){
-                    string tcpName;
-                    if(auto tcpFrame = bodyPart->offsetFrame(ikPosition->offsetFrameId())){
-                        tcpName = tcpFrame->note();
-                        if(tcpName.empty()){
-                            auto& id = tcpFrame->id();
-                            if(id.isInt()){
-                                tcpName = formatR(_("TCP {0}"), id.toInt());
-                            } else {
-                                tcpName = id.toString();
-                            }
-                        }
-                    }
-                    if(tcpName.empty()){
-                        tcpName = "TCP";
-                    }
-                    if(!errorMessage.empty()){
-                        errorMessage += "\n";
-                    }
-                    errorMessage +=
-                        formatR(_("{0} of {1} cannot be moved to position {2}."),
-                                tcpName, bodyItem->displayName(), position->id().label());
-                }
-            }
-        }
-    }
-
-    if(!errorMessage.empty() && mout){
-        mout->putErrorln(errorMessage);
-    }
-
-    return updated;
+    return applyPosition(impl->targetBodyItemSet, position, true, mout);
 }
 
 
 bool MprProgramItemBase::superimposePosition(MprPositionStatement* statement, MessageOut* mout)
 {
+    if(!impl->targetBodyItemSet){
+        return false;
+    }
     if(auto position = impl->findPositionOrShowWarning(statement, mout)){
-        return impl->superimposePosition(position);
+        return cnoid::superimposePosition(impl->targetBodyItemSet, position);
     }
     return false;
 }
@@ -363,90 +306,17 @@ bool MprProgramItemBase::superimposePosition(MprPositionStatement* statement, Me
 
 bool MprProgramItemBase::superimposePosition(MprPosition* position, MessageOut* /* mout */)
 {
-    return impl->superimposePosition(position);
-}
-
-
-/**
-   \todo Simplify the following implementation by using an independent BodySuperimposerAddons
-   for each body item and updating the positions of all the boides simultaneously.
-*/
-bool MprProgramItemBase::Impl::superimposePosition(MprPosition* position)
-{
-    if(!targetBodyItemSet){
+    if(!impl->targetBodyItemSet){
         return false;
     }
-    MprCompositePositionPtr composite = position->castOrConvertToCompositePosition(targetBodyItemSet);
-    
-    // Extract the top-level parent bodies 
-    std::map<Body*, BodyItem*> topBodyMap;
-    for(auto index : targetBodyItemSet->validBodyPartIndices()){
-        auto bodyItem = targetBodyItemSet->bodyItem(index);
-        auto body = bodyItem->body();
-        topBodyMap.insert(std::pair<Body*, BodyItem*>(body, bodyItem));
-    }
-    auto it = topBodyMap.begin();
-    while(it != topBodyMap.end()){
-        bool erased = false;
-        auto body = it->first;
-        while((body = body->parentBody())){
-            if(topBodyMap.find(body) != topBodyMap.end()){
-                it = topBodyMap.erase(it);
-                erased = true;
-                break;
-            }
-        }
-        if(!erased){
-            ++it;
-        }
-    }
-
-    bool result = false;
-    
-    for(auto& kv : topBodyMap){
-        auto bodyItem = kv.second;
-        if(auto superimposer = bodyItem->getAddon<BodySuperimposerAddon>()){
-            auto targetBody = bodyItem->body();
-            bool updated = superimposer->updateSuperimposition(
-                [this, composite, targetBody](){
-                    // Update the positions of a top-level parent body and its child bodies
-                    bool result = false;
-                    for(auto index : targetBodyItemSet->validBodyPartIndices()){
-                        if(auto pi = composite->position(index)){
-                            auto kinematicsKit = targetBodyItemSet->bodyPart(index);
-                            auto body = kinematicsKit->body();
-                            bool doApply = false;
-                            auto tmpBody = body;
-                            while(tmpBody){
-                                if(tmpBody == targetBody){
-                                    doApply = true;
-                                    break;
-                                }
-                                tmpBody = tmpBody->parentBody();
-                            }
-                            if(doApply && pi->apply(kinematicsKit)){
-                                result = true;
-                            }
-                        }
-                    }
-                    return result;
-                });
-            
-            if(updated){
-                result = true;
-            }
-        }
-    }
-    return result;
+    return cnoid::superimposePosition(impl->targetBodyItemSet, position);
 }
 
 
 void MprProgramItemBase::clearSuperimposition()
 {
-    if(impl->targetBodyItem){
-        if(auto superimposer = impl->targetBodyItem->findAddon<BodySuperimposerAddon>()){
-            superimposer->clearSuperimposition();
-        }
+    if(impl->targetBodyItemSet){
+        cnoid::clearSuperimposition(impl->targetBodyItemSet);
     }
 }
 
@@ -488,12 +358,7 @@ bool MprProgramItemBase::Impl::touchupPosition(MprPosition* position, MessageOut
         return false;
     }
 
-    bool result = position->fetch(targetBodyItemSet, mout);
-    if(result){
-        position->notifyUpdate(MprPosition::PositionUpdate);
-    }
-
-    return result;
+    return cnoid::touchupPosition(targetBodyItemSet, position, mout);
 }
 
 

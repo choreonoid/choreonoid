@@ -31,6 +31,7 @@ set(sources
   MprTagTraceStatementTagGroupResolver.cpp
   MprPositionListView.cpp
   MprVariableListView.cpp
+  MprBodyItemUtil.cpp
   )
 
 set(headers
@@ -57,6 +58,7 @@ set(headers
   MprTagTraceStatementTagGroupResolver.h
   MprPositionListView.h
   MprVariableListView.h
+  MprBodyItemUtil.h
   exportdecl.h
   )
 
