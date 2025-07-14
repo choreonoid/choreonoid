@@ -15,6 +15,11 @@ class CNOID_EXPORT MprPositionListWidget : public QTableView
 public:
     MprPositionListWidget(QWidget* parent = nullptr);
     ~MprPositionListWidget();
+
+    int getIkPositionColumnWidth() const;
+    void setSinglePositionHeaderLabel(const std::string& label);
+    bool isStandardUserOperationEnabled() const;
+    void setStandardUserOperationEnabled(bool on);
     
     enum BodySyncMode { NoBodySync, DirectBodySync, TwoStageBodySync };
     void setBodySyncMode(BodySyncMode mode);
@@ -44,13 +49,14 @@ public:
         NumMinimumColumns = 4
     };
 
+    class Impl;
+
 protected:
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
     virtual void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected) override;
 
 private:
-    class Impl;
     Impl* impl;
 };
 

@@ -16,6 +16,7 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QGuiApplication>
+#include <QFontMetrics>
 #include "gettext.h"
 
 using namespace std;
@@ -42,11 +43,12 @@ public:
     int columnCount_;
     vector<int> bodyPartIndices;
     int mainBodyPartIndex;
-    QStringList positionHeaderStrings;
+    QString singlePositionHeaderLabel;
+    QStringList positionHeaderLabels;
     QFont monoFont;
     DisplayValueFormat* valueFormat;
     
-    PositionListModel(MprPositionListWidget* widget);
+    PositionListModel(MprPositionListWidget::Impl* widgetImpl);
     void setBodyItemSet(KinematicBodyItemSet* bodyItemSet);    
     void setPositionList(MprPositionList* positionList);
     bool isValid() const;
@@ -96,6 +98,7 @@ class MprPositionListWidget::Impl
 {
 public:
     MprPositionListWidget* self;
+    DisplayValueFormat* valueFormat;
     KinematicBodyItemSetPtr bodyItemSet;
     MprPositionListPtr positionList;
     PositionListModel* positionListModel;
@@ -106,24 +109,28 @@ public:
     Signal<void(int index)> sigPositionDoubleClicked;
     Signal<void(const QItemSelection& selected, const QItemSelection& deselected)> sigSelectionChanged;
     MenuManager contextMenuManager;
+    ConnectionSet operationConnections;
+    bool isStandardUserOperationEnabled;
     bool isSelectionChangedAlreadyCalled;
 
     Impl(MprPositionListWidget* self);
+    void setStandardUserOperationEnabled(bool on);
     void addPosition(int row, bool doInsert);    
 };
 
 }
 
 
-PositionListModel::PositionListModel(MprPositionListWidget* widget)
-    : QAbstractTableModel(widget),
-      widget(widget),
+PositionListModel::PositionListModel(MprPositionListWidget::Impl* widgetImpl)
+    : QAbstractTableModel(widgetImpl->self),
+      widget(widgetImpl->self),
       monoFont("Monospace")
 {
     columnCount_ = NumMinimumColumns;
     mainBodyPartIndex = -1;
+    singlePositionHeaderLabel = _("Position");
     monoFont.setStyleHint(QFont::TypeWriter);
-    valueFormat = DisplayValueFormat::instance();
+    valueFormat = widgetImpl->valueFormat;
 }
 
 
@@ -134,7 +141,7 @@ void PositionListModel::setBodyItemSet(KinematicBodyItemSet* bodyItemSet)
     this->bodyItemSet = bodyItemSet;
     bodyItemSetConnections.disconnect();
     columnCount_ = NumMinimumColumns;
-    positionHeaderStrings.clear();
+    positionHeaderLabels.clear();
 
     if(!bodyItemSet){
         bodyPartIndices.clear();
@@ -144,9 +151,9 @@ void PositionListModel::setBodyItemSet(KinematicBodyItemSet* bodyItemSet)
         mainBodyPartIndex = bodyItemSet->mainBodyPartIndex();
         if(bodyPartIndices.size() >= 2){
             for(auto index : bodyPartIndices){
-                positionHeaderStrings.append(bodyItemSet->bodyPart(index)->body()->name().c_str());
+                positionHeaderLabels.append(bodyItemSet->bodyPart(index)->body()->name().c_str());
             }
-            columnCount_ += positionHeaderStrings.size() - 1;
+            columnCount_ += positionHeaderLabels.size() - 1;
         }
         bodyItemSetConnections.add(
             bodyItemSet->sigBodySetChanged().connect(
@@ -157,8 +164,8 @@ void PositionListModel::setBodyItemSet(KinematicBodyItemSet* bodyItemSet)
                 }));
     }
 
-    if(positionHeaderStrings.empty()){
-        positionHeaderStrings.append(_("Position"));
+    if(positionHeaderLabels.empty()){
+        positionHeaderLabels.append(singlePositionHeaderLabel);
     }
 
     endResetModel();
@@ -234,8 +241,8 @@ QVariant PositionListModel::headerData(int section, Qt::Orientation orientation,
             default:
                 {
                     int posColumnIndex = section - MainPositionColumn;
-                    if(posColumnIndex < static_cast<int>(positionHeaderStrings.size())){
-                        return positionHeaderStrings[posColumnIndex];
+                    if(posColumnIndex < static_cast<int>(positionHeaderLabels.size())){
+                        return positionHeaderLabels[posColumnIndex];
                     }
                     return QVariant();
                 }
@@ -355,14 +362,14 @@ QVariant PositionListModel::getSinglePositionData(MprPosition* position) const
         auto& offsetId = ik->offsetFrameId();
         if(baseId.isInt() && offsetId.isInt()){
             if(valueFormat->isMillimeter()){
-                return formatC("{0: 9.3f} {1: 9.3f} {2: 9.3f} "
+                return formatC("{0: 8.1f} {1: 8.1f} {2: 8.1f} "
                                "{3: 6.1f} {4: 6.1f} {5: 6.1f} "
                                ": {6:2X} {7:2d} {8:2d}",
                                p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0,
                                rpy[0], rpy[1], rpy[2],
                                ik->configuration(), baseId.toInt(), offsetId.toInt()).c_str();
             } else {
-                return formatC("{0: 6.3f} {1: 6.3f} {2: 6.3f} "
+                return formatC("{0: 7.3f} {1: 7.3f} {2: 7.3f} "
                                "{3: 6.1f} {4: 6.1f} {5: 6.1f} "
                                ": {6:2X} {7:2d} {8:2d}",
                                p.x(), p.y(), p.z(),
@@ -371,13 +378,13 @@ QVariant PositionListModel::getSinglePositionData(MprPosition* position) const
             }
         } else {
             if(valueFormat->isMillimeter()){
-                return formatC("{0: 9.3f} {1: 9.3f} {2: 9.3f} "
+                return formatC("{0: 8.1f} {1: 8.1f} {2: 8.1f} "
                                "{3: 6.1f} {4: 6.1f} {5: 6.1f} : {6:2X}",
                                p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0,
                                rpy[0], rpy[1], rpy[2],
                                ik->configuration()).c_str();
             } else {
-                return formatC("{0: 6.3f} {1: 6.3f} {2: 6.3f} "
+                return formatC("{0: 7.3f} {1: 7.3f} {2: 7.3f} "
                                "{3: 6.1f} {4: 6.1f} {5: 6.1f} : {6:2X}",
                                p.x(), p.y(), p.z(),
                                rpy[0], rpy[1], rpy[2], ik->configuration()).c_str();
@@ -680,7 +687,8 @@ MprPositionListWidget::MprPositionListWidget(QWidget* parent)
     setTabKeyNavigation(true);
     setCornerButtonEnabled(true);
     setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     setEditTriggers(
         QAbstractItemView::DoubleClicked |
         QAbstractItemView::EditKeyPressed |
@@ -714,7 +722,9 @@ MprPositionListWidget::MprPositionListWidget(QWidget* parent)
 MprPositionListWidget::Impl::Impl(MprPositionListWidget* self)
     : self(self)
 {
-    positionListModel = new PositionListModel(self);
+    valueFormat = DisplayValueFormat::instance();
+    positionListModel = new PositionListModel(this);
+    isStandardUserOperationEnabled = false;
     isSelectionChangedAlreadyCalled = false;
 }
 
@@ -722,6 +732,77 @@ MprPositionListWidget::Impl::Impl(MprPositionListWidget* self)
 MprPositionListWidget::~MprPositionListWidget()
 {
     delete impl;
+}
+
+
+int MprPositionListWidget::getIkPositionColumnWidth() const
+{
+    QFontMetrics fm(font());
+    int width;
+    if(impl->valueFormat->isMillimeter()){
+        width = fm.horizontalAdvance("+00000.0 +00000.0 +00000.0 +000.0 000.0 000.0 : AB 00 00");
+    } else {
+        width = fm.horizontalAdvance("+00.000 +00.000 +00.000 +000.0 000.0 000.0 : AB 00 00");
+    }
+    QStyleOptionViewItem opt;
+    opt.initFrom(this);
+    int margin = style()->pixelMetric(QStyle::PM_FocusFrameHMargin, &opt, this);
+    return width + 2 * margin;
+}
+
+
+void MprPositionListWidget::setSinglePositionHeaderLabel(const std::string& label)
+{
+    impl->positionListModel->singlePositionHeaderLabel = label.c_str();
+}
+
+
+bool MprPositionListWidget::isStandardUserOperationEnabled() const
+{
+    return impl->isStandardUserOperationEnabled;
+}
+
+
+void MprPositionListWidget::setStandardUserOperationEnabled(bool on)
+{
+    impl->setStandardUserOperationEnabled(on);
+}
+
+
+void MprPositionListWidget::Impl::setStandardUserOperationEnabled(bool on)
+{
+    if(on != isStandardUserOperationEnabled){
+        if(!on){
+            operationConnections.disconnect();
+        } else {
+            operationConnections.add(
+                sigSelectionChanged.connect(
+                    [this](const QItemSelection& selected, const QItemSelection& deselected){
+                        auto indexes = selected.indexes();
+                        if(!indexes.empty()){
+                            self->applyPosition(indexes.front().row(), false);
+                        }
+                    }));
+            operationConnections.add(
+                sigPositionPressed.connect(
+                    [this](int index, bool isSelectionChanged){
+                        if(!isSelectionChanged){
+                            self->applyPosition(index, false);
+                        }
+                    }));
+            operationConnections.add(
+                sigPositionDoubleClicked.connect(
+                    [this](int index){
+                        self->applyPosition(index, true);
+                    }));
+            operationConnections.add(
+                sigContextMenuRequest.connect(
+                    [this](int index, const QPoint& globalPos){
+                        self->showDefaultContextMenu(index, globalPos);
+                    }));
+        }
+        isStandardUserOperationEnabled = on;
+    }
 }
 
 

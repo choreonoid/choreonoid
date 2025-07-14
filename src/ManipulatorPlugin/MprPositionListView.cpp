@@ -94,42 +94,17 @@ MprPositionListView::Impl::Impl(MprPositionListView* self)
     vbox->addWidget(hframe);
     
     positionListWidget = new MprPositionListWidget(self);
+    positionListWidget->setStandardUserOperationEnabled(true);
     positionListWidget->setBodySyncMode(defaultBodySyncMode);
     positionListWidget->setFrameShape(QFrame::NoFrame);
     vbox->addWidget(positionListWidget);
     
     self->setLayout(vbox);
 
-    positionListWidget->sigSelectionChanged().connect(
-        [this](const QItemSelection& selected, const QItemSelection& deselected){
-            auto indexes = selected.indexes();
-            if(!indexes.empty()){
-                positionListWidget->applyPosition(indexes.front().row(), false);
-            }
-        });
-
-    positionListWidget->sigPositionPressed().connect(
-        [this](int index, bool isSelectionChanged){
-            if(!isSelectionChanged){
-                positionListWidget->applyPosition(index, false);
-            }
-        });
-
-    positionListWidget->sigPositionDoubleClicked().connect(
-        [this](int index){
-            positionListWidget->applyPosition(index, true);
-        });
-
-    positionListWidget->sigContextMenuRequest().connect(
-        [this](int index, const QPoint& globalPos){
-            positionListWidget->showDefaultContextMenu(index, globalPos);
-        });
-
     targetItemPicker.sigTargetItemChanged().connect(
         [this](MprProgramItemBase* item){
             setProgramItem(item);
         });
-
 }
 
 
