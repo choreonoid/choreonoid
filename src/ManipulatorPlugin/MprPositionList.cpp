@@ -105,6 +105,12 @@ void MprPositionList::clear()
 }
 
 
+bool MprPositionList::empty() const
+{
+    return impl->positions.empty();
+}
+
+
 int MprPositionList::numPositions() const
 {
     return impl->positions.size();

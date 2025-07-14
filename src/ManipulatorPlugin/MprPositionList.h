@@ -28,6 +28,7 @@ public:
     bool isStringIdEnabled() const;
 
     void clear();
+    bool empty() const;
     int numPositions() const;
     const MprPosition* positionAt(int index) const;
     MprPosition* positionAt(int index);
