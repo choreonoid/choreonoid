@@ -114,7 +114,7 @@ public:
         bool isRecursive) const;
     void getDescendantItemsIter(
         const Item* parentItem, ItemList<>& io_items, const std::function<bool(Item* item)>& pred,
-        bool isRecursive) const;
+        bool isRecursive, bool isTopOnly) const;
     void getSelectedDescendantItemsIter(
         const Item* parentItem, ItemList<>& io_items, std::function<bool(Item* item)> pred) const;
     Item* cloneSubTreeIter(Item* duplicated, Item* duplicatedParent, CloneMap& cloneMap) const;
@@ -1359,34 +1359,40 @@ bool Item::isOwnedBy(Item* item) const
 
 ItemList<> Item::childItems(std::function<bool(Item* item)> pred) const
 {
-    return getDescendantItems(pred, false);
+    return getDescendantItems(pred, false, false);
 }
 
 
 ItemList<> Item::descendantItems(std::function<bool(Item* item)> pred) const
 {
-    return getDescendantItems(pred, true);
+    return getDescendantItems(pred, true, false);
 }
 
 
-ItemList<Item> Item::getDescendantItems(std::function<bool(Item* item)> pred, bool isRecursive) const
+ItemList<Item> Item::getDescendantItems
+(std::function<bool(Item* item)> pred, bool isRecursive, bool isTopOnly) const
 {
     ItemList<> items;
-    impl->getDescendantItemsIter(this, items, pred, isRecursive);
+    impl->getDescendantItemsIter(this, items, pred, isRecursive, isTopOnly);
     return items;
 }
 
 
 void Item::Impl::getDescendantItemsIter
 (const Item* parentItem, ItemList<>& io_items, const std::function<bool(Item* item)>& pred,
- bool isRecursive) const
+ bool isRecursive, bool isTopOnly) const
 {
     for(auto child = parentItem->childItem(); child; child = child->nextItem()){
-        if(!pred || pred(child)){
+        if(!pred){
             io_items.push_back(child);
+        } else if(pred(child)){
+            io_items.push_back(child);
+            if(isTopOnly){
+                continue;
+            }
         }
         if(isRecursive && child->childItem()){
-            getDescendantItemsIter(child, io_items, pred, isRecursive);
+            getDescendantItemsIter(child, io_items, pred, isRecursive, isTopOnly);
         }
     }
 }

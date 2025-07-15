@@ -377,16 +377,21 @@ public:
 
     template <class ItemType>
     ItemList<ItemType> childItems(std::function<bool(ItemType* item)> pred = nullptr) const {
-        return getDescendantItems(getItemPredicate<ItemType>(pred), false);
+        return getDescendantItems(getItemPredicate<ItemType>(pred), false, false);
     }
 
     ItemList<> descendantItems(std::function<bool(Item* item)> pred = nullptr) const;
 
     template <class ItemType>
     ItemList<ItemType> descendantItems(std::function<bool(ItemType* item)> pred = nullptr) const {
-        return getDescendantItems(getItemPredicate<ItemType>(pred), true);
+        return getDescendantItems(getItemPredicate<ItemType>(pred), true, false);
     }
 
+    template <class ItemType>
+    ItemList<ItemType> topDescendantItems(std::function<bool(ItemType* item)> pred = nullptr) const {
+        return getDescendantItems(getItemPredicate<ItemType>(pred), true, true);
+    }
+    
     ItemList<> selectedDescendantItems(std::function<bool(Item* item)> pred = nullptr) const;
 
     template <class ItemType>
@@ -654,7 +659,7 @@ private:
     Item* findItem(std::function<bool(Item* item)> pred, bool isRecursive) const;
     Item* findItem(const std::string& path, std::function<bool(Item* item)> pred, bool isRecursive) const;
     int countDescendantItems_(std::function<bool(Item* item)> pred);
-    ItemList<Item> getDescendantItems(std::function<bool(Item* item)> pred, bool isRecursive) const;
+    ItemList<Item> getDescendantItems(std::function<bool(Item* item)> pred, bool isRecursive, bool isTopOnly) const;
     void validateClassId() const;
 
     friend class ItemTreeWidget;
