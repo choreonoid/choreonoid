@@ -149,12 +149,16 @@ public:
         pDeviceData[index] = state;
     }
 
-    void storeStateOfBody(const Body* body);
-    bool restoreStateToBody(Body* body) const;
+    void storeStateOfBody(const Body* body) { storeStateOfBody(body, true); }
+    bool restoreStateToBody(Body* body) const { return restoreStateToBody(body, true); }
+    void storePositionOfBody(const Body* body) { storeStateOfBody(body, false); }
+    bool restorePositionToBody(Body* body) const { return restoreStateToBody(body, false); }
 
 protected:
     BodyStateBlock() { }
     BodyStateBlock(double* pData, DeviceStatePtr* pDeviceData) : pData(pData), pDeviceData(pDeviceData) { }
+    void storeStateOfBody(const Body* body, bool storeDeviceState);
+    bool restoreStateToBody(Body* body, bool restoreDeviceState) const;
 
     double* pData;
     DeviceStatePtr* pDeviceData;
@@ -352,9 +356,10 @@ public:
         deviceData[index] = state;
     }
 
-    void storeStateOfBody(const Body* body);
-    bool restoreStateToBody(Body* body) const;
-
+    void storeStateOfBody(const Body* body) { storeStateOfBody(body, true); }
+    bool restoreStateToBody(Body* body) const { return restoreStateToBody(body, true); }
+    void storePositionOfBody(const Body* body) { storeStateOfBody(body, false); }
+    bool restorePositionToBody(Body* body) const { return restoreStateToBody(body, false); }
     void storeMultiplexStateOfBody(const Body* body);
     bool restoreMultiplexStateToBody(Body* body) const;
     
@@ -369,6 +374,9 @@ public:
     }
 
 private:
+    void storeStateOfBody(const Body* body, bool storeDeviceState);
+    bool restoreStateToBody(Body* body, bool restoreDeviceState) const;
+
     std::vector<double> data;
     std::vector<DeviceStatePtr> deviceData;
 };

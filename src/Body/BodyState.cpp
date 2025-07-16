@@ -6,7 +6,7 @@ using namespace std;
 using namespace cnoid;
 
 
-void BodyStateBlock::storeStateOfBody(const Body* body)
+void BodyStateBlock::storeStateOfBody(const Body* body, bool storeDeviceState)
 {
     int numLinks = std::min(body->numLinks(), numLinkPositions());
     if(numLinks > 0){
@@ -23,14 +23,16 @@ void BodyStateBlock::storeStateOfBody(const Body* body)
         }
     }
 
-    int numDevices = std::min(body->numDevices(), numDeviceStates());
-    for(int i=0; i < numDevices; ++i){
-        setDeviceState(i, body->device(i)->cloneState());
+    if(storeDeviceState){
+        int numDevices = std::min(body->numDevices(), numDeviceStates());
+        for(int i=0; i < numDevices; ++i){
+            setDeviceState(i, body->device(i)->cloneState());
+        }
     }
 }
 
 
-bool BodyStateBlock::restoreStateToBody(Body* body) const
+bool BodyStateBlock::restoreStateToBody(Body* body, bool restoreDeviceState) const
 {
     int numJoints = std::min(body->numJoints(), numJointDisplacements());
     auto displacements = jointDisplacements();
@@ -47,12 +49,14 @@ bool BodyStateBlock::restoreStateToBody(Body* body) const
         }
     }
 
-    int numDevices = std::min(body->numDevices(), numDeviceStates());
-    for(int i=0; i < numDevices; ++i){
-        if(auto state = deviceState(i)){
-            auto device = body->device(i);
-            device->copyStateFrom(*state);
-            device->notifyStateChange();
+    if(restoreDeviceState){
+        int numDevices = std::min(body->numDevices(), numDeviceStates());
+        for(int i=0; i < numDevices; ++i){
+            if(auto state = deviceState(i)){
+                auto device = body->device(i);
+                device->copyStateFrom(*state);
+                device->notifyStateChange();
+            }
         }
     }
 
@@ -62,26 +66,26 @@ bool BodyStateBlock::restoreStateToBody(Body* body) const
 
 BodyState::BodyState(const Body* body)
 {
-    storeStateOfBody(body);
+    storeStateOfBody(body, true);
 }
 
 
 BodyState::BodyState(const Body& body)
 {
-    storeStateOfBody(&body);
+    storeStateOfBody(&body, true);
 }
 
 
-void BodyState::storeStateOfBody(const Body* body)
+void BodyState::storeStateOfBody(const Body* body, bool storeDeviceState)
 {
     allocate(body->numLinks(), body->numJoints(), body->numDevices());
-    firstBlock().storeStateOfBody(body);
+    firstBlock().storeStateOfBody(body, storeDeviceState);
 }
 
 
-bool BodyState::restoreStateToBody(Body* body) const
+bool BodyState::restoreStateToBody(Body* body, bool restoreDeviceState) const
 {
-    return firstBlock().restoreStateToBody(body);
+    return firstBlock().restoreStateToBody(body, restoreDeviceState);
 }
 
 
@@ -91,12 +95,12 @@ void BodyState::storeMultiplexStateOfBody(const Body* body)
     const int numJoints = body->numJoints();
     const int numDevices = body->numDevices();
     allocate(numLinks, numJoints, numDevices);
-    firstBlock().storeStateOfBody(body);
+    firstBlock().storeStateOfBody(body, true);
 
     auto multiplexBody = body->nextMultiplexBody();
     while(multiplexBody){
         auto block = extend(numLinks, numJoints, numDevices);
-        block.storeStateOfBody(multiplexBody);
+        block.storeStateOfBody(multiplexBody, true);
         multiplexBody = multiplexBody->nextMultiplexBody();
     }
 }
@@ -107,12 +111,12 @@ bool BodyState::restoreMultiplexStateToBody(Body* body) const
     bool restored = false;
     
     auto block = firstBlock();
-    restored = block.restoreStateToBody(body);
+    restored = block.restoreStateToBody(body, true);
     
     block = nextBlockOf(block);
     while(block){
         body = body->getOrCreateNextMultiplexBody();
-        if(block.restoreStateToBody(body)){
+        if(block.restoreStateToBody(body, true)){
             restored = true;
         }
         block = nextBlockOf(block);
