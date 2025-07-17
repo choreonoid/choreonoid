@@ -1,13 +1,5 @@
-if(MSVC)
-  # Version 3.13 or later is required because the following features are used in this project.
-  # * CMAKE_CXX_STANDARD 17 is supported for MSVC since version 3.10
-  # * The target_link_options command is available since version 3.13
-  # * The install command can specifiy a target defined in a sub directory since version 3.13
-  cmake_minimum_required(VERSION 3.13)
-else()
-  # CMake version 3.10.2 is installed in Ubuntu 18.04.
-  cmake_minimum_required(VERSION 3.10)
-endif()
+# CMake version 3.16 is installed in Ubuntu 20.04.
+cmake_minimum_required(VERSION 3.16)
 
 cmake_policy(SET CMP0003 NEW)
 cmake_policy(SET CMP0057 NEW)
@@ -160,7 +152,6 @@ if(UNIX)
   set(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN ON)
 
   set(compiler_general_options "-Wreturn-type")
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -finline-functions")
 
   option(ENABLE_NATIVE_CPU_ARCHITECTURE "Use the -march=native option to enable instruction set supported by the native processor architecture" OFF)
   if(ENABLE_NATIVE_CPU_ARCHITECTURE)
@@ -221,6 +212,22 @@ if(UNIX)
       message(STATUS "LTO enabled with ${lto_flags}")
     endif()
   endif()
+
+  # Enable standalone debug info for Clang to prevent "incomplete type" errors in debugger.
+  # Without this flag, Clang's default -flimit-debug-info optimization may cause base classes
+  # and types from external libraries to appear as "<incomplete type>" in the debugger.
+  # This significantly increases debug binary size but is essential for proper debugging.
+  # Note: This is a Clang-specific issue; GCC generates complete debug info by default.
+  #
+  add_compile_options(
+    $<$<AND:$<OR:$<C_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:Clang>>,$<CONFIG:Debug>>:-fstandalone-debug>)
+
+  # If this is not sufficient (e.g., for complex template debugging), you can enable
+  # -fno-limit-debug-info for even more complete debug information, though this will
+  # further increase binary size and build times.
+  # add_compile_options(
+  #  $<$<AND:$<OR:$<C_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:Clang>>,$<CONFIG:Debug>>:-fno-limit-debug-info>) 
+
 endif()
 
 if(MSVC)
