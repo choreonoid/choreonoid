@@ -62,3 +62,11 @@ int KinematicBodyItemSet::indexOf(const BodyItem* item) const
     }
     return index;
 }
+
+
+bool KinematicBodyItemSet::contains(const BodyItem* bodyItem) const
+{
+    return indexOf(bodyItem) >= 0;
+}
+
+

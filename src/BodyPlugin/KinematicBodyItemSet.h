@@ -38,6 +38,7 @@ public:
     }
 
     int indexOf(const BodyItem* bodyItem) const;
+    bool contains(const BodyItem* bodyItem) const;
     
     BodyItemKinematicsKit* mainBodyItemPart() {
         return static_cast<BodyItemKinematicsKit*>(mainBodyPart());
