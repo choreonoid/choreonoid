@@ -21,6 +21,7 @@
 #include "ExtCommandItem.h"
 #include "SceneItem.h"
 #include "SceneGeometryMeasurementTracker.h"
+#include "RawSceneItem.h"
 #include "CameraItem.h"
 #include "LightingItem.h"
 #include "PointSetItem.h"
@@ -437,6 +438,7 @@ void App::Impl::initialize()
     ReferencedObjectSeqItem::initializeClass(ext);
     SceneItem::initializeClass(ext);
     SceneGeometryMeasurementTracker::initializeClass();
+    RawSceneItem::initializeClass(ext);
     CameraItem::initializeClass(ext);
     LightingItem::initializeClass(ext);
     PointSetItem::initializeClass(ext);
