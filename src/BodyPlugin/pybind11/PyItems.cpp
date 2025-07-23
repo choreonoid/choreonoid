@@ -1,7 +1,3 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "../WorldItem.h"
 #include "../WorldLogFileItem.h"
 #include "../BodyMotionItem.h"
@@ -50,6 +46,12 @@ void exportItems(py::module m)
         .def_property("recordingFrameRate",
                       &WorldLogFileItem::recordingFrameRate, &WorldLogFileItem::setRecordingFrameRate)
         .def("recallStateAtTime", &WorldLogFileItem::recallStateAtTime)
+        .def("setLivePlaybackReadInterval", &WorldLogFileItem::setLivePlaybackReadInterval)
+        .def("setLivePlaybackReadTimeout", &WorldLogFileItem::setLivePlaybackReadTimeout)
+        .def("startLivePlayback", &WorldLogFileItem::startLivePlayback)
+        .def("stopLivePlayback", &WorldLogFileItem::stopLivePlayback)
+        .def("showPlaybackArchiveSaveDialog", &WorldLogFileItem::showPlaybackArchiveSaveDialog)
+        .def("saveProjectAsPlaybackArchive", &WorldLogFileItem::saveProjectAsPlaybackArchive)
         ;
 
     PyItemList<WorldLogFileItem>(m, "WorldLogFileItemList");

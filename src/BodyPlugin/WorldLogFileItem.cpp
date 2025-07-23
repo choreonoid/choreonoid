@@ -478,7 +478,7 @@ public:
     void beginFrameOutput(double time);
     void outputDeviceState(DeviceState* state);
     void exchangeDeviceStateCacheArrays();
-    void openDialogToSelectDirectoryToSavePlaybackArchive();
+    void showPlaybackArchiveSaveDialog();
     void saveProjectAsPlaybackArchive(const string& filename);
     int createArchiveItemMap(Item* item, ArchiveInfo& info);
     ItemPtr createArchiveModelItem(Item* modelItem, ArchiveInfo& info, bool isBodyItem);
@@ -511,7 +511,7 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
             menuManager.addItem(_("Start Live Playback"))->sigTriggered().connect(
                 [item]{ item->impl->startLivePlayback(); });
             menuManager.addItem(_("Save project as log playback archive"))->sigTriggered().connect(
-                [item](){ item->impl->openDialogToSelectDirectoryToSavePlaybackArchive(); });
+                [item](){ item->impl->showPlaybackArchiveSaveDialog(); });
             menuManager.setPath("/");
             menuManager.addSeparator();
             menuFunction.dispatchAs<Item>(item);
@@ -1320,7 +1320,13 @@ bool WorldLogFileItem::restore(const Archive& archive)
 }
 
 
-void WorldLogFileItem::Impl::openDialogToSelectDirectoryToSavePlaybackArchive()
+void WorldLogFileItem::showPlaybackArchiveSaveDialog()
+{
+    impl->showPlaybackArchiveSaveDialog();
+}
+
+
+void WorldLogFileItem::Impl::showPlaybackArchiveSaveDialog()
 {
     FileDialog dialog;
     dialog.setWindowTitle(_("Save project as log playback archive"));
@@ -1354,6 +1360,12 @@ void WorldLogFileItem::Impl::openDialogToSelectDirectoryToSavePlaybackArchive()
             }
         }
     }
+}
+
+
+void WorldLogFileItem::saveProjectAsPlaybackArchive(const std::string& projectFile)
+{
+    impl->saveProjectAsPlaybackArchive(projectFile);
 }
 
 

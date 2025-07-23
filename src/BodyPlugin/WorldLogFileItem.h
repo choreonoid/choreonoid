@@ -52,6 +52,9 @@ public:
     void startLivePlayback();
     void stopLivePlayback();
 
+    void showPlaybackArchiveSaveDialog();
+    void saveProjectAsPlaybackArchive(const std::string& projectFile);
+
     virtual void notifyUpdate() override;
 
 protected:
