@@ -223,7 +223,7 @@ void SliderOwner::setValue(double value, bool doSync)
     if(doSync){
         callSynchronously([this, value](){ doSetValue(value); });
     } else {
-        callFromMainThread([this, value](){ doSetValue(value); });
+        callOnMainThread([this, value](){ doSetValue(value); });
     }
 }
 
@@ -373,7 +373,7 @@ void GeneralSliderView::removeSlider(GeneralSliderView::Slider* /* slider */)
 
 void GeneralSliderView::Impl::removeSlider(SliderUnit* sliderUnit)
 {
-    callFromMainThread([this, sliderUnit](){ removeSliderMain(sliderUnit); });
+    callOnMainThread([this, sliderUnit](){ removeSliderMain(sliderUnit); });
 }
 
 

@@ -86,9 +86,14 @@ private:
 };
 
 CNOID_EXPORT void callLater(const std::function<void()>& function, int priority = LazyCaller::NormalPriority);
-CNOID_EXPORT void callFromMainThread(const std::function<void()>& function, int priority = LazyCaller::NormalPriority);
+CNOID_EXPORT void callOnMainThread(const std::function<void()>& function, int priority = LazyCaller::NormalPriority);
 CNOID_EXPORT bool callSynchronously(const std::function<void()>& function, int priority = LazyCaller::NormalPriority);
 CNOID_EXPORT bool isRunningInMainThread();
+
+[[deprecated("Use callOnMainThread")]]
+inline void callFromMainThread(const std::function<void()>& function, int priority = LazyCaller::NormalPriority) {
+    callOnMainThread(function, priority);
+}
 
 }
         

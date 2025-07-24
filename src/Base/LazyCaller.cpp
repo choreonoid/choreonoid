@@ -129,7 +129,7 @@ void cnoid::callLater(const std::function<void()>& func, int priority)
 }
 
 
-void cnoid::callFromMainThread(const std::function<void()>& func, int priority)
+void cnoid::callOnMainThread(const std::function<void()>& func, int priority)
 {
     if(QThread::currentThreadId() == callEventHandler.mainThreadId){
         func();
