@@ -53,8 +53,8 @@ public:
     //! \note This function will be deprecated with the setGeometryPairEnabled function.
     virtual void ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore = true) = 0;
 
-    void setGeometryPairEnabled(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore = true) {
-        ignoreGeometryPair(geometry1, geometry2, !ignore);
+    void setGeometryPairEnabled(GeometryHandle geometry1, GeometryHandle geometry2, bool enabled = true) {
+        ignoreGeometryPair(geometry1, geometry2, !enabled);
     }
 
     /**
