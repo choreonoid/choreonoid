@@ -90,7 +90,7 @@ typedef ref_ptr<AGXWire> AGXWirePtr;
 
 bool AGXWireDevice::createAGXWireDevice(StdBodyLoader* loader, const Mapping* node)
 {
-    MappingPtr info = node->cloneMapping();
+    MappingPtr info = node->clone();
 
     // Wire
     AGXWireDeviceDesc desc;

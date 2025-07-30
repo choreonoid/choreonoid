@@ -56,7 +56,7 @@ typedef ref_ptr<AGXBreakableJointDevice> AGXBreakableJointDevicePtr;
 
 bool AGXBreakableJointDevice::createAGXBreakableJointDevice(StdBodyLoader* loader, const Mapping* node)
 {
-    MappingPtr info = node->cloneMapping();
+    MappingPtr info = node->clone();
     AGXBreakableJointDeviceDesc desc;
     AGXBreakableJointDevicePtr jointDevice = new AGXBreakableJointDevice(desc, info);
     //node.clear();

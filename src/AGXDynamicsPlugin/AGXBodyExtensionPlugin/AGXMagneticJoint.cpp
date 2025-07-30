@@ -53,7 +53,7 @@ typedef ref_ptr<AGXMagneticJointDevice> AGXMagneticJointDevicePtr;
 
 bool AGXMagneticJointDevice::createAGXMagneticJointDevice(StdBodyLoader* loader, const Mapping* node)
 {
-    MappingPtr info = node->cloneMapping();
+    MappingPtr info = node->clone();
     AGXMagneticJointDeviceDesc desc;
     AGXMagneticJointDevicePtr jointDevice = new AGXMagneticJointDevice(desc, info);
     //node.clear();
