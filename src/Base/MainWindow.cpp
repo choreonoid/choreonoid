@@ -16,6 +16,7 @@
 #include <QScreen>
 #include <QMenuBar>
 #include <iostream>
+#include <sys/stat.h>
 #include "gettext.h"
 
 using namespace std;
@@ -49,7 +50,7 @@ public:
 
     WindowActivationChecker() : isWindowActivated(false) { }
 
-    bool eventFilter(QObject* obj, QEvent* event) override {
+    virtual bool eventFilter(QObject* obj, QEvent* event) override {
         if(event->type() == QEvent::ActivationChange){
             isWindowActivated = true;
         }
@@ -408,7 +409,41 @@ void MainWindow::Impl::showFirst()
             if(TRACE_FUNCTIONS){
                 cout << "showMaximized();" << endl;
             }
+            
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0)) || !defined(Q_OS_LINUX)
+            // Qt5 or non-Linux platforms: use standard showMaximized()
             self->showMaximized();
+#else
+            /**
+               Workaround for Qt6 crash issue on Wayland with non-NVIDIA GPUs.
+               
+               On Ubuntu 24.04 with Qt6 and Wayland, calling showMaximized() after resize()
+               causes the application to crash when using AMD or Intel GPUs. This appears to
+               be due to incomplete Wayland protocol support in Qt6.
+               
+               However, this crash does not occur with NVIDIA GPUs, likely due to their
+               different driver implementation for Wayland.
+               
+               As a workaround, we use showNormal() for non-NVIDIA GPUs after calling
+               resize(getAvailableScreenSize()). This still achieves the maximized window
+               state without triggering the crash.
+            */
+            if(QGuiApplication::platformName() != "wayland") {
+                // Non-Wayland platforms: use standard showMaximized()
+                self->showMaximized();
+            } else {
+                // Check if NVIDIA proprietary driver is installed
+                struct stat buffer;
+                bool hasNvidiaDriver = (stat("/proc/driver/nvidia/version", &buffer) == 0);
+                
+                if(hasNvidiaDriver) {
+                    self->showMaximized();
+                } else {
+                    // Use showNormal() for AMD/Intel GPUs to avoid crash
+                    self->showNormal();
+                }
+            }
+#endif
 
         } else {
             self->resize(normalSize);
