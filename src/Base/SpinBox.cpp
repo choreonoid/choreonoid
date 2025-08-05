@@ -1,4 +1,5 @@
 #include "SpinBox.h"
+#include <QKeyEvent>
 
 using namespace cnoid;
 
@@ -7,6 +8,7 @@ SpinBox::SpinBox(QWidget* parent)
     : QSpinBox(parent)
 {
     setKeyboardTracking(false);
+    isEnterKeyEventConsumptionEnabled_ = true; // Default to consuming Enter key
 }
 
 
@@ -29,4 +31,16 @@ SignalProxy<void()> SpinBox::sigEditingFinished()
                 [this](){ (*sigEditingFinished_)(); });
     }
     return *sigEditingFinished_;
+}
+
+
+void SpinBox::keyPressEvent(QKeyEvent* event)
+{
+    if(isEnterKeyEventConsumptionEnabled_){
+        if(event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter){
+            event->accept();
+            return;
+        }
+    }
+    QSpinBox::keyPressEvent(event);
 }

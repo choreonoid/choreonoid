@@ -10,6 +10,7 @@ DoubleSpinBox::DoubleSpinBox(QWidget* parent)
     setKeyboardTracking(false);
     isSettingValueInternally = false;
     isUndoRedoKeyInputEnabled_ = false;
+    isEnterKeyEventConsumptionEnabled_ = true; // Default to consuming Enter key
     valueChangedByLastUserInput = false;
 }
 
@@ -90,6 +91,15 @@ void DoubleSpinBox::onEditingFinished()
 
 void DoubleSpinBox::keyPressEvent(QKeyEvent* event)
 {
+    // Handle Enter key consumption
+    if(isEnterKeyEventConsumptionEnabled_){
+        if(event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter){
+            event->accept();
+            return;
+        }
+    }
+    
+    // Handle Undo/Redo keys
     bool isUndoOrRedoKey = false;
     if(isUndoRedoKeyInputEnabled_){
         if(event->key() == Qt::Key_Z && event->modifiers() & Qt::ControlModifier){

@@ -17,6 +17,9 @@ public:
     bool isUserInputEnabled() const { return !isReadOnly(); }
     void setUndoRedoKeyInputEnabled(bool on);
     bool isUndoRedoKeyInputEnabled() const { return isUndoRedoKeyInputEnabled_; }
+    
+    void setEnterKeyEventConsumptionEnabled(bool on) { isEnterKeyEventConsumptionEnabled_ = on; }
+    bool isEnterKeyEventConsumptionEnabled() const { return isEnterKeyEventConsumptionEnabled_; }
 
     void setValue(double val);
 
@@ -35,6 +38,7 @@ private:
     stdx::optional<Signal<void()>> sigEditingFinishedWithValueChange_;
     bool isSettingValueInternally;
     bool isUndoRedoKeyInputEnabled_;
+    bool isEnterKeyEventConsumptionEnabled_;
     bool valueChangedByLastUserInput;
 };
 
