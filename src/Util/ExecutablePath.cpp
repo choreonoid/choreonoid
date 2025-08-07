@@ -59,6 +59,11 @@ void detectExecutableFile()
       function is applied so that such the redundant path becomes a normal path.
     */
     path = stdx::filesystem::lexically_normal(path);
+    
+    // Resolve symlinks to get the real path (handles UsrMerge where /lib -> /usr/lib)
+    if(filesystem::exists(path)){
+        path = filesystem::canonical(path);
+    }
 
     utsname info;
     if(uname(&info) == 0){
