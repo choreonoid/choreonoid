@@ -17,7 +17,7 @@ function(choreonoid_add_lua_module target)
     PREFIX "")
 
   if(CHOREONOID_INSTALL_SDK AND MSVC)
-    install(TARGETS ${target} ARCHIVE DESTINATION lib)
+    install(TARGETS ${target} ARCHIVE DESTINATION ${CHOREONOID_LIB_SUBDIR})
   else()
     install(TARGETS ${target}
       RUNTIME DESTINATION ${CHOREONOID_LUA_SUBDIR}/cnoid

@@ -87,15 +87,15 @@ function(choreonoid_add_library target)
   if(is_static)
     if(CHOREONOID_INSTALL_SDK)
       install(TARGETS ${target}
-	LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+	LIBRARY DESTINATION ${CHOREONOID_LIB_SUBDIR} ARCHIVE DESTINATION ${CHOREONOID_LIB_SUBDIR})
     endif()
   else()
     if(CHOREONOID_INSTALL_SDK)
       install(TARGETS ${target}
-        RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+        RUNTIME DESTINATION ${CHOREONOID_BIN_SUBDIR} LIBRARY DESTINATION ${CHOREONOID_LIB_SUBDIR} ARCHIVE DESTINATION ${CHOREONOID_LIB_SUBDIR})
     else()
       install(TARGETS ${target}
-        RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
+        RUNTIME DESTINATION ${CHOREONOID_BIN_SUBDIR} LIBRARY DESTINATION ${CHOREONOID_LIB_SUBDIR})
     endif()
   endif()
 
@@ -140,7 +140,7 @@ function(choreonoid_add_plugin target)
     install(TARGETS ${target}
       RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}
       LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}
-      ARCHIVE DESTINATION lib)
+      ARCHIVE DESTINATION ${CHOREONOID_LIB_SUBDIR})
   else()
     install(TARGETS ${target}
       RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}
@@ -173,7 +173,7 @@ function(choreonoid_add_executable target)
 
   choreonoid_set_header_files(${ARGN})
 
-  install(TARGETS ${target} RUNTIME DESTINATION bin)
+  install(TARGETS ${target} RUNTIME DESTINATION ${CHOREONOID_BIN_SUBDIR})
 
 endfunction()
 

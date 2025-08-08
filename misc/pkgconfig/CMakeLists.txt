@@ -11,7 +11,7 @@ set(PKGCONFIG_QT_REQUIREMENTS "Qt5Core >= 5.2.0 Qt5Gui >= 5.2.0 Qt5OpenGL >= 5.2
 foreach(file choreonoid-util.pc choreonoid-base.pc choreonoid-body.pc choreonoid-body-plugin.pc)
   configure_file(${file}.in ${pkgconfig_dir}/${file} @ONLY)
   if(INSTALL_SDK)
-    install(FILES ${pkgconfig_dir}/${file} DESTINATION lib/pkgconfig)
+    install(FILES ${pkgconfig_dir}/${file} DESTINATION ${CHOREONOID_LIB_SUBDIR}/pkgconfig)
   endif()
 endforeach()
 
@@ -19,5 +19,5 @@ endforeach()
 # but it is still generated for the backward compatibility
 configure_file(choreonoid-base.pc.in ${pkgconfig_dir}/choreonoid.pc @ONLY)
 if(INSTALL_SDK)
-  install(FILES ${pkgconfig_dir}/choreonoid.pc DESTINATION lib/pkgconfig)
+  install(FILES ${pkgconfig_dir}/choreonoid.pc DESTINATION ${CHOREONOID_LIB_SUBDIR}/pkgconfig)
 endif()

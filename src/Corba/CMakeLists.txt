@@ -24,5 +24,5 @@ target_link_libraries(${target} ${CHOREONOID_OMNIORB_LIBRARIES} fmt::fmt)
 
 if(UNIX)
   configure_file(reset-omninames.sh ${PROJECT_BINARY_DIR}/bin/reset-omninames.sh COPYONLY)
-  install(PROGRAMS reset-omninames.sh DESTINATION bin)
+  install(PROGRAMS reset-omninames.sh DESTINATION ${CHOREONOID_BIN_SUBDIR})
 endif()

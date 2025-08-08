@@ -62,9 +62,9 @@ if(BUILD_ODE_PLUGIN)
         install(PROGRAMS ${ODE_DIR}/bin/ode_doubled.dll DESTINATION bin CONFIGURATIONS Debug)
       
         if(INSTALL_SDK_WITH_EXTLIBS)
-	  install(FILES ${ODE_DIR}/lib/ode_double.lib DESTINATION lib
+	  install(FILES ${ODE_DIR}/lib/ode_double.lib DESTINATION ${CHOREONOID_LIB_SUBDIR}
 	    CONFIGURATIONS Release RelWithDebInfo MinSizeRel)
-	  install(FILES ${ODE_DIR}/lib/ode_doubled.lib DESTINATION lib CONFIGURATIONS Debug)
+	  install(FILES ${ODE_DIR}/lib/ode_doubled.lib DESTINATION ${CHOREONOID_LIB_SUBDIR} CONFIGURATIONS Debug)
 	  install(DIRECTORY ${ODE_DIR}/include/ode DESTINATION ${CNOID_HEADER_SUBDIR})
         endif()
       endif()
