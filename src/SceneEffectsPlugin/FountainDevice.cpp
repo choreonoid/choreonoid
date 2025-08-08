@@ -7,12 +7,6 @@
 using namespace std;
 using namespace cnoid;
 
-namespace {
-
-SceneEffectDeviceTypeRegistration<FountainDevice, SceneFountain> snowDeviceRegistration("FountainDevice");;
-
-}
-
 FountainDevice::FountainDevice()
 {
     auto& ps = particleSystem_;
@@ -134,4 +128,14 @@ double* FountainDevice::writeState(double* out_buf) const
     out_buf[i++] = ps.acceleration()[2];
 
     return out_buf + i;
+}
+
+
+namespace cnoid {
+
+void registerFountainDevice()
+{
+    static SceneEffectDeviceTypeRegistration<FountainDevice, SceneFountain> registration("FountainDevice");
+}
+
 }

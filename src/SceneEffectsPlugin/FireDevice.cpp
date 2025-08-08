@@ -7,12 +7,6 @@
 using namespace std;
 using namespace cnoid;
 
-namespace {
-
-SceneEffectDeviceTypeRegistration<FireDevice, SceneFire> snowDeviceRegistration("FireDevice");;
-
-}
-
 
 FireDevice::FireDevice()
 {
@@ -137,3 +131,15 @@ double* FireDevice::writeState(double* out_buf) const
 
     return out_buf + i;
 }
+
+
+namespace cnoid {
+
+void registerFireDevice()
+{
+    static SceneEffectDeviceTypeRegistration<FireDevice, SceneFire> registration("FireDevice");
+}
+
+}
+
+

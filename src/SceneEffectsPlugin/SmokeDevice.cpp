@@ -2,17 +2,10 @@
 #include "SceneSmoke.h"
 #include "SceneEffectDeviceTypeRegistration.h"
 #include <cnoid/Body>
-#include <cnoid/SceneDevice>
 #include <cnoid/MathUtil>
 
 using namespace std;
 using namespace cnoid;
-
-namespace {
-
-SceneEffectDeviceTypeRegistration<SmokeDevice, SceneSmoke> smokeDeviceRegistration("SmokeDevice");;
-
-}
 
 
 SmokeDevice::SmokeDevice()
@@ -143,4 +136,14 @@ double* SmokeDevice::writeState(double* out_buf) const
     out_buf[i++] = ps.tintColor()[2];
 
     return out_buf + i;
+}
+
+
+namespace cnoid {
+
+void registerSmokeDevice()
+{
+    static SceneEffectDeviceTypeRegistration<SmokeDevice, SceneSmoke> registration("SmokeDevice");
+}
+
 }

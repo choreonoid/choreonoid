@@ -111,14 +111,26 @@ Referenced* SgOrthographicCamera::doClone(CloneMap*) const
 }
 
 
-namespace {
-
-struct NodeClassRegistration {
-    NodeClassRegistration() {
+void cnoid::registerSceneCameraNodeClasses()
+{
+    static bool registered = false;
+    if (!registered) {
+        // Ensure parent class SgPreprocessed is registered first
+        registerSceneGraphNodeClasses();
+        
         SceneNodeClassRegistry::instance()
             .registerClass<SgCamera, SgPreprocessed>("SgCamera")
             .registerClass<SgPerspectiveCamera, SgCamera>("SgPerspectiveCamera")
             .registerClass<SgOrthographicCamera, SgCamera>("SgOrthographicCamera");
+        registered = true;
+    }
+}
+
+namespace {
+
+struct NodeClassRegistration {
+    NodeClassRegistration() {
+        registerSceneCameraNodeClasses();
     }
 } registration;
 

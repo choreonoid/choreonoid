@@ -14,13 +14,24 @@ using namespace cnoid;
 
 namespace {
 
-std::mutex extensionMutex;
-set<SceneRenderer*> renderers;
-vector<std::function<void(SceneRenderer* renderer)>> extendFunctions;
+// Use function-local static to avoid static initialization order fiasco
+std::mutex& getExtensionMutex()
+{
+    static std::mutex extensionMutex;
+    return extensionMutex;
+}
 
-std::mutex propertyKeyMutex;
-int propertyKeyCount = 0;
-std::unordered_map<string, int> propertyKeyMap;
+set<SceneRenderer*>& getRenderers()
+{
+    static set<SceneRenderer*> renderers;
+    return renderers;
+}
+
+vector<std::function<void(SceneRenderer* renderer)>>& getExtendFunctions()
+{
+    static vector<std::function<void(SceneRenderer* renderer)>> extendFunctions;
+    return extendFunctions;
+}
 
 class PreproNodeInfo;
 typedef ref_ptr<PreproNodeInfo> PreproNodeInfoPtr;
@@ -61,6 +72,11 @@ namespace cnoid {
 
 SceneRenderer::PropertyKey::PropertyKey(const std::string& key)
 {
+    // Use function-local static to avoid static initialization order fiasco
+    static std::mutex propertyKeyMutex;
+    static int propertyKeyCount = 0;
+    static std::unordered_map<string, int> propertyKeyMap;
+    
     std::lock_guard<std::mutex> guard(propertyKeyMutex);
 
     auto iter = propertyKeyMap.find(key);
@@ -210,8 +226,8 @@ public:
 SceneRenderer::SceneRenderer()
 {
     impl = new Impl(this);
-    std::lock_guard<std::mutex> guard(extensionMutex);
-    renderers.insert(this);
+    std::lock_guard<std::mutex> guard(getExtensionMutex());
+    getRenderers().insert(this);
 }
 
 
@@ -248,8 +264,8 @@ SceneRenderer::Impl::Impl(SceneRenderer* self)
 
 SceneRenderer::~SceneRenderer()
 {
-    std::lock_guard<std::mutex> guard(extensionMutex);
-    renderers.erase(this);
+    std::lock_guard<std::mutex> guard(getExtensionMutex());
+    getRenderers().erase(this);
     delete impl;
 }
 
@@ -899,10 +915,10 @@ const std::vector<SgVisibilityProcessorPtr>& SceneRenderer::visibilityProcessors
 void SceneRenderer::addExtension(std::function<void(SceneRenderer* renderer)> func)
 {
     {
-        std::lock_guard<std::mutex> guard(extensionMutex);
-        extendFunctions.push_back(func);
+        std::lock_guard<std::mutex> guard(getExtensionMutex());
+        getExtendFunctions().push_back(func);
     }
-    for(SceneRenderer* renderer : renderers){
+    for(SceneRenderer* renderer : getRenderers()){
         renderer->impl->onExtensionAdded(func);
     }
 }
@@ -910,7 +926,8 @@ void SceneRenderer::addExtension(std::function<void(SceneRenderer* renderer)> fu
 
 void SceneRenderer::applyExtensions()
 {
-    std::lock_guard<std::mutex> guard(extensionMutex);
+    std::lock_guard<std::mutex> guard(getExtensionMutex());
+    auto& extendFunctions = getExtendFunctions();
     for(size_t i=0; i < extendFunctions.size(); ++i){
         extendFunctions[i](this);
     }

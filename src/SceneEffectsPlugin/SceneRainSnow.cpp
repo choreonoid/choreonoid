@@ -32,17 +32,6 @@ public:
     GLuint vertexArray;
 };
 
-struct Registration {
-    Registration(){
-        SceneNodeClassRegistry::instance()
-            .registerClass<SceneRainSnowBase, SceneParticles>()
-            .registerClass<SceneRain, SceneRainSnowBase>()
-            .registerClass<SceneSnow, SceneRainSnowBase>();
-
-        registerSceneEffectType<SceneRain, RainSnowProgram>();
-        registerSceneEffectType<SceneSnow, RainSnowProgram>();
-    }
-} registration;
 
 }
 
@@ -199,4 +188,19 @@ void RainSnowProgram::render(SceneRainSnowBase* particles)
 
     glBindVertexArray(vertexArray);
     glDrawArrays(GL_POINTS, 0, ps.numParticles());
+}
+
+
+namespace cnoid {
+
+void registerSceneRainSnow()
+{
+    SceneNodeClassRegistry::instance()
+        .registerClass<SceneRainSnowBase, SceneParticles>()
+        .registerClass<SceneRain, SceneRainSnowBase>()
+        .registerClass<SceneSnow, SceneRainSnowBase>();
+    registerSceneEffectType<SceneRain, RainSnowProgram>();
+    registerSceneEffectType<SceneSnow, RainSnowProgram>();
+}
+
 }

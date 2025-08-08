@@ -326,10 +326,13 @@ Referenced* SgLightweightRenderingGroup::doClone(CloneMap*) const
 }
 
 
-namespace {
-
-struct NodeTypeRegistration {
-    NodeTypeRegistration() {
+void cnoid::registerSceneEffectNodeClasses()
+{
+    static bool registered = false;
+    if (!registered) {
+        // Ensure parent classes (SgPreprocessed, SgGroup) are registered first
+        registerSceneGraphNodeClasses();
+        
         SceneNodeClassRegistry::instance()
             .registerClass<SgVisibilityProcessor, SgPreprocessed>("SgVisibilityProcessor")
             .registerClass<SgPolygonDrawStyle, SgGroup>("SgPolygonDrawStyle")
@@ -339,6 +342,15 @@ struct NodeTypeRegistration {
             .registerClass<SgOutline, SgHighlight>("SgOutline")
             .registerClass<SgBoundingBox, SgHighlight>("SgBoundingBox")
             .registerClass<SgLightweightRenderingGroup, SgGroup>("SgLightweightRenderingGroup");
+        registered = true;
+    }
+}
+
+namespace {
+
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        cnoid::registerSceneEffectNodeClasses();
     }
 } registration;
 

@@ -5,13 +5,6 @@
 using namespace std;
 using namespace cnoid;
 
-namespace {
-
-SceneEffectDeviceTypeRegistration<SnowDevice, SceneSnow> snowDeviceRegistration("SnowDevice");;
-SceneEffectDeviceTypeRegistration<RainDevice, SceneRain> rainDeviceRegistration("RainDevice");;
-
-}
-
 
 RainSnowDevice::RainSnowDevice()
 {
@@ -169,4 +162,15 @@ void SnowDevice::forEachActualType(std::function<bool(const std::type_info& type
     if(!func(typeid(SnowDevice))){
         RainSnowDevice::forEachActualType(func);
     }
+}
+
+
+namespace cnoid {
+
+void registerRainSnowDevices()
+{
+    static SceneEffectDeviceTypeRegistration<SnowDevice, SceneSnow> snowRegistration("SnowDevice");
+    static SceneEffectDeviceTypeRegistration<RainDevice, SceneRain> rainRegistration("RainDevice");
+}
+
 }

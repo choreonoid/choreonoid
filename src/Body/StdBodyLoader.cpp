@@ -22,10 +22,21 @@ namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
-std::mutex customNodeFunctionMutex;
 typedef function<bool(StdBodyLoader* loader, Mapping* node)> CustomNodeFunction;
 typedef map<string, CustomNodeFunction> CustomNodeFunctionMap;
-CustomNodeFunctionMap customNodeFunctions;
+
+// Use function-local static to avoid static initialization order fiasco
+std::mutex& getCustomNodeFunctionMutex()
+{
+    static std::mutex customNodeFunctionMutex;
+    return customNodeFunctionMutex;
+}
+
+CustomNodeFunctionMap& getCustomNodeFunctions()
+{
+    static CustomNodeFunctionMap customNodeFunctions;
+    return customNodeFunctions;
+}
 
 }
 
@@ -503,7 +514,8 @@ void StdBodyLoader::setDefaultCreaseAngle(double theta)
 
 void StdBodyLoader::Impl::updateCustomNodeFunctions()
 {
-    std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
+    std::lock_guard<std::mutex> guard(getCustomNodeFunctionMutex());
+    auto& customNodeFunctions = getCustomNodeFunctions();
     if(customNodeFunctions.size() > numCustomNodeFunctions){
         for(auto& p : customNodeFunctions){
             CustomNodeFunction& func = p.second;
@@ -2021,8 +2033,8 @@ void StdBodyLoader::Impl::readBodyHandlers(ValueNode* node)
 void StdBodyLoader::registerNodeType
 (const char* typeName, std::function<bool(StdBodyLoader* loader, const Mapping* info)> readFunction)
 {
-    std::lock_guard<std::mutex> guard(customNodeFunctionMutex);
-    customNodeFunctions[typeName] = readFunction;
+    std::lock_guard<std::mutex> guard(getCustomNodeFunctionMutex());
+    getCustomNodeFunctions()[typeName] = readFunction;
 }
 
 

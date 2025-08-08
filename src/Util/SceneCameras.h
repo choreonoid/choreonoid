@@ -97,6 +97,10 @@ private:
     double height_;
 };
 
+// Register scene camera node classes to SceneNodeClassRegistry
+// Internal function to avoid static initialization order issues within Util module
+void registerSceneCameraNodeClasses();
+
 }
 
 #endif

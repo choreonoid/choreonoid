@@ -39,12 +39,6 @@ public:
     GLuint vertexArray;
 };
 
-struct Registration {
-    Registration(){
-        SceneNodeClassRegistry::instance().registerClass<SceneFountain, SceneParticles>();
-        registerSceneEffectType<SceneFountain, FountainProgram>();
-    }
-} registration;
 
 
 }
@@ -188,3 +182,16 @@ void FountainProgram::render(SceneFountain* fountain)
     glBindVertexArray(vertexArray);
     glDrawArrays(GL_POINTS, 0, ps.numParticles());
 }
+
+
+namespace cnoid {
+
+void registerSceneFountain()
+{
+    SceneNodeClassRegistry::instance().registerClass<SceneFountain, SceneParticles>();
+    registerSceneEffectType<SceneFountain, FountainProgram>();
+}
+
+}
+
+

@@ -1,4 +1,5 @@
 #include "SceneDrawables.h"
+#include "SceneGraph.h"  // for registerSceneGraphNodeClasses()
 #include "CloneMap.h"
 #include "SceneNodeClassRegistry.h"
 #include "Format.h"
@@ -6,12 +7,14 @@
 using namespace std;
 using namespace cnoid;
 
-namespace {
 
-const bool USE_FACES_FOR_BOUNDING_BOX_CALCULATION = true;
-
-struct NodeClassRegistration {
-    NodeClassRegistration() {
+void cnoid::registerSceneDrawableNodeClasses()
+{
+    static bool registered = false;
+    if (!registered) {
+        // Ensure parent classes (SgNode, SgGroup) are registered first
+        registerSceneGraphNodeClasses();
+        
         SceneNodeClassRegistry::instance()
             .registerClass<SgShape, SgNode>("SgShape")
             .registerClass<SgPlot, SgNode>("SgPlot")
@@ -20,6 +23,18 @@ struct NodeClassRegistration {
             .registerClass<SgText, SgNode>("SgText")
             .registerClass<SgOverlay, SgGroup>("SgOverlay")
             .registerClass<SgViewportOverlay, SgOverlay>("SgViewportOverlay");
+        registered = true;
+    }
+}
+
+
+namespace {
+
+const bool USE_FACES_FOR_BOUNDING_BOX_CALCULATION = true;
+
+struct NodeClassRegistration {
+    NodeClassRegistration() {
+        registerSceneDrawableNodeClasses();
     }
 } registration;
 

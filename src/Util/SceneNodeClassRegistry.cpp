@@ -2,10 +2,12 @@
 
 using namespace cnoid;
 
-namespace cnoid {
 
-SceneNodeClassRegistry SceneNodeClassRegistry::instance_;
-
+SceneNodeClassRegistry& SceneNodeClassRegistry::instance()
+{
+    // Use function-local static to avoid static initialization order fiasco
+    static SceneNodeClassRegistry instance_;
+    return instance_;
 }
 
 

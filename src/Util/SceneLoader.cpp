@@ -16,10 +16,34 @@ namespace {
 typedef shared_ptr<AbstractSceneLoader> AbstractSceneLoaderPtr;
 typedef function<AbstractSceneLoaderPtr()> LoaderFactory;
 typedef map<string, int> LoaderIdMap;
-LoaderIdMap extensionToLoaderIdMap;
-vector<LoaderFactory> loaderFactories;
-mutex loaderMutex;
-Signal<void(const std::vector<std::string>& extensions)> sigAvailableFileExtensionsAdded_;
+
+// Use function-local static to avoid static initialization order fiasco
+LoaderIdMap& getExtensionToLoaderIdMap()
+{
+    static LoaderIdMap instance;
+    return instance;
+}
+
+// Use function-local static to avoid static initialization order fiasco
+vector<LoaderFactory>& getLoaderFactories()
+{
+    static vector<LoaderFactory> instance;
+    return instance;
+}
+
+// Use function-local static to avoid static initialization order fiasco
+mutex& getLoaderMutex()
+{
+    static mutex instance;
+    return instance;
+}
+
+// Use function-local static to avoid static initialization order fiasco
+Signal<void(const std::vector<std::string>& extensions)>& getSigAvailableFileExtensionsAdded()
+{
+    static Signal<void(const std::vector<std::string>& extensions)> instance;
+    return instance;
+}
 
 }
 
@@ -49,13 +73,13 @@ void SceneLoader::registerLoader
 (const std::vector<std::string>& extensions, std::function<std::shared_ptr<AbstractSceneLoader>()> factory)
 {
     if(!extensions.empty()){
-        lock_guard<mutex> lock(loaderMutex);
-        const int id = loaderFactories.size();
-        loaderFactories.push_back(factory);
+        lock_guard<mutex> lock(getLoaderMutex());
+        const int id = getLoaderFactories().size();
+        getLoaderFactories().push_back(factory);
         for(auto& ext : extensions){
-            extensionToLoaderIdMap[ext] = id;
+            getExtensionToLoaderIdMap()[ext] = id;
         }
-        sigAvailableFileExtensionsAdded_(extensions);
+        getSigAvailableFileExtensionsAdded()(extensions);
     }
 }
 
@@ -63,21 +87,21 @@ void SceneLoader::registerLoader
 void SceneLoader::registerLoader(const char* extension, std::function<AbstractSceneLoaderPtr()> factory)
 {
     if(extension){
-        lock_guard<mutex> lock(loaderMutex);
-        const int id = loaderFactories.size();
-        loaderFactories.push_back(factory);
-        extensionToLoaderIdMap[extension] = id;
-        sigAvailableFileExtensionsAdded_({ extension });
+        lock_guard<mutex> lock(getLoaderMutex());
+        const int id = getLoaderFactories().size();
+        getLoaderFactories().push_back(factory);
+        getExtensionToLoaderIdMap()[extension] = id;
+        getSigAvailableFileExtensionsAdded()({ extension });
     }
 }
 
 
 std::vector<std::string> SceneLoader::availableFileExtensions()
 {
-    lock_guard<mutex> lock(loaderMutex);
+    lock_guard<mutex> lock(getLoaderMutex());
     vector<string> extensions;
-    extensions.reserve(extensionToLoaderIdMap.size());
-    for(auto& kv : extensionToLoaderIdMap){
+    extensions.reserve(getExtensionToLoaderIdMap().size());
+    for(auto& kv : getExtensionToLoaderIdMap()){
         extensions.push_back(kv.first);
     }
     return extensions;
@@ -86,7 +110,7 @@ std::vector<std::string> SceneLoader::availableFileExtensions()
 
 SignalProxy<void(const std::vector<std::string>& extensions)> SceneLoader::sigAvailableFileExtensionsAdded()
 {
-    return sigAvailableFileExtensionsAdded_;
+    return getSigAvailableFileExtensionsAdded();
 }
 
 
@@ -133,16 +157,16 @@ AbstractSceneLoaderPtr SceneLoader::Impl::findLoader(string ext)
 {
     AbstractSceneLoaderPtr loader;
     
-    lock_guard<mutex> lock(loaderMutex);
+    lock_guard<mutex> lock(getLoaderMutex());
 
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-    auto p = extensionToLoaderIdMap.find(ext);
-    if(p != extensionToLoaderIdMap.end()){
+    auto p = getExtensionToLoaderIdMap().find(ext);
+    if(p != getExtensionToLoaderIdMap().end()){
         const int loaderId = p->second;
         auto q = loaders.find(loaderId);
         if(q == loaders.end()){
-            loader = loaderFactories[loaderId]();
+            loader = getLoaderFactories()[loaderId]();
             loaders[loaderId] = loader;
         } else {
             loader = q->second;

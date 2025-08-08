@@ -22,17 +22,29 @@ namespace filesystem = stdx::filesystem;
 
 namespace {
 
-unordered_set<std::string> customizedDomains;
-filesystem::path mainMessageCatalogDir;
-filesystem::path customMessageCatalogBaseDir;
-string langSymbol1;
-string langSymbol2;
-bool isCurrentLocaleLanguageSupportChecked = false;
-bool isCurrentLocaleLanguageSupported = false;
+// Use function-local static variables to avoid static initialization order problems
+string& getLangSymbol1()
+{
+    static string langSymbol1;
+    return langSymbol1;
+}
+
+string& getLangSymbol2()
+{
+    static string langSymbol2;
+    return langSymbol2;
+}
+
+bool& getIsCurrentLocaleLanguageSupportChecked()
+{
+    static bool isCurrentLocaleLanguageSupportChecked = false;
+    return isCurrentLocaleLanguageSupportChecked;
+}
 
 
 filesystem::path& getOrCreateMainMessageCatalogDir()
 {
+    static filesystem::path mainMessageCatalogDir;
     if(mainMessageCatalogDir.empty()){
         mainMessageCatalogDir = executableTopDirPath() / "share" / "locale";
     }
@@ -42,6 +54,7 @@ filesystem::path& getOrCreateMainMessageCatalogDir()
 
 filesystem::path& getOrCreateCustomMessageCatalogBaseDir()
 {
+    static filesystem::path customMessageCatalogBaseDir;
     if(customMessageCatalogBaseDir.empty()){
         customMessageCatalogBaseDir = shareDirPath() / "locale";
     }
@@ -51,6 +64,9 @@ filesystem::path& getOrCreateCustomMessageCatalogBaseDir()
 
 bool updateLanguageSymbolsOfCurrentLocale()
 {
+    string& langSymbol1 = getLangSymbol1();
+    string& langSymbol2 = getLangSymbol2();
+    
     auto lang = getenv("LANG");
     if(lang){
         cmatch match;
@@ -88,12 +104,18 @@ bool checkCurrentLocaleLanguageSupport_(const std::string& customLabel)
     return false;
 #endif
     
+    bool& isCurrentLocaleLanguageSupportChecked = getIsCurrentLocaleLanguageSupportChecked();
+    static bool isCurrentLocaleLanguageSupported = false;
+    
     if(isCurrentLocaleLanguageSupportChecked){
         return isCurrentLocaleLanguageSupported;
     }
         
     updateLanguageSymbolsOfCurrentLocale();
 
+    string& langSymbol1 = getLangSymbol1();
+    string& langSymbol2 = getLangSymbol2();
+    
     if(!langSymbol1.empty()){
         filesystem::path& mmcDir = getOrCreateMainMessageCatalogDir();
         if(filesystem::is_directory(mmcDir / langSymbol1)){
@@ -140,6 +162,9 @@ std::string bindModuleTextDomain(const std::string& moduleName, const std::strin
 
 #ifdef CNOID_ENABLE_GETTEXT
 
+    string& langSymbol1 = getLangSymbol1();
+    string& langSymbol2 = getLangSymbol2();
+    
     if(langSymbol1.empty()){
         if(!updateLanguageSymbolsOfCurrentLocale()){
             return domainName;
@@ -147,6 +172,7 @@ std::string bindModuleTextDomain(const std::string& moduleName, const std::strin
     }
 
     // Check if the module (domain) has already been bound with custom messages
+    static unordered_set<std::string> customizedDomains;
     if(!customLabel.empty() || (customizedDomains.find(domainName) == customizedDomains.end())){
         
         filesystem::path* pMessageCatalogDir = nullptr;
@@ -212,6 +238,7 @@ void useEnglishMessageCatalogForUnsupportedLocale(const std::string& customLabel
        Basically, this function must be called first in the main function
        before using the checkCurrentLocaleLanguageSupport function.
     */
+    bool& isCurrentLocaleLanguageSupportChecked = getIsCurrentLocaleLanguageSupportChecked();
     isCurrentLocaleLanguageSupportChecked = false;
     
     if(!checkCurrentLocaleLanguageSupport_(customLabel)){
@@ -221,6 +248,8 @@ void useEnglishMessageCatalogForUnsupportedLocale(const std::string& customLabel
 #else
         setenv("LANG", "en_US.utf8", 1);
 #endif
+        string& langSymbol1 = getLangSymbol1();
+        string& langSymbol2 = getLangSymbol2();
         langSymbol1 = "en";
         langSymbol2 = "en_US";
     }

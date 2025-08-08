@@ -39,12 +39,6 @@ public:
     GLuint vertexArray;
 };
 
-struct Registration {
-    Registration(){
-        SceneNodeClassRegistry::instance().registerClass<SceneFire, SceneParticles>();
-        registerSceneEffectType<SceneFire, FireProgram>();
-    }
-} registration;
 
 }
 
@@ -193,3 +187,16 @@ void FireProgram::render(SceneFire* fire)
 
     glBlendFunc(blendSrc, blendDst);
 }
+
+
+namespace cnoid {
+
+void registerSceneFire()
+{
+    SceneNodeClassRegistry::instance().registerClass<SceneFire, SceneParticles>();
+    registerSceneEffectType<SceneFire, FireProgram>();
+}
+
+}
+
+

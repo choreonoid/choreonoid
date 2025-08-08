@@ -112,6 +112,10 @@ private:
     float cutOffExponent_;
 };
 
+// Register scene light node classes to SceneNodeClassRegistry
+// Internal function to avoid static initialization order issues within Util module
+void registerSceneLightNodeClasses();
+
 }
 
 #endif

@@ -801,6 +801,10 @@ protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 };
 
+// Register scene drawable node classes to SceneNodeClassRegistry
+// Internal function to avoid static initialization order issues within Util module
+void registerSceneDrawableNodeClasses();
+
 }
 
 #endif

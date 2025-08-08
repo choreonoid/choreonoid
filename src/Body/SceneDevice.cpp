@@ -20,7 +20,13 @@ using namespace cnoid;
 namespace {
 
 typedef std::unordered_map<std::type_index, SceneDevice::SceneDeviceFactory> SceneDeviceFactoryMap;
-SceneDeviceFactoryMap sceneDeviceFactories;
+
+// Use function-local static to avoid static initialization order fiasco
+SceneDeviceFactoryMap& getSceneDeviceFactories()
+{
+    static SceneDeviceFactoryMap sceneDeviceFactories;
+    return sceneDeviceFactories;
+}
 
 
 void updatePerspectiveCamera(Camera* camera, SgPerspectiveCamera* sceneCamera)
@@ -108,12 +114,13 @@ SceneDevice* createNullSceneDevice(Device*)
 
 void SceneDevice::registerSceneDeviceFactory_(const std::type_info& type, const SceneDeviceFactory& factory)
 {
-    sceneDeviceFactories[type] = factory;
+    getSceneDeviceFactories()[type] = factory;
 }
 
 
 static bool createSceneDevice(Device* device, const std::type_info& type, SceneDevice*& out_sceneDevice)
 {
+    auto& sceneDeviceFactories = getSceneDeviceFactories();
     SceneDeviceFactoryMap::iterator p = sceneDeviceFactories.find(type);
     if(p != sceneDeviceFactories.end()){
         SceneDevice::SceneDeviceFactory& factory = p->second;

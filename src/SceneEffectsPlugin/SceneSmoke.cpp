@@ -33,12 +33,6 @@ public:
     GLuint vertexArray;
 };
 
-struct Registration {
-    Registration(){
-        SceneNodeClassRegistry::instance().registerClass<SceneSmoke, SceneParticles>();
-        registerSceneEffectType<SceneSmoke, SmokeProgram>();
-    }
-} registration;
 
 }
 
@@ -191,4 +185,15 @@ void SmokeProgram::render(SceneSmoke* smoke)
     glDrawArrays(GL_POINTS, 0, ps.numParticles());
 
     //glBlendFunc(blendSrc, blendDst);
+}
+
+
+namespace cnoid {
+
+void registerSceneSmoke()
+{
+    SceneNodeClassRegistry::instance().registerClass<SceneSmoke, SceneParticles>();
+    registerSceneEffectType<SceneSmoke, SmokeProgram>();
+}
+
 }

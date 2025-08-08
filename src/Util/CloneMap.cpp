@@ -9,14 +9,6 @@
 using namespace std;
 using namespace cnoid;
 
-namespace {
-
-unordered_map<string, int> flagNameToIdMap;
-int idCounter = 0;
-mutex flagMapMutex;
-
-}
-
 namespace cnoid {
 
 class CloneMap::Impl
@@ -200,6 +192,11 @@ Referenced* CloneMap::getClone_(const ClonableReferenced* org)
 
 int CloneMap::getFlagId(const char* name)
 {
+    // Use function-local static to avoid static initialization order fiasco
+    static mutex flagMapMutex;
+    static unordered_map<string, int> flagNameToIdMap;
+    static int idCounter = 0;
+    
     lock_guard<mutex> guard(flagMapMutex);
 
     auto iter = flagNameToIdMap.find(name);

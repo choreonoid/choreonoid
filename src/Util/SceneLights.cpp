@@ -127,15 +127,27 @@ Referenced* SgSpotLight::doClone(CloneMap*) const
 }
 
 
-namespace {
-
-struct NodeTypeRegistration {
-    NodeTypeRegistration() {
+void cnoid::registerSceneLightNodeClasses()
+{
+    static bool registered = false;
+    if (!registered) {
+        // Ensure parent class SgPreprocessed is registered first
+        registerSceneGraphNodeClasses();
+        
         SceneNodeClassRegistry::instance()
             .registerClass<SgLight, SgPreprocessed>("SgLight")
             .registerClass<SgDirectionalLight, SgLight>("SgDirectionalLight")
             .registerClass<SgPointLight, SgLight>("SgPointLight")
             .registerClass<SgSpotLight, SgPointLight>("SgSpotLight");
+        registered = true;
+    }
+}
+
+namespace {
+
+struct NodeTypeRegistration {
+    NodeTypeRegistration() {
+        registerSceneLightNodeClasses();
     }
 } registration;
 

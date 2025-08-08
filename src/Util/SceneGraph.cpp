@@ -1242,10 +1242,10 @@ SgPreprocessed::SgPreprocessed(const SgPreprocessed& org)
 }
 
 
-namespace {
-
-struct NodeClassRegistration {
-    NodeClassRegistration() {
+void cnoid::registerSceneGraphNodeClasses()
+{
+    static bool registered = false;
+    if (!registered) {
         SceneNodeClassRegistry::instance()
             .registerClass<SgGroup, SgNode>("SgGroup")
             .registerClass<SgInvariantGroup, SgGroup>("SgInvariantGroup")
@@ -1258,6 +1258,15 @@ struct NodeClassRegistration {
             .registerClass<SgUnpickableGroup, SgGroup>("SgUnpickableGroup")
             .registerClass<SgPickableInvisibleGroup, SgGroup>("SgPickableInvisibleGroup")
             .registerClass<SgPreprocessed, SgNode>("SgPreprocessed");
+        registered = true;
+    }
+}
+
+namespace {
+
+struct NodeClassRegistration {
+    NodeClassRegistration() {
+        registerSceneGraphNodeClasses();
     }
 } registration;
 

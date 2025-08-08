@@ -20,8 +20,6 @@ namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
-std::mutex deviceWriterRegistrationMutex;
-
 struct WriterInfo
 {
     std::string typeName;
@@ -31,8 +29,19 @@ struct WriterInfo
         const std::function<bool(StdBodyWriter* writer, Mapping* info, const Device* device)>& func)
         : typeName(typeName), func(func) { }
 };
-        
-map<std::type_index, WriterInfo> registeredDeviceWriterMap;
+
+// Use function-local static to avoid static initialization order fiasco
+std::mutex& getDeviceWriterRegistrationMutex()
+{
+    static std::mutex deviceWriterRegistrationMutex;
+    return deviceWriterRegistrationMutex;
+}
+
+map<std::type_index, WriterInfo>& getRegisteredDeviceWriterMap()
+{
+    static map<std::type_index, WriterInfo> registeredDeviceWriterMap;
+    return registeredDeviceWriterMap;
+}
 
 }
 
@@ -170,7 +179,8 @@ bool StdBodyWriter::Impl::writeBody(Body* body, const std::string& filename)
 
 void StdBodyWriter::Impl::updateDeviceWriteFunctions()
 {
-    std::lock_guard<std::mutex> guard(deviceWriterRegistrationMutex);
+    std::lock_guard<std::mutex> guard(getDeviceWriterRegistrationMutex());
+    auto& registeredDeviceWriterMap = getRegisteredDeviceWriterMap();
     if(deviceWriterMap.size() < registeredDeviceWriterMap.size()){
         deviceWriterMap.insert(
             registeredDeviceWriterMap.begin(), registeredDeviceWriterMap.end());
@@ -463,8 +473,8 @@ void StdBodyWriter::registerDeviceWriter_
 (const std::type_info& type, const char* typeName,
  std::function<bool(StdBodyWriter* writer, Mapping* info, const Device* device)> writeFunction)
 {
-    std::lock_guard<std::mutex> guard(deviceWriterRegistrationMutex);
-    registeredDeviceWriterMap.emplace(
+    std::lock_guard<std::mutex> guard(getDeviceWriterRegistrationMutex());
+    getRegisteredDeviceWriterMap().emplace(
         std::piecewise_construct,
         std::forward_as_tuple(type),
         std::forward_as_tuple(typeName, writeFunction));

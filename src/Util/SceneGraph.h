@@ -777,6 +777,10 @@ typedef ref_ptr<SgOutline> SgOutlinePtr;
 class SgLightweightRenderingGroup;
 typedef ref_ptr<SgLightweightRenderingGroup> SgLightweightRenderingGroupPtr;
 
+// Register basic scene graph node classes to SceneNodeClassRegistry
+// Internal function to avoid static initialization order issues within Util module
+void registerSceneGraphNodeClasses();
+
 }
 
 #endif
