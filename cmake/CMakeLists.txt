@@ -38,11 +38,18 @@ endif()
 
 install(FILES ${modules} DESTINATION ${CHOREONOID_CMAKE_CONFIG_SUBDIR})
 if(UNIX)
-  string(CONCAT code
-    "execute_process(COMMAND ${CMAKE_COMMAND} "
-    "-E create_symlink ChoreonoidConfig.cmake choreonoid-config.cmake "
-    "WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_CMAKE_CONFIG_SUBDIR})")
-  install(CODE ${code})
+  # Create symlink for backward compatibility with lowercase package name.
+  # The official usage is find_package(Choreonoid) with capital 'C',
+  # but this symlink allows find_package(choreonoid) to work as well.
+  
+  # Create symlink at build time and install it
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+      ChoreonoidConfig.cmake
+      ${CMAKE_CURRENT_BINARY_DIR}/choreonoid-config.cmake
+  )
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/choreonoid-config.cmake
+          DESTINATION ${CHOREONOID_CMAKE_CONFIG_SUBDIR})
 endif()
 
 configure_file(ChoreonoidConfig.cmake.in ChoreonoidConfig.cmake @ONLY)
