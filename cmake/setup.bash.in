@@ -1,0 +1,44 @@
+#!/bin/bash
+# This script sets up the environment for using Choreonoid
+# Source this file to configure PATH, LD_LIBRARY_PATH, CMAKE_PREFIX_PATH, and PKG_CONFIG_PATH
+
+# Get the directory where this script is located (which is the install prefix)
+_CHOREONOID_INSTALL_PREFIX="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Add Choreonoid bin directory to PATH
+if [[ ":$PATH:" != *":$_CHOREONOID_INSTALL_PREFIX/@CHOREONOID_BIN_SUBDIR@:"* ]]; then
+    export PATH="$_CHOREONOID_INSTALL_PREFIX/@CHOREONOID_BIN_SUBDIR@:$PATH"
+fi
+
+# Add Choreonoid library directory to LD_LIBRARY_PATH
+_CHOREONOID_LIB_DIR="$_CHOREONOID_INSTALL_PREFIX/@CHOREONOID_LIB_SUBDIR@"
+if [[ ":$LD_LIBRARY_PATH:" != *":$_CHOREONOID_LIB_DIR:"* ]]; then
+    export LD_LIBRARY_PATH="$_CHOREONOID_LIB_DIR:$LD_LIBRARY_PATH"
+fi
+
+# Add Choreonoid to CMAKE_PREFIX_PATH for find_package
+if [[ ":$CMAKE_PREFIX_PATH:" != *":$_CHOREONOID_INSTALL_PREFIX:"* ]]; then
+    export CMAKE_PREFIX_PATH="$_CHOREONOID_INSTALL_PREFIX:$CMAKE_PREFIX_PATH"
+fi
+
+# Add pkgconfig directory to PKG_CONFIG_PATH
+_CHOREONOID_PKGCONFIG_DIR="$_CHOREONOID_INSTALL_PREFIX/@CHOREONOID_LIB_SUBDIR@/pkgconfig"
+if [[ ":$PKG_CONFIG_PATH:" != *":$_CHOREONOID_PKGCONFIG_DIR:"* ]]; then
+    export PKG_CONFIG_PATH="$_CHOREONOID_PKGCONFIG_DIR:$PKG_CONFIG_PATH"
+fi
+
+# Add Python path if Python support is enabled
+if [ "@ENABLE_PYTHON@" = "ON" ]; then
+    _CHOREONOID_PYTHON_DIR="$_CHOREONOID_INSTALL_PREFIX/@CHOREONOID_PYTHON_SUBDIR@"
+    if [[ ":$PYTHONPATH:" != *":$_CHOREONOID_PYTHON_DIR:"* ]]; then
+        export PYTHONPATH="$_CHOREONOID_PYTHON_DIR:$PYTHONPATH"
+    fi
+fi
+
+# Clean up temporary variables
+unset _CHOREONOID_INSTALL_PREFIX
+unset _CHOREONOID_LIB_DIR
+unset _CHOREONOID_PKGCONFIG_DIR
+if [ "@ENABLE_PYTHON@" = "ON" ]; then
+    unset _CHOREONOID_PYTHON_DIR
+fi

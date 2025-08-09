@@ -53,3 +53,18 @@ if(UNIX)
 endif()
 
 configure_file(ChoreonoidConfig.cmake.in ChoreonoidConfig.cmake @ONLY)
+
+# Generate setup scripts for environment configuration
+# Only generate for non-standard installation paths where environment setup is needed
+if(UNIX)
+  # Don't generate setup script for standard system paths (/usr, /usr/local)
+  # These locations already have PATH and library paths configured
+  if(NOT CMAKE_INSTALL_PREFIX MATCHES "^/usr(/local)?$")
+    configure_file(setup.bash.in ${CMAKE_CURRENT_BINARY_DIR}/setup.bash @ONLY)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/setup.bash
+            DESTINATION .
+            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                        GROUP_READ GROUP_EXECUTE
+                        WORLD_READ WORLD_EXECUTE)
+  endif()
+endif()
