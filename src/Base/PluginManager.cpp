@@ -52,13 +52,14 @@ namespace {
 
 PluginManager* instance_ = nullptr;
 
-struct PluginInfo;
+class PluginInfo;
 typedef std::shared_ptr<PluginInfo> PluginInfoPtr;
 typedef map<std::string, PluginInfoPtr> PluginMap;
 
-struct PluginInfo
+class PluginInfo
 {
-    QLibrary dll;
+public:
+    QLibrary* dll;
     std::string pathString;
     Plugin* plugin;
     string name;
@@ -73,12 +74,19 @@ struct PluginInfo
     string lastErrorMessage;
 
     PluginInfo(){
+        dll = nullptr;
         plugin = nullptr;
         status = PluginManager::NOT_LOADED;
         areAllRequisitiesResolved = false;
         doReloading = false;
         aboutMenuItem = nullptr;
         aboutDialog = nullptr;
+    }
+
+    ~PluginInfo(){
+        if(dll){
+            delete dll;
+        }
     }
 };
 
@@ -466,40 +474,45 @@ bool PluginManager::Impl::loadPlugin(int index, bool isLoadingMultiplePlugins)
             hasMessages = true;
         }
 
-        info->dll.setFileName(info->pathString.c_str());
+        if(!info->dll){
+            info->dll = new QLibrary;
+            info->dll->setFileName(info->pathString.c_str());
 
-        /*
-          If some plugins do not work correctly due to a dynamic link problem, the problem might be solved
-          by enabling the following option. However, this option might cause the symbol conflicts amaong
-          internally used libraries and the functions provided by plugins may not be able to work correctly.
-          Note that this options is originally required to make the Python plugin able to import binary
-          Python modules on Linux. However, it is now handled inside the Python plugin, and it is not
-          neccessary to enable the option to use Python modules.
-        */
-        char* CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS = getenv("CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS");
-        if(CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS && (strcmp(CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS, "1") == 0)){
-            info->dll.setLoadHints(QLibrary::ExportExternalSymbolsHint);
+            /*
+              If some plugins do not work correctly due to a dynamic link problem, the problem might be solved
+              by enabling the following option. However, this option might cause the symbol conflicts amaong
+              internally used libraries and the functions provided by plugins may not be able to work correctly.
+              Note that this options is originally required to make the Python plugin able to import binary
+              Python modules on Linux. However, it is now handled inside the Python plugin, and it is not
+              neccessary to enable the option to use Python modules.
+            */
+            char* CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS = getenv("CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS");
+            if(CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS && (strcmp(CNOID_EXPORT_PLUGIN_EXTERNAL_SYMBOLS, "1") == 0)){
+                info->dll->setLoadHints(QLibrary::ExportExternalSymbolsHint);
+            }
         }
 
-        if(!(info->dll.load())){
-            info->lastErrorMessage = formatR(_("System error: {0}"), info->dll.errorString().toStdString());
+        if(!(info->dll->load())){
+            info->lastErrorMessage = formatR(_("System error: {0}"), info->dll->errorString().toStdString());
             if(isLoadingMultiplePlugins){
                 /*
                   A plugin without the RPATH information may not be loaded if it is loaded before
                   the plugins it depends on are loaded. In such cases, loading the plugin again
                   after the other plugins have been loaded may allow it to be loaded.
                 */
+                delete info->dll; // QLibrary object must be deleted to retry loading
+                info->dll = nullptr;
                 return false;
             } else {
                 mout->putErrorln(info->lastErrorMessage);
                 info->status = PluginManager::INVALID;
             }
         } else {
-            QFunctionPointer symbol = info->dll.resolve("getChoreonoidPlugin");
+            QFunctionPointer symbol = info->dll->resolve("getChoreonoidPlugin");
             if(!symbol){
                 info->status = PluginManager::INVALID;
                 info->lastErrorMessage = _("The plugin entry function \"getChoreonoidPlugin\" is not found.\n");
-                info->lastErrorMessage += info->dll.errorString().toStdString() + "\n";
+                info->lastErrorMessage += info->dll->errorString().toStdString() + "\n";
                 mout->putError(info->lastErrorMessage);
                 hasMessages = true;
 
@@ -784,7 +797,7 @@ void PluginManager::Impl::unloadPluginsActually()
 
     for(size_t i=0; i < pluginsToUnload.size(); ++i){
         PluginInfoPtr& info = pluginsToUnload[i];
-        if(info->dll.unload()){
+        if(info->dll->unload()){
             info->status = PluginManager::UNLOADED;
             nameToPluginInfoMap.erase(info->name);
             mout->putln(formatR(_("Plugin DLL \"{}\" has been unloaded."), info->pathString));
@@ -792,6 +805,8 @@ void PluginManager::Impl::unloadPluginsActually()
                 info->status = PluginManager::NOT_LOADED;
                 info->doReloading = false;
                 doReloading = true;
+                delete info->dll;
+                info->dll = nullptr;
             }
         }
     }
