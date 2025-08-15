@@ -2,9 +2,6 @@
 #define CNOID_FFMPEG_PLUGIN_FFMPEG_MOVIE_RECORDER_ENCODER_H
 
 #include <cnoid/MovieRecorder>
-extern "C" {
-#include <libavutil/frame.h>
-}
 
 namespace cnoid {
 
@@ -14,9 +11,10 @@ public:
     virtual std::string formatName() const override;
     virtual bool initializeEncoding(int width, int height, int frameRate) override;
     virtual bool doEncoding(std::string fileBasename) override;
-    bool copyCapturedImageToAVFrame(CapturedImagePtr captured, AVFrame* avFrame);
-    
+
 private:
+    class Impl;
+
     int width;
     int height;
     int frameRate;

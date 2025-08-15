@@ -5,6 +5,7 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/frame.h>
 #include <libavutil/opt.h>
 #include <libavutil/imgutils.h>
 }
@@ -22,6 +23,17 @@ void YCbCrfromRGB(double& Y, double& Cb, double& Cr, const double R, const doubl
     Cb = -0.148 * R - 0.291 * G + 0.439 * B + 128.0;
     Cr = 0.439 * R - 0.368 * G - 0.071 * B + 128.0;
 }
+
+}
+
+namespace cnoid {
+
+class FFmpegMovieRecorderEncoder::Impl
+{
+public:
+    static bool copyCapturedImageToAVFrame(
+        FFmpegMovieRecorderEncoder* self, CapturedImagePtr captured, AVFrame* avFrame);
+};
 
 }
 
@@ -150,7 +162,7 @@ bool FFmpegMovieRecorderEncoder::doEncoding(std::string fileBasename)
         AVFrame* frameToSend = nullptr;
         CapturedImagePtr captured = getNextFrameImage();
         if(captured){
-            if(!copyCapturedImageToAVFrame(captured, avFrame)){
+            if(!Impl::copyCapturedImageToAVFrame(this, captured, avFrame)){
                 failed = true;
                 break;
             }
@@ -194,12 +206,13 @@ bool FFmpegMovieRecorderEncoder::doEncoding(std::string fileBasename)
 }
 
 
-bool FFmpegMovieRecorderEncoder::copyCapturedImageToAVFrame(CapturedImagePtr captured, AVFrame* avFrame)
+bool FFmpegMovieRecorderEncoder::Impl::copyCapturedImageToAVFrame
+(FFmpegMovieRecorderEncoder* self, CapturedImagePtr captured, AVFrame* avFrame)
 {
     /* make sure the frame data is writable */
     int ret = av_frame_make_writable(avFrame);
     if(ret < 0){
-        setErrorMessage(_("A video frame data is not writable."));
+        self->setErrorMessage(_("A video frame data is not writable."));
         return false;
     }
 
