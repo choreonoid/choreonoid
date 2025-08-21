@@ -191,6 +191,9 @@ bool MprPositionList::Impl::insert(int index, MprPosition* position, bool doNoti
 bool MprPositionList::replace(int index, MprPosition* position)
 {
     auto existing = positionAt(index);
+    if(existing == position){
+        return false;
+    }
     if(existing->id() != position->id() && findPosition(position->id())){
         return false;
     }

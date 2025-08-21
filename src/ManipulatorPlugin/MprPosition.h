@@ -68,6 +68,7 @@ public:
     virtual bool fetch(KinematicBodySet* bodySet, MessageOut* mout = nullptr);
     virtual bool apply(BodyKinematicsKit* kinematicsKit) const = 0;
     virtual bool apply(KinematicBodySet* bodySet) const;
+    virtual MprPosition* convertPositionType(PositionType type, KinematicBodySet* bodySet) = 0;
 
     const std::string& note() const { return note_; }
     void setNote(const std::string& note) { note_ = note; }
@@ -116,6 +117,7 @@ public:
 
     virtual bool fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
     virtual bool apply(BodyKinematicsKit* kinematicsKit) const override;
+    virtual MprPosition* convertPositionType(PositionType type, KinematicBodySet* bodySet) override;
     virtual bool read(const Mapping* archive) override;
     virtual bool write(Mapping* archive) const override;
 
@@ -206,6 +208,7 @@ public:
     //! \note This function always specifies BodyFrame as the base frame type.
     virtual bool fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout = nullptr) override;
     virtual bool apply(BodyKinematicsKit* kinematicsKit) const override;
+    virtual MprPosition* convertPositionType(PositionType type, KinematicBodySet* bodySet) override;
     virtual bool read(const Mapping* archive) override;
     virtual bool write(Mapping* archive) const override;
 
@@ -252,6 +255,7 @@ public:
     virtual bool fetch(KinematicBodySet* bodySet, MessageOut* mout = nullptr) override;
     virtual bool apply(BodyKinematicsKit* kinematicsKit) const override;
     virtual bool apply(KinematicBodySet* bodySet) const override;
+    virtual MprPosition* convertPositionType(PositionType type, KinematicBodySet* bodySet) override;
 
     virtual bool read(const Mapping* archive) override;
     virtual bool write(Mapping* archive) const override;

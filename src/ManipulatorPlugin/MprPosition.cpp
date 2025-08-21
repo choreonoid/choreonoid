@@ -267,6 +267,25 @@ bool MprFkPosition::apply(BodyKinematicsKit* kinematicsKit) const
 }
 
 
+MprPosition* MprFkPosition::convertPositionType(PositionType type, KinematicBodySet* bodySet)
+{
+    MprPosition* converted = nullptr;
+    if(type == FK){
+        converted = this;
+    } else if(type == IK){
+        if(MprPosition::apply(bodySet)){
+            auto ikPosition = new MprIkPosition;
+            if(ikPosition->MprPosition::fetch(bodySet)){
+                converted = ikPosition;
+            } else {
+                delete ikPosition;
+            }
+        }
+    }
+    return converted;
+}
+
+
 bool MprFkPosition::read(const Mapping* archive)
 {
     if(!MprPosition::read(archive)){
@@ -451,7 +470,26 @@ bool MprIkPosition::apply(BodyKinematicsKit* kinematicsKit) const
     }
     return false;
 }
-    
+
+
+MprPosition* MprIkPosition::convertPositionType(PositionType type, KinematicBodySet* bodySet)
+{
+    MprPosition* converted = nullptr;
+    if(type == IK){
+        converted = this;
+    } else if(type == FK){
+        if(MprPosition::apply(bodySet)){
+            auto fkPosition = new MprFkPosition;
+            if(fkPosition->MprPosition::fetch(bodySet)){
+                converted = fkPosition;
+            } else {
+                delete fkPosition;
+            }
+        }
+    }
+    return converted;
+}
+
 
 bool MprIkPosition::read(const Mapping* archive)
 {
@@ -718,6 +756,34 @@ bool MprCompositePosition::apply(KinematicBodySet* bodySet) const
     }
     
     return applied;
+}
+
+
+MprPosition* MprCompositePosition::convertPositionType(PositionType type, KinematicBodySet* bodySet)
+{
+    MprCompositePosition* convertedCompositePosition = new MprCompositePosition;
+    bool failed = false;
+    int n = positions_.size();
+    for(int i=0; i < n; ++i){
+        if(auto position = positions_[i]){
+            if(auto bodyPart = bodySet->bodyPart(i)){
+                MprPosition* converted = position;
+                if(bodyPart->inverseKinematics()){
+                    converted = position->convertPositionType(type, bodySet);
+                    if(!converted){
+                        failed = true;
+                        break;
+                    }
+                }
+                convertedCompositePosition->setPosition(i, converted);
+            }
+        }
+    }
+    if(failed){
+        delete convertedCompositePosition;
+        convertedCompositePosition = nullptr;
+    }
+    return convertedCompositePosition;
 }
 
 
