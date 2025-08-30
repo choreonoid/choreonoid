@@ -4,7 +4,7 @@
 using namespace cnoid;
 namespace py = pybind11;
 
-PYBIND11_MODULE(BodyPlugin, m)
+PYBIND11_MODULE(GLVisionSimulatorPlugin, m)
 {
     m.doc() = "Choreonoid GLVisionSimulatorPlugin module";
 
