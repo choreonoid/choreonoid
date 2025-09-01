@@ -8,6 +8,16 @@ Makefile
 CMakeFiles/
 cmake_install.cmake
 CMakeCache.txt
+
+# Debian build artifacts
+debian/choreonoid/
+debian/.debhelper/
+debian/files
+debian/*.debhelper
+debian/*.debhelper.log
+debian/*.substvars
+debian/changelog.dch
+obj-*/
 CPackConfig.cmake
 CPackSourceConfig.cmake
 /postinst
