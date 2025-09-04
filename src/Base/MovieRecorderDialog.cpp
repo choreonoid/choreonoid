@@ -79,6 +79,7 @@ MovieRecorderDialog::MovieRecorderDialog()
     hbox->addStretch();
     vbox->addLayout(hbox);
 
+    isReady = false;
     isRecordingModeRadioToolTipEnabled = true;
 
     modeDescriptions.resize(MovieRecorder::NumRecordingModes);
@@ -362,37 +363,42 @@ void MovieRecorderDialog::setSelectableEncoderFilter(std::function<bool(MovieRec
 
 void MovieRecorderDialog::showEvent(QShowEvent* event)
 {
-    updateViewCombo();
+    if(!isReady){
+        updateViewCombo();
 
-    recorderConfConnection =
-        recorder_->sigRecordingConfigurationChanged().connect(
-            [this](){ updateWidgetsWithRecorderConfigurations(); });
-    updateWidgetsWithRecorderConfigurations();
-    
-    recorderStateConnection =
-        recorder_->sigRecordingStateChanged().connect(
-            [this](bool on){ onRecordingStateChanged(on); });
-    onRecordingStateChanged(recorder_->isRecording());
-    
-    viewManagerConnections.disconnect();
-    viewManagerConnections.add(
-        ViewManager::sigViewActivated().connect(
-            [&](View*){ updateViewComboLater(); }));
-    viewManagerConnections.add(
-        ViewManager::sigViewDeactivated().connect(
-            [&](View*){ updateViewComboLater(); }));
+        recorderConfConnection =
+            recorder_->sigRecordingConfigurationChanged().connect(
+                [this](){ updateWidgetsWithRecorderConfigurations(); });
+        updateWidgetsWithRecorderConfigurations();
+
+        recorderStateConnection =
+            recorder_->sigRecordingStateChanged().connect(
+                [this](bool on){ onRecordingStateChanged(on); });
+        onRecordingStateChanged(recorder_->isRecording());
+
+        viewManagerConnections.disconnect();
+        viewManagerConnections.add(
+            ViewManager::sigViewActivated().connect(
+                [&](View*){ updateViewComboLater(); }));
+        viewManagerConnections.add(
+            ViewManager::sigViewDeactivated().connect(
+                [&](View*){ updateViewComboLater(); }));
+
+        isReady = true;
+    }
 
     Dialog::showEvent(event);
 }
 
 
-void MovieRecorderDialog::hideEvent(QHideEvent* event)
+void MovieRecorderDialog::closeEvent(QCloseEvent* event)
 {
     recorderConfConnection.disconnect();
     recorderStateConnection.disconnect();
     viewManagerConnections.disconnect();
     updateViewComboLater.cancel();
-    Dialog::hideEvent(event);
+    isReady = false;
+    Dialog::closeEvent(event);
 }
 
 

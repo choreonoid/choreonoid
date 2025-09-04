@@ -469,8 +469,8 @@ void CameraConfigDialog::Impl::onInteractiveViewpointChangeToggled(bool on)
 }
 
 
-void CameraConfigDialog::hideEvent(QHideEvent* event)
+void CameraConfigDialog::closeEvent(QCloseEvent* event)
 {
     impl->setCameraItem(nullptr);
-    Dialog::hideEvent(event);
+    Dialog::closeEvent(event);
 }

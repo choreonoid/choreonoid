@@ -42,7 +42,7 @@ public:
 protected:
     MovieRecorderDialog();
     virtual void showEvent(QShowEvent* event) override;
-    virtual void hideEvent(QHideEvent* event) override;
+    virtual void closeEvent(QCloseEvent* event) override;
 
 private:
     void updateWidgetsWithRecorderConfigurations();
@@ -64,6 +64,7 @@ private:
     std::function<bool(View* view)> targetViewFilter;
     std::vector<RadioButton*> modeRadioButtons;
     QLabel* modeDescriptionLabel;
+    bool isReady;
     bool isRecordingModeRadioToolTipEnabled;
     std::vector<std::string> modeDescriptions;
     ComboBox* encoderCombo;

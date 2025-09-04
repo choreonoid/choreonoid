@@ -33,7 +33,7 @@ protected:
     virtual void setCameraPositionToDisplayToCameraTransform(const Isometry3& T);
 
 protected:
-    virtual void hideEvent(QHideEvent* event) override;
+    virtual void closeEvent(QCloseEvent* event) override;
 
 private:
     class Impl;
