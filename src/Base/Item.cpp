@@ -1600,7 +1600,9 @@ void Item::Impl::notifyContinuousUpdateStateChangeRecursively(bool on)
 Item::ContinuousUpdateRef::ContinuousUpdateRef(Item* item)
     : itemRef(item)
 {
-    if(item->continuousUpdateCounter == 0){
+    if(item->continuousUpdateCounter > 0){
+        ++item->continuousUpdateCounter;
+    } else {
         bool hasOnInUpperNodes = item->isContinuousUpdateStateSubTree();
         ++item->continuousUpdateCounter;
         item->impl->sigContinuousUpdateStateChanged(true);
@@ -1617,15 +1619,17 @@ Item::ContinuousUpdateRef::ContinuousUpdateRef(Item* item)
 Item::ContinuousUpdateRef::~ContinuousUpdateRef()
 {
     if(auto item = itemRef.lock()){
-        if(item->continuousUpdateCounter == 1){
-            bool hasOnInUpperNodes = item->isContinuousUpdateStateSubTree();
+        if(item->continuousUpdateCounter > 0){
             --item->continuousUpdateCounter;
-            item->impl->sigContinuousUpdateStateChanged(false);
-            if(!hasOnInUpperNodes){
-                item->impl->notifyContinuousUpdateStateChangeRecursively(false);
-            }
-            if(auto rootItem = item->findRootItem()){
-                rootItem->decrementContinuousUpdateStateItemRef();
+            if(item->continuousUpdateCounter == 0){
+                bool hasOnInUpperNodes = item->isContinuousUpdateStateSubTree();
+                item->impl->sigContinuousUpdateStateChanged(false);
+                if(!hasOnInUpperNodes){
+                    item->impl->notifyContinuousUpdateStateChangeRecursively(false);
+                }
+                if(auto rootItem = item->findRootItem()){
+                    rootItem->decrementContinuousUpdateStateItemRef();
+                }
             }
         }
     }
