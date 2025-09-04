@@ -1,5 +1,5 @@
-choreonoid (2.3.0-1) UNRELEASED; urgency=low
+choreonoid (2.3.0-1) unstable; urgency=medium
 
-  * Initial release for development version
+  * New upstream release
 
- -- Shin'ichiro Nakaoka <s.nakaoka@gmail.com>  Sat, 17 Aug 2025 12:00:00 +0900
+ -- Shin'ichiro Nakaoka <s.nakaoka@gmail.com>  Wed, 04 Sep 2025 12:00:00 +0900
