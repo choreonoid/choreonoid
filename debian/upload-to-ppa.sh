@@ -37,6 +37,7 @@ GPG_KEY=""
 FORCE_UPLOAD=false
 DRY_RUN=false
 PPA_VERSION_SUFFIX="1"
+RELEASE_VERSION=false
 
 show_help() {
     echo "Usage: $0 [OPTIONS]"
@@ -48,6 +49,7 @@ show_help() {
     echo "  -d, --distro DISTRO     Distribution(s) to build for (jammy,noble or 'all')"
     echo "  -k, --key GPG_KEY       GPG key ID for signing"
     echo "  -s, --suffix SUFFIX     Debian revision number (default: 1, use 2,3... for re-uploads)"
+    echo "  -r, --release           Build release version (without git info)"
     echo "  -f, --force             Force upload even if version exists"
     echo "  -n, --dry-run           Build packages but don't upload"
     echo "  -h, --help              Show this help message"
@@ -81,6 +83,10 @@ while [[ $# -gt 0 ]]; do
         -s|--suffix)
             PPA_VERSION_SUFFIX="$2"
             shift 2
+            ;;
+        -r|--release)
+            RELEASE_VERSION=true
+            shift
             ;;
         -f|--force)
             FORCE_UPLOAD=true
@@ -199,11 +205,17 @@ for DIST in "${DISTRO_LIST[@]}"; do
     print_step "========================================="
     
     # Create version with PPA suffix
-    # Format: upstream_version-debian_revision
-    # Example: 2.3.0~git20250815.1630.166d2a13-1~jammy
-    UPSTREAM_VERSION="${BASE_VERSION}~git${GIT_DATE}.${GIT_TIME}.${GIT_COMMIT}"
-    DEBIAN_REVISION="${PPA_VERSION_SUFFIX}~${DIST}"
-    PPA_VERSION="${UPSTREAM_VERSION}-${DEBIAN_REVISION}"
+    if [ "$RELEASE_VERSION" = true ]; then
+        # Release version: 2.3.0-1~jammy
+        UPSTREAM_VERSION="${BASE_VERSION}"
+        DEBIAN_REVISION="${PPA_VERSION_SUFFIX}~${DIST}"
+        PPA_VERSION="${UPSTREAM_VERSION}-${DEBIAN_REVISION}"
+    else
+        # Development version: 2.3.0~git20250815.1630.166d2a13-1~jammy
+        UPSTREAM_VERSION="${BASE_VERSION}~git${GIT_DATE}.${GIT_TIME}.${GIT_COMMIT}"
+        DEBIAN_REVISION="${PPA_VERSION_SUFFIX}~${DIST}"
+        PPA_VERSION="${UPSTREAM_VERSION}-${DEBIAN_REVISION}"
+    fi
     
     print_info "Version: $PPA_VERSION"
     
@@ -212,7 +224,19 @@ for DIST in "${DISTRO_LIST[@]}"; do
     
     # Update changelog
     print_info "Updating changelog..."
-    cat > debian/changelog << EOF
+    if [ "$RELEASE_VERSION" = true ]; then
+        # Release version changelog
+        cat > debian/changelog << EOF
+choreonoid (${PPA_VERSION}) ${DIST}; urgency=medium
+
+  * New upstream release
+  * Built for ${DIST}
+
+ -- ${ORIG_MAINTAINER}  $(date -R)
+EOF
+    else
+        # Development version changelog
+        cat > debian/changelog << EOF
 choreonoid (${PPA_VERSION}) ${DIST}; urgency=medium
 
   * Development snapshot from git commit ${GIT_COMMIT}
@@ -220,6 +244,7 @@ choreonoid (${PPA_VERSION}) ${DIST}; urgency=medium
 
  -- ${ORIG_MAINTAINER}  $(date -R)
 EOF
+    fi
     
     # Create source package
     print_info "Creating source package..."
