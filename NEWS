@@ -1,3 +1,40 @@
+Choreonoid 2.3.0 released on September 9, 2025
+==============================================
+
+Changes since 2.2.0:
+
+* Refactored GLVisionSimulatorItem
+  * Added GLVisionSimulatorPlugin and moved GLVisionSimulatorItem into it
+  * Separated the GLVisionSensorSimulator, GLVisionSensorScene and GLVisionSensorRenderingScreen
+    classes from the implementation of GLVisionSimulatorItem
+  * Implemented simulation code for each sensor type as an independent class inheriting from
+    GLVisionSensorSimulator
+* Added background color and world light properties to GLVisionSimulatorItem
+* Added GLCameraEffectPlugin
+* Improved devices so that arbitrary parameters can be specified and accessed via the info member
+* Added LivoxMid360Plugin for simulating the Livox Mid360 sensor
+* Added CameraItem
+* Improved ImageView so that the target image can be selected with a tab menu
+* Improved SmokeDevice and SceneSmoke to allow specification of a tint color
+* Implemented live playback function using WorldLogFileItem
+* Supported displaying values and coordinate axis markers in the left-handed coordinate system
+* Disabled edit operations that should not be performed during simulation
+* Modified the default recording mode of SimulatorItem to tail recording mode to prevent unintended memory
+  exhaustion due to long-running simulations
+* Introduced animation for the view fitting action activated by the corresponding button on the scene bar
+* Added a scene bar button to fit view to the objects of selected items
+* Enabled scaling of PointSetItem
+* Introduced a mode to limit joint displacements in kinematics operations
+* Implemented an option to preserve the local coordinate system in LocationView
+* Improved model file export functionality
+* Implemented a function to export the scene of selected renderable items as an OBJ mesh file
+* Fixed crashes when Choreonoid is invoked with maximized window state on Qt6 and Wayland platforms
+* Added the debian directory for creating deb packages
+* Added an environment setup script for non-standard installation paths
+* Supported PS5 and Xbox gamepads
+* Improved the Python bindings
+* Various minor feature improvements, bug fixes, and internal implementation enhancements
+
 Choreonoid 2.2.0 released on July 11, 2024
 ==========================================
 
