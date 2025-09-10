@@ -47,6 +47,9 @@ public:
     BodyKinematicsKit* clone(CloneMap* cloneMap = nullptr) const {
         return static_cast<BodyKinematicsKit*>(doClone(cloneMap));
     }
+    BodyKinematicsKit* clone(CloneMap& cloneMap) const {
+        return clone(&cloneMap);
+    }
 
     /**
        This function sets the end link in the end link mode.

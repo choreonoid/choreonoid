@@ -12,8 +12,8 @@ public:
     KinematicBodySet();
     KinematicBodySet(const KinematicBodySet& org, CloneMap* cloneMap);
 
-    KinematicBodySet* clone(CloneMap* cloneMap){
-        return static_cast<KinematicBodySet*>(doClone(cloneMap));
+    KinematicBodySet* clone(CloneMap& cloneMap){
+        return static_cast<KinematicBodySet*>(doClone(&cloneMap));
     }
 
     virtual void setBodyPart(int index, BodyKinematicsKit* kinematicsKit);
