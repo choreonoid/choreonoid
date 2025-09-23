@@ -53,7 +53,7 @@ public:
     vector<bool> inputSpinErrorStates;
     ScopedConnectionSet userInputConnections;
 
-    DisplayValueFormat* valueFormat;
+    DisplayValueFormatPtr valueFormat;
     ScopedConnection valueFormatConnection;
     double lengthRatio;
     double angleRatio;
@@ -78,7 +78,8 @@ public:
     SpinBox additionalPrecisionSpin;
     Signal<void(int precision)> sigAdditionalPrecisionChanged;
 
-    Impl(PositionWidget* self);
+    Impl(PositionWidget* self, DisplayValueFormat* format);
+    void setDisplayValueFormat(DisplayValueFormat* format);
     void updateValueFormat(bool doRefresh);
     void setOptionMenuTo(MenuManager& menu);
     void setRpyVisible(bool on);
@@ -105,7 +106,13 @@ public:
 PositionWidget::PositionWidget(QWidget* parent)
     : QWidget(parent)
 {
-    impl = new Impl(this);
+    impl = new Impl(this, DisplayValueFormat::master());
+}
+
+
+PositionWidget::PositionWidget(DisplayValueFormat* format, QWidget* parent)
+{
+    impl = new Impl(this, format);
 }
 
 
@@ -115,13 +122,10 @@ PositionWidget::~PositionWidget()
 }
 
 
-PositionWidget::Impl::Impl(PositionWidget* self_)
+PositionWidget::Impl::Impl(PositionWidget* self_, DisplayValueFormat* format)
     : self(self_)
 {
-    valueFormat = DisplayValueFormat::master();
-    valueFormatConnection =
-        valueFormat->sigFormatChanged().connect(
-            [&](){ updateValueFormat(true); });
+    setDisplayValueFormat(format);
 
     mainvbox = new QVBoxLayout;
     mainvbox->setContentsMargins(0, 0, 0, 0);
@@ -291,6 +295,22 @@ PositionWidget::Impl::Impl(PositionWidget* self_)
 
     updateValueFormat(false);
     clearPosition();
+}
+
+
+void PositionWidget::setDisplayValueFormat(DisplayValueFormat* format)
+{
+    impl->setDisplayValueFormat(format);
+    impl->updateValueFormat(true);
+}
+
+
+void PositionWidget::Impl::setDisplayValueFormat(DisplayValueFormat* format)
+{
+    valueFormat = format;
+    valueFormatConnection =
+        valueFormat->sigFormatChanged().connect(
+            [&](){ updateValueFormat(true); });
 }
 
 
@@ -608,6 +628,14 @@ void PositionWidget::Impl::displayPosition(const Isometry3& T)
 }
 
 
+void PositionWidget::setTranslation(const Vector3& p)
+{
+    Isometry3 T = currentPosition();
+    T.translation() = p;
+    impl->displayPosition(T);
+}
+
+
 void PositionWidget::setRpy(const Vector3& rpy)
 {
     setReferenceRpy(rpy);
@@ -721,20 +749,22 @@ void PositionWidget::Impl::onPositionInputQuaternion(InputElementSet inputElemen
 
 void PositionWidget::Impl::notifyPositionInput(const Isometry3& T, InputElementSet inputElements)
 {
-    bool accepted = callbackOnPositionInput(T);
-
-    if(!accepted){
-        for(size_t i=0; i < inputSpins.size(); ++i){
-            if(inputElements[i]){
-                if(!inputSpinErrorStates[i]){
-                    inputSpins[i]->setStyleSheet(errorStyle);
-                    inputSpinErrorStates[i] = true;
-                }
-            } else {
-                if(inputSpinErrorStates[i]){
-                    inputSpins[i]->setStyleSheet(normalStyle);
-                    inputSpinErrorStates[i] = false;
-                }
+    bool accepted;
+    if(callbackOnPositionInput){
+        accepted = callbackOnPositionInput(T);
+    } else {
+        accepted = true;
+    }
+    for(size_t i=0; i < inputSpins.size(); ++i){
+        if(inputElements[i] && !accepted){
+            if(!inputSpinErrorStates[i]){
+                inputSpins[i]->setStyleSheet(errorStyle);
+                inputSpinErrorStates[i] = true;
+            }
+        } else {
+            if(inputSpinErrorStates[i]){
+                inputSpins[i]->setStyleSheet(normalStyle);
+                inputSpinErrorStates[i] = false;
             }
         }
     }

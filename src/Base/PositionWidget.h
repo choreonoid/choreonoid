@@ -9,6 +9,7 @@
 
 namespace cnoid {
 
+class DisplayValueFormat;
 class MenuManager;
 class Archive;
 
@@ -16,8 +17,10 @@ class CNOID_EXPORT PositionWidget : public QWidget
 {
 public:
     PositionWidget(QWidget* parent = nullptr);
+    PositionWidget(DisplayValueFormat* format, QWidget* parent = nullptr);
     ~PositionWidget();
 
+    void setDisplayValueFormat(DisplayValueFormat* format);
     void setOptionMenuTo(MenuManager& menuManager);
     void setRpyVisible(bool on);
     void setEditable(bool on);
@@ -37,6 +40,7 @@ public:
     Vector3 getRpyInput() const;
     void setReferenceRpy(const Vector3& rpy);
     void setPosition(const Isometry3& T);
+    void setTranslation(const Vector3& p);
     void setRpy(const Vector3& rpy);
     void setErrorHighlight(bool on);
     void storeState(Archive* archive);
