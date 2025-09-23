@@ -203,7 +203,7 @@ JointDisplacementWidgetSet::Impl::Impl
     isPhaseEnabled = true;
     isRangeLimitMode = false;
 
-    dvFormat = DisplayValueFormat::instance();
+    dvFormat = DisplayValueFormat::master();
     dvFormatConnection =
         dvFormat->sigFormatChanged().connect(
             [this](){ updateIndicatorGrid(); });

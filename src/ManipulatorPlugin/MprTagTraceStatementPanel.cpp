@@ -201,7 +201,7 @@ void MprTagTraceStatementPanel::Impl::updateBaseInterfaces()
 
     auto& T = statement->tagGroupPosition();
     auto xyz = T.translation();
-    if(DisplayValueFormat::instance()->isMillimeter()){
+    if(DisplayValueFormat::master()->isMillimeter()){
         for(int i=0; i < 3; ++i){
             xyzLabel[i].setText(QString::number(xyz[i] * 1000.0, 'f', 3));
         }

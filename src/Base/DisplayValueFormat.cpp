@@ -5,7 +5,7 @@
 using namespace std;
 using namespace cnoid;
 
-DisplayValueFormat DisplayValueFormat::instance_;
+ref_ptr<DisplayValueFormat> DisplayValueFormat::master_ = new DisplayValueFormat();
 
 
 DisplayValueFormat::DisplayValueFormat()
@@ -27,6 +27,28 @@ DisplayValueFormat::DisplayValueFormat()
     isAngleStepForcedMode_ = false;
 
     coordinateSystem_ = RightHanded;
+}
+
+
+DisplayValueFormat::DisplayValueFormat(const DisplayValueFormat& org)
+{
+    lengthUnit_ = org.lengthUnit_;
+    meterDecimals_ = org.meterDecimals_;
+    millimeterDecimals_ = org.millimeterDecimals_;
+    meterStep_ = org.meterStep_;
+    millimeterStep_ = org.millimeterStep_;
+    isLengthDecimalsForcedMode_ = org.isLengthDecimalsForcedMode_;
+    isLengthStepForcedMode_ = org.isLengthStepForcedMode_;
+    
+    angleUnit_ = org.angleUnit_;
+    degreeDecimals_ = org.degreeDecimals_;
+    radianDecimals_ = org.radianDecimals_;
+    degreeStep_ = org.degreeStep_;
+    radianStep_ = org.radianStep_;
+    isAngleDecimalsForcedMode_ = org.isAngleDecimalsForcedMode_;
+    isAngleStepForcedMode_ = org.isAngleStepForcedMode_;
+
+    coordinateSystem_ = org.coordinateSystem_;
 }
 
 

@@ -722,7 +722,7 @@ MprPositionListWidget::MprPositionListWidget(QWidget* parent)
 MprPositionListWidget::Impl::Impl(MprPositionListWidget* self)
     : self(self)
 {
-    valueFormat = DisplayValueFormat::instance();
+    valueFormat = DisplayValueFormat::master();
     positionListModel = new PositionListModel(this);
     isStandardUserOperationEnabled = false;
     isSelectionChangedAlreadyCalled = false;

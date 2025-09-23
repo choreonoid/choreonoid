@@ -268,7 +268,7 @@ PositionDragger::Impl::Impl(PositionDragger* self, int axes, int handleType)
 {
     auto& registry = SceneNodeClassRegistry::instance();
 
-    valueFormat = DisplayValueFormat::instance();
+    valueFormat = DisplayValueFormat::master();
     currentDisplayCoordinateSystem = valueFormat->coordinateSystem();
     valueFormatConnection = valueFormat->sigFormatChanged().connect(
         [this]{ onDisplayValueFormatChanged(); });

@@ -93,7 +93,7 @@ TagGroupModel::TagGroupModel(PositionTagListWidget* widget)
       monoFont("Monospace")
 {
     monoFont.setStyleHint(QFont::TypeWriter);
-    valueFormat = DisplayValueFormat::instance();
+    valueFormat = DisplayValueFormat::master();
     isProcessingInternalMove = false;
 }
 

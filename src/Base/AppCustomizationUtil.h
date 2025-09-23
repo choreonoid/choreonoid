@@ -28,7 +28,7 @@ public:
           argc_(argc),
           argv_(argv)
     {
-        displayValueFormat = DisplayValueFormat::instance();
+        displayValueFormat = DisplayValueFormat::master();
     }
 
     int& argc()

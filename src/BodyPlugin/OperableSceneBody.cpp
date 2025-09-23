@@ -1503,7 +1503,7 @@ bool OperableSceneBody::Impl::onPointerMoveEvent(SceneWidgetEvent* event)
                     highlightedLink = pointedSceneLink;
                 }
             }
-            auto valueFormat = DisplayValueFormat::instance();
+            auto valueFormat = DisplayValueFormat::master();
             string text = formatC(
                 "{0} / {1} : ({{0:.{2}f}}, {{1:.{2}f}}, {{2:.{2}f}})",
                 bodyItem->displayName(), pointedSceneLink->link()->name(), valueFormat->lengthDecimals());

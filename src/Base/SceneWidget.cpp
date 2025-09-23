@@ -595,7 +595,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
     collisionLineVisibility = false;
 
-    valueFormat = DisplayValueFormat::instance();
+    valueFormat = DisplayValueFormat::master();
     valueFormatConnection = valueFormat->sigFormatChanged().connect(
         [this]{ onDisplayValueFormatChanged(); });
 

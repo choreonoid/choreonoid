@@ -1,6 +1,7 @@
 #ifndef CNOID_BASE_DISPLAY_VALUE_FORMAT_H
 #define CNOID_BASE_DISPLAY_VALUE_FORMAT_H
 
+#include <cnoid/Referenced>
 #include <cnoid/Signal>
 #include <cnoid/EigenTypes>
 #include "exportdecl.h"
@@ -10,12 +11,16 @@ namespace cnoid {
 /**
    \todo Move this class to the Util module and make it thread-safe.
 */
-class CNOID_EXPORT DisplayValueFormat
+class CNOID_EXPORT DisplayValueFormat : public Referenced
 {
 public:
-    static DisplayValueFormat* instance() { return &instance_; }
+    static DisplayValueFormat* master() { return master_; }
 
-    DisplayValueFormat(const DisplayValueFormat& org) = delete;
+    [[deprecated("Use master")]]
+    static DisplayValueFormat* instance() { return master_; }
+
+    DisplayValueFormat();
+    DisplayValueFormat(const DisplayValueFormat& org);
 
     enum LengthUnit { Meter, Millimeter };
     void setLengthUnit(LengthUnit unitType) { lengthUnit_ = unitType; }
@@ -134,9 +139,7 @@ public:
     void restoreConfiguration();
 
 private:
-    DisplayValueFormat();
-
-    static DisplayValueFormat instance_;
+    static ref_ptr<DisplayValueFormat> master_;
 
     LengthUnit lengthUnit_;
     int meterDecimals_;
@@ -156,6 +159,8 @@ private:
 
     Signal<void()> sigFormatChanged_;
 };
+
+typedef ref_ptr<DisplayValueFormat> DisplayValueFormatPtr;
 
 }
 

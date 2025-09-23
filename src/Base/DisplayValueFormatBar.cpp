@@ -49,7 +49,7 @@ DisplayValueFormatBar::DisplayValueFormatBar()
 
 DisplayValueFormatBar::Impl::Impl(DisplayValueFormatBar* self)
 {
-    displayValueFormat = DisplayValueFormat::instance();
+    displayValueFormat = DisplayValueFormat::master();
 
     displayValueFormatConnection =
         displayValueFormat->sigFormatChanged().connect(

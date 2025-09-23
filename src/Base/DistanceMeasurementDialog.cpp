@@ -182,7 +182,7 @@ DistanceMeasurementDialog::Impl::Impl(DistanceMeasurementDialog* self_)
             onObjectPointPicked(additionalPoints);
         });
 
-    displayValueFormat = DisplayValueFormat::instance();
+    displayValueFormat = DisplayValueFormat::master();
     displayValueFormatConnection =
         displayValueFormat->sigFormatChanged().connect(
             [this](){ updateDisplayValueFormat(); });

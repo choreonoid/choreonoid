@@ -6,7 +6,7 @@ using namespace cnoid;
 LengthSpinBox::LengthSpinBox(QWidget* parent)
     : DoubleSpinBox(parent)
 {
-    dvFormat = DisplayValueFormat::instance();
+    dvFormat = DisplayValueFormat::master();
 
     dvFormatConnection =
         dvFormat->sigFormatChanged().connect([this](){ onFormatChanged(); });

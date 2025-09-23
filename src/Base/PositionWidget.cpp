@@ -118,7 +118,7 @@ PositionWidget::~PositionWidget()
 PositionWidget::Impl::Impl(PositionWidget* self_)
     : self(self_)
 {
-    valueFormat = DisplayValueFormat::instance();
+    valueFormat = DisplayValueFormat::master();
     valueFormatConnection =
         valueFormat->sigFormatChanged().connect(
             [&](){ updateValueFormat(true); });

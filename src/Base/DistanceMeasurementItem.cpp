@@ -822,7 +822,7 @@ void DistanceMeasurementItem::Impl::doPutProperties(PutPropertyFunction& putProp
                     return true;
                 });
                         
-    putProperty(_("Distance"), DisplayValueFormat::instance()->toDisplayLength(distance));
+    putProperty(_("Distance"), DisplayValueFormat::master()->toDisplayLength(distance));
 
     putProperty
         (_("Shortest distance mode"), isShortestDistanceMode,
@@ -989,7 +989,7 @@ ViewportText::ViewportText()
     distanceTextTransform->addChild(distanceText);
     addChild(distanceTextTransform);
 
-    displayValueFormat = DisplayValueFormat::instance();
+    displayValueFormat = DisplayValueFormat::master();
     displayValueFormatConnection = 
         displayValueFormat->sigFormatChanged().connect(
             [this](){ updateDisplayValueFormat(true); });

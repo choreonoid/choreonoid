@@ -148,7 +148,7 @@ void MprPositionLabelSet::detachIkPanel()
 void MprPositionLabelSet::updateIkPanel(BodyItemKinematicsKit* kinematicsKit, MprIkPosition* position)
 {
     auto xyz = position->position().translation();
-    if(DisplayValueFormat::instance()->isMillimeter()){
+    if(DisplayValueFormat::master()->isMillimeter()){
         for(int i=0; i < 3; ++i){
             xyzLabels[i].setText(QString::number(xyz[i] * 1000.0, 'f', 3));
         }
@@ -287,7 +287,7 @@ void MprPositionLabelSet::detachJointLabels()
 void MprPositionLabelSet::updateJointLabels
 (BodyItemKinematicsKit* kinematicsKit, MprFkPosition* position, bool isJointNameLabelEnabled)
 {
-    const double lengthRatio = DisplayValueFormat::instance()->isMillimeter() ? 1000.0 : 1.0;
+    const double lengthRatio = DisplayValueFormat::master()->isMillimeter() ? 1000.0 : 1.0;
     
     for(int i=0; i < numValidJoints; ++i){
         auto& nameLabel = jointNameLabels[i];

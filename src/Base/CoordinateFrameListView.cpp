@@ -130,7 +130,7 @@ FrameListModel::FrameListModel(CoordinateFrameListView::Impl* view)
 {
     monoFont.setStyleHint(QFont::TypeWriter);
     
-    valueFormat = DisplayValueFormat::instance();
+    valueFormat = DisplayValueFormat::master();
 }
 
 
