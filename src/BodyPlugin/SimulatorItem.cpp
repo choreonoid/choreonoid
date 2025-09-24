@@ -1988,8 +1988,8 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
                 r = worldFrameRate;
             }
             logTimeStep = 1.0 / r;
+            continuousUpdateEntries.push_back(worldLogFileItem->startContinuousUpdate());
         }
-        continuousUpdateEntries.push_back(worldLogFileItem->startContinuousUpdate());
     }
 
     continuousUpdateEntries.push_back(worldItem->startContinuousUpdate());
