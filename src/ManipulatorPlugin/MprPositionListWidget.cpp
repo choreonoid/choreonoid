@@ -45,7 +45,7 @@ public:
     int mainBodyPartIndex;
     QString singlePositionHeaderLabel;
     QStringList positionHeaderLabels;
-    QFont monoFont;
+    QFont& monoFont;
     DisplayValueFormat* valueFormat;
     
     PositionListModel(MprPositionListWidget::Impl* widgetImpl);
@@ -98,6 +98,7 @@ class MprPositionListWidget::Impl
 {
 public:
     MprPositionListWidget* self;
+    QFont monoFont;
     DisplayValueFormat* valueFormat;
     KinematicBodyItemSetPtr bodyItemSet;
     MprPositionListPtr positionList;
@@ -124,12 +125,11 @@ public:
 PositionListModel::PositionListModel(MprPositionListWidget::Impl* widgetImpl)
     : QAbstractTableModel(widgetImpl->self),
       widget(widgetImpl->self),
-      monoFont("Monospace")
+      monoFont(widgetImpl->monoFont)
 {
     columnCount_ = NumMinimumColumns;
     mainBodyPartIndex = -1;
     singlePositionHeaderLabel = _("Position");
-    monoFont.setStyleHint(QFont::TypeWriter);
     valueFormat = widgetImpl->valueFormat;
 }
 
@@ -686,6 +686,7 @@ MprPositionListWidget::MprPositionListWidget(QWidget* parent)
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     setTabKeyNavigation(true);
     setCornerButtonEnabled(true);
+    setWordWrap(false);
     setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
@@ -720,8 +721,10 @@ MprPositionListWidget::MprPositionListWidget(QWidget* parent)
 
 
 MprPositionListWidget::Impl::Impl(MprPositionListWidget* self)
-    : self(self)
+    : self(self),
+      monoFont("Monospace")
 {
+    monoFont.setStyleHint(QFont::TypeWriter);
     valueFormat = DisplayValueFormat::master();
     positionListModel = new PositionListModel(this);
     isStandardUserOperationEnabled = false;
@@ -737,7 +740,7 @@ MprPositionListWidget::~MprPositionListWidget()
 
 int MprPositionListWidget::getIkPositionColumnWidth() const
 {
-    QFontMetrics fm(font());
+    QFontMetrics fm(impl->monoFont);
     int width;
     if(impl->valueFormat->isMillimeter()){
         width = fm.horizontalAdvance("+00000.0 +00000.0 +00000.0 +000.0 000.0 000.0 : AB 00 00");
