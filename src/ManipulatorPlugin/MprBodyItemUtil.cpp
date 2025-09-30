@@ -13,7 +13,7 @@ using namespace cnoid;
 
 
 bool cnoid::applyPosition
-(KinematicBodyItemSet* bodyItemSet, MprPosition* position, bool doNotify, MessageOut* mout)
+(KinematicBodyItemSet* bodyItemSet, MprPosition* position, bool doUpdateFrames, bool doNotify, MessageOut* mout)
 {
     bool updated = false;
 
@@ -27,16 +27,17 @@ bool cnoid::applyPosition
         auto bodyItem = bodyPart->bodyItem();
         if(subPosition->apply(bodyPart)){
             updated = true;
-            auto ikPosition = subPosition->ikPosition();
-            if(ikPosition){
-                bodyPart->setReferenceRpy(ikPosition->referenceRpy());
-                bodyPart->setCurrentBaseFrame(ikPosition->baseFrameId());
-                bodyPart->setCurrentOffsetFrame(ikPosition->offsetFrameId());
-            }
             if(doNotify){
                 bodyItem->notifyKinematicStateUpdate();
-                if(ikPosition){
-                    bodyPart->notifyFrameSetChange();
+            }
+            if(doUpdateFrames){
+                if(auto ikPosition = subPosition->ikPosition()){
+                    //bodyPart->setReferenceRpy(ikPosition->referenceRpy());
+                    bodyPart->setCurrentBaseFrame(ikPosition->baseFrameId());
+                    bodyPart->setCurrentOffsetFrame(ikPosition->offsetFrameId());
+                    if(doNotify){
+                        bodyPart->notifyFrameSetChange();
+                    }
                 }
             }
         } else {

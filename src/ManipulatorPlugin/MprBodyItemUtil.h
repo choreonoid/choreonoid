@@ -10,7 +10,7 @@ class MprPosition;
 class MessageOut;
 
 CNOID_EXPORT bool applyPosition(
-    KinematicBodyItemSet* bodyItemSet, MprPosition* position, bool doNotify, MessageOut* mout);
+    KinematicBodyItemSet* bodyItemSet, MprPosition* position, bool doUpdateFrames, bool doNotify, MessageOut* mout);
 CNOID_EXPORT bool superimposePosition(KinematicBodyItemSet* bodyItemSet, MprPosition* position);
 CNOID_EXPORT void clearSuperimposition(KinematicBodyItemSet* bodyItemSet);
 CNOID_EXPORT bool touchupPosition(KinematicBodyItemSet* bodyItemSet, MprPosition* position, MessageOut* mout);

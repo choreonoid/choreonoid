@@ -466,7 +466,7 @@ void PositionListModel::changePositionType(int positionIndex, MprPosition* posit
     if(!bodyItemSet){
         return;
     }
-    if(!applyPosition(bodyItemSet, position, true, MessageOut::interactive())){
+    if(!applyPosition(bodyItemSet, position, true, true, MessageOut::interactive())){
         return;
     }
     if(auto composite = position->compositePosition()){
@@ -974,7 +974,7 @@ bool MprPositionListWidget::applyPosition(int positionIndex, bool forceDirectSyn
     if(impl->bodyItemSet && impl->positionList){
         auto position = impl->positionList->positionAt(positionIndex);
         if(impl->bodySyncMode == DirectBodySync || forceDirectSync){
-            result = cnoid::applyPosition(impl->bodyItemSet, position, true, MessageOut::interactive());
+            result = cnoid::applyPosition(impl->bodyItemSet, position, true, true, MessageOut::interactive());
         } else {
             cnoid::superimposePosition(impl->bodyItemSet, position);
         }

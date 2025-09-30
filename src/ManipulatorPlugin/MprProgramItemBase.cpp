@@ -277,7 +277,7 @@ bool MprProgramItemBase::moveTo(MprPositionStatement* statement, MessageOut* mou
         return false;
     }
     if(auto position = impl->findPositionOrShowWarning(statement, mout)){
-        return applyPosition(impl->targetBodyItemSet, position, true, mout);
+        return applyPosition(impl->targetBodyItemSet, position, true, true, mout);
     }
     return false;
 }
@@ -288,7 +288,7 @@ bool MprProgramItemBase::moveTo(MprPosition* position, MessageOut* mout)
     if(!impl->targetBodyItemSet){
         return false;
     }
-    return applyPosition(impl->targetBodyItemSet, position, true, mout);
+    return applyPosition(impl->targetBodyItemSet, position, true, true, mout);
 }
 
 
