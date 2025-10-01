@@ -55,6 +55,7 @@ set(sources
   PinDragIK.cpp
   BodyKinematicsKit.cpp
   KinematicBodySet.cpp
+  KinematicBodySetState.cpp
   LeggedBodyHelper.cpp
   ZmpDevice.cpp
   BodyCollisionLinkFilter.cpp
@@ -144,6 +145,7 @@ set(headers
   PinDragIK.h
   BodyKinematicsKit.h
   KinematicBodySet.h
+  KinematicBodySetState.h
   LeggedBodyHelper.h
   ZmpDevice.h
   PenetrationBlocker.h
