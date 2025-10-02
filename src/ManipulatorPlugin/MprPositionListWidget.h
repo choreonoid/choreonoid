@@ -25,6 +25,9 @@ public:
     void setBodySyncMode(BodySyncMode mode);
     BodySyncMode bodySyncMode() const;
 
+    void setLazyColumnResizeEnabled(bool enabled);
+    bool isLazyColumnResizeEnabled() const;
+
     void setBodyItemSet(KinematicBodyItemSet* bodyItemSet);
     void setPositionList(MprPositionList* positionList);
     int currentPositionIndex() const;

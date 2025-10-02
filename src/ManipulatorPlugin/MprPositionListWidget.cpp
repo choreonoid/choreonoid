@@ -7,6 +7,7 @@
 #include <cnoid/DisplayValueFormat>
 #include <cnoid/ConnectionSet>
 #include <cnoid/MessageOut>
+#include <cnoid/LazyCaller>
 #include <cnoid/EigenUtil>
 #include <cnoid/Format>
 #include <cnoid/QtEventUtil>
@@ -47,9 +48,11 @@ public:
     QStringList positionHeaderLabels;
     QFont& monoFont;
     DisplayValueFormat* valueFormat;
-    
+    bool useLazyResize;
+    LazyCaller resizeColumnsCaller;
+
     PositionListModel(MprPositionListWidget::Impl* widgetImpl);
-    void setBodyItemSet(KinematicBodyItemSet* bodyItemSet);    
+    void setBodyItemSet(KinematicBodyItemSet* bodyItemSet);
     void setPositionList(MprPositionList* positionList);
     bool isValid() const;
     int numPositions() const;
@@ -69,6 +72,7 @@ public:
         MprPosition* position, BodyKinematicsKit* kinematicsKit, bool isJointSpace);
     void addPosition(int row, MprPosition* position, bool doInsert);
     void removePositions(QModelIndexList selected);
+    void resizeColumns();
     void onPositionAdded(int positionIndex);
     void onPositionRemoved(int positionIndex);
     void onPositionUpdated(int positionIndex, int flags);
@@ -125,12 +129,17 @@ public:
 PositionListModel::PositionListModel(MprPositionListWidget::Impl* widgetImpl)
     : QAbstractTableModel(widgetImpl->self),
       widget(widgetImpl->self),
-      monoFont(widgetImpl->monoFont)
+      monoFont(widgetImpl->monoFont),
+      useLazyResize(true)  // Set to true to use LazyCaller, false for direct resize
 {
     columnCount_ = NumMinimumColumns;
     mainBodyPartIndex = -1;
     singlePositionHeaderLabel = _("Position");
     valueFormat = widgetImpl->valueFormat;
+
+    // Initialize LazyCaller with high priority to run before paint events
+    resizeColumnsCaller.setFunction([this](){ resizeColumns(); });
+    resizeColumnsCaller.setPriority(LazyCaller::HighPriority);
 }
 
 
@@ -541,23 +550,28 @@ void PositionListModel::removePositions(QModelIndexList selected)
 }
 
 
+void PositionListModel::resizeColumns()
+{
+    widget->resizeColumnToContents(IdColumn);
+    for(size_t i=0; i < bodyPartIndices.size(); ++i){
+        widget->resizeColumnToContents(MainPositionColumn + i);
+    }
+}
+
+
 void PositionListModel::onPositionAdded(int positionIndex)
 {
     beginInsertRows(QModelIndex(), positionIndex, positionIndex);
     endInsertRows();
 
-    /*
-      In Windows, the view's resizeColumnsToContents function must be executed
-      to readjust the column size even though the ResizeToContents mode is
-      specified with the setSectionResizeMode function in advance.
-      \note It may be better to use LazyCaller to execute the functions.
-    */
-#ifdef Q_OS_WIN32
-    widget->resizeColumnToContents(IdColumn);
-    for(size_t i=0; i < bodyPartIndices.size(); ++i){
-        widget->resizeColumnToContents(MainPositionColumn + i);
+    // Column resize strategy: either use LazyCaller or direct resize
+    if(useLazyResize){
+        // Schedule resize for next event loop with high priority
+        resizeColumnsCaller();
+    } else {
+        // Direct resize - immediate update
+        resizeColumns();
     }
-#endif
 }
 
 
@@ -566,24 +580,25 @@ void PositionListModel::onPositionRemoved(int positionIndex)
     beginRemoveRows(QModelIndex(), positionIndex, positionIndex);
     endRemoveRows();
 
-#ifdef Q_OS_WIN32
-    widget->resizeColumnToContents(IdColumn);
-    for(size_t i=0; i < bodyPartIndices.size(); ++i){
-        widget->resizeColumnToContents(MainPositionColumn + i);
+    // Column resize strategy: either use LazyCaller or direct resize
+    if(useLazyResize){
+        // Schedule resize for next event loop with high priority
+        resizeColumnsCaller();
+    } else {
+        // Direct resize - immediate update
+        resizeColumns();
     }
-#endif
 }
 
 
 void PositionListModel::onPositionUpdated(int positionIndex, int flags)
 {
+    bool needResize = false;
+
     if(flags & MprPosition::IdUpdate){
         auto modelIndex = index(positionIndex, IdColumn, QModelIndex());
         Q_EMIT dataChanged(modelIndex, modelIndex, { Qt::EditRole });
-
-#ifdef Q_OS_WIN32
-        widget->resizeColumnToContents(IdColumn);
-#endif
+        needResize = true;
     }
     if(flags & MprPosition::NoteUpdate){
         auto modelIndex = index(positionIndex, NoteColumn, QModelIndex());
@@ -593,24 +608,24 @@ void PositionListModel::onPositionUpdated(int positionIndex, int flags)
         auto modelIndex1 = index(positionIndex, MainPositionColumn, QModelIndex());
         auto modelIndex2 = index(positionIndex, columnCount_ - 1, QModelIndex());
         Q_EMIT dataChanged(modelIndex1, modelIndex2, { Qt::EditRole });
-
-#ifdef Q_OS_WIN32
-        for(size_t i=0; i < bodyPartIndices.size(); ++i){
-            widget->resizeColumnToContents(MainPositionColumn + i);
-        }
-#endif
+        needResize = true;
     }
     if(flags & MprPosition::ObjectReplaced){
         auto modelIndex1 = index(positionIndex, IdColumn, QModelIndex());
         auto modelIndex2 = index(positionIndex, columnCount_ - 1, QModelIndex());
         Q_EMIT dataChanged(modelIndex1, modelIndex2, { Qt::EditRole });
+        needResize = true;
+    }
 
-#ifdef Q_OS_WIN32
-        widget->resizeColumnToContents(IdColumn);
-        for(size_t i=0; i < bodyPartIndices.size(); ++i){
-            widget->resizeColumnToContents(MainPositionColumn + i);
+    // Column resize strategy: either use LazyCaller or direct resize
+    if(needResize){
+        if(useLazyResize){
+            // Schedule resize for next event loop with high priority
+            resizeColumnsCaller();
+        } else {
+            // Direct resize - immediate update
+            resizeColumns();
         }
-#endif
     }
 }
 
@@ -965,6 +980,18 @@ void MprPositionListWidget::setBodySyncMode(BodySyncMode mode)
 MprPositionListWidget::BodySyncMode MprPositionListWidget::bodySyncMode() const
 {
     return impl->bodySyncMode;
+}
+
+
+void MprPositionListWidget::setLazyColumnResizeEnabled(bool enabled)
+{
+    impl->positionListModel->useLazyResize = enabled;
+}
+
+
+bool MprPositionListWidget::isLazyColumnResizeEnabled() const
+{
+    return impl->positionListModel->useLazyResize;
 }
 
 
