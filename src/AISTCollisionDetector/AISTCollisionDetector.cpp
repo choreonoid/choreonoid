@@ -146,9 +146,9 @@ public:
     void makeReady();
     bool checkIfGroupPairEnabled(int groupId1, int groupId2);
     bool checkIfModelPairEnabled(ColdetModelPairEx* modelPair);
-    void detectCollisions(GeometryHandle geometry, const std::function<void(const CollisionPair&)>& callback);
-    void detectCollisions(const std::function<void(const CollisionPair&)>& callback);
-    void detectCollisionsInParallel(const std::function<void(const CollisionPair&)>& callback);
+    bool detectCollisions(GeometryHandle geometry, const std::function<bool(const CollisionPair&)>& callback);
+    bool detectCollisions(const std::function<bool(const CollisionPair&)>& callback);
+    bool detectCollisionsInParallel(const std::function<bool(const CollisionPair&)>& callback);
 
     // for multithread version
     int numThreads;
@@ -156,10 +156,10 @@ public:
     vector<int> shuffledPairIndices;
     vector<vector<CollisionPair>> collisionPairArrays;
     mt19937 randomEngine;
-    
+
     void extractCollisionsOfAssignedPairs(
-        int pairIndexBegin, int pairIndexEnd, vector<CollisionPair>& collisionPairs);    
-    void dispatchCollisionsInCollisionPairArrays(std::function<void(const CollisionPair&)> callback);    
+        int pairIndexBegin, int pairIndexEnd, vector<CollisionPair>& collisionPairs);
+    bool dispatchCollisionsInCollisionPairArrays(std::function<bool(const CollisionPair&)> callback);    
 };
 
 }
@@ -529,20 +529,20 @@ void AISTCollisionDetector::updatePositions
 }
 
 
-void AISTCollisionDetector::detectCollisions(GeometryHandle geometry, std::function<void(const CollisionPair&)> callback)
+bool AISTCollisionDetector::detectCollisions(GeometryHandle geometry, std::function<bool(const CollisionPair&)> callback)
 {
     if(!impl->isReady){
         impl->makeReady();
     }
-    impl->detectCollisions(geometry, callback);
+    return impl->detectCollisions(geometry, callback);
 }
 
 
-void AISTCollisionDetector::Impl::detectCollisions
-(GeometryHandle geometry, const std::function<void(const CollisionPair&)>& callback)
+bool AISTCollisionDetector::Impl::detectCollisions
+(GeometryHandle geometry, const std::function<bool(const CollisionPair&)>& callback)
 {
     auto& collisions = collisionPair.collisions();
-    
+
     for(ColdetModelPairEx* modelPair : modelPairs){ // Do not use auto&
         collisions.clear();
         do {
@@ -561,21 +561,24 @@ void AISTCollisionDetector::Impl::detectCollisions
         } while(modelPair);
 
         if(!collisions.empty()){
-            callback(collisionPair);
+            if(callback(collisionPair)){
+                return true; // Early termination requested
+            }
         }
     }
+    return false; // All pairs checked
 }
 
 
-void AISTCollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
+bool AISTCollisionDetector::detectCollisions(std::function<bool(const CollisionPair&)> callback)
 {
     if(!impl->isReady){
         impl->makeReady();
     }
     if(impl->numThreads > 0){
-        impl->detectCollisionsInParallel(callback);
+        return impl->detectCollisionsInParallel(callback);
     } else {
-        impl->detectCollisions(callback);
+        return impl->detectCollisions(callback);
     }
 } 
 
@@ -584,10 +587,10 @@ void AISTCollisionDetector::detectCollisions(std::function<void(const CollisionP
    \todo Remeber which geometry positions are updated after the last collision detection
    and do the actual collision detection only for the updated geometry pairs.
 */
-void AISTCollisionDetector::Impl::detectCollisions(const std::function<void(const CollisionPair&)>& callback)
+bool AISTCollisionDetector::Impl::detectCollisions(const std::function<bool(const CollisionPair&)>& callback)
 {
     auto& collisions = collisionPair.collisions();
-    
+
     for(ColdetModelPairEx* modelPair : modelPairs){ // Do not use auto&
         collisions.clear();
         do {
@@ -602,13 +605,21 @@ void AISTCollisionDetector::Impl::detectCollisions(const std::function<void(cons
         } while(modelPair);
 
         if(!collisions.empty()){
-            callback(collisionPair);
+            if(callback(collisionPair)){
+                return true; // Early termination requested
+            }
         }
     }
+    return false; // All pairs checked
 }
 
 
-void AISTCollisionDetector::Impl::detectCollisionsInParallel(const std::function<void(const CollisionPair&)>& callback)
+/**
+ * @note In parallel execution mode, early termination only stops result processing,
+ *       not collision detection computation itself. All collision pairs are always
+ *       computed before callbacks are invoked. This is an experimental feature.
+ */
+bool AISTCollisionDetector::Impl::detectCollisionsInParallel(const std::function<bool(const CollisionPair&)>& callback)
 {
     if(ENABLE_SHUFFLE){
         std::shuffle(shuffledPairIndices.begin(), shuffledPairIndices.end(), randomEngine);
@@ -635,7 +646,7 @@ void AISTCollisionDetector::Impl::detectCollisionsInParallel(const std::function
     threadPool->waitLoop();
     //threadPool->wait();
 
-    dispatchCollisionsInCollisionPairArrays(callback);
+    return dispatchCollisionsInCollisionPairArrays(callback);
 }
 
 
@@ -671,15 +682,18 @@ void AISTCollisionDetector::Impl::extractCollisionsOfAssignedPairs
     }
 }
 
-void AISTCollisionDetector::Impl::dispatchCollisionsInCollisionPairArrays
-(std::function<void(const CollisionPair&)> callback)
+bool AISTCollisionDetector::Impl::dispatchCollisionsInCollisionPairArrays
+(std::function<bool(const CollisionPair&)> callback)
 {
     for(int i=0; i < numThreads; ++i){
         const vector<CollisionPair>& collisionPairs = collisionPairArrays[i];
         for(size_t j=0; j < collisionPairs.size(); ++j){
-            callback(collisionPairs[j]);
+            if(callback(collisionPairs[j])){
+                return true; // Early termination requested
+            }
         }
     }
+    return false; // All pairs checked
 }
 
 

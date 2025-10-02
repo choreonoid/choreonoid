@@ -450,7 +450,10 @@ void WorldItem::Impl::updateCollisions(bool forceUpdate)
     collisions->clear();
     
     bodyCollisionDetector.detectCollisions(
-        [&](const CollisionPair& pair){ extractCollisions(pair); });
+        [&](const CollisionPair& pair){
+            extractCollisions(pair);
+            return false; // Continue checking all collisions
+        });
     
     sceneCollision->setDirty();
     

@@ -743,7 +743,9 @@ void ConstraintForceSolver::Impl::setConstraintPoints()
 {
     bodyCollisionDetector.detectCollisions(
         [&](const CollisionPair& collisionPair){
-            extractConstraintPoints(collisionPair); });
+            extractConstraintPoints(collisionPair);
+            return false; // Continue checking all collisions
+        });
 
     globalNumContactNormalVectors = globalNumConstraintVectors;
 

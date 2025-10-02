@@ -1281,7 +1281,10 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
                 out_Position = &(static_cast<ODELink*>(object)->link->position()); });
         
         bodyCollisionDetector.detectCollisions(
-            [this](const CollisionPair& collisionPair){ onCollisionPairDetected(collisionPair); });
+            [this](const CollisionPair& collisionPair){
+                onCollisionPairDetected(collisionPair);
+                return false; // Continue checking all collisions
+            });
         
     } else {
         if(MEASURE_PHYSICS_CALCULATION_TIME){

@@ -267,7 +267,7 @@ bool CollisionDetectionControllerItem::Impl::control()
                     }
                 }
                 if(!hasDepth){
-                    return;
+                    return false; // Continue checking other collisions
                 }
             }
             // Note that any functions and variables of the link object must not be accessed
@@ -275,6 +275,7 @@ bool CollisionDetectionControllerItem::Impl::control()
             auto link0 = static_cast<Link*>(collisionPair.object(0));
             auto link1 = static_cast<Link*>(collisionPair.object(1));
             collisions.emplace_back(link0, link1, std::move(collisionPair.collisions()));
+            return false; // Continue checking all collisions
         });
     
     return false;

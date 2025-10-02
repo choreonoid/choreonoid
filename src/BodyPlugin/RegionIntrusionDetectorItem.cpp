@@ -228,7 +228,10 @@ bool RegionIntrusionDetectorItem::control()
     bool prevIntrusion = impl->isIntruding;
     impl->isIntruding = false;
     impl->bodyCollisionDetector->detectCollisions(
-        [this](const CollisionPair&){ impl->isIntruding = true; });
+        [this](const CollisionPair&){
+            impl->isIntruding = true;
+            return true; // Early termination - intrusion detected
+        });
     impl->intrusionChanged = (impl->isIntruding != prevIntrusion);
     return false;
 }

@@ -392,6 +392,7 @@ void KinematicSimulatorItem::Impl::findAttachableBodiesByCollision
         link,
         [&](const CollisionPair& collisionPair){
             onHolderCollisionDetected(info, link, collisionPair);
+            return false; // Continue checking all collisions
         });
     
     for(auto& link : info->collidingLinks){
@@ -495,6 +496,7 @@ void KinematicSimulatorItem::Impl::moveConveyors()
                 link,
                 [this, info, link](const CollisionPair& collisionPair){
                     onConveyorCollisionDetected(info, link, collisionPair);
+                    return false; // Continue checking all collisions
                 });
 
             if(!info->bodiesOnConveyor.empty()){

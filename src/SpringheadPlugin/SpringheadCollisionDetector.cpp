@@ -95,7 +95,7 @@ public:
     void setNonInterfarenceGeometyrPair(GeometryHandle geometry1, GeometryHandle geometry2);
     bool makeReady();
     void updatePosition(GeometryHandle geometry, const Position& position);
-    void detectCollisions(std::function<void(const CollisionPair&)> callback);
+    bool detectCollisions(std::function<bool(const CollisionPair&)> callback);
 
 private :
 
@@ -449,12 +449,12 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
 }
 */
 
-void SpringheadCollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
+bool SpringheadCollisionDetector::detectCollisions(std::function<bool(const CollisionPair&)> callback)
 {
-	impl->detectCollisions(callback);
+	return impl->detectCollisions(callback);
 }
 
-void SpringheadCollisionDetectorImpl::detectCollisions(std::function<void(const CollisionPair&)> callback)
+bool SpringheadCollisionDetectorImpl::detectCollisions(std::function<bool(const CollisionPair&)> callback)
 {
 	// execute collision detection part of Springhead
 	phScene->IntegratePart1();
@@ -478,7 +478,7 @@ void SpringheadCollisionDetectorImpl::detectCollisions(std::function<void(const 
 
 		int ngeo = (int)models.size();
 		CollisionPair cp = collisionPairs[ngeo * gid[0] + gid[1]];
-		
+
 		Spr::Posed p, p0, ps;
 		p0 = so[0]->GetPose();
 		con->GetSocketPose(ps);
@@ -493,8 +493,12 @@ void SpringheadCollisionDetectorImpl::detectCollisions(std::function<void(const 
 	}
 
 	// call callback for all collision pairs
-	for(int i = 0; i < collisionPairs.size(); i++)
-		callback(collisionPairs[i]);
+	for(int i = 0; i < collisionPairs.size(); i++){
+		if(callback(collisionPairs[i])){
+			return true; // Early termination requested
+		}
+	}
+	return false; // All pairs checked
 
     //impl->callback_ = callback;
     //dSpaceCollide(impl->spaceID, (void*)impl, &nearCallback);

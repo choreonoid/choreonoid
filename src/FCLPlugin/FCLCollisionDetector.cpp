@@ -119,7 +119,7 @@ public:
     bool addPrimitive(ColdetModel* model, SgMesh* mesh);
     void makeReady();
     void updatePosition(ColdetModel* model, const Isometry3& position);
-    void detectCollisions(std::function<void(const CollisionPair&)> callback);
+    bool detectCollisions(std::function<bool(const CollisionPair&)> callback);
     void detectObjectCollisions(
         CollisionObjectf* object1, CollisionObjectf* object2, CollisionPair& collisionPair);
 };
@@ -452,16 +452,16 @@ void FCLCollisionDetector::updatePositions
 }
 
 
-void FCLCollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
+bool FCLCollisionDetector::detectCollisions(std::function<bool(const CollisionPair&)> callback)
 {
     if(!impl->isReady){
         impl->makeReady();
     }
-    impl->detectCollisions(callback);
+    return impl->detectCollisions(callback);
 }
 
 
-void FCLCollisionDetector::Impl::detectCollisions(std::function<void(const CollisionPair&)> callback)
+bool FCLCollisionDetector::Impl::detectCollisions(std::function<bool(const CollisionPair&)> callback)
 {
     CollisionPair collisionPair;
     auto& collisions = collisionPair.collisions();
@@ -493,9 +493,12 @@ void FCLCollisionDetector::Impl::detectCollisions(std::function<void(const Colli
             collisionPair.geometry(1) = getHandle(model2);
             collisionPair.object(0) = model1->object;
             collisionPair.object(1) = model2->object;
-            callback(collisionPair);
+            if(callback(collisionPair)){
+                return true; // Early termination requested
+            }
         }
     }
+    return false; // All pairs checked
 }
 
 

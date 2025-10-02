@@ -60,10 +60,25 @@ public:
     void updatePositions();
     void updatePositions(std::function<void(Referenced* object, Isometry3*& out_position)> positionQuery);
 
-    void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback);
+    /**
+     * @brief Detect collisions between all registered bodies
+     * @param callback Function called for each detected collision pair.
+     *                 Return false to continue detection, true to stop early.
+     * @return true if the callback returned true (early termination),
+     *         false if all pairs were checked
+     */
+    bool detectCollisions(std::function<bool(const CollisionPair& collisionPair)> callback);
 
-    //! \note Geometry handle map must be enabled to use this function
-    void detectCollisions(Link* link, std::function<void(const CollisionPair& collisionPair)> callback);
+    /**
+     * @brief Detect collisions between a specific link and all others
+     * @param link The link to check for collisions
+     * @param callback Function called for each detected collision pair.
+     *                 Return false to continue detection, true to stop early.
+     * @return true if the callback returned true (early termination),
+     *         false if all pairs were checked
+     * @note Geometry handle map must be enabled to use this function
+     */
+    bool detectCollisions(Link* link, std::function<bool(const CollisionPair& collisionPair)> callback);
 
     [[deprecated("Use setGeometryHandleMapEnabled.")]]
     void enableGeometryHandleMap(bool on);

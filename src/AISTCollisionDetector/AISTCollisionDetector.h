@@ -31,9 +31,9 @@ public:
     virtual bool makeReady() override;
     virtual void updatePosition(GeometryHandle geometry, const Isometry3& position) override;
     virtual void updatePositions(std::function<void(Referenced* object, Isometry3*& out_Position)> positionQuery) override;
-    virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback) override;
-    virtual void detectCollisions(
-        GeometryHandle geometry, std::function<void(const CollisionPair& collisionPair)> callback) override;
+    virtual bool detectCollisions(std::function<bool(const CollisionPair& collisionPair)> callback) override;
+    virtual bool detectCollisions(
+        GeometryHandle geometry, std::function<bool(const CollisionPair& collisionPair)> callback) override;
 
     // CollisionDetectorDistanceAPI
     virtual double detectDistance(GeometryHandle geometry1, GeometryHandle geometry2, Vector3& out_point1, Vector3& out_point2) override;

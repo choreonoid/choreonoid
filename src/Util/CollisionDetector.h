@@ -79,9 +79,25 @@ public:
     virtual void updatePositions(
         std::function<void(Referenced* object, Isometry3*& out_position)> positionQuery) = 0;
 
-    virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback) = 0;
-    virtual void detectCollisions(
-        GeometryHandle geometry, std::function<void(const CollisionPair& collisionPair)> callback);
+    /**
+     * @brief Detect collisions between all registered geometry pairs
+     * @param callback Function called for each detected collision pair.
+     *                 Return false to continue detection, true to stop early.
+     * @return true if the callback returned true (early termination),
+     *         false if all pairs were checked
+     */
+    virtual bool detectCollisions(std::function<bool(const CollisionPair& collisionPair)> callback) = 0;
+
+    /**
+     * @brief Detect collisions between a specific geometry and all others
+     * @param geometry The geometry to check for collisions
+     * @param callback Function called for each detected collision pair.
+     *                 Return false to continue detection, true to stop early.
+     * @return true if the callback returned true (early termination),
+     *         false if all pairs were checked
+     */
+    virtual bool detectCollisions(
+        GeometryHandle geometry, std::function<bool(const CollisionPair& collisionPair)> callback);
 };
 
 typedef ref_ptr<CollisionDetector> CollisionDetectorPtr;

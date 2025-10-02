@@ -459,6 +459,7 @@ int KinematicFaultChecker::Impl::checkFaults
             bodyCollisionDetector.detectCollisions(
                 [&](const CollisionPair& collisionPair){
                     putSelfCollision(body, frame, collisionPair);
+                    return false; // Continue checking all collisions
                 });
         }
     }

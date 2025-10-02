@@ -373,18 +373,19 @@ void BodyCollisionDetector::updatePositions
 }
 
 
-void BodyCollisionDetector::detectCollisions(std::function<void(const CollisionPair& collisionPair)> callback)
+bool BodyCollisionDetector::detectCollisions(std::function<bool(const CollisionPair& collisionPair)> callback)
 {
-    impl->collisionDetector->detectCollisions(callback);
+    return impl->collisionDetector->detectCollisions(callback);
 }
 
 
-void BodyCollisionDetector::detectCollisions
-(Link* link, std::function<void(const CollisionPair& collisionPair)> callback)
+bool BodyCollisionDetector::detectCollisions
+(Link* link, std::function<bool(const CollisionPair& collisionPair)> callback)
 {
     if(auto handle = findGeometryHandle(link)){
-        impl->collisionDetector->detectCollisions(*handle, callback);
+        return impl->collisionDetector->detectCollisions(*handle, callback);
     }
+    return false; // No geometry handle found
 }
 
 

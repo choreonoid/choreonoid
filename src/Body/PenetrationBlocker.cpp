@@ -153,7 +153,10 @@ bool PenetrationBlockerImpl::adjust(Isometry3& io_T, const Vector3& pushDirectio
         maxdepth = 0.0;
 
         collisionDetector->detectCollisions(
-            [&](const CollisionPair& pair){ onCollisionDetected(pair);});
+            [&](const CollisionPair& pair){
+                onCollisionDetected(pair);
+                return false; // Continue checking all collisions
+            });
         
         if(maxsdepth > 0.0){
             io_T.translation() += (maxdepth - targetDepth) * maxnormal;

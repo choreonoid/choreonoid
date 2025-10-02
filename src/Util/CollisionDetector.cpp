@@ -77,10 +77,14 @@ public:
     virtual void updatePositions(
         std::function<void(Referenced* object, Isometry3*& out_position)> positionQuery) override { }
 
-    virtual void detectCollisions(std::function<void(const CollisionPair& collisionPair)> /* callback */) override { }
+    virtual bool detectCollisions(std::function<bool(const CollisionPair& collisionPair)> /* callback */) override {
+        return false;
+    }
 
-    virtual void detectCollisions(
-        GeometryHandle geometry, std::function<void(const CollisionPair& collisionPair)> callback) override { }
+    virtual bool detectCollisions(
+        GeometryHandle geometry, std::function<bool(const CollisionPair& collisionPair)> callback) override {
+        return false;
+    }
 };
 
 CollisionDetector* factory()
@@ -195,8 +199,8 @@ bool CollisionDetector::isGeometryRemovalSupported() const
 
 
 // This function should be a pure virtual function
-void CollisionDetector::detectCollisions
-(GeometryHandle /* geometry */, std::function<void(const CollisionPair& collisionPair)> /* callback */)
+bool CollisionDetector::detectCollisions
+(GeometryHandle /* geometry */, std::function<bool(const CollisionPair& collisionPair)> /* callback */)
 {
-
+    return false;
 }

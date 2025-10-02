@@ -91,7 +91,8 @@ public:
     vector<GeometryInfoPtr> geometryInfos;
     
     set<SpaceIdPair> ignoredPairs;
-    std::function<void(const CollisionPair&)> callbackOnCollisionDetected;
+    std::function<bool(const CollisionPair&)> callbackOnCollisionDetected;
+    bool shouldTerminate;
 
     MeshExtractor meshExtractor;
     typedef Eigen::Matrix<float, 3, 1> Vertex;
@@ -124,6 +125,7 @@ ODECollisionDetectorImpl::ODECollisionDetectorImpl()
 {
     spaceID = dHashSpaceCreate(0);
     dSpaceSetCleanup(spaceID, 0);
+    shouldTerminate = false;
 }
 
 
@@ -421,9 +423,15 @@ void ODECollisionDetector::updatePositions
                                       
 static void nearCallback(void* data, dGeomID g1, dGeomID g2)
 {
+    ODECollisionDetectorImpl* impl = static_cast<ODECollisionDetectorImpl*>(data);
+
+    // Early termination check
+    if(impl->shouldTerminate){
+        return;
+    }
+
     dSpaceID space1 = dGeomGetSpace(g1);
     dSpaceID space2 = dGeomGetSpace(g2);
-    ODECollisionDetectorImpl* impl = static_cast<ODECollisionDetectorImpl*>(data);
     if(impl->ignoredPairs.find(SpaceIdPair(space1, space2)) != impl->ignoredPairs.end()){
         return;
     }
@@ -454,14 +462,20 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
                 collision.normal[2] = contacts[i].geom.normal[2];
                 collision.depth = contacts[i].geom.depth;
             }
-            impl->callbackOnCollisionDetected(collisionPair);
+            if(!impl->shouldTerminate){
+                if(impl->callbackOnCollisionDetected(collisionPair)){
+                    impl->shouldTerminate = true;
+                }
+            }
         }
     }
 }
 
 
-void ODECollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
+bool ODECollisionDetector::detectCollisions(std::function<bool(const CollisionPair&)> callback)
 {
     impl->callbackOnCollisionDetected = callback;
+    impl->shouldTerminate = false;
     dSpaceCollide(impl->spaceID, (void*)impl, &nearCallback);
+    return impl->shouldTerminate;
 }

@@ -29,7 +29,7 @@ public:
     virtual bool makeReady() override;
     virtual void updatePosition(GeometryHandle geometry, const Position& position) override;
     virtual void updatePositions(std::function<void(Referenced* object, Position*& out_Position)> positionQuery) override;
-    virtual void detectCollisions(std::function<void(const CollisionPair&)> callback) override;
+    virtual bool detectCollisions(std::function<bool(const CollisionPair&)> callback) override;
 
 private:
     SpringheadCollisionDetectorImpl* impl;

@@ -100,7 +100,7 @@ public:
     typedef set<IdPair<GeometryHandle>> GeometryHandlePairSet;
     GeometryHandlePairSet ignoredPairs;
     GeometryHandlePairSet interfarencePairs;
-    std::function<void(const CollisionPair&)> callbackOnCollisionDetected;
+    std::function<bool(const CollisionPair&)> callbackOnCollisionDetected;
 
     BulletCollisionDetectorImpl();
     ~BulletCollisionDetectorImpl();
@@ -108,7 +108,7 @@ public:
     void addMesh(GeometryInfo* model);
     bool makeReady();
     void setGeometryPosition(GeometryInfo* ginfo, const Isometry3& position);
-    void detectCollisions();
+    bool detectCollisions();
     void detectObjectCollisions(btCollisionObject* object1, btCollisionObject* object2, CollisionPair& collisionPair);
 };
 }
@@ -570,14 +570,14 @@ void BulletCollisionDetectorImpl::setGeometryPosition(GeometryInfo* ginfo, const
 }
 
 
-void BulletCollisionDetector::detectCollisions(std::function<void(const CollisionPair&)> callback)
+bool BulletCollisionDetector::detectCollisions(std::function<bool(const CollisionPair&)> callback)
 {
     impl->callbackOnCollisionDetected = callback;
-    impl->detectCollisions();
+    return impl->detectCollisions();
 }
 
 
-void BulletCollisionDetectorImpl::detectCollisions()
+bool BulletCollisionDetectorImpl::detectCollisions()
 {
     for(auto& interfarencePair : interfarencePairs){
         GeometryInfo* ginfo1 = geometryInfos[interfarencePair[0]];
@@ -589,10 +589,13 @@ void BulletCollisionDetectorImpl::detectCollisions()
             detectObjectCollisions(ginfo1->collisionObject, ginfo2->collisionObject, collisionPair);
 
             if(!collisionPair.collisions().empty()){
-                callbackOnCollisionDetected(collisionPair);
+                if(callbackOnCollisionDetected(collisionPair)){
+                    return true; // Early termination requested
+                }
             }
         }
     }
+    return false; // All pairs checked
 }
 
 
