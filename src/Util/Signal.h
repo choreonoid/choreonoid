@@ -80,7 +80,9 @@ struct last_value<void>
     void operator()(InputIterator iter, InputIterator last) const
     {
         while (iter != last){
-            if(iter.isReady()) *iter;
+            if(iter.isReady()){
+                *iter;
+            }
             ++iter;
         }
     }
@@ -153,7 +155,7 @@ protected:
                 firstSlot = slot;
                 lastSlot = slot;
             } else {
-                // lastSlot->next = slot; // This is not necessary
+                lastSlot->next = slot;
                 slot->prev = lastSlot;
                 lastSlot = slot;
             }
