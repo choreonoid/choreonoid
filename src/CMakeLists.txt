@@ -29,8 +29,9 @@ if(ENABLE_GUI)
 
   add_subdirectory(PythonPlugin)
   add_subdirectory(PythonSimScriptPlugin)
-
   add_subdirectory(LuaPlugin)
+
+  add_subdirectory(FCLPlugin)
 
   add_subdirectory(ODEPlugin)
   add_subdirectory(AGXDynamicsPlugin)
@@ -40,9 +41,10 @@ if(ENABLE_GUI)
   add_subdirectory(RokiPlugin)
   add_subdirectory(MulticopterPlugin)
 
+  add_subdirectory(OMPLPlugin)
+
   add_subdirectory(CorbaPlugin)
   add_subdirectory(TrafficControlPlugin)
-  add_subdirectory(FCLPlugin)
   add_subdirectory(PCLPlugin)
   add_subdirectory(CompetitionPlugin)
 
