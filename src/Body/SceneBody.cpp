@@ -13,6 +13,26 @@ using namespace cnoid;
 
 namespace {
 
+void invalidateBoundingBoxUpwards(SgObject* node, SgObject* stopAt)
+{
+    node->invalidateBoundingBox();
+
+    for(auto p = node->parentBegin(); p != node->parentEnd(); ++p){
+        if(*p != stopAt){
+            invalidateBoundingBoxUpwards(*p, stopAt);
+        }
+    }
+}
+
+void invalidateBoundingBoxUpwards(SgObject* node)
+{
+    node->invalidateBoundingBox();
+
+    for(auto p = node->parentBegin(); p != node->parentEnd(); ++p){
+        invalidateBoundingBoxUpwards(*p);
+    }
+}
+
 class LinkShapeGroup : public SgGroup
 {
 public:
@@ -21,7 +41,7 @@ public:
     SgNodePtr collisionShape;
     ScopedConnection collisionShapeUpdateConnection;
     bool hasClone;
-    
+
     LinkShapeGroup(SceneLink::Impl* sceneLinkImpl, Link* link);
     void cloneShapes(CloneMap& cloneMap);
     void resetCollisionShapeUpdateConnection();
@@ -503,6 +523,8 @@ void SceneBody::updateLinkPositions(SgUpdateRef update)
 
     if(update){
         notifyUpdate(update);
+    } else {
+        invalidateBoundingBoxUpwards(this);
     }
 }
 
@@ -514,6 +536,8 @@ void SceneBody::Impl::updateLinkPositions(Body* body, vector<SceneLinkPtr>& scen
         SceneLink* sceneLink = sceneLinks[i];
         Link* link = body->link(i);
         sceneLink->setPosition(link->position());
+        // Invalidate bounding box from this SceneLink up to (but not including) SceneBody
+        invalidateBoundingBoxUpwards(sceneLink, self);
     }
 }
 
