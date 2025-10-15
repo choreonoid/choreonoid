@@ -85,6 +85,7 @@ public:
     bool isMaximizedJustBeforeFullScreen;
     bool isFullScreen;
     bool isGoingToMaximized;
+    bool shouldMaximizeAfterActivation;
     QSize normalSize;
     QSize oldNormalSize;
     int lastWindowState;
@@ -157,8 +158,9 @@ MainWindow::Impl::Impl(MainWindow* self, const std::string& appName, ExtensionMa
 #else
     isFullScreen = config->get({ "full_screen", "fullScreen" }, false);
 #endif
-    
+
     isGoingToMaximized = false;
+    shouldMaximizeAfterActivation = false;
     
     centralWidget = new QWidget(self);
     
@@ -409,40 +411,29 @@ void MainWindow::Impl::showFirst()
             if(TRACE_FUNCTIONS){
                 cout << "showMaximized();" << endl;
             }
-            
+
 #if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0)) || !defined(Q_OS_LINUX)
             // Qt5 or non-Linux platforms: use standard showMaximized()
             self->showMaximized();
 #else
             /**
-               Workaround for Qt6 crash issue on Wayland with non-NVIDIA GPUs.
-               
-               On Ubuntu 24.04 with Qt6 and Wayland, calling showMaximized() after resize()
-               causes the application to crash when using AMD or Intel GPUs. This appears to
-               be due to incomplete Wayland protocol support in Qt6.
-               
-               However, this crash does not occur with NVIDIA GPUs, likely due to their
-               different driver implementation for Wayland.
-               
-               As a workaround, we use showNormal() for non-NVIDIA GPUs after calling
-               resize(getAvailableScreenSize()). This still achieves the maximized window
-               state without triggering the crash.
+               Workaround for Qt6 crash issue on Linux.
+
+               On Linux with Qt6, calling showMaximized() after resize() before the window
+               is shown can cause crashes. This issue has been reported on various
+               configurations including Wayland with AMD/Intel GPUs and more recently on
+               X11 with NVIDIA GPUs.
+
+               The crash appears to be related to Qt6's window state management when
+               showMaximized() is called before the window system has fully initialized
+               the window.
+
+               As a workaround, we use deferred maximization: initially show the window
+               with showNormal() and then call showMaximized() after the window has been
+               activated by the window system (in waitForWindowSystemToActivate()).
             */
-            if(QGuiApplication::platformName() != "wayland") {
-                // Non-Wayland platforms: use standard showMaximized()
-                self->showMaximized();
-            } else {
-                // Check if NVIDIA proprietary driver is installed
-                struct stat buffer;
-                bool hasNvidiaDriver = (stat("/proc/driver/nvidia/version", &buffer) == 0);
-                
-                if(hasNvidiaDriver) {
-                    self->showMaximized();
-                } else {
-                    // Use showNormal() for AMD/Intel GPUs to avoid crash
-                    self->showNormal();
-                }
-            }
+            self->showNormal();
+            shouldMaximizeAfterActivation = true;
 #endif
 
         } else {
@@ -499,6 +490,12 @@ bool MainWindow::waitForWindowSystemToActivate()
         }
     }
     removeEventFilter(&impl->windowActivationChecker);
+
+    // Execute deferred maximization if scheduled
+    if(impl->shouldMaximizeAfterActivation){
+        showMaximized();
+        impl->shouldMaximizeAfterActivation = false;
+    }
 
     return impl->windowActivationChecker.isWindowActivated;
 #endif
