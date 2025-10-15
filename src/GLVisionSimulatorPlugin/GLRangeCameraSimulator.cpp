@@ -83,14 +83,15 @@ void GLRangeCameraSimulator::doStoreScreenImage(GLVisionSensorRenderingScreen* s
     n[3] = 1.0f;
     points->clear();
     points->reserve(resolutionX * resolutionY);
-    unsigned char* colorSrc = nullptr;
+    unsigned char* colorSrcTop;
+    unsigned char* colorSrc;
 
     isDense = true;
     
     for(int y = resolutionY - 1; y >= 0; --y){
         int srcpos = y * resolutionX;
         if(extractColors){
-            colorSrc = &colorBuf[0] + y * resolutionX * 3;
+            colorSrcTop = &colorBuf[0] + y * resolutionX * 3;
         }
         for(int x=0; x < resolutionX; ++x){
             float z = depthBuf[srcpos + x];
@@ -125,6 +126,7 @@ void GLRangeCameraSimulator::doStoreScreenImage(GLVisionSensorRenderingScreen* s
                     points->push_back(p);
                 }
                 if(pixels){
+                    colorSrc = colorSrcTop + x * 3;
                     pixels[0] = colorSrc[0];
                     pixels[1] = colorSrc[1];
                     pixels[2] = colorSrc[2];
@@ -148,6 +150,7 @@ void GLRangeCameraSimulator::doStoreScreenImage(GLVisionSensorRenderingScreen* s
                     p.y() = (y - cy) * numeric_limits<float>::infinity();
                 }
                 if(pixels){
+                    colorSrc = colorSrcTop + x * 3;
                     pixels[0] = colorSrc[0];
                     pixels[1] = colorSrc[1];
                     pixels[2] = colorSrc[2];
@@ -160,8 +163,6 @@ void GLRangeCameraSimulator::doStoreScreenImage(GLVisionSensorRenderingScreen* s
                     points->push_back(p);
                 }
             }
-            
-            colorSrc += 3;
         }
     }
 
