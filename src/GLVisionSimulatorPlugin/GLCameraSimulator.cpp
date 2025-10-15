@@ -34,6 +34,9 @@ bool GLCameraSimulator::doInitialize(GLVisionSimulatorItem* visionSimulatorItem)
 
 bool GLCameraSimulator::doInitializeScreenCamera(GLVisionSensorRenderingScreen* screen)
 {
+    if(camera->imageType() == Camera::NO_IMAGE){
+        screen->setLightingEnabled(false);
+    }
     return screen->useCameraDeviceAsScreenCamera();
 }
 

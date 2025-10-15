@@ -414,11 +414,20 @@ void SensorVisualizerItem::Impl::addSensorVisualizerItem(Body* body)
 template<class ItemType, class SensorType>
 void SensorVisualizerItem::Impl::addVisionSensorVisualizerItem(Body* body)
 {
-    bool isCamera = typeid(SensorType) == typeid(Camera);
+    bool isCameraImageVisualizer = typeid(ItemType) == typeid(CameraImageVisualizerItem);
     
     for(auto& sensor : body->devices<SensorType>()){
-        if(isCamera && reinterpret_cast<Camera*>(sensor.get())->imageType() == Camera::NO_IMAGE){
-            continue;
+        if(isCameraImageVisualizer){
+            if(auto camera = reinterpret_cast<Camera*>(sensor.get())){
+                if(camera->imageType() == Camera::NO_IMAGE){
+                    continue;
+                }
+                if(auto rangeCamera = dynamic_cast<RangeCamera*>(camera)){
+                    if(!rangeCamera->isOrganized()){
+                        continue;
+                    }
+                }
+            }
         }
         auto item = extractMatchedSubItem<ItemType, SensorType>(existingSubItems, sensor);
         if(!item && isRestoringSubItems){

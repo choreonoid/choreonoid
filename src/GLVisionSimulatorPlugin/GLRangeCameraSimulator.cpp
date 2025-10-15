@@ -1,4 +1,5 @@
 #include "GLRangeCameraSimulator.h"
+#include "GLVisionSimulatorItem.h"
 #include <cnoid/GLSceneRenderer>
 
 using namespace std;
@@ -15,11 +16,21 @@ GLRangeCameraSimulator::GLRangeCameraSimulator(RangeCamera* rangeCamera)
 
 bool GLRangeCameraSimulator::doInitialize(GLVisionSimulatorItem* visionSimulatorItem)
 {
-    if(!GLCameraSimulator::doInitialize(visionSimulatorItem)){
+    if(camera->lensType() != Camera::NORMAL_LENS){
         return false;
     }
-
     imageType = rangeCamera->imageType();
+    if(imageType != Camera::NO_IMAGE && imageType != Camera::COLOR_IMAGE){
+        return false;
+    }
+    
+    double frameRate = std::max(0.1, std::min(camera->frameRate(), visionSimulatorItem->maxFrameRate()));
+    setCycleTime(1.0 / frameRate);
+
+    if(visionSimulatorItem->isVisionDataRecordingEnabled()){
+        camera->setImageStateClonable(true);
+    }
+
     hasRo = !rangeCamera->opticalFrameRotation().isIdentity();
     if(hasRo){
         Ro = rangeCamera->opticalFrameRotation().cast<float>();
