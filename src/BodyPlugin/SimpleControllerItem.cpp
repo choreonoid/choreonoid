@@ -20,6 +20,7 @@
 #include <set>
 #include <bitset>
 #include <algorithm>
+#include <map>
 #include "gettext.h"
 
 using namespace std;
@@ -27,6 +28,22 @@ using namespace cnoid;
 namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
+
+/**
+ * Reference count map for controller modules.
+ *
+ * According to the QLibrary documentation: "if other instances of QLibrary are using
+ * the same library, the call will fail, and unloading will only happen when every
+ * instance has called unload()."
+ *
+ * This mechanism should work correctly. However, when using Qt6 on Ubuntu 24.04, it does not
+ * work as expected. When multiple SimpleControllerItem instances use the same module,
+ * calling unload() on one instance can actually unload the library even while other
+ * instances are still using it.
+ *
+ * To work around this Qt6 issue, we maintain our own reference count per module file.
+ */
+std::map<std::string, int> moduleRefCounts;
 
 struct SharedInfo : public Referenced
 {
@@ -97,6 +114,7 @@ public:
     std::string controllerModuleName;
     std::string controllerModuleFilename;
     QLibrary controllerModule;
+    bool hasLoadedModule;
     bool doReloading;
     bool isSymbolExportEnabled;
     Selection baseDirectoryType;
@@ -260,6 +278,7 @@ void SimpleControllerItem::Impl::doCommonInitializationInConstructor()
     isConfigured = false;
     ioBody = nullptr;
     io = nullptr;
+    hasLoadedModule = false;
     mv = MessageView::instance();
 }
 
@@ -413,13 +432,8 @@ bool SimpleControllerItem::Impl::loadController()
     controllerModuleFilename = toUTF8(modulePath.make_preferred().string());
     controllerModule.setFileName(controllerModuleFilename.c_str());
 
-    if(controllerModule.isLoaded()){
+    if(hasLoadedModule){
         mv->putln(formatR(_("The controller module of {} has already been loaded."), self->displayName()));
-
-        // This should be called to make the reference to the DLL.
-        // Otherwise, QLibrary::unload() unloads the DLL without considering this instance.
-        controllerModule.load();
-
     } else {
         mv->put(formatR(_("Loading the controller module \"{1}\" of {0} ... "),
                         self->displayName(), controllerModuleFilename));
@@ -429,6 +443,11 @@ bool SimpleControllerItem::Impl::loadController()
             return false;
         }
         mv->putln(_("OK!"));
+
+        hasLoadedModule = true;
+
+        // Increment reference count for this module
+        moduleRefCounts[controllerModuleFilename]++;
     }
 
     SimpleController::Factory factory =
@@ -493,9 +512,22 @@ void SimpleControllerItem::Impl::unloadController()
         controller = nullptr;
     }
 
-    if(controllerModule.unload()){
-        mv->putln(formatR(_("The controller module \"{1}\" of {0} has been unloaded."),
-                          self->displayName(), controllerModuleFilename));
+    if(hasLoadedModule){
+        // Decrement reference count for this module
+        auto it = moduleRefCounts.find(controllerModuleFilename);
+        if(it != moduleRefCounts.end()){
+            it->second--;
+
+            // Only unload if no other instances are using this module
+            if(it->second <= 0){
+                if(controllerModule.unload()){
+                    mv->putln(formatR(_("The controller module \"{1}\" of {0} has been unloaded."),
+                                      self->displayName(), controllerModuleFilename));
+                }
+                moduleRefCounts.erase(it);
+            }
+        }
+        hasLoadedModule = false;
     }
 
     isConfigured = false;
