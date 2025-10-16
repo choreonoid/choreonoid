@@ -322,7 +322,7 @@ void SceneBar::Impl::setCurrentSceneView(SceneView* sceneView)
                 [this, sceneWidget](){ onSceneWidgetStateChanged(sceneWidget); }));
 
         sceneViewConnections.add(
-            renderer->sigCamerasChanged().connect(
+            renderer->sigCameraListChanged().connect(
                 [this, sceneWidget](){ onSceneRendererCamerasChanged(sceneWidget); }));
         
         sceneViewConnections.add(

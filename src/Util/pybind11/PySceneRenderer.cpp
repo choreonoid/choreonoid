@@ -22,7 +22,7 @@ void exportPySceneRenderer(py::module& m)
         .def_property_readonly(
             "currentCameraPosition",
             [](SceneRenderer& self) -> Isometry3::MatrixType { return self.currentCameraPosition().matrix(); })
-        .def_property_readonly("sigCamerasChanged", &SceneRenderer::sigCamerasChanged)
+        .def_property_readonly("sigCameraListChanged", &SceneRenderer::sigCameraListChanged)
         .def_property_readonly("currentCamera", &SceneRenderer::currentCamera)
         .def_property_readonly("currentCameraIndex", &SceneRenderer::currentCameraIndex)
         .def("setCurrentCamera", (void(SceneRenderer::*)(int)) &SceneRenderer::setCurrentCamera)
@@ -76,6 +76,7 @@ void exportPySceneRenderer(py::module& m)
              })
 
         // deprecated
+        .def_property_readonly("sigCamerasChanged", &SceneRenderer::sigCameraListChanged)
         .def_property_readonly("numLights", &SceneRenderer::numAdditionalLights)
         ;
 }

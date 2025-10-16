@@ -43,6 +43,8 @@ public:
     const SgNodePath& cameraPath(int index) const;
     const Isometry3& cameraPosition(int index) const;
     const Isometry3& currentCameraPosition() const;
+    SignalProxy<void()> sigCameraListChanged() const;
+    [[deprecated("Use sigCameraListChanged")]]
     SignalProxy<void()> sigCamerasChanged() const;
     SgCamera* currentCamera() const;
     int currentCameraIndex() const;

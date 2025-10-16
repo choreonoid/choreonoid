@@ -116,15 +116,16 @@ public:
         // To avoid this problem, 'M' is used instead of 'T'.
         Isometry3 M;
         PreproNodeInfoPtr nodeInfo;
-        ScopedConnection cameraConnection;
-        // This flag includes the camera name change
-        bool cameraPathChanged;
+
+        // Flag to detect camera name changes.
+        // Currently, camera name changes are not automatically detected.
+        // To support automatic detection in the future, set this flag to true
+        // when the camera name is changed, which will trigger cameraListChanged.
+        bool cameraNameChanged;
 
         CameraInfo(SgCamera* camera)
-            : camera(camera), cameraPathChanged(false)
+            : camera(camera), cameraNameChanged(false)
         {
-            cameraConnection = camera->sigUpdated().connect(
-                [this](const SgUpdate&){ cameraPathChanged = true; });
         }
 
         void setNodeInfo(PreproNodeInfo* info)
@@ -144,8 +145,7 @@ public:
 
     Isometry3 I;
 
-    bool cameraSetChanged;
-    bool cameraPathsChanged;
+    bool cameraListChanged;
     bool currentCameraRemoved;
     bool isCurrentCameraAutoRestorationMode;
     bool isPreferredCameraCurrent;
@@ -153,7 +153,7 @@ public:
     SgCamera* currentCamera;
     vector<SgNodePath> cameraPaths;
     vector<string> preferredCurrentCameraPathStrings;
-    Signal<void()> sigCamerasChanged;
+    Signal<void()> sigCameraListChanged;
     Signal<void()> sigCurrentCameraChanged;
         
     struct LightInfo
@@ -468,10 +468,9 @@ void SceneRenderer::Impl::extractPreproNodes()
 
     cameras.swap(prevCameras);
     cameras.clear();
-    cameraSetChanged = false;
-    cameraPathsChanged = false;
+    cameraListChanged = false;
     currentCameraRemoved = true;
-    
+
     lights.clear();
     fogs.clear();
 
@@ -479,23 +478,20 @@ void SceneRenderer::Impl::extractPreproNodes()
         extractPreproNodeIter(preproNodeTree.get(), Affine3::Identity());
     }
 
-    if(!cameraSetChanged){
+    if(!cameraListChanged){
         if(cameras.size() != prevCameras.size()){
-            cameraSetChanged = true;
+            cameraListChanged = true;
         }
     }
-    if(cameraSetChanged){
+    if(cameraListChanged){
         if(currentCameraRemoved){
             currentCameraIndex = 0;
             if(isPreferredCameraCurrent){
                 isPreferredCameraCurrent = false;
             }
         }
-        cameraPathsChanged = true;
-    }
-    if(cameraPathsChanged){
         cameraPaths.clear();
-        sigCamerasChanged();
+        sigCameraListChanged();
     }
 
     bool isCurrentCameraUpdated = false;
@@ -558,18 +554,18 @@ void SceneRenderer::Impl::extractPreproNodeIter(PreproNodeInfo* nodeInfo, const 
 
         size_t index = cameras.size();
         CameraInfo* cameraInfo = nullptr;
-        if(!cameraSetChanged && index < prevCameras.size()){
+        if(!cameraListChanged && index < prevCameras.size()){
             auto& prevCameraInfo = prevCameras[index];
             if(camera == prevCameraInfo->camera){
                 cameraInfo = prevCameraInfo;
-                if(cameraInfo->cameraPathChanged){
-                    cameraPathsChanged = true;
-                    cameraInfo->cameraPathChanged = false;
+                if(cameraInfo->cameraNameChanged){
+                    cameraListChanged = true;
+                    cameraInfo->cameraNameChanged = false;
                 }
             }
         }
         if(!cameraInfo){
-            cameraSetChanged = true;
+            cameraListChanged = true;
             cameraInfo = new CameraInfo(camera);
         }
         cameraInfo->setNodeInfo(nodeInfo);
@@ -646,9 +642,15 @@ const Isometry3& SceneRenderer::cameraPosition(int index) const
 }
 
 
+SignalProxy<void()> SceneRenderer::sigCameraListChanged() const
+{
+    return impl->sigCameraListChanged;
+}
+
+
 SignalProxy<void()> SceneRenderer::sigCamerasChanged() const
 {
-    return impl->sigCamerasChanged;
+    return impl->sigCameraListChanged;
 }
 
 
