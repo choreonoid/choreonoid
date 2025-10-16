@@ -20,7 +20,7 @@ bool GLRangeCameraEffectSimulator::doInitialize(
     // }
 
     connection.disconnect();
-    applyCameraEffect = camera->info()->get("apply_camera_effect", false);
+    applyCameraEffect = rangeCamera->info()->get("apply_camera_effect", false);
     if (applyCameraEffect) {
         filter.readCameraInfo(rangeCamera->info());
         connection = rangeCamera->sigInfoChanged().connect(

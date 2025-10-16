@@ -14,13 +14,17 @@ public:
     LivoxMid360Plugin();
     virtual bool initialize() override;
     virtual bool finalize() override;
+
+private:
+    int simulatorHandle;
 };
 
 }
 
 
 LivoxMid360Plugin::LivoxMid360Plugin()
-    : Plugin("LivoxMid360")
+    : Plugin("LivoxMid360"),
+      simulatorHandle(-1)
 {
     require("GLVisionSimulator");
 }
@@ -28,7 +32,7 @@ LivoxMid360Plugin::LivoxMid360Plugin()
 
 bool LivoxMid360Plugin::initialize()
 {
-    GLVisionSensorSimulator::registerSimulator<LivoxMid360>(
+    simulatorHandle = GLVisionSensorSimulator::registerSimulator<LivoxMid360>(
         [](LivoxMid360* sensor){ return new GLLivoxMid360Simulator(sensor); });
 
     return true;
@@ -37,7 +41,7 @@ bool LivoxMid360Plugin::initialize()
 
 bool LivoxMid360Plugin::finalize()
 {
-    GLVisionSensorSimulator::unregisterSimulator<LivoxMid360>();
+    GLVisionSensorSimulator::unregisterSimulator<LivoxMid360>(simulatorHandle);
     return true;
 }
 

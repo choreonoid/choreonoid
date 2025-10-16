@@ -11,41 +11,63 @@ using namespace cnoid;
 
 namespace {
 
-std::map<std::type_index, std::function<GLVisionSensorSimulator*(VisionSensor*)>> factoryMap;
+struct FactoryEntry {
+    int id;
+    std::function<GLVisionSensorSimulator*(VisionSensor*)> factory;
+};
+
+std::map<std::type_index, std::list<FactoryEntry>> factoryMap;
+std::atomic<int> nextFactoryId{0};
 
 }
 
 
-void GLVisionSensorSimulator::registerSimulator_
+int GLVisionSensorSimulator::registerSimulator_
 (const std::type_info& sensorType, const std::function<GLVisionSensorSimulator*(VisionSensor* sensor)>& factory)
 {
-    factoryMap[sensorType] = factory;
+    int id = nextFactoryId++;
+    factoryMap[sensorType].push_back({id, factory});
+    return id;
 }
 
 
-void GLVisionSensorSimulator::unregisterSimulator_(const std::type_info& sensorType)
+void GLVisionSensorSimulator::unregisterSimulator_(const std::type_info& sensorType, int handle)
 {
-    factoryMap.erase(sensorType);
+    if(handle < 0) return;
+
+    auto it = factoryMap.find(sensorType);
+    if(it != factoryMap.end()) {
+        auto& list = it->second;
+        list.remove_if([handle](const FactoryEntry& entry) {
+            return entry.id == handle;
+        });
+        if(list.empty()) {
+            factoryMap.erase(it);
+        }
+    }
 }
 
 
 GLVisionSensorSimulator* GLVisionSensorSimulator::createSimulator(VisionSensor* sensor)
 {
     GLVisionSensorSimulator* simulator = nullptr;
-    
+
     sensor->forEachActualType(
         [sensor, &simulator](const std::type_info& type){
             auto it = factoryMap.find(type);
             if(it != factoryMap.end()){
-                auto& factory = it->second;
-                simulator = factory(sensor);
-                if(simulator){
-                    return true;
+                auto& list = it->second;
+                // Try factories from last to first (LIFO)
+                for(auto rit = list.rbegin(); rit != list.rend(); ++rit) {
+                    simulator = rit->factory(sensor);
+                    if(simulator){
+                        return true;
+                    }
                 }
             }
             return false;
         });
-                
+
     return simulator;
 }
 

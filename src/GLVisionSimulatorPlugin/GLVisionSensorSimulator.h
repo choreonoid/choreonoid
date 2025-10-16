@@ -17,15 +17,15 @@ class CNOID_EXPORT GLVisionSensorSimulator : public Referenced
 {
 public:
     template<class SensorType>
-    static void registerSimulator(std::function<GLVisionSensorSimulator*(SensorType* sensor)> factory){
-        registerSimulator_(
+    static int registerSimulator(std::function<GLVisionSensorSimulator*(SensorType* sensor)> factory){
+        return registerSimulator_(
             typeid(SensorType),
             [factory](VisionSensor* sensor){ return factory(static_cast<SensorType*>(sensor)); });
     }
-    
+
     template<class SensorType>
-    static void unregisterSimulator(){
-        unregisterSimulator_(typeid(SensorType));
+    static void unregisterSimulator(int handle){
+        unregisterSimulator_(typeid(SensorType), handle);
     }
     
     static GLVisionSensorSimulator* createSimulator(VisionSensor* sensor);
@@ -95,9 +95,9 @@ private:
     bool needToClearVisionDataByTurningOff_;
     bool isBestEffortMode;
 
-    static void registerSimulator_(
+    static int registerSimulator_(
         const std::type_info& sensorType, const std::function<GLVisionSensorSimulator*(VisionSensor* sensor)>& factory);
-    static void unregisterSimulator_(const std::type_info& sensorType);
+    static void unregisterSimulator_(const std::type_info& sensorType, int handle);
 };
 
 typedef ref_ptr<GLVisionSensorSimulator> GLVisionSensorSimulatorPtr;
