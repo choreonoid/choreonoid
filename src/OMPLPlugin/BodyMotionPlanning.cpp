@@ -17,6 +17,7 @@
 #include <ompl/geometric/planners/prm/PRM.h>
 #include <ompl/geometric/PathSimplifier.h>
 #include <ompl/util/Console.h>
+#include <ompl/config.h>
 #include <thread>
 #include <atomic>
 #include <mutex>
@@ -906,11 +907,24 @@ BodyMotionPlanning::Result BodyMotionPlanning::Impl::solveSegment
 
                     // Conservative parameters for general-purpose use
                     // These are tuned to be safe across different scenarios
+#if OMPL_VERSION_VALUE >= 1007000
+                    // OMPL 1.7.0+: shortcutPath was renamed to partialShortcutPath
+                    // NOTE: Consider using ropeShortcutPath() instead for OMPL 1.7.0+.
+                    // It is more efficient (deterministic vs random) and produces statistically
+                    // shorter paths. See: https://github.com/ompl/ompl/pull/1120
+                    bool pathChanged = simplifier.partialShortcutPath(*path,
+                                                              50,     // maxSteps - moderate attempts
+                                                              25,     // maxEmptySteps - stop if not productive
+                                                              0.25,   // rangeRatio - only look 1/4 of path
+                                                              0.01);  // snapToVertex - snap to existing vertices
+#else
+                    // OMPL 1.5.0/1.6.0: use shortcutPath
                     bool pathChanged = simplifier.shortcutPath(*path,
                                                               50,     // maxSteps - moderate attempts
                                                               25,     // maxEmptySteps - stop if not productive
                                                               0.25,   // rangeRatio - only look 1/4 of path
                                                               0.01);  // snapToVertex - snap to existing vertices
+#endif
 
                     if(pathChanged) {
                         anyPathChanged = true;
