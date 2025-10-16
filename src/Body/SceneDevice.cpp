@@ -31,10 +31,22 @@ SceneDeviceFactoryMap& getSceneDeviceFactories()
 
 void updatePerspectiveCamera(Camera* camera, SgPerspectiveCamera* sceneCamera)
 {
-    sceneCamera->setNearClipDistance(camera->nearClipDistance());
-    sceneCamera->setFarClipDistance(camera->farClipDistance());
-    sceneCamera->setFieldOfView(camera->fieldOfView());
-    sceneCamera->notifyUpdate();
+    bool updated = false;
+    if(sceneCamera->nearClipDistance() != camera->nearClipDistance()){
+        sceneCamera->setNearClipDistance(camera->nearClipDistance());
+        updated = true;
+    }
+    if(sceneCamera->farClipDistance() != camera->farClipDistance()){
+        sceneCamera->setFarClipDistance(camera->farClipDistance());
+        updated = true;
+    }
+    if(sceneCamera->fieldOfView() != camera->fieldOfView()){
+        sceneCamera->setFieldOfView(camera->fieldOfView());
+        updated = true;
+    }
+    if(updated){
+        sceneCamera->notifyUpdate();
+    }
 }
 
 
@@ -62,19 +74,56 @@ SceneDevice* createScenePerspectiveCamera(Device* device)
 
 void updateLight(Light* light, SgLight* sceneLight)
 {
-    sceneLight->on(light->on());
-    sceneLight->setColor(light->color());
-    sceneLight->setIntensity(light->intensity());
-    sceneLight->notifyUpdate();
+    bool updated = false;
+    if(sceneLight->on() != light->on()){
+        sceneLight->on(light->on());
+        updated = true;
+    }
+    if(sceneLight->color() != light->color()){
+        sceneLight->setColor(light->color());
+        updated = true;
+    }
+    if(sceneLight->intensity() != light->intensity()){
+        sceneLight->setIntensity(light->intensity());
+        updated = true;
+    }
+    if(updated){
+        sceneLight->notifyUpdate();
+    }
 }
 
 
 void updatePointLight(PointLight* light, SgPointLight* sceneLight)
 {
-    sceneLight->setConstantAttenuation(light->constantAttenuation());
-    sceneLight->setLinearAttenuation(light->linearAttenuation());
-    sceneLight->setQuadraticAttenuation(light->quadraticAttenuation());
-    updateLight(light, sceneLight);
+    bool updated = false;
+    if(sceneLight->constantAttenuation() != light->constantAttenuation()){
+        sceneLight->setConstantAttenuation(light->constantAttenuation());
+        updated = true;
+    }
+    if(sceneLight->linearAttenuation() != light->linearAttenuation()){
+        sceneLight->setLinearAttenuation(light->linearAttenuation());
+        updated = true;
+    }
+    if(sceneLight->quadraticAttenuation() != light->quadraticAttenuation()){
+        sceneLight->setQuadraticAttenuation(light->quadraticAttenuation());
+        updated = true;
+    }
+    // Update Light base class parameters
+    if(sceneLight->on() != light->on()){
+        sceneLight->on(light->on());
+        updated = true;
+    }
+    if(sceneLight->color() != light->color()){
+        sceneLight->setColor(light->color());
+        updated = true;
+    }
+    if(sceneLight->intensity() != light->intensity()){
+        sceneLight->setIntensity(light->intensity());
+        updated = true;
+    }
+    if(updated){
+        sceneLight->notifyUpdate();
+    }
 }
 
 
@@ -88,11 +137,52 @@ SceneDevice* createScenePointLight(Device* device)
 
 void updateSpotLight(SpotLight* light, SgSpotLight* sceneLight)
 {
-    sceneLight->setDirection(light->direction());
-    sceneLight->setBeamWidth(light->beamWidth());
-    sceneLight->setCutOffAngle(light->cutOffAngle());
-    sceneLight->setCutOffExponent(light->cutOffExponent());
-    updatePointLight(light, sceneLight);
+    bool updated = false;
+    if(sceneLight->direction() != light->direction()){
+        sceneLight->setDirection(light->direction());
+        updated = true;
+    }
+    if(sceneLight->beamWidth() != light->beamWidth()){
+        sceneLight->setBeamWidth(light->beamWidth());
+        updated = true;
+    }
+    if(sceneLight->cutOffAngle() != light->cutOffAngle()){
+        sceneLight->setCutOffAngle(light->cutOffAngle());
+        updated = true;
+    }
+    if(sceneLight->cutOffExponent() != light->cutOffExponent()){
+        sceneLight->setCutOffExponent(light->cutOffExponent());
+        updated = true;
+    }
+    // Update PointLight parameters
+    if(sceneLight->constantAttenuation() != light->constantAttenuation()){
+        sceneLight->setConstantAttenuation(light->constantAttenuation());
+        updated = true;
+    }
+    if(sceneLight->linearAttenuation() != light->linearAttenuation()){
+        sceneLight->setLinearAttenuation(light->linearAttenuation());
+        updated = true;
+    }
+    if(sceneLight->quadraticAttenuation() != light->quadraticAttenuation()){
+        sceneLight->setQuadraticAttenuation(light->quadraticAttenuation());
+        updated = true;
+    }
+    // Update Light base class parameters
+    if(sceneLight->on() != light->on()){
+        sceneLight->on(light->on());
+        updated = true;
+    }
+    if(sceneLight->color() != light->color()){
+        sceneLight->setColor(light->color());
+        updated = true;
+    }
+    if(sceneLight->intensity() != light->intensity()){
+        sceneLight->setIntensity(light->intensity());
+        updated = true;
+    }
+    if(updated){
+        sceneLight->notifyUpdate();
+    }
 }
 
 
