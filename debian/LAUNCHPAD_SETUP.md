@@ -121,7 +121,7 @@ sudo apt install dput devscripts git-buildpackage
 
 The script generates versions in this format:
 ```
-2.3.0~git20240814.abc1234~jammy~ppa1
+2.4.0~git20240814.abc1234~jammy~ppa1
 │     │            │        │     └── PPA revision
 │     │            │        └──────── Distribution
 │     │            └───────────────── Git commit hash
@@ -154,13 +154,13 @@ git commit -m "Your changes"
 
 ```bash
 # 1. Update changelog for release
-dch -v 2.3.0-1 "New release"
+dch -v 2.4.0-1 "New release"
 dch -r  # Finalize changelog
 
 # 2. Commit and tag
 git add debian/changelog
-git commit -m "Release version 2.3.0-1"
-git tag v2.3.0
+git commit -m "Release version 2.4.0-1"
+git tag v2.4.0
 
 # 3. Upload to PPA
 ./debian/upload-to-ppa.sh -p YOUR_USERNAME/choreonoid -d all -k YOUR_KEY_ID

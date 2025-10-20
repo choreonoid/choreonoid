@@ -66,12 +66,12 @@ sudo cowbuilder --create --distribution noble \
 
 #### Development Build (Default)
 Includes git commit information in the version number:
-- Version format: `2.3.0~git20250901.1713.202dedb8-1~jammy`
+- Version format: `2.4.0~git20250901.1713.202dedb8-1~jammy`
 - Useful for: Testing, continuous integration, daily builds
 
 #### Release Build (`-r`)
 Uses the version from debian/changelog as-is:
-- Version format: `2.3.0-1`
+- Version format: `2.4.0-1`
 - Useful for: Official releases, stable versions
 
 ## Examples
@@ -122,9 +122,9 @@ Uses the version from debian/changelog as-is:
 ### 2. Version Determination
 - **Development mode**: Generates version with git information
   - Format: `{base_version}~git{date}.{time}.{commit}-1~{distro}`
-  - Example: `2.3.0~git20250901.1713.202dedb8-1~jammy`
+  - Example: `2.4.0~git20250901.1713.202dedb8-1~jammy`
 - **Release mode**: Uses existing changelog version
-  - Example: `2.3.0-1`
+  - Example: `2.4.0-1`
 
 ### 3. Changelog Update
 - **Development builds**: Updates version with git information
@@ -172,14 +172,14 @@ Uses the version from debian/changelog as-is:
 
 ### Development Packages
 ```
-choreonoid_2.3.0~git20250901.1713.202dedb8-1~jammy_amd64.deb
+choreonoid_2.4.0~git20250901.1713.202dedb8-1~jammy_amd64.deb
            └────────────────┬────────────────┘ └─┬─┘ └─┬─┘
                      version with git info    distro arch
 ```
 
 ### Release Packages
 ```
-choreonoid_2.3.0-1_amd64.deb
+choreonoid_2.4.0-1_amd64.deb
            └──┬──┘ └─┬─┘
            version  arch
 ```
