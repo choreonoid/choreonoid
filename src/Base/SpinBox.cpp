@@ -8,7 +8,7 @@ SpinBox::SpinBox(QWidget* parent)
     : QSpinBox(parent)
 {
     setKeyboardTracking(false);
-    isEnterKeyEventConsumptionEnabled_ = true; // Default to consuming Enter key
+    isEnterKeyEventConsumptionEnabled_ = true;
 }
 
 
@@ -38,6 +38,8 @@ void SpinBox::keyPressEvent(QKeyEvent* event)
 {
     if(isEnterKeyEventConsumptionEnabled_){
         if(event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter){
+            interpretText();
+            QSpinBox::editingFinished();
             event->accept();
             return;
         }
