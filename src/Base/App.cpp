@@ -118,7 +118,12 @@ void onCtrl_C_Input(int)
     callLater(
         [](){
             ctrl_c_pressed = true;
-            MainWindow::instance()->close();
+            if(isNoWindowMode){
+                exitRequested = true;
+                QApplication::quit();
+            } else {
+                MainWindow::instance()->close();
+            }
         });
 }
 
