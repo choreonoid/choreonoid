@@ -19,6 +19,7 @@ qt6-base-dev \
 qt6-svg-dev \
 qt6-translations-l10n \
 libglu1-mesa-dev \
+libegl-dev \
 python3-dev \
 python3-numpy \
 libassimp-dev \

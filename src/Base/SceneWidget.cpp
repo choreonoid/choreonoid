@@ -753,7 +753,7 @@ void SceneWidget::Impl::initializeGL()
 
     if(renderer->initializeGL()){
         if(glslRenderer){
-            auto& vendor = glslRenderer->glVendor();
+            auto& vendor = glslRenderer->glVendorString();
             if(vendor.find("NVIDIA Corporation") != string::npos){
                 needToClearGLOnFrameBufferChange = true;
             }

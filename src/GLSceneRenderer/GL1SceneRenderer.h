@@ -26,7 +26,9 @@ public:
     virtual double projectedPixelSizeRatio(const Vector3& position) const override;
     virtual bool initializeGL() override;
     virtual void flushGL() override;
-    virtual const std::string& glVendor() const override;
+    virtual const std::string& glVersionString() const override;
+    virtual const std::string& glVendorString() const override;
+    virtual const std::string& glRendererString() const override;
     virtual void setViewport(int x, int y, int width, int height) override;
     virtual void updateViewportInformation() override;
 

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <stdio.h>
 #include "gl_core_3_3.h"
 
 #if defined(__APPLE__)
@@ -77,10 +78,24 @@ static PROC WinGetProcAddress(const char *name)
 	#else
 		#if defined(__sgi) || defined(__sun)
 			#define IntGetProcAddress(name) SunGetProcAddress(name)
-		#else /* GLX */
+		#else /* GLX / EGL */
 		    #include <GL/glx.h>
+		    #include <EGL/egl.h>
 
-			#define IntGetProcAddress(name) (*glXGetProcAddressARB)((const GLubyte*)name)
+			// Track loading state: 0=not loaded, 1=loaded with EGL, -1=loaded with GLX
+			static int g_functionsLoaded = 0;
+
+			static void* IntGetProcAddressGLX(const char* name)
+			{
+				return (*glXGetProcAddressARB)((const GLubyte*)name);
+			}
+
+			static void* IntGetProcAddressEGL(const char* name)
+			{
+				return eglGetProcAddress(name);
+			}
+
+			#define IntGetProcAddress(name) IntGetProcAddressGLX(name)
 		#endif
 	#endif
 #endif
@@ -1208,22 +1223,85 @@ static void ProcExtsFromExtList(void)
 
 int ogl_LoadFunctions()
 {
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__sgi) && !defined(__sun)
+	// Check if already loaded
+	if(g_functionsLoaded != 0) {
+		if(g_functionsLoaded == 1) {
+			// Already loaded with EGL, cannot reload with GLX
+			fprintf(stderr, "ERROR: OpenGL functions already loaded with EGL, cannot reload with GLX\n");
+			return ogl_LOAD_FAILED;
+		}
+		// Already loaded with GLX, return success
+		return ogl_LOAD_SUCCEEDED;
+	}
+#endif
+
 	int numFailed = 0;
 	ClearExtensionVars();
-	
+
 	_ptrc_glGetIntegerv = (void (CODEGEN_FUNCPTR *)(GLenum, GLint *))IntGetProcAddress("glGetIntegerv");
 	if(!_ptrc_glGetIntegerv) return ogl_LOAD_FAILED;
 	_ptrc_glGetStringi = (const GLubyte * (CODEGEN_FUNCPTR *)(GLenum, GLuint))IntGetProcAddress("glGetStringi");
 	if(!_ptrc_glGetStringi) return ogl_LOAD_FAILED;
-	
+
 	ProcExtsFromExtList();
 	numFailed = Load_Version_3_3();
-	
+
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__sgi) && !defined(__sun)
+	if(numFailed == 0) {
+		g_functionsLoaded = -1;  // Mark as loaded with GLX
+	}
+#endif
+
 	if(numFailed == 0)
 		return ogl_LOAD_SUCCEEDED;
 	else
 		return ogl_LOAD_SUCCEEDED + numFailed;
 }
+
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__sgi) && !defined(__sun)
+int ogl_LoadFunctionsEGL()
+{
+	// Check if already loaded
+	if(g_functionsLoaded != 0) {
+		if(g_functionsLoaded == -1) {
+			// Already loaded with GLX, cannot reload with EGL
+			fprintf(stderr, "ERROR: OpenGL functions already loaded with GLX, cannot reload with EGL\n");
+			return ogl_LOAD_FAILED;
+		}
+		// Already loaded with EGL, return success
+		return ogl_LOAD_SUCCEEDED;
+	}
+
+	int numFailed = 0;
+	ClearExtensionVars();
+
+	// Temporarily redefine IntGetProcAddress to use EGL
+	#undef IntGetProcAddress
+	#define IntGetProcAddress(name) IntGetProcAddressEGL(name)
+
+	_ptrc_glGetIntegerv = (void (CODEGEN_FUNCPTR *)(GLenum, GLint *))IntGetProcAddress("glGetIntegerv");
+	if(!_ptrc_glGetIntegerv) return ogl_LOAD_FAILED;
+	_ptrc_glGetStringi = (const GLubyte * (CODEGEN_FUNCPTR *)(GLenum, GLuint))IntGetProcAddress("glGetStringi");
+	if(!_ptrc_glGetStringi) return ogl_LOAD_FAILED;
+
+	ProcExtsFromExtList();
+	numFailed = Load_Version_3_3();
+
+	// Restore IntGetProcAddress to GLX
+	#undef IntGetProcAddress
+	#define IntGetProcAddress(name) IntGetProcAddressGLX(name)
+
+	if(numFailed == 0) {
+		g_functionsLoaded = 1;  // Mark as loaded with EGL
+	}
+
+	if(numFailed == 0)
+		return ogl_LOAD_SUCCEEDED;
+	else
+		return ogl_LOAD_SUCCEEDED + numFailed;
+}
+#endif
 
 static int g_major_version = 0;
 static int g_minor_version = 0;

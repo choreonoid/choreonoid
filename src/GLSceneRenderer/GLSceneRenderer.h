@@ -40,7 +40,10 @@ public:
 
     virtual void setDefaultFramebufferObject(unsigned int id);
 
-    virtual const std::string& glVendor() const = 0;
+    virtual const std::string& glVersionString() const = 0;
+    virtual const std::string& glslVersionString() const;
+    virtual const std::string& glVendorString() const = 0;
+    virtual const std::string& glRendererString() const = 0;
 
     virtual void setViewport(int x, int y, int width, int height) = 0;
 
@@ -131,11 +134,16 @@ public:
     [[deprecated("Use setNormalVisualizationEnabled and setNormaliVisualizationLength.")]]
     void showNormalVectors(double length);
 
+    // EGL/GLX selection (Linux only)
+    void setUseEGL(bool on);
+    bool isUsingEGL() const;
+
 private:
     Viewport viewport_;
     float aspectRatio_;
     float devicePixelRatio_;
-    
+    bool useEGL_;
+
     class Impl;
     Impl* impl;
 };

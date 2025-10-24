@@ -31,6 +31,8 @@ if(MSVC)
   set(libraries ${libraries} PUBLIC general glu32 opengl32)
 else()
   set(libraries ${libraries} PUBLIC OpenGL::GLU)
+  # Link EGL library for Linux/Unix platforms (required by gl_core_3_3.c)
+  set(libraries ${libraries} PRIVATE EGL)
 endif()
 
 if(CNOID_ENABLE_FREE_TYPE)

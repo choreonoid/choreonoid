@@ -461,9 +461,9 @@ public:
     vector<std::function<void(GLSLSceneRenderer* renderer)>> newExtendFunctions;
 
     string glVersionString;
+    string glslVersionString;
     string glVendorString;
     string glRendererString;
-    string glslVersionString;
 
     Impl(GLSLSceneRenderer* self);
     ~Impl();
@@ -942,17 +942,27 @@ bool GLSLSceneRenderer::initializeGL()
 
 bool GLSLSceneRenderer::Impl::initializeGL()
 {
-    if(ogl_LoadFunctions() == ogl_LOAD_FAILED){
-        return false;
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__sgi) && !defined(__sun)
+    // Load OpenGL functions using EGL or GLX based on renderer setting
+    if(self->isUsingEGL()){
+        if(ogl_LoadFunctionsEGL() == ogl_LOAD_FAILED){
+            return false;
+        }
+    } else
+#endif
+    {
+        if(ogl_LoadFunctions() == ogl_LOAD_FAILED){
+            return false;
+        }
     }
 
     GLint major, minor;
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
     glVersionString = (const char*)glGetString(GL_VERSION);
+    glslVersionString = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
     glVendorString = (const char*)glGetString(GL_VENDOR);
     glRendererString = (const char*)glGetString(GL_RENDERER);
-    glslVersionString = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
 
     os() << formatR(_("OpenGL {0}.{1} (GLSL {2}) is available for the \"{3}\" view.\n"),
                     major, minor, glslVersionString, self->name());
@@ -1067,9 +1077,27 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
 }
 
 
-const std::string& GLSLSceneRenderer::glVendor() const
+const std::string& GLSLSceneRenderer::glVersionString() const
+{
+    return impl->glVersionString;
+}
+
+
+const std::string& GLSLSceneRenderer::glslVersionString() const
+{
+    return impl->glslVersionString;
+}
+
+
+const std::string& GLSLSceneRenderer::glVendorString() const
 {
     return impl->glVendorString;
+}
+
+
+const std::string& GLSLSceneRenderer::glRendererString() const
+{
+    return impl->glRendererString;
 }
 
 
@@ -1082,6 +1110,9 @@ void GLSLSceneRenderer::setDefaultFramebufferObject(unsigned int id)
 
 void GLSLSceneRenderer::Impl::initializeDepthTexture()
 {
+    // Bind the default framebuffer object
+    glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
+
     if(!depthTexture){
         glGenTextures(1, &depthTexture);
         glActiveTexture(GL_TEXTURE0 + DepthTextureUnit);

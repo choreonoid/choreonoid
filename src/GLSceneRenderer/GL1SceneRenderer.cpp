@@ -502,9 +502,21 @@ void GL1SceneRenderer::flushGL()
 }
 
 
-const std::string& GL1SceneRenderer::glVendor() const
+const std::string& GL1SceneRenderer::glVersionString() const
+{
+    return impl->glVersionString;
+}
+
+
+const std::string& GL1SceneRenderer::glVendorString() const
 {
     return impl->glVendorString;
+}
+
+
+const std::string& GL1SceneRenderer::glRendererString() const
+{
+    return impl->glRendererString;
 }
 
 

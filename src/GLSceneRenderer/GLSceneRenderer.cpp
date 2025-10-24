@@ -26,6 +26,7 @@ public:
     SgGroupPtr scene;
     Vector3f backgroundColor;
     Vector3f defaultColor;
+    string glslVersionString;
     ostream* os_;
     ostream& os(){ return *os_; };
 
@@ -62,6 +63,7 @@ GLSceneRenderer* GLSceneRenderer::create(SgGroup* root)
 
 
 GLSceneRenderer::GLSceneRenderer(SgGroup* sceneRoot)
+    : useEGL_(false)
 {
     if(!sceneRoot){
         sceneRoot = new SgGroup;
@@ -132,6 +134,12 @@ void GLSceneRenderer::clearGL()
 void GLSceneRenderer::setDefaultFramebufferObject(unsigned int /* id */)
 {
 
+}
+
+
+const std::string& GLSceneRenderer::glslVersionString() const
+{
+    return impl->glslVersionString;
 }
 
 
@@ -302,4 +310,16 @@ void GLSceneRenderer::showNormalVectors(double length)
 {
     setNormalVisualizationEnabled(length > 0.0);
     setNormalVisualizationLength(length);
+}
+
+
+void GLSceneRenderer::setUseEGL(bool on)
+{
+    useEGL_ = on;
+}
+
+
+bool GLSceneRenderer::isUsingEGL() const
+{
+    return useEGL_;
 }
