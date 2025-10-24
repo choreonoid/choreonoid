@@ -76,7 +76,8 @@ GLVisionSensorSimulator::GLVisionSensorSimulator(VisionSensor* visionSensor)
     : visionSimulatorItem_(nullptr),
       simBody(nullptr),
       bodyIndex(0),
-      visionSensor_(visionSensor)
+      visionSensor_(visionSensor),
+      isOpenGLInfoOutputEnabled_(false)
 {
 
 }

@@ -118,7 +118,7 @@ public:
     double maxLatency;
     CloneMap cloneMap;
     bool isAntiAliasingEnabled;
-        
+
     Impl(GLVisionSimulatorItem* self);
     Impl(GLVisionSimulatorItem* self, const Impl& org);
     ~Impl();
@@ -545,10 +545,17 @@ bool GLVisionSimulatorItem::Impl::initializeSimulation(SimulatorItem* simulatorI
     */
 #endif
     
+    bool isOpenGLInfoOutputSucceeded = false;
     auto it = sensorSimulators.begin();
     while(it != sensorSimulators.end()){
         GLVisionSensorSimulator* sensorSimulator = it->get();
+        // Enable OpenGL info output for the first sensor or after previous initialization failures
+        sensorSimulator->setOpenGLInfoOutputEnabled(!isOpenGLInfoOutputSucceeded);
         if(sensorSimulator->initialize(simBodies)){
+            // Mark OpenGL info as successfully output if it was enabled
+            if(!isOpenGLInfoOutputSucceeded){
+                isOpenGLInfoOutputSucceeded = true;
+            }
             ++it;
         } else {
             os << formatR(_("{0}: Target sensor \"{1}\" cannot be initialized.\n"),

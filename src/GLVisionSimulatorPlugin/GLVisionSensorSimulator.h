@@ -66,6 +66,8 @@ public:
     void isRendering(bool on) { isRendering_ = on; }
     bool needToClearVisionDataByTurningOff() { return needToClearVisionDataByTurningOff_; }
     void needToClearVisionDataByTurningOff(bool on) { needToClearVisionDataByTurningOff_ = on; }
+    bool isOpenGLInfoOutputEnabled() const { return isOpenGLInfoOutputEnabled_; }
+    void setOpenGLInfoOutputEnabled(bool on) { isOpenGLInfoOutputEnabled_ = on; }
 
 protected:
     GLVisionSensorSimulator(VisionSensor* sensor);
@@ -94,6 +96,7 @@ private:
     bool isRendering_;  // only updated and referred to in the simulation thread
     bool needToClearVisionDataByTurningOff_;
     bool isBestEffortMode;
+    bool isOpenGLInfoOutputEnabled_;
 
     static int registerSimulator_(
         const std::type_info& sensorType, const std::function<GLVisionSensorSimulator*(VisionSensor* sensor)>& factory);

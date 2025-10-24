@@ -19,6 +19,10 @@ set(sources
   FisheyeLensConverter.cpp
 )
 
+if(UNIX)
+  list(APPEND sources ../GLSceneRenderer/gl_core_3_3.c)
+endif()
+
 set(headers
   GLVisionSimulatorItem.h
   GLVisionSensorSimulator.h
@@ -28,6 +32,11 @@ set(headers
 choreonoid_make_gettext_mo_files(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})
 target_link_libraries(${target} PUBLIC CnoidBodyPlugin)
+
+if(UNIX)
+  # Link EGL library for Linux/Unix platforms (required by gl_core_3_3.c and GLVisionSensorRenderingScreen.cpp)
+  target_link_libraries(${target} PRIVATE EGL)
+endif()
 
 if(ENABLE_PYTHON)
   add_subdirectory(pybind11)
