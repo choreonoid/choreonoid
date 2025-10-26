@@ -85,7 +85,10 @@ GLVisionSensorSimulator::GLVisionSensorSimulator(VisionSensor* visionSensor)
 
 GLVisionSensorSimulator::~GLVisionSensorSimulator()
 {
-
+    // Stop rendering thread before destroying screens to prevent race condition
+    if(sharedScene_){
+        sharedScene_->terminate();
+    }
 }
 
 

@@ -14,6 +14,12 @@ GLVisionSensorScene::GLVisionSensorScene()
 }
 
 
+GLVisionSensorScene::~GLVisionSensorScene()
+{
+    terminate();
+}
+
+
 void GLVisionSensorScene::addBody(Body* body, CloneMap& cloneMap)
 {
     auto sceneBody = new SceneBody(body);
@@ -80,8 +86,14 @@ void GLVisionSensorScene::terminate()
 {
     {
         std::lock_guard<std::mutex> lock(renderingMutex_);
+        if(isTerminationRequested){
+            return;  // Already terminated
+        }
         isTerminationRequested = true;
     }
     renderingCondition_.notify_all();
-    renderingThread_.wait();
+
+    if(renderingThread_.isRunning()){
+        renderingThread_.wait();
+    }
 }

@@ -16,6 +16,7 @@ class GLVisionSensorScene : public Referenced
 {
 public:
     GLVisionSensorScene();
+    ~GLVisionSensorScene();
     void addBody(Body* body, CloneMap& cloneMap);
     void updateScene(double currentTime);
     void startConcurrentRendering();
