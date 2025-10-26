@@ -253,6 +253,20 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     QCoreApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton);
 #endif
 
+    // Check for --no-window option and set Qt platform to offscreen to avoid X11 dependency
+    // This prevents Qt from using the Xcb platform which would crash if X11 connection is lost
+    // (e.g., when xvfb-run terminates Xvfb before choreonoid exits)
+    // Note: This is only needed on Linux/Unix systems where EGL headless rendering is supported.
+    // Windows does not support OpenGL context creation with the offscreen plugin.
+#ifdef Q_OS_UNIX
+    for(int i = 1; i < argc; ++i){
+        if(strcmp(argv[i], "--no-window") == 0){
+            qputenv("QT_QPA_PLATFORM", "offscreen");
+            break;
+        }
+    }
+#endif
+
     qapplication = new QApplication(argc, argv);
     qapplication->setApplicationName(appName.c_str());
     qapplication->setOrganizationName(organization.c_str());
