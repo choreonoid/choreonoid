@@ -8,7 +8,12 @@ function(choreonoid_add_lua_module target)
   set_target_properties(${target} PROPERTIES VERSION ${CHOREONOID_VERSION_MAJOR}.${CHOREONOID_VERSION_MINOR})
   choreonoid_set_target_common_properties(${target})
   choreonoid_set_header_files(${ARGN} INSTALL_HEADERS)
-    
+
+  # Check for unresolved symbols in Lua modules
+  if(UNIX AND NOT APPLE)
+    target_link_options(${target} PRIVATE "LINKER:--no-undefined")
+  endif()
+
   set_target_properties(${target}  PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_LUA_SUBDIR}/cnoid
     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_LUA_SUBDIR}/cnoid

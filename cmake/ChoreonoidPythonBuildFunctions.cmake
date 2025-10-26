@@ -58,6 +58,11 @@ function(choreonoid_add_python_module)
     endif()
   endif()
 
+  # Check for unresolved symbols in Python modules
+  if(UNIX AND NOT APPLE)
+    target_link_options(${target} PRIVATE "LINKER:--no-undefined")
+  endif()
+
   set_target_properties(${target}  PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR}/cnoid
     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR}/cnoid

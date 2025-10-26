@@ -75,6 +75,10 @@ function(choreonoid_add_library target)
     if(CHOREONOID_ENABLE_INSTALL_RPATH AND (NOT is_static))
       set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
     endif()
+    # Check for unresolved symbols in shared libraries
+    if(NOT is_static AND NOT APPLE)
+      target_link_options(${target} PRIVATE "LINKER:--no-undefined")
+    endif()
   endif()
 
   set_target_properties(${target} PROPERTIES
@@ -124,6 +128,11 @@ function(choreonoid_add_plugin target)
     target_link_libraries(${target} PUBLIC CnoidBase)
   endif()
   choreonoid_set_target_common_properties(${target})
+
+  # Check for unresolved symbols in plugins
+  if(UNIX AND NOT APPLE)
+    target_link_options(${target} PRIVATE "LINKER:--no-undefined")
+  endif()
 
   set_target_properties(${target} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR}
