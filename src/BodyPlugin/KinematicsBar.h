@@ -38,9 +38,6 @@ public:
 
     int collisionDetectionPriority() const { return collisionDetectionPriority_; }
 
-    bool isCollisionLinkHighlihtMode() const;
-    SignalProxy<void()> sigCollisionVisualizationChanged();
-
 protected:
     virtual bool storeState(Archive& archive) override;
     virtual bool restoreState(const Archive& archive) override;

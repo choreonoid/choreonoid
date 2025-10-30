@@ -47,9 +47,6 @@ public:
     ToolButton* jointPositionLimitToggle;
     ToolButton* penetrationBlockToggle;
 
-    ToolButton* collisionLinkHighlightToggle;
-    Signal<void()> sigCollisionVisualizationChanged;            
-
     KinematicsBarSetupDialog* setup;
 
     Impl(KinematicsBar* self);
@@ -113,12 +110,6 @@ KinematicsBar::Impl::Impl(KinematicsBar* self)
     penetrationBlockToggle = self->addToggleButton(":/Body/icon/block.svg");
     penetrationBlockToggle->setToolTip(_("Penetration block mode"));
     penetrationBlockToggle->setChecked(false);
-
-    collisionLinkHighlightToggle = self->addToggleButton(":/Body/icon/collisionoutline.svg");
-    collisionLinkHighlightToggle->setToolTip(_("Highlight colliding links"));
-    collisionLinkHighlightToggle->setChecked(false);
-    collisionLinkHighlightToggle->sigToggled().connect(
-        [this](bool){ sigCollisionVisualizationChanged(); });
 
     self->addButton(":/Base/icon/setup.svg")
         ->sigClicked().connect([this](){ setup->show(); });
@@ -208,18 +199,6 @@ double KinematicsBar::penetrationBlockDepth() const
 }
 
 
-bool KinematicsBar::isCollisionLinkHighlihtMode() const
-{
-    return impl->collisionLinkHighlightToggle->isChecked();
-}
-
-
-SignalProxy<void()> KinematicsBar::sigCollisionVisualizationChanged()
-{
-    return impl->sigCollisionVisualizationChanged;
-}
-
-
 void KinematicsBar::Impl::onLazyCollisionDetectionModeToggled()
 {
     if(setup->lazyCollisionDetectionModeCheck.isChecked()){
@@ -244,7 +223,6 @@ bool KinematicsBar::Impl::storeState(Archive& archive)
     archive.write("enablePositionDragger", draggerToggle->isChecked());
     archive.write("penetrationBlock", penetrationBlockToggle->isChecked());
     //archive.write("footSnap", footSnapToggle->isChecked());
-    archive.write("collisionLinkHighlight", collisionLinkHighlightToggle->isChecked());
     setup->storeState(archive);
     return true;
 }
@@ -291,8 +269,6 @@ bool KinematicsBar::Impl::restoreState(const Archive& archive)
     draggerToggle->setChecked(archive.get("enablePositionDragger", draggerToggle->isChecked()));
     penetrationBlockToggle->setChecked(archive.get("penetrationBlock", penetrationBlockToggle->isChecked()));
     //footSnapToggle->setChecked(archive.get("footSnap", footSnapToggle->isChecked()));
-    collisionLinkHighlightToggle->setChecked(
-        archive.get("collisionLinkHighlight", collisionLinkHighlightToggle->isChecked()));
     setup->restoreState(archive);
     
     return true;
