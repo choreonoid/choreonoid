@@ -240,6 +240,7 @@ public:
     SceneWidgetEventHandler* activeCustomModeHandler;
     int activeCustomModeId;
 
+    bool isCollisionHighlightingEnabled;
     bool collisionLineVisibility;
 
     DisplayValueFormat* valueFormat;
@@ -302,6 +303,7 @@ public:
 
     void onCurrentCameraChanged();
     int visiblePolygonElements() const;
+    void setCollisionHighlightingEnabled(bool on);
     void setCollisionLineVisibility(bool on);
     void setVisiblePolygonElements(int elementFlags);
     void setCameraPosition(const Vector3& position, double transitionTime);
@@ -593,6 +595,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     timerToRenderNormallyAfterInteractiveCameraPositionChange.sigTimeout().connect(
         [&](){ tryToResumeNormalRendering(); });
 
+    isCollisionHighlightingEnabled = false;
     collisionLineVisibility = false;
 
     valueFormat = DisplayValueFormat::master();
@@ -2609,6 +2612,29 @@ bool SceneWidget::isHighlightingEnabled() const
 }
 
 
+void SceneWidget::setCollisionHighlightingEnabled(bool on)
+{
+    impl->setCollisionHighlightingEnabled(on);
+}
+
+
+void SceneWidget::Impl::setCollisionHighlightingEnabled(bool on)
+{
+    if(on != isCollisionHighlightingEnabled){
+        isCollisionHighlightingEnabled = on;
+        renderer->setProperty(SceneRenderer::PropertyKey("CollisionHighlighting"), on);
+        update();
+        emitSigStateChangedLater();
+    }
+}
+
+
+bool SceneWidget::isCollisionHighlightingEnabled() const
+{
+    return impl->isCollisionHighlightingEnabled;
+}
+
+
 void SceneWidget::setCollisionLineVisibility(bool on)
 {
     impl->setCollisionLineVisibility(on);
@@ -3047,6 +3073,7 @@ bool SceneWidget::Impl::storeState(Archive& archive)
     }
 
     archive.write("highlighting", isHighlightingEnabled);
+    archive.write("collision_highlighting", isCollisionHighlightingEnabled);
     archive.write("collision_lines", collisionLineVisibility);
 
     ListingPtr cameraListing = new Listing;
@@ -3162,6 +3189,7 @@ bool SceneWidget::Impl::restoreState(const Archive& archive)
     }
 
     archive.read("highlighting", isHighlightingEnabled);
+    setCollisionHighlightingEnabled(archive.get("collision_highlighting", isCollisionHighlightingEnabled));
     setCollisionLineVisibility(archive.get({"collision_lines", "collisionLines"}, collisionLineVisibility));
     
     const Listing& cameraListing = *archive.findListing("cameras");

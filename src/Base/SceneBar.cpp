@@ -38,6 +38,7 @@ enum ElementId {
     VisualModelToggle = 10,
     ModelTypeFlipButton = 11,
     CollisionModelToggle = 12,
+    CollisionHighlightToggle = 15,
     CollisionLineToggle = 13,
     ConfigButton = 14,
 
@@ -72,6 +73,7 @@ public:
     ToolButton* highlightToggle;
     ToolButton* modelTypeFlipButton;
     ToolButton* collisionModelToggle;
+    ToolButton* collisionHighlightToggle;
     ToolButton* collisionLineToggle;
 
     bool isViewButtonSetEnabled;
@@ -100,6 +102,7 @@ public:
     void onHighlightingToggled(bool on);
     void flipVisibleModels();
     void updateCollisionModelVisibility();
+    void onCollisionHighlightToggled(bool on);
     void onCollisionLineButtonToggled(bool on);
     void enableViewButtonSet();
     void onViewButtonClicked(ElementId button);
@@ -224,6 +227,10 @@ void SceneBar::Impl::initialize()
     collisionModelToggle = self->addToggleButton(":/Base/icon/collisionshape.svg", CollisionModelToggle);
     collisionModelToggle->setToolTip(_("Show the collision detection models"));
     collisionModelToggle->sigToggled().connect([this](bool){ updateCollisionModelVisibility();});
+
+    collisionHighlightToggle = self->addToggleButton(":/Base/icon/collision-highlight.svg", CollisionHighlightToggle);
+    collisionHighlightToggle->setToolTip(_("Toggle the collision highlighting"));
+    collisionHighlightToggle->sigToggled().connect([this](bool on){ onCollisionHighlightToggled(on); });
 
     collisionLineToggle = self->addToggleButton(":/Base/icon/collisionlines.svg", CollisionLineToggle);
     collisionLineToggle->setToolTip(_("Toggle the collision line visibility"));
@@ -387,6 +394,10 @@ void SceneBar::Impl::onSceneWidgetStateChanged(SceneWidget* sceneWidget)
     highlightToggle->blockSignals(true);
     highlightToggle->setChecked(sceneWidget->isHighlightingEnabled());
     highlightToggle->blockSignals(false);
+
+    collisionHighlightToggle->blockSignals(true);
+    collisionHighlightToggle->setChecked(sceneWidget->isCollisionHighlightingEnabled());
+    collisionHighlightToggle->blockSignals(false);
     
     collisionLineToggle->blockSignals(true);
     collisionLineToggle->setChecked(sceneWidget->collisionLineVisibility());
@@ -561,6 +572,14 @@ void SceneBar::Impl::updateCollisionModelVisibility()
     sceneWidget->renderer()->setProperty(
         SceneRenderer::PropertyKey("collisionDetectionModelVisibility"), mode);
     sceneWidget->renderScene();
+}
+
+
+void SceneBar::Impl::onCollisionHighlightToggled(bool on)
+{
+    sceneViewConnections.block();
+    currentSceneView->sceneWidget()->setCollisionHighlightingEnabled(on);
+    sceneViewConnections.unblock();
 }
 
 

@@ -30,6 +30,7 @@
     <file>icon/shapeflip.svg</file>
     <file>icon/collisionshape.svg</file>
     <file>icon/collisionlines.svg</file>
+    <file>icon/collision-highlight.svg</file>
 
     <file>icon/frontview.svg</file>
     <file>icon/backview.svg</file>

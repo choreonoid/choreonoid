@@ -112,6 +112,8 @@ public:
     void setHighlightingEnabled(bool on);
     bool isHighlightingEnabled() const;
 
+    void setCollisionHighlightingEnabled(bool on);
+    bool isCollisionHighlightingEnabled() const;
     void setCollisionLineVisibility(bool on);
     bool collisionLineVisibility() const;
 
