@@ -18,7 +18,6 @@ colors:
   InnerBlack: &InnerBlack
     material:
       diffuse: [ 0.2, 0.2, 0.2 ]
-      ambientIntensity: 0.2
 
 links:
   -
