@@ -128,11 +128,12 @@ void main()
         if(isTextureEnabled){
             vec4 texColor4 = texture(colorTexture, inData.texCoord);
             vec3 texColor = vec3(texColor4);
+            vec3 modulatedColor = texColor * diffuseColor;
             alpha2 = alpha * texColor4.a;
-            color = emissionColor * texColor;
+            color = emissionColor * modulatedColor;
             for(int i=0; i < numLights; ++i){
-                reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], texColor);
-                color += lights[i].ambientIntensity * ambientColor * texColor;
+                reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], modulatedColor);
+                color += lights[i].ambientIntensity * ambientColor * modulatedColor;
             }
         } else {
             vec3 baseColor;
