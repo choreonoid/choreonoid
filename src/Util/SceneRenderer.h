@@ -3,6 +3,8 @@
 
 #include "SceneGraph.h"
 #include "PolymorphicSceneNodeFunctionSet.h"
+#include <vector>
+#include <cmath>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -107,22 +109,40 @@ public:
         int id;
     public:
         PropertyKey(const std::string& key);
-        friend class SceneRenderer::Impl;
+        friend class SceneRenderer;
     };
-    
+
     void setProperty(PropertyKey key, bool value);
     void setProperty(PropertyKey key, int value);
     void setProperty(PropertyKey key, double value);
-    bool property(PropertyKey key, bool defaultValue) const;
-    int property(PropertyKey key, int defaultValue) const;
-    double property(PropertyKey key, double defaultValue) const;
+
+    template<typename T>
+    inline T property(PropertyKey key, T defaultValue) const {
+        static_assert(
+            std::is_same<T, bool>::value ||
+            std::is_same<T, int>::value ||
+            std::is_same<T, double>::value,
+            "Property type must be bool, int, or double"
+        );
+        if (key.id >= static_cast<int>(properties_.size())) {
+            return defaultValue;
+        }
+        double val = properties_[key.id];
+        if (std::isnan(val)) {
+            return defaultValue;
+        }
+        return static_cast<T>(val);
+    }
 
 protected:
     virtual void doRender() = 0;
     virtual bool doPick(int x, int y);
 
 private:
+    void setPropertyImpl(PropertyKey key, double value);
+
     Impl* impl;
+    std::vector<double> properties_;
 };
 
 }

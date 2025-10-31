@@ -180,9 +180,6 @@ public:
     std::mutex newExtensionMutex;
     vector<std::function<void(SceneRenderer* renderer)>> newExtendFunctions;
 
-    typedef stdx::variant<bool, int, double> PropertyValue;
-    vector<PropertyValue> properties;
-    
     Impl(SceneRenderer* self);
 
     void initializePreproNodeFunctions();
@@ -195,29 +192,6 @@ public:
     bool setCurrentCamera(SgCamera* camera);
     bool getSimplifiedCameraPathStrings(int cameraIndex, std::vector<std::string>& out_pathStrings);
     void onExtensionAdded(std::function<void(SceneRenderer* renderer)> func);
-
-    template<class ValueType>
-    void setProperty(SceneRenderer::PropertyKey key, ValueType value){
-        const int id = key.id;
-        if(id >= static_cast<int>(properties.size())){
-            properties.resize(id + 1);
-        }
-        properties[id] = value;
-    }
-
-    template<class ValueType>
-    ValueType property(SceneRenderer::PropertyKey key, int which, ValueType defaultValue){
-        const int id = key.id;
-        if(id >= static_cast<int>(properties.size())){
-            properties.resize(id + 1);
-            return defaultValue;
-        }
-        const PropertyValue& value = properties[id];
-        if(stdx::get_variant_index(value) == which){
-            return stdx::get<ValueType>(value);
-        }
-        return defaultValue;
-    }    
 };
 
 }
@@ -314,39 +288,31 @@ bool SceneRenderer::isRenderingPickingImage() const
 }
 
 
+void SceneRenderer::setPropertyImpl(PropertyKey key, double value)
+{
+    const int id = key.id;
+    if (id >= static_cast<int>(properties_.size())) {
+        properties_.resize(id + 1, std::numeric_limits<double>::quiet_NaN());
+    }
+    properties_[id] = value;
+}
+
+
 void SceneRenderer::setProperty(PropertyKey key, bool value)
 {
-    impl->setProperty(key, value);
+    setPropertyImpl(key, value ? 1.0 : 0.0);
 }
 
 
 void SceneRenderer::setProperty(PropertyKey key, int value)
 {
-    impl->setProperty(key, value);
+    setPropertyImpl(key, static_cast<double>(value));
 }
 
 
 void SceneRenderer::setProperty(PropertyKey key, double value)
 {
-    impl->setProperty(key, value);
-}
-
-
-bool SceneRenderer::property(PropertyKey key, bool defaultValue) const
-{
-    return impl->property(key, 0, defaultValue);
-}
-
-
-int SceneRenderer::property(PropertyKey key, int defaultValue) const
-{
-    return impl->property(key, 1, defaultValue);
-}
-
-
-double SceneRenderer::property(PropertyKey key, double defaultValue) const
-{
-    return impl->property(key, 2, defaultValue);
+    setPropertyImpl(key, value);
 }
 
 
