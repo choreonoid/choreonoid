@@ -3,9 +3,9 @@
 
 #include "ValueTree.h"
 #include "EigenUtil.h"
-#include "Format.h"
 #include <functional>
 #include <initializer_list>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -17,7 +17,7 @@ void readEx(const Listing* listing, Eigen::MatrixBase<Derived>& x)
     const int nc = x.cols();
     if(listing->size() != nr * nc){
         listing->throwException(
-            formatC("A {0} x {1} matrix / vector value is expected", nr, nc));
+            "A " + std::to_string(nr) + " x " + std::to_string(nc) + " matrix / vector value is expected");
     }
     int index = 0;
     for(int i=0; i < nr; ++i){
