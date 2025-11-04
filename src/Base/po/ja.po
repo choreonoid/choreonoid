@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-24 16:38+0900\n"
+"POT-Creation-Date: 2025-11-04 14:03+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -219,11 +219,11 @@ msgstr "ラジアン"
 msgid "Angle value precision (number of decimals)"
 msgstr "角度値精度（小数点以下桁数）"
 
-msgid "Left-handed"
-msgstr "左手系"
-
 msgid "Right-handed"
 msgstr "右手系"
+
+msgid "Left-handed"
+msgstr "左手系"
 
 msgid "Distance Measurement"
 msgstr "距離測定"
@@ -469,14 +469,14 @@ msgstr "画像"
 msgid "ImageView"
 msgstr "画像ビュー"
 
-msgid "ImageViewBar"
-msgstr "画像ビューバー"
-
 msgid "Select an imageable item"
 msgstr "画像アイテムの選択"
 
 msgid "Adjust image size according to view"
 msgstr "画像サイスをビューに合わせる"
+
+msgid "ImageViewBar"
+msgstr "画像ビューバー"
 
 msgid " "
 msgstr "　"
@@ -1710,6 +1710,10 @@ msgstr "プロジェクトパック \"{1}\" のファイル \"{0}\" を展開で
 msgid "The project pack file \"{0}\" does not include a project file."
 msgstr "プロジェクトパック \"{0}\" はプロジェクトファイルを含んでいません．"
 
+#, fuzzy
+msgid "RawSceneItem"
+msgstr "シーンアイテム"
+
 msgid "ReferencedObjectSeqItem"
 msgstr "参照オブジェクト時系列アイテム"
 
@@ -1771,9 +1775,6 @@ msgstr " トライアングル: {}"
 msgid "The project must be saved to detect the scene files for {0}."
 msgstr "{0}のシーンファイルを検出するためにプロジェクトが保存されている必要があります．"
 
-msgid "The file \"{0}\" on which {1} depends is not relocatable and will be lost in the archive."
-msgstr "{1}が依存しているファイル \"{0}\" は再配置できないためアーカイブ内で失われます．"
-
 msgid "RootItem"
 msgstr "ルートアイテム"
 
@@ -1821,6 +1822,10 @@ msgstr "表示するモデルタイプの切り替え"
 
 msgid "Show the collision detection models"
 msgstr "干渉チェック用モデルを表示"
+
+#, fuzzy
+msgid "Toggle the collision highlighting"
+msgstr "干渉線の表示"
 
 msgid "Toggle the collision line visibility"
 msgstr "干渉線の表示"
@@ -1900,6 +1905,9 @@ msgstr "ワールドライト"
 msgid "Ambient light"
 msgstr "環境光"
 
+msgid "Normalize material ambient"
+msgstr "マテリアル環境光を正規化"
+
 msgid "Additional lights"
 msgstr "追加のライト"
 
@@ -1971,12 +1979,6 @@ msgstr "ピッキング用OpenGL画像バッファ"
 
 msgid "OpenGL initialization failed."
 msgstr "OpenGLの初期化に失敗しました．"
-
-msgid "Recursive editable node set change on a scene widget."
-msgstr "シーンウィジェットにおける編集可ノード集合の再帰的変化．"
-
-msgid "Recursive editable node set change on scene widget {0}."
-msgstr "シーンウィジェット{0}における編集可ノード集合の再帰的変化 ．"
 
 msgid "The OpenGL resources of {0} has been cleared."
 msgstr "{0}のOpenGLリソースがクリアされました．"
@@ -2273,3 +2275,12 @@ msgstr "仮想ジョイスティック"
 
 msgid "VirtualJoystickView"
 msgstr "仮想ジョイスティックビュー"
+
+#~ msgid "The file \"{0}\" on which {1} depends is not relocatable and will be lost in the archive."
+#~ msgstr "{1}が依存しているファイル \"{0}\" は再配置できないためアーカイブ内で失われます．"
+
+#~ msgid "Recursive editable node set change on a scene widget."
+#~ msgstr "シーンウィジェットにおける編集可ノード集合の再帰的変化．"
+
+#~ msgid "Recursive editable node set change on scene widget {0}."
+#~ msgstr "シーンウィジェット{0}における編集可ノード集合の再帰的変化 ．"
