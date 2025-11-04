@@ -8,7 +8,7 @@ DEF Scene Group {
 	DEF CHASSIS Shape {
 	  appearance Appearance {
 	    material DEF Material Material {
-	      ambientIntensity 0
+	      ambientIntensity 1.0
 	      diffuseColor 0.32 0.64 0.12
 	      shininess 0.390625
 	      specularColor 0.2 0.4 0.075
@@ -53,7 +53,7 @@ DEF Scene Group {
 		DEF INNER_PLATE_L Shape {
 		  appearance Appearance {
 		    material DEF Material_003 Material {
-		      ambientIntensity 0
+		      ambientIntensity 1.0
 		      diffuseColor 0.64 0.64 0.64
 		      shininess 0.390625
 		      specularColor 0.5 0.5 0.5
@@ -102,7 +102,7 @@ DEF Scene Group {
 		DEF CRAWLER_R Shape {
 		  appearance Appearance {
 		    material DEF Material_004 Material {
-		      ambientIntensity 0
+		      ambientIntensity 1.0
 		      diffuseColor 0.102587 0.102587 0.102587
 		      shininess 0.390625
 		      specularColor 0.064 0.064 0.064
@@ -580,7 +580,7 @@ DEF Scene Group {
 		DEF WHEEL_L0 Shape {
 		  appearance Appearance {
 		    material DEF Material_005 Material {
-		      ambientIntensity 0
+		      ambientIntensity 1.0
 		      diffuseColor 0.64 0.32 0.12
 		      shininess 0.390625
 		      specularColor 0.4 0.2 0.075
@@ -1609,7 +1609,7 @@ DEF Scene Group {
 		    DEF CAMERA Shape {
 		      appearance Appearance {
 			material DEF Material_001 Material {
-			  ambientIntensity 0
+			  ambientIntensity 1.0
 			  diffuseColor 0.25 0.25 0.25
 			  shininess 0.390625
 			  specularColor 0.125 0.125 0.125
@@ -2622,7 +2622,7 @@ DEF Scene Group {
 				    DEF BULB Shape {
 				      appearance Appearance {
 					material DEF Material_006 Material {
-					  ambientIntensity 0
+					  ambientIntensity 1.0
 					  diffuseColor 0.64 0.64 0.32
 					  emissiveColor 1 1 1
 					  shininess 0.390625
