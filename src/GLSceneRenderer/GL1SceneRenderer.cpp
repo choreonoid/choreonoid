@@ -2217,6 +2217,12 @@ void GL1SceneRenderer::enableTexture(bool on)
 }
 
 
+void GL1SceneRenderer::setMaterialAmbientNormalizationEnabled(bool /* on */)
+{
+    // This feature is not supported in GL1SceneRenderer
+}
+
+
 void GL1SceneRenderer::setDefaultPointSize(double size)
 {
     if(size != impl->defaultPointSize){

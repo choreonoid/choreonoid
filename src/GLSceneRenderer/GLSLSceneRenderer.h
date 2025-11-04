@@ -77,6 +77,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void setDefaultSmoothShading(bool on) override;
     virtual SgMaterial* defaultMaterial() override;
     virtual void enableTexture(bool on) override;
+    virtual void setMaterialAmbientNormalizationEnabled(bool on) override;
     virtual void setDefaultPointSize(double size) override;
     virtual void setDefaultLineWidth(double width) override;
     virtual void setNormalVisualizationEnabled(bool on) override;

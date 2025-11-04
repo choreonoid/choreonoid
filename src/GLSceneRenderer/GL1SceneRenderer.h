@@ -43,6 +43,7 @@ public:
     virtual void setDefaultSmoothShading(bool on) override;
     virtual SgMaterial* defaultMaterial() override;
     virtual void enableTexture(bool on) override;
+    virtual void setMaterialAmbientNormalizationEnabled(bool on) override;
     virtual void setDefaultPointSize(double size) override;
     virtual void setDefaultLineWidth(double width) override;
 

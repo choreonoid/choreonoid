@@ -13,7 +13,7 @@ struct LightInfo {
 uniform LightInfo lights[2];
 
 uniform vec3 diffuseColor;
-uniform vec3 ambientColor;
+uniform float ambientIntensity;
 
 layout(location = 0) out vec3 color;
 
@@ -29,6 +29,6 @@ void main()
             n = -normalize(normal);
         }
         color += light.intensity * diffuseColor * max(dot(light.direction, n), 0.0);
-        color += light.ambientIntensity * ambientColor;
+        color += light.ambientIntensity * ambientIntensity * diffuseColor;
     }
 }

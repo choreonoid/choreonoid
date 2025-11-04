@@ -414,6 +414,7 @@ public:
 
     bool isTextureEnabled;
     bool isTextureBeingRendered;
+    bool isMaterialAmbientNormalizationEnabled;
     bool isCurrentFogUpdated;
     SgFogPtr prevFog;
     ScopedConnection currentFogConnection;
@@ -726,6 +727,7 @@ void GLSLSceneRenderer::Impl::initialize()
     defaultLineWidth = 1.0f;
     minTransparency = 0.0f;
     isTextureEnabled = true;
+    isMaterialAmbientNormalizationEnabled = true;
 
     isNormalVisualizationEnabled = false;
     normalVisualizationLength = 0.0f;
@@ -3574,6 +3576,18 @@ void GLSLSceneRenderer::enableTexture(bool on)
     if(on != impl->isTextureEnabled){
         impl->isTextureEnabled = on;
         requestToClearResources();
+    }
+}
+
+
+void GLSLSceneRenderer::setMaterialAmbientNormalizationEnabled(bool on)
+{
+    impl->isMaterialAmbientNormalizationEnabled = on;
+    if(impl->fullLightingProgram){
+        impl->fullLightingProgram->setMaterialAmbientNormalizationEnabled(on);
+    }
+    if(impl->minimumLightingProgram){
+        impl->minimumLightingProgram->setMaterialAmbientNormalizationEnabled(on);
     }
 }
 

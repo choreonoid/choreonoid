@@ -53,6 +53,7 @@ public:
     DoubleSpinBox* worldLightIntensitySpin;
     CheckBox* ambientLightCheck;
     DoubleSpinBox* ambientIntensitySpin;
+    CheckBox* useUniformAmbientIntensityCheck;
     CheckBox* worldLightShadowCheck;
     CheckBox* additionalLightSetCheck;
     CheckBox* textureCheck;
@@ -116,7 +117,8 @@ public:
     double headLightIntensity;
     double worldLightIntensity;
     double ambientIntensity;
-    
+    bool isMaterialAmbientNormalizationEnabled;
+
     struct ShadowInfo {
         int lightIndex;
         bool isEnabled;
@@ -194,6 +196,7 @@ SceneRendererConfig::Impl::Impl(SceneRendererConfig* self)
     headLightIntensity = 0.5;
     worldLightIntensity = 0.5;
     ambientIntensity = 0.5;
+    isMaterialAmbientNormalizationEnabled = true;
 
     for(int i=0; i < MaxNumShadows; ++i){
         shadowInfos[i].lightIndex = i;
@@ -236,6 +239,7 @@ SceneRendererConfig::Impl::Impl(const Impl& org, SceneRendererConfig* self)
     headLightIntensity = org.headLightIntensity;
     worldLightIntensity = org.worldLightIntensity;
     ambientIntensity = org.ambientIntensity;
+    isMaterialAmbientNormalizationEnabled = org.isMaterialAmbientNormalizationEnabled;
 
     for(int i=0; i < MaxNumShadows; ++i){
         shadowInfos[i] = org.shadowInfos[i];
@@ -329,7 +333,9 @@ void SceneRendererConfig::Impl::updateRenderer(GLSceneRenderer* renderer, unsign
         worldLight->on(isWorldLightEnabled || isAmbientLightEnabled);
         worldLight->setIntensity(isWorldLightEnabled ? worldLightIntensity : 0.0);
         worldLight->setAmbientIntensity(isAmbientLightEnabled ? ambientIntensity : 0.0);
-        
+
+        renderer->setMaterialAmbientNormalizationEnabled(isMaterialAmbientNormalizationEnabled);
+
         renderer->enableAdditionalLights(isAdditionalLightSetEnabled);
     }
 
@@ -397,6 +403,9 @@ bool SceneRendererConfig::Impl::store(Mapping* archive)
     archive->write("world_light_intensity", worldLightIntensity);
     archive->write("ambient_light", isAmbientLightEnabled);
     archive->write("ambient_light_intensity", ambientIntensity);
+    if(!isMaterialAmbientNormalizationEnabled){
+        archive->write("material_ambient_normalization", false);
+    }
     archive->write("head_light", isHeadLightEnabled);
     archive->write("head_light_intensity", headLightIntensity);
 
@@ -477,7 +486,8 @@ bool SceneRendererConfig::Impl::restore(const Mapping* archive)
             isAmbientLightEnabled = true;
         }
     }
-    
+    archive->read("material_ambient_normalization", isMaterialAmbientNormalizationEnabled);
+
     archive->read({ "head_light", "defaultHeadLight" }, isHeadLightEnabled);
     archive->read({ "head_light_intensity", "defaultHeadLightIntensity" }, headLightIntensity);
 
@@ -774,7 +784,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneRendererConfig::Impl* config_)
     
     ambientIntensitySpin = new DoubleSpinBox(ownerWidget);
     ambientIntensitySpin->setDecimals(2);
-    ambientIntensitySpin->setSingleStep(0.01);    
+    ambientIntensitySpin->setSingleStep(0.01);
     ambientIntensitySpin->setRange(0.0, 1.0);
     ambientIntensitySpin->sigValueChanged().connect(
         [this](double intensity){
@@ -782,6 +792,14 @@ ConfigWidgetSet::ConfigWidgetSet(SceneRendererConfig::Impl* config_)
             config->updateRenderers(Lighting, true);
         });
     signalObjects.push_back(ambientIntensitySpin);
+
+    useUniformAmbientIntensityCheck = new CheckBox(_("Normalize material ambient"), ownerWidget);
+    useUniformAmbientIntensityCheck->sigToggled().connect(
+        [this](bool on){
+            config->isMaterialAmbientNormalizationEnabled = on;
+            config->updateRenderers(Lighting, true);
+        });
+    signalObjects.push_back(useUniformAmbientIntensityCheck);
 
     additionalLightSetCheck = new CheckBox(_("Additional lights"), ownerWidget);
     additionalLightSetCheck->sigToggled().connect(
@@ -954,13 +972,18 @@ QWidget* ConfigWidgetSet::createLightingPanel()
     hbox->addWidget(ws.headLightCheck);
     hbox->addWidget(new QLabel(_("Intensity")));
     hbox->addWidget(ws.headLightIntensitySpin);
-    hbox->addSpacing(10);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout;
     hbox->addWidget(ws.ambientLightCheck);
     hbox->addWidget(new QLabel(_("Intensity")));
     hbox->addWidget(ws.ambientIntensitySpin);
+    hbox->addSpacing(10);
+    hbox->addWidget(ws.useUniformAmbientIntensityCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
-    
+
     hbox = new QHBoxLayout;
     hbox->addWidget(ws.additionalLightSetCheck);
     for(int i=0; i < MaxNumShadows; ++i){
@@ -1004,6 +1027,7 @@ void ConfigWidgetSet::updateWidgets()
     worldLightShadowCheck->setChecked(config->isWorldLightShadowEnabled);
     ambientLightCheck->setChecked(config->isAmbientLightEnabled);
     ambientIntensitySpin->setValue(config->ambientIntensity);
+    useUniformAmbientIntensityCheck->setChecked(config->isMaterialAmbientNormalizationEnabled);
     additionalLightSetCheck->setChecked(config->isAdditionalLightSetEnabled);
     textureCheck->setChecked(config->isTextureEnabled);
     fogCheck->setChecked(config->isFogEnabled);

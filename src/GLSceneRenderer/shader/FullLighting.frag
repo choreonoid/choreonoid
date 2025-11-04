@@ -43,7 +43,7 @@ uniform MaterialBlock {
 */
 
 uniform vec3 diffuseColor;
-uniform vec3 ambientColor;
+uniform float ambientIntensity;
 uniform vec3 specularColor;
 uniform vec3 emissionColor;
 uniform float specularExponent;
@@ -133,7 +133,7 @@ void main()
             color = emissionColor * modulatedColor;
             for(int i=0; i < numLights; ++i){
                 reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], modulatedColor);
-                color += lights[i].ambientIntensity * ambientColor * modulatedColor;
+                color += lights[i].ambientIntensity * ambientIntensity * modulatedColor;
             }
         } else {
             vec3 baseColor;
@@ -146,7 +146,7 @@ void main()
             color = emissionColor;
             for(int i=0; i < numLights; ++i){
                 reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], baseColor);
-                color += lights[i].ambientIntensity * ambientColor;
+                color += lights[i].ambientIntensity * ambientIntensity * baseColor;
             }
         }
 

@@ -249,6 +249,7 @@ public:
         int index, const SgLight* light, const Isometry3& T, const Isometry3& view, bool shadowCasting) override;
     virtual void setNumLights(int n) override;
     virtual void setMaterial(const SgMaterial* material) override;
+    void setMaterialAmbientNormalizationEnabled(bool on);
 
 private:
     class Impl;
@@ -294,6 +295,7 @@ public:
     void setColorTextureUnit(int textureUnit);
     int colorTextureUnit() const;
     void setTextureEnabled(bool on);
+    void setMaterialAmbientNormalizationEnabled(bool on);
     void setMinimumTransparency(float t);
 
 private:

@@ -94,12 +94,13 @@ public:
         GLint ambientIntensityLocation;
     };
     vector<LightInfo> lightInfos;
-    
+
     GLint diffuseColorLocation;
-    GLint ambientColorLocation;
+    GLint ambientIntensityLocation;
     Vector3f diffuseColor;
-    Vector3f ambientColor;
+    float ambientIntensity;
     bool isColorApplied;
+    bool isMaterialAmbientNormalizationEnabled;
 
     void initialize(GLSLProgram& glsl);    
 };
@@ -143,7 +144,7 @@ public:
     enum StateFlag {
         COLOR_MATERIAL,
         DIFFUSE_COLOR,
-        AMBIENT_COLOR,
+        AMBIENT_INTENSITY,
         EMISSION_COLOR,
         SPECULAR_COLOR,
         SPECULAR_EXPONENT,
@@ -153,7 +154,7 @@ public:
     vector<bool> stateFlag;
 
     Vector3f diffuseColor;
-    Vector3f ambientColor;
+    float ambientIntensity;
     Vector3f specularColor;
     Vector3f emissionColor;
     float specularExponent;
@@ -161,7 +162,7 @@ public:
     float minTransparency;
 
     GLint diffuseColorLocation;
-    GLint ambientColorLocation;
+    GLint ambientIntensityLocation;
     GLint specularColorLocation;
     GLint emissionColorLocation;
     GLint specularExponentLocation;
@@ -174,6 +175,8 @@ public:
 
     GLint isVertexColorEnabledLocation;
     bool isVertexColorEnabled;
+
+    bool isMaterialAmbientNormalizationEnabled;
 
     void initialize(GLSLProgram& glsl);
     void setMaterial(const SgMaterial* material);
@@ -760,6 +763,7 @@ MinimumLightingProgram::MinimumLightingProgram()
           { ":/GLSceneRenderer/shader/MinLighting.frag", GL_FRAGMENT_SHADER } })
 {
     impl = new Impl;
+    impl->isMaterialAmbientNormalizationEnabled = true;
 }
 
 
@@ -794,7 +798,7 @@ void MinimumLightingProgram::Impl::initialize(GLSLProgram& glsl)
     }
 
     diffuseColorLocation = glsl.getUniformLocation("diffuseColor");
-    ambientColorLocation = glsl.getUniformLocation("ambientColor");
+    ambientIntensityLocation = glsl.getUniformLocation("ambientIntensity");
 }
 
 
@@ -865,12 +869,18 @@ void MinimumLightingProgram::setMaterial(const SgMaterial* material)
         glUniform3fv(impl->diffuseColorLocation, 1, dcolor.data());
         impl->diffuseColor = dcolor;
     }
-    Vector3f acolor = material->ambientIntensity() * dcolor;
-    if(!impl->isColorApplied || impl->ambientColor != acolor){
-        glUniform3fv(impl->ambientColorLocation, 1, acolor.data());
-        impl->ambientColor = acolor;
+    float aintensity = impl->isMaterialAmbientNormalizationEnabled ? 1.0f : material->ambientIntensity();
+    if(!impl->isColorApplied || impl->ambientIntensity != aintensity){
+        glUniform1f(impl->ambientIntensityLocation, aintensity);
+        impl->ambientIntensity = aintensity;
     }
     impl->isColorApplied = true;
+}
+
+
+void MinimumLightingProgram::setMaterialAmbientNormalizationEnabled(bool on)
+{
+    impl->isMaterialAmbientNormalizationEnabled = on;
 }
 
 
@@ -995,6 +1005,7 @@ MaterialLightingProgram::MaterialLightingProgram(std::initializer_list<ShaderSou
     setCapability(Transparency);
     impl = new Impl;
     impl->colorTextureUnit = 1;
+    impl->isMaterialAmbientNormalizationEnabled = true;
 }
 
 
@@ -1030,7 +1041,7 @@ void MaterialLightingProgram::Impl::initialize(GLSLProgram& glsl)
     minTransparency = 0.0f;
 
     diffuseColorLocation = glsl.getUniformLocation("diffuseColor");
-    ambientColorLocation = glsl.getUniformLocation("ambientColor");
+    ambientIntensityLocation = glsl.getUniformLocation("ambientIntensity");
     specularColorLocation = glsl.getUniformLocation("specularColor");
     emissionColorLocation = glsl.getUniformLocation("emissionColor");
     specularExponentLocation = glsl.getUniformLocation("specularExponent");
@@ -1077,11 +1088,11 @@ void MaterialLightingProgram::Impl::setMaterial(const SgMaterial* material)
         stateFlag[DIFFUSE_COLOR] = true;
     }
 
-    Vector3f acolor = material->ambientIntensity() * dcolor;
-    if(!stateFlag[AMBIENT_COLOR] || ambientColor != acolor){
-        glUniform3fv(ambientColorLocation, 1, acolor.data());
-        ambientColor = acolor;
-        stateFlag[AMBIENT_COLOR] = true;
+    float aintensity = isMaterialAmbientNormalizationEnabled ? 1.0f : material->ambientIntensity();
+    if(!stateFlag[AMBIENT_INTENSITY] || ambientIntensity != aintensity){
+        glUniform1f(ambientIntensityLocation, aintensity);
+        ambientIntensity = aintensity;
+        stateFlag[AMBIENT_INTENSITY] = true;
     }
 
     const auto& ecolor = material->emissiveColor();
@@ -1130,6 +1141,12 @@ void MaterialLightingProgram::setTextureEnabled(bool on)
         glUniform1i(impl->isTextureEnabledLocation, on);
         impl->isTextureEnabled = on;
     }
+}
+
+
+void MaterialLightingProgram::setMaterialAmbientNormalizationEnabled(bool on)
+{
+    impl->isMaterialAmbientNormalizationEnabled = on;
 }
 
 
