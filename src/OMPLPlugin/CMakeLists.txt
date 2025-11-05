@@ -58,17 +58,26 @@ choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
 target_link_libraries(${target} PRIVATE CnoidBodyPlugin ${OMPL_LIBRARIES})
 
 if(MSVC)
-  # Extract Boost targets from OMPL_LIBRARIES
+  # Extract Boost targets from ompl::ompl target dependencies
   set(BOOST_TARGETS_TO_COPY)
-  foreach(lib ${OMPL_LIBRARIES})
-    if(lib MATCHES "^Boost::")
-      list(APPEND BOOST_TARGETS_TO_COPY ${lib})
+
+  # Get Boost targets from ompl::ompl target's dependencies
+  if(TARGET ompl::ompl)
+    get_target_property(OMPL_INTERFACE_LIBS ompl::ompl INTERFACE_LINK_LIBRARIES)
+    if(OMPL_INTERFACE_LIBS)
+      foreach(lib ${OMPL_INTERFACE_LIBS})
+        if(lib MATCHES "^Boost::")
+          list(APPEND BOOST_TARGETS_TO_COPY ${lib})
+        endif()
+      endforeach()
     endif()
-  endforeach()
-  
+  endif()
+
   # Remove duplicates
-  list(REMOVE_DUPLICATES BOOST_TARGETS_TO_COPY)
-  
+  if(BOOST_TARGETS_TO_COPY)
+    list(REMOVE_DUPLICATES BOOST_TARGETS_TO_COPY)
+  endif()
+
   # Install DLLs for each Boost target
   foreach(boost_target ${BOOST_TARGETS_TO_COPY})
     if(TARGET ${boost_target})
