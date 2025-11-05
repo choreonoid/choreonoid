@@ -25,6 +25,7 @@
 
 #ifdef Q_OS_WIN32
 #include <QtGlobal>
+#include <windows.h>
 #endif
 
 #include "gettext.h"
@@ -450,6 +451,127 @@ void PluginManager::Impl::loadScannedPluginFiles(bool doActivation)
 }
 
 
+#ifdef Q_OS_WIN32
+/**
+   Finds missing dependency DLL by analyzing the PE import table.
+
+   @param dllPath Path to the DLL file to analyze
+   @return Name of the missing dependency DLL, or empty string if all dependencies are found
+
+   This function is needed because QLibrary::errorString() only provides generic error messages
+   (e.g., "Cannot load library") without specifying which dependency DLL is missing.
+
+   Windows does not provide a standard API to retrieve the name of a missing dependency DLL
+   when LoadLibrary fails. The standard approach using GetLastError() only returns a generic
+   error code (e.g., ERROR_MOD_NOT_FOUND), without specifying which dependency is missing.
+
+   While ntdll.dll provides LdrGetFailureData(), it is an undocumented internal API that
+   proves unreliable in practice:
+   - It does not record failures when the top-level DLL itself is not found
+   - It only records failures of dependent DLLs, and even then inconsistently
+   - Previous error data may persist if not manually cleared
+   - It may be cleared by subsequent Windows API calls
+
+   Therefore, we directly parse the PE (Portable Executable) file format to:
+   1. Read the import directory from the PE header
+   2. Enumerate all dependency DLLs listed in the import table
+   3. Check each dependency using SearchPath() to find which one is missing
+
+   This approach is more reliable as it does not depend on undocumented Windows internals.
+
+   Note on RVA (Relative Virtual Address) conversion:
+   PE files use RVAs which are memory addresses relative to the image base when loaded.
+   To read the import table from the file on disk, we must convert RVAs to file offsets
+   using the section headers, as the memory layout differs from the file layout.
+*/
+static std::string findMissingDependencyDLL(const std::string& dllPath)
+{
+    std::string missingDependency;
+
+    int wideSize = MultiByteToWideChar(CP_UTF8, 0, dllPath.c_str(), -1, NULL, 0);
+    if(wideSize > 0){
+        std::vector<wchar_t> widePath(wideSize);
+        MultiByteToWideChar(CP_UTF8, 0, dllPath.c_str(), -1, &widePath[0], wideSize);
+
+        // Analyze the DLL file to find missing dependencies
+        HANDLE hFile = CreateFileW(&widePath[0], GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+        if(hFile != INVALID_HANDLE_VALUE){
+            HANDLE hMapping = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+            if(hMapping){
+                LPVOID pFileBase = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
+                if(pFileBase){
+                    IMAGE_DOS_HEADER* pDosHeader = (IMAGE_DOS_HEADER*)pFileBase;
+                    if(pDosHeader->e_magic == IMAGE_DOS_SIGNATURE){
+                        IMAGE_NT_HEADERS* pNtHeaders = (IMAGE_NT_HEADERS*)((BYTE*)pFileBase + pDosHeader->e_lfanew);
+                        if(pNtHeaders->Signature == IMAGE_NT_SIGNATURE){
+                            IMAGE_DATA_DIRECTORY* pImportDir = &pNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+                            if(pImportDir->Size > 0 && pImportDir->VirtualAddress > 0){
+                                // Convert import directory RVA to file offset
+                                IMAGE_SECTION_HEADER* pSectionHeader = IMAGE_FIRST_SECTION(pNtHeaders);
+                                DWORD importFileOffset = 0;
+                                bool found = false;
+
+                                for(int i = 0; i < pNtHeaders->FileHeader.NumberOfSections; i++, pSectionHeader++){
+                                    if(pImportDir->VirtualAddress >= pSectionHeader->VirtualAddress &&
+                                       pImportDir->VirtualAddress < pSectionHeader->VirtualAddress + pSectionHeader->Misc.VirtualSize){
+                                        importFileOffset = pImportDir->VirtualAddress - pSectionHeader->VirtualAddress + pSectionHeader->PointerToRawData;
+                                        found = true;
+                                        break;
+                                    }
+                                }
+
+                                if(found && importFileOffset > 0){
+                                    IMAGE_IMPORT_DESCRIPTOR* pImportDesc = (IMAGE_IMPORT_DESCRIPTOR*)((BYTE*)pFileBase + importFileOffset);
+
+                                    // Iterate through all imported DLLs
+                                    while(pImportDesc->Name != 0){
+                                        // Convert DLL name RVA to file offset
+                                        pSectionHeader = IMAGE_FIRST_SECTION(pNtHeaders);
+                                        DWORD nameFileOffset = 0;
+                                        for(int i = 0; i < pNtHeaders->FileHeader.NumberOfSections; i++, pSectionHeader++){
+                                            if(pImportDesc->Name >= pSectionHeader->VirtualAddress &&
+                                               pImportDesc->Name < pSectionHeader->VirtualAddress + pSectionHeader->Misc.VirtualSize){
+                                                nameFileOffset = pImportDesc->Name - pSectionHeader->VirtualAddress + pSectionHeader->PointerToRawData;
+                                                break;
+                                            }
+                                        }
+
+                                        if(nameFileOffset > 0){
+                                            const char* dllName = (const char*)((BYTE*)pFileBase + nameFileOffset);
+
+                                            // Check if this dependency DLL can be found
+                                            WCHAR searchPath[MAX_PATH];
+                                            int searchWideSize = MultiByteToWideChar(CP_ACP, 0, dllName, -1, NULL, 0);
+                                            if(searchWideSize > 0 && searchWideSize <= MAX_PATH){
+                                                std::vector<wchar_t> dllNameWide(searchWideSize);
+                                                MultiByteToWideChar(CP_ACP, 0, dllName, -1, &dllNameWide[0], searchWideSize);
+
+                                                if(SearchPathW(NULL, &dllNameWide[0], NULL, MAX_PATH, searchPath, NULL) == 0){
+                                                    // This dependency DLL is missing
+                                                    missingDependency = dllName;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        pImportDesc++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    UnmapViewOfFile(pFileBase);
+                }
+                CloseHandle(hMapping);
+            }
+            CloseHandle(hFile);
+        }
+    }
+
+    return missingDependency;
+}
+#endif
+
+
 bool PluginManager::loadPlugin(int index)
 {
     if(impl->loadPlugin(index, false)){
@@ -494,6 +616,15 @@ bool PluginManager::Impl::loadPlugin(int index, bool isLoadingMultiplePlugins)
 
         if(!(info->dll->load())){
             info->lastErrorMessage = formatR(_("System error: {0}"), info->dll->errorString().toStdString());
+
+#ifdef Q_OS_WIN32
+            // Try to identify which dependency DLL is missing
+            std::string missingDependency = findMissingDependencyDLL(info->pathString);
+            if(!missingDependency.empty()){
+                info->lastErrorMessage += formatR(_("\nMissing dependency: {0}"), missingDependency);
+            }
+#endif
+
             if(isLoadingMultiplePlugins){
                 /*
                   A plugin without the RPATH information may not be loaded if it is loaded before
