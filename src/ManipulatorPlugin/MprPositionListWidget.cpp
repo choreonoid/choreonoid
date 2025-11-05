@@ -872,8 +872,19 @@ void MprPositionListWidget::Impl::addPosition(int row, bool doInsert)
 
 void MprPositionListWidget::addPositionIntoCurrentIndex(bool doInsert)
 {
-    auto current = selectionModel()->currentIndex();
-    int row = current.isValid() ? current.row() : impl->positionListModel->numPositions();
+    auto selectedRows = selectionModel()->selectedRows();
+    int row;
+    if(selectedRows.isEmpty()){
+        row = impl->positionListModel->numPositions();
+    } else {
+        // Get the maximum row index among selected rows (the bottommost selected row)
+        row = selectedRows[0].row();
+        for(int i = 1; i < selectedRows.size(); ++i){
+            if(selectedRows[i].row() > row){
+                row = selectedRows[i].row();
+            }
+        }
+    }
     impl->addPosition(row, doInsert);
 }
 
@@ -892,7 +903,9 @@ void MprPositionListWidget::keyPressEvent(QKeyEvent* event)
 
     switch(event->key()){
     case Qt::Key_Escape:
+        // Clear both selection and current index for complete visual deselection
         clearSelection();
+        selectionModel()->setCurrentIndex(QModelIndex(), QItemSelectionModel::NoUpdate);
         break;
     case Qt::Key_Insert:
         addPositionIntoCurrentIndex(true);
@@ -926,8 +939,13 @@ void MprPositionListWidget::keyPressEvent(QKeyEvent* event)
 void MprPositionListWidget::mousePressEvent(QMouseEvent* event)
 {
     impl->isSelectionChangedAlreadyCalled = false;
-    
+
     QTableView::mousePressEvent(event);
+
+    // Clear current index when clicking on empty area for complete visual deselection
+    if(!indexAt(event->pos()).isValid()){
+        selectionModel()->setCurrentIndex(QModelIndex(), QItemSelectionModel::NoUpdate);
+    }
 
     if(event->button() == Qt::RightButton){
         if(impl->positionList){
