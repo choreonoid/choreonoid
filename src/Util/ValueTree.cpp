@@ -5,6 +5,7 @@
 #include "Format.h"
 #include <stack>
 #include <iostream>
+#include <cctype>
 #include <yaml.h>
 #include <cnoid/stdx/filesystem>
 #include <functional>
@@ -175,7 +176,13 @@ bool ValueNode::read(int &out_value) const
         char* endptr;
         out_value = strtol(nptr, &endptr, 10);
         if(endptr > nptr){
-            return true;
+            // Check if remaining characters are all whitespace
+            while(*endptr != '\0' && std::isspace(static_cast<unsigned char>(*endptr))){
+                endptr++;
+            }
+            if(*endptr == '\0'){
+                return true;
+            }
         }
     }
     return false;
@@ -212,7 +219,13 @@ bool ValueNode::read(double& out_value) const
         char* endptr;
         out_value = strtod(nptr, &endptr);
         if(endptr > nptr){
-            return true;
+            // Check if remaining characters are all whitespace
+            while(*endptr != '\0' && std::isspace(static_cast<unsigned char>(*endptr))){
+                endptr++;
+            }
+            if(*endptr == '\0'){
+                return true;
+            }
         }
     }
     return false;
@@ -226,7 +239,13 @@ bool ValueNode::read(float& out_value) const
         char* endptr;
         out_value = strtof(nptr, &endptr);
         if(endptr > nptr){
-            return true;
+            // Check if remaining characters are all whitespace
+            while(*endptr != '\0' && std::isspace(static_cast<unsigned char>(*endptr))){
+                endptr++;
+            }
+            if(*endptr == '\0'){
+                return true;
+            }
         }
     }
     return false;
