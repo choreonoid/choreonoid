@@ -435,27 +435,28 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
             }
         }
 
-        if(nuIK->isBestEffortIkMode){
-            for(int j=0; j < n; ++j){
-                double& q = joints_[j]->q();
-                nuIK->q0[j] = q;
-                q += nuIK->deltaScale * nuIK->dq(j);
-            }
-        } else {
-            for(int j=0; j < n; ++j){
-                joints_[j]->q() += nuIK->deltaScale * nuIK->dq(j);
-            }
+        // Update joint angles
+        for(int j=0; j < n; ++j){
+            joints_[j]->q() += nuIK->deltaScale * nuIK->dq(j);
         }
 
+        // Apply joint limits
         if(isIkJointLimitEnabled_){
             for(int j=0; j < n; ++j){
                 auto joint = joints_[j];
                 double& q = joint->q();
-                if(q > joint->q_upper() && nuIK->dq(j) > 0.0){
+                if(q > joint->q_upper()){
                     q = joint->q_upper();
-                } else if(q < joint->q_lower() && nuIK->dq(j) < 0.0){
+                } else if(q < joint->q_lower()){
                     q = joint->q_lower();
                 }
+            }
+        }
+
+        // Save current state for best-effort mode rollback (after joint limit clamping)
+        if(nuIK->isBestEffortIkMode){
+            for(int j=0; j < n; ++j){
+                nuIK->q0[j] = joints_[j]->q();
             }
         }
 
