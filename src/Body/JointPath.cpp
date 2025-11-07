@@ -30,6 +30,11 @@ double JointPath::numericalIkDefaultDampingConstant()
     return 1.0e-6;
 }
 
+int JointPath::numericalIkDefaultMaxStagnationCount()
+{
+    return 3;
+}
+
 //! \deprecated
 double JointPath::numericalIkDefaultTruncateRatio()
 {
@@ -46,9 +51,10 @@ public:
     bool isBestEffortIkMode;
     double deltaScale;
     int maxIterations;
-    int iteration; 
+    int iteration;
     double maxIkErrorSqr;
     double dampingConstantSqr;
+    int maxStagnationCount;
     vector<double> q0;
     Isometry3 T0;
     MatrixXd J;
@@ -70,6 +76,7 @@ public:
         maxIkErrorSqr = e * e;
         double d = JointPath::numericalIkDefaultDampingConstant();
         dampingConstantSqr = d * d;
+        maxStagnationCount = JointPath::numericalIkDefaultMaxStagnationCount();
     }
 
     void resize(int numJoints){
@@ -269,6 +276,12 @@ void JointPath::setNumericalIkDampingConstant(double lambda)
 }
 
 
+void JointPath::setNumericalIkMaxStagnationCount(int n)
+{
+    getOrCreateNumericalIK()->maxStagnationCount = n;
+}
+
+
 /**
    \deprecated
    This parameter is used when SVD is used to solve a numerical IK, but the current
@@ -357,6 +370,7 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
 
     double prevErrsqr = std::numeric_limits<double>::max();
     bool completed = false;
+    int stagnationCount = 0;
 
     bool useUsualInverseSolution = false;
     if(USE_USUAL_INVERSE_SOLUTION_FOR_6x6_NON_BEST_EFFORT_PROBLEM){
@@ -385,15 +399,25 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
             target->T() = T;
             break;
         }
-        if(prevErrsqr - errorSqr < nuIK->maxIkErrorSqr){
-            if(nuIK->isBestEffortIkMode && (errorSqr > prevErrsqr)){
-                // Revert the joint displacements to the previous state in this iteration
-                for(int j=0; j < n; ++j){
-                    joints_[j]->q() = nuIK->q0[j];
+
+        // Check for convergence stagnation or divergence
+        double improvement = prevErrsqr - errorSqr;
+        if(improvement < nuIK->maxIkErrorSqr){
+            // No significant improvement or error increased
+            stagnationCount++;
+            if(stagnationCount >= nuIK->maxStagnationCount){
+                if(nuIK->isBestEffortIkMode && (errorSqr > prevErrsqr)){
+                    // Revert the joint displacements to the previous state in this iteration
+                    for(int j=0; j < n; ++j){
+                        joints_[j]->q() = nuIK->q0[j];
+                    }
+                    calcForwardKinematics();
                 }
-                calcForwardKinematics();
+                break;
             }
-            break;
+        } else {
+            // Good improvement, reset stagnation counter
+            stagnationCount = 0;
         }
         prevErrsqr = errorSqr;
 

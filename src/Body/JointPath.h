@@ -99,10 +99,12 @@ public:
     void setNumericalIkDeltaScale(double s);
     void setNumericalIkMaxIterations(int n);
     void setNumericalIkDampingConstant(double lambda);
+    void setNumericalIkMaxStagnationCount(int n);
     static double numericalIkDefaultDeltaScale();
     static int numericalIkDefaultMaxIterations();
     static double numericalIkDefaultMaxIkError();
     static double numericalIkDefaultDampingConstant();
+    static int numericalIkDefaultMaxStagnationCount();
     
     void customizeTarget(
         int numTargetElements,
