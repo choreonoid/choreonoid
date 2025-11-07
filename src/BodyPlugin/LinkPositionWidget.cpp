@@ -473,7 +473,7 @@ void LinkPositionWidget::Impl::setTargetBodyAndLink(BodyItem* bodyItem, Link* li
     if(bodyItem && link){
         // Sub body's root link is recognized as the parent body's end link
         if(link->isRoot() && bodyItem->isAttachedToParentBody()){
-            if(auto parentBodyItem = bodyItem->parentBodyItem()){
+            if(auto parentBodyItem = bodyItem->linkedParentBodyItem()){
                 link = bodyItem->body()->parentBodyLink();
                 bodyItem = parentBodyItem;
             }

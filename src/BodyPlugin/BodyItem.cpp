@@ -77,13 +77,17 @@ public:
 class MyCompositeBodyIK : public CompositeBodyIK
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
     MyCompositeBodyIK(BodyItem::Impl* bodyItemImpl);
+    bool isValid() const { return parentLinkIK != nullptr; }
     virtual bool calcInverseKinematics(const Isometry3& T) override;
     virtual std::shared_ptr<InverseKinematics> getParentBodyIK() override;
 
     BodyItem::Impl* bodyItemImpl;
-    AttachmentDevicePtr attachment;
-    shared_ptr<InverseKinematics> holderIK;
+    Isometry3 T_local_inv;
+    Link* parentLink;
+    shared_ptr<InverseKinematics> parentLinkIK;
 };
 
 class KinematicStateRecord : public EditRecord
@@ -117,13 +121,13 @@ public:
     BodyPtr body;
 
     bool isBeingRestored; // flag to check if this item and its sub tree is being restored
+    bool isLocalPositionRestored;
     bool isUpdateNotificationOnSubTreeRestoredRequested;
     bool isNonRootLinkStateRestorationOnSubTreeRestoredRequested;
     bool isSharingShapes;
     bool isLocationLocked;
     bool isKinematicStateChangeNotifiedByParentBodyItem;
     bool isProcessingInverseKinematicsIncludingParentBody;
-    bool isAttachmentEnabled;
     bool isFkRequested;
     bool isVelFkRequested;
     bool isAccFkRequested;
@@ -132,12 +136,13 @@ public:
 
     ScopedConnection bodyExistenceConnection;
     
-    BodyItem* parentBodyItem;
+    BodyItem* linkedParentBodyItem;
+    Link* parentLink;
     string parentLinkName;
     ref_ptr<BodyLocation> bodyLocation;
     ref_ptr<LinkLocation> parentLinkLocation;
     AttachmentDevicePtr attachmentToParent;
-    ScopedConnection parentBodyItemConnection;
+    ScopedConnection linkedParentBodyItemConnection;
 
     enum { UF_POSITIONS, UF_VELOCITIES, UF_ACCELERATIONS, UF_CM, UF_ZMP, NUM_UPUDATE_ELEMENTS };
     std::bitset<NUM_UPUDATE_ELEMENTS> updateElements;
@@ -192,12 +197,18 @@ public:
     void setLocationLocked(bool on, bool updateInitialPositionWhenLocked, bool doNotiyUpdate);
     void createSceneBody();
     void setTransparency(float t);
+    bool isLinkableToParentBody() const;
     void setParentLink(const std::string& name);
-    bool updateAttachment(bool on, bool doNotifyUpdate);
-    bool isAttachable() const;
-    void setParentBodyItem(BodyItem* bodyItem);
-    Link* attachToBodyItem(BodyItem* bodyItem);
-    void setRelativeOffsetPositionFromParentBody();
+    bool updateParentBodyLinkage(bool doNotifyUpdate);
+    void clearParentBodyLinkage(bool doNotifyUpdate);
+    bool updateParentBodyLinkageTo(BodyItem* parentBodyItem);
+    bool findMatchedAttachmentAndHolder(
+        BodyItem* parentBodyItem, AttachmentDevice*& out_attachment, HolderDevice*& out_holder);
+    void setLinkageToParentBody(BodyItem* parentBodyItem, Link* newParentLink);
+    void setLinkageToParentBody(
+        BodyItem* parentBodyItem, AttachmentDevice* attachment, HolderDevice* holder);
+    void setLinkageToParentBody(BodyItem* parentBodyItem, int linkageType);
+    void setLocalPositionOnParentBodyLink();
     void onParentBodyKinematicStateChanged();
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
@@ -245,7 +256,8 @@ BodyItem::BodyItem()
     impl = new Impl(this);
     impl->init(false);
 
-    isAttachedToParentBody_ = false;
+    preferredParentBodyLinkage_ = Coordinated;
+    currentParentBodyLinkage_ = Unlinked;
     isVisibleLinkSelectionMode_ = false;
 }
     
@@ -261,7 +273,6 @@ BodyItem::Impl::Impl(BodyItem* self)
     : Impl(self, new Body, false)
 {
     body->rootLink()->setName("Root");
-    isAttachmentEnabled = true;
     isCollisionDetectionEnabled = true;
     isSelfCollisionDetectionEnabled = false;
     isJointRangeLimitEnabled = true;
@@ -272,6 +283,7 @@ BodyItem::Impl::Impl(BodyItem* self, Body* body, bool isSharingShapes)
     : self(self),
       body(body),
       isBeingRestored(false),
+      isLocalPositionRestored(false),
       isSharingShapes(isSharingShapes),
       isLocationLocked(false),
       sigKinematicStateChanged([this](){ emitSigKinematicStateChanged(); })
@@ -286,7 +298,8 @@ BodyItem::BodyItem(const BodyItem& org, CloneMap* cloneMap)
     impl = new Impl(this, *org.impl, cloneMap);
     impl->init(true);
 
-    isAttachedToParentBody_ = false;
+    preferredParentBodyLinkage_ = org.preferredParentBodyLinkage_;
+    currentParentBodyLinkage_ = Unlinked;
     isVisibleLinkSelectionMode_ = org.isVisibleLinkSelectionMode_;
 }
 
@@ -294,7 +307,6 @@ BodyItem::BodyItem(const BodyItem& org, CloneMap* cloneMap)
 BodyItem::Impl::Impl(BodyItem* self, const Impl& org, CloneMap* cloneMap)
     : Impl(self, CloneMap::getClone(org.body, cloneMap), true)
 {
-    isAttachmentEnabled = org.isAttachmentEnabled;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
     parentLinkName = org.parentLinkName;
@@ -335,7 +347,8 @@ void BodyItem::Impl::init(bool calledFromCopyConstructor)
 
 void BodyItem::Impl::initBody(bool calledFromCopyConstructor)
 {
-    parentBodyItem = nullptr;
+    linkedParentBodyItem = nullptr;
+    parentLink = nullptr;
     isKinematicStateChangeNotifiedByParentBodyItem = false;
     isProcessingInverseKinematicsIncludingParentBody = false;
     
@@ -383,9 +396,9 @@ bool BodyItem::Impl::doAssign(const Item* srcItem)
     }
     
     auto srcImpl = srcBodyItem->impl;
+    self->preferredParentBodyLinkage_ = srcBodyItem->preferredParentBodyLinkage_;
     self->isVisibleLinkSelectionMode_ = srcBodyItem->isVisibleLinkSelectionMode_;
     isLocationLocked = srcImpl->isLocationLocked;
-    isAttachmentEnabled = srcImpl->isAttachmentEnabled;
     isCollisionDetectionEnabled = srcImpl->isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = srcImpl->isSelfCollisionDetectionEnabled;
     parentLinkName = srcImpl->parentLinkName;
@@ -436,14 +449,14 @@ void BodyItem::onTreePathChanged()
     }
 
     /*
-      If the item is being restored in loading a project, the attachment update is
-      processed when all the child items are restored so that an attachment device
-      dynamically added by a DeviceOverwriteItem can work in the attachment update.
-      In that case, the attachment update is processed by the callback function
+      If the item is being restored in loading a project, the linkage to parent
+      body item is updated when all the child items are restored so that an attachment
+      device dynamically added by a DeviceOverwriteItem can work in the linkage update.
+      In that case, the linkage update is processed by the callback function
       given to the Archive::addProcessOnSubTreeRestored in the restore function.
     */
     if(!impl->isBeingRestored){
-        impl->updateAttachment(true, true);
+        impl->updateParentBodyLinkage(true);
     }
 }
 
@@ -709,8 +722,11 @@ BodyItemKinematicsKit* BodyItem::findPresetKinematicsKit(Link* targetLink)
 
 std::shared_ptr<InverseKinematics> BodyItem::findPresetIK(Link* targetLink)
 {
-    if(isAttachedToParentBody_ && targetLink->isFixedToRoot()){
-        return make_shared<MyCompositeBodyIK>(impl);
+    if(isAttachedToParentBody() && targetLink->isFixedToRoot()){
+        auto ik = make_shared<MyCompositeBodyIK>(impl);
+        if(ik->isValid()){
+            return ik;
+        }
     } else if(auto kinematicsKit = findPresetKinematicsKit(targetLink)){
         return kinematicsKit->inverseKinematics();
     }
@@ -727,8 +743,11 @@ BodyItemKinematicsKit* BodyItem::getCurrentKinematicsKit(Link* targetLink)
 std::shared_ptr<InverseKinematics> BodyItem::getCurrentIK(Link* targetLink)
 {
     std::shared_ptr<InverseKinematics> ik;
-    if(isAttachedToParentBody_ && targetLink->isFixedToRoot()){
-        ik = make_shared<MyCompositeBodyIK>(impl);
+    if(isAttachedToParentBody() && targetLink->isFixedToRoot()){
+        auto compositeBodyIK = make_shared<MyCompositeBodyIK>(impl);
+        if(compositeBodyIK->isValid()){
+            ik = compositeBodyIK;
+        }
     } else if(auto kinematicsKit = getCurrentKinematicsKit(targetLink)){
         ik = kinematicsKit->inverseKinematics();
     }
@@ -975,8 +994,8 @@ void BodyItem::Impl::notifyKinematicStateChange(bool requestFK, bool requestVelF
 
     if(isProcessingInverseKinematicsIncludingParentBody){
         isProcessingInverseKinematicsIncludingParentBody = false;
-        if(parentBodyItem){
-            parentBodyItem->impl->notifyKinematicStateChange(
+        if(linkedParentBodyItem){
+            linkedParentBodyItem->impl->notifyKinematicStateChange(
                 requestFK, requestVelFK, requestAccFK, isDirect);
         }
     } else {
@@ -1003,8 +1022,8 @@ void BodyItem::Impl::emitSigKinematicStateChanged()
     if(isKinematicStateChangeNotifiedByParentBodyItem){
         isKinematicStateChangeNotifiedByParentBodyItem = false;
     } else {
-        if(parentBodyItem && !attachmentToParent){
-            setRelativeOffsetPositionFromParentBody();
+        if(self->currentParentBodyLinkage_ == Coordinated){
+            setLocalPositionOnParentBodyLink();
         }
     }
 
@@ -1048,8 +1067,8 @@ void BodyItem::notifyKinematicStateUpdate(bool doNotifyStateChange)
     
     impl->sigKinematicStateUpdated();
 
-    if(isAttachedToParentBody_){
-        impl->parentBodyItem->notifyKinematicStateUpdate(false);
+    if(isAttachedToParentBody()){
+        impl->linkedParentBodyItem->notifyKinematicStateUpdate(false);
     }
 
     auto record = new KinematicStateRecord(impl, impl->lastEditState);
@@ -1141,7 +1160,7 @@ LocationProxyPtr BodyItem::getLocationProxy()
 
 bool BodyItem::isLocationLocked() const
 {
-    return impl->isLocationLocked || isAttachedToParentBody_;
+    return impl->isLocationLocked || isAttachedToParentBody();
 }
 
 
@@ -1153,7 +1172,7 @@ void BodyItem::setLocationLocked(bool on)
 
 void BodyItem::Impl::setLocationLocked(bool on, bool updateInitialPositionWhenLocked, bool doNotiyUpdate)
 {
-    if(self->isAttachedToParentBody_ && !on){
+    if(self->isAttachedToParentBody() && !on){
         return;
     }
     
@@ -1183,7 +1202,7 @@ LocationProxyPtr BodyItem::createLinkLocationProxy(Link* link)
 
 
 BodyLocation::BodyLocation(BodyItem::Impl* impl)
-    : LocationProxy(impl->self, impl->attachmentToParent ? OffsetLocation : GlobalLocation),
+    : LocationProxy(impl->self, impl->self->isAttachedToParentBody()? OffsetLocation : GlobalLocation),
       impl(impl)
 {
 
@@ -1192,7 +1211,7 @@ BodyLocation::BodyLocation(BodyItem::Impl* impl)
 
 void BodyLocation::updateLocationType()
 {
-    if(impl->attachmentToParent){
+    if(impl->self->isAttachedToParentBody()){
         setLocationType(OffsetLocation);
     } else {
         setLocationType(GlobalLocation);
@@ -1235,7 +1254,7 @@ bool BodyLocation::setLocation(const Isometry3& T)
     switch(locationType()){
     case OffsetLocation:
         rootLink->setOffsetPosition(T);
-        impl->parentBodyItem->notifyKinematicStateChange(true);
+        impl->linkedParentBodyItem->notifyKinematicStateChange(true);
         return true;
     case GlobalLocation:
         rootLink->setPosition(T);
@@ -1257,9 +1276,9 @@ void BodyLocation::finishLocationEditing()
 
 LocationProxyPtr BodyLocation::getParentLocationProxy()
 {
-    if(impl->parentBodyItem){
-        if(!impl->attachmentToParent){
-            return impl->parentBodyItem->getLocationProxy();
+    if(impl->linkedParentBodyItem){
+        if(!impl->self->isAttachedToParentBody()){
+            return impl->linkedParentBodyItem->getLocationProxy();
         } else {
             auto parentLink = impl->body->parentBodyLink();
             if(impl->parentLinkLocation){
@@ -1268,7 +1287,7 @@ LocationProxyPtr BodyLocation::getParentLocationProxy()
                 }
             }
             if(!impl->parentLinkLocation){
-                impl->parentLinkLocation = new LinkLocation(impl->parentBodyItem, parentLink);
+                impl->parentLinkLocation = new LinkLocation(impl->linkedParentBodyItem, parentLink);
             }
             return impl->parentLinkLocation;
         }
@@ -1390,9 +1409,15 @@ void BodyItem::Impl::setTransparency(float t)
 }
 
 
-BodyItem* BodyItem::parentBodyItem()
+bool BodyItem::Impl::isLinkableToParentBody() const
 {
-    return impl->parentBodyItem;
+    return self->findOwnerItem<BodyItem>() != nullptr;
+}
+
+
+BodyItem* BodyItem::linkedParentBodyItem() const
+{
+    return impl->linkedParentBodyItem;
 }
 
 
@@ -1400,203 +1425,290 @@ void BodyItem::Impl::setParentLink(const std::string& name)
 {
     if(name != parentLinkName){
         parentLinkName = name;
-        setRelativeOffsetPositionFromParentBody();
+        updateParentBodyLinkage(true);
     }
 }
 
 
-void BodyItem::setAttachmentEnabled(bool on, bool doNotifyUpdate)
+void BodyItem::setParentLink(const std::string& name)
 {
-    impl->isAttachmentEnabled = on;
-    if(on != isAttachedToParentBody_){
-        impl->updateAttachment(on, doNotifyUpdate);
-    }
+    impl->setParentLink(name);
 }
 
 
-bool BodyItem::Impl::updateAttachment(bool on, bool doNotifyUpdate)
+const std::string& BodyItem::parentLinkName() const
 {
+    return impl->parentLinkName;
+}
+
+
+bool BodyItem::setPreferredParentBodyLinkage(int linkageType, bool doNotifyUpdate)
+{
+    preferredParentBodyLinkage_ = linkageType;
+    if(preferredParentBodyLinkage_ != currentParentBodyLinkage_){
+        impl->updateParentBodyLinkage(doNotifyUpdate);
+    }
+    return currentParentBodyLinkage_ == preferredParentBodyLinkage_;
+}
+
+
+bool BodyItem::Impl::updateParentBodyLinkage(bool doNotifyUpdate)
+{
+    if(self->preferredParentBodyLinkage_ == Unlinked && self->currentParentBodyLinkage_ == Unlinked){
+        return false;
+    }
+    
     bool updated = false;
-    BodyItem* newParentBodyItem = nullptr;
-    if(on && isAttachmentEnabled){
-        newParentBodyItem = self->findOwnerItem<BodyItem>();
+    BodyItem* parentBodyItem = nullptr;
+    bool doClear = false;
+    if(linkedParentBodyItem){
+        if(self->preferredParentBodyLinkage_ == Unlinked){
+            doClear = true;
+        } else {
+            parentBodyItem = self->findOwnerItem<BodyItem>();
+            if(!parentBodyItem){
+                doClear = true;
+            }
+        }
     }
-    if(newParentBodyItem != parentBodyItem || (newParentBodyItem && !self->isAttachedToParentBody_)){
-        setParentBodyItem(newParentBodyItem);
+    if(doClear){
+        clearParentBodyLinkage(doNotifyUpdate);
         updated = true;
-        if(doNotifyUpdate){
-            self->notifyUpdate();
+    } else {
+        if(!parentBodyItem){
+            parentBodyItem = self->findOwnerItem<BodyItem>();
+        }
+        if(parentBodyItem && updateParentBodyLinkageTo(parentBodyItem)){
+            if(doNotifyUpdate){
+                self->notifyUpdate();
+            }
+            updated = true;
         }
     }
     return updated;
 }
 
 
-bool BodyItem::isAttachmentEnabled() const
+void BodyItem::Impl::clearParentBodyLinkage(bool doNotifyUpdate)
 {
-    return impl->isAttachmentEnabled;
+    if(linkedParentBodyItem){
+        if(attachmentToParent){
+            if(attachmentToParent->isAttaching()){
+                if(auto holder = attachmentToParent->holder()){
+                    auto holderLink = holder->link();
+                    mvout(false) <<
+                        formatR(_("{0} has been detached from {1} of {2}."),
+                                self->displayName(), holderLink->name(), holderLink->body()->name())
+                                 << endl;
+                }
+                attachmentToParent->detach();
+                attachmentToParent->on(false);
+                if(doNotifyUpdate){
+                    notifyKinematicStateChange(false, false, false, true);
+                }
+            }
+            attachmentToParent = nullptr;
+        }
+        body->resetParent();
+        setLocationLocked(false, false, doNotifyUpdate);
+        linkedParentBodyItemConnection.disconnect();
+        linkedParentBodyItem = nullptr;
+        parentLink = nullptr;
+        self->currentParentBodyLinkage_ = Unlinked;
+
+        if(bodyLocation){
+            bodyLocation->updateLocationType();
+            // Notify the change of the parent location proxy
+            bodyLocation->notifyAttributeChange();
+        }
+    }
 }
 
 
-bool BodyItem::Impl::isAttachable() const
+bool BodyItem::Impl::updateParentBodyLinkageTo(BodyItem* parentBodyItem)
+{
+    Link* newParentLink = nullptr;
+    AttachmentDevice* newAttachment = nullptr;
+    HolderDevice* newHolder = nullptr;
+    bool updated = false;
+
+    if(self->preferredParentBodyLinkage_ != Unlinked){
+        auto parentBody = parentBodyItem->body();
+        bool isInvalidParentLink = false;
+        if(!parentLinkName.empty()){
+            newParentLink = parentBody->link(parentLinkName);
+            if(!newParentLink){
+                parentBodyItem = nullptr;
+                isInvalidParentLink = true;
+            }
+        }
+        if(!isInvalidParentLink){
+            if(!newParentLink && self->preferredParentBodyLinkage_ == Attached){
+                findMatchedAttachmentAndHolder(parentBodyItem, newAttachment, newHolder);
+            }
+            if(!newAttachment && parentLinkName.empty()){
+                newParentLink = parentBody->rootLink();
+            }
+        }
+    }
+    if(!newAttachment){
+        if(newParentLink != parentLink ||
+           self->preferredParentBodyLinkage_ != self->currentParentBodyLinkage_){
+            setLinkageToParentBody(parentBodyItem, newParentLink);
+            updated = true;
+        } else if(attachmentToParent){
+            clearParentBodyLinkage(true);
+            updated = true;
+        }
+    } else {
+        bool doUpdateAttachmentDevice = false;
+        if (self->preferredParentBodyLinkage_ != self->currentParentBodyLinkage_) {
+            doUpdateAttachmentDevice = true;
+        } else if (newAttachment != attachmentToParent) {
+            doUpdateAttachmentDevice = true;
+        } else {
+            HolderDevice* holder = nullptr;
+            if (attachmentToParent) {
+                holder = attachmentToParent->holder();
+            }
+            if (newHolder != holder) {
+                doUpdateAttachmentDevice = true;
+            }
+        }
+        if (doUpdateAttachmentDevice) {
+            setLinkageToParentBody(parentBodyItem, newAttachment, newHolder);
+            updated = true;
+        }
+    }
+
+    return updated;
+}
+
+
+bool BodyItem::Impl::findMatchedAttachmentAndHolder
+(BodyItem* parentBodyItem, AttachmentDevice*& out_attachment, HolderDevice*& out_holder)
 {
     for(auto& attachment : body->devices<AttachmentDevice>()){
         if(attachment->link()->isRoot()){
-            return true;
+            for(auto& holder : parentBodyItem->body()->devices<HolderDevice>()){
+                if(attachment->isAttachableTo(holder)){
+                    out_attachment = attachment;
+                    out_holder = holder;
+                    return true;
+                }
+            }
         }
     }
     return false;
 }
 
 
-bool BodyItem::attachToParentBody(bool doNotifyUpdate)
+void BodyItem::Impl::setLinkageToParentBody(BodyItem* parentBodyItem, Link* newParentLink)
 {
-    if(!impl->isAttachmentEnabled){
-        setAttachmentEnabled(true, doNotifyUpdate);
-    } else {
-        impl->updateAttachment(true, doNotifyUpdate);
+    clearParentBodyLinkage(true);
+    parentLink = newParentLink;
+    if(parentLink){
+        setLocalPositionOnParentBodyLink();
     }
-    return isAttachedToParentBody_;
+    setLinkageToParentBody(parentBodyItem, self->preferredParentBodyLinkage_);
 }
 
 
-/*
-void BodyItem::resetParentBodyItem()
+void BodyItem::Impl::setLinkageToParentBody
+(BodyItem* parentBodyItem, AttachmentDevice* attachment, HolderDevice* holder)
 {
-    impl->setParentBodyItem(findOwnerItem<BodyItem>());
+    clearParentBodyLinkage(true);
+
+    if(attachment && holder){
+        holder->addAttachment(attachment);
+        holder->on(true);
+        attachment->on(true);
+        attachmentToParent = attachment;
+        parentLink = holder->link();
+        Isometry3 T_offset = holder->T_local() * attachment->T_local().inverse(Eigen::Isometry);
+        body->rootLink()->setOffsetPosition(T_offset);
+        mvout(false) <<
+            formatR(_("{0} has been attached to {1} of {2}."),
+                    self->displayName(), parentLink->name(), parentBodyItem->displayName()) << endl;
+    }
+
+    setLinkageToParentBody(parentBodyItem, Attached);
 }
-*/
 
 
-void BodyItem::Impl::setParentBodyItem(BodyItem* bodyItem)
+void BodyItem::Impl::setLinkageToParentBody(BodyItem* parentBodyItem, int linkageType)
 {
-    if(!bodyItem){
-        if(attachmentToParent){
-            auto holderLink = attachmentToParent->holder()->link();
-            mvout(false) << formatR(_("{0} has been detached from {1} of {2}."),
-                                    self->displayName(), holderLink->name(), holderLink->body()->name()) << endl;
-        }
-    }
+    linkedParentBodyItem = parentBodyItem;
 
-    parentBodyItem = bodyItem;
-    body->resetParent();
-    parentBodyItemConnection.disconnect();
-    attachmentToParent = nullptr;
-    self->isAttachedToParentBody_ = false;
-    bool detached = false;
-    for(auto& attachment : body->devices<AttachmentDevice>()){
-        if(attachment->isAttaching()){
-            attachment->detach();
-            detached = true;
+    if(linkedParentBodyItem && parentLink){
+        self->currentParentBodyLinkage_ = linkageType;
+        if(linkageType == Attached){
+            body->setParent(parentLink);
+            setLocationLocked(true, false, true);
         }
-        attachment->on(false);
-    }
-
-    if(parentBodyItem){
-        auto linkToAttach = attachToBodyItem(parentBodyItem);
-        if(!linkToAttach){
-            setRelativeOffsetPositionFromParentBody();
-        }
-        parentBodyItemConnection =
-            parentBodyItem->sigKinematicStateChanged().connect(
+        linkedParentBodyItemConnection =
+            linkedParentBodyItem->sigKinematicStateChanged().connect(
                 [&](){ onParentBodyKinematicStateChanged(); });
         onParentBodyKinematicStateChanged();
-
-    } else if(detached){
-        setLocationLocked(false, false, true);
-        notifyKinematicStateChange(false, false, false, true);
-    }
-
+    } 
     if(bodyLocation){
         bodyLocation->updateLocationType();
         // Notify the change of the parent location proxy
         bodyLocation->notifyAttributeChange();
     }
-}
+}    
 
 
-Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
+void BodyItem::Impl::setLocalPositionOnParentBodyLink()
 {
-    Link* linkToAttach = nullptr;
-    for(auto& attachment : body->devices<AttachmentDevice>()){
-        if(attachment->link()->isRoot()){
-            for(auto& holder : bodyItem->body()->devices<HolderDevice>()){
-                if(attachment->isAttachableTo(holder)){
-                    holder->addAttachment(attachment);
-                    holder->on(true);
-                    attachment->on(true);
-                    attachmentToParent = attachment;
-                    self->isAttachedToParentBody_ = true;
-                    linkToAttach = holder->link();
-                    Isometry3 T_offset = holder->T_local() * attachment->T_local().inverse(Eigen::Isometry);
-                    body->rootLink()->setOffsetPosition(T_offset);
-                    body->setParent(linkToAttach);
-                    setLocationLocked(true, false, true);
-                    mvout(false) << formatR(_("{0} has been attached to {1} of {2}."),
-                                            self->displayName(), linkToAttach->name(), bodyItem->displayName()) << endl;
-                    goto found;
-                }
-            }
-        }
+    if(isLocalPositionRestored){
+        isLocalPositionRestored = false;
+    } else if(parentLink) {
+        auto T_inv = parentLink->T().inverse(Eigen::Isometry);
+        auto rootLink = body->rootLink();
+        rootLink->setOffsetPosition(T_inv * rootLink->T());
     }
-found:
-    return linkToAttach;
-}
-
-
-void BodyItem::Impl::setRelativeOffsetPositionFromParentBody()
-{
-    auto parentBody = parentBodyItem->body();
-    Link* parentLink = nullptr;
-    if(!parentLinkName.empty()){
-        parentLink = parentBody->link(parentLinkName);
-    }
-    if(!parentLink){
-        parentLink = parentBody->rootLink();
-    }
-    auto T_inv = parentLink->T().inverse(Eigen::Isometry);
-    auto rootLink = body->rootLink();
-    rootLink->setOffsetPosition(T_inv * rootLink->T());
 }
 
 
 void BodyItem::Impl::onParentBodyKinematicStateChanged()
 {
-    Link* parentLink;
-    if(attachmentToParent){
-        parentLink = attachmentToParent->holder()->link();
-    } else {
-        parentLink = nullptr;
-        auto parentBody = parentBodyItem->body();
-        if(!parentLinkName.empty()){
-            parentLink = parentBody->link(parentLinkName);
-        }
-        if(!parentLink){
-            parentLink = parentBody->rootLink();
-        }
+    if(parentLink){
+        auto rootLink = body->rootLink();
+        rootLink->setPosition(parentLink->T() * rootLink->Tb());
+        isKinematicStateChangeNotifiedByParentBodyItem = true;
+        isProcessingInverseKinematicsIncludingParentBody = false;
+        //! \todo requestVelFK and requestAccFK should be set appropriately
+        notifyKinematicStateChange(true, false, false, true);
     }
-    auto rootLink = body->rootLink();
-    rootLink->setPosition(parentLink->T() * rootLink->Tb());
-
-    isKinematicStateChangeNotifiedByParentBodyItem = true;
-    isProcessingInverseKinematicsIncludingParentBody = false;
-    //! \todo requestVelFK and requestAccFK should be set appropriately
-    notifyKinematicStateChange(true, false, false, true);
 }
 
 
 MyCompositeBodyIK::MyCompositeBodyIK(BodyItem::Impl* bodyItemImpl)
     : bodyItemImpl(bodyItemImpl),
-      attachment(bodyItemImpl->attachmentToParent)
+      parentLink(bodyItemImpl->parentLink)
 {
-    auto holderLink = attachment->holder()->link();
-    holderIK = bodyItemImpl->parentBodyItem->getCurrentIK(holderLink);
+    parentLinkIK = bodyItemImpl->linkedParentBodyItem->getCurrentIK(parentLink);
+    T_local_inv = bodyItemImpl->body->rootLink()->offsetPosition().inverse(Eigen::Isometry);
 }
 
 
 bool MyCompositeBodyIK::calcInverseKinematics(const Isometry3& T)
 {
     bool result = false;
+
+    if(parentLinkIK){
+        Isometry3 Tp = T * T_local_inv;
+        result = parentLinkIK->calcInverseKinematics(Tp);
+        if(result){
+            if(!parentLinkIK->calcRemainingPartForwardKinematicsForInverseKinematics()){
+                bodyItemImpl->linkedParentBodyItem->body()->calcForwardKinematics();
+            }
+            bodyItemImpl->isProcessingInverseKinematicsIncludingParentBody = true;
+        }
+    }
+
+    /*
     if(holderIK){
         if(auto holder = attachment->holder()){
             Isometry3 Ta = T * attachment->T_local() * holder->T_local().inverse(Eigen::Isometry);
@@ -1606,13 +1718,14 @@ bool MyCompositeBodyIK::calcInverseKinematics(const Isometry3& T)
             }
         }
     }
+    */
     return result;
 }
 
 
 std::shared_ptr<InverseKinematics> MyCompositeBodyIK::getParentBodyIK()
 {
-    return holderIK;
+    return parentLinkIK;
 }
 
 
@@ -1641,13 +1754,16 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                     return true;
                 });
 
+    if(isLinkableToParentBody()){
+        Selection linkage = { _("Unlinked"), _("Coordinated"), _("Attached") };
+        linkage.select(self->preferredParentBodyLinkage_);
+        putProperty(_("Parent body linkage"), linkage,
+                    [this](int linkageType){
+                        return self->setPreferredParentBodyLinkage(linkageType, true);
+                    });
+    }
     putProperty(_("Parent link"), parentLinkName,
                 [this](const string& name){ setParentLink(name); return true; });
-    
-    if(isAttachable()){
-        putProperty(_("Enable attachment"), isAttachmentEnabled,
-                    [this](bool on){ self->setAttachmentEnabled(on, false); return true; });
-    }
 
     putProperty(_("Lock location"), self->isLocationLocked(),
                 [this](bool on){ setLocationLocked(on, true, true); return true; });
@@ -1692,9 +1808,10 @@ bool BodyItem::Impl::store(Archive& archive)
         archive.write("currentBaseLink", currentBaseLink->name(), DOUBLE_QUOTED);
     }
 
+    auto rootLink = body->rootLink();
     /// \todo Improve the following for current / initial position representations
-    write(archive, "rootPosition", body->rootLink()->p());
-    write(archive, "rootAttitude", Matrix3(body->rootLink()->R()));
+    write(archive, "rootPosition", rootLink->p());
+    write(archive, "rootAttitude", Matrix3(rootLink->R()));
 
     Listing* qs;
     
@@ -1752,11 +1869,26 @@ bool BodyItem::Impl::store(Archive& archive)
         }
     }
 
+    if(isLinkableToParentBody()){
+        const char* linkage = nullptr;
+        if(self->preferredParentBodyLinkage_ == Unlinked){
+            linkage = "unlinked";
+        } else if(self->preferredParentBodyLinkage_ == Coordinated){
+            linkage = "coordinated";
+        } else if(self->preferredParentBodyLinkage_ == Attached){
+            linkage = "attached";
+        }
+        if(linkage){
+            archive.write("parent_body_linkage", linkage);
+            write(archive, "local_translation", rootLink->offsetTranslation());
+            writeDegreeAngleAxis(archive, "local_rotation", AngleAxis(rootLink->offsetRotation()));
+        }
+        if(self->preferredParentBodyLinkage_ == Attached){
+            archive.write("enable_attachment", true); // For backward compatibility
+        }
+    }
     if(!parentLinkName.empty()){
         archive.write("parent_link", parentLinkName, DOUBLE_QUOTED);
-    }
-    if(isAttachable()){
-        archive.write("enable_attachment", isAttachmentEnabled);
     }
 
     if(transparency > 0.0f){
@@ -1789,15 +1921,16 @@ bool BodyItem::Impl::restore(const Archive& archive)
             return false;
         }
     }
-            
+
+    auto rootLink = body->rootLink();
     Vector3 p = Vector3::Zero();
     Matrix3 R = Matrix3::Identity();
         
     if(read(archive, "rootPosition", p)){
-        body->rootLink()->p() = p;
+        rootLink->p() = p;
     }
     if(read(archive, "rootAttitude", R)){
-        body->rootLink()->R() = R;
+        rootLink->R() = R;
     }
 
     //! \todo replace the following code with the ValueTree serialization function of BodyState
@@ -1840,8 +1973,35 @@ bool BodyItem::Impl::restore(const Archive& archive)
         self->setJointRangeLimitEnabled(on);
     }
     archive.read("visible_link_selection_mode", self->isVisibleLinkSelectionMode_);
+
+    string linkage;
+    if(archive.read("parent_body_linkage", linkage)){
+        if(linkage == "unlinked"){
+            self->preferredParentBodyLinkage_ = Unlinked;
+        } else if(linkage == "coordinated"){
+            self->preferredParentBodyLinkage_ = Coordinated;
+        } else if(linkage == "attached"){
+            self->preferredParentBodyLinkage_ = Attached;
+        } else {
+            archive.throwException(_("Unknown parent body linkage type"));
+        }
+        if(self->preferredParentBodyLinkage_ == Coordinated ||
+           self->preferredParentBodyLinkage_ == Attached){
+            Vector3 translation;
+            if(read(archive, "local_translation", translation)){
+                rootLink->setOffsetTranslation(translation);
+                isLocalPositionRestored = true;
+            }
+            AngleAxis rot;
+            if(readDegreeAngleAxis(archive, "local_rotation", rot)){
+                rootLink->setOffsetRotation(rot);
+                isLocalPositionRestored = true;
+            }
+        }
+    } else if(archive.read("enable_attachment", on)){ // For backward compatibility
+        self->preferredParentBodyLinkage_ = on ? Attached : Unlinked;
+    }
     archive.read("parent_link", parentLinkName);
-    archive.read("enable_attachment", isAttachmentEnabled);
 
     double t;
     if(archive.read("transparency", t)){
@@ -1859,9 +2019,11 @@ bool BodyItem::Impl::restore(const Archive& archive)
             bool doNotifyKinematicStateChange = false;
 
             // The attachment is updated after the sub tree is restored
-            if(updateAttachment(true, false)){
+            if(updateParentBodyLinkage(false)){
                 doNotifyUpdate = true;
             }
+            isLocalPositionRestored = false;
+            
             if(isNonRootLinkStateRestorationOnSubTreeRestoredRequested){
                 restoreNonRootLinkStates(archive);
                 doNotifyUpdate = true;

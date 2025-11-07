@@ -1101,7 +1101,7 @@ int OperableSceneBody::Impl::checkLinkKinematicsType(Link* link, bool doUpdateIK
         if(!linkChain->isFixedToRoot()){
             break;
         }
-        bodyItemChain = bodyItemChain->parentBodyItem();
+        bodyItemChain = bodyItemChain->linkedParentBodyItem();
         linkChain = linkChain->body()->parentBodyLink();
     }
 
@@ -1200,7 +1200,7 @@ void OperableSceneBody::Impl::attachPositionDragger(Link* link)
     if(link->isRoot() && bodyItem->isAttachedToParentBody()){
         auto parentBodyLink = bodyItem->body()->parentBodyLink();
         if(!parentBodyLink->isRoot()){
-            auto parentBodyItem = bodyItem->parentBodyItem();
+            auto parentBodyItem = bodyItem->linkedParentBodyItem();
             kinematicsKit = parentBodyItem->getCurrentKinematicsKit(parentBodyLink);
             if(kinematicsKit){
                 positionDragger->setPosition(

@@ -54,21 +54,41 @@ public:
     bool isSharingShapes() const;
     void cloneShapes(CloneMap& cloneMap);
 
-    // API for a composite body
-    // The following body and link pair is basically determined by
-    // the parent-child relationship in the item tree
-    BodyItem* parentBodyItem();
-    // True if the body is attached to the parent body with a holder device and an attachment device
-    bool isAttachedToParentBody() const { return isAttachedToParentBody_; }
-    void setAttachmentEnabled(bool on, bool doNotifyUpdate = true);
-    bool isAttachmentEnabled() const;
-    bool attachToParentBody(bool doNotifyUpdate = true);    
+    // API for a composite body based on the parent-child relationship in the item tree
+    /**
+     * Coupling mode between parent and child bodies:
+     * - Unlinked: No coupling
+     * - Coordinated: Child follows parent in GUI (one-way)
+     * - Attached: Full bidirectional coupling with constraints
+     */
+    enum ParentBodyLinkage { Unlinked, Coordinated, Attached };
+    BodyItem* linkedParentBodyItem() const;
+    bool setPreferredParentBodyLinkage(int linkageType, bool doNotifyUpdate = true);
+    int preferredParentBodyLinkage() const { return preferredParentBodyLinkage_; }
+    bool isAttachmentToParentBodyEnabled() const { return preferredParentBodyLinkage_ == Attached; }
+    int currentParentBodyLinkage() const { return currentParentBodyLinkage_; }
+    bool isAttachedToParentBody() const { return currentParentBodyLinkage_ == Attached; }
+    bool isCoordinatedWithParentBody() const { return currentParentBodyLinkage_ == Coordinated; }
 
-    // The current parent body can temporarily be changed by this function
-    //void setTemporaryParentBodyItem(BodyItem* parentBodyItem);
-    // The parent body item defined by the parent-child relationship in the item tree is restored
-    // if the relationship exists. Otherwise, the parent body item is cleared.
-    //void resetParentBodyItem();
+    bool attachToParentBody(bool doNotifyUpdate = true) {
+        return setPreferredParentBodyLinkage(Attached, doNotifyUpdate);
+    }
+
+    void setParentLink(const std::string& name);
+    const std::string& parentLinkName() const;
+
+    [[deprecated("Use linkedParentBodyItem")]]
+    BodyItem* parentBodyItem() const {
+        return linkedParentBodyItem();
+    }
+    [[deprecated("Use setPreferredParentBodyLinkage")]]
+    void setAttachmentEnabled(bool on, bool doNotifyUpdate = true){
+        setPreferredParentBodyLinkage(Attached, doNotifyUpdate);
+    }
+    [[deprecated("Use isAttachmentToParentBodyEnabled")]]
+    bool isAttachmentEnabled() const {
+        return preferredParentBodyLinkage_ == Attached;
+    }
 
     void moveToOrigin();
     enum PresetPoseID { INITIAL_POSE, STANDARD_POSE };
@@ -259,7 +279,8 @@ protected:
             
 private:
     Impl* impl;
-    bool isAttachedToParentBody_;
+    int preferredParentBodyLinkage_;
+    int currentParentBodyLinkage_;
     bool isVisibleLinkSelectionMode_;
     std::vector<CollisionLinkPairPtr> collisions_;
     std::vector<bool> collisionLinkBitSet_;

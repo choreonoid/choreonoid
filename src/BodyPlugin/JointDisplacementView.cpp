@@ -150,7 +150,7 @@ void JointDisplacementView::Impl::onCurrentBodyItemChanged(BodyItem* bodyItem)
                 updated = true;
                 break;
             }
-            candidate = candidate->parentBodyItem();
+            candidate = candidate->linkedParentBodyItem();
         }
         if(!updated){
             modelUpdateConnection =
