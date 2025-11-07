@@ -196,6 +196,7 @@ BodyLoader* BodyItemBodyFileIO::ensureBodyLoader()
 bool BodyItemBodyFileIO::load(BodyItem* item, const std::string& filename)
 {
     BodyPtr newBody = new Body;
+    newBody->setName(item->name());
     if(!ensureBodyLoader()->load(newBody, filename)){
         return false;
     }
