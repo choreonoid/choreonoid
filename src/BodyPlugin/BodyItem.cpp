@@ -1160,7 +1160,7 @@ LocationProxyPtr BodyItem::getLocationProxy()
 
 bool BodyItem::isLocationLocked() const
 {
-    return impl->isLocationLocked || isAttachedToParentBody();
+    return impl->isLocationLocked;
 }
 
 
@@ -1172,10 +1172,6 @@ void BodyItem::setLocationLocked(bool on)
 
 void BodyItem::Impl::setLocationLocked(bool on, bool updateInitialPositionWhenLocked, bool doNotiyUpdate)
 {
-    if(self->isAttachedToParentBody() && !on){
-        return;
-    }
-    
     if(on != isLocationLocked){
         isLocationLocked = on;
 
@@ -1510,7 +1506,6 @@ void BodyItem::Impl::clearParentBodyLinkage(bool doNotifyUpdate)
             attachmentToParent = nullptr;
         }
         body->resetParent();
-        setLocationLocked(false, false, doNotifyUpdate);
         linkedParentBodyItemConnection.disconnect();
         linkedParentBodyItem = nullptr;
         parentLink = nullptr;
@@ -1644,7 +1639,6 @@ void BodyItem::Impl::setLinkageToParentBody(BodyItem* parentBodyItem, int linkag
         self->currentParentBodyLinkage_ = linkageType;
         if(linkageType == Attached){
             body->setParent(parentLink);
-            setLocationLocked(true, false, true);
         }
         linkedParentBodyItemConnection =
             linkedParentBodyItem->sigKinematicStateChanged().connect(
