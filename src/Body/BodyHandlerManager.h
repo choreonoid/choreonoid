@@ -14,6 +14,7 @@ class CNOID_EXPORT BodyHandlerManager
 {
 public:
     BodyHandlerManager();
+    ~BodyHandlerManager();
     void setMessageSink(std::ostream& os);
     bool loadBodyHandler(Body* body, const std::string& filename);
 
