@@ -3006,7 +3006,6 @@ void GLSLSceneRenderer::Impl::renderPlot
                 }
             } else {
                 const size_t m = std::min(n, colorIndices.size());
-                size_t i = 0;
                 while(i < m){
                     Vector3f c = 255.0f * orgColors[colorIndices[i]];
                     colors.emplace_back(c[0], c[1], c[2]);
