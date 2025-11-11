@@ -3014,7 +3014,7 @@ void GLSLSceneRenderer::Impl::renderPlot
                 }
             }
             if(i < n){
-                const auto& c = colors.back();
+                const auto c = colors.back();
                 while(i < n){
                     colors.push_back(c);
                     ++i;
