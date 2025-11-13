@@ -819,6 +819,9 @@ msgid ""
 msgstr ""
 "アイテム \"{0}\" は継続的に更新中のサブツリーの一部であるため、今は再読込することができません．"
 
+msgid "Items cannot be deleted while processing is in progress."
+msgstr "処理中はアイテムを削除できません．"
+
 msgid "Drop items in {0}"
 msgstr "複数のアイテムを{0}上でドロップ"
 
