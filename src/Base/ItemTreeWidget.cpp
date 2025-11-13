@@ -1892,8 +1892,21 @@ void ItemTreeWidget::Impl::keyPressEvent(QKeyEvent* event)
             processed = true;
             break;
         case Qt::Key_Delete:
-            cutSelectedItems();
-            processed = true;
+            {
+                bool hasContinuousUpdateItem = false;
+                for(auto& item : getSelectedItems()){
+                    if(item->isContinuousUpdateStateSubTree()){
+                        hasContinuousUpdateItem = true;
+                        break;
+                    }
+                }
+                if(hasContinuousUpdateItem){
+                    showWarningDialog(_("Items cannot be deleted while processing is in progress."));
+                } else {
+                    cutSelectedItems();
+                }
+                processed = true;
+            }
             break;
         default:
             break;
