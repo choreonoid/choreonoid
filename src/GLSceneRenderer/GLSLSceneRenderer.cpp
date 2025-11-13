@@ -3013,6 +3013,7 @@ void GLSLSceneRenderer::Impl::renderPlot
                 }
             }
             if(i < n){
+                // The reference is safe here because colors.reserve(n) prevents reallocation
                 const auto& c = colors.back();
                 while(i < n){
                     colors.push_back(c);
