@@ -51,6 +51,8 @@ public:
 
     MenuManager& addSeparator();
 
+    void setAllItemsEnabled(bool on);
+
 private:
     QWidget* topMenu_;
     Menu* popupMenu_;

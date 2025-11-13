@@ -310,3 +310,40 @@ MenuManager& MenuManager::addSeparator()
     addItem(currentMenu_, separator);
     return *this;
 }
+
+
+namespace {
+
+void setActionEnabledRecursively(QAction* action, bool on)
+{
+    if(!action) return;
+
+    action->setEnabled(on);
+
+    // Recursively process submenu items
+    auto menu = action->menu();
+    if(menu){
+        for(auto subAction : menu->actions()){
+            setActionEnabledRecursively(subAction, on);
+        }
+    }
+}
+
+}
+
+
+void MenuManager::setAllItemsEnabled(bool on)
+{
+    if(topMenu_){
+        auto menu = dynamic_cast<QWidget*>(topMenu_);
+        if(auto menuWidget = qobject_cast<QMenu*>(menu)){
+            for(auto action : menuWidget->actions()){
+                setActionEnabledRecursively(action, on);
+            }
+        } else if(auto menuBar = qobject_cast<QMenuBar*>(menu)){
+            for(auto action : menuBar->actions()){
+                setActionEnabledRecursively(action, on);
+            }
+        }
+    }
+}
