@@ -82,7 +82,7 @@ public:
     bool onPlaybackInitialized(double time);
     void onPlaybackStarted(double time);
     bool onTimeChanged(double time);
-    void onPlaybackStopped(double time);
+    double onPlaybackStopped(double time, bool isStoppedManually);
     HRESULT seekMedia(double time);
     HRESULT playMedia();
     HRESULT pauseMedia();
@@ -551,8 +551,8 @@ void DSMediaViewImpl::connectTimeBarSignals()
             timeBar->sigPlaybackStarted().connect(
                 [&](double time){ onPlaybackStarted(time); }));
         timeBarConnections.add(
-            timeBar->sigPlaybackStopped().connect(
-                [&](double time, bool){ onPlaybackStopped(time); }));
+            timeBar->sigPlaybackStoppedEx().connect(
+                [&](double time, bool isStoppedManually){ return onPlaybackStopped(time, isStoppedManually); }));
         timeBarConnections.add(
             timeBar->sigTimeChanged().connect(
                 [&](double time){ return onTimeChanged(time); }));
@@ -588,9 +588,24 @@ bool DSMediaViewImpl::onTimeChanged(double time)
 }
 
 
-void DSMediaViewImpl::onPlaybackStopped(double time)
+double DSMediaViewImpl::onPlaybackStopped(double time, bool isStoppedManually)
 {
+    double lastValidTime = time;
+
+    if(mediaSeeking && currentMediaItem){
+        // Query DirectShow for the actual media duration
+        LONGLONG duration_100ns = 0;
+        if(SUCCEEDED(mediaSeeking->GetDuration(&duration_100ns))){
+            // Convert 100-nanosecond units to seconds and subtract offset
+            double mediaDuration = (double)duration_100ns / 10000000.0;
+            double mediaEndTime = mediaDuration - currentMediaItem->offsetTime();
+            lastValidTime = mediaEndTime;
+        }
+    }
+
     pauseMedia();
+
+    return lastValidTime;
 }
 
 

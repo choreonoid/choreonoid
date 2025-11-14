@@ -89,7 +89,7 @@ public:
     bool onPlaybackInitialized(double time);
     void onPlaybackStarted(double time);
     bool onTimeChanged(double time);
-    void onPlaybackStopped(double time);
+    double onPlaybackStopped(double time, bool isStoppedManually);
     void stopPlayback();
     void onZoomPropertyChanged();
     bool storeState(Archive& archive);
@@ -616,8 +616,8 @@ void GSMediaViewImpl::activateCurrentMediaItem()
                 timeBar->sigPlaybackStarted().connect(
                     [&](double time){ onPlaybackStarted(time); }));
             timeBarConnections.add(
-                timeBar->sigPlaybackStopped().connect(
-                    [&](double time, bool){ onPlaybackStopped(time);}));
+                timeBar->sigPlaybackStoppedEx().connect(
+                    [&](double time, bool isStoppedManually){ return onPlaybackStopped(time, isStoppedManually);}));
             timeBarConnections.add(
                 timeBar->sigTimeChanged().connect(
                     [&](double time){ return onTimeChanged(time); }));
@@ -696,19 +696,34 @@ bool GSMediaViewImpl::onTimeChanged(double time)
 }
 
 
-void GSMediaViewImpl::onPlaybackStopped(double time)
+double GSMediaViewImpl::onPlaybackStopped(double time, bool isStoppedManually)
 {
     if(TRACE_FUNCTIONS){
         cout << "GSMediaViewImpl::onPlaybackStopped()" << endl;
     }
-    
+
+    double lastValidTime = time;
+
     if(isPlaying){
+        // Query GStreamer for the actual video duration
+        gint64 duration_ns = 0;
+        if(gst_element_query_duration(playbin, GST_FORMAT_TIME, &duration_ns)){
+            // Convert nanoseconds to seconds and subtract offset
+            double videoDuration = (double)duration_ns / GST_SECOND;
+            if(currentMediaItem){
+                double videoEndTime = videoDuration - currentMediaItem->offsetTime();
+                lastValidTime = videoEndTime;
+            }
+        }
+
         GstStateChangeReturn ret = gst_element_set_state(GST_ELEMENT(playbin), GST_STATE_PAUSED);
         if(TRACE_FUNCTIONS){
             cout << "ret = " << ret << endl;
         }
         isPlaying = false;
     }
+
+    return lastValidTime;
 }
 
 

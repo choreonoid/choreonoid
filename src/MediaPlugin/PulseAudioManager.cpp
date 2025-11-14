@@ -108,7 +108,7 @@ public:
     void onFullSyncPlaybackToggled();
     bool onPlaybackInitialized(double time);
     void onPlaybackStarted(double time);
-    void onPlaybackStopped(double time);
+    double onPlaybackStopped(double time, bool isStoppedManually);
     bool onTimeChanged(double time);
     bool store(Archive& archive);
     void restore(const Archive& archive);
@@ -236,8 +236,8 @@ PulseAudioManager::Impl::Impl(ExtensionManager* ext)
     timeBar->sigPlaybackStarted().connect(
         [&](double time){ onPlaybackStarted(time); });
 
-    timeBar->sigPlaybackStopped().connect(
-        [&](double time, bool){ onPlaybackStopped(time); });
+    timeBar->sigPlaybackStoppedEx().connect(
+        [&](double time, bool isStoppedManually){ return onPlaybackStopped(time, isStoppedManually); });
 
     // In some environments, the initial stream connection after starting up an
     // operating system produces an undesired playback timing offset.
@@ -302,8 +302,11 @@ bool PulseAudioManager::Impl::playAudioFile(const std::string& filename, double 
             }
             activeSources[audioItem] = source;
 
-            timeBar->sigPlaybackStopped().connect(
-                [this, audioItem](double, bool){ onAudioFilePlaybackStopped(audioItem); });
+            timeBar->sigPlaybackStoppedEx().connect(
+                [this, audioItem](double time, bool){
+                    onAudioFilePlaybackStopped(audioItem);
+                    return time;
+                });
 
             timeBar->setTime(0.0);
             timeBar->startPlayback();
@@ -372,13 +375,24 @@ void PulseAudioManager::Impl::onPlaybackStarted(double time)
 }
 
 
-void PulseAudioManager::Impl::onPlaybackStopped(double time)
+double PulseAudioManager::Impl::onPlaybackStopped(double time, bool isStoppedManually)
 {
+    double lastValidTime = time;
+
+    // Find the maximum end time among all active audio sources
     for(SourceMap::iterator p = activeSources.begin(); p != activeSources.end(); ++p){
         SourcePtr& source = p->second;
+        if(source->audioItem){
+            double audioEndTime = source->audioItem->timeLength() - source->audioItem->offsetTime();
+            if(audioEndTime > lastValidTime){
+                lastValidTime = audioEndTime;
+            }
+        }
         source->stop();
     }
     sigTimeChangedConnection.disconnect();
+
+    return lastValidTime;
 }
 
 
