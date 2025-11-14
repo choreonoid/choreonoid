@@ -28,6 +28,8 @@ class CameraConfigDialog::Impl
 public:
     CameraConfigDialog* self;
     CameraItemPtr cameraItem;
+    bool isCreatingNewCamera;
+    bool isCameraCreationAccepted;
     LineEdit nameEdit;
     RadioButton perspectiveRadio;
     RadioButton orthographicRadio;
@@ -80,7 +82,9 @@ CameraConfigDialog::CameraConfigDialog()
 
 
 CameraConfigDialog::Impl::Impl(CameraConfigDialog* self_)
-    : self(self_)
+    : self(self_),
+      isCreatingNewCamera(false),
+      isCameraCreationAccepted(false)
 {
     auto vbox = new QVBoxLayout;
     self->setLayout(vbox);
@@ -228,8 +232,6 @@ CameraConfigDialog::~CameraConfigDialog()
 
 CameraItem* CameraConfigDialog::showToCreateCameraItem(Item* parentItem)
 {
-    setWindowTitle(_("Camera Creation"));
-    
     CameraItemPtr cameraItem = new CameraItem;
     cameraItem->setName(_("Camera"));
     cameraItem->setChecked(true);
@@ -238,8 +240,18 @@ CameraItem* CameraConfigDialog::showToCreateCameraItem(Item* parentItem)
     cameraItem->cameraTransform()->setPosition(
         Isometry3::Identity() * AngleAxis(PI / 2.0, Vector3::UnitZ()) * AngleAxis(PI, Vector3::UnitX()));
 
+    return showToCreateCameraItem(parentItem, cameraItem);
+}
+
+
+CameraItem* CameraConfigDialog::showToCreateCameraItem(Item* parentItem, CameraItem* cameraItem)
+{
+    setWindowTitle(_("Camera Creation"));
+
     parentItem->addChildItem(cameraItem);
 
+    impl->isCreatingNewCamera = true;
+    impl->isCameraCreationAccepted = false;
     impl->showToConfigureCameraItem(cameraItem);
 
     return cameraItem;
@@ -249,6 +261,8 @@ CameraItem* CameraConfigDialog::showToCreateCameraItem(Item* parentItem)
 void CameraConfigDialog::showToConfigureCameraItem(CameraItem* cameraItem)
 {
     setWindowTitle(_("Camera Configuration"));
+    impl->isCreatingNewCamera = false;
+    impl->isCameraCreationAccepted = false;
     impl->showToConfigureCameraItem(cameraItem);
 }
 
@@ -378,7 +392,9 @@ void CameraConfigDialog::Impl::setVectorElementSpins(const Vector3& v, DoubleSpi
 
 void CameraConfigDialog::Impl::onNameEditingFinished(const std::string& name)
 {
-    cameraItem->setName(name);
+    if(cameraItem){
+        cameraItem->setName(name);
+    }
 }
 
 
@@ -471,6 +487,18 @@ void CameraConfigDialog::Impl::onInteractiveViewpointChangeToggled(bool on)
 
 void CameraConfigDialog::closeEvent(QCloseEvent* event)
 {
+    if(impl->isCreatingNewCamera && !impl->isCameraCreationAccepted && impl->cameraItem){
+        impl->cameraItem->removeFromParentItem();
+    }
+    impl->isCreatingNewCamera = false;
+    impl->isCameraCreationAccepted = false;
     impl->setCameraItem(nullptr);
     Dialog::closeEvent(event);
+}
+
+
+void CameraConfigDialog::accept()
+{
+    impl->isCameraCreationAccepted = true;
+    Dialog::accept();
 }

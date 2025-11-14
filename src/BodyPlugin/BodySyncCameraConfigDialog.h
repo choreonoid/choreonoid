@@ -18,7 +18,6 @@ public:
     static BodySyncCameraConfigDialog* instance();
 
     BodySyncCameraItem* showToCreateCameraItem(BodyItem* bodyItem, Link* link);
-    virtual void showToConfigureCameraItem(CameraItem* cameraItem) override;
 
 protected:
     virtual void updateWidgetsWithCurrentCameraStates() override;

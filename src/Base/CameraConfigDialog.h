@@ -24,6 +24,8 @@ public:
     virtual void showToConfigureCameraItem(CameraItem* cameraItem);
 
 protected:
+    CameraItem* showToCreateCameraItem(Item* parentItem, CameraItem* cameraItem);
+    
     QVBoxLayout* alignVBox();
     QVBoxLayout* optionVBox1();
     QVBoxLayout* optionVBox2();
@@ -32,8 +34,8 @@ protected:
     virtual Isometry3 getCurrentCameraPositionToDisplay();
     virtual void setCameraPositionToDisplayToCameraTransform(const Isometry3& T);
 
-protected:
     virtual void closeEvent(QCloseEvent* event) override;
+    virtual void accept() override;
 
 private:
     class Impl;

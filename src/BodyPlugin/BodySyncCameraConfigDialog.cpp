@@ -29,7 +29,6 @@ class BodySyncCameraConfigDialog::Impl
 {
 public:
     BodySyncCameraConfigDialog* self;
-    BodySyncCameraItemPtr cameraItem;
     ButtonGroup coordinateRadioGroup;
     RadioButton globalRadio;
     RadioButton localRadio;
@@ -37,6 +36,9 @@ public:
     ConnectionSet widgetConnections;
 
     Impl(BodySyncCameraConfigDialog* self);
+    BodySyncCameraItem* getBodySyncCameraItem() {
+        return static_cast<BodySyncCameraItem*>(self->cameraItem());
+    }
     void alignWithTargetOrigin();    
     void onParallelTrackingModeToggled(bool on);
 };
@@ -105,8 +107,6 @@ BodySyncCameraConfigDialog::~BodySyncCameraConfigDialog()
 
 BodySyncCameraItem* BodySyncCameraConfigDialog::showToCreateCameraItem(BodyItem* bodyItem, Link* link)
 {
-    setWindowTitle(_("Camera Creation"));
-    
     BodySyncCameraItemPtr cameraItem = new BodySyncCameraItem;
     cameraItem->setName(formatR(_("{0} Camera"), bodyItem->name()));
     cameraItem->setChecked(true);
@@ -122,29 +122,18 @@ BodySyncCameraItem* BodySyncCameraConfigDialog::showToCreateCameraItem(BodyItem*
     cameraItem->cameraTransform()->setPosition(
         link->T() * AngleAxis(PI / 2.0, Vector3::UnitZ()) * AngleAxis(PI, Vector3::UnitX()));
 
-    bodyItem->addChildItem(cameraItem);
-
-    showToConfigureCameraItem(cameraItem);
+    CameraConfigDialog::showToCreateCameraItem(bodyItem, cameraItem);
 
     return cameraItem;
 }
 
 
-void BodySyncCameraConfigDialog::showToConfigureCameraItem(CameraItem* cameraItem)
-{
-    impl->cameraItem = dynamic_cast<BodySyncCameraItem*>(cameraItem);
-    if(impl->cameraItem){
-        CameraConfigDialog::showToConfigureCameraItem(cameraItem);
-    }
-}
-
-
 void BodySyncCameraConfigDialog::updateWidgetsWithCurrentCameraStates()
 {
-    impl->cameraItem->updateRelativeCameraPosition();
-    
+    auto cameraItem = impl->getBodySyncCameraItem();
+    cameraItem->updateRelativeCameraPosition();
     impl->widgetConnections.block();
-    impl->parallelTrackingCheck.setChecked(impl->cameraItem->isParallelTrackingMode());
+    impl->parallelTrackingCheck.setChecked(cameraItem->isParallelTrackingMode());
     impl->widgetConnections.unblock();
 
     CameraConfigDialog::updateWidgetsWithCurrentCameraStates();
@@ -156,9 +145,9 @@ Isometry3 BodySyncCameraConfigDialog::getCurrentCameraPositionToDisplay()
 {
     Isometry3 T;
     if(impl->globalRadio.isChecked()){
-        T = impl->cameraItem->cameraTransform()->T();
+        T = impl->getBodySyncCameraItem()->cameraTransform()->T();
     } else {
-        T = impl->cameraItem->relativeCameraPosition();
+        T = impl->getBodySyncCameraItem()->relativeCameraPosition();
     }
     return T;
 }
@@ -166,13 +155,14 @@ Isometry3 BodySyncCameraConfigDialog::getCurrentCameraPositionToDisplay()
 
 void BodySyncCameraConfigDialog::setCameraPositionToDisplayToCameraTransform(const Isometry3& T)
 {
+    auto cameraItem = impl->getBodySyncCameraItem();
     Isometry3 Tg;
     if(impl->localRadio.isChecked()){
-        Tg = impl->cameraItem->targetLinkPosition() * T;
+        Tg = cameraItem->targetLinkPosition() * T;
     } else {
         Tg = T;
     }
-    auto transform = impl->cameraItem->cameraTransform();
+    auto transform = cameraItem->cameraTransform();
     transform->setPosition(Tg);
     transform->notifyUpdate();
 }
@@ -180,6 +170,7 @@ void BodySyncCameraConfigDialog::setCameraPositionToDisplayToCameraTransform(con
 
 void BodySyncCameraConfigDialog::Impl::alignWithTargetOrigin()
 {
+    auto cameraItem = getBodySyncCameraItem();
     auto transform = cameraItem->cameraTransform();
     transform->setPosition(cameraItem->targetLinkPosition());
     transform->notifyUpdate();
@@ -188,6 +179,7 @@ void BodySyncCameraConfigDialog::Impl::alignWithTargetOrigin()
 
 void BodySyncCameraConfigDialog::Impl::onParallelTrackingModeToggled(bool on)
 {
+    auto cameraItem = getBodySyncCameraItem();
     cameraItem->setParallelTrackingMode(on);
     cameraItem->notifyUpdate();
 }
