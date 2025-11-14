@@ -33,7 +33,7 @@ elseif(WIN32)
     DSMediaView.cpp
     AudioItem.cpp
     )
-  set(libraries PRIVATE Strmiids.lib)
+  set(libraries PRIVATE Strmiids.lib quartz.lib)
 endif()
 
 set(headers

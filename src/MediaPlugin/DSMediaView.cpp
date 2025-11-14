@@ -11,8 +11,12 @@
 #include <cnoid/MainMenu>
 #include <cnoid/Sleep>
 #include <cnoid/Format>
+#include <cnoid/UTF8>
+#include <cnoid/stdx/filesystem>
 #include <QPainter>
+#include <QWindow>
 #include <Dshow.h>
+#include <errors.h>
 #include <iostream>
 #include <algorithm>
 #include <windows.h>
@@ -21,6 +25,7 @@
 
 using namespace std;
 using namespace cnoid;
+namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 const bool TRACE_FUNCTIONS = false;
@@ -273,19 +278,25 @@ void DSMediaView::paintEvent(QPaintEvent* event)
         cout << "DSMediaView::paintEvent()" << endl;
     }
 
-    QPainter painter(this);
-
-    painter.fillRect(0, 0, width(), height(), QColor(Qt::black));
-
-    
-    
+    // Fill background with black using Win32 GDI
+    HWND hwnd = (HWND)winId();
+    if(hwnd){
+        HDC hdc = GetDC(hwnd);
+        if(hdc){
+            RECT rect;
+            GetClientRect(hwnd, &rect);
+            HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
+            FillRect(hdc, &rect, brush);
+            DeleteObject(brush);
+            ReleaseDC(hwnd, hdc);
+        }
+    }
 }
 
 
 QPaintEngine* DSMediaView::paintEngine () const
 {
-    //return 0;
-    return View::paintEngine();
+    return nullptr;
 }
 
 
@@ -423,13 +434,28 @@ void DSMediaViewImpl::load()
         EIF(CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
                              IID_IGraphBuilder, (void**)&graphBuilder));
 
-        WCHAR wFile[MAX_PATH];
+        // Get the file path and convert to wide character string for DirectShow
+        filesystem::path fpath(fromUTF8(currentMediaItem->mediaFilePath()));
+        std::wstring wFile = fpath.wstring();
 
-        // Convert filename to wide character string
-        MultiByteToWideChar(_getmbcp(), 0, currentMediaItem->mediaURI().c_str(), -1, wFile, sizeof(wFile));
+        mv->putln(formatC("Attempting to load media file: {}", currentMediaItem->mediaFilePath()));
 
         // Have the graph builder construct its the appropriate graph automatically
-        EIF(graphBuilder->RenderFile(wFile, NULL));
+        result = graphBuilder->RenderFile(wFile.c_str(), NULL);
+        if(FAILED(result)) {
+            WCHAR errorText[512];
+            std::string errorMsg;
+            if(AMGetErrorText(result, errorText, 512)) {
+                char mbErrorText[1024];
+                WideCharToMultiByte(CP_UTF8, 0, errorText, -1, mbErrorText, 1024, NULL, NULL);
+                errorMsg = formatC("FAILED(hr=0x{:08x}) in graphBuilder->RenderFile: {}",
+                                   static_cast<unsigned int>(result), mbErrorText);
+            } else {
+                errorMsg = formatC("FAILED(hr=0x{:08x}) in graphBuilder->RenderFile",
+                                   static_cast<unsigned int>(result));
+            }
+            throw DSException(errorMsg);
+        }
 
         // QueryInterface for DirectShow interfaces
         EIF(graphBuilder->QueryInterface(IID_IMediaControl, (void**)&mediaControl));
@@ -511,19 +537,35 @@ HRESULT DSMediaViewImpl::adjustVideoWindow()
     if(TRACE_FUNCTIONS){
         cout << "DSMediaView::adjustVideoWindow()" << endl;
     }
-    
+
     if(videoWindow && basicVideo){
-        LONG screenWidth = self->width();
-        LONG screenHeight = self->height();
+        // Get devicePixelRatio for this widget to convert Qt logical coordinates
+        // to physical coordinates for DirectShow
+        qreal dpr = 1.0;
+        if(auto window = self->windowHandle()){
+            dpr = window->devicePixelRatio();
+        }
+
+        // Get logical dimensions from Qt widget
+        int logicalWidth = self->width();
+        int logicalHeight = self->height();
+
+        // Convert to physical pixels for DirectShow
+        LONG screenWidth = qRound(logicalWidth * dpr);
+        LONG screenHeight = qRound(logicalHeight * dpr);
+
+        // Don't update if widget doesn't have valid size yet
+        if(screenWidth <= 0 || screenHeight <= 0){
+            return S_OK;
+        }
+
         LONG width, height;
         if(basicVideo->GetVideoSize(&width, &height) != E_NOINTERFACE){
+            // width and height from GetVideoSize are already in physical pixels
             if(orgSizeCheck->isChecked()){
-                if(width <= screenWidth && height <= screenHeight){
-                    return videoWindow->SetWindowPosition(
-                        (screenWidth - width) / 2, (screenHeight - height) / 2, width, height);
-                } else {
-                    return videoWindow->SetWindowPosition(0, 0, width, height);
-                }
+                // Center the video regardless of whether it fits in the view
+                return videoWindow->SetWindowPosition(
+                    (screenWidth - width) / 2, (screenHeight - height) / 2, width, height);
             } else if(aspectRatioCheck->isChecked()){
                 double r1 = (double)screenWidth / width;
                 double r2 = (double)screenHeight / height;
