@@ -253,6 +253,15 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     QCoreApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton);
 #endif
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    /*
+      Prevent Qt6 from creating native windows for all sibling widgets when one widget
+      requires WA_NativeWindow (e.g., GSMediaView for GStreamer video overlay).
+      This fixes QRhi OpenGL context errors with native X11 rendering.
+    */
+    QCoreApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
+#endif
+
     // Check for --no-window option and set Qt platform to offscreen to avoid X11 dependency
     // This prevents Qt from using the Xcb platform which would crash if X11 connection is lost
     // (e.g., when xvfb-run terminates Xvfb before choreonoid exits)

@@ -15,6 +15,7 @@
 #include <QEvent>
 #include <QResizeEvent>
 #include <QPainter>
+#include <QWindow>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QGuiApplication>
@@ -157,6 +158,7 @@ GSMediaView::GSMediaView()
     setDefaultLayoutArea(CenterArea);
 
     setAttribute(Qt::WA_NativeWindow);
+    setAttribute(Qt::WA_DontCreateNativeAncestors);
     setAttribute(Qt::WA_PaintOnScreen);
     setAttribute(Qt::WA_OpaquePaintEvent);
 
@@ -286,12 +288,13 @@ void GSMediaViewImpl::onWindowIdChanged()
         XFreeGC(display, gc);
     }
 
-    Display* display = nullptr;
+    display = nullptr;
     int appScreen = 0;
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     if(auto x11App = qGuiApp->nativeInterface<QNativeInterface::QX11Application>()){
         display = x11App->display();
+        appScreen = DefaultScreen(display);
     }
 #else
     display = QX11Info::display();
@@ -317,29 +320,56 @@ void GSMediaView::resizeEvent(QResizeEvent* event)
 
 void GSMediaViewImpl::updateRenderRectangle()
 {
+    // Get devicePixelRatio for this widget to convert Qt logical coordinates
+    // to physical X11/GStreamer coordinates
+    qreal dpr = 1.0;
+    if(auto window = self->windowHandle()){
+        dpr = window->devicePixelRatio();
+    }
+
+    // Get logical dimensions from Qt widget
+    int logicalWidth = self->width();
+    int logicalHeight = self->height();
+
+    // Convert to physical pixels for X11/GStreamer
+    int physicalWidth = qRound(logicalWidth * dpr);
+    int physicalHeight = qRound(logicalHeight * dpr);
+
+    // Don't update render rectangle if widget doesn't have valid size yet
+    if(physicalWidth <= 0 || physicalHeight <= 0){
+        return;
+    }
+
     int x = 0;
     int y = 0;
-    int width = self->width();
-    int height = self->height();
-    QRegion background = QRect(0, 0, width, height);
-    
+    int width = physicalWidth;
+    int height = physicalHeight;
+
     if(orgSizeCheck->isChecked()){
         if(videoWidth > 0 && videoHeight > 0){
-            x = (width - videoWidth) / 2;
-            y = (height - videoHeight) / 2;
+            // videoWidth/videoHeight are already in physical pixels
+            x = (physicalWidth - videoWidth) / 2;
+            y = (physicalHeight - videoHeight) / 2;
             width = videoWidth;
             height = videoHeight;
         }
     } else {
-        if(width >= 3 && height >= 3){
-            x = 1;
-            y = 1;
-            width -= 2;
-            height -= 2;
-        }
-    }        
-    gst_video_overlay_set_render_rectangle(GST_VIDEO_OVERLAY(playbin), x, y, width, height);
+        // Scale border size by DPI ratio
+        int border = qRound(1 * dpr);
+        int minSize = border * 2 + 1;
 
+        if(physicalWidth >= minSize && physicalHeight >= minSize){
+            x = border;
+            y = border;
+            width = physicalWidth - 2 * border;
+            height = physicalHeight - 2 * border;
+        }
+    }
+
+    gst_video_overlay_set_render_rectangle(GST_VIDEO_OVERLAY(videoSink), x, y, width, height);
+
+    // Background region calculation - use physical pixels for X11 painting
+    QRegion background = QRect(0, 0, physicalWidth, physicalHeight);
     background = background.subtracted(QRegion(x, y, width, height));
     rects.clear();
     rects.reserve(background.rectCount());
@@ -543,6 +573,7 @@ void GSMediaViewImpl::onItemCheckToggled(Item* item, bool isChecked)
             if(!currentMediaItem || currentMediaItem->mediaURI().empty()){
                 g_object_set(G_OBJECT(playbin), "uri", "", NULL);
                 timeBarConnections.disconnect();
+                self->update();  // Trigger repaint to clear the view
 
             } else {
                 GstPad* pad = gst_element_get_static_pad(GST_ELEMENT(videoSink), "sink");
@@ -686,13 +717,25 @@ void GSMediaViewImpl::stopPlayback()
     if(TRACE_FUNCTIONS){
         cout << "GSMediaViewImpl::stopPlayback()" << endl;
     }
-    
+
     GstStateChangeReturn ret = gst_element_set_state(GST_ELEMENT(playbin), GST_STATE_NULL);
 
     if(TRACE_FUNCTIONS){
         cout << "ret = " << ret << endl;
     }
-    
+
+    // Clear the video overlay window to remove the last frame
+    if(display && windowId && gc){
+        qreal dpr = 1.0;
+        if(auto window = self->windowHandle()){
+            dpr = window->devicePixelRatio();
+        }
+        int physicalWidth = qRound(self->width() * dpr);
+        int physicalHeight = qRound(self->height() * dpr);
+        XFillRectangle(display, windowId, gc, 0, 0, physicalWidth, physicalHeight);
+        XFlush(display);  // Ensure X11 commands are executed immediately
+    }
+
     isPlaying = false;
 }
 
