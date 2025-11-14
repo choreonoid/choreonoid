@@ -27,13 +27,23 @@ if(UNIX)
   set(libraries PRIVATE ${GSTREAMER_LIBRARIES} ${SNDFILE_LIBRARIES} ${LIBPULSE_LIBRARIES} X11)
 
 elseif(WIN32)
+  option(USE_MEDIA_FOUNDATION "Use Media Foundation instead of DirectShow for MediaView" OFF)
+  mark_as_advanced(USE_MEDIA_FOUNDATION)
+
   set(sources
     MediaPlugin.cpp
     MediaItem.cpp
-    DSMediaView.cpp
     AudioItem.cpp
     )
-  set(libraries PRIVATE Strmiids.lib quartz.lib)
+
+  if(USE_MEDIA_FOUNDATION)
+    set(sources ${sources} MFMediaView.cpp)
+    set(libraries PRIVATE Mf.lib Mfplat.lib Mfuuid.lib Mfreadwrite.lib Strmiids.lib)
+    set_source_files_properties(MediaPlugin.cpp PROPERTIES COMPILE_DEFINITIONS "USE_MEDIA_FOUNDATION")
+  else()
+    set(sources ${sources} DSMediaView.cpp)
+    set(libraries PRIVATE Strmiids.lib quartz.lib)
+  endif()
 endif()
 
 set(headers

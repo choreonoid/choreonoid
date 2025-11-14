@@ -5,7 +5,11 @@
 
 #include "MediaItem.h"
 #ifdef _WIN32
-#include "DSMediaView.h"
+  #ifdef USE_MEDIA_FOUNDATION
+  #include "MFMediaView.h"
+  #else
+  #include "DSMediaView.h"
+  #endif
 #else
 #include "GSMediaView.h"
 #endif
@@ -44,7 +48,11 @@ public:
             MediaItem::initialize(this);
 
 #ifdef _WIN32
+  #ifdef USE_MEDIA_FOUNDATION
+            MFMediaView::initialize(this);
+  #else
             DSMediaView::initialize(this);
+  #endif
 #else
             GSMediaView::initializeClass(this);
 #endif
@@ -55,11 +63,15 @@ public:
 #endif
             return true;
         }
-        
+
     virtual bool finalize()
         {
 #ifdef _WIN32
+  #ifdef USE_MEDIA_FOUNDATION
+            MFMediaView::finalize();
+  #else
             DSMediaView::finalize();
+  #endif
 #endif
             return true;
         }
