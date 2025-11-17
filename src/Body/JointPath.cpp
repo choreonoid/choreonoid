@@ -57,6 +57,8 @@ public:
     int maxStagnationCount;
     vector<double> q0;
     Isometry3 T0;
+    vector<double> qBest;  // Best solution found during iterations (for best-effort mode)
+    double minErrorSqr;     // Minimum error squared achieved (for best-effort mode)
     MatrixXd J;
     VectorXd dTask;
     VectorXd dq;
@@ -324,6 +326,15 @@ bool JointPath::calcInverseKinematics()
 }
 
 
+/**
+ * Calculates inverse kinematics using numerical iteration.
+ *
+ * Best-effort mode behavior:
+ * - Tracks and returns the solution with minimum error across all iterations
+ * - Useful for singularities and joint limit configurations
+ * - For high-precision exploration, set maxIkError=0 and increase maxIterations
+ *   to explore more configurations and return the best one found
+ */
 bool JointPath::calcInverseKinematics(const Isometry3& T)
 {
     const bool USE_USUAL_INVERSE_SOLUTION_FOR_6x6_NON_BEST_EFFORT_PROBLEM = false;
@@ -366,6 +377,10 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
             nuIK->q0[i] = joints_[i]->q();
         }
         nuIK->T0 = target->T();
+    } else {
+        // Initialize best solution tracking for best-effort mode
+        nuIK->minErrorSqr = std::numeric_limits<double>::max();
+        nuIK->qBest.resize(n);
     }
 
     double prevErrsqr = std::numeric_limits<double>::max();
@@ -394,6 +409,15 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
             nuIK->dTask.segment<3>(3) = target->R() * omegaFromRot(target->R().transpose() * T.linear());
             errorSqr = nuIK->dTask.squaredNorm();
         }
+        // Track the best solution in best-effort mode
+        if(nuIK->isBestEffortIkMode && errorSqr < nuIK->minErrorSqr){
+            nuIK->minErrorSqr = errorSqr;
+            for(int j=0; j < n; ++j){
+                nuIK->qBest[j] = joints_[j]->q();
+            }
+            stagnationCount = 0;  // Reset stagnation counter when best solution improves
+        }
+
         if(errorSqr < nuIK->maxIkErrorSqr){
             completed = true;
             target->T() = T;
@@ -406,18 +430,13 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
             // No significant improvement or error increased
             stagnationCount++;
             if(stagnationCount >= nuIK->maxStagnationCount){
-                if(nuIK->isBestEffortIkMode && (errorSqr > prevErrsqr)){
-                    // Revert the joint displacements to the previous state in this iteration
-                    for(int j=0; j < n; ++j){
-                        joints_[j]->q() = nuIK->q0[j];
-                    }
-                    calcForwardKinematics();
-                }
                 break;
             }
         } else {
-            // Good improvement, reset stagnation counter
-            stagnationCount = 0;
+            // Good improvement, reset stagnation counter (unless already reset by best solution update)
+            if(!nuIK->isBestEffortIkMode){
+                stagnationCount = 0;
+            }
         }
         prevErrsqr = errorSqr;
 
@@ -453,22 +472,24 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
             }
         }
 
-        // Save current state for best-effort mode rollback (after joint limit clamping)
-        if(nuIK->isBestEffortIkMode){
-            for(int j=0; j < n; ++j){
-                nuIK->q0[j] = joints_[j]->q();
-            }
-        }
-
         calcForwardKinematics();
     }
 
-    if(!completed && !nuIK->isBestEffortIkMode){
-        for(int i=0; i < n; ++i){
-            joints_[i]->q() = nuIK->q0[i];
+    if(!completed){
+        if(nuIK->isBestEffortIkMode){
+            // Restore the best solution found during iterations
+            for(int i=0; i < n; ++i){
+                joints_[i]->q() = nuIK->qBest[i];
+            }
+            calcForwardKinematics();
+        } else {
+            // Normal mode: restore initial state on failure
+            for(int i=0; i < n; ++i){
+                joints_[i]->q() = nuIK->q0[i];
+            }
+            calcForwardKinematics();
+            target->T() = nuIK->T0;
         }
-        calcForwardKinematics();
-        target->T() = nuIK->T0;
     }
 
     return completed;
