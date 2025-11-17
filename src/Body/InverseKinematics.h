@@ -1,7 +1,3 @@
-/** 
-    \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_INVERSE_KINEMATICS_H
 #define CNOID_BODY_INVERSE_KINEMATICS_H
 
@@ -16,8 +12,13 @@ public:
     virtual ~InverseKinematics();
 
     virtual bool calcInverseKinematics(const Isometry3& T) = 0;
-
     virtual bool calcRemainingPartForwardKinematicsForInverseKinematics();
+
+    // Best-effort IK support
+    virtual bool isBestEffortIkAvailable() const;
+    virtual bool isBestEffortIkEnabled() const;
+    virtual void setBestEffortIkEnabled(bool on);
+    virtual int getDOF() const;
 
     //! deprecated
     bool calcInverseKinematics(const Vector3& p, const Matrix3& R) {

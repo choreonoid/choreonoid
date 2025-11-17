@@ -91,8 +91,16 @@ public:
     bool isCustomIkDisabled() const { return isCustomIkDisabled_; }
     void setCustomIkDisabled(bool on) { isCustomIkDisabled_ = on; }
     
-    bool isBestEffortIkMode() const;
-    void setBestEffortIkMode(bool on);
+    // InverseKinematics interface implementation
+    virtual bool isBestEffortIkAvailable() const override;
+    virtual bool isBestEffortIkEnabled() const override;
+    virtual void setBestEffortIkEnabled(bool on) override;
+    virtual int getDOF() const override;
+    [[deprecated("Use isBestEffortIkEnabled")]]
+    bool isBestEffortIkMode() const { return isBestEffortIkEnabled(); }
+    [[deprecated("Use setBestEffortIkEnabled")]]
+    void setBestEffortIkMode(bool on) { setBestEffortIkEnabled(on); }
+
     bool isIkJointLimitEnabled() const { return isIkJointLimitEnabled_; }
     void setIkJointLimitEnabled(bool on) { isIkJointLimitEnabled_ = on; }
     void setNumericalIkMaxIkError(double e);
@@ -142,9 +150,9 @@ public:
     [[deprecated("Use isCustomIkDisabled.")]]
     bool isNumericalIkEnabled() const { return isCustomIkDisabled(); }
     [[deprecated("Use isBestEffortIkMode.")]]
-    bool isBestEffortIKmode() const { return isBestEffortIkMode(); }
+    bool isBestEffortIKmode() const { return isBestEffortIkEnabled(); }
     [[deprecated("Use setBestEffortIkMode.")]]
-    void setBestEffortIKmode(bool on) { setBestEffortIkMode(on); }
+    void setBestEffortIKmode(bool on) { setBestEffortIkEnabled(on); }
     [[deprecated("Use setNumericalIkMaxIkError.")]]
     void setNumericalIKmaxIKerror(double e){ setNumericalIkMaxIkError(e); }
     [[deprecated("Use setNumericalIkDeltaScale.")]]

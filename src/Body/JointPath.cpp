@@ -242,15 +242,27 @@ NumericalIK* JointPath::getOrCreateNumericalIK()
 }
 
 
-bool JointPath::isBestEffortIkMode() const
+bool JointPath::isBestEffortIkAvailable() const
+{
+    return true;  // JointPath always supports best-effort IK
+}
+
+
+bool JointPath::isBestEffortIkEnabled() const
 {
     return numericalIK ? numericalIK->isBestEffortIkMode : false;
 }
 
 
-void JointPath::setBestEffortIkMode(bool on)
+void JointPath::setBestEffortIkEnabled(bool on)
 {
     getOrCreateNumericalIK()->isBestEffortIkMode = on;
+}
+
+
+int JointPath::getDOF() const
+{
+    return numJoints();
 }
 
 
