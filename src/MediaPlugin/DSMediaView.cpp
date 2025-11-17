@@ -445,7 +445,7 @@ void DSMediaViewImpl::load()
         if(FAILED(result)) {
             WCHAR errorText[512];
             std::string errorMsg;
-            if(AMGetErrorText(result, errorText, 512)) {
+            if(AMGetErrorTextW(result, errorText, 512)) {
                 char mbErrorText[1024];
                 WideCharToMultiByte(CP_UTF8, 0, errorText, -1, mbErrorText, 1024, NULL, NULL);
                 errorMsg = formatC("FAILED(hr=0x{:08x}) in graphBuilder->RenderFile: {}",
