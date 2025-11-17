@@ -1123,10 +1123,13 @@ int OperableSceneBody::Impl::checkLinkKinematicsType(Link* link, bool doUpdateIK
     } else if(mode == KinematicsBar::ForwardKinematics){
         auto baseLink = bodyItem->currentBaseLink();
         if(link->isRoot()){
+            type = LinkOperationType::FK;
             if(!baseLink || link == baseLink){
-                type = LinkOperationType::IK;
-            } else if(baseLink){
-                type = LinkOperationType::FK;
+                if(bodyItem->isAttachedToParentBody()){
+                    type = LinkOperationType::None;
+                } else {
+                    type = LinkOperationType::IK;
+                }
             }
         } else {
             if(baseLink && link == baseLink){
