@@ -4,10 +4,15 @@
 /core
 ext/*
 !ext/CMakeLists.txt
+/build*/
 Makefile
 CMakeFiles/
 cmake_install.cmake
 CMakeCache.txt
+/*.cnoid
+/tmp/
+/.vscode/
+*.code-workspace
 
 # Debian build artifacts
 debian/choreonoid/
