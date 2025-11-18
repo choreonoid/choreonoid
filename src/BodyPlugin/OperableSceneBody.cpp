@@ -14,7 +14,7 @@
 #include <cnoid/SceneMarkers>
 #include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/SceneRenderer>
-#include <cnoid/JointPath>
+#include <cnoid/LinkPath>
 #include <cnoid/LinkedJointHandler>
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/PinDragIK>
@@ -1809,11 +1809,6 @@ bool OperableSceneBody::Impl::initializeIK()
     if(!currentIK){
         currentIK = bodyItem->getCurrentIK(targetLink);
     }
-    if(auto jointPath = dynamic_pointer_cast<JointPath>(currentIK)){
-        if(!jointPath->hasCustomIK()){
-            jointPath->setBestEffortIkMode(true);
-        }
-    }
 
     return currentIK ? true: false;
 }
@@ -1867,13 +1862,19 @@ void OperableSceneBody::Impl::dragIK(SceneWidgetEvent* event)
 void OperableSceneBody::Impl::doIK(const Isometry3& position)
 {
     if(currentIK){
-        if(currentIK->calcInverseKinematics(position) || true /* Best effort */){
+        bool prevBestEffort = currentIK->isBestEffortIkEnabled();
+        int dof = currentIK->getDOF();
+        if(dof >= 1 && dof <= 5 && currentIK->isBestEffortIkAvailable()){
+            currentIK->setBestEffortIkEnabled(true);
+        }
+        if(currentIK->calcInverseKinematics(position) || currentIK->isBestEffortIkEnabled()){
             bool fkDone = currentIK->calcRemainingPartForwardKinematicsForInverseKinematics();
             if(!fkDone){
                 fkTraverse.calcForwardKinematics();
             }
             bodyItem->notifyKinematicStateChange();
         }
+        currentIK->setBestEffortIkEnabled(prevBestEffort);
     }
 }
 

@@ -81,8 +81,13 @@ public:
     
     MyCompositeBodyIK(BodyItem::Impl* bodyItemImpl);
     bool isValid() const { return parentLinkIK != nullptr; }
-    virtual bool calcInverseKinematics(const Isometry3& T) override;
     virtual std::shared_ptr<InverseKinematics> getParentBodyIK() override;
+    virtual bool isBestEffortIkAvailable() const override;
+    virtual bool isBestEffortIkEnabled() const override;
+    virtual void setBestEffortIkEnabled(bool on) override;
+    virtual int getDOF() const override;
+    virtual bool calcInverseKinematics(const Isometry3& T) override;
+    virtual bool calcRemainingPartForwardKinematicsForInverseKinematics() override;
 
     BodyItem::Impl* bodyItemImpl;
     Isometry3 T_local_inv;
@@ -1687,39 +1692,62 @@ MyCompositeBodyIK::MyCompositeBodyIK(BodyItem::Impl* bodyItemImpl)
 }
 
 
+std::shared_ptr<InverseKinematics> MyCompositeBodyIK::getParentBodyIK()
+{
+    return parentLinkIK;
+}
+
+
+bool MyCompositeBodyIK::isBestEffortIkAvailable() const
+{
+    return parentLinkIK ? parentLinkIK->isBestEffortIkAvailable() : false;
+}
+
+
+bool MyCompositeBodyIK::isBestEffortIkEnabled() const
+{
+    return parentLinkIK ? parentLinkIK->isBestEffortIkEnabled() : false;
+}
+
+
+void MyCompositeBodyIK::setBestEffortIkEnabled(bool on)
+{
+    if(parentLinkIK){
+        parentLinkIK->setBestEffortIkEnabled(on);
+    }
+}
+
+
+int MyCompositeBodyIK::getDOF() const
+{
+    return parentLinkIK ? parentLinkIK->getDOF() : 0;
+}
+
+
 bool MyCompositeBodyIK::calcInverseKinematics(const Isometry3& T)
 {
     bool result = false;
-
     if(parentLinkIK){
         Isometry3 Tp = T * T_local_inv;
         result = parentLinkIK->calcInverseKinematics(Tp);
-        if(result){
-            if(!parentLinkIK->calcRemainingPartForwardKinematicsForInverseKinematics()){
-                bodyItemImpl->linkedParentBodyItem->body()->calcForwardKinematics();
-            }
+        if(result || parentLinkIK->isBestEffortIkEnabled()){
             bodyItemImpl->isProcessingInverseKinematicsIncludingParentBody = true;
         }
     }
-
-    /*
-    if(holderIK){
-        if(auto holder = attachment->holder()){
-            Isometry3 Ta = T * attachment->T_local() * holder->T_local().inverse(Eigen::Isometry);
-            result = holderIK->calcInverseKinematics(Ta);
-            if(result){
-                bodyItemImpl->isProcessingInverseKinematicsIncludingParentBody = true;
-            }
-        }
-    }
-    */
     return result;
 }
 
 
-std::shared_ptr<InverseKinematics> MyCompositeBodyIK::getParentBodyIK()
+bool MyCompositeBodyIK::calcRemainingPartForwardKinematicsForInverseKinematics()
 {
-    return parentLinkIK;
+    bool result = false;
+    if(parentLinkIK){
+        if(!parentLinkIK->calcRemainingPartForwardKinematicsForInverseKinematics()){
+            bodyItemImpl->linkedParentBodyItem->body()->calcForwardKinematics();
+        }
+        result = true;
+    }
+    return result;
 }
 
 
