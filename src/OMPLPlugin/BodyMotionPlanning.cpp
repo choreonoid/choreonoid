@@ -40,8 +40,11 @@ class BodyMotionPlanning::Impl
 public:
     using ScopedRealVectorState = ompl::base::ScopedState<ompl::base::RealVectorStateSpace>;
 
+    MessageOut* extMessageOut;
     MessageOut* mout;
-    
+    bool outputEnabled;
+    std::string errorMessages;
+
     KinematicBodySetPtr targetBodySet;
     vector<BodyPtr> attachedObjects;
     vector<BodyPtr> environmentalObjects;
@@ -81,9 +84,11 @@ public:
     void clear();
     bool makeReady(bool doCloneBodies);
     Result solve();
-    bool solveAsynchronously(const std::function<void(Result result)>& onFinished);
+    Result solveAsynchronously(const std::function<void(Result result)>& onFinished);
     Result solveAllSegments(bool useThread = false);
     Result solveSegment(std::shared_ptr<ompl::base::Planner> planner, int waypointIndex);
+    bool checkAndReportStateValidity(const ompl::base::State* state, const char* stateType);
+    std::string getWaypointName(int index);
     void setWaypointState(int index, ompl::base::ScopedState<>& out_state);
     bool restoreBodyStateOfSolutionPathState(int index);
     SgNode* getPathVisualizationNode();
@@ -120,7 +125,26 @@ BodyMotionPlanning::BodyMotionPlanning()
 
 BodyMotionPlanning::Impl::Impl()
 {
-    mout = MessageOut::master();
+    extMessageOut = MessageOut::master();
+    outputEnabled = true;
+
+    mout = new MessageOut(
+        [this](const std::string& message, int type) {
+            if (type == MessageOut::Error || type == MessageOut::Warning) {
+                errorMessages += message;
+            }
+            if (outputEnabled) {
+                extMessageOut->put(message, type);
+            }
+        },
+        [](const std::string&, int) {},
+        [this]() {
+            if (outputEnabled) {
+                extMessageOut->flush();
+            }
+        }
+    );
+
     isReady = false;
 
     plannerType = RRTConnect;
@@ -152,18 +176,25 @@ BodyMotionPlanning::~BodyMotionPlanning()
 
 void BodyMotionPlanning::setMessageOut(MessageOut* mout)
 {
-    impl->mout = mout;
-    
-    // Also update the OMPL log handler to use this MessageOut
-    if(auto* plugin = OMPLPlugin::instance()) {
-        plugin->setMessageOut(mout);
-    }
+    impl->extMessageOut = mout;
 }
 
 
 MessageOut* BodyMotionPlanning::messageOut()
 {
     return impl->mout;
+}
+
+
+void BodyMotionPlanning::setMessageOutputEnabled(bool on)
+{
+    impl->outputEnabled = on;
+}
+
+
+std::string BodyMotionPlanning::getLastErrorMessages() const
+{
+    return impl->errorMessages;
 }
 
 
@@ -401,13 +432,14 @@ void BodyMotionPlanning::addCurrentBodyStateAsWaypoint()
 
 bool BodyMotionPlanning::Impl::makeReady(bool doCloneBodies)
 {
+    errorMessages.clear();
+
     if(!targetBodySet){
         return false;
     }
     if(waypoints.size() < 2){
         return false;
     }
-
     if(!checkWorkspaceBounds()){
         return false;
     }
@@ -459,9 +491,7 @@ bool BodyMotionPlanning::Impl::makeReady(bool doCloneBodies)
         stateValidityChecker->addEnvironmentalObject(body);
     }
 
-    if(isWorkspaceBoundsEnabled){
-        setupWorkspaceBounds();
-    }
+    setupWorkspaceBounds();
 
     stateValidityChecker->setJointSpaceConfigurationHandlerCheckEnabled(
         isJointSpaceConfigurationHandlerCheckEnabled);
@@ -479,9 +509,15 @@ bool BodyMotionPlanning::Impl::makeReady(bool doCloneBodies)
 
 void BodyMotionPlanning::Impl::setupWorkspaceBounds()
 {
+    if(!isWorkspaceBoundsEnabled){
+        stateValidityChecker->setWorkspaceBoundsBody(nullptr);
+        return;
+    }
+
     const auto& lower = workspaceLowerBound;
     const auto& upper = workspaceUpperBound;
     if(lower.x() >= upper.x() || lower.y() >= upper.y() || lower.z() >= upper.z()){
+        stateValidityChecker->setWorkspaceBoundsBody(nullptr);
         return;
     }
 
@@ -532,48 +568,27 @@ void BodyMotionPlanning::Impl::setupWorkspaceBounds()
 
     body->updateLinkTree();
 
-    stateValidityChecker->addEnvironmentalObject(body);
+    stateValidityChecker->setWorkspaceBoundsBody(body);
 }
 
 
 bool BodyMotionPlanning::Impl::checkWorkspaceBounds()
 {
-    if(!isWorkspaceBoundsEnabled){
-        return true;
+    bool isValid = true;
+    if(isWorkspaceBoundsEnabled){
+        // Check if the initial position of the robot base link is within the bounds.
+        // Since the robot base is fixed during planning (only joint angles change),
+        // a single check at initialization is sufficient.
+        auto baseLink = targetBodySet->mainBodyPart()->body()->rootLink();
+        const Vector3& basePos = baseLink->translation();
+        if(basePos.x() < workspaceLowerBound.x() || basePos.x() > workspaceUpperBound.x() ||
+           basePos.y() < workspaceLowerBound.y() || basePos.y() > workspaceUpperBound.y() ||
+           basePos.z() < workspaceLowerBound.z() || basePos.z() > workspaceUpperBound.z()){
+            mout->putError(_("Robot position is outside workspace bounds."));
+            isValid = false;
+        }
     }
-
-    // Check if the initial position of the robot base link is within the bounds.
-    // Since the robot base is fixed during planning (only joint angles change),
-    // a single check at initialization is sufficient.
-    auto baseLink = targetBodySet->mainBodyPart()->body()->rootLink();
-    const Vector3& basePos = baseLink->translation();
-
-    bool isOutOfBounds = false;
-    std::string errorDetails;
-
-    if(basePos.x() < workspaceLowerBound.x() || basePos.x() > workspaceUpperBound.x()){
-        isOutOfBounds = true;
-        errorDetails += formatR(_("  X: {0} (allowed: {1} to {2})\n"),
-                               basePos.x(), workspaceLowerBound.x(), workspaceUpperBound.x());
-    }
-    if(basePos.y() < workspaceLowerBound.y() || basePos.y() > workspaceUpperBound.y()){
-        isOutOfBounds = true;
-        errorDetails += formatR(_("  Y: {0} (allowed: {1} to {2})\n"),
-                               basePos.y(), workspaceLowerBound.y(), workspaceUpperBound.y());
-    }
-    if(basePos.z() < workspaceLowerBound.z() || basePos.z() > workspaceUpperBound.z()){
-        isOutOfBounds = true;
-        errorDetails += formatR(_("  Z: {0} (allowed: {1} to {2})\n"),
-                               basePos.z(), workspaceLowerBound.z(), workspaceUpperBound.z());
-    }
-
-    if(isOutOfBounds){
-        mout->putError(
-            formatR(_("Robot base link position is outside workspace bounds:\n{0}"), errorDetails));
-        return false;
-    }
-
-    return true;
+    return isValid;
 }
 
 
@@ -598,13 +613,13 @@ BodyMotionPlanning::Result BodyMotionPlanning::Impl::solve()
 }
 
 
-bool BodyMotionPlanning::solveAsynchronously(std::function<void(Result result)> onFinished)
+BodyMotionPlanning::Result BodyMotionPlanning::solveAsynchronously(std::function<void(Result result)> onFinished)
 {
     return impl->solveAsynchronously(onFinished);
 }
 
 
-bool BodyMotionPlanning::Impl::solveAsynchronously(const std::function<void(Result result)>& onFinished)
+BodyMotionPlanning::Result BodyMotionPlanning::Impl::solveAsynchronously(const std::function<void(Result result)>& onFinished)
 {
     std::lock_guard<std::mutex> lock(threadMutex);
     
@@ -617,7 +632,7 @@ bool BodyMotionPlanning::Impl::solveAsynchronously(const std::function<void(Resu
     // Prepare in the calling thread
     if(!isReady){
         if(!makeReady(true)){
-            return false;
+            return Invalid;
         }
     }
     
@@ -627,15 +642,13 @@ bool BodyMotionPlanning::Impl::solveAsynchronously(const std::function<void(Resu
     // Start new thread
     solveThread = std::thread([this, onFinished](){
         auto result = solveAllSegments(true);
-        if(result != Terminated){
-            pathVisualizationGroup.reset();
-            if(onFinished){
-                onFinished(result);
-            }
+        pathVisualizationGroup.reset();
+        if(onFinished){
+            onFinished(result);
         }
     });
     
-    return true;
+    return Started;
 }
 
 
@@ -712,6 +725,46 @@ BodyMotionPlanning::Result BodyMotionPlanning::Impl::solveAllSegments(bool useTh
 }
 
 
+bool BodyMotionPlanning::Impl::checkAndReportStateValidity(
+    const ompl::base::State* state, const char* stateType)
+{
+    if(!spaceInformation->isValid(state)){
+        using InvalidReason = BodyStateValidityChecker::InvalidReason;
+        InvalidReason reason = stateValidityChecker->getLastInvalidReason();
+
+        switch(reason){
+        case InvalidReason::NearSingularPoint:
+            mout->putErrorln(formatR(_("{0} is near a singular configuration."), stateType));
+            break;
+        case InvalidReason::CollisionWithEnvironment:
+            mout->putErrorln(formatR(_("{0} is in collision with the environment."), stateType));
+            break;
+        case InvalidReason::OutsideWorkspaceBounds:
+            mout->putErrorln(formatR(_("{0} is outside the workspace bounds."), stateType));
+            break;
+        default:
+            mout->putErrorln(formatR(_("{0} is invalid."), stateType));
+            break;
+        }
+        return false;
+    }
+    return true;
+}
+
+
+std::string BodyMotionPlanning::Impl::getWaypointName(int index)
+{
+    int totalWaypoints = waypoints.size();
+    if(index == 0){
+        return _("Start point");
+    } else if(index == totalWaypoints - 1){
+        return _("Goal point");
+    } else {
+        return formatR(_("{0}th waypoint"), index + 1);
+    }
+}
+
+
 BodyMotionPlanning::Result BodyMotionPlanning::Impl::solveSegment
 (std::shared_ptr<ompl::base::Planner> planner, int waypointIndex)
 {
@@ -744,15 +797,16 @@ BodyMotionPlanning::Result BodyMotionPlanning::Impl::solveSegment
         goalString.pop_back();
     }
     
-    mout->putln(formatR(_("Start point:\n{0}"), startString));
-    mout->putln(formatR(_("Goal point:\n{0}"), goalString));
+    std::string startName = getWaypointName(waypointIndex);
+    std::string goalName = getWaypointName(waypointIndex + 1);
 
-    if(!spaceInformation->isValid(start.get())){
-        mout->putErrorln(_("Start state is invalid"));
+    mout->putln(formatR("{0}:\n{1}", startName, startString));
+    mout->putln(formatR("{0}:\n{1}", goalName, goalString));
+
+    if(!checkAndReportStateValidity(start.get(), startName.c_str())){
         return result;
     }
-    if(!spaceInformation->isValid(goal.get())){
-        mout->putErrorln(_("Goal state is invalid"));
+    if(!checkAndReportStateValidity(goal.get(), goalName.c_str())){
         return result;
     }
 
@@ -799,13 +853,13 @@ BodyMotionPlanning::Result BodyMotionPlanning::Impl::solveSegment
     if(status != ompl::base::PlannerStatus::EXACT_SOLUTION){
         if(terminationRequested){
             result = Terminated;
-            mout->putln(_("Planning terminated by user request"));
+            mout->putln(_("Motion planning was terminated."));
         } else if(timedOut){
             result = Timeout;
-            mout->putln(_("Planning timed out"));
+            mout->putln(_("Motion planning timed out."));
         } else {
             result = NotSolved;
-            mout->putln(_("Solution not found"));
+            mout->putln(_("Motion planning failed. No solution was found."));
         }
         if(solutionPath){
             solutionPath->clear();

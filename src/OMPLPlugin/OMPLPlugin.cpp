@@ -16,15 +16,17 @@ namespace cnoid {
 class ChoreonoidOutputHandler : public ompl::msg::OutputHandler
 {
     MessageOut* mout;
-    
+    bool enabled;
+
 public:
-    ChoreonoidOutputHandler(MessageOut* messageOut) : mout(messageOut) {}
-    
+    ChoreonoidOutputHandler(MessageOut* messageOut) : mout(messageOut), enabled(false) {}
+
     void setMessageOut(MessageOut* messageOut) { mout = messageOut; }
-    
+    void setEnabled(bool on) { enabled = on; }
+
     void log(const std::string& text, ompl::msg::LogLevel level, const char* filename, int line) override
     {
-        if(!mout) return;
+        if(!mout || !enabled) return;
         
         // Remove prefix that OMPL adds (e.g., "Info:    ")
         std::string cleanMsg = text;
@@ -106,6 +108,13 @@ bool OMPLPlugin::finalize()
         impl->outputHandler.reset();
     }
     return true;
+}
+
+void OMPLPlugin::setMessageOutputEnabled(bool on)
+{
+    if(impl->outputHandler) {
+        impl->outputHandler->setEnabled(on);
+    }
 }
 
 void OMPLPlugin::setMessageOut(MessageOut* mout)

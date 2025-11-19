@@ -18,7 +18,8 @@ public:
     
     virtual bool initialize() override;
     virtual bool finalize() override;
-    
+
+    void setMessageOutputEnabled(bool on);
     // Set the MessageOut instance to be used for OMPL log messages
     void setMessageOut(MessageOut* mout);
 

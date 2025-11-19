@@ -22,6 +22,8 @@ public:
     ~BodyMotionPlanning();
 
     void setMessageOut(MessageOut* mout);
+    void setMessageOutputEnabled(bool on);
+    std::string getLastErrorMessages() const;
 
     void setPlannerType(int index);
     void setStateValidityCheckingResolutionRatio(double ratio);
@@ -48,10 +50,10 @@ public:
     void addEnvironmentalObject(Body* body);
     void addCurrentBodyStateAsWaypoint();
 
-    enum Result { Invalid, Solved, NotSolved, Timeout, Terminated };
+    enum Result { Invalid, Started, Solved, NotSolved, Timeout, Terminated };
     Result solve();
     // \note The onFinished callback is called from the thread of motion planning
-    bool solveAsynchronously(std::function<void(Result result)> onFinished);
+    Result solveAsynchronously(std::function<void(Result result)> onFinished);
     void terminate();
 
     int numSolutionPathStates() const;
