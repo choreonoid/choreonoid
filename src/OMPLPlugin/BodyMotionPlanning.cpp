@@ -77,6 +77,7 @@ public:
     Impl();
     SgNode* getWorkspaceBoundVisualizationNode();
     void setupWorkspaceBounds();
+    bool checkWorkspaceBounds();
     void clear();
     bool makeReady(bool doCloneBodies);
     Result solve();
@@ -407,6 +408,10 @@ bool BodyMotionPlanning::Impl::makeReady(bool doCloneBodies)
         return false;
     }
 
+    if(!checkWorkspaceBounds()){
+        return false;
+    }
+
     CloneMap cloneMap;
     SgObject::setNonNodeCloning(cloneMap, false);
 
@@ -464,7 +469,7 @@ bool BodyMotionPlanning::Impl::makeReady(bool doCloneBodies)
     if(!stateValidityChecker->makeReady()){
         return false;
     }
-    
+
     spaceInformation->setup();
 
     isReady = true;
@@ -480,7 +485,7 @@ void BodyMotionPlanning::Impl::setupWorkspaceBounds()
         return;
     }
 
-    constexpr double thickness = 10.0;
+    constexpr double thickness = 1.0;
     const double width_x = upper.x() - lower.x();
     const double width_y = upper.y() - lower.y();
     const double width_z = upper.z() - lower.z();
@@ -528,6 +533,47 @@ void BodyMotionPlanning::Impl::setupWorkspaceBounds()
     body->updateLinkTree();
 
     stateValidityChecker->addEnvironmentalObject(body);
+}
+
+
+bool BodyMotionPlanning::Impl::checkWorkspaceBounds()
+{
+    if(!isWorkspaceBoundsEnabled){
+        return true;
+    }
+
+    // Check if the initial position of the robot base link is within the bounds.
+    // Since the robot base is fixed during planning (only joint angles change),
+    // a single check at initialization is sufficient.
+    auto baseLink = targetBodySet->mainBodyPart()->body()->rootLink();
+    const Vector3& basePos = baseLink->translation();
+
+    bool isOutOfBounds = false;
+    std::string errorDetails;
+
+    if(basePos.x() < workspaceLowerBound.x() || basePos.x() > workspaceUpperBound.x()){
+        isOutOfBounds = true;
+        errorDetails += formatR(_("  X: {0} (allowed: {1} to {2})\n"),
+                               basePos.x(), workspaceLowerBound.x(), workspaceUpperBound.x());
+    }
+    if(basePos.y() < workspaceLowerBound.y() || basePos.y() > workspaceUpperBound.y()){
+        isOutOfBounds = true;
+        errorDetails += formatR(_("  Y: {0} (allowed: {1} to {2})\n"),
+                               basePos.y(), workspaceLowerBound.y(), workspaceUpperBound.y());
+    }
+    if(basePos.z() < workspaceLowerBound.z() || basePos.z() > workspaceUpperBound.z()){
+        isOutOfBounds = true;
+        errorDetails += formatR(_("  Z: {0} (allowed: {1} to {2})\n"),
+                               basePos.z(), workspaceLowerBound.z(), workspaceUpperBound.z());
+    }
+
+    if(isOutOfBounds){
+        mout->putError(
+            formatR(_("Robot base link position is outside workspace bounds:\n{0}"), errorDetails));
+        return false;
+    }
+
+    return true;
 }
 
 
