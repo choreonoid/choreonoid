@@ -1,0 +1,138 @@
+# Japanese translations for Choreonoid package.
+# This file is distributed under the same license as the Choreonoid package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Choreonoid\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-20 02:11+0900\n"
+"PO-Revision-Date: 2025-11-19 22:33+0900\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Robot position is outside workspace bounds."
+msgstr "ロボットの位置が作業空間の範囲外です．"
+
+msgid "Combined path has {0} states from {1} segments"
+msgstr "結合されたパスは{1}個のセグメントから{0}個の状態を持ちます"
+
+msgid "{0} is near a singular configuration."
+msgstr "{0}が特異姿勢に近いです．"
+
+msgid "{0} is in collision with the environment."
+msgstr "{0}が環境と干渉しています．"
+
+msgid "{0} is outside the workspace bounds."
+msgstr "{0}が作業空間の範囲外にあります．"
+
+msgid "{0} is invalid."
+msgstr "{0}が無効です．"
+
+msgid "Start point"
+msgstr "始点"
+
+msgid "Goal point"
+msgstr "終点"
+
+msgid "{0}th waypoint"
+msgstr "{0}番目の経由点"
+
+msgid "Motion planning was terminated."
+msgstr "動作計画が中断されました．"
+
+msgid "Motion planning timed out."
+msgstr "動作計画がタイムアウトしました．"
+
+msgid "Motion planning failed. No solution was found."
+msgstr "動作計画が失敗しました．解がみつかりませんでした．"
+
+msgid "Path simplification disabled. Path length: {0} states"
+msgstr "経路簡略化は無効です。経路長: {0}状態"
+
+msgid "Original path: {0} states (waypoints)"
+msgstr "元の経路: {0}状態 (経由点)"
+
+msgid "Phase 1: Essential vertex reduction..."
+msgstr "フェーズ1: 必須頂点削減..."
+
+msgid "  Round {0}: {1} -> {2} waypoints (removed {3}, range={4:.2f})"
+msgstr "  ラウンド{0}: {1} -> {2}経由点 (削除数{3}, 範囲={4:.2f})"
+
+msgid "  Round {0}: Validation failed, rolling back (range={1:.2f})"
+msgstr "  ラウンド{0}: 検証失敗、ロールバックします (範囲={1:.2f})"
+
+msgid "  Too many consecutive validation failures, stopping reduction"
+msgstr "  連続した検証失敗が多すぎるため、削減を停止します"
+
+msgid "  Collapsed close vertices: {0} -> {1} waypoints"
+msgstr "  近接頂点を結合: {0} -> {1}経由点"
+
+msgid "  Collapse attempt {0} failed validation, retrying..."
+msgstr "  結合試行{0}が検証失敗、再試行中..."
+
+msgid "  All collapse attempts failed validation"
+msgstr "  すべての結合試行が検証失敗しました"
+
+msgid "Phase 1 complete: {0} -> {1} waypoints ({2:.1f}% reduction)"
+msgstr "フェーズ1完了: {0} -> {1}経由点 ({2:.1f}%削減)"
+
+msgid "Phase 2: Optional path shortcutting (enabled)..."
+msgstr "フェーズ2: 経路ショートカット (有効)..."
+
+#, c-format
+msgid "  Shortcut applied: states {0} -> {1}, length {2:.4f} -> {3:.4f} ({4:.2f}% shorter)"
+msgstr "  ショートカット適用: 状態{0} -> {1}, 長さ{2:.4f} -> {3:.4f} ({4:.2f}%短縮)"
+
+msgid "  Shortcut attempt {0} failed validation, retrying..."
+msgstr "  ショートカット試行{0}が検証失敗、再試行中..."
+
+msgid "  No shortcuts found"
+msgstr "  ショートカットが見つかりませんでした"
+
+msgid "  All shortcut attempts failed validation"
+msgstr "  すべてのショートカット試行が検証失敗しました"
+
+msgid "Phase 2: Shortcutting disabled"
+msgstr "フェーズ2: ショートカットは無効です"
+
+msgid "Phase 3: Final optimization pass..."
+msgstr "フェーズ3: 最終最適化パス..."
+
+msgid "  Final collapse attempt {0} failed, retrying..."
+msgstr "  最終結合試行{0}が失敗、再試行中..."
+
+msgid "  Final collapse vertices failed all attempts"
+msgstr "  最終頂点結合がすべての試行で失敗しました"
+
+msgid "  Final reduction attempt {0} failed, retrying..."
+msgstr "  最終削減試行{0}が失敗、再試行中..."
+
+msgid "  Final reduction failed all attempts"
+msgstr "  最終削減がすべての試行で失敗しました"
+
+msgid "  Final pass: {0} -> {1} waypoints (removed {2})"
+msgstr "  最終パス: {0} -> {1}経由点 (削除数{2})"
+
+msgid "  No further reduction possible"
+msgstr "  これ以上の削減はできません"
+
+msgid "FINAL RESULT: {0} -> {1} waypoints ({2:.1f}% reduction)"
+msgstr "最終結果: {0} -> {1}経由点 ({2:.1f}%削減)"
+
+msgid "ERROR: Final path validation failed despite rollbacks!"
+msgstr "エラー: ロールバック後も最終経路の検証が失敗しました!"
+
+msgid "Found solution for segment {0}:"
+msgstr "セグメント{0}の解が見つかりました:"
+
+msgid "Segment path has {0} states"
+msgstr "セグメント経路は{0}個の状態を持ちます"
+
+msgid "OMPL: {0}"
+msgstr "OMPL: {0}"
+
+msgid "OMPL [DEBUG]: {0}"
+msgstr "OMPL [デバッグ]: {0}"
