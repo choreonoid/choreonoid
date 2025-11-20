@@ -86,8 +86,6 @@ public:
     void updateCollisionDetectionBodies(bool forceUpdate);
     void updateColdetBodyInfos(vector<ColdetBodyInfoPtr>& infos);
     void updateCollisions(bool forceUpdate);
-    void setLinkPairIgnored(
-        CollisionDetector* detector, GeometryHandle linkGeometry, Link* parentBodyLink, bool ignore);
     void extractCollisions(const CollisionPair& collisionPair);
     MaterialTable* getOrLoadDefaultMaterialTable(bool checkFileUpdate);
     MaterialTable* getOrCreateUnifiedMaterialTable();
@@ -435,13 +433,11 @@ void WorldItem::Impl::updateCollisions(bool forceUpdate)
         Link* prevParentBodyLink = bodyInfo->parentBodyLink;
         if(newParentBodyLink != prevParentBodyLink){
             auto rootLink = body->rootLink();
-            if(auto pRootLinkGeometry = bodyCollisionDetector.findGeometryHandle(rootLink)){
-                if(prevParentBodyLink){
-                    setLinkPairIgnored(collisionDetector, *pRootLinkGeometry, prevParentBodyLink, false);
-                }
-                if(newParentBodyLink){
-                    setLinkPairIgnored(collisionDetector, *pRootLinkGeometry, newParentBodyLink, true);
-                }
+            if(prevParentBodyLink){
+                bodyCollisionDetector.setLinksInAttachmentIgnored(rootLink, prevParentBodyLink, false);
+            }
+            if(newParentBodyLink){
+                bodyCollisionDetector.setLinksInAttachmentIgnored(rootLink, newParentBodyLink, true);
             }
             bodyInfo->parentBodyLink = newParentBodyLink;
         }
@@ -462,22 +458,6 @@ void WorldItem::Impl::updateCollisions(bool forceUpdate)
     }
     
     sigCollisionsUpdated();
-}
-
-
-void WorldItem::Impl::setLinkPairIgnored
-(CollisionDetector* detector, GeometryHandle linkGeometry, Link* parentBodyLink, bool ignore)
-{
-    while(parentBodyLink){
-        if(auto pParentLinkGeometry = bodyCollisionDetector.findGeometryHandle(parentBodyLink)){
-            detector->ignoreGeometryPair(linkGeometry, *pParentLinkGeometry, ignore);
-        }
-        if(parentBodyLink->isFixedJoint()){
-            parentBodyLink = parentBodyLink->parent();
-        } else {
-            break;
-        }
-    }
 }
 
 

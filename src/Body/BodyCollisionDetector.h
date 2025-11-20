@@ -52,8 +52,13 @@ public:
     }
 
     bool removeBody(Body* body);
-    
+
     bool hasBodies() const;
+
+    /**
+       \note Geometry handle map must be enabled to use this function.
+    */
+    void setLinksInAttachmentIgnored(Link* attachedLink, Link* parentLink, bool ignored);
     
     bool makeReady(bool doForce = false);
 

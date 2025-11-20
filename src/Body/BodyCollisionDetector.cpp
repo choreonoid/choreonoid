@@ -27,6 +27,7 @@ namespace cnoid {
 class BodyCollisionDetector::Impl
 {
 public:
+    BodyCollisionDetector* self;
     CollisionDetectorPtr collisionDetector;
     BodyInfoMap bodyInfoMap;
     unordered_map<LinkPtr, GeometryHandle> linkToGeometryHandleMap;
@@ -38,12 +39,15 @@ public:
     bool isGeometryRemovalSupported;
     bool isMultiplexBodySupportEnabled;
 
-    Impl();
+    Impl(BodyCollisionDetector* self);
     bool addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId, bool isMultiplexBody);
     bool addLinkRecursively(Link* link, bool isParentStatic, int groupId);
     stdx::optional<CollisionDetector::GeometryHandle> addLink(Link* link, bool isStatic, int groupId);
     bool removeBody(Body* body);
     void onMultiplexBodyAddedOrRemoved(Body* body, bool isAdded, bool isSelfCollisionDetectionEnabled, int groupId);
+    void setLinksInAttachmentIgnored(
+        GeometryHandle attachedLinkGeometry, Link* linkInParentBody, Link* traverseParent, Link* traverseChild,
+        bool ignored);
     double findClosestPoints(Link* link1, Link* link2, Vector3& out_point1, Vector3& out_point2);
     void onBodyExistenceChanged(Body* body, bool on);    
 };
@@ -53,11 +57,12 @@ public:
 
 BodyCollisionDetector::BodyCollisionDetector()
 {
-    impl = new Impl;
+    impl = new Impl(this);
 }
 
 
-BodyCollisionDetector::Impl::Impl()
+BodyCollisionDetector::Impl::Impl(BodyCollisionDetector* self)
+    : self(self)
 {
     bodyCollisionLinkFilter.setFuncToDisableLinkPair(
         [this](int linkIndex1, int linkIndex2){
@@ -77,7 +82,7 @@ BodyCollisionDetector::Impl::Impl()
 
 BodyCollisionDetector::BodyCollisionDetector(CollisionDetector* collisionDetector)
 {
-    impl = new Impl;
+    impl = new Impl(this);
     setCollisionDetector(collisionDetector);
 }
 
@@ -334,6 +339,37 @@ void BodyCollisionDetector::Impl::onMultiplexBodyAddedOrRemoved
 bool BodyCollisionDetector::hasBodies() const
 {
     return impl->collisionDetector->numGeometries() > 0;
+}
+
+
+void BodyCollisionDetector::setLinksInAttachmentIgnored(Link* attachedLink, Link* parentLink, bool ignored)
+{
+    if(auto attachedLinkGeometry = findGeometryHandle(attachedLink)){
+        impl->setLinksInAttachmentIgnored(*attachedLinkGeometry, parentLink, nullptr, nullptr, ignored);
+    }
+}
+
+
+void BodyCollisionDetector::Impl::setLinksInAttachmentIgnored
+(GeometryHandle attachedLinkGeometry, Link* linkInParentBody, Link* traverseParent, Link* traverseChild, bool ignored)
+{
+    auto linkInParentBodyGeometry = self->findGeometryHandle(linkInParentBody);
+    if(linkInParentBodyGeometry){
+        collisionDetector->ignoreGeometryPair(
+            attachedLinkGeometry, *linkInParentBodyGeometry, ignored);
+    }
+    if(!traverseParent && linkInParentBody->isFixedJoint()){
+        if(auto parentLink = linkInParentBody->parent()){
+            setLinksInAttachmentIgnored(
+                attachedLinkGeometry, parentLink, nullptr, linkInParentBody, ignored);
+        }
+    }
+    for(auto child = linkInParentBody->child(); child; child = child->sibling()){
+        if(child != traverseChild && child->isFixedJoint()){
+            setLinksInAttachmentIgnored(
+                attachedLinkGeometry, child, linkInParentBody, nullptr, ignored);
+        }
+    }
 }
 
 
