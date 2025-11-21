@@ -1172,7 +1172,8 @@ BodyMotionPlanning::Result BodyMotionPlanning::Impl::solveSegment
 void BodyMotionPlanning::Impl::setWaypointState(int index, ompl::base::ScopedState<>& out_state)
 {
     const auto& bodyState = waypoints[index];
-    auto n = bodyState.numJointDisplacements();
+    int dimension = out_state.getSpace()->getDimension();
+    int n = std::min(bodyState.numJointDisplacements(), dimension);
     const double* jointDisplacements = bodyState.jointDisplacements();
     auto* jointState = out_state->as<ompl::base::RealVectorStateSpace::StateType>();
     for(int i=0; i < n; ++i){

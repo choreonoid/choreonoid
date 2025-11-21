@@ -15,7 +15,7 @@ void BodyStateBlock::storeStateOfBody(const Body* body, bool storeDeviceState)
         }
     }
     
-    int numJoints = std::min(body->numJoints(), numJointDisplacements());
+    int numJoints = std::min(body->numAllJoints(), numJointDisplacements());
     if(numJoints > 0){
         auto displacements = jointDisplacements();
         for(int i=0; i < numJoints; ++i){
@@ -34,7 +34,7 @@ void BodyStateBlock::storeStateOfBody(const Body* body, bool storeDeviceState)
 
 bool BodyStateBlock::restoreStateToBody(Body* body, bool restoreDeviceState) const
 {
-    int numJoints = std::min(body->numJoints(), numJointDisplacements());
+    int numJoints = std::min(body->numAllJoints(), numJointDisplacements());
     auto displacements = jointDisplacements();
     for(int i=0; i < numJoints; ++i){
         body->joint(i)->q() = displacements[i];
@@ -78,7 +78,7 @@ BodyState::BodyState(const Body& body)
 
 void BodyState::storeStateOfBody(const Body* body, bool storeDeviceState)
 {
-    allocate(body->numLinks(), body->numJoints(), body->numDevices());
+    allocate(body->numLinks(), body->numAllJoints(), body->numDevices());
     firstBlock().storeStateOfBody(body, storeDeviceState);
 }
 
@@ -92,7 +92,7 @@ bool BodyState::restoreStateToBody(Body* body, bool restoreDeviceState) const
 void BodyState::storeMultiplexStateOfBody(const Body* body)
 {
     const int numLinks = body->numLinks();
-    const int numJoints = body->numJoints();
+    const int numJoints = body->numAllJoints();
     const int numDevices = body->numDevices();
     allocate(numLinks, numJoints, numDevices);
     firstBlock().storeStateOfBody(body, true);
