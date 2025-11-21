@@ -6,6 +6,7 @@
 #include <cnoid/AISTCollisionDetector>
 #include <cnoid/JointPath>
 #include <cnoid/JointSpaceConfigurationHandler>
+#include <cnoid/LinkedJointHandler>
 #include <cnoid/MathUtil>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 
@@ -70,6 +71,7 @@ void BodyStateValidityChecker::clearBodies()
     // Disable collision detection bwtween environmental objects
     impl->bodyCollisionDetector.collisionDetector()->setGroupPairEnabled(1, 1, false);
 
+    impl->targetBodySet.reset();
     impl->attachedObjects.clear();
     impl->environmentalObjects.clear();
     impl->workspaceBoundsBody.reset();
@@ -87,7 +89,7 @@ void BodyStateValidityChecker::setTargetBodySet(KinematicBodySet* bodySet)
 void BodyStateValidityChecker::setTargetBody(Body* body)
 {
     // Create a KinematicBodySet with a single body for backward compatibility
-    impl->targetBodySet = new KinematicBodySet;
+    auto bodySet = new KinematicBodySet;
     auto kinematicsKit = new BodyKinematicsKit;
     
     // Use setJointPath to ensure inverse kinematics is available
@@ -100,8 +102,9 @@ void BodyStateValidityChecker::setTargetBody(Body* body)
         kinematicsKit->setJointTraverse(body);
     }
     
-    impl->targetBodySet->setBodyPart(0, kinematicsKit);
-    impl->targetBodySet->setMainBodyPartIndex(0);
+    bodySet->setBodyPart(0, kinematicsKit);
+    bodySet->setMainBodyPartIndex(0);
+    setTargetBodySet(bodySet);
 }
 
 
@@ -138,6 +141,7 @@ bool BodyStateValidityChecker::Impl::makeReady()
     bodyCollisionDetector.clearBodies();
     
     auto targetBody = targetBodySet->mainBodyPart()->body();
+    
     bodyCollisionDetector.addBody(targetBody, true, 0);
 
     auto collisionDetector = bodyCollisionDetector.collisionDetector();
@@ -165,9 +169,8 @@ bool BodyStateValidityChecker::Impl::makeReady()
 
     jointSpaceConfigurationHandler.reset();
     if(isJointSpaceConfigurationHandlerCheckEnabled){
-        if(auto kinematicsKit = targetBodySet->mainBodyPart()){
-            jointSpaceConfigurationHandler = kinematicsKit->configurationHandler();
-        }
+        jointSpaceConfigurationHandler =
+            targetBodySet->mainBodyPart()->configurationHandler();
     }
 
     return true;
@@ -203,14 +206,14 @@ bool BodyStateValidityChecker::Impl::isValid(const ompl::base::State* state)
 
 void BodyStateValidityChecker::Impl::updateTargetBodyPosition(const ompl::base::State* state)
 {
-    auto targetBody = targetBodySet->mainBodyPart()->body();
-    
+    auto kinematicsKit = targetBodySet->mainBodyPart();
+    auto targetBody = kinematicsKit->body();
     const auto* jointState = state->as<ompl::base::RealVectorStateSpace::StateType>();
     int numJoints = targetBody->numJoints();
     for(int i=0; i < numJoints; ++i){
         targetBody->joint(i)->q() = jointState->values[i];
     }
-    targetBody->calcForwardKinematics();
+    kinematicsKit->updateLinkedJointDisplacementsAndCalcFowardKinematics();
 }
 
 

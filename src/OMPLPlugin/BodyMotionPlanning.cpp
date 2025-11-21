@@ -5,6 +5,7 @@
 #include <cnoid/BodyState>
 #include <cnoid/KinematicBodySet>
 #include <cnoid/BodyKinematicsKit>
+#include <cnoid/LinkedJointHandler>
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshGenerator>
 #include <cnoid/MessageOut>
@@ -395,12 +396,12 @@ KinematicBodySet* BodyMotionPlanning::targetBodySet()
 
 void BodyMotionPlanning::setTargetBody(Body* body)
 {
-    impl->targetBodySet = new KinematicBodySet;
+    auto bodySet = new KinematicBodySet;
     auto kinematicsKit = new BodyKinematicsKit;
     kinematicsKit->setJointTraverse(body);
-    impl->targetBodySet->setBodyPart(0, kinematicsKit);
-    impl->targetBodySet->setMainBodyPartIndex(0);
-    impl->isReady = false;
+    bodySet->setBodyPart(0, kinematicsKit);
+    bodySet->setMainBodyPartIndex(0);
+    setTargetBodySet(bodySet);
 }
 
 
@@ -1195,12 +1196,13 @@ bool BodyMotionPlanning::restoreBodyStateOfSolutionPathState(int index)
 bool BodyMotionPlanning::Impl::restoreBodyStateOfSolutionPathState(int index)
 {
     const auto state = solutionPath->getState(index)->as<ompl::base::RealVectorStateSpace::StateType>();
-    auto body = targetBodySet->mainBodyPart()->body();
+    auto kinematicsKit = targetBodySet->mainBodyPart();
+    auto body = kinematicsKit->body();
     int numJoints = body->numJoints();
     for(int j = 0; j < numJoints; ++j){
         body->joint(j)->q() = state->values[j];
     }
-    body->calcForwardKinematics();
+    kinematicsKit->updateLinkedJointDisplacementsAndCalcFowardKinematics();
     return true;
 }
 
