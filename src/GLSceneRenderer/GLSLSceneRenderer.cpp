@@ -542,6 +542,7 @@ public:
     void renderOutlineEdge(SgOutline* outline, const Affine3& T);
     void renderLightweightRenderingGroup(SgLightweightRenderingGroup* group);
     void flushNolightingTransformMatrices();
+    void updateTintColor(ShaderProgram* program);
     void renderMaterial(const SgMaterial* material);
     bool renderTexture(SgTexture* texture);
     bool loadTextureImage(TextureResource* resource, const Image& image);
@@ -1215,6 +1216,8 @@ ScopedShaderProgramActivator::ScopedShaderProgramActivator
 
         program->activate();
         renderer->clearGLState();
+        renderer->updateTintColor(program);
+
         changed = true;
     }
 }
@@ -1239,6 +1242,7 @@ ScopedShaderProgramActivator::~ScopedShaderProgramActivator()
         if(prevProgram){
             prevProgram->activate();
             renderer->clearGLState();
+            renderer->updateTintColor(prevProgram);
         }
         renderer->currentProgram = prevProgram;
         renderer->currentSolidColorProgram = prevSolidColorProgram;
@@ -2373,22 +2377,23 @@ void GLSLSceneRenderer::Impl::applyCullingMode(SgMesh* mesh)
 
 void GLSLSceneRenderer::onTintColorChanged()
 {
-    if(auto color = tintColor()){
-        impl->tintColorMaterial->setDiffuseColor(*color);
-        impl->hasTintColor = true;
+    impl->updateTintColor(impl->currentProgram);
+}
+
+
+void GLSLSceneRenderer::Impl::updateTintColor(ShaderProgram* program)
+{
+    if(auto color = self->tintColor()){
+        program->setTintColor(*color);
     } else {
-        impl->hasTintColor = false;
+        program->clearTintColor();
     }
 }
 
 
 void GLSLSceneRenderer::Impl::renderMaterial(const SgMaterial* material)
 {
-    if(hasTintColor){
-        currentProgram->setMaterial(tintColorMaterial);
-    } else {
-        currentProgram->setMaterial(material ? material : defaultMaterial);
-    }
+    currentProgram->setMaterial(material ? material : defaultMaterial);
 }
 
 

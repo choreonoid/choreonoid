@@ -73,6 +73,7 @@ vec3 reflectionElements[MAX_NUM_LIGHTS];
 uniform bool isTextureEnabled;
 uniform sampler2D colorTexture;
 uniform bool isVertexColorEnabled;
+uniform vec3 tintColor = vec3(1.0, 1.0, 1.0);
 uniform vec3 fogColor;
 uniform float maxFogDist;
 uniform float minFogDist;
@@ -122,32 +123,29 @@ void main()
         color4 = wireframeColor;
 
     } else {
-        vec3 color;
-        float alpha2;
-        
+        // Multiply all color components: diffuseColor * vertexColor * textureColor * tintColor
+        vec3 baseColor = diffuseColor;
+        float alpha2 = alpha;
+
+        // Multiply vertex color if enabled
+        if(isVertexColorEnabled){
+            baseColor *= inData.colorV;
+        }
+
+        // Multiply texture color if enabled
         if(isTextureEnabled){
             vec4 texColor4 = texture(colorTexture, inData.texCoord);
-            vec3 texColor = vec3(texColor4);
-            vec3 modulatedColor = texColor * diffuseColor;
-            alpha2 = alpha * texColor4.a;
-            color = emissionColor * modulatedColor;
-            for(int i=0; i < numLights; ++i){
-                reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], modulatedColor);
-                color += lights[i].ambientIntensity * ambientIntensity * modulatedColor;
-            }
-        } else {
-            vec3 baseColor;
-            if(isVertexColorEnabled){
-                baseColor = inData.colorV;
-            } else {
-                baseColor = diffuseColor;
-            }
-            alpha2 = alpha;
-            color = emissionColor;
-            for(int i=0; i < numLights; ++i){
-                reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], baseColor);
-                color += lights[i].ambientIntensity * ambientIntensity * baseColor;
-            }
+            baseColor *= vec3(texColor4);
+            alpha2 *= texColor4.a;
+        }
+
+        // Always multiply tint color (white when disabled)
+        baseColor *= tintColor;
+
+        vec3 color = emissionColor;
+        for(int i=0; i < numLights; ++i){
+            reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], baseColor);
+            color += lights[i].ambientIntensity * ambientIntensity * baseColor;
         }
 
         for(int i=0; i < numShadows; ++i){

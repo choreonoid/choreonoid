@@ -40,6 +40,8 @@ public:
 
     virtual void setMaterial(const SgMaterial* material);
     virtual void setVertexColorEnabled(bool on);
+    virtual void setTintColor(const Vector3f& color);
+    virtual void clearTintColor();
 
     enum Capability {
         NoCapability = 0,
@@ -249,6 +251,8 @@ public:
         int index, const SgLight* light, const Isometry3& T, const Isometry3& view, bool shadowCasting) override;
     virtual void setNumLights(int n) override;
     virtual void setMaterial(const SgMaterial* material) override;
+    virtual void setTintColor(const Vector3f& color) override;
+    virtual void clearTintColor() override;
     void setMaterialAmbientNormalizationEnabled(bool on);
 
 private:
@@ -292,6 +296,8 @@ public:
     virtual void activate() override;
     virtual void setMaterial(const SgMaterial* material) override;
     virtual void setVertexColorEnabled(bool on) override;
+    virtual void setTintColor(const Vector3f& color) override;
+    virtual void clearTintColor() override;
     void setColorTextureUnit(int textureUnit);
     int colorTextureUnit() const;
     void setTextureEnabled(bool on);

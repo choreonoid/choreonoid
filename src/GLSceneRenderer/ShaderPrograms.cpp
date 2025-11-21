@@ -102,7 +102,10 @@ public:
     bool isColorApplied;
     bool isMaterialAmbientNormalizationEnabled;
 
-    void initialize(GLSLProgram& glsl);    
+    GLint tintColorLocation;
+    Vector3f tintColor;
+
+    void initialize(GLSLProgram& glsl);
 };
 
 
@@ -176,10 +179,14 @@ public:
     GLint isVertexColorEnabledLocation;
     bool isVertexColorEnabled;
 
+    GLint tintColorLocation;
+    Vector3f tintColor;
+
     bool isMaterialAmbientNormalizationEnabled;
 
     void initialize(GLSLProgram& glsl);
     void setMaterial(const SgMaterial* material);
+    void setTintColor(const Vector3f& color);
 };
 
 
@@ -327,6 +334,18 @@ void ShaderProgram::setMaterial(const SgMaterial* material)
 
 
 void ShaderProgram::setVertexColorEnabled(bool on)
+{
+
+}
+
+
+void ShaderProgram::setTintColor(const Vector3f& color)
+{
+
+}
+
+
+void ShaderProgram::clearTintColor()
 {
 
 }
@@ -799,6 +818,11 @@ void MinimumLightingProgram::Impl::initialize(GLSLProgram& glsl)
 
     diffuseColorLocation = glsl.getUniformLocation("diffuseColor");
     ambientIntensityLocation = glsl.getUniformLocation("ambientIntensity");
+
+    tintColorLocation = glsl.getUniformLocation("tintColor");
+    tintColor = Vector3f(1.0f, 1.0f, 1.0f);  // Cache initialized to default (white)
+
+    // tintColor has default value in shader, no need to set it here
 }
 
 
@@ -875,6 +899,21 @@ void MinimumLightingProgram::setMaterial(const SgMaterial* material)
         impl->ambientIntensity = aintensity;
     }
     impl->isColorApplied = true;
+}
+
+
+void MinimumLightingProgram::setTintColor(const Vector3f& color)
+{
+    if(impl->tintColor != color){
+        glUniform3fv(impl->tintColorLocation, 1, color.data());
+        impl->tintColor = color;
+    }
+}
+
+
+void MinimumLightingProgram::clearTintColor()
+{
+    setTintColor(Vector3f(1.0f, 1.0f, 1.0f));
 }
 
 
@@ -1054,10 +1093,14 @@ void MaterialLightingProgram::Impl::initialize(GLSLProgram& glsl)
     isVertexColorEnabledLocation = glsl.getUniformLocation("isVertexColorEnabled");
     isVertexColorEnabled = false;
 
+    tintColorLocation = glsl.getUniformLocation("tintColor");
+    tintColor = Vector3f(1.0f, 1.0f, 1.0f);  // Cache initialized to default (white)
+
     glsl.use();
     glUniform1i(isTextureEnabledLocation, isTextureEnabled);
     glUniform1i(colorTextureLocation, colorTextureUnit);
     glUniform1i(isVertexColorEnabledLocation, isVertexColorEnabled);
+    // tintColor has default value in shader, no need to set it here
 }
     
 
@@ -1123,6 +1166,27 @@ void MaterialLightingProgram::Impl::setMaterial(const SgMaterial* material)
         alpha = a;
         stateFlag[ALPHA] = true;
     }
+}
+
+
+void MaterialLightingProgram::Impl::setTintColor(const Vector3f& color)
+{
+    if(tintColor != color){
+        glUniform3fv(tintColorLocation, 1, color.data());
+        tintColor = color;
+    }
+}
+
+
+void MaterialLightingProgram::setTintColor(const Vector3f& color)
+{
+    impl->setTintColor(color);
+}
+
+
+void MaterialLightingProgram::clearTintColor()
+{
+    impl->setTintColor(Vector3f(1.0f, 1.0f, 1.0f));
 }
 
 
