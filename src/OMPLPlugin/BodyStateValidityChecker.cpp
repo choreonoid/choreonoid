@@ -147,14 +147,8 @@ bool BodyStateValidityChecker::Impl::makeReady()
     auto collisionDetector = bodyCollisionDetector.collisionDetector();
     for(auto& body : attachedObjects){
         bodyCollisionDetector.addBody(body, false, 0);
-        if(auto parentLink = body->parentBodyLink()){
-            if(auto parentHandle = bodyCollisionDetector.findGeometryHandle(parentLink)){
-                for(auto& link : body->links()){
-                    collisionDetector->setGeometryPairEnabled(
-                        *parentHandle, *bodyCollisionDetector.findGeometryHandle(link), false);
-                }
-            }
-        }
+        bodyCollisionDetector.setLinksInAttachmentIgnored(
+            body->rootLink(), body->parentBodyLink(), true);
     }
 
     for(auto& body : environmentalObjects){
@@ -223,11 +217,7 @@ bool BodyStateValidityChecker::Impl::detectCollision()
     
     // Update attached objects
     for(auto& body : attachedObjects){
-        if(auto parentLink = body->parentBodyLink()){
-            auto rootLink = body->rootLink();
-            rootLink->setPosition(parentLink->T() * rootLink->Tb());
-            body->calcForwardKinematics();
-        }
+        body->syncPositionWithParentBody(true);
     }
     
     bodyCollisionDetector.updatePositions();
@@ -250,8 +240,8 @@ bool BodyStateValidityChecker::Impl::detectCollision()
     // Check collisions
     bool detected = false;
     for(auto& link : targetBody->links()){
-        detected = bodyCollisionDetector.detectCollisions(link, checkCollision);
-        if(detected){
+        if(bodyCollisionDetector.detectCollisions(link, checkCollision)){
+            detected = true;
             break;
         }
     }
@@ -259,13 +249,14 @@ bool BodyStateValidityChecker::Impl::detectCollision()
     if(!detected){
         for(auto& body : attachedObjects){
             for(auto& link : body->links()){
-                detected = bodyCollisionDetector.detectCollisions(link, checkCollision);
-                if(detected){
-                    break;
+                if(bodyCollisionDetector.detectCollisions(link, checkCollision)){
+                    detected = true;
+                    goto exit;
                 }
             }
         }
     }
+exit:
     
     return detected;
 }
