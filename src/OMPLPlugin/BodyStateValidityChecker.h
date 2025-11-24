@@ -11,13 +11,6 @@ class KinematicBodySet;
 class BodyStateValidityChecker : public ompl::base::StateValidityChecker
 {
 public:
-    enum class InvalidReason {
-        Valid = 0,                      // State is valid
-        NearSingularPoint,              // Near singular configuration
-        CollisionWithEnvironment,       // Collision with environmental objects
-        OutsideWorkspaceBounds         // Collision with workspace bounds body
-    };
-
     BodyStateValidityChecker(ompl::base::SpaceInformation* si);
     BodyStateValidityChecker(const ompl::base::SpaceInformationPtr& si);
     ~BodyStateValidityChecker();
@@ -27,10 +20,17 @@ public:
     void setTargetBody(Body* body);
     void addAttachedObject(Body* body);
     void addEnvironmentalObject(Body* body);
+    void setWorkspaceBoundsBody(Body* body);
     void setJointSpaceConfigurationHandlerCheckEnabled(bool on);
     bool makeReady();
-
-    void setWorkspaceBoundsBody(Body* body);
+    
+    enum class InvalidReason {
+        Valid = 0,
+        NearSingularPoint,
+        SelfCollision,
+        CollisionWithEnvironment,
+        OutsideWorkspaceBounds
+    };
     InvalidReason getLastInvalidReason() const;
 
     virtual bool isValid(const ompl::base::State* state) const override;

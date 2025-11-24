@@ -25,13 +25,16 @@ public:
     std::shared_ptr<JointSpaceConfigurationHandler> jointSpaceConfigurationHandler;
     bool isJointSpaceConfigurationHandlerCheckEnabled;
     BodyPtr workspaceBoundsBody;
-    mutable BodyStateValidityChecker::InvalidReason lastInvalidReason;
+    Link* lastCollidingLinkPair[2];
+    mutable InvalidReason lastInvalidReason;
 
     Impl();
     bool makeReady();
     bool isValid(const ompl::base::State* state);
     void updateTargetBodyPosition(const ompl::base::State* state);
     bool detectCollision();
+    BodyStateValidityChecker::InvalidReason getLastInvalidReason() const;
+    bool checkPartOfTargetBody(Body* body) const;
 };
 
 }
@@ -77,6 +80,9 @@ void BodyStateValidityChecker::clearBodies()
     impl->workspaceBoundsBody.reset();
 
     impl->jointSpaceConfigurationHandler.reset();
+
+    impl->lastCollidingLinkPair[0] = nullptr;
+    impl->lastCollidingLinkPair[1] = nullptr;
 }
 
 
@@ -117,6 +123,12 @@ void BodyStateValidityChecker::addAttachedObject(Body* body)
 void BodyStateValidityChecker::addEnvironmentalObject(Body* body)
 {
     impl->environmentalObjects.push_back(body);
+}
+
+
+void BodyStateValidityChecker::setWorkspaceBoundsBody(Body* body)
+{
+    impl->workspaceBoundsBody = body;
 }
 
 
@@ -180,7 +192,6 @@ bool BodyStateValidityChecker::isValid(const ompl::base::State* state) const
 
 bool BodyStateValidityChecker::Impl::isValid(const ompl::base::State* state)
 {
-    // Reset to valid before checks
     lastInvalidReason = BodyStateValidityChecker::InvalidReason::Valid;
 
     updateTargetBodyPosition(state);
@@ -193,7 +204,7 @@ bool BodyStateValidityChecker::Impl::isValid(const ompl::base::State* state)
     }
 
     bool hasCollision = detectCollision();
-    // Note: lastInvalidReason is set inside detectCollision() if collision detected
+    
     return !hasCollision;
 }
 
@@ -215,32 +226,24 @@ bool BodyStateValidityChecker::Impl::detectCollision()
 {
     auto targetBody = targetBodySet->mainBodyPart()->body();
     
-    // Update attached objects
     for(auto& body : attachedObjects){
         body->syncPositionWithParentBody(true);
     }
     
     bodyCollisionDetector.updatePositions();
 
-    // Collision callback to classify collision type
-    auto checkCollision = [this](const CollisionPair& collisionPair){
-        Link* link0 = static_cast<Link*>(collisionPair.object(0));
-        Link* link1 = static_cast<Link*>(collisionPair.object(1));
+    lastCollidingLinkPair[0] = nullptr;
+    lastCollidingLinkPair[1] = nullptr;
 
-        // Check if either body is the workspace bounds body
-        if(link0->body() == workspaceBoundsBody || link1->body() == workspaceBoundsBody){
-            lastInvalidReason = BodyStateValidityChecker::InvalidReason::OutsideWorkspaceBounds;
-        } else {
-            lastInvalidReason = BodyStateValidityChecker::InvalidReason::CollisionWithEnvironment;
-        }
-
+    auto detectCollidingLinkPair = [this, targetBody](const CollisionPair& collisionPair){
+        lastCollidingLinkPair[0] = static_cast<Link*>(collisionPair.object(0));
+        lastCollidingLinkPair[1] = static_cast<Link*>(collisionPair.object(1));
         return true; // Early termination on first collision
     };
 
-    // Check collisions
     bool detected = false;
     for(auto& link : targetBody->links()){
-        if(bodyCollisionDetector.detectCollisions(link, checkCollision)){
+        if(bodyCollisionDetector.detectCollisions(link, detectCollidingLinkPair)){
             detected = true;
             break;
         }
@@ -249,7 +252,7 @@ bool BodyStateValidityChecker::Impl::detectCollision()
     if(!detected){
         for(auto& body : attachedObjects){
             for(auto& link : body->links()){
-                if(bodyCollisionDetector.detectCollisions(link, checkCollision)){
+                if(bodyCollisionDetector.detectCollisions(link, detectCollidingLinkPair)){
                     detected = true;
                     goto exit;
                 }
@@ -257,18 +260,45 @@ bool BodyStateValidityChecker::Impl::detectCollision()
         }
     }
 exit:
-    
+
     return detected;
-}
-
-
-void BodyStateValidityChecker::setWorkspaceBoundsBody(Body* body)
-{
-    impl->workspaceBoundsBody = body;
 }
 
 
 BodyStateValidityChecker::InvalidReason BodyStateValidityChecker::getLastInvalidReason() const
 {
-    return impl->lastInvalidReason;
+    return impl->getLastInvalidReason();
+}
+
+
+BodyStateValidityChecker::InvalidReason BodyStateValidityChecker::Impl::getLastInvalidReason() const
+{
+    if(lastInvalidReason == InvalidReason::Valid){
+        if(lastCollidingLinkPair[0] && lastCollidingLinkPair[1]){
+            auto body0 = lastCollidingLinkPair[0]->body();
+            auto body1 = lastCollidingLinkPair[1]->body();
+            if(body0 == workspaceBoundsBody || body1 == workspaceBoundsBody){
+                lastInvalidReason = InvalidReason::OutsideWorkspaceBounds;
+            } else if(checkPartOfTargetBody(body0) && checkPartOfTargetBody(body1)){
+                lastInvalidReason = InvalidReason::SelfCollision;
+            } else {
+                lastInvalidReason = InvalidReason::CollisionWithEnvironment;
+            }
+        }
+    }
+    return lastInvalidReason;
+}
+
+
+bool BodyStateValidityChecker::Impl::checkPartOfTargetBody(Body* body) const
+{
+    if(body == targetBodySet->mainBodyPart()->body()){
+        return true;
+    }
+    for(auto& attachedObject : attachedObjects){
+        if(body == attachedObject){
+            return true;
+        }
+    }
+    return false;
 }

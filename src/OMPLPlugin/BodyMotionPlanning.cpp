@@ -735,16 +735,19 @@ bool BodyMotionPlanning::Impl::checkAndReportStateValidity(
 
         switch(reason){
         case InvalidReason::NearSingularPoint:
-            mout->putErrorln(formatR(_("{0} is near a singular configuration."), stateType));
+            mout->putErrorln(formatR(_("Near-singular configuration detected at {0}."), stateType));
+            break;
+        case InvalidReason::SelfCollision:
+            mout->putErrorln(formatR(_("Self-collision detected at {0}."), stateType));
             break;
         case InvalidReason::CollisionWithEnvironment:
-            mout->putErrorln(formatR(_("{0} is in collision with the environment."), stateType));
+            mout->putErrorln(formatR(_("Collision with environment detected at {0}."), stateType));
             break;
         case InvalidReason::OutsideWorkspaceBounds:
-            mout->putErrorln(formatR(_("{0} is outside the workspace bounds."), stateType));
+            mout->putErrorln(formatR(_("The configuration at {0} is outside workspace bounds."), stateType));
             break;
         default:
-            mout->putErrorln(formatR(_("{0} is invalid."), stateType));
+            mout->putErrorln(formatR(_("Invalid configuration at {0}."), stateType));
             break;
         }
         return false;
