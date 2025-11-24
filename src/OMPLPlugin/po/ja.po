@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-20 02:11+0900\n"
+"POT-Creation-Date: 2025-11-25 02:46+0900\n"
 "PO-Revision-Date: 2025-11-19 22:33+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -19,17 +19,20 @@ msgstr "ロボットの位置が作業空間の範囲外です．"
 msgid "Combined path has {0} states from {1} segments"
 msgstr "結合されたパスは{1}個のセグメントから{0}個の状態を持ちます"
 
-msgid "{0} is near a singular configuration."
-msgstr "{0}が特異姿勢に近いです．"
+msgid "Near-singular configuration detected at {0}."
+msgstr "{0}で特異姿勢に近い構成が検出されました．"
 
-msgid "{0} is in collision with the environment."
-msgstr "{0}が環境と干渉しています．"
+msgid "Self-collision detected at {0}."
+msgstr "{0}で自己干渉が検出されました．"
 
-msgid "{0} is outside the workspace bounds."
-msgstr "{0}が作業空間の範囲外にあります．"
+msgid "Collision with environment detected at {0}."
+msgstr "{0}で環境との干渉が検出されました．"
 
-msgid "{0} is invalid."
-msgstr "{0}が無効です．"
+msgid "The configuration at {0} is outside workspace bounds."
+msgstr "{0}の構成が作業空間の範囲外です．"
+
+msgid "Invalid configuration at {0}."
+msgstr "{0}で無効な構成です．"
 
 msgid "Start point"
 msgstr "始点"
@@ -136,3 +139,9 @@ msgstr "OMPL: {0}"
 
 msgid "OMPL [DEBUG]: {0}"
 msgstr "OMPL [デバッグ]: {0}"
+
+#~ msgid "{0} is outside the workspace bounds."
+#~ msgstr "{0}が作業空間の範囲外にあります．"
+
+#~ msgid "{0} is invalid."
+#~ msgstr "{0}が無効です．"
