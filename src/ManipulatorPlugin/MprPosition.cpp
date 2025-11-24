@@ -246,9 +246,7 @@ bool MprFkPosition::applyJointDisplacements(BodyKinematicsKit* kinematicsKit, Jo
     for(int i = 0; i < nj; ++i){
         joints.joint(i)->q() = jointDisplacements_[i];
     }
-    if(auto handler = kinematicsKit->linkedJointHandler()){
-        handler->updateLinkedJointDisplacements();
-    }
+    kinematicsKit->updateLinkedJointDisplacements();
     return true;
 }
 

@@ -128,7 +128,7 @@ public:
     Link* joint(int index);
     const Link* joint(int index) const;
     std::vector<Link*> joints() const;
-    
+
     /**
        The inverse kinematics is available in the joint path mode and the inverse kinematics without joint path mode.
     */
@@ -136,9 +136,12 @@ public:
 
     /**
        The linked joint handler is only available when the body has it.
+       This function returns nullptr when the handler is not available.
     */
     LinkedJointHandler* linkedJointHandler();
-    
+    bool updateLinkedJointDisplacements();
+    void updateLinkedJointDisplacementsAndCalcFowardKinematics();
+
     /**
        The configuration handler is only available when the joint path has it.
     */

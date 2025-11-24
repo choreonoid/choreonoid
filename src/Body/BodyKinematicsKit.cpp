@@ -107,7 +107,7 @@ BodyKinematicsKit::Impl::Impl(const Impl& org, CloneMap* cloneMap)
             } else if(org.jointTraverse){
                 setJointTraverse(make_shared<JointTraverse>(*org.jointTraverse, cloneMap));
             }
-            linkedJointHandler = LinkedJointHandler::findOrCreateLinkedJointHandler(body);
+            linkedJointHandler = body->findHandler<LinkedJointHandler>();
         }
         baseFrames = cloneMap->getClone(org.baseFrames);
         offsetFrames = cloneMap->getClone(org.offsetFrames);
@@ -171,10 +171,8 @@ void BodyKinematicsKit::Impl::setJointPath(Link* baseLink, Link* endLink)
             }
         }
         if(body != prevBody){
-            linkedJointHandler = LinkedJointHandler::findOrCreateLinkedJointHandler(body);
+            linkedJointHandler = body->findHandler<LinkedJointHandler>();
         }
-    } else {
-        linkedJointHandler.reset();
     }
 }
 
@@ -216,7 +214,7 @@ void BodyKinematicsKit::Impl::setInverseKinematics(Link* endLink, std::shared_pt
     }
 
     if(body != prevBody){
-        linkedJointHandler = LinkedJointHandler::findOrCreateLinkedJointHandler(body);
+        linkedJointHandler = body->findHandler<LinkedJointHandler>();
     }
 }
 
@@ -251,7 +249,7 @@ void BodyKinematicsKit::Impl::setJointTraverse(std::shared_ptr<JointTraverse> jo
     this->jointTraverse = jointTraverse;
     
     if(body != prevBody){
-        linkedJointHandler = LinkedJointHandler::findOrCreateLinkedJointHandler(body);
+        linkedJointHandler = body->findHandler<LinkedJointHandler>();
     }
 }
 
@@ -396,6 +394,26 @@ std::shared_ptr<InverseKinematics> BodyKinematicsKit::inverseKinematics()
 LinkedJointHandler* BodyKinematicsKit::linkedJointHandler()
 {
     return impl->linkedJointHandler;
+}
+
+
+bool BodyKinematicsKit::updateLinkedJointDisplacements()
+{
+    if(impl->linkedJointHandler){
+        return impl->linkedJointHandler->updateLinkedJointDisplacements();
+    }
+    return false;
+}
+
+
+void BodyKinematicsKit::updateLinkedJointDisplacementsAndCalcFowardKinematics()
+{
+    if(impl->linkedJointHandler){
+        impl->linkedJointHandler->updateLinkedJointDisplacements();
+    }
+    if(impl->jointTraverse){
+        impl->jointTraverse->calcForwardKinematics();
+    }
 }
 
 
