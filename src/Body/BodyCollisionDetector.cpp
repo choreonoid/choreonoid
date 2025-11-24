@@ -344,8 +344,15 @@ bool BodyCollisionDetector::hasBodies() const
 
 void BodyCollisionDetector::setLinksInAttachmentIgnored(Link* attachedLink, Link* parentLink, bool ignored)
 {
-    if(auto attachedLinkGeometry = findGeometryHandle(attachedLink)){
-        impl->setLinksInAttachmentIgnored(*attachedLinkGeometry, parentLink, nullptr, nullptr, ignored);
+    if(parentLink){
+        if(auto attachedLinkGeometry = findGeometryHandle(attachedLink)){
+            impl->setLinksInAttachmentIgnored(*attachedLinkGeometry, parentLink, nullptr, nullptr, ignored);
+        }
+        for(auto child = attachedLink->child(); child; child = child->sibling()){
+            if(child->isFixedJoint()){
+                setLinksInAttachmentIgnored(child, parentLink, ignored);
+            }
+        }
     }
 }
 
