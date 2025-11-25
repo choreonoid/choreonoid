@@ -72,6 +72,28 @@ public:
     }
 };
 
+int msaaLevelToSelectionIndex(int level)
+{
+    switch(level){
+    case -1: return 0;  // System Default
+    case 0:  return 1;  // Off
+    case 2:  return 2;  // 2x
+    case 4:  return 3;  // 4x
+    case 8:  return 4;  // 8x
+    case 16: return 5;  // 16x
+    default: return 1;  // Off as fallback
+    }
+}
+
+int selectionIndexToMsaaLevel(int index)
+{
+    static const int levels[] = { -1, 0, 2, 4, 8, 16 };
+    if(index >= 0 && index < 6){
+        return levels[index];
+    }
+    return 0;  // Off as fallback
+}
+
 }
 
 namespace cnoid {
@@ -118,6 +140,7 @@ public:
     double maxLatency;
     CloneMap cloneMap;
     bool isAntiAliasingEnabled;
+    int msaaLevel;
 
     Impl(GLVisionSimulatorItem* self);
     Impl(GLVisionSimulatorItem* self, const Impl& org);
@@ -187,6 +210,7 @@ GLVisionSimulatorItem::Impl::Impl(GLVisionSimulatorItem* self)
     threadMode.select(GLVisionSimulatorItem::SENSOR_THREAD_MODE);
 
     isAntiAliasingEnabled = false;
+    msaaLevel = -1;  // System Default
 }
 
 
@@ -222,6 +246,7 @@ GLVisionSimulatorItem::Impl::Impl(GLVisionSimulatorItem* self, const Impl& org)
     maxFrameRate = org.maxFrameRate;
     maxLatency = org.maxLatency;
     isAntiAliasingEnabled = org.isAntiAliasingEnabled;
+    msaaLevel = org.msaaLevel;
 }
 
 
@@ -425,6 +450,18 @@ bool GLVisionSimulatorItem::isAdditionalLightSetEnabled() const
 bool GLVisionSimulatorItem::isAntiAliasingEnabled() const
 {
     return impl->isAntiAliasingEnabled;
+}
+
+
+int GLVisionSimulatorItem::msaaLevel() const
+{
+    return impl->msaaLevel;
+}
+
+
+void GLVisionSimulatorItem::setMsaaLevel(int level)
+{
+    impl->setProperty(impl->msaaLevel, level);
 }
 
 
@@ -809,6 +846,15 @@ void GLVisionSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProper
     putProperty(_("World light"), isWorldLightEnabled, changeProperty(isWorldLightEnabled));
     putProperty(_("Additional lights"), isAdditionalLightSetEnabled, changeProperty(isAdditionalLightSetEnabled));
     putProperty(_("Anti-aliasing"), isAntiAliasingEnabled, changeProperty(isAntiAliasingEnabled));
+
+    Selection msaaSelection = { _("System Default"), _("Off"), "2x", "4x", "8x", "16x" };
+    msaaSelection.select(msaaLevelToSelectionIndex(msaaLevel));
+    putProperty(_("MSAA level"), msaaSelection,
+                [this](int index){
+                    msaaLevel = selectionIndexToMsaaLevel(index);
+                    self->notifyUpdate();
+                    return true;
+                });
 }
 
 
@@ -832,10 +878,13 @@ bool GLVisionSimulatorItem::Impl::store(Archive& archive)
     archive.write("range_sensor_precision_ratio", rangeSensorPrecisionRatio);
     archive.write("depth_error", depthError);
     write(archive, "background_color", backgroundColor);
-    archive.write("enable_head_light", isHeadLightEnabled);    
-    archive.write("enable_world_light", isWorldLightEnabled);    
+    archive.write("enable_head_light", isHeadLightEnabled);
+    archive.write("enable_world_light", isWorldLightEnabled);
     archive.write("enable_additional_lights", isAdditionalLightSetEnabled);
     archive.write("antialiasing", isAntiAliasingEnabled);
+    if(msaaLevel >= 0){
+        archive.write("msaa_level", msaaLevel);
+    }
     return true;
 }
 
@@ -866,6 +915,7 @@ bool GLVisionSimulatorItem::Impl::restore(const Archive& archive)
     archive.read("enable_world_light", isWorldLightEnabled);
     archive.read({ "enable_additional_lights", "enableAdditionalLights" }, isAdditionalLightSetEnabled);
     archive.read({ "antialiasing", "antiAliasing" }, isAntiAliasingEnabled);
+    archive.read("msaa_level", msaaLevel);
 
     string symbol;
     if(archive.read({ "thread_mode", "threadMode" }, symbol)){

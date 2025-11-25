@@ -1,9 +1,12 @@
 #include "SceneRendererConfig.h"
+#include "AppConfig.h"
 #include "MainWindow.h"
+#include "Menu.h"
 #include "Dialog.h"
 #include "Buttons.h"
 #include "ButtonGroup.h"
 #include "CheckBox.h"
+#include "ComboBox.h"
 #include "SpinBox.h"
 #include "DoubleSpinBox.h"
 #include <cnoid/GLSceneRenderer>
@@ -14,6 +17,7 @@
 #include <QBoxLayout>
 #include <QLabel>
 #include <QColorDialog>
+#include <QActionGroup>
 #include "gettext.h"
 
 using namespace std;
@@ -22,6 +26,16 @@ using namespace cnoid;
 namespace {
 
 constexpr int MaxNumShadows = 2;
+
+int systemDefaultMsaaLevel = 4;
+bool isSystemDefaultMsaaLevelInitialized = false;
+Signal<void()> sigSystemDefaultMsaaLevelChanged_;
+
+struct MsaaLevelInfo { const char* label; int level; };
+const MsaaLevelInfo msaaLevels[] = {
+    {N_("Off"), 0}, {"2x", 2}, {"4x", 4}, {"8x", 8}, {"16x", 16}
+};
+constexpr int numMsaaLevels = sizeof(msaaLevels) / sizeof(MsaaLevelInfo);
 
 enum ConfigCategory
 {
@@ -69,6 +83,7 @@ public:
     DoubleSpinBox* pointSizeSpin;
     DoubleSpinBox* lineWidthSpin;
     CheckBox* upsideDownCheck;
+    ComboBox* msaaLevelCombo;
 
     vector<QObject*> signalObjects;
 
@@ -129,6 +144,7 @@ public:
     Vector3f defaultColor;
     double pointSize;
     double lineWidth;
+    int msaaLevel;
 
     ConfigWidgetSet* widgetSet;
     ConfigDialog* dialog;
@@ -161,7 +177,7 @@ void SceneRendererConfig::Impl::doCommonInitialization()
     lightingMode.setSymbol(GLSceneRenderer::NormalLighting, "normal");
     lightingMode.setSymbol(GLSceneRenderer::MinimumLighting, "minimum");
     lightingMode.setSymbol(GLSceneRenderer::SolidColorLighting, "solid_color");
-    
+
     cullingMode.setDomain(CNOID_GETTEXT_DOMAIN_NAME);
     cullingMode.resize(GLSceneRenderer::NumCullingModes);
     cullingMode.setSymbol(GLSceneRenderer::ENABLE_BACK_FACE_CULLING, "enabled");
@@ -170,6 +186,12 @@ void SceneRendererConfig::Impl::doCommonInitialization()
 
     widgetSet = nullptr;
     dialog = nullptr;
+
+    sigSystemDefaultMsaaLevelChanged_.connect([this](){
+        if(msaaLevel < 0){
+            updateRenderers(Drawing, true);
+        }
+    });
 }
 
 
@@ -207,6 +229,7 @@ SceneRendererConfig::Impl::Impl(SceneRendererConfig* self)
     defaultColor << 1.0f, 1.0f, 1.0f; // White
     pointSize = 1.0;
     lineWidth = 1.0;
+    msaaLevel = -1;  // System Default
 }
 
 
@@ -249,7 +272,8 @@ SceneRendererConfig::Impl::Impl(const Impl& org, SceneRendererConfig* self)
     defaultColor << org.defaultColor;
     pointSize = org.pointSize;
     lineWidth = org.lineWidth;
-}    
+    msaaLevel = org.msaaLevel;
+}
 
 
 SceneRendererConfig::~SceneRendererConfig()
@@ -357,6 +381,8 @@ void SceneRendererConfig::Impl::updateRenderer(GLSceneRenderer* renderer, unsign
         renderer->setDefaultColor(defaultColor);
         renderer->setDefaultPointSize(pointSize);
         renderer->setDefaultLineWidth(lineWidth);
+        int effectiveMsaaLevel = (msaaLevel < 0) ? SceneRendererConfig::getSystemDefaultMsaaLevel() : msaaLevel;
+        renderer->setMsaaLevel(effectiveMsaaLevel);
     }
 
     if(categories & Effect){
@@ -445,6 +471,10 @@ bool SceneRendererConfig::Impl::store(Mapping* archive)
 
     if(isUpsideDownEnabled){
         archive->write("upside_down", true);
+    }
+
+    if(msaaLevel >= 0){
+        archive->write("msaa_level", msaaLevel);
     }
 
     return true;
@@ -561,6 +591,8 @@ bool SceneRendererConfig::Impl::restore(const Mapping* archive)
     archive->read({ "point_size", "pointSize" }, pointSize);
     isUpsideDownEnabled = archive->get({ "upside_down", "upsideDown" }, false);
 
+    msaaLevel = archive->get("msaa_level", -1);
+
     if(widgetSet){
         widgetSet->updateWidgets();
     }
@@ -634,6 +666,12 @@ CheckBox* SceneRendererConfig::upsideDownCheck()
 }
 
 
+ComboBox* SceneRendererConfig::msaaLevelCombo()
+{
+    return impl->widgetSet->msaaLevelCombo;
+}
+
+
 void SceneRendererConfig::updateConfigWidgets()
 {
     if(impl->widgetSet){
@@ -668,6 +706,61 @@ void SceneRendererConfig::setColorButtonColor(QPushButton* button, const Vector3
     QString s("border: 1px solid black; background-color: #" + QString::number(c.rgb(), 16).toUpper() + ";");
     button->setStyleSheet(s);
     button->update();
+}
+
+
+int SceneRendererConfig::getSystemDefaultMsaaLevel()
+{
+    if(!isSystemDefaultMsaaLevelInitialized){
+        auto glConfig = AppConfig::archive()->openMapping("OpenGL");
+        systemDefaultMsaaLevel = glConfig->get("msaa_level", 4);
+        isSystemDefaultMsaaLevelInitialized = true;
+    }
+    return systemDefaultMsaaLevel;
+}
+
+
+void SceneRendererConfig::setSystemDefaultMsaaLevel(int level)
+{
+    if(systemDefaultMsaaLevel != level){
+        systemDefaultMsaaLevel = level;
+        isSystemDefaultMsaaLevelInitialized = true;
+        auto glConfig = AppConfig::archive()->openMapping("OpenGL");
+        glConfig->write("msaa_level", level);
+        sigSystemDefaultMsaaLevelChanged_();
+    }
+}
+
+
+SignalProxy<void()> SceneRendererConfig::sigSystemDefaultMsaaLevelChanged()
+{
+    return sigSystemDefaultMsaaLevelChanged_;
+}
+
+
+void SceneRendererConfig::setMenuAsOpenGLMsaaLevelMenu(Menu* menu)
+{
+    auto actionGroup = new QActionGroup(menu);
+    actionGroup->setExclusive(true);
+
+    for(int i = 0; i < numMsaaLevels; ++i){
+        auto& info = msaaLevels[i];
+        auto action = menu->addAction(_(info.label));
+        action->setCheckable(true);
+        action->setData(info.level);
+        actionGroup->addAction(action);
+
+        QObject::connect(action, &QAction::triggered, [level = info.level](){
+            setSystemDefaultMsaaLevel(level);
+        });
+    }
+
+    QObject::connect(menu, &QMenu::aboutToShow, [actionGroup](){
+        int currentLevel = getSystemDefaultMsaaLevel();
+        for(auto action : actionGroup->actions()){
+            action->setChecked(action->data().toInt() == currentLevel);
+        }
+    });
 }
 
 
@@ -915,6 +1008,20 @@ ConfigWidgetSet::ConfigWidgetSet(SceneRendererConfig::Impl* config_)
         });
     signalObjects.push_back(upsideDownCheck);
 
+    msaaLevelCombo = new ComboBox(ownerWidget);
+    msaaLevelCombo->addItem(_("System Default"), -1);
+    for(int i = 0; i < numMsaaLevels; ++i){
+        auto& info = msaaLevels[i];
+        msaaLevelCombo->addItem(_(info.label), info.level);
+    }
+    msaaLevelCombo->sigCurrentIndexChanged().connect(
+        [this](int index){
+            int level = msaaLevelCombo->itemData(index).toInt();
+            config->msaaLevel = level;
+            config->updateRenderers(Drawing, true);
+        });
+    signalObjects.push_back(msaaLevelCombo);
+
     updateWidgets();
 }
 
@@ -1039,6 +1146,16 @@ void ConfigWidgetSet::updateWidgets()
     pointSizeSpin->setValue(config->pointSize);
     upsideDownCheck->setChecked(config->isUpsideDownEnabled);
 
+    // Find the index for msaaLevel
+    int msaaIndex = 0;
+    for(int i = 0; i < msaaLevelCombo->count(); ++i){
+        if(msaaLevelCombo->itemData(i).toInt() == config->msaaLevel){
+            msaaIndex = i;
+            break;
+        }
+    }
+    msaaLevelCombo->setCurrentIndex(msaaIndex);
+
     for(auto& obj : signalObjects){
         obj->blockSignals(false);
     }
@@ -1078,6 +1195,8 @@ ConfigDialog::ConfigDialog(SceneRendererConfig::Impl* config)
     hbox = new QHBoxLayout;
     hbox->addWidget(ws->backgroundColorButton);
     hbox->addWidget(ws->upsideDownCheck);
+    hbox->addWidget(new QLabel(_("Anti-Aliasing (MSAA)")));
+    hbox->addWidget(ws->msaaLevelCombo);
     hbox->addStretch();
     vbox->addLayout(hbox);
 

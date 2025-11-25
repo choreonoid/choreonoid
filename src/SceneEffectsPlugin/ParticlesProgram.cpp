@@ -135,7 +135,12 @@ void ParticlesProgramBase::render
     glUniform1i(particleTexLocation, 0);
 
     globalAttitude_ = position.linear().cast<float>();
+
+    // If particle size varies with MSAA level, try enabling the following code.
+    // Note: This may not work for 16x MSAA due to driver limitations.
+    //glDisable(GL_MULTISAMPLE);
     renderingFunction();
+    //glEnable(GL_MULTISAMPLE);
 
     renderer_->popShaderProgram();
 }

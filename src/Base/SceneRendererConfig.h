@@ -2,6 +2,7 @@
 #define CNOID_BASE_SCENE_RENDERER_CONFIG_H
 
 #include <cnoid/Referenced>
+#include <cnoid/Signal>
 #include <cnoid/EigenTypes>
 #include <QWidget>
 #include <QPushButton>
@@ -12,9 +13,11 @@ namespace cnoid {
 
 class SceneRenderer;
 class Mapping;
+class Menu;
 class PushButton;
 class DoubleSpinBox;
 class CheckBox;
+class ComboBox;
 
 class CNOID_EXPORT SceneRendererConfig : public Referenced
 {
@@ -27,11 +30,16 @@ public:
     void removeRenderer(SceneRenderer* renderer);
     void clearRenderers();
     void updateRenderers();
-    
+
     virtual bool store(Mapping* archive);
     virtual bool restore(const Mapping* archive);
 
     virtual void showConfigDialog();
+
+    static int getSystemDefaultMsaaLevel();
+    static void setSystemDefaultMsaaLevel(int level);
+    static SignalProxy<void()> sigSystemDefaultMsaaLevelChanged();
+    static void setMenuAsOpenGLMsaaLevelMenu(Menu* menu);
 
     static bool inputColorWithColorDialog(const std::string& title, Vector3f& io_color, QPushButton* button);
     static void setColorButtonColor(QPushButton* button, const Vector3f& color);
@@ -49,6 +57,7 @@ protected:
     DoubleSpinBox* pointSizeSpin();
     DoubleSpinBox* lineWidthSpin();
     CheckBox* upsideDownCheck();
+    ComboBox* msaaLevelCombo();
 
 private:
     Impl* impl;

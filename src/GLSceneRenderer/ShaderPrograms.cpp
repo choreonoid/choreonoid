@@ -1,5 +1,6 @@
 #include "ShaderPrograms.h"
 #include "GLSLProgram.h"
+#include "GLSceneRenderer.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
@@ -71,11 +72,15 @@ class SolidPointProgram::Impl
 public:
     GLint projectionMatrixLocation;
     GLint modelViewMatrixLocation;
-    GLint depthTextureLocation;
+    GLint depthTexture2DLocation;
+    GLint depthTextureMSLocation;
+    GLint useMsaaLocation;
+    GLint depthTextureSizeLocation;
     GLint viewportSizeLocation;
     int viewportWidth;
     int viewportHeight;
     bool isViewportSizeInvalidated;
+    bool useMsaa;
 };
 
 
@@ -637,13 +642,21 @@ void SolidPointProgram::initialize()
     SolidColorProgram::initialize();
 
     auto& glsl = glslProgram();
+
     impl->projectionMatrixLocation = glsl.getUniformLocation("projectionMatrix");
     impl->modelViewMatrixLocation = glsl.getUniformLocation("modelViewMatrix");
-    impl->depthTextureLocation = glsl.getUniformLocation("depthTexture");
+    impl->depthTexture2DLocation = glsl.getUniformLocation("depthTexture2D");
+    impl->depthTextureMSLocation = glsl.getUniformLocation("depthTextureMS");
+    impl->useMsaaLocation = glsl.getUniformLocation("useMsaa");
+    impl->depthTextureSizeLocation = glsl.getUniformLocation("depthTextureSize");
     impl->viewportSizeLocation = glsl.getUniformLocation("viewportSize");
     impl->isViewportSizeInvalidated = true;
+    impl->useMsaa = false;
     glsl.use();
-    glUniform1i(impl->depthTextureLocation, 0);
+    // Bind depthTexture2D to texture unit 0, depthTextureMS to texture unit 1
+    glUniform1i(impl->depthTexture2DLocation, 0);
+    glUniform1i(impl->depthTextureMSLocation, 1);
+    glUniform1i(impl->useMsaaLocation, 0);
 }
 
 
@@ -653,8 +666,12 @@ void SolidPointProgram::activate()
 
     if(impl->isViewportSizeInvalidated){
         glUniform2f(impl->viewportSizeLocation, impl->viewportWidth, impl->viewportHeight);
+        if(impl->depthTextureSizeLocation >= 0){
+            glUniform2i(impl->depthTextureSizeLocation, impl->viewportWidth, impl->viewportHeight);
+        }
+        impl->isViewportSizeInvalidated = false;
     }
-    
+
     glDisable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);
 }
@@ -689,6 +706,15 @@ void SolidPointProgram::setViewportSize(int width, int height)
     impl->viewportWidth = width;
     impl->viewportHeight = height;
     impl->isViewportSizeInvalidated = true;
+}
+
+
+void SolidPointProgram::setUseMsaa(bool useMsaa)
+{
+    if(impl->useMsaa != useMsaa){
+        impl->useMsaa = useMsaa;
+        glUniform1i(impl->useMsaaLocation, useMsaa ? 1 : 0);
+    }
 }
 
 

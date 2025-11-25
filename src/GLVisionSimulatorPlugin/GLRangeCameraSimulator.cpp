@@ -54,6 +54,8 @@ bool GLRangeCameraSimulator::doInitialize(GLVisionSimulatorItem* visionSimulator
 
 bool GLRangeCameraSimulator::doInitializeScreenCamera(GLVisionSensorRenderingScreen* screen)
 {
+    // Enable depth buffer update for depth data acquisition
+    screen->setDepthBufferUpdateEnabled(true);
     return screen->useCameraDeviceAsScreenCamera();
 }
 

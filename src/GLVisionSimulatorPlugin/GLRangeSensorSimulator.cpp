@@ -85,7 +85,10 @@ bool GLRangeSensorSimulator::doInitialize(GLVisionSimulatorItem* visionSimulator
 
 bool GLRangeSensorSimulator::doInitializeScreenCamera(GLVisionSensorRenderingScreen* screen)
 {
-    auto& screenInfo = screenInfos[screen->index()];    
+    // Enable depth buffer update for range data acquisition
+    screen->setDepthBufferUpdateEnabled(true);
+
+    auto& screenInfo = screenInfos[screen->index()];
     auto screenCamera = new SgPerspectiveCamera;
     screenCamera->setNearClipDistance(rangeSensor->minDistance());
     screenCamera->setFarClipDistance(rangeSensor->maxDistance());

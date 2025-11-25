@@ -47,6 +47,8 @@ public:
     bool isWorldLightEnabled() const;
     bool isAdditionalLightSetEnabled() const;
     bool isAntiAliasingEnabled() const;
+    int msaaLevel() const;
+    void setMsaaLevel(int level);
 
     CloneMap& cloneMap();
     double currentTime() const;

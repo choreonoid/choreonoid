@@ -87,6 +87,10 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void setDefaultColor(const Vector3f& color) override;
     virtual void setColor(const Vector3f& color) override;
     virtual void setUpsideDown(bool on) override;
+    virtual void setMsaaLevel(int level) override;
+    virtual int msaaLevel() const override;
+    virtual void setDepthBufferUpdateEnabled(bool on) override;
+    virtual bool isDepthBufferUpdateEnabled() const override;
     virtual void setBackFaceCullingMode(int mode) override;
     virtual int backFaceCullingMode() const override;
     virtual void setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool on) override;

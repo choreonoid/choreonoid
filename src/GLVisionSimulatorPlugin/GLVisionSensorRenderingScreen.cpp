@@ -8,6 +8,7 @@
 #include <cnoid/MessageOut>
 #include <cnoid/Format>
 #include <cnoid/AppUtil>
+#include <cnoid/SceneRendererConfig>
 
 #ifdef Q_OS_LINUX
 // CODEGEN_FUNCPTR is defined in gl_core_3_3.h
@@ -82,6 +83,7 @@ GLVisionSensorRenderingScreen::GLVisionSensorRenderingScreen(GLVisionSensorSimul
     sceneLink = nullptr;
     sceneDevice = nullptr;
     isLightingEnabled_ = true;
+    isDepthBufferUpdateEnabled_ = false;
     glContext = nullptr;
     offscreenSurface = nullptr;
     frameBuffer = nullptr;
@@ -190,6 +192,12 @@ void GLVisionSensorRenderingScreen::setScreenCamera
 void GLVisionSensorRenderingScreen::setLightingEnabled(bool on)
 {
     isLightingEnabled_ = on;
+}
+
+
+void GLVisionSensorRenderingScreen::setDepthBufferUpdateEnabled(bool on)
+{
+    isDepthBufferUpdateEnabled_ = on;
 }
 
 
@@ -377,8 +385,12 @@ bool GLVisionSensorRenderingScreen::initializeEGL()
     glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, resolutionX_, resolutionY_);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorRenderbuffer);
 
-    // Note: Do not attach depth-stencil here. GLSLSceneRenderer will attach depth texture later.
-    // This avoids conflict between renderbuffer and texture attachments.
+    // Create depth-stencil renderbuffer
+    // This is needed as the blit destination when MSAA is enabled in GLSLSceneRenderer
+    glGenRenderbuffers(1, &depthStencilRenderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthStencilRenderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, resolutionX_, resolutionY_);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilRenderbuffer);
 
     return true;
 }
@@ -435,6 +447,12 @@ bool GLVisionSensorRenderingScreen::initializeGL()
     {
         sceneRenderer->setDefaultFramebufferObject(frameBuffer->handle());
     }
+
+    // Set MSAA level from GLVisionSimulatorItem settings
+    int msaaLevel = sensorSimulator_->visionSimulatorItem()->msaaLevel();
+    int effectiveMsaaLevel = (msaaLevel < 0) ? SceneRendererConfig::getSystemDefaultMsaaLevel() : msaaLevel;
+    sceneRenderer->setMsaaLevel(effectiveMsaaLevel);
+    sceneRenderer->setDepthBufferUpdateEnabled(isDepthBufferUpdateEnabled_);
 
     if(!sceneRenderer->initializeGL()){
         finalizeGL(false);
@@ -499,7 +517,10 @@ void GLVisionSensorRenderingScreen::finalizeGL(bool doMakeCurrent)
             glDeleteRenderbuffers(1, &colorRenderbuffer);
             colorRenderbuffer = 0;
         }
-        // Note: depthStencilRenderbuffer is not used in EGL path (GLSLSceneRenderer manages depth texture)
+        if(depthStencilRenderbuffer != 0){
+            glDeleteRenderbuffers(1, &depthStencilRenderbuffer);
+            depthStencilRenderbuffer = 0;
+        }
         if(eglContext != EGL_NO_CONTEXT){
             eglDestroyContext(eglDisplay, eglContext);
             eglContext = EGL_NO_CONTEXT;

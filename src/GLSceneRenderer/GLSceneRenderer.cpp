@@ -217,6 +217,30 @@ void GLSceneRenderer::setUpsideDown(bool /* on */)
 }
 
 
+void GLSceneRenderer::setMsaaLevel(int /* level */)
+{
+
+}
+
+
+int GLSceneRenderer::msaaLevel() const
+{
+    return 0;
+}
+
+
+void GLSceneRenderer::setDepthBufferUpdateEnabled(bool /* on */)
+{
+
+}
+
+
+bool GLSceneRenderer::isDepthBufferUpdateEnabled() const
+{
+    return false;
+}
+
+
 void GLSceneRenderer::setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool /* on */)
 {
 

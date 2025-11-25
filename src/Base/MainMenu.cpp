@@ -20,6 +20,7 @@
 #include "RenderableItemSceneExporter.h"
 #include "MovieRecorderDialog.h"
 #include "SceneWidget.h"
+#include "SceneRendererConfig.h"
 #include "DescriptionDialog.h"
 #include "UnifiedEditHistory.h"
 #include <cnoid/Config>
@@ -192,6 +193,9 @@ void MainMenu::setMenuItems()
         [lowMemoryItem]{ lowMemoryItem->setChecked(SceneWidget::isLowMemoryConsumptionMode()); });
     lowMemoryItem->sigToggled().connect(
         [](bool on){ SceneWidget::setLowMemoryConsumptionMode(on); });
+
+    mm.setPath(N_("MSAA Level (System Default)"));
+    SceneRendererConfig::setMenuAsOpenGLMsaaLevelMenu(mm.currentMenu());
 
     //------------------------ Help ------------------------
 

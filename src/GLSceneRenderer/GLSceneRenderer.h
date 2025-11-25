@@ -111,6 +111,11 @@ public:
     virtual void setColor(const Vector3f& color) = 0;
     virtual void setUpsideDown(bool on);
 
+    virtual void setMsaaLevel(int level);
+    virtual int msaaLevel() const;
+    virtual void setDepthBufferUpdateEnabled(bool on);
+    virtual bool isDepthBufferUpdateEnabled() const;
+
     enum CullingMode {
         EnableBackFaceCulling,
         DisableBackFaceCulling,

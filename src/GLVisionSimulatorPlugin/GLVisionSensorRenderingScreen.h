@@ -66,8 +66,9 @@ public:
     int resolutionX() const { return resolutionX_; }
     int resolutionY() const { return resolutionY_; }
     void setLightingEnabled(bool on);
+    void setDepthBufferUpdateEnabled(bool on);
     void readImageBuffer(unsigned char* pixels);
-    void readImageBuffer(Image& image);    
+    void readImageBuffer(Image& image);
     void readDepthBuffer(std::vector<float>& depthBuf);
     bool hasUpdatedData() const { return hasUpdatedData_; }
 
@@ -80,6 +81,7 @@ private:
     SceneDevice* sceneDevice;
     SgCameraPtr screenCamera;
     bool isLightingEnabled_;
+    bool isDepthBufferUpdateEnabled_;
     bool hasUpdatedData_;
     QOpenGLContext* glContext;
     QOffscreenSurface* offscreenSurface;

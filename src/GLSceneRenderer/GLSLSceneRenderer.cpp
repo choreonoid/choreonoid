@@ -384,10 +384,15 @@ public:
     
     GLuint defaultFBO;
     GLuint depthTexture;
+    GLuint msaaFBO;           // Custom MSAA framebuffer (used when msaaSamples > 1)
+    GLuint msaaColorBuffer;   // MSAA color renderbuffer for msaaFBO
     GLuint fboForPicking;
     GLuint colorBufferForPicking;
     GLuint depthBufferForPicking;
     GLuint depthBufferForOverlay;
+    GLuint depthBufferForOverlayPicking;
+    int msaaSamples;
+    bool isDepthBufferUpdateEnabled;
     int pickingImageWidth;
     int pickingImageHeight;
 
@@ -399,6 +404,7 @@ public:
     float minTransparency;
     vector<int> shadowLightIndices;
     bool needToUpdateOverlayDepthBufferSize;
+    bool needToRecreateMsaaFBO;
     bool hasTintColor;
 
     unordered_set<SgNodePtr> invisibleNodeSet;
@@ -714,7 +720,11 @@ void GLSLSceneRenderer::Impl::initialize()
     isBoundingBoxRenderingForLightweightRenderingGroupEnabled = false;
 
     defaultFBO = 0;
-    
+    msaaFBO = 0;
+    msaaColorBuffer = 0;
+    msaaSamples = 4;
+    isDepthBufferUpdateEnabled = false;
+
     lightingMode = NormalLighting;
     
     doUnusedResourceCheck = true;
@@ -882,6 +892,12 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         if(depthTexture){
             glDeleteTextures(1, &depthTexture);
         }
+        if(msaaFBO){
+            glDeleteFramebuffers(1, &msaaFBO);
+        }
+        if(msaaColorBuffer){
+            glDeleteRenderbuffers(1, &msaaColorBuffer);
+        }
 
         if(fboForPicking){
             glDeleteRenderbuffers(1, &colorBufferForPicking);
@@ -890,6 +906,9 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         }
         if(depthBufferForOverlay){
             glDeleteRenderbuffers(1, &depthBufferForOverlay);
+        }
+        if(depthBufferForOverlayPicking){
+            glDeleteRenderbuffers(1, &depthBufferForOverlayPicking);
         }
     }
 
@@ -910,15 +929,19 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         fullLightingProgram.reset(new FullLightingProgram);
 
         needToUpdateDepthTexture = true;
-    
+
         depthTexture = 0;
+        msaaFBO = 0;
+        msaaColorBuffer = 0;
         fboForPicking = 0;
         colorBufferForPicking = 0;
         depthBufferForPicking = 0;
         depthBufferForOverlay = 0;
+        depthBufferForOverlayPicking = 0;
         pickingImageWidth = 0;
         pickingImageHeight = 0;
         needToUpdateOverlayDepthBufferSize = true;
+        needToRecreateMsaaFBO = false;
 
         clearGLState();
 
@@ -1068,6 +1091,10 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
     glDisable(GL_DITHER);
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
+    if(msaaSamples > 1){
+        glEnable(GL_MULTISAMPLE);
+    }
+
 #ifdef CNOID_ENABLE_FREE_TYPE
 # ifdef _WIN32
     freeType.initializeGL("C:\\Windows\\Fonts\\arial.ttf", 100, ImageTextureUnit);
@@ -1116,29 +1143,80 @@ void GLSLSceneRenderer::setDefaultFramebufferObject(unsigned int id)
 
 void GLSLSceneRenderer::Impl::initializeDepthTexture()
 {
-    // Bind the default framebuffer object
-    glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
-
-    if(!depthTexture){
-        glGenTextures(1, &depthTexture);
-        glActiveTexture(GL_TEXTURE0 + DepthTextureUnit);
-        glBindTexture(GL_TEXTURE_2D, depthTexture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    } else {
-        glActiveTexture(GL_TEXTURE0 + DepthTextureUnit);
-        glBindTexture(GL_TEXTURE_2D, depthTexture);
+    // Query GPU's maximum supported MSAA samples and clamp if necessary
+    if(msaaSamples > 1){
+        GLint maxSamples = 0;
+        glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
+        if(msaaSamples > maxSamples){
+            os() << formatR(_("Warning: Requested MSAA samples ({0}) exceeds GPU maximum ({1}). Using {1}x MSAA."),
+                            msaaSamples, maxSamples) << endl;
+            msaaSamples = maxSamples;
+        }
+        // Ensure msaaSamples is at least 2 for MSAA mode
+        if(msaaSamples < 2){
+            os() << _("Warning: GPU does not support MSAA. Disabling MSAA.") << endl;
+            msaaSamples = 0;
+        }
     }
 
     auto& vp = self->viewport();
-    // NVIDIA GPUs support only the following format for the depth texture used with the default frame buffer
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, vp.w, vp.h, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if(status != GL_FRAMEBUFFER_COMPLETE){
-        throw std::runtime_error(_("Framebuffer is not complete.\n"));
+
+    if(msaaSamples > 1){
+        // MSAA enabled: Create custom MSAA FBO to avoid attaching to Qt's default FBO
+        // (Attaching MSAA texture to Qt's MSAA FBO causes crashes on AMD drivers)
+        if(!msaaFBO){
+            glGenFramebuffers(1, &msaaFBO);
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, msaaFBO);
+
+        // MSAA color renderbuffer
+        if(!msaaColorBuffer){
+            glGenRenderbuffers(1, &msaaColorBuffer);
+        }
+        glBindRenderbuffer(GL_RENDERBUFFER, msaaColorBuffer);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples, GL_RGBA8, vp.w, vp.h);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, msaaColorBuffer);
+
+        // MSAA depth texture (for SolidPointProgram to sample)
+        if(!depthTexture){
+            glGenTextures(1, &depthTexture);
+        }
+        glActiveTexture(GL_TEXTURE0 + DepthTextureUnit);
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, depthTexture);
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaSamples, GL_DEPTH24_STENCIL8, vp.w, vp.h, GL_TRUE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, depthTexture, 0);
+
+        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if(status != GL_FRAMEBUFFER_COMPLETE){
+            throw std::runtime_error(_("MSAA Framebuffer is not complete.\n"));
+        }
+
+        // Restore default FBO
+        glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
+    } else {
+        // MSAA disabled: Attach depth texture directly to defaultFBO
+        // (Maintains compatibility with GLVisionSimulatorPlugin)
+        glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
+
+        if(!depthTexture){
+            glGenTextures(1, &depthTexture);
+            glActiveTexture(GL_TEXTURE0 + DepthTextureUnit);
+            glBindTexture(GL_TEXTURE_2D, depthTexture);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        } else {
+            glActiveTexture(GL_TEXTURE0 + DepthTextureUnit);
+            glBindTexture(GL_TEXTURE_2D, depthTexture);
+        }
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, vp.w, vp.h, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+
+        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if(status != GL_FRAMEBUFFER_COMPLETE){
+            throw std::runtime_error(_("Framebuffer is not complete.\n"));
+        }
     }
 
     needToUpdateDepthTexture = false;
@@ -1296,6 +1374,28 @@ void GLSLSceneRenderer::Impl::doRender()
     if(isGLCleared){
         initializeGLForRendering();
     }
+    if(needToRecreateMsaaFBO){
+        // Delete existing MSAA FBO to force recreation with new MSAA level
+        if(msaaFBO){
+            glDeleteFramebuffers(1, &msaaFBO);
+            msaaFBO = 0;
+        }
+        if(msaaColorBuffer){
+            glDeleteRenderbuffers(1, &msaaColorBuffer);
+            msaaColorBuffer = 0;
+        }
+        if(depthTexture){
+            glDeleteTextures(1, &depthTexture);
+            depthTexture = 0;
+        }
+        if(depthBufferForOverlay){
+            glDeleteRenderbuffers(1, &depthBufferForOverlay);
+            depthBufferForOverlay = 0;
+        }
+        needToUpdateDepthTexture = true;
+        needToUpdateOverlayDepthBufferSize = true;
+        needToRecreateMsaaFBO = false;
+    }
     if(needToUpdateDepthTexture){
         initializeDepthTexture();
     }
@@ -1330,6 +1430,12 @@ void GLSLSceneRenderer::Impl::doRender()
     default:
         setupFullLightingRendering();
         break;
+    }
+
+    // Switch to custom MSAA FBO for main rendering
+    // (This must be done after setupFullLightingRendering which renders shadow maps to defaultFBO)
+    if(msaaSamples > 1 && msaaFBO){
+        glBindFramebuffer(GL_FRAMEBUFFER, msaaFBO);
     }
 
     isRenderingVisibleImage = true;
@@ -1368,8 +1474,22 @@ void GLSLSceneRenderer::Impl::doRender()
         if(!overlayRenderingQueue.empty()){
             renderOverlayObjects();
         }
+
+        // Blit from custom MSAA FBO to default FBO
+        if(msaaSamples > 1 && msaaFBO){
+            auto& vp = self->viewport();
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, msaaFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFBO);
+            // Blit color buffer (GL_LINEAR filter for smooth antialiasing)
+            glBlitFramebuffer(0, 0, vp.w, vp.h, 0, 0, vp.w, vp.h, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+            // Copy depth buffer to default FBO if enabled (for vision sensor depth data acquisition)
+            if(isDepthBufferUpdateEnabled){
+                glBlitFramebuffer(0, 0, vp.w, vp.h, 0, 0, vp.w, vp.h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+            }
+            glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
+        }
     }
-    
+
     popProgram();
     endRendering();
 }
@@ -1532,7 +1652,7 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
         if(pickIndex < overlayPickIndex0){
             glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
         } else {
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForOverlay);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForOverlayPicking);
             glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForPicking);
         }
@@ -1830,7 +1950,18 @@ void GLSLSceneRenderer::Impl::doPureWireframeRendering()
 
 void GLSLSceneRenderer::Impl::doVertexRendering()
 {
+    // Bind depth texture for SolidPointProgram to read from
+    // depthTexture2D uses texture unit 0, depthTextureMS uses texture unit 1
+    if(msaaSamples > 1){
+        glActiveTexture(GL_TEXTURE0 + DepthTextureUnit + 1);  // Unit 1 for MSAA
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, depthTexture);
+    } else {
+        glActiveTexture(GL_TEXTURE0 + DepthTextureUnit);  // Unit 0 for non-MSAA
+        glBindTexture(GL_TEXTURE_2D, depthTexture);
+    }
+
     ScopedShaderProgramActivator programActivator(solidPointProgram.get(), this);
+    solidPointProgram->setUseMsaa(msaaSamples > 1);
     solidPointProgram->setProjectionMatrix(projectionMatrix);
 
     activateVertexRenderingFunctions();
@@ -1887,24 +2018,44 @@ void GLSLSceneRenderer::Impl::renderTransparentObjects()
 
 void GLSLSceneRenderer::Impl::renderOverlayObjects()
 {
-    if(needToUpdateOverlayDepthBufferSize){
-        if(depthBufferForOverlay){
-            // The buffer seems to have to be regenerated when the buffer size is changed
-            // using glRenderBufferStorage at least for Intel GPUs on Linux
-            glDeleteRenderbuffers(1, &depthBufferForOverlay);
-            depthBufferForOverlay = 0;
+    GLuint overlayDepthBuffer;
+    if(isRenderingPickingImage){
+        // Use non-MSAA buffer for picking to ensure compatibility with picking FBO
+        if(needToUpdateOverlayDepthBufferSize && depthBufferForOverlayPicking){
+            glDeleteRenderbuffers(1, &depthBufferForOverlayPicking);
+            depthBufferForOverlayPicking = 0;
         }
-        needToUpdateOverlayDepthBufferSize = false; 
+        if(!depthBufferForOverlayPicking){
+            glGenRenderbuffers(1, &depthBufferForOverlayPicking);
+            auto& vp = self->viewport();
+            glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForOverlayPicking);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, vp.w, vp.h);
+        }
+        overlayDepthBuffer = depthBufferForOverlayPicking;
+    } else {
+        if(needToUpdateOverlayDepthBufferSize){
+            if(depthBufferForOverlay){
+                // The buffer seems to have to be regenerated when the buffer size is changed
+                // using glRenderBufferStorage at least for Intel GPUs on Linux
+                glDeleteRenderbuffers(1, &depthBufferForOverlay);
+                depthBufferForOverlay = 0;
+            }
+        }
+        if(!depthBufferForOverlay){
+            glGenRenderbuffers(1, &depthBufferForOverlay);
+            auto& vp = self->viewport();
+            glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForOverlay);
+            if(msaaSamples > 1){
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples, GL_DEPTH_STENCIL, vp.w, vp.h);
+            } else {
+                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, vp.w, vp.h);
+            }
+        }
+        overlayDepthBuffer = depthBufferForOverlay;
     }
-    if(!depthBufferForOverlay){
-        glGenRenderbuffers(1, &depthBufferForOverlay);
-        auto& vp = self->viewport();
-        glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForOverlay);
-        // NVIDIA GPUs support only the following format for the depth texture used with the default frame buffer
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, vp.w, vp.h);
-    }
+    needToUpdateOverlayDepthBufferSize = false;
 
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForOverlay);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, overlayDepthBuffer);
     glClear(GL_DEPTH_BUFFER_BIT);
 
     if(isRenderingPickingImage){
@@ -1921,7 +2072,15 @@ void GLSLSceneRenderer::Impl::renderOverlayObjects()
         renderTransparentObjects();
     }
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+    if(isRenderingPickingImage){
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForPicking);
+    } else if(msaaSamples > 1){
+        // MSAA enabled: Restore depth texture to custom MSAA FBO
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, depthTexture, 0);
+    } else {
+        // MSAA disabled: Restore depth texture to defaultFBO
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+    }
 }
 
 
@@ -3093,6 +3252,7 @@ void GLSLSceneRenderer::Impl::renderPlotMain
 void GLSLSceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
 {
     if(!isRenderingShadowMap && pointSet->hasVertices()){
+        glDisable(GL_MULTISAMPLE);
         renderPlot(
             pointSet, GL_POINTS,
             [pointSet]() -> SgVertexArrayPtr { return pointSet->vertices(); },
@@ -3108,6 +3268,7 @@ void GLSLSceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
                 }
                 return !isRenderingPickingImage;
             });
+        glEnable(GL_MULTISAMPLE);
     }
 }
 
@@ -3661,6 +3822,33 @@ void GLSLSceneRenderer::enableUnusedResourceCheck(bool on)
 void GLSLSceneRenderer::setUpsideDown(bool on)
 {
     impl->isUpsideDownEnabled = on;
+}
+
+
+void GLSLSceneRenderer::setMsaaLevel(int level)
+{
+    if(impl->msaaSamples != level){
+        impl->msaaSamples = level;
+        impl->needToRecreateMsaaFBO = true;
+    }
+}
+
+
+int GLSLSceneRenderer::msaaLevel() const
+{
+    return impl->msaaSamples;
+}
+
+
+void GLSLSceneRenderer::setDepthBufferUpdateEnabled(bool on)
+{
+    impl->isDepthBufferUpdateEnabled = on;
+}
+
+
+bool GLSLSceneRenderer::isDepthBufferUpdateEnabled() const
+{
+    return impl->isDepthBufferUpdateEnabled;
 }
 
 

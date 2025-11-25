@@ -3,6 +3,7 @@
 #include "Buttons.h"
 #include "ButtonGroup.h"
 #include "CheckBox.h"
+#include "ComboBox.h"
 #include "SpinBox.h"
 #include "DoubleSpinBox.h"
 #include "Separator.h"
@@ -75,6 +76,7 @@ public:
     DoubleSpinBox* lineWidthSpin;
     DoubleSpinBox* pointSizeSpin;;
     CheckBox* upsideDownCheck;
+    ComboBox* msaaLevelCombo;
 
     vector<QObject*> signalObjects;
 
@@ -457,13 +459,14 @@ ConfigWidgetSet* SceneWidgetConfig::Impl::getOrCreateConfigWidgetSet()
 {
     if(!widgetSet){
         self->SceneRendererConfig::createConfigWidgets();
-        
+
         widgetSet = new ConfigWidgetSet(this);
         widgetSet->backgroundColorButton = self->backgroundColorButton();
         widgetSet->defaultColorButton = self->defaultColorButton();
         widgetSet->lineWidthSpin = self->lineWidthSpin();
         widgetSet->pointSizeSpin = self->pointSizeSpin();
         widgetSet->upsideDownCheck = self->upsideDownCheck();
+        widgetSet->msaaLevelCombo = self->msaaLevelCombo();
     }
     return widgetSet;
 }
@@ -830,6 +833,12 @@ QWidget* ConfigWidgetSet::createDrawingPanel()
     hbox->addWidget(lineWidthSpin);
     hbox->addWidget(new QLabel(_("Default point size")));
     hbox->addWidget(pointSizeSpin);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout;
+    hbox->addWidget(new QLabel(_("Anti-Aliasing (MSAA)")));
+    hbox->addWidget(msaaLevelCombo);
     hbox->addStretch();
     vbox->addLayout(hbox);
 

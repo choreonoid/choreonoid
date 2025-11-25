@@ -173,8 +173,9 @@ public:
     virtual void deactivate() override;
     virtual void setTransform(const Matrix4& PV, const Isometry3& V, const Affine3& M, const Matrix4* L) override;
 
-    void setProjectionMatrix(const Matrix4& P);    
+    void setProjectionMatrix(const Matrix4& P);
     void setViewportSize(int width, int height);
+    void setUseMsaa(bool useMsaa);
 
 private:
     class Impl;
