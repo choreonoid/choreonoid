@@ -75,23 +75,9 @@ public:
         pos = buf;
         bool result = false;
 
-#ifndef _WIN32
         if(ifs.getline(buf, bufsize)){
             result = true;
         }
-#else
-        // The following code is faster on Windows
-        if(ifs.get(buf, bufsize, '\n')){
-            ifs.ignore();
-            result = true;
-        } else if(!ifs.eof() && ifs.fail()){
-            ifs.clear();
-            if(ifs.peek() == '\n'){
-                ifs.ignore();
-                result = true;
-            }
-        }
-#endif
         if(result){
             ++lineNumber;
             return true;
