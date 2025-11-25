@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-04-28 23:01+0900\n"
+"POT-Creation-Date: 2025-11-28 23:14+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -70,6 +70,15 @@ msgstr "影の描画はCNOID_ENABLE_GLSL_SHADOWの値に従い有効化されま
 
 msgid "Shadow casting is disabled for this GPU due to some problems.\n"
 msgstr "影の描画はこのGPUに対しては問題があるため無効化されます．\n"
+
+msgid "Warning: Requested MSAA samples ({0}) exceeds GPU maximum ({1}). Using {1}x MSAA."
+msgstr "警告: 要求されたMSAAサンプル数({0})がGPUの最大値({1})を超えています．{1}x MSAAを使用します．"
+
+msgid "Warning: GPU does not support MSAA. Disabling MSAA."
+msgstr "警告: GPUがMSAAをサポートしていません．MSAAを無効化します．"
+
+msgid "MSAA Framebuffer is not complete.\n"
+msgstr "MSAAフレームバッファが不完全です．\n"
 
 msgid "Framebuffer is not complete.\n"
 msgstr "フレームバッファが不完全です．\n"

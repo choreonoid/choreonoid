@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-04 14:03+0900\n"
+"POT-Creation-Date: 2025-11-28 23:13+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -93,11 +93,11 @@ msgstr "シーンビューで有効化"
 msgid "&OK"
 msgstr "&OK"
 
-msgid "Camera Creation"
-msgstr "カメラの作成"
-
 msgid "Camera"
 msgstr "カメラ"
+
+msgid "Camera Creation"
+msgstr "カメラの作成"
 
 msgid "Camera Configuration"
 msgstr "カメラの設定"
@@ -810,6 +810,9 @@ msgstr "コピーされたアイテムを \"{0}\" にペーストできません
 msgid "Paste items in {0}"
 msgstr "複数のアイテムを{0}上で貼り付け"
 
+msgid "Items cannot be deleted while processing is in progress."
+msgstr "処理中はアイテムを削除できません．"
+
 msgid "Item \"{0}\" cannot be reloaded currently, as it is being continuously updated."
 msgstr "アイテム \"{0}\" は継続的に更新中のため、今は再読込することができません．"
 
@@ -818,9 +821,6 @@ msgid ""
 "updated."
 msgstr ""
 "アイテム \"{0}\" は継続的に更新中のサブツリーの一部であるため、今は再読込することができません．"
-
-msgid "Items cannot be deleted while processing is in progress."
-msgstr "処理中はアイテムを削除できません．"
 
 msgid "Drop items in {0}"
 msgstr "複数のアイテムを{0}上でドロップ"
@@ -1076,6 +1076,9 @@ msgstr "垂直同期"
 
 msgid "Low GPU Memory Consumption Mode"
 msgstr "GPUメモリ消費低減モード"
+
+msgid "MSAA Level (System Default)"
+msgstr "MSAAレベル（システム設定）"
 
 msgid "Help"
 msgstr "ヘルプ"
@@ -1356,6 +1359,11 @@ msgstr "プラグインファイル \"{}\" を検出しました．\n"
 
 msgid "System error: {0}"
 msgstr "システムエラー: {0}"
+
+msgid ""
+"\n"
+"Missing dependency: {0}"
+msgstr ""
 
 msgid "The plugin entry function \"getChoreonoidPlugin\" is not found.\n"
 msgstr "プラグインエントリ関数 \"getChoreonoidPlugin\" が見つかりません．\n"
@@ -1713,9 +1721,8 @@ msgstr "プロジェクトパック \"{1}\" のファイル \"{0}\" を展開で
 msgid "The project pack file \"{0}\" does not include a project file."
 msgstr "プロジェクトパック \"{0}\" はプロジェクトファイルを含んでいません．"
 
-#, fuzzy
 msgid "RawSceneItem"
-msgstr "シーンアイテム"
+msgstr "Rawシーンアイテム"
 
 msgid "ReferencedObjectSeqItem"
 msgstr "参照オブジェクト時系列アイテム"
@@ -1826,9 +1833,8 @@ msgstr "表示するモデルタイプの切り替え"
 msgid "Show the collision detection models"
 msgstr "干渉チェック用モデルを表示"
 
-#, fuzzy
 msgid "Toggle the collision highlighting"
-msgstr "干渉線の表示"
+msgstr "干渉ハイライトの切り替え"
 
 msgid "Toggle the collision line visibility"
 msgstr "干渉線の表示"
@@ -1877,6 +1883,9 @@ msgstr "標準シーンファイル"
 
 msgid "Empty scene"
 msgstr "空のシーン"
+
+msgid "Off"
+msgstr "オフ"
 
 msgid "Normal"
 msgstr " 標準"
@@ -1941,11 +1950,17 @@ msgstr "デフォルト色"
 msgid "Upside down"
 msgstr "上下反転"
 
+msgid "System Default"
+msgstr "システム設定"
+
 msgid "Lighting mode"
 msgstr "ライティングモード"
 
 msgid "Back face culling: "
 msgstr "裏面除去："
+
+msgid "Anti-Aliasing (MSAA)"
+msgstr "アンチエイリアシング（MSAA）"
 
 msgid "Default line width"
 msgstr "デフォルトの線幅"
@@ -2278,12 +2293,3 @@ msgstr "仮想ジョイスティック"
 
 msgid "VirtualJoystickView"
 msgstr "仮想ジョイスティックビュー"
-
-#~ msgid "The file \"{0}\" on which {1} depends is not relocatable and will be lost in the archive."
-#~ msgstr "{1}が依存しているファイル \"{0}\" は再配置できないためアーカイブ内で失われます．"
-
-#~ msgid "Recursive editable node set change on a scene widget."
-#~ msgstr "シーンウィジェットにおける編集可ノード集合の再帰的変化．"
-
-#~ msgid "Recursive editable node set change on scene widget {0}."
-#~ msgstr "シーンウィジェット{0}における編集可ノード集合の再帰的変化 ．"
