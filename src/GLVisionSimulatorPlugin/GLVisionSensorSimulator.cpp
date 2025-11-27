@@ -125,6 +125,7 @@ bool GLVisionSensorSimulator::initialize(const vector<SimulationBody*>& simBodie
             if(!screen->initialize(sharedScene_, bodyIndex)){
                 return false;
             }
+            isOpenGLInfoOutputEnabled_ = false;
         }
         scenes.push_back(sharedScene_);
     }
