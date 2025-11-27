@@ -126,6 +126,7 @@ void main()
         // Multiply all color components: diffuseColor * vertexColor * textureColor * tintColor
         vec3 baseColor = diffuseColor;
         float alpha2 = alpha;
+        vec3 texColor = vec3(1.0);  // Default to white (no texture effect)
 
         // Multiply vertex color if enabled
         if(isVertexColorEnabled){
@@ -135,14 +136,23 @@ void main()
         // Multiply texture color if enabled
         if(isTextureEnabled){
             vec4 texColor4 = texture(colorTexture, inData.texCoord);
-            baseColor *= vec3(texColor4);
+            texColor = vec3(texColor4);
+            baseColor *= texColor;
             alpha2 *= texColor4.a;
         }
 
         // Always multiply tint color (white when disabled)
         baseColor *= tintColor;
 
-        vec3 color = emissionColor;
+        // Emission color handling:
+        // According to industry standards (glTF, VRML97, X3D), emission color should simply
+        // be added to the final color without being multiplied by any texture. However,
+        // Blender's COLLADA exporter cannot export emission textures (only emission color),
+        // and many URDF robot models are created with Blender-exported COLLADA files where
+        // emission is intended to work with the diffuse texture. To maintain compatibility
+        // with such models, we multiply emission by texture color when a texture is present.
+        // Reference: Blender Issue T35408 - https://projects.blender.org/blender/blender/issues/35408
+        vec3 color = emissionColor * texColor;
         for(int i=0; i < numLights; ++i){
             reflectionElements[i] = calcDiffuseAndSpecularElements(lights[i], baseColor);
             color += lights[i].ambientIntensity * ambientIntensity * baseColor;
