@@ -64,6 +64,8 @@ public:
     int currentCameraIndex() const;
     void setCurrentCamera(int index);
     bool setCurrentCamera(SgCamera* camera);
+    SignalProxy<void()> sigCurrentCameraSelectionChanged();
+    [[deprecated("Use sigCurrentCameraSelectionChanged")]]
     SignalProxy<void()> sigCurrentCameraChanged();
     std::vector<std::string> simplifiedCameraPathStrings(int cameraIndex);
     bool getSimplifiedCameraPathStrings(int cameraIndex, std::vector<std::string>& out_pathStrings);

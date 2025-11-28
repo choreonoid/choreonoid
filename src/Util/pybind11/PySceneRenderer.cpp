@@ -27,7 +27,7 @@ void exportPySceneRenderer(py::module& m)
         .def_property_readonly("currentCameraIndex", &SceneRenderer::currentCameraIndex)
         .def("setCurrentCamera", (void(SceneRenderer::*)(int)) &SceneRenderer::setCurrentCamera)
         .def("setCurrentCamera", (bool(SceneRenderer::*)(SgCamera*)) &SceneRenderer::setCurrentCamera)
-        .def_property_readonly("sigCurrentCameraChanged", &SceneRenderer::sigCurrentCameraChanged)
+        .def_property_readonly("sigCurrentCameraSelectionChanged", &SceneRenderer::sigCurrentCameraSelectionChanged)
         .def("getSimplifiedCameraPathStrings", &SceneRenderer::simplifiedCameraPathStrings)
         .def("findCameraPath", &SceneRenderer::findCameraPath)
         .def("setCurrentCameraPath", &SceneRenderer::setCurrentCameraPath)
@@ -76,6 +76,7 @@ void exportPySceneRenderer(py::module& m)
              })
 
         // deprecated
+        .def_property_readonly("sigCurrentCameraChanged", &SceneRenderer::sigCurrentCameraSelectionChanged)
         .def_property_readonly("sigCamerasChanged", &SceneRenderer::sigCameraListChanged)
         .def_property_readonly("numLights", &SceneRenderer::numAdditionalLights)
         ;

@@ -301,7 +301,7 @@ public:
     void onFpsRenderingRequest();
     void renderFps();
 
-    void onCurrentCameraChanged();
+    void onCurrentCameraSelectionChanged();
     int visiblePolygonElements() const;
     void setCollisionHighlightingEnabled(bool on);
     void setCollisionLineVisibility(bool on);
@@ -522,7 +522,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
         
     renderer->setOutputStream(MessageView::instance()->cout(false));
     renderer->enableUnusedResourceCheck(true);
-    renderer->sigCurrentCameraChanged().connect([&](){ onCurrentCameraChanged(); });
+    renderer->sigCurrentCameraSelectionChanged().connect([&](){ onCurrentCameraSelectionChanged(); });
     renderer->setCurrentCameraAutoRestorationMode(true);
     self->sigObjectNameChanged().connect([this](string name){ renderer->setName(name); });
 
@@ -2519,7 +2519,7 @@ InteractiveCameraTransform* SceneWidget::activeInteractiveCameraTransform()
 }
 
 
-void SceneWidget::Impl::onCurrentCameraChanged()
+void SceneWidget::Impl::onCurrentCameraSelectionChanged()
 {
     interactiveCameraTransform.reset();
     isBuiltinCameraCurrent = false;

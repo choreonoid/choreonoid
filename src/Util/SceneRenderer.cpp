@@ -147,6 +147,7 @@ public:
 
     bool cameraListChanged;
     bool currentCameraRemoved;
+    int foundCurrentCameraIndex;
     bool isCurrentCameraAutoRestorationMode;
     bool isPreferredCameraCurrent;
     int currentCameraIndex;
@@ -154,7 +155,7 @@ public:
     vector<SgNodePath> cameraPaths;
     vector<string> preferredCurrentCameraPathStrings;
     Signal<void()> sigCameraListChanged;
-    Signal<void()> sigCurrentCameraChanged;
+    Signal<void()> sigCurrentCameraSelectionChanged;
         
     struct LightInfo
     {
@@ -442,6 +443,7 @@ void SceneRenderer::Impl::extractPreproNodes()
     cameras.clear();
     cameraListChanged = false;
     currentCameraRemoved = true;
+    foundCurrentCameraIndex = -1;
 
     lights.clear();
     fogs.clear();
@@ -457,7 +459,6 @@ void SceneRenderer::Impl::extractPreproNodes()
     }
     if(cameraListChanged){
         if(currentCameraRemoved){
-            currentCameraIndex = 0;
             if(isPreferredCameraCurrent){
                 isPreferredCameraCurrent = false;
             }
@@ -477,7 +478,8 @@ void SceneRenderer::Impl::extractPreproNodes()
     }
 
     if(!isCurrentCameraUpdated){
-        setCurrentCamera(currentCameraIndex);
+        int newIndex = currentCameraRemoved ? 0 : foundCurrentCameraIndex;
+        setCurrentCamera(newIndex);
     }
 }
 
@@ -545,7 +547,7 @@ void SceneRenderer::Impl::extractPreproNodeIter(PreproNodeInfo* nodeInfo, const 
 
         if(camera == currentCamera){
             currentCameraRemoved = false;
-            currentCameraIndex = cameras.size();
+            foundCurrentCameraIndex = cameras.size();
         }
 
         cameras.push_back(cameraInfo);
@@ -638,14 +640,19 @@ void SceneRenderer::Impl::setCurrentCamera(int index)
     if(index >= 0 && index < static_cast<int>(cameras.size())){
         newCamera = cameras[index]->camera;
     }
-    if(newCamera && newCamera != currentCamera){
-        currentCameraIndex = index;
-        currentCamera = newCamera;
-        if(isCurrentCameraAutoRestorationMode){
-            getSimplifiedCameraPathStrings(index, preferredCurrentCameraPathStrings);
-            isPreferredCameraCurrent = true;
+    if(newCamera){
+        bool cameraChanged = (newCamera != currentCamera);
+        bool indexChanged = (index != currentCameraIndex);
+
+        if(cameraChanged || indexChanged){
+            currentCameraIndex = index;
+            currentCamera = newCamera;
+            if(isCurrentCameraAutoRestorationMode){
+                getSimplifiedCameraPathStrings(index, preferredCurrentCameraPathStrings);
+                isPreferredCameraCurrent = true;
+            }
+            sigCurrentCameraSelectionChanged();
         }
-        sigCurrentCameraChanged();
     }
 }
 
@@ -692,9 +699,15 @@ const Isometry3& SceneRenderer::currentCameraPosition() const
 }
 
 
+SignalProxy<void()> SceneRenderer::sigCurrentCameraSelectionChanged()
+{
+    return impl->sigCurrentCameraSelectionChanged;
+}
+
+
 SignalProxy<void()> SceneRenderer::sigCurrentCameraChanged()
 {
-    return impl->sigCurrentCameraChanged;
+    return impl->sigCurrentCameraSelectionChanged;
 }
 
 

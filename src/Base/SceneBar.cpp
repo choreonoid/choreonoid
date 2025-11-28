@@ -91,8 +91,8 @@ public:
     void onCurrentSceneViewDeactivated();
     void setCurrentSceneView(SceneView* sceneView);
     void onSceneWidgetStateChanged(SceneWidget* sceneWidget);
-    void onSceneRendererCamerasChanged(SceneWidget* sceneWidget);
-    void onSceneRendererCurrentCameraChanged(SceneWidget* sceneWidget);
+    void onSceneRendererCameraListChanged(SceneWidget* sceneWidget);
+    void onSceneRendererCurrentCameraSelectionChanged(SceneWidget* sceneWidget);
     void onCameraComboCurrentIndexChanged(int index);
     void onEditModeButtonToggled(bool on);
     void onFirstPersonModeButtonToggled(bool on);
@@ -318,7 +318,7 @@ void SceneBar::Impl::setCurrentSceneView(SceneView* sceneView)
         auto renderer = sceneWidget->renderer();
 
         onSceneWidgetStateChanged(sceneWidget);
-        onSceneRendererCamerasChanged(sceneWidget);
+        onSceneRendererCameraListChanged(sceneWidget);
 
         sceneViewConnections.add(
             sceneView->sigDeactivated().connect(
@@ -330,11 +330,11 @@ void SceneBar::Impl::setCurrentSceneView(SceneView* sceneView)
 
         sceneViewConnections.add(
             renderer->sigCameraListChanged().connect(
-                [this, sceneWidget](){ onSceneRendererCamerasChanged(sceneWidget); }));
+                [this, sceneWidget](){ onSceneRendererCameraListChanged(sceneWidget); }));
         
         sceneViewConnections.add(
-            renderer->sigCurrentCameraChanged().connect(
-                [this, sceneWidget](){ onSceneRendererCurrentCameraChanged(sceneWidget); }));
+            renderer->sigCurrentCameraSelectionChanged().connect(
+                [this, sceneWidget](){ onSceneRendererCurrentCameraSelectionChanged(sceneWidget); }));
 
         self->setEnabled(true);
     }
@@ -343,7 +343,9 @@ void SceneBar::Impl::setCurrentSceneView(SceneView* sceneView)
 
 void SceneBar::Impl::onCurrentSceneViewDeactivated()
 {
-    setCurrentSceneView(SceneView::instance());
+    auto lastFocusSceneView = SceneView::lastFocusSceneView();
+    setCurrentSceneView(
+        lastFocusSceneView != currentSceneView ? lastFocusSceneView : nullptr);
 }
 
 
@@ -405,7 +407,7 @@ void SceneBar::Impl::onSceneWidgetStateChanged(SceneWidget* sceneWidget)
 }
 
 
-void SceneBar::Impl::onSceneRendererCamerasChanged(SceneWidget* sceneWidget)
+void SceneBar::Impl::onSceneRendererCameraListChanged(SceneWidget* sceneWidget)
 {
     cameraCombo->blockSignals(true);
     cameraCombo->clear();
@@ -416,7 +418,7 @@ void SceneBar::Impl::onSceneRendererCamerasChanged(SceneWidget* sceneWidget)
     vector<string> pathStrings;
 
     const int n = renderer->numCameras();
-    
+
     for(int i=0; i < n; ++i){
         auto camera = renderer->camera(i);
         if(camera == builtinPersCamera || camera == builtinOrthoCamera){
@@ -442,7 +444,7 @@ void SceneBar::Impl::onSceneRendererCamerasChanged(SceneWidget* sceneWidget)
 }
 
 
-void SceneBar::Impl::onSceneRendererCurrentCameraChanged(SceneWidget* sceneWidget)
+void SceneBar::Impl::onSceneRendererCurrentCameraSelectionChanged(SceneWidget* sceneWidget)
 {
     cameraCombo->blockSignals(true);
     cameraCombo->setCurrentIndex(sceneWidget->renderer()->currentCameraIndex());
