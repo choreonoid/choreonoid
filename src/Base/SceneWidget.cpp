@@ -586,7 +586,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
     isBuiltinCameraCurrent = true;
     numBuiltinCameras = 2;
-    systemGroup->addChild(builtinCameraTransform);
+    sceneRoot->insertChild(0, builtinCameraTransform);
     isLightweightViewChangeEnabled = false;
     isCameraPositionInteractivelyChanged = false;
     isCameraRollRistricted = true;
