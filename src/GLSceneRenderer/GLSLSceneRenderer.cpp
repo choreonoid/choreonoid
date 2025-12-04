@@ -1441,7 +1441,12 @@ void GLSLSceneRenderer::Impl::doRender()
     isRenderingVisibleImage = true;
     const Vector3f& c = self->backgroundColor();
     glClearColor(c[0], c[1], c[2], 1.0f);
+    // Enable all channels for clearing (alpha needs to be set to 1.0)
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Disable alpha channel writing to prevent Wayland compositors
+    // from treating the window as transparent
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 
     if(auto camera = self->currentCamera()){
 
