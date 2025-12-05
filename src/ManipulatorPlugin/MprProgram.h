@@ -3,6 +3,7 @@
 
 #include <cnoid/ClonableReferenced>
 #include <cnoid/Signal>
+#include <cnoid/stdx/optional>
 #include <string>
 #include <deque>
 #include <iosfwd>
@@ -47,6 +48,7 @@ public:
     bool remove(MprStatement* statement, bool doNotify = true);
     iterator find(MprStatement* statement);
     const_iterator find(MprStatement* statement) const;
+    stdx::optional<int> stepOf(MprStatement* statement) const;
     void clearStatements();
 
     iterator begin(){ return statements_.begin(); }

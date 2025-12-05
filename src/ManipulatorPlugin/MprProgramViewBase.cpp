@@ -219,7 +219,7 @@ public:
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
     void showContextMenu(MprStatement* statement, QPoint globalPos);
-    void setBaseContextMenu(MenuManager& menuManager);
+    void setBaseContextMenu(MprStatement* statement, MenuManager& menuManager);
     void copySelectedStatements(bool doCut);
     void pasteStatements();
 
@@ -590,8 +590,8 @@ MprProgramViewBase::MprProgramViewBase()
     impl = new Impl(this);
 
     customizeContextMenu<MprStatement>(
-        [this](MprStatement*, MenuManager& menuManager, MprStatementFunctionDispatcher){
-            impl->setBaseContextMenu(menuManager); });
+        [this](MprStatement* statement, MenuManager& menuManager, MprStatementFunctionDispatcher){
+            impl->setBaseContextMenu(statement, menuManager); });
 }
 
 
@@ -1724,7 +1724,7 @@ void MprProgramViewBase::Impl::showContextMenu(MprStatement* statement, QPoint g
     contextMenuManager.setNewPopupMenu(this);
     
     if(!statement){
-        setBaseContextMenu(contextMenuManager);
+        setBaseContextMenu(statement, contextMenuManager);
     } else {
         if (!dynamic_cast<MprCommentStatement*>(statement) &&
             !dynamic_cast<MprDummyStatement*>(statement) &&
@@ -1760,7 +1760,7 @@ void MprProgramViewBase::Impl::showContextMenu(MprStatement* statement, QPoint g
 }
 
 
-void MprProgramViewBase::Impl::setBaseContextMenu(MenuManager& menuManager)
+void MprProgramViewBase::Impl::setBaseContextMenu(MprStatement* statement, MenuManager& menuManager)
 {
     auto cutAction = menuManager.addItem(_("Cut"));
     cutAction->sigTriggered().connect([this](){ copySelectedStatements(true); });
@@ -1789,13 +1789,24 @@ void MprProgramViewBase::Impl::setBaseContextMenu(MenuManager& menuManager)
 
     menuManager.addSeparator();
 
-    menuManager.addItem(_("Insert empty line"))
+    menuManager.addItem(_("Insert Empty Line"))
         ->sigTriggered().connect(
-            [this](){
+            [this]{
                 insertStatement(
                     new MprEmptyStatement,
                     selectedItems().empty() ? AfterTargetPosition : BeforeTargetPosition);
             });
+
+    if(statement){
+        menuManager.addItem(_("Set as Start Step"))
+            ->sigTriggered().connect(
+                [this, statement]{
+                    if(auto step = currentProgramItem->program()->stepOf(statement)){
+                        currentProgramItem->setStartStep(step);
+                        currentProgramItem->notifyUpdate();
+                    }
+                });
+    }
 }
 
 

@@ -39,6 +39,7 @@ public:
     MprProgramPtr topLevelProgram;
     BodyItem* targetBodyItem;
     KinematicBodyItemSetPtr targetBodyItemSet;
+    stdx::optional<int> startStep;
     bool isStartupProgram;
     bool needToUpdateAllReferences;
 
@@ -82,7 +83,8 @@ MprProgramItemBase::MprProgramItemBase(const MprProgramItemBase& org)
 
 
 MprProgramItemBase::Impl::Impl(MprProgramItemBase* self, const Impl& org)
-    : self(self)
+    : self(self),
+      startStep(org.startStep)
 {
     topLevelProgram = org.topLevelProgram->clone();
     initialize();
@@ -240,6 +242,24 @@ bool MprProgramItemBase::setAsStartupProgram(bool on, bool doNotify)
         }
     }
     return (on == impl->isStartupProgram);
+}
+
+
+stdx::optional<int> MprProgramItemBase::startStep() const
+{
+    return impl->startStep;
+}
+
+
+void MprProgramItemBase::setStartStep(std::optional<int> step)
+{
+    impl->startStep = step;
+}
+
+
+int MprProgramItemBase::displayStepIndexBase()
+{
+    return 1;
 }
 
 
@@ -411,6 +431,9 @@ bool MprProgramItemBase::store(Archive& archive)
         if(impl->isStartupProgram){
             archive.write("is_startup_program", true);
         }
+        if(impl->startStep){
+            archive.write("start_step", *impl->startStep);
+        }
         return true;
     }
     return false;
@@ -421,6 +444,11 @@ bool MprProgramItemBase::restore(const Archive& archive)
 {
     if(archive.loadFileTo(this)){
         setAsStartupProgram(archive.get("is_startup_program", false));
+        impl->startStep = stdx::nullopt;
+        int step = archive.get("start_step", -1);
+        if(step >= 0){
+            impl->startStep = step;
+        }
         return true;
     }
     return false;

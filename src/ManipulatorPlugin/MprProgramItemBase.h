@@ -4,6 +4,7 @@
 #include "MprProgram.h"
 #include <cnoid/Item>
 #include <typeinfo>
+#include <cnoid/stdx/optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -33,6 +34,15 @@ public:
 
     bool isStartupProgram() const;
     bool setAsStartupProgram(bool on, bool doNotify = true);
+
+    //! Step index to start execution from.
+    //! 0 is the first step. nullopt means unspecified (starts from the beginning).
+    stdx::optional<int> startStep() const;
+    void setStartStep(std::optional<int> step);
+
+    //! Returns the base index when displaying step numbers to users.
+    //! Override this to return 0 if 0-based indexing is preferred.
+    virtual int displayStepIndexBase();
 
     bool moveTo(MprPositionStatement* statement, MessageOut* mout = nullptr);
     bool moveTo(MprPosition* position, MessageOut* mout = nullptr);

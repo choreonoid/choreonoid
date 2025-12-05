@@ -9,7 +9,7 @@
 #include <cnoid/ItemList>
 #include <cnoid/BodyItem>
 #include <cnoid/ControllerIO>
-#include <cnoid/MessageView>
+#include <cnoid/MessageOut>
 #include <cnoid/CloneMap>
 #include <cnoid/LazyCaller>
 #include <cnoid/PutPropertyFunction>
@@ -300,30 +300,31 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
 {
     this->io = io;
     
-    auto mv = MessageView::instance();
+    auto mout = MessageOut::master();
 
     clear();
     
     auto programItems = self->descendantItems<MprProgramItemBase>();
     if(programItems.empty()){
-        mv->putln(formatR(_("Any program item for {} is not found."),
-                          self->displayName()), MessageView::Error);
+        mout->putErrorln(
+            formatR(_("Any program item for {} is not found."), self->displayName()));
         return false;
     }
     
     startupProgramItem.reset();
     for(auto& programItem : programItems){
         if(!programItem->resolveAllReferences()){
-            mv->putln(formatR(_("Program \"{0}\" is incomplete due to unresolved references."),
-                              programItem->displayName()), MessageView::Warning);
+            mout->putWarningln(
+                formatR(_("Program \"{0}\" is incomplete due to unresolved references."),
+                        programItem->displayName()));
         }
         if(programItem->isStartupProgram()){
             startupProgramItem = programItem;
         }
     }
     if(!startupProgramItem){
-        mv->putln(formatR(_("The startup program for {0} is not specified."),
-                          self->displayName()), MessageView::Error);
+        mout->putErrorln(
+            formatR(_("The startup program for {0} is not specified."), self->displayName()));
         return false;
     }
     startupProgram = cloneMap.getClone(startupProgramItem->program());
@@ -341,12 +342,25 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
     }
     
     if(!self->initializeVariables()){
-        mv->putln(formatR(_("Variables for {} cannot be initialized."), self->displayName()),
-                  MessageView::Error);
+        mout->putErrorln(
+            formatR(_("Variables for {} cannot be initialized."), self->displayName()));
         return false;
     }
 
     iterator = currentProgram->begin();
+
+    if(auto startStep = startupProgramItem->startStep()){
+        int numStatements = currentProgram->numStatements();
+        if(*startStep < numStatements){
+            iterator += *startStep;
+        } else {
+            int displayStep = *startStep + startupProgramItem->displayStepIndexBase();
+            mout->putErrorln(
+                formatR(_("Start step {0} of {1} exceeds the program size ({2} steps)."),
+                        displayStep, self->displayName(), numStatements));
+            return false;
+        }
+    }
 
     auto body = io->body();
 
