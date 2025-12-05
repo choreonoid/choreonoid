@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-07-26 19:33+0900\n"
+"POT-Creation-Date: 2025-12-06 01:36+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -15,6 +15,12 @@ msgstr ""
 
 msgid "Invalid condition type"
 msgstr "無効な条件型"
+
+msgid "TCP {0}"
+msgstr ""
+
+msgid "{0} of {1} cannot be moved to position {2}."
+msgstr "{1}の{0}はポジション{2}に到達することができません．"
 
 msgid "Any program item for {} is not found."
 msgstr "{}用のプログラムアイテムがみつかりません．"
@@ -27,6 +33,9 @@ msgstr "{}の開始プログラムが指定されていません．"
 
 msgid "Variables for {} cannot be initialized."
 msgstr "{0}の変数を初期化できません．"
+
+msgid "Start step {0} of {1} exceeds the program size ({2} steps)."
+msgstr "{1}の開始ステップ{0}はプログラムサイズ（{2}ステップ）を超えています．"
 
 msgid "Variable {0} is not defined."
 msgstr "変数 {0} は定義されていません．"
@@ -109,6 +118,18 @@ msgstr "複合ポジションの再帰構造はサポートされていません
 msgid "{0} is not supported"
 msgstr "{0}はサポートされていません"
 
+msgid "Base"
+msgstr "基準座標"
+
+msgid "Tool"
+msgstr "ツール"
+
+msgid "Auto"
+msgstr "自動"
+
+msgid "Config"
+msgstr "形態"
+
 msgid "{0} cannot be loaded as a manipulator position set"
 msgstr "{0}はマニピュレータ位置集として読み込むことができません"
 
@@ -117,15 +138,6 @@ msgstr "フォーマットバージョン{0}はサポートされていません
 
 msgid "Invalid position ID"
 msgstr "無効なポジションID"
-
-msgid "Position"
-msgstr "ポジション"
-
-msgid "Note"
-msgstr "注釈"
-
-msgid "J"
-msgstr ""
 
 msgid "MprPositionListView"
 msgstr "Mprポジションビュー"
@@ -142,6 +154,15 @@ msgstr "タッチアップ"
 msgid "Two-stage sync"
 msgstr "2段階同期"
 
+msgid "Position"
+msgstr "ポジション"
+
+msgid "Note"
+msgstr "注釈"
+
+msgid "J"
+msgstr ""
+
 msgid "Remove"
 msgstr "削除"
 
@@ -154,18 +175,6 @@ msgstr "移動"
 msgid "%1 ( Not found )"
 msgstr "%1 ( 不定 )"
 
-msgid "Base"
-msgstr "基準座標"
-
-msgid "Tool"
-msgstr "ツール"
-
-msgid "Config"
-msgstr "形態"
-
-msgid "Auto"
-msgstr "自動"
-
 msgid "{0} cannot be loaded as a Manipulator program file"
 msgstr "{0}はマニピュレータプログラムファイルとして読み込むことができません"
 
@@ -174,12 +183,6 @@ msgstr "ステートメント型 \"{0}\" はサポートされていません"
 
 msgid "Position {0} is not found in {1}."
 msgstr "ポジション{0}は{1}にありません．"
-
-msgid "TCP {0}"
-msgstr ""
-
-msgid "{0} of {1} cannot be moved to position {2}."
-msgstr "{1}の{0}はポジション{2}に到達することができません．"
 
 msgid "Program item \"{0}\" is not associated with any manipulator."
 msgstr "プログラムアイテム \"{0}\" はどのマニピュレータとも関連付けられていません．"
@@ -217,8 +220,11 @@ msgstr "コピー"
 msgid "Paste"
 msgstr "貼り付け"
 
-msgid "Insert empty line"
+msgid "Insert Empty Line"
 msgstr "空行の挿入"
+
+msgid "Set as Start Step"
+msgstr "開始ステップに設定"
 
 msgid "Tag Group"
 msgstr "タググループ"
