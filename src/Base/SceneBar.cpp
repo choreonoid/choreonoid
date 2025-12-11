@@ -344,8 +344,9 @@ void SceneBar::Impl::setCurrentSceneView(SceneView* sceneView)
 void SceneBar::Impl::onCurrentSceneViewDeactivated()
 {
     auto lastFocusSceneView = SceneView::lastFocusSceneView();
-    setCurrentSceneView(
-        lastFocusSceneView != currentSceneView ? lastFocusSceneView : nullptr);
+    if(lastFocusSceneView != currentSceneView){
+        setCurrentSceneView(lastFocusSceneView);
+    }
 }
 
 
