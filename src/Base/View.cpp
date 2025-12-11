@@ -71,7 +71,7 @@ void View::onApplicationFocusChanged(QWidget* widget)
     }
 
     if(focusView != lastFocusView_){
-        if(lastFocusView_){
+        if(lastFocusView_ && lastFocusView_->impl->hasFocus){
             lastFocusView_->impl->hasFocus = false;
             lastFocusView_->onFocusChanged(false);
         }
