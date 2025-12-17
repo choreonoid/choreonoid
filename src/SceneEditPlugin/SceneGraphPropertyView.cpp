@@ -10,7 +10,7 @@
 #include <cnoid/SceneEffects>
 #include <cnoid/ValueTree>
 #include <cnoid/QVariantUtil>
-#include <cnoid/stdx/variant>
+#include <variant>
 #include <QBoxLayout>
 #include <QTableWidget>
 #include <QHeaderView>
@@ -48,9 +48,9 @@ struct Double {
     };
 };
 
-typedef stdx::variant<bool, Int, Double, string> ValueVariant;
+typedef std::variant<bool, Int, Double, string> ValueVariant;
 
-typedef stdx::variant<std::function<bool(bool)>, std::function<bool(int)>, std::function<bool(double)>,
+typedef std::variant<std::function<bool(bool)>, std::function<bool(int)>, std::function<bool(double)>,
                       std::function<bool(const string&)> > FunctionVariant;
 
 enum TypeId { TYPE_BOOL, TYPE_INT, TYPE_DOUBLE, TYPE_STRING };
@@ -95,14 +95,14 @@ public:
         if(item){
             if(QSpinBox* spinBox = dynamic_cast<QSpinBox*>(editor)){
                 ValueVariant& value = item->value;
-                if(stdx::get_variant_index(value) == TYPE_INT){
-                    Int& v = stdx::get<Int>(value);
+                if(value.index() == TYPE_INT){
+                    Int& v = std::get<Int>(value);
                     spinBox->setRange(v.min, v.max);
                 }
             } else if(QDoubleSpinBox* doubleSpinBox = dynamic_cast<QDoubleSpinBox*>(editor)){
                 ValueVariant& value = item->value;
-                if(stdx::get_variant_index(value) == TYPE_DOUBLE){
-                    Double& v = stdx::get<Double>(value);
+                if(value.index() == TYPE_DOUBLE){
+                    Double& v = std::get<Double>(value);
                     if(v.decimals >= 0){
                         doubleSpinBox->setDecimals(v.decimals);
                         doubleSpinBox->setSingleStep(pow(10.0, -v.decimals));
@@ -124,9 +124,9 @@ public:
     void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
             
         PropertyItem* item = tableWidget->itemFromIndex(index);
-        if(item && (stdx::get_variant_index(item->value) == TYPE_DOUBLE)){
+        if(item && (item->value.index() == TYPE_DOUBLE)){
             int& d = const_cast<int&>(decimals);
-            d = stdx::get<Double>(item->value).decimals;
+            d = std::get<Double>(item->value).decimals;
         }
         QStyledItemDelegate::paint(painter, option, index);
     }
@@ -209,11 +209,11 @@ PropertyItem::PropertyItem(SceneGraphPropertyViewImpl* viewImpl, ValueVariant va
 QVariant PropertyItem::data(int role) const
 {
     if(role == Qt::DisplayRole || role == Qt::EditRole){
-        switch(stdx::get_variant_index(value)){
-        case TYPE_BOOL:      return stdx::get<bool>(value);
-        case TYPE_INT:       return stdx::get<Int>(value).value;
-        case TYPE_DOUBLE:    return stdx::get<Double>(value).value;
-        case TYPE_STRING:    return stdx::get<string>(value).c_str();
+        switch(value.index()){
+        case TYPE_BOOL:      return std::get<bool>(value);
+        case TYPE_INT:       return std::get<Int>(value).value;
+        case TYPE_DOUBLE:    return std::get<Double>(value).value;
+        case TYPE_STRING:    return std::get<string>(value).c_str();
         }
     }
     return QTableWidgetItem::data(role);
@@ -228,19 +228,19 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
         switch(variantType(qvalue)){
 
         case QVariantBoolType:
-            accepted = stdx::get<std::function<bool(bool)>>(func)(qvalue.toBool());
+            accepted = std::get<std::function<bool(bool)>>(func)(qvalue.toBool());
             break;
                 
         case QVariantStringType:
-            accepted = stdx::get<std::function<bool(const string&)>>(func)(qvalue.toString().toStdString());
+            accepted = std::get<std::function<bool(const string&)>>(func)(qvalue.toString().toStdString());
             break;
                 
         case QVariantIntType:
-            accepted = stdx::get<std::function<bool(int)>>(func)(qvalue.toInt());
+            accepted = std::get<std::function<bool(int)>>(func)(qvalue.toInt());
             break;
                 
         case QVariantDoubleType:
-            accepted = stdx::get<std::function<bool(double)>>(func)(qvalue.toDouble());
+            accepted = std::get<std::function<bool(double)>>(func)(qvalue.toDouble());
             break;
         default:
             break;

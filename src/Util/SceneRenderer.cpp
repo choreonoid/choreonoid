@@ -4,7 +4,7 @@
 #include "SceneLights.h"
 #include "SceneEffects.h"
 #include "EigenUtil.h"
-#include <cnoid/stdx/variant>
+#include <variant>
 #include <set>
 #include <unordered_map>
 #include <mutex>
@@ -41,7 +41,7 @@ class PreproNodeInfo : public Referenced
 public:
     enum { GROUP, TRANSFORM, PREPROCESSED, LIGHT, FOG, CAMERA, VISIBILITY };
     
-    stdx::variant<
+    std::variant<
         SgGroup*,
         SgTransform*,
         SgPreprocessed*,
@@ -486,7 +486,7 @@ void SceneRenderer::Impl::extractPreproNodes()
 
 void SceneRenderer::Impl::extractPreproNodeIter(PreproNodeInfo* nodeInfo, const Affine3& T)
 {
-    switch(stdx::get_variant_index(nodeInfo->node)){
+    switch(nodeInfo->node.index()){
 
     case PreproNodeInfo::GROUP:
         for(auto childInfo = nodeInfo->child; childInfo; childInfo = childInfo->next){
@@ -496,7 +496,7 @@ void SceneRenderer::Impl::extractPreproNodeIter(PreproNodeInfo* nodeInfo, const 
         
     case PreproNodeInfo::TRANSFORM:
     {
-        auto transform = stdx::get<SgTransform*>(nodeInfo->node);
+        auto transform = std::get<SgTransform*>(nodeInfo->node);
         Affine3 T1;
         transform->getTransform(T1);
         const Affine3 T2 = T * T1;
@@ -508,7 +508,7 @@ void SceneRenderer::Impl::extractPreproNodeIter(PreproNodeInfo* nodeInfo, const 
         
     case PreproNodeInfo::LIGHT:
         if(additionalLightsEnabled){
-            auto light = stdx::get<SgLight*>(nodeInfo->node);
+            auto light = std::get<SgLight*>(nodeInfo->node);
             if(light != worldLight){
                 lights.push_back(LightInfo(light, convertToIsometryWithOrthonormalization(T)));
             }
@@ -517,14 +517,14 @@ void SceneRenderer::Impl::extractPreproNodeIter(PreproNodeInfo* nodeInfo, const 
 
     case PreproNodeInfo::FOG:
     {
-        auto fog = stdx::get<SgFog*>(nodeInfo->node);
+        auto fog = std::get<SgFog*>(nodeInfo->node);
         fogs.push_back(fog);
         break;
     }
 
     case PreproNodeInfo::CAMERA:
     {
-        auto camera = stdx::get<SgCamera*>(nodeInfo->node);
+        auto camera = std::get<SgCamera*>(nodeInfo->node);
 
         size_t index = cameras.size();
         CameraInfo* cameraInfo = nullptr;

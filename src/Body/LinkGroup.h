@@ -2,7 +2,7 @@
 #define CNOID_BODY_LINK_GROUP_H
 
 #include <cnoid/Referenced>
-#include <cnoid/stdx/variant>
+#include <variant>
 #include <vector>
 #include <string>
 #include "exportdecl.h"
@@ -25,16 +25,16 @@ public:
     const std::string& name() { return name_; }
 
     int numElements() const { return elements.size(); }
-    bool checkIfGroup(int index) const { return stdx::get_variant_index(elements[index]) == 0; }
-    bool checkIfLink(int index) const { return stdx::get_variant_index(elements[index]) == 1; }
-    LinkGroup* group(int index) { return stdx::get<LinkGroupPtr>(elements[index]); }
-    int linkIndex(int index) const { return stdx::get<int>(elements[index]); }
+    bool checkIfGroup(int index) const { return elements[index].index() == 0; }
+    bool checkIfLink(int index) const { return elements[index].index() == 1; }
+    LinkGroup* group(int index) { return std::get<LinkGroupPtr>(elements[index]); }
+    int linkIndex(int index) const { return std::get<int>(elements[index]); }
     LinkGroup* findSubGroup(const std::string& name);
 
 private:
     LinkGroup();
-    
-    typedef stdx::variant<LinkGroupPtr, int> Element;
+
+    typedef std::variant<LinkGroupPtr, int> Element;
 
     std::string name_;
     std::vector<Element> elements;

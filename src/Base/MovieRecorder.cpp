@@ -874,12 +874,12 @@ void MovieRecorder::Impl::captureViewImage(bool waitForPrevOutput)
     if(SceneView* sceneView = dynamic_cast<SceneView*>(targetView)){
         captured->image = sceneView->sceneWidget()->getImage();
         if(isMouseCursorCaptureEnabled){
-            QPainter painter(&stdx::get<QImage>(captured->image));
+            QPainter painter(&std::get<QImage>(captured->image));
             drawMouseCursorImage(painter);
         }
     } else {
         captured->image = targetView->grab();
-        QPixmap& pixmap = stdx::get<QPixmap>(captured->image);
+        QPixmap& pixmap = std::get<QPixmap>(captured->image);
         captureSceneWidgets(targetView, pixmap);
 
         if(isMouseCursorCaptureEnabled){
@@ -1329,11 +1329,11 @@ bool SequentialNumberedImageFileEncoder::doEncoding(std::string fileBaseName)
         }
         string filename = formatR(fFilename, captured->frame);
         bool saved = false;
-        if(stdx::get_variant_index(captured->image) == 0){
-            QPixmap& pixmap = stdx::get<QPixmap>(captured->image);
+        if(captured->image.index() == 0){
+            QPixmap& pixmap = std::get<QPixmap>(captured->image);
             saved = pixmap.save(filename.c_str());
         } else {
-            QImage& image = stdx::get<QImage>(captured->image);
+            QImage& image = std::get<QImage>(captured->image);
             saved = image.save(filename.c_str());
         }
         if(!saved){

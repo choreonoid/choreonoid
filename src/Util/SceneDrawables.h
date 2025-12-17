@@ -3,7 +3,7 @@
 
 #include "SceneGraph.h"
 #include "Image.h"
-#include <cnoid/stdx/variant>
+#include <variant>
 #include <memory>
 #include <initializer_list>
 #include "exportdecl.h"
@@ -455,12 +455,12 @@ public:
         double height;
     };
 
-    typedef stdx::variant<Mesh, Box, Sphere, Cylinder, Cone, Capsule> Primitive;
+    typedef std::variant<Mesh, Box, Sphere, Cylinder, Cone, Capsule> Primitive;
 
     SgMesh(Primitive primitive);
 
-    const int primitiveType() const { return stdx::get_variant_index(primitive_); }
-    template<class TPrimitive> const TPrimitive& primitive() const { return stdx::get<TPrimitive>(primitive_); }
+    const int primitiveType() const { return primitive_.index(); }
+    template<class TPrimitive> const TPrimitive& primitive() const { return std::get<TPrimitive>(primitive_); }
     void setPrimitive(Primitive prim) { primitive_ = prim; }
 
     //! The value is -1 when the division number is not explicitly specified.

@@ -9,7 +9,7 @@
 #include "Referenced.h"
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <cnoid/stdx/variant>
+#include <variant>
 #include <string>
 #include <bitset>
 #include <vector>
@@ -809,7 +809,7 @@ public:
 
 typedef ref_ptr<VRMLSpotLight> VRMLSpotLightPtr;
 
-typedef stdx::variant<
+typedef std::variant<
     SFBool,
     SFInt32, SFFloat, SFVec2f, SFVec3f, SFRotation, SFColor, SFTime, SFString, SFNode, SFImage,
     MFInt32, MFFloat, MFVec2f, MFVec3f, MFRotation, MFColor, MFTime, MFString, MFNode>

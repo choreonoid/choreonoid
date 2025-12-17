@@ -4,7 +4,7 @@
 #include <cnoid/Referenced>
 #include <cnoid/GeneralId>
 #include <cnoid/Signal>
-#include <cnoid/stdx/variant>
+#include <variant>
 #include <string>
 #include "exportdecl.h"
 
@@ -15,7 +15,7 @@ class MprVariableList;
 class CNOID_EXPORT MprVariable : public Referenced
 {
 public:
-    typedef stdx::variant<int, double, bool, std::string> Value;
+    typedef std::variant<int, double, bool, std::string> Value;
     enum TypeId { Int, Double, Bool, String };
 
     MprVariable();
@@ -23,30 +23,30 @@ public:
     MprVariable(const MprVariable& org);
     MprVariable& operator=(const MprVariable&) = delete;
 
-    static int valueType(const Value& value) { return stdx::get_variant_index(value); }
-    static int intValue(const Value& value) { return stdx::get<int>(value); }
-    static double doubleValue(const Value& value) { return stdx::get<double>(value); }
-    static bool boolValue(const Value& value) { return stdx::get<bool>(value); }
-    static const std::string& stringValue(const Value& value) { return stdx::get<std::string>(value); }
+    static int valueType(const Value& value) { return value.index(); }
+    static int intValue(const Value& value) { return std::get<int>(value); }
+    static double doubleValue(const Value& value) { return std::get<double>(value); }
+    static bool boolValue(const Value& value) { return std::get<bool>(value); }
+    static const std::string& stringValue(const Value& value) { return std::get<std::string>(value); }
     static bool toBool(const Value& value);
 
     const GeneralId& id() const { return id_; }
     bool resetId(const GeneralId& id);
 
-    int valueType() const { return stdx::get_variant_index(value_); }
+    int valueType() const { return value_.index(); }
     bool changeValueType(TypeId type);
-    
+
     bool isInt() const { return valueType() == Int; }
     bool isDouble() const { return valueType() == Double; }
     bool isBool() const { return valueType() == Bool; }
     bool isString() const { return valueType() == String; }
 
-    template<class T> T value() const { return stdx::get<T>(value_); }
+    template<class T> T value() const { return std::get<T>(value_); }
     Value value() const { return value_; }
-    int intValue() const { return stdx::get<int>(value_); }
-    double doubleValue() const { return stdx::get<double>(value_); }
-    bool boolValue() const { return stdx::get<bool>(value_); }
-    const std::string& stringValue() const { return stdx::get<std::string>(value_); }
+    int intValue() const { return std::get<int>(value_); }
+    double doubleValue() const { return std::get<double>(value_); }
+    bool boolValue() const { return std::get<bool>(value_); }
+    const std::string& stringValue() const { return std::get<std::string>(value_); }
 
     bool setValue(int value);
     bool setValue(double value);

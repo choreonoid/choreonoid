@@ -3,7 +3,7 @@
 
 #include <cnoid/Referenced>
 #include <cnoid/Signal>
-#include <cnoid/stdx/variant>
+#include <variant>
 #include <QPixmap>
 #include <QImage>
 #include "exportdecl.h"
@@ -96,7 +96,7 @@ protected:
     class CapturedImage : public Referenced
     {
     public:
-        stdx::variant<QPixmap, QImage> image;
+        std::variant<QPixmap, QImage> image;
         int frame;
     };
     typedef ref_ptr<CapturedImage> CapturedImagePtr;

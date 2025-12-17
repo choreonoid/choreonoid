@@ -179,12 +179,12 @@ bool MprVariable::setValue(const Value& value)
 
 static void changeValueToInt(MprVariable::Value& value)
 {
-    switch(stdx::get_variant_index(value)){
+    switch(value.index()){
     case MprVariable::Double:
-        value = static_cast<int>(stdx::get<double>(value));
+        value = static_cast<int>(std::get<double>(value));
         break;
     case MprVariable::Bool:
-        value = stdx::get<bool>(value) ? 1 : 0;
+        value = std::get<bool>(value) ? 1 : 0;
         break;
     default:
         value = 0;
@@ -195,12 +195,12 @@ static void changeValueToInt(MprVariable::Value& value)
 
 static void changeValueToDouble(MprVariable::Value& value)
 {
-    switch(stdx::get_variant_index(value)){
+    switch(value.index()){
     case MprVariable::Int:
-        value = static_cast<double>(stdx::get<int>(value));
+        value = static_cast<double>(std::get<int>(value));
         break;
     case MprVariable::Bool:
-        value = stdx::get<bool>(value) ? 1.0 : 0.0;
+        value = std::get<bool>(value) ? 1.0 : 0.0;
         break;
     default:
         value = 0.0;
@@ -211,12 +211,12 @@ static void changeValueToDouble(MprVariable::Value& value)
 
 static void changeValueToBool(MprVariable::Value& value)
 {
-    switch(stdx::get_variant_index(value)){
+    switch(value.index()){
     case MprVariable::Int:
-        value = static_cast<bool>(stdx::get<int>(value));
+        value = static_cast<bool>(std::get<int>(value));
         break;
     case MprVariable::Double:
-        value = static_cast<bool>(stdx::get<double>(value));
+        value = static_cast<bool>(std::get<double>(value));
         break;
     default:
         value = false;
@@ -249,7 +249,7 @@ bool MprVariable::changeValueType(TypeId typeId)
 
 bool MprVariable::toBool(const Value& value)
 {
-    switch(stdx::get_variant_index(value)){
+    switch(value.index()){
     case Int:    return intValue(value);
     case Double: return doubleValue(value);
     case Bool:   return boolValue(value);
@@ -321,23 +321,23 @@ bool MprVariable::read(const Mapping* archive)
 bool MprVariable::write(Mapping* archive) const
 {
     if(id_.write(archive, "id")){
-        int valueType = stdx::get_variant_index(value_);
+        int valueType = value_.index();
         switch(valueType){
         case Int:
             archive->write("value_type", "int");
-            archive->write("value", stdx::get<int>(value_));
+            archive->write("value", std::get<int>(value_));
             break;
         case Double:
             archive->write("value_type", "double");
-            archive->write("value", stdx::get<double>(value_));
+            archive->write("value", std::get<double>(value_));
             break;
         case Bool:
             archive->write("value_type", "bool");
-            archive->write("value", stdx::get<bool>(value_));
+            archive->write("value", std::get<bool>(value_));
             break;
         case String:
             archive->write("value_type", "string");
-            archive->write("value", stdx::get<string>(value_), DOUBLE_QUOTED);
+            archive->write("value", std::get<string>(value_), DOUBLE_QUOTED);
             break;
         default:
             break;
