@@ -28,7 +28,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/Format>
 #include <cnoid/DisplayValueFormat>
-#include <cnoid/stdx/clamp>
+#include <algorithm>
 #include "gettext.h"
 
 using namespace std;
@@ -1940,7 +1940,7 @@ void OperableSceneBody::Impl::dragFKRotation(SceneWidgetEvent* event)
     if(dragProjector.dragRotation(event)){
         double q = orgJointPosition + dragProjector.rotationAngle();
         if(bodyItem->isJointRangeLimitEnabled()){
-            q = stdx::clamp(q, targetLink->q_lower(), targetLink->q_upper());
+            q = std::clamp(q, targetLink->q_lower(), targetLink->q_upper());
         }
         if(linkedJointHandler->updateLinkedJointDisplacements(targetLink, q)){
             linkedJointHandler->limitLinkedJointDisplacementsWithinMovableRanges(targetLink);
@@ -1956,7 +1956,7 @@ void OperableSceneBody::Impl::dragFKTranslation(SceneWidgetEvent* event)
     if(dragProjector.dragTranslation(event)){
         double q = orgJointPosition + dragProjector.translationAxis().dot(dragProjector.translation());
         if(bodyItem->isJointRangeLimitEnabled()){
-            q = stdx::clamp(q, targetLink->q_lower(), targetLink->q_upper());
+            q = std::clamp(q, targetLink->q_lower(), targetLink->q_upper());
         }
         if(linkedJointHandler->updateLinkedJointDisplacements(targetLink, q)){
             linkedJointHandler->limitLinkedJointDisplacementsWithinMovableRanges(targetLink);

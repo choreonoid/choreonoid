@@ -5,8 +5,8 @@
 #include <cnoid/BodyMotion>
 #include <cnoid/ZMPSeq>
 #include <cnoid/MessageOut>
-#include <cnoid/stdx/clamp>
 #include <cnoid/Format>
+#include <algorithm>
 #include <vector>
 #include "gettext.h"
 

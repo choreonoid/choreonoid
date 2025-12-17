@@ -27,7 +27,7 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QKeyEvent>
-#include <cnoid/stdx/clamp>
+#include <algorithm>
 #include "gettext.h"
 
 using namespace std;
@@ -1463,7 +1463,7 @@ bool HumanoidPoseFetchView::Impl::setLinkElementsToKeyPose(BodyKeyPose* pose, ve
         if(link->jointId() >= 0){
             double q = link->q();
             if(jointRangeLimitCheck.isChecked()){
-                q = stdx::clamp(q, link->q_lower(), link->q_upper());
+                q = std::clamp(q, link->q_lower(), link->q_upper());
             }
             pose->setJointDisplacement(link->jointId(), q);
             fetched = true;
