@@ -20,7 +20,7 @@ Slider::Slider(Qt::Orientation orientation, QWidget* parent)
 SignalProxy<void(int)> Slider::sigValueChanged()
 {
     if(!sigValueChanged_){
-        stdx::emplace(sigValueChanged_);
+        sigValueChanged_.emplace();
         connect(this, &QSlider::valueChanged,
                 [this](int value){ (*sigValueChanged_)(value); });
     }
@@ -31,7 +31,7 @@ SignalProxy<void(int)> Slider::sigValueChanged()
 SignalProxy<void()> Slider::sigSliderPressed()
 {
     if(!sigSliderPressed_){
-        stdx::emplace(sigSliderPressed_);
+        sigSliderPressed_.emplace();
         connect(this, &QSlider::sliderPressed,
                 [this](){ (*sigSliderPressed_)(); });
     }
@@ -42,7 +42,7 @@ SignalProxy<void()> Slider::sigSliderPressed()
 SignalProxy<void()> Slider::sigSliderReleased()
 {
     if(!sigSliderReleased_){
-        stdx::emplace(sigSliderReleased_);
+        sigSliderReleased_.emplace();
         connect(this, &QSlider::sliderReleased,
                 [this](){ (*sigSliderReleased_)(); });
     }

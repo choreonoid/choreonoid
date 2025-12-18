@@ -37,7 +37,7 @@ void DoubleSpinBox::setValue(double val)
 SignalProxy<void(double)> DoubleSpinBox::sigValueChanged()
 {
     if(!sigValueChanged_){
-        stdx::emplace(sigValueChanged_);
+        sigValueChanged_.emplace();
         connect(this, (void(QDoubleSpinBox::*)(double)) &QDoubleSpinBox::valueChanged,
                 [this](double value){ onValueChanged(value); });
     }
@@ -48,7 +48,7 @@ SignalProxy<void(double)> DoubleSpinBox::sigValueChanged()
 SignalProxy<void()> DoubleSpinBox::sigEditingFinished()
 {
     if(!sigEditingFinished_){
-        stdx::emplace(sigEditingFinished_);
+        sigEditingFinished_.emplace();
         connect(this, &QDoubleSpinBox::editingFinished,
                 [this](){ onEditingFinished(); });
     }
@@ -59,7 +59,7 @@ SignalProxy<void()> DoubleSpinBox::sigEditingFinished()
 SignalProxy<void()> DoubleSpinBox::sigEditingFinishedWithValueChange()
 {
     if(!sigEditingFinishedWithValueChange_){
-        stdx::emplace(sigEditingFinishedWithValueChange_);
+        sigEditingFinishedWithValueChange_.emplace();
         sigEditingFinished();
     }
     return *sigEditingFinishedWithValueChange_;

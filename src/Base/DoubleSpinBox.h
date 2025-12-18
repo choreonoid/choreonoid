@@ -3,7 +3,7 @@
 
 #include <cnoid/Signal>
 #include <QDoubleSpinBox>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -33,9 +33,9 @@ protected:
     virtual void keyPressEvent(QKeyEvent* event) override;
 
 private:
-    stdx::optional<Signal<void(double)>> sigValueChanged_;
-    stdx::optional<Signal<void()>> sigEditingFinished_;
-    stdx::optional<Signal<void()>> sigEditingFinishedWithValueChange_;
+    std::optional<Signal<void(double)>> sigValueChanged_;
+    std::optional<Signal<void()>> sigEditingFinished_;
+    std::optional<Signal<void()>> sigEditingFinishedWithValueChange_;
     bool isSettingValueInternally;
     bool isUndoRedoKeyInputEnabled_;
     bool isEnterKeyEventConsumptionEnabled_;

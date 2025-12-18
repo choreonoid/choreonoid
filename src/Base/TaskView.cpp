@@ -11,7 +11,7 @@
 #include "Archive.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/Format>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QEventLoop>
@@ -101,10 +101,10 @@ public:
     int lastUsualPhaseIndex;
     int configPhaseIndex;
     Signal<void()> sigCurrentPhaseChanged;
-    stdx::optional<int> nextPhaseIndex;
+    std::optional<int> nextPhaseIndex;
     enum { NO_CURRENT_COMMAND = -2, PRE_COMMAND = -1 };
     int currentCommandIndex;
-    stdx::optional<int> nextCommandIndex; // -1 means the pre-command
+    std::optional<int> nextCommandIndex; // -1 means the pre-command
 
     LazyCaller goToNextCommandLater;
     
@@ -1116,7 +1116,7 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
     
     cancelWaiting(false);
 
-    nextCommandIndex = stdx::nullopt;
+    nextCommandIndex = std::nullopt;
 
     setBusyState(true);
     
@@ -1153,7 +1153,7 @@ void TaskViewImpl::executeCommandSuccessively(int commandIndex)
                 commandFunc = command->function();
                 nextPhaseIndex = command->nextPhaseIndex(currentPhaseIndex_);
                 if(nextPhaseIndex >= currentTask->numPhases()){
-                    nextPhaseIndex = stdx::nullopt;
+                    nextPhaseIndex = std::nullopt;
                     isCommandToFinishTask = true;
                 }
                 nextCommandIndex = command->nextCommandIndex(commandIndex);
@@ -1200,7 +1200,7 @@ void TaskViewImpl::setTransitionToNextCommand()
         } else {
             if(nextCommandIndex && *nextCommandIndex != currentCommandIndex){
                 int index = *nextCommandIndex;
-                nextCommandIndex = stdx::nullopt;
+                nextCommandIndex = std::nullopt;
                 bool executeNext = autoModeToggle.isChecked();
                 if(!executeNext){
                     if(currentCommandIndex >= 0){
@@ -1303,8 +1303,8 @@ void TaskViewImpl::onNextOrPrevButtonClicked(int direction)
 
 void TaskViewImpl::breakSequence()
 {
-    nextPhaseIndex = stdx::nullopt;
-    nextCommandIndex = stdx::nullopt;
+    nextPhaseIndex = std::nullopt;
+    nextCommandIndex = std::nullopt;
 
     mv->putln("Transition to the next task-command was interrupted.", MessageView::Highlight);
 }
@@ -1420,8 +1420,8 @@ void TaskViewImpl::cancelWaiting(bool doBreak)
     } else {
         if(eventLoop.isRunning()){
             autoModeToggle.setChecked(false); // stop the auto mode, too
-            nextPhaseIndex = stdx::nullopt;
-            nextCommandIndex = stdx::nullopt;
+            nextPhaseIndex = std::nullopt;
+            nextCommandIndex = std::nullopt;
             stopWaiting(false);
         }
         if(doBreak){

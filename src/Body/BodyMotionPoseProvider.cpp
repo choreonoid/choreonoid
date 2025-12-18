@@ -207,7 +207,7 @@ bool BodyMotionPoseProvider::getBaseLinkPosition(Isometry3& out_T) const
 }
 
 
-void BodyMotionPoseProvider::getJointDisplacements(std::vector<stdx::optional<double>>& out_q) const
+void BodyMotionPoseProvider::getJointDisplacements(std::vector<std::optional<double>>& out_q) const
 {
     int n = qTranslated.size();
     out_q.resize(n);
@@ -217,7 +217,7 @@ void BodyMotionPoseProvider::getJointDisplacements(std::vector<stdx::optional<do
 }
 
 
-stdx::optional<Vector3> BodyMotionPoseProvider::ZMP() const
+std::optional<Vector3> BodyMotionPoseProvider::ZMP() const
 {
     return ZMP_;
 }

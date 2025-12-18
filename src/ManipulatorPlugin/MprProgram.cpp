@@ -191,13 +191,13 @@ MprProgram::const_iterator MprProgram::find(MprStatement* statement) const
 }
 
 
-stdx::optional<int> MprProgram::stepOf(MprStatement* statement) const
+std::optional<int> MprProgram::stepOf(MprStatement* statement) const
 {
     auto iter = std::find(begin(), end(), statement);
     if(iter != end()){
         return std::distance(begin(), iter);
     }
-    return stdx::nullopt;
+    return std::nullopt;
 }
 
 

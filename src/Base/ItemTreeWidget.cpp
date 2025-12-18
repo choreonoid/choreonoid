@@ -15,7 +15,7 @@
 #include <QHeaderView>
 #include <QModelIndex>
 #include <QBoxLayout>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
@@ -176,7 +176,7 @@ public:
         QColor foregroundColor;
         bool fontItalicState;
     };
-    stdx::optional<DisplayState> orgDisplayState;
+    std::optional<DisplayState> orgDisplayState;
 
     ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl);
     virtual ~ItwItem();

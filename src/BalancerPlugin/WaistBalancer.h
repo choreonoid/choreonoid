@@ -6,7 +6,7 @@
 #include <cnoid/Link>
 #include <cnoid/LinkTraverse>
 #include <cnoid/CompositeIK>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <vector>
 
 namespace cnoid {
@@ -84,7 +84,7 @@ private:
     PoseProvider* provider;
     bool isCalculatingInitialWaistTrajectory;
 
-    std::vector<stdx::optional<double>> jointDisplacements;
+    std::vector<std::optional<double>> jointDisplacements;
 
     int numIterations_;
     int beginningFrame;

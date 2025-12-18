@@ -3,7 +3,7 @@
 
 #include <cnoid/Signal>
 #include <QDial>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -29,7 +29,7 @@ protected:
 private:
     void onValueChanged(int value);
     
-    stdx::optional<Signal<void(double)>> sigValueChanged_;
+    std::optional<Signal<void(double)>> sigValueChanged_;
     double increasingValue;
     int preValue;
     bool isUserInputEnabled_;

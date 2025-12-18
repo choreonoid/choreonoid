@@ -8,7 +8,7 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/IdPair>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <btBulletDynamicsCommon.h>
 #include <HACD/hacdHACD.h>
 #include <BulletCollision/Gimpact/btGImpactShape.h>
@@ -104,7 +104,7 @@ public:
 
     BulletCollisionDetectorImpl();
     ~BulletCollisionDetectorImpl();
-    stdx::optional<GeometryHandle> addGeometry(SgNode* geometry);
+    std::optional<GeometryHandle> addGeometry(SgNode* geometry);
     void addMesh(GeometryInfo* model);
     bool makeReady();
     void setGeometryPosition(GeometryInfo* ginfo, const Isometry3& position);
@@ -175,13 +175,13 @@ int BulletCollisionDetector::numGeometries() const
 }
 
 
-stdx::optional<GeometryHandle> BulletCollisionDetector::addGeometry(SgNode* geometry)
+std::optional<GeometryHandle> BulletCollisionDetector::addGeometry(SgNode* geometry)
 {
     return impl->addGeometry(geometry);
 }
 
 
-stdx::optional<GeometryHandle> BulletCollisionDetectorImpl::addGeometry(SgNode* geometry)
+std::optional<GeometryHandle> BulletCollisionDetectorImpl::addGeometry(SgNode* geometry)
 {
     if(geometry){
         GeometryHandle handle = geometryInfos.size();
@@ -235,7 +235,7 @@ stdx::optional<GeometryHandle> BulletCollisionDetectorImpl::addGeometry(SgNode* 
         }
     }
 
-    return stdx::nullopt;
+    return std::nullopt;
 }
 
 
@@ -249,7 +249,7 @@ void BulletCollisionDetectorImpl::addMesh(GeometryInfo* ginfo)
     if(mesh->primitiveType() != SgMesh::MESH){
         bool doAddPrimitive = false;
         Vector3 scale;
-        stdx::optional<Vector3> translation;
+        std::optional<Vector3> translation;
         if(!meshExtractor.isCurrentScaled()){
             scale.setOnes();
             doAddPrimitive = true;

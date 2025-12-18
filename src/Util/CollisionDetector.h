@@ -3,7 +3,7 @@
 
 #include "Collision.h"
 #include "Referenced.h"
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <vector>
 #include <cstdint>
 #include "exportdecl.h"
@@ -40,7 +40,7 @@ public:
     /**
        \return A handle of the geometry in the collision detector
     */
-    virtual stdx::optional<GeometryHandle> addGeometry(SgNode* geometry) = 0;
+    virtual std::optional<GeometryHandle> addGeometry(SgNode* geometry) = 0;
 
     virtual void setCustomObject(GeometryHandle geometry, Referenced* object) = 0;
     virtual void setGeometryStatic(GeometryHandle geometry, bool isStatic = true) = 0;

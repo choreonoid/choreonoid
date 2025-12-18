@@ -3,7 +3,7 @@
 
 #include <cnoid/Signal>
 #include <QSlider>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -27,9 +27,9 @@ protected:
     virtual void wheelEvent(QWheelEvent* event) override;
 
 private:
-    stdx::optional<Signal<void(int)>> sigValueChanged_;
-    stdx::optional<Signal<void()>> sigSliderPressed_;
-    stdx::optional<Signal<void()>> sigSliderReleased_;
+    std::optional<Signal<void(int)>> sigValueChanged_;
+    std::optional<Signal<void()>> sigSliderPressed_;
+    std::optional<Signal<void()>> sigSliderReleased_;
     bool isUserInputEnabled_;
 };
 

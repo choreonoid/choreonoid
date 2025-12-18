@@ -70,7 +70,7 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
     Vector3 p0 = rootLink->p();
     Matrix3 R0 = rootLink->R();
 
-    std::vector<stdx::optional<double>> srcJointDisplacements(numJoints);
+    std::vector<std::optional<double>> srcJointDisplacements(numJoints);
 
     for(int frameIndex = beginningFrame; frameIndex <= endingFrame; ++frameIndex){
 

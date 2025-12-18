@@ -75,10 +75,10 @@ public:
     virtual int baseLinkIndex() const override;
     virtual bool getBaseLinkPosition(Isometry3& out_T) const override;
 
-    stdx::optional<double> jointPosition(int jointId) const;
-    virtual stdx::optional<Vector3> ZMP() const override;
+    std::optional<double> jointPosition(int jointId) const;
+    virtual std::optional<Vector3> ZMP() const override;
 
-    virtual void getJointDisplacements(std::vector<stdx::optional<double>>& out_q) const override;
+    virtual void getJointDisplacements(std::vector<std::optional<double>>& out_q) const override;
 
 private:
     class Impl;

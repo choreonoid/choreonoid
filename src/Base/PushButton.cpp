@@ -27,7 +27,7 @@ PushButton::PushButton(const QIcon & icon, const QString & text, QWidget* parent
 SignalProxy<void()> PushButton::sigClicked()
 {
     if(!sigClicked_){
-        stdx::emplace(sigClicked_);
+        sigClicked_.emplace();
         connect(this, (void(QPushButton::*)()) &QPushButton::clicked,
                 [this](){ (*sigClicked_)(); });
     }
@@ -38,7 +38,7 @@ SignalProxy<void()> PushButton::sigClicked()
 SignalProxy<void(bool)> PushButton::sigToggled()
 {
     if(!sigToggled_){
-        stdx::emplace(sigToggled_);
+        sigToggled_.emplace();
         connect(this, (void(QPushButton::*)(bool)) &QPushButton::toggled,
                 [this](bool checked){ (*sigToggled_)(checked); });
     }

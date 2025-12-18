@@ -18,7 +18,7 @@
 #include <cnoid/FloatingNumberBox>
 #include <cnoid/PoseSeqInterpolator>
 #include <cnoid/Format>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <Eigen/StdVector>
 #include <QLabel>
 #include <QDialogButtonBox>
@@ -233,7 +233,7 @@ static void getInterpolatedPose(PoseSeqInterpolator& interpolator, double time, 
     interpolator.getBaseLinkPosition(body->rootLink()->T());
 
     for(int i=0; i < body->numJoints(); ++i){
-        stdx::optional<double> q = interpolator.jointPosition(i);
+        std::optional<double> q = interpolator.jointPosition(i);
         if(q){
             body->joint(i)->q() = *q;
         }

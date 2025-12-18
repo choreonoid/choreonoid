@@ -4,7 +4,7 @@
 #include "MprProgram.h"
 #include <cnoid/Item>
 #include <typeinfo>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -37,7 +37,7 @@ public:
 
     //! Step index to start execution from.
     //! 0 is the first step. nullopt means unspecified (starts from the beginning).
-    stdx::optional<int> startStep() const;
+    std::optional<int> startStep() const;
     void setStartStep(std::optional<int> step);
 
     //! Returns the base index when displaying step numbers to users.

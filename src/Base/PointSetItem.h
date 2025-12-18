@@ -6,7 +6,7 @@
 #include "LocatableItem.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/EigenTypes>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -73,7 +73,7 @@ public:
     SignalProxy<void()> sigAttentionPointsChanged();
     void notifyAttentionPointChange();
     
-    stdx::optional<Vector3> attentionPoint() const; // deprecated
+    std::optional<Vector3> attentionPoint() const; // deprecated
     SignalProxy<void()> sigAttentionPointChanged();  // deprecated
     void clearAttentionPoint();  // deprecated
     void setAttentionPoint(const Vector3& p);  // deprecated

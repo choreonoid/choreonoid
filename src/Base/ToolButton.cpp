@@ -20,7 +20,7 @@ ToolButton::ToolButton(const QString& text, QWidget* parent)
 SignalProxy<void()> ToolButton::sigClicked()
 {
     if(!sigClicked_){
-        stdx::emplace(sigClicked_);
+        sigClicked_.emplace();
         connect(this, (void(QToolButton::*)()) &QToolButton::clicked,
                 [this](){ (*sigClicked_)(); });
     }
@@ -31,7 +31,7 @@ SignalProxy<void()> ToolButton::sigClicked()
 SignalProxy<void(bool)> ToolButton::sigToggled()
 {
     if(!sigToggled_){
-        stdx::emplace(sigToggled_);
+        sigToggled_.emplace();
         connect(this, (void(QToolButton::*)(bool)) &QToolButton::toggled,
                 [this](bool checked){ (*sigToggled_)(checked); });
     }
@@ -42,7 +42,7 @@ SignalProxy<void(bool)> ToolButton::sigToggled()
 SignalProxy<void()> ToolButton::sigPressed()
 {
     if(!sigPressed_){
-        stdx::emplace(sigPressed_);
+        sigPressed_.emplace();
         connect(this, (void(QToolButton::*)()) &QToolButton::pressed,
                 [this](){ (*sigPressed_)(); });
     }
@@ -53,7 +53,7 @@ SignalProxy<void()> ToolButton::sigPressed()
 SignalProxy<void()> ToolButton::sigReleased()
 {
     if(!sigReleased_){
-        stdx::emplace(sigReleased_);
+        sigReleased_.emplace();
         connect(this, (void(QToolButton::*)()) &QToolButton::released,
                 [this](){ (*sigReleased_)(); });
     }

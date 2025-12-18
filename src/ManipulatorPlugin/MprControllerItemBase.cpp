@@ -147,9 +147,9 @@ public:
     bool interpretIfStatement(MprIfStatement* statement);
     bool interpretWhileStatement(MprWhileStatement* statement);
     bool interpretCallStatement(MprCallStatement* statement);
-    stdx::optional<bool> evalConditionalExpression(const string& expression);
-    stdx::optional<MprVariable::Value> getTermValue(string::const_iterator& pos, string::const_iterator end);
-    stdx::optional<string> getComparisonOperator(string::const_iterator& pos, string::const_iterator end);
+    std::optional<bool> evalConditionalExpression(const string& expression);
+    std::optional<MprVariable::Value> getTermValue(string::const_iterator& pos, string::const_iterator end);
+    std::optional<string> getComparisonOperator(string::const_iterator& pos, string::const_iterator end);
     bool interpretAssignStatement(MprAssignStatement* statement);
     bool applyBinaryOperation(MprVariable::Value& lhsValue, char op, const MprVariable::Value& rhsValue);
     bool interpretSetSignalStatement(MprSignalStatement* statement);
@@ -498,7 +498,7 @@ MprVariable* MprControllerItemBase::Impl::findVariable(const GeneralId& id)
 }
 
 
-stdx::optional<MprVariable::Value> MprControllerItemBase::evalExpressionAsVariableValue
+std::optional<MprVariable::Value> MprControllerItemBase::evalExpressionAsVariableValue
 (std::string::const_iterator& io_expressionBegin, std::string::const_iterator expressionEnd)
 {
     std::smatch match;
@@ -510,7 +510,7 @@ stdx::optional<MprVariable::Value> MprControllerItemBase::evalExpressionAsVariab
         }
         impl->io->os() << formatR(_("Variable {0} is not defined."), id.label()) << endl;
     }
-    return stdx::nullopt;
+    return std::nullopt;
 }
 
 
@@ -941,7 +941,7 @@ bool MprControllerItemBase::Impl::interpretCallStatement(MprCallStatement* state
 
 
 template<class LhsType, class RhsType>
-static stdx::optional<bool> checkNumericalComparison(const string& op, LhsType lhs, RhsType rhs)
+static std::optional<bool> checkNumericalComparison(const string& op, LhsType lhs, RhsType rhs)
 {
     if(op == "="){
         return lhs == rhs;
@@ -956,23 +956,23 @@ static stdx::optional<bool> checkNumericalComparison(const string& op, LhsType l
     } else if(op == ">="){
         return lhs >= rhs;
     }
-    return stdx::nullopt;
+    return std::nullopt;
 }
 
 
-stdx::optional<bool> MprControllerItemBase::Impl::evalConditionalExpression(const string& expression)
+std::optional<bool> MprControllerItemBase::Impl::evalConditionalExpression(const string& expression)
 {
     if(expression.empty()){
         io->os() << _("Empty conditional expression.") << endl;
-        return stdx::nullopt;
+        return std::nullopt;
     }
     auto pos = expression.cbegin();
     auto end = expression.cend();
 
     bool isExpressionValid = false;
-    stdx::optional<string> pCmpOp;
-    stdx::optional<MprVariable::Value> pRhs;
-    stdx::optional<MprVariable::Value> pLhs = getTermValue(pos, end);
+    std::optional<string> pCmpOp;
+    std::optional<MprVariable::Value> pRhs;
+    std::optional<MprVariable::Value> pLhs = getTermValue(pos, end);
     if(pLhs){
         if(pos == end){
             isExpressionValid = true;
@@ -988,7 +988,7 @@ stdx::optional<bool> MprControllerItemBase::Impl::evalConditionalExpression(cons
     }
     if(!isExpressionValid){
         io->os() << formatR(_("Conditional expression \"{0}\" is invalid."), expression) << endl;
-        return stdx::nullopt;
+        return std::nullopt;
     }
 
     auto& lhs = *pLhs;
@@ -997,7 +997,7 @@ stdx::optional<bool> MprControllerItemBase::Impl::evalConditionalExpression(cons
         return MprVariable::toBool(lhs);
     }
             
-    stdx::optional<bool> pResult;
+    std::optional<bool> pResult;
     auto& rhs = *pRhs;
     string& cmpOp = *pCmpOp;
 
@@ -1046,10 +1046,10 @@ stdx::optional<bool> MprControllerItemBase::Impl::evalConditionalExpression(cons
 }
     
     
-stdx::optional<MprVariable::Value> MprControllerItemBase::Impl::getTermValue
+std::optional<MprVariable::Value> MprControllerItemBase::Impl::getTermValue
 (string::const_iterator& pos, string::const_iterator end)
 {
-    stdx::optional<MprVariable::Value> value;
+    std::optional<MprVariable::Value> value;
     std::smatch match;
 
     if(regex_search(pos, end,  match, stringPattern)){
@@ -1083,7 +1083,7 @@ stdx::optional<MprVariable::Value> MprControllerItemBase::Impl::getTermValue
 }
 
 
-stdx::optional<string> MprControllerItemBase::Impl::getComparisonOperator
+std::optional<string> MprControllerItemBase::Impl::getComparisonOperator
 (string::const_iterator& pos, string::const_iterator end)
 {
     std::smatch match;
@@ -1091,7 +1091,7 @@ stdx::optional<string> MprControllerItemBase::Impl::getComparisonOperator
         pos = match[0].second;
         return match.str(1);
     }
-    return stdx::nullopt;
+    return std::nullopt;
 }
 
 

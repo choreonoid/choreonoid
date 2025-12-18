@@ -15,7 +15,7 @@ SpinBox::SpinBox(QWidget* parent)
 SignalProxy<void(int)> SpinBox::sigValueChanged()
 {
     if(!sigValueChanged_){
-        stdx::emplace(sigValueChanged_);
+        sigValueChanged_.emplace();
         connect(this, (void(QSpinBox::*)(int)) &QSpinBox::valueChanged,
                 [this](int value){ (*sigValueChanged_)(value); });
     }
@@ -26,7 +26,7 @@ SignalProxy<void(int)> SpinBox::sigValueChanged()
 SignalProxy<void()> SpinBox::sigEditingFinished()
 {
     if(!sigEditingFinished_){
-        stdx::emplace(sigEditingFinished_);
+        sigEditingFinished_.emplace();
         connect(this, &QSpinBox::editingFinished,
                 [this](){ (*sigEditingFinished_)(); });
     }

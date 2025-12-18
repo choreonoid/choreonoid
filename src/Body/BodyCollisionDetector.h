@@ -25,7 +25,7 @@ public:
 
     bool isGeometryHandleMapEnabled() const;
     void setGeometryHandleMapEnabled(bool on);
-    stdx::optional<GeometryHandle> findGeometryHandle(Link* link);
+    std::optional<GeometryHandle> findGeometryHandle(Link* link);
 
     typedef std::function<Referenced*(Link* link, GeometryHandle geometry)> LinkAssociatedObjectFunc;
     void setLinkAssociatedObjectFunction(LinkAssociatedObjectFunc func);
@@ -35,7 +35,7 @@ public:
     void setMultiplexBodySupportEnabled(bool on);
     
     void addBody(Body* body, bool isSelfCollisionDetectionEnabled = true, int groupId = 0);
-    stdx::optional<GeometryHandle> addLink(Link* link, int groupId = 0);
+    std::optional<GeometryHandle> addLink(Link* link, int groupId = 0);
 
     //! \note The geometry handle must be enabled for using this function.
     void setGroup(Body* body, int groupId);

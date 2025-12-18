@@ -3,7 +3,7 @@
 
 #include <cnoid/Referenced>
 #include <cnoid/EigenTypes>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <string>
 #include <vector>
 #include "exportdecl.h"
@@ -190,7 +190,7 @@ public:
      * @param dir direction of ray
      * @return distance if ray collides with this mesh
      */
-    stdx::optional<double> computeDistanceWithRay(const double *point, const double *dir);
+    std::optional<double> computeDistanceWithRay(const double *point, const double *dir);
 
     /**
      * @brief check collision between this triangle mesh and a point cloud

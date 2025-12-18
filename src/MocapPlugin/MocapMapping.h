@@ -4,7 +4,7 @@
 #include <cnoid/Referenced>
 #include <cnoid/NullOut>
 #include <cnoid/EigenTypes>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <vector>
 #include <map>
 #include <set>
@@ -48,7 +48,7 @@ public:
     {
     public:
         std::string label[2];
-        stdx::optional<double> length;
+        std::optional<double> length;
     };
 
     int numSkeletonEdges() const { return skeletonEdges.size(); }

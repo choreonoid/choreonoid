@@ -7,7 +7,7 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/EigenUtil>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <Springhead.h>
 #include <Physics/PHContactPoint.h>
 #include <Physics/PHConstraintEngine.h>
@@ -200,7 +200,7 @@ void SpringheadCollisionDetectorImpl::addMesh(GeometryExPtr model)
     if(mesh->primitiveType() != SgMesh::MESH){
         bool doAddPrimitive = false;
         Vector3 scale;
-        stdx::optional<Vector3> translation;
+        std::optional<Vector3> translation;
         if(!meshExtractor->isCurrentScaled()){
             scale.setOnes();
             doAddPrimitive = true;

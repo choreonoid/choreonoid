@@ -6,7 +6,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <QBoxLayout>
 #include <QStyle>
 
@@ -41,7 +41,7 @@ class FileDialog::Impl : public QFileDialog
 public:
     FileDialog* self;
     QBoxLayout* optionPanelBox;
-    stdx::optional<Signal<void(int index)>> sigFilterSelected;
+    std::optional<Signal<void(int index)>> sigFilterSelected;
     Signal<bool(int result), LogicalProduct> sigAboutToFinish;
     
     Impl(FileDialog* self);
@@ -212,7 +212,7 @@ void FileDialog::insertOptionPanel(QWidget* panel)
 SignalProxy<void(int index)> FileDialog::sigFilterSelected()
 {
     if(!impl->sigFilterSelected){
-        stdx::emplace(impl->sigFilterSelected);
+        impl->sigFilterSelected.emplace();
         QObject::connect(impl, &QFileDialog::filterSelected,
                 [this](const QString& filter){ impl->onFilterSelected(filter); });
     }

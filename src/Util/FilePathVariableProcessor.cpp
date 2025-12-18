@@ -4,7 +4,7 @@
 #include "FileUtil.h"
 #include "UTF8.h"
 #include "Format.h"
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <regex>
 #include <unordered_map>
 #include "gettext.h"
@@ -20,7 +20,7 @@ ref_ptr<FilePathVariableProcessor> FilePathVariableProcessor::currentInstance_;
 class FilePathVariableProcessor::Impl
 {
 public:
-    stdx::optional<regex> variableRegex;
+    std::optional<regex> variableRegex;
     filesystem::path baseDirPath;
     filesystem::path projectDirPath;
     string projectDirString;

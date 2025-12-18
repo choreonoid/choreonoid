@@ -4,7 +4,7 @@
 #include "ToolBar.h"
 #include "MenuManager.h"
 #include <cnoid/ValueTree>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <QMouseEvent>
 #include <QTabWidget>
 #include <functional>
@@ -41,7 +41,7 @@ private:
     QWidget* lastCaptureWidget;
     QString lastCaptureFile;
     MappingPtr config;
-    stdx::optional<bool> isTabInclusionMode;
+    std::optional<bool> isTabInclusionMode;
 };
 
 }

@@ -45,7 +45,7 @@ public:
 
     Isometry3 T_last;
     Vector3 lastTranslationInput;
-    stdx::optional<Vector3> lastRpyInput;
+    std::optional<Vector3> lastRpyInput;
     std::function<bool(const Isometry3& T)> callbackOnPositionInput;
     std::function<void()> callbackOnPositionInputFinished;
     //vector<QWidget*> inputPanelWidgets;
@@ -575,7 +575,7 @@ void PositionWidget::Impl::displayPosition(const Isometry3& T)
     }
     lastTranslationInput = p;
 
-    lastRpyInput = stdx::nullopt;
+    lastRpyInput = std::nullopt;
     Matrix3 R = T.linear();
     if(isRpyEnabled){
         Vector3 rpy;
@@ -730,7 +730,7 @@ void PositionWidget::Impl::onPositionInputQuaternion(InputElementSet inputElemen
     Vector3 p = lastTranslationInput;
     valueFormat->updateToRightHandedPosition(p);
     T_last.translation() = p;
-    lastRpyInput = stdx::nullopt;
+    lastRpyInput = std::nullopt;
     
     Eigen::Quaterniond quat =
         Eigen::Quaterniond(

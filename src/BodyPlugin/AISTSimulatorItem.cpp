@@ -93,7 +93,7 @@ public:
     bool isOldAccelSensorMode;
     bool hasNonRootFreeJoints;
 
-    stdx::optional<int> forcedBodyPositionFunctionId;
+    std::optional<int> forcedBodyPositionFunctionId;
     std::mutex forcedBodyPositionMutex;
     DyBody* forcedPositionBody;
     Isometry3 forcedBodyPosition;
@@ -673,7 +673,7 @@ void AISTSimulatorItem::clearForcedPositions()
 {
     if(impl->forcedBodyPositionFunctionId){
         removePostDynamicsFunction(*impl->forcedBodyPositionFunctionId);
-        impl->forcedBodyPositionFunctionId = stdx::nullopt;
+        impl->forcedBodyPositionFunctionId = std::nullopt;
     }
 }
     

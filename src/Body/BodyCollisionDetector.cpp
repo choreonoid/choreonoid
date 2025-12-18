@@ -42,7 +42,7 @@ public:
     Impl(BodyCollisionDetector* self);
     bool addBody(Body* body, bool isSelfCollisionDetectionEnabled, int groupId, bool isMultiplexBody);
     bool addLinkRecursively(Link* link, bool isParentStatic, int groupId);
-    stdx::optional<CollisionDetector::GeometryHandle> addLink(Link* link, bool isStatic, int groupId);
+    std::optional<CollisionDetector::GeometryHandle> addLink(Link* link, bool isStatic, int groupId);
     bool removeBody(Body* body);
     void onMultiplexBodyAddedOrRemoved(Body* body, bool isAdded, bool isSelfCollisionDetectionEnabled, int groupId);
     void setLinksInAttachmentIgnored(
@@ -242,11 +242,11 @@ bool BodyCollisionDetector::Impl::addLinkRecursively(Link* link, bool isParentSt
 }
 
 
-stdx::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::Impl::addLink(Link* link, bool isStatic, int groupId)
+std::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::Impl::addLink(Link* link, bool isStatic, int groupId)
 {
     bool added = false;
 
-    stdx::optional<GeometryHandle> handle = collisionDetector->addGeometry(link->collisionShape());
+    std::optional<GeometryHandle> handle = collisionDetector->addGeometry(link->collisionShape());
     
     if(handle){
         Referenced* object;
@@ -271,7 +271,7 @@ stdx::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::Impl::a
 }
 
 
-stdx::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::addLink(Link* link, int groupId)
+std::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::addLink(Link* link, int groupId)
 {
     impl->needToMakeCollisionDetectorReady = true;
     return impl->addLink(link, link->isStatic(), groupId);
@@ -391,13 +391,13 @@ bool BodyCollisionDetector::makeReady(bool doForce)
 }
 
 
-stdx::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::findGeometryHandle(Link* link)
+std::optional<CollisionDetector::GeometryHandle> BodyCollisionDetector::findGeometryHandle(Link* link)
 {
     auto iter = impl->linkToGeometryHandleMap.find(link);
     if(iter != impl->linkToGeometryHandleMap.end()){
         return iter->second;
     }
-    return stdx::nullopt;
+    return std::nullopt;
 }
 
 

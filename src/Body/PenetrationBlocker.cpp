@@ -21,7 +21,7 @@ public:
     bool isCollisionDetectorReady;
 
     Link* targetLink;
-    stdx::optional<GeometryHandle> targetLinkGeometry;
+    std::optional<GeometryHandle> targetLinkGeometry;
 
     struct LinkInfo {
         Link* link;

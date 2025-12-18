@@ -20,7 +20,7 @@ CheckBox::CheckBox(const QString& text, QWidget* parent)
 SignalProxy<void(int)> CheckBox::sigStateChanged()
 {
     if(!sigStateChanged_){
-        stdx::emplace(sigStateChanged_);
+        sigStateChanged_.emplace();
         connect(this, (void(QCheckBox::*)(int)) &QCheckBox::stateChanged,
                 [this](int state){ (*sigStateChanged_)(state); });
     }
@@ -31,7 +31,7 @@ SignalProxy<void(int)> CheckBox::sigStateChanged()
 SignalProxy<void(bool)> CheckBox::sigToggled()
 {
     if(!sigToggled_){
-        stdx::emplace(sigToggled_);
+        sigToggled_.emplace();
         connect(this, (void(QCheckBox::*)(bool)) &QCheckBox::toggled,
                 [this](bool checked){ (*sigToggled_)(checked); });
     }

@@ -96,7 +96,7 @@ protected:
     // Virtual functions for customizing variables
     virtual bool initializeVariables();
     void setVariableListSync(MprVariableList* listInGui, MprVariableList* listInController);
-    virtual stdx::optional<MprVariable::Value> evalExpressionAsVariableValue(
+    virtual std::optional<MprVariable::Value> evalExpressionAsVariableValue(
         std::string::const_iterator& io_expressionBegin, std::string::const_iterator expressionEnd);
     virtual std::function<bool(MprVariable::Value value)> evalExpressionAsVariableToAssginValue(
         const std::string& expression);

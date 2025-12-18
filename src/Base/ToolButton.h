@@ -3,7 +3,7 @@
 
 #include <cnoid/Signal>
 #include <QToolButton>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -27,10 +27,10 @@ protected:
     virtual void mousePressEvent(QMouseEvent* event) override;
 
 private:
-    stdx::optional<Signal<void()>> sigClicked_;
-    stdx::optional<Signal<void(bool)>> sigToggled_;
-    stdx::optional<Signal<void()>> sigPressed_;
-    stdx::optional<Signal<void()>> sigReleased_;
+    std::optional<Signal<void()>> sigClicked_;
+    std::optional<Signal<void(bool)>> sigToggled_;
+    std::optional<Signal<void()>> sigPressed_;
+    std::optional<Signal<void()>> sigReleased_;
     bool isUserInputEnabled_;
 };
 

@@ -104,7 +104,7 @@ public:
 
     ODECollisionDetectorImpl();
     ~ODECollisionDetectorImpl();
-    stdx::optional<GeometryHandle> addGeometry(SgNode* geometry);
+    std::optional<GeometryHandle> addGeometry(SgNode* geometry);
     void addMesh(GeometryInfo* model);
     void ignoreGeometryPair(GeometryHandle geometry1, GeometryHandle geometry2, bool ignore);
     bool makeReady();
@@ -168,13 +168,13 @@ int ODECollisionDetector::numGeometries() const
 }
 
 
-stdx::optional<GeometryHandle> ODECollisionDetector::addGeometry(SgNode* geometry)
+std::optional<GeometryHandle> ODECollisionDetector::addGeometry(SgNode* geometry)
 {
     return impl->addGeometry(geometry);
 }
 
 
-stdx::optional<GeometryHandle> ODECollisionDetectorImpl::addGeometry(SgNode* geometry)
+std::optional<GeometryHandle> ODECollisionDetectorImpl::addGeometry(SgNode* geometry)
 {
     if(geometry){
         GeometryHandle handle = geometryInfos.size();
@@ -200,7 +200,7 @@ stdx::optional<GeometryHandle> ODECollisionDetectorImpl::addGeometry(SgNode* geo
         }
     }
 
-    return stdx::nullopt;
+    return std::nullopt;
 }
 
 

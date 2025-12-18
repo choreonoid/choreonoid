@@ -356,7 +356,7 @@ void ColdetModel::setPrimitivePosition(const double* R, const double* p)
 }
 
 
-stdx::optional<double> ColdetModel::computeDistanceWithRay(const double *point, 
+std::optional<double> ColdetModel::computeDistanceWithRay(const double *point, 
                                            const double *dir)
 {
     Opcode::RayCollider RC;
@@ -367,7 +367,7 @@ stdx::optional<double> ColdetModel::computeDistanceWithRay(const double *point,
     udword Cache;
     RC.Collide(world_ray, internalModel->model, transform, &Cache);
     if (CF.mDistance == FLT_MAX){
-        return stdx::nullopt;
+        return std::nullopt;
     }else{
         return CF.mDistance;
     }

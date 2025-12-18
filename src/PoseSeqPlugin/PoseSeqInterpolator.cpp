@@ -12,7 +12,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/Array2D>
 #include <cnoid/ConnectionSet>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <list>
 #include <vector>
 #include <algorithm>
@@ -94,7 +94,7 @@ struct LinkInfo
     LinkAuxSample::Seq::iterator auxIter;
 
     // Link local coordinate frame used in the interpolation
-    stdx::optional<Isometry3> T_offset;
+    std::optional<Isometry3> T_offset;
         
     // interpolation state
     Isometry3 T;
@@ -159,7 +159,7 @@ struct JointInfo
     double prev_q;
 
     // interpolated state
-    stdx::optional<double> q;
+    std::optional<double> q;
 };
 
 struct ZmpSample
@@ -1272,7 +1272,7 @@ bool PoseSeqInterpolator::Impl::interpolate(double time, int waistLinkIndex, con
     }
 
     for(size_t i=0; i < jointInfos.size(); ++i){
-        jointInfos[i].q = stdx::nullopt;
+        jointInfos[i].q = std::nullopt;
     }
 
     calcIkJointPositions();
@@ -1504,7 +1504,7 @@ bool PoseSeqInterpolator::getBaseLinkPosition(Isometry3& out_T) const
 }
 
 
-stdx::optional<double> PoseSeqInterpolator::jointPosition(int jointId) const
+std::optional<double> PoseSeqInterpolator::jointPosition(int jointId) const
 {
     JointInfo& info = impl->jointInfos[jointId];
     if(!info.q){
@@ -1517,7 +1517,7 @@ stdx::optional<double> PoseSeqInterpolator::jointPosition(int jointId) const
 }
 
 
-void PoseSeqInterpolator::getJointDisplacements(std::vector<stdx::optional<double>>& out_q) const
+void PoseSeqInterpolator::getJointDisplacements(std::vector<std::optional<double>>& out_q) const
 {
     const int n = impl->jointInfos.size();
     out_q.resize(n);
@@ -1527,13 +1527,13 @@ void PoseSeqInterpolator::getJointDisplacements(std::vector<stdx::optional<doubl
 }
 
 
-stdx::optional<Vector3> PoseSeqInterpolator::ZMP() const
+std::optional<Vector3> PoseSeqInterpolator::ZMP() const
 {
     Vector3 p;
     if(::interpolate<3, ZmpSample>(impl->zmpSamples, impl->zmpIter, impl->currentTime, p.data())){
         return p;
     }
-    return stdx::nullopt;
+    return std::nullopt;
 }
 
 
@@ -1559,7 +1559,7 @@ bool PoseSeqInterpolator::Impl::update()
                 if(stepTrajectoryAdjustmentMode == ToeStepMode){
                     info->T_offset = legged->toeOffset(i);
                 } else {
-                    info->T_offset = stdx::nullopt;
+                    info->T_offset = std::nullopt;
                 }
                 footLinkInfos.push_back(info);
             }

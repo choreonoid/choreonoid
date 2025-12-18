@@ -20,7 +20,7 @@ RadioButton::RadioButton(const QString& text, QWidget* parent)
 SignalProxy<void(bool)> RadioButton::sigToggled()
 {
     if(!sigToggled_){
-        stdx::emplace(sigToggled_);
+        sigToggled_.emplace();
         connect(this, (void(QRadioButton::*)(bool)) &QRadioButton::toggled,
                 [this](bool checked){ (*sigToggled_)(checked); });
     }

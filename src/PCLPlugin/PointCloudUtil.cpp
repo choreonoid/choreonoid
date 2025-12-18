@@ -102,13 +102,13 @@ SgMesh* cnoid::applyPCLGreedyProjectionTriangulation
 }
 
 
-stdx::optional<double> cnoid::alignPointCloud
+std::optional<double> cnoid::alignPointCloud
 (SgPointSet* target, SgPointSet* source, Affine3& io_T, double maxCorrespondenceDistance, int maxIterations, double epsilon)
 {
     typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;    
 
     if(!target->hasVertices() || !source->hasVertices()){
-        return stdx::nullopt;
+        return std::nullopt;
     }
 
     const SgVertexArray& targetPoints = *target->vertices();
@@ -147,5 +147,5 @@ stdx::optional<double> cnoid::alignPointCloud
     if(icp.hasConverged()){
         return icp.getFitnessScore();
     }
-    return stdx::nullopt;
+    return std::nullopt;
 }

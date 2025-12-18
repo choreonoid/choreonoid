@@ -3,7 +3,7 @@
 #include <cnoid/IdPair>
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <memory>
 
 #include <fcl/config.h>
@@ -114,7 +114,7 @@ public:
     bool isReady;
 
     Impl();
-    stdx::optional<GeometryHandle> addGeometry(SgNode* geometry);
+    std::optional<GeometryHandle> addGeometry(SgNode* geometry);
     void addMesh(ColdetModel* geometry, SgMesh* mesh);
     bool addPrimitive(ColdetModel* model, SgMesh* mesh);
     void makeReady();
@@ -172,13 +172,13 @@ int FCLCollisionDetector::numGeometries() const
 }
 
 
-stdx::optional<GeometryHandle> FCLCollisionDetector::addGeometry(SgNode* geometry)
+std::optional<GeometryHandle> FCLCollisionDetector::addGeometry(SgNode* geometry)
 {
     return impl->addGeometry(geometry);
 }
 
 
-stdx::optional<GeometryHandle> FCLCollisionDetector::Impl::addGeometry(SgNode* geometry)
+std::optional<GeometryHandle> FCLCollisionDetector::Impl::addGeometry(SgNode* geometry)
 {
     const int index = models.size();
     ColdetModel* model = nullptr;
@@ -261,7 +261,7 @@ bool FCLCollisionDetector::Impl::addPrimitive(ColdetModel* model, SgMesh* mesh)
     bool meshAdded = false;
     bool doAddPrimitive = false;
     Vector3 scale;
-    stdx::optional<Vector3> translation;
+    std::optional<Vector3> translation;
     if(!meshExtractor.isCurrentScaled()){
         scale.setOnes();
         doAddPrimitive = true;

@@ -3,7 +3,7 @@
 */
 
 #include "ComboBox.h"
-#include <cnoid/stdx/optional>
+#include <optional>
 #include "gettext.h"
 
 using namespace cnoid;
@@ -16,10 +16,10 @@ public:
     bool isI18nEnabled;
     std::string domainName;
         
-    stdx::optional<Signal<void(int)>> sigActivated;
-    stdx::optional<Signal<void(int)>> sigCurrentIndexChanged;
-    stdx::optional<Signal<void(const QString&)>> sigEditTextChanged;
-    stdx::optional<Signal<void(int)>> sigHighlighted;
+    std::optional<Signal<void(int)>> sigActivated;
+    std::optional<Signal<void(int)>> sigCurrentIndexChanged;
+    std::optional<Signal<void(const QString&)>> sigEditTextChanged;
+    std::optional<Signal<void(int)>> sigHighlighted;
     Signal<void()> sigAboutToShowPopup;
 
     Impl();
@@ -113,7 +113,7 @@ void ComboBox::showPopup()
 SignalProxy<void(int)> ComboBox::sigActivated()
 {
     if(!impl->sigActivated){
-        stdx::emplace(impl->sigActivated);
+        impl->sigActivated.emplace();
         connect(this, (void(QComboBox::*)(int)) &QComboBox::activated,
                 [this](int index){ (*impl->sigActivated)(index); });
     }
@@ -124,7 +124,7 @@ SignalProxy<void(int)> ComboBox::sigActivated()
 SignalProxy<void(int)> ComboBox::sigCurrentIndexChanged()
 {
     if(!impl->sigCurrentIndexChanged){
-        stdx::emplace(impl->sigCurrentIndexChanged);
+        impl->sigCurrentIndexChanged.emplace();
         connect(this, (void(QComboBox::*)(int)) &QComboBox::currentIndexChanged,
                 [this](int index){ (*impl->sigCurrentIndexChanged)(index); });
     }
@@ -135,7 +135,7 @@ SignalProxy<void(int)> ComboBox::sigCurrentIndexChanged()
 SignalProxy<void(const QString&)> ComboBox::sigEditTextChanged()
 {
     if(!impl->sigEditTextChanged){
-        stdx::emplace(impl->sigEditTextChanged);
+        impl->sigEditTextChanged.emplace();
         connect(this, (void(QComboBox::*)(const QString&)) &QComboBox::editTextChanged,
                 [this](const QString& text){ (*impl->sigEditTextChanged)(text); });
     }
@@ -146,7 +146,7 @@ SignalProxy<void(const QString&)> ComboBox::sigEditTextChanged()
 SignalProxy<void(int)> ComboBox::sigHighlighted()
 {
     if(!impl->sigHighlighted){
-        stdx::emplace(impl->sigHighlighted);
+        impl->sigHighlighted.emplace();
         connect(this, (void(QComboBox::*)(int)) &QComboBox::highlighted,
                 [this](int index){ (*impl->sigHighlighted)(index); });
     }

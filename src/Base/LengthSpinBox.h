@@ -29,7 +29,7 @@ private:
     DisplayValueFormat* dvFormat;
     ScopedConnection dvFormatConnection;
     int unit;
-    stdx::optional<double> meterSingleStep;
+    std::optional<double> meterSingleStep;
 };
 
 }

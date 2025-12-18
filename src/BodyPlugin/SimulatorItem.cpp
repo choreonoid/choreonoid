@@ -320,7 +320,7 @@ public:
     double nextLogTime;
     double logTimeStep;
     
-    stdx::optional<int> extForceFunctionId;
+    std::optional<int> extForceFunctionId;
     std::mutex extForceMutex;
     struct ExtForceInfo {
         Link* link;
@@ -330,7 +330,7 @@ public:
     };
     ExtForceInfo extForceInfo;
 
-    stdx::optional<int> virtualElasticStringFunctionId;
+    std::optional<int> virtualElasticStringFunctionId;
     std::mutex virtualElasticStringMutex;
     struct VirtualElasticString {
         Link* link;
@@ -1810,8 +1810,8 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
         }
     }
 
-    extForceFunctionId = stdx::nullopt;
-    virtualElasticStringFunctionId = stdx::nullopt;
+    extForceFunctionId = std::nullopt;
+    virtualElasticStringFunctionId = std::nullopt;
 
     cloneMap.replacePendingObjects();
     
@@ -2634,7 +2634,7 @@ void SimulatorItem::clearExternalForces()
 {
     if(impl->extForceFunctionId){
         removePreDynamicsFunction(*impl->extForceFunctionId);
-        impl->extForceFunctionId = stdx::nullopt;
+        impl->extForceFunctionId = std::nullopt;
     }
 }    
 
@@ -2691,7 +2691,7 @@ void SimulatorItem::clearVirtualElasticStrings()
 {
     if(impl->virtualElasticStringFunctionId){
         removePreDynamicsFunction(*impl->virtualElasticStringFunctionId);
-        impl->virtualElasticStringFunctionId = stdx::nullopt;
+        impl->virtualElasticStringFunctionId = std::nullopt;
     }
 }
 

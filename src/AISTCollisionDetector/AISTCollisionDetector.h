@@ -2,7 +2,7 @@
 #define CNOID_AIST_COLLISION_DETECTOR_AIST_COLLISION_DETECTOR_H
 
 #include <cnoid/CollisionDetector>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -17,7 +17,7 @@ public:
     virtual CollisionDetector* clone() const override;
     virtual void clearGeometries() override;
     virtual int numGeometries() const override;
-    virtual stdx::optional<GeometryHandle> addGeometry(SgNode* geometry) override;
+    virtual std::optional<GeometryHandle> addGeometry(SgNode* geometry) override;
     virtual void setCustomObject(GeometryHandle geometry, Referenced* object) override;
     virtual void setGeometryStatic(GeometryHandle geometry, bool isStatic = true) override;
     virtual void setGeometryEnabled(GeometryHandle geometry, bool isEnabled) override;
@@ -40,7 +40,7 @@ public:
 
     // experimental
     void setNumThreads(int n);
-    stdx::optional<double> detectDistanceToRayIntersection(
+    std::optional<double> detectDistanceToRayIntersection(
         GeometryHandle geometry, const Vector3& point, const Vector3& direction);
 
 private:

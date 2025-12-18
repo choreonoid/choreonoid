@@ -1848,7 +1848,7 @@ void HumanoidPoseFetchView::Impl::adjustHandPosition(int which, int axis, double
                     Isometry3 T;
                     interpolator->getBaseLinkPosition(T);
                     body->rootLink()->setPosition(T);
-                    std::vector<stdx::optional<double>> qs;
+                    std::vector<std::optional<double>> qs;
                     interpolator->getJointDisplacements(qs);
                     for(size_t i=0; i < qs.size(); ++i){
                         if(auto q = qs[i]){

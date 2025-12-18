@@ -13,7 +13,7 @@ ButtonGroup::ButtonGroup(QObject* parent)
 SignalProxy<void(int id)> ButtonGroup::sigIdClicked()
 {
     if(!sigIdClicked_){
-        stdx::emplace(sigIdClicked_);
+        sigIdClicked_.emplace();
         connect(this, (void(QButtonGroup::*)(int))
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
@@ -31,7 +31,7 @@ SignalProxy<void(int id)> ButtonGroup::sigIdClicked()
 SignalProxy<void(int id, bool checked)> ButtonGroup::sigIdToggled()
 {
     if(!sigIdToggled_){
-        stdx::emplace(sigIdToggled_);
+        sigIdToggled_.emplace();
         connect(this, (void(QButtonGroup::*)(int,bool))
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))

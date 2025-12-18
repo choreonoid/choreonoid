@@ -7,7 +7,7 @@
 
 #include <cnoid/Signal>
 #include <QLineEdit>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -39,12 +39,12 @@ public:
     SignalProxy<void(const QString& text)> sigTextEdited();
 
 private:
-    stdx::optional<Signal<void(int oldpos, int newpos)>> sigCursorPositionChanged_;
-    stdx::optional<Signal<void()>> sigEditingFinished_;
-    stdx::optional<Signal<void()>> sigReturnPressed_;
-    stdx::optional<Signal<void()>> sigSelectionChanged_;
-    stdx::optional<Signal<void(const QString& text)>> sigTextChanged_;
-    stdx::optional<Signal<void(const QString& text)>> sigTextEdited_;
+    std::optional<Signal<void(int oldpos, int newpos)>> sigCursorPositionChanged_;
+    std::optional<Signal<void()>> sigEditingFinished_;
+    std::optional<Signal<void()>> sigReturnPressed_;
+    std::optional<Signal<void()>> sigSelectionChanged_;
+    std::optional<Signal<void(const QString& text)>> sigTextChanged_;
+    std::optional<Signal<void(const QString& text)>> sigTextEdited_;
 };
 
 }

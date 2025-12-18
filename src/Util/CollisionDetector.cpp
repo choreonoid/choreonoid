@@ -54,7 +54,7 @@ public:
         return numGeometries_;
     }
 
-    virtual stdx::optional<GeometryHandle> addGeometry(SgNode*) override
+    virtual std::optional<GeometryHandle> addGeometry(SgNode*) override
     {
         GeometryHandle handle;
         handle = numGeometries_++;

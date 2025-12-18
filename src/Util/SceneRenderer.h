@@ -3,7 +3,7 @@
 
 #include "SceneGraph.h"
 #include "PolymorphicSceneNodeFunctionSet.h"
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <vector>
 #include <cmath>
 #include "exportdecl.h"
@@ -37,14 +37,14 @@ public:
     virtual void renderCustomTransform(SgTransform* transform, const std::function<void()>& traverseFunction) = 0;
     virtual void renderNode(SgNode* node) = 0;
 
-    void setTintColor(stdx::optional<Vector3f> color) {
+    void setTintColor(std::optional<Vector3f> color) {
         tintColor_ = color;
         onTintColorChanged();
     }
     void clearTintColor() {
-        tintColor_ = stdx::nullopt;
+        tintColor_ = std::nullopt;
     }
-    stdx::optional<Vector3f> tintColor() const {
+    std::optional<Vector3f> tintColor() const {
         return tintColor_;
     }
 
@@ -158,7 +158,7 @@ private:
 
     Impl* impl;
     std::vector<double> properties_;
-    stdx::optional<Vector3f> tintColor_;
+    std::optional<Vector3f> tintColor_;
 };
 
 }

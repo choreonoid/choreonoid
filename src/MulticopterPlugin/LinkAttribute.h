@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <cnoid/stdx/optional>
+#include <optional>
 
 namespace Multicopter {
 
@@ -105,11 +105,11 @@ public:
         _logMode = logMode;
     }
 
-    cnoid::stdx::optional<cnoid::CollisionDetector::GeometryHandle> getGeometryHandle() const{
+    std::optional<cnoid::CollisionDetector::GeometryHandle> getGeometryHandle() const{
         return _handle;
     }
 
-    void setGeometryHandle(cnoid::stdx::optional<cnoid::CollisionDetector::GeometryHandle> handle){
+    void setGeometryHandle(std::optional<cnoid::CollisionDetector::GeometryHandle> handle){
         _handle = handle;
     }
 
@@ -127,7 +127,7 @@ private:
     std::vector<bool> _linkForceApplyFlagAry;
     int _effectMode;
     bool _logMode;
-    cnoid::stdx::optional<cnoid::CollisionDetector::GeometryHandle> _handle;
+    std::optional<cnoid::CollisionDetector::GeometryHandle> _handle;
 };
 
 }

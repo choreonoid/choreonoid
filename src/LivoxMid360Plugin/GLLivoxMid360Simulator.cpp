@@ -146,7 +146,7 @@ void GLLivoxMid360Simulator::storeRangeData()
 }
 
 
-stdx::optional<double> GLLivoxMid360Simulator::getDistance(double yawAngle, double pitchAngle)
+std::optional<double> GLLivoxMid360Simulator::getDistance(double yawAngle, double pitchAngle)
 {
     double shiftedYaw = yawAngle + ScreenYawEnd;
     if(shiftedYaw < 0.0){
@@ -171,7 +171,7 @@ stdx::optional<double> GLLivoxMid360Simulator::getDistance(double yawAngle, doub
 
     float depth = info.depthBuf[py * info.resolutionX + px];
     if(depth <= 0.0f || depth >= 1.0f){
-        return stdx::nullopt;
+        return std::nullopt;
     } else {
         double z0 = 2.0 * depth - 1.0;
         double w = info.P_inv_32 * z0 + info.P_inv_33;

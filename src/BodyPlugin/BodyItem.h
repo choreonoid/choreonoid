@@ -6,7 +6,7 @@
 #include <cnoid/CollisionLinkPair>
 #include <cnoid/LocatableItem>
 #include <cnoid/RenderableItem>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <memory>
 #include "exportdecl.h"
 
@@ -200,7 +200,7 @@ public:
 
     enum PositionType { CM_PROJECTION, HOME_COP, LEFT_HOME_COP, RIGHT_HOME_COP, ZERO_MOMENT_POINT };
             
-    stdx::optional<Vector3> getParticularPosition(PositionType posType);
+    std::optional<Vector3> getParticularPosition(PositionType posType);
 
     bool setStance(double width);
 

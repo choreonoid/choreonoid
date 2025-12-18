@@ -382,7 +382,7 @@ void ODELink::addMesh(MeshExtractor* extractor, ODEBody* odeBody, bool doFlipYZ)
     if(mesh->primitiveType() != SgMesh::MESH){
         bool doAddPrimitive = false;
         Vector3 scale;
-        stdx::optional<Vector3> translation;
+        std::optional<Vector3> translation;
         if(!extractor->isCurrentScaled()){
             scale.setOnes();
             doAddPrimitive = true;

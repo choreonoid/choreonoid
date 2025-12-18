@@ -193,7 +193,7 @@ public:
     void setPresetPose(BodyItem::PresetPoseID id);
     bool doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor);
     bool setStance(double width);
-    void getParticularPosition(BodyItem::PositionType position, stdx::optional<Vector3>& pos);
+    void getParticularPosition(BodyItem::PositionType position, std::optional<Vector3>& pos);
     void notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK, bool isDirect);
     void emitSigKinematicStateChanged();
     bool setCollisionDetectionEnabled(bool on);
@@ -953,15 +953,15 @@ bool BodyItem::Impl::setStance(double width)
 }
                 
 
-stdx::optional<Vector3> BodyItem::getParticularPosition(PositionType position)
+std::optional<Vector3> BodyItem::getParticularPosition(PositionType position)
 {
-    stdx::optional<Vector3> pos;
+    std::optional<Vector3> pos;
     impl->getParticularPosition(position, pos);
     return pos;
 }
 
 
-void BodyItem::Impl::getParticularPosition(BodyItem::PositionType position, stdx::optional<Vector3>& pos)
+void BodyItem::Impl::getParticularPosition(BodyItem::PositionType position, std::optional<Vector3>& pos)
 {
     if(position == BodyItem::ZERO_MOMENT_POINT){
         if(self->isLeggedBody()){

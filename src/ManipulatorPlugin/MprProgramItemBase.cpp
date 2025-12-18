@@ -39,7 +39,7 @@ public:
     MprProgramPtr topLevelProgram;
     BodyItem* targetBodyItem;
     KinematicBodyItemSetPtr targetBodyItemSet;
-    stdx::optional<int> startStep;
+    std::optional<int> startStep;
     bool isStartupProgram;
     bool needToUpdateAllReferences;
 
@@ -245,7 +245,7 @@ bool MprProgramItemBase::setAsStartupProgram(bool on, bool doNotify)
 }
 
 
-stdx::optional<int> MprProgramItemBase::startStep() const
+std::optional<int> MprProgramItemBase::startStep() const
 {
     return impl->startStep;
 }
@@ -444,7 +444,7 @@ bool MprProgramItemBase::restore(const Archive& archive)
 {
     if(archive.loadFileTo(this)){
         setAsStartupProgram(archive.get("is_startup_program", false));
-        impl->startStep = stdx::nullopt;
+        impl->startStep = std::nullopt;
         int step = archive.get("start_step", -1);
         if(step >= 0){
             impl->startStep = step;

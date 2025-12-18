@@ -7,7 +7,7 @@
 #include <cnoid/UTF8>
 #include <cnoid/Format>
 #include <cnoid/stdx/filesystem>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -49,7 +49,7 @@ public:
     filesystem::path directoryPath;
     ImageIO imageIO;
 
-    stdx::optional<Affine3f> T_local;
+    std::optional<Affine3f> T_local;
     
     typedef map<unsigned int, SgNodePtr> AiIndexToSgShapeMap;
     AiIndexToSgShapeMap aiIndexToSgShapeMap;
@@ -159,7 +159,7 @@ SgNode* AssimpSceneLoader::Impl::load(const std::string& filename)
     filesystem::path path(fromUTF8(filename));
     directoryPath = path.remove_filename();
 
-    T_local = stdx::nullopt;
+    T_local = std::nullopt;
 
     SgNode* node = convertAiNode(scene->mRootNode);
 
@@ -181,7 +181,7 @@ SgGroup* AssimpSceneLoader::Impl::convertAiNode(aiNode* node)
         S[1][0], S[1][1], S[1][2],
         S[2][0], S[2][1], S[2][2];
 
-    stdx::optional<Affine3f> prev_T_local = T_local;
+    std::optional<Affine3f> prev_T_local = T_local;
 
     if(ENABLE_FLIPPED_COORDINATE_EXPANSION || ENABLE_WARNING_FOR_FLIPPED_COORDINATE){
         double d = T.linear().determinant();

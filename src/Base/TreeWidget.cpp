@@ -2,7 +2,7 @@
 #include <QHeaderView>
 #include <QPainter>
 #include <QPen>
-#include <cnoid/stdx/optional>
+#include <optional>
 
 using namespace cnoid;
 
@@ -14,24 +14,24 @@ public:
     int gridColorRGB;
     bool isVerticalGridLineShown;
     
-    stdx::optional<Signal<void(QTreeWidgetItem* current, QTreeWidgetItem* previous)>> sigCurrentItemChanged;
-    stdx::optional<Signal<void(QTreeWidgetItem* item, int column)>> sigItemActivated;
-    stdx::optional<Signal<void(QTreeWidgetItem* item, int column)>> sigItemChanged;
-    stdx::optional<Signal<void(QTreeWidgetItem* item, int column)>> sigItemClicked;
-    stdx::optional<Signal<void(QTreeWidgetItem* item)>> sigItemCollapsed;
-    stdx::optional<Signal<void(QTreeWidgetItem* item, int column)>> sigItemDoubleClicked;
-    stdx::optional<Signal<void(QTreeWidgetItem* item, int column)>> sigItemEntered;
-    stdx::optional<Signal<void(QTreeWidgetItem* item)>> sigItemExpanded;
-    stdx::optional<Signal<void(QTreeWidgetItem* item, int column)>> sigItemPressed;
-    stdx::optional<Signal<void()>> sigItemSelectionChanged;
+    std::optional<Signal<void(QTreeWidgetItem* current, QTreeWidgetItem* previous)>> sigCurrentItemChanged;
+    std::optional<Signal<void(QTreeWidgetItem* item, int column)>> sigItemActivated;
+    std::optional<Signal<void(QTreeWidgetItem* item, int column)>> sigItemChanged;
+    std::optional<Signal<void(QTreeWidgetItem* item, int column)>> sigItemClicked;
+    std::optional<Signal<void(QTreeWidgetItem* item)>> sigItemCollapsed;
+    std::optional<Signal<void(QTreeWidgetItem* item, int column)>> sigItemDoubleClicked;
+    std::optional<Signal<void(QTreeWidgetItem* item, int column)>> sigItemEntered;
+    std::optional<Signal<void(QTreeWidgetItem* item)>> sigItemExpanded;
+    std::optional<Signal<void(QTreeWidgetItem* item, int column)>> sigItemPressed;
+    std::optional<Signal<void()>> sigItemSelectionChanged;
 
-    stdx::optional<Signal<void(const QModelIndex& parent, int first, int last)>> sigRowsAboutToBeRemoved;
-    stdx::optional<Signal<void(const QModelIndex& parent, int first, int last)>> sigRowsRemoved;
-    stdx::optional<Signal<void(const QModelIndex& parent, int first, int last)>> sigRowsInserted;
+    std::optional<Signal<void(const QModelIndex& parent, int first, int last)>> sigRowsAboutToBeRemoved;
+    std::optional<Signal<void(const QModelIndex& parent, int first, int last)>> sigRowsRemoved;
+    std::optional<Signal<void(const QModelIndex& parent, int first, int last)>> sigRowsInserted;
 
-    stdx::optional<Signal<void(int logicalIndex, int oldSize, int newSize)>> sigSectionResized;
+    std::optional<Signal<void(int logicalIndex, int oldSize, int newSize)>> sigSectionResized;
     
-    stdx::optional<Signal<void(const QPoint& pos)>> sigCustomContextMenuRequested;
+    std::optional<Signal<void(const QPoint& pos)>> sigCustomContextMenuRequested;
 
     Impl();
 };
@@ -112,7 +112,7 @@ void TreeWidget::scrollContentsBy(int dx, int dy)
 SignalProxy<void(QTreeWidgetItem* current, QTreeWidgetItem* previous)> TreeWidget::sigCurrentItemChanged()
 {
     if(!impl->sigCurrentItemChanged){
-        stdx::emplace(impl->sigCurrentItemChanged);
+        impl->sigCurrentItemChanged.emplace();
         connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, QTreeWidgetItem*)) &QTreeWidget::currentItemChanged,
                 [this](QTreeWidgetItem* current, QTreeWidgetItem* previous){
                     (*impl->sigCurrentItemChanged)(current, previous);
@@ -125,7 +125,7 @@ SignalProxy<void(QTreeWidgetItem* current, QTreeWidgetItem* previous)> TreeWidge
 SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemActivated()
 {
     if(!impl->sigItemActivated){
-        stdx::emplace(impl->sigItemActivated);
+        impl->sigItemActivated.emplace();
         connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, int)) &QTreeWidget::itemActivated,
                 [this](QTreeWidgetItem* item, int column){
                     (*impl->sigItemActivated)(item, column);
@@ -138,7 +138,7 @@ SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemActivate
 SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemChanged()
 {
     if(!impl->sigItemChanged){
-        stdx::emplace(impl->sigItemChanged);
+        impl->sigItemChanged.emplace();
         connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, int)) &QTreeWidget::itemChanged,
                 [this](QTreeWidgetItem* item, int column){
                     (*impl->sigItemChanged)(item, column);
@@ -151,7 +151,7 @@ SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemChanged(
 SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemClicked()
 {
     if(!impl->sigItemClicked){
-        stdx::emplace(impl->sigItemClicked);
+        impl->sigItemClicked.emplace();
         connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, int)) &QTreeWidget::itemClicked,
                 [this](QTreeWidgetItem* item, int column){
                     (*impl->sigItemClicked)(item, column);
@@ -164,7 +164,7 @@ SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemClicked(
 SignalProxy<void(QTreeWidgetItem* item)> TreeWidget::sigItemCollapsed()
 {
     if(!impl->sigItemCollapsed){
-        stdx::emplace(impl->sigItemCollapsed);
+        impl->sigItemCollapsed.emplace();
         connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*)) &QTreeWidget::itemCollapsed,
                 [this](QTreeWidgetItem* item){
                     (*impl->sigItemCollapsed)(item);
@@ -177,7 +177,7 @@ SignalProxy<void(QTreeWidgetItem* item)> TreeWidget::sigItemCollapsed()
 SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemDoubleClicked()
 {
     if(!impl->sigItemDoubleClicked){
-        stdx::emplace(impl->sigItemDoubleClicked);
+        impl->sigItemDoubleClicked.emplace();
         connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, int)) &QTreeWidget::itemDoubleClicked,
                 [this](QTreeWidgetItem* item, int column){
                     (*impl->sigItemDoubleClicked)(item, column);
@@ -190,7 +190,7 @@ SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemDoubleCl
 SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemEntered()
 {
     if(!impl->sigItemEntered){
-        stdx::emplace(impl->sigItemEntered);
+        impl->sigItemEntered.emplace();
         connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, int)) &QTreeWidget::itemEntered,
                 [this](QTreeWidgetItem* item, int column){
                     (*impl->sigItemEntered)(item, column);
@@ -203,7 +203,7 @@ SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemEntered(
 SignalProxy<void(QTreeWidgetItem* item)> TreeWidget::sigItemExpanded()
 {
     if(!impl->sigItemExpanded){
-        stdx::emplace(impl->sigItemExpanded);
+        impl->sigItemExpanded.emplace();
         connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*)) &QTreeWidget::itemExpanded,
                 [this](QTreeWidgetItem* item){
                     (*impl->sigItemExpanded)(item);
@@ -216,7 +216,7 @@ SignalProxy<void(QTreeWidgetItem* item)> TreeWidget::sigItemExpanded()
 SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemPressed()
 {
     if(!impl->sigItemPressed){
-        stdx::emplace(impl->sigItemPressed);
+        impl->sigItemPressed.emplace();
         connect(this, (void(QTreeWidget::*)(QTreeWidgetItem*, int)) &QTreeWidget::itemPressed,
                 [this](QTreeWidgetItem* item, int column){
                     (*impl->sigItemPressed)(item, column);
@@ -229,7 +229,7 @@ SignalProxy<void(QTreeWidgetItem* item, int column)> TreeWidget::sigItemPressed(
 SignalProxy<void()> TreeWidget::sigItemSelectionChanged()
 {
     if(!impl->sigItemSelectionChanged){
-        stdx::emplace(impl->sigItemSelectionChanged);
+        impl->sigItemSelectionChanged.emplace();
         connect(this, (void(QTreeWidget::*)()) &QTreeWidget::itemSelectionChanged,
                 [this](){ (*impl->sigItemSelectionChanged)(); });
     }
@@ -240,7 +240,7 @@ SignalProxy<void()> TreeWidget::sigItemSelectionChanged()
 SignalProxy<void(const QModelIndex& parent, int first, int last)> TreeWidget::sigRowsAboutToBeRemoved()
 {
     if(!impl->sigRowsAboutToBeRemoved){
-        stdx::emplace(impl->sigRowsAboutToBeRemoved);
+        impl->sigRowsAboutToBeRemoved.emplace();
         connect(model(), (void(QAbstractItemModel::*)(const QModelIndex&, int, int)) &QAbstractItemModel::rowsAboutToBeRemoved,
                 [this](const QModelIndex& parent, int first, int last){
                     (*impl->sigRowsAboutToBeRemoved)(parent, first, last);
@@ -253,7 +253,7 @@ SignalProxy<void(const QModelIndex& parent, int first, int last)> TreeWidget::si
 SignalProxy<void(const QModelIndex& parent, int first, int last)> TreeWidget::sigRowsRemoved()
 {
     if(!impl->sigRowsRemoved){
-        stdx::emplace(impl->sigRowsRemoved);
+        impl->sigRowsRemoved.emplace();
         connect(model(), (void(QAbstractItemModel::*)(const QModelIndex&, int, int)) &QAbstractItemModel::rowsRemoved,
                 [this](const QModelIndex& parent, int first, int last){
                     (*impl->sigRowsRemoved)(parent, first, last);
@@ -266,7 +266,7 @@ SignalProxy<void(const QModelIndex& parent, int first, int last)> TreeWidget::si
 SignalProxy<void(const QModelIndex &parent, int first, int last)> TreeWidget::sigRowsInserted()
 {
     if(!impl->sigRowsInserted){
-        stdx::emplace(impl->sigRowsInserted);
+        impl->sigRowsInserted.emplace();
         connect(model(), (void(QAbstractItemModel::*)(const QModelIndex&, int, int)) &QAbstractItemModel::rowsInserted,
                 [this](const QModelIndex& parent, int first, int last){
                     (*impl->sigRowsInserted)(parent, first, last);
@@ -279,7 +279,7 @@ SignalProxy<void(const QModelIndex &parent, int first, int last)> TreeWidget::si
 SignalProxy<void(int logicalIndex, int oldSize, int newSize)> TreeWidget::sigSectionResized()
 {
     if(!impl->sigSectionResized){
-        stdx::emplace(impl->sigSectionResized);
+        impl->sigSectionResized.emplace();
         connect(header(), (void(QHeaderView::*)(int, int, int)) &QHeaderView::sectionResized,
                 [this](int logicalIndex, int oldSize, int newSize){
                     (*impl->sigSectionResized)(logicalIndex, oldSize, newSize);
@@ -292,7 +292,7 @@ SignalProxy<void(int logicalIndex, int oldSize, int newSize)> TreeWidget::sigSec
 SignalProxy<void(const QPoint& pos)> TreeWidget::sigCustomContextMenuRequested()
 {
     if(!impl->sigCustomContextMenuRequested){
-        stdx::emplace(impl->sigCustomContextMenuRequested);
+        impl->sigCustomContextMenuRequested.emplace();
         connect(this, (void(QWidget::*)(const QPoint& pos)) &QWidget::customContextMenuRequested,
                 [this](const QPoint& pos){
                     (*impl->sigCustomContextMenuRequested)(pos);

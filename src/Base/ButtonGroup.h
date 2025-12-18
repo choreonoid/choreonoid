@@ -3,7 +3,7 @@
 
 #include <cnoid/Signal>
 #include <QButtonGroup>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -21,8 +21,8 @@ public:
     SignalProxy<void(int id, bool checked)> sigButtonToggled() { return sigIdToggled(); }
 
 private:
-    stdx::optional<Signal<void(int id)>> sigIdClicked_;
-    stdx::optional<Signal<void(int id, bool checked)>> sigIdToggled_;
+    std::optional<Signal<void(int id)>> sigIdClicked_;
+    std::optional<Signal<void(int id, bool checked)>> sigIdToggled_;
 };
 
 }

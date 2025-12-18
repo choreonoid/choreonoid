@@ -3,7 +3,7 @@
 
 #include "LivoxMid360.h"
 #include <cnoid/GLVisionSensorSimulator>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <mutex>
 
 namespace cnoid {
@@ -45,7 +45,7 @@ private:
     std::shared_ptr<std::vector<Vector2f>> angleData;
 
     void storeRangeData();
-    stdx::optional<double> getDistance(double yawAngle, double pitchAngle);
+    std::optional<double> getDistance(double yawAngle, double pitchAngle);
 };
 
 }

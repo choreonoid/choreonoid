@@ -4,7 +4,7 @@
 
 #include "TreeView.h"
 #include "ItemSelectionModel.h"
-#include <cnoid/stdx/optional>
+#include <optional>
 
 using namespace std;
 using namespace cnoid;
@@ -14,14 +14,14 @@ namespace cnoid {
 class TreeView::Impl
 {
 public:
-    stdx::optional<Signal<void(const QModelIndex& index)>> sigCollapsed;
-    stdx::optional<Signal<void(const QModelIndex& index)>> sigExpanded;
-    stdx::optional<Signal<void(const QModelIndex& index)>> sigActivated;
-    stdx::optional<Signal<void(const QModelIndex& index)>> sigClicked;
-    stdx::optional<Signal<void(const QModelIndex& index)>> sigDoubleClicked;
-    stdx::optional<Signal<void(const QModelIndex& index)>> sigEntered;
-    stdx::optional<Signal<void(const QModelIndex& index)>> sigPressed;
-    stdx::optional<Signal<void()>> sigViewportEntered;
+    std::optional<Signal<void(const QModelIndex& index)>> sigCollapsed;
+    std::optional<Signal<void(const QModelIndex& index)>> sigExpanded;
+    std::optional<Signal<void(const QModelIndex& index)>> sigActivated;
+    std::optional<Signal<void(const QModelIndex& index)>> sigClicked;
+    std::optional<Signal<void(const QModelIndex& index)>> sigDoubleClicked;
+    std::optional<Signal<void(const QModelIndex& index)>> sigEntered;
+    std::optional<Signal<void(const QModelIndex& index)>> sigPressed;
+    std::optional<Signal<void()>> sigViewportEntered;
 };
 
 }
@@ -60,7 +60,7 @@ ItemSelectionModel* TreeView::selectionModel() const
 SignalProxy<void(const QModelIndex& index)> TreeView::sigCollapsed()
 {
     if(!impl->sigCollapsed){
-        stdx::emplace(impl->sigCollapsed);
+        impl->sigCollapsed.emplace();
         connect(this, SIGNAL(collapsed(const QModelIndex&)),
                 this, SLOT(onCollapsed(const QModelIndex&)));
     }
@@ -71,7 +71,7 @@ SignalProxy<void(const QModelIndex& index)> TreeView::sigCollapsed()
 SignalProxy<void(const QModelIndex& index)> TreeView::sigExpanded()
 {
     if(!impl->sigExpanded){
-        stdx::emplace(impl->sigExpanded);
+        impl->sigExpanded.emplace();
         connect(this, SIGNAL(expanded(const QModelIndex&)),
                 this, SLOT(onExpanded(const QModelIndex&)));
     }
@@ -82,7 +82,7 @@ SignalProxy<void(const QModelIndex& index)> TreeView::sigExpanded()
 SignalProxy<void(const QModelIndex& index)> TreeView::sigActivated()
 {
     if(!impl->sigActivated){
-        stdx::emplace(impl->sigActivated);
+        impl->sigActivated.emplace();
         connect(this, SIGNAL(activated(const QModelIndex& index)),
                 this, SLOT(onActivated(const QModelIndex& index)));
     }
@@ -93,7 +93,7 @@ SignalProxy<void(const QModelIndex& index)> TreeView::sigActivated()
 SignalProxy<void(const QModelIndex& index)> TreeView::sigClicked()
 {
     if(!impl->sigClicked){
-        stdx::emplace(impl->sigClicked);
+        impl->sigClicked.emplace();
         connect(this, SIGNAL(clicked(const QModelIndex& index)),
                 this, SLOT(onClicked(const QModelIndex& index)));
     }
@@ -104,7 +104,7 @@ SignalProxy<void(const QModelIndex& index)> TreeView::sigClicked()
 SignalProxy<void(const QModelIndex& index)> TreeView::sigDoubleClicked()
 {
     if(!impl->sigDoubleClicked){
-        stdx::emplace(impl->sigDoubleClicked);
+        impl->sigDoubleClicked.emplace();
         connect(this, SIGNAL(doubleClicked(const QModelIndex& index)),
                 this, SLOT(onDoubleClicked(const QModelIndex& index)));
     }
@@ -115,7 +115,7 @@ SignalProxy<void(const QModelIndex& index)> TreeView::sigDoubleClicked()
 SignalProxy<void(const QModelIndex& index)> TreeView::sigEntered()
 {
     if(!impl->sigEntered){
-        stdx::emplace(impl->sigEntered);
+        impl->sigEntered.emplace();
         connect(this, SIGNAL(entered(const QModelIndex& index)),
                 this, SLOT(onEntered(const QModelIndex& index)));
     }
@@ -126,7 +126,7 @@ SignalProxy<void(const QModelIndex& index)> TreeView::sigEntered()
 SignalProxy<void(const QModelIndex& index)> TreeView::sigPressed()
 {
     if(!impl->sigPressed){
-        stdx::emplace(impl->sigPressed);
+        impl->sigPressed.emplace();
         connect(this, SIGNAL(pressed(const QModelIndex& index)),
                 this, SLOT(onPressed(const QModelIndex& index)));
     }
@@ -137,7 +137,7 @@ SignalProxy<void(const QModelIndex& index)> TreeView::sigPressed()
 SignalProxy<void()> TreeView::sigViewportEntered()
 {
     if(!impl->sigViewportEntered){
-        stdx::emplace(impl->sigViewportEntered);
+        impl->sigViewportEntered.emplace();
         connect(this, SIGNAL(viewportEntere()),
                 this, SLOT(onViewportEntered()));
     }

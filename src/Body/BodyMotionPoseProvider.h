@@ -30,8 +30,8 @@ public:
     virtual bool seek(double time, int waistLinkIndex, const Vector3& waistTranslation) override;
     virtual int baseLinkIndex() const override;
     virtual bool getBaseLinkPosition(Isometry3& out_T) const override;
-    virtual void getJointDisplacements(std::vector<stdx::optional<double>>& out_q) const override;
-    virtual stdx::optional<Vector3> ZMP() const override;
+    virtual void getJointDisplacements(std::vector<std::optional<double>>& out_q) const override;
+    virtual std::optional<Vector3> ZMP() const override;
 
 private:
     BodyPtr body_;

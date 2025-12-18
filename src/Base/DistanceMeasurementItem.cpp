@@ -17,7 +17,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
 #include <cnoid/Format>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include <vector>
 #include "gettext.h"
 
@@ -33,7 +33,7 @@ public:
     ScopedConnection itemConnection;
     GeometryMeasurementTrackerPtr tracker;
     ScopedConnection trackerConnection;
-    vector<stdx::optional<CollisionDetector::GeometryHandle>> geometryHandles;
+    vector<std::optional<CollisionDetector::GeometryHandle>> geometryHandles;
     bool isShortestDistanceFixedPoint;
     Vector3 measurementPoint;
 

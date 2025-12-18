@@ -3,7 +3,7 @@
 
 #include <cnoid/Signal>
 #include <QCheckBox>
-#include <cnoid/stdx/optional>
+#include <optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -25,8 +25,8 @@ protected:
     virtual void mousePressEvent(QMouseEvent* event) override;
 
 private:
-    stdx::optional<Signal<void(int)>> sigStateChanged_;
-    stdx::optional<Signal<void(bool)>> sigToggled_;
+    std::optional<Signal<void(int)>> sigStateChanged_;
+    std::optional<Signal<void(bool)>> sigToggled_;
     bool isUserInputEnabled_;
 };
 

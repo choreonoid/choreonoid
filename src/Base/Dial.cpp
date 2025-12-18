@@ -15,7 +15,7 @@ Dial::Dial(QWidget* parent)
 SignalProxy<void(double)> Dial::sigValueChanged()
 {
     if(!sigValueChanged_){
-        stdx::emplace(sigValueChanged_);
+        sigValueChanged_.emplace();
         connect(this, (void(QDial::*)(int)) &QDial::valueChanged,
                 [this](int value){ onValueChanged(value); });
     }

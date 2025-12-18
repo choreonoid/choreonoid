@@ -39,7 +39,7 @@ public:
     int groupId;
     bool isEnabled;
     bool isStatic;
-    stdx::optional<Isometry3> localPosition;
+    std::optional<Isometry3> localPosition;
     ColdetModelExPtr sibling;
     
     ColdetModelEx() : groupId(0), isEnabled(true), isStatic(false) { }
@@ -141,7 +141,7 @@ public:
     Impl(const AISTCollisionDetector::Impl& org);
     ~Impl();
     void initialize();
-    stdx::optional<GeometryHandle> addGeometry(SgNode* geometry);
+    std::optional<GeometryHandle> addGeometry(SgNode* geometry);
     void addMesh(ColdetModelEx* model);
     void makeReady();
     bool checkIfGroupPairEnabled(int groupId1, int groupId2);
@@ -255,13 +255,13 @@ int AISTCollisionDetector::numGeometries() const
 }
 
 
-stdx::optional<GeometryHandle> AISTCollisionDetector::addGeometry(SgNode* geometry)
+std::optional<GeometryHandle> AISTCollisionDetector::addGeometry(SgNode* geometry)
 {
     return impl->addGeometry(geometry);
 }
 
 
-stdx::optional<GeometryHandle> AISTCollisionDetector::Impl::addGeometry(SgNode* geometry)
+std::optional<GeometryHandle> AISTCollisionDetector::Impl::addGeometry(SgNode* geometry)
 {
     if(geometry){
         ColdetModelExPtr model = new ColdetModelEx;
@@ -275,7 +275,7 @@ stdx::optional<GeometryHandle> AISTCollisionDetector::Impl::addGeometry(SgNode* 
             }
         }
     }
-    return stdx::nullopt;
+    return std::nullopt;
 }
 
 
@@ -705,7 +705,7 @@ double AISTCollisionDetector::detectDistance
 }
 
 
-stdx::optional<double> AISTCollisionDetector::detectDistanceToRayIntersection
+std::optional<double> AISTCollisionDetector::detectDistanceToRayIntersection
 (GeometryHandle geometry, const Vector3& point, const Vector3& direction)
 {
     return getColdetModel(geometry)->computeDistanceWithRay(point.data(), direction.data());
