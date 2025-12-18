@@ -12,7 +12,7 @@
 #include <cnoid/UTF8>
 #include <cnoid/ValueTree>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <QTcpSocket>
 #include <thread>
 #include <iostream>
@@ -20,7 +20,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 bool commonInitializationDone;

@@ -6,13 +6,12 @@
 #include <cnoid/LazyCaller>
 #include <cnoid/MessageView>
 #include <cnoid/UTF8>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <cnoid/Format>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace cnoid {
 

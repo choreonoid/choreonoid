@@ -6,7 +6,7 @@
 #include "NullOut.h"
 #include "UTF8.h"
 #include "Format.h"
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include "gettext.h"
 
 using namespace std;
@@ -95,7 +95,7 @@ SgNode* StdSceneLoader::Impl::load(const std::string& filename)
         YAMLReader reader;
         topNode = reader.loadDocument(filename)->toMapping();
         if(topNode){
-            stdx::filesystem::path filepath(fromUTF8(filename));
+            std::filesystem::path filepath(fromUTF8(filename));
             sceneReader.setBaseDirectory(toUTF8(filepath.parent_path().string()));
 
             double scaling;

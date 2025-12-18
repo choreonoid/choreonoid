@@ -8,6 +8,7 @@
 #include <typeinfo>
 #include <iosfwd>
 #include <memory>
+#include <filesystem>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -289,7 +290,7 @@ private:
     
     static bool overwriteItem(
         Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog = false,
-        time_t cutoffTime = 0, MessageOut* mout = nullptr);
+        std::filesystem::file_time_type cutoffTime = {}, MessageOut* mout = nullptr);
     static bool overwriteItemOrSaveItemWithDialog(Item* item, bool forceOverwrite, const std::string& format){
         return overwriteItem(item, forceOverwrite, format, true);
     }

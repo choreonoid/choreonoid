@@ -11,7 +11,7 @@
 #include "Timer.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/UTF8>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <QAction>
 #include <QHBoxLayout>
 #include <QFile>
@@ -23,7 +23,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 #define FILE_CHECK_TIME 1000   //msec
 
@@ -46,7 +45,7 @@ public:
     QLabel fileNameLabel;
     QLabel lineLabel;
     Timer timer;
-    std::time_t fileTimeStamp;
+    std::filesystem::file_time_type fileTimeStamp;
     uintmax_t fileSize;
 
     QAction* actionUndo;
@@ -255,7 +254,7 @@ void TextEditView::Impl::setCurrentFileName()
         textEdit.setReadOnly(false);
         textEdit.document()->setModified(false);
         filesystem::path fpath(fromUTF8(currentTextItem->textFilename()));
-        fileTimeStamp = filesystem::last_write_time_to_time_t(fpath);
+        fileTimeStamp = filesystem::last_write_time(fpath);
         fileSize = filesystem::file_size(fpath);
         if(self->hasFocus()){
             timer.start(FILE_CHECK_TIME);
@@ -271,7 +270,7 @@ void TextEditView::Impl::checkFileUpdate()
         if(!filename.empty()){
             filesystem::path fpath(fromUTF8(filename));
             if(filesystem::exists(fpath)){
-                if( filesystem::last_write_time_to_time_t(fpath) != fileTimeStamp ||
+                if( filesystem::last_write_time(fpath) != fileTimeStamp ||
                     filesystem::file_size(fpath) != fileSize ){
                     QMessageBox::StandardButton ret;
                     ret = QMessageBox::warning(
@@ -284,7 +283,7 @@ void TextEditView::Impl::checkFileUpdate()
                         textEdit.clear();
                         open();
                     }else if (ret == QMessageBox::No){
-                        fileTimeStamp = filesystem::last_write_time_to_time_t(fpath);
+                        fileTimeStamp = filesystem::last_write_time(fpath);
                         fileSize = filesystem::file_size(fpath);
                         textEdit.document()->setModified(true);
                     }

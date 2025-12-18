@@ -3,7 +3,7 @@
 
 #include <cnoid/RangeSensor>
 #include <cnoid/EigenTypes>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <vector>
 
 namespace cnoid {
@@ -26,7 +26,7 @@ public:
     
     const std::vector<Vector2f>& sphericalAngleSeq() const { return *sphericalAngleSeq_; }
     
-    bool readSpecifications(const Mapping* info, const stdx::filesystem::path& baseDirPath);
+    bool readSpecifications(const Mapping* info, const std::filesystem::path& baseDirPath);
     bool loadSphericalAngleSeqFile(const std::string& filename);
     bool writeSpecifications(Mapping* info) const;
 

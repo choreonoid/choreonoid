@@ -2,13 +2,13 @@
 #include "FileUtil.h"
 #include "UTF8.h"
 #include "Format.h"
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <zip.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace fs = stdx::filesystem;
+namespace fs = std::filesystem;
 
 namespace cnoid {
 
@@ -77,7 +77,7 @@ bool ZipArchiver::Impl::createZipFile(const std::string& zipFilename, const std:
 {
     fs::path zipFilePath(fromUTF8(zipFilename));
 
-    stdx::error_code ec;
+    std::error_code ec;
     if(fs::exists(zipFilePath)){
         fs::remove(zipFilePath, ec);
         if(ec){
@@ -227,7 +227,7 @@ bool ZipArchiver::Impl::extractFilesFromZipFile
 (zip_t* zip, const string& zipFilename, const fs::path& zipFilePath, const fs::path& topDirPath)
 {
     vector<unsigned char> buf(1024 * 1024);
-    stdx::error_code ec;
+    std::error_code ec;
     
     int numEntries = zip_get_num_entries(zip, 0);
     

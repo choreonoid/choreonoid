@@ -14,7 +14,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <QPainter>
 #include <QProgressDialog>
 #include <QCoreApplication>
@@ -42,7 +42,6 @@ static constexpr bool hasMouseCursorCaptureFeature = false;
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 

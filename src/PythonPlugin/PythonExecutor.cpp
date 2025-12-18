@@ -8,7 +8,7 @@
 #include <cnoid/LazyCaller>
 #include <cnoid/UTF8>
 #include <cnoid/FileUtil>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
@@ -17,7 +17,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 

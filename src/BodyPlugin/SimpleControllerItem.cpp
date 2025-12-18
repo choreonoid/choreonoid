@@ -16,7 +16,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/Format>
 #include <QLibrary>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <set>
 #include <bitset>
 #include <algorithm>
@@ -25,7 +25,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 

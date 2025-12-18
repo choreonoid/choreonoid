@@ -14,13 +14,12 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -73,7 +72,7 @@ public:
     MaterialTablePtr unifiedMaterialTable;
     MaterialTablePtr defaultMaterialTable;
     string defaultMaterialTableFile;
-    std::time_t defaultMaterialTableTimestamp;
+    std::filesystem::file_time_type defaultMaterialTableTimestamp;
 
     Impl(WorldItem* self);
     Impl(WorldItem* self, const Impl& org);
@@ -159,7 +158,7 @@ void WorldItem::Impl::init()
     sceneCollision = new SceneCollision(collisions);
     sceneCollision->setAttribute(SgObject::MetaScene);
     sceneCollision->setName("Collisions");
-    defaultMaterialTableTimestamp = 0;
+    defaultMaterialTableTimestamp = {};
     needToUpdateCollisionsLater = false;
     needToUpdateUnifiedMaterialTable = true;
 
@@ -519,7 +518,7 @@ MaterialTable* WorldItem::Impl::getOrLoadDefaultMaterialTable(bool checkFileUpda
         defaultMaterialTable = new MaterialTable;
         if(defaultMaterialTable->load(defaultMaterialTableFile, os)){
             defaultMaterialTableTimestamp =
-                filesystem::last_write_time_to_time_t(fromUTF8(defaultMaterialTableFile));
+                filesystem::last_write_time(fromUTF8(defaultMaterialTableFile));
         } else {
             failedToLoad = true;
         }
@@ -528,7 +527,7 @@ MaterialTable* WorldItem::Impl::getOrLoadDefaultMaterialTable(bool checkFileUpda
         if(!defaultMaterialTableFile.empty()){
             filesystem::path fpath(fromUTF8(defaultMaterialTableFile));
             if(filesystem::exists(fpath)){
-                auto newTimestamp = filesystem::last_write_time_to_time_t(fpath);
+                auto newTimestamp = filesystem::last_write_time(fpath);
                 if(newTimestamp > defaultMaterialTableTimestamp){
                     MaterialTablePtr newMaterialTable = new MaterialTable;
                     if(newMaterialTable->load(defaultMaterialTableFile, os)){

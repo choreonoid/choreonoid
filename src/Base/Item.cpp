@@ -13,7 +13,7 @@
 #include <cnoid/ValueTree>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <typeinfo>
 #include <vector>
 #include <map>
@@ -25,7 +25,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -93,7 +92,7 @@ public:
     std::string filePath;
     std::string fileFormat;
     MappingPtr fileOptions;
-    std::time_t fileModificationTime;
+    std::filesystem::file_time_type fileModificationTime;
     bool isConsistentWithFile;
     int fileConsistencyId;
     bool isConsistentWithProjectArchive;
@@ -206,7 +205,7 @@ void Item::Impl::initialize()
     self->continuousUpdateCounter = 0;
     self->isSelected_ = false;
 
-    fileModificationTime = 0;
+    fileModificationTime = {};
     isConsistentWithFile = true;
     fileConsistencyId = 0;
     isConsistentWithProjectArchive = false;
@@ -1680,7 +1679,7 @@ bool Item::saveWithFileDialog()
 }
 
 
-bool Item::overwrite(bool forceOverwrite, const std::string& format, time_t cutoffTime, MessageOut* mout)
+bool Item::overwrite(bool forceOverwrite, const std::string& format, filesystem::file_time_type cutoffTime, MessageOut* mout)
 {
     return ItemManager::overwriteItem(this, forceOverwrite, format, false, cutoffTime, mout);
 }
@@ -1736,7 +1735,7 @@ const std::string& Item::lastAccessedFileFormatId() const
 #endif
 
 
-std::time_t Item::fileModificationTime() const
+std::filesystem::file_time_type Item::fileModificationTime() const
 {
     return impl->fileModificationTime;
 }
@@ -1776,10 +1775,10 @@ void Item::updateFileInformation
 {
     filesystem::path fpath(fromUTF8(filename));
     if(filesystem::exists(fpath)){
-        impl->fileModificationTime = filesystem::last_write_time_to_time_t(fpath);
+        impl->fileModificationTime = filesystem::last_write_time(fpath);
         impl->isConsistentWithFile = true;
     } else {
-        impl->fileModificationTime = 0;
+        impl->fileModificationTime = {};
         impl->isConsistentWithFile = false;
         impl->isConsistentWithProjectArchive = false;
     }        

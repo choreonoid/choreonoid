@@ -2,7 +2,7 @@
 #include "Format.h"
 #include <cnoid/Config>
 #include <cnoid/ExecutablePath>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <unordered_set>
 #include <regex>
 #include <string>
@@ -18,7 +18,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = stdx::filesystem;
 
 namespace {
 

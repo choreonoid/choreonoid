@@ -5,7 +5,7 @@
 #include <cnoid/UTF8>
 #include <cnoid/FileUtil>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <unordered_map>
 #include <iostream>
 #ifdef _WIN32
@@ -17,7 +17,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 

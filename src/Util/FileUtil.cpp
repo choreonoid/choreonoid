@@ -5,7 +5,6 @@ using namespace std;
 
 namespace cnoid {
 
-namespace filesystem = stdx::filesystem;
 
 #ifdef _WIN32
 const char* DLL_PREFIX = "";
@@ -33,7 +32,7 @@ const char* PATH_DELIMITER = ":";
 
 filesystem::path getCompactPath(const filesystem::path& path)
 {
-    return stdx::filesystem::lexically_normal(path);
+    return path.lexically_normal();
     /*
     filesystem::path compact;
     for(filesystem::path::const_iterator p = path.begin(); p != path.end(); ++p){
@@ -50,7 +49,7 @@ filesystem::path getCompactPath(const filesystem::path& path)
 
 void makePathCompact(filesystem::path& io_path)
 {
-    io_path = stdx::filesystem::lexically_normal(io_path);
+    io_path = io_path.lexically_normal();
     //io_path = getCompactPath(io_path);
 }
 
@@ -60,7 +59,7 @@ int findPathInDirectory(const filesystem::path& directory, const filesystem::pat
     int numMatchedDepth = 0;
         
     if(directory.is_absolute() && path.is_absolute()){
-        filesystem::path compactPath = filesystem::lexically_normal(path);
+        filesystem::path compactPath = path.lexically_normal();
 
         filesystem::path::const_iterator it1 = directory.begin();
         filesystem::path::const_iterator it2 = compactPath.begin();
@@ -119,7 +118,7 @@ int findSubDirectory(const filesystem::path& directory, const filesystem::path& 
 }
 
 
-stdx::optional<stdx::filesystem::path> getRelativePath(const filesystem::path& path_, const filesystem::path& base_)
+std::optional<std::filesystem::path> getRelativePath(const filesystem::path& path_, const filesystem::path& base_)
 {
     filesystem::path relativePath;
     bool isAbsolute;
@@ -128,17 +127,17 @@ stdx::optional<stdx::filesystem::path> getRelativePath(const filesystem::path& p
         if(base_.is_absolute()){
             isAbsolute = true;
         } else {
-            return stdx::nullopt;
+            return std::nullopt;
         }
     } else {
         if(base_.is_absolute()){
-            return stdx::nullopt;
+            return std::nullopt;
         }
         isAbsolute = false;
     }
 
-    filesystem::path path(filesystem::lexically_normal(path_));
-    filesystem::path base(filesystem::lexically_normal(base_));
+    filesystem::path path = filesystem::path(path_).lexically_normal();
+    filesystem::path base = filesystem::path(base_).lexically_normal();
     auto it1 = path.begin();
     auto it2 = base.begin();
     bool isFirstElement = true;
@@ -180,7 +179,7 @@ stdx::optional<stdx::filesystem::path> getRelativePath(const filesystem::path& p
 
     if(isFirstElement && isAbsolute){
         // There is no relative path
-        return stdx::nullopt;
+        return std::nullopt;
     }
 
     while(it2 != base.end()){
@@ -195,7 +194,7 @@ stdx::optional<stdx::filesystem::path> getRelativePath(const filesystem::path& p
 }
 
 
-bool checkIfSubFilePath(const stdx::filesystem::path& path, const stdx::filesystem::path& base)
+bool checkIfSubFilePath(const std::filesystem::path& path, const std::filesystem::path& base)
 {
     bool result = false;
     if(auto relPath = getRelativePath(path, base)){
@@ -220,7 +219,7 @@ bool findRelativePath(const filesystem::path& from_, const filesystem::path& to,
 #else
     if(from_.is_absolute() && to.is_absolute()){
 
-        filesystem::path from(filesystem::lexically_normal(from_));
+        filesystem::path from = from_.lexically_normal();
         filesystem::path::const_iterator p = from.begin();
         filesystem::path::const_iterator q = to.begin();
         
@@ -249,9 +248,9 @@ bool findRelativePath(const filesystem::path& from_, const filesystem::path& to,
 }
 
 
-stdx::filesystem::path getNativeUniformPath(const stdx::filesystem::path& path)
+std::filesystem::path getNativeUniformPath(const std::filesystem::path& path)
 {
-    auto uniformed = lexically_normal(path);
+    auto uniformed = path.lexically_normal();
     uniformed.make_preferred();
 
 #ifndef _WIN32
@@ -268,7 +267,7 @@ stdx::filesystem::path getNativeUniformPath(const stdx::filesystem::path& path)
 }
 
 
-std::string getExtension(const stdx::filesystem::path& path)
+std::string getExtension(const std::filesystem::path& path)
 {
     string ext = path.extension().string();
     if(!ext.empty()){
@@ -281,50 +280,50 @@ std::string getExtension(const stdx::filesystem::path& path)
     return ext;
 }
 
-std::string getGenericPathString(const stdx::filesystem::path& path)
+std::string getGenericPathString(const std::filesystem::path& path)
 {
     return path.generic_string();
 }
 
-bool checkAbsolute(const stdx::filesystem::path& path)
+bool checkAbsolute(const std::filesystem::path& path)
 {
     return path.is_absolute();
 }
 
-stdx::filesystem::path getAbsolutePath(const stdx::filesystem::path& path)
+std::filesystem::path getAbsolutePath(const std::filesystem::path& path)
 {
-    return stdx::filesystem::absolute(path);
+    return std::filesystem::absolute(path);
 }
 
-std::string getAbsolutePathString(const stdx::filesystem::path& path)
+std::string getAbsolutePathString(const std::filesystem::path& path)
 {
-    return stdx::filesystem::absolute(path).string();
+    return std::filesystem::absolute(path).string();
 }
 
-std::string getFilename(const stdx::filesystem::path& path)
+std::string getFilename(const std::filesystem::path& path)
 {
     return path.filename().string();
 }
 
 std::string getFilename(const std::string& pathString)
 {
-    stdx::filesystem::path path(pathString);
+    std::filesystem::path path(pathString);
     return path.filename().string();
 }
 
-std::string getBasename(const stdx::filesystem::path& path)
+std::string getBasename(const std::filesystem::path& path)
 {
     return path.stem().string();
 }
 
-std::string getPathString(const stdx::filesystem::path& path)
+std::string getPathString(const std::filesystem::path& path)
 {
     return path.string();
 }
 
-std::string getNativePathString(const stdx::filesystem::path& path)
+std::string getNativePathString(const std::filesystem::path& path)
 {
-    stdx::filesystem::path p(path);
+    std::filesystem::path p(path);
     return p.make_preferred().string();
 }
 

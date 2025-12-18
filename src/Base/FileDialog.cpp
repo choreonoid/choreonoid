@@ -5,14 +5,13 @@
 #include <cnoid/ValueTree>
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <optional>
 #include <QBoxLayout>
 #include <QStyle>
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = stdx::filesystem;
 
 namespace {
 

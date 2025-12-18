@@ -292,7 +292,7 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
 #ifdef Q_OS_WIN32
     // Make a bundled Python available if it exists in the Choreonoid top directory.
     std::smatch match;
-    for(auto& dir : stdx::filesystem::directory_iterator(executableTopDirPath())){
+    for(auto& dir : std::filesystem::directory_iterator(executableTopDirPath())){
         static std::regex re("^Python\\d+$");
         string dirString = dir.path().filename().string();
         if(regex_match(dirString, match, re)){

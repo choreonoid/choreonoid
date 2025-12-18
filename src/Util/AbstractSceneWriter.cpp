@@ -2,14 +2,13 @@
 #include "SceneDrawables.h"
 #include "UTF8.h"
 #include "Format.h"
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <unordered_map>
 #include <unordered_set>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = stdx::filesystem;
 
 namespace cnoid {
 
@@ -58,7 +57,7 @@ bool AbstractSceneWriter::findOrCopyImageFile(SgImage* image, const std::string&
 {
     bool foundOrCopied = false;
     bool orgImageFileFound = false;
-    stdx::error_code ec;
+    std::error_code ec;
     
     auto uri = image->uri();
     if(uri.find("file://") == 0){

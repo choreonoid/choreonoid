@@ -31,7 +31,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -128,8 +127,8 @@ public:
     void removeOldBackups();
     bool getItemBackupFileInformation(
         Item* item,
-        stdx::filesystem::path& out_backupFilePath,
-        stdx::filesystem::path& out_hardLinkFilePath,
+        std::filesystem::path& out_backupFilePath,
+        std::filesystem::path& out_hardLinkFilePath,
         std::string& out_fileFormat);
     void updateBackupProjectFilePaths();
     bool restoreProject(int backupProjectIndex);
@@ -394,7 +393,7 @@ bool ProjectBackupManager::Impl::ensureBackupDirectory()
     }
         
     bool isDirectoryReady = false;
-    stdx::error_code ec;
+    std::error_code ec;
     if(filesystem::exists(backupTopDirPath)){
         if(filesystem::is_directory(backupTopDirPath)){
             isDirectoryReady = true;
@@ -472,7 +471,7 @@ bool ProjectBackupManager::Impl::saveProjectAsBackup()
         return false; // Skip this time. Another Choreonoid instance may be doing backup.
     }
 
-    stdx::error_code ec;
+    std::error_code ec;
     bool isDirectoryReady = filesystem::create_directories(currentBackupDirPath, ec);
 
     if(!isDirectoryReady || ec){
@@ -509,7 +508,7 @@ bool ProjectBackupManager::Impl::saveProjectAsBackup()
 void ProjectBackupManager::Impl::removeOldBackups()
 {
     while(backupDirPaths.size() > maxNumBackups){
-        stdx::error_code ec;
+        std::error_code ec;
         filesystem::remove_all(backupDirPaths.back(), ec);
         backupDirPaths.pop_back();
     }
@@ -518,8 +517,8 @@ void ProjectBackupManager::Impl::removeOldBackups()
 
 bool ProjectBackupManager::getItemBackupFileInformation
 (Item* item,
- stdx::filesystem::path& out_backupFilePath,
- stdx::filesystem::path& out_hardLinkFilePath,
+ std::filesystem::path& out_backupFilePath,
+ std::filesystem::path& out_hardLinkFilePath,
  std::string& out_fileFormat)
 {
     return impl->getItemBackupFileInformation(
@@ -529,8 +528,8 @@ bool ProjectBackupManager::getItemBackupFileInformation
 
 bool ProjectBackupManager::Impl::getItemBackupFileInformation
 (Item* item,
- stdx::filesystem::path& out_backupFilePath,
- stdx::filesystem::path& out_hardLinkFilePath,
+ std::filesystem::path& out_backupFilePath,
+ std::filesystem::path& out_hardLinkFilePath,
  std::string& out_fileFormat)
 {
     if(currentBackupDirPath.empty()){
@@ -615,7 +614,7 @@ void ProjectBackupManager::setItemBackupFileFormat(Item* item, const std::string
 }
 
 
-const std::vector<stdx::filesystem::path>& ProjectBackupManager::getBackupProjectFilePaths()
+const std::vector<std::filesystem::path>& ProjectBackupManager::getBackupProjectFilePaths()
 {
     impl->updateBackupProjectFilePaths();
     return impl->backupProjectFilePaths;

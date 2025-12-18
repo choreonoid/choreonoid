@@ -8,7 +8,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -60,9 +59,9 @@ bool AppConfig::initialize(const std::string& application_, const std::string& o
 }
 
 
-const stdx::filesystem::path& AppConfig::configDataDirPath()
+const std::filesystem::path& AppConfig::configDataDirPath()
 {
-    static stdx::filesystem::path path;
+    static std::filesystem::path path;
     if(path.empty()){
         path = configDirPath / fromUTF8(application);
     }

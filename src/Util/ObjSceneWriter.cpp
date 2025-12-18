@@ -6,7 +6,7 @@
 #include "UTF8.h"
 #include "NullOut.h"
 #include "Format.h"
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <fstream>
 #include <map>
 #include <set>
@@ -15,7 +15,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace cnoid {
 

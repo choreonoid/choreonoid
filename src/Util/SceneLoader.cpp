@@ -2,7 +2,7 @@
 #include "NullOut.h"
 #include "UTF8.h"
 #include "Format.h"
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <mutex>
 #include <map>
 #include <algorithm>
@@ -192,7 +192,7 @@ SgNode* SceneLoader::load(const std::string& filename, bool& out_isSupportedForm
 
 SgNode* SceneLoader::Impl::load(const std::string& filename, bool* out_isSupportedFormat)
 {
-    stdx::filesystem::path filepath(fromUTF8(filename));
+    std::filesystem::path filepath(fromUTF8(filename));
 
     string ext = filepath.extension().string();
     if(ext.empty()){

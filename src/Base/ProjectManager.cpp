@@ -20,7 +20,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <QResource>
 #include <QMessageBox>
 #include <string>
@@ -29,7 +29,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -241,8 +240,7 @@ void ProjectManager::Impl::setCurrentProjectFile(const string& filename)
         auto name = toUTF8(path.stem().string());
         currentProjectName = name;
 
-        // filesystem::canonical can only be used with C++17
-        path = filesystem::lexically_normal(filesystem::absolute(path));
+        path = filesystem::absolute(path).lexically_normal();
 
         currentProjectFile = toUTF8(path.string());
         currentProjectDirectory = toUTF8(path.parent_path().string());

@@ -7,7 +7,7 @@
 #define CNOID_UTIL_EXECUTABLE_PATH_H
 
 #include <string>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <cnoid/Config>
 #include "exportdecl.h"
 
@@ -17,11 +17,11 @@ CNOID_EXPORT const std::string& executableFile();
 CNOID_EXPORT const std::string& executableBasename();
 CNOID_EXPORT const std::string& executableDir();
 CNOID_EXPORT const std::string& executableTopDir();
-CNOID_EXPORT stdx::filesystem::path executableTopDirPath();
+CNOID_EXPORT std::filesystem::path executableTopDirPath();
 CNOID_EXPORT const std::string& pluginDir();
-CNOID_EXPORT stdx::filesystem::path pluginDirPath();
+CNOID_EXPORT std::filesystem::path pluginDirPath();
 CNOID_EXPORT const std::string& shareDir();
-CNOID_EXPORT stdx::filesystem::path shareDirPath();
+CNOID_EXPORT std::filesystem::path shareDirPath();
 
 [[deprecated("Use cnoid::executableFile().")]]
 inline const std::string& executablePath() { return executableFile(); }

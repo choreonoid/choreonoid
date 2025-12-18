@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cctype>
 #include <yaml.h>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <functional>
 #include "gettext.h"
 
@@ -1134,7 +1134,7 @@ void Mapping::write(const std::string &key, double value)
 
 void Mapping::writePath(const std::string &key, const std::string& value)
 {
-    auto path = toUTF8(stdx::filesystem::path(fromUTF8(value)).generic_string());
+    auto path = toUTF8(std::filesystem::path(fromUTF8(value)).generic_string());
     write(key, path, DOUBLE_QUOTED);
 }
 

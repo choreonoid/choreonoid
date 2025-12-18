@@ -13,7 +13,7 @@
 #include <cnoid/UTF8>
 #include <cnoid/Format>
 #include <variant>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <QTableWidget>
 #include <QHeaderView>
 #include <QBoxLayout>
@@ -30,7 +30,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 

@@ -18,7 +18,7 @@
 
 using namespace std;
 using namespace cnoid;
-namespace fs = stdx::filesystem;
+namespace fs = std::filesystem;
 
 namespace cnoid {
 
@@ -158,7 +158,7 @@ bool ProjectPacker::Impl::packProjectToZipFile(const std::string& filename, cons
     bool packed = packProjectToDirectory(directory, projectName);
     if(packed){
         packed = createProjectZipFile(filename);
-        stdx::error_code ec;        
+        std::error_code ec;        
         fs::remove_all(fromUTF8(directory), ec);
     }
     return packed;
@@ -230,7 +230,7 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
         }
     }
 
-    stdx::error_code ec;
+    std::error_code ec;
     
     try {
         // Find the top directory of the packed project using breadth-first search
@@ -319,17 +319,9 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
                        toUTF8(ec.message())));
             return false;
         }
-#if __cplusplus > 201402L
         fs::copy(
             path, destDirPath,
             fs::copy_options::overwrite_existing | fs::copy_options::recursive, ec);
-#else
-        if(!fs::copy_directory_recursively(path, destDirPath, ec)){
-            if(!ec){
-                return false;
-            }
-        }
-#endif
         if(ec){
             mout->putErrorln(
                 formatR(_("File \"{0}\" cannot be copied into the directory \"{1}\" for packing: {2}."),
@@ -491,7 +483,7 @@ bool ProjectPacker::Impl::createProjectZipFile(const string& zipFilename)
 {
     fs::path zipFilePath(fromUTF8(zipFilename));
 
-    stdx::error_code ec;
+    std::error_code ec;
     if(fs::exists(zipFilePath)){
         fs::remove(zipFilePath, ec);
         if(ec){
@@ -630,7 +622,7 @@ bool ProjectPacker::Impl::extractFiles
     fs::path projectFile(zipFilePath.stem());
     projectFile += ".cnoid";
     vector<unsigned char> buf(1024 * 1024);
-    stdx::error_code ec;
+    std::error_code ec;
     
     int numEntries = zip_get_num_entries(zip, 0);
     

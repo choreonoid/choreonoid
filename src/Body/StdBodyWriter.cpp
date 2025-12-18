@@ -9,14 +9,13 @@
 #include <cnoid/NullOut>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <mutex>
 #include <typeindex>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 

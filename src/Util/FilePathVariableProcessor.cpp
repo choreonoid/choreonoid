@@ -11,7 +11,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = stdx::filesystem;
 
 namespace cnoid {
 
@@ -146,7 +145,7 @@ void FilePathVariableProcessor::setSubstitutionWithSystemPathVariableEnabled(boo
 }
 
 
-void FilePathVariableProcessor::addAppSpecificVariable(const std::string& name, const stdx::filesystem::path& path)
+void FilePathVariableProcessor::addAppSpecificVariable(const std::string& name, const std::filesystem::path& path)
 {
     impl->appSpecificVariables[name].emplace_back(path);
 }
@@ -158,7 +157,7 @@ void FilePathVariableProcessor::addAppSpecificVariable(const std::string& name, 
 }
 
 
-void FilePathVariableProcessor::addUserVariable(const std::string& name, const stdx::filesystem::path& path)
+void FilePathVariableProcessor::addUserVariable(const std::string& name, const std::filesystem::path& path)
 {
     impl->userVariables[name].emplace_back(path);
 }
@@ -170,9 +169,9 @@ void FilePathVariableProcessor::clearUserVariables()
 }
 
 
-std::vector<std::pair<std::string, stdx::filesystem::path>> FilePathVariableProcessor::getUserVariables() const
+std::vector<std::pair<std::string, std::filesystem::path>> FilePathVariableProcessor::getUserVariables() const
 {
-    std::vector<std::pair<std::string, stdx::filesystem::path>> variables;
+    std::vector<std::pair<std::string, std::filesystem::path>> variables;
     variables.reserve(impl->userVariables.size());
     for(auto& kv : impl->userVariables){
         auto& name = kv.first;
@@ -232,7 +231,7 @@ void FilePathVariableProcessor::setBaseDirectory(const std::string& directory)
 }
 
 
-void FilePathVariableProcessor::setBaseDirPath(const stdx::filesystem::path& path)
+void FilePathVariableProcessor::setBaseDirPath(const std::filesystem::path& path)
 {
     impl->baseDirPath = path;
     if(impl->baseDirPath.is_relative()){
@@ -254,7 +253,7 @@ std::string FilePathVariableProcessor::baseDirectory() const
 }
 
 
-const stdx::filesystem::path& FilePathVariableProcessor::baseDirPath() const
+const std::filesystem::path& FilePathVariableProcessor::baseDirPath() const
 {
     return impl->baseDirPath;
 }
@@ -266,7 +265,7 @@ void FilePathVariableProcessor::setProjectDirectory(const std::string& directory
 }
 
 
-void FilePathVariableProcessor::setProjectDirPath(const stdx::filesystem::path& path)
+void FilePathVariableProcessor::setProjectDirPath(const std::filesystem::path& path)
 {
     impl->projectDirPath = path;
     if(impl->projectDirPath.is_relative()){
@@ -290,7 +289,7 @@ const std::string& FilePathVariableProcessor::projectDirectory() const
 }
 
 
-const stdx::filesystem::path& FilePathVariableProcessor::projectDirPath() const
+const std::filesystem::path& FilePathVariableProcessor::projectDirPath() const
 {
     return impl->projectDirPath;
 }
@@ -517,7 +516,7 @@ std::string FilePathVariableProcessor::Impl::expand
             path = filesystem::current_path() / path;
         }
     }
-    path = filesystem::lexically_normal(path);
+    path = path.lexically_normal();
     return toUTF8(path.make_preferred().string());
 }
 

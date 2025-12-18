@@ -218,10 +218,10 @@ bool FFmpegMovieRecorderEncoder::Impl::copyCapturedImageToAVFrame
 
     // copy into frame
     QImage image;
-    if(stdx::get_variant_index(captured->image) == 0){
-        image = stdx::get<QPixmap>(captured->image).toImage();
+    if(captured->image.index() == 0){
+        image = std::get<QPixmap>(captured->image).toImage();
     } else {
-        image = stdx::get<QImage>(captured->image);
+        image = std::get<QImage>(captured->image);
     }
     int width = image.width();
     int height = image.height();

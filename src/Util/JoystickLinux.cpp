@@ -2,7 +2,7 @@
 #include "ExtJoystick.h"
 #include "Format.h"
 #include <cnoid/Config>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <linux/joystick.h>
 #include <sys/ioctl.h>
 #include <string>
@@ -18,7 +18,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = stdx::filesystem;
 
 namespace {
 

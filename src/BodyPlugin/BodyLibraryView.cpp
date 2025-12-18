@@ -32,7 +32,7 @@
 #include <QDrag>
 #include <QPainter>
 #include <QMessageBox>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <cnoid/Format>
 #include <unordered_set>
 #include <map>
@@ -41,7 +41,7 @@
 
 using namespace std;
 using namespace cnoid;
-namespace fs = stdx::filesystem;
+namespace fs = std::filesystem;
 
 namespace {
 
@@ -741,7 +741,7 @@ fs::path BodyLibraryView::Impl::getInternalItemDirPath(QTreeWidgetItem* parentIt
 
 bool BodyLibraryView::Impl::ensureDirectory(const fs::path& dirPath, bool doCleanExistingDir)
 {
-    stdx::error_code ec;
+    std::error_code ec;
     bool dirExists = fs::exists(dirPath, ec);
     if(ec){
         return false;
@@ -779,7 +779,7 @@ bool BodyLibraryView::Impl::copyFile(const fs::path& srcPath, const fs::path& de
         return false;
     }
 
-    stdx::error_code ec;
+    std::error_code ec;
 
 #if __cplusplus > 201402L
     fs::copy_file(srcPath, destPath, fs::copy_options::overwrite_existing, ec);
@@ -798,7 +798,7 @@ bool BodyLibraryView::Impl::renameLibraryItem(LibraryItem* item, const string& n
     fs::path orgDirPath = getInternalItemDirPath(item);
     fs::path newDirPath;
 
-    stdx::error_code ec;
+    std::error_code ec;
     if(fs::is_directory(orgDirPath, ec)){
         fs::path newNamePath(fromUTF8(newName));
         newDirPath = orgDirPath.parent_path() / newNamePath;
@@ -857,7 +857,7 @@ bool BodyLibraryView::Impl::relocateItemFiles
                 failed = true;
             } else {
                 destDirPath /= orgDirPath.filename();
-                stdx::error_code ec;
+                std::error_code ec;
                 fs::rename(orgDirPath, destDirPath, ec);
                 if(ec){
                     failed = true;
@@ -898,7 +898,7 @@ void BodyLibraryView::Impl::relocateItemFileInformationRecursively(LibraryItem* 
 
 void BodyLibraryView::Impl::removeLibraryItem(LibraryItem* item)
 {
-    stdx::error_code ec;
+    std::error_code ec;
     auto path = getInternalItemDirPath(item);
     if(checkIfExistingInternalFilePath(path)){
         fs::remove_all(path, ec);
@@ -1191,7 +1191,7 @@ bool BodyLibraryView::Impl::storeItemFilesToLibraryDirectory
             libraryItem->thumbnailFile = storedThumbnailFile;
         }
     } else {
-        stdx::error_code ec;
+        std::error_code ec;
         fs::remove_all(destDirPath, ec);
         mout->putErrorln(
             formatR(_("{0} cannot be stored in the library directory due to a file copy error."),
@@ -1891,7 +1891,7 @@ bool BodyLibraryView::Impl::importLibrary(const std::string& filename, MessageOu
     }
 
     fs::path extractionDirPath = libraryDirPath / "tmp";
-    stdx::error_code ec;
+    std::error_code ec;
     
     fs::create_directories(extractionDirPath, ec);
     if(ec){
@@ -1920,13 +1920,9 @@ bool BodyLibraryView::Impl::importLibrary(const std::string& filename, MessageOu
         for(const fs::directory_entry& entry : fs::directory_iterator(srcTopDirPath)){
             auto& entryPath = entry.path();
             fs::path destPath = libraryDirPath / entryPath.filename();
-#if __cplusplus > 201402L
             fs::copy(
                 entryPath, destPath,
                 fs::copy_options::overwrite_existing | fs::copy_options::recursive, ec);
-#else
-            fs::copy_directory_recursively(entryPath, destPath, ec);
-#endif
             if(ec){
                 failed = true;
             }
@@ -1985,7 +1981,7 @@ bool BodyLibraryView::Impl::exportLibrary(const std::string& filename, MessageOu
 bool BodyLibraryView::Impl::exportLibraryToDirectory(const std::string& directory, MessageOut* mout)
 {
     bool failed = false;
-    stdx::error_code ec;
+    std::error_code ec;
     fs::path exportDirPath(fromUTF8(directory));
     if(fs::exists(exportDirPath)){
         fs::remove_all(exportDirPath, ec);
@@ -2006,13 +2002,9 @@ bool BodyLibraryView::Impl::exportLibraryToDirectory(const std::string& director
         return false;
     }
     
-#if __cplusplus > 201402L
     fs::copy(
         libraryDirPath, exportDirPath,
         fs::copy_options::overwrite_existing | fs::copy_options::recursive, ec);
-#else
-    fs::copy_directory_recursively(libraryDirPath, exportDirPath, ec);
-#endif
     if(ec){
         mout->putErrorln(
             formatR(_("Library files cannot be copied to a temporary directory for exportation: {0}"),

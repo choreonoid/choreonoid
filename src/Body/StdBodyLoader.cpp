@@ -9,7 +9,7 @@
 #include <cnoid/NullOut>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <unordered_map>
 #include <mutex>
 #include <stdexcept>
@@ -18,7 +18,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -1825,7 +1824,7 @@ void StdBodyLoader::Impl::readSubBodyNode(Mapping* node)
     
     filesystem::path filepath(fromUTF8(uri));
     if(filepath.is_relative()){
-        filepath = filesystem::lexically_normal(sceneReader.baseDirPath() / filepath);
+        filepath = (sceneReader.baseDirPath() / filepath).lexically_normal();
     }
     if(filesystem::equivalent(mainFilePath, filepath)){
         node->throwException("recursive sub-body is prohibited");

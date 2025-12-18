@@ -6,13 +6,12 @@
 #include "MessageView.h"
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <QMessageBox>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace cnoid {
 

@@ -16,13 +16,12 @@
 #include "NullOut.h"
 #include "UTF8.h"
 #include "Format.h"
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <unordered_map>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace cnoid {
 
@@ -620,7 +619,7 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
     string relativeFilePathToCopiedFile;
 
     if(sceneObject->hasUri()){
-        stdx::error_code ec;
+        std::error_code ec;
         string srcFile = sceneObject->localFileAbsolutePath();
         filesystem::path srcFilePath(fromUTF8(srcFile));
         if(!srcFilePath.empty()){
@@ -720,11 +719,11 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
     } else {
         path += ".scen";
     }
-    auto fullPath = filesystem::lexically_normal(outputBaseDirPath / path);
+    auto fullPath = (outputBaseDirPath / path).lexically_normal();
     auto filename = fullPath.string();
 
     bool replaced = false;
-    stdx::error_code ec;
+    std::error_code ec;
     
     auto emplaced = extModelFiles.emplace(filename);
     if(!emplaced.second){ // Already replaced

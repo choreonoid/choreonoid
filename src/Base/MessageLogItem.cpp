@@ -7,7 +7,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <fstream>
 #include <regex>
 #include "gettext.h"
@@ -136,8 +136,8 @@ void MessageLogItem::Impl::openFile()
     if(fileMode.selectedIndex()==MessageLogItem::APPEND){
         ofs.open(nativeFilename, ios_base::out | ios_base::app | ios_base::binary);
     }else{
-        stdx::filesystem::path path(nativeFilename);
-        if(stdx::filesystem::exists(path)){
+        std::filesystem::path path(nativeFilename);
+        if(std::filesystem::exists(path)){
             bool ok = showConfirmDialog(
                 _("Confirm"),
                 formatR(_(" \"{}\" already exists.\n Do you want to replace it? " ), filename));
@@ -185,7 +185,7 @@ void MessageLogItem::Impl::setFileName(const string& filename_)
         return;
 
     filename = filename_;
-    stdx::filesystem::path path(fromUTF8(filename));
+    std::filesystem::path path(fromUTF8(filename));
     string ext = path.extension().string();
     if(ext != ".log"){
         filename += ".log";

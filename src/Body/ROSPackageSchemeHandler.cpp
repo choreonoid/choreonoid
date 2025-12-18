@@ -1,14 +1,13 @@
 #include <cnoid/UriSchemeProcessor>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <vector>
 #include <cstdlib>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = stdx::filesystem;
 
 namespace {
 

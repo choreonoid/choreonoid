@@ -4,7 +4,7 @@
 #include "ValueTree.h"
 #include "UTF8.h"
 #include "Format.h"
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <unordered_map>
 #include <typeindex>
 #include <mutex>
@@ -12,7 +12,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = stdx::filesystem;
 
 namespace {
 

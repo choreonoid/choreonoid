@@ -14,14 +14,13 @@
 #include <cnoid/ValueTree>
 #include <cnoid/NullOut>
 #include <cnoid/UTF8>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <cnoid/Format>
 #include <stdexcept>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = stdx::filesystem;
 
 namespace cnoid {
 
@@ -145,7 +144,7 @@ void throwExceptionOfIllegalField(VRMLProto* proto, const std::string& name, con
 template <typename TValue>
 void requireField(VRMLProto* proto, const std::string& name){
     VRMLVariantField* field = proto->findField(name);
-    if(!field || !stdx::holds_alternative<TValue>(*field)){
+    if(!field || !std::holds_alternative<TValue>(*field)){
         throwExceptionOfIllegalField(proto, name, labelOfVRMLfieldType<TValue>());
     }
 }
@@ -156,7 +155,7 @@ VRMLVariantField* addField(VRMLProto* proto, const std::string& name, const TVal
     if(!field){
         field = &proto->field(name);
         (*field) = defaultValue;
-    } else if(!stdx::holds_alternative<TValue>(*field)){
+    } else if(!std::holds_alternative<TValue>(*field)){
         throwExceptionOfIllegalField(proto, name, labelOfVRMLfieldType<TValue>());
     }
     return field;
@@ -169,7 +168,7 @@ VRMLVariantField* addField(VRMLProto* proto, const std::string& name) {
 
 double getLimitValue(VRMLVariantField& field, double defaultValue)
 {
-    MFFloat& values = stdx::get<MFFloat>(field);
+    MFFloat& values = std::get<MFFloat>(field);
     if(values.empty()){
         return defaultValue;
     }
@@ -184,18 +183,18 @@ template<class ValueType> ValueType getValue(VRMLProtoInstance* node, const char
             formatR(_("Node \"{0}\" should have the field \"{1}\""),
                     node->proto->protoName, fieldName));
     }
-    return stdx::get<ValueType>(p->second);
+    return std::get<ValueType>(p->second);
 }
        
 void readVRMLfield(VRMLVariantField& field, string& out_s)
 {
-    switch(stdx::get_variant_index(field)){
+    switch(field.index()){
     case SFSTRING:
-        out_s = stdx::get<SFString>(field);
+        out_s = std::get<SFString>(field);
         break;
     case MFSTRING:
     {
-        MFString& strings = stdx::get<MFString>(field);
+        MFString& strings = std::get<MFString>(field);
         out_s = "";
         for(size_t i=0; i < strings.size(); i++){
             out_s += strings[i] + "\n";
@@ -210,8 +209,8 @@ void readVRMLfield(VRMLVariantField& field, string& out_s)
 bool checkAndReadVRMLfield(VRMLProtoInstance* node, const char* key, bool& out_value)
 {
     VRMLVariantField* field = node->findField(key);
-    if(field && stdx::get_variant_index(*field) == SFBOOL){
-        out_value = stdx::get<SFBool>(*field);
+    if(field && field->index() == SFBOOL){
+        out_value = std::get<SFBool>(*field);
         return true;
     }
     return false;
@@ -220,8 +219,8 @@ bool checkAndReadVRMLfield(VRMLProtoInstance* node, const char* key, bool& out_v
 bool checkAndReadVRMLfield(VRMLProtoInstance* node, const char* key, int& out_value)
 {
     VRMLVariantField* field = node->findField(key);
-    if(field && stdx::get_variant_index(*field) == SFINT32){
-        out_value = stdx::get<SFInt32>(*field);
+    if(field && field->index() == SFINT32){
+        out_value = std::get<SFInt32>(*field);
         return true;
     }
     return false;
@@ -229,14 +228,14 @@ bool checkAndReadVRMLfield(VRMLProtoInstance* node, const char* key, int& out_va
 
 void readVRMLfield(VRMLVariantField& field, double& out_value)
 {
-    out_value = stdx::get<SFFloat>(field);
+    out_value = std::get<SFFloat>(field);
 }
 
 bool checkAndReadVRMLfield(VRMLProtoInstance* node, const char* key, SFVec3f& out_value)
 {
     VRMLVariantField* field = node->findField(key);
-    if(field && stdx::get_variant_index(*field) == SFVEC3F){
-        out_value = stdx::get<SFVec3f>(*field);
+    if(field && field->index() == SFVEC3F){
+        out_value = std::get<SFVec3f>(*field);
         return true;
     }
     return false;
@@ -244,16 +243,16 @@ bool checkAndReadVRMLfield(VRMLProtoInstance* node, const char* key, SFVec3f& ou
    
 void readVRMLfield(VRMLVariantField& field, Vector3& out_v)
 {
-    out_v = stdx::get<SFVec3f>(field);
+    out_v = std::get<SFVec3f>(field);
 }
 
 void readVRMLfield(VRMLVariantField& field, Matrix3& out_R)
 {
-    if(stdx::get_variant_index(field) == SFROTATION){
-        out_R = stdx::get<SFRotation>(field).toRotationMatrix();
+    if(field.index() == SFROTATION){
+        out_R = std::get<SFRotation>(field).toRotationMatrix();
 
-    } else if(stdx::get_variant_index(field) == MFFLOAT){
-        MFFloat& mf = stdx::get<MFFloat>(field);
+    } else if(field.index() == MFFLOAT){
+        MFFloat& mf = std::get<MFFloat>(field);
         if(mf.size() >= 9){
             out_R <<
                 mf[0], mf[1], mf[2],
@@ -498,7 +497,7 @@ void VRMLBodyLoaderImpl::checkJointProto(VRMLProto* proto)
     if(!field){
         throw invalid_argument(_("Prototype of Humanoid must have the \"jointAxis\" field"));
     }
-    if(!stdx::holds_alternative<SFString>(*field) && !stdx::holds_alternative<SFVec3f>(*field)){
+    if(!std::holds_alternative<SFString>(*field) && !std::holds_alternative<SFVec3f>(*field)){
         throw invalid_argument(_("The type of \"jointAxis\" field in \"Humanoid\" prototype must be SFString or SFVec3f"));
     }
 
@@ -615,7 +614,7 @@ void VRMLBodyLoaderImpl::readHumanoidNode(VRMLProtoInstance* humanoidNode)
     
     body->setModelName(humanoidNode->defName);
 
-    MFNode& nodes = stdx::get<MFNode>(humanoidNode->fields["humanoidBody"]);
+    MFNode& nodes = std::get<MFNode>(humanoidNode->fields["humanoidBody"]);
 
     if(nodes.size() == 0){
         throw invalid_argument(_("The Humanoid node does not have a Joint node in its \"humanoidBody\" field."));
@@ -676,7 +675,7 @@ Link* VRMLBodyLoaderImpl::readJointNode(VRMLProtoInstance* jointNode)
     iLink.collisionShape = new SgGroup;
     iLink.isSurfaceNodeUsed = false;
 
-    MFNode& childNodes = stdx::get<MFNode>(jointNode->fields["children"]);
+    MFNode& childNodes = std::get<MFNode>(jointNode->fields["children"]);
     Affine3 T(Affine3::Identity());
     ProtoIdSet acceptableProtoIds;
     acceptableProtoIds.set(PROTO_JOINT);
@@ -730,7 +729,7 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode)
     link->setName(jointNode->defName);
     VRMLProtoFieldMap& jf = jointNode->fields;
     
-    link->setJointId(stdx::get<SFInt32>(jf["jointId"]));
+    link->setJointId(std::get<SFInt32>(jf["jointId"]));
     if(link->jointId() >= 0){
         if(link->jointId() >= static_cast<int>(validJointIdSet.size())){
             validJointIdSet.resize(link->jointId() + 1, false);
@@ -776,10 +775,10 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode)
     } else {
         Vector3 jointAxis;
         VRMLVariantField& jointAxisField = jf["jointAxis"];
-        switch(stdx::get_variant_index(jointAxisField)){
+        switch(jointAxisField.index()){
         case SFSTRING:
         {
-            SFString& axisLabel = stdx::get<SFString>(jointAxisField);
+            SFString& axisLabel = std::get<SFString>(jointAxisField);
             if(axisLabel == "X"){
                 jointAxis = Vector3::UnitX();
             } else if(axisLabel == "Y"){
@@ -809,7 +808,7 @@ Link* VRMLBodyLoaderImpl::createLink(VRMLProtoInstance* jointNode)
     double equivalentInertia = 0.0;
     VRMLVariantField* field = jointNode->findField("equivalentInertia");
     if(field){
-        equivalentInertia = stdx::get<SFFloat>(*field);
+        equivalentInertia = std::get<SFFloat>(*field);
     }
     
     if( equivalentInertia == 0.0 ){
@@ -932,7 +931,7 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
     readVRMLfield(sf["momentsOfInertia"], I);
     iLink.I.noalias() += T.linear() * I * T.linear().transpose();
 
-    MFNode& childNodes = stdx::get<MFNode>(segmentNode->fields["children"]);
+    MFNode& childNodes = std::get<MFNode>(segmentNode->fields["children"]);
     ProtoIdSet acceptableProtoIds;
     acceptableProtoIds.set(PROTO_SURFACE);
     acceptableProtoIds.set(PROTO_DEVICE);
@@ -969,10 +968,10 @@ void VRMLBodyLoaderImpl::readSurfaceNode(LinkInfo& iLink, VRMLProtoInstance* seg
     iLink.isSurfaceNodeUsed = true;
 
     // check if another Surface node does not appear in the subtree
-    MFNode& visualNodes = stdx::get<MFNode>(segmentShapeNode->fields["visual"]);
+    MFNode& visualNodes = std::get<MFNode>(segmentShapeNode->fields["visual"]);
     ProtoIdSet acceptableProtoIds;
     readJointSubNodes(iLink, visualNodes, acceptableProtoIds, T);
-    MFNode& collisionNodes = stdx::get<MFNode>(segmentShapeNode->fields["collision"]);
+    MFNode& collisionNodes = std::get<MFNode>(segmentShapeNode->fields["collision"]);
     readJointSubNodes(iLink, collisionNodes, acceptableProtoIds, T);
 
     SgGroup* group;
@@ -1090,7 +1089,7 @@ CameraPtr VRMLBodyLoaderImpl::createCamera(VRMLProtoInstance* node)
     CameraPtr camera;
     RangeCamera* range = nullptr;
     
-    const SFString& type = stdx::get<SFString>(node->fields["type"]);
+    const SFString& type = std::get<SFString>(node->fields["type"]);
     if(type == "COLOR"){
         camera = new Camera;
         camera->setImageType(Camera::COLOR_IMAGE);
@@ -1205,10 +1204,10 @@ void VRMLBodyLoaderImpl::setExtraJoints()
             }
         }
 
-        SFString& jointType = stdx::get<SFString>(f["jointType"]);
+        SFString& jointType = std::get<SFString>(f["jointType"]);
         if(jointType == "piston"){
             joint->setType(ExtraJoint::Piston);
-            joint->setAxis(stdx::get<SFVec3f>(f["jointAxis"]));
+            joint->setAxis(std::get<SFVec3f>(f["jointAxis"]));
         } else if(jointType == "ball"){
             joint->setType(ExtraJoint::Ball);
         } else {

@@ -12,7 +12,7 @@
 #include <cnoid/Sleep>
 #include <cnoid/Format>
 #include <cnoid/UTF8>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <QPainter>
 #include <QWindow>
 #include <Dshow.h>
@@ -25,7 +25,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 const bool TRACE_FUNCTIONS = false;

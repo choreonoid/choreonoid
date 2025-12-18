@@ -84,7 +84,7 @@ void LivoxMid360::setNumSamples(int n)
 }
 
 
-bool LivoxMid360::readSpecifications(const Mapping* info, const stdx::filesystem::path& baseDirPath)
+bool LivoxMid360::readSpecifications(const Mapping* info, const std::filesystem::path& baseDirPath)
 {
     if(!RangeSensor::readSpecifications(info)){
         return false;
@@ -101,7 +101,7 @@ bool LivoxMid360::readSpecifications(const Mapping* info, const stdx::filesystem
 
     string filename;
     if(info->read("angle_seq_file", filename)){
-        stdx::filesystem::path filePath(filename);
+        std::filesystem::path filePath(filename);
         if(filePath.is_relative()){
             filePath = baseDirPath / filePath;
         }

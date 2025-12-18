@@ -5,7 +5,7 @@
 
 #include "VRMLWriter.h"
 #include "UTF8.h"
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <iostream>
 
 using namespace std;
@@ -465,10 +465,10 @@ void VRMLWriterImpl::writeSwitchNode(VRMLNodePtr node)
  **/
 std::string VRMLWriterImpl::abstorel(std::string& fname)
 {
-    stdx::filesystem::path from(fromUTF8(ofname));
-    stdx::filesystem::path to(fromUTF8(fname));
-    stdx::filesystem::path::const_iterator fromIter = from.begin();
-    stdx::filesystem::path::const_iterator toIter = to.begin();
+    std::filesystem::path from(fromUTF8(ofname));
+    std::filesystem::path to(fromUTF8(fname));
+    std::filesystem::path::const_iterator fromIter = from.begin();
+    std::filesystem::path::const_iterator toIter = to.begin();
     
     while(fromIter != from.end() && toIter != to.end() && (*toIter) == (*fromIter)) {
         ++toIter;
@@ -477,7 +477,7 @@ std::string VRMLWriterImpl::abstorel(std::string& fname)
     
     if (fromIter != from.end()) ++fromIter;
     
-    stdx::filesystem::path finalPath;
+    std::filesystem::path finalPath;
     while(fromIter != from.end()) {
         finalPath /= "..";
         ++fromIter;

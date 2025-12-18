@@ -13,7 +13,7 @@
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshGenerator>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <cnoid/Format>
 #include "gettext.h"
 
@@ -139,7 +139,7 @@ void SkeletonMotionItem::loadAMCfiles()
             
             for(auto& file : amcFiles){
                 SkeletonMotionItemPtr item = new SkeletonMotionItem;
-                item->setName(stdx::filesystem::path(file).stem().string());
+                item->setName(std::filesystem::path(file).stem().string());
                 SkeletonMotionPtr motion = loader.loadAMC(file, mvout());
                 if(motion){
                     item->resetMotion(motion);

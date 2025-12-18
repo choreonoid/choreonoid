@@ -4,7 +4,7 @@
 #include <cnoid/Archive>
 #include <cnoid/CloneMap>
 #include <cnoid/UTF8>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include "gettext.h"
 
 using namespace std;

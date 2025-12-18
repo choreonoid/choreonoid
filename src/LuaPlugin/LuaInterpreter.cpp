@@ -5,13 +5,12 @@
 #include "LuaInterpreter.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/MessageView>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <iostream>
 #include <stack>
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace cnoid {
 

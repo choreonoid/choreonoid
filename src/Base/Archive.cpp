@@ -5,7 +5,7 @@
 #include <cnoid/MessageOut>
 #include <cnoid/Format>
 #include <cnoid/UTF8>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <map>
 #include <list>
 #include <deque>
@@ -14,7 +14,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -332,7 +331,7 @@ bool Archive::loadFileTo(Item* item, bool& out_hasFileInformation) const
                 if(!file.empty()){
                     filesystem::path filePath(fromUTF8(file));
                     filesystem::path backupPath(fromUTF8(backupFile));
-                    stdx::error_code ec;
+                    std::error_code ec;
                     if(!filesystem::equivalent(filePath, backupPath, ec)){
                         item->setConsistentWithFile(false);
                     }
@@ -432,7 +431,7 @@ bool Archive::saveItemToFile(Item* item)
             string backupFilename = toUTF8(backupFilePath.string());
 
             if(!hardLinkFilePath.empty()){
-                stdx::error_code ec;
+                std::error_code ec;
                 filesystem::create_hard_link(hardLinkFilePath, backupFilePath, ec);
                 if(ec){
                     mout()->putErrorln(toUTF8(ec.message()));
@@ -442,7 +441,7 @@ bool Archive::saveItemToFile(Item* item)
             } else {
                 string orgFilename = item->filePath();
                 string orgFileFormat = item->fileFormat();
-                time_t orgModificationTime = item->fileModificationTime();
+                auto orgModificationTime = item->fileModificationTime();
                 bool orgProjectConsistency = item->isConsistentWithProjectArchive();
                 bool orgFileConsistency = item->isConsistentWithFile();
 

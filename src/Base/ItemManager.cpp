@@ -17,7 +17,7 @@
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <QLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -34,7 +34,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -1109,8 +1108,8 @@ bool ItemManager::saveItemWithDialog(Item* item, const std::string& format, bool
 
 
 bool ItemManager::overwriteItem
-(Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog, time_t cutoffTime,
- MessageOut* mout)
+(Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog,
+ filesystem::file_time_type cutoffTime, MessageOut* mout)
 {
     if(doSaveItemWithDialog){
         if(!checkFileImmutable(item)){
@@ -1133,8 +1132,8 @@ bool ItemManager::overwriteItem
                 if(doSaveItemWithDialog){
                     filename.clear();
                 }
-            } else if(cutoffTime == 0){
-                if(filesystem::last_write_time_to_time_t(fpath) != item->fileModificationTime()){
+            } else if(cutoffTime == filesystem::file_time_type{}){
+                if(filesystem::last_write_time(fpath) != item->fileModificationTime()){
                     // The actual file was replaced with another file
                     needToOverwrite = true;
                     if(doSaveItemWithDialog){
@@ -1142,7 +1141,7 @@ bool ItemManager::overwriteItem
                     }
                 }
             } else { // The cutoff-time is specified
-                if(filesystem::last_write_time_to_time_t(fpath) < cutoffTime){
+                if(filesystem::last_write_time(fpath) < cutoffTime){
                     needToOverwrite = true;
                 }
             }

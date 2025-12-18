@@ -3,7 +3,7 @@
 #include <cnoid/SceneLoader>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include "gettext.h"
 
 using namespace std;
@@ -85,7 +85,7 @@ SgNode* GeneralSceneFileImporterBase::Impl::loadScene(GeneralSceneFileImporterBa
 
     if(!scene){
         if(!isSupported){
-            auto fname = toUTF8(stdx::filesystem::path(fromUTF8(filename)).filename().string());
+            auto fname = toUTF8(std::filesystem::path(fromUTF8(filename)).filename().string());
             self->putError(formatR(_("The file format of \"{}\" is not supported.\n"), fname));
         }
         return nullptr;

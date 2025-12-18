@@ -5,7 +5,7 @@
 
 #include "ExecutablePath.h"
 #include "UTF8.h"
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <algorithm>
 
 #ifdef _WIN32
@@ -42,7 +42,6 @@ string executableBasename_;
 
 namespace cnoid {
 
-namespace filesystem = stdx::filesystem;
 
 void detectExecutableFile()
 {
@@ -58,7 +57,7 @@ void detectExecutableFile()
       path component and looks like "/usr/bin/../lib/libCnodUtil.so.1.8". The following normalization
       function is applied so that such the redundant path becomes a normal path.
     */
-    path = stdx::filesystem::lexically_normal(path);
+    path = path.lexically_normal();
     
     // Resolve symlinks to get the real path (handles UsrMerge where /lib -> /usr/lib)
     if(filesystem::exists(path)){
@@ -182,7 +181,7 @@ const std::string& executableTopDir()
     return executableTopDir_;
 }
 
-stdx::filesystem::path executableTopDirPath()
+std::filesystem::path executableTopDirPath()
 {
     return fromUTF8(executableTopDir());
 }
@@ -195,7 +194,7 @@ const std::string& pluginDir()
     return pluginDir_;
 }
 
-stdx::filesystem::path pluginDirPath()
+std::filesystem::path pluginDirPath()
 {
     return fromUTF8(pluginDir());
 }
@@ -208,7 +207,7 @@ const std::string& shareDir()
     return shareDir_;
 }
 
-stdx::filesystem::path shareDirPath()
+std::filesystem::path shareDirPath()
 {
     return fromUTF8(shareDir());
 }

@@ -7,7 +7,7 @@
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/ValueTree>
 #include <cnoid/UTF8>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QHeaderView>
@@ -168,7 +168,7 @@ void PathVariableEditor::writePathVariablesToArchive()
             string name = tableWidget->item(i, 0)->text().toStdString();
             if(!name.empty() && !item->path.isEmpty()){
                 Listing* listing = pathVars->openListing(name);
-                stdx::filesystem::path path(fromUTF8(item->path.toStdString()));
+                std::filesystem::path path(fromUTF8(item->path.toStdString()));
                 listing->append(toUTF8(path.generic_string()), DOUBLE_QUOTED);
             }
         }

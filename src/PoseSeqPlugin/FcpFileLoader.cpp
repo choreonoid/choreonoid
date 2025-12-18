@@ -16,7 +16,7 @@
 #include <cnoid/Tokenizer>
 #include <cnoid/FileDialog>
 #include <cnoid/UTF8>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <map>
 #include <vector>
 #include <stdexcept>
@@ -156,7 +156,7 @@ PoseSeqItemPtr loadFaceControllerPoseSeq(const string& filename)
     os << "Loading " << filename << "..." << endl;
 
     PoseSeqItemPtr item = new PoseSeqItem;
-    stdx::filesystem::path fpath(filename_);
+    std::filesystem::path fpath(filename_);
     item->setName(toUTF8(fpath.stem().string()));
     PoseSeqPtr seq = item->poseSeq();
 

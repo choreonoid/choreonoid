@@ -4,7 +4,7 @@
 #include "EigenUtil.h"
 #include "SceneGraph.h"
 #include "ValueTree.h"
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -29,7 +29,7 @@ public:
     bool isGroupOptimizationEnabled() const;
 
     std::string baseDirectory() const;
-    stdx::filesystem::path baseDirPath() const;
+    std::filesystem::path baseDirPath() const;
     void setYAMLReader(YAMLReader* reader);
     void setScaling(double s);
     void clear();

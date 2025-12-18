@@ -14,7 +14,7 @@
 #include <cnoid/FileUtil>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <QLibrary>
 #include <QFileDialog>
 #include <vector>
@@ -32,7 +32,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 
 #ifdef Q_OS_WIN32
@@ -248,7 +247,7 @@ bool PluginManager::Impl::addPluginDirectory(const std::string& nativeDirectory,
         path = filesystem::absolute(path);
     }
 
-    stdx::error_code ec;
+    std::error_code ec;
     if(!filesystem::is_directory(path, ec)){
         return false;
     }

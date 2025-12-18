@@ -24,7 +24,7 @@
 #include <cnoid/MessageOut>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <QDateTime>
 #include <QElapsedTimer>
 #include <fstream>
@@ -35,7 +35,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = stdx::filesystem;
 
 namespace {
 
@@ -1389,7 +1388,7 @@ void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectF
         return;
     }
 
-    stdx::error_code ec;
+    std::error_code ec;
 
     auto logFilePath = filesystem::absolute(fromUTF8(getActualFilename()), ec);
     if(!filesystem::exists(logFilePath ,ec)){
@@ -1512,7 +1511,7 @@ ItemPtr WorldLogFileItem::Impl::createArchiveModelItem(Item* modelItem, ArchiveI
 
     string nativeBaseName = fromUTF8(baseName);
     filesystem::path modelDirPath = info.archiveDirPath / nativeBaseName;
-    stdx::error_code ec;
+    std::error_code ec;
 
     filesystem::create_directories(modelDirPath, ec);
     if(ec){
@@ -1726,7 +1725,7 @@ bool WorldLogFileItem::Impl::seekToLivePlaybackLastFrame()
     bool hasNewFrames = currentReadFramePos > livePlaybackLastFramePos;
     livePlaybackLastFramePos = currentReadFramePos;
     
-    stdx::error_code ec;
+    std::error_code ec;
     std::uintmax_t prevFileSize = livePlaybackLogFileSize;
     livePlaybackLogFileSize = filesystem::file_size(readFilePath, ec);
     

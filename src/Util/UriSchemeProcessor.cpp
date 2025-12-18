@@ -2,7 +2,7 @@
 #include "FilePathVariableProcessor.h"
 #include "UTF8.h"
 #include "Format.h"
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <sstream>
 #include <mutex>
 #include <regex>
@@ -11,7 +11,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = stdx::filesystem;
 
 namespace {
 
@@ -33,7 +32,7 @@ public:
     regex uriSchemeRegex;
     bool isUriSchemeRegexReady;
     FilePathVariableProcessorPtr filePathVariableProcessor;
-    stdx::filesystem::path baseDirPath;
+    std::filesystem::path baseDirPath;
     string baseDirectory;
 
     void ensureUriSchemeRegex();
@@ -179,9 +178,9 @@ std::string UriSchemeProcessor::Impl::getFilePath(const std::string& uri)
                 errorStream.flush();
             }
         } else if(!baseDirPath.empty()){
-            stdx::filesystem::path path(fromUTF8(filePath));
+            std::filesystem::path path(fromUTF8(filePath));
             if(!path.is_absolute()){
-                path = filesystem::lexically_normal(baseDirPath / path);
+                path = (baseDirPath / path).lexically_normal();
                 filePath = toUTF8(path.generic_string());
             }
         }

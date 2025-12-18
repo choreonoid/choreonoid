@@ -5,7 +5,7 @@
 #include <cnoid/Signal>
 #include <string>
 #include <vector>
-#include <ctime>
+#include <filesystem>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -530,7 +530,8 @@ public:
        If the data has not been loaded from a file, the functions do nothing and returns false.
     */
     bool overwrite(
-        bool forceOverwrite = false, const std::string& format = std::string(), time_t cutoffTime = 0,
+        bool forceOverwrite = false, const std::string& format = std::string(),
+        std::filesystem::file_time_type cutoffTime = {},
         MessageOut* mout = nullptr);
 
     /**
@@ -546,7 +547,7 @@ public:
     const std::string& fileFormat() const;
     Mapping* fileOptions();
     const Mapping* fileOptions() const;
-    std::time_t fileModificationTime() const;
+    std::filesystem::file_time_type fileModificationTime() const;
     bool isConsistentWithFile() const;
     int fileConsistencyId() const;
 

@@ -3,7 +3,7 @@
 
 #include "UTF8.h"
 #include "Format.h"
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <fast_float/fast_float.h>
 #include <fstream>
 #include <stdexcept>
@@ -353,7 +353,7 @@ public:
     
     void throwEx(const std::string& error)
     {
-        stdx::filesystem::path path(fromUTF8(filename));
+        std::filesystem::path path(fromUTF8(filename));
         throw std::runtime_error(
             formatC("{0} at line {1} of \"{2}\".",
                     error, lineNumber, toUTF8(path.filename().string())));

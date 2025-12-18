@@ -6,7 +6,7 @@
 #include <cnoid/NullOut>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <optional>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -17,7 +17,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 
@@ -561,9 +560,9 @@ SgTexture* AssimpSceneLoader::Impl::convertAiTexture(unsigned int index)
         if(srcMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS){
             filesystem::path filepath(fromUTF8(path.data));
             if(!filepath.is_absolute()){
-                filepath = filesystem::lexically_normal(directoryPath / filepath);
+                filepath = (directoryPath / filepath).lexically_normal();
             }
-            string textureFile = toUTF8(stdx::filesystem::absolute(filepath).string());
+            string textureFile = toUTF8(std::filesystem::absolute(filepath).string());
 
             SgImagePtr image;
             ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(textureFile);

@@ -15,7 +15,7 @@
 #include "ImageIO.h"
 #include "UTF8.h"
 #include "Format.h"
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <cnoid/Config>
 #include <unordered_map>
 #include <mutex>
@@ -23,7 +23,6 @@
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = stdx::filesystem;
 
 namespace cnoid {
 
@@ -139,7 +138,7 @@ public:
     MappingPtr readOldFormatMetaDataString(const std::string& data);
     void extractNamedSceneNodes(Mapping* resourceNode, ResourceInfo* info, Resource& resource);
     ResourceInfo* getOrCreateResourceInfo(Mapping* resourceNode, const string& uri, Mapping* metadata);
-    stdx::filesystem::path findFileInPackage(const string& file);
+    std::filesystem::path findFileInPackage(const string& file);
     void adjustNodeCoordinate(SceneNodeInfo& info);
     void makeSceneNodeMap(ResourceInfo* info);
     void makeSceneNodeMapSub(const SceneNodeInfo& nodeInfo, SceneNodeMap& nodeMap);
@@ -274,7 +273,7 @@ std::string StdSceneReader::Impl::getBaseDirectory() const
 }
 
 
-stdx::filesystem::path StdSceneReader::baseDirPath() const
+std::filesystem::path StdSceneReader::baseDirPath() const
 {
     if(impl->uriSchemeProcessor){
         return impl->uriSchemeProcessor->filePathVariableProcessor()->baseDirPath();

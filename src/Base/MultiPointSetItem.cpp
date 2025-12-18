@@ -13,13 +13,12 @@
 #include <cnoid/YAMLWriter>
 #include <cnoid/SceneMarkers>
 #include <cnoid/UTF8>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <stdexcept>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace filesystem = cnoid::stdx::filesystem;
 
 namespace {
 

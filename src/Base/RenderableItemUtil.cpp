@@ -7,12 +7,12 @@
 #include <cnoid/UTF8>
 #include <cnoid/MessageOut>
 #include <cnoid/Format>
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-namespace fs = stdx::filesystem;
+namespace fs = std::filesystem;
 
 namespace cnoid {
 

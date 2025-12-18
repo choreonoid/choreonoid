@@ -1,7 +1,7 @@
 #ifndef CNOID_BASE_PROJECT_BACKUP_MANAGER_H
 #define CNOID_BASE_PROJECT_BACKUP_MANAGER_H
 
-#include <cnoid/stdx/filesystem>
+#include <filesystem>
 #include <vector>
 #include "exportdecl.h"
 
@@ -25,11 +25,11 @@ public:
     bool saveProjectAsBackup();
     bool getItemBackupFileInformation(
         Item* item,
-        stdx::filesystem::path& out_backupFilePath,
-        stdx::filesystem::path& out_hardLinkFilePath,
+        std::filesystem::path& out_backupFilePath,
+        std::filesystem::path& out_hardLinkFilePath,
         std::string& out_fileFormat);
     void setItemBackupFileFormat(Item* item, const std::string& fileFormat);
-    const std::vector<stdx::filesystem::path>& getBackupProjectFilePaths();
+    const std::vector<std::filesystem::path>& getBackupProjectFilePaths();
     bool restoreProject(int backupProjectIndex);
     void showConfigDialog();
     void showRecoveryDialog();
