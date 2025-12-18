@@ -15,6 +15,7 @@
 #include <QResizeEvent>
 #include <QWindow>
 #include <QPainter>
+#include <QTimer>
 #include <windows.h>
 #include <mfapi.h>
 #include <mfidl.h>
@@ -23,41 +24,6 @@
 #include <evr.h>
 #include <Shlwapi.h>
 #include "gettext.h"
-
-/*
- * KNOWN ISSUES (as of 2025-11-14):
- *
- * 1. Video frame disappears when view is resized while not playing
- *    - When the media is paused or stopped, resizing the view or triggering repaint
- *      causes the last video frame to disappear and the view becomes completely black.
- *    - This issue does NOT occur during playback - only when not playing.
- *
- * 2. Background artifacts when changing video size options during playback
- *    - When changing options (Keep Aspect Ratio, Keep Original Size) during playback,
- *      garbage/artifacts from the previous video frames remain in the background area.
- *    - The artifacts can be cleared by triggering an external repaint event (e.g.,
- *      resizing the view or dragging the main window), but this is not a proper solution.
- *
- * Attempted solutions (all unsuccessful):
- *    - RedrawWindow() with various flags (RDW_INVALIDATE, RDW_UPDATENOW, RDW_ERASE)
- *      Result: Made it worse, video disappeared completely
- *    - QApplication::processEvents() to force event processing
- *      Result: No effect
- *    - InvalidateRect() to invalidate the window region
- *      Result: No effect
- *    - Conditional painting (fill background only when media is not loaded)
- *      Result: Partially helped with stopped state, but artifacts remained
- *    - ExcludeClipRect() to exclude video area before painting background
- *      Result: Everything turned black when resizing
- *    - Empty paintEvent() relying only on EVR's SetBorderColor()
- *      Result: Artifacts never cleared at all
- *    - Current approach: Use QPainter to fill background (same as DSMediaView)
- *      Result: Video displays correctly, but the two issues above remain
- *
- * The root cause appears to be a coordination issue between EVR's direct rendering
- * to the window and Qt's paint system. Further investigation into Media Foundation
- * and EVR internals may be needed to properly resolve these issues.
- */
 
 using namespace std;
 using namespace cnoid;
@@ -86,13 +52,30 @@ public:
     IMFClock* clock;
     IMFSimpleAudioVolume* audioVolume;
 
+    // Source Reader for frame extraction (used for seeking without audio)
+    IMFSourceReader* sourceReader;
+
+    // Frame buffer for display
+    BYTE* frameBuffer;
+    LONG frameBufferSize;
+    LONG frameWidth;
+    LONG frameHeight;
+    LONG frameStride;
+
     // State flags
     bool bMapped;
     bool bLoaded;
     bool bCanSeek;
+    bool bIgnoreTimeChange;  // Ignore time change signals during initial load
+    bool bWasMinimized;      // Track if window was minimized (needs reload on restore)
 
-    // Window handle
-    HWND hwnd;
+    // Seek debouncing
+    QTimer* seekDebounceTimer;
+    double pendingSeekTime;
+
+    // Window handles
+    HWND hwnd;           // Parent window (Qt widget)
+    HWND hwndVideo;      // Child window for video rendering
     WNDPROC orgWinProc;
 
     // TimeBar integration
@@ -110,6 +93,7 @@ public:
     ~MFMediaViewImpl();
 
     void onWindowIdChanged();
+    void onWindowShown();
     void onItemCheckToggled(Item* item, bool isChecked);
     void onAspectRatioCheckToggled();
     void onOrgSizeCheckToggled();
@@ -123,12 +107,20 @@ public:
 
     HRESULT adjustVideoWindow();
     HRESULT ensureVideoDisplayControl();
+    void createVideoWindow();
+    void destroyVideoWindow();
 
     // Playback control
-    HRESULT playMedia();
+    HRESULT playMedia(double startTime = -1.0);  // Start playback at specified time (-1 = current position)
     HRESULT pauseMedia();
     HRESULT stopMedia();
-    HRESULT seekMedia(double time);
+    void seekMedia(double time);      // Debounced seek (schedules actual seek)
+
+    // Frame extraction (silent seek)
+    HRESULT createSourceReader(const std::wstring& filePath);
+    void releaseSourceReader();
+    HRESULT displayFrameAtTime(double time);
+    void renderFrameToWindow();
 
     // TimeBar callbacks
     void connectTimeBarSignals();
@@ -137,9 +129,6 @@ public:
     void onPlaybackStarted(double time);
     double onPlaybackStopped(double time, bool isStoppedManually);
     bool onTimeChanged(double time);
-
-    // Event handling
-    HRESULT handleSessionEvent();
 };
 
 }
@@ -243,8 +232,26 @@ bool MFMediaView::restoreState(const Archive& archive)
 bool MFMediaView::event(QEvent* event)
 {
     if(event->type() == QEvent::WinIdChange){
+        // Window ID changed - this happens when view is rearranged, docked/undocked, etc.
+        // Mark for reload since EVR/MediaSession needs to be reinitialized
+        if(impl->bLoaded){
+            impl->bWasMinimized = true;
+        }
         impl->onWindowIdChanged();
         return true;
+    }
+    if(event->type() == QEvent::Hide){
+        // Window is being hidden (e.g., main window minimized)
+        // Mark for reload when restored
+        if(impl->bLoaded){
+            impl->bWasMinimized = true;
+        }
+    }
+    if(event->type() == QEvent::Show){
+        impl->onWindowShown();
+    }
+    if(event->type() == QEvent::WindowActivate){
+        impl->onWindowShown();
     }
     return QWidget::event(event);
 }
@@ -256,13 +263,25 @@ void MFMediaView::resizeEvent(QResizeEvent* event)
 
 void MFMediaView::paintEvent(QPaintEvent* event)
 {
-    QPainter painter(this);
-    painter.fillRect(0, 0, width(), height(), QColor(Qt::black));
+    // Fill background with black using Win32 GDI
+    // This is more compatible with EVR's direct window rendering than QPainter
+    HWND hwnd = (HWND)winId();
+    if(hwnd){
+        HDC hdc = GetDC(hwnd);
+        if(hdc){
+            RECT rect;
+            GetClientRect(hwnd, &rect);
+            HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
+            FillRect(hdc, &rect, brush);
+            DeleteObject(brush);
+            ReleaseDC(hwnd, hdc);
+        }
+    }
 }
 
 QPaintEngine* MFMediaView::paintEngine() const
 {
-    return View::paintEngine();
+    return nullptr;
 }
 
 void MFMediaView::onActivated()
@@ -276,12 +295,38 @@ void MFMediaView::onActivated()
     if(targetItem && targetItem != impl->currentMediaItem){
         impl->currentMediaItem = targetItem;
         impl->load();
+    } else if(impl->bWasMinimized && impl->currentMediaItem){
+        impl->bWasMinimized = false;
+
+        if(impl->currentState == MFMediaViewImpl::Running){
+            // Was playing during minimize - just re-establish video window
+            // (MediaSession was not unloaded, audio continued)
+            impl->destroyVideoWindow();
+            impl->hwnd = (HWND)winId();
+            impl->createVideoWindow();
+            if(impl->videoDisplayControl && impl->hwndVideo){
+                impl->videoDisplayControl->SetVideoWindow(impl->hwndVideo);
+                impl->adjustVideoWindow();
+                impl->videoDisplayControl->RepaintVideo();
+            }
+        } else {
+            // Was paused/stopped - need to reload and restore position
+            impl->load();
+            // Restore TimeBar position
+            QTimer::singleShot(150, [this](){
+                if(impl->bLoaded){
+                    impl->displayFrameAtTime(TimeBar::instance()->time());
+                }
+            });
+        }
     }
 }
 
 void MFMediaView::onDeactivated()
 {
-    if(impl->bLoaded){
+    // If playing, don't unload - let audio continue during minimize
+    // We'll re-establish video on reactivate
+    if(impl->bLoaded && impl->currentState != MFMediaViewImpl::Running){
         impl->unload();
     }
     impl->bMapped = false;
@@ -297,11 +342,33 @@ MFMediaViewImpl::MFMediaViewImpl(MFMediaView* self)
     clock = nullptr;
     audioVolume = nullptr;
 
+    sourceReader = nullptr;
+    frameBuffer = nullptr;
+    frameBufferSize = 0;
+    frameWidth = 0;
+    frameHeight = 0;
+    frameStride = 0;
+
     bMapped = false;
     bLoaded = false;
     bCanSeek = true;
+    bIgnoreTimeChange = false;
+    bWasMinimized = false;
+
+    // Initialize seek debounce timer
+    seekDebounceTimer = new QTimer(self);
+    seekDebounceTimer->setSingleShot(true);
+    seekDebounceTimer->setInterval(50);  // 50ms debounce
+    QObject::connect(seekDebounceTimer, &QTimer::timeout, [this](){
+        if(bLoaded && bCanSeek){
+            // Use SourceReader for silent frame display when not playing
+            displayFrameAtTime(pendingSeekTime);
+        }
+    });
+    pendingSeekTime = 0.0;
 
     hwnd = nullptr;
+    hwndVideo = nullptr;
     orgWinProc = nullptr;
 
     currentState = Stopped;
@@ -326,16 +393,112 @@ MFMediaViewImpl::~MFMediaViewImpl()
     if(bLoaded){
         unload();
     }
+    releaseSourceReader();
+    if(frameBuffer){
+        delete[] frameBuffer;
+        frameBuffer = nullptr;
+    }
+    destroyVideoWindow();
 }
 
 void MFMediaViewImpl::onWindowIdChanged()
 {
-    hwnd = (HWND)self->winId();
+    HWND newHwnd = (HWND)self->winId();
 
-    // Set video window if already loaded
-    if(videoDisplayControl && hwnd){
-        videoDisplayControl->SetVideoWindow(hwnd);
-        adjustVideoWindow();
+    // If parent HWND changed and we have a video window, destroy it
+    // (it was created with the old parent)
+    if(newHwnd != hwnd && hwndVideo){
+        destroyVideoWindow();
+    }
+
+    hwnd = newHwnd;
+
+    // If bWasMinimized is set (by event handler), trigger reload via onWindowShown
+    // This handles view rearrangement, docking changes, etc.
+    if(bWasMinimized && bLoaded && bMapped){
+        onWindowShown();
+        return;
+    }
+
+    // Recreate video window if needed and set video display
+    if(bLoaded && videoDisplayControl && hwnd){
+        if(!hwndVideo){
+            createVideoWindow();
+        }
+        if(hwndVideo){
+            videoDisplayControl->SetVideoWindow(hwndVideo);
+            adjustVideoWindow();
+        }
+    }
+}
+
+void MFMediaViewImpl::onWindowShown()
+{
+    if(!bMapped){
+        return;
+    }
+
+    // If window was minimized and is now being restored, do a full reload
+    // This is necessary because EVR/MediaSession enters a bad state after minimize
+    if(bWasMinimized && bLoaded && currentMediaItem){
+        bWasMinimized = false;
+        unload();
+        load();
+        return;
+    }
+
+    if(!bLoaded){
+        return;
+    }
+
+    // Update parent HWND (it may have changed)
+    HWND currentHwnd = (HWND)self->winId();
+    if(currentHwnd != hwnd){
+        hwnd = currentHwnd;
+    }
+
+    // Check if parent window is valid
+    if(!hwnd || !IsWindow(hwnd)){
+        return;
+    }
+
+    // Check if child window was destroyed or became invalid
+    if(hwndVideo && !IsWindow(hwndVideo)){
+        hwndVideo = nullptr;
+        orgWinProc = nullptr;
+    }
+
+    // Recreate child window if needed
+    if(!hwndVideo && hwnd){
+        createVideoWindow();
+    }
+
+    // Re-establish EVR video window if needed
+    if(videoDisplayControl && hwndVideo && IsWindow(hwndVideo)){
+        videoDisplayControl->SetVideoWindow(hwndVideo);
+    }
+
+    adjustVideoWindow();
+
+    // Redisplay the current frame
+    if(currentState != Running){
+        // First, try to render cached frame if available
+        if(frameBuffer && frameWidth > 0 && frameHeight > 0){
+            renderFrameToWindow();
+        } else {
+            // No cached frame, extract from SourceReader
+            QTimer::singleShot(50, [this](){
+                if(bLoaded && bMapped && hwndVideo && IsWindow(hwndVideo)){
+                    TimeBar* tb = TimeBar::instance();
+                    displayFrameAtTime(tb->time());
+                }
+            });
+        }
+    } else {
+        // If playing, repaint video
+        if(videoDisplayControl){
+            videoDisplayControl->RepaintVideo();
+        }
     }
 }
 
@@ -464,13 +627,30 @@ HRESULT MFMediaViewImpl::load()
         bLoaded = true;
         currentState = Stopped;
 
+        // Create SourceReader for silent frame extraction
+        createSourceReader(wFilePath);
+
+        // Ignore time change signals during initial load.
+        // This prevents duplicate seeks from TimeBar restoration during project loading.
+        bIgnoreTimeChange = true;
+
         // Connect to TimeBar
         connectTimeBarSignals();
 
-        // Seek to current TimeBar time and pause
-        TimeBar* timeBar = TimeBar::instance();
-        seekMedia(timeBar->time());
-        pauseMedia();
+        // Adjust video window size and position
+        adjustVideoWindow();
+
+        // Display initial frame at current TimeBar position (using SourceReader - no audio)
+        // Use QTimer::singleShot to defer until the window is fully created and shown
+        QTimer::singleShot(100, [this](){
+            if(bLoaded){
+                TimeBar* timeBar = TimeBar::instance();
+                displayFrameAtTime(timeBar->time());
+            }
+        });
+
+        // Clear the ignore flag after event loop processes pending events
+        QTimer::singleShot(0, [this](){ bIgnoreTimeChange = false; });
 
         MessageOut::master()->putln(
             formatR(_("Media loaded: {}"), fpath.filename().string()));
@@ -488,6 +668,9 @@ HRESULT MFMediaViewImpl::load()
 HRESULT MFMediaViewImpl::unload()
 {
     disconnectTimeBarSignals();
+
+    // Release SourceReader
+    releaseSourceReader();
 
     if(audioVolume){
         audioVolume->Release();
@@ -521,6 +704,9 @@ HRESULT MFMediaViewImpl::unload()
         mediaSource->Release();
         mediaSource = nullptr;
     }
+
+    // Destroy video child window
+    destroyVideoWindow();
 
     bLoaded = false;
     currentState = Stopped;
@@ -696,9 +882,13 @@ HRESULT MFMediaViewImpl::createOutputNode(IMFStreamDescriptor* streamDesc, IMFTo
 
     // Create appropriate renderer based on media type
     if(majorType == MFMediaType_Video){
-        // Create EVR (Enhanced Video Renderer)
+        // Create child window for video rendering before creating EVR
+        createVideoWindow();
+        HWND targetHwnd = hwndVideo ? hwndVideo : hwnd;
+
+        // Create EVR (Enhanced Video Renderer) with child window
         IMFActivate* activate = nullptr;
-        hr = MFCreateVideoRendererActivate(hwnd, &activate);
+        hr = MFCreateVideoRendererActivate(targetHwnd, &activate);
         if(SUCCEEDED(hr)){
             hr = node->SetObject(activate);
             if(SUCCEEDED(hr)){
@@ -757,10 +947,10 @@ HRESULT MFMediaViewImpl::ensureVideoDisplayControl()
     HRESULT hr = videoRendererActivate->ActivateObject(IID_IMFVideoDisplayControl, (void**)&videoDisplayControl);
 
     if(SUCCEEDED(hr) && videoDisplayControl){
-        // Set video window
-        if(hwnd){
-            videoDisplayControl->SetVideoWindow(hwnd);
-            adjustVideoWindow();
+        // Set video window (prefer child window if available)
+        HWND targetHwnd = hwndVideo ? hwndVideo : hwnd;
+        if(targetHwnd){
+            videoDisplayControl->SetVideoWindow(targetHwnd);
         }
     }
 
@@ -768,7 +958,7 @@ HRESULT MFMediaViewImpl::ensureVideoDisplayControl()
 }
 
 // Phase 3: Playback control
-HRESULT MFMediaViewImpl::playMedia()
+HRESULT MFMediaViewImpl::playMedia(double startTime)
 {
     if(!mediaSession || !bLoaded){
         return E_FAIL;
@@ -779,7 +969,19 @@ HRESULT MFMediaViewImpl::playMedia()
 
     PROPVARIANT varStart;
     PropVariantInit(&varStart);
-    varStart.vt = VT_EMPTY;  // Start from current position
+
+    if(startTime >= 0){
+        // Start playback at specified position (ensures precise synchronization with TimeBar)
+        double adjustedTime = startTime;
+        if(currentMediaItem){
+            adjustedTime += currentMediaItem->offsetTime();
+        }
+        const LONGLONG ONE_SECOND = 10000000;
+        varStart.vt = VT_I8;
+        varStart.hVal.QuadPart = (LONGLONG)(adjustedTime * ONE_SECOND);
+    } else {
+        varStart.vt = VT_EMPTY;  // Start from current position
+    }
 
     HRESULT hr = mediaSession->Start(&GUID_NULL, &varStart);
     PropVariantClear(&varStart);
@@ -824,9 +1026,110 @@ HRESULT MFMediaViewImpl::stopMedia()
     return hr;
 }
 
-HRESULT MFMediaViewImpl::seekMedia(double time)
+// Debounced seek - only the last seek request within the debounce interval is executed
+void MFMediaViewImpl::seekMedia(double time)
 {
-    if(!mediaSession || !bLoaded || !bCanSeek){
+    pendingSeekTime = time;
+    seekDebounceTimer->start();  // Restart timer on each call
+}
+
+// SourceReader-based frame extraction (silent seeking without audio)
+HRESULT MFMediaViewImpl::createSourceReader(const std::wstring& filePath)
+{
+    HRESULT hr = S_OK;
+
+    // Release any existing SourceReader
+    releaseSourceReader();
+
+    // Create attributes for SourceReader
+    IMFAttributes* attributes = nullptr;
+    hr = MFCreateAttributes(&attributes, 1);
+    if(FAILED(hr)){
+        return hr;
+    }
+
+    // Request video processing for easy RGB conversion
+    hr = attributes->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, TRUE);
+
+    // Create SourceReader from file
+    hr = MFCreateSourceReaderFromURL(filePath.c_str(), attributes, &sourceReader);
+    attributes->Release();
+
+    if(FAILED(hr)){
+        return hr;
+    }
+
+    // Select only video stream (disable audio to avoid any audio processing)
+    sourceReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
+    sourceReader->SetStreamSelection(MF_SOURCE_READER_FIRST_VIDEO_STREAM, TRUE);
+
+    // Set output format to RGB32 for easy rendering
+    IMFMediaType* outputType = nullptr;
+    hr = MFCreateMediaType(&outputType);
+    if(SUCCEEDED(hr)){
+        hr = outputType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
+        if(SUCCEEDED(hr)){
+            hr = outputType->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32);
+        }
+        if(SUCCEEDED(hr)){
+            hr = sourceReader->SetCurrentMediaType(
+                MF_SOURCE_READER_FIRST_VIDEO_STREAM, nullptr, outputType);
+        }
+        outputType->Release();
+    }
+
+    // Get the actual output format to determine frame dimensions
+    IMFMediaType* actualType = nullptr;
+    hr = sourceReader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, &actualType);
+    if(SUCCEEDED(hr)){
+        UINT32 width = 0, height = 0;
+        hr = MFGetAttributeSize(actualType, MF_MT_FRAME_SIZE, &width, &height);
+        if(SUCCEEDED(hr)){
+            frameWidth = width;
+            frameHeight = height;
+
+            // Get stride (may be negative for bottom-up DIB)
+            LONG stride = 0;
+            hr = actualType->GetUINT32(MF_MT_DEFAULT_STRIDE, (UINT32*)&stride);
+            if(FAILED(hr)){
+                // Calculate stride if not provided (RGB32 = 4 bytes per pixel)
+                stride = width * 4;
+            }
+            frameStride = stride;
+
+            // Allocate frame buffer
+            LONG bufferSize = abs(stride) * height;
+            if(bufferSize > frameBufferSize){
+                if(frameBuffer){
+                    delete[] frameBuffer;
+                }
+                frameBuffer = new BYTE[bufferSize];
+                frameBufferSize = bufferSize;
+            }
+        }
+        actualType->Release();
+    }
+
+    return hr;
+}
+
+void MFMediaViewImpl::releaseSourceReader()
+{
+    if(sourceReader){
+        sourceReader->Release();
+        sourceReader = nullptr;
+    }
+}
+
+HRESULT MFMediaViewImpl::displayFrameAtTime(double time)
+{
+    if(!sourceReader || !frameBuffer || frameWidth <= 0 || frameHeight <= 0){
+        return E_FAIL;
+    }
+
+    // Check if we have a valid window to render to
+    HWND targetHwnd = hwndVideo ? hwndVideo : hwnd;
+    if(!targetHwnd || !IsWindow(targetHwnd)){
         return E_FAIL;
     }
 
@@ -838,18 +1141,169 @@ HRESULT MFMediaViewImpl::seekMedia(double time)
 
     // Convert to 100-nanosecond units
     const LONGLONG ONE_SECOND = 10000000;
-    LONGLONG position = (LONGLONG)(adjustedTime * ONE_SECOND);
+    LONGLONG targetPosition = (LONGLONG)(adjustedTime * ONE_SECOND);
+    if(targetPosition < 0) targetPosition = 0;
 
-    // Seek using Start method with specified position
-    PROPVARIANT varStart;
-    PropVariantInit(&varStart);
-    varStart.vt = VT_I8;
-    varStart.hVal.QuadPart = position;
+    // Seek to the specified position (seeks to nearest keyframe before target)
+    PROPVARIANT varPosition;
+    PropVariantInit(&varPosition);
+    varPosition.vt = VT_I8;
+    varPosition.hVal.QuadPart = targetPosition;
+    HRESULT hr = sourceReader->SetCurrentPosition(GUID_NULL, varPosition);
+    PropVariantClear(&varPosition);
 
-    HRESULT hr = mediaSession->Start(&GUID_NULL, &varStart);
-    PropVariantClear(&varStart);
+    if(FAILED(hr)){
+        return hr;
+    }
+
+    // Read samples until we reach or pass the target position
+    // This is necessary because SetCurrentPosition only seeks to keyframes
+    IMFSample* lastSample = nullptr;
+    const int MAX_FRAMES_TO_DECODE = 300;  // Safety limit
+
+    for(int i = 0; i < MAX_FRAMES_TO_DECODE; i++){
+        DWORD streamIndex = 0;
+        DWORD flags = 0;
+        LONGLONG timestamp = 0;
+        IMFSample* sample = nullptr;
+
+        hr = sourceReader->ReadSample(
+            MF_SOURCE_READER_FIRST_VIDEO_STREAM,
+            0,
+            &streamIndex,
+            &flags,
+            &timestamp,
+            &sample);
+
+        if(FAILED(hr) || (flags & MF_SOURCE_READERF_ENDOFSTREAM)){
+            // End of stream or error - use last sample if we have one
+            if(sample){
+                sample->Release();
+            }
+            break;
+        }
+
+        if(!sample){
+            continue;
+        }
+
+        // Release previous sample and keep this one
+        if(lastSample){
+            lastSample->Release();
+        }
+        lastSample = sample;
+
+        // Check if we've reached or passed the target position
+        if(timestamp >= targetPosition){
+            break;
+        }
+    }
+
+    // Render the last sample we got
+    if(lastSample){
+        IMFMediaBuffer* buffer = nullptr;
+        hr = lastSample->ConvertToContiguousBuffer(&buffer);
+        if(SUCCEEDED(hr)){
+            BYTE* data = nullptr;
+            DWORD maxLen = 0, curLen = 0;
+            hr = buffer->Lock(&data, &maxLen, &curLen);
+            if(SUCCEEDED(hr)){
+                // Copy frame data to our buffer
+                LONG copySize = (std::min)((LONG)curLen, frameBufferSize);
+                memcpy(frameBuffer, data, copySize);
+                buffer->Unlock();
+
+                // Render the frame to the window
+                renderFrameToWindow();
+            }
+            buffer->Release();
+        }
+        lastSample->Release();
+    }
 
     return hr;
+}
+
+void MFMediaViewImpl::renderFrameToWindow()
+{
+    if(!frameBuffer || frameWidth <= 0 || frameHeight <= 0){
+        return;
+    }
+
+    // Use child window if available, otherwise parent window
+    HWND targetHwnd = hwndVideo ? hwndVideo : hwnd;
+    if(!targetHwnd){
+        return;
+    }
+
+    HDC hdc = GetDC(targetHwnd);
+    if(!hdc){
+        return;
+    }
+
+    // Get window size
+    RECT clientRect;
+    GetClientRect(targetHwnd, &clientRect);
+    int windowWidth = clientRect.right - clientRect.left;
+    int windowHeight = clientRect.bottom - clientRect.top;
+
+    if(windowWidth <= 0 || windowHeight <= 0){
+        ReleaseDC(targetHwnd, hdc);
+        return;
+    }
+
+    // Calculate destination rectangle based on display options
+    int destX, destY, destW, destH;
+
+    if(orgSizeCheck && orgSizeCheck->isChecked()){
+        // Keep original size - center video
+        destX = (windowWidth - frameWidth) / 2;
+        destY = (windowHeight - frameHeight) / 2;
+        destW = frameWidth;
+        destH = frameHeight;
+    } else if(aspectRatioCheck && aspectRatioCheck->isChecked()){
+        // Scale to fit while maintaining aspect ratio
+        double r1 = (double)windowWidth / frameWidth;
+        double r2 = (double)windowHeight / frameHeight;
+        double scale = (std::min)(r1, r2);
+
+        destW = (int)(frameWidth * scale);
+        destH = (int)(frameHeight * scale);
+        destX = (windowWidth - destW) / 2;
+        destY = (windowHeight - destH) / 2;
+    } else {
+        // Stretch to fill entire window
+        destX = 0;
+        destY = 0;
+        destW = windowWidth;
+        destH = windowHeight;
+    }
+
+    // Fill background with black first
+    HBRUSH blackBrush = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    FillRect(hdc, &clientRect, blackBrush);
+
+    // Create BITMAPINFO structure for RGB32 data
+    BITMAPINFO bmi = {};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = frameWidth;
+    bmi.bmiHeader.biHeight = -frameHeight;  // Negative for top-down DIB
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    // Use StretchDIBits to render the frame
+    SetStretchBltMode(hdc, HALFTONE);
+    StretchDIBits(
+        hdc,
+        destX, destY, destW, destH,           // Destination rectangle
+        0, 0, frameWidth, frameHeight,        // Source rectangle
+        frameBuffer,
+        &bmi,
+        DIB_RGB_COLORS,
+        SRCCOPY);
+
+    ReleaseDC(targetHwnd, hdc);
 }
 
 // Phase 4: TimeBar integration
@@ -887,9 +1341,11 @@ bool MFMediaViewImpl::onPlaybackInitialized(double time)
     // Ensure video display control is obtained
     ensureVideoDisplayControl();
 
-    // Seek to the start time and pause
-    seekMedia(time);
-    pauseMedia();
+    // Cancel any pending debounced seek to avoid interference
+    seekDebounceTimer->stop();
+
+    // Display frame at start position (playMedia will handle actual seeking)
+    displayFrameAtTime(time);
 
     return true;
 }
@@ -897,7 +1353,8 @@ bool MFMediaViewImpl::onPlaybackInitialized(double time)
 void MFMediaViewImpl::onPlaybackStarted(double time)
 {
     if(bLoaded){
-        playMedia();
+        // Start playback at specified time for precise synchronization with TimeBar
+        playMedia(time);
     }
 }
 
@@ -939,6 +1396,11 @@ bool MFMediaViewImpl::onTimeChanged(double time)
         return false;
     }
 
+    // Ignore time change during initial load to avoid audio glitch
+    if(bIgnoreTimeChange){
+        return false;
+    }
+
     if(currentState == Running){
         // Continue playback, don't seek
         return true;
@@ -946,6 +1408,83 @@ bool MFMediaViewImpl::onTimeChanged(double time)
         // Seek to new time while paused
         seekMedia(time);
         return false;
+    }
+}
+
+// Video child window procedure
+static LRESULT CALLBACK videoChildWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    MFMediaViewImpl* impl = (MFMediaViewImpl*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+
+    switch(uMsg){
+    case WM_PAINT:
+        if(impl){
+            if(impl->currentState == MFMediaViewImpl::Running && impl->videoDisplayControl){
+                // Let EVR repaint the video during playback
+                impl->videoDisplayControl->RepaintVideo();
+            } else if(impl->frameBuffer && impl->frameWidth > 0 && impl->frameHeight > 0){
+                // Not playing - render cached frame using GDI
+                impl->renderFrameToWindow();
+            }
+        }
+        // Validate the window to prevent continuous WM_PAINT messages
+        ValidateRect(hwnd, nullptr);
+        return 0;
+
+    case WM_ERASEBKGND:
+        // Return non-zero to indicate we handled background erasing
+        return 1;
+    }
+
+    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+}
+
+// Video child window management
+void MFMediaViewImpl::createVideoWindow()
+{
+    if(hwndVideo || !hwnd){
+        return;
+    }
+
+    // Register window class for video child window
+    static bool classRegistered = false;
+    static const wchar_t* className = L"CnoidMFVideoWindow";
+
+    if(!classRegistered){
+        WNDCLASSEXW wc = {};
+        wc.cbSize = sizeof(WNDCLASSEXW);
+        wc.style = CS_OWNDC;
+        wc.lpfnWndProc = videoChildWindowProc;
+        wc.hInstance = GetModuleHandle(nullptr);
+        wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+        wc.lpszClassName = className;
+        RegisterClassExW(&wc);
+        classRegistered = true;
+    }
+
+    // Create child window for video rendering
+    hwndVideo = CreateWindowExW(
+        0,
+        className,
+        L"",
+        WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
+        0, 0, 1, 1,  // Initial size, will be adjusted later
+        hwnd,
+        nullptr,
+        GetModuleHandle(nullptr),
+        nullptr);
+
+    // Store pointer to impl for use in window procedure
+    if(hwndVideo){
+        SetWindowLongPtr(hwndVideo, GWLP_USERDATA, (LONG_PTR)this);
+    }
+}
+
+void MFMediaViewImpl::destroyVideoWindow()
+{
+    if(hwndVideo){
+        DestroyWindow(hwndVideo);
+        hwndVideo = nullptr;
     }
 }
 
@@ -977,55 +1516,79 @@ HRESULT MFMediaViewImpl::adjustVideoWindow()
         return S_OK;
     }
 
+    // Child window should already exist (created in createOutputNode)
+    // If not, create it now as fallback
+    if(!hwndVideo){
+        createVideoWindow();
+        if(hwndVideo){
+            videoDisplayControl->SetVideoWindow(hwndVideo);
+        } else {
+            return S_OK;
+        }
+    }
+
     SIZE videoSize, arSize;
     hr = videoDisplayControl->GetNativeVideoSize(&videoSize, &arSize);
 
-    if(hr == E_NOINTERFACE || FAILED(hr)){
-        // No video (audio-only file) or not ready yet
-        return S_OK;
+    LONG videoWidth = 0;
+    LONG videoHeight = 0;
+
+    if(SUCCEEDED(hr) && hr != E_NOINTERFACE){
+        videoWidth = videoSize.cx;
+        videoHeight = videoSize.cy;
     }
 
-    LONG videoWidth = videoSize.cx;
-    LONG videoHeight = videoSize.cy;
-
+    // If video size is not yet available, use screen size as default
+    // This ensures the child window is properly sized even before video is ready
     if(videoWidth <= 0 || videoHeight <= 0){
-        return S_OK;
+        videoWidth = screenWidth;
+        videoHeight = screenHeight;
     }
 
-    // videoWidth and videoHeight are already in physical pixels
-    RECT rcDest;
+    // Calculate child window position and size
+    LONG childX, childY, childW, childH;
 
     if(orgSizeCheck && orgSizeCheck->isChecked()){
-        // Keep original size - center video if it fits, otherwise position at (0,0)
-        if(videoWidth <= screenWidth && videoHeight <= screenHeight){
-            LONG x = (screenWidth - videoWidth) / 2;
-            LONG y = (screenHeight - videoHeight) / 2;
-            rcDest = {x, y, x + videoWidth, y + videoHeight};
-        } else {
-            rcDest = {0, 0, videoWidth, videoHeight};
-        }
+        // Keep original size - center video
+        childX = (screenWidth - videoWidth) / 2;
+        childY = (screenHeight - videoHeight) / 2;
+        childW = videoWidth;
+        childH = videoHeight;
     } else if(aspectRatioCheck && aspectRatioCheck->isChecked()){
         // Scale to fit while maintaining aspect ratio
         double r1 = (double)screenWidth / videoWidth;
         double r2 = (double)screenHeight / videoHeight;
         double scale = (std::min)(r1, r2);
 
-        LONG scaledWidth = (LONG)(videoWidth * scale);
-        LONG scaledHeight = (LONG)(videoHeight * scale);
-
-        LONG x = (screenWidth - scaledWidth) / 2;
-        LONG y = (screenHeight - scaledHeight) / 2;
-
-        rcDest = {x, y, x + scaledWidth, y + scaledHeight};
+        childW = (LONG)(videoWidth * scale);
+        childH = (LONG)(videoHeight * scale);
+        childX = (screenWidth - childW) / 2;
+        childY = (screenHeight - childH) / 2;
     } else {
         // Stretch to fill entire window
-        rcDest = {0, 0, screenWidth, screenHeight};
+        childX = 0;
+        childY = 0;
+        childW = screenWidth;
+        childH = screenHeight;
     }
 
-    // Set border color to black to fill non-video areas
-    videoDisplayControl->SetBorderColor(RGB(0, 0, 0));
+    // Move and resize child window
+    // This automatically clips video to child window bounds
+    SetWindowPos(hwndVideo, nullptr, childX, childY, childW, childH,
+                 SWP_NOZORDER | SWP_NOACTIVATE);
 
-    // Set new position
+    // Set aspect ratio mode based on user preference
+    // Note: This is only needed for stretch mode since EVR defaults to preserving aspect ratio
+    if(!orgSizeCheck || !orgSizeCheck->isChecked()){
+        if(aspectRatioCheck && aspectRatioCheck->isChecked()){
+            videoDisplayControl->SetAspectRatioMode(MFVideoARMode_PreservePicture);
+        } else {
+            videoDisplayControl->SetAspectRatioMode(MFVideoARMode_None);
+        }
+    }
+
+    // Set video to fill entire child window
+    RECT rcDest = {0, 0, childW, childH};
     hr = videoDisplayControl->SetVideoPosition(nullptr, &rcDest);
 
     // Repaint video at new position
@@ -1034,9 +1597,4 @@ HRESULT MFMediaViewImpl::adjustVideoWindow()
     }
 
     return hr;
-}
-
-HRESULT MFMediaViewImpl::handleSessionEvent()
-{
-    return S_OK;
 }

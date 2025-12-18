@@ -27,7 +27,7 @@ if(UNIX)
   set(libraries PRIVATE ${GSTREAMER_LIBRARIES} ${SNDFILE_LIBRARIES} ${LIBPULSE_LIBRARIES} X11)
 
 elseif(WIN32)
-  option(USE_MEDIA_FOUNDATION "Use Media Foundation instead of DirectShow for MediaView" OFF)
+  option(USE_MEDIA_FOUNDATION "Use Media Foundation instead of DirectShow for MediaView" ON)
   mark_as_advanced(USE_MEDIA_FOUNDATION)
 
   set(sources
