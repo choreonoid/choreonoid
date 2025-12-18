@@ -14,11 +14,6 @@ set(modules
 
 set(util_dependencies fmt ${FILESYSTEM_LIBRARY})
 
-if(has_boost_libs_for_util_libs)
-  set(boost_version ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION})
-  set(boost_components_for_util_libs system filesystem)
-endif()
-
 if(UNIX)
   set(CHOREONOID_USE_SUBSYSTEM_CONSOLE false)
 elseif(MSVC)

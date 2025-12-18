@@ -52,10 +52,6 @@ set(CHOREONOID_INCLUDE_DIRS "@include_dirs@")
 set(CHOREONOID_LIBRARY_DIRS "@library_dirs@")
 set(CHOREONOID_INSTALL_SDK @CHOREONOID_INSTALL_SDK@)
 
-if(@has_boost_libs_for_util_libs@)
-  find_package(Boost @boost_version@ EXACT COMPONENTS @boost_components_for_util_libs@)
-endif()
-
 add_library(Choreonoid::CnoidUtil SHARED IMPORTED GLOBAL)
 if(WIN32)
   set_target_properties(Choreonoid::CnoidUtil PROPERTIES
@@ -76,13 +72,8 @@ endif()
 #target_include_directories(Choreonoid::CnoidUtil INTERFACE ${CHOREONOID_INCLUDE_DIRS})
 set_property(TARGET Choreonoid::CnoidUtil APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS
   ${CHOREONOID_COMPILE_DEFINITIONS})
-if(@has_boost_libs_for_util_libs@)
-  set_property(TARGET Choreonoid::CnoidUtil APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-    ${CHOREONOID_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
-else()
-  set_property(TARGET Choreonoid::CnoidUtil APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-    ${CHOREONOID_INCLUDE_DIRS})
-endif()
+set_property(TARGET Choreonoid::CnoidUtil APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+  ${CHOREONOID_INCLUDE_DIRS})
 
 target_link_libraries(Choreonoid::CnoidUtil INTERFACE @util_dependencies@)
 set(CHOREONOID_UTIL_LIBRARIES Choreonoid::CnoidUtil)

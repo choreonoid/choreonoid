@@ -3,30 +3,8 @@
 
 #include <algorithm>
 
-#if __cplusplus >= 201703L
-
 namespace cnoid::stdx {
 using std::clamp;
 }
-
-#else
-
-namespace cnoid { namespace stdx {
-/** Clamp a value in a given interval.
- *
- * \param value Value to clamp.
- * \param lower Lower bound.
- * \param upper Upper bound.
- *
- * \returns clamped value
- */
-template<typename T>
-constexpr const T clamp(const T& v, const T& low, const T& high)
-{
-    return v < low ? low : (v < high ? v : high);
-}
-} } // namespace cnoid::stdx
-
-#endif
 
 #endif

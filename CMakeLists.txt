@@ -89,10 +89,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # C++ version
 if(CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD ${CMAKE_CXX_STANDARD} CACHE STRING "C++ version number. Specify either 20, 17 or 14.")
+  set(CMAKE_CXX_STANDARD ${CMAKE_CXX_STANDARD} CACHE STRING "C++ version number. Specify 20 or 17.")
 
 else()
-  set(cxx_standard 14)
+  set(cxx_standard 17)
 
   if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.12.0) # C++20 is supported by CMake 3.12 or later
     if(UNIX)
@@ -105,25 +105,11 @@ else()
     endif()
   endif()
 
-  if(NOT has_cpp20)
-    if(UNIX)
-      # C++17 support of GCC 7 is experimental
-      if(NOT CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8)
-	check_cxx_compiler_flag("-std=c++17" has_cpp17)
-      endif()
-    elseif(MSVC)
-      check_cxx_compiler_flag("/std:c++17" has_cpp17)
-    endif()
-    if(has_cpp17)
-      set(cxx_standard 17)
-    endif()
-  endif()
-
-  set(CMAKE_CXX_STANDARD ${cxx_standard} CACHE STRING "C++ version number. Specify either 20, 17 or 14.")
+  set(CMAKE_CXX_STANDARD ${cxx_standard} CACHE STRING "C++ version number. Specify 20 or 17.")
 endif()
 
-if(CMAKE_CXX_STANDARD LESS 14)
-  message(FATAL_ERROR "Choreonoid requires C++14 or higher.")
+if(CMAKE_CXX_STANDARD LESS 17)
+  message(FATAL_ERROR "Choreonoid requires C++17 or higher.")
 endif()
 
 if(UNIX)
@@ -518,25 +504,9 @@ if(ENABLE_LUA)
   set(CHOREONOID_LUA_SUBDIR ${CHOREONOID_PLUGIN_SUBDIR}/lua)
 endif()
 
-if(CMAKE_CXX_STANDARD GREATER_EQUAL 17)
-  if(UNIX)
-    set(FILESYSTEM_LIBRARY stdc++fs)
-  endif()
-  set(has_boost_libs_for_util_libs false)
-else()
-  # boost
-  set(Boost_USE_STATIC_LIBS OFF)
-  find_package(Boost REQUIRED COMPONENTS system filesystem)
-  include_directories(${Boost_INCLUDE_DIRS})
-  link_directories(${Boost_LIBRARY_DIRS})
-  list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${Boost_INCLUDE_DIRS})
-  list(APPEND CHOREONOID_SDK_LIBRARY_DIRS ${Boost_LIBRARY_DIRS})
-  set(FILESYSTEM_LIBRARY ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
-  if(MSVC)
-    set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS BOOST_ALL_DYN_LINK ${BOOST_LIB_DIAGNOSTIC})
-    install_runtime_dlls(${Boost_LIBRARY_DIRS} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
-  endif()
-  set(has_boost_libs_for_util_libs true)
+# C++17 std::filesystem
+if(UNIX)
+  set(FILESYSTEM_LIBRARY stdc++fs)
 endif()
 
 # Eigen
