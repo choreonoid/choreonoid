@@ -51,7 +51,6 @@ set(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN @CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN
 set(CHOREONOID_INCLUDE_DIRS "@include_dirs@")
 set(CHOREONOID_LIBRARY_DIRS "@library_dirs@")
 set(CHOREONOID_INSTALL_SDK @CHOREONOID_INSTALL_SDK@)
-set(CHOREONOID_USE_PYTHON2 @CNOID_USE_PYTHON2@)
 
 if(@has_boost_libs_for_util_libs@)
   find_package(Boost @boost_version@ EXACT COMPONENTS @boost_components_for_util_libs@)
