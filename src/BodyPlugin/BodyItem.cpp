@@ -450,7 +450,7 @@ void BodyItem::onTreePathChanged()
 {
     auto worldItem = findOwnerItem<WorldItem>();
     if(!worldItem){
-        clearCollisions();
+        clearCollisions(true);
     }
 
     /*
@@ -1092,6 +1092,9 @@ bool BodyItem::Impl::setCollisionDetectionEnabled(bool on)
 {
     if(on != isCollisionDetectionEnabled){
         isCollisionDetectionEnabled = on;
+        if(!on){
+            self->clearCollisions(true);
+        }
         updateCollisionDetectorLater();
         return true;
     }
@@ -1109,6 +1112,9 @@ bool BodyItem::Impl::setSelfCollisionDetectionEnabled(bool on)
 {
     if(on != isSelfCollisionDetectionEnabled){
         isSelfCollisionDetectionEnabled = on;
+        if(!on){
+            self->clearCollisions(true);
+        }
         updateCollisionDetectorLater();
         return true;
     }
@@ -1141,15 +1147,20 @@ bool BodyItem::isSelfCollisionDetectionEnabled() const
 }
 
 
-void BodyItem::clearCollisions()
+void BodyItem::clearCollisions(bool doNotifyCollisionUpdate)
 {
     collisions_.clear();
 
+    bool changed = false;
     for(size_t i=0; i < collisionLinkBitSet_.size(); ++i){
         if(collisionLinkBitSet_[i]){
             collisionsOfLink_[i].clear();
             collisionLinkBitSet_[i] = false;
+            changed = true;
         }
+    }
+    if(doNotifyCollisionUpdate && changed){
+        notifyCollisionUpdate();
     }
 }
 

@@ -82,7 +82,7 @@ public:
     void onSubTreeChanged();
     bool selectCollisionDetector(int index, bool doUpdateCollisionDetectionBodies);
     void enableCollisionDetection(bool on);
-    void clearCollisionDetector();
+    void clearCollisionDetector(bool doNotiyCollisionUpdate);
     void updateCollisionDetectionBodies(bool forceUpdate);
     void updateColdetBodyInfos(vector<ColdetBodyInfoPtr>& infos);
     void updateCollisions(bool forceUpdate);
@@ -270,7 +270,7 @@ void WorldItem::Impl::enableCollisionDetection(bool on)
     bool changed = false;
     
     if(isCollisionDetectionEnabled && !on){
-        clearCollisionDetector();
+        clearCollisionDetector(true);
         isCollisionDetectionEnabled = false;
         changed = true;
         
@@ -282,7 +282,6 @@ void WorldItem::Impl::enableCollisionDetection(bool on)
 
     if(changed){
         self->notifyUpdate();
-        sigCollisionsUpdated();
     }
 }
 
@@ -305,15 +304,21 @@ bool WorldItem::isCollisionDetectionBetweenMultiplexBodiesEnabled() const
 }
 
 
-void WorldItem::Impl::clearCollisionDetector()
+void WorldItem::Impl::clearCollisionDetector(bool doNotiyCollisionUpdate)
 {
+    collisions->clear();
+    sceneCollision->setDirty();
     bodyCollisionDetector.clearBodies();
     bodyItemConnections.disconnect();
     updateCollisionsLater.cancel();
     needToUpdateCollisionsLater = false;
 
     for(auto& info : coldetBodyInfos){
-        info->bodyItem->clearCollisions();
+        info->bodyItem->clearCollisions(doNotiyCollisionUpdate);
+    }
+
+    if(doNotiyCollisionUpdate){
+        sigCollisionsUpdated();
     }
 }
 
@@ -360,7 +365,7 @@ void WorldItem::Impl::updateCollisionDetectionBodies(bool forceUpdate)
         bodyToBodyItemMap[info->bodyItem->body()] = info->bodyItem;
     }
 
-    clearCollisionDetector();
+    clearCollisionDetector(false);
 
     bodyCollisionDetector.setMultiplexBodySupportEnabled(isCollisionDetectionBetweenMultiplexBodiesEnabled);
 
@@ -426,7 +431,7 @@ void WorldItem::Impl::updateCollisions(bool forceUpdate)
 
     for(auto& bodyInfo : coldetBodyInfos){
         auto bodyItem = bodyInfo->bodyItem;
-        bodyItem->clearCollisions();
+        bodyItem->clearCollisions(false);
 
         auto body = bodyItem->body();
         Link* newParentBodyLink = bodyItem->isAttachedToParentBody() ? body->parentBodyLink() : nullptr;

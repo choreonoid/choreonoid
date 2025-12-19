@@ -180,7 +180,7 @@ public:
     [[deprecated("Use setSelfCollisionDetectionEnabled")]]
     void enableSelfCollisionDetection(bool on) { setSelfCollisionDetectionEnabled(on); }
     
-    void clearCollisions();
+    void clearCollisions(bool doNotifyCollisionUpdate);
 
     typedef std::shared_ptr<CollisionLinkPair> CollisionLinkPairPtr;
     
