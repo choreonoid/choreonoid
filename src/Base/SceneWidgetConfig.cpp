@@ -567,7 +567,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
 
     nearClipSpin = new DoubleSpinBox(ownerWidget);
     nearClipSpin->setDecimals(4);
-    nearClipSpin->setRange(0.0001, 9.9999);
+    nearClipSpin->setRange(0.0001, 99999.9999);
     nearClipSpin->setSingleStep(0.0001);
     nearClipSpin->sigValueChanged().connect(
         [this](double d){
@@ -578,7 +578,7 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
 
     farClipSpin = new DoubleSpinBox(ownerWidget);
     farClipSpin->setDecimals(1);
-    farClipSpin->setRange(0.1, 9999999.9);
+    farClipSpin->setRange(0.1, 999999999.9);
     farClipSpin->setSingleStep(0.1);
     farClipSpin->sigValueChanged().connect(
         [this](double d){

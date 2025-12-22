@@ -320,10 +320,10 @@ void PositionWidget::Impl::updateValueFormat(bool doRefresh)
     double lmax;
     if(lunit == DisplayValueFormat::Millimeter){
         lengthRatio = 1000.0;
-        lmax = 99999999.0;
+        lmax = 99999999.9;
     } else {
         lengthRatio = 1.0;
-        lmax = 99999.0;
+        lmax = 999999999.9;
     }
     int ldecimals = valueFormat->lengthDecimals();
     double lstep = valueFormat->lengthStep();
