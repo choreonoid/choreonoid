@@ -396,11 +396,8 @@ DistanceMeasurementDialog::Impl::~Impl()
 
 void DistanceMeasurementDialog::Impl::updateDisplayValueFormat()
 {
-    if(displayValueFormat->isMeter()){
-        pointDisplayFormat = formatC("( {{0:.{0}f}}, {{1:.{0}f}}, {{2:.{0}f}} ) [m]", displayValueFormat->lengthDecimals());
-    } else {
-        pointDisplayFormat = formatC("( {{0:.{0}f}}, {{1:.{0}f}}, {{2:.{0}f}} ) [mm]", displayValueFormat->lengthDecimals());
-    }
+    pointDisplayFormat = formatC("( {{0:.{0}f}}, {{1:.{0}f}}, {{2:.{0}f}} ) [{1}]",
+                                 displayValueFormat->lengthDecimals(), displayValueFormat->lengthUnitSymbol());
     distanceDisplayFormat = formatC("{{0:.{0}f}}", displayValueFormat->lengthDecimals());
 
     updateDistanceDisplay();
@@ -995,7 +992,7 @@ void DistanceMeasurementDialog::Impl::updateDistanceDisplay()
         const Vector3& p1 = measurementItem->measurementPoint(1);
 
         distanceLabel.setText(formatR(distanceDisplayFormat, displayValueFormat->toDisplayLength(distance)).c_str());
-        distanceUnitLabel.setText(displayValueFormat->isMeter() ? _("[m]") : _("[mm]"));
+        distanceUnitLabel.setText(formatC("[{0}]", displayValueFormat->lengthUnitSymbol()).c_str());
         updatePointDisplay(0, p0);
         updatePointDisplay(1, p1);
 

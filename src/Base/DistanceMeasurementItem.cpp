@@ -999,11 +999,8 @@ ViewportText::ViewportText()
 
 void ViewportText::updateDisplayValueFormat(bool doUpdateText)
 {
-    if(displayValueFormat->isMillimeter()){
-        distanceDisplayFormat = formatC("{{0:.{0}f}}mm", displayValueFormat->lengthDecimals());
-    } else {
-        distanceDisplayFormat = formatC("{{0:.{0}f}}m", displayValueFormat->lengthDecimals());
-    }
+    distanceDisplayFormat = formatC("{{0:.{0}f}}{1}",
+                                    displayValueFormat->lengthDecimals(), displayValueFormat->lengthUnitSymbol());
     if(doUpdateText){
         updateText();
     }

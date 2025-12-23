@@ -19,30 +19,18 @@ LengthSpinBox::LengthSpinBox(QWidget* parent)
 
 void LengthSpinBox::setMeterRange(double minimum, double maximum)
 {
-    if(dvFormat->isMeter()){
-        setRange(minimum, maximum);
-    } else if(dvFormat->isMillimeter()){
-        setRange(minimum * 1000.0, maximum * 1000.0);
-    }
+    setRange(dvFormat->toDisplayLength(minimum), dvFormat->toDisplayLength(maximum));
 }
         
 double LengthSpinBox::meterMaximum() const
 {
-    if(dvFormat->isMeter()){
-        return maximum();
-    } else {
-        return maximum() / 1000.0;
-    }
+    return dvFormat->toMeter(maximum());
 }
 
 
 double LengthSpinBox::meterMinimum() const
 {
-    if(dvFormat->isMeter()){
-        return minimum();
-    } else {
-        return minimum() / 1000.0;
-    }
+    return dvFormat->toMeter(minimum());
 }
 
 
@@ -50,32 +38,20 @@ void LengthSpinBox::setMeterSingleStep(double step)
 {
     meterSingleStep = step;
     if(!dvFormat->isLengthStepForcedMode()){
-        if(dvFormat->isMeter()){
-            setSingleStep(step);
-        } else {
-            setSingleStep(step * 1000.0);
-        }
+        setSingleStep(dvFormat->toDisplayLength(step));
     }
 }
 
 
 void LengthSpinBox::setMeterValue(double x)
 {
-    if(dvFormat->isMeter()){
-        setValue(x);
-    } else {
-        setValue(x * 1000.0);
-    }
+    setValue(dvFormat->toDisplayLength(x));
 }
 
 
 double LengthSpinBox::meterValue() const
 {
-    if(dvFormat->isMeter()){
-        return value();
-    } else {
-        return value() / 1000.0;
-    }
+    return dvFormat->toMeter(value());
 }
 
 
@@ -86,17 +62,19 @@ void LengthSpinBox::onFormatChanged()
         blockSignals(true);
         setDecimals(dvFormat->lengthDecimals());
         if(meterSingleStep && !dvFormat->isLengthStepForcedMode()){
-            setSingleStep(*meterSingleStep);
+            setSingleStep(dvFormat->toDisplayLength(*meterSingleStep));
         } else {
             setSingleStep(dvFormat->lengthStep());
         }
-        if(dvFormat->isMeter()){
-            setRange(minimum() / 1000.0, maximum() / 1000.0);
-            setValue(value() / 1000.0);
-        } else {
-            setRange(minimum() * 1000.0, maximum() * 1000.0);
-            setValue(value() * 1000.0);
-        }
+        // Convert current values from old unit to meter, then to new display unit
+        double oldRatio = (unit == DisplayValueFormat::Meter) ? 1.0 :
+                          (unit == DisplayValueFormat::Millimeter) ? 0.001 : 1000.0;
+        double meterMin = minimum() * oldRatio;
+        double meterMax = maximum() * oldRatio;
+        double meterVal = value() * oldRatio;
+        setRange(dvFormat->toDisplayLength(meterMin), dvFormat->toDisplayLength(meterMax));
+        setValue(dvFormat->toDisplayLength(meterVal));
+        unit = newUnit;
         blockSignals(false);
     }
 }

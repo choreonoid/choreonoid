@@ -257,19 +257,12 @@ void PointSetToMeshConversionDialog::Impl::updateInterfaces()
     muSpin.blockSignals(true);
     searchRadiusSpin.blockSignals(true);
 
-    if(dvf->isMillimeter()){
-        normalEstimationSearchRadiusUnitLabel.setText("[mm]");
-        muSpin.setDecimals(0);
-        muSpin.setSingleStep(1.0);
-        muUnitLabel.setText("[mm]");
-        searchRadiusUnitLabel.setText("[mm]");
-    } else {
-        normalEstimationSearchRadiusUnitLabel.setText("[m]");
-        muSpin.setDecimals(1);
-        muSpin.setSingleStep(0.1);
-        muUnitLabel.setText("[m]");
-        searchRadiusUnitLabel.setText("[m]");
-    }
+    auto unitLabel = formatC("[{0}]", dvf->lengthUnitSymbol());
+    normalEstimationSearchRadiusUnitLabel.setText(unitLabel.c_str());
+    muUnitLabel.setText(unitLabel.c_str());
+    searchRadiusUnitLabel.setText(unitLabel.c_str());
+    muSpin.setDecimals(dvf->lengthDecimals());
+    muSpin.setSingleStep(dvf->lengthStep());
 
     normalEstimationSearchRadiusSpin.setDecimals(dvf->lengthDecimals());
     normalEstimationSearchRadiusSpin.setSingleStep(dvf->lengthStep());

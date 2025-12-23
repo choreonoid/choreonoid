@@ -48,6 +48,10 @@ public:
     QStringList positionHeaderLabels;
     QFont& monoFont;
     DisplayValueFormat* valueFormat;
+    mutable std::string ikPosFormat;
+    mutable std::string ikPosFormatNoIds;
+    mutable std::string fkPosFormat;
+    ScopedConnection valueFormatConnection;
     bool useLazyResize;
     LazyCaller resizeColumnsCaller;
 
@@ -136,6 +140,11 @@ PositionListModel::PositionListModel(MprPositionListWidget::Impl* widgetImpl)
     mainBodyPartIndex = -1;
     singlePositionHeaderLabel = _("Position");
     valueFormat = widgetImpl->valueFormat;
+    valueFormatConnection = valueFormat->sigFormatChanged().connect(
+        [this](){
+            ikPosFormat.clear();
+            Q_EMIT layoutChanged();
+        });
 
     // Initialize LazyCaller with high priority to run before paint events
     resizeColumnsCaller.setFunction([this](){ resizeColumns(); });
@@ -363,6 +372,17 @@ QVariant PositionListModel::getPositionData(MprPosition* position, int posColumn
 
 QVariant PositionListModel::getSinglePositionData(MprPosition* position) const
 {
+    double ratio = valueFormat->ratioToDisplayLength();
+    if(ikPosFormat.empty()){
+        int decimals = valueFormat->lengthDecimals();
+        // IK: mm: 8.1f -> 8-1+decimals, m: 7.3f -> 7-3+decimals
+        int ikWidth = (valueFormat->isMillimeter() ? 7 : 4) + decimals;
+        // FK: mm: 9.3f -> 9-3+decimals, m: 6.3f -> 6-3+decimals
+        int fkWidth = (valueFormat->isMillimeter() ? 6 : 3) + decimals;
+        ikPosFormat = formatC("{{0: {0}.{1}f}} {{1: {0}.{1}f}} {{2: {0}.{1}f}} {{3: 6.1f}} {{4: 6.1f}} {{5: 6.1f}} : {{6:2X}} {{7:2d}} {{8:2d}}", ikWidth, decimals);
+        ikPosFormatNoIds = formatC("{{0: {0}.{1}f}} {{1: {0}.{1}f}} {{2: {0}.{1}f}} {{3: 6.1f}} {{4: 6.1f}} {{5: 6.1f}} : {{6:2X}}", ikWidth, decimals);
+        fkPosFormat = formatC("{{0: {0}.{1}f}}", fkWidth, decimals);
+    }
     if(position->isIK()){
         auto ik = position->ikPosition();
         auto p = ik->position().translation();
@@ -370,34 +390,14 @@ QVariant PositionListModel::getSinglePositionData(MprPosition* position) const
         auto& baseId = ik->baseFrameId();
         auto& offsetId = ik->offsetFrameId();
         if(baseId.isInt() && offsetId.isInt()){
-            if(valueFormat->isMillimeter()){
-                return formatC("{0: 8.1f} {1: 8.1f} {2: 8.1f} "
-                               "{3: 6.1f} {4: 6.1f} {5: 6.1f} "
-                               ": {6:2X} {7:2d} {8:2d}",
-                               p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0,
-                               rpy[0], rpy[1], rpy[2],
-                               ik->configuration(), baseId.toInt(), offsetId.toInt()).c_str();
-            } else {
-                return formatC("{0: 7.3f} {1: 7.3f} {2: 7.3f} "
-                               "{3: 6.1f} {4: 6.1f} {5: 6.1f} "
-                               ": {6:2X} {7:2d} {8:2d}",
-                               p.x(), p.y(), p.z(),
-                               rpy[0], rpy[1], rpy[2],
-                               ik->configuration(), baseId.toInt(), offsetId.toInt()).c_str();
-            }
+            return formatR(ikPosFormat,
+                           p.x() * ratio, p.y() * ratio, p.z() * ratio,
+                           rpy[0], rpy[1], rpy[2],
+                           ik->configuration(), baseId.toInt(), offsetId.toInt()).c_str();
         } else {
-            if(valueFormat->isMillimeter()){
-                return formatC("{0: 8.1f} {1: 8.1f} {2: 8.1f} "
-                               "{3: 6.1f} {4: 6.1f} {5: 6.1f} : {6:2X}",
-                               p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0,
-                               rpy[0], rpy[1], rpy[2],
-                               ik->configuration()).c_str();
-            } else {
-                return formatC("{0: 7.3f} {1: 7.3f} {2: 7.3f} "
-                               "{3: 6.1f} {4: 6.1f} {5: 6.1f} : {6:2X}",
-                               p.x(), p.y(), p.z(),
-                               rpy[0], rpy[1], rpy[2], ik->configuration()).c_str();
-            }
+            return formatR(ikPosFormatNoIds,
+                           p.x() * ratio, p.y() * ratio, p.z() * ratio,
+                           rpy[0], rpy[1], rpy[2], ik->configuration()).c_str();
         }
     } else if(position->isFK()){
         auto fk = position->fkPosition();
@@ -409,11 +409,7 @@ QVariant PositionListModel::getSinglePositionData(MprPosition* position) const
             if(fk->checkIfRevoluteJoint(i)){
                 data += formatC("{0: 6.1f}", degree(q));
             } else {
-                if(valueFormat->isMillimeter()){
-                    data += formatC("{0: 9.3f}", q * 1000.0);
-                } else {
-                    data += formatC("{0: 6.3f}", q);
-                }
+                data += formatR(fkPosFormat, q * ratio);
             }
             if(i < m){
                 data += " ";
@@ -759,6 +755,8 @@ int MprPositionListWidget::getIkPositionColumnWidth() const
     int width;
     if(impl->valueFormat->isMillimeter()){
         width = fm.horizontalAdvance("+00000.0 +00000.0 +00000.0 +000.0 000.0 000.0 : AB 00 00");
+    } else if(impl->valueFormat->isKilometer()){
+        width = fm.horizontalAdvance("+00.000000 +00.000000 +00.000000 +000.0 000.0 000.0 : AB 00 00");
     } else {
         width = fm.horizontalAdvance("+00.000 +00.000 +00.000 +000.0 000.0 000.0 : AB 00 00");
     }

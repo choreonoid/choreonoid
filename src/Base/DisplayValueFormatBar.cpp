@@ -57,6 +57,7 @@ DisplayValueFormatBar::Impl::Impl(DisplayValueFormatBar* self)
     
     lengthUnitCombo.addItem(_("Meter"), DisplayValueFormat::Meter);
     lengthUnitCombo.addItem(_("Millimeter"), DisplayValueFormat::Millimeter);
+    lengthUnitCombo.addItem(_("Kilometer"), DisplayValueFormat::Kilometer);
     self->addWidget(&lengthUnitCombo);
 
     auto label = self->addLabel(" . ");

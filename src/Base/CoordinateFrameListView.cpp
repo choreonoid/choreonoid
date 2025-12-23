@@ -46,6 +46,8 @@ public:
     ScopedConnectionSet frameListConnections;
     QFont monoFont;
     DisplayValueFormat* valueFormat;
+    mutable std::string positionFormat;
+    ScopedConnection valueFormatConnection;
     
     FrameListModel(CoordinateFrameListView::Impl* view);
     void setFrameListItem(CoordinateFrameListItem* frameListItem);
@@ -129,8 +131,13 @@ FrameListModel::FrameListModel(CoordinateFrameListView::Impl* view)
       monoFont("Monospace")
 {
     monoFont.setStyleHint(QFont::TypeWriter);
-    
+
     valueFormat = DisplayValueFormat::master();
+    valueFormatConnection = valueFormat->sigFormatChanged().connect(
+        [this](){
+            positionFormat.clear();
+            Q_EMIT layoutChanged();
+        });
 }
 
 
@@ -292,15 +299,16 @@ QVariant FrameListModel::data(const QModelIndex& index, int role) const
             Isometry3 T = frame->T();
             auto p = T.translation();
             auto rpy = degree(rpyFromRot(T.linear()));
-
-            if(valueFormat->isMillimeter()){
-                return formatC("{0: 9.3f} {1: 9.3f} {2: 9.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
-                               p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0,
-                               rpy[0], rpy[1], rpy[2]).c_str();
-            } else {
-                return formatC("{0: 6.3f} {1: 6.3f} {2: 6.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
-                               p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
+            double ratio = valueFormat->ratioToDisplayLength();
+            if(positionFormat.empty()){
+                int decimals = valueFormat->lengthDecimals();
+                // mm: 9.3f -> 9-3+decimals, m: 6.3f -> 6-3+decimals
+                int width = (valueFormat->isMillimeter() ? 6 : 3) + decimals;
+                positionFormat = formatC("{{0: {0}.{1}f}} {{1: {0}.{1}f}} {{2: {0}.{1}f}} {{3: 6.1f}} {{4: 6.1f}} {{5: 6.1f}}", width, decimals);
             }
+            return formatR(positionFormat,
+                           p.x() * ratio, p.y() * ratio, p.z() * ratio,
+                           rpy[0], rpy[1], rpy[2]).c_str();
         }
         case GlobalCheckColumn:
             return frame->isGlobal();

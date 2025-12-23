@@ -462,6 +462,8 @@ void JointDisplacementWidgetSet::Impl::updateIndicatorGrid()
     lengthUnit = dvFormat->lengthUnit();
     if(lengthUnit == DisplayValueFormat::Millimeter){
         defaultMaxLength = 10000.0;
+    } else if(lengthUnit == DisplayValueFormat::Kilometer){
+        defaultMaxLength = 10.0;  // 10km
     } else {
         defaultMaxLength = 10.0;
     }
@@ -745,23 +747,16 @@ void JointIndicator::initialize(Link* joint)
         dial.setEnabled(true);
         
     } else if(joint->isPrismaticJoint()){
-        if(baseImpl->lengthUnit == DisplayValueFormat::Millimeter){
-            unitConversionRatio = 1000.0;
-            lower *= unitConversionRatio;
-            upper *= unitConversionRatio;
-            if(!setRangeLabelValue(lowerLimitLabel, lower, isLowerInfinite, baseImpl->lengthDecimals)){
-                lower = -1000.0;
-            }
-            if(!setRangeLabelValue(upperLimitLabel, upper, isUpperInfinite, baseImpl->lengthDecimals)){
-                upper = 1000.0;
-            }
-        } else {
-            if(!setRangeLabelValue(lowerLimitLabel, lower, isLowerInfinite, baseImpl->lengthDecimals)){
-                lower = -1.0;
-            }
-            if(!setRangeLabelValue(upperLimitLabel, upper, isUpperInfinite, baseImpl->lengthDecimals)){
-                upper = 1.0;
-            }
+        unitConversionRatio = baseImpl->dvFormat->ratioToDisplayLength();
+        lower *= unitConversionRatio;
+        upper *= unitConversionRatio;
+        double defaultRange = (baseImpl->lengthUnit == DisplayValueFormat::Millimeter) ? 1000.0 :
+                              (baseImpl->lengthUnit == DisplayValueFormat::Kilometer) ? 0.001 : 1.0;
+        if(!setRangeLabelValue(lowerLimitLabel, lower, isLowerInfinite, baseImpl->lengthDecimals)){
+            lower = -defaultRange;
+        }
+        if(!setRangeLabelValue(upperLimitLabel, upper, isUpperInfinite, baseImpl->lengthDecimals)){
+            upper = defaultRange;
         }
         slider.setRange(lower * Resolution, upper * Resolution);
         slider.setEnabled(true);

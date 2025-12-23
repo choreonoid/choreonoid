@@ -34,6 +34,9 @@ public:
     ScopedConnectionSet tagGroupConnections;
     QFont monoFont;
     DisplayValueFormat* valueFormat;
+    mutable std::string positionFormat;
+    mutable std::string positionWithRpyFormat;
+    ScopedConnection valueFormatConnection;
     bool isProcessingInternalMove;
     
     TagGroupModel(PositionTagListWidget* widget);
@@ -94,6 +97,11 @@ TagGroupModel::TagGroupModel(PositionTagListWidget* widget)
 {
     monoFont.setStyleHint(QFont::TypeWriter);
     valueFormat = DisplayValueFormat::master();
+    valueFormatConnection = valueFormat->sigFormatChanged().connect(
+        [this](){
+            positionFormat.clear();
+            Q_EMIT layoutChanged();
+        });
     isProcessingInternalMove = false;
 }
 
@@ -231,23 +239,21 @@ QVariant TagGroupModel::data(const QModelIndex& index, int role) const
 QVariant TagGroupModel::getPositionData(const PositionTag* tag) const
 {
     auto p = tag->translation();
+    double ratio = valueFormat->ratioToDisplayLength();
+    if(positionFormat.empty()){
+        int decimals = valueFormat->lengthDecimals();
+        // mm: 9.3f -> 9-3+decimals, m: 6.3f -> 6-3+decimals
+        int width = (valueFormat->isMillimeter() ? 6 : 3) + decimals;
+        positionFormat = formatC("{{0: {0}.{1}f}} {{1: {0}.{1}f}} {{2: {0}.{1}f}}", width, decimals);
+        positionWithRpyFormat = formatC("{{0: {0}.{1}f}} {{1: {0}.{1}f}} {{2: {0}.{1}f}} {{3: 6.1f}} {{4: 6.1f}} {{5: 6.1f}}", width, decimals);
+    }
     if(!tag->hasAttitude()){
-        if(valueFormat->isMillimeter()){
-            return formatC("{0: 9.3f} {1: 9.3f} {2: 9.3f}",
-                           p.x() * 1000.0, p.y() * 1000.0, p.z() * 1000.0).c_str();
-        } else {
-            return formatC("{0: 6.3f} {1: 6.3f} {2: 6.3f}", p.x(), p.y(), p.z()).c_str();
-        }
+        return formatR(positionFormat, p.x() * ratio, p.y() * ratio, p.z() * ratio).c_str();
     } else {
         auto rpy = degree(rpyFromRot(tag->rotation()));
-        if(valueFormat->isMillimeter()){
-            return formatC("{0: 9.3f} {1: 9.3f} {2: 9.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
-                           p.x() * 1000.0, p.y() * 1000, p.z() * 1000,
-                           rpy[0], rpy[1],rpy[2]).c_str();
-        } else {
-            return formatC("{0: 6.3f} {1: 6.3f} {2: 6.3f} {3: 6.1f} {4: 6.1f} {5: 6.1f}",
-                           p.x(), p.y(), p.z(), rpy[0], rpy[1], rpy[2]).c_str();
-        }
+        return formatR(positionWithRpyFormat,
+                       p.x() * ratio, p.y() * ratio, p.z() * ratio,
+                       rpy[0], rpy[1], rpy[2]).c_str();
     }
 }
 

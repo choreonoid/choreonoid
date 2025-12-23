@@ -13,8 +13,10 @@ DisplayValueFormat::DisplayValueFormat()
     lengthUnit_ = Meter;
     meterDecimals_ = 3;
     millimeterDecimals_ = 1;
+    kilometerDecimals_ = 3;
     meterStep_ = 0.001;
     millimeterStep_ = 1.0;
+    kilometerStep_ = 0.001;
     isLengthDecimalsForcedMode_ = false;
     isLengthStepForcedMode_ = false;
     
@@ -35,8 +37,10 @@ DisplayValueFormat::DisplayValueFormat(const DisplayValueFormat& org)
     lengthUnit_ = org.lengthUnit_;
     meterDecimals_ = org.meterDecimals_;
     millimeterDecimals_ = org.millimeterDecimals_;
+    kilometerDecimals_ = org.kilometerDecimals_;
     meterStep_ = org.meterStep_;
     millimeterStep_ = org.millimeterStep_;
+    kilometerStep_ = org.kilometerStep_;
     isLengthDecimalsForcedMode_ = org.isLengthDecimalsForcedMode_;
     isLengthStepForcedMode_ = org.isLengthStepForcedMode_;
     
@@ -56,14 +60,10 @@ void DisplayValueFormat::setLengthDecimals(int decimals)
 {
     if(lengthUnit_ == Meter){
         meterDecimals_ = decimals;
-        millimeterDecimals_ = decimals + 3;
-    } else {
+    } else if(lengthUnit_ == Millimeter){
         millimeterDecimals_ = decimals;
-        decimals -= 3;
-        if(decimals < 0){
-            decimals = 0;
-        }
-        meterDecimals_ = decimals;
+    } else {
+        kilometerDecimals_ = decimals;
     }
 }
 
@@ -72,10 +72,10 @@ void DisplayValueFormat::setLengthStep(double step)
 {
     if(lengthUnit_ == Meter){
         meterStep_ = step;
-        millimeterStep_ = step * 1000.0;
-    } else {
-        meterStep_ = step / 1000.0;
+    } else if(lengthUnit_ == Millimeter){
         millimeterStep_ = step;
+    } else {
+        kilometerStep_ = step;
     }
 }
 
@@ -120,5 +120,6 @@ void DisplayValueFormat::restoreConfiguration()
     if(config){
         meterStep_ = config.get("meter_step", meterStep_);
         millimeterStep_ = config.get("millimeter_step", millimeterStep_);
+        kilometerStep_ = config.get("kilometer_step", kilometerStep_);
     }
 }

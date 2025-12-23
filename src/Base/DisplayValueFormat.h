@@ -22,27 +22,43 @@ public:
     DisplayValueFormat();
     DisplayValueFormat(const DisplayValueFormat& org);
 
-    enum LengthUnit { Meter, Millimeter };
+    enum LengthUnit { Meter, Millimeter, Kilometer };
     void setLengthUnit(LengthUnit unitType) { lengthUnit_ = unitType; }
     int lengthUnit() const { return lengthUnit_; }
     bool isMeter() const { return lengthUnit_ == Meter; }
     bool isMillimeter() const { return lengthUnit_ == Millimeter; }
+    bool isKilometer() const { return lengthUnit_ == Kilometer; }
     double toDisplayLength(double meter) const {
-        return (lengthUnit_ == Meter) ? meter : meter * 1000.0;
+        if(lengthUnit_ == Meter) return meter;
+        if(lengthUnit_ == Millimeter) return meter * 1000.0;
+        return meter / 1000.0;  // Kilometer
     }
     double toMeter(double displayLength) const {
-        return (lengthUnit_ == Meter) ? displayLength : displayLength / 1000.0;
+        if(lengthUnit_ == Meter) return displayLength;
+        if(lengthUnit_ == Millimeter) return displayLength / 1000.0;
+        return displayLength * 1000.0;  // Kilometer
     }
     double ratioToDisplayLength() const {
-        return (lengthUnit_ == Meter) ? 1.0 : 1000.0;
+        if(lengthUnit_ == Meter) return 1.0;
+        if(lengthUnit_ == Millimeter) return 1000.0;
+        return 0.001;  // Kilometer
+    }
+    const char* lengthUnitSymbol() const {
+        if(lengthUnit_ == Meter) return "m";
+        if(lengthUnit_ == Millimeter) return "mm";
+        return "km";
     }
     void setMeterDecimals(int decimals) { meterDecimals_ = decimals; }
     int meterDecimals() const { return meterDecimals_; }
     void setMillimeterDecimals(int decimals){ millimeterDecimals_ = decimals; }
     int millimeterDecimals() const { return millimeterDecimals_; }
+    void setKilometerDecimals(int decimals){ kilometerDecimals_ = decimals; }
+    int kilometerDecimals() const { return kilometerDecimals_; }
     void setLengthDecimals(int decimals);
     int lengthDecimals() const {
-        return (lengthUnit_ == Meter) ? meterDecimals_ : millimeterDecimals_;
+        if(lengthUnit_ == Meter) return meterDecimals_;
+        if(lengthUnit_ == Millimeter) return millimeterDecimals_;
+        return kilometerDecimals_;
     }
     void setLengthDecimalsForcedMode(bool on) { isLengthDecimalsForcedMode_ = on; }
     bool isLengthDecimalsForcedMode() const { return isLengthDecimalsForcedMode_; }
@@ -50,9 +66,13 @@ public:
     double meterStep() const { return meterStep_; }
     void setMillimeterStep(double step){ millimeterStep_ = step; }
     double millimeterStep() const { return millimeterStep_; }
+    void setKilometerStep(double step){ kilometerStep_ = step; }
+    double kilometerStep() const { return kilometerStep_; }
     void setLengthStep(double step);
     double lengthStep() const {
-        return (lengthUnit_ == Meter) ? meterStep_ : millimeterStep_;
+        if(lengthUnit_ == Meter) return meterStep_;
+        if(lengthUnit_ == Millimeter) return millimeterStep_;
+        return kilometerStep_;
     }
     void setLengthStepForcedMode(bool on){ isLengthStepForcedMode_ = on; }
     bool isLengthStepForcedMode() const { return isLengthStepForcedMode_; }
@@ -144,8 +164,10 @@ private:
     LengthUnit lengthUnit_;
     int meterDecimals_;
     int millimeterDecimals_;
+    int kilometerDecimals_;
     double meterStep_;
     double millimeterStep_;
+    double kilometerStep_;
     bool isLengthDecimalsForcedMode_;
     bool isLengthStepForcedMode_;
     AngleUnit angleUnit_;

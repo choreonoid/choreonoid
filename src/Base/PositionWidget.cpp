@@ -316,15 +316,9 @@ void PositionWidget::Impl::setDisplayValueFormat(DisplayValueFormat* format)
 
 void PositionWidget::Impl::updateValueFormat(bool doRefresh)
 {
-    int lunit = valueFormat->lengthUnit();
-    double lmax;
-    if(lunit == DisplayValueFormat::Millimeter){
-        lengthRatio = 1000.0;
-        lmax = 99999999.9;
-    } else {
-        lengthRatio = 1.0;
-        lmax = 999999999.9;
-    }
+    lengthRatio = valueFormat->ratioToDisplayLength();
+
+    double lmax = 999999999.9;
     int ldecimals = valueFormat->lengthDecimals();
     double lstep = valueFormat->lengthStep();
     if(additionalPrecisionCheck.isChecked()){

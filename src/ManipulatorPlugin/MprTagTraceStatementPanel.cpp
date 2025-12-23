@@ -199,16 +199,13 @@ void MprTagTraceStatementPanel::Impl::updateBaseInterfaces()
 
     auto statement = self->currentStatement<MprTagTraceStatement>();
 
+    auto dvf = DisplayValueFormat::master();
     auto& T = statement->tagGroupPosition();
     auto xyz = T.translation();
-    if(DisplayValueFormat::master()->isMillimeter()){
-        for(int i=0; i < 3; ++i){
-            xyzLabel[i].setText(QString::number(xyz[i] * 1000.0, 'f', 3));
-        }
-    } else {
-        for(int i=0; i < 3; ++i){
-            xyzLabel[i].setText(QString::number(xyz[i], 'f', 4));
-        }
+    double ratio = dvf->ratioToDisplayLength();
+    int decimals = dvf->lengthDecimals();
+    for(int i=0; i < 3; ++i){
+        xyzLabel[i].setText(QString::number(xyz[i] * ratio, 'f', decimals));
     }
     auto rpy = rpyFromRot(T.linear());
     for(int i=0; i < 3; ++i){

@@ -147,15 +147,12 @@ void MprPositionLabelSet::detachIkPanel()
 
 void MprPositionLabelSet::updateIkPanel(BodyItemKinematicsKit* kinematicsKit, MprIkPosition* position)
 {
+    auto dvf = DisplayValueFormat::master();
     auto xyz = position->position().translation();
-    if(DisplayValueFormat::master()->isMillimeter()){
-        for(int i=0; i < 3; ++i){
-            xyzLabels[i].setText(QString::number(xyz[i] * 1000.0, 'f', 3));
-        }
-    } else {
-        for(int i=0; i < 3; ++i){
-            xyzLabels[i].setText(QString::number(xyz[i], 'f', 4));
-        }
+    double ratio = dvf->ratioToDisplayLength();
+    int decimals = dvf->lengthDecimals();
+    for(int i=0; i < 3; ++i){
+        xyzLabels[i].setText(QString::number(xyz[i] * ratio, 'f', decimals));
     }
     auto rpy = position->rpy();
     for(int i=0; i < 3; ++i){
@@ -287,8 +284,10 @@ void MprPositionLabelSet::detachJointLabels()
 void MprPositionLabelSet::updateJointLabels
 (BodyItemKinematicsKit* kinematicsKit, MprFkPosition* position, bool isJointNameLabelEnabled)
 {
-    const double lengthRatio = DisplayValueFormat::master()->isMillimeter() ? 1000.0 : 1.0;
-    
+    auto dvf = DisplayValueFormat::master();
+    const double lengthRatio = dvf->ratioToDisplayLength();
+    int decimals = dvf->lengthDecimals();
+
     for(int i=0; i < numValidJoints; ++i){
         auto& nameLabel = jointNameLabels[i];
         if(isJointNameLabelEnabled){
@@ -302,7 +301,7 @@ void MprPositionLabelSet::updateJointLabels
         if(position->checkIfRevoluteJoint(i)){
             displacementLabel.setText(QString::number(degree(q), 'f', 1));
         } else {
-            displacementLabel.setText(QString::number(lengthRatio * q, 'f', 3));
+            displacementLabel.setText(QString::number(lengthRatio * q, 'f', decimals));
         }
         displacementLabel.setVisible(true);
     }
