@@ -12,6 +12,9 @@ public:
     static void initialize(ExtensionManager* ext);
     virtual ~DisplayValueFormatBar();
 
+    virtual bool storeState(Archive& archive) override;
+    virtual bool restoreState(const Archive& archive) override;
+
 private:
     DisplayValueFormatBar();
     

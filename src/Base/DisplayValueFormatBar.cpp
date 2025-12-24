@@ -1,8 +1,11 @@
 #include "DisplayValueFormatBar.h"
 #include "ExtensionManager.h"
 #include "DisplayValueFormat.h"
+#include "ProjectManager.h"
+#include "Archive.h"
 #include <cnoid/ComboBox>
 #include <cnoid/SpinBox>
+#include <cnoid/ConnectionSet>
 #include <cmath>
 #include "gettext.h"
 
@@ -22,6 +25,9 @@ public:
     SpinBox anglePrecisionSpin;
     ComboBox coordinateSystemCombo;
 
+    bool hasProjectSettings;
+    ScopedConnectionSet projectManagerConnections;
+
     Impl(DisplayValueFormatBar* self);
     void onDisplayValueFormatChanged(bool doBlockSignals);
     void updateLengthUnit(int unitType);
@@ -29,6 +35,9 @@ public:
     void updateAngleUnit(int unitType);
     void updateAngleDecimals(int decimals);
     void updateCoordinateSystem(int system);
+    void onProjectCleared();
+    bool storeState(Archive& archive);
+    bool restoreState(const Archive& archive);
 };
 
 }
@@ -50,10 +59,15 @@ DisplayValueFormatBar::DisplayValueFormatBar()
 DisplayValueFormatBar::Impl::Impl(DisplayValueFormatBar* self)
 {
     displayValueFormat = DisplayValueFormat::master();
+    hasProjectSettings = false;
 
     displayValueFormatConnection =
         displayValueFormat->sigFormatChanged().connect(
             [this](){ onDisplayValueFormatChanged(true); });
+
+    projectManagerConnections.add(
+        ProjectManager::instance()->sigProjectCleared().connect(
+            [this](){ onProjectCleared(); }));
     
     lengthUnitCombo.addItem(_("Meter"), DisplayValueFormat::Meter);
     lengthUnitCombo.addItem(_("Millimeter"), DisplayValueFormat::Millimeter);
@@ -149,6 +163,7 @@ void DisplayValueFormatBar::Impl::onDisplayValueFormatChanged(bool doBlockSignal
 
 void DisplayValueFormatBar::Impl::updateLengthUnit(int unitType)
 {
+    hasProjectSettings = true;
     displayValueFormat->setLengthUnit(static_cast<DisplayValueFormat::LengthUnit>(unitType));
 
     lengthPrecisionSpin.blockSignals(true);
@@ -162,6 +177,7 @@ void DisplayValueFormatBar::Impl::updateLengthUnit(int unitType)
 
 void DisplayValueFormatBar::Impl::updateLengthDecimals(int decimals)
 {
+    hasProjectSettings = true;
     displayValueFormat->setLengthDecimals(decimals);
     displayValueFormat->setLengthStep(pow(10.0, -decimals));
     auto block = displayValueFormatConnection.scopedBlock();
@@ -171,6 +187,7 @@ void DisplayValueFormatBar::Impl::updateLengthDecimals(int decimals)
 
 void DisplayValueFormatBar::Impl::updateAngleUnit(int unitType)
 {
+    hasProjectSettings = true;
     displayValueFormat->setAngleUnit(static_cast<DisplayValueFormat::AngleUnit>(unitType));
 
     anglePrecisionSpin.blockSignals(true);
@@ -184,6 +201,7 @@ void DisplayValueFormatBar::Impl::updateAngleUnit(int unitType)
 
 void DisplayValueFormatBar::Impl::updateAngleDecimals(int decimals)
 {
+    hasProjectSettings = true;
     displayValueFormat->setAngleDecimals(decimals);
     displayValueFormat->setAngleStep(pow(10.0, -decimals));
     auto block = displayValueFormatConnection.scopedBlock();
@@ -193,7 +211,143 @@ void DisplayValueFormatBar::Impl::updateAngleDecimals(int decimals)
 
 void DisplayValueFormatBar::Impl::updateCoordinateSystem(int system)
 {
+    hasProjectSettings = true;
     displayValueFormat->setCoordinateSystem(static_cast<DisplayValueFormat::CoordinateSystem>(system));
     auto block = displayValueFormatConnection.scopedBlock();
     displayValueFormat->notifyFormatChange();
+}
+
+
+void DisplayValueFormatBar::Impl::onProjectCleared()
+{
+    hasProjectSettings = false;
+}
+
+
+bool DisplayValueFormatBar::storeState(Archive& archive)
+{
+    return impl->storeState(archive);
+}
+
+
+bool DisplayValueFormatBar::Impl::storeState(Archive& archive)
+{
+    if(!hasProjectSettings){
+        return true;
+    }
+
+    const char* lengthUnitSymbol = nullptr;
+    switch(displayValueFormat->lengthUnit()){
+    case DisplayValueFormat::Meter:      lengthUnitSymbol = "meter"; break;
+    case DisplayValueFormat::Millimeter: lengthUnitSymbol = "millimeter"; break;
+    case DisplayValueFormat::Kilometer:  lengthUnitSymbol = "kilometer"; break;
+    }
+    if(lengthUnitSymbol){
+        archive.write("length_unit", lengthUnitSymbol);
+    }
+
+    archive.write("length_decimals", displayValueFormat->lengthDecimals());
+    archive.write("length_step", displayValueFormat->lengthStep());
+
+    const char* angleUnitSymbol = nullptr;
+    switch(displayValueFormat->angleUnit()){
+    case DisplayValueFormat::Degree: angleUnitSymbol = "degree"; break;
+    case DisplayValueFormat::Radian: angleUnitSymbol = "radian"; break;
+    }
+    if(angleUnitSymbol){
+        archive.write("angle_unit", angleUnitSymbol);
+    }
+
+    archive.write("angle_decimals", displayValueFormat->angleDecimals());
+    archive.write("angle_step", displayValueFormat->angleStep());
+
+    const char* coordinateSystemSymbol = nullptr;
+    switch(displayValueFormat->coordinateSystem()){
+    case DisplayValueFormat::RightHanded: coordinateSystemSymbol = "right_handed"; break;
+    case DisplayValueFormat::LeftHanded:  coordinateSystemSymbol = "left_handed"; break;
+    }
+    if(coordinateSystemSymbol){
+        archive.write("coordinate_system", coordinateSystemSymbol);
+    }
+
+    return true;
+}
+
+
+bool DisplayValueFormatBar::restoreState(const Archive& archive)
+{
+    return impl->restoreState(archive);
+}
+
+
+bool DisplayValueFormatBar::Impl::restoreState(const Archive& archive)
+{
+    bool hasSettings = false;
+
+    string lengthUnitSymbol;
+    if(archive.read("length_unit", lengthUnitSymbol)){
+        if(lengthUnitSymbol == "meter"){
+            displayValueFormat->setLengthUnit(DisplayValueFormat::Meter);
+            hasSettings = true;
+        } else if(lengthUnitSymbol == "millimeter"){
+            displayValueFormat->setLengthUnit(DisplayValueFormat::Millimeter);
+            hasSettings = true;
+        } else if(lengthUnitSymbol == "kilometer"){
+            displayValueFormat->setLengthUnit(DisplayValueFormat::Kilometer);
+            hasSettings = true;
+        }
+    }
+
+    int lengthDecimals;
+    if(archive.read("length_decimals", lengthDecimals)){
+        displayValueFormat->setLengthDecimals(lengthDecimals);
+        hasSettings = true;
+    }
+
+    double lengthStep;
+    if(archive.read("length_step", lengthStep)){
+        displayValueFormat->setLengthStep(lengthStep);
+        hasSettings = true;
+    }
+
+    string angleUnitSymbol;
+    if(archive.read("angle_unit", angleUnitSymbol)){
+        if(angleUnitSymbol == "degree"){
+            displayValueFormat->setAngleUnit(DisplayValueFormat::Degree);
+            hasSettings = true;
+        } else if(angleUnitSymbol == "radian"){
+            displayValueFormat->setAngleUnit(DisplayValueFormat::Radian);
+            hasSettings = true;
+        }
+    }
+
+    int angleDecimals;
+    if(archive.read("angle_decimals", angleDecimals)){
+        displayValueFormat->setAngleDecimals(angleDecimals);
+        hasSettings = true;
+    }
+
+    double angleStep;
+    if(archive.read("angle_step", angleStep)){
+        displayValueFormat->setAngleStep(angleStep);
+        hasSettings = true;
+    }
+
+    string coordinateSystemSymbol;
+    if(archive.read("coordinate_system", coordinateSystemSymbol)){
+        if(coordinateSystemSymbol == "right_handed"){
+            displayValueFormat->setCoordinateSystem(DisplayValueFormat::RightHanded);
+            hasSettings = true;
+        } else if(coordinateSystemSymbol == "left_handed"){
+            displayValueFormat->setCoordinateSystem(DisplayValueFormat::LeftHanded);
+            hasSettings = true;
+        }
+    }
+
+    if(hasSettings){
+        hasProjectSettings = true;
+        displayValueFormat->notifyFormatChange();
+    }
+
+    return true;
 }
