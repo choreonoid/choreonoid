@@ -28,6 +28,14 @@ public:
     static void registerSceneDeviceFactory(const SceneDeviceFactory& factory){
         registerSceneDeviceFactory_(typeid(DeviceType), factory);
     }
+    template<class DeviceType, class Factory>
+    static void registerSceneDeviceFactory(Factory&& factory){
+        registerSceneDeviceFactory_(
+            typeid(DeviceType),
+            [f = std::forward<Factory>(factory)](Device* device){
+                return f(static_cast<DeviceType*>(device));
+            });
+    }
 
     template<class DeviceType>
     struct FactoryRegistration {
