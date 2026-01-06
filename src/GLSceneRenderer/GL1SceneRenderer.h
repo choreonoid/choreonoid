@@ -24,7 +24,7 @@ public:
     virtual const Matrix4& viewProjectionMatrix() const override;
     virtual Vector3 project(const Vector3& p) const override;
     virtual double projectedPixelSizeRatio(const Vector3& position) const override;
-    virtual bool initializeGL() override;
+    virtual bool initializeGL(GLADloadfunc getProcAddress) override;
     virtual void flushGL() override;
     virtual const std::string& glVersionString() const override;
     virtual const std::string& glVendorString() const override;

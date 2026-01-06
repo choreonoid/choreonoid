@@ -1,7 +1,7 @@
 #ifndef CNOID_BASE_SHADER_PROGRAMS_H
 #define CNOID_BASE_SHADER_PROGRAMS_H
 
-#include "glcore.h"
+#include <cnoid/gl.h>
 #include <cnoid/EigenTypes>
 #include <initializer_list>
 #include "exportdecl.h"

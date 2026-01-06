@@ -37,12 +37,9 @@ public:
 }
 
 
-void GLSceneRenderer::initializeClass()
+void GLSceneRenderer::setRendererType(int type)
 {
-    char* CNOID_USE_GLSL = getenv("CNOID_USE_GLSL");
-    if(CNOID_USE_GLSL && (strcmp(CNOID_USE_GLSL, "0") == 0)){
-        rendererType_ = GL1_RENDERER;
-    }
+    rendererType_ = type;
 }
 
 
@@ -63,7 +60,6 @@ GLSceneRenderer* GLSceneRenderer::create(SgGroup* root)
 
 
 GLSceneRenderer::GLSceneRenderer(SgGroup* sceneRoot)
-    : useEGL_(false)
 {
     if(!sceneRoot){
         sceneRoot = new SgGroup;
@@ -334,16 +330,4 @@ void GLSceneRenderer::showNormalVectors(double length)
 {
     setNormalVisualizationEnabled(length > 0.0);
     setNormalVisualizationLength(length);
-}
-
-
-void GLSceneRenderer::setUseEGL(bool on)
-{
-    useEGL_ = on;
-}
-
-
-bool GLSceneRenderer::isUsingEGL() const
-{
-    return useEGL_;
 }

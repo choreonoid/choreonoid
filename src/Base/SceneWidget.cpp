@@ -22,6 +22,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/Format>
 #include <QOpenGLWidget>
+#include <QOpenGLContext>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QElapsedTimer>
@@ -742,6 +743,13 @@ QWidget* SceneWidget::indicator()
     return sharedIndicatorLabel;
 }
 
+static QOpenGLContext* glContext = nullptr;
+
+static void* getProcAddress(const char* name)
+{
+    return (void*)glContext->getProcAddress(name);
+}
+
 
 void SceneWidget::Impl::initializeGL()
 {
@@ -754,7 +762,8 @@ void SceneWidget::Impl::initializeGL()
     lastDevicePixelRatio = devicePixelRatio();
     renderer->setDevicePixelRatio(lastDevicePixelRatio);
 
-    if(renderer->initializeGL()){
+    glContext = context();
+    if(renderer->initializeGL((GLADloadfunc)getProcAddress)){
         if(glslRenderer){
             auto& vendor = glslRenderer->glVendorString();
             if(vendor.find("NVIDIA Corporation") != string::npos){
@@ -766,6 +775,7 @@ void SceneWidget::Impl::initializeGL()
             _("OpenGL initialization failed."), MessageView::Error);
         // This view shoulbe be disabled when the glew initialization is failed.
     }
+    glContext = nullptr;
 }
 
 

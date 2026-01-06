@@ -2,6 +2,7 @@
 #define CNOID_BASE_GL_SCENE_RENDERER_H
 
 #include <cnoid/SceneRenderer>
+#include <cnoid/gl.h>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -11,7 +12,7 @@ class Image;
 class CNOID_EXPORT GLSceneRenderer : public SceneRenderer
 {
 public:
-    static void initializeClass();
+    static void setRendererType(int type);
 
     enum RendererType { GL1_RENDERER, GLSL_RENDERER };
     static int rendererType();
@@ -25,7 +26,7 @@ public:
     virtual SgGroup* sceneRoot() override;
     virtual SgGroup* scene() override;
 
-    virtual bool initializeGL() = 0;
+    virtual bool initializeGL(GLADloadfunc getProcAddress) = 0;
     virtual void flushGL() = 0;
 
     /**
@@ -140,15 +141,10 @@ public:
     [[deprecated("Use setNormalVisualizationEnabled and setNormaliVisualizationLength.")]]
     void showNormalVectors(double length);
 
-    // EGL/GLX selection (Linux only)
-    void setUseEGL(bool on);
-    bool isUsingEGL() const;
-
 private:
     Viewport viewport_;
     float aspectRatio_;
     float devicePixelRatio_;
-    bool useEGL_;
 
     class Impl;
     Impl* impl;

@@ -9,7 +9,6 @@
 #include <cnoid/GLSLProgram>
 #include <cnoid/GLSLSceneRenderer>
 #include <QImage>
-#include <mutex>
 
 using namespace std;
 using namespace cnoid;
@@ -65,18 +64,6 @@ void ParticlesProgramBase::requestRendering
         if(initializationState == FAILED){
             return;
         } else {
-            {
-                static std::mutex mutex;
-                static bool isOglFunctionsLoaded = false;
-                std::lock_guard<std::mutex> guard(mutex);
-                if(!isOglFunctionsLoaded){
-                    if(ogl_LoadFunctions() == ogl_LOAD_FAILED){
-                        initializationState = FAILED;
-                        return;
-                    }
-                    isOglFunctionsLoaded = true;
-                }
-            }
             if(initializeRendering(particles)){
                 initializationState = INITIALIZED;
             } else {

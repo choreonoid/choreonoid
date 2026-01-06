@@ -49,7 +49,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
         ReferencedPtr object, int id,
         const std::function<void(Referenced* object, const Affine3& modelTransform, int id)>& renderingFunction);
 
-    virtual bool initializeGL() override;
+    virtual bool initializeGL(GLADloadfunc getProcAddress) override;
     virtual void flushGL() override;
     virtual void clearGL() override;
     virtual void setDefaultFramebufferObject(unsigned int id) override;

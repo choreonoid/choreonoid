@@ -38,6 +38,12 @@ constexpr int DepthTextureUnit = 0;
 constexpr int ImageTextureUnit = 1;
 constexpr int ShadowMapTextureUnit = 2;
 
+int glVersion = 0;
+
+bool isGLVersionAtLeast(int major, int minor) {
+    return glVersion >= major * 10000 + minor;
+}
+
 typedef vector<Affine3, Eigen::aligned_allocator<Affine3>> Affine3Array;
 
 std::mutex extensionMutex;
@@ -482,7 +488,7 @@ public:
     void initializeDepthTexture();
     void clearGL(bool isGLContextActive, bool isCalledFromConstructor, bool isCalledFromDestructor);
     void clearResourceMap();
-    bool initializeGL();
+    bool initializeGL(GLADloadfunc getProcAddress);
     void checkGPU();
     bool initializeGLForRendering();
     void doRender();
@@ -963,38 +969,29 @@ void GLSLSceneRenderer::Impl::clearResourceMap()
 }
 
 
-bool GLSLSceneRenderer::initializeGL()
+bool GLSLSceneRenderer::initializeGL(GLADloadfunc getProcAddress)
 {
-    return impl->initializeGL();
+    return impl->initializeGL(getProcAddress);
 }
 
 
-bool GLSLSceneRenderer::Impl::initializeGL()
+bool GLSLSceneRenderer::Impl::initializeGL(GLADloadfunc getProcAddress)
 {
-#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__sgi) && !defined(__sun)
-    // Load OpenGL functions using EGL or GLX based on renderer setting
-    if(self->isUsingEGL()){
-        if(ogl_LoadFunctionsEGL() == ogl_LOAD_FAILED){
-            return false;
-        }
-    } else
-#endif
-    {
-        if(ogl_LoadFunctions() == ogl_LOAD_FAILED){
+    if(glVersion == 0){
+        glVersion = cnoidLoadGL(getProcAddress);
+        if(glVersion == 0){
             return false;
         }
     }
 
-    GLint major, minor;
-    glGetIntegerv(GL_MAJOR_VERSION, &major);
-    glGetIntegerv(GL_MINOR_VERSION, &minor);
     glVersionString = (const char*)glGetString(GL_VERSION);
     glslVersionString = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
     glVendorString = (const char*)glGetString(GL_VENDOR);
     glRendererString = (const char*)glGetString(GL_RENDERER);
 
     os() << formatR(_("OpenGL {0}.{1} (GLSL {2}) is available for the \"{3}\" view.\n"),
-                    major, minor, glslVersionString, self->name());
+                    GLAD_VERSION_MAJOR(glVersion), GLAD_VERSION_MINOR(glVersion),
+                    glslVersionString, self->name());
     os() << formatR(_("Driver profile: {0} {1} {2}.\n"),
                     glVendorString, glRendererString, glVersionString);
 

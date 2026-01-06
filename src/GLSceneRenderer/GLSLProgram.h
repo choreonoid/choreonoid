@@ -1,7 +1,7 @@
 #ifndef CNOID_BASE_GLSL_PROGRAM_H
 #define CNOID_BASE_GLSL_PROGRAM_H
 
-#include "glcore.h"
+#include <cnoid/gl.h>
 #include <cnoid/EigenTypes>
 #include <vector>
 #include <string>

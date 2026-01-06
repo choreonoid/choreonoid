@@ -2,6 +2,7 @@
 #include "GLVisionSimulatorItem.h"
 #include "GLVisionSensorSimulator.h"
 #include <cnoid/GLSceneRenderer>
+#include <cnoid/gl.h>
 #include <cnoid/Camera>
 #include <cnoid/SceneLights>
 #include <cnoid/MathUtil>
@@ -9,48 +10,6 @@
 #include <cnoid/Format>
 #include <cnoid/AppUtil>
 #include <cnoid/SceneRendererConfig>
-
-#ifdef Q_OS_LINUX
-// CODEGEN_FUNCPTR is defined in gl_core_3_3.h
-#ifndef CODEGEN_FUNCPTR
-#define CODEGEN_FUNCPTR
-#endif
-
-// Forward declare OpenGL function pointers (from gl_core_3_3.c)
-// Note: gl_core_3_3.c uses _ptrc_ prefix for actual variable names
-extern "C" {
-    // OpenGL loader functions
-    enum { ogl_LOAD_FAILED = 0, ogl_LOAD_SUCCEEDED = 1 };
-    int ogl_LoadFunctionsEGL();
-
-    // Declare actual function pointer variables with _ptrc_ prefix
-    extern void (CODEGEN_FUNCPTR *_ptrc_glGenFramebuffers)(GLsizei n, GLuint * framebuffers);
-    extern void (CODEGEN_FUNCPTR *_ptrc_glBindFramebuffer)(GLenum target, GLuint framebuffer);
-    extern void (CODEGEN_FUNCPTR *_ptrc_glGenRenderbuffers)(GLsizei n, GLuint * renderbuffers);
-    extern void (CODEGEN_FUNCPTR *_ptrc_glBindRenderbuffer)(GLenum target, GLuint renderbuffer);
-    extern void (CODEGEN_FUNCPTR *_ptrc_glRenderbufferStorage)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-    extern void (CODEGEN_FUNCPTR *_ptrc_glFramebufferRenderbuffer)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-    extern GLenum (CODEGEN_FUNCPTR *_ptrc_glCheckFramebufferStatus)(GLenum target);
-    extern void (CODEGEN_FUNCPTR *_ptrc_glDeleteFramebuffers)(GLsizei n, const GLuint * framebuffers);
-    extern void (CODEGEN_FUNCPTR *_ptrc_glDeleteRenderbuffers)(GLsizei n, const GLuint * renderbuffers);
-    extern void (CODEGEN_FUNCPTR *_ptrc_glPixelStorei)(GLenum pname, GLint param);
-    extern void (CODEGEN_FUNCPTR *_ptrc_glReadPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void * pixels);
-}
-
-// Define macros to match gl_core_3_3.h style
-#define glGenFramebuffers _ptrc_glGenFramebuffers
-#define glBindFramebuffer _ptrc_glBindFramebuffer
-#define glGenRenderbuffers _ptrc_glGenRenderbuffers
-#define glBindRenderbuffer _ptrc_glBindRenderbuffer
-#define glRenderbufferStorage _ptrc_glRenderbufferStorage
-#define glFramebufferRenderbuffer _ptrc_glFramebufferRenderbuffer
-#define glCheckFramebufferStatus _ptrc_glCheckFramebufferStatus
-#define glDeleteFramebuffers _ptrc_glDeleteFramebuffers
-#define glDeleteRenderbuffers _ptrc_glDeleteRenderbuffers
-#define glPixelStoreiEGL _ptrc_glPixelStorei
-#define glReadPixelsEGL _ptrc_glReadPixels
-#endif
-
 #include <QApplication>
 #include "gettext.h"
 
@@ -62,14 +21,29 @@ namespace {
 // This does not seem to be necessary
 constexpr bool USE_FLUSH_GL_FUNCTION = false;
 
-#ifdef Q_OS_LINUX
+// For loading OpenGL functions via Qt's QOpenGLContext (used by GLSceneRenderer::initializeGL)
+static void* getQtProcAddress(const char* name)
+{
+    return (void*)QOpenGLContext::currentContext()->getProcAddress(name);
+}
+
+#ifdef CNOID_ENABLE_EGL
+// EGL extension function pointers
+static PFNEGLQUERYDEVICESEXTPROC eglQueryDevicesEXT_ = nullptr;
+static PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT_ = nullptr;
+
 // EGL resources shared across all instances
+static bool eglExtensionFunctionsLoaded = false;
 static bool eglDeviceEnumerationDone = false;
 static bool useEglDeviceEnumeration = false;
 static EGLDeviceEXT selectedEglDevice = nullptr;
-static PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT_cached = nullptr;
 static EGLDisplay sharedEglDisplay = EGL_NO_DISPLAY;
 static int eglInstanceCount = 0;
+
+// EGL OpenGL version determined once for the process
+static bool eglOpenGLVersionDetermined = false;
+static int eglOpenGLMajorVersion = 0;
+static int eglOpenGLMinorVersion = 0;
 #endif
 
 }
@@ -89,7 +63,7 @@ GLVisionSensorRenderingScreen::GLVisionSensorRenderingScreen(GLVisionSensorSimul
     frameBuffer = nullptr;
     usingEGL = false;
 
-#ifdef Q_OS_LINUX
+#ifdef CNOID_ENABLE_EGL
     // Initialize EGL members
     eglDisplay = nullptr;
     eglContext = nullptr;
@@ -205,14 +179,8 @@ bool GLVisionSensorRenderingScreen::initializeGLX()
 {
     glContext = new QOpenGLContext;
 
-    QSurfaceFormat format;
+    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
     format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
-    if(GLSceneRenderer::rendererType() == GLSceneRenderer::GLSL_RENDERER){
-        format.setProfile(QSurfaceFormat::CoreProfile);
-        format.setVersion(3, 3);
-    } else {
-        format.setVersion(1, 5);
-    }
     glContext->setFormat(format);
 
     if(!glContext->create()){
@@ -234,10 +202,22 @@ bool GLVisionSensorRenderingScreen::initializeGLX()
 }
 
 
-#ifdef Q_OS_LINUX
+#ifdef CNOID_ENABLE_EGL
 bool GLVisionSensorRenderingScreen::initializeEGL()
 {
     auto mout = MessageOut::master();
+
+    // Track if this is the first EGL initialization
+    bool isFirstInitialization = !eglExtensionFunctionsLoaded;
+
+    // Load EGL extension function pointers only once
+    if(!eglExtensionFunctionsLoaded) {
+        eglQueryDevicesEXT_ =
+            (PFNEGLQUERYDEVICESEXTPROC)eglGetProcAddress("eglQueryDevicesEXT");
+        eglGetPlatformDisplayEXT_ =
+            (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
+        eglExtensionFunctionsLoaded = true;
+    }
 
     // Perform EGL device enumeration only once for the first instance
     if(!eglDeviceEnumerationDone) {
@@ -245,18 +225,13 @@ bool GLVisionSensorRenderingScreen::initializeEGL()
         // This works in headless environments (without X11/Xvfb)
         bool deviceEnumerationSucceeded = false;
 
-        // Get function pointers for EGL device enumeration extensions
-        PFNEGLQUERYDEVICESEXTPROC eglQueryDevicesEXT =
-            (PFNEGLQUERYDEVICESEXTPROC)eglGetProcAddress("eglQueryDevicesEXT");
-        eglGetPlatformDisplayEXT_cached =
-            (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
-
-        if(eglQueryDevicesEXT && eglGetPlatformDisplayEXT_cached) {
+        // Check if EGL device enumeration extensions are available
+        if(eglQueryDevicesEXT_ && eglGetPlatformDisplayEXT_) {
             // Query available EGL devices
             EGLint numDevices = 0;
-            if(eglQueryDevicesEXT(0, nullptr, &numDevices) && numDevices > 0) {
+            if(eglQueryDevicesEXT_(0, nullptr, &numDevices) && numDevices > 0) {
                 std::vector<EGLDeviceEXT> devices(numDevices);
-                if(eglQueryDevicesEXT(numDevices, devices.data(), &numDevices)) {
+                if(eglQueryDevicesEXT_(numDevices, devices.data(), &numDevices)) {
                     // Use the first available device
                     selectedEglDevice = devices[0];
                     deviceEnumerationSucceeded = true;
@@ -269,7 +244,7 @@ bool GLVisionSensorRenderingScreen::initializeEGL()
         eglDeviceEnumerationDone = true;
 
         // Output warning only once if enumeration failed
-        if(!deviceEnumerationSucceeded && (eglQueryDevicesEXT || eglGetPlatformDisplayEXT_cached)) {
+        if(!deviceEnumerationSucceeded && (eglQueryDevicesEXT_ || eglGetPlatformDisplayEXT_)) {
             mout->putWarningln(
                 "EGL device enumeration failed. Falling back to EGL_DEFAULT_DISPLAY. "
                 "Hardware acceleration may not be available in headless environments.");
@@ -280,7 +255,7 @@ bool GLVisionSensorRenderingScreen::initializeEGL()
     if(sharedEglDisplay == EGL_NO_DISPLAY) {
         if(useEglDeviceEnumeration) {
             // Use device enumeration method
-            sharedEglDisplay = eglGetPlatformDisplayEXT_cached(EGL_PLATFORM_DEVICE_EXT, selectedEglDevice, nullptr);
+            sharedEglDisplay = eglGetPlatformDisplayEXT_(EGL_PLATFORM_DEVICE_EXT, selectedEglDevice, nullptr);
             if(sharedEglDisplay != EGL_NO_DISPLAY) {
                 // Initialize EGL with the device display
                 EGLint major, minor;
@@ -338,13 +313,54 @@ bool GLVisionSensorRenderingScreen::initializeEGL()
         return false;
     }
 
-    // Create EGL context
-    EGLint contextAttribs[] = {
-        EGL_CONTEXT_MAJOR_VERSION, 3,
-        EGL_CONTEXT_MINOR_VERSION, 3,
-        EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
-        EGL_NONE
-    };
+    // Determine the best available OpenGL version once for the process (GLSL mode only)
+    if(GLSceneRenderer::rendererType() == GLSceneRenderer::GLSL_RENDERER && !eglOpenGLVersionDetermined) {
+        // Try OpenGL versions from 4.6 down to 3.3
+        struct { int major; int minor; } versions[] = {
+            {4, 6}, {4, 5}, {4, 4}, {4, 3}, {4, 2}, {4, 1}, {4, 0},
+            {3, 3}
+        };
+
+        for(const auto& v : versions) {
+            EGLint testAttribs[] = {
+                EGL_CONTEXT_MAJOR_VERSION, v.major,
+                EGL_CONTEXT_MINOR_VERSION, v.minor,
+                EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
+                EGL_NONE
+            };
+            EGLContext testContext = eglCreateContext(eglDisplay, eglConfig, EGL_NO_CONTEXT, testAttribs);
+            if(testContext != EGL_NO_CONTEXT) {
+                eglDestroyContext(eglDisplay, testContext);
+                eglOpenGLMajorVersion = v.major;
+                eglOpenGLMinorVersion = v.minor;
+                eglOpenGLVersionDetermined = true;
+                break;
+            }
+        }
+
+        if(!eglOpenGLVersionDetermined) {
+            mout->putErrorln(_("OpenGL 3.3 or later is required but not supported."));
+            return false;
+        }
+    }
+
+    // Create EGL context with version based on renderer type
+    EGLint contextAttribs[9];
+    int attribIndex = 0;
+    if(GLSceneRenderer::rendererType() == GLSceneRenderer::GLSL_RENDERER){
+        contextAttribs[attribIndex++] = EGL_CONTEXT_MAJOR_VERSION;
+        contextAttribs[attribIndex++] = eglOpenGLMajorVersion;
+        contextAttribs[attribIndex++] = EGL_CONTEXT_MINOR_VERSION;
+        contextAttribs[attribIndex++] = eglOpenGLMinorVersion;
+        contextAttribs[attribIndex++] = EGL_CONTEXT_OPENGL_PROFILE_MASK;
+        contextAttribs[attribIndex++] = EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT;
+    } else {
+        contextAttribs[attribIndex++] = EGL_CONTEXT_MAJOR_VERSION;
+        contextAttribs[attribIndex++] = 1;
+        contextAttribs[attribIndex++] = EGL_CONTEXT_MINOR_VERSION;
+        contextAttribs[attribIndex++] = 5;
+    }
+    contextAttribs[attribIndex] = EGL_NONE;
     eglContext = eglCreateContext(eglDisplay, eglConfig, EGL_NO_CONTEXT, contextAttribs);
     if(eglContext == EGL_NO_CONTEXT) {
         mout->putErrorln("Failed to create EGL context.");
@@ -369,28 +385,14 @@ bool GLVisionSensorRenderingScreen::initializeEGL()
         return false;
     }
 
-    // Load OpenGL functions using EGL
-    if(ogl_LoadFunctionsEGL() == ogl_LOAD_FAILED) {
-        mout->putErrorln("Failed to load OpenGL functions via EGL.");
-        return false;
+    // Output EGL initialization message only on first successful initialization
+    if(isFirstInitialization) {
+        if(useEglDeviceEnumeration) {
+            mout->putln(_("EGL is used for headless rendering with GPU device enumeration."));
+        } else {
+            mout->putln(_("EGL is used for headless rendering with the default display."));
+        }
     }
-
-    // Create FBO manually for EGL
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-    // Create color renderbuffer
-    glGenRenderbuffers(1, &colorRenderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, colorRenderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, resolutionX_, resolutionY_);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorRenderbuffer);
-
-    // Create depth-stencil renderbuffer
-    // This is needed as the blit destination when MSAA is enabled in GLSLSceneRenderer
-    glGenRenderbuffers(1, &depthStencilRenderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthStencilRenderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, resolutionX_, resolutionY_);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilRenderbuffer);
 
     return true;
 }
@@ -403,7 +405,7 @@ bool GLVisionSensorRenderingScreen::initializeGL()
         return false;
     }
 
-#ifdef Q_OS_LINUX
+#ifdef CNOID_ENABLE_EGL
     // Check if we're in GUI mode or --no-window mode
     if(!AppUtil::isNoWindowMode()) {
         // GUI mode: Use Qt OpenGL (GLX)
@@ -421,7 +423,7 @@ bool GLVisionSensorRenderingScreen::initializeGL()
             return false;
         }
     }
-#ifdef Q_OS_LINUX
+#ifdef CNOID_ENABLE_EGL
     else {
         if(!initializeEGL()){
             usingEGL = false;
@@ -437,26 +439,52 @@ bool GLVisionSensorRenderingScreen::initializeGL()
         sceneRenderer->setFlagVariableToUpdatePreprocessedNodeTree(flagToUpdatePreprocessedNodeTree);
     }
 
-#ifdef Q_OS_LINUX
-    // Set renderer to use EGL for loading OpenGL functions
-    if(usingEGL) {
-        sceneRenderer->setUseEGL(true);
-        sceneRenderer->setDefaultFramebufferObject(fbo);
-    } else
-#endif
-    {
-        sceneRenderer->setDefaultFramebufferObject(frameBuffer->handle());
-    }
-
     // Set MSAA level from GLVisionSimulatorItem settings
     int msaaLevel = sensorSimulator_->visionSimulatorItem()->msaaLevel();
     int effectiveMsaaLevel = (msaaLevel < 0) ? SceneRendererConfig::getSystemDefaultMsaaLevel() : msaaLevel;
     sceneRenderer->setMsaaLevel(effectiveMsaaLevel);
     sceneRenderer->setDepthBufferUpdateEnabled(isDepthBufferUpdateEnabled_);
 
-    if(!sceneRenderer->initializeGL()){
+    // Initialize OpenGL functions with the appropriate loader
+    bool glInitialized = false;
+#ifdef CNOID_ENABLE_EGL
+    if(usingEGL){
+        glInitialized = sceneRenderer->initializeGL((GLADloadfunc)eglGetProcAddress);
+    } else
+#endif
+    {
+        glInitialized = sceneRenderer->initializeGL((GLADloadfunc)getQtProcAddress);
+    }
+    if(!glInitialized){
         finalizeGL(false);
         return false;
+    }
+
+    // Create FBO and set it to renderer
+#ifdef CNOID_ENABLE_EGL
+    if(usingEGL) {
+        // Create FBO manually for EGL
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+        // Create color renderbuffer
+        glGenRenderbuffers(1, &colorRenderbuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, colorRenderbuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, resolutionX_, resolutionY_);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorRenderbuffer);
+
+        // Create depth-stencil renderbuffer
+        // This is needed as the blit destination when MSAA is enabled in GLSLSceneRenderer
+        glGenRenderbuffers(1, &depthStencilRenderbuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, depthStencilRenderbuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, resolutionX_, resolutionY_);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilRenderbuffer);
+
+        sceneRenderer->setDefaultFramebufferObject(fbo);
+    } else
+#endif
+    {
+        sceneRenderer->setDefaultFramebufferObject(frameBuffer->handle());
     }
 
     auto visionSimulatorItem = sensorSimulator_->visionSimulatorItem();
@@ -506,7 +534,7 @@ void GLVisionSensorRenderingScreen::finalizeGL(bool doMakeCurrent)
         sceneRenderer = nullptr;
     }
 
-#ifdef Q_OS_LINUX
+#ifdef CNOID_ENABLE_EGL
     if(usingEGL){
         // Clean up per-instance EGL resources
         if(fbo != 0){
@@ -578,7 +606,7 @@ void GLVisionSensorRenderingScreen::startRenderingThread()
 
 void GLVisionSensorRenderingScreen::moveRenderingBufferToThread(QThread& thread)
 {
-#ifdef Q_OS_LINUX
+#ifdef CNOID_ENABLE_EGL
     if(!usingEGL){
         // Qt OpenGL mode: need to move context to thread
         glContext->moveToThread(&thread);
@@ -592,7 +620,7 @@ void GLVisionSensorRenderingScreen::moveRenderingBufferToThread(QThread& thread)
 
 void GLVisionSensorRenderingScreen::moveRenderingBufferToMainThread()
 {
-#ifdef Q_OS_LINUX
+#ifdef CNOID_ENABLE_EGL
     if(!usingEGL){
         // Qt OpenGL mode: need to move context to main thread
         QThread* mainThread = QApplication::instance()->thread();
@@ -608,7 +636,7 @@ void GLVisionSensorRenderingScreen::moveRenderingBufferToMainThread()
 
 void GLVisionSensorRenderingScreen::makeGLContextCurrent()
 {
-#ifdef Q_OS_LINUX
+#ifdef CNOID_ENABLE_EGL
     if(usingEGL){
         eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext);
     } else {
@@ -622,7 +650,7 @@ void GLVisionSensorRenderingScreen::makeGLContextCurrent()
 
 void GLVisionSensorRenderingScreen::doneGLContextCurrent()
 {
-#ifdef Q_OS_LINUX
+#ifdef CNOID_ENABLE_EGL
     if(usingEGL){
         eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     } else {
@@ -662,16 +690,8 @@ void GLVisionSensorRenderingScreen::finalizeRendering()
 
 void GLVisionSensorRenderingScreen::readImageBuffer(unsigned char* pixels)
 {
-#ifdef Q_OS_LINUX
-    if(usingEGL){
-        glPixelStoreiEGL(GL_PACK_ALIGNMENT, 1);
-        glReadPixelsEGL(0, 0, resolutionX_, resolutionY_, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-    } else
-#endif
-    {
-        glPixelStorei(GL_PACK_ALIGNMENT, 1);
-        glReadPixels(0, 0, resolutionX_, resolutionY_, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-    }
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, resolutionX_, resolutionY_, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 }
 
 
@@ -686,12 +706,5 @@ void GLVisionSensorRenderingScreen::readImageBuffer(Image& image)
 void GLVisionSensorRenderingScreen::readDepthBuffer(std::vector<float>& depthBuf)
 {
     depthBuf.resize(resolutionX_ * resolutionY_);
-#ifdef Q_OS_LINUX
-    if(usingEGL){
-        glReadPixelsEGL(0, 0, resolutionX_, resolutionY_, GL_DEPTH_COMPONENT, GL_FLOAT, &depthBuf[0]);
-    } else
-#endif
-    {
-        glReadPixels(0, 0, resolutionX_, resolutionY_, GL_DEPTH_COMPONENT, GL_FLOAT, &depthBuf[0]);
-    }
+    glReadPixels(0, 0, resolutionX_, resolutionY_, GL_DEPTH_COMPONENT, GL_FLOAT, &depthBuf[0]);
 }

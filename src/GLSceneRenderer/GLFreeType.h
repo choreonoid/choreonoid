@@ -1,7 +1,7 @@
 #ifndef CNOID_BASE_GL_FREE_TYPE_H
 #define CNOID_BASE_GL_FREE_TYPE_H
 
-#include "glcore.h"
+#include <cnoid/gl.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <string>

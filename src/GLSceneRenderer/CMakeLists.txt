@@ -4,10 +4,6 @@ set(sources
   GLSLProgram.cpp
   ShaderPrograms.cpp
   GLSLSceneRenderer.cpp
-  gl_core_3_3.c
-  #gl_core_4_0.c
-  #gl_core_4_4.c
-  gl_1_5.c
   )
 
 set(headers
@@ -25,14 +21,12 @@ choreonoid_qt_add_resources(RC_SRCS GLSceneRenderer.qrc)
 
 make_gettext_mofiles(${target} mofiles)
 
-set(libraries PUBLIC CnoidUtil PRIVATE ${CHOREONOID_QT_CORE_LIBRARY})
+set(libraries PUBLIC CnoidUtil PRIVATE ${CHOREONOID_QT_CORE_LIBRARY} CnoidOpenGL)
 
 if(MSVC)
   set(libraries ${libraries} PUBLIC general glu32 opengl32)
 else()
   set(libraries ${libraries} PUBLIC OpenGL::GLU)
-  # Link EGL library for Linux/Unix platforms (required by gl_core_3_3.c)
-  set(libraries ${libraries} PRIVATE EGL)
 endif()
 
 if(CNOID_ENABLE_FREE_TYPE)

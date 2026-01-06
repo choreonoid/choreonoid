@@ -3,38 +3,25 @@
 
 #include "GLVisionSensorScene.h"
 #include <cnoid/SceneCameras>
+
+// Define CNOID_ENABLE_EGL based on platform
+// In the future, this should be a CMake option
+#ifdef __linux__
+#define CNOID_ENABLE_EGL
+#endif
+
+// Include GLSceneRenderer before Qt OpenGL headers to avoid conflicts.
+// This also provides OpenGL type definitions (GLuint, GLenum, etc.) via cnoid/gl.h.
+#include <cnoid/GLSceneRenderer>
+#ifdef CNOID_ENABLE_EGL
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#endif
 #include <QOpenGLContext>
 #include <QOffscreenSurface>
 #include <QOpenGLFramebufferObject>
 #include <vector>
 #include "exportdecl.h"
-
-#ifdef Q_OS_LINUX
-// Include EGL headers
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-
-// Qt 5.12 (Ubuntu 20.04) has incomplete handling of X11 macro conflicts.
-// EGL headers internally include X11 headers which define these names as macros,
-// conflicting with Qt's enum values and function names.
-// Qt 5.15+ handles this internally, so we only need this workaround for older versions.
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-#undef Status
-#undef None
-#undef Bool
-#undef CursorShape
-#undef Expose
-#undef KeyPress
-#undef KeyRelease
-#undef FocusIn
-#undef FocusOut
-#undef FontChange
-#undef Unsorted
-#endif
-
-// Forward declare OpenGL types
-typedef unsigned int GLuint;
-#endif
 
 namespace cnoid {
 
@@ -88,7 +75,7 @@ private:
     QOpenGLFramebufferObject* frameBuffer;
     bool usingEGL;
 
-#ifdef Q_OS_LINUX
+#ifdef CNOID_ENABLE_EGL
     // EGL resources
     EGLDisplay eglDisplay;
     EGLContext eglContext;

@@ -17,7 +17,6 @@ set(sources
   SmokeDevice.cpp
   FireDevice.cpp
   RainSnowDevice.cpp
-  gl_core_3_3.c
   )
 
 set(headers
@@ -28,6 +27,5 @@ set(headers
 choreonoid_qt_add_resources(RC_SRCS SceneEffectsPlugin.qrc)
 set(target CnoidSceneEffectsPlugin)
 make_gettext_mofiles(${target} mofiles)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 choreonoid_add_plugin(${target} ${sources} ${mofiles} ${RC_SRCS} HEADERS ${headers})
-target_link_libraries(${target} PUBLIC CnoidBodyPlugin)
+target_link_libraries(${target} PUBLIC CnoidBodyPlugin PRIVATE CnoidOpenGL)
