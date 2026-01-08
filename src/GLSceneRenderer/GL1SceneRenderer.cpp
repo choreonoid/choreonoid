@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <cnoid/gl.h>
-#include <GL/glu.h>
+#include "GLImageScaler.h"
 #include "gettext.h"
 
 using namespace std;
@@ -1246,8 +1246,9 @@ bool GL1SceneRenderer::Impl::renderTexture(SgTexture* texture, bool withMaterial
                 GLsizei potWidth = pow(2.0, pw);
                 GLsizei potHeight = pow(2.0, ph);
                 tmpbuf->scaledImageBuf.resize(potWidth * potHeight * image.numComponents());
-                gluScaleImage(format, width, height, GL_UNSIGNED_BYTE, image.pixels(),
-                              potWidth, potHeight, GL_UNSIGNED_BYTE, &tmpbuf->scaledImageBuf.front());
+                scaleImageBilinear(width, height, image.numComponents(), image.pixels(),
+                                   potWidth, potHeight,
+                                   reinterpret_cast<unsigned char*>(&tmpbuf->scaledImageBuf.front()));
                 glTexImage2D(GL_TEXTURE_2D, 0, format, potWidth, potHeight, 0,
                              format, GL_UNSIGNED_BYTE, &tmpbuf->scaledImageBuf.front());
                 tmpbuf->used = true;

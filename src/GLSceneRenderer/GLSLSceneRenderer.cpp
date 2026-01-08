@@ -13,7 +13,6 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/NullOut>
 #include <cnoid/Format>
-#include <GL/glu.h>
 #include <unordered_map>
 #include <unordered_set>
 #include <deque>
@@ -422,8 +421,6 @@ public:
     bool isCheckingUnusedResources;
     bool hasValidNextResourceMap;
     bool isResourceClearRequested;
-
-    vector<char> scaledImageBuf;
 
     bool isTextureEnabled;
     bool isTextureBeingRendered;
@@ -2619,22 +2616,9 @@ bool GLSLSceneRenderer::Impl::loadTextureImage(TextureResource* resource, const 
 
     if(resource->isLoaded && resource->isSameSizeAs(image)){
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, image.pixels());
-
     } else {
-        double w2 = log2(width);
-        double h2 = log2(height);
-        double pw = ceil(w2);
-        double ph = ceil(h2);
-        if((pw - w2 == 0.0) && (ph - h2 == 0.0)){
-            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image.pixels());
-        } else{
-            GLsizei potWidth = pow(2.0, pw);
-            GLsizei potHeight = pow(2.0, ph);
-            scaledImageBuf.resize(potWidth * potHeight * image.numComponents());
-            gluScaleImage(format, width, height, GL_UNSIGNED_BYTE, image.pixels(),
-                          potWidth, potHeight, GL_UNSIGNED_BYTE, &scaledImageBuf.front());
-            glTexImage2D(GL_TEXTURE_2D, 0, format, potWidth, potHeight, 0, format, GL_UNSIGNED_BYTE, &scaledImageBuf.front());
-        }
+        // NPOT (Non-Power-Of-Two) textures are fully supported in OpenGL 3.3+
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image.pixels());
         resource->isLoaded = true;
         resource->width = width;
         resource->height = height;

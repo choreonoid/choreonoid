@@ -23,12 +23,6 @@ make_gettext_mofiles(${target} mofiles)
 
 set(libraries PUBLIC CnoidUtil PRIVATE ${CHOREONOID_QT_CORE_LIBRARY} CnoidOpenGL)
 
-if(MSVC)
-  set(libraries ${libraries} PUBLIC general glu32 opengl32)
-else()
-  set(libraries ${libraries} PUBLIC OpenGL::GLU)
-endif()
-
 if(CNOID_ENABLE_FREE_TYPE)
   set(sources ${sources} GLFreeType.cpp)
   if(MSVC)
