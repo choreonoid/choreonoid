@@ -15585,7 +15585,8 @@ GLAD_API_CALL PFNGLWRITEMASKEXTPROC glad_glWriteMaskEXT;
 GLAD_API_CALL int gladLoadGLUserPtr( GLADuserptrloadfunc load, void *userptr);
 GLAD_API_CALL int gladLoadGL( GLADloadfunc load);
 
-
+/* Custom loader that loads only the OpenGL functions used by Choreonoid */
+GLAD_API_CALL int cnoidLoadGL( GLADloadfunc load);
 
 #ifdef __cplusplus
 }
