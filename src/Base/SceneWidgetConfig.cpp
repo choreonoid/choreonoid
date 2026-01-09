@@ -6,6 +6,8 @@
 #include "ComboBox.h"
 #include "SpinBox.h"
 #include "DoubleSpinBox.h"
+#include "LengthSpinBox.h"
+#include "LengthUnitLabel.h"
 #include "Separator.h"
 #include <cnoid/GLSceneRenderer>
 #include <cnoid/ValueTree>
@@ -47,8 +49,10 @@ public:
     QWidget* debugPanel;
 
     DoubleSpinBox* fieldOfViewSpin;
-    DoubleSpinBox* nearClipSpin;
-    DoubleSpinBox* farClipSpin;
+    LengthSpinBox* nearClipSpin;
+    LengthSpinBox* farClipSpin;
+    LengthUnitLabel* clipDistanceUnitLabel;
+    CheckBox* infiniteFarCheck;
     CheckBox* restrictCameraRollCheck;
     ButtonGroup* verticalAxisGroup;
     RadioButton* verticalAxisRadios[3];
@@ -105,6 +109,7 @@ public:
     double fieldOfView; // degree
     double nearClipDistance;
     double farClipDistance;
+    bool isInfiniteFarOverrideEnabled;
     int verticalAxis;
     bool isCameraRollRistricted;
     bool isCoordinateAxesEnabled;
@@ -151,6 +156,7 @@ SceneWidgetConfig::Impl::Impl(SceneWidgetConfig* self)
     fieldOfView = 35.0;
     nearClipDistance = 0.04;
     farClipDistance = 200.0;
+    isInfiniteFarOverrideEnabled = true;
     verticalAxis = 2; // Z
     isCameraRollRistricted = true;
     isCoordinateAxesEnabled = true;
@@ -184,6 +190,7 @@ SceneWidgetConfig::Impl::Impl(const Impl& org, SceneWidgetConfig* self)
     fieldOfView = org.fieldOfView;
     nearClipDistance = org.nearClipDistance;
     farClipDistance = org.farClipDistance;
+    isInfiniteFarOverrideEnabled = org.isInfiniteFarOverrideEnabled;
     verticalAxis = org.verticalAxis;
     isCameraRollRistricted = org.isCameraRollRistricted;
     isCoordinateAxesEnabled = org.isCoordinateAxesEnabled;
@@ -251,8 +258,10 @@ void SceneWidgetConfig::Impl::updateSceneWidget(SceneWidget* sceneWidget, unsign
         sceneWidget->setClipDistances(nearClipDistance, farClipDistance);
         sceneWidget->setInteractiveCameraRollRestricted(isCameraRollRistricted);
         sceneWidget->setVerticalAxis(verticalAxis);
+        auto renderer = sceneWidget->renderer<GLSceneRenderer>();
+        renderer->setInfiniteFarOverrideEnabled(isInfiniteFarOverrideEnabled);
     }
-    
+
     if(categories & DrawingCategory){
         sceneWidget->setCoordinateAxes(isCoordinateAxesEnabled);
         auto renderer = sceneWidget->renderer<GLSceneRenderer>();
@@ -317,7 +326,11 @@ bool SceneWidgetConfig::Impl::store(Mapping* archive)
     auto distances = archive->createFlowStyleListing("clip_distances");
     distances->append(nearClipDistance);
     distances->append(farClipDistance);
-    
+
+    if(isInfiniteFarOverrideEnabled){
+        archive->write("infinite_far_clip", true);
+    }
+
     if(!isCameraRollRistricted){
         archive->write("restrictCameraRoll", false);
     }
@@ -406,6 +419,8 @@ bool SceneWidgetConfig::Impl::restore(const Mapping* archive)
     }
 
     isCameraRollRistricted = archive->get("restrictCameraRoll", true);
+
+    archive->read("infinite_far_clip", isInfiniteFarOverrideEnabled);
 
     string symbol;
     verticalAxis = 2;
@@ -565,27 +580,36 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
         });
     signalObjects.push_back(fieldOfViewSpin);
 
-    nearClipSpin = new DoubleSpinBox(ownerWidget);
-    nearClipSpin->setDecimals(4);
-    nearClipSpin->setRange(0.0001, 99999.9999);
-    nearClipSpin->setSingleStep(0.0001);
+    nearClipSpin = new LengthSpinBox(ownerWidget);
+    nearClipSpin->setMinimumMeterDecimals(4);  // 0.1mm precision
+    nearClipSpin->setMeterRange(0.0001, 99999.9999);
+    nearClipSpin->setMeterSingleStep(0.0001);
     nearClipSpin->sigValueChanged().connect(
-        [this](double d){
-            config->nearClipDistance = d;
+        [this](double){
+            config->nearClipDistance = nearClipSpin->meterValue();
             config->updateSceneWidgets(CameraCategory, true);
         });
     signalObjects.push_back(nearClipSpin);
 
-    farClipSpin = new DoubleSpinBox(ownerWidget);
-    farClipSpin->setDecimals(1);
-    farClipSpin->setRange(0.1, 999999999.9);
-    farClipSpin->setSingleStep(0.1);
+    farClipSpin = new LengthSpinBox(ownerWidget);
+    farClipSpin->setMeterRange(0.1, 999999999.9);
+    farClipSpin->setMeterSingleStep(0.1);
     farClipSpin->sigValueChanged().connect(
-        [this](double d){
-            config->farClipDistance = d;
+        [this](double){
+            config->farClipDistance = farClipSpin->meterValue();
             config->updateSceneWidgets(CameraCategory, true);
         });
     signalObjects.push_back(farClipSpin);
+
+    clipDistanceUnitLabel = new LengthUnitLabel(ownerWidget);
+
+    infiniteFarCheck = new CheckBox(_("Use infinite far clip distance for all cameras (OpenGL 4.5 or later)"), ownerWidget);
+    infiniteFarCheck->sigToggled().connect(
+        [this](bool on){
+            config->isInfiniteFarOverrideEnabled = on;
+            config->updateSceneWidgets(CameraCategory, true);
+        });
+    signalObjects.push_back(infiniteFarCheck);
 
     restrictCameraRollCheck = new CheckBox(_("Restrict camera roll"), ownerWidget);
     restrictCameraRollCheck->sigToggled().connect(
@@ -756,12 +780,16 @@ QWidget* ConfigWidgetSet::createCameraPanel()
     hbox->addWidget(fieldOfViewSpin);
     hbox->addWidget(new QLabel("[deg]"));
     hbox->addSpacing(8);
-    hbox->addWidget(new QLabel(_("Clip distances")));
-    hbox->addSpacing(8);
     hbox->addWidget(new QLabel(_("Near")));
     hbox->addWidget(nearClipSpin);
     hbox->addWidget(new QLabel(_("Far")));
     hbox->addWidget(farClipSpin);
+    hbox->addWidget(clipDistanceUnitLabel);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout;
+    hbox->addWidget(infiniteFarCheck);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
@@ -876,10 +904,11 @@ void ConfigWidgetSet::updateWidgets()
     for(auto& obj : signalObjects){
         obj->blockSignals(true);
     }
-    
+
     fieldOfViewSpin->setValue(config->fieldOfView);
-    nearClipSpin->setValue(config->nearClipDistance);
-    farClipSpin->setValue(config->farClipDistance);
+    nearClipSpin->setMeterValue(config->nearClipDistance);
+    farClipSpin->setMeterValue(config->farClipDistance);
+    infiniteFarCheck->setChecked(config->isInfiniteFarOverrideEnabled);
     restrictCameraRollCheck->setChecked(config->isCameraRollRistricted);
     verticalAxisRadios[config->verticalAxis]->setChecked(true);
     coordinateAxesCheck->setChecked(config->isCoordinateAxesEnabled);
@@ -891,7 +920,7 @@ void ConfigWidgetSet::updateWidgets()
         gws.spanSpin->setValue(info.span);
         gws.intervalSpin->setValue(info.interval);
     }
-    
+
     normalVisualizationCheck->setChecked(config->isNormalVisualizationEnabled);
     normalLengthSpin->setValue(config->normalLength);
     lightweightViewChangeCheck->setChecked(config->isLightweightViewChangedEnabled);

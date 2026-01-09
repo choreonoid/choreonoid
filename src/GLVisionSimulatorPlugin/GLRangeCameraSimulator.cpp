@@ -48,6 +48,12 @@ bool GLRangeCameraSimulator::doInitialize(GLVisionSimulatorItem* visionSimulator
     detectionProbability.reset();
     distanceErrorDistribution.reset();
 
+    if(imageType == Camera::NO_IMAGE){
+        // Disable MSAA for better performance when only depth data is used
+        // Antialiasing provides no benefit for depth-only rendering
+        screen(0)->disableMsaa();
+    }
+
     return true;
 }
 
@@ -88,6 +94,8 @@ void GLRangeCameraSimulator::doStoreScreenImage(GLVisionSensorRenderingScreen* s
     screen->readDepthBuffer(depthBuf);
 
     const Matrix4f Pinv = screen->renderer()->projectionMatrix().inverse().cast<float>();
+    const bool isReversedDepth = screen->renderer()->isReversedDepthBuffer();
+
     const float fw = resolutionX;
     const float fh = resolutionY;
     const int cx = resolutionX / 2;
@@ -114,15 +122,16 @@ void GLRangeCameraSimulator::doStoreScreenImage(GLVisionSensorRenderingScreen* s
                     if(!isOrganized){
                         continue;
                     } else {
-                        z = 1.0f;
+                        z = GLVisionSensorRenderingScreen::getDepthClearValue(isReversedDepth);
                     }
                 }
             }
 
-            if(z > 0.0f && z < 1.0f){
+            const bool isValidDepth = GLVisionSensorRenderingScreen::isValidDepthValue(z, isReversedDepth);
+            if(isValidDepth){
                 n.x() = 2.0f * x / fw - 1.0f;
                 n.y() = 2.0f * y / fh - 1.0f;
-                n.z() = 2.0f * z - 1.0f;
+                n.z() = GLVisionSensorRenderingScreen::depthToNdcZ(z, isReversedDepth);
                 const Vector4f o = Pinv * n;
                 const float& w = o[3];
                 Vector3f p(o[0] / w, o[1] / w, o[2] / w);
@@ -147,11 +156,7 @@ void GLRangeCameraSimulator::doStoreScreenImage(GLVisionSensorRenderingScreen* s
                 }
             } else if(isOrganized){
                 Vector3f p;
-                if(z <= 0.0f){
-                    p.z() = numeric_limits<float>::infinity();
-                } else {
-                    p.z() = -numeric_limits<float>::infinity();
-                }
+                p.z() = numeric_limits<float>::infinity();
                 if(x == cx){
                     p.x() = 0.0;
                 } else {

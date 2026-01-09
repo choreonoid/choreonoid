@@ -176,6 +176,7 @@ public:
     void setProjectionMatrix(const Matrix4& P);
     void setViewportSize(int width, int height);
     void setUseMsaa(bool useMsaa);
+    void setReversedDepth(bool on);
 
 private:
     class Impl;
@@ -349,6 +350,8 @@ public:
     void setShadowMapViewProjection(const Matrix4& PV);
     void setShadowAntiAliasingEnabled(bool on);
     bool isShadowAntiAliasingEnabled() const;
+    void setUseReversedDepth(bool on);
+    void resetReversedDepthState();
 
 private:
     class Impl;

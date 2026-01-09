@@ -12,6 +12,8 @@ layout( points, max_vertices = 1 ) out;
 
 in vec4 offsetPosition[];
 
+uniform bool isReversedDepth;
+
 #ifdef DO_DEPTH_TEST_IN_GEOMETRY_SHADER
 uniform sampler2D depthTexture;
 #else
@@ -21,10 +23,17 @@ flat out float offsetFragCoord_z;
 
 void main()
 {
-    const float near = 0.0;
-    const float far = 1.0;
-    float z_offset = offsetPosition[0].z / offsetPosition[0].w;
-    offsetFragCoord_z = ((far - near) * z_offset + (far + near)) / 2.0;
+    // Convert from NDC z to depth buffer value
+    // For reversed depth with [0,1] range: NDC z is already in [0,1], just use it directly
+    // For standard depth with [-1,1] range: transform from [-1,1] to [0,1]
+    float z_ndc = offsetPosition[0].z / offsetPosition[0].w;
+    if(isReversedDepth){
+        // NDC range is [0, 1] with glClipControl GL_ZERO_TO_ONE
+        offsetFragCoord_z = z_ndc;
+    } else {
+        // NDC range is [-1, 1], convert to [0, 1]
+        offsetFragCoord_z = (z_ndc + 1.0) / 2.0;
+    }
 
 #ifdef DO_DEPTH_TEST_IN_GEOMETRY_SHADER
     float MRD = 1.0 / ((1 << 24) - 1);
@@ -32,11 +41,22 @@ void main()
     vec3 pos_c = pos.xy / pos.w;
     vec2 texCoord = (pos_c.xy + vec2(1.0, 1.0)) / 2.0;
     float depth = texture(depthTexture, texCoord).r;
-    if(offsetFragCoord_z - MRD < depth){
-        gl_Position = pos;
-        gl_PointSize = gl_in[0].gl_PointSize;
-        EmitVertex();
-        EndPrimitive();
+    if(isReversedDepth){
+        // Reversed depth: larger values are closer
+        if(offsetFragCoord_z + MRD > depth){
+            gl_Position = pos;
+            gl_PointSize = gl_in[0].gl_PointSize;
+            EmitVertex();
+            EndPrimitive();
+        }
+    } else {
+        // Standard depth: smaller values are closer
+        if(offsetFragCoord_z - MRD < depth){
+            gl_Position = pos;
+            gl_PointSize = gl_in[0].gl_PointSize;
+            EmitVertex();
+            EndPrimitive();
+        }
     }
 #else
     gl_Position = gl_in[0].gl_Position;

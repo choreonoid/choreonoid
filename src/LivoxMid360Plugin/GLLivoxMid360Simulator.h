@@ -36,6 +36,8 @@ private:
         double P_inv_33;
     };
     std::vector<ScreenInfo> screenInfos;
+    bool isReversedDepth;
+    bool isReversedDepthDetected;
         
     std::mutex screenSyncMutex;
     int screenSyncCounter;

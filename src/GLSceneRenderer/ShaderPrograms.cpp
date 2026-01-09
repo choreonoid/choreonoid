@@ -77,10 +77,12 @@ public:
     GLint useMsaaLocation;
     GLint depthTextureSizeLocation;
     GLint viewportSizeLocation;
+    GLint isReversedDepthLocation;
     int viewportWidth;
     int viewportHeight;
     bool isViewportSizeInvalidated;
     bool useMsaa;
+    bool isReversedDepth;
 };
 
 
@@ -259,11 +261,14 @@ public:
 
     Matrix4 shadowBias;
 
+    bool useReversedDepth;
+    bool useReversedDepthInitialized;
+
     Impl(FullLightingProgram* self);
     void initialize(GLSLProgram& glsl);
     void initializeShadowInfo(GLSLProgram& glsl, int index);
     void activate(GLSLProgram& glsl);
-    void updateShaderWireframeState();    
+    void updateShaderWireframeState();
 };
 
 }
@@ -650,13 +655,16 @@ void SolidPointProgram::initialize()
     impl->useMsaaLocation = glsl.getUniformLocation("useMsaa");
     impl->depthTextureSizeLocation = glsl.getUniformLocation("depthTextureSize");
     impl->viewportSizeLocation = glsl.getUniformLocation("viewportSize");
+    impl->isReversedDepthLocation = glsl.getUniformLocation("isReversedDepth");
     impl->isViewportSizeInvalidated = true;
     impl->useMsaa = false;
+    impl->isReversedDepth = false;
     glsl.use();
     // Bind depthTexture2D to texture unit 0, depthTextureMS to texture unit 1
     glUniform1i(impl->depthTexture2DLocation, 0);
     glUniform1i(impl->depthTextureMSLocation, 1);
     glUniform1i(impl->useMsaaLocation, 0);
+    glUniform1i(impl->isReversedDepthLocation, 0);
 }
 
 
@@ -714,6 +722,15 @@ void SolidPointProgram::setUseMsaa(bool useMsaa)
     if(impl->useMsaa != useMsaa){
         impl->useMsaa = useMsaa;
         glUniform1i(impl->useMsaaLocation, useMsaa ? 1 : 0);
+    }
+}
+
+
+void SolidPointProgram::setReversedDepth(bool on)
+{
+    if(impl->isReversedDepth != on){
+        impl->isReversedDepth = on;
+        glUniform1i(impl->isReversedDepthLocation, on ? 1 : 0);
     }
 }
 
@@ -1286,11 +1303,8 @@ FullLightingProgram::Impl::Impl(FullLightingProgram* self)
     orthoShadowCamera->setHeight(15.0);
     currentShadowIndex = 0;
 
-    shadowBias <<
-        0.5, 0.0, 0.0, 0.5,
-        0.0, 0.5, 0.0, 0.5,
-        0.0, 0.0, 0.5, 0.5,
-        0.0, 0.0, 0.0, 1.0;
+    useReversedDepth = false;
+    useReversedDepthInitialized = false;
 }    
     
 
@@ -1373,6 +1387,9 @@ void FullLightingProgram::Impl::initialize(GLSLProgram& glsl)
         auto& shadow = shadowInfos[i];
         glUniform1i(shadow.shadowMapLocation, shadowMapTextureTopIndex + i);
     }
+
+    // Reset reversed depth state to ensure proper initialization on first render
+    useReversedDepthInitialized = false;
 }
 
 
@@ -1401,7 +1418,7 @@ void FullLightingProgram::Impl::initializeShadowInfo(GLSLProgram& glsl, int inde
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadow.depthTexture, 0);
     
@@ -1578,6 +1595,17 @@ void FullLightingProgram::activateMainRenderingPass()
 {
     impl->currentShadowIndex = 0;
 
+    // Re-bind shadow map textures to their designated texture units
+    // to ensure they are correctly bound for sampling during main rendering
+    for(int i = 0; i < impl->numShadows; ++i){
+        auto& shadow = impl->shadowInfos[i];
+        glActiveTexture(GL_TEXTURE0 + impl->shadowMapTextureTopIndex + i);
+        glBindTexture(GL_TEXTURE_2D, shadow.depthTexture);
+    }
+
+    // Restore active texture unit to the default
+    glActiveTexture(GL_TEXTURE0);
+
     glUniform1i(impl->numShadowsLocation, impl->numShadows);
     if(impl->numShadows > 0){
         glUniform1i(impl->isShadowAntiAliasingEnabledLocation, impl->isShadowAntiAliasingEnabled);
@@ -1653,6 +1681,68 @@ bool FullLightingProgram::isShadowAntiAliasingEnabled() const
 }
 
 
+void FullLightingProgram::setUseReversedDepth(bool on)
+{
+    if(impl->useReversedDepthInitialized && impl->useReversedDepth == on){
+        return;
+    }
+    impl->useReversedDepth = on;
+    impl->useReversedDepthInitialized = true;
+
+    // Update shadow bias matrix for the depth buffer mode
+    // Standard depth with NDC [-1,1]: transform to texture coords [0,1]
+    //   x' = x * 0.5 + 0.5, y' = y * 0.5 + 0.5, z' = z * 0.5 + 0.5
+    // Reversed depth with NDC [0,1] (glClipControl GL_ZERO_TO_ONE): z is already [0,1]
+    //   x' = x * 0.5 + 0.5, y' = y * 0.5 + 0.5, z' = z (no transform needed)
+    if(on){
+        impl->shadowBias <<
+            0.5, 0.0, 0.0, 0.5,
+            0.0, 0.5, 0.0, 0.5,
+            0.0, 0.0, 1.0, 0.0,  // z' = z (no transform for reversed depth)
+            0.0, 0.0, 0.0, 1.0;
+    } else {
+        impl->shadowBias <<
+            0.5, 0.0, 0.0, 0.5,
+            0.0, 0.5, 0.0, 0.5,
+            0.0, 0.0, 0.5, 0.5,  // z' = z * 0.5 + 0.5 (standard depth)
+            0.0, 0.0, 0.0, 1.0;
+    }
+
+    // Update shadow map texture compare function and border color
+    for(int i = 0; i < impl->maxNumShadows; ++i){
+        auto& shadow = impl->shadowInfos[i];
+        glActiveTexture(GL_TEXTURE0 + impl->shadowMapTextureTopIndex + i);
+        glBindTexture(GL_TEXTURE_2D, shadow.depthTexture);
+
+        if(on){
+            // Reversed depth: larger values are closer, smaller values are farther
+            // Shadow test: ref depth > shadow map depth means not in shadow
+            // (ref depth is closer to the light than the occluder)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_GREATER);
+            // Out of range should be "not in shadow" = farthest = 0.0
+            static const GLfloat border[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+            glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
+        } else {
+            // Standard depth: smaller values are closer, larger values are farther
+            // Shadow test: ref depth < shadow map depth means not in shadow
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+            // Out of range should be "not in shadow" = farthest = 1.0
+            static const GLfloat border[] = { 1.0f, 0.0f, 0.0f, 0.0f };
+            glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
+        }
+    }
+
+    // Restore active texture unit to the default
+    glActiveTexture(GL_TEXTURE0);
+}
+
+
+void FullLightingProgram::resetReversedDepthState()
+{
+    impl->useReversedDepthInitialized = false;
+}
+
+
 ShadowMapProgram::ShadowMapProgram(FullLightingProgram* phongShadowProgram)
     : mainProgram(phongShadowProgram)
 {
@@ -1672,6 +1762,10 @@ void ShadowMapProgram::initializeShadowMapBuffer()
     auto& shadow = mainImpl->shadowInfos[mainImpl->currentShadowIndex];
     glBindFramebuffer(GL_FRAMEBUFFER, shadow.frameBuffer);
 
+    // Bind the correct texture before calling glTexParameteri
+    glActiveTexture(GL_TEXTURE0 + mainImpl->shadowMapTextureTopIndex + mainImpl->currentShadowIndex);
+    glBindTexture(GL_TEXTURE_2D, shadow.depthTexture);
+
     if(mainImpl->isShadowAntiAliasingEnabled){
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1680,6 +1774,13 @@ void ShadowMapProgram::initializeShadowMapBuffer()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
 
+    // Set appropriate clear depth for shadow map
+    // Reversed depth: clear to 0.0 (farthest), Standard depth: clear to 1.0 (farthest)
+    if(mainImpl->useReversedDepth){
+        glClearDepth(0.0);
+    } else {
+        glClearDepth(1.0);
+    }
     glClear(GL_DEPTH_BUFFER_BIT);
 }
 

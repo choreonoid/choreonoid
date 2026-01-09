@@ -228,6 +228,11 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
         GLSceneRenderer::setRendererType(GLSceneRenderer::GLSL_RENDERER);
     }
 
+    char* CNOID_DISABLE_REVERSED_DEPTH_BUFFER = getenv("CNOID_DISABLE_REVERSED_DEPTH_BUFFER");
+    if(CNOID_DISABLE_REVERSED_DEPTH_BUFFER && strcmp(CNOID_DISABLE_REVERSED_DEPTH_BUFFER, "1") == 0){
+        GLSceneRenderer::forceStandardDepthBuffer();
+    }
+
     glFormat.setSwapInterval(
         AppConfig::archive()->openMapping("OpenGL")->get("vsync", false));
 

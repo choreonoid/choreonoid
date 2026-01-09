@@ -49,6 +49,8 @@ public:
     bool isAntiAliasingEnabled() const;
     int msaaLevel() const;
     void setMsaaLevel(int level);
+    void setInfiniteFarOverrideEnabled(bool on);
+    bool isInfiniteFarOverrideEnabled() const;
 
     CloneMap& cloneMap();
     double currentTime() const;

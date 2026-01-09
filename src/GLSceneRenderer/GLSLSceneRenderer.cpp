@@ -389,6 +389,7 @@ public:
     
     GLuint defaultFBO;
     GLuint depthTexture;
+    GLuint depthResolveTexture; // Non-MSAA depth texture for blit destination (used when msaaSamples > 1)
     GLuint msaaFBO;           // Custom MSAA framebuffer (used when msaaSamples > 1)
     GLuint msaaColorBuffer;   // MSAA color renderbuffer for msaaFBO
     GLuint fboForPicking;
@@ -398,6 +399,8 @@ public:
     GLuint depthBufferForOverlayPicking;
     int msaaSamples;
     bool isDepthBufferUpdateEnabled;
+    bool isReversedDepthBufferActive;
+    bool isInfiniteFarOverrideEnabled;
     int pickingImageWidth;
     int pickingImageHeight;
 
@@ -723,10 +726,14 @@ void GLSLSceneRenderer::Impl::initialize()
     isBoundingBoxRenderingForLightweightRenderingGroupEnabled = false;
 
     defaultFBO = 0;
+    depthTexture = 0;
+    depthResolveTexture = 0;
     msaaFBO = 0;
     msaaColorBuffer = 0;
     msaaSamples = 4;
     isDepthBufferUpdateEnabled = false;
+    isReversedDepthBufferActive = false;
+    isInfiniteFarOverrideEnabled = true;
 
     lightingMode = NormalLighting;
     
@@ -895,6 +902,9 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         if(depthTexture){
             glDeleteTextures(1, &depthTexture);
         }
+        if(depthResolveTexture){
+            glDeleteTextures(1, &depthResolveTexture);
+        }
         if(msaaFBO){
             glDeleteFramebuffers(1, &msaaFBO);
         }
@@ -934,6 +944,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         needToUpdateDepthTexture = true;
 
         depthTexture = 0;
+        depthResolveTexture = 0;
         msaaFBO = 0;
         msaaColorBuffer = 0;
         fboForPicking = 0;
@@ -986,7 +997,7 @@ bool GLSLSceneRenderer::Impl::initializeGL(GLADloadfunc getProcAddress)
     glVendorString = (const char*)glGetString(GL_VENDOR);
     glRendererString = (const char*)glGetString(GL_RENDERER);
 
-    os() << formatR(_("OpenGL {0}.{1} (GLSL {2}) is available for the \"{3}\" view.\n"),
+    os() << formatR(_("OpenGL {0}.{1} (GLSL {2}) is available for {3}.\n"),
                     GLAD_VERSION_MAJOR(glVersion), GLAD_VERSION_MINOR(glVersion),
                     glslVersionString, self->name());
     os() << formatR(_("Driver profile: {0} {1} {2}.\n"),
@@ -1081,7 +1092,25 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
     }
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
+    // Automatic reversed depth buffer detection
+    if(!GLSceneRenderer::isStandardDepthBufferForced() && glad_glClipControl){
+        isReversedDepthBufferActive = true;
+        glad_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+        glClearDepth(0.0);
+        glDepthFunc(GL_GEQUAL);
+    } else {
+        isReversedDepthBufferActive = false;
+        if(!glad_glClipControl){
+            os() << _("Warning: glClipControl is not available. Standard depth buffer is used instead of reversed depth buffer.")
+                 << endl;
+        } else {
+            os() << _("Standard depth buffer is used instead of reversed depth buffer.")
+                 << endl;
+            glad_glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
+        }
+        glClearDepth(1.0);
+        glDepthFunc(GL_LEQUAL);
+    }
     glDisable(GL_DITHER);
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
@@ -1153,6 +1182,10 @@ void GLSLSceneRenderer::Impl::initializeDepthTexture()
         }
     }
 
+    // Use floating-point depth for reversed depth buffer to maximize precision benefit
+    GLenum depthFormat = isReversedDepthBufferActive
+        ? GL_DEPTH32F_STENCIL8 : GL_DEPTH24_STENCIL8;
+
     auto& vp = self->viewport();
 
     if(msaaSamples > 1){
@@ -1177,7 +1210,7 @@ void GLSLSceneRenderer::Impl::initializeDepthTexture()
         }
         glActiveTexture(GL_TEXTURE0 + DepthTextureUnit);
         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, depthTexture);
-        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaSamples, GL_DEPTH24_STENCIL8, vp.w, vp.h, GL_TRUE);
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaSamples, depthFormat, vp.w, vp.h, GL_TRUE);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, depthTexture, 0);
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -1185,8 +1218,28 @@ void GLSLSceneRenderer::Impl::initializeDepthTexture()
             throw std::runtime_error(_("MSAA Framebuffer is not complete.\n"));
         }
 
-        // Restore default FBO
-        glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
+        // Create non-MSAA depth resolve texture for blit destination (only when depth buffer update is needed)
+        // This enables glBlitFramebuffer to work correctly for depth buffer
+        if(isDepthBufferUpdateEnabled){
+            if(!depthResolveTexture){
+                glGenTextures(1, &depthResolveTexture);
+            }
+            glBindTexture(GL_TEXTURE_2D, depthResolveTexture);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            GLenum depthPixelType = isReversedDepthBufferActive
+                ? GL_FLOAT_32_UNSIGNED_INT_24_8_REV : GL_UNSIGNED_INT_24_8;
+            glTexImage2D(GL_TEXTURE_2D, 0, depthFormat, vp.w, vp.h, 0, GL_DEPTH_STENCIL, depthPixelType, NULL);
+
+            // Attach depth resolve texture to defaultFBO for glBlitFramebuffer destination
+            glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthResolveTexture, 0);
+
+            // Restore msaaFBO for rendering
+            glBindFramebuffer(GL_FRAMEBUFFER, msaaFBO);
+        }
     } else {
         // MSAA disabled: Attach depth texture directly to defaultFBO
         // (Maintains compatibility with GLVisionSimulatorPlugin)
@@ -1204,7 +1257,9 @@ void GLSLSceneRenderer::Impl::initializeDepthTexture()
             glActiveTexture(GL_TEXTURE0 + DepthTextureUnit);
             glBindTexture(GL_TEXTURE_2D, depthTexture);
         }
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, vp.w, vp.h, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+        GLenum depthPixelType = isReversedDepthBufferActive
+            ? GL_FLOAT_32_UNSIGNED_INT_24_8_REV : GL_UNSIGNED_INT_24_8;
+        glTexImage2D(GL_TEXTURE_2D, 0, depthFormat, vp.w, vp.h, 0, GL_DEPTH_STENCIL, depthPixelType, NULL);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -1437,6 +1492,13 @@ void GLSLSceneRenderer::Impl::doRender()
     glClearColor(c[0], c[1], c[2], 1.0f);
     // Enable all channels for clearing (alpha needs to be set to 1.0)
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+    // For reversed depth buffer, ensure GL state is set correctly before glClear
+    if(isReversedDepthBufferActive){
+        glClearDepth(0.0);
+        glDepthFunc(GL_GEQUAL);
+    }
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // Disable alpha channel writing to prevent Wayland compositors
     // from treating the window as transparent
@@ -1586,7 +1648,9 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
         }
         glGenRenderbuffers(1, &depthBufferForPicking);
         glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForPicking);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, vp.w, vp.h);
+        GLenum pickingDepthFormat = isReversedDepthBufferActive
+            ? GL_DEPTH32F_STENCIL8 : GL_DEPTH24_STENCIL8;
+        glRenderbufferStorage(GL_RENDERBUFFER, pickingDepthFormat, vp.w, vp.h);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForPicking);
 
         pickingImageWidth = vp.w;
@@ -1713,6 +1777,15 @@ bool GLSLSceneRenderer::Impl::renderShadowMap(SgLight* light, const Isometry3& T
         Isometry3 Tc = T;
         SgCamera* shadowMapCamera = fullLightingProgram->getShadowMapCamera(light, Tc);
         if(shadowMapCamera){
+            // Set reversed depth mode for shadow map generation
+            fullLightingProgram->setUseReversedDepth(isReversedDepthBufferActive);
+
+            // Copy scene camera's clip distances to shadow map camera for scene scale adaptation.
+            // TODO: Consider adding shadow range parameters to SgLight in the future.
+            auto sceneCamera = self->currentCamera();
+            shadowMapCamera->setNearClipDistance(sceneCamera->nearClipDistance());
+            shadowMapCamera->setFarClipDistance(sceneCamera->farClipDistance());
+
             renderCamera(shadowMapCamera, Tc);
             fullLightingProgram->setShadowMapViewProjection(PV);
             fullLightingProgram->shadowMapProgram()->initializeShadowMapBuffer();
@@ -1721,7 +1794,7 @@ bool GLSLSceneRenderer::Impl::renderShadowMap(SgLight* light, const Isometry3& T
             if(USE_GL_FLUSH_FUNCTION_IN_SHADOW_MAP_RENDERING){
                 glFlush();
             }
-            
+
             return true;
         }
     }
@@ -1731,23 +1804,56 @@ bool GLSLSceneRenderer::Impl::renderShadowMap(SgLight* light, const Isometry3& T
 
 void GLSLSceneRenderer::Impl::renderCamera(SgCamera* camera, const Isometry3& cameraPosition)
 {
+    bool useReversed = isReversedDepthBufferActive;
+    bool useInfinite = isReversedDepthBufferActive && isInfiniteFarOverrideEnabled;
+
     if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
         double aspectRatio = self->aspectRatio();
-        self->getPerspectiveProjectionMatrix(
-            pers->fovy(aspectRatio), aspectRatio, pers->nearClipDistance(), pers->farClipDistance(),
-            projectionMatrix);
-        
+        if(useReversed){
+            if(useInfinite){
+                self->getReversedInfinitePerspectiveProjectionMatrix(
+                    pers->fovy(aspectRatio), aspectRatio, pers->nearClipDistance(),
+                    projectionMatrix);
+            } else {
+                self->getReversedPerspectiveProjectionMatrix(
+                    pers->fovy(aspectRatio), aspectRatio, pers->nearClipDistance(), pers->farClipDistance(),
+                    projectionMatrix);
+            }
+        } else {
+            self->getPerspectiveProjectionMatrix(
+                pers->fovy(aspectRatio), aspectRatio, pers->nearClipDistance(), pers->farClipDistance(),
+                projectionMatrix);
+        }
+
     } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
         GLfloat left, right, bottom, top;
         self->getViewVolume(ortho, left, right, bottom, top);
-        self->getOrthographicProjectionMatrix(
-            left, right, bottom, top, ortho->nearClipDistance(), ortho->farClipDistance(),
-            projectionMatrix);
-        
+        if(useReversed){
+            self->getReversedOrthographicProjectionMatrix(
+                left, right, bottom, top, ortho->nearClipDistance(), ortho->farClipDistance(),
+                projectionMatrix);
+        } else {
+            self->getOrthographicProjectionMatrix(
+                left, right, bottom, top, ortho->nearClipDistance(), ortho->farClipDistance(),
+                projectionMatrix);
+        }
+
     } else {
-        self->getPerspectiveProjectionMatrix(
-            radian(40.0), self->aspectRatio(), 0.01, 1.0e4,
-            projectionMatrix);
+        if(useReversed){
+            if(useInfinite){
+                self->getReversedInfinitePerspectiveProjectionMatrix(
+                    radian(40.0), self->aspectRatio(), 0.01,
+                    projectionMatrix);
+            } else {
+                self->getReversedPerspectiveProjectionMatrix(
+                    radian(40.0), self->aspectRatio(), 0.01, 1.0e4,
+                    projectionMatrix);
+            }
+        } else {
+            self->getPerspectiveProjectionMatrix(
+                radian(40.0), self->aspectRatio(), 0.01, 1.0e4,
+                projectionMatrix);
+        }
     }
 
     if(isUpsideDownEnabled){
@@ -1961,6 +2067,7 @@ void GLSLSceneRenderer::Impl::doVertexRendering()
 
     ScopedShaderProgramActivator programActivator(solidPointProgram.get(), this);
     solidPointProgram->setUseMsaa(msaaSamples > 1);
+    solidPointProgram->setReversedDepth(isReversedDepthBufferActive);
     solidPointProgram->setProjectionMatrix(projectionMatrix);
 
     activateVertexRenderingFunctions();
@@ -2028,7 +2135,9 @@ void GLSLSceneRenderer::Impl::renderOverlayObjects()
             glGenRenderbuffers(1, &depthBufferForOverlayPicking);
             auto& vp = self->viewport();
             glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForOverlayPicking);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, vp.w, vp.h);
+            GLenum pickingDepthFormat = isReversedDepthBufferActive
+                ? GL_DEPTH32F_STENCIL8 : GL_DEPTH24_STENCIL8;
+            glRenderbufferStorage(GL_RENDERBUFFER, pickingDepthFormat, vp.w, vp.h);
         }
         overlayDepthBuffer = depthBufferForOverlayPicking;
     } else {
@@ -2044,10 +2153,12 @@ void GLSLSceneRenderer::Impl::renderOverlayObjects()
             glGenRenderbuffers(1, &depthBufferForOverlay);
             auto& vp = self->viewport();
             glBindRenderbuffer(GL_RENDERBUFFER, depthBufferForOverlay);
+            GLenum overlayDepthFormat = isReversedDepthBufferActive
+                ? GL_DEPTH32F_STENCIL8 : GL_DEPTH24_STENCIL8;
             if(msaaSamples > 1){
-                glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples, GL_DEPTH_STENCIL, vp.w, vp.h);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples, overlayDepthFormat, vp.w, vp.h);
             } else {
-                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, vp.w, vp.h);
+                glRenderbufferStorage(GL_RENDERBUFFER, overlayDepthFormat, vp.w, vp.h);
             }
         }
         overlayDepthBuffer = depthBufferForOverlay;
@@ -2055,6 +2166,12 @@ void GLSLSceneRenderer::Impl::renderOverlayObjects()
     needToUpdateOverlayDepthBufferSize = false;
 
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, overlayDepthBuffer);
+
+    if(isReversedDepthBufferActive){
+        glClearDepth(0.0);
+    } else {
+        glClearDepth(1.0);
+    }
     glClear(GL_DEPTH_BUFFER_BIT);
 
     if(isRenderingPickingImage){
@@ -3455,12 +3572,19 @@ void GLSLSceneRenderer::Impl::renderViewportOverlayMain(SgViewportOverlay* overl
     SgViewportOverlay::ViewVolume vv;
     auto& vp = self->viewport();
     overlay->calcViewVolume(vp.w, vp.h, vv);
-    self->getOrthographicProjectionMatrix(vv.left, vv.right, vv.bottom, vv.top, vv.zNear, vv.zFar, PV);
+
+    if(isReversedDepthBufferActive){
+        self->getReversedOrthographicProjectionMatrix(
+            vv.left, vv.right, vv.bottom, vv.top, vv.zNear, vv.zFar, PV);
+    } else {
+        self->getOrthographicProjectionMatrix(
+            vv.left, vv.right, vv.bottom, vv.top, vv.zNear, vv.zFar, PV);
+    }
 
     pickedNodePath.clear();
 
     ScopedShaderProgramActivator programActivator(solidColorExProgram.get(), this);
-    
+
     renderOverlayMain(overlay, Affine3::Identity(), emptyNodePath);
 
     PV = PV0;
@@ -3853,6 +3977,49 @@ int GLSLSceneRenderer::backFaceCullingMode() const
 void GLSLSceneRenderer::setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool on)
 {
     impl->isBoundingBoxRenderingForLightweightRenderingGroupEnabled = on;
+}
+
+
+bool GLSLSceneRenderer::isReversedDepthBuffer() const
+{
+    return impl->isReversedDepthBufferActive;
+}
+
+
+bool GLSLSceneRenderer::getCameraRay(double x, double y, Vector3& out_origin, Vector3& out_direction) const
+{
+    Vector3 nearPoint, midPoint;
+    double nearDepth, midDepth;
+
+    if(impl->isReversedDepthBufferActive){
+        // Reversed depth buffer: near=1.0, far=0.0
+        nearDepth = 1.0;
+        midDepth = 0.5;
+    } else {
+        // Standard depth buffer: near=0.0, far=1.0
+        nearDepth = 0.0;
+        midDepth = 0.5;
+    }
+
+    if(GLSceneRenderer::unproject(x, y, nearDepth, nearPoint) &&
+       GLSceneRenderer::unproject(x, y, midDepth, midPoint)){
+        out_origin = nearPoint;
+        out_direction = (midPoint - nearPoint).normalized();
+        return true;
+    }
+    return false;
+}
+
+
+void GLSLSceneRenderer::setInfiniteFarOverrideEnabled(bool on)
+{
+    impl->isInfiniteFarOverrideEnabled = on;
+}
+
+
+bool GLSLSceneRenderer::isInfiniteFarOverrideEnabled() const
+{
+    return impl->isInfiniteFarOverrideEnabled;
 }
 
 

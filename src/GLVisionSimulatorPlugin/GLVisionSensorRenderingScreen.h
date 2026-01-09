@@ -41,10 +41,30 @@ public:
     int resolutionY() const { return resolutionY_; }
     void setLightingEnabled(bool on);
     void setDepthBufferUpdateEnabled(bool on);
+    void disableMsaa();
     void readImageBuffer(unsigned char* pixels);
     void readImageBuffer(Image& image);
     void readDepthBuffer(std::vector<float>& depthBuf);
     bool hasUpdatedData() const { return hasUpdatedData_; }
+
+    // Depth buffer helper functions for reversed/standard depth buffer handling
+    static float getDepthClearValue(bool isReversedDepth) {
+        return isReversedDepth ? 0.0f : 1.0f;
+    }
+    static bool isValidDepthValue(float depth, bool isReversedDepth) {
+        // Reversed: near=1.0, far=0.0, clear=0.0 -> valid range is (0.0, 1.0]
+        // Standard: near=0.0, far=1.0, clear=1.0 -> valid range is [0.0, 1.0)
+        return isReversedDepth ? (depth > 0.0f && depth <= 1.0f)
+                               : (depth >= 0.0f && depth < 1.0f);
+    }
+    static float depthToNdcZ(float depth, bool isReversedDepth) {
+        // Reversed: NDC z-range is [0, 1], no transformation needed
+        // Standard: depth [0,1] -> NDC [-1,1]
+        return isReversedDepth ? depth : (2.0f * depth - 1.0f);
+    }
+    static double depthToNdcZ(double depth, bool isReversedDepth) {
+        return isReversedDepth ? depth : (2.0 * depth - 1.0);
+    }
 
 private:
     GLVisionSensorSimulator* sensorSimulator_;
@@ -56,6 +76,7 @@ private:
     SgCameraPtr screenCamera;
     bool isLightingEnabled_;
     bool isDepthBufferUpdateEnabled_;
+    bool isMsaaDisabled_;
     bool hasUpdatedData_;
     QOpenGLContext* glContext;
     QOffscreenSurface* offscreenSurface;

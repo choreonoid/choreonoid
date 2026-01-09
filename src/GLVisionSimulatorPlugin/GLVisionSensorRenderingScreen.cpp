@@ -7,10 +7,11 @@
 #include <cnoid/SceneLights>
 #include <cnoid/MathUtil>
 #include <cnoid/MessageOut>
-#include <cnoid/Format>
+#include <cnoid/NullOut>
 #include <cnoid/AppUtil>
 #include <cnoid/SceneRendererConfig>
 #include <QApplication>
+#include <sstream>
 #include "gettext.h"
 
 // Define CNOID_ENABLE_EGL based on platform
@@ -83,6 +84,7 @@ GLVisionSensorRenderingScreen::GLVisionSensorRenderingScreen(GLVisionSensorSimul
     sceneDevice = nullptr;
     isLightingEnabled_ = true;
     isDepthBufferUpdateEnabled_ = false;
+    isMsaaDisabled_ = false;
     glContext = nullptr;
     offscreenSurface = nullptr;
     frameBuffer = nullptr;
@@ -194,6 +196,12 @@ void GLVisionSensorRenderingScreen::setLightingEnabled(bool on)
 void GLVisionSensorRenderingScreen::setDepthBufferUpdateEnabled(bool on)
 {
     isDepthBufferUpdateEnabled_ = on;
+}
+
+
+void GLVisionSensorRenderingScreen::disableMsaa()
+{
+    isMsaaDisabled_ = true;
 }
 
 
@@ -456,16 +464,29 @@ bool GLVisionSensorRenderingScreen::initializeGL()
 #endif
 
     // Common initialization: create and configure scene renderer
-    if(!sceneRenderer){
-        sceneRenderer = GLSceneRenderer::create();
-        sceneRenderer->setFlagVariableToUpdatePreprocessedNodeTree(flagToUpdatePreprocessedNodeTree);
-    }
+    auto visionSimulatorItem = sensorSimulator_->visionSimulatorItem();
 
-    // Set MSAA level from GLVisionSimulatorItem settings
-    int msaaLevel = sensorSimulator_->visionSimulatorItem()->msaaLevel();
-    int effectiveMsaaLevel = (msaaLevel < 0) ? SceneRendererConfig::getSystemDefaultMsaaLevel() : msaaLevel;
+    sceneRenderer = GLSceneRenderer::create();
+    sceneRenderer->setFlagVariableToUpdatePreprocessedNodeTree(flagToUpdatePreprocessedNodeTree);
+
+    // Set rendering options from GLVisionSimulatorItem settings
+    int effectiveMsaaLevel = 0;
+    if(!isMsaaDisabled_){
+        int msaaLevel = visionSimulatorItem->msaaLevel();
+        effectiveMsaaLevel = (msaaLevel < 0) ? SceneRendererConfig::getSystemDefaultMsaaLevel() : msaaLevel;
+    }
     sceneRenderer->setMsaaLevel(effectiveMsaaLevel);
     sceneRenderer->setDepthBufferUpdateEnabled(isDepthBufferUpdateEnabled_);
+    sceneRenderer->setInfiniteFarOverrideEnabled(visionSimulatorItem->isInfiniteFarOverrideEnabled());
+
+    // Use a local stringstream to buffer OpenGL info output during initialization
+    // to avoid flush() triggering Qt event processing and losing GL context
+    std::unique_ptr<std::ostringstream> glInfoBuffer;
+    if(sensorSimulator_->isOpenGLInfoOutputEnabled()){
+        sceneRenderer->setName(visionSimulatorItem->displayName());
+        glInfoBuffer = std::make_unique<std::ostringstream>();
+        sceneRenderer->setOutputStream(*glInfoBuffer);
+    }
 
     // Initialize OpenGL functions with the appropriate loader
     bool glInitialized = false;
@@ -477,6 +498,16 @@ bool GLVisionSensorRenderingScreen::initializeGL()
     {
         glInitialized = sceneRenderer->initializeGL((GLADloadfunc)getQtProcAddress);
     }
+
+    // Output buffered OpenGL info after initialization is complete
+    if(glInfoBuffer){
+        sceneRenderer->setOutputStream(cnoid::nullout());
+        std::string glInfo = glInfoBuffer->str();
+        if(!glInfo.empty()){
+            MessageOut::master()->put(glInfo);
+        }
+    }
+
     if(!glInitialized){
         finalizeGL(false);
         return false;
@@ -509,8 +540,6 @@ bool GLVisionSensorRenderingScreen::initializeGL()
         sceneRenderer->setDefaultFramebufferObject(frameBuffer->handle());
     }
 
-    auto visionSimulatorItem = sensorSimulator_->visionSimulatorItem();
-        
     sceneRenderer->setViewport(0, 0, resolutionX_, resolutionY_);
     sceneRenderer->sceneRoot()->addChild(scene->sceneRoot());
     flagToUpdatePreprocessedNodeTree = true;
@@ -524,19 +553,6 @@ bool GLVisionSensorRenderingScreen::initializeGL()
         sceneRenderer->enableAdditionalLights(visionSimulatorItem->isAdditionalLightSetEnabled());
     } else {
         sceneRenderer->setLightingMode(GLSceneRenderer::NoLighting);
-    }
-
-    // Output OpenGL information if enabled for this sensor
-    if(sensorSimulator_->isOpenGLInfoOutputEnabled()){
-        auto mout = MessageOut::master();
-        mout->putln(
-            formatR(_("OpenGL {0} (GLSL {1}) is available for {2}."),
-                    sceneRenderer->glVersionString(),
-                    sceneRenderer->glslVersionString(),
-                    sensorSimulator_->visionSimulatorItem()->displayName()));
-        mout->putln(
-            formatR(_("Driver profile: {0} {1}."),
-                    sceneRenderer->glVendorString(), sceneRenderer->glRendererString()));
     }
 
     doneGLContextCurrent();

@@ -35,6 +35,7 @@ bool GLLivoxMid360Simulator::doInitialize(GLVisionSimulatorItem* visionSimulator
     for(int i=0; i < NumScreens; ++i){
         auto screen = addScreen();
         screen->setLightingEnabled(false);
+        screen->setDepthBufferUpdateEnabled(true);
     }
 
     if(sensor->yawRange() <= 0.0 || sensor->pitchRange() <= 0.0){
@@ -57,7 +58,8 @@ bool GLLivoxMid360Simulator::doInitialize(GLVisionSimulatorItem* visionSimulator
 
     screenSyncCounter = 0;
     currentAngleSeqIndex = 0;
-    
+    isReversedDepthDetected = false;
+
     return true;
 }
 
@@ -66,7 +68,7 @@ bool GLLivoxMid360Simulator::doInitializeScreenCamera(GLVisionSensorRenderingScr
 {
     int screenIndex = screen->index();
     auto& info = screenInfos[screenIndex];
-    
+
     auto screenCamera = new SgPerspectiveCamera;
     screenCamera->setNearClipDistance(sensor->minDistance());
     screenCamera->setFarClipDistance(sensor->maxDistance());
@@ -107,6 +109,10 @@ void GLLivoxMid360Simulator::doStoreScreenImage(GLVisionSensorRenderingScreen* s
     Matrix4 P_inv = screen->renderer()->projectionMatrix().inverse();
     info.P_inv_32 = P_inv(3, 2);
     info.P_inv_33 = P_inv(3, 3);
+    if(!isReversedDepthDetected){
+        isReversedDepth = screen->renderer()->isReversedDepthBuffer();
+        isReversedDepthDetected = true;
+    }
 
     bool doStoreRangeData = false;
     {
@@ -170,10 +176,10 @@ std::optional<double> GLLivoxMid360Simulator::getDistance(double yawAngle, doubl
     py = std::min(py, info.resolutionY - 1);
 
     float depth = info.depthBuf[py * info.resolutionX + px];
-    if(depth <= 0.0f || depth >= 1.0f){
+    if(!GLVisionSensorRenderingScreen::isValidDepthValue(depth, isReversedDepth)){
         return std::nullopt;
     } else {
-        double z0 = 2.0 * depth - 1.0;
+        double z0 = GLVisionSensorRenderingScreen::depthToNdcZ(depth, isReversedDepth);
         double w = info.P_inv_32 * z0 + info.P_inv_33;
         double z = -1.0 / w;
         return fabs((z / cos(localPitch)) / cos(localYaw));

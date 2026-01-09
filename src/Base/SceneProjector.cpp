@@ -36,11 +36,11 @@ void ScenePlaneProjector::setPlane(const Vector3& normal, const Vector3& point)
 
 bool ScenePlaneProjector::project(const SceneWidgetEvent* event, Vector3& out_projected) const
 {
-    Vector3 nearPoint, farPoint;
+    Vector3 origin, direction;
     SceneWidget* sceneWidget = event->sceneWidget();
-    if(sceneWidget->unproject(event->x(), event->y(), 0.0, nearPoint) &&
-       sceneWidget->unproject(event->x(), event->y(), 1.0, farPoint)){
-        return calcPlaneLineIntersection(nearPoint, farPoint, out_projected);
+    if(sceneWidget->getCameraRay(event->x(), event->y(), origin, direction)){
+        Vector3 farPoint = origin + direction * 1.0e9;
+        return calcPlaneLineIntersection(origin, farPoint, out_projected);
     }
     return false;
 }
@@ -127,11 +127,11 @@ bool SceneCylinderProjector::project(const SceneWidgetEvent* event, Vector3& out
 bool SceneCylinderProjector::project
 (const SceneWidgetEvent* event, Vector3& out_isecFront, Vector3& out_isecBack) const
 {
-    Vector3 nearPoint, farPoint;
+    Vector3 origin, direction;
     SceneWidget* sceneWidget = event->sceneWidget();
-    if(sceneWidget->unproject(event->x(), event->y(), 0.0, nearPoint) &&
-       sceneWidget->unproject(event->x(), event->y(), 1.0, farPoint)){
-        return calcCylinderLineIntersection(nearPoint, farPoint, out_isecFront, out_isecBack);
+    if(sceneWidget->getCameraRay(event->x(), event->y(), origin, direction)){
+        Vector3 farPoint = origin + direction * 1.0e9;
+        return calcCylinderLineIntersection(origin, farPoint, out_isecFront, out_isecBack);
     }
     return false;
 }

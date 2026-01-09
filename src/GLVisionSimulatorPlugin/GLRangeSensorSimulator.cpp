@@ -40,6 +40,9 @@ bool GLRangeSensorSimulator::doInitialize(GLVisionSimulatorItem* visionSimulator
         auto& screenInfo = screenInfos[i];
         auto screen = addScreen();
         screen->setLightingEnabled(false);
+        // Disable MSAA for better performance since range sensors only use the depth buffer
+        // and antialiasing provides no benefit for depth-only rendering
+        screen->disableMsaa();
 
         // Adjust to be a multiple of yawStep
         int n = 1;
@@ -150,6 +153,7 @@ void GLRangeSensorSimulator::doStoreScreenImage(GLVisionSensorRenderingScreen* s
     const Matrix4 Pinv = screen->renderer()->projectionMatrix().inverse();
     const double Pinv_32 = Pinv(3, 2);
     const double Pinv_33 = Pinv(3, 3);
+    const bool isReversedDepth = screen->renderer()->isReversedDepthBuffer();
     const int resolutionX = screen->resolutionX();
     const int resolutionY = screen->resolutionY();
     const double fw = resolutionX;
@@ -198,10 +202,11 @@ void GLRangeSensorSimulator::doStoreScreenImage(GLVisionSensorRenderingScreen* s
             }
             //! \todo add the option to do the interpolation between the adjacent two pixel depths
             const float depth = depthBuf[srcpos + px];
-            if(depth <= 0.0f || depth >= 1.0f){
+            const bool isInvalidDepth = !GLVisionSensorRenderingScreen::isValidDepthValue(depth, isReversedDepth);
+            if(isInvalidDepth){
                 distances->push_back(std::numeric_limits<double>::infinity());
-            } else {                
-                const double z0 = 2.0 * depth - 1.0;
+            } else {
+                const double z0 = GLVisionSensorRenderingScreen::depthToNdcZ(depth, isReversedDepth);
                 const double w = Pinv_32 * z0 + Pinv_33;
                 const double z = -1.0 / w + depthError;
                 double distance = fabs((z / cosPitchAngle) / cos(yawAngle));

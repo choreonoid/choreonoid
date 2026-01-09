@@ -101,6 +101,13 @@ public:
     virtual bool unproject(double x, double y, double z, Vector3& out_projected) const = 0;
 
     /**
+       Get a ray from the camera through the screen point (x, y).
+       Uses near plane and an intermediate depth for safe calculation with infinite far.
+       @return true if successful
+    */
+    virtual bool getCameraRay(double x, double y, Vector3& out_origin, Vector3& out_direction) const = 0;
+
+    /**
        This function updates the information on preprocessed nodes such as
        cameras, lights, and fogs.
     */

@@ -94,6 +94,10 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void setBackFaceCullingMode(int mode) override;
     virtual int backFaceCullingMode() const override;
     virtual void setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool on) override;
+    virtual bool isReversedDepthBuffer() const override;
+    virtual bool getCameraRay(double x, double y, Vector3& out_origin, Vector3& out_direction) const override;
+    virtual void setInfiniteFarOverrideEnabled(bool on) override;
+    virtual bool isInfiniteFarOverrideEnabled() const override;
 
     void setLowMemoryConsumptionMode(bool on);
 

@@ -11,6 +11,7 @@ using namespace cnoid;
 namespace {
 
 int rendererType_ = GLSceneRenderer::GLSL_RENDERER;
+bool isStandardDepthBufferForced_ = false;
 
 }
 
@@ -237,6 +238,36 @@ bool GLSceneRenderer::isDepthBufferUpdateEnabled() const
 }
 
 
+void GLSceneRenderer::forceStandardDepthBuffer()
+{
+    isStandardDepthBufferForced_ = true;
+}
+
+
+bool GLSceneRenderer::isStandardDepthBufferForced()
+{
+    return isStandardDepthBufferForced_;
+}
+
+
+bool GLSceneRenderer::isReversedDepthBuffer() const
+{
+    return false;
+}
+
+
+void GLSceneRenderer::setInfiniteFarOverrideEnabled(bool /* on */)
+{
+
+}
+
+
+bool GLSceneRenderer::isInfiniteFarOverrideEnabled() const
+{
+    return false;
+}
+
+
 void GLSceneRenderer::setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool /* on */)
 {
 
@@ -269,6 +300,81 @@ void GLSceneRenderer::getOrthographicProjectionMatrix
 }
 
 
+void GLSceneRenderer::getReversedPerspectiveProjectionMatrix
+(double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix)
+{
+    const double f = 1.0 / tan(fovy / 2.0);
+    // Reversed-Z with NDC range [0, 1] (requires glClipControl GL_ZERO_TO_ONE)
+    // Maps: near plane -> depth 1.0, far plane -> depth 0.0
+    //
+    // For reversed-Z with NDC [0,1], near->1, far->0:
+    //   z_clip = A * z_eye + B, w_clip = -z_eye
+    //   z_ndc = z_clip / w_clip = (A * z_eye + B) / (-z_eye)
+    //   At z_eye = -n: z_ndc = (-A*n + B) / n = 1  =>  B - A*n = n
+    //   At z_eye = -f: z_ndc = (-A*f + B) / f = 0  =>  B = A*f
+    //   Substituting: A*f - A*n = n  =>  A = n / (f - n) = zNear / (zFar - zNear)
+    //   B = A*f = zNear * zFar / (zFar - zNear)
+    const double A = zNear / (zFar - zNear);
+    const double B = (zFar * zNear) / (zFar - zNear);
+    out_matrix <<
+        (f / aspect), 0.0, 0.0, 0.0,
+        0.0, f, 0.0, 0.0,
+        0.0, 0.0, A, B,
+        0.0, 0.0, -1.0, 0.0;
+}
+
+
+void GLSceneRenderer::getReversedInfinitePerspectiveProjectionMatrix
+(double fovy, double aspect, double zNear, Matrix4& out_matrix)
+{
+    const double f = 1.0 / tan(fovy / 2.0);
+    // Infinite far plane reversed-Z with NDC range [0, 1]
+    // From the finite formula: A = -zNear/(zFar-zNear), B = zNear*zFar/(zFar-zNear)
+    // As zFar -> infinity: A -> 0, B -> zNear
+    // Maps: near plane -> depth 1.0, infinity -> depth 0.0
+    out_matrix <<
+        (f / aspect), 0.0, 0.0, 0.0,
+        0.0, f, 0.0, 0.0,
+        0.0, 0.0, 0.0, zNear,
+        0.0, 0.0, -1.0, 0.0;
+}
+
+
+void GLSceneRenderer::getReversedOrthographicProjectionMatrix
+(double left,  double right,  double bottom,  double top,  double nearVal,  double farVal, Matrix4& out_matrix)
+{
+    const double tx = -(right + left) / (right - left);
+    const double ty = -(top + bottom) / (top - bottom);
+    // Reversed-Z with NDC range [0, 1]: near maps to 1.0, far maps to 0.0
+    // z_ndc = sz * z_eye + tz
+    // At z_eye = -nearVal: z_ndc = 1 -> -sz*nearVal + tz = 1
+    // At z_eye = -farVal:  z_ndc = 0 -> -sz*farVal + tz = 0 -> tz = sz*farVal
+    // Substituting: -sz*nearVal + sz*farVal = 1 -> sz = 1/(farVal - nearVal)
+    // But we need near->1, far->0, so we need to flip: sz = -1/(farVal - nearVal) = 1/(nearVal - farVal)
+    // tz = sz*farVal = farVal/(nearVal - farVal)
+    // Alternatively: sz = 1/(nearVal - farVal), tz = nearVal/(nearVal - farVal)
+    // Check: at z=-n: -n/(n-f) + n/(n-f) = 0 ... wrong
+    // Let's redo: z_ndc = sz * (-z_eye) + tz  (since eye space z is negative)
+    // Actually for orthographic the standard is: z_ndc = -2/(f-n) * z_eye - (f+n)/(f-n)
+    // For reversed [0,1] with near->1, far->0:
+    //   At z_eye = -n: z_ndc = 1
+    //   At z_eye = -f: z_ndc = 0
+    // z_ndc = a * z_eye + b
+    // -a*n + b = 1, -a*f + b = 0 => b = a*f
+    // -a*n + a*f = 1 => a*(f-n) = 1 => a = 1/(f-n)
+    // b = f/(f-n)
+    // Check: z=-n => 1/(f-n)*(-n) + f/(f-n) = (-n+f)/(f-n) = 1 OK
+    // Check: z=-f => 1/(f-n)*(-f) + f/(f-n) = (-f+f)/(f-n) = 0 OK
+    const double sz = 1.0 / (farVal - nearVal);
+    const double tz = farVal / (farVal - nearVal);
+    out_matrix <<
+        (2.0 / (right - left)), 0.0, 0.0, tx,
+        0.0, (2.0 / (top - bottom)), 0.0, ty,
+        0.0, 0.0, sz, tz,
+        0.0, 0.0, 0.0, 1.0;
+}
+
+
 void GLSceneRenderer::getViewFrustum
 (const SgPerspectiveCamera* camera, double& left, double& right, double& bottom, double& top) const
 {
@@ -296,7 +402,14 @@ bool GLSceneRenderer::unproject(double x, double y, double z, Vector3& out_proje
     Vector4 p;
     p[0] = 2.0 * (x - viewport_.x) / viewport_.w - 1.0;
     p[1] = 2.0 * (y - viewport_.y) / viewport_.h - 1.0;
-    p[2] = 2.0 * z - 1.0;
+    // For reversed depth buffer with glClipControl(GL_ZERO_TO_ONE),
+    // NDC z-range is [0, 1], so no transformation is needed.
+    // For standard depth buffer, NDC z-range is [-1, 1], so we transform [0,1] -> [-1,1].
+    if(isReversedDepthBuffer()){
+        p[2] = z;
+    } else {
+        p[2] = 2.0 * z - 1.0;
+    }
     p[3] = 1.0;
 
     const Matrix4 V = currentCameraPosition().inverse().matrix();
@@ -311,6 +424,21 @@ bool GLSceneRenderer::unproject(double x, double y, double z, Vector3& out_proje
     out_projected.z() = projected.z() / projected[3];
 
     return true;
+}
+
+
+bool GLSceneRenderer::getCameraRay(double x, double y, Vector3& out_origin, Vector3& out_direction) const
+{
+    // Standard depth buffer: near=0.0, far=1.0
+    // Use near plane and an intermediate point to calculate the ray direction
+    Vector3 nearPoint, midPoint;
+    if(GLSceneRenderer::unproject(x, y, 0.0, nearPoint) &&
+       GLSceneRenderer::unproject(x, y, 0.5, midPoint)){
+        out_origin = nearPoint;
+        out_direction = (midPoint - nearPoint).normalized();
+        return true;
+    }
+    return false;
 }
 
 

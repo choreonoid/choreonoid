@@ -96,6 +96,12 @@ public:
     */
     bool unproject(double x, double y, double z, Vector3& out_projected) const;
 
+    /**
+       Get a ray from the camera through the screen point (x, y).
+       @note x and y are in mouse cursor coordinates (may differ from viewport in high-DPI)
+    */
+    bool getCameraRay(double x, double y, Vector3& out_origin, Vector3& out_direction) const;
+
     void fitViewToAll(double transitionTime = 0.0);
     void fitViewTo(const SgNodePath& path, double transitionTime = 0.0);
     void fitViewTo(const BoundingBox& bbox, double transitionTime = 0.0);

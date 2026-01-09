@@ -70,11 +70,18 @@ public:
         double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix);
     void getOrthographicProjectionMatrix(
         double left,  double right,  double bottom,  double top,  double nearVal,  double farVal, Matrix4& out_matrix);
+    void getReversedPerspectiveProjectionMatrix(
+        double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix);
+    void getReversedInfinitePerspectiveProjectionMatrix(
+        double fovy, double aspect, double zNear, Matrix4& out_matrix);
+    void getReversedOrthographicProjectionMatrix(
+        double left,  double right,  double bottom,  double top,  double nearVal,  double farVal, Matrix4& out_matrix);
     
     void getViewFrustum(const SgPerspectiveCamera* camera, double& left, double& right, double& bottom, double& top) const;
     void getViewVolume(const SgOrthographicCamera* camera, float& out_left, float& out_right, float& out_bottom, float& out_top) const;
 
     virtual bool unproject(double x, double y, double z, Vector3& out_projected) const override;
+    virtual bool getCameraRay(double x, double y, Vector3& out_origin, Vector3& out_direction) const override;
 
     const Vector3f& backgroundColor() const;
     void setBackgroundColor(const Vector3f& color);
@@ -132,6 +139,13 @@ public:
 
     virtual void setBackFaceCullingMode(int mode) = 0;
     virtual int backFaceCullingMode() const = 0;
+
+    static void forceStandardDepthBuffer();
+    static bool isStandardDepthBufferForced();
+
+    virtual bool isReversedDepthBuffer() const;
+    virtual void setInfiniteFarOverrideEnabled(bool on);
+    virtual bool isInfiniteFarOverrideEnabled() const;
 
     virtual void setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool on);
 

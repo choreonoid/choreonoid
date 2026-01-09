@@ -13,6 +13,7 @@ uniform sampler2D depthTexture2D;
 uniform sampler2DMS depthTextureMS;
 uniform bool useMsaa;
 uniform ivec2 depthTextureSize;
+uniform bool isReversedDepth;
 #endif
 
 #ifdef DO_DOUBLE_DEPTH_CHECK
@@ -37,8 +38,16 @@ void main()
         depth = texture(depthTexture2D, texCoord).r;
     }
 
-    if(depth < offsetFragCoord_z - MRD){
+    bool shouldDiscard;
+    if(isReversedDepth){
+        // Reversed depth: larger values are closer
+        shouldDiscard = (depth > offsetFragCoord_z + MRD);
+    } else {
+        // Standard depth: smaller values are closer
+        shouldDiscard = (depth < offsetFragCoord_z - MRD);
+    }
 
+    if(shouldDiscard){
 #ifndef DO_DOUBLE_DEPTH_CHECK
         discard;
 #else
@@ -50,7 +59,13 @@ void main()
             vec2 texCoord2 = gl_FragCoord.xy / viewportSize;
             depth2 = texture(depthTexture2D, texCoord2).r;
         }
-        if(depth2 < (offsetFragCoord_z - MRD)){
+        bool shouldDiscard2;
+        if(isReversedDepth){
+            shouldDiscard2 = (depth2 > offsetFragCoord_z + MRD);
+        } else {
+            shouldDiscard2 = (depth2 < offsetFragCoord_z - MRD);
+        }
+        if(shouldDiscard2){
             discard;
         }
 #endif

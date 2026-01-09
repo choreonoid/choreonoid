@@ -525,7 +525,10 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     renderer->enableUnusedResourceCheck(true);
     renderer->sigCurrentCameraSelectionChanged().connect([&](){ onCurrentCameraSelectionChanged(); });
     renderer->setCurrentCameraAutoRestorationMode(true);
-    self->sigObjectNameChanged().connect([this](string name){ renderer->setName(name); });
+
+    self->sigObjectNameChanged().connect([this](string name){
+        renderer->setName(formatR(_("{0} view"), name));
+    });
 
     lastDevicePixelRatio = 1.0f;
 
@@ -2003,6 +2006,12 @@ void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
 bool SceneWidget::unproject(double x, double y, double z, Vector3& out_projected) const
 {
     return impl->renderer->unproject(x, y, z, out_projected);
+}
+
+
+bool SceneWidget::getCameraRay(double x, double y, Vector3& out_origin, Vector3& out_direction) const
+{
+    return impl->renderer->getCameraRay(x, y, out_origin, out_direction);
 }
 
 

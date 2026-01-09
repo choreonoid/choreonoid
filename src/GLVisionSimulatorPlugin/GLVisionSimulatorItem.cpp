@@ -141,6 +141,7 @@ public:
     CloneMap cloneMap;
     bool isAntiAliasingEnabled;
     int msaaLevel;
+    bool isInfiniteFarOverrideEnabled;
 
     Impl(GLVisionSimulatorItem* self);
     Impl(GLVisionSimulatorItem* self, const Impl& org);
@@ -211,6 +212,7 @@ GLVisionSimulatorItem::Impl::Impl(GLVisionSimulatorItem* self)
 
     isAntiAliasingEnabled = false;
     msaaLevel = -1;  // System Default
+    isInfiniteFarOverrideEnabled = true;
 }
 
 
@@ -247,6 +249,7 @@ GLVisionSimulatorItem::Impl::Impl(GLVisionSimulatorItem* self, const Impl& org)
     maxLatency = org.maxLatency;
     isAntiAliasingEnabled = org.isAntiAliasingEnabled;
     msaaLevel = org.msaaLevel;
+    isInfiniteFarOverrideEnabled = org.isInfiniteFarOverrideEnabled;
 }
 
 
@@ -462,6 +465,18 @@ int GLVisionSimulatorItem::msaaLevel() const
 void GLVisionSimulatorItem::setMsaaLevel(int level)
 {
     impl->setProperty(impl->msaaLevel, level);
+}
+
+
+void GLVisionSimulatorItem::setInfiniteFarOverrideEnabled(bool on)
+{
+    impl->setProperty(impl->isInfiniteFarOverrideEnabled, on);
+}
+
+
+bool GLVisionSimulatorItem::isInfiniteFarOverrideEnabled() const
+{
+    return impl->isInfiniteFarOverrideEnabled;
 }
 
 
@@ -855,6 +870,7 @@ void GLVisionSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProper
                     self->notifyUpdate();
                     return true;
                 });
+    putProperty(_("Infinite far clip"), isInfiniteFarOverrideEnabled, changeProperty(isInfiniteFarOverrideEnabled));
 }
 
 
@@ -884,6 +900,9 @@ bool GLVisionSimulatorItem::Impl::store(Archive& archive)
     archive.write("antialiasing", isAntiAliasingEnabled);
     if(msaaLevel >= 0){
         archive.write("msaa_level", msaaLevel);
+    }
+    if(isInfiniteFarOverrideEnabled){
+        archive.write("infinite_far_clip", true);
     }
     return true;
 }
@@ -916,6 +935,7 @@ bool GLVisionSimulatorItem::Impl::restore(const Archive& archive)
     archive.read({ "enable_additional_lights", "enableAdditionalLights" }, isAdditionalLightSetEnabled);
     archive.read({ "antialiasing", "antiAliasing" }, isAntiAliasingEnabled);
     archive.read("msaa_level", msaaLevel);
+    archive.read("infinite_far_clip", isInfiniteFarOverrideEnabled);
 
     string symbol;
     if(archive.read({ "thread_mode", "threadMode" }, symbol)){
