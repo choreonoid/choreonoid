@@ -8,6 +8,7 @@
 
 #include "gl.h"
 #include <stdio.h>
+#include <string.h>
 
 /**
  * Load only the OpenGL functions used by Choreonoid.
@@ -48,6 +49,7 @@ int cnoidLoadGL(GLADloadfunc load)
     glad_glCheckFramebufferStatus = (PFNGLCHECKFRAMEBUFFERSTATUSPROC)load("glCheckFramebufferStatus");
     glad_glClear = (PFNGLCLEARPROC)load("glClear");
     glad_glClearColor = (PFNGLCLEARCOLORPROC)load("glClearColor");
+    glad_glClearDepth = (PFNGLCLEARDEPTHPROC)load("glClearDepth");
     glad_glClearStencil = (PFNGLCLEARSTENCILPROC)load("glClearStencil");
     glad_glColor4f = (PFNGLCOLOR4FPROC)load("glColor4f");
     glad_glColorMask = (PFNGLCOLORMASKPROC)load("glColorMask");
@@ -157,6 +159,33 @@ int cnoidLoadGL(GLADloadfunc load)
     glad_glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)load("glVertexAttribPointer");
     glad_glVertexPointer = (PFNGLVERTEXPOINTERPROC)load("glVertexPointer");
     glad_glViewport = (PFNGLVIEWPORTPROC)load("glViewport");
+
+    /* Load glGetStringi for extension detection (OpenGL 3.0+) */
+    glad_glGetStringi = (PFNGLGETSTRINGIPROC)load("glGetStringi");
+
+    /* Detect GL_ARB_clip_control extension */
+    GLAD_GL_ARB_clip_control = 0;
+    if(major >= 5 || (major == 4 && minor >= 5)){
+        /* OpenGL 4.5+ has clip_control as core feature */
+        GLAD_GL_ARB_clip_control = 1;
+    } else if(glad_glGetStringi && glad_glGetIntegerv){
+        /* Check for ARB_clip_control extension in OpenGL 3.0+ */
+        GLint numExtensions = 0;
+        glad_glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
+        for(GLint i = 0; i < numExtensions; i++){
+            const char* ext = (const char*)glad_glGetStringi(GL_EXTENSIONS, i);
+            if(ext && strcmp(ext, "GL_ARB_clip_control") == 0){
+                GLAD_GL_ARB_clip_control = 1;
+                break;
+            }
+        }
+    }
+
+    /* Load glClipControl only if the extension is available */
+    glad_glClipControl = NULL;
+    if(GLAD_GL_ARB_clip_control){
+        glad_glClipControl = (PFNGLCLIPCONTROLPROC)load("glClipControl");
+    }
 
     return major * 10000 + minor;
 }
