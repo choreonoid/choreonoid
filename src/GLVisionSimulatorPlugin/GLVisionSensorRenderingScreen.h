@@ -3,20 +3,7 @@
 
 #include "GLVisionSensorScene.h"
 #include <cnoid/SceneCameras>
-
-// Define CNOID_ENABLE_EGL based on platform
-// In the future, this should be a CMake option
-#ifdef __linux__
-#define CNOID_ENABLE_EGL
-#endif
-
-// Include GLSceneRenderer before Qt OpenGL headers to avoid conflicts.
-// This also provides OpenGL type definitions (GLuint, GLenum, etc.) via cnoid/gl.h.
 #include <cnoid/GLSceneRenderer>
-#ifdef CNOID_ENABLE_EGL
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-#endif
 #include <QOpenGLContext>
 #include <QOffscreenSurface>
 #include <QOpenGLFramebufferObject>
@@ -75,16 +62,8 @@ private:
     QOpenGLFramebufferObject* frameBuffer;
     bool usingEGL;
 
-#ifdef CNOID_ENABLE_EGL
-    // EGL resources
-    EGLDisplay eglDisplay;
-    EGLContext eglContext;
-    EGLSurface eglSurface;
-    EGLConfig eglConfig;
-    GLuint fbo;
-    GLuint colorRenderbuffer;
-    GLuint depthStencilRenderbuffer;
-#endif
+    struct EGLInfo;
+    EGLInfo* egl;
 
     GLSceneRenderer* sceneRenderer;
     int resolutionX_;

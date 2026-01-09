@@ -13,8 +13,33 @@
 #include <QApplication>
 #include "gettext.h"
 
+// Define CNOID_ENABLE_EGL based on platform
+// In the future, this should be a CMake option
+#ifdef __linux__
+#define CNOID_ENABLE_EGL
+#endif
+
+// Include EGL headers after Qt headers to avoid X11 macro conflicts
+#ifdef CNOID_ENABLE_EGL
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#endif
+
 using namespace std;
 using namespace cnoid;
+
+// EGLInfo structure definition (forward declared in header as nested struct)
+#ifdef CNOID_ENABLE_EGL
+struct GLVisionSensorRenderingScreen::EGLInfo {
+    EGLDisplay display = EGL_NO_DISPLAY;
+    EGLContext context = EGL_NO_CONTEXT;
+    EGLSurface surface = EGL_NO_SURFACE;
+    EGLConfig config = nullptr;
+    GLuint fbo = 0;
+    GLuint colorRenderbuffer = 0;
+    GLuint depthStencilRenderbuffer = 0;
+};
+#endif
 
 namespace {
 
@@ -62,17 +87,11 @@ GLVisionSensorRenderingScreen::GLVisionSensorRenderingScreen(GLVisionSensorSimul
     offscreenSurface = nullptr;
     frameBuffer = nullptr;
     usingEGL = false;
-
 #ifdef CNOID_ENABLE_EGL
-    // Initialize EGL members
-    eglDisplay = nullptr;
-    eglContext = nullptr;
-    eglSurface = nullptr;
-    fbo = 0;
-    colorRenderbuffer = 0;
-    depthStencilRenderbuffer = 0;
+    egl = new EGLInfo;
+#else
+    egl = nullptr;
 #endif
-
     sceneRenderer = nullptr;
 }
 
@@ -80,6 +99,9 @@ GLVisionSensorRenderingScreen::GLVisionSensorRenderingScreen(GLVisionSensorSimul
 GLVisionSensorRenderingScreen::~GLVisionSensorRenderingScreen()
 {
     finalizeGL(true);
+#ifdef CNOID_ENABLE_EGL
+    delete egl;
+#endif
 }
 
 
@@ -287,7 +309,7 @@ bool GLVisionSensorRenderingScreen::initializeEGL()
     }
 
     // Each instance uses the shared EGL display
-    eglDisplay = sharedEglDisplay;
+    egl->display = sharedEglDisplay;
     eglInstanceCount++;
 
     // Choose EGL configuration
@@ -302,7 +324,7 @@ bool GLVisionSensorRenderingScreen::initializeEGL()
         EGL_NONE
     };
     EGLint numConfigs;
-    if(!eglChooseConfig(eglDisplay, configAttribs, &eglConfig, 1, &numConfigs) || numConfigs == 0) {
+    if(!eglChooseConfig(egl->display, configAttribs, &egl->config, 1, &numConfigs) || numConfigs == 0) {
         mout->putErrorln("Failed to choose EGL config.");
         return false;
     }
@@ -328,9 +350,9 @@ bool GLVisionSensorRenderingScreen::initializeEGL()
                 EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
                 EGL_NONE
             };
-            EGLContext testContext = eglCreateContext(eglDisplay, eglConfig, EGL_NO_CONTEXT, testAttribs);
+            EGLContext testContext = eglCreateContext(egl->display, egl->config, EGL_NO_CONTEXT, testAttribs);
             if(testContext != EGL_NO_CONTEXT) {
-                eglDestroyContext(eglDisplay, testContext);
+                eglDestroyContext(egl->display, testContext);
                 eglOpenGLMajorVersion = v.major;
                 eglOpenGLMinorVersion = v.minor;
                 eglOpenGLVersionDetermined = true;
@@ -361,8 +383,8 @@ bool GLVisionSensorRenderingScreen::initializeEGL()
         contextAttribs[attribIndex++] = 5;
     }
     contextAttribs[attribIndex] = EGL_NONE;
-    eglContext = eglCreateContext(eglDisplay, eglConfig, EGL_NO_CONTEXT, contextAttribs);
-    if(eglContext == EGL_NO_CONTEXT) {
+    egl->context = eglCreateContext(egl->display, egl->config, EGL_NO_CONTEXT, contextAttribs);
+    if(egl->context == EGL_NO_CONTEXT) {
         mout->putErrorln("Failed to create EGL context.");
         return false;
     }
@@ -373,14 +395,14 @@ bool GLVisionSensorRenderingScreen::initializeEGL()
         EGL_HEIGHT, resolutionY_,
         EGL_NONE
     };
-    eglSurface = eglCreatePbufferSurface(eglDisplay, eglConfig, pbufferAttribs);
-    if(eglSurface == EGL_NO_SURFACE) {
+    egl->surface = eglCreatePbufferSurface(egl->display, egl->config, pbufferAttribs);
+    if(egl->surface == EGL_NO_SURFACE) {
         mout->putErrorln("Failed to create EGL Pbuffer surface.");
         return false;
     }
 
     // Make the EGL context current
-    if(!eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
+    if(!eglMakeCurrent(egl->display, egl->surface, egl->surface, egl->context)) {
         mout->putErrorln("Failed to make EGL context current.");
         return false;
     }
@@ -464,23 +486,23 @@ bool GLVisionSensorRenderingScreen::initializeGL()
 #ifdef CNOID_ENABLE_EGL
     if(usingEGL) {
         // Create FBO manually for EGL
-        glGenFramebuffers(1, &fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glGenFramebuffers(1, &egl->fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, egl->fbo);
 
         // Create color renderbuffer
-        glGenRenderbuffers(1, &colorRenderbuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, colorRenderbuffer);
+        glGenRenderbuffers(1, &egl->colorRenderbuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, egl->colorRenderbuffer);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, resolutionX_, resolutionY_);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorRenderbuffer);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, egl->colorRenderbuffer);
 
         // Create depth-stencil renderbuffer
         // This is needed as the blit destination when MSAA is enabled in GLSLSceneRenderer
-        glGenRenderbuffers(1, &depthStencilRenderbuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, depthStencilRenderbuffer);
+        glGenRenderbuffers(1, &egl->depthStencilRenderbuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, egl->depthStencilRenderbuffer);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, resolutionX_, resolutionY_);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilRenderbuffer);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, egl->depthStencilRenderbuffer);
 
-        sceneRenderer->setDefaultFramebufferObject(fbo);
+        sceneRenderer->setDefaultFramebufferObject(egl->fbo);
     } else
 #endif
     {
@@ -537,25 +559,25 @@ void GLVisionSensorRenderingScreen::finalizeGL(bool doMakeCurrent)
 #ifdef CNOID_ENABLE_EGL
     if(usingEGL){
         // Clean up per-instance EGL resources
-        if(fbo != 0){
-            glDeleteFramebuffers(1, &fbo);
-            fbo = 0;
+        if(egl->fbo != 0){
+            glDeleteFramebuffers(1, &egl->fbo);
+            egl->fbo = 0;
         }
-        if(colorRenderbuffer != 0){
-            glDeleteRenderbuffers(1, &colorRenderbuffer);
-            colorRenderbuffer = 0;
+        if(egl->colorRenderbuffer != 0){
+            glDeleteRenderbuffers(1, &egl->colorRenderbuffer);
+            egl->colorRenderbuffer = 0;
         }
-        if(depthStencilRenderbuffer != 0){
-            glDeleteRenderbuffers(1, &depthStencilRenderbuffer);
-            depthStencilRenderbuffer = 0;
+        if(egl->depthStencilRenderbuffer != 0){
+            glDeleteRenderbuffers(1, &egl->depthStencilRenderbuffer);
+            egl->depthStencilRenderbuffer = 0;
         }
-        if(eglContext != EGL_NO_CONTEXT){
-            eglDestroyContext(eglDisplay, eglContext);
-            eglContext = EGL_NO_CONTEXT;
+        if(egl->context != EGL_NO_CONTEXT){
+            eglDestroyContext(egl->display, egl->context);
+            egl->context = EGL_NO_CONTEXT;
         }
-        if(eglSurface != EGL_NO_SURFACE){
-            eglDestroySurface(eglDisplay, eglSurface);
-            eglSurface = EGL_NO_SURFACE;
+        if(egl->surface != EGL_NO_SURFACE){
+            eglDestroySurface(egl->display, egl->surface);
+            egl->surface = EGL_NO_SURFACE;
         }
 
         // Terminate shared EGL display only when this is the last instance
@@ -565,7 +587,7 @@ void GLVisionSensorRenderingScreen::finalizeGL(bool doMakeCurrent)
             sharedEglDisplay = EGL_NO_DISPLAY;
         }
 
-        eglDisplay = EGL_NO_DISPLAY;
+        egl->display = EGL_NO_DISPLAY;
     } else
 #endif
     {
@@ -638,7 +660,7 @@ void GLVisionSensorRenderingScreen::makeGLContextCurrent()
 {
 #ifdef CNOID_ENABLE_EGL
     if(usingEGL){
-        eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext);
+        eglMakeCurrent(egl->display, egl->surface, egl->surface, egl->context);
     } else {
         glContext->makeCurrent(offscreenSurface);
     }
@@ -652,7 +674,7 @@ void GLVisionSensorRenderingScreen::doneGLContextCurrent()
 {
 #ifdef CNOID_ENABLE_EGL
     if(usingEGL){
-        eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        eglMakeCurrent(egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     } else {
         glContext->doneCurrent();
     }
