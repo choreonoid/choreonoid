@@ -93,3 +93,6 @@ msgstr "システム設定"
 
 msgid "MSAA level"
 msgstr "MSAAレベル"
+
+msgid "Infinite far clip"
+msgstr "無限遠クリップ"

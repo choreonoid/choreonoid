@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-28 23:13+0900\n"
+"POT-Creation-Date: 2026-01-17 00:08+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -291,12 +291,6 @@ msgstr "距離測定アイテム \"{0}\" はプロジェクトから削除され
 
 msgid "The distance measurement cannot be started since the target items are not specified."
 msgstr "対象アイテムが指定されていないので距離測定を開始できません．"
-
-msgid "[m]"
-msgstr ""
-
-msgid "[mm]"
-msgstr ""
 
 msgid "Distance Marker Color"
 msgstr "距離マーカの色"
@@ -1998,6 +1992,9 @@ msgstr "デバッグ"
 msgid "OpengGL image buffer for picking"
 msgstr "ピッキング用OpenGL画像バッファ"
 
+msgid "{0} view"
+msgstr "{0}ビュー"
+
 msgid "OpenGL initialization failed."
 msgstr "OpenGLの初期化に失敗しました．"
 
@@ -2024,6 +2021,9 @@ msgstr "編集モード"
 
 msgid "View Mode"
 msgstr "閲覧モード"
+
+msgid "Far"
+msgstr "遠方"
 
 msgid "Restrict camera roll"
 msgstr "カメラロールを制限"
@@ -2064,14 +2064,8 @@ msgstr "ピッキング用画像"
 msgid "Field of view"
 msgstr "視野角"
 
-msgid "Clip distances"
-msgstr "クリップ距離"
-
 msgid "Near"
 msgstr "近方"
-
-msgid "Far"
-msgstr "遠方"
 
 msgid "Vertical axis"
 msgstr "垂直軸"
@@ -2296,3 +2290,6 @@ msgstr "仮想ジョイスティック"
 
 msgid "VirtualJoystickView"
 msgstr "仮想ジョイスティックビュー"
+
+msgid "Use infinite far clip distance for all cameras (OpenGL 4.5 or later)"
+msgstr "全カメラの遠方を無限遠にする（OpenGL 4.5以降）"
