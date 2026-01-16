@@ -4,6 +4,7 @@ set(sources
   GLSLProgram.cpp
   ShaderPrograms.cpp
   GLSLSceneRenderer.cpp
+  CnoidGLSceneRenderer.cpp # This file must be placed at the last position
   )
 
 set(headers
