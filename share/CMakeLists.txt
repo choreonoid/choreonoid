@@ -45,6 +45,17 @@ if(ENABLE_SAMPLES)
   endif()
 endif()
 
+# "livox" directory (scan mode data for Livox LiDAR sensors)
+if(BUILD_LIVOX_MID360_PLUGIN AND ENABLE_SAMPLES)
+  install(DIRECTORY livox DESTINATION ${CNOID_SHARE_SUBDIR})
+  if(make_symlink)
+    add_custom_target(
+      symlink_to_livox ALL
+      COMMAND ${CMAKE_COMMAND} -E create_symlink
+      ${CNOID_SOURCE_SHARE_DIR}/livox ${CNOID_BINARY_SHARE_DIR}/livox)
+  endif()
+endif()
+
 # "project" directory
 if(make_symlink)
   file(MAKE_DIRECTORY ${CNOID_BINARY_SHARE_DIR}/project)

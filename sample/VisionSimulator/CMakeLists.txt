@@ -1,0 +1,6 @@
+if(BUILD_GL_VISION_SIMULATOR_PLUGIN)
+  install(FILES TankVisionSensors.cnoid DESTINATION ${CNOID_SHARE_SUBDIR}/project)
+  if(BUILD_LIVOX_MID360_PLUGIN)
+    install(FILES Mid360.cnoid DESTINATION ${CNOID_SHARE_SUBDIR}/project)
+  endif()
+endif()

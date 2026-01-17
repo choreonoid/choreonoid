@@ -4,6 +4,7 @@
 #include <cnoid/StdSceneReader>
 #include <cnoid/ValueTree>
 #include <cnoid/MathUtil>
+#include <cnoid/FilePathVariableProcessor>
 #include <fstream>
 
 using namespace std;
@@ -101,11 +102,10 @@ bool LivoxMid360::readSpecifications(const Mapping* info, const std::filesystem:
 
     string filename;
     if(info->read("angle_seq_file", filename)){
-        std::filesystem::path filePath(filename);
-        if(filePath.is_relative()){
-            filePath = baseDirPath / filePath;
-        }
-        if(!loadSphericalAngleSeqFile(filePath.string())){
+        auto fpvp = FilePathVariableProcessor::systemInstance();
+        fpvp->setBaseDirPath(baseDirPath);
+        std::string expandedPath = fpvp->expand(filename, true);
+        if(!loadSphericalAngleSeqFile(expandedPath)){
             info->throwException("Illegal scan angle csv file");
         }
     }

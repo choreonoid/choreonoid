@@ -13,6 +13,7 @@ endfunction()
 
 add_subdirectory(general)
 add_subdirectory(SimpleController)
+add_subdirectory(VisionSimulator)
 add_subdirectory(SceneEffects)
 add_subdirectory(PoseSeq)
 add_subdirectory(HRP4C)

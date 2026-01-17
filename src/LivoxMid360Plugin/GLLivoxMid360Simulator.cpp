@@ -15,7 +15,7 @@ namespace {
 constexpr int NumScreens = 4;
 constexpr double ScreenYawRange = (2.0 * M_PI) / NumScreens;
 constexpr double ScreenYawEnd = ScreenYawRange / 2.0;
-constexpr double ScreenTanYawEnd = tan(ScreenYawEnd);
+const double ScreenTanYawEnd = tan(ScreenYawEnd);
 
 }
 

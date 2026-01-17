@@ -40,7 +40,7 @@ list(APPEND project_files SampleCrawler.cnoid SampleCrawlerJoystick.cnoid Sample
 
 # Tank
 choreonoid_add_simple_controller(TankJoystickController TankJoystickController.cpp)
-list(APPEND project_files Tank.cnoid TankVisionSensors.cnoid)
+list(APPEND project_files Tank.cnoid)
 
 # DoubleArmV7
 choreonoid_add_simple_controller(DoubleArmV7Controller DoubleArmV7Controller.cpp)
