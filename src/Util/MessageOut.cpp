@@ -10,7 +10,7 @@ using namespace cnoid;
 
 namespace {
 
-mutex sinkMutex;
+recursive_mutex sinkMutex;
 
 class MessageOutStreamBuf : public std::basic_streambuf<char>
 {
@@ -68,6 +68,8 @@ public:
     unique_ptr<MessageOutStreamBuf> errorStreamBuf;
 
     Impl(MessageOut* self);
+    void put(const string& message, int type);
+    void flush();
 };
 
 }
@@ -176,7 +178,7 @@ MessageOut::~MessageOut()
 
 void MessageOut::clearSinks()
 {
-    lock_guard<mutex> lock(sinkMutex);
+    lock_guard<recursive_mutex> lock(sinkMutex);
     impl->sinks.clear();
 }
     
@@ -186,7 +188,7 @@ MessageOut::SinkHandle MessageOut::addSink
  std::function<void(const std::string& message, int type)> notifyFunc,
  std::function<void()> flushFunc)
 {
-    lock_guard<mutex> lock(sinkMutex);
+    lock_guard<recursive_mutex> lock(sinkMutex);
     impl->sinks.push_back(new Sink(messageFunc, notifyFunc, flushFunc));
     return impl->sinks.back();
 }
@@ -194,7 +196,7 @@ MessageOut::SinkHandle MessageOut::addSink
 
 void MessageOut::removeSink(SinkHandle sink)
 {
-    lock_guard<mutex> lock(sinkMutex);
+    lock_guard<recursive_mutex> lock(sinkMutex);
     for(auto it = impl->sinks.begin(); it != impl->sinks.end(); ++it){
         if(*it == sink){
             impl->sinks.erase(it);
@@ -204,51 +206,67 @@ void MessageOut::removeSink(SinkHandle sink)
 }
 
 
-void MessageOut::put(const std::string& message, int type)
+inline void MessageOut::Impl::put(const string& message, int type)
 {
-    lock_guard<mutex> lock(sinkMutex);
-    if(type == Error){
-        impl->hasErrors = true;
+    if(type == MessageOut::Error){
+        hasErrors = true;
     }
-    if(!impl->isPendingMode){
-        for(auto& sink : impl->sinks){
+    if(!isPendingMode){
+        for(auto& sink : sinks){
             sink->messageFunc(message, type);
         }
     } else {
-        impl->pendingMessages.emplace_back(message, type);
+        pendingMessages.emplace_back(message, type);
     }
+}
+
+
+void MessageOut::put(const std::string& message, int type)
+{
+    lock_guard<recursive_mutex> lock(sinkMutex);
+    impl->put(message, type);
 }
 
 
 void MessageOut::putln(const std::string& message, int type)
 {
-    put(message + "\n", type);
-    flush();
+    lock_guard<recursive_mutex> lock(sinkMutex);
+    impl->put(message + "\n", type);
+    impl->flush();
 }
 
 
 void MessageOut::notify(const std::string& message, int type)
 {
-    putln(message, type);
+    lock_guard<recursive_mutex> lock(sinkMutex);
+    impl->put(message + "\n", type);
+    impl->flush();
     for(auto& sink : impl->sinks){
         sink->notifyFunc(message, type);
     }
 }
 
 
-void MessageOut::flush()
+inline void MessageOut::Impl::flush()
 {
-    if(!impl->isPendingMode){
-        for(auto& sink : impl->sinks){
+    if(!isPendingMode){
+        for(auto& sink : sinks){
             sink->flushFunc();
         }
     }
 }
 
 
+void MessageOut::flush()
+{
+    lock_guard<recursive_mutex> lock(sinkMutex);
+    impl->flush();
+}
+
+
 std::ostream& MessageOut::cout()
 {
-    lock_guard<mutex> lock(sinkMutex);
+    lock_guard<recursive_mutex> lock(sinkMutex);
     if(impl->direct_cout){
         return *impl->direct_cout;
     }
@@ -262,7 +280,7 @@ std::ostream& MessageOut::cout()
 
 std::ostream& MessageOut::cerr()
 {
-    lock_guard<mutex> lock(sinkMutex);
+    lock_guard<recursive_mutex> lock(sinkMutex);
     if(impl->direct_cerr){
         return *impl->direct_cerr;
     }
@@ -282,14 +300,14 @@ bool MessageOut::hasErrors() const
 
 void MessageOut::setPendingMode(bool on)
 {
-    lock_guard<mutex> lock(sinkMutex);
+    lock_guard<recursive_mutex> lock(sinkMutex);
     impl->isPendingMode = on;
 }
     
 
 void MessageOut::flushPendingMessages()
 {
-    lock_guard<mutex> lock(sinkMutex);
+    lock_guard<recursive_mutex> lock(sinkMutex);
     for(auto& message : impl->pendingMessages){
         for(auto& sink : impl->sinks){
             sink->messageFunc(message.text, message.type);

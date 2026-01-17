@@ -291,7 +291,11 @@ MessageView::Impl::Impl(MessageView* self) :
         [](const std::string& message, int /* type */){
             InfoBar::instance()->notify(message);
         },
-        [this]{ flush(); });
+        [this]{
+            if(QThread::currentThreadId() == mainThreadId){
+                flush();
+            }
+        });
 
     MessageOut::interactive()->addSink(
         [this](const std::string& message, int type){
