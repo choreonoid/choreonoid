@@ -12,7 +12,7 @@ LengthSpinBox::LengthSpinBox(QWidget* parent)
         dvFormat->sigFormatChanged().connect([this](){ onFormatChanged(); });
 
     unit = dvFormat->lengthUnit();
-    setDecimals(dvFormat->lengthDecimals());
+    updateDecimals();
     setSingleStep(dvFormat->lengthStep());
 }
 
@@ -55,17 +55,42 @@ double LengthSpinBox::meterValue() const
 }
 
 
+void LengthSpinBox::setMinimumMeterDecimals(int decimals)
+{
+    minMeterDecimals = decimals;
+    updateDecimals();
+}
+
+
+void LengthSpinBox::updateDecimals()
+{
+    int decimals = dvFormat->lengthDecimals();
+    if(minMeterDecimals){
+        int minDecimals;
+        if(dvFormat->lengthUnit() == DisplayValueFormat::Meter){
+            minDecimals = *minMeterDecimals;
+        } else if(dvFormat->lengthUnit() == DisplayValueFormat::Millimeter){
+            minDecimals = std::max(0, *minMeterDecimals - 3);
+        } else { // Kilometer
+            minDecimals = *minMeterDecimals + 3;
+        }
+        decimals = std::max(decimals, minDecimals);
+    }
+    setDecimals(decimals);
+}
+
+
 void LengthSpinBox::onFormatChanged()
 {
     int newUnit = dvFormat->lengthUnit();
+    blockSignals(true);
+    updateDecimals();
+    if(meterSingleStep && !dvFormat->isLengthStepForcedMode()){
+        setSingleStep(dvFormat->toDisplayLength(*meterSingleStep));
+    } else {
+        setSingleStep(dvFormat->lengthStep());
+    }
     if(newUnit != unit){
-        blockSignals(true);
-        setDecimals(dvFormat->lengthDecimals());
-        if(meterSingleStep && !dvFormat->isLengthStepForcedMode()){
-            setSingleStep(dvFormat->toDisplayLength(*meterSingleStep));
-        } else {
-            setSingleStep(dvFormat->lengthStep());
-        }
         // Convert current values from old unit to meter, then to new display unit
         double oldRatio = (unit == DisplayValueFormat::Meter) ? 1.0 :
                           (unit == DisplayValueFormat::Millimeter) ? 0.001 : 1000.0;
@@ -75,7 +100,7 @@ void LengthSpinBox::onFormatChanged()
         setRange(dvFormat->toDisplayLength(meterMin), dvFormat->toDisplayLength(meterMax));
         setValue(dvFormat->toDisplayLength(meterVal));
         unit = newUnit;
-        blockSignals(false);
     }
+    blockSignals(false);
 }
 

@@ -23,13 +23,18 @@ public:
     void setMeterValue(double x);
     double meterValue() const;
 
+    //! Set minimum decimals in meter unit (e.g., 3 for 1mm precision)
+    void setMinimumMeterDecimals(int decimals);
+
 private:
     void onFormatChanged();
-    
+    void updateDecimals();
+
     DisplayValueFormat* dvFormat;
     ScopedConnection dvFormatConnection;
     int unit;
     std::optional<double> meterSingleStep;
+    std::optional<int> minMeterDecimals;
 };
 
 }
