@@ -1,5 +1,5 @@
 /*!
- * @author Hervé Audren
+ * @author Herve Audren
  */
 
 #include "../BulletSimulatorItem.h"
