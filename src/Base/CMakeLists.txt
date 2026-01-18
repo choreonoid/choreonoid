@@ -65,6 +65,8 @@ set(sources
   SpinBox.cpp
   DoubleSpinBox.cpp
   LengthSpinBox.cpp
+  LengthUnitLabel.cpp
+  AngleUnitLabel.cpp
   FloatingNumberBox.cpp
   ScrollBar.cpp
   Slider.cpp
@@ -178,6 +180,8 @@ set(headers
   SpinBox.h
   DoubleSpinBox.h
   LengthSpinBox.h
+  LengthUnitLabel.h
+  AngleUnitLabel.h
   FloatingNumberBox.h
   ScrollBar.h
   Slider.h
