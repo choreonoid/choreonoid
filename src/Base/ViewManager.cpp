@@ -672,7 +672,7 @@ static ArchivePtr storeView
     bool isValid = true;
     bool isPrimalInstance = viewClass->checkIfPrimalInstance(view);
 
-    if(!isLayoutMode || !isPrimalInstance){
+    if(!isLayoutMode){
         state = new Archive;
         state->inheritSharedInfoFrom(parentArchive);
         if(!view->storeState(*state)){

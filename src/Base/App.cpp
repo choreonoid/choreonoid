@@ -16,6 +16,7 @@
 #include "ItemEditRecordManager.h"
 #include "TimeSyncItemEngine.h"
 #include "MainWindow.h"
+#include "LayoutSwitcher.h"
 #include "FolderItem.h"
 #include "SubProjectItem.h"
 #include "ExtCommandItem.h"
@@ -421,6 +422,7 @@ void App::Impl::initialize()
     
     ItemManager::initializeClass(ext);
     ProjectManager::initializeClass(ext);
+    LayoutSwitcher::initializeClass(ext);
     ProjectBackupManager::initializeClass();
     RootItem::initializeClass(ext);
     UnifiedEditHistory::initializeClass(ext);
