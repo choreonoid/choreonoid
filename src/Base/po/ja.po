@@ -828,6 +828,9 @@ msgstr "{0}ビュー"
 msgid "Register Layout"
 msgstr "レイアウトの登録"
 
+msgid "Rename Layout"
+msgstr "レイアウト名の変更"
+
 msgid "Layout"
 msgstr "レイアウト"
 
