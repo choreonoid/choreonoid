@@ -35,6 +35,9 @@ enum ConfigCategory
     AllCategories = CameraCategory | DrawingCategory | GridCategory
 };
 
+std::optional<DisplayValueFormat::LengthUnit> fixedLengthUnit_;
+int fixedLengthDecimals_ = 1;
+
 class ConfigWidgetSet
 {
 public:
@@ -60,8 +63,9 @@ public:
 
     struct GridWidgetSet {
         CheckBox* check;
-        DoubleSpinBox* spanSpin;
-        DoubleSpinBox* intervalSpin;
+        LengthSpinBox* spanSpin;
+        LengthSpinBox* intervalSpin;
+        LengthUnitLabel* unitLabel;
         PushButton* colorButton;
     };
     GridWidgetSet gridWidgetSets[3];
@@ -141,6 +145,13 @@ public:
     void showPickingImageWindow();
 };
 
+}
+
+
+void SceneWidgetConfig::setFixedLengthUnit(std::optional<DisplayValueFormat::LengthUnit> unit, int decimals)
+{
+    fixedLengthUnit_ = unit;
+    fixedLengthDecimals_ = decimals;
 }
 
 
@@ -584,6 +595,9 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
     nearClipSpin->setMinimumMeterDecimals(4);  // 0.1mm precision
     nearClipSpin->setMeterRange(0.0001, 99999.9999);
     nearClipSpin->setMeterSingleStep(0.0001);
+    if(fixedLengthUnit_){
+        nearClipSpin->setFixedUnit(*fixedLengthUnit_, fixedLengthDecimals_);
+    }
     nearClipSpin->sigValueChanged().connect(
         [this](double){
             config->nearClipDistance = nearClipSpin->meterValue();
@@ -594,6 +608,9 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
     farClipSpin = new LengthSpinBox(ownerWidget);
     farClipSpin->setMeterRange(0.1, 999999999.9);
     farClipSpin->setMeterSingleStep(0.1);
+    if(fixedLengthUnit_){
+        farClipSpin->setFixedUnit(*fixedLengthUnit_, fixedLengthDecimals_);
+    }
     farClipSpin->sigValueChanged().connect(
         [this](double){
             config->farClipDistance = farClipSpin->meterValue();
@@ -602,6 +619,9 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
     signalObjects.push_back(farClipSpin);
 
     clipDistanceUnitLabel = new LengthUnitLabel(ownerWidget);
+    if(fixedLengthUnit_){
+        clipDistanceUnitLabel->setFixedUnit(*fixedLengthUnit_);
+    }
 
     infiniteFarCheck = new CheckBox(_("Use infinite far clip distance for all cameras (OpenGL 4.5 or later)"), ownerWidget);
     infiniteFarCheck->sigToggled().connect(
@@ -653,31 +673,42 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
             });
         signalObjects.push_back(gws.check);
 
-        auto spanSpin = new DoubleSpinBox(ownerWidget);
+        auto spanSpin = new LengthSpinBox(ownerWidget);
         spanSpin->setAlignment(Qt::AlignCenter);
-    	spanSpin->setDecimals(1);
-    	spanSpin->setRange(0.0, 99.9);
-        spanSpin->setSingleStep(0.1);
+        spanSpin->setMeterRange(0.0, 999.9);
+        spanSpin->setMeterSingleStep(0.1);
+        if(fixedLengthUnit_){
+            spanSpin->setFixedUnit(*fixedLengthUnit_, fixedLengthDecimals_);
+        }
         spanSpin->sigValueChanged().connect(
-            [this, i](double span){
-                config->gridInfos[i].span = span;
+            [this, i](double){
+                config->gridInfos[i].span = gridWidgetSets[i].spanSpin->meterValue();
                 config->updateSceneWidgets(GridCategory, true);
             });
         signalObjects.push_back(spanSpin);
         gws.spanSpin = spanSpin;
 
-        auto intervalSpin = new DoubleSpinBox(ownerWidget);
+        auto intervalSpin = new LengthSpinBox(ownerWidget);
         intervalSpin->setAlignment(Qt::AlignCenter);
-    	intervalSpin->setDecimals(3);
-    	intervalSpin->setRange(0.001, 9.999);
-        intervalSpin->setSingleStep(0.001);
+        intervalSpin->setMinimumMeterDecimals(3);
+        intervalSpin->setMeterRange(0.001, 99.999);
+        intervalSpin->setMeterSingleStep(0.001);
+        if(fixedLengthUnit_){
+            intervalSpin->setFixedUnit(*fixedLengthUnit_, fixedLengthDecimals_);
+        }
         intervalSpin->sigValueChanged().connect(
-            [this, i](double interval){
-                config->gridInfos[i].interval = interval;
+            [this, i](double){
+                config->gridInfos[i].interval = gridWidgetSets[i].intervalSpin->meterValue();
                 config->updateSceneWidgets(GridCategory, true);
             });
         signalObjects.push_back(intervalSpin);
         gws.intervalSpin = intervalSpin;
+
+        auto unitLabel = new LengthUnitLabel(ownerWidget);
+        if(fixedLengthUnit_){
+            unitLabel->setFixedUnit(*fixedLengthUnit_);
+        }
+        gws.unitLabel = unitLabel;
 
         auto colorButton = new PushButton(ownerWidget);
         SceneRendererConfig::setColorButtonColor(colorButton, config->gridInfos[i].color);
@@ -832,11 +863,12 @@ QWidget* ConfigWidgetSet::createBackgroundPanel()
         grid->addWidget(gws.spanSpin, i, 6);
         grid->addWidget(new QLabel(_("Interval")), i, 7);
         grid->addWidget(gws.intervalSpin, i, 8);
-        grid->addWidget(new QLabel(_("Color")), i, 9);
-        grid->addWidget(gws.colorButton, i, 10);
+        grid->addWidget(gws.unitLabel, i, 9);
+        grid->addWidget(new QLabel(_("Color")), i, 10);
+        grid->addWidget(gws.colorButton, i, 11);
     }
 
-    grid->setColumnStretch(10, 10);
+    grid->setColumnStretch(11, 10);
 
     return backgroundPanel;
 }
@@ -917,8 +949,8 @@ void ConfigWidgetSet::updateWidgets()
         auto& gws = gridWidgetSets[i];
         auto& info = config->gridInfos[i];
         gws.check->setChecked(info.isEnabled);
-        gws.spanSpin->setValue(info.span);
-        gws.intervalSpin->setValue(info.interval);
+        gws.spanSpin->setMeterValue(info.span);
+        gws.intervalSpin->setMeterValue(info.interval);
     }
 
     normalVisualizationCheck->setChecked(config->isNormalVisualizationEnabled);

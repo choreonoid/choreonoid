@@ -11,6 +11,7 @@
 #include "TimeBar.h"
 #include "DisplayValueFormat.h"
 #include "GeneralSceneFileLoadDialog.h"
+#include "SceneWidgetConfig.h"
 #include <cnoid/GettextUtil>
 
 namespace cnoid {
@@ -155,6 +156,11 @@ public:
     void setCoordinateSystem(DisplayValueFormat::CoordinateSystem system)
     {
         displayValueFormat->setCoordinateSystem(system);
+    }
+
+    static void setSceneWidgetFixedLengthUnit(DisplayValueFormat::LengthUnit unit, int decimals)
+    {
+        SceneWidgetConfig::setFixedLengthUnit(unit, decimals);
     }
 };
 

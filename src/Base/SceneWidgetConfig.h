@@ -2,6 +2,8 @@
 #define CNOID_BASE_SCENE_WIDGET_CONFIG_H
 
 #include "SceneRendererConfig.h"
+#include "DisplayValueFormat.h"
+#include <optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -12,6 +14,9 @@ class PushButton;
 class CNOID_EXPORT SceneWidgetConfig : public SceneRendererConfig
 {
 public:
+    //! Fix length unit for Near/Far and grid settings (pass nullopt to follow DisplayValueFormat)
+    static void setFixedLengthUnit(std::optional<DisplayValueFormat::LengthUnit> unit, int decimals);
+
     ~SceneWidgetConfig();
 
     void addSceneWidget(SceneWidget* widget, bool doUpdateSceneWidget);
