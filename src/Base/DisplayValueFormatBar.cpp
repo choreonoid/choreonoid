@@ -283,69 +283,107 @@ bool DisplayValueFormatBar::restoreState(const Archive& archive)
 bool DisplayValueFormatBar::Impl::restoreState(const Archive& archive)
 {
     bool hasSettings = false;
+    bool formatChanged = false;
 
     string lengthUnitSymbol;
     if(archive.read("length_unit", lengthUnitSymbol)){
+        int newUnit = displayValueFormat->lengthUnit();
         if(lengthUnitSymbol == "meter"){
-            displayValueFormat->setLengthUnit(DisplayValueFormat::Meter);
+            newUnit = DisplayValueFormat::Meter;
             hasSettings = true;
         } else if(lengthUnitSymbol == "millimeter"){
-            displayValueFormat->setLengthUnit(DisplayValueFormat::Millimeter);
+            newUnit = DisplayValueFormat::Millimeter;
             hasSettings = true;
         } else if(lengthUnitSymbol == "kilometer"){
-            displayValueFormat->setLengthUnit(DisplayValueFormat::Kilometer);
+            newUnit = DisplayValueFormat::Kilometer;
             hasSettings = true;
+        }
+        if(hasSettings && newUnit != displayValueFormat->lengthUnit()){
+            displayValueFormat->setLengthUnit(static_cast<DisplayValueFormat::LengthUnit>(newUnit));
+            formatChanged = true;
         }
     }
 
     int lengthDecimals;
     if(archive.read("length_decimals", lengthDecimals)){
-        displayValueFormat->setLengthDecimals(lengthDecimals);
         hasSettings = true;
+        if(lengthDecimals != displayValueFormat->lengthDecimals()){
+            displayValueFormat->setLengthDecimals(lengthDecimals);
+            formatChanged = true;
+        }
     }
 
     double lengthStep;
     if(archive.read("length_step", lengthStep)){
-        displayValueFormat->setLengthStep(lengthStep);
         hasSettings = true;
+        if(lengthStep != displayValueFormat->lengthStep()){
+            displayValueFormat->setLengthStep(lengthStep);
+            formatChanged = true;
+        }
     }
 
     string angleUnitSymbol;
     if(archive.read("angle_unit", angleUnitSymbol)){
+        int newUnit = displayValueFormat->angleUnit();
+        bool validUnit = false;
         if(angleUnitSymbol == "degree"){
-            displayValueFormat->setAngleUnit(DisplayValueFormat::Degree);
-            hasSettings = true;
+            newUnit = DisplayValueFormat::Degree;
+            validUnit = true;
         } else if(angleUnitSymbol == "radian"){
-            displayValueFormat->setAngleUnit(DisplayValueFormat::Radian);
+            newUnit = DisplayValueFormat::Radian;
+            validUnit = true;
+        }
+        if(validUnit){
             hasSettings = true;
+            if(newUnit != displayValueFormat->angleUnit()){
+                displayValueFormat->setAngleUnit(static_cast<DisplayValueFormat::AngleUnit>(newUnit));
+                formatChanged = true;
+            }
         }
     }
 
     int angleDecimals;
     if(archive.read("angle_decimals", angleDecimals)){
-        displayValueFormat->setAngleDecimals(angleDecimals);
         hasSettings = true;
+        if(angleDecimals != displayValueFormat->angleDecimals()){
+            displayValueFormat->setAngleDecimals(angleDecimals);
+            formatChanged = true;
+        }
     }
 
     double angleStep;
     if(archive.read("angle_step", angleStep)){
-        displayValueFormat->setAngleStep(angleStep);
         hasSettings = true;
+        if(angleStep != displayValueFormat->angleStep()){
+            displayValueFormat->setAngleStep(angleStep);
+            formatChanged = true;
+        }
     }
 
     string coordinateSystemSymbol;
     if(archive.read("coordinate_system", coordinateSystemSymbol)){
+        int newSystem = displayValueFormat->coordinateSystem();
+        bool validSystem = false;
         if(coordinateSystemSymbol == "right_handed"){
-            displayValueFormat->setCoordinateSystem(DisplayValueFormat::RightHanded);
-            hasSettings = true;
+            newSystem = DisplayValueFormat::RightHanded;
+            validSystem = true;
         } else if(coordinateSystemSymbol == "left_handed"){
-            displayValueFormat->setCoordinateSystem(DisplayValueFormat::LeftHanded);
+            newSystem = DisplayValueFormat::LeftHanded;
+            validSystem = true;
+        }
+        if(validSystem){
             hasSettings = true;
+            if(newSystem != displayValueFormat->coordinateSystem()){
+                displayValueFormat->setCoordinateSystem(static_cast<DisplayValueFormat::CoordinateSystem>(newSystem));
+                formatChanged = true;
+            }
         }
     }
 
     if(hasSettings){
         hasProjectSettings = true;
+    }
+    if(formatChanged){
         displayValueFormat->notifyFormatChange();
     }
 
