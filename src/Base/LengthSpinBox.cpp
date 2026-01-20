@@ -110,6 +110,14 @@ void LengthSpinBox::onFormatChanged()
 
     int newUnit = dvFormat->lengthUnit();
     blockSignals(true);
+
+    // Save current values in meter before updateDecimals() to avoid rounding by setDecimals()
+    double oldRatio = (unit == DisplayValueFormat::Meter) ? 1.0 :
+                      (unit == DisplayValueFormat::Millimeter) ? 0.001 : 1000.0;
+    double meterMin = minimum() * oldRatio;
+    double meterMax = maximum() * oldRatio;
+    double meterVal = value() * oldRatio;
+
     updateDecimals();
     if(meterSingleStep && !dvFormat->isLengthStepForcedMode()){
         setSingleStep(dvFormat->toDisplayLength(*meterSingleStep));
@@ -117,12 +125,7 @@ void LengthSpinBox::onFormatChanged()
         setSingleStep(dvFormat->lengthStep());
     }
     if(newUnit != unit){
-        // Convert current values from old unit to meter, then to new display unit
-        double oldRatio = (unit == DisplayValueFormat::Meter) ? 1.0 :
-                          (unit == DisplayValueFormat::Millimeter) ? 0.001 : 1000.0;
-        double meterMin = minimum() * oldRatio;
-        double meterMax = maximum() * oldRatio;
-        double meterVal = value() * oldRatio;
+        // Convert saved meter values to new display unit
         setRange(dvFormat->toDisplayLength(meterMin), dvFormat->toDisplayLength(meterMax));
         setValue(dvFormat->toDisplayLength(meterVal));
         unit = newUnit;
