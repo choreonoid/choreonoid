@@ -19,17 +19,27 @@ LengthSpinBox::LengthSpinBox(QWidget* parent)
 
 void LengthSpinBox::setMeterRange(double minimum, double maximum)
 {
-    setRange(dvFormat->toDisplayLength(minimum), dvFormat->toDisplayLength(maximum));
+    if(fixedUnit_){
+        setRange(toFixedUnitLength(minimum), toFixedUnitLength(maximum));
+    } else {
+        setRange(dvFormat->toDisplayLength(minimum), dvFormat->toDisplayLength(maximum));
+    }
 }
         
 double LengthSpinBox::meterMaximum() const
 {
+    if(fixedUnit_){
+        return fromFixedUnitLength(maximum());
+    }
     return dvFormat->toMeter(maximum());
 }
 
 
 double LengthSpinBox::meterMinimum() const
 {
+    if(fixedUnit_){
+        return fromFixedUnitLength(minimum());
+    }
     return dvFormat->toMeter(minimum());
 }
 
@@ -37,7 +47,9 @@ double LengthSpinBox::meterMinimum() const
 void LengthSpinBox::setMeterSingleStep(double step)
 {
     meterSingleStep = step;
-    if(!dvFormat->isLengthStepForcedMode()){
+    if(fixedUnit_){
+        setSingleStep(toFixedUnitLength(step));
+    } else if(!dvFormat->isLengthStepForcedMode()){
         setSingleStep(dvFormat->toDisplayLength(step));
     }
 }
@@ -45,12 +57,19 @@ void LengthSpinBox::setMeterSingleStep(double step)
 
 void LengthSpinBox::setMeterValue(double x)
 {
-    setValue(dvFormat->toDisplayLength(x));
+    if(fixedUnit_){
+        setValue(toFixedUnitLength(x));
+    } else {
+        setValue(dvFormat->toDisplayLength(x));
+    }
 }
 
 
 double LengthSpinBox::meterValue() const
 {
+    if(fixedUnit_){
+        return fromFixedUnitLength(value());
+    }
     return dvFormat->toMeter(value());
 }
 
@@ -64,12 +83,14 @@ void LengthSpinBox::setMinimumMeterDecimals(int decimals)
 
 void LengthSpinBox::updateDecimals()
 {
-    int decimals = dvFormat->lengthDecimals();
+    int currentUnit = fixedUnit_ ? *fixedUnit_ : dvFormat->lengthUnit();
+    // Use fixed decimals if set, otherwise use DisplayValueFormat
+    int decimals = fixedDecimals_ ? *fixedDecimals_ : dvFormat->lengthDecimals();
     if(minMeterDecimals){
         int minDecimals;
-        if(dvFormat->lengthUnit() == DisplayValueFormat::Meter){
+        if(currentUnit == DisplayValueFormat::Meter){
             minDecimals = *minMeterDecimals;
-        } else if(dvFormat->lengthUnit() == DisplayValueFormat::Millimeter){
+        } else if(currentUnit == DisplayValueFormat::Millimeter){
             minDecimals = std::max(0, *minMeterDecimals - 3);
         } else { // Kilometer
             minDecimals = *minMeterDecimals + 3;
@@ -82,6 +103,11 @@ void LengthSpinBox::updateDecimals()
 
 void LengthSpinBox::onFormatChanged()
 {
+    // If fixed unit mode, skip DisplayValueFormat changes
+    if(fixedUnit_){
+        return;
+    }
+
     int newUnit = dvFormat->lengthUnit();
     blockSignals(true);
     updateDecimals();
@@ -102,5 +128,55 @@ void LengthSpinBox::onFormatChanged()
         unit = newUnit;
     }
     blockSignals(false);
+}
+
+
+void LengthSpinBox::setFixedUnit(DisplayValueFormat::LengthUnit fixedUnit, int decimals)
+{
+    fixedUnit_ = fixedUnit;
+    fixedDecimals_ = decimals;
+    dvFormatConnection.disconnect();  // Disconnect DisplayValueFormat change notification
+    unit = fixedUnit;
+    updateDecimals();
+    if(meterSingleStep){
+        setSingleStep(toFixedUnitLength(*meterSingleStep));
+    } else {
+        setSingleStep(dvFormat->lengthStep());
+    }
+}
+
+
+void LengthSpinBox::clearFixedUnit()
+{
+    fixedUnit_.reset();
+    fixedDecimals_.reset();
+    unit = dvFormat->lengthUnit();
+    dvFormatConnection =
+        dvFormat->sigFormatChanged().connect([this](){ onFormatChanged(); });
+    onFormatChanged();
+}
+
+
+double LengthSpinBox::toFixedUnitLength(double meter) const
+{
+    if(*fixedUnit_ == DisplayValueFormat::Meter){
+        return meter;
+    }
+    if(*fixedUnit_ == DisplayValueFormat::Millimeter){
+        return meter * 1000.0;
+    }
+    return meter / 1000.0;  // Kilometer
+}
+
+
+double LengthSpinBox::fromFixedUnitLength(double displayLength) const
+{
+    if(*fixedUnit_ == DisplayValueFormat::Meter){
+        return displayLength;
+    }
+    if(*fixedUnit_ == DisplayValueFormat::Millimeter){
+        return displayLength / 1000.0;
+    }
+    return displayLength * 1000.0;  // Kilometer
 }
 

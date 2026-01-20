@@ -2,11 +2,10 @@
 #define CNOID_BASE_LENGTH_SPIN_BOX_H
 
 #include "DoubleSpinBox.h"
+#include "DisplayValueFormat.h"
 #include "exportdecl.h"
 
 namespace cnoid {
-
-class DisplayValueFormat;
 
 class CNOID_EXPORT LengthSpinBox : public DoubleSpinBox
 {
@@ -26,7 +25,14 @@ public:
     //! Set minimum decimals in meter unit (e.g., 3 for 1mm precision)
     void setMinimumMeterDecimals(int decimals);
 
+    //! Fix the length unit and decimals regardless of DisplayValueFormat settings
+    void setFixedUnit(DisplayValueFormat::LengthUnit unit, int decimals);
+    void clearFixedUnit();
+    bool hasFixedUnit() const { return fixedUnit_.has_value(); }
+
 private:
+    double toFixedUnitLength(double meter) const;
+    double fromFixedUnitLength(double displayLength) const;
     void onFormatChanged();
     void updateDecimals();
 
@@ -35,6 +41,8 @@ private:
     int unit;
     std::optional<double> meterSingleStep;
     std::optional<int> minMeterDecimals;
+    std::optional<int> fixedUnit_;
+    std::optional<int> fixedDecimals_;
 };
 
 }

@@ -20,3 +20,20 @@ void LengthUnitLabel::onFormatChanged()
 {
     setText(formatR("[{}]", dvFormat->lengthUnitSymbol()).c_str());
 }
+
+
+void LengthUnitLabel::setFixedUnit(DisplayValueFormat::LengthUnit fixedUnit)
+{
+    fixedUnit_ = fixedUnit;
+    dvFormatConnection.disconnect();
+    setText(formatR("[{}]", DisplayValueFormat::lengthUnitSymbol(fixedUnit)).c_str());
+}
+
+
+void LengthUnitLabel::clearFixedUnit()
+{
+    fixedUnit_.reset();
+    dvFormatConnection =
+        dvFormat->sigFormatChanged().connect([this](){ onFormatChanged(); });
+    onFormatChanged();
+}

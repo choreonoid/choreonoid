@@ -43,10 +43,13 @@ public:
         if(lengthUnit_ == Millimeter) return 1000.0;
         return 0.001;  // Kilometer
     }
-    const char* lengthUnitSymbol() const {
-        if(lengthUnit_ == Meter) return "m";
-        if(lengthUnit_ == Millimeter) return "mm";
+    static const char* lengthUnitSymbol(LengthUnit unit) {
+        if(unit == Meter) return "m";
+        if(unit == Millimeter) return "mm";
         return "km";
+    }
+    const char* lengthUnitSymbol() const {
+        return lengthUnitSymbol(lengthUnit_);
     }
     void setMeterDecimals(int decimals) { meterDecimals_ = decimals; }
     int meterDecimals() const { return meterDecimals_; }
