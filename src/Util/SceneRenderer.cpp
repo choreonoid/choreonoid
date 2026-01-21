@@ -264,7 +264,7 @@ void SceneRenderer::clearScene()
 }
 
 
-void SceneRenderer::onTintColorChanged()
+void SceneRenderer::onHighlightColorChanged()
 {
 
 }

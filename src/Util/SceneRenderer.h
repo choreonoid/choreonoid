@@ -37,15 +37,15 @@ public:
     virtual void renderCustomTransform(SgTransform* transform, const std::function<void()>& traverseFunction) = 0;
     virtual void renderNode(SgNode* node) = 0;
 
-    void setTintColor(std::optional<Vector3f> color) {
-        tintColor_ = color;
-        onTintColorChanged();
+    void setHighlightColor(std::optional<Vector3f> color) {
+        highlightColor_ = color;
+        onHighlightColorChanged();
     }
-    void clearTintColor() {
-        tintColor_ = std::nullopt;
+    void clearHighlightColor() {
+        highlightColor_ = std::nullopt;
     }
-    std::optional<Vector3f> tintColor() const {
-        return tintColor_;
+    std::optional<Vector3f> highlightColor() const {
+        return highlightColor_;
     }
 
     typedef std::function<SgNode*(SgNode* targetNode)> NodeDecorationFunction;
@@ -158,14 +158,14 @@ public:
 protected:
     virtual void doRender() = 0;
     virtual bool doPick(int x, int y);
-    virtual void onTintColorChanged();
+    virtual void onHighlightColorChanged();
 
 private:
     void setPropertyImpl(PropertyKey key, double value);
 
     Impl* impl;
     std::vector<double> properties_;
-    std::optional<Vector3f> tintColor_;
+    std::optional<Vector3f> highlightColor_;
 };
 
 }

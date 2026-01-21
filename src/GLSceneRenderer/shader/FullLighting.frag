@@ -73,7 +73,8 @@ vec3 reflectionElements[MAX_NUM_LIGHTS];
 uniform bool isTextureEnabled;
 uniform sampler2D colorTexture;
 uniform bool isVertexColorEnabled;
-uniform vec3 tintColor = vec3(1.0, 1.0, 1.0);
+uniform vec3 highlightColor = vec3(1.0, 1.0, 1.0);
+uniform bool isHighlightEnabled = false;
 uniform vec3 fogColor;
 uniform float maxFogDist;
 uniform float minFogDist;
@@ -141,8 +142,12 @@ void main()
             alpha2 *= texColor4.a;
         }
 
-        // Always multiply tint color (white when disabled)
-        baseColor *= tintColor;
+        // Highlight mode: replace color with highlight color while preserving texture pattern
+        if(isHighlightEnabled) {
+            float maxComponent = max(max(baseColor.r, baseColor.g), baseColor.b);
+            // Map brightness: 0 -> 0.5, 1 -> 1.0 (preserves texture pattern with boosted dark areas)
+            baseColor = highlightColor * (0.5 + maxComponent * 0.5);
+        }
 
         // Emission color handling:
         // According to industry standards (glTF, VRML97, X3D), emission color should simply
@@ -205,26 +210,31 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
             n = -n;
         }
 
+        vec3 spec;
+        if(!isHighlightEnabled){
 #if USE_BLINN_PHONG_MODEL
-        vec3 h = normalize(v + s);
+            vec3 h = normalize(v + s);
 #else
-        vec3 h = reflect(-s, n); // Original phong model
+            vec3 h = reflect(-s, n); // Original phong model
 #endif
-        // Epsilon value is used in the max function because pow(0, 0) is not defined in GLSL
-        vec3 spec = specularColor * pow(max(dot(h, n), 1.0e-6), specularExponent);
-        
+            // Epsilon value is used in the max function because pow(0, 0) is not defined in GLSL
+            spec = specularColor * pow(max(dot(h, n), 1.0e-6), specularExponent);
+        } else {
+            spec = vec3(0.0);
+        }
+
         return light.intensity * (diffuseColor * max(dot(s, n), 0.0) + spec);
-        
+
     } else {
         // point light
         vec3 l = vec3(light.position) - inData.position;
         vec3 s = normalize(l);
         float ki;
 
-        if(light.cutoffAngle == 0.0){ 
+        if(light.cutoffAngle == 0.0){
             ki = 1.0;
         } else {
-            // spot light            
+            // spot light
             vec3 direction = normalize(light.direction);
             float sd = dot(-s, direction);
             float angle = acos(sd);
@@ -237,7 +247,7 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
                 ki = pow(t, light.cutoffExponent);
             }
         }
-        
+
         vec3 v = normalize(vec3(-inData.position));
         vec3 n = normalize(inData.normal);
         if(!gl_FrontFacing){
@@ -248,15 +258,20 @@ vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor)
                         light.constantAttenuation +
                         distance * light.linearAttenuation +
                         distance * distance * light.quadraticAttenuation);
-        
+
+        vec3 spec;
+        if(!isHighlightEnabled){
 #if USE_BLINN_PHONG_MODEL
-        vec3 h = normalize(v + s);
+            vec3 h = normalize(v + s);
 #else
-        vec3 h = reflect(-s, n); // Original phong model
+            vec3 h = reflect(-s, n); // Original phong model
 #endif
-        // Epsilon value is used in the max function because pow(0, 0) is not defined in GLSL
-        vec3 spec = specularColor * pow(max(dot(h, n), 1.0e-6), specularExponent);
-        
+            // Epsilon value is used in the max function because pow(0, 0) is not defined in GLSL
+            spec = specularColor * pow(max(dot(h, n), 1.0e-6), specularExponent);
+        } else {
+            spec = vec3(0.0);
+        }
+
         return ki * light.intensity * (diffuseColor * max(dot(s, n), 0.0) + spec);
     }
 }

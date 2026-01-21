@@ -109,8 +109,10 @@ public:
     bool isColorApplied;
     bool isMaterialAmbientNormalizationEnabled;
 
-    GLint tintColorLocation;
-    Vector3f tintColor;
+    GLint highlightColorLocation;
+    GLint isHighlightEnabledLocation;
+    Vector3f highlightColor;
+    bool isHighlightEnabled;
 
     void initialize(GLSLProgram& glsl);
 };
@@ -186,14 +188,15 @@ public:
     GLint isVertexColorEnabledLocation;
     bool isVertexColorEnabled;
 
-    GLint tintColorLocation;
-    Vector3f tintColor;
+    GLint highlightColorLocation;
+    GLint isHighlightEnabledLocation;
+    Vector3f highlightColor;
+    bool isHighlightEnabled;
 
     bool isMaterialAmbientNormalizationEnabled;
 
     void initialize(GLSLProgram& glsl);
     void setMaterial(const SgMaterial* material);
-    void setTintColor(const Vector3f& color);
 };
 
 
@@ -349,13 +352,13 @@ void ShaderProgram::setVertexColorEnabled(bool on)
 }
 
 
-void ShaderProgram::setTintColor(const Vector3f& color)
+void ShaderProgram::setHighlightColor(const Vector3f& color)
 {
 
 }
 
 
-void ShaderProgram::clearTintColor()
+void ShaderProgram::clearHighlightColor()
 {
 
 }
@@ -862,10 +865,10 @@ void MinimumLightingProgram::Impl::initialize(GLSLProgram& glsl)
     diffuseColorLocation = glsl.getUniformLocation("diffuseColor");
     ambientIntensityLocation = glsl.getUniformLocation("ambientIntensity");
 
-    tintColorLocation = glsl.getUniformLocation("tintColor");
-    tintColor = Vector3f(1.0f, 1.0f, 1.0f);  // Cache initialized to default (white)
-
-    // tintColor has default value in shader, no need to set it here
+    highlightColorLocation = glsl.getUniformLocation("highlightColor");
+    isHighlightEnabledLocation = glsl.getUniformLocation("isHighlightEnabled");
+    highlightColor = Vector3f(1.0f, 1.0f, 1.0f);
+    isHighlightEnabled = false;
 }
 
 
@@ -945,18 +948,28 @@ void MinimumLightingProgram::setMaterial(const SgMaterial* material)
 }
 
 
-void MinimumLightingProgram::setTintColor(const Vector3f& color)
+void MinimumLightingProgram::setHighlightColor(const Vector3f& color)
 {
-    if(impl->tintColor != color){
-        glUniform3fv(impl->tintColorLocation, 1, color.data());
-        impl->tintColor = color;
+    if(impl->highlightColor != color){
+        glUniform3fv(impl->highlightColorLocation, 1, color.data());
+        impl->highlightColor = color;
+    }
+    setHighlightEnabled(true);
+}
+
+
+void MinimumLightingProgram::setHighlightEnabled(bool enabled)
+{
+    if(impl->isHighlightEnabled != enabled){
+        glUniform1i(impl->isHighlightEnabledLocation, enabled);
+        impl->isHighlightEnabled = enabled;
     }
 }
 
 
-void MinimumLightingProgram::clearTintColor()
+void MinimumLightingProgram::clearHighlightColor()
 {
-    setTintColor(Vector3f(1.0f, 1.0f, 1.0f));
+    setHighlightEnabled(false);
 }
 
 
@@ -1136,14 +1149,15 @@ void MaterialLightingProgram::Impl::initialize(GLSLProgram& glsl)
     isVertexColorEnabledLocation = glsl.getUniformLocation("isVertexColorEnabled");
     isVertexColorEnabled = false;
 
-    tintColorLocation = glsl.getUniformLocation("tintColor");
-    tintColor = Vector3f(1.0f, 1.0f, 1.0f);  // Cache initialized to default (white)
+    highlightColorLocation = glsl.getUniformLocation("highlightColor");
+    isHighlightEnabledLocation = glsl.getUniformLocation("isHighlightEnabled");
+    highlightColor = Vector3f(1.0f, 1.0f, 1.0f);
+    isHighlightEnabled = false;
 
     glsl.use();
     glUniform1i(isTextureEnabledLocation, isTextureEnabled);
     glUniform1i(colorTextureLocation, colorTextureUnit);
     glUniform1i(isVertexColorEnabledLocation, isVertexColorEnabled);
-    // tintColor has default value in shader, no need to set it here
 }
     
 
@@ -1212,24 +1226,28 @@ void MaterialLightingProgram::Impl::setMaterial(const SgMaterial* material)
 }
 
 
-void MaterialLightingProgram::Impl::setTintColor(const Vector3f& color)
+void MaterialLightingProgram::setHighlightColor(const Vector3f& color)
 {
-    if(tintColor != color){
-        glUniform3fv(tintColorLocation, 1, color.data());
-        tintColor = color;
+    if(impl->highlightColor != color){
+        glUniform3fv(impl->highlightColorLocation, 1, color.data());
+        impl->highlightColor = color;
+    }
+    setHighlightEnabled(true);
+}
+
+
+void MaterialLightingProgram::setHighlightEnabled(bool enabled)
+{
+    if(impl->isHighlightEnabled != enabled){
+        glUniform1i(impl->isHighlightEnabledLocation, enabled);
+        impl->isHighlightEnabled = enabled;
     }
 }
 
 
-void MaterialLightingProgram::setTintColor(const Vector3f& color)
+void MaterialLightingProgram::clearHighlightColor()
 {
-    impl->setTintColor(color);
-}
-
-
-void MaterialLightingProgram::clearTintColor()
-{
-    impl->setTintColor(Vector3f(1.0f, 1.0f, 1.0f));
+    setHighlightEnabled(false);
 }
 
 

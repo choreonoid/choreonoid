@@ -473,10 +473,10 @@ void OperableSceneLink::Impl::render(SceneRenderer* renderer)
                     if(node != shapeGroup){
                         renderingFunctions->dispatch(node);
                     } else {
-                        auto orgTintColor = renderer->tintColor();
-                        renderer->setTintColor(Vector3f(1.0f, 0.0f, 0.0f));
+                        auto orgHighlightColor = renderer->highlightColor();
+                        renderer->setHighlightColor(Vector3f(1.0f, 0.0f, 0.0f));
                         renderingFunctions->dispatch(node);
-                        renderer->setTintColor(orgTintColor);
+                        renderer->setHighlightColor(orgHighlightColor);
                         break;
                     }
                 }
