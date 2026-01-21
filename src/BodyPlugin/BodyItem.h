@@ -62,8 +62,11 @@ public:
      * - Attached: Full bidirectional coupling with constraints
      */
     enum ParentBodyLinkage { Unlinked, Coordinated, Attached };
+    bool isLinkableToParentBody() const;
     BodyItem* linkedParentBodyItem() const;
     bool setPreferredParentBodyLinkage(int linkageType, bool doNotifyUpdate = true);
+    bool setPreferredParentBodyLinkage(
+        int linkageType, const std::string& parentLinkName, bool doNotifyUpdate = true);
     int preferredParentBodyLinkage() const { return preferredParentBodyLinkage_; }
     bool isAttachmentToParentBodyEnabled() const { return preferredParentBodyLinkage_ == Attached; }
     int currentParentBodyLinkage() const { return currentParentBodyLinkage_; }
@@ -75,6 +78,7 @@ public:
     }
 
     void setParentLink(const std::string& name);
+    void resetParentLink();
     const std::string& parentLinkName() const;
 
     [[deprecated("Use linkedParentBodyItem")]]

@@ -204,7 +204,7 @@ public:
     void setTransparency(float t);
     bool isLinkableToParentBody() const;
     void setParentLink(const std::string& name);
-    bool updateParentBodyLinkage(bool doNotifyUpdate);
+    bool updateParentBodyLinkage(bool doUpdatePreferred, bool doNotifyUpdate);
     void clearParentBodyLinkage(bool doNotifyUpdate);
     bool updateParentBodyLinkageTo(BodyItem* parentBodyItem);
     bool findMatchedAttachmentAndHolder(
@@ -461,7 +461,7 @@ void BodyItem::onTreePathChanged()
       given to the Archive::addProcessOnSubTreeRestored in the restore function.
     */
     if(!impl->isBeingRestored){
-        impl->updateParentBodyLinkage(true);
+        impl->updateParentBodyLinkage(false, true);
     }
 }
 
@@ -1421,9 +1421,9 @@ void BodyItem::Impl::setTransparency(float t)
 }
 
 
-bool BodyItem::Impl::isLinkableToParentBody() const
+bool BodyItem::isLinkableToParentBody() const
 {
-    return self->findOwnerItem<BodyItem>() != nullptr;
+    return findOwnerItem<BodyItem>() != nullptr;
 }
 
 
@@ -1437,7 +1437,7 @@ void BodyItem::Impl::setParentLink(const std::string& name)
 {
     if(name != parentLinkName){
         parentLinkName = name;
-        updateParentBodyLinkage(true);
+        updateParentBodyLinkage(false, true);
     }
 }
 
@@ -1445,6 +1445,15 @@ void BodyItem::Impl::setParentLink(const std::string& name)
 void BodyItem::setParentLink(const std::string& name)
 {
     impl->setParentLink(name);
+}
+
+
+void BodyItem::resetParentLink()
+{
+    if(!impl->parentLinkName.empty()){
+        impl->parentLinkName.clear();
+        impl->updateParentBodyLinkage(false, true);
+    }
 }
 
 
@@ -1458,13 +1467,32 @@ bool BodyItem::setPreferredParentBodyLinkage(int linkageType, bool doNotifyUpdat
 {
     preferredParentBodyLinkage_ = linkageType;
     if(preferredParentBodyLinkage_ != currentParentBodyLinkage_){
-        impl->updateParentBodyLinkage(doNotifyUpdate);
+        impl->updateParentBodyLinkage(false, doNotifyUpdate);
     }
     return currentParentBodyLinkage_ == preferredParentBodyLinkage_;
 }
 
 
-bool BodyItem::Impl::updateParentBodyLinkage(bool doNotifyUpdate)
+bool BodyItem::setPreferredParentBodyLinkage
+(int linkageType, const std::string& parentLinkName, bool doNotifyUpdate)
+{
+    preferredParentBodyLinkage_ = linkageType;
+    bool doUpdate = false;
+    if(preferredParentBodyLinkage_ != currentParentBodyLinkage_){
+        doUpdate = true;
+    }
+    if(parentLinkName != impl->parentLinkName){
+        impl->parentLinkName = parentLinkName;
+        doUpdate = true;
+    }
+    if(doUpdate){
+        impl->updateParentBodyLinkage(false, doNotifyUpdate);
+    }
+    return currentParentBodyLinkage_ == preferredParentBodyLinkage_;
+}
+
+
+bool BodyItem::Impl::updateParentBodyLinkage(bool doUpdatePreferred, bool doNotifyUpdate)
 {
     if(self->preferredParentBodyLinkage_ == Unlinked && self->currentParentBodyLinkage_ == Unlinked){
         return false;
@@ -1497,6 +1525,11 @@ bool BodyItem::Impl::updateParentBodyLinkage(bool doNotifyUpdate)
             updated = true;
         }
     }
+
+    if(doUpdatePreferred){
+        self->preferredParentBodyLinkage_ = self->currentParentBodyLinkage_;
+    }
+    
     return updated;
 }
 
@@ -1787,14 +1820,12 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                     return true;
                 });
 
-    if(isLinkableToParentBody()){
-        Selection linkage = { _("Unlinked"), _("Coordinated"), _("Attached") };
-        linkage.select(self->preferredParentBodyLinkage_);
-        putProperty(_("Parent body linkage"), linkage,
-                    [this](int linkageType){
-                        return self->setPreferredParentBodyLinkage(linkageType, true);
-                    });
-    }
+    Selection linkage = { _("Unlinked"), _("Coordinated"), _("Attached") };
+    linkage.select(self->preferredParentBodyLinkage_);
+    putProperty(_("Parent body linkage"), linkage,
+        [this](int linkageType){
+            return self->setPreferredParentBodyLinkage(linkageType, true);
+        });
     putProperty(_("Parent link"), parentLinkName,
                 [this](const string& name){ setParentLink(name); return true; });
 
@@ -1902,7 +1933,7 @@ bool BodyItem::Impl::store(Archive& archive)
         }
     }
 
-    if(isLinkableToParentBody()){
+    if(self->isLinkableToParentBody()){
         const char* linkage = nullptr;
         if(self->preferredParentBodyLinkage_ == Unlinked){
             linkage = "unlinked";
@@ -2052,7 +2083,7 @@ bool BodyItem::Impl::restore(const Archive& archive)
             bool doNotifyKinematicStateChange = false;
 
             // The attachment is updated after the sub tree is restored
-            if(updateParentBodyLinkage(false)){
+            if(updateParentBodyLinkage(false, false)){
                 doNotifyUpdate = true;
             }
             isLocalPositionRestored = false;
