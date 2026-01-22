@@ -1830,6 +1830,16 @@ void MprProgramViewBase::Impl::setBaseContextMenu(MprStatement* statement, MenuM
         pasteAction->sigTriggered().connect([this](){ pasteStatements(); });
     }
 
+    menuManager.addSeparator();
+
+    auto insertEmptyLineAction = menuManager.addItem(_("Insert Empty Line"));
+    insertEmptyLineAction->sigTriggered().connect(
+        [this]{
+            insertStatement(
+                new MprEmptyStatement,
+                selectedItems().empty() ? AfterTargetPosition : BeforeTargetPosition);
+        });
+
     if(auto currentStatementItem = dynamic_cast<StatementItem*>(currentItem())){
         if(selectedItems().empty() || dynamic_cast<MprDummyStatement*>(currentStatementItem->statement().get())){
             cutAction->setEnabled(false);
@@ -1837,20 +1847,12 @@ void MprProgramViewBase::Impl::setBaseContextMenu(MprStatement* statement, MenuM
         }
         if(auto program = currentStatementItem->getProgram()){
             if(!program->isEditable()){
+                cutAction->setEnabled(false);
                 pasteAction->setEnabled(false);
+                insertEmptyLineAction->setEnabled(false);
             }
         }
     }
-
-    menuManager.addSeparator();
-
-    menuManager.addItem(_("Insert Empty Line"))
-        ->sigTriggered().connect(
-            [this]{
-                insertStatement(
-                    new MprEmptyStatement,
-                    selectedItems().empty() ? AfterTargetPosition : BeforeTargetPosition);
-            });
 
     if(statement){
         menuManager.addItem(_("Set as Start Step"))
