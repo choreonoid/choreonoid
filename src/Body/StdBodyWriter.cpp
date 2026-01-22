@@ -233,10 +233,12 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
     MappingPtr node = new Mapping;
 
     if(link->name().empty()){
-        os() << formatR(_("The name of the link {0} is not specified.")) << endl;
-        return nullptr;
+        os() << formatR(
+            _("Warning: The name of the link {0} of {1} is not specified."),
+            link->index(), link->body()->modelName()) << endl;
+    } else {
+        node->write("name", link->name(), DOUBLE_QUOTED);
     }
-    node->write("name", link->name(), DOUBLE_QUOTED);
 
     if(auto parent = link->parent()){
         node->write("parent", link->parent()->name(), DOUBLE_QUOTED);
