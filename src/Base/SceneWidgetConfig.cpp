@@ -81,6 +81,7 @@ public:
     // The following objects are obtained from SceneRendererConfig
     PushButton* backgroundColorButton;
     PushButton* defaultColorButton;
+    PushButton* collisionHighlightColorButton;
     DoubleSpinBox* lineWidthSpin;
     DoubleSpinBox* pointSizeSpin;;
     CheckBox* upsideDownCheck;
@@ -489,6 +490,7 @@ ConfigWidgetSet* SceneWidgetConfig::Impl::getOrCreateConfigWidgetSet()
         widgetSet = new ConfigWidgetSet(this);
         widgetSet->backgroundColorButton = self->backgroundColorButton();
         widgetSet->defaultColorButton = self->defaultColorButton();
+        widgetSet->collisionHighlightColorButton = self->collisionHighlightColorButton();
         widgetSet->lineWidthSpin = self->lineWidthSpin();
         widgetSet->pointSizeSpin = self->pointSizeSpin();
         widgetSet->upsideDownCheck = self->upsideDownCheck();
@@ -893,6 +895,12 @@ QWidget* ConfigWidgetSet::createDrawingPanel()
     hbox->addWidget(lineWidthSpin);
     hbox->addWidget(new QLabel(_("Default point size")));
     hbox->addWidget(pointSizeSpin);
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout;
+    hbox->addWidget(new QLabel(_("Collision highlight color")));
+    hbox->addWidget(collisionHighlightColorButton);
     hbox->addStretch();
     vbox->addLayout(hbox);
 

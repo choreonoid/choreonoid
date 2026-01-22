@@ -452,13 +452,15 @@ void OperableSceneLink::hideMarker()
 void OperableSceneLink::Impl::render(SceneRenderer* renderer)
 {
     static const SceneRenderer::PropertyKey key("CollisionHighlighting");
+    static const SceneRenderer::PropertyKey colorKey("CollisionHighlightColor", 3);
+    static const Vector3f defaultHighlightColor(1.0f, 0.0f, 0.0f);
 
     bool highlightCollision = false;
     if(renderer->property(key, false)){ // Check if collision highlighting enabled
         int linkIndex = self->link()->index();
         highlightCollision = sceneBodyImpl->collisionLinkBitSet[linkIndex];
     }
-    
+
     if(!highlightCollision){
         renderer->renderingFunctions()->dispatchAs<SgPosTransform>(self);
     } else {
@@ -474,7 +476,8 @@ void OperableSceneLink::Impl::render(SceneRenderer* renderer)
                         renderingFunctions->dispatch(node);
                     } else {
                         auto orgHighlightColor = renderer->highlightColor();
-                        renderer->setHighlightColor(Vector3f(1.0f, 0.0f, 0.0f));
+                        Vector3f highlightColor = renderer->property(colorKey, defaultHighlightColor);
+                        renderer->setHighlightColor(highlightColor);
                         renderingFunctions->dispatch(node);
                         renderer->setHighlightColor(orgHighlightColor);
                         break;

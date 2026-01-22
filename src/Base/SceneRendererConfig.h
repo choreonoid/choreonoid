@@ -54,6 +54,7 @@ protected:
     QWidget* getOrCreateLightingPanel();
     PushButton* backgroundColorButton();
     PushButton* defaultColorButton();
+    PushButton* collisionHighlightColorButton();
     DoubleSpinBox* pointSizeSpin();
     DoubleSpinBox* lineWidthSpin();
     CheckBox* upsideDownCheck();
