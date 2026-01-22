@@ -4,6 +4,7 @@
 #include "SceneLights.h"
 #include "SceneEffects.h"
 #include "EigenUtil.h"
+#include <cassert>
 #include <variant>
 #include <set>
 #include <unordered_map>
@@ -70,22 +71,27 @@ public:
 
 namespace cnoid {
 
-SceneRenderer::PropertyKey::PropertyKey(const std::string& key)
+SceneRenderer::PropertyKey::PropertyKey(const std::string& key, int numElements)
+    : numElements(numElements)
 {
     // Use function-local static to avoid static initialization order fiasco
     static std::mutex propertyKeyMutex;
     static int propertyKeyCount = 0;
-    static std::unordered_map<string, int> propertyKeyMap;
-    
+    static std::unordered_map<string, std::pair<int, int>> propertyKeyMap;
+
     std::lock_guard<std::mutex> guard(propertyKeyMutex);
 
     auto iter = propertyKeyMap.find(key);
     if(iter != propertyKeyMap.end()){
-        id = iter->second;
+        id = iter->second.first;
+#ifndef NDEBUG
+        // Debug build: check element count consistency
+        assert(iter->second.second == numElements);
+#endif
     } else {
         id = propertyKeyCount;
-        propertyKeyMap.insert(make_pair(key, id));
-        propertyKeyCount++;
+        propertyKeyMap.insert(make_pair(key, std::make_pair(id, numElements)));
+        propertyKeyCount += numElements;
     }
 }
 
@@ -320,6 +326,30 @@ void SceneRenderer::setProperty(PropertyKey key, int value)
 void SceneRenderer::setProperty(PropertyKey key, double value)
 {
     setPropertyImpl(key, value);
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, const Vector3f& value)
+{
+    const int id = key.id;
+    if(id + 2 >= static_cast<int>(properties_.size())){
+        properties_.resize(id + 3, std::numeric_limits<double>::quiet_NaN());
+    }
+    properties_[id]     = value.x();
+    properties_[id + 1] = value.y();
+    properties_[id + 2] = value.z();
+}
+
+
+void SceneRenderer::setProperty(PropertyKey key, const Vector3& value)
+{
+    const int id = key.id;
+    if(id + 2 >= static_cast<int>(properties_.size())){
+        properties_.resize(id + 3, std::numeric_limits<double>::quiet_NaN());
+    }
+    properties_[id]     = value.x();
+    properties_[id + 1] = value.y();
+    properties_[id + 2] = value.z();
 }
 
 

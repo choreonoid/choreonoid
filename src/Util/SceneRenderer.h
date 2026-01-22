@@ -128,14 +128,17 @@ public:
     
     class CNOID_EXPORT PropertyKey {
         int id;
+        int numElements;
     public:
-        PropertyKey(const std::string& key);
+        PropertyKey(const std::string& key, int numElements = 1);
         friend class SceneRenderer;
     };
 
     void setProperty(PropertyKey key, bool value);
     void setProperty(PropertyKey key, int value);
     void setProperty(PropertyKey key, double value);
+    void setProperty(PropertyKey key, const Vector3f& value);
+    void setProperty(PropertyKey key, const Vector3& value);
 
     template<typename T>
     inline T property(PropertyKey key, T defaultValue) const {
@@ -153,6 +156,31 @@ public:
             return defaultValue;
         }
         return static_cast<T>(val);
+    }
+
+    inline Vector3f property(PropertyKey key, const Vector3f& defaultValue) const {
+        if(key.id + 2 >= static_cast<int>(properties_.size())){
+            return defaultValue;
+        }
+        double x = properties_[key.id];
+        if(std::isnan(x)){
+            return defaultValue;
+        }
+        return Vector3f(
+            static_cast<float>(x),
+            static_cast<float>(properties_[key.id + 1]),
+            static_cast<float>(properties_[key.id + 2]));
+    }
+
+    inline Vector3 property(PropertyKey key, const Vector3& defaultValue) const {
+        if(key.id + 2 >= static_cast<int>(properties_.size())){
+            return defaultValue;
+        }
+        double x = properties_[key.id];
+        if(std::isnan(x)){
+            return defaultValue;
+        }
+        return Vector3(x, properties_[key.id + 1], properties_[key.id + 2]);
     }
 
 protected:
