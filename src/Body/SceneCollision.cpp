@@ -45,12 +45,14 @@ SceneCollision::SceneCollision(const SceneCollision&)
 void SceneCollision::render(SceneRenderer* renderer)
 {
     static const SceneRenderer::PropertyKey key("collisionLineRatio");
+    static const SceneRenderer::PropertyKey colorKey("CollisionLineColor", 3);
+    static const Vector3f defaultLineColor(0.0f, 1.0f, 0.0f);
 
     const double collisionLineRatio = renderer->property(key, 0.0);
     if(collisionLineRatio <= 0.0){
         return;
     }
-    
+
     if(isDirty){
         vertices_->clear();
         lineVertexIndices().clear();
@@ -75,6 +77,9 @@ void SceneCollision::render(SceneRenderer* renderer)
         vertices_->notifyUpdate();
         isDirty = false;
     }
-    
+
+    Vector3f lineColor = renderer->property(colorKey, defaultLineColor);
+    material()->setDiffuseColor(lineColor);
+
     renderer->renderingFunctions()->dispatchAs<SgLineSet>(this);
 }

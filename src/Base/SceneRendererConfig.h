@@ -55,6 +55,7 @@ protected:
     PushButton* backgroundColorButton();
     PushButton* defaultColorButton();
     PushButton* collisionHighlightColorButton();
+    PushButton* collisionLineColorButton();
     DoubleSpinBox* pointSizeSpin();
     DoubleSpinBox* lineWidthSpin();
     CheckBox* upsideDownCheck();
