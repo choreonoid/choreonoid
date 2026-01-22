@@ -40,7 +40,8 @@ public:
     void setName(const std::string& name);
 
     bool empty() const { return statements_.empty(); }
-    int numStatements() const { return statements_.size(); }
+    int numToplevelStatements() const { return statements_.size(); }
+    int numAllStatements() const;
 
     iterator insert(iterator pos, MprStatement* statement, bool doNotify = true);
     iterator append(MprStatement* statement, bool doNotify = true);
@@ -49,6 +50,7 @@ public:
     iterator find(MprStatement* statement);
     const_iterator find(MprStatement* statement) const;
     std::optional<int> stepOf(MprStatement* statement) const;
+    MprStatement* statementAtStep(int step) const;
     void clearStatements();
 
     iterator begin(){ return statements_.begin(); }

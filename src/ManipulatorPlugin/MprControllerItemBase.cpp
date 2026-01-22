@@ -126,6 +126,7 @@ public:
 
     Impl(MprControllerItemBase* self);
     bool initialize(ControllerIO* io);
+    bool setupStartStep();
     bool createKinematicBodySetForInternalUse();
 
     // Default variable mappings
@@ -349,17 +350,8 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
 
     iterator = currentProgram->begin();
 
-    if(auto startStep = startupProgramItem->startStep()){
-        int numStatements = currentProgram->numStatements();
-        if(*startStep < numStatements){
-            iterator += *startStep;
-        } else {
-            int displayStep = *startStep + startupProgramItem->displayStepIndexBase();
-            mout->putErrorln(
-                formatR(_("Start step {0} of {1} exceeds the program size ({2} steps)."),
-                        displayStep, self->displayName(), numStatements));
-            return false;
-        }
+    if(!setupStartStep()){
+        return false;
     }
 
     auto body = io->body();
@@ -367,7 +359,80 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
     ioDevice = body->findDevice<DigitalIoDevice>();
 
     isLogEnabled = io->enableLog();
-    
+
+    return true;
+}
+
+
+bool MprControllerItemBase::Impl::setupStartStep()
+{
+    auto startStep = startupProgramItem->startStep();
+    if(!startStep){
+        return true;
+    }
+
+    int numStatements = currentProgram->numAllStatements();
+    if(*startStep >= numStatements){
+        int displayStep = *startStep + startupProgramItem->displayStepIndexBase();
+        MessageOut::master()->putErrorln(
+            formatR(_("Start step {0} of {1} exceeds the program size ({2} steps)."),
+                    displayStep, self->displayName(), numStatements));
+        return false;
+    }
+
+    auto startStatement = currentProgram->statementAtStep(*startStep);
+    if(!startStatement){
+        return true;
+    }
+
+    // Build the program hierarchy from the start statement up to the top level
+    MprStatement* stmt = startStatement;
+    MprProgram* prog = stmt->holderProgram();
+
+    vector<pair<MprProgram*, MprProgram::iterator>> hierarchy;
+    while(prog){
+        auto it = prog->find(stmt);
+        if(it != prog->end()){
+            hierarchy.push_back({prog, it});
+        }
+        if(auto holder = prog->holderStatement()){
+            stmt = holder;
+            prog = holder->holderProgram();
+        } else {
+            break;
+        }
+    }
+
+    if(hierarchy.empty()){
+        return true;
+    }
+
+    // Set up from top level down to the start statement
+    // The last element in the hierarchy is the top level program
+    currentProgram = hierarchy.back().first;
+    iterator = hierarchy.back().second;
+
+    // Push intermediate levels onto the program stack (from top to bottom, excluding the deepest)
+    for(int i = static_cast<int>(hierarchy.size()) - 1; i > 0; --i){
+        auto& [upperProg, upperIter] = hierarchy[i];
+        auto& [lowerProg, lowerIter] = hierarchy[i - 1];
+
+        ProgramPosition pos;
+        pos.program = upperProg;
+        pos.current = upperIter;
+        pos.next = upperIter + 1;
+
+        if(!programStack.empty()){
+            pos.hierachicalPosition = programStack.back().hierachicalPosition;
+        }
+        pos.hierachicalPosition.push_back(static_cast<int>(upperIter - upperProg->begin()));
+
+        programStack.push_back(pos);
+
+        currentProgram = lowerProg;
+        iterator = lowerIter;
+    }
+
     return true;
 }
 

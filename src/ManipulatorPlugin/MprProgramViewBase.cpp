@@ -169,6 +169,9 @@ public:
     QHBoxLayout buttonBox[3];
     QSize buttonIconSize;
     ProgramViewDelegate* mainDelegate;
+    QFont normalFont;
+    QFont boldFont;
+    weak_ref_ptr<MprStatement> weak_startStepStatement;
     ref_ptr<StatementDelegate> defaultStatementDelegate;
     unordered_map<type_index, ref_ptr<StatementDelegate>> statementDelegateMap;
 
@@ -209,6 +212,7 @@ public:
     void onStatementInserted(MprProgram::iterator iter);
     void onStatementRemoved(MprProgram* program, MprStatement* statement);
     void onStatementUpdated(MprStatement* statement);
+    void updateStartStepHighlight();
     void forEachStatementInTreeEditEvent(
         const QModelIndex& parent, int start, int end,
         function<void(MprStructuredStatement* parentStatement, MprProgram* program,
@@ -368,6 +372,7 @@ void ProgramViewDelegate::paint(QPainter* painter, const QStyleOptionViewItem& o
             } else {
                 painter->setPen(item->foreground(column).color());
             }
+            painter->setFont(item->font(column));
             painter->drawText(rect, 0, statement->label(column).c_str());
             painter->restore();
         }
@@ -738,6 +743,10 @@ void MprProgramViewBase::Impl::setupWidgets()
             buttonIconSize = QSize(24, 24);
         }
     }
+
+    normalFont = font();
+    boldFont = font();
+    boldFont.setBold(true);
 }
 
 
@@ -901,12 +910,18 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
     programConnections.add(
         program->sigStatementInserted().connect(
             [this](MprProgram::iterator iter){
-                onStatementInserted(iter); }));
-    
+                onStatementInserted(iter);
+                // Update start step highlight when a statement is inserted at any level
+                updateStartStepHighlight();
+            }));
+
     programConnections.add(
         program->sigStatementRemoved().connect(
             [this](MprStatement* statement, MprProgram* program){
-                onStatementRemoved(program, statement); }));
+                onStatementRemoved(program, statement);
+                // Update start step highlight when a statement is removed from any level
+                updateStartStepHighlight();
+            }));
     
     programConnections.add(
         program->sigStatementUpdated().connect(
@@ -917,7 +932,11 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
         program->sigStatementReferenceUpdated().connect(
             [this](MprStatement* statement){
                 onStatementUpdated(statement); }));
-    
+
+    programConnections.add(
+        currentProgramItem->sigUpdated().connect(
+            [this](){ updateStartStepHighlight(); }));
+
     programNameLabel.setStyleSheet("font-weight: bold");
 
     if(auto bodyItem = currentProgramItem->targetBodyItem()){
@@ -950,6 +969,7 @@ void MprProgramViewBase::Impl::setProgramItem(MprProgramItemBase* item)
     self->updateButtons();
 
     addStatementsToTree(program, invisibleRootItem(), nullptr, pExpansionStateMap);
+    updateStartStepHighlight();
 }
 
 
@@ -1268,7 +1288,7 @@ MprStatement* MprProgramViewBase::Impl::findStatementAtHierachicalPositionIter
 (const vector<int>& position, MprProgram* program, int level)
 {
     int statementIndex = position[level];
-    if(statementIndex < program->numStatements()){
+    if(statementIndex < program->numToplevelStatements()){
         auto iter = program->begin() + statementIndex;
         auto statement = *iter;
         if(++level == position.size()){
@@ -1556,6 +1576,41 @@ void MprProgramViewBase::Impl::onStatementUpdated(MprStatement* statement)
 }
 
 
+void MprProgramViewBase::Impl::updateStartStepHighlight()
+{
+    if(!currentProgramItem){
+        return;
+    }
+
+    auto program = currentProgramItem->program();
+
+    // Clear previous bold font
+    if(auto prevStatement = weak_startStepStatement.lock()){
+        if(auto item = findStatementItem(prevStatement)){
+            for(int i = 0; i < NumColumns; ++i){
+                item->setFont(i, normalFont);
+            }
+        }
+    }
+    weak_startStepStatement.reset();
+
+    // Set bold font for new startStep (using hierarchical step)
+    auto startStep = currentProgramItem->startStep();
+    if(startStep.has_value()){
+        int stepIndex = startStep.value();
+        // Use hierarchical step number to get the statement
+        if(auto statement = program->statementAtStep(stepIndex)){
+            if(auto item = findStatementItem(statement)){
+                for(int i = 0; i < NumColumns; ++i){
+                    item->setFont(i, boldFont);
+                }
+            }
+            weak_startStepStatement = statement;
+        }
+    }
+}
+
+
 void MprProgramViewBase::Impl::forEachStatementInTreeEditEvent
 (const QModelIndex& parent, int start, int end,
  function<void(MprStructuredStatement* parentStatement, MprProgram* program,
@@ -1801,6 +1856,7 @@ void MprProgramViewBase::Impl::setBaseContextMenu(MprStatement* statement, MenuM
         menuManager.addItem(_("Set as Start Step"))
             ->sigTriggered().connect(
                 [this, statement]{
+                    // Use hierarchical step number
                     if(auto step = currentProgramItem->program()->stepOf(statement)){
                         currentProgramItem->setStartStep(step);
                         currentProgramItem->notifyUpdate();

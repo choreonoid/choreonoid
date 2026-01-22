@@ -117,6 +117,17 @@ void MprProgram::setName(const std::string& name)
 }
 
 
+int MprProgram::numAllStatements() const
+{
+    int count = 0;
+    std::function<void(MprStatement*)> callback = [&](MprStatement*) {
+        ++count;
+    };
+    const_cast<MprProgram*>(this)->traverseStatements(callback);
+    return count;
+}
+
+
 MprProgram::iterator MprProgram::insert(iterator pos, MprStatement* statement, bool doNotify)
 {
     if(statement->holderProgram_){
@@ -193,11 +204,35 @@ MprProgram::const_iterator MprProgram::find(MprStatement* statement) const
 
 std::optional<int> MprProgram::stepOf(MprStatement* statement) const
 {
-    auto iter = std::find(begin(), end(), statement);
-    if(iter != end()){
-        return std::distance(begin(), iter);
-    }
-    return std::nullopt;
+    int step = 0;
+    std::optional<int> result;
+    std::function<bool(MprStatement*)> callback = [&](MprStatement* s) -> bool {
+        if(s == statement){
+            result = step;
+            return false;
+        }
+        ++step;
+        return true;
+    };
+    const_cast<MprProgram*>(this)->traverseStatements(callback);
+    return result;
+}
+
+
+MprStatement* MprProgram::statementAtStep(int targetStep) const
+{
+    int step = 0;
+    MprStatement* result = nullptr;
+    std::function<bool(MprStatement*)> callback = [&](MprStatement* s) -> bool {
+        if(step == targetStep){
+            result = s;
+            return false;
+        }
+        ++step;
+        return true;
+    };
+    const_cast<MprProgram*>(this)->traverseStatements(callback);
+    return result;
 }
 
 

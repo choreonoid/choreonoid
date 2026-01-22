@@ -420,7 +420,7 @@ void MprProgramItemBase::doPutProperties(PutPropertyFunction& putProperty)
     auto program = impl->topLevelProgram;
     putProperty(_("Startup"), impl->isStartupProgram,
                 [&](bool on){ return setAsStartupProgram(on); });
-    putProperty(_("Num statements"), program->numStatements());
+    putProperty(_("Num statements"), program->numToplevelStatements());
     putProperty(_("Num positions"), program->positionList()->numPositions());
 }
 
