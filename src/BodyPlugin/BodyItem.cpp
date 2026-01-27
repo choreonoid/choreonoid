@@ -1473,7 +1473,7 @@ bool BodyItem::setPreferredParentBodyLinkage(int linkageType, bool doNotifyUpdat
 }
 
 
-bool BodyItem::setPreferredParentBodyLinkage
+bool BodyItem::setPreferredParentBodyLinkageAndParentLink
 (int linkageType, const std::string& parentLinkName, bool doNotifyUpdate)
 {
     preferredParentBodyLinkage_ = linkageType;

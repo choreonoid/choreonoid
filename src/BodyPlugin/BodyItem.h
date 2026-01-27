@@ -65,7 +65,7 @@ public:
     bool isLinkableToParentBody() const;
     BodyItem* linkedParentBodyItem() const;
     bool setPreferredParentBodyLinkage(int linkageType, bool doNotifyUpdate = true);
-    bool setPreferredParentBodyLinkage(
+    bool setPreferredParentBodyLinkageAndParentLink(
         int linkageType, const std::string& parentLinkName, bool doNotifyUpdate = true);
     int preferredParentBodyLinkage() const { return preferredParentBodyLinkage_; }
     bool isAttachmentToParentBodyEnabled() const { return preferredParentBodyLinkage_ == Attached; }
