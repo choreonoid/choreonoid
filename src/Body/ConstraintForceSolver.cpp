@@ -629,7 +629,7 @@ ConstraintForceSolver::Impl::createContactMaterialFromMaterialPair(int material1
     Material* m2 = materialTable->material(material2);
 
     auto cm = new ContactMaterialEx;
-    double friction = std::min(m1->roughness(), m2->roughness());
+    double friction = sqrt(m1->roughness() * m2->roughness());
     friction = std::min(std::max(friction, minFrictionCoefficient), maxFrictionCoefficient);
     cm->setFriction(friction);
     cm->setRestitution(sqrt((1.0 - m1->viscosity()) * (1.0 - m2->viscosity())));
