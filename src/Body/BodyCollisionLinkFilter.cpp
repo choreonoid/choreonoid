@@ -254,6 +254,16 @@ bool BodyCollisionLinkFilter::checkIfEnabledLinkIndex(int linkIndex) const
 }
 
 
+bool BodyCollisionLinkFilter::checkIfEnabledLinkPair(int linkIndex1, int linkIndex2) const
+{
+    if(!impl->isSelfCollisionDetectionEnabled){
+        return false;
+    }
+    return impl->ignoredLinkPairs.find(IdPair<int>(linkIndex1, linkIndex2))
+           == impl->ignoredLinkPairs.end();
+}
+
+
 void BodyCollisionLinkFilter::apply()
 {
     if(impl->funcToDisableLinkPair){

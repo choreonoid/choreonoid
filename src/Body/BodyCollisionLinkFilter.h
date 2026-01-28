@@ -19,6 +19,7 @@ public:
     void setFuncToDisableLinkPair(FuncToDisableLinkPair func);
     void setTargetBody(Body* body, bool isSelfCollisionDetectionEnabled);
     bool checkIfEnabledLinkIndex(int linkIndex) const;
+    bool checkIfEnabledLinkPair(int linkIndex1, int linkIndex2) const;
     void apply();
     void apply(FuncToDisableLinkPair func);
 
