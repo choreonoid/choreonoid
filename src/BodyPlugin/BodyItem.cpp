@@ -33,6 +33,7 @@
 #include <cnoid/Format>
 #include <bitset>
 #include <algorithm>
+#include <vector>
 #include <iostream>
 #include "gettext.h"
 
@@ -138,6 +139,7 @@ public:
     bool isAccFkRequested;
     bool isCollisionDetectionEnabled;
     bool isSelfCollisionDetectionEnabled;
+    bool isDeviceStateStoringEnabled;
 
     ScopedConnection bodyExistenceConnection;
     
@@ -217,8 +219,10 @@ public:
     void onParentBodyKinematicStateChanged();
     void doPutProperties(PutPropertyFunction& putProperty);
     bool store(Archive& archive);
+    void storeDeviceStates(Archive& archive);
     bool restore(const Archive& archive);
     void restoreNonRootLinkStates(const Archive& archive);
+    void restoreDeviceStates(const Archive& archive);
     RenderableItemUtil* getOrCreateRenderableItemUtil();
 };
 
@@ -280,6 +284,7 @@ BodyItem::Impl::Impl(BodyItem* self)
     body->rootLink()->setName("Root");
     isCollisionDetectionEnabled = true;
     isSelfCollisionDetectionEnabled = false;
+    isDeviceStateStoringEnabled = false;
     isJointRangeLimitEnabled = true;
 }
 
@@ -314,6 +319,7 @@ BodyItem::Impl::Impl(BodyItem* self, const Impl& org, CloneMap* cloneMap)
 {
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
+    isDeviceStateStoringEnabled = org.isDeviceStateStoringEnabled;
     parentLinkName = org.parentLinkName;
 
     if(org.currentBaseLink){
@@ -406,6 +412,7 @@ bool BodyItem::Impl::doAssign(const Item* srcItem)
     isLocationLocked = srcImpl->isLocationLocked;
     isCollisionDetectionEnabled = srcImpl->isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = srcImpl->isSelfCollisionDetectionEnabled;
+    isDeviceStateStoringEnabled = srcImpl->isDeviceStateStoringEnabled;
     parentLinkName = srcImpl->parentLinkName;
     transparency = srcImpl->transparency;
     
@@ -1853,6 +1860,9 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Multiplexing number"), body->numMultiplexBodies());
     putProperty(_("Existence"), body->existence(),
                 [this](bool on){ body->setExistence(on); return true; });
+
+    putProperty(_("Store device states"), isDeviceStateStoringEnabled,
+                changeProperty(isDeviceStateStoringEnabled));
 }
 
 
@@ -1959,7 +1969,42 @@ bool BodyItem::Impl::store(Archive& archive)
         archive.write("transparency", transparency);
     }
 
+    if(isDeviceStateStoringEnabled){
+        storeDeviceStates(archive);
+    }
+
     return true;
+}
+
+
+void BodyItem::Impl::storeDeviceStates(Archive& archive)
+{
+    auto& devices = body->devices();
+    if(devices.empty()){
+        return;
+    }
+
+    auto deviceStatesListing = archive.createListing("device_states");
+    archive.setFloatingNumberFormat("%.15g");
+
+    std::vector<double> buf;
+    for(auto& device : devices){
+        MappingPtr deviceNode = new Mapping;
+        deviceNode->write("type", device->typeName());
+        if(!device->name().empty()){
+            deviceNode->write("name", device->name(), DOUBLE_QUOTED);
+        }
+
+        int size = device->stateSize();
+        buf.resize(size);
+        device->writeState(buf.data());
+        auto stateListing = deviceNode->createFlowStyleListing("state");
+        for(int i = 0; i < size; ++i){
+            stateListing->append(buf[i]);
+        }
+
+        deviceStatesListing->append(deviceNode);
+    }
 }
 
 
@@ -2099,6 +2144,11 @@ bool BodyItem::Impl::restore(const Archive& archive)
                 isUpdateNotificationOnSubTreeRestoredRequested = false;
             }
 
+            if(archive.findListing("device_states")->isValid()){
+                isDeviceStateStoringEnabled = true;
+                restoreDeviceStates(archive);
+            }
+
             if(doNotifyUpdate || doNotifyKinematicStateChange){
                 // Update notifications should be done after all the post processes
                 archive.addProcessOnSubTreeRestored(
@@ -2188,6 +2238,60 @@ void BodyItem::Impl::restoreNonRootLinkStates(const Archive& archive)
     auto kinematicsNode = archive.findMapping("link_kinematics");
     if(kinematicsNode->isValid()){
         getOrCreateKinematicsKitManager()->restoreState(*kinematicsNode);
+    }
+}
+
+
+void BodyItem::Impl::restoreDeviceStates(const Archive& archive)
+{
+    auto deviceStatesListing = archive.findListing("device_states");
+    if(!deviceStatesListing->isValid()){
+        return;
+    }
+
+    auto devices = body->devices();
+    int numSkipped = 0;
+    std::vector<double> buf;
+
+    for(int i = 0; i < deviceStatesListing->size(); ++i){
+        auto node = deviceStatesListing->at(i)->toMapping();
+        string type;
+        if(!node->read("type", type)){
+            ++numSkipped;
+            continue;
+        }
+        string name;
+        node->read("name", name);
+
+        bool found = false;
+        for(auto it = devices.begin(); it != devices.end(); ++it){
+            Device* device = *it;
+            if(type == device->typeName() && name == device->name()){
+                auto stateListing = node->findListing("state");
+                if(stateListing->isValid()){
+                    int size = stateListing->size();
+                    buf.resize(size);
+                    for(int j = 0; j < size; ++j){
+                        buf[j] = (*stateListing)[j].toDouble();
+                    }
+                    device->readState(buf.data(), size);
+                    device->notifyStateChange();
+                }
+                devices.erase(it);
+                found = true;
+                break;
+            }
+        }
+        if(!found){
+            ++numSkipped;
+        }
+    }
+
+    if(numSkipped > 0){
+        MessageView::instance()->putln(
+            formatR(_("{0}: {1} device state(s) could not be restored"),
+                    self->displayName(), numSkipped),
+            MessageView::Warning);
     }
 }
 
