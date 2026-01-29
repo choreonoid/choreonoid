@@ -232,6 +232,7 @@ public:
     SceneWidgetEvent latestEvent;
     QPoint latestGlobalMousePos;
     Vector3 lastClickedPoint;
+    bool lastPickingResult;
     int mousePressX;
     int mousePressY;
     QMouseEvent* lastMouseMoveEvent;
@@ -558,6 +559,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
     latestEvent.sceneWidget_ = self;
     lastClickedPoint.setZero();
+    lastPickingResult = false;
     lastMouseMoveEvent = nullptr;
     lastMouseMoveHandler = nullptr;
 
@@ -1412,7 +1414,7 @@ void SceneWidget::Impl::updateLatestEventPath(bool forceFullPicking)
     int py = latestEvent.y();
 
     isRendering = true;
-    bool picked = renderer->pick(px, py);
+    lastPickingResult = renderer->pick(px, py);
     isRendering = false;
 
     if(isPickingVisualizationEnabled){
@@ -1428,7 +1430,7 @@ void SceneWidget::Impl::updateLatestEventPath(bool forceFullPicking)
     latestEvent.pixelSizeRatio_ = 0.0;
     pointedEditablePath.clear();
 
-    if(picked){
+    if(lastPickingResult){
         latestEvent.point_ = renderer->pickedPoint();
         latestEvent.pixelSizeRatio_ = renderer->projectedPixelSizeRatio(latestEvent.point_);
         latestEvent.nodePath_ = renderer->pickedNodePath();
@@ -1876,10 +1878,13 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
     }
 
     if(!handled){
-        if(latestEvent.nodePath().empty()){
+        if(!lastPickingResult){
             updateIndicator("");
         } else {
-            string name = findObjectNameFromNodePath(latestEvent.nodePath());
+            string name;
+            if(!latestEvent.nodePath().empty()){
+                name = findObjectNameFromNodePath(latestEvent.nodePath());
+            }
             string text;
             if(name.empty()){
                 text = formatC("{0}: ({{0:.{1}f}} {{1:.{1}f}} {{2:.{1}f}})",

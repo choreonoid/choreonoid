@@ -355,6 +355,7 @@ public:
     bool needToUpdateDepthTexture;
     bool isRenderingVisibleImage;
     bool isRenderingPickingImage;
+    bool isRenderingUnpickableGroup;
     bool isPickingImageOutputEnabled;
     bool isShadowCastingAvailable;
     bool isWorldLightShadowEnabled;
@@ -717,6 +718,7 @@ void GLSLSceneRenderer::Impl::initialize()
     needToUpdateOverlayDepthBufferSize = true;
     isRenderingVisibleImage = false;
     isRenderingPickingImage = false;
+    isRenderingUnpickableGroup = false;
     isPickingImageOutputEnabled = false;
     isShadowCastingAvailable = true;
     isWorldLightShadowEnabled = false;
@@ -1663,6 +1665,7 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
     }
 
     isRenderingPickingImage = true;
+    isRenderingUnpickableGroup = false;
     isRenderingVisibleImage = false;
     beginRendering();
     
@@ -1710,6 +1713,7 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
 
     pickedNodePath.clear();
 
+    bool picked = false;
     if(pickIndex >= 0 && pickIndex < static_cast<int>(pickingNodePathList.size())){
         GLfloat depth;
         if(pickIndex < overlayPickIndex0){
@@ -1720,14 +1724,18 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferForPicking);
         }
         if(self->unproject(x, y, depth, pickedPoint)){
-            pickedNodePath = *pickingNodePathList[pickIndex];
+            auto& pPickedNodePath = pickingNodePathList[pickIndex];
+            if(pPickedNodePath){
+                pickedNodePath = *pPickedNodePath;
+            }
+            picked = true;
         }
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFBO);
 
-    return !pickedNodePath.empty();
+    return picked;
 }
 
 
@@ -2310,7 +2318,11 @@ int GLSLSceneRenderer::Impl::pushPickEndNode(SgNode* node)
     }
     currentNodePath.push_back(node);
     int pickIndex = pickingNodePathList.size();
-    pickingNodePathList.push_back(std::make_shared<SgNodePath>(currentNodePath));
+    if(!isRenderingUnpickableGroup){
+        pickingNodePathList.push_back(std::make_shared<SgNodePath>(currentNodePath));
+    } else {
+        pickingNodePathList.push_back(nullptr);
+    }
     return pickIndex;
 }
 
@@ -2409,7 +2421,11 @@ void GLSLSceneRenderer::Impl::renderSwitchableGroup(SgSwitchableGroup* group)
 
 void GLSLSceneRenderer::Impl::renderUnpickableGroup(SgUnpickableGroup* group)
 {
-    if(!isRenderingPickingImage){
+    if(!isRenderingUnpickableGroup){
+        isRenderingUnpickableGroup = true;
+        renderGroup(group);
+        isRenderingUnpickableGroup = false;
+    } else {
         renderGroup(group);
     }
 }
