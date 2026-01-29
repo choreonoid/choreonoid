@@ -230,6 +230,7 @@ set(headers
   ItemTreeView.h
   ItemTreePanelDialog.h
   ItemPropertyWidget.h
+  ItemPropertyView.h
   ItemList.h
   Item.h
   ItemAddon.h

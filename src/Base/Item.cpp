@@ -1896,6 +1896,14 @@ Item* Item::findReplacementItem() const
 
 void Item::putProperties(PutPropertyFunction& putProperty)
 {
+    putProperties(putProperty, nullptr);
+}
+
+
+void Item::putProperties(
+    PutPropertyFunction& putProperty,
+    const std::function<void(Item* item, PutPropertyFunction& putProperty)>& additionalPropertyFunction)
+{
     putProperty(_("Name"), name_,
                 [&](const string& name){
                     if(!name.empty()){
@@ -1908,12 +1916,16 @@ void Item::putProperties(PutPropertyFunction& putProperty)
     if(dname != name_){
         putProperty(_("Display name"), dname);
     }
-    
+
     static string moduleName, className;
     ItemManager::getClassIdentifier(this, moduleName, className);
     putProperty(_("Class"), className);
-    
+
     doPutProperties(putProperty);
+
+    if(additionalPropertyFunction){
+        additionalPropertyFunction(this, putProperty);
+    }
 
     if(!impl->filePath.empty()){
         putProperty(_("File"), FilePathProperty(impl->filePath));

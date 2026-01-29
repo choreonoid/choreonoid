@@ -171,6 +171,20 @@ public:
         dispatch(obj, obj->classId());
     }
 
+    void dispatchSuperClassFunction(ObjectBase* obj)
+    {
+        int id = obj->classId();
+        if(id >= validDispatchTableSize){
+            if(!const_cast<PolymorphicFunctionSet*>(this)->updateDispatchTable(id)){
+                return;
+            }
+        }
+        int superClassId = registry.getSuperClassId(id);
+        if(superClassId >= 0){
+            dispatch(obj, superClassId);
+        }
+    }
+
     template <class Object>
     inline void dispatchAs(Object* obj) const
     {

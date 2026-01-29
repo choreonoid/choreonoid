@@ -5,6 +5,7 @@
 #include <cnoid/Signal>
 #include <string>
 #include <vector>
+#include <functional>
 #include <filesystem>
 #include "exportdecl.h"
 
@@ -570,6 +571,9 @@ public:
 #endif
 
     void putProperties(PutPropertyFunction& putProperty);
+    void putProperties(
+        PutPropertyFunction& putProperty,
+        const std::function<void(Item* item, PutPropertyFunction& putProperty)>& additionalPropertyFunction);
 
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);

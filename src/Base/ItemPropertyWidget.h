@@ -26,7 +26,18 @@ public:
             });
     };
 
+    template<class ItemType>
+    void addPropertyFunction(std::function<void(ItemType* item, PutPropertyFunction& putProperty)> func){
+        addPropertyFunction_(
+            typeid(ItemType),
+            [func](Item* item, PutPropertyFunction& putProperty){
+                func(static_cast<ItemType*>(item), putProperty);
+            });
+    };
+
     bool hasPropertyFunctionFor(Item* item) const;
+    bool hasAdditionalPropertyFunctionFor(Item* item) const;
+    void dispatchAdditionalPropertyFunctions(Item* item);
 
     void setCurrentItem(Item* item);
     void updateProperties();
@@ -41,8 +52,12 @@ protected:
 private:
     void setPropertyFunction_(
         const std::type_info& type, std::function<void(Item* item, PutPropertyFunction& putProperty)> func);
+    void addPropertyFunction_(
+        const std::type_info& type, std::function<void(Item* item, PutPropertyFunction& putProperty)> func);
 
     Impl* impl;
+
+    friend class ItemPropertyView;
 };
 
 }

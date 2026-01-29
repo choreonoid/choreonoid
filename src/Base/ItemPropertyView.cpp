@@ -8,6 +8,12 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+ItemPropertyView* instance_ = nullptr;
+
+}
+
 namespace cnoid {
 
 class ItemPropertyView::Impl : public ItemPropertyWidget
@@ -28,8 +34,18 @@ void ItemPropertyView::initializeClass(ExtensionManager* ext)
 }
 
 
+ItemPropertyView* ItemPropertyView::instance()
+{
+    if(!instance_){
+        instance_ = ViewManager::getOrCreateView<ItemPropertyView>();
+    }
+    return instance_;
+}
+
+
 ItemPropertyView::ItemPropertyView()
 {
+    instance_ = this;
     impl = new Impl(this);
 
     setDefaultLayoutArea(BottomLeftArea);
@@ -45,10 +61,17 @@ ItemPropertyView::Impl::Impl(ItemPropertyView* self)
       targetItemPicker(self)
 {
     setPropertyFunction<Item>(
-        [](Item* item, PutPropertyFunction& putProperty){
-            item->putProperties(putProperty);
+        [this](Item* item, PutPropertyFunction& putProperty){
+            if(hasAdditionalPropertyFunctionFor(item)){
+                item->putProperties(putProperty,
+                    [this](Item* item, PutPropertyFunction& /*putProperty*/){
+                        dispatchAdditionalPropertyFunctions(item);
+                    });
+            } else {
+                item->putProperties(putProperty);
+            }
         });
-    
+
     targetItemPicker.sigTargetItemSpecified().connect(
         [&](Item* item){ setCurrentItem(item); });
 }
@@ -56,7 +79,18 @@ ItemPropertyView::Impl::Impl(ItemPropertyView* self)
 
 ItemPropertyView::~ItemPropertyView()
 {
+    if(instance_ == this){
+        instance_ = nullptr;
+    }
     delete impl;
+}
+
+
+void ItemPropertyView::addPropertyFunction_(
+    const std::type_info& type,
+    std::function<void(Item* item, PutPropertyFunction& putProperty)> func)
+{
+    impl->addPropertyFunction_(type, func);
 }
 
 

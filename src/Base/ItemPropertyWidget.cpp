@@ -133,6 +133,7 @@ public:
     ItemPtr currentItem;
     ScopedConnectionSet itemConnections;
     PolymorphicItemFunctionSet  propertyFunctions;
+    PolymorphicItemFunctionSet  additionalPropertyFunctions;
     bool isEditable;
 
     double minValue;
@@ -700,9 +701,45 @@ void ItemPropertyWidget::setPropertyFunction_
 }
 
 
+void ItemPropertyWidget::addPropertyFunction_
+(const std::type_info& type, std::function<void(Item* item, PutPropertyFunction& putProperty)> func)
+{
+    auto existingFunc = impl->additionalPropertyFunctions.getFunction(type);
+
+    if(existingFunc){
+        impl->additionalPropertyFunctions.setFunction(
+            type,
+            [this, existingFunc, func](Item* item){
+                existingFunc(item);
+                func(item, *impl);
+            });
+    } else {
+        auto& apf = impl->additionalPropertyFunctions;
+        impl->additionalPropertyFunctions.setFunction(
+            type,
+            [this, &apf, func](Item* item){
+                apf.dispatchSuperClassFunction(item);
+                func(item, *impl);
+            });
+    }
+}
+
+
 bool ItemPropertyWidget::hasPropertyFunctionFor(Item* item) const
 {
     return item ? impl->propertyFunctions.hasFunctionFor(item) : false;
+}
+
+
+bool ItemPropertyWidget::hasAdditionalPropertyFunctionFor(Item* item) const
+{
+    return item ? impl->additionalPropertyFunctions.hasFunctionFor(item) : false;
+}
+
+
+void ItemPropertyWidget::dispatchAdditionalPropertyFunctions(Item* item)
+{
+    impl->additionalPropertyFunctions.dispatch(item);
 }
 
 
