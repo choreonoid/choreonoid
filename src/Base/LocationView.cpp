@@ -789,28 +789,31 @@ void LocationView::Impl::updateBaseCoordinateSystems()
             if(checkDependencyOnAnotherLocation(currentCategory, frameParentLocation)){
                 continue;
             }
-            
-            basename = frameParentLocation->getName();
-            basename += " ";
-            parentPositionFunc = [frameParentLocation](){ return frameParentLocation->getGlobalLocation(); };
+
+            if(frameParentLocation){
+                basename = frameParentLocation->getName();
+                basename += " ";
+                parentPositionFunc = [frameParentLocation](){ return frameParentLocation->getGlobalLocation(); };
+            }
             basename += frameListItem->displayName();
             basename += " ";
             auto frames = frameListItem->frameList();
-            int n = frames->numFrames();
+            int numFrames = frames->numFrames();
 
             Item* targetItem = locationInfo->item;
             if(!targetItem){
                 targetItem = location->locatableItem();
             }
-            
-            for(int i=0; i < n; ++i){
-                if(auto frameItem = frameListItem->findFrameItemAt(i)){
+
+            int frameIndex = frameParentLocation ? 0 : 1;
+            for( ; frameIndex < numFrames; ++frameIndex){
+                if(auto frameItem = frameListItem->findFrameItemAt(frameIndex)){
                     if(frameItem == targetItem){
                         continue;
                     }
                 }
                 string name(basename);
-                auto frame = frames->frameAt(i);
+                auto frame = frames->frameAt(frameIndex);
                 name += frame->id().label();
                 if(!frame->note().empty()){
                     name += " : ";
