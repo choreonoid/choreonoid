@@ -184,6 +184,7 @@ void CoordinateFrameItem::Impl::onFrameUpdated(int flags)
         if(frameLocation){
             frameLocation->notifyAttributeChange();
         }
+        self->notifyNameChange();
     }
     if(flags & CoordinateFrame::PositionUpdate){
         sigLocationChanged();

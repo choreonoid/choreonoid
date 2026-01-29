@@ -16,6 +16,12 @@ using namespace cnoid;
 
 namespace {
 
+class CoordinateFrameListItemCreationPanel : public DefaultItemCreationPanel
+{
+public:
+    virtual bool initializeCreation(Item* protoItem, Item* parentItem) override;
+};
+
 class ListAssociationSignalInfo : public Referenced
 {
 public:
@@ -89,8 +95,8 @@ public:
     Impl(CoordinateFrameListItem* self, CoordinateFrameList* frameList, int itemizationMode);
     void notifyRegisteredItemsOfListAssociation(bool doCheckDisassociation);
     void checkListDisassociation(bool doDisassociateAll);
-    void setItemizationMode(int mode);
-    void updateFrameItems();
+    void setItemizationMode(int mode, bool isInitialization);
+    void updateFrameItems(bool isInitialization);
     CoordinateFrameItem* createFrameItem(CoordinateFrame* frame);
     CoordinateFrameItem* findFrameItemAt(int index, Item*& out_insertionPosition);
     CoordinateFrameItem* findFrameItemAt(int index);
@@ -107,11 +113,20 @@ public:
 }
 
 
+bool CoordinateFrameListItemCreationPanel::initializeCreation(Item* protoItem, Item* parentItem)
+{
+    DefaultItemCreationPanel::initializeCreation(protoItem, parentItem);
+    static_cast<CoordinateFrameListItem*>(protoItem)->
+        setItemizationMode(CoordinateFrameListItem::SubItemization);
+    return true;
+}
+
+
 void CoordinateFrameListItem::initializeClass(ExtensionManager* ext)
 {
     auto& im = ext->itemManager();
     im.registerClass<CoordinateFrameListItem>(N_("CoordinateFrameListItem"));
-    im.addCreationPanel<CoordinateFrameListItem>();
+    im.addCreationPanel<CoordinateFrameListItem>(new CoordinateFrameListItemCreationPanel);
 }
 
 
@@ -132,12 +147,14 @@ CoordinateFrameListItem::sigListAssociationWith(Item* item)
 CoordinateFrameListItem::CoordinateFrameListItem()
 {
     impl = new Impl(this, new CoordinateFrameList, NoItemization);
+    impl->updateFrameItems(true);
 }
 
 
 CoordinateFrameListItem::CoordinateFrameListItem(CoordinateFrameList* frameList)
 {
     impl = new Impl(this, frameList, NoItemization);
+    impl->updateFrameItems(true);
 }
 
 
@@ -146,17 +163,20 @@ CoordinateFrameListItem::CoordinateFrameListItem(const CoordinateFrameListItem& 
 {
     auto frameList = new CoordinateFrameList(*org.impl->frameList);
     impl = new Impl(this, frameList, org.impl->itemizationMode);
+    impl->updateFrameItems(true);
 }
 
 
 CoordinateFrameListItem::Impl::Impl
-(CoordinateFrameListItem* self, CoordinateFrameList* frameList, int itemizationMode)
+(CoordinateFrameListItem* self, CoordinateFrameList* frameList, int itemizationMode_)
     : self(self),
       frameList(frameList),
-      itemizationMode(itemizationMode)
+      itemizationMode(NoItemization)
 {
     frameList->setFirstElementAsDefaultFrame();
-    isUpdatingFrameItems = false;    
+    isUpdatingFrameItems = false;
+
+    setItemizationMode(itemizationMode_, true);
 
     frameMarkerGroup = new SgGroup;
     relativeFrameMarkerGroup = new SgPosTransform;
@@ -256,15 +276,17 @@ bool CoordinateFrameListItem::isNoItemizationMode() const
 
 void CoordinateFrameListItem::setItemizationMode(int mode)
 {
-    impl->setItemizationMode(mode);
+    impl->setItemizationMode(mode, false);
 }
 
 
-void CoordinateFrameListItem::Impl::setItemizationMode(int mode)
+void CoordinateFrameListItem::Impl::setItemizationMode(int mode, bool isInitialization)
 {
     if(mode != itemizationMode){
         itemizationMode = mode;
-        frameListConnections.disconnect();
+        if(!isInitialization){
+            frameListConnections.disconnect();
+        }
         if(mode != NoItemization){
             frameListConnections.add(
                 frameList->sigFrameAdded().connect(
@@ -273,7 +295,9 @@ void CoordinateFrameListItem::Impl::setItemizationMode(int mode)
                 frameList->sigFrameRemoved().connect(
                     [&](int index, CoordinateFrame* frame){ onFrameRemoved(index, frame); }));
         }
-        updateFrameItems();
+        if(!isInitialization){
+            updateFrameItems(false);
+        }
     }
 }
 
@@ -293,23 +317,29 @@ std::string CoordinateFrameListItem::getFrameItemDisplayName(const CoordinateFra
     if(impl->frameItemDisplayNameFunction){
         return impl->frameItemDisplayNameFunction(item);
     }
-    return item->name();
+    auto frame = item->frame();
+    if(!frame->note().empty()){
+        return formatR(_("{0} ( {1} )"), frame->id().label(), frame->note());
+    }
+    return frame->id().label();
 }
 
 
 void CoordinateFrameListItem::updateFrameItems()
 {
-    impl->updateFrameItems();
+    impl->updateFrameItems(false);
 }
 
 
-void CoordinateFrameListItem::Impl::updateFrameItems()
+void CoordinateFrameListItem::Impl::updateFrameItems(bool isInitialization)
 {
     isUpdatingFrameItems = true;
-    
-    // clear existing frame items
-    for(auto& item : self->childItems<CoordinateFrameItem>()){
-        item->removeFromParentItem();
+
+    if(!isInitialization){
+        // clear existing frame items
+        for(auto& item : self->childItems<CoordinateFrameItem>()){
+            item->removeFromParentItem();
+        }
     }
 
     if(itemizationMode != NoItemization){
