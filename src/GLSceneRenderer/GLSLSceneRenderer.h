@@ -26,6 +26,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void renderCustomTransform(SgTransform* transform, const std::function<void()>& traverseFunction) override;
     virtual void renderNode(SgNode* node) override;
 
+    virtual void invalidatePlotVertices(SgPlot* plot) override;
+
     virtual void addNodeDecoration(SgNode* node, NodeDecorationFunction func, int id) override;
     virtual void clearNodeDecorations(int id) override;
 

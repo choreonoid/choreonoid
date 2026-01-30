@@ -184,6 +184,8 @@ public:
 
     vector<SgVisibilityProcessorPtr> visibilityProcessors;
 
+    Signal<void()> sigDestroyed;
+
     std::mutex newExtensionMutex;
     vector<std::function<void(SceneRenderer* renderer)>> newExtendFunctions;
 
@@ -245,6 +247,7 @@ SceneRenderer::Impl::Impl(SceneRenderer* self)
 
 SceneRenderer::~SceneRenderer()
 {
+    impl->sigDestroyed();
     std::lock_guard<std::mutex> guard(getExtensionMutex());
     getRenderers().erase(this);
     delete impl;
@@ -738,6 +741,18 @@ SignalProxy<void()> SceneRenderer::sigCurrentCameraSelectionChanged()
 SignalProxy<void()> SceneRenderer::sigCurrentCameraChanged()
 {
     return impl->sigCurrentCameraSelectionChanged;
+}
+
+
+SignalProxy<void()> SceneRenderer::sigDestroyed() const
+{
+    return impl->sigDestroyed;
+}
+
+
+void SceneRenderer::invalidatePlotVertices(SgPlot*)
+{
+
 }
 
 

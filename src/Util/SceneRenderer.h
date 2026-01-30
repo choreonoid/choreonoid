@@ -37,6 +37,8 @@ public:
     virtual void renderCustomTransform(SgTransform* transform, const std::function<void()>& traverseFunction) = 0;
     virtual void renderNode(SgNode* node) = 0;
 
+    virtual void invalidatePlotVertices(SgPlot* plot);
+
     void setHighlightColor(std::optional<Vector3f> color) {
         highlightColor_ = color;
         onHighlightColorChanged();
@@ -67,6 +69,7 @@ public:
     SignalProxy<void()> sigCurrentCameraSelectionChanged();
     [[deprecated("Use sigCurrentCameraSelectionChanged")]]
     SignalProxy<void()> sigCurrentCameraChanged();
+    SignalProxy<void()> sigDestroyed() const;
     std::vector<std::string> simplifiedCameraPathStrings(int cameraIndex);
     bool getSimplifiedCameraPathStrings(int cameraIndex, std::vector<std::string>& out_pathStrings);
     int findCameraPath(const std::vector<std::string>& simplifiedPathStrings);

@@ -2358,6 +2358,15 @@ void GLSLSceneRenderer::renderNode(SgNode* node)
 }
 
 
+void GLSLSceneRenderer::invalidatePlotVertices(SgPlot* plot)
+{
+    auto p = impl->currentResourceMap->find(plot);
+    if(p != impl->currentResourceMap->end()){
+        static_cast<VertexResource*>(p->second.get())->numVertices = 0;
+    }
+}
+
+
 void GLSLSceneRenderer::Impl::renderChildNodes(SgGroup* group)
 {
     if(nodeDecorationInfoArrayMap.empty()){
