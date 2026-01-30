@@ -244,6 +244,14 @@ SceneDevice::SceneDevice(Device* device)
 }
 
 
+SceneDevice::SceneDevice(int classId, Device* device)
+    : SgPosTransform(classId),
+      device_(device)
+{
+    setTransform(device->T_local());
+}
+
+
 SceneDevice::SceneDevice
 (Device* device, SgNode* sceneNode,
  std::function<void()> functionOnStateChanged,

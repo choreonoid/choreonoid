@@ -75,6 +75,7 @@ public:
     void setSceneUpdateConnection(bool on);
 
 protected:
+    SceneDevice(int classId, Device* device);
     ~SceneDevice();
 
 private:
