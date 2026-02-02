@@ -72,6 +72,16 @@ bool SgObject::checkMetaSceneCloning(const CloneMap& cloneMap)
 }
 
 
+void SgObject::setName(const std::string& name, SgUpdateRef update)
+{
+    name_ = name;
+    if(update){
+        update->withAction(SgUpdate::NameModified);
+        notifyUpdate(*update);
+    }
+}
+
+
 int SgObject::numChildObjects() const
 {
     return 0;

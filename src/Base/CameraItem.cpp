@@ -151,11 +151,9 @@ CameraItem::~CameraItem()
 bool CameraItem::setName(const std::string& name_)
 {
     if(name_ != name()){
-        impl->persCamera->setName(name_);
-        impl->orthoCamera->setName(name_);
+        impl->persCamera->setName(name_, impl->update);
+        impl->orthoCamera->setName(name_, impl->update);
         Item::setName(name_);
-        impl->persCamera->notifyUpdate(impl->update);
-        impl->orthoCamera->notifyUpdate(impl->update);
     }
     return true;
 }
@@ -279,7 +277,7 @@ bool CameraItem::Impl::setFieldOfView(double fov)
 {
     if(fov > 0.0 && fov < PI){
         persCamera->setFieldOfView(fov);
-        persCamera->notifyUpdate(update);
+        persCamera->notifyUpdate(update.withAction(SgUpdate::Modified));
         return true;
     }
     return false;
@@ -335,8 +333,8 @@ bool CameraItem::Impl::setClipDistances(double nearDistance, double farDistance)
         persCamera->setFarClipDistance(farDistance);
         orthoCamera->setNearClipDistance(nearDistance);
         orthoCamera->setFarClipDistance(farDistance);
-        persCamera->notifyUpdate(update);
-        orthoCamera->notifyUpdate(update);
+        persCamera->notifyUpdate(update.withAction(SgUpdate::Modified));
+        orthoCamera->notifyUpdate(update.withAction(SgUpdate::Modified));
     }
     return true;
 }

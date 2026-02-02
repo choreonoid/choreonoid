@@ -57,8 +57,8 @@ void exportPySceneGraph(py::module& m)
         .export_values();
 
     py::class_<SgObject, SgObjectPtr, Referenced>(m, "SgObject")
-        .def_property("name", &SgObject::name, &SgObject::setName)
-        .def("setName", &SgObject::setName)
+        .def_property("name", &SgObject::name, (void(SgObject::*)(const std::string&)) &SgObject::setName)
+        .def("setName", (void(SgObject::*)(const std::string&)) &SgObject::setName)
         .def("notifyUpdate",(void(SgObject::*)(SgUpdate&)) &SgObject::notifyUpdate)
         .def("notifyUpdate",(void(SgObject::*)(int)) &SgObject::notifyUpdate, py::arg("action") = SgUpdate::Modified)
 

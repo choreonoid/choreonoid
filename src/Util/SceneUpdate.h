@@ -16,7 +16,8 @@ public:
         Removed = 1 << 1,
         GeometryModified = 1 << 2,
         AppearanceModified = 1 << 3,
-        Modified = GeometryModified | AppearanceModified,
+        NameModified = 1 << 4,
+        Modified = GeometryModified | AppearanceModified | NameModified,
 
         // deprecated
         NONE = None,

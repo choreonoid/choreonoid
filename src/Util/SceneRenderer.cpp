@@ -122,16 +122,20 @@ public:
         // To avoid this problem, 'M' is used instead of 'T'.
         Isometry3 M;
         PreproNodeInfoPtr nodeInfo;
+        ScopedConnection cameraConnection;
 
-        // Flag to detect camera name changes.
-        // Currently, camera name changes are not automatically detected.
-        // To support automatic detection in the future, set this flag to true
-        // when the camera name is changed, which will trigger cameraListChanged.
+        // Flag to detect camera name changes via sigUpdated() with NameModified action.
         bool cameraNameChanged;
 
         CameraInfo(SgCamera* camera)
             : camera(camera), cameraNameChanged(false)
         {
+            cameraConnection = camera->sigUpdated().connect(
+                [this](const SgUpdate& update){
+                    if(update.hasAction(SgUpdate::NameModified)){
+                        cameraNameChanged = true;
+                    }
+                });
         }
 
         void setNodeInfo(PreproNodeInfo* info)

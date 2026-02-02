@@ -72,6 +72,7 @@ public:
     
     const std::string& name() const { return name_; }
     void setName(const std::string& name) { name_ = name; }
+    void setName(const std::string& name, SgUpdateRef update);
 
     virtual int numChildObjects() const;
     virtual SgObject* childObject(int index);
