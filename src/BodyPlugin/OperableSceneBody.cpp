@@ -455,38 +455,38 @@ void OperableSceneLink::Impl::render(SceneRenderer* renderer)
     static const SceneRenderer::PropertyKey colorKey("CollisionHighlightColor", 3);
     static const Vector3f defaultHighlightColor(1.0f, 0.0f, 0.0f);
 
-    bool highlightCollision = false;
-    if(renderer->property(key, false)){ // Check if collision highlighting enabled
-        int linkIndex = self->link()->index();
-        highlightCollision = sceneBodyImpl->collisionLinkBitSet[linkIndex];
-    }
-
-    if(!highlightCollision){
+    if(!renderer->property(key, false)){ // Check if collision highlighting enabled
         renderer->renderingFunctions()->dispatchAs<SgPosTransform>(self);
     } else {
-        renderer->renderCustomTransform(
-            self,
-            [this, renderer]{
-                auto shapeGroup = self->shapeGroup();
-                auto renderingFunctions = renderer->renderingFunctions();
-                auto it = self->begin();
-                while(it != self->end()){
-                    auto node = *it++;
-                    if(node != shapeGroup){
-                        renderingFunctions->dispatch(node);
-                    } else {
-                        auto orgHighlightColor = renderer->highlightColor();
-                        Vector3f highlightColor = renderer->property(colorKey, defaultHighlightColor);
-                        renderer->setHighlightColor(highlightColor);
-                        renderingFunctions->dispatch(node);
-                        renderer->setHighlightColor(orgHighlightColor);
-                        break;
+        auto link = self->link();
+        int linkIndex = link->index();
+        if(!sceneBodyImpl->collisionLinkBitSet[linkIndex] || link->body()->isStaticModel()){
+            renderer->renderingFunctions()->dispatchAs<SgPosTransform>(self);
+        } else { // highlight colliding link
+            renderer->renderCustomTransform(
+                self,
+                [this, renderer]{
+                    auto shapeGroup = self->shapeGroup();
+                    auto renderingFunctions = renderer->renderingFunctions();
+                    auto it = self->begin();
+                    while(it != self->end()){
+                        auto node = *it++;
+                        if(node != shapeGroup){
+                            renderingFunctions->dispatch(node);
+                        } else {
+                            auto orgHighlightColor = renderer->highlightColor();
+                            Vector3f highlightColor = renderer->property(colorKey, defaultHighlightColor);
+                            renderer->setHighlightColor(highlightColor);
+                            renderingFunctions->dispatch(node);
+                            renderer->setHighlightColor(orgHighlightColor);
+                            break;
+                        }
                     }
-                }
-                while(it != self->end()){
-                    renderingFunctions->dispatch(*it++);
-                }
-            });
+                    while(it != self->end()){
+                        renderingFunctions->dispatch(*it++);
+                    }
+                });
+        }
     }
 }
 
