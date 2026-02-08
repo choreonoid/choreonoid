@@ -151,9 +151,12 @@ CameraItem::~CameraItem()
 bool CameraItem::setName(const std::string& name_)
 {
     if(name_ != name()){
-        impl->persCamera->setName(name_, impl->update);
-        impl->orthoCamera->setName(name_, impl->update);
+        impl->persCamera->setName(name_);
+        impl->orthoCamera->setName(name_);
         Item::setName(name_);
+        impl->update.setAction(SgUpdate::NameModified);
+        impl->persCamera->notifyUpdate(impl->update);
+        impl->orthoCamera->notifyUpdate(impl->update);
     }
     return true;
 }

@@ -393,7 +393,9 @@ void CameraConfigDialog::Impl::setVectorElementSpins(const Vector3& v, DoubleSpi
 void CameraConfigDialog::Impl::onNameEditingFinished(const std::string& name)
 {
     if(cameraItem){
+        cameraConnection.block();
         cameraItem->setName(name);
+        cameraConnection.unblock();
     }
 }
 
