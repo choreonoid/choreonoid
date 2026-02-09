@@ -1863,6 +1863,8 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
 
     putProperty(_("Store device states"), isDeviceStateStoringEnabled,
                 changeProperty(isDeviceStateStoringEnabled));
+
+    putProperty.reset();
 }
 
 
