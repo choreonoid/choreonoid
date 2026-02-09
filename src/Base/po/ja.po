@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-22 13:27+0900\n"
+"POT-Creation-Date: 2026-02-09 19:26+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -170,6 +170,9 @@ msgstr "注釈"
 
 msgid "CoordinateFrameListItem"
 msgstr "座標フレームリストアイテム"
+
+msgid "{0} ( {1} )"
+msgstr ""
 
 msgid "\"{0}\" cannot be added to \"{1}\" because the item of ID {2} already exists in it. "
 msgstr "アイテム \"{0}\" のID{2}は既に \"{1}\" に存在するためアイテムを追加できません．"
@@ -2031,6 +2034,15 @@ msgstr "編集モード"
 msgid "View Mode"
 msgstr "閲覧モード"
 
+msgid "Auto"
+msgstr "自動"
+
+msgid "Horizontal"
+msgstr "横"
+
+msgid "Vertical"
+msgstr "縦"
+
 msgid "Use infinite far clip distance for all cameras (OpenGL 4.5 or later)"
 msgstr "全カメラの遠方を無限遠にする（OpenGL 4.5以降）"
 
@@ -2156,9 +2168,6 @@ msgstr "フェーズインデックス"
 
 msgid "Execute the default command of the current phase"
 msgstr "本フェーズのデフォルトコマンドを実行"
-
-msgid "Auto"
-msgstr "自動"
 
 msgid "Automatic mode"
 msgstr "自動モード"
