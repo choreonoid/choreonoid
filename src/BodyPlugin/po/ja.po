@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-18 15:31+0900\n"
+"POT-Creation-Date: 2026-02-09 18:42+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -212,9 +212,6 @@ msgstr "静的"
 msgid "Root fixed"
 msgstr "ルート固定"
 
-msgid "Parent link"
-msgstr "親リンク"
-
 msgid "Attached"
 msgstr "固定"
 
@@ -226,6 +223,9 @@ msgstr "独立"
 
 msgid "Parent body linkage"
 msgstr "親ボディ連結"
+
+msgid "Parent link"
+msgstr "親リンク"
 
 msgid "Lock location"
 msgstr "配置ロック"
@@ -254,14 +254,20 @@ msgstr "多重化数"
 msgid "Existence"
 msgstr "存在"
 
+msgid "Store device states"
+msgstr "デバイス状態の保存"
+
 msgid "Unknown parent body linkage type"
 msgstr "不明な親ボディ連結タイプ"
 
-msgid "Mismatched size of the stored joint positions for {}"
-msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
+msgid "Mismatched size of the stored joint positions for {0}."
+msgstr "{0}に対して読み込まれる関節位置情報のサイズが一致しません．"
 
-msgid "Mismatched size of the stored initial joint positions for {}"
-msgstr "{}に対して読み込まれる初期関節位置情報のサイズが一致しません"
+msgid "Mismatched size of the stored initial joint positions for {0}."
+msgstr "{0}に対して読み込まれる初期関節位置情報のサイズが一致しません．"
+
+msgid "{0}: {1} device state(s) could not be restored."
+msgstr "{0}: {1}のデバイス状態をリストアできませんでした．"
 
 msgid "Change the position of \"{0}\""
 msgstr "\"{0}\" のポジションを変更"
@@ -967,9 +973,9 @@ msgstr ""
 msgid "{0:7.3f} [s]: Position limit over of {1} ({2} is beyond the range ({3} , {4}).)"
 msgstr "{0:7.3f} [秒]: {1}の関節位置制約オーバー ({2} は範囲({3} , {4})を超えています．"
 
-#, fuzzy, c-format
+#, no-c-format
 msgid "{0:7.3f} [s]: Velocity limit over of {1} ({2} is {3:.0f}% of the range ({4} , {5}).)"
-msgstr "{0:7.3f} [秒]: {1}の速度リミットオーバー ({2}は範囲({4} , {5})の{3:.0f}%を超えています．"
+msgstr "{0:7.3f} [秒]: {1}の速度リミットオーバー ({2}は範囲({4} , {5})の{3:.0f}%を超えています．)"
 
 msgid "{0:7.3f} [s]: Collision between {1} and {2}"
 msgstr "{0:7.3f} [秒]: {1}と{2}の干渉を検出"
@@ -981,6 +987,8 @@ msgid ""
 "Body multiplexing is not supported by the kinematics simulator item with the current collision "
 "detector that does not support the geometry removal function."
 msgstr ""
+"ボディ多重化はジオメトリ削除関数を備えていないカレントの干渉検出器と運動学シミュレータではサポート"
+"されていません．"
 
 msgid "KinematicsBar"
 msgstr "運動学バー"

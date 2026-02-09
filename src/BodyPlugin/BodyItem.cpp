@@ -8,7 +8,6 @@
 #include <cnoid/RootItem>
 #include <cnoid/ConnectionSet>
 #include <cnoid/LazySignal>
-#include <cnoid/MessageView>
 #include <cnoid/TimeBar>
 #include <cnoid/ItemManager>
 #include <cnoid/OptionManager>
@@ -31,6 +30,7 @@
 #include <cnoid/EigenArchive>
 #include <cnoid/CloneMap>
 #include <cnoid/Format>
+#include <cnoid/MessageOut>
 #include <bitset>
 #include <algorithm>
 #include <vector>
@@ -2198,9 +2198,9 @@ void BodyItem::Impl::restoreNonRootLinkStates(const Archive& archive)
             int nj = body->numAllJoints();
             if(qs->size() != nj){
                 if(qs->size() != body->numJoints()){
-                    MessageView::instance()->putln(
-                        formatR(_("Mismatched size of the stored joint positions for {}"), self->displayName()),
-                        MessageView::Warning);
+                    MessageOut::master()->putWarningln(
+                        formatR(_("Mismatched size of the stored joint positions for {0}."),
+                                self->displayName()));
                 }
                 nj = std::min(qs->size(), nj);
             }
@@ -2214,9 +2214,9 @@ void BodyItem::Impl::restoreNonRootLinkStates(const Archive& archive)
             int m = qs->size();
             if(m != n){
                 if(m != body->numJoints()){
-                    MessageView::instance()->putln(
-                        formatR(_("Mismatched size of the stored initial joint positions for {}"), self->displayName()),
-                        MessageView::Warning);
+                    MessageOut::master()->putWarningln(
+                        formatR(_("Mismatched size of the stored initial joint positions for {0}."),
+                                self->displayName()));
                 }
                 m = std::min(m, n);
             }
@@ -2290,10 +2290,9 @@ void BodyItem::Impl::restoreDeviceStates(const Archive& archive)
     }
 
     if(numSkipped > 0){
-        MessageView::instance()->putln(
-            formatR(_("{0}: {1} device state(s) could not be restored"),
-                    self->displayName(), numSkipped),
-            MessageView::Warning);
+        MessageOut::master()->putWarningln(
+            formatR(_("{0}: {1} device state(s) could not be restored."),
+                    self->displayName(), numSkipped));
     }
 }
 

@@ -519,6 +519,7 @@ void KinematicFaultChecker::Impl::putJointVelocityFault(int frame, Link* joint)
         double r = (dq < 0.0) ? (dq / l) : (dq / u);
         r *= 100.0;
 
+        // xgettext: no-c-format
         os << formatR(_("{0:7.3f} [s]: Velocity limit over of {1} ({2} is {3:.0f}% of the range ({4} , {5}).)"),
                       (frame / frameRate), joint->name(), dq, r, l, u) << endl;
         
