@@ -83,7 +83,6 @@ GLSceneRenderer::Impl::Impl(GLSceneRenderer* self, SgGroup* sceneRoot)
     vp.y = invaid;
     vp.w = invaid;
     vp.h = invaid;
-    self->aspectRatio_ = 1.0f;
     self->devicePixelRatio_ = 1.0f;
     backgroundColor << 0.0f, 0.0f, 0.0f; // black
     defaultColor << 1.0f, 1.0f, 1.0f;
@@ -167,9 +166,9 @@ void GLSceneRenderer::setDefaultColor(const Vector3f& color)
 void GLSceneRenderer::updateViewportInformation(int x, int y, int width, int height)
 {
     if(height <= 0){
-        aspectRatio_ = 1.0;
+        setAspectRatio(1.0f);
     } else {
-        aspectRatio_ = static_cast<double>(width) / height;
+        setAspectRatio(static_cast<float>(width) / height);
     }
     viewport_.x = x;
     viewport_.y = y;
@@ -378,9 +377,10 @@ void GLSceneRenderer::getReversedOrthographicProjectionMatrix
 void GLSceneRenderer::getViewFrustum
 (const SgPerspectiveCamera* camera, double& left, double& right, double& bottom, double& top) const
 {
-    top = camera->nearClipDistance() * tan(camera->fovy(aspectRatio_) / 2.0);
+    double effectiveFovy = getEffectiveFovy(camera);
+    top = camera->nearClipDistance() * tan(effectiveFovy / 2.0);
     bottom = -top;
-    right = top * aspectRatio_;
+    right = top * aspectRatio();
     left = -right;
 }
 
@@ -389,11 +389,25 @@ void GLSceneRenderer::getViewVolume
 (const SgOrthographicCamera* camera, float& out_left, float& out_right, float& out_bottom, float& out_top) const
 {
     float h = camera->height();
-    out_top = h / 2.0f;
-    out_bottom = -h / 2.0f;
-    float w = h * aspectRatio_;
-    out_left = -w / 2.0f;
-    out_right = w / 2.0f;
+    float ar = aspectRatio();
+    int fovMode = fieldOfViewMode();
+    bool useHorizontal =
+        (fovMode == HorizontalFieldOfView) ||
+        (fovMode == AutoFieldOfView && ar < 1.0f);
+    if(useHorizontal){
+        float w = h;
+        out_left = -w / 2.0f;
+        out_right = w / 2.0f;
+        float actualH = h / ar;
+        out_top = actualH / 2.0f;
+        out_bottom = -actualH / 2.0f;
+    } else {
+        out_top = h / 2.0f;
+        out_bottom = -h / 2.0f;
+        float w = h * ar;
+        out_left = -w / 2.0f;
+        out_right = w / 2.0f;
+    }
 }
 
 

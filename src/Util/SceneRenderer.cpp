@@ -213,6 +213,8 @@ public:
 SceneRenderer::SceneRenderer()
 {
     impl = new Impl(this);
+    aspectRatio_ = 1.0f;
+    fieldOfViewMode_ = AutoFieldOfView;
     std::lock_guard<std::mutex> guard(getExtensionMutex());
     getRenderers().insert(this);
 }
@@ -914,6 +916,33 @@ void SceneRenderer::getLightInfo(int index, SgLight*& out_light, Isometry3& out_
         out_position = info.M;
     } else {
         out_light = nullptr;
+    }
+}
+
+
+void SceneRenderer::setFieldOfViewMode(int mode)
+{
+    fieldOfViewMode_ = mode;
+}
+
+
+int SceneRenderer::fieldOfViewMode() const
+{
+    return fieldOfViewMode_;
+}
+
+
+double SceneRenderer::getEffectiveFovy(const SgPerspectiveCamera* camera) const
+{
+    double fov = camera->fieldOfView();
+    switch(fieldOfViewMode_){
+    case VerticalFieldOfView:
+        return fov;
+    case HorizontalFieldOfView:
+        return 2.0 * atan(tan(fov / 2.0) / aspectRatio_);
+    case AutoFieldOfView:
+    default:
+        return camera->fovy(aspectRatio_);
     }
 }
 

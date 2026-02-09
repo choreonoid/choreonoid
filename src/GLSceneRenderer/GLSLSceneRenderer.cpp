@@ -1817,19 +1817,20 @@ void GLSLSceneRenderer::Impl::renderCamera(SgCamera* camera, const Isometry3& ca
 
     if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
         double aspectRatio = self->aspectRatio();
+        double fovy = self->getEffectiveFovy(pers);
         if(useReversed){
             if(useInfinite){
                 self->getReversedInfinitePerspectiveProjectionMatrix(
-                    pers->fovy(aspectRatio), aspectRatio, pers->nearClipDistance(),
+                    fovy, aspectRatio, pers->nearClipDistance(),
                     projectionMatrix);
             } else {
                 self->getReversedPerspectiveProjectionMatrix(
-                    pers->fovy(aspectRatio), aspectRatio, pers->nearClipDistance(), pers->farClipDistance(),
+                    fovy, aspectRatio, pers->nearClipDistance(), pers->farClipDistance(),
                     projectionMatrix);
             }
         } else {
             self->getPerspectiveProjectionMatrix(
-                pers->fovy(aspectRatio), aspectRatio, pers->nearClipDistance(), pers->farClipDistance(),
+                fovy, aspectRatio, pers->nearClipDistance(), pers->farClipDistance(),
                 projectionMatrix);
         }
 

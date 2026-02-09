@@ -62,7 +62,6 @@ public:
     };
 
     const Viewport& viewport() const { return viewport_; }
-    float aspectRatio() const { return aspectRatio_; } // width / height;
     float devicePixelRatio() const { return devicePixelRatio_; }
     void setDevicePixelRatio(float r){ devicePixelRatio_ = r; }
 
@@ -157,7 +156,6 @@ public:
 
 private:
     Viewport viewport_;
-    float aspectRatio_;
     float devicePixelRatio_;
 
     class Impl;

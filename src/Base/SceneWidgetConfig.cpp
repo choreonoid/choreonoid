@@ -52,6 +52,8 @@ public:
     QWidget* debugPanel;
 
     DoubleSpinBox* fieldOfViewSpin;
+    ButtonGroup* fovDirectionGroup;
+    RadioButton* fovDirectionRadios[3];
     LengthSpinBox* nearClipSpin;
     LengthSpinBox* farClipSpin;
     LengthUnitLabel* clipDistanceUnitLabel;
@@ -116,6 +118,7 @@ public:
     double nearClipDistance;
     double farClipDistance;
     bool isInfiniteFarOverrideEnabled;
+    int fieldOfViewMode; // 0=Auto, 1=Vertical, 2=Horizontal
     int verticalAxis;
     bool isCameraRollRistricted;
     bool isCoordinateAxesEnabled;
@@ -170,6 +173,7 @@ SceneWidgetConfig::Impl::Impl(SceneWidgetConfig* self)
     nearClipDistance = 0.04;
     farClipDistance = 200.0;
     isInfiniteFarOverrideEnabled = true;
+    fieldOfViewMode = 0;
     verticalAxis = 2; // Z
     isCameraRollRistricted = true;
     isCoordinateAxesEnabled = true;
@@ -204,6 +208,7 @@ SceneWidgetConfig::Impl::Impl(const Impl& org, SceneWidgetConfig* self)
     nearClipDistance = org.nearClipDistance;
     farClipDistance = org.farClipDistance;
     isInfiniteFarOverrideEnabled = org.isInfiniteFarOverrideEnabled;
+    fieldOfViewMode = org.fieldOfViewMode;
     verticalAxis = org.verticalAxis;
     isCameraRollRistricted = org.isCameraRollRistricted;
     isCoordinateAxesEnabled = org.isCoordinateAxesEnabled;
@@ -273,6 +278,7 @@ void SceneWidgetConfig::Impl::updateSceneWidget(SceneWidget* sceneWidget, unsign
         sceneWidget->setVerticalAxis(verticalAxis);
         auto renderer = sceneWidget->renderer<GLSceneRenderer>();
         renderer->setInfiniteFarOverrideEnabled(isInfiniteFarOverrideEnabled);
+        renderer->setFieldOfViewMode(fieldOfViewMode);
     }
 
     if(categories & DrawingCategory){
@@ -342,6 +348,10 @@ bool SceneWidgetConfig::Impl::store(Mapping* archive)
 
     if(isInfiniteFarOverrideEnabled){
         archive->write("infinite_far_clip", true);
+    }
+
+    if(fieldOfViewMode != 0){
+        archive->write("fov_direction", fieldOfViewMode == 1 ? "vertical" : "horizontal");
     }
 
     if(!isCameraRollRistricted){
@@ -434,6 +444,15 @@ bool SceneWidgetConfig::Impl::restore(const Mapping* archive)
     isCameraRollRistricted = archive->get("restrictCameraRoll", true);
 
     archive->read("infinite_far_clip", isInfiniteFarOverrideEnabled);
+
+    string fovDirection;
+    if(archive->read("fov_direction", fovDirection)){
+        if(fovDirection == "vertical"){
+            fieldOfViewMode = 1;
+        } else if(fovDirection == "horizontal"){
+            fieldOfViewMode = 2;
+        }
+    }
 
     string symbol;
     verticalAxis = 2;
@@ -594,6 +613,21 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
             config->updateSceneWidgets(CameraCategory, true);
         });
     signalObjects.push_back(fieldOfViewSpin);
+
+    fovDirectionGroup = new ButtonGroup(ownerWidget);
+    const char* fovDirectionLabels[] = { _("Auto"), _("Vertical"), _("Horizontal") };
+    for(int i = 0; i < 3; ++i){
+        fovDirectionRadios[i] = new RadioButton(fovDirectionLabels[i], ownerWidget);
+        fovDirectionGroup->addButton(fovDirectionRadios[i], i);
+    }
+    fovDirectionGroup->sigButtonToggled().connect(
+        [this](int mode, bool on){
+            if(on){
+                config->fieldOfViewMode = mode;
+                config->updateSceneWidgets(CameraCategory, true);
+            }
+        });
+    signalObjects.push_back(fovDirectionGroup);
 
     nearClipSpin = new LengthSpinBox(ownerWidget);
     nearClipSpin->setMinimumMeterDecimals(4);  // 0.1mm precision
@@ -815,6 +849,14 @@ QWidget* ConfigWidgetSet::createCameraPanel()
     hbox->addWidget(fieldOfViewSpin);
     hbox->addWidget(new QLabel("[deg]"));
     hbox->addSpacing(8);
+    hbox->addWidget(new QLabel(_("Direction")));
+    for(int i = 0; i < 3; ++i){
+        hbox->addWidget(fovDirectionRadios[i]);
+    }
+    hbox->addStretch();
+    vbox->addLayout(hbox);
+
+    hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(_("Near")));
     hbox->addWidget(nearClipSpin);
     hbox->addWidget(new QLabel(_("Far")));
@@ -950,6 +992,7 @@ void ConfigWidgetSet::updateWidgets()
     }
 
     fieldOfViewSpin->setValue(config->fieldOfView);
+    fovDirectionRadios[config->fieldOfViewMode]->setChecked(true);
     nearClipSpin->setMeterValue(config->nearClipDistance);
     farClipSpin->setMeterValue(config->farClipDistance);
     infiniteFarCheck->setChecked(config->isInfiniteFarOverrideEnabled);

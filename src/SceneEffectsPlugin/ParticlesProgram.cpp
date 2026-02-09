@@ -108,7 +108,7 @@ void ParticlesProgramBase::render
     auto ps = particles->getParticleSystem();
     
     if(SgPerspectiveCamera* persCamera = dynamic_cast<SgPerspectiveCamera*>(camera)){
-        glUniform1f(angle2pixelsLocation, vp.h / persCamera->fovy(static_cast<double>(vp.w) / vp.h));
+        glUniform1f(angle2pixelsLocation, vp.h / renderer_->getEffectiveFovy(persCamera));
         glUniform1f(pointSizeLocation, ps->particleSize());
     } else if(SgOrthographicCamera* orthoCamera = dynamic_cast<SgOrthographicCamera*>(camera)){
         //float size = 0.08f * height / orthoCamera->height();

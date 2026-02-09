@@ -10,6 +10,8 @@
 
 namespace cnoid {
 
+class SgPerspectiveCamera;
+
 class CNOID_EXPORT SceneRenderer
 {
     class Impl;
@@ -17,6 +19,12 @@ class CNOID_EXPORT SceneRenderer
 public:
     SceneRenderer();
     virtual ~SceneRenderer();
+
+    enum FieldOfViewMode {
+        AutoFieldOfView,
+        VerticalFieldOfView,
+        HorizontalFieldOfView
+    };
 
     void setName(const std::string& name);
     const std::string& name() const;
@@ -87,6 +95,11 @@ public:
     [[deprecated("Use numAdditionalLights")]]
     int numLights() const { return numAdditionalLights(); }
     void getLightInfo(int index, SgLight*& out_light, Isometry3& out_position) const;
+
+    void setFieldOfViewMode(int mode);
+    int fieldOfViewMode() const;
+    float aspectRatio() const { return aspectRatio_; }
+    double getEffectiveFovy(const SgPerspectiveCamera* camera) const;
 
     void enableFog(bool on);
     bool isFogEnabled() const;
@@ -190,6 +203,7 @@ protected:
     virtual void doRender() = 0;
     virtual bool doPick(int x, int y);
     virtual void onHighlightColorChanged();
+    void setAspectRatio(float r) { aspectRatio_ = r; }
 
 private:
     void setPropertyImpl(PropertyKey key, double value);
@@ -197,6 +211,8 @@ private:
     Impl* impl;
     std::vector<double> properties_;
     std::optional<Vector3f> highlightColor_;
+    float aspectRatio_;
+    int fieldOfViewMode_;
 };
 
 }

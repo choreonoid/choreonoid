@@ -611,7 +611,7 @@ void GL1SceneRenderer::Impl::renderCamera(SgCamera* camera, const Affine3& camer
     if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
         double aspectRatio = self->aspectRatio();
         self->getPerspectiveProjectionMatrix(
-            pers->fovy(aspectRatio), aspectRatio, pers->nearClipDistance(), pers->farClipDistance(),
+            self->getEffectiveFovy(pers), aspectRatio, pers->nearClipDistance(), pers->farClipDistance(),
             lastProjectionMatrix);
         
     } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){

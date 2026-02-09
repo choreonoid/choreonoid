@@ -2213,7 +2213,7 @@ void SceneWidget::Impl::startViewTranslation()
         double r{}, cw{}, ch{};
         SgCamera* camera = renderer->currentCamera();
         if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
-            const double fovy = pers->fovy(aspect);
+            const double fovy = renderer->getEffectiveFovy(pers);
             r = (lastClickedPoint - C.translation()).dot(SgCamera::direction(C));
             ch = tanf(fovy / 2.0) * 2.0;
             cw = aspect * ch;
