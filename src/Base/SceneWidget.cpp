@@ -309,6 +309,8 @@ public:
     void setCollisionLineVisibility(bool on);
     void setVisiblePolygonElements(int elementFlags);
     void setCameraPosition(const Vector3& position, double transitionTime);
+    void setInteractiveCameraPosition(
+        InteractiveCameraTransform* transform, const Vector3& position, double transitionTime);
     void setCameraPositionLookingFor(
         const Vector3& eye, const Vector3& direction, const Vector3& up, double transitionTime);
     void setCameraPositionLookingAt(
@@ -1304,22 +1306,26 @@ void SceneWidget::Impl::fitViewTo(const BoundingBox& bbox, double transitionTime
     }
 
     const double radius = bbox.boundingSphereRadius();
-
-    double left, right, bottom, top;
-    renderer->getViewFrustum(builtinPersCamera, left, right, bottom, top);
-
-    const double a = renderer->aspectRatio();
-    double length = (a >= 1.0) ? (top - bottom) : (right - left);
+    auto currentCamera = renderer->currentCamera();
 
     Isometry3 T_camera = interactiveCameraTransform->T();
-    double z = 2.0 * radius * builtinPersCamera->nearClipDistance() / length;
-    T_camera.translation() = bbox.center() + T_camera.rotation() * Vector3(0, 0, z);
 
-    auto currentCamera = renderer->currentCamera();
-    if(currentCamera == builtinPersCamera){
-        setCameraPosition(T_camera.translation(), transitionTime);
+    if(auto persCamera = dynamic_cast<SgPerspectiveCamera*>(currentCamera)){
+        double left, right, bottom, top;
+        renderer->getViewFrustum(persCamera, left, right, bottom, top);
+        const double a = renderer->aspectRatio();
+        double length = (a >= 1.0) ? (top - bottom) : (right - left);
+        double z = 2.0 * radius * persCamera->nearClipDistance() / length;
+        T_camera.translation() = bbox.center() + T_camera.rotation() * Vector3(0, 0, z);
+        setInteractiveCameraPosition(interactiveCameraTransform, T_camera.translation(), transitionTime);
 
     } else if(auto ortho = dynamic_cast<SgOrthographicCamera*>(currentCamera)){
+        double left, right, bottom, top;
+        renderer->getViewFrustum(builtinPersCamera, left, right, bottom, top);
+        const double a = renderer->aspectRatio();
+        double length = (a >= 1.0) ? (top - bottom) : (right - left);
+        double z = 2.0 * radius * builtinPersCamera->nearClipDistance() / length;
+        T_camera.translation() = bbox.center() + T_camera.rotation() * Vector3(0, 0, z);
         if(a >= 1.0){
             ortho->setHeight(radius * 2.0);
         } else {
@@ -2849,8 +2855,15 @@ void SceneWidget::setCameraPosition(const Vector3& position, double transitionTi
 
 void SceneWidget::Impl::setCameraPosition(const Vector3& position, double transitionTime)
 {
+    setInteractiveCameraPosition(builtinCameraTransform, position, transitionTime);
+}
+
+
+void SceneWidget::Impl::setInteractiveCameraPosition(
+    InteractiveCameraTransform* transform, const Vector3& position, double transitionTime)
+{
     if(transitionTime > 0.0){
-        Vector3 p0 = builtinCameraTransform->translation();
+        Vector3 p0 = transform->translation();
         Interpolator interp(0.0, p0, transitionTime, position);
         QElapsedTimer timer;
         timer.start();
@@ -2859,13 +2872,13 @@ void SceneWidget::Impl::setCameraPosition(const Vector3& position, double transi
             if(time >= transitionTime){
                 break;
             }
-            builtinCameraTransform->setTranslation(interp.interpolate(time));
+            transform->setTranslation(interp.interpolate(time));
             repaint();
             QCoreApplication::processEvents();
         }
     }
-    builtinCameraTransform->setTranslation(position);
-    builtinCameraTransform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
+    transform->setTranslation(position);
+    transform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
 }
 
 
