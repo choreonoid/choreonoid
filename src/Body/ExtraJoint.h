@@ -2,15 +2,17 @@
 #define CNOID_BODY_EXTRA_JOINT_H
 
 #include "Link.h"
-#include <cnoid/Referenced>
+#include <cnoid/ClonableReferenced>
 #include <cnoid/ValueTree>
 #include "exportdecl.h"
-        
+
 namespace cnoid {
 
-class CNOID_EXPORT ExtraJoint : public Referenced
+class CloneMap;
+
+class CNOID_EXPORT ExtraJoint : public ClonableReferenced
 {
-public:    
+public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     enum ExtraJointType {
@@ -21,12 +23,13 @@ public:
         EJ_BALL [[deprecated]] = Ball,
         EJ_PISTON [[deprecated]] = Piston
     };
-    
+
     ExtraJoint() {
         for(int i=0; i < 2; ++i){
             T[i].setIdentity();
             links[i] = nullptr;
         }
+        axis_ = Vector3::UnitX();
     };
     ExtraJoint(ExtraJointType type)
         : ExtraJoint() {
@@ -38,8 +41,14 @@ public:
         setAxis(axis);
     };
 
-    ExtraJoint(const ExtraJoint& org) = delete;
     ExtraJoint& operator=(const ExtraJoint& rhs) = delete;
+
+    ExtraJoint* clone() const {
+        return static_cast<ExtraJoint*>(doClone(nullptr));
+    }
+    ExtraJoint* clone(CloneMap& cloneMap) const {
+        return static_cast<ExtraJoint*>(doClone(&cloneMap));
+    }
 
     ExtraJointType type() const { return type_; }
     void setType(const ExtraJointType type) { type_ = type; }
@@ -59,12 +68,8 @@ public:
     void setLocalTranslation(int which, const Vector3& p){ this->T[which].translation() = p; }
     Isometry3::ConstTranslationPart localTranslation(int which) const { return T[which].translation(); }
     
-    Vector3 axis(int which = 0) const { return T[which].linear().col(0); }
-    void setAxis(const Vector3& axis) { setAxis(0, axis); }
-    void setAxis(int which, const Vector3& axis) {
-        auto rot = Quaternion::FromTwoVectors(Vector3::UnitX(), axis.normalized());
-        T[which].linear() = rot * Matrix3::Identity();
-    }
+    const Vector3& axis() const { return axis_; }
+    void setAxis(const Vector3& axis) { axis_ = axis.normalized(); }
     
     Isometry3::ConstTranslationPart point(int which) const { return localTranslation(which); }
     void setPoint(int which, const Vector3& p) { setLocalTranslation(which, p); }
@@ -89,16 +94,20 @@ public:
     Mapping* info() { return info_; }
     void resetInfo(Mapping* info){ info_ = info; }
 
+protected:
+    ExtraJoint(const ExtraJoint& org, CloneMap* cloneMap = nullptr);
+    virtual ExtraJoint* doClone(CloneMap* cloneMap) const override;
+
 private:
     ExtraJointType type_;
     LinkPtr links[2];
 
-    /**
-       Coordinate frames of the joint in link local coordinates.
-       Note that T[x].linear().col(0) corresponds to the joint axis in each link.
-    */
+    //! Coordinate frames of the joint in link local coordinates
     Isometry3 T[2];
-    
+
+    //! Joint axis direction in the local frame (used for Hinge/Piston types)
+    Vector3 axis_;
+
     MappingPtr info_;
 };
 

@@ -487,16 +487,19 @@ void ConstraintForceSolver::Impl::initExtraJoint(ExtraJoint* extraJoint)
     if(!extraJoint->link(0) || !extraJoint->link(1)){
         return;
     }
-    
+
     ExtraJointLinkPairPtr linkPair = std::make_shared<ExtraJointLinkPair>();
     linkPair->isBelongingToSameSubBody = extraJoint->isForLinksOfSameBody();
     linkPair->isNonContactConstraint = true;
-    
+
     if(extraJoint->type() == ExtraJoint::Piston){
         linkPair->constraintPoints.resize(2);
-        auto R = extraJoint->localRotation(0);
-        linkPair->jointConstraintAxes[0] = R.col(1); // Y
-        linkPair->jointConstraintAxes[1] = R.col(2); // Z
+        Vector3 a = (extraJoint->localRotation(0) * extraJoint->axis()).normalized();
+        Vector3 u = (std::abs(a.dot(Vector3::UnitY())) < 0.9) ? Vector3::UnitY() : Vector3::UnitZ();
+        Vector3 ax1 = a.cross(u).normalized();
+        Vector3 ax2 = a.cross(ax1).normalized();
+        linkPair->jointConstraintAxes[0] = ax1;
+        linkPair->jointConstraintAxes[1] = ax2;
 
     } else if(extraJoint->type() == ExtraJoint::Ball){
         linkPair->constraintPoints.resize(3);
@@ -524,12 +527,11 @@ void ConstraintForceSolver::Impl::initExtraJoint(ExtraJoint* extraJoint)
 void ConstraintForceSolver::Impl::initWorldExtraJoints()
 {
     for(auto& orgJoint : world.extraJoints()){
-        ExtraJointPtr joint = new ExtraJoint(orgJoint->type());
+        ExtraJointPtr joint = orgJoint->clone();
         for(int i=0; i < 2; ++i){
             if(auto body = world.body(orgJoint->bodyName(i))){
                 if(auto link = body->link(orgJoint->linkName(i))){
                     joint->setLink(i, link);
-                    joint->setLocalPosition(i, orgJoint->localPosition(i));
                 }
             }
         }

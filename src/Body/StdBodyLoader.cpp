@@ -1987,11 +1987,8 @@ void StdBodyLoader::Impl::readExtraJoint(Mapping* info)
     }
 
     if(joint->type() == ExtraJoint::Hinge || joint->type() == ExtraJoint::Piston){
-        if(extractEigen(info, { "axis_in_link1", "axis", "jointAxis" }, v)){
-            joint->setAxis(0, v);
-        }
-        if(extractEigen(info, { "axis_in_link2" }, v)){
-            joint->setAxis(1, v);
+        if(extractEigen(info, { "axis", "jointAxis" }, v)){
+            joint->setAxis(v);
         }
     }
 
@@ -2002,10 +1999,10 @@ void StdBodyLoader::Impl::readExtraJoint(Mapping* info)
     if(extractRotation(info, "rotation_in_link2", R)){
         joint->setLocalRotation(1, R);
     }
-    if(extractEigen(info, { "translation_in_link1", "link1_local_pos", "link1LocalPos" }, v)){
+    if(extractEigen(info, { "translation_in_link1", "link1LocalPos" }, v)){
         joint->setPoint(0, v);
     }
-    if(extractEigen(info, { "translation_in_link2", "link2_local_pos", "link2LocalPos" }, v)){
+    if(extractEigen(info, { "translation_in_link2", "link2LocalPos" }, v)){
         joint->setPoint(1, v);
     }
     

@@ -138,7 +138,7 @@ void exportPyBody(py::module& m)
              [](ExtraJoint& self, int which, Eigen::Ref<const Matrix3RM> R){ self.setLocalRotation(which, R); })
         .def("setLocalTranslation",
              [](ExtraJoint& self, int which, const Vector3& p){ self.setLocalTranslation(which, p); })
-        .def("setAxis", [](ExtraJoint& self, int which, const Vector3& a){ self.setAxis(a); })
+        .def("setAxis", [](ExtraJoint& self, const Vector3& a){ self.setAxis(a); })
         .def("setPoint", &ExtraJoint::setPoint)
         ;
 

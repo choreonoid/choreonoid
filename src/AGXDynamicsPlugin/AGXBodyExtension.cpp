@@ -36,7 +36,7 @@ void AGXExtraJoint::createJoints()
 
         Link* const link = extraJoint->link(0);
         const Vector3 p = link->R() * extraJoint->point(0) + link->p();
-        const Vector3 a = link->R() * extraJoint->axis();
+        const Vector3 a = link->R() * extraJoint->localRotation(0) * extraJoint->axis();
         agx::ConstraintRef constraint = nullptr;
 
         switch (extraJoint->type()) {
