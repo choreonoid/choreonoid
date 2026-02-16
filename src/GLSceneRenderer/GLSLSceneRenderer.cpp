@@ -1837,13 +1837,40 @@ void GLSLSceneRenderer::Impl::renderCamera(SgCamera* camera, const Isometry3& ca
     } else if(SgOrthographicCamera* ortho = dynamic_cast<SgOrthographicCamera*>(camera)){
         GLfloat left, right, bottom, top;
         self->getViewVolume(ortho, left, right, bottom, top);
+        double farDist = ortho->farClipDistance();
+        if(useInfinite){
+            // True infinite projection is not possible for orthographic cameras
+            // because linear depth causes loss of depth resolution as far approaches infinity.
+            // Dynamically determine a sufficient far value from the scene bounding box.
+            const BoundingBox& bbox = self->sceneRoot()->boundingBox();
+            if(!bbox.empty()){
+                // Compute the maximum distance from the camera to the 8 corners
+                // of the bounding box along the camera's viewing direction
+                Vector3 cameraPos = cameraPosition.translation();
+                Vector3 cameraDir = -cameraPosition.linear().col(2); // -Z axis is the viewing direction
+                Vector3 bmin = bbox.min();
+                Vector3 bmax = bbox.max();
+                double maxDist = farDist; // At least keep the camera's farClipDistance
+                for(int i = 0; i < 8; ++i){
+                    Vector3 corner(
+                        (i & 1) ? bmax.x() : bmin.x(),
+                        (i & 2) ? bmax.y() : bmin.y(),
+                        (i & 4) ? bmax.z() : bmin.z());
+                    double dist = cameraDir.dot(corner - cameraPos);
+                    if(dist > maxDist){
+                        maxDist = dist;
+                    }
+                }
+                farDist = maxDist * 1.1; // 10% margin
+            }
+        }
         if(useReversed){
             self->getReversedOrthographicProjectionMatrix(
-                left, right, bottom, top, ortho->nearClipDistance(), ortho->farClipDistance(),
+                left, right, bottom, top, ortho->nearClipDistance(), farDist,
                 projectionMatrix);
         } else {
             self->getOrthographicProjectionMatrix(
-                left, right, bottom, top, ortho->nearClipDistance(), ortho->farClipDistance(),
+                left, right, bottom, top, ortho->nearClipDistance(), farDist,
                 projectionMatrix);
         }
 
