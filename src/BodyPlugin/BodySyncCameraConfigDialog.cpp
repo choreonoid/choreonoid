@@ -2,22 +2,15 @@
 #include "BodyPlugin.h"
 #include "BodyItem.h"
 #include "BodySyncCameraItem.h"
-#include <cnoid/SceneView>
-#include <cnoid/SceneWidget>
-#include <cnoid/SceneRenderer>
-#include <cnoid/SceneCameras>
-#include <cnoid/EigenUtil>
+#include <cnoid/SceneGraph>
+#include <cnoid/MathUtil>
 #include <cnoid/ConnectionSet>
-#include <cnoid/LineEdit>
 #include <cnoid/ButtonGroup>
 #include <cnoid/Buttons>
-#include <cnoid/DoubleSpinBox>
-#include <cnoid/LengthSpinBox>
 #include <cnoid/CheckBox>
 #include <cnoid/Format>
 #include <QBoxLayout>
 #include <QLabel>
-#include <QDialogButtonBox>
 #include "gettext.h"
 
 using namespace std;
