@@ -11,6 +11,7 @@ class CNOID_EXPORT LengthSpinBox : public DoubleSpinBox
 {
 public:
     LengthSpinBox(QWidget* parent = nullptr);
+    LengthSpinBox(double meterMinimum, double meterMaximum, QWidget* parent = nullptr);
 
     void setMeterRange(double minimum, double maximum);
     double meterMaximum() const;
@@ -25,6 +26,8 @@ public:
     //! Set minimum decimals in meter unit (e.g., 3 for 1mm precision)
     void setMinimumMeterDecimals(int decimals);
 
+    void setAutoStepAdjustmentEnabled(bool on);
+
     //! Fix the length unit and decimals regardless of DisplayValueFormat settings
     void setFixedUnit(DisplayValueFormat::LengthUnit unit, int decimals);
     void clearFixedUnit();
@@ -33,16 +36,21 @@ public:
 private:
     double toFixedUnitLength(double meter) const;
     double fromFixedUnitLength(double displayLength) const;
+    void initialize();
     void onFormatChanged();
     void updateDecimals();
+    void updateMinimumRange();
 
     DisplayValueFormat* dvFormat;
     ScopedConnection dvFormatConnection;
     int unit;
     std::optional<double> meterSingleStep;
+    std::optional<double> meterMinimum_;
+    std::optional<double> meterMaximum_;
     std::optional<int> minMeterDecimals;
     std::optional<int> fixedUnit_;
     std::optional<int> fixedDecimals_;
+    bool isAutoStepAdjustmentEnabled_ = false;
 };
 
 }
