@@ -183,6 +183,7 @@ public:
     SgOrthographicCameraPtr builtinOrthoCamera;
     int numBuiltinCameras;
     bool isBuiltinCameraCurrent;
+    SgCamera* previousBuiltinCamera;
     bool isLightweightViewChangeEnabled;
     bool isCameraPositionInteractivelyChanged;
     bool isCameraRollRistricted;
@@ -304,6 +305,7 @@ public:
     void renderFps();
 
     void onCurrentCameraSelectionChanged();
+    void adjustBuiltinCameraProjectionForSwitch(SgCamera* prevCamera, SgCamera* newCamera);
     int visiblePolygonElements() const;
     void setCollisionHighlightingEnabled(bool on);
     void setCollisionLineVisibility(bool on);
@@ -561,6 +563,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
     latestEvent.sceneWidget_ = self;
     lastClickedPoint.setZero();
+    previousBuiltinCamera = nullptr;
     lastPickingResult = false;
     lastMouseMoveEvent = nullptr;
     lastMouseMoveHandler = nullptr;
@@ -2551,9 +2554,11 @@ InteractiveCameraTransform* SceneWidget::activeInteractiveCameraTransform()
 
 void SceneWidget::Impl::onCurrentCameraSelectionChanged()
 {
+    SgCamera* prevCamera = previousBuiltinCamera;
+
     interactiveCameraTransform.reset();
     isBuiltinCameraCurrent = false;
-    
+
     SgCamera* current = renderer->currentCamera();
 
     if(!current){
@@ -2573,8 +2578,69 @@ void SceneWidget::Impl::onCurrentCameraSelectionChanged()
         latestEvent.cameraPath_ = path;
     }
 
+    if(isBuiltinCameraCurrent){
+        adjustBuiltinCameraProjectionForSwitch(prevCamera, current);
+        previousBuiltinCamera = current;
+    }
+
     if(!isRendering){
         update();
+    }
+}
+
+
+void SceneWidget::Impl::adjustBuiltinCameraProjectionForSwitch(
+    SgCamera* prevCamera, SgCamera* newCamera)
+{
+    if(!prevCamera || !newCamera){
+        return;
+    }
+
+    const Isometry3& T = builtinCameraTransform->T();
+    const Vector3 viewDir = SgCamera::direction(T);
+    const double d = (lastClickedPoint - T.translation()).dot(viewDir);
+
+    if(d < 1.0e-6){
+        return;
+    }
+
+    const double effectiveFovy = renderer->getEffectiveFovy(builtinPersCamera);
+    const double halfTanFovy = tan(effectiveFovy / 2.0);
+
+    int fovMode = renderer->fieldOfViewMode();
+    float ar = renderer->aspectRatio();
+    bool useHorizontal =
+        (fovMode == SceneRenderer::HorizontalFieldOfView) ||
+        (fovMode == SceneRenderer::AutoFieldOfView && ar < 1.0f);
+
+    if(prevCamera == builtinPersCamera && newCamera == builtinOrthoCamera){
+        // Perspective -> Orthographic:
+        // Match the visible area at the focus distance
+        double visibleHeight = 2.0 * d * halfTanFovy;
+        double orthoHeight;
+        if(useHorizontal){
+            orthoHeight = visibleHeight * ar;
+        } else {
+            orthoHeight = visibleHeight;
+        }
+        builtinOrthoCamera->setHeight(orthoHeight);
+        builtinOrthoCamera->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
+
+    } else if(prevCamera == builtinOrthoCamera && newCamera == builtinPersCamera){
+        // Orthographic -> Perspective:
+        // Move camera so that the perspective view at the focus point
+        // matches the orthographic visible area
+        double orthoHeight = builtinOrthoCamera->height();
+        double visibleHeight;
+        if(useHorizontal){
+            visibleHeight = orthoHeight / ar;
+        } else {
+            visibleHeight = orthoHeight;
+        }
+        double newD = visibleHeight / (2.0 * halfTanFovy);
+        Vector3 newPos = T.translation() - viewDir * (newD - d);
+        builtinCameraTransform->setTranslation(newPos);
+        builtinCameraTransform->notifyUpdate(sgUpdate.withAction(SgUpdate::Modified));
     }
 }
 
