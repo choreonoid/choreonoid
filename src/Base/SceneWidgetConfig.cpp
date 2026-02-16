@@ -629,9 +629,8 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
         });
     signalObjects.push_back(fovDirectionGroup);
 
-    nearClipSpin = new LengthSpinBox(ownerWidget);
+    nearClipSpin = new LengthSpinBox(0.0001, 99999.9999, ownerWidget);
     nearClipSpin->setMinimumMeterDecimals(4);  // 0.1mm precision
-    nearClipSpin->setMeterRange(0.0001, 99999.9999);
     nearClipSpin->setMeterSingleStep(0.0001);
     if(fixedLengthUnit_){
         nearClipSpin->setFixedUnit(*fixedLengthUnit_, fixedLengthDecimals_);
@@ -643,9 +642,8 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
         });
     signalObjects.push_back(nearClipSpin);
 
-    farClipSpin = new LengthSpinBox(ownerWidget);
-    farClipSpin->setMeterRange(0.1, 999999999.9);
-    farClipSpin->setMeterSingleStep(0.1);
+    farClipSpin = new LengthSpinBox(1.0, 9999999999.0, ownerWidget);
+    farClipSpin->setAutoStepAdjustmentEnabled(true);
     if(fixedLengthUnit_){
         farClipSpin->setFixedUnit(*fixedLengthUnit_, fixedLengthDecimals_);
     }
@@ -711,9 +709,8 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
             });
         signalObjects.push_back(gws.check);
 
-        auto spanSpin = new LengthSpinBox(ownerWidget);
+        auto spanSpin = new LengthSpinBox(0.0, 999.9, ownerWidget);
         spanSpin->setAlignment(Qt::AlignCenter);
-        spanSpin->setMeterRange(0.0, 999.9);
         spanSpin->setMeterSingleStep(0.1);
         if(fixedLengthUnit_){
             spanSpin->setFixedUnit(*fixedLengthUnit_, fixedLengthDecimals_);
@@ -726,10 +723,9 @@ ConfigWidgetSet::ConfigWidgetSet(SceneWidgetConfig::Impl* config_)
         signalObjects.push_back(spanSpin);
         gws.spanSpin = spanSpin;
 
-        auto intervalSpin = new LengthSpinBox(ownerWidget);
+        auto intervalSpin = new LengthSpinBox(0.001, 99.999, ownerWidget);
         intervalSpin->setAlignment(Qt::AlignCenter);
         intervalSpin->setMinimumMeterDecimals(3);
-        intervalSpin->setMeterRange(0.001, 99.999);
         intervalSpin->setMeterSingleStep(0.001);
         if(fixedLengthUnit_){
             intervalSpin->setFixedUnit(*fixedLengthUnit_, fixedLengthDecimals_);
