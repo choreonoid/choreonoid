@@ -131,7 +131,7 @@ public:
 
         case Link::JointVelocity:
             qref0 = qref1;
-            qref1 = qseq->frame(std::min(currentFrameIndex + 1, lastFrameIndex));
+            qref1 = qseq->clampedFrame(currentFrameIndex + 1);
             for(int i=0; i < ioBody->numJoints(); ++i){
                 ioBody->joint(i)->dq_target() = (qref1[i] - qref0[i]) / dt;
             }
@@ -141,7 +141,7 @@ public:
             break;
         }
 
-        if(currentFrameIndex < qseq->numFrames()){
+        if(currentFrameIndex < lastFrameIndex){
             ++currentFrameIndex;
             return true;
         } else {
