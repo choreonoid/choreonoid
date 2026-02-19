@@ -9,6 +9,7 @@
 #include "AbstractSeq.h"
 #include "Deque2D.h"
 #include <algorithm>
+#include <cassert>
 #include <memory>
 
 namespace cnoid {
@@ -205,7 +206,8 @@ public:
         return Container::append();
     }
 
-    int clampFrameIndex(int frameIndex, bool& out_isWithinRange){
+    int clampFrameIndex(int frameIndex, bool& out_isWithinRange) const {
+        assert(numFrames() > 0);
         if(frameIndex < 0){
             frameIndex = 0;
             out_isWithinRange = false;
@@ -218,13 +220,22 @@ public:
         return frameIndex;
     }
 
-    int clampFrameIndex(int frameIndex){
+    int clampFrameIndex(int frameIndex) const {
+        assert(numFrames() > 0);
         if(frameIndex < 0){
             frameIndex = 0;
         } else if(frameIndex >= numFrames()){
             frameIndex = numFrames() - 1;
         }
         return frameIndex;
+    }
+
+    const Frame clampedFrame(int frameIndex) const {
+        return frame(clampFrameIndex(frameIndex));
+    }
+
+    const Frame clampedFrame(int frameIndex, bool& out_isWithinRange) const {
+        return frame(clampFrameIndex(frameIndex, out_isWithinRange));
     }
 
 protected:
