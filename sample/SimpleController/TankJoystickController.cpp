@@ -129,7 +129,7 @@ public:
             trackL->dq_target() = k * (-2.0 * pos[1] + pos[0]);
             trackR->dq_target() = k * (-2.0 * pos[1] - pos[0]);
         } else {
-            double k = 4.0;
+            double k = 10.0;
             trackL->dq_target() = k * (-pos[1] + pos[0]);
             trackR->dq_target() = k * (-pos[1] - pos[0]);
         }

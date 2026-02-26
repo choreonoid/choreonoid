@@ -1,0 +1,188 @@
+format: ChoreonoidBody
+formatVersion: 1.0
+angleUnit: degree
+name: PxCrawler
+
+links:
+  -
+    name: CHASSIS
+    jointType: free
+    translation: [ 0, 0, 0.1 ]
+    elements:
+      -
+        type: RigidBody
+        centerOfMass: [ 0, 0, 0 ]
+        mass: 20.0
+        inertia: [
+          0.94, 0, 0,
+          0, 2.50, 0,
+          0, 0, 3.15 ]
+        elements:
+          -
+            type: Shape
+            translation: [ 0, 0, 0.05 ]
+            appearance:
+              material: &green
+                diffuseColor: [ 0.0, 0.5, 0.0 ]
+                specularColor: [ 0.3, 1.0, 0.3 ]
+                specular_exponent: 20.0
+            geometry:
+              type: Box
+              size: [ 1.4, 0.8, 0.1 ]
+          -
+            type: Transform
+            translation: [ 0, 0, 0.1 ]
+            elements:
+              Shape:
+                appearance:
+                  material: *green
+                geometry:
+                  type: Extrusion
+                  crossSection: [
+                    0.55, 0,
+                    0.25, 0.2,
+                    -0.55, 0.2,
+                    -0.55, 0,
+                    0.55, 0 ]
+                  spine: [ 0, -0.25, 0, 0, 0.25, 0 ]
+  -
+    name: CRAWLER_TRACK_L
+    parent: CHASSIS
+    translation: [ 0.0, 0.5, 0 ]
+    jointType: fixed
+    mass: 5.0
+    inertia: [
+      0.008, 0, 0,
+      0, 0.76, 0,
+      0, 0, 0.76 ]
+    elements:
+      -
+        type: Transform
+        translation: [ 0, -0.05, 0 ]
+        elements:
+          Shape: &CRAWLER_BASE_SHAPE
+            geometry:
+              type: Box
+              size: [1.35, 0.1, 0.1 ]
+            appearance:
+              material:
+                diffuseColor: [ 0.1, 0.1, 0.1 ]
+      -
+        type: PxContinuousTrack
+        name: TRACK_L
+        sprocket: SPROCKET_L
+        sprocket_radius: 0.18
+        idler: IDLER_L
+        idler_radius: 0.18
+        width: 0.16
+        thickness: 0.01
+        num_shoes: 32
+        grouser_height: 0.025
+        grouser_thickness: 0.03
+        mass: 8.0
+        contact_material: TankTracks
+        appearance_material: &TrackMaterial
+          diffuse: [ 0.15, 0.15, 0.15 ]
+          specular: [ 1.0, 1.0, 1.0 ]
+          specular_exponent: 20.0
+        drive_damping: 10000.0
+        drive_max_force: 1000.0
+  -
+    name: SPROCKET_L
+    parent: CRAWLER_TRACK_L
+    translation: [ 0.6566, 0, 0 ]
+    jointType: revolute
+    jointAxis: Y
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 2.0
+    inertia: [
+      0.02, 0,     0,
+      0,    0.032, 0,
+      0,    0,     0.02 ]
+    material: TankWheel
+    elements:
+      Shape: &WHEEL_SHAPE
+        geometry: { type: Cylinder, radius: 0.18, height: 0.16 }
+        appearance:
+          material:
+            diffuse: [ 0.15, 0.25, 0.5 ]
+            specular: [ 1.0, 1.0, 1.0 ]
+            specular_exponent: 10.0
+  -
+    name: IDLER_L
+    parent: CRAWLER_TRACK_L
+    translation: [ -0.6566, 0, 0 ]
+    jointType: revolute
+    jointAxis: Y
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 2.0
+    inertia: [
+      0.02, 0,     0,
+      0,    0.032, 0,
+      0,    0,     0.02 ]
+    material: TankWheel
+    elements:
+      Shape: *WHEEL_SHAPE
+  -
+    name: CRAWLER_TRACK_R
+    parent: CHASSIS
+    translation: [ 0.0, -0.5, 0 ]
+    jointType: fixed
+    mass: 5.0
+    inertia: [
+      0.008, 0, 0,
+      0, 0.76, 0,
+      0, 0, 0.76 ]
+    elements:
+      -
+        type: Transform
+        translation: [ 0, 0.05, 0 ]
+        elements:
+          Shape: *CRAWLER_BASE_SHAPE
+      -
+        type: PxContinuousTrack
+        name: TRACK_R
+        sprocket: SPROCKET_R
+        sprocket_radius: 0.18
+        idler: IDLER_R
+        idler_radius: 0.18
+        width: 0.16
+        thickness: 0.01
+        num_shoes: 32
+        grouser_height: 0.025
+        grouser_thickness: 0.03
+        mass: 8.0
+        contact_material: TankTracks
+        appearance_material: *TrackMaterial
+        drive_damping: 10000.0
+        drive_max_force: 1000.0
+  -
+    name: SPROCKET_R
+    parent: CRAWLER_TRACK_R
+    translation: [ 0.6566, 0, 0 ]
+    jointType: revolute
+    jointAxis: Y
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 2.0
+    inertia: [
+      0.02, 0,     0,
+      0,    0.032, 0,
+      0,    0,     0.02 ]
+    material: TankWheel
+    elements:
+      Shape: *WHEEL_SHAPE
+  -
+    name: IDLER_R
+    parent: CRAWLER_TRACK_R
+    translation: [ -0.6566, 0, 0 ]
+    jointType: revolute
+    jointAxis: Y
+    centerOfMass: [ 0, 0, 0 ]
+    mass: 2.0
+    inertia: [
+      0.02, 0,     0,
+      0,    0.032, 0,
+      0,    0,     0.02 ]
+    material: TankWheel
+    elements:
+      Shape: *WHEEL_SHAPE
