@@ -957,6 +957,9 @@ if(ENABLE_PHYSX)
   add_subdirectory(thirdparty/physx-5.6.1)
 endif()
 
+# robin-map
+add_subdirectory(thirdparty/robin-map-1.4.1)
+
 add_subdirectory(src)
 add_subdirectory(include)
 

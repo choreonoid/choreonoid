@@ -101,6 +101,9 @@ copyrighted by other developers.
  * pybind11 (https://github.com/pybind/pybind11)
    see thirdparty/pybind11-2.12.0/LICENSE
 
+ * robin-map (https://github.com/Tessil/robin-map)
+   see thirdparty/robin-map-1.4.1/LICENSE
+
  * Sol (https://github.com/ThePhD/sol2)
    see thirdparty/sol2/LICENSE
 
