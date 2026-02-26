@@ -98,6 +98,9 @@ copyrighted by other developers.
  * Pugixml (https://pugixml.org)
    see thirdparty/pugixml-1.11/readme.txt
 
+ * nanobind (https://github.com/wjakob/nanobind)
+   see thirdparty/nanobind-2.12.0/LICENSE
+
  * pybind11 (https://github.com/pybind/pybind11)
    see thirdparty/pybind11-2.12.0/LICENSE
 

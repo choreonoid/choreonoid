@@ -960,6 +960,10 @@ endif()
 # robin-map
 add_subdirectory(thirdparty/robin-map-1.4.1)
 
+# nanobind
+set(NB_USE_SUBMODULE_DEPS OFF)
+add_subdirectory(thirdparty/nanobind-2.12.0)
+
 add_subdirectory(src)
 add_subdirectory(include)
 
