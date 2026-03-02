@@ -405,14 +405,17 @@ public:
     
     ofstream ofs;
     WriteBuf writeBuf;
-    int lastOutputFramePos;
+    size_t lastOutputFramePos;
     double recordingFrameRate;
     stack<int> sizeHeaderStack;
 
     // for device state recording and playback
     struct DeviceStateCache : public Referenced {
         DeviceStatePtr state;
-        int seekPos;
+        // This position is stored as a 4-byte int in the log file for format compatibility,
+        // so cached device state references may overflow for files exceeding 2GB.
+        // This is not a problem for devices whose state changes every frame (no cache hit).
+        size_t seekPos;
     };
     typedef ref_ptr<DeviceStateCache> DeviceStateCachePtr;
     
@@ -428,9 +431,9 @@ public:
     ifstream ifs;
     ReadBuf readBuf;
     ReadBuf readBuf2;
-    int currentReadFramePos;
-    int currentReadFrameDataSize;
-    int prevReadFrameOffset;
+    size_t currentReadFramePos;
+    size_t currentReadFrameDataSize;
+    size_t prevReadFrameOffset;
     double currentReadFrameTime;
     bool isCurrentFrameDataLoaded;
     bool isOverRange;
@@ -441,7 +444,7 @@ public:
 
     WorldLogFileEnginePtr logEngine;
     Timer* livePlaybackTimer;
-    int livePlaybackLastFramePos;
+    size_t livePlaybackLastFramePos;
     std::uintmax_t livePlaybackLogFileSize;
     int livePlaybackReadInterval; // msec
     double livePlaybackReadTimeout; // sec
@@ -458,7 +461,7 @@ public:
     void updateBodyInfos();
     void onWorldSubTreeChanged();
     bool readTopHeader();
-    bool readFrameHeader(int pos);
+    bool readFrameHeader(size_t pos);
     bool seek(double time);
     bool seekToLivePlaybackLastFrame();
     bool loadCurrentFrameData();
@@ -747,7 +750,7 @@ bool WorldLogFileItem::Impl::readTopHeader()
 }
 
 
-bool WorldLogFileItem::Impl::readFrameHeader(int pos)
+bool WorldLogFileItem::Impl::readFrameHeader(size_t pos)
 {
     isCurrentFrameDataLoaded = false;
     
@@ -810,7 +813,7 @@ bool WorldLogFileItem::Impl::seek(double time)
 
     if(currentReadFrameTime < time){
         while(true){
-            int pos = currentReadFramePos;
+            size_t pos = currentReadFramePos;
             if(!readFrameHeader(currentReadFramePos + frameHeaderSize + currentReadFrameDataSize)){
                 isOverRange = true;
                 return (currentReadFrameTime >= 0.0);
@@ -1714,7 +1717,7 @@ bool WorldLogFileItem::Impl::seekToLivePlaybackLastFrame()
             return false;
         }
     }
-    int framePos = currentReadFramePos;
+    size_t framePos = currentReadFramePos;
     while(true){
         if(!readFrameHeader(framePos)){
             break;
