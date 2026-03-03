@@ -300,7 +300,7 @@ TimeBar::Impl::ConfigDialog::ConfigDialog(TimeBar* timeBar)
     hbox->addWidget(new QLabel(_("Playback speed ratio")));
     playbackSpeedRatioSpin.setAlignment(Qt::AlignCenter);
     playbackSpeedRatioSpin.setDecimals(1);
-    playbackSpeedRatioSpin.setRange(0.1, 99.9);
+    playbackSpeedRatioSpin.setRange(0.1, 999999.9);
     playbackSpeedRatioSpin.setSingleStep(0.1);
     playbackSpeedRatioSpin.setValue(impl->playbackSpeedRatio);
     playbackSpeedRatioSpin.sigValueChanged().connect(
