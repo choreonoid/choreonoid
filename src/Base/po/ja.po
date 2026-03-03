@@ -2240,14 +2240,59 @@ msgstr "タイムバーの設定"
 msgid "Internal frame rate"
 msgstr "内部フレームレート"
 
+msgid "Internal frame rate:"
+msgstr "内部フレームレート:"
+
 msgid "Playback frame rate"
 msgstr "再生フレームレート"
+
+msgid "Playback frame rate:"
+msgstr "再生フレームレート:"
 
 msgid "Idle event driven mode"
 msgstr "アイドルイベント駆動モード"
 
 msgid "Playback speed ratio"
 msgstr "再生速度倍率"
+
+msgid "Playback speed ratio:"
+msgstr "再生速度倍率:"
+
+msgid "Time display units:"
+msgstr "時刻表示単位:"
+
+msgid "Day"
+msgstr "日"
+
+msgid "Hour"
+msgstr "時間"
+
+msgid "Min"
+msgstr "分"
+
+msgid "Sec"
+msgstr "秒"
+
+msgid "D "
+msgstr "日 "
+
+msgid "H "
+msgstr "時間 "
+
+msgid "M "
+msgstr "分 "
+
+msgid "S"
+msgstr "秒"
+
+msgid "D"
+msgstr "日"
+
+msgid "H"
+msgstr "時間"
+
+msgid "M"
+msgstr "分"
 
 msgid "Sync with ongoing updates"
 msgstr "進行中の更新に同期"

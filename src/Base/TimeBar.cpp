@@ -262,7 +262,7 @@ TimeBar::Impl::Impl(TimeBar* self)
     dayTimeSpin->setRange(0, 99999);
     dayTimeSpin->sigValueChanged().connect([this](double){ onTimeUnitSpinValueChanged(dayTimeSpin); });
     self->addWidget(dayTimeSpin, DayTimeSpin);
-    dayTimeLabel = self->addLabel("D ", DayTimeLabel);
+    dayTimeLabel = self->addLabel(_("D "), DayTimeLabel);
 
     hourTimeSpin = new DoubleSpinBox;
     hourTimeSpin->setAlignment(Qt::AlignCenter);
@@ -270,7 +270,7 @@ TimeBar::Impl::Impl(TimeBar* self)
     hourTimeSpin->setRange(0, 99999);
     hourTimeSpin->sigValueChanged().connect([this](double){ onTimeUnitSpinValueChanged(hourTimeSpin); });
     self->addWidget(hourTimeSpin, HourTimeSpin);
-    hourTimeLabel = self->addLabel("H ", HourTimeLabel);
+    hourTimeLabel = self->addLabel(_("H "), HourTimeLabel);
 
     minuteTimeSpin = new DoubleSpinBox;
     minuteTimeSpin->setAlignment(Qt::AlignCenter);
@@ -278,14 +278,14 @@ TimeBar::Impl::Impl(TimeBar* self)
     minuteTimeSpin->setRange(0, 99999);
     minuteTimeSpin->sigValueChanged().connect([this](double){ onTimeUnitSpinValueChanged(minuteTimeSpin); });
     self->addWidget(minuteTimeSpin, MinuteTimeSpin);
-    minuteTimeLabel = self->addLabel("M ", MinuteTimeLabel);
+    minuteTimeLabel = self->addLabel(_("M "), MinuteTimeLabel);
 
     timeSpin = new DoubleSpinBox;
     timeSpin->setAlignment(Qt::AlignCenter);
     timeSpin->sigValueChanged().connect(
         [this](double){ onTimeUnitSpinValueChanged(timeSpin); });
     self->addWidget(timeSpin, TimeSpin);
-    secondTimeLabel = self->addLabel("S", SecondTimeLabel);
+    secondTimeLabel = self->addLabel(_("S"), SecondTimeLabel);
 
     timeSlider = new Slider(Qt::Horizontal);
     timeSlider->sigValueChanged().connect(
@@ -1488,10 +1488,10 @@ void TimeBar::Impl::updateTimeUnitDisplay()
 
     // Min/Max time unit labels
     if(multiUnit){
-        const char* unitLabel = "S";
-        if(enabledTimeUnits & UnitDay) unitLabel = "D";
-        else if(enabledTimeUnits & UnitHour) unitLabel = "H";
-        else if(enabledTimeUnits & UnitMinute) unitLabel = "M";
+        const char* unitLabel = _("S");
+        if(enabledTimeUnits & UnitDay) unitLabel = _("D");
+        else if(enabledTimeUnits & UnitHour) unitLabel = _("H");
+        else if(enabledTimeUnits & UnitMinute) unitLabel = _("M");
         maxTimeUnitLabel->setText(unitLabel);
         maxTimeUnitLabel->show();
     } else {
