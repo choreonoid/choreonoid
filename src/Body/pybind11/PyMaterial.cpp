@@ -26,6 +26,10 @@ void exportPyMaterial(py::module& m)
         .def("setRoughness", &Material::setRoughness)
         .def_property("viscosity", &Material::viscosity, &Material::setViscosity)
         .def("setViscosity", &Material::setViscosity)
+        .def_property("stiffness", &Material::stiffness, &Material::setStiffness)
+        .def("setStiffness", &Material::setStiffness)
+        .def_property("damping", &Material::damping, &Material::setDamping)
+        .def("setDamping", &Material::setDamping)
         .def_property_readonly("info", (Mapping*(Material::*)()) &Material::info)
         .def("getInfo",
              [](Material& self, const std::string& key, bool defaultValue){

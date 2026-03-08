@@ -36,6 +36,8 @@ materials:
     youngs_modulus: 1e10
     roughness: 1.0
     viscosity: 1.0
+    stiffness: 100000.0
+    damping: 100000.0
   -
     name: TankWheel
     youngs_modulus: 1e10

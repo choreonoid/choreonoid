@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #include "Material.h"
 #include <mutex>
 #include <unordered_map>
@@ -66,6 +61,8 @@ Material::Material()
 {
     roughness_ = 0.5;
     viscosity_ = 1.0;
+    stiffness_ = 0.0;
+    damping_ = 0.0;
     info_ = new Mapping;
 }
 
@@ -75,6 +72,8 @@ Material::Material(const Material& org)
 {
     roughness_ = org.roughness_;
     viscosity_ = org.viscosity_;
+    stiffness_ = org.stiffness_;
+    damping_ = org.damping_;
     info_ = org.info_->clone();
 }
 
@@ -83,11 +82,15 @@ Material::Material(const Mapping* info)
 {
     roughness_ = 0.5;
     viscosity_ = 1.0;
+    stiffness_ = 0.0;
+    damping_ = 0.0;
 
     info_ = info->clone();
     info_->extract("name", name_);
     info_->extract("roughness", roughness_);
     info_->extract("viscosity", viscosity_);
+    info_->extract("stiffness", stiffness_);
+    info_->extract("damping", damping_);
 }
 
 

@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_MATERIAL_H
 #define CNOID_BODY_MATERIAL_H
 
@@ -34,6 +29,10 @@ public:
     void setRoughness(double r) { roughness_ = r; }
     double viscosity() const { return viscosity_; }
     void setViscosity(double v) { viscosity_ = v; }
+    double stiffness() const { return stiffness_; }
+    void setStiffness(double s) { stiffness_ = s; }
+    double damping() const { return damping_; }
+    void setDamping(double d) { damping_ = d; }
 
     Mapping* info() { return info_; }
     const Mapping* info() const { return info_; }
@@ -45,6 +44,8 @@ private:
     std::string name_;
     double roughness_;
     double viscosity_;
+    double stiffness_;
+    double damping_;
     MappingPtr info_;
 };
 
