@@ -115,6 +115,7 @@ following libraries:
 * Qt (http://www.qt.io/)
 * Assimp (https://www.assimp.org/)
 * Open Dynamics Engine (http://www.ode.org/)
+* NVIDIA PhysX (https://github.com/NVIDIA-Omniverse/PhysX)
 * Bullet Physics Library (http://bulletphysics.org/)
 * FFmpeg (https://ffmpeg.org/)
 * Point Cloud Library (https://pointclouds.org/)

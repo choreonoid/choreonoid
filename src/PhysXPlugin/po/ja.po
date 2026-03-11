@@ -1,0 +1,147 @@
+# Japanese translations for Choreonoid package.
+# Copyright (C) 2026 THE Choreonoid'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Choreonoid package.
+# nakaoka <s.nakaoka@gmail.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Choreonoid\n"
+"Report-Msgid-Bugs-To: info@choreonoid.co.jp\n"
+"POT-Creation-Date: 2026-03-10 19:29+0900\n"
+"PO-Revision-Date: 2026-03-10 19:29+0900\n"
+"Last-Translator: nakaoka <s.nakaoka@gmail.com>\n"
+"Language-Team: Japanese <translation-team-ja@lists.sourceforge.net>\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "{0} in line {1} of {2}."
+msgstr "{2}の{1}行目: {0}"
+
+msgid "PxCreateFoundation failed!"
+msgstr "PxCreateFoundationに失敗しました！"
+
+msgid "NVIDIA PhysX {0}.{1}.{2} is available.\n"
+msgstr "NVIDIA PhysX {0}.{1}.{2} が利用可能です。\n"
+
+msgid "PhysXSimulatorItem"
+msgstr "PhysXシミュレータアイテム"
+
+msgid "PGS"
+msgstr ""
+
+msgid "TGS"
+msgstr ""
+
+msgid "PxCreatePhysics failed!"
+msgstr "PxCreatePhysicsに失敗しました！"
+
+msgid "Gravity"
+msgstr "重力加速度"
+
+msgid "Scene origin shift"
+msgstr "シーン原点シフト"
+
+msgid "Num threads"
+msgstr "スレッド数"
+
+msgid "Tolerances scale length"
+msgstr "許容スケール長さ"
+
+msgid "Tolerances scale speed"
+msgstr "許容スケール速度"
+
+msgid "Convex mesh tight bounds"
+msgstr "凸メッシュタイトバウンド"
+
+msgid "Skip convex mesh cleanup"
+msgstr "凸メッシュクリーンアップをスキップ"
+
+msgid "Triangle mesh for dynamic objects"
+msgstr "動的オブジェクトに三角メッシュを使用"
+
+msgid "Triangle mesh preprocessing"
+msgstr "三角メッシュ前処理"
+
+msgid "SDF spacing"
+msgstr "SDF間隔"
+
+msgid "SDF subgrid size"
+msgstr "SDFサブグリッドサイズ"
+
+msgid "SDF bits per pixel"
+msgstr "SDFピクセルあたりビット数"
+
+msgid "SDF construction threads"
+msgstr "SDF構築スレッド数"
+
+msgid "Solver type"
+msgstr "ソルバタイプ"
+
+msgid "Position iterations"
+msgstr "位置反復回数"
+
+msgid "Velocity iterations"
+msgstr "速度反復回数"
+
+msgid "Linear damping"
+msgstr "線形ダンピング"
+
+msgid "Angular damping"
+msgstr "角度ダンピング"
+
+msgid "Drive stiffness"
+msgstr "駆動剛性"
+
+msgid "Drive damping"
+msgstr "駆動ダンピング"
+
+msgid "Enable velocity output"
+msgstr "速度出力を有効化"
+
+msgid "Enable acceleration output"
+msgstr "加速度出力を有効化"
+
+msgid "Error output"
+msgstr "エラー出力"
+
+msgid "Mesh \"{0}\""
+msgstr "メッシュ \"{0}\""
+
+msgid "A mesh"
+msgstr "メッシュ"
+
+msgid "createScene failed!"
+msgstr "createSceneに失敗しました！"
+
+msgid ""
+"{0} has a non-axis-aligned scaling which is not supported in the PhysX"
+"plugin. The mesh is skipped."
+msgstr ""
+"{0}は軸に沿わないスケーリングを持っており、PhysXプラグインではサポートされて"
+"いません。このメッシュはスキップされます。"
+
+msgid "{0} is not validated."
+msgstr "{0}は検証されませんでした。"
+
+msgid "{0} has no valid vertices for creating a convex mesh."
+msgstr "{0}には凸メッシュを作成するための有効な頂点がありません。"
+
+msgid "{0} cannot be converted to a convex mesh."
+msgstr "{0}を凸メッシュに変換できません。"
+
+msgid ""
+"PxContinuousTrack \"{0}\" (link \"{1}\"): Adjusted num_grousers from {2} to "
+"{3} for phase alignment between wheels and linear segments."
+msgstr ""
+"PxContinuousTrack \"{0}\" (リンク \"{1}\"): 車輪とリニアセグメント間の位相整合"
+"のため、num_grousersを{2}から{3}に調整しました。"
+
+msgid ""
+"PxContinuousTrack \"{0}\" (link \"{1}\"): num_grousers={2} is not phase-"
+"aligned with wheel distance {3:.4f}. Suggested wheel distance: {4}"
+msgstr ""
+"PxContinuousTrack \"{0}\" (リンク \"{1}\"): num_grousers={2}は車輪間距離"
+"{3:.4f}と位相が合っていません。推奨車輪間距離: {4}"
