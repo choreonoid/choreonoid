@@ -60,6 +60,7 @@ public:
     bool readTranslation(const Mapping* info, Vector3& out_p) const;
     bool readTranslation(const Mapping* info, const char* key, Vector3& out_p) const;
     bool extractTranslation(Mapping* info, Vector3& out_p) const;
+    SgMaterial* readMaterial(Mapping* info);
     SgNode* readNode(Mapping* info);
     SgNode* readNode(Mapping* info, const std::string& type);
     SgNode* readScene(ValueNode* scene);

@@ -1357,6 +1357,12 @@ void StdSceneReader::Impl::readAppearance(SgShape* shape, Mapping* info)
 }
 
 
+SgMaterial* StdSceneReader::readMaterial(Mapping* info)
+{
+    return impl->readMaterial(info);
+}
+
+
 SgMaterial* StdSceneReader::Impl::readMaterial(Mapping* info)
 {
     SgMaterialPtr material = findSharedObject<SgMaterial>(info, "material");

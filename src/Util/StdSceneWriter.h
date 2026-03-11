@@ -2,6 +2,7 @@
 #define CNOID_UTIL_STD_SCENE_WRITER_H
 
 #include "AbstractSceneWriter.h"
+#include "ValueTree.h"
 #include "Referenced.h"
 #include <vector>
 #include "exportdecl.h"
@@ -9,6 +10,7 @@
 namespace cnoid {
 
 class FilePathVariableProcessor;
+class SgMaterial;
 class ValueNode;
 
 class CNOID_EXPORT StdSceneWriter : public AbstractSceneWriter
@@ -75,6 +77,8 @@ public:
        \note The clear function must be executed when this function is used to write a set of scenes
        to eliminate the effect of the previous writing.
     */
+    MappingPtr writeMaterial(SgMaterial* material);
+
     ref_ptr<ValueNode> writeScene(SgNode* node);
     
     virtual bool writeScene(const std::string& filename, SgNode* node) override;

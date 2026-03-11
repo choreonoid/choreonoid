@@ -1161,6 +1161,12 @@ MappingPtr StdSceneWriter::Impl::writeAppearance(SgShape* shape)
 }
 
 
+MappingPtr StdSceneWriter::writeMaterial(SgMaterial* material)
+{
+    return impl->writeMaterial(material);
+}
+
+
 MappingPtr StdSceneWriter::Impl::writeMaterial(SgMaterial* material)
 {
     if(!material){
