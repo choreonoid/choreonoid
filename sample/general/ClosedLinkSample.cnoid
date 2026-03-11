@@ -1,4 +1,4 @@
-optionalPlugins: [ ODE, Bullet ]
+optionalPlugins: [ ODE, Bullet, PhysX ]
 
 items: 
   id: 0
@@ -116,6 +116,14 @@ items:
             Friction: 0.7
             ERP2: 0
             SplitImpulsePenetrationThreshold: -0.0001
+        - 
+          id: 5
+          name: "PhysXSimulator"
+          plugin: PhysX
+          class: PhysXSimulatorItem
+          data: 
+            realtimeSync: true
+            recordingMode: "Time bar range"
 views: 
   - 
     id: 4

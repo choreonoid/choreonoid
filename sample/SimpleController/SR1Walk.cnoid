@@ -263,10 +263,22 @@ items:
                 deviceStateOutput: true
                 controllerThreads: true
                 recordCollisionData: false
-                staticFriction: 0.5
-                dynamicFriction: 0.8
-                Restitution: 0.1
-                jointLimitMode: false
+            - 
+              id: 14
+              name: "PhysXSimulator-Position"
+              plugin: PhysX
+              class: PhysXSimulatorItem
+              data: 
+                timestep: 0.002
+                realtimeSync: true
+                recording: "full"
+                timeRangeMode: "Active control period"
+                timeLength: 60
+                allLinkPositionOutputMode: false
+                deviceStateOutput: true
+                controllerThreads: true
+                recordCollisionData: false
+                controllerOptions: position
 toolbars: 
   "TimeBar": 
     min_time: 0

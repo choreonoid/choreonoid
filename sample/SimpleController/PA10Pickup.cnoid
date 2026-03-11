@@ -219,19 +219,9 @@ items:
           class: PhysXSimulatorItem
           data: 
             timeStep: 0.001
-            realtimeSync: true
             recording: "full"
-            timeRangeMode: "Time bar range"
-            onlyActiveControlPeriod: true
-            timeLength: 60
+            timeRangeMode: "Active control period"
             allLinkPositionOutputMode: false
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            staticFriction: 0.5
-            dynamicFriction: 0.5
-            Restitution: 0.1
-            jointLimitMode: false
         -
           id: 11
           name: "KinematicSimulator"

@@ -213,10 +213,6 @@ items:
             deviceStateOutput: false
             controllerThreads: false
             recordCollisionData: false
-            staticFriction: 0.5
-            dynamicFriction: 0.5
-            Restitution: 0.1
-            jointLimitMode: false
         - 
           id: 11
           name: "AGXSimulator"

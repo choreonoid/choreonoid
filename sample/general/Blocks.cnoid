@@ -1,4 +1,4 @@
-optionalPlugins: [ ODE, AGXDynamics ]
+optionalPlugins: [ ODE, PhysX, AGXDynamics ]
 
 items: 
   id: 0
@@ -39,491 +39,539 @@ items:
             collisionDetection: true
             selfCollisionDetection: false
             isEditable: true
-        - 
+        -
           id: 3
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0, 0.15 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0, 0.15 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
+          name: "Blocks"
+          plugin: Base
+          class: FolderItem
+          children:
+            -
+              id: 4
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0, 0.15 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0, 0.15 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 5
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.3, 0.15 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.3, 0.15 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 6
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.6, 0.15 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.6, 0.15 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 7
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.9, 0.15 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.9, 0.15 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 8
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 1.2, 0.15 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 1.2, 0.15 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 9
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 1.5, 0.15 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 1.5, 0.15 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 10
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.15, 0.45 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.15, 0.45 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 11
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.45, 0.45 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.45, 0.45 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 12
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.75, 0.45 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.75, 0.45 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 13
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 1.05, 0.45 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 1.05, 0.45 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 14
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 1.35, 0.45 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 1.35, 0.45 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 15
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.3, 0.75 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.3, 0.75 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 16
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.6, 0.75 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.6, 0.75 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 17
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.9, 0.75 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.9, 0.75 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 18
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 1.2, 0.75 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 1.2, 0.75 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 19
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.45, 1.05 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.45, 1.05 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 20
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.75, 1.05 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.75, 1.05 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 21
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 1.05, 1.05 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 1.05, 1.05 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 22
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.6, 1.35 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.6, 1.35 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 23
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.9, 1.35 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.9, 1.35 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
+            -
+              id: 24
+              name: "box2"
+              plugin: Body
+              class: BodyItem
+              is_checked: true
+              data:
+                file: "${SHARE}/model/misc/box2.body"
+                format: CHOREONOID-BODY
+                currentBaseLink: "WAIST"
+                rootPosition: [ 0, 0.75, 2 ]
+                rootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                initialRootPosition: [ 0, 0.75, 2 ]
+                initialRootAttitude: [
+                  1, 0, 0,
+                  0, 1, 0,
+                  0, 0, 1 ]
+                fix_root: false
+                collisionDetection: true
+                selfCollisionDetection: false
+                lock_location: false
+                scene_sensitive: true
         - 
-          id: 4
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.3, 0.15 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.3, 0.15 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 5
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.6, 0.15 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.6, 0.15 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 6
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.9, 0.15 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.9, 0.15 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 7
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 1.2, 0.15 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 1.2, 0.15 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 8
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 1.5, 0.15 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 1.5, 0.15 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 9
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.15, 0.45 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.15, 0.45 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 10
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.45, 0.45 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.45, 0.45 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 11
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.75, 0.45 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.75, 0.45 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 12
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 1.05, 0.45 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 1.05, 0.45 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 13
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 1.35, 0.45 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 1.35, 0.45 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 14
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.3, 0.75 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.3, 0.75 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 15
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.6, 0.75 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.6, 0.75 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 16
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.9, 0.75 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.9, 0.75 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 17
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 1.2, 0.75 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 1.2, 0.75 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 18
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.45, 1.05 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.45, 1.05 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 19
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.75, 1.05 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.75, 1.05 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 20
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 1.05, 1.05 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 1.05, 1.05 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 21
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.6, 1.35 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.6, 1.35 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 22
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.9, 1.35 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.9, 1.35 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 23
-          name: "box2"
-          plugin: Body
-          class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0.75, 2 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0.75, 2 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
-          id: 24
+          id: 25
           name: "AISTSimulator"
           plugin: Body
           class: AISTSimulatorItem
@@ -545,7 +593,7 @@ items:
             2Dmode: false
             oldAccelSensorMode: false
         - 
-          id: 25
+          id: 26
           name: "ODESimulator"
           plugin: ODE
           class: ODESimulatorItem
@@ -573,7 +621,15 @@ items:
             2Dmode: false
             useWorldCollisionDetector: false
         - 
-          id: 26
+          id: 27
+          name: "PhysXSimulator"
+          plugin: PhysX
+          class: PhysXSimulatorItem
+          data: 
+            timestep: 0.001
+            recordingMode: "Time bar range"
+        - 
+          id: 28
           name: "AGXSimulator"
           plugin: AGXDynamics
           class: AGXSimulatorItem
@@ -609,9 +665,9 @@ views:
     class: ItemTreeView
     mounted: true
     state: 
-      selected: [ 24 ]
-      checked: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 ]
-      expanded: [ 1, 2, 3, 4 ]
+      selected: [ 25 ]
+      checked: [ 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24 ]
+      expanded: [ 1 ]
   - 
     id: 3
     plugin: Base
