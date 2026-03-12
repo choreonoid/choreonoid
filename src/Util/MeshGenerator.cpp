@@ -1091,6 +1091,95 @@ SgMesh* MeshGenerator::generateTorus(double radius, double crossSectionRadius, d
 }
 
 
+SgMesh* MeshGenerator::generateRing(double radius, double width, double thickness)
+{
+    return generateRing(radius, width, thickness, 0.0, 2.0 * PI);
+}
+
+
+SgMesh* MeshGenerator::generateRing(
+    double radius, double width, double thickness, double beginAngle, double endAngle)
+{
+    double arcAngle = endAngle - beginAngle;
+    bool isPartial = (arcAngle < 2.0 * PI - 1.0e-6);
+    int numDivisions = std::max(4, static_cast<int>(divisionNumber_ * arcAngle / (2.0 * PI)));
+    double phiStep = arcAngle / numDivisions;
+    int numRings = isPartial ? (numDivisions + 1) : numDivisions;
+
+    double halfW = width / 2.0;
+    double rOuter = radius + thickness / 2.0;
+    double rInner = radius - thickness / 2.0;
+
+    // Each ring has 4 vertices: outer+y, outer-y, inner-y, inner+y
+    const int vertsPerRing = 4;
+
+    auto mesh = new SgMesh;
+    auto& vertices = *mesh->getOrCreateVertices();
+    vertices.reserve(numRings * vertsPerRing + (isPartial ? 4 : 0));
+
+    for(int i = 0; i < numRings; ++i){
+        double phi = beginAngle + i * phiStep;
+        double cp = cos(phi);
+        double sp = sin(phi);
+        // v0: outer +y
+        vertices.push_back(Vector3f(rOuter * cp, halfW, rOuter * sp));
+        // v1: outer -y
+        vertices.push_back(Vector3f(rOuter * cp, -halfW, rOuter * sp));
+        // v2: inner -y
+        vertices.push_back(Vector3f(rInner * cp, -halfW, rInner * sp));
+        // v3: inner +y
+        vertices.push_back(Vector3f(rInner * cp, halfW, rInner * sp));
+    }
+
+    // 4 faces per segment (outer, bottom(-y), inner, top(+y)), 2 triangles each
+    int numSegments = isPartial ? (numRings - 1) : numRings;
+    int numCapTriangles = isPartial ? 4 : 0; // 2 triangles per cap, 2 caps
+    mesh->reserveNumTriangles(numSegments * 4 * 2 + numCapTriangles);
+
+    for(int i = 0; i < numSegments; ++i){
+        int cur = i * vertsPerRing;
+        int nxt = ((i + 1) % numRings) * vertsPerRing;
+
+        // Outer face (v0-v1 of current, v0-v1 of next) - normal outward
+        mesh->addTriangle(cur + 0, nxt + 1, cur + 1);
+        mesh->addTriangle(cur + 0, nxt + 0, nxt + 1);
+
+        // Bottom face (-y side: v1-v2 of current, v1-v2 of next) - normal -y
+        mesh->addTriangle(cur + 1, nxt + 2, cur + 2);
+        mesh->addTriangle(cur + 1, nxt + 1, nxt + 2);
+
+        // Inner face (v2-v3 of current, v2-v3 of next) - normal inward
+        mesh->addTriangle(cur + 2, nxt + 3, cur + 3);
+        mesh->addTriangle(cur + 2, nxt + 2, nxt + 3);
+
+        // Top face (+y side: v3-v0 of current, v3-v0 of next) - normal +y
+        mesh->addTriangle(cur + 3, nxt + 0, cur + 0);
+        mesh->addTriangle(cur + 3, nxt + 3, nxt + 0);
+    }
+
+    // End caps for partial ring
+    if(isPartial){
+        // Begin cap (i=0): normal points toward -phi direction
+        int b = 0;
+        mesh->addTriangle(b + 0, b + 1, b + 2);
+        mesh->addTriangle(b + 0, b + 2, b + 3);
+
+        // End cap (i=numRings-1): normal points toward +phi direction
+        int e = (numRings - 1) * vertsPerRing;
+        mesh->addTriangle(e + 0, e + 2, e + 1);
+        mesh->addTriangle(e + 0, e + 3, e + 2);
+    }
+
+    if(isBoundingBoxUpdateEnabled_){
+        mesh->updateBoundingBox();
+    }
+
+    generateNormals(mesh, PI / 2.0);
+
+    return mesh;
+}
+
+
 SgMesh* MeshGenerator::generateExtrusion(const Extrusion& extrusion, int meshOptions)
 {
     int spineSize = extrusion.spine.size();
