@@ -552,7 +552,7 @@ IoConnectionView::Impl::Impl(IoConnectionView* self)
     hheader->setSectionResizeMode(QHeaderView::ResizeToContents);
     hheader->setStretchLastSection(true);
     auto vheader = verticalHeader();
-    vheader->setSectionResizeMode(QHeaderView::ResizeToContents);
+    vheader->setSectionResizeMode(QHeaderView::Fixed);
 
     connectionMapModel = new ConnectionMapModel(this);
     setModel(connectionMapModel);
