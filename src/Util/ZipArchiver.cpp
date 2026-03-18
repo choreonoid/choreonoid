@@ -89,7 +89,7 @@ bool ZipArchiver::Impl::createZipFile(const std::string& zipFilename, const std:
             return false;
         }
     }
-        
+
     int errorp;
     zip_t* zip = zip_open(zipFilePath.make_preferred().string().c_str(), ZIP_CREATE, &errorp);
     if(!zip){
@@ -112,7 +112,7 @@ bool ZipArchiver::Impl::createZipFile(const std::string& zipFilename, const std:
         errorType = NoError;
         systemErrorMessage.clear();
         errorMessage.clear();
-        
+
     } else {
         if(fs::exists(zipFilePath)){
             fs::remove(zipFilePath, ec);
@@ -205,7 +205,7 @@ bool ZipArchiver::Impl::extractZipFile(const std::string& zipFilename, const std
         systemErrorMessage = zip_error_strerror(&error);
         errorMessage = 
             formatR(_("Failed to open the zip file \"{0}\": {1}"),
-                    zipFilename, systemErrorMessage);;
+                    zipFilename, systemErrorMessage);
         return false;
     }
 

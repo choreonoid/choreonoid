@@ -405,7 +405,7 @@ bool CoordinateFrameItem::isLocationLocked() const
     }
     return false;
 }
-    
+
 
 void CoordinateFrameItem::setLocationLocked(bool on)
 {
