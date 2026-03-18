@@ -495,6 +495,7 @@ void CoordinateFrameListItem::onFrameItemRemoved(CoordinateFrameItem* frameItem)
             impl->frameListConnections.block();
             impl->frameList->remove(frameItem->frame());
             impl->frameListConnections.unblock();
+            impl->setFrameMarkerVisible(frameItem->frame(), false, false);
         }
     }
 }
