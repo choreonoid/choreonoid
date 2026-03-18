@@ -229,7 +229,10 @@ void LinkPositionWidget::Impl::createPanel()
     fetchButton.sigClicked().connect([this](){ updateDisplay(); });
     hbox->addWidget(&fetchButton);
     applyButton.setText(_("Apply"));
-    applyButton.sigClicked().connect([this](){ positionWidget->applyPositionInput(); });
+    applyButton.sigClicked().connect([this](){
+        positionWidget->applyPositionInput();
+        updateDisplay();
+    });
     hbox->addWidget(&applyButton);
     vbox->addLayout(hbox);
 
