@@ -345,7 +345,7 @@ msgid "Drop was canceled because item \"{0}\" is duplicated in the drop position
 msgstr "ドロップ位置でアイテム \"{0}\" が重複するためドロップはキャンセルされました． "
 
 msgid "Group Name:"
-msgstr "グループ名；"
+msgstr "グループ名："
 
 msgid "Body Library"
 msgstr "ボディライブラリ"
