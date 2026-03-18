@@ -445,11 +445,11 @@ void DistanceMeasurementDialog::Impl::setMeasurementItem(DistanceMeasurementItem
         if(!builtinMeasurementItem){
             builtinMeasurementItem = new DistanceMeasurementItem;
             builtinMeasurementItem->setName(_("Distance Measurement"));
-            builtinMeasurementItem->setChecked(true);
         }
         measurementItem = builtinMeasurementItem;
         if(isNewSession){
             itemToAddNewMeasurementItem = defaultItemToAddNewMeasurementItem.lock();
+            measurementItem->setChecked(true);
             if(!itemToAddNewMeasurementItem){
                 itemToAddNewMeasurementItem = RootItem::instance();
             }
