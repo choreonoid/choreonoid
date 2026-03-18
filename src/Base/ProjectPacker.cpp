@@ -263,7 +263,18 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
                 nodeQueue.push_back(childNode);
             }
         }
-
+        /*
+          When there is only one dependent path and it is a directory,
+          topDirPath becomes that directory itself. In that case, the directory
+          would be used as the base for relative path calculation, causing the
+          directory structure to be lost in the packed output (e.g. a "WORK"
+          folder's contents would be placed at the top level instead of inside
+          the "WORK" folder). Moving to the parent directory preserves the
+          original directory structure.
+        */
+        if (allPaths.size() == 1 && topDirPath == allPaths[0]) {
+            topDirPath = allPaths[0].parent_path();
+        }
         packingDirPath = fromUTF8(packingDirectory);
         if(!packingDirPath.is_absolute()){
             packingDirPath = fs::absolute(packingDirPath);
@@ -493,9 +504,9 @@ bool ProjectPacker::Impl::createProjectZipFile(const string& zipFilename)
             return false;
         }
     }
-        
+
     int errorp;
-    zip_t* zip = zip_open(toUTF8(zipFilePath.make_preferred().string()).c_str(), ZIP_CREATE, &errorp);
+    zip_t* zip = zip_open(zipFilePath.make_preferred().string().c_str(), ZIP_CREATE, &errorp);
     if(!zip){
         zip_error_t error;
         zip_error_init_with_code(&error, errorp);
@@ -588,7 +599,7 @@ bool ProjectPacker::unpackProject(const std::string& projectPackFile)
 bool ProjectPacker::Impl::unpackProject(const std::string& projectPackFile)
 {
     unpackedProjectFile.clear();
-    
+
     fs::path projectPackFilePath(fromUTF8(projectPackFile));
 
     int errorp;
@@ -621,9 +632,10 @@ bool ProjectPacker::Impl::extractFiles
 {
     fs::path projectFile(zipFilePath.stem());
     projectFile += ".cnoid";
+    string fallbackProjectFile;
     vector<unsigned char> buf(1024 * 1024);
     std::error_code ec;
-    
+
     int numEntries = zip_get_num_entries(zip, 0);
     
     for(int i = 0; i < numEntries; ++i){
@@ -670,8 +682,11 @@ bool ProjectPacker::Impl::extractFiles
 
                         if(unpackedProjectFile.empty()){
                             fs::path filePath(fromUTF8(name));
-                            if(*getRelativePath(filePath, *filePath.begin()) == projectFile){
+                            auto relPath = *getRelativePath(filePath, *filePath.begin());
+                            if(relPath == projectFile){
                                 unpackedProjectFile = entryPath.generic_string();
+                            } else if(fallbackProjectFile.empty() && relPath.extension() == ".cnoid"){
+                                fallbackProjectFile = entryPath.generic_string();
                             }
                         }
                     }
@@ -687,6 +702,17 @@ bool ProjectPacker::Impl::extractFiles
             }
         }
     }
+
+    /*
+      If the project file was not found by matching the zip filename,
+      fall back to the first .cnoid file found in the archive.
+      This handles the case where the user has renamed the zip file
+      after packing.
+    */
+    if(unpackedProjectFile.empty() && !fallbackProjectFile.empty()){
+        unpackedProjectFile = fallbackProjectFile;
+    }
+
     return true;
 }
 
@@ -699,7 +725,7 @@ bool ProjectPacker::loadPackedProject(const std::string& projectPackFile)
                 formatR(_("The project pack file \"{0}\" does not include a project file."), projectPackFile));
             return false;
         }
-        return impl->loadUnpackedProject(impl->unpackedProjectFile);
+        return impl->loadUnpackedProject(toUTF8(impl->unpackedProjectFile));
     }
     return false;
 }
