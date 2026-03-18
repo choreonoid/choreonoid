@@ -691,7 +691,7 @@ void BinaryMeshLoader::loadConcurrently(const string& filename, size_t triangleO
 {
     loaderThread = thread(
         [this, filename, triangleOffset, numTriangles](){
-            ifstream ifs(filename.c_str(), std::ios::in | std::ios::binary);
+            ifstream ifs(fromUTF8(filename).c_str(), std::ios::in | std::ios::binary);
             load(ifs, triangleOffset, numTriangles);
         });
 }
