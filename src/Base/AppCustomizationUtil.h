@@ -12,6 +12,7 @@
 #include "DisplayValueFormat.h"
 #include "GeneralSceneFileLoadDialog.h"
 #include "SceneWidgetConfig.h"
+#include "CoordinateFrameListItem.h"
 #include <cnoid/GettextUtil>
 
 namespace cnoid {
@@ -161,6 +162,11 @@ public:
     static void setSceneWidgetFixedLengthUnit(DisplayValueFormat::LengthUnit unit, int decimals)
     {
         SceneWidgetConfig::setFixedLengthUnit(unit, decimals);
+    }
+
+    static void setCoordinateFrameIdValidator(std::function<bool(const GeneralId& id)> validator)
+    {
+        CoordinateFrameListItem::setDefaultFrameIdValidator(validator);
     }
 };
 

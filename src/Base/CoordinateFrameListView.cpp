@@ -354,13 +354,14 @@ bool FrameListModel::setData(const QModelIndex& index, const QVariant& value, in
             if(frame->id().isInt()){
                 bool ok;
                 auto intValue = value.toInt(&ok);
-                if(ok){
-                    frameList->resetId(frame, intValue);
+                if(ok && frameListItem->resetFrameId(frame, GeneralId(intValue))){
                     updateFlags = CoordinateFrame::IdUpdate;
                 }
             } else {
-                frameList->resetId(frame, value.toString().toStdString());
-                updateFlags = CoordinateFrame::IdUpdate;
+                auto newId = value.toString().toStdString();
+                if(frameListItem->resetFrameId(frame, GeneralId(newId))){
+                    updateFlags = CoordinateFrame::IdUpdate;
+                }
             }
             break;
         }

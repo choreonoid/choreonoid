@@ -7,6 +7,7 @@
 #include <cnoid/GeneralId>
 #include <cnoid/Signal>
 #include <cnoid/EigenTypes>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -80,6 +81,24 @@ public:
     ReferencedPtr transientFrameMarkerHolder(const CoordinateFrame* frame);
     bool isFrameMarkerVisible(const CoordinateFrame* frame) const;
     SignalProxy<void(int index, bool on)> sigFrameMarkerVisibilityChanged();
+
+    /**
+       \brief Set a validator function to restrict acceptable frame IDs when editing from the GUI.
+       \param validator A function that returns true if the given GeneralId is acceptable.
+       If not set, all IDs are accepted. This validator is used by resetFrameId().
+    */
+    static void setDefaultFrameIdValidator(std::function<bool(const GeneralId& id)> validator);
+    static std::function<bool(const GeneralId& id)> defaultFrameIdValidator();
+
+    /**
+       \brief Reset the ID of a coordinate frame with validation.
+       \return true if the ID was successfully changed, false if the validator rejected the ID
+       or the underlying resetId failed.
+       This function checks the ID against the default frame ID validator before
+       calling CoordinateFrameList::resetId(). Use this function for GUI-originated
+       ID changes to ensure the validator is applied.
+    */
+    bool resetFrameId(CoordinateFrame* frame, const GeneralId& newId);
 
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

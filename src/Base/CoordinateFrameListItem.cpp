@@ -16,6 +16,8 @@ using namespace cnoid;
 
 namespace {
 
+std::function<bool(const GeneralId&)> defaultFrameIdValidator_;
+
 class CoordinateFrameListItemCreationPanel : public DefaultItemCreationPanel
 {
 public:
@@ -523,6 +525,27 @@ CoordinateFrameList* CoordinateFrameListItem::frameList()
 const CoordinateFrameList* CoordinateFrameListItem::frameList() const
 {
     return impl->frameList;
+}
+
+
+void CoordinateFrameListItem::setDefaultFrameIdValidator(std::function<bool(const GeneralId& id)> validator)
+{
+    defaultFrameIdValidator_ = validator;
+}
+
+
+std::function<bool(const GeneralId&)> CoordinateFrameListItem::defaultFrameIdValidator()
+{
+    return defaultFrameIdValidator_;
+}
+
+
+bool CoordinateFrameListItem::resetFrameId(CoordinateFrame* frame, const GeneralId& newId)
+{
+    if(defaultFrameIdValidator_ && !defaultFrameIdValidator_(newId)){
+        return false;
+    }
+    return impl->frameList->resetId(frame, newId);
 }
 
 
