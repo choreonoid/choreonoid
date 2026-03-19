@@ -742,9 +742,7 @@ void SceneWidget::renderScene(bool doImmediately)
 {
     if(doImmediately){
         impl->repaint();
-        App::beginNestedEventLoop();
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents|QEventLoop::ExcludeSocketNotifiers);
-        App::endNestedEventLoop();
+        App::updateGui();
     } else {
         impl->update();
     }
@@ -990,9 +988,7 @@ void SceneWidget::Impl::doFpsTest(int iteration)
                 Translation3(-p) *
                 C);
             repaint();
-            App::beginNestedEventLoop();
-            QCoreApplication::processEvents();
-            App::endNestedEventLoop();
+            App::updateGui(true);
             ++numFrames;
             if(isFpsTestCanceled){
                 break;
@@ -2945,9 +2941,7 @@ void SceneWidget::Impl::setInteractiveCameraPosition(
             }
             transform->setTranslation(interp.interpolate(time));
             repaint();
-            App::beginNestedEventLoop();
-            QCoreApplication::processEvents();
-            App::endNestedEventLoop();
+            App::updateGui(true);
         }
     }
     transform->setTranslation(position);
@@ -2992,9 +2986,7 @@ void SceneWidget::Impl::setCameraPositionLookingFor
             T.linear() = rotFromRpy(pos.tail<3>());
             builtinCameraTransform->setPosition(T);
             repaint();
-            App::beginNestedEventLoop();
-            QCoreApplication::processEvents();
-            App::endNestedEventLoop();
+            App::updateGui(true);
         }
     }
 
@@ -3057,9 +3049,7 @@ void SceneWidget::Impl::setCameraPositionLookingAt
             Vector3 up = Vector3(AngleAxis(theta, upRotationAxis) * up0).normalized();
             builtinCameraTransform->setPosition(SgCamera::positionLookingAt(eye, center, up));
             repaint();
-            App::beginNestedEventLoop();
-            QCoreApplication::processEvents();
-            App::endNestedEventLoop();
+            App::updateGui(true);
         }
     }
 

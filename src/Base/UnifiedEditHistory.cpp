@@ -1,4 +1,5 @@
 #include "UnifiedEditHistory.h"
+#include "App.h"
 #include "EditRecord.h"
 #include "ExtensionManager.h"
 #include "ProjectManager.h"
@@ -228,7 +229,7 @@ void UnifiedEditHistory::Impl::flushNewRecordBuffer()
         return;
     }
 
-    if(MessageView::isFlushing()){
+    if(App::isNestedEventLoopActive()){
         flushNewRecordBufferLater();
         return;
     }

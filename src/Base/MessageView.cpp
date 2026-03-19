@@ -32,7 +32,6 @@ struct PendingMessage
 };
 vector<PendingMessage> initialPendingMessages;
 
-int flushingRef = 0;
 int blockFlushCounter = 0;
 
 const bool PUT_COUT_TOO = false;
@@ -681,16 +680,8 @@ void MessageView::flush()
 void MessageView::Impl::flush()
 {
     if(blockFlushCounter == 0){
-        ++flushingRef;
         App::updateGui();
-        --flushingRef;
     }
-}
-
-
-bool MessageView::isFlushing()
-{
-    return (flushingRef > 0);
 }
 
 

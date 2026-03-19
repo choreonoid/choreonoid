@@ -65,7 +65,6 @@ public:
     int currentColumn();
         
     void flush();
-    static bool isFlushing();
 
     static void blockFlush();
     static void unblockFlush();

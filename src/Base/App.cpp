@@ -777,11 +777,15 @@ SignalProxy<void()> cnoid::sigAboutToQuit()
 }
 
 
-void App::updateGui()
+void App::updateGui(bool allEvents)
 {
     ++nestedEventLoopCounter;
-    QCoreApplication::processEvents(
-        QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers, 1.0);
+    if(allEvents){
+        QCoreApplication::processEvents();
+    } else {
+        QCoreApplication::processEvents(
+            QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers);
+    }
     --nestedEventLoopCounter;
 }
 

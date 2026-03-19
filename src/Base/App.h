@@ -43,7 +43,7 @@ public:
 
     static bool isDoingInitialization();
     static ExtensionManager* baseModule();
-    static void updateGui();
+    static void updateGui(bool allEvents = false);
     static void exit(int returnCode = 0);
     static void checkErrorAndExitIfTestMode();
     static SignalProxy<void()> sigExecutionStarted();
