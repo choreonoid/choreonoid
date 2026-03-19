@@ -3,6 +3,7 @@
 */
 
 #include "Dialog.h"
+#include "App.h"
 #include "MainWindow.h"
 #include <QStyle>
 #include <QKeyEvent>
@@ -70,6 +71,15 @@ void Dialog::show()
     if(isWindowPositionKeepingMode_ && !lastWindowPosition_.isNull()){
         setGeometry(lastWindowPosition_);
     }
+}
+
+
+int Dialog::exec()
+{
+    App::beginNestedEventLoop();
+    int result = QDialog::exec();
+    App::endNestedEventLoop();
+    return result;
 }
 
 

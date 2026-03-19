@@ -1,4 +1,5 @@
 #include "FileDialog.h"
+#include "App.h"
 #include "AppConfig.h"
 #include "ProjectManager.h"
 #include "MainWindow.h"
@@ -270,7 +271,10 @@ SignalProxy<bool(int result), LogicalProduct> FileDialog::sigAboutToFinish()
 int FileDialog::exec()
 {
     impl->show();
-    return QDialog::exec();
+    App::beginNestedEventLoop();
+    int result = QDialog::exec();
+    App::endNestedEventLoop();
+    return result;
 }
     
 

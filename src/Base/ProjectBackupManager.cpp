@@ -1,6 +1,7 @@
 #include "ProjectBackupManager.h"
 #include "App.h"
 #include "AppConfig.h"
+#include "LazyCaller.h"
 #include "ProjectManager.h"
 #include "RootItem.h"
 #include "TimeBar.h"
@@ -113,6 +114,9 @@ public:
     ConfigDialog* configDialog;
     RecoveryDialog* recoveryDialog;
 
+    LazyCaller requestBackupLater;
+    bool isBackupDeferred;
+
     Impl(ProjectBackupManager* self);
     ~Impl();
     void writeConfigurations();
@@ -121,6 +125,7 @@ public:
     void pauseAutoBackup();
     void unpauseAutoBackup();
     void onAutoBackupRequest();
+    void onNestedEventLoopExited();
     void onTreeContinuousUpdateStateExistenceChanged(bool on);
     bool ensureBackupDirectory();
     bool saveProjectAsBackup();
@@ -197,6 +202,9 @@ ProjectBackupManager::Impl::Impl(ProjectBackupManager* self)
     crashMarkerFilePath = backupTopDirPath / "crash_marker.tmp";
     isBackupDirectoryEnsured = false;
     isCrashMarkerCreated = false;
+    isBackupDeferred = false;
+    requestBackupLater.setFunction([this]{ onAutoBackupRequest(); });
+    App::sigNestedEventLoopExited().connect([this]{ onNestedEventLoopExited(); });
     configDialog = nullptr;
     recoveryDialog = nullptr;
 }
@@ -361,18 +369,34 @@ void ProjectBackupManager::Impl::unpauseAutoBackup()
 
 void ProjectBackupManager::Impl::onAutoBackupRequest()
 {
+    if(App::isNestedEventLoopActive()){
+        isBackupDeferred = true;
+        return;
+    }
     if(isAutoBackupPausedDuringPlayback){
         if(TimeBar::instance()->isPlaybackProcessing()){
-            return; // Skip auto backup
+            return;
         }
     }
     if(isAutoBackupPausedDuringContinuousUpdate){
         if(rootItem->hasAnyItemsInContinuousUpdateState()){
-            return; // Skip auto backup
+            return;
         }
     }
-    
+
     saveProjectAsBackup();
+}
+
+
+void ProjectBackupManager::Impl::onNestedEventLoopExited()
+{
+    if(isBackupDeferred){
+        isBackupDeferred = false;
+        if(timer && timer->isActive()){
+            timer->start(); /* Reset the timer interval */
+        }
+        requestBackupLater();
+    }
 }
 
 

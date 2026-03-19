@@ -40,6 +40,7 @@ public:
         return isEnterKeyClosePreventionMode_;
     }
     void show();
+    virtual int exec() override;
 
     int layoutHorizontalSpacing();
     int layoutVerticalSpacing();

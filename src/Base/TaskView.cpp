@@ -1340,7 +1340,9 @@ bool TaskViewImpl::executeCommand(int commandIndex)
                 setCurrentCommandIndex(commandIndex);
                 isPendingCommandCompleted = false;
                 func(this);
+                App::beginNestedEventLoop();
                 QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+                App::endNestedEventLoop();
                 setCurrentCommandIndex(callerCommandIndex);
                 completed = isPendingCommandCompleted;
             }

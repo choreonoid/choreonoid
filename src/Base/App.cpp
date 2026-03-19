@@ -107,6 +107,8 @@ Signal<void()> sigExecutionStarted_;
 Signal<void()> sigAboutToQuit_;
 
 bool isDoingInitialization_ = true;
+int nestedEventLoopCounter = 0;
+Signal<void()> sigNestedEventLoopExited_;
 bool isTestMode = false;
 bool isNoWindowMode = false;
 bool ctrl_c_pressed = false;
@@ -777,8 +779,36 @@ SignalProxy<void()> cnoid::sigAboutToQuit()
 
 void App::updateGui()
 {
+    ++nestedEventLoopCounter;
     QCoreApplication::processEvents(
         QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers, 1.0);
+    --nestedEventLoopCounter;
+}
+
+
+bool App::isNestedEventLoopActive()
+{
+    return nestedEventLoopCounter > 0;
+}
+
+
+void App::beginNestedEventLoop()
+{
+    ++nestedEventLoopCounter;
+}
+
+
+void App::endNestedEventLoop()
+{
+    if(--nestedEventLoopCounter == 0){
+        sigNestedEventLoopExited_();
+    }
+}
+
+
+SignalProxy<void()> App::sigNestedEventLoopExited()
+{
+    return sigNestedEventLoopExited_;
 }
 
 

@@ -48,6 +48,11 @@ public:
     static void checkErrorAndExitIfTestMode();
     static SignalProxy<void()> sigExecutionStarted();
     static SignalProxy<void()> sigAboutToQuit();
+
+    static bool isNestedEventLoopActive();
+    static void beginNestedEventLoop();
+    static void endNestedEventLoop();
+    static SignalProxy<void()> sigNestedEventLoopExited();
         
 private:
     class Impl;

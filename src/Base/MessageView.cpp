@@ -1,4 +1,5 @@
 #include "MessageView.h"
+#include "App.h"
 #include "MainWindow.h"
 #include "ViewManager.h"
 #include "InfoBar.h"
@@ -681,8 +682,7 @@ void MessageView::Impl::flush()
 {
     if(blockFlushCounter == 0){
         ++flushingRef;
-        QCoreApplication::processEvents(
-            QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers, 1.0);
+        App::updateGui();
         --flushingRef;
     }
 }
@@ -1159,7 +1159,9 @@ std::ostream& cnoid::mvout(bool doFlush)
 
 void cnoid::showMessageBox(const std::string& message)
 {
+    App::beginNestedEventLoop();
     QMessageBox::information(MainWindow::instance(), _("Message"), message.c_str());
+    App::endNestedEventLoop();
 }
 
 
@@ -1172,7 +1174,8 @@ bool cnoid::showWarningDialog(const std::string& message, bool doConfirmation)
 bool cnoid::showWarningDialog(const std::string& caption, const std::string& message, bool doConfirmation)
 {
     bool result = true;
-    
+
+    App::beginNestedEventLoop();
     if(!doConfirmation){
         QMessageBox::warning(MainWindow::instance(), caption.c_str(), message.c_str());
     } else {
@@ -1185,6 +1188,7 @@ bool cnoid::showWarningDialog(const std::string& caption, const std::string& mes
             result = false;
         }
     }
+    App::endNestedEventLoop();
 
     return result;
 }
@@ -1192,7 +1196,9 @@ bool cnoid::showWarningDialog(const std::string& caption, const std::string& mes
 
 void cnoid::showErrorDialog(const std::string& message)
 {
+    App::beginNestedEventLoop();
     QMessageBox::critical(MainWindow::instance(), _("Error"), message.c_str());
+    App::endNestedEventLoop();
 }
 
 
@@ -1210,14 +1216,18 @@ void cnoid::showErrorDialog
         mbox.setDetailedText(detailed.c_str());
     }
     mbox.setStandardButtons(QMessageBox::Ok);
+    App::beginNestedEventLoop();
     mbox.exec();
+    App::endNestedEventLoop();
 }
 
 
 bool cnoid::showConfirmDialog(const std::string& caption, const std::string& message)
 {
+    App::beginNestedEventLoop();
     QMessageBox::StandardButton clicked =
         QMessageBox::question(
             MainWindow::instance(), caption.c_str(), message.c_str(), QMessageBox::Ok | QMessageBox::Cancel);
+    App::endNestedEventLoop();
     return (clicked == QMessageBox::Ok);
 }

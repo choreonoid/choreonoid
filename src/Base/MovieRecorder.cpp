@@ -746,7 +746,9 @@ bool MovieRecorder::Impl::startOfflineModeRecording()
 
         doContinue = timeBar->setTime(time);
 
+        App::beginNestedEventLoop();
         QCoreApplication::processEvents();
+        App::endNestedEventLoop();
 
         if(requestStopRecording){
             break;
