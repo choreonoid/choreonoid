@@ -8,6 +8,9 @@
 #include <QKeyEvent>
 #include <QTabWidget>
 #include <QStyle>
+#include <QPainter>
+#include <QPen>
+#include <cnoid/LazyCaller>
 #include <cnoid/Format>
 
 using namespace std;
@@ -17,6 +20,17 @@ namespace {
 
 ViewArea* mainViewArea = nullptr;
 View* lastFocusView_ = nullptr;
+
+class ViewBorderMarker : public QWidget
+{
+public:
+    View* view;
+    QPen pen;
+
+    ViewBorderMarker(View* view);
+    void updatePosition();
+    virtual void paintEvent(QPaintEvent* event) override;
+};
 
 }
 
@@ -42,8 +56,11 @@ public:
     bool isFontSizeZoomKeysEnabled;
     int fontZoom;
 
+    ViewBorderMarker* borderMarker;
+
     Impl(View* self);
     void updateTitle();
+    void updateBorderMarker();
     void zoomFontSize(int zoom, const QList<QWidget*>& widgets);
 };
 
@@ -108,6 +125,7 @@ View::Impl::Impl(View* self)
     defaultLayoutArea = CenterArea;
     isFontSizeZoomKeysEnabled = false;
     fontZoom = 0;
+    borderMarker = nullptr;
 }
 
 
@@ -129,6 +147,7 @@ View::~View()
         impl->viewArea->removeView(this);
     }
 
+    delete impl->borderMarker;
     delete impl;
 }
 
@@ -188,6 +207,7 @@ const std::string& View::titleFormat() const
 void View::setViewArea(ViewArea* area)
 {
     impl->viewArea = area;
+    impl->updateBorderMarker();
 }
 
 
@@ -292,6 +312,7 @@ void View::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
     impl->sigResized();
+    impl->updateBorderMarker();
 }
 
 
@@ -498,4 +519,139 @@ bool View::storeState(Archive& /* archive */)
 bool View::restoreState(const Archive& /* archive */)
 {
     return true;
+}
+
+
+ViewBorderMarker::ViewBorderMarker(View* view)
+    : view(view)
+{
+    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
+    setAttribute(Qt::WA_NoSystemBackground);
+    setAttribute(Qt::WA_TransparentForMouseEvents);
+
+    pen.setStyle(Qt::SolidLine);
+    pen.setColor(QColor(Qt::red));
+    pen.setWidthF(8.0);
+}
+
+
+void ViewBorderMarker::updatePosition()
+{
+    ViewArea* viewArea = view->viewArea();
+    if(!viewArea){
+        hide();
+        return;
+    }
+    setParent(viewArea);
+
+    QWidget* parent = view->parentWidget();
+    if(!parent){
+        hide();
+        return;
+    }
+
+    int inset = static_cast<int>(pen.widthF() / 2.0);
+
+    if(view->width() <= parent->width() && view->height() <= parent->height()){
+        QPoint p = view->viewAreaPos();
+        setGeometry(p.x(), p.y(), view->width(), view->height());
+        QRegion rect(view->rect());
+        setMask(rect.xored(QRegion(inset, inset, view->width() - inset * 2, view->height() - inset * 2)));
+    } else {
+        QPoint p(0, 0);
+        p = parent->mapTo(viewArea, p);
+        setGeometry(p.x(), p.y(), parent->width(), parent->height());
+        QRegion rect(parent->rect());
+        setMask(rect.xored(QRegion(inset, inset, parent->width() - inset * 2, parent->height() - inset * 2)));
+    }
+}
+
+
+void ViewBorderMarker::paintEvent(QPaintEvent*)
+{
+    QPainter painter(this);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRect(0, 0, width(), height());
+}
+
+
+void View::Impl::updateBorderMarker()
+{
+    if(!borderMarker){
+        return;
+    }
+    if(isActive && viewArea){
+        borderMarker->updatePosition();
+        borderMarker->show();
+        borderMarker->raise();
+    } else {
+        borderMarker->hide();
+        if(!viewArea){
+            borderMarker->setParent(nullptr);
+        }
+    }
+}
+
+
+void View::enableBorderMarker(bool on)
+{
+    if(on){
+        if(!impl->borderMarker){
+            impl->borderMarker = new ViewBorderMarker(this);
+        }
+        impl->updateBorderMarker();
+    } else {
+        if(impl->borderMarker){
+            delete impl->borderMarker;
+            impl->borderMarker = nullptr;
+        }
+    }
+}
+
+
+bool View::isBorderMarkerEnabled() const
+{
+    return impl->borderMarker != nullptr;
+}
+
+
+void View::setBorderMarkerColor(const QColor& color)
+{
+    if(impl->borderMarker){
+        impl->borderMarker->pen.setColor(color);
+        impl->borderMarker->update();
+    }
+}
+
+
+void View::setBorderMarkerVisible(bool on)
+{
+    if(impl->borderMarker){
+        if(on){
+            impl->borderMarker->show();
+        } else {
+            impl->borderMarker->hide();
+        }
+    }
+}
+
+
+void View::moveEvent(QMoveEvent* event)
+{
+    QWidget::moveEvent(event);
+    impl->updateBorderMarker();
+}
+
+
+bool View::event(QEvent* event)
+{
+    if(event->type() == QEvent::ParentChange){
+        /* Defer the update so that the layout is finalized before
+           the marker position is recalculated. */
+        if(impl->borderMarker){
+            callLater([this](){ impl->updateBorderMarker(); });
+        }
+    }
+    return QWidget::event(event);
 }

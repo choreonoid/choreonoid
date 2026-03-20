@@ -77,6 +77,11 @@ public:
 
     void enableFontSizeZoomKeys(bool on);
 
+    void enableBorderMarker(bool on);
+    bool isBorderMarkerEnabled() const;
+    void setBorderMarkerColor(const QColor& color);
+    void setBorderMarkerVisible(bool on);
+
     virtual bool storeState(Archive& archive);
     virtual bool restoreState(const Archive& archive);
 
@@ -113,6 +118,8 @@ private:
     // Qt events (make hidden)
     virtual void showEvent(QShowEvent* event);
     virtual void hideEvent(QHideEvent* event);
+    virtual void moveEvent(QMoveEvent* event);
+    virtual bool event(QEvent* event);
 
     void setViewArea(ViewArea* area);
     void notifySigRemoved();

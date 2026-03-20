@@ -51,16 +51,6 @@ const char* recordingModeSymbols[] = { "offline", "online", "direct" };
 
 vector<MovieRecorderEncoderPtr> newEncoders;
 
-class ViewMarker : public QWidget
-{
-public:
-    MovieRecorder::Impl* recorderImpl;
-    QPen pen;
-    ViewMarker(MovieRecorder::Impl* recorderImpl);
-    void setTargetView(View* view);
-    virtual void paintEvent(QPaintEvent* event);
-};
-
 }
 
 namespace cnoid {
@@ -106,7 +96,6 @@ public:
     Timer blinkTimer;
     bool isBlinked;
 
-    ViewMarker* viewMarker;
     bool isViewMarkerVisible;
 
     string directory;
@@ -134,7 +123,6 @@ public:
     void setTargetView(View* view, bool isExplicitlySpecified, bool doNotify);
     void setTargetView(const std::string& name, bool doNotify);
     void onViewCreated(View* view);
-    void onTargetViewResized(View* view);
     void onTargetViewRemoved(View* view);
     void setCurrentEncoder(int index, bool doNotify);
     void setCurrentEncoderByFormatName(const std::string& formatName, bool doNotify);
@@ -230,7 +218,6 @@ MovieRecorder::Impl::Impl(MovieRecorder* self)
     blinkTimer.setInterval(500);
     isBlinked = false;
 
-    viewMarker = nullptr;
     isViewMarkerVisible = false;
 
 #ifdef _WIN32
@@ -278,8 +265,8 @@ MovieRecorder::Impl::~Impl()
     timeBarConnections.disconnect();
     store(AppConfig::archive()->openMapping("MovieRecorder"));
 
-    if(viewMarker){
-        delete viewMarker;
+    if(targetView){
+        targetView->enableBorderMarker(false);
     }
 }
 
@@ -321,14 +308,16 @@ void MovieRecorder::Impl::setTargetView(View* view, bool isExplicitlySpecified, 
             stopRecording(false);
         }
         targetViewConnections.disconnect();
+
+        if(targetView){
+            targetView->enableBorderMarker(false);
+        }
+
         targetView = view;
 
         if(targetView){
             auto view = targetView;
             targetViewName = targetView->name();
-            targetViewConnections.add(
-                targetView->sigResized().connect(
-                    [this, view](){ onTargetViewResized(view); }));
             targetViewConnections.add(
                 targetView->sigRemoved().connect(
                     [this, view](){ onTargetViewRemoved(view); }));
@@ -379,14 +368,6 @@ void MovieRecorder::Impl::onViewCreated(View* view)
 {
     if(!targetView && (view->name() == targetViewName)){
         setTargetView(view, true, true);
-    }
-}
-
-
-void MovieRecorder::Impl::onTargetViewResized(View* view)
-{
-    if(view == targetView){
-        updateViewMarker();
     }
 }
 
@@ -1110,17 +1091,10 @@ void MovieRecorder::Impl::setViewMarkerVisible(bool on)
 void MovieRecorder::Impl::updateViewMarker()
 {
     if(isViewMarkerVisible && targetView && targetView->isActive()){
-        if(!viewMarker){
-            viewMarker = new ViewMarker(this);
-        }
-        viewMarker->setTargetView(targetView);
-        viewMarker->show();
+        targetView->enableBorderMarker(true);
     } else {
-        if(viewMarker){
-            viewMarker->hide();
-            if(!targetView){
-                viewMarker->setParent(nullptr);
-            }
+        if(targetView){
+            targetView->enableBorderMarker(false);
         }
     }
 }
@@ -1137,12 +1111,8 @@ void MovieRecorder::Impl::startBlinking()
 
 void MovieRecorder::Impl::onBlinkingTimeout()
 {
-    if(isViewMarkerVisible && viewMarker){
-        if(viewMarker->isVisible()){
-            viewMarker->hide();
-        } else {
-            viewMarker->show();
-        }
+    if(isViewMarkerVisible && targetView){
+        targetView->setBorderMarkerVisible(isBlinked);
     }
     isBlinked = !isBlinked;
     sigBlinking(isBlinked);
@@ -1151,8 +1121,8 @@ void MovieRecorder::Impl::onBlinkingTimeout()
 
 void MovieRecorder::Impl::stopBlinking()
 {
-    if(isViewMarkerVisible && viewMarker){
-        viewMarker->show();
+    if(isViewMarkerVisible && targetView){
+        targetView->setBorderMarkerVisible(true);
     }
     blinkTimer.stop();
     sigBlinking(false);
@@ -1238,49 +1208,6 @@ void MovieRecorder::Impl::restore(const Mapping* archive)
 
     updateViewMarker();
     sigRecordingConfigurationChanged();
-}
-
-
-ViewMarker::ViewMarker(MovieRecorder::Impl* recorderImpl)
-    : recorderImpl(recorderImpl)
-{
-    setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
-    setAttribute(Qt::WA_NoSystemBackground);
-    setAttribute(Qt::WA_TransparentForMouseEvents);
-
-    pen.setStyle(Qt::SolidLine);
-    pen.setColor(QColor(Qt::red));
-    pen.setWidthF(8.0);
-}
-
-
-void ViewMarker::setTargetView(View* view)
-{
-    ViewArea* viewArea = view->viewArea();
-    setParent(viewArea);
-
-    QWidget* parent = view->parentWidget();
-    if(view->width() <= parent->width() && view->height() <= parent->height()){
-        QPoint p = view->viewAreaPos();
-        setGeometry(p.x(), p.y(), view->width(), view->height());
-        QRegion rect(view->rect());
-        setMask(rect.xored(QRegion(4, 4, view->width() - 8, view->height() - 8)));
-    } else {
-        QPoint p(0, 0);
-        p = parent->mapTo(viewArea, p);
-        setGeometry(p.x(), p.y(), parent->width(), parent->height());
-        QRegion rect(parent->rect());
-        setMask(rect.xored(QRegion(4, 4, parent->width() - 8, parent->height() - 8)));
-    }
-}
-
-
-void ViewMarker::paintEvent(QPaintEvent*)
-{
-    QPainter painter(this);
-    painter.setPen(pen);
-    painter.setBrush(Qt::NoBrush);
-    painter.drawRect(0, 0, width(), height());
 }
 
 
