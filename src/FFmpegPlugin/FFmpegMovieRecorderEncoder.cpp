@@ -51,6 +51,15 @@ bool FFmpegMovieRecorderEncoder::initializeEncoding(int width, int height, int f
         return false;
     }
 
+#ifdef _WIN32
+    /* libopenh264 supports up to H.264 Level 5.2 (max 9,437,184 pixels) */
+    const int maxPixels = 9437184;
+    if(width * height > maxPixels){
+        setErrorMessage(_("The image size is too large for the encoder."));
+        return false;
+    }
+#endif
+
     this->width = width;
     this->height = height;
     this->frameRate = frameRate;
