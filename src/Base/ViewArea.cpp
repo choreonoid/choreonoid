@@ -610,10 +610,25 @@ void ViewArea::Impl::detectExistingPaneAreas()
     EdgeContactState edge;
     edge.set();
 
-    ViewPane* firstPane = updateAreaDetectionInfos(topSplitter, edge, infos);
+    ViewPane* firstPane = nullptr;
+    if(topSplitter){
+        firstPane = updateAreaDetectionInfos(topSplitter, edge, infos);
+    }
 
     if(infos.empty()){
-        createDefaultPanes();
+        /*
+          No existing panes were found. This can happen when a project saved
+          with all views hidden is restored, leaving topSplitter null.
+          Create a single pane so that views can be added to it on demand.
+        */
+        clearAllPanes();
+        topSplitter = new CustomSplitter(this, self);
+        vbox->addWidget(topSplitter);
+        auto pane = new ViewPane(this, topSplitter);
+        topSplitter->addWidget(pane);
+        for(int i=0; i < View::NumLayoutAreas; ++i){
+            areaToPane[i] = pane;
+        }
 
     } else {
         setBestAreaMatchPane(infos, View::CenterArea, firstPane);
@@ -1008,7 +1023,11 @@ void ViewArea::restoreAllViewAreaLayouts(ArchivePtr archive)
             auto primaryScreen = QGuiApplication::primaryScreen();
             for(int i=0; i < layouts.size(); ++i){
                 Mapping& layout = *layouts[i].toMapping();
-                Archive* contents = dynamic_cast<Archive*>(layout.get("contents").toMapping());
+                auto contentsNode = layout.findMapping("contents");
+                if(!contentsNode->isValid()){
+                    continue;
+                }
+                Archive* contents = dynamic_cast<Archive*>(contentsNode->toMapping());
                 if(contents){
                     contents->inheritSharedInfoFrom(*archive);
                     const string type = layout.get("type").toString();
