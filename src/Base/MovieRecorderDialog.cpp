@@ -9,10 +9,26 @@
 #include "FileDialog.h"
 #include "Separator.h"
 #include <QDialogButtonBox>
+#include <QStyle>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
+
+
+void MovieRecorderDialog::setImageSizeSpecificationRequired(bool on)
+{
+    isImageSizeSpecificationRequired_ = on;
+}
+
+
+void MovieRecorderDialog::setImageSizeRange(int minWidth, int maxWidth, int minHeight, int maxHeight)
+{
+    imageSizeMinWidth_ = minWidth;
+    imageSizeMaxWidth_ = maxWidth;
+    imageSizeMinHeight_ = minHeight;
+    imageSizeMaxHeight_ = maxHeight;
+}
 
 
 MovieRecorderDialog* MovieRecorderDialog::instance()
@@ -23,7 +39,12 @@ MovieRecorderDialog* MovieRecorderDialog::instance()
 
 
 MovieRecorderDialog::MovieRecorderDialog()
-    : updateViewComboLater([&](){ updateViewCombo(); })
+    : updateViewComboLater([&](){ updateViewCombo(); }),
+      isImageSizeSpecificationRequired_(false),
+      imageSizeMinWidth_(1),
+      imageSizeMaxWidth_(9999),
+      imageSizeMinHeight_(1),
+      imageSizeMaxHeight_(9999)
 {
     recorder_ = MovieRecorder::instance();
 
@@ -230,11 +251,22 @@ MovieRecorderDialog::MovieRecorderDialog()
                 imageWidthSpin->setEnabled(on);
                 imageHeightSpin->setEnabled(on);
             }));
-    hbox->addWidget(imageSizeCheck);
+    if(isImageSizeSpecificationRequired_){
+        imageSizeCheck->setChecked(true);
+        imageSizeCheck->hide();
+        recorder_->setImageSizeSpecified(true);
+        auto label = new QLabel(_("Image size"), this);
+        int checkBoxWidth = imageSizeCheck->style()->pixelMetric(QStyle::PM_IndicatorWidth)
+            + imageSizeCheck->style()->pixelMetric(QStyle::PM_CheckBoxLabelSpacing);
+        label->setContentsMargins(checkBoxWidth, 0, 0, 0);
+        hbox->addWidget(label);
+    } else {
+        hbox->addWidget(imageSizeCheck);
+    }
 
     imageWidthSpin = new SpinBox(this);
     configurationWidgets.push_back(imageWidthSpin);
-    imageWidthSpin->setRange(1, 9999);
+    imageWidthSpin->setRange(imageSizeMinWidth_, imageSizeMaxWidth_);
     imageWidthSpin->setValue(640);
     widgetConnections.add(
         imageWidthSpin->sigValueChanged().connect(
@@ -248,7 +280,7 @@ MovieRecorderDialog::MovieRecorderDialog()
 
     imageHeightSpin = new SpinBox(this);
     configurationWidgets.push_back(imageHeightSpin);
-    imageHeightSpin->setRange(1, 9999);
+    imageHeightSpin->setRange(imageSizeMinHeight_, imageSizeMaxHeight_);
     widgetConnections.add(
         imageHeightSpin->sigValueChanged().connect(
             [this](int height){
@@ -459,9 +491,14 @@ void MovieRecorderDialog::updateWidgetsWithRecorderConfigurations()
 
     bool isImageSizeSpecified = recorder_->isImageSizeSpecified();
     imageSizeCheck->setChecked(isImageSizeSpecified);
-    imageWidthSpin->setEnabled(isImageSizeSpecified);
+    if(isImageSizeSpecificationRequired_){
+        imageWidthSpin->setEnabled(true);
+        imageHeightSpin->setEnabled(true);
+    } else {
+        imageWidthSpin->setEnabled(isImageSizeSpecified);
+        imageHeightSpin->setEnabled(isImageSizeSpecified);
+    }
     imageWidthSpin->setValue(recorder_->imageWidth());
-    imageHeightSpin->setEnabled(isImageSizeSpecified);
     imageHeightSpin->setValue(recorder_->imageHeight());
 
     if(MovieRecorder::isMouseCursorCaptureAvailable()){

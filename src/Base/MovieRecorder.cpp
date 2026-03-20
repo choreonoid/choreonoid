@@ -15,6 +15,7 @@
 #include <cnoid/UTF8>
 #include <cnoid/Format>
 #include <filesystem>
+#include <algorithm>
 #include <QPainter>
 #include <QProgressDialog>
 #include <QCoreApplication>
@@ -152,6 +153,8 @@ public:
     void stopBlinking();
     void store(Mapping* archive);
     void restore(const Mapping* archive);
+    bool checkDirectoryPath(const std::string& path);
+    bool checkFileName(const std::string& name);
 };
 
 }
@@ -645,6 +648,33 @@ bool MovieRecorder::Impl::startRecording()
 }
 
 
+bool MovieRecorder::Impl::checkDirectoryPath(const std::string& path)
+{
+#ifdef _WIN32
+    /* Check for invalid colon usage in Windows drive letter paths */
+    if(std::count(path.cbegin(), path.cend(), ':') > 1){
+        return false;
+    }
+    if(path.rfind(':') != 1){
+        return false;
+    }
+#endif
+    if(path.find_first_of(",;*?\"<>|") != std::string::npos){
+        return false;
+    }
+    return true;
+}
+
+
+bool MovieRecorder::Impl::checkFileName(const std::string& name)
+{
+    if(name.find_first_of("\\/:,;*?\"<>|") != std::string::npos){
+        return false;
+    }
+    return true;
+}
+
+
 bool MovieRecorder::Impl::initializeRecording()
 {
     if(!targetView){
@@ -657,6 +687,10 @@ bool MovieRecorder::Impl::initializeRecording()
         return false;
     }
     filesystem::path dirPath = fromUTF8(directory);
+    if(!checkDirectoryPath(fromUTF8(directory))){
+        showWarningDialog(formatR(_("{} includes characters that cannot be used."), directory));
+        return false;
+    }
     if(filesystem::exists(dirPath)){
         if(!filesystem::is_directory(dirPath)){
             showWarningDialog(formatR(_("{} is not a directory."), toUTF8(dirPath.string())));
@@ -664,6 +698,11 @@ bool MovieRecorder::Impl::initializeRecording()
         }
     } else {
         filesystem::create_directories(dirPath);
+    }
+
+    if(!checkFileName(fromUTF8(fileBaseName))){
+        showWarningDialog(formatR(_("{} includes characters that cannot be used."), fileBaseName));
+        return false;
     }
 
     filesystem::path basePath(dirPath / fromUTF8(fileBaseName));

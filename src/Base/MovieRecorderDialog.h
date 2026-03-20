@@ -27,6 +27,9 @@ class CNOID_EXPORT MovieRecorderDialog : public Dialog
 public:
     static MovieRecorderDialog* instance();
 
+    void setImageSizeSpecificationRequired(bool on);
+    void setImageSizeRange(int minWidth, int maxWidth, int minHeight, int maxHeight);
+
     MovieRecorder* recorder(){ return recorder_; }
     void setTargetViewFilter(std::function<bool(View* view)> filter);
     void setRecordingModeRadioVisible(MovieRecorder::RecordingMode mode, bool on);
@@ -80,6 +83,11 @@ private:
     CheckBox* imageSizeCheck;
     SpinBox* imageWidthSpin;
     SpinBox* imageHeightSpin;
+    bool isImageSizeSpecificationRequired_;
+    int imageSizeMinWidth_;
+    int imageSizeMaxWidth_;
+    int imageSizeMinHeight_;
+    int imageSizeMaxHeight_;
     CheckBox* mouseCursorCheck;
     ToggleButton* recordingToggle;
     std::vector<QWidget*> configurationWidgets;
