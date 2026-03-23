@@ -97,6 +97,17 @@ void LinkTraverse::traverse(Link* link, bool toUpper, bool toLower, bool isRever
 }
 
 
+void LinkTraverse::insertRoot(Link* root)
+{
+    if(!links_.empty()){
+        if(!checkIfUpperLink(links_.front(), root)){
+            ++numUpwardConnections;
+        }
+    }
+    links_.insert(links_.begin(), root);
+}
+
+
 void LinkTraverse::append(Link* link, bool isLowerLink)
 {
     links_.push_back(link);
@@ -106,42 +117,39 @@ void LinkTraverse::append(Link* link, bool isLowerLink)
 }
 
 
-bool LinkTraverse::remove(Link* link)
+bool LinkTraverse::remove(int index)
 {
-    int index = -1;
-    bool hasSingleAdjacentLink = false;
-    for(size_t i=0; i < links_.size(); ++i){
-        auto element = links_[i];
-        if(element == link){
-            index = i;
-        } else if(element->parent() == link || link->parent() == element){
-            if(!hasSingleAdjacentLink){
-                hasSingleAdjacentLink = true;
-            } else {
-                hasSingleAdjacentLink = false; // Two adjacent links!
-                break;
-            }
-        }
-    }
-    if(index < 0 || !hasSingleAdjacentLink){
-        return false;
-    }
-
     if(numUpwardConnections > 0){
+        auto link = links_[index];
         auto root = rootLink();
-        if(link == root || checkIfUpperLink(root, link)){
+        if(link == root){
             --numUpwardConnections;
             if(numUpwardConnections == 0){
                 hasRootUpperLinks_ = false;
             }
+        } else if(checkIfUpperLink(root, link)){
+            return false;
         }
     }
-
     links_.erase(links_.begin() + index);
-
     hasRootLowerLinks_ = (links_.size() - numUpwardConnections) >= 2;
-
     return true;
+}
+
+
+bool LinkTraverse::remove(Link* link)
+{
+    int index = -1;
+    for(size_t i=0; i < links_.size(); ++i){
+        if(link == links_[i]){
+            index = i;
+            break;
+        }
+    }
+    if(index < 0){
+        return false;
+    }
+    return remove(index);
 }
 
 

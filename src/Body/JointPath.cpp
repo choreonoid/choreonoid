@@ -114,6 +114,7 @@ JointPath::JointPath(Link* end)
 
 bool JointPath::setPath(Link* base, Link* end)
 {
+    remainingLinkTraverse.reset();
     if(!linkPath_.setPath(base, end)){
         return false;
     }
@@ -511,18 +512,42 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
 bool JointPath::calcRemainingPartForwardKinematicsForInverseKinematics()
 {
     if(!remainingLinkTraverse){
-        remainingLinkTraverse = make_shared<LinkTraverse>(baseLink(), true, true);
-
+        remainingLinkTraverse = make_shared<LinkTraverse>();
+        Link* remainingBaseLink = nullptr;
+        if(empty()){
+            remainingLinkTraverse->find(baseLink(), true, true);
+            remainingBaseLink = baseLink();
+        } else if(isJointDownward(0)){
+            remainingLinkTraverse->find(linkPath_[1], false, true);
+            remainingLinkTraverse->insertRoot(baseLink());
+            remainingBaseLink = baseLink();
+        } else {
+            remainingLinkTraverse->find(baseLink(), true, false);
+            while(!remainingLinkTraverse->empty()){
+                auto nextLink = remainingLinkTraverse->link(1);
+                remainingBaseLink = nextLink;
+                if(remainingLinkTraverse->isDownward(1)){
+                    break;
+                }
+                if(nextLink->child()->sibling()){ // has multiple children
+                    break;
+                }
+                remainingLinkTraverse->remove(0);
+            }
+        }
         int n = linkPath_.numLinks();
-        for(int i=1; i < n; ++i){ // Exclude the base link
-            remainingLinkTraverse->remove(linkPath_[i]);
+        for(int i=0; i < n; ++i){
+            auto link = linkPath_[i];
+            if(link != remainingBaseLink){
+                remainingLinkTraverse->remove(link);
+            }
         }
     }
     remainingLinkTraverse->calcForwardKinematics();
     return true;
 }
-        
-    
+
+
 int JointPath::numIterations() const
 {
     return numericalIK ? numericalIK->iteration : 0;

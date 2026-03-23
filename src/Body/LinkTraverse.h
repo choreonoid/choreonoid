@@ -29,8 +29,9 @@ public:
     bool hasRootLowerLinks() const { return hasRootLowerLinks_; }
     bool hasRootUpperLinks() const { return hasRootUpperLinks_; }
 
+    void insertRoot(Link* root);
     void append(Link* link, bool isLowerLink = true);
-
+    bool remove(int index);
     bool remove(Link* link);
 
     Body* body() { return links_.empty() ? nullptr : links_.front()->body(); }
