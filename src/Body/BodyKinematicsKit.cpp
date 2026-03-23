@@ -713,6 +713,10 @@ bool BodyKinematicsKit::setEndPosition
         impl->configurationHandler->resetPreferredConfigurationType();
     }
 
+    if(solved){
+        impl->jointPath->calcRemainingPartForwardKinematicsForInverseKinematics();
+    }
+
     return solved;
 }
 
@@ -741,6 +745,10 @@ bool BodyKinematicsKit::setGlobalEndPosition
 
     if(impl->configurationHandler){
         impl->configurationHandler->resetPreferredConfigurationType();
+    }
+
+    if(solved){
+        impl->jointPath->calcRemainingPartForwardKinematicsForInverseKinematics();
     }
 
     return solved;
