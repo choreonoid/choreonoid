@@ -47,6 +47,11 @@ namespace {
 
 constexpr int LibraryItemType = QTreeWidgetItem::UserType;
 
+#ifdef _WIN32
+constexpr int maxDirPath = 247;
+constexpr int maxFilePath = 259;
+#endif
+
 class LibraryItem : public QTreeWidgetItem
 {
 public:
@@ -148,6 +153,9 @@ public:
     bool renameLibraryItem(LibraryItem* item, const string& newName);
     bool moveLibraryItem(LibraryItem* item, QTreeWidgetItem* destGroupItem);
     bool relocateItemFiles(LibraryItem* item, const fs::path& orgDirPath, QTreeWidgetItem* destGroupItem);
+#ifdef _WIN32
+    size_t getMaxDescendantPathLength(QTreeWidgetItem* item, const fs::path& basePath);
+#endif
     void relocateItemFileInformationRecursively(LibraryItem* item, fs::path basePath);
     void removeLibraryItem(LibraryItem* item);
     LibraryItemNameDialog* getOrCreateLibraryItemNameDialog();
@@ -823,6 +831,23 @@ bool BodyLibraryView::Impl::renameLibraryItem(LibraryItem* item, const string& n
         if(fs::is_directory(orgDirPath, ec)){
             fs::path newNamePath(fromUTF8(name));
             newDirPath = orgDirPath.parent_path() / newNamePath;
+#ifdef _WIN32
+            /*
+              Calculate the max path length as if the item were already renamed.
+              getMaxDescendantPathLength builds paths by appending item names to basePath,
+              so passing the parent path makes it use the item's current name.
+              We need to temporarily set the new name to get the correct result.
+            */
+            string orgName = item->name;
+            item->name = name;
+            size_t maxLen = getMaxDescendantPathLength(item, orgDirPath.parent_path());
+            item->name = orgName;
+            size_t limit = item->isGroup ? maxDirPath : maxFilePath;
+            if(maxLen > limit){
+                failed = true;
+                return !failed;
+            }
+#endif
             fs::rename(orgDirPath, newDirPath, ec);
             if(ec){
                 failed = true;
@@ -869,6 +894,32 @@ bool BodyLibraryView::Impl::moveLibraryItem(LibraryItem* item, QTreeWidgetItem* 
 }
 
 
+#ifdef _WIN32
+size_t BodyLibraryView::Impl::getMaxDescendantPathLength(QTreeWidgetItem* item, const fs::path& basePath)
+{
+    auto libraryItem = dynamic_cast<LibraryItem*>(item);
+    auto itemPath = basePath / fs::path(fromUTF8(libraryItem->name));
+    size_t maxLen = itemPath.wstring().length();
+    if(!libraryItem->isGroup){
+        fs::path filePath(fromUTF8(libraryItem->file));
+        auto fullFilePath = itemPath / filePath.filename();
+        size_t fileLen = fullFilePath.wstring().length();
+        if(fileLen > maxLen){
+            maxLen = fileLen;
+        }
+    }
+    int n = item->childCount();
+    for(int i = 0; i < n; ++i){
+        size_t childLen = getMaxDescendantPathLength(item->child(i), itemPath);
+        if(childLen > maxLen){
+            maxLen = childLen;
+        }
+    }
+    return maxLen;
+}
+#endif
+
+
 bool BodyLibraryView::Impl::relocateItemFiles
 (LibraryItem* item, const fs::path& orgDirPath, QTreeWidgetItem* destGroupItem)
 {
@@ -876,6 +927,14 @@ bool BodyLibraryView::Impl::relocateItemFiles
     fs::path destDirPath = getInternalItemDirPath(destGroupItem);
 
     if(destDirPath != orgDirPath){
+#ifdef _WIN32
+        size_t maxLen = getMaxDescendantPathLength(item, destDirPath);
+        size_t limit = item->isGroup ? maxDirPath : maxFilePath;
+        if(maxLen > limit){
+            failed = true;
+            return !failed;
+        }
+#endif
         if(checkIfExistingInternalFilePath(orgDirPath)){
             if(!ensureDirectory(destDirPath)){
                 failed = true;
@@ -1035,6 +1094,14 @@ bool BodyLibraryView::Impl::createGroupWithDialog(QTreeWidgetItem* parentItem)
             auto groupItem = createGroupItem(groupName);
             auto block = rowsInsertedConnection.scopedBlock();
             parentItem->addChild(groupItem);
+#ifdef _WIN32
+            auto dirPath = getInternalItemDirPath(groupItem);
+            if(dirPath.wstring().length() > maxDirPath){
+                removeLibraryItem(groupItem);
+                showErrorDialog(_("The group cannot be created because the path would be too long."));
+                return created;
+            }
+#endif
             selectAndScrollToItem(groupItem);
             saveIndexFile();
             created = true;
