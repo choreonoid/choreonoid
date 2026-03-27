@@ -85,13 +85,15 @@ public:
     vector<LibraryItem*> libraryItems;
 };
 
-class GroupNameDialog : public Dialog
+class LibraryItemNameDialog : public Dialog
 {
 public:
+    QLabel* nameLabel;
     LineEdit* nameEdit;
     PushButton* applyButton;
 
-    GroupNameDialog(QWidget* parent);
+    LibraryItemNameDialog(QWidget* parent);
+    void setGroupMode(bool isGroup);
 };
 
 }
@@ -117,7 +119,7 @@ public:
     QPixmap noImagePixmap;
     int imageSize;
     MenuManager contextMenuManager;
-    GroupNameDialog* groupNameDialog;
+    LibraryItemNameDialog* libraryItemNameDialog;
     // Used for buit-in drag&drop function inside the view
     map<LibraryItem*, fs::path> libraryItemToOrgDirPathMap;
     BodyLibrarySelectionDialog* selectionDialog;
@@ -130,6 +132,8 @@ public:
     ~Impl();
     bool setLibraryDirectory(const std::string& directory, bool ensureDirectoryAndIndexFile);
     LibraryItem* createGroupItem(const std::string& name);
+    void removeSpace(std::string& name);
+    bool checkGroupName(const std::string& name);
     LibraryItem* createBodyItem(
         const std::string& name, const std::string& file, const std::string& thumbnailFile);
     bool setItemImage(LibraryItem* item);
@@ -146,7 +150,7 @@ public:
     bool relocateItemFiles(LibraryItem* item, const fs::path& orgDirPath, QTreeWidgetItem* destGroupItem);
     void relocateItemFileInformationRecursively(LibraryItem* item, fs::path basePath);
     void removeLibraryItem(LibraryItem* item);
-    GroupNameDialog* getOrCreateGroupNameDialog();
+    LibraryItemNameDialog* getOrCreateLibraryItemNameDialog();
     bool createGroupWithDialog(ElementPtr parentGroup);
     bool createGroupWithDialog(QTreeWidgetItem* parentItem);
     bool registerBodyWithDialog(
@@ -330,13 +334,14 @@ void ExTreeWidget::dropEvent(QDropEvent* event)
 }
 
 
-GroupNameDialog::GroupNameDialog(QWidget* parent)
+LibraryItemNameDialog::LibraryItemNameDialog(QWidget* parent)
 {
     auto vbox = new QVBoxLayout;
     setLayout(vbox);
 
     auto hbox = new QHBoxLayout;
-    hbox->addWidget(new QLabel(_("Group Name:")));
+    nameLabel = new QLabel;
+    hbox->addWidget(nameLabel);
     nameEdit = new LineEdit;
     hbox->addWidget(nameEdit);
     vbox->addLayout(hbox);
@@ -358,6 +363,16 @@ GroupNameDialog::GroupNameDialog(QWidget* parent)
             applyButton->setEnabled(!text.isEmpty());
         });
     applyButton->setEnabled(false);
+}
+
+
+void LibraryItemNameDialog::setGroupMode(bool isGroup)
+{
+    if(isGroup){
+        nameLabel->setText(_("Group Name:"));
+    } else {
+        nameLabel->setText(_("Registration Name:"));
+    }
 }
 
 
@@ -493,7 +508,7 @@ BodyLibraryView::Impl::Impl(BodyLibraryView* self)
     needToSaveIndexFile = false;
     imageSize = 120;
 
-    groupNameDialog = nullptr;
+    libraryItemNameDialog = nullptr;
     selectionDialog = nullptr;
 }
 
@@ -506,8 +521,8 @@ BodyLibraryView::~BodyLibraryView()
 
 BodyLibraryView::Impl::~Impl()
 {
-    if(groupNameDialog){
-        delete groupNameDialog;
+    if(libraryItemNameDialog){
+        delete libraryItemNameDialog;
     }
 }
 
@@ -794,22 +809,29 @@ bool BodyLibraryView::Impl::copyFile(const fs::path& srcPath, const fs::path& de
 bool BodyLibraryView::Impl::renameLibraryItem(LibraryItem* item, const string& newName)
 {
     bool failed = false;
+    string name = newName;
+    removeSpace(name);
+    if(!checkGroupName(name)){
+        failed = true;
+    }
 
     fs::path orgDirPath = getInternalItemDirPath(item);
     fs::path newDirPath;
 
-    std::error_code ec;
-    if(fs::is_directory(orgDirPath, ec)){
-        fs::path newNamePath(fromUTF8(newName));
-        newDirPath = orgDirPath.parent_path() / newNamePath;
-        fs::rename(orgDirPath, newDirPath, ec);
-        if(ec){
-            failed = true;
+    if(!failed){
+        std::error_code ec;
+        if(fs::is_directory(orgDirPath, ec)){
+            fs::path newNamePath(fromUTF8(name));
+            newDirPath = orgDirPath.parent_path() / newNamePath;
+            fs::rename(orgDirPath, newDirPath, ec);
+            if(ec){
+                failed = true;
+            }
         }
     }
 
     if(!failed){
-        item->name = newName;
+        item->name = name;
         if(!newDirPath.empty()){
             relocateItemFileInformationRecursively(item, newDirPath);
             updateItemImagesRecursively(item);
@@ -826,6 +848,8 @@ bool BodyLibraryView::Impl::moveLibraryItem(LibraryItem* item, QTreeWidgetItem* 
     fs::path orgDirPath = getInternalItemDirPath(item);
 
     if(!relocateItemFiles(item, orgDirPath, destGroupItem)){
+        showErrorDialog(formatR(_("Item \"{0}\" cannot be moved to \"{1}\"."),
+               item->name, destGroupItem->text(0).toStdString()));
         return false;
     }
 
@@ -915,12 +939,39 @@ void BodyLibraryView::Impl::removeLibraryItem(LibraryItem* item)
 }
 
 
-GroupNameDialog* BodyLibraryView::Impl::getOrCreateGroupNameDialog()
+void BodyLibraryView::Impl::removeSpace(std::string& name)
 {
-    if(!groupNameDialog){
-        groupNameDialog = new GroupNameDialog(&treeWidget);
+    if(name.empty()){
+        return;
     }
-    return groupNameDialog;
+    while(!name.empty() && name.front() == ' '){
+        name.erase(name.begin());
+    }
+    while(!name.empty() && name.back() == ' '){
+        name.pop_back();
+    }
+}
+
+
+bool BodyLibraryView::Impl::checkGroupName(const std::string& name)
+{
+    if(name.empty()){
+        return false;
+    }
+    auto nativeName = fromUTF8(name);
+    if(nativeName.find_first_of("\\/:,;*?\"<>|") != std::string::npos){
+        return false;
+    }
+    return true;
+}
+
+
+LibraryItemNameDialog* BodyLibraryView::Impl::getOrCreateLibraryItemNameDialog()
+{
+    if(!libraryItemNameDialog){
+        libraryItemNameDialog = new LibraryItemNameDialog(&treeWidget);
+    }
+    return libraryItemNameDialog;
 }
 
 
@@ -953,23 +1004,33 @@ bool BodyLibraryView::Impl::createGroupWithDialog(QTreeWidgetItem* parentItem)
     if(needToLoadIndexFile){
         loadIndexFile();
     }
-    
+
     bool created = false;
 
     if(!parentItem){
         parentItem = treeWidget.invisibleRootItem();
     }
-    
-    auto dialog = getOrCreateGroupNameDialog();
+
+    auto dialog = getOrCreateLibraryItemNameDialog();
+    dialog->setGroupMode(true);
+    dialog->nameEdit->setText("");
     if(parentItem == treeWidget.invisibleRootItem()){
         dialog->setWindowTitle(_("Create Group"));
     } else {
         dialog->setWindowTitle(_("Create Sub Group"));
     }
     dialog->applyButton->setText(_("&Create"));
-    
+
     if(dialog->exec() == QDialog::Accepted){
         string groupName = dialog->nameEdit->string();
+
+        removeSpace(groupName);
+        if(!checkGroupName(groupName)){
+            showErrorDialog(
+                formatR(_("Group name \"{0}\" includes characters that cannot be used."), groupName));
+            return created;
+        }
+
         if(!checkNameDuplication(parentItem, groupName)){
             auto groupItem = createGroupItem(groupName);
             auto block = rowsInsertedConnection.scopedBlock();
@@ -1004,6 +1065,15 @@ bool BodyLibraryView::registerBodyWithDialog
 bool BodyLibraryView::Impl::registerBodyWithDialog
 (BodyItem* bodyItem, Mapping* extraInfo, QTreeWidgetItem* groupItem, QTreeWidgetItem* position, bool doStoreFiles)
 {
+    fs::path filePath(fromUTF8(bodyItem->filePath()));
+    if(!filePath.empty() && !fs::exists(filePath)){
+        showErrorDialog(
+            formatR(_("The body cannot be registered in the body library "
+                      "due to the lack of reference file: {0}"),
+                    bodyItem->filePath()));
+        return false;
+    }
+
     string name = bodyItem->name();
 
     if(name.empty()){
@@ -1078,7 +1148,7 @@ string BodyLibraryView::Impl::exportBodyFileToLibraryDirectory(BodyItem* bodyIte
         return file;
     }
 
-    auto dirPath = getInternalItemDirPath(groupItem, name);
+    auto dirPath = getInternalItemDirPath(groupItem, fromUTF8(name));
     if(!ensureDirectory(dirPath, true)){
         showErrorDialog(
             formatR(_("The directory \"{0}\" to put the body file in the body library cannot be created. "
@@ -1086,8 +1156,8 @@ string BodyLibraryView::Impl::exportBodyFileToLibraryDirectory(BodyItem* bodyIte
                     toUTF8(dirPath.string())));
         return file;
     }
-    
-    auto filePath = dirPath / (name + ".body");
+
+    auto filePath = dirPath / (fromUTF8(name) + ".body");
     file = toUTF8(filePath.generic_string());
 
     if(!bodyItem->save(file, "CHOREONOID-BODY")){
@@ -1111,8 +1181,8 @@ bool BodyLibraryView::Impl::storeItemFilesToLibraryDirectory
     string storedBodyFile;
     fs::path orgBodyFilePath(fromUTF8(libraryItem->file));
     fs::path orgBodyFileDirPath = orgBodyFilePath.parent_path();
-    fs::path destDirPath = getInternalItemDirPath(groupItem, libraryItem->name);
-    
+    fs::path destDirPath = getInternalItemDirPath(groupItem, fromUTF8(libraryItem->name));
+
     auto rp = getRelativePath(destDirPath, orgBodyFileDirPath);
     if(!rp){
         return false;
@@ -1323,8 +1393,9 @@ bool BodyLibraryView::Impl::renameLibraryItemWithDialog(LibraryItem* item)
     }
 
     bool renamed = false;
-    
-    auto dialog = getOrCreateGroupNameDialog();
+
+    auto dialog = getOrCreateLibraryItemNameDialog();
+    dialog->setGroupMode(item->isGroup);
     if(item->isGroup){
         dialog->setWindowTitle(_("Rename Group"));
     } else {
@@ -1335,6 +1406,7 @@ bool BodyLibraryView::Impl::renameLibraryItemWithDialog(LibraryItem* item)
 
     if(dialog->exec() == QDialog::Accepted){
         string newName = dialog->nameEdit->string();
+        removeSpace(newName);
         if(newName != item->name){
             QTreeWidgetItem* parentItem = item->parent();
             if(!parentItem){
@@ -1347,7 +1419,7 @@ bool BodyLibraryView::Impl::renameLibraryItemWithDialog(LibraryItem* item)
                           "in the library directory cannot be moved to the renamed ones."));
                 } else {
                     if(item->isGroup){
-                        item->setText(0, newName.c_str());
+                        item->setText(0, item->name.c_str());
                     } else {
                         setItemImage(item);
                     }
@@ -1480,6 +1552,7 @@ void BodyLibraryView::Impl::moveSelectedItemsWithDialog(QTreeWidgetItem* destIte
 void BodyLibraryView::Impl::onTreeWidgetRowsInserted(const QModelIndex& parent, int start, int end)
 {
     auto model = treeWidget.model();
+    bool failed = false;
     for(int row = start; row <= end; ++row){
         auto index = model->index(row, 0, parent);
         if(auto item = treeWidget.getLibraryItem(index)){
@@ -1487,12 +1560,34 @@ void BodyLibraryView::Impl::onTreeWidgetRowsInserted(const QModelIndex& parent, 
             if(it != libraryItemToOrgDirPathMap.end()){
                 auto& orgDirPath = it->second;
                 if(!relocateItemFiles(item, orgDirPath, item->parent())){
-                    // Drop should be canceled when moving files failed.
+                    showErrorDialog(formatR(_("Item \"{0}\" cannot be moved to \"{1}\"."),
+                        item->name, item->parent()->text(0).toStdString()));
+                    failed = true;
+                    break;
                 }
             }
-            updateItemImagesRecursively(item);
-            saveIndexFileLater();
         }
+    }
+    if(failed){
+        /*
+          The tree state and the file system state are now inconsistent.
+          Reload the index file to restore the tree to the correct state.
+          This must be done via callLater because this handler is called
+          during the rowsInserted signal, and modifying the tree directly
+          here would corrupt the model's internal state.
+          Note: If some items were already relocated before the failure,
+          those files remain in the moved location and become inconsistent
+          with the restored index. A full rollback is not implemented.
+        */
+        callLater([this](){ loadIndexFile(); });
+    } else {
+        for(int row = start; row <= end; ++row){
+            auto index = model->index(row, 0, parent);
+            if(auto item = treeWidget.getLibraryItem(index)){
+                updateItemImagesRecursively(item);
+            }
+        }
+        saveIndexFileLater();
     }
 }
 
@@ -1593,6 +1688,11 @@ bool BodyLibraryView::eventFilter(QObject* obj, QEvent* event)
 bool BodyLibraryView::Impl::onSceneViewDragEnterEvent(SceneView* sceneView, QDragEnterEvent* event)
 {
     if(auto data = dynamic_cast<const ExMimeData*>(event->mimeData())){
+        for(auto& item : data->libraryItems){
+            if(item->isGroup){
+                return false;
+            }
+        }
         event->acceptProposedAction();
         return true;
     }
@@ -1972,7 +2072,7 @@ bool BodyLibraryView::Impl::exportLibrary(const std::string& filename, MessageOu
         } else {
             mout->putErrorln(archiver.errorMessage());
         }
-        fs::remove_all(directory);
+        fs::remove_all(fromUTF8(directory));
     }
     return exported;
 }
