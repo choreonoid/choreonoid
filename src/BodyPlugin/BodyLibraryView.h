@@ -68,6 +68,17 @@ public:
     */
     void setDragPixmapEnabled(bool on);
 
+    /**
+       \brief Enable or disable conversion to body file format when registering
+       a body item in the library.
+
+       When enabled, if the body item's file is not in the .body format (e.g. URDF),
+       it is automatically exported as a .body file before registration.
+       When disabled, the original file format is preserved as-is.
+       The default is false (disabled).
+    */
+    void setConversionToBodyFileInRegistrationEnabled(bool on);
+
     virtual BodyItem* loadBodyItem(const std::string& name, const std::string& filename, Mapping* extraInfo);
 
     class Impl;

@@ -130,6 +130,7 @@ public:
     BodyLibrarySelectionDialog* selectionDialog;
     vector<fs::path> refDirPaths;
     bool isDragPixmapEnabled;
+    bool isConversionToBodyFileInRegistrationEnabled;
 
     static QTreeWidgetItem* getTreeWidgetItem(Element& element);
     static LibraryItem* getLibraryItem(Element& element);
@@ -522,6 +523,7 @@ BodyLibraryView::Impl::Impl(BodyLibraryView* self)
     libraryItemNameDialog = nullptr;
     selectionDialog = nullptr;
     isDragPixmapEnabled = true;
+    isConversionToBodyFileInRegistrationEnabled = false;
 }
 
 
@@ -542,6 +544,12 @@ BodyLibraryView::Impl::~Impl()
 void BodyLibraryView::setDragPixmapEnabled(bool on)
 {
     impl->isDragPixmapEnabled = on;
+}
+
+
+void BodyLibraryView::setConversionToBodyFileInRegistrationEnabled(bool on)
+{
+    impl->isConversionToBodyFileInRegistrationEnabled = on;
 }
 
 
@@ -1168,7 +1176,13 @@ bool BodyLibraryView::Impl::registerBodyWithDialog
 
     bool exported = false;
     string file = bodyItem->filePath();
-    if(file.empty()){
+    bool needsExport = file.empty();
+    if(!needsExport && isConversionToBodyFileInRegistrationEnabled){
+        if(fs::path(fromUTF8(file)).extension() != ".body"){
+            needsExport = true;
+        }
+    }
+    if(needsExport){
         file = exportBodyFileToLibraryDirectory(bodyItem, groupItem);
         if(file.empty()){
             return false;
