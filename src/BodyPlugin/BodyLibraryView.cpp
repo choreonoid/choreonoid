@@ -129,6 +129,7 @@ public:
     map<LibraryItem*, fs::path> libraryItemToOrgDirPathMap;
     BodyLibrarySelectionDialog* selectionDialog;
     vector<fs::path> refDirPaths;
+    bool isDragPixmapEnabled;
 
     static QTreeWidgetItem* getTreeWidgetItem(Element& element);
     static LibraryItem* getLibraryItem(Element& element);
@@ -274,14 +275,16 @@ void ExTreeWidget::startDrag(Qt::DropActions supportedActions)
 {
     auto drag = new QDrag(this);
     drag->setMimeData(model()->mimeData(selectedIndexes()));
-    QPixmap pixmap(viewport()->visibleRegion().boundingRect().size());
-    pixmap.fill(Qt::transparent);
-    QPainter painter(&pixmap);
-    for(QModelIndex index: selectedIndexes()){
-        painter.drawPixmap(visualRect(index), viewport()->grab(visualRect(index)));
+    if(viewImpl->isDragPixmapEnabled){
+        QPixmap pixmap(viewport()->visibleRegion().boundingRect().size());
+        pixmap.fill(Qt::transparent);
+        QPainter painter(&pixmap);
+        for(QModelIndex index: selectedIndexes()){
+            painter.drawPixmap(visualRect(index), viewport()->grab(visualRect(index)));
+        }
+        drag->setPixmap(pixmap);
+        drag->setHotSpot(viewport()->mapFromGlobal(QCursor::pos()));
     }
-    drag->setPixmap(pixmap);
-    drag->setHotSpot(viewport()->mapFromGlobal(QCursor::pos()));
     drag->exec(supportedActions, Qt::MoveAction);
 }
 
@@ -518,6 +521,7 @@ BodyLibraryView::Impl::Impl(BodyLibraryView* self)
 
     libraryItemNameDialog = nullptr;
     selectionDialog = nullptr;
+    isDragPixmapEnabled = true;
 }
 
 
@@ -532,6 +536,12 @@ BodyLibraryView::Impl::~Impl()
     if(libraryItemNameDialog){
         delete libraryItemNameDialog;
     }
+}
+
+
+void BodyLibraryView::setDragPixmapEnabled(bool on)
+{
+    impl->isDragPixmapEnabled = on;
 }
 
 

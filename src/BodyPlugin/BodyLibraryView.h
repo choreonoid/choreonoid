@@ -58,6 +58,16 @@ public:
     bool importLibrary(const std::string& filename, MessageOut* mout = nullptr);
     bool exportLibrary(const std::string& filename, MessageOut* mout = nullptr);
 
+    /**
+       \brief Enable or disable the drag preview pixmap in the library tree.
+
+       When enabled, dragging items in the library tree shows a visual preview
+       of the dragged items near the cursor. Set this to false to disable the
+       preview if it causes issues in specific environments.
+       The default is true (enabled).
+    */
+    void setDragPixmapEnabled(bool on);
+
     virtual BodyItem* loadBodyItem(const std::string& name, const std::string& filename, Mapping* extraInfo);
 
     class Impl;
