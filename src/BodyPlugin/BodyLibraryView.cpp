@@ -131,6 +131,7 @@ public:
     vector<fs::path> refDirPaths;
     bool isDragPixmapEnabled;
     bool isConversionToBodyFileInRegistrationEnabled;
+    bool isDependentFileDetectionWithNewlyLoadedModelEnabled;
 
     static QTreeWidgetItem* getTreeWidgetItem(Element& element);
     static LibraryItem* getLibraryItem(Element& element);
@@ -524,6 +525,7 @@ BodyLibraryView::Impl::Impl(BodyLibraryView* self)
     selectionDialog = nullptr;
     isDragPixmapEnabled = true;
     isConversionToBodyFileInRegistrationEnabled = false;
+    isDependentFileDetectionWithNewlyLoadedModelEnabled = false;
 }
 
 
@@ -550,6 +552,12 @@ void BodyLibraryView::setDragPixmapEnabled(bool on)
 void BodyLibraryView::setConversionToBodyFileInRegistrationEnabled(bool on)
 {
     impl->isConversionToBodyFileInRegistrationEnabled = on;
+}
+
+
+void BodyLibraryView::setDependentFileDetectionWithNewlyLoadedModelEnabled(bool on)
+{
+    impl->isDependentFileDetectionWithNewlyLoadedModelEnabled = on;
 }
 
 
@@ -1284,7 +1292,7 @@ bool BodyLibraryView::Impl::storeItemFilesToLibraryDirectory
     if(!(*rp).empty()){
          // The directory of the current file is different from the internal directory
 
-        if(!bodyItem){
+        if(!bodyItem || isDependentFileDetectionWithNewlyLoadedModelEnabled){
             // BodyItem object is temporarily used to detect dependent files
             bodyItem = new BodyItem;
             bodyItem->load(libraryItem->file);

@@ -79,6 +79,19 @@ public:
     */
     void setConversionToBodyFileInRegistrationEnabled(bool on);
 
+    /**
+       \brief Enable or disable always loading a fresh model from file for
+       dependent file detection when storing files to the library directory.
+
+       When enabled, the body item passed to the store operation is ignored and
+       a new BodyItem is always loaded from the file to detect dependent files.
+       This ensures that the detected dependencies reflect the actual file on disk
+       rather than the in-memory state of the body item.
+       When disabled, the passed body item is used if available.
+       The default is false (disabled).
+    */
+    void setDependentFileDetectionWithNewlyLoadedModelEnabled(bool on);
+
     virtual BodyItem* loadBodyItem(const std::string& name, const std::string& filename, Mapping* extraInfo);
 
     class Impl;
