@@ -139,6 +139,9 @@ CameraItem::Impl::Impl(CameraItem* self, const Impl& org, InteractiveCameraTrans
     cameraTransform->setPosition(org.cameraTransform->position());
     cameraTransform->setInteractiveViewpointChangeLocked(
         org.cameraTransform->isInteractiveViewpointChangeLocked());
+
+    setFieldOfView(org.persCamera->fieldOfView());
+    setClipDistances(org.persCamera->nearClipDistance(), org.persCamera->farClipDistance());
 }
 
 
