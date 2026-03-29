@@ -15,7 +15,7 @@ namespace {
 
 const bool PUT_DEBUG_MESSAGE = true;
 
-constexpr int MainEndLinkGuessBufSize = 10;
+
 
 #ifndef uint
 typedef unsigned int uint;
@@ -74,7 +74,10 @@ public:
         
     Impl(Body* self);
     void initialize(Body* self, Link* rootLink);
-    void guessMainEndLinkSub(Link* link, Link* rootLink, int dof, Link** linkOfDof);
+    void guessMainEndLinkSub(
+        Link* link, Link* rootLink,
+        int actualDof, int trailCount,
+        Link*& bestLeaf, int& bestDof, int& bestTrail);
     void removeDeviceFromDeviceNameMap(Device* device);
     MultiplexInfo* getOrCreateMultiplexInfo(Body* self);
     bool installCustomizer(BodyCustomizerInterface* customizerInterface);
@@ -463,39 +466,54 @@ Link* Body::lastSerialLink() const
 }
 
 
-//  Find a maximum DOF link whose DOF is different from any other links.
+/* Traverse the link tree to find the "main end link" - the leaf link of
+   the branch with the highest actual DOF (revolute/prismatic joints).
+   Ties are broken first by the number of trailing fixed links after the
+   last actual joint, then by sibling order (elder sibling's subtree wins). */
 Link* Body::guessMainEndLink() const
 {
-    Link* linkOfDof[MainEndLinkGuessBufSize];
-    for(int i=0; i < MainEndLinkGuessBufSize; ++i){
-        linkOfDof[i] = nullptr;
-    }
-    
-    impl->guessMainEndLinkSub(rootLink_, rootLink_, 0, linkOfDof);
+    Link* bestLeaf = nullptr;
+    int bestDof = 0;
+    int bestTrail = 0;
 
-    for(int i = MainEndLinkGuessBufSize - 1; i > 0; --i){
-        auto link = linkOfDof[i];
-        if(link && link != rootLink_){
-            return link;
-        }
+    impl->guessMainEndLinkSub(rootLink_, rootLink_, 0, 0,
+                              bestLeaf, bestDof, bestTrail);
+
+    if(!bestLeaf){
+        return rootLink_;
     }
-    
-    return nullptr;
+    return bestLeaf;
 }
 
 
-void Body::Impl::guessMainEndLinkSub(Link* link, Link* rootLink, int dof, Link** linkOfDof)
+void Body::Impl::guessMainEndLinkSub(
+    Link* link, Link* rootLink,
+    int actualDof, int trailCount,
+    Link*& bestLeaf, int& bestDof, int& bestTrail)
 {
-    if(!linkOfDof[dof]){
-        linkOfDof[dof] = link;
-    } else {
-        linkOfDof[dof] = rootLink;
-    }
-    ++dof;
-    if(dof < MainEndLinkGuessBufSize){
-        for(Link* child = link->child(); child; child = child->sibling()){
-            guessMainEndLinkSub(child, rootLink, dof, linkOfDof);
+    if(!link->child()){
+        if(link != rootLink){
+            if(actualDof > bestDof ||
+               (actualDof == bestDof && trailCount > bestTrail)){
+                bestLeaf = link;
+                bestDof = actualDof;
+                bestTrail = trailCount;
+            }
         }
+        return;
+    }
+
+    for(Link* child = link->child(); child; child = child->sibling()){
+        int childDof = actualDof;
+        int childTrail = trailCount;
+        if(child->hasActualJoint()){
+            ++childDof;
+            childTrail = 0;
+        } else {
+            ++childTrail;
+        }
+        guessMainEndLinkSub(child, rootLink, childDof, childTrail,
+                            bestLeaf, bestDof, bestTrail);
     }
 }
 
