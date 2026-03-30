@@ -137,7 +137,10 @@ public:
     void copySelectedItemsWithSubTrees();
     bool pasteItems(bool doCheckPositionAcceptance = true);
     ItemList<Item> getCopiedItems();
+    enum CutDenialReason { NotDenied, Attached, ContinuousUpdate, CustomDenied };
     bool checkCuttable(Item* item) const;
+    bool checkCuttable(Item* item, CutDenialReason& reason) const;
+    void setItemCuttableChecker(std::function<bool(Item* item)> pred);
     bool checkCopiable(Item* item) const;
     bool checkPastable(Item* pasteParentItem) const;
 

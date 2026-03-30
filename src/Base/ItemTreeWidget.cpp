@@ -85,6 +85,7 @@ public:
     stack<bool> projectLoadingWithItemExpansionInfoStack;
     
     ItemList<Item> copiedItems;
+    std::function<bool(Item* item)> itemCuttableChecker;
     MenuManager menuManager;
     int fontPointSizeDiff;
 
@@ -1557,7 +1558,33 @@ ItemList<Item> ItemTreeWidget::getCopiedItems()
 
 bool ItemTreeWidget::checkCuttable(Item* item) const
 {
-    return !item->hasAttribute(Item::Attached);
+    CutDenialReason reason;
+    return checkCuttable(item, reason);
+}
+
+
+bool ItemTreeWidget::checkCuttable(Item* item, CutDenialReason& reason) const
+{
+    if(item->hasAttribute(Item::Attached)){
+        reason = Attached;
+        return false;
+    }
+    if(item->isContinuousUpdateStateSubTree()){
+        reason = ContinuousUpdate;
+        return false;
+    }
+    if(impl->itemCuttableChecker && !impl->itemCuttableChecker(item)){
+        reason = CustomDenied;
+        return false;
+    }
+    reason = NotDenied;
+    return true;
+}
+
+
+void ItemTreeWidget::setItemCuttableChecker(std::function<bool(Item* item)> pred)
+{
+    impl->itemCuttableChecker = pred;
 }
 
 
@@ -1893,17 +1920,18 @@ void ItemTreeWidget::Impl::keyPressEvent(QKeyEvent* event)
             break;
         case Qt::Key_Delete:
             {
-                bool hasContinuousUpdateItem = false;
+                ItemTreeWidget::CutDenialReason reason = ItemTreeWidget::NotDenied;
                 for(auto& item : getSelectedItems()){
-                    if(item->isContinuousUpdateStateSubTree()){
-                        hasContinuousUpdateItem = true;
+                    if(!self->checkCuttable(item, reason)){
                         break;
                     }
                 }
-                if(hasContinuousUpdateItem){
-                    showWarningDialog(_("Items cannot be deleted while processing is in progress."));
-                } else {
+                if(reason == ItemTreeWidget::NotDenied){
                     cutSelectedItems();
+                } else if(reason == ItemTreeWidget::ContinuousUpdate){
+                    showWarningDialog(_("Items cannot be deleted while processing is in progress."));
+                } else if(reason == ItemTreeWidget::Attached){
+                    showWarningDialog(_("Attached items cannot be deleted."));
                 }
                 processed = true;
             }
