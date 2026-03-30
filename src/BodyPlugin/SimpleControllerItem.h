@@ -26,6 +26,8 @@ public:
     virtual void input() override;
     virtual bool control() override;
     virtual void output() override;
+    virtual void pause() override;
+    virtual bool resume() override;
     virtual void stop() override;
 
     class Impl;

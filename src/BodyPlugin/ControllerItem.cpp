@@ -117,6 +117,18 @@ void ControllerItem::output()
 }
 
 
+void ControllerItem::pause()
+{
+
+}
+
+
+bool ControllerItem::resume()
+{
+    return true;
+}
+
+
 void ControllerItem::stop()
 {
 

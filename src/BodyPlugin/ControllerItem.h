@@ -68,7 +68,17 @@ public:
        \note This function is called from the simulation thread.
     */
     virtual void output();
-        
+
+    /**
+       \note This function is called from the main thread.
+    */
+    virtual void pause();
+
+    /**
+       \note This function is called from the main thread.
+    */
+    virtual bool resume();
+
     /**
        \note This function is called from the main thread.
     */

@@ -18,7 +18,7 @@
 #include <cnoid/BodyState>
 #include <cnoid/App>
 #include <cnoid/TimeBar>
-#include <cnoid/MessageView>
+#include <cnoid/MessageOut>
 #include <cnoid/LazyCaller>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
@@ -294,6 +294,9 @@ public:
     bool isDoingSimulationLoop;
     volatile bool stopRequested;
     volatile bool pauseRequested;
+    volatile bool isActuallyPaused;
+    std::mutex pauseMutex;
+    std::condition_variable pauseCondition;
     bool isCollisionDataRecordingEnabled;
     bool doRecordCollisionData;
     bool isSceneViewEditModeBlockedDuringSimulation;
@@ -304,7 +307,7 @@ public:
     QMutex recordBufMutex;
     double actualSimulationTime;
     double finishTime;
-    MessageView* mv;
+    MessageOut* mout;
 
     bool isSimulationFromInitialState;
     bool isWaitingForSimulationToStop;
@@ -368,7 +371,9 @@ public:
     int flushMainRecords();
     void stopSimulation(bool isForced, bool doSync);
     void pauseSimulation();
-    void restartSimulation();
+    void resumeSimulation();
+    void pauseControllers();
+    void resumeControllers();
     void onSimulationLoopStopped(bool isForced);
     bool isActive() const;
     void setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f, double time);
@@ -495,7 +500,7 @@ void SimulatorItem::initializeClass(ExtensionManager* ext)
             }
             if(item->isPausing()){
                 pause->setEnabled(false);
-                resume->sigTriggered().connect([item]{ item->restartSimulation(); });
+                resume->sigTriggered().connect([item]{ item->resumeSimulation(); });
             } else {
                 resume->setEnabled(false);
             }
@@ -560,7 +565,7 @@ Body* ControllerInfo::body()
 
 std::ostream& ControllerInfo::os() const
 {
-    return simImpl->mv->cout();
+    return simImpl->mout->cout();
 }
     
 
@@ -1236,7 +1241,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self)
       recordingMode(NumRecordingModes, CNOID_GETTEXT_DOMAIN_NAME),
       timeRangeMode(NumTimeRangeModes, CNOID_GETTEXT_DOMAIN_NAME),
       realtimeSyncMode(NumRealtimeSyncModes, CNOID_GETTEXT_DOMAIN_NAME),
-      mv(MessageView::instance())
+      mout(MessageOut::master())
 {
     worldItem = nullptr;
     
@@ -1672,14 +1677,12 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
     for(auto& simulatorItem : worldItem->descendantItems<SimulatorItem>()){
         if(simulatorItem->isRunning()){
             if(simulatorItem == self){
-                mv->putln(
-                    formatR(_("{0} is doing its simulation."), self->displayName()),
-                    MessageView::Warning);
+                mout->putWarningln(
+                    formatR(_("{0} is doing its simulation."), self->displayName()));
             } else {
-                mv->putln(
+                mout->putErrorln(
                     formatR(_("{0} cannot start the simulation because {1} in the same world is doing its simulation."),
-                            self->displayName(), simulatorItem->displayName()),
-                    MessageView::Error);
+                            self->displayName(), simulatorItem->displayName()));
             }
             return false;
         }
@@ -1688,16 +1691,14 @@ bool SimulatorItem::Impl::startSimulation(bool doReset)
     stopSimulation(true, true);
 
     if(!worldItem){
-        mv->putln(formatR(_("{} must be in a WorldItem to do simulation."), self->displayName()),
-                  MessageView::Error);
+        mout->putErrorln(formatR(_("{} must be in a WorldItem to do simulation."), self->displayName()));
         return false;
     }
 
     bool initialized = initializeSimulation(doReset);
 
     if(!initialized){
-        mv->notify(formatR(_("{0} failed to initialize the simulation."), self->displayName()),
-                   MessageView::Error);
+        mout->notifyError(formatR(_("{0} failed to initialize the simulation."), self->displayName()));
         clearSimulation();
     }
 
@@ -1775,8 +1776,7 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
             }
 
             if(!simBody){
-                mv->putln(formatR(_("The clone of {0} for the simulation cannot be created."), orgBody->name()),
-                          MessageView::Warning);
+                mout->putWarningln(formatR(_("The clone of {0} for the simulation cannot be created."), orgBody->name()));
             } else {
                 if(simBody->body()){
                     simBodyMap[bodyItem] = simBody;
@@ -1826,15 +1826,14 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
         SubSimulatorItem* item = *p;
         bool initialized = false;
         if(item->isEnabled()){
-            mv->putln(formatR(_("SubSimulatorItem \"{}\" has been detected."), item->displayName()));
+            mout->putln(formatR(_("SubSimulatorItem \"{}\" has been detected."), item->displayName()));
             if(item->initializeSimulation(self)){
                 initialized = true;
             } else {
-                mv->putln(formatR(_("The initialization of \"{}\" failed."), item->displayName()),
-                          MessageView::Warning);
+                mout->putWarningln(formatR(_("The initialization of \"{}\" failed."), item->displayName()));
             }
         } else {
-            mv->putln(formatR(_("SubSimulatorItem \"{}\" is disabled."), item->displayName()));
+            mout->putln(formatR(_("SubSimulatorItem \"{}\" is disabled."), item->displayName()));
         }
         if(initialized){
             continuousUpdateEntries.push_back(item->startContinuousUpdate());
@@ -1910,15 +1909,13 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
             if(body){
                 ready = controllerItem->start();
                 if(!ready){
-                    mv->putln(formatR(_("{0} for {1} failed to start."),
-                                      controllerItem->displayName(), simBodyImpl->bodyItem->displayName()),
-                              MessageView::Warning);
+                    mout->putWarningln(formatR(_("{0} for {1} failed to start."),
+                                      controllerItem->displayName(), simBodyImpl->bodyItem->displayName()));
                 }
             } else {
                 ready = controllerItem->start();
                 if(!ready){
-                    mv->putln(formatR(_("{} failed to start."), controllerItem->displayName()),
-                              MessageView::Warning);
+                    mout->putWarningln(formatR(_("{} failed to start."), controllerItem->displayName()));
                 }
             }
             if(ready){
@@ -1934,8 +1931,7 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
     doStopSimulationWhenNoActiveControllers = isActiveControlTimeRangeMode && hasControllers;
 
     if(doStopSimulationWhenNoActiveControllers && activeControllerInfos.empty()){
-        mv->putln(_("The simulation cannot be started because all the controllers are inactive."),
-                  MessageView::Error);
+        mout->putErrorln(_("The simulation cannot be started because all the controllers are inactive."));
         clearSimulation();
         return false;
     }
@@ -1950,6 +1946,7 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
     isForcedToStopSimulation = false;
     stopRequested = false;
     pauseRequested = false;
+    isActuallyPaused = false;
 
     useControllerThreads = useControllerThreadsProperty;
     if(useControllerThreads){
@@ -1970,7 +1967,7 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
         if(worldLogFileItem->logFile().empty()){
             worldLogFileItem = nullptr;
         } else {
-            mv->putln(formatR(_("WorldLogFileItem \"{0}\" has been detected. "
+            mout->putln(formatR(_("WorldLogFileItem \"{0}\" has been detected. "
                                 "A simulation result is recoreded to \"{1}\"."),
                               worldLogFileItem->displayName(), worldLogFileItem->logFile()));
 
@@ -2000,7 +1997,7 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
     start();
     startFlushTimer();
 
-    mv->notify(formatR(_("Simulation by {} has started."), self->displayName()));
+    mout->notify(formatR(_("Simulation by {} has started."), self->displayName()));
 
     sigSimulationStarted();
     
@@ -2094,6 +2091,11 @@ void SimulatorItem::Impl::run()
                 if(!isOnPause){
                     elapsedTime += timer.elapsed();
                     isOnPause = true;
+                    {
+                        std::lock_guard<std::mutex> lock(pauseMutex);
+                        isActuallyPaused = true;
+                    }
+                    pauseCondition.notify_all();
                     sigSimulationPaused();
                 }
                 QThread::msleep(50);
@@ -2101,6 +2103,7 @@ void SimulatorItem::Impl::run()
                 if(isOnPause){
                     timer.start();
                     isOnPause = false;
+                    isActuallyPaused = false;
                     sigSimulationResumed();
                 }
                 if(!stepSimulationMain() || stopRequested || frame++ >= maxFrame){
@@ -2121,6 +2124,11 @@ void SimulatorItem::Impl::run()
                 if(!isOnPause){
                     elapsedTime += timer.elapsed();
                     isOnPause = true;
+                    {
+                        std::lock_guard<std::mutex> lock(pauseMutex);
+                        isActuallyPaused = true;
+                    }
+                    pauseCondition.notify_all();
                     sigSimulationPaused();
                 }
                 QThread::msleep(50);
@@ -2128,6 +2136,7 @@ void SimulatorItem::Impl::run()
                 if(isOnPause){
                     timer.start();
                     isOnPause = false;
+                    isActuallyPaused = false;
                     sigSimulationResumed();
                 }
                 if(!stepSimulationMain() || stopRequested || frame >= maxFrame){
@@ -2424,23 +2433,60 @@ void SimulatorItem::Impl::pauseSimulation()
 {
     flushTimer.stop();
     pauseRequested = true;
+
+    {
+        std::unique_lock<std::mutex> lock(pauseMutex);
+        pauseCondition.wait(lock, [this]{ return isActuallyPaused || !isDoingSimulationLoop; });
+    }
+
+    pauseControllers();
     flushRecords();
     logEngine->stopOngoingTimeUpdate();
 }
 
 
-void SimulatorItem::restartSimulation()
+void SimulatorItem::resumeSimulation()
 {
-    impl->restartSimulation();
+    impl->resumeSimulation();
 }
 
 
-void SimulatorItem::Impl::restartSimulation()
+void SimulatorItem::restartSimulation()
+{
+    resumeSimulation();
+}
+
+
+void SimulatorItem::Impl::resumeSimulation()
 {
     if(pauseRequested){
+        resumeControllers();
         logEngine->startOngoingTimeUpdate();
         pauseRequested = false;
         startFlushTimer();
+    }
+}
+
+
+void SimulatorItem::Impl::pauseControllers()
+{
+    for(auto& simBody : allSimBodies){
+        for(auto& info : simBody->impl->controllerInfos){
+            info->controllerItem->pause();
+        }
+    }
+}
+
+
+void SimulatorItem::Impl::resumeControllers()
+{
+    for(auto& simBody : allSimBodies){
+        for(auto& info : simBody->impl->controllerInfos){
+            if(!info->controllerItem->resume()){
+                mout->putErrorln(
+                    formatR(_("{} failed to resume."), info->controllerItem->displayName()));
+            }
+        }
     }
 }
 
@@ -2460,6 +2506,7 @@ void SimulatorItem::Impl::stopSimulation(bool isForced, bool doSync)
         isForcedToStopSimulation = isForced;
         stopRequested = true;
         pauseRequested = false;
+        isActuallyPaused = false;
         
         if(doSync){
             wait();
@@ -2501,10 +2548,10 @@ void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
     flushRecords();
     logEngine->stopOngoingTimeUpdate();
 
-    mv->notify(formatR(_("Simulation by {0} has finished at {1} [s]."), self->displayName(), finishTime));
+    mout->notify(formatR(_("Simulation by {0} has finished at {1} [s]."), self->displayName(), finishTime));
 
     if(finishTime > 0.0){
-        mv->putln(formatR(_("Computation time is {0} [s], computation time / simulation time = {1}."),
+        mout->putln(formatR(_("Computation time is {0} [s], computation time / simulation time = {1}."),
                           actualSimulationTime, (actualSimulationTime / finishTime)));
     }
 

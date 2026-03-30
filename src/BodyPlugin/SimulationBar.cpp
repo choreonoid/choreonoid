@@ -192,7 +192,7 @@ void SimulationBar::startSimulation(SimulatorItem* simulator, bool doReset)
 {
     if(simulator->isRunning()){
     	if(pauseToggle->isChecked() && !doReset){
-            simulator->restartSimulation();
+            simulator->resumeSimulation();
             pauseToggle->blockSignals(true);
             pauseToggle->setChecked(false);
             pauseToggle->blockSignals(false);
@@ -272,7 +272,7 @@ void SimulationBar::pauseSimulation(SimulatorItem* simulator)
         }
     } else {
         if(simulator->isRunning()){
-            simulator->restartSimulation();
+            simulator->resumeSimulation();
         }
         timeBar->startPlayback();
     }

@@ -118,6 +118,16 @@ void SimpleController::stop()
 
 }
 
+void SimpleController::pause()
+{
+
+}
+
+bool SimpleController::resume()
+{
+    return true;
+}
+
 void SimpleController::unconfigure()
 {
 

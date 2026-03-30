@@ -129,7 +129,20 @@ public:
        The finalization of the control process is implemented in this function.
     */
     virtual void stop();
-    
+
+    /**
+       This function is called when the simulation is paused.
+       Override this to implement any processing needed when the simulation enters a paused state.
+    */
+    virtual void pause();
+
+    /**
+       This function is called when the simulation is resumed from a paused state.
+
+       \return Return true if the resumption succeeds, or false if it fails.
+    */
+    virtual bool resume();
+
     /**
        The unconfigure function is called when the controller is unloaded.
        The process to finalize the controller itself is implemented in this function.

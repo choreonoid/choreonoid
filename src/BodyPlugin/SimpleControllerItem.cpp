@@ -1156,6 +1156,29 @@ void SimpleControllerItem::Impl::output()
 }
 
 
+void SimpleControllerItem::pause()
+{
+    for(auto iter = impl->subControllerItems.rbegin(); iter != impl->subControllerItems.rend(); ++iter){
+        (*iter)->pause();
+    }
+    impl->controller->pause();
+}
+
+
+bool SimpleControllerItem::resume()
+{
+    if(!impl->controller->resume()){
+        return false;
+    }
+    for(auto& subController : impl->subControllerItems){
+        if(!subController->resume()){
+            return false;
+        }
+    }
+    return true;
+}
+
+
 void SimpleControllerItem::stop()
 {
     for(auto iter = impl->subControllerItems.rbegin(); iter != impl->subControllerItems.rend(); ++iter){
