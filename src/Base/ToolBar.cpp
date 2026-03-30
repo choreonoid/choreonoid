@@ -392,9 +392,20 @@ void ToolBar::addSpacing(int spacing, int id)
 
 int ToolBar::elementPosition(int id) const
 {
-    for(size_t i=0; i < elements.size(); ++i){
-        if(elements[i].id == id){
-            return i;
+    QWidget* widget = nullptr;
+    for(auto& element : elements){
+        if(element.id == id){
+            widget = element.widget;
+            break;
+        }
+    }
+    if(widget){
+        for(int i = 0; i < elementLayout->count(); ++i){
+            if(auto item = elementLayout->itemAt(i)){
+                if(item->widget() == widget){
+                    return i;
+                }
+            }
         }
     }
     return -1;
@@ -454,8 +465,9 @@ void ToolBar::setActiveElements(const Listing& ids)
         if(auto widget = layoutItem->widget()){
             widget->hide();
         }
+        delete layoutItem;
     }
-    
+
     for(int i=0; i < ids.size(); ++i){
         int id = ids[i].toInt();
         auto found = std::find_if(

@@ -35,20 +35,22 @@ enum ElementId {
     PlayButton = 0,
     ResumeButton = 1,
     RefreshButton = 2,
-    DayTimeSpin = 3,
-    DayTimeLabel = 4,
-    HourTimeSpin = 5,
-    HourTimeLabel = 6,
-    MinuteTimeSpin = 7,
-    MinuteTimeLabel = 8,
-    TimeSpin = 9,
-    SecondTimeLabel = 10,
-    TimeSlider = 11,
-    TimeRangeMinSpin = 12,
-    // 13 is reserved
-    TimeRangeMaxSpin = 14,
+    TimeSpin = 3,
+    TimeSlider = 4,
+    TimeRangeMinSpin = 5,
+    TimeRangeMaxSpin = 6,
+    ConfigButton = 7,
+
+    // The following elements were added later and assigned new IDs,
+    // so the IDs do not match the order in which they appear on the toolbar.
+    DayTimeSpin = 8,
+    DayTimeLabel = 9,
+    HourTimeSpin = 10,
+    HourTimeLabel = 11,
+    MinuteTimeSpin = 12,
+    MinuteTimeLabel = 13,
+    SecondTimeLabel = 14,
     MaxTimeUnitLabel = 15,
-    ConfigButton = 16
 };
 
 enum TimeUnit {
@@ -308,7 +310,7 @@ TimeBar::Impl::Impl(TimeBar* self)
     self->addWidget(maxTimeSpin, TimeRangeMaxSpin);
     maxTimeUnitLabel = self->addLabel("", MaxTimeUnitLabel);
 
-    auto configButton = self->addButton(":/Base/icon/setup.svg");
+    auto configButton = self->addButton(":/Base/icon/setup.svg", ConfigButton);
     configButton->setToolTip(_("Show the config dialog"));
     configButton->sigClicked().connect([this](){ configDialog->show(); });
 
@@ -445,7 +447,11 @@ TimeBar::Impl::~Impl()
 void TimeBar::onActiveElementUpdated()
 {
     if(!impl->minTimeSpin->isHidden() && !impl->maxTimeSpin->isHidden()){
-        setInsertionPosition(elementPosition(TimeRangeMinSpin));
+        int pos = elementPosition(TimeRangeMinSpin);
+        if(pos >= 0){
+            pos += 1;
+        }
+        setInsertionPosition(pos);
         addWidget(impl->timeRangeDelimiterLabel);
         impl->timeRangeDelimiterLabel->show();
     }
