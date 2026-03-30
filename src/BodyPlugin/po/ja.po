@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-09 18:42+0900\n"
+"POT-Creation-Date: 2026-03-30 18:47+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -347,11 +347,17 @@ msgstr "ドロップ位置でアイテム \"{0}\" が重複するためドロッ
 msgid "Group Name:"
 msgstr "グループ名："
 
+msgid "Registration Name:"
+msgstr "登録名："
+
 msgid "Body Library"
 msgstr "ボディライブラリ"
 
 msgid "BodyLibraryView"
 msgstr "ボディライブラリビュー"
+
+msgid "Item \"{0}\" cannot be moved to \"{1}\"."
+msgstr "アイテム \"{0}\" を \"{1}\" に移動することができません．"
 
 msgid "Create Group"
 msgstr "グループの作成"
@@ -362,9 +368,20 @@ msgstr "サブグループの作成"
 msgid "&Create"
 msgstr "作成（&C)"
 
+msgid "Group name \"{0}\" includes characters that cannot be used."
+msgstr "グループ名 \"{0}\" には使用できない文字が含まれています．"
+
+msgid "The group cannot be created because the path would be too long."
+msgstr "パスが長すぎるためグループを作成できません．"
+
 msgid "Group name \"{0}\" is duplicated. Please use another name for a new group."
 msgstr ""
 "グループ名 \"{0}\" は重複しています．新しいグループには別の名前を使用するようにしてください．"
+
+msgid "The body cannot be registered in the body library due to the lack of reference file: {0}"
+msgstr ""
+"このボディは参照ファイルが無いためボディライブラリに登録することができません．"
+"ファイル:{0}"
 
 msgid "The body cannot be registered in the body library due to the lack of its name."
 msgstr "このボディは名前が無いためボディライブラリに登録することができません．"
@@ -1606,6 +1623,9 @@ msgstr ""
 
 msgid "Simulation by {} has started."
 msgstr "{}によるシミュレーションを開始しました．"
+
+msgid "{} failed to resume."
+msgstr "{}の再開に失敗しました．"
 
 msgid "Simulation by {0} has finished at {1} [s]."
 msgstr "{0}によるシミュレーションが{1}秒時点で終了しました．"

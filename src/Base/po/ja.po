@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-09 19:26+0900\n"
+"POT-Creation-Date: 2026-03-30 18:47+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -813,6 +813,9 @@ msgstr "複数のアイテムを{0}上で貼り付け"
 msgid "Items cannot be deleted while processing is in progress."
 msgstr "処理中はアイテムを削除できません．"
 
+msgid "Attached items cannot be deleted."
+msgstr "アタッチされたアイテムは削除できません．"
+
 msgid "Item \"{0}\" cannot be reloaded currently, as it is being continuously updated."
 msgstr "アイテム \"{0}\" は継続的に更新中のため、今は再読込することができません．"
 
@@ -1170,6 +1173,9 @@ msgstr "対象のビューが指定されていません．"
 
 msgid "Please set a directory to output image files."
 msgstr "画像ファイルを出力するディレクトリを指定してください．"
+
+msgid "{} includes characters that cannot be used."
+msgstr "{}には使用できない文字が含まれています．"
 
 msgid "{} is not a directory."
 msgstr "{}はディレクトリではありません．"
@@ -2234,26 +2240,29 @@ msgstr "再生再開"
 msgid "Refresh state at the current time"
 msgstr "現在時刻で状態を更新"
 
+msgid "D "
+msgstr "日 "
+
+msgid "H "
+msgstr "時間 "
+
+msgid "M "
+msgstr "分 "
+
+msgid "S"
+msgstr "秒"
+
 msgid "Time Bar Config"
 msgstr "タイムバーの設定"
 
-msgid "Internal frame rate"
-msgstr "内部フレームレート"
-
 msgid "Internal frame rate:"
 msgstr "内部フレームレート:"
-
-msgid "Playback frame rate"
-msgstr "再生フレームレート"
 
 msgid "Playback frame rate:"
 msgstr "再生フレームレート:"
 
 msgid "Idle event driven mode"
 msgstr "アイドルイベント駆動モード"
-
-msgid "Playback speed ratio"
-msgstr "再生速度倍率"
 
 msgid "Playback speed ratio:"
 msgstr "再生速度倍率:"
@@ -2273,27 +2282,6 @@ msgstr "分"
 msgid "Sec"
 msgstr "秒"
 
-msgid "D "
-msgstr "日 "
-
-msgid "H "
-msgstr "時間 "
-
-msgid "M "
-msgstr "分 "
-
-msgid "S"
-msgstr "秒"
-
-msgid "D"
-msgstr "日"
-
-msgid "H"
-msgstr "時間"
-
-msgid "M"
-msgstr "分"
-
 msgid "Sync with ongoing updates"
 msgstr "進行中の更新に同期"
 
@@ -2306,11 +2294,26 @@ msgstr "アニメーションの停止"
 msgid "Resume animation"
 msgstr "アニメーションの再生・停止"
 
+msgid "D"
+msgstr "日"
+
+msgid "H"
+msgstr "時間"
+
+msgid "M"
+msgstr "分"
+
+msgid "Undo cannot be executed on an item that is being continuously updated."
+msgstr "継続的に更新中のアイテムに対しては元に戻すを実行できません．"
+
 msgid "Undo: {0}."
 msgstr "「{0}」を元に戻しました．"
 
 msgid "Undo failed and the edit history has been clered."
 msgstr "元に戻すことができませんでした．編集履歴をクリアしました．"
+
+msgid "Redo cannot be executed on an item that is being continuously updated."
+msgstr "継続的に更新中のアイテムに対してはやり直しを実行できません．"
 
 msgid "Redo: {0}."
 msgstr "「{0}」をやり直しました．"
