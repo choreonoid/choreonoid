@@ -1,10 +1,11 @@
 #include "UnifiedEditHistory.h"
 #include "App.h"
 #include "EditRecord.h"
+#include "Item.h"
 #include "ExtensionManager.h"
 #include "ProjectManager.h"
 #include "Action.h"
-#include "MessageView.h"
+#include <cnoid/MessageOut>
 #include "LazyCaller.h"
 #include <cnoid/Format>
 #include <deque>
@@ -53,7 +54,7 @@ public:
     LazyCaller flushNewRecordBufferLater;
     Signal<void()> sigHistoryUpdated;
     Signal<void(int position)> sigCurrentPositionChanged;
-    MessageView* mv;
+    MessageOut* mout;
 
     // Smart pointers are not used to avoid cyclic references.
     // Each blocker is externally referenced using a smart pointer and the corresponding element
@@ -67,8 +68,9 @@ public:
     void addRecord(EditRecord* record);
     void flushNewRecordBuffer();
     void expandHistoryFromLatestToCurrentUndoPosition();
+    bool isRecordTargetContinuouslyUpdating(EditRecord* record);
     bool undo();
-    bool redo();    
+    bool redo();
     void cancelRedo(int position);
 };
 
@@ -98,9 +100,9 @@ UnifiedEditHistory::Impl::Impl(ExtensionManager* ext)
     : flushNewRecordBufferLater([this](){ flushNewRecordBuffer(); }, LazyCaller::LowPriority)
 {
     currentPosition = 0;
-    maxHistorySize = 10;
+    maxHistorySize = 100;
 
-    mv = MessageView::instance();
+    mout = MessageOut::master();
 
     auto pm = ProjectManager::instance();
 
@@ -374,21 +376,42 @@ bool UnifiedEditHistory::undo()
 }
 
 
+bool UnifiedEditHistory::Impl::isRecordTargetContinuouslyUpdating(EditRecord* record)
+{
+    if(auto group = dynamic_cast<EditRecordGroup*>(record)){
+        for(int i = 0; i < group->numRecords(); ++i){
+            if(isRecordTargetContinuouslyUpdating(group->record(i))){
+                return true;
+            }
+        }
+    } else if(auto item = record->targetObject<Item>()){
+        if(item->isContinuousUpdateState()){
+            return true;
+        }
+    }
+    return false;
+}
+
+
 bool UnifiedEditHistory::Impl::undo()
 {
     bool done = false;
 
     if(currentPosition < static_cast<int>(records.size())){
         auto record = records[currentPosition];
+        if(isRecordTargetContinuouslyUpdating(record)){
+            mout->notifyWarning(_("Undo cannot be executed on an item that is being continuously updated."));
+            return done;
+        }
         if(record->applyUndo()){
-            mv->notify(formatR(_("Undo: {0}."), record->label()));
+            mout->notify(formatR(_("Undo: {0}."), record->label()));
             ++currentPosition;
             sigCurrentPositionChanged(currentPosition);
             done = true;
         } else {
             record->applyRedo();
             clear();
-            mv->notify(_("Undo failed and the edit history has been clered."), MessageView::Error);
+            mout->notifyError(_("Undo failed and the edit history has been clered."));
         }
     }
 
@@ -408,15 +431,19 @@ bool UnifiedEditHistory::Impl::redo()
 
     if(currentPosition >= 1){
         auto record = records[currentPosition - 1];
+        if(isRecordTargetContinuouslyUpdating(record)){
+            mout->notifyWarning(_("Redo cannot be executed on an item that is being continuously updated."));
+            return done;
+        }
         if(record->applyRedo()){
-            mv->notify(formatR(_("Redo: {0}."), record->label()));
+            mout->notify(formatR(_("Redo: {0}."), record->label()));
             --currentPosition;
             sigCurrentPositionChanged(currentPosition);
             done = true;
         } else {
             record->applyUndo();
             clear();
-            mv->notify(_("Redo failed and the edit history has been clered."), MessageView::Error);
+            mout->notifyError(_("Redo failed and the edit history has been clered."));
         }
     }
 
