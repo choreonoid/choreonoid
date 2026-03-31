@@ -93,6 +93,8 @@ protected:
     virtual bool onStart();
     virtual bool onStop();
 
+    void setFloatingPointValueRange(double min, double max);
+
     // Virtual functions for customizing variables
     virtual bool initializeVariables();
     void setVariableListSync(MprVariableList* listInGui, MprVariableList* listInController);

@@ -19,6 +19,7 @@
 #include <regex>
 #include <cctype>
 #include <algorithm>
+#include <limits>
 #include "gettext.h"
 
 using namespace std;
@@ -110,6 +111,8 @@ public:
     unordered_map<type_index, InterpretFunction> interpreterMap;
     DigitalIoDevicePtr ioDevice;
     double speedRatio;
+    double floatingPointValueMin;
+    double floatingPointValueMax;
 
     MprControllerLogPtr currentLog;
     unordered_map<MprProgramPtr, shared_ptr<string>> topLevelProgramToSharedNameMap;
@@ -180,6 +183,8 @@ MprControllerItemBase::MprControllerItemBase(const MprControllerItemBase& org)
     impl = new Impl(this);
 
     impl->speedRatio = org.impl->speedRatio;
+    impl->floatingPointValueMin = org.impl->floatingPointValueMin;
+    impl->floatingPointValueMax = org.impl->floatingPointValueMax;
 }
 
 
@@ -189,6 +194,8 @@ MprControllerItemBase::Impl::Impl(MprControllerItemBase* self)
     isEnabled = true;
     isActiveControlState = false;
     speedRatio = 1.0;
+    floatingPointValueMin = -std::numeric_limits<double>::max();
+    floatingPointValueMax = std::numeric_limits<double>::max();
     currentLog = new MprControllerLog;
 }
 
@@ -908,6 +915,13 @@ void MprControllerItemBase::setSpeedRatio(double r)
 }
 
 
+void MprControllerItemBase::setFloatingPointValueRange(double min, double max)
+{
+    impl->floatingPointValueMin = min;
+    impl->floatingPointValueMax = max;
+}
+
+
 bool MprControllerItemBase::Impl::interpretCommentStatement(MprCommentStatement*)
 {
     ++iterator;
@@ -1122,8 +1136,13 @@ std::optional<MprVariable::Value> MprControllerItemBase::Impl::getTermValue
         pos = match[0].second;
                 
     } else if(regex_search(pos, end, match, floatPattern)){
-        value = std::stod(match.str(0));
-        pos = match[0].second;
+        double number = std::stod(match.str(0));
+        if(number < floatingPointValueMin || number > floatingPointValueMax){
+            io->os() << formatR(_("Real value {0} is out of range."), match.str(0)) << endl;
+        } else {
+            value = number;
+            pos = match[0].second;
+        }
             
     } else if(regex_search(pos, end, match, intPattern)){
         errno = 0;
