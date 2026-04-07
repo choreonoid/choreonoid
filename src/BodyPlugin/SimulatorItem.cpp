@@ -2497,6 +2497,12 @@ void SimulatorItem::stopSimulation(bool isForced)
 }
 
 
+void SimulatorItem::requestToStopSimulation(bool isForced)
+{
+    impl->stopSimulation(isForced, false);
+}
+
+
 void SimulatorItem::Impl::stopSimulation(bool isForced, bool doSync)
 {
     if(isDoingSimulationLoop){

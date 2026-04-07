@@ -79,6 +79,7 @@ public:
 
     bool startSimulation(bool doReset = true);
     void stopSimulation(bool isForced = false);
+    void requestToStopSimulation(bool isForced = false);
     void pauseSimulation();
     void resumeSimulation();
 
