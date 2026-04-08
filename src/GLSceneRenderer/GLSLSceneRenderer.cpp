@@ -1553,6 +1553,10 @@ void GLSLSceneRenderer::Impl::doRender()
         }
     }
 
+    // Restore the full color mask so that Qt's QOpenGLWidget can properly
+    // composite the framebuffer content onto the window surface.
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
     popProgram();
     endRendering();
 }
