@@ -130,6 +130,17 @@ public:
     std::vector<Link*> joints() const;
 
     /**
+       Returns the joint at the given position in the joint ID ascending order.
+    */
+    Link* jointAtIdOrder(int index);
+
+    /**
+       Returns the JointPath/JointTraverse index of the joint at the given
+       position in the joint ID ascending order.
+    */
+    int jointIndexAtIdOrder(int index);
+
+    /**
        The inverse kinematics is available in the joint path mode and the inverse kinematics without joint path mode.
     */
     std::shared_ptr<InverseKinematics> inverseKinematics();

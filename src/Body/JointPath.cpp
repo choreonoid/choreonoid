@@ -5,6 +5,8 @@
 #include "BodyCustomizerInterface.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/TruncatedSVD>
+#include <algorithm>
+#include <numeric>
 
 using namespace std;
 using namespace cnoid;
@@ -136,6 +138,7 @@ void JointPath::initialize()
 void JointPath::extractJoints()
 {
     numUpwardJointConnections = 0;
+    idOrderIndices_.clear();
 
     int n = linkPath_.size();
     if(n <= 1){
@@ -180,6 +183,34 @@ int JointPath::indexOf(const Link* link) const
         }
     }
     return -1;
+}
+
+
+void JointPath::updateIdOrderIndices() const
+{
+    if(idOrderIndices_.empty() && !joints_.empty()){
+        int n = joints_.size();
+        idOrderIndices_.resize(n);
+        std::iota(idOrderIndices_.begin(), idOrderIndices_.end(), 0);
+        std::sort(idOrderIndices_.begin(), idOrderIndices_.end(),
+                  [this](int a, int b){
+                      return joints_[a]->jointId() < joints_[b]->jointId();
+                  });
+    }
+}
+
+
+Link* JointPath::jointAtIdOrder(int index) const
+{
+    updateIdOrderIndices();
+    return joints_[idOrderIndices_[index]];
+}
+
+
+int JointPath::jointIndexAtIdOrder(int index) const
+{
+    updateIdOrderIndices();
+    return idOrderIndices_[index];
 }
 
 

@@ -385,6 +385,28 @@ std::vector<Link*> BodyKinematicsKit::joints() const
 }
 
 
+Link* BodyKinematicsKit::jointAtIdOrder(int index)
+{
+    if(impl->jointPath){
+        return impl->jointPath->jointAtIdOrder(index);
+    } else if(impl->jointTraverse){
+        return impl->jointTraverse->jointAtIdOrder(index);
+    }
+    return nullptr;
+}
+
+
+int BodyKinematicsKit::jointIndexAtIdOrder(int index)
+{
+    if(impl->jointPath){
+        return impl->jointPath->jointIndexAtIdOrder(index);
+    } else if(impl->jointTraverse){
+        return impl->jointTraverse->jointIndexAtIdOrder(index);
+    }
+    return index;
+}
+
+
 std::shared_ptr<InverseKinematics> BodyKinematicsKit::inverseKinematics()
 {
     return impl->inverseKinematics;

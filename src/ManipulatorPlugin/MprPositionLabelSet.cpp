@@ -288,17 +288,26 @@ void MprPositionLabelSet::updateJointLabels
     const double lengthRatio = dvf->ratioToDisplayLength();
     int decimals = dvf->lengthDecimals();
 
+    /*
+      Always display in joint ID order. When the data is in JointPathOrder,
+      map each display index to the corresponding JointPath index to get
+      the correct displacement value.
+    */
+    bool isJointPathOrder = (position->jointDisplacementOrder() == MprFkPosition::JointPathOrder);
+
     for(int i=0; i < numValidJoints; ++i){
         auto& nameLabel = jointNameLabels[i];
+        auto joint = kinematicsKit->jointAtIdOrder(i);
         if(isJointNameLabelEnabled){
-            nameLabel.setText(QString("%1:").arg(kinematicsKit->joint(i)->jointName().c_str()));
+            nameLabel.setText(QString("%1:").arg(joint->jointName().c_str()));
             nameLabel.show();
         } else {
             nameLabel.hide();
         }
+        int dispIndex = isJointPathOrder ? kinematicsKit->jointIndexAtIdOrder(i) : i;
         auto& displacementLabel = jointDisplacementLabels[i];
-        double q = position->jointDisplacement(i);
-        if(position->checkIfRevoluteJoint(i)){
+        double q = position->jointDisplacement(dispIndex);
+        if(position->checkIfRevoluteJoint(dispIndex)){
             displacementLabel.setText(QString::number(degree(q), 'f', 1));
         } else {
             displacementLabel.setText(QString::number(lengthRatio * q, 'f', decimals));

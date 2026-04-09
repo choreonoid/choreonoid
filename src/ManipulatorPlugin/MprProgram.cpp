@@ -516,7 +516,7 @@ bool MprProgram::load(const std::string& filename, std::ostream& os)
         result = impl->read(archive);
 
     } catch(const ValueNode::Exception& ex){
-        os << ex.message();
+        os << ex.message() << "\n";
     }
 
     return result;

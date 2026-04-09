@@ -52,6 +52,21 @@ public:
         return joints_[index];
     }
 
+    /**
+       Returns the joint at the given position in the joint ID ascending order.
+       For example, if the path contains joints with IDs [0, 1, 6, 2, 3, 4, 5],
+       jointAtIdOrder(2) returns the joint with ID 2 (which is at path index 3).
+    */
+    Link* jointAtIdOrder(int index) const;
+
+    /**
+       Returns the JointPath index of the joint at the given position in the
+       joint ID ascending order.
+       For example, if the path contains joints with IDs [0, 1, 6, 2, 3, 4, 5],
+       jointIndexAtIdOrder(2) returns 3 (the path index of the joint with ID 2).
+    */
+    int jointIndexAtIdOrder(int index) const;
+
     Link* operator[] (int index) const {
         return joints_[index];
     }
@@ -177,11 +192,13 @@ public:
 private:
     void initialize();
     void extractJoints();
+    void updateIdOrderIndices() const;
     void doResetWhenJointPathUpdated();
     NumericalIK* getOrCreateNumericalIK();
 
     LinkPath linkPath_;
     std::vector<LinkPtr> joints_;
+    mutable std::vector<int> idOrderIndices_;
     std::shared_ptr<LinkTraverse> remainingLinkTraverse;
     NumericalIK* numericalIK;
     int numUpwardJointConnections;

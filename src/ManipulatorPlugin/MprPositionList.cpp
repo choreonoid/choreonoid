@@ -343,8 +343,12 @@ bool MprPositionList::read(const Mapping* archive)
         versionNode = archive->find("formatVersion"); // Old key
     }
     auto version = versionNode->toDouble();
-    if(version != 1.0){
-        versionNode->throwException(formatR(_("Format version {0} is not supported."), version));
+    /*
+      format_version 1.0: FkPosition stores joint displacements in JointPath order.
+      format_version 2.0: FkPosition stores joint displacements sorted by joint ID.
+    */
+    if(version != 1.0 && version != 2.0){
+        versionNode->throwException(formatR(_("Format version {0} is not supported"), version));
     }
 
     clear();
@@ -367,6 +371,15 @@ bool MprPositionList::read(const Mapping* archive)
             }
             if(position){
                 if(position->read(node)){
+                    /*
+                      Set JointPathOrder after read, because MprFkPosition::read
+                      sets JointIdOrder as default when it finds the
+                      "joint_displacements" key.
+                    */
+                    if(version < 2.0 && position->isFK()){
+                        position->fkPosition()->setJointDisplacementOrder(
+                            MprFkPosition::JointPathOrder);
+                    }
                     if(position->id().isValid()){
                         append(position);
                     } else {
@@ -376,7 +389,7 @@ bool MprPositionList::read(const Mapping* archive)
             }
         }
     }
-    
+
     return true;
 }
 
@@ -384,7 +397,11 @@ bool MprPositionList::read(const Mapping* archive)
 bool MprPositionList::write(Mapping* archive) const
 {
     archive->write("type", "ManipulatorPositionList");
-    archive->write("format_version", 1.0);
+    /*
+      Version 2.0: Each FkPosition uses a key name that indicates its
+      displacement order type, so mixed orders in one list are handled correctly.
+    */
+    archive->write("format_version", 2.0);
 
     if(!impl->positions.empty()){
         auto positionNodes = archive->createListing("positions");

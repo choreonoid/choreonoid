@@ -43,6 +43,18 @@ public:
     Link* joint(int index) const {
         return joints_[index];
     }
+
+    /**
+       Returns the joint at the given position in the joint ID ascending order.
+    */
+    Link* jointAtIdOrder(int index) const;
+
+    /**
+       Returns the JointTraverse index of the joint at the given position
+       in the joint ID ascending order.
+    */
+    int jointIndexAtIdOrder(int index) const;
+
     const std::vector<LinkPtr>& joints() { return joints_; }
 
     //! This function removes the link from both the link traverse and the joint array
@@ -61,7 +73,11 @@ public:
     }
 
 private:
+    void updateIdOrderIndices() const;
+    void invalidateIdOrderCache() { idOrderIndices_.clear(); }
+
     std::vector<LinkPtr> joints_;
+    mutable std::vector<int> idOrderIndices_;
     LinkTraverse linkTraverse_;
 };
 

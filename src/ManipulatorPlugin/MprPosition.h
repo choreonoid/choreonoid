@@ -104,8 +104,27 @@ private:
 class CNOID_EXPORT MprFkPosition : public MprPosition
 {
     typedef std::array<double, MaxNumJoints> JointDisplacementArray;
-    
+
 public:
+    /*
+      Order type for joint displacement values stored in MprFkPosition.
+
+      JointIdOrder:
+        Joint displacements are sorted by joint ID in ascending order.
+        This is the default format since format_version 2.0 of
+        ManipulatorPositionList. For robots where the kinematic chain order
+        differs from the joint ID order (e.g. a 7-axis robot with joints
+        connected as J1-J2-J7-J3-J4-J5-J6), this order matches the
+        intuitive J1-J2-J3-J4-J5-J6-J7 sequence.
+
+      JointPathOrder:
+        Joint displacements are stored in the order joints appear along the
+        JointPath (kinematic chain order). This was the only format in
+        format_version 1.0 of ManipulatorPositionList.
+        This order type exists for backward compatibility with old data files.
+    */
+    enum JointDisplacementOrder { JointIdOrder, JointPathOrder };
+
     MprFkPosition();
     MprFkPosition(const GeneralId& id);
     MprFkPosition(const MprFkPosition& org);
@@ -123,6 +142,9 @@ public:
 
     int numJoints() const { return numJoints_; }
 
+    void setJointDisplacementOrder(JointDisplacementOrder order) { jointDisplacementOrder_ = order; }
+    JointDisplacementOrder jointDisplacementOrder() const { return jointDisplacementOrder_; }
+
     typedef JointDisplacementArray::iterator iterator;
     typedef JointDisplacementArray::const_iterator const_iterator;
 
@@ -138,19 +160,20 @@ public:
 
     bool checkIfPrismaticJoint(int index) const { return prismaticJointFlags_[index]; }
     bool checkIfRevoluteJoint(int index) const { return !prismaticJointFlags_[index]; }
-        
+
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
-    
+
 private:
     template<class JointContainer>
     bool fetchJointDisplacements(const JointContainer& joints, MessageOut* out);
     template<class JointContainer>
     bool applyJointDisplacements(BodyKinematicsKit* kinematicsKit, JointContainer& joints) const;
-    
+
     JointDisplacementArray jointDisplacements_;
     std::bitset<MaxNumJoints> prismaticJointFlags_;
     int numJoints_;
+    JointDisplacementOrder jointDisplacementOrder_;
 };
 
 

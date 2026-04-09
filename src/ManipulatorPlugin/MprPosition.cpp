@@ -185,6 +185,7 @@ MprFkPosition::MprFkPosition(const GeneralId& id)
 {
     jointDisplacements_.fill(0.0);
     numJoints_ = 0;
+    jointDisplacementOrder_ = JointIdOrder;
 }
 
 
@@ -194,6 +195,7 @@ MprFkPosition::MprFkPosition(const MprFkPosition& org)
       prismaticJointFlags_(org.prismaticJointFlags_)
 {
     numJoints_ = org.numJoints_;
+    jointDisplacementOrder_ = org.jointDisplacementOrder_;
 }
 
 
@@ -207,12 +209,19 @@ template<class JointContainer>
 bool MprFkPosition::fetchJointDisplacements(const JointContainer& joints, MessageOut* mout)
 {
     bool fetched = false;
-    
+
     if(checkJointDisplacementRanges(joints, mout)){
         numJoints_ = std::min(joints.numJoints(), MaxNumJoints);
+
+        /*
+          Store joint displacements sorted by joint ID in ascending order.
+          This ensures that the displacement array index corresponds to the
+          joint's logical position (e.g. J1=index 0, J2=index 1, ..., J7=index 6)
+          regardless of the kinematic chain order.
+        */
         int i;
         for(i = 0; i < numJoints_; ++i){
-            auto joint = joints.joint(i);
+            auto joint = joints.jointAtIdOrder(i);
             jointDisplacements_[i] = joint->q();
             prismaticJointFlags_[i] = joint->isPrismaticJoint();
         }
@@ -220,6 +229,7 @@ bool MprFkPosition::fetchJointDisplacements(const JointContainer& joints, Messag
             jointDisplacements_[i] = 0.0;
             prismaticJointFlags_[i] = false;
         }
+        jointDisplacementOrder_ = JointIdOrder;
         fetched = true;
     }
 
@@ -243,9 +253,19 @@ template<class JointContainer>
 bool MprFkPosition::applyJointDisplacements(BodyKinematicsKit* kinematicsKit, JointContainer& joints) const
 {
     int nj = std::min(joints.numJoints(), numJoints_);
-    for(int i = 0; i < nj; ++i){
-        joints.joint(i)->q() = jointDisplacements_[i];
+
+    if(jointDisplacementOrder_ == JointIdOrder){
+        /* The displacement array is sorted by joint ID */
+        for(int i = 0; i < nj; ++i){
+            joints.jointAtIdOrder(i)->q() = jointDisplacements_[i];
+        }
+    } else {
+        /* JointPathOrder: apply in the original JointPath traversal order (legacy format) */
+        for(int i = 0; i < nj; ++i){
+            joints.joint(i)->q() = jointDisplacements_[i];
+        }
     }
+
     kinematicsKit->updateLinkedJointDisplacements();
     return true;
 }
@@ -305,9 +325,20 @@ bool MprFkPosition::read(const Mapping* archive)
     }
 
     
-    auto nodes = archive->findListing("joint_displacements");
-    if(!nodes->isValid()){
-        nodes = archive->findListing("jointDisplacements"); // old
+    /*
+      In format_version 2.0, "joint_displacements" means JointIdOrder (default),
+      and "joint_path_ordered_displacements" means JointPathOrder (legacy migration).
+      In format_version 1.0, only "joint_displacements" / "jointDisplacements" existed,
+      and the order type is set to JointPathOrder by MprPositionList::read.
+    */
+    auto nodes = archive->findListing({ "joint_displacements", "jointDisplacements" });
+    if(nodes->isValid()){
+        jointDisplacementOrder_ = JointIdOrder;
+    } else {
+        nodes = archive->findListing("joint_path_ordered_displacements");
+        if(nodes->isValid()){
+            jointDisplacementOrder_ = JointPathOrder;
+        }
     }
     if(!nodes->isValid()){
         numJoints_ = 0;
@@ -339,7 +370,10 @@ bool MprFkPosition::write(Mapping* archive) const
 
     archive->setFloatingNumberFormat("%.9g");
 
-    auto qlist = archive->createFlowStyleListing("joint_displacements");
+    const char* displacementKey = (jointDisplacementOrder_ == JointIdOrder)
+        ? "joint_displacements"
+        : "joint_path_ordered_displacements";
+    auto qlist = archive->createFlowStyleListing(displacementKey);
     ListingPtr plist = new Listing;
 
     for(int i=0; i < numJoints_; ++i){
