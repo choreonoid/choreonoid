@@ -952,12 +952,18 @@ public:
 
     virtual bool load(Item* item, const std::string& filename) override
     {
-        return (*fileFunction)(item, filename, os(), parentItem());
+        auto& os_ = os();
+        bool loaded = (*fileFunction)(item, filename, os_, parentItem());
+        os_.flush();
+        return loaded;
     };
 
     virtual bool save(Item* item, const std::string& filename) override
     {
-        return (*fileFunction)(item, filename, os(), parentItem());
+        auto& os_ = os();
+        bool saved = (*fileFunction)(item, filename, os_, parentItem());
+        os_.flush();
+        return saved;
     };
 };
 

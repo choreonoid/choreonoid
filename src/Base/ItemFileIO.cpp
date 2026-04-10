@@ -387,11 +387,15 @@ bool ItemFileIO::Impl::loadItem
     mout->notify(formatR(_("Loading {0} \"{1}\""), caption, filename));
 
     actuallyLoadedItem = item;
+    int messageCount = mout->globalMessageCount();
     bool loaded = self->load(item, filename);
-    mout->flush();
 
     if(!loaded){
-        mout->putErrorln(_(" -> failed."));
+        if(messageCount == mout->globalMessageCount()){
+            mout->putHighlightedln(_(" -> failed."));
+        } else {
+            mout->flush();
+        }
     } else {
         if(item->name().empty()){
             item->setName(toUTF8(filesystem::path(fromUTF8(filename)).stem().string()));
