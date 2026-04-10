@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-06 01:36+0900\n"
+"POT-Creation-Date: 2026-04-10 01:18+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -60,6 +60,9 @@ msgstr "条件式 \"{0}\" は無効です．"
 
 msgid "Type / operator mismatch in the conditional expression of a While statement."
 msgstr "Whileステートメントの条件式における型とオペレータがマッチしていません．"
+
+msgid "Real value {0} is out of range."
+msgstr "実数値{0}は範囲外です．"
 
 msgid "Integer value {0} is out of range."
 msgstr "整数値{0}は範囲外です．"
@@ -133,8 +136,8 @@ msgstr "形態"
 msgid "{0} cannot be loaded as a manipulator position set"
 msgstr "{0}はマニピュレータ位置集として読み込むことができません"
 
-msgid "Format version {0} is not supported."
-msgstr "フォーマットバージョン{0}はサポートされていません．"
+msgid "Format version {0} is not supported"
+msgstr "フォーマットバージョン{0}はサポートされていません"
 
 msgid "Invalid position ID"
 msgstr "無効なポジションID"
@@ -177,6 +180,9 @@ msgstr "%1 ( 不定 )"
 
 msgid "{0} cannot be loaded as a Manipulator program file"
 msgstr "{0}はマニピュレータプログラムファイルとして読み込むことができません"
+
+msgid "Format version {0} is not supported."
+msgstr "フォーマットバージョン{0}はサポートされていません．"
 
 msgid "Statement type \"{0}\" is not supported"
 msgstr "ステートメント型 \"{0}\" はサポートされていません"
