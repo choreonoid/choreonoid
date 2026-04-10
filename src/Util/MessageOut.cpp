@@ -11,6 +11,7 @@ using namespace cnoid;
 namespace {
 
 recursive_mutex sinkMutex;
+unsigned int globalMessageCount_ = 0;
 
 class MessageOutStreamBuf : public std::basic_streambuf<char>
 {
@@ -102,8 +103,11 @@ MessageOutStreamBuf::int_type MessageOutStreamBuf::overflow(int_type c)
 int MessageOutStreamBuf::sync()
 {
     auto p = &buf.front();
-    mout.put(string(p, pptr() - p), messageType);
-    mout.flush();
+    auto size = pptr() - p;
+    if(size > 0){
+        mout.put(string(p, size), messageType);
+        mout.flush();
+    }
     setp(p, p + buf.size());
     return 0;
 }
@@ -218,6 +222,7 @@ inline void MessageOut::Impl::put(const string& message, int type)
     } else {
         pendingMessages.emplace_back(message, type);
     }
+    ++globalMessageCount_;
 }
 
 
@@ -289,6 +294,13 @@ std::ostream& MessageOut::cerr()
         impl->cerr = make_unique<ostream>(impl->errorStreamBuf.get());
     }
     return *impl->cerr;
+}
+
+
+unsigned int MessageOut::globalMessageCount()
+{
+    lock_guard<recursive_mutex> lock(sinkMutex);
+    return globalMessageCount_;
 }
 
 

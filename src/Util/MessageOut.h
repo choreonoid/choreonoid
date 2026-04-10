@@ -76,6 +76,8 @@ public:
     void setPendingMode(bool on);
     void flushPendingMessages();
 
+    static unsigned int globalMessageCount();
+
     // Used for continuous integration
     bool hasErrors() const;
 
