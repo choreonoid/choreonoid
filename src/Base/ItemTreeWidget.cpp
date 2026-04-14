@@ -236,11 +236,11 @@ ItemTreeWidget::ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
             setCheckState(i + 1, item->isChecked(i) ? Qt::Checked : Qt::Unchecked);
             setToolTip(i + 1, rootItem->checkEntryDescription(i).c_str());
         }
-        itemCheckConnection = 
-            item->sigAnyCheckToggled().connect(
-                [this](int checkId, bool on){
-                    this->widgetImpl->toggleItwItemCheck(this, checkId, on); });
     }
+    itemCheckConnection =
+        item->sigAnyCheckToggled().connect(
+            [this](int checkId, bool on){
+                this->widgetImpl->toggleItwItemCheck(this, checkId, on); });
 
     isExpandedBeforeRemoving = false;
     isTemporaryAttributeDisplay = false;
@@ -1833,9 +1833,14 @@ void ItemTreeWidget::Impl::setItwItemSelected(ItwItem* itwItem, bool on)
 
 void ItemTreeWidget::Impl::toggleItwItemCheck(ItwItem* itwItem, int checkId, bool on)
 {
-    auto state = itwItem->checkState(checkId + 1);
-    if(((state != Qt::Checked) && on) || ((state != Qt::Unchecked) && !on)){
-        itwItem->setCheckState(checkId + 1, on ? Qt::Checked : Qt::Unchecked);
+    if(isCheckColumnShown){
+        auto state = itwItem->checkState(checkId + 1);
+        if(((state != Qt::Checked) && on) || ((state != Qt::Unchecked) && !on)){
+            itwItem->setCheckState(checkId + 1, on ? Qt::Checked : Qt::Unchecked);
+            updateItemDisplay(itwItem);
+        }
+    } else {
+        updateItemDisplay(itwItem);
     }
 }
 
