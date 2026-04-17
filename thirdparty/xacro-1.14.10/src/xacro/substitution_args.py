@@ -111,6 +111,8 @@ def _eval_find(pkg):
     for package_path in package_paths:
         if package_path.endswith('/' + pkg):
             return package_path
+        if os.path.exists(package_path + '/' + pkg):
+            return package_path + '/' + pkg
 
     raise ResourceNotFound
 
