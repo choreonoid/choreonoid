@@ -829,7 +829,9 @@ void URDFBodyLoader::Impl::setMaterialToAllShapeNodes(SgNode* node, SgMaterial* 
             setMaterialToAllShapeNodes(child, material);
         }
     } else if (auto shape = dynamic_cast<SgShape*>(node)) {
-        shape->setMaterial(material);
+        if (!shape->material()) {
+            shape->setMaterial(material);
+        }
     }
 }
 
