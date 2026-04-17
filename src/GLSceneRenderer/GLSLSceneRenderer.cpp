@@ -2793,6 +2793,11 @@ bool GLSLSceneRenderer::Impl::loadTextureImage(TextureResource* resource, const 
     } else {
         // NPOT (Non-Power-Of-Two) textures are fully supported in OpenGL 3.3+
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image.pixels());
+        if(format == GL_RED){
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_RED);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, GL_RED);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED);
+        }
         resource->isLoaded = true;
         resource->width = width;
         resource->height = height;
