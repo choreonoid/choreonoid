@@ -28,8 +28,26 @@ if(NOT ENABLE_PHYSX)
 
   set(PHYSX_BINARY_TYPE release CACHE STRING "Specify the binary type among release, profile, checked, debug")
 
+  if(WIN32)
+    # Pick the default based on the MSVC toolset. Users can override with
+    # -DPHYSX_PLATFORM_DIR=... for setups the heuristic does not cover
+    # (e.g. a newer VS that ships before the PhysX SDK gains an explicit
+    # subdirectory for it, or a dynamic-CRT build using vc???.md).
+    if(MSVC_VERSION GREATER_EQUAL 1930)
+      set(_physx_default_platform_dir "win.x86_64.vc143.mt")  # VS 2022 and newer
+    elseif(MSVC_VERSION GREATER_EQUAL 1920)
+      set(_physx_default_platform_dir "win.x86_64.vc142.mt")  # VS 2019
+    else()
+      set(_physx_default_platform_dir "win.x86_64.vc141.mt")  # VS 2017 or older
+    endif()
+    set(PHYSX_PLATFORM_DIR "${_physx_default_platform_dir}" CACHE STRING
+      "PhysX binary subdirectory (e.g. win.x86_64.vc143.mt, win.x86_64.vc142.mt)")
+  else()
+    set(PHYSX_PLATFORM_DIR "linux.x86_64")
+  endif()
+
   include_directories(${PHYSX_DIR}/include)
-  link_directories(${PHYSX_DIR}/bin/linux.x86_64/${PHYSX_BINARY_TYPE})
+  link_directories(${PHYSX_DIR}/bin/${PHYSX_PLATFORM_DIR}/${PHYSX_BINARY_TYPE})
 endif()
 
 set(target CnoidPhysXPlugin)
