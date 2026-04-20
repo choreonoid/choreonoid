@@ -24,6 +24,7 @@ choreonoid_add_python_module(PyUtil
   PyMeshUtils.cpp
   PyGeometryTypes.cpp
   PyTask.cpp
+  PySceneLoader.cpp
   )
 
 target_link_libraries(PyUtil CnoidUtil)
