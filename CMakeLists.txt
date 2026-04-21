@@ -139,9 +139,19 @@ if(UNIX)
 
   set(compiler_general_options "-Wreturn-type")
 
-  option(ENABLE_NATIVE_CPU_ARCHITECTURE "Use the -march=native option to enable instruction set supported by the native processor architecture" OFF)
-  if(ENABLE_NATIVE_CPU_ARCHITECTURE)
+  option(ENABLE_NATIVE_CPU_ARCHITECTURE "Use -march=native (build-machine-specific, not portable)" OFF)
+  option(ENABLE_X86_64_V3 "Use -march=x86-64-v3 (AVX2/FMA/BMI2, portable to Haswell/Excavator or later)" OFF)
+
+  if(ENABLE_NATIVE_CPU_ARCHITECTURE AND ENABLE_X86_64_V3)
+    message(WARNING
+      "Both ENABLE_NATIVE_CPU_ARCHITECTURE and ENABLE_X86_64_V3 are ON. "
+      "ENABLE_NATIVE_CPU_ARCHITECTURE takes precedence; ENABLE_X86_64_V3 is ignored. "
+      "Please enable only one of them.")
     set(compiler_general_options "${compiler_general_options} -march=native")
+  elseif(ENABLE_NATIVE_CPU_ARCHITECTURE)
+    set(compiler_general_options "${compiler_general_options} -march=native")
+  elseif(ENABLE_X86_64_V3)
+    set(compiler_general_options "${compiler_general_options} -march=x86-64-v3")
   endif()
 
   option(CHECK_UNRESOLVED_SYMBOLS "check unresolved symbols in the object files when creating shared libraries" OFF)
