@@ -89,6 +89,9 @@ copyrighted by other developers.
  * LibYAML (http://pyyaml.org/wiki/LibYAML)
    MIT license (see thirdparty/yaml-0.2.5/LICENSE)
 
+ * NVIDIA PhysX (https://github.com/NVIDIA-Omniverse/PhysX)
+   see thirdparty/physx-5.6.1/LICENSE.md
+
  * OPCODE (http://www.codercorner.com/Opcode.htm)
    see src/AISTCollisionDetector/Opcode/ReadMe.txt
 
@@ -115,7 +118,6 @@ following libraries:
 * Qt (http://www.qt.io/)
 * Assimp (https://www.assimp.org/)
 * Open Dynamics Engine (http://www.ode.org/)
-* NVIDIA PhysX (https://github.com/NVIDIA-Omniverse/PhysX)
 * Bullet Physics Library (http://bulletphysics.org/)
 * FFmpeg (https://ffmpeg.org/)
 * Point Cloud Library (https://pointclouds.org/)

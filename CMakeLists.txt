@@ -943,6 +943,14 @@ endif()
 set(CLI11_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/CLI11)
 include_directories(${CLI11_INCLUDE_DIRS})
 
+# PhysX (bundled). Enables the bundled PhysX tree as a project-wide
+# thirdparty library that plugins (not only PhysXPlugin) can link against.
+# When this is ON, BUILD_PHYSX_PLUGIN also defaults to ON.
+option(ENABLE_PHYSX "Build the bundled PhysX library" ON)
+if(ENABLE_PHYSX)
+  add_subdirectory(thirdparty/physx-5.6.1)
+endif()
+
 add_subdirectory(src)
 add_subdirectory(include)
 
