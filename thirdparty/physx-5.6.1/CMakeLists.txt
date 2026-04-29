@@ -76,7 +76,10 @@ set(PHYSX_GCC_WARNING_FLAGS
     -Wno-array-bounds
     -Wno-class-memaccess
     -Wno-conversion-null
-    -Wno-format
+    # -Wno-format is intentionally omitted: it conflicts with Debian's
+    # mandatory -Wformat -Werror=format-security packaging policy, and the
+    # PhysX 5.6.1 sources we build do not actually emit -Wformat warnings
+    # (we do not pass -Werror, so any future warning would be non-fatal).
     -Wno-format-overflow
     -Wno-invalid-offsetof
     -Wno-misleading-indentation
