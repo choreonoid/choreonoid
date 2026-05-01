@@ -2794,9 +2794,17 @@ bool GLSLSceneRenderer::Impl::loadTextureImage(TextureResource* resource, const 
         // NPOT (Non-Power-Of-Two) textures are fully supported in OpenGL 3.3+
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image.pixels());
         if(format == GL_RED){
+            // Replicate the red channel into G and B so that a single-channel
+            // (grayscale) texture behaves like the legacy GL_LUMINANCE format.
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_RED);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, GL_RED);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED);
+        } else {
+            // Reset swizzle to the default in case this texture object was
+            // previously used for a GL_RED image.
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_RED);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, GL_GREEN);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_BLUE);
         }
         resource->isLoaded = true;
         resource->width = width;
