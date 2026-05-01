@@ -208,6 +208,9 @@ set(headers
   )
 
 set(include_dirs ${LIBYAML_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${JPEG_INCLUDE_DIRS} ${LIBUUID_INCLUDE_DIRS})
+if(CNOID_USE_TIFF)
+  list(APPEND include_dirs ${TIFF_INCLUDE_DIRS})
+endif()
 if(MSVC)
   include_directories(BEFORE ${include_dirs})
 else()
@@ -230,6 +233,10 @@ choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers}
 set(libraries
   PUBLIC fmt::fmt ${GETTEXT_LIBRARIES}
   PRIVATE ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${libzip_LIBRARIES})
+if(CNOID_USE_TIFF)
+  set(libraries ${libraries} PRIVATE ${TIFF_LIBRARIES})
+  target_compile_definitions(CnoidUtil PRIVATE CNOID_USE_TIFF)
+endif()
 
 if(UNIX)
   set(libraries ${libraries}

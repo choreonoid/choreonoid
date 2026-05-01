@@ -10,6 +10,10 @@ extern "C" {
 #include <jpeglib.h>
 }
 
+#ifdef CNOID_USE_TIFF
+#include <tiffio.h>
+#endif
+
 #include "gettext.h"
 
 using namespace std;
@@ -310,9 +314,50 @@ bool loadTGA(Image& image, const std::string& filename, bool isUpsideDown, ostre
     }
 
     fclose (fp);
-    
+
     return true;
 }
+
+
+#ifdef CNOID_USE_TIFF
+
+bool loadTIFF(Image& image, const std::string& filename, bool isUpsideDown, ostream& os)
+{
+    TIFF* tif = TIFFOpen(fromUTF8(filename).c_str(), "r");
+    if(!tif){
+        os << formatR(_("Image file \"{0}\" cannot be loaded."), filename) << endl;
+        return false;
+    }
+
+    uint32_t width = 0;
+    uint32_t height = 0;
+    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+
+    if(width == 0 || height == 0){
+        TIFFClose(tif);
+        os << formatR(_("Image file \"{0}\" is empty."), filename) << endl;
+        return false;
+    }
+
+    image.setSize(width, height, 4);
+
+    const int orientation = isUpsideDown ? ORIENTATION_BOTLEFT : ORIENTATION_TOPLEFT;
+    if(!TIFFReadRGBAImageOriented(
+            tif, width, height,
+            reinterpret_cast<uint32_t*>(image.pixels()),
+            orientation, 0)){
+        TIFFClose(tif);
+        image.reset();
+        os << formatR(_("Image file \"{0}\" cannot be decoded as TIFF."), filename) << endl;
+        return false;
+    }
+
+    TIFFClose(tif);
+    return true;
+}
+
+#endif
 
 }
 
@@ -337,6 +382,10 @@ bool ImageIO::load(Image& image, const std::string& filename, std::ostream& os)
         loaded = loadJPEG(image, filename, isUpsideDown_, os);
     } else if(ext == ".tga"){
         loaded = loadTGA(image, filename, isUpsideDown_, os);
+#ifdef CNOID_USE_TIFF
+    } else if(ext == ".tif" || ext == ".tiff"){
+        loaded = loadTIFF(image, filename, isUpsideDown_, os);
+#endif
     } else {
         os << formatR(_("The image file format of \"{0}\" is not supported."), fpath.string()) << endl;
     }

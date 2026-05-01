@@ -14,6 +14,7 @@ zlib1g-dev \
 libzip-dev \
 libjpeg-dev \
 libpng-dev \
+libtiff-dev \
 libfreetype-dev \
 qtbase5-dev \
 libqt5x11extras5-dev \

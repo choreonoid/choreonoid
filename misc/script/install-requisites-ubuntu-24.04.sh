@@ -14,6 +14,7 @@ zlib1g-dev \
 libzip-dev \
 libjpeg-dev \
 libpng-dev \
+libtiff-dev \
 libfreetype-dev \
 qt6-base-dev \
 qt6-svg-dev \

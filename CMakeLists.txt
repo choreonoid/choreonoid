@@ -899,6 +899,12 @@ else()
   set(JPEG_LIBRARIES jpeg)
 endif()
 
+# tiff (optional)
+find_package(TIFF)
+if(TIFF_FOUND)
+  set(CNOID_USE_TIFF ON)
+endif()
+
 # fmtlib
 if(MSVC)
   set(USE_BUNDLED_FMTLIB_DEFAULT ON)
