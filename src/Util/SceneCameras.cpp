@@ -31,7 +31,7 @@ Isometry3 SgCamera::positionLookingFor(const Vector3& eye, const Vector3& direct
     Vector3 d = direction.normalized();
     Vector3 c = d.cross(up).normalized();
     Vector3 u = c.cross(d);
-    Isometry3 C;
+    Isometry3 C(Isometry3::Identity());
     C.linear() << c, u, -d;
     C.translation() = eye;
     return C;
