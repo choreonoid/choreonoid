@@ -1,0 +1,45 @@
+name: CI of choreonoid
+
+on:
+  push:
+    paths-ignore:
+      # Changes to those files don't mandate running CI
+      - "debian/**"
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04, macos-latest]
+        build-type: [RelWithDebInfo]
+        compiler: [gcc, clang]
+        exclude:
+          # Only default compiler on macos-latest
+          - os: macos-latest
+            compiler: clang
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Install dependencies
+      uses: jrl-umi3218/github-actions/install-dependencies@master
+      if: matrix.build-type != 'script'
+      with:
+        compiler: ${{ matrix.compiler }}
+        build-type: ${{ matrix.build-type }}
+        ubuntu: |
+          apt: doxygen doxygen-latex graphviz libboost-all-dev libeigen3-dev libz-dev libjpeg-dev libpng-dev libglew-dev libxfixes-dev libyaml-dev qt5-default libqt5svg5-dev libqt5x11extras5-dev libode-dev libcos4-dev python2.7-dev python3-dev uuid-dev gettext libyaml-dev pkg-config
+        macos: |
+          brew: eigen boost doxygen zlib jpeg libpng glew libxfixes libyaml pkg-config libtool
+    - name: Build and test
+      uses: jrl-umi3218/github-actions/build-cmake-project@master
+      with:
+        compiler: ${{ matrix.compiler }}
+        build-type: ${{ matrix.build-type }}
