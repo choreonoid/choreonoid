@@ -8,7 +8,9 @@
 #include <cnoid/Link>
 #include <cnoid/ViewManager>
 #include <cnoid/AppConfig>
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/ConnectionSet>
+#include <cnoid/Format>
 #include <cnoid/MathUtil>
 #include <QTableWidget>
 #include <QHeaderView>
@@ -27,6 +29,7 @@ public:
     LinkPropertyView* self;
     ScopedConnection bodySelectionManagerConnection;
     ScopedConnection modelUpdateConnection;
+    ScopedConnection dvFormatConnection;
     BodyItemPtr currentBodyItem;
     LinkPtr currentLink;
     int fontPointSizeDiff;
@@ -88,6 +91,14 @@ LinkPropertyView::Impl::Impl(LinkPropertyView* self)
     if(config->read("fontZoom", storedFontPointSizeDiff)){
         zoomFontSize(storedFontPointSizeDiff);
     }
+
+    dvFormatConnection =
+        DisplayValueFormat::master()->sigFormatChanged().connect(
+            [this]{
+                if(currentLink){
+                    updateLinkProperties(currentLink);
+                }
+            });
 }
 
 
@@ -152,12 +163,23 @@ void LinkPropertyView::Impl::updateLinkProperties(Link* link)
     if(!link){
         return;
     }
-    
+
+    auto dvf = DisplayValueFormat::master();
+    const double lengthRatio = dvf->ratioToDisplayLength();
+    const char* lengthSymbol = dvf->lengthUnitSymbol();
+    const bool isDegree = dvf->isDegree();
+    const char* angleSymbol = isDegree ? "deg" : "rad";
+    const char* angleVelocitySymbol = isDegree ? "deg/s" : "rad/s";
+
     addProperty(_("Name"), link->name());
     addProperty(_("Index"), link->index());
-    addProperty(_("Offset translation"), Vector3(link->offsetTranslation()));
+    addProperty(
+        formatR(_("Offset translation [{0}]"), lengthSymbol),
+        Vector3(link->offsetTranslation() * lengthRatio));
     addProperty(_("Offset rotation"), AngleAxis(link->offsetRotation()));
-    addProperty(_("Center of mass"), link->centerOfMass());
+    addProperty(
+        formatR(_("Center of mass [{0}]"), lengthSymbol),
+        Vector3(link->centerOfMass() * lengthRatio));
     addProperty(_("Mass"), link->mass());
     addProperty(_("Inertia tensor"), link->I());
     addProperty(_("Material"), link->materialName());
@@ -170,16 +192,29 @@ void LinkPropertyView::Impl::updateLinkProperties(Link* link)
         double q_upper = link->q_upper();
         double dq_lower = link->dq_lower();
         double dq_upper = link->dq_upper();
+        string qUnit;
+        string dqUnit;
         if(link->isRevoluteJoint()){
-            q_lower = degree(q_lower);
-            q_upper = degree(q_upper);
-            dq_lower = degree(dq_lower);
-            dq_upper = degree(dq_upper);
+            if(isDegree){
+                q_lower = degree(q_lower);
+                q_upper = degree(q_upper);
+                dq_lower = degree(dq_lower);
+                dq_upper = degree(dq_upper);
+            }
+            qUnit = angleSymbol;
+            dqUnit = angleVelocitySymbol;
+        } else {
+            q_lower *= lengthRatio;
+            q_upper *= lengthRatio;
+            dq_lower *= lengthRatio;
+            dq_upper *= lengthRatio;
+            qUnit = lengthSymbol;
+            dqUnit = formatC("{0}/s", lengthSymbol);
         }
-        addProperty(_("Lower joint limit"), q_lower);
-        addProperty(_("Upper joint limit"), q_upper);
-        addProperty(_("Lower joint velocity"), dq_lower);
-        addProperty(_("Upper joint velocity"), dq_upper);
+        addProperty(formatR(_("Lower joint limit [{0}]"), qUnit), q_lower);
+        addProperty(formatR(_("Upper joint limit [{0}]"), qUnit), q_upper);
+        addProperty(formatR(_("Lower joint velocity [{0}]"), dqUnit), dq_lower);
+        addProperty(formatR(_("Upper joint velocity [{0}]"), dqUnit), dq_upper);
 
         addProperty(_("Joint inertia"), link->Jm2());
     }
