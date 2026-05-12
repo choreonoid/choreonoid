@@ -5,11 +5,13 @@
 #include "MprControllerItemBase.h"
 #include <cnoid/MprPosition>
 #include <cnoid/MprPositionList>
+#include <cnoid/BodyItem>
 #include <cnoid/KinematicBodyItemSet>
 #include <cnoid/BodyItemKinematicsKit>
 #include <cnoid/JointPath>
 #include <cnoid/EigenUtil>
 #include <cnoid/Buttons>
+#include <cnoid/ConnectionSet>
 #include <cnoid/MessageOut>
 #include <QLabel>
 #include <QBoxLayout>
@@ -37,11 +39,15 @@ public:
     bool needToUpdatePositionLabelGrid;
     vector<MprPositionLabelSetPtr> positionLabelSets;
     int numActivePositionLabelSets;
+    KinematicBodyItemSetPtr observedBodyItemSet;
+    ScopedConnection bodyItemSetChangeConnection;
+    ConnectionSet handlerSetUpdateConnections;
 
     Impl(MprPositionStatementPanel* self);
     ~Impl();
     void updateTotalPositionLabelGridColumnSize();
     void updatePositionPanel();
+    void updateHandlerSetUpdateConnections(KinematicBodyItemSet* bodyItemSet);
     void updatePositionLabelSet(
         MprPosition* position, BodyItemKinematicsKit* kinematicsKit, int& io_widgetSetIndex, int& io_row);
     MprPositionLabelSet* getOrCreatePositionLabelSet(int index);
@@ -177,10 +183,50 @@ void MprPositionStatementPanel::updatePositionPanel()
 }
 
 
+void MprPositionStatementPanel::Impl::updateHandlerSetUpdateConnections(KinematicBodyItemSet* bodyItemSet)
+{
+    if(bodyItemSet == observedBodyItemSet){
+        return;
+    }
+    observedBodyItemSet = bodyItemSet;
+    bodyItemSetChangeConnection.disconnect();
+    handlerSetUpdateConnections.disconnect();
+
+    if(!bodyItemSet){
+        return;
+    }
+
+    /*
+       Subscribe to each body item in the set so that handler-set changes in any
+       of them (including composite-position parts) trigger a repaint.
+    */
+    auto connectAll = [this, bodyItemSet]{
+        handlerSetUpdateConnections.disconnect();
+        for(auto& index : bodyItemSet->validBodyPartIndices()){
+            if(auto bodyItem = bodyItemSet->bodyItem(index)){
+                handlerSetUpdateConnections.add(
+                    bodyItem->sigModelUpdated().connect(
+                        [this](int flags){
+                            if(flags & BodyItem::HandlerSetUpdate){
+                                updatePositionPanel();
+                            }
+                        }));
+            }
+        }
+    };
+    connectAll();
+
+    bodyItemSetChangeConnection =
+        bodyItemSet->sigBodySetChanged().connect(connectAll);
+}
+
+
 void MprPositionStatementPanel::Impl::updatePositionPanel()
 {
     auto statement = self->currentStatement<MprPositionStatement>();
     auto position = statement->position();
+
+    updateHandlerSetUpdateConnections(self->currentBodyItemSet());
 
     if(!position){
         positionNameLabel.setText(

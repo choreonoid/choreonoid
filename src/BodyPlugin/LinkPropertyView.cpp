@@ -5,7 +5,10 @@
 #include "LinkPropertyView.h"
 #include "BodySelectionManager.h"
 #include <cnoid/BodyItem>
+#include <cnoid/Body>
 #include <cnoid/Link>
+#include <cnoid/JointDisplacementPresentationHelper>
+#include <cnoid/JointDisplacementPresentationHandler>
 #include <cnoid/ViewManager>
 #include <cnoid/AppConfig>
 #include <cnoid/DisplayValueFormat>
@@ -215,6 +218,42 @@ void LinkPropertyView::Impl::updateLinkProperties(Link* link)
         addProperty(formatR(_("Upper joint limit [{0}]"), qUnit), q_upper);
         addProperty(formatR(_("Lower joint velocity [{0}]"), dqUnit), dq_lower);
         addProperty(formatR(_("Upper joint velocity [{0}]"), dqUnit), dq_upper);
+
+        /*
+           When a JointDisplacementPresentationHandler is responsible for this
+           joint, the joint's displacement is shown and edited as a presentation
+           value (e.g. a linear distance for a gun-axis joint). The lower/upper
+           bounds of that presentation value are listed here for reference.
+        */
+        if(currentBodyItem){
+            // Pass Body, not BodyItem, to skip signal subscription for this short-lived helper.
+            JointDisplacementPresentationHelper helper(currentBodyItem->body());
+            auto pType = helper.getPresentationType(link);
+            if(pType != JointDisplacementPresentationHandler::Fixed){
+                double pLower, pUpper;
+                helper.getPresentationRange(link, pLower, pUpper);
+                if(pLower != link->q_lower() || pUpper != link->q_upper()){
+                    string pUnit;
+                    if(pType == JointDisplacementPresentationHandler::Angle){
+                        if(isDegree){
+                            pLower = degree(pLower);
+                            pUpper = degree(pUpper);
+                        }
+                        pUnit = angleSymbol;
+                    } else {
+                        pLower *= lengthRatio;
+                        pUpper *= lengthRatio;
+                        pUnit = lengthSymbol;
+                    }
+                    addProperty(
+                        formatR(_("Lower joint limit (presentation value) [{0}]"), pUnit),
+                        pLower);
+                    addProperty(
+                        formatR(_("Upper joint limit (presentation value) [{0}]"), pUnit),
+                        pUpper);
+                }
+            }
+        }
 
         addProperty(_("Joint inertia"), link->Jm2());
     }

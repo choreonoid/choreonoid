@@ -1,18 +1,19 @@
 #include "JointDisplacementWidgetSet.h"
 #include "BodySelectionManager.h"
 #include "BodyItem.h"
-#include <cnoid/DisplayValueFormat>
-#include <cnoid/Body>
-#include <cnoid/Link>
-#include <cnoid/LinkedJointHandler>
 #include <cnoid/Archive>
-#include <cnoid/EigenUtil>
 #include <cnoid/Buttons>
 #include <cnoid/SpinBox>
 #include <cnoid/Slider>
 #include <cnoid/Dial>
 #include <cnoid/LazyCaller>
 #include <cnoid/MenuManager>
+#include <cnoid/Body>
+#include <cnoid/Link>
+#include <cnoid/LinkedJointHandler>
+#include <cnoid/JointDisplacementPresentationHelper>
+#include <cnoid/DisplayValueFormat>
+#include <cnoid/EigenUtil>
 #include <cnoid/MathUtil>
 #include <QLabel>
 #include <QKeyEvent>
@@ -94,6 +95,7 @@ public:
     BodySelectionManager* bodySelectionManager;
     BodyItemPtr currentBodyItem;
     LinkedJointHandlerPtr linkedJointHandler;
+    JointDisplacementPresentationHelper presentationHelper;
     vector<int> activeJointLinkIndices;
     vector<JointIndicator*> jointIndicators;
     LazyCaller updateJointDisplacementsLater;
@@ -102,6 +104,7 @@ public:
     ScopedConnection kinematicStateChangeConnection;
     ScopedConnection continuousUpdateStateChangeConnection;
     ScopedConnection modelUpdateConnection;
+    ScopedConnection presentationHandlerSetChangedConnection;
 
     DisplayValueFormat* dvFormat;
     ScopedConnection dvFormatConnection;
@@ -378,13 +381,15 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
         }
 
         updateConnectionForSelectedJointsOnlyMode();
-        
-        updateIndicatorGrid();
 
         linkedJointHandler.reset();
+        presentationHelper.setBodyItem(bodyItem);
         kinematicStateChangeConnection.disconnect();
         continuousUpdateStateChangeConnection.disconnect();
         modelUpdateConnection.disconnect();
+        presentationHandlerSetChangedConnection.disconnect();
+
+        updateIndicatorGrid();
 
         if(bodyItem){
             linkedJointHandler = LinkedJointHandler::findOrCreateLinkedJointHandler(bodyItem->body());
@@ -405,6 +410,10 @@ void JointDisplacementWidgetSet::Impl::setBodyItem(BodyItem* bodyItem)
                             updateIndicatorGrid();
                         }
                     });
+
+            presentationHandlerSetChangedConnection =
+                presentationHelper.sigHandlerSetChanged().connect(
+                    [this]{ updateIndicatorGrid(); });
         }
     }
 }
@@ -675,23 +684,25 @@ void JointIndicator::initialize(Link* joint)
     } else {
         idLabel.setText("");
     }
-    
+
     nameLabel.setText(joint->jointName().c_str());
-    
+
     spin.show();
-    
+
     unitConversionRatio = 1.0;
-    double lower = joint->q_lower();
-    bool isLowerInfinite = (joint->q_lower() == -std::numeric_limits<double>::max());
-    double upper = joint->q_upper();
-    bool isUpperInfinite = (joint->q_upper() == std::numeric_limits<double>::max());
-    
+    auto& helper = baseImpl->presentationHelper;
+    double lower, upper;
+    helper.getPresentationRange(joint, lower, upper);
+    bool isLowerInfinite = (lower == -std::numeric_limits<double>::max());
+    bool isUpperInfinite = (upper == std::numeric_limits<double>::max());
+    auto presentationType = helper.getPresentationType(joint);
+
     slider.blockSignals(true);
     spin.blockSignals(true);
     dial.blockSignals(true);
     phaseSpin.blockSignals(true);
-    
-    if(joint->isRevoluteJoint()){
+
+    if(presentationType == JointDisplacementPresentationHandler::Angle){
         bool isValidRange = true;
         if(baseImpl->angleUnit == DisplayValueFormat::Degree){
             unitConversionRatio = 180.0 / PI;
@@ -736,17 +747,17 @@ void JointIndicator::initialize(Link* joint)
         }
         slider.setRange(lower * Resolution, upper * Resolution);
         slider.setEnabled(true);
-        
+
         spin.setDecimals(baseImpl->angleDecimals);
         spin.setRange(-baseImpl->defaultMaxAngle, baseImpl->defaultMaxAngle);
         spin.setSingleStep(baseImpl->angleStep);
         spin.setEnabled(true);
-        
+
         dial.setWrapping(true);
         dial.setNotchesVisible(false);
         dial.setEnabled(true);
-        
-    } else if(joint->isPrismaticJoint()){
+
+    } else if(presentationType == JointDisplacementPresentationHandler::Length){
         unitConversionRatio = baseImpl->dvFormat->ratioToDisplayLength();
         lower *= unitConversionRatio;
         upper *= unitConversionRatio;
@@ -760,7 +771,7 @@ void JointIndicator::initialize(Link* joint)
         }
         slider.setRange(lower * Resolution, upper * Resolution);
         slider.setEnabled(true);
-        
+
         spin.setDecimals(baseImpl->lengthDecimals);
         spin.setRange(-baseImpl->defaultMaxLength, baseImpl->defaultMaxLength);
         spin.setSingleStep(baseImpl->lengthStep);
@@ -770,7 +781,7 @@ void JointIndicator::initialize(Link* joint)
         dial.setWrapping(false);
         dial.setNotchesVisible(true);
         dial.setEnabled(true);
-        
+
     } else {
         slider.setRange(0, 0);
         setRangeLabelValue(lowerLimitLabel, 0.0, false, 0);
@@ -839,7 +850,7 @@ void JointIndicator::updateDisplacementWidgets(bool forceUpdate)
             isWarningState = false;
         }
         
-        double v = unitConversionRatio * q;
+        double v = unitConversionRatio * baseImpl->presentationHelper.toPresentationValue(joint, q);
 
         spin.blockSignals(true);
         if(v > spin.maximum()){
@@ -910,7 +921,8 @@ void JointIndicator::updateDisplacement(double q)
 
 void JointIndicator::onDisplacementInput(double value)
 {
-    updateDisplacement(value / unitConversionRatio);
+    updateDisplacement(
+        baseImpl->presentationHelper.fromPresentationValue(joint, value / unitConversionRatio));
 }
 
 

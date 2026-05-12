@@ -3,6 +3,11 @@
 #include "MprPositionList.h"
 #include "MprBodyItemUtil.h"
 #include <cnoid/KinematicBodyItemSet>
+#include <cnoid/BodyItemKinematicsKit>
+#include <cnoid/BodyItem>
+#include <cnoid/Body>
+#include <cnoid/Link>
+#include <cnoid/JointDisplacementPresentationHelper>
 #include <cnoid/MenuManager>
 #include <cnoid/DisplayValueFormat>
 #include <cnoid/ConnectionSet>
@@ -69,7 +74,7 @@ public:
     virtual QVariant data(const QModelIndex& index, int role) const override;
     bool checkIfJointSpacePosition(MprPosition* position) const;
     QVariant getPositionData(MprPosition* position, int posColumnIndex) const;
-    QVariant getSinglePositionData(MprPosition* position) const;
+    QVariant getSinglePositionData(MprPosition* position, BodyItemKinematicsKit* kinematicsKit) const;
     virtual bool setData(const QModelIndex& index, const QVariant& value, int role) override;
     void changePositionType(int positionIndex, MprPosition* position, bool isJointSpace);
     MprPositionPtr getPositionWithChangedPositionType(
@@ -180,6 +185,23 @@ void PositionListModel::setBodyItemSet(KinematicBodyItemSet* bodyItemSet)
                         setBodyItemSet(this->bodyItemSet);
                     }
                 }));
+
+        /*
+           Subscribe to each body item so that handler-set changes (e.g. adding
+           or removing a gun-axis configuration) in any of them trigger a
+           refresh of the FK display values.
+        */
+        for(auto& index : bodyPartIndices){
+            if(auto bodyItem = bodyItemSet->bodyItem(index)){
+                bodyItemSetConnections.add(
+                    bodyItem->sigModelUpdated().connect(
+                        [this](int flags){
+                            if(flags & BodyItem::HandlerSetUpdate){
+                                Q_EMIT layoutChanged();
+                            }
+                        }));
+            }
+        }
     }
 
     if(positionHeaderLabels.empty()){
@@ -355,13 +377,14 @@ QVariant PositionListModel::getPositionData(MprPosition* position, int posColumn
     if(posColumnIndex < static_cast<int>(bodyPartIndices.size())){
         int positionIndex = bodyPartIndices[posColumnIndex];
         if(positionIndex >= 0){
+            BodyItemKinematicsKit* kit = bodyItemSet ? bodyItemSet->bodyItemPart(positionIndex) : nullptr;
             if(!position->isComposite()){
                 if(positionIndex == mainBodyPartIndex){
-                    return getSinglePositionData(position);
+                    return getSinglePositionData(position, kit);
                 }
             } else {
                 if(auto pi = position->compositePosition()->position(positionIndex)){
-                    return getSinglePositionData(pi);
+                    return getSinglePositionData(pi, kit);
                 }
             }
         }
@@ -370,7 +393,8 @@ QVariant PositionListModel::getPositionData(MprPosition* position, int posColumn
 }
 
 
-QVariant PositionListModel::getSinglePositionData(MprPosition* position) const
+QVariant PositionListModel::getSinglePositionData
+(MprPosition* position, BodyItemKinematicsKit* kinematicsKit) const
 {
     double ratio = valueFormat->ratioToDisplayLength();
     if(ikPosFormat.empty()){
@@ -404,15 +428,49 @@ QVariant PositionListModel::getSinglePositionData(MprPosition* position) const
         string data;
         int n = fk->numJoints();
         int m = n - 1;
-        for(int i=0; i < n; ++i){
-            auto q = fk->q(i);
-            if(fk->checkIfRevoluteJoint(i)){
-                data += formatC("{0: 6.1f}", degree(q));
-            } else {
-                data += formatR(fkPosFormat, q * ratio);
+        bool isJointPathOrder = (fk->jointDisplacementOrder() == MprFkPosition::JointPathOrder);
+        /*
+           MprFkPosition itself is body-independent: it carries only joint
+           displacements and a prismatic/revolute flag per joint. However, when
+           joint displacement presentation is customized for a specific body
+           (e.g. a gun-axis joint displayed as a linear distance), the display
+           must follow that customization. So if the corresponding bodyItemSet
+           is available we route the values through
+           JointDisplacementPresentationHelper; otherwise we fall back to the
+           body-independent data and display the internal values as-is.
+        */
+        if(kinematicsKit){
+            // Pass Body, not BodyItem, to skip signal subscription for this short-lived helper.
+            JointDisplacementPresentationHelper helper(kinematicsKit->bodyItem()->body());
+            int nKitJoints = kinematicsKit->numJoints();
+            for(int i=0; i < n; ++i){
+                Link* joint = (i < nKitJoints)
+                    ? (isJointPathOrder ? kinematicsKit->joint(i) : kinematicsKit->jointAtIdOrder(i))
+                    : nullptr;
+                double value = joint ? helper.toPresentationValue(joint, fk->q(i)) : fk->q(i);
+                bool isAngle = joint
+                    ? (helper.getPresentationType(joint) == JointDisplacementPresentationHandler::Angle)
+                    : fk->checkIfRevoluteJoint(i);
+                if(isAngle){
+                    data += formatC("{0: 6.1f}", degree(value));
+                } else {
+                    data += formatR(fkPosFormat, value * ratio);
+                }
+                if(i < m){
+                    data += " ";
+                }
             }
-            if(i < m){
-                data += " ";
+        } else {
+            for(int i=0; i < n; ++i){
+                auto q = fk->q(i);
+                if(fk->checkIfRevoluteJoint(i)){
+                    data += formatC("{0: 6.1f}", degree(q));
+                } else {
+                    data += formatR(fkPosFormat, q * ratio);
+                }
+                if(i < m){
+                    data += " ";
+                }
             }
         }
         return data.c_str();

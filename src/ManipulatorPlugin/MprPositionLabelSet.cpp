@@ -1,4 +1,5 @@
 #include "MprPositionLabelSet.h"
+#include <cnoid/JointDisplacementPresentationHelper>
 #include <cnoid/DisplayValueFormat>
 #include <cnoid/MathUtil>
 #include <cnoid/Format>
@@ -287,6 +288,8 @@ void MprPositionLabelSet::updateJointLabels
     auto dvf = DisplayValueFormat::master();
     const double lengthRatio = dvf->ratioToDisplayLength();
     int decimals = dvf->lengthDecimals();
+    // Pass Body, not BodyItem, to skip signal subscription for this short-lived helper.
+    JointDisplacementPresentationHelper helper(kinematicsKit->bodyItem()->body());
 
     /*
       Always display in joint ID order. When the data is in JointPathOrder,
@@ -307,10 +310,11 @@ void MprPositionLabelSet::updateJointLabels
         int dispIndex = isJointPathOrder ? kinematicsKit->jointIndexAtIdOrder(i) : i;
         auto& displacementLabel = jointDisplacementLabels[i];
         double q = position->jointDisplacement(dispIndex);
-        if(position->checkIfRevoluteJoint(dispIndex)){
-            displacementLabel.setText(QString::number(degree(q), 'f', 1));
+        double value = helper.toPresentationValue(joint, q);
+        if(helper.getPresentationType(joint) == JointDisplacementPresentationHandler::Angle){
+            displacementLabel.setText(QString::number(degree(value), 'f', 1));
         } else {
-            displacementLabel.setText(QString::number(lengthRatio * q, 'f', decimals));
+            displacementLabel.setText(QString::number(lengthRatio * value, 'f', decimals));
         }
         displacementLabel.setVisible(true);
     }

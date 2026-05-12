@@ -545,12 +545,17 @@ bool BodyItem::addExtraBodyHandler(const std::string& handlerName)
     names.push_back(handlerName);
 
     bool loaded = false;
+    bool handlerAttached = false;
     if(impl->body){
         if(findHandlerByFilename(impl->body, handlerName)){
             loaded = true;
         } else {
             loaded = sharedBodyHandlerManager().loadBodyHandler(impl->body, handlerName);
+            handlerAttached = loaded;
         }
+    }
+    if(handlerAttached){
+        notifyModelUpdate(HandlerSetUpdate);
     }
     return loaded;
 }
@@ -567,10 +572,15 @@ bool BodyItem::removeExtraBodyHandler(const std::string& handlerName)
             break;
         }
     }
+    bool handlerDetached = false;
     if(removed && impl->body){
         if(auto handler = findHandlerByFilename(impl->body, handlerName)){
             impl->body->removeHandler(handler);
+            handlerDetached = true;
         }
+    }
+    if(handlerDetached){
+        notifyModelUpdate(HandlerSetUpdate);
     }
     return removed;
 }
@@ -2276,12 +2286,17 @@ bool BodyItem::Impl::restore(const Archive& archive)
                had a chance to apply Link::info() overrides. The handler's initialize() walks
                body->links() looking at Link::info(), so it must run after those updates.
             */
+            bool handlerAttached = false;
             for(auto& name : extraBodyHandlerNames){
                 if(!findHandlerByFilename(body, name)){
                     if(sharedBodyHandlerManager().loadBodyHandler(body, name)){
                         doNotifyUpdate = true;
+                        handlerAttached = true;
                     }
                 }
+            }
+            if(handlerAttached){
+                self->notifyModelUpdate(BodyItem::HandlerSetUpdate);
             }
 
             if(archive.findListing("device_states")->isValid()){

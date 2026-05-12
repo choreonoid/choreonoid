@@ -59,6 +59,7 @@ set(sources
   LinkPropertyView.cpp
   LinkMassSummaryView.cpp
   JointDisplacementWidgetSet.cpp
+  JointDisplacementPresentationHelper.cpp
   MultiBodyJointDisplacementWidget.cpp
   JointDisplacementView.cpp
   JointStateView.cpp
@@ -125,6 +126,7 @@ set(headers
   LinkPositionView.h
   LinkPositionWidget.h
   JointDisplacementWidgetSet.h
+  JointDisplacementPresentationHelper.h
   MultiBodyJointDisplacementWidget.h
   IoConnectionView.h
   BodyLibraryView.h

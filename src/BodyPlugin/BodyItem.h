@@ -142,7 +142,8 @@ public:
         LinkSpecUpdate = 1 << 1,
         DeviceSetUpdate = 1 << 2,
         DeviceSpecUpdate = 1 << 3,
-        ShapeUpdate = 1 << 4
+        ShapeUpdate = 1 << 4,
+        HandlerSetUpdate = 1 << 5
     };
     SignalProxy<void(int flags)> sigModelUpdated();
     void notifyModelUpdate(int flags);

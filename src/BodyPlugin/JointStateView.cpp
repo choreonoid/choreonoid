@@ -3,6 +3,7 @@
 #include "BodySelectionManager.h"
 #include <cnoid/BodyItem>
 #include <cnoid/Body>
+#include <cnoid/JointDisplacementPresentationHelper>
 #include <cnoid/ConnectionSet>
 #include <cnoid/EigenUtil>
 #include <cnoid/ExtraBodyStateAccessor>
@@ -34,6 +35,7 @@ public:
     int uColumn;
 
     BodyPtr currentBody;
+    JointDisplacementPresentationHelper presentationHelper;
     PolymorphicReferencedArray<ExtraBodyStateAccessor> accessors;
     vector< vector<int> > jointStateColumnMap;
     Array2D<ExtraBodyStateAccessor::Value> jointState;
@@ -172,10 +174,12 @@ void JointStateView::Impl::setCurrentBodyItem(BodyItem* bodyItem)
     treeWidget.setNumColumns(uColumn + 1);
     jointStateColumnMap.clear();
 
+    presentationHelper.setBodyItem(bodyItem);
+
     if(!bodyItem){
         currentBody.reset();
         accessors.clear();
-        
+
     } else {
         currentBody = bodyItem->body();
 
@@ -221,6 +225,9 @@ void JointStateView::Impl::setCurrentBodyItem(BodyItem* bodyItem)
     if(bodyItem){
         connectionsToBody.add(
             bodyItem->sigKinematicStateChanged().connect(
+                [&](){ onKinematicStateChanged(); }));
+        connectionsToBody.add(
+            presentationHelper.sigHandlerSetChanged().connect(
                 [&](){ onKinematicStateChanged(); }));
     }
 
@@ -323,10 +330,12 @@ void JointStateView::Impl::updateView()
             Link* joint = currentBody->joint(i);
             if(joint){
                 if(auto item = treeWidget.itemOfLink(joint->index())){
-                    if(joint->jointType() == Link::RevoluteJoint){
-                        item->setText(qColumn, QString::number(degree(joint->q()), 'f', 2));
+                    double value = presentationHelper.toPresentationValue(joint);
+                    if(presentationHelper.getPresentationType(joint)
+                       == JointDisplacementPresentationHandler::Angle){
+                        item->setText(qColumn, QString::number(degree(value), 'f', 2));
                     } else {
-                        item->setText(qColumn, QString::number(joint->q(), 'f', 2));
+                        item->setText(qColumn, QString::number(value, 'f', 2));
                     }
                     item->setText(uColumn, QString::number(joint->u(), 'f', 2));
                 }
