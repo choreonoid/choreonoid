@@ -42,6 +42,7 @@ public:
         ShapeOffset        = 1 << 12,
         ShapeColor         = 1 << 13,
         Shape              = 1 << 14,
+        LinkInfo           = 1 << 15,
         AllNonShapeElements =
           OffsetPosition | JointType | JointAxis | JointId | JointName | JointRange |
           JointVelocityRange | JointEffortRange | Mass | Inertia | CenterOfMass | Material

@@ -616,6 +616,17 @@ void LinkOverwriteItem::Impl::copyOverwriteLinkElements(Link* srcLink, Link* des
     if(overwriteElementSet & Material){
         destLink->setMaterial(srcLink->materialId());
     }
+    if(overwriteElementSet & LinkInfo){
+        auto srcInfo = srcLink->info();
+        if(srcInfo && !srcInfo->empty()){
+            auto destInfo = destLink->info();
+            if(!destInfo){
+                destLink->resetInfo(srcInfo->clone());
+            } else {
+                destInfo->insert(srcInfo);
+            }
+        }
+    }
 }
 
 
@@ -1107,6 +1118,13 @@ bool LinkOverwriteItem::Impl::store(Archive& archive)
         }
     }
 
+    if(overwriteElementSet & LinkInfo){
+        auto info = link->info();
+        if(info && !info->empty()){
+            archive.insert("link_info", info->clone());
+        }
+    }
+
     return true;
 }
 
@@ -1249,6 +1267,12 @@ bool LinkOverwriteItem::Impl::restore(const Archive& archive)
         if(auto collisionShape = ensureSceneReader(archive)->readScene(collisionShapeArchive)){
             self->setCollisionShape(collisionShape);
         }
+    }
+
+    auto linkInfoArchive = archive.findMapping("link_info");
+    if(linkInfoArchive->isValid()){
+        link->resetInfo(linkInfoArchive->clone());
+        overwriteElementSet |= LinkInfo;
     }
 
     return true;
