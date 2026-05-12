@@ -6,7 +6,6 @@
 #include "SceneView.h"
 #include "SceneWidget.h"
 #include "ScenePointSelectionMode.h"
-#include "DisplayValueFormat.h"
 #include "MessageView.h"
 #include "Buttons.h"
 #include "ButtonGroup.h"
@@ -15,6 +14,7 @@
 #include "SpinBox.h"
 #include "LineEdit.h"
 #include "Separator.h"
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/ConnectionSet>
 #include <cnoid/Format>
 #include <QLabel>

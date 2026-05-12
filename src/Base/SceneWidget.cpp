@@ -10,10 +10,10 @@
 #include "LazyCaller.h"
 #include "Timer.h"
 #include "AppConfig.h"
-#include "DisplayValueFormat.h"
 #include "QtEventUtil.h"
 #include <cnoid/GL1SceneRenderer>
 #include <cnoid/GLSLSceneRenderer>
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/Selection>
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneCameras>

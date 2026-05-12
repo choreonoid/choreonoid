@@ -1,6 +1,4 @@
 #include "DisplayValueFormat.h"
-#include <cnoid/ValueTree>
-#include "AppConfig.h"
 
 using namespace std;
 using namespace cnoid;
@@ -111,15 +109,4 @@ void DisplayValueFormat::setAngleStep(double step)
 void DisplayValueFormat::notifyFormatChange()
 {
     sigFormatChanged_();
-}
-
-
-void DisplayValueFormat::restoreConfiguration()
-{
-    Mapping& config = *AppConfig::archive()->findMapping("display_value_format");
-    if(config){
-        meterStep_ = config.get("meter_step", meterStep_);
-        millimeterStep_ = config.get("millimeter_step", millimeterStep_);
-        kilometerStep_ = config.get("kilometer_step", kilometerStep_);
-    }
 }

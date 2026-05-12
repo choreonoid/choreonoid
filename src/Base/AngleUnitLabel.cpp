@@ -1,5 +1,5 @@
 #include "AngleUnitLabel.h"
-#include "DisplayValueFormat.h"
+#include <cnoid/DisplayValueFormat>
 
 using namespace cnoid;
 

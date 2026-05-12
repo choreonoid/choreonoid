@@ -1,5 +1,5 @@
 #include "LengthSpinBox.h"
-#include "DisplayValueFormat.h"
+#include <cnoid/DisplayValueFormat>
 #include <cmath>
 
 using namespace cnoid;

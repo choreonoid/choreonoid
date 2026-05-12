@@ -159,8 +159,6 @@ public:
     void notifyFormatChange();
     SignalProxy<void()> sigFormatChanged() { return sigFormatChanged_; }
 
-    void restoreConfiguration();
-
 private:
     static ref_ptr<DisplayValueFormat> master_;
 

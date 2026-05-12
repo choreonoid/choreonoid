@@ -2,7 +2,7 @@
 #define CNOID_BASE_LENGTH_SPIN_BOX_H
 
 #include "DoubleSpinBox.h"
-#include "DisplayValueFormat.h"
+#include <cnoid/DisplayValueFormat>
 #include "exportdecl.h"
 
 namespace cnoid {

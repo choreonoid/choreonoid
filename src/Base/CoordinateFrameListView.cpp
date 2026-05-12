@@ -6,11 +6,11 @@
 #include "TargetItemPicker.h"
 #include "LocatableItem.h"
 #include "Archive.h"
-#include "DisplayValueFormat.h"
 #include "Buttons.h"
 #include "QtEventUtil.h"
 #include "QtSvgUtil.h"
 #include <cnoid/CoordinateFrameList>
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
 #include <cnoid/Format>

@@ -1,11 +1,11 @@
 #include "PositionWidget.h"
-#include "DisplayValueFormat.h"
 #include "MenuManager.h"
 #include "Archive.h"
 #include "Buttons.h"
 #include "SpinBox.h"
 #include "CheckBox.h"
 #include "Separator.h"
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/EigenUtil>
 #include <cnoid/ConnectionSet>
 #include <cnoid/Format>

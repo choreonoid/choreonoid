@@ -1,8 +1,8 @@
 #include "PositionTagListWidget.h"
 #include "MenuManager.h"
 #include "PositionTagGroupItem.h"
-#include "DisplayValueFormat.h"
 #include "QtEventUtil.h"
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/PositionTagGroup>
 #include <cnoid/PositionTag>
 #include <cnoid/EigenUtil>

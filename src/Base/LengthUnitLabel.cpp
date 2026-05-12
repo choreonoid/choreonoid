@@ -1,5 +1,5 @@
 #include "LengthUnitLabel.h"
-#include "DisplayValueFormat.h"
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/Format>
 
 using namespace cnoid;

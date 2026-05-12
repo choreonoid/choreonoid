@@ -83,6 +83,7 @@ set(sources
   Task.cpp
   AbstractTaskSequencer.cpp
   ZipArchiver.cpp
+  DisplayValueFormat.cpp
   CnoidUtil.cpp # This file must be placed at the last position
   )
 
@@ -204,6 +205,7 @@ set(headers
   Task.h
   AbstractTaskSequencer.h
   ZipArchiver.h
+  DisplayValueFormat.h
   exportdecl.h
   )
 

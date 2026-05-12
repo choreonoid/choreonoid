@@ -4,10 +4,10 @@
 #include "GeometryMeasurementTracker.h"
 #include "ItemTreeView.h"
 #include "DistanceMeasurementDialog.h"
-#include "DisplayValueFormat.h"
 #include "PutPropertyFunction.h"
 #include "Archive.h"
 #include "LazyCaller.h"
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/SceneRenderer>

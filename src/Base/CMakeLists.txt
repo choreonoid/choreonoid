@@ -43,7 +43,6 @@ set(sources
   ItemEditRecordManager.cpp
   UnifiedEditHistoryView.cpp
   StringListComboBox.cpp
-  DisplayValueFormat.cpp
   PositionWidget.cpp
   LocationView.cpp
   ToolBar.cpp
@@ -244,7 +243,6 @@ set(headers
   EditRecord.h
   ItemEditRecordManager.h
   StringListComboBox.h
-  DisplayValueFormat.h
   PositionWidget.h
   LocationView.h
   PutPropertyFunction.h

@@ -9,10 +9,10 @@
 #include "MainWindow.h"
 #include "FileDialog.h"
 #include "TimeBar.h"
-#include "DisplayValueFormat.h"
 #include "GeneralSceneFileLoadDialog.h"
 #include "SceneWidgetConfig.h"
 #include "CoordinateFrameListItem.h"
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/GettextUtil>
 
 namespace cnoid {

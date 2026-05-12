@@ -1,10 +1,10 @@
 #include "DisplayValueFormatBar.h"
 #include "ExtensionManager.h"
-#include "DisplayValueFormat.h"
 #include "ProjectManager.h"
 #include "Archive.h"
 #include <cnoid/ComboBox>
 #include <cnoid/SpinBox>
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/ConnectionSet>
 #include <cmath>
 #include "gettext.h"

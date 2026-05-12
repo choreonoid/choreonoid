@@ -2,7 +2,7 @@
 #define CNOID_BASE_SCENE_WIDGET_CONFIG_H
 
 #include "SceneRendererConfig.h"
-#include "DisplayValueFormat.h"
+#include <cnoid/DisplayValueFormat>
 #include <optional>
 #include "exportdecl.h"
 

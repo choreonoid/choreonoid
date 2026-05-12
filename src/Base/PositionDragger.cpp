@@ -1,7 +1,7 @@
 #include "PositionDragger.h"
 #include "SceneDragProjector.h"
 #include "SceneWidget.h"
-#include "DisplayValueFormat.h"
+#include <cnoid/DisplayValueFormat>
 #include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneUtil>
