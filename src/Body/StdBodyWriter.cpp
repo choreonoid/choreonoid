@@ -196,13 +196,17 @@ MappingPtr StdBodyWriter::Impl::writeBody(Body* body)
     node->write("angle_unit", "degree");
 
     node->write("name", body->name(), DOUBLE_QUOTED);
-    node->write("root_link", body->rootLink()->name(), DOUBLE_QUOTED);
+    auto rootLinkNode = new ScalarNode(body->rootLink()->name(), DOUBLE_QUOTED);
+    // Insert a blank line after the header area (before the links and the following elements)
+    rootLinkNode->setBlankLineAppended();
+    node->insert("root_link", rootLinkNode);
 
     ListingPtr linksNode = new Listing;
     for(auto& link : body->links()){
         linksNode->append(writeLink(link));
     }
     if(!linksNode->empty()){
+        linksNode->setBlankLineAppended();
         node->insert("links", linksNode);
     }
 
@@ -210,13 +214,13 @@ MappingPtr StdBodyWriter::Impl::writeBody(Body* body)
     if(numBodyHandlers > 0){
         ListingPtr handlers = new Listing;
         for(int i=0; i < numBodyHandlers; ++i){
-            auto& filename = body->handler(0)->filename();
+            auto& filename = body->handler(i)->filename();
             if(!filename.empty()){
-                handlers->append(filename);
+                handlers->append(filename, DOUBLE_QUOTED);
             }
         }
         if(handlers->size() == 1){
-            node->write("body_handlers", handlers->front()->toString());
+            node->write("body_handlers", handlers->front()->toString(), DOUBLE_QUOTED);
         } else if(handlers->size() >= 2){
             node->insert("body_handlers", handlers);
         }
