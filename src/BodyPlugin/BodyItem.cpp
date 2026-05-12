@@ -26,6 +26,7 @@
 #include <cnoid/AttachmentDevice>
 #include <cnoid/HolderDevice>
 #include <cnoid/LinkedJointHandler>
+#include <cnoid/BodyHandlerManager>
 #include <cnoid/RenderableItemUtil>
 #include <cnoid/EigenArchive>
 #include <cnoid/CloneMap>
@@ -166,6 +167,8 @@ public:
 
     BodyState initialState;
     BodyState lastEditState;
+
+    std::vector<std::string> extraBodyHandlerNames;
 
     BodyPtr exchangedMultiplexBody;
             
@@ -332,6 +335,8 @@ BodyItem::Impl::Impl(BodyItem* self, const Impl& org, CloneMap* cloneMap)
 
     initialState = org.initialState;
     transparency = org.transparency;
+
+    extraBodyHandlerNames = org.extraBodyHandlerNames;
 }
 
 
@@ -504,6 +509,90 @@ void BodyItem::setBody(Body* body)
 }
 
 
+static BodyHandlerManager& sharedBodyHandlerManager()
+{
+    static BodyHandlerManager manager;
+    static bool isMessageSinkSet = false;
+    if(!isMessageSinkSet){
+        manager.setMessageSink(MessageOut::master()->cout());
+        isMessageSinkSet = true;
+    }
+    return manager;
+}
+
+
+static BodyHandler* findHandlerByFilename(Body* body, const std::string& filename)
+{
+    int n = body->numHandlers();
+    for(int i = 0; i < n; ++i){
+        auto h = body->handler(i);
+        if(h->filename() == filename){
+            return h;
+        }
+    }
+    return nullptr;
+}
+
+
+bool BodyItem::addExtraBodyHandler(const std::string& handlerName)
+{
+    auto& names = impl->extraBodyHandlerNames;
+    for(auto& name : names){
+        if(name == handlerName){
+            return true;
+        }
+    }
+    names.push_back(handlerName);
+
+    bool loaded = false;
+    if(impl->body){
+        if(findHandlerByFilename(impl->body, handlerName)){
+            loaded = true;
+        } else {
+            loaded = sharedBodyHandlerManager().loadBodyHandler(impl->body, handlerName);
+        }
+    }
+    return loaded;
+}
+
+
+bool BodyItem::removeExtraBodyHandler(const std::string& handlerName)
+{
+    auto& names = impl->extraBodyHandlerNames;
+    bool removed = false;
+    for(auto it = names.begin(); it != names.end(); ++it){
+        if(*it == handlerName){
+            names.erase(it);
+            removed = true;
+            break;
+        }
+    }
+    if(removed && impl->body){
+        if(auto handler = findHandlerByFilename(impl->body, handlerName)){
+            impl->body->removeHandler(handler);
+        }
+    }
+    return removed;
+}
+
+
+bool BodyItem::hasExtraBodyHandler(const std::string& handlerName) const
+{
+    for(auto& name : impl->extraBodyHandlerNames){
+        if(name == handlerName){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+const std::vector<std::string>& BodyItem::extraBodyHandlerNames() const
+{
+    return impl->extraBodyHandlerNames;
+}
+
+
 void BodyItem::Impl::setBody(Body* body_)
 {
     body = body_;
@@ -514,11 +603,17 @@ void BodyItem::Impl::setBody(Body* body_)
     if(rootLink->name().empty()){
         rootLink->setName("Root");
     }
-        
+
     body->initializePosition();
     body->setCurrentTimeFunction([](){ return TimeBar::instance()->time(); });
 
     initBody(false);
+
+    for(auto& name : extraBodyHandlerNames){
+        if(!findHandlerByFilename(body, name)){
+            sharedBodyHandlerManager().loadBodyHandler(body, name);
+        }
+    }
 
     auto& itemName = self->name();
     if(itemName.empty()){
@@ -1971,6 +2066,13 @@ bool BodyItem::Impl::store(Archive& archive)
         archive.write("transparency", transparency);
     }
 
+    if(!extraBodyHandlerNames.empty()){
+        auto& listing = *archive.createListing("extra_body_handlers");
+        for(auto& name : extraBodyHandlerNames){
+            listing.append(name, DOUBLE_QUOTED);
+        }
+    }
+
     if(isDeviceStateStoringEnabled){
         storeDeviceStates(archive);
     }
@@ -2119,6 +2221,29 @@ bool BodyItem::Impl::restore(const Archive& archive)
         setTransparency(t);
     }
 
+    auto handlersNode = archive.find("extra_body_handlers");
+    if(handlersNode->isValid() && handlersNode->isListing()){
+        /*
+           Only record the handler names here. The actual handler loading and initialization
+           is deferred to addProcessOnSubTreeRestored below so that sub-tree items like
+           LinkOverwriteItem can finish updating Link::info() (e.g. gun_axis parameters)
+           before the handler's initialize() walks body->links().
+        */
+        for(auto& elem : *handlersNode->toListing()){
+            auto name = elem->toString();
+            bool alreadyRecorded = false;
+            for(auto& existing : extraBodyHandlerNames){
+                if(existing == name){
+                    alreadyRecorded = true;
+                    break;
+                }
+            }
+            if(!alreadyRecorded){
+                extraBodyHandlerNames.push_back(name);
+            }
+        }
+    }
+
     isUpdateNotificationOnSubTreeRestoredRequested = false;
     isNonRootLinkStateRestorationOnSubTreeRestoredRequested = false;
 
@@ -2134,7 +2259,7 @@ bool BodyItem::Impl::restore(const Archive& archive)
                 doNotifyUpdate = true;
             }
             isLocalPositionRestored = false;
-            
+
             if(isNonRootLinkStateRestorationOnSubTreeRestoredRequested){
                 restoreNonRootLinkStates(archive);
                 doNotifyUpdate = true;
@@ -2144,6 +2269,19 @@ bool BodyItem::Impl::restore(const Archive& archive)
             if(isUpdateNotificationOnSubTreeRestoredRequested){
                 doNotifyUpdate = true;
                 isUpdateNotificationOnSubTreeRestoredRequested = false;
+            }
+
+            /*
+               Load the extra body handlers now that any LinkOverwriteItem in the sub-tree has
+               had a chance to apply Link::info() overrides. The handler's initialize() walks
+               body->links() looking at Link::info(), so it must run after those updates.
+            */
+            for(auto& name : extraBodyHandlerNames){
+                if(!findHandlerByFilename(body, name)){
+                    if(sharedBodyHandlerManager().loadBodyHandler(body, name)){
+                        doNotifyUpdate = true;
+                    }
+                }
             }
 
             if(archive.findListing("device_states")->isValid()){

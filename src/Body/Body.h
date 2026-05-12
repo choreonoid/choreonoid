@@ -365,6 +365,9 @@ public:
     double currentTime() const { return currentTimeFunction(); }
 
     bool addHandler(BodyHandler* handler, bool isTopPriority = false);
+    bool removeHandler(BodyHandler* handler);
+    bool removeHandler(int index);
+    void clearHandlers();
 
     template<class BodyHandlerType>
     BodyHandlerType* findHandler(){

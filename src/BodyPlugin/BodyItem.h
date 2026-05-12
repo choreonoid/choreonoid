@@ -248,6 +248,24 @@ public:
     bool isVisibleLinkSelectionMode() const { return isVisibleLinkSelectionMode_; }
     void setVisibleLinkSelectionMode(bool on) { isVisibleLinkSelectionMode_ = on; }
 
+    /**
+       Add a body handler that is loaded outside the body file (e.g. URDF, mesh, or to extend
+       an existing .body file at the BodyItem level). The handler name is recorded in this
+       BodyItem and reapplied when the Body is reloaded or replaced. The same name is not added
+       twice. If a handler instance with the same filename is already attached to the Body
+       (e.g. specified in the .body file), the loading is skipped to avoid duplicate registration.
+    */
+    bool addExtraBodyHandler(const std::string& handlerName);
+
+    /**
+       Remove an extra body handler that was previously added by addExtraBodyHandler.
+       The corresponding handler instance attached to the Body (matched by filename) is detached.
+    */
+    bool removeExtraBodyHandler(const std::string& handlerName);
+
+    bool hasExtraBodyHandler(const std::string& handlerName) const;
+    const std::vector<std::string>& extraBodyHandlerNames() const;
+
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 

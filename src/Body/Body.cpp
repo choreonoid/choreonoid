@@ -1005,6 +1005,36 @@ bool Body::addHandler(BodyHandler* handler, bool isTopPriority)
 }
 
 
+bool Body::removeHandler(BodyHandler* handler)
+{
+    auto& handlers = impl->handlers;
+    for(auto it = handlers.begin(); it != handlers.end(); ++it){
+        if(it->get() == handler){
+            handlers.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool Body::removeHandler(int index)
+{
+    auto& handlers = impl->handlers;
+    if(index < 0 || index >= static_cast<int>(handlers.size())){
+        return false;
+    }
+    handlers.erase(handlers.begin() + index);
+    return true;
+}
+
+
+void Body::clearHandlers()
+{
+    impl->handlers.clear();
+}
+
+
 BodyHandler* Body::findHandler(std::function<bool(BodyHandler*)> isTargetHandlerType)
 {
     for(auto& handler : impl->handlers){
