@@ -212,6 +212,7 @@ SphereMarker::SphereMarker()
 
 SphereMarker::SphereMarker(double radius, const Vector3f& color, float transparency)
 {
+    setAttribute(Marker);
     initialize(radius, color, transparency);
 }
 
