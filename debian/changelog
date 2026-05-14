@@ -1,9 +1,8 @@
 choreonoid (2.4.0-1) unstable; urgency=medium
 
-  * Start development of version 2.4.0
-  * Version bump after 2.3.0 release
+  * New upstream release
 
- -- Shin'ichiro Nakaoka <s.nakaoka@gmail.com>  Mon, 20 Oct 2025 17:53:34 +0900
+ -- Shin'ichiro Nakaoka <s.nakaoka@gmail.com>  Thu, 14 May 2026 12:00:00 +0900
 
 choreonoid (2.3.0-1) unstable; urgency=medium
 

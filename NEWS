@@ -1,11 +1,49 @@
-Choreonoid 2.4.0 (under development)
-====================================
+Choreonoid 2.4.0 released on May 14, 2026
+=========================================
 
 Changes since 2.3.0:
 
-(To be documented)
-
----
+* Improved the rendering engine
+  * Introduced a reversed depth buffer for OpenGL 4.6 or later, eliminating the need to set the far clipping distance
+  * Supported MSAA anti-aliasing
+  * Fixed the texture color blending algorithm
+  * Fixed an issue with grayscale texture rendering
+  * Supported highlighting of colliding objects
+  * Fixed a transparent rendering issue on certain environments
+* Improved the scene view
+  * Supported an infinite far clipping distance mode
+  * Added anti-aliasing settings
+  * Made the field of view consistent when switching between perspective and orthographic cameras
+  * Allowed selection of the FOV direction from auto / vertical / horizontal
+  * Supported view fitting for external cameras (CameraItem / BodySyncCameraItem)
+* Improved the headless mode (--no-window option)
+  * Supported environments without a window system (desktop environment)
+  * Used EGL for vision sensor simulation to support OpenGL hardware acceleration
+  * Fixed Ctrl+C handling
+* Renewed the PhysXPlugin
+  * Added a new PhysXPlugin based on NVIDIA PhysX 5 (replacing the previous experimental plugin)
+  * Supported bundling PhysX 5.6.1 as a thirdparty library so that it can be built together with Choreonoid
+  * Supported simulation of continuous tracks (crawler mechanisms) using the PxContinuousTrack device
+* Improved body-related processing
+  * Added a parent link property to BodyItem so that a child body can be synchronized with a specific link of its parent body
+  * Fixed issues in saving and restoring body states
+  * Improved numerical inverse kinematics to obtain solutions more robustly
+  * Optimized the forward kinematics computation for the remaining part after inverse kinematics
+  * Changed the friction coefficient calculation for material pairs to sqrt(r1*r2)
+* Improved value display and unit handling
+  * Supported multi-unit display (day / hour / minute / second) for the time on TimeBar
+  * Raised the upper limit of the playback speed ratio on TimeBar from 99.9 to 999999.9
+  * Extended the configurable range of value display formats
+* File-related improvements
+  * Supported loading TIFF image files in ImageIO
+  * Removed the 2 GB file size limit of WorldLogFileItem
+  * Fixed the handling of material tags in URDFBodyLoader to follow the de facto standard behavior
+* Build-related changes
+  * Unified the required C++ standard to C++17 or later, and removed boost dependency in all environments
+  * Removed Python 2 support
+  * Added the debian directory and scripts for creating Debian packages
+* Added OMPLPlugin as a foundation for motion planning functionality
+* Many other minor bug fixes, internal class improvements, code cleanups, translation catalog updates, etc.
 
 Choreonoid 2.3.0 released on September 9, 2025
 ==============================================
