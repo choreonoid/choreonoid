@@ -4,8 +4,9 @@ Upstream-Contact: Shin'ichiro Nakaoka <s.nakaoka@gmail.com>
 Source: https://github.com/choreonoid/choreonoid
 
 Files: *
-Copyright: 2019-2025 Choreonoid Inc.
+Copyright: 2019-2026 Choreonoid Inc.
            2007-2019 Shin'ichiro Nakaoka and the Choreonoid development team,
+                     Intelligent Systems Research Institute,
                      National Institute of Advanced Industrial Science and Technology (AIST)
 License: MIT
 
@@ -18,17 +19,81 @@ License: OPCODE
  purpose, including commercial applications, and to alter it and redistribute it
  freely.
 
+Files: thirdparty/CLI11-2.4.1/*
+Copyright: 2017-2024 University of Cincinnati
+License: BSD-3-clause
+
+Files: thirdparty/eigen-3.4.0/*
+Copyright: various, see thirdparty/eigen-3.4.0/COPYING.README
+License: MPL-2.0 and others
+ Eigen is primarily MPL-2.0 licensed. Some files are licensed under BSD-3-clause,
+ LGPL-2.1+, or Apache-2.0. See thirdparty/eigen-3.4.0/COPYING.README for details.
+
+Files: thirdparty/fast_float-0.8.0/*
+Copyright: 2021 The fast_float authors
+License: Apache-2.0 or MIT
+ fast_float is dual-licensed under Apache-2.0 and MIT.
+
+Files: thirdparty/fmt-11.0.0/*
+Copyright: 2012-present, Victor Zverovich and {fmt} contributors
+License: MIT
+
+Files: thirdparty/freetype-2.13.0/*
+Copyright: 1996-2023 David Turner, Robert Wilhelm, and Werner Lemberg
+License: FreeType or GPL-2+
+ FreeType is dual-licensed under the FreeType License (BSD-style with a
+ credit clause) and the GPL-2+. See thirdparty/freetype-2.13.0/LICENSE.TXT
+ for details.
+
+Files: thirdparty/gettext-0.21/*
+Copyright: 1995-2020 Free Software Foundation, Inc.
+License: LGPL-2.1+
+
+Files: thirdparty/jpeg-9c/*
+Copyright: 1991-2018 Thomas G. Lane, Guido Vollbeding
+License: IJG
+ This software is based in part on the work of the Independent JPEG Group.
+ See thirdparty/jpeg-9c/README for the full license text.
+
+Files: thirdparty/libyaml-0.2.5/*
+Copyright: 2017-2020 Ingy doet Net
+           2006-2016 Kirill Simonov
+License: MIT
+
+Files: thirdparty/libzip-1.9.2/*
+Copyright: 1999-2020 Dieter Baron and Thomas Klausner
+License: BSD-3-clause
+
+Files: thirdparty/lpng1232/*
+Copyright: 1998-2008 Glenn Randers-Pehrson
+           1996-1997 Andreas Dilger
+           1995-1996 Guy Eric Schalnat, Group 42, Inc.
+License: libpng
+ See thirdparty/lpng1232/LICENSE for the full license text.
+
+Files: thirdparty/physx-5.6.1/*
+Copyright: 2008-2025 NVIDIA Corporation
+License: BSD-3-clause
+
+Files: thirdparty/pugixml-1.11/*
+Copyright: 2006-2020 Arseny Kapoulkine
+License: MIT
+
 Files: thirdparty/pybind11-2.12.0/*
 Copyright: 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>
 License: BSD-3-clause
 
-Files: thirdparty/pugixml-1.11/*
-Copyright: 2006-2021 Arseny Kapoulkine
+Files: thirdparty/sol2/*
+Copyright: 2013-2016 Rapptz and contributors
 License: MIT
 
-Files: thirdparty/fmt-11.0.0/*
-Copyright: 2012-present, Victor Zverovich
-License: MIT
+Files: thirdparty/xacro-1.14.10/*
+Copyright: Open Source Robotics Foundation, Inc.
+License: BSD-3-clause
+
+Files: thirdparty/zlib-1.2.13/*
+Copyright: 1995-2022 Jean-loup Gailly and Mark Adler
+License: Zlib
 
 License: MIT
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -72,3 +137,142 @@ License: BSD-3-clause
  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+License: Apache-2.0
+ Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ use these files except in compliance with the License. You may obtain a
+ copy of the License at
+ .
+   http://www.apache.org/licenses/LICENSE-2.0
+ .
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ License for the specific language governing permissions and limitations
+ under the License.
+ .
+ On Debian systems, the full text of the Apache License version 2.0 can be
+ found in the file '/usr/share/common-licenses/Apache-2.0'.
+
+License: LGPL-2.1+
+ This library is free software; you can redistribute it and/or modify it
+ under the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation; either version 2.1 of the License, or (at
+ your option) any later version.
+ .
+ This library is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+ License for more details.
+ .
+ On Debian systems, the full text of the GNU Lesser General Public License
+ version 2.1 can be found in the file '/usr/share/common-licenses/LGPL-2.1'.
+
+License: GPL-2+
+ This program is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the Free
+ Software Foundation; either version 2 of the License, or (at your option)
+ any later version.
+ .
+ This program is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ more details.
+ .
+ On Debian systems, the full text of the GNU General Public License version 2
+ can be found in the file '/usr/share/common-licenses/GPL-2'.
+
+License: MPL-2.0
+ This Source Code Form is subject to the terms of the Mozilla Public
+ License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ You can obtain one at http://mozilla.org/MPL/2.0/.
+
+License: Zlib
+ This software is provided 'as-is', without any express or implied warranty.
+ In no event will the authors be held liable for any damages arising from the
+ use of this software.
+ .
+ Permission is granted to anyone to use this software for any purpose,
+ including commercial applications, and to alter it and redistribute it
+ freely, subject to the following restrictions:
+ .
+ 1. The origin of this software must not be misrepresented; you must not claim
+    that you wrote the original software. If you use this software in a product,
+    an acknowledgment in the product documentation would be appreciated but is
+    not required.
+ 2. Altered source versions must be plainly marked as such, and must not be
+    misrepresented as being the original software.
+ 3. This notice may not be removed or altered from any source distribution.
+
+License: libpng
+ The PNG Reference Library is supplied "AS IS".  The Contributing Authors and
+ Group 42, Inc. disclaim all warranties, expressed or implied, including,
+ without limitation, the warranties of merchantability and of fitness for any
+ purpose.  The Contributing Authors and Group 42, Inc. assume no liability for
+ direct, indirect, incidental, special, exemplary, or consequential damages,
+ which may result from the use of the PNG Reference Library, even if advised
+ of the possibility of such damage.
+ .
+ Permission is hereby granted to use, copy, modify, and distribute this source
+ code, or portions hereof, for any purpose, without fee, subject to the
+ following restrictions:
+ .
+ 1. The origin of this source code must not be misrepresented.
+ 2. Altered versions must be plainly marked as such and must not be
+    misrepresented as being the original source.
+ 3. This Copyright notice may not be removed or altered from any source or
+    altered source distribution.
+ .
+ The Contributing Authors and Group 42, Inc. specifically permit, without fee,
+ and encourage the use of this source code as a component to supporting the
+ PNG file format in commercial products.  If you use this source code in a
+ product, acknowledgment is not required but would be appreciated.
+
+License: IJG
+ The authors make NO WARRANTY or representation, either express or implied,
+ with respect to this software, its quality, accuracy, merchantability, or
+ fitness for a particular purpose.  This software is provided "AS IS", and you,
+ its user, assume the entire risk as to its quality and accuracy.
+ .
+ This software is copyright (C) 1991-2018, Thomas G. Lane, Guido Vollbeding.
+ All Rights Reserved except as specified below.
+ .
+ Permission is hereby granted to use, copy, modify, and distribute this
+ software (or portions thereof) for any purpose, without fee, subject to these
+ conditions:
+ (1) If any part of the source code for this software is distributed, then this
+ README file must be included, with this copyright and no-warranty notice
+ unaltered; and any additions, deletions, or changes to the original files
+ must be clearly indicated in accompanying documentation.
+ (2) If only executable code is distributed, then the accompanying
+ documentation must state that "this software is based in part on the work of
+ the Independent JPEG Group".
+ (3) Permission for use of this software is granted only if the user accepts
+ full responsibility for any undesirable consequences; the authors accept
+ NO LIABILITY for damages of any kind.
+ .
+ These conditions apply to any software derived from or based on the IJG code,
+ not just to the unmodified library.  If you assume the entire risk as you do
+ for commercial software, then you have no further obligations.
+ .
+ We acknowledge and thank the IJG authors and the Independent JPEG Group.
+
+License: FreeType
+ The FreeType  2 font  engine is  copyrighted work  and cannot  be used
+ legally  without a  software license.   In order  to make  this project
+ usable to a vast majority of developers, it is distributed under two
+ mutually exclusive open-source licenses:  The FreeType License (a BSD-style
+ license with a credit clause) and the GPL-2+.
+ .
+ See thirdparty/freetype-2.13.0/LICENSE.TXT and
+ thirdparty/freetype-2.13.0/docs/FTL.TXT for details.
+
+License: OPCODE
+ OPCODE (Optimized Collision Detection) is distributed with the following
+ disclaimer:
+ .
+ This software is provided 'as-is', without any express or implied warranty.
+ In no event will the authors be held liable for any damages arising from the
+ use of this software. Permission is granted to anyone to use this software
+ for any purpose, including commercial applications, and to alter it and
+ redistribute it freely.
