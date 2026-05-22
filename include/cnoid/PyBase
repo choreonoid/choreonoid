@@ -1,1 +1,5 @@
+#ifdef CNOID_USE_NANOBIND
+#include "src/Base/python/PyBase.h"
+#else
 #include "src/Base/pybind11/PyBase.h"
+#endif

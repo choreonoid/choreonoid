@@ -123,7 +123,7 @@ target_link_libraries(${target} PUBLIC CnoidBodyPlugin ${agx_libraries})
 add_subdirectory(AGXBodyExtensionPlugin)
 
 if(ENABLE_PYTHON AND USE_PYBIND11)
-  add_subdirectory(pybind11)
+  choreonoid_add_python_binding_subdirectory()
 endif()
 
 if(WIN32 AND INSTALL_AGX_RUNTIME)

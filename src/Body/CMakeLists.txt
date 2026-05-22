@@ -199,7 +199,7 @@ if(BODY_CUSTOMIZERS)
 endif()
 
 if(ENABLE_PYTHON)
-  add_subdirectory(pybind11)
+  choreonoid_add_python_binding_subdirectory()
 endif()
 
 add_subdirectory(lua)

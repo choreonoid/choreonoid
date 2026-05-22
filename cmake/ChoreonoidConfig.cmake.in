@@ -148,15 +148,15 @@ include(${CMAKE_CURRENT_LIST_DIR}/ChoreonoidBasicBuildFunctions.cmake)
 
 set(CHOREONOID_ENABLE_PYTHON @ENABLE_PYTHON@)
 if(CHOREONOID_ENABLE_PYTHON)
-  add_library(Choreonoid::CnoidPyUtil SHARED IMPORTED GLOBAL)
+  # These are decided when Choreonoid itself is built and exported here so that
+  # ChoreonoidPythonBuildFunctions.cmake builds external Python modules the same
+  # way as the core build.
+  set(CHOREONOID_PYTHON_BINDING_BACKEND "@CHOREONOID_PYTHON_BINDING_BACKEND@")
+  set(CHOREONOID_PYTHON_FREE_THREADED @CHOREONOID_PYTHON_FREE_THREADED@)
+  set(CHOREONOID_USE_PYBIND11 @USE_PYBIND11@) # This variable is kept for backward compatibility
+
   add_library(Choreonoid::CnoidPyBase SHARED IMPORTED GLOBAL)
   if(WIN32)
-    set_target_properties(Choreonoid::CnoidPyUtil PROPERTIES
-      IMPORTED_LOCATION ${CHOREONOID_BIN_DIR}/CnoidPyUtil.dll
-      IMPORTED_IMPLIB ${CHOREONOID_LIB_DIR}/CnoidPyUtil.lib
-      IMPORTED_LOCATION_DEBUG ${CHOREONOID_BIN_DIR}/CnoidPyUtild.dll
-      IMPORTED_IMPLIB_DEBUG ${CHOREONOID_LIB_DIR}/CnoidPyUtild.lib
-      IMPORTED_CONFIGURATIONS "RELEASE;DEBUG")
     set_target_properties(Choreonoid::CnoidPyBase PROPERTIES
       IMPORTED_LOCATION ${CHOREONOID_BIN_DIR}/CnoidPyBase.dll
       IMPORTED_IMPLIB ${CHOREONOID_LIB_DIR}/CnoidPyBase.lib
@@ -164,17 +164,37 @@ if(CHOREONOID_ENABLE_PYTHON)
       IMPORTED_IMPLIB_DEBUG ${CHOREONOID_LIB_DIR}/CnoidPyBased.lib
       IMPORTED_CONFIGURATIONS "RELEASE;DEBUG")
   else()
-    set_target_properties(Choreonoid::CnoidPyUtil PROPERTIES
-      IMPORTED_LOCATION ${CHOREONOID_LIB_DIR}/libCnoidPyUtil.so)
     set_target_properties(Choreonoid::CnoidPyBase PROPERTIES
       IMPORTED_LOCATION ${CHOREONOID_LIB_DIR}/libCnoidPyBase.so)
   endif()
-  target_link_libraries(Choreonoid::CnoidPyUtil INTERFACE "@PYTHON_LIBRARIES@")
-  target_link_libraries(Choreonoid::CnoidPyBase INTERFACE Choreonoid::CnoidPyUtil)
-  set(CHOREONOID_PYTHON_UTIL_LIBRARIES Choreonoid::CnoidPyUtil)
   set(CHOREONOID_PYTHON_LIBRARIES Choreonoid::CnoidPyBase)
+
+  # The pybind11 backend ships a CnoidPyUtil shared library that every Python
+  # module is expected to link to. The nanobind backend does not build it (the
+  # shared headers reach consumers through the include path and the nanobind
+  # runtime is linked via nanobind_add_module()), so the import target and
+  # CHOREONOID_PYTHON_UTIL_LIBRARIES are only defined for pybind11 here.
+  if(CHOREONOID_PYTHON_BINDING_BACKEND STREQUAL "pybind11")
+    add_library(Choreonoid::CnoidPyUtil SHARED IMPORTED GLOBAL)
+    if(WIN32)
+      set_target_properties(Choreonoid::CnoidPyUtil PROPERTIES
+        IMPORTED_LOCATION ${CHOREONOID_BIN_DIR}/CnoidPyUtil.dll
+        IMPORTED_IMPLIB ${CHOREONOID_LIB_DIR}/CnoidPyUtil.lib
+        IMPORTED_LOCATION_DEBUG ${CHOREONOID_BIN_DIR}/CnoidPyUtild.dll
+        IMPORTED_IMPLIB_DEBUG ${CHOREONOID_LIB_DIR}/CnoidPyUtild.lib
+        IMPORTED_CONFIGURATIONS "RELEASE;DEBUG")
+    else()
+      set_target_properties(Choreonoid::CnoidPyUtil PROPERTIES
+        IMPORTED_LOCATION ${CHOREONOID_LIB_DIR}/libCnoidPyUtil.so)
+    endif()
+    target_link_libraries(Choreonoid::CnoidPyUtil INTERFACE "@PYTHON_LIBRARIES@")
+    target_link_libraries(Choreonoid::CnoidPyBase INTERFACE Choreonoid::CnoidPyUtil)
+    set(CHOREONOID_PYTHON_UTIL_LIBRARIES Choreonoid::CnoidPyUtil)
+  else()
+    set(CHOREONOID_PYTHON_UTIL_LIBRARIES "")
+  endif()
+
   set(CHOREONOID_PYTHON_SUBDIR "@CHOREONOID_PYTHON_SUBDIR@")
-  set(CHOREONOID_USE_PYBIND11 @USE_PYBIND11@) # This variable is kept for backward compatibility
   include(${CMAKE_CURRENT_LIST_DIR}/ChoreonoidPythonBuildFunctions.cmake)
 endif()
 

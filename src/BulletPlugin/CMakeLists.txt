@@ -84,5 +84,5 @@ target_link_libraries(${target} PUBLIC CnoidBodyPlugin PRIVATE ${bullet_LIBRARIE
 install_runtime_dlls(${BULLET_DIR}/bin ${bullet_LIBRARIES})
 
 if(ENABLE_PYTHON)
-  add_subdirectory(pybind11)
+  choreonoid_add_python_binding_subdirectory()
 endif()

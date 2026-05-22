@@ -35,5 +35,5 @@ if(UNIX)
 endif()
 
 if(ENABLE_PYTHON)
-  add_subdirectory(pybind11)
+  choreonoid_add_python_binding_subdirectory()
 endif()

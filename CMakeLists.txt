@@ -452,14 +452,92 @@ endif()
 
 option(USE_BUNDLED_PYBIND11 "Use the Pybind11 library bundled with Choreonoid" ON)
 
+# Selects which Python binding implementation is built. The pybind11 backend
+# builds the existing "src/*/pybind11" bindings, while the nanobind backend
+# builds the new "src/*/python" bindings. This is a transitional option; the
+# pybind11 backend will be removed once the migration to nanobind is complete.
+set(CHOREONOID_PYTHON_BINDING_BACKEND "pybind11" CACHE STRING
+  "Python binding backend to build (pybind11 or nanobind)")
+set_property(CACHE CHOREONOID_PYTHON_BINDING_BACKEND PROPERTY STRINGS pybind11 nanobind)
+
+# When a free-threaded (no-GIL) CPython interpreter is available, it is used by
+# default so that the bindings can be exercised without the GIL. Turning this
+# option on forces the use of the ordinary (GIL-enabled) interpreter even if a
+# free-threaded one is installed. A negative option is used so that the default
+# behavior ("use a free-threaded build if there is one, otherwise the normal
+# one") is consistent regardless of whether a free-threaded build is present.
+option(DISABLE_FREE_THREADED_PYTHON
+  "Do not use a free-threaded (no-GIL) Python even if one is available" OFF)
+
 set(CHOREONOID_PYTHON_SUBDIR ${CHOREONOID_PLUGIN_SUBDIR}/python)
 
 if(ENABLE_PYTHON)
-  # The following cache variables must be cleared to update the python version
-  unset(PYTHON_INCLUDE_DIR CACHE)
-  unset(PYTHON_LIBRARY CACHE)
-  unset(PYTHON_LIBRARY_DEBUG CACHE)
-  find_package(PythonLibs 3 REQUIRED)
+  # With the nanobind backend, prefer a free-threaded (no-GIL) interpreter
+  # unless the user opted out. The pybind11 backend does not support
+  # free-threading and keeps using the ordinary interpreter.
+  #
+  # The free-threaded executable is located by name ("python3.Nt") without
+  # hard-coding a version number, and then pinned through Python_EXECUTABLE so
+  # that FindPython resolves its include dir, library and SOABI from it. This
+  # builds both the core libraries and the nanobind extensions against the same
+  # ABI.
+  if(CHOREONOID_PYTHON_BINDING_BACKEND STREQUAL "nanobind"
+      AND NOT DISABLE_FREE_THREADED_PYTHON AND NOT Python_EXECUTABLE)
+    set(_cnoid_ft_python_candidates)
+    foreach(_dir /usr/local/bin /usr/bin /bin)
+      file(GLOB _cnoid_ft_found "${_dir}/python3.*t")
+      list(APPEND _cnoid_ft_python_candidates ${_cnoid_ft_found})
+    endforeach()
+    if(_cnoid_ft_python_candidates)
+      if(NOT CMAKE_VERSION VERSION_LESS 3.18)
+        list(SORT _cnoid_ft_python_candidates COMPARE NATURAL ORDER DESCENDING)
+      else()
+        list(SORT _cnoid_ft_python_candidates)
+        list(REVERSE _cnoid_ft_python_candidates)
+      endif()
+      foreach(_cnoid_ft_candidate ${_cnoid_ft_python_candidates})
+        # Confirm it really is a free-threaded build instead of trusting the name.
+        execute_process(
+          COMMAND ${_cnoid_ft_candidate} -c
+            "import sysconfig; print(1 if sysconfig.get_config_var('Py_GIL_DISABLED') else 0)"
+          OUTPUT_VARIABLE _cnoid_ft_check
+          OUTPUT_STRIP_TRAILING_WHITESPACE
+          RESULT_VARIABLE _cnoid_ft_rc)
+        if(_cnoid_ft_rc EQUAL 0 AND _cnoid_ft_check STREQUAL "1")
+          set(Python_EXECUTABLE "${_cnoid_ft_candidate}")
+          break()
+        endif()
+      endforeach()
+    endif()
+  endif()
+
+  find_package(Python 3 REQUIRED COMPONENTS Interpreter Development)
+
+  # Record whether the selected interpreter is a free-threaded (no-GIL) build in
+  # CHOREONOID_PYTHON_FREE_THREADED. It is queried from the interpreter so that
+  # it is available regardless of the binding backend, and it is exported through
+  # ChoreonoidConfig.cmake for use by external module builds.
+  execute_process(
+    COMMAND ${Python_EXECUTABLE} -c
+      "import sysconfig; print(1 if sysconfig.get_config_var('Py_GIL_DISABLED') else 0)"
+    OUTPUT_VARIABLE _cnoid_python_gil_disabled
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE _cnoid_python_gil_rc)
+  if(_cnoid_python_gil_rc EQUAL 0 AND _cnoid_python_gil_disabled STREQUAL "1")
+    set(CHOREONOID_PYTHON_FREE_THREADED ON)
+    message(STATUS "Using a free-threaded (no-GIL) Python: ${Python_EXECUTABLE} (${Python_VERSION})")
+  else()
+    set(CHOREONOID_PYTHON_FREE_THREADED OFF)
+    message(STATUS "Using a standard (GIL-enabled) Python: ${Python_EXECUTABLE} (${Python_VERSION})")
+  endif()
+
+  # Backward-compatibility aliases for code that still refers to the legacy
+  # PYTHON_* variables (e.g. PYTHON_LIBRARIES in the binding CMakeLists and in
+  # the exported ChoreonoidConfig.cmake).
+  set(PYTHON_EXECUTABLE ${Python_EXECUTABLE})
+  set(PYTHON_INCLUDE_DIRS ${Python_INCLUDE_DIRS})
+  set(PYTHON_LIBRARIES ${Python_LIBRARIES})
+
   include_directories(${PYTHON_INCLUDE_DIRS})
   list(APPEND CHOREONOID_SDK_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS})
   set(init_py "${PROJECT_BINARY_DIR}/${CHOREONOID_PYTHON_SUBDIR}/cnoid/__init__.py")
@@ -481,6 +559,17 @@ if(ENABLE_PYTHON)
     endif()
   endif()
   include_directories(${PYBIND11_INCLUDE_DIRS})
+
+  if(NOT CHOREONOID_PYTHON_BINDING_BACKEND MATCHES "^(pybind11|nanobind)$")
+    message(FATAL_ERROR
+      "CHOREONOID_PYTHON_BINDING_BACKEND must be either \"pybind11\" or \"nanobind\".")
+  endif()
+  # The binding backend selects the source directory of the bindings, but the
+  # public "include/cnoid/Py*" header shims also need to point at the matching
+  # directory. They switch on this definition.
+  if(CHOREONOID_PYTHON_BINDING_BACKEND STREQUAL "nanobind")
+    add_definitions(-DCNOID_USE_NANOBIND)
+  endif()
 
 endif()
 
@@ -960,9 +1049,25 @@ endif()
 # robin-map
 add_subdirectory(thirdparty/robin-map-1.4.1)
 
-# nanobind
-set(NB_USE_SUBMODULE_DEPS OFF)
-add_subdirectory(thirdparty/nanobind-2.12.0)
+# nanobind (only configured when the nanobind binding backend is selected)
+if(ENABLE_PYTHON AND CHOREONOID_PYTHON_BINDING_BACKEND STREQUAL "nanobind")
+  set(NB_USE_SUBMODULE_DEPS OFF)
+  add_subdirectory(thirdparty/nanobind-2.12.0)
+
+  # nanobind_add_module() builds the shared nanobind runtime lazily and does not
+  # register an install rule for it. Without one, every Python module that links
+  # against nanobind.dll fails to load from the install tree at runtime
+  # ("ImportError: DLL load failed"). Create the target eagerly here and install it.
+  if(CHOREONOID_PYTHON_FREE_THREADED)
+    set(_nanobind_runtime nanobind-ft)
+  else()
+    set(_nanobind_runtime nanobind)
+  endif()
+  nanobind_build_library(${_nanobind_runtime})
+  install(TARGETS ${_nanobind_runtime}
+    RUNTIME DESTINATION ${CHOREONOID_BIN_SUBDIR}
+    LIBRARY DESTINATION ${CHOREONOID_LIB_SUBDIR})
+endif()
 
 add_subdirectory(src)
 add_subdirectory(include)

@@ -1,1 +1,5 @@
+#ifdef CNOID_USE_NANOBIND
+#include "src/Util/python/PyEigenTypes.h"
+#else
 #include "src/Util/pybind11/PyEigenTypes.h"
+#endif

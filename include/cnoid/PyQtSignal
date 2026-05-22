@@ -1,1 +1,5 @@
+#ifdef CNOID_USE_NANOBIND
+#include "src/Base/python/PyQtSignal.h"
+#else
 #include "src/Base/pybind11/PyQtSignal.h"
+#endif

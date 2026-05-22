@@ -44,5 +44,5 @@ choreonoid_add_plugin(${target} ${sources} ${qtsources} ${qtforms} ${mofiles} HE
 target_link_libraries(${target} PUBLIC CnoidBodyPlugin)
 
 if(ENABLE_PYTHON AND USE_PYBIND11)
-  add_subdirectory(pybind11)
+  choreonoid_add_python_binding_subdirectory()
 endif()

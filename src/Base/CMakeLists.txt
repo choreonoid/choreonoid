@@ -366,7 +366,7 @@ file(COPY icon/choreonoid.svg DESTINATION ${CNOID_BINARY_SHARE_DIR}/icon)
 install(FILES icon/choreonoid.svg DESTINATION ${CNOID_SHARE_SUBDIR}/icon)
 
 if(ENABLE_PYTHON)
-  add_subdirectory(pybind11)
+  choreonoid_add_python_binding_subdirectory()
 endif()
 
 add_subdirectory(lua)
