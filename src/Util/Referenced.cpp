@@ -8,8 +8,9 @@ using namespace cnoid;
 
 Referenced::~Referenced()
 {
-    if(weakCounter_){
-        weakCounter_->isObjectAlive_ = false;
-        weakCounter_->release();
+    WeakCounter* wc = weakCounter_.load(std::memory_order_acquire);
+    if(wc){
+        wc->isObjectAlive_ = false;
+        wc->release();
     }
 }

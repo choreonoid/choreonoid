@@ -6,6 +6,7 @@
 #define CNOID_UTIL_REFERENCED_H
 
 #include <atomic>
+#include <mutex>
 #include <cassert>
 #include <iosfwd>
 #include <functional>
@@ -21,7 +22,8 @@ namespace cnoid {
 class Referenced;
 
 /**
-   \todo Make this thread safe. (Is it necessary to use mutex?)
+   This is the control block used by weak_ref_ptr. Its mutex serializes
+   weak_ref_ptr::lock() against the final release of the referenced object.
 */
 class WeakCounter
 {
@@ -46,8 +48,10 @@ public:
 private:
     std::atomic<int> weakCount;
     std::atomic<bool> isObjectAlive_;
+    std::mutex mutex; // serializes weak_ref_ptr::lock() against the object's final release
 
     friend class Referenced;
+    template<class Y> friend class weak_ref_ptr;
 };
 
     
@@ -58,7 +62,7 @@ class CNOID_EXPORT Referenced
     template<class Y> friend class ref_ptr;
 
     mutable std::atomic<int> refCount_;
-    WeakCounter* weakCounter_;
+    std::atomic<WeakCounter*> weakCounter_;
             
     void addRef() const {
         ++refCount_;
@@ -66,10 +70,21 @@ class CNOID_EXPORT Referenced
     }
 
     void releaseRef() const {
-        //if(refCount_.fetch_sub(1, std::memory_order_release) == 1) {
-        if(refCount_.fetch_sub(1) == 1) {
-            //std::atomic_thread_fence(std::memory_order_acquire);
-            delete this;
+        WeakCounter* wc = weakCounter_.load(std::memory_order_acquire);
+        if(!wc){
+            // Fast path: no weak reference exists for this object.
+            if(refCount_.fetch_sub(1) == 1){
+                delete this;
+            }
+        } else {
+            // A weak_ref_ptr may concurrently try to revive this object in
+            // lock(). Serialize the final release against it via the mutex.
+            std::unique_lock<std::mutex> guard(wc->mutex);
+            if(refCount_.fetch_sub(1) == 1){
+                wc->isObjectAlive_ = false;
+                guard.unlock();
+                delete this;
+            }
         }
     }
 
@@ -78,14 +93,17 @@ class CNOID_EXPORT Referenced
         --refCount_;
     }
 
-    /**
-       \note This function is not thread safe
-    */
     WeakCounter* weakCounter(){
-        if(!weakCounter_){
-            weakCounter_ = new WeakCounter();
+        WeakCounter* wc = weakCounter_.load(std::memory_order_acquire);
+        if(!wc){
+            WeakCounter* nwc = new WeakCounter();
+            if(weakCounter_.compare_exchange_strong(wc, nwc)){
+                wc = nwc;
+            } else {
+                delete nwc; // another thread installed it first
+            }
         }
-        return weakCounter_;
+        return wc;
     }
 
 protected:
@@ -318,9 +336,7 @@ public:
 
     weak_ref_ptr& operator=(weak_ref_ptr&& rhs){
         weak_ref_ptr(static_cast<weak_ref_ptr&&>(rhs)).swap(*this);
-        rhs.px = nullptr;
-        rhs.counter = 0;
-        return rhs;
+        return *this;
     }
 
     template<class Y>
@@ -343,11 +359,13 @@ public:
     explicit operator bool() const { return px != nullptr; }
 
     ref_ptr<T> lock() const {
-        if(counter && counter->isObjectAlive()){
-            return ref_ptr<T>(px);
-        } else {
-            return ref_ptr<T>();
+        if(counter){
+            std::lock_guard<std::mutex> guard(counter->mutex);
+            if(counter->isObjectAlive()){
+                return ref_ptr<T>(px);
+            }
         }
+        return ref_ptr<T>();
     }
 
     bool expired() const {
