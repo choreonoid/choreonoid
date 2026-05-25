@@ -1,12 +1,9 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_REFERENCED_H
 #define CNOID_UTIL_REFERENCED_H
 
 #include <atomic>
 #include <mutex>
+#include <cstdint>
 #include <cassert>
 #include <iosfwd>
 #include <functional>
@@ -54,43 +51,187 @@ private:
     template<class Y> friend class weak_ref_ptr;
 };
 
-    
+
+/*
+   Lifetime management across a binding language (Python via nanobind, etc.)
+
+   Referenced supports being exposed to a binding language (Python through
+   nanobind, and potentially others) while keeping its lifetime correct whether
+   an object originates in C++ or in the binding language. The reference count
+   field packedRefCount_ operates in one of two modes (see the field comment for
+   the bit layout):
+
+     - C++ mode: the field holds the C++ reference count. addRef()/releaseRef()
+       update it and the object is deleted when the count reaches 0, exactly as a
+       plain intrusively reference-counted C++ object would behave. The binding
+       language is never touched in this mode.
+
+     - Binding-language mode: ownership has been handed over to the binding
+       language. The field holds a pointer to the bound wrapper object (a
+       PyObject* for Python, kept as a void* so this header stays free of any
+       binding-language dependency). addRef()/releaseRef() now delegate to the
+       wrapper's own reference count via the function pointers in
+       ReferencedPythonInterface, and the C++ side never deletes the object - the
+       binding language frees both the wrapper and the embedded C++ object when
+       the wrapper is garbage-collected.
+
+   setSelfPython() performs the one-way C++ -> binding-language transition: it is
+   called once when the object is first exposed to the binding language, moves
+   any outstanding C++ reference count into the wrapper's reference count, and
+   stores the wrapper pointer. This is the same scheme as nanobind's built-in
+   intrusive_counter; we register it through nb::intrusive_ptr so that the
+   transition hook is inherited by every Referenced-derived type (see
+   src/Util/python/PyReferenced.cpp).
+
+   Why hand memory ownership to the binding language at all? Because an object
+   constructed on the Python side is embedded inside the nanobind wrapper's
+   allocation (nanobind placement-news it there); the C++ side cannot
+   operator-delete such memory. Letting the binding language own and free the
+   memory is the only consistent rule that works for both C++-created and
+   Python-created objects. The cost is that an object still referenced from C++
+   at interpreter shutdown is leaked rather than destroyed (see the is-alive
+   guard below); this is accepted - leaking just before process exit is harmless,
+   whereas the alternatives crash.
+
+   Exit-time safety (the reason we do NOT use intrusive_counter as-is): when the
+   interpreter has shut down, decref must not touch the dead binding-language
+   runtime. A C++ static singleton (e.g. MessageOut::master()) released by its
+   static destructor after interpreter finalization would otherwise call
+   Py_DECREF on a dead runtime and crash. The injected decref therefore checks
+   nb::is_alive() and becomes a no-op once the runtime is gone (so the object is
+   neither freed nor its destructor run - it simply leaks, as noted above).
+   nanobind's stock intrusive_counter lacks this guard; adding it is the one
+   change we make on top of that scheme. The is-alive check lives in the injected
+   decref (src/Util/python/PyReferenced.cpp) where nb::is_alive() is directly
+   available; Referenced itself only decides which mode it is in.
+
+   Note on reference cycles: as with std::shared_ptr or any intrusive count, a
+   cycle of strong references among binding-language-exposed objects (e.g. two
+   objects holding ref_ptr to each other) will not be collected and leaks. This
+   is a property of strong reference counting, not of this scheme; it is avoided
+   the usual way (break cycles with weak_ref_ptr on the C++ side, or weakref on
+   the Python side). It does not occur from merely exposing an object.
+*/
+
+/*
+   Function pointers that delegate reference counting of a binding-language-owned
+   Referenced object to the reference count of its bound wrapper object. The
+   binding layer installs these once at start-up via
+   initReferencedPythonInterface(). Referenced does not depend on Python/nanobind
+   headers; the wrapper is passed as a void*. The injected decref is responsible
+   for the nb::is_alive() guard described above.
+*/
+struct ReferencedPythonInterface
+{
+    void (*incref)(void* wrapper) noexcept;
+    void (*decref)(void* wrapper) noexcept;
+};
+
+CNOID_EXPORT void initReferencedPythonInterface(const ReferencedPythonInterface& iface);
 class CNOID_EXPORT Referenced
 {
     friend class WeakCounter;
     template<class Y> friend class weak_ref_ptr;
     template<class Y> friend class ref_ptr;
 
-    mutable std::atomic<int> refCount_;
+    /*
+       packedRefCount_ packs either the C++ reference count or a pointer to the
+       bound binding-language wrapper into a single word, distinguished by bit 0:
+
+         bit 0 == 1 (C++ mode):     packedRefCount_ == (count << 1) | 1. The
+                                    initial value 1 encodes a count of 0. addRef()
+                                    /releaseRef() add/subtract 2 to leave bit 0 set.
+         bit 0 == 0 (binding mode): packedRefCount_ is the wrapper pointer held as
+                                    a uintptr_t. Wrapper (PyObject) pointers are
+                                    aligned so bit 0 is always 0, disambiguating
+                                    the two modes.
+
+       In C++ mode the object is deleted when the count reaches 0 (value goes
+       3 -> 1), preserving plain Referenced semantics. In binding mode reference
+       counting is delegated to the wrapper and the object is destroyed by the
+       binding language, so releaseRef() does not delete it here.
+    */
+    mutable std::atomic<std::uintptr_t> packedRefCount_;
     std::atomic<WeakCounter*> weakCounter_;
-            
+
     void addRef() const {
-        ++refCount_;
-        //refCount_.fetch_add(1, std::memory_order_relaxed);
+        std::uintptr_t v = packedRefCount_.load(std::memory_order_relaxed);
+        while(true){
+            if(v & 1){ // C++ mode
+                if(packedRefCount_.compare_exchange_weak(
+                       v, v + 2, std::memory_order_relaxed)){
+                    break;
+                }
+            } else { // binding-language mode: delegate to the wrapper
+                pythonInterface.incref(reinterpret_cast<void*>(v));
+                break;
+            }
+        }
     }
 
     void releaseRef() const {
+        std::uintptr_t v = packedRefCount_.load(std::memory_order_acquire);
+        if(!(v & 1)){
+            // Binding-language mode: delegate to the wrapper's reference count.
+            // The injected decref guards against a finalized runtime; the C++
+            // side never deletes the object in this mode.
+            pythonInterface.decref(reinterpret_cast<void*>(v));
+            return;
+        }
         WeakCounter* wc = weakCounter_.load(std::memory_order_acquire);
         if(!wc){
             // Fast path: no weak reference exists for this object.
-            if(refCount_.fetch_sub(1) == 1){
-                delete this;
+            while(true){
+                if(!(v & 1)){
+                    // setSelfPython() switched us to binding mode concurrently.
+                    pythonInterface.decref(reinterpret_cast<void*>(v));
+                    return;
+                }
+                if(packedRefCount_.compare_exchange_weak(
+                       v, v - 2, std::memory_order_acq_rel)){
+                    if(v == 3){ // count went 1 -> 0
+                        delete this;
+                    }
+                    return;
+                }
             }
         } else {
             // A weak_ref_ptr may concurrently try to revive this object in
             // lock(). Serialize the final release against it via the mutex.
             std::unique_lock<std::mutex> guard(wc->mutex);
-            if(refCount_.fetch_sub(1) == 1){
-                wc->isObjectAlive_ = false;
-                guard.unlock();
-                delete this;
+            while(true){
+                if(!(v & 1)){
+                    pythonInterface.decref(reinterpret_cast<void*>(v));
+                    return;
+                }
+                if(packedRefCount_.compare_exchange_weak(
+                       v, v - 2, std::memory_order_acq_rel)){
+                    if(v == 3){ // count went 1 -> 0
+                        wc->isObjectAlive_ = false;
+                        guard.unlock();
+                        delete this;
+                    }
+                    return;
+                }
             }
         }
     }
 
     void decrementRef() const {
-        //refCount_.fetch_sub(1, std::memory_order_release);
-        --refCount_;
+        // Used by ref_ptr::retn(): drop one C++ reference without deleting, since
+        // ownership is being transferred to the caller.
+        std::uintptr_t v = packedRefCount_.load(std::memory_order_relaxed);
+        while(true){
+            if(v & 1){ // C++ mode
+                if(packedRefCount_.compare_exchange_weak(
+                       v, v - 2, std::memory_order_release)){
+                    break;
+                }
+            } else { // binding-language mode
+                pythonInterface.decref(reinterpret_cast<void*>(v));
+                break;
+            }
+        }
     }
 
     WeakCounter* weakCounter(){
@@ -106,15 +247,60 @@ class CNOID_EXPORT Referenced
         return wc;
     }
 
-protected:
-    Referenced() : refCount_(0), weakCounter_(nullptr) { }
-    Referenced(const Referenced&) : refCount_(0), weakCounter_(nullptr) { }
+    static ReferencedPythonInterface pythonInterface;
+    friend CNOID_EXPORT void initReferencedPythonInterface(const ReferencedPythonInterface& iface);
 
-    //int refCount() const { return refCount_.load(std::memory_order_relaxed); }
-    int refCount() const { return refCount_.load(); }
-    
+protected:
+    // The initial value 1 encodes a C++ reference count of 0 (C++ mode, bit 0 set).
+    Referenced() : packedRefCount_(1), weakCounter_(nullptr) { }
+    Referenced(const Referenced&) : packedRefCount_(1), weakCounter_(nullptr) { }
+
+    int refCount() const {
+        std::uintptr_t v = packedRefCount_.load();
+        if(v & 1){
+            return static_cast<int>(v >> 1); // C++ mode
+        }
+        return 0; // binding-language mode: the count lives in the wrapper
+    }
+
 public:
     virtual ~Referenced();
+
+    /**
+       Hand ownership of this object over to the given binding-language wrapper.
+       After this call the object is in binding-language mode: any outstanding C++
+       reference count is moved into the wrapper's reference count, and subsequent
+       reference counting is delegated to it. Called once by the binding layer
+       when the object is first exposed (see src/Util/python/PyReferenced.cpp).
+       The argument is the wrapper (a PyObject*) passed as a void*.
+
+       May be called when the C++ count is 0 (an object created by the binding
+       language's constructor, owned by no ref_ptr yet); the wrapper alone then
+       keeps it alive. No-op if already in binding-language mode.
+    */
+    void setSelfPython(void* wrapper) noexcept {
+        std::uintptr_t v = packedRefCount_.load(std::memory_order_acquire);
+        if(v & 1){ // C++ mode
+            std::uintptr_t count = v >> 1;
+            for(std::uintptr_t i = 0; i < count; ++i){
+                pythonInterface.incref(wrapper);
+            }
+            packedRefCount_.store(
+                reinterpret_cast<std::uintptr_t>(wrapper), std::memory_order_release);
+        }
+    }
+
+    /**
+       Return the binding-language wrapper bound to this object (as a void*), or
+       nullptr if it is still in C++ mode.
+    */
+    void* selfPython() const noexcept {
+        std::uintptr_t v = packedRefCount_.load(std::memory_order_acquire);
+        if(v & 1){
+            return nullptr;
+        }
+        return reinterpret_cast<void*>(v);
+    }
 };
 
     
