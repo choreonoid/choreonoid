@@ -1,0 +1,3 @@
+// PyNumpyHelper.h exists only for the nanobind backend (zero-copy NumPy views of
+// Eigen expressions and raw buffers); there is no pybind11 counterpart.
+#include "src/Util/python/PyNumpyHelper.h"

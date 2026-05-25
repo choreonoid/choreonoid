@@ -93,3 +93,7 @@ endif()
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   target_compile_definitions(${target} PUBLIC _DEBUG)
 endif()
+
+if(ENABLE_PYTHON)
+  choreonoid_add_python_binding_subdirectory()
+endif()
