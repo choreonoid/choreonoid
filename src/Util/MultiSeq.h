@@ -15,7 +15,7 @@
 namespace cnoid {
 
 template <typename ElementType, typename Allocator = std::allocator<ElementType>>
-class MultiSeq : public Deque2D<ElementType, Allocator>, public AbstractMultiSeq
+class MultiSeq : public AbstractMultiSeq, public Deque2D<ElementType, Allocator>
 {
     typedef MultiSeq<ElementType, Allocator> MultiSeqType;
         
@@ -34,8 +34,8 @@ public:
     }
 
     MultiSeq(const char* seqType, int numFrames, int numParts, bool initializeElements = false)
-        : Container(numFrames, numParts),
-          AbstractMultiSeq(seqType) {
+        : AbstractMultiSeq(seqType),
+          Container(numFrames, numParts) {
         frameRate_ = 0.0;
         offsetTime_ = 0.0;
 
@@ -45,8 +45,8 @@ public:
     }
 
     MultiSeq(const MultiSeqType& org)
-        : Container(org),
-          AbstractMultiSeq(org) {
+        : AbstractMultiSeq(org),
+          Container(org) {
         frameRate_ = org.frameRate_;
         offsetTime_ = org.offsetTime_;
     }
