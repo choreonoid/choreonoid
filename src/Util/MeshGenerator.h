@@ -15,7 +15,7 @@ public:
     static MeshGenerator* mainThreadInstance();
 
     MeshGenerator();
-    MeshGenerator(const MeshGenerator& org);
+    MeshGenerator(const MeshGenerator& org) = delete;
     ~MeshGenerator();
 
     void setDivisionNumber(int n);
