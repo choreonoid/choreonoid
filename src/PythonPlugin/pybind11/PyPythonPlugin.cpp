@@ -2,7 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "../PythonPlugin.h"
+#include "PythonPlugin.h"
 #include <cnoid/PyBase>
 
 using namespace cnoid;

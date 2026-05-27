@@ -1,1 +1,5 @@
-#include "src/PythonPlugin/PythonConsoleView.h"
+#ifdef CNOID_USE_NANOBIND
+#include "src/PythonPlugin/python/PythonConsoleView.h"
+#else
+#include "src/PythonPlugin/pybind11/PythonConsoleView.h"
+#endif

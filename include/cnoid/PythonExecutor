@@ -1,1 +1,5 @@
-#include "src/PythonPlugin/PythonExecutor.h"
+#ifdef CNOID_USE_NANOBIND
+#include "src/PythonPlugin/python/PythonExecutor.h"
+#else
+#include "src/PythonPlugin/pybind11/PythonExecutor.h"
+#endif
