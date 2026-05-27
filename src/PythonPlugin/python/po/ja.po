@@ -1,0 +1,113 @@
+# Japanese translations for Choreonoid package.
+# This file is distributed under the same license as the Choreonoid package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Choreonoid\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-11-22 23:04+0900\n"
+"PO-Revision-Date: 2021-10-25 12:00+0900\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Python Console"
+msgstr "Pythonコンソール"
+
+msgid "PythonConsoleView"
+msgstr "Pythonコンソールビュー"
+
+msgid "Python"
+msgstr ""
+
+msgid "Redirectiton to MessageView"
+msgstr "メッセージビューへのリダイレクト"
+
+msgid "Refresh modules in the script directory"
+msgstr "スクリプトディレクトリのモジュールを更新します"
+
+msgid "Executing python script \"{}\" ..."
+msgstr "Pythonスクリプト \"{}\" を実行中..."
+
+msgid "The script finished."
+msgstr "スクリプトが終了しました．"
+
+msgid "Failed to run the python script."
+msgstr "Pythonスクリプトの実行に失敗しました．"
+
+msgid ""
+"Failed to export the libpython symbols. The system may not be able to load binary Python modules."
+msgstr ""
+"libpythonｓのシンボルのエクスポートに失敗しました．システムはバイナリのPythonモジュールをロードで"
+"きないかもしれません．"
+
+msgid "PythonPlugin: \"{}\" has been added to the Python module search path list."
+msgstr "PythonPlugin: \"{}\" がPythonのモジュールパスに追加されました．"
+
+msgid "PythonScriptItem"
+msgstr "Pythonスクリプトアイテム"
+
+msgid "Python Script"
+msgstr "Pythonスクリプト"
+
+msgid "Script"
+msgstr "スクリプト"
+
+msgid "Execution on project loading"
+msgstr "プロジェクト読込時に実行"
+
+msgid "Python script file \"{}\" cannot be loaded. The file does not exist."
+msgstr "Pythonスクリプトファイル \"{}\" は存在しないため読みこむことができません．"
+
+msgid ""
+"Python script \"{}\" is now running in the foreground. The execution of the script cannot be "
+"overlapped."
+msgstr ""
+"Pythonスクリプト \"{}\" はバックグラウンドスレッドで実行中です．スクリプトを重複して実行することは"
+"できません．"
+
+msgid "Python Script Termination"
+msgstr "Pythonスクリプトの停止"
+
+msgid "Python script \"{}\" is running now. Do you want to terminate and restart it?"
+msgstr "Pythonスクリプト \"{}\" は実行中です．これを停止して再実行しますか？"
+
+msgid "The python script cannot be terminated. It cannot be restarted."
+msgstr "Pythonスクリプトを終了できません．再実行できません．"
+
+msgid " Python script \"{}\" is empty."
+msgstr "Pythonスクリプト \"{}\" は空です．"
+
+msgid "The file of Python script \"{}\" does not exist."
+msgstr "Pythonスクリプト \"{}\" のファイルが存在しません．"
+
+msgid "Execution of Python script \"{}\" has been started."
+msgstr "Pythonスクリプト \"{}\" の実行を開始しました．"
+
+msgid "Python script \"{}\" is now running in the foreground. The code cannot be executed now."
+msgstr "Pythonスクリプト \"{}\" はフォアグラウンドで実行中です．今これを実行することはできません．"
+
+msgid "The execution of Python script \"{}\" has been terminated."
+msgstr "Pythonスクリプト \"{}\" の実行が完了しました．"
+
+msgid ""
+"The execution of Python script \"{0}\" failed.\n"
+"{1}"
+msgstr ""
+"Pythonスクリプト \"{0}\" の実行に失敗しました．\n"
+"{1}"
+
+msgid "The execution of Python script \"{}\" has been finished."
+msgstr "Pythonスクリプト \"{}\" の実行が完了しました．"
+
+msgid "Python script \"{}\" has been terminated."
+msgstr "Pythonスクリプト \"{}\" を停止しました．"
+
+msgid "Python script \"{}\" cannot be terminated. Some internal errors may happen."
+msgstr ""
+"Pythonスクリプト \"{}\" の実行を停止できません．何らかの内部エラーが発生しているかもしれません．"
+
+msgid "Background execution"
+msgstr "バックグラウンド実行"

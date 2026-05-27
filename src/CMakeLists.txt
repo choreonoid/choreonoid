@@ -1,4 +1,12 @@
 add_subdirectory(Util)
+
+# CnoidPythonInterpreter manages the embedded CPython interpreter for the
+# nanobind backend. It is loaded dynamically by the Base App, so it has no link
+# dependency from Base.
+if(ENABLE_PYTHON AND CHOREONOID_PYTHON_BINDING_BACKEND STREQUAL "nanobind")
+  add_subdirectory(PythonInterpreter)
+endif()
+
 add_subdirectory(OpenGL)
 add_subdirectory(GLSceneRenderer)
 add_subdirectory(AISTCollisionDetector)

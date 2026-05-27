@@ -81,6 +81,7 @@
 #include <QStyleFactory>
 #include <QThread>
 #include <QLibraryInfo>
+#include <QLibrary>
 #include <regex>
 #include <iostream>
 #include <csignal>
@@ -161,6 +162,12 @@ public:
     ExtensionManager* ext;
     MainWindow* mainWindow;
     MessageView* messageView;
+
+    // Set when the embedded Python interpreter (managed by the optional
+    // CnoidPythonInterpreter library) has been initialized. It is called as the
+    // very last step of the shutdown to finalize the interpreter safely under
+    // the nanobind backend.
+    void (*finalizePythonInterpreter)() = nullptr;
     QTranslator translator;
     ErrorCode error;
     string errorMessage;
@@ -497,6 +504,28 @@ void App::Impl::initialize()
                 EIGEN_WORLD_VERSION, EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
                 Eigen::SimdInstructionSetsInUse()));
 
+    // Optionally load the CnoidPythonInterpreter library, which manages the
+    // lifecycle of the embedded Python interpreter for the nanobind backend, and
+    // initialize the interpreter before loading the plugins so that the Python
+    // plugin and the binding modules can rely on a running interpreter. The
+    // library is loaded dynamically so that the Base module has no compile-time
+    // dependency on Python; when it is absent (Python disabled or the pybind11
+    // backend), this simply does nothing. The QLibrary object can be deleted
+    // afterwards because Qt does not unload the library when it is destroyed.
+    {
+        auto lib = new QLibrary("CnoidPythonInterpreter");
+        if(lib->load()){
+            auto initFunc =
+                reinterpret_cast<int(*)()>(lib->resolve("cnoid_initializePythonInterpreter"));
+            auto finalizeFunc =
+                reinterpret_cast<void(*)()>(lib->resolve("cnoid_finalizePythonInterpreter"));
+            if(initFunc && finalizeFunc && initFunc()){
+                finalizePythonInterpreter = finalizeFunc;
+            }
+        }
+        delete lib;
+    }
+
     pluginManager->doStartupLoading();
 
     mainWindow->installEventFilter(this);
@@ -632,6 +661,16 @@ int App::Impl::exec()
     ext->deleteManagedObjects();
     delete mainWindow;
     mainWindow = nullptr;
+
+    // Finalize the embedded Python interpreter as the very last step, after all
+    // plugins have been finalized and the item tree has been released. Under the
+    // nanobind backend this is when the Python wrappers that still own
+    // Referenced-derived C++ objects are destroyed, so it must run after every
+    // other shutdown step (see src/Python/PythonInterpreter.cpp).
+    if(finalizePythonInterpreter){
+        finalizePythonInterpreter();
+        finalizePythonInterpreter = nullptr;
+    }
 
     // Note that the application must be terminated without deleting
     // the base extension manager pointed by the 'ext' variable
