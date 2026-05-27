@@ -2,10 +2,11 @@
 #define CNOID_PHYSX_PLUGIN_PHYSX_SIMULATOR_ITEM_H
 
 #include <cnoid/SimulatorItem>
+#include "exportdecl.h"
 
 namespace cnoid {
 
-class PhysXSimulatorItem : public SimulatorItem
+class CNOID_EXPORT PhysXSimulatorItem : public SimulatorItem
 {
 public:
     static void initialize(ExtensionManager* ext);
