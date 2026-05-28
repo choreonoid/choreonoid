@@ -123,6 +123,7 @@ void onCtrl_C_Input(int)
             ctrl_c_pressed = true;
             if(isNoWindowMode){
                 exitRequested = true;
+                sigAboutToQuit_();
                 QApplication::quit();
             } else {
                 MainWindow::instance()->close();
@@ -700,7 +701,10 @@ void App::exit(int returnCode)
         auto impl = instance_->impl;
         impl->returnCode = returnCode;
         exitRequested = true;
-        if(impl->mainWindow){
+        if(isNoWindowMode){
+            sigAboutToQuit_();
+            impl->qapplication->exit(returnCode);
+        } else if(impl->mainWindow){
             if(!impl->mainWindow->close()){
                 impl->qapplication->exit(returnCode);
             }
