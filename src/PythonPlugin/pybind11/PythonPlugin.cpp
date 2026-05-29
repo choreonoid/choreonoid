@@ -443,7 +443,14 @@ bool PythonPlugin::finalize()
     // because the views and items have their own python objects
     viewManager().deleteView(ViewManager::findView<PythonConsoleView>());
     itemManager().detachAllManagedTypeItemsFromRoot();
-    
+
+    // Objects managed by this plugin (e.g. tool bars mounted from a Python script) may hold
+    // Python callbacks connected to Qt signals. They must be deleted here while the Python
+    // interpreter is still valid; otherwise they would be deleted in the base ExtensionManager
+    // destructor after the interpreter has been torn down, and destroying the held callbacks
+    // would call PyGILState_Ensure on an invalid interpreter state and crash.
+    deleteManagedObjects();
+
     return true;
 }
 
