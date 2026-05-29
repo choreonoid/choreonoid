@@ -125,6 +125,20 @@ void exportPyViews(py::module m)
         .def("isBuiltinCameraCurrent", &SceneWidget::isBuiltinCameraCurrent)
         .def("isBuiltinCamera", &SceneWidget::isBuiltinCamera)
         .def("findOwnerInteractiveCameraTransform", &SceneWidget::findOwnerInteractiveCameraTransform)
+        .def("setCameraPosition",
+             [](SceneWidget& self, const Vector3& position, double transitionTime){
+                 self.setCameraPosition(position, transitionTime); },
+             py::arg("position"), py::arg("transitionTime") = 0.0)
+        .def("setCameraPositionLookingFor",
+             [](SceneWidget& self, const Vector3& eye, const Vector3& direction,
+                const Vector3& up, double transitionTime){
+                 self.setCameraPositionLookingFor(eye, direction, up, transitionTime); },
+             py::arg("eye"), py::arg("direction"), py::arg("up"), py::arg("transitionTime") = 0.0)
+        .def("setCameraPositionLookingAt",
+             [](SceneWidget& self, const Vector3& eye, const Vector3& center,
+                const Vector3& up, double transitionTime){
+                 self.setCameraPositionLookingAt(eye, center, up, transitionTime); },
+             py::arg("eye"), py::arg("center"), py::arg("up"), py::arg("transitionTime") = 0.0)
         .def("startBuiltinCameraViewChange", &SceneWidget::startBuiltinCameraViewChange)
         .def("rotateBuiltinCameraView", &SceneWidget::rotateBuiltinCameraView)
         .def("translateBuiltinCameraView", &SceneWidget::translateBuiltinCameraView)

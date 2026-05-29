@@ -5,6 +5,7 @@
 #include "PyUtil.h"
 #include "../SceneGraph.h"
 #include "../SceneCameras.h"
+#include "../SceneLights.h"
 #include "../CloneMap.h"
 
 using namespace cnoid;
@@ -161,6 +162,50 @@ void exportPySceneGraph(py::module& m)
         .def(py::init<>())
         .def_property("height", &SgOrthographicCamera::height, &SgOrthographicCamera::setHeight)
         .def("setHeight", &SgOrthographicCamera::setHeight)
+        ;
+
+    py::class_<SgLight, SgLightPtr, SgPreprocessed>(m, "SgLight")
+        .def_property("on", (bool(SgLight::*)()const) &SgLight::on, (void(SgLight::*)(bool)) &SgLight::on)
+        .def_property("color",
+                      [](SgLight& self){ return self.color(); },
+                      [](SgLight& self, const Vector3f& c){ self.setColor(c); })
+        .def("setColor", [](SgLight& self, const Vector3f& c){ self.setColor(c); })
+        .def_property("intensity", &SgLight::intensity, &SgLight::setIntensity)
+        .def("setIntensity", &SgLight::setIntensity)
+        .def_property("ambientIntensity", &SgLight::ambientIntensity, &SgLight::setAmbientIntensity)
+        .def("setAmbientIntensity", &SgLight::setAmbientIntensity)
+        ;
+
+    py::class_<SgDirectionalLight, SgDirectionalLightPtr, SgLight>(m, "SgDirectionalLight")
+        .def(py::init<>())
+        .def_property("direction",
+                      [](SgDirectionalLight& self){ return self.direction(); },
+                      [](SgDirectionalLight& self, const Vector3& d){ self.setDirection(d); })
+        .def("setDirection", [](SgDirectionalLight& self, const Vector3& d){ self.setDirection(d); })
+        ;
+
+    py::class_<SgPointLight, SgPointLightPtr, SgLight>(m, "SgPointLight")
+        .def(py::init<>())
+        .def_property("constantAttenuation", &SgPointLight::constantAttenuation, &SgPointLight::setConstantAttenuation)
+        .def("setConstantAttenuation", &SgPointLight::setConstantAttenuation)
+        .def_property("linearAttenuation", &SgPointLight::linearAttenuation, &SgPointLight::setLinearAttenuation)
+        .def("setLinearAttenuation", &SgPointLight::setLinearAttenuation)
+        .def_property("quadraticAttenuation", &SgPointLight::quadraticAttenuation, &SgPointLight::setQuadraticAttenuation)
+        .def("setQuadraticAttenuation", &SgPointLight::setQuadraticAttenuation)
+        ;
+
+    py::class_<SgSpotLight, SgSpotLightPtr, SgPointLight>(m, "SgSpotLight")
+        .def(py::init<>())
+        .def_property("direction",
+                      [](SgSpotLight& self){ return self.direction(); },
+                      [](SgSpotLight& self, const Vector3& d){ self.setDirection(d); })
+        .def("setDirection", [](SgSpotLight& self, const Vector3& d){ self.setDirection(d); })
+        .def_property("beamWidth", &SgSpotLight::beamWidth, &SgSpotLight::setBeamWidth)
+        .def("setBeamWidth", &SgSpotLight::setBeamWidth)
+        .def_property("cutOffAngle", &SgSpotLight::cutOffAngle, &SgSpotLight::setCutOffAngle)
+        .def("setCutOffAngle", &SgSpotLight::setCutOffAngle)
+        .def_property("cutOffExponent", &SgSpotLight::cutOffExponent, &SgSpotLight::setCutOffExponent)
+        .def("setCutOffExponent", &SgSpotLight::setCutOffExponent)
         ;
 }
 
