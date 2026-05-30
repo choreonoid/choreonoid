@@ -6,11 +6,11 @@ import math
 
 sceneWidget = SceneView.instance.sceneWidget
 sceneWidget.setHeadLightEnabled(False)
-sceneWidget.setFloorGridEnabled(False)
-sceneWidget.setWorldLightIntensity(0.1)
-sceneWidget.setWorldLightAmbient(0.0)
+sceneWidget.setGridEnabled(SceneWidget.XY_Grid, False)
+sceneWidget.updateGrids()
+sceneWidget.renderer.worldLight.setAmbientIntensity(0.0)
 sceneWidget.setBackgroundColor([0, 0, 0])
-sceneWidget.setCameraPosition(
+sceneWidget.setCameraPositionLookingFor(
     [ 6.85805, 3.70225, 2.89464 ],
     [ -0.834875, -0.460056, -0.302213 ],
     [ -0.264686, -0.145855, 0.95324 ])
@@ -54,7 +54,7 @@ tankItem.addChildItem(controllerItem)
 simulatorItem = AISTSimulatorItem()
 simulatorItem.setTimeStep(0.001)
 simulatorItem.setRealtimeSyncMode(True)
-simulatorItem.setTimeRangeMode(SimulatorItem.TR_UNLIMITED)
+simulatorItem.setTimeRangeMode(SimulatorItem.UnlimitedTime)
 worldItem.addChildItem(simulatorItem)
 simulatorItem.setSelected(True)
 

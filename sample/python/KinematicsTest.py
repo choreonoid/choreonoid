@@ -39,7 +39,7 @@ for i in range(20):
     for link in endLinks:
         print(" {}: ".format(link.name), end="")
         print(link.translation, end=" ")
-        print(rpyFromRot(link.attitude))
+        print(rpyFromRot(link.R))
 
     print(" Center of Mass: {}".format(robot.calcCenterOfMass()))
 
