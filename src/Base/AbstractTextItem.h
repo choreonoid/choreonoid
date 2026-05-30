@@ -21,7 +21,7 @@ public:
 
     virtual const std::string& textFilename() const = 0;
 
-protected:
+    // Public so that nanobind can destroy this intrusively-owned object.
     virtual ~AbstractTextItem();
 };
 

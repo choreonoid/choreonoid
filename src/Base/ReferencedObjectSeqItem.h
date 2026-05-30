@@ -22,6 +22,9 @@ public:
 
     void resetSeq();
 
+    // Public so that nanobind can destroy this intrusively-owned object.
+    virtual ~ReferencedObjectSeqItem();
+
 protected:
     ReferencedObjectSeqItem(const ReferencedObjectSeqItem& org, CloneMap* cloneMap);
 
@@ -29,8 +32,6 @@ protected:
        This is for the copy constructor of an inherited class
     */
     ReferencedObjectSeqItem(const ReferencedObjectSeqItem& org, std::shared_ptr<ReferencedObjectSeq> cloneSeq);
-        
-    virtual ~ReferencedObjectSeqItem();
 
     virtual Item* doCloneItem(CloneMap* cloneMap) const override;
             

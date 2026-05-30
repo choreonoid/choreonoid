@@ -104,6 +104,16 @@ protected:
 
 private:
     std::string name_;
+
+    // The tool bar name is normally given to the constructor. This setter is
+    // only for the Python bindings, where the object is created on the heap in
+    // __new__ without a name and the name is assigned afterwards in __init__ so
+    // that a Python subclass can be defined with just __init__. It is private so
+    // that it is not used in normal C++ code, and is exposed to the bindings via
+    // the friend accessor below.
+    void setName(const std::string& name) { name_ = name; }
+    friend struct PyToolBarNameAccessor;
+
     QHBoxLayout* elementLayout;
     QWidget* handle;
     int insertionPosition;

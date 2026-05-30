@@ -38,9 +38,10 @@ public:
     virtual bool execute();
     virtual bool executeAsSimulationScript() = 0;
 
-protected:
+    // Public so that nanobind can destroy this intrusively-owned object.
     virtual ~SimulationScriptItem();
 
+protected:
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
     virtual bool restore(const Archive& archive);

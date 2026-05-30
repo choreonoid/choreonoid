@@ -247,9 +247,11 @@ class CNOID_EXPORT SgMeshBase : public SgObject
 protected:
     SgMeshBase();
     SgMeshBase(const SgMeshBase& org, CloneMap* cloneMap = nullptr);
-    ~SgMeshBase();
-    
+
 public:
+    // Public so that nanobind can destroy this intrusively-owned object.
+    ~SgMeshBase();
+
     virtual int numChildObjects() const override;
     virtual SgObject* childObject(int index) override;
 

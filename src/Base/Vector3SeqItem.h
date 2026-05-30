@@ -22,6 +22,9 @@ public:
     bool loadPlainFormat(const std::string& filename);
     bool saveAsPlainFormat(const std::string& filename);
 
+    // Public so that nanobind can destroy this intrusively-owned object.
+    virtual ~Vector3SeqItem();
+
 protected:
     Vector3SeqItem(const Vector3SeqItem& org);
 
@@ -29,8 +32,6 @@ protected:
        This is for the copy constructor of an inherited class
     */
     Vector3SeqItem(const Vector3SeqItem& org, std::shared_ptr<Vector3Seq> cloneSeq);
-        
-    virtual ~Vector3SeqItem();
 
     virtual Item* doCloneItem(CloneMap* cloneMap) const override;
             

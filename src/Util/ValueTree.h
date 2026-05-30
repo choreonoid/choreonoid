@@ -195,12 +195,17 @@ public:
     int indexInMapping() const { return indexInMapping_; }
     void setAsHeaderInMapping(int priority = 1) { indexInMapping_ = -priority; }
 
+public:
+    // Made public so that nanobind, which owns and frees Referenced-derived
+    // objects through its intrusive ownership mechanism, can destroy a bare
+    // ValueNode wrapper (e.g. a scalar element obtained via Listing/Mapping
+    // indexing). Mapping and Listing already expose public destructors.
+    virtual ~ValueNode() { }
+
 protected:
 
     ValueNode() { }
     ValueNode(TypeBit type) : typeBits(type), line_(-1), column_(-1) { }
-
-    virtual ~ValueNode() { }
 
     void throwNotScalarException() const;
     void throwNotMappingException() const;

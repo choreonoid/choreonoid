@@ -50,7 +50,7 @@ public:
         
     virtual bool terminate() = 0;
 
-protected:
+    // Public so that nanobind can destroy this intrusively-owned object.
     virtual ~ScriptItem();
 };
 
