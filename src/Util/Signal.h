@@ -93,7 +93,8 @@ class SignalBase;
 class SlotHolderBase : public Referenced
 {
 public:
-    SlotHolderBase() : prev(nullptr), owner(nullptr), blockCounter(0) { }
+    SlotHolderBase()
+        : prev(nullptr), owner(nullptr), pendingOwner(nullptr), blockCounter(0) { }
     void disconnect();
     bool connected() const;
     void changeOrder(int orderId);
@@ -101,6 +102,15 @@ public:
     ref_ptr<SlotHolderBase> next;
     SlotHolderBase* prev;
     SignalBase* owner;
+    /*
+       Set when the slot is held in the pending list (slotListToConnectLater)
+       of a signal that is currently calling its slots. Cleared when the slot
+       is either moved into the regular list or removed from the pending list
+       on disconnect. This lets disconnect() reach a slot that is still pending,
+       which prevents a freshly connected and then destroyed slot from being
+       inserted into the regular list and invoked later.
+    */
+    SignalBase* pendingOwner;
     int blockCounter;
 };
 
@@ -144,6 +154,7 @@ protected:
                 }
                 slotHolder->next = slot;
             }
+            slot->pendingOwner = this;
         }
     }
 
@@ -160,9 +171,27 @@ protected:
                 lastSlot = slot;
             }
             slot->owner = this;
+            slot->pendingOwner = nullptr;
             slot = slot->next;
         }
         slotListToConnectLater.reset();
+    }
+
+    void removeFromPendingList(SlotHolderBase* slot)
+    {
+        if(slotListToConnectLater == slot){
+            slotListToConnectLater = slot->next;
+        } else {
+            auto cur = slotListToConnectLater;
+            while(cur && cur->next != slot){
+                cur = cur->next;
+            }
+            if(cur){
+                cur->next = slot->next;
+            }
+        }
+        slot->next.reset();
+        ++slot->blockCounter;
     }
 
     void remove(SlotHolderPtr slot)
@@ -230,6 +259,9 @@ inline void SlotHolderBase::disconnect()
 {
     if(owner){
         owner->remove(this);
+    } else if(pendingOwner){
+        pendingOwner->removeFromPendingList(this);
+        pendingOwner = nullptr;
     }
 }
 
