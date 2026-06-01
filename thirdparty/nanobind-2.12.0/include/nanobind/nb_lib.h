@@ -402,6 +402,12 @@ NB_CORE void nb_inst_set_state(PyObject *o, bool ready, bool destruct) noexcept;
 /// Query the 'ready' and 'destruct' flags of an instance
 NB_CORE std::pair<bool, bool> nb_inst_state(PyObject *o) noexcept;
 
+// [CHOREONOID PATCH] See CHOREONOID_PATCHES.md in the nanobind root directory.
+// Relinquish ownership (clear destruct/cpp_delete) of every Python wrapper that
+// shares the same C++ object as 'o', including the hidden owning base wrapper
+// created for a Python subclass of an nb::new_() type.
+NB_CORE void nb_cnoid_relinquish_all_wrappers(PyObject *o) noexcept;
+
 // ========================================================================
 
 // Create and install a Python property object

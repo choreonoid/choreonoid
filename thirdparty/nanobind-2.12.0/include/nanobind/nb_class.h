@@ -318,6 +318,10 @@ inline void inst_set_state(handle h, bool ready, bool destruct) {
 inline std::pair<bool, bool> inst_state(handle h) {
     return detail::nb_inst_state(h.ptr());
 }
+// [CHOREONOID PATCH] See CHOREONOID_PATCHES.md in the nanobind root directory.
+inline void cnoid_relinquish_all_wrappers(handle h) {
+    detail::nb_cnoid_relinquish_all_wrappers(h.ptr());
+}
 inline void inst_mark_ready(handle h) { inst_set_state(h, true, true); }
 inline bool inst_ready(handle h) { return inst_state(h).first; }
 inline void inst_destruct(handle h) { detail::nb_inst_destruct(h.ptr()); }

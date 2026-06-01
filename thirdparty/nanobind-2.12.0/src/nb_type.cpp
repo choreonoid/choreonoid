@@ -2133,6 +2133,47 @@ void nb_inst_set_state(PyObject *o, bool ready, bool destruct) noexcept {
     nbi->cpp_delete = destruct && !nbi->internal;
 }
 
+// [CHOREONOID PATCH] See CHOREONOID_PATCHES.md in this directory.
+// Clear the destruct/cpp_delete flags of *every* Python wrapper that refers to
+// the same C++ object as 'o'. This is needed when ownership of a C++ object is
+// handed over to C++ code (e.g. a Qt widget reparented to a Qt parent that will
+// delete it). A Python subclass of a bound C++ type created with nb::new_()
+// produces two wrappers for one C++ object: the subclass wrapper (which is a
+// non-owning reference) and a hidden base-type wrapper that actually owns the
+// object (destruct = true). Calling nb_inst_set_state() on only the visible
+// (subclass) wrapper leaves the hidden owner with destruct = true, so the C++
+// object would be deleted twice. This walks the C++ -> Python instance map and
+// relinquishes ownership from all of them.
+void nb_cnoid_relinquish_all_wrappers(PyObject *o) noexcept {
+    nb_inst *nbi = (nb_inst *) o;
+    void *p = inst_ptr(nbi);
+
+    nb_shard &shard = internals->shard(p);
+    lock_shard guard(shard);
+
+    nb_ptr_map &inst_c2p = shard.inst_c2p;
+    nb_ptr_map::iterator it = inst_c2p.find(p);
+    if (it == inst_c2p.end())
+        return;
+
+    auto relinquish = [](PyObject *inst) {
+        nb_inst *i = (nb_inst *) inst;
+        i->destruct = false;
+        i->cpp_delete = false;
+    };
+
+    void *entry = it->second;
+    if (!nb_is_seq(entry)) {
+        relinquish((PyObject *) entry);
+    } else {
+        nb_inst_seq *seq = nb_get_seq(entry);
+        while (seq) {
+            relinquish(seq->inst);
+            seq = seq->next;
+        }
+    }
+}
+
 std::pair<bool, bool> nb_inst_state(PyObject *o) noexcept {
     nb_inst *nbi = (nb_inst *) o;
     return { nbi->state == nb_inst::state_ready, (bool) nbi->destruct };
