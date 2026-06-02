@@ -4,6 +4,7 @@
 #include "Format.h"
 #include <iostream>
 #include <algorithm>
+#include <iterator>
 #include <stack>
 #include <fstream>
 #include <unordered_set>
@@ -895,8 +896,20 @@ void YAMLWriter::Impl::putMappingNode(const Mapping* mapping)
                 putKey(key, mapping->keyStringStyle());
                 const ValueNodePtr& node = it->second;
                 putNodeMain(node, false);
+                if(node->LFType() & ValueNode::APPEND_LF){
+                    bool hasFollowingEntry = false;
+                    for(int j = i + 1; j < n; ++j){
+                        if(!iters[j]->first.empty()){
+                            hasFollowingEntry = true;
+                            break;
+                        }
+                    }
+                    if(hasFollowingEntry){
+                        os() << "\n";
+                    }
+                }
             }
-        }        
+        }
     } else {
         for(Mapping::const_iterator it = mapping->begin(); it != mapping->end(); ++it){
             const string& key = it->first;
@@ -904,6 +917,18 @@ void YAMLWriter::Impl::putMappingNode(const Mapping* mapping)
                 putKey(key, mapping->keyStringStyle());
                 const ValueNodePtr& node = it->second;
                 putNodeMain(node, false);
+                if(node->LFType() & ValueNode::APPEND_LF){
+                    bool hasFollowingEntry = false;
+                    for(auto it2 = std::next(it); it2 != mapping->end(); ++it2){
+                        if(!it2->first.empty()){
+                            hasFollowingEntry = true;
+                            break;
+                        }
+                    }
+                    if(hasFollowingEntry){
+                        os() << "\n";
+                    }
+                }
             }
         }
     }

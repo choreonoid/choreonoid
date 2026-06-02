@@ -90,6 +90,16 @@ public:
     */
     bool isForcedRadianMode() const { return typeBits & FORCED_RADIAN_MODE; }
     void setForcedRadianMode(bool on = true) { typeBits |= FORCED_RADIAN_MODE; }
+
+    /**
+       When this is set for a node used as a value of a mapping entry, a blank line is
+       inserted after the entry when the mapping is written, as long as another entry
+       follows it.
+    */
+    bool isBlankLineAppended() const { return typeBits & APPEND_LF; }
+    void setBlankLineAppended(bool on = true) {
+        if(on){ typeBits |= APPEND_LF; } else { typeBits &= ~APPEND_LF; }
+    }
     [[deprecated("Use 'isForcedRadianMode' to determine the angle unit.")]]
     bool isDegreeMode() const { return !isForcedRadianMode(); }
     [[deprecated("Use ''setForcedRadianMode' to specify the angle unit.")]]
