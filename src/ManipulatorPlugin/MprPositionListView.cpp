@@ -139,12 +139,11 @@ void MprPositionListView::Impl::setProgramItem(MprProgramItemBase* item)
         } else {
             targetLabel.setText(item->displayName().c_str());
         }
-        positionListWidget->setBodyItemSet(item->targetBodyItemSet());
-        positionListWidget->setPositionList(item->program()->positionList());
+        positionListWidget->setBodyItemSetAndPositionList(
+            item->targetBodyItemSet(), item->program()->positionList());
     } else {
         targetLabel.setText("---");
-        positionListWidget->setBodyItemSet(nullptr);
-        positionListWidget->setPositionList(nullptr);
+        positionListWidget->setBodyItemSetAndPositionList(nullptr, nullptr);
     }
     addButton.setEnabled(programItem != nullptr);
 }

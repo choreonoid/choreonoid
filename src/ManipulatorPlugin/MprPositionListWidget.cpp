@@ -61,8 +61,9 @@ public:
     LazyCaller resizeColumnsCaller;
 
     PositionListModel(MprPositionListWidget::Impl* widgetImpl);
-    void setBodyItemSet(KinematicBodyItemSet* bodyItemSet);
-    void setPositionList(MprPositionList* positionList);
+    void setBodyItemSet(KinematicBodyItemSet* bodyItemSet, bool doResetModel);
+    void setPositionList(MprPositionList* positionList, bool doResetModel);
+    void setBodyItemSetAndPositionList(KinematicBodyItemSet* bodyItemSet, MprPositionList* positionList);
     bool isValid() const;
     int numPositions() const;
     MprPosition* positionAt(const QModelIndex& index) const;
@@ -157,9 +158,22 @@ PositionListModel::PositionListModel(MprPositionListWidget::Impl* widgetImpl)
 }
 
 
-void PositionListModel::setBodyItemSet(KinematicBodyItemSet* bodyItemSet)
+/*
+   The body item set and the position list each affect the row/column structure
+   of the model, so a change to either of them must be wrapped in a
+   beginResetModel/endResetModel pair. When both are set in succession (the
+   typical case from a program list view), they should share a single reset, so
+   setBodyItemSet/setPositionList take a doResetModel flag and
+   setBodyItemSetAndPositionList sets both within one reset. Resetting only after
+   setBodyItemSet, while the position list is still the previous (or null) one,
+   would otherwise fix the row count to the old value and the view would show no
+   rows even though a new position list has been assigned.
+*/
+void PositionListModel::setBodyItemSet(KinematicBodyItemSet* bodyItemSet, bool doResetModel)
 {
-    beginResetModel();
+    if(doResetModel){
+        beginResetModel();
+    }
 
     this->bodyItemSet = bodyItemSet;
     bodyItemSetConnections.disconnect();
@@ -182,7 +196,7 @@ void PositionListModel::setBodyItemSet(KinematicBodyItemSet* bodyItemSet)
             bodyItemSet->sigBodySetChanged().connect(
                 [this](){
                     if(this->bodyItemSet){
-                        setBodyItemSet(this->bodyItemSet);
+                        setBodyItemSet(this->bodyItemSet, true);
                     }
                 }));
 
@@ -208,12 +222,18 @@ void PositionListModel::setBodyItemSet(KinematicBodyItemSet* bodyItemSet)
         positionHeaderLabels.append(singlePositionHeaderLabel);
     }
 
-    endResetModel();
+    if(doResetModel){
+        endResetModel();
+    }
 }
 
 
-void PositionListModel::setPositionList(MprPositionList* positionList)
+void PositionListModel::setPositionList(MprPositionList* positionList, bool doResetModel)
 {
+    if(doResetModel){
+        beginResetModel();
+    }
+
     this->positionList = positionList;
     positionListConnections.disconnect();
 
@@ -228,6 +248,20 @@ void PositionListModel::setPositionList(MprPositionList* positionList)
             positionList->sigPositionUpdated().connect(
                 [this](int index, int flags){ onPositionUpdated(index, flags); }));
     }
+
+    if(doResetModel){
+        endResetModel();
+    }
+}
+
+
+void PositionListModel::setBodyItemSetAndPositionList
+(KinematicBodyItemSet* bodyItemSet, MprPositionList* positionList)
+{
+    beginResetModel();
+    setBodyItemSet(bodyItemSet, false);
+    setPositionList(positionList, false);
+    endResetModel();
 }
 
 
@@ -883,14 +917,23 @@ void MprPositionListWidget::Impl::setStandardUserOperationEnabled(bool on)
 void MprPositionListWidget::setBodyItemSet(KinematicBodyItemSet* bodyItemSet)
 {
     impl->bodyItemSet = bodyItemSet;
-    impl->positionListModel->setBodyItemSet(bodyItemSet);
+    impl->positionListModel->setBodyItemSet(bodyItemSet, true);
 }
 
 
 void MprPositionListWidget::setPositionList(MprPositionList* positionList)
 {
     impl->positionList = positionList;
-    impl->positionListModel->setPositionList(positionList);
+    impl->positionListModel->setPositionList(positionList, true);
+}
+
+
+void MprPositionListWidget::setBodyItemSetAndPositionList
+(KinematicBodyItemSet* bodyItemSet, MprPositionList* positionList)
+{
+    impl->bodyItemSet = bodyItemSet;
+    impl->positionList = positionList;
+    impl->positionListModel->setBodyItemSetAndPositionList(bodyItemSet, positionList);
 }
 
 

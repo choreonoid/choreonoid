@@ -30,6 +30,7 @@ public:
 
     void setBodyItemSet(KinematicBodyItemSet* bodyItemSet);
     void setPositionList(MprPositionList* positionList);
+    void setBodyItemSetAndPositionList(KinematicBodyItemSet* bodyItemSet, MprPositionList* positionList);
     int currentPositionIndex() const;
     void setCurrentPositionIndex(int index);
     void addPosition(int row, bool doInsert);
