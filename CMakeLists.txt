@@ -1048,6 +1048,14 @@ if(ENABLE_PHYSX)
   add_subdirectory(thirdparty/physx-5.6.1)
 endif()
 
+# MuJoCo (bundled). Enables the bundled prebuilt MuJoCo library as a
+# project-wide thirdparty library that plugins (the MuJoCoPlugin in
+# particular) can link against by linking the "mujoco" target.
+option(ENABLE_MUJOCO "Use the bundled MuJoCo library" ON)
+if(ENABLE_MUJOCO)
+  add_subdirectory(thirdparty/mujoco-3.9.0)
+endif()
+
 # robin-map
 add_subdirectory(thirdparty/robin-map-1.4.1)
 

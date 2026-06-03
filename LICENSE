@@ -89,6 +89,9 @@ copyrighted by other developers.
  * LibYAML (http://pyyaml.org/wiki/LibYAML)
    MIT license (see thirdparty/yaml-0.2.5/LICENSE)
 
+ * MuJoCo (https://github.com/google-deepmind/mujoco)
+   see thirdparty/mujoco-3.9.0/LICENSE
+
  * NVIDIA PhysX (https://github.com/NVIDIA-Omniverse/PhysX)
    see thirdparty/physx-5.6.1/LICENSE.md
 
