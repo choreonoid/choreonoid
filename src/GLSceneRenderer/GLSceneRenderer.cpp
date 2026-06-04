@@ -414,8 +414,13 @@ void GLSceneRenderer::getViewVolume
 bool GLSceneRenderer::unproject(double x, double y, double z, Vector3& out_projected) const
 {
     Vector4 p;
-    p[0] = 2.0 * (x - viewport_.x) / viewport_.w - 1.0;
-    p[1] = 2.0 * (y - viewport_.y) / viewport_.h - 1.0;
+    // Add 0.5 to use the pixel center as the sample point. The depth buffer
+    // stores the depth sampled at the pixel center, so the unprojection ray
+    // must pass through the same pixel center to keep the reconstructed point
+    // on the rendered surface. Casting the ray through the pixel corner instead
+    // causes a systematic error that is amplified at grazing view angles.
+    p[0] = 2.0 * (x + 0.5 - viewport_.x) / viewport_.w - 1.0;
+    p[1] = 2.0 * (y + 0.5 - viewport_.y) / viewport_.h - 1.0;
     // For reversed depth buffer with glClipControl(GL_ZERO_TO_ONE),
     // NDC z-range is [0, 1], so no transformation is needed.
     // For standard depth buffer, NDC z-range is [-1, 1], so we transform [0,1] -> [-1,1].
