@@ -3,13 +3,26 @@
 
 #include "BodyItemKinematicsKit.h"
 #include <cnoid/KinematicBodySet>
+#include <cnoid/ConnectionSet>
 #include <map>
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class BodyItem;
+class Link;
+typedef ref_ptr<Link> LinkPtr;
 
+/**
+   KinematicBodyItemSet is the BodyItem-level counterpart of KinematicBodySet:
+   each "body part" slot is implemented by a BodyItemKinematicsKit and refers
+   to a BodyItem in the project tree. The class also tracks the lifetime and
+   model structure of each member BodyItem, and exposes onBodyItemModelUpdated()
+   as a hook for derived classes to react when a member's joint configuration
+   actually changes. See KinematicBodySet for the meaning of "part" and the
+   overall ensemble abstraction.
+*/
 class CNOID_EXPORT KinematicBodyItemSet : public KinematicBodySet
 {
 public:
@@ -39,7 +52,7 @@ public:
 
     int indexOf(const BodyItem* bodyItem) const;
     bool contains(const BodyItem* bodyItem) const;
-    
+
     BodyItemKinematicsKit* mainBodyItemPart() {
         return static_cast<BodyItemKinematicsKit*>(mainBodyPart());
     }
@@ -56,9 +69,18 @@ public:
 protected:
     KinematicBodyItemSet(const KinematicBodyItemSet& org, CloneMap* cloneMap);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
+    virtual bool onBodyItemModelUpdated(int index, BodyItem* bodyItem, int flags);
 
 private:
-    std::map<int, ScopedConnection> bodyItemConnectionMap;
+    struct BodyItemEntry {
+        ScopedConnectionSet connections;
+        std::vector<LinkPtr> jointSignature;
+    };
+
+    static std::vector<LinkPtr> captureJointSignature(BodyItemKinematicsKit* kit);
+    void onBodyItemModelUpdate(int index, int flags);
+
+    std::map<int, BodyItemEntry> bodyItemEntryMap;
 };
 
 typedef ref_ptr<KinematicBodyItemSet> KinematicBodyItemSetPtr;

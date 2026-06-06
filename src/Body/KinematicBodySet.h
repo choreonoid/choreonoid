@@ -6,6 +6,15 @@
 
 namespace cnoid {
 
+/**
+   KinematicBodySet aggregates multiple Bodies as constituent parts of a
+   single kinematic ensemble (e.g. a main robot together with its external
+   axes). Each "body part" represents one such constituent role at a fixed
+   index slot; its implementation handle is a BodyKinematicsKit. The word
+   "part" denotes membership in the ensemble -- it does not refer to a
+   subcomponent of one Body. Derived classes refine this with
+   domain-specific composition rules.
+*/
 class CNOID_EXPORT KinematicBodySet : public ClonableReferenced
 {
 public:
