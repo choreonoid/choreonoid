@@ -201,8 +201,19 @@ public:
     class ExtraJointLinkPair : public LinkPair
     {
     public:
-        Vector3 jointPoint[2];
-        Vector3 jointConstraintAxes[3];
+        // Each constraint pins the relative translation along one axis at one
+        // anchor point. The anchor is given as a local point in each link's frame
+        // (localPoint[0] in link0, localPoint[1] in link1) and the constraint axis
+        // is given in link0's local frame. A ball uses one anchor with three axes;
+        // a hinge uses two anchors along the joint axis (the first pinned in all
+        // three axes, the second in the two axes orthogonal to the joint axis) so
+        // that the axis line is fixed while the rotation about it remains free.
+        struct ConstraintInfo
+        {
+            Vector3 localPoint[2];
+            Vector3 axis; // in link0 local frame
+        };
+        vector<ConstraintInfo> constraintInfos;
     };
     typedef std::shared_ptr<ExtraJointLinkPair> ExtraJointLinkPairPtr;
     vector<ExtraJointLinkPairPtr> extraJointLinkPairs;
@@ -492,32 +503,83 @@ void ConstraintForceSolver::Impl::initExtraJoint(ExtraJoint* extraJoint)
     linkPair->isBelongingToSameSubBody = extraJoint->isForLinksOfSameBody();
     linkPair->isNonContactConstraint = true;
 
-    if(extraJoint->type() == ExtraJoint::Piston){
-        linkPair->constraintPoints.resize(2);
-        Vector3 a = (extraJoint->localRotation(0) * extraJoint->axis()).normalized();
-        Vector3 u = (std::abs(a.dot(Vector3::UnitY())) < 0.9) ? Vector3::UnitY() : Vector3::UnitZ();
-        Vector3 ax1 = a.cross(u).normalized();
-        Vector3 ax2 = a.cross(ax1).normalized();
-        linkPair->jointConstraintAxes[0] = ax1;
-        linkPair->jointConstraintAxes[1] = ax2;
-
-    } else if(extraJoint->type() == ExtraJoint::Ball){
-        linkPair->constraintPoints.resize(3);
-        linkPair->jointConstraintAxes[0] = Vector3(1.0, 0.0, 0.0);
-        linkPair->jointConstraintAxes[1] = Vector3(0.0, 1.0, 0.0);
-        linkPair->jointConstraintAxes[2] = Vector3(0.0, 0.0, 1.0);
-    }
-
-    int numConstraints = linkPair->constraintPoints.size();
-    for(int i=0; i < numConstraints; ++i){
-        ConstraintPoint& constraint = linkPair->constraintPoints[i];
-        constraint.numFrictionVectors = 0;
-        constraint.globalFrictionIndex = numeric_limits<int>::max();
-    }
-
     for(int i=0; i < 2; ++i){
         linkPair->link[i] = static_cast<DyLink*>(extraJoint->link(i));
-        linkPair->jointPoint[i] = extraJoint->point(i);
+    }
+
+    // The two anchor points (one in each link's local frame) of the joint.
+    const Vector3 p0 = extraJoint->point(0);
+    const Vector3 p1 = extraJoint->point(1);
+
+    auto& infos = linkPair->constraintInfos;
+
+    const int jointType = extraJoint->type();
+
+    if(jointType == ExtraJoint::Ball){
+        // Pin the relative translation at the anchor in all three axes.
+        for(int i=0; i < 3; ++i){
+            ExtraJointLinkPair::ConstraintInfo info;
+            info.localPoint[0] = p0;
+            info.localPoint[1] = p1;
+            info.axis = Vector3::Unit(i);
+            infos.push_back(info);
+        }
+
+    } else if(jointType == ExtraJoint::Piston){
+        // Pin the two axes orthogonal to the joint axis at the anchor, leaving the
+        // axial translation and the rotation about the axis free.
+        const Vector3 a = (extraJoint->localRotation(0) * extraJoint->axis()).normalized();
+        const Vector3 u = (std::abs(a.dot(Vector3::UnitY())) < 0.9) ? Vector3::UnitY() : Vector3::UnitZ();
+        const Vector3 ax1 = a.cross(u).normalized();
+        const Vector3 ax2 = a.cross(ax1).normalized();
+        for(const auto& axis : {ax1, ax2}){
+            ExtraJointLinkPair::ConstraintInfo info;
+            info.localPoint[0] = p0;
+            info.localPoint[1] = p1;
+            info.axis = axis;
+            infos.push_back(info);
+        }
+
+    } else if(jointType == ExtraJoint::Hinge){
+        // Fix the joint axis line and leave only the rotation about it. The first
+        // anchor is pinned in all three axes; a second anchor offset along the
+        // joint axis is pinned in the two axes orthogonal to the joint axis. This
+        // uses five constraints (3 + 2), which is the minimum for a hinge.
+        const Vector3 a0 = (extraJoint->localRotation(0) * extraJoint->axis()).normalized();
+        const Vector3 a1 = (extraJoint->localRotation(1) * extraJoint->axis()).normalized();
+        const Vector3 u = (std::abs(a0.dot(Vector3::UnitY())) < 0.9) ? Vector3::UnitY() : Vector3::UnitZ();
+        const Vector3 ax1 = a0.cross(u).normalized();
+        const Vector3 ax2 = a0.cross(ax1).normalized();
+        const double span = 0.05; // offset of the second anchor along the axis
+
+        // First anchor: pin all three axes.
+        for(int i=0; i < 3; ++i){
+            ExtraJointLinkPair::ConstraintInfo info;
+            info.localPoint[0] = p0;
+            info.localPoint[1] = p1;
+            info.axis = Vector3::Unit(i);
+            infos.push_back(info);
+        }
+        // Second anchor along the axis: pin the two orthogonal axes only. The
+        // anchor is offset consistently in both link frames so that the axis
+        // direction is what is being constrained.
+        for(const auto& axis : {ax1, ax2}){
+            ExtraJointLinkPair::ConstraintInfo info;
+            info.localPoint[0] = p0 + span * a0;
+            info.localPoint[1] = p1 + span * a1;
+            info.axis = axis;
+            infos.push_back(info);
+        }
+
+    } else {
+        // Unsupported extra joint type; add no constraint.
+        return;
+    }
+
+    linkPair->constraintPoints.resize(infos.size());
+    for(auto& constraint : linkPair->constraintPoints){
+        constraint.numFrictionVectors = 0;
+        constraint.globalFrictionIndex = numeric_limits<int>::max();
     }
 
     extraJointLinkPairs.push_back(linkPair);
@@ -969,38 +1031,35 @@ void ConstraintForceSolver::Impl::setFrictionVectors(ConstraintPoint& contact)
 void ConstraintForceSolver::Impl::setExtraJointConstraintPoints(const ExtraJointLinkPairPtr& linkPair)
 {
     auto& constraintPoints = linkPair->constraintPoints;
+    auto& constraintInfos = linkPair->constraintInfos;
 
     DyLink* link0 = linkPair->link[0];
     DyLink* link1 = linkPair->link[1];
 
-    Vector3 point[2];
-    point[0].noalias() = link0->p() + link0->R() * linkPair->jointPoint[0];
-    point[1].noalias() = link1->p() + link1->R() * linkPair->jointPoint[1];
-    Vector3 midPoint = (point[0] + point[1]) / 2.0;
-    Vector3 error = midPoint - point[0];
-
-    /*
-      if(error.squaredNorm() > (0.04 * 0.04)){
-      return false;
-      }
-    */
-
-    // check velocities
-    Vector3 v[2];
-    for(int k=0; k < 2; ++k){
-        DyLink* link = linkPair->link[k];
-        if(link->isRoot() && link->isFixedJoint()){
-            v[k].setZero();
-        } else {
-            v[k] = link->vo() + link->w().cross(point[k]);
-        }
-    }
-    Vector3 relVelocityOn0 = v[1] - v[0];
-
-    int n = linkPair->constraintPoints.size();
+    int n = constraintPoints.size();
     for(int i=0; i < n; ++i){
         ConstraintPoint& constraint = constraintPoints[i];
-        const Vector3 axis = link0->R() * linkPair->jointConstraintAxes[i];
+        const auto& info = constraintInfos[i];
+
+        // World position of the anchor as seen from each link.
+        Vector3 point[2];
+        point[0].noalias() = link0->p() + link0->R() * info.localPoint[0];
+        point[1].noalias() = link1->p() + link1->R() * info.localPoint[1];
+        Vector3 midPoint = (point[0] + point[1]) / 2.0;
+        Vector3 error = midPoint - point[0];
+
+        Vector3 v[2];
+        for(int k=0; k < 2; ++k){
+            DyLink* link = linkPair->link[k];
+            if(link->isRoot() && link->isFixedJoint()){
+                v[k].setZero();
+            } else {
+                v[k] = link->vo() + link->w().cross(point[k]);
+            }
+        }
+        Vector3 relVelocityOn0 = v[1] - v[0];
+
+        const Vector3 axis = link0->R() * info.axis;
         constraint.point = midPoint;
         constraint.normalTowardInside[0] =  axis;
         constraint.normalTowardInside[1] = -axis;
