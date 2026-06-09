@@ -468,14 +468,14 @@ extraJoints:
   -
     link1Name: Finger1_finger
     link2Name: Finger1_finger_tip
-    jointType: piston
+    jointType: hinge
     jointAxis: [ 0, 0, 1 ]
     link1LocalPos: [ 0.047181008, -0.005912811, 0 ]
     link2LocalPos: [ -0.00645959, -0.017700592, 0 ]
   -
     link1Name: Finger2_finger
     link2Name: Finger2_finger_tip
-    jointType: piston
+    jointType: hinge
     jointAxis: [ 0, 0, 1 ]
     link1LocalPos: [ 0.047181008, -0.005912811, 0 ]
     link2LocalPos: [ -0.00645959, -0.017700592, 0 ]

@@ -186,7 +186,7 @@ extraJoints:
   -
     link1Name: STEERING
     link2Name: STEERING_LEFT
-    jointType: piston
+    jointType: hinge
     jointAxis: [ 0, 0, 1 ]
     link1LocalPos: [ 0, 0.3, 0 ]
     link2LocalPos: [ -0.05, 0, 0 ]

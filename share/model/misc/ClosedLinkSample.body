@@ -137,7 +137,7 @@ extraJoints:
   -
     link1Name: J1
     link2Name: J3
-    jointType: piston
+    jointType: hinge
     jointAxis: [ 0, 0, 1 ]
     link1LocalPos: [ 0.2, 0, 0 ]
     link2LocalPos: [ 0, 0.1, 0 ]
