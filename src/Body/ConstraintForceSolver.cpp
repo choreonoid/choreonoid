@@ -80,6 +80,16 @@ static const double DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO = 5.0;
 static const double DEFAULT_CONTACT_CULLING_DISTANCE = 0.005;
 static const double DEFAULT_CONTACT_CULLING_DEPTH = 0.05;
 
+// Restitution is applied only when the approaching normal velocity exceeds
+// this multiple of the velocity that the persistent (constraint-free) relative
+// normal acceleration of the contact point regenerates in a single step, so
+// that a contact held together by gravity, actuator forces, etc. never
+// triggers a bounce while it is resting. A small absolute threshold is also
+// applied to be robust against numerical noise when the persistent
+// acceleration is zero (e.g. a side contact with a wall).
+static const double IMPACT_VELOCITY_THRESH_RATIO = 2.0;
+static const double MIN_IMPACT_VELOCITY_THRESH = 1.0e-4;
+
 
 // test for mobile robots with wheels
 //static const double DEFAULT_CONTACT_CORRECTION_DEPTH = 0.005;
@@ -1657,7 +1667,8 @@ void ConstraintForceSolver::Impl::clearSingularPointConstraintsOfClosedLoopConne
 
 void ConstraintForceSolver::Impl::setConstantVectorAndMuBlock()
 {
-    double dtinv = 1.0 / world.timeStep();
+    const double dt = world.timeStep();
+    double dtinv = 1.0 / dt;
     const int block2 = globalNumConstraintVectors;
     const int block3 = globalNumConstraintVectors + globalNumFrictionVectors;
 
@@ -1665,6 +1676,8 @@ void ConstraintForceSolver::Impl::setConstantVectorAndMuBlock()
 
         LinkPair& linkPair = *constrainedLinkPairs[i];
         int numConstraintsInPair = linkPair.constraintPoints.size();
+        const double restitution =
+            linkPair.isNonContactConstraint ? 0.0 : linkPair.contactMaterial->restitution();
 
         for(int j=0; j < numConstraintsInPair; ++j){
             ConstraintPoint& constraint = linkPair.constraintPoints[j];
@@ -1689,6 +1702,27 @@ void ConstraintForceSolver::Impl::setConstantVectorAndMuBlock()
 
             } else {
                 // contact constraint
+
+                // Restitution: when the contact is an impact (the approaching
+                // normal velocity exceeds the threshold), require the post-step
+                // normal velocity to be -e * (approaching velocity) instead of
+                // zero. This is realized by scaling the velocity term of the
+                // LCP constant vector by (1 + e). The impact threshold is
+                // derived per contact point from an0, the relative normal
+                // acceleration under the constraint-free dynamics, which covers
+                // every persistent source of approach velocity regeneration
+                // (gravity in any direction, slopes, actuator forces pressing
+                // the contact, centrifugal terms).
+                double vn = constraint.normalProjectionOfRelVelocityOn0;
+                if(restitution > 0.0){
+                    const double vth = std::max(
+                        IMPACT_VELOCITY_THRESH_RATIO * std::max(-an0(globalIndex), 0.0) * dt,
+                        MIN_IMPACT_VELOCITY_THRESH);
+                    if(vn < -vth){
+                        vn *= (1.0 + restitution);
+                    }
+                }
+
                 if(ENABLE_CONTACT_DEPTH_CORRECTION){
                     double velOffset;
                     const double depth = constraint.depth - contactCorrectionDepth;
@@ -1697,9 +1731,9 @@ void ConstraintForceSolver::Impl::setConstantVectorAndMuBlock()
                     } else {
                         velOffset = contactCorrectionVelocityRatio * (-1.0 / (depth + 1.0) + 1.0);
                     }
-                    b(globalIndex) = an0(globalIndex) + (constraint.normalProjectionOfRelVelocityOn0 - velOffset) * dtinv;
+                    b(globalIndex) = an0(globalIndex) + (vn - velOffset) * dtinv;
                 } else {
-                    b(globalIndex) = an0(globalIndex) + constraint.normalProjectionOfRelVelocityOn0 * dtinv;
+                    b(globalIndex) = an0(globalIndex) + vn * dtinv;
                 }
 
                 contactIndexToMu[globalIndex] = constraint.mu;
