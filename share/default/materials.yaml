@@ -83,7 +83,7 @@ contact_materials:
   -
     materials: [ Ground, Default ]
     friction: 0.5
-    restitution: 0.25
+    restitution: 0.0
     youngsModulus: 1.0e9
   -
     materials: [ Default, Slider ]
