@@ -1,0 +1,109 @@
+optional_plugins: [ PhysX, MuJoCo, ODE, AGXDynamics ]
+
+items:
+  id: 0
+  name: "RootItem"
+  plugin: Base
+  class: RootItem
+  is_builtin_item: true
+  children:
+    -
+      id: 1
+      name: "World"
+      plugin: Body
+      class: WorldItem
+      is_checked: true
+      data:
+        collision_detection: false
+        collision_detector: AISTCollisionDetector
+        default_material_table_file: "${SHARE}/default/materials.yaml"
+      children:
+        -
+          id: 2
+          name: "Ball"
+          plugin: Body
+          class: BodyItem
+          is_checked: true
+          data:
+            file: "${SHARE}/model/misc/ball.body"
+            format: CHOREONOID-BODY
+            root_translation: [ 0, 0, 1 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            initial_root_translation: [ 0, 0, 1 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: false
+            collision_detection: true
+            lock_location: false
+            scene_sensitive: true
+        -
+          id: 3
+          name: "Floor"
+          plugin: Body
+          class: BodyItem
+          is_checked: true
+          data:
+            file: "${SHARE}/model/misc/floor.body"
+            format: CHOREONOID-BODY
+            root_translation: [ 0, 0, -0.1 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            initial_root_translation: [ 0, 0, -0.1 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: true
+            collision_detection: true
+            lock_location: false
+            scene_sensitive: true
+        -
+          id: 4
+          name: "Simulators"
+          plugin: Base
+          class: FolderItem
+          children:
+            -
+              id: 5
+              name: "AISTSimulator"
+              plugin: Body
+              class: AISTSimulatorItem
+              data:
+                realtime_sync_mode: compensatory
+                recording: full
+                time_range_mode: timebar
+            -
+              id: 6
+              name: "PhysXSimulator"
+              plugin: PhysX
+              class: PhysXSimulatorItem
+              data:
+                realtime_sync_mode: compensatory
+                recording: full
+                time_range_mode: timebar
+            -
+              id: 7
+              name: "MuJoCoSimulator"
+              plugin: MuJoCo
+              class: MuJoCoSimulatorItem
+              data:
+                realtime_sync_mode: compensatory
+                recording: tail
+                time_range_mode: timebar
+            -
+              id: 8
+              name: "ODESimulator"
+              plugin: ODE
+              class: ODESimulatorItem
+              data:
+                realtime_sync_mode: compensatory
+                recording: tail
+                time_range_mode: timebar
+            -
+              id: 9
+              name: "AGXSimulator"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
+              data:
+                realtime_sync_mode: compensatory
+                recording: tail
+                time_range_mode: timebar
+toolbars:
+  "TimeBar":
+    min_time: 0
+    max_time: 5

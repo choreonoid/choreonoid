@@ -1,0 +1,22 @@
+format: ChoreonoidBody
+format_version: 2.0
+
+name: "Ball"
+root_link: ball
+links:
+  -
+    name: ball
+    joint_type: free
+    translation: [ 0, 0, 0.1 ]
+    mass: 0.5
+    inertia: [
+      0.0033, 0,      0,
+      0,      0.0033, 0,
+      0,      0,      0.0033 ]
+    material: Ball
+    elements:
+      -
+        type: Shape
+        geometry: { type: Sphere, radius: 0.1 }
+        appearance:
+          material: { diffuse: [ 1.0, 1.0, 1.0 ] }

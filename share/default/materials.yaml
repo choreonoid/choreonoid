@@ -8,6 +8,10 @@ materials:
     roughness: 1.0
     viscosity: 1.0
   -
+    name: Ball
+    roughness: 0.5
+    viscosity: 0.36
+  -
     name: Slider
     roughness: 0.0
     viscosity: 1.0
@@ -80,6 +84,11 @@ contact_materials:
     friction: 0.5
     restitution: 0.0
     youngsModulus: 1.0e9
+  -
+    materials: [ Ground, Ball ]
+    friction: 0.5
+    restitution: 0.8
+    youngsModulus: 1.0e8
   -
     materials: [ Ground, Default ]
     friction: 0.5
