@@ -13,7 +13,12 @@
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyItem>
 #include <cnoid/BodyCollisionDetector>
+#include <cnoid/WorldItem>
+#include <cnoid/Material>
+#include <cnoid/MaterialTable>
+#include <cnoid/IdPair>
 #include <QElapsedTimer>
+#include <unordered_map>
 #include "gettext.h"
 
 #ifdef GAZEBO_ODE
@@ -36,6 +41,13 @@ const bool USE_AMOTOR = false;
 const bool MEASURE_PHYSICS_CALCULATION_TIME = true;
 
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
+
+// Restitution is applied only when the impact velocity exceeds this multiple
+// of the velocity that the normal component of gravity regenerates at a
+// resting contact in a single step (with a small absolute minimum for
+// gravity-orthogonal contacts such as walls).
+const double IMPACT_VELOCITY_THRESH_RATIO = 2.0;
+const double MIN_IMPACT_VELOCITY_THRESH = 1.0e-4;
 
 typedef Eigen::Matrix<float, 3, 1> Vertex;
 
@@ -157,6 +169,18 @@ public:
     bool useWorldCollisionDetector;
     BodyCollisionDetector bodyCollisionDetector;
 
+    // Contact material support. The friction and restitution coefficients are
+    // resolved per material-id pair from the MaterialTable of the world item.
+    // When the materials cannot be resolved, the friction falls back to the
+    // global friction property and the restitution to zero.
+    MaterialTable* materialTable;
+    struct ContactParam {
+        double friction;
+        double restitution;
+    };
+    std::unordered_map<IdPair<int>, ContactParam> contactParamCache;
+    Vector3 odeGravity; // gravity in the ODE world frame (flipped in the 2D mode)
+
     double physicsTime;
     QElapsedTimer physicsTimer;
     double collisionTime;
@@ -170,6 +194,8 @@ public:
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody(ODEBody* odeBody);
     bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
+    ContactParam resolveContactParam(Link* link1, Link* link2);
+    void setBounceParameters(dContact& contact, double restitution);
     void doPutProperties(PutPropertyFunction& putProperty);
     void store(Archive& archive);
     void restore(const Archive& archive);
@@ -197,6 +223,11 @@ ODELink::ODELink
     }
     if(!simImpl->useWorldCollisionDetector){
         createGeometry(odeBody, simImpl->doFlipYZ);
+        // Make the link accessible from the geoms in the collision callback
+        // (dBodyGetData cannot be used as static links have no ODE body)
+        for(auto& id : geomID){
+            dGeomSetData(id, link);
+        }
     }
 
     for(Link* child = link->child(); child; child = child->sibling()){
@@ -949,6 +980,7 @@ void ODESimulatorItemImpl::initialize()
     worldID = 0;
     spaceID = 0;
     contactJointGroupID = dJointGroupCreate(0);
+    materialTable = nullptr;
     self->SimulatorItem::setAllLinkPositionOutputMode(true);
 }
 
@@ -1118,6 +1150,7 @@ bool ODESimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
 
     dRandSetSeed(0);
     dWorldSetGravity(worldID, g.x(), g.y(), g.z());
+    odeGravity = g;
     dWorldSetERP(worldID, globalERP);
     dWorldSetCFM(worldID, globalCFM.value());
     dWorldSetContactSurfaceLayer(worldID, 0.0);
@@ -1127,6 +1160,12 @@ bool ODESimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     dWorldSetContactSurfaceLayer(worldID, surfaceLayerDepth);
 
     timeStep = self->worldTimeStep();
+
+    materialTable = nullptr;
+    contactParamCache.clear();
+    if(WorldItem* worldItem = self->worldItem()){
+        materialTable = worldItem->materialTable();
+    }
 
     for(size_t i=0; i < simBodies.size(); ++i){
         addBody(static_cast<ODEBody*>(simBodies[i]));
@@ -1176,6 +1215,62 @@ void ODESimulatorItem::initializeSimulationThread()
 }
 
 
+ODESimulatorItemImpl::ContactParam ODESimulatorItemImpl::resolveContactParam(Link* link1, Link* link2)
+{
+    if(!materialTable || !link1 || !link2){
+        return { friction, 0.0 };
+    }
+    const int id1 = link1->materialId();
+    const int id2 = link2->materialId();
+    const IdPair<int> key(id1, id2);
+    auto it = contactParamCache.find(key);
+    if(it != contactParamCache.end()){
+        return it->second;
+    }
+
+    ContactParam param{ friction, 0.0 };
+    // Prefer an explicitly defined contact material pair; otherwise derive the
+    // values from the two single materials in the same way as the other
+    // simulator items (friction = sqrt(r1*r2), restitution = sqrt((1-v1)*(1-v2))).
+    if(ContactMaterial* cm = materialTable->contactMaterial(id1, id2)){
+        param.friction = cm->friction();
+        param.restitution = cm->restitution();
+    } else {
+        Material* m1 = materialTable->material(id1);
+        Material* m2 = materialTable->material(id2);
+        if(m1 && m2){
+            param.friction = std::sqrt(m1->roughness() * m2->roughness());
+            param.restitution = std::sqrt(std::max(0.0, 1.0 - m1->viscosity())
+                                          * std::max(0.0, 1.0 - m2->viscosity()));
+        }
+    }
+    param.friction = std::max(param.friction, 0.0);
+    param.restitution = std::min(std::max(param.restitution, 0.0), 1.0);
+    contactParamCache[key] = param;
+    return param;
+}
+
+
+void ODESimulatorItemImpl::setBounceParameters(dContact& contact, double restitution)
+{
+    if(restitution > 0.0){
+        dSurfaceParameters& surface = contact.surface;
+        surface.mode |= dContactBounce;
+        surface.bounce = restitution;
+        // Apply restitution only when the impact velocity exceeds the velocity
+        // that the normal component of gravity regenerates at a resting contact
+        // in a single step. The threshold adapts to the contact direction
+        // (zero gravity component for walls, g*cos(theta) for slopes) and to
+        // the gravity setting of the simulation.
+        const Vector3 normal(
+            contact.geom.normal[0], contact.geom.normal[1], contact.geom.normal[2]);
+        surface.bounce_vel = std::max(
+            IMPACT_VELOCITY_THRESH_RATIO * std::fabs(odeGravity.dot(normal)) * timeStep,
+            MIN_IMPACT_VELOCITY_THRESH);
+    }
+}
+
+
 static void nearCallback(void* data, dGeomID g1, dGeomID g2)
 {
     if(dGeomIsSpace(g1) || dGeomIsSpace(g2)) { 
@@ -1210,14 +1305,14 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
                     sign = -1.0;
                 }
             }
+            auto param = impl->resolveContactParam(
+                static_cast<Link*>(dGeomGetData(g1)), static_cast<Link*>(dGeomGetData(g2)));
             for(int i=0; i < numContacts; ++i){
                 dSurfaceParameters& surface = contacts[i].surface;
                 if(!crawlerlink){
-                    //surface.mode = dContactApprox1 | dContactBounce;
-                    //surface.bounce = 0.0;
-                    //surface.bounce_vel = 1.0;
                     surface.mode = dContactApprox1;
-                    surface.mu = impl->friction;
+                    surface.mu = param.friction;
+                    impl->setBounceParameters(contacts[i], param.restitution);
 
                 } else {
                     if(contacts[i].geom.depth > 0.001){
@@ -1351,6 +1446,8 @@ void ODESimulatorItemImpl::onCollisionPairDetected(const CollisionPair& collisio
         }
     }
 
+    auto param = resolveContactParam(link1->link, link2->link);
+
     int numContacts = collisions.size();
     for(int i=0; i < numContacts; ++i){
         dContact contact;
@@ -1365,7 +1462,8 @@ void ODESimulatorItemImpl::onCollisionPairDetected(const CollisionPair& collisio
         dSurfaceParameters& surface = contact.surface;
         if(!crawlerlink){
             surface.mode = dContactApprox1;
-            surface.mu = friction;
+            surface.mu = param.friction;
+            setBounceParameters(contact, param.restitution);
         } else {
             if(contact.geom.depth > 0.001){
                 continue;
