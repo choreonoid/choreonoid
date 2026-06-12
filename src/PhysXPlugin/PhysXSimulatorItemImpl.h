@@ -5,6 +5,7 @@
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyCollisionLinkFilter>
 #include <cnoid/MaterialTable>
+#include <cnoid/IdPair>
 #include <cnoid/ForceSensor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshExtractor>
@@ -31,10 +32,17 @@ typedef ref_ptr<PhysxLink> PhysxLinkPtr;
 typedef ref_ptr<PhysxBodyArticulation> PhysxBodyArticulationPtr;
 typedef ref_ptr<PhysxBody> PhysxBodyPtr;
 
-class CrawlerContactModifyCallback : public physx::PxContactModifyCallback
+// Contact modification callback used for two purposes: overriding the contact
+// parameters (friction / restitution) of explicitly defined contact material
+// pairs, and injecting the surface velocity of pseudo continuous tracks.
+class ContactModifyCallback : public physx::PxContactModifyCallback
 {
 public:
+    ContactModifyCallback(PhysXSimulatorItem::Impl* impl) : impl(impl) { }
     void onContactModify(physx::PxContactModifyPair* const pairs, physx::PxU32 count) override;
+
+private:
+    PhysXSimulatorItem::Impl* impl;
 };
 
 class CustomFilterCallback : public physx::PxSimulationFilterCallback
@@ -222,10 +230,21 @@ public:
     physx::PxScene* scene;
     physx::PxDefaultCpuDispatcher* cpuDispatcher;
     CustomFilterCallback* filterCallback;
-    CrawlerContactModifyCallback* contactModifyCallback;
+    ContactModifyCallback* contactModifyCallback;
 
     MaterialTable* materialTable;
     std::map<int, physx::PxMaterial*> materialCache;
+
+    // Explicitly defined contact material pairs. Per-shape PxMaterials cannot
+    // express pair-specific parameters, so these are applied by overriding the
+    // contacts in the contact modification callback. The map is built before
+    // the simulation starts and is only read (concurrently) during it.
+    struct ContactPairParam {
+        float friction;
+        float restitution;
+    };
+    std::unordered_map<IdPair<int>, ContactPairParam> contactPairParamMap;
+    std::unordered_set<int> pairMaterialIds; // material ids referenced by the explicit pairs
     std::unordered_map<SgMesh*, physx::PxTriangleMesh*> triangleMeshMap;
     std::unordered_map<SgMesh*, physx::PxTriangleMesh*> triangleMeshWithSdfMap;
     std::unordered_map<SgMesh*, physx::PxConvexMesh*> convexMeshMap;
@@ -263,6 +282,12 @@ public:
     Selection solverType;
     int positionIterations;
     int velocityIterations;
+
+    // Apply gravity and other external forces in every TGS position iteration
+    // (PxSceneFlag::eENABLE_EXTERNAL_FORCES_EVERY_ITERATION_TGS). This improves
+    // the solver convergence and the stability of articulations, but it is
+    // known to damp the restitution of bouncing contacts at small time steps.
+    bool isExternalForcesEveryTgsIterationEnabled;
     double linearDamping;
     double angularDamping;
     FloatingNumberString driveStiffness;

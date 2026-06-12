@@ -95,6 +95,12 @@ PxFilterFlags customFilterShader(
         pairFlags |= PxPairFlag::eMODIFY_CONTACTS;
     }
 
+    // Both materials are referenced by explicit contact material pairs, so the
+    // contact parameters may have to be overridden in the modification callback.
+    if(filterData0.word2 && filterData1.word2){
+        pairFlags |= PxPairFlag::eMODIFY_CONTACTS;
+    }
+
     // Same body pair: need callback for self-collision filtering
     if(filterData0.word1 != 0 && filterData0.word1 == filterData1.word1){
         return PxFilterFlag::eCALLBACK;
@@ -134,7 +140,7 @@ PxFilterFlags CustomFilterCallback::pairFound(
 }
 
 
-void CrawlerContactModifyCallback::onContactModify(PxContactModifyPair* const pairs, PxU32 count)
+void ContactModifyCallback::onContactModify(PxContactModifyPair* const pairs, PxU32 count)
 {
     for(PxU32 p = 0; p < count; ++p){
         auto& pair = pairs[p];
@@ -145,6 +151,27 @@ void CrawlerContactModifyCallback::onContactModify(PxContactModifyPair* const pa
         if(!physxLinks[0] || !physxLinks[1]){
             continue;
         }
+
+        // Override the contact parameters with those of an explicitly defined
+        // contact material pair. Without an explicit pair the contacts keep the
+        // values combined from the per-shape PxMaterials, which realize the same
+        // formulas as the derived pair parameters (sqrt(r1*r2) etc.) through the
+        // MULTIPLY combine mode of the sqrt-converted single material values.
+        if(!impl->contactPairParamMap.empty()){
+            auto it = impl->contactPairParamMap.find(
+                IdPair<int>(physxLinks[0]->link->materialId(),
+                            physxLinks[1]->link->materialId()));
+            if(it != impl->contactPairParamMap.end()){
+                const auto& param = it->second;
+                PxU32 numContacts = pair.contacts.size();
+                for(PxU32 i = 0; i < numContacts; ++i){
+                    pair.contacts.setStaticFriction(i, param.friction);
+                    pair.contacts.setDynamicFriction(i, param.friction);
+                    pair.contacts.setRestitution(i, param.restitution);
+                }
+            }
+        }
+
         if(!physxLinks[0]->useSurfaceVelocity && !physxLinks[1]->useSurfaceVelocity){
             continue;
         }
@@ -218,6 +245,11 @@ PhysXSimulatorItem::Impl::Impl(PhysXSimulatorItem* self)
     solverType.select(PxSolverType::eTGS);
     positionIterations = 8;
     velocityIterations = 2;
+    // Disabled by default, following the PhysX default. Enabling this may
+    // improve the solver convergence and the stability of articulations
+    // (e.g. grasping), but it damps the restitution of bouncing contacts at
+    // small time steps and distorts the free-fall distance.
+    isExternalForcesEveryTgsIterationEnabled = false;
     linearDamping = 0.0;
     angularDamping = 0.0;
     driveStiffness = "1.0e8";
@@ -258,6 +290,7 @@ PhysXSimulatorItem::Impl::Impl(PhysXSimulatorItem* self, const Impl& org)
     solverType = org.solverType;
     positionIterations = org.positionIterations;
     velocityIterations = org.velocityIterations;
+    isExternalForcesEveryTgsIterationEnabled = org.isExternalForcesEveryTgsIterationEnabled;
     linearDamping = org.linearDamping;
     angularDamping = org.angularDamping;
     driveStiffness = org.driveStiffness;
@@ -400,7 +433,11 @@ bool PhysXSimulatorItem::Impl::initializeSimulation(const std::vector<Simulation
     PxSceneDesc sceneDesc(physics->getTolerancesScale());
     sceneDesc.gravity = getPxVec3(gravity);
     sceneDesc.solverType = static_cast<PxSolverType::Enum>(solverType.selectedIndex());
-    if(solverType.selectedIndex() == PxSolverType::eTGS){
+    if(solverType.selectedIndex() == PxSolverType::eTGS && isExternalForcesEveryTgsIterationEnabled){
+        // Improves the solver convergence and the stability of articulations.
+        // Note that this flag is known to damp the restitution of bouncing
+        // contacts at small time steps (around 1 ms); disable the corresponding
+        // property when correct restitution matters more than the stability.
         sceneDesc.flags |= PxSceneFlag::eENABLE_EXTERNAL_FORCES_EVERY_ITERATION_TGS;
     }
     if(isAccelerationOutputEnabled){
@@ -411,8 +448,13 @@ bool PhysXSimulatorItem::Impl::initializeSimulation(const std::vector<Simulation
     filterCallback = new CustomFilterCallback();
     sceneDesc.filterShader = customFilterShader;
     sceneDesc.filterCallback = filterCallback;
-    contactModifyCallback = new CrawlerContactModifyCallback();
+    contactModifyCallback = new ContactModifyCallback(this);
     sceneDesc.contactModifyCallback = contactModifyCallback;
+
+    // The default threshold (0.2 * PxTolerancesScale::speed = 2.0 m/s) is too
+    // high to observe restitution; impacts slower than the threshold do not
+    // bounce at all.
+    sceneDesc.bounceThresholdVelocity = 0.2f;
 
     scene = physics->createScene(sceneDesc);
     if(!scene){
@@ -427,6 +469,27 @@ bool PhysXSimulatorItem::Impl::initializeSimulation(const std::vector<Simulation
     materialTable = nullptr;
     if(WorldItem* worldItem = self->worldItem()){
         materialTable = worldItem->materialTable();
+    }
+
+    // Collect the explicitly defined contact material pairs. They are applied
+    // by the contact modification callback because per-shape PxMaterials cannot
+    // express pair-specific parameters.
+    contactPairParamMap.clear();
+    pairMaterialIds.clear();
+    if(materialTable){
+        const int maxId = materialTable->maxMaterialId();
+        for(int i = 0; i <= maxId; ++i){
+            for(int j = i; j <= maxId; ++j){
+                if(ContactMaterial* cm = materialTable->contactMaterial(i, j)){
+                    ContactPairParam param;
+                    param.friction = static_cast<float>(cm->friction());
+                    param.restitution = static_cast<float>(cm->restitution());
+                    contactPairParamMap[IdPair<int>(i, j)] = param;
+                    pairMaterialIds.insert(i);
+                    pairMaterialIds.insert(j);
+                }
+            }
+        }
     }
 
     timeStep = self->worldTimeStep();
@@ -554,6 +617,8 @@ void PhysXSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Solver type"), solverType, changeProperty(solverType));
     putProperty.min(1).max(255)(_("Position iterations"), positionIterations, changeProperty(positionIterations));
     putProperty.min(0).max(255)(_("Velocity iterations"), velocityIterations, changeProperty(velocityIterations));
+    putProperty(_("External forces every TGS iteration"), isExternalForcesEveryTgsIterationEnabled,
+                changeProperty(isExternalForcesEveryTgsIterationEnabled));
     putProperty.decimals(4).min(0.0)(_("Linear damping"), linearDamping, changeProperty(linearDamping));
     putProperty.decimals(4).min(0.0)(_("Angular damping"), angularDamping, changeProperty(angularDamping));
     putProperty(_("Drive stiffness"), driveStiffness,
@@ -609,6 +674,9 @@ void PhysXSimulatorItem::Impl::store(Archive& archive)
     }
     archive.write("position_iterations", positionIterations);
     archive.write("velocity_iterations", velocityIterations);
+    if(isExternalForcesEveryTgsIterationEnabled){
+        archive.write("external_forces_every_tgs_iteration", true);
+    }
     if(linearDamping != 0.0){
         archive.write("linear_damping", linearDamping);
     }
@@ -662,6 +730,7 @@ void PhysXSimulatorItem::Impl::restore(const Archive& archive)
     }
     archive.read("position_iterations", positionIterations);
     archive.read("velocity_iterations", velocityIterations);
+    archive.read("external_forces_every_tgs_iteration", isExternalForcesEveryTgsIterationEnabled);
     archive.read("linear_damping", linearDamping);
     archive.read("angular_damping", angularDamping);
     driveStiffness = archive.get("drive_stiffness", driveStiffness.string());
@@ -688,7 +757,9 @@ PxMaterial* PhysXSimulatorItem::Impl::getOrCreatePxMaterial(int materialId)
     // friction = sqrt(roughness) -> with MULTIPLY mode: sqrt(r1)*sqrt(r2) = sqrt(r1*r2)
     // restitution = sqrt(1-viscosity) -> with MULTIPLY mode: sqrt((1-v1)*(1-v2))
     double roughness = material ? material->roughness() : 0.5;
-    double viscosity = material ? material->viscosity() : 0.0;
+    // The fallback viscosity must be 1.0 (restitution 0); a smaller value would
+    // make every contact of materialless bodies elastic.
+    double viscosity = material ? material->viscosity() : 1.0;
     double stiffness = material ? material->stiffness() : 0.0;
     double damping = material ? material->damping() : 0.0;
 
@@ -1045,6 +1116,9 @@ void PhysxLink::finalizeConstruction()
                 filterData.word0 = 1;
             }
             filterData.word1 = static_cast<PxU32>(physxBody->bodyIndex);
+            if(physxBody->simImpl->pairMaterialIds.count(link->materialId())){
+                filterData.word2 = 1;
+            }
             shapes[i]->setSimulationFilterData(filterData);
         }
     }
