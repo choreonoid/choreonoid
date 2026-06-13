@@ -29,15 +29,6 @@ namespace {
 
 typedef CollisionDetector::GeometryHandle GeometryHandle;
 
-// Is LCP solved by Iterative or Pivoting method ?
-// #define USE_PIVOTING_LCP
-#ifdef USE_PIVOTING_LCP
-#include "SimpleLCP_Path.h"
-static const bool usePivotingLCP = true;
-#else
-static const bool usePivotingLCP = false;
-#endif
-
 // settings
 
 static const double VEL_THRESH_OF_DYNAMIC_FRICTION = 1.0e-4;
@@ -254,9 +245,65 @@ public:
 
     typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixX;
     typedef VectorXd VectorX;
-        
-    // Mlcp * solution + b   _|_  solution
-    MatrixX Mlcp;
+
+    // The LCP formulation: Mlcp * solution + b   _|_  solution
+    //
+    // The matrix Mlcp is generally sparse; its element (i, j) can be nonzero
+    // only when the link pair owning constraint i and the link pair owning
+    // constraint j share a dynamic (non-static) sub-body, because a test
+    // force applied at a constraint propagates to the accelerations at
+    // another constraint only through a common dynamic sub-body. To exploit
+    // this, the matrix is stored in a row-compressed form in which the
+    // nonzero column pattern is shared by all the rows of the same link pair.
+    // One adjacent link pair that shares a dynamic sub-body with the owner block
+    // (the owner itself is included). All the per-adjacent quantities are kept
+    // together here so that they are indexed by a single position.
+    struct Adjacent
+    {
+        int pairIndex; // index of the adjacent link pair (the list is sorted by this)
+
+        // position of this adjacent pair's normal / friction column block within
+        // the owner block's columns
+        int normalOffset;
+        int frictionOffset;
+
+        // position of the owner block's normal / friction column block within
+        // this adjacent pair's columns
+        int reciprocalNormalOffset;
+        int reciprocalFrictionOffset;
+    };
+
+    struct LinkPairBlock
+    {
+        int normalTop;    // global index of the first normal constraint
+        int numNormals;   // number of normal constraints
+        int frictionTop;  // global friction index of the first friction constraint
+        int numFrictions; // number of friction constraints
+
+        // the link pairs sharing a dynamic sub-body (sorted by pairIndex, including self)
+        std::vector<Adjacent> adjacents;
+        int selfPosition; // position of the own pair in adjacents
+
+        // nonzero column indices (ascending) shared by all the rows of this pair
+        std::vector<int> columns;
+    };
+    std::vector<LinkPairBlock> linkPairBlocks; // aligned with constrainedLinkPairs
+
+    // Per matrix row information, indexed by the matrix row
+    struct RowInfo
+    {
+        int linkPairIndex;    // the link pair this row belongs to
+        int valueTop;         // top position of this row in matrixValues
+        int diagonalPosition; // position of the diagonal element within this row
+    };
+    std::vector<RowInfo> rowInfos;
+
+    std::vector<double> matrixValues; // nonzero element values stored row by row
+
+    // work buffer reused by buildMatrixStructure to collect adjacent pair indices
+    std::vector<int> adjacentPairIndexBuf;
+
+    std::unordered_map<DySubBody*, std::vector<int>> subBodyToLinkPairIndicesMap;
 
     // constant acceleration term when no external force is applied
     VectorX an0;
@@ -308,6 +355,7 @@ public:
     void putContactPoints();
     void solveImpactConstraints();
     void initMatrices();
+    void buildMatrixStructure();
     void setAccelCalcSkipInformation();
     void setDefaultAccelerationVector();
     void setAccelerationMatrix();
@@ -317,39 +365,42 @@ public:
     void calcAccelsABM(DySubBody* subBody, int constraintIndex);
     void calcAccelsMM(DySubBody* bodyData, int constraintIndex);
     void extractRelAccelsOfConstraintPoints(
-        Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt, int testForceIndex, int constraintIndex);
+        LinkPairBlock& block, int localColumnOffset, bool isFrictionColumn, int constraintIndex);
     void extractRelAccelsFromLinkPairCase1(
-        Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt,
-        LinkPair& linkPair, int testForceIndex, int constraintIndex);
+        LinkPair& linkPair, int columnPosition, int maxConstraintIndexToExtract);
     void extractRelAccelsFromLinkPairCase2(
-        Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt,
-        LinkPair& linkPair, int iTestForce, int iDefault, int testForceIndex, int constraintIndex);
-    void extractRelAccelsFromLinkPairCase3(
-        Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt,
-        LinkPair& linkPair, int testForceIndex, int constraintIndex);
-    void copySymmetricElementsOfAccelerationMatrix(
-        Eigen::Block<MatrixX>& Knn, Eigen::Block<MatrixX>& Ktn, Eigen::Block<MatrixX>& Knt, Eigen::Block<MatrixX>& Ktt);
+        LinkPair& linkPair, int iTestForce, int iDefault, int columnPosition, int maxConstraintIndexToExtract);
+    void copySymmetricElementsOfAccelerationMatrix();
     void clearSingularPointConstraintsOfClosedLoopConnections();
     void setConstantVectorAndMuBlock();
     void addConstraintForceToLinks();
     void addConstraintForceToLink(LinkPair* linkPair, int ipair);
-    void solveMCPByProjectedGaussSeidel(const MatrixX& M, const VectorX& b, VectorX& x);
-    void solveMCPByProjectedGaussSeidelMainStep(const MatrixX& M, const VectorX& b, VectorX& x);
-    void solveMCPByProjectedGaussSeidelInitial(
-        const MatrixX& M, const VectorX& b, VectorX& x, const int numIteration);
-    void checkLCPResult(MatrixX& M, VectorX& b, VectorX& x);
-    void checkMCPResult(MatrixX& M, VectorX& b, VectorX& x);
 
-#ifdef USE_PIVOTING_LCP
-    bool callPathLCPSolver(MatrixX& Mlcp, VectorX& b, VectorX& solution);
+    double solveGaussSeidelRow(int row, const VectorX& b, const VectorX& x)
+    {
+        const RowInfo& rowInfo = rowInfos[row];
+        const double* values = &matrixValues[rowInfo.valueTop];
+        const double diagonal = values[rowInfo.diagonalPosition];
+        if(diagonal == numeric_limits<double>::max()){
+            return 0.0;
+        }
+        const LinkPairBlock& block = linkPairBlocks[rowInfo.linkPairIndex];
+        const int* columns = block.columns.data();
+        const int numColumns = block.columns.size();
+        double sum = -diagonal * x(row);
+        for(int k=0; k < numColumns; ++k){
+            sum += values[k] * x(columns[k]);
+        }
+        return (-b(row) - sum) / diagonal;
+    }
 
-    // for PATH solver
-    std::vector<double> lb;
-    std::vector<double> ub;
-    std::vector<int> m_i;
-    std::vector<int> m_j;
-    std::vector<double> m_ij;
-#endif
+    void solveMCPByProjectedGaussSeidel(const VectorX& b, VectorX& x);
+    void solveMCPByProjectedGaussSeidelMainStep(const VectorX& b, VectorX& x);
+    void solveMCPByProjectedGaussSeidelInitial(const VectorX& b, VectorX& x, const int numIteration);
+    void multiplyMatrixAndVector(const VectorX& x, VectorX& y);
+    MatrixX makeDenseMatrix();
+    void checkLCPResult(VectorX& b, VectorX& x);
+    void checkMCPResult(VectorX& b, VectorX& x);
 
     ofstream os;
 
@@ -758,6 +809,8 @@ void ConstraintForceSolver::Impl::solve()
             initMatrices();
         }
 
+        buildMatrixStructure();
+
         if(areThereImpacts){
             solveImpactConstraints();
         }
@@ -770,42 +823,32 @@ void ConstraintForceSolver::Impl::solve()
         setAccelerationMatrix();
 
         clearSingularPointConstraintsOfClosedLoopConnections();
-		
+
         setConstantVectorAndMuBlock();
 
         if(CFS_DEBUG_VERBOSE){
             debugPutVector(an0, "an0");
             debugPutVector(at0, "at0");
-            debugPutMatrix(Mlcp, "Mlcp");
+            MatrixX M = makeDenseMatrix();
+            debugPutMatrix(M, "Mlcp");
             debugPutVector(b.head(globalNumConstraintVectors), "b1");
             debugPutVector(b.segment(globalNumConstraintVectors, globalNumFrictionVectors), "b2");
         }
 
-        bool isConverged;
-#ifdef USE_PIVOTING_LCP
-        isConverged = callPathLCPSolver(Mlcp, b, solution);
-#else
         if(!USE_PREVIOUS_LCP_SOLUTION || constraintsSizeChanged){
             solution.setZero();
         }
-        solveMCPByProjectedGaussSeidel(Mlcp, b, solution);
-        isConverged = true;
-#endif
+        solveMCPByProjectedGaussSeidel(b, solution);
 
-        if(!isConverged){
-            ++numUnconverged;
-            if(CFS_DEBUG)
-                os << "LCP didn't converge" << numUnconverged << std::endl;
-        } else {
-            if(CFS_DEBUG)
-                os << "LCP converged" << std::endl;
-            if(CFS_DEBUG_LCPCHECK){
-                // checkLCPResult(Mlcp, b, solution);
-                checkMCPResult(Mlcp, b, solution);
-            }
-
-            addConstraintForceToLinks();
+        if(CFS_DEBUG){
+            os << "LCP converged" << std::endl;
         }
+        if(CFS_DEBUG_LCPCHECK){
+            // checkLCPResult(b, solution);
+            checkMCPResult(b, solution);
+        }
+
+        addConstraintForceToLinks();
     }
 
     prevGlobalNumConstraintVectors = globalNumConstraintVectors;
@@ -1162,28 +1205,157 @@ void ConstraintForceSolver::Impl::initMatrices()
     const int n = globalNumConstraintVectors;
     const int m = globalNumFrictionVectors;
 
-    const int dimLCP = usePivotingLCP ? (n + m + m) : (n + m);
+    const int dimLCP = n + m;
 
-    Mlcp.resize(dimLCP, dimLCP);
     b.resize(dimLCP);
     solution.resize(dimLCP);
 
-    if(usePivotingLCP){
-        Mlcp.block(0, n + m, n, m).setZero();
-        Mlcp.block(n + m, 0, m, n).setZero();
-        Mlcp.block(n + m, n, m, m) = -MatrixX::Identity(m, m);
-        Mlcp.block(n + m, n + m, m, m).setZero();
-        Mlcp.block(n, n + m, m, m).setIdentity();
-        b.tail(m).setZero();
-
-    } else {
-        frictionIndexToContactIndex.resize(m);
-        contactIndexToMu.resize(globalNumContactNormalVectors);
-        mcpHi.resize(globalNumContactNormalVectors);
-    }
+    frictionIndexToContactIndex.resize(m);
+    contactIndexToMu.resize(globalNumContactNormalVectors);
+    mcpHi.resize(globalNumContactNormalVectors);
 
     an0.resize(n);
     at0.resize(m);
+}
+
+
+void ConstraintForceSolver::Impl::buildMatrixStructure()
+{
+    const int n = globalNumConstraintVectors;
+    const int numLinkPairs = constrainedLinkPairs.size();
+
+    if(static_cast<int>(linkPairBlocks.size()) < numLinkPairs){
+        linkPairBlocks.resize(numLinkPairs);
+    }
+
+    // Set the constraint index blocks of each link pair and collect the link
+    // pairs that involve each dynamic sub-body
+    subBodyToLinkPairIndicesMap.clear();
+    for(int i=0; i < numLinkPairs; ++i){
+        LinkPair& linkPair = *constrainedLinkPairs[i];
+        LinkPairBlock& block = linkPairBlocks[i];
+        auto& points = linkPair.constraintPoints;
+        block.normalTop = points.front().globalIndex;
+        block.numNormals = points.size();
+        block.frictionTop = 0;
+        block.numFrictions = 0;
+        for(auto& point : points){
+            if(point.numFrictionVectors > 0){
+                if(block.numFrictions == 0){
+                    block.frictionTop = point.globalFrictionIndex;
+                }
+                block.numFrictions += point.numFrictionVectors;
+            }
+        }
+        DySubBody* subBody0 = linkPair.link[0]->subBody();
+        DySubBody* subBody1 = linkPair.link[1]->subBody();
+        if(!subBody0->isStatic()){
+            subBodyToLinkPairIndicesMap[subBody0].push_back(i);
+        }
+        if(subBody1 != subBody0 && !subBody1->isStatic()){
+            subBodyToLinkPairIndicesMap[subBody1].push_back(i);
+        }
+    }
+
+    // Determine the adjacent link pairs and the column pattern of each link pair
+    for(int i=0; i < numLinkPairs; ++i){
+        LinkPair& linkPair = *constrainedLinkPairs[i];
+        LinkPairBlock& block = linkPairBlocks[i];
+
+        // Collect the indices of the adjacent pairs (sorted, unique) in a work
+        // buffer first, so that the sort/unique operate on plain indices.
+        auto& indices = adjacentPairIndexBuf;
+        indices.clear();
+        indices.push_back(i); // keep the diagonal block even for a pair of static sub-bodies
+        for(int k=0; k < 2; ++k){
+            DySubBody* subBody = linkPair.link[k]->subBody();
+            if(k == 1 && subBody == linkPair.link[0]->subBody()){
+                break;
+            }
+            if(!subBody->isStatic()){
+                auto& pairs = subBodyToLinkPairIndicesMap[subBody];
+                indices.insert(indices.end(), pairs.begin(), pairs.end());
+            }
+        }
+        std::sort(indices.begin(), indices.end());
+        indices.erase(std::unique(indices.begin(), indices.end()), indices.end());
+
+        const int numAdjacents = indices.size();
+        auto& adjacents = block.adjacents;
+        adjacents.resize(numAdjacents);
+
+        // Build the column pattern: first all the adjacent pairs' normal columns,
+        // then all their friction columns, recording each block's offset.
+        auto& columns = block.columns;
+        columns.clear();
+        for(int a=0; a < numAdjacents; ++a){
+            Adjacent& adj = adjacents[a];
+            adj.pairIndex = indices[a];
+            if(indices[a] == i){
+                block.selfPosition = a;
+            }
+            LinkPairBlock& adjacent = linkPairBlocks[indices[a]];
+            adj.normalOffset = columns.size();
+            for(int j=0; j < adjacent.numNormals; ++j){
+                columns.push_back(adjacent.normalTop + j);
+            }
+        }
+        for(int a=0; a < numAdjacents; ++a){
+            Adjacent& adj = adjacents[a];
+            LinkPairBlock& adjacent = linkPairBlocks[adj.pairIndex];
+            adj.frictionOffset = columns.size();
+            for(int j=0; j < adjacent.numFrictions; ++j){
+                columns.push_back(n + adjacent.frictionTop + j);
+            }
+        }
+    }
+
+    // Resolve the position of each pair's column blocks in the adjacent pairs' patterns
+    for(int i=0; i < numLinkPairs; ++i){
+        LinkPairBlock& block = linkPairBlocks[i];
+        for(auto& adj : block.adjacents){
+            LinkPairBlock& adjacent = linkPairBlocks[adj.pairIndex];
+            // find the owner pair i within the adjacent pair's adjacents (sorted by pairIndex)
+            int lo = 0, hi = adjacent.adjacents.size();
+            while(lo < hi){
+                int mid = (lo + hi) / 2;
+                if(adjacent.adjacents[mid].pairIndex < i){
+                    lo = mid + 1;
+                } else {
+                    hi = mid;
+                }
+            }
+            adj.reciprocalNormalOffset = adjacent.adjacents[lo].normalOffset;
+            adj.reciprocalFrictionOffset = adjacent.adjacents[lo].frictionOffset;
+        }
+    }
+
+    // Set the row information and allocate the value array
+    const int dimLCP = n + globalNumFrictionVectors;
+    rowInfos.resize(dimLCP);
+    for(int i=0; i < numLinkPairs; ++i){
+        LinkPairBlock& block = linkPairBlocks[i];
+        for(int j=0; j < block.numNormals; ++j){
+            rowInfos[block.normalTop + j].linkPairIndex = i;
+        }
+        for(int j=0; j < block.numFrictions; ++j){
+            rowInfos[n + block.frictionTop + j].linkPairIndex = i;
+        }
+    }
+    int valueTop = 0;
+    for(int row = 0; row < dimLCP; ++row){
+        RowInfo& rowInfo = rowInfos[row];
+        LinkPairBlock& block = linkPairBlocks[rowInfo.linkPairIndex];
+        const Adjacent& self = block.adjacents[block.selfPosition];
+        rowInfo.valueTop = valueTop;
+        valueTop += block.columns.size();
+        if(row < n){
+            rowInfo.diagonalPosition = self.normalOffset + (row - block.normalTop);
+        } else {
+            rowInfo.diagonalPosition = self.frictionOffset + (row - n - block.frictionTop);
+        }
+    }
+    matrixValues.assign(valueTop, 0.0);
 }
 
 
@@ -1269,17 +1441,10 @@ void ConstraintForceSolver::Impl::setDefaultAccelerationVector()
 
 void ConstraintForceSolver::Impl::setAccelerationMatrix()
 {
-    const int n = globalNumConstraintVectors;
-    const int m = globalNumFrictionVectors;
-
-    Eigen::Block<MatrixX> Knn = Mlcp.block(0, 0, n, n);
-    Eigen::Block<MatrixX> Ktn = Mlcp.block(0, n, n, m);
-    Eigen::Block<MatrixX> Knt = Mlcp.block(n, 0, m, n);
-    Eigen::Block<MatrixX> Ktt = Mlcp.block(n, n, m, m);
-
     for(size_t i=0; i < constrainedLinkPairs.size(); ++i){
 
         LinkPair& linkPair = *constrainedLinkPairs[i];
+        LinkPairBlock& block = linkPairBlocks[i];
         int numConstraintsInPair = linkPair.constraintPoints.size();
 
         for(int j=0; j < numConstraintsInPair; ++j){
@@ -1313,7 +1478,8 @@ void ConstraintForceSolver::Impl::setAccelerationMatrix()
                     }
                 }
             }
-            extractRelAccelsOfConstraintPoints(Knn, Knt, constraintIndex, constraintIndex);
+            extractRelAccelsOfConstraintPoints(
+                block, constraintIndex - block.normalTop, false, constraintIndex);
 
             // apply test friction force
             for(int l=0; l < constraint.numFrictionVectors; ++l){
@@ -1340,7 +1506,8 @@ void ConstraintForceSolver::Impl::setAccelerationMatrix()
                         }
                     }
                 }
-                extractRelAccelsOfConstraintPoints(Ktn, Ktt, constraint.globalFrictionIndex + l, constraintIndex);
+                extractRelAccelsOfConstraintPoints(
+                    block, constraint.globalFrictionIndex + l - block.frictionTop, true, constraintIndex);
             }
 
             linkPair.link[0]->subBody()->isTestForceBeingApplied = false;
@@ -1349,7 +1516,7 @@ void ConstraintForceSolver::Impl::setAccelerationMatrix()
     }
 
     if(ASSUME_SYMMETRIC_MATRIX){
-        copySymmetricElementsOfAccelerationMatrix(Knn, Ktn, Knt, Ktt);
+        copySymmetricElementsOfAccelerationMatrix();
     }
 }
 
@@ -1492,34 +1659,39 @@ void ConstraintForceSolver::Impl::calcAccelsMM(DySubBody* subBody, int constrain
 
 
 void ConstraintForceSolver::Impl::extractRelAccelsOfConstraintPoints
-(Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt, int testForceIndex, int constraintIndex)
+(LinkPairBlock& block, int localColumnOffset, bool isFrictionColumn, int constraintIndex)
 {
     int maxConstraintIndexToExtract = ASSUME_SYMMETRIC_MATRIX ? constraintIndex : globalNumConstraintVectors;
 
-    for(size_t i=0; i < constrainedLinkPairs.size(); ++i){
-        LinkPair& linkPair = *constrainedLinkPairs[i];
+    // Only the link pairs sharing a dynamic sub-body with the pair of the test
+    // force can have nonzero responses; the other elements are structurally
+    // zero and are not stored in the sparse matrix.
+    for(auto& adj : block.adjacents){
+        LinkPair& linkPair = *constrainedLinkPairs[adj.pairIndex];
+        int columnPosition =
+            (isFrictionColumn ? adj.reciprocalFrictionOffset : adj.reciprocalNormalOffset)
+            + localColumnOffset;
         auto subBody0 = linkPair.link[0]->subBody();
         auto subBody1 = linkPair.link[1]->subBody();
         if(subBody0->isTestForceBeingApplied){
             if(subBody1->isTestForceBeingApplied){
-                extractRelAccelsFromLinkPairCase1(Kxn, Kxt, linkPair, testForceIndex, maxConstraintIndexToExtract);
+                extractRelAccelsFromLinkPairCase1(linkPair, columnPosition, maxConstraintIndexToExtract);
             } else {
-                extractRelAccelsFromLinkPairCase2(Kxn, Kxt, linkPair, 0, 1, testForceIndex, maxConstraintIndexToExtract);
+                extractRelAccelsFromLinkPairCase2(linkPair, 0, 1, columnPosition, maxConstraintIndexToExtract);
             }
         } else {
             if(subBody1->isTestForceBeingApplied){
-                extractRelAccelsFromLinkPairCase2(Kxn, Kxt, linkPair, 1, 0, testForceIndex, maxConstraintIndexToExtract);
-            } else {
-                extractRelAccelsFromLinkPairCase3(Kxn, Kxt, linkPair, testForceIndex, maxConstraintIndexToExtract);
+                extractRelAccelsFromLinkPairCase2(linkPair, 1, 0, columnPosition, maxConstraintIndexToExtract);
             }
+            // When the test force is not applied to either sub-body, the
+            // elements remain zero
         }
     }
 }
 
 
 void ConstraintForceSolver::Impl::extractRelAccelsFromLinkPairCase1
-(Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt,
- LinkPair& linkPair, int testForceIndex, int maxConstraintIndexToExtract)
+(LinkPair& linkPair, int columnPosition, int maxConstraintIndexToExtract)
 {
     auto& constraintPoints = linkPair.constraintPoints;
 
@@ -1546,19 +1718,20 @@ void ConstraintForceSolver::Impl::extractRelAccelsFromLinkPairCase1
 
         Vector3 relAccel = dv1 - dv0;
 
-        Kxn(constraintIndex, testForceIndex) = constraint.normalTowardInside[1].dot(relAccel) - an0(constraintIndex);
+        matrixValues[rowInfos[constraintIndex].valueTop + columnPosition] =
+            constraint.normalTowardInside[1].dot(relAccel) - an0(constraintIndex);
 
         for(int j=0; j < constraint.numFrictionVectors; ++j){
             const int index = constraint.globalFrictionIndex + j;
-            Kxt(index, testForceIndex) = constraint.frictionVector[j][1].dot(relAccel) - at0(index);
+            matrixValues[rowInfos[globalNumConstraintVectors + index].valueTop + columnPosition] =
+                constraint.frictionVector[j][1].dot(relAccel) - at0(index);
         }
     }
 }
 
 
 void ConstraintForceSolver::Impl::extractRelAccelsFromLinkPairCase2
-(Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt,
- LinkPair& linkPair, int iTestForce, int iDefault, int testForceIndex, int maxConstraintIndexToExtract)
+(LinkPair& linkPair, int iTestForce, int iDefault, int columnPosition, int maxConstraintIndexToExtract)
 {
     auto& constraintPoints = linkPair.constraintPoints;
 
@@ -1581,70 +1754,47 @@ void ConstraintForceSolver::Impl::extractRelAccelsFromLinkPairCase2
 
         Vector3 relAccel = constraint.defaultAccel[iDefault] - dv;
 
-        Kxn(constraintIndex, testForceIndex) = constraint.normalTowardInside[iDefault].dot(relAccel) - an0(constraintIndex);
+        matrixValues[rowInfos[constraintIndex].valueTop + columnPosition] =
+            constraint.normalTowardInside[iDefault].dot(relAccel) - an0(constraintIndex);
 
         for(int j=0; j < constraint.numFrictionVectors; ++j){
             const int index = constraint.globalFrictionIndex + j;
-            Kxt(index, testForceIndex) = constraint.frictionVector[j][iDefault].dot(relAccel) - at0(index);
+            matrixValues[rowInfos[globalNumConstraintVectors + index].valueTop + columnPosition] =
+                constraint.frictionVector[j][iDefault].dot(relAccel) - at0(index);
         }
 
     }
 }
 
 
-void ConstraintForceSolver::Impl::extractRelAccelsFromLinkPairCase3
-(Eigen::Block<MatrixX>& Kxn, Eigen::Block<MatrixX>& Kxt, LinkPair& linkPair, int testForceIndex, int maxConstraintIndexToExtract)
+void ConstraintForceSolver::Impl::copySymmetricElementsOfAccelerationMatrix()
 {
-    auto& constraintPoints = linkPair.constraintPoints;
+    const int n = globalNumConstraintVectors;
+    const int dimLCP = n + globalNumFrictionVectors;
 
-    for(size_t i=0; i < constraintPoints.size(); ++i){
-
-        ConstraintPoint& constraint = constraintPoints[i];
-        int constraintIndex = constraint.globalIndex;
-
-        if(ASSUME_SYMMETRIC_MATRIX && constraintIndex > maxConstraintIndexToExtract){
-            break;
-        }
-
-        Kxn(constraintIndex, testForceIndex) = 0.0;
-
-        for(int j=0; j < constraint.numFrictionVectors; ++j){
-            Kxt(constraint.globalFrictionIndex + j, testForceIndex) = 0.0;
-        }
-    }
-}
-
-
-void ConstraintForceSolver::Impl::copySymmetricElementsOfAccelerationMatrix
-(Eigen::Block<MatrixX>& Knn, Eigen::Block<MatrixX>& Ktn, Eigen::Block<MatrixX>& Knt, Eigen::Block<MatrixX>& Ktt)
-{
-    for(size_t linkPairIndex=0; linkPairIndex < constrainedLinkPairs.size(); ++linkPairIndex){
-
-        auto& constraintPoints = constrainedLinkPairs[linkPairIndex]->constraintPoints;
-
-        for(size_t localConstraintIndex = 0; localConstraintIndex < constraintPoints.size(); ++localConstraintIndex){
-
-            ConstraintPoint& constraint = constraintPoints[localConstraintIndex];
-
-            int constraintIndex = constraint.globalIndex;
-            int nextConstraintIndex = constraintIndex + 1;
-            for(int i = nextConstraintIndex; i < globalNumConstraintVectors; ++i){
-                Knn(i, constraintIndex) = Knn(constraintIndex, i);
-            }
-            int frictionTopOfNextConstraint = constraint.globalFrictionIndex + constraint.numFrictionVectors;
-            for(int i = frictionTopOfNextConstraint; i < globalNumFrictionVectors; ++i){
-                Knt(i, constraintIndex) = Ktn(constraintIndex, i);
-            }
-
-            for(int localFrictionIndex=0; localFrictionIndex < constraint.numFrictionVectors; ++localFrictionIndex){
-
-                int frictionIndex = constraint.globalFrictionIndex + localFrictionIndex;
-
-                for(int i = nextConstraintIndex; i < globalNumConstraintVectors; ++i){
-                    Ktn(i, frictionIndex) = Knt(frictionIndex, i);
+    for(int row = 0; row < dimLCP; ++row){
+        LinkPairBlock& block = linkPairBlocks[rowInfos[row].linkPairIndex];
+        const int rowTop = rowInfos[row].valueTop;
+        const bool isFrictionRow = (row >= n);
+        const int localOffset = isFrictionRow ? (row - n - block.frictionTop) : (row - block.normalTop);
+        for(auto& adj : block.adjacents){
+            LinkPairBlock& adjacent = linkPairBlocks[adj.pairIndex];
+            // position of the column corresponding to this row in the adjacent pair's pattern
+            const int mirrorColumnPosition =
+                (isFrictionRow ? adj.reciprocalFrictionOffset : adj.reciprocalNormalOffset)
+                + localOffset;
+            for(int j=0; j < adjacent.numNormals; ++j){
+                const int column = adjacent.normalTop + j;
+                if(column > row){
+                    matrixValues[rowInfos[column].valueTop + mirrorColumnPosition] =
+                        matrixValues[rowTop + adj.normalOffset + j];
                 }
-                for(int i = frictionTopOfNextConstraint; i < globalNumFrictionVectors; ++i){
-                    Ktt(i, frictionIndex) = Ktt(frictionIndex, i);
+            }
+            for(int j=0; j < adjacent.numFrictions; ++j){
+                const int column = n + adjacent.frictionTop + j;
+                if(column > row){
+                    matrixValues[rowInfos[column].valueTop + mirrorColumnPosition] =
+                        matrixValues[rowTop + adj.frictionOffset + j];
                 }
             }
         }
@@ -1654,12 +1804,31 @@ void ConstraintForceSolver::Impl::copySymmetricElementsOfAccelerationMatrix
 
 void ConstraintForceSolver::Impl::clearSingularPointConstraintsOfClosedLoopConnections()
 {
-    for(int i = 0; i < Mlcp.rows(); ++i){
-        if(Mlcp(i, i) < 1.0e-4){
-            for(int j=0; j < Mlcp.rows(); ++j){
-                Mlcp(j, i) = 0.0;
+    const int n = globalNumConstraintVectors;
+    const int dimLCP = n + globalNumFrictionVectors;
+
+    for(int i = 0; i < dimLCP; ++i){
+        double& diagonal = matrixValues[rowInfos[i].valueTop + rowInfos[i].diagonalPosition];
+        if(diagonal < 1.0e-4){
+            // Clear the i-th column. Only the rows of the link pairs adjacent
+            // to the pair owning constraint i can have the column.
+            LinkPairBlock& block = linkPairBlocks[rowInfos[i].linkPairIndex];
+            const bool isFrictionColumn = (i >= n);
+            const int localColumnOffset =
+                isFrictionColumn ? (i - n - block.frictionTop) : (i - block.normalTop);
+            for(auto& adj : block.adjacents){
+                LinkPairBlock& adjacent = linkPairBlocks[adj.pairIndex];
+                const int columnPosition =
+                    (isFrictionColumn ? adj.reciprocalFrictionOffset : adj.reciprocalNormalOffset)
+                    + localColumnOffset;
+                for(int j=0; j < adjacent.numNormals; ++j){
+                    matrixValues[rowInfos[adjacent.normalTop + j].valueTop + columnPosition] = 0.0;
+                }
+                for(int j=0; j < adjacent.numFrictions; ++j){
+                    matrixValues[rowInfos[n + adjacent.frictionTop + j].valueTop + columnPosition] = 0.0;
+                }
             }
-            Mlcp(i, i) = numeric_limits<double>::max();
+            diagonal = numeric_limits<double>::max();
         }
     }
 }
@@ -1670,7 +1839,6 @@ void ConstraintForceSolver::Impl::setConstantVectorAndMuBlock()
     const double dt = world.timeStep();
     double dtinv = 1.0 / dt;
     const int block2 = globalNumConstraintVectors;
-    const int block3 = globalNumConstraintVectors + globalNumFrictionVectors;
 
     for(size_t i=0; i < constrainedLinkPairs.size(); ++i){
 
@@ -1749,13 +1917,8 @@ void ConstraintForceSolver::Impl::setConstantVectorAndMuBlock()
                         b(block2 + globalFrictionIndex) += tangentProjectionOfRelVelocity * dtinv;
                     }
 
-                    if(usePivotingLCP){
-                        // set mu (coefficients of friction)
-                        Mlcp(block3 + globalFrictionIndex, globalIndex) = constraint.mu;
-                    } else {
-                        // for iterative solver
-                        frictionIndexToContactIndex[globalFrictionIndex] = globalIndex;
-                    }
+                    // for iterative solver
+                    frictionIndexToContactIndex[globalFrictionIndex] = globalIndex;
 
                     ++globalFrictionIndex;
                 }
@@ -1821,12 +1984,12 @@ void ConstraintForceSolver::Impl::addConstraintForceToLink(LinkPair* linkPair, i
 }
 
 
-void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidel(const MatrixX& M, const VectorX& b, VectorX& x)
+void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidel(const VectorX& b, VectorX& x)
 {
     static const int loopBlockSize = DEFAULT_NUM_GAUSS_SEIDEL_ITERATION_BLOCK;
 
     if(numGaussSeidelInitialIteration > 0){
-        solveMCPByProjectedGaussSeidelInitial(M, b, x, numGaussSeidelInitialIteration);
+        solveMCPByProjectedGaussSeidelInitial(b, x, numGaussSeidelInitialIteration);
     }
 
     int numBlockLoops = maxNumGaussSeidelIteration / loopBlockSize;
@@ -1845,11 +2008,11 @@ void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidel(const MatrixX& 
         i++;
 
         for(int j=0; j < loopBlockSize - 1; ++j){
-            solveMCPByProjectedGaussSeidelMainStep(M, b, x);
+            solveMCPByProjectedGaussSeidelMainStep(b, x);
         }
 
         x0 = x;
-        solveMCPByProjectedGaussSeidelMainStep(M, b, x);
+        solveMCPByProjectedGaussSeidelMainStep(b, x);
 
         if(true){
             double n = x.norm();
@@ -1896,22 +2059,13 @@ void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidel(const MatrixX& 
 }
 
 
-void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidelMainStep(const MatrixX& M, const VectorX& b, VectorX& x)
+void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidelMainStep(const VectorX& b, VectorX& x)
 {
     const int size = globalNumConstraintVectors + globalNumFrictionVectors;
 
     for(int j=0; j < globalNumContactNormalVectors; ++j){
 
-        double xx;
-        if(M(j,j) == numeric_limits<double>::max()){
-            xx=0.0;
-        } else {
-            double sum = -M(j, j) * x(j);
-            for(int k=0; k < size; ++k){
-                sum += M(j, k) * x(k);
-            }
-            xx = (-b(j) - sum) / M(j, j);
-        }
+        double xx = solveGaussSeidelRow(j, b, x);
         if(xx < 0.0){
             x(j) = 0.0;
         } else {
@@ -1919,52 +2073,25 @@ void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidelMainStep(const M
         }
         mcpHi[j] = contactIndexToMu[j] * x(j);
     }
-    
+
     for(int j=globalNumContactNormalVectors; j < globalNumConstraintVectors; ++j){
-        
-        if(M(j,j) == numeric_limits<double>::max()){
-            x(j)=0.0;
-        } else {
-            double sum = -M(j, j) * x(j);
-            for(int k=0; k < size; ++k){
-                sum += M(j, k) * x(k);
-            }
-            x(j) = (-b(j) - sum) / M(j, j);
-        }
+        x(j) = solveGaussSeidelRow(j, b, x);
     }
-    
-    
+
+
     if(ENABLE_TRUE_FRICTION_CONE){
 
         int contactIndex = 0;
         for(int j=globalNumConstraintVectors; j < size; ++j, ++contactIndex){
-            
-            double fx0;
-            if(M(j,j) == numeric_limits<double>::max()) {
-                fx0 = 0.0;
-            } else {
-                double sum = -M(j, j) * x(j);
-                for(int k=0; k < size; ++k){
-                    sum += M(j, k) * x(k);
-                }
-                fx0 = (-b(j) - sum) / M(j, j);
-            }
+
+            double fx0 = solveGaussSeidelRow(j, b, x);
             double& fx = x(j);
-            
+
             ++j;
-            
-            double fy0;
-            if(M(j,j) == numeric_limits<double>::max()) {
-                fy0=0.0;
-            } else {
-                double sum = -M(j, j) * x(j);
-                for(int k=0; k < size; ++k){
-                    sum += M(j, k) * x(k);
-                }
-                fy0 = (-b(j) - sum) / M(j, j);
-            }
+
+            double fy0 = solveGaussSeidelRow(j, b, x);
             double& fy = x(j);
-            
+
             const double fmax = mcpHi[contactIndex];
             const double fmax2 = fmax * fmax;
             const double fmag2 = fx0 * fx0 + fy0 * fy0;
@@ -1978,27 +2105,18 @@ void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidelMainStep(const M
                 fy = fy0;
             }
         }
-        
+
     } else {
 
         int frictionIndex = 0;
         for(int j=globalNumConstraintVectors; j < size; ++j, ++frictionIndex){
 
-            double xx;
-            if(M(j,j) == numeric_limits<double>::max()) {
-                xx=0.0;
-            } else {
-                double sum = -M(j, j) * x(j);
-                for(int k=0; k < size; ++k){
-                    sum += M(j, k) * x(k);
-                }
-                xx = (-b(j) - sum) / M(j, j);
-            }
-            
+            double xx = solveGaussSeidelRow(j, b, x);
+
             const int contactIndex = frictionIndexToContactIndex[frictionIndex];
             const double fmax = mcpHi[contactIndex];
             const double fmin = (STATIC_FRICTION_BY_TWO_CONSTRAINTS ? -fmax : 0.0);
-            
+
             if(xx < fmin){
                 x(j) = fmin;
             } else if(xx > fmax){
@@ -2012,7 +2130,7 @@ void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidelMainStep(const M
 
 
 void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidelInitial
-(const MatrixX& M, const VectorX& b, VectorX& x, const int numIteration)
+(const VectorX& b, VectorX& x, const int numIteration)
 {
     const int size = globalNumConstraintVectors + globalNumFrictionVectors;
 
@@ -2023,16 +2141,7 @@ void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidelInitial
 
         for(int j=0; j < globalNumContactNormalVectors; ++j){
 
-            double xx;
-            if(M(j,j)==numeric_limits<double>::max()){
-                xx=0.0;
-            } else {
-                double sum = -M(j, j) * x(j);
-                for(int k=0; k < size; ++k){
-                    sum += M(j, k) * x(k);
-                }
-                xx = (-b(j) - sum) / M(j, j);
-            }
+            double xx = solveGaussSeidelRow(j, b, x);
             if(xx < 0.0){
                 x(j) = 0.0;
             } else {
@@ -2043,16 +2152,7 @@ void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidelInitial
         }
 
         for(int j=globalNumContactNormalVectors; j < globalNumConstraintVectors; ++j){
-
-            if(M(j,j)==numeric_limits<double>::max()){
-                x(j) = 0.0;
-            } else {
-                double sum = -M(j, j) * x(j);
-                for(int k=0; k < size; ++k){
-                    sum += M(j, k) * x(k);
-                }
-                x(j) = r * (-b(j) - sum) / M(j, j);
-            }
+            x(j) = r * solveGaussSeidelRow(j, b, x);
             r += rstep;
         }
 
@@ -2061,30 +2161,12 @@ void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidelInitial
             int contactIndex = 0;
             for(int j=globalNumConstraintVectors; j < size; ++j, ++contactIndex){
 
-                double fx0;
-                if(M(j,j)==numeric_limits<double>::max())
-                    fx0 = 0.0;
-                else{
-                    double sum = -M(j, j) * x(j);
-                    for(int k=0; k < size; ++k){
-                        sum += M(j, k) * x(k);
-                    }
-                    fx0 = (-b(j) - sum) / M(j, j);
-                }
+                double fx0 = solveGaussSeidelRow(j, b, x);
                 double& fx = x(j);
 
                 ++j;
 
-                double fy0;
-                if(M(j,j)==numeric_limits<double>::max())
-                    fy0 = 0.0;
-                else{
-                    double sum = -M(j, j) * x(j);
-                    for(int k=0; k < size; ++k){
-                        sum += M(j, k) * x(k);
-                    }
-                    fy0 = (-b(j) - sum) / M(j, j);
-                }
+                double fy0 = solveGaussSeidelRow(j, b, x);
                 double& fy = x(j);
 
                 const double fmax = mcpHi[contactIndex];
@@ -2107,16 +2189,7 @@ void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidelInitial
             int frictionIndex = 0;
             for(int j=globalNumConstraintVectors; j < size; ++j, ++frictionIndex){
 
-                double xx;
-                if(M(j,j)==numeric_limits<double>::max())
-                    xx = 0.0;
-                else{
-                    double sum = -M(j, j) * x(j);
-                    for(int k=0; k < size; ++k){
-                        sum += M(j, k) * x(k);
-                    }
-                    xx = (-b(j) - sum) / M(j, j);
-                }
+                double xx = solveGaussSeidelRow(j, b, x);
 
                 const int contactIndex = frictionIndexToContactIndex[frictionIndex];
                 const double fmax = mcpHi[contactIndex];
@@ -2137,12 +2210,46 @@ void ConstraintForceSolver::Impl::solveMCPByProjectedGaussSeidelInitial
 }
 
 
-void ConstraintForceSolver::Impl::checkLCPResult(MatrixX& M, VectorX& b, VectorX& x)
+void ConstraintForceSolver::Impl::multiplyMatrixAndVector(const VectorX& x, VectorX& y)
+{
+    const int dimLCP = globalNumConstraintVectors + globalNumFrictionVectors;
+    y.resize(dimLCP);
+    for(int row = 0; row < dimLCP; ++row){
+        auto& block = linkPairBlocks[rowInfos[row].linkPairIndex];
+        const double* values = &matrixValues[rowInfos[row].valueTop];
+        const int numColumns = block.columns.size();
+        double sum = 0.0;
+        for(int k=0; k < numColumns; ++k){
+            sum += values[k] * x(block.columns[k]);
+        }
+        y(row) = sum;
+    }
+}
+
+
+// for debugging
+ConstraintForceSolver::Impl::MatrixX ConstraintForceSolver::Impl::makeDenseMatrix()
+{
+    const int dimLCP = globalNumConstraintVectors + globalNumFrictionVectors;
+    MatrixX M = MatrixX::Zero(dimLCP, dimLCP);
+    for(int row = 0; row < dimLCP; ++row){
+        auto& columns = linkPairBlocks[rowInfos[row].linkPairIndex].columns;
+        for(size_t k=0; k < columns.size(); ++k){
+            M(row, columns[k]) = matrixValues[rowInfos[row].valueTop + k];
+        }
+    }
+    return M;
+}
+
+
+void ConstraintForceSolver::Impl::checkLCPResult(VectorX& b, VectorX& x)
 {
     os << "check LCP result\n";
     os << "-------------------------------\n";
 
-    VectorX z = M * x + b;
+    VectorX z;
+    multiplyMatrixAndVector(x, z);
+    z += b;
 
     int n = x.size();
     for(int i=0; i < n; ++i){
@@ -2167,12 +2274,14 @@ void ConstraintForceSolver::Impl::checkLCPResult(MatrixX& M, VectorX& b, VectorX
 }
 
 
-void ConstraintForceSolver::Impl::checkMCPResult(MatrixX& M, VectorX& b, VectorX& x)
+void ConstraintForceSolver::Impl::checkMCPResult(VectorX& b, VectorX& x)
 {
     os << "check MCP result\n";
     os << "-------------------------------\n";
 
-    VectorX z = M * x + b;
+    VectorX z;
+    multiplyMatrixAndVector(x, z);
+    z += b;
 
     for(int i=0; i < globalNumConstraintVectors; ++i){
         os << "(" << x(i) << ", " << z(i) << ")";
@@ -2214,44 +2323,6 @@ void ConstraintForceSolver::Impl::checkMCPResult(MatrixX& M, VectorX& b, VectorX
 
     os << std::endl;
 }
-
-
-#ifdef USE_PIVOTING_LCP
-bool ConstraintForceSolver::Impl::callPathLCPSolver(MatrixX& Mlcp, VectorX& b, VectorX& solution)
-{
-    int size = solution.size();
-    int square = size * size;
-    std::vector<double> lb(size + 1, 0.0);
-    std::vector<double> ub(size + 1, 1.0e20);
-
-    int m_nnz = 0;
-    std::vector<int> m_i(square + 1);
-    std::vector<int> m_j(square + 1);
-    std::vector<double> m_ij(square + 1);
-
-    for(int i=0; i < size; ++i){
-        solution(i) = 0.0;
-    }
-
-    for(int j=0; j < size; ++j){
-        for(int i=0; i < size; ++i){
-            double v = Mlcp(i, j);
-            if(v != 0.0){
-                m_i[m_nnz] = i+1;
-                m_j[m_nnz] = j+1;
-                m_ij[m_nnz] = v;
-                ++m_nnz;
-            }
-        }
-    }
-
-    MCP_Termination status;
-
-    SimpleLCP(size, m_nnz, &m_i[0], &m_j[0], &m_ij[0], &b(0), &lb[0], &ub[0], &status, &solution(0));
-
-    return (status == MCP_Solved);
-}
-#endif
 
 
 ConstraintForceSolver::ConstraintForceSolver(DyWorldBase& world)
