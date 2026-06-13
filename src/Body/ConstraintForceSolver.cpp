@@ -1526,6 +1526,21 @@ void ConstraintForceSolver::Impl::initABMForceElementsWithNoExtForce(DySubBody* 
     subBody->dpf.setZero();
     subBody->dptau.setZero();
 
+    // Cache the inverse of the free root link's 6x6 articulated inertia. The
+    // matrix is constant throughout the matrix assembly of this step, so the
+    // per-test-force solve in calcAccelsABM becomes a matrix-vector product
+    // instead of refactorizing the matrix every time. The matrix is symmetric
+    // positive definite (an inertia matrix), so LDLT is used; for a well
+    // conditioned 6x6 inertia the explicit inverse agrees with a direct solve
+    // to machine precision.
+    auto rootLink = subBody->rootLink();
+    if(rootLink->isFreeJoint()){
+        Eigen::Matrix<double, 6, 6> M;
+        M << rootLink->Ivv(), rootLink->Iwv().transpose(),
+             rootLink->Iwv(), rootLink->Iww();
+        subBody->rootInvInertia = M.ldlt().solve(Eigen::Matrix<double, 6, 6>::Identity());
+    }
+
     const int n = subBody->numLinks();
     for(int i = n-1; i >= 0; --i){
         auto link = subBody->link(i);
@@ -1593,16 +1608,13 @@ void ConstraintForceSolver::Impl::calcAccelsABM(DySubBody* subBody, int constrai
         rootLink->cfs.dw .setZero();
         rootLink->cfs.dvo.setZero();
     } else {
-        Eigen::Matrix<double, 6, 6> M;
-        M << rootLink->Ivv(), rootLink->Iwv().transpose(),
-             rootLink->Iwv(), rootLink->Iww();
-
+        // Solve M * a = -f using the inverse cached in
+        // initABMForceElementsWithNoExtForce (M is constant during the assembly).
         Eigen::Matrix<double, 6, 1> f;
         f << (rootLink->cfs.pf0   + subBody->dpf),
              (rootLink->cfs.ptau0 + subBody->dptau);
-        f *= -1.0;
 
-        Eigen::Matrix<double, 6, 1> a(M.colPivHouseholderQr().solve(f));
+        Eigen::Matrix<double, 6, 1> a(subBody->rootInvInertia * (-f));
 
         rootLink->cfs.dvo = a.head<3>();
         rootLink->cfs.dw  = a.tail<3>();

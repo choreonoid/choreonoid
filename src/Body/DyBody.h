@@ -57,6 +57,11 @@ private:
     bool isTestForceBeingApplied;
     Vector3 dpf;
     Vector3 dptau;
+    // Inverse of the free root link's 6x6 articulated inertia, cached once per
+    // step so that the per-test-force acceleration solve in calcAccelsABM is a
+    // matrix-vector product instead of a matrix factorization. DontAlign avoids
+    // imposing 16-byte alignment on the heap-allocated DySubBody.
+    Eigen::Matrix<double, 6, 6, Eigen::DontAlign> rootInvInertia;
 
     void initialize(DyLink* rootLink, std::multimap<Link*, ForceSensor*>& forceSensorMap);
     void extractLinksInSubBody(
