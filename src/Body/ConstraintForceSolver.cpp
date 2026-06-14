@@ -240,7 +240,6 @@ public:
     int prevGlobalNumConstraintVectors;
     int prevGlobalNumFrictionVectors;
 
-    bool areThereImpacts;
     int numUnconverged;
 
     typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixX;
@@ -353,7 +352,6 @@ public:
     void setExtraJointConstraintPoints(const ExtraJointLinkPairPtr& linkPair);
     void set2dConstraintPoints(const Constrain2dLinkPairPtr& linkPair);
     void putContactPoints();
-    void solveImpactConstraints();
     void initMatrices();
     void buildMatrixStructure();
     void setAccelCalcSkipInformation();
@@ -785,7 +783,6 @@ void ConstraintForceSolver::Impl::solve()
 
     globalNumConstraintVectors = 0;
     globalNumFrictionVectors = 0;
-    areThereImpacts = false;
 
     constrainedLinkPairs.clear();
 
@@ -810,10 +807,6 @@ void ConstraintForceSolver::Impl::solve()
         }
 
         buildMatrixStructure();
-
-        if(areThereImpacts){
-            solveImpactConstraints();
-        }
 
         if(SKIP_REDUNDANT_ACCEL_CALC){
             setAccelCalcSkipInformation();
@@ -994,12 +987,6 @@ bool ConstraintForceSolver::Impl::setContactConstraintPoint(LinkPair& linkPair, 
 
     contact.normalProjectionOfRelVelocityOn0 = contact.normalTowardInside[1].dot(contact.relVelocityOn0);
 
-    if(!areThereImpacts){
-        if(contact.normalProjectionOfRelVelocityOn0 < -1.0e-6){
-            areThereImpacts = true;
-        }
-    }
-    
     Vector3 v_tangent =
         contact.relVelocityOn0 - contact.normalProjectionOfRelVelocityOn0 * contact.normalTowardInside[1];
     
@@ -1189,14 +1176,6 @@ void ConstraintForceSolver::Impl::putContactPoints()
         }
     }
     os << std::endl;
-}
-
-
-void ConstraintForceSolver::Impl::solveImpactConstraints()
-{
-    if(CFS_DEBUG){
-        os << "Impacts !" << std::endl;
-    }
 }
 
 
