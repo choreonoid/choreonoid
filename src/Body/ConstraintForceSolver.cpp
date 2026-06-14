@@ -71,6 +71,12 @@ static const double DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO = 5.0;
 static const double DEFAULT_CONTACT_CULLING_DISTANCE = 0.005;
 static const double DEFAULT_CONTACT_CULLING_DEPTH = 0.05;
 
+// Default maximum number of contact points kept per contact pair (per normal
+// cluster). The manifold reduction is enabled by default; set this (or a
+// material-specific "max_num_contact_points") to 0 to reproduce the legacy
+// behavior of keeping all the contact points filtered only by proximity culling.
+static const int DEFAULT_MAX_NUM_CONTACT_POINTS = 4;
+
 // Restitution is applied only when the approaching normal velocity exceeds
 // this multiple of the velocity that the persistent (constraint-free) relative
 // normal acceleration of the contact point regenerates in a single step, so
@@ -164,11 +170,12 @@ public:
     public:
         double cullingDistance;
         double cullingDepth;
+        int maxNumContactPoints; // 0 means no limit (reduction disabled)
         CollisionHandler collisionHandler;
         Connection collisionHandlerConnection;
-        
-        ContactMaterialEx() { }
-        ContactMaterialEx(const ContactMaterial& org) : ContactMaterial(org) { }
+
+        ContactMaterialEx() : maxNumContactPoints(0) { }
+        ContactMaterialEx(const ContactMaterial& org) : ContactMaterial(org), maxNumContactPoints(0) { }
         ~ContactMaterialEx(){ collisionHandlerConnection.disconnect(); }
         
         void onCollisionHandlerUnregistered(){
@@ -198,6 +205,7 @@ public:
     double defaultContactCullingDistance;
     double defaultContactCullingDepth;
     double defaultCoefficientOfRestitution;
+    int defaultMaxNumContactPoints; // 0 means no limit (reduction disabled)
 
     class ExtraJointLinkPair : public LinkPair
     {
@@ -302,6 +310,15 @@ public:
     // work buffer reused by buildMatrixStructure to collect adjacent pair indices
     std::vector<int> adjacentPairIndexBuf;
 
+    // work buffers reused by reduceContactConstraintPoints (cleared and refilled
+    // each call to avoid per-frame heap allocations)
+    std::vector<int> reduceClusterOf;
+    std::vector<Vector3> reduceClusterNormals;
+    std::vector<ConstraintPoint> reduceResult;
+    std::vector<int> reduceMembers;
+    std::vector<bool> reduceSelected;
+    std::vector<int> reducePicked;
+
     std::unordered_map<DySubBody*, std::vector<int>> subBodyToLinkPairIndicesMap;
 
     // constant acceleration term when no external force is applied
@@ -347,7 +364,9 @@ public:
     void solve();
     void setConstraintPoints();
     void extractConstraintPoints(const CollisionPair& collisionPair);
-    bool setContactConstraintPoint(LinkPair& linkPair, const Collision& collision);
+    bool addContactConstraintCandidate(LinkPair& linkPair, const Collision& collision);
+    void reduceContactConstraintPoints(LinkPair& linkPair, int maxNumPoints);
+    void finalizeContactConstraintPoint(LinkPair& linkPair, ConstraintPoint& contact, Vector3 normal);
     void setFrictionVectors(ConstraintPoint& constraintPoint);
     void setExtraJointConstraintPoints(const ExtraJointLinkPairPtr& linkPair);
     void set2dConstraintPoints(const Constrain2dLinkPairPtr& linkPair);
@@ -447,7 +466,8 @@ ConstraintForceSolver::Impl::Impl(DyWorldBase& world)
     defaultContactCullingDistance = DEFAULT_CONTACT_CULLING_DISTANCE;
     defaultContactCullingDepth = DEFAULT_CONTACT_CULLING_DEPTH;
     defaultCoefficientOfRestitution = 0.0;
-    
+    defaultMaxNumContactPoints = DEFAULT_MAX_NUM_CONTACT_POINTS;
+
     maxNumGaussSeidelIteration = DEFAULT_MAX_NUM_GAUSS_SEIDEL_ITERATION;
     numGaussSeidelInitialIteration = DEFAULT_NUM_GAUSS_SEIDEL_INITIAL_ITERATION;
     gaussSeidelErrorCriterion = DEFAULT_GAUSS_SEIDEL_ERROR_CRITERION;
@@ -722,6 +742,7 @@ void ConstraintForceSolver::Impl::initializeContactMaterials()
                     auto cm = new ContactMaterialEx(*org);
                     cm->cullingDistance = cm->info("cullingDistance", defaultContactCullingDistance);
                     cm->cullingDepth = cm->info("cullingDepth", defaultContactCullingDepth);
+                    cm->maxNumContactPoints = cm->info("max_num_contact_points", defaultMaxNumContactPoints);
 
                     if(cm->info()->read("collisionHandler", collisionHandlerName)){
                         auto iter = collisionHandlerMap.find(collisionHandlerName);
@@ -758,6 +779,7 @@ ConstraintForceSolver::Impl::createContactMaterialFromMaterialPair(int material1
     cm->setRestitution(sqrt((1.0 - m1->viscosity()) * (1.0 - m2->viscosity())));
     cm->cullingDistance = defaultContactCullingDistance;
     cm->cullingDepth = defaultContactCullingDepth;
+    cm->maxNumContactPoints = defaultMaxNumContactPoints;
     materialTable->setContactMaterial(material1, material2, cm);
 
     return cm;
@@ -915,45 +937,208 @@ void ConstraintForceSolver::Impl::extractConstraintPoints(const CollisionPair& c
     
     pLinkPair->link[0]->subBody()->hasConstrainedLinks = true;
     pLinkPair->link[1]->subBody()->hasConstrainedLinks = true;
-    
+
+    // First collect the contact points as candidates (depth/proximity culling
+    // only), then optionally reduce them to a manifold of at most
+    // maxNumContactPoints, and finally assign the global indices and the
+    // friction vectors to the surviving points. The candidate collection must
+    // precede the index assignment so that the global indices of one link pair
+    // stay contiguous, which the sparse matrix structure relies on.
+    auto& candidates = pLinkPair->constraintPoints;
     for(auto& collision : collisions){
-        setContactConstraintPoint(*pLinkPair, collision);
+        addContactConstraintCandidate(*pLinkPair, collision);
     }
 
-    if(!pLinkPair->constraintPoints.empty()){
+    const int maxNumPoints = pLinkPair->contactMaterial->maxNumContactPoints;
+    if(maxNumPoints > 0 && static_cast<int>(candidates.size()) > maxNumPoints){
+        reduceContactConstraintPoints(*pLinkPair, maxNumPoints);
+    }
+
+    for(auto& contact : candidates){
+        finalizeContactConstraintPoint(*pLinkPair, contact, contact.normalTowardInside[1]);
+    }
+
+    if(!candidates.empty()){
         constrainedLinkPairs.push_back(pLinkPair);
     }
 }
 
 
 /**
-   @retuen true if the point is actually added to the constraints
+   Add a collision as a contact constraint candidate. Only the geometric
+   quantities (point, depth, normal) are set here; the global indices and the
+   friction vectors are assigned later in finalizeContactConstraintPoint, after
+   the optional manifold reduction. The candidate normal is temporarily kept in
+   normalTowardInside[1].
+   @return true if the point is actually added as a candidate
 */
-bool ConstraintForceSolver::Impl::setContactConstraintPoint(LinkPair& linkPair, const Collision& collision)
+bool ConstraintForceSolver::Impl::addContactConstraintCandidate(LinkPair& linkPair, const Collision& collision)
 {
     // skip the contact which has too much depth
     if(collision.depth > linkPair.contactMaterial->cullingDepth){
         return false;
     }
-    
+
     auto& constraintPoints = linkPair.constraintPoints;
-    constraintPoints.push_back(ConstraintPoint());
-    ConstraintPoint& contact = constraintPoints.back();
 
-    contact.point = collision.point;
-
-    // dense contact points are eliminated
-    int nPrevPoints = constraintPoints.size() - 1;
-    for(int i=0; i < nPrevPoints; ++i){
-        if((constraintPoints[i].point - contact.point).norm() < linkPair.contactMaterial->cullingDistance){
-            constraintPoints.pop_back();
-            return false;
+    // When the manifold reduction is enabled (maxNumContactPoints > 0), the
+    // reduction's farthest-point selection already avoids picking near-duplicate
+    // points, so the proximity culling here is skipped (it would otherwise discard
+    // candidates by arrival order, possibly dropping a better extreme point before
+    // the reduction can choose it). When the reduction is disabled, the proximity
+    // culling provides the legacy behavior of eliminating dense duplicate points.
+    if(linkPair.contactMaterial->maxNumContactPoints == 0){
+        for(auto& prev : constraintPoints){
+            if((prev.point - collision.point).norm() < linkPair.contactMaterial->cullingDistance){
+                return false;
+            }
         }
     }
 
-    contact.normalTowardInside[1] = collision.normal;
-    contact.normalTowardInside[0] = -contact.normalTowardInside[1];
+    constraintPoints.push_back(ConstraintPoint());
+    ConstraintPoint& contact = constraintPoints.back();
+    contact.point = collision.point;
     contact.depth = collision.depth;
+    contact.normalTowardInside[1] = collision.normal;
+
+    return true;
+}
+
+
+/**
+   Reduce the contact constraint candidates of a link pair to a manifold of at
+   most maxNumPoints points per normal cluster, keeping the points that span the
+   largest area (the convex-hull extremes of the contact patch) so that the
+   support polygon is preserved. Candidates that share a similar normal form one
+   cluster; the deepest point of each cluster is always kept.
+*/
+void ConstraintForceSolver::Impl::reduceContactConstraintPoints(LinkPair& linkPair, int maxNumPoints)
+{
+    auto& candidates = linkPair.constraintPoints;
+    const int numCandidates = candidates.size();
+
+    // Cluster the candidates by normal direction (cos of 15 deg ~= 0.966).
+    // Each cluster's representative normal is fixed to the normal of the first
+    // point that created it; subsequent points are compared against that fixed
+    // representative.
+    //
+    // Note: this makes the clustering slightly order-dependent. If the normals
+    // within one real contact face are spread close to the threshold (e.g. on a
+    // curved surface or a coarse mesh whose per-point normals scatter by ~10
+    // deg), the order in which points arrive can change where a cluster is split
+    // (chained clustering). Updating the representative to the running mean of
+    // the cluster's normals (re-normalized) would reduce this order dependence
+    // at negligible cost. It is intentionally NOT done here because: (1) for a
+    // flat face the per-point normals agree to within a few degrees, so the mean
+    // and the fixed representative give the same clusters and the averaging
+    // would have no effect; (2) the mean still drifts as the cluster grows, so
+    // it only mitigates rather than removes the order dependence. Adopt the mean
+    // only if contact chattering or frame-to-frame instability of the reduced
+    // manifold is actually observed.
+    static const double normalClusterCosThresh = 0.966;
+    auto& clusterOf = reduceClusterOf;
+    auto& clusterNormals = reduceClusterNormals;
+    clusterOf.assign(numCandidates, -1);
+    clusterNormals.clear();
+    for(int i=0; i < numCandidates; ++i){
+        const Vector3& ni = candidates[i].normalTowardInside[1];
+        int found = -1;
+        for(size_t c=0; c < clusterNormals.size(); ++c){
+            if(ni.dot(clusterNormals[c]) >= normalClusterCosThresh){
+                found = c;
+                break;
+            }
+        }
+        if(found < 0){
+            found = clusterNormals.size();
+            clusterNormals.push_back(ni);
+        }
+        clusterOf[i] = found;
+    }
+
+    auto& reduced = reduceResult;
+    reduced.clear();
+    reduced.reserve(maxNumPoints * clusterNormals.size());
+
+    auto& members = reduceMembers;
+    auto& selected = reduceSelected;
+    auto& picked = reducePicked;
+    for(size_t c=0; c < clusterNormals.size(); ++c){
+        members.clear();
+        for(int i=0; i < numCandidates; ++i){
+            if(clusterOf[i] == static_cast<int>(c)){
+                members.push_back(i);
+            }
+        }
+        const int numMembers = members.size();
+        if(numMembers <= maxNumPoints){
+            for(int idx : members){
+                reduced.push_back(candidates[idx]);
+            }
+            continue;
+        }
+
+        // Greedy selection: deepest point first, then iteratively the point
+        // farthest from the already selected set (maximizing the spanned area).
+        selected.assign(numMembers, false);
+        picked.clear();
+
+        int deepest = 0;
+        for(int m=1; m < numMembers; ++m){
+            if(candidates[members[m]].depth > candidates[members[deepest]].depth){
+                deepest = m;
+            }
+        }
+        selected[deepest] = true;
+        picked.push_back(deepest);
+
+        while(static_cast<int>(picked.size()) < maxNumPoints){
+            int best = -1;
+            double bestDist = -1.0;
+            for(int m=0; m < numMembers; ++m){
+                if(selected[m]){
+                    continue;
+                }
+                // distance from member m to the nearest already-picked point
+                double nearest = std::numeric_limits<double>::max();
+                for(int p : picked){
+                    double d = (candidates[members[m]].point - candidates[members[p]].point).squaredNorm();
+                    if(d < nearest){
+                        nearest = d;
+                    }
+                }
+                if(nearest > bestDist){
+                    bestDist = nearest;
+                    best = m;
+                }
+            }
+            if(best < 0){
+                break;
+            }
+            selected[best] = true;
+            picked.push_back(best);
+        }
+
+        for(int m : picked){
+            reduced.push_back(candidates[members[m]]);
+        }
+    }
+
+    candidates.swap(reduced);
+}
+
+
+/**
+   Finalize a surviving contact constraint point: assign the global indices, set
+   the opposite normal, compute the relative velocity, and build the friction
+   vectors. The candidate normal is passed in (it was kept in
+   normalTowardInside[1] during the candidate stage).
+*/
+void ConstraintForceSolver::Impl::finalizeContactConstraintPoint
+(LinkPair& linkPair, ConstraintPoint& contact, Vector3 normal)
+{
+    contact.normalTowardInside[1] = normal;
+    contact.normalTowardInside[0] = -normal;
     contact.globalIndex = globalNumConstraintVectors++;
 
     // check velocities
@@ -974,9 +1159,9 @@ bool ConstraintForceSolver::Impl::setContactConstraintPoint(LinkPair& linkPair, 
                 const Vector3 axis = link->R() * link->a();
                 Vector3 direction;
                 if(k==0){
-                    direction = axis.cross(collision.normal);
+                    direction = axis.cross(normal);
                 } else {
-                    direction = collision.normal.cross(axis);
+                    direction = normal.cross(axis);
                 }
                 direction.normalize();
                 v[k] += link->dq_target() * direction;
@@ -989,14 +1174,14 @@ bool ConstraintForceSolver::Impl::setContactConstraintPoint(LinkPair& linkPair, 
 
     Vector3 v_tangent =
         contact.relVelocityOn0 - contact.normalProjectionOfRelVelocityOn0 * contact.normalTowardInside[1];
-    
+
     contact.globalFrictionIndex = globalNumFrictionVectors;
-    
+
     double vt_square = v_tangent.squaredNorm();
     static const double vsqrthresh = VEL_THRESH_OF_DYNAMIC_FRICTION * VEL_THRESH_OF_DYNAMIC_FRICTION;
     bool isSlipping = (vt_square > vsqrthresh);
     contact.mu = isSlipping ? linkPair.contactMaterial->dynamicFriction() : linkPair.contactMaterial->staticFriction();
-    
+
     if( !ONLY_STATIC_FRICTION_FORMULATION && isSlipping){
         contact.numFrictionVectors = 1;
         double vt_mag = sqrt(vt_square);
@@ -1005,7 +1190,7 @@ bool ConstraintForceSolver::Impl::setContactConstraintPoint(LinkPair& linkPair, 
         Vector3 t3 = t2.cross(contact.normalTowardInside[1]);
         contact.frictionVector[0][0] = t3.normalized();
         contact.frictionVector[0][1] = -contact.frictionVector[0][0];
-        
+
         // proportional dynamic friction near zero velocity
         if(PROPORTIONAL_DYNAMIC_FRICTION){
             vt_mag *= 10000.0;
@@ -1022,8 +1207,6 @@ bool ConstraintForceSolver::Impl::setContactConstraintPoint(LinkPair& linkPair, 
         }
     }
     globalNumFrictionVectors += contact.numFrictionVectors;
-
-    return true;
 }
 
 
@@ -2417,6 +2600,18 @@ void ConstraintForceSolver::setContactCullingDepth(double depth)
 double ConstraintForceSolver::contactCullingDepth()
 {
     return impl->defaultContactCullingDepth;
+}
+
+
+void ConstraintForceSolver::setMaxNumContactPoints(int n)
+{
+    impl->defaultMaxNumContactPoints = n;
+}
+
+
+int ConstraintForceSolver::maxNumContactPoints() const
+{
+    return impl->defaultMaxNumContactPoints;
 }
 
 

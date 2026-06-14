@@ -41,8 +41,9 @@ public:
     double maxFrictionCoefficient() const;
     void setContactCullingDistance(double value);        
     void setContactCullingDepth(double value);        
-    void setErrorCriterion(double value);        
+    void setErrorCriterion(double value);
     void setMaxNumIterations(int value);
+    void setMaxNumContactPoints(int value);
     void setContactCorrectionDepth(double value);
     void setContactCorrectionVelocityRatio(double value);
     void setEpsilon(double epsilon);

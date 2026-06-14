@@ -85,6 +85,7 @@ public:
     FloatingNumberString contactCullingDepth;
     FloatingNumberString errorCriterion;
     int maxNumIterations;
+    int maxNumContactPoints;
     FloatingNumberString contactCorrectionDepth;
     FloatingNumberString contactCorrectionVelocityRatio;
     double epsilon;
@@ -157,6 +158,7 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self)
     
     errorCriterion = cfs.gaussSeidelErrorCriterion();
     maxNumIterations = cfs.gaussSeidelMaxNumIterations();
+    maxNumContactPoints = cfs.maxNumContactPoints();
     contactCorrectionDepth = cfs.contactCorrectionDepth();
     contactCorrectionVelocityRatio = cfs.contactCorrectionVelocityRatio();
 
@@ -189,6 +191,7 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self, const Impl& org)
     contactCullingDepth = org.contactCullingDepth;
     errorCriterion = org.errorCriterion;
     maxNumIterations = org.maxNumIterations;
+    maxNumContactPoints = org.maxNumContactPoints;
     contactCorrectionDepth = org.contactCorrectionDepth;
     contactCorrectionVelocityRatio = org.contactCorrectionVelocityRatio;
     epsilon = org.epsilon;
@@ -291,7 +294,13 @@ void AISTSimulatorItem::setErrorCriterion(double value)
     
 void AISTSimulatorItem::setMaxNumIterations(int value)
 {
-    impl->maxNumIterations = value;   
+    impl->maxNumIterations = value;
+}
+
+
+void AISTSimulatorItem::setMaxNumContactPoints(int value)
+{
+    impl->maxNumContactPoints = value;
 }
 
 
@@ -422,6 +431,7 @@ bool AISTSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationB
     cfs.setMaterialTable(self->worldItem()->materialTable());
     cfs.setGaussSeidelErrorCriterion(errorCriterion.value());
     cfs.setGaussSeidelMaxNumIterations(maxNumIterations);
+    cfs.setMaxNumContactPoints(maxNumContactPoints);
     cfs.setContactDepthCorrection(contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
     
     self->addPostDynamicsFunction([&](){ clearExternalForces(); });
@@ -716,6 +726,7 @@ void AISTSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Error criterion"), errorCriterion,
                 [&](const string& v){ return errorCriterion.setPositiveValue(v); });
     putProperty.min(1)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
+    putProperty.min(0)(_("Max contact points"), maxNumContactPoints, changeProperty(maxNumContactPoints));
     putProperty(_("CC depth"), contactCorrectionDepth,
                 [&](const string& v){ return contactCorrectionDepth.setNonNegativeValue(v); });
     putProperty(_("CC v-ratio"), contactCorrectionVelocityRatio,
@@ -745,6 +756,7 @@ bool AISTSimulatorItem::Impl::store(Archive& archive)
     archive.write("contactCullingDepth", contactCullingDepth);
     archive.write("errorCriterion", errorCriterion);
     archive.write("maxNumIterations", maxNumIterations);
+    archive.write("max_num_contact_points", maxNumContactPoints);
     archive.write("contactCorrectionDepth", contactCorrectionDepth);
     archive.write("contactCorrectionVelocityRatio", contactCorrectionVelocityRatio);
     archive.write("kinematicWalking", isKinematicWalkingEnabled);
@@ -781,6 +793,7 @@ bool AISTSimulatorItem::Impl::restore(const Archive& archive)
     contactCullingDepth = archive.get("contactCullingDepth", contactCullingDepth.string());
     errorCriterion = archive.get("errorCriterion", errorCriterion.string());
     archive.read("maxNumIterations", maxNumIterations);
+    archive.read("max_num_contact_points", maxNumContactPoints);
     contactCorrectionDepth = archive.get("contactCorrectionDepth", contactCorrectionDepth.string());
     contactCorrectionVelocityRatio = archive.get("contactCorrectionVelocityRatio", contactCorrectionVelocityRatio.string());
     archive.read("kinematicWalking", isKinematicWalkingEnabled);

@@ -35,7 +35,13 @@ public:
     
     void setContactCullingDepth(double depth);
     double contactCullingDepth();
-    
+
+    // Maximum number of contact points kept per contact pair (per normal
+    // cluster). 0 (the default) disables the reduction. A material-specific
+    // "max_num_contact_points" info value overrides this default.
+    void setMaxNumContactPoints(int n);
+    int maxNumContactPoints() const;
+
     void setCoefficientOfRestitution(double epsilon);
     double coefficientOfRestitution() const;
 
