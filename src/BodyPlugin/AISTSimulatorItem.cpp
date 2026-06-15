@@ -724,7 +724,7 @@ void AISTSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Contact culling depth"), contactCullingDepth,
                 [&](const string& v){ return contactCullingDepth.setNonNegativeValue(v); });
     putProperty(_("Error criterion"), errorCriterion,
-                [&](const string& v){ return errorCriterion.setPositiveValue(v); });
+                [&](const string& v){ return errorCriterion.setNonNegativeValue(v); });
     putProperty.min(1)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
     putProperty.min(0)(_("Max contact points"), maxNumContactPoints, changeProperty(maxNumContactPoints));
     putProperty(_("CC depth"), contactCorrectionDepth,
