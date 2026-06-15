@@ -120,6 +120,22 @@ static const double DEFAULT_CONTACT_CORRECTION_DEPTH = 0.00025;
 //static const double PENETRATION_B = 80.0;
 static const double DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO = 5.0;
 
+// Characteristic depth of the depth-correction saturation, expressed as a
+// multiple of contactCorrectionDepth (d0). For penetrations whose excess over
+// d0 is small compared to this, the correction velocity is linear (slope =
+// contactCorrectionVelocityRatio); for larger excess it saturates toward an
+// upper bound of contactCorrectionVelocityRatio * (this multiple) * d0. The
+// point is that the depth correction exists to settle the penetration to the
+// small target depth d0, not to remove a deep penetration in one step: a deep
+// interference is itself an anomaly (e.g. a spurious horizontal contact normal
+// returned by a mesh collision checker), and trying to correct it abruptly
+// injects a large, non-physical disturbance. Saturating the correction keeps
+// the disturbance bounded so the simulation stays stable while the user
+// investigates the real cause. The function remains monotonically increasing in
+// depth (deeper still corrects at least as fast), it only caps the unbounded
+// growth.
+static const double CONTACT_CORRECTION_SATURATION_DEPTH_RATIO = 4.0;
+
 static const double DEFAULT_CONTACT_CULLING_DISTANCE = 0.005;
 static const double DEFAULT_CONTACT_CULLING_DEPTH = 0.05;
 
@@ -2123,7 +2139,14 @@ void ConstraintForceSolver::Impl::setConstantVectorAndMuBlock()
                     if(depth <= 0.0){
                         velOffset = contactCorrectionVelocityRatio * depth;
                     } else {
-                        velOffset = contactCorrectionVelocityRatio * (-1.0 / (depth + 1.0) + 1.0);
+                        // Saturating correction that stays linear (slope =
+                        // contactCorrectionVelocityRatio) near depth = 0, so it
+                        // joins the shallow branch smoothly, and tends to the
+                        // upper bound contactCorrectionVelocityRatio * s as the
+                        // excess depth grows, where s is the characteristic
+                        // depth scaled from d0.
+                        const double s = CONTACT_CORRECTION_SATURATION_DEPTH_RATIO * contactCorrectionDepth;
+                        velOffset = contactCorrectionVelocityRatio * depth / (1.0 + depth / s);
                     }
                     b(globalIndex) = an0(globalIndex) + (vn - velOffset) * dtinv;
                 } else {
