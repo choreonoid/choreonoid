@@ -43,6 +43,7 @@ public:
     void setContactCullingDepth(double value);        
     void setErrorCriterion(double value);
     void setMaxNumIterations(int value);
+    void setNumCollisionDetectionThreads(int value);
     void setMaxNumContactPoints(int value);
     void setContactCorrectionDepth(double value);
     void setContactCorrectionVelocityRatio(double value);

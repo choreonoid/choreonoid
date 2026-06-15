@@ -51,6 +51,9 @@ public:
     void setGaussSeidelMaxNumIterations(int n);
     int gaussSeidelMaxNumIterations();
 
+    void setNumCollisionDetectionThreads(int n);
+    int numCollisionDetectionThreads() const;
+
     void setContactDepthCorrection(double depth, double velocityRatio);
     double contactCorrectionDepth();
     double contactCorrectionVelocityRatio();

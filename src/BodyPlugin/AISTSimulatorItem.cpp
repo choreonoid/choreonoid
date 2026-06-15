@@ -85,6 +85,7 @@ public:
     FloatingNumberString contactCullingDepth;
     FloatingNumberString errorCriterion;
     int maxNumIterations;
+    int numCollisionDetectionThreads;
     int maxNumContactPoints;
     FloatingNumberString contactCorrectionDepth;
     FloatingNumberString contactCorrectionVelocityRatio;
@@ -158,6 +159,7 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self)
     
     errorCriterion = cfs.gaussSeidelErrorCriterion();
     maxNumIterations = cfs.gaussSeidelMaxNumIterations();
+    numCollisionDetectionThreads = cfs.numCollisionDetectionThreads();
     maxNumContactPoints = cfs.maxNumContactPoints();
     contactCorrectionDepth = cfs.contactCorrectionDepth();
     contactCorrectionVelocityRatio = cfs.contactCorrectionVelocityRatio();
@@ -191,6 +193,7 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self, const Impl& org)
     contactCullingDepth = org.contactCullingDepth;
     errorCriterion = org.errorCriterion;
     maxNumIterations = org.maxNumIterations;
+    numCollisionDetectionThreads = org.numCollisionDetectionThreads;
     maxNumContactPoints = org.maxNumContactPoints;
     contactCorrectionDepth = org.contactCorrectionDepth;
     contactCorrectionVelocityRatio = org.contactCorrectionVelocityRatio;
@@ -295,6 +298,12 @@ void AISTSimulatorItem::setErrorCriterion(double value)
 void AISTSimulatorItem::setMaxNumIterations(int value)
 {
     impl->maxNumIterations = value;
+}
+
+
+void AISTSimulatorItem::setNumCollisionDetectionThreads(int value)
+{
+    impl->numCollisionDetectionThreads = value;
 }
 
 
@@ -431,6 +440,7 @@ bool AISTSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationB
     cfs.setMaterialTable(self->worldItem()->materialTable());
     cfs.setGaussSeidelErrorCriterion(errorCriterion.value());
     cfs.setGaussSeidelMaxNumIterations(maxNumIterations);
+    cfs.setNumCollisionDetectionThreads(numCollisionDetectionThreads);
     cfs.setMaxNumContactPoints(maxNumContactPoints);
     cfs.setContactDepthCorrection(contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
     
@@ -726,6 +736,8 @@ void AISTSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Error criterion"), errorCriterion,
                 [&](const string& v){ return errorCriterion.setNonNegativeValue(v); });
     putProperty.min(1)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
+    putProperty.min(0)(_("Collision detection threads"), numCollisionDetectionThreads,
+                       changeProperty(numCollisionDetectionThreads));
     putProperty.min(0)(_("Max contact points"), maxNumContactPoints, changeProperty(maxNumContactPoints));
     putProperty(_("CC depth"), contactCorrectionDepth,
                 [&](const string& v){ return contactCorrectionDepth.setNonNegativeValue(v); });
@@ -756,6 +768,7 @@ bool AISTSimulatorItem::Impl::store(Archive& archive)
     archive.write("contactCullingDepth", contactCullingDepth);
     archive.write("errorCriterion", errorCriterion);
     archive.write("maxNumIterations", maxNumIterations);
+    archive.write("num_collision_detection_threads", numCollisionDetectionThreads);
     archive.write("max_num_contact_points", maxNumContactPoints);
     archive.write("contactCorrectionDepth", contactCorrectionDepth);
     archive.write("contactCorrectionVelocityRatio", contactCorrectionVelocityRatio);
@@ -793,6 +806,7 @@ bool AISTSimulatorItem::Impl::restore(const Archive& archive)
     contactCullingDepth = archive.get("contactCullingDepth", contactCullingDepth.string());
     errorCriterion = archive.get("errorCriterion", errorCriterion.string());
     archive.read("maxNumIterations", maxNumIterations);
+    archive.read("num_collision_detection_threads", numCollisionDetectionThreads);
     archive.read("max_num_contact_points", maxNumContactPoints);
     contactCorrectionDepth = archive.get("contactCorrectionDepth", contactCorrectionDepth.string());
     contactCorrectionVelocityRatio = archive.get("contactCorrectionVelocityRatio", contactCorrectionVelocityRatio.string());

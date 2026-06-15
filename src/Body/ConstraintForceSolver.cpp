@@ -411,6 +411,7 @@ public:
     int  maxNumGaussSeidelIteration;
     int  numGaussSeidelInitialIteration;
     double gaussSeidelErrorCriterion;
+    int  numCollisionDetectionThreads;
     double contactCorrectionDepth;
     double contactCorrectionVelocityRatio;
 
@@ -539,6 +540,7 @@ ConstraintForceSolver::Impl::Impl(DyWorldBase& world)
     maxNumGaussSeidelIteration = DEFAULT_MAX_NUM_GAUSS_SEIDEL_ITERATION;
     numGaussSeidelInitialIteration = DEFAULT_NUM_GAUSS_SEIDEL_INITIAL_ITERATION;
     gaussSeidelErrorCriterion = DEFAULT_GAUSS_SEIDEL_ERROR_CRITERION;
+    numCollisionDetectionThreads = 0;
     contactCorrectionDepth = DEFAULT_CONTACT_CORRECTION_DEPTH;
     contactCorrectionVelocityRatio = DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO;
 
@@ -784,6 +786,14 @@ void ConstraintForceSolver::Impl::initialize(void)
     }
 
     initWorldExtraJoints();
+
+    // Enable parallel collision detection when requested. This must be set
+    // before makeReady(), which is where the detector fixes its thread count.
+    if(numCollisionDetectionThreads > 0){
+        if(auto aist = dynamic_cast<AISTCollisionDetector*>(bodyCollisionDetector.collisionDetector())){
+            aist->setNumThreads(numCollisionDetectionThreads);
+        }
+    }
 
     bodyCollisionDetector.makeReady();
 
@@ -2708,6 +2718,18 @@ void ConstraintForceSolver::setGaussSeidelMaxNumIterations(int n)
 int ConstraintForceSolver::gaussSeidelMaxNumIterations()
 {
     return impl->maxNumGaussSeidelIteration;
+}
+
+
+void ConstraintForceSolver::setNumCollisionDetectionThreads(int n)
+{
+    impl->numCollisionDetectionThreads = n;
+}
+
+
+int ConstraintForceSolver::numCollisionDetectionThreads() const
+{
+    return impl->numCollisionDetectionThreads;
 }
 
 
