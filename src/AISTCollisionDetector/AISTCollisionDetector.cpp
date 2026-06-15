@@ -5,15 +5,13 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/ThreadPool>
 #include <algorithm>
-#include <random>
 #include <set>
+#include <atomic>
 
 using namespace std;
 using namespace cnoid;
 
 namespace {
-
-const bool ENABLE_SHUFFLE = false;
 
 typedef CollisionDetector::GeometryHandle GeometryHandle;
 
@@ -153,13 +151,17 @@ public:
     // for multithread version
     int numThreads;
     unique_ptr<ThreadPool> threadPool;
-    vector<int> shuffledPairIndices;
-    vector<vector<CollisionPair>> collisionPairArrays;
-    mt19937 randomEngine;
+    // One result slot per model pair (indexed by the pair index), so that the
+    // final collision order is the deterministic pair-index order regardless of
+    // which thread processed which pair. This keeps the simulation reproducible
+    // and the warm-start indices stable. Empty slots (pairs not in collision)
+    // are skipped when dispatching.
+    vector<CollisionPair> collisionPairSlots;
 
-    void extractCollisionsOfAssignedPairs(
-        int pairIndexBegin, int pairIndexEnd, vector<CollisionPair>& collisionPairs);
-    bool dispatchCollisionsInCollisionPairArrays(std::function<bool(const CollisionPair&)> callback);    
+    std::atomic<int> nextPairIndex; // shared cursor for dynamic scheduling
+
+    void extractCollisionsOfAssignedPairs();
+    bool dispatchCollisionsInCollisionPairArrays(std::function<bool(const CollisionPair&)> callback);
 };
 
 }
@@ -200,11 +202,6 @@ void AISTCollisionDetector::Impl::initialize()
     isReady = false;
     numThreads = 0;
     meshExtractor = new MeshExtractor;
-
-    if(ENABLE_SHUFFLE){
-        random_device seed;
-        randomEngine.seed(seed());
-    }
 }    
 
 
@@ -455,17 +452,11 @@ void AISTCollisionDetector::Impl::makeReady()
     if(maxNumThreads <= 0){
         numThreads = 0;
         threadPool.reset();
-        collisionPairArrays.clear();
+        collisionPairSlots.clear();
     } else {
         numThreads = (maxNumThreads > numPairs) ? numPairs : maxNumThreads;
         threadPool.reset(new ThreadPool(numThreads));
-        if(ENABLE_SHUFFLE){
-            shuffledPairIndices.resize(modelPairs.size());
-            for(size_t i=0; i < shuffledPairIndices.size(); ++i){
-                shuffledPairIndices[i] = i;
-            }
-        }
-        collisionPairArrays.resize(numThreads);
+        collisionPairSlots.resize(numPairs);
     }
 
     isReady = true;
@@ -621,76 +612,62 @@ bool AISTCollisionDetector::Impl::detectCollisions(const std::function<bool(cons
  */
 bool AISTCollisionDetector::Impl::detectCollisionsInParallel(const std::function<bool(const CollisionPair&)>& callback)
 {
-    if(ENABLE_SHUFFLE){
-        std::shuffle(shuffledPairIndices.begin(), shuffledPairIndices.end(), randomEngine);
-    }
-
-    const int numPairs = modelPairs.size();
-    const int minSize = numPairs / numThreads;
-    int remainder = numPairs % numThreads;
-    int index = 0;
+    // Dynamic scheduling: each worker repeatedly pulls the next pair index
+    // atomically, so an uneven per-pair cost (some pairs in contact, others far
+    // apart) does not stall a single statically-assigned thread. Each pair
+    // writes its result to its own slot (indexed by the pair index), so threads
+    // never write to the same slot and no locking is needed.
+    nextPairIndex.store(0);
     for(int i=0; i < numThreads; ++i){
-        int size = minSize;
-        if(remainder > 0){
-            ++size;
-            --remainder;
-        }
-        if(size == 0){
-            break;
-        }
-        threadPool->post([this, i, index, size](){
-            extractCollisionsOfAssignedPairs(index, index + size, collisionPairArrays[i]);
+        threadPool->post([this](){
+            extractCollisionsOfAssignedPairs();
         });
-        index += size;
     }
-    threadPool->waitLoop();
-    //threadPool->wait();
+    threadPool->wait();
 
     return dispatchCollisionsInCollisionPairArrays(callback);
 }
 
 
-void AISTCollisionDetector::Impl::extractCollisionsOfAssignedPairs
-(int pairIndexBegin, int pairIndexEnd, vector<CollisionPair>& collisionPairs)
+void AISTCollisionDetector::Impl::extractCollisionsOfAssignedPairs()
 {
-    collisionPairs.clear();
+    const int numPairs = modelPairs.size();
 
-    for(int i=pairIndexBegin; i < pairIndexEnd; ++i){
-        ColdetModelPairEx* modelPair;
-        if(ENABLE_SHUFFLE){
-            modelPair = modelPairs[shuffledPairIndices[i]];
-        } else {
-            modelPair = modelPairs[i];
+    while(true){
+        const int i = nextPairIndex.fetch_add(1);
+        if(i >= numPairs){
+            break;
         }
+        ColdetModelPairEx* modelPair = modelPairs[i];
 
-        collisionPairs.push_back(CollisionPair());
-        CollisionPair& collisionPair = collisionPairs.back();
+        CollisionPair& cpair = collisionPairSlots[i];
+        cpair.clearCollisions();
         do {
             if(modelPair->model(0)->isEnabled && modelPair->model(1)->isEnabled){
                 if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
                     if(!modelPair->detectCollisions().empty()){
-                        copyCollisionPairCollisions(modelPair, collisionPair, true);
+                        copyCollisionPairCollisions(modelPair, cpair, true);
                     }
                 }
             }
             modelPair = modelPair->sibling;
         } while(modelPair);
-
-        if(collisionPair.empty()){
-            collisionPairs.pop_back();
-        }
     }
 }
+
 
 bool AISTCollisionDetector::Impl::dispatchCollisionsInCollisionPairArrays
 (std::function<bool(const CollisionPair&)> callback)
 {
-    for(int i=0; i < numThreads; ++i){
-        const vector<CollisionPair>& collisionPairs = collisionPairArrays[i];
-        for(size_t j=0; j < collisionPairs.size(); ++j){
-            if(callback(collisionPairs[j])){
-                return true; // Early termination requested
-            }
+    // Dispatch in pair-index order, skipping pairs that are not in collision.
+    const int numPairs = modelPairs.size();
+    for(int i=0; i < numPairs; ++i){
+        const CollisionPair& cpair = collisionPairSlots[i];
+        if(cpair.empty()){
+            continue;
+        }
+        if(callback(cpair)){
+            return true; // Early termination requested
         }
     }
     return false; // All pairs checked
