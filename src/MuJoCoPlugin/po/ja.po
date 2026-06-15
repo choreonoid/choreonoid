@@ -1,0 +1,115 @@
+# Japanese translations for Choreonoid package.
+# Copyright (C) 2026 THE Choreonoid'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Choreonoid package.
+# nakaoka <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Choreonoid\n"
+"Report-Msgid-Bugs-To: info@choreonoid.co.jp\n"
+"POT-Creation-Date: 2026-06-15 21:39+0900\n"
+"PO-Revision-Date: 2026-06-15 21:39+0900\n"
+"Last-Translator: nakaoka <EMAIL@ADDRESS>\n"
+"Language-Team: Japanese <translation-team-ja@lists.sourceforge.net>\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "MuJoCo {0} is available.\n"
+msgstr "MuJoCo {0} が利用可能です。\n"
+
+msgid "Mesh \"{0}\""
+msgstr "メッシュ \"{0}\""
+
+msgid "A mesh"
+msgstr "メッシュ"
+
+msgid "MuJoCoSimulatorItem"
+msgstr "MuJoCoシミュレータアイテム"
+
+msgid "Euler"
+msgstr ""
+
+msgid "Implicit"
+msgstr ""
+
+msgid "ImplicitFast"
+msgstr ""
+
+msgid "PGS"
+msgstr ""
+
+msgid "CG"
+msgstr ""
+
+msgid "Newton"
+msgstr ""
+
+msgid "MuJoCo: mj_makeSpec failed."
+msgstr "MuJoCo: mj_makeSpecに失敗しました。"
+
+msgid "MuJoCo: failed to obtain the world body."
+msgstr "MuJoCo: ワールドボディの取得に失敗しました。"
+
+msgid "MuJoCo: model compilation failed: {0}"
+msgstr "MuJoCo: モデルのコンパイルに失敗しました: {0}"
+
+msgid "MuJoCo: mj_makeData failed."
+msgstr "MuJoCo: mj_makeDataに失敗しました。"
+
+msgid ""
+"MuJoCo: an extra joint connecting links of different bodies is not supported."
+msgstr "MuJoCo: 異なるボディのリンクを接続する追加ジョイントはサポートされていません。"
+
+msgid ""
+"MuJoCo: the piston extra joint between {0} and {1} is not supported and is "
+"ignored."
+msgstr "MuJoCo: {0}と{1}の間のピストン追加ジョイントはサポートされておらず、無視されます。"
+
+msgid ""
+"{0} has a non-axis-aligned scaling which is not supported in the MuJoCo "
+"plugin. The mesh is skipped."
+msgstr ""
+"{0}は軸非整列のスケーリングを含んでおり、MuJoCoプラグインではサポートされていません。"
+"このメッシュはスキップされます。"
+
+msgid "Gravity"
+msgstr "重力加速度"
+
+msgid "Integrator"
+msgstr "積分器"
+
+msgid "Solver"
+msgstr "ソルバ"
+
+msgid "Solver iterations"
+msgstr "ソルバ反復回数"
+
+msgid "Number of threads"
+msgstr "スレッド数"
+
+msgid "Position gain"
+msgstr "位置ゲイン"
+
+msgid "Velocity gain"
+msgstr "速度ゲイン"
+
+msgid "Min friction"
+msgstr "最小摩擦係数"
+
+msgid "Max friction"
+msgstr "最大摩擦係数"
+
+msgid "Friction impedance ratio"
+msgstr "摩擦インピーダンス比"
+
+msgid "Self collision"
+msgstr "自己干渉"
+
+msgid "Velocity output"
+msgstr "速度出力"
+
+msgid "Acceleration output"
+msgstr "加速度出力"
