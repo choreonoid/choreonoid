@@ -91,6 +91,12 @@ msgstr "収束判定誤差基準"
 msgid "Max iterations"
 msgstr "最大反復計算回数"
 
+msgid "Collision detection threads"
+msgstr "干渉検出スレッド数"
+
+msgid "Max contact points"
+msgstr "最大接触点数"
+
 msgid "CC depth"
 msgstr "接触補正深度"
 
