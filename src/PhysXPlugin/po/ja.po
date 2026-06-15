@@ -86,6 +86,9 @@ msgstr "位置反復回数"
 msgid "Velocity iterations"
 msgstr "速度反復回数"
 
+msgid "External forces every TGS iteration"
+msgstr "TGS反復毎に外力を適用"
+
 msgid "Linear damping"
 msgstr "線形ダンピング"
 
@@ -115,6 +118,16 @@ msgstr "メッシュ"
 
 msgid "createScene failed!"
 msgstr "createSceneに失敗しました！"
+
+msgid "Confirmation of all link position recording mode"
+msgstr "全リンク位置記録モードの確認"
+
+msgid ""
+"{0}: There is a model that has free-type joints other than the root link and all the link "
+"positions should be recorded in this case. Do you enable the mode to do it?"
+msgstr ""
+"{0}: ルートリンク以外でフリー型の関節を有するモデルがあるため，全てのリンクの位置を記録するのが望"
+"ましいです．これを行うモードを有効にしますか？"
 
 msgid ""
 "{0} has a non-axis-aligned scaling which is not supported in the PhysX"
