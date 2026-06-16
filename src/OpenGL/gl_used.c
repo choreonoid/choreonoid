@@ -118,6 +118,7 @@ int cnoidLoadGL(GLADloadfunc load)
     glad_glPixelStorei = (PFNGLPIXELSTOREIPROC)load("glPixelStorei");
     glad_glPointSize = (PFNGLPOINTSIZEPROC)load("glPointSize");
     glad_glPolygonMode = (PFNGLPOLYGONMODEPROC)load("glPolygonMode");
+    glad_glPolygonOffset = (PFNGLPOLYGONOFFSETPROC)load("glPolygonOffset");
     glad_glPopAttrib = (PFNGLPOPATTRIBPROC)load("glPopAttrib");
     glad_glPopClientAttrib = (PFNGLPOPCLIENTATTRIBPROC)load("glPopClientAttrib");
     glad_glPopMatrix = (PFNGLPOPMATRIXPROC)load("glPopMatrix");

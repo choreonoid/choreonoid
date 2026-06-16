@@ -12,6 +12,14 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+// Move caster depths slightly away from the light to suppress self-shadow acne.
+constexpr GLfloat ShadowMapDepthOffsetFactor = 2.0f;
+constexpr GLfloat ShadowMapDepthOffsetUnits = 8.0f;
+
+}
+
 namespace cnoid {
 
 class ShaderProgram::Impl
@@ -1753,15 +1761,15 @@ void FullLightingProgram::setUseReversedDepth(bool on)
 
         if(on){
             // Reversed depth: larger values are closer, smaller values are farther
-            // Shadow test: ref depth > shadow map depth means not in shadow
+            // Shadow test: ref depth >= shadow map depth means not in shadow
             // (ref depth is closer to the light than the occluder)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_GREATER);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_GEQUAL);
             // Out of range should be "not in shadow" = farthest = 0.0
             static const GLfloat border[] = { 0.0f, 0.0f, 0.0f, 0.0f };
             glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
         } else {
             // Standard depth: smaller values are closer, larger values are farther
-            // Shadow test: ref depth < shadow map depth means not in shadow
+            // Shadow test: ref depth <= shadow map depth means not in shadow
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
             // Out of range should be "not in shadow" = farthest = 1.0
             static const GLfloat border[] = { 1.0f, 0.0f, 0.0f, 0.0f };
@@ -1811,6 +1819,11 @@ void ShadowMapProgram::initializeShadowMapBuffer()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
 
+    const GLfloat offsetSign = mainImpl->useReversedDepth ? -1.0f : 1.0f;
+    glPolygonOffset(
+        ShadowMapDepthOffsetFactor * offsetSign,
+        ShadowMapDepthOffsetUnits * offsetSign);
+
     // Set appropriate clear depth for shadow map
     // Reversed depth: clear to 0.0 (farthest), Standard depth: clear to 1.0 (farthest)
     if(mainImpl->useReversedDepth){
@@ -1828,12 +1841,14 @@ void ShadowMapProgram::activate()
     
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
+    glEnable(GL_POLYGON_OFFSET_FILL);
 }
     
 
 void ShadowMapProgram::deactivate()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, mainProgram->impl->defaultFBO);
+    glDisable(GL_POLYGON_OFFSET_FILL);
     glCullFace(GL_BACK);
 
     NolightingProgram::deactivate();
