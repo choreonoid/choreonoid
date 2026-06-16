@@ -23,15 +23,23 @@ namespace {
 const bool USE_AFFINE_TRANSFORM = false;
 
 /*
-  If the following option is true, transforms with coordinate flip
-  are applied to the original mesh vertices so that flipped transforms
-  can be excluded from the scene graph.
-  However, this conversion may cause some troubles in operating the scene graph,
-  so the conversion should be disabled unless there is a special reason.
-  Anyway, transformations with flipping should not be included in the scene graph.
-  Such transformations can be warned by setting true to the next option.
+  Collada and similar source formats sometimes embed a reflection (a linear
+  transform whose determinant is negative) into a node, typically when an
+  authoring tool mirrors a left-side mesh to obtain its right-side counterpart.
+  Such a reflection cannot be carried on the Choreonoid scene graph: only
+  SgAffineTransform can hold it, and several downstream subsystems (renderer
+  normal matrix, back-face culling, MeshExtractor winding, physics-engine
+  collision-shape transforms) assume rotation-only transforms and silently
+  produce wrong results when a reflection passes through. See the SgAffineTransform
+  comment in SceneGraph.h for details.
+
+  When the following option is true, any reflection found on an aiNode is baked
+  into the descendant mesh vertices (with the normals and, if necessary, the
+  triangle winding adjusted accordingly), so that the scene graph itself stays
+  free of flips.
+  This is the recommended behavior and the option should normally be left on.
  */
-const bool ENABLE_FLIPPED_COORDINATE_EXPANSION = false;
+const bool ENABLE_FLIPPED_COORDINATE_EXPANSION = true;
 const bool ENABLE_WARNING_FOR_FLIPPED_COORDINATE = false;
 
 // Registers the loader when this library is loaded so that it can be used independently of
@@ -116,6 +124,15 @@ AssimpSceneLoader::Impl::Impl()
 {
 #ifdef AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION
     importer.SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION, true);
+#endif
+
+#ifdef AI_CONFIG_IMPORT_COLLADA_USE_COLLADA_NAMES
+    // Collada nodes carry both an 'id' (a file-unique identifier, often decorated by the
+    // exporter, e.g. "node-Ranger") and a 'name' (the original object name from the
+    // authoring tool, e.g. "Ranger"). By default Assimp puts the id into aiNode::mName.
+    // This option flips that so the human-meaningful name is used, which is what callers
+    // expect when looking nodes up by name (e.g. SDF's <mesh><submesh><name>).
+    importer.SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_USE_COLLADA_NAMES, true);
 #endif
 
     imageIO.setUpsideDown(true);
@@ -281,21 +298,21 @@ SgGroup* AssimpSceneLoader::Impl::convertAiNode(aiNode* node)
 SgGroup* AssimpSceneLoader::Impl::decomposeTransformation(const Affine3& T)
 {
     Matrix3 Q = T.linear();
-    
+
+    // With ENABLE_FLIPPED_COORDINATE_EXPANSION on, any reflection has already
+    // been baked into the descendant mesh vertices in convertAiNode, so a
+    // negative determinant should not reach here. Defensive bail-out: if it
+    // ever does, return nullptr so the caller falls back to SgAffineTransform
+    // rather than producing a broken rotation/scale decomposition.
+    if(Q.determinant() < 0.0){
+        return nullptr;
+    }
+
     // Step 1: Use polar decomposition to decompose Q into U (rotation) and P (symmetric positive definite matrix)
     // Polar decomposition using SVD
     Eigen::JacobiSVD<Eigen::Matrix3d> svd(Q, Eigen::ComputeFullU | Eigen::ComputeFullV);
     Eigen::Matrix3d R = svd.matrixU() * svd.matrixV().transpose();
     Eigen::Matrix3d P = svd.matrixV() * svd.singularValues().asDiagonal() * svd.matrixV().transpose();
-    
-    // Ensure U_extracted is a proper rotation matrix (determinant = +1)
-    if (R.determinant() < 0) {
-        // If inversion is needed, flip the last column to make determinant positive
-        R.col(2) = -R.col(2);
-        // P matrix also needs adjustment
-        P.col(2) = -P.col(2);
-        P.row(2) = -P.row(2);
-    }
     
     // Step 2: Decompose P as R*S*R^T
     // Perform eigenvalue decomposition on P (= R*S*R^T)
@@ -376,6 +393,15 @@ SgNode* AssimpSceneLoader::Impl::convertAiMeshFaces(aiMesh* srcMesh)
     SgGroupPtr group = new SgGroup;
     group->setName(srcMesh->mName.C_Str());
 
+    // If a non-trivial transform is being baked into the mesh by
+    // ENABLE_FLIPPED_COORDINATE_EXPANSION, decide once whether it contains a
+    // reflection. Some Collada files already compensate the triangle winding
+    // for a reflected node, so the actual winding flip is decided after the
+    // transformed normals are available.
+    const bool isFlipped =
+        ENABLE_FLIPPED_COORDINATE_EXPANSION && T_local &&
+        (*T_local).linear().determinant() < 0.0f;
+
     const unsigned int numVertices = srcMesh->mNumVertices;
     const auto srcVertices = srcMesh->mVertices;
     SgVertexArrayPtr vertices = new SgVertexArray;
@@ -400,9 +426,14 @@ SgNode* AssimpSceneLoader::Impl::convertAiMeshFaces(aiMesh* srcMesh)
             normals->at(i) << n.x, n.y, n.z;
         }
         if(ENABLE_FLIPPED_COORDINATE_EXPANSION && T_local){
-            const Matrix3f R = (*T_local).linear();
+            // Normals transform by the inverse transpose of the linear part.
+            // This is identical to the linear part itself when the transform
+            // is a rotation (possibly with a uniform positive scale), but it
+            // matters here precisely because T_local may contain a reflection
+            // or a non-uniform scale.
+            const Matrix3f N = (*T_local).linear().inverse().transpose();
             for(auto& n : *normals){
-                n = R * n;
+                n = (N * n).normalized();
             }
         }
     }
@@ -422,6 +453,34 @@ SgNode* AssimpSceneLoader::Impl::convertAiMeshFaces(aiMesh* srcMesh)
 
     const unsigned int numFaces = srcMesh->mNumFaces;
     const aiFace* srcFaces = srcMesh->mFaces;
+
+    bool flipTriangleWinding = isFlipped;
+    if(isFlipped && normals){
+        double dotSum = 0.0;
+        int numCheckedFaces = 0;
+        for(unsigned int i = 0; i < numFaces; ++i){
+            const aiFace& face = srcFaces[i];
+            if(face.mNumIndices == 3){
+                const unsigned int* indices = face.mIndices;
+                const Vector3f& v0 = vertices->at(indices[0]);
+                const Vector3f& v1 = vertices->at(indices[1]);
+                const Vector3f& v2 = vertices->at(indices[2]);
+                Vector3f faceNormal = (v1 - v0).cross(v2 - v0);
+                if(faceNormal.squaredNorm() > 0.0f){
+                    faceNormal.normalize();
+                    Vector3f normal =
+                        normals->at(indices[0]) + normals->at(indices[1]) + normals->at(indices[2]);
+                    if(normal.squaredNorm() > 0.0f){
+                        dotSum += faceNormal.dot(normal.normalized());
+                        ++numCheckedFaces;
+                    }
+                }
+            }
+        }
+        if(numCheckedFaces > 0){
+            flipTriangleWinding = (dotSum < 0.0);
+        }
+    }
     
     if(types & aiPrimitiveType_POINT){
         auto pointSet = new SgPointSet;
@@ -470,7 +529,11 @@ SgNode* AssimpSceneLoader::Impl::convertAiMeshFaces(aiMesh* srcMesh)
             const aiFace& face = srcFaces[i];
             if(face.mNumIndices == 3){
                 const unsigned int* indices = face.mIndices;
-                mesh->addTriangle(indices[0], indices[1], indices[2]);
+                if(flipTriangleWinding){
+                    mesh->addTriangle(indices[0], indices[2], indices[1]);
+                } else {
+                    mesh->addTriangle(indices[0], indices[1], indices[2]);
+                }
             }
         }
 
