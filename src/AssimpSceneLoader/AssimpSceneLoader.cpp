@@ -68,6 +68,10 @@ public:
     AiIndexToSgTextureMap  aiIndexToSgTextureMap;
     typedef map<string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
+    // Additional directories searched for texture image files when they are not found next to
+    // the scene file. Populated via AssimpSceneLoader::addImageSearchDirectory() and reset by
+    // clearImageSearchDirectories(). Tried in registration order.
+    vector<filesystem::path> imageSearchDirectories;
 
     MeshFilter meshFilter;
 
@@ -130,6 +134,21 @@ AssimpSceneLoader::~AssimpSceneLoader()
 void AssimpSceneLoader::setMessageSink(std::ostream& os)
 {
     getOrCreateImpl()->os_ = &os;
+}
+
+
+void AssimpSceneLoader::addImageSearchDirectory(const std::string& directory)
+{
+    if(directory.empty()) return;
+    getOrCreateImpl()->imageSearchDirectories.emplace_back(fromUTF8(directory));
+}
+
+
+void AssimpSceneLoader::clearImageSearchDirectories()
+{
+    if(impl){
+        impl->imageSearchDirectories.clear();
+    }
 }
 
 
@@ -568,21 +587,55 @@ SgTexture* AssimpSceneLoader::Impl::convertAiTexture(unsigned int index)
     if(srcMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0){
         aiString path;
         if(srcMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS){
-            filesystem::path filepath(fromUTF8(path.data));
-            if(!filepath.is_absolute()){
-                filepath = (directoryPath / filepath).lexically_normal();
-            }
-            string textureFile = toUTF8(std::filesystem::absolute(filepath).string());
+            filesystem::path rawPath(fromUTF8(path.data));
+            const bool isAbsolute = rawPath.is_absolute();
+            filesystem::path primaryPath =
+                isAbsolute ? rawPath : (directoryPath / rawPath).lexically_normal();
+            string primaryTextureFile = toUTF8(std::filesystem::absolute(primaryPath).string());
 
+            // First try the path as referenced by the scene file (relative paths resolved
+            // against the scene file's directory).
             SgImagePtr image;
-            ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(textureFile);
+            string usedTextureFile = primaryTextureFile;
+            ImagePathToSgImageMap::iterator p = imagePathToSgImageMap.find(primaryTextureFile);
             if(p != imagePathToSgImageMap.end()){
                 image = p->second;
             } else {
                 image = new SgImage;
-                if(imageIO.load(image->image(), textureFile, os())){
-                    image->setUri(path.data, textureFile);
-                    imagePathToSgImageMap[textureFile] = image;
+                // For a relative path, additional image search directories may be tried as a
+                // fallback, so suppress diagnostics on the first attempt and let the final
+                // attempt report the failure.
+                const bool hasFallback = !isAbsolute && !imageSearchDirectories.empty();
+                std::ostream& firstSink = hasFallback ? nullout() : os();
+                if(imageIO.load(image->image(), primaryTextureFile, firstSink)){
+                    image->setUri(path.data, primaryTextureFile);
+                    imagePathToSgImageMap[primaryTextureFile] = image;
+                } else if(hasFallback){
+                    // Try each search directory with just the filename portion.
+                    const filesystem::path filenameOnly = rawPath.filename();
+                    image.reset();
+                    for(size_t i = 0; i < imageSearchDirectories.size(); ++i){
+                        filesystem::path fallback =
+                            (imageSearchDirectories[i] / filenameOnly).lexically_normal();
+                        string fallbackTextureFile =
+                            toUTF8(std::filesystem::absolute(fallback).string());
+                        auto fp = imagePathToSgImageMap.find(fallbackTextureFile);
+                        if(fp != imagePathToSgImageMap.end()){
+                            image = fp->second;
+                            usedTextureFile = fallbackTextureFile;
+                            break;
+                        }
+                        SgImagePtr trial = new SgImage;
+                        const bool isLastTry = (i + 1 == imageSearchDirectories.size());
+                        std::ostream& sink = isLastTry ? os() : nullout();
+                        if(imageIO.load(trial->image(), fallbackTextureFile, sink)){
+                            trial->setUri(path.data, fallbackTextureFile);
+                            imagePathToSgImageMap[fallbackTextureFile] = trial;
+                            image = trial;
+                            usedTextureFile = fallbackTextureFile;
+                            break;
+                        }
+                    }
                 } else {
                     image.reset();
                 }

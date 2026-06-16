@@ -113,6 +113,10 @@ public:
     filesystem::path directoryPath;
     string directory;
 
+    // Additional directories searched for texture image files when they are not found next to
+    // the OBJ file. Populated via ObjSceneLoader::addImageSearchDirectory(), tried in order.
+    vector<filesystem::path> imageSearchDirectories;
+
     Impl(ObjSceneLoader* self);
     void clearBufObjects();
     SgNode* load(const string& filename);
@@ -167,6 +171,19 @@ ObjSceneLoader::~ObjSceneLoader()
 void ObjSceneLoader::setMessageSink(std::ostream& os)
 {
     impl->os_ = &os;
+}
+
+
+void ObjSceneLoader::addImageSearchDirectory(const std::string& directory)
+{
+    if(directory.empty()) return;
+    impl->imageSearchDirectories.emplace_back(fromUTF8(directory));
+}
+
+
+void ObjSceneLoader::clearImageSearchDirectories()
+{
+    impl->imageSearchDirectories.clear();
 }
 
 
@@ -736,14 +753,40 @@ void ObjSceneLoader::Impl::readTexture(const std::string& mapType)
 {
     if(mapType == "Kd"){
         if(subScanner.readStringToEOL(token)){
-            filesystem::path path(fromUTF8(token));
-            if(path.is_relative()){
-                path = directoryPath / path;
-            }
-            auto filename = toUTF8(path.string());
+            const filesystem::path rawPath(fromUTF8(token));
+            const bool isAbsolute = rawPath.is_absolute();
+
+            // Primary candidate: the path as written in the MTL (relative paths resolved
+            // against the OBJ file's directory).
+            filesystem::path primaryPath = isAbsolute ? rawPath : (directoryPath / rawPath);
+            const string primaryFilename = toUTF8(primaryPath.string());
+
             SgTexturePtr texture = new SgTexture;
             auto image = texture->getOrCreateImage();
-            if(imageIO.load(image->image(), filename, os())){
+
+            // When fallback search directories are registered (only relevant for a relative
+            // path), suppress per-attempt error messages and only report failure if every
+            // candidate fails.
+            const bool hasFallback = !isAbsolute && !imageSearchDirectories.empty();
+            std::ostream& primarySink = hasFallback ? nullout() : os();
+            bool loaded = imageIO.load(image->image(), primaryFilename, primarySink);
+
+            if(!loaded && hasFallback){
+                const filesystem::path filenameOnly = rawPath.filename();
+                for(size_t i = 0; i < imageSearchDirectories.size(); ++i){
+                    const filesystem::path fallback =
+                        (imageSearchDirectories[i] / filenameOnly).lexically_normal();
+                    const string fallbackFilename = toUTF8(fallback.string());
+                    const bool isLastTry = (i + 1 == imageSearchDirectories.size());
+                    std::ostream& sink = isLastTry ? os() : nullout();
+                    if(imageIO.load(image->image(), fallbackFilename, sink)){
+                        loaded = true;
+                        break;
+                    }
+                }
+            }
+
+            if(loaded){
                 image->setUriWithFilePathAndBaseDirectory(token, directory);
                 currentMaterialDefInfo->texture = texture;
             }

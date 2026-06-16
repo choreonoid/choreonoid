@@ -3,6 +3,7 @@
 
 #include "SceneGraph.h"
 #include <iosfwd>
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -16,6 +17,16 @@ public:
     virtual void setMessageSink(std::ostream& os);
     virtual void setDefaultDivisionNumber(int n);
     virtual void setDefaultCreaseAngle(double theta);
+
+    /**
+       Hints the loader at additional directories to consider when a texture image referenced
+       by the scene file cannot be located beside the scene file itself. The default
+       implementation does nothing; concrete loaders that handle this hint (currently
+       AssimpSceneLoader) override it. See AssimpSceneLoader::addImageSearchDirectory for the
+       lookup rules and threading contract.
+    */
+    virtual void addImageSearchDirectory(const std::string& directory);
+    virtual void clearImageSearchDirectories();
 
     enum LengthUnitType { Meter, Millimeter, Inch, NumLengthUnitTypes };
     virtual void setLengthUnitHint(LengthUnitType hint);

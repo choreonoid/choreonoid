@@ -60,6 +60,9 @@ public:
     std::shared_ptr<AbstractSceneLoader> actualSceneLoaderOnLastLoading;
     int defaultDivisionNumber;
     double defaultCreaseAngle;
+    // Image search directories accumulated via addImageSearchDirectory(). Kept so that
+    // loaders created lazily after the call also receive them.
+    vector<string> imageSearchDirectories;
 
     Impl(SceneLoader* impl);
     AbstractSceneLoaderPtr findLoader(string ext);
@@ -168,6 +171,12 @@ AbstractSceneLoaderPtr SceneLoader::Impl::findLoader(string ext)
         if(q == loaders.end()){
             loader = getLoaderFactories()[loaderId]();
             loaders[loaderId] = loader;
+            // Apply any image search directories that were registered before this loader
+            // was instantiated, so the loader behaves consistently regardless of the order
+            // in which configuration calls and loads were issued.
+            for(const auto& dir : imageSearchDirectories){
+                loader->addImageSearchDirectory(dir);
+            }
         } else {
             loader = q->second;
         }
@@ -236,6 +245,32 @@ SgNode* SceneLoader::Impl::load(const std::string& filename, bool* out_isSupport
 std::shared_ptr<AbstractSceneLoader> SceneLoader::actualSceneLoaderOnLastLoading()
 {
     return impl->actualSceneLoaderOnLastLoading;
+}
+
+
+void SceneLoader::addImageSearchDirectory(const std::string& directory)
+{
+    if(directory.empty()){
+        return;
+    }
+    lock_guard<mutex> lock(getLoaderMutex());
+    impl->imageSearchDirectories.push_back(directory);
+    // Propagate to every loader that has already been instantiated.
+    for(auto& [id, loader] : impl->loaders){
+        (void)id;
+        loader->addImageSearchDirectory(directory);
+    }
+}
+
+
+void SceneLoader::clearImageSearchDirectories()
+{
+    lock_guard<mutex> lock(getLoaderMutex());
+    impl->imageSearchDirectories.clear();
+    for(auto& [id, loader] : impl->loaders){
+        (void)id;
+        loader->clearImageSearchDirectories();
+    }
 }
 
 

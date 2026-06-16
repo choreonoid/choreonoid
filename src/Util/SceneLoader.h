@@ -33,6 +33,17 @@ public:
 
     std::shared_ptr<AbstractSceneLoader> actualSceneLoaderOnLastLoading();
 
+    /**
+       Registers an image search directory and propagates it to every concrete loader this
+       SceneLoader manages. The directory is remembered, so loaders created lazily by later
+       calls to load() will also receive it. This is the right place to express "textures
+       may also live in this directory" hints that are independent of the mesh file format
+       (e.g. the SDF convention of placing textures under "<model>/materials/textures/").
+    */
+    virtual void addImageSearchDirectory(const std::string& directory) override;
+
+    virtual void clearImageSearchDirectories() override;
+
 private:
     class Impl;
     Impl* impl;

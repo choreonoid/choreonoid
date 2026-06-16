@@ -35,6 +35,18 @@ void AbstractSceneLoader::setDefaultCreaseAngle(double /* theta */)
 }
 
 
+void AbstractSceneLoader::addImageSearchDirectory(const std::string& /* directory */)
+{
+
+}
+
+
+void AbstractSceneLoader::clearImageSearchDirectories()
+{
+
+}
+
+
 void AbstractSceneLoader::setLengthUnitHint(LengthUnitType hint)
 {
     lengthUnitHint_ = hint;
