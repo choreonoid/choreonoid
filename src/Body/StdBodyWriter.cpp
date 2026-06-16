@@ -329,7 +329,7 @@ MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
 
 static ValueNode* createLimitValueNode(double value, bool isAngle, const char* format)
 {
-    if(value <= -std::numeric_limits<double>::max() || value >= std::numeric_limits<double>::max()){
+    if(Link::isUnlimitedRangeValue(value)){
         return new ScalarNode("unlimited");
     } else if(isAngle){
         return new ScalarNode(degree(value), format);

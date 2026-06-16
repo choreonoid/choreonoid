@@ -419,8 +419,8 @@ static bool applyVelocityLimitFilterMain
     int n = std::min(numParts, body->numJoints());
     for(int i=0; i < n; ++i){
         Link* joint = body->joint(i);
-        if(joint->dq_upper() != std::numeric_limits<double>::max() ||
-           joint->dq_lower() != -std::numeric_limits<double>::max()){
+        if(!Link::isUnlimitedRangeValue(joint->dq_upper()) ||
+           !Link::isUnlimitedRangeValue(joint->dq_lower())){
             const double deltaUVLimit = joint->dq_upper() / frameRate;
             const double deltaLVLimit = joint->dq_lower() / frameRate;
             
@@ -490,8 +490,8 @@ void cnoid::applyRangeLimitFilter
     int n = std::min(numParts, body->numJoints());
     for(int i=0; i < n; ++i){
         Link* joint = body->joint(i);
-        if(joint->q_upper() != std::numeric_limits<double>::max() ||
-           joint->q_lower() != -std::numeric_limits<double>::max()){
+        if(!Link::isUnlimitedRangeValue(joint->q_upper()) ||
+           !Link::isUnlimitedRangeValue(joint->q_lower())){
             const double upper = joint->q_upper() - margin;
             const double lower = joint->q_lower() + margin;
             if(upper > lower){

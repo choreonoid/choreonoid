@@ -5,6 +5,8 @@
 #include <cnoid/EigenTypes>
 #include <cnoid/SceneUpdate>
 #include <vector>
+#include <cmath>
+#include <limits>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -268,6 +270,18 @@ public:
     double dq_lower() const { return dq_lower_; } ///< the upper limit of joint velocities
     double u_upper() const { return u_upper_; } ///< the upper limit of joints efforts
     double u_lower() const { return u_lower_; } ///< the lower limit of joint efforts
+
+    /**
+       Returns true if the given value represents an unlimited bound of a joint range
+       (displacement, velocity, or effort). A bound is considered unlimited when its
+       magnitude reaches std::numeric_limits<double>::max(), which is the value set by
+       setUnlimitedJoint*Range() and is the canonical representation of "no limit" in
+       Choreonoid. Use this predicate instead of comparing directly with
+       std::numeric_limits<double>::max() so that the convention stays encapsulated.
+    */
+    static bool isUnlimitedRangeValue(double v) {
+        return std::abs(v) >= std::numeric_limits<double>::max();
+    }
 
     bool hasJointDisplacementLimits() const;
     bool hasJointVelocityLimits() const;

@@ -640,10 +640,10 @@ void BodyLinkView::Impl::updateSlideJointState()
     qSpin.setRange(-999.9999, 999.9999);
     qSpin.setSingleStep(0.0001);
 
-    if(qmin <= -std::numeric_limits<double>::max()){
+    if(Link::isUnlimitedRangeValue(qmin)){
         qmin = -999.9999;
     }
-    if(qmax >= std::numeric_limits<double>::max()){
+    if(Link::isUnlimitedRangeValue(qmax)){
         qmax = 999.9999;
     }
     

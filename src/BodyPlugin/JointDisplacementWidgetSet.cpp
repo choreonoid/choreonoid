@@ -693,8 +693,8 @@ void JointIndicator::initialize(Link* joint)
     auto& helper = baseImpl->presentationHelper;
     double lower, upper;
     helper.getPresentationRange(joint, lower, upper);
-    bool isLowerInfinite = (lower == -std::numeric_limits<double>::max());
-    bool isUpperInfinite = (upper == std::numeric_limits<double>::max());
+    bool isLowerInfinite = Link::isUnlimitedRangeValue(lower);
+    bool isUpperInfinite = Link::isUnlimitedRangeValue(upper);
     auto presentationType = helper.getPresentationType(joint);
 
     slider.blockSignals(true);
