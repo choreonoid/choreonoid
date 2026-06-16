@@ -2365,3 +2365,27 @@ msgstr "仮想ジョイスティック"
 
 msgid "VirtualJoystickView"
 msgstr "仮想ジョイスティックビュー"
+
+msgid "Find"
+msgstr "検索"
+
+msgid "Find:"
+msgstr "検索文字列:"
+
+msgid "Case sensitive"
+msgstr "大文字と小文字を区別"
+
+msgid "Whole words"
+msgstr "単語単位で検索"
+
+msgid "Find Next"
+msgstr "次を検索"
+
+msgid "Find Previous"
+msgstr "前を検索"
+
+msgid "Close"
+msgstr "閉じる"
+
+msgid "Not found"
+msgstr "見つかりませんでした"

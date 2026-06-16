@@ -12,6 +12,13 @@
 #include <QMessageBox>
 #include <QCoreApplication>
 #include <QThread>
+#include <QDialog>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QLabel>
+#include <QCheckBox>
+#include <QKeyEvent>
+#include <QShortcut>
 #include <stack>
 #include <regex>
 #include <streambuf>
@@ -103,6 +110,27 @@ public:
 };
 
 
+class FindDialog : public QDialog
+{
+public:
+    MessageView::Impl* viewImpl;
+    QLineEdit* findEdit;
+    QCheckBox* caseSensitiveCheck;
+    QCheckBox* wholeWordCheck;
+    QPushButton* findNextButton;
+    QPushButton* findPrevButton;
+    QLabel* statusLabel;
+
+    FindDialog(MessageView::Impl* viewImpl, QWidget* parent);
+    void showAndFocus();
+    void findNext();
+    void findPrev();
+
+protected:
+    virtual void keyPressEvent(QKeyEvent* event) override;
+};
+
+
 }
 
 namespace cnoid {
@@ -113,9 +141,10 @@ public:
     MessageView* self;
 
     Qt::HANDLE mainThreadId;
-        
+
     QHBoxLayout* layout;
     TextEditEx* textEdit;
+    FindDialog* findDialog;
     QTextCursor cursor;
     QTextCharFormat orgCharFormat;
     QTextCharFormat currentCharFormat;
@@ -136,6 +165,10 @@ public:
 
     Impl(MessageView* self);
     void createTextEdit();
+    void showFindDialog();
+    bool findText(const QString& text, bool backward, bool caseSensitive, bool wholeWord);
+    void findNext();
+    void findPrev();
 
     void put(const string& message, int type, bool doLF, bool doNotify, bool doFlush, bool isMovable);
     void put(const std::string& message, bool doLF, bool doNotify, bool doFlush, bool isMovable);
@@ -190,6 +223,18 @@ int MessageViewStreamBuf::sync()
 
 void TextEditEx::keyPressEvent(QKeyEvent* event)
 {
+    if(event->key() == Qt::Key_F && (event->modifiers() & Qt::ControlModifier)){
+        viewImpl->showFindDialog();
+        return;
+    }
+    if(event->key() == Qt::Key_F3){
+        if(event->modifiers() & Qt::ShiftModifier){
+            viewImpl->findPrev();
+        } else {
+            viewImpl->findNext();
+        }
+        return;
+    }
     switch(event->key()){
     case Qt::Key_Return:
         moveCursor(QTextCursor::End);
@@ -270,6 +315,7 @@ MessageView::Impl::Impl(MessageView* self) :
     self(self),
     mainThreadId(QThread::currentThreadId()),
     textEdit(nullptr),
+    findDialog(nullptr),
     sbuf(this, false),
     os(&sbuf),
     sbuf_flush(this, true),
@@ -318,6 +364,165 @@ MessageView::Impl::Impl(MessageView* self) :
             InfoBar::instance()->notify(message);
         },
         [this]{ flush(); });
+}
+
+
+FindDialog::FindDialog(MessageView::Impl* viewImpl, QWidget* parent)
+    : QDialog(parent),
+      viewImpl(viewImpl)
+{
+    setWindowTitle(_("Find"));
+    setModal(false);
+
+    auto mainLayout = new QVBoxLayout(this);
+
+    auto editLayout = new QHBoxLayout;
+    editLayout->addWidget(new QLabel(_("Find:")));
+    findEdit = new QLineEdit;
+    editLayout->addWidget(findEdit);
+    mainLayout->addLayout(editLayout);
+
+    auto optionsLayout = new QHBoxLayout;
+    caseSensitiveCheck = new QCheckBox(_("Case sensitive"));
+    optionsLayout->addWidget(caseSensitiveCheck);
+    wholeWordCheck = new QCheckBox(_("Whole words"));
+    optionsLayout->addWidget(wholeWordCheck);
+    optionsLayout->addStretch();
+    mainLayout->addLayout(optionsLayout);
+
+    statusLabel = new QLabel;
+    mainLayout->addWidget(statusLabel);
+
+    auto buttonLayout = new QHBoxLayout;
+    buttonLayout->addStretch();
+    findPrevButton = new QPushButton(_("Find Previous"));
+    findPrevButton->setAutoDefault(false);
+    buttonLayout->addWidget(findPrevButton);
+    findNextButton = new QPushButton(_("Find Next"));
+    findNextButton->setDefault(true);
+    buttonLayout->addWidget(findNextButton);
+    auto closeButton = new QPushButton(_("Close"));
+    closeButton->setAutoDefault(false);
+    buttonLayout->addWidget(closeButton);
+    mainLayout->addLayout(buttonLayout);
+
+    QObject::connect(findNextButton, &QPushButton::clicked, [this]{ findNext(); });
+    QObject::connect(findPrevButton, &QPushButton::clicked, [this]{ findPrev(); });
+    QObject::connect(closeButton, &QPushButton::clicked, this, &QDialog::close);
+    QObject::connect(findEdit, &QLineEdit::returnPressed, [this]{ findNext(); });
+    QObject::connect(findEdit, &QLineEdit::textChanged, [this]{ statusLabel->clear(); });
+}
+
+
+void FindDialog::keyPressEvent(QKeyEvent* event)
+{
+    if(event->key() == Qt::Key_F3){
+        if(event->modifiers() & Qt::ShiftModifier){
+            findPrev();
+        } else {
+            findNext();
+        }
+        return;
+    }
+    QDialog::keyPressEvent(event);
+}
+
+
+void FindDialog::showAndFocus()
+{
+    if(!isVisible()){
+        show();
+    } else {
+        raise();
+        activateWindow();
+    }
+    findEdit->setFocus();
+    findEdit->selectAll();
+}
+
+
+void FindDialog::findNext()
+{
+    QString text = findEdit->text();
+    if(text.isEmpty()){
+        return;
+    }
+    if(viewImpl->findText(text, false, caseSensitiveCheck->isChecked(), wholeWordCheck->isChecked())){
+        statusLabel->clear();
+    } else {
+        statusLabel->setText(_("Not found"));
+    }
+}
+
+
+void FindDialog::findPrev()
+{
+    QString text = findEdit->text();
+    if(text.isEmpty()){
+        return;
+    }
+    if(viewImpl->findText(text, true, caseSensitiveCheck->isChecked(), wholeWordCheck->isChecked())){
+        statusLabel->clear();
+    } else {
+        statusLabel->setText(_("Not found"));
+    }
+}
+
+
+void MessageView::Impl::showFindDialog()
+{
+    if(!findDialog){
+        findDialog = new FindDialog(this, self);
+    }
+    findDialog->showAndFocus();
+}
+
+
+bool MessageView::Impl::findText(const QString& text, bool backward, bool caseSensitive, bool wholeWord)
+{
+    QTextDocument::FindFlags flags;
+    if(backward){
+        flags |= QTextDocument::FindBackward;
+    }
+    if(caseSensitive){
+        flags |= QTextDocument::FindCaseSensitively;
+    }
+    if(wholeWord){
+        flags |= QTextDocument::FindWholeWords;
+    }
+    if(textEdit->find(text, flags)){
+        return true;
+    }
+    // Wrap around
+    QTextCursor savedCursor = textEdit->textCursor();
+    QTextCursor wrapCursor = savedCursor;
+    wrapCursor.movePosition(backward ? QTextCursor::End : QTextCursor::Start);
+    textEdit->setTextCursor(wrapCursor);
+    if(textEdit->find(text, flags)){
+        return true;
+    }
+    textEdit->setTextCursor(savedCursor);
+    return false;
+}
+
+
+void MessageView::Impl::findNext()
+{
+    if(findDialog && !findDialog->findEdit->text().isEmpty()){
+        findDialog->findNext();
+    } else {
+        showFindDialog();
+    }
+}
+
+
+void MessageView::Impl::findPrev()
+{
+    if(findDialog && !findDialog->findEdit->text().isEmpty()){
+        findDialog->findPrev();
+    } else {
+        showFindDialog();
+    }
 }
 
 
