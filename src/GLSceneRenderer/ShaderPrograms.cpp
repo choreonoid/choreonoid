@@ -107,6 +107,24 @@ public:
     Vector3f diffuseColor;
     float ambientIntensity;
     bool isColorApplied;
+
+    // When true, the material's own ambientIntensity is ignored when shading and the
+    // surface is treated as fully reflecting whatever ambient light the lighting environment
+    // provides (i.e. aintensity = 1.0). When false the material value is honoured.
+    //
+    // Why this option exists: classic scene-graph specifications such as VRML97 give each
+    // material an "ambientIntensity" scalar -- how much of the scene's ambient light the
+    // material reflects -- with a default of 0.2 that makes shapes look reasonable. Modern
+    // real-time rendering, especially physically based rendering, takes the opposite view:
+    // reflectance is a property of the material alone, and ambient light is purely the
+    // responsibility of the lighting environment (scene ambient term, image-based lighting,
+    // ...). Per-material ambient knobs are considered redundant. Modern authoring tools
+    // follow this convention, so meshes exported in COLLADA / OBJ / glTF, and especially
+    // robotics CAD data, almost always carry "ambient = 0" even though the surface is meant
+    // to look the same as any well-lit diffuse surface -- the classic formula would render
+    // them nearly black. Turning this option on makes those models look right by letting the
+    // user balance brightness from the light side as the modern convention expects; turning
+    // it off restores the classic VRML/X3D behaviour for content authored for that model.
     bool isMaterialAmbientNormalizationEnabled;
 
     GLint highlightColorLocation;
@@ -193,6 +211,7 @@ public:
     Vector3f highlightColor;
     bool isHighlightEnabled;
 
+    // See MinLightingProgram::Impl::isMaterialAmbientNormalizationEnabled for the rationale.
     bool isMaterialAmbientNormalizationEnabled;
 
     void initialize(GLSLProgram& glsl);

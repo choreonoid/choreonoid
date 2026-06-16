@@ -536,6 +536,14 @@ private:
 typedef ref_ptr<SgScaleTransform> SgScaleTransformPtr;
 
 
+/*
+  A scene graph transform that can carry an arbitrary affine 3D transformation,
+  including non-uniform scaling, shear, and reflection. Loaders should avoid
+  emitting this node when possible because many scene-processing paths assume
+  rigid transforms or positive scales. In particular, a reflection may require
+  special handling of normals and triangle winding, so it is usually better to
+  bake it into the mesh geometry.
+*/
 class CNOID_EXPORT SgAffineTransform : public SgTransform
 {
 public:
