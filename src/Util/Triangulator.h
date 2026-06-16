@@ -74,13 +74,16 @@ template<class TVector3Array> class Triangulator
             for(size_t i=0; i < workPolygon.size(); ++i){
                 if(!earMask[i]){
                     const TVector3& p = workVertex(i);
-                    if(((a - p).cross(b - p)).dot(ccs) <= static_cast<Scalar>(0.0)){
+                    // A vertex on an ear edge must also reject the ear. Otherwise the
+                    // clipping can skip the vertex and collapse concave outlines that
+                    // include collinear boundary points.
+                    if(((a - p).cross(b - p)).dot(ccs) < static_cast<Scalar>(0.0)){
                         continue;
                     }
-                    if(((b - p).cross(c - p)).dot(ccs) <= static_cast<Scalar>(0.0)){
+                    if(((b - p).cross(c - p)).dot(ccs) < static_cast<Scalar>(0.0)){
                         continue;
                     }
-                    if(((c - p).cross(a - p)).dot(ccs) <= static_cast<Scalar>(0.0)){
+                    if(((c - p).cross(a - p)).dot(ccs) < static_cast<Scalar>(0.0)){
                         continue;
                     }
                     contains = true;
