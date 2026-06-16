@@ -795,6 +795,8 @@ if(ENABLE_URDF AND ENABLE_PYTHON)
   add_subdirectory(thirdparty/xacro-1.14.10)
 endif()
 
+option(ENABLE_SDF "Enable SDF functions" ON)
+
 # CORBA, omniORB
 option(ENABLE_CORBA "Enable CORBA related modules / plugins" OFF)
 mark_as_advanced(ENABLE_CORBA)
