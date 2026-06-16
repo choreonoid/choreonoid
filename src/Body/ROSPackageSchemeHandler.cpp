@@ -51,7 +51,7 @@ public:
         }
     }
 
-    string operator()(const string& path, std::ostream& os)
+    string operator()(const string& path, UriSchemeProcessor& processor)
     {
         filesystem::path filepath(fromUTF8(path));
         auto iter = filepath.begin();
@@ -69,7 +69,7 @@ public:
 
         bool found = false;
         filesystem::path combined;
-        
+
         for(auto element : packagePaths){
             filesystem::path packagePath(element);
             combined = packagePath / filepath;
@@ -89,8 +89,8 @@ public:
         if(found){
             return toUTF8(combined.string());
         } else {
-            os << formatR(_("\"{}\" is not found in the ROS package directories."), path);
-            os.flush();
+            processor.setErrorMessage(
+                formatR(_("\"{}\" is not found in the ROS package directories."), path));
             return string();
         }
     }

@@ -1,8 +1,8 @@
 #ifndef CNOID_UTIL_URI_SCHEME_PROCESSOR_H
 #define CNOID_UTIL_URI_SCHEME_PROCESSOR_H
 
-#include <iosfwd>
 #include <string>
+#include <vector>
 #include <functional>
 #include "exportdecl.h"
 
@@ -13,7 +13,17 @@ class FilePathVariableProcessor;
 class CNOID_EXPORT UriSchemeProcessor
 {
 public:
-    typedef std::function<std::string(const std::string& path, std::ostream& os)> UriSchemeHandler;
+    /**
+       Signature of a URI scheme handler. The handler is given the URI's scheme-less path
+       and a reference to the processor instance that invoked it. The processor exposes the
+       caller's context (base directory, model search directories, ...), so handlers can be
+       written without depending on any thread-local state or global storage. The handler
+       returns the resolved file path on success, or an empty string on failure. On failure
+       the handler should call processor.setErrorMessage() so that the caller can retrieve
+       the diagnostic via UriSchemeProcessor::errorMessage().
+    */
+    typedef std::function<std::string(const std::string& path,
+                                      UriSchemeProcessor& processor)> UriSchemeHandler;
 
     static void registerUriSchemeHandler(const std::string& scheme, UriSchemeHandler handler);
 
@@ -27,7 +37,7 @@ public:
     void setFilePathVariableProcessor(FilePathVariableProcessor* processor);
 
     FilePathVariableProcessor* filePathVariableProcessor();
-    
+
     /**
        If a base directory is specified, the getFilePath function returns the absolute path
        from the base directory when the path included in the URI is a relative path. Otherwise,
@@ -46,6 +56,18 @@ public:
 
     std::string baseDirectory() const;
 
+    /**
+       Adds a directory that registered URI scheme handlers may consult when resolving a URI
+       that identifies a resource by name (e.g. "model://<name>/..."). The interpretation is
+       left to each handler. Directories are kept in registration order and the previous
+       contents are preserved across calls.
+    */
+    void addModelSearchDirectory(const std::string& directory);
+
+    void clearModelSearchDirectories();
+
+    const std::vector<std::string>& modelSearchDirectories() const;
+
     bool detectScheme(const std::string& uri);
     std::string getFilePath(const std::string& uri);
 
@@ -59,6 +81,23 @@ public:
     bool isFileScheme() const;
     bool isSupportedScheme() const;
     const std::string& path();
+
+    /**
+       Adds a diagnostic message describing why URI resolution failed. Registered URI scheme
+       handlers call this on failure so that the caller (which sees getFilePath() returning
+       an empty string) can retrieve the reason via errorMessage() and route it to its own
+       logging or exception machinery. Multiple calls within the same getFilePath()
+       invocation are concatenated with newline separators so that diagnostics from
+       successive failure sources are all preserved. The accumulated message is cleared at
+       the start of each getFilePath() call.
+    */
+    void setErrorMessage(const std::string& message);
+
+    /**
+       Returns the accumulated diagnostic for the most recent getFilePath() call, or an
+       empty string if that call succeeded or no message was set. Multi-line content
+       indicates several failure points reported within the same resolution attempt.
+    */
     std::string errorMessage() const;
 
 private:

@@ -3,10 +3,10 @@
 #include "UTF8.h"
 #include "Format.h"
 #include <filesystem>
-#include <sstream>
 #include <mutex>
 #include <regex>
 #include <unordered_map>
+#include <vector>
 #include "gettext.h"
 
 using namespace std;
@@ -26,7 +26,9 @@ class UriSchemeProcessor::Impl
 public:
     string scheme;
     string uriPath;
-    ostringstream errorStream;
+    // Diagnostic message set by the last URI scheme handler that failed. Cleared at the
+    // beginning of every getFilePath() call.
+    string errorMessage;
     bool hasFileScheme;
     bool hasSupportedScheme;
     regex uriSchemeRegex;
@@ -34,10 +36,13 @@ public:
     FilePathVariableProcessorPtr filePathVariableProcessor;
     std::filesystem::path baseDirPath;
     string baseDirectory;
+    // Directories that scheme handlers may search to resolve name-based URIs (e.g. the
+    // model name in "model://<name>/..."). Their interpretation is left to each handler.
+    vector<string> modelSearchDirectories;
 
     void ensureUriSchemeRegex();
     bool detectScheme(const std::string& uri);
-    std::string getFilePath(const std::string& uri);
+    std::string getFilePath(const std::string& uri, UriSchemeProcessor* self);
 };
 
 }
@@ -99,6 +104,27 @@ std::string UriSchemeProcessor::baseDirectory() const
 }
 
 
+void UriSchemeProcessor::addModelSearchDirectory(const std::string& directory)
+{
+    if(directory.empty()){
+        return;
+    }
+    impl->modelSearchDirectories.push_back(directory);
+}
+
+
+void UriSchemeProcessor::clearModelSearchDirectories()
+{
+    impl->modelSearchDirectories.clear();
+}
+
+
+const std::vector<std::string>& UriSchemeProcessor::modelSearchDirectories() const
+{
+    return impl->modelSearchDirectories;
+}
+
+
 void UriSchemeProcessor::Impl::ensureUriSchemeRegex()
 {
     if(!isUriSchemeRegexReady){
@@ -120,7 +146,7 @@ bool UriSchemeProcessor::Impl::detectScheme(const std::string& uri)
     scheme.clear();
     hasSupportedScheme = false;
     hasFileScheme = false;
-    errorStream.str("");
+    errorMessage.clear();
 
     smatch match;
     if(!regex_match(uri, match, uriSchemeRegex)){
@@ -139,16 +165,16 @@ bool UriSchemeProcessor::Impl::detectScheme(const std::string& uri)
 
 std::string UriSchemeProcessor::getFilePath(const std::string& uri)
 {
-    return impl->getFilePath(uri);
+    return impl->getFilePath(uri, this);
 }
 
 
-std::string UriSchemeProcessor::Impl::getFilePath(const std::string& uri)
+std::string UriSchemeProcessor::Impl::getFilePath(const std::string& uri, UriSchemeProcessor* self)
 {
     string filePath;
-    
+
     bool hasScheme = detectScheme(uri);
-    
+
     if(!hasScheme){
         filePath = uri;
     } else {
@@ -159,12 +185,12 @@ std::string UriSchemeProcessor::Impl::getFilePath(const std::string& uri)
             std::lock_guard<std::mutex> guard(uriSchemeHandlerMutex);
             auto it = uriSchemeHandlerMap.find(scheme);
             if(it == uriSchemeHandlerMap.end()){
-                errorStream <<
+                if(!errorMessage.empty()) errorMessage += '\n';
+                errorMessage +=
                     formatR(_("The \"{0}\" scheme in URI \"{1}\" is not supported."), scheme, uri);
-                errorStream.flush();
             } else {
                 auto& handler = it->second;
-                filePath = handler(uriPath,  errorStream);
+                filePath = handler(uriPath, *self);
                 hasSupportedScheme = true;
             }
         }
@@ -174,8 +200,8 @@ std::string UriSchemeProcessor::Impl::getFilePath(const std::string& uri)
         if(filePathVariableProcessor){
             filePath = filePathVariableProcessor->expand(filePath, true);
             if(filePath.empty()){
-                errorStream << filePathVariableProcessor->errorMessage();
-                errorStream.flush();
+                if(!errorMessage.empty()) errorMessage += '\n';
+                errorMessage += filePathVariableProcessor->errorMessage();
             }
         } else if(!baseDirPath.empty()){
             std::filesystem::path path(fromUTF8(filePath));
@@ -192,7 +218,7 @@ std::string UriSchemeProcessor::Impl::getFilePath(const std::string& uri)
 
 std::string UriSchemeProcessor::getParameterizedFilePath(const std::string& uri)
 {
-    auto filePath = impl->getFilePath(uri);
+    auto filePath = impl->getFilePath(uri, this);
     if(impl->filePathVariableProcessor && isFileScheme() && !filePath.empty()){
         filePath = impl->filePathVariableProcessor->parameterize(filePath);
     }
@@ -224,7 +250,20 @@ const std::string& UriSchemeProcessor::path()
 }
 
 
+void UriSchemeProcessor::setErrorMessage(const std::string& message)
+{
+    // Append rather than overwrite so that diagnostics from successive sources within a
+    // single getFilePath() invocation (e.g. a scheme handler followed by a path-variable
+    // expansion failure) are all preserved. The slate is wiped at the start of each
+    // getFilePath() call, so this only accumulates within one resolution attempt.
+    if(!impl->errorMessage.empty()){
+        impl->errorMessage += '\n';
+    }
+    impl->errorMessage += message;
+}
+
+
 std::string UriSchemeProcessor::errorMessage() const
 {
-    return impl->errorStream.str();
+    return impl->errorMessage;
 }
