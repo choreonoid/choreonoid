@@ -34,6 +34,16 @@ const bool USE_AFFINE_TRANSFORM = false;
 const bool ENABLE_FLIPPED_COORDINATE_EXPANSION = false;
 const bool ENABLE_WARNING_FOR_FLIPPED_COORDINATE = false;
 
+// Registers the loader when this library is loaded so that it can be used independently of
+// the Choreonoid GUI (i.e. without the AssimpPlugin calling initializeClass()). The
+// registration is idempotent because SceneLoader::registerLoader just overwrites the
+// extension-to-loader mapping, so calling initializeClass() again from the plugin is harmless.
+struct Registration {
+    Registration(){
+        AssimpSceneLoader::initializeClass();
+    }
+} registration;
+
 }
 
 namespace cnoid {
