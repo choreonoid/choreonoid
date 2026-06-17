@@ -1528,18 +1528,24 @@ bool ODESimulatorItem::store(Archive& archive)
 
 void ODESimulatorItemImpl::store(Archive& archive)
 {
-    archive.write("stepMode", stepMode.selectedSymbol());
+    archive.write("step_mode", stepMode.selectedSymbol());
     write(archive, "gravity", gravity);
     archive.write("friction", friction);
-    archive.write("jointLimitMode", isJointLimitMode);
-    archive.write("globalERP", globalERP);
-    archive.write("globalCFM", globalCFM);
-    archive.write("numIterations", numIterations);
-    archive.write("overRelaxation", overRelaxation);
-    archive.write("limitCorrectingVel", enableMaxCorrectingVel);
-    archive.write("maxCorrectingVel", maxCorrectingVel);
-    archive.write("2Dmode", is2Dmode);
-    archive.write("useWorldCollisionDetector", useWorldCollisionDetector);
+    if(isJointLimitMode){
+        archive.write("enable_joint_limit", true);
+    }
+    archive.write("global_erp", globalERP);
+    archive.write("global_cfm", globalCFM);
+    archive.write("num_iterations", numIterations);
+    archive.write("over_relaxation", overRelaxation);
+    archive.write("limit_correcting_velocity", enableMaxCorrectingVel);
+    archive.write("max_correcting_velocity", maxCorrectingVel);
+    if(is2Dmode){
+        archive.write("use_2d_mode", true);
+    }
+    if(useWorldCollisionDetector){
+        archive.write("use_world_collision_detector", true);
+    }
 }
 
 
@@ -1554,20 +1560,20 @@ bool ODESimulatorItem::restore(const Archive& archive)
 void ODESimulatorItemImpl::restore(const Archive& archive)
 {
     string symbol;
-    if(archive.read("stepMode", symbol)){
+    if(archive.read({ "step_mode", "stepMode" }, symbol)){
         stepMode.select(symbol);
     }
     read(archive, "gravity", gravity);
     archive.read("friction", friction);
-    archive.read("jointLimitMode", isJointLimitMode);
-    archive.read("globalERP", globalERP);
-    globalCFM = archive.get("globalCFM", globalCFM.string());
-    archive.read("numIterations", numIterations);
-    archive.read("overRelaxation", overRelaxation);
-    archive.read("limitCorrectingVel", enableMaxCorrectingVel);
-    maxCorrectingVel = archive.get("maxCorrectingVel", maxCorrectingVel.string());
-    archive.read("2Dmode", is2Dmode);
-    if(!archive.read("useWorldCollisionDetector", useWorldCollisionDetector)){
+    archive.read({ "enable_joint_limit", "jointLimitMode" }, isJointLimitMode);
+    archive.read({ "global_erp", "globalERP" }, globalERP);
+    globalCFM = archive.get({ "global_cfm", "globalCFM" }, globalCFM.string());
+    archive.read({ "num_iterations", "numIterations" }, numIterations);
+    archive.read({ "over_relaxation", "overRelaxation" }, overRelaxation);
+    archive.read({ "limit_correcting_velocity", "limitCorrectingVel" }, enableMaxCorrectingVel);
+    maxCorrectingVel = archive.get({ "max_correcting_velocity", "maxCorrectingVel" }, maxCorrectingVel.string());
+    archive.read({ "use_2d_mode", "2Dmode" }, is2Dmode);
+    if(!archive.read({ "use_world_collision_detector", "useWorldCollisionDetector" }, useWorldCollisionDetector)){
         archive.read("UseWorldItem'sCollisionDetector", useWorldCollisionDetector);
     }
 }
