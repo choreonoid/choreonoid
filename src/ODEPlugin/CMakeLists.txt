@@ -1,4 +1,25 @@
-option(BUILD_ODE_PLUGIN "Building ODEPlugin" OFF)
+# Detect ODE availability to decide the default value of BUILD_ODE_PLUGIN.
+# The user can still override this by specifying BUILD_ODE_PLUGIN explicitly.
+# The detection results are reused below to avoid probing ODE twice.
+set(DEFAULT_BUILD_ODE_PLUGIN OFF)
+if(ODE_DIR)
+  set(DEFAULT_BUILD_ODE_PLUGIN ON)
+elseif(UNIX)
+  pkg_check_modules(ODE QUIET ode)
+  if(ODE_FOUND)
+    set(DEFAULT_BUILD_ODE_PLUGIN ON)
+  endif()
+elseif(MSVC)
+  find_library(ode_lib ode_double
+    HINTS "c:/Program Files/ODE/lib" "c:/local/ODE/lib" NO_CACHE)
+  if(ode_lib)
+    get_filename_component(ode_lib_dir ${ode_lib} DIRECTORY)
+    get_filename_component(ODE_DIR ${ode_lib_dir} DIRECTORY)
+    set(ODE_DIR ${ODE_DIR} CACHE PATH "set the top directory of Open Dynamics Engine" FORCE)
+    set(DEFAULT_BUILD_ODE_PLUGIN ON)
+  endif()
+endif()
+option(BUILD_ODE_PLUGIN "Building ODEPlugin" ${DEFAULT_BUILD_ODE_PLUGIN})
 # option(BUILD_GAZEBO_ODE_PLUGIN "Building Gazebo ODE Plugin" OFF)
 option(USE_ODE_STATIC_LIB "Gazebo ODE Plugin and ODE Plugin use a static library." OFF)
 
@@ -19,7 +40,9 @@ if(BUILD_ODE_PLUGIN)
 
   if(UNIX)
     if(NOT ODE_DIR)
-      pkg_check_modules(ODE REQUIRED ode)
+      if(NOT ODE_FOUND)
+        pkg_check_modules(ODE REQUIRED ode)
+      endif()
       if(USE_ODE_STATIC_LIB)
         set(ODE_LIBRARIES ode.a)
       else()
