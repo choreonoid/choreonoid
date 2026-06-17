@@ -1291,7 +1291,16 @@ void PhysxArticulationLink::initializeArticulationJoint()
         drive.damping = 0.0f;
         drive.maxForce = 0.0f;
 
-        if(link->actuationMode() == Link::JointEffort){
+        // Resolve the control law from the actuation mode bitmask. The mode can
+        // combine bits (e.g. JointDisplacement | JointVelocity = position control
+        // with a velocity feedforward), so it must be tested by bit, not by exact
+        // equality. Position takes precedence over velocity over effort.
+        short mode = link->actuationMode();
+        bool positionMode = mode & Link::JointDisplacement;
+        bool velocityMode = !positionMode && (mode & Link::JointVelocity);
+        bool effortMode = !positionMode && !velocityMode && (mode & Link::JointEffort);
+
+        if(effortMode){
             // Use direct torque control via articulation cache
             drive.driveType = PxArticulationDriveType::eNONE;
             //drive.maxForce = PX_MAX_F32;
@@ -1307,7 +1316,7 @@ void PhysxArticulationLink::initializeArticulationJoint()
                     bodyArticulation->articulationCache->jointForce[articulationDofIndex] = static_cast<PxReal>(u);
                 };
 
-        } else if(link->actuationMode() == Link::JointVelocity){
+        } else if(velocityMode){
             drive.driveType = PxArticulationDriveType::eFORCE;
             drive.stiffness = 0.0f;
             drive.damping = static_cast<PxReal>(physxBody->simImpl->driveDamping.value());
@@ -1320,17 +1329,23 @@ void PhysxArticulationLink::initializeArticulationJoint()
                     bodyArticulation->articulationCache->jointForce[articulationDofIndex] = 0.0f;
                 };
 
-        } else if(link->actuationMode() == Link::JointDisplacement){
+        } else if(positionMode){
             drive.driveType = PxArticulationDriveType::eFORCE;
             drive.stiffness = static_cast<PxReal>(physxBody->simImpl->driveStiffness.value());
             drive.damping = static_cast<PxReal>(physxBody->simImpl->driveDamping.value());
             drive.maxForce = link->hasJointEffortLimits()
                 ? static_cast<PxReal>(std::max(fabs(link->u_upper()), fabs(link->u_lower())))
                 : PX_MAX_F32;
+            // Use the velocity target only when the JointVelocity bit is also set;
+            // otherwise dq_target is not a supplied command (the drive velocity
+            // target stays 0, giving a plain position servo).
+            bool useVelocityFeedforward = mode & Link::JointVelocity;
             controlInputFunc =
-                [this] {
-                    joint->setDriveVelocity(articulationAxis, link->dq_target());
+                [this, useVelocityFeedforward] {
                     joint->setDriveTarget(articulationAxis, link->q_target());
+                    if(useVelocityFeedforward){
+                        joint->setDriveVelocity(articulationAxis, link->dq_target());
+                    }
                     bodyArticulation->articulationCache->jointForce[articulationDofIndex] = 0.0f;
                 };
         }
