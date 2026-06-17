@@ -21,6 +21,8 @@ list(APPEND project_files
   SR1Minimum.cnoid
   SR1Walk.cnoid
   SR1WalkSlippy.cnoid SlippyMaterialSet.yaml
+  SR1DHWalk.cnoid
+  SR1WalkURDF.cnoid
   SR1Walk2D.cnoid
   SR1Liftup.cnoid
   SR1WalkinHouse.cnoid)
@@ -31,7 +33,7 @@ list(APPEND project_files PA10Pickup.cnoid)
 
 # Universal Robots
 choreonoid_add_simple_controller(UniversalRobotPickupController UniversalRobotPickupController.cpp)
-list(APPEND project_files UR3Pickup.cnoid UR5Pickup.cnoid UR10Pickup.cnoid)
+list(APPEND project_files UR3Pickup.cnoid UR5Pickup.cnoid UR10Pickup.cnoid MultiUR10Pickup.cnoid)
 
 # Crawler
 choreonoid_add_simple_controller(SampleCrawlerController SampleCrawlerController.cpp)

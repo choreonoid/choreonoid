@@ -1,148 +1,84 @@
-optionalPlugins: [ ODE, Bullet, PhysX ]
+optional_plugins: [ PhysX, MuJoCo, ODE, AGXDynamics ]
 
-items: 
+items:
   id: 0
   name: "RootItem"
   plugin: Base
   class: RootItem
   is_builtin_item: true
-  children: 
-    - 
+  children:
+    -
       id: 1
       name: "World"
       plugin: Body
       class: WorldItem
-      data: 
+      is_checked: true
+      data:
         collision_detection: false
         collision_detector: AISTCollisionDetector
         default_material_table_file: "${SHARE}/default/materials.yaml"
-      children: 
-        - 
+      children:
+        -
           id: 2
           name: "ClosedLinkSample"
           plugin: Body
           class: BodyItem
           is_checked: true
-          data: 
+          data:
             file: "${SHARE}/model/misc/ClosedLinkSample.body"
             format: CHOREONOID-BODY
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0, 0.15 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, -0, 1, 
-              0, -1, -0 ]
-            jointDisplacements: [ -45, 45, -45 ]
-            jointPositions: [ -0.785398, 0.785398, -0.785398 ]
-            initialRootPosition: [ 0, 0, 0.15 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, -0, 1, 
-              0, -1, -0 ]
-            initialJointPositions: [ -0.785398, 0.785398, -0.785398 ]
-            staticModel: false
-            collisionDetection: true
-            selfCollisionDetection: false
-            location_editable: true
+            current_base_link: "WAIST"
+            root_translation: [ 0, 0, 0.15 ]
+            root_rotation: [ -1, 0, 0, 90 ]
+            joint_displacements: [ -45, 45, -45 ]
+            initial_root_translation: [ 0, 0, 0.15 ]
+            initial_root_rotation: [ -1, 0, 0, 90 ]
+            fix_root: true
+            collision_detection: true
+            lock_location: false
             scene_sensitive: true
-            zmp: [ 0, 0, 0 ]
-        - 
-          id: 3
-          name: "AISTSimulator"
-          plugin: Body
-          class: AISTSimulatorItem
-          is_selected: true
-          data: 
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Unlimited"
-            timeLength: 60
-            active_control_time_range_mode: false
-            allLinkPositionOutputMode: false
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            controllerOptions: ""
-            scene_view_edit_mode_blocking: false
-            dynamicsMode: "Forward dynamics"
-            integrationMode: semi-implicit_euler
-            gravity: [ 0, 0, -9.80665 ]
-            min_friction_coefficient: 0
-            max_friction_coefficient: 100
-            cullingThresh: 0.005
-            contactCullingDepth: 0.05
-            errorCriterion: 0.001
-            maxNumIterations: 25
-            contactCorrectionDepth: 0.00025
-            contactCorrectionVelocityRatio: 5
-            kinematicWalking: false
-            2Dmode: false
-            oldAccelSensorMode: false
-        - 
-          id: 4
-          name: "ODESimulator"
-          plugin: ODE
-          class: ODESimulatorItem
-          data: 
-            realtimeSync: true
-            recordingMode: "Time bar range"
-            timeLength: 60
-            allLinkPositionOutputMode: true
-            stepMode: Iterative (quick step)
-            gravity: [ 0, 0, -9.80665 ]
-            friction: 1
-            jointLimitMode: false
-            globalERP: 0.4
-            globalCFM: 1e-10
-            numIterations: 50
-            overRelaxation: 1.3
-            limitCorrectingVel: true
-            maxCorrectingVel: 1.0e-3
-            2Dmode: false
         -
-          id: 5
-          name: "BulletSimulator"
-          plugin: Bullet
-          class: BulletSimulatorItem
-          data: 
-            realtimeSync: true
-            recordingMode: "Time bar range"
-            onlyActiveControlPeriod: true
-            timeLength: 60
-            allLinkPositionOutputMode: true
-            ErrorReductionParameter: 0.2
-            NumIterations: 10
-            Restitution: 0
-            Friction: 0.7
-            ERP2: 0
-            SplitImpulsePenetrationThreshold: -0.0001
-        - 
-          id: 5
-          name: "PhysXSimulator"
-          plugin: PhysX
-          class: PhysXSimulatorItem
-          data: 
-            realtimeSync: true
-            recordingMode: "Time bar range"
-views: 
-  - 
+          id: 3
+          name: "Simulators"
+          plugin: Base
+          class: FolderItem
+          children:
+            -
+              id: 4
+              name: "AISTSimulator"
+              plugin: Body
+              class: AISTSimulatorItem
+            -
+              id: 5
+              name: "PhysXSimulator"
+              plugin: PhysX
+              class: PhysXSimulatorItem
+            -
+              id: 6
+              name: "MuJoCoSimulator"
+              plugin: MuJoCo
+              class: MuJoCoSimulatorItem
+            -
+              id: 7
+              name: "ODESimulator"
+              plugin: ODE
+              class: ODESimulatorItem
+            -
+              id: 8
+              name: "AGXSimulator"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
+views:
+  -
     id: 4
     plugin: Base
     class: SceneView
     mounted: true
-    state: 
-      cameras: 
-        - 
+    state:
+      cameras:
+        -
           camera: [ System, Perspective ]
-          isCurrent: true
-          fieldOfView: 0.610865
-          near: 0.04
-          far: 200
+          is_current: true
           eye: [ 0.817133, 0.834253, 0.399377 ]
           direction: [ -0.650101, -0.716069, -0.254193 ]
           up: [ -0.170863, -0.188201, 0.967154 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.04
-          far: 200

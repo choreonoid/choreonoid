@@ -1,138 +1,144 @@
-items: 
+optional_plugins: [ PhysX, MuJoCo, ODE, AGXDynamics ]
+
+items:
   id: 0
-  name: "Root"
+  name: "RootItem"
   plugin: Base
   class: RootItem
-  children: 
-    - 
+  is_builtin_item: true
+  children:
+    -
       id: 1
       name: "World"
       plugin: Body
       class: WorldItem
       is_checked: true
-      data: 
-        collisionDetection: false
-        collisionDetector: AISTCollisionDetector
+      data:
+        collision_detection: false
+        collision_detector: AISTCollisionDetector
         default_material_table_file: "${SHARE}/default/materials.yaml"
-      children: 
-        - 
+      children:
+        -
           id: 2
           name: "Floor"
           plugin: Body
           class: BodyItem
           is_checked: true
-          data: 
+          data:
             file: "${SHARE}/model/misc/floor.body"
             format: CHOREONOID-BODY
-            rootPosition: [ 0, 0, -0.1 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0, -0.1 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            staticModel: true
-            collisionDetection: true
-            selfCollisionDetection: false
-            location_editable: false
+            root_translation: [ 0, 0, -0.1 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            initial_root_translation: [ 0, 0, -0.1 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: true
+            collision_detection: true
+            lock_location: false
             scene_sensitive: true
-            zmp: [ 0, 0, 0 ]
-        - 
+        -
           id: 3
-          name: "AISTSimulator"
-          plugin: Body
-          class: AISTSimulatorItem
-          data: 
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Unlimited"
-            timeLength: 3
-        - 
-          id: 4
           name: "Conveyor"
           plugin: Body
           class: BodyItem
           is_checked: true
-          data: 
+          data:
             file: "${SHARE}/model/misc/conveyor.body"
             format: CHOREONOID-BODY
-            currentBaseLink: "BASE"
-            rootPosition: [ 0, 0, 0.05 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointDisplacements: [ 0 ]
-            jointPositions: [ 0 ]
-            initialRootPosition: [ 0, 0, 0.05 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            staticModel: false
-            collisionDetection: true
-            selfCollisionDetection: false
-            location_editable: false
+            current_base_link: "BASE"
+            root_translation: [ 0, 0, 0.05 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            joint_displacements: [ 0 ]
+            initial_root_translation: [ 0, 0, 0.05 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: true
+            collision_detection: true
+            lock_location: false
             scene_sensitive: true
-          children: 
-            - 
-              id: 5
+          children:
+            -
+              id: 4
               name: "ConveyorController"
               plugin: Body
               class: SimpleControllerItem
-              data: 
-                isNoDelayMode: false
-                controllerOptions: ""
+              data:
                 controller: "ConveyorController"
-                baseDirectory: "Controller directory"
+                base_directory: "Controller directory"
                 reloading: true
-                exportSymbols: false
-                isOldTargetVariableMode: false
-        - 
-          id: 6
+                export_symbols: false
+        -
+          id: 5
           name: "Ellipsoid1"
           plugin: Body
           class: BodyItem
           is_checked: true
-          data: 
+          data:
             file: "${SHARE}/model/misc/ellipsoid1.body"
             format: CHOREONOID-BODY
-            currentBaseLink: "BASE"
-            rootPosition: [ 2, 0, 0.39 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 2, 0, 0.39 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            staticModel: false
-            collisionDetection: true
-            selfCollisionDetection: false
-            location_editable: false
+            root_translation: [ 2, 0, 0.39 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            initial_root_translation: [ 2, 0, 0.39 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: false
+            collision_detection: true
+            lock_location: false
             scene_sensitive: true
+        -
+          id: 6
+          name: "Simulators"
+          plugin: Base
+          class: FolderItem
+          children:
+            -
+              id: 7
+              name: "AISTSimulator"
+              plugin: Body
+              class: AISTSimulatorItem
+              data:
+                time_range_mode: timebar
+            -
+              id: 8
+              name: "PhysXSimulator"
+              plugin: PhysX
+              class: PhysXSimulatorItem
+              data:
+                time_range_mode: timebar
+            -
+              id: 9
+              name: "MuJoCoSimulator"
+              plugin: MuJoCo
+              class: MuJoCoSimulatorItem
+              data:
+                time_range_mode: timebar
+            -
+              id: 10
+              name: "ODESimulator"
+              plugin: ODE
+              class: ODESimulatorItem
+              data:
+                time_range_mode: timebar
+            -
+              id: 11
+              name: "AGXSimulator"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
+              data:
+                time_range_mode: timebar
 views:
-  - 
+  -
     id: 4
     plugin: Base
     class: SceneView
     mounted: true
-    state: 
-      floorGrid: false
-      cameras: 
-        - 
+    state:
+      floor_grid: false
+      cameras:
+        -
           camera: [ System, Perspective ]
-          isCurrent: true
-          fieldOfView: 0.6978
-          near: 0.01
-          far: 10000
+          is_current: true
           eye: [ 6.36153, 3.6281, 2.30974 ]
           direction: [ -0.788228, -0.567075, -0.239005 ]
           up: [ -0.194013, -0.139579, 0.971018 ]
+toolbars:
+  "TimeBar":
+    min_time: 0
+    max_time: 10

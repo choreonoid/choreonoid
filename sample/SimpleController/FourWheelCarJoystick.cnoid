@@ -1,131 +1,113 @@
-items: 
+optional_plugins: [ PhysX, MuJoCo, ODE, AGXDynamics ]
+
+items:
   id: 0
-  name: "Root"
+  name: "RootItem"
   plugin: Base
   class: RootItem
-  children: 
-    - 
+  is_builtin_item: true
+  children:
+    -
       id: 1
       name: "World"
       plugin: Body
       class: WorldItem
-      data: 
-        collisionDetection: false
-        collisionDetector: AISTCollisionDetector
-        materialTableFile: "${SHARE}/default/materials.yaml"
-      children: 
-        - 
+      is_checked: true
+      data:
+        collision_detection: false
+        collision_detector: AISTCollisionDetector
+        default_material_table_file: "${SHARE}/default/materials.yaml"
+      children:
+        -
           id: 2
           name: "FourWheelCar"
           plugin: Body
           class: BodyItem
           is_checked: true
-          data: 
+          data:
             file: "${SHARE}/model/misc/FourWheelCar.body"
             format: CHOREONOID-BODY
-            currentBaseLink: "BODY"
-            rootPosition: [ 0, 0, 0.1 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointDisplacements: [ 0, 0, 0, 0, 0, 0 ]
-            jointPositions: [ 0, 0, 0, 0, 0, 0 ]
-            initialRootPosition: [ 0, 0, 0.1 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialJointPositions: [ 0, 0, 0, 0, 0, 0 ]
-            staticModel: false
-            collisionDetection: true
-            selfCollisionDetection: false
-            location_editable: true
+            current_base_link: "BODY"
+            root_translation: [ 0, 0, 0.1 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            joint_displacements: [ 0, 0, 0, 0, 0, 0 ]
+            initial_root_translation: [ 0, 0, 0.1 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: false
+            collision_detection: true
+            lock_location: false
             scene_sensitive: true
-            zmp: [ 0, 0, 0 ]
-          children: 
-            - 
+          children:
+            -
               id: 3
               name: "FourWheelCarJoystickController"
               plugin: Body
               class: SimpleControllerItem
-              data: 
-                isNoDelayMode: false
-                controllerOptions: ""
+              data:
                 controller: "FourWheelCarJoystickController"
-                baseDirectory: "Controller directory"
+                base_directory: "Controller directory"
                 reloading: true
-                exportSymbols: false
-                isOldTargetVariableMode: false
-        - 
+                export_symbols: false
+        -
           id: 4
           name: "Floor"
           plugin: Body
           class: BodyItem
           is_checked: true
-          data: 
+          data:
             file: "${SHARE}/model/misc/floor.body"
             format: CHOREONOID-BODY
-            rootPosition: [ 0, 0, -0.1 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0, -0.1 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            staticModel: true
-            collisionDetection: true
-            selfCollisionDetection: false
-            location_editable: false
+            root_translation: [ 0, 0, -0.1 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            initial_root_translation: [ 0, 0, -0.1 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: true
+            collision_detection: true
+            lock_location: false
             scene_sensitive: true
-            zmp: [ 0, 0, 0 ]
-        - 
+        -
           id: 5
-          name: "AISTSimulator"
-          plugin: Body
-          class: AISTSimulatorItem
-          is_selected: true
-          data: 
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Unlimited"
-            timeLength: 180
-            allLinkPositionOutputMode: false
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            controllerOptions: ""
-            dynamicsMode: "Forward dynamics"
-            integrationMode: semi-implicit_euler
-            gravity: [ 0, 0, -9.80665 ]
-            kinematicWalking: false
-            2Dmode: false
-            oldAccelSensorMode: false
-views: 
-  - 
-    id: 2
-    plugin: Base
-    class: ItemTreeView
-    mounted: true
-    state: 
-      expanded: [ 1, 2, 3 ]
-  - 
-    id: 5
+          name: "Simulators"
+          plugin: Base
+          class: FolderItem
+          children:
+            -
+              id: 6
+              name: "AISTSimulator"
+              plugin: Body
+              class: AISTSimulatorItem
+            -
+              id: 7
+              name: "PhysXSimulator"
+              plugin: PhysX
+              class: PhysXSimulatorItem
+            -
+              id: 8
+              name: "MuJoCoSimulator"
+              plugin: MuJoCo
+              class: MuJoCoSimulatorItem
+            -
+              id: 9
+              name: "ODESimulator"
+              plugin: ODE
+              class: ODESimulatorItem
+            -
+              id: 10
+              name: "AGXSimulator"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
+views:
+  -
+    id: 4
     plugin: Base
     class: SceneView
     mounted: true
-    state: 
-      cameras: 
-        - 
+    state:
+      floor_grid: false
+      cameras:
+        -
           camera: [ System, Perspective ]
-          isCurrent: true
-          fieldOfView: 0.6978
-          near: 0.01
-          far: 100
+          is_current: true
           eye: [ 1.95407, 1.07719, 0.860395 ]
           direction: [ -0.831712, -0.469217, -0.296801 ]
           up: [ -0.258501, -0.145835, 0.954939 ]

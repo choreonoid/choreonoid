@@ -1,180 +1,161 @@
-items: 
+optional_plugins: [ PhysX, MuJoCo, ODE, AGXDynamics ]
+
+items:
   id: 0
-  name: "Root"
+  name: "RootItem"
   plugin: Base
   class: RootItem
-  children: 
-    - 
+  is_builtin_item: true
+  children:
+    -
       id: 1
       name: "World"
       plugin: Body
       class: WorldItem
-      data: 
-        collisionDetection: false
-        collisionDetector: AISTCollisionDetector
-        materialTableFile: "${SHARE}/default/materials.yaml"
-      children: 
-        - 
+      is_checked: true
+      data:
+        collision_detection: false
+        collision_detector: AISTCollisionDetector
+        default_material_table_file: "${SHARE}/default/materials.yaml"
+      children:
+        -
           id: 2
           name: "UR5-2F85"
           plugin: Body
           class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/UniversalRobots/UR5-2F85.body"
-            currentBaseLink: "Base"
-            rootPosition: [ 0, 0, 0 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [ 
-               0.000000, -1.484033,  0.600000,  0.000000, -0.600000, -0.303311,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000 ]
-            initialRootPosition: [ 0, 0, 0 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialJointPositions: [ 
-               0.000000, -1.484033,  0.600000,  0.000000, -0.600000, -0.303311,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-          children: 
-            - 
+          is_checked: true
+          data:
+            file: "${SHARE}/model/UniversalRobots/UR5-2F85.body"
+            format: CHOREONOID-BODY
+            root_translation: [ 0, 0, 0 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            joint_displacements: [
+              0, -85.0288, 34.3775, 0, -34.3775, -17.3784, 0, 0, 0, 0,
+              0, 0 ]
+            initial_root_translation: [ 0, 0, 0 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: true
+            collision_detection: true
+            lock_location: false
+            scene_sensitive: true
+          children:
+            -
               id: 3
               name: "URobotController"
               plugin: Body
               class: SimpleControllerItem
-              data: 
-                isNoDelayMode: false
-                controllerOptions: ""
+              data:
                 controller: "UniversalRobotPickupController"
-                baseDirectory: "Controller directory"
+                base_directory: "Controller directory"
                 reloading: false
-                isOldTargetVariableMode: false
-        - 
+                export_symbols: false
+        -
           id: 4
           name: "box3"
           plugin: Body
           class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box3.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0.800000006, -1.08189917e-09, 0.0349000115 ]
-            rootAttitude: [ 
-              5.04951375e-08, -1, 8.37663453e-08, 
-              1, 5.04951368e-08, -6.91177229e-09, 
-              6.91176806e-09, 8.37663456e-08, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0.8, 0, 0.035 ]
-            initialRootAttitude: [ 
-              2.22044605e-16, -1, 0, 
-              1, 2.22044605e-16, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
+          is_checked: true
+          data:
+            file: "${SHARE}/model/misc/box3.body"
+            format: CHOREONOID-BODY
+            root_translation: [ 0.8, 0, 0.035 ]
+            root_rotation: [ 0, 0, 1, 90 ]
+            initial_root_translation: [ 0.8, 0, 0.035 ]
+            initial_root_rotation: [ 0, 0, 1, 90 ]
+            fix_root: false
+            collision_detection: true
+            lock_location: false
+            scene_sensitive: true
+        -
           id: 5
           name: "box2"
           plugin: Body
           class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ -0, 0.5, 0.1499 ]
-            rootAttitude: [ 
-              1, 0, -0, 
-              -0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ -0, 0.5, 0.1499 ]
-            initialRootAttitude: [ 
-              1, 0, -0, 
-              -0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            staticModel: true
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
+          is_checked: true
+          data:
+            file: "${SHARE}/model/misc/box2.body"
+            format: CHOREONOID-BODY
+            root_translation: [ 0, 0.5, 0.1499 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            initial_root_translation: [ 0, 0.5, 0.1499 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: true
+            collision_detection: true
+            lock_location: false
+            scene_sensitive: true
+        -
           id: 6
           name: "Floor"
           plugin: Body
           class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/floor.body"
-            currentBaseLink: ""
-            rootPosition: [ 0, 0, -0.1 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0, -0.1 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-        - 
+          is_checked: true
+          data:
+            file: "${SHARE}/model/misc/floor.body"
+            format: CHOREONOID-BODY
+            root_translation: [ 0, 0, -0.1 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            initial_root_translation: [ 0, 0, -0.1 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: true
+            collision_detection: true
+            lock_location: false
+            scene_sensitive: true
+        -
           id: 7
-          name: "AISTSimulator"
-          plugin: Body
-          class: AISTSimulatorItem
-          data: 
-            timeStep: 0.001
-            realtimeSync: true
-            recording: "full"
-            timeRangeMode: "Active control period"
-            timeLength: 60
-            allLinkPositionOutputMode: false
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            controllerOptions: ""
-            dynamicsMode: "Forward dynamics"
-            integrationMode: semi-implicit_euler
-            gravity: [ 0, 0, -9.80665 ]
-            kinematicWalking: false
-            2Dmode: false
-            oldAccelSensorMode: false
-views: 
-  - 
-    id: 1
-    plugin: Base
-    class: ItemTreeView
-    mounted: true
-    state: 
-      checked: [ 1, 2, 4, 5, 6 ]
-      expanded: [ 1, 2, 3, 4, 5 ]
-  - 
-    id: 3
+          name: "Simulators"
+          plugin: Base
+          class: FolderItem
+          children:
+            -
+              id: 8
+              name: "AISTSimulator"
+              plugin: Body
+              class: AISTSimulatorItem
+              data:
+                is_active_control_time_range_mode: true
+            -
+              id: 9
+              name: "PhysXSimulator"
+              plugin: PhysX
+              class: PhysXSimulatorItem
+              data:
+                is_active_control_time_range_mode: true
+            -
+              id: 10
+              name: "MuJoCoSimulator"
+              plugin: MuJoCo
+              class: MuJoCoSimulatorItem
+              data:
+                is_active_control_time_range_mode: true
+            -
+              id: 11
+              name: "ODESimulator"
+              plugin: ODE
+              class: ODESimulatorItem
+              data:
+                is_active_control_time_range_mode: true
+                step_mode: "Big matrix"
+                add_joint_axis_inertia_to_link_inertia: true
+            -
+              id: 12
+              name: "AGXSimulator"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
+              data:
+                is_active_control_time_range_mode: true
+views:
+  -
+    id: 4
     plugin: Base
     class: SceneView
     mounted: true
-    state: 
-      floorGrid: false
-      cameras: 
-        - 
+    state:
+      floor_grid: false
+      field_of_view: 39.981
+      cameras:
+        -
           camera: [ System, Perspective ]
-          isCurrent: true
-          fieldOfView: 0.6978
-          near: 0.01
-          far: 10000
+          is_current: true
           eye: [ 1.60234839, 1.55811366, 0.879095462 ]
           direction: [ -0.717816086, -0.63422, -0.287236938 ]
           up: [ -0.215254201, -0.190185929, 0.957859563 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 2.70671
-          near: 0.01
-          far: 10000

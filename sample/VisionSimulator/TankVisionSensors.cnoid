@@ -1,90 +1,80 @@
-items: 
+optional_plugins: [ PhysX, MuJoCo, ODE, AGXDynamics ]
+
+items:
   id: 0
-  name: "Root"
+  name: "RootItem"
   plugin: Base
   class: RootItem
-  children: 
-    - 
+  is_builtin_item: true
+  children:
+    -
       id: 1
       name: "World"
       plugin: Body
       class: WorldItem
-      isChecked: true
-      data: 
-        collisionDetection: false
-        collisionDetector: AISTCollisionDetector
-        materialTableFile: "${SHARE}/default/materials.yaml"
-      children: 
-        - 
+      is_checked: true
+      data:
+        collision_detection: false
+        collision_detector: AISTCollisionDetector
+        default_material_table_file: "${SHARE}/default/materials.yaml"
+      children:
+        -
           id: 2
           name: "Tank"
           plugin: Body
           class: BodyItem
-          isChecked: true
-          data: 
+          is_checked: true
+          data:
             file: "${SHARE}/model/Tank/Tank.body"
             format: CHOREONOID-BODY
-            rootPosition: [ -2, -0.5, 0.1 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointDisplacements: [ 0, 0 ]
-            jointPositions: [ 0, 0 ]
-            initialRootPosition: [ -2, -0.5, 0.1 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialJointPositions: [ 0, 0 ]
-            staticModel: false
-            collisionDetection: true
-            selfCollisionDetection: false
-            location_editable: true
+            root_translation: [ -2, -0.5, 0.1 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            joint_displacements: [ 0, 0 ]
+            initial_root_translation: [ -2, -0.5, 0.1 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: false
+            collision_detection: true
+            lock_location: false
             scene_sensitive: true
-            zmp: [ 0, 0, 0 ]
-          children: 
-            - 
+          children:
+            -
               id: 3
               name: "JoystickController"
               plugin: Body
               class: SimpleControllerItem
-              data: 
-                isNoDelayMode: false
-                controllerOptions: ""
+              data:
                 controller: "TankJoystickController"
-                baseDirectory: "Controller directory"
+                base_directory: "Controller directory"
                 reloading: true
-                exportSymbols: false
-                isOldTargetVariableMode: false
-            - 
+                export_symbols: false
+            -
               id: 4
               name: "SensorVisualizer"
               plugin: Body
               class: SensorVisualizer
-              data: 
-                sub_items: 
-                  - 
+              data:
+                sub_items:
+                  -
                     class: AccelerationSensorVisualizerItem
                     name: AccelerationSensor
                     ratio: 0.1
                     threshold: 0.05
                     offset: [ 0, 0, -9.8 ]
-                  - 
+                  -
                     class: RateGyroSensorVisualizerItem
                     name: RateGyro
                     ratio: 0.4
                     threshold: 0.01
                     offset: [ 0, 0, 0 ]
-                  - 
+                  -
                     class: CameraImageVisualizerItem
                     name: Kinect-Image
                     is_checked: true
-                  - 
+                  -
                     class: CameraImageVisualizerItem
                     name: Theta
                     is_checked: true
-                  - 
+                  -
                     class: PointCloudVisualizerItem
                     name: Kinect
                     is_checked: true
@@ -95,7 +85,7 @@ items:
                     point_size: 0
                     voxel_size: 0.01
                     is_editable: false
-                  - 
+                  -
                     class: RangeSensorVisualizerItem
                     name: VLP-16
                     is_checked: true
@@ -106,40 +96,30 @@ items:
                     point_size: 0
                     voxel_size: 0.01
                     is_editable: false
-        - 
+        -
           id: 5
           name: "Labo1"
           plugin: Body
           class: BodyItem
-          data: 
+          data:
             file: "${SHARE}/model/Labo1/Labo1.body"
             format: CHOREONOID-BODY
-            rootPosition: [ 0, 0, 0 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointDisplacements: [ 0 ]
-            jointPositions: [ 0 ]
-            initialRootPosition: [ 0, 0, 0 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialJointPositions: [ 0 ]
-            staticModel: false
-            collisionDetection: true
-            selfCollisionDetection: false
-            location_editable: false
+            root_translation: [ 0, 0, 0 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            joint_displacements: [ 0 ]
+            initial_root_translation: [ 0, 0, 0 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: true
+            collision_detection: true
+            lock_location: false
             scene_sensitive: true
-            zmp: [ 0, 0, 0 ]
-        - 
+        -
           id: 6
           name: "Lighting"
           plugin: Base
           class: LightingItem
           is_checked: true
-          data: 
+          data:
             light_type: "Spot light"
             translation: [ 0, 0, 2.5 ]
             direction: [ 0, 0, -1 ]
@@ -154,310 +134,225 @@ items:
             cutoff_angle: 70
             cutoff_exponent: 1
             show_marker: false
-        - 
+        -
           id: 7
-          name: "AISTSimulator"
-          plugin: Body
-          class: AISTSimulatorItem
-          data: 
-            timeStep: 0.001
-            realtimeSync: true
-            recording: "tail"
-            timeRangeMode: "Active control period"
-            timeLength: 60
-            allLinkPositionOutputMode: false
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            controllerOptions: ""
-            dynamicsMode: "Forward dynamics"
-            integrationMode: semi-implicit_euler
-            gravity: [ 0, 0, -9.80665 ]
-            kinematicWalking: false
-            2Dmode: false
-            oldAccelSensorMode: false
-          children: 
-            - 
+          name: "Simulators"
+          plugin: Base
+          class: FolderItem
+          children:
+            -
               id: 8
-              name: "GLVisionSimulator"
+              name: "AISTSimulator"
               plugin: Body
-              class: GLVisionSimulatorItem
-              data: 
-                enabled: true
-                maxFrameRate: 1000
-                maxLatency: 1
-                recordVisionData: true
-                threadMode: Sensor
-                bestEffort: true
-                allSceneObjects: true
-                rangeSensorPrecisionRatio: 2
-                depthError: 0
-                enableHeadLight: true
-                enableAdditionalLights: true
-                antiAliasing: false
-views: 
-  - 
+              class: AISTSimulatorItem
+              data:
+                is_active_control_time_range_mode: true
+              children:
+                -
+                  id: 9
+                  name: "GLVisionSimulator"
+                  plugin: Body
+                  class: GLVisionSimulatorItem
+                  data:
+                    record_vision_data: true
+            -
+              id: 10
+              name: "PhysXSimulator"
+              plugin: PhysX
+              class: PhysXSimulatorItem
+              data:
+                is_active_control_time_range_mode: true
+              children:
+                -
+                  id: 11
+                  name: "GLVisionSimulator"
+                  plugin: Body
+                  class: GLVisionSimulatorItem
+                  data:
+                    record_vision_data: true
+            -
+              id: 12
+              name: "MuJoCoSimulator"
+              plugin: MuJoCo
+              class: MuJoCoSimulatorItem
+              data:
+                is_active_control_time_range_mode: true
+              children:
+                -
+                  id: 13
+                  name: "GLVisionSimulator"
+                  plugin: Body
+                  class: GLVisionSimulatorItem
+                  data:
+                    record_vision_data: true
+            -
+              id: 14
+              name: "ODESimulator"
+              plugin: ODE
+              class: ODESimulatorItem
+              data:
+                is_active_control_time_range_mode: true
+              children:
+                -
+                  id: 15
+                  name: "GLVisionSimulator"
+                  plugin: Body
+                  class: GLVisionSimulatorItem
+                  data:
+                    record_vision_data: true
+            -
+              id: 16
+              name: "AGXSimulator"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
+              data:
+                is_active_control_time_range_mode: true
+              children:
+                -
+                  id: 17
+                  name: "GLVisionSimulator"
+                  plugin: Body
+                  class: GLVisionSimulatorItem
+                  data:
+                    record_vision_data: true
+views:
+  -
     id: 0
     name: "Kinect Image"
     plugin: Base
     class: ImageView
     mounted: true
-    state: 
+    state:
       ImageableItem: [ 4, "Kinect-Image" ]
-  - 
+  -
     id: 1
     name: "Theta Image"
     plugin: Base
     class: ImageView
     mounted: true
-    state: 
+    state:
       ImageableItem: [ 4, "Theta" ]
-  - 
+  -
     id: 2
     plugin: Base
     class: ItemPropertyView
     mounted: true
-  - 
+  -
     id: 3
     plugin: Base
     class: ItemTreeView
     mounted: true
-    state: 
-      expanded: [ 1, 2, 3, 4, 5, 6 ]
-  - 
+    state:
+      expanded: [ 1, 2, 4, 7 ]
+  -
     id: 4
     plugin: Base
     class: MessageView
     mounted: true
-  - 
+  -
     id: 5
     plugin: Base
     class: SceneView
     mounted: true
-    state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      restrictCameraRoll: true
-      verticalAxis: Z
-      lightingMode: full
-      cullingMode: enabled
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: false
-      worldLightIntensity: 0.1
-      worldLightAmbient: 0
-      additionalLights: true
-      fog: true
-      floorGrid: false
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 2
-      normalVisualization: false
-      normalLength: 0.01
-      lightweightViewChange: false
-      coordinateAxes: true
-      fpsTestIteration: 1
-      upsideDown: false
-      cameras: 
-        - 
+    state:
+      head_light_intensity: 0.75
+      world_light: false
+      world_light_shadow: false
+      ambient_light: false
+      shadow_lights:
+        - { index: 1, enabled: true }
+        - { index: 2, enabled: true }
+      floor_grid: false
+      point_size: 2
+      background_color: [ 0, 0, 0 ]
+      cameras:
+        -
           camera: [ System, Perspective ]
-          isCurrent: true
-          fieldOfView: 0.6978
-          near: 0.01
-          far: 10000
+          is_current: true
           eye: [ -7.55, -3.78401, 3.39381 ]
           direction: [ 0.8446, 0.410131, -0.344157 ]
           up: [ 0.309587, 0.150333, 0.938912 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 10000
-      backgroundColor: [ 0, 0, 0 ]
-      gridColor: [ 0.9, 0.9, 0.9, 1 ]
-      xzgridColor: [ 0.9, 0.9, 0.9, 1 ]
-      yzgridColor: [ 0.9, 0.9, 0.9, 1 ]
-      isDedicatedItemCheckEnabled: false
-  - 
+  -
     id: 6
-    name: "Virtual Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
-  - 
+  -
     id: 8
     plugin: Body
     class: JointDisplacementView
     mounted: true
-    state: 
-      show_selected_joints: false
-      show_joint_ids: false
-      show_joint_names: true
-      overlap_joint_names: false
-      show_sliders: true
-      show_dials: false
-      show_phases: true
-  - 
+  -
     id: 9
     name: "Link Position"
     plugin: Body
     class: LinkPositionView
     mounted: true
-    state: 
-      coordinate_mode: world
-      preferred_coordinate_mode: base
-      show_rpy: true
-      unique_rpy: false
-      show_quoternion: false
-      show_rotation_matrix: false
-      target_link_type: root_or_ik_link
-  - 
+  -
     id: 10
     plugin: Body
     class: LinkSelectionView
     mounted: true
-    state: 
-      listingMode: "Link List"
-      currentBodyItem: 2
-      bodyItems: 
-        - 
-          id: 2
-          selectedLinks: [ 0 ]
-  - 
+  -
     id: 11
     plugin: Python
     class: PythonConsoleView
     mounted: true
-toolbars: 
-  "BodyMotionGenerationBar": 
-    autoGenerationForNewBody: true
-    balancer: false
-    autoGeneration: false
-    timeScaleRatio: 1
-    preInitialDuration: 1
-    postFinalDuration: 1
-    onlyTimeBarRange: false
-    makeNewBodyItem: true
-    stealthyStepMode: true
-    stealthyHeightRatioThresh: 2
-    flatLiftingHeight: 0.005
-    flatLandingHeight: 0.005
-    impactReductionHeight: 0.005
-    impactReductionTime: 0.04
-    autoZmp: true
-    minZmpTransitionTime: 0.1
-    zmpCenteringTimeThresh: 0.03
-    zmpTimeMarginBeforeLiftingSpin: 0
-    zmpMaxDistanceFromCenter: 0.02
-    allLinkPositions: false
-    lipSyncMix: false
-    timeToStartBalancer: 0
-    balancerIterations: 2
-    plainBalancerMode: false
-    boundaryConditionType: position
-    boundarySmootherType: quintic
-    boundarySmootherTime: 0.5
-    boundaryCmAdjustment: false
-    boundaryCmAdjustmentTime: 1
-    waistHeightRelaxation: false
-    gravity: 9.8
-    dynamicsTimeRatio: 1
-  "TimeBar": 
-    minTime: 0
-    maxTime: 30
-    frameRate: 1000
-    playbackFrameRate: 60
-    idleLoopDrivenMode: false
-    currentTime: 0
-    speedScale: 1
-    syncToOngoingUpdates: true
-    autoExpansion: true
-Body: 
-  "BodySelectionManager": 
-    currentBodyItem: 2
-    currentLink: "CHASSIS"
-  "EditableSceneBody": 
-    editableSceneBodies: 
-      - 
-        bodyItem: 2
-        showCenterOfMass: false
-        showPpcom: false
-        showZmp: false
-viewAreas: 
-  - 
+viewAreas:
+  -
     type: embedded
     tabs: true
-    contents: 
+    contents:
       type: splitter
       orientation: horizontal
       sizes: [ 363, 1553 ]
-      children: 
-        - 
+      children:
+        -
           type: splitter
           orientation: vertical
           sizes: [ 454, 453 ]
-          children: 
-            - 
+          children:
+            -
               type: pane
               views: [ 3 ]
-            - 
+            -
               type: pane
               views: [ 2, 10 ]
               current: 2
-        - 
+        -
           type: splitter
           orientation: vertical
           sizes: [ 703, 204 ]
-          children: 
-            - 
+          children:
+            -
               type: splitter
               orientation: horizontal
               sizes: [ 726, 823 ]
-              children: 
-                - 
+              children:
+                -
                   type: splitter
                   orientation: vertical
                   sizes: [ 350, 349 ]
-                  children: 
-                    - 
+                  children:
+                    -
                       type: pane
                       views: [ 9, 8, 0 ]
                       current: 0
-                    - 
+                    -
                       type: pane
                       views: [ 1 ]
-                - 
+                -
                   type: pane
                   views: [ 5 ]
-            - 
+            -
               type: splitter
               orientation: horizontal
               sizes: [ 892, 657 ]
-              children: 
-                - 
+              children:
+                -
                   type: pane
                   views: [ 4, 11 ]
                   current: 4
-                - 
+                -
                   type: pane
                   views: [ 6 ]
-layoutOfToolBars: 
-  rows: 
-    - 
-      - { name: "FileBar", x: 0, priority: 0 }
-      - { name: "SimulationBar", x: 47, priority: 1 }
-      - { name: "ScriptBar", x: 47, priority: 0 }
-      - { name: "TimeBar", x: 94, priority: 0 }
-      - { name: "SceneBar", x: 1175, priority: 2 }
-      - { name: "KinematicsBar", x: 1540, priority: 3 }
-      - { name: "ImageViewBar", x: 1774, priority: 4 }

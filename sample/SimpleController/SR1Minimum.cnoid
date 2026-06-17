@@ -1,97 +1,109 @@
-items: 
+optional_plugins: [ PhysX, MuJoCo, ODE, AGXDynamics ]
+
+items:
   id: 0
-  name: "Root"
+  name: "RootItem"
   plugin: Base
   class: RootItem
-  children: 
-    - 
+  is_builtin_item: true
+  children:
+    -
       id: 1
       name: "World"
       plugin: Body
       class: WorldItem
-      data: 
-        collisionDetection: false
-        collisionDetector: AISTCollisionDetector
-      children: 
-        - 
+      is_checked: true
+      data:
+        collision_detection: false
+        collision_detector: AISTCollisionDetector
+        default_material_table_file: "${SHARE}/default/materials.yaml"
+      children:
+        -
           id: 2
           name: "SR1"
           plugin: Body
           class: BodyItem
           is_checked: true
-          data: 
-            modelFile: "${SHARE}/model/SR1/SR1.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0, 0.7135 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [ 
-               0.000000, -0.036652,  0.000000,  0.078540, -0.041888,  0.000000,  0.174533, -0.003491,  0.000000, 
-              -1.570796,  0.000000,  0.000000,  0.000000,  0.000000, -0.036652,  0.000000,  0.078540, -0.041888, 
-               0.000000,  0.174533, -0.003491,  0.000000, -1.570796,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000 ]
-            initialRootPosition: [ 0, 0, 0.7135 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialJointPositions: [ 
-               0.000000, -0.036652,  0.000000,  0.078540, -0.041888,  0.000000,  0.174533, -0.003491,  0.000000, 
-              -1.570796,  0.000000,  0.000000,  0.000000,  0.000000, -0.036652,  0.000000,  0.078540, -0.041888, 
-               0.000000,  0.174533, -0.003491,  0.000000, -1.570796,  0.000000,  0.000000,  0.000000,  0.000000, 
-               0.000000,  0.000000 ]
-            zmp: [ 0, 0, 0 ]
-            selfCollisionDetection: false
-            isEditable: true
-          children: 
-            - 
+          data:
+            file: "${SHARE}/model/SR1/SR1.body"
+            format: CHOREONOID-BODY
+            current_base_link: "WAIST"
+            root_translation: [ 0, 0, 0.7135 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            joint_displacements: [
+              0, -2.1, 0, 4.50001, -2.40001, 0, 10, -0.20002, 0, -90,
+              0, 0, 0, 0, -2.1, 0, 4.50001, -2.40001, 0, 10,
+              -0.20002, 0, -90, 0, 0, 0, 0, 0, 0 ]
+            initial_root_translation: [ 0, 0, 0.7135 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: false
+            collision_detection: true
+            lock_location: false
+            scene_sensitive: true
+          children:
+            -
               id: 3
-              name: "SimpleController"
-              plugin: SimpleController
+              name: "SR1MinimumController"
+              plugin: Body
               class: SimpleControllerItem
-              data: 
-                isNoDelayMode: false
+              data:
                 controller: "SR1MinimumController"
+                base_directory: "Controller directory"
                 reloading: true
-                inputLinkPositions: false
-        - 
+                export_symbols: false
+        -
           id: 4
           name: "Floor"
           plugin: Body
           class: BodyItem
           is_checked: true
-          data: 
-            modelFile: "${SHARE}/model/misc/floor.body"
-            currentBaseLink: "BASE"
-            rootPosition: [ 0, 0, -0.1 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0, -0.1 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            selfCollisionDetection: false
-            isEditable: true
-        - 
+          data:
+            file: "${SHARE}/model/misc/floor.body"
+            format: CHOREONOID-BODY
+            root_translation: [ 0, 0, -0.1 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            initial_root_translation: [ 0, 0, -0.1 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: true
+            collision_detection: true
+            lock_location: false
+            scene_sensitive: true
+        -
           id: 5
-          name: "AISTSimulator"
-          plugin: Body
-          class: AISTSimulatorItem
-          data: 
-            realtimeSync: true
-            recording: "full"
+          name: "Simulators"
+          plugin: Base
+          class: FolderItem
+          children:
+            -
+              id: 6
+              name: "AISTSimulator"
+              plugin: Body
+              class: AISTSimulatorItem
+            -
+              id: 7
+              name: "PhysXSimulator"
+              plugin: PhysX
+              class: PhysXSimulatorItem
+            -
+              id: 8
+              name: "MuJoCoSimulator"
+              plugin: MuJoCo
+              class: MuJoCoSimulatorItem
+            -
+              id: 9
+              name: "ODESimulator"
+              plugin: ODE
+              class: ODESimulatorItem
+            -
+              id: 10
+              name: "AGXSimulator"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
 views:
   -
-    id: 0
+    id: 4
     plugin: Base
     class: SceneView
     mounted: true
     state:
-      floorGrid: false
+      floor_grid: false

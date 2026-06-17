@@ -1,240 +1,147 @@
-optionalPlugins: [ ODE, Bullet, PhysX, AGXDynamics ]
+optional_plugins: [ PhysX, MuJoCo, ODE, AGXDynamics ]
 
-items: 
+items:
   id: 0
-  name: "Root"
+  name: "RootItem"
   plugin: Base
   class: RootItem
-  children: 
-    - 
+  is_builtin_item: true
+  children:
+    -
       id: 1
       name: "World"
       plugin: Body
       class: WorldItem
-      data: 
-        collisionDetection: false
-        collisionDetector: AISTCollisionDetector
-      children: 
-        - 
+      is_checked: true
+      data:
+        collision_detection: false
+        collision_detector: AISTCollisionDetector
+        default_material_table_file: "${SHARE}/default/materials.yaml"
+      children:
+        -
           id: 2
           name: "SR1"
           plugin: Body
           class: BodyItem
           is_checked: true
-          data: 
-            modelFile: "${SHARE}/model/SR1/SR1.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0, 0, 0.7135 ]
-            rootAttitude: [ 
-              0.999955, -0.006461, 0.006886, 
-              0.006461, 0.999979, -2.5e-005, 
-              -0.006886, 7e-005, 0.999976 ]
-            jointPositions: [ 
-               0.000822, -0.037473,  0.000350,  0.077177, -0.046633, -0.000874,  0.175490, -0.003915,  0.000048, 
-              -1.568620,  0.000121,  0.000267,  0.000008, -0.000889, -0.040642,  0.000364,  0.077387, -0.043666, 
-               0.000969,  0.175601,  0.003290,  0.000028, -1.568673,  0.000228,  0.000239,  0.000006,  0.005740, 
-              -0.000324,  0.000089 ]
-            initialRootPosition: [ 0, 0, 0.7135 ]
-            initialRootAttitude: [ 
-              0.999955418, -0.00646083645, 0.00688615345, 
-              0.00646116355, 0.999979126, -2.52542765e-005, 
-              -0.00688584655, 6.97457235e-005, 0.99997629 ]
-            initialJointPositions: [ 
-               0.000822, -0.037473,  0.000350,  0.077177, -0.046633, -0.000874,  0.175490, -0.003915,  0.000048, 
-              -1.568620,  0.000121,  0.000267,  0.000008, -0.000889, -0.040642,  0.000364,  0.077387, -0.043666, 
-               0.000969,  0.175601,  0.003290,  0.000028, -1.568673,  0.000228,  0.000239,  0.000006,  0.005740, 
-              -0.000324,  0.000089 ]
-            zmp: [ 0, 0, 0 ]
-            selfCollisionDetection: false
-            isEditable: true
-          children: 
-            - 
+          data:
+            file: "${SHARE}/model/SR1/SR1.body"
+            format: CHOREONOID-BODY
+            current_base_link: "WAIST"
+            root_translation: [ 0, 0, 0.7135 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            joint_displacements: [
+              0, -2.1, 0, 4.5, -2.7, -0.05, 10, -0.2, 0, -90,
+              0, 0, 0, -0.05, -2.3, 0, 4.5, -2.5, 0.05, 10,
+              0.2, 0, -90, 0, 0, 0, 0.3, 0, 0 ]
+            initial_root_translation: [ 0, 0, 0.7135 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: false
+            collision_detection: true
+            lock_location: false
+            scene_sensitive: true
+          children:
+            -
               id: 3
               name: "SR1LiftupController"
-              plugin: SimpleController
+              plugin: Body
               class: SimpleControllerItem
-              data: 
-                isNoDelayMode: false
+              data:
                 controller: "SR1LiftupController"
+                base_directory: "Controller directory"
                 reloading: true
-                inputLinkPositions: false
-        - 
+                export_symbols: false
+        -
           id: 4
           name: "box2"
           plugin: Body
           class: BodyItem
           is_checked: true
-          data: 
-            modelFile: "${SHARE}/model/misc/box2.body"
-            currentBaseLink: "WAIST"
-            rootPosition: [ 0.55, 0, 0.151 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0.55, 0, 0.151 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            selfCollisionDetection: false
-            isEditable: true
-        - 
+          data:
+            file: "${SHARE}/model/misc/box2.body"
+            format: CHOREONOID-BODY
+            root_translation: [ 0.55, 0, 0.151 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            initial_root_translation: [ 0.55, 0, 0.151 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: false
+            collision_detection: true
+            lock_location: false
+            scene_sensitive: true
+        -
           id: 5
           name: "Floor"
           plugin: Body
           class: BodyItem
           is_checked: true
-          data: 
-            modelFile: "${SHARE}/model/misc/floor.body"
-            currentBaseLink: "BASE"
-            rootPosition: [ 0, 0, -0.1 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0, -0.1 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            selfCollisionDetection: false
-            isEditable: true
-        - 
+          data:
+            file: "${SHARE}/model/misc/floor.body"
+            format: CHOREONOID-BODY
+            root_translation: [ 0, 0, -0.1 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            initial_root_translation: [ 0, 0, -0.1 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: true
+            collision_detection: true
+            lock_location: false
+            scene_sensitive: true
+        -
           id: 6
           name: "Simulators"
           plugin: Base
           class: FolderItem
-          children: 
-            - 
+          children:
+            -
               id: 7
               name: "AISTSimulator"
               plugin: Body
               class: AISTSimulatorItem
-              data: 
-                timeStep: 0.002
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Time bar range"
-                timeLength: 60
-                allLinkPositionOutputMode: false
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: 
-                dynamicsMode: "Forward dynamics"
-                integrationMode: semi-implicit_euler
-                gravity: [ 0, 0, -9.80665 ]
-                kinematicWalking: false
-                2Dmode: false
-            - 
+              data:
+                time_step: 0.002
+                time_length: 15
+                time_range_mode: specified
+                num_collision_detection_threads: 2
+            -
               id: 8
-              name: "ODESimulator"
-              plugin: ODE
-              class: ODESimulatorItem
-              data: 
-                timeStep: 0.002
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Time bar range"
-                timeLength: 60
-                allLinkPositionOutputMode: true
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: 
-                stepMode: Iterative (quick step)
-                gravity: [ 0, 0, -9.8 ]
-                friction: 0.5
-                jointLimitMode: false
-                globalERP: 0.4
-                globalCFM: 1e-10
-                numIterations: 50
-                overRelaxation: 1.3
-                limitCorrectingVel: true
-                maxCorrectingVel: 1.0e-3
-                2Dmode: false
-                UseWorldItem'sCollisionDetector: false
-                velocityMode: false
-            - 
-              id: 9
-              name: "BulletSimulator"
-              plugin: Bullet
-              class: BulletSimulatorItem
-              data: 
-                timeStep: 0.002
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Time bar range"
-                timeLength: 60
-                allLinkPositionOutputMode: true
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: 
-                ErrorReductionParameter: 0.5
-                NumIterations: 10
-                Restitution: 0
-                Friction: 0.7
-                ERP2: 0
-                SplitImpulsePenetrationThreshold: -0.0001
-            - 
-              id: 10
               name: "PhysXSimulator"
               plugin: PhysX
               class: PhysXSimulatorItem
-              data: 
-                timeStep: 0.002
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Time bar range"
-                timeLength: 60
-                allLinkPositionOutputMode: true
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: 
-                staticFriction: 0.5
-                dynamicFriction: 0.8
-                Restitution: 0.1
-                jointLimitMode: false
-            - 
+              data:
+                time_step: 0.002
+                time_length: 15
+                time_range_mode: specified
+            -
+              id: 9
+              name: "MuJoCoSimulator"
+              plugin: MuJoCo
+              class: MuJoCoSimulatorItem
+              data:
+                time_step: 0.002
+                time_length: 15
+                time_range_mode: specified
+            -
+              id: 10
+              name: "ODESimulator"
+              plugin: ODE
+              class: ODESimulatorItem
+              data:
+                time_step: 0.002
+                time_length: 15
+                time_range_mode: specified
+            -
               id: 11
               name: "AGXSimulator"
               plugin: AGXDynamics
               class: AGXSimulatorItem
-              data: 
-                timestep: 0.002
-                realtimeSync: true
-                recording: "full"
-                timeRangeMode: "Time bar range"
-                timeLength: 60
-                allLinkPositionOutputMode: true
-                deviceStateOutput: true
-                controllerThreads: true
-                recordCollisionData: false
-                controllerOptions: ""
-                Gravity: [ 0, 0, -9.80665 ]
-                NumThreads: 1
-                ContactReduction: true
-                ContactReductionBinResolution: 3
-                ContactReductionThreshhold: 12
-                ContactWarmstarting: false
-                AutoSleep: false
-                SaveToAGXFileOnStart: false
+              data:
+                time_step: 0.002
+                time_length: 15
+                time_range_mode: specified
 views:
   -
-    id: 0
+    id: 4
     plugin: Base
     class: SceneView
     mounted: true
     state:
-      floorGrid: false
-toolbars: 
-  "TimeBar": 
-    min_time: 0
-    max_time: 15
+      floor_grid: false
