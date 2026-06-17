@@ -162,18 +162,22 @@ void ControllerItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool ControllerItem::store(Archive& archive)
 {
-    archive.write("isNoDelayMode", isNoDelayMode_);
-    archive.write("controllerOptions", optionString_, DOUBLE_QUOTED);
+    if(isNoDelayMode_){
+        archive.write("no_delay_mode", true);
+    }
+    if(!optionString_.empty()){
+        archive.write("controller_options", optionString_, DOUBLE_QUOTED);
+    }
     return true;
 }
 
 
 bool ControllerItem::restore(const Archive& archive)
 {
-    if(!archive.read("isNoDelayMode", isNoDelayMode_)){
+    if(!archive.read({ "no_delay_mode", "isNoDelayMode" }, isNoDelayMode_)){
         // For the backward compatibility
-        archive.read("isImmediateMode", isNoDelayMode_); 
+        archive.read("isImmediateMode", isNoDelayMode_);
     }
-    archive.read("controllerOptions", optionString_);
+    archive.read({ "controller_options", "controllerOptions" }, optionString_);
     return true;
 }

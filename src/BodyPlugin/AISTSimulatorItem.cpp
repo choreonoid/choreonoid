@@ -759,22 +759,28 @@ bool AISTSimulatorItem::store(Archive& archive)
 
 bool AISTSimulatorItem::Impl::store(Archive& archive)
 {
-    archive.write("dynamicsMode", dynamicsMode.selectedSymbol(), DOUBLE_QUOTED);
-    archive.write("integrationMode", integrationMode.is(SemiImplicitEuler) ? "semi-implicit_euler" : "runge-kutta");
+    archive.write("dynamics_mode", dynamicsMode.selectedSymbol(), DOUBLE_QUOTED);
+    archive.write("integration_mode", integrationMode.is(SemiImplicitEuler) ? "semi-implicit_euler" : "runge-kutta");
     write(archive, "gravity", gravity);
     archive.write("min_friction_coefficient", minFrictionCoefficient);
     archive.write("max_friction_coefficient", maxFrictionCoefficient);
-    archive.write("cullingThresh", contactCullingDistance);
-    archive.write("contactCullingDepth", contactCullingDepth);
-    archive.write("errorCriterion", errorCriterion);
-    archive.write("maxNumIterations", maxNumIterations);
+    archive.write("contact_culling_distance", contactCullingDistance);
+    archive.write("contact_culling_depth", contactCullingDepth);
+    archive.write("error_criterion", errorCriterion);
+    archive.write("max_num_iterations", maxNumIterations);
     archive.write("num_collision_detection_threads", numCollisionDetectionThreads);
     archive.write("max_num_contact_points", maxNumContactPoints);
-    archive.write("contactCorrectionDepth", contactCorrectionDepth);
-    archive.write("contactCorrectionVelocityRatio", contactCorrectionVelocityRatio);
-    archive.write("kinematicWalking", isKinematicWalkingEnabled);
-    archive.write("2Dmode", is2Dmode);
-    archive.write("oldAccelSensorMode", isOldAccelSensorMode);
+    archive.write("contact_correction_depth", contactCorrectionDepth);
+    archive.write("contact_correction_velocity_ratio", contactCorrectionVelocityRatio);
+    if(isKinematicWalkingEnabled){
+        archive.write("enable_kinematic_walking", true);
+    }
+    if(is2Dmode){
+        archive.write("use_2d_mode", true);
+    }
+    if(isOldAccelSensorMode){
+        archive.write("use_old_accel_sensor_mode", true);
+    }
     return true;
 }
 
@@ -789,10 +795,10 @@ bool AISTSimulatorItem::restore(const Archive& archive)
 bool AISTSimulatorItem::Impl::restore(const Archive& archive)
 {
     string symbol;
-    if(archive.read("dynamicsMode", symbol)){
+    if(archive.read({ "dynamics_mode", "dynamicsMode" }, symbol)){
         dynamicsMode.select(symbol);
     }
-    if(archive.read("integrationMode", symbol)){
+    if(archive.read({ "integration_mode", "integrationMode" }, symbol)){
         if(symbol == "runge-kutta" || symbol == "Runge Kutta"){
             integrationMode.select(RungeKutta);
         } else {
@@ -802,16 +808,16 @@ bool AISTSimulatorItem::Impl::restore(const Archive& archive)
     read(archive, "gravity", gravity);
     archive.read("min_friction_coefficient", minFrictionCoefficient);
     archive.read("max_friction_coefficient", maxFrictionCoefficient);
-    contactCullingDistance = archive.get("cullingThresh", contactCullingDistance.string());
-    contactCullingDepth = archive.get("contactCullingDepth", contactCullingDepth.string());
-    errorCriterion = archive.get("errorCriterion", errorCriterion.string());
-    archive.read("maxNumIterations", maxNumIterations);
+    contactCullingDistance = archive.get({ "contact_culling_distance", "cullingThresh" }, contactCullingDistance.string());
+    contactCullingDepth = archive.get({ "contact_culling_depth", "contactCullingDepth" }, contactCullingDepth.string());
+    errorCriterion = archive.get({ "error_criterion", "errorCriterion" }, errorCriterion.string());
+    archive.read({ "max_num_iterations", "maxNumIterations" }, maxNumIterations);
     archive.read("num_collision_detection_threads", numCollisionDetectionThreads);
     archive.read("max_num_contact_points", maxNumContactPoints);
-    contactCorrectionDepth = archive.get("contactCorrectionDepth", contactCorrectionDepth.string());
-    contactCorrectionVelocityRatio = archive.get("contactCorrectionVelocityRatio", contactCorrectionVelocityRatio.string());
-    archive.read("kinematicWalking", isKinematicWalkingEnabled);
-    archive.read("2Dmode", is2Dmode);
-    archive.read("oldAccelSensorMode", isOldAccelSensorMode);
+    contactCorrectionDepth = archive.get({ "contact_correction_depth", "contactCorrectionDepth" }, contactCorrectionDepth.string());
+    contactCorrectionVelocityRatio = archive.get({ "contact_correction_velocity_ratio", "contactCorrectionVelocityRatio" }, contactCorrectionVelocityRatio.string());
+    archive.read({ "enable_kinematic_walking", "kinematicWalking" }, isKinematicWalkingEnabled);
+    archive.read({ "use_2d_mode", "2Dmode" }, is2Dmode);
+    archive.read({ "use_old_accel_sensor_mode", "oldAccelSensorMode" }, isOldAccelSensorMode);
     return true;
 }

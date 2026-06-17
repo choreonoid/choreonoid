@@ -1986,23 +1986,21 @@ bool BodyItem::Impl::store(Archive& archive)
     archive.setFloatingNumberFormat("%.9g");
 
     if(currentBaseLink){
-        archive.write("currentBaseLink", currentBaseLink->name(), DOUBLE_QUOTED);
+        archive.write("current_base_link", currentBaseLink->name(), DOUBLE_QUOTED);
     }
 
     auto rootLink = body->rootLink();
-    /// \todo Improve the following for current / initial position representations
-    write(archive, "rootPosition", rootLink->p());
-    write(archive, "rootAttitude", Matrix3(rootLink->R()));
+    write(archive, "root_translation", rootLink->p());
+    writeDegreeAngleAxis(archive, "root_rotation", AngleAxis(rootLink->R()));
 
     Listing* qs;
-    
-    // New format uses degree
+
     int n = body->numAllJoints();
     if(n > 0){
         bool doWriteInitialJointDisplacements = false;
         auto initialJointDisplacements = initialState.jointDisplacements();
         int numInitialJointDisplacements = initialState.numJointDisplacements();
-        qs = archive.createFlowStyleListing("jointDisplacements");
+        qs = archive.createFlowStyleListing("joint_displacements");
         qs->setFloatingNumberFormat("%g");
         for(int i=0; i < n; ++i){
             double q = body->joint(i)->q();
@@ -2014,7 +2012,7 @@ bool BodyItem::Impl::store(Archive& archive)
             }
         }
         if(doWriteInitialJointDisplacements){
-            qs = archive.createFlowStyleListing("initialJointDisplacements");
+            qs = archive.createFlowStyleListing("initial_joint_displacements");
             qs->setFloatingNumberFormat("%g");
             for(size_t i=0; i < numInitialJointDisplacements; ++i){
                 qs->append(degree(initialJointDisplacements[i]), 10, n);
@@ -2022,16 +2020,17 @@ bool BodyItem::Impl::store(Archive& archive)
         }
     }
 
-    //! \todo replace the following code with the ValueTree serialization function of BodyState
     if(initialState.hasLinkPositions()){
         auto initialRootPosition = initialState.rootLinkPosition();
-        write(archive, "initialRootPosition", initialRootPosition.translation());
-        write(archive, "initialRootAttitude", Matrix3(initialRootPosition.rotation()));
+        write(archive, "initial_root_translation", initialRootPosition.translation());
+        writeDegreeAngleAxis(archive, "initial_root_rotation", AngleAxis(initialRootPosition.rotation()));
     }
 
     archive.write("fix_root", body->isFixedRootModel());
-    archive.write("collisionDetection", isCollisionDetectionEnabled);
-    archive.write("selfCollisionDetection", isSelfCollisionDetectionEnabled);
+    archive.write("collision_detection", isCollisionDetectionEnabled);
+    if(isSelfCollisionDetectionEnabled){
+        archive.write("self_collision_detection", true);
+    }
     archive.write("lock_location", self->isLocationLocked());
     archive.write("scene_sensitive", self->isSceneSensitive());
 
@@ -2148,19 +2147,27 @@ bool BodyItem::Impl::restore(const Archive& archive)
     auto rootLink = body->rootLink();
     Vector3 p = Vector3::Zero();
     Matrix3 R = Matrix3::Identity();
-        
-    if(read(archive, "rootPosition", p)){
+
+    if(read(archive, { "root_translation", "rootPosition" }, p)){
         rootLink->p() = p;
     }
-    if(read(archive, "rootAttitude", R)){
+    AngleAxis aa;
+    if(readDegreeAngleAxis(archive, "root_rotation", aa)){
+        rootLink->R() = aa.toRotationMatrix();
+    } else if(read(archive, "rootAttitude", R)){ // Old format
         rootLink->R() = R;
     }
 
-    //! \todo replace the following code with the ValueTree serialization function of BodyState
     initialState.allocate(1, 0);
 
-    read(archive, "initialRootPosition", p);
-    read(archive, "initialRootAttitude", R);
+    p.setZero();
+    R.setIdentity();
+    read(archive, { "initial_root_translation", "initialRootPosition" }, p);
+    if(readDegreeAngleAxis(archive, "initial_root_rotation", aa)){
+        R = aa.toRotationMatrix();
+    } else {
+        read(archive, "initialRootAttitude", R); // Old format
+    }
     initialState.rootLinkPosition().set(SE3(p, R));
 
     restoreNonRootLinkStates(archive);
@@ -2176,10 +2183,10 @@ bool BodyItem::Impl::restore(const Archive& archive)
             body->setRootLinkFixed(false);
         }
     }
-    if(archive.read("collisionDetection", on)){
+    if(archive.read({ "collision_detection", "collisionDetection" }, on)){
         setCollisionDetectionEnabled(on);
     }
-    if(archive.read("selfCollisionDetection", on)){
+    if(archive.read({ "self_collision_detection", "selfCollisionDetection" }, on)){
         setSelfCollisionDetectionEnabled(on);
     }
     if(archive.read("lock_location", on)){
@@ -2327,8 +2334,8 @@ void BodyItem::Impl::restoreNonRootLinkStates(const Archive& archive)
     Listing* qs;
     bool useNewJointDisplacementFormat = false;
 
-    qs = archive.findListing("jointDisplacements");
-    Listing* qs_initial = archive.findListing("initialJointDisplacements");
+    qs = archive.findListing({ "joint_displacements", "jointDisplacements" });
+    Listing* qs_initial = archive.findListing({ "initial_joint_displacements", "initialJointDisplacements" });
     if(qs->isValid()){
         useNewJointDisplacementFormat = true;
         int nj = std::min(qs->size(), body->numAllJoints());
@@ -2386,7 +2393,7 @@ void BodyItem::Impl::restoreNonRootLinkStates(const Archive& archive)
 
     body->calcForwardKinematics();
     string baseLinkName;
-    if(archive.read("currentBaseLink", baseLinkName)){
+    if(archive.read({ "current_base_link", "currentBaseLink" }, baseLinkName)){
         setCurrentBaseLink(body->link(baseLinkName), false, false);
     }
 
