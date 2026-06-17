@@ -8,10 +8,6 @@
 
 #include <cnoid/CollisionDetector>
 
-#ifdef GAZEBO_ODE
-#define ODECollisionDetector GazeboODECollisionDetector
-#endif
-
 namespace cnoid {
 
 class ODECollisionDetectorImpl;

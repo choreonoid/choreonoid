@@ -10,11 +10,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/IdPair>
 
-#ifdef GAZEBO_ODE
-#include <gazebo/ode/ode.h>
-#else
 #include <ode/ode.h>
-#endif
 
 using namespace std;
 using namespace cnoid;

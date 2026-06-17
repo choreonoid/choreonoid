@@ -4,9 +4,6 @@
 #include <cnoid/SimulatorItem>
 #include <cnoid/EigenTypes>
 #include "exportdecl.h"
-#ifdef GAZEBO_ODE
-#define ODESimulatorItem GazeboODESimulatorItem
-#endif
 
 namespace cnoid {
 

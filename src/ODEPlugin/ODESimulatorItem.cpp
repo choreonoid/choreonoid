@@ -21,13 +21,8 @@
 #include <unordered_map>
 #include "gettext.h"
 
-#ifdef GAZEBO_ODE
-#include <gazebo/ode/ode.h>
-#define ITEM_NAME N_("GazeboODESimulatorItem")
-#else
 #include <ode/ode.h>
 #define ITEM_NAME N_("ODESimulatorItem")
-#endif
 #include <iostream>
 
 using namespace std;
@@ -307,24 +302,15 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
         }
         if(link->actuationMode() == Link::JointVelocity){
             if(!USE_AMOTOR){
-#ifdef GAZEBO_ODE
-                dJointSetHingeParam(jointID, dParamFMax, 100);   //???
-                dJointSetHingeParam(jointID, dParamFudgeFactor, 1);
-#else
                 dJointSetHingeParam(jointID, dParamFMax, numeric_limits<dReal>::max());
                 dJointSetHingeParam(jointID, dParamFudgeFactor, 1);
-#endif
             }else{
                 motorID = dJointCreateAMotor(worldID, 0);
                 dJointAttach(motorID, bodyID, parentBodyID);
                 dJointSetAMotorMode(motorID, dAMotorUser);
                 dJointSetAMotorNumAxes(motorID, 1);
                 dJointSetAMotorAxis(motorID, 0, 2, a.x(), a.y(), a.z());
-#ifdef GAZEBO_ODE
-                dJointSetAMotorParam(motorID, dParamFMax, 100);
-#else
                 dJointSetAMotorParam(motorID, dParamFMax, numeric_limits<dReal>::max() );
-#endif
                 dJointSetAMotorParam(motorID, dParamFudgeFactor, 1);
             }
         }
@@ -361,11 +347,6 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
 
     case Link::FixedJoint:
     default:
-#ifdef GAZEBO_ODE
-    	jointID = dJointCreateFixed(worldID, 0);
-        dJointAttach(jointID, bodyID, parentBodyID);
-    	dJointSetFixed(jointID);
-#else
         if(parentBodyID){
             jointID = dJointCreateFixed(worldID, 0);
             dJointAttach(jointID, bodyID, parentBodyID);
@@ -373,7 +354,6 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
         } else {
             dBodySetKinematic(bodyID);
         }
-#endif
         break;
     }
 }
