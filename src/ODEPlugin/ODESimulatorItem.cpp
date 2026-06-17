@@ -778,6 +778,17 @@ void ODEBody::setExtraJoints(bool doFlipYZ)
                 dJointSetPistonAnchor(jointID, p.x(), p.y(), p.z());
                 dJointSetPistonAxis(jointID, a.x(), a.y(), a.z());
 
+            } else if(extraJoint->type() == ExtraJoint::Fixed){
+                jointID = dJointCreateFixed(worldID, 0);
+                dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
+                dJointSetFixed(jointID);
+
+            } else if(extraJoint->type() == ExtraJoint::Hinge){
+                jointID = dJointCreateHinge(worldID, 0);
+                dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
+                dJointSetHingeAnchor(jointID, p.x(), p.y(), p.z());
+                dJointSetHingeAxis(jointID, a.x(), a.y(), a.z());
+
             } else if(extraJoint->type() == ExtraJoint::Ball){
                 jointID = dJointCreateBall(worldID, 0);
                 dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
