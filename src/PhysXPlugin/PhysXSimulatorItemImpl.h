@@ -139,13 +139,11 @@ public:
     bool hasForceSensors;
     bool isSleeping_;
     BasicSensorSimulationHelper sensorHelper;
-    std::vector<physx::PxJoint*> extraJoints;
     BodyCollisionLinkFilter bodyCollisionLinkFilter;
 
     PhysxBody(Body* body, PhysXSimulatorItem::Impl* simImpl);
     ~PhysxBody();
     void createPhysxObjects();
-    void setExtraJoints();
     void setKinematicStateToPhysx();
     void inputControlCommandToPhysx();
     void addExternalForceToPhysx();
@@ -248,6 +246,13 @@ public:
     std::unordered_map<SgMesh*, physx::PxTriangleMesh*> triangleMeshMap;
     std::unordered_map<SgMesh*, physx::PxTriangleMesh*> triangleMeshWithSdfMap;
     std::unordered_map<SgMesh*, physx::PxConvexMesh*> convexMeshMap;
+    std::unordered_map<Body*, PhysxBody*> physxBodyMap;
+
+    struct PhysxExtraJoint {
+        physx::PxJoint* joint;
+        PhysxBody* bodies[2];
+    };
+    std::vector<PhysxExtraJoint> extraJoints;
 
     Vector3 gravity;
     Vector3 sceneOriginShift;
@@ -305,6 +310,9 @@ public:
     void clear();
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
+    void setExtraJoints(const std::vector<SimulationBody*>& simBodies);
+    PhysxLink* findPhysxLink(Link* link);
+    void releaseExtraJoints(PhysxBody* physxBody);
     void doPutProperties(PutPropertyFunction& putProperty);
     void store(Archive& archive);
     void restore(const Archive& archive);

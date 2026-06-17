@@ -24,7 +24,8 @@ public:
     class Impl;
 
 protected:
-    virtual SimulationBody* createSimulationBody(Body* orgBody) override;
+    virtual void clearSimulation() override;
+    virtual SimulationBody* createSimulationBody(Body* orgBody, CloneMap& cloneMap) override;
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies) override;
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies) override;
         

@@ -10,6 +10,7 @@
 #include <cnoid/Material>
 #include <cnoid/EigenUtil>
 #include <cnoid/EigenArchive>
+#include <cnoid/CloneMap>
 #include <cnoid/Archive>
 #include <cnoid/Format>
 #include <cnoid/MessageOut>
@@ -355,6 +356,9 @@ Vector3 PhysXSimulatorItem::getGravity() const
 
 void PhysXSimulatorItem::Impl::clear()
 {
+    releaseExtraJoints(nullptr);
+    physxBodyMap.clear();
+
     trackSimulator.reset();
 
     for(auto& pair : materialCache){
@@ -403,9 +407,19 @@ Item* PhysXSimulatorItem::doDuplicate() const
 }
 
 
-SimulationBody* PhysXSimulatorItem::createSimulationBody(Body* orgBody)
+void PhysXSimulatorItem::clearSimulation()
 {
-    return new PhysxBody(orgBody->clone(), impl);
+    impl->clear();
+    if(impl->physics){
+        impl->physics->release();
+        impl->physics = nullptr;
+    }
+}
+
+
+SimulationBody* PhysXSimulatorItem::createSimulationBody(Body* orgBody, CloneMap& cloneMap)
+{
+    return new PhysxBody(cloneMap.getClone(orgBody), impl);
 }
 
 
@@ -495,9 +509,14 @@ bool PhysXSimulatorItem::Impl::initializeSimulation(const std::vector<Simulation
     timeStep = self->worldTimeStep();
 
     bool hasNonRootFreeJoints = false;
+    physxBodyMap.clear();
     for(size_t i = 0; i < simBodies.size(); ++i){
         auto physxBody = static_cast<PhysxBody*>(simBodies[i]);
         physxBody->bodyIndex = static_cast<int>(i) + 1; // 0 means no body (static actor)
+        physxBodyMap[physxBody->body()] = physxBody;
+    }
+    for(size_t i = 0; i < simBodies.size(); ++i){
+        auto physxBody = static_cast<PhysxBody*>(simBodies[i]);
         physxBody->createPhysxObjects();
         if(!hasNonRootFreeJoints){
             for(auto& link : physxBody->body()->links()){
@@ -508,6 +527,7 @@ bool PhysXSimulatorItem::Impl::initializeSimulation(const std::vector<Simulation
             }
         }
     }
+    setExtraJoints(simBodies);
     if(hasNonRootFreeJoints && !self->isAllLinkPositionOutputMode()){
         bool confirmed = showConfirmDialog(
             _("Confirmation of all link position recording mode"),
@@ -799,9 +819,7 @@ PhysxBody::PhysxBody(Body* body, PhysXSimulatorItem::Impl* simImpl)
 
 PhysxBody::~PhysxBody()
 {
-    for(auto& joint : extraJoints){
-        joint->release();
-    }
+    simImpl->releaseExtraJoints(this);
 }
 
 
@@ -873,7 +891,6 @@ void PhysxBody::createPhysxObjects()
         }
     }
 
-    setExtraJoints();
 }
 
 
@@ -905,74 +922,126 @@ void PhysxBodyArticulation::buildLinkIndexToDofIndexMap(std::vector<int>& linkIn
 }
 
 
-void PhysxBody::setExtraJoints()
+PhysxLink* PhysXSimulatorItem::Impl::findPhysxLink(Link* link)
 {
-    auto body_ = body();
-    auto& physics = simImpl->physics;
-    int numExtraJoints = body_->numExtraJoints();
+    if(!link){
+        return nullptr;
+    }
+    auto body = link->body();
+    auto p = physxBodyMap.find(body);
+    if(p == physxBodyMap.end()){
+        return nullptr;
+    }
+    auto physxBody = p->second;
+    const int linkIndex = link->index();
+    if(linkIndex < 0 || linkIndex >= static_cast<int>(physxBody->physxLinks.size())){
+        return nullptr;
+    }
+    PhysxLink* physxLink = physxBody->physxLinks[linkIndex];
+    if(!physxLink || physxLink->link != link){
+        return nullptr;
+    }
+    return physxLink;
+}
 
-    for(int i = 0; i < numExtraJoints; ++i){
-        auto extraJoint = body_->extraJoint(i);
-        Link* link0 = extraJoint->link(0);
-        Link* link1 = extraJoint->link(1);
-        if(!link0 || !link1){
-            continue;
-        }
-        auto physxLink0 = physxLinks[link0->index()];
-        auto physxLink1 = physxLinks[link1->index()];
-        if(!physxLink0->rigidActor || !physxLink1->rigidActor){
-            continue;
-        }
 
-        int jointType = extraJoint->type();
-        PxTransform T0, T1;
-        if(jointType == ExtraJoint::Hinge || jointType == ExtraJoint::Piston){
-            // PhysX uses X-axis as the joint axis.
-            // Compute rotation that maps UnitX to the specified axis direction.
-            Matrix3 Rax = Quaternion::FromTwoVectors(Vector3::UnitX(), extraJoint->axis()).toRotationMatrix();
-            Isometry3 T0frame;
-            T0frame.linear() = extraJoint->localRotation(0) * Rax;
-            T0frame.translation() = extraJoint->localTranslation(0);
-            T0 = getPxTransform(T0frame);
-            Isometry3 T1frame;
-            T1frame.linear() = extraJoint->localRotation(1) * Rax;
-            T1frame.translation() = extraJoint->localTranslation(1);
-            T1 = getPxTransform(T1frame);
-        } else {
-            T0 = getPxTransform(extraJoint->localPosition(0));
-            T1 = getPxTransform(extraJoint->localPosition(1));
-        }
+void PhysXSimulatorItem::Impl::setExtraJoints(const std::vector<SimulationBody*>& simBodies)
+{
+    std::unordered_set<ExtraJoint*> initializedExtraJoints;
 
-        PxJoint* joint = nullptr;
-        switch(jointType){
-        case ExtraJoint::Fixed:
-            joint = PxFixedJointCreate(
-                *physics, physxLink0->rigidActor, T0, physxLink1->rigidActor, T1);
-            break;
-        case ExtraJoint::Hinge:
-            joint = PxRevoluteJointCreate(
-                *physics, physxLink0->rigidActor, T0, physxLink1->rigidActor, T1);
-            break;
-        case ExtraJoint::Ball:
-            joint = PxSphericalJointCreate(
-                *physics, physxLink0->rigidActor, T0, physxLink1->rigidActor, T1);
-            break;
-        case ExtraJoint::Piston: {
-            auto d6Joint = PxD6JointCreate(
-                *physics, physxLink0->rigidActor, T0, physxLink1->rigidActor, T1);
-            if(d6Joint){
-                d6Joint->setMotion(PxD6Axis::eX, PxD6Motion::eFREE);
-                d6Joint->setMotion(PxD6Axis::eTWIST, PxD6Motion::eFREE);
+    for(auto simBody : simBodies){
+        auto physxBody = static_cast<PhysxBody*>(simBody);
+        auto body = physxBody->body();
+        int numExtraJoints = body->numExtraJoints();
+
+        for(int i = 0; i < numExtraJoints; ++i){
+            auto extraJoint = body->extraJoint(i);
+            if(!initializedExtraJoints.insert(extraJoint).second){
+                continue;
             }
-            joint = d6Joint;
-            break;
+
+            PhysxLink* physxLinks[2] = {
+                findPhysxLink(extraJoint->link(0)),
+                findPhysxLink(extraJoint->link(1))
+            };
+            if(!physxLinks[0] || !physxLinks[1] ||
+               !physxLinks[0]->rigidActor || !physxLinks[1]->rigidActor){
+                continue;
+            }
+
+            int jointType = extraJoint->type();
+            PxTransform T0, T1;
+            if(jointType == ExtraJoint::Hinge || jointType == ExtraJoint::Piston){
+                // PhysX uses X-axis as the joint axis.
+                // Compute rotation that maps UnitX to the specified axis direction.
+                Matrix3 Rax = Quaternion::FromTwoVectors(Vector3::UnitX(), extraJoint->axis()).toRotationMatrix();
+                Isometry3 T0frame;
+                T0frame.linear() = extraJoint->localRotation(0) * Rax;
+                T0frame.translation() = extraJoint->localTranslation(0);
+                T0 = getPxTransform(T0frame);
+                Isometry3 T1frame;
+                T1frame.linear() = extraJoint->localRotation(1) * Rax;
+                T1frame.translation() = extraJoint->localTranslation(1);
+                T1 = getPxTransform(T1frame);
+            } else {
+                T0 = getPxTransform(extraJoint->localPosition(0));
+                T1 = getPxTransform(extraJoint->localPosition(1));
+            }
+
+            PxJoint* joint = nullptr;
+            switch(jointType){
+            case ExtraJoint::Fixed:
+                joint = PxFixedJointCreate(
+                    *physics, physxLinks[0]->rigidActor, T0, physxLinks[1]->rigidActor, T1);
+                break;
+            case ExtraJoint::Hinge:
+                joint = PxRevoluteJointCreate(
+                    *physics, physxLinks[0]->rigidActor, T0, physxLinks[1]->rigidActor, T1);
+                break;
+            case ExtraJoint::Ball:
+                joint = PxSphericalJointCreate(
+                    *physics, physxLinks[0]->rigidActor, T0, physxLinks[1]->rigidActor, T1);
+                break;
+            case ExtraJoint::Piston: {
+                auto d6Joint = PxD6JointCreate(
+                    *physics, physxLinks[0]->rigidActor, T0, physxLinks[1]->rigidActor, T1);
+                if(d6Joint){
+                    d6Joint->setMotion(PxD6Axis::eX, PxD6Motion::eFREE);
+                    d6Joint->setMotion(PxD6Axis::eTWIST, PxD6Motion::eFREE);
+                }
+                joint = d6Joint;
+                break;
+            }
+            default:
+                break;
+            }
+            if(joint){
+                PhysxExtraJoint jointInfo;
+                jointInfo.joint = joint;
+                jointInfo.bodies[0] = physxLinks[0]->physxBody;
+                jointInfo.bodies[1] = physxLinks[1]->physxBody;
+                extraJoints.push_back(jointInfo);
+            }
         }
-        default:
-            break;
+    }
+}
+
+
+void PhysXSimulatorItem::Impl::releaseExtraJoints(PhysxBody* physxBody)
+{
+    for(auto& extraJoint : extraJoints){
+        if(!extraJoint.joint){
+            continue;
         }
-        if(joint){
-            extraJoints.push_back(joint);
+        if(!physxBody ||
+           extraJoint.bodies[0] == physxBody ||
+           extraJoint.bodies[1] == physxBody){
+            extraJoint.joint->release();
+            extraJoint.joint = nullptr;
         }
+    }
+    if(!physxBody){
+        extraJoints.clear();
     }
 }
 
