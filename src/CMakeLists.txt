@@ -44,8 +44,9 @@ if(ENABLE_GUI)
 
   add_subdirectory(FCLPlugin)
 
-  add_subdirectory(ODEPlugin)
   add_subdirectory(PhysXPlugin)
+  add_subdirectory(MuJoCoPlugin)
+  add_subdirectory(ODEPlugin)
   add_subdirectory(AGXDynamicsPlugin)
   add_subdirectory(BulletPlugin)
   add_subdirectory(SpringheadPlugin)
