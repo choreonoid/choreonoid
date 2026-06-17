@@ -355,35 +355,35 @@ bool SceneWidgetConfig::Impl::store(Mapping* archive)
     }
 
     if(!isCameraRollRistricted){
-        archive->write("restrictCameraRoll", false);
+        archive->write("restrict_camera_roll", false);
     }
     if(verticalAxis != 2){
-        archive->write("verticalAxis", axisSymbols[verticalAxis]);
+        archive->write("vertical_axis", axisSymbols[verticalAxis]);
     }
 
     static const char* planes[] = { "floor", "xz", "yz" };
     for(int i=0; i < 3; ++i){
         auto& info = gridInfos[i];
         auto& plane = planes[i];
-        archive->write(formatC("{}Grid", plane), info.isEnabled);
-        archive->write(formatC("{}GridSpan", plane), info.span);
-        archive->write(formatC("{}GridInterval", plane), info.interval);
+        archive->write(formatC("{}_grid", plane), info.isEnabled);
+        archive->write(formatC("{}_grid_span", plane), info.span);
+        archive->write(formatC("{}_grid_interval", plane), info.interval);
     }
     write(archive, "xy_grid_color", gridInfos[0].color);
     write(archive, "xz_grid_color", gridInfos[1].color);
     write(archive, "yz_grid_color", gridInfos[2].color);
 
     if(isNormalVisualizationEnabled){
-        archive->write("normalVisualization", true);
+        archive->write("show_normals", true);
     }
     if(normalLength != defaultNormalLength){
-        archive->write("normalLength", normalLength);
+        archive->write("normal_length", normalLength);
     }
     if(isLightweightViewChangedEnabled){
-        archive->write("lightweightViewChange", true);
+        archive->write("enable_lightweight_view_change", true);
     }
     if(!isCoordinateAxesEnabled){
-        archive->write("coordinateAxes", false);
+        archive->write("show_coordinate_axes", false);
     }
 
     return true;
@@ -441,7 +441,7 @@ bool SceneWidgetConfig::Impl::restore(const Mapping* archive)
         }
     }
 
-    isCameraRollRistricted = archive->get("restrictCameraRoll", true);
+    isCameraRollRistricted = archive->get({ "restrict_camera_roll", "restrictCameraRoll" }, true);
 
     archive->read("infinite_far_clip", isInfiniteFarOverrideEnabled);
 
@@ -456,7 +456,7 @@ bool SceneWidgetConfig::Impl::restore(const Mapping* archive)
 
     string symbol;
     verticalAxis = 2;
-    if(archive->read("verticalAxis", symbol)){
+    if(archive->read({ "vertical_axis", "verticalAxis" }, symbol)){
         for(int i=0; i < 3; ++i){
             if(symbol == axisSymbols[i]){
                 verticalAxis = i;
@@ -464,15 +464,21 @@ bool SceneWidgetConfig::Impl::restore(const Mapping* archive)
             }
         }
     }
-    
+
     static const char* planes[] = { "floor", "xz", "yz" };
     static const char* grid_color_keys[] = { "xy_grid_color", "xz_grid_color", "yz_grid_color" };
     for(int i=0; i < 3; ++i){
         auto& info = gridInfos[i];
         auto& plane = planes[i];
-        archive->read(formatC("{}Grid", plane), info.isEnabled);
-        archive->read(formatC("{}GridSpan", plane), info.span);
-        archive->read(formatC("{}GridInterval", plane), info.interval);
+        if(!archive->read(formatC("{}_grid", plane), info.isEnabled)){
+            archive->read(formatC("{}Grid", plane), info.isEnabled);
+        }
+        if(!archive->read(formatC("{}_grid_span", plane), info.span)){
+            archive->read(formatC("{}GridSpan", plane), info.span);
+        }
+        if(!archive->read(formatC("{}_grid_interval", plane), info.interval)){
+            archive->read(formatC("{}GridInterval", plane), info.interval);
+        }
         if(read(archive, grid_color_keys[i], info.color)){
             if(widgetSet){
                 setColorButtonColor(widgetSet->gridWidgetSets[i].colorButton, info.color);
@@ -480,11 +486,11 @@ bool SceneWidgetConfig::Impl::restore(const Mapping* archive)
         }
     }
 
-    isNormalVisualizationEnabled = archive->get("normalVisualization", false);
-    normalLength = archive->get("normalLength", defaultNormalLength);
-    isLightweightViewChangedEnabled = archive->get("lightweightViewChange", false);
-    
-    isCoordinateAxesEnabled = archive->get("coordinateAxes", true);
+    isNormalVisualizationEnabled = archive->get({ "show_normals", "normalVisualization" }, false);
+    normalLength = archive->get({ "normal_length", "normalLength" }, defaultNormalLength);
+    isLightweightViewChangedEnabled = archive->get({ "enable_lightweight_view_change", "lightweightViewChange" }, false);
+
+    isCoordinateAxesEnabled = archive->get({ "show_coordinate_axes", "coordinateAxes" }, true);
 
     if(widgetSet){
         widgetSet->updateWidgets();

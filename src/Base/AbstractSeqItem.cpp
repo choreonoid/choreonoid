@@ -82,7 +82,7 @@ bool AbstractSeqItem::store(Archive& archive)
     if(overwriteOrSaveWithDialog()){
         archive.writeFileInformation(this);
     }
-    archive.write("offsetTime", abstractSeq()->getOffsetTime());
+    archive.write("offset_time", abstractSeq()->getOffsetTime());
     return true;
 }
 
@@ -90,7 +90,7 @@ bool AbstractSeqItem::store(Archive& archive)
 bool AbstractSeqItem::restore(const Archive& archive)
 {
     double offsetTime;
-    if(archive.read("offsetTime", offsetTime)){
+    if(archive.read({ "offset_time", "offsetTime" }, offsetTime)){
         abstractSeq()->setOffsetTime(offsetTime);
     }
     return archive.loadFileTo(this);

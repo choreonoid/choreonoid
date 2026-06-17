@@ -1193,21 +1193,29 @@ void MovieRecorder::Impl::store(Mapping* archive)
     } else {
         archive->write("target", targetViewName);
     }
-    archive->write("recordingMode", recordingModeSymbols[recordingMode]);
+    archive->write("recording_mode", recordingModeSymbols[recordingMode]);
     archive->write("format", currentEncoder->formatName(), DOUBLE_QUOTED);
-    archive->write("showViewMarker", isViewMarkerVisible);
+    archive->write("show_view_marker", isViewMarkerVisible);
     archive->write("directory", directory, DOUBLE_QUOTED);
     archive->write("basename", fileBaseName, DOUBLE_QUOTED);
-    archive->write("checkStartTime", isStartingTimeSpecified);
-    archive->write("startTime", specifiedStartingTime);
-    archive->write("checkFinishTime", isFinishingTimeSpecified);
-    archive->write("finishTime", specifiedFinishingTime);
+    if(isStartingTimeSpecified){
+        archive->write("use_start_time", true);
+    }
+    if(specifiedStartingTime != 0.0){
+        archive->write("start_time", specifiedStartingTime);
+    }
+    if(isFinishingTimeSpecified){
+        archive->write("use_finish_time", true);
+    }
+    if(specifiedFinishingTime != 0.0){
+        archive->write("finish_time", specifiedFinishingTime);
+    }
     archive->write("fps", frameRate);
-    archive->write("setSize", isImageSizeSpecified);
+    archive->write("use_custom_image_size", isImageSizeSpecified);
     archive->write("width", imageWidth);
     archive->write("height", imageHeight);
-    if(hasMouseCursorCaptureFeature){
-        archive->write("mouseCursor", isMouseCursorCaptureEnabled);
+    if(hasMouseCursorCaptureFeature && isMouseCursorCaptureEnabled){
+        archive->write("capture_mouse_cursor", true);
     }
 }
 
@@ -1218,7 +1226,7 @@ void MovieRecorder::Impl::restore(const Mapping* archive)
     if(archive->read("target", symbol)){
         setTargetView(symbol, false);
     }
-    if(archive->read("recordingMode", symbol)){
+    if(archive->read({ "recording_mode", "recordingMode" }, symbol)){
         for(int i=0; i < 3; ++i){
             if(symbol == recordingModeSymbols[i]){
                 recordingMode = static_cast<RecordingMode>(i);
@@ -1230,19 +1238,19 @@ void MovieRecorder::Impl::restore(const Mapping* archive)
     if(archive->read("format", format)){
         setCurrentEncoderByFormatName(format, false);
     }
-    archive->read("showViewMarker", isViewMarkerVisible);
+    archive->read({ "show_view_marker", "showViewMarker" }, isViewMarkerVisible);
     archive->read("directory", directory);
     archive->read("basename", fileBaseName);
-    archive->read("checkStartTime", isStartingTimeSpecified);
-    archive->read("startTime", specifiedStartingTime);
-    archive->read("checkFinishTime", isFinishingTimeSpecified);
-    archive->read("finishTime", specifiedFinishingTime);
+    archive->read({ "use_start_time", "checkStartTime" }, isStartingTimeSpecified);
+    archive->read({ "start_time", "startTime" }, specifiedStartingTime);
+    archive->read({ "use_finish_time", "checkFinishTime" }, isFinishingTimeSpecified);
+    archive->read({ "finish_time", "finishTime" }, specifiedFinishingTime);
     archive->read("fps", frameRate);
-    archive->read("setSize", isImageSizeSpecified);
+    archive->read({ "use_custom_image_size", "setSize" }, isImageSizeSpecified);
     archive->read("width", imageWidth);
     archive->read("height", imageHeight);
     if(hasMouseCursorCaptureFeature){
-        archive->read("mouseCursor", isMouseCursorCaptureEnabled);
+        archive->read({ "capture_mouse_cursor", "mouseCursor" }, isMouseCursorCaptureEnabled);
     }
 
     updateViewMarker();

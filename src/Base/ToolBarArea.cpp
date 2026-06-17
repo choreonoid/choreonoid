@@ -348,7 +348,7 @@ void ToolBarArea::Impl::restoreLayout(Mapping* archive)
         return;
     }
 
-    const MappingPtr layoutOfToolBars = archive->findMapping("layoutOfToolBars");
+    const MappingPtr layoutOfToolBars = archive->findMapping({ "toolbar_layout", "layoutOfToolBars" });
     if(!layoutOfToolBars->isValid()){
         layoutToolBars();
         return;
@@ -438,6 +438,7 @@ void ToolBarArea::Impl::resetLayout(Mapping* archive)
 
 void ToolBarArea::removeLayout(Mapping* archive)
 {
+    archive->remove("toolbar_layout");
     archive->remove("layoutOfToolBars");
 }
 
@@ -450,7 +451,7 @@ void ToolBarArea::storeLayout(Mapping* archive)
 
 void ToolBarArea::Impl::storeLayout(Mapping* archive)
 {
-    auto layoutOfToolBars = archive->createMapping("layoutOfToolBars");
+    auto layoutOfToolBars = archive->createMapping("toolbar_layout");
     int numVisibleToolBars = 0;
 
     auto rows = layoutOfToolBars->createListing("rows");

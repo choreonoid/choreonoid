@@ -445,7 +445,7 @@ ItemList<> ProjectManager::Impl::loadProject
             }
 
             std::set<string> optionalPlugins;
-            Listing& optionalPluginsNode = *archive->findListing("optionalPlugins");
+            Listing& optionalPluginsNode = *archive->findListing({ "optional_plugins", "optionalPlugins" });
             if(optionalPluginsNode.isValid()){
                 for(int i=0; i < optionalPluginsNode.size(); ++i){
                     optionalPlugins.insert(optionalPluginsNode[i].toString());
@@ -544,7 +544,7 @@ ItemList<> ProjectManager::Impl::loadProject
 
             if(loaded){
                 if(!isSubProject){
-                    if(archive->get("isNewProjectTemplate", false)){
+                    if(archive->get({ "is_new_project_template", "isNewProjectTemplate" }, false)){
                         clearCurrentProjectFile();
                     } else {
                         if(!isBackup){

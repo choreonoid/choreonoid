@@ -1648,10 +1648,10 @@ SignalProxy<void(int index, bool on)> TaskView::sigMenuItemToggled()
 
 bool TaskView::storeState(Archive& archive)
 {
-    archive.write("layoutMode", impl->isVerticalLayout ? "vertical" : "horizontal");
-    archive.write("isAutoMode", impl->autoModeToggle.isChecked());
+    archive.write("layout_mode", impl->isVerticalLayout ? "vertical" : "horizontal");
+    archive.write("auto_mode", impl->autoModeToggle.isChecked());
     if(impl->currentTask){
-        archive.write("currentTask", impl->currentTask->name());
+        archive.write("current_task", impl->currentTask->name());
     }
     return true;
 }
@@ -1660,16 +1660,16 @@ bool TaskView::storeState(Archive& archive)
 bool TaskView::restoreState(const Archive& archive)
 {
     string layoutMode;
-    if(archive.read("layoutMode", layoutMode)){
+    if(archive.read({ "layout_mode", "layoutMode" }, layoutMode)){
         if(layoutMode == "horizontal"){
             impl->doLayout(false);
         } else if(layoutMode == "vertical"){
             impl->doLayout(true);
         }
     }
-    impl->autoModeToggle.setChecked(archive.get("isAutoMode", false));
+    impl->autoModeToggle.setChecked(archive.get({ "auto_mode", "isAutoMode" }, false));
     string name;
-    if(archive.read("currentTask", name)){
+    if(archive.read({ "current_task", "currentTask" }, name)){
         archive.addPostProcess([this, name](){ impl->setCurrentTaskByName(name, false); }, 1);
     }
     return true;

@@ -590,8 +590,7 @@ bool MultiPointSetItem::Impl::onTopRotationPropertyChanged(const std::string& va
 
 bool MultiPointSetItem::store(Archive& archive)
 {
-    archive.write("visibilityMode", impl->visibilityMode.selectedSymbol());
-    archive.write("autoSave", false);
+    archive.write("visibility_mode", impl->visibilityMode.selectedSymbol());
 
     auto& scene = impl->scene;
     write(archive, "translation", Vector3(scene->translation()));
@@ -601,9 +600,9 @@ bool MultiPointSetItem::store(Archive& archive)
     // The old format is deprecated, and writing the following element should be omitted in the future.
     archive.write("angle_unit", "degree");
 
-    archive.write("renderingMode", impl->renderingMode.selectedSymbol());
-    archive.write("pointSize", pointSize());
-    archive.write("voxelSize", voxelSize());
+    archive.write("rendering_mode", impl->renderingMode.selectedSymbol());
+    archive.write("point_size", pointSize());
+    archive.write("voxel_size", voxelSize());
     return true;
 }
 
@@ -611,11 +610,9 @@ bool MultiPointSetItem::store(Archive& archive)
 bool MultiPointSetItem::restore(const Archive& archive)
 {
     string symbol;
-    if(archive.read("visibilityMode", symbol)){
+    if(archive.read({ "visibility_mode", "visibilityMode" }, symbol)){
         setVisibilityMode(impl->visibilityMode.index(symbol));
     }
-    
-    archive.get("autoSave", false);
 
     auto& scene = impl->scene;
     Vector3 translation;
@@ -634,11 +631,11 @@ bool MultiPointSetItem::restore(const Archive& archive)
         scene->setRotation(rot);
     }
     
-    if(archive.read("renderingMode", symbol)){
+    if(archive.read({ "rendering_mode", "renderingMode" }, symbol)){
         impl->onRenderingModePropertyChanged(impl->renderingMode.index(symbol));
     }
-    setPointSize(archive.get("pointSize", pointSize()));
-    setVoxelSize(archive.get("voxelSize", voxelSize()));
+    setPointSize(archive.get({ "point_size", "pointSize" }, pointSize()));
+    setVoxelSize(archive.get({ "voxel_size", "voxelSize" }, voxelSize()));
     
     return true;
 }
@@ -833,7 +830,7 @@ bool MultiPointSetItem::Impl::load(const std::string& filename)
                     if(childItem->load(toUTF8((directory / path).string()), self, "PCD-FILE")){
                         childItem->setName(toUTF8(path.stem().string()));
                         Isometry3 T;
-                        if(read(info, "offsetTransform", T)){
+                        if(read(info, { "offset_transform", "offsetTransform" }, T)){
                             childItem->setOffsetPosition(T);
                         }
                         self->addSubItem(childItem);
@@ -859,7 +856,7 @@ bool MultiPointSetItem::Impl::save(const std::string& filename)
     outputArchive->setFloatingNumberFormat("%.9g");
 
     outputArchive->write("type", "MultiPointSet");
-    outputArchive->write("fileFormat", "PCD");
+    outputArchive->write("file_format", "PCD");
 
     outputFileListing = outputArchive->createListing("files");
     const int n = self->numPointSetItems();
@@ -887,7 +884,7 @@ bool MultiPointSetItem::Impl::outputPointSetItem(int index)
             MappingPtr info = new Mapping();
             info->write("file", filename);
             info->setFloatingNumberFormat("%.9g");
-            write(*info, "offsetTransform", item->offsetPosition());
+            write(*info, "offset_transform", item->offsetPosition());
             outputFileListing->insert(index, info);
             result = true;
 

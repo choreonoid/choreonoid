@@ -1017,7 +1017,7 @@ void ViewArea::restoreAllViewAreaLayouts(ArchivePtr archive)
     Impl* mainViewAreaImpl = MainWindow::instance()->viewArea()->impl;
     
     if(archive){
-        Listing& layouts = *archive->findListing("viewAreas");
+        Listing& layouts = *archive->findListing({ "view_areas", "viewAreas" });
         if(layouts.isValid()){
             auto screens = QGuiApplication::screens();
             auto primaryScreen = QGuiApplication::primaryScreen();
@@ -1057,7 +1057,7 @@ void ViewArea::restoreAllViewAreaLayouts(ArchivePtr archive)
                                 const QRect r(geo[0].toInt(), geo[1].toInt(), geo[2].toInt(), geo[3].toInt());
                                 viewWindow->setGeometry(r.translated(s.x(), s.y()));
                             }
-                            if(layout.get("fullScreen", false)){
+                            if(layout.get({ "full_screen", "fullScreen" }, false)){
                                 layout.read("maximized", viewWindow->impl->isMaximizedBeforeFullScreen);
                                 viewWindow->showFullScreen();
                             } else {
@@ -1279,7 +1279,7 @@ void ViewArea::storeAllViewAreaLayouts(ArchivePtr archive)
         layouts->append(layout);
     }
     if(!layouts->empty()){
-        archive->insert("viewAreas", layouts);
+        archive->insert("view_areas", layouts);
     }
 }
 
@@ -1339,10 +1339,10 @@ void ViewArea::Impl::storeLayout(Archive* archive)
                 }
                 
                 if(self->isFullScreen()){
-                    archive->write("fullScreen", true);
+                    archive->write("full_screen", true);
                     archive->write("maximized", isMaximizedBeforeFullScreen);
                 } else {
-                    archive->write("fullScreen", false);
+                    archive->write("full_screen", false);
                     archive->write("maximized", self->isMaximized());
                 }
             }

@@ -154,7 +154,7 @@ void MultiSE3SeqGraphView::onDataModified
 bool MultiSE3SeqGraphView::storeState(Archive& archive)
 {
     if(GraphViewBase::storeState(archive)){
-        Listing& visibleElements = *archive.createFlowStyleListing("visibleElements");
+        Listing& visibleElements = *archive.createFlowStyleListing("visible_elements");
         for(int i=0; i < 3; ++i){
             if(xyzToggles[i].isChecked()){
                 visibleElements.append(i);
@@ -174,7 +174,7 @@ bool MultiSE3SeqGraphView::storeState(Archive& archive)
 bool MultiSE3SeqGraphView::restoreState(const Archive& archive)
 {
     if(GraphViewBase::restoreState(archive)){
-        const Listing& visibleElements = *archive.findListing("visibleElements");
+        const Listing& visibleElements = *archive.findListing({ "visible_elements", "visibleElements" });
         if(visibleElements.isValid()){
             auto block = toggleConnections.scopedBlock();
             for(int i=0; i < 3; ++i){

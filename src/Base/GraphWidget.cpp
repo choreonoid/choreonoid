@@ -1938,25 +1938,25 @@ bool GraphWidgetImpl::storeState(Archive& archive)
     static const char* modeLabel[] = { "view", "edit" };
     archive.write("mode", modeLabel[mode]);
 
-    static const char* editModeLabel[] = { "freeLine", "line" };
-    archive.write("editMode", editModeLabel[editMode]);
-    
+    static const char* editModeLabel[] = { "free_line", "line" };
+    archive.write("edit_mode", editModeLabel[editMode]);
+
     archive.write("original", isOrgValueVisible);
     archive.write("velocity", isVelocityVisible);
     archive.write("acceleration", isAccelerationVisible);
     archive.write("limits", isLimitVisible);
     archive.write("grid", isGridOn);
-    archive.write("gridWidth", gridWidth);
-    archive.write("gridHeight", gridHeight);
-    archive.write("lineWidth", lineWidth);
+    archive.write("grid_width", gridWidth);
+    archive.write("grid_height", gridHeight);
+    archive.write("line_width", lineWidth);
     archive.write("rulers", self->showsRulers());
     archive.write("sync", timeBarSyncMode);
-    archive.write("controlPointStep", controlPointStep);
-    archive.write("controlPointOffset", controlPointOffset);
-    archive.write("controlPointHeighlight", isControlPointsHighlighted);
+    archive.write("control_point_step", controlPointStep);
+    archive.write("control_point_offset", controlPointOffset);
+    archive.write("control_point_highlight", isControlPointsHighlighted);
 
     static const char* scrollModeLabel[] = { "off", "continuous", "page" };
-    archive.write("scrollMode", scrollModeLabel[autoScrollMode]);
+    archive.write("scroll_mode", scrollModeLabel[autoScrollMode]);
     
     archive.write("lower", rangeLowerY);
     archive.write("upper", rangeUpperY);
@@ -1978,32 +1978,32 @@ bool GraphWidgetImpl::restoreState(const Archive& archive)
         changeMode((modeLabel == "edit") ? GraphWidget::EDIT_MODE : GraphWidget::VIEW_MODE);
     }
     string editModeLabel;
-    if(archive.read("editMode", editModeLabel)){
-        if(editModeLabel == "freeLine"){
+    if(archive.read({ "edit_mode", "editMode" }, editModeLabel)){
+        if(editModeLabel == "free_line" || editModeLabel == "freeLine"){
             editMode = GraphWidget::FREE_LINE_MODE;
         } else if(editModeLabel == "line"){
             editMode = GraphWidget::LINE_MODE;
         }
     }
-        
+
     archive.read("original", isOrgValueVisible);
     archive.read("velocity", isVelocityVisible);
     archive.read("acceleration", isAccelerationVisible);
     archive.read("limits", isLimitVisible);
     archive.read("grid", isGridOn);
-    archive.read("gridWidth", gridWidth);
-    archive.read("gridHeight", gridHeight);
-    archive.read("lineWidth", lineWidth);
+    archive.read({ "grid_width", "gridWidth" }, gridWidth);
+    archive.read({ "grid_height", "gridHeight" }, gridHeight);
+    archive.read({ "line_width", "lineWidth" }, lineWidth);
     self->showRulers(archive.get("rulers", self->showsRulers()));
     setTimeBarSyncMode(archive.get("sync", timeBarSyncMode));
 
-    int step = archive.get("controlPointStep", controlPointStep);
-    int offset = archive.get("controlPointOffset", controlPointOffset);
+    int step = archive.get({ "control_point_step", "controlPointStep" }, controlPointStep);
+    int offset = archive.get({ "control_point_offset", "controlPointOffset" }, controlPointOffset);
     setControlPointStep(step, offset);
-    archive.read("controlPointHeighlight", isControlPointsHighlighted);
+    archive.read({ "control_point_highlight", "controlPointHeighlight" }, isControlPointsHighlighted);
 
     string scrollModeLabel;
-    if(archive.read("scrollMoe", scrollModeLabel)){
+    if(archive.read({ "scroll_mode", "scrollMode" }, scrollModeLabel)){
         if(scrollModeLabel == "off"){
             setAutoScrollMode(GraphWidget::OFF);
         } else if(scrollModeLabel == "continuous"){

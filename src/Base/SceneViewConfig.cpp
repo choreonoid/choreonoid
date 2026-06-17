@@ -210,7 +210,7 @@ bool SceneViewConfig::store(Archive* archive)
     bool result = SceneWidgetConfig::store(archive);
 
     if(impl->itemCheckId != Item::PrimaryCheck){
-        archive->write("isDedicatedItemCheckEnabled", true);
+        archive->write("enable_dedicated_item_check", true);
         RootItem::instance()->storeCheckStates(impl->itemCheckId, *archive, "checked");
     }
 
@@ -227,9 +227,8 @@ bool SceneViewConfig::restore(const Archive* archive)
 
 bool SceneViewConfig::Impl::restore(const Archive* archive)
 {
-    bool isDedicatedItemCheckEnabled =
-        archive->get("isDedicatedItemCheckEnabled", false) ||
-        archive->get("dedicatedItemTreeViewChecks", false);
+    bool isDedicatedItemCheckEnabled = archive->get(
+        { "enable_dedicated_item_check", "isDedicatedItemCheckEnabled", "dedicatedItemTreeViewChecks" }, false);
 
     // This will also call the onDedicatedCheckToggled() function, which
     // updates the itemCheckId.

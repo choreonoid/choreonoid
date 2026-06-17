@@ -318,11 +318,11 @@ void MainWindow::setInitialLayout(Archive* archive)
         cout << "MainWindow::setInitialLayout()" << endl;
     }
     if(impl->isBeforeDoingInitialLayout){
-        auto viewLayout = archive->findListing("viewAreas");
+        auto viewLayout = archive->findListing({ "view_areas", "viewAreas" });
         if(viewLayout->isValid()){
             impl->initialLayoutArchive = archive;
         }
-        auto toolBarLayout = archive->findMapping("layoutOfToolBars");
+        auto toolBarLayout = archive->findMapping({ "toolbar_layout", "layoutOfToolBars" });
         if(toolBarLayout->isValid()){
             impl->toolBarArea->setInitialLayout(archive);
         }
@@ -672,7 +672,7 @@ void MainWindow::Impl::storeWindowStateConfig()
     config->write("show_status_bar", InfoBar::instance()->isVisible());
 
     /*
-    config->write("storeLastLayout", storeLastLayoutCheck->isChecked());
+    config->write("store_last_layout", storeLastLayoutCheck->isChecked());
     if(storeLastLayoutCheck->isChecked()){
         toolBarArea->storeLayout(config);
     } else {

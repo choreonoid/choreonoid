@@ -1108,10 +1108,11 @@ void PluginManager::Impl::showDialogToLoadPlugin()
     dialog.setNameFilters(filters);
 
     MappingPtr config = AppConfig::archive()->openMapping("PluginManager");
-    dialog.setDirectory(config->get("pluginLoadingDialogDirectory", executableTopDir()).c_str());
-    
+    dialog.setDirectory(
+        config->get({ "plugin_loading_dialog_directory", "pluginLoadingDialogDirectory" }, executableTopDir()).c_str());
+
     if(dialog.exec()){
-        config->writePath("pluginLoadingDialogDirectory", dialog.directory().absolutePath().toStdString());
+        config->writePath("plugin_loading_dialog_directory", dialog.directory().absolutePath().toStdString());
         QStringList filenames = dialog.selectedFiles();
         for(int i=0; i < filenames.size(); ++i){
             auto path = filesystem::path(fromUTF8(filenames[i].toStdString()));

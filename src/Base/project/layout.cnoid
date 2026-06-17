@@ -1,120 +1,120 @@
-isNewProjectTemplate: true
+is_new_project_template: true
 
-optionalPlugins: [ Python ]
+optional_plugins: [ Python ]
 
-views: 
-  - 
+views:
+  -
     id: 1
     plugin: Base
     class: ItemPropertyView
-  - 
+  -
     id: 2
     plugin: Base
     class: ItemTreeView
-  - 
+  -
     id: 3
     plugin: Base
     class: LocationView
-  - 
+  -
     id: 4
     plugin: Base
     class: MessageView
-  - 
+  -
     id: 5
     plugin: Base
     class: SceneView
-    state: 
-      lightingMode: full
-  - 
+    state:
+      lighting_mode: full
+  -
     id: 7
     plugin: Body
     class: JointDisplacementView
-    state: 
+    state:
       show_joint_ids: true
       show_joint_names: false
-  - 
+  -
     id: 8
     plugin: Body
     class: LinkDeviceListView
-  - 
+  -
     id: 9
     plugin: Body
     class: LinkPositionView
-  - 
+  -
     id: 10
     plugin: Body
     class: LinkPropertyView
-  - 
+  -
     id: 11
     plugin: Python
     class: PythonConsoleView
 
-viewAreas: 
-  - 
+view_areas:
+  -
     type: embedded
     tabs: true
-    contents: 
+    contents:
       type: splitter
       orientation: horizontal
       sizes: [ 400, 100 ]
-      children: 
-        - 
+      children:
+        -
           type: splitter
           orientation: horizontal
           sizes: [ 140, 400 ]
-          children: 
-            - 
+          children:
+            -
               type: splitter
               orientation: vertical
               sizes: [ 100, 100 ]
-              children: 
-                - 
+              children:
+                -
                   type: pane
                   views: [ 2 ]
-                - 
+                -
                   type: pane
                   views: [ 1, 10 ]
                   current: 1
-            - 
+            -
               type: splitter
               orientation: vertical
               sizes: [ 300, 100 ]
-              children: 
-                - 
+              children:
+                -
                   type: pane
                   views: [ 5 ]
-                - 
+                -
                   type: pane
                   views: [ 4, 11 ]
                   current: 1
-        - 
+        -
           type: splitter
           orientation: vertical
           sizes: [ 1, 600 ]
-          children: 
-            - 
+          children:
+            -
               type: pane
               views: [ 3 ]
-            - 
+            -
               type: splitter
               orientation: vertical
               sizes: [ 1, 400 ]
-              children: 
-                - 
+              children:
+                -
                   type: pane
                   views: [ 9 ]
-                - 
+                -
                   type: pane
                   views: [ 8, 7 ]
                   current: 7
-layoutOfToolBars: 
-  rows: 
-    - 
+toolbar_layout:
+  rows:
+    -
       - { name: "FileBar", x: 0, priority: 0 }
       - { name: "ScriptBar", x: 0, priority: 1 }
       - { name: "SimulationBar", x: 0, priority: 2 }
       - { name: "TimeBar", x: 0, priority: 0 }
-    - 
+    -
       - { name: "BodyBar", x: 0, priority: 0 }
       - { name: "KinematicsBar", x: 0, priority: 1 }
       - { name: "SceneBar", x: 0, priority: 2 }

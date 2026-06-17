@@ -165,8 +165,10 @@ void ExtCommandItem::doPutProperties(PutPropertyFunction& putProperty)
 bool ExtCommandItem::store(Archive& archive)
 {
     archive.write("command", command_);
-    archive.write("executeOnLoading", doExecuteOnLoading);
-    archive.write("waitingTimeAfterStarted", waitingTimeAfterStarted_);
+    archive.write("execute_on_loading", doExecuteOnLoading);
+    if(waitingTimeAfterStarted_ != 0.0){
+        archive.write("wait_time_after_start", waitingTimeAfterStarted_);
+    }
     return true;
 }
 
@@ -174,9 +176,9 @@ bool ExtCommandItem::store(Archive& archive)
 bool ExtCommandItem::restore(const Archive& archive)
 {
     archive.read("command", command_);
-    archive.read("waitingTimeAfterStarted", waitingTimeAfterStarted_);
+    archive.read({ "wait_time_after_start", "waitingTimeAfterStarted" }, waitingTimeAfterStarted_);
 
-    if(archive.read("executeOnLoading", doExecuteOnLoading)){
+    if(archive.read({ "execute_on_loading", "executeOnLoading" }, doExecuteOnLoading)){
         if(doExecuteOnLoading){
             execute();
         }

@@ -279,7 +279,7 @@ void View::onActivated()
 void View::onDeactivated()
 {
     if(impl->isFontSizeZoomKeysEnabled){
-        AppConfig::archive()->openMapping(impl->className)->write("fontZoom", impl->fontZoom);
+        AppConfig::archive()->openMapping(impl->className)->write("font_zoom", impl->fontZoom);
     }
 }
 
@@ -448,7 +448,7 @@ void View::enableFontSizeZoomKeys(bool on)
     if(on){
         MappingPtr config = AppConfig::archive()->openMapping(impl->className);
         int storedZoom;
-        if(config->read("fontZoom", storedZoom)){
+        if(config->read({ "font_zoom", "fontZoom" }, storedZoom)){
             zoomFontSize(storedZoom);
         }
     }
