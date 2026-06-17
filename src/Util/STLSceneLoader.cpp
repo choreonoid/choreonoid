@@ -3,7 +3,6 @@
 #include "SceneDrawables.h"
 #include "SceneLoader.h"
 #include "NullOut.h"
-#include "strtofloat.h"
 #include "UTF8.h"
 #include "Format.h"
 #include <fstream>

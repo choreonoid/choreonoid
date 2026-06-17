@@ -4,7 +4,6 @@
 
 #include "EasyScanner.h"
 #include "UTF8.h"
-#include "strtofloat.h"
 #include "Format.h"
 #include <cstdio>
 #include <cctype>
@@ -325,7 +324,7 @@ int EasyScanner::readToken()
             text = tail;
             return T_INTEGER;
         }
-        doubleValue = cnoid::strtod(text, &tail);
+        doubleValue = std::strtod(text, &tail);
         if(tail != text){
             text = tail;
             return T_DOUBLE;
@@ -417,7 +416,7 @@ bool EasyScanner::readFloat()
 
     if(checkLF()) return false;
 
-    floatValue = cnoid::strtof(text, &tail);
+    floatValue = std::strtof(text, &tail);
 
     if(tail != text){
         text = tail;
@@ -434,7 +433,7 @@ bool EasyScanner::readDouble()
 
     if(checkLF()) return false;
 
-    doubleValue = cnoid::strtod(text, &tail);
+    doubleValue = std::strtod(text, &tail);
 
     if(tail != text){
         text = tail;
