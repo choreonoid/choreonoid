@@ -13,11 +13,14 @@
 #include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/BodyItem>
 #include <cnoid/BodyCollisionDetector>
+#include <cnoid/BodyCollisionLinkFilter>
 #include <cnoid/WorldItem>
 #include <cnoid/Material>
 #include <cnoid/MaterialTable>
 #include <cnoid/IdPair>
+#include <cnoid/ValueTree>
 #include <QElapsedTimer>
+#include <memory>
 #include <unordered_map>
 #include "gettext.h"
 
@@ -75,12 +78,33 @@ void flipYZ(dMatrix3& R)
     R[10] = y.z();
 }
 
+bool hasLinkDisablingCollisionRules(Body* body)
+{
+    ListingPtr rules = body->info()->findListing("collision_detection_rules");
+    if(rules->isValid()){
+        for(auto& node : *rules){
+            auto mapping = node->toMapping();
+            if(mapping->isValid() && mapping->find("disabled_links")->isValid()){
+                return true;
+            }
+        }
+    }
+
+    MappingPtr info = body->info()->findMapping("collisionDetection");
+    if(info->isValid()){
+        return info->findListing("excludeLinks")->isValid();
+    }
+
+    return false;
+}
+
 class ODEBody;
 
 class ODELink : public Referenced
 {
 public:
     Link* link;
+    ODEBody* odeBody;
     dBodyID bodyID;
     dJointID jointID;
     vector<dGeomID> geomID;
@@ -116,6 +140,8 @@ public:
     vector<ODELinkPtr> odeLinks;
     dWorldID worldID;
     dSpaceID spaceID;
+    unique_ptr<BodyCollisionLinkFilter> bodyCollisionLinkFilter;
+    bool selfCollision;
     vector<dJointFeedback> forceSensorFeedbacks;
     BasicSensorSimulationHelper sensorHelper;
         
@@ -205,6 +231,7 @@ ODELink::ODELink
     odeBody->odeLinks.push_back(this);
 
     this->link = link;
+    this->odeBody = odeBody;
     bodyID = 0;
     jointID = 0;
     triMeshDataID = 0;
@@ -216,12 +243,14 @@ ODELink::ODELink
     if(odeBody->worldID){
         createLinkBody(simImpl, odeBody->worldID, parent, T_origin);
     }
-    if(!simImpl->useWorldCollisionDetector){
+    if(!simImpl->useWorldCollisionDetector &&
+       (!odeBody->bodyCollisionLinkFilter ||
+        odeBody->bodyCollisionLinkFilter->checkIfEnabledLinkIndex(link->index()))){
         createGeometry(odeBody, simImpl->doFlipYZ);
-        // Make the link accessible from the geoms in the collision callback
+        // Make the ODE link accessible from the geoms in the collision callback
         // (dBodyGetData cannot be used as static links have no ODE body)
         for(auto& id : geomID){
-            dGeomSetData(id, link);
+            dGeomSetData(id, this);
         }
     }
 
@@ -683,6 +712,7 @@ ODEBody::ODEBody(Body* body)
 {
     worldID = 0;
     spaceID = 0;
+    selfCollision = false;
 }
 
 
@@ -697,6 +727,38 @@ ODEBody::~ODEBody()
 void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
 {
     Body* body = this->body();
+    selfCollision = false;
+    bodyCollisionLinkFilter.reset();
+    bool selfCollisionRequested = bodyItem() && bodyItem()->isSelfCollisionDetectionEnabled();
+    int numCollisionLinks = 0;
+    for(int i = 0; i < body->numLinks(); ++i){
+        if(body->link(i)->collisionShape()){
+            ++numCollisionLinks;
+        }
+    }
+    bool needsSelfCollisionFilter =
+        !simImpl->useWorldCollisionDetector && selfCollisionRequested && numCollisionLinks >= 2;
+    bool needsLinkExclusionFilter =
+        !simImpl->useWorldCollisionDetector && hasLinkDisablingCollisionRules(body);
+    if(needsSelfCollisionFilter || needsLinkExclusionFilter){
+        bodyCollisionLinkFilter = std::make_unique<BodyCollisionLinkFilter>();
+        bodyCollisionLinkFilter->setTargetBody(body, selfCollisionRequested);
+
+        int numEnabledCollisionLinks = 0;
+        for(int i = 0; i < body->numLinks(); ++i){
+            Link* link = body->link(i);
+            if(link->collisionShape()){
+                if(bodyCollisionLinkFilter->checkIfEnabledLinkIndex(i)){
+                    ++numEnabledCollisionLinks;
+                }
+            }
+        }
+        selfCollision = needsSelfCollisionFilter && numEnabledCollisionLinks >= 2;
+        bool needsFilterForGeometry = numEnabledCollisionLinks < numCollisionLinks;
+        if(!selfCollision && !needsFilterForGeometry){
+            bodyCollisionLinkFilter.reset();
+        }
+    }
     
     worldID = body->isStaticModel() ? 0 : simImpl->worldID;
 
@@ -1266,7 +1328,7 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
 {
     if(dGeomIsSpace(g1) || dGeomIsSpace(g2)) { 
         dSpaceCollide2(g1, g2, data, &nearCallback);
-        if(false) { // Currently just skip same body link pairs. 
+        if(false) { // Same-body pairs are handled per ODEBody when self-collision is enabled.
             if(dGeomIsSpace(g1)){
                 dSpaceCollide((dSpaceID)g1, data, &nearCallback);
             }
@@ -1276,6 +1338,18 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
         }
     } else {
         ODESimulatorItemImpl* impl = (ODESimulatorItemImpl*)data;
+        auto odeLink1 = static_cast<ODELink*>(dGeomGetData(g1));
+        auto odeLink2 = static_cast<ODELink*>(dGeomGetData(g2));
+        if(!odeLink1 || !odeLink2 || odeLink1 == odeLink2){
+            return;
+        }
+        if(odeLink1->odeBody == odeLink2->odeBody){
+            auto& filter = odeLink1->odeBody->bodyCollisionLinkFilter;
+            if(!filter || !filter->checkIfEnabledLinkPair(
+                   odeLink1->link->index(), odeLink2->link->index())){
+                return;
+            }
+        }
         static const int MaxNumContacts = 100;
         dContact contacts[MaxNumContacts];
         int numContacts = dCollide(g1, g2, MaxNumContacts, &contacts[0].geom, sizeof(dContact));
@@ -1296,8 +1370,7 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
                     sign = -1.0;
                 }
             }
-            auto param = impl->resolveContactParam(
-                static_cast<Link*>(dGeomGetData(g1)), static_cast<Link*>(dGeomGetData(g2)));
+            auto param = impl->resolveContactParam(odeLink1->link, odeLink2->link);
             for(int i=0; i < numContacts; ++i){
                 dSurfaceParameters& surface = contacts[i].surface;
                 if(!crawlerlink){
@@ -1377,6 +1450,12 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
             collisionTimer.start();
         }
         dSpaceCollide(spaceID, (void*)this, &nearCallback);
+        for(auto& simBody : activeSimBodies){
+            auto odeBody = static_cast<ODEBody*>(simBody);
+            if(odeBody->spaceID && odeBody->selfCollision){
+                dSpaceCollide(odeBody->spaceID, (void*)this, &nearCallback);
+            }
+        }
         if(MEASURE_PHYSICS_CALCULATION_TIME){
             collisionTime += collisionTimer.nsecsElapsed();
         }
