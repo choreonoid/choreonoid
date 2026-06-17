@@ -453,6 +453,7 @@ ItemPtr ItemTreeArchiver::Impl::restoreItem
         if(item){
             if(!dataArchive){
                 dataArchive = new Archive;
+                archive.insert("data", dataArchive);
             }
             dataArchive->inheritSharedInfoFrom(archive);
             dataArchive->setCurrentParentItem(parentItem);
