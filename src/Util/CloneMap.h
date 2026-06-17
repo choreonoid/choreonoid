@@ -41,6 +41,10 @@ public:
         return findClone<ObjectType>(org.get());
     }
 
+    // Get an existing clone or create one immediately. This is suitable for
+    // objects owned by the object being cloned. Do not use it for an external
+    // reference that may be cloned later by another owner; it can create a
+    // detached clone. Use findCloneOrReplaceLater for such references.
     template<class ObjectType>
     ObjectType* getClone(const ObjectType* org){
         return static_cast<ObjectType*>(findOrCreateClone_(org));
@@ -94,6 +98,9 @@ public:
     }
     */
 
+    // For external references. If the clone already exists, return it. If not,
+    // register replaceFunction for a later replacePendingObjects call and do not
+    // create a clone here.
     template<class ObjectType>
     ObjectType* findCloneOrReplaceLater(
         const ObjectType* org, std::function<void(ObjectType* clone)> replaceFunction){
@@ -104,6 +111,8 @@ public:
                     replaceFunction(static_cast<ObjectType*>(clone)); }));
     }
 
+    // Apply replacements registered by findCloneOrReplaceLater. Call this after
+    // all objects in the clone scope have had a chance to register their clones.
     void replacePendingObjects();
 
     void setOriginalAsClone(const Referenced* org);
