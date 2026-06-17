@@ -160,7 +160,9 @@ void Body::copyFrom(const Body* org, CloneMap* cloneMap)
             auto extraJoint = orgExtraJoint->clone();
             for(int j = 0; j < 2; ++j){
                 if(auto orgLink = orgExtraJoint->link(j)){
-                    extraJoint->setLink(j, link(orgLink->index()));
+                    if(orgLink->body() == org){
+                        extraJoint->setLink(j, link(orgLink->index()));
+                    }
                 }
             }
             extraJoints_.push_back(extraJoint);

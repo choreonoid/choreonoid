@@ -16,7 +16,9 @@ ExtraJoint::ExtraJoint(const ExtraJoint& org, CloneMap* cloneMap)
     if(cloneMap){
         for(int i = 0; i < 2; ++i){
             if(org.links[i]){
-                links[i] = cloneMap->getClone<Link>(org.links[i]);
+                links[i] = cloneMap->findCloneOrReplaceLater<Link>(
+                    org.links[i],
+                    [this, i](Link* link){ links[i] = link; });
             }
         }
         info_ = CloneMap::getClone(org.info_.get(), cloneMap);
@@ -44,4 +46,3 @@ std::string ExtraJoint::bodyName(int which) const
     }
     return string();
 }
-

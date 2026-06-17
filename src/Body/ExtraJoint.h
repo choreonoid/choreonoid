@@ -55,6 +55,8 @@ public:
     
     Link* link(int which) const { return links[which]; }
 
+    // The link may belong to another Body. Clone implementations should treat
+    // such links as external references and avoid creating detached clones.
     void setLink(int which, Link* link) {
         links[which] = link;
     }

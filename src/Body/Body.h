@@ -263,6 +263,9 @@ public:
     int numExtraJoints() const { return static_cast<int>(extraJoints_.size()); }
     ExtraJoint* extraJoint(int index) { return extraJoints_[index]; }
     const ExtraJoint* extraJoint(int index) const {  return extraJoints_[index]; }
+    // The same ExtraJoint may be registered to multiple bodies when it connects
+    // links across Body instances. Code that collects these joints may need to
+    // deduplicate the same ExtraJoint pointer.
     void addExtraJoint(ExtraJoint* extraJoint) { extraJoints_.push_back(extraJoint); }
     void clearExtraJoints() { extraJoints_.clear(); }
 

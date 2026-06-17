@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <random>
 #include <unordered_map>
+#include <unordered_set>
 #include <limits>
 #include <fstream>
 #include <iomanip>
@@ -294,6 +295,7 @@ public:
     };
     typedef std::shared_ptr<ExtraJointLinkPair> ExtraJointLinkPairPtr;
     vector<ExtraJointLinkPairPtr> extraJointLinkPairs;
+    unordered_set<ExtraJoint*> initializedExtraJoints;
 
     bool is2Dmode;
     DySubBodyPtr subBodyFor2dConstraint;
@@ -572,6 +574,7 @@ void ConstraintForceSolver::Impl::clearBodies()
     geometryPairToLinkPairMap.clear();
     constrainedLinkPairs.clear();
     extraJointLinkPairs.clear();
+    initializedExtraJoints.clear();
     constrain2dLinkPairs.clear();
 }    
 
@@ -645,6 +648,9 @@ void ConstraintForceSolver::Impl::init2Dconstraint(DySubBody* subBody)
 void ConstraintForceSolver::Impl::initExtraJoint(ExtraJoint* extraJoint)
 {
     if(!extraJoint->link(0) || !extraJoint->link(1)){
+        return;
+    }
+    if(!initializedExtraJoints.insert(extraJoint).second){
         return;
     }
 
