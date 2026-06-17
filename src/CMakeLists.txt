@@ -49,8 +49,6 @@ if(ENABLE_GUI)
   add_subdirectory(ODEPlugin)
   add_subdirectory(AGXDynamicsPlugin)
   add_subdirectory(BulletPlugin)
-  add_subdirectory(SpringheadPlugin)
-  add_subdirectory(RokiPlugin)
   add_subdirectory(MulticopterPlugin)
 
   add_subdirectory(OMPLPlugin)
