@@ -8,6 +8,7 @@
 #include <cnoid/RotorDevice>
 #include <cnoid/SharedJoystick>
 #include <cnoid/EigenUtil>
+#include <cmath>
 
 using namespace std;
 using namespace cnoid;
@@ -43,6 +44,12 @@ const double RATE[] = { -1.0, 0.1, -0.1, -0.5 };
 const double KPX[] = { 0.4, 0.4 };
 const double KDX[] = { 0.4, 0.4 };
 const double RATEX[] = { -1.0, -1.0 };
+const double maxRotorForce = 20.0;
+const double yawTorqueCoef = 0.02;
+const double maxPropSpeed = 80.0;
+const double idlePropSpeed = 20.0;
+const double propSpeedGain = 1.0e-4;
+const double stickDeadband = 0.25;
 
 class QuadcopterController : public SimpleController
 {
@@ -76,6 +83,7 @@ public:
     bool power;
     bool powerprev;
     bool rotorswitch;
+    bool isTakeoffStarted;
 
     virtual bool initialize(SimpleControllerIO* io) override;
     Vector4 getZRPY();
@@ -106,6 +114,9 @@ bool QuadcopterController::initialize(SimpleControllerIO* io)
         io->enableOutput(prop[i]);
 
         rotor[i] = ioBody->findDevice<Multicopter::RotorDevice>(rotorname[i]);
+        rotor[i]->setValue(0.0);
+        rotor[i]->setTorque(0.0);
+        rotor[i]->notifyStateChange();
         io->enableInput(rotor[i]);
     }
 
@@ -122,6 +133,7 @@ bool QuadcopterController::initialize(SimpleControllerIO* io)
     joystick = io->getOrCreateSharedObject<SharedJoystick>("joystick");
     targetMode = joystick->addMode();
     rotorswitch = false;
+    isTakeoffStarted = false;
 
     return true;
 }
@@ -150,6 +162,9 @@ bool QuadcopterController::control()
     //control rotors
     Vector4 zrpy = getZRPY();
     double cc = cos(zrpy[1]) * cos(zrpy[2]);
+    if(cc < 0.2){
+        cc = 0.2;
+    }
     double gfcoef = 1.0 * 9.80665 / 4 / cc ;
     Vector4 force = Vector4::Zero();
     Vector4 torque = Vector4::Zero();
@@ -159,6 +174,7 @@ bool QuadcopterController::control()
         powerprev = false;
     } else if((power == true) && (powerprev != true)) {
         rotorswitch = !rotorswitch;
+        isTakeoffStarted = false;
         powerprev = true;
     }
 
@@ -170,7 +186,18 @@ bool QuadcopterController::control()
     }
     prevModeButtonState = modeButtonState;
 
-    if(rotorswitch) {
+    double zInput = joystick->getPosition(targetMode, rotorAxis[0]);
+    double dzCommand = 0.0;
+    if(fabs(zInput) > stickDeadband){
+        dzCommand = RATE[0] * zInput;
+    }
+    if(rotorswitch && dzCommand > 0.0){
+        isTakeoffStarted = true;
+    } else if(!rotorswitch){
+        isTakeoffStarted = false;
+    }
+
+    if(rotorswitch && isTakeoffStarted) {
         Vector4 f;
 
         Vector4 dzrpy = (zrpy - zrpyprev) / timeStep;
@@ -187,7 +214,7 @@ bool QuadcopterController::control()
             double pos = joystick->getPosition(targetMode, rotorAxis[axis]);
 
             if((axis == 0) || (axis == 3)) {
-                if(fabs(pos) > 0.25) {
+                if(fabs(pos) > stickDeadband) {
                     dzrpyref[axis] = RATE[axis] * pos;
                 } else {
                     dzrpyref[axis] = 0.0;
@@ -195,14 +222,14 @@ bool QuadcopterController::control()
                 f[axis] = KP[axis] * (dzrpyref[axis] - dzrpy[axis]) + KD[axis] * (0.0 - ddzrpy[axis]);
             } else {
                 if(!isStableMode){
-                    if(fabs(pos) > 0.25) {
+                    if(fabs(pos) > stickDeadband) {
                         zrpyref[axis] = RATE[axis] * pos;
                     } else {
                         zrpyref[axis] = 0.0;
                     }
                 } else {
                     int axis_xy = axis - 1;
-                    if(fabs(pos) > 0.25) {
+                    if(fabs(pos) > stickDeadband) {
                         dxyref[axis_xy] = RATEX[axis_xy] * pos;
                     } else {
                         dxyref[axis_xy] = 0.0;
@@ -225,29 +252,63 @@ bool QuadcopterController::control()
         xyprev = xy;
         dxyprev = dxy;
         
+        Vector4 force0;
+        double targetTotal = 0.0;
         for(int i = 0; i < 4; ++i) {
-            double fi = 0.0;
-            fi += gfcoef;
+            double fi = gfcoef;
             fi += sign[i][0] * f[0];
             fi += sign[i][1] * f[1];
             fi += sign[i][2] * f[2];
             fi += sign[i][3] * f[3];
-            force[i] = fi;
-            torque[i] = dir[i] * fi;
+            force0[i] = fi;
+            targetTotal += fi;
         }
+        if(targetTotal < 0.0){
+            targetTotal = 0.0;
+        }
+
+        double clampedTotal = 0.0;
+        for(int i = 0; i < 4; ++i) {
+            double fi = force0[i];
+            if(fi < 0.0){
+                fi = 0.0;
+            } else if(fi > maxRotorForce){
+                fi = maxRotorForce;
+            }
+            force[i] = fi;
+            clampedTotal += fi;
+        }
+
+        if(clampedTotal > targetTotal && clampedTotal > 0.0){
+            force *= targetTotal / clampedTotal;
+        }
+
+        for(int i = 0; i < 4; ++i) {
+            torque[i] = yawTorqueCoef * dir[i] * force[i];
+        }
+    } else {
+        zrpyprev = zrpy;
+        dzrpyprev = Vector4::Zero();
+        Vector2 xy = getXY();
+        xyprev = xy;
+        dxyprev = Vector2::Zero();
     }
 
     for(int i = 0; i < 4; ++i) {
         double tau = torque[i];
         rotor[i]->setTorque(tau);
-        if(tau != 0.0) {
-            prop[i]->u() = tau * 0.001;
-        } else {
-            double dq = prop[i]->dq();
-            prop[i]->u() = 0.0005 * (0.0 - dq);
-        }
         rotor[i]->setValue(force[i]);
         rotor[i]->notifyStateChange();
+
+        double dqTarget = 0.0;
+        if(rotorswitch){
+            if(isTakeoffStarted){
+                dqTarget = dir[i] * maxPropSpeed * std::sqrt(force[i] / maxRotorForce);
+            } else {
+                dqTarget = dir[i] * idlePropSpeed;
+            }
+        }
+        prop[i]->u() = propSpeedGain * (dqTarget - prop[i]->dq());
     }
 
     //control camera
@@ -257,7 +318,7 @@ bool QuadcopterController::control()
     double dq = (q - qprev) / timeStep;
     double pos = joystick->getPosition(targetMode, cameraAxis) * -1.0;
     double dqref = 0.0;
-    if(fabs(pos) > 0.25) {
+    if(fabs(pos) > stickDeadband) {
         double deltaq = 0.002 * pos;
         qref += deltaq;
         if(qref > 0) {

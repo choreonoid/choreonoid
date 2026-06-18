@@ -1,431 +1,340 @@
-items: 
+required_plugins: [ Multicopter ]
+optional_plugins: [ PhysX, MuJoCo, ODE, AGXDynamics ]
+
+items:
   id: 0
-  name: "Root"
+  name: "RootItem"
   plugin: Base
   class: RootItem
-  children: 
-    - 
+  is_builtin_item: true
+  children:
+    -
       id: 1
       name: "World"
       plugin: Body
       class: WorldItem
-      data: 
-        collisionDetection: false
-        collisionDetector: AISTCollisionDetector
-        materialTableFile: "${SHARE}/default/materials.yaml"
-      children: 
-        - 
+      is_checked: true
+      data:
+        collision_detection: false
+        collision_detector: AISTCollisionDetector
+        default_material_table_file: "${SHARE}/default/materials.yaml"
+      children:
+        -
           id: 2
           name: "quadcopter"
           plugin: Body
           class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/multicopter/quadcopter.body"
-            currentBaseLink: "BODY"
-            rootPosition: [ -1.55410793e-07, -1.00120746e-07, 0.114890723 ]
-            rootAttitude: [ 
-              1, -4.1549709e-06, -5.91607799e-08, 
-              4.15497076e-06, 1, -2.28602061e-06, 
-              5.91702782e-08, 2.28602037e-06, 1 ]
-            jointPositions: [ -0.000000,  0.000004,  0.000004,  0.000004,  0.000004 ]
-            initialRootPosition: [ 0, 0, 0.2 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialJointPositions: [  0.000000,  0.000000,  0.000000,  0.000000,  0.000000 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-          children: 
-            - 
+          is_checked: true
+          data:
+            file: "${SHARE}/model/multicopter/quadcopter.body"
+            format: CHOREONOID-BODY
+            current_base_link: "BODY"
+            root_translation: [ 0, 0, 0.2 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            joint_displacements: [ 0, 0, 0, 0, 0 ]
+            initial_root_translation: [ 0, 0, 0.2 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: false
+            collision_detection: true
+            lock_location: false
+            scene_sensitive: true
+          children:
+            -
               id: 3
               name: "QuadcopterController"
               plugin: Body
               class: SimpleControllerItem
-              data: 
-                isNoDelayMode: false
-                controllerOptions: ""
+              data:
                 controller: "QuadcopterController"
-                baseDirectory: "Controller directory"
+                base_directory: "Controller directory"
                 reloading: false
-            - 
+                export_symbols: false
+            -
               id: 4
               name: "BodyTrackingCamera"
               plugin: Body
               class: BodyTrackingCameraItem
-              data: 
-                keepRelativeAttitude: false
-                nearClipDistance: 0.01
-                farClipDistance: 100
-        - 
+              is_checked: true
+              data:
+                keep_relative_attitude: false
+                near_clip_distance: 0.01
+                far_clip_distance: 100
+        -
           id: 5
           name: "Floor"
           plugin: Body
           class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/floor.body"
-            currentBaseLink: "Floor"
-            rootPosition: [ 0, 0, -0.1 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            jointPositions: [  ]
-            initialRootPosition: [ 0, 0, -0.1 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: false
-        - 
+          is_checked: true
+          data:
+            file: "${SHARE}/model/misc/floor.body"
+            format: CHOREONOID-BODY
+            root_translation: [ 0, 0, -0.1 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            initial_root_translation: [ 0, 0, -0.1 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: true
+            collision_detection: true
+            lock_location: true
+            scene_sensitive: true
+        -
           id: 6
-          name: "GLVisionSimulator"
-          plugin: Body
-          class: GLVisionSimulatorItem
-          data: 
-            enabled: true
-            maxFrameRate: 1000
-            maxLatency: 1
-            recordVisionData: false
-            threadMode: Sensor
-            bestEffort: true
-            allSceneObjects: true
-            rangeSensorPrecisionRatio: 2
-            depthError: 0
-            enableHeadLight: true
-            enableAdditionalLights: true
-          children: 
-            - 
+          name: "Simulators"
+          plugin: Base
+          class: FolderItem
+          children:
+            -
               id: 7
-              name: "MulticopterSimulator"
-              plugin: Multicopter
-              class: MulticopterSimulatorItem
-              data: 
-                enabled: true
-                Fluid Density[kg/m^3]: 1.293
-                Viscosity[Pa･s]: 1.7e-05
-                Fluid Velocity[m/s]: [ 0, 0, 0 ]
-                Air Definition File: ""
-                Wall Effect: false
-                Ground Effect: false
-                Output Parameter: false
-                Output Time Step[s]: 1
-              children: 
-                - 
+              name: "AISTSimulator"
+              plugin: Body
+              class: AISTSimulatorItem
+              data:
+                time_step: 0.005
+                is_active_control_time_range_mode: true
+              children:
+                -
                   id: 8
-                  name: "AISTSimulator"
+                  name: "GLVisionSimulator"
                   plugin: Body
-                  class: AISTSimulatorItem
-                  data: 
-                    timestep: 0.005
-                    realtimeSync: true
-                    recording: "full"
-                    timeRangeMode: "Unlimited"
-                    timeLength: 180
-                    allLinkPositionOutputMode: true
-                    deviceStateOutput: true
-                    controllerThreads: true
-                    recordCollisionData: false
-                    controllerOptions: ""
-                    dynamicsMode: "Forward dynamics"
-                    integrationMode: "Euler"
-                    gravity: [ 0, 0, -9.80665 ]
-                    staticFriction: 1
-                    dynamicFriction: 1
-                    cullingThresh: 0.005
-                    contactCullingDepth: 0.05
-                    errorCriterion: 0.001
-                    maxNumIterations: 1000
-                    contactCorrectionDepth: 0.0001
-                    contactCorrectionVelocityRatio: 1
-                    kinematicWalking: false
-                    2Dmode: false
-                    oldAccelSensorMode: false
-                - 
+                  class: GLVisionSimulatorItem
+                -
                   id: 9
-                  name: "AGXSimulator"
-                  plugin: AGXDynamics
-                  class: AGXSimulatorItem
-                  data: 
-                    timestep: 0.005
-                    realtimeSync: true
-                    recording: "full"
-                    timeRangeMode: "Unlimited"
-                    timeLength: 180
-                    allLinkPositionOutputMode: true
-                    deviceStateOutput: true
-                    controllerThreads: true
-                    recordCollisionData: false
-                    controllerOptions: ""
-                    Gravity: [ 0, 0, -9.80665 ]
-                    NumThreads: 1
-                    ContactReduction: true
-                    ContactReductionBinResolution: 3
-                    ContactReductionThreshhold: 12
-                    ContactWarmstarting: false
-                    AutoSleep: false
-                    SaveToAGXFileOnStart: false
-views: 
-  - 
+                  name: "MulticopterSimulator"
+                  plugin: Multicopter
+                  class: MulticopterSimulatorItem
+                  data:
+                    Fluid Density[kg/m^3]: 1.293
+                    Viscosity[Pa*s]: 1.7e-05
+                    Fluid Velocity[m/s]: [ 0, 0, 0 ]
+            -
+              id: 10
+              name: "PhysXSimulator"
+              plugin: PhysX
+              class: PhysXSimulatorItem
+              data:
+                time_step: 0.005
+                is_active_control_time_range_mode: true
+                enable_velocity_output: true
+                enable_acceleration_output: true
+              children:
+                -
+                  id: 11
+                  name: "GLVisionSimulator"
+                  plugin: Body
+                  class: GLVisionSimulatorItem
+                -
+                  id: 12
+                  name: "MulticopterSimulator"
+                  plugin: Multicopter
+                  class: MulticopterSimulatorItem
+                  data:
+                    Fluid Density[kg/m^3]: 1.293
+                    Viscosity[Pa*s]: 1.7e-05
+                    Fluid Velocity[m/s]: [ 0, 0, 0 ]
+            -
+              id: 13
+              name: "MuJoCoSimulator"
+              plugin: MuJoCo
+              class: MuJoCoSimulatorItem
+              data:
+                time_step: 0.005
+                is_active_control_time_range_mode: true
+                velocity_output: true
+                acceleration_output: true
+              children:
+                -
+                  id: 14
+                  name: "GLVisionSimulator"
+                  plugin: Body
+                  class: GLVisionSimulatorItem
+                -
+                  id: 15
+                  name: "MulticopterSimulator"
+                  plugin: Multicopter
+                  class: MulticopterSimulatorItem
+                  data:
+                    Fluid Density[kg/m^3]: 1.293
+                    Viscosity[Pa*s]: 1.7e-05
+                    Fluid Velocity[m/s]: [ 0, 0, 0 ]
+            -
+              id: 16
+              name: "ODESimulator"
+              plugin: ODE
+              class: ODESimulatorItem
+              data:
+                time_step: 0.005
+                is_active_control_time_range_mode: true
+                step_mode: "Big matrix"
+                num_iterations: 200
+                over_relaxation: 1.0
+              children:
+                -
+                  id: 17
+                  name: "GLVisionSimulator"
+                  plugin: Body
+                  class: GLVisionSimulatorItem
+                -
+                  id: 18
+                  name: "MulticopterSimulator"
+                  plugin: Multicopter
+                  class: MulticopterSimulatorItem
+                  data:
+                    Fluid Density[kg/m^3]: 1.293
+                    Viscosity[Pa*s]: 1.7e-05
+                    Fluid Velocity[m/s]: [ 0, 0, 0 ]
+            -
+              id: 19
+              name: "AGXSimulator"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
+              data:
+                time_step: 0.005
+                is_active_control_time_range_mode: true
+              children:
+                -
+                  id: 20
+                  name: "GLVisionSimulator"
+                  plugin: Body
+                  class: GLVisionSimulatorItem
+                -
+                  id: 21
+                  name: "MulticopterSimulator"
+                  plugin: Multicopter
+                  class: MulticopterSimulatorItem
+                  data:
+                    Fluid Density[kg/m^3]: 1.293
+                    Viscosity[Pa*s]: 1.7e-05
+                    Fluid Velocity[m/s]: [ 0, 0, 0 ]
+views:
+  -
     id: 0
     plugin: Base
     class: ItemPropertyView
     mounted: true
-  - 
+  -
     id: 1
     plugin: Base
     class: ItemTreeView
     mounted: true
-    state: 
-      selected: [ 8 ]
-      checked: [ 1, 2, 4, 5 ]
-      expanded: [ 1, 2, 3, 6, 7 ]
-  - 
+    state:
+      expanded: [ 1, 2, 6 ]
+  -
     id: 2
     plugin: Base
     class: MessageView
     mounted: true
-  - 
+  -
     id: 3
     plugin: Base
     class: SceneView
     mounted: true
-    state: 
-      editMode: true
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
-      additionalLights: true
-      fog: true
-      floorGrid: false
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      fpsTestIteration: 1
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      upsideDown: false
-      cameras: 
-        - 
+    state:
+      floor_grid: false
+      cameras:
+        -
           camera: [ System, Perspective ]
-          fieldOfView: 0.698132
-          near: 0.01
-          far: 100
           eye: [ -2.34089605, -1.31751451, 1.42974889 ]
           direction: [ 0.818052366, 0.438501061, -0.372165483 ]
           up: [ 0.328013227, 0.175825111, 0.928166393 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 100
-        - 
+        -
           camera: BodyTrackingCamera
-          isCurrent: true
-          fieldOfView: 0.785398
-          near: 0.01
-          far: 100
+          is_current: true
           eye: [ -1.6848272, -0.934988438, 0.850591599 ]
           direction: [ 0.821291541, 0.440237358, -0.362865366 ]
           up: [ 0.319816439, 0.171431382, 0.931841578 ]
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
-  - 
+  -
     id: 4
     name: "Camera Scene"
     plugin: Base
     class: SceneView
     mounted: true
-    state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: true
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.5
-      worldLightAmbient: 0.3
-      additionalLights: true
-      fog: true
-      floorGrid: false
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      fpsTestIteration: 1
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      upsideDown: false
-      cameras: 
-        - 
+    state:
+      floor_grid: false
+      cameras:
+        -
           camera: [ System, Perspective ]
-          fieldOfView: 0.698132
-          near: 0.01
-          far: 100
           eye: [ 4, 2, 1.5 ]
           direction: [ -0.888888889, -0.444444444, -0.111111111 ]
           up: [ -0.099380799, -0.0496903995, 0.99380799 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 100
-        - 
-          camera: [ Quadcopter, Camera ]
-          isCurrent: true
-        - 
+        -
+          camera: [ quadcopter, Camera ]
+          is_current: true
+        -
           camera: BodyTrackingCamera
-          fieldOfView: 0.785398
-          near: 0.01
-          far: 100
           eye: [ -1.6848272, -0.934988438, 0.850591599 ]
           direction: [ 0.821291541, 0.440237358, -0.362865366 ]
           up: [ 0.319816439, 0.171431382, 0.931841578 ]
-      backgroundColor: [ 0.100000001, 0.100000001, 0.300000012 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
-  - 
+  -
     id: 5
     name: "Virtual Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
-  - 
+  -
     id: 6
     plugin: Body
-    class: BodyLinkView
+    class: JointDisplacementView
     mounted: true
-    state: 
-      showRotationMatrix: false
-  - 
+  -
     id: 7
     plugin: Body
-    class: JointSliderView
-    mounted: true
-    state: 
-      showAllJoints: true
-      jointId: false
-      name: true
-      numColumns: 1
-      spinBox: true
-      slider: true
-      labelOnLeft: true
-      currentBodyItem: 5
-  - 
+    class: LinkPositionView
+  -
     id: 8
     plugin: Body
     class: LinkSelectionView
     mounted: true
-    state: 
-      listingMode: "Link List"
-      currentBodyItem: 5
-  - 
+  -
     id: 11
     plugin: Python
     class: PythonConsoleView
     mounted: true
-viewAreas: 
-  - 
+viewAreas:
+  -
     type: embedded
     tabs: true
-    contents: 
+    contents:
       type: splitter
       orientation: horizontal
       sizes: [ 343, 1571 ]
-      children: 
-        - 
+      children:
+        -
           type: splitter
           orientation: vertical
           sizes: [ 372, 533 ]
-          children: 
-            - 
+          children:
+            -
               type: pane
               views: [ 1 ]
-              current: 1
-            - 
+            -
               type: pane
-              views: [ 0, 8, 10 ]
+              views: [ 0, 8 ]
               current: 0
-        - 
+        -
           type: splitter
           orientation: vertical
           sizes: [ 646, 259 ]
-          children: 
-            - 
+          children:
+            -
               type: splitter
               orientation: horizontal
               sizes: [ 680, 885 ]
-              children: 
-                - 
+              children:
+                -
                   type: pane
-                  views: [ 6, 7, 4 ]
+                  views: [ 6, 4 ]
                   current: 4
-                - 
+                -
                   type: pane
                   views: [ 3 ]
-                  current: 3
-            - 
+            -
               type: splitter
               orientation: horizontal
               sizes: [ 783, 782 ]
-              children: 
-                - 
+              children:
+                -
                   type: pane
                   views: [ 2, 11 ]
                   current: 2
-                - 
+                -
                   type: pane
                   views: [ 5 ]
-                  current: 5
-layoutOfToolBars: 
-  rows: 
-    - 
-      - { name: "FileBar", x: 0, priority: 0 }
-      - { name: "ScriptBar", x: 47, priority: 0 }
-      - { name: "TimeBar", x: 94, priority: 0 }
-      - { name: "SceneBar", x: 1071, priority: 0 }
-      - { name: "GraphBar", x: 1341, priority: 0 }
-      - { name: "BodyMotionGenerationBar", x: 1448, priority: 0 }
-    - 
-      - { name: "SimulationBar", x: 0, priority: 0 }
-      - { name: "BodyBar", x: 197, priority: 0 }
-      - { name: "KinematicsBar", x: 457, priority: 0 }
