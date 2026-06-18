@@ -34,6 +34,9 @@ msgstr "摩擦係数"
 msgid "Limit joint range"
 msgstr "関節範囲拘束"
 
+msgid "Add joint-axis inertia to link inertia"
+msgstr "軸慣性をリンク慣性に加算"
+
 msgid "Global ERP"
 msgstr "グローバルERP"
 
@@ -52,8 +55,17 @@ msgstr "深度補正速度制限"
 msgid "Max correcting vel."
 msgstr "最大深度補正速度"
 
+msgid "Surface drive culling depth"
+msgstr "接触面駆動間引き深度"
+
 msgid "2D mode"
 msgstr "2Dモード"
 
 msgid "Use WorldItem's Collision Detector"
 msgstr "ワールドアイテムの干渉検出器を使用"
+
+msgid "{0} has joint-axis inertia at joint \"{1}\" ({2}). ODESimulatorItem cannot reproduce it directly, so it is approximately added to the link inertia. This behavior can be changed with the \"Add joint-axis inertia to link inertia\" property."
+msgstr "{0} の関節 \"{1}\" には軸慣性 ({2}) が設定されています。ODESimulatorItem は軸慣性そのものを再現できないため、不正確な近似としてリンクの慣性に加算します。この挙動は「軸慣性をリンク慣性に加算」プロパティで変更できます。"
+
+msgid "{0} has joint-axis inertia at joint \"{1}\" ({2}). ODESimulatorItem does not support it directly. Enable \"Add joint-axis inertia to link inertia\" to approximately add it to the link inertia."
+msgstr "{0} の関節 \"{1}\" には軸慣性 ({2}) が設定されています。ODESimulatorItem は軸慣性そのものをサポートしていません。「軸慣性をリンク慣性に加算」をONにすると、不正確な近似としてリンクの慣性に加算できます。"
