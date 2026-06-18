@@ -101,6 +101,13 @@ bool hasLinkDisablingCollisionRules(Body* body)
     return false;
 }
 
+bool isSurfaceVelocityLink(Link* link)
+{
+    return link->jointType() == Link::PseudoContinuousTrackJoint &&
+        (link->actuationMode() == Link::JointVelocity ||
+         link->actuationMode() == Link::DeprecatedJointSurfaceVelocity);
+}
+
 class ODEBody;
 
 class ODELink : public Referenced
@@ -1402,6 +1409,7 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
             dBodyID body2ID = dGeomGetBody(g2);
             Link* crawlerlink = 0;
             double sign = 1.0;
+            double motionSign = 1.0;
             if(!impl->crawlerLinks.empty()){
                 CrawlerLinkMap::iterator p = impl->crawlerLinks.find(body1ID);
                 if(p != impl->crawlerLinks.end()){
@@ -1411,6 +1419,16 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
                 if(p != impl->crawlerLinks.end()){
                     crawlerlink = p->second;
                     sign = -1.0;
+                }
+            }
+            if(!crawlerlink){
+                if(isSurfaceVelocityLink(odeLink1->link)){
+                    crawlerlink = odeLink1->link;
+                    motionSign = -1.0;
+                } else if(isSurfaceVelocityLink(odeLink2->link)){
+                    crawlerlink = odeLink2->link;
+                    sign = -1.0;
+                    motionSign = -1.0;
                 }
             }
             auto param = impl->resolveContactParam(odeLink1->link, odeLink2->link);
@@ -1442,7 +1460,7 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
                         //Vector3 pos(dpos[0], dpos[1], dpos[2]);
                         //Vector3 v = crawlerlink->v + crawlerlink->w.cross(pos-crawlerlink->p);
                         //surface.motion1 = dir.dot(v) + crawlerlink->u;
-                        surface.motion1 = crawlerlink->dq_target();
+                        surface.motion1 = motionSign * crawlerlink->dq_target();
                         surface.mu = impl->friction;
                         surface.mu2 = 0.5;
                     }
@@ -1547,6 +1565,7 @@ void ODESimulatorItemImpl::onCollisionPairDetected(const CollisionPair& collisio
     dBodyID body2ID = link2->bodyID;
     Link* crawlerlink = 0;
     double sign = 1.0;
+    double motionSign = 1.0;
     if(!crawlerLinks.empty()){
         CrawlerLinkMap::iterator p = crawlerLinks.find(body1ID);
         if(p != crawlerLinks.end()){
@@ -1556,6 +1575,16 @@ void ODESimulatorItemImpl::onCollisionPairDetected(const CollisionPair& collisio
         if(p != crawlerLinks.end()){
             crawlerlink = p->second;
             sign = -1.0;
+        }
+    }
+    if(!crawlerlink){
+        if(isSurfaceVelocityLink(link1->link)){
+            crawlerlink = link1->link;
+            motionSign = -1.0;
+        } else if(isSurfaceVelocityLink(link2->link)){
+            crawlerlink = link2->link;
+            sign = -1.0;
+            motionSign = -1.0;
         }
     }
 
@@ -1594,7 +1623,7 @@ void ODESimulatorItemImpl::onCollisionPairDetected(const CollisionPair& collisio
                 contact.fdir1[0] = dir[0];
                 contact.fdir1[1] = dir[1];
                 contact.fdir1[2] = dir[2];
-                surface.motion1 = crawlerlink->u();
+                surface.motion1 = motionSign * crawlerlink->dq_target();
                 surface.mu = friction;
                 surface.mu2 = 0.5;
             }
