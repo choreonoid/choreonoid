@@ -101,7 +101,7 @@ bool hasLinkDisablingCollisionRules(Body* body)
     return false;
 }
 
-bool isSurfaceVelocityLink(Link* link)
+bool isSurfaceDriveLink(Link* link)
 {
     return link->jointType() == Link::PseudoContinuousTrackJoint &&
         (link->actuationMode() == Link::JointVelocity ||
@@ -171,7 +171,7 @@ public:
 
 namespace cnoid {
   
-typedef std::map<dBodyID, Link*> CrawlerLinkMap;
+typedef std::map<dBodyID, Link*> SurfaceDriveLinkMap;
 class ODESimulatorItemImpl
 {
 public:
@@ -183,7 +183,7 @@ public:
     dSpaceID spaceID;
     dJointGroupID contactJointGroupID;
     double timeStep;
-    CrawlerLinkMap crawlerLinks;
+    SurfaceDriveLinkMap surfaceDriveLinks;
 
     Selection stepMode;
     Vector3 gravity;
@@ -198,7 +198,7 @@ public:
     bool enableMaxCorrectingVel;
     FloatingNumberString maxCorrectingVel;
     double surfaceLayerDepth;
-    double surfaceVelocityCullingDepth;
+    double surfaceDriveCullingDepth;
     bool useWorldCollisionDetector;
     BodyCollisionDetector bodyCollisionDetector;
 
@@ -398,7 +398,7 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
         if(parentBodyID){
             if(link->actuationMode() == Link::JointVelocity ||
                link->actuationMode() == Link::DeprecatedJointSurfaceVelocity){
-                simImpl->crawlerLinks.insert(make_pair(bodyID, link));
+                simImpl->surfaceDriveLinks.insert(make_pair(bodyID, link));
             }
     	}
 
@@ -957,7 +957,7 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self)
     enableMaxCorrectingVel = true;
     maxCorrectingVel = "1.0e-2";
     surfaceLayerDepth = 0.0001;
-    surfaceVelocityCullingDepth = 0.005;
+    surfaceDriveCullingDepth = 0.005;
     friction = 1.0;
     isJointLimitMode = false;
     isAddingJointAxisInertiaToLinkInertia = false;
@@ -988,7 +988,7 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimu
     enableMaxCorrectingVel = org.enableMaxCorrectingVel;
     maxCorrectingVel = org.maxCorrectingVel;
     surfaceLayerDepth = org.surfaceLayerDepth;
-    surfaceVelocityCullingDepth = org.surfaceVelocityCullingDepth;
+    surfaceDriveCullingDepth = org.surfaceDriveCullingDepth;
     friction = org.friction;
     isJointLimitMode = org.isJointLimitMode;
     isAddingJointAxisInertiaToLinkInertia = org.isAddingJointAxisInertiaToLinkInertia;
@@ -1135,7 +1135,7 @@ void ODESimulatorItemImpl::clear()
         spaceID = 0;
     }
 
-    crawlerLinks.clear();
+    surfaceDriveLinks.clear();
 }    
 
 
@@ -1410,26 +1410,26 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
         if(numContacts > 0){
             dBodyID body1ID = dGeomGetBody(g1);
             dBodyID body2ID = dGeomGetBody(g2);
-            Link* crawlerlink = 0;
+            Link* surfaceDriveLink = 0;
             double sign = 1.0;
             double motionSign = 1.0;
-            if(!impl->crawlerLinks.empty()){
-                CrawlerLinkMap::iterator p = impl->crawlerLinks.find(body1ID);
-                if(p != impl->crawlerLinks.end()){
-                    crawlerlink = p->second;
+            if(!impl->surfaceDriveLinks.empty()){
+                SurfaceDriveLinkMap::iterator p = impl->surfaceDriveLinks.find(body1ID);
+                if(p != impl->surfaceDriveLinks.end()){
+                    surfaceDriveLink = p->second;
                 }
-                p = impl->crawlerLinks.find(body2ID);
-                if(p != impl->crawlerLinks.end()){
-                    crawlerlink = p->second;
+                p = impl->surfaceDriveLinks.find(body2ID);
+                if(p != impl->surfaceDriveLinks.end()){
+                    surfaceDriveLink = p->second;
                     sign = -1.0;
                 }
             }
-            if(!crawlerlink){
-                if(isSurfaceVelocityLink(odeLink1->link)){
-                    crawlerlink = odeLink1->link;
+            if(!surfaceDriveLink){
+                if(isSurfaceDriveLink(odeLink1->link)){
+                    surfaceDriveLink = odeLink1->link;
                     motionSign = -1.0;
-                } else if(isSurfaceVelocityLink(odeLink2->link)){
-                    crawlerlink = odeLink2->link;
+                } else if(isSurfaceDriveLink(odeLink2->link)){
+                    surfaceDriveLink = odeLink2->link;
                     sign = -1.0;
                     motionSign = -1.0;
                 }
@@ -1437,18 +1437,18 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
             auto param = impl->resolveContactParam(odeLink1->link, odeLink2->link);
             for(int i=0; i < numContacts; ++i){
                 dSurfaceParameters& surface = contacts[i].surface;
-                bool applySurfaceVelocity =
-                    crawlerlink &&
-                    (impl->surfaceVelocityCullingDepth <= 0.0 ||
-                     contacts[i].geom.depth <= impl->surfaceVelocityCullingDepth);
-                if(!applySurfaceVelocity){
+                bool applySurfaceDrive =
+                    surfaceDriveLink &&
+                    (impl->surfaceDriveCullingDepth <= 0.0 ||
+                     contacts[i].geom.depth <= impl->surfaceDriveCullingDepth);
+                if(!applySurfaceDrive){
                     surface.mode = dContactApprox1;
                     surface.mu = param.friction;
                     impl->setBounceParameters(contacts[i], param.restitution);
 
                 } else {
                     surface.mode = dContactFDir1 | dContactMotion1 | dContactMu2 | dContactApprox1_2 | dContactApprox1_1;
-                    const Vector3 axis = crawlerlink->R() * crawlerlink->a();
+                    const Vector3 axis = surfaceDriveLink->R() * surfaceDriveLink->a();
                     const Vector3 n(contacts[i].geom.normal);
                     Vector3 dir = axis.cross(n);
                     if(dir.norm() < 1.0e-5){
@@ -1462,9 +1462,9 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
                         contacts[i].fdir1[2] = dir[2];
                         //dVector3& dpos = contacts[i].geom.pos;
                         //Vector3 pos(dpos[0], dpos[1], dpos[2]);
-                        //Vector3 v = crawlerlink->v + crawlerlink->w.cross(pos-crawlerlink->p);
-                        //surface.motion1 = dir.dot(v) + crawlerlink->u;
-                        surface.motion1 = motionSign * crawlerlink->dq_target();
+                        //Vector3 v = surfaceDriveLink->v + surfaceDriveLink->w.cross(pos-surfaceDriveLink->p);
+                        //surface.motion1 = dir.dot(v) + surfaceDriveLink->u;
+                        surface.motion1 = motionSign * surfaceDriveLink->dq_target();
                         surface.mu = impl->friction;
                         surface.mu2 = 0.5;
                     }
@@ -1567,26 +1567,26 @@ void ODESimulatorItemImpl::onCollisionPairDetected(const CollisionPair& collisio
 
     dBodyID body1ID = link1->bodyID;
     dBodyID body2ID = link2->bodyID;
-    Link* crawlerlink = 0;
+    Link* surfaceDriveLink = 0;
     double sign = 1.0;
     double motionSign = 1.0;
-    if(!crawlerLinks.empty()){
-        CrawlerLinkMap::iterator p = crawlerLinks.find(body1ID);
-        if(p != crawlerLinks.end()){
-            crawlerlink = p->second;
+    if(!surfaceDriveLinks.empty()){
+        SurfaceDriveLinkMap::iterator p = surfaceDriveLinks.find(body1ID);
+        if(p != surfaceDriveLinks.end()){
+            surfaceDriveLink = p->second;
         }
-        p = crawlerLinks.find(body2ID);
-        if(p != crawlerLinks.end()){
-            crawlerlink = p->second;
+        p = surfaceDriveLinks.find(body2ID);
+        if(p != surfaceDriveLinks.end()){
+            surfaceDriveLink = p->second;
             sign = -1.0;
         }
     }
-    if(!crawlerlink){
-        if(isSurfaceVelocityLink(link1->link)){
-            crawlerlink = link1->link;
+    if(!surfaceDriveLink){
+        if(isSurfaceDriveLink(link1->link)){
+            surfaceDriveLink = link1->link;
             motionSign = -1.0;
-        } else if(isSurfaceVelocityLink(link2->link)){
-            crawlerlink = link2->link;
+        } else if(isSurfaceDriveLink(link2->link)){
+            surfaceDriveLink = link2->link;
             sign = -1.0;
             motionSign = -1.0;
         }
@@ -1606,16 +1606,16 @@ void ODESimulatorItemImpl::onCollisionPairDetected(const CollisionPair& collisio
         contact.geom.depth = collisions[i].depth;
 
         dSurfaceParameters& surface = contact.surface;
-        bool applySurfaceVelocity =
-            crawlerlink &&
-            (surfaceVelocityCullingDepth <= 0.0 || contact.geom.depth <= surfaceVelocityCullingDepth);
-        if(!applySurfaceVelocity){
+        bool applySurfaceDrive =
+            surfaceDriveLink &&
+            (surfaceDriveCullingDepth <= 0.0 || contact.geom.depth <= surfaceDriveCullingDepth);
+        if(!applySurfaceDrive){
             surface.mode = dContactApprox1;
             surface.mu = param.friction;
             setBounceParameters(contact, param.restitution);
         } else {
             surface.mode = dContactFDir1 | dContactMotion1 | dContactMu2 | dContactApprox1_2;
-            const Vector3 axis = crawlerlink->R() * crawlerlink->a();
+            const Vector3 axis = surfaceDriveLink->R() * surfaceDriveLink->a();
             const Vector3 n(contact.geom.normal);
             Vector3 dir = axis.cross(n);
             if(dir.norm() < 1.0e-5){
@@ -1627,7 +1627,7 @@ void ODESimulatorItemImpl::onCollisionPairDetected(const CollisionPair& collisio
                 contact.fdir1[0] = dir[0];
                 contact.fdir1[1] = dir[1];
                 contact.fdir1[2] = dir[2];
-                surface.motion1 = motionSign * crawlerlink->dq_target();
+                surface.motion1 = motionSign * surfaceDriveLink->dq_target();
                 surface.mu = friction;
                 surface.mu2 = 0.5;
             }
@@ -1684,7 +1684,7 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](const string& value){ return maxCorrectingVel.setNonNegativeValue(value); });
 
     putProperty.decimals(4).min(0.0)(
-        _("Surface velocity culling depth"), surfaceVelocityCullingDepth, changeProperty(surfaceVelocityCullingDepth));
+        _("Surface drive culling depth"), surfaceDriveCullingDepth, changeProperty(surfaceDriveCullingDepth));
 
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
 
@@ -1717,7 +1717,7 @@ void ODESimulatorItemImpl::store(Archive& archive)
     archive.write("over_relaxation", overRelaxation);
     archive.write("limit_correcting_velocity", enableMaxCorrectingVel);
     archive.write("max_correcting_velocity", maxCorrectingVel);
-    archive.write("surface_velocity_culling_depth", surfaceVelocityCullingDepth);
+    archive.write("surface_drive_culling_depth", surfaceDriveCullingDepth);
     if(is2Dmode){
         archive.write("use_2d_mode", true);
     }
@@ -1751,7 +1751,7 @@ void ODESimulatorItemImpl::restore(const Archive& archive)
     archive.read({ "over_relaxation", "overRelaxation" }, overRelaxation);
     archive.read({ "limit_correcting_velocity", "limitCorrectingVel" }, enableMaxCorrectingVel);
     maxCorrectingVel = archive.get({ "max_correcting_velocity", "maxCorrectingVel" }, maxCorrectingVel.string());
-    archive.read({ "surface_velocity_culling_depth", "surface_velocity_depth_limit" }, surfaceVelocityCullingDepth);
+    archive.read("surface_drive_culling_depth", surfaceDriveCullingDepth);
     archive.read({ "use_2d_mode", "2Dmode" }, is2Dmode);
     if(!archive.read({ "use_world_collision_detector", "useWorldCollisionDetector" }, useWorldCollisionDetector)){
         archive.read("UseWorldItem'sCollisionDetector", useWorldCollisionDetector);
