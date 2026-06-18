@@ -1164,7 +1164,7 @@ PhysxLink::PhysxLink(Link* link, PhysxBody* physxBody)
     rigidActor = nullptr;
     rigidBody = nullptr;
     rigidDynamic = nullptr;
-    useSurfaceVelocity = false;
+    useSurfaceVelocity = (link->jointType() == Link::PseudoContinuousTrackJoint);
 }
 
 
