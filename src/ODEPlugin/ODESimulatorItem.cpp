@@ -7,6 +7,7 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/FloatingNumberString>
+#include <cnoid/MessageOut>
 #include <cnoid/Body>
 #include <cnoid/Link>
 #include <cnoid/Sensor>
@@ -119,8 +120,8 @@ public:
     dJointID motorID;
 
     ODELink(
-        ODESimulatorItemImpl* simImpl, ODEBody* odeBody, ODELink* parent, const Isometry3& T_parent,
-        Link* link);
+        ODESimulatorItemImpl* simImpl, ODEBody* odeBody, ODELink* parent,
+        const Isometry3& T_origin, Link* link);
     ~ODELink();
     void createLinkBody(
         ODESimulatorItemImpl* simImpl, dWorldID worldID, ODELink* parent, const Isometry3& T_origin);
@@ -143,6 +144,7 @@ public:
     dWorldID worldID;
     dSpaceID spaceID;
     unique_ptr<BodyCollisionLinkFilter> bodyCollisionLinkFilter;
+    bool isJointAxisInertiaWarningIssued;
     bool selfCollision;
     vector<dJointFeedback> forceSensorFeedbacks;
     BasicSensorSimulationHelper sensorHelper;
@@ -228,7 +230,7 @@ public:
 
 
 ODELink::ODELink
-(ODESimulatorItemImpl* simImpl, ODEBody* odeBody, ODELink* parent, const Isometry3& T_parent, Link* link)
+(ODESimulatorItemImpl* simImpl, ODEBody* odeBody, ODELink* parent, const Isometry3& T_origin, Link* link)
 {
     odeBody->odeLinks.push_back(this);
 
@@ -239,9 +241,6 @@ ODELink::ODELink
     triMeshDataID = 0;
     geomID.clear();
     motorID = 0;
-    
-    Isometry3 T_origin = T_parent * link->Tb();
-    
     if(odeBody->worldID){
         createLinkBody(simImpl, odeBody->worldID, parent, T_origin);
     }
@@ -257,7 +256,7 @@ ODELink::ODELink
     }
 
     for(Link* child = link->child(); child; child = child->sibling()){
-        new ODELink(simImpl, odeBody, this, T_origin, child);
+        new ODELink(simImpl, odeBody, this, T_origin * child->Tb(), child);
     }
 
 }
@@ -268,22 +267,21 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
     bodyID = dBodyCreate(worldID);
     dBodySetData(bodyID, link);
 
+    if(!odeBody->isJointAxisInertiaWarningIssued && link->Jm2() != 0.0){
+        MessageOut::master()->putWarningln(
+            formatR(_("{0} has joint-axis inertia at joint \"{1}\" ({2}), "
+                      "but ODESimulatorItem does not support it."),
+                    odeBody->body()->name(), link->name(), link->Jm2()));
+        odeBody->isJointAxisInertiaWarningIssued = true;
+    }
+
     dMass mass;
     dMassSetZero(&mass);
     const Matrix3& I = link->I();
-#if 0
-    Vector3 axis = link->a();
-    Matrix3 I0 = I + axis * axis.transpose() * link->Jm2();
     dMassSetParameters(&mass, link->m(),
             0.0, 0.0, 0.0,
-            I0(0,0), I0(1,1), I0(2,2),
-            I0(0,1), I0(0,2), I0(1,2));
-#else
-    dMassSetParameters(&mass, link->m(),
-                       0.0, 0.0, 0.0,
-                       I(0,0), I(1,1), I(2,2),
-                       I(0,1), I(0,2), I(1,2));
-#endif
+            I(0,0), I(1,1), I(2,2),
+            I(0,1), I(0,2), I(1,2));
 
     dBodySetMass(bodyID, &mass);
 
@@ -714,6 +712,7 @@ ODEBody::ODEBody(Body* body)
 {
     worldID = 0;
     spaceID = 0;
+    isJointAxisInertiaWarningIssued = false;
     selfCollision = false;
 }
 
@@ -729,6 +728,7 @@ ODEBody::~ODEBody()
 void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
 {
     Body* body = this->body();
+    isJointAxisInertiaWarningIssued = false;
     selfCollision = false;
     bodyCollisionLinkFilter.reset();
     bool selfCollisionRequested = bodyItem() && bodyItem()->isSelfCollisionDetectionEnabled();
@@ -769,7 +769,7 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
         dSpaceSetCleanup(spaceID, 0);
     }
 
-    ODELink* rootLink = new ODELink(simImpl, this, nullptr, Isometry3::Identity(), body->rootLink());
+    ODELink* rootLink = new ODELink(simImpl, this, nullptr, body->rootLink()->T(), body->rootLink());
 
     setKinematicStateToODE(simImpl->doFlipYZ);
 
