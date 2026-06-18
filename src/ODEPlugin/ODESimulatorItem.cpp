@@ -7,6 +7,7 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/FloatingNumberString>
+#include <cnoid/Format>
 #include <cnoid/MessageOut>
 #include <cnoid/Body>
 #include <cnoid/Link>
@@ -29,7 +30,6 @@
 
 #include <ode/ode.h>
 #define ITEM_NAME N_("ODESimulatorItem")
-#include <iostream>
 
 using namespace std;
 using namespace cnoid;
@@ -1608,8 +1608,9 @@ void ODESimulatorItemImpl::onCollisionPairDetected(const CollisionPair& collisio
 void ODESimulatorItem::finalizeSimulation()
 {
     if(MEASURE_PHYSICS_CALCULATION_TIME){
-        cout << "ODE physicsTime= " << impl->physicsTime *1.0e-9 << "[s]"<< endl;
-        cout << "ODE collisionTime= " << impl->collisionTime *1.0e-9 << "[s]"<< endl;
+        auto mout = MessageOut::master();
+        mout->putln(formatC("ODE physicsTime= {}[s]", impl->physicsTime * 1.0e-9));
+        mout->putln(formatC("ODE collisionTime= {}[s]", impl->collisionTime * 1.0e-9));
     }
 }
 
