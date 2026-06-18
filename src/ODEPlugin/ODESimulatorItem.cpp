@@ -19,9 +19,11 @@
 #include <cnoid/MaterialTable>
 #include <cnoid/IdPair>
 #include <cnoid/ValueTree>
+#include <cnoid/CloneMap>
 #include <QElapsedTimer>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include "gettext.h"
 
 #include <ode/ode.h>
@@ -148,7 +150,6 @@ public:
     ODEBody(Body* body);
     ~ODEBody();
     void createBody(ODESimulatorItemImpl* simImpl);
-    void setExtraJoints(bool doFlipYZ);
     void setKinematicStateToODE(bool doFlipYZ);
     void setControlValToODE();
     void getKinematicStateFromODE(bool doFlipYZ);
@@ -214,6 +215,7 @@ public:
     void clear();
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     void addBody(ODEBody* odeBody);
+    void setExtraJoints(const std::vector<SimulationBody*>& simBodies);
     bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
     ContactParam resolveContactParam(Link* link1, Link* link2);
     void setBounceParameters(dContact& contact, double restitution);
@@ -779,8 +781,6 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
         simImpl->bodyCollisionDetector.addBody(body, bodyItem()->isSelfCollisionDetectionEnabled());
     }
 
-    setExtraJoints(simImpl->doFlipYZ);
-
     if(simImpl->is2Dmode && worldID){
         dJointID planeJointID = dJointCreatePlane2D(worldID, 0);
         dJointAttach(planeJointID, rootLink->bodyID, 0);
@@ -795,68 +795,6 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
     forceSensorFeedbacks.resize(forceSensors.size());
     for(size_t i=0; i < forceSensors.size(); ++i){
         dJointSetFeedback(odeLinks[forceSensors[i]->link()->index()]->jointID, &forceSensorFeedbacks[i]);
-    }
-}
-
-
-void ODEBody::setExtraJoints(bool doFlipYZ)
-{
-    Body* body = this->body();
-    const int n = body->numExtraJoints();
-
-    for(int j=0; j < n; ++j){
-
-        ExtraJoint* extraJoint = body->extraJoint(j);
-
-        ODELinkPtr odeLinkPair[2];
-        for(int i=0; i < 2; ++i){
-            ODELinkPtr odeLink;
-            Link* link = extraJoint->link(i);
-            if(link->index() < odeLinks.size()){
-                odeLink = odeLinks[link->index()];
-                if(odeLink->link == link){
-                    odeLinkPair[i] = odeLink;
-                }
-            }
-            if(!odeLink){
-                break;
-            }
-        }
-
-        if(odeLinkPair[1]){
-            dJointID jointID = 0;
-            Link* link = odeLinkPair[0]->link;
-            Vector3 p = link->T() * extraJoint->point(0);
-            Vector3 a = link->R() * extraJoint->localRotation(0) * extraJoint->axis();
-            if(doFlipYZ){
-                flipYZ(p);
-                flipYZ(a);
-            }
-
-            // \todo do the destroy management for these joints
-            if(extraJoint->type() == ExtraJoint::Piston){
-                jointID = dJointCreatePiston(worldID, 0);
-                dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
-                dJointSetPistonAnchor(jointID, p.x(), p.y(), p.z());
-                dJointSetPistonAxis(jointID, a.x(), a.y(), a.z());
-
-            } else if(extraJoint->type() == ExtraJoint::Fixed){
-                jointID = dJointCreateFixed(worldID, 0);
-                dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
-                dJointSetFixed(jointID);
-
-            } else if(extraJoint->type() == ExtraJoint::Hinge){
-                jointID = dJointCreateHinge(worldID, 0);
-                dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
-                dJointSetHingeAnchor(jointID, p.x(), p.y(), p.z());
-                dJointSetHingeAxis(jointID, a.x(), a.y(), a.z());
-
-            } else if(extraJoint->type() == ExtraJoint::Ball){
-                jointID = dJointCreateBall(worldID, 0);
-                dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
-                dJointSetBallAnchor(jointID, p.x(), p.y(), p.z());
-            }
-        }
     }
 }
 
@@ -1169,9 +1107,9 @@ Item* ODESimulatorItem::doCloneItem(CloneMap* /* cloneMap */) const
 }
 
 
-SimulationBody* ODESimulatorItem::createSimulationBody(Body* orgBody)
+SimulationBody* ODESimulatorItem::createSimulationBody(Body* orgBody, CloneMap& cloneMap)
 {
-    return new ODEBody(orgBody->clone());
+    return new ODEBody(cloneMap.getClone(orgBody));
 }
 
 
@@ -1223,6 +1161,7 @@ bool ODESimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     for(size_t i=0; i < simBodies.size(); ++i){
         addBody(static_cast<ODEBody*>(simBodies[i]));
     }
+    setExtraJoints(simBodies);
     if(useWorldCollisionDetector){
         bodyCollisionDetector.makeReady();
     }
@@ -1259,6 +1198,82 @@ void ODESimulatorItemImpl::addBody(ODEBody* odeBody)
     body.calcForwardKinematics(true, true);
 
     odeBody->createBody(this);
+}
+
+
+void ODESimulatorItemImpl::setExtraJoints(const std::vector<SimulationBody*>& simBodies)
+{
+    unordered_map<Link*, ODELink*> odeLinkMap;
+    unordered_set<ExtraJoint*> initializedExtraJoints;
+
+    for(auto simBody : simBodies){
+        auto odeBody = static_cast<ODEBody*>(simBody);
+        for(auto& odeLink : odeBody->odeLinks){
+            odeLinkMap[odeLink->link] = odeLink;
+        }
+    }
+
+    for(auto simBody : simBodies){
+        Body* body = simBody->body();
+        const int n = body->numExtraJoints();
+
+        for(int j = 0; j < n; ++j){
+            ExtraJoint* extraJoint = body->extraJoint(j);
+            if(!initializedExtraJoints.insert(extraJoint).second){
+                continue;
+            }
+
+            ODELink* odeLinkPair[2] = { nullptr, nullptr };
+            for(int i = 0; i < 2; ++i){
+                Link* link = extraJoint->link(i);
+                if(!link){
+                    break;
+                }
+                auto p = odeLinkMap.find(link);
+                if(p == odeLinkMap.end()){
+                    break;
+                }
+                odeLinkPair[i] = p->second;
+            }
+
+            if(!odeLinkPair[0] || !odeLinkPair[1] ||
+               (!odeLinkPair[0]->bodyID && !odeLinkPair[1]->bodyID)){
+                continue;
+            }
+
+            dJointID jointID = 0;
+            Link* link = odeLinkPair[0]->link;
+            Vector3 p = link->T() * extraJoint->point(0);
+            Vector3 a = link->R() * extraJoint->localRotation(0) * extraJoint->axis();
+            if(doFlipYZ){
+                flipYZ(p);
+                flipYZ(a);
+            }
+
+            if(extraJoint->type() == ExtraJoint::Piston){
+                jointID = dJointCreatePiston(worldID, 0);
+                dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
+                dJointSetPistonAnchor(jointID, p.x(), p.y(), p.z());
+                dJointSetPistonAxis(jointID, a.x(), a.y(), a.z());
+
+            } else if(extraJoint->type() == ExtraJoint::Fixed){
+                jointID = dJointCreateFixed(worldID, 0);
+                dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
+                dJointSetFixed(jointID);
+
+            } else if(extraJoint->type() == ExtraJoint::Hinge){
+                jointID = dJointCreateHinge(worldID, 0);
+                dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
+                dJointSetHingeAnchor(jointID, p.x(), p.y(), p.z());
+                dJointSetHingeAxis(jointID, a.x(), a.y(), a.z());
+
+            } else if(extraJoint->type() == ExtraJoint::Ball){
+                jointID = dJointCreateBall(worldID, 0);
+                dJointAttach(jointID, odeLinkPair[0]->bodyID, odeLinkPair[1]->bodyID);
+                dJointSetBallAnchor(jointID, p.x(), p.y(), p.z());
+            }
+        }
+    }
 }
 
 

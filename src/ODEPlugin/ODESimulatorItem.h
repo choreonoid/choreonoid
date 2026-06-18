@@ -38,7 +38,7 @@ public:
     virtual Vector3 getGravity() const override;
 
 protected:
-    virtual SimulationBody* createSimulationBody(Body* orgBody) override;
+    virtual SimulationBody* createSimulationBody(Body* orgBody, CloneMap& cloneMap) override;
     virtual bool initializeSimulation(const std::vector<SimulationBody*>& simBodies) override;
     virtual void initializeSimulationThread() override;
     virtual bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies) override;
