@@ -137,6 +137,7 @@ public:
     void setKinematicStateToODEflip();
     void setTorqueToODE();
     void setVelocityToODE();
+    void addExternalForceToODE(bool doFlipYZ);
     void getKinematicStateFromODE();
     void getKinematicStateFromODEflip();
     void addMesh(MeshExtractor* extractor, ODEBody* odeBody, bool doFlipYZ);
@@ -161,6 +162,7 @@ public:
     void createBody(ODESimulatorItemImpl* simImpl);
     void setKinematicStateToODE(bool doFlipYZ);
     void setControlValToODE();
+    void addExternalForcesToODE(bool doFlipYZ);
     void getKinematicStateFromODE(bool doFlipYZ);
     void updateForceSensors(bool doFlipYZ);
     void alignToZAxisIn2Dmode();
@@ -735,6 +737,28 @@ void ODELink::setVelocityToODE()
 }
 
 
+void ODELink::addExternalForceToODE(bool doFlipYZ)
+{
+    if(!bodyID){
+        return;
+    }
+
+    Vector3 f = link->f_ext();
+    Vector3 tau = link->tau_ext();
+    if(f.isZero() && tau.isZero()){
+        return;
+    }
+
+    if(doFlipYZ){
+        f = getFlipYZ(f);
+        tau = getFlipYZ(tau);
+    }
+
+    dBodyAddForceAtPos(bodyID, f.x(), f.y(), f.z(), 0.0, 0.0, 0.0);
+    dBodyAddTorque(bodyID, tau.x(), tau.y(), tau.z());
+}
+
+
 ODEBody::ODEBody(Body* body)
     : SimulationBody(body)
 {
@@ -858,6 +882,15 @@ void ODEBody::setControlValToODE()
             break;
         }
      }
+}
+
+
+void ODEBody::addExternalForcesToODE(bool doFlipYZ)
+{
+    for(size_t i=0; i < odeLinks.size(); ++i){
+        odeLinks[i]->addExternalForceToODE(doFlipYZ);
+    }
+    body()->clearExternalForces();
 }
 
 
@@ -1490,6 +1523,9 @@ bool ODESimulatorItemImpl::stepSimulation(const std::vector<SimulationBody*>& ac
         odeBody->body()->setVirtualJointForces();
         if(odeBody->worldID){
             odeBody->setControlValToODE();
+            odeBody->addExternalForcesToODE(doFlipYZ);
+        } else {
+            odeBody->body()->clearExternalForces();
         }
     }
 
