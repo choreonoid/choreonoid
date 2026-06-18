@@ -1,359 +1,306 @@
-items: 
+required_plugins: [ SubmersibleSample ]
+optional_plugins: [ PhysX, MuJoCo, ODE, AGXDynamics ]
+
+items:
   id: 0
-  name: "Root"
+  name: "RootItem"
   plugin: Base
   class: RootItem
-  children: 
-    - 
+  is_builtin_item: true
+  children:
+    -
       id: 1
       name: "World"
       plugin: Body
       class: WorldItem
-      data: 
-        collisionDetection: false
-        collisionDetector: AISTCollisionDetector
-      children: 
-        - 
+      is_checked: true
+      data:
+        collision_detection: false
+        collision_detector: AISTCollisionDetector
+        default_material_table_file: "${SHARE}/default/materials.yaml"
+      children:
+        -
           id: 2
           name: "Submersible"
           plugin: Body
           class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/misc/submersible.body"
-            currentBaseLink: "CHASSIS"
-            rootPosition: [ -2, -0.8, 0.6 ]
-            rootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            initialRootPosition: [ -2, -0.8, 0.6 ]
-            initialRootAttitude: [ 
-              1, 0, 0, 
-              0, 1, 0, 
-              0, 0, 1 ]
-            zmp: [ 0, 0, 0 ]
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: true
-          children: 
-            - 
+          is_checked: true
+          data:
+            file: "${SHARE}/model/misc/submersible.body"
+            format: CHOREONOID-BODY
+            current_base_link: "CHASSIS"
+            root_translation: [ -2, -0.8, 0.6 ]
+            root_rotation: [ 1, 0, 0, 0 ]
+            initial_root_translation: [ -2, -0.8, 0.6 ]
+            initial_root_rotation: [ 1, 0, 0, 0 ]
+            fix_root: false
+            collision_detection: true
+            lock_location: false
+            scene_sensitive: true
+          children:
+            -
               id: 3
               name: "BodyTrackingCamera"
               plugin: Body
               class: BodyTrackingCameraItem
-              data: 
-                keepRelativeAttitude: true
-        - 
+              is_checked: true
+              data:
+                keep_relative_attitude: true
+        -
           id: 4
           name: "Labo1"
           plugin: Body
           class: BodyItem
-          data: 
-            modelFile: "${SHARE}/model/Labo1/Labo1.body"
-            currentBaseLink: "Base"
-            collisionDetection: true
-            selfCollisionDetection: false
-            isEditable: false
-        - 
+          is_checked: true
+          data:
+            file: "${SHARE}/model/Labo1/Labo1.body"
+            format: CHOREONOID-BODY
+            current_base_link: "Base"
+            fix_root: true
+            collision_detection: true
+            lock_location: true
+            scene_sensitive: true
+        -
           id: 5
           name: "FogUnderWater"
           plugin: Base
           class: SceneItem
-          data: 
+          is_checked: true
+          data:
             file: "${SHARE}/model/misc/FogUnderWater.wrl"
-            format: VRML-FILE
+            format: GENERAL-3D-MODEL
             translation: [ 0, 0, 0 ]
             rotation: [ 1, 0, 0, 0 ]
-        - 
+        -
           id: 6
-          name: "AISTSimulator"
-          plugin: Body
-          class: AISTSimulatorItem
-          data: 
-            timestep: 0.005
-            realtimeSync: true
-            recording: tail
-            timeRangeMode: Active control period
-            timeLength: 180
-            allLinkPositionOutputMode: false
-            deviceStateOutput: true
-            controllerThreads: true
-            recordCollisionData: false
-            dynamicsMode: Forward dynamics
-            integrationMode: semi-implicit_euler
-            gravity: [ 0, 0, -9.80665 ]
-            kinematicWalking: false
-            2Dmode: false
-          children: 
-            - 
+          name: "Simulators"
+          plugin: Base
+          class: FolderItem
+          children:
+            -
               id: 7
-              name: "SubmersibleSimulator"
-              plugin: SubmersibleSample
-              class: SubmersibleSimulatorItem
-              data: 
-                enabled: true
-views: 
-  - 
+              name: "AISTSimulator"
+              plugin: Body
+              class: AISTSimulatorItem
+              data:
+                time_step: 0.005
+                recording: tail
+                is_active_control_time_range_mode: true
+              children:
+                -
+                  id: 8
+                  name: "SubmersibleSimulator"
+                  plugin: SubmersibleSample
+                  class: SubmersibleSimulatorItem
+            -
+              id: 9
+              name: "PhysXSimulator"
+              plugin: PhysX
+              class: PhysXSimulatorItem
+              data:
+                time_step: 0.005
+                recording: tail
+                is_active_control_time_range_mode: true
+                enable_velocity_output: true
+              children:
+                -
+                  id: 10
+                  name: "SubmersibleSimulator"
+                  plugin: SubmersibleSample
+                  class: SubmersibleSimulatorItem
+            -
+              id: 11
+              name: "MuJoCoSimulator"
+              plugin: MuJoCo
+              class: MuJoCoSimulatorItem
+              data:
+                time_step: 0.005
+                recording: tail
+                is_active_control_time_range_mode: true
+              children:
+                -
+                  id: 12
+                  name: "SubmersibleSimulator"
+                  plugin: SubmersibleSample
+                  class: SubmersibleSimulatorItem
+            -
+              id: 13
+              name: "ODESimulator"
+              plugin: ODE
+              class: ODESimulatorItem
+              data:
+                time_step: 0.005
+                recording: tail
+                is_active_control_time_range_mode: true
+              children:
+                -
+                  id: 14
+                  name: "SubmersibleSimulator"
+                  plugin: SubmersibleSample
+                  class: SubmersibleSimulatorItem
+            -
+              id: 15
+              name: "AGXSimulator"
+              plugin: AGXDynamics
+              class: AGXSimulatorItem
+              data:
+                time_step: 0.005
+                recording: tail
+                is_active_control_time_range_mode: true
+              children:
+                -
+                  id: 16
+                  name: "SubmersibleSimulator"
+                  plugin: SubmersibleSample
+                  class: SubmersibleSimulatorItem
+views:
+  -
     id: 0
-    name: "CameraImage"
-    plugin: Base
-    class: ImageView
-  - 
-    id: 1
     plugin: Base
     class: ItemPropertyView
     mounted: true
-  - 
-    id: 2
+  -
+    id: 1
     plugin: Base
     class: ItemTreeView
     mounted: true
-    state: 
-      selected: [ 3 ]
-      checked: [ 2, 3, 4, 5 ]
-      expanded: [ 1, 2, 5 ]
-  - 
+    state:
+      expanded: [ 1, 2, 6 ]
+  -
+    id: 2
+    plugin: Base
+    class: LocationView
+    mounted: true
+  -
     id: 3
     plugin: Base
     class: MessageView
     mounted: true
-  - 
+  -
     id: 4
     plugin: Base
     class: SceneView
     mounted: true
-    state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: false
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.3
-      worldLightAmbient: 0.1
-      additionalLights: true
-      fog: true
-      floorGrid: false
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: true
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      cameras: 
-        - 
+    state:
+      head_light: false
+      world_light_intensity: 0.3
+      ambient_light_intensity: 0.1
+      floor_grid: false
+      background_color: [ 0.41568628, 0.447058827, 0.996078432 ]
+      cameras:
+        -
           camera: [ System, Perspective ]
-          isCurrent: true
-          fieldOfView: 0.6978
-          near: 0.01
-          far: 1000
+          is_current: true
           eye: [ -3.35237326, -1.76568689, 1.5591039 ]
           direction: [ 0.815202718, 0.513427567, -0.268023623 ]
           up: [ 0.226791351, 0.14283678, 0.96341234 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 1000
-        - 
+        -
           camera: BodyTrackingCamera
-          fieldOfView: 0.785398
-          near: 0.01
-          far: 1000
           eye: [ -3.72299386, -0.786552187, 1.45821584 ]
           direction: [ 0.975848656, -0.00975881164, -0.218229618 ]
           up: [ 0.218218707, -0.00218225976, 0.97589745 ]
-      backgroundColor: [ 0.41568628, 0.447058827, 0.996078432 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
-  - 
+  -
     id: 5
     name: "Camera Scene"
     plugin: Base
     class: SceneView
     mounted: true
-    state: 
-      editMode: false
-      viewpointControlMode: thirdPerson
-      collisionLines: false
-      polygonMode: fill
-      defaultHeadLight: false
-      defaultHeadLightIntensity: 0.75
-      headLightLightingFromBack: false
-      worldLight: true
-      worldLightIntensity: 0.3
-      worldLightAmbient: 0.1
-      additionalLights: true
-      fog: true
-      floorGrid: false
-      floorGridSpan: 10
-      floorGridInterval: 0.5
-      xzGridSpan: 10
-      xzGridInterval: 0.5
-      xzGrid: false
-      yzGridSpan: 10
-      yzGridInterval: 0.5
-      texture: true
-      lineWidth: 1
-      pointSize: 1
-      normalVisualization: false
-      normalLength: 0.01
-      coordinateAxes: false
-      showFPS: false
-      enableNewDisplayListDoubleRendering: false
-      useBufferForPicking: true
-      cameras: 
-        - 
+    state:
+      head_light: false
+      world_light_intensity: 0.3
+      ambient_light_intensity: 0.1
+      floor_grid: false
+      show_coordinate_axes: false
+      background_color: [ 0.41568628, 0.447058827, 1 ]
+      cameras:
+        -
           camera: [ System, Perspective ]
-          fieldOfView: 0.6978
-          near: 0.01
-          far: 1000
           eye: [ 3.74000443, 2.54011419, 1.8281897 ]
           direction: [ -0.752805236, -0.613319567, -0.239004988 ]
           up: [ -0.185294344, -0.150961552, 0.97101834 ]
-        - 
-          camera: [ System, Orthographic ]
-          orthoHeight: 20
-          near: 0.01
-          far: 1000
-        - 
+        -
           camera: BodyTrackingCamera
-          isCurrent: true
-          fieldOfView: 0.785398
-          near: 0.01
-          far: 1000
+          is_current: true
           eye: [ -3.72299386, -0.786552187, 1.45821584 ]
           direction: [ 0.975848656, -0.00975881164, -0.218229618 ]
           up: [ 0.218218707, -0.00218225976, 0.97589745 ]
-      backgroundColor: [ 0.41568628, 0.447058827, 1 ]
-      gridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      xzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      yzgridColor: [ 0.899999976, 0.899999976, 0.899999976, 1 ]
-      dedicatedItemTreeViewChecks: false
-  - 
+  -
     id: 6
-    name: "Task"
-    plugin: Base
-    class: TaskView
-    state: 
-      layoutMode: horizontal
-      isAutoMode: false
-  - 
-    id: 7
     name: "Joystick"
     plugin: Base
     class: VirtualJoystickView
     mounted: true
-  - 
+  -
+    id: 7
+    plugin: Body
+    class: JointDisplacementView
+    mounted: true
+  -
     id: 8
     plugin: Body
-    class: BodyLinkView
-    mounted: true
-    state: 
-      showRotationMatrix: false
-  - 
+    class: LinkPositionView
+  -
     id: 9
-    plugin: Body
-    class: JointSliderView
-    mounted: true
-    state: 
-      showAllJoints: true
-      jointId: false
-      name: true
-      numColumns: 1
-      spinBox: true
-      slider: true
-      labelOnLeft: true
-      currentBodyItem: 2
-  - 
-    id: 10
     plugin: Body
     class: LinkSelectionView
     mounted: true
-    state: 
-      listingMode: "Link List"
-      currentBodyItem: 2
-  - 
-    id: 11
+  -
+    id: 10
     plugin: Python
     class: PythonConsoleView
     mounted: true
-toolbars: 
-  "TimeBar": 
-    minTime: 0
-    maxTime: 30
-viewAreas: 
-  - 
+viewAreas:
+  -
     type: embedded
     tabs: true
-    contents: 
+    contents:
       type: splitter
       orientation: horizontal
       sizes: [ 303, 1291 ]
-      children: 
-        - 
+      children:
+        -
           type: splitter
           orientation: vertical
           sizes: [ 381, 381 ]
-          children: 
-            - 
+          children:
+            -
               type: pane
-              views: [ 2 ]
-              current: 2
-            - 
+              views: [ 1 ]
+            -
               type: pane
-              views: [ 1, 10 ]
-              current: 1
-        - 
+              views: [ 0, 9 ]
+              current: 0
+        -
           type: splitter
           orientation: vertical
           sizes: [ 544, 218 ]
-          children: 
-            - 
+          children:
+            -
               type: splitter
               orientation: horizontal
               sizes: [ 602, 683 ]
-              children: 
-                - 
+              children:
+                -
                   type: pane
-                  views: [ 5, 8, 9 ]
+                  views: [ 5, 7 ]
                   current: 5
-                - 
+                -
                   type: pane
                   views: [ 4 ]
-                  current: 4
-            - 
+            -
               type: splitter
               orientation: horizontal
               sizes: [ 869, 416 ]
-              children: 
-                - 
+              children:
+                -
                   type: pane
-                  views: [ 3, 11 ]
+                  views: [ 3, 10 ]
                   current: 3
-                - 
+                -
                   type: pane
-                  views: [ 7 ]
-                  current: 7
-layoutOfToolBars: 
-  rows: 
-    - 
-      - { name: "CaptureBar", x: 0, priority: 1 }
-      - { name: "FileBar", x: 0, priority: 0 }
-      - { name: "SimulationBar", x: 95, priority: 3 }
-      - { name: "TimeBar", x: 95, priority: 2 }
-      - { name: "SceneBar", x: 1335, priority: 4 }
+                  views: [ 6, 2 ]
+                  current: 6
+toolbars:
+  "TimeBar":
+    min_time: 0
+    max_time: 30
