@@ -198,6 +198,7 @@ public:
     bool enableMaxCorrectingVel;
     FloatingNumberString maxCorrectingVel;
     double surfaceLayerDepth;
+    double surfaceVelocityCullingDepth;
     bool useWorldCollisionDetector;
     BodyCollisionDetector bodyCollisionDetector;
 
@@ -954,8 +955,9 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self)
     numIterations = 50;
     overRelaxation = 1.3;
     enableMaxCorrectingVel = true;
-    maxCorrectingVel = "1.0e-3";
+    maxCorrectingVel = "1.0e-2";
     surfaceLayerDepth = 0.0001;
+    surfaceVelocityCullingDepth = 0.005;
     friction = 1.0;
     isJointLimitMode = false;
     isAddingJointAxisInertiaToLinkInertia = false;
@@ -986,6 +988,7 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimu
     enableMaxCorrectingVel = org.enableMaxCorrectingVel;
     maxCorrectingVel = org.maxCorrectingVel;
     surfaceLayerDepth = org.surfaceLayerDepth;
+    surfaceVelocityCullingDepth = org.surfaceVelocityCullingDepth;
     friction = org.friction;
     isJointLimitMode = org.isJointLimitMode;
     isAddingJointAxisInertiaToLinkInertia = org.isAddingJointAxisInertiaToLinkInertia;
@@ -1434,15 +1437,16 @@ static void nearCallback(void* data, dGeomID g1, dGeomID g2)
             auto param = impl->resolveContactParam(odeLink1->link, odeLink2->link);
             for(int i=0; i < numContacts; ++i){
                 dSurfaceParameters& surface = contacts[i].surface;
-                if(!crawlerlink){
+                bool applySurfaceVelocity =
+                    crawlerlink &&
+                    (impl->surfaceVelocityCullingDepth <= 0.0 ||
+                     contacts[i].geom.depth <= impl->surfaceVelocityCullingDepth);
+                if(!applySurfaceVelocity){
                     surface.mode = dContactApprox1;
                     surface.mu = param.friction;
                     impl->setBounceParameters(contacts[i], param.restitution);
 
                 } else {
-                    if(contacts[i].geom.depth > 0.001){
-                        continue;
-                    }
                     surface.mode = dContactFDir1 | dContactMotion1 | dContactMu2 | dContactApprox1_2 | dContactApprox1_1;
                     const Vector3 axis = crawlerlink->R() * crawlerlink->a();
                     const Vector3 n(contacts[i].geom.normal);
@@ -1602,14 +1606,14 @@ void ODESimulatorItemImpl::onCollisionPairDetected(const CollisionPair& collisio
         contact.geom.depth = collisions[i].depth;
 
         dSurfaceParameters& surface = contact.surface;
-        if(!crawlerlink){
+        bool applySurfaceVelocity =
+            crawlerlink &&
+            (surfaceVelocityCullingDepth <= 0.0 || contact.geom.depth <= surfaceVelocityCullingDepth);
+        if(!applySurfaceVelocity){
             surface.mode = dContactApprox1;
             surface.mu = param.friction;
             setBounceParameters(contact, param.restitution);
         } else {
-            if(contact.geom.depth > 0.001){
-                continue;
-            }
             surface.mode = dContactFDir1 | dContactMotion1 | dContactMu2 | dContactApprox1_2;
             const Vector3 axis = crawlerlink->R() * crawlerlink->a();
             const Vector3 n(contact.geom.normal);
@@ -1679,6 +1683,9 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Max correcting vel."), maxCorrectingVel,
                 [&](const string& value){ return maxCorrectingVel.setNonNegativeValue(value); });
 
+    putProperty.decimals(4).min(0.0)(
+        _("Surface velocity culling depth"), surfaceVelocityCullingDepth, changeProperty(surfaceVelocityCullingDepth));
+
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
 
     putProperty(_("Use WorldItem's Collision Detector"), useWorldCollisionDetector, changeProperty(useWorldCollisionDetector));
@@ -1710,6 +1717,7 @@ void ODESimulatorItemImpl::store(Archive& archive)
     archive.write("over_relaxation", overRelaxation);
     archive.write("limit_correcting_velocity", enableMaxCorrectingVel);
     archive.write("max_correcting_velocity", maxCorrectingVel);
+    archive.write("surface_velocity_culling_depth", surfaceVelocityCullingDepth);
     if(is2Dmode){
         archive.write("use_2d_mode", true);
     }
@@ -1743,6 +1751,7 @@ void ODESimulatorItemImpl::restore(const Archive& archive)
     archive.read({ "over_relaxation", "overRelaxation" }, overRelaxation);
     archive.read({ "limit_correcting_velocity", "limitCorrectingVel" }, enableMaxCorrectingVel);
     maxCorrectingVel = archive.get({ "max_correcting_velocity", "maxCorrectingVel" }, maxCorrectingVel.string());
+    archive.read({ "surface_velocity_culling_depth", "surface_velocity_depth_limit" }, surfaceVelocityCullingDepth);
     archive.read({ "use_2d_mode", "2Dmode" }, is2Dmode);
     if(!archive.read({ "use_world_collision_detector", "useWorldCollisionDetector" }, useWorldCollisionDetector)){
         archive.read("UseWorldItem'sCollisionDetector", useWorldCollisionDetector);
