@@ -112,6 +112,9 @@ int nestedEventLoopCounter = 0;
 Signal<void()> sigNestedEventLoopExited_;
 bool isTestMode = false;
 bool isNoWindowMode = false;
+bool isWindowSystemAvailable = true;
+bool isOffscreenMode = false;
+bool isNoWindowModeAutoEnabled = false;
 bool ctrl_c_pressed = false;
 bool exitRequested = false;
 vector<string> additionalPathVariables;
@@ -277,17 +280,45 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     QCoreApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 #endif
 
-    // Check for --no-window option and set Qt platform to offscreen to avoid X11 dependency
-    // This prevents Qt from using the Xcb platform which would crash if X11 connection is lost
-    // (e.g., when xvfb-run terminates Xvfb before choreonoid exits)
-    // Note: This is only needed on Linux/Unix systems where EGL headless rendering is supported.
-    // Windows does not support OpenGL context creation with the offscreen plugin.
+    // Decide the headless/offscreen execution mode based on the available
+    // window system and the --no-window option.
+    //
+    // - If neither DISPLAY nor WAYLAND_DISPLAY is set, no window system is
+    //   available, so the application is forced into no-window mode and the
+    //   Qt offscreen platform plugin is used. In that case the vision
+    //   simulator switches its OpenGL backend to EGL (see
+    //   GLVisionSensorRenderingScreen::initializeGL).
+    // - If --no-window is given on a system with a window system, the GUI is
+    //   simply not shown but Qt keeps using the regular platform (xcb /
+    //   wayland) and the vision simulator keeps using the Qt OpenGL (GLX)
+    //   backend. This avoids the "QOpenGLWidget is not supported on this
+    //   platform" warning that would otherwise be emitted by the offscreen
+    //   platform plugin when SceneWidget (a QOpenGLWidget) is constructed.
+    //
+    // Note: this auto-detection is only meaningful on Unix-like systems.
+    // Windows does not support OpenGL context creation with the offscreen
+    // platform plugin.
 #ifdef Q_OS_UNIX
+    isWindowSystemAvailable =
+        (getenv("DISPLAY") != nullptr) || (getenv("WAYLAND_DISPLAY") != nullptr);
+    bool noWindowRequested = false;
     for(int i = 1; i < argc; ++i){
         if(strcmp(argv[i], "--no-window") == 0){
-            qputenv("QT_QPA_PLATFORM", "offscreen");
+            noWindowRequested = true;
             break;
         }
+    }
+    if(!isWindowSystemAvailable && !noWindowRequested){
+        isNoWindowModeAutoEnabled = true;
+    }
+    isNoWindowMode = noWindowRequested || !isWindowSystemAvailable;
+    isOffscreenMode = isNoWindowMode && !isWindowSystemAvailable;
+    if(isOffscreenMode){
+        qputenv("QT_QPA_PLATFORM", "offscreen");
+    }
+    if(isNoWindowModeAutoEnabled){
+        mout->putln(
+            _("No window system is available. Choreonoid has been switched to no-window mode."));
     }
 #endif
 
@@ -405,8 +436,23 @@ void App::Impl::initialize()
         "--test-mode", isTestMode,
         "exit the application when an error occurs and put MessageView text to the standard output");
     
+    // The --no-window option is registered here only so that it appears in
+    // the help message and is accepted as a valid command-line option by the
+    // option parser. The actual value of isNoWindowMode has already been
+    // determined before QApplication construction (see App::Impl::Impl),
+    // because the Qt platform plugin (offscreen vs. xcb / wayland) must be
+    // selected at that point, which is earlier than when OptionManager
+    // parses the command line.
+    //
+    // To prevent OptionManager from overwriting the value of isNoWindowMode
+    // that has already been determined, a dummy variable is bound here
+    // instead of isNoWindowMode itself. This also avoids the situation where
+    // isNoWindowMode was set to true automatically due to the absence of a
+    // window system but the option parser would otherwise leave it
+    // unchanged.
+    static bool noWindowOptionDummy = false;
     optionManager->add_flag(
-        "--no-window", isNoWindowMode,
+        "--no-window", noWindowOptionDummy,
         "Do not show the application window and put MessageView text to the standard output");
     
     optionManager->add_flag(
@@ -868,6 +914,18 @@ void AppUtil::updateGui()
 bool AppUtil::isNoWindowMode()
 {
     return ::isNoWindowMode;
+}
+
+
+bool AppUtil::isWindowSystemAvailable()
+{
+    return ::isWindowSystemAvailable;
+}
+
+
+bool AppUtil::isOffscreenMode()
+{
+    return ::isOffscreenMode;
 }
 
 

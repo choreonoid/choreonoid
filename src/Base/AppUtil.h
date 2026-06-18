@@ -13,6 +13,8 @@ public:
     static SignalProxy<void()> sigAboutToQuit();
     static void updateGui();
     static bool isNoWindowMode();
+    static bool isWindowSystemAvailable();
+    static bool isOffscreenMode();
     static SignalProxy<void(QKeyEvent* event)> sigKeyPressed();
     static SignalProxy<void(QKeyEvent* event)> sigKeyReleased();
 };

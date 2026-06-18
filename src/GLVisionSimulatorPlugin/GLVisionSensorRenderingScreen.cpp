@@ -436,14 +436,14 @@ bool GLVisionSensorRenderingScreen::initializeGL()
     }
 
 #ifdef CNOID_ENABLE_EGL
-    // Check if we're in GUI mode or --no-window mode
-    if(!AppUtil::isNoWindowMode()) {
-        // GUI mode: Use Qt OpenGL (GLX)
-        usingEGL = false;
-    } else {
-        // --no-window mode: Use EGL
-        usingEGL = true;
-    }
+    // EGL and GLX can technically coexist in the same process via libglvnd,
+    // but Qt selects a single GL backend per process (controlled by
+    // QT_XCB_GL_INTEGRATION) and mixing Qt's GL context with a separate EGL
+    // context tends to be fragile in practice. Therefore use EGL only when
+    // Choreonoid is running on the Qt offscreen platform (no window system
+    // available); otherwise keep using Qt OpenGL (GLX) so that the vision
+    // sensor shares the same OpenGL backend as the GUI.
+    usingEGL = AppUtil::isOffscreenMode();
 #endif
 
     // Initialize OpenGL context (GLX or EGL)
