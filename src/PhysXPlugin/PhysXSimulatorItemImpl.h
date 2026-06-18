@@ -308,6 +308,7 @@ public:
     ~Impl();
     void initialize();
     void clear();
+    void releasePhysics();
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
     bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
     void setExtraJoints(const std::vector<SimulationBody*>& simBodies);

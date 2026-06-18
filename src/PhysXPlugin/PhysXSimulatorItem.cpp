@@ -321,9 +321,15 @@ PhysXSimulatorItem::~PhysXSimulatorItem()
 PhysXSimulatorItem::Impl::~Impl()
 {
     clear();
+    releasePhysics();
+}
 
+
+void PhysXSimulatorItem::Impl::releasePhysics()
+{
     if(physics){
         physics->release();
+        physics = nullptr;
     }
 }
 
@@ -410,10 +416,18 @@ Item* PhysXSimulatorItem::doDuplicate() const
 void PhysXSimulatorItem::clearSimulation()
 {
     impl->clear();
-    if(impl->physics){
-        impl->physics->release();
-        impl->physics = nullptr;
-    }
+}
+
+
+void PhysXSimulatorItem::onDisconnectedFromRoot()
+{
+    SimulatorItem::onDisconnectedFromRoot();
+
+    // PxPhysics is kept across simulation runs to avoid recreating it every time,
+    // but it must be released before the PhysX plugin releases PxFoundation.
+    // Disconnecting from the root marks the end of the item's valid simulation
+    // context, including the explicit detach done in PhysXPlugin::finalize().
+    impl->releasePhysics();
 }
 
 

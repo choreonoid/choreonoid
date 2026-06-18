@@ -1,5 +1,6 @@
 #include "PhysXPlugin.h"
 #include "PhysXSimulatorItem.h"
+#include <cnoid/ItemManager>
 #include <cnoid/MessageOut>
 #include <foundation/PxPhysicsVersion.h>
 #include <extensions/PxDefaultAllocator.h>
@@ -86,6 +87,12 @@ bool PhysXPlugin::finalize()
         profileZoneManager->release();
     }
     */
+
+    // Normal application shutdown clears the root item before plugin finalization.
+    // This explicit detach is a fallback for other finalization paths: it triggers
+    // PhysXSimulatorItem::onDisconnectedFromRoot() while PxFoundation is still
+    // alive, so PxPhysics is released even if Python keeps the item object.
+    itemManager().detachAllManagedTypeItemsFromRoot();
 
     if(foundation_){
         foundation_->release();
