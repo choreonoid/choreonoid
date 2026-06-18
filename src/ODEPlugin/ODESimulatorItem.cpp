@@ -182,6 +182,7 @@ public:
     Vector3 gravity;
     double friction;
     bool isJointLimitMode;
+    bool isAddingJointAxisInertiaToLinkInertia;
     bool is2Dmode;
     double globalERP;
     FloatingNumberString globalCFM;
@@ -268,20 +269,39 @@ void ODELink::createLinkBody(ODESimulatorItemImpl* simImpl, dWorldID worldID, OD
     dBodySetData(bodyID, link);
 
     if(!odeBody->isJointAxisInertiaWarningIssued && link->Jm2() != 0.0){
-        MessageOut::master()->putWarningln(
-            formatR(_("{0} has joint-axis inertia at joint \"{1}\" ({2}), "
-                      "but ODESimulatorItem does not support it."),
-                    odeBody->body()->name(), link->name(), link->Jm2()));
+        if(simImpl->isAddingJointAxisInertiaToLinkInertia){
+            MessageOut::master()->putWarningln(
+                formatR(_("{0} has joint-axis inertia at joint \"{1}\" ({2}). "
+                          "ODESimulatorItem cannot reproduce it directly, "
+                          "so it is approximately added to the link inertia. "
+                          "This behavior can be changed with the "
+                          "\"Add joint-axis inertia to link inertia\" property."),
+                        odeBody->body()->name(), link->name(), link->Jm2()));
+        } else {
+            MessageOut::master()->putWarningln(
+                formatR(_("{0} has joint-axis inertia at joint \"{1}\" ({2}). "
+                          "ODESimulatorItem does not support it directly. "
+                          "Enable \"Add joint-axis inertia to link inertia\" "
+                          "to approximately add it to the link inertia."),
+                        odeBody->body()->name(), link->name(), link->Jm2()));
+        }
         odeBody->isJointAxisInertiaWarningIssued = true;
     }
 
     dMass mass;
     dMassSetZero(&mass);
     const Matrix3& I = link->I();
+    Matrix3 I0;
+    const Matrix3* I_ode = &I;
+    if(simImpl->isAddingJointAxisInertiaToLinkInertia && link->Jm2() != 0.0){
+        const Vector3 axis = link->a();
+        I0 = I + axis * axis.transpose() * link->Jm2();
+        I_ode = &I0;
+    }
     dMassSetParameters(&mass, link->m(),
             0.0, 0.0, 0.0,
-            I(0,0), I(1,1), I(2,2),
-            I(0,1), I(0,2), I(1,2));
+            (*I_ode)(0,0), (*I_ode)(1,1), (*I_ode)(2,2),
+            (*I_ode)(0,1), (*I_ode)(0,2), (*I_ode)(1,2));
 
     dBodySetMass(bodyID, &mass);
 
@@ -931,6 +951,7 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self)
     surfaceLayerDepth = 0.0001;
     friction = 1.0;
     isJointLimitMode = false;
+    isAddingJointAxisInertiaToLinkInertia = false;
     is2Dmode = false;
     doFlipYZ = false;
     useWorldCollisionDetector = false;
@@ -960,6 +981,7 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimu
     surfaceLayerDepth = org.surfaceLayerDepth;
     friction = org.friction;
     isJointLimitMode = org.isJointLimitMode;
+    isAddingJointAxisInertiaToLinkInertia = org.isAddingJointAxisInertiaToLinkInertia;
     is2Dmode = org.is2Dmode;
     doFlipYZ = org.doFlipYZ;
     useWorldCollisionDetector = org.useWorldCollisionDetector;
@@ -1013,6 +1035,12 @@ void ODESimulatorItem::setFriction(double friction)
 void ODESimulatorItem::setJointLimitMode(bool on)
 {
     impl->isJointLimitMode = on;
+}
+
+
+void ODESimulatorItem::setJointAxisInertiaAdditionMode(bool on)
+{
+    impl->isAddingJointAxisInertiaToLinkInertia = on;
 }
 
 
@@ -1603,6 +1631,10 @@ void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 
     putProperty(_("Limit joint range"), isJointLimitMode, changeProperty(isJointLimitMode));
 
+    putProperty(_("Add joint-axis inertia to link inertia"),
+                isAddingJointAxisInertiaToLinkInertia,
+                changeProperty(isAddingJointAxisInertiaToLinkInertia));
+
     putProperty.decimals(1).range(0.0, 1.0);
     putProperty(_("Global ERP"), globalERP, changeProperty(globalERP));
     putProperty(_("Global CFM"), globalCFM,
@@ -1639,6 +1671,9 @@ void ODESimulatorItemImpl::store(Archive& archive)
     if(isJointLimitMode){
         archive.write("enable_joint_limit", true);
     }
+    if(isAddingJointAxisInertiaToLinkInertia){
+        archive.write("add_joint_axis_inertia_to_link_inertia", true);
+    }
     archive.write("global_erp", globalERP);
     archive.write("global_cfm", globalCFM);
     archive.write("num_iterations", numIterations);
@@ -1671,6 +1706,7 @@ void ODESimulatorItemImpl::restore(const Archive& archive)
     read(archive, "gravity", gravity);
     archive.read("friction", friction);
     archive.read({ "enable_joint_limit", "jointLimitMode" }, isJointLimitMode);
+    archive.read("add_joint_axis_inertia_to_link_inertia", isAddingJointAxisInertiaToLinkInertia);
     archive.read({ "global_erp", "globalERP" }, globalERP);
     globalCFM = archive.get({ "global_cfm", "globalCFM" }, globalCFM.string());
     archive.read({ "num_iterations", "numIterations" }, numIterations);

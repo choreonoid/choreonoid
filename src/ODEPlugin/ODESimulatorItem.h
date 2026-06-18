@@ -24,6 +24,7 @@ public:
     void setGravity(const Vector3& gravity);
     void setFriction(double friction);
     void setJointLimitMode(bool on);
+    void setJointAxisInertiaAdditionMode(bool on);
     void set2Dmode(bool on);
     void setGlobalERP(double erp);
     void setGlobalCFM(double value);
