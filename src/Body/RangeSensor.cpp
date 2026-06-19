@@ -119,7 +119,7 @@ Referenced* RangeSensor::doClone(CloneMap*) const
 }
 
 
-DeviceState* RangeSensor::cloneState() const
+DeviceState* RangeSensor::cloneState(DeviceState* /* existingClone */) const
 {
     return new RangeSensor(*this, true);
 }

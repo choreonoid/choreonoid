@@ -39,7 +39,7 @@ public:
     RainDevice(const RainDevice& org, bool copyStateOnly = false);
     virtual const char* typeName() const override;
     virtual void copyStateFrom(const DeviceState& other) override;
-    virtual DeviceState* cloneState() const override;
+    virtual DeviceState* cloneState(DeviceState* existingClone) const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
 
 protected:
@@ -56,7 +56,7 @@ public:
     SnowDevice(const SnowDevice& org, bool copyStateOnly = false);
     virtual const char* typeName() const override;
     virtual void copyStateFrom(const DeviceState& other) override;
-    virtual DeviceState* cloneState() const override;
+    virtual DeviceState* cloneState(DeviceState* existingClone) const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
 
 protected:

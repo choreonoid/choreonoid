@@ -42,7 +42,7 @@ CompetitorMarker::CompetitorMarker(const CompetitorMarker& org, bool copyStateOn
 }
 
 
-DeviceState* CompetitorMarker::cloneState() const
+DeviceState* CompetitorMarker::cloneState(DeviceState* /* existingClone */) const
 {
     return new CompetitorMarker(*this, true);
 }

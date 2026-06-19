@@ -54,7 +54,7 @@ void Imu::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* Imu::cloneState() const
+DeviceState* Imu::cloneState(DeviceState* /* existingClone */) const
 {
     return new Imu(*this, true);
 }

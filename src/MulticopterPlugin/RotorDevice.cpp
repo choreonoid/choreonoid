@@ -313,7 +313,7 @@ RotorDevice::RotorDevice(const RotorDevice& org, bool copyStateOnly)
     copyStateFrom(org);
 }
 
-DeviceState* RotorDevice::cloneState() const
+DeviceState* RotorDevice::cloneState(DeviceState* /* existingClone */) const
 {
     return new RotorDevice(*this, false);
 }

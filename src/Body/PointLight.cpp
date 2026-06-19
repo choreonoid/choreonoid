@@ -52,7 +52,7 @@ PointLight::PointLight(const PointLight& org, bool copyStateOnly)
 }
 
 
-DeviceState* PointLight::cloneState() const
+DeviceState* PointLight::cloneState(DeviceState* /* existingClone */) const
 {
     return new PointLight(*this, true);
 }

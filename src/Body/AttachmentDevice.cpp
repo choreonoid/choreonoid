@@ -64,7 +64,7 @@ void AttachmentDevice::copyStateFrom(const DeviceState& other)
 }
     
 
-DeviceState* AttachmentDevice::cloneState() const
+DeviceState* AttachmentDevice::cloneState(DeviceState* /* existingClone */) const
 {
     return new AttachmentDevice(*this, true, nullptr);
 

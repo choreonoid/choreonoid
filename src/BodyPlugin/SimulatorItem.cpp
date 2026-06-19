@@ -1087,7 +1087,7 @@ void SimulationBody::Impl::bufferBodyDeviceState(Body* body, BodyStateBlock& sta
 {
     for(int i=0; i < numDevicesToRecord; ++i){
         if(deviceStateChangeFlag[i]){
-            stateBlock.setDeviceState(i, body->device(i)->cloneState());
+            stateBlock.setDeviceState(i, body->device(i)->cloneState(prevStateBlock.deviceState(i)));
             deviceStateChangeFlag[i] = false;
         } else {
             stateBlock.setDeviceState(i, prevStateBlock.deviceState(i));

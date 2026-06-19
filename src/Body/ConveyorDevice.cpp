@@ -63,7 +63,7 @@ void ConveyorDevice::copyStateFrom(const DeviceState& other)
 }
     
 
-DeviceState* ConveyorDevice::cloneState() const
+DeviceState* ConveyorDevice::cloneState(DeviceState* /* existingClone */) const
 {
     return new ConveyorDevice(*this, true, nullptr);
 

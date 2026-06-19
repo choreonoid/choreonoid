@@ -99,7 +99,7 @@ void HolderDevice::copyStateFrom(const DeviceState& other)
 }
     
 
-DeviceState* HolderDevice::cloneState() const
+DeviceState* HolderDevice::cloneState(DeviceState* /* existingClone */) const
 {
     return new HolderDevice(*this, true, nullptr);
 

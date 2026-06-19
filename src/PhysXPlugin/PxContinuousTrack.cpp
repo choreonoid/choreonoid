@@ -475,7 +475,7 @@ void PxContinuousTrack::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* PxContinuousTrack::cloneState() const
+DeviceState* PxContinuousTrack::cloneState(DeviceState* /* existingClone */) const
 {
     return new PxContinuousTrack(*this, true);
 }

@@ -49,7 +49,7 @@ void FireDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* FireDevice::cloneState() const
+DeviceState* FireDevice::cloneState(DeviceState* /* existingClone */) const
 {
     return new FireDevice(*this, true);
 }

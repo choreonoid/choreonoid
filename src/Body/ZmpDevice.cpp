@@ -48,7 +48,7 @@ void ZmpDevice::copyStateFrom(const DeviceState& other)
 }
     
 
-DeviceState* ZmpDevice::cloneState() const
+DeviceState* ZmpDevice::cloneState(DeviceState* /* existingClone */) const
 {
     return new ZmpDevice(*this, true, nullptr);
 

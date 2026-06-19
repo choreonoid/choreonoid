@@ -47,7 +47,7 @@ void FountainDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* FountainDevice::cloneState() const
+DeviceState* FountainDevice::cloneState(DeviceState* /* existingClone */) const
 {
     return new FountainDevice(*this, true);
 }

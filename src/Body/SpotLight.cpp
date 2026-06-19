@@ -52,7 +52,7 @@ SpotLight::SpotLight(const SpotLight& org, bool copyStateOnly)
 }
 
 
-DeviceState* SpotLight::cloneState() const
+DeviceState* SpotLight::cloneState(DeviceState* /* existingClone */) const
 {
     return new SpotLight(*this, true);
 }

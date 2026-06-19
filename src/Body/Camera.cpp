@@ -88,7 +88,7 @@ Referenced* Camera::doClone(CloneMap*) const
 }
 
 
-DeviceState* Camera::cloneState() const
+DeviceState* Camera::cloneState(DeviceState* /* existingClone */) const
 {
     return new Camera(*this, true);
 }

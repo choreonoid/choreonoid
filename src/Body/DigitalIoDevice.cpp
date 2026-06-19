@@ -98,7 +98,7 @@ void DigitalIoDevice::copyStateFrom(const DeviceState& other)
 }
     
 
-DeviceState* DigitalIoDevice::cloneState() const
+DeviceState* DigitalIoDevice::cloneState(DeviceState* /* existingClone */) const
 {
     return new DigitalIoDevice(*this, true, nullptr);
 }

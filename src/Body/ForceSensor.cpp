@@ -50,7 +50,7 @@ ForceSensor::ForceSensor(const ForceSensor& org, bool copyStateOnly)
 }
 
 
-DeviceState* ForceSensor::cloneState() const
+DeviceState* ForceSensor::cloneState(DeviceState* /* existingClone */) const
 {
     return new ForceSensor(*this, true);
 }

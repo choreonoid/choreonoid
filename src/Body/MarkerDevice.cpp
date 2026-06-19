@@ -134,7 +134,7 @@ void MarkerDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* MarkerDevice::cloneState() const
+DeviceState* MarkerDevice::cloneState(DeviceState* /* existingClone */) const
 {
     return new MarkerDevice(*this, true);
 }

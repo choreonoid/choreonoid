@@ -19,7 +19,7 @@ public:
     virtual const char* typeName() const override;
     void copyHolderDeviceStateFrom(const HolderDevice* other);
     virtual void copyStateFrom(const DeviceState& other) override;
-    virtual DeviceState* cloneState() const override;
+    virtual DeviceState* cloneState(DeviceState* existingClone) const override;
     void copyHolderDeviceFrom(const HolderDevice* device);
     virtual bool copyFrom(const Device* other) override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;

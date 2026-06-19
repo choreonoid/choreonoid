@@ -24,7 +24,20 @@ public:
 
     virtual const char* typeName() const = 0;
     virtual void copyStateFrom(const DeviceState& other) = 0;
-    virtual DeviceState* cloneState() const = 0;
+
+    /**
+       Clone the current state, optionally reusing data shared with an existing clone.
+
+       Derived classes can use \a existingClone (typically the clone created at the
+       previous frame) to share append-only or otherwise reusable internal data,
+       copying only the delta into the new clone. The caller retains ownership of
+       \a existingClone; the implementation only reads from it.
+
+       \param existingClone The previously cloned state to share data with, or nullptr
+       when no previous clone exists (e.g. the first frame).
+       \return A newly created clone of the current state.
+    */
+    virtual DeviceState* cloneState(DeviceState* existingClone = nullptr) const = 0;
 
     /**
        Size of the double-precision floating numbers for representing the state.

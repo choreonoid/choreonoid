@@ -97,7 +97,7 @@ void RainDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* RainDevice::cloneState() const
+DeviceState* RainDevice::cloneState(DeviceState* /* existingClone */) const
 {
     return new RainDevice(*this, true);
 }
@@ -145,7 +145,7 @@ void SnowDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* SnowDevice::cloneState() const
+DeviceState* SnowDevice::cloneState(DeviceState* /* existingClone */) const
 {
     return new SnowDevice(*this, false);
 }

@@ -48,7 +48,7 @@ void SmokeDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* SmokeDevice::cloneState() const
+DeviceState* SmokeDevice::cloneState(DeviceState* /* existingClone */) const
 {
     return new SmokeDevice(*this, true);
 }

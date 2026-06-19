@@ -61,7 +61,7 @@ void LivoxMid360::copyLivoxMid360StateFrom(const LivoxMid360& other, bool doCopy
 }
 
 
-DeviceState* LivoxMid360::cloneState() const
+DeviceState* LivoxMid360::cloneState(DeviceState* /* existingClone */) const
 {
     return new LivoxMid360(*this, true);
 }
