@@ -33,6 +33,8 @@
 from __future__ import print_function, division
 
 import ast
+import collections
+import enum
 import glob
 import math
 import os
@@ -99,37 +101,48 @@ class YamlListWrapper(list):
     def __getitem__(self, idx):
         return YamlListWrapper.wrap(super(YamlListWrapper, self).__getitem__(idx))
 
+    def __iter__(self):
+        for item in super(YamlListWrapper, self).__iter__():
+            yield YamlListWrapper.wrap(item)
+
 
 class YamlDictWrapper(dict):
     """Wrapper class providing dotted access to dict items"""
     def __getattr__(self, item):
         try:
             return YamlListWrapper.wrap(super(YamlDictWrapper, self).__getitem__(item))
-        except KeyError:
-            raise XacroException("No such key: '{}'".format(item))
+        except KeyError:  # raise AttributeError instead to support hasattr()
+            raise AttributeError("The yaml dictionary has no key '{}'".format(item))
 
     __getitem__ = __getattr__
 
 
-def construct_angle_radians(loader, node):
-    """utility function to construct radian values from yaml"""
-    value = loader.construct_scalar(node)
-    try:
-        return float(safe_eval(value, _global_symbols))
-    except SyntaxError:
-        raise XacroException("invalid expression: %s" % value)
+class ConstructUnits(enum.Enum):
+    """utility enumeration to construct a values with a unit from yaml"""
+    __ConstructUnitsValue = collections.namedtuple('__ConstructUnitsValue', ['tag', 'conversion_constant'])
+    # Angles [base: radians]
+    angle_radians    = __ConstructUnitsValue(u'!radians', 1.0)
+    angle_degrees    = __ConstructUnitsValue(u'!degrees', math.pi/180.0)
+    # Length [base: meters]
+    length_meters      = __ConstructUnitsValue(u'!meters', 1.0)
+    length_millimeters = __ConstructUnitsValue(u'!millimeters', 0.001)
+    length_foot        = __ConstructUnitsValue(u'!foot', 0.3048)
+    length_inches      = __ConstructUnitsValue(u'!inches', 0.0254)
 
-
-def construct_angle_degrees(loader, node):
-    """utility function for converting degrees into radians from yaml"""
-    return math.radians(construct_angle_radians(loader, node))
+    def constructor(self, loader, node):
+        """utility function to construct a values with a unit from yaml"""
+        value = loader.construct_scalar(node)
+        try:
+            return float(safe_eval(value, _global_symbols))*self.value.conversion_constant
+        except SyntaxError:
+            raise XacroException("invalid expression: %s" % value)
 
 
 def load_yaml(filename):
     try:
         import yaml
-        yaml.SafeLoader.add_constructor(u'!radians', construct_angle_radians)
-        yaml.SafeLoader.add_constructor(u'!degrees', construct_angle_degrees)
+        for unit in ConstructUnits:
+            yaml.SafeLoader.add_constructor(unit.value.tag, unit.constructor)
     except Exception:
         raise XacroException("yaml support not available; install python-yaml")
 
@@ -182,7 +195,7 @@ def create_global_symbols():
             try:  # Retrieve namespace target dict
                 target = result[ns]
             except KeyError:  # or create if not existing yet
-                target = MacroNameSpace()
+                target = NameSpace()
                 result.update([(ns, target)])
             target.update(addons)  # Populate target dict
 
@@ -199,8 +212,8 @@ def create_global_symbols():
     expose('sorted', 'range', source=__builtins__, ns='python', deprecate_msg=deprecate_msg)
     # Expose all builtin symbols into the python namespace. Thus the stay accessible if the global symbol was overriden
     expose('list', 'dict', 'map', 'len', 'str', 'float', 'int', 'True', 'False', 'min', 'max', 'round',
-           'all', 'any', 'complex', 'divmod', 'enumerate', 'filter', 'frozenset', 'hash', 'isinstance', 'issubclass',
-           'ord', 'repr', 'reversed', 'slice', 'set', 'sum', 'tuple', 'type', 'zip', source=__builtins__, ns='python')
+           'abs', 'all', 'any', 'complex', 'divmod', 'enumerate', 'filter', 'frozenset', 'hash', 'isinstance', 'issubclass',
+           'ord', 'repr', 'reversed', 'slice', 'set', 'sum', 'tuple', 'type', 'vars', 'zip', source=__builtins__, ns='python')
 
     # Expose all math symbols and functions into namespace math (and directly for backwards compatibility -- w/o deprecation)
     expose([(k, v) for k, v in math.__dict__.items() if not k.startswith('_')], ns='math', deprecate_msg='')
@@ -208,6 +221,7 @@ def create_global_symbols():
     # Expose load_yaml, abs_filename, and dotify into namespace xacro (and directly with deprecation)
     expose(load_yaml=load_yaml, abs_filename=abs_filename_spec, dotify=YamlDictWrapper,
            ns='xacro', deprecate_msg=deprecate_msg)
+    expose(arg=lambda name: substitution_args_context['arg'][name], ns='xacro')
 
     def message_adapter(f):
         def wrapper(*args, **kwargs):
@@ -406,23 +420,16 @@ class Table(dict):
         return p
 
 
-class NameSpace(object):
+class NameSpace(Table):
+    def __init__(self, parent=None):
+        super(NameSpace, self).__init__(parent)
+
     # dot access (namespace.property) is forwarded to getitem()
     def __getattr__(self, item):
         try:
             return self.__getitem__(item)
         except KeyError:
             raise NameError("name '{}' is not defined".format(item))
-
-
-class PropertyNameSpace(Table, NameSpace):
-    def __init__(self, parent=None):
-        super(PropertyNameSpace, self).__init__(parent)
-
-
-class MacroNameSpace(dict, NameSpace):
-    def __init__(self, *args, **kwargs):
-        super(MacroNameSpace, self).__init__(*args, **kwargs)
 
 
 class QuickLexer(object):
@@ -509,8 +516,8 @@ def process_include(elt, macros, symbols, func):
     if namespace_spec:
         try:
             namespace_spec = eval_text(namespace_spec, symbols)
-            macros[namespace_spec] = ns_macros = MacroNameSpace()
-            symbols[namespace_spec] = ns_symbols = PropertyNameSpace()
+            macros[namespace_spec] = ns_macros = NameSpace()
+            symbols[namespace_spec] = ns_symbols = NameSpace(parent=symbols)
         except TypeError:
             raise XacroException('namespaces are supported with in-order option only')
     else:
@@ -567,8 +574,8 @@ def is_valid_name(name):
     return False
 
 
-default_value = '''\$\{.*?\}|\$\(.*?\)|(?:'.*?'|\".*?\"|[^\s'\"]+)+|'''
-re_macro_arg = re.compile(r'^\s*([^\s:=]+?)\s*:?=\s*(\^\|?)?(' + default_value + ')(?:\s+|$)(.*)')
+default_value = r'''\$\{.*?\}|\$\(.*?\)|(?:'.*?'|\".*?\"|[^\s'\"]+)+|'''
+re_macro_arg = re.compile(r'^\s*([^\s:=]+?)\s*:?=\s*(\^\|?)?(' + default_value + r')(?:\s+|$)(.*)')
 #                          space(   param )(   :=  )(  ^|  )(        default      )( space )(rest)
 
 
@@ -672,6 +679,10 @@ def grab_property(elt, table):
         if table.parent is not None:
             target_table = table.parent
             lazy_eval = False
+            if not isinstance(table, NameSpace):  # in macro scope
+                # ... skip all namespaces to reach caller's scope
+                while isinstance(target_table, NameSpace):
+                    target_table = target_table.parent
         else:
             warning("%s: no parent scope at global scope " % name)
             return  # cannot store the value, no reason to evaluate it
@@ -750,23 +761,23 @@ def handle_dynamic_macro_call(node, macros, symbols):
     return True
 
 
-def resolve_macro(fullname, macros):
-    # split name into namespaces and real name
-    namespaces = fullname.split('.')
-    name = namespaces.pop(-1)
-
-    def _resolve(namespaces, name, macros):
-        # traverse namespaces to actual macros dict
+def resolve_macro(fullname, macros, symbols):
+    def _resolve(namespaces, name, macros, symbols):
+        # traverse namespaces to actual macros+symbols dicts
         for ns in namespaces:
             macros = macros[ns]
-        return macros[name]
+            symbols = symbols[ns]
+        return macros, symbols, macros[name]
 
     # try fullname and (namespaces, name) in this order
     try:
-        return _resolve([], fullname, macros)
+        return _resolve([], fullname, macros, symbols)
     except KeyError:
+        # split name into namespaces and real name
+        namespaces = fullname.split('.')
+        name = namespaces.pop(-1)
         if namespaces:
-            return _resolve(namespaces, name, macros)
+            return _resolve(namespaces, name, macros, symbols)
         else:
             raise
 
@@ -779,7 +790,7 @@ def handle_macro_call(node, macros, symbols):
 
     name = node.tagName[6:]  # drop 'xacro:' prefix
     try:
-        m = resolve_macro(name, macros)
+        macros, symbols, m = resolve_macro(name, macros, symbols)
         body = m.body.cloneNode(deep=True)
 
     except KeyError:
@@ -829,7 +840,7 @@ def handle_macro_call(node, macros, symbols):
     if params:
         raise XacroException("Undefined parameters [%s]" % ",".join(params), macro=m)
 
-    eval_all(body, macros, scoped_symbols)
+    eval_all(body, scoped_macros, scoped_symbols)
 
     # Remove any comments directly before the macro call
     remove_previous_comments(node)
@@ -910,9 +921,11 @@ def eval_all(node, macros, symbols):
         pass
 
     node = node.firstChild
+    eval_comments = False
     while node:
         next = node.nextSibling
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
+            eval_comments = False  # any tag automatically disables comment evaluation
             if node.tagName == 'xacro:insert_block':
                 name, = check_attrs(node, ['name'], [])
 
@@ -945,7 +958,7 @@ def eval_all(node, macros, symbols):
             elif node.tagName == 'xacro:arg':
                 name, default = check_attrs(node, ['name', 'default'], [])
                 if name not in substitution_args_context['arg']:
-                    substitution_args_context['arg'][name] = eval_text(default, symbols)
+                    substitution_args_context['arg'][name] = unicode(eval_text(default, symbols))
 
                 remove_previous_comments(node)
                 replace_node(node, by=None)
@@ -986,9 +999,19 @@ def eval_all(node, macros, symbols):
             else:
                 eval_all(node, macros, symbols)
 
-        # TODO: Also evaluate content of COMMENT_NODEs?
         elif node.nodeType == xml.dom.Node.TEXT_NODE:
             node.data = unicode(eval_text(node.data, symbols))
+            if node.data.strip():
+                eval_comments = False # non-empty text disables comment evaluation
+
+        elif node.nodeType == xml.dom.Node.COMMENT_NODE:
+            if "xacro:eval-comments" in node.data:
+                eval_comments = "xacro:eval-comments:off" not in node.data
+                replace_node(node, by=None) # drop this comment
+            elif eval_comments:
+                node.data = unicode(eval_text(node.data, symbols))
+            else:
+                pass # leave comment as is
 
         node = next
 

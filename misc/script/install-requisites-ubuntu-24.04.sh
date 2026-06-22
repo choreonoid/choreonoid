@@ -22,6 +22,7 @@ qt6-translations-l10n \
 libegl-dev \
 python3-dev \
 python3-numpy \
+python3-yaml \
 libassimp-dev \
 libode-dev \
 libfcl-dev \

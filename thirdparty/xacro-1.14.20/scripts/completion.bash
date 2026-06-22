@@ -14,7 +14,7 @@ function _complete_xacro {
     _init_completion || return # this handles default completion (variables, redirection)
 
     if [[ ${cur} =~ \-.* ]]; then
-        COMPREPLY+=($(compgen -W "--help --legacy --inorder --check-order --deps --includes --xacro-ns -q -v --verbosity=" -- ${cur}))
+        COMPREPLY+=($(compgen -W "--help --deps -q -v --verbosity=" -- ${cur}))
         [[ $COMPREPLY == *= ]] && compopt -o nospace
     else
         local FILE=$(_file_arg)

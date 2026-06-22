@@ -107,7 +107,7 @@ def _eval_find(pkg):
     if ros_package_path == "":
         raise ResourceNotFound
     
-    package_paths = ros_package_path.split(':')
+    package_paths = ros_package_path.split(os.pathsep)
     for package_path in package_paths:
         if package_path.endswith('/' + pkg):
             return package_path

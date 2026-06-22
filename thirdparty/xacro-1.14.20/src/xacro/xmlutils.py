@@ -106,6 +106,13 @@ def reqd_attrs(tag, attrs):
             raise RuntimeError("%s: missing attribute '%s'" % (tag.nodeName, name))
     return result
 
+# Python 3.13 introduced a new argument to xml.dom.minidom._write_data
+# https://github.com/ros/xacro/issues/352
+_WRITE_DATA_EXTRA_KWARGS = dict(attr=True)
+try:
+    xml.dom.minidom._write_data(None, None, attr=True)
+except TypeError:
+    _WRITE_DATA_EXTRA_KWARGS = {}
 
 # Better pretty printing of xml
 # Taken from http://ronrothman.com/public/leftbraned/xml-dom-minidom-toprettyxml-and-silly-whitespace/
@@ -120,7 +127,7 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
 
     for a_name in a_names:
         writer.write(" %s=\"" % a_name)
-        xml.dom.minidom._write_data(writer, attrs[a_name].value)
+        xml.dom.minidom._write_data(writer, attrs[a_name].value, **_WRITE_DATA_EXTRA_KWARGS)
         writer.write("\"")
     if self.childNodes:
         if len(self.childNodes) == 1 \

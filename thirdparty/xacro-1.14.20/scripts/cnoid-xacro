@@ -29,6 +29,6 @@
 # Author: Stuart Glaser
 # Maintainer: William Woodall <wwoodall@willowgarage.com>
 
-# The namespace "cnoid" is added for the use with Choreonoid
+# The namespace "cnoid" is added for use with Choreonoid.
 import cnoid.xacro
 cnoid.xacro.main()

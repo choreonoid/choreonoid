@@ -26,6 +26,7 @@ libqt5svg5-dev \
 qttranslations5-l10n \
 python3-dev \
 python3-numpy \
+python3-yaml \
 libassimp-dev \
 libode-dev \
 libfcl-dev \

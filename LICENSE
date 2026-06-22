@@ -114,7 +114,7 @@ copyrighted by other developers.
    see thirdparty/sol2/LICENSE
 
  * Xacro (https://github.com/ros/xacro)
-   sett thirdparty/xacro-1.14.10/package.xml
+   see thirdparty/xacro-1.14.20/package.xml
 
  * zlib (https://zlib.net/)
    see thirdparty/zlib-1.2.13/LICENSE

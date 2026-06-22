@@ -1,26 +1,27 @@
 #include "URDFBodyLoader.h"
 #include "URDFKeywords.h"
+#include "XacroProcessor.h"
 #include <cnoid/Body>
 #include <cnoid/BodyLoader>
 #include <cnoid/Camera>
 #include <cnoid/EigenUtil>
 #include <cnoid/ExecutablePath>
+#include <cnoid/Format>
 #include <cnoid/MeshGenerator>
 #include <cnoid/NullOut>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
 #include <cnoid/SceneLoader>
 #include <cnoid/UriSchemeProcessor>
-#include <cnoid/UTF8>
-#include <cnoid/Format>
 #include <filesystem>
 #include <pugixml.hpp>
+#include <algorithm>
+#include <cstdlib>
 #include <memory>
 #include <ostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <cstdio>
 #include "gettext.h"
 
 using namespace cnoid;
@@ -189,39 +190,39 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
     jointCounter_ = 0;
     colorMap.clear();
     meshMap.clear();
+    uriSchemeProcessor.setBaseDirectoryFor(filename);
+    uriSchemeProcessor.clearModelSearchDirectories();
+
+    struct UriSchemeProcessorCleanup {
+        UriSchemeProcessor& processor;
+        ~UriSchemeProcessorCleanup() { processor.clearModelSearchDirectories(); }
+    } uriSchemeProcessorCleanup{uriSchemeProcessor};
+
+    // Local package paths are inferred from the file being loaded and used by
+    // ROSPackageSchemeHandler to resolve package:// URIs without ROS_PACKAGE_PATH.
+    vector<string> localPackageSearchDirectories = findLocalPackageSearchDirectories(filename);
+    for (const auto& directory : localPackageSearchDirectories) {
+        uriSchemeProcessor.addModelSearchDirectory(directory);
+    }
 
     pugi::xml_parse_result result;
+    string xacroErrorOutput;
 
     const string suffix = ".xacro";
     if (filename.size() >= suffix.size()
         && std::equal(suffix.begin(),
                       suffix.end(),
                       filename.end() - suffix.size())) {
-#ifdef _WIN32
-        os() << "Error: Xacro files are not supported in Windows." << endl;
-        return false;
-#else
         // parses and reads a xacro-formatted URDF
-        char buffer[128];
-        std::string urdf_content;
-        FILE* pipe = popen(formatC("{0}/cnoid-xacro {1}", executableDir(), filename).c_str(), "r");
-        if (!pipe) {
-            os() << "Error: popen() for xacro parsing failed." << endl;
+        string urdfContent;
+        // The same local paths are passed to the xacro child process as a temporary
+        // ROS_PACKAGE_PATH so $(find pkg) works for self-contained packages.
+        if (!expandXacro(
+                filename, executableDir(), localPackageSearchDirectories,
+                os(), urdfContent, xacroErrorOutput)) {
             return false;
         }
-        try {
-            while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
-                urdf_content += buffer;
-            }
-        } catch (...) {
-            pclose(pipe);
-            os() << "Error: copying xacro contents failed." << endl;
-            return false;
-        }
-        pclose(pipe);
-
-        result = doc.load_string(urdf_content.data());
-#endif
+        result = doc.load_string(urdfContent.data());
     } else {
         // loads a URDF
         result = doc.load_file(filename.c_str());
@@ -229,6 +230,12 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
 
     if (!result) {
         os() << "Error: parsing XML failed: " << result.description() << endl;
+        if (!xacroErrorOutput.empty()) {
+            os() << xacroErrorOutput;
+            if (xacroErrorOutput.back() != '\n') {
+                os() << endl;
+            }
+        }
         return false;
     }
 
@@ -240,8 +247,6 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
         os() << "Error: multiple 'robot' tags are found.";
         return false;
     }
-
-    uriSchemeProcessor.setBaseDirectoryFor(filename);
 
     // gets the 'robot' tag
     const xml_node& robotNode = doc.child(ROBOT);

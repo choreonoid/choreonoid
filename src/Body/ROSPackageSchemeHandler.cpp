@@ -11,6 +11,36 @@ using namespace cnoid;
 
 namespace {
 
+// Separator of the ROS_PACKAGE_PATH / AMENT_PREFIX_PATH path lists. Windows uses ';' because
+// its absolute paths contain ':' in drive letters such as "C:\...".
+#ifdef _WIN32
+constexpr char pathListSeparator = ';';
+#else
+constexpr char pathListSeparator = ':';
+#endif
+
+// Checks both search-path styles used by this handler: a directory containing the package
+// (".../share" or a ROS_PACKAGE_PATH entry) and the package directory itself.
+bool findFileInPackageDirectory(
+    const filesystem::path& directory, const filesystem::path& filepath,
+    const filesystem::path& relativePath, bool enableRelativePath,
+    filesystem::path& out_filepath)
+{
+    filesystem::path combined = directory / filepath;
+    if (exists(combined)) {
+        out_filepath = combined;
+        return true;
+    }
+    if (enableRelativePath && !relativePath.empty()) {
+        combined = directory / relativePath;
+        if (exists(combined)) {
+            out_filepath = combined;
+            return true;
+        }
+    }
+    return false;
+}
+
 /*
   This handler enables BodyLoader classes to support the "package://" scheme used in ROS.
 */
@@ -27,7 +57,7 @@ public:
         if(rpp){
             do {
                 const char* begin = rpp;
-                while(*rpp != ':' && *rpp) rpp++;
+                while(*rpp != pathListSeparator && *rpp) rpp++;
                 string element(begin, rpp);
                 if(!element.empty()){
                     packagePaths.push_back(element);
@@ -40,7 +70,7 @@ public:
         if(app){
             do {
                 const char* begin = app;
-                while(*app != ':' && *app) app++;
+                while(*app != pathListSeparator && *app) app++;
                 string element(begin, app);
                 if(!element.empty()){
                     filesystem::path path(element);
@@ -60,30 +90,33 @@ public:
         }
 
         filesystem::path relativePath;
-        if(has_ROS_PACKAGE_PATH){
-            ++iter;
-            while(iter != filepath.end()){
-                relativePath /= *iter++;
-            }
+        ++iter;
+        while(iter != filepath.end()){
+            relativePath /= *iter++;
         }
 
         bool found = false;
         filesystem::path combined;
 
-        for(auto element : packagePaths){
+        // Per-loader local search paths are inferred from the file being loaded. Try them
+        // first so self-contained model packages override similarly named packages elsewhere.
+        for(auto element : processor.modelSearchDirectories()){
             filesystem::path packagePath(element);
-            combined = packagePath / filepath;
-            if(exists(combined)){
+            if(findFileInPackageDirectory(packagePath, filepath, relativePath, true, combined)){
                 found = true;
                 break;
             }
-            if(has_ROS_PACKAGE_PATH){
-                combined = packagePath / relativePath;
-                if(exists(combined)){
-                    found = true;
-                    break;
-                }
+        }
+
+        // Environment-derived paths come next. These are collected from ROS_PACKAGE_PATH and
+        // AMENT_PREFIX_PATH when this package URI handler is constructed.
+        for(auto element : packagePaths){
+            if(found){
+                break;
             }
+            filesystem::path packagePath(element);
+            found = findFileInPackageDirectory(
+                packagePath, filepath, relativePath, has_ROS_PACKAGE_PATH, combined);
         }
 
         if(found){

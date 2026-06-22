@@ -792,7 +792,7 @@ endif()
 
 option(ENABLE_URDF "Enable URDF functions" ON)
 if(ENABLE_URDF AND ENABLE_PYTHON)
-  add_subdirectory(thirdparty/xacro-1.14.10)
+  add_subdirectory(thirdparty/xacro-1.14.20)
 endif()
 
 option(ENABLE_SDF "Enable SDF functions" ON)
