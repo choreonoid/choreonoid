@@ -77,6 +77,7 @@ BodyKinematicsKit::BodyKinematicsKit(const BodyKinematicsKit& org, CloneMap* clo
 BodyKinematicsKit::Impl::Impl(const Impl& org, CloneMap* cloneMap)
 {
     isCustomIkDisabled = org.isCustomIkDisabled;
+    bool isIkJointLimitEnabled = org.jointPath && org.jointPath->isIkJointLimitEnabled();
 
     currentBaseFrameId = org.currentBaseFrameId;
     currentOffsetFrameId = org.currentOffsetFrameId;
@@ -111,6 +112,10 @@ BodyKinematicsKit::Impl::Impl(const Impl& org, CloneMap* cloneMap)
         }
         baseFrames = cloneMap->getClone(org.baseFrames);
         offsetFrames = cloneMap->getClone(org.offsetFrames);
+    }
+
+    if(jointPath){
+        jointPath->setIkJointLimitEnabled(isIkJointLimitEnabled);
     }
 
     defaultBaseFrame = new CoordinateFrame;
