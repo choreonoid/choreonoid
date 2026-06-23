@@ -92,6 +92,7 @@ public:
 
     bool isEnabled;
     bool isActiveControlState;
+    StartupProgramSelectionMode startupProgramSelectionMode;
     typedef MprProgram::iterator Iterator;
     Iterator iterator;
 
@@ -185,6 +186,7 @@ MprControllerItemBase::MprControllerItemBase(const MprControllerItemBase& org)
     impl->speedRatio = org.impl->speedRatio;
     impl->floatingPointValueMin = org.impl->floatingPointValueMin;
     impl->floatingPointValueMax = org.impl->floatingPointValueMax;
+    impl->startupProgramSelectionMode = org.impl->startupProgramSelectionMode;
 }
 
 
@@ -193,6 +195,7 @@ MprControllerItemBase::Impl::Impl(MprControllerItemBase* self)
 {
     isEnabled = true;
     isActiveControlState = false;
+    startupProgramSelectionMode = StartupProgramSelectionMode::ByStartupFlag;
     speedRatio = 1.0;
     floatingPointValueMin = -std::numeric_limits<double>::max();
     floatingPointValueMax = std::numeric_limits<double>::max();
@@ -270,6 +273,12 @@ void MprControllerItemBase::setResidentInputFunction(std::function<void()> input
 }
 
 
+void MprControllerItemBase::setStartupProgramSelectionMode(StartupProgramSelectionMode mode)
+{
+    impl->startupProgramSelectionMode = mode;
+}
+
+
 bool MprControllerItemBase::isEnabled() const
 {
     return impl->isEnabled;
@@ -326,9 +335,13 @@ bool MprControllerItemBase::Impl::initialize(ControllerIO* io)
                 formatR(_("Program \"{0}\" is incomplete due to unresolved references."),
                         programItem->displayName()));
         }
-        if(programItem->isStartupProgram()){
+        if(startupProgramSelectionMode == StartupProgramSelectionMode::ByStartupFlag &&
+           programItem->isStartupProgram()){
             startupProgramItem = programItem;
         }
+    }
+    if(startupProgramSelectionMode == StartupProgramSelectionMode::FirstProgram){
+        startupProgramItem = programItems.get(0);
     }
     if(!startupProgramItem){
         mout->putErrorln(

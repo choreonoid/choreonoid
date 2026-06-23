@@ -50,6 +50,13 @@ public:
     virtual void stop() override final;
 
 protected:
+    enum class StartupProgramSelectionMode {
+        ByStartupFlag,
+        FirstProgram
+    };
+
+    void setStartupProgramSelectionMode(StartupProgramSelectionMode mode);
+
     template<class StatementType>
     void registerStatementInterpreter(std::function<bool(StatementType* statement)> interpret){
         registerStatementInterpreter(
