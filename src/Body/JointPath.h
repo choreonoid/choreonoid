@@ -118,6 +118,13 @@ public:
 
     bool isIkJointLimitEnabled() const { return isIkJointLimitEnabled_; }
     void setIkJointLimitEnabled(bool on) { isIkJointLimitEnabled_ = on; }
+    /**
+       If enabled, the target link pose is set exactly to the specified goal pose
+       when the pose-target numerical IK succeeds. Disabling this keeps the pose
+       obtained by FK from the solved joint displacements. This option is enabled by default.
+    */
+    bool isNumericalIkExactEndPositionEnabled() const { return isNumericalIkExactEndPositionEnabled_; }
+    void setNumericalIkExactEndPositionEnabled(bool on) { isNumericalIkExactEndPositionEnabled_ = on; }
     void setNumericalIkMaxIkError(double e);
     void setNumericalIkDeltaScale(double s);
     void setNumericalIkMaxIterations(int n);
@@ -195,6 +202,7 @@ private:
     void updateIdOrderIndices() const;
     void doResetWhenJointPathUpdated();
     NumericalIK* getOrCreateNumericalIK();
+    CNOID_BODY_LOCAL bool calcInverseKinematics(const Isometry3* T, bool doExactEndPosition);
 
     LinkPath linkPath_;
     std::vector<LinkPtr> joints_;
@@ -204,6 +212,7 @@ private:
     int numUpwardJointConnections;
     bool needForwardKinematicsBeforeIK;
     bool isIkJointLimitEnabled_;
+    bool isNumericalIkExactEndPositionEnabled_;
     bool isCustomIkDisabled_;
     std::string name_;
 };

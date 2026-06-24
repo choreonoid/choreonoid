@@ -6,11 +6,12 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/TruncatedSVD>
 #include <algorithm>
+#include <cmath>
+#include <limits>
 #include <numeric>
 
 using namespace std;
 using namespace cnoid;
-
 
 double JointPath::numericalIkDefaultDeltaScale()
 {
@@ -131,6 +132,7 @@ void JointPath::initialize()
     needForwardKinematicsBeforeIK = false;
     numericalIK = nullptr;
     isIkJointLimitEnabled_ = false;
+    isNumericalIkExactEndPositionEnabled_ = true;
     isCustomIkDisabled_ = false;
 }    
 
@@ -265,6 +267,62 @@ void JointPath::calcJacobian(Eigen::MatrixXd& out_J) const
 }
 
 
+namespace {
+
+constexpr double TwoPi = 2.0 * PI;
+
+double roundAngleToReference(double angle, double reference)
+{
+    return angle + TwoPi * std::round((reference - angle) / TwoPi);
+}
+
+double findNearestEquivalentAngleInRange(double angle, double reference, double lower, double upper)
+{
+    if(!(lower <= upper)){
+        return angle;
+    }
+
+    angle = roundAngleToReference(angle, reference);
+    if(angle >= lower && angle <= upper){
+        return angle;
+    }
+
+    const int kmin = static_cast<int>(std::ceil((lower - angle) / TwoPi));
+    const int kmax = static_cast<int>(std::floor((upper - angle) / TwoPi));
+    if(kmin > kmax){
+        return angle;
+    }
+
+    double bestAngle = angle;
+    double minDiff = std::numeric_limits<double>::max();
+    for(int k = kmin; k <= kmax; ++k){
+        const double candidate = angle + TwoPi * k;
+        const double diff = std::abs(candidate - reference);
+        if(diff < minDiff){
+            minDiff = diff;
+            bestAngle = candidate;
+        }
+    }
+    return bestAngle;
+}
+
+void adjustRevoluteJointDisplacementPhase(Link* joint, double reference)
+{
+    if(!joint->isRevoluteJoint()){
+        return;
+    }
+
+    auto& q = joint->q();
+    if(joint->hasJointDisplacementLimits()){
+        q = findNearestEquivalentAngleInRange(q, reference, joint->q_lower(), joint->q_upper());
+    } else {
+        q = roundAngleToReference(q, reference);
+    }
+}
+
+}
+
+
 NumericalIK* JointPath::getOrCreateNumericalIK()
 {
     if(!numericalIK){
@@ -363,8 +421,7 @@ JointPath& JointPath::setBaseLinkGoal(const Isometry3& T)
 bool JointPath::calcInverseKinematics()
 {
     if(numericalIK && numericalIK->errorFunc){
-        Isometry3 T; // dummy
-        return calcInverseKinematics(T);
+        return calcInverseKinematics(nullptr, false);
     }
     return false;
 }
@@ -381,17 +438,26 @@ bool JointPath::calcInverseKinematics()
  */
 bool JointPath::calcInverseKinematics(const Isometry3& T)
 {
+    return calcInverseKinematics(&T, isNumericalIkExactEndPositionEnabled_);
+}
+
+
+bool JointPath::calcInverseKinematics(const Isometry3* T, bool doExactEndPosition)
+{
     const bool USE_USUAL_INVERSE_SOLUTION_FOR_6x6_NON_BEST_EFFORT_PROBLEM = false;
     const bool USE_SVD_FOR_BEST_EFFORT_IK = false;
 
     if(joints_.empty()){
+        if(!T){
+            return false;
+        }
         if(linkPath_.empty()){
             return false;
         }
         if(baseLink() == endLink()){
-            endLink()->setPosition(T);
+            endLink()->setPosition(*T);
             if(endLink()->isFreeJoint() && !endLink()->isRoot()){
-                endLink()->setOffsetPosition(endLink()->parent()->T().inverse() * T);
+                endLink()->setOffsetPosition(endLink()->parent()->T().inverse() * (*T));
             }
             return true;
         } else {
@@ -402,6 +468,9 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
     const int n = numJoints();
 
     auto nuIK = getOrCreateNumericalIK();
+    if(!nuIK->errorFunc && !T){
+        return false;
+    }
     
     if(!nuIK->jacobianFunc){
         nuIK->jacobianFunc = [&](MatrixXd& out_Jacobian){ setJacobian<0x3f, 0, 0>(*this, endLink(), out_Jacobian); };
@@ -416,10 +485,10 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
     }
 
     nuIK->q0.resize(n);
+    for(int i=0; i < n; ++i){
+        nuIK->q0[i] = joints_[i]->q();
+    }
     if(!nuIK->isBestEffortIkMode){
-        for(int i=0; i < n; ++i){
-            nuIK->q0[i] = joints_[i]->q();
-        }
         nuIK->T0 = target->T();
     } else {
         // Initialize best solution tracking for best-effort mode
@@ -449,8 +518,8 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
         if(nuIK->errorFunc){
             errorSqr = nuIK->errorFunc(nuIK->dTask);
         } else {
-            nuIK->dTask.head<3>() = T.translation() - target->p();
-            nuIK->dTask.segment<3>(3) = target->R() * omegaFromRot(target->R().transpose() * T.linear());
+            nuIK->dTask.head<3>() = T->translation() - target->p();
+            nuIK->dTask.segment<3>(3) = target->R() * omegaFromRot(target->R().transpose() * T->linear());
             errorSqr = nuIK->dTask.squaredNorm();
         }
         // Track the best solution in best-effort mode
@@ -464,7 +533,6 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
 
         if(errorSqr < nuIK->maxIkErrorSqr){
             completed = true;
-            target->T() = T;
             break;
         }
 
@@ -501,6 +569,10 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
         // Update joint angles
         for(int j=0; j < n; ++j){
             joints_[j]->q() += nuIK->deltaScale * nuIK->dq(j);
+            // Keep an equivalent phase close to the initial displacement so that
+            // revolute joints with multiple valid 2PI phases do not become
+            // unnecessarily constrained by joint limits.
+            adjustRevoluteJointDisplacementPhase(joints_[j], nuIK->q0[j]);
         }
 
         // Apply joint limits
@@ -519,7 +591,11 @@ bool JointPath::calcInverseKinematics(const Isometry3& T)
         calcForwardKinematics();
     }
 
-    if(!completed){
+    if(completed){
+        if(doExactEndPosition && T){
+            target->T() = *T;
+        }
+    } else {
         if(nuIK->isBestEffortIkMode){
             // Restore the best solution found during iterations
             for(int i=0; i < n; ++i){
