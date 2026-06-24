@@ -1,5 +1,6 @@
 #include "MprVariableListView.h"
 #include "MprMultiVariableListItem.h"
+#include "MprGeneralVariableListItem.h"
 #include "MprControllerItemBase.h"
 #include <cnoid/MprVariableList>
 #include <cnoid/ViewManager>
@@ -126,8 +127,8 @@ class MprVariableListView::Impl : public QTableView
 {
 public:
     MprVariableListView* self;
-    TargetItemPicker<MprMultiVariableListItem> targetItemPicker;
-    MprMultiVariableListItemPtr targetMultiVariableListItem;
+    TargetItemPicker<Item> targetItemPicker;
+    ItemPtr targetVariableListItem;
     MprVariableListPtr currentVariableList;
     int lastVariableListIndex;
     VariableListModel* variableListModel;
@@ -141,7 +142,9 @@ public:
     ScopedConnectionSet targetItemConnections;
 
     Impl(MprVariableListView* self);
-    void setTargetMultiVariableListItem(MprMultiVariableListItem* item);
+    void setTargetVariableListItem(Item* item);
+    int numVariableLists() const;
+    MprVariableList* variableListAt(int index) const;
     void updateTargetLabel();
     void updateTypeSelectionRadioButtons();
     void setCurrentVariableList(int listIndex);
@@ -692,8 +695,13 @@ MprVariableListView::Impl::Impl(MprVariableListView* self)
     vbox->addWidget(this);
     self->setLayout(vbox);
 
+    targetItemPicker.setTargetPredicate(
+        [](Item* item){
+            return dynamic_cast<MprMultiVariableListItem*>(item) ||
+                dynamic_cast<MprGeneralVariableListItem*>(item);
+        });
     targetItemPicker.sigTargetItemChanged().connect(
-        [&](MprMultiVariableListItem* item){ setTargetMultiVariableListItem(item); });
+        [&](Item* item){ setTargetVariableListItem(item); });
 
     lastVariableListIndex = 0;
 }
@@ -712,10 +720,10 @@ void MprVariableListView::onAttachedMenuRequest(MenuManager& menuManager)
 }
 
 
-void MprVariableListView::Impl::setTargetMultiVariableListItem(MprMultiVariableListItem* item)
+void MprVariableListView::Impl::setTargetVariableListItem(Item* item)
 {
     targetItemConnections.disconnect();
-    targetMultiVariableListItem = item;
+    targetVariableListItem = item;
     currentVariableList.reset();
 
     if(item){
@@ -738,9 +746,37 @@ void MprVariableListView::Impl::setTargetMultiVariableListItem(MprMultiVariableL
 }
 
 
+int MprVariableListView::Impl::numVariableLists() const
+{
+    auto item = targetVariableListItem.get();
+    if(auto multiListItem = dynamic_cast<MprMultiVariableListItem*>(item)){
+        return multiListItem->numVariableLists();
+    }
+    if(auto generalListItem = dynamic_cast<MprGeneralVariableListItem*>(item)){
+        return generalListItem->variableList() ? 1 : 0;
+    }
+    return 0;
+}
+
+
+MprVariableList* MprVariableListView::Impl::variableListAt(int index) const
+{
+    auto item = targetVariableListItem.get();
+    if(auto multiListItem = dynamic_cast<MprMultiVariableListItem*>(item)){
+        return multiListItem->variableListAt(index);
+    }
+    if(auto generalListItem = dynamic_cast<MprGeneralVariableListItem*>(item)){
+        if(index == 0){
+            return generalListItem->variableList();
+        }
+    }
+    return nullptr;
+}
+
+
 void MprVariableListView::Impl::updateTargetLabel()
 {
-    auto item = targetMultiVariableListItem.get();
+    auto item = targetVariableListItem.get();
     if(item){
         if(auto controller = item->findOwnerItem<MprControllerItemBase>()){
             targetLabel.setText(
@@ -765,13 +801,12 @@ void MprVariableListView::Impl::updateTypeSelectionRadioButtons()
     }
     listTypeRadios.clear();
 
-    auto& target = targetMultiVariableListItem;
-    if(!target){
+    if(!targetVariableListItem){
         return;
     }
-    int n = target->numVariableLists();
+    int n = numVariableLists();
     for(int i=0; i < n; ++i){
-        if(auto list = target->variableListAt(i)){
+        if(auto list = variableListAt(i)){
             QString caption;
             switch(list->variableType()){
             case MprVariableList::GeneralVariable:
@@ -806,15 +841,14 @@ void MprVariableListView::Impl::setCurrentVariableList(int listIndex)
 {
     currentVariableList.reset();
     
-    auto& target = targetMultiVariableListItem;
     bool hideValueTypeColumn = true;
 
-    if(target && target->numVariableLists() > 0){
-        int n = target->numVariableLists();
+    if(targetVariableListItem && numVariableLists() > 0){
+        int n = numVariableLists();
         if(listIndex >= n){
             listIndex = n - 1;
         }
-        currentVariableList = target->variableListAt(listIndex);
+        currentVariableList = variableListAt(listIndex);
         lastVariableListIndex = listIndex;
 
         if(currentVariableList->variableType() == MprVariableList::GeneralVariable){

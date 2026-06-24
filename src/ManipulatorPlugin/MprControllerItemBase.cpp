@@ -3,6 +3,7 @@
 #include "MprBasicStatements.h"
 #include "MprVariableList.h"
 #include "MprMultiVariableListItem.h"
+#include "MprGeneralVariableListItem.h"
 #include <cnoid/ItemManager>
 #include <cnoid/KinematicBodyItemSet>
 #include <cnoid/DigitalIoDevice>
@@ -138,6 +139,8 @@ public:
     void extractProgramLocalVariables(Item* item, vector<MprVariableListPtr>& variableLists);
     void extractControllerGlobalVariables(Item* item, vector<MprVariableListPtr>& variableLists);
     void addVariableList(vector<MprVariableListPtr>& variableLists, MprMultiVariableListItem* listItem);
+    void addVariableList(vector<MprVariableListPtr>& variableLists, MprGeneralVariableListItem* listItem);
+    void addVariableList(vector<MprVariableListPtr>& variableLists, MprVariableList* listInGui);
     void notifyGuiOfVariableUpdate(
         MprVariableList* listInController, MprVariableList* listInGui, int variableIndex);
     void updateVariableListInGui(MprVariableList* listInGui, MprVariable* variableForNotification);
@@ -494,6 +497,8 @@ void MprControllerItemBase::Impl::extractProgramLocalVariables
     for(Item* child = item->childItem(); child; child = child->nextItem()){
         if(auto listItem = dynamic_cast<MprMultiVariableListItem*>(child)){
             addVariableList(variableLists, listItem);
+        } else if(auto listItem = dynamic_cast<MprGeneralVariableListItem*>(child)){
+            addVariableList(variableLists, listItem);
         }
         extractProgramLocalVariables(child, variableLists);
     }
@@ -509,6 +514,8 @@ void MprControllerItemBase::Impl::extractControllerGlobalVariables
         }
         if(auto listItem = dynamic_cast<MprMultiVariableListItem*>(child)){
             addVariableList(variableLists, listItem);
+        } else if(auto listItem = dynamic_cast<MprGeneralVariableListItem*>(child)){
+            addVariableList(variableLists, listItem);
         }
         extractControllerGlobalVariables(child, variableLists);
     }
@@ -518,7 +525,21 @@ void MprControllerItemBase::Impl::extractControllerGlobalVariables
 void MprControllerItemBase::Impl::addVariableList
 (vector<MprVariableListPtr>& variableLists, MprMultiVariableListItem* listItem)
 {
-    MprVariableListPtr listInGui = listItem->findVariableList(MprVariableList::GeneralVariable);
+    auto listInGui = listItem->findVariableList(MprVariableList::GeneralVariable);
+    addVariableList(variableLists, listInGui);
+}
+
+
+void MprControllerItemBase::Impl::addVariableList
+(vector<MprVariableListPtr>& variableLists, MprGeneralVariableListItem* listItem)
+{
+    addVariableList(variableLists, listItem->variableList());
+}
+
+
+void MprControllerItemBase::Impl::addVariableList
+(vector<MprVariableListPtr>& variableLists, MprVariableList* listInGui)
+{
     if(listInGui){
         auto listInController = listInGui->clone();
         self->setVariableListSync(listInGui, listInController);

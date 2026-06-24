@@ -1,5 +1,6 @@
 #include "MprProgramItemBase.h"
 #include "MprMultiVariableListItem.h"
+#include "MprGeneralVariableListItem.h"
 #include "MprControllerItemBase.h"
 #include "MprPositionListView.h"
 #include "MprVariableListView.h"
@@ -22,6 +23,7 @@ public:
         MprControllerItemBase::initializeClass(this);
         MprProgramItemBase::initializeClass(this);
         MprMultiVariableListItem::initializeClass(this);
+        MprGeneralVariableListItem::initializeClass(this);
 
         MprPositionListView::initializeClass(this);
         MprVariableListView::initializeClass(this);
