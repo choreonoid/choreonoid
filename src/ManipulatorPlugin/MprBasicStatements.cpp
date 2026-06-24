@@ -3,7 +3,6 @@
 #include <cnoid/CloneMap>
 #include <cnoid/ValueTree>
 #include <cnoid/Format>
-#include <regex>
 #include "gettext.h"
 
 using namespace std;
@@ -424,12 +423,7 @@ bool MprAssignStatement::read(MprProgram* program, const Mapping* archive)
 {
     MprStatement::read(program, archive);
     
-    if(archive->read("variable", variableExpression_)){
-        std::smatch match;
-        if(regex_match(variableExpression_, match, regex("^[+-]?\\d+$"))){
-            variableExpression_ = formatC("var[{}]", variableExpression_);
-        }
-    }
+    archive->read("variable", variableExpression_);
     if(!archive->read("value", valueExpression_)){
         archive->read("expression", valueExpression_); // for backward compatibility
     }

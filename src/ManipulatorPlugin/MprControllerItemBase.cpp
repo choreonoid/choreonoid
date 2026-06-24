@@ -263,7 +263,7 @@ void MprControllerItemBase::registerBaseStatementInterpreters()
     impl->floatPattern.assign("^[+-]?(\\d+\\.\\d*|\\.\\d+)");
     impl->boolPattern.assign("^([Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee])");
     impl->stringPattern.assign("^\"(.*)\"");
-    impl->variablePattern.assign("^var\\[(\\d+)\\]");
+    impl->variablePattern.assign("^\\$(\\d+)");
 }
 
 
