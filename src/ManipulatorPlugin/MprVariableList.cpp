@@ -241,6 +241,9 @@ bool MprVariableList::Impl::checkType(MprVariable* variable)
 {
     bool isAcceptable = true;
     switch(self->variableType_){
+    case GeneralVariable:
+        isAcceptable = true;
+        break;
     case IntVariable:
         if(!variable->isInt()){
             isAcceptable = false;
