@@ -144,7 +144,7 @@ QWidget* MprAssignStatementDelegate::createEditor(MprStatement* statement, int c
 MprSignalStatementDelegate::MprSignalStatementDelegate()
 {
     minIoNumber = 0;
-    maxIoNumber = 999;
+    maxIoNumber = 9999;
 }
 
 
@@ -198,7 +198,7 @@ QWidget* MprSignalStatementDelegate::createEditor(MprStatement* statement, int c
 MprWaitStatementDelegate::MprWaitStatementDelegate()
 {
     minIoNumber = 0;
-    maxIoNumber = 999;
+    maxIoNumber = 9999;
 }
 
 
