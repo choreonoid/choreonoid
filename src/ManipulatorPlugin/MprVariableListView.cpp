@@ -138,9 +138,11 @@ public:
     vector<RadioButton*> listTypeRadios;
     PushButton addButton;
     MenuManager contextMenuManager;
+    ScopedConnectionSet targetItemConnections;
 
     Impl(MprVariableListView* self);
     void setTargetMultiVariableListItem(MprMultiVariableListItem* item);
+    void updateTargetLabel();
     void updateTypeSelectionRadioButtons();
     void setCurrentVariableList(int listIndex);
     void addVariableIntoCurrentIndex(bool doInsert);
@@ -712,9 +714,33 @@ void MprVariableListView::onAttachedMenuRequest(MenuManager& menuManager)
 
 void MprVariableListView::Impl::setTargetMultiVariableListItem(MprMultiVariableListItem* item)
 {
+    targetItemConnections.disconnect();
     targetMultiVariableListItem = item;
     currentVariableList.reset();
 
+    if(item){
+        targetItemConnections.add(
+            item->sigNameChanged().connect([this](const std::string&){ updateTargetLabel(); }));
+        targetItemConnections.add(
+            item->sigTreePathChanged().connect([this](){ updateTargetLabel(); }));
+        if(auto controller = item->findOwnerItem<MprControllerItemBase>()){
+            targetItemConnections.add(
+                controller->sigNameChanged().connect(
+                    [this](const std::string&){ updateTargetLabel(); }));
+        }
+    }
+    updateTargetLabel();
+
+    updateTypeSelectionRadioButtons();
+    setCurrentVariableList(lastVariableListIndex);
+    
+    addButton.setEnabled(currentVariableList != nullptr);
+}
+
+
+void MprVariableListView::Impl::updateTargetLabel()
+{
+    auto item = targetMultiVariableListItem.get();
     if(item){
         if(auto controller = item->findOwnerItem<MprControllerItemBase>()){
             targetLabel.setText(
@@ -725,11 +751,6 @@ void MprVariableListView::Impl::setTargetMultiVariableListItem(MprMultiVariableL
     } else {
         targetLabel.setText("---");
     }
-
-    updateTypeSelectionRadioButtons();
-    setCurrentVariableList(lastVariableListIndex);
-    
-    addButton.setEnabled(currentVariableList != nullptr);
 }
 
 
