@@ -49,6 +49,12 @@ public:
     virtual void output() override final;
     virtual void stop() override final;
 
+    enum class ControlResult {
+        Ongoing,
+        Completed,
+        Failed
+    };
+
 protected:
     enum class StartupProgramSelectionMode {
         ByStartupFlag,
@@ -91,6 +97,10 @@ protected:
 
     KinematicBodySet* kinematicBodySetForInternalUse();
 
+    void pushControlFunctions(
+        std::function<ControlResult()> control, std::function<void()> input = nullptr, std::function<void()> output = nullptr);
+
+    [[deprecated("Use the overload taking std::function<ControlResult()> instead.")]]
     void pushControlFunctions(
         std::function<bool()> control, std::function<void()> input = nullptr, std::function<void()> output = nullptr);
         

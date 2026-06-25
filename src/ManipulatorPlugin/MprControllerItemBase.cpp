@@ -28,28 +28,30 @@ using namespace cnoid;
 
 namespace {
 
+using ControlResult = MprControllerItemBase::ControlResult;
+
 class Processor : public Referenced
 {
 public:
     virtual void input() { }
-    virtual bool control() = 0;
+    virtual ControlResult control() = 0;
     virtual void output() { }
 };
 
 class ControlFunctionSetProcessor : public Processor
 {
 public:
-    function<bool()> control_;
+    function<ControlResult()> control_;
     function<void()> input_;
     function<void()> output_;
 
     ControlFunctionSetProcessor(
-        function<bool()> control, function<void()> input, function<void()> output)
+        function<ControlResult()> control, function<void()> input, function<void()> output)
         : control_(control), input_(input), output_(output)
     { }
 
     virtual void input() override { if(input_) input_(); }
-    virtual bool control() override { return control_(); }
+    virtual ControlResult control() override { return control_(); }
     virtual void output() override { if(output_) output_(); }
 };
 
@@ -60,8 +62,8 @@ public:
 
     OutputOnceFunctionProcessor(function<void()> output): output_(output) { }
 
-    virtual bool control() override {
-        return output_ != nullptr;
+    virtual ControlResult control() override {
+        return output_ ? ControlResult::Ongoing : ControlResult::Completed;
     }
     virtual void output() override {
         if(output_){
@@ -774,13 +776,25 @@ bool MprControllerItemBase::Impl::control()
     while(true){
         bool isProcessorActive = false;
         while(!processorStack.empty()){
-            isProcessorActive = processorStack.back()->control();
-            if(isProcessorActive){
+            auto result = processorStack.back()->control();
+            if(result == ControlResult::Ongoing){
+                isProcessorActive = true;
                 break;
             }
             processorStack.pop_back();
+            if(result == ControlResult::Failed){
+                isActiveControlState = false;
+                if(isLogEnabled){
+                    currentLog->isErrorState_ = true;
+                    stateChanged = true;
+                }
+                break;
+            }
         }
         if(isProcessorActive){
+            break;
+        }
+        if(!isActiveControlState){
             break;
         }
 
@@ -869,9 +883,21 @@ void MprControllerItemBase::Impl::setCurrentProgramPositionToLog(MprControllerLo
 
 
 void MprControllerItemBase::pushControlFunctions
-(std::function<bool()> control, std::function<void()> input, std::function<void()> output)
+(std::function<ControlResult()> control, std::function<void()> input, std::function<void()> output)
 {
     impl->processorStack.push_back(new ControlFunctionSetProcessor(control, input, output));
+}
+
+
+void MprControllerItemBase::pushControlFunctions
+(std::function<bool()> control, std::function<void()> input, std::function<void()> output)
+{
+    pushControlFunctions(
+        [control](){
+            return control() ? ControlResult::Ongoing : ControlResult::Completed;
+        },
+        input,
+        output);
 }
         
 
@@ -1408,11 +1434,13 @@ bool MprControllerItemBase::Impl::interpretWaitStatement(MprWaitStatement* state
 {
     if(statement->conditionType() == MprWaitStatement::SignalInput){
         if(!ioDevice){
-            self->pushControlFunctions([]() { return true; });
+            self->pushControlFunctions(
+                []() { return ControlResult::Ongoing; });
         } else {
             self->pushControlFunctions(
                 [this, statement](){
-                    return ioDevice->in(statement->signalIndex()) != statement->signalStateCondition();
+                    return (ioDevice->in(statement->signalIndex()) != statement->signalStateCondition()) ?
+                        ControlResult::Ongoing : ControlResult::Completed;
                 });
         }
     }
@@ -1426,7 +1454,11 @@ bool MprControllerItemBase::Impl::interpretWaitStatement(MprWaitStatement* state
 bool MprControllerItemBase::Impl::interpretDelayStatement(MprDelayStatement* statement)
 {
     int remainingFrames = statement->time() / io->timeStep();
-    self->pushControlFunctions([remainingFrames]() mutable { return (remainingFrames-- > 0); });
+    self->pushControlFunctions(
+        [remainingFrames]() mutable {
+            return (remainingFrames-- > 0) ?
+                ControlResult::Ongoing : ControlResult::Completed;
+        });
     ++iterator;
     return true;
 }
