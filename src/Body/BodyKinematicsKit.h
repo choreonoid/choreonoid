@@ -197,6 +197,27 @@ public:
     //! \note hasJointPath() must be true.
     Isometry3 globalBasePosition(const GeneralId& baseFrameId = GeneralId() /* current */) const;
 
+    /**
+       Calculate the target link position that realizes the given end position
+       with the specified base and offset frames.
+    */
+    bool calcLinkPositionFromEndPosition(
+        const Isometry3& T_end,
+        const GeneralId& baseFrameId,
+        const GeneralId& offsetFrameId,
+        Isometry3& out_T_link) const;
+
+    /**
+       This overload also returns the offset frame position used for the
+       conversion from the end position to the target link position.
+    */
+    bool calcLinkPositionFromEndPosition(
+        const Isometry3& T_end,
+        const GeneralId& baseFrameId,
+        const GeneralId& offsetFrameId,
+        Isometry3& out_T_link,
+        Isometry3& out_T_offset) const;
+
     bool setEndPosition(
         const Isometry3& T,
         const GeneralId& baseFrameId = GeneralId() /* Current */,

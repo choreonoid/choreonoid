@@ -458,6 +458,22 @@ void MprIkPosition::resetReferenceRpy()
 }
 
 
+bool MprIkPosition::calcTargetLinkPosition
+(BodyKinematicsKit* kinematicsKit, Isometry3& out_T_link) const
+{
+    return kinematicsKit->calcLinkPositionFromEndPosition(
+        T, baseFrameId_, offsetFrameId_, out_T_link);
+}
+
+
+bool MprIkPosition::calcTargetLinkPosition
+(BodyKinematicsKit* kinematicsKit, Isometry3& out_T_link, Isometry3& out_T_offset) const
+{
+    return kinematicsKit->calcLinkPositionFromEndPosition(
+        T, baseFrameId_, offsetFrameId_, out_T_link, out_T_offset);
+}
+
+
 bool MprIkPosition::fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout)
 {
     bool fetched = false;

@@ -50,7 +50,6 @@ public:
 
 }
 
-
 BodyKinematicsKit::BodyKinematicsKit()
 {
     impl = new Impl;
@@ -701,6 +700,52 @@ Isometry3 BodyKinematicsKit::globalBasePosition(const GeneralId& baseFrameId) co
 }
 
 
+namespace {
+
+bool calcLinkPositionFromEndPositionImpl
+(const BodyKinematicsKit* kit, const Isometry3& T_end,
+ const GeneralId& baseFrameId, const GeneralId& offsetFrameId,
+ Isometry3& out_T_link, Isometry3* out_T_offset)
+{
+    if(!kit->endLink()){
+        return false;
+    }
+
+    auto T_base = kit->globalBasePosition(baseFrameId);
+    auto offsetFrame_ = offsetFrameId.isValid() ? kit->offsetFrame(offsetFrameId) : kit->currentOffsetFrame();
+    if(!offsetFrame_){
+        return false;
+    }
+
+    Isometry3 T_offset = offsetFrame_->T();
+    out_T_link = T_base * T_end * T_offset.inverse(Eigen::Isometry);
+    if(out_T_offset){
+        *out_T_offset = T_offset;
+    }
+    return true;
+}
+
+}
+
+
+bool BodyKinematicsKit::calcLinkPositionFromEndPosition
+(const Isometry3& T_end, const GeneralId& baseFrameId, const GeneralId& offsetFrameId,
+ Isometry3& out_T_link) const
+{
+    return calcLinkPositionFromEndPositionImpl(
+        this, T_end, baseFrameId, offsetFrameId, out_T_link, nullptr);
+}
+
+
+bool BodyKinematicsKit::calcLinkPositionFromEndPosition
+(const Isometry3& T_end, const GeneralId& baseFrameId, const GeneralId& offsetFrameId,
+ Isometry3& out_T_link, Isometry3& out_T_offset) const
+{
+    return calcLinkPositionFromEndPositionImpl(
+        this, T_end, baseFrameId, offsetFrameId, out_T_link, &out_T_offset);
+}
+
+
 bool BodyKinematicsKit::setEndPosition
 (const Isometry3& T, const GeneralId& baseFrameId, const GeneralId& offsetFrameId, int configuration)
 {
@@ -708,27 +753,10 @@ bool BodyKinematicsKit::setEndPosition
         return false;
     }
 
-    Isometry3 T_base;
-    CoordinateFrame* baseFrame_;
-    if(baseFrameId.isValid()){
-        baseFrame_ = baseFrame(baseFrameId);
-    } else {
-        baseFrame_ = currentBaseFrame();
+    Isometry3 T_link;
+    if(!calcLinkPositionFromEndPosition(T, baseFrameId, offsetFrameId, T_link)){
+        return false;
     }
-    if(baseFrame_->isGlobal()){
-        T_base = baseFrame_->T();
-    } else {
-        T_base = impl->baseLink()->T() * baseFrame_->T();
-    }
-
-    CoordinateFrame* offsetFrame_;
-    if(offsetFrameId.isValid()){
-        offsetFrame_ = offsetFrame(offsetFrameId);
-    } else {
-        offsetFrame_ = currentOffsetFrame();
-    }
-    Isometry3 T_offset = offsetFrame_->T();
-    Isometry3 T_link = T_base * T * T_offset.inverse(Eigen::Isometry);
 
     if(impl->configurationHandler){
         impl->configurationHandler->setPreferredConfigurationType(configuration);

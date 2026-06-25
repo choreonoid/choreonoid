@@ -198,6 +198,18 @@ public:
     const Vector3 referenceRpy() const { return referenceRpy_; }
     void setReferenceRpy(const Vector3& rpy);
     void resetReferenceRpy();
+    /**
+       Calculate the target link position from this IK position using its stored
+       base and offset frame IDs.
+    */
+    bool calcTargetLinkPosition(
+        BodyKinematicsKit* kinematicsKit, Isometry3& out_T_link) const;
+    /**
+       This overload also returns the offset frame position used for the
+       conversion from the stored end position to the target link position.
+    */
+    bool calcTargetLinkPosition(
+        BodyKinematicsKit* kinematicsKit, Isometry3& out_T_link, Isometry3& out_T_offset) const;
 
     void setBaseFrameId(const GeneralId& id){ baseFrameId_ = id; }
     void setOffsetFrameId(const GeneralId& id){ offsetFrameId_ = id; }
