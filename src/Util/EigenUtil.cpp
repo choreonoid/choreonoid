@@ -176,22 +176,37 @@ Vector3 rpyFromRot(const Matrix3& R, const Vector3& prev)
 
 Vector3 omegaFromRot(const Matrix3& R)
 {
+    const double epsilon = 1.0e-6;
     double alpha = (R(0,0) + R(1,1) + R(2,2) - 1.0) / 2.0;
 
-    if(alpha > 1.0 - 1.0e-6) {   //th=0,2PI;
+    if(alpha > 1.0 - epsilon) {   // th = 0
         return Vector3::Zero();
 
     } else {
-        if (alpha < -1.0) {
-            alpha = -1.0;
+        // The standard skew-symmetric formula loses accuracy near PI because sin(th)
+        // approaches zero. Use a quaternion only in this narrow range to keep the
+        // rotation axis sign stable without slowing down the common cases.
+        if(alpha < -1.0 + epsilon){
+            Quaternion q(R);
+            q.normalize();
+            if(q.w() < 0.0){
+                q.coeffs() *= -1.0;
+            }
+            double s = q.vec().norm();
+            if(s < std::numeric_limits<double>::epsilon()){
+                return Vector3::Zero();
+            }
+            double th = 2.0 * atan2(s, q.w());
+            return (th / s) * q.vec();
         }
+
+        // Fast path for the regular range.
         double th = acos(alpha);
         double s = sin(th);
 
-        if (s < std::numeric_limits<double>::epsilon()) {   //th=PI
-            return Vector3( sqrt((R(0,0)+1)*0.5)*th, sqrt((R(1,1)+1)*0.5)*th, sqrt((R(2,2)+1)*0.5)*th );
+        if(s < std::numeric_limits<double>::epsilon()){
+            return Vector3::Zero();
         }
-
         double k = -0.5 * th / s;
 
         return Vector3((R(1,2) - R(2,1)) * k,
