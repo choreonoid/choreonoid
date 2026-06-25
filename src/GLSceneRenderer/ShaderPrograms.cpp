@@ -227,6 +227,16 @@ public:
 };
 
 
+class ShadedPointProgram::Impl
+{
+public:
+    GLint modelViewMatrixLocation;
+    GLint normalMatrixLocation;
+    GLint MVPLocation;
+    GLint pointSizeLocation;
+};
+
+
 class FullLightingProgram::Impl
 {
 public:
@@ -1305,6 +1315,58 @@ void MaterialLightingProgram::setMaterialAmbientNormalizationEnabled(bool on)
 void MaterialLightingProgram::setMinimumTransparency(float t)
 {
     impl->minTransparency = t;
+}
+
+
+ShadedPointProgram::ShadedPointProgram()
+    : MaterialLightingProgram(
+        { { ":/GLSceneRenderer/shader/ShadedPoint.vert", GL_VERTEX_SHADER },
+          { ":/GLSceneRenderer/shader/ShadedPoint.frag", GL_FRAGMENT_SHADER } })
+{
+    impl = new Impl;
+}
+
+
+ShadedPointProgram::~ShadedPointProgram()
+{
+    delete impl;
+}
+
+
+void ShadedPointProgram::initialize()
+{
+    MaterialLightingProgram::initialize();
+
+    auto& glsl = glslProgram();
+    impl->modelViewMatrixLocation = glsl.getUniformLocation("modelViewMatrix");
+    impl->normalMatrixLocation = glsl.getUniformLocation("normalMatrix");
+    impl->MVPLocation = glsl.getUniformLocation("MVP");
+    impl->pointSizeLocation = glsl.getUniformLocation("pointSize");
+}
+
+
+void ShadedPointProgram::setTransform
+(const Matrix4& PV, const Isometry3& V, const Affine3& M, const Matrix4* L)
+{
+    const Affine3f VM = (V * M).cast<float>();
+    const Matrix3f N = VM.linear();
+
+    Matrix4f PVM;
+    if(L){
+        PVM.noalias() = (PV * M.matrix() * (*L)).cast<float>();
+    } else {
+        PVM.noalias() = (PV * M.matrix()).cast<float>();
+    }
+
+    glUniformMatrix4fv(impl->modelViewMatrixLocation, 1, GL_FALSE, VM.data());
+    glUniformMatrix3fv(impl->normalMatrixLocation, 1, GL_FALSE, N.data());
+    glUniformMatrix4fv(impl->MVPLocation, 1, GL_FALSE, PVM.data());
+}
+
+
+void ShadedPointProgram::setPointSize(float size)
+{
+    glUniform1f(impl->pointSizeLocation, size);
 }
 
 

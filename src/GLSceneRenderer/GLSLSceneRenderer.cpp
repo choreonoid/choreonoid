@@ -94,6 +94,7 @@ public:
     GLuint vbos[MAX_NUM_BUFFERS];
     GLsizei numVertices;
     int numBuffers;
+    bool hasNormalAttribute;
     // Local transform is used with the short integer type vertex elements
     Matrix4* pLocalTransform;
     Matrix4 localTransform;
@@ -122,6 +123,7 @@ public:
         }
         numBuffers = 0;
         numVertices = 0;
+        hasNormalAttribute = false;
     }
 
     virtual void discard() override { clearHandles(); }
@@ -149,6 +151,7 @@ public:
                 vbos[i] = 0;
             }
             numBuffers = 0;
+            hasNormalAttribute = false;
         }
     }
 
@@ -337,6 +340,7 @@ public:
     unique_ptr<SolidColorProgram> solidColorProgram;
     unique_ptr<SolidColorExProgram> solidColorExProgram;
     unique_ptr<SolidPointProgram> solidPointProgram;
+    unique_ptr<ShadedPointProgram> shadedPointProgram;
     unique_ptr<ThickLineProgram> thickLineProgram;
     unique_ptr<TextProgram> textProgram;
     unique_ptr<OutlineProgram> outlineProgram;
@@ -537,11 +541,15 @@ public:
     void renderShapeVertices(SgShape* shape);
     void renderPlot(
         SgPlot* plot, GLenum primitiveMode,
-        const std::function<SgVertexArrayPtr()>& getVertices, std::function<bool()> setupShaderProgram);
+        std::function<bool()> setupShaderProgram,
+        const std::function<SgVertexArrayPtr()>& getVertices,
+        const std::function<SgNormalArrayPtr()>& getNormals = nullptr);
     void renderPlotMain(
         SgPlot* plot, GLenum primitiveMode, VertexResource* resource, const Affine3& modelTransform, int pickIndex,
         const std::function<bool()>& setupShaderProgram);
-    void renderPointSet(SgPointSet* pointSet);        
+    void renderPointSet(SgPointSet* pointSet);
+    bool hasUsablePointNormals(SgPointSet* pointSet) const;
+    void writePlotNormalBuffer(VertexResource* resource, SgNormalArray* normals, size_t n);
     void renderLineSet(SgLineSet* lineSet);
     void renderText(SgText* text);
     void renderPolygonDrawStyle(SgPolygonDrawStyle* style);
@@ -895,6 +903,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         solidColorProgram->release();
         solidColorExProgram->release();
         solidPointProgram->release();
+        shadedPointProgram->release();
         thickLineProgram->release();
         textProgram->release();
         outlineProgram->release();
@@ -937,6 +946,7 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         solidColorProgram.reset(new SolidColorProgram);
         solidColorExProgram.reset(new SolidColorExProgram);
         solidPointProgram.reset(new SolidPointProgram);
+        shadedPointProgram.reset(new ShadedPointProgram);
         thickLineProgram.reset(new ThickLineProgram);
         textProgram.reset(new TextProgram);
         outlineProgram.reset(new OutlineProgram);
@@ -1078,6 +1088,7 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
         solidColorProgram->initialize();
         solidColorExProgram->initialize();
         solidPointProgram->initialize();
+        shadedPointProgram->initialize();
         thickLineProgram->initialize();
         textProgram->setTextureUnit(ImageTextureUnit);
         textProgram->initialize();
@@ -2998,6 +3009,7 @@ bool GLSLSceneRenderer::Impl::writeMeshNormalsSub
         }
         glBufferData(GL_ARRAY_BUFFER, normals.array.size() * sizeof(value_type), normals.array.data(), GL_STATIC_DRAW);
         glEnableVertexAttribArray(1);
+        resource->hasNormalAttribute = true;
     }
     
     if(isNormalVisualizationEnabled){
@@ -3310,7 +3322,9 @@ void GLSLSceneRenderer::Impl::renderShapeVertices(SgShape* shape)
 
 void GLSLSceneRenderer::Impl::renderPlot
 (SgPlot* plot, GLenum primitiveMode,
- const std::function<SgVertexArrayPtr()>& getVertices, std::function<bool()> setupShaderProgram)
+ std::function<bool()> setupShaderProgram,
+ const std::function<SgVertexArrayPtr()>& getVertices,
+ const std::function<SgNormalArrayPtr()>& getNormals)
 {
     VertexResource* resource = getOrCreateVertexResource(plot);
     if(!resource->isValid()){
@@ -3326,6 +3340,13 @@ void GLSLSceneRenderer::Impl::renderPlot
         }
         glBufferData(GL_ARRAY_BUFFER, vertices->size() * sizeof(Vector3f), vertices->data(), GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
+
+        if(getNormals){
+            SgNormalArrayPtr normals = getNormals();
+            if(normals && normals->size() >= n){
+                writePlotNormalBuffer(resource, normals, n);
+            }
+        }
 
         if(plot->hasColors()){
             typedef Eigen::Array<GLubyte,3,1> Color;
@@ -3365,7 +3386,13 @@ void GLSLSceneRenderer::Impl::renderPlot
             glBufferData(GL_ARRAY_BUFFER, n * sizeof(Color), colors.data(), GL_STATIC_DRAW);
             glEnableVertexAttribArray(3);
         }
-    }        
+    } else if(getNormals && !resource->hasNormalAttribute){
+        SgNormalArrayPtr normals = getNormals();
+        if(normals && normals->size() >= static_cast<size_t>(resource->numVertices)){
+            glBindVertexArray(resource->vao);
+            writePlotNormalBuffer(resource, normals, resource->numVertices);
+        }
+    }
     
     auto pickIndex = pushPickEndNode(plot);
 
@@ -3422,25 +3449,78 @@ void GLSLSceneRenderer::Impl::renderPlotMain
 }
 
 
+bool GLSLSceneRenderer::Impl::hasUsablePointNormals(SgPointSet* pointSet) const
+{
+    const SgVertexArray* vertices = pointSet->vertices();
+    const SgNormalArray* normals = pointSet->normals();
+    if(!vertices || !normals || vertices->empty()){
+        return false;
+    }
+
+    const size_t n = vertices->size();
+    const SgIndexArray& normalIndices = pointSet->normalIndices();
+    if(normalIndices.empty()){
+        return normals->size() >= n;
+    }
+    // Shaded point rendering intentionally supports only one normal per point.
+    // Indexed normals are kept on SgPlot for data preservation and other uses,
+    // but expanding them for point clouds adds cost and is not needed for surfel-style points.
+    // Fall back to the ordinary unlit point rendering path for indexed-normal point sets.
+    return false;
+}
+
+
+void GLSLSceneRenderer::Impl::writePlotNormalBuffer
+(VertexResource* resource, SgNormalArray* normals, size_t n)
+{
+    const Vector3f* normalData = &(*normals)[0];
+
+    {
+        LockVertexArrayAPI lock;
+        glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+        glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+    }
+
+    glBufferData(GL_ARRAY_BUFFER, n * sizeof(Vector3f), normalData, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1);
+    resource->hasNormalAttribute = true;
+}
+
+
 void GLSLSceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
 {
     if(!isRenderingShadowMap && pointSet->hasVertices()){
         glDisable(GL_MULTISAMPLE);
-        renderPlot(
-            pointSet, GL_POINTS,
-            [pointSet]() -> SgVertexArrayPtr { return pointSet->vertices(); },
-            [this, pointSet](){
-                if(!isRenderingPickingImage){
-                    pushProgram(solidColorExProgram);
-                }
-                const double s = pointSet->pointSize();
-                if(s > 0.0){
-                    setPointSize(s);
-                } else {
-                    setPointSize(defaultPointSize);
-                }
-                return !isRenderingPickingImage;
-            });
+        if(!isRenderingPickingImage && currentLightingProgram && hasUsablePointNormals(pointSet)){
+            renderPlot(
+                pointSet, GL_POINTS,
+                [this, pointSet](){
+                    pushProgram(shadedPointProgram);
+                    renderLights(shadedPointProgram.get());
+                    renderFog(shadedPointProgram.get());
+                    const double s = pointSet->pointSize();
+                    shadedPointProgram->setPointSize(s > 0.0 ? s : defaultPointSize);
+                    return true;
+                },
+                [pointSet]() -> SgVertexArrayPtr { return pointSet->vertices(); },
+                [pointSet]() -> SgNormalArrayPtr { return pointSet->normals(); });
+        } else {
+            renderPlot(
+                pointSet, GL_POINTS,
+                [this, pointSet](){
+                    if(!isRenderingPickingImage){
+                        pushProgram(solidColorExProgram);
+                    }
+                    const double s = pointSet->pointSize();
+                    if(s > 0.0){
+                        setPointSize(s);
+                    } else {
+                        setPointSize(defaultPointSize);
+                    }
+                    return !isRenderingPickingImage;
+                },
+                [pointSet]() -> SgVertexArrayPtr { return pointSet->vertices(); });
+        }
         glEnable(GL_MULTISAMPLE);
     }
 }
@@ -3466,7 +3546,6 @@ void GLSLSceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
     if(!isRenderingShadowMap && lineSet->hasVertices() && lineSet->numLines() > 0){
         renderPlot(
             lineSet, GL_LINES,
-            [lineSet](){ return getLineSetVertices(lineSet); },
             [this, lineSet](){
                 float width = lineSet->lineWidth();
                 if(isRenderingPickingImage){
@@ -3483,7 +3562,8 @@ void GLSLSceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
                     pushProgram(thickLineProgram);
                 }
                 return true;
-            });
+            },
+            [lineSet](){ return getLineSetVertices(lineSet); });
     }
 }
 

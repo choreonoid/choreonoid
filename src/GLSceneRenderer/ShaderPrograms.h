@@ -316,6 +316,25 @@ private:
 };
 
 
+class ShadedPointProgram : public MaterialLightingProgram
+{
+    ShadedPointProgram(const ShadedPointProgram&) = delete;
+
+public:
+    ShadedPointProgram();
+    ~ShadedPointProgram();
+
+    virtual void initialize() override;
+    virtual void setTransform(const Matrix4& PV, const Isometry3& V, const Affine3& M, const Matrix4* L) override;
+
+    void setPointSize(float size);
+
+private:
+    class Impl;
+    Impl* impl;
+};
+
+
 class ShadowMapProgram;
 
 class FullLightingProgram : public MaterialLightingProgram
