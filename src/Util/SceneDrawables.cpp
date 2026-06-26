@@ -3,6 +3,7 @@
 #include "CloneMap.h"
 #include "SceneNodeClassRegistry.h"
 #include "Format.h"
+#include <algorithm>
 
 using namespace std;
 using namespace cnoid;
@@ -1116,6 +1117,8 @@ SgPointSet::SgPointSet(int classId)
     : SgPlot(classId)
 {
     pointSize_ = 0.0;
+    validPointBeginIndex_ = 0;
+    validPointEndIndex_ = -1;
 }
 
 
@@ -1130,12 +1133,36 @@ SgPointSet::SgPointSet(const SgPointSet& org, CloneMap* cloneMap)
     : SgPlot(org, cloneMap)
 {
     pointSize_ = org.pointSize_;
+    validPointBeginIndex_ = org.validPointBeginIndex_;
+    validPointEndIndex_ = org.validPointEndIndex_;
 }
 
 
 Referenced* SgPointSet::doClone(CloneMap* cloneMap) const
 {
     return new SgPointSet(*this, cloneMap);
+}
+
+
+void SgPointSet::setValidPointRange(int beginIndex, int endIndex)
+{
+    validPointBeginIndex_ = std::max(0, beginIndex);
+    validPointEndIndex_ = endIndex;
+}
+
+
+void SgPointSet::setNumValidPoints(int numPoints)
+{
+    setValidPointRange(0, numPoints);
+}
+
+
+int SgPointSet::numValidPoints() const
+{
+    if(validPointEndIndex_ < 0){
+        return -1;
+    }
+    return std::max(0, validPointEndIndex_ - validPointBeginIndex_);
 }
 
 

@@ -646,12 +646,21 @@ public:
     */
     double pointSize() const { return pointSize_; }
 
+    void setValidPointRange(int beginIndex, int endIndex);
+    void setNumValidPoints(int numPoints);
+    int validPointBeginIndex() const { return validPointBeginIndex_; }
+    int validPointEndIndex() const { return validPointEndIndex_; }
+    int numValidPoints() const;
+    bool hasValidPointRange() const { return validPointBeginIndex_ > 0 || validPointEndIndex_ >= 0; }
+
 protected:
     SgPointSet(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
     double pointSize_;
+    int validPointBeginIndex_;
+    int validPointEndIndex_;
 };
 
 

@@ -20,6 +20,7 @@
 #include <regex>
 #include <stdexcept>
 #include <iostream>
+#include <algorithm>
 #include "gettext.h"
 
 using namespace std;
@@ -164,6 +165,37 @@ public:
         if(vao){
             glDeleteVertexArrays(1, &vao);
         }
+    }
+};
+
+class PointSetResource : public VertexResource
+{
+public:
+    PointSetResource(SgPointSet* pointSet)
+        : VertexResource(pointSet)
+    {
+        connection.disconnect();
+        connection =
+            pointSet->sigUpdated().connect(
+                [this, pointSet](const SgUpdate& update){
+                    if(isUpdateRequired(pointSet, update)){
+                        numVertices = 0;
+                    }
+                });
+    }
+
+private:
+    bool isUpdateRequired(SgPointSet* pointSet, const SgUpdate& update)
+    {
+        const auto& path = update.path();
+        SgObject* source = path.front();
+        if(source == pointSet->vertices() || source == pointSet->normals() || source == pointSet->colors()){
+            return true;
+        }
+        if(source == pointSet && update.hasAction(SgUpdate::GeometryModified)){
+            return true;
+        }
+        return false;
     }
 };
 
@@ -532,8 +564,9 @@ public:
     void renderPickableInvisibleGroup(SgPickableInvisibleGroup* group);
     template<class ResourceType, class ObjectType>
     ResourceType* getOrCreateGLResource(ObjectType* obj);
-    VertexResource* getOrCreateVertexResource(SgObject* obj);
-    void drawVertexResource(VertexResource* resource, GLenum primitiveMode, const Affine3& modelTransform);
+    void drawVertexResource(
+        VertexResource* resource, GLenum primitiveMode, const Affine3& modelTransform,
+        GLint first = 0, GLsizei count = -1);
     void drawBoundingBox(VertexResource* resource, const BoundingBox& bbox);
     void renderShape(SgShape* shape);
     void renderShapeMain(SgShape* shape, const Affine3& modelTransform, int pickIndex);
@@ -541,12 +574,14 @@ public:
     void renderShapeVertices(SgShape* shape);
     void renderPlot(
         SgPlot* plot, GLenum primitiveMode,
+        VertexResource* resource,
+        GLint first, GLsizei count,
         std::function<bool()> setupShaderProgram,
         const std::function<SgVertexArrayPtr()>& getVertices,
         const std::function<SgNormalArrayPtr()>& getNormals = nullptr);
     void renderPlotMain(
         SgPlot* plot, GLenum primitiveMode, VertexResource* resource, const Affine3& modelTransform, int pickIndex,
-        const std::function<bool()>& setupShaderProgram);
+        const std::function<bool()>& setupShaderProgram, GLint first, GLsizei count);
     void renderPointSet(SgPointSet* pointSet);
     bool hasUsablePointNormals(SgPointSet* pointSet) const;
     void writePlotNormalBuffer(VertexResource* resource, SgNormalArray* normals, size_t n);
@@ -2555,18 +2590,17 @@ ResourceType* GLSLSceneRenderer::Impl::getOrCreateGLResource(ObjectType* obj)
 }
 
 
-VertexResource* GLSLSceneRenderer::Impl::getOrCreateVertexResource(SgObject* obj)
-{
-    return getOrCreateGLResource<VertexResource>(obj);
-}
-
-
 void GLSLSceneRenderer::Impl::drawVertexResource
-(VertexResource* resource, GLenum primitiveMode, const Affine3& modelTransform)
+(VertexResource* resource, GLenum primitiveMode, const Affine3& modelTransform, GLint first, GLsizei count)
 {
     currentProgram->setTransform(PV, viewTransform, modelTransform, resource->pLocalTransform);
     glBindVertexArray(resource->vao);
-    glDrawArrays(primitiveMode, 0, resource->numVertices);
+    if(count < 0){
+        count = std::max<GLsizei>(0, resource->numVertices - first);
+    }
+    if(count > 0){
+        glDrawArrays(primitiveMode, first, count);
+    }
 }
 
 
@@ -2659,7 +2693,7 @@ void GLSLSceneRenderer::Impl::renderShapeMain(SgShape* shape, const Affine3& mod
         }
     }
 
-    VertexResource* resource = getOrCreateVertexResource(mesh);
+    VertexResource* resource = getOrCreateGLResource<VertexResource>(mesh);
     if(!resource->isValid()){
         makeVertexBufferObjects(shape, resource);
     }
@@ -3303,7 +3337,7 @@ void GLSLSceneRenderer::Impl::renderShapeVertices(SgShape* shape)
     SgMesh* mesh = shape->mesh();
     if(mesh && mesh->hasVertices()){
         auto vertices = mesh->vertices();
-        VertexResource* resource = getOrCreateVertexResource(vertices);
+        VertexResource* resource = getOrCreateGLResource<VertexResource>(vertices);
         if(!resource->isValid()){
             glBindVertexArray(resource->vao);
             {
@@ -3320,13 +3354,42 @@ void GLSLSceneRenderer::Impl::renderShapeVertices(SgShape* shape)
 }
 
 
+static void getPointSetDrawArrayRange
+(SgPointSet* pointSet, GLsizei numVertices, GLint& out_first, GLsizei& out_count)
+{
+    out_first = 0;
+    out_count = numVertices;
+
+    if(numVertices <= 0){
+        return;
+    }
+
+    int first = std::max(0, pointSet->validPointBeginIndex());
+    if(first >= numVertices){
+        out_first = numVertices;
+        out_count = 0;
+        return;
+    }
+
+    int end = pointSet->validPointEndIndex();
+    out_first = first;
+    if(end < 0){
+        out_count = numVertices - first;
+    } else {
+        end = std::min(end, static_cast<int>(numVertices));
+        out_count = std::max(0, end - first);
+    }
+}
+
+
 void GLSLSceneRenderer::Impl::renderPlot
 (SgPlot* plot, GLenum primitiveMode,
+ VertexResource* resource,
+ GLint first, GLsizei count,
  std::function<bool()> setupShaderProgram,
  const std::function<SgVertexArrayPtr()>& getVertices,
  const std::function<SgNormalArrayPtr()>& getNormals)
 {
-    VertexResource* resource = getOrCreateVertexResource(plot);
     if(!resource->isValid()){
         glBindVertexArray(resource->vao);
         SgVertexArrayPtr vertices = getVertices();
@@ -3343,8 +3406,13 @@ void GLSLSceneRenderer::Impl::renderPlot
 
         if(getNormals){
             SgNormalArrayPtr normals = getNormals();
-            if(normals && normals->size() >= n){
-                writePlotNormalBuffer(resource, normals, n);
+            GLsizei effectiveCount = count;
+            if(effectiveCount < 0){
+                effectiveCount = std::max<GLsizei>(0, static_cast<GLsizei>(n) - first);
+            }
+            const size_t requiredNormalCount = static_cast<size_t>(first + effectiveCount);
+            if(normals && normals->size() >= requiredNormalCount){
+                writePlotNormalBuffer(resource, normals, std::min(n, normals->size()));
             }
         }
 
@@ -3406,15 +3474,16 @@ void GLSLSceneRenderer::Impl::renderPlot
 
     if(!isTransparent){
         renderPlotMain(
-            plot, primitiveMode, resource, modelMatrixStack.back(), pickIndex, setupShaderProgram);
+            plot, primitiveMode, resource, modelMatrixStack.back(), pickIndex, setupShaderProgram, first, count);
     } else {
         SgPlotPtr plotPtr = plot;
         int matrixIndex = modelMatrixBuffer.size();
         modelMatrixBuffer.push_back(modelMatrixStack.back());
         transparentRenderingQueue.emplace_back(
-            [this, plotPtr, primitiveMode, resource, matrixIndex, pickIndex, setupShaderProgram](){
+            [this, plotPtr, primitiveMode, resource, matrixIndex, pickIndex, setupShaderProgram, first, count](){
                 renderPlotMain(
-                    plotPtr, primitiveMode, resource, modelMatrixBuffer[matrixIndex], pickIndex, setupShaderProgram);
+                    plotPtr, primitiveMode, resource, modelMatrixBuffer[matrixIndex],
+                    pickIndex, setupShaderProgram, first, count);
             });
     }
     popPickNode();
@@ -3423,7 +3492,7 @@ void GLSLSceneRenderer::Impl::renderPlot
 
 void GLSLSceneRenderer::Impl::renderPlotMain
 (SgPlot* plot, GLenum primitiveMode, VertexResource* resource, const Affine3& modelTransform, int pickIndex,
- const std::function<bool()>& setupShaderProgram)
+ const std::function<bool()>& setupShaderProgram, GLint first, GLsizei count)
 {
     bool pushed = setupShaderProgram();
     
@@ -3441,7 +3510,7 @@ void GLSLSceneRenderer::Impl::renderPlotMain
         }
     }
 
-    drawVertexResource(resource, primitiveMode, modelTransform);
+    drawVertexResource(resource, primitiveMode, modelTransform, first, count);
 
     if(pushed){
         popProgram();
@@ -3457,7 +3526,10 @@ bool GLSLSceneRenderer::Impl::hasUsablePointNormals(SgPointSet* pointSet) const
         return false;
     }
 
-    const size_t n = vertices->size();
+    GLint first;
+    GLsizei count;
+    getPointSetDrawArrayRange(pointSet, vertices->size(), first, count);
+    const size_t n = static_cast<size_t>(first + count);
     const SgIndexArray& normalIndices = pointSet->normalIndices();
     if(normalIndices.empty()){
         return normals->size() >= n;
@@ -3491,9 +3563,15 @@ void GLSLSceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
 {
     if(!isRenderingShadowMap && pointSet->hasVertices()){
         glDisable(GL_MULTISAMPLE);
+        GLint first;
+        GLsizei count;
+        getPointSetDrawArrayRange(pointSet, pointSet->vertices()->size(), first, count);
         if(!isRenderingPickingImage && currentLightingProgram && hasUsablePointNormals(pointSet)){
+            auto resource = getOrCreateGLResource<PointSetResource>(pointSet);
             renderPlot(
                 pointSet, GL_POINTS,
+                resource,
+                first, count,
                 [this, pointSet](){
                     pushProgram(shadedPointProgram);
                     renderLights(shadedPointProgram.get());
@@ -3505,8 +3583,11 @@ void GLSLSceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
                 [pointSet]() -> SgVertexArrayPtr { return pointSet->vertices(); },
                 [pointSet]() -> SgNormalArrayPtr { return pointSet->normals(); });
         } else {
+            auto resource = getOrCreateGLResource<PointSetResource>(pointSet);
             renderPlot(
                 pointSet, GL_POINTS,
+                resource,
+                first, count,
                 [this, pointSet](){
                     if(!isRenderingPickingImage){
                         pushProgram(solidColorExProgram);
@@ -3544,8 +3625,11 @@ static SgVertexArrayPtr getLineSetVertices(SgLineSet* lineSet)
 void GLSLSceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
 {
     if(!isRenderingShadowMap && lineSet->hasVertices() && lineSet->numLines() > 0){
+        auto resource = getOrCreateGLResource<VertexResource>(lineSet);
         renderPlot(
             lineSet, GL_LINES,
+            resource,
+            0, -1,
             [this, lineSet](){
                 float width = lineSet->lineWidth();
                 if(isRenderingPickingImage){

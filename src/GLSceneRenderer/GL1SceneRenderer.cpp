@@ -9,6 +9,7 @@
 #include <bitset>
 #include <unordered_map>
 #include <iostream>
+#include <algorithm>
 #include <cnoid/gl.h>
 #include "GLImageScaler.h"
 #include "gettext.h"
@@ -39,7 +40,6 @@ struct SgObjectPtrHash {
 };
 
 typedef std::unordered_map<SgObjectPtr, ReferencedPtr, SgObjectPtrHash> ResourceMap;
-
 
 struct TransparentShapeInfo
 {
@@ -81,6 +81,25 @@ public:
     GLuint& normalVisualizationVertexBufferName(){ return bufferNames[4]; }
 };
 typedef ref_ptr<VertexResource> VertexResourcePtr;
+
+
+class PointSetResource : public VertexResource
+{
+public:
+    static bool isUpdateRequired(SgPointSet* pointSet, const SgUpdate& update)
+    {
+        const auto& path = update.path();
+        SgObject* source = path.front();
+        if(source == pointSet->vertices() || source == pointSet->normals() || source == pointSet->colors()){
+            return true;
+        }
+        if(source == pointSet && update.hasAction(SgUpdate::GeometryModified)){
+            return true;
+        }
+        return false;
+    }
+};
+typedef ref_ptr<PointSetResource> PointSetResourcePtr;
 
 
 class TextureResource : public Referenced
@@ -283,7 +302,9 @@ public:
     bool renderTexture(SgTexture* texture, bool withMaterial);
     void renderTransparentShapes();
     void putMeshData(SgMesh* mesh);
-    VertexResource* findOrCreateVertexResource(SgObject* object, bool& out_found);
+    template<class ResourceType, class ObjectType>
+    ResourceType* findOrCreateResource(ObjectType* object, bool& out_found);
+    PointSetResource* findOrCreatePointSetResource(SgPointSet* pointSet, bool& out_found);
     void renderMesh(SgMesh* mesh, bool hasTexture);
     void setupMeshResource(SgMesh* mesh, VertexResource* resource, bool hasTexture);
     void renderNormalVisualizationLines(SgMesh* mesh, VertexResource* resource);
@@ -292,7 +313,9 @@ public:
     void renderLineSet(SgLineSet* lineSet);
     void setupLineSetResource(SgLineSet* lineSet, VertexResource* resource);
     void renderPlot(
-        SgPlot* plot, GLenum primitiveMode, function<void(VertexResource*)> setupVertexResource);
+        SgPlot* plot, GLenum primitiveMode, VertexResource* resource, bool isResourceFound,
+        GLint first, GLsizei count,
+        function<void(VertexResource*)> setupVertexResource);
     void renderPolygonDrawStyle(SgPolygonDrawStyle* style);
     void renderViewportOverlay(SgViewportOverlay* overlay);
     void renderOutlineGroup(SgOutline* outline);
@@ -1378,25 +1401,43 @@ void GL1SceneRenderer::Impl::putMeshData(SgMesh* mesh)
 }
 
 
-VertexResource* GL1SceneRenderer::Impl::findOrCreateVertexResource(SgObject* object, bool& out_found)
+template<class ResourceType, class ObjectType>
+ResourceType* GL1SceneRenderer::Impl::findOrCreateResource(ObjectType* object, bool& out_found)
 {
-    VertexResource* resource;
+    ResourceType* resource;
     auto it = currentResourceMap->find(object);
     if(it != currentResourceMap->end()){
-        resource = static_cast<VertexResource*>(it->second.get());
+        resource = static_cast<ResourceType*>(it->second.get());
         out_found = true;
     } else {
-        resource = new VertexResource;
+        resource = new ResourceType;
         it = currentResourceMap->insert(ResourceMap::value_type(object, resource)).first;
         resource->updateConnection =
             object->sigUpdated().connect(
-                [this, object](const SgUpdate& update){
+                [this, object](const SgUpdate&){
                     updatedSceneObjects.push_back(object);
                 });
         out_found = false;
     }
     if(isCheckingUnusedResources){
         nextResourceMap->insert(*it);
+    }
+    return resource;
+}
+
+
+PointSetResource* GL1SceneRenderer::Impl::findOrCreatePointSetResource(SgPointSet* pointSet, bool& out_found)
+{
+    auto resource = findOrCreateResource<PointSetResource>(pointSet, out_found);
+    if(!out_found){
+        resource->updateConnection.disconnect();
+        resource->updateConnection =
+            pointSet->sigUpdated().connect(
+                [this, pointSet](const SgUpdate& update){
+                    if(PointSetResource::isUpdateRequired(pointSet, update)){
+                        updatedSceneObjects.push_back(pointSet);
+                    }
+                });
     }
     return resource;
 }
@@ -1423,7 +1464,7 @@ void GL1SceneRenderer::Impl::renderMesh(SgMesh* mesh, bool hasTexture)
     }
 
     bool found;
-    auto resource = findOrCreateVertexResource(mesh, found);
+    auto resource = findOrCreateResource<VertexResource>(mesh, found);
     if(!found){
         setupMeshResource(mesh, resource, hasTexture);
     }
@@ -1618,6 +1659,34 @@ void GL1SceneRenderer::Impl::renderNormalVisualizationLines(SgMesh* mesh, Vertex
 }
 
 
+static void getPointSetDrawArrayRange
+(SgPointSet* pointSet, GLsizei numVertices, GLint& out_first, GLsizei& out_count)
+{
+    out_first = 0;
+    out_count = numVertices;
+
+    if(numVertices <= 0){
+        return;
+    }
+
+    int first = std::max(0, pointSet->validPointBeginIndex());
+    if(first >= numVertices){
+        out_first = numVertices;
+        out_count = 0;
+        return;
+    }
+
+    int end = pointSet->validPointEndIndex();
+    out_first = first;
+    if(end < 0){
+        out_count = numVertices - first;
+    } else {
+        end = std::min(end, static_cast<int>(numVertices));
+        out_count = std::max(0, end - first);
+    }
+}
+
+
 void GL1SceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
 {
     if(!pointSet->hasVertices()){
@@ -1628,8 +1697,13 @@ void GL1SceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
         setPointSize(s);
     }
 
+    bool found;
+    auto resource = findOrCreatePointSetResource(pointSet, found);
+    GLint first;
+    GLsizei count;
+    getPointSetDrawArrayRange(pointSet, pointSet->vertices()->size(), first, count);
     renderPlot(
-        pointSet, (GLenum)GL_POINTS,
+        pointSet, (GLenum)GL_POINTS, resource, found, first, count,
         [this, pointSet](VertexResource* resource){
             setupPointSetResource(pointSet, resource);
         });
@@ -1704,8 +1778,10 @@ void GL1SceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
         setLineWidth(w);
     }
     
+    bool found;
+    auto resource = findOrCreateResource<VertexResource>(lineSet, found);
     renderPlot(
-        lineSet, (GLenum)GL_LINES,
+        lineSet, (GLenum)GL_LINES, resource, found, 0, -1,
         [this, lineSet](VertexResource* resource){
             setupLineSetResource(lineSet, resource);
         });
@@ -1782,12 +1858,11 @@ void GL1SceneRenderer::Impl::setupLineSetResource(SgLineSet* lineSet, VertexReso
 
 
 void GL1SceneRenderer::Impl::renderPlot
-(SgPlot* plot, GLenum primitiveMode, function<void(VertexResource*)> setupVertexResource)
+(SgPlot* plot, GLenum primitiveMode, VertexResource* resource, bool isResourceFound,
+ GLint first, GLsizei count,
+ function<void(VertexResource*)> setupVertexResource)
 {
-    bool found;
-    auto resource = findOrCreateVertexResource(plot, found);
-
-    if(!found){
+    if(!isResourceFound){
         setupVertexResource(resource);
     }
 
@@ -1830,7 +1905,12 @@ void GL1SceneRenderer::Impl::renderPlot
     }
 
     auto id = pushPickEndNode(plot, true);
-    glDrawArrays(primitiveMode, 0, resource->numVertices);
+    if(count < 0){
+        count = std::max<GLsizei>(0, resource->numVertices - first);
+    }
+    if(count > 0){
+        glDrawArrays(primitiveMode, first, count);
+    }
     popPickNode();
 
     if(!doLighting){
