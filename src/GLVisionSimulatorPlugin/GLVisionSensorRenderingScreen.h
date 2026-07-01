@@ -96,6 +96,7 @@ private:
     bool initializeEGL();
     void finalizeGL(bool doMakeCurrent);
     void makeGLContextCurrent();
+    void releaseCurrentQtContext();
 };
 
 typedef ref_ptr<GLVisionSensorRenderingScreen> GLVisionSensorRenderingScreenPtr;

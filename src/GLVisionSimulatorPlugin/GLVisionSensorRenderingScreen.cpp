@@ -647,10 +647,12 @@ void GLVisionSensorRenderingScreen::moveRenderingBufferToThread(QThread& thread)
 #ifdef CNOID_ENABLE_EGL
     if(!usingEGL){
         // Qt OpenGL mode: need to move context to thread
+        releaseCurrentQtContext();
         glContext->moveToThread(&thread);
     }
     // EGL mode: contexts are managed per-thread, no explicit move needed
 #else
+    releaseCurrentQtContext();
     glContext->moveToThread(&thread);
 #endif
 }
@@ -697,6 +699,19 @@ void GLVisionSensorRenderingScreen::doneGLContextCurrent()
 #else
     glContext->doneCurrent();
 #endif
+}
+
+
+void GLVisionSensorRenderingScreen::releaseCurrentQtContext()
+{
+#ifdef CNOID_ENABLE_EGL
+    if(usingEGL){
+        return;
+    }
+#endif
+    if(glContext && QOpenGLContext::currentContext() == glContext){
+        glContext->doneCurrent();
+    }
 }
 
 
