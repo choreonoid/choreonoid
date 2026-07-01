@@ -50,6 +50,16 @@ std::mutex extensionMutex;
 set<GLSLSceneRenderer*> renderers;
 vector<std::function<void(GLSLSceneRenderer* renderer)>> extendFunctions;
 
+/*
+  Different OpenGL contexts may issue commands from different threads, and the
+  renderer keeps its VAO / VBO resources per context, so this lock is not a
+  general OpenGL specification requirement. It is an empirical workaround for
+  crashes observed with the NVIDIA Linux OpenGL driver when vertex array state
+  setup such as glBindVertexArray / glVertexAttribPointer was performed
+  concurrently. This workaround was introduced on 2017-11-13 by commit
+  ca3038af3f ("Implement exclusion control for avoiding a crash on the NVIDIA
+  OpenGL driver").
+*/
 const bool LOCK_VERTEX_ARRAY_API_TO_AVOID_CRASH_ON_NVIDIA_LINUX_OPENGL_DRIVER = true;
 
 std::mutex vertexArrayMutex;
@@ -106,12 +116,18 @@ public:
     VertexResource(const VertexResource&) = delete;
     VertexResource& operator=(const VertexResource&) = delete;
 
-    VertexResource(SgObject* obj)
+protected:
+    VertexResource()
     {
         clearHandles();
         glGenVertexArrays(1, &vao);
         pLocalTransform = nullptr;
+    }
 
+public:
+    VertexResource(SgObject* obj)
+        : VertexResource()
+    {
         connection =
             obj->sigUpdated().connect(
                 [this](const SgUpdate&){ numVertices = 0; });
@@ -168,35 +184,42 @@ public:
     }
 };
 
+// SgPointSet can grow by appending vertices while keeping the same array object.
+// VertexResource only tracks whether a buffer exists and how many vertices are
+// already stored in the GPU buffer, so it cannot tell append updates from array
+// replacement or manage spare buffer capacity. This resource keeps that
+// PointSet-specific buffer state.
 class PointSetResource : public VertexResource
 {
 public:
-    PointSetResource(SgPointSet* pointSet)
-        : VertexResource(pointSet)
-    {
-        connection.disconnect();
-        connection =
-            pointSet->sigUpdated().connect(
-                [this, pointSet](const SgUpdate& update){
-                    if(isUpdateRequired(pointSet, update)){
-                        numVertices = 0;
-                    }
-                });
-    }
+    enum BufferUpdateFlag {
+        NoBufferUpdate = 0,
+        AppendBufferUpdate = 1 << 0,
+        FullBufferUpdate = 1 << 1,
+        ExpandBufferCapacity = 1 << 2
+    };
+
+    // Source arrays used to build the current GPU buffers. They are checked
+    // only when an update notification is received.
+    SgVertexArrayPtr bufferedVertexArraySource;
+    SgNormalArrayPtr bufferedNormalArraySource;
+    GLsizei vertexBufferCapacity;
+    GLsizei normalBufferCapacity;
+    GLsizei numBufferedNormals;
+    int vertexBufferIndex;
+    int normalBufferIndex;
+    int vertexBufferUpdateFlags;
+    int normalBufferUpdateFlags;
+
+    PointSetResource(SgPointSet* pointSet);
+    virtual void discard() override;
+    void clearBufferState();
+    void prepareFullBufferUpdate();
 
 private:
-    bool isUpdateRequired(SgPointSet* pointSet, const SgUpdate& update)
-    {
-        const auto& path = update.path();
-        SgObject* source = path.front();
-        if(source == pointSet->vertices() || source == pointSet->normals() || source == pointSet->colors()){
-            return true;
-        }
-        if(source == pointSet && update.hasAction(SgUpdate::GeometryModified)){
-            return true;
-        }
-        return false;
-    }
+    void onPointSetUpdated(SgPointSet* pointSet, const SgUpdate& update);
+    void requestVertexBufferUpdate(SgPointSet* pointSet, bool vertexArrayUpdated, bool forceFullUpdate);
+    void requestNormalBufferUpdate(SgPointSet* pointSet, bool normalArrayUpdated, bool forceFullUpdate);
 };
 
 typedef ref_ptr<VertexResource> VertexResourcePtr;
@@ -572,19 +595,23 @@ public:
     void renderShapeMain(SgShape* shape, const Affine3& modelTransform, int pickIndex);
     void applyCullingMode(SgMesh* mesh);
     void renderShapeVertices(SgShape* shape);
-    void renderPlot(
-        SgPlot* plot, GLenum primitiveMode,
-        VertexResource* resource,
-        GLint first, GLsizei count,
-        std::function<bool()> setupShaderProgram,
-        const std::function<SgVertexArrayPtr()>& getVertices,
-        const std::function<SgNormalArrayPtr()>& getNormals = nullptr);
+    void renderPreparedPlot(
+        SgPlot* plot, GLenum primitiveMode, VertexResource* resource,
+        GLint first, GLsizei count, std::function<bool()> setupShaderProgram);
     void renderPlotMain(
         SgPlot* plot, GLenum primitiveMode, VertexResource* resource, const Affine3& modelTransform, int pickIndex,
         const std::function<bool()>& setupShaderProgram, GLint first, GLsizei count);
     void renderPointSet(SgPointSet* pointSet);
     bool hasUsablePointNormals(SgPointSet* pointSet) const;
+    void preparePlotBuffers(
+        SgPlot* plot, VertexResource* resource, GLint first, GLsizei count,
+        const std::function<SgVertexArrayPtr()>& getVertices,
+        const std::function<SgNormalArrayPtr()>& getNormals);
+    void preparePointSetPlotBuffers(
+        SgPointSet* pointSet, PointSetResource* resource, GLint first, GLsizei count, bool useNormals);
     void writePlotNormalBuffer(VertexResource* resource, SgNormalArray* normals, size_t n);
+    void writePointSetNormalBuffer(PointSetResource* resource, SgNormalArray* normals, size_t n);
+    void writePlotColorBuffer(SgPlot* plot, VertexResource* resource, size_t n);
     void renderLineSet(SgLineSet* lineSet);
     void renderText(SgText* text);
     void renderPolygonDrawStyle(SgPolygonDrawStyle* style);
@@ -3354,6 +3381,125 @@ void GLSLSceneRenderer::Impl::renderShapeVertices(SgShape* shape)
 }
 
 
+PointSetResource::PointSetResource(SgPointSet* pointSet)
+    : VertexResource()
+{
+    clearBufferState();
+    connection =
+        pointSet->sigUpdated().connect(
+            [this, pointSet](const SgUpdate& update){
+                onPointSetUpdated(pointSet, update);
+            });
+}
+
+
+void PointSetResource::discard()
+{
+    VertexResource::discard();
+    clearBufferState();
+}
+
+
+void PointSetResource::clearBufferState()
+{
+    bufferedVertexArraySource = nullptr;
+    bufferedNormalArraySource = nullptr;
+    vertexBufferCapacity = 0;
+    normalBufferCapacity = 0;
+    numBufferedNormals = 0;
+    vertexBufferIndex = -1;
+    normalBufferIndex = -1;
+    vertexBufferUpdateFlags = NoBufferUpdate;
+    normalBufferUpdateFlags = NoBufferUpdate;
+}
+
+
+void PointSetResource::prepareFullBufferUpdate()
+{
+    deleteBuffers();
+    clearBufferState();
+    numVertices = 0;
+}
+
+
+void PointSetResource::onPointSetUpdated(SgPointSet* pointSet, const SgUpdate& update)
+{
+    const auto& path = update.path();
+    SgObject* source = path.front();
+    if(source == pointSet->vertices()){
+        requestVertexBufferUpdate(pointSet, true, false);
+    } else if(source == pointSet->normals()){
+        requestNormalBufferUpdate(pointSet, true, false);
+    } else if(source == pointSet->colors()){
+        requestVertexBufferUpdate(pointSet, false, true);
+    } else if(source == pointSet){
+        if(update.hasAction(SgUpdate::GeometryModified) ||
+           (pointSet->hasColors() && update.action() != SgUpdate::None)){
+            requestVertexBufferUpdate(pointSet, false, true);
+        }
+    }
+}
+
+
+void PointSetResource::requestVertexBufferUpdate
+(SgPointSet* pointSet, bool vertexArrayUpdated, bool forceFullUpdate)
+{
+    SgVertexArray* vertices = pointSet->vertices();
+    const GLsizei n = vertices ? static_cast<GLsizei>(vertices->size()) : 0;
+    const bool sourceChanged =
+        bufferedVertexArraySource && bufferedVertexArraySource != vertices;
+    if(forceFullUpdate || sourceChanged || (pointSet->hasColors() && n != numVertices) ||
+       n < numVertices || (vertexArrayUpdated && n <= numVertices)){
+        vertexBufferUpdateFlags = FullBufferUpdate;
+        if(numVertices > 0 && n > vertexBufferCapacity){
+            vertexBufferUpdateFlags |= ExpandBufferCapacity;
+        }
+    } else if(n > numVertices){
+        vertexBufferUpdateFlags = AppendBufferUpdate;
+        if(n > vertexBufferCapacity){
+            vertexBufferUpdateFlags = FullBufferUpdate | ExpandBufferCapacity;
+        }
+    }
+    if(hasNormalAttribute && pointSet->normals()){
+        if(vertexBufferUpdateFlags & AppendBufferUpdate){
+            requestNormalBufferUpdate(pointSet, false, false);
+        } else if(vertexBufferUpdateFlags & FullBufferUpdate){
+            normalBufferUpdateFlags = vertexBufferUpdateFlags;
+        }
+    }
+}
+
+
+void PointSetResource::requestNormalBufferUpdate
+(SgPointSet* pointSet, bool normalArrayUpdated, bool forceFullUpdate)
+{
+    if(!hasNormalAttribute){
+        return;
+    }
+    SgNormalArray* normals = pointSet->normals();
+    if(!normals){
+        return;
+    }
+    SgVertexArray* vertices = pointSet->vertices();
+    const GLsizei vertexSize = vertices ? static_cast<GLsizei>(vertices->size()) : numVertices;
+    const GLsizei n = static_cast<GLsizei>(std::min(normals->size(), static_cast<size_t>(vertexSize)));
+    const bool sourceChanged =
+        bufferedNormalArraySource && bufferedNormalArraySource != normals;
+    if(forceFullUpdate || sourceChanged || n < numBufferedNormals ||
+       (normalArrayUpdated && n <= numBufferedNormals)){
+        normalBufferUpdateFlags = FullBufferUpdate;
+        if(numBufferedNormals > 0 && n > normalBufferCapacity){
+            normalBufferUpdateFlags |= ExpandBufferCapacity;
+        }
+    } else if(n > numBufferedNormals){
+        normalBufferUpdateFlags = AppendBufferUpdate;
+        if(n > normalBufferCapacity){
+            normalBufferUpdateFlags = FullBufferUpdate | ExpandBufferCapacity;
+        }
+    }
+}
+
+
 static void getPointSetDrawArrayRange
 (SgPointSet* pointSet, GLsizei numVertices, GLint& out_first, GLsizei& out_count)
 {
@@ -3382,11 +3528,80 @@ static void getPointSetDrawArrayRange
 }
 
 
-void GLSLSceneRenderer::Impl::renderPlot
-(SgPlot* plot, GLenum primitiveMode,
- VertexResource* resource,
- GLint first, GLsizei count,
- std::function<bool()> setupShaderProgram,
+// Calculate a VBO capacity for a growing point array. The initial buffer is
+// allocated exactly, and this is used only when the existing capacity is
+// exceeded: grow by powers of two for small arrays, then by fixed 1M-point
+// chunks to avoid excessive GPU memory slack for large point clouds.
+GLsizei calcExpandedBufferCapacity(GLsizei required)
+{
+    constexpr GLsizei LargeBufferGrowthUnit = 1 << 20;
+    if(required > LargeBufferGrowthUnit){
+        return ((required + LargeBufferGrowthUnit - 1) / LargeBufferGrowthUnit) * LargeBufferGrowthUnit;
+    }
+    GLsizei capacity = 1;
+    while(capacity < required){
+        capacity *= 2;
+    }
+    return capacity;
+}
+
+
+/*
+  Create the color buffer used for PointSet and LineSet rendering.
+
+  PointSet vertex and normal buffers support append-only partial transfers, but
+  plot colors are still expanded and transferred as a complete buffer here.
+  Supporting partial color transfers requires tracking the expanded color buffer
+  source and handling colorIndices append/update cases explicitly.
+*/
+void GLSLSceneRenderer::Impl::writePlotColorBuffer(SgPlot* plot, VertexResource* resource, size_t n)
+{
+    typedef Eigen::Array<GLubyte,3,1> Color;
+    vector<Color> colors;
+    colors.reserve(n);
+    const SgColorArray& orgColors = *plot->colors();
+    const SgIndexArray& colorIndices = plot->colorIndices();
+    size_t i = 0;
+    if(plot->colorIndices().empty()){
+        const size_t m = std::min(n, orgColors.size());
+        while(i < m){
+            Vector3f c = 255.0f * orgColors[i];
+            colors.emplace_back(c[0], c[1], c[2]);
+            ++i;
+        }
+    } else {
+        const size_t m = std::min(n, colorIndices.size());
+        while(i < m){
+            Vector3f c = 255.0f * orgColors[colorIndices[i]];
+            colors.emplace_back(c[0], c[1], c[2]);
+            ++i;
+        }
+    }
+    if(i < n){
+        // The reference is safe here because colors.reserve(n) prevents reallocation
+        const auto& c = colors.back();
+        while(i < n){
+            colors.push_back(c);
+            ++i;
+        }
+    }
+    {
+        LockVertexArrayAPI lock;
+        glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+        glVertexAttribPointer((GLuint)3, 3, GL_UNSIGNED_BYTE, GL_TRUE, 0, ((GLubyte*)NULL +(0)));
+    }
+    glBufferData(GL_ARRAY_BUFFER, n * sizeof(Color), colors.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(3);
+}
+
+
+/*
+  Prepare vertex, normal, and color buffers for ordinary Plot rendering.
+  Note that PointSet uses preparePointSetPlotBuffers() for append-only partial
+  transfers.
+*/
+void GLSLSceneRenderer::Impl::preparePlotBuffers
+(SgPlot* plot, VertexResource* resource, GLint first, GLsizei count,
  const std::function<SgVertexArrayPtr()>& getVertices,
  const std::function<SgNormalArrayPtr()>& getNormals)
 {
@@ -3417,42 +3632,7 @@ void GLSLSceneRenderer::Impl::renderPlot
         }
 
         if(plot->hasColors()){
-            typedef Eigen::Array<GLubyte,3,1> Color;
-            vector<Color> colors;
-            colors.reserve(n);
-            const SgColorArray& orgColors = *plot->colors();
-            const SgIndexArray& colorIndices = plot->colorIndices();
-            size_t i = 0;
-            if(plot->colorIndices().empty()){
-                const size_t m = std::min(n, orgColors.size());
-                while(i < m){
-                    Vector3f c = 255.0f * orgColors[i];
-                    colors.emplace_back(c[0], c[1], c[2]);
-                    ++i;
-                }
-            } else {
-                const size_t m = std::min(n, colorIndices.size());
-                while(i < m){
-                    Vector3f c = 255.0f * orgColors[colorIndices[i]];
-                    colors.emplace_back(c[0], c[1], c[2]);
-                    ++i;
-                }
-            }
-            if(i < n){
-                // The reference is safe here because colors.reserve(n) prevents reallocation
-                const auto& c = colors.back();
-                while(i < n){
-                    colors.push_back(c);
-                    ++i;
-                }
-            }
-            {
-                LockVertexArrayAPI lock;
-                glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
-                glVertexAttribPointer((GLuint)3, 3, GL_UNSIGNED_BYTE, GL_TRUE, 0, ((GLubyte*)NULL +(0)));
-            }
-            glBufferData(GL_ARRAY_BUFFER, n * sizeof(Color), colors.data(), GL_STATIC_DRAW);
-            glEnableVertexAttribArray(3);
+            writePlotColorBuffer(plot, resource, n);
         }
     } else if(getNormals && !resource->hasNormalAttribute){
         SgNormalArrayPtr normals = getNormals();
@@ -3461,7 +3641,108 @@ void GLSLSceneRenderer::Impl::renderPlot
             writePlotNormalBuffer(resource, normals, resource->numVertices);
         }
     }
-    
+}
+
+
+// If useNormals is true, renderPointSet() has already confirmed that direct
+// point normals are available for the draw range. This function does not repeat
+// that range check.
+void GLSLSceneRenderer::Impl::preparePointSetPlotBuffers
+(SgPointSet* pointSet, PointSetResource* resource, GLint first, GLsizei count, bool useNormals)
+{
+    SgVertexArrayPtr vertices = pointSet->vertices();
+    const int vertexBufferUpdateFlags = resource->vertexBufferUpdateFlags;
+    if(vertexBufferUpdateFlags & PointSetResource::FullBufferUpdate){
+        resource->prepareFullBufferUpdate();
+    }
+
+    if(!resource->isValid()){
+        glBindVertexArray(resource->vao);
+        const size_t n = vertices->size();
+        resource->numVertices = n;
+
+        {
+            LockVertexArrayAPI lock;
+            const int vertexBufferIndex = resource->numBuffers;
+            glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+            glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte *)NULL + (0)));
+            resource->vertexBufferIndex = vertexBufferIndex;
+        }
+        const GLsizei capacity =
+            (vertexBufferUpdateFlags & PointSetResource::ExpandBufferCapacity) ?
+            calcExpandedBufferCapacity(static_cast<GLsizei>(n)) : static_cast<GLsizei>(n);
+        glBufferData(GL_ARRAY_BUFFER, capacity * sizeof(Vector3f), nullptr, GL_DYNAMIC_DRAW);
+        if(n > 0){
+            glBufferSubData(GL_ARRAY_BUFFER, 0, n * sizeof(Vector3f), vertices->data());
+        }
+        resource->bufferedVertexArraySource = vertices;
+        resource->vertexBufferCapacity = capacity;
+        resource->vertexBufferUpdateFlags = PointSetResource::NoBufferUpdate;
+        glEnableVertexAttribArray(0);
+
+        if(useNormals){
+            SgNormalArrayPtr normals = pointSet->normals();
+            writePointSetNormalBuffer(resource, normals, std::min(n, normals->size()));
+        }
+
+        if(pointSet->hasColors()){
+            writePlotColorBuffer(pointSet, resource, n);
+        }
+    } else if(vertexBufferUpdateFlags & PointSetResource::AppendBufferUpdate){
+        const GLsizei oldSize = resource->numVertices;
+        const GLsizei newSize = static_cast<GLsizei>(vertices->size());
+        glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(resource->vertexBufferIndex));
+        glBufferSubData(
+            GL_ARRAY_BUFFER,
+            oldSize * sizeof(Vector3f),
+            (newSize - oldSize) * sizeof(Vector3f),
+            &(*vertices)[oldSize]);
+        resource->numVertices = newSize;
+        resource->bufferedVertexArraySource = vertices;
+        resource->vertexBufferUpdateFlags = PointSetResource::NoBufferUpdate;
+    }
+
+    if(useNormals){
+        SgNormalArrayPtr normals = pointSet->normals();
+        if(!resource->hasNormalAttribute){
+            glBindVertexArray(resource->vao);
+            writePointSetNormalBuffer(resource, normals, std::min(
+                                          static_cast<size_t>(resource->numVertices), normals->size()));
+        } else if(resource->normalBufferUpdateFlags != PointSetResource::NoBufferUpdate){
+            const GLsizei newSize =
+                static_cast<GLsizei>(std::min(normals->size(), static_cast<size_t>(resource->numVertices)));
+            glBindBuffer(GL_ARRAY_BUFFER, resource->vbo(resource->normalBufferIndex));
+            if(resource->normalBufferUpdateFlags & PointSetResource::FullBufferUpdate){
+                const GLsizei capacity =
+                    (resource->normalBufferUpdateFlags & PointSetResource::ExpandBufferCapacity) ?
+                    calcExpandedBufferCapacity(newSize) : newSize;
+                glBufferData(GL_ARRAY_BUFFER, capacity * sizeof(Vector3f), nullptr, GL_DYNAMIC_DRAW);
+                if(newSize > 0){
+                    glBufferSubData(GL_ARRAY_BUFFER, 0, newSize * sizeof(Vector3f), normals->data());
+                }
+                resource->normalBufferCapacity = capacity;
+                resource->numBufferedNormals = newSize;
+                resource->bufferedNormalArraySource = normals;
+            } else if(resource->normalBufferUpdateFlags & PointSetResource::AppendBufferUpdate){
+                const GLsizei oldSize = resource->numBufferedNormals;
+                glBufferSubData(
+                    GL_ARRAY_BUFFER,
+                    oldSize * sizeof(Vector3f),
+                    (newSize - oldSize) * sizeof(Vector3f),
+                    &(*normals)[oldSize]);
+                resource->numBufferedNormals = newSize;
+                resource->bufferedNormalArraySource = normals;
+            }
+            resource->normalBufferUpdateFlags = PointSetResource::NoBufferUpdate;
+        }
+    }
+}
+
+
+void GLSLSceneRenderer::Impl::renderPreparedPlot
+(SgPlot* plot, GLenum primitiveMode, VertexResource* resource,
+ GLint first, GLsizei count, std::function<bool()> setupShaderProgram)
+{
     auto pickIndex = pushPickEndNode(plot);
 
     bool isTransparent = false;
@@ -3545,7 +3826,7 @@ bool GLSLSceneRenderer::Impl::hasUsablePointNormals(SgPointSet* pointSet) const
 void GLSLSceneRenderer::Impl::writePlotNormalBuffer
 (VertexResource* resource, SgNormalArray* normals, size_t n)
 {
-    const Vector3f* normalData = &(*normals)[0];
+    const Vector3f* normalData = n > 0 ? &(*normals)[0] : nullptr;
 
     {
         LockVertexArrayAPI lock;
@@ -3554,6 +3835,33 @@ void GLSLSceneRenderer::Impl::writePlotNormalBuffer
     }
 
     glBufferData(GL_ARRAY_BUFFER, n * sizeof(Vector3f), normalData, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1);
+    resource->hasNormalAttribute = true;
+}
+
+
+void GLSLSceneRenderer::Impl::writePointSetNormalBuffer
+(PointSetResource* resource, SgNormalArray* normals, size_t n)
+{
+    const Vector3f* normalData = n > 0 ? &(*normals)[0] : nullptr;
+
+    {
+        LockVertexArrayAPI lock;
+        const int normalBufferIndex = resource->numBuffers;
+        glBindBuffer(GL_ARRAY_BUFFER, resource->newBuffer());
+        glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+        resource->normalBufferIndex = normalBufferIndex;
+    }
+
+    const GLsizei numNormals = static_cast<GLsizei>(n);
+    const GLsizei capacity = std::max(numNormals, resource->vertexBufferCapacity);
+    glBufferData(GL_ARRAY_BUFFER, capacity * sizeof(Vector3f), nullptr, GL_DYNAMIC_DRAW);
+    if(numNormals > 0){
+        glBufferSubData(GL_ARRAY_BUFFER, 0, numNormals * sizeof(Vector3f), normalData);
+    }
+    resource->bufferedNormalArraySource = normals;
+    resource->normalBufferCapacity = capacity;
+    resource->numBufferedNormals = numNormals;
     glEnableVertexAttribArray(1);
     resource->hasNormalAttribute = true;
 }
@@ -3568,39 +3876,32 @@ void GLSLSceneRenderer::Impl::renderPointSet(SgPointSet* pointSet)
         getPointSetDrawArrayRange(pointSet, pointSet->vertices()->size(), first, count);
         if(!isRenderingPickingImage && currentLightingProgram && hasUsablePointNormals(pointSet)){
             auto resource = getOrCreateGLResource<PointSetResource>(pointSet);
-            renderPlot(
-                pointSet, GL_POINTS,
-                resource,
-                first, count,
-                [this, pointSet](){
-                    pushProgram(shadedPointProgram);
-                    renderLights(shadedPointProgram.get());
-                    renderFog(shadedPointProgram.get());
-                    const double s = pointSet->pointSize();
-                    shadedPointProgram->setPointSize(s > 0.0 ? s : defaultPointSize);
-                    return true;
-                },
-                [pointSet]() -> SgVertexArrayPtr { return pointSet->vertices(); },
-                [pointSet]() -> SgNormalArrayPtr { return pointSet->normals(); });
+            auto setupShaderProgram = [this, pointSet](){
+                pushProgram(shadedPointProgram);
+                renderLights(shadedPointProgram.get());
+                renderFog(shadedPointProgram.get());
+                const double s = pointSet->pointSize();
+                shadedPointProgram->setPointSize(s > 0.0 ? s : defaultPointSize);
+                return true;
+            };
+            preparePointSetPlotBuffers(pointSet, resource, first, count, true);
+            renderPreparedPlot(pointSet, GL_POINTS, resource, first, count, setupShaderProgram);
         } else {
             auto resource = getOrCreateGLResource<PointSetResource>(pointSet);
-            renderPlot(
-                pointSet, GL_POINTS,
-                resource,
-                first, count,
-                [this, pointSet](){
-                    if(!isRenderingPickingImage){
-                        pushProgram(solidColorExProgram);
-                    }
-                    const double s = pointSet->pointSize();
-                    if(s > 0.0){
-                        setPointSize(s);
-                    } else {
-                        setPointSize(defaultPointSize);
-                    }
-                    return !isRenderingPickingImage;
-                },
-                [pointSet]() -> SgVertexArrayPtr { return pointSet->vertices(); });
+            auto setupShaderProgram = [this, pointSet](){
+                if(!isRenderingPickingImage){
+                    pushProgram(solidColorExProgram);
+                }
+                const double s = pointSet->pointSize();
+                if(s > 0.0){
+                    setPointSize(s);
+                } else {
+                    setPointSize(defaultPointSize);
+                }
+                return !isRenderingPickingImage;
+            };
+            preparePointSetPlotBuffers(pointSet, resource, first, count, false);
+            renderPreparedPlot(pointSet, GL_POINTS, resource, first, count, setupShaderProgram);
         }
         glEnable(GL_MULTISAMPLE);
     }
@@ -3626,28 +3927,25 @@ void GLSLSceneRenderer::Impl::renderLineSet(SgLineSet* lineSet)
 {
     if(!isRenderingShadowMap && lineSet->hasVertices() && lineSet->numLines() > 0){
         auto resource = getOrCreateGLResource<VertexResource>(lineSet);
-        renderPlot(
-            lineSet, GL_LINES,
-            resource,
-            0, -1,
-            [this, lineSet](){
-                float width = lineSet->lineWidth();
-                if(isRenderingPickingImage){
-                    if(width < MinLineWidthForPicking){
-                        width = MinLineWidthForPicking;
-                    }
-                } else if(width <= 0.0f){
-                    width = defaultLineWidth;
+        auto setupShaderProgram = [this, lineSet](){
+            float width = lineSet->lineWidth();
+            if(isRenderingPickingImage){
+                if(width < MinLineWidthForPicking){
+                    width = MinLineWidthForPicking;
                 }
-                if(width == 1.0f){
-                    pushProgram(solidColorExProgram);
-                } else {
-                    thickLineProgram->setLineWidth(width);
-                    pushProgram(thickLineProgram);
-                }
-                return true;
-            },
-            [lineSet](){ return getLineSetVertices(lineSet); });
+            } else if(width <= 0.0f){
+                width = defaultLineWidth;
+            }
+            if(width == 1.0f){
+                pushProgram(solidColorExProgram);
+            } else {
+                thickLineProgram->setLineWidth(width);
+                pushProgram(thickLineProgram);
+            }
+            return true;
+        };
+        preparePlotBuffers(lineSet, resource, 0, -1, [lineSet](){ return getLineSetVertices(lineSet); }, nullptr);
+        renderPreparedPlot(lineSet, GL_LINES, resource, 0, -1, setupShaderProgram);
     }
 }
 
