@@ -122,6 +122,13 @@ that:
      `-fno-strict-aliasing`; Clang uses
      `-fstrict-aliasing -Wstrict-aliasing=2 -ffp-exception-behavior=maytrap`
      plus `-Weverything` with the upstream `-Wno-*` set.
+     A few suppressions of our own (`-Wno-missing-include-dirs`,
+     `-Wno-nrvo`) are appended to `PHYSX_CLANG_WARNING_FLAGS` by a
+     separate `list(APPEND ...)` that follows the `set()` call. Keep
+     that block when re-importing the upstream list, and re-check it
+     after a Clang major-version bump: `-Weverything` turns on every
+     warning the compiler has, so a newer Clang can introduce further
+     categories in the bundled sources.
    - On MSVC: `/MP /GF /GS- /Gd /fp:fast /Oy /W4 /GR-` plus
      `/wd4514 /wd4820 /wd4127 /wd4710 /wd4711 /wd4577 /wd4996`.
    C++14 is pinned via `set_target_properties(CXX_STANDARD 14)` on each

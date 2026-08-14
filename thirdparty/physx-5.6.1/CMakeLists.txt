@@ -158,6 +158,35 @@ set(PHYSX_CLANG_WARNING_FLAGS
     -Wno-undefined-func-template
 )
 
+# Suppressions of our own, kept apart from the upstream list above so that the
+# list can be re-imported verbatim when PhysX is updated.
+#
+# -Wmissing-include-dirs: the upstream CMake fragments add include directories
+#     that do not exist in this bundled tree. Some belong to the GPU/CUDA and
+#     OmniPVD parts we do not ship, and the rest are platform subdirectories
+#     that upstream names even though the release package does not contain
+#     them (in a few cases spelled with an inconsistent letter case). A
+#     non-existent include directory is ignored by the compiler, so the only
+#     effect is one warning per translation unit.
+# -Wnrvo: reports the places where the named return value optimization could
+#     not be applied. It comes from the PhysX headers, mostly PxMat33.h, and
+#     concerns how the upstream code is written rather than how we build it.
+#
+# Only recent Clang versions implement these two. Older ones do not know the
+# options at all, which is harmless because the upstream list already contains
+# -Wno-unknown-warning-option.
+#
+# -Wformat is deliberately not suppressed, for the same reason it is left
+# enabled in PHYSX_GCC_WARNING_FLAGS: -Wno-format would also turn off the
+# format-security checking that Debian's packaging policy requires. Clang
+# reports a signedness mismatch through -Wformat itself and offers no narrower
+# option for it, so the few "%d with an unsigned argument" sites in the PhysX
+# sources stay visible.
+list(APPEND PHYSX_CLANG_WARNING_FLAGS
+    -Wno-missing-include-dirs
+    -Wno-nrvo
+)
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # GCC path - see upstream linux/CMakeLists.txt L129
     set(PHYSX_COMPILER_SPECIFIC_FLAGS -fno-strict-aliasing)
