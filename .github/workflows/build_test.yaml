@@ -87,6 +87,18 @@ jobs:
           sudo cmake --install build
           sudo ldconfig
 
+      # MediaPlugin connects to a PulseAudio server when it is initialized, but
+      # the runner has no sound server running. A server with a virtual output
+      # device is started here so that the audio initialization is actually
+      # tested instead of just being skipped. The pactl command at the end
+      # confirms that the server is really reachable.
+      - name: Start a PulseAudio server with a virtual output device
+        run: |
+          sudo apt-get install -y pulseaudio pulseaudio-utils
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=choreonoid_test_sink
+          pactl info
+
       # The batch mode makes Choreonoid exit as soon as all the automatic
       # processing has finished, and its return code becomes non-zero if any
       # error message has been output. This detects a failure in the start-up
