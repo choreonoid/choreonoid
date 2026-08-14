@@ -29,6 +29,16 @@ jobs:
       fail-fast: false
       matrix:
         ubuntu: [ubuntu-22.04, ubuntu-24.04, ubuntu-26.04]
+        compiler: [gcc, clang]
+        # The command names of each compiler are given as matrix values so that
+        # the build step does not have to branch on the compiler
+        include:
+          - compiler: gcc
+            cc: gcc
+            cxx: g++
+          - compiler: clang
+            cc: clang
+            cxx: clang++
     runs-on: ${{ matrix.ubuntu }}
     steps:
       - name: Checkout
@@ -36,6 +46,13 @@ jobs:
 
       - name: Update the package lists
         run: sudo apt-get update
+
+      # Clang is not installed by the install scripts because Choreonoid is
+      # built with GCC by default on Ubuntu, and the runner images do not
+      # necessarily provide it either
+      - name: Install Clang
+        if: matrix.compiler == 'clang'
+        run: sudo apt-get install -y clang
 
       # Some runner images lack a package that the ordinary install script
       # assumes to be present. The additional script exists only for them.
@@ -56,6 +73,8 @@ jobs:
       - name: Build Choreonoid
         run: |
           cmake -S . -B build \
+            -DCMAKE_C_COMPILER=${{ matrix.cc }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
             -DBUILD_MEDIA_PLUGIN=ON \
             -DBUILD_FCL_PLUGIN=ON \
             -DBUILD_POSE_SEQ_PLUGIN=ON \
