@@ -7,6 +7,20 @@ on:
       - 'master'
   pull_request:
 
+# Stop the running workflow of a branch when a new commit is pushed to it
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# The install scripts pass these variables to apt-get with the sudo
+# --preserve-env option so that no installation step asks anything interactively
+env:
+  DEBIAN_FRONTEND: noninteractive
+  TZ: Asia/Tokyo
+
 jobs:
   build:
     name: build
@@ -14,22 +28,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ubuntu : [ubuntu-20.04, ubuntu-22.04]
+        ubuntu: [ubuntu-22.04, ubuntu-24.04, ubuntu-26.04]
     runs-on: ${{ matrix.ubuntu }}
+    # The runner image of Ubuntu 26.04 is still a preview version and it can fail
+    # for reasons that have nothing to do with Choreonoid. Such a failure is
+    # reported but it does not make the whole workflow fail.
+    continue-on-error: ${{ matrix.ubuntu == 'ubuntu-26.04' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Update and upgrade
-        run: sudo apt-get update && sudo apt-get -y upgrade
+      - name: Update the package lists
+        run: sudo apt-get update
 
-      - name: Install dependencies of choreonoid (only necessary for Ubuntu on Github actions)
-        run: sh .github/script/install-requisites-${{ matrix.ubuntu }}-for-github-actions.sh
+      # Some runner images lack a package that the ordinary install script
+      # assumes to be present. The additional script exists only for them.
+      - name: Install the dependencies only necessary on the GitHub Actions runner
+        run: |
+          script=.github/script/install-requisites-${{ matrix.ubuntu }}-for-github-actions.sh
+          if [ -f "$script" ]; then sh "$script"; fi
 
-      - name: Install dependencies of choreonoid
+      - name: Install the dependencies of Choreonoid
         run: sh misc/script/install-requisites-${{ matrix.ubuntu }}.sh
 
-      - name: Build choreonoid
-        run: cmake . && make -j4
+      - name: Build Choreonoid
+        run: |
+          cmake -S . -B build
+          cmake --build build --parallel $(nproc)
