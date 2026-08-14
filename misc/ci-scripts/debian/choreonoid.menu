@@ -1,3 +1,0 @@
-?package(choreonoid):needs="X11"\
-        section="Applications/Science/Engineering"\
-        title="Choreonoid" command="/usr/bin/choreonoid"

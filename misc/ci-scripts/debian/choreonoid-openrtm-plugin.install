@@ -1,4 +1,0 @@
-usr/lib/libCnoidBodyIoRTC.so.*
-usr/lib/choreonoid-*/libCnoidOpenRTMPlugin.so
-usr/lib/choreonoid-*/python/cnoid/OpenRTMPlugin.so
-usr/share/locale/ja/LC_MESSAGES/CnoidOpenRTMPlugin-*.mo
