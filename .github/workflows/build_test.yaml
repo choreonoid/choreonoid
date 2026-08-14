@@ -55,3 +55,19 @@ jobs:
         run: |
           cmake -S . -B build
           cmake --build build --parallel $(nproc)
+
+      # Installing Choreonoid detects a missing or wrong install rule, which the
+      # build alone cannot detect
+      - name: Install Choreonoid
+        run: |
+          sudo cmake --install build
+          sudo ldconfig
+
+      # The batch mode makes Choreonoid exit as soon as all the automatic
+      # processing has finished, and its return code becomes non-zero if any
+      # error message has been output. This detects a failure in the start-up
+      # process, which the build and the installation cannot detect. No window
+      # system is available on the runner, so Choreonoid runs in the no-window
+      # mode. The timeout is a safeguard against an unexpected hang.
+      - name: Check that the installed Choreonoid starts up
+        run: timeout 60 choreonoid --batch
