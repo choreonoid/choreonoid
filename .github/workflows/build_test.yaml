@@ -51,9 +51,33 @@ jobs:
       - name: Install the dependencies of Choreonoid
         run: sh misc/script/install-requisites-${{ matrix.ubuntu }}.sh
 
+      # The optional components that the dependencies of Choreonoid are
+      # sufficient to build are enabled so that the workflow covers as much of
+      # the code base as possible. This affects the build of this workflow only
+      # and does not change the default value of any option.
+      # CHECK_UNRESOLVED_SYMBOLS only adds a linker flag that warns about
+      # unresolved symbols. It does not make the build fail by itself.
       - name: Build Choreonoid
         run: |
-          cmake -S . -B build
+          cmake -S . -B build \
+            -DBUILD_MEDIA_PLUGIN=ON \
+            -DBUILD_FCL_PLUGIN=ON \
+            -DBUILD_POSE_SEQ_PLUGIN=ON \
+            -DBUILD_BALANCER_PLUGIN=ON \
+            -DBUILD_BODY_MOTION_FILTER_PLUGIN=ON \
+            -DBUILD_MANIPULATOR_PLUGIN=ON \
+            -DBUILD_SCENE_EFFECTS_PLUGIN=ON \
+            -DBUILD_MOCAP_PLUGIN=ON \
+            -DBUILD_MULTICOPTER_PLUGIN=ON \
+            -DBUILD_GL_CAMERA_EFFECT_PLUGIN=ON \
+            -DBUILD_LIVOX_MID360_PLUGIN=ON \
+            -DBUILD_TRAFFIC_CONTROL_PLUGIN=ON \
+            -DBUILD_COLLISION_HANDLER_SAMPLE=ON \
+            -DBUILD_SUBMERSIBLE_SAMPLE=ON \
+            -DBUILD_HRP4C_HANDLER=ON \
+            -DBUILD_CHOREONOID_INFO_COMMAND=ON \
+            -DINSTALL_SYNC_LOGFILE_COMMAND=ON \
+            -DCHECK_UNRESOLVED_SYMBOLS=ON
           cmake --build build --parallel $(nproc)
 
       # Installing Choreonoid detects a missing or wrong install rule, which the
